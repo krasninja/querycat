@@ -1,0 +1,8 @@
+expected: |
+  1,Russia,144100000
+  2,USA,329500000
+  3,China,1402000000
+  4,Belarus,9399000
+  5,Ukraine,41167336
+query: |
+  select id, name, population from read_file('Countries*.csv');

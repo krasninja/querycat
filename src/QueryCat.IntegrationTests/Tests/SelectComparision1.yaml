@@ -1,0 +1,14 @@
+expected: |
+  True,True,False,False
+  True,False,True,True
+query: |
+  SELECT
+    2 > 1,
+    2.4 > 1,
+    5 > 10.5,
+    5 <> 5
+  UNION SELECT
+    5.0 = 5,
+    2 = 1,
+    4 >= 4,
+    1 + 5 > 2 + 2

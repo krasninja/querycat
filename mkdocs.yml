@@ -1,0 +1,31 @@
+site_name: QueryCat Documentation
+nav:
+  - 'Home': index.md
+  - 'Concepts': concepts.md
+  - 'Tutorial': tutorial.md
+  - 'Formatters': formatters.md
+  - 'Commands':
+    - 'ECHO': commands/echo.md
+    - 'SELECT': commands/select.md
+  - 'Input':
+    - 'CSV': input/csv.md
+    - 'IISW3C': input/iisw3c.md
+    - 'Text': input/text-line.md
+    - 'TSV': input/tsv.md
+  - 'Output':
+    - 'CSV': output/csv.md
+    - 'Text Table': output/text-table.md
+    - 'TSV': output/tsv.md
+  - 'Functions':
+    - 'Aggregate': functions/aggregate.md
+    - 'Date and Time': functions/datetime.md
+    - 'Info': functions/info.md
+    - 'Input': functions/input.md
+    - 'Math': functions/math.md
+    - 'Misc': functions/misc.md
+    - 'Output': functions/output.md
+    - 'String': functions/string.md
+    - 'System': functions/system.md
+  - 'Misc':
+    - 'Alternative Tools': misc/alternative-tools.md
+theme: readthedocs

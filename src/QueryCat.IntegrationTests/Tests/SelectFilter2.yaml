@@ -1,0 +1,6 @@
+expected: |
+  3,ravioli,260,01/03/2022 00:00:00,False
+query: |
+  SELECT id,product,price,date,is_active FROM read_file('RestaurantPerzi.csv') WHERE id <> 1 + 1 AND id > 2
+  UNION
+  SELECT id,product,price,date,is_active FROM read_file('RestaurantPerzi.csv') WHERE date > '2033-01-01';

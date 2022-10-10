@@ -1,0 +1,9 @@
+expected: |
+  1,5,6
+  1,4,3
+  2,9,2
+  2,9,3
+  2,8,7
+  2,6,6
+query: |
+  SELECT num1, num2, num3 FROM read_file('Numbers1.csv') ORDER BY num1 ASC, num2 + 1 DESC, num3, 1;

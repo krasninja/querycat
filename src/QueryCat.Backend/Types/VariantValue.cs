@@ -1,0 +1,526 @@
+using System.Globalization;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+
+namespace QueryCat.Backend.Types;
+
+/// <summary>
+/// The union-like class. It holds only one value of the specified data type.
+/// In fact it has two 64-bit fields.
+/// </summary>
+public readonly partial struct VariantValue : IEquatable<VariantValue>
+{
+    public const string TrueValue = "TRUE";
+    public const string FalseValue = "FALSE";
+
+    private static readonly DataTypeObject IntegerObject = new("INT");
+    private static readonly DataTypeObject FloatObject = new("FLOAT");
+    private static readonly DataTypeObject TimestampObject = new("TIMESTAMP");
+    private static readonly DataTypeObject BooleanObject = new("BOOL");
+
+    public static VariantValue OneIntegerValue = new(1);
+
+    [StructLayout(LayoutKind.Explicit)]
+    private readonly struct TypeUnion
+    {
+        [FieldOffset(0)]
+        internal readonly long IntegerValue;
+
+        [FieldOffset(0)]
+        internal readonly double DoubleValue;
+
+        [FieldOffset(0)]
+        internal readonly DateTime DateTimeValue;
+
+        [FieldOffset(0)]
+        internal readonly bool BooleanValue;
+
+        internal TypeUnion(long value) : this()
+        {
+            IntegerValue = value;
+        }
+
+        internal TypeUnion(double value) : this()
+        {
+            DoubleValue = value;
+        }
+
+        internal TypeUnion(DateTime value) : this()
+        {
+            DateTimeValue = value;
+        }
+
+        internal TypeUnion(bool value) : this()
+        {
+            BooleanValue = value;
+        }
+    }
+
+    private readonly TypeUnion _valueUnion;
+
+    private readonly object? _object = null;
+
+    /// <summary>
+    /// NULL value.
+    /// </summary>
+    public static VariantValue Null = default;
+
+    #region Constructors
+
+    private VariantValue(in TypeUnion union, object? obj)
+    {
+        _valueUnion = union;
+        _object = obj;
+    }
+
+    public VariantValue(DataType type)
+    {
+        _object = type switch
+        {
+            DataType.Integer => IntegerObject,
+            DataType.String => string.Empty,
+            DataType.Boolean => BooleanObject,
+            DataType.Float => FloatObject,
+            DataType.Timestamp => TimestampObject,
+            _ => throw new ArgumentOutOfRangeException(nameof(type)),
+        };
+        _valueUnion = default;
+    }
+
+    public VariantValue(long value)
+    {
+        _valueUnion = new TypeUnion(value);
+        _object = IntegerObject;
+    }
+
+    public VariantValue(int value)
+    {
+        _valueUnion = new TypeUnion(value);
+        _object = IntegerObject;
+    }
+
+    public VariantValue(string? value)
+    {
+        _object = value;
+        _valueUnion = default;
+    }
+
+    public VariantValue(ReadOnlySpan<char> value)
+    {
+        _object = value.ToString();
+        _valueUnion = default;
+    }
+
+    public VariantValue(double value)
+    {
+        _valueUnion = new TypeUnion(value);
+        _object = FloatObject;
+    }
+
+    public VariantValue(DateTime value)
+    {
+        _valueUnion = new TypeUnion(value);
+        _object = TimestampObject;
+    }
+
+    public VariantValue(bool value)
+    {
+        _valueUnion = new TypeUnion(value);
+        _object = BooleanObject;
+    }
+
+    public VariantValue(decimal value)
+    {
+        _object = value;
+        _valueUnion = default;
+    }
+
+    private VariantValue(object obj)
+    {
+        _object = obj;
+        _valueUnion = default;
+    }
+
+    public static VariantValue CreateFromObject<T>(in T obj)
+    {
+        if (obj == null)
+        {
+            return Null;
+        }
+
+        if (obj is long || obj is int || obj is short
+            || obj is byte)
+        {
+            return new VariantValue(Convert.ToInt64(obj));
+        }
+        if (obj is bool objBool)
+        {
+            return new VariantValue(objBool);
+        }
+        if (obj is double || obj is float)
+        {
+            return new VariantValue(Convert.ToDouble(obj));
+        }
+        if (obj is decimal objDecimal)
+        {
+            return new VariantValue(objDecimal);
+        }
+        if (obj is string || typeof(T).IsEnum)
+        {
+            return new VariantValue(Convert.ToString(obj));
+        }
+        if (obj is DateTime)
+        {
+            return new VariantValue(Convert.ToDateTime(obj));
+        }
+        return new VariantValue(obj);
+    }
+
+    /// <summary>
+    /// Get internal variant value type.
+    /// </summary>
+    /// <returns>Data type.</returns>
+    public DataType GetInternalType()
+    {
+        if (_object == null)
+        {
+            return DataType.Null;
+        }
+        if (_object == IntegerObject)
+        {
+            return DataType.Integer;
+        }
+        if (_object is string)
+        {
+            return DataType.String;
+        }
+        if (_object == FloatObject)
+        {
+            return DataType.Float;
+        }
+        if (_object == BooleanObject)
+        {
+            return DataType.Boolean;
+        }
+        if (_object == TimestampObject)
+        {
+            return DataType.Timestamp;
+        }
+        if (_object is decimal)
+        {
+            return DataType.Numeric;
+        }
+        if (_object != null)
+        {
+            return DataType.Object;
+        }
+        throw new InvalidOperationException("Cannot get type.");
+    }
+
+    private bool IsValueType() =>
+        _object == IntegerObject || _object == FloatObject ||
+        _object == BooleanObject || _object == TimestampObject;
+
+    #endregion
+
+    #region Getters and Setters
+
+    public long AsInteger => CheckTypeAndTryToCast(DataType.Integer)._valueUnion.IntegerValue;
+
+    public string AsString
+    {
+        get
+        {
+            var obj = CheckTypeAndTryToCast(DataType.String)._object;
+            return obj != null ? (string)obj : string.Empty;
+        }
+    }
+
+    public double AsFloat => CheckTypeAndTryToCast(DataType.Float)._valueUnion.DoubleValue;
+
+    public DateTime AsTimestamp => CheckTypeAndTryToCast(DataType.Timestamp)._valueUnion.DateTimeValue;
+
+    public bool AsBoolean => CheckTypeAndTryToCast(DataType.Boolean)._valueUnion.BooleanValue;
+
+    public bool? AsBooleanNullable => !IsNull
+        ? CheckTypeAndTryToCast(DataType.Boolean)._valueUnion.BooleanValue
+        : null;
+
+    public decimal AsNumeric => (decimal)CheckTypeAndTryToCast(DataType.Numeric)._object!;
+
+    public object? AsObject => CheckTypeAndTryToCast(DataType.Object)._object;
+
+    #endregion
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private VariantValue CheckTypeAndTryToCast(DataType targetType)
+    {
+        var currentType = GetInternalType();
+        if (targetType != currentType)
+        {
+            if (Cast(targetType, out VariantValue convertedValue))
+            {
+                return convertedValue;
+            }
+            throw new InvalidVariantTypeException(currentType, targetType);
+        }
+        return this;
+    }
+
+    /// <summary>
+    /// Determines whether the value is null.
+    /// </summary>
+    public bool IsNull => _object == null;
+
+    #region Casting
+
+    private static VariantValue StringToInteger(string? value, out bool success)
+        => StringToInteger((ReadOnlySpan<char>)value, out success);
+
+    private static VariantValue StringToInteger(in ReadOnlySpan<char> value, out bool success)
+    {
+        success = int.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out var @out);
+        return success ? new VariantValue(@out) : Null;
+    }
+
+    private static VariantValue StringToTimestamp(string? value, out bool success)
+        => StringToTimestamp((ReadOnlySpan<char>)value, out success);
+
+    private static VariantValue StringToTimestamp(in ReadOnlySpan<char> value, out bool success)
+    {
+        success = DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.None, out var @out);
+        return success ? new VariantValue(@out) : Null;
+    }
+
+    private static VariantValue StringToFloat(string? value, out bool success)
+        => StringToFloat((ReadOnlySpan<char>)value, out success);
+
+    private static VariantValue StringToFloat(in ReadOnlySpan<char> value, out bool success)
+    {
+        success = double.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out var @out);
+        return success ? new VariantValue(@out) : Null;
+    }
+
+    private static VariantValue StringToBoolean(string? value, out bool success)
+        => StringToBoolean((ReadOnlySpan<char>)value, out success);
+
+    private static VariantValue StringToBoolean(in ReadOnlySpan<char> value, out bool success)
+    {
+        if (value.IsEmpty)
+        {
+            success = false;
+            return Null;
+        }
+
+        if (value.Equals(TrueValue, StringComparison.OrdinalIgnoreCase)
+            || value.Equals("1", StringComparison.OrdinalIgnoreCase)
+            || value.Equals("YES", StringComparison.OrdinalIgnoreCase)
+            || value.Equals("ON", StringComparison.OrdinalIgnoreCase)
+            || value.Equals("T", StringComparison.OrdinalIgnoreCase))
+        {
+            success = true;
+            return new VariantValue(true);
+        }
+
+        if (value.Equals(FalseValue, StringComparison.OrdinalIgnoreCase)
+            || value.Equals("0", StringComparison.OrdinalIgnoreCase)
+            || value.Equals("NO", StringComparison.OrdinalIgnoreCase)
+            || value.Equals("OFF", StringComparison.OrdinalIgnoreCase)
+            || value.Equals("F", StringComparison.OrdinalIgnoreCase))
+        {
+            success = true;
+            return new VariantValue(false);
+        }
+
+        success = false;
+        return Null;
+    }
+
+    private static VariantValue StringToNumeric(string? value, out bool success)
+        => StringToNumeric((ReadOnlySpan<char>)value, out success);
+
+    private static VariantValue StringToNumeric(in ReadOnlySpan<char> value, out bool success)
+    {
+        success = decimal.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out var @out);
+        return success ? new VariantValue(@out) : Null;
+    }
+
+    private static VariantValue StringToString(string? value, out bool success)
+    {
+        success = true;
+        return new VariantValue(value);
+    }
+
+    private static VariantValue StringToString(in ReadOnlySpan<char> value, out bool success)
+    {
+        success = true;
+        return new VariantValue(value);
+    }
+
+    /// <summary>
+    /// Attempt to convert type of the variant value to another one.
+    /// </summary>
+    /// <param name="targetType">Target type to convert.</param>
+    /// <param name="output">Return value.</param>
+    /// <returns>True if cast was successful, false otherwise.</returns>
+    public bool Cast(in DataType targetType, out VariantValue output)
+    {
+        // Null value is always null.
+        if (IsNull)
+        {
+            output = Null;
+            return true;
+        }
+
+        var sourceType = GetInternalType();
+        if (sourceType == targetType)
+        {
+            output = this;
+            return true;
+        }
+
+        var success = true;
+        output = sourceType switch
+        {
+            DataType.Integer => targetType switch
+            {
+                DataType.String => new(_valueUnion.IntegerValue.ToString()),
+                DataType.Float => new((double)_valueUnion.IntegerValue),
+                DataType.Boolean => new(_valueUnion.IntegerValue != 0),
+                DataType.Numeric => new((decimal)_valueUnion.IntegerValue),
+                _ => Null
+            },
+            DataType.String => targetType switch
+            {
+                DataType.Integer => StringToInteger(_object as string, out success),
+                DataType.Float => StringToFloat(_object as string, out success),
+                DataType.Timestamp => StringToTimestamp(_object as string, out success),
+                DataType.Boolean => StringToBoolean(_object as string, out success),
+                DataType.Numeric => StringToNumeric(_object as string, out success),
+                _ => Null
+            },
+            DataType.Float => targetType switch
+            {
+                DataType.Integer => new((int)_valueUnion.DoubleValue),
+                DataType.String => new(_valueUnion.DoubleValue.ToString(CultureInfo.InvariantCulture)),
+                DataType.Numeric => new((decimal)_valueUnion.DoubleValue),
+                _ => Null
+            },
+            DataType.Timestamp => targetType switch
+            {
+                DataType.String => new(_valueUnion.DateTimeValue.ToString(CultureInfo.InvariantCulture)),
+                _ => Null
+            },
+            DataType.Boolean => targetType switch
+            {
+                DataType.Integer => new(_valueUnion.BooleanValue ? 1 : 0),
+                DataType.String => new(_valueUnion.BooleanValue ? TrueValue : FalseValue),
+                _ => Null
+            },
+            DataType.Numeric => targetType switch
+            {
+                DataType.Integer => new(decimal.ToInt64((decimal)_object!)),
+                DataType.String => new(((decimal)_object!).ToString(CultureInfo.InvariantCulture)),
+                DataType.Float => new(decimal.ToDouble((decimal)_object!)),
+                _ => Null
+            },
+            _ => Null
+        };
+        return !output.IsNull && success;
+    }
+
+    /// <summary>
+    /// Try create variant value from string.
+    /// </summary>
+    /// <param name="value">String value.</param>
+    /// <param name="targetType">Target type.</param>
+    /// <param name="variantValue">Out variant value.</param>
+    /// <returns><c>True</c> if created successfully, <c>false</c> otherwise.</returns>
+    public static bool TryCreateFromString(
+        string value,
+        in DataType targetType,
+        out VariantValue variantValue) => TryCreateFromString((ReadOnlySpan<char>)value, targetType, out variantValue);
+
+    /// <summary>
+    /// Try create variant value from string.
+    /// </summary>
+    /// <param name="value">String value.</param>
+    /// <param name="targetType">Target type.</param>
+    /// <param name="variantValue">Out variant value.</param>
+    /// <returns><c>True</c> if created successfully, <c>false</c> otherwise.</returns>
+    public static bool TryCreateFromString(
+        in ReadOnlySpan<char> value,
+        in DataType targetType,
+        out VariantValue variantValue)
+    {
+        bool success = false;
+        variantValue = targetType switch
+        {
+            DataType.Integer => StringToInteger(value, out success),
+            DataType.Float => StringToFloat(value, out success),
+            DataType.Timestamp => StringToTimestamp(value, out success),
+            DataType.Boolean => StringToBoolean(value, out success),
+            DataType.Numeric => StringToNumeric(value, out success),
+            DataType.String => StringToString(value, out success),
+            _ => Null
+        };
+        return success;
+    }
+
+    #endregion
+
+    public static bool Equals(in VariantValue value1, ref VariantValue value2) =>
+        value1._valueUnion.IntegerValue == value2._valueUnion.IntegerValue
+            && ((value1._object == null && value2._object == null) || Equals(value1._object, value2._object));
+
+            /// <inheritdoc />
+    public override bool Equals(object? obj)
+        => obj is VariantValue vv
+            && Equals(this, ref vv);
+
+    /// <inheritdoc />
+    public override int GetHashCode()
+    {
+        if (_object == null)
+        {
+            return 0;
+        }
+        return IsValueType() ? _valueUnion.GetHashCode() : _object.GetHashCode();
+    }
+
+    public static bool operator ==(VariantValue left, VariantValue right) => left.Equals(right);
+
+    public static bool operator !=(VariantValue left, VariantValue right) => !(left == right);
+
+    public static VariantValue operator +(VariantValue left, VariantValue right)
+        => Add(ref left, ref right, out _);
+
+    public static implicit operator decimal(VariantValue value) => value.AsNumeric;
+
+    public static implicit operator long(VariantValue value) => value.AsInteger;
+
+    public static implicit operator bool(VariantValue value) => value.AsBoolean;
+
+    public static implicit operator double(VariantValue value) => value.AsFloat;
+
+    public static implicit operator string(VariantValue value) => value.AsString;
+
+    public static implicit operator DateTime(VariantValue value) => value.AsTimestamp;
+
+    /// <inheritdoc />
+    public override string ToString() => GetInternalType() switch
+    {
+        DataType.Null => "NULL",
+        DataType.Void => "VOID",
+        DataType.Integer => AsInteger.ToString(),
+        DataType.String => AsString,
+        DataType.Boolean => AsBoolean.ToString(),
+        DataType.Float => AsFloat.ToString("F2", CultureInfo.InvariantCulture),
+        DataType.Timestamp => AsTimestamp.ToString(CultureInfo.InvariantCulture),
+        DataType.Object => "object: " + AsObject,
+        _ => "unknown"
+    };
+
+    /// <inheritdoc />
+    public bool Equals(VariantValue other) => Equals(this, ref other);
+}

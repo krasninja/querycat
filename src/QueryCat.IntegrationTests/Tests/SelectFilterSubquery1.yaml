@@ -1,0 +1,5 @@
+expected: |
+  1,2
+query: |
+  SELECT id, (select 2) FROM read_file('RestaurantPerzi.csv')
+  WHERE product = (select 'pepperoni') and price <= (select 1000) and is_active = TRUE;

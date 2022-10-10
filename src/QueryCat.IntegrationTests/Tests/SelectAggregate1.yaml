@@ -1,0 +1,5 @@
+expected: |
+  260,460,366.6666666666667,3,1111
+query: |
+  SELECT min(price), max(price), avg(price), count(*), 1 + sum(price) + 10
+  FROM read_file('RestaurantPerzi.csv')

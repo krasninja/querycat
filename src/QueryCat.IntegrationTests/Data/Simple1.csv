@@ -1,0 +1,4 @@
+id,intfield,float,stringfield,date,booleanfield
+1,10,10.4,string,2022-01-01,TRUE
+2,20,20.55,,2022-01-01,FALSE
+3,,,str,,

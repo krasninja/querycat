@@ -1,0 +1,3 @@
+expected:
+query: |
+  select objfunc(a => 10, objret());

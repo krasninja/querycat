@@ -1,0 +1,4 @@
+expected: |
+  4
+query: |
+  select (select (select 1 + 1) + 1) + 1;

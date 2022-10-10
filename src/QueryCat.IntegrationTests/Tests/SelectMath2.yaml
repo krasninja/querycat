@@ -1,0 +1,4 @@
+expected: |
+  2,2,10.2,3,1
+query: |
+  SELECT abs(-2), abs(2), abs(10.2), round(3.3), sin(radians(90))

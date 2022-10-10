@@ -1,0 +1,7 @@
+expected: |
+  Russia,Krasnoyarsk,2280
+  Russia,Sochi,1799
+query: |
+  SELECT country, city, sum(balance)
+  FROM read_file('Simple2.csv')
+  GROUP BY country, city;

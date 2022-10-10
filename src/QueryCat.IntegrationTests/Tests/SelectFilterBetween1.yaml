@@ -1,0 +1,9 @@
+expected: |
+  2
+  3
+query: |
+  SELECT id FROM read_file('RestaurantPerzi.csv')
+  WHERE price between 300 and 400
+  UNION
+  SELECT id FROM read_file('RestaurantPerzi.csv')
+  WHERE price not between 300 and 500 and is_active = True or is_active = False;

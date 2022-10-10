@@ -1,0 +1,5 @@
+expected: |
+  1
+query: |
+  SELECT id FROM read_file('RestaurantPerzi.csv')
+  WHERE product in ('pepperoni', 'cola') and is_active in (True) and id not in (3, 5)

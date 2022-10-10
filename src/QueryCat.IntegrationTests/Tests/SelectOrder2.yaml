@@ -1,0 +1,5 @@
+expected: |
+  Sochi,1799
+  Krasnoyarsk,2280
+query: |
+  SELECT city, sum(balance) as total FROM 'Simple2.csv' GROUP BY city ORDER BY total FETCH 10;

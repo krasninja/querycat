@@ -1,0 +1,16 @@
+expected: |
+  3
+  -4
+  7
+  19
+  1.5
+query: |
+  SELECT 1+ 2
+  UNION
+  SELECT 1 - 2 - 3
+  UNION
+  SELECT 1 + 2 * 3
+  UNION
+  SELECT 6 + (2 + (3 * 10) - 6) / 2
+  UNION
+  SELECT 3 / 2.0

@@ -1,0 +1,8 @@
+expected: |
+  strategy,Starcraft,2
+query: |
+  -- Find duplicates.
+  SELECT key, name, count(*) as total
+  FROM read_file('Duplicates.csv')
+  GROUP BY key, name
+  HAVING COUNT(*) > 1;

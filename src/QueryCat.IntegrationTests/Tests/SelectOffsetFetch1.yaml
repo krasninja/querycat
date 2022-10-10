@@ -1,0 +1,5 @@
+expected: |
+  China
+  Belarus
+query: |
+  select name from 'Countries*.csv' offset 4 - 2 fetch 2;

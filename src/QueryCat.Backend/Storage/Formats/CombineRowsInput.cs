@@ -1,0 +1,101 @@
+using System.Text;
+using QueryCat.Backend.Relational;
+using QueryCat.Backend.Types;
+
+namespace QueryCat.Backend.Storage.Formats;
+
+/// <summary>
+/// The class combines multiple rows inputs (of the same schema) into a single rows input.
+/// </summary>
+public sealed class CombineRowsInput : RowsInput, IDisposable
+{
+    private readonly IReadOnlyList<IRowsInput> _rowsInputs;
+    private int _currentInputIndex = -1;
+    private IRowsInput? _currentRowsInput;
+
+    /// <inheritdoc />
+    public override Column[] Columns { get; protected set; } = Array.Empty<Column>();
+
+    public CombineRowsInput(IReadOnlyList<IRowsInput> rowsInputs)
+    {
+        if (!rowsInputs.Any())
+        {
+            throw new QueryCatException("No inputs.");
+        }
+        _rowsInputs = rowsInputs;
+    }
+
+    /// <inheritdoc />
+    public override void Open()
+    {
+        if (FetchNextInput())
+        {
+            _currentRowsInput!.Open();
+            Columns = _currentRowsInput.Columns;
+        }
+    }
+
+    /// <inheritdoc />
+    public override void Close()
+    {
+        _currentRowsInput?.Close();
+    }
+
+    /// <inheritdoc />
+    public override ErrorCode ReadValue(int columnIndex, out VariantValue value)
+    {
+        if (_currentRowsInput != null)
+        {
+            return _currentRowsInput.ReadValue(columnIndex, out value);
+        }
+        value = VariantValue.Null;
+        return ErrorCode.Error;
+    }
+
+    /// <inheritdoc />
+    protected override bool OnReadNext()
+    {
+        if (_currentRowsInput != null)
+        {
+            if (_currentRowsInput.ReadNext())
+            {
+                return true;
+            }
+            _currentRowsInput.Close();
+        }
+
+        if (FetchNextInput())
+        {
+            _currentRowsInput!.Open();
+            return ReadNext();
+        }
+
+        return false;
+    }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        Close();
+    }
+
+    private bool FetchNextInput()
+    {
+        _currentInputIndex++;
+        if (_currentInputIndex > -1 && _currentInputIndex < _rowsInputs.Count)
+        {
+            _currentRowsInput = _rowsInputs[_currentInputIndex];
+            return true;
+        }
+        _currentRowsInput = null;
+        return false;
+    }
+
+    /// <inheritdoc />
+    public override string ToString()
+    {
+        var sb = new StringBuilder();
+        sb.Append(string.Join("\n", _rowsInputs.Select(ri => $"{ri.GetType().Name}: {ri}")));
+        return sb.ToString();
+    }
+}

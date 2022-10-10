@@ -1,0 +1,9 @@
+expected: |
+  True,False,True,True,True
+query: |
+  SELECT
+    True and True,
+    true AND FALSE,
+    False or True,
+    True OR False AND NOT true,
+    1 > 2 OR 5 + 5 = 10

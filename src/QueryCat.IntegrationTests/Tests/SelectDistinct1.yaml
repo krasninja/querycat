@@ -1,0 +1,5 @@
+expected: |
+  10,A
+  10,b
+query: |
+  SELECT DISTINCT * FROM read_string('id,str\n10,A\n10,A\n10,A\n10,b', formatter=>csv());

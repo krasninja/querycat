@@ -1,0 +1,4 @@
+id,product,price,date,is_active
+1,pepperoni,460,2022-01-02,True
+2,cesar with chicken,380,2022-02-01,True
+3,ravioli,260,2022-01-03,False

@@ -1,0 +1,4 @@
+expected: |
+  abcdef
+query: |
+  SELECT 'abc' || 'de' || 'f'

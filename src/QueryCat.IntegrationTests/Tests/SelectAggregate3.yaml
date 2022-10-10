@@ -1,0 +1,8 @@
+expected: |
+  Krasnoyarsk,2970
+  Sochi,2366
+query: |
+  SELECT city, SUM(balance + 123) + 321
+  FROM read_file('Simple2.csv')
+  GROUP BY city
+  HAVING COUNT(1) > 1 and SUM(balance + 2) > 200;

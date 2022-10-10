@@ -1,0 +1,10 @@
+expected: |
+  2
+  3
+  1
+query: |
+  SELECT id FROM read_file('RestaurantPerzi.csv') WHERE product LIKE 'cesar%'
+  UNION
+  SELECT id FROM read_file('RestaurantPerzi.csv') WHERE product NOT LIKE '%chicken%' AND product NOT LIKE 'peppero__'
+  UNION
+  SELECT id FROM read_file('RestaurantPerzi.csv') WHERE product LIKE '[o-q]epperoni';

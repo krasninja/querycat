@@ -1,0 +1,67 @@
+syntax: glob
+
+### VisualStudio ###
+
+# user-specific files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+# build/
+bld/
+[Bb]in/
+[Oo]bj/
+msbuild.log
+
+# visual studio
+.vs/
+
+# IDEA (Rider)
+.idea/
+
+# visual studio code
+.vscode/
+
+# resharper is a .NET coding add-in
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+
+# windows image file caches
+Thumbs.db
+ehthumbs.db
+
+# folder config file
+Desktop.ini
+
+# windows shortcuts
+*.lnk
+
+# common binary extensions on Windows
+*.exe
+*.dll
+*.lib
+
+### OSX ###
+
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# thumbnails
+._*
+
+# antlr
+.antlr
+
+# project specific
+/output
+/src/QueryCat.Benchmarks/Users.csv
