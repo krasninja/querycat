@@ -18,6 +18,8 @@ namespace QueryCat.Backend.Commands.Select.Visitors;
 /// </summary>
 internal sealed partial class SelectQueryBodyVisitor : AstVisitor
 {
+    private const string SourceInputColumn = "source_input_column";
+
     private readonly ExecutionThread _executionThread;
 
     public SelectQueryBodyVisitor(ExecutionThread executionThread)
@@ -66,6 +68,7 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
 
         ApplyStatistic(context);
         ResolveSelectAllStatement(context.CurrentIterator, node.ColumnsList);
+        ResolveSelectSourceColumns(context, node);
         ResolveNodesTypes(node, context.CurrentIterator);
 
         // WHERE.
@@ -237,6 +240,28 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
 
     #region SELECT
 
+    private void ResolveSelectSourceColumns(SelectCommandContext context,
+        SelectQuerySpecificationNode querySpecificationNode)
+    {
+        if (context.RowsInputIterator == null)
+        {
+            return;
+        }
+
+        foreach (var column in querySpecificationNode.ColumnsList.Columns.OfType<SelectColumnsSublistExpressionNode>())
+        {
+            if (column.ExpressionNode is IdentifierExpressionNode identifierExpressionNode)
+            {
+                var sourceColumn = context.RowsInputIterator.GetColumnByName(
+                    identifierExpressionNode.Name, identifierExpressionNode.SourceName);
+                if (sourceColumn != null)
+                {
+                    column.SetAttribute(SourceInputColumn, sourceColumn);
+                }
+            }
+        }
+    }
+
     private void ResolveSelectAllStatement(IRowsIterator rows, SelectColumnsListNode columnsNode)
     {
         for (int i = 0; i < columnsNode.Columns.Count; i++)
@@ -319,6 +344,12 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
             var column = !string.IsNullOrEmpty(columnName)
                 ? new Column(columnName, columnNode.GetDataType())
                 : new Column(i + 1, columnNode.GetDataType());
+
+            var sourceInputColumn = node.Columns[i].GetAttribute<Column>(SourceInputColumn);
+            if (sourceInputColumn != null)
+            {
+                column.Description = sourceInputColumn.Description;
+            }
 
             yield return new ColumnWithIndex(column, i);
         }

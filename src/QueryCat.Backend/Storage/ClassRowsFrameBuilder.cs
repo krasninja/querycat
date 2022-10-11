@@ -1,5 +1,7 @@
+using System.ComponentModel;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Text;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Types;
@@ -15,10 +17,23 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
     private readonly List<(Column Column, Func<TClass, VariantValue> ValueGetter)> _columns = new();
 
     /// <summary>
+    /// Property naming convention when used from expressions.
+    /// </summary>
+    public NamingConventionStyle NamingConvention { get; set; } = NamingConventionStyle.Keep;
+
+    /// <summary>
     /// Columns.
     /// </summary>
     public IEnumerable<Column> Columns => _columns.Select(c => c.Column);
 
+    /// <summary>
+    /// Add property.
+    /// </summary>
+    /// <param name="name">Property name.</param>
+    /// <param name="valueGetter">The delegate to get property value by object.</param>
+    /// <param name="description">Property description.</param>
+    /// <typeparam name="T">Property type.</typeparam>
+    /// <returns>The instance of <see cref="ClassRowsFrameBuilder{TClass}" />.</returns>
     public ClassRowsFrameBuilder<TClass> AddProperty<T>(string name, Func<TClass, T> valueGetter, string? description = null)
     {
         var dataType = DataTypeUtils.ConvertFromSystem(typeof(T));
@@ -29,14 +44,32 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
         return this;
     }
 
-    public ClassRowsFrameBuilder<TClass> AddProperty<T>(Expression<Func<TClass, T>> valueGetterExpression,
+    /// <summary>
+    /// Add property from expression.
+    /// </summary>
+    /// <param name="valueGetterExpression">Property expression.</param>
+    /// <param name="description">Property description.</param>
+    /// <typeparam name="T">Property type.</typeparam>
+    /// <returns>The instance of <see cref="ClassRowsFrameBuilder{TClass}" />.</returns>
+    public ClassRowsFrameBuilder<TClass> AddProperty<T>(
+        Expression<Func<TClass, T>> valueGetterExpression,
         string? description = null)
     {
-        var name = GetPropertyName(valueGetterExpression);
+        var propertyInfo = GetProperty(valueGetterExpression);
+        if (propertyInfo == null)
+        {
+            throw new InvalidOperationException("Cannot get column name from property.");
+        }
+        var propertyName = ConvertName(propertyInfo.Name);
+        if (string.IsNullOrEmpty(description))
+        {
+            description = propertyInfo.GetCustomAttributes<DescriptionAttribute>()
+                .Select(a => a.Description).FirstOrDefault();
+        }
         var dataType = DataTypeUtils.ConvertFromSystem(typeof(T));
         var valueGetter = valueGetterExpression.Compile();
         _columns.Add((
-            new Column(name, dataType, description),
+            new Column(propertyName, dataType, description),
             obj => VariantValue.CreateFromObject(valueGetter.Invoke(obj))
         ));
         return this;
@@ -69,19 +102,19 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
     /// <typeparam name="T2">The return value type.</typeparam>
     /// <param name="property">The property.</param>
     /// <returns>The property name.</returns>
-    private static string GetPropertyName<T1, T2>(Expression<Func<T1, T2>> property)
+    private static PropertyInfo? GetProperty<T1, T2>(Expression<Func<T1, T2>> property)
     {
         if (property.Body is UnaryExpression unaryExpression)
         {
             var memberExpression = (MemberExpression)unaryExpression.Operand;
-            return ((PropertyInfo)memberExpression.Member).Name;
+            return (PropertyInfo)memberExpression.Member;
         }
         if (property.Body is MemberExpression bodyMemberExpression)
         {
-            return ((PropertyInfo)bodyMemberExpression.Member).Name;
+            return (PropertyInfo)bodyMemberExpression.Member;
         }
 
-        return string.Empty;
+        return null;
     }
 
     /// <summary>
@@ -91,4 +124,43 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
     /// <param name="obj">Object.</param>
     /// <returns>Value.</returns>
     public VariantValue GetValue(int columnIndex, TClass obj) => _columns[columnIndex].ValueGetter(obj);
+
+    private string ConvertName(string name)
+    {
+        if (string.IsNullOrEmpty(name))
+        {
+            return string.Empty;
+        }
+
+        if (NamingConvention == NamingConventionStyle.CamelCase)
+        {
+            return name.Length < 2 ? name.ToLower() : char.ToLower(name[0]) + name.Substring(1);
+        }
+        else if (NamingConvention == NamingConventionStyle.SnakeCase)
+        {
+            // Based on https://stackoverflow.com/questions/63055621/how-to-convert-camel-case-to-snake-case-with-two-capitals-next-to-each-other.
+            var sb = new StringBuilder()
+                .Append(char.ToLower(name[0]));
+            for (int i = 1; i < name.Length; ++i)
+            {
+                var ch = name[i];
+                if (char.IsUpper(ch))
+                {
+                    sb.Append('_');
+                    sb.Append(char.ToLower(ch));
+                }
+                else
+                {
+                    sb.Append(ch);
+                }
+            }
+            return sb.ToString();
+        }
+        else if (NamingConvention == NamingConventionStyle.PascalCase)
+        {
+            return System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(name);
+        }
+
+        return name;
+    }
 }
