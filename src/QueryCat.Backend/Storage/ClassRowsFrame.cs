@@ -1,6 +1,7 @@
+using QueryCat.Backend.Relational;
 using QueryCat.Backend.Types;
 
-namespace QueryCat.Backend.Relational;
+namespace QueryCat.Backend.Storage;
 
 /// <summary>
 /// Rows frame that contains objects of specific class.
@@ -11,12 +12,6 @@ public class ClassRowsFrame<TClass> : RowsFrame where TClass : class
     private readonly Func<TClass, VariantValue>[] _valuesGetters;
     private readonly Row _row;
 
-    public static ClassRowsFrame<TClass> Empty { get; } = new(
-        new RowsFrameOptions(),
-        Array.Empty<Column>(),
-        _ => VariantValue.Null
-    );
-
     internal ClassRowsFrame(
         RowsFrameOptions options,
         Column[] columns,
@@ -26,6 +21,10 @@ public class ClassRowsFrame<TClass> : RowsFrame where TClass : class
         _row = new Row(this);
     }
 
+    /// <summary>
+    /// Add object.
+    /// </summary>
+    /// <param name="obj">Object to add.</param>
     public void AddRow(TClass obj)
     {
         for (int i = 0; i < Columns.Length; i++)
@@ -35,6 +34,10 @@ public class ClassRowsFrame<TClass> : RowsFrame where TClass : class
         AddRow(_row);
     }
 
+    /// <summary>
+    /// Add several objects.
+    /// </summary>
+    /// <param name="objects">Objects to add.</param>
     public void AddRows(IEnumerable<TClass> objects)
     {
         foreach (var obj in objects)

@@ -55,7 +55,7 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
             return;
         }
 
-        for (int i = 0; i < row.Iterator.Columns.Length; i++)
+        for (int i = 0; i < row.Columns.Length; i++)
         {
             if (!_isSingleValue)
             {

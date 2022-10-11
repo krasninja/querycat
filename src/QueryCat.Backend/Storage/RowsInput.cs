@@ -38,28 +38,22 @@ public abstract class RowsInput : IRowsInput
     {
         if (_isFirstCall)
         {
-            Initialize();
+            Load();
             _isFirstCall = false;
         }
-        return OnReadNext();
+        return true;
     }
 
     /// <inheritdoc />
-    public void Reset()
+    public virtual void Reset()
     {
         _isFirstCall = true;
     }
 
     /// <summary>
-    /// The method is called by ReadNext.
-    /// </summary>
-    /// <returns>True if there are remain rows to read, false if no row was read.</returns>
-    protected abstract bool OnReadNext();
-
-    /// <summary>
     /// The method is called before first ReadNext to initialize input.
     /// </summary>
-    protected virtual void Initialize()
+    protected virtual void Load()
     {
     }
 }

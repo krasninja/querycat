@@ -10,5 +10,6 @@ public enum ErrorCode
     Error,
 
     CannotCast,
-    CannotApplyOperator
+    CannotApplyOperator,
+    InvalidColumnIndex,
 }

@@ -90,5 +90,9 @@ public sealed class ObjectsRowsInput<T> : RowsInput
     }
 
     /// <inheritdoc />
-    protected override bool OnReadNext() => _enumerator.MoveNext();
+    public override bool ReadNext()
+    {
+        base.ReadNext();
+        return _enumerator.MoveNext();
+    }
 }

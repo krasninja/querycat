@@ -9,6 +9,11 @@ namespace QueryCat.Backend.Functions;
 public class CannotFindArgumentException : QueryCatException
 #pragma warning restore CA2229
 {
+    /// <summary>
+    /// Constructor.
+    /// </summary>
+    /// <param name="functionName">Function name.</param>
+    /// <param name="argumentName">Function argument.</param>
     public CannotFindArgumentException(string functionName, string argumentName) :
         base(string.Format(Resources.Errors.CannotFindArgument, argumentName, functionName))
     {

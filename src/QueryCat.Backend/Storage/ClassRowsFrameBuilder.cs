@@ -1,19 +1,25 @@
 using System.Linq.Expressions;
 using System.Reflection;
+using QueryCat.Backend.Relational;
 using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Types;
 
-namespace QueryCat.Backend.Relational;
+namespace QueryCat.Backend.Storage;
 
 /// <summary>
 /// Builder simplify the process of objects mapping to <see cref="RowsFrame" />.
 /// </summary>
 /// <typeparam name="TClass">Class type.</typeparam>
-public class ClassBuilder<TClass> where TClass : class
+public class ClassRowsFrameBuilder<TClass> where TClass : class
 {
     private readonly List<(Column Column, Func<TClass, VariantValue> ValueGetter)> _columns = new();
 
-    public ClassBuilder<TClass> AddProperty<T>(string name, Func<TClass, T> valueGetter, string? description = null)
+    /// <summary>
+    /// Columns.
+    /// </summary>
+    public IEnumerable<Column> Columns => _columns.Select(c => c.Column);
+
+    public ClassRowsFrameBuilder<TClass> AddProperty<T>(string name, Func<TClass, T> valueGetter, string? description = null)
     {
         var dataType = DataTypeUtils.ConvertFromSystem(typeof(T));
         _columns.Add((
@@ -23,7 +29,7 @@ public class ClassBuilder<TClass> where TClass : class
         return this;
     }
 
-    public ClassBuilder<TClass> AddProperty<T>(Expression<Func<TClass, T>> valueGetterExpression,
+    public ClassRowsFrameBuilder<TClass> AddProperty<T>(Expression<Func<TClass, T>> valueGetterExpression,
         string? description = null)
     {
         var name = GetPropertyName(valueGetterExpression);
@@ -77,4 +83,12 @@ public class ClassBuilder<TClass> where TClass : class
 
         return string.Empty;
     }
+
+    /// <summary>
+    /// Get value.
+    /// </summary>
+    /// <param name="columnIndex">Column index.</param>
+    /// <param name="obj">Object.</param>
+    /// <returns>Value.</returns>
+    public VariantValue GetValue(int columnIndex, TClass obj) => _columns[columnIndex].ValueGetter(obj);
 }

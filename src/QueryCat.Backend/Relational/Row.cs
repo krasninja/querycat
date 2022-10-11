@@ -8,17 +8,12 @@ namespace QueryCat.Backend.Relational;
 /// </summary>
 public class Row : IRowsSchema, ICloneable
 {
-    private readonly IRowsSchema _schema;
+    private readonly Column[] _columns;
 
     private readonly VariantValue[] _values;
 
     /// <inheritdoc />
-    public Column[] Columns => _schema.Columns;
-
-    /// <summary>
-    /// Related rows schema.
-    /// </summary>
-    public IRowsSchema Iterator => _schema;
+    public Column[] Columns => _columns;
 
     /// <summary>
     /// Constructor.
@@ -26,7 +21,18 @@ public class Row : IRowsSchema, ICloneable
     /// <param name="schema">Related rows schema.</param>
     public Row(IRowsSchema schema)
     {
-        _schema = schema;
+        _columns = schema.Columns;
+        _values = new VariantValue[Columns.Length];
+        MakeEmpty();
+    }
+
+    /// <summary>
+    /// Constructor.
+    /// </summary>
+    /// <param name="columns">Columns.</param>
+    public Row(params Column[] columns)
+    {
+        _columns = columns;
         _values = new VariantValue[Columns.Length];
         MakeEmpty();
     }
@@ -39,7 +45,7 @@ public class Row : IRowsSchema, ICloneable
     {
         _values = new VariantValue[row._values.Length];
         Array.Copy(row._values, _values, row._values.Length);
-        _schema = row._schema;
+        _columns = row._columns;
     }
 
     /// <summary>
@@ -134,7 +140,7 @@ public class Row : IRowsSchema, ICloneable
         {
             return false;
         }
-        if (_schema != row._schema)
+        if (_columns != row._columns)
         {
             return false;
         }

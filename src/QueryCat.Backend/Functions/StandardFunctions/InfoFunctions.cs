@@ -15,7 +15,7 @@ public static class InfoFunctions
     [FunctionSignature("_functions(): object")]
     public static VariantValue Functions(FunctionCallInfo args)
     {
-        var builder = new ClassBuilder<Function>()
+        var builder = new ClassRowsFrameBuilder<Function>()
             .AddProperty("signature", f => f.ToString())
             .AddProperty("description", f => f.Description);
         var functions = args.FunctionsManager?.GetFunctions().OrderBy(f => f.Name)
@@ -44,7 +44,7 @@ public static class InfoFunctions
             throw new QueryCatException("Invalid rows input type.");
         }
 
-        var builder = new ClassBuilder<Column>()
+        var builder = new ClassRowsFrameBuilder<Column>()
 #if DEBUG
             .AddProperty("id", f => f.Id)
 #endif

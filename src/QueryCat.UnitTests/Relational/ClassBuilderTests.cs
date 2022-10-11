@@ -1,5 +1,5 @@
 using Xunit;
-using QueryCat.Backend.Relational;
+using QueryCat.Backend.Storage;
 using QueryCat.Backend.Types;
 
 namespace QueryCat.UnitTests.Relational;
@@ -26,7 +26,7 @@ public class ClassBuilderTests
     public void Build_UserClass_CorrectRowsFrame()
     {
         // Arrange.
-        var builder = new ClassBuilder<User>();
+        var builder = new ClassRowsFrameBuilder<User>();
         builder.AddProperty("Id", u => u.Id);
         builder.AddProperty(u => u.Name);
         var users = new List<User>

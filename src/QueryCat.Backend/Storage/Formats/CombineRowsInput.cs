@@ -1,4 +1,3 @@
-using System.Text;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Types;
 
@@ -20,7 +19,7 @@ public sealed class CombineRowsInput : RowsInput, IDisposable
     {
         if (!rowsInputs.Any())
         {
-            throw new QueryCatException("No inputs.");
+            throw new ArgumentException("No inputs.", nameof(rowsInputs));
         }
         _rowsInputs = rowsInputs;
     }
@@ -53,8 +52,10 @@ public sealed class CombineRowsInput : RowsInput, IDisposable
     }
 
     /// <inheritdoc />
-    protected override bool OnReadNext()
+    public override bool ReadNext()
     {
+        base.ReadNext();
+
         if (_currentRowsInput != null)
         {
             if (_currentRowsInput.ReadNext())
@@ -93,9 +94,5 @@ public sealed class CombineRowsInput : RowsInput, IDisposable
 
     /// <inheritdoc />
     public override string ToString()
-    {
-        var sb = new StringBuilder();
-        sb.Append(string.Join("\n", _rowsInputs.Select(ri => $"{ri.GetType().Name}: {ri}")));
-        return sb.ToString();
-    }
+        => string.Join("\n", _rowsInputs.Select(ri => $"{ri.GetType().Name}: {ri}"));
 }

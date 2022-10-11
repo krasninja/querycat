@@ -122,5 +122,11 @@ namespace QueryCat.Backend.Resources {
                 return ResourceManager.GetString("CannotFindArgument", resourceCulture);
             }
         }
+        
+        internal static string NoColumns {
+            get {
+                return ResourceManager.GetString("NoColumns", resourceCulture);
+            }
+        }
     }
 }

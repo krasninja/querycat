@@ -15,8 +15,14 @@ public class RowsFrame : IRowsSchema, IEnumerable<Row>
     private readonly ChunkList<VariantValue[]> _storage;
     private readonly Column[] _columns;
 
+    /// <summary>
+    /// Total rows.
+    /// </summary>
     public int TotalRows { get; private set; }
 
+    /// <summary>
+    /// Is the rows frame empty.
+    /// </summary>
     public bool IsEmpty => TotalRows == 0;
 
     /// <inheritdoc />
@@ -37,7 +43,7 @@ public class RowsFrame : IRowsSchema, IEnumerable<Row>
         _columns = columns;
         if (_columns.Length < 1)
         {
-            throw new ArgumentException("There are no columns.", nameof(columns));
+            throw new ArgumentException(Resources.Errors.NoColumns, nameof(columns));
         }
         _rowsPerChunk = _chunkSize / _columns.Length;
         // Align.
@@ -74,21 +80,25 @@ public class RowsFrame : IRowsSchema, IEnumerable<Row>
         return TotalRows++;
     }
 
-    public int AddRow(params object[] items)
+    /// <summary>
+    /// Add row.
+    /// </summary>
+    /// <param name="values">Values to add.</param>
+    public void AddRow(params object[] values)
     {
         (int chunkIndex, int offset) = EnsureCapacityAndGetStartOffset(TotalRows);
         for (int i = 0; i < _columns.Length; i++)
         {
-            if (items[i] is VariantValue rowValue)
+            if (values[i] is VariantValue rowValue)
             {
                 _storage[chunkIndex][offset + i] = rowValue;
             }
             else
             {
-                _storage[chunkIndex][offset + i] = VariantValue.CreateFromObject(items[i]);
+                _storage[chunkIndex][offset + i] = VariantValue.CreateFromObject(values[i]);
             }
         }
-        return TotalRows++;
+        TotalRows++;
     }
 
     /// <summary>
@@ -145,6 +155,9 @@ public class RowsFrame : IRowsSchema, IEnumerable<Row>
         return values;
     }
 
+    /// <summary>
+    /// Clear storage.
+    /// </summary>
     public void Clear()
     {
         _storage.Clear();

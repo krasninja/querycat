@@ -57,4 +57,7 @@
     <data name="CannotFindArgument" xml:space="preserve">
         <value>Cannot find argument '{0}' in function '{1}'.</value>
     </data>
+    <data name="NoColumns" xml:space="preserve">
+        <value>There are no columns.</value>
+    </data>
 </root>

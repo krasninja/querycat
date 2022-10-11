@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using QueryCat.Backend.Relational;
+using QueryCat.Backend.Storage;
 
 namespace QueryCat.Benchmarks;
 
@@ -70,7 +70,7 @@ public class User
     [Column(name: "removed_at")]
     public DateTime? RemovedAt { get; set; }
 
-    public static ClassBuilder<User> ClassBuilder { get; } = new ClassBuilder<User>()
+    public static ClassRowsFrameBuilder<User> ClassBuilder { get; } = new ClassRowsFrameBuilder<User>()
         .AddProperty(u => u.Id)
         .AddProperty(u => u.Email)
         .AddProperty(u => u.FirstName)
