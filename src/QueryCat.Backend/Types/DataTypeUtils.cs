@@ -51,6 +51,11 @@ public static class DataTypeUtils
             return DataType.String;
         }
 
+        if (typeof(DateTimeOffset).IsAssignableFrom(type))
+        {
+            return DataType.Timestamp;
+        }
+
         return GetTypeCode(type) switch
         {
             TypeCode.Byte => DataType.Integer,

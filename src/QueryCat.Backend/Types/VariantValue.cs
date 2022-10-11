@@ -173,6 +173,10 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         {
             return new VariantValue(Convert.ToDateTime(obj));
         }
+        if (obj is DateTimeOffset dateTimeOffset)
+        {
+            return new VariantValue(dateTimeOffset.UtcDateTime);
+        }
         return new VariantValue(obj);
     }
 
