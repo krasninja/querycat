@@ -21,14 +21,13 @@ public class QueryCommand : BaseQueryCommand
     /// <inheritdoc />
     public override int OnExecute(CommandLineApplication app, IConsole console)
     {
-        if (!app.Arguments.Any())
-        {
-            app.ShowHelp();
-            return 0;
-        }
+        PreInitialize();
+        OnExecuteInternal(console);
+        return 0;
+    }
 
-        base.OnExecute(app, console);
-
+    internal void OnExecuteInternal(IConsole console)
+    {
         var runner = CreateRunner();
         runner.Run(Query);
 
@@ -37,6 +36,5 @@ public class QueryCommand : BaseQueryCommand
             console.WriteLine(new string('-', 5));
             console.WriteLine(runner.ExecutionThread.Statistic.ToString());
         }
-        return 0;
     }
 }

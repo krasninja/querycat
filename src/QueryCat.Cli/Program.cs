@@ -47,9 +47,16 @@ internal class Program
     {
         AppDomain.CurrentDomain.UnhandledException += CurrentDomainOnUnhandledException;
         Logger.Instance.AddHandlers(new ConsoleLogHandler());
+
         if (args.Length < 1)
         {
             args = new[] { "-h" };
+        }
+        // Fast execution without arguments processing.
+        if (args.Length == 1 && args[0].StartsWith('"'))
+        {
+            new QueryCommand().OnExecuteInternal(PhysicalConsole.Singleton);
+            return 0;
         }
 
         return CommandLineApplication.Execute<QueryCommand>(args);

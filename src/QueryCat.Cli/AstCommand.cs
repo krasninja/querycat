@@ -8,7 +8,7 @@ public class AstCommand : BaseQueryCommand
     /// <inheritdoc />
     public override int OnExecute(CommandLineApplication app, IConsole console)
     {
-        base.OnExecute(app, console);
+        PreInitialize();
 
         var runner = CreateRunner();
         runner.ExecutionThread.BeforeStatementExecute += (sender, args) =>

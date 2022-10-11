@@ -39,8 +39,15 @@ public abstract class BaseQueryCommand
     /// <returns>Error code.</returns>
     public virtual int OnExecute(CommandLineApplication app, IConsole console)
     {
-        Logger.Instance.MinLevel = LogLevel;
         return 0;
+    }
+
+    /// <summary>
+    /// Pre initialization steps.
+    /// </summary>
+    protected void PreInitialize()
+    {
+        Logger.Instance.MinLevel = LogLevel;
     }
 
     protected Runner CreateRunner()
