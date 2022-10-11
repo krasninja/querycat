@@ -1,4 +1,5 @@
 using McMaster.Extensions.CommandLineUtils;
+using QueryCat.Backend.Execution;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Types;
 using QueryCat.Backend.Utils;
@@ -13,7 +14,10 @@ public class ExplainCommand : BaseQueryCommand
     {
         PreInitialize();
 
-        var runner = CreateRunner();
+        var runner = CreateRunner(new ExecutionOptions
+        {
+            PagingSize = -1,
+        });
         runner.ExecutionThread.AfterStatementExecute += (sender, args) =>
         {
             var result = runner.ExecutionThread.LastResult;

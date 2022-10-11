@@ -1,4 +1,5 @@
 using McMaster.Extensions.CommandLineUtils;
+using QueryCat.Backend.Execution;
 
 namespace QueryCat.Cli;
 
@@ -10,7 +11,7 @@ public class AstCommand : BaseQueryCommand
     {
         PreInitialize();
 
-        var runner = CreateRunner();
+        var runner = CreateRunner(new ExecutionOptions());
         runner.ExecutionThread.BeforeStatementExecute += (sender, args) =>
         {
             console.WriteLine(runner.DumpAst());

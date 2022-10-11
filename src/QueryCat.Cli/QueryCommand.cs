@@ -1,4 +1,5 @@
 using McMaster.Extensions.CommandLineUtils;
+using QueryCat.Backend.Execution;
 using QueryCat.Backend.Functions.StandardFunctions;
 
 namespace QueryCat.Cli;
@@ -12,8 +13,20 @@ namespace QueryCat.Cli;
 [HelpOption("-?|-h|--help")]
 public class QueryCommand : BaseQueryCommand
 {
-    [Option("--stat", Description = "Show statistic")]
+    [Option("--stat", Description = "Show statistic.")]
     protected bool ShowStatistic { get; } = false;
+
+    [Option("--max-errors", Description = "Max number of errors before abort. -1 is ignore.")]
+    protected int MaxErrors { get; } = -1;
+
+    [Option("--detailed-stat", Description = "Show detailed statistic (include rows errors).")]
+    protected bool ShowDetailedStatistic { get; } = false;
+
+    [Option("--row-number", Description = "Include row number column.")]
+    public bool RowNumber { get; } = false;
+
+    [Option("--page-size", Description = "Output page size. Set -1 to show all.")]
+    public int PageSize { get; } = 20;
 
     // TODO: McMaster throws exception if this method is not defined.
     public static string GetVersion() => InfoFunctions.GetVersion();
@@ -28,10 +41,16 @@ public class QueryCommand : BaseQueryCommand
 
     internal void OnExecuteInternal(IConsole console)
     {
-        var runner = CreateRunner();
+        var runner = CreateRunner(new ExecutionOptions
+        {
+            AddRowNumberColumn = RowNumber,
+            PagingSize = PageSize,
+            ShowDetailedStatistic = ShowDetailedStatistic,
+            MaxErrors = MaxErrors,
+        });
         runner.Run(Query);
 
-        if (ShowStatistic)
+        if (ShowStatistic || ShowDetailedStatistic)
         {
             console.WriteLine(new string('-', 5));
             console.WriteLine(runner.ExecutionThread.Statistic.ToString());

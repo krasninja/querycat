@@ -1,13 +1,14 @@
 using QueryCat.Backend.Execution;
+using QueryCat.Backend.Logging;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Commands.Select.Iterators;
 
 /// <summary>
-/// The iterator just count the number of processed rows. It fills the execution statistic.
+/// The iterator adds the statistic processing.
 /// </summary>
-public sealed class CountRowsIterator : IRowsIterator
+public sealed class StatisticRowsIterator : IRowsIterator
 {
     private readonly IRowsIterator _rowsIterator;
     private readonly ExecutionStatistic _statistic;
@@ -18,7 +19,12 @@ public sealed class CountRowsIterator : IRowsIterator
     /// <inheritdoc />
     public Row Current => _rowsIterator.Current;
 
-    public CountRowsIterator(IRowsIterator rowsIterator, ExecutionStatistic statistic)
+    /// <summary>
+    /// Max count of errors before abort.
+    /// </summary>
+    public int MaxErrorsCount { get; set; } = -1;
+
+    public StatisticRowsIterator(IRowsIterator rowsIterator, ExecutionStatistic statistic)
     {
         _rowsIterator = rowsIterator;
         _statistic = statistic;
@@ -27,6 +33,13 @@ public sealed class CountRowsIterator : IRowsIterator
     /// <inheritdoc />
     public bool MoveNext()
     {
+        if (MaxErrorsCount > -1 && _statistic.ErrorsCount >= MaxErrorsCount)
+        {
+            Logger.Instance.Fatal(
+                $"Maximum number of errors reached! Maximum {MaxErrorsCount}, current {_statistic.ErrorsCount}.");
+            return false;
+        }
+
         var result = _rowsIterator.MoveNext();
         if (result)
         {

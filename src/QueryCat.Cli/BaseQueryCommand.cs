@@ -14,12 +14,6 @@ public abstract class BaseQueryCommand
     [Argument(0, Description = "SQL-like query.")]
     public string Query { get; } = string.Empty;
 
-    [Option("--row-number", Description = "Include row number column.")]
-    public bool RowNumber { get; } = false;
-
-    [Option("--page-size", Description = "Output page size. Set -1 to show all.")]
-    public int PageSize { get; } = 20;
-
     [Option("--log-level", Description = "Log level.")]
     public LogLevel LogLevel { get; } =
 #if DEBUG
@@ -50,18 +44,14 @@ public abstract class BaseQueryCommand
         Logger.Instance.MinLevel = LogLevel;
     }
 
-    protected Runner CreateRunner()
+    protected Runner CreateRunner(ExecutionOptions executionOptions)
     {
-        var executionOptions = new ExecutionOptions
-        {
-            AddRowNumberColumn = RowNumber,
-            PagingSize = PageSize,
-            PluginAssemblies = { typeof(QueryCat.DataProviders.Registration).Assembly }
-        };
+        executionOptions.PluginAssemblies.Add(typeof(QueryCat.DataProviders.Registration).Assembly);
         executionOptions.DefaultRowsOutput = ConsoleDataProviders.CreateConsole(null, pageSize: executionOptions.PagingSize);
         var pluginLoader = new PluginsLoader(PluginDirectories);
         executionOptions.PluginAssemblies.AddRange(pluginLoader.GetPlugins());
         var runner = new Runner(executionOptions);
+        runner.ExecutionThread.Statistic.CountErrorRows = runner.ExecutionThread.Options.ShowDetailedStatistic;
         runner.Bootstrap();
         return runner;
     }

@@ -16,12 +16,18 @@ public class RowsInputIterator : IRowsIterator
     private Row _row;
     private bool[] _fetchedColumnsIndexes = Array.Empty<bool>();
     private bool _hasInput;
+    private int _rowIndex;
 
     /// <inheritdoc />
     public Column[] Columns => _rowsInput.Columns;
 
     /// <inheritdoc />
     public Row Current => _row;
+
+    /// <summary>
+    /// The event occurs on data processing (reading) errors.
+    /// </summary>
+    public event EventHandler<RowsInputErrorEventArgs>? OnError;
 
     public RowsInputIterator(IRowsInput rowsInput, bool autoFetch = true)
     {
@@ -44,9 +50,9 @@ public class RowsInputIterator : IRowsIterator
     /// <summary>
     /// Read value for the specific column from rows input.
     /// </summary>
-    /// <param name="columnsIndex">Column index.</param>
+    /// <param name="columnIndex">Column index.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void FetchValueForColumn(int columnsIndex)
+    public void FetchValueForColumn(int columnIndex)
     {
         // Postpone columns and row initialization because some row inputs
         // has columns initialized only after first MoveNext() call.
@@ -55,15 +61,19 @@ public class RowsInputIterator : IRowsIterator
             _fetchedColumnsIndexes = new bool[Columns.Length];
             _row = new Row(this);
         }
-        if (!_hasInput || _fetchedColumnsIndexes[columnsIndex])
+        if (!_hasInput || _fetchedColumnsIndexes[columnIndex])
         {
             return;
         }
-        _rowsInput.ReadValue(columnsIndex, out VariantValue variantValue);
-        _row[columnsIndex] = variantValue;
+        var errorCode = _rowsInput.ReadValue(columnIndex, out VariantValue variantValue);
+        if (errorCode != ErrorCode.OK)
+        {
+            OnError?.Invoke(this, new RowsInputErrorEventArgs(_rowIndex, columnIndex, errorCode));
+        }
+        _row[columnIndex] = variantValue;
         if (!_autoFetch)
         {
-            _fetchedColumnsIndexes[columnsIndex] = true;
+            _fetchedColumnsIndexes[columnIndex] = true;
         }
     }
 
@@ -93,6 +103,7 @@ public class RowsInputIterator : IRowsIterator
         {
             Array.Fill(_fetchedColumnsIndexes, false);
         }
+        _rowIndex++;
         return _hasInput;
     }
 
@@ -101,6 +112,7 @@ public class RowsInputIterator : IRowsIterator
     {
         _row.Clear();
         _rowsInput.Reset();
+        _rowIndex = 0;
     }
 
     /// <inheritdoc />

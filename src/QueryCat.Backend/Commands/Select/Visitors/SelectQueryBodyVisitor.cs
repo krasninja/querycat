@@ -67,6 +67,7 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
         var context = CreateSourceRowsSet(node);
 
         ApplyStatistic(context);
+        ProcessErrorsFromInputSources(context);
         ResolveSelectAllStatement(context.CurrentIterator, node.ColumnsList);
         ResolveSelectSourceColumns(context, node);
         ResolveNodesTypes(node, context.CurrentIterator);
@@ -100,6 +101,19 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
     }
 
     #region FROM
+
+    private void ProcessErrorsFromInputSources(SelectCommandContext context)
+    {
+        if (context.RowsInputIterator == null)
+        {
+            return;
+        }
+
+        context.RowsInputIterator.OnError += (sender, args) =>
+        {
+            _executionThread.Statistic.IncrementErrorsCount(args.ErrorCode, args.RowIndex, args.ColumnIndex);
+        };
+    }
 
     private IReadOnlyList<SelectInputQueryContext> OpenInputSources(SelectTableReferenceListNode fromNode)
     {
@@ -157,7 +171,10 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
 
     private void ApplyStatistic(SelectCommandContext context)
     {
-        context.AppendIterator(new CountRowsIterator(context.CurrentIterator, _executionThread.Statistic));
+        context.AppendIterator(new StatisticRowsIterator(context.CurrentIterator, _executionThread.Statistic)
+        {
+            MaxErrorsCount = _executionThread.Options.MaxErrors,
+        });
     }
 
     private SelectCommandContext CreateSourceRowsSet(SelectQuerySpecificationNode querySpecificationNode)

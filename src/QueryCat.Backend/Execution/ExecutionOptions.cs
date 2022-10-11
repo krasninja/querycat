@@ -23,5 +23,18 @@ public sealed class ExecutionOptions
     /// </summary>
     public bool AddRowNumberColumn { get; set; } = true;
 
+    /// <summary>
+    /// Show detailed statistic.
+    /// </summary>
+    public bool ShowDetailedStatistic { get; set; } = false;
+
+    /// <summary>
+    /// Max number of errors before abort.
+    /// </summary>
+    public int MaxErrors { get; set; } = -1;
+
+    /// <summary>
+    /// List of assemblies with additional functionality (functions, inputs, outputs, etc).
+    /// </summary>
     public List<Assembly> PluginAssemblies { get; } = new();
 }

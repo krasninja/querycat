@@ -1,4 +1,5 @@
 using McMaster.Extensions.CommandLineUtils;
+using QueryCat.Backend.Execution;
 using QueryCat.Backend.Functions;
 using QueryCat.Backend.Functions.StandardFunctions;
 using QueryCat.Backend.Relational;
@@ -15,7 +16,10 @@ public class SchemaCommand : BaseQueryCommand
     {
         PreInitialize();
 
-        var runner = CreateRunner();
+        var runner = CreateRunner(new ExecutionOptions
+        {
+            PagingSize = -1
+        });
         runner.ExecutionThread.AfterStatementExecute += (sender, args) =>
         {
             var result = runner.ExecutionThread.LastResult;
