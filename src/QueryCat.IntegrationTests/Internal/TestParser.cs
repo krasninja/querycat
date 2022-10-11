@@ -27,7 +27,7 @@ public class TestParser
         var testData = Deserializer.Deserialize<TestData>(
             File.OpenText(Path.Combine(testsDirectory, _fileName + ".yaml")));
         testData.Expected = (testData.Expected ?? string.Empty).Trim();
-        testData.Query = testData.Query.Trim();
+        testData.Query = testData.Query.Replace("\r\n", "\n").Trim();
         return testData;
     }
 

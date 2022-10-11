@@ -51,7 +51,7 @@ public class BaseTests
     {
         _memory.Seek(0, SeekOrigin.Begin);
         using var sr = new StreamReader(_memory);
-        return sr.ReadToEnd().Trim();
+        return sr.ReadToEnd().Replace("\r\n", "\n").Trim();
     }
 
     [FunctionSignature("objfunc(a: integer, b: object): object")]
