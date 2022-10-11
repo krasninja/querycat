@@ -19,8 +19,8 @@ public class DistinctRowsIteratorTests
             new Column("Name", DataType.String));
         table.AddRow(10, "Anna");
         table.AddRow(20, "Marina M");
-        table.AddRow(20, "Marina K");
-        table.AddRow(30, "Marina B");
+        table.AddRow(20, "Marina M");
+        table.AddRow(30, "Marina M");
 
         // Act.
         var resultRowsSet = new DistinctRowsIterator(table.GetIterator()).ToFrame();
