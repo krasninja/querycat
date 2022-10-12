@@ -71,7 +71,7 @@ internal sealed partial class SelectQueryBodyVisitor
                 }
 
                 var targetIndex = index + aggregateColumnsOffset;
-                functionCallNode.SetAttribute(Constants.InputAggregateIndexKey, targetIndex);
+                functionCallNode.SetAttribute(AstAttributeKeys.InputAggregateIndexKey, targetIndex);
             }
         };
 
@@ -93,13 +93,13 @@ internal sealed partial class SelectQueryBodyVisitor
 
         selectAggregateTargetsVisitor.Run(columnsNodes);
         var aggregateTargets = columnsNodes.GetAllChildren<FunctionCallNode>()
-            .Select(n => n.GetAttribute<AggregateTarget>(Constants.AggregateFunctionKey));
+            .Select(n => n.GetAttribute<AggregateTarget>(AstAttributeKeys.AggregateFunctionKey));
         if (havingNode != null)
         {
             selectAggregateTargetsVisitor.Run(havingNode);
             aggregateTargets = aggregateTargets.Union(
                 havingNode.GetAllChildren<FunctionCallNode>()
-                    .Select(n => n.GetAttribute<AggregateTarget>(Constants.AggregateFunctionKey)));
+                    .Select(n => n.GetAttribute<AggregateTarget>(AstAttributeKeys.AggregateFunctionKey)));
         }
         return aggregateTargets.OfType<AggregateTarget>().ToArray();
     }

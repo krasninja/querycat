@@ -85,7 +85,7 @@ internal class ResolveTypesVisitor : AstVisitor
     /// <inheritdoc />
     public override void Visit(LiteralNode node)
     {
-        node.SetAttribute(Constants.TypeKey, node.Value.GetInternalType());
+        node.SetAttribute(AstAttributeKeys.TypeKey, node.Value.GetInternalType());
     }
 
     /// <inheritdoc />
@@ -98,7 +98,7 @@ internal class ResolveTypesVisitor : AstVisitor
         }
         else
         {
-            node.Right.CopyTo<DataType>(Constants.TypeKey, node);
+            node.Right.CopyTo<DataType>(AstAttributeKeys.TypeKey, node);
         }
     }
 
@@ -115,13 +115,13 @@ internal class ResolveTypesVisitor : AstVisitor
     /// <inheritdoc />
     public override void Visit(FunctionCallArgumentNode node)
     {
-        node.ExpressionValue.CopyTo<DataType>(Constants.TypeKey, node);
+        node.ExpressionValue.CopyTo<DataType>(AstAttributeKeys.TypeKey, node);
     }
 
     /// <inheritdoc />
     public override void Visit(FunctionCallExpressionNode node)
     {
-        node.CopyTo<DataType>(Constants.TypeKey, node.FunctionNode);
+        node.CopyTo<DataType>(AstAttributeKeys.TypeKey, node.FunctionNode);
     }
 
     /// <inheritdoc />
@@ -147,14 +147,14 @@ internal class ResolveTypesVisitor : AstVisitor
             }
         }
 
-        node.SetAttribute(Constants.FunctionKey, function);
+        node.SetAttribute(AstAttributeKeys.FunctionKey, function);
         node.SetDataType(returnType);
     }
 
     /// <inheritdoc />
     public override void Visit(FunctionCallStatementNode node)
     {
-        node.CopyTo<DataType>(Constants.TypeKey, node.FunctionNode);
+        node.CopyTo<DataType>(AstAttributeKeys.TypeKey, node.FunctionNode);
     }
 
     #endregion

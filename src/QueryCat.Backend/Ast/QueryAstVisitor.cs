@@ -255,9 +255,9 @@ public class QueryAstVisitor : AstVisitor
 
     #endregion
 
-    private static void SetString(IAstNode node, string value) => node.SetAttribute(Constants.StringKey, value);
+    private static void SetString(IAstNode node, string value) => node.SetAttribute(AstAttributeKeys.StringKey, value);
 
-    public static string GetString(IAstNode node) => node.GetAttribute<string>(Constants.StringKey) ?? string.Empty;
+    public static string GetString(IAstNode node) => node.GetAttribute<string>(AstAttributeKeys.StringKey) ?? string.Empty;
 
     public static string GetStringWithParens(IAstNode node) => string.Concat("(", GetString(node), ")");
 

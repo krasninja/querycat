@@ -97,28 +97,28 @@ internal class SelectMakeDelegateVisitor : MakeDelegateVisitor
     /// <inheritdoc />
     public override void Visit(FunctionCallNode node)
     {
-        if (node.HasAttribute(Constants.InputAggregateIndexKey))
+        if (node.HasAttribute(AstAttributeKeys.InputAggregateIndexKey))
         {
-            var index = node.GetAttribute<int>(Constants.InputAggregateIndexKey);
+            var index = node.GetAttribute<int>(AstAttributeKeys.InputAggregateIndexKey);
             NodeIdFuncMap[node.Id] = data => data.RowsIterator.Current[index];
             return;
         }
 
         base.Visit(node);
 
-        var function = node.GetAttribute<Function>(Constants.FunctionKey);
+        var function = node.GetAttribute<Function>(AstAttributeKeys.FunctionKey);
         if (function == null || !function.IsAggregate)
         {
             return;
         }
 
         var target = CreateAggregateTarget(node, function);
-        node.SetAttribute(Constants.AggregateFunctionKey, target);
+        node.SetAttribute(AstAttributeKeys.AggregateFunctionKey, target);
     }
 
     private AggregateTarget CreateAggregateTarget(FunctionCallNode node, Function function)
     {
-        var functionCallInfo = node.GetAttribute<FunctionCallInfo>(Constants.ArgumentsKey);
+        var functionCallInfo = node.GetAttribute<FunctionCallInfo>(AstAttributeKeys.ArgumentsKey);
         if (functionCallInfo == null)
         {
             throw new InvalidOperationException("Function node must have 'FunctionCallInfo' attribute.");

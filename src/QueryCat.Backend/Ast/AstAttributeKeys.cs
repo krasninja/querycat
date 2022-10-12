@@ -3,7 +3,7 @@ namespace QueryCat.Backend.Ast;
 /// <summary>
 /// AST constants.
 /// </summary>
-internal static class Constants
+internal static class AstAttributeKeys
 {
     /// <summary>
     /// <see cref="Func{TResult}" /> delegate to get value.
@@ -49,4 +49,9 @@ internal static class Constants
     /// Command statement evaluated result.
     /// </summary>
     public const string ResultKey = "result_key";
+
+    /// <summary>
+    /// Correspond identifier rows input column.
+    /// </summary>
+    public const string InputColumn = "input_column";
 }

@@ -28,6 +28,7 @@ internal sealed class SelectResolveTypesVisitor : ResolveTypesVisitor
         }
         else
         {
+            node.SetAttribute(AstAttributeKeys.InputColumn, _rowsIterator.Columns[columnIndex]);
             node.SetDataType(_rowsIterator.Columns[columnIndex].DataType);
         }
     }
@@ -35,7 +36,7 @@ internal sealed class SelectResolveTypesVisitor : ResolveTypesVisitor
     /// <inheritdoc />
     public override void Visit(SelectColumnsSublistExpressionNode node)
     {
-        node.ExpressionNode.CopyTo<DataType>(Constants.TypeKey, node);
+        node.ExpressionNode.CopyTo<DataType>(AstAttributeKeys.TypeKey, node);
     }
 
     /// <inheritdoc />

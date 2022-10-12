@@ -40,7 +40,7 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
         var combineRowsIterator = new CombineRowsIterator();
         foreach (var queryNode in node.Queries)
         {
-            var queryContext = queryNode.GetAttribute<SelectCommandContext>(Constants.ResultKey);
+            var queryContext = queryNode.GetAttribute<SelectCommandContext>(AstAttributeKeys.ResultKey);
             if (queryContext == null)
             {
                 throw new InvalidOperationException("Invalid argument.");
@@ -56,7 +56,7 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
             resultIterator = new RowIdRowsIterator(resultIterator);
         }
 
-        node.SetAttribute(Constants.ResultKey, resultIterator);
+        node.SetAttribute(AstAttributeKeys.ResultKey, resultIterator);
         node.SetFunc(() => VariantValue.CreateFromObject(resultIterator));
     }
 
@@ -71,6 +71,7 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
         ResolveSelectAllStatement(context.CurrentIterator, node.ColumnsList);
         ResolveSelectSourceColumns(context, node);
         ResolveNodesTypes(node, context.CurrentIterator);
+        FillQueryContextConditions(node, context.InputQueryContextList);
 
         // WHERE.
         ApplyFilter(context, node.TableExpression);
@@ -97,7 +98,7 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
         // INTO.
         CreateOutput(context, node);
 
-        node.SetAttribute(Constants.ResultKey, context);
+        node.SetAttribute(AstAttributeKeys.ResultKey, context);
     }
 
     #region FROM
@@ -127,7 +128,7 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
                 var type = source.GetInternalType();
                 if (DataTypeUtils.IsSimple(type))
                 {
-                    fromTableFunction.SetAttribute(Constants.RowsInputKey, source);
+                    fromTableFunction.SetAttribute(AstAttributeKeys.RowsInputKey, source);
                     continue;
                 }
                 var rowsInput = source.AsObject as IRowsInput;
@@ -135,7 +136,7 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
                 {
                     if (source.AsObject is IRowsIterator rowsIterator)
                     {
-                        fromTableFunction.SetAttribute(Constants.RowsInputKey, rowsIterator);
+                        fromTableFunction.SetAttribute(AstAttributeKeys.RowsInputKey, rowsIterator);
                     }
                     else
                     {
@@ -143,7 +144,7 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
                     }
                     continue;
                 }
-                fromTableFunction.SetAttribute(Constants.RowsInputKey, rowsInput);
+                fromTableFunction.SetAttribute(AstAttributeKeys.RowsInputKey, rowsInput);
 
                 var context = new SelectInputQueryContext(rowsInput);
                 contexts.Add(context);
@@ -162,8 +163,8 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
             }
             else if (fromTableExpression is SelectQueryExpressionBodyNode queryExpressionBodyNode)
             {
-                var iterator = fromTableExpression.GetAttribute<IRowsIterator>(Constants.ResultKey);
-                queryExpressionBodyNode.SetAttribute(Constants.RowsInputKey, iterator);
+                var iterator = fromTableExpression.GetAttribute<IRowsIterator>(AstAttributeKeys.ResultKey);
+                queryExpressionBodyNode.SetAttribute(AstAttributeKeys.RowsInputKey, iterator);
             }
         }
         return contexts;
@@ -195,12 +196,12 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
         IRowsIterator? resultRowsIterator = null;
         foreach (var tableFunction in querySpecificationNode.TableExpression.Tables.TableFunctions)
         {
-            var rowsInput = tableFunction.GetAttribute(Constants.RowsInputKey) as IRowsInput;
-            if (rowsInput == null && tableFunction.GetAttribute(Constants.RowsInputKey) is IRowsIterator rowsIterator)
+            var rowsInput = tableFunction.GetAttribute(AstAttributeKeys.RowsInputKey) as IRowsInput;
+            if (rowsInput == null && tableFunction.GetAttribute(AstAttributeKeys.RowsInputKey) is IRowsIterator rowsIterator)
             {
                 rowsInput = new RowsIteratorInput(rowsIterator);
             }
-            if (rowsInput == null && tableFunction.GetAttribute(Constants.RowsInputKey) is VariantValue value)
+            if (rowsInput == null && tableFunction.GetAttribute(AstAttributeKeys.RowsInputKey) is VariantValue value)
             {
                 rowsInput = new SingleValueRowsInput(value);
             }
@@ -251,6 +252,55 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
             InputQueryContextList = inputContexts.ToArray(),
         };
         return context;
+    }
+
+    private void FillQueryContextConditions(SelectQuerySpecificationNode querySpecificationNode,
+        IEnumerable<SelectInputQueryContext> contexts)
+    {
+        foreach (var context in contexts)
+        {
+            FillQueryContextConditions(querySpecificationNode, context);
+        }
+    }
+
+    private void FillQueryContextConditions(
+        SelectQuerySpecificationNode querySpecificationNode,
+        SelectInputQueryContext context)
+    {
+        var searchNode = querySpecificationNode.TableExpression?.SearchConditionNode;
+        if (searchNode == null)
+        {
+            return;
+        }
+
+        var callbackVisitor = new CallbackDelegateVisitor();
+        callbackVisitor.Callback = (node, traversal) =>
+        {
+            // Get the binary comparision node.
+            if (node is not BinaryOperationExpressionNode binaryOperationExpressionNode
+                || !VariantValue.ComparisionOperations.Contains(binaryOperationExpressionNode.Operation))
+            {
+                return;
+            }
+            // Make sure parent does not contain OR condition - it breaks strict AND logic.
+            if (traversal.GetParents().OfType<BinaryOperationExpressionNode>().Any(n => n.Operation == VariantValue.Operation.Or))
+            {
+                return;
+            }
+            // Left and Right must be id and literal.
+            if (!binaryOperationExpressionNode.MatchType(out IdentifierExpressionNode? identifierNode, out LiteralNode? literalNode))
+            {
+                return;
+            }
+            // Try to find correspond row input column.
+            var column = identifierNode!.GetAttribute<Column>(AstAttributeKeys.InputColumn);
+            if (column == null || context.RowsInput.GetColumnIndex(column) < 0)
+            {
+                return;
+            }
+            context.Conditions.Add(new QueryContextCondition(column, binaryOperationExpressionNode.Operation, literalNode!.Value));
+        };
+        callbackVisitor.Run(searchNode);
     }
 
     #endregion
@@ -453,7 +503,7 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
         {
             var makeDelegateVisitor = new SelectMakeDelegateVisitor(_executionThread, context);
             var func = makeDelegateVisitor.RunAndReturn(querySpecificationNode.Target);
-            var functionCallInfo = querySpecificationNode.Target.GetAttribute<FunctionCallInfo>(Constants.ArgumentsKey)
+            var functionCallInfo = querySpecificationNode.Target.GetAttribute<FunctionCallInfo>(AstAttributeKeys.ArgumentsKey)
                 ?? throw new InvalidOperationException("FunctionCallInfo is not set on function node.");
             outputIterator = new VaryingOutputRowsIterator(
                 context.CurrentIterator,

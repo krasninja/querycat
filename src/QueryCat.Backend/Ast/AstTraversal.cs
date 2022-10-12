@@ -35,6 +35,12 @@ public class AstTraversal
         => _treeStack.Select(s => s.Node).OfType<TNode>().FirstOrDefault();
 
     /// <summary>
+    /// Returns enumerable of all current node parents.
+    /// </summary>
+    /// <returns>Enumerable of parents.</returns>
+    public IEnumerable<IAstNode> GetParents() => _treeStack.Select(s => s.Node);
+
+    /// <summary>
     /// Pre-order traversal.
     /// </summary>
     /// <param name="node">Node to start the traversal.</param>

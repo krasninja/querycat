@@ -75,17 +75,17 @@ internal static class AstNodeExtensions
     #region Attribute helpers
 
     public static Func<VariantValue> GetFunc(this IAstNode node)
-        => node.GetAttribute<Func<VariantValue>>(Constants.FuncKey)
+        => node.GetAttribute<Func<VariantValue>>(AstAttributeKeys.FuncKey)
             ?? throw new InvalidOperationException("No function attribute.");
 
     public static void SetFunc(this IAstNode node, Func<VariantValue> func)
-        => node.SetAttribute(Constants.FuncKey, func);
+        => node.SetAttribute(AstAttributeKeys.FuncKey, func);
 
     public static DataType GetDataType(this IAstNode node)
-        => node.GetAttribute<DataType>(Constants.TypeKey);
+        => node.GetAttribute<DataType>(AstAttributeKeys.TypeKey);
 
     public static void SetDataType(this IAstNode node, DataType type)
-        => node.SetAttribute(Constants.TypeKey, type);
+        => node.SetAttribute(AstAttributeKeys.TypeKey, type);
 
     #endregion
 }

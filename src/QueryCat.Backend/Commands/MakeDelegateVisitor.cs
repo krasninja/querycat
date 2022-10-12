@@ -191,7 +191,7 @@ internal class MakeDelegateVisitor : AstVisitor
     /// <inheritdoc />
     public override void Visit(FunctionCallNode node)
     {
-        var function = node.GetAttribute<Function>(Constants.FunctionKey);
+        var function = node.GetAttribute<Function>(AstAttributeKeys.FunctionKey);
         if (function == null)
         {
             throw new InvalidOperationException("Function not set.");
@@ -244,7 +244,7 @@ internal class MakeDelegateVisitor : AstVisitor
         var argsDelegates = argsDelegatesList.ToArray();
         var callInfo = new FunctionCallInfo(argsDelegates);
         callInfo.FunctionsManager = _thread.FunctionsManager;
-        node.SetAttribute(Constants.ArgumentsKey, callInfo);
+        node.SetAttribute(AstAttributeKeys.ArgumentsKey, callInfo);
         NodeIdFuncMap[node.Id] = context =>
         {
             callInfo.Reset();
