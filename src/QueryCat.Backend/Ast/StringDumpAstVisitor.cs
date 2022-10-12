@@ -67,7 +67,7 @@ internal sealed class StringDumpAstVisitor : DelegateVisitor
                 {
                     var value = FormatValue(attribute.Value);
                     _output.Append(new string(' ', ident));
-                    _output.AppendLine($" _{attribute.Key}: {value}");
+                    _output.AppendLine($"  {attribute.Key}: {value}");
                 }
             }
         }

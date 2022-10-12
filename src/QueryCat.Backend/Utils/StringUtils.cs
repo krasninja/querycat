@@ -8,6 +8,12 @@ namespace QueryCat.Backend.Utils;
 /// </summary>
 internal static class StringUtils
 {
+    /// <summary>
+    /// Implements SQL LIKE pattern comparision.
+    /// </summary>
+    /// <param name="pattern">"Like" pattern.</param>
+    /// <param name="str">Target string.</param>
+    /// <returns><c>True</c> if the target string matches the pattern, <c>false</c> otherwise.</returns>
     public static bool MatchesToLikePattern(ReadOnlySpan<char> pattern, ReadOnlySpan<char> str)
     {
         // Based on this: https://stackoverflow.com/questions/5417070/c-sharp-version-of-sql-like/8583383#8583383
@@ -24,7 +30,7 @@ internal static class StringUtils
 
         for (int i = 0; i < str.Length; i++)
         {
-            char c = str[i];
+            var c = str[i];
             endOfPattern = patternIndex >= pattern.Length;
             if (!endOfPattern)
             {
@@ -68,9 +74,9 @@ internal static class StringUtils
                     set.Clear();
                     if (pattern[patternIndex + 1] == '-' && pattern[patternIndex + 3] == ']')
                     {
-                        char start = char.ToUpper(pattern[patternIndex]);
+                        var start = char.ToUpper(pattern[patternIndex]);
                         patternIndex += 2;
-                        char end = char.ToUpper(pattern[patternIndex]);
+                        var end = char.ToUpper(pattern[patternIndex]);
                         if (start <= end)
                         {
                             for (char ci = start; ci <= end; ci++)
