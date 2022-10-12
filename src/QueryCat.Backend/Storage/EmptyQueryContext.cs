@@ -11,4 +11,7 @@ public class EmptyQueryContext : QueryContext
 
     /// <inheritdoc />
     public override IReadOnlyList<Column> GetColumns() => Array.Empty<Column>();
+
+    /// <inheritdoc />
+    public override IReadOnlyList<QueryContextCondition> GetConditions() => Array.Empty<QueryContextCondition>();
 }

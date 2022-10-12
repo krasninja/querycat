@@ -13,6 +13,8 @@ public class SelectInputQueryContext : QueryContext
     /// </summary>
     public IRowsInput RowsInput { get; }
 
+    internal List<QueryContextCondition> Conditions { get; } = new();
+
     /// <inheritdoc />
     public SelectInputQueryContext(IRowsInput rowsInput)
     {
@@ -21,4 +23,7 @@ public class SelectInputQueryContext : QueryContext
 
     /// <inheritdoc />
     public override IReadOnlyList<Column> GetColumns() => RowsInput.Columns;
+
+    /// <inheritdoc />
+    public override IReadOnlyList<QueryContextCondition> GetConditions() => Conditions;
 }
