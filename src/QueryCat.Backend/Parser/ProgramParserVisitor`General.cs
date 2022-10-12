@@ -132,6 +132,10 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
     }
 
     /// <inheritdoc />
+    public override IAstNode VisitExpressionStandardFunctionCall(QueryCatParser.ExpressionStandardFunctionCallContext context)
+        => this.Visit<FunctionCallNode>(context.standardFunction());
+
+    /// <inheritdoc />
     public override IAstNode VisitExpressionFunctionCall(QueryCatParser.ExpressionFunctionCallContext context)
         => this.Visit<FunctionCallNode>(context.functionCall());
 
@@ -206,6 +210,18 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
     public override IAstNode VisitFunctionCallArg(QueryCatParser.FunctionCallArgContext context)
         => new FunctionCallArgumentNode(
             GetIdentifierText(context.IDENTIFIER()), this.Visit<ExpressionNode>(context.expression()));
+
+    #endregion
+
+    #region Standard functions
+
+    /// <inheritdoc />
+    public override IAstNode VisitStandardFunctionCurrentDate(QueryCatParser.StandardFunctionCurrentDateContext context)
+        => new FunctionCallNode("date", new FunctionCallArgumentNode(new FunctionCallNode("now")));
+
+    /// <inheritdoc />
+    public override IAstNode VisitStandardFunctionCurrentTimestamp(QueryCatParser.StandardFunctionCurrentTimestampContext context)
+        => new FunctionCallNode("now");
 
     #endregion
 

@@ -18,8 +18,24 @@ public static class DateTimeFunctions
         return new VariantValue(DateTime.ParseExact(target, format, CultureInfo.InvariantCulture));
     }
 
+    [Description("Current date and time")]
+    [FunctionSignature("now(): timestamp")]
+    public static VariantValue Now(FunctionCallInfo args)
+    {
+        return new VariantValue(DateTime.Now);
+    }
+
+    [Description("Takes the date part.")]
+    [FunctionSignature("date(datetime: timestamp): timestamp")]
+    public static VariantValue Date(FunctionCallInfo args)
+    {
+        return new VariantValue(args.GetAt(0).AsTimestamp.Date);
+    }
+
     public static void RegisterFunctions(FunctionsManager functionsManager)
     {
         functionsManager.RegisterFunction(ToDate);
+        functionsManager.RegisterFunction(Now);
+        functionsManager.RegisterFunction(Date);
     }
 }

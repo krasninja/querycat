@@ -20,6 +20,12 @@ public class FunctionCallNode : ExpressionNode
         Arguments = arguments ?? new List<FunctionCallArgumentNode>();
     }
 
+    public FunctionCallNode(string functionName, params FunctionCallArgumentNode[] arguments)
+    {
+        FunctionName = functionName;
+        Arguments = arguments.ToList();
+    }
+
     public FunctionCallNode(FunctionCallNode node) :
         this(node.FunctionName, node.Arguments.Select(a => (FunctionCallArgumentNode)a.Clone()).ToList())
     {

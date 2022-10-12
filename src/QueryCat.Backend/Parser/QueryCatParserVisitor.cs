@@ -250,6 +250,20 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitFunctionCallArg([NotNull] QueryCatParser.FunctionCallArgContext context);
 	/// <summary>
+	/// Visit a parse tree produced by the <c>standardFunctionCurrentDate</c>
+	/// labeled alternative in <see cref="QueryCatParser.standardFunction"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitStandardFunctionCurrentDate([NotNull] QueryCatParser.StandardFunctionCurrentDateContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>standardFunctionCurrentTimestamp</c>
+	/// labeled alternative in <see cref="QueryCatParser.standardFunction"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitStandardFunctionCurrentTimestamp([NotNull] QueryCatParser.StandardFunctionCurrentTimestampContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="QueryCatParser.type"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
@@ -262,6 +276,13 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitExpressionBinary([NotNull] QueryCatParser.ExpressionBinaryContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>ExpressionStandardFunctionCall</c>
+	/// labeled alternative in <see cref="QueryCatParser.expression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitExpressionStandardFunctionCall([NotNull] QueryCatParser.ExpressionStandardFunctionCallContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>ExpressionBetween</c>
 	/// labeled alternative in <see cref="QueryCatParser.expression"/>.

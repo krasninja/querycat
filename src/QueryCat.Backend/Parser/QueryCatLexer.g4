@@ -49,22 +49,33 @@ ANY:                'ANY';
 
 // General grammar keywords.
 
-TRUE:               'TRUE';
-FALSE:              'FALSE';
-NULL:               'NULL';
 AND:                'AND';
-OR:                 'OR';
+AS:                 'AS';
+BY:                 'BY';
+CAST:               'CAST';
+DEFAULT:            'DEFAULT';
+FALSE:              'FALSE';
 IN:                 'IN';
 IS:                 'IS';
-NOT:                'NOT';
 LIKE:               'LIKE';
-VOID:               'VOID';
-AS:                 'AS';
-TO:                 'TO';
-BY:                 'BY';
+NOT:                'NOT';
+NULL:               'NULL';
 ONLY:               'ONLY';
-DEFAULT:            'DEFAULT';
-CAST:               'CAST';
+OR:                 'OR';
+TO:                 'TO';
+TRUE:               'TRUE';
+VOID:               'VOID';
+
+// Datetime.
+
+CURRENT_DATE:       'CURRENT_DATE';
+CURRENT_TIMESTAMP:  'CURRENT_TIMESTAMP';
+YEAR:               'YEAR';
+MONTH:              'MONTH';
+DAY:                'DAY';
+HOUR:               'HOUR';
+MINUTE:             'MINUTE';
+SECOND:             'SECOND';
 
 // ECHO command.
 
@@ -72,26 +83,26 @@ ECHO:               'ECHO';
 
 // SELECT command.
 
+ALL:                'ALL';
+ASC:                'ASC';
 BETWEEN:            'BETWEEN';
-OFFSET:             'OFFSET';
-ROW:                'ROW';
-ROWS:               'ROWS';
+DESC:               'DESC';
+DISTINCT:           'DISTINCT';
 FETCH:              'FETCH';
 FIRST:              'FIRST';
-NEXT:               'NEXT';
-ORDER:              'ORDER';
-ASC:                'ASC';
-DESC:               'DESC';
-HAVING:             'HAVING';
-WHERE:              'WHERE';
-UNION:              'UNION';
-GROUP:              'GROUP';
-INTO:               'INTO';
-SELECT:             'SELECT';
-FROM:               'FROM';
-DISTINCT:           'DISTINCT';
-ALL:                'ALL';
 FORMAT:             'FORMAT';
+FROM:               'FROM';
+GROUP:              'GROUP';
+HAVING:             'HAVING';
+INTO:               'INTO';
+NEXT:               'NEXT';
+OFFSET:             'OFFSET';
+ORDER:              'ORDER';
+ROW:                'ROW';
+ROWS:               'ROWS';
+SELECT:             'SELECT';
+UNION:              'UNION';
+WHERE:              'WHERE';
 
 TYPE: INTEGER | STRING | FLOAT | TIMESTAMP | BOOLEAN | NUMERIC | OBJECT | ANY;
 

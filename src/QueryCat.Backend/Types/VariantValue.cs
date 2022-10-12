@@ -516,11 +516,29 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     {
         DataType.Null => "NULL",
         DataType.Void => "VOID",
-        DataType.Integer => AsInteger.ToString(),
+        DataType.Integer => AsInteger.ToString(CultureInfo.InvariantCulture),
         DataType.String => AsString,
-        DataType.Boolean => AsBoolean.ToString(),
+        DataType.Boolean => AsBoolean.ToString(CultureInfo.InvariantCulture),
         DataType.Float => AsFloat.ToString("F2", CultureInfo.InvariantCulture),
         DataType.Timestamp => AsTimestamp.ToString(CultureInfo.InvariantCulture),
+        DataType.Object => "object: " + AsObject,
+        _ => "unknown"
+    };
+
+    /// <summary>
+    /// Convert to string according to the format.
+    /// </summary>
+    /// <param name="format">Format string.</param>
+    /// <returns>String representation.</returns>
+    public string ToString(string format) => GetInternalType() switch
+    {
+        DataType.Null => "NULL",
+        DataType.Void => "VOID",
+        DataType.Integer => AsInteger.ToString(format, CultureInfo.InvariantCulture),
+        DataType.String => AsString,
+        DataType.Boolean => AsBoolean.ToString(),
+        DataType.Float => AsFloat.ToString(format, CultureInfo.InvariantCulture),
+        DataType.Timestamp => AsTimestamp.ToString(format, CultureInfo.InvariantCulture),
         DataType.Object => "object: " + AsObject,
         _ => "unknown"
     };

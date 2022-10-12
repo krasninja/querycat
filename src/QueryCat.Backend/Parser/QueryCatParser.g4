@@ -106,6 +106,12 @@ functionCall
     ;
 functionCallArg: (IDENTIFIER ASSOCIATION)? expression;
 
+// SQL functions.
+standardFunction
+    : CURRENT_DATE # standardFunctionCurrentDate
+    | CURRENT_TIMESTAMP # standardFunctionCurrentTimestamp
+    ;
+
 type
     : INTEGER
     | STRING
@@ -120,10 +126,11 @@ type
 // For reference: https://www.postgresql.org/docs/current/sql-syntax-lexical.html#SQL-PRECEDENCE
 expression
     : literal # ExpressionLiteral
+    | standardFunction # ExpressionStandardFunctionCall
+    | functionCall # ExpressionFunctionCall
     | IDENTIFIER # ExpressionIdentifier
     | '(' expression ')' # ExpressionInParens
     | '(' selectExpression ')' # ExpressionSelect
-    | functionCall # ExpressionFunctionCall
     | left=expression op=CONCAT right=expression # ExpressionBinary
     | op=(PLUS | MINUS) right=expression # ExpressionUnary
     | left=expression op=(STAR | DIV | MOD) right=expression # ExpressionBinary

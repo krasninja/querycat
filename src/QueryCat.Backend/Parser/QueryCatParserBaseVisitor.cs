@@ -389,6 +389,28 @@ public partial class QueryCatParserBaseVisitor<Result> : AbstractParseTreeVisito
 	/// <return>The visitor result.</return>
 	public virtual Result VisitFunctionCallArg([NotNull] QueryCatParser.FunctionCallArgContext context) { return VisitChildren(context); }
 	/// <summary>
+	/// Visit a parse tree produced by the <c>standardFunctionCurrentDate</c>
+	/// labeled alternative in <see cref="QueryCatParser.standardFunction"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitStandardFunctionCurrentDate([NotNull] QueryCatParser.StandardFunctionCurrentDateContext context) { return VisitChildren(context); }
+	/// <summary>
+	/// Visit a parse tree produced by the <c>standardFunctionCurrentTimestamp</c>
+	/// labeled alternative in <see cref="QueryCatParser.standardFunction"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitStandardFunctionCurrentTimestamp([NotNull] QueryCatParser.StandardFunctionCurrentTimestampContext context) { return VisitChildren(context); }
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="QueryCatParser.type"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
@@ -409,6 +431,17 @@ public partial class QueryCatParserBaseVisitor<Result> : AbstractParseTreeVisito
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	public virtual Result VisitExpressionBinary([NotNull] QueryCatParser.ExpressionBinaryContext context) { return VisitChildren(context); }
+	/// <summary>
+	/// Visit a parse tree produced by the <c>ExpressionStandardFunctionCall</c>
+	/// labeled alternative in <see cref="QueryCatParser.expression"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitExpressionStandardFunctionCall([NotNull] QueryCatParser.ExpressionStandardFunctionCallContext context) { return VisitChildren(context); }
 	/// <summary>
 	/// Visit a parse tree produced by the <c>ExpressionBetween</c>
 	/// labeled alternative in <see cref="QueryCatParser.expression"/>.
