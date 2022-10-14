@@ -1,6 +1,3 @@
-using System.Buffers;
-using System.Text;
-
 namespace QueryCat.Backend.Utils;
 
 /// <summary>
@@ -165,76 +162,5 @@ internal static class StringUtils
             }
         }
         return isMatch && endOfPattern;
-    }
-
-    /// <summary>
-    /// Unquote the target string.
-    /// </summary>
-    /// <param name="target">Target string.</param>
-    /// <param name="quoteChar">Quote character.</param>
-    /// <returns>Unquoted string.</returns>
-    public static ReadOnlySpan<char> Unquote(ReadOnlySpan<char> target, char quoteChar = '"')
-    {
-        if (target.IsEmpty)
-        {
-            return ReadOnlySpan<char>.Empty;
-        }
-        int startIndex = 0;
-        int endIndex = target.Length;
-        if (target[0] == quoteChar)
-        {
-            startIndex++;
-            endIndex--;
-        }
-
-        // TODO: can be optimized by using buffer like method below.
-        var sb = new StringBuilder(endIndex);
-        for (var i = startIndex; i < endIndex; i++)
-        {
-            if (target[i] == quoteChar)
-            {
-                sb.Append(target[startIndex..i]);
-                startIndex = ++i;
-            }
-        }
-        sb.Append(target.Slice(startIndex, endIndex - startIndex));
-        return sb.ToString();
-    }
-
-    /// <summary>
-    /// Unquote the target string.
-    /// </summary>
-    /// <param name="target">Target string.</param>
-    /// <param name="quoteChar">Quote character.</param>
-    /// <returns>Unquoted string.</returns>
-    public static ReadOnlySpan<char> Unquote(ReadOnlySequence<char> target, char quoteChar = '"')
-    {
-        if (target.IsEmpty)
-        {
-            return ReadOnlySpan<char>.Empty;
-        }
-        int endIndex = (int)target.Length;
-        var valueReader = target.First.Span[0] == quoteChar
-            ? new SequenceReader<char>(target.Slice(1, --endIndex - 1))
-            : new SequenceReader<char>(target);
-
-        var buffer = new char[endIndex + 1].AsSpan();
-        var lastBufferIndex = 0;
-        while (valueReader.TryReadTo(out ReadOnlySpan<char> span, quoteChar))
-        {
-            if (span.IsEmpty)
-            {
-                break;
-            }
-            span.CopyTo(buffer.Slice(lastBufferIndex, span.Length));
-            lastBufferIndex += span.Length;
-            buffer[lastBufferIndex++] = quoteChar;
-            valueReader.Advance(1);
-        }
-        var unreadSequence = valueReader.UnreadSequence;
-        var unreadSequenceLength = (int)unreadSequence.Length;
-        unreadSequence.CopyTo(buffer.Slice(lastBufferIndex, unreadSequenceLength));
-        lastBufferIndex += unreadSequenceLength;
-        return buffer.Slice(0, lastBufferIndex);
     }
 }

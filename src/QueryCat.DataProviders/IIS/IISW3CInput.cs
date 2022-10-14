@@ -3,6 +3,7 @@ using QueryCat.Backend;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Storage;
 using QueryCat.Backend.Types;
+using QueryCat.Backend.Utils;
 
 namespace QueryCat.DataProviders.IIS;
 
@@ -14,7 +15,7 @@ namespace QueryCat.DataProviders.IIS;
 public sealed class IISW3CInput : StreamRowsInput
 {
     // https://docs.microsoft.com/en-us/previous-versions/iis/6.0-sdk/ms525807(v=vs.90).
-    private const string FieldsMarker = "#Fields: ";
+    private const string FieldsMarker = "#Fields:";
 
     private int _timeColumnIndex = -1;
     private int _dateColumnIndex = -1;
@@ -49,7 +50,7 @@ public sealed class IISW3CInput : StreamRowsInput
     /// <inheritdoc />
     protected override StreamReader? StreamReader { get; set; }
 
-    public IISW3CInput(Stream stream) : base(new StreamRowsInputOptions
+    public IISW3CInput(Stream stream) : base(new StreamReader(stream), new DelimiterStreamReader.ReaderOptions
     {
         Delimiters = new[] { ' ' }
     })
@@ -99,7 +100,7 @@ public sealed class IISW3CInput : StreamRowsInput
             var line = GetColumnValue(0);
             if (line.StartsWith(FieldsMarker))
             {
-                ParseHeaders(line);
+                ParseHeaders(GetRowText().ToString());
                 foundHeaders = true;
                 break;
             }

@@ -1,6 +1,6 @@
 expected: |
   100,Malbec"
   200,"Cabernet, Sauvignon!"
-  300,Shiraz"""
+  300,Shiraz"
 query: |
   SELECT id, code FROM read_file('Wine.csv');

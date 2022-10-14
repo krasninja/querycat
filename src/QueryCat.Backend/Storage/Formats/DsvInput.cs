@@ -1,12 +1,13 @@
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Types;
+using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Storage.Formats;
 
 /// <summary>
 /// Delimiter separated values (DSV) input.
 /// </summary>
-public sealed class DsvInput : StreamRowsInput
+internal sealed class DsvInput : StreamRowsInput
 {
     private const char QuoteChar = '\"';
 
@@ -19,18 +20,18 @@ public sealed class DsvInput : StreamRowsInput
     };
 
     private bool? _hasHeader;
+    private readonly bool _addFileNameColumn;
 
-    public DsvInput(Stream stream, char delimiter, bool? hasHeader = null) :
-        base(new StreamRowsInputOptions
+    public DsvInput(Stream stream, char delimiter, bool? hasHeader = null, bool addFileNameColumn = true) :
+        base(new StreamReader(stream), new DelimiterStreamReader.ReaderOptions
         {
-            BufferSize = StreamRowsInputOptions.DefaultBufferSize,
             Delimiters = new[] { delimiter },
-            QuoteChar = QuoteChar,
-            UseQuoteChar = true
+            QuoteChars = new[] { QuoteChar },
         })
     {
         StreamReader = new StreamReader(stream);
         _hasHeader = hasHeader;
+        _addFileNameColumn = addFileNameColumn;
 
         if (StreamReader?.BaseStream is not FileStream)
         {
@@ -100,7 +101,10 @@ public sealed class DsvInput : StreamRowsInput
     }
 
     /// <inheritdoc />
-    protected override Column[] GetCustomColumns() => _customColumns;
+    protected override Column[] GetCustomColumns()
+    {
+        return _addFileNameColumn ? _customColumns : Array.Empty<Column>();
+    }
 
     /// <inheritdoc />
     protected override VariantValue GetCustomColumnValue(int rowIndex, int columnIndex)

@@ -14,9 +14,9 @@ public class CsvParseBenchmarks
     public int ReadAllUsersWithDsvFormatter()
     {
         using var file = OpenTestUsersFile();
-        var input = new DsvFormatter(',').OpenInput(file);
+        var input = new DsvFormatter(',', addFileNameColumn: false).OpenInput(file);
         input.Open();
-        var rowsFrame = User.ClassBuilder.BuildRowsFrame();
+        var rowsFrame = new RowsFrame(input.Columns);
         var rowsIterator = input.AsIterable(autoFetch: true);
         rowsIterator.ToFrame(rowsFrame);
         return rowsFrame.TotalRows;

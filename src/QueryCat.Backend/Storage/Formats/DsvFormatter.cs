@@ -14,6 +14,7 @@ public class DsvFormatter : IRowsFormatter
 {
     private readonly char _delimiter;
     private readonly bool? _hasHeader;
+    private readonly bool _addFileNameColumn;
 
     [Description("CSV formatter.")]
     [FunctionSignature("csv(has_header?: boolean): object<IRowsFormatter>")]
@@ -33,15 +34,16 @@ public class DsvFormatter : IRowsFormatter
         return VariantValue.CreateFromObject(rowsSource);
     }
 
-    public DsvFormatter(char delimiter, bool? hasHeader = null)
+    public DsvFormatter(char delimiter, bool? hasHeader = null, bool addFileNameColumn = true)
     {
         _delimiter = delimiter;
         _hasHeader = hasHeader;
+        _addFileNameColumn = addFileNameColumn;
     }
 
     /// <inheritdoc />
     public IRowsInput OpenInput(Stream input)
-        => new DsvInput(input, _delimiter, _hasHeader);
+        => new DsvInput(input, _delimiter, _hasHeader, _addFileNameColumn);
 
     /// <inheritdoc />
     public IRowsOutput OpenOutput(Stream output)

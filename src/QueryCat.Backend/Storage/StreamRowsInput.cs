@@ -1,5 +1,4 @@
 using System.Buffers;
-using System.Runtime.CompilerServices;
 using QueryCat.Backend.Logging;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Relational.Iterators;
@@ -26,27 +25,12 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
      */
     private int _rowIndex = 0;
 
-    protected DynamicBuffer<char> DynamicBuffer { get; }
-
     protected abstract StreamReader? StreamReader { get; set; }
-
-    protected StreamRowsInputOptions Options { get; }
 
     public QueryContext QueryContext { get; private set; } = EmptyQueryContext.Empty;
 
-    private readonly char[] _stopCharacters;
-
-    // Stores positions of delimiters for columns.
-    private int[] _currentDelimitersPositions = new int[32];
-    private bool[] _currentDelimitersQuotes = new bool[32];
-    private int _currentDelimitersPositionsCursor;
-
-    // Little optimization to prevent unnecessary DynamicBuffer.GetSequence() calls.
-    private ReadOnlySequence<char> _currentSequence = ReadOnlySequence<char>.Empty;
-
     // Current position in a reading row. We need it in a case if read current row and need to
     // fetch new data to finish. The current position will contain the start index.
-    private int _currentDelimiterPosition;
     private bool _firstFetch = true;
 
     // Cache.
@@ -57,26 +41,16 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
 
     private int _customColumnsCount = 0;
 
+    private readonly DelimiterStreamReader _delimiterStreamReader;
+
     /// <summary>
     /// Constructor.
     /// </summary>
+    /// <param name="streamReader">Stream reader.</param>
     /// <param name="options">The options.</param>
-    protected StreamRowsInput(StreamRowsInputOptions? options = null)
+    public StreamRowsInput(StreamReader streamReader, DelimiterStreamReader.ReaderOptions? options = null)
     {
-        Options = options ?? new StreamRowsInputOptions();
-        DynamicBuffer = new DynamicBuffer<char>(Options.BufferSize);
-
-        // Stop characters.
-        var stopCharactersList = new List<char>(10);
-        stopCharactersList.AddRange(Options.Delimiters);
-        if (Options.UseQuoteChar)
-        {
-            stopCharactersList.Add(Options.QuoteChar);
-        }
-        stopCharactersList.AddRange(new[] { '\n', '\r' });
-        _stopCharacters = stopCharactersList.ToArray();
-
-        _currentDelimitersPositions[0] = 0;
+        _delimiterStreamReader = new DelimiterStreamReader(streamReader, options);
     }
 
     /// <inheritdoc />
@@ -107,14 +81,14 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
         var customColumns = GetCustomColumns();
         _customColumnsCount = customColumns.Length;
 
-        Columns = new Column[_currentDelimitersPositionsCursor + _customColumnsCount - 1];
+        Columns = new Column[_delimiterStreamReader.GetFieldsCount() + _customColumnsCount];
         for (var i = 0; i < _customColumnsCount; i++)
         {
             Columns[i] = new Column(customColumns[i]);
         }
         for (var i = _customColumnsCount; i < Columns.Length; i++)
         {
-            Columns[i] = new Column(i + 1 - _customColumnsCount, DataType.String);
+            Columns[i] = new Column(i - _customColumnsCount, DataType.String);
         }
     }
 
@@ -124,7 +98,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
         bool hasData;
         do
         {
-            hasData = ReadNextWithDelimiters(Options.Delimiters);
+            hasData = ReadNextWithDelimiters();
             if (hasData && _firstFetch)
             {
                 SetDefaultColumns();
@@ -146,26 +120,11 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
         }
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private char GetNextCharacter()
-    {
-        if (DynamicBuffer.Size <= _currentDelimiterPosition)
-        {
-            ReadNextBufferData();
-        }
-        if (DynamicBuffer.Size > _currentDelimiterPosition)
-        {
-            return DynamicBuffer.GetAt(_currentDelimiterPosition);
-        }
-        return '\0';
-    }
-
     /// <summary>
     /// Read the next row using custom delimiters.
     /// </summary>
-    /// <param name="delimiters">Custom delimiters.</param>
     /// <returns><c>True</c> if cursor was moved and data is available, <c>false</c> if there is no row anymore.</returns>
-    protected bool ReadNextWithDelimiters(char[]? delimiters = null)
+    protected bool ReadNextWithDelimiters()
     {
         _rowIndex++;
 
@@ -174,128 +133,13 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
         {
             return true;
         }
+
         if (StreamReader == null)
         {
             return false;
         }
 
-        _currentDelimitersPositionsCursor = 1;
-        DynamicBuffer.Advance(_currentDelimiterPosition);
-        _currentDelimiterPosition = 0;
-        if (DynamicBuffer.IsEmpty)
-        {
-            ReadNextBufferData();
-        }
-
-        int readBytes;
-        bool isInQuotes = false, // Are we within quotes?
-            quotesMode = false; // Set when first field char is quote.
-        SequenceReader<char> sequenceReader;
-        do
-        {
-            _currentSequence = DynamicBuffer.GetSequence();
-            sequenceReader = new SequenceReader<char>(_currentSequence);
-            sequenceReader.Advance(_currentDelimiterPosition);
-            while (_currentDelimiterPosition < DynamicBuffer.Size)
-            {
-                var hasAdvanced = !isInQuotes
-                    ? sequenceReader.TryAdvanceToAny(_stopCharacters, advancePastDelimiter: false)
-                    : sequenceReader.TryAdvanceTo(Options.QuoteChar, advancePastDelimiter: false);
-                if (!hasAdvanced)
-                {
-                    _currentDelimiterPosition = (int)sequenceReader.Consumed;
-                    break;
-                }
-
-                sequenceReader.TryPeek(out char ch);
-                sequenceReader.Advance(1);
-                if (Options.UseQuoteChar && ch == Options.QuoteChar)
-                {
-                    // If the field starts with quote - turn on the quotes processing mode.
-                    if (_currentDelimitersPositions[_currentDelimitersPositionsCursor - 1] == (int)sequenceReader.Consumed - 1)
-                    {
-                        quotesMode = true;
-                    }
-                    if (quotesMode)
-                    {
-                        isInQuotes = !isInQuotes;
-                    }
-                }
-                else if (delimiters != null && Array.IndexOf(delimiters, ch) > -1)
-                {
-                    _currentDelimiterPosition = (int)sequenceReader.Consumed;
-                    if (!isInQuotes)
-                    {
-                        AddDelimiterPosition(_currentDelimiterPosition, quotesMode);
-                        quotesMode = false;
-                    }
-                }
-                else if (ch == '\n' || ch == '\r')
-                {
-                    if (!isInQuotes)
-                    {
-                        _currentDelimiterPosition = (int)sequenceReader.Consumed;
-                        AddDelimiterPosition(_currentDelimiterPosition, quotesMode);
-                        quotesMode = false;
-
-                        // Process /r/n Windows line end case.
-                        if (ch == '\r' && GetNextCharacter() == '\n')
-                        {
-                            _currentDelimiterPosition++;
-                        }
-
-                        // Skip empty line and try to read next.
-                        if (Options.SkipEmptyLines && IsEmpty())
-                        {
-                            sequenceReader.Advance(_currentDelimiterPosition);
-                            _currentDelimitersPositionsCursor = 1;
-                            continue;
-                        }
-
-                        return true;
-                    }
-
-                    _currentDelimiterPosition = (int)sequenceReader.Consumed;
-                    break;
-                }
-            }
-
-            readBytes = ReadNextBufferData();
-        }
-        while (readBytes > 0);
-
-        // We are at the end of the stream. Add remain index and exit.
-        _currentDelimiterPosition += (int)sequenceReader.Remaining;
-        AddDelimiterPosition(_currentDelimiterPosition + 1, quotesMode);
-        return !IsEmpty();
-    }
-
-    private bool IsEmpty()
-        => _currentDelimitersPositionsCursor == 2 && _currentDelimitersPositions[1] == 1;
-
-    private int ReadNextBufferData()
-    {
-        if (StreamReader!.EndOfStream)
-        {
-            return 0;
-        }
-
-        var buffer = DynamicBuffer.Allocate();
-        var readBytes = StreamReader.Read(buffer);
-        DynamicBuffer.Commit(readBytes);
-        return readBytes;
-    }
-
-    private void AddDelimiterPosition(int value, bool quotesMode)
-    {
-        _currentDelimitersPositionsCursor++;
-        if (_currentDelimitersPositions.Length < _currentDelimitersPositionsCursor)
-        {
-            Array.Resize(ref _currentDelimitersPositions, _currentDelimitersPositionsCursor);
-            Array.Resize(ref _currentDelimitersQuotes, _currentDelimitersPositionsCursor);
-        }
-        _currentDelimitersPositions[_currentDelimitersPositionsCursor - 1] = value;
-        _currentDelimitersQuotes[_currentDelimitersPositionsCursor - 1] = quotesMode;
+        return _delimiterStreamReader.Read();
     }
 
     /// <summary>
@@ -309,15 +153,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     /// Get current row as text string.
     /// </summary>
     /// <returns>Row text string.</returns>
-    protected ReadOnlySequence<char> GetRowText()
-    {
-        if (_currentDelimitersPositionsCursor < 1)
-        {
-            return ReadOnlySequence<char>.Empty;
-        }
-        return _currentSequence.Slice(
-            _currentDelimitersPositions[0], _currentDelimitersPositions[_currentDelimitersPositionsCursor - 1] - 1);
-    }
+    protected ReadOnlySequence<char> GetRowText() => _delimiterStreamReader.GetLine();
 
     /// <summary>
     /// Get column row string value.
@@ -335,24 +171,8 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
             return GetCustomColumnValue(_rowIndex, columnIndex).AsString;
         }
         columnIndex -= _customColumnsCount;
-        if (columnIndex + 1 > _currentDelimitersPositionsCursor - 1)
-        {
-            return ReadOnlySpan<char>.Empty;
-        }
 
-        var previousColumnIndex = _currentDelimitersPositions[columnIndex];
-        var currentColumnIndex = _currentDelimitersPositions[columnIndex + 1];
-        if (previousColumnIndex == currentColumnIndex)
-        {
-            return ReadOnlySpan<char>.Empty;
-        }
-        var valueSequence = _currentSequence.Slice(previousColumnIndex, currentColumnIndex - previousColumnIndex - 1);
-        var valueHasQuotes = Options.UseQuoteChar && _currentDelimitersQuotes[columnIndex + 1];
-        if (valueHasQuotes)
-        {
-            return StringUtils.Unquote(valueSequence);
-        }
-        return valueSequence.IsSingleSegment ? valueSequence.FirstSpan : valueSequence.ToArray();
+        return _delimiterStreamReader.GetField(columnIndex);
     }
 
     /// <inheritdoc />
@@ -423,14 +243,4 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     }
 
     #endregion
-
-    /// <inheritdoc />
-    public override string ToString()
-    {
-        if (StreamReader?.BaseStream is FileStream fileStream)
-        {
-            return Path.GetFileName(fileStream.Name).Trim();
-        }
-        return GetType().Name;
-    }
 }

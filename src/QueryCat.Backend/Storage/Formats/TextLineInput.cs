@@ -1,12 +1,13 @@
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Types;
+using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Storage.Formats;
 
 /// <summary>
 /// Text line input.
 /// </summary>
-public sealed class TextLineInput : StreamRowsInput
+internal sealed class TextLineInput : StreamRowsInput
 {
     /// <inheritdoc />
     protected override StreamReader? StreamReader { get; set; }
@@ -16,11 +17,7 @@ public sealed class TextLineInput : StreamRowsInput
         new("filename", DataType.String, "File path"), // Index 0.
     };
 
-    public TextLineInput(Stream stream) : base(new StreamRowsInputOptions
-    {
-        BufferSize = StreamRowsInputOptions.DefaultBufferSize,
-        UseQuoteChar = false
-    })
+    public TextLineInput(Stream stream) : base(new StreamReader(stream), new DelimiterStreamReader.ReaderOptions())
     {
         StreamReader = new StreamReader(stream);
 

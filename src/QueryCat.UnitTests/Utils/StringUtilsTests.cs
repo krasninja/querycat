@@ -1,4 +1,3 @@
-using System.Buffers;
 using Xunit;
 using QueryCat.Backend.Utils;
 
@@ -20,21 +19,5 @@ public class StringUtilsTests
 
         // Assert.
         Assert.Equal(shouldMatch, result);
-    }
-
-    [Theory]
-    [InlineData("test", "test")]
-    [InlineData("\"test\"", "test")]
-    [InlineData("\"test with \"\"quote\"\"\"", "test with \"quote\"")]
-    [InlineData("test with \"\"quote\"\"", "test with \"quote\"")]
-    public void Unquote(string target, string expected)
-    {
-        // Act.
-        var result1 = StringUtils.Unquote(target).ToString();
-        var result2 = StringUtils.Unquote(new ReadOnlySequence<char>(target.AsMemory())).ToString();
-
-        // Assert.
-        Assert.Equal(expected, result1);
-        Assert.Equal(expected, result2);
     }
 }
