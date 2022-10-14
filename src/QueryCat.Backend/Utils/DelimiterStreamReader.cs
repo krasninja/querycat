@@ -8,7 +8,7 @@ namespace QueryCat.Backend.Utils;
 /// </summary>
 public class DelimiterStreamReader
 {
-    private const int DefaultBufferSize = 4_096 * 8;
+    private const int DefaultBufferSize = 0x4000;
 
     private static readonly char[] AutoDetectDelimiters = { ',', '\t', ';', '|' };
 
