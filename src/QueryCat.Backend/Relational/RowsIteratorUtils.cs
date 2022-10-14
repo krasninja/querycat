@@ -10,17 +10,15 @@ public static class RowsIteratorUtils
 {
     private class EmptyRowsIterator : IRowsIterator
     {
-        private readonly Row _empty;
-
         /// <inheritdoc />
         public Column[] Columns => Array.Empty<Column>();
 
         /// <inheritdoc />
-        public Row Current => new(this);
+        public Row Current { get; }
 
         public EmptyRowsIterator()
         {
-            _empty = new Row(this);
+            Current = new Row(this);
         }
 
         /// <inheritdoc />
