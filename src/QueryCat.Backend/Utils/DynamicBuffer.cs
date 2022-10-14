@@ -1,7 +1,6 @@
 using System.Buffers;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using System.Text;
 
 // ReSharper disable LocalizableElement
 
@@ -31,6 +30,22 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
      * 3 - bufferTail
      * 4 - endPosition = 37
      * 5 - allocatedPosition = 45
+     *
+     * Use case #1:
+     * 1) dynamicBuffer.Write("12345"); // Write some data to the buffer. Buffer state is "12345".
+     * 2) dynamicBuffer.Advance(3); // Advance cursor. Now buffer is "45".
+     * 3) dynamicBuffer.Write("67"); // Write more data. Now buffer is "4567".
+     * 4) dynamicBuffer.GetSpan(0); // Get buffer data.
+     * 5) dynamicBuffer.Advance(20); // Move cursor to the end. Buffer is empty.
+     *
+     * Use case #2:
+     * 1) var buf1 = dynamicBuffer.Allocate(); // Get available buffer.
+     * 2) "123".CopyTo(buf1); // Copy "123" to buffer. The buffer is empty.
+     * 3) dynamicBuffer.Commit(3); // Commit that we wrote only 3 characters.
+     * 4) dynamicBuffer.GetSpan(0); // Get buffer data. It is "123".
+     * 5) var buf2 = dynamicBuffer.Allocate(); // Get another empty buffer.
+     * 6) "45".CopyTo(buf2); // Append 45. But dynamic buffer state is still "123".
+     * 7) dynamicBuffer.Commit(2); // Dynamic buffer state "12345".
      */
 
     private readonly int _chunkSize;
@@ -71,6 +86,7 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
     private long _allocatedPosition;
     private long _startPosition;
     private long _endPosition;
+    private bool _allocatedFlag;
 
     /// <summary>
     /// Simple implementation of queue for <see cref="BufferSegment" />.
@@ -262,6 +278,16 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
     /// <returns>Buffer.</returns>
     public Span<T> Allocate()
     {
+        if (_allocatedFlag)
+        {
+            throw new InvalidOperationException("You should commit data before allocate a new buffer.");
+        }
+        _allocatedFlag = true;
+        return AllocateInternal();
+    }
+
+    private Span<T> AllocateInternal()
+    {
         // Check if we have spare space at current chunk.
         if (_buffersList.IsAny && _endPosition % _chunkSize > 0)
         {
@@ -300,6 +326,7 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
     /// <param name="size">Number of elements.</param>
     public void Commit(int size)
     {
+        _allocatedFlag = false;
         if (size < 0)
         {
             throw new ArgumentOutOfRangeException(nameof(size));
@@ -347,7 +374,7 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
         {
             endIndex = maxEndIndex;
         }
-        var spanSize = endIndex - startIndex + 1;
+        var spanSize = endIndex - startIndex;
         if (spanSize < 0 || startIndex < 0 || endIndex < 0)
         {
             throw new ArgumentOutOfRangeException(nameof(startIndex), "Start index must be greater than end index.");
@@ -566,7 +593,7 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
         // Write values.
         while (writeIndex < length)
         {
-            var buffer = _buffersList.Tail?.Buffer ?? Allocate();
+            var buffer = _buffersList.Tail?.Buffer ?? AllocateInternal();
             var remainBuffer = (int)_allocatedPosition - (int)_endPosition;
             if (_buffersList.Tail == _buffersList.Head)
             {
@@ -574,7 +601,7 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
             }
             if (remainBuffer < 1)
             {
-                buffer = Allocate();
+                buffer = AllocateInternal();
                 remainBuffer = buffer.Length;
             }
 
@@ -593,7 +620,7 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
     /// <param name="data">Data to write.</param>
     /// <param name="totalWidth">Total dynamic buffer size.</param>
     /// <param name="paddingValue">The value to fill the remain space.</param>
-    public void WriteWithPadRight(ReadOnlySpan<T> data, int totalWidth, T paddingValue)
+    public void WritePadRight(ReadOnlySpan<T> data, int totalWidth, T paddingValue)
     {
         Write(data);
         var paddingCount = totalWidth - data.Length;
@@ -609,7 +636,7 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
     /// <param name="data">Data to write.</param>
     /// <param name="totalWidth">Total dynamic buffer size.</param>
     /// <param name="paddingValue">The value to fill the remain space.</param>
-    public void WriteWithPadLeft(ReadOnlySpan<T> data, int totalWidth, T paddingValue)
+    public void WritePadLeft(ReadOnlySpan<T> data, int totalWidth, T paddingValue)
     {
         var paddingCount = totalWidth - data.Length;
         if (paddingCount > 0)
@@ -617,50 +644,6 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
             Write(paddingValue, paddingCount);
         }
         Write(data);
-    }
-
-    /// <summary>
-    /// Write string into the buffer. It is only available for <see cref="char" />
-    /// or <see cref="byte" /> generic type.
-    /// </summary>
-    /// <param name="data">String to write.</param>
-    public void WriteString(string data)
-    {
-        if (this is DynamicBuffer<char> charsDynamicBuffer)
-        {
-            charsDynamicBuffer.Write(data);
-            return;
-        }
-        if (this is DynamicBuffer<byte> bytesDynamicBuffer)
-        {
-            bytesDynamicBuffer.Write(Encoding.ASCII.GetBytes(data));
-            return;
-        }
-
-        throw new InvalidOperationException("The method is designed only for character and byte generic type.");
-    }
-
-    /// <summary>
-    /// Write string into the buffer. It is only available for <see cref="char" />
-    /// or <see cref="byte" /> generic type.
-    /// </summary>
-    /// <param name="data">String to write.</param>
-    /// <param name="totalWidth">Total dynamic buffer size.</param>
-    /// <param name="paddingValue">The value to fill the remain space.</param>
-    public void WriteStringWithPadRight(string data, int totalWidth, T paddingValue)
-    {
-        if (this is DynamicBuffer<char> charsDynamicBuffer && paddingValue is char paddingCharacter)
-        {
-            charsDynamicBuffer.WriteWithPadRight(data, totalWidth, paddingCharacter);
-            return;
-        }
-        if (this is DynamicBuffer<byte> bytesDynamicBuffer && paddingValue is byte paddingByte)
-        {
-            bytesDynamicBuffer.WriteWithPadRight(Encoding.ASCII.GetBytes(data), totalWidth, paddingByte);
-            return;
-        }
-
-        throw new InvalidOperationException("The method is designed only for character generic type.");
     }
 
     #endregion

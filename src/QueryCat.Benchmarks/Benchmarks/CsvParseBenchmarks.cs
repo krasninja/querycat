@@ -23,7 +23,7 @@ public class CsvParseBenchmarks
     }
 
     [Benchmark]
-    public int ReadAllUsersWithStringSplit()
+    public int ReadAllUsersWithNaiveStringSplit()
     {
         /*
          * The test is not the correct way of CSV parsing, it is just to test dumb implementation!

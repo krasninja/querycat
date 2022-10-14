@@ -64,24 +64,6 @@ public class DynamicBufferTests
     }
 
     [Fact]
-    public void Advance_ExactBufferSizeBytes_ShouldWorkCorrectly()
-    {
-        // Arrange.
-        var dynamicBuffer = new DynamicBuffer<byte>(chunkSize: 10);
-        dynamicBuffer.Allocate();
-        dynamicBuffer.Allocate();
-        dynamicBuffer.Commit(20);
-
-        // Act.
-        dynamicBuffer.Advance(0);
-        dynamicBuffer.Advance(10);
-        dynamicBuffer.Advance(11);
-
-        // Assert.
-        Assert.Equal(0, dynamicBuffer.Size);
-    }
-
-    [Fact]
     public void GetSequence_CommitOneSegment_ShouldReturnOne()
     {
         // Arrange.
@@ -319,12 +301,12 @@ public class DynamicBufferTests
         var span2 = dynamicBuffer.GetSpan(13, 17);
         var span3 = dynamicBuffer.GetSpan(3, 14);
         dynamicBuffer.Advance(3);
-        var span4 = dynamicBuffer.GetSpan(3, 3);
+        var span4 = dynamicBuffer.GetSpan(3, 4);
 
         // Assert.
-        Assert.Equal("bcde", span1.ToString());
-        Assert.Equal("nopqr", span2.ToString());
-        Assert.Equal("defghijklmno", span3.ToString());
+        Assert.Equal("bcd", span1.ToString());
+        Assert.Equal("nopq", span2.ToString());
+        Assert.Equal("defghijklmn", span3.ToString());
         Assert.Equal("g", span4.ToString());
     }
 
@@ -349,7 +331,7 @@ public class DynamicBufferTests
         var dynamicBuffer = new DynamicBuffer<char>(chunkSize: 5);
 
         // Act.
-        dynamicBuffer.WriteString("123451234567");
+        dynamicBuffer.Write("123451234567");
 
         // Assert.
         Assert.Equal(12, dynamicBuffer.GetSequence().Length);
@@ -362,7 +344,7 @@ public class DynamicBufferTests
         var dynamicBuffer = new DynamicBuffer<char>(chunkSize: 5);
 
         // Act.
-        dynamicBuffer.WriteStringWithPadRight("1234567890123", 15, '_');
+        dynamicBuffer.WritePadRight("1234567890123", 15, '_');
 
         // Assert.
         Assert.Equal("1234567890123__", dynamicBuffer.GetSequence().ToString());
@@ -375,11 +357,29 @@ public class DynamicBufferTests
         var dynamicBuffer = new DynamicBuffer<char>(chunkSize: 5);
 
         // Act.
-        dynamicBuffer.WriteString("12345678");
+        dynamicBuffer.Write("12345678");
         dynamicBuffer.Advance(3);
-        dynamicBuffer.WriteString("90");
+        dynamicBuffer.Write("90");
 
         // Assert.
         Assert.Equal("4567890", dynamicBuffer.GetSequence().ToString());
+    }
+
+    [Fact]
+    public void Allocate_MultipleCopy_ShouldConcatenate()
+    {
+        // Arrange.
+        var dynamicBuffer = new DynamicBuffer<char>(chunkSize: 5);
+
+        // Act.
+        var buf1 = dynamicBuffer.Allocate();
+        "12".CopyTo(buf1);
+        "34".CopyTo(buf1.Slice(2, 2));
+        dynamicBuffer.Commit(2);
+        dynamicBuffer.Commit(2);
+
+        // Assert.
+        Assert.Equal("1234", dynamicBuffer.GetSequence().ToString());
+        Assert.Equal("1234", dynamicBuffer.GetSpan(0).ToString());
     }
 }
