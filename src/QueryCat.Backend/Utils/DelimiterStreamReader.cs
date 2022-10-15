@@ -1,13 +1,25 @@
 using System.Buffers;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 
 namespace QueryCat.Backend.Utils;
 
 /// <summary>
-/// Read text stream with delimiters.
+/// Simple text parser with the delimiters. Can be used to parse CSV, DSV, stdin stream, etc.
 /// </summary>
 public class DelimiterStreamReader
 {
+    /*
+     * The basic use case:
+     *
+     * var csv = new DelimiterStreamReader(new StreamReader(file));
+     * csv.Read(); // Read header.
+     * while (csv.Read())
+     * {
+     *     csv.GetInt32(0); // Read column #0 as int.
+     *     csv.GetField(1); // Read column #1 as string.
+     * }
+     */
     private const int DefaultBufferSize = 0x4000;
 
     private static readonly char[] AutoDetectDelimiters = { ',', '\t', ';', '|' };
@@ -41,6 +53,11 @@ public class DelimiterStreamReader
         /// Do not take into account empty lines.
         /// </summary>
         public bool SkipEmptyLines { get; init; } = true;
+
+        /// <summary>
+        /// Culture to use for parse.
+        /// </summary>
+        public CultureInfo Culture { get; init; } = CultureInfo.InvariantCulture;
     }
 
     private struct FieldInfo
@@ -51,13 +68,13 @@ public class DelimiterStreamReader
 
         public int QuotesCount { get; set; }
 
+        public char QuoteCharacter { get; set; }
+
         public bool HasQuotes => QuotesCount > 0;
 
         public bool HasInnerQuotes => QuotesCount > 2;
 
-        public bool IsEmpty => StartIndex == EndIndex;
-
-        public char QuoteCharacter { get; set; }
+        public bool IsEmpty => EndIndex - StartIndex < 2;
 
         public void Reset()
         {
@@ -86,6 +103,11 @@ public class DelimiterStreamReader
     // fetch new data to finish. The current position will contain the start index.
     private int _currentDelimiterPosition;
 
+    /// <summary>
+    /// Constructor.
+    /// </summary>
+    /// <param name="streamReader">Stream reader.</param>
+    /// <param name="options">Reader options.</param>
     public DelimiterStreamReader(StreamReader streamReader, ReaderOptions? options = null)
     {
         _streamReader = streamReader;
@@ -256,6 +278,38 @@ public class DelimiterStreamReader
         return !IsEmpty();
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    private bool IsEmpty()
+        => _fieldInfoLastIndex == 1 && _fieldInfos[0].EndIndex == 1;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    private int ReadNextBufferData()
+    {
+        if (_streamReader.EndOfStream)
+        {
+            return 0;
+        }
+
+        var buffer = _dynamicBuffer.Allocate();
+        var readBytes = _streamReader.Read(buffer);
+        _dynamicBuffer.Commit(readBytes);
+        return readBytes;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    private ref FieldInfo GetNextFieldInfo()
+    {
+        if (_fieldInfoLastIndex > _fieldInfos.Length)
+        {
+            Array.Resize(ref _fieldInfos, _fieldInfoLastIndex);
+        }
+
+#if DEBUG
+        _fieldInfos[_fieldInfoLastIndex].Reset();
+#endif
+        return ref _fieldInfos[_fieldInfoLastIndex++];
+    }
+
     /// <summary>
     /// Get column value.
     /// </summary>
@@ -289,6 +343,69 @@ public class DelimiterStreamReader
     }
 
     /// <summary>
+    /// Check if the column with the specific index is empty.
+    /// </summary>
+    /// <param name="columnIndex">Column index.</param>
+    /// <returns>Returns <c>true</c> if empty, <c>false</c> otherwise.</returns>
+    public bool IsEmpty(int columnIndex)
+    {
+        if (columnIndex + 1 > _fieldInfoLastIndex)
+        {
+            return true;
+        }
+        ref FieldInfo fieldInfo = ref _fieldInfos[columnIndex];
+        if (fieldInfo.IsEmpty)
+        {
+            return true;
+        }
+        if (fieldInfo.HasQuotes && fieldInfo.EndIndex - fieldInfo.StartIndex - fieldInfo.QuotesCount == 0)
+        {
+            return true;
+        }
+        return false;
+    }
+
+    #region Helpers
+
+    /// <summary>
+    /// Get Int32 value of the specific column.
+    /// </summary>
+    /// <param name="columnIndex">Column index.</param>
+    /// <returns>The value.</returns>
+    public int GetInt32(int columnIndex) => int.Parse(GetField(columnIndex), provider: _options.Culture);
+
+    /// <summary>
+    /// Get decimal value of the specific column.
+    /// </summary>
+    /// <param name="columnIndex">Column index.</param>
+    /// <returns>The value.</returns>
+    public decimal GetDecimal(int columnIndex) => decimal.Parse(GetField(columnIndex), provider: _options.Culture);
+
+    /// <summary>
+    /// Get <see cref="DateTime" /> value of the specific column.
+    /// </summary>
+    /// <param name="columnIndex">Column index.</param>
+    /// <returns>The value.</returns>
+    public DateTime GetDateTime(int columnIndex) => DateTime.Parse(GetField(columnIndex),
+        styles: DateTimeStyles.None, provider: _options.Culture);
+
+    /// <summary>
+    /// Get boolean value of the specific column.
+    /// </summary>
+    /// <param name="columnIndex">Column index.</param>
+    /// <returns>The value.</returns>
+    public bool GetBoolean(int columnIndex) => bool.Parse(GetField(columnIndex));
+
+    /// <summary>
+    /// Get string value of the specific column.
+    /// </summary>
+    /// <param name="columnIndex">Column index.</param>
+    /// <returns>The value.</returns>
+    public string GetString(int columnIndex) => GetField(columnIndex).ToString();
+
+    #endregion
+
+    /// <summary>
     /// Get the whole line.
     /// </summary>
     /// <returns>Line string.</returns>
@@ -300,38 +417,6 @@ public class DelimiterStreamReader
         }
         return _currentSequence.Slice(
             _fieldInfos[0].StartIndex, _fieldInfos[_fieldInfoLastIndex - 2].EndIndex - 1);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    private bool IsEmpty()
-        => _fieldInfoLastIndex == 1 && _fieldInfos[0].EndIndex == 1;
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    private int ReadNextBufferData()
-    {
-        if (_streamReader.EndOfStream)
-        {
-            return 0;
-        }
-
-        var buffer = _dynamicBuffer.Allocate();
-        var readBytes = _streamReader.Read(buffer);
-        _dynamicBuffer.Commit(readBytes);
-        return readBytes;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    private ref FieldInfo GetNextFieldInfo()
-    {
-        if (_fieldInfoLastIndex > _fieldInfos.Length)
-        {
-            Array.Resize(ref _fieldInfos, _fieldInfoLastIndex);
-        }
-
-#if DEBUG
-        _fieldInfos[_fieldInfoLastIndex].Reset();
-#endif
-        return ref _fieldInfos[_fieldInfoLastIndex++];
     }
 
     internal static ReadOnlySpan<char> Unquote(string target, char quoteChar = '"')
@@ -369,7 +454,7 @@ public class DelimiterStreamReader
     /// <inheritdoc />
     public override string ToString()
     {
-        if (_streamReader?.BaseStream is FileStream fileStream)
+        if (_streamReader.BaseStream is FileStream fileStream)
         {
             return Path.GetFileName(fileStream.Name).Trim();
         }
