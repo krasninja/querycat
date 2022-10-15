@@ -28,11 +28,6 @@ internal sealed class DsvInput : StreamRowsInput
     {
         _hasHeader = hasHeader;
         _addFileNameColumn = addFileNameColumn;
-
-        if (StreamReader.BaseStream is not FileStream)
-        {
-            _customColumns = Array.Empty<Column>();
-        }
     }
 
     #region Header
@@ -50,18 +45,15 @@ internal sealed class DsvInput : StreamRowsInput
         {
             // Parse head columns names.
             iterator.MoveNext();
-            var columnNames = iterator.Current.AsArray().Select(c => c.AsString).ToArray();
+            var columnNames = GetCurrentInputValues(iterator.Current);
             if (columnNames.Length < 1)
             {
                 throw new IOSourceException("There are no columns.");
             }
-            for (int i = 0; i < columnNames.Length; i++)
+            var columns = GetInputColumns();
+            for (int i = 0; i < columns.Length; i++)
             {
-                Columns[i].Name = columnNames[i];
-            }
-            for (var i = 0; i < _customColumns.Length; i++)
-            {
-                Columns[i].Name = _customColumns[i].Name;
+                columns[i].Name = columnNames[i].AsString;
             }
         }
 
@@ -73,7 +65,9 @@ internal sealed class DsvInput : StreamRowsInput
     /// <inheritdoc />
     protected override Column[] GetVirtualColumns()
     {
-        return _addFileNameColumn ? _customColumns : Array.Empty<Column>();
+        return _addFileNameColumn && StreamReader.BaseStream is FileStream
+            ? _customColumns
+            : Array.Empty<Column>();
     }
 
     /// <inheritdoc />
@@ -81,14 +75,7 @@ internal sealed class DsvInput : StreamRowsInput
     {
         if (columnIndex == 0 && StreamReader.BaseStream is FileStream fileStream)
         {
-            if (rowIndex == 0 && _hasHeader == true)
-            {
-                return new VariantValue(_customColumns[columnIndex].Name);
-            }
-            else
-            {
-                return new VariantValue(fileStream.Name);
-            }
+            return new VariantValue(fileStream.Name);
         }
         return base.GetVirtualColumnValue(rowIndex, columnIndex);
     }
