@@ -47,15 +47,11 @@ public sealed class IISW3CInput : StreamRowsInput
         ["cs(Referer)"] = new("cs(Referer)", DataType.String, "The site that the user last visited"),
     };
 
-    /// <inheritdoc />
-    protected override StreamReader? StreamReader { get; set; }
-
     public IISW3CInput(Stream stream) : base(new StreamReader(stream), new DelimiterStreamReader.ReaderOptions
     {
         Delimiters = new[] { ' ' }
     })
     {
-        StreamReader = new StreamReader(stream);
     }
 
     /// <inheritdoc />
@@ -95,7 +91,7 @@ public sealed class IISW3CInput : StreamRowsInput
     {
         // Try to find fields header.
         bool foundHeaders = false;
-        while (ReadNextWithDelimiters())
+        while (ReadNext())
         {
             var line = GetColumnValue(0);
             if (line.StartsWith(FieldsMarker))
@@ -139,6 +135,6 @@ public sealed class IISW3CInput : StreamRowsInput
             }
         }
 
-        Columns = columns.ToArray();
+        SetColumns(columns);
     }
 }

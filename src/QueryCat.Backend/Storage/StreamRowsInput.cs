@@ -8,8 +8,13 @@ using QueryCat.Backend.Utils;
 namespace QueryCat.Backend.Storage;
 
 /// <summary>
-/// The base class that contains common logic to parse text data from a stream. It
-/// stores the delimiter indexes within the buffer.
+/// The base class that contains common logic to parse text data from a stream. With
+/// additional functionality:
+/// - analyze text data schema;
+/// - cache analyze data to prevent double reading;
+/// - IRowsInput interface implementation;
+/// - StreamReader reset (if Stream supports Seek);
+/// - custom columns.
 /// </summary>
 public abstract class StreamRowsInput : IRowsInput, IDisposable
 {
@@ -17,15 +22,15 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
      * The main workflow is:
      * - Open()
      *   - Analyze() - init columns, add custom columns, resolve columns types
-     *     - ReadNext() - store data into RowsFrame, on first call init columns
-     *   - Prepare() - prepare for reading
      * - SetContext()
      * - ReadNext() - real data reading, cache first, stream next
      * - Close()
      */
     private int _rowIndex = 0;
 
-    protected abstract StreamReader? StreamReader { get; set; }
+    protected StreamReader StreamReader { get; set; }
+
+    private bool _isClosed;
 
     public QueryContext QueryContext { get; private set; } = EmptyQueryContext.Empty;
 
@@ -34,10 +39,12 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     private bool _firstFetch = true;
 
     // Cache.
-    private RowsFrameIterator? _preReadIterator;
+    private CacheRowsIterator? _cacheIterator;
+
+    private Column[] _columns = { };
 
     /// <inheritdoc />
-    public Column[] Columns { get; protected set; } = Array.Empty<Column>();
+    public Column[] Columns => _columns;
 
     private int _customColumnsCount = 0;
 
@@ -51,6 +58,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     public StreamRowsInput(StreamReader streamReader, DelimiterStreamReader.ReaderOptions? options = null)
     {
         _delimiterStreamReader = new DelimiterStreamReader(streamReader, options);
+        StreamReader = streamReader;
     }
 
     /// <inheritdoc />
@@ -69,8 +77,10 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     /// <inheritdoc />
     public virtual ErrorCode ReadValue(int columnIndex, out VariantValue value)
     {
+        var columnValue = GetColumnValue(columnIndex);
+        Logger.Instance.Debug($"Column index {columnIndex}, value '{columnValue}.", nameof(StreamRowsInput));
         return VariantValue.TryCreateFromString(
-            GetColumnValue(columnIndex),
+            columnValue,
             Columns[columnIndex].DataType,
             out value)
             ? ErrorCode.OK : ErrorCode.CannotCast;
@@ -78,68 +88,72 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
 
     private void SetDefaultColumns()
     {
-        var customColumns = GetCustomColumns();
+        var customColumns = GetVirtualColumns();
         _customColumnsCount = customColumns.Length;
 
-        Columns = new Column[_delimiterStreamReader.GetFieldsCount() + _customColumnsCount];
+        var newColumns = new Column[_delimiterStreamReader.GetFieldsCount() + _customColumnsCount];
         for (var i = 0; i < _customColumnsCount; i++)
         {
-            Columns[i] = new Column(customColumns[i]);
+            newColumns[i] = new Column(customColumns[i]);
         }
-        for (var i = _customColumnsCount; i < Columns.Length; i++)
+        for (var i = _customColumnsCount; i < newColumns.Length; i++)
         {
-            Columns[i] = new Column(i - _customColumnsCount, DataType.String);
+            newColumns[i] = new Column(i - _customColumnsCount, DataType.String);
         }
-    }
-
-    /// <inheritdoc />
-    public bool ReadNext()
-    {
-        bool hasData;
-        do
-        {
-            hasData = ReadNextWithDelimiters();
-            if (hasData && _firstFetch)
-            {
-                SetDefaultColumns();
-                _firstFetch = false;
-            }
-        }
-        while (hasData && IgnoreLine());
-        return hasData;
-    }
-
-    /// <inheritdoc />
-    public virtual void Reset()
-    {
-        if (StreamReader != null)
-        {
-            Logger.Instance.Debug("Reset.", nameof(StreamRowsInput));
-            StreamReader.DiscardBufferedData();
-            StreamReader.BaseStream.Seek(0, SeekOrigin.Begin);
-        }
+        SetColumns(newColumns);
     }
 
     /// <summary>
-    /// Read the next row using custom delimiters.
+    /// Initialize columns with the new set.
     /// </summary>
-    /// <returns><c>True</c> if cursor was moved and data is available, <c>false</c> if there is no row anymore.</returns>
-    protected bool ReadNextWithDelimiters()
+    /// <param name="columns">New columns.</param>
+    protected void SetColumns(IEnumerable<Column> columns)
+    {
+        var newColumns = columns as Column[] ?? columns.ToArray();
+        Array.Resize(ref _columns, newColumns.Length);
+        Array.Copy(newColumns, _columns, newColumns.Length);
+    }
+
+    /// <inheritdoc />
+    public virtual bool ReadNext()
+    {
+        var hasData = ReadNextInternal();
+        if (hasData && _firstFetch)
+        {
+            SetDefaultColumns();
+            _firstFetch = false;
+        }
+        return hasData;
+    }
+
+    private bool ReadNextInternal()
     {
         _rowIndex++;
 
         // If we have cached data - return it first.
-        if (_preReadIterator != null && _preReadIterator.MoveNext())
+        if (_cacheIterator != null && _cacheIterator.MoveNext())
         {
+            if (_cacheIterator.EndOfCache)
+            {
+                _cacheIterator = null;
+            }
             return true;
         }
 
-        if (StreamReader == null)
+        if (_isClosed)
         {
             return false;
         }
 
         return _delimiterStreamReader.Read();
+    }
+
+    /// <inheritdoc />
+    public virtual void Reset()
+    {
+        Logger.Instance.Debug("Reset.", nameof(StreamRowsInput));
+        StreamReader.DiscardBufferedData();
+        StreamReader.BaseStream.Seek(0, SeekOrigin.Begin);
     }
 
     /// <summary>
@@ -162,13 +176,13 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     /// <returns>The string value.</returns>
     protected ReadOnlySpan<char> GetColumnValue(int columnIndex)
     {
-        if (_preReadIterator != null && _preReadIterator.HasData)
+        if (_cacheIterator != null)
         {
-            return _preReadIterator.Current[columnIndex].AsString;
+            return _cacheIterator.Current[columnIndex].AsString;
         }
         if (columnIndex < _customColumnsCount)
         {
-            return GetCustomColumnValue(_rowIndex, columnIndex).AsString;
+            return GetVirtualColumnValue(_rowIndex, columnIndex).AsString;
         }
         columnIndex -= _customColumnsCount;
 
@@ -178,28 +192,25 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     /// <inheritdoc />
     public virtual void Open()
     {
-        // input iterator -> action to append cache.
         var inputIterator = new RowsInputIterator(this, autoFetch: true);
-        RowsFrameIterator? localPreReadIterator = null;
-        var actionRowsIterator = new ActionRowsIterator(inputIterator, "add to pre-read cache")
+
+        // Move iterator, after that we are able to fill initial columns set.
+        var hasData = inputIterator.MoveNext();
+        if (!hasData)
         {
-            AfterMoveNext = afterMoveIterator =>
-            {
-                if (localPreReadIterator == null)
-                {
-                    var preReadRowsFrame = new RowsFrame(Columns);
-                    localPreReadIterator = preReadRowsFrame.GetIterator();
-                }
-                localPreReadIterator.RowsFrame.AddRow(afterMoveIterator.Current);
-            }
-        };
-        Analyze(actionRowsIterator);
-        if (localPreReadIterator != null)
-        {
-            localPreReadIterator.Reset();
-            _preReadIterator = localPreReadIterator;
-            Prepare(localPreReadIterator);
+            return;
         }
+
+        // Prepare cache iterator. Analyze might read data which we cache and
+        // then provide from memory instead from input source.
+        var cacheIterator = new CacheRowsIterator(inputIterator);
+        cacheIterator.AddRow(inputIterator.Current);
+        cacheIterator.Seek(-1, CursorSeekOrigin.Begin);
+
+        var startRowIndex = Analyze(cacheIterator);
+        cacheIterator.Seek(startRowIndex, CursorSeekOrigin.Begin);
+        cacheIterator.Freeze();
+        _cacheIterator = cacheIterator;
     }
 
     /// <summary>
@@ -207,22 +218,25 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     /// The data that was read by iterator will be cached.
     /// </summary>
     /// <param name="iterator">Rows iterator.</param>
-    protected virtual void Analyze(IRowsIterator iterator)
+    /// <returns>The row index where the data starts.</returns>
+    protected virtual int Analyze(ICursorRowsIterator iterator)
     {
+        return -1;
     }
 
     /// <summary>
-    /// Prepare for data set reading. The method is called right after data analysis and before
-    /// actual data read.
+    /// The method should return custom (virtual) columns array.
     /// </summary>
-    /// <param name="iterator">Rows iterator.</param>
-    protected virtual void Prepare(IRowsIterator iterator)
-    {
-    }
+    /// <returns>Virtual columns array.</returns>
+    protected virtual Column[] GetVirtualColumns() => Array.Empty<Column>();
 
-    protected virtual Column[] GetCustomColumns() => Array.Empty<Column>();
-
-    protected virtual VariantValue GetCustomColumnValue(int rowIndex, int columnIndex) => VariantValue.Null;
+    /// <summary>
+    /// The method should get value for the specific custom column.
+    /// </summary>
+    /// <param name="rowIndex">Row index.</param>
+    /// <param name="columnIndex">Column index.</param>
+    /// <returns>Value.</returns>
+    protected virtual VariantValue GetVirtualColumnValue(int rowIndex, int columnIndex) => VariantValue.Null;
 
     #region Dispose
 
@@ -230,8 +244,8 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     {
         if (disposing)
         {
-            StreamReader?.Dispose();
-            StreamReader = null;
+            StreamReader.Dispose();
+            _isClosed = true;
         }
     }
 

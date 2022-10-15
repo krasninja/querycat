@@ -11,9 +11,6 @@ internal sealed class DsvInput : StreamRowsInput
 {
     private const char QuoteChar = '\"';
 
-    /// <inheritdoc />
-    protected override StreamReader? StreamReader { get; set; }
-
     private readonly Column[] _customColumns =
     {
         new("filename", DataType.String, "File path"), // Index 0.
@@ -29,11 +26,10 @@ internal sealed class DsvInput : StreamRowsInput
             QuoteChars = new[] { QuoteChar },
         })
     {
-        StreamReader = new StreamReader(stream);
         _hasHeader = hasHeader;
         _addFileNameColumn = addFileNameColumn;
 
-        if (StreamReader?.BaseStream is not FileStream)
+        if (StreamReader.BaseStream is not FileStream)
         {
             _customColumns = Array.Empty<Column>();
         }
@@ -44,35 +40,17 @@ internal sealed class DsvInput : StreamRowsInput
     #endregion
 
     /// <inheritdoc />
-    protected override void Analyze(IRowsIterator iterator)
+    protected override int Analyze(ICursorRowsIterator iterator)
     {
-        RowsFrame? cache = null;
-        for (var i = 0; i < 10 && iterator.MoveNext(); i++)
-        {
-            if (cache == null)
-            {
-                cache = new RowsFrame(iterator.Columns);
-            }
-            cache.AddRow(iterator.Current);
-        }
-        if (cache == null)
-        {
-            return;
-        }
-        var analyzeRowsIterator = cache.GetIterator();
-
-        var hasHeader = _hasHeader ?? RowsIteratorUtils.DetermineIfHasHeader(cache.GetIterator());
+        var hasHeader = _hasHeader ?? RowsIteratorUtils.DetermineIfHasHeader(iterator);
         _hasHeader = hasHeader;
+        iterator.Seek(-1, CursorSeekOrigin.Begin);
 
         if (hasHeader)
         {
-            if (!analyzeRowsIterator.MoveNext())
-            {
-                throw new IOSourceException("There is no header row.");
-            }
-
             // Parse head columns names.
-            var columnNames = analyzeRowsIterator.Current.AsArray().Select(c => c.AsString).ToArray();
+            iterator.MoveNext();
+            var columnNames = iterator.Current.AsArray().Select(c => c.AsString).ToArray();
             if (columnNames.Length < 1)
             {
                 throw new IOSourceException("There are no columns.");
@@ -87,29 +65,21 @@ internal sealed class DsvInput : StreamRowsInput
             }
         }
 
-        Columns = RowsIteratorUtils.ResolveColumnsTypes(analyzeRowsIterator).ToArray();
+        var newColumns = RowsIteratorUtils.ResolveColumnsTypes(iterator);
+        SetColumns(newColumns);
+        return hasHeader ? 0 : -1;
     }
 
     /// <inheritdoc />
-    protected override void Prepare(IRowsIterator iterator)
-    {
-        if (_hasHeader == true)
-        {
-            ReadNext();
-        }
-        base.Prepare(iterator);
-    }
-
-    /// <inheritdoc />
-    protected override Column[] GetCustomColumns()
+    protected override Column[] GetVirtualColumns()
     {
         return _addFileNameColumn ? _customColumns : Array.Empty<Column>();
     }
 
     /// <inheritdoc />
-    protected override VariantValue GetCustomColumnValue(int rowIndex, int columnIndex)
+    protected override VariantValue GetVirtualColumnValue(int rowIndex, int columnIndex)
     {
-        if (columnIndex == 0 && StreamReader?.BaseStream is FileStream fileStream)
+        if (columnIndex == 0 && StreamReader.BaseStream is FileStream fileStream)
         {
             if (rowIndex == 0 && _hasHeader == true)
             {
@@ -120,6 +90,6 @@ internal sealed class DsvInput : StreamRowsInput
                 return new VariantValue(fileStream.Name);
             }
         }
-        return base.GetCustomColumnValue(rowIndex, columnIndex);
+        return base.GetVirtualColumnValue(rowIndex, columnIndex);
     }
 }

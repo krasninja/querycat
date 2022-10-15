@@ -13,6 +13,7 @@ public class CacheRowsIterator : ICursorRowsIterator
     private readonly List<Row> _cache;
     private int _cursor = -1;
     private Row _currentRow;
+    private bool _isFreezed;
 
     /// <inheritdoc />
     public Column[] Columns => _rowsIterator.Columns;
@@ -26,12 +27,22 @@ public class CacheRowsIterator : ICursorRowsIterator
     /// <inheritdoc />
     public Row Current => _currentRow;
 
-    public CacheRowsIterator(IRowsIterator rowsIterator, int cacheSize = 0)
+    /// <summary>
+    /// Is the current cache cursor position at the last row.
+    /// </summary>
+    public bool EndOfCache => _isFreezed && Position >= _cache.Count;
+
+    /// <summary>
+    /// Constructor.
+    /// </summary>
+    /// <param name="rowsIterator">Row iterator.</param>
+    /// <param name="cacheSize">Max cache size. -1 for no limit.</param>
+    public CacheRowsIterator(IRowsIterator rowsIterator, int cacheSize = -1)
     {
         _currentRow = new Row(rowsIterator); // Empty.
         _rowsIterator = rowsIterator;
         _cacheSize = cacheSize;
-        _cache = new List<Row>(cacheSize);
+        _cache = new List<Row>(_cacheSize > 0 ? _cacheSize : 32);
     }
 
     /// <inheritdoc />
@@ -45,6 +56,11 @@ public class CacheRowsIterator : ICursorRowsIterator
             return true;
         }
 
+        if (_isFreezed)
+        {
+            return false;
+        }
+
         var hasData = _rowsIterator.MoveNext();
         if (!hasData)
         {
@@ -53,11 +69,26 @@ public class CacheRowsIterator : ICursorRowsIterator
 
         // Move next and add to cache.
         _currentRow = _rowsIterator.Current;
-        if (_cursor < _cacheSize)
+        if (_cursor < _cacheSize || _cacheSize == -1)
         {
             _cache.Add(new Row(_currentRow));
         }
         _cursor++;
+        return true;
+    }
+
+    /// <summary>
+    /// Add row manually to the cache. It ignores the max cache limit.
+    /// </summary>
+    /// <param name="row">Row to add.</param>
+    /// <returns><c>True</c> if row has been added, <c>false</c> otherwise.</returns>
+    public bool AddRow(Row row)
+    {
+        if (_isFreezed)
+        {
+            return false;
+        }
+        _cache.Add(new Row(row));
         return true;
     }
 
@@ -90,5 +121,13 @@ public class CacheRowsIterator : ICursorRowsIterator
     public void Explain(IndentedStringBuilder stringBuilder)
     {
         stringBuilder.AppendRowsIteratorsWithIndent($"Cache (max={_cacheSize} fill={_cache.Count})", _rowsIterator);
+    }
+
+    /// <summary>
+    /// Freezes the cache. In this mode new rows cannot be added.
+    /// </summary>
+    public void Freeze()
+    {
+        _isFreezed = true;
     }
 }
