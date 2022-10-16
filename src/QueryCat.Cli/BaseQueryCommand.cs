@@ -2,6 +2,7 @@ using McMaster.Extensions.CommandLineUtils;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Logging;
 using QueryCat.Backend.Providers;
+using QueryCat.Backend.Storage.Formats;
 using QueryCat.Cli.Infrastructure;
 
 namespace QueryCat.Cli;
@@ -47,7 +48,8 @@ public abstract class BaseQueryCommand
     protected Runner CreateRunner(ExecutionOptions executionOptions)
     {
         executionOptions.PluginAssemblies.Add(typeof(QueryCat.DataProviders.Registration).Assembly);
-        executionOptions.DefaultRowsOutput = ConsoleDataProviders.CreateConsole(null, pageSize: executionOptions.PagingSize);
+        var textTableFormatter = new TextTableFormatter();
+        executionOptions.DefaultRowsOutput = textTableFormatter.OpenOutput(StandardIODataProviders.GetConsoleOutput());
         var pluginLoader = new PluginsLoader(PluginDirectories);
         executionOptions.PluginAssemblies.AddRange(pluginLoader.GetPlugins());
         var runner = new Runner(executionOptions);

@@ -128,6 +128,32 @@ public class DelimiterStreamReaderTests
         Assert.Equal("quake 2", name2);
     }
 
+    [Fact]
+    public void Read_LogTextFromStdin_ShouldParse()
+    {
+        // Arrange.
+        var sb = new StringBuilder()
+            .Append("ivan     tty1         2022-10-15\n")
+            .Append("affka    tty1         2022-10-15\n");
+
+        // Act.
+        var streamRowsInput = new DelimiterStreamReader(StringToStream(sb.ToString()),
+            new DelimiterStreamReader.ReaderOptions
+            {
+                Delimiters = new[] { ' ' },
+                QuoteChars = Array.Empty<char>(),
+                DelimitersCanRepeat = true,
+            });
+        streamRowsInput.Read();
+        var name1 = streamRowsInput.GetField(0).ToString();
+        streamRowsInput.Read();
+        var name2 = streamRowsInput.GetField(0).ToString();
+
+        // Assert.
+        Assert.Equal("ivan", name1);
+        Assert.Equal("affka", name2);
+    }
+
     [Theory]
     [InlineData("test", "test")]
     [InlineData("\"test\"", "test")]

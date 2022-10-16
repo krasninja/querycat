@@ -9,7 +9,8 @@ public static class Registration
 {
     public static void RegisterFunctions(FunctionsManager functionsManager)
     {
-        functionsManager.RegisterFunction(ConsoleDataProviders.Console);
+        functionsManager.RegisterFunction(StandardIODataProviders.Stdout);
+        functionsManager.RegisterFunction(StandardIODataProviders.Stdin);
 
         functionsManager.RegisterFunction(GenericProvider.Read);
         functionsManager.RegisterFunction(GenericProvider.Write);

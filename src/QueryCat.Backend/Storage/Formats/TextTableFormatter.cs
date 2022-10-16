@@ -7,9 +7,7 @@ public class TextTableFormatter : IRowsFormatter
 {
     /// <inheritdoc />
     public IRowsInput OpenInput(Stream input)
-    {
-        throw new NotImplementedException();
-    }
+        => new TextTableInput(new StreamReader(input));
 
     /// <inheritdoc />
     public IRowsOutput OpenOutput(Stream output)

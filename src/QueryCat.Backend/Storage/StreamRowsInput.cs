@@ -78,7 +78,6 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     public virtual ErrorCode ReadValue(int columnIndex, out VariantValue value)
     {
         var columnValue = GetColumnValue(columnIndex);
-        Logger.Instance.Debug($"Column index {columnIndex}, value '{columnValue}.", nameof(StreamRowsInput));
         return VariantValue.TryCreateFromString(
             columnValue,
             Columns[columnIndex].DataType,
@@ -131,13 +130,13 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
         _rowIndex++;
 
         // If we have cached data - return it first.
-        if (_cacheIterator != null && _cacheIterator.MoveNext())
+        if (_cacheIterator != null)
         {
-            if (_cacheIterator.EndOfCache)
+            if (_cacheIterator.MoveNext())
             {
-                _cacheIterator = null;
+                return true;
             }
-            return true;
+            _cacheIterator = null;
         }
 
         if (_isClosed)

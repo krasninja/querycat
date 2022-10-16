@@ -71,11 +71,6 @@ public readonly struct LogItem
     /// <param name="exception">Exception to log. Optional.</param>
     public LogItem(LogLevel level, string message, string? source = null, Exception? exception = null)
     {
-        if (string.IsNullOrEmpty(message))
-        {
-            throw new ArgumentNullException(nameof(message));
-        }
-
         Level = level;
         Message = message;
         Exception = exception;

@@ -272,7 +272,7 @@ public class DelimiterStreamReader
         }
         while (readBytes > 0);
 
-        // We are at the end of the stream. Add remain index and exit.
+        // We are at the end of the stream. Update remain index and exit.
         _currentDelimiterPosition += (int)sequenceReader.Remaining;
         currentField.EndIndex = _currentDelimiterPosition + 1;
         return !IsEmpty();

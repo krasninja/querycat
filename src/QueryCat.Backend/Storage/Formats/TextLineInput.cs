@@ -9,9 +9,6 @@ namespace QueryCat.Backend.Storage.Formats;
 /// </summary>
 internal sealed class TextLineInput : StreamRowsInput
 {
-    /// <inheritdoc />
-    protected override StreamReader? StreamReader { get; set; }
-
     private readonly Column[] _customColumns =
     {
         new("filename", DataType.String, "File path"), // Index 0.
@@ -19,35 +16,30 @@ internal sealed class TextLineInput : StreamRowsInput
 
     public TextLineInput(Stream stream) : base(new StreamReader(stream), new DelimiterStreamReader.ReaderOptions())
     {
-        StreamReader = new StreamReader(stream);
-
         if (StreamReader?.BaseStream is not FileStream)
         {
             _customColumns = Array.Empty<Column>();
         }
     }
 
-    #region Header
-
-    #endregion
-
     /// <inheritdoc />
-    protected override void Analyze(IRowsIterator iterator)
+    protected override int Analyze(ICursorRowsIterator iterator)
     {
-        Columns = RowsIteratorUtils.ResolveColumnsTypes(iterator).ToArray();
+        SetColumns(RowsIteratorUtils.ResolveColumnsTypes(iterator));
         Columns[^1].Name = "text";
+        return base.Analyze(iterator);
     }
 
     /// <inheritdoc />
-    protected override Column[] GetCustomColumns() => _customColumns;
+    protected override Column[] GetVirtualColumns() => _customColumns;
 
     /// <inheritdoc />
-    protected override VariantValue GetCustomColumnValue(int rowIndex, int columnIndex)
+    protected override VariantValue GetVirtualColumnValue(int rowIndex, int columnIndex)
     {
-        if (columnIndex == 0 && StreamReader?.BaseStream is FileStream fileStream)
+        if (columnIndex == 0 && StreamReader.BaseStream is FileStream fileStream)
         {
             return new VariantValue(fileStream.Name);
         }
-        return base.GetCustomColumnValue(rowIndex, columnIndex);
+        return base.GetVirtualColumnValue(rowIndex, columnIndex);
     }
 }
