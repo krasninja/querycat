@@ -19,6 +19,7 @@ public sealed class IISW3CInput : StreamRowsInput
 
     private int _timeColumnIndex = -1;
     private int _dateColumnIndex = -1;
+    private bool _isInitialized;
 
     // https://procodeguide.com/programming/iis-logs/.
     private static readonly Dictionary<string, Column> AvailableFields = new()
@@ -78,7 +79,7 @@ public sealed class IISW3CInput : StreamRowsInput
     /// <inheritdoc />
     protected override bool IgnoreLine()
     {
-        if (Columns.Length < 1)
+        if (!_isInitialized)
         {
             return false;
         }
@@ -98,6 +99,7 @@ public sealed class IISW3CInput : StreamRowsInput
             {
                 ParseHeaders(GetRowText().ToString());
                 foundHeaders = true;
+                _isInitialized = true;
                 break;
             }
         }

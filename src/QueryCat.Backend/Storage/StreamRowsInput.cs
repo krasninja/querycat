@@ -14,7 +14,7 @@ namespace QueryCat.Backend.Storage;
 /// - cache analyze data to prevent double reading;
 /// - IRowsInput interface implementation;
 /// - StreamReader reset (if Stream supports Seek);
-/// - custom columns.
+/// - virtual (custom) columns.
 /// </summary>
 public abstract class StreamRowsInput : IRowsInput, IDisposable
 {
@@ -116,12 +116,17 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     /// <inheritdoc />
     public virtual bool ReadNext()
     {
-        var hasData = ReadNextInternal();
-        if (hasData && _firstFetch)
+        bool hasData;
+        do
         {
-            SetDefaultColumns();
-            _firstFetch = false;
+            hasData = ReadNextInternal();
+            if (hasData && _firstFetch)
+            {
+                SetDefaultColumns();
+                _firstFetch = false;
+            }
         }
+        while (hasData && IgnoreLine());
         return hasData;
     }
 

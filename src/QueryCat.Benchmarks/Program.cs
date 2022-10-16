@@ -15,6 +15,11 @@ public class Program
 {
     public static int Main(string[] args)
     {
+        if (args.Length < 1)
+        {
+            args = new[] { "-h" };
+        }
+
         return CommandLineApplication.Execute<Program>(args);
     }
 }
