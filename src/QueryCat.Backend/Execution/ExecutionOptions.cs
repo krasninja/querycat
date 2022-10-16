@@ -1,5 +1,6 @@
 using System.Reflection;
 using QueryCat.Backend.Storage;
+using QueryCat.Backend.Storage.Formats;
 
 namespace QueryCat.Backend.Execution;
 
@@ -17,6 +18,11 @@ public sealed class ExecutionOptions
     /// Page size.
     /// </summary>
     public int PagingSize { get; set; } = 20;
+
+    /// <summary>
+    /// Output mode.
+    /// </summary>
+    public TextTableOutput.Style OutputStyle { get; set; } = TextTableOutput.Style.Table;
 
     /// <summary>
     /// Add row number to output.

@@ -1,6 +1,7 @@
 using McMaster.Extensions.CommandLineUtils;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Functions.StandardFunctions;
+using QueryCat.Backend.Storage.Formats;
 
 namespace QueryCat.Cli;
 
@@ -28,6 +29,9 @@ public class QueryCommand : BaseQueryCommand
     [Option("--page-size", Description = "Output page size. Set -1 to show all.")]
     public int PageSize { get; } = 20;
 
+    [Option("--output-style", Description = "Output style.")]
+    public TextTableOutput.Style OutputStyle { get; set; } = TextTableOutput.Style.Table;
+
     // TODO: McMaster throws exception if this method is not defined.
     public static string GetVersion() => InfoFunctions.GetVersion();
 
@@ -45,6 +49,7 @@ public class QueryCommand : BaseQueryCommand
         {
             AddRowNumberColumn = RowNumber,
             PagingSize = PageSize,
+            OutputStyle = OutputStyle,
             ShowDetailedStatistic = ShowDetailedStatistic,
             MaxErrors = MaxErrors,
         });

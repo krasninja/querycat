@@ -29,6 +29,13 @@ public class Column : ICloneable
     public string SourceName { get; internal set; } = string.Empty;
 
     /// <summary>
+    /// Full name in format "sourceName"."name".
+    /// </summary>
+    public string FullName => !string.IsNullOrEmpty(SourceName)
+        ? $"{SourceName}.{Name}"
+        : Name;
+
+    /// <summary>
     /// Column description. Optional.
     /// </summary>
     public string Description { get; internal set; }

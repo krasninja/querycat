@@ -48,8 +48,10 @@ public abstract class BaseQueryCommand
     protected Runner CreateRunner(ExecutionOptions executionOptions)
     {
         executionOptions.PluginAssemblies.Add(typeof(QueryCat.DataProviders.Registration).Assembly);
-        var textTableFormatter = new TextTableFormatter();
-        executionOptions.DefaultRowsOutput = textTableFormatter.OpenOutput(StandardIODataProviders.GetConsoleOutput());
+        var output = new TextTableOutput(
+            stream: StandardIODataProviders.GetConsoleOutput(),
+            style: executionOptions.OutputStyle);
+        executionOptions.DefaultRowsOutput = output;
         var pluginLoader = new PluginsLoader(PluginDirectories);
         executionOptions.PluginAssemblies.AddRange(pluginLoader.GetPlugins());
         var runner = new Runner(executionOptions);
