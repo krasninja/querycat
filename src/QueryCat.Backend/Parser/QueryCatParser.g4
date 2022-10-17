@@ -117,15 +117,21 @@ type
     | STRING
     | FLOAT
     | TIMESTAMP
+    | INTERVAL
     | BOOLEAN
     | NUMERIC
     | OBJECT
     | ANY
     ;
 
+castOperand: CAST '(' value=simpleExpression AS type ')';
+array: '(' expression (',' expression)* ')';
+intervalLiteral: INTERVAL interval=STRING_LITERAL;
+
 // For reference: https://www.postgresql.org/docs/current/sql-syntax-lexical.html#SQL-PRECEDENCE
 expression
     : literal # ExpressionLiteral
+    | castOperand # ExpressionCast
     | standardFunction # ExpressionStandardFunctionCall
     | functionCall # ExpressionFunctionCall
     | IDENTIFIER # ExpressionIdentifier
@@ -145,13 +151,14 @@ expression
     | op=NOT right=expression # ExpressionUnary
     ;
 
-array: '(' expression (',' expression)* ')';
-intervalLiteral: INTERVAL interval=STRING_LITERAL;
-
 // Simple expression is subset of "expressons" to be used in clauses like BETWEEN.
 // Because (BETWEEN x AND y) conflicts with plain (a AND b).
 simpleExpression
     : literal # SimpleExpressionLiteral
+    | castOperand # SimpleExpressionCast
+    | standardFunction # SimpleExpressionStandardFunctionCall
+    | functionCall # SimpleExpressionFunctionCall
+    | IDENTIFIER # SimpleExpressionIdentifier
     | left=simpleExpression op=(STAR | DIV | MOD) right=simpleExpression # SimpleExpressionBinary
     | left=simpleExpression op=(PLUS | MINUS) right=simpleExpression # SimpleExpressionBinary
     | left=simpleExpression op=(EQUALS | NOT_EQUALS | GREATER | GREATER_OR_EQUALS | LESS | LESS_OR_EQUALS) right=simpleExpression # SimpleExpressionBinary

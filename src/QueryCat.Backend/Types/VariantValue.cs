@@ -434,6 +434,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
                 DataType.Timestamp => StringToTimestamp(_object as string, out success),
                 DataType.Boolean => StringToBoolean(_object as string, out success),
                 DataType.Numeric => StringToNumeric(_object as string, out success),
+                DataType.Interval => StringToInterval(_object as string, out success),
                 _ => Null
             },
             DataType.Float => targetType switch

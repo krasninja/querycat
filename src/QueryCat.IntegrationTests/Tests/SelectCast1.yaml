@@ -1,0 +1,7 @@
+expected: |
+  06/12/1987 00:00:00,20,10
+query: |
+  select
+    cast('1987-06-12' as timestamp),
+    cast(10 + 10 as float),
+    cast(10.23 as integer)

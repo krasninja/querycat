@@ -136,6 +136,25 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
         return new BinaryOperationExpressionNode(operation, left, right);
     }
 
+    /// <inheritdoc />
+    public override IAstNode VisitSimpleExpressionIdentifier(QueryCatParser.SimpleExpressionIdentifierContext context)
+        => new IdentifierExpressionNode(GetIdentifierText(context.IDENTIFIER()));
+
+    /// <inheritdoc />
+    public override IAstNode VisitSimpleExpressionFunctionCall(QueryCatParser.SimpleExpressionFunctionCallContext context)
+        => this.Visit<FunctionCallNode>(context.functionCall());
+
+    /// <inheritdoc />
+    public override IAstNode VisitSimpleExpressionStandardFunctionCall(QueryCatParser.SimpleExpressionStandardFunctionCallContext context)
+        => this.Visit<FunctionCallNode>(context.standardFunction());
+
+    /// <inheritdoc />
+    public override IAstNode VisitCastOperand(QueryCatParser.CastOperandContext context)
+        => new CastNode(
+            this.Visit<ExpressionNode>(context.value),
+            this.VisitType(context.type())
+        );
+
     #endregion
 
     /// <summary>
@@ -210,7 +229,7 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
     #endregion
 
     /// <inheritdoc />
-    public override IAstNode VisitType(QueryCatParser.TypeContext context)
+    public override TypeNode VisitType(QueryCatParser.TypeContext context)
     {
         var value = GetChildType(context, 0) switch
         {

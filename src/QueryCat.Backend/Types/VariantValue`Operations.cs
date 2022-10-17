@@ -132,6 +132,19 @@ public readonly partial struct VariantValue
             return DataType.String;
         }
 
+        if (operation == Operation.Add || operation == Operation.Subtract)
+        {
+            if ((left == DataType.Timestamp && right == DataType.Interval)
+                || (right == DataType.Interval && left == DataType.Timestamp))
+            {
+                return DataType.Timestamp;
+            }
+            if (left == DataType.Interval && right == DataType.Interval)
+            {
+                return DataType.Interval;
+            }
+        }
+
         if (AlgebraicOperations.Contains(operation))
         {
             if (left == right)
@@ -142,7 +155,7 @@ public readonly partial struct VariantValue
             bool canConvert = GetTargetType(left, right, out var target);
             if (!canConvert)
             {
-                GetTargetType(right, left, out target);
+                canConvert = GetTargetType(right, left, out target);
             }
             return target;
         }
@@ -210,10 +223,12 @@ public readonly partial struct VariantValue
             DataType.Timestamp => rightType switch
             {
                 DataType.Interval => new VariantValue(left.AsTimestamp + right.AsInterval),
+                _ => Null,
             },
             DataType.Interval => rightType switch
             {
                 DataType.Interval => new VariantValue(left.AsInterval + right.AsInterval),
+                _ => Null,
             },
             _ => Null,
         };

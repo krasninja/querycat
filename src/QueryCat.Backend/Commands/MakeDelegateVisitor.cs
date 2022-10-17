@@ -83,6 +83,24 @@ internal class MakeDelegateVisitor : AstVisitor
     }
 
     /// <inheritdoc />
+    public override void Visit(CastNode node)
+    {
+        var expressionAction = NodeIdFuncMap[node.ExpressionNode.Id];
+
+        VariantValue Func(VariantValueFuncData data)
+        {
+            var expressionValue = expressionAction.Invoke(data);
+            if (expressionValue.Cast(node.TargetTypeNode.Type, out VariantValue result))
+            {
+                return result;
+            }
+            ApplyStatistic(ErrorCode.CannotCast);
+            return VariantValue.Null;
+        }
+        NodeIdFuncMap[node.Id] = Func;
+    }
+
+    /// <inheritdoc />
     public override void Visit(IdentifierExpressionNode node)
     {
         throw new CannotFindIdentifierException(node.Name);

@@ -34,6 +34,10 @@ public abstract class AstVisitor
     {
     }
 
+    public virtual void Visit(CastNode node)
+    {
+    }
+
     public virtual void Visit(EmptyNode node)
     {
     }

@@ -61,6 +61,9 @@ public sealed class DsvOutput : RowsOutput, IDisposable
                     case DataType.Timestamp:
                         _streamWriter.Write(row[i].AsTimestamp);
                         break;
+                    case DataType.Interval:
+                        _streamWriter.Write(row[i].AsInterval);
+                        break;
                     case DataType.Boolean:
                         _streamWriter.Write(row[i].AsBoolean);
                         break;

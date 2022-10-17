@@ -77,6 +77,12 @@ internal class ResolveTypesVisitor : AstVisitor
     }
 
     /// <inheritdoc />
+    public override void Visit(CastNode node)
+    {
+        node.SetDataType(node.TargetTypeNode.Type);
+    }
+
+    /// <inheritdoc />
     public override void Visit(IdentifierExpressionNode node)
     {
         throw new CannotFindIdentifierException(node.Name);

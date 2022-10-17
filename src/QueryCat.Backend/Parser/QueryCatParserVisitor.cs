@@ -270,6 +270,31 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitType([NotNull] QueryCatParser.TypeContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="QueryCatParser.castOperand"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitCastOperand([NotNull] QueryCatParser.CastOperandContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="QueryCatParser.array"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitArray([NotNull] QueryCatParser.ArrayContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="QueryCatParser.intervalLiteral"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitIntervalLiteral([NotNull] QueryCatParser.IntervalLiteralContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>ExpressionCast</c>
+	/// labeled alternative in <see cref="QueryCatParser.expression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitExpressionCast([NotNull] QueryCatParser.ExpressionCastContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>ExpressionBinary</c>
 	/// labeled alternative in <see cref="QueryCatParser.expression"/>.
 	/// </summary>
@@ -340,18 +365,6 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitExpressionFunctionCall([NotNull] QueryCatParser.ExpressionFunctionCallContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="QueryCatParser.array"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitArray([NotNull] QueryCatParser.ArrayContext context);
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="QueryCatParser.intervalLiteral"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitIntervalLiteral([NotNull] QueryCatParser.IntervalLiteralContext context);
-	/// <summary>
 	/// Visit a parse tree produced by the <c>SimpleExpressionLiteral</c>
 	/// labeled alternative in <see cref="QueryCatParser.simpleExpression"/>.
 	/// </summary>
@@ -359,12 +372,40 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitSimpleExpressionLiteral([NotNull] QueryCatParser.SimpleExpressionLiteralContext context);
 	/// <summary>
+	/// Visit a parse tree produced by the <c>SimpleExpressionCast</c>
+	/// labeled alternative in <see cref="QueryCatParser.simpleExpression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSimpleExpressionCast([NotNull] QueryCatParser.SimpleExpressionCastContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>SimpleExpressionStandardFunctionCall</c>
+	/// labeled alternative in <see cref="QueryCatParser.simpleExpression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSimpleExpressionStandardFunctionCall([NotNull] QueryCatParser.SimpleExpressionStandardFunctionCallContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>SimpleExpressionBinary</c>
 	/// labeled alternative in <see cref="QueryCatParser.simpleExpression"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitSimpleExpressionBinary([NotNull] QueryCatParser.SimpleExpressionBinaryContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>SimpleExpressionFunctionCall</c>
+	/// labeled alternative in <see cref="QueryCatParser.simpleExpression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSimpleExpressionFunctionCall([NotNull] QueryCatParser.SimpleExpressionFunctionCallContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>SimpleExpressionIdentifier</c>
+	/// labeled alternative in <see cref="QueryCatParser.simpleExpression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSimpleExpressionIdentifier([NotNull] QueryCatParser.SimpleExpressionIdentifierContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>literalPlain</c>
 	/// labeled alternative in <see cref="QueryCatParser.literal"/>.
