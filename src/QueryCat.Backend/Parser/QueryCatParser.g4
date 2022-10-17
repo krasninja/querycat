@@ -110,6 +110,7 @@ functionCallArg: (IDENTIFIER ASSOCIATION)? expression;
 standardFunction
     : CURRENT_DATE # standardFunctionCurrentDate
     | CURRENT_TIMESTAMP # standardFunctionCurrentTimestamp
+    | TRIM '(' spec=(LEADING | TRAILING | BOTH)? characters=STRING_LITERAL? FROM? target=simpleExpression ')' # standardFunctionTrim
     ;
 
 type

@@ -264,6 +264,13 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitStandardFunctionCurrentTimestamp([NotNull] QueryCatParser.StandardFunctionCurrentTimestampContext context);
 	/// <summary>
+	/// Visit a parse tree produced by the <c>standardFunctionTrim</c>
+	/// labeled alternative in <see cref="QueryCatParser.standardFunction"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitStandardFunctionTrim([NotNull] QueryCatParser.StandardFunctionTrimContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="QueryCatParser.type"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

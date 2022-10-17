@@ -55,6 +55,7 @@ BY:                 'BY';
 CAST:               'CAST';
 DEFAULT:            'DEFAULT';
 FALSE:              'FALSE';
+FROM:               'FROM';
 IN:                 'IN';
 IS:                 'IS';
 LIKE:               'LIKE';
@@ -65,6 +66,11 @@ OR:                 'OR';
 TO:                 'TO';
 TRUE:               'TRUE';
 VOID:               'VOID';
+
+TRIM:               'TRIM';
+LEADING:            'LEADING';
+TRAILING:           'TRAILING';
+BOTH:               'BOTH';
 
 // Datetime.
 
@@ -92,7 +98,6 @@ DISTINCT:           'DISTINCT';
 FETCH:              'FETCH';
 FIRST:              'FIRST';
 FORMAT:             'FORMAT';
-FROM:               'FROM';
 GROUP:              'GROUP';
 HAVING:             'HAVING';
 INTO:               'INTO';

@@ -22,6 +22,11 @@ public sealed class LiteralNode : ExpressionNode
         Value = value;
     }
 
+    public LiteralNode(string value)
+    {
+        Value = new VariantValue(value);
+    }
+
     public LiteralNode(LiteralNode node) : this(node.Value)
     {
         node.CopyTo(this);

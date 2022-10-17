@@ -226,6 +226,32 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
     public override IAstNode VisitStandardFunctionCurrentTimestamp(QueryCatParser.StandardFunctionCurrentTimestampContext context)
         => new FunctionCallNode("now");
 
+    /// <inheritdoc />
+    public override IAstNode VisitStandardFunctionTrim(QueryCatParser.StandardFunctionTrimContext context)
+    {
+        var targetNode = this.Visit<ExpressionNode>(context.target);
+        var characters = context.characters != null ? context.characters.Text : string.Empty;
+        if (context.spec == null || context.spec.Type == QueryCatLexer.BOTH)
+        {
+            return new FunctionCallNode("btrim",
+                new FunctionCallArgumentNode(targetNode),
+                new FunctionCallArgumentNode(new LiteralNode(characters)));
+        }
+        if (context.spec.Type == QueryCatLexer.LEADING)
+        {
+            return new FunctionCallNode("ltrim",
+                new FunctionCallArgumentNode(targetNode),
+                new FunctionCallArgumentNode(new LiteralNode(characters)));
+        }
+        if (context.spec.Type == QueryCatLexer.TRAILING)
+        {
+            return new FunctionCallNode("rtrim",
+                new FunctionCallArgumentNode(targetNode),
+                new FunctionCallArgumentNode(new LiteralNode(characters)));
+        }
+        return base.VisitStandardFunctionTrim(context);
+    }
+
     #endregion
 
     /// <inheritdoc />

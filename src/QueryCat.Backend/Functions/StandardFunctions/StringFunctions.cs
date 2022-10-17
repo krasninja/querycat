@@ -42,6 +42,15 @@ public static class StringFunctions
         return new VariantValue(value.TrimEnd(trimCharacters.ToArray()));
     }
 
+    [Description("Remove the longest string consisting only of characters in characters from the start and end of string.")]
+    [FunctionSignature("btrim(target: string, characters: string = ' '): string")]
+    public static VariantValue BTrim(FunctionCallInfo args)
+    {
+        var value = args.GetAt(0).AsString;
+        var trimCharacters = args.GetAt(1).AsString;
+        return new VariantValue(value.Trim(trimCharacters.ToArray()));
+    }
+
     [Description("Extracts the substring of string starting at the start'th character, and extending for count characters if that is specified.")]
     [FunctionSignature("substr(target: string, start: integer, count?: integer): string")]
     public static VariantValue SubString(FunctionCallInfo args)
@@ -68,6 +77,7 @@ public static class StringFunctions
         functionsManager.RegisterFunction(Upper);
         functionsManager.RegisterFunction(LTrim);
         functionsManager.RegisterFunction(RTrim);
+        functionsManager.RegisterFunction(BTrim);
         functionsManager.RegisterFunction(SubString);
         functionsManager.RegisterFunction(Length);
     }
