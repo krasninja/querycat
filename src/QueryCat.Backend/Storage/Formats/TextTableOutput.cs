@@ -85,10 +85,6 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
         var columns = QueryContext.GetColumns().ToArray();
         _isSingleValue = columns.Length == 1 && columns[0].Name == SingleValueRowsIterator.ColumnTitle;
         _columnsLengths = new int[columns.Length];
-        if (!_hasHeader || _isSingleValue)
-        {
-            return;
-        }
 
         _onInit.Invoke();
         _streamWriter.Flush();
@@ -105,6 +101,11 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
 
     private void OnTableInit()
     {
+        if (!_hasHeader || _isSingleValue)
+        {
+            return;
+        }
+
         var columns = QueryContext.GetColumns().ToArray();
 
         for (int i = 0; i < columns.Length; i++)
