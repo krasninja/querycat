@@ -174,6 +174,7 @@ public readonly partial struct VariantValue
             DataType.Float => new VariantValue(-left.AsFloat),
             DataType.Numeric => new VariantValue(-left.AsNumeric),
             DataType.Boolean => new VariantValue(!left.AsBoolean),
+            DataType.Interval => new VariantValue(-left.AsInterval),
             _ => Null,
         };
         errorCode = !result.IsNull ? ErrorCode.OK : ErrorCode.CannotApplyOperator;
@@ -205,6 +206,14 @@ public readonly partial struct VariantValue
                 DataType.Integer => new VariantValue(left.AsNumeric + right.AsInteger),
                 DataType.Numeric => new VariantValue(left.AsNumeric + right.AsNumeric),
                 _ => Null,
+            },
+            DataType.Timestamp => rightType switch
+            {
+                DataType.Interval => new VariantValue(left.AsTimestamp + right.AsInterval),
+            },
+            DataType.Interval => rightType switch
+            {
+                DataType.Interval => new VariantValue(left.AsInterval + right.AsInterval),
             },
             _ => Null,
         };
@@ -362,6 +371,11 @@ public readonly partial struct VariantValue
                 DataType.Timestamp or DataType.String => left.AsTimestamp == right.AsTimestamp,
                 _ => null,
             },
+            DataType.Interval => rightType switch
+            {
+                DataType.Interval => left.AsInterval == right.AsInterval,
+                _ => null,
+            },
             DataType.String => rightType switch
             {
                 DataType.String or DataType.Boolean or DataType.Integer or DataType.Integer
@@ -427,6 +441,11 @@ public readonly partial struct VariantValue
                 DataType.Timestamp or DataType.String => left.AsTimestamp > right.AsTimestamp,
                 _ => null,
             },
+            DataType.Interval => rightType switch
+            {
+                DataType.Interval => left.AsInterval > right.AsInterval,
+                _ => null,
+            },
             _ => null,
         };
         errorCode = result.HasValue ? ErrorCode.OK : ErrorCode.CannotApplyOperator;
@@ -479,6 +498,11 @@ public readonly partial struct VariantValue
             DataType.Timestamp => rightType switch
             {
                 DataType.Timestamp or DataType.String => left.AsTimestamp < right.AsTimestamp,
+                _ => null,
+            },
+            DataType.Interval => rightType switch
+            {
+                DataType.Interval => left.AsInterval < right.AsInterval,
                 _ => null,
             },
             _ => null,

@@ -346,6 +346,12 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitArray([NotNull] QueryCatParser.ArrayContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="QueryCatParser.intervalLiteral"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitIntervalLiteral([NotNull] QueryCatParser.IntervalLiteralContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>SimpleExpressionLiteral</c>
 	/// labeled alternative in <see cref="QueryCatParser.simpleExpression"/>.
 	/// </summary>
@@ -360,10 +366,18 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitSimpleExpressionBinary([NotNull] QueryCatParser.SimpleExpressionBinaryContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="QueryCatParser.literal"/>.
+	/// Visit a parse tree produced by the <c>literalPlain</c>
+	/// labeled alternative in <see cref="QueryCatParser.literal"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitLiteral([NotNull] QueryCatParser.LiteralContext context);
+	Result VisitLiteralPlain([NotNull] QueryCatParser.LiteralPlainContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>literalInterval</c>
+	/// labeled alternative in <see cref="QueryCatParser.literal"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitLiteralInterval([NotNull] QueryCatParser.LiteralIntervalContext context);
 }
 } // namespace QueryCat.Backend.Parser

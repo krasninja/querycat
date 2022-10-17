@@ -44,10 +44,10 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
     public override IAstNode VisitStatementFunctionCall(QueryCatParser.StatementFunctionCallContext context)
         => new FunctionCallStatementNode(this.Visit<FunctionCallNode>(context.functionCall()));
 
-    #region Expressions
+    #region Expressions and literals
 
     /// <inheritdoc />
-    public override IAstNode VisitLiteral(QueryCatParser.LiteralContext context)
+    public override IAstNode VisitLiteralPlain(QueryCatParser.LiteralPlainContext context)
     {
         var text = GetIdentifierText(context);
         return context.Start.Type switch
@@ -65,6 +65,11 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
     }
 
     /// <inheritdoc />
+    public override IAstNode VisitLiteralInterval(QueryCatParser.LiteralIntervalContext context)
+        => new LiteralNode(new VariantValue(
+            DataTypeUtils.ParseInterval(GetIdentifierText(context.intervalLiteral().interval.Text))));
+
+    /// <inheritdoc />
     public override IAstNode VisitExpressionBinary(QueryCatParser.ExpressionBinaryContext context)
     {
         var operation = ConvertOperationTokenToAst(context.op.Type);
@@ -75,23 +80,6 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
 
         var left = (ExpressionNode)Visit(context.left);
         var right = (ExpressionNode)Visit(context.right);
-        return new BinaryOperationExpressionNode(operation, left, right);
-    }
-
-    private BinaryOperationExpressionNode VisitExpressionBinaryInternal(
-        IToken contextOp,
-        QueryCatParser.ExpressionContext contextLeft,
-        QueryCatParser.ExpressionContext contextRight,
-        bool isNot)
-    {
-        var operation = ConvertOperationTokenToAst(contextOp.Type);
-        if (operation == VariantValue.Operation.Like && isNot)
-        {
-            operation = VariantValue.Operation.NotLike;
-        }
-
-        var left = (ExpressionNode)Visit(contextLeft);
-        var right = (ExpressionNode)Visit(contextRight);
         return new BinaryOperationExpressionNode(operation, left, right);
     }
 
@@ -138,10 +126,6 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
     /// <inheritdoc />
     public override IAstNode VisitExpressionFunctionCall(QueryCatParser.ExpressionFunctionCallContext context)
         => this.Visit<FunctionCallNode>(context.functionCall());
-
-    /// <inheritdoc />
-    public override IAstNode VisitSimpleExpressionLiteral(QueryCatParser.SimpleExpressionLiteralContext context)
-        => VisitLiteral(context.literal());
 
     /// <inheritdoc />
     public override IAstNode VisitSimpleExpressionBinary(QueryCatParser.SimpleExpressionBinaryContext context)
@@ -236,6 +220,7 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
             QueryCatParser.STRING => DataType.String,
             QueryCatParser.BOOLEAN => DataType.Boolean,
             QueryCatParser.TIMESTAMP => DataType.Timestamp,
+            QueryCatParser.INTERVAL => DataType.Interval,
             QueryCatParser.ANY => DataType.Void,
             _ => DataType.Object,
         };

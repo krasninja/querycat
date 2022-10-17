@@ -146,6 +146,7 @@ expression
     ;
 
 array: '(' expression (',' expression)* ')';
+intervalLiteral: INTERVAL interval=STRING_LITERAL;
 
 // Simple expression is subset of "expressons" to be used in clauses like BETWEEN.
 // Because (BETWEEN x AND y) conflicts with plain (a AND b).
@@ -157,12 +158,13 @@ simpleExpression
     ;
 
 literal
-    : INTEGER_LITERAL
-    | FLOAT_LITERAL
-    | NUMERIC_LITERAL
-    | BOOLEAN_LITERAL
-    | STRING_LITERAL
-    | TRUE
-    | FALSE
-    | NULL
+    : INTEGER_LITERAL # literalPlain
+    | FLOAT_LITERAL # literalPlain
+    | NUMERIC_LITERAL # literalPlain
+    | BOOLEAN_LITERAL # literalPlain
+    | STRING_LITERAL # literalPlain
+    | TRUE # literalPlain
+    | FALSE # literalPlain
+    | NULL # literalPlain
+    | intervalLiteral # literalInterval
     ;

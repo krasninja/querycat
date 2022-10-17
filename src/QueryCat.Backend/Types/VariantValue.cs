@@ -16,6 +16,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     private static readonly DataTypeObject IntegerObject = new("INT");
     private static readonly DataTypeObject FloatObject = new("FLOAT");
     private static readonly DataTypeObject TimestampObject = new("TIMESTAMP");
+    private static readonly DataTypeObject IntervalObject = new("INTERVAL");
     private static readonly DataTypeObject BooleanObject = new("BOOL");
 
     public static VariantValue OneIntegerValue = new(1);
@@ -35,6 +36,9 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         [FieldOffset(0)]
         internal readonly bool BooleanValue;
 
+        [FieldOffset(0)]
+        internal readonly TimeSpan TimeSpanValue;
+
         internal TypeUnion(long value) : this()
         {
             IntegerValue = value;
@@ -53,6 +57,11 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         internal TypeUnion(bool value) : this()
         {
             BooleanValue = value;
+        }
+
+        internal TypeUnion(TimeSpan value) : this()
+        {
+            TimeSpanValue = value;
         }
     }
 
@@ -82,6 +91,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
             DataType.Boolean => BooleanObject,
             DataType.Float => FloatObject,
             DataType.Timestamp => TimestampObject,
+            DataType.Interval => IntervalObject,
             _ => throw new ArgumentOutOfRangeException(nameof(type)),
         };
         _valueUnion = default;
@@ -121,6 +131,12 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     {
         _valueUnion = new TypeUnion(value);
         _object = TimestampObject;
+    }
+
+    public VariantValue(TimeSpan value)
+    {
+        _valueUnion = new TypeUnion(value);
+        _object = IntervalObject;
     }
 
     public VariantValue(bool value)
@@ -177,6 +193,10 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         {
             return new VariantValue(dateTimeOffset.UtcDateTime);
         }
+        if (obj is TimeSpan timeSpan)
+        {
+            return new VariantValue(timeSpan);
+        }
         return new VariantValue(obj);
     }
 
@@ -210,6 +230,10 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         {
             return DataType.Timestamp;
         }
+        if (_object == IntervalObject)
+        {
+            return DataType.Interval;
+        }
         if (_object is decimal)
         {
             return DataType.Numeric;
@@ -223,7 +247,8 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
 
     private bool IsValueType() =>
         _object == IntegerObject || _object == FloatObject ||
-        _object == BooleanObject || _object == TimestampObject;
+        _object == BooleanObject || _object == TimestampObject ||
+        _object == IntervalObject;
 
     #endregion
 
@@ -243,6 +268,8 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     public double AsFloat => CheckTypeAndTryToCast(DataType.Float)._valueUnion.DoubleValue;
 
     public DateTime AsTimestamp => CheckTypeAndTryToCast(DataType.Timestamp)._valueUnion.DateTimeValue;
+
+    public TimeSpan AsInterval => CheckTypeAndTryToCast(DataType.Interval)._valueUnion.TimeSpanValue;
 
     public bool AsBoolean => CheckTypeAndTryToCast(DataType.Boolean)._valueUnion.BooleanValue;
 
@@ -293,6 +320,12 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     private static VariantValue StringToTimestamp(in ReadOnlySpan<char> value, out bool success)
     {
         success = DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.None, out var @out);
+        return success ? new VariantValue(@out) : Null;
+    }
+
+    private static VariantValue StringToInterval(in ReadOnlySpan<char> value, out bool success)
+    {
+        success = TimeSpan.TryParse(value, CultureInfo.InvariantCulture, out var @out);
         return success ? new VariantValue(@out) : Null;
     }
 
@@ -466,6 +499,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
             DataType.Boolean => StringToBoolean(value, out success),
             DataType.Numeric => StringToNumeric(value, out success),
             DataType.String => StringToString(value, out success),
+            DataType.Interval => StringToInterval(value, out success),
             _ => Null
         };
         return success;
@@ -511,6 +545,8 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
 
     public static implicit operator DateTime(VariantValue value) => value.AsTimestamp;
 
+    public static implicit operator TimeSpan(VariantValue value) => value.AsInterval;
+
     /// <inheritdoc />
     public override string ToString() => GetInternalType() switch
     {
@@ -521,6 +557,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         DataType.Boolean => AsBoolean.ToString(CultureInfo.InvariantCulture),
         DataType.Float => AsFloat.ToString("F2", CultureInfo.InvariantCulture),
         DataType.Timestamp => AsTimestamp.ToString(CultureInfo.InvariantCulture),
+        DataType.Interval => AsInterval.ToString("c", CultureInfo.InvariantCulture),
         DataType.Object => "object: " + AsObject,
         _ => "unknown"
     };
@@ -539,6 +576,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         DataType.Boolean => AsBoolean.ToString(),
         DataType.Float => AsFloat.ToString(format, CultureInfo.InvariantCulture),
         DataType.Timestamp => AsTimestamp.ToString(format, CultureInfo.InvariantCulture),
+        DataType.Interval => AsInterval.ToString(format, CultureInfo.InvariantCulture),
         DataType.Object => "object: " + AsObject,
         _ => "unknown"
     };

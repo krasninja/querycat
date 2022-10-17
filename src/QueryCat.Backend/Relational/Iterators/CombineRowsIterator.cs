@@ -50,7 +50,7 @@ internal sealed class CombineRowsIterator : IRowsIterator
             }
             for (int i = 0; i < Columns.Length; i++)
             {
-                if (!DataTypeUtils.EqualsWithCase(rowsIterator.Columns[i].DataType, Columns[i].DataType))
+                if (!DataTypeUtils.EqualsWithCast(rowsIterator.Columns[i].DataType, Columns[i].DataType))
                 {
                     throw new SemanticException(
                         String.Format(Resources.Errors.TypesMistmatch, Columns[i].Name));

@@ -70,6 +70,7 @@ VOID:               'VOID';
 
 CURRENT_DATE:       'CURRENT_DATE';
 CURRENT_TIMESTAMP:  'CURRENT_TIMESTAMP';
+INTERVAL:           'INTERVAL';
 YEAR:               'YEAR';
 MONTH:              'MONTH';
 DAY:                'DAY';

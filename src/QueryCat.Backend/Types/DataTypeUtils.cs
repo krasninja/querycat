@@ -15,6 +15,7 @@ public static class DataTypeUtils
         DataType.Float,
         DataType.Integer,
         DataType.Timestamp,
+        DataType.Interval,
         DataType.Boolean,
         DataType.Numeric,
         DataType.Object
@@ -32,6 +33,7 @@ public static class DataTypeUtils
         DataType.Integer => typeof(long),
         DataType.String => typeof(string),
         DataType.Timestamp => typeof(DateTime),
+        DataType.Interval => typeof(TimeSpan),
         DataType.Null => typeof(void),
         DataType.Void => typeof(void),
         DataType.Numeric => typeof(decimal),
@@ -54,6 +56,10 @@ public static class DataTypeUtils
         if (typeof(DateTimeOffset).IsAssignableFrom(type))
         {
             return DataType.Timestamp;
+        }
+        if (typeof(TimeSpan).IsAssignableFrom(type))
+        {
+            return DataType.Interval;
         }
 
         return GetTypeCode(type) switch
@@ -83,10 +89,15 @@ public static class DataTypeUtils
             : Type.GetTypeCode(type);
     }
 
+    /// <summary>
+    /// Is this is a simple type (not an object).
+    /// </summary>
+    /// <param name="dataType">Data type.</param>
+    /// <returns><c>True</c> if type is simple, <c>false</c> otherwise.</returns>
     public static bool IsSimple(DataType dataType)
         =>
             IsNumeric(dataType) || dataType == DataType.Boolean || dataType == DataType.String
-            || dataType == DataType.Timestamp;
+                || dataType == DataType.Timestamp || dataType == DataType.Interval;
 
     /// <summary>
     /// Is the data type numeric.
@@ -96,12 +107,91 @@ public static class DataTypeUtils
     public static bool IsNumeric(DataType dataType)
         => dataType == DataType.Integer || dataType == DataType.Float || dataType == DataType.Numeric;
 
-    public static bool EqualsWithCase(DataType dataType1, DataType dataType2)
+    public static bool EqualsWithCast(DataType dataType1, DataType dataType2)
     {
         if (IsNumeric(dataType1) && IsNumeric(dataType2))
         {
             return true;
         }
         return dataType1 == dataType2;
+    }
+
+    /// <summary>
+    /// Parse interval from string.
+    /// </summary>
+    /// <param name="target">Target string.</param>
+    /// <returns>Time span.</returns>
+    internal static TimeSpan ParseInterval(string target)
+    {
+        if (TimeSpan.TryParse(target, out var resultTimeSpan))
+        {
+            return resultTimeSpan;
+        }
+
+        var result = TimeSpan.Zero;
+        var arr = target.ToUpper().Split(' ',
+            StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        for (var i = 0; i < arr.Length; i++)
+        {
+            string intervalType;
+            string intervalString = arr[i];
+
+            // Covert short value to full (like 1h -> 1 h).
+            if (char.IsLetter(arr[i][^1]))
+            {
+                intervalType = arr[i][^1].ToString();
+                intervalString = arr[i][0..^1];
+            }
+            // Standard case like "1 min".
+            else if (i < arr.Length - 1)
+            {
+                intervalType = arr[++i];
+            }
+            else
+            {
+                throw new FormatException("Incorrect number of items for interval.");
+            }
+
+            // First must be double.
+            if (!double.TryParse(intervalString, out var intervalDouble))
+            {
+                throw new FormatException("Cannot parse interval as double.");
+            }
+
+            var timeSpan = ParseIntervalInternal(intervalDouble, intervalType);
+            result += timeSpan;
+        }
+
+        return result;
+    }
+
+    private static TimeSpan ParseIntervalInternal(double value, string type)
+    {
+        switch (type)
+        {
+            case "MS":
+            case "MILLISECOND":
+            case "MILLISECONDS":
+                return TimeSpan.FromMilliseconds(value);
+            case "S":
+            case "SEC":
+            case "SECOND":
+            case "SECONDS":
+                return TimeSpan.FromSeconds(value);
+            case "M":
+            case "MIN":
+            case "MINUTE":
+            case "MINUTES":
+                return TimeSpan.FromMinutes(value);
+            case "H":
+            case "HOUR":
+            case "HOURS":
+                return TimeSpan.FromHours(value);
+            case "D":
+            case "DAY":
+            case "DAYS":
+                return TimeSpan.FromDays(value);
+        }
+        throw new FormatException("Cannot parse interval.");
     }
 }

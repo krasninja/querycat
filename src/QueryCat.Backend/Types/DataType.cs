@@ -46,6 +46,11 @@ public enum DataType : sbyte
     Numeric = 6,
 
     /// <summary>
+    /// Time span value.
+    /// </summary>
+    Interval = 7,
+
+    /// <summary>
     /// Other object type.
     /// </summary>
     Object = 40
