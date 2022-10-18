@@ -52,6 +52,11 @@ public class Column : ICloneable
     public int Length { get; internal set; }
 
     /// <summary>
+    /// Should the column be visible on output. It doesn't affect column search.
+    /// </summary>
+    public bool IsHidden => Name.StartsWith("__");
+
+    /// <summary>
     /// Constructor.
     /// </summary>
     /// <param name="name">Column name.</param>

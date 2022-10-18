@@ -111,11 +111,12 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
 
         for (int i = 0; i < columns.Length; i++)
         {
-            var lengths = new[]
+            if (columns[i].IsHidden)
             {
-                columns[i].Length
-            };
-            _columnsLengths[i] = lengths.Max();
+                continue;
+            }
+
+            _columnsLengths[i] = columns[i].Length;
 
             _streamWriter.Write(_separatorWithSpace);
             _streamWriter.Write(columns[i].FullName.PadRight(_columnsLengths[i]));
@@ -145,6 +146,10 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
     {
         for (int i = 0; i < row.Columns.Length; i++)
         {
+            if (row.Columns[i].IsHidden)
+            {
+                continue;
+            }
             if (!_isSingleValue)
             {
                 _streamWriter.Write(_separatorWithSpace);
@@ -166,13 +171,21 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
 
     private void OnCardInit()
     {
-        _maxColumnNameWidth = Math.Min(QueryContext.GetColumns().Select(c => c.Name.Length).Max(), 20);
+        _maxColumnNameWidth = Math.Min(
+            QueryContext.GetColumns()
+            .Where(c => !c.IsHidden)
+            .Select(c => c.Name.Length)
+            .Max(), 20);
     }
 
     private void OnCardWrite(Row row)
     {
         for (int i = 0; i < row.Columns.Length; i++)
         {
+            if (row.Columns[i].IsHidden)
+            {
+                continue;
+            }
             var value = row[i];
             _streamWriter.Write(row.Columns[i].FullName.PadLeft(_maxColumnNameWidth));
             _streamWriter.Write($" {_separator} {value}\n");
