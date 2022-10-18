@@ -81,7 +81,20 @@ public abstract class ClassEnumerableInput<TClass> :
     /// Get data.
     /// </summary>
     /// <returns>Objects.</returns>
-    public abstract IEnumerable<TClass> GetData();
+    public virtual IEnumerable<TClass> GetData()
+    {
+        return GetDataAsync().GetAwaiter().GetResult();
+    }
+
+    /// <summary>
+    /// Get data async. It is a helper virtual method that is intended to simplify async overload.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Objects.</returns>
+    public virtual Task<IEnumerable<TClass>> GetDataAsync(CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(Enumerable.Empty<TClass>());
+    }
 
     #region Dispose
 

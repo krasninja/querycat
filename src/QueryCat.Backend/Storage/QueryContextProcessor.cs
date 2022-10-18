@@ -1,3 +1,4 @@
+using QueryCat.Backend.Logging;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Types;
 
@@ -8,10 +9,11 @@ namespace QueryCat.Backend.Storage;
 /// </summary>
 public class QueryContextProcessor
 {
-    private record struct ConditionAction(
+    private record ConditionAction(
         string ColumnName,
         VariantValue.Operation[] Operations,
-        Action<QueryContextCondition> Action);
+        Action<QueryContextCondition> Action,
+        bool IsRequired = false);
 
     private readonly List<ConditionAction> _conditionActions = new();
 
@@ -20,6 +22,10 @@ public class QueryContextProcessor
     /// </summary>
     public QueryContext QueryContext { get; }
 
+    /// <summary>
+    /// Constructor.
+    /// </summary>
+    /// <param name="queryContext">Query context.</param>
     public QueryContextProcessor(QueryContext queryContext)
     {
         QueryContext = queryContext;
@@ -38,6 +44,18 @@ public class QueryContextProcessor
     }
 
     /// <summary>
+    /// Register required equals condition.
+    /// </summary>
+    /// <param name="name">Column name.</param>
+    /// <param name="action">Action.</param>
+    /// <returns>Instance of <see cref="QueryContextProcessor" />.</returns>
+    public QueryContextProcessor RegisterRequiredCondition(string name, Action<QueryContextCondition> action)
+    {
+        _conditionActions.Add(new ConditionAction(name, new[] { VariantValue.Operation.Equals }, action, true));
+        return this;
+    }
+
+    /// <summary>
     /// Register condition.
     /// </summary>
     /// <param name="name">Column name.</param>
@@ -47,6 +65,19 @@ public class QueryContextProcessor
     public QueryContextProcessor RegisterCondition(string name, VariantValue.Operation operation, Action<QueryContextCondition> action)
     {
         _conditionActions.Add(new ConditionAction(name, new[] { operation }, action));
+        return this;
+    }
+
+    /// <summary>
+    /// Register required condition.
+    /// </summary>
+    /// <param name="name">Column name.</param>
+    /// <param name="operation">Operation.</param>
+    /// <param name="action">Action.</param>
+    /// <returns>Instance of <see cref="QueryContextProcessor" />.</returns>
+    public QueryContextProcessor RegisterRequiredCondition(string name, VariantValue.Operation operation, Action<QueryContextCondition> action)
+    {
+        _conditionActions.Add(new ConditionAction(name, new[] { operation }, action, true));
         return this;
     }
 
@@ -70,6 +101,8 @@ public class QueryContextProcessor
     /// </summary>
     public void Run()
     {
+        var processed = new List<ConditionAction>();
+
         foreach (var condition in QueryContext.GetConditions())
         {
             foreach (var conditionAction in _conditionActions)
@@ -77,10 +110,24 @@ public class QueryContextProcessor
                 if (Column.NameEquals(condition.Column, conditionAction.ColumnName)
                     && conditionAction.Operations.Contains(condition.Operation))
                 {
+                    processed.Add(conditionAction);
+                    var operations = string.Join(", ", conditionAction.Operations.Select(o => $"'{o}'"));
+                    Logger.Instance.Trace(
+                        $"Applied condition for column '{condition.Column.FullName}' and operations {operations}.",
+                        nameof(QueryContextProcessor));
                     conditionAction.Action.Invoke(condition);
                     break;
                 }
             }
+        }
+
+        var requiredNotProcessed = _conditionActions.Where(ca => ca.IsRequired).Except(processed)
+            .FirstOrDefault();
+        if (requiredNotProcessed != null)
+        {
+            var operations = string.Join(", ", requiredNotProcessed.Operations.Select(o => $"'{o}'"));
+            throw new QueryCatException(
+                $"The input requires filter by '{requiredNotProcessed.ColumnName}' with operations {operations}");
         }
     }
 }

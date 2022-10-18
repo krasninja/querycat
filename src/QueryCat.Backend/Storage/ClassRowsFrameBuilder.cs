@@ -32,13 +32,23 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
     /// <param name="name">Property name.</param>
     /// <param name="valueGetter">The delegate to get property value by object.</param>
     /// <param name="description">Property description.</param>
+    /// <param name="defaultLength">Default column length.</param>
     /// <typeparam name="T">Property type.</typeparam>
     /// <returns>The instance of <see cref="ClassRowsFrameBuilder{TClass}" />.</returns>
-    public ClassRowsFrameBuilder<TClass> AddProperty<T>(string name, Func<TClass, T> valueGetter, string? description = null)
+    public ClassRowsFrameBuilder<TClass> AddProperty<T>(
+        string name,
+        Func<TClass, T> valueGetter,
+        string? description = null,
+        int? defaultLength = null)
     {
         var dataType = DataTypeUtils.ConvertFromSystem(typeof(T));
+        var column = new Column(name, dataType, description);
+        if (defaultLength.HasValue)
+        {
+            column.Length = defaultLength.Value;
+        }
         _columns.Add((
-            new Column(name, dataType, description),
+            column,
             obj => VariantValue.CreateFromObject(valueGetter(obj))
         ));
         return this;
@@ -49,11 +59,13 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
     /// </summary>
     /// <param name="valueGetterExpression">Property expression.</param>
     /// <param name="description">Property description.</param>
+    /// <param name="defaultLength">Default column length.</param>
     /// <typeparam name="T">Property type.</typeparam>
     /// <returns>The instance of <see cref="ClassRowsFrameBuilder{TClass}" />.</returns>
     public ClassRowsFrameBuilder<TClass> AddProperty<T>(
         Expression<Func<TClass, T>> valueGetterExpression,
-        string? description = null)
+        string? description = null,
+        int? defaultLength = null)
     {
         var propertyInfo = GetProperty(valueGetterExpression);
         if (propertyInfo == null)
@@ -80,20 +92,26 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
     /// </summary>
     /// <param name="options">Options.</param>
     /// <returns>Instance of <see cref="ClassRowsFrame{TClass}" />.</returns>
-    public ClassRowsFrame<TClass> BuildRowsFrame(RowsFrameOptions? options = null) => new(
-        options ?? new RowsFrameOptions(),
-        _columns.Select(c => c.Column).ToArray(),
-        _columns.Select(c => c.ValueGetter).ToArray());
+    public ClassRowsFrame<TClass> BuildRowsFrame(RowsFrameOptions? options = null)
+    {
+        return new(
+            options ?? new RowsFrameOptions(),
+            _columns.Select(c => c.Column).ToArray(),
+            _columns.Select(c => c.ValueGetter).ToArray());
+    }
 
     /// <summary>
     /// Build iterator based on <see cref="IEnumerable{T}" />.
     /// </summary>
     /// <param name="enumerable">Enumerable.</param>
     /// <returns>Enumerable iterator instance.</returns>
-    public EnumerableRowsIterator<TClass> BuildIterator(IEnumerable<TClass> enumerable) => new(
-        _columns.Select(c => c.Column).ToArray(),
-        _columns.Select(c => c.ValueGetter).ToArray(),
-        enumerable);
+    public EnumerableRowsIterator<TClass> BuildIterator(IEnumerable<TClass> enumerable)
+    {
+        return new(
+            _columns.Select(c => c.Column).ToArray(),
+            _columns.Select(c => c.ValueGetter).ToArray(),
+            enumerable);
+    }
 
     /// <summary>
     /// Returns the name of the specified property of the specified type.
