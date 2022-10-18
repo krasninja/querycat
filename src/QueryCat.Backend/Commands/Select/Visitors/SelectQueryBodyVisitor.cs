@@ -165,6 +165,27 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
             {
                 var iterator = fromTableExpression.GetAttribute<IRowsIterator>(AstAttributeKeys.ResultKey);
                 queryExpressionBodyNode.SetAttribute(AstAttributeKeys.RowsInputKey, iterator);
+
+                if (!string.IsNullOrEmpty(queryExpressionBodyNode.Alias))
+                {
+                    foreach (var inputColumn in queryExpressionBodyNode.GetAllChildren<IdentifierExpressionNode>())
+                    {
+                        inputColumn.SourceName = queryExpressionBodyNode.Alias;
+                    }
+                    foreach (var inputColumn in queryExpressionBodyNode.GetAllChildren<SelectColumnsSublistNameNode>())
+                    {
+                        inputColumn.SourceName = queryExpressionBodyNode.Alias;
+                    }
+
+                    var rowsIterator = queryExpressionBodyNode.GetAttribute<IRowsIterator>(AstAttributeKeys.RowsInputKey);
+                    if (rowsIterator != null)
+                    {
+                        foreach (var column in rowsIterator.Columns)
+                        {
+                            column.SourceName = queryExpressionBodyNode.Alias;
+                        }
+                    }
+                }
             }
         }
         return contexts;
@@ -186,7 +207,14 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
             return new(new SingleValueRowsInput().AsIterable());
         }
 
-        new ResolveTypesVisitor(_executionThread).Run(querySpecificationNode.TableExpression.Tables);
+        foreach (var tableExpression in querySpecificationNode.TableExpression.Tables.TableFunctions)
+        {
+            if (tableExpression is SelectQueryExpressionBodyNode)
+            {
+                continue;
+            }
+            new ResolveTypesVisitor(_executionThread).Run(querySpecificationNode.TableExpression.Tables);
+        }
 
         // By opening input source we resolve all columns.
         var inputContexts = OpenInputSources(querySpecificationNode.TableExpression.Tables);
@@ -251,6 +279,7 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
             RowsInputIterator = resultRowsIterator as RowsInputIterator,
             InputQueryContextList = inputContexts.ToArray(),
         };
+
         return context;
     }
 

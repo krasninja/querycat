@@ -60,4 +60,7 @@
     <data name="NoColumns" xml:space="preserve">
         <value>There are no columns.</value>
     </data>
+    <data name="InvalidSubqueryColumnsCount" xml:space="preserve">
+        <value>Subquery returns {0} columns, expected 1.</value>
+    </data>
 </root>

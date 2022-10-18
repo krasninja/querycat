@@ -51,7 +51,7 @@ selectSetQuantifier: ALL | DISTINCT;
 selectSublist
     : STAR # SelectSublistAll
     | expression selectAlias? # SelectSublistExpression
-    | IDENTIFIER (PERIOD IDENTIFIER)? selectAlias? # SelectSublistIdentifier
+    | identifierChain selectAlias? # SelectSublistIdentifier
     ;
 
 // Into.
@@ -100,11 +100,19 @@ echoStatement: ECHO expression;
  * ========
  */
 
+identifierChain
+    : source=IDENTIFIER PERIOD name=IDENTIFIER? # identifierChainFull
+    | name=IDENTIFIER # identifierChainSimple
+    ;
+array: '(' expression (',' expression)* ')';
+intervalLiteral: INTERVAL interval=STRING_LITERAL;
+
 functionCall
     : IDENTIFIER '(' ( functionCallArg (COMMA functionCallArg)* )? ')'
     | IDENTIFIER '(' '*' ')' // Special case for COUNT(*).
     ;
 functionCallArg: (IDENTIFIER ASSOCIATION)? expression;
+castOperand: CAST '(' value=simpleExpression AS type ')';
 
 // SQL functions.
 standardFunction
@@ -125,17 +133,13 @@ type
     | ANY
     ;
 
-castOperand: CAST '(' value=simpleExpression AS type ')';
-array: '(' expression (',' expression)* ')';
-intervalLiteral: INTERVAL interval=STRING_LITERAL;
-
 // For reference: https://www.postgresql.org/docs/current/sql-syntax-lexical.html#SQL-PRECEDENCE
 expression
     : literal # ExpressionLiteral
     | castOperand # ExpressionCast
     | standardFunction # ExpressionStandardFunctionCall
     | functionCall # ExpressionFunctionCall
-    | IDENTIFIER # ExpressionIdentifier
+    | identifierChain # ExpressionIdentifier
     | '(' expression ')' # ExpressionInParens
     | '(' selectExpression ')' # ExpressionSelect
     | left=expression op=CONCAT right=expression # ExpressionBinary
@@ -159,7 +163,7 @@ simpleExpression
     | castOperand # SimpleExpressionCast
     | standardFunction # SimpleExpressionStandardFunctionCall
     | functionCall # SimpleExpressionFunctionCall
-    | IDENTIFIER # SimpleExpressionIdentifier
+    | identifierChain # SimpleExpressionIdentifier
     | left=simpleExpression op=(STAR | DIV | MOD) right=simpleExpression # SimpleExpressionBinary
     | left=simpleExpression op=(PLUS | MINUS) right=simpleExpression # SimpleExpressionBinary
     | left=simpleExpression op=(EQUALS | NOT_EQUALS | GREATER | GREATER_OR_EQUALS | LESS | LESS_OR_EQUALS) right=simpleExpression # SimpleExpressionBinary

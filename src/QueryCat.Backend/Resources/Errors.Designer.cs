@@ -128,5 +128,11 @@ namespace QueryCat.Backend.Resources {
                 return ResourceManager.GetString("NoColumns", resourceCulture);
             }
         }
+        
+        internal static string InvalidSubqueryColumnsCount {
+            get {
+                return ResourceManager.GetString("InvalidSubqueryColumnsCount", resourceCulture);
+            }
+        }
     }
 }

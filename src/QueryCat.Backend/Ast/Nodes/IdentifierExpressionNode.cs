@@ -13,7 +13,7 @@ public sealed class IdentifierExpressionNode : ExpressionNode
     /// <summary>
     /// Optional source name. Should be empty for local variables.
     /// </summary>
-    public string SourceName { get; } = string.Empty;
+    public string SourceName { get; internal set; } = string.Empty;
 
     /// <inheritdoc />
     public override string Code => "id";

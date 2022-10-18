@@ -37,10 +37,6 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
         => new ExpressionStatementNode((ExpressionNode)Visit(context.expression()));
 
     /// <inheritdoc />
-    public override IAstNode VisitExpressionIdentifier(QueryCatParser.ExpressionIdentifierContext context)
-        => new IdentifierExpressionNode(GetIdentifierText(context.IDENTIFIER()));
-
-    /// <inheritdoc />
     public override IAstNode VisitStatementFunctionCall(QueryCatParser.StatementFunctionCallContext context)
         => new FunctionCallStatementNode(this.Visit<FunctionCallNode>(context.functionCall()));
 
@@ -137,10 +133,6 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
     }
 
     /// <inheritdoc />
-    public override IAstNode VisitSimpleExpressionIdentifier(QueryCatParser.SimpleExpressionIdentifierContext context)
-        => new IdentifierExpressionNode(GetIdentifierText(context.IDENTIFIER()));
-
-    /// <inheritdoc />
     public override IAstNode VisitSimpleExpressionFunctionCall(QueryCatParser.SimpleExpressionFunctionCallContext context)
         => this.Visit<FunctionCallNode>(context.functionCall());
 
@@ -188,6 +180,14 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
     /// <inheritdoc />
     public override IAstNode VisitArray(QueryCatParser.ArrayContext context)
         => new InExpressionValuesNode(this.Visit<ExpressionNode>(context.expression()).ToList());
+
+    /// <inheritdoc />
+    public override IAstNode VisitIdentifierChainFull(QueryCatParser.IdentifierChainFullContext context)
+        => new IdentifierExpressionNode(context.name.Text, GetIdentifierText(context.source.Text));
+
+    /// <inheritdoc />
+    public override IAstNode VisitIdentifierChainSimple(QueryCatParser.IdentifierChainSimpleContext context)
+        => new IdentifierExpressionNode(GetIdentifierText(context.name.Text));
 
     private static bool GetBooleanFromString(string text)
     {

@@ -2,7 +2,7 @@ namespace QueryCat.Backend.Ast.Nodes.Select;
 
 public sealed class SelectColumnsSublistNameNode : SelectColumnsSublistNode
 {
-    public string SourceName { get; }
+    public string SourceName { get; internal set; }
 
     public string ColumnName { get; }
 

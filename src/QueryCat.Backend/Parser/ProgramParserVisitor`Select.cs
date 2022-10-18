@@ -80,12 +80,15 @@ internal partial class ProgramParserVisitor
 
     /// <inheritdoc />
     public override IAstNode VisitSelectSublistIdentifier(QueryCatParser.SelectSublistIdentifierContext context)
-        => new SelectColumnsSublistNameNode(
-            columnName: context.IDENTIFIER(0).GetText(),
-            sourceName: GetIdentifierText(context.IDENTIFIER(1)))
+    {
+        var idNode = this.Visit<IdentifierExpressionNode>(context.identifierChain());
+        return new SelectColumnsSublistNameNode(
+            columnName: idNode.Name,
+            sourceName: idNode.SourceName)
         {
             Alias = this.Visit(context.selectAlias(), SelectAliasNode.Empty).AliasName
         };
+    }
 
     /// <inheritdoc />
     public override IAstNode VisitExpressionSelect(QueryCatParser.ExpressionSelectContext context)
