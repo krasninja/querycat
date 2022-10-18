@@ -1,6 +1,7 @@
 using QueryCat.Backend.Relational;
+using QueryCat.Backend.Storage;
 
-namespace QueryCat.Backend.Storage.Formats;
+namespace QueryCat.Backend.Formatters;
 
 /// <summary>
 /// Render rows by pages.

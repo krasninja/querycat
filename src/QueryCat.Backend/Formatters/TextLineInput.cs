@@ -1,8 +1,9 @@
 using QueryCat.Backend.Relational;
+using QueryCat.Backend.Storage;
 using QueryCat.Backend.Types;
 using QueryCat.Backend.Utils;
 
-namespace QueryCat.Backend.Storage.Formats;
+namespace QueryCat.Backend.Formatters;
 
 /// <summary>
 /// Text line input.

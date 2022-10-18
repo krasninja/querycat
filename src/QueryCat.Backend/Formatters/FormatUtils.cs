@@ -1,4 +1,4 @@
-namespace QueryCat.Backend.Storage.Formats;
+namespace QueryCat.Backend.Formatters;
 
 /// <summary>
 /// Format utilities.

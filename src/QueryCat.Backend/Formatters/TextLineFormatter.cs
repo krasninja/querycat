@@ -1,8 +1,9 @@
 using System.ComponentModel;
 using QueryCat.Backend.Functions;
+using QueryCat.Backend.Storage;
 using QueryCat.Backend.Types;
 
-namespace QueryCat.Backend.Storage.Formats;
+namespace QueryCat.Backend.Formatters;
 
 /// <summary>
 /// Formats the data as a single text line.

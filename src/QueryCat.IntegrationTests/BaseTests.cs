@@ -1,7 +1,7 @@
 using System.Globalization;
 using QueryCat.Backend.Execution;
+using QueryCat.Backend.Formatters;
 using QueryCat.Backend.Functions;
-using QueryCat.Backend.Storage.Formats;
 using QueryCat.Backend.Types;
 using QueryCat.IntegrationTests.Internal;
 

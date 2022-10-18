@@ -1,9 +1,10 @@
 using System.Text;
 using QueryCat.Backend.Logging;
 using QueryCat.Backend.Relational;
+using QueryCat.Backend.Storage;
 using QueryCat.Backend.Types;
 
-namespace QueryCat.Backend.Storage.Formats;
+namespace QueryCat.Backend.Formatters;
 
 /// <summary>
 /// Delimiter separated values (DSV) output.

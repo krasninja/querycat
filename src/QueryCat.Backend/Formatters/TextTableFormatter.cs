@@ -1,4 +1,6 @@
-namespace QueryCat.Backend.Storage.Formats;
+using QueryCat.Backend.Storage;
+
+namespace QueryCat.Backend.Formatters;
 
 /// <summary>
 /// Simple text table formatter.

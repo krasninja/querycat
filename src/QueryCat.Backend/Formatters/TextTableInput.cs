@@ -1,6 +1,7 @@
+using QueryCat.Backend.Storage;
 using QueryCat.Backend.Utils;
 
-namespace QueryCat.Backend.Storage.Formats;
+namespace QueryCat.Backend.Formatters;
 
 /// <summary>
 /// The input that is optimized to read from STDIN.

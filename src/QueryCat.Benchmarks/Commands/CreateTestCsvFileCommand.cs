@@ -2,8 +2,8 @@ using System.Diagnostics;
 using Bogus;
 using Bogus.DataSets;
 using McMaster.Extensions.CommandLineUtils;
+using QueryCat.Backend.Formatters;
 using QueryCat.Backend.Storage;
-using QueryCat.Backend.Storage.Formats;
 
 namespace QueryCat.Benchmarks.Commands;
 
