@@ -8,12 +8,12 @@ public class PublishGeneralSettings : DotNetPublishSettings
     public PublishGeneralSettings(BuildContext context)
     {
         Configuration = DotNetConstants.ConfigurationRelease;
-        PublishTrimmed = true;
+        PublishTrimmed = false;
         PublishSingleFile = true;
         NoLogo = true;
-        PublishReadyToRun = false;
-        IncludeAllContentForSelfExtract = true;
-        EnableCompressionInSingleFile = false;
+        PublishReadyToRun = true;
+        IncludeAllContentForSelfExtract = false;
+        EnableCompressionInSingleFile = true;
         SelfContained = true;
         ArgumentCustomization = pag =>
         {
@@ -25,7 +25,8 @@ public class PublishGeneralSettings : DotNetPublishSettings
             pag.Append(new TextArgument("-p:HttpActivityPropagationSupport=false"));
             pag.Append(new TextArgument("-p:InvariantGlobalization=true"));
             pag.Append(new TextArgument("-p:MetadataUpdaterSupport=false"));
-            pag.Append(new TextArgument($"-p:Version={context.Version}"));
+            // For reference: https://andrewlock.net/version-vs-versionsuffix-vs-packageversion-what-do-they-all-mean/.
+            pag.Append(new TextArgument($"-p:InformationalVersion={context.Version}"));
             return pag;
         };
     }

@@ -7,8 +7,9 @@
     <Nullable>enable</Nullable>
     <CodeAnalysisRuleSet>../../tools/QueryCat.ruleset</CodeAnalysisRuleSet>
     <AssemblyName>qcat</AssemblyName>
-    <PackageVersion>0.1.0</PackageVersion>
-    <DebugType>embedded</DebugType>
+    <Authors>Ivan Kozhin</Authors>
+    <Product>QueryCat</Product>
+    <Copyright>Copyright (c) 2022</Copyright>
   </PropertyGroup>
 
   <ItemGroup>
