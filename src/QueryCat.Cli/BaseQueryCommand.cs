@@ -53,7 +53,7 @@ public abstract class BaseQueryCommand
             style: executionOptions.OutputStyle);
         executionOptions.DefaultRowsOutput = output;
         var pluginLoader = new PluginsLoader(PluginDirectories);
-        executionOptions.PluginAssemblies.AddRange(pluginLoader.GetPlugins());
+        executionOptions.PluginAssemblies.AddRange(pluginLoader.LoadPlugins());
         var runner = new Runner(executionOptions);
         runner.ExecutionThread.Statistic.CountErrorRows = runner.ExecutionThread.Options.ShowDetailedStatistic;
         runner.Bootstrap();

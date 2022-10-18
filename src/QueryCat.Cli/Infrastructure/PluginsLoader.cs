@@ -1,11 +1,12 @@
 using System.Reflection;
+using QueryCat.Backend.Logging;
 
 namespace QueryCat.Cli.Infrastructure;
 
 /// <summary>
 /// Plugins loader.
 /// </summary>
-public class PluginsLoader
+internal class PluginsLoader
 {
     private readonly IEnumerable<string> _pluginDirectories;
 
@@ -14,9 +15,13 @@ public class PluginsLoader
         _pluginDirectories = pluginDirectories;
     }
 
-    public IEnumerable<Assembly> GetPlugins()
+    /// <summary>
+    /// Load plugins.
+    /// </summary>
+    /// <returns>Loaded assemblies.</returns>
+    public IEnumerable<Assembly> LoadPlugins()
     {
-        var path = Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location);
+        var path = Path.GetDirectoryName(AppDomain.CurrentDomain.BaseDirectory);
         if (string.IsNullOrEmpty(path))
         {
             return Enumerable.Empty<Assembly>();
@@ -26,11 +31,12 @@ public class PluginsLoader
         AppDomain.CurrentDomain.AssemblyResolve += CurrentDomainOnAssemblyResolve;
 
         var assembliesList = new List<Assembly>();
-        foreach (var source in _pluginDirectories.Concat(new[] { path }))
+        foreach (var source in _pluginDirectories)
         {
             var pluginFiles = Directory.GetFiles(source, "*Plugin*.dll");
             foreach (var file in pluginFiles)
             {
+                Logger.Instance.Debug($"Load plugin assembly '{file}'.");
                 var assembly = Assembly.LoadFrom(file);
                 assembliesList.Add(assembly);
             }
