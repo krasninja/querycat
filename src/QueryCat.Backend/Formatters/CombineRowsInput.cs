@@ -95,5 +95,5 @@ public sealed class CombineRowsInput : RowsInput, IDisposable
 
     /// <inheritdoc />
     public override string ToString()
-        => string.Join("\n", _rowsInputs.Select(ri => $"{ri.GetType().Name}: {ri}"));
+        => string.Join(Environment.NewLine, _rowsInputs.Select(ri => $"{ri.GetType().Name}: {ri}"));
 }
