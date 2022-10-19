@@ -11,8 +11,8 @@ namespace QueryCat.Backend.Providers;
 /// </summary>
 public static class StringDataProviders
 {
-    [Description("Read data from a string.")]
-    [FunctionSignature("read_string(text: string, formatter: object<IRowsFormatter>): object<IRowsInput>")]
+    [Description("Reads data from a string.")]
+    [FunctionSignature("read_text(text: string, formatter: object<IRowsFormatter>): object<IRowsInput>")]
     public static VariantValue ReadString(FunctionCallInfo args)
     {
         var text = args.GetAt(0).AsString;

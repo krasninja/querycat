@@ -22,20 +22,8 @@ internal static class MiscFunctions
         return VariantValue.Null;
     }
 
-    [Description("Convert value to string according to the given format.")]
-    [FunctionSignature("to_char(args: any, fmt?: string): string")]
-    public static VariantValue ToChar(FunctionCallInfo args)
-    {
-        var arg = args.GetAt(0);
-        var format = args.GetAt(1);
-        return !string.IsNullOrEmpty(format)
-            ? new VariantValue(arg.ToString(format))
-            : new VariantValue(arg.ToString());
-    }
-
     public static void RegisterFunctions(FunctionsManager functionsManager)
     {
         functionsManager.RegisterFunction(Coalesce);
-        functionsManager.RegisterFunction(ToChar);
     }
 }

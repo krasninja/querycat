@@ -71,6 +71,17 @@ public static class StringFunctions
         return new VariantValue(value.Length);
     }
 
+    [Description("Convert value to string according to the given format.")]
+    [FunctionSignature("to_char(args: any, fmt?: string): string")]
+    public static VariantValue ToChar(FunctionCallInfo args)
+    {
+        var arg = args.GetAt(0);
+        var format = args.GetAt(1);
+        return !string.IsNullOrEmpty(format)
+            ? new VariantValue(arg.ToString(format))
+            : new VariantValue(arg.ToString());
+    }
+
     public static void RegisterFunctions(FunctionsManager functionsManager)
     {
         functionsManager.RegisterFunction(Lower);
@@ -80,5 +91,6 @@ public static class StringFunctions
         functionsManager.RegisterFunction(BTrim);
         functionsManager.RegisterFunction(SubString);
         functionsManager.RegisterFunction(Length);
+        functionsManager.RegisterFunction(ToChar);
     }
 }

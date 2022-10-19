@@ -11,7 +11,7 @@ namespace QueryCat.Backend.Formatters;
 public class TextLineFormatter : IRowsFormatter
 {
     [Description("Text line formatter.")]
-    [FunctionSignature("textline(): object<IRowsFormatter>")]
+    [FunctionSignature("text_line(): object<IRowsFormatter>")]
     public static VariantValue TextLine(FunctionCallInfo args)
     {
         var rowsSource = new TextLineFormatter();
