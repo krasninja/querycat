@@ -5,5 +5,5 @@ The input format reads a data line by line. The result rows frame has only one s
 ## Syntax
 
 ```
-textline(): object<IRowsFormatter>
+text_line(): object<IRowsFormatter>
 ```

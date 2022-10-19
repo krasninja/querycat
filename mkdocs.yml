@@ -10,6 +10,7 @@ nav:
   - 'Input':
     - 'CSV': input/csv.md
     - 'IISW3C': input/iisw3c.md
+    - 'STDIN': input/stdin.md
     - 'Text': input/text-line.md
     - 'TSV': input/tsv.md
   - 'Output':
