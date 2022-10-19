@@ -51,6 +51,7 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
         var resultIterator = combineRowsIterator.RowIterators.Count == 1
             ? combineRowsIterator.RowIterators.First()
             : combineRowsIterator;
+
         if (_executionThread.Options.AddRowNumberColumn)
         {
             resultIterator = new RowIdRowsIterator(resultIterator);
@@ -116,79 +117,53 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
         };
     }
 
-    private IReadOnlyList<SelectInputQueryContext> OpenInputSources(SelectTableReferenceListNode fromNode)
+    /// <summary>
+    /// Create and open input source.
+    /// This method should set <see cref="AstAttributeKeys.RowsInputKey" /> key.
+    /// </summary>
+    private void OpenInputSource(
+        SelectTableFunctionNode fromTableFunction,
+        IList<SelectInputQueryContext> queryContexts)
     {
-        var contexts = new List<SelectInputQueryContext>();
         var makeDelegateVisitor = new MakeDelegateVisitor(_executionThread);
-        foreach (var fromTableExpression in fromNode.TableFunctions)
+        IRowsInput? resultRowsInput;
+
+        var source = makeDelegateVisitor.RunAndReturn(fromTableFunction.TableFunction).Invoke();
+
+        if (DataTypeUtils.IsSimple(source.GetInternalType()))
         {
-            if (fromTableExpression is SelectTableFunctionNode fromTableFunction)
+            resultRowsInput = new SingleValueRowsInput(source);
+            fromTableFunction.SetAttribute(AstAttributeKeys.RowsInputKey, resultRowsInput);
+        }
+        else if (source.AsObject is IRowsInput)
+        {
+            resultRowsInput = (IRowsInput)source.AsObject;
+            resultRowsInput.Open();
+            Logger.Instance.Debug($"Open rows input {resultRowsInput}.", nameof(SelectQueryBodyVisitor));
+            var context = new SelectInputQueryContext(resultRowsInput);
+            resultRowsInput.SetContext(context);
+            queryContexts.Add(context);
+        }
+        else if (source.AsObject is IRowsIterator rowsIterator)
+        {
+            resultRowsInput = new RowsIteratorInput(rowsIterator);
+            fromTableFunction.SetAttribute(AstAttributeKeys.RowsInputKey, resultRowsInput);
+        }
+        else
+        {
+            throw new QueryCatException("Invalid rows input.");
+        }
+
+        fromTableFunction.SetAttribute(AstAttributeKeys.RowsInputKey, resultRowsInput);
+
+        // Set alias for columns.
+        if (!string.IsNullOrEmpty(fromTableFunction.Alias))
+        {
+            foreach (var inputColumn in resultRowsInput.Columns)
             {
-                var source = makeDelegateVisitor.RunAndReturn(fromTableFunction.TableFunction).Invoke();
-                var type = source.GetInternalType();
-                if (DataTypeUtils.IsSimple(type))
-                {
-                    fromTableFunction.SetAttribute(AstAttributeKeys.RowsInputKey, source);
-                    continue;
-                }
-                var rowsInput = source.AsObject as IRowsInput;
-                if (rowsInput == null)
-                {
-                    if (source.AsObject is IRowsIterator rowsIterator)
-                    {
-                        fromTableFunction.SetAttribute(AstAttributeKeys.RowsInputKey, rowsIterator);
-                    }
-                    else
-                    {
-                        Logger.Instance.Warning("Invalid rows input type!");
-                    }
-                    continue;
-                }
-                fromTableFunction.SetAttribute(AstAttributeKeys.RowsInputKey, rowsInput);
-
-                var context = new SelectInputQueryContext(rowsInput);
-                contexts.Add(context);
-                rowsInput.Open();
-                rowsInput.SetContext(context);
-
-                if (!string.IsNullOrEmpty(fromTableFunction.Alias))
-                {
-                    foreach (var inputColumn in rowsInput.Columns)
-                    {
-                        inputColumn.SourceName = fromTableFunction.Alias;
-                    }
-                }
-
-                Logger.Instance.Debug($"Open rows input {rowsInput}.", nameof(SelectQueryBodyVisitor));
-            }
-            else if (fromTableExpression is SelectQueryExpressionBodyNode queryExpressionBodyNode)
-            {
-                var iterator = fromTableExpression.GetAttribute<IRowsIterator>(AstAttributeKeys.ResultKey);
-                queryExpressionBodyNode.SetAttribute(AstAttributeKeys.RowsInputKey, iterator);
-
-                if (!string.IsNullOrEmpty(queryExpressionBodyNode.Alias))
-                {
-                    foreach (var inputColumn in queryExpressionBodyNode.GetAllChildren<IdentifierExpressionNode>())
-                    {
-                        inputColumn.SourceName = queryExpressionBodyNode.Alias;
-                    }
-                    foreach (var inputColumn in queryExpressionBodyNode.GetAllChildren<SelectColumnsSublistNameNode>())
-                    {
-                        inputColumn.SourceName = queryExpressionBodyNode.Alias;
-                    }
-
-                    var rowsIterator = queryExpressionBodyNode.GetAttribute<IRowsIterator>(AstAttributeKeys.RowsInputKey);
-                    if (rowsIterator != null)
-                    {
-                        foreach (var column in rowsIterator.Columns)
-                        {
-                            column.SourceName = queryExpressionBodyNode.Alias;
-                        }
-                    }
-                }
+                inputColumn.SourceName = fromTableFunction.Alias;
             }
         }
-        return contexts;
     }
 
     private void ApplyStatistic(SelectCommandContext context)
@@ -201,52 +176,16 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
 
     private SelectCommandContext CreateSourceRowsSet(SelectQuerySpecificationNode querySpecificationNode)
     {
-        // No FROM - assumed this is the query with SELECT only.
-        if (querySpecificationNode.TableExpression == null)
+        IRowsIterator CreateMultipleIterator(List<IRowsInput> rowsInputs)
         {
-            return new(new SingleValueRowsInput().AsIterable());
-        }
-
-        foreach (var tableExpression in querySpecificationNode.TableExpression.Tables.TableFunctions)
-        {
-            if (tableExpression is SelectQueryExpressionBodyNode)
+            if (rowsInputs.Count == 0)
             {
-                continue;
+                throw new QueryCatException("No rows inputs.");
             }
-            new ResolveTypesVisitor(_executionThread).Run(querySpecificationNode.TableExpression.Tables);
-        }
-
-        // By opening input source we resolve all columns.
-        var inputContexts = OpenInputSources(querySpecificationNode.TableExpression.Tables);
-
-        // Start with FROM statement, if none - there is only one SELECT row.
-        var rowsInputs = new List<IRowsInput>();
-        IRowsIterator? resultRowsIterator = null;
-        foreach (var tableFunction in querySpecificationNode.TableExpression.Tables.TableFunctions)
-        {
-            var rowsInput = tableFunction.GetAttribute(AstAttributeKeys.RowsInputKey) as IRowsInput;
-            if (rowsInput == null && tableFunction.GetAttribute(AstAttributeKeys.RowsInputKey) is IRowsIterator rowsIterator)
+            if (rowsInputs.Count == 1)
             {
-                rowsInput = new RowsIteratorInput(rowsIterator);
+                return new RowsInputIterator(rowsInputs[0], autoFetch: false);
             }
-            if (rowsInput == null && tableFunction.GetAttribute(AstAttributeKeys.RowsInputKey) is VariantValue value)
-            {
-                rowsInput = new SingleValueRowsInput(value);
-            }
-            if (rowsInput == null)
-            {
-                throw new SemanticException(Resources.Errors.InvalidRowsInputType);
-            }
-            rowsInputs.Add(rowsInput);
-        }
-        if (rowsInputs.Count == 1)
-        {
-            resultRowsIterator = new RowsInputIterator(rowsInputs[0], autoFetch: false);
-        }
-
-        // If more than one source on FROM clause, create multiplication.
-        if (rowsInputs.Count > 1)
-        {
             var multipleIterator = new MultiplyRowsIterator(
                 new RowsInputIterator(rowsInputs[0], autoFetch: true),
                 new RowsInputIterator(rowsInputs[1], autoFetch: true));
@@ -255,32 +194,88 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
                 multipleIterator = new MultiplyRowsIterator(
                     multipleIterator, new RowsInputIterator(rowsInputs[i], autoFetch: true));
             }
-            resultRowsIterator = multipleIterator;
+            return multipleIterator;
         }
 
-        if (resultRowsIterator == null)
+        void DisposeRowsInputs(List<IRowsInput> rowsInputs)
         {
-            throw new QueryCatException("No input sources defined.");
+            foreach (var rowsInput in rowsInputs)
+            {
+                (rowsInput as IDisposable)?.Dispose();
+            }
         }
 
+        void HandleSubQueryNode(SelectQueryExpressionBodyNode queryExpressionBodyNode)
+        {
+            var iterator = queryExpressionBodyNode.GetAttribute<IRowsIterator>(AstAttributeKeys.ResultKey);
+            if (iterator == null)
+            {
+                throw new QueryCatException("No iterator!");
+            }
+            queryExpressionBodyNode.SetAttribute(AstAttributeKeys.RowsInputKey,
+                new RowsIteratorInput(iterator));
+
+            if (string.IsNullOrEmpty(queryExpressionBodyNode.Alias))
+            {
+                return;
+            }
+            foreach (var inputColumn in queryExpressionBodyNode.GetAllChildren<IdentifierExpressionNode>())
+            {
+                inputColumn.SourceName = queryExpressionBodyNode.Alias;
+            }
+            foreach (var inputColumn in queryExpressionBodyNode.GetAllChildren<SelectColumnsSublistNameNode>())
+            {
+                inputColumn.SourceName = queryExpressionBodyNode.Alias;
+            }
+            foreach (var column in iterator.Columns)
+            {
+                column.SourceName = queryExpressionBodyNode.Alias;
+            }
+        }
+
+        // Entry point here.
+        //
+
+        // No FROM - assumed this is the query with SELECT only.
+        if (querySpecificationNode.TableExpression == null)
+        {
+            return new(new SingleValueRowsInput().AsIterable());
+        }
+
+        // Start with FROM statement, if none - there is only one SELECT row.
+        var rowsInputs = new List<IRowsInput>();
+        var inputContexts = new List<SelectInputQueryContext>();
+        foreach (var tableExpression in querySpecificationNode.TableExpression.Tables.TableFunctions)
+        {
+            // Here we should set AstAttributeKeys.ResultKey key.
+            if (tableExpression is SelectQueryExpressionBodyNode selectQueryExpressionBodyNode)
+            {
+                HandleSubQueryNode(selectQueryExpressionBodyNode);
+            }
+            else if (tableExpression is SelectTableFunctionNode tableFunctionNode)
+            {
+                new ResolveTypesVisitor(_executionThread).Run(tableExpression);
+                OpenInputSource(tableFunctionNode, inputContexts);
+            }
+
+            var rowsInput = tableExpression.GetAttribute<IRowsInput>(AstAttributeKeys.RowsInputKey);
+            if (rowsInput != null)
+            {
+                rowsInputs.Add(rowsInput);
+            }
+        }
+
+        var resultRowsIterator = CreateMultipleIterator(rowsInputs);
         var tearDownIterator = new TearDownRowsIterator(resultRowsIterator, "close inputs")
         {
-            Action = _ =>
-            {
-                foreach (var rowsInput in rowsInputs)
-                {
-                    (rowsInput as IDisposable)?.Dispose();
-                }
-            }
+            Action = _ => DisposeRowsInputs(rowsInputs)
         };
-        var context = new SelectCommandContext(tearDownIterator)
+        return new SelectCommandContext(tearDownIterator)
         {
             // TODO: this will cause problems for MultiplyRowsIterator.
             RowsInputIterator = resultRowsIterator as RowsInputIterator,
             InputQueryContextList = inputContexts.ToArray(),
         };
-
-        return context;
     }
 
     private void FillQueryContextConditions(

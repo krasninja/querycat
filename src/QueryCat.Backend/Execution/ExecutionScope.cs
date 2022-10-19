@@ -12,8 +12,6 @@ public sealed class ExecutionScope
     private readonly Dictionary<string, int> _variablesNames = new();
     private readonly ExecutionScope? _parent;
 
-    internal SelectQueryExpressionBodyNode? Query { get; set; }
-
     public IReadOnlyList<VariantValue> Variables => _variables;
 
     public IReadOnlyDictionary<string, int> VariablesNames => _variablesNames;
