@@ -71,7 +71,7 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
         ResolveSelectAllStatement(context.CurrentIterator, node.ColumnsList);
         ResolveSelectSourceColumns(context, node);
         ResolveNodesTypes(node, context.CurrentIterator);
-        FillQueryContextConditions(node, context.InputQueryContextList);
+        FillQueryContextConditions(node, context);
 
         // WHERE.
         ApplyFilter(context, node.TableExpression);
@@ -283,18 +283,20 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
         return context;
     }
 
-    private void FillQueryContextConditions(SelectQuerySpecificationNode querySpecificationNode,
-        IEnumerable<SelectInputQueryContext> contexts)
+    private void FillQueryContextConditions(
+        SelectQuerySpecificationNode querySpecificationNode,
+        SelectCommandContext commandContext)
     {
-        foreach (var context in contexts)
+        foreach (var context in commandContext.InputQueryContextList)
         {
-            FillQueryContextConditions(querySpecificationNode, context);
+            FillQueryContextConditions(querySpecificationNode, context, commandContext);
         }
     }
 
     private void FillQueryContextConditions(
         SelectQuerySpecificationNode querySpecificationNode,
-        SelectInputQueryContext context)
+        SelectInputQueryContext rowsInputContext,
+        SelectCommandContext commandContext)
     {
         var searchNode = querySpecificationNode.TableExpression?.SearchConditionNode;
         if (searchNode == null)
@@ -302,32 +304,75 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
             return;
         }
 
-        var callbackVisitor = new CallbackDelegateVisitor();
-        callbackVisitor.Callback = (node, traversal) =>
+        // Process expression <id> <op> <expr> or <expr> <op> <id>.
+        bool HandleBinaryOperation(IAstNode node, AstTraversal traversal)
         {
             // Get the binary comparision node.
             if (node is not BinaryOperationExpressionNode binaryOperationExpressionNode
                 || !VariantValue.ComparisionOperations.Contains(binaryOperationExpressionNode.Operation))
             {
-                return;
+                return false;
             }
             // Make sure parent does not contain OR condition - it breaks strict AND logic.
             if (traversal.GetParents().OfType<BinaryOperationExpressionNode>().Any(n => n.Operation == VariantValue.Operation.Or))
             {
-                return;
+                return false;
             }
-            // Left and Right must be id and literal.
-            if (!binaryOperationExpressionNode.MatchType(out IdentifierExpressionNode? identifierNode, out LiteralNode? literalNode))
+            // Left and Right must be id and expression.
+            if (!binaryOperationExpressionNode.MatchType(out IdentifierExpressionNode? identifierNode, out ExpressionNode? expressionNode))
             {
-                return;
+                return false;
             }
             // Try to find correspond row input column.
             var column = identifierNode!.GetAttribute<Column>(AstAttributeKeys.InputColumn);
-            if (column == null || context.RowsInput.GetColumnIndex(column) < 0)
+            if (column == null || rowsInputContext.RowsInput.GetColumnIndex(column) < 0)
+            {
+                return false;
+            }
+            var makeDelegateVisitor = new SelectMakeDelegateVisitor(_executionThread, commandContext);
+            var value = makeDelegateVisitor.RunAndReturn(expressionNode!).Invoke();
+            rowsInputContext.Conditions.Add(new QueryContextCondition(column, binaryOperationExpressionNode.Operation, value));
+            return true;
+        }
+
+        // Process expression <id> BETWEEN <expr> AND <expr>.
+        bool HandleBetweenOperation(IAstNode node, AstTraversal traversal)
+        {
+            // Get the between comparision node.
+            if (node is not BetweenExpressionNode betweenExpressionNode)
+            {
+                return false;
+            }
+            // Make sure we have id node.
+            if (betweenExpressionNode.Expression is not IdentifierExpressionNode identifierNode)
+            {
+                return false;
+            }
+            // Try to find correspond row input column.
+            var column = identifierNode!.GetAttribute<Column>(AstAttributeKeys.InputColumn);
+            if (column == null || rowsInputContext.RowsInput.GetColumnIndex(column) < 0)
+            {
+                return false;
+            }
+            var makeDelegateVisitor = new SelectMakeDelegateVisitor(_executionThread, commandContext);
+            var leftValue = makeDelegateVisitor.RunAndReturn(betweenExpressionNode.Left).Invoke();
+            var rightValue = makeDelegateVisitor.RunAndReturn(betweenExpressionNode.Right).Invoke();
+            rowsInputContext.Conditions.Add(new QueryContextCondition(column, VariantValue.Operation.GreaterOrEquals, leftValue));
+            rowsInputContext.Conditions.Add(new QueryContextCondition(column, VariantValue.Operation.LessOrEquals, rightValue));
+            return true;
+        }
+
+        var callbackVisitor = new CallbackDelegateVisitor();
+        callbackVisitor.Callback = (node, traversal) =>
+        {
+            if (HandleBinaryOperation(node, traversal))
             {
                 return;
             }
-            context.Conditions.Add(new QueryContextCondition(column, binaryOperationExpressionNode.Operation, literalNode!.Value));
+            if (HandleBetweenOperation(node, traversal))
+            {
+                return;
+            }
         };
         callbackVisitor.Run(searchNode);
     }

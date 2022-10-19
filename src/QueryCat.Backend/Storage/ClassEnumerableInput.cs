@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Types;
 
@@ -83,7 +84,20 @@ public abstract class ClassEnumerableInput<TClass> :
     /// <returns>Objects.</returns>
     public virtual IEnumerable<TClass> GetData()
     {
-        return GetDataAsync().GetAwaiter().GetResult();
+        var enumerator = GetDataAsync().GetAsyncEnumerator();
+        // Blocking all the way...
+        try
+        {
+            enumerator.ConfigureAwait(false);
+            while (enumerator.MoveNextAsync().AsTask().ConfigureAwait(false).GetAwaiter().GetResult())
+            {
+                yield return enumerator.Current;
+            }
+        }
+        finally
+        {
+            enumerator.DisposeAsync().AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
+        }
     }
 
     /// <summary>
@@ -91,9 +105,11 @@ public abstract class ClassEnumerableInput<TClass> :
     /// </summary>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Objects.</returns>
-    public virtual Task<IEnumerable<TClass>> GetDataAsync(CancellationToken cancellationToken = default)
+    public virtual async IAsyncEnumerable<TClass> GetDataAsync(
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        return Task.FromResult(Enumerable.Empty<TClass>());
+        await Task.CompletedTask;
+        yield break;
     }
 
     #region Dispose

@@ -97,13 +97,58 @@ public class QueryContextProcessor
     }
 
     /// <summary>
+    /// Register required condition.
+    /// </summary>
+    /// <param name="name">Column name.</param>
+    /// <param name="operation1">Operation 1.</param>
+    /// <param name="operation2">Operation 2.</param>
+    /// <param name="action">Action.</param>
+    /// <returns>Instance of <see cref="QueryContextProcessor" />.</returns>
+    public QueryContextProcessor RegisterRequiredCondition(string name, VariantValue.Operation operation1,
+        VariantValue.Operation operation2, Action<QueryContextCondition> action)
+    {
+        _conditionActions.Add(new ConditionAction(name, new[] { operation1, operation2 }, action, true));
+        return this;
+    }
+
+    /// <summary>
     /// Run processing.
     /// </summary>
     public void Run()
     {
-        var processed = new List<ConditionAction>();
+        void LogProcessed(IEnumerable<ConditionAction> processed)
+        {
+            foreach (var conditionAction in processed)
+            {
+                var operations = string.Join(", ", conditionAction.Operations.Select(o => $"'{o}'"));
+                Logger.Instance.Trace(
+                    $"Applied condition for column '{conditionAction.ColumnName}' and operations {operations}.",
+                    nameof(QueryContextProcessor));
+            }
+        }
 
-        foreach (var condition in QueryContext.GetConditions())
+        var conditions = QueryContext.GetConditions();
+
+        var processed = ApplyConditions(conditions);
+        processed = processed.Union(ApplyGreaterLessOperationInsteadOfEquals(conditions));
+
+        processed = processed.ToList();
+        LogProcessed(processed);
+
+        var requiredNotProcessed = _conditionActions.Where(ca => ca.IsRequired).Except(processed);
+        var requiredNotProcessedFirst = requiredNotProcessed.FirstOrDefault();
+        if (requiredNotProcessedFirst != null)
+        {
+            var operations = string.Join(", ", requiredNotProcessedFirst.Operations.Select(o => $"'{o}'"));
+            throw new QueryCatException(
+                $"The input requires filter by '{requiredNotProcessedFirst.ColumnName}' with operations {operations}.");
+        }
+    }
+
+    private IEnumerable<ConditionAction> ApplyConditions(IReadOnlyList<QueryContextCondition> conditions)
+    {
+        var processed = new List<ConditionAction>();
+        foreach (var condition in conditions)
         {
             foreach (var conditionAction in _conditionActions)
             {
@@ -111,23 +156,20 @@ public class QueryContextProcessor
                     && conditionAction.Operations.Contains(condition.Operation))
                 {
                     processed.Add(conditionAction);
-                    var operations = string.Join(", ", conditionAction.Operations.Select(o => $"'{o}'"));
-                    Logger.Instance.Trace(
-                        $"Applied condition for column '{condition.Column.FullName}' and operations {operations}.",
-                        nameof(QueryContextProcessor));
                     conditionAction.Action.Invoke(condition);
                     break;
                 }
             }
         }
+        return processed;
+    }
 
-        var requiredNotProcessed = _conditionActions.Where(ca => ca.IsRequired).Except(processed)
-            .FirstOrDefault();
-        if (requiredNotProcessed != null)
-        {
-            var operations = string.Join(", ", requiredNotProcessed.Operations.Select(o => $"'{o}'"));
-            throw new QueryCatException(
-                $"The input requires filter by '{requiredNotProcessed.ColumnName}' with operations {operations}");
-        }
+    /// <summary>
+    /// If we have "greater or equal" and "less or equal" required operations, but user provided only "equal" operation,
+    /// we change it.
+    /// </summary>
+    private IEnumerable<ConditionAction> ApplyGreaterLessOperationInsteadOfEquals(IReadOnlyList<QueryContextCondition> conditions)
+    {
+        return new ConditionAction[] { };
     }
 }
