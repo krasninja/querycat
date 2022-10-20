@@ -109,7 +109,8 @@ public class Row : IRowsSchema, ICloneable
             var columnIndex = this.GetColumnIndexByName(columnName);
             if (columnIndex < 0)
             {
-                throw new ArgumentException($"Cannot find column '{columnName}'.", nameof(columnIndex));
+                throw new ArgumentException(
+                    string.Format(Resources.Errors.CannotFindColumn, columnName), nameof(columnIndex));
             }
             return _values[columnIndex];
         }
@@ -119,7 +120,8 @@ public class Row : IRowsSchema, ICloneable
             var columnIndex = this.GetColumnIndexByName(columnName);
             if (columnIndex < 0)
             {
-                throw new ArgumentException($"Cannot find column '{columnName}'.", nameof(columnIndex));
+                throw new ArgumentException(string.Format(Resources.Errors.CannotFindColumn, columnName),
+                    nameof(columnIndex));
             }
             _values[columnIndex] = value;
         }

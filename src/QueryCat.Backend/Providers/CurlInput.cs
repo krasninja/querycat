@@ -8,7 +8,7 @@ namespace QueryCat.Backend.Providers;
 /// <summary>
 /// Web request providers.
 /// </summary>
-public static class CurlDataProviders
+public static class CurlInput
 {
     private const string ContentTypeHeader = "Content-Type";
 

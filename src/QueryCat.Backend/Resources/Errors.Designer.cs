@@ -140,5 +140,11 @@ namespace QueryCat.Backend.Resources {
                 return ResourceManager.GetString("CannotProcessNodeAsInput", resourceCulture);
             }
         }
+        
+        internal static string CannotFindColumn {
+            get {
+                return ResourceManager.GetString("CannotFindColumn", resourceCulture);
+            }
+        }
     }
 }

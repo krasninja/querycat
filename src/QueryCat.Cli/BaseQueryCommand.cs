@@ -49,7 +49,7 @@ public abstract class BaseQueryCommand
     {
         executionOptions.PluginAssemblies.Add(typeof(QueryCat.DataProviders.Registration).Assembly);
         var output = new TextTableOutput(
-            stream: StandardIODataProviders.GetConsoleOutput(),
+            stream: StandardInputOutput.GetConsoleOutput(),
             style: executionOptions.OutputStyle);
         executionOptions.DefaultRowsOutput = output;
         var pluginLoader = new PluginsLoader(PluginDirectories);

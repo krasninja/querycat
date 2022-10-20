@@ -66,4 +66,7 @@
     <data name="CannotProcessNodeAsInput" xml:space="preserve">
         <value>Cannot process node {0} as input.</value>
     </data>
+    <data name="CannotFindColumn" xml:space="preserve">
+        <value>Cannot find column '{0}'.</value>
+    </data>
 </root>

@@ -9,17 +9,19 @@ public static class Registration
 {
     public static void RegisterFunctions(FunctionsManager functionsManager)
     {
-        functionsManager.RegisterFunction(StandardIODataProviders.Stdout);
-        functionsManager.RegisterFunction(StandardIODataProviders.Stdin);
+        functionsManager.RegisterFunction(StandardInputOutput.Stdout);
+        functionsManager.RegisterFunction(StandardInputOutput.Stdin);
 
-        functionsManager.RegisterFunction(GenericProvider.Read);
-        functionsManager.RegisterFunction(GenericProvider.Write);
+        functionsManager.RegisterFunction(GenericInputOutput.Read);
+        functionsManager.RegisterFunction(GenericInputOutput.Write);
 
-        functionsManager.RegisterFunction(FileDataProviders.ReadFile);
-        functionsManager.RegisterFunction(FileDataProviders.WriteFile);
+        functionsManager.RegisterFunction(FluidTemplateRowsOutput.FluidTemplate);
 
-        functionsManager.RegisterFunction(StringDataProviders.ReadString);
+        functionsManager.RegisterFunction(FileInputOutput.ReadFile);
+        functionsManager.RegisterFunction(FileInputOutput.WriteFile);
 
-        functionsManager.RegisterFunction(CurlDataProviders.WGet);
+        functionsManager.RegisterFunction(StringInput.ReadString);
+
+        functionsManager.RegisterFunction(CurlInput.WGet);
     }
 }

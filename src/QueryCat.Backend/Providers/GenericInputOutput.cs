@@ -8,7 +8,7 @@ namespace QueryCat.Backend.Providers;
 /// The provider implements simple read and write functions. The actual function will
 /// be resolved by URI schema.
 /// </summary>
-public static class GenericProvider
+public static class GenericInputOutput
 {
     [Description("Read data from a URI.")]
     [FunctionSignature("read(uri: string, formatter?: object<IRowsFormatter>): object<IRowsInput>")]
@@ -18,16 +18,16 @@ public static class GenericProvider
         if (uri.StartsWith(@"http://", StringComparison.OrdinalIgnoreCase) ||
             uri.StartsWith(@"https://", StringComparison.OrdinalIgnoreCase))
         {
-            return CurlDataProviders.WGet(args);
+            return CurlInput.WGet(args);
         }
 
-        return FileDataProviders.ReadFile(args);
+        return FileInputOutput.ReadFile(args);
     }
 
     [Description("Write data to a URI.")]
-    [FunctionSignature("write(uri: string, formatter?: object<IRowsFormatter>): object<IRowsInput>")]
+    [FunctionSignature("write(uri: string, formatter?: object<IRowsFormatter>): object<IRowsOutput>")]
     public static VariantValue Write(FunctionCallInfo args)
     {
-        return FileDataProviders.WriteFile(args);
+        return FileInputOutput.WriteFile(args);
     }
 }

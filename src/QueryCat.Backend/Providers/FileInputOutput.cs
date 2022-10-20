@@ -9,7 +9,7 @@ namespace QueryCat.Backend.Providers;
 /// <summary>
 /// Data provider that uses local files to read/write rows.
 /// </summary>
-public static class FileDataProviders
+public static class FileInputOutput
 {
     [Description("Read data from a file.")]
     [FunctionSignature("read_file(path: string, formatter?: object<IRowsFormatter>): object<IRowsInput>")]
