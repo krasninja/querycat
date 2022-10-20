@@ -258,9 +258,43 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
         SelectQuerySpecificationNode querySpecificationNode,
         SelectCommandContext commandContext)
     {
+        // Fill conditions.
         foreach (var context in commandContext.InputQueryContextList)
         {
             FillQueryContextConditions(querySpecificationNode, context, commandContext);
+        }
+
+        // Fill "limit". For now we limit only of order is not defined.
+        if (querySpecificationNode.OrderBy == null && querySpecificationNode.Fetch != null)
+        {
+            var fetchCount = new SelectMakeDelegateVisitor(_executionThread, commandContext)
+                .RunAndReturn(querySpecificationNode.Fetch.CountNode).Invoke().AsInteger;
+            foreach (var queryContext in commandContext.InputQueryContextList)
+            {
+                queryContext.Limit = fetchCount;
+            }
+        }
+
+        // Fill columns orders.
+        if (querySpecificationNode.OrderBy != null)
+        {
+            foreach (var queryContext in commandContext.InputQueryContextList)
+            {
+                foreach (var orderNode in querySpecificationNode.OrderBy.OrderBySpecificationNodes)
+                {
+                    if (orderNode.Expression is not IdentifierExpressionNode identifierExpressionNode)
+                    {
+                        continue;
+                    }
+                    var column = queryContext.RowsInput.GetColumnByName(identifierExpressionNode.Name,
+                        identifierExpressionNode.SourceName);
+                    if (column == null)
+                    {
+                        continue;
+                    }
+                    queryContext.Orders.Add(new QueryContextOrder(column, ConvertDirection(orderNode.Order)));
+                }
+            }
         }
     }
 

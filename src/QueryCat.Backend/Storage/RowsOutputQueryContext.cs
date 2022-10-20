@@ -9,14 +9,11 @@ public class RowsOutputQueryContext : QueryContext
 {
     private readonly Column[] _columns;
 
-    /// <inheritdoc />
-    public override IReadOnlyList<Column> GetColumns() => _columns;
-
-    /// <inheritdoc />
-    public override IReadOnlyList<QueryContextCondition> GetConditions() => Array.Empty<QueryContextCondition>();
-
     public RowsOutputQueryContext(Column[] columns)
     {
         _columns = columns;
     }
+
+    /// <inheritdoc />
+    public override IReadOnlyList<Column> GetColumns() => _columns;
 }

@@ -9,4 +9,7 @@ namespace QueryCat.Backend.Storage;
 /// <param name="Column">Filter column.</param>
 /// <param name="Operation">Filter operation.</param>
 /// <param name="Value">Filter value.</param>
-public sealed record QueryContextCondition(Column Column, VariantValue.Operation Operation, VariantValue Value);
+public sealed record QueryContextCondition(
+    Column Column,
+    VariantValue.Operation Operation,
+    VariantValue Value);
