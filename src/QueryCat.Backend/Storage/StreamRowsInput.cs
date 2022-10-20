@@ -81,11 +81,17 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     public virtual ErrorCode ReadValue(int columnIndex, out VariantValue value)
     {
         var columnValue = GetColumnValue(columnIndex);
-        return VariantValue.TryCreateFromString(
+        if (columnValue.Length == 0)
+        {
+            value = VariantValue.Null;
+            return ErrorCode.OK;
+        }
+        var errorCode = VariantValue.TryCreateFromString(
             columnValue,
             Columns[columnIndex].DataType,
             out value)
             ? ErrorCode.OK : ErrorCode.CannotCast;
+        return errorCode;
     }
 
     private void SetDefaultColumns()
