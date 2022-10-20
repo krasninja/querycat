@@ -65,10 +65,10 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
     public override void Visit(SelectQuerySpecificationNode node)
     {
         // FROM.
-        var context = CreateSourceRowsSet(node);
+        var context = CreateSourceContext(node);
 
         ApplyStatistic(context);
-        ProcessErrorsFromInputSources(context);
+        SubscribeOnErrorsFromInputSources(context);
         ResolveSelectAllStatement(context.CurrentIterator, node.ColumnsList);
         ResolveSelectSourceColumns(context, node);
         ResolveNodesTypes(node, context.CurrentIterator);
@@ -104,13 +104,15 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
 
     #region FROM
 
-    private void ProcessErrorsFromInputSources(SelectCommandContext context)
+    /// <summary>
+    /// Update statistic if there is a error in rows input.
+    /// </summary>
+    private void SubscribeOnErrorsFromInputSources(SelectCommandContext context)
     {
         if (context.RowsInputIterator == null)
         {
             return;
         }
-
         context.RowsInputIterator.OnError += (sender, args) =>
         {
             _executionThread.Statistic.IncrementErrorsCount(args.ErrorCode, args.RowIndex, args.ColumnIndex);
@@ -121,49 +123,34 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
     /// Create and open input source.
     /// This method should set <see cref="AstAttributeKeys.RowsInputKey" /> key.
     /// </summary>
-    private void OpenInputSource(
+    private IRowsInput CreateInputSourceFromFunction(
         SelectTableFunctionNode fromTableFunction,
         IList<SelectInputQueryContext> queryContexts)
     {
         var makeDelegateVisitor = new MakeDelegateVisitor(_executionThread);
-        IRowsInput? resultRowsInput;
 
         var source = makeDelegateVisitor.RunAndReturn(fromTableFunction.TableFunction).Invoke();
 
         if (DataTypeUtils.IsSimple(source.GetInternalType()))
         {
-            resultRowsInput = new SingleValueRowsInput(source);
-            fromTableFunction.SetAttribute(AstAttributeKeys.RowsInputKey, resultRowsInput);
+            return new SingleValueRowsInput(source);
         }
-        else if (source.AsObject is IRowsInput)
+        if (source.AsObject is IRowsInput)
         {
-            resultRowsInput = (IRowsInput)source.AsObject;
-            resultRowsInput.Open();
-            Logger.Instance.Debug($"Open rows input {resultRowsInput}.", nameof(SelectQueryBodyVisitor));
-            var context = new SelectInputQueryContext(resultRowsInput);
-            resultRowsInput.SetContext(context);
+            var rowsInput = (IRowsInput)source.AsObject;
+            rowsInput.Open();
+            Logger.Instance.Debug($"Open rows input {rowsInput}.", nameof(SelectQueryBodyVisitor));
+            var context = new SelectInputQueryContext(rowsInput);
+            rowsInput.SetContext(context);
             queryContexts.Add(context);
+            return rowsInput;
         }
-        else if (source.AsObject is IRowsIterator rowsIterator)
+        if (source.AsObject is IRowsIterator rowsIterator)
         {
-            resultRowsInput = new RowsIteratorInput(rowsIterator);
-            fromTableFunction.SetAttribute(AstAttributeKeys.RowsInputKey, resultRowsInput);
-        }
-        else
-        {
-            throw new QueryCatException("Invalid rows input.");
+            return new RowsIteratorInput(rowsIterator);
         }
 
-        fromTableFunction.SetAttribute(AstAttributeKeys.RowsInputKey, resultRowsInput);
-
-        // Set alias for columns.
-        if (!string.IsNullOrEmpty(fromTableFunction.Alias))
-        {
-            foreach (var inputColumn in resultRowsInput.Columns)
-            {
-                inputColumn.SourceName = fromTableFunction.Alias;
-            }
-        }
+        throw new QueryCatException("Invalid rows input.");
     }
 
     private void ApplyStatistic(SelectCommandContext context)
@@ -174,7 +161,7 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
         });
     }
 
-    private SelectCommandContext CreateSourceRowsSet(SelectQuerySpecificationNode querySpecificationNode)
+    private SelectCommandContext CreateSourceContext(SelectQuerySpecificationNode querySpecificationNode)
     {
         IRowsIterator CreateMultipleIterator(List<IRowsInput> rowsInputs)
         {
@@ -205,32 +192,14 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
             }
         }
 
-        void HandleSubQueryNode(SelectQueryExpressionBodyNode queryExpressionBodyNode)
+        IRowsInput CreateInputSourceFromSubQuery(SelectQueryExpressionBodyNode queryExpressionBodyNode)
         {
             var iterator = queryExpressionBodyNode.GetAttribute<IRowsIterator>(AstAttributeKeys.ResultKey);
             if (iterator == null)
             {
-                throw new QueryCatException("No iterator!");
+                throw new QueryCatException("No iterator for subquery!");
             }
-            queryExpressionBodyNode.SetAttribute(AstAttributeKeys.RowsInputKey,
-                new RowsIteratorInput(iterator));
-
-            if (string.IsNullOrEmpty(queryExpressionBodyNode.Alias))
-            {
-                return;
-            }
-            foreach (var inputColumn in queryExpressionBodyNode.GetAllChildren<IdentifierExpressionNode>())
-            {
-                inputColumn.SourceName = queryExpressionBodyNode.Alias;
-            }
-            foreach (var inputColumn in queryExpressionBodyNode.GetAllChildren<SelectColumnsSublistNameNode>())
-            {
-                inputColumn.SourceName = queryExpressionBodyNode.Alias;
-            }
-            foreach (var column in iterator.Columns)
-            {
-                column.SourceName = queryExpressionBodyNode.Alias;
-            }
+            return new RowsIteratorInput(iterator);
         }
 
         // Entry point here.
@@ -247,22 +216,29 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
         var inputContexts = new List<SelectInputQueryContext>();
         foreach (var tableExpression in querySpecificationNode.TableExpression.Tables.TableFunctions)
         {
-            // Here we should set AstAttributeKeys.ResultKey key.
+            IRowsInput rowsInput;
+            string alias;
             if (tableExpression is SelectQueryExpressionBodyNode selectQueryExpressionBodyNode)
             {
-                HandleSubQueryNode(selectQueryExpressionBodyNode);
+                rowsInput = CreateInputSourceFromSubQuery(selectQueryExpressionBodyNode);
+                alias = selectQueryExpressionBodyNode.Alias;
             }
             else if (tableExpression is SelectTableFunctionNode tableFunctionNode)
             {
                 new ResolveTypesVisitor(_executionThread).Run(tableExpression);
-                OpenInputSource(tableFunctionNode, inputContexts);
+                rowsInput = CreateInputSourceFromFunction(tableFunctionNode, inputContexts);
+                alias = tableFunctionNode.Alias;
+            }
+            else
+            {
+                throw new InvalidOperationException(
+                    string.Format(Resources.Errors.CannotProcessNodeAsInput, tableExpression));
             }
 
-            var rowsInput = tableExpression.GetAttribute<IRowsInput>(AstAttributeKeys.RowsInputKey);
-            if (rowsInput != null)
-            {
-                rowsInputs.Add(rowsInput);
-            }
+            SetAlias(tableExpression, alias);
+            SetAlias(rowsInput, alias);
+            tableExpression.SetAttribute(AstAttributeKeys.RowsInputKey, rowsInput);
+            rowsInputs.Add(rowsInput);
         }
 
         var resultRowsIterator = CreateMultipleIterator(rowsInputs);
@@ -376,7 +352,11 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
 
     #region SELECT
 
-    private void ResolveSelectSourceColumns(SelectCommandContext context,
+    /// <summary>
+    /// Assign SourceInputColumn attribute based on rows input iterator.
+    /// </summary>
+    private void ResolveSelectSourceColumns(
+        SelectCommandContext context,
         SelectQuerySpecificationNode querySpecificationNode)
     {
         if (context.RowsInputIterator == null)
@@ -633,6 +613,36 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
             projectedIterator.AddFuncColumn(
                 context.RowsInputIterator.Columns[columnIndex],
                 new FuncUnit(data => data.RowsIterator.Current[columnIndex]));
+        }
+    }
+
+    private void SetAlias(IAstNode node, string alias)
+    {
+        if (string.IsNullOrEmpty(alias))
+        {
+            return;
+        }
+        foreach (var inputColumn in node.GetAllChildren<IdentifierExpressionNode>()
+                     .Where(n => string.IsNullOrEmpty(n.SourceName)))
+        {
+            inputColumn.SourceName = alias;
+        }
+        foreach (var inputColumn in node.GetAllChildren<SelectColumnsSublistNameNode>()
+                     .Where(n => string.IsNullOrEmpty(n.SourceName)))
+        {
+            inputColumn.SourceName = alias;
+        }
+    }
+
+    private void SetAlias(IRowsInput input, string alias)
+    {
+        if (string.IsNullOrEmpty(alias))
+        {
+            return;
+        }
+        foreach (var column in input.Columns.Where(c => string.IsNullOrEmpty(c.SourceName)))
+        {
+            column.SourceName = alias;
         }
     }
 

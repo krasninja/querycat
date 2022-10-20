@@ -4,7 +4,6 @@ using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Commands.Select.Iterators;
 using QueryCat.Backend.Functions;
 using QueryCat.Backend.Logging;
-using QueryCat.Backend.Relational;
 using QueryCat.Backend.Types;
 
 namespace QueryCat.Backend.Commands.Select.Visitors;
@@ -40,7 +39,7 @@ internal sealed partial class SelectQueryBodyVisitor
             return;
         }
 
-        var keysFactory = CreateGroupKeyValuesFactory(groupByNode, context.CurrentIterator, context);
+        var keysFactory = CreateGroupKeyValuesFactory(groupByNode, context);
         var aggregateColumnsOffset = context.CurrentIterator.Columns.Length;
 
         context.AppendIterator(
@@ -117,7 +116,7 @@ internal sealed partial class SelectQueryBodyVisitor
         context.CurrentIterator = new FilterRowsIterator(context.CurrentIterator, predicate);
     }
 
-    private FuncUnit[] CreateGroupKeyValuesFactory(SelectGroupByNode? groupByNode, IRowsIterator rowsIterator,
+    private FuncUnit[] CreateGroupKeyValuesFactory(SelectGroupByNode? groupByNode,
         SelectCommandContext context)
     {
         // If there is no GROUP BY statement but there are aggregates functions in SELECT -

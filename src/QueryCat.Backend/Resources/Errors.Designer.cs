@@ -134,5 +134,11 @@ namespace QueryCat.Backend.Resources {
                 return ResourceManager.GetString("InvalidSubqueryColumnsCount", resourceCulture);
             }
         }
+        
+        internal static string CannotProcessNodeAsInput {
+            get {
+                return ResourceManager.GetString("CannotProcessNodeAsInput", resourceCulture);
+            }
+        }
     }
 }

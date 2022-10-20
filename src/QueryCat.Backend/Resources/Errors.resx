@@ -63,4 +63,7 @@
     <data name="InvalidSubqueryColumnsCount" xml:space="preserve">
         <value>Subquery returns {0} columns, expected 1.</value>
     </data>
+    <data name="CannotProcessNodeAsInput" xml:space="preserve">
+        <value>Cannot process node {0} as input.</value>
+    </data>
 </root>
