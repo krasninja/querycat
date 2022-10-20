@@ -18,6 +18,8 @@ namespace QueryCat.Backend.Storage;
 /// </summary>
 public abstract class StreamRowsInput : IRowsInput, IDisposable
 {
+    private readonly StreamRowsInputOptions? _options;
+
     /*
      * The main workflow is:
      * - Open()
@@ -55,9 +57,10 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     /// </summary>
     /// <param name="streamReader">Stream reader.</param>
     /// <param name="options">The options.</param>
-    public StreamRowsInput(StreamReader streamReader, DelimiterStreamReader.ReaderOptions? options = null)
+    public StreamRowsInput(StreamReader streamReader, StreamRowsInputOptions? options = null)
     {
-        _delimiterStreamReader = new DelimiterStreamReader(streamReader, options);
+        _options = options ?? new();
+        _delimiterStreamReader = new DelimiterStreamReader(streamReader, _options.DelimiterStreamReaderOptions);
         StreamReader = streamReader;
     }
 

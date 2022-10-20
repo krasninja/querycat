@@ -21,10 +21,13 @@ internal sealed class DsvInput : StreamRowsInput
     private readonly bool _addFileNameColumn;
 
     public DsvInput(Stream stream, char delimiter, bool? hasHeader = null, bool addFileNameColumn = true) :
-        base(new StreamReader(stream), new DelimiterStreamReader.ReaderOptions
+        base(new StreamReader(stream), new StreamRowsInputOptions
         {
-            Delimiters = new[] { delimiter },
-            QuoteChars = new[] { QuoteChar },
+            DelimiterStreamReaderOptions = new DelimiterStreamReader.ReaderOptions
+            {
+                Delimiters = new[] { delimiter },
+                QuoteChars = new[] { QuoteChar },
+            }
         })
     {
         _hasHeader = hasHeader;

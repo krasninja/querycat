@@ -10,11 +10,14 @@ public sealed class TextTableInput : StreamRowsInput
 {
     /// <inheritdoc />
     public TextTableInput(StreamReader streamReader)
-        : base(streamReader, new DelimiterStreamReader.ReaderOptions
+        : base(streamReader, new StreamRowsInputOptions
         {
-            Delimiters = new[] { ' ' },
-            QuoteChars = Array.Empty<char>(),
-            DelimitersCanRepeat = true,
+            DelimiterStreamReaderOptions = new DelimiterStreamReader.ReaderOptions
+            {
+                Delimiters = new[] { ' ' },
+                QuoteChars = Array.Empty<char>(),
+                DelimitersCanRepeat = true,
+            }
         })
     {
     }

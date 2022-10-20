@@ -48,9 +48,12 @@ public sealed class IISW3CInput : StreamRowsInput
         ["cs(Referer)"] = new("cs(Referer)", DataType.String, "The site that the user last visited"),
     };
 
-    public IISW3CInput(Stream stream) : base(new StreamReader(stream), new DelimiterStreamReader.ReaderOptions
+    public IISW3CInput(Stream stream) : base(new StreamReader(stream), new StreamRowsInputOptions()
     {
-        Delimiters = new[] { ' ' }
+        DelimiterStreamReaderOptions = new DelimiterStreamReader.ReaderOptions
+        {
+            Delimiters = new[] { ' ' }
+        }
     })
     {
     }
