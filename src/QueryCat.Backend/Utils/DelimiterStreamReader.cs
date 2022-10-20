@@ -226,7 +226,7 @@ public class DelimiterStreamReader
                 else if (!lineMode && Array.IndexOf(_options.Delimiters, ch) > -1)
                 {
                     _currentDelimiterPosition = (int)sequenceReader.Consumed;
-                    if (!isInQuotes && _currentDelimiterPosition > 1)
+                    if (!isInQuotes && _currentDelimiterPosition > 0)
                     {
                         currentField.EndIndex = _currentDelimiterPosition;
                         currentField = ref GetNextFieldInfo();
