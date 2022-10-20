@@ -30,6 +30,11 @@ internal sealed class SelectCommandContext
     public ColumnsInfoContainer ColumnsInfoContainer { get; } = new();
 
     /// <summary>
+    /// Has INTO clause. In that case we do not return output value.
+    /// </summary>
+    public bool HasOutput { get; set; }
+
+    /// <summary>
     /// Constructor.
     /// </summary>
     /// <param name="iterator">Input iterator.</param>

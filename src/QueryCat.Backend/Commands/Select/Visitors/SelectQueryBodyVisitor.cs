@@ -4,7 +4,6 @@ using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Commands.Select.Iterators;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Functions;
-using QueryCat.Backend.Indexes;
 using QueryCat.Backend.Logging;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Relational.Iterators;
@@ -38,12 +37,17 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
     public override void Visit(SelectQueryExpressionBodyNode node)
     {
         var combineRowsIterator = new CombineRowsIterator();
+        var hasOutputInQuery = false;
         foreach (var queryNode in node.Queries)
         {
             var queryContext = queryNode.GetAttribute<SelectCommandContext>(AstAttributeKeys.ResultKey);
             if (queryContext == null)
             {
                 throw new InvalidOperationException("Invalid argument.");
+            }
+            if (queryContext.HasOutput)
+            {
+                hasOutputInQuery = true;
             }
             combineRowsIterator.AddRowsIterator(queryContext.CurrentIterator);
         }
@@ -58,7 +62,18 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
         }
 
         node.SetAttribute(AstAttributeKeys.ResultKey, resultIterator);
-        node.SetFunc(() => VariantValue.CreateFromObject(resultIterator));
+        if (hasOutputInQuery)
+        {
+            node.SetFunc(() =>
+            {
+                resultIterator.MoveToEnd();
+                return VariantValue.Null;
+            });
+        }
+        else
+        {
+            node.SetFunc(() => VariantValue.CreateFromObject(resultIterator));
+        }
     }
 
     /// <inheritdoc />
@@ -608,13 +623,15 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
         // executor writes it into default output.
         if (outputIterator.HasOutputDefined)
         {
-            context.CurrentIterator = new ActionRowsIterator(outputIterator, "write to output")
+            context.HasOutput = true;
+            var adjustColumnsIterator = new AdjustColumnsLengthsIterator(outputIterator);
+            context.CurrentIterator = new ActionRowsIterator(adjustColumnsIterator, "write to output")
             {
                 BeforeMoveNext = _ =>
                 {
-                    while (outputIterator.MoveNext())
+                    while (adjustColumnsIterator.MoveNext())
                     {
-                        outputIterator.CurrentOutput.Write(outputIterator.Current);
+                        outputIterator.CurrentOutput.Write(adjustColumnsIterator.Current);
                     }
                 }
             };
