@@ -45,7 +45,7 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
     /// <inheritdoc />
     public override IAstNode VisitLiteralPlain(QueryCatParser.LiteralPlainContext context)
     {
-        var text = GetIdentifierText(context);
+        var text = GetUnwrappedText(context);
         return context.Start.Type switch
         {
             QueryCatParser.INTEGER_LITERAL => new LiteralNode(new VariantValue(int.Parse(text))),
@@ -63,7 +63,7 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
     /// <inheritdoc />
     public override IAstNode VisitLiteralInterval(QueryCatParser.LiteralIntervalContext context)
         => new LiteralNode(new VariantValue(
-            DataTypeUtils.ParseInterval(GetIdentifierText(context.intervalLiteral().interval.Text))));
+            DataTypeUtils.ParseInterval(GetUnwrappedText(context.intervalLiteral().interval.Text))));
 
     /// <inheritdoc />
     public override IAstNode VisitExpressionBinary(QueryCatParser.ExpressionBinaryContext context)
@@ -183,11 +183,11 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
 
     /// <inheritdoc />
     public override IAstNode VisitIdentifierChainFull(QueryCatParser.IdentifierChainFullContext context)
-        => new IdentifierExpressionNode(context.name.Text, GetIdentifierText(context.source.Text));
+        => new IdentifierExpressionNode(context.name.Text, GetUnwrappedText(context.source.Text));
 
     /// <inheritdoc />
     public override IAstNode VisitIdentifierChainSimple(QueryCatParser.IdentifierChainSimpleContext context)
-        => new IdentifierExpressionNode(GetIdentifierText(context.name.Text));
+        => new IdentifierExpressionNode(GetUnwrappedText(context.name.Text));
 
     private static bool GetBooleanFromString(string text)
     {
@@ -206,13 +206,13 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
 
     /// <inheritdoc />
     public override IAstNode VisitFunctionCall(QueryCatParser.FunctionCallContext context)
-        => new FunctionCallNode(GetIdentifierText(context.IDENTIFIER()),
+        => new FunctionCallNode(GetUnwrappedText(context.IDENTIFIER()),
             this.Visit<FunctionCallArgumentNode>(context.functionCallArg()).ToList());
 
     /// <inheritdoc />
     public override IAstNode VisitFunctionCallArg(QueryCatParser.FunctionCallArgContext context)
         => new FunctionCallArgumentNode(
-            GetIdentifierText(context.IDENTIFIER()), this.Visit<ExpressionNode>(context.expression()));
+            GetUnwrappedText(context.IDENTIFIER()), this.Visit<ExpressionNode>(context.expression()));
 
     #endregion
 
@@ -252,6 +252,15 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
         return base.VisitStandardFunctionTrim(context);
     }
 
+    /// <inheritdoc />
+    public override IAstNode VisitStandardFunctionPosition(QueryCatParser.StandardFunctionPositionContext context)
+    {
+        var targetNode = this.Visit<ExpressionNode>(context.@string);
+        return new FunctionCallNode("position",
+            new FunctionCallArgumentNode(new LiteralNode(GetUnwrappedText(context.substring.Text))),
+            new FunctionCallArgumentNode(targetNode));
+    }
+
     #endregion
 
     /// <inheritdoc />
@@ -277,7 +286,7 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
     private static int GetChildType(ParserRuleContext context, int index)
         => ((ITerminalNode)context.GetChild(index)).Symbol.Type;
 
-    private static string GetIdentifierText(string text)
+    private static string GetUnwrappedText(string text)
     {
         if (text.StartsWith("\'", StringComparison.Ordinal) && text.EndsWith("\'", StringComparison.Ordinal))
         {
@@ -290,13 +299,13 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
         return text;
     }
 
-    private static string GetIdentifierText(IParseTree? node)
+    private static string GetUnwrappedText(IParseTree? node)
     {
         if (node == null)
         {
             return string.Empty;
         }
-        return GetIdentifierText(node.GetText());
+        return GetUnwrappedText(node.GetText());
     }
 
     #endregion

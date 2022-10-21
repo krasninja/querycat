@@ -82,6 +82,15 @@ public static class StringFunctions
             : new VariantValue(arg.ToString());
     }
 
+    [Description("Returns first starting index of the specified substring within string, or zero if it's not present.")]
+    [FunctionSignature("[position](substring: string, target: string): integer")]
+    public static VariantValue Position(FunctionCallInfo args)
+    {
+        var substring = args.GetAt(0).AsString;
+        var target = args.GetAt(1).AsString;
+        return new VariantValue(target.IndexOf(substring, StringComparison.InvariantCulture) + 1);
+    }
+
     public static void RegisterFunctions(FunctionsManager functionsManager)
     {
         functionsManager.RegisterFunction(Lower);
@@ -92,5 +101,6 @@ public static class StringFunctions
         functionsManager.RegisterFunction(SubString);
         functionsManager.RegisterFunction(Length);
         functionsManager.RegisterFunction(ToChar);
+        functionsManager.RegisterFunction(Position);
     }
 }

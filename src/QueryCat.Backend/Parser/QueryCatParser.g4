@@ -20,7 +20,7 @@ statement
  * FUNCTION command.
  */
 
-functionSignature: IDENTIFIER '(' (functionArg (COMMA functionArg)*)? ')' (COLON functionType)? EOF;
+functionSignature: name=IDENTIFIER '(' (functionArg (COMMA functionArg)*)? ')' (COLON functionType)? EOF;
 functionType: type ('<' IDENTIFIER '>')?;
 functionArg: variadic=ELLIPSIS? IDENTIFIER optional=QUESTION? COLON functionType isArray=LEFT_RIGHT_BRACKET? ('=' default=literal)?;
 
@@ -119,6 +119,7 @@ standardFunction
     : CURRENT_DATE # standardFunctionCurrentDate
     | CURRENT_TIMESTAMP # standardFunctionCurrentTimestamp
     | TRIM '(' spec=(LEADING | TRAILING | BOTH)? characters=STRING_LITERAL? FROM? target=simpleExpression ')' # standardFunctionTrim
+    | POSITION '(' substring=STRING_LITERAL IN string=simpleExpression ')' # standardFunctionPosition
     ;
 
 type

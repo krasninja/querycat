@@ -24,7 +24,7 @@ internal partial class ProgramParserVisitor
 
     /// <inheritdoc />
     public override IAstNode VisitSelectAlias(QueryCatParser.SelectAliasContext context)
-        => new SelectAliasNode(GetIdentifierText(context.name.Text));
+        => new SelectAliasNode(GetUnwrappedText(context.name.Text));
 
     /// <inheritdoc />
     public override IAstNode VisitSelectExpression(QueryCatParser.SelectExpressionContext context)
@@ -131,7 +131,7 @@ internal partial class ProgramParserVisitor
     public override IAstNode VisitSelectTableReferenceWithFormat(QueryCatParser.SelectTableReferenceWithFormatContext context)
     {
         var readFunction = new FunctionCallNode("read");
-        var uri = GetIdentifierText(context.STRING_LITERAL());
+        var uri = GetUnwrappedText(context.STRING_LITERAL());
         readFunction.Arguments.Add(new FunctionCallArgumentNode("uri",
             new LiteralNode(new VariantValue(uri))));
         if (context.functionCall() != null)

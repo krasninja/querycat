@@ -67,6 +67,8 @@ TO:                 'TO';
 TRUE:               'TRUE';
 VOID:               'VOID';
 
+// Trim function.
+
 TRIM:               'TRIM';
 LEADING:            'LEADING';
 TRAILING:           'TRAILING';
@@ -83,6 +85,10 @@ DAY:                'DAY';
 HOUR:               'HOUR';
 MINUTE:             'MINUTE';
 SECOND:             'SECOND';
+
+// Other functions.
+
+POSITION:           'POSITION';
 
 // ECHO command.
 

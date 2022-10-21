@@ -194,6 +194,10 @@ public sealed class FunctionsManager
                 return;
             }
             var functionName = NormalizeName(signatureAttribute.Signature.Substring(0, indexOfLeftParen));
+            if (functionName.StartsWith('['))
+            {
+                functionName = functionName.Substring(1, functionName.Length - 2);
+            }
             if (!_functionsPreRegistration.ContainsKey(functionName))
             {
                 _functionsPreRegistration.Add(functionName, (functionDelegate, methodInfo));
