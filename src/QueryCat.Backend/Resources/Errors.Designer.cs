@@ -146,5 +146,11 @@ namespace QueryCat.Backend.Resources {
                 return ResourceManager.GetString("CannotFindColumn", resourceCulture);
             }
         }
+        
+        internal static string InvalidArgumentType {
+            get {
+                return ResourceManager.GetString("InvalidArgumentType", resourceCulture);
+            }
+        }
     }
 }

@@ -32,10 +32,43 @@ public static class DateTimeFunctions
         return new VariantValue(args.GetAt(0).AsTimestamp.Date);
     }
 
+    [Description("The function retrieves subfields such as year or hour from date/time values.")]
+    [FunctionSignature("date_part(field: string, source: timestamp): integer")]
+    public static VariantValue Extract(FunctionCallInfo args)
+    {
+        var field = args.GetAt(0).AsString.Trim().ToUpperInvariant();
+        var source = args.GetAt(1);
+        var result = source.GetInternalType() switch
+        {
+            DataType.Timestamp => field switch
+            {
+                "YEAR" => source.AsTimestamp.Year,
+                "MONTH" => source.AsTimestamp.Month,
+                "DAY" => source.AsTimestamp.Day,
+                "HOUR" => source.AsTimestamp.Hour,
+                "MINUTE" => source.AsTimestamp.Minute,
+                "SECOND" => source.AsTimestamp.Second,
+                _ => throw new SemanticException("Incorrect part."),
+            },
+            DataType.Interval => field switch
+            {
+                "DAY" => source.AsInterval.Days,
+                "HOUR" => source.AsInterval.Hours,
+                "MINUTE" => source.AsInterval.Minutes,
+                "SECOND" => source.AsInterval.Seconds,
+                "MILLISECOND" => source.AsInterval.Milliseconds,
+                _ => throw new SemanticException("Incorrect part."),
+            },
+            _ => throw new SemanticException(Resources.Errors.InvalidArgumentType),
+        };
+        return new VariantValue(result);
+    }
+
     public static void RegisterFunctions(FunctionsManager functionsManager)
     {
         functionsManager.RegisterFunction(ToDate);
         functionsManager.RegisterFunction(Now);
         functionsManager.RegisterFunction(Date);
+        functionsManager.RegisterFunction(Extract);
     }
 }

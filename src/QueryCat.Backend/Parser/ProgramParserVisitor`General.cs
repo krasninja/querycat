@@ -261,6 +261,15 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
             new FunctionCallArgumentNode(targetNode));
     }
 
+    /// <inheritdoc />
+    public override IAstNode VisitStandardFunctionExtract(QueryCatParser.StandardFunctionExtractContext context)
+    {
+        var targetNode = this.Visit<ExpressionNode>(context.source);
+        return new FunctionCallNode("date_part",
+            new FunctionCallArgumentNode(new LiteralNode(GetUnwrappedText(context.extractField.GetText()))),
+            new FunctionCallArgumentNode(targetNode));
+    }
+
     #endregion
 
     /// <inheritdoc />

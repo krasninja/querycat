@@ -69,4 +69,7 @@
     <data name="CannotFindColumn" xml:space="preserve">
         <value>Cannot find column '{0}'.</value>
     </data>
+    <data name="InvalidArgumentType" xml:space="preserve">
+        <value>Invalid argument type.</value>
+    </data>
 </root>

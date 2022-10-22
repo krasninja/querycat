@@ -7,6 +7,10 @@ options {
     tokenVocab = QueryCatLexer;
 }
 
+/*
+ * Program statements.
+ */
+
 program: statement (SEMICOLON statement)* SEMICOLON? EOF;
 
 statement
@@ -120,6 +124,17 @@ standardFunction
     | CURRENT_TIMESTAMP # standardFunctionCurrentTimestamp
     | TRIM '(' spec=(LEADING | TRAILING | BOTH)? characters=STRING_LITERAL? FROM? target=simpleExpression ')' # standardFunctionTrim
     | POSITION '(' substring=STRING_LITERAL IN string=simpleExpression ')' # standardFunctionPosition
+    | EXTRACT '(' extractField=dateTimeField FROM source=simpleExpression ')' # standardFunctionExtract
+    ;
+
+dateTimeField
+    : YEAR
+    | MONTH
+    | DAY
+    | HOUR
+    | MINUTE
+    | SECOND
+    | MILLISECOND
     ;
 
 type

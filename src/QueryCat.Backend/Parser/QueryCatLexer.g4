@@ -85,10 +85,12 @@ DAY:                'DAY';
 HOUR:               'HOUR';
 MINUTE:             'MINUTE';
 SECOND:             'SECOND';
+MILLISECOND:        'MILLISECOND';
 
 // Other functions.
 
 POSITION:           'POSITION';
+EXTRACT:            'EXTRACT';
 
 // ECHO command.
 

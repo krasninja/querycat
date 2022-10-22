@@ -310,6 +310,19 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitStandardFunctionPosition([NotNull] QueryCatParser.StandardFunctionPositionContext context);
 	/// <summary>
+	/// Visit a parse tree produced by the <c>standardFunctionExtract</c>
+	/// labeled alternative in <see cref="QueryCatParser.standardFunction"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitStandardFunctionExtract([NotNull] QueryCatParser.StandardFunctionExtractContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="QueryCatParser.dateTimeField"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitDateTimeField([NotNull] QueryCatParser.DateTimeFieldContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="QueryCatParser.type"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
