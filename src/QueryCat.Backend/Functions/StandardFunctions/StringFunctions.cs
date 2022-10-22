@@ -91,6 +91,26 @@ public static class StringFunctions
         return new VariantValue(target.IndexOf(substring, StringComparison.InvariantCulture) + 1);
     }
 
+    [Description("Replaces all occurrences in string of substring from with substring to.")]
+    [FunctionSignature("replace(target: string, old: string, new: string): string")]
+    public static VariantValue Replace(FunctionCallInfo args)
+    {
+        var target = args.GetAt(0).AsString;
+        var from = args.GetAt(1).AsString;
+        var to = args.GetAt(2).AsString;
+        return new VariantValue(target.Replace(from, to));
+    }
+
+    [Description("Reverses the order of the characters in the string.")]
+    [FunctionSignature("reverse(target: string): string")]
+    public static VariantValue Reverse(FunctionCallInfo args)
+    {
+        var target = args.GetAt(0).AsString;
+        var charArray = target.ToCharArray();
+        Array.Reverse(charArray);
+        return new VariantValue(new string(charArray));
+    }
+
     public static void RegisterFunctions(FunctionsManager functionsManager)
     {
         functionsManager.RegisterFunction(Lower);
@@ -102,5 +122,7 @@ public static class StringFunctions
         functionsManager.RegisterFunction(Length);
         functionsManager.RegisterFunction(ToChar);
         functionsManager.RegisterFunction(Position);
+        functionsManager.RegisterFunction(Replace);
+        functionsManager.RegisterFunction(Reverse);
     }
 }
