@@ -124,11 +124,11 @@ public class DelimiterStreamReader
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     private char GetNextCharacter()
     {
-        if (_dynamicBuffer.Size <= _currentDelimiterPosition)
+        if ((ulong)_dynamicBuffer.Size <= (ulong)_currentDelimiterPosition)
         {
             ReadNextBufferData();
         }
-        if (_dynamicBuffer.Size > _currentDelimiterPosition)
+        if ((ulong)_dynamicBuffer.Size > (ulong)_currentDelimiterPosition)
         {
             return _dynamicBuffer.GetAt(_currentDelimiterPosition);
         }
@@ -177,7 +177,7 @@ public class DelimiterStreamReader
             _currentSequence = _dynamicBuffer.GetSequence();
             sequenceReader = new SequenceReader<char>(_currentSequence);
             sequenceReader.Advance(_currentDelimiterPosition);
-            while (_currentDelimiterPosition < _dynamicBuffer.Size)
+            while ((ulong)_currentDelimiterPosition < (ulong)_dynamicBuffer.Size)
             {
                 // Skip extra spaces (or any delimiters).
                 if (_options.DelimitersCanRepeat)
@@ -270,7 +270,7 @@ public class DelimiterStreamReader
 
             readBytes = ReadNextBufferData();
         }
-        while (readBytes > 0);
+        while ((ulong)readBytes > 0);
 
         // We are at the end of the stream. Update remain index and exit.
         _currentDelimiterPosition += (int)sequenceReader.Remaining;
@@ -299,7 +299,7 @@ public class DelimiterStreamReader
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     private ref FieldInfo GetNextFieldInfo()
     {
-        if (_fieldInfoLastIndex > _fieldInfos.Length)
+        if ((ulong)_fieldInfoLastIndex > (ulong)_fieldInfos.Length)
         {
             Array.Resize(ref _fieldInfos, _fieldInfoLastIndex);
         }
@@ -317,7 +317,7 @@ public class DelimiterStreamReader
     /// <returns><c>True</c> if there are more records to read, <c>false</c> otherwise.</returns>
     public ReadOnlySpan<char> GetField(int columnIndex)
     {
-        if (columnIndex + 1 > _fieldInfoLastIndex)
+        if ((ulong)columnIndex + 1 > (ulong)_fieldInfoLastIndex)
         {
             return ReadOnlySpan<char>.Empty;
         }

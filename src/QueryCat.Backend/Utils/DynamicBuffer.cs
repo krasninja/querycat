@@ -104,6 +104,7 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
 
         public bool IsAny => Head != null;
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
         public void AddFirst(BufferSegment segment)
         {
             if (Head == null)
@@ -122,6 +123,7 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
             Count++;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
         public void AddLast(BufferSegment segment)
         {
             if (Tail == null)
@@ -141,6 +143,7 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
             Count++;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
         public BufferSegment? PopFirst()
         {
             if (Head == null)
@@ -150,7 +153,7 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
             var head = Head;
             Head = Head.NextRef;
             Count--;
-            if (Count == 0)
+            if ((ulong)Count == 0)
             {
                 Tail = null;
             }
@@ -180,6 +183,7 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
         internal ReadOnlySpan<T> GetSpan(int startIndex, int endIndex)
             => new(Buffer, startIndex, endIndex - startIndex);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
         public BufferSegment(T[] buffer, long startIndex)
         {
             Buffer = buffer;
@@ -222,15 +226,15 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
 
         long advanced = 0;
         BufferSegment? currentSegment = _buffersList.Head;
-        while (currentSegment != null && advanced < sizeToAdvance)
+        while (currentSegment != null && (ulong)advanced < (ulong)sizeToAdvance)
         {
             var chunkStartIndex = _startPosition % _chunkSize;
 
             // For head buffer we should free remain space. For example, ooooooXXXX.
-            if (chunkStartIndex > 0 && currentSegment == _buffersList.Head)
+            if ((ulong)chunkStartIndex > 0 && currentSegment == _buffersList.Head)
             {
                 var remainSpaceInChunk = _chunkSize - chunkStartIndex;
-                var remain = sizeToAdvance > remainSpaceInChunk ? remainSpaceInChunk : sizeToAdvance;
+                var remain = (ulong)sizeToAdvance > (ulong)remainSpaceInChunk ? remainSpaceInChunk : sizeToAdvance;
                 remain = Math.Min(remain, Size);
                 advanced += remain;
                 _startPosition += remain;
@@ -238,13 +242,13 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
             // For tail buffer we can only free remain space.
             else if (currentSegment == _buffersList.Tail)
             {
-                var remain = Math.Min(sizeToAdvance - advanced, Math.Min(_chunkSize, Size));
+                var remain = Min(sizeToAdvance - advanced, _chunkSize, Size);
                 advanced += remain;
                 _startPosition += remain;
             }
             else
             {
-                var remain = sizeToAdvance - advanced > _chunkSize ? _chunkSize
+                var remain = (ulong)(sizeToAdvance - advanced) > (ulong)_chunkSize ? _chunkSize
                     : sizeToAdvance - advanced;
                 remain = Math.Min(remain, Size);
                 advanced += remain;
@@ -257,7 +261,7 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
                 var segment = _buffersList.PopFirst();
                 currentSegment = segment?.NextRef;
                 if (segment != null
-                    && (_maxFreeBuffers == -1 || TotalBuffersCount < _freeBuffersList.Count))
+                    && (_maxFreeBuffers == -1 || (ulong)TotalBuffersCount < (ulong)_freeBuffersList.Count))
                 {
                     _freeBuffersList.AddLast(segment);
                 }
@@ -647,4 +651,18 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
     }
 
     #endregion
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    private static ulong Min(ulong val1, ulong val2, ulong val3)
+    {
+        var temp = val1 <= val2 ? val1 : val2;
+        return temp <= val3 ? temp : val3;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    private static long Min(long val1, long val2, long val3)
+    {
+        var temp = val1 <= val2 ? val1 : val2;
+        return temp <= val3 ? temp : val3;
+    }
 }
