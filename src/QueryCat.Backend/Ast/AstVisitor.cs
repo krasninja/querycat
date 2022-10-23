@@ -146,6 +146,10 @@ public abstract class AstVisitor
     {
     }
 
+    public virtual void Visit(SelectExistsExpressionNode node)
+    {
+    }
+
     public virtual void Visit(SelectFetchNode node)
     {
     }

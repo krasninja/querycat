@@ -191,11 +191,11 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
 
     private static bool GetBooleanFromString(string text)
     {
-        if (text.Equals(VariantValue.TrueValue, StringComparison.OrdinalIgnoreCase))
+        if (text.Equals(VariantValue.TrueValueString, StringComparison.OrdinalIgnoreCase))
         {
             return true;
         }
-        if (text.Equals(VariantValue.FalseValue, StringComparison.OrdinalIgnoreCase))
+        if (text.Equals(VariantValue.FalseValueString, StringComparison.OrdinalIgnoreCase))
         {
             return false;
         }

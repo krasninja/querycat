@@ -4,7 +4,6 @@ using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Commands.Select.Iterators;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Functions;
-using QueryCat.Backend.Logging;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Storage;
@@ -81,6 +80,7 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
     {
         // FROM.
         var context = CreateSourceContext(node);
+        node.SetAttribute(AstAttributeKeys.ResultKey, context);
 
         ApplyStatistic(context);
         SubscribeOnErrorsFromInputSources(context);
@@ -113,8 +113,6 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
 
         // INTO.
         CreateOutput(context, node);
-
-        node.SetAttribute(AstAttributeKeys.ResultKey, context);
     }
 
     #region FROM
@@ -132,40 +130,6 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
         {
             _executionThread.Statistic.IncrementErrorsCount(args.ErrorCode, args.RowIndex, args.ColumnIndex);
         };
-    }
-
-    /// <summary>
-    /// Create and open input source.
-    /// This method should set <see cref="AstAttributeKeys.RowsInputKey" /> key.
-    /// </summary>
-    private IRowsInput CreateInputSourceFromFunction(
-        SelectTableFunctionNode fromTableFunction,
-        IList<SelectInputQueryContext> queryContexts)
-    {
-        var makeDelegateVisitor = new MakeDelegateVisitor(_executionThread);
-
-        var source = makeDelegateVisitor.RunAndReturn(fromTableFunction.TableFunction).Invoke();
-
-        if (DataTypeUtils.IsSimple(source.GetInternalType()))
-        {
-            return new SingleValueRowsInput(source);
-        }
-        if (source.AsObject is IRowsInput)
-        {
-            var rowsInput = (IRowsInput)source.AsObject;
-            rowsInput.Open();
-            Logger.Instance.Debug($"Open rows input {rowsInput}.", nameof(SelectQueryBodyVisitor));
-            var context = new SelectInputQueryContext(rowsInput);
-            rowsInput.SetContext(context);
-            queryContexts.Add(context);
-            return rowsInput;
-        }
-        if (source.AsObject is IRowsIterator rowsIterator)
-        {
-            return new RowsIteratorInput(rowsIterator);
-        }
-
-        throw new QueryCatException("Invalid rows input.");
     }
 
     private void ApplyStatistic(SelectCommandContext context)
@@ -240,8 +204,8 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
             }
             else if (tableExpression is SelectTableFunctionNode tableFunctionNode)
             {
-                new ResolveTypesVisitor(_executionThread).Run(tableExpression);
-                rowsInput = CreateInputSourceFromFunction(tableFunctionNode, inputContexts);
+                rowsInput = tableFunctionNode.GetAttribute<IRowsInput>(AstAttributeKeys.RowsInputKey)
+                    ?? throw new InvalidOperationException("No rows input.");
                 alias = tableFunctionNode.Alias;
             }
             else

@@ -59,4 +59,10 @@ internal sealed class SelectResolveTypesVisitor : ResolveTypesVisitor
     {
         node.SetDataType(node.Queries[0].ColumnsList.Columns[0].GetDataType());
     }
+
+    /// <inheritdoc />
+    public override void Visit(SelectExistsExpressionNode node)
+    {
+        node.SetDataType(DataType.Boolean);
+    }
 }

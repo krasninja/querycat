@@ -166,6 +166,7 @@ expression
     | left=expression NOT? op=LIKE right=expression # ExpressionBinary
     | left=expression NOT? op=IN right=array # ExpressionBinaryIn
     | expr=expression NOT? op=BETWEEN left=simpleExpression AND right=expression # ExpressionBetween
+    | EXISTS '(' selectExpression ')' # ExpressionExists
     | left=expression op=AND right=expression # ExpressionBinary
     | left=expression op=OR right=expression # ExpressionBinary
     | right=expression op=IS NOT? NULL # ExpressionUnary

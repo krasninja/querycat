@@ -54,6 +54,7 @@ AS:                 'AS';
 BY:                 'BY';
 CAST:               'CAST';
 DEFAULT:            'DEFAULT';
+EXISTS:             'EXISTS';
 FALSE:              'FALSE';
 FROM:               'FROM';
 IN:                 'IN';

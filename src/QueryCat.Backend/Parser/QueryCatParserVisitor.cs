@@ -406,6 +406,13 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitExpressionFunctionCall([NotNull] QueryCatParser.ExpressionFunctionCallContext context);
 	/// <summary>
+	/// Visit a parse tree produced by the <c>ExpressionExists</c>
+	/// labeled alternative in <see cref="QueryCatParser.expression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitExpressionExists([NotNull] QueryCatParser.ExpressionExistsContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>SimpleExpressionLiteral</c>
 	/// labeled alternative in <see cref="QueryCatParser.simpleExpression"/>.
 	/// </summary>

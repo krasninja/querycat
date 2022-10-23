@@ -10,8 +10,8 @@ namespace QueryCat.Backend.Types;
 /// </summary>
 public readonly partial struct VariantValue : IEquatable<VariantValue>
 {
-    public const string TrueValue = "TRUE";
-    public const string FalseValue = "FALSE";
+    public const string TrueValueString = "TRUE";
+    public const string FalseValueString = "FALSE";
 
     private static readonly DataTypeObject IntegerObject = new("INT");
     private static readonly DataTypeObject FloatObject = new("FLOAT");
@@ -20,6 +20,8 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     private static readonly DataTypeObject BooleanObject = new("BOOL");
 
     public static VariantValue OneIntegerValue = new(1);
+    public static VariantValue TrueValue = new(true);
+    public static VariantValue FalseValue = new(false);
 
     [StructLayout(LayoutKind.Explicit)]
     private readonly struct TypeUnion
@@ -349,7 +351,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
             return Null;
         }
 
-        if (value.Equals(TrueValue, StringComparison.OrdinalIgnoreCase)
+        if (value.Equals(TrueValueString, StringComparison.OrdinalIgnoreCase)
             || value.Equals("1", StringComparison.OrdinalIgnoreCase)
             || value.Equals("YES", StringComparison.OrdinalIgnoreCase)
             || value.Equals("ON", StringComparison.OrdinalIgnoreCase)
@@ -359,7 +361,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
             return new VariantValue(true);
         }
 
-        if (value.Equals(FalseValue, StringComparison.OrdinalIgnoreCase)
+        if (value.Equals(FalseValueString, StringComparison.OrdinalIgnoreCase)
             || value.Equals("0", StringComparison.OrdinalIgnoreCase)
             || value.Equals("NO", StringComparison.OrdinalIgnoreCase)
             || value.Equals("OFF", StringComparison.OrdinalIgnoreCase)
@@ -452,7 +454,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
             DataType.Boolean => targetType switch
             {
                 DataType.Integer => new(_valueUnion.BooleanValue ? 1 : 0),
-                DataType.String => new(_valueUnion.BooleanValue ? TrueValue : FalseValue),
+                DataType.String => new(_valueUnion.BooleanValue ? TrueValueString : FalseValueString),
                 _ => Null
             },
             DataType.Numeric => targetType switch

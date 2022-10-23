@@ -6,7 +6,7 @@ public sealed class SelectTableFunctionNode : ExpressionNode
 {
     public FunctionCallNode TableFunction { get; }
 
-    public string Alias { get; }
+    public string Alias { get; set; }
 
     /// <inheritdoc />
     public override string Code => "tablefunc";

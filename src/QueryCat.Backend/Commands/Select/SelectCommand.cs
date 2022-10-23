@@ -13,6 +13,7 @@ public sealed class SelectCommand
 {
     public Func<VariantValue> Execute(ExecutionThread executionThread, SelectStatementNode selectStatementNode)
     {
+        new SelectQueryMakeInputVisitor(executionThread).Run(selectStatementNode);
         new SelectQueryBodyVisitor(executionThread).Run(selectStatementNode);
         return selectStatementNode.QueryNode.GetFunc();
     }

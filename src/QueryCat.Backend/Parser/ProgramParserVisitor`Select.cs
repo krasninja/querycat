@@ -94,6 +94,10 @@ internal partial class ProgramParserVisitor
     public override IAstNode VisitExpressionSelect(QueryCatParser.ExpressionSelectContext context)
         => this.Visit<SelectQueryExpressionBodyNode>(context.selectExpression());
 
+    /// <inheritdoc />
+    public override IAstNode VisitExpressionExists(QueryCatParser.ExpressionExistsContext context)
+        => new SelectExistsExpressionNode(this.Visit<SelectQueryExpressionBodyNode>(context.selectExpression()));
+
     #endregion
 
     #region Into
@@ -125,7 +129,10 @@ internal partial class ProgramParserVisitor
 
     /// <inheritdoc />
     public override IAstNode VisitSelectTableReferenceNoFormat(QueryCatParser.SelectTableReferenceNoFormatContext context)
-        => new SelectTableFunctionNode(this.Visit<FunctionCallNode>(context.functionCall()));
+        => new SelectTableFunctionNode(this.Visit<FunctionCallNode>(context.functionCall()))
+        {
+            Alias = this.Visit(context.selectAlias(), SelectAliasNode.Empty).AliasName
+        };
 
     /// <inheritdoc />
     public override IAstNode VisitSelectTableReferenceWithFormat(QueryCatParser.SelectTableReferenceWithFormatContext context)

@@ -77,6 +77,28 @@ internal class SelectMakeDelegateVisitor : MakeDelegateVisitor
     }
 
     /// <inheritdoc />
+    public override void Visit(SelectExistsExpressionNode node)
+    {
+        var rowsIterator = node.SubQueryExpressionNode.GetFunc().Invoke().AsObject as IRowsIterator;
+        if (rowsIterator == null)
+        {
+            throw new InvalidOperationException("Incorrect subquery type.");
+        }
+
+        VariantValue Func(VariantValueFuncData data)
+        {
+            rowsIterator.Reset();
+            if (rowsIterator.MoveNext())
+            {
+                return VariantValue.TrueValue;
+            }
+            return VariantValue.FalseValue;
+        }
+        _subQueryIterators.Add(rowsIterator);
+        NodeIdFuncMap[node.Id] = Func;
+    }
+
+    /// <inheritdoc />
     public override void Visit(SelectHavingNode node)
     {
         NodeIdFuncMap[node.Id] = NodeIdFuncMap[node.ExpressionNode.Id];
