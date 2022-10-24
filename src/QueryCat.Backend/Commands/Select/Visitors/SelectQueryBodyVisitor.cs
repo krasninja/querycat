@@ -39,11 +39,7 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
         var hasOutputInQuery = false;
         foreach (var queryNode in node.Queries)
         {
-            var queryContext = queryNode.GetAttribute<SelectCommandContext>(AstAttributeKeys.ResultKey);
-            if (queryContext == null)
-            {
-                throw new InvalidOperationException("Invalid argument.");
-            }
+            var queryContext = queryNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ResultKey);
             if (queryContext.HasOutput)
             {
                 hasOutputInQuery = true;
@@ -79,14 +75,17 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
     public override void Visit(SelectQuerySpecificationNode node)
     {
         // FROM.
-        var context = CreateSourceContext(node);
-        node.SetAttribute(AstAttributeKeys.ResultKey, context);
+        var context = node.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ResultKey);
+        if (context.HasFinalRowsIterator)
+        {
+            return;
+        }
 
         ApplyStatistic(context);
         SubscribeOnErrorsFromInputSources(context);
         ResolveSelectAllStatement(context.CurrentIterator, node.ColumnsList);
         ResolveSelectSourceColumns(context, node);
-        ResolveNodesTypes(node, context.CurrentIterator);
+        ResolveNodesTypes(node, context);
         FillQueryContextConditions(node, context);
 
         // WHERE.
@@ -140,99 +139,6 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
         });
     }
 
-    private SelectCommandContext CreateSourceContext(SelectQuerySpecificationNode querySpecificationNode)
-    {
-        IRowsIterator CreateMultipleIterator(List<IRowsInput> rowsInputs)
-        {
-            if (rowsInputs.Count == 0)
-            {
-                throw new QueryCatException("No rows inputs.");
-            }
-            if (rowsInputs.Count == 1)
-            {
-                return new RowsInputIterator(rowsInputs[0], autoFetch: false);
-            }
-            var multipleIterator = new MultiplyRowsIterator(
-                new RowsInputIterator(rowsInputs[0], autoFetch: true),
-                new RowsInputIterator(rowsInputs[1], autoFetch: true));
-            for (int i = 2; i < rowsInputs.Count; i++)
-            {
-                multipleIterator = new MultiplyRowsIterator(
-                    multipleIterator, new RowsInputIterator(rowsInputs[i], autoFetch: true));
-            }
-            return multipleIterator;
-        }
-
-        void DisposeRowsInputs(List<IRowsInput> rowsInputs)
-        {
-            foreach (var rowsInput in rowsInputs)
-            {
-                (rowsInput as IDisposable)?.Dispose();
-            }
-        }
-
-        IRowsInput CreateInputSourceFromSubQuery(SelectQueryExpressionBodyNode queryExpressionBodyNode)
-        {
-            var iterator = queryExpressionBodyNode.GetAttribute<IRowsIterator>(AstAttributeKeys.ResultKey);
-            if (iterator == null)
-            {
-                throw new QueryCatException("No iterator for subquery!");
-            }
-            return new RowsIteratorInput(iterator);
-        }
-
-        // Entry point here.
-        //
-
-        // No FROM - assumed this is the query with SELECT only.
-        if (querySpecificationNode.TableExpression == null)
-        {
-            return new(new SingleValueRowsInput().AsIterable());
-        }
-
-        // Start with FROM statement, if none - there is only one SELECT row.
-        var rowsInputs = new List<IRowsInput>();
-        var inputContexts = new List<SelectInputQueryContext>();
-        foreach (var tableExpression in querySpecificationNode.TableExpression.Tables.TableFunctions)
-        {
-            IRowsInput rowsInput;
-            string alias;
-            if (tableExpression is SelectQueryExpressionBodyNode selectQueryExpressionBodyNode)
-            {
-                rowsInput = CreateInputSourceFromSubQuery(selectQueryExpressionBodyNode);
-                alias = selectQueryExpressionBodyNode.Alias;
-            }
-            else if (tableExpression is SelectTableFunctionNode tableFunctionNode)
-            {
-                rowsInput = tableFunctionNode.GetAttribute<IRowsInput>(AstAttributeKeys.RowsInputKey)
-                    ?? throw new InvalidOperationException("No rows input.");
-                alias = tableFunctionNode.Alias;
-            }
-            else
-            {
-                throw new InvalidOperationException(
-                    string.Format(Resources.Errors.CannotProcessNodeAsInput, tableExpression));
-            }
-
-            SetAlias(tableExpression, alias);
-            SetAlias(rowsInput, alias);
-            tableExpression.SetAttribute(AstAttributeKeys.RowsInputKey, rowsInput);
-            rowsInputs.Add(rowsInput);
-        }
-
-        var resultRowsIterator = CreateMultipleIterator(rowsInputs);
-        var tearDownIterator = new TearDownRowsIterator(resultRowsIterator, "close inputs")
-        {
-            Action = _ => DisposeRowsInputs(rowsInputs)
-        };
-        return new SelectCommandContext(tearDownIterator)
-        {
-            // TODO: this will cause problems for MultiplyRowsIterator.
-            RowsInputIterator = resultRowsIterator as RowsInputIterator,
-            InputQueryContextList = inputContexts.ToArray(),
-        };
-    }
-
     private void FillQueryContextConditions(
         SelectQuerySpecificationNode querySpecificationNode,
         SelectCommandContext commandContext)
@@ -246,7 +152,7 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
         // Fill "limit". For now we limit only of order is not defined.
         if (querySpecificationNode.OrderBy == null && querySpecificationNode.Fetch != null)
         {
-            var fetchCount = new SelectMakeDelegateVisitor(_executionThread, commandContext)
+            var fetchCount = new SelectCreateDelegateVisitor(_executionThread, commandContext)
                 .RunAndReturn(querySpecificationNode.Fetch.CountNode).Invoke().AsInteger;
             foreach (var queryContext in commandContext.InputQueryContextList)
             {
@@ -313,7 +219,7 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
             {
                 return false;
             }
-            var makeDelegateVisitor = new SelectMakeDelegateVisitor(_executionThread, commandContext);
+            var makeDelegateVisitor = new SelectCreateDelegateVisitor(_executionThread, commandContext);
             var value = makeDelegateVisitor.RunAndReturn(expressionNode!).Invoke();
             rowsInputContext.Conditions.Add(new QueryContextCondition(column, binaryOperationExpressionNode.Operation, value));
             return true;
@@ -338,7 +244,7 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
             {
                 return false;
             }
-            var makeDelegateVisitor = new SelectMakeDelegateVisitor(_executionThread, commandContext);
+            var makeDelegateVisitor = new SelectCreateDelegateVisitor(_executionThread, commandContext);
             var leftValue = makeDelegateVisitor.RunAndReturn(betweenExpressionNode.Left).Invoke();
             var rightValue = makeDelegateVisitor.RunAndReturn(betweenExpressionNode.Right).Invoke();
             rowsInputContext.Conditions.Add(new QueryContextCondition(column, VariantValue.Operation.GreaterOrEquals, leftValue));
@@ -418,7 +324,7 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
     {
         var selectColumns = CreateSelectColumns(columnsNode).ToList();
 
-        var makeDelegateVisitor = new SelectMakeDelegateVisitor(_executionThread, context);
+        var makeDelegateVisitor = new SelectCreateDelegateVisitor(_executionThread, context);
         var projectedIterator = new ProjectedRowsIterator(context.CurrentIterator, context.ColumnsInfoContainer);
         foreach (var selectColumn in selectColumns)
         {
@@ -497,7 +403,7 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
 
         CreatePrefetchProjection(context, selectTableExpressionNode);
 
-        var makeDelegateVisitor = new SelectMakeDelegateVisitor(_executionThread, context);
+        var makeDelegateVisitor = new SelectCreateDelegateVisitor(_executionThread, context);
         var predicate = makeDelegateVisitor.RunAndReturn(selectTableExpressionNode.SearchConditionNode);
         context.AppendIterator(new FilterRowsIterator(context.CurrentIterator, predicate));
     }
@@ -514,7 +420,7 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
         }
 
         // Create wrapper to initialize rows frame and create index.
-        var makeDelegateVisitor = new SelectMakeDelegateVisitor(_executionThread, context);
+        var makeDelegateVisitor = new SelectCreateDelegateVisitor(_executionThread, context);
         var orderFunctions = orderByNode.OrderBySpecificationNodes.Select(n =>
             new OrderRowsIterator.OrderBy(
                 makeDelegateVisitor.RunAndReturn(n.Expression),
@@ -538,7 +444,7 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
 
     private void ApplyOffsetFetch(SelectCommandContext context, SelectQuerySpecificationNode querySpecificationNode)
     {
-        var makeDelegateVisitor = new SelectMakeDelegateVisitor(_executionThread, context);
+        var makeDelegateVisitor = new SelectCreateDelegateVisitor(_executionThread, context);
         if (querySpecificationNode.Offset != null)
         {
             var count = makeDelegateVisitor.RunAndReturn(querySpecificationNode.Offset.CountNode).Invoke().AsInteger;
@@ -563,7 +469,7 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
         VaryingOutputRowsIterator? outputIterator;
         if (querySpecificationNode.Target != null)
         {
-            var makeDelegateVisitor = new SelectMakeDelegateVisitor(_executionThread, context);
+            var makeDelegateVisitor = new SelectCreateDelegateVisitor(_executionThread, context);
             var func = makeDelegateVisitor.RunAndReturn(querySpecificationNode.Target);
             var functionCallInfo = querySpecificationNode.Target.GetAttribute<FunctionCallInfo>(AstAttributeKeys.ArgumentsKey)
                 ?? throw new InvalidOperationException("FunctionCallInfo is not set on function node.");
@@ -600,6 +506,8 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
                 }
             };
         }
+
+        context.HasFinalRowsIterator = true;
     }
 
     #endregion
@@ -631,43 +539,13 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
         }
     }
 
-    private void SetAlias(IAstNode node, string alias)
-    {
-        if (string.IsNullOrEmpty(alias))
-        {
-            return;
-        }
-        foreach (var inputColumn in node.GetAllChildren<IdentifierExpressionNode>()
-                     .Where(n => string.IsNullOrEmpty(n.SourceName)))
-        {
-            inputColumn.SourceName = alias;
-        }
-        foreach (var inputColumn in node.GetAllChildren<SelectColumnsSublistNameNode>()
-                     .Where(n => string.IsNullOrEmpty(n.SourceName)))
-        {
-            inputColumn.SourceName = alias;
-        }
-    }
-
-    private void SetAlias(IRowsInput input, string alias)
-    {
-        if (string.IsNullOrEmpty(alias))
-        {
-            return;
-        }
-        foreach (var column in input.Columns.Where(c => string.IsNullOrEmpty(c.SourceName)))
-        {
-            column.SourceName = alias;
-        }
-    }
-
-    private void ResolveNodesTypes(IAstNode? node, IRowsIterator rowsIterator)
+    private void ResolveNodesTypes(IAstNode? node, SelectCommandContext context)
     {
         if (node == null)
         {
             return;
         }
-        new SelectResolveTypesVisitor(_executionThread, rowsIterator).Run(node);
+        new SelectResolveTypesVisitor(_executionThread, context).Run(node);
     }
 
     private ISet<int> GetColumnsIdsFromNode(IRowsIterator rowsIterator, params IAstNode?[] nodes)

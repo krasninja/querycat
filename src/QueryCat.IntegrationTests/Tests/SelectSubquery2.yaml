@@ -3,4 +3,5 @@ expected: |
 query: |
   SELECT
     ('id: ' || CAST(t.id AS STRING) || ', product: ' || CAST(t.product AS STRING)) AS result
-  FROM (SELECT id, product, price FROM 'RestaurantPerzi.csv' WHERE id = 3) AS t;
+  FROM
+    (SELECT id, product, price FROM 'RestaurantPerzi.csv' WHERE id = 3) AS t;

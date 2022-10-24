@@ -48,7 +48,7 @@ public sealed class StatementsVisitor : AstVisitor
     public override void Visit(ExpressionStatementNode node)
     {
         new ResolveTypesVisitor(_executionThread).Run(node);
-        var func = new MakeDelegateVisitor(_executionThread).RunAndReturn(node.ExpressionNode);
+        var func = new CreateDelegateVisitor(_executionThread).RunAndReturn(node.ExpressionNode);
         ResultDelegate = () => func.Invoke();
     }
 
@@ -56,7 +56,7 @@ public sealed class StatementsVisitor : AstVisitor
     public override void Visit(FunctionCallStatementNode node)
     {
         new ResolveTypesVisitor(_executionThread).Run(node);
-        var func = new MakeDelegateVisitor(_executionThread).RunAndReturn(node);
+        var func = new CreateDelegateVisitor(_executionThread).RunAndReturn(node);
         ResultDelegate = () => func.Invoke();
     }
 }

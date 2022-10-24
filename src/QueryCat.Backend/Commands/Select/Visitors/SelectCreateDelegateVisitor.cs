@@ -12,17 +12,15 @@ namespace QueryCat.Backend.Commands.Select.Visitors;
 /// <summary>
 /// Generate delegate for a node using SELECT statement specific processing.
 /// </summary>
-internal class SelectMakeDelegateVisitor : MakeDelegateVisitor
+internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
 {
-    private readonly IRowsIterator _rowsIterator;
     private readonly SelectCommandContext _context;
 
     private readonly List<IRowsIterator> _subQueryIterators = new();
 
     /// <inheritdoc />
-    public SelectMakeDelegateVisitor(ExecutionThread thread, SelectCommandContext context) : base(thread)
+    public SelectCreateDelegateVisitor(ExecutionThread thread, SelectCommandContext context) : base(thread)
     {
-        _rowsIterator = context.CurrentIterator;
         _context = context;
     }
 
@@ -40,17 +38,17 @@ internal class SelectMakeDelegateVisitor : MakeDelegateVisitor
     /// <inheritdoc />
     public override void Visit(IdentifierExpressionNode node)
     {
-        int columnIndex = _rowsIterator.GetColumnIndexByName(node.Name, node.SourceName);
+        int columnIndex = _context.GetColumnIndexByName(node.Name, node.SourceName, out SelectCommandContext? commandContext);
         if (columnIndex < 0)
         {
             base.Visit(node);
         }
         else
         {
-            var info = _context.ColumnsInfoContainer.GetByColumn(_rowsIterator.Columns[columnIndex]);
+            var info = _context.ColumnsInfoContainer.GetByColumn(commandContext!.CurrentIterator.Columns[columnIndex]);
             if (info.Redirect != null)
             {
-                columnIndex = _rowsIterator.GetColumnIndex(info.Redirect);
+                columnIndex = commandContext.CurrentIterator.GetColumnIndex(info.Redirect);
             }
             NodeIdFuncMap[node.Id] = data => data.RowsIterator.Current[columnIndex];
         }
@@ -65,7 +63,7 @@ internal class SelectMakeDelegateVisitor : MakeDelegateVisitor
     /// <inheritdoc />
     public override void Visit(SelectColumnsSublistNameNode node)
     {
-        int columnIndex = _rowsIterator.GetColumnIndexByName(node.ColumnName, node.SourceName);
+        int columnIndex = _context.GetColumnIndexByName(node.ColumnName, node.SourceName, out SelectCommandContext? commandContext);
         if (columnIndex < 0)
         {
             base.Visit(node);
@@ -140,11 +138,7 @@ internal class SelectMakeDelegateVisitor : MakeDelegateVisitor
 
     private AggregateTarget CreateAggregateTarget(FunctionCallNode node, Function function)
     {
-        var functionCallInfo = node.GetAttribute<FunctionCallInfo>(AstAttributeKeys.ArgumentsKey);
-        if (functionCallInfo == null)
-        {
-            throw new InvalidOperationException("Function node must have 'FunctionCallInfo' attribute.");
-        }
+        var functionCallInfo = node.GetRequiredAttribute<FunctionCallInfo>(AstAttributeKeys.ArgumentsKey);
 
         // Try to use alias for column name.
         var columnsSublistNode = AstTraversal.GetFirstParent<SelectColumnsSublistNode>();

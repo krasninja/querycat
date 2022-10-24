@@ -88,7 +88,7 @@ internal sealed partial class SelectQueryBodyVisitor
         SelectColumnsListNode columnsNodes)
     {
         var havingNode = tableExpressionNode?.HavingNode;
-        var selectAggregateTargetsVisitor = new SelectMakeDelegateVisitor(_executionThread, context);
+        var selectAggregateTargetsVisitor = new SelectCreateDelegateVisitor(_executionThread, context);
 
         selectAggregateTargetsVisitor.Run(columnsNodes);
         var aggregateTargets = columnsNodes.GetAllChildren<FunctionCallNode>()
@@ -112,7 +112,7 @@ internal sealed partial class SelectQueryBodyVisitor
             return;
         }
 
-        var predicate = new SelectMakeDelegateVisitor(_executionThread, context).RunAndReturn(havingNode);
+        var predicate = new SelectCreateDelegateVisitor(_executionThread, context).RunAndReturn(havingNode);
         context.CurrentIterator = new FilterRowsIterator(context.CurrentIterator, predicate);
     }
 
@@ -128,7 +128,7 @@ internal sealed partial class SelectQueryBodyVisitor
                 new(VariantValue.OneIntegerValue)
             };
         }
-        var makeDelegateVisitor = new SelectMakeDelegateVisitor(_executionThread, context);
+        var makeDelegateVisitor = new SelectCreateDelegateVisitor(_executionThread, context);
         return groupByNode.GroupBy.Select(n => makeDelegateVisitor.RunAndReturn(n)).ToArray();
     }
 }

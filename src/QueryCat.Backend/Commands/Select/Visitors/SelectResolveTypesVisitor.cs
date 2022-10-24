@@ -2,34 +2,33 @@ using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Execution;
-using QueryCat.Backend.Relational;
 using QueryCat.Backend.Types;
 
 namespace QueryCat.Backend.Commands.Select.Visitors;
 
 internal sealed class SelectResolveTypesVisitor : ResolveTypesVisitor
 {
-    private readonly IRowsIterator _rowsIterator;
+    private readonly SelectCommandContext _selectCommandContext;
 
     /// <inheritdoc />
-    public SelectResolveTypesVisitor(ExecutionThread executionThread, IRowsIterator rowsIterator) :
+    public SelectResolveTypesVisitor(ExecutionThread executionThread, SelectCommandContext selectCommandContext) :
         base(executionThread)
     {
-        _rowsIterator = rowsIterator;
+        _selectCommandContext = selectCommandContext;
     }
 
     /// <inheritdoc />
     public override void Visit(IdentifierExpressionNode node)
     {
-        var columnIndex = _rowsIterator.GetColumnIndexByName(node.Name, node.SourceName);
+        var columnIndex = _selectCommandContext.GetColumnIndexByName(node.Name, node.SourceName, out SelectCommandContext? commandContext);
         if (columnIndex < 0)
         {
             base.Visit(node);
         }
         else
         {
-            node.SetAttribute(AstAttributeKeys.InputColumn, _rowsIterator.Columns[columnIndex]);
-            node.SetDataType(_rowsIterator.Columns[columnIndex].DataType);
+            node.SetAttribute(AstAttributeKeys.InputColumn, commandContext!.CurrentIterator.Columns[columnIndex]);
+            node.SetDataType(commandContext.CurrentIterator.Columns[columnIndex].DataType);
         }
     }
 
@@ -42,15 +41,15 @@ internal sealed class SelectResolveTypesVisitor : ResolveTypesVisitor
     /// <inheritdoc />
     public override void Visit(SelectColumnsSublistNameNode node)
     {
-        var columnIndex = _rowsIterator.GetColumnIndexByName(node.ColumnName, node.SourceName);
+        var columnIndex = _selectCommandContext.GetColumnIndexByName(node.ColumnName, node.SourceName, out SelectCommandContext? commandContext);
         if (columnIndex < 0)
         {
             base.Visit(node);
         }
         else
         {
-            node.SetAttribute(AstAttributeKeys.InputColumn, _rowsIterator.Columns[columnIndex]);
-            node.SetDataType(_rowsIterator.Columns[columnIndex].DataType);
+            node.SetAttribute(AstAttributeKeys.InputColumn, commandContext!.CurrentIterator.Columns[columnIndex]);
+            node.SetDataType(commandContext.CurrentIterator.Columns[columnIndex].DataType);
         }
     }
 

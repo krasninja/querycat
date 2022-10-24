@@ -19,6 +19,11 @@ internal sealed class SelectCommandContext
     public RowsInputIterator? RowsInputIterator { get; set; }
 
     /// <summary>
+    /// Parent select contexts.
+    /// </summary>
+    public SelectCommandContext[] ParentContexts { get; set; } = Array.Empty<SelectCommandContext>();
+
+    /// <summary>
     /// Context information for rows inputs. We bypass this to input to provide additional information
     /// about a query. This would allow optimize execution.
     /// </summary>
@@ -33,6 +38,11 @@ internal sealed class SelectCommandContext
     /// Has INTO clause. In that case we do not return output value.
     /// </summary>
     public bool HasOutput { get; set; }
+
+    /// <summary>
+    /// Set to <c>true</c> if the final result was prepared.
+    /// </summary>
+    public bool HasFinalRowsIterator { get; set; }
 
     /// <summary>
     /// Constructor.
@@ -50,5 +60,27 @@ internal sealed class SelectCommandContext
     public void AppendIterator(IRowsIterator nextIterator)
     {
         CurrentIterator = nextIterator;
+    }
+
+    public int GetColumnIndexByName(string name, string source, out SelectCommandContext? commandContext)
+    {
+        var columnIndex = CurrentIterator.GetColumnIndexByName(name, source);
+        if (columnIndex > -1)
+        {
+            commandContext = this;
+            return columnIndex;
+        }
+        foreach (var parentContext in ParentContexts)
+        {
+            columnIndex = parentContext.CurrentIterator.GetColumnIndexByName(name, source);
+            if (columnIndex > -1)
+            {
+                commandContext = parentContext;
+                return columnIndex;
+            }
+        }
+
+        commandContext = default;
+        return -1;
     }
 }

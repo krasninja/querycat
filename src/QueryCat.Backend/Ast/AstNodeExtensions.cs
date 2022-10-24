@@ -59,6 +59,23 @@ internal static class AstNodeExtensions
         => node.GetAttribute<object>(key) != null;
 
     /// <summary>
+    /// Get required attribute assigned to the node.
+    /// </summary>
+    /// <param name="node">Node.</param>
+    /// <param name="key">Attribute key.</param>
+    /// <typeparam name="T">Expected attribute type.</typeparam>
+    /// <returns>Attribute value.</returns>
+    public static T GetRequiredAttribute<T>(this IAstNode node, string key)
+    {
+        var value = node.GetAttribute<T>(key);
+        if (value == null)
+        {
+            throw new QueryCatException($"Cannot get attribute of type {typeof(T).Name} key '{key}' for node '{node}'.");
+        }
+        return value;
+    }
+
+    /// <summary>
     /// Copy attribute value from one node to another.
     /// </summary>
     /// <param name="toNode">Destination node.</param>

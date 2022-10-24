@@ -13,8 +13,15 @@ public sealed class SelectCommand
 {
     public Func<VariantValue> Execute(ExecutionThread executionThread, SelectStatementNode selectStatementNode)
     {
-        new SelectQueryMakeInputVisitor(executionThread).Run(selectStatementNode);
-        new SelectQueryBodyVisitor(executionThread).Run(selectStatementNode);
+        // First we create context for SELECT command by analyzing FROM clause.
+        new SelectContextCreator(executionThread).CreateForQuery(selectStatementNode.QueryNode.Queries);
+
+        // Then create query context for remain sub queries.
+        new SelectQueryCreateContextVisitor(executionThread).Run(selectStatementNode);
+
+        // Create final execution delegate.
+        new SelectQueryBodyVisitor(executionThread).Run(selectStatementNode.QueryNode);
+
         return selectStatementNode.QueryNode.GetFunc();
     }
 }

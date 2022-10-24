@@ -10,7 +10,7 @@ namespace QueryCat.Backend.Commands;
 /// <summary>
 /// Generate delegate for the specific node.
 /// </summary>
-internal class MakeDelegateVisitor : AstVisitor
+internal class CreateDelegateVisitor : AstVisitor
 {
     private readonly ExecutionThread _thread;
 
@@ -23,7 +23,7 @@ internal class MakeDelegateVisitor : AstVisitor
 
     protected ExecutionThread ExecutionThread => _thread;
 
-    public MakeDelegateVisitor(ExecutionThread thread)
+    public CreateDelegateVisitor(ExecutionThread thread)
     {
         _thread = thread;
         AstTraversal = new AstTraversal(this);

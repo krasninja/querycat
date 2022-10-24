@@ -1,4 +1,3 @@
-using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Types;
 
 namespace QueryCat.Backend.Execution;
