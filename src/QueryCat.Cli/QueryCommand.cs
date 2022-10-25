@@ -6,7 +6,7 @@ using QueryCat.Backend.Functions.StandardFunctions;
 namespace QueryCat.Cli;
 
 [Command(Name = "qcat", Description = "The simple data query and transformation utility.",
-    UnrecognizedArgumentHandling = UnrecognizedArgumentHandling.StopParsingAndCollect)]
+    UnrecognizedArgumentHandling = UnrecognizedArgumentHandling.Throw)]
 [VersionOptionFromMember("--version", MemberName = nameof(InfoFunctions.GetVersion))]
 [Subcommand(typeof(SchemaCommand))]
 [Subcommand(typeof(AstCommand))]
@@ -15,13 +15,13 @@ namespace QueryCat.Cli;
 public class QueryCommand : BaseQueryCommand
 {
     [Option("--stat", Description = "Show statistic.")]
-    protected bool ShowStatistic { get; } = false;
+    public bool ShowStatistic { get; } = false;
 
     [Option("--max-errors", Description = "Max number of errors before abort. -1 is ignore.")]
-    protected int MaxErrors { get; } = -1;
+    public int MaxErrors { get; } = -1;
 
     [Option("--detailed-stat", Description = "Show detailed statistic (include rows errors).")]
-    protected bool ShowDetailedStatistic { get; } = false;
+    public bool ShowDetailedStatistic { get; } = false;
 
     [Option("--row-number", Description = "Include row number column.")]
     public bool RowNumber { get; } = false;
@@ -30,7 +30,7 @@ public class QueryCommand : BaseQueryCommand
     public int PageSize { get; } = 20;
 
     [Option("--output-style", Description = "Output style.")]
-    public TextTableOutput.Style OutputStyle { get; set; } = TextTableOutput.Style.Table;
+    public TextTableOutput.Style OutputStyle { get; } = TextTableOutput.Style.Table;
 
     // TODO: McMaster throws exception if this method is not defined.
     public static string GetVersion() => InfoFunctions.GetVersion();
