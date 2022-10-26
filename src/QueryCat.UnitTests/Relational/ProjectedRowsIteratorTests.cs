@@ -23,8 +23,10 @@ public sealed class ProjectedRowsIteratorTests
         table.AddRow(20, "Igor");
 
         // Act.
-        var projectedIterator = new ProjectedRowsIterator(table.GetIterator(), new ColumnsInfoContainer());
-        projectedIterator.AddFuncColumn(table.Columns[1], new FuncUnit(data => data.RowsIterator.Current[1]));
+        var tableIterator = table.GetIterator();
+        var projectedIterator = new ProjectedRowsIterator(tableIterator, new ColumnsInfoContainer());
+        projectedIterator.AddFuncColumn(table.Columns[1],
+            new FuncUnit(data => data.RowsIterator.Current[1], tableIterator));
         var frame = projectedIterator.ToFrame();
         var firstRow = frame.First();
 
