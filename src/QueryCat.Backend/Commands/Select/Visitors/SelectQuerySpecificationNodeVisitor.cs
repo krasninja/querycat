@@ -3,7 +3,6 @@ using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Commands.Select.Iterators;
 using QueryCat.Backend.Execution;
-using QueryCat.Backend.Formatters;
 using QueryCat.Backend.Functions;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Relational.Iterators;
@@ -286,7 +285,7 @@ internal sealed partial class SelectQuerySpecificationNodeVisitor : AstVisitor
         var selectColumns = CreateSelectColumns(columnsNode).ToList();
 
         var makeDelegateVisitor = new SelectCreateDelegateVisitor(_executionThread, context);
-        var projectedIterator = new ProjectedRowsIterator(context.CurrentIterator, context.ColumnsInfoContainer);
+        var projectedIterator = new ProjectedRowsIterator(context.CurrentIterator);
         foreach (var selectColumn in selectColumns)
         {
             var func = makeDelegateVisitor.RunAndReturn(columnsNode.Columns[selectColumn.ColumnIndex]);
@@ -512,15 +511,6 @@ internal sealed partial class SelectQuerySpecificationNodeVisitor : AstVisitor
         var fetchIterator = new PrefetchRowsIterator(context.CurrentIterator, context.RowsInputIterator,
             inputColumnIndexesForSelect);
         context.AppendIterator(fetchIterator);
-        var projectedIterator = new ProjectedRowsIterator(context.CurrentIterator, context.ColumnsInfoContainer);
-        context.AppendIterator(projectedIterator);
-
-        foreach (var columnIndex in inputColumnIndexesForSelect)
-        {
-            projectedIterator.AddFuncColumn(
-                context.RowsInputIterator.Columns[columnIndex],
-                new FuncUnit(data => data.RowsIterator.Current[columnIndex], context.RowsInputIterator));
-        }
     }
 
     private void ResolveNodesTypes(IAstNode? node, SelectCommandContext context)

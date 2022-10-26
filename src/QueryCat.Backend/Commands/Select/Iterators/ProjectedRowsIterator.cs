@@ -35,7 +35,7 @@ internal sealed class ProjectedRowsIterator : IRowsIterator
         public VariantValue GetValue() => Func.Invoke();
     }
 
-    public ProjectedRowsIterator(IRowsIterator rowsIterator, ColumnsInfoContainer columnsInfoContainer)
+    public ProjectedRowsIterator(IRowsIterator rowsIterator)
     {
         _rowsIterator = rowsIterator;
         _currentRow = new Row(this);
