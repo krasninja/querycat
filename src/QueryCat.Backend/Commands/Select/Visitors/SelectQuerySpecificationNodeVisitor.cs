@@ -3,6 +3,7 @@ using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Commands.Select.Iterators;
 using QueryCat.Backend.Execution;
+using QueryCat.Backend.Formatters;
 using QueryCat.Backend.Functions;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Relational.Iterators;
@@ -445,13 +446,15 @@ internal sealed partial class SelectQuerySpecificationNodeVisitor : AstVisitor
     {
         var queryContext = new RowsOutputQueryContext(context.CurrentIterator.Columns);
         VaryingOutputRowsIterator? outputIterator;
+        var hasVaryingTarget = false;
         if (querySpecificationNode.Target != null)
         {
             ResolveNodesTypes(querySpecificationNode.Target, context);
             var makeDelegateVisitor = new SelectCreateDelegateVisitor(_executionThread, context);
             var func = makeDelegateVisitor.RunAndReturn(querySpecificationNode.Target);
-            var functionCallInfo = querySpecificationNode.Target.GetAttribute<FunctionCallInfo>(AstAttributeKeys.ArgumentsKey)
-                ?? throw new InvalidOperationException("FunctionCallInfo is not set on function node.");
+            var functionCallInfo = querySpecificationNode.Target
+                .GetRequiredAttribute<FunctionCallInfo>(AstAttributeKeys.ArgumentsKey);
+            hasVaryingTarget = querySpecificationNode.Target.Arguments.Count > 0;
             outputIterator = new VaryingOutputRowsIterator(
                 context.CurrentIterator,
                 func,
@@ -473,14 +476,16 @@ internal sealed partial class SelectQuerySpecificationNodeVisitor : AstVisitor
         if (outputIterator.HasOutputDefined)
         {
             context.HasOutput = true;
-            var adjustColumnsIterator = new AdjustColumnsLengthsIterator(outputIterator);
-            context.CurrentIterator = new ActionRowsIterator(adjustColumnsIterator, "write to output")
+            var resultIterator = !hasVaryingTarget
+                ? new AdjustColumnsLengthsIterator(outputIterator)
+                : (IRowsIterator)outputIterator;
+            context.CurrentIterator = new ActionRowsIterator(resultIterator, "write to output")
             {
                 BeforeMoveNext = _ =>
                 {
-                    while (adjustColumnsIterator.MoveNext())
+                    while (resultIterator.MoveNext())
                     {
-                        outputIterator.CurrentOutput.Write(adjustColumnsIterator.Current);
+                        outputIterator.CurrentOutput.Write(resultIterator.Current);
                     }
                 }
             };
