@@ -98,6 +98,23 @@ public static class MathFunctions
 
     #endregion
 
+    [Description("a raised to the power of b.")]
+    [FunctionSignature("power(a: integer, b: integer): integer")]
+    [FunctionSignature("power(a: float, b: float): float")]
+    [FunctionSignature("power(a: integer, b: float): float")]
+    [FunctionSignature("power(a: float, b: integer): float")]
+    public static VariantValue Power(FunctionCallInfo args)
+    {
+        var a = args.GetAt(0);
+        var b = args.GetAt(1);
+        return a.GetInternalType() switch
+        {
+            DataType.Float => new VariantValue(Math.Pow(a.AsFloat, b.AsFloat)),
+            DataType.Integer => new VariantValue(Math.Pow(a.AsFloat, b.AsFloat)),
+            _ => VariantValue.Null
+        };
+    }
+
     public static void RegisterFunctions(FunctionsManager functionsManager)
     {
         functionsManager.RegisterFunction(Abs);
@@ -109,5 +126,6 @@ public static class MathFunctions
         functionsManager.RegisterFunction(Cos);
         functionsManager.RegisterFunction(Sin);
         functionsManager.RegisterFunction(Tan);
+        functionsManager.RegisterFunction(Power);
     }
 }
