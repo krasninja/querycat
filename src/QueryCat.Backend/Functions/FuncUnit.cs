@@ -33,6 +33,12 @@ public class FuncUnit
         _data = new VariantValueFuncData(EmptyIterator.Instance);
     }
 
+    public FuncUnit(VariantValueFunc func, IRowsIterator rowsIterator)
+    {
+        _func = func;
+        _data = new VariantValueFuncData(rowsIterator);
+    }
+
     /// <summary>
     /// Set the iterator to get current row value on SELECT iteration stage.
     /// </summary>
@@ -41,13 +47,6 @@ public class FuncUnit
     {
         _data = new VariantValueFuncData(rowsIterator);
     }
-
-    /// <summary>
-    /// Invoke the func delegate.
-    /// </summary>
-    /// <returns>Invocation result.</returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public VariantValue Invoke() => _func(_data);
 
     /// <summary>
     /// Set the iterator to get current row value on SELECT iteration stage.
@@ -61,4 +60,11 @@ public class FuncUnit
             funcUnit.SetIterator(rowsIterator);
         }
     }
+
+    /// <summary>
+    /// Invoke the func delegate.
+    /// </summary>
+    /// <returns>Invocation result.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public VariantValue Invoke() => _func(_data);
 }

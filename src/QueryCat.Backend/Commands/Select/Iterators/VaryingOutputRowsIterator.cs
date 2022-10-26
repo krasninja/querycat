@@ -41,7 +41,6 @@ internal sealed class VaryingOutputRowsIterator : IRowsIterator, IDisposable
         _queryContext = queryContext;
 
         _outputFactory = func;
-        _outputFactory.SetIterator(_rowsIterator);
         _functionCallInfo = functionCallInfo;
 
         CurrentOutput = defaultRowsOutput;

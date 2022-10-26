@@ -15,6 +15,13 @@ public sealed class IdentifierExpressionNode : ExpressionNode
     /// </summary>
     public string SourceName { get; internal set; } = string.Empty;
 
+    /// <summary>
+    /// Full name (source name + name).
+    /// </summary>
+    public string FullName => !string.IsNullOrEmpty(SourceName)
+        ? $"{SourceName}.{Name}"
+        : Name;
+
     /// <inheritdoc />
     public override string Code => "id";
 

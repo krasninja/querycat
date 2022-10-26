@@ -22,6 +22,7 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
     public SelectCreateDelegateVisitor(ExecutionThread thread, SelectCommandContext context) : base(thread)
     {
         _context = context;
+        AstTraversal.TypesToIgnore.Add(typeof(SelectQuerySpecificationNode));
     }
 
     /// <inheritdoc />
@@ -29,7 +30,7 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
     {
         _subQueryIterators.Clear();
         base.RunAndReturn(node);
-        return new FuncUnit(NodeIdFuncMap[node.Id])
+        return new FuncUnit(NodeIdFuncMap[node.Id], _context.CurrentIterator)
         {
             SubQueryIterators = _subQueryIterators.ToArray()
         };
@@ -50,7 +51,8 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
             {
                 columnIndex = commandContext.CurrentIterator.GetColumnIndex(info.Redirect);
             }
-            NodeIdFuncMap[node.Id] = data => data.RowsIterator.Current[columnIndex];
+            var iterator = commandContext.CurrentIterator;
+            NodeIdFuncMap[node.Id] = data => iterator.Current[columnIndex];
         }
     }
 
@@ -70,7 +72,8 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
         }
         else
         {
-            NodeIdFuncMap[node.Id] = data => data.RowsIterator.Current[columnIndex];
+            var iterator = commandContext!.CurrentIterator;
+            NodeIdFuncMap[node.Id] = data => iterator.Current[columnIndex];
         }
     }
 
@@ -167,11 +170,6 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
         if (rowsIterator == null)
         {
             throw new InvalidOperationException("Incorrect subquery type.");
-        }
-        if (rowsIterator.Columns.Length > 1)
-        {
-            throw new QueryCatException(
-                string.Format(Resources.Errors.InvalidSubqueryColumnsCount, rowsIterator.Columns.Length));
         }
         VariantValue Func(VariantValueFuncData data)
         {

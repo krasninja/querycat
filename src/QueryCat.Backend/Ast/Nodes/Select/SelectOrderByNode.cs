@@ -18,13 +18,7 @@ public sealed class SelectOrderByNode : AstNode
     }
 
     /// <inheritdoc />
-    public override IEnumerable<IAstNode> GetChildren()
-    {
-        foreach (var orderBySpecificationNode in OrderBySpecificationNodes)
-        {
-            yield return orderBySpecificationNode;
-        }
-    }
+    public override IEnumerable<IAstNode> GetChildren() => OrderBySpecificationNodes;
 
     /// <inheritdoc />
     public override object Clone() => new SelectOrderByNode(this);

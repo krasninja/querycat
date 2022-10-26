@@ -8,7 +8,7 @@ using QueryCat.Backend.Types;
 
 namespace QueryCat.Backend.Commands.Select.Visitors;
 
-internal sealed partial class SelectQueryBodyVisitor
+internal sealed partial class SelectQuerySpecificationNodeVisitor
 {
     /*
      * For aggregate queries we break pipeline execution and have to prepare new rows frame.
@@ -30,6 +30,9 @@ internal sealed partial class SelectQueryBodyVisitor
         SelectQuerySpecificationNode selectQueryNode)
     {
         var groupByNode = selectQueryNode.TableExpression?.GroupByNode;
+        ResolveNodesTypes(
+            new IAstNode?[] { groupByNode, selectQueryNode.TableExpression, selectQueryNode.ColumnsList },
+            context);
         var targets = CreateAggregateTargets(context, selectQueryNode.TableExpression, selectQueryNode.ColumnsList);
 
         // If there is no group by and no aggregate functions used - skip aggregates

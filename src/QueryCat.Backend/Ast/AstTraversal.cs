@@ -10,6 +10,11 @@ public class AstTraversal
     private readonly AstVisitor _visitor;
     private readonly Stack<(IAstNode Node, IEnumerator<IAstNode> Enumerator)> _treeStack = new(32);
 
+    /// <summary>
+    /// The list of types the traversal will not visit.
+    /// </summary>
+    public List<Type> TypesToIgnore { get; } = new();
+
     public AstTraversal(AstVisitor visitor)
     {
         _visitor = visitor ?? throw new ArgumentNullException(nameof(visitor));
@@ -50,6 +55,7 @@ public class AstTraversal
         {
             return;
         }
+        var typesToIgnore = TypesToIgnore.ToArray();
 
         _treeStack.Push((node, node.GetChildren().GetEnumerator()));
         node.Accept(_visitor);
@@ -63,8 +69,11 @@ public class AstTraversal
                 {
                     continue;
                 }
-                _treeStack.Push((current.Enumerator.Current, next.GetChildren().GetEnumerator()));
-                next.Accept(_visitor);
+                if (Array.IndexOf(typesToIgnore, current.Enumerator.Current.GetType()) == -1)
+                {
+                    _treeStack.Push((current.Enumerator.Current, next.GetChildren().GetEnumerator()));
+                    next.Accept(_visitor);
+                }
             }
             else
             {
@@ -84,6 +93,7 @@ public class AstTraversal
         {
             return;
         }
+        var typesToIgnore = TypesToIgnore.ToArray();
 
         _treeStack.Push((node, node.GetChildren().GetEnumerator()));
         while (_treeStack.Count > 0)
@@ -96,7 +106,10 @@ public class AstTraversal
                 {
                     continue;
                 }
-                _treeStack.Push((current.Enumerator.Current, next.GetChildren().GetEnumerator()));
+                if (Array.IndexOf(typesToIgnore, current.Enumerator.Current.GetType()) == -1)
+                {
+                    _treeStack.Push((current.Enumerator.Current, next.GetChildren().GetEnumerator()));
+                }
             }
             else
             {

@@ -29,7 +29,6 @@ public class OrderColumnsIndex : IOrderIndex
         public RowsComparer(OrderColumnsIndex orderColumnsIndex)
         {
             _orderColumnsIndex = orderColumnsIndex;
-            FuncUnit.SetIterator(_orderColumnsIndex._valueGetters, _orderColumnsIndex.RowsFrameIterator);
 
             _values1 = new VariantValue[_orderColumnsIndex._valueGetters.Length];
             _values2 = new VariantValue[_orderColumnsIndex._valueGetters.Length];
@@ -121,12 +120,13 @@ public class OrderColumnsIndex : IOrderIndex
 
     public OrderColumnsIndex(
         ICursorRowsIterator rowsFrameIterator,
-        IEnumerable<OrderDirection> directions,
-        IEnumerable<FuncUnit> valueGetters)
+        IList<OrderDirection> directions,
+        IList<int> columnIndexes)
     {
         RowsFrameIterator = rowsFrameIterator;
         _directions = directions.ToArray();
-        _valueGetters = valueGetters.ToArray();
+        _valueGetters = columnIndexes.Select(index => new FuncUnit(data => data.RowsIterator.Current[index], rowsFrameIterator))
+            .ToArray();
     }
 
     /// <inheritdoc />

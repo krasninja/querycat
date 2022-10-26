@@ -12,63 +12,25 @@ using QueryCat.Backend.Types;
 namespace QueryCat.Backend.Commands.Select.Visitors;
 
 /// <summary>
-/// The visitor creates <see cref="IRowsIterator" /> as result.
+/// The visitor creates <see cref="IRowsIterator" /> as result for <see cref="SelectQuerySpecificationNode" /> node.
 /// </summary>
-internal sealed partial class SelectQueryBodyVisitor : AstVisitor
+internal sealed partial class SelectQuerySpecificationNodeVisitor : AstVisitor
 {
     private const string SourceInputColumn = "source_input_column";
 
     private readonly ExecutionThread _executionThread;
+    private readonly AstTraversal _astTraversal;
 
-    public SelectQueryBodyVisitor(ExecutionThread executionThread)
+    public SelectQuerySpecificationNodeVisitor(ExecutionThread executionThread)
     {
         this._executionThread = executionThread;
+        this._astTraversal = new AstTraversal(this);
     }
 
     /// <inheritdoc />
     public override void Run(IAstNode node)
     {
-        var traversal = new AstTraversal(this);
-        traversal.PostOrder(node);
-    }
-
-    /// <inheritdoc />
-    public override void Visit(SelectQueryExpressionBodyNode node)
-    {
-        var combineRowsIterator = new CombineRowsIterator();
-        var hasOutputInQuery = false;
-        foreach (var queryNode in node.Queries)
-        {
-            var queryContext = queryNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ResultKey);
-            if (queryContext.HasOutput)
-            {
-                hasOutputInQuery = true;
-            }
-            combineRowsIterator.AddRowsIterator(queryContext.CurrentIterator);
-        }
-
-        var resultIterator = combineRowsIterator.RowIterators.Count == 1
-            ? combineRowsIterator.RowIterators.First()
-            : combineRowsIterator;
-
-        if (_executionThread.Options.AddRowNumberColumn)
-        {
-            resultIterator = new RowIdRowsIterator(resultIterator);
-        }
-
-        node.SetAttribute(AstAttributeKeys.ResultKey, resultIterator);
-        if (hasOutputInQuery)
-        {
-            node.SetFunc(() =>
-            {
-                resultIterator.MoveToEnd();
-                return VariantValue.Null;
-            });
-        }
-        else
-        {
-            node.SetFunc(() => VariantValue.CreateFromObject(resultIterator));
-        }
+        _astTraversal.PostOrder(node);
     }
 
     /// <inheritdoc />
@@ -76,27 +38,24 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
     {
         // FROM.
         var context = node.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ResultKey);
-        if (context.HasFinalRowsIterator)
-        {
-            return;
-        }
 
+        // Misc.
         ApplyStatistic(context);
         SubscribeOnErrorsFromInputSources(context);
         ResolveSelectAllStatement(context.CurrentIterator, node.ColumnsList);
         ResolveSelectSourceColumns(context, node);
-        ResolveNodesTypes(node, context);
         FillQueryContextConditions(node, context);
 
         // WHERE.
         ApplyFilter(context, node.TableExpression);
 
+        // Fetch remain data.
         CreatePrefetchProjection(context,
             node.GetChildren()
                 .Except(new[] { node.TableExpression?.SearchConditionNode })
                 .ToArray());
 
-        // GROUP BY.
+        // GROUP BY/HAVING.
         ApplyAggregate(context, node);
         ApplyHaving(context, node.TableExpression?.HavingNode);
 
@@ -209,7 +168,8 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
                 return false;
             }
             // Left and Right must be id and expression.
-            if (!binaryOperationExpressionNode.MatchType(out IdentifierExpressionNode? identifierNode, out ExpressionNode? expressionNode))
+            if (!binaryOperationExpressionNode.MatchType(out IdentifierExpressionNode? identifierNode, out ExpressionNode? expressionNode)
+                || expressionNode is IdentifierExpressionNode)
             {
                 return false;
             }
@@ -368,16 +328,31 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
             return string.Empty;
         }
 
+        string GetColumnSourceName(SelectColumnsSublistNode columnNode)
+        {
+            if (columnNode is SelectColumnsSublistExpressionNode expressionNode
+                && expressionNode.ExpressionNode is IdentifierExpressionNode identifierExpressionNode)
+            {
+                return identifierExpressionNode.SourceName;
+            }
+            if (columnNode is SelectColumnsSublistNameNode selectResultColumnNode)
+            {
+                return selectResultColumnNode.SourceName;
+            }
+            return string.Empty;
+        }
+
         for (int i = 0; i < node.Columns.Count; i++)
         {
             var columnNode = node.Columns[i];
             var columnName = GetColumnName(columnNode);
+            var columnSourceName = GetColumnSourceName(columnNode);
             if (string.IsNullOrEmpty(columnName) && node.Columns.Count == 1)
             {
                 columnName = SingleValueRowsIterator.ColumnTitle;
             }
             var column = !string.IsNullOrEmpty(columnName)
-                ? new Column(columnName, columnNode.GetDataType())
+                ? new Column(columnName, columnSourceName, columnNode.GetDataType())
                 : new Column(i + 1, columnNode.GetDataType());
 
             var sourceInputColumn = node.Columns[i].GetAttribute<Column>(SourceInputColumn);
@@ -401,6 +376,7 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
             return;
         }
 
+        ResolveNodesTypes(selectTableExpressionNode, context);
         CreatePrefetchProjection(context, selectTableExpressionNode);
 
         var makeDelegateVisitor = new SelectCreateDelegateVisitor(_executionThread, context);
@@ -418,13 +394,15 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
         {
             return;
         }
+        ResolveNodesTypes(orderByNode, context);
 
         // Create wrapper to initialize rows frame and create index.
         var makeDelegateVisitor = new SelectCreateDelegateVisitor(_executionThread, context);
         var orderFunctions = orderByNode.OrderBySpecificationNodes.Select(n =>
             new OrderRowsIterator.OrderBy(
                 makeDelegateVisitor.RunAndReturn(n.Expression),
-                ConvertDirection(n.Order)
+                ConvertDirection(n.Order),
+                n.GetDataType()
             )
         );
         var scope = new VariantValueFuncData(context.CurrentIterator);
@@ -469,6 +447,7 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
         VaryingOutputRowsIterator? outputIterator;
         if (querySpecificationNode.Target != null)
         {
+            ResolveNodesTypes(querySpecificationNode.Target, context);
             var makeDelegateVisitor = new SelectCreateDelegateVisitor(_executionThread, context);
             var func = makeDelegateVisitor.RunAndReturn(querySpecificationNode.Target);
             var functionCallInfo = querySpecificationNode.Target.GetAttribute<FunctionCallInfo>(AstAttributeKeys.ArgumentsKey)
@@ -535,7 +514,7 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
         {
             projectedIterator.AddFuncColumn(
                 context.RowsInputIterator.Columns[columnIndex],
-                new FuncUnit(data => data.RowsIterator.Current[columnIndex]));
+                new FuncUnit(data => data.RowsIterator.Current[columnIndex], context.RowsInputIterator));
         }
     }
 
@@ -546,6 +525,18 @@ internal sealed partial class SelectQueryBodyVisitor : AstVisitor
             return;
         }
         new SelectResolveTypesVisitor(_executionThread, context).Run(node);
+    }
+
+    private void ResolveNodesTypes(IAstNode?[] nodes, SelectCommandContext context)
+    {
+        var selectResolveTypesVisitor = new SelectResolveTypesVisitor(_executionThread, context);
+        foreach (var node in nodes)
+        {
+            if (node != null)
+            {
+                selectResolveTypesVisitor.Run(node);
+            }
+        }
     }
 
     private ISet<int> GetColumnsIdsFromNode(IRowsIterator rowsIterator, params IAstNode?[] nodes)

@@ -66,6 +66,10 @@ public sealed class SelectQuerySpecificationNode : AstNode
         {
             yield return TableExpression;
         }
+        if (OrderBy != null)
+        {
+            yield return OrderBy;
+        }
         if (Offset != null)
         {
             yield return Offset;

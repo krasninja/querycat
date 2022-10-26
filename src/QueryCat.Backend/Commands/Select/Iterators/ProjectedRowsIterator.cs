@@ -64,16 +64,9 @@ internal sealed class ProjectedRowsIterator : IRowsIterator
     public int AddFuncColumn(Column column, FuncUnit func)
     {
         Array.Resize(ref _columns, _columns.Length + 1);
-        func.SetIterator(_rowsIterator);
         _columns[^1] = new FuncColumn(column, func);
         _currentRow = new Row(this);
         return _columns.Length - 1;
-    }
-
-    public int AddFuncColumnIndex(int columnIndex)
-    {
-        return AddFuncColumn(_rowsIterator.Current.Columns[columnIndex],
-            new FuncUnit(data => data.RowsIterator.Current[columnIndex]));
     }
 
     /// <inheritdoc />

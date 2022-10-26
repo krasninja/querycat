@@ -8,19 +8,21 @@ namespace QueryCat.Backend.Commands.Select.Visitors;
 
 internal sealed class SelectResolveTypesVisitor : ResolveTypesVisitor
 {
-    private readonly SelectCommandContext _selectCommandContext;
+    private readonly SelectCommandContext _context;
 
     /// <inheritdoc />
-    public SelectResolveTypesVisitor(ExecutionThread executionThread, SelectCommandContext selectCommandContext) :
+    public SelectResolveTypesVisitor(ExecutionThread executionThread, SelectCommandContext context) :
         base(executionThread)
     {
-        _selectCommandContext = selectCommandContext;
+        _context = context;
+        AstTraversal.TypesToIgnore.Add(typeof(SelectQuerySpecificationNode));
     }
 
     /// <inheritdoc />
     public override void Visit(IdentifierExpressionNode node)
     {
-        var columnIndex = _selectCommandContext.GetColumnIndexByName(node.Name, node.SourceName, out SelectCommandContext? commandContext);
+        var columnIndex = _context
+            .GetColumnIndexByName(node.Name, node.SourceName, out SelectCommandContext? commandContext);
         if (columnIndex < 0)
         {
             base.Visit(node);
@@ -41,7 +43,8 @@ internal sealed class SelectResolveTypesVisitor : ResolveTypesVisitor
     /// <inheritdoc />
     public override void Visit(SelectColumnsSublistNameNode node)
     {
-        var columnIndex = _selectCommandContext.GetColumnIndexByName(node.ColumnName, node.SourceName, out SelectCommandContext? commandContext);
+        var columnIndex = _context
+            .GetColumnIndexByName(node.ColumnName, node.SourceName, out SelectCommandContext? commandContext);
         if (columnIndex < 0)
         {
             base.Visit(node);
@@ -63,5 +66,11 @@ internal sealed class SelectResolveTypesVisitor : ResolveTypesVisitor
     public override void Visit(SelectExistsExpressionNode node)
     {
         node.SetDataType(DataType.Boolean);
+    }
+
+    /// <inheritdoc />
+    public override void Visit(SelectOrderBySpecificationNode node)
+    {
+        node.SetDataType(node.Expression.GetDataType());
     }
 }

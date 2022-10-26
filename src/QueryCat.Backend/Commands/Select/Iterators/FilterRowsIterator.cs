@@ -24,7 +24,6 @@ internal sealed class FilterRowsIterator : IRowsIterator
     {
         _rowsIterator = rowsIterator;
         _predicate = predicate;
-        _predicate.SetIterator(_rowsIterator);
     }
 
     /// <inheritdoc />

@@ -57,13 +57,8 @@ internal sealed class GroupRowsIterator : IRowsIterator
         AggregateTarget[] targets)
     {
         _rowsIterator = rowsIterator;
-        foreach (var funcUnit in keys)
-        {
-            funcUnit.SetIterator(rowsIterator);
-        }
         _keys = keys;
         _context = context;
-        FuncUnit.SetIterator(_keys, rowsIterator);
         _targets = targets;
 
         var columns = GetAggregateColumns(rowsIterator, targets);
