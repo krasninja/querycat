@@ -13,7 +13,7 @@ public class CacheRowsIterator : ICursorRowsIterator
     private readonly List<Row> _cache;
     private int _cursor = -1;
     private Row _currentRow;
-    private bool _isFreezed;
+    private bool _isFrozen;
 
     /// <inheritdoc />
     public Column[] Columns => _rowsIterator.Columns;
@@ -30,7 +30,7 @@ public class CacheRowsIterator : ICursorRowsIterator
     /// <summary>
     /// Is the current cache cursor position at the last row.
     /// </summary>
-    public bool EndOfCache => _isFreezed && Position >= _cache.Count;
+    public bool EndOfCache => _isFrozen && Position >= _cache.Count;
 
     /// <summary>
     /// Constructor.
@@ -56,7 +56,7 @@ public class CacheRowsIterator : ICursorRowsIterator
             return true;
         }
 
-        if (_isFreezed)
+        if (_isFrozen)
         {
             return false;
         }
@@ -84,7 +84,7 @@ public class CacheRowsIterator : ICursorRowsIterator
     /// <returns><c>True</c> if row has been added, <c>false</c> otherwise.</returns>
     public bool AddRow(Row row)
     {
-        if (_isFreezed)
+        if (_isFrozen)
         {
             return false;
         }
@@ -128,6 +128,6 @@ public class CacheRowsIterator : ICursorRowsIterator
     /// </summary>
     public void Freeze()
     {
-        _isFreezed = true;
+        _isFrozen = true;
     }
 }
