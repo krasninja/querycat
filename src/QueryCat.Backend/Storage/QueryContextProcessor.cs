@@ -114,7 +114,8 @@ public class QueryContextProcessor
     /// <summary>
     /// Run processing.
     /// </summary>
-    public void Run()
+    /// <returns>Applied count.</returns>
+    public int Run()
     {
         void LogProcessed(IEnumerable<ConditionAction> processed)
         {
@@ -143,6 +144,8 @@ public class QueryContextProcessor
             throw new QueryCatException(
                 $"The input requires filter by '{requiredNotProcessedFirst.ColumnName}' with operations {operations}.");
         }
+
+        return processed.Count();
     }
 
     private IEnumerable<ConditionAction> ApplyConditions(IReadOnlyList<QueryContextCondition> conditions)

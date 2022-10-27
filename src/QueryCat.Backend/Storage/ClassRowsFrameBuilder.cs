@@ -14,6 +14,8 @@ namespace QueryCat.Backend.Storage;
 /// <typeparam name="TClass">Class type.</typeparam>
 public class ClassRowsFrameBuilder<TClass> where TClass : class
 {
+    private const string DataColumn = "__data";
+
     private readonly List<(Column Column, Func<TClass, VariantValue> ValueGetter)> _columns = new();
 
     /// <summary>
@@ -25,6 +27,21 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
     /// Columns.
     /// </summary>
     public IEnumerable<Column> Columns => _columns.Select(c => c.Column);
+
+    /// <summary>
+    /// Add data property that adds source object itself.
+    /// </summary>
+    /// <param name="description">Property description.</param>
+    /// <returns>The instance of <see cref="ClassRowsFrameBuilder{TClass}" />.</returns>
+    public ClassRowsFrameBuilder<TClass> AddDataProperty(string? description = null)
+    {
+        var column = new Column(DataColumn, DataType.Object, description ?? "The raw data representation.");
+        _columns.Add((
+            column,
+            obj => VariantValue.CreateFromObject(obj)
+        ));
+        return this;
+    }
 
     /// <summary>
     /// Add property.

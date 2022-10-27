@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using QueryCat.Backend.Logging;
 
 namespace QueryCat.Backend.Storage;
@@ -36,22 +37,30 @@ public class ClassEnumerableInputHelper<TClass> where TClass : class
         }
     }
 
-    public delegate Task<IEnumerable<TClass>> FetchLimitOffsetDelegate(int offset, int limit);
+    public delegate Task<IEnumerable<TClass>> FetchLimitOffsetDelegate(int offset, int limit,
+        CancellationToken cancellationToken = default);
+
+    public delegate Task<IEnumerable<TClass>> FetchPagedDelegate(int page, int limit,
+        CancellationToken cancellationToken = default);
+
+    public delegate Task<IEnumerable<TClass>?> FetchUntilFlagDelegate(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Fetch remote source using offset/limit method.
     /// </summary>
     /// <param name="action">Action to get new data. It is called using new offset and limit values.</param>
+    /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
     /// <returns>Async enumerable of objects.</returns>
     public async IAsyncEnumerable<TClass> FetchLimitOffset(
-        FetchLimitOffsetDelegate action)
+        FetchLimitOffsetDelegate action,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         int offset = 0;
         int fetchedCount;
         do
         {
             Logger.Instance.Debug($"Run with offset {offset} and limit {Limit}.", GetType().Name);
-            var list = await action(offset, Limit);
+            var list = await action(offset, Limit, cancellationToken);
             fetchedCount = 0;
             foreach (var item in list)
             {
@@ -67,16 +76,18 @@ public class ClassEnumerableInputHelper<TClass> where TClass : class
     /// Fetch remote source using paged method.
     /// </summary>
     /// <param name="action">Action to get new data. It is called using new page values.</param>
+    /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
     /// <returns>Async enumerable of objects.</returns>
     public async IAsyncEnumerable<TClass> FetchPaged(
-        FetchLimitOffsetDelegate action)
+        FetchPagedDelegate action,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         int page = PageStart;
         int fetchedCount;
         do
         {
             Logger.Instance.Debug($"Run with page {page} and limit {Limit}.", GetType().Name);
-            var list = await action(page, Limit);
+            var list = await action(page, Limit, cancellationToken);
             fetchedCount = 0;
             foreach (var item in list)
             {
@@ -84,6 +95,35 @@ public class ClassEnumerableInputHelper<TClass> where TClass : class
                 yield return item;
             }
             page++;
+        }
+        while (fetchedCount > 0);
+    }
+
+    /// <summary>
+    /// Fetch until specific condition. If the end of iteration is reach the action must
+    /// return empty enumeration or null.
+    /// </summary>
+    /// <param name="action">Action to fetch data.</param>
+    /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
+    /// <returns>Async enumerable of objects or null.</returns>
+    public async IAsyncEnumerable<TClass>? FetchUntilFlag(
+        FetchUntilFlagDelegate action,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        int fetchedCount;
+        do
+        {
+            var list = await action(cancellationToken);
+            if (list == null)
+            {
+                yield break;
+            }
+            fetchedCount = 0;
+            foreach (var item in list)
+            {
+                fetchedCount++;
+                yield return item;
+            }
         }
         while (fetchedCount > 0);
     }
