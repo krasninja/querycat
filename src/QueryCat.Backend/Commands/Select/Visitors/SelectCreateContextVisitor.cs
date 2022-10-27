@@ -24,9 +24,8 @@ internal sealed class SelectCreateContextVisitor : AstVisitor
     /// <inheritdoc />
     public override void Visit(SelectQuerySpecificationNode node)
     {
-        var selectContextCreator = new SelectContextCreator(_executionThread);
-        var context = selectContextCreator.CreateForQuery(node);
-        context.ParentContexts = GetParentContexts(node);
+        var selectContextCreator = new SelectContextCreator(_executionThread, GetParentContexts(node));
+        selectContextCreator.CreateForQuery(node);
     }
 
     private SelectCommandContext[] GetParentContexts(IAstNode node)
@@ -34,7 +33,7 @@ internal sealed class SelectCreateContextVisitor : AstVisitor
         var parentContexts = new List<SelectCommandContext>();
         foreach (var parentNode in _astTraversal.GetParents().OfType<SelectQuerySpecificationNode>())
         {
-            if (parentNode == node || parentNode.TableExpression == null)
+            if (parentNode.Equals(node) || parentNode.TableExpression == null)
             {
                 continue;
             }

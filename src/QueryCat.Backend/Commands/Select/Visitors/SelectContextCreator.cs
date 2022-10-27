@@ -13,10 +13,12 @@ namespace QueryCat.Backend.Commands.Select.Visitors;
 internal sealed class SelectContextCreator
 {
     private readonly ExecutionThread _executionThread;
+    private readonly SelectCommandContext[] _parents;
 
-    public SelectContextCreator(ExecutionThread executionThread)
+    public SelectContextCreator(ExecutionThread executionThread, SelectCommandContext[]? parents = null)
     {
         this._executionThread = executionThread;
+        this._parents = parents ?? Array.Empty<SelectCommandContext>();
     }
 
     public IList<SelectCommandContext> CreateForQuery(IEnumerable<SelectQuerySpecificationNode> nodes)
@@ -31,6 +33,7 @@ internal sealed class SelectContextCreator
             return node.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ResultKey);
         }
         var context = CreateSourceContext(node);
+        context.ParentContexts = _parents;
         node.SetAttribute(AstAttributeKeys.ResultKey, context);
         return context;
     }
@@ -63,6 +66,11 @@ internal sealed class SelectContextCreator
             var source = new CreateDelegateVisitor(_executionThread)
                 .RunAndReturn(tableFunctionNode.TableFunction).Invoke();
             var rowsInput = CreateRowsInput(source);
+            var isSubQuery = _parents.Length > 0;
+            if (isSubQuery)
+            {
+                rowsInput = new CacheRowsInput(rowsInput);
+            }
             return rowsInput;
         }
 
