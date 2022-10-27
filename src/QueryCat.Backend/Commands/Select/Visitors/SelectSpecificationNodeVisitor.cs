@@ -14,14 +14,14 @@ namespace QueryCat.Backend.Commands.Select.Visitors;
 /// <summary>
 /// The visitor creates <see cref="IRowsIterator" /> as result for <see cref="SelectQuerySpecificationNode" /> node.
 /// </summary>
-internal sealed partial class SelectQuerySpecificationNodeVisitor : AstVisitor
+internal sealed partial class SelectSpecificationNodeVisitor : AstVisitor
 {
     private const string SourceInputColumn = "source_input_column";
 
     private readonly ExecutionThread _executionThread;
     private readonly AstTraversal _astTraversal;
 
-    public SelectQuerySpecificationNodeVisitor(ExecutionThread executionThread)
+    public SelectSpecificationNodeVisitor(ExecutionThread executionThread)
     {
         this._executionThread = executionThread;
         this._astTraversal = new AstTraversal(this);

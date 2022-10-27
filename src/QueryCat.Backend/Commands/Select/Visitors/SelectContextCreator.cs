@@ -48,7 +48,7 @@ internal sealed class SelectContextCreator
         IRowsInput CreateInputSourceFromSubQuery(SelectQueryExpressionBodyNode queryExpressionBodyNode)
         {
             CreateForQuery(queryExpressionBodyNode.Queries);
-            new SelectQueryBodyNodeVisitor(_executionThread).Run(queryExpressionBodyNode);
+            new SelectBodyNodeVisitor(_executionThread).Run(queryExpressionBodyNode);
             var iterator = queryExpressionBodyNode.GetFunc().Invoke().AsObject as IRowsIterator;
             if (iterator == null)
             {
@@ -131,7 +131,7 @@ internal sealed class SelectContextCreator
         {
             var rowsInput = (IRowsInput)source.AsObject;
             rowsInput.Open();
-            Logger.Instance.Debug($"Open rows input {rowsInput}.", nameof(SelectQuerySpecificationNodeVisitor));
+            Logger.Instance.Debug($"Open rows input {rowsInput}.", nameof(SelectSpecificationNodeVisitor));
             return rowsInput;
         }
         if (source.AsObject is IRowsIterator rowsIterator)

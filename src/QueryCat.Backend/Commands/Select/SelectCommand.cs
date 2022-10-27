@@ -17,10 +17,10 @@ public sealed class SelectCommand
         new SelectContextCreator(executionThread).CreateForQuery(selectStatementNode.QueryNode.Queries);
 
         // Then create query context for remain sub queries.
-        new SelectQueryCreateContextVisitor(executionThread).Run(selectStatementNode);
+        new SelectCreateContextVisitor(executionThread).Run(selectStatementNode);
 
         // Create final execution delegate.
-        new SelectQueryBodyNodeVisitor(executionThread).Run(selectStatementNode.QueryNode);
+        new SelectBodyNodeVisitor(executionThread).Run(selectStatementNode.QueryNode);
 
         return selectStatementNode.QueryNode.GetFunc();
     }

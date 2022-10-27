@@ -4,12 +4,12 @@ using QueryCat.Backend.Execution;
 
 namespace QueryCat.Backend.Commands.Select.Visitors;
 
-internal sealed class SelectQueryCreateContextVisitor : AstVisitor
+internal sealed class SelectCreateContextVisitor : AstVisitor
 {
     private readonly ExecutionThread _executionThread;
     private readonly AstTraversal _astTraversal;
 
-    public SelectQueryCreateContextVisitor(ExecutionThread executionThread)
+    public SelectCreateContextVisitor(ExecutionThread executionThread)
     {
         this._executionThread = executionThread;
         this._astTraversal = new AstTraversal(this);
