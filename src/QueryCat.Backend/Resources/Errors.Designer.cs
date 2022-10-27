@@ -152,5 +152,11 @@ namespace QueryCat.Backend.Resources {
                 return ResourceManager.GetString("InvalidArgumentType", resourceCulture);
             }
         }
+        
+        internal static string NoValues {
+            get {
+                return ResourceManager.GetString("NoValues", resourceCulture);
+            }
+        }
     }
 }

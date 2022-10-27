@@ -72,4 +72,7 @@
     <data name="InvalidArgumentType" xml:space="preserve">
         <value>Invalid argument type.</value>
     </data>
+    <data name="NoValues" xml:space="preserve">
+        <value>No values.</value>
+    </data>
 </root>

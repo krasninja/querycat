@@ -32,6 +32,7 @@ public readonly partial struct VariantValue
         IsNotNull,
         Like,
         NotLike,
+        In,
 
         // Logical.
         And = 200,

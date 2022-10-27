@@ -44,7 +44,6 @@ internal sealed partial class SelectSpecificationNodeVisitor : AstVisitor
         SubscribeOnErrorsFromInputSources(context);
         ResolveSelectAllStatement(context.CurrentIterator, node.ColumnsList);
         ResolveSelectSourceColumns(context, node);
-        FillQueryContextConditions(node, context);
 
         // WHERE.
         ApplyFilter(context, node.TableExpression);
@@ -64,6 +63,7 @@ internal sealed partial class SelectSpecificationNodeVisitor : AstVisitor
 
         // SELECT.
         CreateSelectRowsSet(context, node.ColumnsList);
+        FillQueryContextConditions(node, context);
         CreateDistinctRowsSet(context, node);
 
         // OFFSET, FETCH.
@@ -153,6 +153,8 @@ internal sealed partial class SelectSpecificationNodeVisitor : AstVisitor
             return;
         }
 
+        var makeDelegateVisitor = new SelectCreateDelegateVisitor(_executionThread, commandContext);
+
         // Process expression <id> <op> <expr> or <expr> <op> <id>.
         bool HandleBinaryOperation(IAstNode node, AstTraversal traversal)
         {
@@ -179,7 +181,6 @@ internal sealed partial class SelectSpecificationNodeVisitor : AstVisitor
             {
                 return false;
             }
-            var makeDelegateVisitor = new SelectCreateDelegateVisitor(_executionThread, commandContext);
             var value = makeDelegateVisitor.RunAndReturn(expressionNode!).Invoke();
             rowsInputContext.Conditions.Add(new QueryContextCondition(column, binaryOperationExpressionNode.Operation, value));
             return true;
@@ -199,16 +200,42 @@ internal sealed partial class SelectSpecificationNodeVisitor : AstVisitor
                 return false;
             }
             // Try to find correspond row input column.
-            var column = identifierNode!.GetAttribute<Column>(AstAttributeKeys.InputColumn);
+            var column = identifierNode.GetAttribute<Column>(AstAttributeKeys.InputColumn);
             if (column == null || rowsInputContext.RowsInput.GetColumnIndex(column) < 0)
             {
                 return false;
             }
-            var makeDelegateVisitor = new SelectCreateDelegateVisitor(_executionThread, commandContext);
             var leftValue = makeDelegateVisitor.RunAndReturn(betweenExpressionNode.Left).Invoke();
             var rightValue = makeDelegateVisitor.RunAndReturn(betweenExpressionNode.Right).Invoke();
             rowsInputContext.Conditions.Add(new QueryContextCondition(column, VariantValue.Operation.GreaterOrEquals, leftValue));
             rowsInputContext.Conditions.Add(new QueryContextCondition(column, VariantValue.Operation.LessOrEquals, rightValue));
+            return true;
+        }
+
+        bool HandleInOperation(IAstNode node, AstTraversal traversal)
+        {
+            // Get the IN comparision node.
+            if (node is not InOperationExpressionNode inOperationExpressionNode)
+            {
+                return false;
+            }
+            // Make sure we have id node.
+            if (inOperationExpressionNode.Expression is not IdentifierExpressionNode identifierNode)
+            {
+                return false;
+            }
+            // Try to find correspond row input column.
+            var column = identifierNode.GetAttribute<Column>(AstAttributeKeys.InputColumn);
+            if (column == null || rowsInputContext.RowsInput.GetColumnIndex(column) < 0)
+            {
+                return false;
+            }
+            var values = new List<VariantValue>();
+            foreach (var inExpressionValue in inOperationExpressionNode.InExpressionValues.Values)
+            {
+                values.Add(makeDelegateVisitor.RunAndReturn(inExpressionValue).Invoke());
+            }
+            rowsInputContext.Conditions.Add(new QueryContextCondition(column, VariantValue.Operation.In, values));
             return true;
         }
 
@@ -220,6 +247,10 @@ internal sealed partial class SelectSpecificationNodeVisitor : AstVisitor
                 return;
             }
             if (HandleBetweenOperation(node, traversal))
+            {
+                return;
+            }
+            if (HandleInOperation(node, traversal))
             {
                 return;
             }

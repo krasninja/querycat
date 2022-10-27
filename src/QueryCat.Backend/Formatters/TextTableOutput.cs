@@ -128,6 +128,11 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
 
         for (int i = 0; i < columns.Length; i++)
         {
+            if (columns[i].IsHidden)
+            {
+                continue;
+            }
+
             var lengths = new[]
             {
                 columns[i].Length

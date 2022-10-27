@@ -23,7 +23,7 @@ public sealed class InOperationExpressionNode : ExpressionNode
         }
         else
         {
-            InExpressionValues = new InExpressionValuesNode(new List<ExpressionNode>()
+            InExpressionValues = new InExpressionValuesNode(new List<ExpressionNode>
             {
                 inExpressionValues
             });
