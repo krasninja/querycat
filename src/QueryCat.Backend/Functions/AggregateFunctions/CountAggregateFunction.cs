@@ -18,8 +18,11 @@ internal sealed class CountAggregateFunction : IAggregateFunction
     /// <inheritdoc />
     public void Invoke(VariantValueArray state, FunctionCallInfo callInfo)
     {
-        state.Values[0] =
-            VariantValue.Add(ref state.Values[0], ref VariantValue.OneIntegerValue, out ErrorCode _);
+        if (!callInfo.GetAt(0).IsNull)
+        {
+            state.Values[0] =
+                VariantValue.Add(ref state.Values[0], ref VariantValue.OneIntegerValue, out ErrorCode _);
+        }
     }
 
     /// <inheritdoc />
