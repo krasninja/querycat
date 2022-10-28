@@ -63,20 +63,38 @@ public sealed class IISW3CInput : StreamRowsInput
     {
         if (columnIndex == _dateColumnIndex)
         {
+            value = VariantValue.Null;
             if (_timeColumnIndex == -1)
             {
-                value = new VariantValue(DateTime
-                    .ParseExact(GetColumnValue(_dateColumnIndex), "yyyy'-'MM'-'dd", CultureInfo.InvariantCulture));
+                if (DateTime.TryParseExact(GetColumnValue(_dateColumnIndex), "yyyy'-'MM'-'dd",
+                        CultureInfo.InvariantCulture, DateTimeStyles.None, out var date))
+                {
+                    value = new VariantValue(date);
+                    return ErrorCode.OK;
+                }
+                return ErrorCode.CannotCast;
             }
             else
             {
                 var stringDate = string.Concat(GetColumnValue(_dateColumnIndex), " ", GetColumnValue(_timeColumnIndex));
-                value = new VariantValue(DateTime
-                    .ParseExact(stringDate, "yyyy'-'MM'-'dd HH:mm:ss", CultureInfo.InvariantCulture));
+                if (DateTime.TryParseExact(stringDate, "yyyy'-'MM'-'dd HH:mm:ss",
+                        CultureInfo.InvariantCulture, DateTimeStyles.None, out var datetime))
+                {
+                    value = new VariantValue(datetime);
+                    return ErrorCode.OK;
+                }
+                return ErrorCode.CannotCast;
             }
         }
-        var offset = _dateColumnIndex > -1 && columnIndex > _dateColumnIndex ? 1 : 0;
-        return base.ReadValue(columnIndex + offset, out value);
+
+        var offset = _timeColumnIndex > -1 && _dateColumnIndex > -1 && columnIndex >= _timeColumnIndex ? 1 : 0;
+        var columnValue = GetColumnValue(columnIndex + offset);
+        var errorCode = VariantValue.TryCreateFromString(
+            columnValue,
+            Columns[columnIndex].DataType,
+            out value)
+            ? ErrorCode.OK : ErrorCode.CannotCast;
+        return errorCode;
     }
 
     /// <inheritdoc />
