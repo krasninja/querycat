@@ -3,7 +3,7 @@ expected: |
   -4
   7
   19
-  1.5
+  1
 query: |
   SELECT 1+ 2
   UNION

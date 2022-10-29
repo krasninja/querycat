@@ -28,13 +28,13 @@ internal sealed class SelectContextCreator
 
     public SelectCommandContext CreateForQuery(SelectQuerySpecificationNode node)
     {
-        if (node.HasAttribute(AstAttributeKeys.ResultKey))
+        if (node.HasAttribute(AstAttributeKeys.ContextKey))
         {
-            return node.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ResultKey);
+            return node.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
         }
         var context = CreateSourceContext(node);
         context.ParentContexts = _parents;
-        node.SetAttribute(AstAttributeKeys.ResultKey, context);
+        node.SetAttribute(AstAttributeKeys.ContextKey, context);
         return context;
     }
 
@@ -123,7 +123,6 @@ internal sealed class SelectContextCreator
 
         return new SelectCommandContext(tearDownIterator)
         {
-            // TODO: this will cause problems for MultiplyRowsIterator.
             RowsInputIterator = resultRowsIterator as RowsInputIterator,
             InputQueryContextList = inputContexts.ToArray(),
         };
@@ -177,15 +176,26 @@ internal sealed class SelectContextCreator
         {
             return;
         }
+
         foreach (var inputColumn in node.GetAllChildren<IdentifierExpressionNode>()
                      .Where(n => string.IsNullOrEmpty(n.SourceName)))
         {
             inputColumn.SourceName = alias;
         }
+
         foreach (var inputColumn in node.GetAllChildren<SelectColumnsSublistNameNode>()
                      .Where(n => string.IsNullOrEmpty(n.SourceName)))
         {
             inputColumn.SourceName = alias;
+        }
+
+        var iterator = node.GetAttribute<IRowsIterator>(AstAttributeKeys.ResultKey);
+        if (iterator != null)
+        {
+            foreach (var column in iterator.Columns)
+            {
+                column.SourceName = alias;
+            }
         }
     }
 

@@ -51,6 +51,11 @@ internal static class AstAttributeKeys
     public const string ResultKey = "result_key";
 
     /// <summary>
+    /// Select command context.
+    /// </summary>
+    public const string ContextKey = "context_key";
+
+    /// <summary>
     /// Correspond identifier rows input column.
     /// </summary>
     public const string InputColumn = "input_column";

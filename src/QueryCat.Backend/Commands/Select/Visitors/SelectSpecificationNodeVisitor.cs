@@ -14,30 +14,29 @@ namespace QueryCat.Backend.Commands.Select.Visitors;
 /// <summary>
 /// The visitor creates <see cref="IRowsIterator" /> as result for <see cref="SelectQuerySpecificationNode" /> node.
 /// </summary>
-internal sealed partial class SelectSpecificationNodeVisitor : AstVisitor
+internal sealed partial class SelectSpecificationNodeVisitor : SelectAstVisitor
 {
     private const string SourceInputColumn = "source_input_column";
 
-    private readonly ExecutionThread _executionThread;
-    private readonly AstTraversal _astTraversal;
-
-    public SelectSpecificationNodeVisitor(ExecutionThread executionThread)
+    public SelectSpecificationNodeVisitor(ExecutionThread executionThread) : base(executionThread)
     {
-        this._executionThread = executionThread;
-        this._astTraversal = new AstTraversal(this);
     }
 
     /// <inheritdoc />
     public override void Run(IAstNode node)
     {
-        _astTraversal.PostOrder(node);
+        AstTraversal.PostOrder(node);
     }
 
     /// <inheritdoc />
     public override void Visit(SelectQuerySpecificationNode node)
     {
         // FROM.
-        var context = node.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ResultKey);
+        var context = node.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
+        if (context.HasFinalRowsIterator)
+        {
+            return;
+        }
 
         // Misc.
         ApplyStatistic(context);
@@ -67,7 +66,7 @@ internal sealed partial class SelectSpecificationNodeVisitor : AstVisitor
         CreateDistinctRowsSet(context, node);
 
         // OFFSET, FETCH.
-        ApplyOffsetFetch(context, node);
+        ApplyOffsetFetch(context, node.Offset, node.Fetch);
 
         // INTO.
         CreateOutput(context, node);
@@ -86,15 +85,15 @@ internal sealed partial class SelectSpecificationNodeVisitor : AstVisitor
         }
         context.RowsInputIterator.OnError += (sender, args) =>
         {
-            _executionThread.Statistic.IncrementErrorsCount(args.ErrorCode, args.RowIndex, args.ColumnIndex);
+            ExecutionThread.Statistic.IncrementErrorsCount(args.ErrorCode, args.RowIndex, args.ColumnIndex);
         };
     }
 
     private void ApplyStatistic(SelectCommandContext context)
     {
-        context.AppendIterator(new StatisticRowsIterator(context.CurrentIterator, _executionThread.Statistic)
+        context.AppendIterator(new StatisticRowsIterator(context.CurrentIterator, ExecutionThread.Statistic)
         {
-            MaxErrorsCount = _executionThread.Options.MaxErrors,
+            MaxErrorsCount = ExecutionThread.Options.MaxErrors,
         });
     }
 
@@ -111,7 +110,7 @@ internal sealed partial class SelectSpecificationNodeVisitor : AstVisitor
         // Fill "limit". For now we limit only of order is not defined.
         if (querySpecificationNode.OrderBy == null && querySpecificationNode.Fetch != null)
         {
-            var fetchCount = new SelectCreateDelegateVisitor(_executionThread, commandContext)
+            var fetchCount = new SelectCreateDelegateVisitor(ExecutionThread, commandContext)
                 .RunAndReturn(querySpecificationNode.Fetch.CountNode).Invoke().AsInteger;
             foreach (var queryContext in commandContext.InputQueryContextList)
             {
@@ -153,7 +152,7 @@ internal sealed partial class SelectSpecificationNodeVisitor : AstVisitor
             return;
         }
 
-        var makeDelegateVisitor = new SelectCreateDelegateVisitor(_executionThread, commandContext);
+        var makeDelegateVisitor = new SelectCreateDelegateVisitor(ExecutionThread, commandContext);
 
         // Process expression <id> <op> <expr> or <expr> <op> <id>.
         bool HandleBinaryOperation(IAstNode node, AstTraversal traversal)
@@ -315,7 +314,7 @@ internal sealed partial class SelectSpecificationNodeVisitor : AstVisitor
     {
         var selectColumns = CreateSelectColumns(columnsNode).ToList();
 
-        var makeDelegateVisitor = new SelectCreateDelegateVisitor(_executionThread, context);
+        var makeDelegateVisitor = new SelectCreateDelegateVisitor(ExecutionThread, context);
         var projectedIterator = new ProjectedRowsIterator(context.CurrentIterator);
         foreach (var selectColumn in selectColumns)
         {
@@ -410,60 +409,9 @@ internal sealed partial class SelectSpecificationNodeVisitor : AstVisitor
         ResolveNodesTypes(selectTableExpressionNode, context);
         CreatePrefetchProjection(context, selectTableExpressionNode);
 
-        var makeDelegateVisitor = new SelectCreateDelegateVisitor(_executionThread, context);
+        var makeDelegateVisitor = new SelectCreateDelegateVisitor(ExecutionThread, context);
         var predicate = makeDelegateVisitor.RunAndReturn(selectTableExpressionNode.SearchConditionNode);
         context.AppendIterator(new FilterRowsIterator(context.CurrentIterator, predicate));
-    }
-
-    #endregion
-
-    #region ORDER BY
-
-    private void ApplyOrderBy(SelectCommandContext context, SelectOrderByNode? orderByNode)
-    {
-        if (orderByNode == null)
-        {
-            return;
-        }
-        ResolveNodesTypes(orderByNode, context);
-
-        // Create wrapper to initialize rows frame and create index.
-        var makeDelegateVisitor = new SelectCreateDelegateVisitor(_executionThread, context);
-        var orderFunctions = orderByNode.OrderBySpecificationNodes.Select(n =>
-            new OrderRowsIterator.OrderBy(
-                makeDelegateVisitor.RunAndReturn(n.Expression),
-                ConvertDirection(n.Order),
-                n.GetDataType()
-            )
-        );
-        var scope = new VariantValueFuncData(context.CurrentIterator);
-        context.AppendIterator(new OrderRowsIterator(scope, orderFunctions.ToArray()));
-    }
-
-    private OrderDirection ConvertDirection(SelectOrderSpecification order) => order switch
-    {
-        SelectOrderSpecification.Ascending => OrderDirection.Ascending,
-        SelectOrderSpecification.Descending => OrderDirection.Descending,
-        _ => throw new ArgumentOutOfRangeException(nameof(order)),
-    };
-
-    #endregion
-
-    #region OFFSET, FETCH
-
-    private void ApplyOffsetFetch(SelectCommandContext context, SelectQuerySpecificationNode querySpecificationNode)
-    {
-        var makeDelegateVisitor = new SelectCreateDelegateVisitor(_executionThread, context);
-        if (querySpecificationNode.Offset != null)
-        {
-            var count = makeDelegateVisitor.RunAndReturn(querySpecificationNode.Offset.CountNode).Invoke().AsInteger;
-            context.CurrentIterator = new OffsetRowsIterator(context.CurrentIterator, count);
-        }
-        if (querySpecificationNode.Fetch != null)
-        {
-            var count = makeDelegateVisitor.RunAndReturn(querySpecificationNode.Fetch.CountNode).Invoke().AsInteger;
-            context.CurrentIterator = new LimitRowsIterator(context.CurrentIterator, count);
-        }
     }
 
     #endregion
@@ -480,7 +428,7 @@ internal sealed partial class SelectSpecificationNodeVisitor : AstVisitor
         if (querySpecificationNode.Target != null)
         {
             ResolveNodesTypes(querySpecificationNode.Target, context);
-            var makeDelegateVisitor = new SelectCreateDelegateVisitor(_executionThread, context);
+            var makeDelegateVisitor = new SelectCreateDelegateVisitor(ExecutionThread, context);
             var func = makeDelegateVisitor.RunAndReturn(querySpecificationNode.Target);
             var functionCallInfo = querySpecificationNode.Target
                 .GetRequiredAttribute<FunctionCallInfo>(AstAttributeKeys.ArgumentsKey);
@@ -489,14 +437,14 @@ internal sealed partial class SelectSpecificationNodeVisitor : AstVisitor
                 context.CurrentIterator,
                 func,
                 functionCallInfo,
-                _executionThread.Options.DefaultRowsOutput,
+                ExecutionThread.Options.DefaultRowsOutput,
                 queryContext);
         }
         else
         {
             outputIterator = new VaryingOutputRowsIterator(
                 context.CurrentIterator,
-                _executionThread.Options.DefaultRowsOutput,
+                ExecutionThread.Options.DefaultRowsOutput,
                 queryContext);
         }
 
@@ -550,12 +498,12 @@ internal sealed partial class SelectSpecificationNodeVisitor : AstVisitor
         {
             return;
         }
-        new SelectResolveTypesVisitor(_executionThread, context).Run(node);
+        new SelectResolveTypesVisitor(ExecutionThread, context).Run(node);
     }
 
     private void ResolveNodesTypes(IAstNode?[] nodes, SelectCommandContext context)
     {
-        var selectResolveTypesVisitor = new SelectResolveTypesVisitor(_executionThread, context);
+        var selectResolveTypesVisitor = new SelectResolveTypesVisitor(ExecutionThread, context);
         foreach (var node in nodes)
         {
             if (node != null)

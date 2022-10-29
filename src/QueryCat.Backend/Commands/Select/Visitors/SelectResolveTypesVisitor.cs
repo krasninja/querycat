@@ -22,15 +22,15 @@ internal sealed class SelectResolveTypesVisitor : ResolveTypesVisitor
     public override void Visit(IdentifierExpressionNode node)
     {
         var columnIndex = _context
-            .GetColumnIndexByName(node.Name, node.SourceName, out SelectCommandContext? commandContext);
+            .GetColumnIndexByName(node.Name, node.SourceName, out var rowsIterator);
         if (columnIndex < 0)
         {
             base.Visit(node);
         }
         else
         {
-            node.SetAttribute(AstAttributeKeys.InputColumn, commandContext!.CurrentIterator.Columns[columnIndex]);
-            node.SetDataType(commandContext.CurrentIterator.Columns[columnIndex].DataType);
+            node.SetAttribute(AstAttributeKeys.InputColumn, rowsIterator!.Columns[columnIndex]);
+            node.SetDataType(rowsIterator.Columns[columnIndex].DataType);
         }
     }
 
@@ -44,15 +44,15 @@ internal sealed class SelectResolveTypesVisitor : ResolveTypesVisitor
     public override void Visit(SelectColumnsSublistNameNode node)
     {
         var columnIndex = _context
-            .GetColumnIndexByName(node.ColumnName, node.SourceName, out SelectCommandContext? commandContext);
+            .GetColumnIndexByName(node.ColumnName, node.SourceName, out var rowsIterator);
         if (columnIndex < 0)
         {
             base.Visit(node);
         }
         else
         {
-            node.SetAttribute(AstAttributeKeys.InputColumn, commandContext!.CurrentIterator.Columns[columnIndex]);
-            node.SetDataType(commandContext.CurrentIterator.Columns[columnIndex].DataType);
+            node.SetAttribute(AstAttributeKeys.InputColumn, rowsIterator!.Columns[columnIndex]);
+            node.SetDataType(rowsIterator.Columns[columnIndex].DataType);
         }
     }
 

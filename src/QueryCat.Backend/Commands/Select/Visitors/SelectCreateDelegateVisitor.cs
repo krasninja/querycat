@@ -39,19 +39,19 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
     /// <inheritdoc />
     public override void Visit(IdentifierExpressionNode node)
     {
-        int columnIndex = _context.GetColumnIndexByName(node.Name, node.SourceName, out SelectCommandContext? commandContext);
+        int columnIndex = _context.GetColumnIndexByName(node.Name, node.SourceName, out var rowsIterator);
         if (columnIndex < 0)
         {
             base.Visit(node);
         }
         else
         {
-            var info = _context.ColumnsInfoContainer.GetByColumn(commandContext!.CurrentIterator.Columns[columnIndex]);
+            var info = _context.ColumnsInfoContainer.GetByColumn(rowsIterator!.Columns[columnIndex]);
             if (info.Redirect != null)
             {
-                columnIndex = commandContext.CurrentIterator.GetColumnIndex(info.Redirect);
+                columnIndex = rowsIterator.GetColumnIndex(info.Redirect);
             }
-            var iterator = commandContext.CurrentIterator;
+            var iterator = rowsIterator;
             NodeIdFuncMap[node.Id] = data => iterator.Current[columnIndex];
         }
     }
@@ -65,14 +65,14 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
     /// <inheritdoc />
     public override void Visit(SelectColumnsSublistNameNode node)
     {
-        int columnIndex = _context.GetColumnIndexByName(node.ColumnName, node.SourceName, out SelectCommandContext? commandContext);
+        int columnIndex = _context.GetColumnIndexByName(node.ColumnName, node.SourceName, out var rowsIterator);
         if (columnIndex < 0)
         {
             base.Visit(node);
         }
         else
         {
-            var iterator = commandContext!.CurrentIterator;
+            var iterator = rowsIterator!;
             NodeIdFuncMap[node.Id] = data => iterator.Current[columnIndex];
         }
     }

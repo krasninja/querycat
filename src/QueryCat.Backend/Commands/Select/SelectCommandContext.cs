@@ -62,12 +62,12 @@ internal sealed class SelectCommandContext
         CurrentIterator = nextIterator;
     }
 
-    public int GetColumnIndexByName(string name, string source, out SelectCommandContext? commandContext)
+    public int GetColumnIndexByName(string name, string source, out IRowsIterator? rowsIterator)
     {
         var columnIndex = CurrentIterator.GetColumnIndexByName(name, source);
         if (columnIndex > -1)
         {
-            commandContext = this;
+            rowsIterator = CurrentIterator;
             return columnIndex;
         }
         foreach (var parentContext in ParentContexts)
@@ -75,12 +75,12 @@ internal sealed class SelectCommandContext
             columnIndex = parentContext.CurrentIterator.GetColumnIndexByName(name, source);
             if (columnIndex > -1)
             {
-                commandContext = parentContext;
+                rowsIterator = parentContext.CurrentIterator;
                 return columnIndex;
             }
         }
 
-        commandContext = default;
+        rowsIterator = default;
         return -1;
     }
 }

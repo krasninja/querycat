@@ -34,8 +34,19 @@ functionArg: variadic=ELLIPSIS? IDENTIFIER optional=QUESTION? COLON functionType
  * ===============
  */
 
-selectStatement: selectExpression;
-selectExpression: selectQuery (UNION selectQuery)*;
+selectStatement: selectQueryExpression;
+
+// Union.
+selectQueryExpression: selectQuery (UNION selectQuery)*
+    selectOrderByClause?
+    selectOffsetClause?
+    selectFetchFirstClause?;
+
+// Order.
+selectOrderByClause: ORDER BY selectSortSpecification (COMMA selectSortSpecification)*;
+selectSortSpecification: expression (ASC | DESC)?;
+
+// Select query.
 selectAlias: AS (name=(IDENTIFIER | STRING_LITERAL));
 selectQuery
     : SELECT
@@ -45,7 +56,7 @@ selectQuery
         selectFromClause
         selectOrderByClause?
         selectOffsetClause?
-        selectFetchFirstClause? # SelectQueryFull
+        selectFetchFirstClause?# SelectQueryFull
     | SELECT selectSublist (COMMA selectSublist)* selectTarget? # SelectQuerySingle
     ;
 selectList: selectSublist (COMMA selectSublist)*;
@@ -72,7 +83,7 @@ selectTableReferenceList:
 selectTableReference
     : functionCall selectAlias? # SelectTableReferenceNoFormat
     | STRING_LITERAL (FORMAT functionCall)? selectAlias? # SelectTableReferenceWithFormat
-    | '(' selectExpression ')' selectAlias? # SelectTableReferenceSubquery
+    | '(' selectQueryExpression ')' selectAlias? # SelectTableReferenceSubquery
     ;
 
 // Group, Having.
@@ -81,10 +92,6 @@ selectHaving: HAVING expression;
 
 // Where.
 selectSearchCondition: WHERE expression;
-
-// Order.
-selectOrderByClause: ORDER BY selectSortSpecification (COMMA selectSortSpecification)*;
-selectSortSpecification: expression (ASC | DESC)?;
 
 // Limit, offset.
 selectOffsetClause: OFFSET (offset=expression) (ROW | ROWS)?;
@@ -157,7 +164,7 @@ expression
     | functionCall # ExpressionFunctionCall
     | identifierChain # ExpressionIdentifier
     | '(' expression ')' # ExpressionInParens
-    | '(' selectExpression ')' # ExpressionSelect
+    | '(' selectQueryExpression ')' # ExpressionSelect
     | left=expression op=CONCAT right=expression # ExpressionBinary
     | op=(PLUS | MINUS) right=expression # ExpressionUnary
     | left=expression op=(STAR | DIV | MOD) right=expression # ExpressionBinary
@@ -166,7 +173,7 @@ expression
     | left=expression NOT? op=LIKE right=expression # ExpressionBinary
     | left=expression NOT? op=IN right=array # ExpressionBinaryIn
     | expr=expression NOT? op=BETWEEN left=simpleExpression AND right=expression # ExpressionBetween
-    | EXISTS '(' selectExpression ')' # ExpressionExists
+    | EXISTS '(' selectQueryExpression ')' # ExpressionExists
     | left=expression op=AND right=expression # ExpressionBinary
     | left=expression op=OR right=expression # ExpressionBinary
     | right=expression op=IS NOT? NULL # ExpressionUnary

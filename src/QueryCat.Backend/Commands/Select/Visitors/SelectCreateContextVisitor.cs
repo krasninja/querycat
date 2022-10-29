@@ -37,7 +37,7 @@ internal sealed class SelectCreateContextVisitor : AstVisitor
             {
                 continue;
             }
-            var parentContext = parentNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ResultKey);
+            var parentContext = parentNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
             parentContexts.Add(parentContext);
         }
         return parentContexts.ToArray();

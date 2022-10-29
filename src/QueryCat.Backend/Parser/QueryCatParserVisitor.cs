@@ -92,11 +92,23 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitSelectStatement([NotNull] QueryCatParser.SelectStatementContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="QueryCatParser.selectExpression"/>.
+	/// Visit a parse tree produced by <see cref="QueryCatParser.selectQueryExpression"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitSelectExpression([NotNull] QueryCatParser.SelectExpressionContext context);
+	Result VisitSelectQueryExpression([NotNull] QueryCatParser.SelectQueryExpressionContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="QueryCatParser.selectOrderByClause"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSelectOrderByClause([NotNull] QueryCatParser.SelectOrderByClauseContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="QueryCatParser.selectSortSpecification"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSelectSortSpecification([NotNull] QueryCatParser.SelectSortSpecificationContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="QueryCatParser.selectAlias"/>.
 	/// </summary>
@@ -207,18 +219,6 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitSelectSearchCondition([NotNull] QueryCatParser.SelectSearchConditionContext context);
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="QueryCatParser.selectOrderByClause"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitSelectOrderByClause([NotNull] QueryCatParser.SelectOrderByClauseContext context);
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="QueryCatParser.selectSortSpecification"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitSelectSortSpecification([NotNull] QueryCatParser.SelectSortSpecificationContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="QueryCatParser.selectOffsetClause"/>.
 	/// </summary>

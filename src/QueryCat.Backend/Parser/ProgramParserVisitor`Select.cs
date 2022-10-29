@@ -20,16 +20,21 @@ internal partial class ProgramParserVisitor
 
     /// <inheritdoc />
     public override IAstNode VisitSelectStatement(QueryCatParser.SelectStatementContext context)
-        => this.Visit<SelectQueryExpressionBodyNode>(context.selectExpression());
+        => this.Visit<SelectQueryExpressionBodyNode>(context.selectQueryExpression());
 
     /// <inheritdoc />
     public override IAstNode VisitSelectAlias(QueryCatParser.SelectAliasContext context)
         => new SelectAliasNode(GetUnwrappedText(context.name.Text));
 
     /// <inheritdoc />
-    public override IAstNode VisitSelectExpression(QueryCatParser.SelectExpressionContext context)
+    public override IAstNode VisitSelectQueryExpression(QueryCatParser.SelectQueryExpressionContext context)
         => new SelectQueryExpressionBodyNode(
-            this.Visit<SelectQuerySpecificationNode>(context.selectQuery()).ToArray());
+            this.Visit<SelectQuerySpecificationNode>(context.selectQuery()).ToArray())
+        {
+            OrderBy = this.VisitMaybe<SelectOrderByNode>(context.selectOrderByClause()),
+            Offset = this.VisitMaybe<SelectOffsetNode>(context.selectOffsetClause()),
+            Fetch = this.VisitMaybe<SelectFetchNode>(context.selectFetchFirstClause()),
+        };
 
     /// <inheritdoc />
     public override IAstNode VisitSelectQueryFull(QueryCatParser.SelectQueryFullContext context)
@@ -92,11 +97,11 @@ internal partial class ProgramParserVisitor
 
     /// <inheritdoc />
     public override IAstNode VisitExpressionSelect(QueryCatParser.ExpressionSelectContext context)
-        => this.Visit<SelectQueryExpressionBodyNode>(context.selectExpression());
+        => this.Visit<SelectQueryExpressionBodyNode>(context.selectQueryExpression());
 
     /// <inheritdoc />
     public override IAstNode VisitExpressionExists(QueryCatParser.ExpressionExistsContext context)
-        => new SelectExistsExpressionNode(this.Visit<SelectQueryExpressionBodyNode>(context.selectExpression()));
+        => new SelectExistsExpressionNode(this.Visit<SelectQueryExpressionBodyNode>(context.selectQueryExpression()));
 
     #endregion
 
@@ -154,7 +159,7 @@ internal partial class ProgramParserVisitor
     public override IAstNode VisitSelectTableReferenceSubquery(
         QueryCatParser.SelectTableReferenceSubqueryContext context)
     {
-        var query = this.Visit<SelectQueryExpressionBodyNode>(context.selectExpression());
+        var query = this.Visit<SelectQueryExpressionBodyNode>(context.selectQueryExpression());
         query.Alias = this.Visit(context.selectAlias(), SelectAliasNode.Empty).AliasName;
         return query;
     }

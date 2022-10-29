@@ -2,7 +2,10 @@ expected: |
   2,City Sochi,test
   1,City Krasnoyarsk,test
 query: |
-  select abs(id - 2), 'City ' || city, (select 'test') as 'test'
+  select
+    abs(id - 2),
+    'City ' || city,
+    (select 'test') as 'test'
   from 'Simple2.csv'
   where id * 2 / 2 > 0 and id in (1, 2, 3, 4, 5)
   group by city || ' City'
