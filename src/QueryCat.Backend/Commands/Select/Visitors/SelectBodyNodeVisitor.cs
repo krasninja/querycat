@@ -33,6 +33,45 @@ internal sealed class SelectBodyNodeVisitor : SelectAstVisitor
         // Add all iterators and merge them into "combine" iterator.
         var combineRowsIterator = new CombineRowsIterator();
         var hasOutputInQuery = false;
+
+        // Create compound context.
+        var firstQueryContext = node.Queries[0].GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
+        var context = new SelectCommandContext(combineRowsIterator)
+        {
+            RowsInputIterator = firstQueryContext.RowsInputIterator
+        };
+
+        // Process.
+        CreateCombineRowsSet(context, node, ref hasOutputInQuery);
+        ApplyOrderBy(context, node.OrderBy);
+        ApplyOffsetFetch(context, node.Offset, node.Fetch);
+        CreateSelectRowsSet(context, node.Queries[0]);
+        var resultIterator = context.CurrentIterator;
+
+        // Set result. If INTO clause is specified we do not return IRowsIterator outside. Just
+        // iterating it we will save rows into target. Otherwise we return it as is.
+        node.SetAttribute(AstAttributeKeys.ResultKey, resultIterator);
+        if (hasOutputInQuery)
+        {
+            node.SetFunc(() =>
+            {
+                resultIterator.MoveToEnd();
+                return VariantValue.Null;
+            });
+        }
+        else
+        {
+            node.SetFunc(() => VariantValue.CreateFromObject(resultIterator));
+        }
+    }
+
+    private void CreateCombineRowsSet(
+        SelectCommandContext context,
+        SelectQueryExpressionBodyNode node,
+        ref bool hasOutputInQuery)
+    {
+        // Add all iterators and merge them into "combine" iterator.
+        var combineRowsIterator = new CombineRowsIterator();
         foreach (var queryNode in node.Queries)
         {
             var queryContext = queryNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
@@ -52,31 +91,7 @@ internal sealed class SelectBodyNodeVisitor : SelectAstVisitor
             resultIterator = new RowIdRowsIterator(resultIterator);
         }
 
-        var firstQueryContext = node.Queries[0].GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
-        var context = new SelectCommandContext(resultIterator)
-        {
-            RowsInputIterator = firstQueryContext.RowsInputIterator
-        };
-        ApplyOrderBy(context, node.OrderBy);
-        ApplyOffsetFetch(context, node.Offset, node.Fetch);
-        CreateSelectRowsSet(context, node.Queries[0]);
-        resultIterator = context.CurrentIterator;
-
-        // Set result. If INTO clause is specified we do not return IRowsIterator outside. Just
-        // iterating it we will save rows into target. Otherwise we return it as is.
-        node.SetAttribute(AstAttributeKeys.ResultKey, resultIterator);
-        if (hasOutputInQuery)
-        {
-            node.SetFunc(() =>
-            {
-                resultIterator.MoveToEnd();
-                return VariantValue.Null;
-            });
-        }
-        else
-        {
-            node.SetFunc(() => VariantValue.CreateFromObject(resultIterator));
-        }
+        context.SetIterator(resultIterator);
     }
 
     #region SELECT
@@ -94,7 +109,7 @@ internal sealed class SelectBodyNodeVisitor : SelectAstVisitor
             projectedIterator.AddFuncColumn(firstQueryContext.CurrentIterator.Columns[i],
                 new FuncUnit(data => iterator.Current[columnIndex]));
         }
-        context.AppendIterator(projectedIterator);
+        context.SetIterator(projectedIterator);
     }
 
     #endregion

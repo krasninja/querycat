@@ -45,7 +45,7 @@ internal sealed partial class SelectSpecificationNodeVisitor
         var keysFactory = CreateGroupKeyValuesFactory(groupByNode, context);
         var aggregateColumnsOffset = context.CurrentIterator.Columns.Length;
 
-        context.AppendIterator(
+        context.SetIterator(
             new GroupRowsIterator(context.CurrentIterator, keysFactory, context, targets));
 
         ReplaceAggregateFunctionsByColumnReference(selectQueryNode, targets, aggregateColumnsOffset);
@@ -116,7 +116,7 @@ internal sealed partial class SelectSpecificationNodeVisitor
         }
 
         var predicate = new SelectCreateDelegateVisitor(ExecutionThread, context).RunAndReturn(havingNode);
-        context.CurrentIterator = new FilterRowsIterator(context.CurrentIterator, predicate);
+        context.SetIterator(new FilterRowsIterator(context.CurrentIterator, predicate));
     }
 
     private FuncUnit[] CreateGroupKeyValuesFactory(SelectGroupByNode? groupByNode,

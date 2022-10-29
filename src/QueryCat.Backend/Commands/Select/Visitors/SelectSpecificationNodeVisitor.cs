@@ -20,6 +20,7 @@ internal sealed partial class SelectSpecificationNodeVisitor : SelectAstVisitor
 
     public SelectSpecificationNodeVisitor(ExecutionThread executionThread) : base(executionThread)
     {
+        AstTraversal.TypesToIgnore.Add(typeof(SelectQuerySpecificationNode));
     }
 
     /// <inheritdoc />
@@ -91,7 +92,7 @@ internal sealed partial class SelectSpecificationNodeVisitor : SelectAstVisitor
 
     private void ApplyStatistic(SelectCommandContext context)
     {
-        context.AppendIterator(new StatisticRowsIterator(context.CurrentIterator, ExecutionThread.Statistic)
+        context.SetIterator(new StatisticRowsIterator(context.CurrentIterator, ExecutionThread.Statistic)
         {
             MaxErrorsCount = ExecutionThread.Options.MaxErrors,
         });
@@ -321,7 +322,7 @@ internal sealed partial class SelectSpecificationNodeVisitor : SelectAstVisitor
             var func = makeDelegateVisitor.RunAndReturn(columnsNode.Columns[selectColumn.ColumnIndex]);
             projectedIterator.AddFuncColumn(selectColumn.Column, func);
         }
-        context.AppendIterator(projectedIterator);
+        context.SetIterator(projectedIterator);
     }
 
     private void CreateDistinctRowsSet(
@@ -330,7 +331,7 @@ internal sealed partial class SelectSpecificationNodeVisitor : SelectAstVisitor
     {
         if (querySpecificationNode.QuantifierNode.IsDistinct)
         {
-            context.CurrentIterator = new DistinctRowsIterator(context.CurrentIterator);
+            context.SetIterator(new DistinctRowsIterator(context.CurrentIterator));
         }
     }
 
@@ -411,7 +412,7 @@ internal sealed partial class SelectSpecificationNodeVisitor : SelectAstVisitor
 
         var makeDelegateVisitor = new SelectCreateDelegateVisitor(ExecutionThread, context);
         var predicate = makeDelegateVisitor.RunAndReturn(selectTableExpressionNode.SearchConditionNode);
-        context.AppendIterator(new FilterRowsIterator(context.CurrentIterator, predicate));
+        context.SetIterator(new FilterRowsIterator(context.CurrentIterator, predicate));
     }
 
     #endregion
@@ -422,31 +423,26 @@ internal sealed partial class SelectSpecificationNodeVisitor : SelectAstVisitor
         SelectCommandContext context,
         SelectQuerySpecificationNode querySpecificationNode)
     {
+        context.HasFinalRowsIterator = true;
+
         var queryContext = new RowsOutputQueryContext(context.CurrentIterator.Columns);
-        VaryingOutputRowsIterator? outputIterator;
-        var hasVaryingTarget = false;
-        if (querySpecificationNode.Target != null)
+        if (querySpecificationNode.Target == null)
         {
-            ResolveNodesTypes(querySpecificationNode.Target, context);
-            var makeDelegateVisitor = new SelectCreateDelegateVisitor(ExecutionThread, context);
-            var func = makeDelegateVisitor.RunAndReturn(querySpecificationNode.Target);
-            var functionCallInfo = querySpecificationNode.Target
-                .GetRequiredAttribute<FunctionCallInfo>(AstAttributeKeys.ArgumentsKey);
-            hasVaryingTarget = querySpecificationNode.Target.Arguments.Count > 0;
-            outputIterator = new VaryingOutputRowsIterator(
-                context.CurrentIterator,
-                func,
-                functionCallInfo,
-                ExecutionThread.Options.DefaultRowsOutput,
-                queryContext);
+            return;
         }
-        else
-        {
-            outputIterator = new VaryingOutputRowsIterator(
-                context.CurrentIterator,
-                ExecutionThread.Options.DefaultRowsOutput,
-                queryContext);
-        }
+
+        ResolveNodesTypes(querySpecificationNode.Target, context);
+        var makeDelegateVisitor = new SelectCreateDelegateVisitor(ExecutionThread, context);
+        var func = makeDelegateVisitor.RunAndReturn(querySpecificationNode.Target);
+        var functionCallInfo = querySpecificationNode.Target
+            .GetRequiredAttribute<FunctionCallInfo>(AstAttributeKeys.ArgumentsKey);
+        var hasVaryingTarget = querySpecificationNode.Target.Arguments.Count > 0;
+        var outputIterator = new VaryingOutputRowsIterator(
+            context.CurrentIterator,
+            func,
+            functionCallInfo,
+            ExecutionThread.Options.DefaultRowsOutput,
+            queryContext);
 
         // If we have INTO clause defined we execute iterator and write rows into
         // INTO function rows output. Otherwise we just return IRowsIterator as is and
@@ -457,19 +453,12 @@ internal sealed partial class SelectSpecificationNodeVisitor : SelectAstVisitor
             var resultIterator = !hasVaryingTarget
                 ? new AdjustColumnsLengthsIterator(outputIterator)
                 : (IRowsIterator)outputIterator;
-            context.CurrentIterator = new ActionRowsIterator(resultIterator, "write to output")
+            var actionIterator = new ActionRowsIterator(resultIterator, "write to output")
             {
-                BeforeMoveNext = _ =>
-                {
-                    while (resultIterator.MoveNext())
-                    {
-                        outputIterator.CurrentOutput.Write(resultIterator.Current);
-                    }
-                }
+                BeforeMoveNext = _ => outputIterator.CurrentOutput.Write(resultIterator),
             };
+            context.SetIterator(actionIterator);
         }
-
-        context.HasFinalRowsIterator = true;
     }
 
     #endregion
@@ -489,28 +478,7 @@ internal sealed partial class SelectSpecificationNodeVisitor : SelectAstVisitor
 
         var fetchIterator = new PrefetchRowsIterator(context.CurrentIterator, context.RowsInputIterator,
             inputColumnIndexesForSelect);
-        context.AppendIterator(fetchIterator);
-    }
-
-    private void ResolveNodesTypes(IAstNode? node, SelectCommandContext context)
-    {
-        if (node == null)
-        {
-            return;
-        }
-        new SelectResolveTypesVisitor(ExecutionThread, context).Run(node);
-    }
-
-    private void ResolveNodesTypes(IAstNode?[] nodes, SelectCommandContext context)
-    {
-        var selectResolveTypesVisitor = new SelectResolveTypesVisitor(ExecutionThread, context);
-        foreach (var node in nodes)
-        {
-            if (node != null)
-            {
-                selectResolveTypesVisitor.Run(node);
-            }
-        }
+        context.SetIterator(fetchIterator);
     }
 
     private ISet<int> GetColumnsIdsFromNode(IRowsIterator rowsIterator, params IAstNode?[] nodes)

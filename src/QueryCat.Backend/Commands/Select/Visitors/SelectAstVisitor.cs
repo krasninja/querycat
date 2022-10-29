@@ -28,7 +28,7 @@ internal abstract class SelectAstVisitor : AstVisitor
         {
             return;
         }
-        new SelectResolveTypesVisitor(ExecutionThread, context).Run(orderByNode);
+        ResolveNodesTypes(orderByNode, context);
 
         // Create wrapper to initialize rows frame and create index.
         var makeDelegateVisitor = new SelectCreateDelegateVisitor(ExecutionThread, context);
@@ -40,7 +40,7 @@ internal abstract class SelectAstVisitor : AstVisitor
             )
         );
         var scope = new VariantValueFuncData(context.CurrentIterator);
-        context.AppendIterator(new OrderRowsIterator(scope, orderFunctions.ToArray()));
+        context.SetIterator(new OrderRowsIterator(scope, orderFunctions.ToArray()));
     }
 
     protected OrderDirection ConvertDirection(SelectOrderSpecification order) => order switch
@@ -63,14 +63,35 @@ internal abstract class SelectAstVisitor : AstVisitor
         if (offsetNode != null)
         {
             var count = makeDelegateVisitor.RunAndReturn(offsetNode.CountNode).Invoke().AsInteger;
-            context.CurrentIterator = new OffsetRowsIterator(context.CurrentIterator, count);
+            context.SetIterator(new OffsetRowsIterator(context.CurrentIterator, count));
         }
         if (fetchNode != null)
         {
             var count = makeDelegateVisitor.RunAndReturn(fetchNode.CountNode).Invoke().AsInteger;
-            context.CurrentIterator = new LimitRowsIterator(context.CurrentIterator, count);
+            context.SetIterator(new LimitRowsIterator(context.CurrentIterator, count));
         }
     }
 
     #endregion
+
+    protected void ResolveNodesTypes(IAstNode? node, SelectCommandContext context)
+    {
+        if (node == null)
+        {
+            return;
+        }
+        new SelectResolveTypesVisitor(ExecutionThread, context).Run(node);
+    }
+
+    protected void ResolveNodesTypes(IAstNode?[] nodes, SelectCommandContext context)
+    {
+        var selectResolveTypesVisitor = new SelectResolveTypesVisitor(ExecutionThread, context);
+        foreach (var node in nodes)
+        {
+            if (node != null)
+            {
+                selectResolveTypesVisitor.Run(node);
+            }
+        }
+    }
 }

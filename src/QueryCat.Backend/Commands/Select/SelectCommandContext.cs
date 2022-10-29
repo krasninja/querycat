@@ -11,7 +11,7 @@ internal sealed class SelectCommandContext
     /// <summary>
     /// Current iterator.
     /// </summary>
-    public IRowsIterator CurrentIterator { get; set; }
+    public IRowsIterator CurrentIterator { get; private set; }
 
     /// <summary>
     /// The instance of <see cref="RowsInputIterator" /> that is used in FROM clause.
@@ -57,7 +57,7 @@ internal sealed class SelectCommandContext
     /// Append (overwrite) current iterator.
     /// </summary>
     /// <param name="nextIterator">The next iterator.</param>
-    public void AppendIterator(IRowsIterator nextIterator)
+    public void SetIterator(IRowsIterator nextIterator)
     {
         CurrentIterator = nextIterator;
     }
