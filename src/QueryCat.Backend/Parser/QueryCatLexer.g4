@@ -163,7 +163,10 @@ FLOAT_LITERAL
     | '0x' HEX_DIGIT+
     ;
 NUMERIC_LITERAL: FLOAT_LITERAL'M';
-STRING_LITERAL: '\'' ( ~'\'' | '\'\'')* '\'';
+STRING_LITERAL
+    : '\'' ( ~'\'' | '\'\'')* '\''
+    | '"' ( ~'"' | '""')* '"'
+    ;
 BOOLEAN_LITERAL: TRUE | FALSE;
 
 // Comments.
