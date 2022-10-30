@@ -36,7 +36,7 @@ public class PagingOutput : IRowsOutput
     /// <inheritdoc />
     public void Write(Row row)
     {
-        if (PagingRowsCount != -1 && _rowsCounter++ >= PagingRowsCount)
+        if (PagingRowsCount != -1 && _rowsCounter++ >= PagingRowsCount && !Console.IsInputRedirected)
         {
             Console.WriteLine(Resources.Messages.PagingMore);
             Console.ReadKey();
