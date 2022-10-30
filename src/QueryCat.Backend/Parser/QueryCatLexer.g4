@@ -35,6 +35,9 @@ GREATER_OR_EQUALS:  '>=';
 LESS:               '<';
 LESS_OR_EQUALS:     '<=';
 CONCAT:             '||';
+LESS_LESS:          '<<';
+GREATER_GREATER:    '>>';
+TYPECAST:           '::';
 
 // Types.
 

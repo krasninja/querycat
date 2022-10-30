@@ -170,6 +170,7 @@ expression
     | '(' expression ')' # ExpressionInParens
     | '(' selectQueryExpression ')' # ExpressionSelect
     | left=expression op=CONCAT right=expression # ExpressionBinary
+    | right=expression TYPECAST type # ExpressionBinaryCast
     | op=(PLUS | MINUS) right=expression # ExpressionUnary
     | left=expression op=(STAR | DIV | MOD) right=expression # ExpressionBinary
     | left=expression op=(PLUS | MINUS) right=expression # ExpressionBinary
@@ -192,6 +193,9 @@ simpleExpression
     | standardFunction # SimpleExpressionStandardFunctionCall
     | functionCall # SimpleExpressionFunctionCall
     | identifierChain # SimpleExpressionIdentifier
+    | op=(PLUS | MINUS) right=expression # SimpleExpressionUnary
+    | left=simpleExpression op=CONCAT right=simpleExpression # SimpleExpressionBinary
+    | right=simpleExpression TYPECAST type # SimpleExpressionBinaryCast
     | left=simpleExpression op=(STAR | DIV | MOD) right=simpleExpression # SimpleExpressionBinary
     | left=simpleExpression op=(PLUS | MINUS) right=simpleExpression # SimpleExpressionBinary
     | left=simpleExpression op=(EQUALS | NOT_EQUALS | GREATER | GREATER_OR_EQUALS | LESS | LESS_OR_EQUALS) right=simpleExpression # SimpleExpressionBinary

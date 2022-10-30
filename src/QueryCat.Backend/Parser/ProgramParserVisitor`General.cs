@@ -80,6 +80,13 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
     }
 
     /// <inheritdoc />
+    public override IAstNode VisitExpressionBinaryCast(QueryCatParser.ExpressionBinaryCastContext context)
+        => new CastNode(
+            this.Visit<ExpressionNode>(context.right),
+            this.VisitType(context.type())
+        );
+
+    /// <inheritdoc />
     public override IAstNode VisitExpressionUnary(QueryCatParser.ExpressionUnaryContext context)
     {
         var operation = ConvertOperationTokenToAst(context.op.Type);
@@ -124,6 +131,19 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
         => this.Visit<FunctionCallNode>(context.functionCall());
 
     /// <inheritdoc />
+    public override IAstNode VisitSimpleExpressionUnary(QueryCatParser.SimpleExpressionUnaryContext context)
+    {
+        var operation = ConvertOperationTokenToAst(context.op.Type);
+        if (operation == VariantValue.Operation.IsNull)
+        {
+            operation = VariantValue.Operation.IsNotNull;
+        }
+
+        var right = (ExpressionNode)Visit(context.right);
+        return new UnaryOperationExpressionNode(operation, right);
+    }
+
+    /// <inheritdoc />
     public override IAstNode VisitSimpleExpressionBinary(QueryCatParser.SimpleExpressionBinaryContext context)
     {
         var operation = ConvertOperationTokenToAst(context.op.Type);
@@ -131,6 +151,13 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
         var right = (ExpressionNode)Visit(context.right);
         return new BinaryOperationExpressionNode(operation, left, right);
     }
+
+    /// <inheritdoc />
+    public override IAstNode VisitSimpleExpressionBinaryCast(QueryCatParser.SimpleExpressionBinaryCastContext context)
+        => new CastNode(
+            this.Visit<ExpressionNode>(context.right),
+            this.VisitType(context.type())
+        );
 
     /// <inheritdoc />
     public override IAstNode VisitSimpleExpressionFunctionCall(QueryCatParser.SimpleExpressionFunctionCallContext context)
