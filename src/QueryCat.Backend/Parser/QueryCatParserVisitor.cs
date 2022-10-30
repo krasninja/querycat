@@ -232,6 +232,18 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitSelectFetchFirstClause([NotNull] QueryCatParser.SelectFetchFirstClauseContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="QueryCatParser.selectTopClause"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSelectTopClause([NotNull] QueryCatParser.SelectTopClauseContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="QueryCatParser.selectLimitClause"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSelectLimitClause([NotNull] QueryCatParser.SelectLimitClauseContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="QueryCatParser.echoStatement"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

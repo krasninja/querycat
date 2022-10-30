@@ -50,13 +50,15 @@ selectSortSpecification: expression (ASC | DESC)?;
 selectAlias: AS (name=(IDENTIFIER | STRING_LITERAL));
 selectQuery
     : SELECT
+        selectTopClause?
         selectSetQuantifier?
         selectList
         selectTarget?
         selectFromClause
         selectOrderByClause?
+        selectLimitClause?
         selectOffsetClause?
-        selectFetchFirstClause?# SelectQueryFull
+        selectFetchFirstClause? # SelectQueryFull
     | SELECT selectSublist (COMMA selectSublist)* selectTarget? # SelectQuerySingle
     ;
 selectList: selectSublist (COMMA selectSublist)*;
@@ -96,6 +98,8 @@ selectSearchCondition: WHERE expression;
 // Limit, offset.
 selectOffsetClause: OFFSET (offset=expression) (ROW | ROWS)?;
 selectFetchFirstClause: FETCH (FIRST | NEXT)? (limit=expression) (ROW | ROWS)? (ONLY | ONLY)?;
+selectTopClause: TOP limit=INTEGER_LITERAL;
+selectLimitClause: LIMIT limit=expression;
 
 /*
  * =============

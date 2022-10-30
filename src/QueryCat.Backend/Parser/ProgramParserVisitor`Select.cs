@@ -45,7 +45,9 @@ internal partial class ProgramParserVisitor
             Target = this.VisitMaybe<FunctionCallNode>(context.selectTarget()),
             OrderBy = this.VisitMaybe<SelectOrderByNode>(context.selectOrderByClause()),
             Offset = this.VisitMaybe<SelectOffsetNode>(context.selectOffsetClause()),
-            Fetch = this.VisitMaybe<SelectFetchNode>(context.selectFetchFirstClause()),
+            Fetch = this.VisitMaybe<SelectFetchNode>(context.selectFetchFirstClause())
+                ?? this.VisitMaybe<SelectFetchNode>(context.selectLimitClause())
+                ?? this.VisitMaybe<SelectFetchNode>(context.selectTopClause())
         };
 
     /// <inheritdoc />
@@ -212,6 +214,17 @@ internal partial class ProgramParserVisitor
     /// <inheritdoc />
     public override IAstNode VisitSelectFetchFirstClause(QueryCatParser.SelectFetchFirstClauseContext context)
         => new SelectFetchNode(this.Visit<ExpressionNode>(context.limit));
+
+    /// <inheritdoc />
+    public override IAstNode VisitSelectLimitClause(QueryCatParser.SelectLimitClauseContext context)
+        => new SelectFetchNode(this.Visit<ExpressionNode>(context.limit));
+
+    /// <inheritdoc />
+    public override IAstNode VisitSelectTopClause(QueryCatParser.SelectTopClauseContext context)
+        => new SelectFetchNode(
+            new LiteralNode(
+                new VariantValue(GetUnwrappedText(context.limit.Text)))
+            );
 
     #endregion
 }

@@ -110,12 +110,14 @@ FORMAT:             'FORMAT';
 GROUP:              'GROUP';
 HAVING:             'HAVING';
 INTO:               'INTO';
+LIMIT:              'LIMIT';
 NEXT:               'NEXT';
 OFFSET:             'OFFSET';
 ORDER:              'ORDER';
 ROW:                'ROW';
 ROWS:               'ROWS';
 SELECT:             'SELECT';
+TOP:                'TOP';
 UNION:              'UNION';
 WHERE:              'WHERE';
 

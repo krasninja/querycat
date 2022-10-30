@@ -1,0 +1,4 @@
+expected: |
+  Russia
+query: |
+  select top 1 name from 'Countries1.csv' limit (select 1) offset 0;
