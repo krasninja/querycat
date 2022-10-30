@@ -455,7 +455,13 @@ internal sealed partial class SelectSpecificationNodeVisitor : SelectAstVisitor
                 : (IRowsIterator)outputIterator;
             var actionIterator = new ActionRowsIterator(resultIterator, "write to output")
             {
-                BeforeMoveNext = _ => outputIterator.CurrentOutput.Write(resultIterator),
+                BeforeMoveNext = _ =>
+                {
+                    while (outputIterator.MoveNext())
+                    {
+                        outputIterator.CurrentOutput.Write(resultIterator);
+                    }
+                },
             };
             context.SetIterator(actionIterator);
         }
