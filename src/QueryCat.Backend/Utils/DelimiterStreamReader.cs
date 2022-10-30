@@ -32,32 +32,32 @@ public class DelimiterStreamReader
         /// <summary>
         /// Quote character.
         /// </summary>
-        public char[] QuoteChars { get; init; } = Array.Empty<char>();
+        public char[] QuoteChars { get; set; } = Array.Empty<char>();
 
         /// <summary>
         /// Columns delimiters.
         /// </summary>
-        public char[] Delimiters { get; init; } = Array.Empty<char>();
+        public char[] Delimiters { get; set; } = Array.Empty<char>();
 
         /// <summary>
         /// Can a delimiter be repeated. Can be useful for example for whitespace delimiter.
         /// </summary>
-        public bool DelimitersCanRepeat { get; init; } = false;
+        public bool DelimitersCanRepeat { get; set; }
 
         /// <summary>
         /// Buffer size.
         /// </summary>
-        public int BufferSize { get; init; } = DefaultBufferSize;
+        public int BufferSize { get; set; } = DefaultBufferSize;
 
         /// <summary>
         /// Do not take into account empty lines.
         /// </summary>
-        public bool SkipEmptyLines { get; init; } = true;
+        public bool SkipEmptyLines { get; set; } = true;
 
         /// <summary>
         /// Culture to use for parse.
         /// </summary>
-        public CultureInfo Culture { get; init; } = CultureInfo.InvariantCulture;
+        public CultureInfo Culture { get; set; } = CultureInfo.InvariantCulture;
     }
 
     private struct FieldInfo
@@ -76,6 +76,7 @@ public class DelimiterStreamReader
 
         public bool IsEmpty => EndIndex - StartIndex < 2;
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Reset()
         {
             StartIndex = 0;
@@ -122,17 +123,32 @@ public class DelimiterStreamReader
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    private char GetNextCharacter()
+    private bool EnsureHasAdvanceData(ref SequenceReader<char> sequenceReader, int advance = 1)
     {
-        if ((ulong)_dynamicBuffer.Size <= (ulong)_currentDelimiterPosition)
+        if ((ulong)_dynamicBuffer.Size < (ulong)(_currentDelimiterPosition + advance))
         {
-            ReadNextBufferData();
+            var readCount = ReadNextBufferData();
+            if (readCount == 0)
+            {
+                return false;
+            }
+            _currentSequence = _dynamicBuffer.GetSequence();
+            sequenceReader = new SequenceReader<char>(_currentSequence);
+            sequenceReader.Advance(_currentDelimiterPosition);
         }
+        return true;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    private bool GetNextCharacter(out char nextChar)
+    {
         if ((ulong)_dynamicBuffer.Size > (ulong)_currentDelimiterPosition)
         {
-            return _dynamicBuffer.GetAt(_currentDelimiterPosition);
+            nextChar = _dynamicBuffer.GetAt(_currentDelimiterPosition);
+            return true;
         }
-        return '\0';
+        nextChar = '\0';
+        return false;
     }
 
     /// <summary>
@@ -182,7 +198,9 @@ public class DelimiterStreamReader
                 // Skip extra spaces (or any delimiters).
                 if (_options.DelimitersCanRepeat)
                 {
-                    while (Array.IndexOf(_options.Delimiters, GetNextCharacter()) > -1)
+                    while (EnsureHasAdvanceData(ref sequenceReader)
+                        && GetNextCharacter(out var nextChar)
+                        && Array.IndexOf(_options.Delimiters, nextChar) > -1)
                     {
                         _currentDelimiterPosition++;
                         sequenceReader.Advance(1);
@@ -247,7 +265,10 @@ public class DelimiterStreamReader
                         fieldStart = true;
 
                         // Process /r/n Windows line end case.
-                        if (ch == '\r' && GetNextCharacter() == '\n')
+                        if (ch == '\r'
+                            && EnsureHasAdvanceData(ref sequenceReader)
+                            && GetNextCharacter(out var nextCh)
+                            && nextCh == '\n')
                         {
                             _currentDelimiterPosition++;
                         }
@@ -299,14 +320,12 @@ public class DelimiterStreamReader
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     private ref FieldInfo GetNextFieldInfo()
     {
-        if ((ulong)_fieldInfoLastIndex > (ulong)_fieldInfos.Length)
+        if ((ulong)_fieldInfoLastIndex >= (ulong)_fieldInfos.Length)
         {
-            Array.Resize(ref _fieldInfos, _fieldInfoLastIndex);
+            Array.Resize(ref _fieldInfos, _fieldInfoLastIndex + 1);
         }
 
-#if DEBUG
         _fieldInfos[_fieldInfoLastIndex].Reset();
-#endif
         return ref _fieldInfos[_fieldInfoLastIndex++];
     }
 

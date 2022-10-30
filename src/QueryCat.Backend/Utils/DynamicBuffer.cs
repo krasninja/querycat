@@ -557,13 +557,9 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
     /// Get the total buffer without advanced data.
     /// </summary>
     /// <returns>The total sequence.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ReadOnlySequence<T> GetSequence()
     {
-        if (_buffersList.IsEmpty)
-        {
-            return ReadOnlySequence<T>.Empty;
-        }
-
         var headStartIndex = GetSegmentStartIndex(_buffersList.Head);
         var tailEndIndex = GetSegmentEndIndex(_buffersList.Tail);
         return new ReadOnlySequence<T>(_buffersList.Head!, headStartIndex, _buffersList.Tail!, tailEndIndex);
