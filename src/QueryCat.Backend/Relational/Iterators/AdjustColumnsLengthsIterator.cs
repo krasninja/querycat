@@ -54,9 +54,9 @@ public class AdjustColumnsLengthsIterator : IRowsIterator
     {
         for (var i = 0; i < Columns.Length; i++)
         {
-            if (Columns[i].Length < Columns[i].Name.Length)
+            if (Columns[i].Length < Columns[i].FullName.Length)
             {
-                Columns[i].Length = Columns[i].Name.Length;
+                Columns[i].Length = Columns[i].FullName.Length;
             }
         }
 
