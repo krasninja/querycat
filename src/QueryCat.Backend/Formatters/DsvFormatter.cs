@@ -11,8 +11,10 @@ namespace QueryCat.Backend.Formatters;
 /// <remarks>
 /// URL: https://en.wikipedia.org/wiki/Delimiter-separated_values.
 /// </remarks>
-public class DsvFormatter : IRowsFormatter
+internal class DsvFormatter : IRowsFormatter
 {
+    private readonly StreamRowsInputOptions? _streamRowsInputOptions;
+
     private readonly char _delimiter;
     private readonly bool? _hasHeader;
     private readonly bool _addFileNameColumn;
@@ -42,13 +44,36 @@ public class DsvFormatter : IRowsFormatter
         _addFileNameColumn = addFileNameColumn;
     }
 
+    public DsvFormatter(StreamRowsInputOptions streamRowsInputOptions)
+    {
+        _streamRowsInputOptions = streamRowsInputOptions;
+    }
+
     /// <inheritdoc />
     public IRowsInput OpenInput(Stream input)
-        => new DsvInput(input, _delimiter, _hasHeader, _addFileNameColumn);
+        => new DsvInput(GetOptions(input));
 
     /// <inheritdoc />
     public IRowsOutput OpenOutput(Stream output)
-        => new DsvOutput(output, _delimiter, _hasHeader ?? true);
+        => new DsvOutput(GetOptions(output));
+
+    private DsvOptions GetOptions(Stream stream)
+    {
+        var options = new DsvOptions(stream)
+        {
+            HasHeader = _hasHeader,
+            AddFileNameColumn = _addFileNameColumn
+        };
+        if (_streamRowsInputOptions != null)
+        {
+            options.InputOptions = _streamRowsInputOptions;
+        }
+        else
+        {
+            options.InputOptions.DelimiterStreamReaderOptions.Delimiters = new[] { _delimiter };
+        }
+        return options;
+    }
 
     public static void RegisterFunctions(FunctionsManager functionsManager)
     {

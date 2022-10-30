@@ -9,18 +9,18 @@ namespace QueryCat.Backend.Formatters;
 /// <summary>
 /// Delimiter separated values (DSV) output.
 /// </summary>
-public sealed class DsvOutput : RowsOutput, IDisposable
+internal sealed class DsvOutput : RowsOutput, IDisposable
 {
     private readonly StreamWriter _streamWriter;
     private readonly char _delimiter;
     private readonly bool _hasHeader;
     private bool _wroteHeader;
 
-    public DsvOutput(Stream stream, char delimiter, bool hasHeader = true)
+    public DsvOutput(DsvOptions dsvOptions)
     {
-        _streamWriter = new StreamWriter(stream, Encoding.Default, -1, leaveOpen: true);
-        _delimiter = delimiter;
-        _hasHeader = hasHeader;
+        _streamWriter = new StreamWriter(dsvOptions.Stream, Encoding.Default, -1, leaveOpen: true);
+        _delimiter = dsvOptions.InputOptions.DelimiterStreamReaderOptions.Delimiters[0];
+        _hasHeader = dsvOptions.HasHeader ?? true;
     }
 
     /// <inheritdoc />

@@ -1,7 +1,6 @@
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Storage;
 using QueryCat.Backend.Types;
-using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Formatters;
 
@@ -10,28 +9,19 @@ namespace QueryCat.Backend.Formatters;
 /// </summary>
 internal sealed class DsvInput : StreamRowsInput
 {
-    private const char QuoteChar = '\"';
-
     private readonly Column[] _customColumns =
     {
         new("filename", DataType.String, "File path"), // Index 0.
     };
 
     private bool? _hasHeader;
-    private readonly bool _addFileNameColumn;
 
-    public DsvInput(Stream stream, char delimiter, bool? hasHeader = null, bool addFileNameColumn = true) :
-        base(new StreamReader(stream), new StreamRowsInputOptions
-        {
-            DelimiterStreamReaderOptions = new DelimiterStreamReader.ReaderOptions
-            {
-                Delimiters = new[] { delimiter },
-                QuoteChars = new[] { QuoteChar },
-            }
-        })
+    public DsvOptions Options { get; }
+
+    public DsvInput(DsvOptions dsvOptions) : base(new StreamReader(dsvOptions.Stream), dsvOptions.InputOptions)
     {
-        _hasHeader = hasHeader;
-        _addFileNameColumn = addFileNameColumn;
+        Options = dsvOptions;
+        _hasHeader = Options.HasHeader;
     }
 
     #region Header
@@ -69,7 +59,7 @@ internal sealed class DsvInput : StreamRowsInput
     /// <inheritdoc />
     protected override Column[] GetVirtualColumns()
     {
-        return _addFileNameColumn && StreamReader.BaseStream is FileStream
+        return Options.AddFileNameColumn && StreamReader.BaseStream is FileStream
             ? _customColumns
             : Array.Empty<Column>();
     }

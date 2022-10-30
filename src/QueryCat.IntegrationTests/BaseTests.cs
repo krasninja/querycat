@@ -2,7 +2,9 @@ using System.Globalization;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Formatters;
 using QueryCat.Backend.Functions;
+using QueryCat.Backend.Storage;
 using QueryCat.Backend.Types;
+using QueryCat.Backend.Utils;
 using QueryCat.IntegrationTests.Internal;
 
 namespace QueryCat.IntegrationTests;
@@ -20,7 +22,19 @@ public class BaseTests
     {
         Runner = new(new ExecutionOptions
         {
-            DefaultRowsOutput = new DsvOutput(_memory, ',', hasHeader: false),
+            DefaultRowsOutput = new DsvOutput(new DsvOptions(_memory)
+            {
+                AddFileNameColumn = false,
+                HasHeader = false,
+                InputOptions = new StreamRowsInputOptions
+                {
+                    DelimiterStreamReaderOptions = new DelimiterStreamReader.ReaderOptions
+                    {
+                        QuoteChars = new[] { '"' },
+                        Delimiters = new[] { ',' },
+                    }
+                }
+            }),
             AddRowNumberColumn = false
         });
         Runner.Bootstrap();

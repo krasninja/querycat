@@ -1,3 +1,6 @@
+using QueryCat.Backend.Storage;
+using QueryCat.Backend.Utils;
+
 namespace QueryCat.Backend.Formatters;
 
 /// <summary>
@@ -10,6 +13,15 @@ public static class FormatUtils
         [".csv"] = () => new DsvFormatter(','),
         [".tsv"] = () => new DsvFormatter('\t'),
         [".tab"] = () => new DsvFormatter('\t'),
+        [".log"] = () => new DsvFormatter(new StreamRowsInputOptions
+        {
+            DelimiterStreamReaderOptions = new DelimiterStreamReader.ReaderOptions
+            {
+                Delimiters = new[] { ' ' },
+                DelimitersCanRepeat = true,
+                SkipEmptyLines = true,
+            }
+        }),
     };
 
     public static IRowsFormatter? GetFormatterByExtension(string extension)
