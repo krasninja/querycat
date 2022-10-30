@@ -3,6 +3,7 @@
 | Name and Description |
 | --- |
 | `date(datetime: timestamp): timestamp`<br /><br /> Takes the date part. |
+| `date_part(field: string, source: timestamp): integer`<br /><br /> The function retrieves subfields such as year or hour from date/time values. |
 | `now(): timestamp`<br /><br /> Current date and time |
 | `to_date(target: string, fmt: string): timestamp`<br /><br /> Converts string to date according to the given format. |
 
@@ -40,3 +41,25 @@ The formatting is based on .NET framework conventions. You can read more about i
 
 - [Custom date and time format strings](https://learn.microsoft.com/en-us/dotnet/standard/base-types/custom-date-and-time-format-strings).
 - [Standard date and time format strings](https://learn.microsoft.com/en-us/dotnet/standard/base-types/standard-date-and-time-format-strings).
+
+## Date Part
+
+To get the date part use `EXTRACT` function. The syntax is `EXTRACT(part FROM timestamp)`. The valid parts are:
+
+- `YEAR`;
+- `MONTH`;
+- `DAY`;
+- `HOUR`;
+- `MINUTE`;
+- `SECOND`;
+- `DAY`;
+- `HOUR`;
+- `MINUTE`;
+- `SECOND`;
+- `MILLISECOND`;
+
+Example:
+
+```
+select extract(year from cast('2023-01-01' as timestamp));
+```

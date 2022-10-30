@@ -29,3 +29,5 @@ There are following column data types are supported:
 | OBJECT | |
 
 For boolean `true` additional values can be used: `1`, `yes`, `on`, `t`. Boolean `false`: `0`, `no`, `off`, `f`.
+
+Every column is considered to be nullable. If value is empty it will be parsed as NULL.

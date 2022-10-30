@@ -8,4 +8,3 @@
 | `iisw3c(): object<IRowsFormatter>` | IIS W3C log files format. More info: https://www.w3.org/TR/WD-logfile. |
 | `text_line(): object<IRowsFormatter>` | Text line formatter. |
 | `tsv(has_header?: boolean): object<IRowsFormatter>` | Tab separated values (TSV) format. |
-

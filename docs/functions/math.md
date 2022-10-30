@@ -5,6 +5,7 @@
 | `abs(x: integer): integer`<br />`abs(x: float): float`<br />`abs(x: numeric): numeric`<br /><br /> Absolute value. |
 | `degrees(rad: integer): float`<br />`degrees(rad: float): float`<br /><br /> Converts radians to degrees. |
 | `pi(): float`<br /><br /> "Pi" constant. |
+| `power(a: integer, b: integer): integer`<br />`power(a: float, b: float): float`<br />`power(a: integer, b: float): float`<br />`power(a: float, b: integer): float`<br /><br /> a raised to the power of b. |
 | `radians(deg: integer): float`<br />`radians(deg: float): float`<br /><br /> Converts degrees to radians. |
 | `round(x: integer): float`<br />`round(x: float): float`<br /><br /> Rounds to nearest integer. |
 | `sqrt(x: integer): float`<br />`sqrt(x: float): float`<br /><br /> Square root. |

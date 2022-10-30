@@ -5,7 +5,7 @@ Executes the SQL query against input. If not output is specified (with `INTO` cl
 ## Syntax
 
 ```
-SELECT [ DISTINCT ]
+SELECT [ DISTINCT ] [ TOP number ]
     [ * | expression AS [ alias ] | column AS [ alias ] [, ...] ]
 [ INTO [ function : IRowsOutput ] ]
 [ FROM [ function : IRowsInput | uri ] FORMAT [ function : IRowsFormatter ] ]
@@ -13,6 +13,7 @@ SELECT [ DISTINCT ]
 [ GROUP BY [ expression ] [, ...] ]
 [ HAVING aggregate_search_condition [, ...] ]
 [ ORDER BY [ expression [ ASC | DESC ] ] ]
+[ LIMIT number ]
 [ OFFSET number [ ROW | ROWS ] ]
 [ FETCH [ FIRST | NEXT ] number [ ROW | ROWS ] [ ONLY ]
 ```
@@ -24,6 +25,8 @@ The SELECT clause specifies the fields of the output records to be returned. Als
 ```sql
 SELECT (2 - 1 + 4 * 6) / 3.0
 ```
+
+The non-standard T-SQL  `TOP` clause is supported as well to limit result data set.
 
 ## INTO
 
@@ -93,3 +96,5 @@ The FETCH and OFFSET clauses specifies how many records should be returned.
 ```sql
 SELECT * FROM curl('https://tinyurl.com/24buj7mb') OFFSET 2 FETCH FIRST 5 ROWS
 ```
+
+Also, the LIMIT clause is support for those who used to use it. But it is out of SQL standard. It is much more preferable to use FETCH clause for such cases.

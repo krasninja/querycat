@@ -9,7 +9,7 @@ namespace QueryCat.Backend.Providers;
 
 public class FluidTemplateRowsOutput : IRowsOutput
 {
-    [Description("Writes data to a template.")]
+    [Description("Writes data to a Fluid template.")]
     [FunctionSignature("fluid_template(template: string, out: string, var_name: string = 'rows'): object<IRowsOutput>")]
     public static VariantValue FluidTemplate(FunctionCallInfo args)
     {
