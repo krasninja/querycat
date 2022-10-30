@@ -19,6 +19,10 @@ public class ConsoleLogHandler : ILogHandler
             if (logItem.Level >= LogLevel.Error)
             {
                 Console.Error.WriteLine(LogItem.DefaultLogFormatter(logItem));
+                if (logItem.Exception != null)
+                {
+                    Console.Error.WriteLine(logItem.Exception.ToString());
+                }
             }
             else
             {

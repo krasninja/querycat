@@ -1,4 +1,5 @@
 ﻿using McMaster.Extensions.CommandLineUtils;
+using QueryCat.Backend;
 using QueryCat.Backend.Functions.StandardFunctions;
 using QueryCat.Backend.Logging;
 using QueryCat.Cli.Infrastructure;
@@ -42,8 +43,11 @@ internal class Program
     {
         switch (e.ExceptionObject)
         {
+            case QueryCatException queryCatException:
+                Logger.Instance.Error(queryCatException.Message);
+                break;
             case Exception exception:
-                Logger.Instance.Fatal(exception.Message);
+                Logger.Instance.Fatal(exception.Message, exception: exception);
                 break;
         }
         Environment.Exit(1);
