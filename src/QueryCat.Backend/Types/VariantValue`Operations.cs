@@ -18,6 +18,8 @@ public readonly partial struct VariantValue
         Multiple,
         Divide,
         Modulo,
+        LeftShift,
+        RightShift,
 
         // Comparision.
         Equals = 100,
@@ -54,6 +56,8 @@ public readonly partial struct VariantValue
             Operation.Multiple => Mul,
             Operation.Divide => Div,
             Operation.Modulo => Modulo,
+            Operation.LeftShift => LeftShift,
+            Operation.RightShift => RightShift,
             Operation.Equals => Equals,
             Operation.NotEquals => NotEquals,
             Operation.Greater => Greater,
@@ -79,6 +83,8 @@ public readonly partial struct VariantValue
         Operation.Multiple,
         Operation.Divide,
         Operation.Modulo,
+        Operation.LeftShift,
+        Operation.RightShift,
     };
 
     internal static Operation[] ComparisionOperations { get; } =
@@ -338,6 +344,44 @@ public readonly partial struct VariantValue
             {
                 DataType.Integer => new VariantValue(left.AsNumeric % right.AsInteger),
                 DataType.Numeric => new VariantValue(left.AsNumeric % right.AsNumeric),
+                _ => Null,
+            },
+            _ => Null,
+        };
+
+        errorCode = !result.IsNull ? ErrorCode.OK : ErrorCode.CannotApplyOperator;
+        return result;
+    }
+
+    public static VariantValue LeftShift(ref VariantValue left, ref VariantValue right, out ErrorCode errorCode)
+    {
+        var leftType = left.GetInternalType();
+        var rightType = right.GetInternalType();
+
+        VariantValue result = leftType switch
+        {
+            DataType.Integer => rightType switch
+            {
+                DataType.Integer => new VariantValue((int)left.AsInteger << (int)right.AsInteger),
+                _ => Null,
+            },
+            _ => Null,
+        };
+
+        errorCode = !result.IsNull ? ErrorCode.OK : ErrorCode.CannotApplyOperator;
+        return result;
+    }
+
+    public static VariantValue RightShift(ref VariantValue left, ref VariantValue right, out ErrorCode errorCode)
+    {
+        var leftType = left.GetInternalType();
+        var rightType = right.GetInternalType();
+
+        VariantValue result = leftType switch
+        {
+            DataType.Integer => rightType switch
+            {
+                DataType.Integer => new VariantValue((int)left.AsInteger >> (int)right.AsInteger),
                 _ => Null,
             },
             _ => Null,

@@ -188,6 +188,8 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
         QueryCatParser.MOD => VariantValue.Operation.Modulo,
         QueryCatParser.PLUS => VariantValue.Operation.Add,
         QueryCatParser.MINUS => VariantValue.Operation.Subtract,
+        QueryCatParser.LESS_LESS => VariantValue.Operation.LeftShift,
+        QueryCatParser.GREATER_GREATER => VariantValue.Operation.RightShift,
         QueryCatParser.EQUALS => VariantValue.Operation.Equals,
         QueryCatParser.NOT_EQUALS => VariantValue.Operation.NotEquals,
         QueryCatParser.GREATER => VariantValue.Operation.Greater,
