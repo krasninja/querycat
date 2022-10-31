@@ -194,4 +194,21 @@ public static class DataTypeUtils
         }
         throw new FormatException("Cannot parse interval.");
     }
+
+    /// <summary>
+    /// Convert variant value to enum.
+    /// </summary>
+    /// <param name="value">Variant value.</param>
+    /// <typeparam name="TEnum">Enum type.</typeparam>
+    /// <returns>Enum value.</returns>
+    public static TEnum ConvertToEnum<TEnum>(in VariantValue value) where TEnum : struct
+    {
+        var type = value.GetInternalType();
+        return type switch
+        {
+            DataType.Integer => (TEnum)Enum.ToObject(typeof(TEnum), value.AsInteger),
+            DataType.String => Enum.Parse<TEnum>(value.AsString, ignoreCase: true),
+            _ => throw new ArgumentException()
+        };
+    }
 }
