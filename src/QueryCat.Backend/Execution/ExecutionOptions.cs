@@ -1,5 +1,6 @@
 using System.Reflection;
 using QueryCat.Backend.Formatters;
+using QueryCat.Backend.Providers;
 using QueryCat.Backend.Storage;
 
 namespace QueryCat.Backend.Execution;
@@ -12,17 +13,12 @@ public sealed class ExecutionOptions
     /// <summary>
     /// Default output if FROM is not specified.
     /// </summary>
-    public IRowsOutput DefaultRowsOutput { get; set; } = NullRowsOutput.Instance;
+    public IRowsOutput DefaultRowsOutput { get; set; }
 
     /// <summary>
     /// Page size.
     /// </summary>
     public int PagingSize { get; set; } = 20;
-
-    /// <summary>
-    /// Output mode.
-    /// </summary>
-    public TextTableOutput.Style OutputStyle { get; set; } = TextTableOutput.Style.Table;
 
     /// <summary>
     /// Add row number to output.
@@ -43,4 +39,11 @@ public sealed class ExecutionOptions
     /// List of assemblies with additional functionality (functions, inputs, outputs, etc).
     /// </summary>
     public List<Assembly> PluginAssemblies { get; } = new();
+
+    public ExecutionOptions(TextTableOutput.Style outputStyle = TextTableOutput.Style.Table)
+    {
+        DefaultRowsOutput = new TextTableOutput(
+            stream: StandardInputOutput.GetConsoleOutput(),
+            style: outputStyle);
+    }
 }

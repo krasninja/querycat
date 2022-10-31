@@ -94,7 +94,10 @@ public sealed class ExecutionThread
                 break;
             }
 
-            Options.DefaultRowsOutput.Write(result);
+            if (Options.DefaultRowsOutput != NullRowsOutput.Instance)
+            {
+                Options.DefaultRowsOutput.Write(result);
+            }
             ExecutingStatement = ExecutingStatement.Next;
         }
 

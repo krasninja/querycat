@@ -8,9 +8,11 @@ namespace QueryCat.Cli;
 [Command(Name = "qcat", Description = "The simple data query and transformation utility.",
     UnrecognizedArgumentHandling = UnrecognizedArgumentHandling.Throw)]
 [VersionOptionFromMember("--version", MemberName = nameof(InfoFunctions.GetVersion))]
-[Subcommand(typeof(SchemaCommand))]
-[Subcommand(typeof(AstCommand))]
-[Subcommand(typeof(ExplainCommand))]
+[Subcommand(
+    typeof(SchemaCommand),
+    typeof(AstCommand),
+    typeof(ExplainCommand),
+    typeof(ServeCommand))]
 [HelpOption("-?|-h|--help")]
 public class QueryCommand : BaseQueryCommand
 {
@@ -45,11 +47,10 @@ public class QueryCommand : BaseQueryCommand
 
     internal void OnExecuteInternal(IConsole console)
     {
-        var runner = CreateRunner(new ExecutionOptions
+        var runner = CreateRunner(new ExecutionOptions(OutputStyle)
         {
             AddRowNumberColumn = RowNumber,
             PagingSize = PageSize,
-            OutputStyle = OutputStyle,
             ShowDetailedStatistic = ShowDetailedStatistic,
             MaxErrors = MaxErrors,
         });
