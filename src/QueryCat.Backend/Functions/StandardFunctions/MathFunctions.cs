@@ -115,6 +115,13 @@ public static class MathFunctions
         };
     }
 
+    [Description("Returns a random value in the range 0.0 <= x < 1.0.")]
+    [FunctionSignature("random(): float")]
+    public static VariantValue Random(FunctionCallInfo args)
+    {
+        return new VariantValue(System.Random.Shared.NextDouble());
+    }
+
     public static void RegisterFunctions(FunctionsManager functionsManager)
     {
         functionsManager.RegisterFunction(Abs);
@@ -127,5 +134,6 @@ public static class MathFunctions
         functionsManager.RegisterFunction(Sin);
         functionsManager.RegisterFunction(Tan);
         functionsManager.RegisterFunction(Power);
+        functionsManager.RegisterFunction(Random);
     }
 }

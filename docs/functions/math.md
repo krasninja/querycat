@@ -7,6 +7,7 @@
 | `pi(): float`<br /><br /> "Pi" constant. |
 | `power(a: integer, b: integer): integer`<br />`power(a: float, b: float): float`<br />`power(a: integer, b: float): float`<br />`power(a: float, b: integer): float`<br /><br /> a raised to the power of b. |
 | `radians(deg: integer): float`<br />`radians(deg: float): float`<br /><br /> Converts degrees to radians. |
+| `random(): float`<br /><br /> Returns a random value in the range 0.0 <= x < 1.0. |
 | `round(x: integer): float`<br />`round(x: float): float`<br /><br /> Rounds to nearest integer. |
 | `sqrt(x: integer): float`<br />`sqrt(x: float): float`<br /><br /> Square root. |
 
