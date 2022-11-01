@@ -122,6 +122,22 @@ public static class MathFunctions
         return new VariantValue(System.Random.Shared.NextDouble());
     }
 
+    [Description("Nearest integer less than or equal to argument.")]
+    [FunctionSignature("floor(x: float): float")]
+    public static VariantValue Floor(FunctionCallInfo args)
+    {
+        var x = args.GetAt(0).AsFloat;
+        return new VariantValue(Math.Floor(x));
+    }
+
+    [Description("Nearest integer greater than or equal to argument (same as ceil).")]
+    [FunctionSignature("ceiling(x: float): float")]
+    public static VariantValue Ceiling(FunctionCallInfo args)
+    {
+        var x = args.GetAt(0).AsFloat;
+        return new VariantValue(Math.Ceiling(x));
+    }
+
     public static void RegisterFunctions(FunctionsManager functionsManager)
     {
         functionsManager.RegisterFunction(Abs);
@@ -135,5 +151,7 @@ public static class MathFunctions
         functionsManager.RegisterFunction(Tan);
         functionsManager.RegisterFunction(Power);
         functionsManager.RegisterFunction(Random);
+        functionsManager.RegisterFunction(Floor);
+        functionsManager.RegisterFunction(Ceiling);
     }
 }
