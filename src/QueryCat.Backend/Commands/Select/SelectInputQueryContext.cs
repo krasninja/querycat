@@ -15,8 +15,6 @@ public class SelectInputQueryContext : QueryContext
 
     internal List<QueryContextCondition> Conditions { get; } = new();
 
-    internal List<QueryContextOrder> Orders { get; } = new();
-
     /// <summary>
     /// Limit rows count.
     /// </summary>
@@ -36,7 +34,4 @@ public class SelectInputQueryContext : QueryContext
 
     /// <inheritdoc />
     public override long? GetLimit() => Limit;
-
-    /// <inheritdoc />
-    internal override IReadOnlyList<QueryContextOrder> GetColumnsOrders() => Orders;
 }

@@ -118,28 +118,6 @@ internal sealed partial class SelectSpecificationNodeVisitor : SelectAstVisitor
                 queryContext.Limit = fetchCount;
             }
         }
-
-        // Fill columns orders.
-        if (querySpecificationNode.OrderBy != null)
-        {
-            foreach (var queryContext in commandContext.InputQueryContextList)
-            {
-                foreach (var orderNode in querySpecificationNode.OrderBy.OrderBySpecificationNodes)
-                {
-                    if (orderNode.Expression is not IdentifierExpressionNode identifierExpressionNode)
-                    {
-                        continue;
-                    }
-                    var column = queryContext.RowsInput.GetColumnByName(identifierExpressionNode.Name,
-                        identifierExpressionNode.SourceName);
-                    if (column == null)
-                    {
-                        continue;
-                    }
-                    queryContext.Orders.Add(new QueryContextOrder(column, ConvertDirection(orderNode.Order)));
-                }
-            }
-        }
     }
 
     private void FillQueryContextConditions(
