@@ -20,13 +20,26 @@ public class FluidTemplateRowsOutput : IRowsOutput
         return VariantValue.CreateFromObject(new FluidTemplateRowsOutput(templateFile, outputFile, variableName));
     }
 
+    private const string QueryCatExecutionContextKey = "$$qcat_context";
+
     private readonly string _templateFile;
     private readonly string _outFile;
     private readonly string _varName;
     private readonly TemplateOptions _templateOptions;
     private readonly List<Row> _rows = new();
 
+    private QueryContext _queryContext = new EmptyQueryContext();
+
     private static readonly FluidParser Parser = new();
+
+    static FluidTemplateRowsOutput()
+    {
+        Parser.RegisterEmptyBlock("exec", (statements, writer, encoder, context) =>
+        {
+            var queryContext = (QueryContext)context.AmbientValues[QueryCatExecutionContextKey];
+            return default;
+        });
+    }
 
     public FluidTemplateRowsOutput(string templateFile, string outFile, string varName)
     {
@@ -61,6 +74,7 @@ public class FluidTemplateRowsOutput : IRowsOutput
     /// <inheritdoc />
     public void SetContext(QueryContext queryContext)
     {
+        _queryContext = queryContext;
     }
 
     /// <inheritdoc />
@@ -70,6 +84,7 @@ public class FluidTemplateRowsOutput : IRowsOutput
         if (Parser.TryParse(templateText, out var template, out var error))
         {
             var context = new TemplateContext(template, _templateOptions);
+            context.AmbientValues[QueryCatExecutionContextKey] = _queryContext;
             context.SetValue(_varName, _rows);
             File.WriteAllText(_outFile, template.Render(context));
         }
@@ -83,6 +98,6 @@ public class FluidTemplateRowsOutput : IRowsOutput
     public void Write(Row row)
     {
         // Cache here and write all on close.
-        _rows.Add(row);
+        _rows.Add(new Row(row));
     }
 }
