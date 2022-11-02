@@ -258,6 +258,8 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
 
     public long AsInteger => CheckTypeAndTryToCast(DataType.Integer)._valueUnion.IntegerValue;
 
+    internal long AsIntegerUnsafe => _valueUnion.IntegerValue;
+
     public string AsString
     {
         get
@@ -267,13 +269,23 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         }
     }
 
+    internal string AsStringUnsafe => _object != null ? (string)_object : string.Empty;
+
     public double AsFloat => CheckTypeAndTryToCast(DataType.Float)._valueUnion.DoubleValue;
+
+    internal double AsFloatUnsafe => _valueUnion.DoubleValue;
 
     public DateTime AsTimestamp => CheckTypeAndTryToCast(DataType.Timestamp)._valueUnion.DateTimeValue;
 
+    internal DateTime AsTimestampUnsafe => _valueUnion.DateTimeValue;
+
     public TimeSpan AsInterval => CheckTypeAndTryToCast(DataType.Interval)._valueUnion.TimeSpanValue;
 
+    internal TimeSpan AsIntervalUnsafe => _valueUnion.TimeSpanValue;
+
     public bool AsBoolean => CheckTypeAndTryToCast(DataType.Boolean)._valueUnion.BooleanValue;
+
+    internal bool AsBooleanUnsafe => _valueUnion.BooleanValue;
 
     public bool? AsBooleanNullable => !IsNull
         ? CheckTypeAndTryToCast(DataType.Boolean)._valueUnion.BooleanValue
@@ -281,7 +293,11 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
 
     public decimal AsNumeric => (decimal)CheckTypeAndTryToCast(DataType.Numeric)._object!;
 
+    internal decimal AsNumericUnsafe => (decimal)_object!;
+
     public object? AsObject => CheckTypeAndTryToCast(DataType.Object)._object;
+
+    internal object? AsObjectUnsafe => _object;
 
     #endregion
 

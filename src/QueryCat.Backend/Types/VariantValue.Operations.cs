@@ -184,21 +184,76 @@ public readonly partial struct VariantValue
 
     #region Algebraic operations
 
+    public delegate VariantValue UnaryFunction(ref VariantValue left);
+
+    public static VariantValue UnaryNullDelegate(ref VariantValue left) => Null;
+
+    public delegate VariantValue BinaryFunction(ref VariantValue left, ref VariantValue right);
+
+    private static VariantValue BinaryNullDelegate(ref VariantValue left, ref VariantValue right)
+        => Null;
+
     public static VariantValue Negation(ref VariantValue left, out ErrorCode errorCode)
     {
         var leftType = left.GetInternalType();
 
-        VariantValue result = leftType switch
+        var function = GetNegationDelegate(leftType);
+        if (function == UnaryNullDelegate)
         {
-            DataType.Integer => new VariantValue(-left.AsInteger),
-            DataType.Float => new VariantValue(-left.AsFloat),
-            DataType.Numeric => new VariantValue(-left.AsNumeric),
-            DataType.Boolean => new VariantValue(!left.AsBoolean),
-            DataType.Interval => new VariantValue(-left.AsInterval),
-            _ => Null,
+            errorCode = ErrorCode.CannotApplyOperator;
+            return Null;
+        }
+
+        errorCode = ErrorCode.OK;
+        return function.Invoke(ref left);
+    }
+
+    public static UnaryFunction GetNegationDelegate(DataType leftType)
+    {
+        return leftType switch
+        {
+            DataType.Integer => (ref VariantValue left) =>
+            {
+                if (left.IsNull)
+                {
+                    return Null;
+                }
+                return new VariantValue(-left.AsIntegerUnsafe);
+            },
+            DataType.Float => (ref VariantValue left) =>
+            {
+                if (left.IsNull)
+                {
+                    return Null;
+                }
+                return new VariantValue(-left.AsFloatUnsafe);
+            },
+            DataType.Numeric => (ref VariantValue left) =>
+            {
+                if (left.IsNull)
+                {
+                    return Null;
+                }
+                return new VariantValue(-left.AsNumericUnsafe);
+            },
+            DataType.Boolean => (ref VariantValue left) =>
+            {
+                if (left.IsNull)
+                {
+                    return Null;
+                }
+                return new VariantValue(!left.AsBooleanUnsafe);
+            },
+            DataType.Interval => (ref VariantValue left) =>
+            {
+                if (left.IsNull)
+                {
+                    return Null;
+                }
+                return new VariantValue(-left.AsIntervalUnsafe);
+            },
+            _ => UnaryNullDelegate
         };
-        errorCode = !result.IsNull ? ErrorCode.OK : ErrorCode.CannotApplyOperator;
-        return result;
     }
 
     public static VariantValue Add(ref VariantValue left, ref VariantValue right, out ErrorCode errorCode)
@@ -206,52 +261,147 @@ public readonly partial struct VariantValue
         var leftType = left.GetInternalType();
         var rightType = right.GetInternalType();
 
-        VariantValue result = leftType switch
+        var function = GetAddDelegate(leftType, rightType);
+        if (function == BinaryNullDelegate)
+        {
+            errorCode = ErrorCode.CannotApplyOperator;
+            return Null;
+        }
+
+        errorCode = ErrorCode.OK;
+        return function.Invoke(ref left, ref right);
+    }
+
+    public static BinaryFunction GetAddDelegate(DataType leftType, DataType rightType)
+    {
+        return leftType switch
         {
             DataType.Integer => rightType switch
             {
-                DataType.Integer => new VariantValue(left.AsInteger + right.AsInteger),
-                DataType.Float => new VariantValue(left.AsInteger + right.AsFloat),
-                DataType.Numeric => new VariantValue(left.AsInteger + right.AsNumeric),
-                _ => Null,
+                DataType.Integer => (ref VariantValue left, ref VariantValue right) =>
+                {
+                    if (left.IsNull || right.IsNull)
+                    {
+                        return Null;
+                    }
+                    return new VariantValue(left.AsIntegerUnsafe + right.AsIntegerUnsafe);
+                },
+                DataType.Float => (ref VariantValue left, ref VariantValue right) =>
+                {
+                    if (left.IsNull || right.IsNull)
+                    {
+                        return Null;
+                    }
+                    return new VariantValue(left.AsIntegerUnsafe + right.AsFloatUnsafe);
+                },
+                DataType.Numeric => (ref VariantValue left, ref VariantValue right) =>
+                {
+                    if (left.IsNull || right.IsNull)
+                    {
+                        return Null;
+                    }
+                    return new VariantValue(left.AsInteger + right.AsNumeric);
+                },
+                _ => BinaryNullDelegate,
             },
             DataType.Float => rightType switch
             {
-                DataType.Integer => new VariantValue(left.AsFloat + right.AsInteger),
-                DataType.Float => new VariantValue(left.AsFloat + right.AsFloat),
-                _ => Null,
+                DataType.Integer => (ref VariantValue left, ref VariantValue right) =>
+                {
+                    if (left.IsNull || right.IsNull)
+                    {
+                        return Null;
+                    }
+                    return new VariantValue(left.AsFloat + right.AsInteger);
+                },
+                DataType.Float => (ref VariantValue left, ref VariantValue right) =>
+                {
+                    if (left.IsNull || right.IsNull)
+                    {
+                        return Null;
+                    }
+                    return new VariantValue(left.AsFloat + right.AsFloat);
+                },
+                _ => BinaryNullDelegate,
             },
             DataType.Numeric => rightType switch
             {
-                DataType.Integer => new VariantValue(left.AsNumeric + right.AsInteger),
-                DataType.Numeric => new VariantValue(left.AsNumeric + right.AsNumeric),
-                _ => Null,
+                DataType.Integer => (ref VariantValue left, ref VariantValue right) =>
+                {
+                    if (left.IsNull || right.IsNull)
+                    {
+                        return Null;
+                    }
+                    return new VariantValue(left.AsNumeric + right.AsInteger);
+                },
+                DataType.Numeric => (ref VariantValue left, ref VariantValue right) =>
+                {
+                    if (left.IsNull || right.IsNull)
+                    {
+                        return Null;
+                    }
+                    return new VariantValue(left.AsNumeric + right.AsNumeric);
+                },
+                _ => BinaryNullDelegate,
             },
             DataType.Timestamp => rightType switch
             {
-                DataType.Interval => new VariantValue(left.AsTimestamp + right.AsInterval),
-                _ => Null,
+                DataType.Interval => (ref VariantValue left, ref VariantValue right) =>
+                {
+                    if (left.IsNull || right.IsNull)
+                    {
+                        return Null;
+                    }
+                    return new VariantValue(left.AsTimestamp + right.AsInterval);
+                },
+                _ => BinaryNullDelegate,
             },
             DataType.Interval => rightType switch
             {
-                DataType.Interval => new VariantValue(left.AsInterval + right.AsInterval),
-                _ => Null,
+                DataType.Interval => (ref VariantValue left, ref VariantValue right) =>
+                {
+                    if (left.IsNull || right.IsNull)
+                    {
+                        return Null;
+                    }
+                    return new VariantValue(left.AsInterval + right.AsInterval);
+                },
+                _ => BinaryNullDelegate,
             },
-            _ => Null,
+            _ => BinaryNullDelegate,
         };
-
-        errorCode = !result.IsNull ? ErrorCode.OK : ErrorCode.CannotApplyOperator;
-        return result;
     }
 
     public static VariantValue Subtract(ref VariantValue left, ref VariantValue right, out ErrorCode errorCode)
     {
-        var negativeRight = Negation(ref right, out errorCode);
-        if (errorCode != ErrorCode.OK)
+        var leftType = left.GetInternalType();
+        var rightType = right.GetInternalType();
+
+        var function = GetSubtractDelegate(leftType, rightType);
+        if (function == BinaryNullDelegate)
         {
+            errorCode = ErrorCode.CannotApplyOperator;
             return Null;
         }
-        return Add(ref left, ref negativeRight, out errorCode);
+
+        errorCode = ErrorCode.OK;
+        return function.Invoke(ref left, ref right);
+    }
+
+    public static BinaryFunction GetSubtractDelegate(DataType leftType, DataType rightType)
+    {
+        var negativeFunction = GetNegationDelegate(leftType);
+        var addFunction = GetAddDelegate(leftType, rightType);
+        if (negativeFunction == UnaryNullDelegate || addFunction == BinaryNullDelegate)
+        {
+            return BinaryNullDelegate;
+        }
+
+        return (ref VariantValue left, ref VariantValue right) =>
+        {
+            var negativeRight = negativeFunction.Invoke(ref right);
+            return addFunction.Invoke(ref left, ref negativeRight);
+        };
     }
 
     public static VariantValue Mul(ref VariantValue left, ref VariantValue right, out ErrorCode errorCode)
