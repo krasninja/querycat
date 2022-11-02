@@ -3,7 +3,6 @@ using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Commands.Select.Iterators;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Functions;
-using QueryCat.Backend.Relational;
 using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Types;
 
@@ -47,22 +46,15 @@ internal sealed class SelectBodyNodeVisitor : SelectAstVisitor
         ApplyOffsetFetch(context, node.Offset, node.Fetch);
         CreateSelectRowsSet(context, node.Queries[0]);
         var resultIterator = context.CurrentIterator;
+        if (hasOutputInQuery)
+        {
+            resultIterator = new ExecuteRowsIterator(resultIterator);
+        }
 
         // Set result. If INTO clause is specified we do not return IRowsIterator outside. Just
         // iterating it we will save rows into target. Otherwise we return it as is.
         node.SetAttribute(AstAttributeKeys.ResultKey, resultIterator);
-        if (hasOutputInQuery)
-        {
-            node.SetFunc(() =>
-            {
-                resultIterator.MoveToEnd();
-                return VariantValue.Null;
-            });
-        }
-        else
-        {
-            node.SetFunc(() => VariantValue.CreateFromObject(resultIterator));
-        }
+        node.SetFunc(() => VariantValue.CreateFromObject(resultIterator));
     }
 
     private void CreateCombineRowsSet(

@@ -58,15 +58,4 @@ public static class RowsIteratorExtensions
         }
         return frame;
     }
-
-    /// <summary>
-    /// Move iterator until end of rows.
-    /// </summary>
-    /// <param name="iterator">Iterator.</param>
-    public static void MoveToEnd(this IRowsIterator iterator)
-    {
-        while (iterator.MoveNext())
-        {
-        }
-    }
 }

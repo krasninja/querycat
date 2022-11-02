@@ -459,7 +459,7 @@ internal sealed partial class SelectSpecificationNodeVisitor : SelectAstVisitor
                 {
                     while (outputIterator.MoveNext())
                     {
-                        outputIterator.CurrentOutput.Write(resultIterator);
+                        outputIterator.CurrentOutput.Write(resultIterator.Current);
                     }
                 },
             };
