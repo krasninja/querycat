@@ -41,26 +41,31 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         [FieldOffset(0)]
         internal readonly TimeSpan TimeSpanValue;
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal TypeUnion(long value) : this()
         {
             IntegerValue = value;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal TypeUnion(double value) : this()
         {
             DoubleValue = value;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal TypeUnion(DateTime value) : this()
         {
             DateTimeValue = value;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal TypeUnion(bool value) : this()
         {
             BooleanValue = value;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal TypeUnion(TimeSpan value) : this()
         {
             TimeSpanValue = value;
