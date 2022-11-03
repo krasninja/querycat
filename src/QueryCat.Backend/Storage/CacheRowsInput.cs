@@ -17,6 +17,8 @@ public sealed class CacheRowsInput : IRowsInput
     private int _rowIndex = -1;
     private int _cacheLength = 0;
 
+    private QueryContext _queryContext = new EmptyQueryContext();
+
     /// <inheritdoc />
     public Column[] Columns => _rowsInput.Columns;
 
@@ -31,7 +33,11 @@ public sealed class CacheRowsInput : IRowsInput
     public void Open() => _rowsInput.Open();
 
     /// <inheritdoc />
-    public void SetContext(QueryContext queryContext) => _rowsInput.SetContext(queryContext);
+    public void SetContext(QueryContext queryContext)
+    {
+        _queryContext = queryContext;
+        _rowsInput.SetContext(queryContext);
+    }
 
     /// <inheritdoc />
     public void Close() => _rowsInput.Close();

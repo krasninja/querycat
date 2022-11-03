@@ -1,5 +1,6 @@
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Types;
+using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Storage;
 
@@ -49,6 +50,38 @@ public class QueryContextCondition
         VariantValue value) : this(column, operation, new[] { value })
     {
     }
+
+    #region Serialization
+
+    internal string Serialize()
+        => $"{Column.Name},{(int)Operation},{string.Join(",", Values.Select(DataTypeUtils.SerializeVariantValue))}";
+
+    /// <summary>
+    /// Deserialize from string. The string format is "columnName,operationIndex,value1,value2".
+    /// </summary>
+    /// <param name="columnFinder">Delegate to find column by name.</param>
+    /// <param name="str">Target string.</param>
+    internal static QueryContextCondition? CreateFromString(Func<string, Column?> columnFinder, string str)
+    {
+        var arr = StringUtils.GetFieldsFromLine(str);
+        if (arr.Length < 3)
+        {
+            return null;
+        }
+
+        var column = columnFinder.Invoke(arr[0]);
+        if (column == null)
+        {
+            return null;
+        }
+
+        return new QueryContextCondition(
+            column,
+            (VariantValue.Operation)int.Parse(arr[1]),
+            arr[2..].Select(v => DataTypeUtils.DeserializeVariantValue(v)).ToArray());
+    }
+
+    #endregion
 
     /// <inheritdoc />
     public override string ToString() => $"Column = {Column}, Operation = {Operation}";

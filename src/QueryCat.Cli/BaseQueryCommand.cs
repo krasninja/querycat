@@ -1,8 +1,6 @@
 using McMaster.Extensions.CommandLineUtils;
 using QueryCat.Backend.Execution;
-using QueryCat.Backend.Formatters;
 using QueryCat.Backend.Logging;
-using QueryCat.Backend.Providers;
 using QueryCat.Cli.Infrastructure;
 
 namespace QueryCat.Cli;

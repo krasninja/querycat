@@ -1,3 +1,5 @@
+using QueryCat.Backend.Utils;
+
 namespace QueryCat.Backend.Types;
 
 /// <summary>
@@ -211,4 +213,67 @@ public static class DataTypeUtils
             _ => throw new ArgumentException()
         };
     }
+
+    #region Serialization
+
+    internal static string SerializeVariantValue(VariantValue value)
+        => value.GetInternalType() switch
+        {
+            DataType.Null => "null",
+            DataType.Void => "void",
+            DataType.Integer => "i:" + value.AsIntegerUnsafe,
+            DataType.String => "s:" + StringUtils.Quote(value.AsStringUnsafe).ToString(),
+            DataType.Boolean => "bl:" + value.AsBooleanUnsafe,
+            DataType.Float => "fl:" + value.AsFloatUnsafe,
+            DataType.Timestamp => $"ts:{value.AsTimestampUnsafe.Ticks}:{(int)value.AsTimestampUnsafe.Kind}",
+            DataType.Interval => "in:" + value.AsInterval.Ticks,
+            _ => string.Empty
+        };
+
+    internal static VariantValue DeserializeVariantValue(ReadOnlySpan<char> source)
+    {
+        if (source == "null" || source == "void")
+        {
+            return VariantValue.Null;
+        }
+        var colonIndex = source.IndexOf(':');
+        if (colonIndex == -1)
+        {
+            throw new InvalidOperationException("Invalid deserialization source.");
+        }
+
+        var type = source[..colonIndex].ToString();
+        var value = source.Slice(colonIndex + 1);
+        if (type == "i")
+        {
+            return new VariantValue(int.Parse(value));
+        }
+        if (type == "s")
+        {
+            return new VariantValue(StringUtils.Unquote(value));
+        }
+        if (type == "bl")
+        {
+            return new VariantValue(bool.Parse(value));
+        }
+        if (type == "fl")
+        {
+            return new VariantValue(float.Parse(value));
+        }
+        if (type == "ts")
+        {
+            var ticks = long.Parse(value.Slice(0, value.Length - 2));
+            var kind = (DateTimeKind)int.Parse(value.Slice(value.Length - 1));
+            return new VariantValue(new DateTime(ticks, kind));
+        }
+        if (type == "in")
+        {
+            var ticks = long.Parse(value);
+            return new VariantValue(new TimeSpan(ticks));
+        }
+
+        throw new InvalidOperationException($"Invalid deserialization type '{type}'.");
+    }
+
+    #endregion
 }

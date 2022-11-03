@@ -1,3 +1,5 @@
+using System.Text;
+
 namespace QueryCat.Backend.Utils;
 
 /// <summary>
@@ -162,5 +164,137 @@ internal static class StringUtils
             }
         }
         return isMatch && endOfPattern;
+    }
+
+    private const string QuoteChar = "\"";
+
+    public static ReadOnlySpan<char> Quote(ReadOnlySpan<char> target, char separator = ' ')
+    {
+        if (target.IndexOf(separator) == -1)
+        {
+            return target;
+        }
+        var sb = new StringBuilder(target.Length + 2)
+            .Append(QuoteChar)
+            .Append(target)
+            .Replace(QuoteChar, QuoteChar + QuoteChar, 1, target.Length)
+            .Append(QuoteChar);
+        return sb.ToString();
+    }
+
+    public static ReadOnlySpan<char> Unquote(ReadOnlySpan<char> target)
+    {
+        if (target.Length == 0 || target[..1].ToString() != QuoteChar)
+        {
+            return target;
+        }
+        var sb = new StringBuilder(target.Length)
+            .Append(target.Slice(1, target.Length - 2))
+            .Replace(QuoteChar + QuoteChar, QuoteChar);
+        return sb.ToString();
+    }
+
+    /// <remarks>
+    /// Source: https://www.codeproject.com/Tips/823670/Csharp-Light-and-Fast-CSV-Parser.
+    /// </remarks>
+    public static string[] GetFieldsFromLine(string line, char delimiter = ',')
+    {
+        var inQuote = false;
+        var record = new List<string>();
+        var sb = new StringBuilder();
+        var reader = new StringReader(line);
+
+        while (reader.Peek() != -1)
+        {
+            var readChar = (char)reader.Read();
+
+            if (readChar == '\n' || (readChar == '\r' && (char)reader.Peek() == '\n'))
+            {
+                // If it's a \r\n combo consume the \n part and throw it away.
+                if (readChar == '\r')
+                {
+                    reader.Read();
+                }
+
+                if (inQuote)
+                {
+                    if (readChar == '\r')
+                    {
+                        sb.Append('\r');
+                    }
+                    sb.Append('\n');
+                }
+                else
+                {
+                    if (record.Count > 0 || sb.Length > 0)
+                    {
+                        record.Add(sb.ToString());
+                        sb.Clear();
+                    }
+                }
+            }
+            else if (sb.Length == 0 && !inQuote)
+            {
+                if (readChar == '"')
+                {
+                    inQuote = true;
+                }
+                else if (readChar == delimiter)
+                {
+                    record.Add(sb.ToString());
+                    sb.Clear();
+                }
+                else if (char.IsWhiteSpace(readChar))
+                {
+                    // Ignore leading whitespace.
+                }
+                else
+                {
+                    sb.Append(readChar);
+                }
+            }
+            else if (readChar == delimiter)
+            {
+                if (inQuote)
+                {
+                    sb.Append(delimiter);
+                }
+                else
+                {
+                    record.Add(sb.ToString());
+                    sb.Clear();
+                }
+            }
+            else if (readChar == '"')
+            {
+                if (inQuote)
+                {
+                    if ((char)reader.Peek() == '"')
+                    {
+                        reader.Read();
+                        sb.Append('"');
+                    }
+                    else
+                    {
+                        inQuote = false;
+                    }
+                }
+                else
+                {
+                    sb.Append(readChar);
+                }
+            }
+            else
+            {
+                sb.Append(readChar);
+            }
+        }
+
+        if (record.Count > 0 || sb.Length > 0)
+        {
+            record.Add(sb.ToString());
+        }
+
+        return record.ToArray();
     }
 }

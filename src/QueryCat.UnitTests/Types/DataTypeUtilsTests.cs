@@ -23,4 +23,29 @@ public class DataTypeUtilsTests
         Assert.Equal(TimeSpan.FromMinutes(1), min1);
         Assert.Equal(new TimeSpan(1, 2, 3), min1Sec1Hour1);
     }
+
+    [Fact]
+    public void SerializeDeserialize_VariousValues_ShouldMatch()
+    {
+        // Arrange.
+        var valuesArray = new[]
+        {
+            new VariantValue(10),
+            new VariantValue(true),
+            new VariantValue("test string"),
+            new VariantValue(new DateTime(2022, 1, 1)),
+            new VariantValue(new TimeSpan(10, 10, 10)),
+            VariantValue.Null
+        };
+
+        // Act.
+        var serializedArray = valuesArray.Select(DataTypeUtils.SerializeVariantValue).ToArray();
+        var deserializedArray = serializedArray.Select(v => DataTypeUtils.DeserializeVariantValue(v)).ToArray();
+
+        // Assert.
+        for (var i = 0; i < valuesArray.Length; i++)
+        {
+            Assert.Equal(valuesArray[i], deserializedArray[i]);
+        }
+    }
 }
