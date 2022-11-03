@@ -595,13 +595,13 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     {
         DataType.Null => "NULL",
         DataType.Void => "VOID",
-        DataType.Integer => AsInteger.ToString(format, CultureInfo.InvariantCulture),
-        DataType.String => AsString,
-        DataType.Boolean => AsBoolean.ToString(),
-        DataType.Float => AsFloat.ToString(format, CultureInfo.InvariantCulture),
-        DataType.Timestamp => AsTimestamp.ToString(format, CultureInfo.InvariantCulture),
-        DataType.Interval => AsInterval.ToString(format, CultureInfo.InvariantCulture),
-        DataType.Object => "object: " + AsObject,
+        DataType.Integer => AsIntegerUnsafe.ToString(format, CultureInfo.InvariantCulture),
+        DataType.String => AsStringUnsafe,
+        DataType.Boolean => AsBooleanUnsafe.ToString(),
+        DataType.Float => AsFloatUnsafe.ToString(format, CultureInfo.InvariantCulture),
+        DataType.Timestamp => AsTimestampUnsafe.ToString(format, CultureInfo.InvariantCulture),
+        DataType.Interval => AsIntervalUnsafe.ToString(format, CultureInfo.InvariantCulture),
+        DataType.Object => "object: " + AsObjectUnsafe,
         _ => "unknown"
     };
 
