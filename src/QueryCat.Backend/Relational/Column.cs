@@ -135,14 +135,16 @@ public class Column : ICloneable
         return size;
     }
 
+    internal static bool NameEquals(string name1, string name2)
+        => name1.Equals(name2, StringComparison.OrdinalIgnoreCase);
+
     public static bool NameEquals(Column sourceColumn, string columnName, string? sourceName = null)
     {
         if (string.IsNullOrEmpty(sourceName))
         {
-            return sourceColumn.Name.Equals(columnName, StringComparison.OrdinalIgnoreCase);
+            return NameEquals(sourceColumn.Name, columnName);
         }
-        return string.Equals(sourceColumn.Name, columnName, StringComparison.OrdinalIgnoreCase)
-            && string.Equals(sourceColumn.SourceName, sourceName, StringComparison.OrdinalIgnoreCase);
+        return NameEquals(sourceColumn.Name, columnName) && NameEquals(sourceColumn.SourceName, sourceName);
     }
 
     /// <inheritdoc />

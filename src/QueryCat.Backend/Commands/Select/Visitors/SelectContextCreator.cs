@@ -14,10 +14,13 @@ internal sealed class SelectContextCreator
 {
     private readonly ExecutionThread _executionThread;
     private readonly SelectCommandContext[] _parents;
+    private readonly ResolveTypesVisitor _resolveTypesVisitor;
+    private readonly Dictionary<IRowsInput, SelectInputQueryContext> _rowsInputContextMap = new();
 
     public SelectContextCreator(ExecutionThread executionThread, SelectCommandContext[]? parents = null)
     {
         this._executionThread = executionThread;
+        this._resolveTypesVisitor = new ResolveTypesVisitor(executionThread);
         this._parents = parents ?? Array.Empty<SelectCommandContext>();
     }
 
@@ -62,16 +65,11 @@ internal sealed class SelectContextCreator
 
         IRowsInput CreateInputSourceFromTableFunction(SelectTableFunctionNode tableFunctionNode)
         {
-            new ResolveTypesVisitor(_executionThread).Run(tableFunctionNode);
+            _resolveTypesVisitor.Run(tableFunctionNode);
             var source = new CreateDelegateVisitor(_executionThread)
                 .RunAndReturn(tableFunctionNode.TableFunction).Invoke();
-            var rowsInput = CreateRowsInput(source);
             var isSubQuery = _parents.Length > 0;
-            if (isSubQuery)
-            {
-                rowsInput = new CacheRowsInput(rowsInput);
-            }
-            return rowsInput;
+            return CreateRowsInput(source, isSubQuery);
         }
 
         // Entry point here.
@@ -98,9 +96,10 @@ internal sealed class SelectContextCreator
             else if (tableExpression is SelectTableFunctionNode tableFunctionNode)
             {
                 rowsInput = CreateInputSourceFromTableFunction(tableFunctionNode);
-                var inputContext = new SelectInputQueryContext(rowsInput);
-                inputContexts.Add(inputContext);
-                rowsInput.SetContext(inputContext);
+                if (_rowsInputContextMap.TryGetValue(rowsInput, out var queryContext))
+                {
+                    inputContexts.Add(queryContext);
+                }
                 alias = tableFunctionNode.Alias;
             }
             else
@@ -128,15 +127,21 @@ internal sealed class SelectContextCreator
         };
     }
 
-    private IRowsInput CreateRowsInput(VariantValue source)
+    private IRowsInput CreateRowsInput(VariantValue source, bool isSubQuery)
     {
         if (DataTypeUtils.IsSimple(source.GetInternalType()))
         {
             return new SingleValueRowsInput(source);
         }
-        if (source.AsObject is IRowsInput)
+        if (source.AsObject is IRowsInput rowsInput)
         {
-            var rowsInput = (IRowsInput)source.AsObject;
+            var queryContext = new SelectInputQueryContext(rowsInput);
+            if (isSubQuery)
+            {
+                rowsInput = new CacheRowsInput(rowsInput);
+            }
+            _rowsInputContextMap[rowsInput] = queryContext;
+            rowsInput.SetContext(queryContext);
             rowsInput.Open();
             Logger.Instance.Debug($"Open rows input {rowsInput}.", nameof(SelectSpecificationNodeVisitor));
             return rowsInput;

@@ -1,5 +1,6 @@
 using System.Text;
 using QueryCat.Backend.Relational;
+using QueryCat.Backend.Types;
 using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Storage;
@@ -9,28 +10,115 @@ namespace QueryCat.Backend.Storage;
 /// </summary>
 internal class CacheKey
 {
+    /// <summary>
+    /// Input function class/name.
+    /// </summary>
     public string From { get; }
 
+    /// <summary>
+    /// Input function arguments.
+    /// </summary>
+    public string[] InputArguments { get; }
+
+    /// <summary>
+    /// Columns selected from input.
+    /// </summary>
     public string[] SelectColumns { get; }
 
-    public QueryContextCondition[] Conditions { get; }
+    /// <summary>
+    /// Key conditions that were applied to the input.
+    /// </summary>
+    public CacheKeyCondition[] Conditions { get; }
 
-    public int Offset { get; }
+    /// <summary>
+    /// Applied offset.
+    /// </summary>
+    public long Offset { get; }
 
-    public int Limit { get; }
+    /// <summary>
+    /// Applied result limit. -1 means no limit.
+    /// </summary>
+    public long Limit { get; }
+
+    /// <summary>
+    /// Empty instance.
+    /// </summary>
+    public static CacheKey Empty { get; } = new(
+        from: "empty",
+        Array.Empty<string>(),
+        Array.Empty<string>(),
+        Array.Empty<QueryContextCondition>());
 
     public CacheKey(
         string from,
+        string[] inputArguments,
         string[] selectColumns,
         QueryContextCondition[]? conditions = null,
-        int offset = 0,
-        int limit = -1)
+        long offset = 0,
+        long? limit = null) : this(
+            from,
+            inputArguments,
+            selectColumns,
+            (conditions ?? Array.Empty<QueryContextCondition>()).Select(c =>
+                new CacheKeyCondition(
+                    c.Column,
+                    c.Operation,
+                    new VariantValueArray(c.ValueFuncs.Select(f => f.Invoke()))
+                )).ToArray(),
+            offset,
+            limit)
+    {
+    }
+
+    internal CacheKey(
+        string from,
+        string[] inputArguments,
+        string[] selectColumns,
+        CacheKeyCondition[]? conditions = null,
+        long offset = 0,
+        long? limit = null)
     {
         From = from;
+        InputArguments = inputArguments;
         SelectColumns = selectColumns;
-        Conditions = conditions ?? Array.Empty<QueryContextCondition>();
+        Conditions = conditions ?? Array.Empty<CacheKeyCondition>();
         Offset = offset;
-        Limit = limit;
+        Limit = limit ?? -1;
+    }
+
+    /// <summary>
+    /// The function is to analyze if the current cache key can be used to process the provided one.
+    /// </summary>
+    /// <param name="key">Other key.</param>
+    /// <returns>Returns <c>true</c> if the current cache key is withing other key subset, <c>false</c> otherwise.</returns>
+    public bool Match(CacheKey key)
+    {
+        // TODO: Make it smarter.
+        if (From != key.From)
+        {
+            return false;
+        }
+        if (!InputArguments.SequenceEqual(key.InputArguments))
+        {
+            return false;
+        }
+        if (!SelectColumns.SequenceEqual(key.SelectColumns))
+        {
+            return false;
+        }
+        if (!Conditions.SequenceEqual(key.Conditions))
+        {
+            return false;
+        }
+        if (Offset != key.Offset)
+        {
+            return false;
+        }
+        if (Limit != key.Limit)
+        {
+            return false;
+        }
+        return true;
     }
 
     #region Serialization
@@ -39,6 +127,12 @@ internal class CacheKey
     {
         var sb = new StringBuilder();
         sb.Append(StringUtils.Quote($"F:{From}").ToString());
+        if (InputArguments.Length > 0)
+        {
+            sb.Append(' ');
+            var inputKeys = InputArguments.Select(ik => "I:" + StringUtils.Quote(ik).ToString());
+            sb.AppendJoin(' ', inputKeys);
+        }
         if (SelectColumns.Length > 0)
         {
             sb.Append(' ');
@@ -71,35 +165,41 @@ internal class CacheKey
         var offset = 0;
         var limit = -1;
         List<string> selectColumns = new();
-        List<QueryContextCondition> conditions = new();
+        List<string> inputKeys = new();
+        List<CacheKeyCondition> conditions = new();
         foreach (var item in arr)
         {
-            if (item.StartsWith("F:"))
+            var key = item.Substring(0, 2);
+            var value = StringUtils.Unquote(item.Substring(2)).ToString();
+            if (key == "F:")
             {
-                from = item.Substring(2);
+                from = value;
             }
-            else if (item.StartsWith("S:"))
+            else if (key == "I:")
             {
-                selectColumns.Add(item.Substring(2));
+                inputKeys.Add(value);
             }
-            else if (item.StartsWith("W:"))
+            else if (key == "S:")
             {
-                var condition = QueryContextCondition.CreateFromString(FindColumnByName, item.Substring(2));
-                if (condition != null)
+                selectColumns.Add(value);
+            }
+            else if (key == "W:")
+            {
+                if (CacheKeyCondition.Deserialize(FindColumnByName, value, out var condition))
                 {
                     conditions.Add(condition);
                 }
             }
-            else if (item.StartsWith("O:"))
+            else if (key == "O:")
             {
-                offset = int.Parse(item.Substring(2));
+                offset = int.Parse(value);
             }
-            else if (item.StartsWith("L:"))
+            else if (key == "L:")
             {
-                limit = int.Parse(item.Substring(2));
+                limit = int.Parse(value);
             }
         }
-        return new CacheKey(from, selectColumns.ToArray(), conditions.ToArray(), offset, limit);
+        return new CacheKey(from, inputKeys.ToArray(), selectColumns.ToArray(), conditions.ToArray(), offset, limit);
     }
 
     #endregion

@@ -18,8 +18,9 @@ public class CacheKeyTests
         var nameColumn = new Column("name", DataType.String);
         var cacheKey = new CacheKey(
             "github actions",
+            new[] { "1", "one two" },
             new[] { idColumn.Name, nameColumn.Name },
-            new QueryContextCondition[]
+            new CacheKeyCondition[]
             {
                 new(idColumn, VariantValue.Operation.GreaterOrEquals, new VariantValue(10)),
                 new(nameColumn, VariantValue.Operation.Like, new VariantValue("%rob bob%")),
@@ -33,7 +34,8 @@ public class CacheKeyTests
 
         // Assert.
         Assert.Equal(
-            "\"F:github actions\" S:id S:name O:5 L:100 W:id,103,i:10 \"W:name,110,s:\"\"%rob bob%\"\"\"", str);
+            "\"F:github actions\" I:1 I:\"one two\" S:id S:name O:5 L:100 W:id,103,i:10 \"W:name,110,s:\"\"%rob bob%\"\"\"",
+            str);
         Assert.Equal(cacheKey.From, deserializedCacheKey.From);
         Assert.Equal(cacheKey.Conditions.Length, deserializedCacheKey.Conditions.Length);
         Assert.Equal(cacheKey.Conditions[0].Value, deserializedCacheKey.Conditions[0].Value);

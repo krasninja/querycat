@@ -16,4 +16,7 @@ public class RowsOutputQueryContext : QueryContext
 
     /// <inheritdoc />
     public override IReadOnlyList<Column> GetColumns() => _columns;
+
+    /// <inheritdoc />
+    internal override CacheKey GetCacheKey() => CacheKey.Empty;
 }

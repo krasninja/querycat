@@ -21,6 +21,10 @@ public sealed class VariantValueArray
         _values = values;
     }
 
+    public VariantValueArray(IEnumerable<VariantValue> values) : this(values.ToArray())
+    {
+    }
+
     public VariantValueArray(int size)
     {
         _values = new VariantValue[size];

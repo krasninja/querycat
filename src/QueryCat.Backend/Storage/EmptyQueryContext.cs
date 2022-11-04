@@ -11,4 +11,7 @@ public class EmptyQueryContext : QueryContext
 
     /// <inheritdoc />
     public override IReadOnlyList<Column> GetColumns() => Array.Empty<Column>();
+
+    /// <inheritdoc />
+    internal override CacheKey GetCacheKey() => CacheKey.Empty;
 }

@@ -22,7 +22,7 @@ public abstract class RowsInput : IRowsInput
     public abstract void Open();
 
     /// <inheritdoc />
-    public void SetContext(QueryContext queryContext)
+    public virtual void SetContext(QueryContext queryContext)
     {
         QueryContext = queryContext;
     }

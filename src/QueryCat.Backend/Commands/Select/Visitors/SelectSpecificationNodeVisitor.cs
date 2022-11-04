@@ -148,8 +148,7 @@ internal sealed partial class SelectSpecificationNodeVisitor : SelectAstVisitor
                 return false;
             }
             // Left and Right must be id and expression.
-            if (!binaryOperationExpressionNode.MatchType(out IdentifierExpressionNode? identifierNode, out ExpressionNode? expressionNode)
-                || expressionNode is IdentifierExpressionNode)
+            if (!binaryOperationExpressionNode.MatchType(out IdentifierExpressionNode? identifierNode, out ExpressionNode? expressionNode))
             {
                 return false;
             }
@@ -159,8 +158,8 @@ internal sealed partial class SelectSpecificationNodeVisitor : SelectAstVisitor
             {
                 return false;
             }
-            var value = makeDelegateVisitor.RunAndReturn(expressionNode!).Invoke();
-            rowsInputContext.Conditions.Add(new QueryContextCondition(column, binaryOperationExpressionNode.Operation, value));
+            var valueFunc = makeDelegateVisitor.RunAndReturn(expressionNode!);
+            rowsInputContext.Conditions.Add(new QueryContextCondition(column, binaryOperationExpressionNode.Operation, valueFunc));
             return true;
         }
 
@@ -183,10 +182,10 @@ internal sealed partial class SelectSpecificationNodeVisitor : SelectAstVisitor
             {
                 return false;
             }
-            var leftValue = makeDelegateVisitor.RunAndReturn(betweenExpressionNode.Left).Invoke();
-            var rightValue = makeDelegateVisitor.RunAndReturn(betweenExpressionNode.Right).Invoke();
-            rowsInputContext.Conditions.Add(new QueryContextCondition(column, VariantValue.Operation.GreaterOrEquals, leftValue));
-            rowsInputContext.Conditions.Add(new QueryContextCondition(column, VariantValue.Operation.LessOrEquals, rightValue));
+            var leftValueFunc = makeDelegateVisitor.RunAndReturn(betweenExpressionNode.Left);
+            var rightValueFunc = makeDelegateVisitor.RunAndReturn(betweenExpressionNode.Right);
+            rowsInputContext.Conditions.Add(new QueryContextCondition(column, VariantValue.Operation.GreaterOrEquals, leftValueFunc));
+            rowsInputContext.Conditions.Add(new QueryContextCondition(column, VariantValue.Operation.LessOrEquals, rightValueFunc));
             return true;
         }
 
@@ -208,10 +207,10 @@ internal sealed partial class SelectSpecificationNodeVisitor : SelectAstVisitor
             {
                 return false;
             }
-            var values = new List<VariantValue>();
+            var values = new List<FuncUnit>();
             foreach (var inExpressionValue in inOperationExpressionNode.InExpressionValues.Values)
             {
-                values.Add(makeDelegateVisitor.RunAndReturn(inExpressionValue).Invoke());
+                values.Add(makeDelegateVisitor.RunAndReturn(inExpressionValue));
             }
             rowsInputContext.Conditions.Add(new QueryContextCondition(column, VariantValue.Operation.In, values));
             return true;
