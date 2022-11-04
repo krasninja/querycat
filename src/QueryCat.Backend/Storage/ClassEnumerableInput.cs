@@ -51,7 +51,6 @@ public abstract class ClassEnumerableInput<TClass> :
     {
         Close();
         base.Reset();
-        Load();
     }
 
     /// <inheritdoc />
@@ -82,7 +81,7 @@ public abstract class ClassEnumerableInput<TClass> :
     /// Get data.
     /// </summary>
     /// <returns>Objects.</returns>
-    public virtual IEnumerable<TClass> GetData()
+    protected virtual IEnumerable<TClass> GetData()
     {
         var enumerator = GetDataAsync().GetAsyncEnumerator();
         // Blocking all the way...
@@ -105,11 +104,18 @@ public abstract class ClassEnumerableInput<TClass> :
     /// </summary>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Objects.</returns>
-    public virtual async IAsyncEnumerable<TClass> GetDataAsync(
+    protected virtual async IAsyncEnumerable<TClass> GetDataAsync(
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        await Task.CompletedTask;
-        yield break;
+        foreach (var item in await GetDataChunkAsync(cancellationToken))
+        {
+            yield return item;
+        }
+    }
+
+    protected virtual Task<IEnumerable<TClass>> GetDataChunkAsync(CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(Enumerable.Empty<TClass>());
     }
 
     #region Dispose

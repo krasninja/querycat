@@ -1,4 +1,3 @@
-using System.Runtime.CompilerServices;
 using QueryCat.Backend.Logging;
 
 namespace QueryCat.Backend.Storage;
@@ -20,7 +19,7 @@ public class ClassEnumerableInputHelper<TClass> where TClass : class
     /// <summary>
     /// Start page index. Zero by default.
     /// </summary>
-    public int PageStart { get; set; } = 0;
+    public int PageStart { get; set; }
 
     /// <summary>
     /// Constructor.
@@ -37,94 +36,94 @@ public class ClassEnumerableInputHelper<TClass> where TClass : class
         }
     }
 
-    public delegate Task<IEnumerable<TClass>> FetchLimitOffsetDelegate(int offset, int limit,
+    public delegate Task<(IEnumerable<TClass> Items, bool HasMore)> FetchLimitOffsetDelegate(int offset, int limit,
         CancellationToken cancellationToken = default);
 
-    public delegate Task<IEnumerable<TClass>> FetchPagedDelegate(int page, int limit,
+    public delegate Task<(IEnumerable<TClass> Items, bool HasMore)> FetchPagedDelegate(int page, int limit,
         CancellationToken cancellationToken = default);
 
-    public delegate Task<IEnumerable<TClass>?> FetchUntilFlagDelegate(CancellationToken cancellationToken = default);
+    public delegate Task<(IEnumerable<TClass> Items, bool HasMore)> FetchUntilFlagDelegate(
+        CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Fetch remote source using offset/limit method.
+    /// Fetch remote source using offset/limit method. The iteration ends if hasMore flag is set to <c>true</c>
+    /// or empty result.
     /// </summary>
     /// <param name="action">Action to get new data. It is called using new offset and limit values.</param>
     /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
     /// <returns>Async enumerable of objects.</returns>
-    public async IAsyncEnumerable<TClass> FetchLimitOffset(
+    public IEnumerable<TClass> FetchLimitOffset(
         FetchLimitOffsetDelegate action,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default)
     {
         int offset = 0;
         int fetchedCount;
+        bool hasMore;
         do
         {
             Logger.Instance.Debug($"Run with offset {offset} and limit {Limit}.", GetType().Name);
-            var list = await action(offset, Limit, cancellationToken);
+            var data = action(offset, Limit, cancellationToken).GetAwaiter().GetResult();
             fetchedCount = 0;
-            foreach (var item in list)
+            foreach (var item in data.Items)
             {
                 fetchedCount++;
                 yield return item;
             }
             offset += Limit;
+            hasMore = data.HasMore;
         }
-        while (fetchedCount > 0);
+        while (fetchedCount > 0 && hasMore);
     }
 
     /// <summary>
-    /// Fetch remote source using paged method.
+    /// Fetch remote source using paged method. The iteration ends if hasMore flag is set to <c>true</c>
+    /// or empty result.
     /// </summary>
     /// <param name="action">Action to get new data. It is called using new page values.</param>
-    /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
     /// <returns>Async enumerable of objects.</returns>
-    public async IAsyncEnumerable<TClass> FetchPaged(
-        FetchPagedDelegate action,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    public IEnumerable<TClass> FetchPaged(FetchPagedDelegate action)
     {
         int page = PageStart;
         int fetchedCount;
+        bool hasMore;
         do
         {
             Logger.Instance.Debug($"Run with page {page} and limit {Limit}.", GetType().Name);
-            var list = await action(page, Limit, cancellationToken);
+            var data = action(page, Limit).GetAwaiter().GetResult();
             fetchedCount = 0;
-            foreach (var item in list)
+            foreach (var item in data.Items)
             {
                 fetchedCount++;
                 yield return item;
             }
             page++;
+            hasMore = data.HasMore;
         }
-        while (fetchedCount > 0);
+        while (fetchedCount > 0 && hasMore);
     }
 
     /// <summary>
     /// Fetch until specific condition. If the end of iteration is reach the action must
-    /// return empty enumeration or null.
+    /// return hasMore flag <c>true</c>.
     /// </summary>
     /// <param name="action">Action to fetch data.</param>
-    /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
     /// <returns>Async enumerable of objects or null.</returns>
-    public async IAsyncEnumerable<TClass>? FetchUntilFlag(
-        FetchUntilFlagDelegate action,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    public IEnumerable<TClass> FetchUntilHasMore(
+        FetchUntilFlagDelegate action)
     {
         int fetchedCount;
+        bool hasMore;
         do
         {
-            var list = await action(cancellationToken);
-            if (list == null)
-            {
-                yield break;
-            }
+            var data = action().GetAwaiter().GetResult();
             fetchedCount = 0;
-            foreach (var item in list)
+            foreach (var item in data.Items)
             {
                 fetchedCount++;
                 yield return item;
             }
+            hasMore = data.HasMore;
         }
-        while (fetchedCount > 0);
+        while (fetchedCount > 0 && hasMore);
     }
 }
