@@ -3,6 +3,7 @@ using System.Text.Json;
 using McMaster.Extensions.CommandLineUtils;
 using QueryCat.Backend;
 using QueryCat.Backend.Execution;
+using QueryCat.Backend.Formatters;
 using QueryCat.Backend.Logging;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Relational.Iterators;
@@ -20,6 +21,7 @@ public class ServeCommand : BaseQueryCommand
     private const string ContentTypeJson = "application/json";
     private const string ContentTypeTextPlain = "text/plain";
     private const string ContentTypeHtml = "text/html";
+    private const string ContentTypeForm = "application/x-www-form-urlencoded";
 
     [Option("--urls", Description = "Endpoint to serve on.")]
     public string Urls { get; } = "http://localhost:6789/";
@@ -49,7 +51,7 @@ public class ServeCommand : BaseQueryCommand
         var listener = new HttpListener();
         listener.Prefixes.Add(Urls);
         listener.Start();
-        console.Out.WriteLine($"Listening on {Urls}...");
+        console.Out.WriteLine($"Listening on {Urls}. Use /api/query endpoint.");
 
         while (true)
         {
@@ -87,7 +89,7 @@ public class ServeCommand : BaseQueryCommand
 
     private static void HandleQueryApiAction(HttpListenerRequest request, HttpListenerResponse response, Runner runner)
     {
-        if (request.HttpMethod != PostMethod)
+        if (request.HttpMethod != PostMethod && request.HttpMethod != GetMethod)
         {
             response.StatusCode = (int)HttpStatusCode.MethodNotAllowed;
             return;
@@ -101,17 +103,27 @@ public class ServeCommand : BaseQueryCommand
             : new SingleValueRowsIterator(lastResult);
 
         var acceptedType = request.AcceptTypes?.FirstOrDefault();
+        if (string.IsNullOrEmpty(acceptedType) || acceptedType == "*/*")
+        {
+            acceptedType = request.ContentType;
+        }
+
         if (acceptedType == ContentTypeHtml)
         {
             response.ContentType = ContentTypeHtml;
             using var streamWriter = new StreamWriter(response.OutputStream);
             WriteHtml(iterator, streamWriter);
         }
-        else
+        else if (acceptedType == ContentTypeJson)
         {
             response.ContentType = ContentTypeJson;
             using var jsonWriter = new Utf8JsonWriter(response.OutputStream);
             WriteJson(iterator, jsonWriter);
+        }
+        else
+        {
+            response.ContentType = ContentTypeTextPlain;
+            WriteText(iterator, response.OutputStream);
         }
     }
 
@@ -122,30 +134,52 @@ public class ServeCommand : BaseQueryCommand
 
     private static string GetQueryFromRequest(HttpListenerRequest request)
     {
-        using var sr = new StreamReader(request.InputStream);
-        var text = sr.ReadToEnd();
-        if (request.ContentType == ContentTypeTextPlain)
+        if (request.HttpMethod == PostMethod)
         {
-            return text;
-        }
-        else if (request.ContentType == ContentTypeJson)
-        {
-            var wrapper = JsonSerializer.Deserialize<QueryWrapper>(text, new JsonSerializerOptions
+            using var sr = new StreamReader(request.InputStream);
+            var text = sr.ReadToEnd();
+            if (request.ContentType == ContentTypeTextPlain
+                || request.ContentType == ContentTypeForm)
             {
-                PropertyNameCaseInsensitive = true
-            });
-            return wrapper?.Query ?? string.Empty;
+                return text;
+            }
+            else if (request.ContentType == ContentTypeJson)
+            {
+                var wrapper = JsonSerializer.Deserialize<QueryWrapper>(text, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+                return wrapper?.Query ?? string.Empty;
+            }
+        }
+        else if (request.HttpMethod == GetMethod)
+        {
+            var query = request.QueryString.Get("q");
+            if (!string.IsNullOrEmpty(query))
+            {
+                return query;
+            }
+            throw new QueryCatException("Cannot parse query.");
         }
         throw new QueryCatException("Incorrect content type.");
     }
 
     private static void WriteHtml(IRowsIterator iterator, StreamWriter streamWriter)
     {
-        streamWriter.WriteLine("<!DOCTYPE html><HTML><BODY><TABLE>");
+        streamWriter.WriteLine("<!DOCTYPE html><HTML>");
+        streamWriter.WriteLine("<HEAD>");
+        streamWriter.WriteLine("<META CHARSET=\"utf-8\">");
+        streamWriter.WriteLine("<link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css\">");
+        streamWriter.WriteLine("</HEAD>");
+        streamWriter.WriteLine("<BODY><TABLE class=\"table qcat-table\">");
 
         streamWriter.WriteLine("<TR>");
         foreach (var column in iterator.Columns)
         {
+            if (column.IsHidden)
+            {
+                continue;
+            }
             streamWriter.WriteLine($"<TH>{column.Name}</TH>");
         }
         streamWriter.WriteLine("</TR>");
@@ -155,12 +189,23 @@ public class ServeCommand : BaseQueryCommand
             streamWriter.WriteLine("<TR>");
             for (var i = 0; i < iterator.Columns.Length; i++)
             {
+                if (iterator.Columns[i].IsHidden)
+                {
+                    continue;
+                }
                 streamWriter.WriteLine($"<TD>{iterator.Current[i]}</TD>");
             }
             streamWriter.WriteLine("</TR>");
         }
 
         streamWriter.WriteLine("</TABLE></BODY></HTML>");
+    }
+
+    private static void WriteText(IRowsIterator iterator, Stream stream)
+    {
+        var formatter = new TextTableFormatter();
+        var output = formatter.OpenOutput(stream);
+        output.Write(iterator);
     }
 
     private static void WriteJson(IRowsIterator iterator, Utf8JsonWriter jsonWriter)

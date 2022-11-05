@@ -31,7 +31,9 @@ Just imagine that everything in the world is a table, and you can process it usi
     - 7.6) [Output](functions/output)
     - 7.7) [String](functions/string)
     - 7.8) [System](functions/system)
-- 8) Development
-    - 8.1) [Overview](development/overview)
-- 9) Misc
-    - 9.1) [Alternatives](misc/alternative-tools)
+- 8) Features
+    - 8.1) [Web Server](features/web-server)
+- 9) Development
+    - 9.1) [Overview](development/overview)
+- 10) Misc
+    - 10.1) [Alternatives](misc/alternative-tools)

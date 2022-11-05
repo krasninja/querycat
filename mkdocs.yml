@@ -27,6 +27,10 @@ nav:
     - 'Output': functions/output.md
     - 'String': functions/string.md
     - 'System': functions/system.md
+  - 'Features':
+    - 'Web Server': features/web-server.md
+  - 'Development':
+    - 'Overview': development/overview.md
   - 'Misc':
     - 'Alternative Tools': misc/alternative-tools.md
 theme: readthedocs
