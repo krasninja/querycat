@@ -13,7 +13,7 @@ public class SelectInputQueryContext : QueryContext
 
     private readonly List<KeyColumn> _keyColumns = new();
 
-    private readonly List<string> _inputArguments = new();
+    private string[] _inputArguments = Array.Empty<string>();
 
     /// <summary>
     /// The target rows input.
@@ -45,9 +45,9 @@ public class SelectInputQueryContext : QueryContext
     internal IReadOnlyList<string> GetInputArguments() => _inputArguments;
 
     /// <inheritdoc />
-    public override QueryContext AddInputArguments(params string[] keys)
+    public override QueryContext SetInputArguments(params string[] args)
     {
-        _inputArguments.AddRange(keys);
+        _inputArguments = args;
         return this;
     }
 
@@ -91,6 +91,15 @@ public class SelectInputQueryContext : QueryContext
 
         value = VariantValue.Null;
         return false;
+    }
+
+    /// <inheritdoc />
+    public override void Clear()
+    {
+        _keyColumns.Clear();
+        _inputArguments = Array.Empty<string>();
+        Conditions.Clear();
+        Limit = null;
     }
 
     /// <inheritdoc />

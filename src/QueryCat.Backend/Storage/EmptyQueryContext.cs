@@ -14,4 +14,9 @@ public class EmptyQueryContext : QueryContext
 
     /// <inheritdoc />
     internal override CacheKey GetCacheKey() => CacheKey.Empty;
+
+    /// <inheritdoc />
+    public override void Clear()
+    {
+    }
 }

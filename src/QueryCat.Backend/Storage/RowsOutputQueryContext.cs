@@ -19,4 +19,9 @@ public class RowsOutputQueryContext : QueryContext
 
     /// <inheritdoc />
     internal override CacheKey GetCacheKey() => CacheKey.Empty;
+
+    /// <inheritdoc />
+    public override void Clear()
+    {
+    }
 }

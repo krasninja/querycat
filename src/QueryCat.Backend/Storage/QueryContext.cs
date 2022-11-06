@@ -35,9 +35,9 @@ public abstract class QueryContext
     /// <summary>
     /// Add input function keys/arguments.
     /// </summary>
-    /// <param name="keys">Arguments.</param>
+    /// <param name="args">Arguments.</param>
     /// <returns>Instance of <see cref="QueryContext" />.</returns>
-    public virtual QueryContext AddInputArguments(params string[] keys)
+    public virtual QueryContext SetInputArguments(params string[] args)
     {
         return this;
     }
@@ -77,4 +77,9 @@ public abstract class QueryContext
         value = VariantValue.Null;
         return false;
     }
+
+    /// <summary>
+    /// Clear the context data.
+    /// </summary>
+    public abstract void Clear();
 }

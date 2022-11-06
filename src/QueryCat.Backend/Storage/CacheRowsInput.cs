@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using QueryCat.Backend.Logging;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Types;
@@ -8,10 +9,12 @@ namespace QueryCat.Backend.Storage;
 /// <summary>
 /// The input caches input data and after reset reads it from memory instead.
 /// </summary>
+[DebuggerDisplay("Count = {TotalCacheEntries}, CacheReads = {CacheReads}, TotalReads = {TotalReads}")]
 public sealed class CacheRowsInput : IRowsInput
 {
     private const int ChunkSize = 4096;
 
+    [DebuggerDisplay("Key = {Key}, IsExpired = {IsExpired}")]
     private sealed class CacheEntry
     {
         public CacheKey Key { get; }
@@ -39,7 +42,6 @@ public sealed class CacheRowsInput : IRowsInput
     }
 
     private readonly List<CacheEntry> _cacheEntries = new();
-
     private readonly IRowsInput _rowsInput;
     private bool[] _cacheReadMap;
     private int _rowIndex = -1;
@@ -49,6 +51,12 @@ public sealed class CacheRowsInput : IRowsInput
 
     /// <inheritdoc />
     public Column[] Columns => _rowsInput.Columns;
+
+    internal int CacheReads { get; private set; }
+
+    internal int TotalReads { get; private set; }
+
+    internal int TotalCacheEntries => _cacheEntries.Count;
 
     public CacheRowsInput(IRowsInput rowsInput)
     {
@@ -72,12 +80,20 @@ public sealed class CacheRowsInput : IRowsInput
     /// <inheritdoc />
     public ErrorCode ReadValue(int columnIndex, out VariantValue value)
     {
+        if (_rowIndex < 0)
+        {
+            value = VariantValue.Null;
+            return ErrorCode.Error;
+        }
+
         var cacheEntry = GetCurrentCacheEntry();
+        TotalReads++;
 
         var offset = Columns.Length * _rowIndex + columnIndex;
         if (_rowIndex < cacheEntry.CacheLength && _cacheReadMap[columnIndex])
         {
             value = cacheEntry.Cache[offset];
+            CacheReads++;
             return ErrorCode.OK;
         }
 
@@ -94,6 +110,7 @@ public sealed class CacheRowsInput : IRowsInput
             cacheEntry.Cache.Add(VariantValue.Null);
         }
         cacheEntry.CacheLength++;
+        Array.Fill(_cacheReadMap, false);
     }
 
     /// <inheritdoc />
@@ -109,13 +126,16 @@ public sealed class CacheRowsInput : IRowsInput
             Array.Fill(_cacheReadMap, true);
             return true;
         }
-        Array.Fill(_cacheReadMap, false);
 
         var hasData = _rowsInput.ReadNext();
         if (hasData)
         {
             // Otherwise increase cache and read data.
             IncreaseCache(cacheEntry);
+        }
+        else
+        {
+            _rowIndex--;
         }
 
         if (!hasData
@@ -177,7 +197,7 @@ public sealed class CacheRowsInput : IRowsInput
         {
             if (!_currentCacheEntry.IsCompleted && _currentCacheEntry.Key.Equals(newCacheKey))
             {
-                Logger.Instance.Debug("Reuse existing previous cache.", nameof(CacheRowsInput));
+                Logger.Instance.Debug("Reuse previous cache.", nameof(CacheRowsInput));
                 return;
             }
         }
