@@ -61,7 +61,10 @@ Desktop.ini
 
 # antlr
 .antlr
+*.interp
+*.tokens
 
 # project specific
 /output
 /src/QueryCat.Benchmarks/Users.csv
+/src/gen/*.java
