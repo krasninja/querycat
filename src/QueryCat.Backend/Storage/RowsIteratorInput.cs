@@ -33,7 +33,7 @@ public sealed class RowsIteratorInput : IRowsInput
         _queryContext = queryContext;
         if (!string.IsNullOrEmpty(_id))
         {
-            queryContext.SetInputArguments(_id);
+            queryContext.InputInfo.InputArguments = new[] { _id };
         }
     }
 
@@ -55,9 +55,9 @@ public sealed class RowsIteratorInput : IRowsInput
     /// <inheritdoc />
     public void Reset()
     {
-        if (_queryContext != null && !string.IsNullOrEmpty(_id))
+        if (_queryContext?.InputInfo != null && !string.IsNullOrEmpty(_id))
         {
-            _queryContext.SetInputArguments(_id);
+            _queryContext.InputInfo.InputArguments = new[] { _id };
         }
         _rowsIterator.Reset();
     }

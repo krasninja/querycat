@@ -115,7 +115,7 @@ internal sealed partial class SelectSpecificationNodeVisitor : SelectAstVisitor
                 .RunAndReturn(querySpecificationNode.Fetch.CountNode).Invoke().AsInteger;
             foreach (var queryContext in commandContext.InputQueryContextList)
             {
-                queryContext.Limit = fetchCount;
+                queryContext.QueryInfo.Limit = fetchCount;
             }
         }
     }
@@ -159,7 +159,7 @@ internal sealed partial class SelectSpecificationNodeVisitor : SelectAstVisitor
                 return false;
             }
             var valueFunc = makeDelegateVisitor.RunAndReturn(expressionNode!);
-            rowsInputContext.Conditions.Add(new QueryContextCondition(column, binaryOperationExpressionNode.Operation, valueFunc));
+            rowsInputContext.QueryInfo.AddCondition(column, binaryOperationExpressionNode.Operation, valueFunc);
             return true;
         }
 
@@ -184,8 +184,8 @@ internal sealed partial class SelectSpecificationNodeVisitor : SelectAstVisitor
             }
             var leftValueFunc = makeDelegateVisitor.RunAndReturn(betweenExpressionNode.Left);
             var rightValueFunc = makeDelegateVisitor.RunAndReturn(betweenExpressionNode.Right);
-            rowsInputContext.Conditions.Add(new QueryContextCondition(column, VariantValue.Operation.GreaterOrEquals, leftValueFunc));
-            rowsInputContext.Conditions.Add(new QueryContextCondition(column, VariantValue.Operation.LessOrEquals, rightValueFunc));
+            rowsInputContext.QueryInfo.AddCondition(column, VariantValue.Operation.GreaterOrEquals, leftValueFunc);
+            rowsInputContext.QueryInfo.AddCondition(column, VariantValue.Operation.LessOrEquals, rightValueFunc);
             return true;
         }
 
@@ -212,7 +212,7 @@ internal sealed partial class SelectSpecificationNodeVisitor : SelectAstVisitor
             {
                 values.Add(makeDelegateVisitor.RunAndReturn(inExpressionValue));
             }
-            rowsInputContext.Conditions.Add(new QueryContextCondition(column, VariantValue.Operation.In, values));
+            rowsInputContext.QueryInfo.AddCondition(column, VariantValue.Operation.In, values.ToArray());
             return true;
         }
 

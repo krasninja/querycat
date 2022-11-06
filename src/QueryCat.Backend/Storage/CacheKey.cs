@@ -8,7 +8,7 @@ namespace QueryCat.Backend.Storage;
 /// <summary>
 /// The cache key for the specific instance of <see cref="IRowsInput" />.
 /// </summary>
-internal class CacheKey
+internal readonly struct CacheKey
 {
     /// <summary>
     /// Input function class/name.
@@ -48,6 +48,16 @@ internal class CacheKey
         Array.Empty<string>(),
         Array.Empty<string>(),
         Array.Empty<QueryContextCondition>());
+
+    public CacheKey(QueryContext queryContext) : this(
+        from: queryContext.InputInfo.RowsInputId,
+        inputArguments: queryContext.InputInfo.InputArguments.ToArray(),
+        selectColumns: queryContext.QueryInfo.Columns.Select(c => c.Name).ToArray(),
+        conditions: queryContext.GetKeyConditions().ToArray(),
+        offset: queryContext.QueryInfo.Offset,
+        limit: queryContext.QueryInfo.Limit)
+    {
+    }
 
     public CacheKey(
         string from,

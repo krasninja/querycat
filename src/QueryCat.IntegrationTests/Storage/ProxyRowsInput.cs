@@ -8,7 +8,7 @@ namespace QueryCat.IntegrationTests.Storage;
 public class ProxyRowsInput : IRowsInput
 {
     private IRowsInput _rowsInput;
-    private QueryContext? _queryContext = null;
+    private QueryContext? _queryContext;
 
     /// <inheritdoc />
     public Column[] Columns => _rowsInput.Columns;
@@ -45,7 +45,7 @@ public class ProxyRowsInput : IRowsInput
         _rowsInput = rowsInput;
         if (_queryContext != null && inputArguments.Any())
         {
-            _queryContext.SetInputArguments(inputArguments);
+            _queryContext.InputInfo.SetInputArguments(inputArguments);
         }
     }
 }

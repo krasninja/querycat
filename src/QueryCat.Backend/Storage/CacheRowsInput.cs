@@ -154,7 +154,7 @@ public sealed class CacheRowsInput : IRowsInput
         {
             return _currentCacheEntry;
         }
-        var key = _queryContext.GetCacheKey();
+        var key = new CacheKey(_queryContext);
         _currentCacheEntry = new CacheEntry(key, TimeSpan.FromMinutes(1));
         return _currentCacheEntry;
     }
@@ -174,7 +174,7 @@ public sealed class CacheRowsInput : IRowsInput
     {
         RemoveExpiredKeys();
 
-        var key = _queryContext.GetCacheKey();
+        var key = new CacheKey(_queryContext);
         foreach (var cacheEntry in _cacheEntries)
         {
             if (cacheEntry.Key.Match(key))
@@ -192,7 +192,7 @@ public sealed class CacheRowsInput : IRowsInput
     {
         _rowIndex = -1;
         _rowsInput.Reset();
-        var newCacheKey = _queryContext.GetCacheKey();
+        var newCacheKey = new CacheKey(_queryContext);
         if (_currentCacheEntry != null)
         {
             if (!_currentCacheEntry.IsCompleted && _currentCacheEntry.Key.Equals(newCacheKey))

@@ -29,7 +29,7 @@ public class ClassEnumerableInputHelper<TClass> where TClass : class
     {
         _enumerableInput = enumerableInput;
 
-        var queryLimit = enumerableInput.QueryContext.GetLimit();
+        var queryLimit = enumerableInput.QueryContext.QueryInfo.Limit;
         if (queryLimit.HasValue)
         {
             Limit = Math.Min((int)queryLimit.Value, Limit);

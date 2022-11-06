@@ -87,11 +87,11 @@ internal sealed class DsvOutput : RowsOutput, IDisposable
 
     private void WriteHeader(QueryContext queryContext)
     {
-        var columns = queryContext.GetColumns().ToArray();
+        var columns = queryContext.QueryInfo.Columns;
 
         if (_hasHeader && !_wroteHeader)
         {
-            var length = columns.Length;
+            var length = columns.Count;
             for (int i = 0; i < length; i++)
             {
                 WriteString(columns[i].Name);

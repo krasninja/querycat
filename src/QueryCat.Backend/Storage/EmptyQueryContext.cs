@@ -10,13 +10,7 @@ public class EmptyQueryContext : QueryContext
     public static EmptyQueryContext Empty { get; } = new();
 
     /// <inheritdoc />
-    public override IReadOnlyList<Column> GetColumns() => Array.Empty<Column>();
-
-    /// <inheritdoc />
-    internal override CacheKey GetCacheKey() => CacheKey.Empty;
-
-    /// <inheritdoc />
-    public override void Clear()
-    {
-    }
+    public override QueryContextQueryInfo QueryInfo { get; } = new(
+        columns: Array.Empty<Column>(),
+        limit: null);
 }

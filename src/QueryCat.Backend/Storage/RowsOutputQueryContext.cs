@@ -7,21 +7,11 @@ namespace QueryCat.Backend.Storage;
 /// </summary>
 public class RowsOutputQueryContext : QueryContext
 {
-    private readonly Column[] _columns;
+    /// <inheritdoc />
+    public override QueryContextQueryInfo QueryInfo { get; }
 
     public RowsOutputQueryContext(Column[] columns)
     {
-        _columns = columns;
-    }
-
-    /// <inheritdoc />
-    public override IReadOnlyList<Column> GetColumns() => _columns;
-
-    /// <inheritdoc />
-    internal override CacheKey GetCacheKey() => CacheKey.Empty;
-
-    /// <inheritdoc />
-    public override void Clear()
-    {
+        QueryInfo = new QueryContextQueryInfo(columns);
     }
 }

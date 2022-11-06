@@ -9,48 +9,45 @@ namespace QueryCat.Backend.Storage;
 public abstract class QueryContext
 {
     /// <summary>
-    /// Get columns for select.
+    /// Information about the rows input.
     /// </summary>
-    /// <returns>Columns for select.</returns>
-    public abstract IReadOnlyList<Column> GetColumns();
+    public QueryContextInputInfo InputInfo { get; set; } = new(NullRowsInput.Instance);
 
     /// <summary>
-    /// Get query conditions.
+    /// Information about the query where the rows input is used.
     /// </summary>
-    /// <returns>List of conditions.</returns>
-    public virtual IReadOnlyList<QueryContextCondition> GetConditions() => new QueryContextCondition[] { };
+    public abstract QueryContextQueryInfo QueryInfo { get; }
 
     /// <summary>
-    /// Get rows limit. Allows to select only needed amount of records.
-    /// </summary>
-    /// <returns>Limit count.</returns>
-    public virtual long? GetLimit() => null;
-
-    /// <summary>
-    /// Get cache key for the specific query.
-    /// </summary>
-    /// <returns>Cache key instance.</returns>
-    internal abstract CacheKey GetCacheKey();
-
-    /// <summary>
-    /// Add input function keys/arguments.
-    /// </summary>
-    /// <param name="args">Arguments.</param>
-    /// <returns>Instance of <see cref="QueryContext" />.</returns>
-    public virtual QueryContext SetInputArguments(params string[] args)
-    {
-        return this;
-    }
-
-    /// <summary>
-    /// Add key column information.
+    /// Returns <c>true</c> if we can find key column condition.
     /// </summary>
     /// <param name="columnName">Column name.</param>
-    /// <param name="operations">Key operations.</param>
-    /// <returns>Instance of <see cref="QueryContext" />.</returns>
-    public virtual QueryContext AddKeyColumn(string columnName, params VariantValue.Operation[] operations)
+    /// <param name="operation">Column operation.</param>
+    /// <param name="orOperation">Alternative operation.</param>
+    /// <param name="value">Condition value.</param>
+    /// <returns><c>True</c> if found, <c>false</c> otherwise.</returns>
+    public bool HasKeyCondition(string columnName, VariantValue.Operation operation,
+        VariantValue.Operation orOperation, out VariantValue value)
     {
-        return this;
+        if (!InputInfo.KeyColumns.Any(k => Column.NameEquals(k.ColumnName, columnName)
+                && k.Operations.Contains(operation)
+                && k.Operations.Contains(orOperation)))
+        {
+            value = VariantValue.Null;
+            return false;
+        }
+        foreach (var condition in QueryInfo.Conditions)
+        {
+            if (Column.NameEquals(condition.Column, columnName)
+                && (condition.Operation == operation || condition.Operation == orOperation))
+            {
+                value = condition.ValueFunc.Invoke();
+                return true;
+            }
+        }
+
+        value = VariantValue.Null;
+        return false;
     }
 
     /// <summary>
@@ -63,23 +60,14 @@ public abstract class QueryContext
     public bool HasKeyCondition(string columnName, VariantValue.Operation operation, out VariantValue value)
         => HasKeyCondition(columnName, operation, operation, out value);
 
-    /// <summary>
-    /// Returns <c>true</c> if we can find key column condition.
-    /// </summary>
-    /// <param name="columnName">Column name.</param>
-    /// <param name="operation">Column operation.</param>
-    /// <param name="orOperation">Alternative condition value.</param>
-    /// <param name="value">Condition value.</param>
-    /// <returns><c>True</c> if found, <c>false</c> otherwise.</returns>
-    public virtual bool HasKeyCondition(string columnName, VariantValue.Operation operation,
-        VariantValue.Operation orOperation, out VariantValue value)
+    internal IEnumerable<QueryContextCondition> GetKeyConditions()
     {
-        value = VariantValue.Null;
-        return false;
+        foreach (var condition in QueryInfo.Conditions)
+        {
+            if (HasKeyCondition(condition.Column.Name, condition.Operation, out _))
+            {
+                yield return condition;
+            }
+        }
     }
-
-    /// <summary>
-    /// Clear the context data.
-    /// </summary>
-    public abstract void Clear();
 }

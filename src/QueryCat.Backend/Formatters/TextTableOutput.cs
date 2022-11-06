@@ -83,9 +83,9 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
     /// <inheritdoc />
     protected override void Initialize()
     {
-        var columns = QueryContext.GetColumns().ToArray();
-        _isSingleValue = columns.Length == 1 && columns[0].Name == SingleValueRowsIterator.ColumnTitle;
-        _columnsLengths = new int[columns.Length];
+        var columns = QueryContext.QueryInfo.Columns;
+        _isSingleValue = columns.Count == 1 && columns[0].Name == SingleValueRowsIterator.ColumnTitle;
+        _columnsLengths = new int[columns.Count];
 
         _onInit.Invoke();
         _streamWriter.Flush();
@@ -107,9 +107,9 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
             return;
         }
 
-        var columns = QueryContext.GetColumns().ToArray();
+        var columns = QueryContext.QueryInfo.Columns;
 
-        for (int i = 0; i < columns.Length; i++)
+        for (int i = 0; i < columns.Count; i++)
         {
             if (columns[i].IsHidden)
             {
@@ -126,7 +126,7 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
         _streamWriter.WriteLine();
         _streamWriter.Flush();
 
-        for (int i = 0; i < columns.Length; i++)
+        for (int i = 0; i < columns.Count; i++)
         {
             if (columns[i].IsHidden)
             {
@@ -176,8 +176,7 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
 
     private void OnCardInit()
     {
-        _maxColumnNameWidth = Math.Min(
-            QueryContext.GetColumns()
+        _maxColumnNameWidth = Math.Min(QueryContext.QueryInfo.Columns
             .Where(c => !c.IsHidden)
             .Select(c => c.Name.Length)
             .Max(), 20);
