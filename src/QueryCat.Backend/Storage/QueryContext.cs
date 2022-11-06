@@ -19,6 +19,11 @@ public abstract class QueryContext
     public abstract QueryContextQueryInfo QueryInfo { get; }
 
     /// <summary>
+    /// Input config storage.
+    /// </summary>
+    public IInputConfigStorage InputConfigStorage { get; internal set; } = new MemoryInputConfigStorage();
+
+    /// <summary>
     /// Returns <c>true</c> if we can find key column condition.
     /// </summary>
     /// <param name="columnName">Column name.</param>

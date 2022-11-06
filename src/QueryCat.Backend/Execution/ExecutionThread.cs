@@ -14,6 +14,8 @@ public sealed class ExecutionThread
 {
     private readonly StatementsVisitor _statementsVisitor;
 
+    internal PersistentInputConfigStorage InputConfigStorage { get; } = new();
+
     /// <summary>
     /// Root scope.
     /// </summary>

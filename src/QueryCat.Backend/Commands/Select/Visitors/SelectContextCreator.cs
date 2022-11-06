@@ -135,7 +135,10 @@ internal sealed class SelectContextCreator
         }
         if (source.AsObject is IRowsInput rowsInput)
         {
-            var queryContext = new SelectInputQueryContext(rowsInput);
+            var queryContext = new SelectInputQueryContext(rowsInput)
+            {
+                InputConfigStorage = _executionThread.InputConfigStorage
+            };
             if (isSubQuery)
             {
                 rowsInput = new CacheRowsInput(rowsInput);
