@@ -40,6 +40,11 @@ public sealed class ExecutionOptions
     /// </summary>
     public List<Assembly> PluginAssemblies { get; } = new();
 
+    /// <summary>
+    /// Do not save/load config.
+    /// </summary>
+    public bool UseConfig { get; set; } = true;
+
     public ExecutionOptions(TextTableOutput.Style outputStyle = TextTableOutput.Style.Table)
     {
         DefaultRowsOutput = new TextTableOutput(

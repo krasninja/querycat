@@ -35,7 +35,8 @@ public class BaseTests
                     }
                 }
             }),
-            AddRowNumberColumn = false
+            UseConfig = true,
+            AddRowNumberColumn = false,
         });
         Runner.Bootstrap();
         Runner.ExecutionThread.FunctionsManager.RegisterFunctionsFromAssemblies(

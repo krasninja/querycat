@@ -12,9 +12,12 @@ namespace QueryCat.Backend.Execution;
 /// </summary>
 public sealed class ExecutionThread
 {
+    internal const string ApplicationDirectory = "qcat";
+    internal const string ConfigFileName = "config.json";
+
     private readonly StatementsVisitor _statementsVisitor;
 
-    internal PersistentInputConfigStorage InputConfigStorage { get; } = new();
+    internal PersistentInputConfigStorage InputConfigStorage { get; }
 
     /// <summary>
     /// Root scope.
@@ -64,6 +67,10 @@ public sealed class ExecutionThread
         RootScope = new ExecutionScope();
         Options = options ?? new ExecutionOptions();
         _statementsVisitor = new StatementsVisitor(this);
+
+        var appDirectory =
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), ApplicationDirectory);
+        InputConfigStorage = new PersistentInputConfigStorage(Path.Combine(appDirectory, ConfigFileName));
     }
 
     /// <summary>
@@ -73,6 +80,10 @@ public sealed class ExecutionThread
     {
         var stopwatch = new Stopwatch();
         stopwatch.Start();
+        if (Options.UseConfig)
+        {
+            InputConfigStorage.LoadAsync().GetAwaiter().GetResult();
+        }
 
         while (ExecutingStatement != null)
         {
@@ -103,6 +114,10 @@ public sealed class ExecutionThread
             ExecutingStatement = ExecutingStatement.Next;
         }
 
+        if (Options.UseConfig)
+        {
+            InputConfigStorage.SaveAsync().GetAwaiter().GetResult();
+        }
         stopwatch.Stop();
         Statistic.ExecutionTime = stopwatch.Elapsed;
     }
