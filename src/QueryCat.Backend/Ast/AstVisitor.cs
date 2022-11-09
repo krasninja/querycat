@@ -190,6 +190,10 @@ public abstract class AstVisitor
     {
     }
 
+    public virtual void Visit(SelectSubqueryConditionExpressionNode node)
+    {
+    }
+
     public virtual void Visit(SelectSubqueryExpressionNode node)
     {
     }

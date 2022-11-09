@@ -180,6 +180,8 @@ expression
     | left=expression NOT? op=IN right=array # ExpressionBinaryIn
     | expr=expression NOT? op=BETWEEN left=simpleExpression AND right=expression # ExpressionBetween
     | EXISTS '(' selectQueryExpression ')' # ExpressionExists
+    | left=simpleExpression op=(EQUALS | NOT_EQUALS | GREATER | GREATER_OR_EQUALS | LESS | LESS_OR_EQUALS)
+        condition=(ANY | SOME | ALL) '(' selectQueryExpression ')' # ExpressionSubquery
     | left=expression op=AND right=expression # ExpressionBinary
     | left=expression op=OR right=expression # ExpressionBinary
     | right=expression op=IS NOT? NULL # ExpressionUnary

@@ -73,4 +73,10 @@ internal sealed class SelectResolveTypesVisitor : ResolveTypesVisitor
     {
         node.SetDataType(node.Expression.GetDataType());
     }
+
+    /// <inheritdoc />
+    public override void Visit(SelectSubqueryConditionExpressionNode node)
+    {
+        node.SetDataType(DataType.Boolean);
+    }
 }

@@ -105,6 +105,26 @@ internal partial class ProgramParserVisitor
     public override IAstNode VisitExpressionExists(QueryCatParser.ExpressionExistsContext context)
         => new SelectExistsExpressionNode(this.Visit<SelectQueryExpressionBodyNode>(context.selectQueryExpression()));
 
+    /// <inheritdoc />
+    public override IAstNode VisitExpressionSubquery(QueryCatParser.ExpressionSubqueryContext context)
+    {
+        SelectSubqueryConditionExpressionNode.QuantifierOperator ConvertStringToOperation(int type)
+            => type switch
+            {
+                QueryCatParser.SOME => SelectSubqueryConditionExpressionNode.QuantifierOperator.Any,
+                QueryCatParser.ANY => SelectSubqueryConditionExpressionNode.QuantifierOperator.Any,
+                QueryCatParser.ALL => SelectSubqueryConditionExpressionNode.QuantifierOperator.All,
+                _ => throw new ArgumentException(nameof(type)),
+            };
+
+        var operation = ConvertOperationTokenToAst(context.op.Type);
+        return new SelectSubqueryConditionExpressionNode(
+            left: this.Visit<ExpressionNode>(context.expr),
+            operation: operation,
+            quantifierOperator: ConvertStringToOperation(context.condition.Type),
+            subQueryNode: this.Visit<SelectQueryExpressionBodyNode>(context.selectQueryExpression()));
+    }
+
     #endregion
 
     #region Into

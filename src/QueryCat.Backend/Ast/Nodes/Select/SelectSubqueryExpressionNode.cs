@@ -15,6 +15,7 @@ public sealed class SelectSubqueryExpressionNode : ExpressionNode
     public SelectSubqueryExpressionNode(SelectSubqueryExpressionNode node)
         : this((SelectQueryExpressionBodyNode)node.Clone())
     {
+        node.CopyTo(this);
     }
 
     /// <inheritdoc />

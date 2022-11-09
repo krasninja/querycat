@@ -1,0 +1,5 @@
+expected: |
+  tt8090284,Tri kota
+query: |
+  select imdb_id, title from 'MoviesTitles.csv' as t where 'f' =
+    all(select a.gender from 'MoviesActors.csv' as a where a.imdb_id = t.imdb_id);

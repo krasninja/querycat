@@ -390,6 +390,13 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitExpressionUnary([NotNull] QueryCatParser.ExpressionUnaryContext context);
 	/// <summary>
+	/// Visit a parse tree produced by the <c>ExpressionSubquery</c>
+	/// labeled alternative in <see cref="QueryCatParser.expression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitExpressionSubquery([NotNull] QueryCatParser.ExpressionSubqueryContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>ExpressionBinaryCast</c>
 	/// labeled alternative in <see cref="QueryCatParser.expression"/>.
 	/// </summary>

@@ -1,0 +1,12 @@
+imdb_id,rating_id,title,year,director,runtime,imdb_rating
+tt0468569,4,The Dark Knight,2008,Christopher Nolan,152,9.0
+tt0944947,105,Game of Thrones,2011,N/A,57,9.2
+tt9174582,105,Brassic,2019,N/A,50,8.4
+tt2442560,105,Peaky Blinders,2013,N/A,60,8.8
+tt8090284,1,Tri kota,2015,N/A,5,7.1
+tt6966692,4,Green Book,2018,Peter Farrelly,130,8.2
+tt0099785,3,Home Alone,1990,Chris Columbus,103,7.7
+tt0095016,5,Die Hard,1988,John McTiernan,132,8.2
+tt0120201,5,Starship Troopers,1997,Paul Verhoeven,129,7.3
+tt0112573,5,Braveheart,1995,Mel Gibson,178,8.4
+tt0099423,5,Die Hard 2,1990,Renny Harlin,124,7.1

@@ -158,6 +158,8 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
         );
     }
 
+    #region Subqueries
+
     /// <inheritdoc />
     public override void Visit(SelectQueryExpressionBodyNode node)
     {
@@ -169,8 +171,9 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
         var rowsIterator = node.GetFunc().Invoke().AsObject as IRowsIterator;
         if (rowsIterator == null)
         {
-            throw new InvalidOperationException("Incorrect subquery type.");
+            throw new InvalidOperationException(Resources.Errors.InvalidRowsInputType);
         }
+
         VariantValue Func(VariantValueFuncData data)
         {
             rowsIterator.Reset();
@@ -180,7 +183,78 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
             }
             return VariantValue.Null;
         }
+
         _subQueryIterators.Add(rowsIterator);
         NodeIdFuncMap[node.Id] = Func;
     }
+
+    /// <inheritdoc />
+    public override void Visit(SelectSubqueryConditionExpressionNode node)
+    {
+        if (NodeIdFuncMap.ContainsKey(node.Id))
+        {
+            return;
+        }
+
+        var rowsIterator = node.SubQueryNode.GetFunc().Invoke().AsObject as IRowsIterator;
+        if (rowsIterator == null)
+        {
+            throw new InvalidOperationException(Resources.Errors.InvalidRowsInputType);
+        }
+        if (rowsIterator.Columns.Length > 1)
+        {
+            throw new QueryCatException(Resources.Errors.InvalidSubqueryColumnsCount);
+        }
+        var operationDelegate = VariantValue.GetOperationDelegate(node.Operation);
+
+        VariantValue AllFunc(VariantValueFuncData data)
+        {
+            var leftValue = NodeIdFuncMap[node.Left.Id].Invoke(data);
+            rowsIterator.Reset();
+            while (rowsIterator.MoveNext())
+            {
+                var rightValue = rowsIterator.Current[0];
+                var result = operationDelegate(ref leftValue, ref rightValue, out ErrorCode code);
+                ApplyStatistic(code);
+                if (!result.AsBoolean)
+                {
+                    return VariantValue.FalseValue;
+                }
+            }
+            return VariantValue.TrueValue;
+        }
+
+        VariantValue AnyFunc(VariantValueFuncData data)
+        {
+            var leftValue = NodeIdFuncMap[node.Left.Id].Invoke(data);
+            rowsIterator.Reset();
+            while (rowsIterator.MoveNext())
+            {
+                var rightValue = rowsIterator.Current[0];
+                var result = operationDelegate(ref leftValue, ref rightValue, out ErrorCode code);
+                ApplyStatistic(code);
+                if (result.AsBoolean)
+                {
+                    return VariantValue.TrueValue;
+                }
+            }
+            return VariantValue.FalseValue;
+        }
+
+        _subQueryIterators.Add(rowsIterator);
+        if (node.Operator == SelectSubqueryConditionExpressionNode.QuantifierOperator.Any)
+        {
+            NodeIdFuncMap[node.Id] = AnyFunc;
+        }
+        else if (node.Operator == SelectSubqueryConditionExpressionNode.QuantifierOperator.All)
+        {
+            NodeIdFuncMap[node.Id] = AllFunc;
+        }
+        else
+        {
+            throw new InvalidOperationException($"Quantifier '{node.Operator}' cannot be proceed.");
+        }
+    }
+
+    #endregion
 }

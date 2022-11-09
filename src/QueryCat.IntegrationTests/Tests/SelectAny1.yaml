@@ -1,0 +1,7 @@
+expected: |
+  tt0944947
+  tt9174582
+  tt2442560
+query: |
+  select imdb_id from 'MoviesTitles.csv' as t where t.imdb_id =
+    any(select a.imdb_id from 'MoviesActors.csv' as a where a.imdb_id = t.imdb_id and extract(year from a.dob) > 1985);

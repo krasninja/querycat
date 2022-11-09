@@ -67,6 +67,7 @@ NOT:                'NOT';
 NULL:               'NULL';
 ONLY:               'ONLY';
 OR:                 'OR';
+SOME:               'SOME';
 TO:                 'TO';
 TRUE:               'TRUE';
 VOID:               'VOID';

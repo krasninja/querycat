@@ -1,5 +1,4 @@
 using Xunit;
-using QueryCat.Backend.Commands.Select;
 using QueryCat.Backend.Commands.Select.Iterators;
 using QueryCat.Backend.Functions;
 using QueryCat.Backend.Relational;

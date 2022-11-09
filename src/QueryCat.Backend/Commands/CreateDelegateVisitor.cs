@@ -273,7 +273,7 @@ internal class CreateDelegateVisitor : AstVisitor
 
     #endregion
 
-    private void ApplyStatistic(ErrorCode code)
+    protected void ApplyStatistic(ErrorCode code)
     {
         if (code != ErrorCode.OK)
         {

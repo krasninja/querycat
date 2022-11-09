@@ -1,0 +1,15 @@
+[
+  {"id": 1, "name": "N/A", "description": "Not available."},
+  {"id": 2, "name": "G", "description": "General Audiences."},
+  {"id": 3, "name": "PG", "description": "Parental Guidance Suggested."},
+  {"id": 4, "name": "PG-13", "description": "Parents Strongly Cautioned."},
+  {"id": 5, "name": "R", "description": "Restricted."},
+  {"id": 6, "name": "NC-17", "description": "Adults Only."},
+
+  {"id": 100, "name": "TV-Y", "description": "This program is designed to be appropriate for all children."},
+  {"id": 101, "name": "TV-Y7", "description": "This program is designed for children age 7 and above."},
+  {"id": 102, "name": "TV-G", "description": "Most parents will find this program suitable for all ages."},
+  {"id": 103, "name": "TV-PG", "description": "This program contains material that parents may find unsuitable for younger children."},
+  {"id": 104, "name": "TV-14", "description": "This program contains material that most parents would find unsuitable for children under 14 years of age."},
+  {"id": 105, "name": "TV-MA", "description": "This program is specifically designed to be viewed by adults and therefore may be unsuitable for children under 17."}
+]
