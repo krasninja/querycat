@@ -119,7 +119,7 @@ internal partial class ProgramParserVisitor
 
         var operation = ConvertOperationTokenToAst(context.op.Type);
         return new SelectSubqueryConditionExpressionNode(
-            left: this.Visit<ExpressionNode>(context.expr),
+            left: this.Visit<ExpressionNode>(context.left),
             operation: operation,
             quantifierOperator: ConvertStringToOperation(context.condition.Type),
             subQueryNode: this.Visit<SelectQueryExpressionBodyNode>(context.selectQueryExpression()));

@@ -3033,7 +3033,7 @@ public partial class QueryCatParser : Parser {
 		}
 	}
 	public partial class ExpressionSubqueryContext : ExpressionContext {
-		public SimpleExpressionContext expr;
+		public SimpleExpressionContext left;
 		public IToken op;
 		public IToken condition;
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode LEFT_PAREN() { return GetToken(QueryCatParser.LEFT_PAREN, 0); }
@@ -3276,7 +3276,7 @@ public partial class QueryCatParser : Parser {
 				Context = _localctx;
 				_prevctx = _localctx;
 				State = 425;
-				((ExpressionSubqueryContext)_localctx).expr = simpleExpression(0);
+				((ExpressionSubqueryContext)_localctx).left = simpleExpression(0);
 				State = 426;
 				((ExpressionSubqueryContext)_localctx).op = TokenStream.LT(1);
 				_la = TokenStream.LA(1);

@@ -57,7 +57,6 @@ public class PersistentInputConfigStorage : MemoryInputConfigStorage
             dict[variantValueWithKey.Key] = DataTypeUtils.SerializeVariantValue(variantValueWithKey.Value);
         }
 
-
         var json = JsonSerializer.Serialize(dict);
         await File.WriteAllTextAsync(_configFile, json, cancellationToken);
 
