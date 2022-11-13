@@ -2,7 +2,7 @@ namespace QueryCat.Backend.Types;
 
 public partial struct VariantValue
 {
-    public static UnaryFunction GetNegationDelegate(DataType leftType)
+    internal static UnaryFunction GetNegationDelegate(DataType leftType)
     {
         return leftType switch
         {
@@ -50,7 +50,7 @@ public partial struct VariantValue
         };
     }
 
-    public static VariantValue Subtract(ref VariantValue left, ref VariantValue right, out ErrorCode errorCode)
+    internal static VariantValue Subtract(ref VariantValue left, ref VariantValue right, out ErrorCode errorCode)
     {
         var leftType = left.GetInternalType();
         var rightType = right.GetInternalType();
@@ -66,7 +66,7 @@ public partial struct VariantValue
         return function.Invoke(ref left, ref right);
     }
 
-    public static BinaryFunction GetSubtractDelegate(DataType leftType, DataType rightType)
+    internal static BinaryFunction GetSubtractDelegate(DataType leftType, DataType rightType)
     {
         var negativeFunction = GetNegationDelegate(leftType);
         var addFunction = GetAddDelegate(leftType, rightType);
@@ -80,38 +80,5 @@ public partial struct VariantValue
             var negativeRight = negativeFunction.Invoke(ref right);
             return addFunction.Invoke(ref left, ref negativeRight);
         };
-    }
-
-    public static VariantValue Mul(ref VariantValue left, ref VariantValue right, out ErrorCode errorCode)
-    {
-        var leftType = left.GetInternalType();
-        var rightType = right.GetInternalType();
-
-        VariantValue result = leftType switch
-        {
-            DataType.Integer => rightType switch
-            {
-                DataType.Integer => new VariantValue(left.AsInteger * right.AsInteger),
-                DataType.Float => new VariantValue(left.AsInteger * right.AsFloat),
-                DataType.Numeric => new VariantValue(left.AsInteger * right.AsNumeric),
-                _ => Null,
-            },
-            DataType.Float => rightType switch
-            {
-                DataType.Integer => new VariantValue(left.AsFloat * right.AsInteger),
-                DataType.Float => new VariantValue(left.AsFloat * right.AsFloat),
-                _ => Null,
-            },
-            DataType.Numeric => rightType switch
-            {
-                DataType.Integer => new VariantValue(left.AsNumeric * right.AsInteger),
-                DataType.Numeric => new VariantValue(left.AsNumeric * right.AsNumeric),
-                _ => Null,
-            },
-            _ => Null,
-        };
-
-        errorCode = !result.IsNull ? ErrorCode.OK : ErrorCode.CannotApplyOperator;
-        return result;
     }
 }

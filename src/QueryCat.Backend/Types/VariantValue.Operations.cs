@@ -85,6 +85,11 @@ public readonly partial struct VariantValue
             Operation.Add => GetAddDelegate(leftType, rightType),
             Operation.Subtract => GetSubtractDelegate(leftType, rightType),
             Operation.Equals => GetEqualsDelegate(leftType, rightType),
+            Operation.NotEquals => GetNotEqualsDelegate(leftType, rightType),
+            Operation.Greater => GetGreaterDelegate(leftType, rightType),
+            Operation.GreaterOrEquals => GetGreaterOrEqualsDelegate(leftType, rightType),
+            Operation.Less => GetLessDelegate(leftType, rightType),
+            Operation.LessOrEquals => GetLessOrEqualsDelegate(leftType, rightType),
             _ => GetBinaryFunction(GetOperationDelegate(operation)),
         };
 
@@ -227,6 +232,39 @@ public readonly partial struct VariantValue
         return function.Invoke(ref left);
     }
 
+    internal static VariantValue Mul(ref VariantValue left, ref VariantValue right, out ErrorCode errorCode)
+    {
+        var leftType = left.GetInternalType();
+        var rightType = right.GetInternalType();
+
+        VariantValue result = leftType switch
+        {
+            DataType.Integer => rightType switch
+            {
+                DataType.Integer => new VariantValue(left.AsInteger * right.AsInteger),
+                DataType.Float => new VariantValue(left.AsInteger * right.AsFloat),
+                DataType.Numeric => new VariantValue(left.AsInteger * right.AsNumeric),
+                _ => Null,
+            },
+            DataType.Float => rightType switch
+            {
+                DataType.Integer => new VariantValue(left.AsFloat * right.AsInteger),
+                DataType.Float => new VariantValue(left.AsFloat * right.AsFloat),
+                _ => Null,
+            },
+            DataType.Numeric => rightType switch
+            {
+                DataType.Integer => new VariantValue(left.AsNumeric * right.AsInteger),
+                DataType.Numeric => new VariantValue(left.AsNumeric * right.AsNumeric),
+                _ => Null,
+            },
+            _ => Null,
+        };
+
+        errorCode = !result.IsNull ? ErrorCode.OK : ErrorCode.CannotApplyOperator;
+        return result;
+    }
+
     public static VariantValue Div(ref VariantValue left, ref VariantValue right, out ErrorCode errorCode)
     {
         var leftType = left.GetInternalType();
@@ -334,124 +372,6 @@ public readonly partial struct VariantValue
     #endregion
 
     #region Comparision operations
-
-    public static VariantValue Greater(ref VariantValue left, ref VariantValue right, out ErrorCode errorCode)
-    {
-        var leftType = left.GetInternalType();
-        var rightType = right.GetInternalType();
-
-        bool? result = leftType switch
-        {
-            DataType.Integer => rightType switch
-            {
-                DataType.Integer => left.AsInteger > right.AsInteger,
-                DataType.Float => left.AsInteger > right.AsFloat,
-                DataType.Numeric => left.AsInteger > right.AsNumeric,
-                _ => null,
-            },
-            DataType.Float => rightType switch
-            {
-                DataType.Integer => left.AsFloat > right.AsInteger,
-                DataType.Float => left.AsFloat > right.AsFloat,
-                _ => null,
-            },
-            DataType.Numeric => rightType switch
-            {
-                DataType.Integer => left.AsNumeric > right.AsInteger,
-                DataType.Numeric => left.AsNumeric > right.AsNumeric,
-                _ => null,
-            },
-            DataType.Boolean => rightType switch
-            {
-                DataType.Boolean or DataType.Integer => left.AsInteger > right.AsInteger,
-                _ => null,
-            },
-            DataType.String => rightType switch
-            {
-                DataType.String => string.CompareOrdinal(left.AsString, right.AsString) > 0,
-                _ => null,
-            },
-            DataType.Timestamp => rightType switch
-            {
-                DataType.Timestamp or DataType.String => left.AsTimestamp > right.AsTimestamp,
-                _ => null,
-            },
-            DataType.Interval => rightType switch
-            {
-                DataType.Interval => left.AsInterval > right.AsInterval,
-                _ => null,
-            },
-            _ => null,
-        };
-        errorCode = result.HasValue ? ErrorCode.OK : ErrorCode.CannotApplyOperator;
-        return result.HasValue
-            ? new VariantValue(result.Value)
-            : Null;
-    }
-
-    public static VariantValue GreaterOrEquals(ref VariantValue left, ref VariantValue right, out ErrorCode errorCode)
-        => new(
-            Greater(ref left, ref right, out errorCode).AsBoolean
-            || Equals(ref left, ref right, out errorCode).AsBoolean);
-
-    public static VariantValue Less(ref VariantValue left, ref VariantValue right, out ErrorCode errorCode)
-    {
-        var leftType = left.GetInternalType();
-        var rightType = right.GetInternalType();
-
-        bool? result = leftType switch
-        {
-            DataType.Integer => rightType switch
-            {
-                DataType.Integer => left.AsInteger < right.AsInteger,
-                DataType.Float => left.AsInteger < right.AsFloat,
-                DataType.Numeric => left.AsInteger < right.AsNumeric,
-                _ => null,
-            },
-            DataType.Float => rightType switch
-            {
-                DataType.Integer => left.AsFloat < right.AsInteger,
-                DataType.Float => left.AsFloat < right.AsFloat,
-                _ => null,
-            },
-            DataType.Numeric => rightType switch
-            {
-                DataType.Integer => left.AsNumeric < right.AsInteger,
-                DataType.Numeric => left.AsNumeric < right.AsNumeric,
-                _ => null,
-            },
-            DataType.Boolean => rightType switch
-            {
-                DataType.Boolean or DataType.Integer => left.AsInteger < right.AsInteger,
-                _ => null,
-            },
-            DataType.String => rightType switch
-            {
-                DataType.String => string.CompareOrdinal(left.AsString, right.AsString) < 0,
-                _ => null,
-            },
-            DataType.Timestamp => rightType switch
-            {
-                DataType.Timestamp or DataType.String => left.AsTimestamp < right.AsTimestamp,
-                _ => null,
-            },
-            DataType.Interval => rightType switch
-            {
-                DataType.Interval => left.AsInterval < right.AsInterval,
-                _ => null,
-            },
-            _ => null,
-        };
-        errorCode = result.HasValue ? ErrorCode.OK : ErrorCode.CannotApplyOperator;
-        return result.HasValue
-            ? new VariantValue(result.Value)
-            : Null;
-    }
-
-    public static VariantValue LessOrEquals(ref VariantValue left, ref VariantValue right, out ErrorCode errorCode)
-        => new(
-            Less(ref left, ref right, out errorCode).AsBoolean
-            || Equals(ref left, ref right, out errorCode).AsBoolean);
 
     public static VariantValue Between(ref VariantValue value,
         ref VariantValue left, ref VariantValue right, out ErrorCode errorCode)

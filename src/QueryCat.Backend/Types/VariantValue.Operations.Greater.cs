@@ -1,14 +1,13 @@
-// ReSharper disable CompareOfFloatsByEqualityOperator
 namespace QueryCat.Backend.Types;
 
 public partial struct VariantValue
 {
-    internal static VariantValue Equals(ref VariantValue left, ref VariantValue right, out ErrorCode errorCode)
+    internal static VariantValue Greater(ref VariantValue left, ref VariantValue right, out ErrorCode errorCode)
     {
         var leftType = left.GetInternalType();
         var rightType = right.GetInternalType();
 
-        var function = GetEqualsDelegate(leftType, rightType);
+        var function = GetGreaterDelegate(leftType, rightType);
         if (function == BinaryNullDelegate)
         {
             errorCode = ErrorCode.CannotApplyOperator;
@@ -19,7 +18,7 @@ public partial struct VariantValue
         return function.Invoke(ref left, ref right);
     }
 
-    internal static BinaryFunction GetEqualsDelegate(DataType leftType, DataType rightType)
+    internal static BinaryFunction GetGreaterDelegate(DataType leftType, DataType rightType)
     {
         return leftType switch
         {
@@ -31,7 +30,7 @@ public partial struct VariantValue
                     {
                         return Null;
                     }
-                    return new VariantValue(left.AsIntegerUnsafe == right.AsIntegerUnsafe);
+                    return new VariantValue(left.AsIntegerUnsafe > right.AsIntegerUnsafe);
                 },
                 DataType.Float => (ref VariantValue left, ref VariantValue right) =>
                 {
@@ -39,7 +38,7 @@ public partial struct VariantValue
                     {
                         return Null;
                     }
-                    return new VariantValue(left.AsIntegerUnsafe == right.AsFloatUnsafe);
+                    return new VariantValue(left.AsIntegerUnsafe > right.AsFloatUnsafe);
                 },
                 DataType.Numeric => (ref VariantValue left, ref VariantValue right) =>
                 {
@@ -47,7 +46,7 @@ public partial struct VariantValue
                     {
                         return Null;
                     }
-                    return new VariantValue(left.AsIntegerUnsafe == right.AsNumericUnsafe);
+                    return new VariantValue(left.AsIntegerUnsafe > right.AsNumericUnsafe);
                 },
                 _ => BinaryNullDelegate,
             },
@@ -59,7 +58,7 @@ public partial struct VariantValue
                     {
                         return Null;
                     }
-                    return new VariantValue(left.AsFloatUnsafe == right.AsIntegerUnsafe);
+                    return new VariantValue(left.AsFloatUnsafe > right.AsFloatUnsafe);
                 },
                 DataType.Float => (ref VariantValue left, ref VariantValue right) =>
                 {
@@ -67,7 +66,7 @@ public partial struct VariantValue
                     {
                         return Null;
                     }
-                    return new VariantValue(left.AsFloatUnsafe == right.AsFloatUnsafe);
+                    return new VariantValue(left.AsFloatUnsafe > right.AsFloatUnsafe);
                 },
                 _ => BinaryNullDelegate,
             },
@@ -79,7 +78,7 @@ public partial struct VariantValue
                     {
                         return Null;
                     }
-                    return new VariantValue(left.AsNumericUnsafe == right.AsIntegerUnsafe);
+                    return new VariantValue(left.AsNumericUnsafe > right.AsIntegerUnsafe);
                 },
                 DataType.Numeric => (ref VariantValue left, ref VariantValue right) =>
                 {
@@ -87,59 +86,19 @@ public partial struct VariantValue
                     {
                         return Null;
                     }
-                    return new VariantValue(left.AsNumericUnsafe == right.AsNumericUnsafe);
+                    return new VariantValue(left.AsNumericUnsafe > right.AsNumericUnsafe);
                 },
                 _ => BinaryNullDelegate,
             },
             DataType.Boolean => rightType switch
             {
-                DataType.Boolean => (ref VariantValue left, ref VariantValue right) =>
+                DataType.Boolean or DataType.Integer => (ref VariantValue left, ref VariantValue right) =>
                 {
                     if (left.IsNull || right.IsNull)
                     {
                         return Null;
                     }
-                    return new VariantValue(left.AsBooleanUnsafe == right.AsBooleanUnsafe);
-                },
-                DataType.String => (ref VariantValue left, ref VariantValue right) =>
-                {
-                    if (left.IsNull || right.IsNull)
-                    {
-                        return Null;
-                    }
-                    return new VariantValue(left.AsBooleanUnsafe == right.AsBoolean);
-                },
-                _ => BinaryNullDelegate,
-            },
-            DataType.Timestamp => rightType switch
-            {
-                DataType.Timestamp => (ref VariantValue left, ref VariantValue right) =>
-                {
-                    if (left.IsNull || right.IsNull)
-                    {
-                        return Null;
-                    }
-                    return new VariantValue(left.AsTimestampUnsafe == right.AsTimestampUnsafe);
-                },
-                DataType.String => (ref VariantValue left, ref VariantValue right) =>
-                {
-                    if (left.IsNull || right.IsNull)
-                    {
-                        return Null;
-                    }
-                    return new VariantValue(left.AsTimestampUnsafe == right.AsTimestamp);
-                },
-                _ => BinaryNullDelegate,
-            },
-            DataType.Interval => rightType switch
-            {
-                DataType.Interval => (ref VariantValue left, ref VariantValue right) =>
-                {
-                    if (left.IsNull || right.IsNull)
-                    {
-                        return Null;
-                    }
-                    return new VariantValue(left.AsIntervalUnsafe == right.AsIntervalUnsafe);
+                    return new VariantValue(left.AsIntegerUnsafe > right.AsIntegerUnsafe);
                 },
                 _ => BinaryNullDelegate,
             },
@@ -151,43 +110,76 @@ public partial struct VariantValue
                     {
                         return Null;
                     }
-                    return new VariantValue(left.AsStringUnsafe == right.AsStringUnsafe);
+                    return new VariantValue(string.CompareOrdinal(left.AsStringUnsafe, right.AsStringUnsafe) > 0);
                 },
-                DataType.Boolean or DataType.Integer or DataType.Integer
-                    => (ref VariantValue left, ref VariantValue right) =>
+                _ => BinaryNullDelegate,
+            },
+            DataType.Timestamp => rightType switch
+            {
+                DataType.Timestamp => (ref VariantValue left, ref VariantValue right) =>
+                {
+                    if (left.IsNull || right.IsNull)
                     {
-                        if (left.IsNull || right.IsNull)
-                        {
-                            return Null;
-                        }
-                        return new VariantValue(left.AsStringUnsafe == right.AsString);
-                    },
+                        return Null;
+                    }
+                    return new VariantValue(left.AsTimestampUnsafe > right.AsTimestampUnsafe);
+                },
+                DataType.String => (ref VariantValue left, ref VariantValue right) =>
+                {
+                    if (left.IsNull || right.IsNull)
+                    {
+                        return Null;
+                    }
+                    return new VariantValue(left.AsTimestampUnsafe > right.AsTimestamp);
+                },
+                _ => BinaryNullDelegate,
+            },
+            DataType.Interval => rightType switch
+            {
+                DataType.Interval => (ref VariantValue left, ref VariantValue right) =>
+                {
+                    if (left.IsNull || right.IsNull)
+                    {
+                        return Null;
+                    }
+                    return new VariantValue(left.AsIntervalUnsafe > right.AsIntervalUnsafe);
+                },
                 _ => BinaryNullDelegate,
             },
             _ => BinaryNullDelegate,
         };
     }
 
-    internal static VariantValue NotEquals(ref VariantValue left, ref VariantValue right, out ErrorCode errorCode)
+    internal static VariantValue GreaterOrEquals(ref VariantValue left, ref VariantValue right, out ErrorCode errorCode)
     {
-        var result = Equals(ref left, ref right, out errorCode);
-        if (errorCode != ErrorCode.OK)
+        var leftType = left.GetInternalType();
+        var rightType = right.GetInternalType();
+
+        var function = GetGreaterOrEqualsDelegate(leftType, rightType);
+        if (function == BinaryNullDelegate)
         {
+            errorCode = ErrorCode.CannotApplyOperator;
             return Null;
         }
-        return Negation(ref result, out errorCode);
+
+        errorCode = ErrorCode.OK;
+        return function.Invoke(ref left, ref right);
     }
 
-    internal static BinaryFunction GetNotEqualsDelegate(DataType leftType, DataType rightType)
+    internal static BinaryFunction GetGreaterOrEqualsDelegate(DataType leftType, DataType rightType)
     {
+        var greaterDelegate = GetGreaterDelegate(leftType, rightType);
         var equalsDelegate = GetEqualsDelegate(leftType, rightType);
+
         return (ref VariantValue left, ref VariantValue right) =>
         {
             if (left.IsNull || right.IsNull)
             {
                 return Null;
             }
-            return new VariantValue(!equalsDelegate.Invoke(ref left, ref right).AsBooleanUnsafe);
+            var result = greaterDelegate.Invoke(ref left, ref right).AsBooleanUnsafe
+                || equalsDelegate.Invoke(ref left, ref right).AsBooleanUnsafe;
+            return new VariantValue(result);
         };
     }
 }

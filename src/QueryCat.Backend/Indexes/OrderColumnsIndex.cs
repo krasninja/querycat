@@ -13,6 +13,7 @@ public class OrderColumnsIndex : IOrderIndex
     private int[] _rowsOrder = Array.Empty<int>();
     private readonly OrderDirection[] _directions;
     private readonly FuncUnit[] _valueGetters;
+    private readonly int[] _columnIndexes;
 
     private ICursorRowsIterator RowsFrameIterator { get; }
 
@@ -26,6 +27,9 @@ public class OrderColumnsIndex : IOrderIndex
         private readonly int[] _greaterValues;
         private readonly int[] _lessValues;
 
+        private readonly VariantValue.BinaryFunction[] _greaterFunctions;
+        private readonly VariantValue.BinaryFunction[] _lessFunctions;
+
         public RowsComparer(OrderColumnsIndex orderColumnsIndex)
         {
             _orderColumnsIndex = orderColumnsIndex;
@@ -37,6 +41,10 @@ public class OrderColumnsIndex : IOrderIndex
                 .Select(d => d == OrderDirection.Ascending ? 1 : -1).ToArray();
             _lessValues = _orderColumnsIndex._directions
                 .Select(d => d == OrderDirection.Ascending ? -1 : 1).ToArray();
+            var columnsTypes = _orderColumnsIndex._columnIndexes
+                .Select(i => _orderColumnsIndex.RowsFrameIterator.Columns[i].DataType).ToArray();
+            _greaterFunctions = columnsTypes.Select(t => VariantValue.GetGreaterDelegate(t, t)).ToArray();
+            _lessFunctions = columnsTypes.Select(t => VariantValue.GetLessDelegate(t, t)).ToArray();
         }
 
         private void FillValues(VariantValue[] values, int rowIndex)
@@ -56,11 +64,11 @@ public class OrderColumnsIndex : IOrderIndex
 
             for (int i = 0; i < _values1.Length; i++)
             {
-                if (VariantValue.Greater(ref _values1[i], ref _values2[i], out _))
+                if (_greaterFunctions[i].Invoke(ref _values1[i], ref _values2[i]).AsBooleanUnsafe)
                 {
                     return _greaterValues[i];
                 }
-                if (VariantValue.Less(ref _values1[i], ref _values2[i], out _))
+                if (_lessFunctions[i].Invoke(ref _values1[i], ref _values2[i]))
                 {
                     return _lessValues[i];
                 }
@@ -125,6 +133,7 @@ public class OrderColumnsIndex : IOrderIndex
     {
         RowsFrameIterator = rowsFrameIterator;
         _directions = directions.ToArray();
+        _columnIndexes = columnIndexes.ToArray();
         _valueGetters = columnIndexes.Select(index => new FuncUnit(data => data.RowsIterator.Current[index], rowsFrameIterator))
             .ToArray();
     }

@@ -2,7 +2,7 @@ namespace QueryCat.Backend.Types;
 
 public partial struct VariantValue
 {
-    public static VariantValue Add(ref VariantValue left, ref VariantValue right, out ErrorCode errorCode)
+    internal static VariantValue Add(ref VariantValue left, ref VariantValue right, out ErrorCode errorCode)
     {
         var leftType = left.GetInternalType();
         var rightType = right.GetInternalType();
@@ -18,7 +18,7 @@ public partial struct VariantValue
         return function.Invoke(ref left, ref right);
     }
 
-    public static BinaryFunction GetAddDelegate(DataType leftType, DataType rightType)
+    internal static BinaryFunction GetAddDelegate(DataType leftType, DataType rightType)
     {
         return leftType switch
         {
