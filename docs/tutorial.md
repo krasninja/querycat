@@ -11,9 +11,9 @@ $ seq 1 1000 > example.csv
 Query example CSV file with simple aggregate functions and filtering:
 
 ```
-$ qcat "SELECT sum(column1), count(*) AS total FROM './example.csv' WHERE column1 % 2 = 0"
+$ qcat "SELECT sum(column0) as s, count(*) AS total FROM './example.csv' WHERE column0 % 2 = 0"
 
-| column1 | total |
+| s       | total |
 | ------- | ----- |
 | 250500  | 500   |
 ```
@@ -35,7 +35,7 @@ The `FORMAT` clause requires you to specify a function that returns any formatte
 ## Grouping, Limiting
 
 ```
-$ qcat "SELECT column1 % 3 FROM './example.csv' GROUP BY column1 % 3 HAVING column1 % 3 > 0"
+$ qcat "SELECT column0 % 3 FROM './example.csv' GROUP BY column0 % 3 HAVING column0 % 3 > 0"
 1
 2
 ```
@@ -47,7 +47,7 @@ You can use `GROUP BY` and `HAVING` clauses for grouping. To limit query result,
 ```
 $ qcat "SELECT * FROM './example.csv' OFFSET 4 FETCH 5"
 
-| filename                 | column1 |
+| filename                 | column0 |
 | ------------------------ | ------- |
 | /home/ivan/1/example.csv | 5       |
 | /home/ivan/1/example.csv | 6       |
@@ -61,9 +61,9 @@ $ qcat "SELECT * FROM './example.csv' OFFSET 4 FETCH 5"
 Ordering is implemented as part of SQL standard.
 
 ```
-qcat "SELECT * FROM './example.csv' ORDER BY column1 DESC FETCH 3"
+qcat "SELECT * FROM './example.csv' ORDER BY column0 DESC FETCH 3"
 
-| filename                 | column1 |
+| filename                 | column0 |
 | ------------------------ | ------- |
 | /home/ivan/1/example.csv | 1000    |
 | /home/ivan/1/example.csv | 999     |
@@ -77,8 +77,8 @@ For every row's source (files, logs, web resources, etc) QueryCat tries to make 
 ```
 $ qcat schema "SELECT * FROM './example.csv'"
 
-| Name       | Type       | Description |
-| ---------- | ---------- | ----------- |
-| filename   | String     | File path   |
-| column1    | Integer    |             |
+| name                      | type       | description |
+| ------------------------- | ---------- | ----------- |
+| filename                  | String     | File path.  |
+| column0                   | Integer    |             |
 ```

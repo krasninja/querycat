@@ -15,13 +15,15 @@ Just imagine that everything in the world is a table, and you can process it usi
 - 5) Input
     - 5.1) [CSV](input/csv)
     - 5.2) [IISW3C](input/iisw3c)
-    - 5.3) [STDIN](input/stdin)
-    - 5.4) [Text](input/text-line)
-    - 5.5) [TSV](output/tsv)
+    - 5.3) [JSON](input/json)
+    - 5.4) [STDIN](input/stdin)
+    - 5.5) [Text](input/text-line)
+    - 5.6) [TSV](output/tsv)
 - 6) Output
     - 6.1) [CSV](output/csv)
-    - 6.2) [Text Table](output/text-table)
-    - 6.3) [TSV](output/tsv)
+    - 6.2) [JSON](output/json)
+    - 6.3) [Text Table](output/text-table)
+    - 6.4) [TSV](output/tsv)
 - 7) Functions
     - 7.1) [Aggregate](functions/aggregate)
     - 7.2) [Date and Time](functions/datetime)
