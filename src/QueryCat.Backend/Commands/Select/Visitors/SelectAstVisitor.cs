@@ -62,11 +62,13 @@ internal abstract class SelectAstVisitor : AstVisitor
         var makeDelegateVisitor = new SelectCreateDelegateVisitor(ExecutionThread, context);
         if (offsetNode != null)
         {
+            ResolveNodesTypes(offsetNode, context);
             var count = makeDelegateVisitor.RunAndReturn(offsetNode.CountNode).Invoke().AsInteger;
             context.SetIterator(new OffsetRowsIterator(context.CurrentIterator, count));
         }
         if (fetchNode != null)
         {
+            ResolveNodesTypes(offsetNode, context);
             var count = makeDelegateVisitor.RunAndReturn(fetchNode.CountNode).Invoke().AsInteger;
             context.SetIterator(new LimitRowsIterator(context.CurrentIterator, count));
         }

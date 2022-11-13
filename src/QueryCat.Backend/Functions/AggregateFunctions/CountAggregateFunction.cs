@@ -11,6 +11,13 @@ namespace QueryCat.Backend.Functions.AggregateFunctions;
 // ReSharper disable once ClassNeverInstantiated.Global
 internal sealed class CountAggregateFunction : IAggregateFunction
 {
+    private readonly VariantValue.BinaryFunction _addDelegate;
+
+    public CountAggregateFunction()
+    {
+        _addDelegate = VariantValue.GetAddDelegate(DataType.Integer, DataType.Integer);
+    }
+
     /// <inheritdoc />
     public VariantValueArray GetInitialState(DataType type)
         => new(new VariantValue(type));
@@ -21,7 +28,7 @@ internal sealed class CountAggregateFunction : IAggregateFunction
         if (!callInfo.GetAt(0).IsNull)
         {
             state.Values[0] =
-                VariantValue.Add(ref state.Values[0], ref VariantValue.OneIntegerValue, out ErrorCode _);
+                _addDelegate.Invoke(ref state.Values[0], ref VariantValue.OneIntegerValue);
         }
     }
 

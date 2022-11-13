@@ -13,6 +13,13 @@ namespace QueryCat.Backend.Functions.AggregateFunctions;
 // ReSharper disable once ClassNeverInstantiated.Global
 internal sealed class AvgAggregateFunction : IAggregateFunction
 {
+    private readonly VariantValue.BinaryFunction _addDelegate;
+
+    public AvgAggregateFunction()
+    {
+        _addDelegate = VariantValue.GetAddDelegate(DataType.Integer, DataType.Integer);
+    }
+
     /// <inheritdoc />
     public VariantValueArray GetInitialState(DataType type)
         => new(
@@ -28,7 +35,7 @@ internal sealed class AvgAggregateFunction : IAggregateFunction
         {
             state.Values[0] += value;
             state.Values[1] =
-                VariantValue.Add(ref state.Values[1], ref VariantValue.OneIntegerValue, out ErrorCode _);
+                _addDelegate.Invoke(ref state.Values[1], ref VariantValue.OneIntegerValue);
         }
     }
 

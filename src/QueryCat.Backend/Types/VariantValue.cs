@@ -535,7 +535,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         value1._valueUnion.IntegerValue == value2._valueUnion.IntegerValue
             && ((value1._object == null && value2._object == null) || Equals(value1._object, value2._object));
 
-            /// <inheritdoc />
+    /// <inheritdoc />
     public override bool Equals(object? obj)
         => obj is VariantValue vv
             && Equals(this, ref vv);

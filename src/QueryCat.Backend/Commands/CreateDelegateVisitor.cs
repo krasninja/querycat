@@ -69,14 +69,14 @@ internal class CreateDelegateVisitor : AstVisitor
     {
         var leftAction = NodeIdFuncMap[node.Left.Id];
         var rightAction = NodeIdFuncMap[node.Right.Id];
-        var operationDelegate = VariantValue.GetOperationDelegate(node.Operation);
+        var action = VariantValue.GetOperationDelegate(node.Operation,
+            node.Left.GetDataType(), node.Right.GetDataType());
 
         VariantValue Func(VariantValueFuncData data)
         {
             var leftValue = leftAction.Invoke(data);
             var rightValue = rightAction.Invoke(data);
-            var result = operationDelegate(ref leftValue, ref rightValue, out ErrorCode code);
-            ApplyStatistic(code);
+            var result = action.Invoke(ref leftValue, ref rightValue);
             return result;
         }
         NodeIdFuncMap[node.Id] = Func;
