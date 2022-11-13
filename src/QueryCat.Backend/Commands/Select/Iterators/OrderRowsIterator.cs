@@ -28,6 +28,8 @@ internal sealed class OrderRowsIterator : IRowsIterator
     /// <inheritdoc />
     public Row Current => _rowsFrameIterator.Current;
 
+    internal RowsFrame RowsFrame => _rowsFrame;
+
     public OrderRowsIterator(
         VariantValueFuncData data,
         OrderBy[] orders)

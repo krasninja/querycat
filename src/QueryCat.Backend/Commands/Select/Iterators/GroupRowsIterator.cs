@@ -50,6 +50,8 @@ internal sealed class GroupRowsIterator : IRowsIterator
     /// <inheritdoc />
     public Row Current => _rowsFrameIterator.Current;
 
+    internal RowsFrame RowsFrame => _rowsFrame;
+
     public GroupRowsIterator(
         IRowsIterator rowsIterator,
         FuncUnit[] keys,
