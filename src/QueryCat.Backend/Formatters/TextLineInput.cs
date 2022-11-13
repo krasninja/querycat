@@ -1,4 +1,5 @@
 using QueryCat.Backend.Relational;
+using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Storage;
 using QueryCat.Backend.Types;
 
@@ -23,11 +24,11 @@ internal sealed class TextLineInput : StreamRowsInput
     }
 
     /// <inheritdoc />
-    protected override int Analyze(ICursorRowsIterator iterator)
+    protected override void Analyze(CacheRowsIterator iterator)
     {
-        SetColumns(RowsIteratorUtils.ResolveColumnsTypes(iterator));
+        RowsIteratorUtils.ResolveColumnsTypes(iterator);
         Columns[^1].Name = "text";
-        return base.Analyze(iterator);
+        base.Analyze(iterator);
     }
 
     /// <inheritdoc />

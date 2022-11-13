@@ -1,3 +1,4 @@
+using System.Buffers;
 using Xunit;
 using System.Text;
 using QueryCat.Backend.Utils;
@@ -157,12 +158,28 @@ public class DelimiterStreamReaderTests
     [Theory]
     [InlineData("test", "test")]
     [InlineData("\"test\"", "test")]
+    [InlineData("\"\"\"test\"\"\"", "\"test\"")]
     [InlineData("\"test with \"\"quote\"\"\"", "test with \"quote\"")]
     [InlineData("test with \"\"quote\"\"", "test with \"quote\"")]
-    public void Unquote(string target, string expected)
+    public void UnquoteDoubleQuotes(string target, string expected)
     {
         // Act.
-        var result1 = DelimiterStreamReader.Unquote(target).ToString();
+        var result1 = DelimiterStreamReader.UnquoteDoubleQuotes(
+            new ReadOnlySequence<char>(target.AsMemory())).ToString();
+
+        // Assert.
+        Assert.Equal(expected, result1);
+    }
+
+    [Theory]
+    [InlineData("test", "test")]
+    [InlineData("te\\\"st", "te\"st")]
+    [InlineData("\\\"st\\\'", "\"st'")]
+    public void UnquoteBackslash(string target, string expected)
+    {
+        // Act.
+        var result1 = DelimiterStreamReader.UnquoteBackslash(
+            new ReadOnlySequence<char>(target.AsMemory())).ToString();
 
         // Assert.
         Assert.Equal(expected, result1);

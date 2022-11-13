@@ -22,6 +22,7 @@ public static class FormatUtils
                 SkipEmptyLines = true,
             }
         }),
+        [".json"] = () => new JsonFormatter(),
     };
 
     public static IRowsFormatter? GetFormatterByExtension(string extension)
@@ -40,6 +41,7 @@ public static class FormatUtils
         ["application/csv"] = () => new DsvFormatter(','),
         ["application/x-csv"] = () => new DsvFormatter(','),
         ["text/tab-separated-values"] = () => new DsvFormatter('\t'),
+        ["application/json"] = () => new JsonFormatter(),
     };
 
     public static IRowsFormatter? GetFormatterByContentType(string contentType)

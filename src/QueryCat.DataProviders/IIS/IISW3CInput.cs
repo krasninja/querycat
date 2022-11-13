@@ -59,9 +59,9 @@ public sealed class IISW3CInput : StreamRowsInput
     }
 
     /// <inheritdoc />
-    public override ErrorCode ReadValue(int columnIndex, out VariantValue value)
+    protected override ErrorCode ReadValueInternal(int nonVirtualColumnIndex, DataType type, out VariantValue value)
     {
-        if (columnIndex == _dateColumnIndex)
+        if (nonVirtualColumnIndex == _dateColumnIndex)
         {
             value = VariantValue.Null;
             if (_timeColumnIndex == -1)
@@ -87,11 +87,11 @@ public sealed class IISW3CInput : StreamRowsInput
             }
         }
 
-        var offset = _timeColumnIndex > -1 && _dateColumnIndex > -1 && columnIndex >= _timeColumnIndex ? 1 : 0;
-        var columnValue = GetColumnValue(columnIndex + offset);
+        var offset = _timeColumnIndex > -1 && _dateColumnIndex > -1 && nonVirtualColumnIndex >= _timeColumnIndex ? 1 : 0;
+        var columnValue = GetInputColumnValue(nonVirtualColumnIndex + offset);
         var errorCode = VariantValue.TryCreateFromString(
             columnValue,
-            Columns[columnIndex].DataType,
+            type,
             out value)
             ? ErrorCode.OK : ErrorCode.CannotCast;
         return errorCode;
@@ -115,7 +115,7 @@ public sealed class IISW3CInput : StreamRowsInput
         bool foundHeaders = false;
         while (ReadNext())
         {
-            var line = GetColumnValue(0);
+            var line = GetInputColumnValue(0);
             if (line.StartsWith(FieldsMarker))
             {
                 ParseHeaders(GetRowText().ToString());
@@ -131,7 +131,7 @@ public sealed class IISW3CInput : StreamRowsInput
         }
     }
 
-    public void ParseHeaders(ReadOnlySpan<char> header)
+    private void ParseHeaders(ReadOnlySpan<char> header)
     {
         var fields = header.ToString().Substring(FieldsMarker.Length)
             .Split(' ', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);

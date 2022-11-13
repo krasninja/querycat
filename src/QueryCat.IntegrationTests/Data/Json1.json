@@ -1,0 +1,8 @@
+{ "id": 10,
+  "name": "test", "date": "2022-11-14", "complex": { "arr": [ 1, 2, 3], "private": true },
+  "bool": true, "double": 3.141592
+}
+
+
+{ "id": 1, "name": "test", "complexEmpty": {  }
+}

@@ -31,6 +31,7 @@ public sealed class Runner
         timer.Start();
 #endif
         ExecutionThread.FunctionsManager.RegisterWithFunction(DsvFormatter.RegisterFunctions);
+        ExecutionThread.FunctionsManager.RegisterWithFunction(JsonFormatter.RegisterFunctions);
         ExecutionThread.FunctionsManager.RegisterWithFunction(TextLineFormatter.RegisterFunctions);
         ExecutionThread.FunctionsManager.RegisterWithFunction(DateTimeFunctions.RegisterFunctions);
         ExecutionThread.FunctionsManager.RegisterWithFunction(InfoFunctions.RegisterFunctions);

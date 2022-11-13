@@ -31,8 +31,6 @@ internal sealed class DsvOptions
     /// </summary>
     public bool? HasHeader { get; init; }
 
-    public bool AddFileNameColumn { get; init; } = true;
-
     public DsvOptions(Stream stream)
     {
         Stream = stream;

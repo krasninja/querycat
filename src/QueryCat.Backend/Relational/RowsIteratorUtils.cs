@@ -47,8 +47,7 @@ public static class RowsIteratorUtils
     /// </summary>
     /// <param name="rowsIterator">Rows iterator to read.</param>
     /// <param name="numberOfRowsToAnalyze">Number of rows to analyze, default is 10.</param>
-    /// <returns>Rows frame with resolved types.</returns>
-    public static IList<Column> ResolveColumnsTypes(IRowsIterator rowsIterator, int numberOfRowsToAnalyze = 10)
+    public static void ResolveColumnsTypes(IRowsIterator rowsIterator, int numberOfRowsToAnalyze = 10)
     {
         // Read.
         RowsFrame? rowsFrame = null;
@@ -61,24 +60,17 @@ public static class RowsIteratorUtils
         }
         if (rowsFrame == null)
         {
-            return rowsIterator.Columns;
+            return;
         }
 
         // Analyze and create new columns.
-        var newColumns = new Column[rowsFrame.Columns.Length];
         for (var i = 0; i < rowsFrame.Columns.Length; i++)
         {
             var column = rowsFrame.Columns[i];
-            if (column.DataType != DataType.String)
-            {
-                newColumns[i] = column;
-            }
             var values = rowsFrame.GetColumnValues(i);
             var newType = DetermineTypeByValues(values);
-            newColumns[i] = new Column(column.Name, newType, column.Description);
+            column.DataType = newType;
         }
-
-        return newColumns;
     }
 
     internal static DataType DetermineTypeByValues(IEnumerable<string> values)

@@ -12,7 +12,7 @@ namespace QueryCat.IntegrationTests;
 /// <summary>
 /// Base class for tests.
 /// </summary>
-public class BaseTests
+public class BaseTests : IDisposable
 {
     private readonly MemoryStream _memory = new();
 
@@ -24,7 +24,6 @@ public class BaseTests
         {
             DefaultRowsOutput = new DsvOutput(new DsvOptions(_memory)
             {
-                AddFileNameColumn = false,
                 HasHeader = false,
                 InputOptions = new StreamRowsInputOptions
                 {
@@ -32,7 +31,8 @@ public class BaseTests
                     {
                         QuoteChars = new[] { '"' },
                         Delimiters = new[] { ',' },
-                    }
+                    },
+                    AddInputSourceColumn = false,
                 }
             }),
             UseConfig = true,
@@ -90,5 +90,20 @@ public class BaseTests
     {
         return new VariantValue(callInfo.GetAt(0).AsInteger
             + callInfo.GetAt(1).AsInteger);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _memory.Dispose();
+        }
+    }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
     }
 }

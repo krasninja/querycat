@@ -62,7 +62,6 @@ internal class DsvFormatter : IRowsFormatter
         var options = new DsvOptions(stream)
         {
             HasHeader = _hasHeader,
-            AddFileNameColumn = _addFileNameColumn
         };
         if (_streamRowsInputOptions != null)
         {
@@ -71,6 +70,7 @@ internal class DsvFormatter : IRowsFormatter
         else
         {
             options.InputOptions.DelimiterStreamReaderOptions.Delimiters = new[] { _delimiter };
+            options.InputOptions.AddInputSourceColumn = _addFileNameColumn;
         }
         return options;
     }

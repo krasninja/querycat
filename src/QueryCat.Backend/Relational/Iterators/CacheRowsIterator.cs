@@ -92,6 +92,15 @@ public class CacheRowsIterator : ICursorRowsIterator
         return true;
     }
 
+    /// <summary>
+    /// Remove row at specified index.
+    /// </summary>
+    /// <param name="rowIndex">Row index.</param>
+    public void RemoveRowAt(int rowIndex)
+    {
+        _cache.RemoveAt(rowIndex);
+    }
+
     /// <inheritdoc />
     public void Reset()
     {
@@ -99,6 +108,8 @@ public class CacheRowsIterator : ICursorRowsIterator
         _cache.Clear();
         _cursor = -1;
     }
+
+    public void SeekToHead() => Seek(-1, CursorSeekOrigin.Begin);
 
     /// <inheritdoc />
     public void Seek(int offset, CursorSeekOrigin origin)

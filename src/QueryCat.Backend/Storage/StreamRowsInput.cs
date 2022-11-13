@@ -18,17 +18,26 @@ namespace QueryCat.Backend.Storage;
 /// </summary>
 public abstract class StreamRowsInput : IRowsInput, IDisposable
 {
-    private readonly StreamRowsInputOptions? _options;
-
     /*
      * The main workflow is:
      * - Open()
+     *   - ReadNext() - get first row
+     *     - ReadNextInternal()
+     *     - SetDefaultColumns() - on this stage we know the real columns count, preinitialize
      *   - Analyze() - init columns, add custom columns, resolve columns types
      * - SetContext()
      * - ReadNext() - real data reading, cache first, stream next
      * - Close()
      */
-    private int _rowIndex = 0;
+
+    private readonly StreamRowsInputOptions _options;
+
+    private readonly Column[] _customColumns =
+    {
+        new("filename", DataType.String, "File path."), // Index 0.
+    };
+
+    private int _rowIndex;
 
     protected StreamReader StreamReader { get; }
 
@@ -43,12 +52,12 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     // Cache.
     private CacheRowsIterator? _cacheIterator;
 
-    private Column[] _columns = { };
+    private Column[] _columns = Array.Empty<Column>();
 
     /// <inheritdoc />
     public Column[] Columns => _columns;
 
-    private int _virtualColumnsCount = 0;
+    private int _virtualColumnsCount;
 
     private readonly DelimiterStreamReader _delimiterStreamReader;
 
@@ -62,6 +71,15 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
         _options = options ?? new();
         _delimiterStreamReader = new DelimiterStreamReader(streamReader, _options.DelimiterStreamReaderOptions);
         StreamReader = streamReader;
+    }
+
+    /// <summary>
+    /// Set the OnDelimiterDelegate delegate value to override parsing behavior.
+    /// </summary>
+    /// <param name="onDelimiterDelegate">Delegate.</param>
+    protected void SetOnDelimiterDelegate(DelimiterStreamReader.OnDelimiterDelegate onDelimiterDelegate)
+    {
+        _delimiterStreamReader.OnDelimiter = onDelimiterDelegate;
     }
 
     /// <inheritdoc />
@@ -78,35 +96,72 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     }
 
     /// <inheritdoc />
-    public virtual ErrorCode ReadValue(int columnIndex, out VariantValue value)
+    public ErrorCode ReadValue(int columnIndex, out VariantValue value)
     {
-        var columnValue = GetColumnValue(columnIndex);
-        if (columnValue.Length == 0)
+        if (TryReadVirtualOrCachedColumnValue(columnIndex, out value, out var errorCode))
         {
-            value = VariantValue.Null;
-            return ErrorCode.OK;
+            return errorCode;
         }
+
+        var nonVirtualColumnIndex = columnIndex - _virtualColumnsCount;
+        var type = Columns[columnIndex].DataType;
+        return ReadValueInternal(nonVirtualColumnIndex, type, out value);
+    }
+
+    /// <summary>
+    /// Actual value reading. It is called when there is no cached data.
+    /// </summary>
+    /// <param name="nonVirtualColumnIndex">Actual column index to read.</param>
+    /// <param name="type">Column data type.</param>
+    /// <param name="value">Return value.</param>
+    /// <returns>Error code.</returns>
+    protected virtual ErrorCode ReadValueInternal(int nonVirtualColumnIndex, DataType type, out VariantValue value)
+    {
         var errorCode = VariantValue.TryCreateFromString(
-            columnValue,
-            Columns[columnIndex].DataType,
+            _delimiterStreamReader.GetField(nonVirtualColumnIndex),
+            type,
             out value)
             ? ErrorCode.OK : ErrorCode.CannotCast;
         return errorCode;
     }
 
-    private void SetDefaultColumns()
+    private bool TryReadVirtualOrCachedColumnValue(int columnIndex, out VariantValue value, out ErrorCode errorCode)
     {
-        var virtualColumns = GetVirtualColumns();
-        _virtualColumnsCount = virtualColumns.Length;
-
-        var newColumns = new Column[_delimiterStreamReader.GetFieldsCount() + _virtualColumnsCount];
-        for (var i = 0; i < _virtualColumnsCount; i++)
+        var originalColumnIndex = columnIndex;
+        string stringValue;
+        if (_cacheIterator != null)
         {
-            newColumns[i] = new Column(virtualColumns[i]);
+            stringValue = _cacheIterator.Current[originalColumnIndex].AsString;
         }
-        for (var i = _virtualColumnsCount; i < newColumns.Length; i++)
+        else if (originalColumnIndex < _virtualColumnsCount)
         {
-            newColumns[i] = new Column(i - _virtualColumnsCount, DataType.String);
+            stringValue = GetVirtualColumnValue(_rowIndex, originalColumnIndex).AsString;
+        }
+        else
+        {
+            value = VariantValue.Null;
+            errorCode = ErrorCode.OK;
+            return false;
+        }
+
+        errorCode = VariantValue.TryCreateFromString(
+            stringValue,
+            Columns[originalColumnIndex].DataType,
+            out value)
+            ? ErrorCode.OK : ErrorCode.Error;
+        return true;
+    }
+
+    /// <summary>
+    /// Set pre initialized columns.
+    /// </summary>
+    /// <param name="columnsCount">Columns count.</param>
+    protected virtual void SetDefaultColumns(int columnsCount)
+    {
+        var newColumns = new Column[columnsCount];
+        for (var i = 0; i < newColumns.Length; i++)
+        {
+            newColumns[i] = new Column(i, DataType.String);
         }
         SetColumns(newColumns);
     }
@@ -117,21 +172,57 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     /// <param name="columns">New columns.</param>
     protected void SetColumns(IEnumerable<Column> columns)
     {
-        var newColumns = columns as Column[] ?? columns.ToArray();
-        Array.Resize(ref _columns, newColumns.Length);
-        Array.Copy(newColumns, _columns, newColumns.Length);
+        var virtualColumns = GetVirtualColumns();
+        var nonVirtualColumns = columns.Where(c => !virtualColumns.Contains(c)).ToArray();
+        Array.Resize(ref _columns, nonVirtualColumns.Length + _virtualColumnsCount);
+
+        // Add virtual columns.
+        for (var i = 0; i < _virtualColumnsCount; i++)
+        {
+            _columns[i] = new Column(virtualColumns[i]);
+        }
+
+        // Add non-virtual columns.
+        for (var i = _virtualColumnsCount; i < nonVirtualColumns.Length + _virtualColumnsCount; i++)
+        {
+            _columns[i] = nonVirtualColumns[i - _virtualColumnsCount];
+        }
     }
 
     /// <inheritdoc />
     public virtual bool ReadNext()
     {
-        bool hasData;
+        bool hasData = false;
         do
         {
-            hasData = ReadNextInternal();
+            // If we have cached data - return it first.
+            if (_cacheIterator != null)
+            {
+                if (_cacheIterator.MoveNext())
+                {
+                    hasData = true;
+                }
+                else
+                {
+                    _cacheIterator = null;
+                }
+            }
+            if (!hasData)
+            {
+                if (_isClosed)
+                {
+                    return false;
+                }
+                hasData = ReadNextInternal();
+            }
+            if (hasData)
+            {
+                _rowIndex++;
+            }
+
             if (hasData && _firstFetch)
             {
-                SetDefaultColumns();
+                SetDefaultColumns(_delimiterStreamReader.GetFieldsCount());
                 _firstFetch = false;
             }
         }
@@ -139,25 +230,12 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
         return hasData;
     }
 
-    private bool ReadNextInternal()
+    /// <summary>
+    /// Actual next data reading.
+    /// </summary>
+    /// <returns><c>True</c> if has data, <c>false</c> otherwise.</returns>
+    protected virtual bool ReadNextInternal()
     {
-        _rowIndex++;
-
-        // If we have cached data - return it first.
-        if (_cacheIterator != null)
-        {
-            if (_cacheIterator.MoveNext())
-            {
-                return true;
-            }
-            _cacheIterator = null;
-        }
-
-        if (_isClosed)
-        {
-            return false;
-        }
-
         return _delimiterStreamReader.Read();
     }
 
@@ -202,9 +280,13 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
         return _delimiterStreamReader.GetField(columnIndex);
     }
 
+    protected ReadOnlySpan<char> GetInputColumnValue(int columnIndex)
+        => GetColumnValue(columnIndex + _virtualColumnsCount);
+
     /// <inheritdoc />
     public virtual void Open()
     {
+        _virtualColumnsCount = GetVirtualColumns().Length;
         var inputIterator = new RowsInputIterator(this, autoFetch: true);
 
         // Move iterator, after that we are able to fill initial columns set.
@@ -218,10 +300,10 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
         // then provide from memory instead from input source.
         var cacheIterator = new CacheRowsIterator(inputIterator);
         cacheIterator.AddRow(inputIterator.Current);
-        cacheIterator.Seek(-1, CursorSeekOrigin.Begin);
+        cacheIterator.SeekToHead();
 
-        var startRowIndex = Analyze(cacheIterator);
-        cacheIterator.Seek(startRowIndex, CursorSeekOrigin.Begin);
+        Analyze(cacheIterator);
+        cacheIterator.SeekToHead();
         cacheIterator.Freeze();
         _cacheIterator = cacheIterator;
     }
@@ -231,17 +313,20 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     /// The data that was read by iterator will be cached.
     /// </summary>
     /// <param name="iterator">Rows iterator.</param>
-    /// <returns>The row index where the data starts.</returns>
-    protected virtual int Analyze(ICursorRowsIterator iterator)
+    protected virtual void Analyze(CacheRowsIterator iterator)
     {
-        return -1;
     }
 
     /// <summary>
     /// The method should return custom (virtual) columns array.
     /// </summary>
     /// <returns>Virtual columns array.</returns>
-    protected virtual Column[] GetVirtualColumns() => Array.Empty<Column>();
+    protected virtual Column[] GetVirtualColumns()
+    {
+        return _options.AddInputSourceColumn && StreamReader.BaseStream is FileStream
+            ? _customColumns
+            : Array.Empty<Column>();
+    }
 
     /// <summary>
     /// The method should get value for the specific custom column.
@@ -249,7 +334,14 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     /// <param name="rowIndex">Row index.</param>
     /// <param name="columnIndex">Column index.</param>
     /// <returns>Value.</returns>
-    protected virtual VariantValue GetVirtualColumnValue(int rowIndex, int columnIndex) => VariantValue.Null;
+    protected virtual VariantValue GetVirtualColumnValue(int rowIndex, int columnIndex)
+    {
+        if (columnIndex == 0 && StreamReader.BaseStream is FileStream fileStream)
+        {
+            return new VariantValue(fileStream.Name);
+        }
+        return VariantValue.Null;
+    }
 
     /// <summary>
     /// Get input column (all columns excluding virtual).

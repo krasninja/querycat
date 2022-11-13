@@ -1,0 +1,4 @@
+expected: |
+  1,N/A
+query: |
+  select top 1 id, name from 'MoviesRatings.json';

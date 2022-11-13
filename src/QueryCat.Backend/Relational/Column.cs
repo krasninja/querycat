@@ -43,7 +43,7 @@ public class Column : ICloneable
     /// <summary>
     /// Column data type.
     /// </summary>
-    public DataType DataType { get; }
+    public DataType DataType { get; internal set; }
 
     /// <summary>
     /// The suggested column data length. The overall value

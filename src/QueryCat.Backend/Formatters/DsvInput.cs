@@ -1,6 +1,6 @@
 using QueryCat.Backend.Relational;
+using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Storage;
-using QueryCat.Backend.Types;
 
 namespace QueryCat.Backend.Formatters;
 
@@ -9,11 +9,6 @@ namespace QueryCat.Backend.Formatters;
 /// </summary>
 internal sealed class DsvInput : StreamRowsInput
 {
-    private readonly Column[] _customColumns =
-    {
-        new("filename", DataType.String, "File path"), // Index 0.
-    };
-
     private bool? _hasHeader;
 
     public DsvOptions Options { get; }
@@ -29,7 +24,7 @@ internal sealed class DsvInput : StreamRowsInput
     #endregion
 
     /// <inheritdoc />
-    protected override int Analyze(ICursorRowsIterator iterator)
+    protected override void Analyze(CacheRowsIterator iterator)
     {
         var hasHeader = _hasHeader ?? RowsIteratorUtils.DetermineIfHasHeader(iterator);
         _hasHeader = hasHeader;
@@ -51,26 +46,11 @@ internal sealed class DsvInput : StreamRowsInput
             }
         }
 
-        var newColumns = RowsIteratorUtils.ResolveColumnsTypes(iterator);
-        SetColumns(newColumns);
-        return hasHeader ? 0 : -1;
-    }
-
-    /// <inheritdoc />
-    protected override Column[] GetVirtualColumns()
-    {
-        return Options.AddFileNameColumn && StreamReader.BaseStream is FileStream
-            ? _customColumns
-            : Array.Empty<Column>();
-    }
-
-    /// <inheritdoc />
-    protected override VariantValue GetVirtualColumnValue(int rowIndex, int columnIndex)
-    {
-        if (columnIndex == 0 && StreamReader.BaseStream is FileStream fileStream)
+        RowsIteratorUtils.ResolveColumnsTypes(iterator);
+        // Remove header row since it is not a data row.
+        if (hasHeader)
         {
-            return new VariantValue(fileStream.Name);
+            iterator.RemoveRowAt(0);
         }
-        return base.GetVirtualColumnValue(rowIndex, columnIndex);
     }
 }
