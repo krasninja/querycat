@@ -222,6 +222,10 @@ public class ServeCommand : BaseQueryCommand
         jsonWriter.WriteStartArray();
         foreach (var column in columns)
         {
+            if (column.IsHidden)
+            {
+                continue;
+            }
             jsonWriter.WriteStartObject();
             jsonWriter.WritePropertyName("name");
             jsonWriter.WriteStringValue(column.Name);
@@ -243,6 +247,10 @@ public class ServeCommand : BaseQueryCommand
             jsonWriter.WriteStartObject();
             for (var i = 0; i < iterator.Columns.Length; i++)
             {
+                if (iterator.Columns[i].IsHidden)
+                {
+                    continue;
+                }
                 jsonWriter.WritePropertyName(iterator.Columns[i].Name);
                 WriteJsonVariantValue(jsonWriter, iterator.Current[i]);
             }
