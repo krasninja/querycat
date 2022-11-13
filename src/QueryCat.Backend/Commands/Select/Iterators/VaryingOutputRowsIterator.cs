@@ -69,7 +69,11 @@ internal sealed class VaryingOutputRowsIterator : IRowsIterator, IDisposable
         }
 
         _functionCallInfo.InvokePushArgs(_outputFactory.Data);
-        if (_outputs.TryGetValue(_functionCallInfo.Arguments, out IRowsOutput? output))
+        var argValues = _functionCallInfo.Arguments.Values
+            .Where(a => a.GetInternalType() != DataType.Object)
+            .ToArray();
+        var args = new VariantValueArray(argValues);
+        if (_outputs.TryGetValue(args, out IRowsOutput? output))
         {
             CurrentOutput = output;
         }
@@ -87,7 +91,7 @@ internal sealed class VaryingOutputRowsIterator : IRowsIterator, IDisposable
             output.Open();
             output.SetContext(_queryContext);
             Logger.Instance.Debug($"Open for args {_functionCallInfo.Arguments}.", nameof(VaryingOutputRowsIterator));
-            _outputs.Add(new VariantValueArray(_functionCallInfo.Arguments), output);
+            _outputs.Add(args, output);
             CurrentOutput = output;
         }
 

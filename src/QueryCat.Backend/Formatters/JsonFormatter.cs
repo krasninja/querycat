@@ -24,9 +24,7 @@ internal sealed class JsonFormatter : IRowsFormatter
 
     /// <inheritdoc />
     public IRowsOutput OpenOutput(Stream output)
-    {
-        throw new NotImplementedException();
-    }
+        => new JsonOutput(output);
 
     public static void RegisterFunctions(FunctionsManager functionsManager)
     {
