@@ -1,5 +1,6 @@
 using System.Globalization;
 using QueryCat.Backend;
+using QueryCat.Backend.Logging;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Storage;
 using QueryCat.Backend.Types;
@@ -111,6 +112,7 @@ public sealed class IISW3CInput : StreamRowsInput
     /// <inheritdoc />
     public override void Open()
     {
+        Logger.Instance.Debug($"Open {this}.", nameof(IISW3CInput));
         // Try to find fields header.
         bool foundHeaders = false;
         while (ReadNext())
@@ -121,6 +123,7 @@ public sealed class IISW3CInput : StreamRowsInput
                 ParseHeaders(GetRowText().ToString());
                 foundHeaders = true;
                 _isInitialized = true;
+                Logger.Instance.Debug("Found headers.", nameof(IISW3CInput));
                 break;
             }
         }

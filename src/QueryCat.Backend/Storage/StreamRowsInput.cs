@@ -39,6 +39,11 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
 
     private int _rowIndex;
 
+    /// <summary>
+    /// Row index.
+    /// </summary>
+    protected int RowIndex => _rowIndex;
+
     protected StreamReader StreamReader { get; }
 
     private bool _isClosed;
@@ -192,9 +197,11 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     /// <inheritdoc />
     public virtual bool ReadNext()
     {
-        bool hasData = false;
+        bool hasData;
         do
         {
+            hasData = false;
+
             // If we have cached data - return it first.
             if (_cacheIterator != null)
             {
@@ -286,6 +293,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     /// <inheritdoc />
     public virtual void Open()
     {
+        Logger.Instance.Debug("Start open.", nameof(StreamRowsInput));
         _virtualColumnsCount = GetVirtualColumns().Length;
         var inputIterator = new RowsInputIterator(this, autoFetch: true);
 
@@ -306,6 +314,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
         cacheIterator.SeekToHead();
         cacheIterator.Freeze();
         _cacheIterator = cacheIterator;
+        Logger.Instance.Debug("Open finished.", nameof(StreamRowsInput));
     }
 
     /// <summary>
@@ -383,4 +392,14 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     }
 
     #endregion
+
+    /// <inheritdoc />
+    public override string ToString()
+    {
+        if (StreamReader.BaseStream is FileStream fileStream)
+        {
+            return $"{nameof(StreamRowsInput)}: {fileStream.Name}";
+        }
+        return base.ToString() ?? string.Empty;
+    }
 }
