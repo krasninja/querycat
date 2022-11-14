@@ -56,7 +56,7 @@ public static class StringFunctions
     public static VariantValue SubString(FunctionCallInfo args)
     {
         var value = args.GetAt(0).AsString;
-        var start = (int)args.GetAt(1).AsInteger;
+        var start = (int)args.GetAt(1).AsInteger - 1;
         var count = !args.GetAt(2).IsNull ? (int)args.GetAt(2).AsInteger : value.Length - start;
         return new VariantValue(value.Substring(start, count));
     }
