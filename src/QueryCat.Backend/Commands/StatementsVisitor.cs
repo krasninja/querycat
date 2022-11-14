@@ -56,7 +56,7 @@ public sealed class StatementsVisitor : AstVisitor
     public override void Visit(FunctionCallStatementNode node)
     {
         new ResolveTypesVisitor(_executionThread).Run(node);
-        var func = new CreateDelegateVisitor(_executionThread).RunAndReturn(node);
+        var func = new CreateDelegateVisitor(_executionThread).RunAndReturn(node.FunctionNode);
         ResultDelegate = () => func.Invoke();
     }
 }

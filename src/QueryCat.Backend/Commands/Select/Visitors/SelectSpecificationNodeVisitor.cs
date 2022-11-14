@@ -58,13 +58,16 @@ internal sealed partial class SelectSpecificationNodeVisitor : SelectAstVisitor
         ApplyAggregate(context, node);
         ApplyHaving(context, node.TableExpression?.HavingNode);
 
+        // SELECT.
+        CreateSelectRowsSet(context, node.ColumnsList, extended: true);
+        FillQueryContextConditions(node, context);
+
+        // DISTINCT.
+        CreateDistinctRowsSet(context, node);
+
         // ORDER BY.
         ApplyOrderBy(context, node.OrderBy);
-
-        // SELECT.
         CreateSelectRowsSet(context, node.ColumnsList);
-        FillQueryContextConditions(node, context);
-        CreateDistinctRowsSet(context, node);
 
         // OFFSET, FETCH.
         ApplyOffsetFetch(context, node.Offset, node.Fetch);
@@ -288,12 +291,24 @@ internal sealed partial class SelectSpecificationNodeVisitor : SelectAstVisitor
 
     private void CreateSelectRowsSet(
         SelectCommandContext context,
-        SelectColumnsListNode columnsNode)
+        SelectColumnsListNode columnsNode,
+        bool extended = false)
     {
         var selectColumns = CreateSelectColumns(columnsNode).ToList();
+        var projectedIterator = new ProjectedRowsIterator(context.CurrentIterator);
+
+        if (extended)
+        {
+            var iterator = context.CurrentIterator;
+            for (var i = 0; i < context.CurrentIterator.Columns.Length; i++)
+            {
+                var index = i;
+                projectedIterator.AddFuncColumn(
+                    context.CurrentIterator.Columns[index], new FuncUnit(_ => iterator.Current[index]));
+            }
+        }
 
         var makeDelegateVisitor = new SelectCreateDelegateVisitor(ExecutionThread, context);
-        var projectedIterator = new ProjectedRowsIterator(context.CurrentIterator);
         foreach (var selectColumn in selectColumns)
         {
             var func = makeDelegateVisitor.RunAndReturn(columnsNode.Columns[selectColumn.ColumnIndex]);
