@@ -51,7 +51,7 @@ selectAlias: AS (name=(IDENTIFIER | STRING_LITERAL));
 selectQuery
     : SELECT
         selectTopClause?
-        selectSetQuantifier?
+        selectDistinctClause?
         selectList
         selectTarget?
         selectFromClause
@@ -62,7 +62,8 @@ selectQuery
     | SELECT selectSublist (COMMA selectSublist)* selectTarget? # SelectQuerySingle
     ;
 selectList: selectSublist (COMMA selectSublist)*;
-selectSetQuantifier: ALL | DISTINCT;
+selectDistinctClause: ALL | DISTINCT | selectDistinctOnClause;
+selectDistinctOnClause: DISTINCT ON '(' simpleExpression (COMMA simpleExpression)* ')';
 
 // Columns.
 selectSublist

@@ -4,9 +4,12 @@ namespace QueryCat.Backend.Ast.Nodes.Select;
 
 public sealed class SelectQuerySpecificationNode : AstNode
 {
-    public SelectSetQuantifierNode QuantifierNode { get; set; } = new(false);
+    public SelectColumnsListNode ColumnsList { get; }
 
-    public SelectColumnsListNode ColumnsList { get;  }
+    /// <summary>
+    /// Distinct node.
+    /// </summary>
+    public SelectDistinctNode? DistinctNode { get; set; }
 
     /// <summary>
     /// "Into" SQL statement. Use default if null.
@@ -39,6 +42,10 @@ public sealed class SelectQuerySpecificationNode : AstNode
         {
             Target = (FunctionCallNode)node.Target.Clone();
         }
+        if (node.DistinctNode != null)
+        {
+            DistinctNode = (SelectDistinctNode)node.DistinctNode.Clone();
+        }
         if (node.TableExpression != null)
         {
             TableExpression = (SelectTableExpressionNode)node.TableExpression.Clone();
@@ -61,6 +68,10 @@ public sealed class SelectQuerySpecificationNode : AstNode
         if (Target != null)
         {
             yield return Target;
+        }
+        if (DistinctNode != null)
+        {
+            yield return DistinctNode;
         }
         if (TableExpression != null)
         {

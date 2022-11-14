@@ -49,17 +49,18 @@ internal sealed partial class SelectSpecificationNodeVisitor : SelectAstVisitor
         ApplyFilter(context, node.TableExpression);
 
         // Fetch remain data.
-        CreatePrefetchProjection(context,
-            node.GetChildren()
-                .Except(new[] { node.TableExpression?.SearchConditionNode })
-                .ToArray());
+        CreatePrefetchProjection(context, new List<IAstNode?>
+        {
+            node.ColumnsList, node.Target, node.DistinctNode, node.OrderBy, node.Offset, node.Fetch,
+            node.TableExpression
+        });
 
         // GROUP BY/HAVING.
         ApplyAggregate(context, node);
         ApplyHaving(context, node.TableExpression?.HavingNode);
 
         // SELECT.
-        CreateSelectRowsSet(context, node.ColumnsList, extended: true);
+        AddSelectRowsSet(context, node.ColumnsList);
         FillQueryContextConditions(node, context);
 
         // DISTINCT.
@@ -67,7 +68,7 @@ internal sealed partial class SelectSpecificationNodeVisitor : SelectAstVisitor
 
         // ORDER BY.
         ApplyOrderBy(context, node.OrderBy);
-        CreateSelectRowsSet(context, node.ColumnsList);
+        SetSelectRowsSet(context, node.ColumnsList);
 
         // OFFSET, FETCH.
         ApplyOffsetFetch(context, node.Offset, node.Fetch);
@@ -289,30 +290,60 @@ internal sealed partial class SelectSpecificationNodeVisitor : SelectAstVisitor
         }
     }
 
-    private void CreateSelectRowsSet(
+    private void AddSelectRowsSet(
         SelectCommandContext context,
-        SelectColumnsListNode columnsNode,
-        bool extended = false)
+        SelectColumnsListNode columnsNode)
     {
         var selectColumns = CreateSelectColumns(columnsNode).ToList();
         var projectedIterator = new ProjectedRowsIterator(context.CurrentIterator);
 
-        if (extended)
+        var iterator = context.CurrentIterator;
+        for (var i = 0; i < context.CurrentIterator.Columns.Length; i++)
         {
-            var iterator = context.CurrentIterator;
-            for (var i = 0; i < context.CurrentIterator.Columns.Length; i++)
-            {
-                var index = i;
-                projectedIterator.AddFuncColumn(
-                    context.CurrentIterator.Columns[index], new FuncUnit(_ => iterator.Current[index]));
-            }
+            var index = i;
+            projectedIterator.AddFuncColumn(
+                context.CurrentIterator.Columns[index], new FuncUnit(_ => iterator.Current[index]));
         }
 
         var makeDelegateVisitor = new SelectCreateDelegateVisitor(ExecutionThread, context);
         foreach (var selectColumn in selectColumns)
         {
             var func = makeDelegateVisitor.RunAndReturn(columnsNode.Columns[selectColumn.ColumnIndex]);
-            projectedIterator.AddFuncColumn(selectColumn.Column, func);
+            var columnIndex = projectedIterator.AddFuncColumn(selectColumn.Column, func);
+            var info = context.ColumnsInfoContainer.GetByColumn(projectedIterator.Columns[columnIndex]);
+            info.RelatedSelectSublistNode = columnsNode.Columns[selectColumn.ColumnIndex];
+        }
+        context.SetIterator(projectedIterator);
+    }
+
+    private void SetSelectRowsSet(
+        SelectCommandContext context,
+        SelectColumnsListNode columnsNode)
+    {
+        var projectedIterator = new ProjectedRowsIterator(context.CurrentIterator);
+        var iterator = context.CurrentIterator;
+        foreach (var selectColumn in columnsNode.Columns)
+        {
+            var columnInfo = context.ColumnsInfoContainer.Columns
+                .FirstOrDefault(c => c.RelatedSelectSublistNode == selectColumn);
+            if (columnInfo == null)
+            {
+                continue;
+            }
+
+            var index = -1;
+            for (var i = 0; i < iterator.Columns.Length; i++)
+            {
+                if (columnInfo.Column == iterator.Columns[i])
+                {
+                    index = i;
+                    break;
+                }
+            }
+            if (index > -1)
+            {
+                projectedIterator.AddFuncColumn(columnInfo.Column, new FuncUnit(_ => iterator.Current[index]));
+            }
         }
         context.SetIterator(projectedIterator);
     }
@@ -321,10 +352,16 @@ internal sealed partial class SelectSpecificationNodeVisitor : SelectAstVisitor
         SelectCommandContext context,
         SelectQuerySpecificationNode querySpecificationNode)
     {
-        if (querySpecificationNode.QuantifierNode.IsDistinct)
+        if (querySpecificationNode.DistinctNode == null || querySpecificationNode.DistinctNode.IsEmpty)
         {
-            context.SetIterator(new DistinctRowsIterator(context.CurrentIterator));
+            return;
         }
+
+        ResolveNodesTypes(querySpecificationNode.DistinctNode, context);
+        var makeDelegateVisitor = new SelectCreateDelegateVisitor(ExecutionThread, context);
+        var funcUnits = querySpecificationNode.DistinctNode.
+            On.Select(d => makeDelegateVisitor.RunAndReturn(d)).ToArray();
+        context.SetIterator(new DistinctRowsIterator(context.CurrentIterator, funcUnits));
     }
 
     private record struct ColumnWithIndex(
@@ -400,7 +437,7 @@ internal sealed partial class SelectSpecificationNodeVisitor : SelectAstVisitor
         }
 
         ResolveNodesTypes(selectTableExpressionNode, context);
-        CreatePrefetchProjection(context, selectTableExpressionNode);
+        CreatePrefetchProjection(context, new List<IAstNode> { selectTableExpressionNode });
 
         var makeDelegateVisitor = new SelectCreateDelegateVisitor(ExecutionThread, context);
         var predicate = makeDelegateVisitor.RunAndReturn(selectTableExpressionNode.SearchConditionNode);
@@ -461,7 +498,7 @@ internal sealed partial class SelectSpecificationNodeVisitor : SelectAstVisitor
 
     #endregion
 
-    private void CreatePrefetchProjection(SelectCommandContext context, params IAstNode?[] nodes)
+    private void CreatePrefetchProjection(SelectCommandContext context, IEnumerable<IAstNode?> nodes)
     {
         if (context.RowsInputIterator == null)
         {
@@ -479,7 +516,7 @@ internal sealed partial class SelectSpecificationNodeVisitor : SelectAstVisitor
         context.SetIterator(fetchIterator);
     }
 
-    private ISet<int> GetColumnsIdsFromNode(IRowsIterator rowsIterator, params IAstNode?[] nodes)
+    private ISet<int> GetColumnsIdsFromNode(IRowsIterator rowsIterator, IEnumerable<IAstNode?> nodes)
     {
         var columns = new HashSet<int>();
         foreach (var node in nodes)

@@ -5,7 +5,7 @@ namespace QueryCat.Backend.Types;
 /// <summary>
 /// Array of <see cref="VariantValue" /> with Equals implementation.
 /// </summary>
-public sealed class VariantValueArray
+public class VariantValueArray
 {
     private VariantValue[] _values;
 
@@ -101,4 +101,10 @@ public sealed class VariantValueArray
         }
         return sb.ToString();
     }
+
+    public static bool operator ==(VariantValueArray left, VariantValueArray right)
+        => left.Equals(right);
+
+    public static bool operator !=(VariantValueArray left, VariantValueArray right)
+        => !(left == right);
 }

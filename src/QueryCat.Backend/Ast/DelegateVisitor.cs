@@ -207,6 +207,18 @@ public abstract class DelegateVisitor : AstVisitor
     }
 
     /// <inheritdoc />
+    public override void Visit(SelectDistinctNode node)
+    {
+        OnVisit(node);
+    }
+
+    /// <inheritdoc />
+    public override void Visit(SelectExistsExpressionNode node)
+    {
+        OnVisit(node);
+    }
+
+    /// <inheritdoc />
     public override void Visit(SelectFetchNode node)
     {
         OnVisit(node);
@@ -261,13 +273,13 @@ public abstract class DelegateVisitor : AstVisitor
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectSetQuantifierNode node)
+    public override void Visit(SelectStatementNode node)
     {
         OnVisit(node);
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectStatementNode node)
+    public override void Visit(SelectSubqueryConditionExpressionNode node)
     {
         OnVisit(node);
     }

@@ -1,0 +1,5 @@
+expected: |
+  1
+  4
+query: |
+  SELECT DISTINCT ON (city || city) id FROM 'Simple2.csv'

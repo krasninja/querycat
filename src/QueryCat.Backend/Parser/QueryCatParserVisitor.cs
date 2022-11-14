@@ -136,11 +136,17 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitSelectList([NotNull] QueryCatParser.SelectListContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="QueryCatParser.selectSetQuantifier"/>.
+	/// Visit a parse tree produced by <see cref="QueryCatParser.selectDistinctClause"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitSelectSetQuantifier([NotNull] QueryCatParser.SelectSetQuantifierContext context);
+	Result VisitSelectDistinctClause([NotNull] QueryCatParser.SelectDistinctClauseContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="QueryCatParser.selectDistinctOnClause"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSelectDistinctOnClause([NotNull] QueryCatParser.SelectDistinctOnClauseContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>SelectSublistAll</c>
 	/// labeled alternative in <see cref="QueryCatParser.selectSublist"/>.

@@ -1,3 +1,4 @@
+using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Relational;
 
 namespace QueryCat.Backend.Commands.Select;
@@ -16,6 +17,11 @@ internal class ColumnsInfoContainer
         /// The target column.
         /// </summary>
         public Column Column { get; }
+
+        /// <summary>
+        /// Related AST node.
+        /// </summary>
+        public SelectColumnsSublistNode? RelatedSelectSublistNode { get; set; }
 
         /// <summary>
         /// Column redirection. It indicates that redirect column value should be used

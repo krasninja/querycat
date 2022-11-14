@@ -146,6 +146,10 @@ public abstract class AstVisitor
     {
     }
 
+    public virtual void Visit(SelectDistinctNode node)
+    {
+    }
+
     public virtual void Visit(SelectExistsExpressionNode node)
     {
     }
@@ -179,10 +183,6 @@ public abstract class AstVisitor
     }
 
     public virtual void Visit(SelectSearchConditionNode node)
-    {
-    }
-
-    public virtual void Visit(SelectSetQuantifierNode node)
     {
     }
 

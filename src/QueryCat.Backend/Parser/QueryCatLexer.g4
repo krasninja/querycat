@@ -65,6 +65,7 @@ IS:                 'IS';
 LIKE:               'LIKE';
 NOT:                'NOT';
 NULL:               'NULL';
+ON:                 'ON';
 ONLY:               'ONLY';
 OR:                 'OR';
 SOME:               'SOME';

@@ -40,7 +40,7 @@ internal partial class ProgramParserVisitor
     public override IAstNode VisitSelectQueryFull(QueryCatParser.SelectQueryFullContext context)
         => new SelectQuerySpecificationNode(this.Visit<SelectColumnsListNode>(context.selectList()))
         {
-            QuantifierNode = this.Visit(context.selectSetQuantifier(), new SelectSetQuantifierNode(false)),
+            DistinctNode = this.VisitMaybe<SelectDistinctNode>(context.selectDistinctClause()),
             TableExpression = this.VisitMaybe<SelectTableExpressionNode>(context.selectFromClause()),
             Target = this.VisitMaybe<FunctionCallNode>(context.selectTarget()),
             OrderBy = this.VisitMaybe<SelectOrderByNode>(context.selectOrderByClause()),
@@ -64,9 +64,38 @@ internal partial class ProgramParserVisitor
     public override IAstNode VisitSelectList(QueryCatParser.SelectListContext context)
         => new SelectColumnsListNode(this.Visit<SelectColumnsSublistNode>(context.selectSublist()).ToList());
 
+    #endregion
+
+    #region Distinct
+
     /// <inheritdoc />
-    public override IAstNode VisitSelectSetQuantifier(QueryCatParser.SelectSetQuantifierContext context)
-        => new SelectSetQuantifierNode(context.DISTINCT() != null);
+    public override IAstNode VisitSelectDistinctClause(QueryCatParser.SelectDistinctClauseContext context)
+    {
+        if (context.ALL() != null)
+        {
+            return SelectDistinctNode.Empty;
+        }
+        if (context.DISTINCT() != null)
+        {
+            return SelectDistinctNode.All;
+        }
+        var distinctClause = context.selectDistinctOnClause();
+        if (distinctClause != null)
+        {
+            return this.Visit(distinctClause);
+        }
+        return SelectDistinctNode.Empty;
+    }
+
+    /// <inheritdoc />
+    public override IAstNode VisitSelectDistinctOnClause(QueryCatParser.SelectDistinctOnClauseContext context)
+    {
+        if (context.DISTINCT() == null)
+        {
+            return SelectDistinctNode.Empty;
+        }
+        return new SelectDistinctNode(this.Visit<ExpressionNode>(context.simpleExpression()).ToList());
+    }
 
     #endregion
 
