@@ -19,7 +19,7 @@ public class CsvParseBenchmarks
     [Benchmark]
     public int ReadAllUsersWithDsvFormatter()
     {
-        using var file = OpenTestUsersFile();
+        using var file = UsersCsvFile.OpenTestUsersFile();
         var input = new DsvFormatter(',', addFileNameColumn: false).OpenInput(file);
         input.Open();
         var rowsFrame = new RowsFrame(input.Columns);
@@ -34,7 +34,7 @@ public class CsvParseBenchmarks
         var rowsFrame = User.ClassBuilder.BuildRowsFrame();
         var row = new Row(rowsFrame);
 
-        using var file = OpenTestUsersFile();
+        using var file = UsersCsvFile.OpenTestUsersFile();
         var csv = new DelimiterStreamReader(new StreamReader(file), new DelimiterStreamReader.ReaderOptions
         {
             Delimiters = new[] { ',' },
@@ -74,7 +74,7 @@ public class CsvParseBenchmarks
         var rowsFrame = User.ClassBuilder.BuildRowsFrame();
         var row = new Row(rowsFrame);
 
-        using var file = OpenTestUsersFile();
+        using var file = UsersCsvFile.OpenTestUsersFile();
         using var csv = CsvDataReader.Create(new StreamReader(file), new CsvDataReaderOptions
         {
             Culture = CultureInfo.InvariantCulture,
@@ -110,7 +110,7 @@ public class CsvParseBenchmarks
         var rowsFrame = User.ClassBuilder.BuildRowsFrame();
         var row = new Row(rowsFrame);
 
-        using var file = OpenTestUsersFile();
+        using var file = UsersCsvFile.OpenTestUsersFile();
         using var csv = new CsvReader(new StreamReader(file), new CsvConfiguration(CultureInfo.CurrentCulture));
         csv.Read();
         csv.ReadHeader();
@@ -148,7 +148,7 @@ public class CsvParseBenchmarks
         var rowsFrame = User.ClassBuilder.BuildRowsFrame();
         var row = new Row(rowsFrame);
 
-        using var file = OpenTestUsersFile();
+        using var file = UsersCsvFile.OpenTestUsersFile();
         var csv = new NReco.Csv.CsvReader(new StreamReader(file));
         csv.Read();
 
@@ -189,7 +189,7 @@ public class CsvParseBenchmarks
         var rowsFrame = User.ClassBuilder.BuildRowsFrame();
         var row = new Row(rowsFrame);
 
-        using var file = OpenTestUsersFile();
+        using var file = UsersCsvFile.OpenTestUsersFile();
         using var streamReader = new StreamReader(file);
         streamReader.ReadLine(); // Read header.
         while (streamReader.ReadLine() is { } line)
@@ -214,27 +214,5 @@ public class CsvParseBenchmarks
         }
 
         return rowsFrame.TotalRows;
-    }
-
-    private FileStream OpenTestUsersFile()
-    {
-        string[] locations =
-        {
-            ".",
-            "../../..",
-            "../../../../../../..",
-        };
-
-        foreach (var location in locations)
-        {
-            var file = Path.Combine(location, CreateTestCsvFileCommand.UsersFileName);
-            if (File.Exists(file))
-            {
-                return File.OpenRead(file);
-            }
-        }
-
-        throw new InvalidOperationException(
-            $"Cannot find file {CreateTestCsvFileCommand.UsersFileName}, don't you forget to run 'create-test-csv' command?");
     }
 }
