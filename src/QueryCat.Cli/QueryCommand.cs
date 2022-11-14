@@ -5,7 +5,10 @@ using QueryCat.Backend.Functions.StandardFunctions;
 
 namespace QueryCat.Cli;
 
-[Command(Name = "qcat", Description = "The simple data query and transformation utility.",
+[Command(
+    Name = "qcat",
+    Description = "The simple text parsing, data query and transformation utility.",
+    ExtendedHelpText = @"Visit https://github.com/krasninja/querycat for more information.",
     UnrecognizedArgumentHandling = UnrecognizedArgumentHandling.Throw)]
 [VersionOptionFromMember("--version", MemberName = nameof(InfoFunctions.GetVersion))]
 [Subcommand(

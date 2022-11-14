@@ -9,8 +9,6 @@ namespace QueryCat.Cli;
 /// <summary>
 /// Program entry point.
 /// </summary>
-[Command(Name = "qcat", Description = "The simple data query and transformation utility",
-    UnrecognizedArgumentHandling = UnrecognizedArgumentHandling.Throw)]
 [VersionOptionFromMember("--version", MemberName = nameof(InfoFunctions.GetVersion))]
 [HelpOption("-?|-h|--help")]
 internal class Program
