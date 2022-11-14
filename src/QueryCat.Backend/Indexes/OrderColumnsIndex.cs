@@ -86,14 +86,7 @@ public class OrderColumnsIndex : IOrderIndex
         public Column[] Columns => _orderColumnsIndex.RowsFrameIterator.Columns;
 
         /// <inheritdoc />
-        public Row Current
-        {
-            get
-            {
-                _orderColumnsIndex.RowsFrameIterator.Seek(_orderColumnsIndex._rowsOrder[_currentRowIndex], CursorSeekOrigin.Begin);
-                return _orderColumnsIndex.RowsFrameIterator.Current;
-            }
-        }
+        public Row Current => _orderColumnsIndex.RowsFrameIterator.Current;
 
         public OrderColumnsIterator(OrderColumnsIndex orderColumnsIndex)
         {
