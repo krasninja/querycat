@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net7.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <CodeAnalysisRuleSet>../../tools/QueryCat.ruleset</CodeAnalysisRuleSet>
@@ -10,6 +10,7 @@
     <Authors>Ivan Kozhin</Authors>
     <Product>QueryCat</Product>
     <Copyright>Copyright (c) 2022</Copyright>
+    <LangVersion>default</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
