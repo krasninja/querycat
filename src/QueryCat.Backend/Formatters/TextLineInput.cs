@@ -17,7 +17,7 @@ internal sealed class TextLineInput : StreamRowsInput
 
     public TextLineInput(Stream stream) : base(new StreamReader(stream))
     {
-        if (StreamReader?.BaseStream is not FileStream)
+        if (StreamReader.BaseStream is not FileStream)
         {
             _customColumns = Array.Empty<Column>();
         }

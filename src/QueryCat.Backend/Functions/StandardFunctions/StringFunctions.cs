@@ -76,7 +76,6 @@ public static class StringFunctions
             count = value.Length - start;
         }
 
-
         return new VariantValue(value.Substring(start, count));
     }
 
