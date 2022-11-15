@@ -4,7 +4,7 @@ using QueryCat.Backend.Types;
 
 namespace QueryCat.Backend.Formatters;
 
-public class NullInput : RowsInput
+internal sealed class NullInput : RowsInput
 {
     /// <inheritdoc />
     public override Column[] Columns { get; protected set; } = Array.Empty<Column>();

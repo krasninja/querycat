@@ -5,7 +5,10 @@ using QueryCat.Backend.Types;
 
 namespace QueryCat.Backend.Formatters;
 
-public class NullFormatter : IRowsFormatter
+/// <summary>
+/// Null formatters do nothing and can be used for testing only.
+/// </summary>
+internal sealed class NullFormatter : IRowsFormatter
 {
     [Description("NULL formatter.")]
     [FunctionSignature("null_fmt(): object<IRowsFormatter>")]
