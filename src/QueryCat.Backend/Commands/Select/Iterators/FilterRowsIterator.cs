@@ -10,7 +10,7 @@ namespace QueryCat.Backend.Commands.Select.Iterators;
 internal sealed class FilterRowsIterator : IRowsIterator
 {
     private readonly IRowsIterator _rowsIterator;
-    private readonly FuncUnit _predicate;
+    private readonly IFuncUnit _predicate;
 
     /// <inheritdoc />
     public Column[] Columns => _rowsIterator.Columns;
@@ -20,7 +20,7 @@ internal sealed class FilterRowsIterator : IRowsIterator
 
     public FilterRowsIterator(
         IRowsIterator rowsIterator,
-        FuncUnit predicate)
+        IFuncUnit predicate)
     {
         _rowsIterator = rowsIterator;
         _predicate = predicate;

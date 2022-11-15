@@ -19,6 +19,6 @@ internal sealed record AggregateTarget(
     DataType ReturnType,
     IAggregateFunction AggregateFunction,
     FunctionCallInfo FunctionCallInfo,
-    VariantValueFunc ValueGenerator,
+    IFuncUnit ValueGenerator,
     FunctionCallNode Node,
     string Name);

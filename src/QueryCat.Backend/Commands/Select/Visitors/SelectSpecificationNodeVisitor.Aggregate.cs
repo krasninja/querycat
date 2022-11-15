@@ -119,16 +119,16 @@ internal sealed partial class SelectSpecificationNodeVisitor
         context.SetIterator(new FilterRowsIterator(context.CurrentIterator, predicate));
     }
 
-    private FuncUnit[] CreateGroupKeyValuesFactory(SelectGroupByNode? groupByNode,
+    private IFuncUnit[] CreateGroupKeyValuesFactory(SelectGroupByNode? groupByNode,
         SelectCommandContext context)
     {
         // If there is no GROUP BY statement but there are aggregates functions in SELECT -
         // just generate "fake" key.
         if (groupByNode == null || !groupByNode.GroupBy.Any())
         {
-            return new FuncUnit[]
+            return new IFuncUnit[]
             {
-                new(VariantValue.OneIntegerValue)
+                new FuncUnitStatic(VariantValue.OneIntegerValue)
             };
         }
         var makeDelegateVisitor = new SelectCreateDelegateVisitor(ExecutionThread, context);

@@ -11,7 +11,7 @@ namespace QueryCat.Backend.Commands.Select.Iterators;
 /// </summary>
 internal sealed class OrderRowsIterator : IRowsIterator
 {
-    private readonly VariantValueFuncData _data;
+    private readonly IRowsIterator _rowsIterator;
     private readonly OrderBy[] _orders;
     private readonly OrderColumnsIndex _orderIndex;
     private readonly IRowsIterator _orderIndexIterator;
@@ -20,7 +20,7 @@ internal sealed class OrderRowsIterator : IRowsIterator
 
     private bool _isInitialized;
 
-    internal record OrderBy(FuncUnit Func, OrderDirection Direction, DataType DataType);
+    internal record OrderBy(IFuncUnit Func, OrderDirection Direction, DataType DataType);
 
     /// <inheritdoc />
     public Column[] Columns => _rowsFrameIterator.Columns;
@@ -30,14 +30,12 @@ internal sealed class OrderRowsIterator : IRowsIterator
 
     internal RowsFrame RowsFrame => _rowsFrame;
 
-    public OrderRowsIterator(
-        VariantValueFuncData data,
-        OrderBy[] orders)
+    public OrderRowsIterator(IRowsIterator rowsIterator, OrderBy[] orders)
     {
-        _data = data;
+        _rowsIterator = rowsIterator;
         _orders = orders;
 
-        var columns = _data.RowsIterator.Columns.Union(
+        var columns = _rowsIterator.Columns.Union(
             orders.Select((i, index) => new Column($"__order{index}", i.DataType)));
         _rowsFrame = new RowsFrame(columns.ToArray());
         _rowsFrameIterator = _rowsFrame.GetIterator();
@@ -45,7 +43,7 @@ internal sealed class OrderRowsIterator : IRowsIterator
         _orderIndex = new OrderColumnsIndex(
             _rowsFrameIterator,
             orders.Select(o => o.Direction).ToArray(),
-            orders.Select((o, index) => index + _data.RowsIterator.Columns.Length).ToArray()
+            orders.Select((o, index) => index + _rowsIterator.Columns.Length).ToArray()
         );
         _orderIndexIterator = _orderIndex.GetOrderIterator();
     }
@@ -66,15 +64,15 @@ internal sealed class OrderRowsIterator : IRowsIterator
     private void CopyRowIteratorToFrame()
     {
         var row = new Row(_rowsFrame);
-        while (_data.RowsIterator.MoveNext())
+        while (_rowsIterator.MoveNext())
         {
-            for (int i = 0; i < _data.RowsIterator.Columns.Length; i++)
+            for (int i = 0; i < _rowsIterator.Columns.Length; i++)
             {
-                row[i] = _data.RowsIterator.Current[i];
+                row[i] = _rowsIterator.Current[i];
             }
             for (int i = 0; i < _orders.Length; i++)
             {
-                row[i + _data.RowsIterator.Columns.Length] = _orders[i].Func.Invoke();
+                row[i + _rowsIterator.Columns.Length] = _orders[i].Func.Invoke();
             }
             _rowsFrame.AddRow(row);
         }
@@ -90,6 +88,6 @@ internal sealed class OrderRowsIterator : IRowsIterator
     /// <inheritdoc />
     public void Explain(IndentedStringBuilder stringBuilder)
     {
-        stringBuilder.AppendRowsIteratorsWithIndent("Order", _data.RowsIterator);
+        stringBuilder.AppendRowsIteratorsWithIndent("Order", _rowsIterator);
     }
 }

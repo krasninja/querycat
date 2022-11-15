@@ -39,8 +39,7 @@ internal abstract class SelectAstVisitor : AstVisitor
                 n.GetDataType()
             )
         );
-        var scope = new VariantValueFuncData(context.CurrentIterator);
-        context.SetIterator(new OrderRowsIterator(scope, orderFunctions.ToArray()));
+        context.SetIterator(new OrderRowsIterator(context.CurrentIterator, orderFunctions.ToArray()));
     }
 
     protected OrderDirection ConvertDirection(SelectOrderSpecification order) => order switch

@@ -99,7 +99,7 @@ internal sealed class SelectBodyNodeVisitor : SelectAstVisitor
         {
             var columnIndex = i;
             projectedIterator.AddFuncColumn(firstQueryContext.CurrentIterator.Columns[i],
-                new FuncUnit(data => iterator.Current[columnIndex]));
+                new FuncUnitFromRowsIterator(iterator, columnIndex));
         }
         context.SetIterator(projectedIterator);
     }

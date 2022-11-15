@@ -16,15 +16,15 @@ internal sealed class VaryingOutputRowsIterator : IRowsIterator, IDisposable
 {
     private readonly IRowsIterator _rowsIterator;
     private readonly QueryContext _queryContext;
-    private readonly FuncUnit _outputFactory;
+    private readonly IFuncUnit _outputFactory;
     private readonly FunctionCallInfo _functionCallInfo;
     private readonly Dictionary<VariantValueArray, IRowsOutput> _outputs = new();
 
     /// <inheritdoc />
-    public Column[] Columns => _outputFactory.Data.RowsIterator.Columns;
+    public Column[] Columns => _rowsIterator.Columns;
 
     /// <inheritdoc />
-    public Row Current => _outputFactory.Data.RowsIterator.Current;
+    public Row Current => _rowsIterator.Current;
 
     public IRowsOutput CurrentOutput { get; private set; }
 
@@ -32,7 +32,7 @@ internal sealed class VaryingOutputRowsIterator : IRowsIterator, IDisposable
 
     public VaryingOutputRowsIterator(
         IRowsIterator rowsIterator,
-        FuncUnit func,
+        IFuncUnit func,
         FunctionCallInfo functionCallInfo,
         IRowsOutput defaultRowsOutput,
         QueryContext queryContext)
@@ -51,7 +51,7 @@ internal sealed class VaryingOutputRowsIterator : IRowsIterator, IDisposable
         IRowsOutput defaultRowsOutput,
         QueryContext queryContext) : this(
             rowsIterator: rowsIterator,
-            func: new FuncUnit(_ => VariantValue.CreateFromObject(defaultRowsOutput)),
+            func: new FuncUnitDelegate(() => VariantValue.CreateFromObject(defaultRowsOutput)),
             functionCallInfo: FunctionCallInfo.Empty,
             defaultRowsOutput,
             queryContext)
@@ -68,7 +68,7 @@ internal sealed class VaryingOutputRowsIterator : IRowsIterator, IDisposable
             return false;
         }
 
-        _functionCallInfo.InvokePushArgs(_outputFactory.Data);
+        _functionCallInfo.InvokePushArgs();
         var argValues = _functionCallInfo.Arguments.Values
             .Where(a => a.GetInternalType() != DataType.Object)
             .ToArray();

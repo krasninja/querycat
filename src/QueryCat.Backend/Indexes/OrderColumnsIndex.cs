@@ -12,7 +12,7 @@ public class OrderColumnsIndex : IOrderIndex
 {
     private int[] _rowsOrder = Array.Empty<int>();
     private readonly OrderDirection[] _directions;
-    private readonly FuncUnit[] _valueGetters;
+    private readonly IFuncUnit[] _valueGetters;
     private readonly int[] _columnIndexes;
 
     private ICursorRowsIterator RowsFrameIterator { get; }
@@ -127,7 +127,7 @@ public class OrderColumnsIndex : IOrderIndex
         RowsFrameIterator = rowsFrameIterator;
         _directions = directions.ToArray();
         _columnIndexes = columnIndexes.ToArray();
-        _valueGetters = columnIndexes.Select(index => new FuncUnit(data => data.RowsIterator.Current[index], rowsFrameIterator))
+        _valueGetters = columnIndexes.Select(index => new FuncUnitFromRowsIterator(rowsFrameIterator, index))
             .ToArray();
     }
 

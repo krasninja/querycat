@@ -26,14 +26,13 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
     }
 
     /// <inheritdoc />
-    public override FuncUnit RunAndReturn(IAstNode node)
+    public override IFuncUnit RunAndReturn(IAstNode node)
     {
         _subQueryIterators.Clear();
         base.RunAndReturn(node);
-        return new FuncUnit(NodeIdFuncMap[node.Id], _context.CurrentIterator)
-        {
-            SubQueryIterators = _subQueryIterators.ToArray()
-        };
+        var funcUnit = NodeIdFuncMap[node.Id];
+        funcUnit.SetData(FuncUnit.SubqueriesRowsIterators, _subQueryIterators);
+        return funcUnit;
     }
 
     /// <inheritdoc />
@@ -52,7 +51,7 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
                 columnIndex = rowsIterator.GetColumnIndex(info.Redirect);
             }
             var iterator = rowsIterator;
-            NodeIdFuncMap[node.Id] = data => iterator.Current[columnIndex];
+            NodeIdFuncMap[node.Id] = new FuncUnitFromRowsIterator(iterator, columnIndex);
         }
     }
 
@@ -73,7 +72,7 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
         else
         {
             var iterator = rowsIterator!;
-            NodeIdFuncMap[node.Id] = data => iterator.Current[columnIndex];
+            NodeIdFuncMap[node.Id] = new FuncUnitFromRowsIterator(iterator, columnIndex);
         }
     }
 
@@ -86,7 +85,7 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
             throw new InvalidOperationException("Incorrect subquery type.");
         }
 
-        VariantValue Func(VariantValueFuncData data)
+        VariantValue Func()
         {
             rowsIterator.Reset();
             if (rowsIterator.MoveNext())
@@ -96,7 +95,7 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
             return VariantValue.FalseValue;
         }
         _subQueryIterators.Add(rowsIterator);
-        NodeIdFuncMap[node.Id] = Func;
+        NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func);
     }
 
     /// <inheritdoc />
@@ -123,7 +122,7 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
         if (node.HasAttribute(AstAttributeKeys.InputAggregateIndexKey))
         {
             var index = node.GetAttribute<int>(AstAttributeKeys.InputAggregateIndexKey);
-            NodeIdFuncMap[node.Id] = data => data.RowsIterator.Current[index];
+            NodeIdFuncMap[node.Id] = new FuncUnitFromRowsIterator(_context.CurrentIterator, index);
             return;
         }
 
@@ -174,7 +173,7 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
             throw new InvalidOperationException(Resources.Errors.InvalidRowsInputType);
         }
 
-        VariantValue Func(VariantValueFuncData data)
+        VariantValue Func()
         {
             rowsIterator.Reset();
             if (rowsIterator.MoveNext())
@@ -185,7 +184,7 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
         }
 
         _subQueryIterators.Add(rowsIterator);
-        NodeIdFuncMap[node.Id] = Func;
+        NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func);
     }
 
     /// <inheritdoc />
@@ -207,9 +206,9 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
         }
         var operationDelegate = VariantValue.GetOperationDelegate(node.Operation);
 
-        VariantValue AllFunc(VariantValueFuncData data)
+        VariantValue AllFunc()
         {
-            var leftValue = NodeIdFuncMap[node.Left.Id].Invoke(data);
+            var leftValue = NodeIdFuncMap[node.Left.Id].Invoke();
             rowsIterator.Reset();
             while (rowsIterator.MoveNext())
             {
@@ -224,9 +223,9 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
             return VariantValue.TrueValue;
         }
 
-        VariantValue AnyFunc(VariantValueFuncData data)
+        VariantValue AnyFunc()
         {
-            var leftValue = NodeIdFuncMap[node.Left.Id].Invoke(data);
+            var leftValue = NodeIdFuncMap[node.Left.Id].Invoke();
             rowsIterator.Reset();
             while (rowsIterator.MoveNext())
             {
@@ -244,11 +243,11 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
         _subQueryIterators.Add(rowsIterator);
         if (node.Operator == SelectSubqueryConditionExpressionNode.QuantifierOperator.Any)
         {
-            NodeIdFuncMap[node.Id] = AnyFunc;
+            NodeIdFuncMap[node.Id] = new FuncUnitDelegate(AnyFunc);
         }
         else if (node.Operator == SelectSubqueryConditionExpressionNode.QuantifierOperator.All)
         {
-            NodeIdFuncMap[node.Id] = AllFunc;
+            NodeIdFuncMap[node.Id] = new FuncUnitDelegate(AllFunc);
         }
         else
         {
