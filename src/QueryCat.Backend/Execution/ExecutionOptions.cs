@@ -47,8 +47,12 @@ public sealed class ExecutionOptions
 
     public ExecutionOptions(TextTableOutput.Style outputStyle = TextTableOutput.Style.Table)
     {
-        DefaultRowsOutput = new TextTableOutput(
+        var tableOutput = new TextTableOutput(
             stream: StandardInputOutput.GetConsoleOutput(),
             style: outputStyle);
+        DefaultRowsOutput = new PagingOutput(tableOutput)
+        {
+            PagingRowsCount = PagingSize,
+        };
     }
 }
