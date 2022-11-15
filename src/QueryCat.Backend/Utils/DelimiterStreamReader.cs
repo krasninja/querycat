@@ -250,8 +250,8 @@ public class DelimiterStreamReader
                 if (_options.DelimitersCanRepeat)
                 {
                     while (EnsureHasAdvanceData(ref sequenceReader)
-                        && GetNextCharacter(out var nextChar)
-                        && Array.IndexOf(_options.Delimiters, nextChar) > -1)
+                           && GetNextCharacter(out var nextChar)
+                           && Array.IndexOf(_options.Delimiters, nextChar) > -1)
                     {
                         _currentDelimiterPosition++;
                         sequenceReader.Advance(1);
@@ -268,11 +268,11 @@ public class DelimiterStreamReader
                     _currentDelimiterPosition = sequenceReader.Consumed;
                     break;
                 }
-                sequenceReader.TryPeek(out char ch);
+                var ch = sequenceReader.CurrentSpan[sequenceReader.CurrentSpanIndex];
                 sequenceReader.Advance(1);
 
                 // Quotes.
-                if (Array.IndexOf(_options.QuoteChars, ch) > -1)
+                if (isInQuotes || Array.IndexOf(_options.QuoteChars, ch) > -1)
                 {
                     if (fieldStart)
                     {
@@ -345,8 +345,7 @@ public class DelimiterStreamReader
                         // Process /r/n Windows line end case.
                         if (ch == '\r'
                             && EnsureHasAdvanceData(ref sequenceReader)
-                            && GetNextCharacter(out var nextCh)
-                            && nextCh == '\n')
+                            && sequenceReader.IsNext('\n'))
                         {
                             _currentDelimiterPosition++;
                         }
@@ -354,8 +353,10 @@ public class DelimiterStreamReader
                         // Skip empty line and try to read next.
                         if (_options.SkipEmptyLines && IsEmpty())
                         {
-                            sequenceReader.Advance(_currentDelimiterPosition);
-                            _fieldInfoLastIndex = 1;
+                            sequenceReader.Advance(1);
+                            _fieldInfoLastIndex = 0;
+                            currentField = ref GetNextFieldInfo();
+                            currentField.StartIndex = _currentDelimiterPosition;
                             continue;
                         }
 
@@ -379,7 +380,7 @@ public class DelimiterStreamReader
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     private bool IsEmpty()
-        => _fieldInfoLastIndex == 1 && _fieldInfos[0].EndIndex == 1;
+        => _fieldInfoLastIndex <= 2 && _fieldInfos[0].EndIndex == 1;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     private int ReadNextBufferData()
