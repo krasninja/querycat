@@ -10,7 +10,7 @@ public static class FormatUtils
 {
     private static readonly Dictionary<string, Func<IRowsFormatter>> FormatterByExtensionFactories = new()
     {
-        [".csv"] = () => new DsvFormatter(','),
+        [".csv"] = () => new DsvFormatter(),
         [".tsv"] = () => new DsvFormatter('\t'),
         [".tab"] = () => new DsvFormatter('\t'),
         [".log"] = () => new DsvFormatter(new StreamRowsInputOptions
@@ -36,7 +36,7 @@ public static class FormatUtils
 
     private static readonly Dictionary<string, Func<IRowsFormatter>> FormatterByContentTypeFactories = new()
     {
-        ["text/csv"] = () => new DsvFormatter(','),
+        ["text/csv"] = () => new DsvFormatter(),
         ["text/x-csv"] = () => new DsvFormatter(','),
         ["application/csv"] = () => new DsvFormatter(','),
         ["application/x-csv"] = () => new DsvFormatter(','),

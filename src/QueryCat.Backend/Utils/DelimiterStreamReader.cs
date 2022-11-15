@@ -24,6 +24,7 @@ public class DelimiterStreamReader
     private const int DefaultBufferSize = 0x4000;
 
     private static readonly char[] AutoDetectDelimiters = { ',', '\t', ';', '|' };
+    private static readonly char[] EndOfLineCharacters = { '\n', '\r' };
 
     public delegate void OnDelimiterDelegate(char ch, long pos, out bool countField, out bool endLine);
 
@@ -59,6 +60,11 @@ public class DelimiterStreamReader
         /// Columns delimiters.
         /// </summary>
         public char[] Delimiters { get; set; } = Array.Empty<char>();
+
+        /// <summary>
+        /// Get the preferred delimiter if we cannot determine any from line.
+        /// </summary>
+        public char? PreferredDelimiter { get; set; }
 
         /// <summary>
         /// Can a delimiter be repeated. Can be useful for example for whitespace delimiter.
@@ -127,7 +133,7 @@ public class DelimiterStreamReader
     private readonly DynamicBuffer<char> _dynamicBuffer;
     private readonly StreamReader _streamReader;
     private readonly ReaderOptions _options;
-    private readonly char[] _stopCharacters;
+    private char[] _stopCharacters = Array.Empty<char>();
 
     // Stores positions of delimiters for columns.
     private FieldInfo[] _fieldInfos = new FieldInfo[32];
@@ -150,9 +156,12 @@ public class DelimiterStreamReader
         _streamReader = streamReader;
         _options = options ?? new ReaderOptions();
         _dynamicBuffer = new DynamicBuffer<char>(_options.BufferSize);
+        InitStopCharacters();
+    }
 
-        // Stop characters.
-        var endOfLineCharacters = _options.CompleteOnEndOfLine ? new[] { '\n', '\r' } : Array.Empty<char>();
+    private void InitStopCharacters()
+    {
+        var endOfLineCharacters = _options.CompleteOnEndOfLine ? EndOfLineCharacters : Array.Empty<char>();
         _stopCharacters = _options.Delimiters
             .Union(_options.QuoteChars)
             .Union(endOfLineCharacters)
@@ -191,7 +200,7 @@ public class DelimiterStreamReader
     /// <summary>
     /// Get current line fields count.
     /// </summary>
-    /// <returns></returns>
+    /// <returns>Fields count.</returns>
     public int GetFieldsCount() => _fieldInfoLastIndex - 1;
 
     /// <summary>
@@ -216,6 +225,11 @@ public class DelimiterStreamReader
         if (_dynamicBuffer.IsEmpty)
         {
             ReadNextBufferData();
+        }
+
+        if (_options.Delimiters.Length == 0)
+        {
+            FindDelimiter();
         }
 
         int readBytes;
@@ -500,6 +514,63 @@ public class DelimiterStreamReader
         }
         return _currentSequence.Slice(
             _fieldInfos[0].StartIndex, _fieldInfos[_fieldInfoLastIndex - 2].EndIndex - 1);
+    }
+
+    private void FindDelimiter()
+    {
+        SequenceReader<char> sequenceReader;
+        ReadOnlySpan<char> line;
+        do
+        {
+            _currentSequence = _dynamicBuffer.GetSequence();
+            sequenceReader = new SequenceReader<char>(_currentSequence);
+        }
+        while (!sequenceReader.TryReadToAny(out line, EndOfLineCharacters));
+
+        if (!TryDetectDelimiter(line, out char delimiter))
+        {
+            if (_options.PreferredDelimiter.HasValue)
+            {
+                delimiter = _options.PreferredDelimiter.Value;
+            }
+            else
+            {
+                throw new InvalidOperationException("Cannot determine delimiter. Please try to specify explicitly.");
+            }
+        }
+
+        _options.Delimiters = new[] { delimiter };
+        InitStopCharacters();
+    }
+
+    /// <summary>
+    /// Tries to detect delimiter that best matches to the specific string.
+    /// </summary>
+    /// <param name="line">Line to analyze.</param>
+    /// <param name="delimiter">Delimiter or space if not found.</param>
+    /// <returns><c>True</c> if found best delimiter, <c>false</c> otherwise.</returns>
+    public static bool TryDetectDelimiter(ReadOnlySpan<char> line, out char delimiter)
+    {
+        var autoDetectDelimitersCount = new int[AutoDetectDelimiters.Length];
+        for (var i = 0; i < line.Length; i++)
+        {
+            var delimiterIndex = Array.IndexOf(AutoDetectDelimiters, line[i]);
+            if (delimiterIndex > -1)
+            {
+                autoDetectDelimitersCount[delimiterIndex]++;
+            }
+        }
+
+        var bestDelimiterCount = autoDetectDelimitersCount.Max();
+        var bestDelimiterIndex = Array.IndexOf(autoDetectDelimitersCount, autoDetectDelimitersCount.Max());
+        if (bestDelimiterIndex < 0 || bestDelimiterCount == 0)
+        {
+            delimiter = ' ';
+            return false;
+        }
+
+        delimiter = AutoDetectDelimiters[bestDelimiterIndex];
+        return true;
     }
 
     #region Escape

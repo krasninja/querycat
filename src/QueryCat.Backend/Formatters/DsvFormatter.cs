@@ -15,16 +15,22 @@ internal class DsvFormatter : IRowsFormatter
 {
     private readonly StreamRowsInputOptions? _streamRowsInputOptions;
 
-    private readonly char _delimiter;
+    private readonly char? _delimiter;
     private readonly bool? _hasHeader;
     private readonly bool _addFileNameColumn;
 
     [Description("CSV formatter.")]
-    [FunctionSignature("csv(has_header?: boolean): object<IRowsFormatter>")]
+    [FunctionSignature("csv(has_header?: boolean, delimiter?: string = null): object<IRowsFormatter>")]
     public static VariantValue Csv(FunctionCallInfo args)
     {
         var hasHeader = args.GetAt(0).AsBooleanNullable;
-        var rowsSource = new DsvFormatter(',', hasHeader);
+        var delimiter = args.GetAt(1).AsString;
+        if (delimiter.Length != 0 && delimiter.Length > 1)
+        {
+            throw new QueryCatException("Delimiter must be one character.");
+        }
+
+        var rowsSource = new DsvFormatter(delimiter.Length == 1 ? delimiter[0] : null, hasHeader);
         return VariantValue.CreateFromObject(rowsSource);
     }
 
@@ -37,7 +43,7 @@ internal class DsvFormatter : IRowsFormatter
         return VariantValue.CreateFromObject(rowsSource);
     }
 
-    public DsvFormatter(char delimiter, bool? hasHeader = null, bool addFileNameColumn = true)
+    public DsvFormatter(char? delimiter = null, bool? hasHeader = null, bool addFileNameColumn = true)
     {
         _delimiter = delimiter;
         _hasHeader = hasHeader;
@@ -69,7 +75,11 @@ internal class DsvFormatter : IRowsFormatter
         }
         else
         {
-            options.InputOptions.DelimiterStreamReaderOptions.Delimiters = new[] { _delimiter };
+            if (_delimiter.HasValue)
+            {
+                options.InputOptions.DelimiterStreamReaderOptions.Delimiters = new[] { _delimiter.Value };
+            }
+            options.InputOptions.DelimiterStreamReaderOptions.PreferredDelimiter = ',';
             options.InputOptions.AddInputSourceColumn = _addFileNameColumn;
         }
         return options;
