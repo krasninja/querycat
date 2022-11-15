@@ -6,17 +6,21 @@ namespace QueryCat.Backend.Formatters;
 /// <summary>
 /// The input that is optimized to read from STDIN.
 /// </summary>
-public sealed class TextTableInput : StreamRowsInput
+internal sealed class TextTableInput : DsvInput
 {
     /// <inheritdoc />
-    public TextTableInput(StreamReader streamReader)
-        : base(streamReader, new StreamRowsInputOptions
+    public TextTableInput(Stream stream)
+        : base(new DsvOptions(stream)
         {
-            DelimiterStreamReaderOptions = new DelimiterStreamReader.ReaderOptions
+            InputOptions = new StreamRowsInputOptions
             {
-                Delimiters = new[] { ' ' },
-                QuoteChars = Array.Empty<char>(),
-                DelimitersCanRepeat = true,
+                DelimiterStreamReaderOptions = new DelimiterStreamReader.ReaderOptions
+                {
+                    Delimiters = new[] { ' ' },
+                    DelimitersCanRepeat = true,
+                    QuoteChars = Array.Empty<char>(),
+                    SkipEmptyLines = true,
+                },
             }
         })
     {
