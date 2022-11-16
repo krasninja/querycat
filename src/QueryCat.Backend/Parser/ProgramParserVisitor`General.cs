@@ -3,6 +3,7 @@ using Antlr4.Runtime.Tree;
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Function;
+using QueryCat.Backend.Ast.Nodes.SpecialFunctions;
 using QueryCat.Backend.Types;
 
 namespace QueryCat.Backend.Parser;
@@ -81,7 +82,7 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
 
     /// <inheritdoc />
     public override IAstNode VisitExpressionBinaryCast(QueryCatParser.ExpressionBinaryCastContext context)
-        => new CastNode(
+        => new CastFunctionNode(
             this.Visit<ExpressionNode>(context.right),
             this.VisitType(context.type())
         );
@@ -124,7 +125,7 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
 
     /// <inheritdoc />
     public override IAstNode VisitExpressionStandardFunctionCall(QueryCatParser.ExpressionStandardFunctionCallContext context)
-        => this.Visit<FunctionCallNode>(context.standardFunction());
+        => this.Visit<ExpressionNode>(context.standardFunction());
 
     /// <inheritdoc />
     public override IAstNode VisitExpressionFunctionCall(QueryCatParser.ExpressionFunctionCallContext context)
@@ -153,13 +154,6 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
     }
 
     /// <inheritdoc />
-    public override IAstNode VisitSimpleExpressionBinaryCast(QueryCatParser.SimpleExpressionBinaryCastContext context)
-        => new CastNode(
-            this.Visit<ExpressionNode>(context.right),
-            this.VisitType(context.type())
-        );
-
-    /// <inheritdoc />
     public override IAstNode VisitSimpleExpressionFunctionCall(QueryCatParser.SimpleExpressionFunctionCallContext context)
         => this.Visit<FunctionCallNode>(context.functionCall());
 
@@ -169,7 +163,7 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
 
     /// <inheritdoc />
     public override IAstNode VisitCastOperand(QueryCatParser.CastOperandContext context)
-        => new CastNode(
+        => new CastFunctionNode(
             this.Visit<ExpressionNode>(context.value),
             this.VisitType(context.type())
         );

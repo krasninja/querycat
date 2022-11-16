@@ -137,6 +137,7 @@ standardFunction
     | TRIM '(' spec=(LEADING | TRAILING | BOTH)? characters=STRING_LITERAL? FROM? target=simpleExpression ')' # standardFunctionTrim
     | POSITION '(' substring=STRING_LITERAL IN string=simpleExpression ')' # standardFunctionPosition
     | EXTRACT '(' extractField=dateTimeField FROM source=simpleExpression ')' # standardFunctionExtract
+    | COALESCE '(' expression (COMMA expression)* ')' # standardFunctionCoalesce
     ;
 
 dateTimeField

@@ -57,9 +57,12 @@ AS:                 'AS';
 BY:                 'BY';
 CAST:               'CAST';
 DEFAULT:            'DEFAULT';
+ELSE:               'ELSE';
+END:                'END';
 EXISTS:             'EXISTS';
 FALSE:              'FALSE';
 FROM:               'FROM';
+IF:                 'IF';
 IN:                 'IN';
 IS:                 'IS';
 LIKE:               'LIKE';
@@ -69,6 +72,7 @@ ON:                 'ON';
 ONLY:               'ONLY';
 OR:                 'OR';
 SOME:               'SOME';
+THEN:               'THEN';
 TO:                 'TO';
 TRUE:               'TRUE';
 VOID:               'VOID';
@@ -95,8 +99,13 @@ MILLISECOND:        'MILLISECOND';
 
 // Other functions.
 
-POSITION:           'POSITION';
+CASE:               'CASE';
+COALESCE:           'COALESCE';
 EXTRACT:            'EXTRACT';
+GREATEST:           'GREATEST';
+LEAST:              'LEAST';
+POSITION:           'POSITION';
+WHEN:               'WHEN';
 
 // ECHO command.
 

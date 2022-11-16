@@ -8,22 +8,21 @@ namespace QueryCat.Backend.Functions.StandardFunctions;
 /// </summary>
 internal static class MiscFunctions
 {
-    [Description("Return first not NULL value.")]
-    [FunctionSignature("coalesce(...args: any[]): any")]
-    public static VariantValue Coalesce(FunctionCallInfo args)
+    [Description("The function returns a null value if value1 equals value2; otherwise it returns value1.")]
+    [FunctionSignature("[nullif](value1: any, value2: any): any")]
+    public static VariantValue NullIf(FunctionCallInfo args)
     {
-        foreach (var argument in args.Arguments.Values)
+        var value1 = args.GetAt(0);
+        var value2 = args.GetAt(1);
+        if (VariantValue.Equals(ref value1, ref value2, out _))
         {
-            if (!argument.IsNull)
-            {
-                return argument;
-            }
+            return VariantValue.Null;
         }
-        return VariantValue.Null;
+        return value1;
     }
 
     public static void RegisterFunctions(FunctionsManager functionsManager)
     {
-        functionsManager.RegisterFunction(Coalesce);
+        functionsManager.RegisterFunction(NullIf);
     }
 }

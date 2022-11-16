@@ -1,6 +1,7 @@
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Function;
+using QueryCat.Backend.Ast.Nodes.SpecialFunctions;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Functions;
 using QueryCat.Backend.Types;
@@ -78,24 +79,6 @@ internal class CreateDelegateVisitor : AstVisitor
             var rightValue = rightAction.Invoke();
             var result = action.Invoke(ref leftValue, ref rightValue);
             return result;
-        }
-        NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func);
-    }
-
-    /// <inheritdoc />
-    public override void Visit(CastNode node)
-    {
-        var expressionAction = NodeIdFuncMap[node.ExpressionNode.Id];
-
-        VariantValue Func()
-        {
-            var expressionValue = expressionAction.Invoke();
-            if (expressionValue.Cast(node.TargetTypeNode.Type, out VariantValue result))
-            {
-                return result;
-            }
-            ApplyStatistic(ErrorCode.CannotCast);
-            return VariantValue.Null;
         }
         NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func);
     }
@@ -189,6 +172,48 @@ internal class CreateDelegateVisitor : AstVisitor
             default:
                 throw new QueryCatException(Resources.Errors.InvalidOperation);
         }
+    }
+
+    #endregion
+
+    #region Special functions
+
+    /// <inheritdoc />
+    public override void Visit(CastFunctionNode node)
+    {
+        var expressionAction = NodeIdFuncMap[node.ExpressionNode.Id];
+
+        VariantValue Func()
+        {
+            var expressionValue = expressionAction.Invoke();
+            if (expressionValue.Cast(node.TargetTypeNode.Type, out VariantValue result))
+            {
+                return result;
+            }
+            ApplyStatistic(ErrorCode.CannotCast);
+            return VariantValue.Null;
+        }
+        NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func);
+    }
+
+    /// <inheritdoc />
+    public override void Visit(CoalesceFunctionNode node)
+    {
+        var expressionActions = node.Expressions.Select(e => NodeIdFuncMap[e.Id]).ToArray();
+
+        VariantValue Func()
+        {
+            foreach (var expressionAction in expressionActions)
+            {
+                var value = expressionAction.Invoke();
+                if (!value.IsNull)
+                {
+                    return value;
+                }
+            }
+            return VariantValue.Null;
+        }
+        NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func);
     }
 
     #endregion

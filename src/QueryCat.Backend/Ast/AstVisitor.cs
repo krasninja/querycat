@@ -1,6 +1,7 @@
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Function;
 using QueryCat.Backend.Ast.Nodes.Select;
+using QueryCat.Backend.Ast.Nodes.SpecialFunctions;
 
 namespace QueryCat.Backend.Ast;
 
@@ -31,10 +32,6 @@ public abstract class AstVisitor
     }
 
     public virtual void Visit(BinaryOperationExpressionNode node)
-    {
-    }
-
-    public virtual void Visit(CastNode node)
     {
     }
 
@@ -115,6 +112,18 @@ public abstract class AstVisitor
     }
 
     public virtual void Visit(FunctionTypeNode node)
+    {
+    }
+
+    #endregion
+
+    #region Special functions
+
+    public virtual void Visit(CastFunctionNode node)
+    {
+    }
+
+    public virtual void Visit(CoalesceFunctionNode node)
     {
     }
 
