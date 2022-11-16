@@ -170,7 +170,17 @@ internal partial class ProgramParserVisitor
 
     /// <inheritdoc />
     public override IAstNode VisitSelectTarget(QueryCatParser.SelectTargetContext context)
-        => this.Visit<FunctionCallNode>(context.functionCall());
+    {
+        if (context.uri != null)
+        {
+            var writeFunction = new FunctionCallNode("write");
+            var uri = GetUnwrappedText(context.uri.Text);
+            writeFunction.Arguments.Add(new FunctionCallArgumentNode("uri",
+                new LiteralNode(new VariantValue(uri))));
+            return writeFunction;
+        }
+        return this.Visit<FunctionCallNode>(context.functionCall());
+    }
 
     #endregion
 
@@ -208,7 +218,7 @@ internal partial class ProgramParserVisitor
     public override IAstNode VisitSelectTableReferenceWithFormat(QueryCatParser.SelectTableReferenceWithFormatContext context)
     {
         var readFunction = new FunctionCallNode("read");
-        var uri = GetUnwrappedText(context.STRING_LITERAL());
+        var uri = GetUnwrappedText(context.uri.Text);
         readFunction.Arguments.Add(new FunctionCallArgumentNode("uri",
             new LiteralNode(new VariantValue(uri))));
         if (context.functionCall() != null)

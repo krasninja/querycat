@@ -73,7 +73,7 @@ selectSublist
     ;
 
 // Into.
-selectTarget: INTO functionCall;
+selectTarget: INTO (functionCall | uri=STRING_LITERAL);
 
 // From.
 selectFromClause:
@@ -86,7 +86,7 @@ selectTableReferenceList:
 selectTableReference
     : functionCall selectAlias? # SelectTableReferenceNoFormat
     | '-' # SelectTableReferenceStdin
-    | STRING_LITERAL (FORMAT functionCall)? selectAlias? # SelectTableReferenceWithFormat
+    | uri=STRING_LITERAL (FORMAT functionCall)? selectAlias? # SelectTableReferenceWithFormat
     | '(' selectQueryExpression ')' selectAlias? # SelectTableReferenceSubquery
     ;
 
