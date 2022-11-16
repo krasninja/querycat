@@ -28,6 +28,7 @@ public class PublishAll : AsyncFrostingTask<BuildContext>
             new[]
             {
                 Path.Combine(context.OutputDirectory, "qcat"),
+                Path.Combine(context.OutputDirectory, "qcat.pdb"),
                 Path.Combine(context.OutputDirectory, licenseFileName),
             },
             level: ZipLevel);
@@ -40,6 +41,7 @@ public class PublishAll : AsyncFrostingTask<BuildContext>
             new[]
             {
                 Path.Combine(context.OutputDirectory, "qcat.exe"),
+                Path.Combine(context.OutputDirectory, "qcat.pdb"),
                 Path.Combine(context.OutputDirectory, licenseFileName),
             },
             level: ZipLevel);
