@@ -31,6 +31,7 @@ public class BaseTests : IDisposable
                     {
                         QuoteChars = new[] { '"' },
                         Delimiters = new[] { ',' },
+                        BufferSize = 13,
                     },
                     AddInputSourceColumn = false,
                 }
