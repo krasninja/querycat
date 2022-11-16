@@ -55,7 +55,7 @@ internal partial class ProgramParserVisitor
     {
         var selectColumnsSublistNodes = this.Visit<SelectColumnsSublistNode>(context.selectSublist()).ToList();
         SelectTableExpressionNode? selectTableExpressionNode = null;
-        if (Console.IsInputRedirected)
+        if (Console.IsInputRedirected && !Console.IsErrorRedirected && !Console.IsOutputRedirected)
         {
             selectTableExpressionNode = new SelectTableExpressionNode(new SelectTableReferenceListNode(
                 new List<ExpressionNode>
