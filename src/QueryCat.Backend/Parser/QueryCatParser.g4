@@ -85,6 +85,7 @@ selectTableReferenceList:
     FROM selectTableReference (COMMA selectTableReference)*;
 selectTableReference
     : functionCall selectAlias? # SelectTableReferenceNoFormat
+    | '-' # SelectTableReferenceStdin
     | STRING_LITERAL (FORMAT functionCall)? selectAlias? # SelectTableReferenceWithFormat
     | '(' selectQueryExpression ')' selectAlias? # SelectTableReferenceSubquery
     ;

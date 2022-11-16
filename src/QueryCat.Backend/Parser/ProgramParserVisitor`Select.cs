@@ -54,9 +54,19 @@ internal partial class ProgramParserVisitor
     public override IAstNode VisitSelectQuerySingle(QueryCatParser.SelectQuerySingleContext context)
     {
         var selectColumnsSublistNodes = this.Visit<SelectColumnsSublistNode>(context.selectSublist()).ToList();
+        SelectTableExpressionNode? selectTableExpressionNode = null;
+        if (Console.IsInputRedirected)
+        {
+            selectTableExpressionNode = new SelectTableExpressionNode(new SelectTableReferenceListNode(
+                new List<ExpressionNode>
+                {
+                    new SelectTableFunctionNode(new FunctionCallNode("stdin")),
+                }));
+        }
         return new SelectQuerySpecificationNode(new SelectColumnsListNode(selectColumnsSublistNodes))
         {
-            Target = this.VisitMaybe<FunctionCallNode>(context.selectTarget())
+            Target = this.VisitMaybe<FunctionCallNode>(context.selectTarget()),
+            TableExpression = selectTableExpressionNode
         };
     }
 
@@ -189,6 +199,10 @@ internal partial class ProgramParserVisitor
         {
             Alias = this.Visit(context.selectAlias(), SelectAliasNode.Empty).AliasName
         };
+
+    /// <inheritdoc />
+    public override IAstNode VisitSelectTableReferenceStdin(QueryCatParser.SelectTableReferenceStdinContext context)
+        => new SelectTableFunctionNode(new FunctionCallNode("stdin"));
 
     /// <inheritdoc />
     public override IAstNode VisitSelectTableReferenceWithFormat(QueryCatParser.SelectTableReferenceWithFormatContext context)
