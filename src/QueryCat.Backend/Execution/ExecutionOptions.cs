@@ -41,6 +41,11 @@ public sealed class ExecutionOptions
     public List<Assembly> PluginAssemblies { get; } = new();
 
     /// <summary>
+    /// List of directories to search for plugins.
+    /// </summary>
+    public List<string> PluginDirectories { get; } = new();
+
+    /// <summary>
     /// Do not save/load config.
     /// </summary>
     public bool UseConfig { get; set; } = true;

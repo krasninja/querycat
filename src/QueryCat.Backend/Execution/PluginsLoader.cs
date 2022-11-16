@@ -1,7 +1,7 @@
 using System.Reflection;
 using QueryCat.Backend.Logging;
 
-namespace QueryCat.Cli.Infrastructure;
+namespace QueryCat.Backend.Execution;
 
 /// <summary>
 /// Plugins loader.
