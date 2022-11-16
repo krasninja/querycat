@@ -102,8 +102,6 @@ MILLISECOND:        'MILLISECOND';
 CASE:               'CASE';
 COALESCE:           'COALESCE';
 EXTRACT:            'EXTRACT';
-GREATEST:           'GREATEST';
-LEAST:              'LEAST';
 POSITION:           'POSITION';
 WHEN:               'WHEN';
 
