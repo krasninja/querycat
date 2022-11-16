@@ -203,7 +203,7 @@ public class DelimiterStreamReaderTests
     public void TryDetectDelimiter(string target, char expected)
     {
         // Act.
-        DelimiterStreamReader.TryDetectDelimiter(target, out char delimiter);
+        DelimiterStreamReader.TryDetectDelimiter(target, out var delimiter);
 
         // Assert.
         Assert.Equal(expected, delimiter);
