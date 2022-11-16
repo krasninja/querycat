@@ -353,10 +353,13 @@ public class DelimiterStreamReader
                         // Skip empty line and try to read next.
                         if (_options.SkipEmptyLines && IsEmpty())
                         {
-                            sequenceReader.Advance(1);
                             _fieldInfoLastIndex = 0;
                             currentField = ref GetNextFieldInfo();
                             currentField.StartIndex = _currentDelimiterPosition;
+                            if (!sequenceReader.End)
+                            {
+                                sequenceReader.Advance(1);
+                            }
                             continue;
                         }
 
