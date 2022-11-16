@@ -25,7 +25,7 @@ public sealed class ProjectedRowsIteratorTests
         var tableIterator = table.GetIterator();
         var projectedIterator = new ProjectedRowsIterator(tableIterator);
         projectedIterator.AddFuncColumn(table.Columns[1],
-            new FuncUnitFromRowsIterator(tableIterator, 1));
+            new FuncUnitRowsIteratorColumn(tableIterator, 1));
         var frame = projectedIterator.ToFrame();
         var firstRow = frame.First();
 

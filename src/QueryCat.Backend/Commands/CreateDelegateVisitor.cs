@@ -252,16 +252,14 @@ internal class CreateDelegateVisitor : AstVisitor
             // Try positional.
             if (node.Arguments.Count >= i + 1 && node.Arguments[i].IsPositional)
             {
-                int argPosition = i;
-                argsDelegatesList.Add(NodeIdFuncMap[node.Arguments[argPosition].Id]);
+                argsDelegatesList.Add(NodeIdFuncMap[node.Arguments[i].Id]);
                 continue;
             }
 
             // Try optional.
             if (function.Arguments[i].HasDefaultValue)
             {
-                int argPosition = i;
-                argsDelegatesList.Add(new FuncUnitStatic(function.Arguments[argPosition].DefaultValue));
+                argsDelegatesList.Add(new FuncUnitStatic(function.Arguments[i].DefaultValue));
                 continue;
             }
 

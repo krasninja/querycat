@@ -21,7 +21,7 @@ public class SamplePluginEnumerableInput : ClassEnumerableInput<TestClass>
         return VariantValue.CreateFromObject(rowsSource);
     }
 
-    private long _currentState = 0;
+    private long _currentState;
 
     /// <inheritdoc />
     protected override void Initialize(ClassRowsFrameBuilder<TestClass> builder)

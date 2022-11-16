@@ -32,7 +32,7 @@ public class DistinctRowsIterator : IRowsIterator
         {
             // If no columns specified distinct by all columns.
             _columnsFunctions = rowsIterator.Columns
-                .Select((c, i) => new FuncUnitFromRowsIterator(rowsIterator, i))
+                .Select((_, i) => new FuncUnitRowsIteratorColumn(rowsIterator, i))
                 .ToArray();
         }
     }

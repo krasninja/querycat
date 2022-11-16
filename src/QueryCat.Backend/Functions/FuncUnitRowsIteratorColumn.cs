@@ -4,12 +4,12 @@ using QueryCat.Backend.Types;
 
 namespace QueryCat.Backend.Functions;
 
-internal sealed class FuncUnitFromRowsIterator : FuncUnit
+internal sealed class FuncUnitRowsIteratorColumn : FuncUnit
 {
     private readonly IRowsIterator _rowsIterator;
     private readonly int _columnIndex;
 
-    public FuncUnitFromRowsIterator(IRowsIterator rowsIterator, int columnIndex)
+    public FuncUnitRowsIteratorColumn(IRowsIterator rowsIterator, int columnIndex)
     {
         _rowsIterator = rowsIterator;
         _columnIndex = columnIndex;
@@ -20,5 +20,5 @@ internal sealed class FuncUnitFromRowsIterator : FuncUnit
     public override VariantValue Invoke() => _rowsIterator.Current[_columnIndex];
 
     /// <inheritdoc />
-    public override string ToString() => $"{nameof(FuncUnitFromRowsIterator)}: {_rowsIterator}, {_columnIndex}";
+    public override string ToString() => $"{nameof(FuncUnitRowsIteratorColumn)}: {_rowsIterator}, {_columnIndex}";
 }

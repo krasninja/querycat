@@ -233,7 +233,6 @@ internal sealed partial class SelectSpecificationNodeVisitor : SelectAstVisitor
             }
             if (HandleInOperation(node, traversal))
             {
-                return;
             }
         };
         callbackVisitor.Run(searchNode);
@@ -300,9 +299,8 @@ internal sealed partial class SelectSpecificationNodeVisitor : SelectAstVisitor
         var iterator = context.CurrentIterator;
         for (var i = 0; i < context.CurrentIterator.Columns.Length; i++)
         {
-            var index = i;
             projectedIterator.AddFuncColumn(
-                context.CurrentIterator.Columns[index], new FuncUnitFromRowsIterator(iterator, index));
+                context.CurrentIterator.Columns[i], new FuncUnitRowsIteratorColumn(iterator, i));
         }
 
         var makeDelegateVisitor = new SelectCreateDelegateVisitor(ExecutionThread, context);
@@ -342,7 +340,7 @@ internal sealed partial class SelectSpecificationNodeVisitor : SelectAstVisitor
             }
             if (index > -1)
             {
-                projectedIterator.AddFuncColumn(columnInfo.Column, new FuncUnitFromRowsIterator(iterator, index));
+                projectedIterator.AddFuncColumn(columnInfo.Column, new FuncUnitRowsIteratorColumn(iterator, index));
             }
         }
         context.SetIterator(projectedIterator);

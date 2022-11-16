@@ -193,7 +193,7 @@ public sealed class FunctionsManager
                 Logger.Instance.Warning($"Incorrect signature: {signatureAttribute.Signature}.");
                 return;
             }
-            var functionName = NormalizeName(signatureAttribute.Signature.Substring(0, indexOfLeftParen));
+            var functionName = NormalizeName(signatureAttribute.Signature[..indexOfLeftParen]);
             if (functionName.StartsWith('['))
             {
                 functionName = functionName.Substring(1, functionName.Length - 2);
@@ -251,8 +251,7 @@ public sealed class FunctionsManager
 
     public void RegisterAggregate(Type aggregateType)
     {
-        var aggregateFunctionInstance = Activator.CreateInstance(aggregateType) as IAggregateFunction;
-        if (aggregateFunctionInstance == null)
+        if (Activator.CreateInstance(aggregateType) is not IAggregateFunction aggregateFunctionInstance)
         {
             throw new InvalidOperationException(
                 $"Type '{aggregateType.Name}' is not assignable from '{nameof(IAggregateFunction)}.");

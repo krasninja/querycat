@@ -50,8 +50,7 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
             {
                 columnIndex = rowsIterator.GetColumnIndex(info.Redirect);
             }
-            var iterator = rowsIterator;
-            NodeIdFuncMap[node.Id] = new FuncUnitFromRowsIterator(iterator, columnIndex);
+            NodeIdFuncMap[node.Id] = new FuncUnitRowsIteratorColumn(rowsIterator, columnIndex);
         }
     }
 
@@ -72,15 +71,14 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
         else
         {
             var iterator = rowsIterator!;
-            NodeIdFuncMap[node.Id] = new FuncUnitFromRowsIterator(iterator, columnIndex);
+            NodeIdFuncMap[node.Id] = new FuncUnitRowsIteratorColumn(iterator, columnIndex);
         }
     }
 
     /// <inheritdoc />
     public override void Visit(SelectExistsExpressionNode node)
     {
-        var rowsIterator = node.SubQueryExpressionNode.GetFunc().Invoke().AsObject as IRowsIterator;
-        if (rowsIterator == null)
+        if (node.SubQueryExpressionNode.GetFunc().Invoke().AsObject is not IRowsIterator rowsIterator)
         {
             throw new InvalidOperationException("Incorrect subquery type.");
         }
@@ -122,7 +120,7 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
         if (node.HasAttribute(AstAttributeKeys.InputAggregateIndexKey))
         {
             var index = node.GetAttribute<int>(AstAttributeKeys.InputAggregateIndexKey);
-            NodeIdFuncMap[node.Id] = new FuncUnitFromRowsIterator(_context.CurrentIterator, index);
+            NodeIdFuncMap[node.Id] = new FuncUnitRowsIteratorColumn(_context.CurrentIterator, index);
             return;
         }
 
@@ -167,8 +165,7 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
             return;
         }
 
-        var rowsIterator = node.GetFunc().Invoke().AsObject as IRowsIterator;
-        if (rowsIterator == null)
+        if (node.GetFunc().Invoke().AsObject is not IRowsIterator rowsIterator)
         {
             throw new InvalidOperationException(Resources.Errors.InvalidRowsInputType);
         }
@@ -195,8 +192,7 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
             return;
         }
 
-        var rowsIterator = node.SubQueryNode.GetFunc().Invoke().AsObject as IRowsIterator;
-        if (rowsIterator == null)
+        if (node.SubQueryNode.GetFunc().Invoke().AsObject is not IRowsIterator rowsIterator)
         {
             throw new InvalidOperationException(Resources.Errors.InvalidRowsInputType);
         }

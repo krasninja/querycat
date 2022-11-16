@@ -10,7 +10,7 @@ public class IndentedStringBuilder
 {
     private readonly int _indentSize;
     private readonly StringBuilder _stringBuilder = new();
-    private int _indent = 0;
+    private int _indent;
 
     /// <summary>
     /// Constructor.

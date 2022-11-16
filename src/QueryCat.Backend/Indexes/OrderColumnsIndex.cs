@@ -127,7 +127,7 @@ public class OrderColumnsIndex : IOrderIndex
         RowsFrameIterator = rowsFrameIterator;
         _directions = directions.ToArray();
         _columnIndexes = columnIndexes.ToArray();
-        _valueGetters = columnIndexes.Select(index => new FuncUnitFromRowsIterator(rowsFrameIterator, index))
+        _valueGetters = columnIndexes.Select(index => new FuncUnitRowsIteratorColumn(rowsFrameIterator, index))
             .ToArray();
     }
 

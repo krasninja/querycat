@@ -5,7 +5,7 @@ using QueryCat.Backend.Types;
 namespace QueryCat.UnitTests.Relational;
 
 /// <summary>
-/// Tests for <see cref="ClassBuilder{T}" />.
+/// Tests for <see cref="ClassRowsFrameBuilder{T}" />.
 /// </summary>
 public class ClassBuilderTests
 {

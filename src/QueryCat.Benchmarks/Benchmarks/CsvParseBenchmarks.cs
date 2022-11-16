@@ -9,7 +9,6 @@ using QueryCat.Backend.Relational;
 using QueryCat.Backend.Storage;
 using QueryCat.Backend.Types;
 using QueryCat.Backend.Utils;
-using QueryCat.Benchmarks.Commands;
 
 namespace QueryCat.Benchmarks.Benchmarks;
 

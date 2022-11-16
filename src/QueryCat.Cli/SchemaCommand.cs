@@ -20,7 +20,7 @@ public class SchemaCommand : BaseQueryCommand
         {
             PagingSize = -1
         });
-        runner.ExecutionThread.AfterStatementExecute += (sender, args) =>
+        runner.ExecutionThread.AfterStatementExecute += (_, args) =>
         {
             var result = runner.ExecutionThread.LastResult;
             if (!result.IsNull && result.GetInternalType() == DataType.Object

@@ -15,7 +15,7 @@ public sealed class SelectDistinctNode : AstNode
     /// <inheritdoc />
     public override string Code => "distinct";
 
-    public IEnumerable<ExpressionNode> On { get; } = Enumerable.Empty<ExpressionNode>();
+    public IList<ExpressionNode> On { get; } = new List<ExpressionNode>();
 
     public static SelectDistinctNode Empty { get; } = new()
     {

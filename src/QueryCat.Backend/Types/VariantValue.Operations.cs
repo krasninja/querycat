@@ -76,7 +76,7 @@ public readonly partial struct VariantValue
             Operation.BetweenAnd => BetweenAnd,
             Operation.Like => Like,
             Operation.NotLike => NotLike,
-            _ => throw new ArgumentOutOfRangeException()
+            _ => throw new ArgumentOutOfRangeException("Invalid operation.", nameof(operation))
         };
 
     internal static BinaryFunction GetOperationDelegate(Operation operation, DataType leftType, DataType rightType)

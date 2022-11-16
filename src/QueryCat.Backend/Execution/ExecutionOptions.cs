@@ -28,7 +28,7 @@ public sealed class ExecutionOptions
     /// <summary>
     /// Show detailed statistic.
     /// </summary>
-    public bool ShowDetailedStatistic { get; set; } = false;
+    public bool ShowDetailedStatistic { get; set; }
 
     /// <summary>
     /// Max number of errors before abort.

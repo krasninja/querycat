@@ -238,7 +238,7 @@ public class DelimiterStreamReader
             fieldStart = true; // Indicates that we are at field start.
         SequenceReader<char> sequenceReader;
         _fieldInfoLastIndex = 0;
-        ref FieldInfo currentField = ref GetNextFieldInfo();
+        ref var currentField = ref GetNextFieldInfo();
         do
         {
             _currentSequence = _dynamicBuffer.GetSequence();
@@ -292,7 +292,7 @@ public class DelimiterStreamReader
                         {
                             // Process \" case.
                             sequenceReader.Rewind(2);
-                            sequenceReader.TryPeek(out char prevCh);
+                            sequenceReader.TryPeek(out var prevCh);
                             sequenceReader.Advance(2);
                             if (prevCh != '\\')
                             {
@@ -312,10 +312,7 @@ public class DelimiterStreamReader
                     if (!isInQuotes && (ulong)_currentDelimiterPosition > 0)
                     {
                         bool addField = true, completeLine = false;
-                        if (OnDelimiter != null)
-                        {
-                            OnDelimiter.Invoke(ch, _currentDelimiterPosition, out addField, out completeLine);
-                        }
+                        OnDelimiter?.Invoke(ch, _currentDelimiterPosition, out addField, out completeLine);
                         if (addField)
                         {
                             currentField.EndIndex = _options.IncludeDelimiter ? _currentDelimiterPosition + 1 : _currentDelimiterPosition;
@@ -333,7 +330,7 @@ public class DelimiterStreamReader
                     }
                 }
                 // End of line.
-                else if (_options.CompleteOnEndOfLine && (ch == '\n' || ch == '\r'))
+                else if (_options.CompleteOnEndOfLine && ch is '\n' or '\r')
                 {
                     if (!isInQuotes)
                     {
@@ -423,7 +420,7 @@ public class DelimiterStreamReader
             return ReadOnlySpan<char>.Empty;
         }
 
-        ref FieldInfo fieldInfo = ref _fieldInfos[columnIndex];
+        ref var fieldInfo = ref _fieldInfos[columnIndex];
         if (fieldInfo.IsEmpty)
         {
             return ReadOnlySpan<char>.Empty;
@@ -454,7 +451,7 @@ public class DelimiterStreamReader
         {
             return true;
         }
-        ref FieldInfo fieldInfo = ref _fieldInfos[columnIndex];
+        ref var fieldInfo = ref _fieldInfos[columnIndex];
         if (fieldInfo.IsEmpty)
         {
             return true;
@@ -531,7 +528,7 @@ public class DelimiterStreamReader
         }
         while (!sequenceReader.TryReadToAny(out line, EndOfLineCharacters));
 
-        if (!TryDetectDelimiter(line, out char delimiter))
+        if (!TryDetectDelimiter(line, out var delimiter))
         {
             if (_options.PreferredDelimiter.HasValue)
             {
@@ -645,16 +642,6 @@ public class DelimiterStreamReader
             }
             reader.Advance(1);
         }
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    private static ReadOnlySpan<char> GetSpanFromSequenceReader(SequenceReader<char> reader)
-    {
-        if (reader.Sequence.IsSingleSegment)
-        {
-            return reader.CurrentSpan;
-        }
-        return reader.Sequence.ToString();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]

@@ -49,7 +49,7 @@ public sealed class IISW3CInput : StreamRowsInput
         ["cs(Referer)"] = new("cs(Referer)", DataType.String, "The site that the user last visited"),
     };
 
-    public IISW3CInput(Stream stream) : base(new StreamReader(stream), new StreamRowsInputOptions()
+    public IISW3CInput(Stream stream) : base(new StreamReader(stream), new StreamRowsInputOptions
     {
         DelimiterStreamReaderOptions = new DelimiterStreamReader.ReaderOptions
         {
@@ -142,7 +142,7 @@ public sealed class IISW3CInput : StreamRowsInput
         for (var i = 0; i < fields.Length; i++)
         {
             var field = fields[i];
-            if (AvailableFields.TryGetValue(field, out Column? column))
+            if (AvailableFields.TryGetValue(field, out var column))
             {
                 if (Column.NameEquals(column, "time"))
                 {

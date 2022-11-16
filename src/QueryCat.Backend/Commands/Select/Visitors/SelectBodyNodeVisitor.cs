@@ -97,9 +97,8 @@ internal sealed class SelectBodyNodeVisitor : SelectAstVisitor
         var firstQueryContext = querySpecificationNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
         for (int i = 0; i < firstQueryContext.CurrentIterator.Columns.Length; i++)
         {
-            var columnIndex = i;
             projectedIterator.AddFuncColumn(firstQueryContext.CurrentIterator.Columns[i],
-                new FuncUnitFromRowsIterator(iterator, columnIndex));
+                new FuncUnitRowsIteratorColumn(iterator, i));
         }
         context.SetIterator(projectedIterator);
     }

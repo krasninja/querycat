@@ -14,7 +14,7 @@ public abstract class DelegateVisitor : AstVisitor
 
     protected AstTraversal AstTraversal => _astTraversal;
 
-    public DelegateVisitor()
+    protected DelegateVisitor()
     {
         _astTraversal = new AstTraversal(this);
     }

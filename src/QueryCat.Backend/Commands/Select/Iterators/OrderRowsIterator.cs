@@ -43,7 +43,7 @@ internal sealed class OrderRowsIterator : IRowsIterator
         _orderIndex = new OrderColumnsIndex(
             _rowsFrameIterator,
             orders.Select(o => o.Direction).ToArray(),
-            orders.Select((o, index) => index + _rowsIterator.Columns.Length).ToArray()
+            orders.Select((_, index) => index + _rowsIterator.Columns.Length).ToArray()
         );
         _orderIndexIterator = _orderIndex.GetOrderIterator();
     }

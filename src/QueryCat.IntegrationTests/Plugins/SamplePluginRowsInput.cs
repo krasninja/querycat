@@ -24,7 +24,7 @@ public class SamplePluginRowsInput : IRowsInput
         return VariantValue.CreateFromObject(rowsSource);
     }
 
-    private long _currentState = 0;
+    private long _currentState;
 
     /// <inheritdoc />
     public Column[] Columns { get; } =

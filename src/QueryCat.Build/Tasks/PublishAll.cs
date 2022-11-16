@@ -16,7 +16,7 @@ public class PublishAll : AsyncFrostingTask<BuildContext>
     public override async Task RunAsync(BuildContext context)
     {
         var root = Path.Combine(context.OutputDirectory);
-        var licenseFileName = "LICENSE.txt";
+        const string licenseFileName = "LICENSE.txt";
         context.CopyFile(Path.Combine(context.OutputDirectory, $"../{licenseFileName}"),
             Path.Combine(context.OutputDirectory, licenseFileName));
 
