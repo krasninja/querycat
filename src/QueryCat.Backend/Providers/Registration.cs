@@ -15,8 +15,6 @@ public static class Registration
         functionsManager.RegisterFunction(GenericInputOutput.Read);
         functionsManager.RegisterFunction(GenericInputOutput.Write);
 
-        functionsManager.RegisterFunction(FluidTemplateRowsOutput.FluidTemplate);
-
         functionsManager.RegisterFunction(FileInputOutput.ReadFile);
         functionsManager.RegisterFunction(FileInputOutput.WriteFile);
 
