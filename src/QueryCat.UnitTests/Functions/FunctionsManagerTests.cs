@@ -1,4 +1,5 @@
 using Xunit;
+using QueryCat.Backend.Execution;
 using QueryCat.Backend.Functions;
 using QueryCat.Backend.Types;
 
@@ -19,7 +20,7 @@ public sealed class FunctionsManagerTests
 
         var func = _functionsManager.FindByName("add",
             FunctionArgumentsTypes.FromPositionArguments(DataType.Integer, DataType.Integer));
-        var functionCallInfo = FunctionCallInfo.CreateWithArguments(
+        var functionCallInfo = FunctionCallInfo.CreateWithArguments(ExecutionThread.Empty,
             new VariantValue(5), new VariantValue(6));
         var ret = func.Delegate(functionCallInfo);
 
@@ -41,7 +42,7 @@ public sealed class FunctionsManagerTests
         var func = _functionsManager.FindByName("add",
             FunctionArgumentsTypes.FromPositionArguments(
                 DataType.String, DataType.Integer, DataType.Integer));
-        var functionCallInfo = FunctionCallInfo.CreateWithArguments(
+        var functionCallInfo = FunctionCallInfo.CreateWithArguments(ExecutionThread.Empty,
             new VariantValue("sum"), new VariantValue(5), new VariantValue(5));
         var ret = func.Delegate(functionCallInfo);
 
@@ -56,7 +57,7 @@ public sealed class FunctionsManagerTests
 
         var func = _functionsManager.FindByName("add",
             FunctionArgumentsTypes.FromPositionArguments(DataType.String));
-        var functionCallInfo = FunctionCallInfo.CreateWithArguments(new VariantValue("sum"));
+        var functionCallInfo = FunctionCallInfo.CreateWithArguments(ExecutionThread.Empty, new VariantValue("sum"));
         var ret = func.Delegate(functionCallInfo);
 
         Assert.Equal("sum: 0", ret);

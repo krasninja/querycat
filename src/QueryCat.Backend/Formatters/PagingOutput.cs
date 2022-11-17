@@ -40,7 +40,7 @@ public class PagingOutput : IRowsOutput
             && !Console.IsInputRedirected
             && !Console.IsOutputRedirected)
         {
-            Console.WriteLine(Resources.Messages.PagingMore);
+            Console.WriteLine("--More--");
             Console.ReadKey();
             _rowsCounter = 0;
         }

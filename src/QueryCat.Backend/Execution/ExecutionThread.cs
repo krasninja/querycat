@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Commands;
+using QueryCat.Backend.Execution.Plugins;
 using QueryCat.Backend.Functions;
 using QueryCat.Backend.Storage;
 using QueryCat.Backend.Types;
@@ -13,7 +14,6 @@ namespace QueryCat.Backend.Execution;
 public sealed class ExecutionThread
 {
     internal const string ApplicationDirectory = "qcat";
-    internal const string ApplicationPluginsDirectory = "plugins";
     internal const string ConfigFileName = "config.json";
 
     private readonly StatementsVisitor _statementsVisitor;
@@ -46,6 +46,11 @@ public sealed class ExecutionThread
     public ExecutionStatistic Statistic { get; } = new();
 
     /// <summary>
+    /// Plugins manager.
+    /// </summary>
+    public PluginsManager PluginsManager { get; }
+
+    /// <summary>
     /// Last execution statement return value.
     /// </summary>
     public VariantValue LastResult { get; private set; } = VariantValue.Null;
@@ -71,12 +76,14 @@ public sealed class ExecutionThread
     public ExecutionThread(
         ExecutionOptions? options = null)
     {
+        var appLocalDirectory = GetApplicationDirectory();
+
         RootScope = new ExecutionScope();
         Options = options ?? new ExecutionOptions();
+        PluginsManager = new PluginsManager(
+            PluginsManager.GetPluginDirectories(appLocalDirectory).Union(Options.PluginDirectories));
         _statementsVisitor = new StatementsVisitor(this);
-
-        var appDirectory = GetApplicationDirectory();
-        InputConfigStorage = new PersistentInputConfigStorage(Path.Combine(appDirectory, ConfigFileName));
+        InputConfigStorage = new PersistentInputConfigStorage(Path.Combine(appLocalDirectory, ConfigFileName));
     }
 
     /// <summary>
@@ -127,5 +134,16 @@ public sealed class ExecutionThread
         stopwatch.Stop();
         Statistic.ExecutionTime = stopwatch.Elapsed;
         return LastResult;
+    }
+
+    internal void LoadPlugins()
+    {
+        var pluginLoader = new PluginsLoader(PluginsManager.PluginDirectories);
+        Options.PluginAssemblies.AddRange(pluginLoader.LoadPlugins());
+
+        foreach (var pluginAssembly in Options.PluginAssemblies)
+        {
+            FunctionsManager.RegisterFromAssembly(pluginAssembly);
+        }
     }
 }

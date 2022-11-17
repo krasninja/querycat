@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Text;
 using QueryCat.Backend.Ast;
+using QueryCat.Backend.Execution.Plugins;
 using QueryCat.Backend.Formatters;
 using QueryCat.Backend.Functions.AggregateFunctions;
 using QueryCat.Backend.Functions.StandardFunctions;
@@ -39,30 +40,11 @@ public class Runner
         ExecutionThread.FunctionsManager.RegisterWithFunction(StringFunctions.RegisterFunctions);
         ExecutionThread.FunctionsManager.RegisterWithFunction(AggregatesRegistration.RegisterFunctions);
         ExecutionThread.FunctionsManager.RegisterWithFunction(Providers.Registration.RegisterFunctions);
-        LoadPlugins();
+        ExecutionThread.LoadPlugins();
 #if DEBUG
         timer.Stop();
         Logger.Instance.Trace($"Bootstrap time: {timer.Elapsed}.");
 #endif
-    }
-
-    private void LoadPlugins()
-    {
-        // Additional directories to find plugins.
-        var exeDirectory = AppContext.BaseDirectory;
-        ExecutionThread.Options.PluginDirectories.Add(
-            Path.Combine(ExecutionThread.GetApplicationDirectory(), ExecutionThread.ApplicationPluginsDirectory));
-        ExecutionThread.Options.PluginDirectories.Add(exeDirectory);
-        ExecutionThread.Options.PluginDirectories.Add(
-            Path.Combine(exeDirectory, ExecutionThread.ApplicationPluginsDirectory));
-
-        var pluginLoader = new PluginsLoader(ExecutionThread.Options.PluginDirectories);
-        ExecutionThread.Options.PluginAssemblies.AddRange(pluginLoader.LoadPlugins());
-
-        foreach (var pluginAssembly in ExecutionThread.Options.PluginAssemblies)
-        {
-            ExecutionThread.FunctionsManager.RegisterFromAssembly(pluginAssembly);
-        }
     }
 
     /// <summary>

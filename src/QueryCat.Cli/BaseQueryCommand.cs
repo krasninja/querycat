@@ -9,7 +9,7 @@ namespace QueryCat.Cli;
 /// </summary>
 public abstract class BaseQueryCommand
 {
-    [Argument(0, Description = "SQL-like query.")]
+    [Argument(0, Description = "SQL-like query or command argument.")]
     public string Query { get; } = string.Empty;
 
     [Option("--log-level", Description = "Log level.")]
@@ -42,8 +42,9 @@ public abstract class BaseQueryCommand
         Logger.Instance.MinLevel = LogLevel;
     }
 
-    protected Runner CreateRunner(ExecutionOptions executionOptions)
+    protected Runner CreateRunner(ExecutionOptions? executionOptions = null)
     {
+        executionOptions ??= new ExecutionOptions();
         executionOptions.PluginDirectories.AddRange(PluginDirectories);
         var runner = new Runner(executionOptions);
         runner.ExecutionThread.Statistic.CountErrorRows = runner.ExecutionThread.Options.ShowDetailedStatistic;

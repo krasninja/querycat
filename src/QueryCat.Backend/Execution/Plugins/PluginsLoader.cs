@@ -1,7 +1,7 @@
 using System.Reflection;
 using QueryCat.Backend.Logging;
 
-namespace QueryCat.Backend.Execution;
+namespace QueryCat.Backend.Execution.Plugins;
 
 /// <summary>
 /// Plugins loader.
@@ -31,19 +31,11 @@ internal class PluginsLoader
         AppDomain.CurrentDomain.AssemblyResolve += CurrentDomainOnAssemblyResolve;
 
         var assembliesList = new List<Assembly>();
-        foreach (var source in _pluginDirectories)
+        foreach (var pluginFile in PluginsManager.GetPluginFiles(_pluginDirectories))
         {
-            if (!Directory.Exists(source))
-            {
-                continue;
-            }
-            var pluginFiles = Directory.GetFiles(source, "*Plugin*.dll");
-            foreach (var file in pluginFiles)
-            {
-                Logger.Instance.Debug($"Load plugin assembly '{file}'.");
-                var assembly = Assembly.LoadFrom(file);
-                assembliesList.Add(assembly);
-            }
+            Logger.Instance.Debug($"Load plugin assembly '{pluginFile}'.");
+            var assembly = Assembly.LoadFrom(pluginFile);
+            assembliesList.Add(assembly);
         }
 
         return assembliesList;

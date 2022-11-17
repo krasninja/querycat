@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Linq.Expressions;
 using System.Reflection;
 using QueryCat.Backend.Ast.Nodes.Function;
+using QueryCat.Backend.Execution;
 using QueryCat.Backend.Functions.AggregateFunctions;
 using QueryCat.Backend.Logging;
 using QueryCat.Backend.Parser;
@@ -41,7 +42,7 @@ public sealed class FunctionsManager
     /// <returns>Result.</returns>
     public static VariantValue Call(FunctionDelegate functionDelegate, params object[] args)
     {
-        var callInfo = FunctionCallInfo.CreateWithArguments(args);
+        var callInfo = FunctionCallInfo.CreateWithArguments(ExecutionThread.Empty, args);
         return functionDelegate.Invoke(callInfo);
     }
 
