@@ -55,8 +55,7 @@ internal sealed class SelectContextCreator
         {
             CreateForQuery(queryExpressionBodyNode.Queries);
             new SelectBodyNodeVisitor(_executionThread).Run(queryExpressionBodyNode);
-            var iterator = queryExpressionBodyNode.GetFunc().Invoke().AsObject as IRowsIterator;
-            if (iterator == null)
+            if (queryExpressionBodyNode.GetFunc().Invoke().AsObject is not IRowsIterator iterator)
             {
                 throw new QueryCatException("No iterator for subquery!");
             }

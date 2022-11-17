@@ -1,6 +1,6 @@
-namespace QueryCat.Backend.Ast.Nodes;
+namespace QueryCat.Backend.Ast.Nodes.SpecialFunctions;
 
-public sealed class CastNode : ExpressionNode
+public sealed class CastFunctionNode : ExpressionNode
 {
     public ExpressionNode ExpressionNode { get; }
 
@@ -10,13 +10,13 @@ public sealed class CastNode : ExpressionNode
     public override string Code => "cast";
 
     /// <inheritdoc />
-    public CastNode(ExpressionNode expressionNode, TypeNode targetTypeNode)
+    public CastFunctionNode(ExpressionNode expressionNode, TypeNode targetTypeNode)
     {
         ExpressionNode = expressionNode;
         TargetTypeNode = targetTypeNode;
     }
 
-    public CastNode(CastNode node) : this(
+    public CastFunctionNode(CastFunctionNode node) : this(
         (ExpressionNode)node.ExpressionNode.Clone(), (TypeNode)node.TargetTypeNode.Clone())
     {
         node.CopyTo(this);
@@ -29,7 +29,7 @@ public sealed class CastNode : ExpressionNode
     }
 
     /// <inheritdoc />
-    public override object Clone() => new CastNode(this);
+    public override object Clone() => new CastFunctionNode(this);
 
     /// <inheritdoc />
     public override void Accept(AstVisitor visitor) => visitor.Visit(this);

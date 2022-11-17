@@ -47,10 +47,7 @@ public static class CurlInput
                 formatter = FormatUtils.GetFormatterByExtension(extension);
             }
         }
-        if (formatter == null)
-        {
-            formatter = new TextLineFormatter();
-        }
+        formatter ??= new TextLineFormatter();
 
         var stream = response.Content.ReadAsStream();
         return VariantValue.CreateFromObject(formatter.OpenInput(stream));

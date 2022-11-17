@@ -26,7 +26,7 @@ The SELECT clause specifies the fields of the output records to be returned. Als
 SELECT (2 - 1 + 4 * 6) / 3.0
 ```
 
-The non-standard T-SQL  `TOP` clause is supported as well to limit result data set.
+The non-standard T-SQL `TOP` clause is supported as well to limit result data set.
 
 ## INTO
 
@@ -78,7 +78,7 @@ SELECT state, min(population) FROM 'https://tinyurl.com/24buj7mb' GROUP BY state
 The WHERE clause is used to specify a boolean condition that must be satisfied by an input record for that record to be output. Input records that do not satisfy the condition are discarded.
 
 ```sql
-SELECT * FROM curl('https://tinyurl.com/24buj7mb') WHERE year = 2019
+SELECT * FROM curl('https://tinyurl.com/24buj7mb') WHERE [year] = 2019
 ```
 
 ## ORDER BY
@@ -86,7 +86,7 @@ SELECT * FROM curl('https://tinyurl.com/24buj7mb') WHERE year = 2019
 The ORDER BY clause specifies which SELECT clause field-expressions the query output records should be sorted by.
 
 ```sql
-SELECT * FROM curl('https://tinyurl.com/24buj7mb') ORDER BY year, population DESC
+SELECT * FROM 'https://tinyurl.com/24buj7mb' ORDER BY [year], population DESC
 ```
 
 ## LIMIT AND OFFSET
@@ -94,7 +94,7 @@ SELECT * FROM curl('https://tinyurl.com/24buj7mb') ORDER BY year, population DES
 The FETCH and OFFSET clauses specifies how many records should be returned.
 
 ```sql
-SELECT * FROM curl('https://tinyurl.com/24buj7mb') OFFSET 2 FETCH FIRST 5 ROWS
+SELECT * FROM 'https://tinyurl.com/24buj7mb' OFFSET 2 FETCH FIRST 5 ROWS
 ```
 
 Also, the LIMIT clause is support for those who used to use it. But it is out of SQL standard. It is much more preferable to use FETCH clause for such cases.

@@ -21,7 +21,7 @@ internal static class DictionaryExtensions
         Func<TKey, TValue?> addValueFactory,
         Action<TKey, TValue?> updateValueFactory)
     {
-        if (dictionary.TryGetValue(key, out TValue? value))
+        if (dictionary.TryGetValue(key, out var value))
         {
             updateValueFactory.Invoke(key, value);
             return value;
@@ -50,7 +50,7 @@ internal static class DictionaryExtensions
         Func<TKey, TValue?> addValueFactory,
         Func<TKey, TValue?, TValue?> updateValueFactory)
     {
-        if (dictionary.TryGetValue(key, out TValue? value))
+        if (dictionary.TryGetValue(key, out var value))
         {
             var newValue = updateValueFactory.Invoke(key, value);
             dictionary[key] = newValue;

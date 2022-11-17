@@ -49,7 +49,7 @@ public sealed class IISW3CInput : StreamRowsInput
         ["cs(Referer)"] = new("cs(Referer)", DataType.String, "The site that the user last visited"),
     };
 
-    public IISW3CInput(Stream stream) : base(new StreamReader(stream), new StreamRowsInputOptions()
+    public IISW3CInput(Stream stream) : base(new StreamReader(stream), new StreamRowsInputOptions
     {
         DelimiterStreamReaderOptions = new DelimiterStreamReader.ReaderOptions
         {
@@ -114,7 +114,7 @@ public sealed class IISW3CInput : StreamRowsInput
     {
         Logger.Instance.Debug($"Open {this}.", nameof(IISW3CInput));
         // Try to find fields header.
-        bool foundHeaders = false;
+        var foundHeaders = false;
         while (ReadNext())
         {
             var line = GetInputColumnValue(0);
@@ -136,13 +136,13 @@ public sealed class IISW3CInput : StreamRowsInput
 
     private void ParseHeaders(ReadOnlySpan<char> header)
     {
-        var fields = header.ToString().Substring(FieldsMarker.Length)
+        var fields = header.ToString()[FieldsMarker.Length..]
             .Split(' ', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
         var columns = new List<Column>();
         for (var i = 0; i < fields.Length; i++)
         {
             var field = fields[i];
-            if (AvailableFields.TryGetValue(field, out Column? column))
+            if (AvailableFields.TryGetValue(field, out var column))
             {
                 if (Column.NameEquals(column, "time"))
                 {

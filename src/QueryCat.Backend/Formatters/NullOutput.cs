@@ -6,7 +6,7 @@ using QueryCat.Backend.Types;
 
 namespace QueryCat.Backend.Formatters;
 
-public class NullOutput : RowsOutput
+internal sealed class NullOutput : RowsOutput
 {
     [Description("NULL output.")]
     [FunctionSignature("write_null(): object<IRowsOutput>")]

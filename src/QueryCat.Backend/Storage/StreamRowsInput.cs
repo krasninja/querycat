@@ -23,7 +23,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
      * - Open()
      *   - ReadNext() - get first row
      *     - ReadNextInternal()
-     *     - SetDefaultColumns() - on this stage we know the real columns count, preinitialize
+     *     - SetDefaultColumns() - on this stage we know the real columns count, pre-initialize
      *   - Analyze() - init columns, add custom columns, resolve columns types
      * - SetContext()
      * - ReadNext() - real data reading, cache first, stream next
@@ -71,7 +71,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     /// </summary>
     /// <param name="streamReader">Stream reader.</param>
     /// <param name="options">The options.</param>
-    public StreamRowsInput(StreamReader streamReader, StreamRowsInputOptions? options = null)
+    protected StreamRowsInput(StreamReader streamReader, StreamRowsInputOptions? options = null)
     {
         _options = options ?? new();
         _delimiterStreamReader = new DelimiterStreamReader(streamReader, _options.DelimiterStreamReaderOptions);
@@ -132,15 +132,14 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
 
     private bool TryReadVirtualOrCachedColumnValue(int columnIndex, out VariantValue value, out ErrorCode errorCode)
     {
-        var originalColumnIndex = columnIndex;
         string stringValue;
         if (_cacheIterator != null)
         {
-            stringValue = _cacheIterator.Current[originalColumnIndex].AsString;
+            stringValue = _cacheIterator.Current[columnIndex].AsString;
         }
-        else if (originalColumnIndex < _virtualColumnsCount)
+        else if (columnIndex < _virtualColumnsCount)
         {
-            stringValue = GetVirtualColumnValue(_rowIndex, originalColumnIndex).AsString;
+            stringValue = GetVirtualColumnValue(_rowIndex, columnIndex).AsString;
         }
         else
         {
@@ -151,7 +150,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
 
         errorCode = VariantValue.TryCreateFromString(
             stringValue,
-            Columns[originalColumnIndex].DataType,
+            Columns[columnIndex].DataType,
             out value)
             ? ErrorCode.OK : ErrorCode.Error;
         return true;
@@ -366,7 +365,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     protected Span<VariantValue> GetCurrentInputValues(Row row)
     {
         var values = new VariantValue[_columns.Length - _virtualColumnsCount];
-        for (int i = _virtualColumnsCount; i < _columns.Length; i++)
+        for (var i = _virtualColumnsCount; i < _columns.Length; i++)
         {
             values[i - _virtualColumnsCount] = row[i];
         }

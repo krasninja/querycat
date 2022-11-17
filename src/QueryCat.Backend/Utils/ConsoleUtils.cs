@@ -15,7 +15,7 @@ internal static class ConsoleUtils
         var isPosix = !System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(
             System.Runtime.InteropServices.OSPlatform.Windows);
 
-        char prevch = '\0';
+        var prevch = '\0';
         var arr = new byte[] { 0 };
         while (stream.Read(arr, 0, 1) > 0)
         {

@@ -19,11 +19,7 @@ public class DelimiterStreamReaderTests
             .Append("10,john");
 
         // Act.
-        var streamRowsInput = new DelimiterStreamReader(StringToStream(sb.ToString()),
-            new DelimiterStreamReader.ReaderOptions
-            {
-                Delimiters = new[] { ',' },
-            });
+        var streamRowsInput = new DelimiterStreamReader(StringToStream(sb.ToString()));
         streamRowsInput.Read();
         streamRowsInput.Read();
 
@@ -37,15 +33,11 @@ public class DelimiterStreamReaderTests
     {
         // Arrange.
         var sb = new StringBuilder()
-            .Append("id,name\n")
-            .Append("10,john\n");
+            .Append("id\tname\n")
+            .Append("10\tjohn\n");
 
         // Act.
-        var streamRowsInput = new DelimiterStreamReader(StringToStream(sb.ToString()),
-            new DelimiterStreamReader.ReaderOptions
-            {
-                Delimiters = new[] { ',' },
-            });
+        var streamRowsInput = new DelimiterStreamReader(StringToStream(sb.ToString()));
         streamRowsInput.Read();
         streamRowsInput.Read();
 
@@ -64,11 +56,7 @@ public class DelimiterStreamReaderTests
             .Append("10,john\n");
 
         // Act.
-        var streamRowsInput = new DelimiterStreamReader(StringToStream(sb.ToString()),
-            new DelimiterStreamReader.ReaderOptions
-            {
-                Delimiters = new[] { ',' },
-            });
+        var streamRowsInput = new DelimiterStreamReader(StringToStream(sb.ToString()));
         streamRowsInput.Read();
         streamRowsInput.ReadLine();
 
@@ -155,6 +143,29 @@ public class DelimiterStreamReaderTests
         Assert.Equal("affka", name2);
     }
 
+    [Fact]
+    public void Read_DataWithEmptyLines_ShouldSkipEmpty()
+    {
+        // Arrange.
+        var sb = new StringBuilder()
+            .Append("id,name\r\n")
+            .Append("\r\n")
+            .Append("10,john");
+
+        // Act.
+        var streamRowsInput = new DelimiterStreamReader(StringToStream(sb.ToString()), new DelimiterStreamReader.ReaderOptions
+        {
+            SkipEmptyLines = true,
+            Delimiters = new[] { ',' },
+        });
+        streamRowsInput.Read();
+        streamRowsInput.Read();
+
+        // Assert.
+        Assert.Equal("10", streamRowsInput.GetField(0).ToString());
+        Assert.Equal("john", streamRowsInput.GetField(1).ToString());
+    }
+
     [Theory]
     [InlineData("test", "test")]
     [InlineData("\"test\"", "test")]
@@ -183,6 +194,19 @@ public class DelimiterStreamReaderTests
 
         // Assert.
         Assert.Equal(expected, result1);
+    }
+
+    [Theory]
+    [InlineData("id,name", ',')]
+    [InlineData("id\tfull name\tmiddle name\tbe;be", '\t')]
+    [InlineData("name", ' ')]
+    public void TryDetectDelimiter(string target, char expected)
+    {
+        // Act.
+        DelimiterStreamReader.TryDetectDelimiter(target, out var delimiter);
+
+        // Assert.
+        Assert.Equal(expected, delimiter);
     }
 
     private static StreamReader StringToStream(string value)

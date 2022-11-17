@@ -1,70 +1,30 @@
-using System.Runtime.CompilerServices;
-using QueryCat.Backend.Relational;
-using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Types;
 
 namespace QueryCat.Backend.Functions;
 
-/// <summary>
-/// The class is the delegate implementation for QueryCat project. It contains all the data
-/// needed to run the node delegate and get the result.
-/// </summary>
-public class FuncUnit
+internal abstract class FuncUnit : IFuncUnit
 {
-    private readonly VariantValueFunc _func;
-    private VariantValueFuncData _data;
+    public const int SubqueriesRowsIterators = 10;
 
-    /// <summary>
-    /// Data to be used for func invocation.
-    /// </summary>
-    public VariantValueFuncData Data => _data;
+    private IDictionary<int, object>? _objects;
 
-    public IRowsIterator[] SubQueryIterators { get; internal set; } = Array.Empty<IRowsIterator>();
-
-    public FuncUnit(VariantValue value)
+    /// <inheritdoc />
+    public object? GetData(int index)
     {
-        _func = _ => value;
-        _data = VariantValueFuncData.Empty;
-    }
-
-    public FuncUnit(VariantValueFunc func)
-    {
-        _func = func;
-        _data = new VariantValueFuncData(EmptyIterator.Instance);
-    }
-
-    public FuncUnit(VariantValueFunc func, IRowsIterator rowsIterator)
-    {
-        _func = func;
-        _data = new VariantValueFuncData(rowsIterator);
-    }
-
-    /// <summary>
-    /// Set the iterator to get current row value on SELECT iteration stage.
-    /// </summary>
-    /// <param name="rowsIterator">Rows iterator.</param>
-    public void SetIterator(IRowsIterator rowsIterator)
-    {
-        _data = new VariantValueFuncData(rowsIterator);
-    }
-
-    /// <summary>
-    /// Set the iterator to get current row value on SELECT iteration stage.
-    /// </summary>
-    /// <param name="funcUnits">Delegates.</param>
-    /// <param name="rowsIterator">Rows iterator.</param>
-    public static void SetIterator(IEnumerable<FuncUnit> funcUnits, IRowsIterator rowsIterator)
-    {
-        foreach (var funcUnit in funcUnits)
+        if (_objects == null)
         {
-            funcUnit.SetIterator(rowsIterator);
+            return null;
         }
+        return _objects[index];
     }
 
-    /// <summary>
-    /// Invoke the func delegate.
-    /// </summary>
-    /// <returns>Invocation result.</returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public VariantValue Invoke() => _func(_data);
+    /// <inheritdoc />
+    public void SetData(int index, object obj)
+    {
+        _objects ??= new SortedDictionary<int, object>();
+        _objects[index] = obj;
+    }
+
+    /// <inheritdoc />
+    public abstract VariantValue Invoke();
 }

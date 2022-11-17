@@ -11,7 +11,7 @@ namespace QueryCat.Backend.Ast;
 /// </summary>
 public class QueryAstVisitor : AstVisitor
 {
-    private const string Space = " ";
+    private const char Space = ' ';
 
     /// <inheritdoc />
     public override void Run(IAstNode node)

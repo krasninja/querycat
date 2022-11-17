@@ -57,7 +57,7 @@ public sealed class QueryContextQueryInfo
     internal QueryContextCondition AddCondition(
         Column column,
         VariantValue.Operation operation,
-        params FuncUnit[] valueFuncs)
+        params IFuncUnit[] valueFuncs)
     {
         var queryContextCondition = new QueryContextCondition(column, operation, valueFuncs);
         _queryContextConditions.Add(queryContextCondition);

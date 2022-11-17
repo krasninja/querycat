@@ -7,7 +7,7 @@ namespace QueryCat.Backend.Formatters;
 /// <summary>
 /// Delimiter separated values (DSV) input.
 /// </summary>
-internal sealed class DsvInput : StreamRowsInput
+internal class DsvInput : StreamRowsInput
 {
     private bool? _hasHeader;
 

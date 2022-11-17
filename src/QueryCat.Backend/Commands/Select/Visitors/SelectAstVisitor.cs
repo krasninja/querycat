@@ -2,7 +2,6 @@ using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Commands.Select.Iterators;
 using QueryCat.Backend.Execution;
-using QueryCat.Backend.Functions;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Relational.Iterators;
 
@@ -14,7 +13,7 @@ internal abstract class SelectAstVisitor : AstVisitor
 
     protected ExecutionThread ExecutionThread { get; }
 
-    public SelectAstVisitor(ExecutionThread executionThread)
+    protected SelectAstVisitor(ExecutionThread executionThread)
     {
         ExecutionThread = executionThread;
         AstTraversal = new AstTraversal(this);
@@ -39,11 +38,10 @@ internal abstract class SelectAstVisitor : AstVisitor
                 n.GetDataType()
             )
         );
-        var scope = new VariantValueFuncData(context.CurrentIterator);
-        context.SetIterator(new OrderRowsIterator(scope, orderFunctions.ToArray()));
+        context.SetIterator(new OrderRowsIterator(context.CurrentIterator, orderFunctions.ToArray()));
     }
 
-    protected OrderDirection ConvertDirection(SelectOrderSpecification order) => order switch
+    private static OrderDirection ConvertDirection(SelectOrderSpecification order) => order switch
     {
         SelectOrderSpecification.Ascending => OrderDirection.Ascending,
         SelectOrderSpecification.Descending => OrderDirection.Descending,

@@ -11,6 +11,8 @@ namespace QueryCat.Backend.Formatters;
 /// </summary>
 internal sealed class DsvOutput : RowsOutput, IDisposable
 {
+    private const char DefaultDelimiter = ',';
+
     private readonly StreamWriter _streamWriter;
     private readonly char _delimiter;
     private readonly bool _hasHeader;
@@ -19,7 +21,9 @@ internal sealed class DsvOutput : RowsOutput, IDisposable
     public DsvOutput(DsvOptions dsvOptions)
     {
         _streamWriter = new StreamWriter(dsvOptions.Stream, Encoding.Default, -1, leaveOpen: true);
-        _delimiter = dsvOptions.InputOptions.DelimiterStreamReaderOptions.Delimiters[0];
+        _delimiter = dsvOptions.InputOptions.DelimiterStreamReaderOptions.Delimiters.Length > 0 ?
+            dsvOptions.InputOptions.DelimiterStreamReaderOptions.Delimiters[0]
+            : DefaultDelimiter;
         _hasHeader = dsvOptions.HasHeader ?? true;
     }
 

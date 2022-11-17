@@ -13,6 +13,7 @@ namespace QueryCat.Backend.Execution;
 public sealed class ExecutionThread
 {
     internal const string ApplicationDirectory = "qcat";
+    internal const string ApplicationPluginsDirectory = "plugins";
     internal const string ConfigFileName = "config.json";
 
     private readonly StatementsVisitor _statementsVisitor;
@@ -61,6 +62,12 @@ public sealed class ExecutionThread
 
     public static readonly ExecutionThread Empty = new();
 
+    internal string GetApplicationDirectory()
+    {
+        return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            ApplicationDirectory);
+    }
+
     public ExecutionThread(
         ExecutionOptions? options = null)
     {
@@ -68,15 +75,14 @@ public sealed class ExecutionThread
         Options = options ?? new ExecutionOptions();
         _statementsVisitor = new StatementsVisitor(this);
 
-        var appDirectory =
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), ApplicationDirectory);
+        var appDirectory = GetApplicationDirectory();
         InputConfigStorage = new PersistentInputConfigStorage(Path.Combine(appDirectory, ConfigFileName));
     }
 
     /// <summary>
     /// Run the execution flow.
     /// </summary>
-    public void Run()
+    public VariantValue Run()
     {
         var stopwatch = new Stopwatch();
         stopwatch.Start();
@@ -120,5 +126,6 @@ public sealed class ExecutionThread
         }
         stopwatch.Stop();
         Statistic.ExecutionTime = stopwatch.Elapsed;
+        return LastResult;
     }
 }

@@ -75,13 +75,13 @@ internal sealed class StringDumpAstVisitor : DelegateVisitor
 
     private static string FormatValue(object? value)
     {
-        if (value is VariantValueFunc)
+        if (value is IFuncUnit funcUnit)
         {
-            return nameof(VariantValueFunc);
+            return funcUnit.ToString() ?? nameof(IFuncUnit);
         }
         if (value is Func<VariantValue>)
         {
-            return nameof(VariantValueFunc) + "`0";
+            return nameof(Func<VariantValue>) + "`0";
         }
         return value?.ToString() ?? string.Empty;
     }

@@ -13,9 +13,9 @@ public class QueryContextCondition
 
     public VariantValue.Operation Operation { get; }
 
-    public IReadOnlyList<FuncUnit> ValueFuncs { get; }
+    public IReadOnlyList<IFuncUnit> ValueFuncs { get; }
 
-    public FuncUnit ValueFunc => ValueFuncs[0];
+    public IFuncUnit ValueFunc => ValueFuncs[0];
 
     /// <summary>
     /// Constructor.
@@ -26,7 +26,7 @@ public class QueryContextCondition
     public QueryContextCondition(
         Column column,
         VariantValue.Operation operation,
-        IReadOnlyList<FuncUnit> valueFuncs)
+        IReadOnlyList<IFuncUnit> valueFuncs)
     {
         if (valueFuncs.Count < 1)
         {
@@ -47,7 +47,7 @@ public class QueryContextCondition
     public QueryContextCondition(
         Column column,
         VariantValue.Operation operation,
-        FuncUnit value) : this(column, operation, new[] { value })
+        IFuncUnit value) : this(column, operation, new[] { value })
     {
     }
 

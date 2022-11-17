@@ -31,7 +31,7 @@ public class DynamicBufferTests
         var dynamicBuffer = new DynamicBuffer<byte>(chunkSize: 10);
 
         // Arrange.
-        for (int i = 0; i < 3; i++)
+        for (var i = 0; i < 3; i++)
         {
             var buffer = dynamicBuffer.Allocate();
             dynamicBuffer.Commit(buffer);
@@ -134,7 +134,7 @@ public class DynamicBufferTests
     {
         // Arrange.
         var dynamicBuffer = new DynamicBuffer<byte>(chunkSize: 10);
-        for (int i = 0; i < 3; i++)
+        for (var i = 0; i < 3; i++)
         {
             var buffer = dynamicBuffer.Allocate();
             dynamicBuffer.Commit(buffer);
@@ -222,11 +222,11 @@ public class DynamicBufferTests
         var delimiters = new[] { ',', ';' };
 
         // Act.
-        var firstIndex = dynamicBuffer.IndexOfAny(delimiters, out char _);
-        var secondIndex = dynamicBuffer.IndexOfAny(delimiters, out char secondDelimiter, firstIndex + 1);
-        var thirdIndex = dynamicBuffer.IndexOfAny(delimiters, out char thirdDelimiter, secondIndex + 1);
+        var firstIndex = dynamicBuffer.IndexOfAny(delimiters, out _);
+        var secondIndex = dynamicBuffer.IndexOfAny(delimiters, out var secondDelimiter, firstIndex + 1);
+        var thirdIndex = dynamicBuffer.IndexOfAny(delimiters, out var thirdDelimiter, secondIndex + 1);
         dynamicBuffer.Advance(secondIndex);
-        var fourthIndex = dynamicBuffer.IndexOfAny(delimiters, out char _);
+        var fourthIndex = dynamicBuffer.IndexOfAny(delimiters, out _);
 
         // Assert.
         Assert.Equal(11, firstIndex);
@@ -253,7 +253,7 @@ public class DynamicBufferTests
         var delimiters = new[] { ',', ';' };
 
         // Act.
-        var firstIndex = dynamicBuffer.IndexOfAny(delimiters, out char firstDelimiter);
+        var firstIndex = dynamicBuffer.IndexOfAny(delimiters, out var firstDelimiter);
 
         // Assert.
         Assert.Equal(2, firstIndex);
@@ -276,7 +276,7 @@ public class DynamicBufferTests
         var delimiters = new[] { ',', ';' };
 
         // Act.
-        var firstIndex = dynamicBuffer.IndexOfAny(delimiters, out char _);
+        var firstIndex = dynamicBuffer.IndexOfAny(delimiters, out _);
 
         // Assert.
         Assert.Equal(-1, firstIndex);

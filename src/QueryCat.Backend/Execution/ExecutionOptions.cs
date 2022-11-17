@@ -28,7 +28,7 @@ public sealed class ExecutionOptions
     /// <summary>
     /// Show detailed statistic.
     /// </summary>
-    public bool ShowDetailedStatistic { get; set; } = false;
+    public bool ShowDetailedStatistic { get; set; }
 
     /// <summary>
     /// Max number of errors before abort.
@@ -41,14 +41,23 @@ public sealed class ExecutionOptions
     public List<Assembly> PluginAssemblies { get; } = new();
 
     /// <summary>
+    /// List of directories to search for plugins.
+    /// </summary>
+    public List<string> PluginDirectories { get; } = new();
+
+    /// <summary>
     /// Do not save/load config.
     /// </summary>
     public bool UseConfig { get; set; } = true;
 
     public ExecutionOptions(TextTableOutput.Style outputStyle = TextTableOutput.Style.Table)
     {
-        DefaultRowsOutput = new TextTableOutput(
+        var tableOutput = new TextTableOutput(
             stream: StandardInputOutput.GetConsoleOutput(),
             style: outputStyle);
+        DefaultRowsOutput = new PagingOutput(tableOutput)
+        {
+            PagingRowsCount = PagingSize,
+        };
     }
 }

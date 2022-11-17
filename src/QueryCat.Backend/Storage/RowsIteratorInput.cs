@@ -9,7 +9,7 @@ namespace QueryCat.Backend.Storage;
 public sealed class RowsIteratorInput : IRowsInput
 {
     private readonly IRowsIterator _rowsIterator;
-    private QueryContext? _queryContext = null;
+    private QueryContext? _queryContext;
     private readonly string _id;
 
     /// <inheritdoc />

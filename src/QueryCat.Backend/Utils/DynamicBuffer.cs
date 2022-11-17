@@ -53,7 +53,7 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
 
 #if DEBUG
     // ReSharper disable once StaticMemberInGenericType
-    private static int segmentId = 0;
+    private static int segmentId;
 #endif
 
     /// <summary>
@@ -225,7 +225,7 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
         }
 
         long advanced = 0;
-        BufferSegment? currentSegment = _buffersList.Head;
+        var currentSegment = _buffersList.Head;
         while (currentSegment != null && (ulong)advanced < (ulong)sizeToAdvance)
         {
             var chunkStartIndex = _startPosition % _chunkSize;
@@ -336,7 +336,8 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
             throw new ArgumentOutOfRangeException(nameof(size));
         }
 
-        long globalStartIndex = 0, committed = 0;
+        const long globalStartIndex = 0;
+        long committed = 0;
         var iterator = IteratorStart();
         while (iterator.IsNotEmpty)
         {
@@ -385,7 +386,7 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
         }
 
         T[]? localBuffer = null;
-        int localBufferStartIndex = 0;
+        var localBufferStartIndex = 0;
 
         /*
          * oooXX XXXXX XXXXo
@@ -560,9 +561,13 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ReadOnlySequence<T> GetSequence()
     {
+        if (_buffersList.Head == null)
+        {
+            return ReadOnlySequence<T>.Empty;
+        }
         var headStartIndex = GetSegmentStartIndex(_buffersList.Head);
         var tailEndIndex = GetSegmentEndIndex(_buffersList.Tail);
-        return new ReadOnlySequence<T>(_buffersList.Head!, headStartIndex, _buffersList.Tail!, tailEndIndex);
+        return new ReadOnlySequence<T>(_buffersList.Head, headStartIndex, _buffersList.Tail!, tailEndIndex);
     }
 
     #endregion
@@ -587,8 +592,8 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
     /// <param name="data">Data to write.</param>
     public void Write(ReadOnlySpan<T> data)
     {
-        int writeIndex = 0;
-        int length = data.Length;
+        var writeIndex = 0;
+        var length = data.Length;
 
         // Write values.
         while (writeIndex < length)
@@ -607,7 +612,7 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
 
             var position = (int)_endPosition % _chunkSize;
             var upperIndex = remainBuffer > data.Length - writeIndex ? data.Length : remainBuffer + writeIndex;
-            data[writeIndex..upperIndex].CopyTo(buffer.Slice(position));
+            data[writeIndex..upperIndex].CopyTo(buffer[position..]);
             var append = upperIndex - writeIndex;
             _endPosition += append;
             writeIndex += append;

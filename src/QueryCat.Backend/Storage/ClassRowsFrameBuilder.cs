@@ -169,7 +169,7 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
 
         if (NamingConvention == NamingConventionStyle.CamelCase)
         {
-            return name.Length < 2 ? name.ToLower() : char.ToLower(name[0]) + name.Substring(1);
+            return name.Length < 2 ? name.ToLower() : char.ToLower(name[0]) + name[1..];
         }
         else if (NamingConvention == NamingConventionStyle.SnakeCase)
         {

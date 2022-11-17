@@ -23,7 +23,7 @@ public class SamplePluginRowsIterator : IRowsIterator
         return VariantValue.CreateFromObject(rowsSource);
     }
 
-    private long _currentState = 0;
+    private long _currentState;
 
     /// <inheritdoc />
     public Column[] Columns { get; } =

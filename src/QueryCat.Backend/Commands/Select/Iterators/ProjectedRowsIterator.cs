@@ -23,10 +23,10 @@ internal sealed class ProjectedRowsIterator : IRowsIterator
 
     internal sealed class FuncColumn : Column
     {
-        public FuncUnit Func { get; }
+        public IFuncUnit Func { get; }
 
         /// <inheritdoc />
-        public FuncColumn(Column column, FuncUnit func)
+        public FuncColumn(Column column, IFuncUnit func)
             : base(column)
         {
             Func = func;
@@ -61,7 +61,7 @@ internal sealed class ProjectedRowsIterator : IRowsIterator
         _rowsIterator.Reset();
     }
 
-    public int AddFuncColumn(Column column, FuncUnit func)
+    public int AddFuncColumn(Column column, IFuncUnit func)
     {
         Array.Resize(ref _columns, _columns.Length + 1);
         _columns[^1] = new FuncColumn(column, func);

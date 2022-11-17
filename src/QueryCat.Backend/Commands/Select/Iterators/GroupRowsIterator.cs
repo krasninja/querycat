@@ -12,7 +12,7 @@ internal sealed class GroupRowsIterator : IRowsIterator
     private readonly RowsFrame _rowsFrame;
     private readonly RowsFrameIterator _rowsFrameIterator;
     private readonly int _aggregateColumnsOffset;
-    private readonly FuncUnit[] _keys;
+    private readonly IFuncUnit[] _keys;
     private readonly SelectCommandContext _context;
 
     private readonly AggregateTarget[] _targets;
@@ -54,7 +54,7 @@ internal sealed class GroupRowsIterator : IRowsIterator
 
     public GroupRowsIterator(
         IRowsIterator rowsIterator,
-        FuncUnit[] keys,
+        IFuncUnit[] keys,
         SelectCommandContext context,
         AggregateTarget[] targets)
     {
@@ -100,7 +100,6 @@ internal sealed class GroupRowsIterator : IRowsIterator
         var keysRowIndexesMap = new Dictionary<VariantValueArray, GroupKeyEntry>();
 
         // Fill keysRowIndexesMap.
-        var data = new VariantValueFuncData(_rowsIterator);
         while (_rowsIterator.MoveNext())
         {
             // Format key and fill aggregate values.
@@ -121,7 +120,7 @@ internal sealed class GroupRowsIterator : IRowsIterator
             }
             for (int i = 0; i < _targets.Length; i++)
             {
-                _targets[i].ValueGenerator.Invoke(data); // We need this call to fill FunctionCallInfo.
+                _targets[i].ValueGenerator.Invoke(); // We need this call to fill FunctionCallInfo.
                 _targets[i].AggregateFunction.Invoke(groupKey.AggregateStates[i], _targets[i].FunctionCallInfo);
             }
         }

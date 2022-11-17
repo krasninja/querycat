@@ -1,6 +1,7 @@
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Function;
+using QueryCat.Backend.Ast.Nodes.SpecialFunctions;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Functions;
 using QueryCat.Backend.Types;
@@ -79,12 +80,6 @@ internal class ResolveTypesVisitor : AstVisitor
     }
 
     /// <inheritdoc />
-    public override void Visit(CastNode node)
-    {
-        node.SetDataType(node.TargetTypeNode.Type);
-    }
-
-    /// <inheritdoc />
     public override void Visit(IdentifierExpressionNode node)
     {
         throw new CannotFindIdentifierException(node.Name);
@@ -114,6 +109,29 @@ internal class ResolveTypesVisitor : AstVisitor
     public override void Visit(InOperationExpressionNode node)
     {
         node.SetDataType(DataType.Boolean);
+    }
+
+    #endregion
+
+    #region Special functions
+
+    /// <inheritdoc />
+    public override void Visit(CastFunctionNode node)
+    {
+        node.SetDataType(node.TargetTypeNode.Type);
+    }
+
+    /// <inheritdoc />
+    public override void Visit(CoalesceFunctionNode node)
+    {
+        var types = node.Expressions.Select(e => e.GetDataType());
+        var generalType = types.Where(DataTypeUtils.IsSimple).Distinct().ToList();
+        if (generalType.Count > 1)
+        {
+            var foundTypes = string.Join(", ", generalType);
+            throw new SemanticException($"COALESCE function must have identical argument types. Found ({foundTypes}).");
+        }
+        node.SetDataType(generalType.First());
     }
 
     #endregion

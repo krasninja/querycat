@@ -45,9 +45,8 @@ public abstract class BaseQueryCommand
 
     protected Runner CreateRunner(ExecutionOptions executionOptions)
     {
-        executionOptions.PluginAssemblies.Add(typeof(QueryCat.DataProviders.Registration).Assembly);
-        var pluginLoader = new PluginsLoader(PluginDirectories);
-        executionOptions.PluginAssemblies.AddRange(pluginLoader.LoadPlugins());
+        executionOptions.PluginAssemblies.Add(typeof(DataProviders.Registration).Assembly);
+        executionOptions.PluginDirectories.AddRange(PluginDirectories);
         var runner = new Runner(executionOptions);
         runner.ExecutionThread.Statistic.CountErrorRows = runner.ExecutionThread.Options.ShowDetailedStatistic;
         runner.Bootstrap();

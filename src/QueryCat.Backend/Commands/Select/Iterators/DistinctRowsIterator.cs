@@ -11,7 +11,7 @@ namespace QueryCat.Backend.Commands.Select.Iterators;
 public class DistinctRowsIterator : IRowsIterator
 {
     private readonly IRowsIterator _rowsIterator;
-    private readonly FuncUnit[] _columnsFunctions;
+    private readonly IFuncUnit[] _columnsFunctions;
     private readonly HashSet<VariantValueArray> _values = new();
 
     /// <inheritdoc />
@@ -21,7 +21,7 @@ public class DistinctRowsIterator : IRowsIterator
     public Row Current => _rowsIterator.Current;
 
     public DistinctRowsIterator(IRowsIterator rowsIterator,
-        params FuncUnit[] columnsIndexes)
+        params IFuncUnit[] columnsIndexes)
     {
         _rowsIterator = rowsIterator;
         if (columnsIndexes.Any())
@@ -32,7 +32,7 @@ public class DistinctRowsIterator : IRowsIterator
         {
             // If no columns specified distinct by all columns.
             _columnsFunctions = rowsIterator.Columns
-                .Select((c, i) => new FuncUnit(_ => rowsIterator.Current[i]))
+                .Select((_, i) => new FuncUnitRowsIteratorColumn(rowsIterator, i))
                 .ToArray();
         }
     }

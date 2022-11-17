@@ -136,7 +136,7 @@ internal readonly struct CacheKey
     internal string Serialize()
     {
         var sb = new StringBuilder();
-        sb.Append(StringUtils.Quote($"F:{From}").ToString());
+        sb.Append(StringUtils.Quote($"F:{From}"));
         if (InputArguments.Length > 0)
         {
             sb.Append(' ');
@@ -179,8 +179,8 @@ internal readonly struct CacheKey
         List<CacheKeyCondition> conditions = new();
         foreach (var item in arr)
         {
-            var key = item.Substring(0, 2);
-            var value = StringUtils.Unquote(item.Substring(2)).ToString();
+            var key = item[..2];
+            var value = StringUtils.Unquote(item.AsSpan(2)).ToString();
             if (key == "F:")
             {
                 from = value;

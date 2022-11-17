@@ -211,7 +211,7 @@ internal sealed partial class SelectSpecificationNodeVisitor : SelectAstVisitor
             {
                 return false;
             }
-            var values = new List<FuncUnit>();
+            var values = new List<IFuncUnit>();
             foreach (var inExpressionValue in inOperationExpressionNode.InExpressionValues.Values)
             {
                 values.Add(makeDelegateVisitor.RunAndReturn(inExpressionValue));
@@ -233,7 +233,6 @@ internal sealed partial class SelectSpecificationNodeVisitor : SelectAstVisitor
             }
             if (HandleInOperation(node, traversal))
             {
-                return;
             }
         };
         callbackVisitor.Run(searchNode);
@@ -300,9 +299,8 @@ internal sealed partial class SelectSpecificationNodeVisitor : SelectAstVisitor
         var iterator = context.CurrentIterator;
         for (var i = 0; i < context.CurrentIterator.Columns.Length; i++)
         {
-            var index = i;
             projectedIterator.AddFuncColumn(
-                context.CurrentIterator.Columns[index], new FuncUnit(_ => iterator.Current[index]));
+                context.CurrentIterator.Columns[i], new FuncUnitRowsIteratorColumn(iterator, i));
         }
 
         var makeDelegateVisitor = new SelectCreateDelegateVisitor(ExecutionThread, context);
@@ -342,7 +340,7 @@ internal sealed partial class SelectSpecificationNodeVisitor : SelectAstVisitor
             }
             if (index > -1)
             {
-                projectedIterator.AddFuncColumn(columnInfo.Column, new FuncUnit(_ => iterator.Current[index]));
+                projectedIterator.AddFuncColumn(columnInfo.Column, new FuncUnitRowsIteratorColumn(iterator, index));
             }
         }
         context.SetIterator(projectedIterator);

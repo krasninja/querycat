@@ -56,7 +56,7 @@ public sealed class ChunkList<T> : IList<T>, IList, IReadOnlyList<T>
         set
         {
             var chunk = _chunks[FindChunk(index)];
-            int itemIndex = index - chunk.PrevCount;
+            var itemIndex = index - chunk.PrevCount;
             chunk.Items[itemIndex] = value;
         }
     }
@@ -101,7 +101,7 @@ public sealed class ChunkList<T> : IList<T>, IList, IReadOnlyList<T>
     /// <inheritdoc />
     public int IndexOf(T item)
     {
-        int count = 0;
+        var count = 0;
         foreach (var chunk in _chunks)
         {
             var index = chunk.IndexOf(item);
@@ -132,7 +132,7 @@ public sealed class ChunkList<T> : IList<T>, IList, IReadOnlyList<T>
             return;
         }
 
-        int chunkIndexToInsert = FindChunk(index);
+        var chunkIndexToInsert = FindChunk(index);
         var chunk = _chunks[chunkIndexToInsert];
         chunk.Items.Insert(index - chunk.PrevCount, item);
         _count++;
@@ -143,7 +143,7 @@ public sealed class ChunkList<T> : IList<T>, IList, IReadOnlyList<T>
             int num2 = chunk.Items.Count / 2;
             while (num2 < chunk.Items.Count)
             {
-                T item2 = chunk.Items[num2];
+                var item2 = chunk.Items[num2];
                 chunk.RemoveItem(item2);
                 newChunk.AddItem(item2);
             }
@@ -153,12 +153,11 @@ public sealed class ChunkList<T> : IList<T>, IList, IReadOnlyList<T>
 
     private void UpdatePrevCount(int startIndex)
     {
-        var list = _chunks;
-        var chunk = list[startIndex];
-        int count = chunk.PrevCount + chunk.Items.Count;
-        for (int i = startIndex + 1; i < list.Count; i++)
+        var chunk = _chunks[startIndex];
+        var count = chunk.PrevCount + chunk.Items.Count;
+        for (int i = startIndex + 1; i < _chunks.Count; i++)
         {
-            var chunk2 = list[i];
+            var chunk2 = _chunks[i];
             chunk2.PrevCount = count;
             count += chunk2.Items.Count;
         }
@@ -171,9 +170,9 @@ public sealed class ChunkList<T> : IList<T>, IList, IReadOnlyList<T>
     /// If it's negative or exceeds the number of elements, an exception is raised.</param>
     public void RemoveAt(int index)
     {
-        int chunkIndex = FindChunk(index);
+        var chunkIndex = FindChunk(index);
         var chunk = _chunks[chunkIndex];
-        int indexAtChunk = index - chunk.PrevCount;
+        var indexAtChunk = index - chunk.PrevCount;
         chunk.Items.RemoveAt(indexAtChunk);
         _count--;
         if (chunk.Items.Count < _chunkSize)
@@ -194,8 +193,7 @@ public sealed class ChunkList<T> : IList<T>, IList, IReadOnlyList<T>
     {
         var chunk1 = _chunks[chunkIndex];
         var chunk2 = _chunks[chunkIndex + 1];
-        int num = 0;
-        while (num < chunk2.Items.Count)
+        while (chunk2.Items.Count > 0)
         {
             var item = chunk2.Items[0];
             chunk2.RemoveItem(item);
@@ -206,8 +204,8 @@ public sealed class ChunkList<T> : IList<T>, IList, IReadOnlyList<T>
 
     private int FindChunk(int index)
     {
-        int num = 0;
-        int chunkIndex = _chunks.Count - 1;
+        var num = 0;
+        var chunkIndex = _chunks.Count - 1;
         while (num < chunkIndex)
         {
             int num3 = num + (chunkIndex - num) / 2;

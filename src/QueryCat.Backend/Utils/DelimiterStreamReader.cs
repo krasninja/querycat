@@ -24,6 +24,7 @@ public class DelimiterStreamReader
     private const int DefaultBufferSize = 0x4000;
 
     private static readonly char[] AutoDetectDelimiters = { ',', '\t', ';', '|' };
+    private static readonly char[] EndOfLineCharacters = { '\n', '\r' };
 
     public delegate void OnDelimiterDelegate(char ch, long pos, out bool countField, out bool endLine);
 
@@ -59,6 +60,11 @@ public class DelimiterStreamReader
         /// Columns delimiters.
         /// </summary>
         public char[] Delimiters { get; set; } = Array.Empty<char>();
+
+        /// <summary>
+        /// Get the preferred delimiter if we cannot determine any from line.
+        /// </summary>
+        public char? PreferredDelimiter { get; set; }
 
         /// <summary>
         /// Can a delimiter be repeated. Can be useful for example for whitespace delimiter.
@@ -127,7 +133,7 @@ public class DelimiterStreamReader
     private readonly DynamicBuffer<char> _dynamicBuffer;
     private readonly StreamReader _streamReader;
     private readonly ReaderOptions _options;
-    private readonly char[] _stopCharacters;
+    private char[] _stopCharacters = Array.Empty<char>();
 
     // Stores positions of delimiters for columns.
     private FieldInfo[] _fieldInfos = new FieldInfo[32];
@@ -150,9 +156,12 @@ public class DelimiterStreamReader
         _streamReader = streamReader;
         _options = options ?? new ReaderOptions();
         _dynamicBuffer = new DynamicBuffer<char>(_options.BufferSize);
+        InitStopCharacters();
+    }
 
-        // Stop characters.
-        var endOfLineCharacters = _options.CompleteOnEndOfLine ? new[] { '\n', '\r' } : Array.Empty<char>();
+    private void InitStopCharacters()
+    {
+        var endOfLineCharacters = _options.CompleteOnEndOfLine ? EndOfLineCharacters : Array.Empty<char>();
         _stopCharacters = _options.Delimiters
             .Union(_options.QuoteChars)
             .Union(endOfLineCharacters)
@@ -191,7 +200,7 @@ public class DelimiterStreamReader
     /// <summary>
     /// Get current line fields count.
     /// </summary>
-    /// <returns></returns>
+    /// <returns>Fields count.</returns>
     public int GetFieldsCount() => _fieldInfoLastIndex - 1;
 
     /// <summary>
@@ -218,13 +227,18 @@ public class DelimiterStreamReader
             ReadNextBufferData();
         }
 
+        if (_options.Delimiters.Length == 0)
+        {
+            FindDelimiter();
+        }
+
         int readBytes;
         bool isInQuotes = false, // Are we within quotes?
             quotesMode = false, // Set when first field char is quote.
             fieldStart = true; // Indicates that we are at field start.
         SequenceReader<char> sequenceReader;
         _fieldInfoLastIndex = 0;
-        ref FieldInfo currentField = ref GetNextFieldInfo();
+        ref var currentField = ref GetNextFieldInfo();
         do
         {
             _currentSequence = _dynamicBuffer.GetSequence();
@@ -236,8 +250,8 @@ public class DelimiterStreamReader
                 if (_options.DelimitersCanRepeat)
                 {
                     while (EnsureHasAdvanceData(ref sequenceReader)
-                        && GetNextCharacter(out var nextChar)
-                        && Array.IndexOf(_options.Delimiters, nextChar) > -1)
+                           && GetNextCharacter(out var nextChar)
+                           && Array.IndexOf(_options.Delimiters, nextChar) > -1)
                     {
                         _currentDelimiterPosition++;
                         sequenceReader.Advance(1);
@@ -254,11 +268,11 @@ public class DelimiterStreamReader
                     _currentDelimiterPosition = sequenceReader.Consumed;
                     break;
                 }
-                sequenceReader.TryPeek(out char ch);
+                var ch = sequenceReader.CurrentSpan[sequenceReader.CurrentSpanIndex];
                 sequenceReader.Advance(1);
 
                 // Quotes.
-                if (Array.IndexOf(_options.QuoteChars, ch) > -1)
+                if (isInQuotes || Array.IndexOf(_options.QuoteChars, ch) > -1)
                 {
                     if (fieldStart)
                     {
@@ -278,7 +292,7 @@ public class DelimiterStreamReader
                         {
                             // Process \" case.
                             sequenceReader.Rewind(2);
-                            sequenceReader.TryPeek(out char prevCh);
+                            sequenceReader.TryPeek(out var prevCh);
                             sequenceReader.Advance(2);
                             if (prevCh != '\\')
                             {
@@ -298,10 +312,7 @@ public class DelimiterStreamReader
                     if (!isInQuotes && (ulong)_currentDelimiterPosition > 0)
                     {
                         bool addField = true, completeLine = false;
-                        if (OnDelimiter != null)
-                        {
-                            OnDelimiter.Invoke(ch, _currentDelimiterPosition, out addField, out completeLine);
-                        }
+                        OnDelimiter?.Invoke(ch, _currentDelimiterPosition, out addField, out completeLine);
                         if (addField)
                         {
                             currentField.EndIndex = _options.IncludeDelimiter ? _currentDelimiterPosition + 1 : _currentDelimiterPosition;
@@ -319,7 +330,7 @@ public class DelimiterStreamReader
                     }
                 }
                 // End of line.
-                else if (_options.CompleteOnEndOfLine && (ch == '\n' || ch == '\r'))
+                else if (_options.CompleteOnEndOfLine && ch is '\n' or '\r')
                 {
                     if (!isInQuotes)
                     {
@@ -331,8 +342,7 @@ public class DelimiterStreamReader
                         // Process /r/n Windows line end case.
                         if (ch == '\r'
                             && EnsureHasAdvanceData(ref sequenceReader)
-                            && GetNextCharacter(out var nextCh)
-                            && nextCh == '\n')
+                            && sequenceReader.IsNext('\n'))
                         {
                             _currentDelimiterPosition++;
                         }
@@ -340,8 +350,13 @@ public class DelimiterStreamReader
                         // Skip empty line and try to read next.
                         if (_options.SkipEmptyLines && IsEmpty())
                         {
-                            sequenceReader.Advance(_currentDelimiterPosition);
-                            _fieldInfoLastIndex = 1;
+                            _fieldInfoLastIndex = 0;
+                            currentField = ref GetNextFieldInfo();
+                            currentField.StartIndex = _currentDelimiterPosition;
+                            if (!sequenceReader.End)
+                            {
+                                sequenceReader.Advance(1);
+                            }
                             continue;
                         }
 
@@ -365,7 +380,7 @@ public class DelimiterStreamReader
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     private bool IsEmpty()
-        => _fieldInfoLastIndex == 1 && _fieldInfos[0].EndIndex == 1;
+        => _fieldInfoLastIndex <= 2 && _fieldInfos[0].EndIndex == 1;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     private int ReadNextBufferData()
@@ -405,7 +420,7 @@ public class DelimiterStreamReader
             return ReadOnlySpan<char>.Empty;
         }
 
-        ref FieldInfo fieldInfo = ref _fieldInfos[columnIndex];
+        ref var fieldInfo = ref _fieldInfos[columnIndex];
         if (fieldInfo.IsEmpty)
         {
             return ReadOnlySpan<char>.Empty;
@@ -436,7 +451,7 @@ public class DelimiterStreamReader
         {
             return true;
         }
-        ref FieldInfo fieldInfo = ref _fieldInfos[columnIndex];
+        ref var fieldInfo = ref _fieldInfos[columnIndex];
         if (fieldInfo.IsEmpty)
         {
             return true;
@@ -500,6 +515,63 @@ public class DelimiterStreamReader
         }
         return _currentSequence.Slice(
             _fieldInfos[0].StartIndex, _fieldInfos[_fieldInfoLastIndex - 2].EndIndex - 1);
+    }
+
+    private void FindDelimiter()
+    {
+        SequenceReader<char> sequenceReader;
+        ReadOnlySpan<char> line;
+        do
+        {
+            _currentSequence = _dynamicBuffer.GetSequence();
+            sequenceReader = new SequenceReader<char>(_currentSequence);
+        }
+        while (!sequenceReader.TryReadToAny(out line, EndOfLineCharacters));
+
+        if (!TryDetectDelimiter(line, out var delimiter))
+        {
+            if (_options.PreferredDelimiter.HasValue)
+            {
+                delimiter = _options.PreferredDelimiter.Value;
+            }
+            else
+            {
+                throw new InvalidOperationException("Cannot determine delimiter. Please try to specify explicitly.");
+            }
+        }
+
+        _options.Delimiters = new[] { delimiter };
+        InitStopCharacters();
+    }
+
+    /// <summary>
+    /// Tries to detect delimiter that best matches to the specific string.
+    /// </summary>
+    /// <param name="line">Line to analyze.</param>
+    /// <param name="delimiter">Delimiter or space if not found.</param>
+    /// <returns><c>True</c> if found best delimiter, <c>false</c> otherwise.</returns>
+    public static bool TryDetectDelimiter(ReadOnlySpan<char> line, out char delimiter)
+    {
+        var autoDetectDelimitersCount = new int[AutoDetectDelimiters.Length];
+        for (var i = 0; i < line.Length; i++)
+        {
+            var delimiterIndex = Array.IndexOf(AutoDetectDelimiters, line[i]);
+            if (delimiterIndex > -1)
+            {
+                autoDetectDelimitersCount[delimiterIndex]++;
+            }
+        }
+
+        var bestDelimiterCount = autoDetectDelimitersCount.Max();
+        var bestDelimiterIndex = Array.IndexOf(autoDetectDelimitersCount, autoDetectDelimitersCount.Max());
+        if (bestDelimiterIndex < 0 || bestDelimiterCount == 0)
+        {
+            delimiter = ' ';
+            return false;
+        }
+
+        delimiter = AutoDetectDelimiters[bestDelimiterIndex];
+        return true;
     }
 
     #region Escape
@@ -570,16 +642,6 @@ public class DelimiterStreamReader
             }
             reader.Advance(1);
         }
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    private static ReadOnlySpan<char> GetSpanFromSequenceReader(SequenceReader<char> reader)
-    {
-        if (reader.Sequence.IsSingleSegment)
-        {
-            return reader.CurrentSpan;
-        }
-        return reader.Sequence.ToString();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]

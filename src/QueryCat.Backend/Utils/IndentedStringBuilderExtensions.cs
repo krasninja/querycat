@@ -32,20 +32,24 @@ public static class IndentedStringBuilderExtensions
 
     public static IndentedStringBuilder AppendSubQueriesWithIndent(
         this IndentedStringBuilder stringBuilder,
-        FuncUnit funcUnit)
+        IFuncUnit funcUnit)
     {
-        stringBuilder.IncreaseIndent();
-        foreach (var rowsIterator in funcUnit.SubQueryIterators)
+        if (funcUnit.GetData(FuncUnit.SubqueriesRowsIterators) is IEnumerable<IRowsIterator> subqueriesRowsIterators)
         {
-            rowsIterator.Explain(stringBuilder);
+            stringBuilder.IncreaseIndent();
+            foreach (var rowsIterator in subqueriesRowsIterators)
+            {
+                rowsIterator.Explain(stringBuilder);
+            }
+            stringBuilder.DecreaseIndent();
         }
-        stringBuilder.DecreaseIndent();
+
         return stringBuilder;
     }
 
     public static IndentedStringBuilder AppendSubQueriesWithIndent(
         this IndentedStringBuilder stringBuilder,
-        IEnumerable<FuncUnit> funcUnits)
+        IEnumerable<IFuncUnit> funcUnits)
     {
         foreach (var funcUnit in funcUnits)
         {

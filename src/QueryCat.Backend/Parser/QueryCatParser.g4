@@ -73,7 +73,7 @@ selectSublist
     ;
 
 // Into.
-selectTarget: INTO functionCall;
+selectTarget: INTO (functionCall | uri=STRING_LITERAL);
 
 // From.
 selectFromClause:
@@ -85,7 +85,8 @@ selectTableReferenceList:
     FROM selectTableReference (COMMA selectTableReference)*;
 selectTableReference
     : functionCall selectAlias? # SelectTableReferenceNoFormat
-    | STRING_LITERAL (FORMAT functionCall)? selectAlias? # SelectTableReferenceWithFormat
+    | '-' # SelectTableReferenceStdin
+    | uri=STRING_LITERAL (FORMAT functionCall)? selectAlias? # SelectTableReferenceWithFormat
     | '(' selectQueryExpression ')' selectAlias? # SelectTableReferenceSubquery
     ;
 
@@ -137,6 +138,7 @@ standardFunction
     | TRIM '(' spec=(LEADING | TRAILING | BOTH)? characters=STRING_LITERAL? FROM? target=simpleExpression ')' # standardFunctionTrim
     | POSITION '(' substring=STRING_LITERAL IN string=simpleExpression ')' # standardFunctionPosition
     | EXTRACT '(' extractField=dateTimeField FROM source=simpleExpression ')' # standardFunctionExtract
+    | COALESCE '(' expression (COMMA expression)* ')' # standardFunctionCoalesce
     ;
 
 dateTimeField

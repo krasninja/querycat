@@ -12,7 +12,7 @@ public class AstCommand : BaseQueryCommand
         PreInitialize();
 
         var runner = CreateRunner(new ExecutionOptions());
-        runner.ExecutionThread.BeforeStatementExecute += (sender, args) =>
+        runner.ExecutionThread.BeforeStatementExecute += (_, args) =>
         {
             console.WriteLine(runner.DumpAst());
             args.ContinueExecution = false;

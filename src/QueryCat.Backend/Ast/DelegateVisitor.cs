@@ -1,6 +1,7 @@
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Function;
 using QueryCat.Backend.Ast.Nodes.Select;
+using QueryCat.Backend.Ast.Nodes.SpecialFunctions;
 
 namespace QueryCat.Backend.Ast;
 
@@ -13,7 +14,7 @@ public abstract class DelegateVisitor : AstVisitor
 
     protected AstTraversal AstTraversal => _astTraversal;
 
-    public DelegateVisitor()
+    protected DelegateVisitor()
     {
         _astTraversal = new AstTraversal(this);
     }
@@ -40,12 +41,6 @@ public abstract class DelegateVisitor : AstVisitor
 
     /// <inheritdoc />
     public override void Visit(BinaryOperationExpressionNode node)
-    {
-        OnVisit(node);
-    }
-
-    /// <inheritdoc />
-    public override void Visit(CastNode node)
     {
         OnVisit(node);
     }
@@ -162,6 +157,22 @@ public abstract class DelegateVisitor : AstVisitor
 
     /// <inheritdoc />
     public override void Visit(FunctionTypeNode node)
+    {
+        OnVisit(node);
+    }
+
+    #endregion
+
+    #region Special functions
+
+    /// <inheritdoc />
+    public override void Visit(CastFunctionNode node)
+    {
+        OnVisit(node);
+    }
+
+    /// <inheritdoc />
+    public override void Visit(CoalesceFunctionNode node)
     {
         OnVisit(node);
     }

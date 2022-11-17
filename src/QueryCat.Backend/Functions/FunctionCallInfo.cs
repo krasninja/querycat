@@ -9,7 +9,7 @@ public sealed class FunctionCallInfo
 {
     private readonly VariantValueArray _args;
     private int _argsCursor;
-    private readonly VariantValueFunc[] _pushArgs;
+    private readonly IFuncUnit[] _pushArgs;
 
     public static FunctionCallInfo Empty { get; } = new();
 
@@ -40,7 +40,7 @@ public sealed class FunctionCallInfo
         return callInfo;
     }
 
-    public FunctionCallInfo(params VariantValueFunc[] pushArgs)
+    public FunctionCallInfo(params IFuncUnit[] pushArgs)
     {
         _pushArgs = pushArgs;
         _args = new VariantValueArray(pushArgs.Length);
@@ -63,11 +63,11 @@ public sealed class FunctionCallInfo
     /// </summary>
     public void Reset() => _argsCursor = 0;
 
-    public void InvokePushArgs(VariantValueFuncData variantValueFuncData)
+    public void InvokePushArgs()
     {
         for (int i = 0; i < _pushArgs.Length; i++)
         {
-            _args.Values[i] = _pushArgs[i].Invoke(variantValueFuncData);
+            _args.Values[i] = _pushArgs[i].Invoke();
         }
     }
 

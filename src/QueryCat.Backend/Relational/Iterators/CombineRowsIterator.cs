@@ -53,7 +53,7 @@ internal sealed class CombineRowsIterator : IRowsIterator
                 if (!DataTypeUtils.EqualsWithCast(rowsIterator.Columns[i].DataType, Columns[i].DataType))
                 {
                     throw new SemanticException(
-                        String.Format(Resources.Errors.TypesMistmatch, Columns[i].Name));
+                        string.Format(Resources.Errors.TypesMistmatch, Columns[i].Name));
                 }
             }
         }

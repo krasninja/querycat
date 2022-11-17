@@ -194,6 +194,13 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitSelectTableReferenceNoFormat([NotNull] QueryCatParser.SelectTableReferenceNoFormatContext context);
 	/// <summary>
+	/// Visit a parse tree produced by the <c>SelectTableReferenceStdin</c>
+	/// labeled alternative in <see cref="QueryCatParser.selectTableReference"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSelectTableReferenceStdin([NotNull] QueryCatParser.SelectTableReferenceStdinContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>SelectTableReferenceWithFormat</c>
 	/// labeled alternative in <see cref="QueryCatParser.selectTableReference"/>.
 	/// </summary>
@@ -334,6 +341,13 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitStandardFunctionExtract([NotNull] QueryCatParser.StandardFunctionExtractContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>standardFunctionCoalesce</c>
+	/// labeled alternative in <see cref="QueryCatParser.standardFunction"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitStandardFunctionCoalesce([NotNull] QueryCatParser.StandardFunctionCoalesceContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="QueryCatParser.dateTimeField"/>.
 	/// </summary>

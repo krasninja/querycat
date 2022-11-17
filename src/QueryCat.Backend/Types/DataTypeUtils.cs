@@ -142,7 +142,7 @@ public static class DataTypeUtils
             if (char.IsLetter(arr[i][^1]))
             {
                 intervalType = arr[i][^1].ToString();
-                intervalString = arr[i][0..^1];
+                intervalString = arr[i][..^1];
             }
             // Standard case like "1 min".
             else if (i < arr.Length - 1)
@@ -210,7 +210,7 @@ public static class DataTypeUtils
         {
             DataType.Integer => (TEnum)Enum.ToObject(typeof(TEnum), value.AsInteger),
             DataType.String => Enum.Parse<TEnum>(value.AsString, ignoreCase: true),
-            _ => throw new ArgumentException()
+            _ => throw new ArgumentException("Invalid value type."),
         };
     }
 
@@ -243,7 +243,7 @@ public static class DataTypeUtils
         }
 
         var type = source[..colonIndex].ToString();
-        var value = source.Slice(colonIndex + 1);
+        var value = source[(colonIndex + 1)..];
         if (type == "i")
         {
             return new VariantValue(int.Parse(value));
@@ -262,8 +262,8 @@ public static class DataTypeUtils
         }
         if (type == "ts")
         {
-            var ticks = long.Parse(value.Slice(0, value.Length - 2));
-            var kind = (DateTimeKind)int.Parse(value.Slice(value.Length - 1));
+            var ticks = long.Parse(value[..^2]);
+            var kind = (DateTimeKind)int.Parse(value[^1..]);
             return new VariantValue(new DateTime(ticks, kind));
         }
         if (type == "in")

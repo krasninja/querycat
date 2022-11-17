@@ -9,7 +9,7 @@ public class TextTableFormatter : IRowsFormatter
 {
     /// <inheritdoc />
     public IRowsInput OpenInput(Stream input)
-        => new TextTableInput(new StreamReader(input));
+        => new TextTableInput(input);
 
     /// <inheritdoc />
     public IRowsOutput OpenOutput(Stream output)

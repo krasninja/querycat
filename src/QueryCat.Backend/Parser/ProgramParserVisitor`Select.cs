@@ -54,9 +54,19 @@ internal partial class ProgramParserVisitor
     public override IAstNode VisitSelectQuerySingle(QueryCatParser.SelectQuerySingleContext context)
     {
         var selectColumnsSublistNodes = this.Visit<SelectColumnsSublistNode>(context.selectSublist()).ToList();
+        SelectTableExpressionNode? selectTableExpressionNode = null;
+        if (Console.IsInputRedirected && !Console.IsErrorRedirected && !Console.IsOutputRedirected)
+        {
+            selectTableExpressionNode = new SelectTableExpressionNode(new SelectTableReferenceListNode(
+                new List<ExpressionNode>
+                {
+                    new SelectTableFunctionNode(new FunctionCallNode("stdin")),
+                }));
+        }
         return new SelectQuerySpecificationNode(new SelectColumnsListNode(selectColumnsSublistNodes))
         {
-            Target = this.VisitMaybe<FunctionCallNode>(context.selectTarget())
+            Target = this.VisitMaybe<FunctionCallNode>(context.selectTarget()),
+            TableExpression = selectTableExpressionNode
         };
     }
 
@@ -160,7 +170,17 @@ internal partial class ProgramParserVisitor
 
     /// <inheritdoc />
     public override IAstNode VisitSelectTarget(QueryCatParser.SelectTargetContext context)
-        => this.Visit<FunctionCallNode>(context.functionCall());
+    {
+        if (context.uri != null)
+        {
+            var writeFunction = new FunctionCallNode("write");
+            var uri = GetUnwrappedText(context.uri.Text);
+            writeFunction.Arguments.Add(new FunctionCallArgumentNode("uri",
+                new LiteralNode(new VariantValue(uri))));
+            return writeFunction;
+        }
+        return this.Visit<FunctionCallNode>(context.functionCall());
+    }
 
     #endregion
 
@@ -191,10 +211,14 @@ internal partial class ProgramParserVisitor
         };
 
     /// <inheritdoc />
+    public override IAstNode VisitSelectTableReferenceStdin(QueryCatParser.SelectTableReferenceStdinContext context)
+        => new SelectTableFunctionNode(new FunctionCallNode("stdin"));
+
+    /// <inheritdoc />
     public override IAstNode VisitSelectTableReferenceWithFormat(QueryCatParser.SelectTableReferenceWithFormatContext context)
     {
         var readFunction = new FunctionCallNode("read");
-        var uri = GetUnwrappedText(context.STRING_LITERAL());
+        var uri = GetUnwrappedText(context.uri.Text);
         readFunction.Arguments.Add(new FunctionCallArgumentNode("uri",
             new LiteralNode(new VariantValue(uri))));
         if (context.functionCall() != null)
