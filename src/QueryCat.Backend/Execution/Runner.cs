@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Reflection;
 using System.Text;
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Formatters;
@@ -14,7 +13,7 @@ namespace QueryCat.Backend.Execution;
 /// <summary>
 /// The facade class that contains workflow to run query from string.
 /// </summary>
-public sealed class Runner
+public class Runner
 {
     private readonly AstBuilder _astBuilder = new();
 

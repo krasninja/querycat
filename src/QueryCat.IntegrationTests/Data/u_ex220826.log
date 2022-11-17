@@ -1,8 +1,0 @@
-
-
-#Software: Microsoft Internet Information Services 10.0
-#Version: 1.0
-#Date: 2022-08-26 00:00:00
-#Fields: date time s-ip cs-method cs-uri-stem cs-uri-query s-port cs-username c-ip cs(User-Agent) cs(Referer) sc-status sc-substatus sc-win32-status time-taken
-2022-08-26 00:00:10 10.142.0.2 POST /member/TrafficSchoolLessonTrack.ashx pid=2204914 443 mcaffee@example.com 172.69.42.32 Mozilla/5.0+(Windows+NT+10.0;+Win64;+x64)+AppleWebKit/537.36+(KHTML,+like+Gecko)+Chrome/104.0.0.0+Safari/537.36 https://member.driversedpermit.com/member/TrafficSchoolLesson.aspx?id=12 200 0 0 62
-2022-08-26 00:02:23 10.142.0.2 POST /member/TrafficSchoolLessonTrack.ashx pid=2112768 443 lukebart@example.net 172.70.206.244 Mozilla/5.0+(Windows+NT+10.0;+Win64;+x64)+AppleWebKit/537.36+(KHTML,+like+Gecko)+Chrome/104.0.5112.102+Safari/537.36+Edg/104.0.1293.63 https://member.driversedpermit.com/member/TrafficSchoolLesson.aspx?id=12 200 0 0 78

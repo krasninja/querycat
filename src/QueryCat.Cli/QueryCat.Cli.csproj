@@ -23,7 +23,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\QueryCat.Backend\QueryCat.Backend.csproj" />
-    <ProjectReference Include="..\QueryCat.DataProviders\QueryCat.DataProviders.csproj" />
   </ItemGroup>
 
 </Project>

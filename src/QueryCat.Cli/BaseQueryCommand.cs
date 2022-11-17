@@ -1,7 +1,6 @@
 using McMaster.Extensions.CommandLineUtils;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Logging;
-using QueryCat.Cli.Infrastructure;
 
 namespace QueryCat.Cli;
 
@@ -45,7 +44,6 @@ public abstract class BaseQueryCommand
 
     protected Runner CreateRunner(ExecutionOptions executionOptions)
     {
-        executionOptions.PluginAssemblies.Add(typeof(DataProviders.Registration).Assembly);
         executionOptions.PluginDirectories.AddRange(PluginDirectories);
         var runner = new Runner(executionOptions);
         runner.ExecutionThread.Statistic.CountErrorRows = runner.ExecutionThread.Options.ShowDetailedStatistic;

@@ -18,9 +18,12 @@ internal sealed class DsvOutput : RowsOutput, IDisposable
     private readonly bool _hasHeader;
     private bool _wroteHeader;
 
+    internal Stream Stream { get; }
+
     public DsvOutput(DsvOptions dsvOptions)
     {
-        _streamWriter = new StreamWriter(dsvOptions.Stream, Encoding.Default, -1, leaveOpen: true);
+        Stream = dsvOptions.Stream;
+        _streamWriter = new StreamWriter(Stream, Encoding.Default, -1, leaveOpen: true);
         _delimiter = dsvOptions.InputOptions.DelimiterStreamReaderOptions.Delimiters.Length > 0 ?
             dsvOptions.InputOptions.DelimiterStreamReaderOptions.Delimiters[0]
             : DefaultDelimiter;
