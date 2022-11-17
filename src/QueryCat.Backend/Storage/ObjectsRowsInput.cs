@@ -1,10 +1,8 @@
 using System.Reflection;
-using QueryCat.Backend;
 using QueryCat.Backend.Relational;
-using QueryCat.Backend.Storage;
 using QueryCat.Backend.Types;
 
-namespace QueryCat.DataProviders.Objects;
+namespace QueryCat.Backend.Storage;
 
 /// <summary>
 /// Creates rows input from POCO objects.
