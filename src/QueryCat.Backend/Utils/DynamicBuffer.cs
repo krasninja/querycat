@@ -561,9 +561,13 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ReadOnlySequence<T> GetSequence()
     {
+        if (_buffersList.Head == null)
+        {
+            return ReadOnlySequence<T>.Empty;
+        }
         var headStartIndex = GetSegmentStartIndex(_buffersList.Head);
         var tailEndIndex = GetSegmentEndIndex(_buffersList.Tail);
-        return new ReadOnlySequence<T>(_buffersList.Head!, headStartIndex, _buffersList.Tail!, tailEndIndex);
+        return new ReadOnlySequence<T>(_buffersList.Head, headStartIndex, _buffersList.Tail!, tailEndIndex);
     }
 
     #endregion
