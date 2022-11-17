@@ -82,7 +82,7 @@ public sealed class ExecutionThread
     /// <summary>
     /// Run the execution flow.
     /// </summary>
-    public void Run()
+    public VariantValue Run()
     {
         var stopwatch = new Stopwatch();
         stopwatch.Start();
@@ -126,5 +126,6 @@ public sealed class ExecutionThread
         }
         stopwatch.Stop();
         Statistic.ExecutionTime = stopwatch.Elapsed;
+        return LastResult;
     }
 }

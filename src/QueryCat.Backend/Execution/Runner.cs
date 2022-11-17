@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Reflection;
 using System.Text;
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Formatters;
@@ -50,8 +51,14 @@ public sealed class Runner
 
     private void LoadPlugins()
     {
+        // Additional directories to find plugins.
+        var exeDirectory = AppContext.BaseDirectory;
         ExecutionThread.Options.PluginDirectories.Add(
             Path.Combine(ExecutionThread.GetApplicationDirectory(), ExecutionThread.ApplicationPluginsDirectory));
+        ExecutionThread.Options.PluginDirectories.Add(exeDirectory);
+        ExecutionThread.Options.PluginDirectories.Add(
+            Path.Combine(exeDirectory, ExecutionThread.ApplicationPluginsDirectory));
+
         var pluginLoader = new PluginsLoader(ExecutionThread.Options.PluginDirectories);
         ExecutionThread.Options.PluginAssemblies.AddRange(pluginLoader.LoadPlugins());
 
