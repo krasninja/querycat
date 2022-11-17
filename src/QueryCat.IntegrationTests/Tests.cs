@@ -1,5 +1,6 @@
 using Xunit;
 using QueryCat.Backend.Functions;
+using QueryCat.Backend.Tests;
 using QueryCat.Backend.Types;
 
 namespace QueryCat.IntegrationTests;
@@ -21,7 +22,7 @@ public class Tests
         _testRunner.ExecutionThread.FunctionsManager.RegisterFunction(FuncWithObject);
         _testRunner.ExecutionThread.FunctionsManager.RegisterFunction(ReturnObjFunc);
         _testRunner.ExecutionThread.FunctionsManager.RegisterFunction(SumIntegersOpt);
-        var data = _testRunner.GetQueryData(fileName);
+        var data = TestRunner.GetQueryData(fileName);
         _testRunner.Run(data.Query);
 
         // Act.

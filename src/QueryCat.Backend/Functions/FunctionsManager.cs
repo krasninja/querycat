@@ -20,7 +20,6 @@ public sealed class FunctionsManager
     private readonly Dictionary<string, List<Function>> _functions = new(capacity: 40);
     private readonly Dictionary<string, (FunctionDelegate Delagate, MethodInfo MethodInfo)> _functionsPreRegistration = new();
     private readonly Dictionary<string, IAggregateFunction> _aggregateFunctions = new(capacity: 40);
-    private readonly AstBuilder _builder = new();
 
     private static Function EmptyAggregate => new(
         _ =>
@@ -124,7 +123,7 @@ public sealed class FunctionsManager
         functions = Array.Empty<Function>();
         name = NormalizeName(name);
 
-        var found = _functions.TryGetValue(name, out List<Function>? outFunctions);
+        var found = _functions.TryGetValue(name, out var outFunctions);
         if (!found)
         {
             if (_functionsPreRegistration.TryGetValue(name, out var functionInfo))
@@ -218,7 +217,7 @@ public sealed class FunctionsManager
         List<Function>? functionsList = null;
         foreach (var signatureAttribute in signatureAttributes)
         {
-            var signatureAst = _builder.BuildFunctionSignatureFromString(signatureAttribute.Signature);
+            var signatureAst = AstBuilder.BuildFunctionSignatureFromString(signatureAttribute.Signature);
 
             var function = new Function(functionDelegate, signatureAst);
             if (_functions.TryGetValue(NormalizeName(function.Name), out var sameNameFunctionsList))
@@ -266,7 +265,7 @@ public sealed class FunctionsManager
         var signatureAttributes = aggregateType.GetCustomAttributes<AggregateFunctionSignatureAttribute>();
         foreach (var signatureAttribute in signatureAttributes)
         {
-            var signatureAst = _builder.BuildFunctionSignatureFromString(signatureAttribute.Signature);
+            var signatureAst = AstBuilder.BuildFunctionSignatureFromString(signatureAttribute.Signature);
             var function = new Function(EmptyFunction, signatureAst, aggregate: true);
             var descriptionAttribute = aggregateType.GetCustomAttribute<DescriptionAttribute>();
             if (descriptionAttribute != null)
@@ -296,7 +295,7 @@ public sealed class FunctionsManager
     public IAggregateFunction FindAggregateByName(string name)
     {
         name = name.ToUpper();
-        _aggregateFunctions.TryGetValue(name, out IAggregateFunction? aggregateFunction);
+        _aggregateFunctions.TryGetValue(name, out var aggregateFunction);
         if (aggregateFunction == null)
         {
             throw new CannotFindFunctionException(name);

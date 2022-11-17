@@ -34,7 +34,7 @@ public sealed class EnumerableRowsIterator<TClass> : IRowsIterator
         hasData = hasData && _enumerator.Current != null;
         if (hasData)
         {
-            for (int i = 0; i < Columns.Length; i++)
+            for (var i = 0; i < Columns.Length; i++)
             {
                 _row[i] = _valuesGetters[i].Invoke(_enumerator.Current!);
             }

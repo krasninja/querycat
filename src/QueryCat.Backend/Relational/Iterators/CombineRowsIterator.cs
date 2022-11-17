@@ -48,7 +48,7 @@ internal sealed class CombineRowsIterator : IRowsIterator
             {
                 throw new SemanticException(Resources.Errors.InvalidUnionColumnsCount);
             }
-            for (int i = 0; i < Columns.Length; i++)
+            for (var i = 0; i < Columns.Length; i++)
             {
                 if (!DataTypeUtils.EqualsWithCast(rowsIterator.Columns[i].DataType, Columns[i].DataType))
                 {

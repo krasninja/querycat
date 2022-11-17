@@ -56,7 +56,7 @@ public class ClassEnumerableInputHelper<TClass> where TClass : class
         FetchLimitOffsetDelegate action,
         CancellationToken cancellationToken = default)
     {
-        int offset = 0;
+        var offset = 0;
         int fetchedCount;
         bool hasMore;
         do
@@ -83,7 +83,7 @@ public class ClassEnumerableInputHelper<TClass> where TClass : class
     /// <returns>Async enumerable of objects.</returns>
     public IEnumerable<TClass> FetchPaged(FetchPagedDelegate action)
     {
-        int page = PageStart;
+        var page = PageStart;
         int fetchedCount;
         bool hasMore;
         do

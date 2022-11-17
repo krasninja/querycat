@@ -50,7 +50,7 @@ public class OrderColumnsIndex : IOrderIndex
         private void FillValues(VariantValue[] values, int rowIndex)
         {
             _orderColumnsIndex.RowsFrameIterator.Seek(rowIndex, CursorSeekOrigin.Begin);
-            for (int i = 0; i < values.Length; i++)
+            for (var i = 0; i < values.Length; i++)
             {
                 values[i] = _orderColumnsIndex._valueGetters[i].Invoke();
             }
@@ -62,7 +62,7 @@ public class OrderColumnsIndex : IOrderIndex
             FillValues(_values1, x);
             FillValues(_values2, y);
 
-            for (int i = 0; i < _values1.Length; i++)
+            for (var i = 0; i < _values1.Length; i++)
             {
                 if (_greaterFunctions[i].Invoke(ref _values1[i], ref _values2[i]).AsBooleanUnsafe)
                 {

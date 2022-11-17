@@ -11,11 +11,7 @@ internal abstract class FuncUnit : IFuncUnit
     /// <inheritdoc />
     public object? GetData(int index)
     {
-        if (_objects == null)
-        {
-            return null;
-        }
-        return _objects[index];
+        return _objects?[index];
     }
 
     /// <inheritdoc />

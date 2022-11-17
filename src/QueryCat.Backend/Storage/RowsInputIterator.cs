@@ -65,7 +65,7 @@ public class RowsInputIterator : IRowsIterator
         {
             return;
         }
-        var errorCode = _rowsInput.ReadValue(columnIndex, out VariantValue variantValue);
+        var errorCode = _rowsInput.ReadValue(columnIndex, out var variantValue);
         if (errorCode != ErrorCode.OK)
         {
             OnError?.Invoke(this, new RowsInputErrorEventArgs(_rowIndex, columnIndex, errorCode));
@@ -79,7 +79,7 @@ public class RowsInputIterator : IRowsIterator
 
     public void FetchValuesForColumns(params int[] columnsIndexes)
     {
-        for (int i = 0; i < columnsIndexes.Length; i++)
+        for (var i = 0; i < columnsIndexes.Length; i++)
         {
             var index = columnsIndexes[i];
             FetchValueForColumn(index);

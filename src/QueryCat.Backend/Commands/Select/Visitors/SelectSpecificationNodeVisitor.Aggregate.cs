@@ -51,7 +51,7 @@ internal sealed partial class SelectSpecificationNodeVisitor
         ReplaceAggregateFunctionsByColumnReference(selectQueryNode, targets, aggregateColumnsOffset);
     }
 
-    private void ReplaceAggregateFunctionsByColumnReference(
+    private static void ReplaceAggregateFunctionsByColumnReference(
         SelectQuerySpecificationNode selectQueryNode,
         AggregateTarget[] targets,
         int aggregateColumnsOffset)

@@ -8,9 +8,9 @@ namespace QueryCat.Benchmarks.Benchmarks;
 [MemoryDiagnoser]
 public class DynamicBufferBenchmarks
 {
-    private readonly byte[] _chunk = new byte[2048];
+    private const int TotalCount = 100_000;
 
-    private readonly int _totalCount = 100_000;
+    private readonly byte[] _chunk = new byte[2048];
 
     public DynamicBufferBenchmarks()
     {
@@ -25,7 +25,7 @@ public class DynamicBufferBenchmarks
     {
         var dynamicBuffer = new DynamicBuffer<byte>(chunkSize: 4096);
 
-        for (int remaining = _totalCount, taken; remaining > 0; remaining -= taken)
+        for (int remaining = TotalCount, taken; remaining > 0; remaining -= taken)
         {
             taken = Math.Min(remaining, _chunk.Length);
             dynamicBuffer.Write(_chunk);
@@ -37,7 +37,7 @@ public class DynamicBufferBenchmarks
     {
         var buffer = new SparseBufferWriter<byte>(4096, SparseBufferGrowth.Linear);
         var ms = buffer.AsStream(false);
-        for (int remaining = _totalCount, taken; remaining > 0; remaining -= taken)
+        for (int remaining = TotalCount, taken; remaining > 0; remaining -= taken)
         {
             taken = Math.Min(remaining, _chunk.Length);
             ms.Write(_chunk, 0, taken);

@@ -312,7 +312,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         var currentType = GetInternalType();
         if (targetType != currentType)
         {
-            if (Cast(targetType, out VariantValue convertedValue))
+            if (Cast(targetType, out var convertedValue))
             {
                 return convertedValue;
             }
@@ -514,7 +514,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         in DataType targetType,
         out VariantValue variantValue)
     {
-        bool success = false;
+        var success = false;
         variantValue = targetType switch
         {
             DataType.Integer => StringToInteger(value, out success),

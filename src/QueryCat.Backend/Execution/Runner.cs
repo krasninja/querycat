@@ -15,8 +15,6 @@ namespace QueryCat.Backend.Execution;
 /// </summary>
 public class Runner
 {
-    private readonly AstBuilder _astBuilder = new();
-
     public ExecutionThread ExecutionThread { get; }
 
     public Runner(ExecutionOptions? executionOptions = null)
@@ -90,7 +88,7 @@ public class Runner
     /// <param name="query">Query.</param>
     public VariantValue Run(string query)
     {
-        var programNode = _astBuilder.BuildProgramFromString(query);
+        var programNode = AstBuilder.BuildProgramFromString(query);
 
         // Set first executing statement and run.
         ExecutionThread.ExecutingStatement = programNode.Statements.FirstOrDefault();

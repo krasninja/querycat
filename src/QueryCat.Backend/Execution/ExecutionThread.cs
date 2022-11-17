@@ -62,7 +62,7 @@ public sealed class ExecutionThread
 
     public static readonly ExecutionThread Empty = new();
 
-    internal string GetApplicationDirectory()
+    internal static string GetApplicationDirectory()
     {
         return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             ApplicationDirectory);

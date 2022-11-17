@@ -65,7 +65,7 @@ public sealed class FunctionCallInfo
 
     public void InvokePushArgs()
     {
-        for (int i = 0; i < _pushArgs.Length; i++)
+        for (var i = 0; i < _pushArgs.Length; i++)
         {
             _args.Values[i] = _pushArgs[i].Invoke();
         }

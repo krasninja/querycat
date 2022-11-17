@@ -22,12 +22,12 @@ internal static class StringUtils
             isCharSetOn = false,
             isNotCharSetOn = false,
             endOfPattern = false;
-        int lastWildCard = -1;
-        int patternIndex = 0;
+        var lastWildCard = -1;
+        var patternIndex = 0;
         var set = new List<char>();
         char p = '\0';
 
-        for (int i = 0; i < str.Length; i++)
+        for (var i = 0; i < str.Length; i++)
         {
             var c = str[i];
             endOfPattern = patternIndex >= pattern.Length;
@@ -44,14 +44,7 @@ internal static class StringUtils
                     {
                         patternIndex++;
                     }
-                    if (patternIndex >= pattern.Length)
-                    {
-                        p = '\0';
-                    }
-                    else
-                    {
-                        p = pattern[patternIndex];
-                    }
+                    p = patternIndex >= pattern.Length ? '\0' : pattern[patternIndex];
                 }
                 else if (p == '_')
                 {

@@ -54,7 +54,7 @@ public static class RowsOutputExtensions
             rowsIterator = new AdjustColumnsLengthsIterator(rowsIterator);
         }
 
-        bool isOpened = false;
+        var isOpened = false;
         var queryContext = new RowsOutputQueryContext(rowsIterator.Columns);
         while (rowsIterator.MoveNext())
         {

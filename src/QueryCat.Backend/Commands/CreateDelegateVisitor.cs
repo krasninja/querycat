@@ -135,43 +135,34 @@ internal class CreateDelegateVisitor : AstVisitor
     {
         var action = NodeIdFuncMap[node.Right.Id];
 
-        switch (node.Operation)
+        NodeIdFuncMap[node.Id] = node.Operation switch
         {
-            case VariantValue.Operation.Subtract:
-                NodeIdFuncMap[node.Id] = new FuncUnitDelegate(() =>
-                {
-                    var value = action.Invoke();
-                    var result = VariantValue.Negation(ref value, out ErrorCode code);
-                    ApplyStatistic(code);
-                    return result;
-                });
-                break;
-            case VariantValue.Operation.Not:
-                NodeIdFuncMap[node.Id] = new FuncUnitDelegate(() =>
-                {
-                    var value = action.Invoke();
-                    var result = VariantValue.Not(ref value, out ErrorCode code);
-                    ApplyStatistic(code);
-                    return result;
-                });
-                break;
-            case VariantValue.Operation.IsNull:
-                NodeIdFuncMap[node.Id] = new FuncUnitDelegate(() =>
-                {
-                    var value = action.Invoke();
-                    return new VariantValue(value.IsNull);
-                });
-                break;
-            case VariantValue.Operation.IsNotNull:
-                NodeIdFuncMap[node.Id] = new FuncUnitDelegate(() =>
-                {
-                    var value = action.Invoke();
-                    return new VariantValue(!value.IsNull);
-                });
-                break;
-            default:
-                throw new QueryCatException(Resources.Errors.InvalidOperation);
-        }
+            VariantValue.Operation.Subtract => new FuncUnitDelegate(() =>
+            {
+                var value = action.Invoke();
+                var result = VariantValue.Negation(ref value, out ErrorCode code);
+                ApplyStatistic(code);
+                return result;
+            }),
+            VariantValue.Operation.Not => new FuncUnitDelegate(() =>
+            {
+                var value = action.Invoke();
+                var result = VariantValue.Not(ref value, out ErrorCode code);
+                ApplyStatistic(code);
+                return result;
+            }),
+            VariantValue.Operation.IsNull => new FuncUnitDelegate(() =>
+            {
+                var value = action.Invoke();
+                return new VariantValue(value.IsNull);
+            }),
+            VariantValue.Operation.IsNotNull => new FuncUnitDelegate(() =>
+            {
+                var value = action.Invoke();
+                return new VariantValue(!value.IsNull);
+            }),
+            _ => throw new QueryCatException(Resources.Errors.InvalidOperation)
+        };
     }
 
     #endregion

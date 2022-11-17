@@ -42,7 +42,7 @@ public class TestRunner : Runner
     /// </summary>
     /// <param name="fileName">File path.</param>
     /// <returns>Test data.</returns>
-    public TestData GetQueryData(string fileName)
+    public static TestData GetQueryData(string fileName)
     {
         Directory.SetCurrentDirectory(GetDataDirectory());
         Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
@@ -63,12 +63,6 @@ public class TestRunner : Runner
         return sr.ReadToEnd().Replace("\r\n", "\n").Trim();
     }
 
-    private static string GetDataDirectory()
-        => Path.Combine(TestParser.FindTestsDirectory(), DataDirectory);
-
-    private static string GetTestsDirectory()
-        => Path.Combine(TestParser.FindTestsDirectory(), TestDirectory);
-
     /// <summary>
     /// Get all test data files for XUnit tests.
     /// </summary>
@@ -81,4 +75,10 @@ public class TestRunner : Runner
             yield return new object[] { Path.GetFileNameWithoutExtension(testFile) };
         }
     }
+
+    private static string GetDataDirectory()
+        => Path.Combine(TestParser.FindTestsDirectory(), DataDirectory);
+
+    private static string GetTestsDirectory()
+        => Path.Combine(TestParser.FindTestsDirectory(), TestDirectory);
 }

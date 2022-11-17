@@ -21,7 +21,7 @@ public static class CurlInput
         var uriArgument = args.GetAt(0);
         var formatter = args.GetAt(1).AsObject as IRowsFormatter;
 
-        if (!Uri.TryCreate(uriArgument, UriKind.Absolute, out Uri? uri))
+        if (!Uri.TryCreate(uriArgument, UriKind.Absolute, out var uri))
         {
             throw new QueryCatException("Invalid URI.");
         }

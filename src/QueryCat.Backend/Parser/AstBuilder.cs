@@ -8,11 +8,11 @@ namespace QueryCat.Backend.Parser;
 /// <summary>
 /// The class is to build AST (abstract syntax tree) from user query string.
 /// </summary>
-internal sealed class AstBuilder
+internal static class AstBuilder
 {
     private static readonly ProgramAntlrErrorListener ErrorListener = new();
 
-    public ProgramNode BuildProgramFromString(string program)
+    public static ProgramNode BuildProgramFromString(string program)
     {
         var inputStream = new AntlrInputStream(program);
         var lexer = new QueryCatLexer(inputStream);
@@ -29,7 +29,7 @@ internal sealed class AstBuilder
         return (ProgramNode)visitor.Visit(context);
     }
 
-    public FunctionSignatureNode BuildFunctionSignatureFromString(string function)
+    public static FunctionSignatureNode BuildFunctionSignatureFromString(string function)
     {
         var inputStream = new AntlrInputStream(function);
         var lexer = new QueryCatLexer(inputStream);

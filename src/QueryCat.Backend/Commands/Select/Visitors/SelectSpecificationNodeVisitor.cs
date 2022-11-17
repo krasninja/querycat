@@ -88,7 +88,7 @@ internal sealed partial class SelectSpecificationNodeVisitor : SelectAstVisitor
         {
             return;
         }
-        context.RowsInputIterator.OnError += (sender, args) =>
+        context.RowsInputIterator.OnError += (_, args) =>
         {
             ExecutionThread.Statistic.IncrementErrorsCount(args.ErrorCode, args.RowIndex, args.ColumnIndex);
         };
@@ -245,7 +245,7 @@ internal sealed partial class SelectSpecificationNodeVisitor : SelectAstVisitor
     /// <summary>
     /// Assign SourceInputColumn attribute based on rows input iterator.
     /// </summary>
-    private void ResolveSelectSourceColumns(
+    private static void ResolveSelectSourceColumns(
         SelectCommandContext context,
         SelectQuerySpecificationNode querySpecificationNode)
     {
@@ -268,7 +268,7 @@ internal sealed partial class SelectSpecificationNodeVisitor : SelectAstVisitor
         }
     }
 
-    private void ResolveSelectAllStatement(IRowsIterator rows, SelectColumnsListNode columnsNode)
+    private static void ResolveSelectAllStatement(IRowsIterator rows, SelectColumnsListNode columnsNode)
     {
         for (int i = 0; i < columnsNode.Columns.Count; i++)
         {
@@ -314,7 +314,7 @@ internal sealed partial class SelectSpecificationNodeVisitor : SelectAstVisitor
         context.SetIterator(projectedIterator);
     }
 
-    private void SetSelectRowsSet(
+    private static void SetSelectRowsSet(
         SelectCommandContext context,
         SelectColumnsListNode columnsNode)
     {
@@ -366,7 +366,7 @@ internal sealed partial class SelectSpecificationNodeVisitor : SelectAstVisitor
         Column Column,
         int ColumnIndex);
 
-    private IEnumerable<ColumnWithIndex> CreateSelectColumns(SelectColumnsListNode node)
+    private static IEnumerable<ColumnWithIndex> CreateSelectColumns(SelectColumnsListNode node)
     {
         string GetColumnName(SelectColumnsSublistNode columnNode)
         {
@@ -514,7 +514,7 @@ internal sealed partial class SelectSpecificationNodeVisitor : SelectAstVisitor
         context.SetIterator(fetchIterator);
     }
 
-    private ISet<int> GetColumnsIdsFromNode(IRowsIterator rowsIterator, IEnumerable<IAstNode?> nodes)
+    private static ISet<int> GetColumnsIdsFromNode(IRowsIterator rowsIterator, IEnumerable<IAstNode?> nodes)
     {
         var columns = new HashSet<int>();
         foreach (var node in nodes)

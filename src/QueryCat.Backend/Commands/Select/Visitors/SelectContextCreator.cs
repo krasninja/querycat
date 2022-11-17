@@ -156,7 +156,7 @@ internal sealed class SelectContextCreator
         throw new QueryCatException("Invalid rows input.");
     }
 
-    private IRowsIterator CreateMultipleIterator(List<IRowsInput> rowsInputs)
+    private static IRowsIterator CreateMultipleIterator(List<IRowsInput> rowsInputs)
     {
         if (rowsInputs.Count == 0)
         {
@@ -177,7 +177,7 @@ internal sealed class SelectContextCreator
         return multipleIterator;
     }
 
-    private void SetAlias(IAstNode node, string alias)
+    private static void SetAlias(IAstNode node, string alias)
     {
         if (string.IsNullOrEmpty(alias))
         {
@@ -206,7 +206,7 @@ internal sealed class SelectContextCreator
         }
     }
 
-    private void SetAlias(IRowsInput input, string alias)
+    private static void SetAlias(IRowsInput input, string alias)
     {
         if (string.IsNullOrEmpty(alias))
         {

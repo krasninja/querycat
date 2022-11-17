@@ -68,12 +68,12 @@ internal sealed class JsonInput : StreamRowsInput
         }
         if (property.ValueKind == JsonValueKind.Number && DataTypeUtils.IsNumeric(type))
         {
-            if (property.TryGetInt64(out long longValue))
+            if (property.TryGetInt64(out var longValue))
             {
                 value = new VariantValue(longValue);
                 return ErrorCode.OK;
             }
-            if (property.TryGetDouble(out double doubleValue))
+            if (property.TryGetDouble(out var doubleValue))
             {
                 value = new VariantValue(doubleValue);
                 return ErrorCode.OK;
@@ -81,7 +81,7 @@ internal sealed class JsonInput : StreamRowsInput
         }
         else if (property.ValueKind == JsonValueKind.String)
         {
-            if (type == DataType.Timestamp && property.TryGetDateTime(out DateTime dateTimeValue))
+            if (type == DataType.Timestamp && property.TryGetDateTime(out var dateTimeValue))
             {
                 value = new VariantValue(dateTimeValue);
                 return ErrorCode.OK;
@@ -93,7 +93,7 @@ internal sealed class JsonInput : StreamRowsInput
             }
         }
         if (property.ValueKind == JsonValueKind.Number && type == DataType.Interval
-            && property.TryGetInt64(out long intervalValue))
+            && property.TryGetInt64(out var intervalValue))
         {
             value = new VariantValue(TimeSpan.FromTicks(intervalValue));
             return ErrorCode.OK;

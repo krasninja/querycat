@@ -136,7 +136,7 @@ public static class DataTypeUtils
         for (var i = 0; i < arr.Length; i++)
         {
             string intervalType;
-            string intervalString = arr[i];
+            var intervalString = arr[i];
 
             // Covert short value to full (like 1h -> 1 h).
             if (char.IsLetter(arr[i][^1]))

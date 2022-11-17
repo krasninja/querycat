@@ -130,10 +130,6 @@ public class Row : IRowsSchema, ICloneable
     /// <inheritdoc />
     public override bool Equals(object? obj)
     {
-        if (obj == null)
-        {
-            return false;
-        }
         if (obj is not Row row)
         {
             return false;
@@ -147,7 +143,7 @@ public class Row : IRowsSchema, ICloneable
             return false;
         }
 
-        for (int i = 0; i < _values.Length; i++)
+        for (var i = 0; i < _values.Length; i++)
         {
             if (!row._values[i].Equals(_values[i]))
             {
@@ -169,7 +165,7 @@ public class Row : IRowsSchema, ICloneable
     public override int GetHashCode()
     {
         var hashCode = default(HashCode);
-        for (int i = 0; i < _values.Length; i++)
+        for (var i = 0; i < _values.Length; i++)
         {
             hashCode.Add(_values[i]);
         }
@@ -180,7 +176,7 @@ public class Row : IRowsSchema, ICloneable
     public override string ToString()
     {
         var sb = new StringBuilder(Columns.Length * 20);
-        for (int i = 0; i < Columns.Length; i++)
+        for (var i = 0; i < Columns.Length; i++)
         {
             sb.Append(_values[i].ToString());
             if (i != Columns.Length - 1)

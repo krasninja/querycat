@@ -127,7 +127,7 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
         base.Visit(node);
 
         var function = node.GetAttribute<Function>(AstAttributeKeys.FunctionKey);
-        if (function == null || !function.IsAggregate)
+        if (function is not { IsAggregate: true })
         {
             return;
         }

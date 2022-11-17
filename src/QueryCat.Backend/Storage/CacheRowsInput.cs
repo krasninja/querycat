@@ -105,7 +105,7 @@ public sealed class CacheRowsInput : IRowsInput
 
     private void IncreaseCache(CacheEntry cacheEntry)
     {
-        for (int i = 0; i < Columns.Length; i++)
+        for (var i = 0; i < Columns.Length; i++)
         {
             cacheEntry.Cache.Add(VariantValue.Null);
         }

@@ -99,7 +99,7 @@ internal sealed class DsvOutput : RowsOutput, IDisposable
         if (_hasHeader && !_wroteHeader)
         {
             var length = columns.Count;
-            for (int i = 0; i < length; i++)
+            for (var i = 0; i < length; i++)
             {
                 WriteString(columns[i].Name);
                 if (i < length - 1)

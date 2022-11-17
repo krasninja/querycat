@@ -205,7 +205,7 @@ public class CsvParseBenchmarks
             row[8] = new VariantValue(arr[8]); // Phone.
             row[9] = new VariantValue(arr[9]); // Gender.
             row[10] = new VariantValue(DateTime.Parse(arr[10])); // DateOfBirth.
-            row[11] = new VariantValue(Decimal.Parse(arr[11])); // Balance.
+            row[11] = new VariantValue(decimal.Parse(arr[11])); // Balance.
             row[12] = new VariantValue(DateTime.Parse(arr[12])); // CreatedAt.
             row[13] = new VariantValue(null); // RemovedAt.
             row[14] = new VariantValue(arr[14]); // Phrase.

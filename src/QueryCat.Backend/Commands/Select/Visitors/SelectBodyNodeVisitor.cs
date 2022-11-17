@@ -88,7 +88,7 @@ internal sealed class SelectBodyNodeVisitor : SelectAstVisitor
 
     #region SELECT
 
-    private void CreateSelectRowsSet(
+    private static void CreateSelectRowsSet(
         SelectCommandContext context,
         SelectQuerySpecificationNode querySpecificationNode)
     {

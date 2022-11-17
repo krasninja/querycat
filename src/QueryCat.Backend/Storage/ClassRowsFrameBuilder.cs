@@ -97,8 +97,13 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
         }
         var dataType = DataTypeUtils.ConvertFromSystem(typeof(T));
         var valueGetter = valueGetterExpression.Compile();
+        var column = new Column(propertyName, dataType, description);
+        if (defaultLength.HasValue)
+        {
+            column.Length = defaultLength.Value;
+        }
         _columns.Add((
-            new Column(propertyName, dataType, description),
+            column,
             obj => VariantValue.CreateFromObject(valueGetter.Invoke(obj))
         ));
         return this;
@@ -176,7 +181,7 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
             // Based on https://stackoverflow.com/questions/63055621/how-to-convert-camel-case-to-snake-case-with-two-capitals-next-to-each-other.
             var sb = new StringBuilder()
                 .Append(char.ToLower(name[0]));
-            for (int i = 1; i < name.Length; ++i)
+            for (var i = 1; i < name.Length; ++i)
             {
                 var ch = name[i];
                 if (char.IsUpper(ch))

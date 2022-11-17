@@ -51,7 +51,7 @@ public readonly partial struct VariantValue
     internal static BinaryFunction GetBinaryFunction(OperationBinaryDelegate @delegate)
     {
         return (ref VariantValue left, ref VariantValue right)
-            => @delegate.Invoke(ref left, ref right, out var _);
+            => @delegate.Invoke(ref left, ref right, out _);
     }
 
     internal static OperationBinaryDelegate GetOperationDelegate(Operation operation)
@@ -183,7 +183,7 @@ public readonly partial struct VariantValue
                 return right;
             }
 
-            bool canConvert = GetTargetType(left, right, out var target);
+            var canConvert = GetTargetType(left, right, out var target);
             if (!canConvert)
             {
                 canConvert = GetTargetType(right, left, out target);
@@ -237,7 +237,7 @@ public readonly partial struct VariantValue
         var leftType = left.GetInternalType();
         var rightType = right.GetInternalType();
 
-        VariantValue result = leftType switch
+        var result = leftType switch
         {
             DataType.Integer => rightType switch
             {
@@ -270,7 +270,7 @@ public readonly partial struct VariantValue
         var leftType = left.GetInternalType();
         var rightType = right.GetInternalType();
 
-        VariantValue result = leftType switch
+        var result = leftType switch
         {
             DataType.Integer => rightType switch
             {
@@ -303,7 +303,7 @@ public readonly partial struct VariantValue
         var leftType = left.GetInternalType();
         var rightType = right.GetInternalType();
 
-        VariantValue result = leftType switch
+        var result = leftType switch
         {
             DataType.Integer => rightType switch
             {
@@ -336,7 +336,7 @@ public readonly partial struct VariantValue
         var leftType = left.GetInternalType();
         var rightType = right.GetInternalType();
 
-        VariantValue result = leftType switch
+        var result = leftType switch
         {
             DataType.Integer => rightType switch
             {
@@ -355,7 +355,7 @@ public readonly partial struct VariantValue
         var leftType = left.GetInternalType();
         var rightType = right.GetInternalType();
 
-        VariantValue result = leftType switch
+        var result = leftType switch
         {
             DataType.Integer => rightType switch
             {
@@ -533,7 +533,7 @@ public readonly partial struct VariantValue
         var leftType = left.GetInternalType();
         var rightType = right.GetInternalType();
 
-        VariantValue result = leftType switch
+        var result = leftType switch
         {
             DataType.String => rightType switch
             {

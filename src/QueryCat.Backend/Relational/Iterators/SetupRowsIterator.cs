@@ -11,7 +11,7 @@ public class SetupRowsIterator : IRowsIterator
     private readonly string _message;
     private bool _isInitialized;
 
-    public virtual IRowsIterator RowsIterator => _rowsIterator;
+    public IRowsIterator RowsIterator => _rowsIterator;
 
     /// <inheritdoc />
     public virtual Column[] Columns => _rowsIterator.Columns;
