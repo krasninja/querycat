@@ -65,6 +65,15 @@ public abstract class QueryContext
     public bool HasKeyCondition(string columnName, VariantValue.Operation operation, out VariantValue value)
         => HasKeyCondition(columnName, operation, operation, out value);
 
+    /// <summary>
+    /// Returns <c>true</c> if we can find key column equal condition.
+    /// </summary>
+    /// <param name="columnName">Column name.</param>
+    /// <param name="value">Equal condition value.</param>
+    /// <returns><c>True</c> if found, <c>false</c> otherwise.</returns>
+    public bool HasKeyCondition(string columnName, out VariantValue value)
+        => HasKeyCondition(columnName, VariantValue.Operation.Equals, VariantValue.Operation.Equals, out value);
+
     internal IEnumerable<QueryContextCondition> GetKeyConditions()
     {
         foreach (var condition in QueryInfo.Conditions)
