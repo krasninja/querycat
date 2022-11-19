@@ -47,6 +47,10 @@ internal class PluginsLoader
 
         foreach (var pluginDirectory in _pluginDirectories)
         {
+            if (!Directory.Exists(pluginDirectory))
+            {
+                continue;
+            }
             var directoryInfo = new DirectoryInfo(pluginDirectory);
             foreach (var fileInfo in directoryInfo.GetFiles())
             {
