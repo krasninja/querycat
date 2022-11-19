@@ -1,3 +1,4 @@
+using QueryCat.Backend.Logging;
 using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Types;
@@ -239,7 +240,8 @@ public static class DataTypeUtils
         var colonIndex = source.IndexOf(':');
         if (colonIndex == -1)
         {
-            throw new InvalidOperationException("Invalid deserialization source.");
+            Logger.Instance.Warning("Invalid deserialization source.");
+            return VariantValue.Null;
         }
 
         var type = source[..colonIndex].ToString();

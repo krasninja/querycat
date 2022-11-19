@@ -53,6 +53,11 @@ public class PersistentInputConfigStorage : MemoryInputConfigStorage
                 Logger.Instance.Trace($"Skip saving config with key '{variantValueWithKey.Key}'. Only simple types save is supported.",
                     nameof(PersistentInputConfigStorage));
             }
+            var type = variantValueWithKey.Value.GetInternalType();
+            if (!DataTypeUtils.IsSimple(type))
+            {
+                continue;
+            }
 
             dict[variantValueWithKey.Key] = DataTypeUtils.SerializeVariantValue(variantValueWithKey.Value);
         }
