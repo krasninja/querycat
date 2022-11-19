@@ -70,6 +70,11 @@ public class Runner
     /// <param name="query">Query.</param>
     public VariantValue Run(string query)
     {
+        if (string.IsNullOrEmpty(query))
+        {
+            return VariantValue.Null;
+        }
+
         var programNode = AstBuilder.BuildProgramFromString(query);
 
         // Set first executing statement and run.

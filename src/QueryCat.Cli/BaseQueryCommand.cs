@@ -10,7 +10,10 @@ namespace QueryCat.Cli;
 public abstract class BaseQueryCommand
 {
     [Argument(0, Description = "SQL-like query or command argument.")]
-    public string Query { get; } = string.Empty;
+    public string Query { get; private set; } = string.Empty;
+
+    [Option("-f|--files", Description = "SQL files.")]
+    public List<string> Files { get; } = new();
 
     [Option("--log-level", Description = "Log level.")]
     public LogLevel LogLevel { get; } =
@@ -40,6 +43,11 @@ public abstract class BaseQueryCommand
     protected void PreInitialize()
     {
         Logger.Instance.MinLevel = LogLevel;
+
+        if (Files.Any())
+        {
+            Query = string.Join(Environment.NewLine, Files.Select(File.ReadAllText));
+        }
     }
 
     protected Runner CreateRunner(ExecutionOptions? executionOptions = null)
