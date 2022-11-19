@@ -18,6 +18,19 @@ public abstract class ClassEnumerableInput<TClass> :
     public override Column[] Columns { get; protected set; } = Array.Empty<Column>();
 
     /// <summary>
+    /// Helper and utils methods.
+    /// </summary>
+    public ClassEnumerableInputUtils<TClass> Utils { get; }
+
+    /// <summary>
+    /// Constructor.
+    /// </summary>
+    public ClassEnumerableInput()
+    {
+        Utils = new ClassEnumerableInputUtils<TClass>(this);
+    }
+
+    /// <summary>
     /// Create rows frame.
     /// </summary>
     /// <param name="builder">Rows frame builder.</param>

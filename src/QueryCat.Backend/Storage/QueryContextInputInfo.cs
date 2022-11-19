@@ -49,6 +49,10 @@ public sealed class QueryContextInputInfo
     /// <returns>Instance of <see cref="QueryContextInputInfo" />.</returns>
     public QueryContextInputInfo AddKeyColumn(string columnName, params VariantValue.Operation[] operations)
     {
+        if (!operations.Any())
+        {
+            operations = new[] { VariantValue.Operation.Equals };
+        }
         _keyColumns.Add(new KeyColumn(columnName, operations));
         return this;
     }
