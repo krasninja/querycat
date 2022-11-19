@@ -1,5 +1,6 @@
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Types;
+using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Storage;
 
@@ -27,4 +28,10 @@ public interface IRowsInput : IRowsSource, IRowsSchema
     /// Sets the input to its initial position.
     /// </summary>
     void Reset();
+
+    /// <summary>
+    /// Write explain information about the current input.
+    /// </summary>
+    /// <param name="stringBuilder">String builder to write.</param>
+    void Explain(IndentedStringBuilder stringBuilder);
 }

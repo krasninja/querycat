@@ -217,4 +217,14 @@ public sealed class CacheRowsInput : IRowsInput
         }
         _currentCacheEntry = CreateOrGetCacheEntry();
     }
+
+    /// <inheritdoc />
+    public void Explain(IndentedStringBuilder stringBuilder)
+    {
+        stringBuilder.AppendRowsInputsWithIndent("Cache", _rowsInput);
+    }
+
+    /// <inheritdoc />
+    public override string ToString()
+        => $"cache: {_rowsInput}, total = {TotalCacheEntries}, reads = {CacheReads}, total_reads = {TotalReads}";
 }

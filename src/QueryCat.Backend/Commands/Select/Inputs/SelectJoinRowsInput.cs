@@ -2,6 +2,7 @@ using QueryCat.Backend.Functions;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Storage;
 using QueryCat.Backend.Types;
+using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Commands.Select.Inputs;
 
@@ -157,4 +158,13 @@ internal sealed class SelectJoinRowsInput : IRowsInput
         _leftInput.Reset();
         _rightInput.Reset();
     }
+
+    /// <inheritdoc />
+    public void Explain(IndentedStringBuilder stringBuilder)
+    {
+        stringBuilder.AppendRowsInputsWithIndent($"{_joinType} join", _leftInput, _rightInput);
+    }
+
+    /// <inheritdoc />
+    public override string ToString() => $"left: {_leftInput}, type: {_joinType}, right: {_rightInput}";
 }

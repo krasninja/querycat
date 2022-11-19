@@ -120,11 +120,7 @@ public class RowsInputIterator : IRowsIterator
     {
         stringBuilder.AppendLine($"Input {_rowsInput.GetType().Name} (autofetch={_autoFetch})");
         stringBuilder.IncreaseIndent();
-        var rowsInputString = _rowsInput.ToString();
-        if (!string.IsNullOrEmpty(rowsInputString))
-        {
-            stringBuilder.AppendLine(rowsInputString);
-        }
+        _rowsInput.Explain(stringBuilder);
         stringBuilder.DecreaseIndent();
     }
 }

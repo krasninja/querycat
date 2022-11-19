@@ -48,6 +48,7 @@ internal sealed class SelectContextCreator
         {
             foreach (var rowsInput in rowsInputs)
             {
+                rowsInput.Close();
                 (rowsInput as IDisposable)?.Dispose();
             }
         }

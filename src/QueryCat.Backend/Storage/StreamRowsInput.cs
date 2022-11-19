@@ -96,7 +96,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     /// <inheritdoc />
     public void Close()
     {
-        Logger.Instance.Debug("Close.", nameof(StreamRowsInput));
+        Logger.Instance.Debug($"Close {this}.", nameof(StreamRowsInput));
         Dispose(true);
     }
 
@@ -251,6 +251,12 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
         Logger.Instance.Debug("Reset.", nameof(StreamRowsInput));
         StreamReader.DiscardBufferedData();
         StreamReader.BaseStream.Seek(0, SeekOrigin.Begin);
+    }
+
+    /// <inheritdoc />
+    public void Explain(IndentedStringBuilder stringBuilder)
+    {
+        stringBuilder.AppendLine(this.ToString());
     }
 
     /// <summary>
