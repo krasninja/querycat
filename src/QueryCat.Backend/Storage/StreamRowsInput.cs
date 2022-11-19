@@ -376,6 +376,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
 
     protected virtual void Dispose(bool disposing)
     {
+        Logger.Instance.Debug("Dispose.", nameof(StreamRowsInput));
         if (disposing)
         {
             StreamReader.Dispose();

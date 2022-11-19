@@ -75,12 +75,6 @@ public sealed class CombineRowsInput : RowsInput, IDisposable
         return false;
     }
 
-    /// <inheritdoc />
-    public void Dispose()
-    {
-        Close();
-    }
-
     private bool FetchNextInput()
     {
         _currentInputIndex++;
@@ -91,6 +85,23 @@ public sealed class CombineRowsInput : RowsInput, IDisposable
         }
         _currentRowsInput = null;
         return false;
+    }
+
+    /// <inheritdoc />
+    public override void Reset()
+    {
+        _currentRowsInput = null;
+        foreach (var rowsInput in _rowsInputs)
+        {
+            rowsInput.Reset();
+        }
+        base.Reset();
+    }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        Close();
     }
 
     /// <inheritdoc />

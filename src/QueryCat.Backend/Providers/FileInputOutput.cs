@@ -23,7 +23,7 @@ public static class FileInputOutput
         {
             throw new QueryCatException($"No files match '{path}'.");
         }
-        var input = new CombineRowsInput(files);
+        var input = files.Count == 1 ? files.First() : new CombineRowsInput(files);
         return VariantValue.CreateFromObject(input);
     }
 

@@ -20,6 +20,10 @@ internal class SelectInputCreateDelegateVisitor : CreateDelegateVisitor
     public override void Visit(IdentifierExpressionNode node)
     {
         var rowsInput = node.GetAttribute<IRowsInput>(AstAttributeKeys.RowsInputKey);
+        if (rowsInput == null)
+        {
+            throw new InvalidOperationException("Rows input not initialized.");
+        }
         var columnIndex = node.GetAttribute<int>(AstAttributeKeys.InputColumnIndexKey);
         NodeIdFuncMap[node.Id] = new FuncUnitRowsInputColumn(rowsInput, columnIndex);
     }
