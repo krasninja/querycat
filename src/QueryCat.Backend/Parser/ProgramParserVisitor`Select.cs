@@ -204,18 +204,18 @@ internal partial class ProgramParserVisitor
             .ToList());
 
     /// <inheritdoc />
-    public override IAstNode VisitSelectTableReferenceNoFormat(QueryCatParser.SelectTableReferenceNoFormatContext context)
+    public override IAstNode VisitSelectTablePrimaryNoFormat(QueryCatParser.SelectTablePrimaryNoFormatContext context)
         => new SelectTableFunctionNode(this.Visit<FunctionCallNode>(context.functionCall()))
         {
-            Alias = this.Visit(context.selectAlias(), SelectAliasNode.Empty).AliasName
+            Alias = this.Visit(context.selectAlias(), SelectAliasNode.Empty).AliasName,
         };
 
     /// <inheritdoc />
-    public override IAstNode VisitSelectTableReferenceStdin(QueryCatParser.SelectTableReferenceStdinContext context)
+    public override IAstNode VisitSelectTablePrimaryStdin(QueryCatParser.SelectTablePrimaryStdinContext context)
         => new SelectTableFunctionNode(new FunctionCallNode("stdin"));
 
     /// <inheritdoc />
-    public override IAstNode VisitSelectTableReferenceWithFormat(QueryCatParser.SelectTableReferenceWithFormatContext context)
+    public override IAstNode VisitSelectTablePrimaryWithFormat(QueryCatParser.SelectTablePrimaryWithFormatContext context)
     {
         var readFunction = new FunctionCallNode("read");
         var uri = GetUnwrappedText(context.uri.Text);
@@ -231,12 +231,51 @@ internal partial class ProgramParserVisitor
     }
 
     /// <inheritdoc />
-    public override IAstNode VisitSelectTableReferenceSubquery(
-        QueryCatParser.SelectTableReferenceSubqueryContext context)
+    public override IAstNode VisitSelectTablePrimarySubquery(
+        QueryCatParser.SelectTablePrimarySubqueryContext context)
     {
         var query = this.Visit<SelectQueryExpressionBodyNode>(context.selectQueryExpression());
         query.Alias = this.Visit(context.selectAlias(), SelectAliasNode.Empty).AliasName;
         return query;
+    }
+
+    /// <inheritdoc />
+    public override IAstNode VisitSelectTableReference(QueryCatParser.SelectTableReferenceContext context)
+    {
+        var expressionNode = this.Visit<ExpressionNode>(context.selectTablePrimary());
+        if (expressionNode is SelectTableFunctionNode functionNode)
+        {
+            functionNode.JoinedNodes.AddRange(this.Visit<SelectTableJoinedNode>(context.selectTableJoined()));
+        }
+        return expressionNode;
+    }
+
+    /// <inheritdoc />
+    public override IAstNode VisitSelectTableJoined(QueryCatParser.SelectTableJoinedContext context)
+    {
+        return new SelectTableJoinedNode(
+            this.Visit<ExpressionNode>(context.right),
+            this.Visit<SelectTableJoinedTypeNode>(context.selectJoinType()),
+            this.Visit<ExpressionNode>(context.condition));
+    }
+
+    /// <inheritdoc />
+    public override IAstNode VisitSelectJoinType(QueryCatParser.SelectJoinTypeContext context)
+    {
+        var type = SelectTableJoinedType.Full;
+        if (context.INNER() != null)
+        {
+            type = SelectTableJoinedType.Inner;
+        }
+        else if (context.LEFT() != null)
+        {
+            type = SelectTableJoinedType.Left;
+        }
+        else if (context.RIGHT() != null)
+        {
+            type = SelectTableJoinedType.Right;
+        }
+        return new SelectTableJoinedTypeNode(type);
     }
 
     #endregion

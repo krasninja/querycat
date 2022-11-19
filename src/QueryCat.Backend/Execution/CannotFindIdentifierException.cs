@@ -10,7 +10,7 @@ public class CannotFindIdentifierException : SemanticException
 #pragma warning restore CA2229
 {
     public CannotFindIdentifierException(string name)
-        : base(string.Format(Resources.Errors.CannotFindColumnOrVariable, name))
+        : base($"Column or variable '{name}' does not exist.")
     {
     }
 }

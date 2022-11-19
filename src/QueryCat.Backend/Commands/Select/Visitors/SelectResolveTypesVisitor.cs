@@ -29,7 +29,8 @@ internal sealed class SelectResolveTypesVisitor : ResolveTypesVisitor
         }
         else
         {
-            node.SetAttribute(AstAttributeKeys.InputColumn, rowsIterator!.Columns[columnIndex]);
+            node.SetAttribute(AstAttributeKeys.InputColumnKey, rowsIterator!.Columns[columnIndex]);
+            node.SetAttribute(AstAttributeKeys.InputColumnIndexKey, columnIndex);
             node.SetDataType(rowsIterator.Columns[columnIndex].DataType);
         }
     }
@@ -51,7 +52,7 @@ internal sealed class SelectResolveTypesVisitor : ResolveTypesVisitor
         }
         else
         {
-            node.SetAttribute(AstAttributeKeys.InputColumn, rowsIterator!.Columns[columnIndex]);
+            node.SetAttribute(AstAttributeKeys.InputColumnKey, rowsIterator!.Columns[columnIndex]);
             node.SetDataType(rowsIterator.Columns[columnIndex].DataType);
         }
     }

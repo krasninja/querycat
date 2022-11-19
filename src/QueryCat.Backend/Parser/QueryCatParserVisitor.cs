@@ -187,33 +187,51 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitSelectTableReferenceList([NotNull] QueryCatParser.SelectTableReferenceListContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>SelectTableReferenceNoFormat</c>
-	/// labeled alternative in <see cref="QueryCatParser.selectTableReference"/>.
+	/// Visit a parse tree produced by <see cref="QueryCatParser.selectTableReference"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitSelectTableReferenceNoFormat([NotNull] QueryCatParser.SelectTableReferenceNoFormatContext context);
+	Result VisitSelectTableReference([NotNull] QueryCatParser.SelectTableReferenceContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>SelectTableReferenceStdin</c>
-	/// labeled alternative in <see cref="QueryCatParser.selectTableReference"/>.
+	/// Visit a parse tree produced by the <c>SelectTablePrimaryNoFormat</c>
+	/// labeled alternative in <see cref="QueryCatParser.selectTablePrimary"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitSelectTableReferenceStdin([NotNull] QueryCatParser.SelectTableReferenceStdinContext context);
+	Result VisitSelectTablePrimaryNoFormat([NotNull] QueryCatParser.SelectTablePrimaryNoFormatContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>SelectTableReferenceWithFormat</c>
-	/// labeled alternative in <see cref="QueryCatParser.selectTableReference"/>.
+	/// Visit a parse tree produced by the <c>SelectTablePrimaryStdin</c>
+	/// labeled alternative in <see cref="QueryCatParser.selectTablePrimary"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitSelectTableReferenceWithFormat([NotNull] QueryCatParser.SelectTableReferenceWithFormatContext context);
+	Result VisitSelectTablePrimaryStdin([NotNull] QueryCatParser.SelectTablePrimaryStdinContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>SelectTableReferenceSubquery</c>
-	/// labeled alternative in <see cref="QueryCatParser.selectTableReference"/>.
+	/// Visit a parse tree produced by the <c>SelectTablePrimaryWithFormat</c>
+	/// labeled alternative in <see cref="QueryCatParser.selectTablePrimary"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitSelectTableReferenceSubquery([NotNull] QueryCatParser.SelectTableReferenceSubqueryContext context);
+	Result VisitSelectTablePrimaryWithFormat([NotNull] QueryCatParser.SelectTablePrimaryWithFormatContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>SelectTablePrimarySubquery</c>
+	/// labeled alternative in <see cref="QueryCatParser.selectTablePrimary"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSelectTablePrimarySubquery([NotNull] QueryCatParser.SelectTablePrimarySubqueryContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="QueryCatParser.selectTableJoined"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSelectTableJoined([NotNull] QueryCatParser.SelectTableJoinedContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="QueryCatParser.selectJoinType"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSelectJoinType([NotNull] QueryCatParser.SelectJoinTypeContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="QueryCatParser.selectGroupBy"/>.
 	/// </summary>

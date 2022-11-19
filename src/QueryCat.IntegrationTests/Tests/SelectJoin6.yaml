@@ -1,0 +1,9 @@
+expected: |
+  1,a,1,xxx
+  2,b,,
+  3,c,3,yyy
+  ,,5,zzz
+query: |
+  select t1.num, t1.name, t2.num, t2.value
+  from 'Table1.csv' as t1
+    full join 'Table2.csv' AS t2 ON t1.num = t2.num

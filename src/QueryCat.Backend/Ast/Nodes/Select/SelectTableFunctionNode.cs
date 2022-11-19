@@ -8,6 +8,8 @@ public sealed class SelectTableFunctionNode : ExpressionNode
 
     public string Alias { get; set; }
 
+    public List<SelectTableJoinedNode> JoinedNodes { get; } = new();
+
     /// <inheritdoc />
     public override string Code => "tablefunc";
 

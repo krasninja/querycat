@@ -58,5 +58,10 @@ internal static class AstAttributeKeys
     /// <summary>
     /// Correspond identifier rows input column.
     /// </summary>
-    public const string InputColumn = "input_column";
+    public const string InputColumnKey = "input_column";
+
+    /// <summary>
+    /// Correspond identifier rows input column index.
+    /// </summary>
+    public const string InputColumnIndexKey = "input_column_index";
 }

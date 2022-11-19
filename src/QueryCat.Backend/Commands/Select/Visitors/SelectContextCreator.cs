@@ -1,6 +1,7 @@
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Select;
+using QueryCat.Backend.Commands.Select.Inputs;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Logging;
 using QueryCat.Backend.Relational;
@@ -59,7 +60,9 @@ internal sealed class SelectContextCreator
             {
                 throw new QueryCatException("No iterator for subquery!");
             }
-            return new RowsIteratorInput(iterator);
+            var rowsInput = new RowsIteratorInput(iterator);
+            SetAlias(rowsInput, queryExpressionBodyNode.Alias);
+            return rowsInput;
         }
 
         IRowsInput CreateInputSourceFromTableFunction(SelectTableFunctionNode tableFunctionNode)
@@ -68,7 +71,66 @@ internal sealed class SelectContextCreator
             var source = new CreateDelegateVisitor(_executionThread)
                 .RunAndReturn(tableFunctionNode.TableFunction).Invoke();
             var isSubQuery = _parents.Length > 0;
-            return CreateRowsInput(source, isSubQuery);
+            var rowsInput = CreateRowsInput(source, isSubQuery);
+            SetAlias(rowsInput, tableFunctionNode.Alias);
+            foreach (var joinedNode in tableFunctionNode.JoinedNodes)
+            {
+                rowsInput = CreateInputSourceFromTableJoin(rowsInput, joinedNode);
+            }
+            return rowsInput;
+        }
+
+        IRowsInput CreateInputSourceFromTableJoin(IRowsInput left, SelectTableJoinedNode tableJoinedNode)
+        {
+            var right = GetRowsInputFromExpression(tableJoinedNode.RightTableNode);
+            var alias = GetAliasFromExpression(tableJoinedNode.RightTableNode);
+            SetAlias(right, alias);
+
+            // For right join we swap left and right. But we keep columns in the same order.
+            var join = ConvertAstJoinType(tableJoinedNode.JoinTypeNode.JoinedType);
+            var reverseColumnsOrder = false;
+            if (join == JoinType.Right)
+            {
+                (left, right) = (right, left);
+                reverseColumnsOrder = true;
+            }
+            // Because of iterator specific conditions we must cache right input.
+            right = new CacheRowsInput(right, autoFetch: true);
+
+            new SelectInputResolveTypesVisitor(_executionThread, left, right)
+                .Run(tableJoinedNode.SearchConditionNode);
+            var searchFunc = new SelectInputCreateDelegateVisitor(_executionThread, left, right)
+                .RunAndReturn(tableJoinedNode.SearchConditionNode);
+            return new SelectJoinRowsInput(left, right, join, searchFunc, reverseColumnsOrder);
+        }
+
+        IRowsInput GetRowsInputFromExpression(ExpressionNode expressionNode)
+        {
+            if (expressionNode is SelectQueryExpressionBodyNode selectQueryExpressionBodyNode)
+            {
+                return CreateInputSourceFromSubQuery(selectQueryExpressionBodyNode);
+            }
+            else if (expressionNode is SelectTableFunctionNode tableFunctionNode)
+            {
+                return CreateInputSourceFromTableFunction(tableFunctionNode);
+            }
+            else
+            {
+                throw new InvalidOperationException($"Cannot process node {expressionNode} as input.");
+            }
+        }
+
+        string GetAliasFromExpression(ExpressionNode expressionNode)
+        {
+            if (expressionNode is SelectQueryExpressionBodyNode selectQueryExpressionBodyNode)
+            {
+                return selectQueryExpressionBodyNode.Alias;
+            }
+            else if (expressionNode is SelectTableFunctionNode tableFunctionNode)
+            {
+                return tableFunctionNode.Alias;
+            }
+            return string.Empty;
         }
 
         // Entry point here.
@@ -85,30 +147,14 @@ internal sealed class SelectContextCreator
         var inputContexts = new List<SelectInputQueryContext>();
         foreach (var tableExpression in querySpecificationNode.TableExpression.Tables.TableFunctions)
         {
-            IRowsInput rowsInput;
-            string alias;
-            if (tableExpression is SelectQueryExpressionBodyNode selectQueryExpressionBodyNode)
+            var rowsInput = GetRowsInputFromExpression(tableExpression);
+            string alias = GetAliasFromExpression(tableExpression);
+            if (_rowsInputContextMap.TryGetValue(rowsInput, out var queryContext))
             {
-                rowsInput = CreateInputSourceFromSubQuery(selectQueryExpressionBodyNode);
-                alias = selectQueryExpressionBodyNode.Alias;
-            }
-            else if (tableExpression is SelectTableFunctionNode tableFunctionNode)
-            {
-                rowsInput = CreateInputSourceFromTableFunction(tableFunctionNode);
-                if (_rowsInputContextMap.TryGetValue(rowsInput, out var queryContext))
-                {
-                    inputContexts.Add(queryContext);
-                }
-                alias = tableFunctionNode.Alias;
-            }
-            else
-            {
-                throw new InvalidOperationException(
-                    string.Format(Resources.Errors.CannotProcessNodeAsInput, tableExpression));
+                inputContexts.Add(queryContext);
             }
 
             SetAlias(tableExpression, alias);
-            SetAlias(rowsInput, alias);
             tableExpression.SetAttribute(AstAttributeKeys.RowsInputKey, rowsInput);
             rowsInputs.Add(rowsInput);
         }
@@ -217,4 +263,14 @@ internal sealed class SelectContextCreator
             column.SourceName = alias;
         }
     }
+
+    private static JoinType ConvertAstJoinType(SelectTableJoinedType tableJoinedType)
+        => tableJoinedType switch
+        {
+            SelectTableJoinedType.Full => JoinType.Full,
+            SelectTableJoinedType.Inner => JoinType.Inner,
+            SelectTableJoinedType.Left => JoinType.Left,
+            SelectTableJoinedType.Right => JoinType.Right,
+            _ => throw new ArgumentOutOfRangeException(nameof(tableJoinedType), tableJoinedType, null)
+        };
 }

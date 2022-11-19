@@ -157,7 +157,7 @@ internal sealed partial class SelectSpecificationNodeVisitor : SelectAstVisitor
                 return false;
             }
             // Try to find correspond row input column.
-            var column = identifierNode!.GetAttribute<Column>(AstAttributeKeys.InputColumn);
+            var column = identifierNode!.GetAttribute<Column>(AstAttributeKeys.InputColumnKey);
             if (column == null || rowsInputContext.RowsInput.GetColumnIndex(column) < 0)
             {
                 return false;
@@ -181,7 +181,7 @@ internal sealed partial class SelectSpecificationNodeVisitor : SelectAstVisitor
                 return false;
             }
             // Try to find correspond row input column.
-            var column = identifierNode.GetAttribute<Column>(AstAttributeKeys.InputColumn);
+            var column = identifierNode.GetAttribute<Column>(AstAttributeKeys.InputColumnKey);
             if (column == null || rowsInputContext.RowsInput.GetColumnIndex(column) < 0)
             {
                 return false;
@@ -206,7 +206,7 @@ internal sealed partial class SelectSpecificationNodeVisitor : SelectAstVisitor
                 return false;
             }
             // Try to find correspond row input column.
-            var column = identifierNode.GetAttribute<Column>(AstAttributeKeys.InputColumn);
+            var column = identifierNode.GetAttribute<Column>(AstAttributeKeys.InputColumnKey);
             if (column == null || rowsInputContext.RowsInput.GetColumnIndex(column) < 0)
             {
                 return false;

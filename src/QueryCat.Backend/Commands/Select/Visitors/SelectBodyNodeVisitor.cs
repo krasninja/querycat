@@ -9,7 +9,7 @@ using QueryCat.Backend.Types;
 namespace QueryCat.Backend.Commands.Select.Visitors;
 
 /// <summary>
-/// The visitor is po process <see cref="SelectQueryExpressionBodyNode" /> nodes only in post order way.
+/// The visitor is to process <see cref="SelectQueryExpressionBodyNode" /> nodes only in post order way.
 /// </summary>
 internal sealed class SelectBodyNodeVisitor : SelectAstVisitor
 {

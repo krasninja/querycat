@@ -83,12 +83,15 @@ selectFromClause:
     selectHaving?;
 selectTableReferenceList:
     FROM selectTableReference (COMMA selectTableReference)*;
-selectTableReference
-    : functionCall selectAlias? # SelectTableReferenceNoFormat
-    | '-' # SelectTableReferenceStdin
-    | uri=STRING_LITERAL (FORMAT functionCall)? selectAlias? # SelectTableReferenceWithFormat
-    | '(' selectQueryExpression ')' selectAlias? # SelectTableReferenceSubquery
+selectTableReference: selectTablePrimary selectTableJoined*;
+selectTablePrimary
+    : functionCall selectAlias? # SelectTablePrimaryNoFormat
+    | '-' # SelectTablePrimaryStdin
+    | uri=STRING_LITERAL (FORMAT functionCall)? selectAlias? # SelectTablePrimaryWithFormat
+    | '(' selectQueryExpression ')' selectAlias? # SelectTablePrimarySubquery
     ;
+selectTableJoined: selectJoinType? JOIN right=selectTablePrimary ON condition=expression;
+selectJoinType: INNER | (LEFT | RIGHT | FULL) OUTER?;
 
 // Group, Having.
 selectGroupBy: GROUP BY expression (COMMA expression)*;

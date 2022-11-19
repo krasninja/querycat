@@ -43,6 +43,7 @@ public sealed class CacheRowsInput : IRowsInput
 
     private readonly List<CacheEntry> _cacheEntries = new();
     private readonly IRowsInput _rowsInput;
+    private readonly bool _autoFetch;
     private bool[] _cacheReadMap;
     private int _rowIndex = -1;
     private CacheEntry? _currentCacheEntry;
@@ -58,9 +59,10 @@ public sealed class CacheRowsInput : IRowsInput
 
     internal int TotalCacheEntries => _cacheEntries.Count;
 
-    public CacheRowsInput(IRowsInput rowsInput)
+    public CacheRowsInput(IRowsInput rowsInput, bool autoFetch = false)
     {
         _rowsInput = rowsInput;
+        _autoFetch = autoFetch;
         _cacheReadMap = Array.Empty<bool>();
     }
 
@@ -145,7 +147,20 @@ public sealed class CacheRowsInput : IRowsInput
             _cacheEntries.Add(cacheEntry);
         }
 
+        if (_autoFetch && _rowIndex > -1)
+        {
+            ReadAllItemsToCache();
+        }
+
         return hasData;
+    }
+
+    private void ReadAllItemsToCache()
+    {
+        for (var i = 0; i < _cacheReadMap.Length; i++)
+        {
+            ReadValue(i, out _);
+        }
     }
 
     private CacheEntry GetCurrentCacheEntry()

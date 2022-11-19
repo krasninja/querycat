@@ -314,6 +314,18 @@ public abstract class DelegateVisitor : AstVisitor
     }
 
     /// <inheritdoc />
+    public override void Visit(SelectTableJoinedNode node)
+    {
+        OnVisit(node);
+    }
+
+    /// <inheritdoc />
+    public override void Visit(SelectTableJoinedTypeNode node)
+    {
+        OnVisit(node);
+    }
+
+    /// <inheritdoc />
     public override void Visit(SelectTableReferenceListNode node)
     {
         OnVisit(node);
