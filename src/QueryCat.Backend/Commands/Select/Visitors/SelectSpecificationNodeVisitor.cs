@@ -404,7 +404,10 @@ internal sealed partial class SelectSpecificationNodeVisitor : SelectAstVisitor
         {
             var columnNode = node.Columns[i];
             var columnName = GetColumnName(columnNode);
-            var columnSourceName = GetColumnSourceName(columnNode);
+            // Do not set source name if alias is specified.
+            var columnSourceName = string.IsNullOrEmpty(columnNode.Alias)
+                ? GetColumnSourceName(columnNode)
+                : string.Empty;
             if (string.IsNullOrEmpty(columnName) && node.Columns.Count == 1)
             {
                 columnName = SingleValueRowsIterator.ColumnTitle;
