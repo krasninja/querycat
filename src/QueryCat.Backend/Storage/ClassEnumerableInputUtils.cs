@@ -28,7 +28,14 @@ public class ClassEnumerableInputUtils<TClass> where TClass : class
         var queryLimit = enumerableInput.QueryContext.QueryInfo.Limit;
         if (queryLimit.HasValue)
         {
-            Limit = Math.Min((int)queryLimit.Value, Limit);
+            var keyConditionsCount = enumerableInput.QueryContext.GetKeyConditions().Count();
+            var allConditionsCount = enumerableInput.QueryContext.QueryInfo.Conditions.Count;
+            // If we only have key conditions in query it means that all results will match
+            // it. So we can natively limit output page size.
+            if (keyConditionsCount == allConditionsCount)
+            {
+                Limit = Math.Min((int)queryLimit.Value, Limit);
+            }
         }
     }
 

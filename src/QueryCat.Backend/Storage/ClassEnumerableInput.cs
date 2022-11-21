@@ -17,17 +17,28 @@ public abstract class ClassEnumerableInput<TClass> :
     /// <inheritdoc />
     public override Column[] Columns { get; protected set; } = Array.Empty<Column>();
 
+    private ClassEnumerableInputUtils<TClass>? _utils;
+
     /// <summary>
     /// Helper and utils methods.
     /// </summary>
-    public ClassEnumerableInputUtils<TClass> Utils { get; }
+    public ClassEnumerableInputUtils<TClass> Utils
+    {
+        get
+        {
+            if (_utils == null)
+            {
+                _utils = new ClassEnumerableInputUtils<TClass>(this);
+            }
+            return _utils;
+        }
+    }
 
     /// <summary>
     /// Constructor.
     /// </summary>
     public ClassEnumerableInput()
     {
-        Utils = new ClassEnumerableInputUtils<TClass>(this);
     }
 
     /// <summary>
@@ -56,6 +67,7 @@ public abstract class ClassEnumerableInput<TClass> :
     /// <inheritdoc />
     protected override void Load()
     {
+        QueryContext.ValidateAndInvokeKeyConditions();
         _enumerator = GetData().GetEnumerator();
     }
 
