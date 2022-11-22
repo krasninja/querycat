@@ -6,12 +6,12 @@ using QueryCat.Backend.Storage;
 
 namespace QueryCat.Backend.Commands.Select.Inputs;
 
-internal class SelectInputCreateDelegateVisitor : CreateDelegateVisitor
+internal class InputCreateDelegateVisitor : CreateDelegateVisitor
 {
     private readonly IRowsInput[] _rowsInputs;
 
     /// <inheritdoc />
-    public SelectInputCreateDelegateVisitor(ExecutionThread thread, params IRowsInput[] rowsInputs) : base(thread)
+    public InputCreateDelegateVisitor(ExecutionThread thread, params IRowsInput[] rowsInputs) : base(thread)
     {
         _rowsInputs = rowsInputs;
     }

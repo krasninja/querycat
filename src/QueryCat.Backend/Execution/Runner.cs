@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using System.Text;
 using QueryCat.Backend.Ast;
-using QueryCat.Backend.Execution.Plugins;
 using QueryCat.Backend.Formatters;
 using QueryCat.Backend.Functions.AggregateFunctions;
 using QueryCat.Backend.Functions.StandardFunctions;

@@ -1,12 +1,13 @@
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Storage;
+using QueryCat.Backend.Types;
 
 namespace QueryCat.Backend.Commands.Select;
 
 /// <summary>
 /// Contains all necessary information to handle the query on all stages.
 /// </summary>
-internal sealed class SelectCommandContext
+internal sealed class SelectCommandContext : CommandContext
 {
     /// <summary>
     /// Current iterator.
@@ -22,6 +23,13 @@ internal sealed class SelectCommandContext
     /// Parent select contexts.
     /// </summary>
     public SelectCommandContext[] ParentContexts { get; set; } = Array.Empty<SelectCommandContext>();
+
+    private readonly List<SelectCommandContext> _childContexts = new();
+
+    /// <summary>
+    /// Child command contexts.
+    /// </summary>
+    public IReadOnlyList<SelectCommandContext> ChildContexts => _childContexts;
 
     /// <summary>
     /// Context information for rows inputs. We bypass this to input to provide additional information
@@ -62,6 +70,33 @@ internal sealed class SelectCommandContext
         CurrentIterator = nextIterator;
     }
 
+    /// <summary>
+    /// Add child context.
+    /// </summary>
+    /// <param name="context">Context.</param>
+    internal void AddChildContext(SelectCommandContext context)
+        => _childContexts.Add(context);
+
+    /// <summary>
+    /// Add child contexts list.
+    /// </summary>
+    /// <param name="contexts">Enumerable of contexts.</param>
+    internal void AddChildContext(IEnumerable<SelectCommandContext> contexts)
+    {
+        foreach (var selectCommandContext in contexts)
+        {
+            AddChildContext(selectCommandContext);
+        }
+    }
+
+    /// <summary>
+    /// Get column index by name and return relate rows iterator.
+    /// It also search within parent contexts.
+    /// </summary>
+    /// <param name="name">Column name.</param>
+    /// <param name="source">Source name.</param>
+    /// <param name="rowsIterator">Related rows iterator.</param>
+    /// <returns>Column index or -1.</returns>
     public int GetColumnIndexByName(string name, string source, out IRowsIterator? rowsIterator)
     {
         var columnIndex = CurrentIterator.GetColumnIndexByName(name, source);
@@ -82,5 +117,22 @@ internal sealed class SelectCommandContext
 
         rowsIterator = default;
         return -1;
+    }
+
+    /// <inheritdoc />
+    public override VariantValue Invoke()
+    {
+        return VariantValue.CreateFromObject(CurrentIterator);
+    }
+
+    /// <inheritdoc />
+    protected override void Dispose(bool disposing)
+    {
+        RowsInputIterator?.Dispose();
+        foreach (var childContext in ChildContexts)
+        {
+            childContext.Dispose();
+        }
+        base.Dispose(disposing);
     }
 }

@@ -8,7 +8,7 @@ namespace QueryCat.Backend.Relational;
 /// </summary>
 public static class RowsIteratorUtils
 {
-    private class EmptyRowsIterator : IRowsIterator
+    private sealed class EmptyRowsIterator : IRowsIterator
     {
         /// <inheritdoc />
         public Column[] Columns => Array.Empty<Column>();

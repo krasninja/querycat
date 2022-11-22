@@ -78,7 +78,8 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
     /// <inheritdoc />
     public override void Visit(SelectExistsExpressionNode node)
     {
-        if (node.SubQueryExpressionNode.GetFunc().Invoke().AsObject is not IRowsIterator rowsIterator)
+        var commandContext = node.SubQueryExpressionNode.GetRequiredAttribute<CommandContext>(AstAttributeKeys.ContextKey);
+        if (commandContext.Invoke().AsObject is not IRowsIterator rowsIterator)
         {
             throw new InvalidOperationException("Incorrect subquery type.");
         }
@@ -165,7 +166,8 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
             return;
         }
 
-        if (node.GetFunc().Invoke().AsObject is not IRowsIterator rowsIterator)
+        var commandContext = node.GetRequiredAttribute<CommandContext>(AstAttributeKeys.ContextKey);
+        if (commandContext.Invoke().AsObject is not IRowsIterator rowsIterator)
         {
             throw new InvalidOperationException(Resources.Errors.InvalidRowsInputType);
         }
@@ -192,7 +194,8 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
             return;
         }
 
-        if (node.SubQueryNode.GetFunc().Invoke().AsObject is not IRowsIterator rowsIterator)
+        var commandContext = node.SubQueryNode.GetRequiredAttribute<CommandContext>(AstAttributeKeys.ContextKey);
+        if (commandContext.Invoke().AsObject is not IRowsIterator rowsIterator)
         {
             throw new InvalidOperationException(Resources.Errors.InvalidRowsInputType);
         }

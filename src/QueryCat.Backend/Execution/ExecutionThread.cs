@@ -73,8 +73,7 @@ public sealed class ExecutionThread
             ApplicationDirectory);
     }
 
-    public ExecutionThread(
-        ExecutionOptions? options = null)
+    public ExecutionThread(ExecutionOptions? options = null)
     {
         var appLocalDirectory = GetApplicationDirectory();
 
@@ -100,30 +99,37 @@ public sealed class ExecutionThread
 
         while (ExecutingStatement != null)
         {
-            _statementsVisitor.Run(ExecutingStatement);
+            var commandContext = _statementsVisitor.RunAndReturn(ExecutingStatement);
 
-            // Fire "before" event.
-            var executeEventArgs = new ExecuteEventArgs();
-            BeforeStatementExecute?.Invoke(this, executeEventArgs);
-            if (!executeEventArgs.ContinueExecution)
+            try
             {
-                break;
+                // Fire "before" event.
+                var executeEventArgs = new ExecuteEventArgs();
+                BeforeStatementExecute?.Invoke(this, executeEventArgs);
+                if (!executeEventArgs.ContinueExecution)
+                {
+                    break;
+                }
+                var result = commandContext.Invoke();
+                LastResult = result;
+
+                // Fire "after" event.
+                AfterStatementExecute?.Invoke(this, executeEventArgs);
+                if (!executeEventArgs.ContinueExecution)
+                {
+                    break;
+                }
+
+                if (Options.DefaultRowsOutput != NullRowsOutput.Instance)
+                {
+                    Options.DefaultRowsOutput.Write(result);
+                }
+            }
+            finally
+            {
+                commandContext.Dispose();
             }
 
-            var result = _statementsVisitor.ResultDelegate.Invoke();
-            LastResult = result;
-
-            // Fire "after" event.
-            AfterStatementExecute?.Invoke(this, executeEventArgs);
-            if (!executeEventArgs.ContinueExecution)
-            {
-                break;
-            }
-
-            if (Options.DefaultRowsOutput != NullRowsOutput.Instance)
-            {
-                Options.DefaultRowsOutput.Write(result);
-            }
             ExecutingStatement = ExecutingStatement.Next;
         }
 

@@ -6,12 +6,12 @@ using QueryCat.Backend.Storage;
 
 namespace QueryCat.Backend.Commands.Select.Inputs;
 
-internal class SelectInputResolveTypesVisitor : ResolveTypesVisitor
+internal class InputResolveTypesVisitor : ResolveTypesVisitor
 {
     private readonly IRowsInput[] _rowsInputs;
 
     /// <inheritdoc />
-    public SelectInputResolveTypesVisitor(ExecutionThread executionThread, params IRowsInput[] rowsInputs)
+    public InputResolveTypesVisitor(ExecutionThread executionThread, params IRowsInput[] rowsInputs)
         : base(executionThread)
     {
         _rowsInputs = rowsInputs;

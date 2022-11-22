@@ -1,7 +1,5 @@
 using System.Runtime.CompilerServices;
-using QueryCat.Backend.Logging;
 using QueryCat.Backend.Relational;
-using QueryCat.Backend.Types;
 using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Storage;
@@ -9,7 +7,7 @@ namespace QueryCat.Backend.Storage;
 /// <summary>
 /// Iterator for <see cref="IRowsInput" />.
 /// </summary>
-public class RowsInputIterator : IRowsIterator
+public class RowsInputIterator : IRowsIterator, IDisposable
 {
     private readonly IRowsInput _rowsInput;
     private readonly bool _autoFetch;
@@ -90,11 +88,6 @@ public class RowsInputIterator : IRowsIterator
     public bool MoveNext()
     {
         _hasInput = _rowsInput.ReadNext();
-        if (!_hasInput)
-        {
-            Logger.Instance.Debug($"Close rows input {_rowsInput}.", nameof(RowsInputIterator));
-            _rowsInput.Close();
-        }
         if (_hasInput && _autoFetch)
         {
             FetchValuesForAllColumns();
@@ -122,5 +115,20 @@ public class RowsInputIterator : IRowsIterator
         stringBuilder.IncreaseIndent();
         _rowsInput.Explain(stringBuilder);
         stringBuilder.DecreaseIndent();
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _rowsInput.Close();
+        }
+    }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
     }
 }

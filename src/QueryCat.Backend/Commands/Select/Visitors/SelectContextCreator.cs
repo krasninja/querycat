@@ -38,26 +38,22 @@ internal sealed class SelectContextCreator
         }
         var context = CreateSourceContext(node);
         context.ParentContexts = _parents;
+        foreach (var parent in _parents)
+        {
+            parent.AddChildContext(context);
+        }
         node.SetAttribute(AstAttributeKeys.ContextKey, context);
         return context;
     }
 
     private SelectCommandContext CreateSourceContext(SelectQuerySpecificationNode querySpecificationNode)
     {
-        void DisposeRowsInputs(List<IRowsInput> rowsInputs)
-        {
-            foreach (var rowsInput in rowsInputs)
-            {
-                rowsInput.Close();
-                (rowsInput as IDisposable)?.Dispose();
-            }
-        }
-
         IRowsInput CreateInputSourceFromSubQuery(SelectQueryExpressionBodyNode queryExpressionBodyNode)
         {
             CreateForQuery(queryExpressionBodyNode.Queries);
             new SelectBodyNodeVisitor(_executionThread).Run(queryExpressionBodyNode);
-            if (queryExpressionBodyNode.GetFunc().Invoke().AsObject is not IRowsIterator iterator)
+            var commandContext = queryExpressionBodyNode.GetRequiredAttribute<CommandContext>(AstAttributeKeys.ContextKey);
+            if (commandContext.Invoke().AsObject is not IRowsIterator iterator)
             {
                 throw new QueryCatException("No iterator for subquery!");
             }
@@ -96,11 +92,15 @@ internal sealed class SelectContextCreator
                 reverseColumnsOrder = true;
             }
             // Because of iterator specific conditions we must cache right input.
-            right = new CacheRowsInput(right, autoFetch: true);
+            if (_rowsInputContextMap.TryGetValue(right, out var context))
+            {
+                right = new CacheRowsInput(right, autoFetch: true);
+                right.SetContext(context);
+            }
 
-            new SelectInputResolveTypesVisitor(_executionThread, left, right)
+            new InputResolveTypesVisitor(_executionThread, left, right)
                 .Run(tableJoinedNode.SearchConditionNode);
-            var searchFunc = new SelectInputCreateDelegateVisitor(_executionThread, left, right)
+            var searchFunc = new InputCreateDelegateVisitor(_executionThread, left, right)
                 .RunAndReturn(tableJoinedNode.SearchConditionNode);
             return new SelectJoinRowsInput(left, right, join, searchFunc, reverseColumnsOrder);
         }
@@ -161,12 +161,8 @@ internal sealed class SelectContextCreator
         }
 
         var resultRowsIterator = CreateMultipleIterator(rowsInputs);
-        var tearDownIterator = new TearDownRowsIterator(resultRowsIterator, "close inputs")
-        {
-            Action = _ => DisposeRowsInputs(rowsInputs)
-        };
 
-        return new SelectCommandContext(tearDownIterator)
+        return new SelectCommandContext(resultRowsIterator)
         {
             RowsInputIterator = resultRowsIterator as RowsInputIterator,
             InputQueryContextList = inputContexts.ToArray(),

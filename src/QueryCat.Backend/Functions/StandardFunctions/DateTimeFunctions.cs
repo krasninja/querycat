@@ -38,6 +38,10 @@ public static class DateTimeFunctions
     {
         var field = args.GetAt(0).AsString.Trim().ToUpperInvariant();
         var source = args.GetAt(1);
+        if (source.IsNull)
+        {
+            return VariantValue.Null;
+        }
         var result = source.GetInternalType() switch
         {
             DataType.Timestamp => field switch

@@ -92,7 +92,7 @@ public sealed class CacheRowsInput : IRowsInput
         TotalReads++;
 
         var offset = Columns.Length * _rowIndex + columnIndex;
-        if (_rowIndex < cacheEntry.CacheLength && _cacheReadMap[columnIndex])
+        if (_rowIndex < cacheEntry.CacheLength && (cacheEntry.IsCompleted || _cacheReadMap[columnIndex]))
         {
             value = cacheEntry.Cache[offset];
             CacheReads++;
@@ -127,6 +127,10 @@ public sealed class CacheRowsInput : IRowsInput
         {
             Array.Fill(_cacheReadMap, true);
             return true;
+        }
+        else if (cacheEntry.IsCompleted)
+        {
+            return false;
         }
 
         var hasData = _rowsInput.ReadNext();
@@ -207,6 +211,7 @@ public sealed class CacheRowsInput : IRowsInput
     {
         _rowIndex = -1;
         var newCacheKey = new CacheKey(_queryContext);
+        _rowsInput.Reset();
         if (_currentCacheEntry != null)
         {
             if (!_currentCacheEntry.IsCompleted && _currentCacheEntry.Key.Equals(newCacheKey))

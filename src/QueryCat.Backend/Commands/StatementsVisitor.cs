@@ -15,11 +15,17 @@ public sealed class StatementsVisitor : AstVisitor
 {
     private readonly ExecutionThread _executionThread;
 
-    public Func<VariantValue> ResultDelegate { get; private set; } = () => VariantValue.Null;
+    public CommandContext CommandContext { get; private set; } = EmptyCommandContext.Empty;
 
     public StatementsVisitor(ExecutionThread executionThread)
     {
         _executionThread = executionThread;
+    }
+
+    public CommandContext RunAndReturn(IAstNode node)
+    {
+        Run(node);
+        return CommandContext;
     }
 
     /// <inheritdoc />
@@ -41,7 +47,7 @@ public sealed class StatementsVisitor : AstVisitor
     /// <inheritdoc />
     public override void Visit(SelectStatementNode node)
     {
-        ResultDelegate = new SelectCommand().Execute(_executionThread, node);
+        CommandContext = new SelectCommand().Execute(_executionThread, node);
     }
 
     /// <inheritdoc />
@@ -49,7 +55,7 @@ public sealed class StatementsVisitor : AstVisitor
     {
         new ResolveTypesVisitor(_executionThread).Run(node);
         var func = new CreateDelegateVisitor(_executionThread).RunAndReturn(node.ExpressionNode);
-        ResultDelegate = () => func.Invoke();
+        CommandContext = new FunctionCommandContext(func);
     }
 
     /// <inheritdoc />
@@ -57,6 +63,6 @@ public sealed class StatementsVisitor : AstVisitor
     {
         new ResolveTypesVisitor(_executionThread).Run(node);
         var func = new CreateDelegateVisitor(_executionThread).RunAndReturn(node.FunctionNode);
-        ResultDelegate = () => func.Invoke();
+        CommandContext = new FunctionCommandContext(func);
     }
 }

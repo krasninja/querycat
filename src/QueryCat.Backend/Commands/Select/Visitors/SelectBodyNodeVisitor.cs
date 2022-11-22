@@ -37,8 +37,9 @@ internal sealed class SelectBodyNodeVisitor : SelectAstVisitor
         var firstQueryContext = node.Queries[0].GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
         var context = new SelectCommandContext(combineRowsIterator)
         {
-            RowsInputIterator = firstQueryContext.RowsInputIterator
+            RowsInputIterator = firstQueryContext.RowsInputIterator,
         };
+        context.AddChildContext(firstQueryContext.ChildContexts);
 
         // Process.
         CreateCombineRowsSet(context, node, ref hasOutputInQuery);
@@ -54,7 +55,7 @@ internal sealed class SelectBodyNodeVisitor : SelectAstVisitor
         // Set result. If INTO clause is specified we do not return IRowsIterator outside. Just
         // iterating it we will save rows into target. Otherwise we return it as is.
         node.SetAttribute(AstAttributeKeys.ResultKey, resultIterator);
-        node.SetFunc(() => VariantValue.CreateFromObject(resultIterator));
+        node.SetAttribute(AstAttributeKeys.ContextKey, context);
     }
 
     private void CreateCombineRowsSet(
