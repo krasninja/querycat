@@ -7,7 +7,7 @@ namespace QueryCat.Backend.Storage;
 /// iteration (offset, limit, fetch).
 /// </summary>
 /// <typeparam name="TClass">Source class type.</typeparam>
-public class ClassEnumerableInputUtils<TClass> where TClass : class
+public class ClassEnumerableInputFetch<TClass> where TClass : class
 {
     /// <summary>
     /// Default limit to fetch.
@@ -23,7 +23,7 @@ public class ClassEnumerableInputUtils<TClass> where TClass : class
     /// Constructor.
     /// </summary>
     /// <param name="enumerableInput">Enumerable input.</param>
-    public ClassEnumerableInputUtils(ClassEnumerableInput<TClass> enumerableInput)
+    public ClassEnumerableInputFetch(ClassEnumerableInput<TClass> enumerableInput)
     {
         var queryLimit = enumerableInput.QueryContext.QueryInfo.Limit;
         if (queryLimit.HasValue)

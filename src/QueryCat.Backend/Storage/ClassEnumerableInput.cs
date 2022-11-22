@@ -17,23 +17,6 @@ public abstract class ClassEnumerableInput<TClass> :
     /// <inheritdoc />
     public override Column[] Columns { get; protected set; } = Array.Empty<Column>();
 
-    private ClassEnumerableInputUtils<TClass>? _utils;
-
-    /// <summary>
-    /// Helper and utils methods.
-    /// </summary>
-    public ClassEnumerableInputUtils<TClass> Utils
-    {
-        get
-        {
-            if (_utils == null)
-            {
-                _utils = new ClassEnumerableInputUtils<TClass>(this);
-            }
-            return _utils;
-        }
-    }
-
     /// <summary>
     /// Constructor.
     /// </summary>
@@ -68,7 +51,8 @@ public abstract class ClassEnumerableInput<TClass> :
     protected override void Load()
     {
         QueryContext.ValidateAndInvokeKeyConditions();
-        _enumerator = GetData().GetEnumerator();
+        var fetch = new ClassEnumerableInputFetch<TClass>(this);
+        _enumerator = GetData(fetch).GetEnumerator();
     }
 
     /// <inheritdoc />
@@ -105,8 +89,9 @@ public abstract class ClassEnumerableInput<TClass> :
     /// <summary>
     /// Get data.
     /// </summary>
+    /// <param name="fetch">Fetch helper utilities.</param>
     /// <returns>Objects.</returns>
-    protected virtual IEnumerable<TClass> GetData()
+    protected virtual IEnumerable<TClass> GetData(ClassEnumerableInputFetch<TClass> fetch)
     {
         var enumerator = GetDataAsync().GetAsyncEnumerator();
         // Blocking all the way...
