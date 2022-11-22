@@ -1,6 +1,5 @@
 using QueryCat.Backend.Functions;
 using QueryCat.Backend.Relational;
-using QueryCat.Backend.Types;
 using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Commands.Select.Iterators;
@@ -13,27 +12,14 @@ internal sealed class ProjectedRowsIterator : IRowsIterator
 {
     private readonly IRowsIterator _rowsIterator;
     private Row _currentRow;
-    private FuncColumn[] _columns = Array.Empty<FuncColumn>();
+    private Column[] _columns = Array.Empty<Column>();
+    private IFuncUnit[] _funcUnits = Array.Empty<IFuncUnit>();
 
     /// <inheritdoc />
     public Column[] Columns => _columns;
 
     /// <inheritdoc />
     public Row Current => _currentRow;
-
-    internal sealed class FuncColumn : Column
-    {
-        public IFuncUnit Func { get; }
-
-        /// <inheritdoc />
-        public FuncColumn(Column column, IFuncUnit func)
-            : base(column)
-        {
-            Func = func;
-        }
-
-        public VariantValue GetValue() => Func.Invoke();
-    }
 
     public ProjectedRowsIterator(IRowsIterator rowsIterator)
     {
@@ -49,7 +35,7 @@ internal sealed class ProjectedRowsIterator : IRowsIterator
         {
             for (int i = 0; i < _columns.Length; i++)
             {
-                _currentRow[i] = _columns[i].GetValue();
+                _currentRow[i] = _funcUnits[i].Invoke();
             }
         }
         return moveResult;
@@ -64,7 +50,9 @@ internal sealed class ProjectedRowsIterator : IRowsIterator
     public int AddFuncColumn(Column column, IFuncUnit func)
     {
         Array.Resize(ref _columns, _columns.Length + 1);
-        _columns[^1] = new FuncColumn(column, func);
+        Array.Resize(ref _funcUnits, _funcUnits.Length + 1);
+        _columns[^1] = column;
+        _funcUnits[^1] = func;
         _currentRow = new Row(this);
         return _columns.Length - 1;
     }
@@ -73,6 +61,6 @@ internal sealed class ProjectedRowsIterator : IRowsIterator
     public void Explain(IndentedStringBuilder stringBuilder)
     {
         stringBuilder.AppendRowsIteratorsWithIndent("Projection", _rowsIterator)
-            .AppendSubQueriesWithIndent(_columns.Select(c => c.Func));
+            .AppendSubQueriesWithIndent(_funcUnits);
     }
 }
