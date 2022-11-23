@@ -19,6 +19,8 @@ internal sealed class SelectCommandContext : CommandContext
     /// </summary>
     public RowsInputIterator? RowsInputIterator { get; set; }
 
+    internal HashSet<int> PrefetchedColumnIndexes { get; } = new();
+
     /// <summary>
     /// Parent select contexts.
     /// </summary>

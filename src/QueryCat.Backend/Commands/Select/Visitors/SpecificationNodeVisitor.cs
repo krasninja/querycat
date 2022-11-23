@@ -506,12 +506,18 @@ internal sealed partial class SelectSpecificationNodeVisitor : SelectAstVisitor
             return;
         }
 
-        var inputColumnIndexesForSelect = GetColumnsIdsFromNode(context.RowsInputIterator, nodes).ToArray();
-        if (inputColumnIndexesForSelect.Length < 1)
+        var inputColumnIndexesForSelect = GetColumnsIdsFromNode(context.RowsInputIterator, nodes)
+            .ToArray();
+        if (inputColumnIndexesForSelect.Length < 1
+            || context.PrefetchedColumnIndexes.Count == inputColumnIndexesForSelect.Length)
         {
             return;
         }
 
+        foreach (var index in inputColumnIndexesForSelect)
+        {
+            context.PrefetchedColumnIndexes.Add(index);
+        }
         var fetchIterator = new PrefetchRowsIterator(context.CurrentIterator, context.RowsInputIterator,
             inputColumnIndexesForSelect);
         context.SetIterator(fetchIterator);
