@@ -58,6 +58,6 @@ public sealed class StatisticRowsIterator : IRowsIterator
     /// <inheritdoc />
     public void Explain(IndentedStringBuilder stringBuilder)
     {
-        stringBuilder.AppendRowsIteratorsWithIndent($"Count (count={_statistic.ProcessedCount})", _rowsIterator);
+        stringBuilder.AppendRowsIteratorsWithIndent($"Stat (count={_statistic.ProcessedCount})", _rowsIterator);
     }
 }

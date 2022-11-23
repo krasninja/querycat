@@ -35,6 +35,7 @@ internal sealed class SelectBodyNodeVisitor : SelectAstVisitor
 
         // Create compound context.
         var firstQueryContext = node.Queries[0].GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
+        var isSubQuery = firstQueryContext.ParentContexts.Length > 0;
         var context = new SelectCommandContext(combineRowsIterator)
         {
             RowsInputIterator = firstQueryContext.RowsInputIterator,
@@ -42,10 +43,9 @@ internal sealed class SelectBodyNodeVisitor : SelectAstVisitor
         context.AddChildContext(firstQueryContext.ChildContexts);
 
         // Process.
-        CreateCombineRowsSet(context, node, ref hasOutputInQuery);
+        CreateCombineRowsSet(context, node, isSubQuery, ref hasOutputInQuery);
         ApplyOrderBy(context, node.OrderBy);
         ApplyOffsetFetch(context, node.Offset, node.Fetch);
-        CreateSelectRowsSet(context, node.Queries[0]);
         var resultIterator = context.CurrentIterator;
         if (hasOutputInQuery)
         {
@@ -61,6 +61,7 @@ internal sealed class SelectBodyNodeVisitor : SelectAstVisitor
     private void CreateCombineRowsSet(
         SelectCommandContext context,
         SelectQueryExpressionBodyNode node,
+        bool isSubQuery,
         ref bool hasOutputInQuery)
     {
         // Add all iterators and merge them into "combine" iterator.
@@ -79,30 +80,11 @@ internal sealed class SelectBodyNodeVisitor : SelectAstVisitor
         var resultIterator = combineRowsIterator.RowIterators.Count == 1
             ? combineRowsIterator.RowIterators.First()
             : combineRowsIterator;
-        if (ExecutionThread.Options.AddRowNumberColumn)
+        if (ExecutionThread.Options.AddRowNumberColumn && !isSubQuery)
         {
             resultIterator = new RowIdRowsIterator(resultIterator);
         }
 
         context.SetIterator(resultIterator);
     }
-
-    #region SELECT
-
-    private static void CreateSelectRowsSet(
-        SelectCommandContext context,
-        SelectQuerySpecificationNode querySpecificationNode)
-    {
-        var iterator = context.CurrentIterator;
-        var projectedIterator = new ProjectedRowsIterator(iterator);
-        var firstQueryContext = querySpecificationNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
-        for (int i = 0; i < firstQueryContext.CurrentIterator.Columns.Length; i++)
-        {
-            projectedIterator.AddFuncColumn(firstQueryContext.CurrentIterator.Columns[i],
-                new FuncUnitRowsIteratorColumn(iterator, i));
-        }
-        context.SetIterator(projectedIterator);
-    }
-
-    #endregion
 }

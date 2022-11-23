@@ -60,7 +60,7 @@ internal sealed class ProjectedRowsIterator : IRowsIterator
     /// <inheritdoc />
     public void Explain(IndentedStringBuilder stringBuilder)
     {
-        stringBuilder.AppendRowsIteratorsWithIndent("Projection", _rowsIterator)
+        stringBuilder.AppendRowsIteratorsWithIndent($"Projection (columns={_columns.Length})", _rowsIterator)
             .AppendSubQueriesWithIndent(_funcUnits);
     }
 }
