@@ -77,7 +77,7 @@ public class OrderColumnsIndex : IOrderIndex
         }
     }
 
-    private sealed class OrderColumnsIterator : IRowsIterator
+    private sealed class OrderColumnsIterator : ICursorRowsIterator
     {
         private readonly OrderColumnsIndex _orderColumnsIndex;
         private int _currentRowIndex = -1;
@@ -87,6 +87,12 @@ public class OrderColumnsIndex : IOrderIndex
 
         /// <inheritdoc />
         public Row Current => _orderColumnsIndex.RowsFrameIterator.Current;
+
+        /// <inheritdoc />
+        public int Position => _orderColumnsIndex._rowsOrder[_currentRowIndex];
+
+        /// <inheritdoc />
+        public int TotalRows => _orderColumnsIndex.RowsFrameIterator.TotalRows;
 
         public OrderColumnsIterator(OrderColumnsIndex orderColumnsIndex)
         {
@@ -116,6 +122,23 @@ public class OrderColumnsIndex : IOrderIndex
         public void Explain(IndentedStringBuilder stringBuilder)
         {
             stringBuilder.AppendRowsIteratorsWithIndent("Sort", _orderColumnsIndex.RowsFrameIterator);
+        }
+
+        /// <inheritdoc />
+        public void Seek(int offset, CursorSeekOrigin origin)
+        {
+            if (origin == CursorSeekOrigin.Begin)
+            {
+                _currentRowIndex = offset;
+            }
+            else if (origin == CursorSeekOrigin.Current)
+            {
+                _currentRowIndex += offset;
+            }
+            else if (origin == CursorSeekOrigin.End)
+            {
+                _currentRowIndex = TotalRows - offset;
+            }
         }
     }
 
