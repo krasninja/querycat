@@ -509,7 +509,7 @@ internal sealed partial class SelectSpecificationNodeVisitor : SelectAstVisitor
         var inputColumnIndexesForSelect = GetColumnsIdsFromNode(context.RowsInputIterator, nodes)
             .ToArray();
         if (inputColumnIndexesForSelect.Length < 1
-            || context.PrefetchedColumnIndexes.Count == inputColumnIndexesForSelect.Length)
+            || context.PrefetchedColumnIndexes.SetEquals(inputColumnIndexesForSelect))
         {
             return;
         }
