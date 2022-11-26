@@ -60,7 +60,7 @@ public sealed class PluginsManager : IDisposable
                 yield return pluginFile;
             }
 
-            pluginFiles = Directory.GetFiles(source, "*Plugin*.nuget");
+            pluginFiles = Directory.GetFiles(source, "*Plugin*.nupkg");
             foreach (var pluginFile in pluginFiles)
             {
                 yield return pluginFile;
