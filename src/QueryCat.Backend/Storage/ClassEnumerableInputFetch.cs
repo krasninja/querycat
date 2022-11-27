@@ -125,9 +125,9 @@ public class ClassEnumerableInputFetch<TClass> where TClass : class
         FetchLimitOffsetDelegate action,
         CancellationToken cancellationToken = default)
     {
-        return FetchLimitOffset(async (limit, offset, ct) =>
+        return FetchLimitOffset(async (offset, limit, ct) =>
         {
-            var data = await action.Invoke(limit, offset, ct);
+            var data = await action.Invoke(offset, limit, ct);
             return (data, true);
         });
     }
