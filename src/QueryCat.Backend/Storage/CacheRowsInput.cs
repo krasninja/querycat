@@ -145,7 +145,7 @@ public sealed class CacheRowsInput : IRowsInput
         }
 
         if (!hasData
-            || (cacheEntry.Key.Limit > 0 &&_rowIndex + 1 >= cacheEntry.Key.Limit))
+            || (cacheEntry.Key.Limit > 0 && _rowIndex + 1 >= cacheEntry.Key.Limit))
         {
             cacheEntry.Finish();
             _cacheEntries.Add(cacheEntry);

@@ -27,6 +27,8 @@ public class RowsInputIterator : IRowsIterator, IDisposable
     /// </summary>
     public event EventHandler<RowsInputErrorEventArgs>? OnError;
 
+    public IRowsInput RowsInput => _rowsInput;
+
     public RowsInputIterator(IRowsInput rowsInput, bool autoFetch = true)
     {
         _rowsInput = rowsInput;

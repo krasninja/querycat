@@ -14,8 +14,8 @@ internal sealed class GroupRowsIterator : IRowsIterator
     private readonly int _aggregateColumnsOffset;
     private readonly IFuncUnit[] _keys;
     private readonly SelectCommandContext _context;
-
     private readonly AggregateTarget[] _targets;
+
     /*
      * For aggregate queries we break pipeline execution and have to prepare new rows frame.
      * We also prepare new columns. For example:

@@ -4,7 +4,6 @@ using QueryCat.Backend.Ast.Nodes.Function;
 using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Commands.Select;
 using QueryCat.Backend.Execution;
-using QueryCat.Backend.Types;
 
 namespace QueryCat.Backend.Commands;
 
