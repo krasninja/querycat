@@ -21,6 +21,11 @@ public sealed class ExecutionThread
     internal PersistentInputConfigStorage InputConfigStorage { get; }
 
     /// <summary>
+    /// Configuration storage.
+    /// </summary>
+    public IInputConfigStorage ConfigStorage => InputConfigStorage;
+
+    /// <summary>
     /// Root scope.
     /// </summary>
     internal ExecutionScope RootScope { get; }
