@@ -14,7 +14,6 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
     public override IAstNode VisitProgram(QueryCatParser.ProgramContext context)
     {
         var statements = new List<StatementNode>();
-        StatementNode? previousStatement = null;
         foreach (var statementContext in context.statement())
         {
             if (statementContext.IsEmpty || statementContext.children == null)
@@ -26,9 +25,12 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
             {
                 throw new InvalidOperationException("Invalid statement.");
             }
-            statement.Next = previousStatement;
             statements.Add(statement);
-            previousStatement = statement;
+        }
+        // Make statements sequence.
+        for (var i = 1; i < statements.Count; i++)
+        {
+            statements[i - 1].Next = statements[i];
         }
         return new ProgramNode(statements);
     }
