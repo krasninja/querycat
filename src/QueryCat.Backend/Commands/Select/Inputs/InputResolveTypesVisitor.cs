@@ -24,7 +24,7 @@ internal class InputResolveTypesVisitor : ResolveTypesVisitor
         {
             var columnIndex = rowsInput
                 .GetColumnIndexByName(node.Name, node.SourceName);
-            if (columnIndex > 0)
+            if (columnIndex > -1)
             {
                 node.SetAttribute(AstAttributeKeys.InputColumnKey, rowsInput.Columns[columnIndex]);
                 node.SetAttribute(AstAttributeKeys.RowsInputKey, rowsInput);
