@@ -62,24 +62,28 @@ internal sealed class SelectContextCreator
             return rowsInput;
         }
 
-        IRowsInput CreateInputSourceFromTableFunction(SelectTableFunctionNode tableFunctionNode)
+        // Last input is combine input.
+        IRowsInput[] CreateInputSourceFromTableFunction(SelectTableFunctionNode tableFunctionNode)
         {
             _resolveTypesVisitor.Run(tableFunctionNode);
             var source = new CreateDelegateVisitor(_executionThread)
                 .RunAndReturn(tableFunctionNode.TableFunction).Invoke();
             var isSubQuery = _parents.Length > 0;
+            var inputs = new List<IRowsInput>();
             var rowsInput = CreateRowsInput(source, isSubQuery);
+            inputs.Add(rowsInput);
             SetAlias(rowsInput, tableFunctionNode.Alias);
             foreach (var joinedNode in tableFunctionNode.JoinedNodes)
             {
                 rowsInput = CreateInputSourceFromTableJoin(rowsInput, joinedNode);
+                inputs.Add(rowsInput);
             }
-            return rowsInput;
+            return inputs.ToArray();
         }
 
         IRowsInput CreateInputSourceFromTableJoin(IRowsInput left, SelectTableJoinedNode tableJoinedNode)
         {
-            var right = GetRowsInputFromExpression(tableJoinedNode.RightTableNode);
+            var right = GetRowsInputFromExpression(tableJoinedNode.RightTableNode).Last();
             var alias = GetAliasFromExpression(tableJoinedNode.RightTableNode);
             SetAlias(right, alias);
 
@@ -105,11 +109,14 @@ internal sealed class SelectContextCreator
             return new SelectJoinRowsInput(left, right, join, searchFunc, reverseColumnsOrder);
         }
 
-        IRowsInput GetRowsInputFromExpression(ExpressionNode expressionNode)
+        IRowsInput[] GetRowsInputFromExpression(ExpressionNode expressionNode)
         {
             if (expressionNode is SelectQueryExpressionBodyNode selectQueryExpressionBodyNode)
             {
-                return CreateInputSourceFromSubQuery(selectQueryExpressionBodyNode);
+                return new[]
+                {
+                    CreateInputSourceFromSubQuery(selectQueryExpressionBodyNode)
+                };
             }
             else if (expressionNode is SelectTableFunctionNode tableFunctionNode)
             {
@@ -144,23 +151,29 @@ internal sealed class SelectContextCreator
         }
 
         // Start with FROM statement, if none - there is only one SELECT row.
-        var rowsInputs = new List<IRowsInput>();
+        var allRowsInputs = new List<IRowsInput>();
+        var finalRowsInputs = new List<IRowsInput>();
         var inputContexts = new List<SelectInputQueryContext>();
         foreach (var tableExpression in querySpecificationNode.TableExpression.Tables.TableFunctions)
         {
-            var rowsInput = GetRowsInputFromExpression(tableExpression);
-            string alias = GetAliasFromExpression(tableExpression);
-            if (_rowsInputContextMap.TryGetValue(rowsInput, out var queryContext))
+            var rowsInputs = GetRowsInputFromExpression(tableExpression);
+            var finalRowInput = rowsInputs.Last();
+            var alias = GetAliasFromExpression(tableExpression);
+            foreach (var rowsInput in rowsInputs)
             {
-                inputContexts.Add(queryContext);
+                if (_rowsInputContextMap.TryGetValue(rowsInput, out var queryContext))
+                {
+                    inputContexts.Add(queryContext);
+                }
             }
 
             SetAlias(tableExpression, alias);
-            tableExpression.SetAttribute(AstAttributeKeys.RowsInputKey, rowsInput);
-            rowsInputs.Add(rowsInput);
+            tableExpression.SetAttribute(AstAttributeKeys.RowsInputKey, rowsInputs);
+            allRowsInputs.AddRange(rowsInputs);
+            finalRowsInputs.Add(finalRowInput);
         }
 
-        var resultRowsIterator = CreateMultipleIterator(rowsInputs);
+        var resultRowsIterator = CreateMultipleIterator(finalRowsInputs);
 
         return new SelectCommandContext(resultRowsIterator)
         {
