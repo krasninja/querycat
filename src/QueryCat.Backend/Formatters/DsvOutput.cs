@@ -115,7 +115,8 @@ internal sealed class DsvOutput : RowsOutput, IDisposable
 
     private void WriteString(string str)
     {
-        var containsDelimiter = str.IndexOf(_delimiter) > -1;
+        var containsDelimiter = str.IndexOf(_delimiter) > -1
+            || str.Contains('\n');
         if (containsDelimiter)
         {
             _streamWriter.Write('\"');
