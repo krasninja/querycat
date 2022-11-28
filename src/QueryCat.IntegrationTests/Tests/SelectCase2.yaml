@@ -1,0 +1,12 @@
+expected: |
+  ">900"
+  "<600"
+  600-900
+query: |
+  SELECT TOP 3
+    CASE
+      WHEN balance > 900 THEN '>900'
+      WHEN balance < 600 THEN '<600'
+      ELSE '600-900'
+    END as balance_description
+  FROM 'Simple2.csv';

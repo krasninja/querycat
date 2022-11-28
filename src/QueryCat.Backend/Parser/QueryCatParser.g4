@@ -133,6 +133,8 @@ functionCall
     ;
 functionCallArg: (IDENTIFIER ASSOCIATION)? expression;
 castOperand: CAST '(' value=simpleExpression AS type ')';
+caseExpression: CASE arg=simpleExpression? caseWhen* (ELSE default=expression)? END;
+caseWhen: WHEN condition=expression THEN result=expression;
 
 // SQL functions.
 standardFunction
@@ -172,6 +174,7 @@ expression
     | castOperand # ExpressionCast
     | standardFunction # ExpressionStandardFunctionCall
     | functionCall # ExpressionFunctionCall
+    | caseExpression # ExpressionCase
     | identifierChain # ExpressionIdentifier
     | '(' expression ')' # ExpressionInParens
     | '(' selectQueryExpression ')' # ExpressionSelect
@@ -201,6 +204,7 @@ simpleExpression
     | castOperand # SimpleExpressionCast
     | standardFunction # SimpleExpressionStandardFunctionCall
     | functionCall # SimpleExpressionFunctionCall
+    | caseExpression # SimpleExpressionCase
     | identifierChain # SimpleExpressionIdentifier
     | op=(PLUS | MINUS) right=expression # SimpleExpressionUnary
     | left=simpleExpression op=CONCAT right=simpleExpression # SimpleExpressionBinary

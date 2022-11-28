@@ -35,6 +35,14 @@ public abstract class AstVisitor
     {
     }
 
+    public virtual void Visit(CaseExpressionNode node)
+    {
+    }
+
+    public virtual void Visit(CaseWhenThenNode node)
+    {
+    }
+
     public virtual void Visit(EmptyNode node)
     {
     }

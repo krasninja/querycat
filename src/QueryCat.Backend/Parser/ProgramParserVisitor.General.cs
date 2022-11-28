@@ -170,6 +170,19 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
             this.VisitType(context.type())
         );
 
+    /// <inheritdoc />
+    public override IAstNode VisitCaseExpression(QueryCatParser.CaseExpressionContext context)
+        => new CaseExpressionNode(
+            argument: this.VisitMaybe<ExpressionNode?>(context.arg),
+            when: this.Visit<CaseWhenThenNode>(context.caseWhen()).ToList(),
+            @default: this.Visit<ExpressionNode>(context.@default));
+
+    /// <inheritdoc />
+    public override IAstNode VisitCaseWhen(QueryCatParser.CaseWhenContext context)
+        => new CaseWhenThenNode(
+            conditionNode: this.Visit<ExpressionNode>(context.condition),
+            resultNode: this.Visit<ExpressionNode>(context.result));
+
     #endregion
 
     /// <summary>

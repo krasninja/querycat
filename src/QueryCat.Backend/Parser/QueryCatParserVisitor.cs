@@ -325,6 +325,18 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitCastOperand([NotNull] QueryCatParser.CastOperandContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="QueryCatParser.caseExpression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitCaseExpression([NotNull] QueryCatParser.CaseExpressionContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="QueryCatParser.caseWhen"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitCaseWhen([NotNull] QueryCatParser.CaseWhenContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>standardFunctionCurrentDate</c>
 	/// labeled alternative in <see cref="QueryCatParser.standardFunction"/>.
 	/// </summary>
@@ -399,6 +411,13 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitExpressionInParens([NotNull] QueryCatParser.ExpressionInParensContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>ExpressionCase</c>
+	/// labeled alternative in <see cref="QueryCatParser.expression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitExpressionCase([NotNull] QueryCatParser.ExpressionCaseContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>ExpressionCast</c>
 	/// labeled alternative in <see cref="QueryCatParser.expression"/>.
@@ -476,6 +495,13 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitExpressionExists([NotNull] QueryCatParser.ExpressionExistsContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>SimpleExpressionCase</c>
+	/// labeled alternative in <see cref="QueryCatParser.simpleExpression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSimpleExpressionCase([NotNull] QueryCatParser.SimpleExpressionCaseContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>SimpleExpressionLiteral</c>
 	/// labeled alternative in <see cref="QueryCatParser.simpleExpression"/>.
