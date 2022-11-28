@@ -91,6 +91,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     public void SetContext(QueryContext queryContext)
     {
         QueryContext = queryContext;
+        queryContext.InputInfo.SetInputArguments(_options.CacheKeys);
     }
 
     /// <inheritdoc />
