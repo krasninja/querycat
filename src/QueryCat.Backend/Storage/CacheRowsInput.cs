@@ -198,7 +198,7 @@ public sealed class CacheRowsInput : IRowsInput
         {
             if (cacheEntry.Key.Match(key))
             {
-                Logger.Instance.Debug("Reuse existing cache.", nameof(CacheRowsInput));
+                Logger.Instance.Debug($"Reuse existing cache with key {key}.", nameof(CacheRowsInput));
                 return cacheEntry;
             }
         }
@@ -216,7 +216,7 @@ public sealed class CacheRowsInput : IRowsInput
         {
             if (!_currentCacheEntry.IsCompleted && _currentCacheEntry.Key.Equals(newCacheKey))
             {
-                Logger.Instance.Debug("Reuse previous cache.", nameof(CacheRowsInput));
+                Logger.Instance.Debug($"Reuse previous cache with key {_currentCacheEntry.Key}.", nameof(CacheRowsInput));
                 return;
             }
         }
