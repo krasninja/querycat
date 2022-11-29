@@ -1,6 +1,7 @@
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Select;
+using QueryCat.Backend.Ast.Nodes.SpecialFunctions;
 using QueryCat.Backend.Commands.Select.Inputs;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Logging;
@@ -73,6 +74,7 @@ internal sealed class SelectContextCreator
             var rowsInput = CreateRowsInput(source, isSubQuery);
             inputs.Add(rowsInput);
             SetAlias(rowsInput, tableFunctionNode.Alias);
+            FixInputColumnTypes(querySpecificationNode, rowsInput);
             foreach (var joinedNode in tableFunctionNode.JoinedNodes)
             {
                 rowsInput = CreateInputSourceFromTableJoin(rowsInput, joinedNode);
@@ -98,7 +100,7 @@ internal sealed class SelectContextCreator
             // Because of iterator specific conditions we must cache right input.
             if (_rowsInputContextMap.TryGetValue(right, out var context))
             {
-                right = new CacheRowsInput(right, autoFetch: true);
+                right = new CacheRowsInput(right);
                 right.SetContext(context);
             }
 
@@ -283,4 +285,25 @@ internal sealed class SelectContextCreator
             SelectTableJoinedType.Right => JoinType.Right,
             _ => throw new ArgumentOutOfRangeException(nameof(tableJoinedType), tableJoinedType, null)
         };
+
+    /// <summary>
+    /// Find the expressions in SELECT output area like CAST(id AS string).
+    /// </summary>
+    private static void FixInputColumnTypes(SelectQuerySpecificationNode querySpecificationNode,
+        IRowsInput rowsInput)
+    {
+        foreach (var castNode in querySpecificationNode.ColumnsList.GetAllChildren<CastFunctionNode>())
+        {
+            if (castNode.ExpressionNode is not IdentifierExpressionNode idNode)
+            {
+                continue;
+            }
+
+            var columnIndex = rowsInput.GetColumnIndexByName(idNode.Name, idNode.SourceName);
+            if (columnIndex > -1)
+            {
+                rowsInput.Columns[columnIndex].DataType = castNode.TargetTypeNode.Type;
+            }
+        }
+    }
 }
