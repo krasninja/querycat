@@ -84,6 +84,60 @@ internal class CreateDelegateVisitor : AstVisitor
     }
 
     /// <inheritdoc />
+    public override void Visit(CaseExpressionNode node)
+    {
+        var whenConditions = node.WhenNodes.Select(n => NodeIdFuncMap[n.ConditionNode.Id]).ToArray();
+        var whenResults = node.WhenNodes.Select(n => NodeIdFuncMap[n.ResultNode.Id]).ToArray();
+        var whenDefault = node.DefaultNode != null
+            ? NodeIdFuncMap[node.DefaultNode.Id]
+            : new FuncUnitStatic(VariantValue.Null);
+
+        if (node.IsSimpleCase)
+        {
+            var arg = NodeIdFuncMap[node.Argument!.Id];
+            var equalsDelegate = VariantValue.GetEqualsDelegate(node.Argument.GetDataType(),
+                node.Argument.GetDataType());
+
+            VariantValue Func()
+            {
+                var argValue = arg.Invoke();
+                for (var i = 0; i < whenConditions.Length; i++)
+                {
+                    var conditionValue = whenConditions[i].Invoke();
+                    if (equalsDelegate.Invoke(ref argValue, ref conditionValue).AsBoolean)
+                    {
+                        var resultValue = whenResults[i].Invoke();
+                        return resultValue;
+                    }
+                }
+                return whenDefault.Invoke();
+            }
+            NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func);
+        }
+        else if (node.IsSearchCase)
+        {
+            VariantValue Func()
+            {
+                for (var i = 0; i < whenConditions.Length; i++)
+                {
+                    var conditionValue = whenConditions[i].Invoke();
+                    if (conditionValue.AsBoolean)
+                    {
+                        var resultValue = whenResults[i].Invoke();
+                        return resultValue;
+                    }
+                }
+                return whenDefault.Invoke();
+            }
+            NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func);
+        }
+        else
+        {
+            throw new InvalidOperationException("Cannot create CASE delegate.");
+        }
+    }
+
+    /// <inheritdoc />
     public override void Visit(IdentifierExpressionNode node)
     {
         throw new CannotFindIdentifierException(node.Name);

@@ -80,6 +80,16 @@ internal class ResolveTypesVisitor : AstVisitor
     }
 
     /// <inheritdoc />
+    public override void Visit(CaseExpressionNode node)
+    {
+        var lastWhenNode = node.WhenNodes.LastOrDefault();
+        if (lastWhenNode != null)
+        {
+            node.SetDataType(lastWhenNode.ResultNode.GetDataType());
+        }
+    }
+
+    /// <inheritdoc />
     public override void Visit(IdentifierExpressionNode node)
     {
         throw new CannotFindIdentifierException(node.Name);

@@ -1,6 +1,6 @@
 expected: |
-  ">900"
-  "<600"
+  >900
+  <600
   600-900
 query: |
   SELECT TOP 3
