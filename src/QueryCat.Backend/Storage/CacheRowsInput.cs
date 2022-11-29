@@ -14,6 +14,13 @@ public sealed class CacheRowsInput : IRowsInput
 {
     private const int ChunkSize = 4096;
 
+    private enum CacheMode
+    {
+        InProgress,
+        SemiCompleted,
+        Completed
+    }
+
     [DebuggerDisplay("Key = {Key}, IsExpired = {IsExpired}")]
     private sealed class CacheEntry
     {
@@ -25,7 +32,9 @@ public sealed class CacheRowsInput : IRowsInput
 
         public bool IsExpired => DateTime.UtcNow >= ExpireAt;
 
-        public bool IsCompleted { get; private set; }
+        public CacheMode Mode { get; private set; } = CacheMode.InProgress;
+
+        public bool IsCompleted => Mode == CacheMode.Completed;
 
         public int CacheLength { get; set; }
 
@@ -35,9 +44,9 @@ public sealed class CacheRowsInput : IRowsInput
             ExpireAt = DateTime.UtcNow + expireAt;
         }
 
-        public void Finish()
+        public void SetMode(CacheMode mode)
         {
-            IsCompleted = true;
+            Mode = mode;
         }
     }
 
@@ -59,10 +68,10 @@ public sealed class CacheRowsInput : IRowsInput
 
     internal int TotalCacheEntries => _cacheEntries.Count;
 
-    public CacheRowsInput(IRowsInput rowsInput, bool autoFetch = false)
+    public CacheRowsInput(IRowsInput rowsInput)
     {
         _rowsInput = rowsInput;
-        _autoFetch = autoFetch;
+        _autoFetch = true;
         _cacheReadMap = Array.Empty<bool>();
     }
 
@@ -92,7 +101,7 @@ public sealed class CacheRowsInput : IRowsInput
         TotalReads++;
 
         var offset = Columns.Length * _rowIndex + columnIndex;
-        if (_rowIndex < cacheEntry.CacheLength && (cacheEntry.IsCompleted || _cacheReadMap[columnIndex]))
+        if (_rowIndex < cacheEntry.CacheLength && (cacheEntry.Mode == CacheMode.Completed || _cacheReadMap[columnIndex]))
         {
             value = cacheEntry.Cache[offset];
             CacheReads++;
@@ -128,7 +137,8 @@ public sealed class CacheRowsInput : IRowsInput
             Array.Fill(_cacheReadMap, true);
             return true;
         }
-        else if (cacheEntry.IsCompleted)
+        // We cannot read cache data, but cache is completed.
+        if (cacheEntry.IsCompleted)
         {
             return false;
         }
@@ -144,14 +154,14 @@ public sealed class CacheRowsInput : IRowsInput
             _rowIndex--;
         }
 
+        // If we don't have data - this mean we can complete the cache line.
         if (!hasData
             || (cacheEntry.Key.Limit > 0 && _rowIndex + 1 >= cacheEntry.Key.Limit))
         {
-            cacheEntry.Finish();
-            _cacheEntries.Add(cacheEntry);
+            cacheEntry.SetMode(CacheMode.SemiCompleted);
         }
 
-        if (_autoFetch && _rowIndex > -1)
+        if (hasData && _autoFetch && _rowIndex > -1)
         {
             ReadAllItemsToCache();
         }
@@ -161,10 +171,14 @@ public sealed class CacheRowsInput : IRowsInput
 
     private void ReadAllItemsToCache()
     {
-        for (var i = 0; i < _cacheReadMap.Length; i++)
+        var cacheEntry = GetCurrentCacheEntry();
+        for (var columnIndex = 0; columnIndex < _cacheReadMap.Length; columnIndex++)
         {
-            ReadValue(i, out _);
+            var offset = Columns.Length * _rowIndex + columnIndex;
+            _rowsInput.ReadValue(columnIndex, out var value);
+            cacheEntry.Cache[offset] = value;
         }
+        Array.Fill(_cacheReadMap, true);
     }
 
     private CacheEntry GetCurrentCacheEntry()
@@ -214,7 +228,14 @@ public sealed class CacheRowsInput : IRowsInput
         _rowsInput.Reset();
         if (_currentCacheEntry != null)
         {
-            if (!_currentCacheEntry.IsCompleted && _currentCacheEntry.Key.Equals(newCacheKey))
+            // Try to complete cache if it is semi completed.
+            if (_currentCacheEntry.Mode == CacheMode.SemiCompleted)
+            {
+                _currentCacheEntry.SetMode(CacheMode.Completed);
+                _cacheEntries.Add(_currentCacheEntry);
+            }
+            // If we reset but persist the same key - just go ahead using existing input.
+            if (_currentCacheEntry.Key.Equals(newCacheKey))
             {
                 Logger.Instance.Debug($"Reuse previous cache with key {_currentCacheEntry.Key}.", nameof(CacheRowsInput));
                 return;
