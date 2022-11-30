@@ -14,13 +14,6 @@ public sealed class CacheRowsInput : IRowsInput
 {
     private const int ChunkSize = 4096;
 
-    private enum CacheMode
-    {
-        InProgress,
-        SemiCompleted,
-        Completed
-    }
-
     [DebuggerDisplay("Key = {Key}, IsExpired = {IsExpired}")]
     private sealed class CacheEntry
     {
@@ -32,9 +25,7 @@ public sealed class CacheRowsInput : IRowsInput
 
         public bool IsExpired => DateTime.UtcNow >= ExpireAt;
 
-        public CacheMode Mode { get; private set; } = CacheMode.InProgress;
-
-        public bool IsCompleted => Mode == CacheMode.Completed;
+        public bool IsCompleted { get; private set; }
 
         public int CacheLength { get; set; }
 
@@ -44,15 +35,14 @@ public sealed class CacheRowsInput : IRowsInput
             ExpireAt = DateTime.UtcNow + expireAt;
         }
 
-        public void SetMode(CacheMode mode)
+        public void Complete()
         {
-            Mode = mode;
+            IsCompleted = true;
         }
     }
 
     private readonly List<CacheEntry> _cacheEntries = new();
     private readonly IRowsInput _rowsInput;
-    private readonly bool _autoFetch;
     private bool[] _cacheReadMap;
     private int _rowIndex = -1;
     private CacheEntry? _currentCacheEntry;
@@ -71,7 +61,6 @@ public sealed class CacheRowsInput : IRowsInput
     public CacheRowsInput(IRowsInput rowsInput)
     {
         _rowsInput = rowsInput;
-        _autoFetch = true;
         _cacheReadMap = Array.Empty<bool>();
     }
 
@@ -101,17 +90,9 @@ public sealed class CacheRowsInput : IRowsInput
         TotalReads++;
 
         var offset = Columns.Length * _rowIndex + columnIndex;
-        if (_rowIndex < cacheEntry.CacheLength && (cacheEntry.Mode == CacheMode.Completed || _cacheReadMap[columnIndex]))
-        {
-            value = cacheEntry.Cache[offset];
-            CacheReads++;
-            return ErrorCode.OK;
-        }
-
-        var errorCode = _rowsInput.ReadValue(columnIndex, out value);
-        cacheEntry.Cache[offset] = value;
-        _cacheReadMap[columnIndex] = true;
-        return errorCode;
+        value = cacheEntry.Cache[offset];
+        CacheReads++;
+        return ErrorCode.OK;
     }
 
     private void IncreaseCache(CacheEntry cacheEntry)
@@ -154,16 +135,17 @@ public sealed class CacheRowsInput : IRowsInput
             _rowIndex--;
         }
 
+        if (hasData && _rowIndex > -1)
+        {
+            ReadAllItemsToCache();
+        }
+
         // If we don't have data - this mean we can complete the cache line.
         if (!hasData
             || (cacheEntry.Key.Limit > 0 && _rowIndex + 1 >= cacheEntry.Key.Limit))
         {
-            cacheEntry.SetMode(CacheMode.SemiCompleted);
-        }
-
-        if (hasData && _autoFetch && _rowIndex > -1)
-        {
-            ReadAllItemsToCache();
+            cacheEntry.Complete();
+            _cacheEntries.Add(cacheEntry);
         }
 
         return hasData;
@@ -176,6 +158,7 @@ public sealed class CacheRowsInput : IRowsInput
         {
             var offset = Columns.Length * _rowIndex + columnIndex;
             _rowsInput.ReadValue(columnIndex, out var value);
+            TotalReads++;
             cacheEntry.Cache[offset] = value;
         }
         Array.Fill(_cacheReadMap, true);
@@ -228,12 +211,6 @@ public sealed class CacheRowsInput : IRowsInput
         _rowsInput.Reset();
         if (_currentCacheEntry != null)
         {
-            // Try to complete cache if it is semi completed.
-            if (_currentCacheEntry.Mode == CacheMode.SemiCompleted)
-            {
-                _currentCacheEntry.SetMode(CacheMode.Completed);
-                _cacheEntries.Add(_currentCacheEntry);
-            }
             // If we reset but persist the same key - just go ahead using existing input.
             if (_currentCacheEntry.Key.Equals(newCacheKey))
             {

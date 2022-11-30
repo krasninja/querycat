@@ -22,15 +22,15 @@ public class CacheRowsInputTests
         var iterator = cacheRowsInput.AsIterable(autoFetch: true);
 
         // Act.
-        iterator.MoveNext();
-        iterator.MoveNext();
+        iterator.MoveNext(); // 2 total and 1 cache read.
+        iterator.MoveNext(); // 2 total and 1 cache read.
         iterator.Reset();
-        iterator.MoveNext();
-        iterator.MoveNext();
+        iterator.MoveNext(); // 1 total and 1 cache read.
+        iterator.MoveNext(); // 1 total and 1 cache read.
 
         // Assert.
-        Assert.Equal(4, cacheRowsInput.TotalReads);
-        Assert.Equal(2, cacheRowsInput.CacheReads);
+        Assert.Equal(6, cacheRowsInput.TotalReads);
+        Assert.Equal(4, cacheRowsInput.CacheReads);
     }
 
     [Fact]
@@ -45,16 +45,16 @@ public class CacheRowsInputTests
         var iterator = cacheRowsInput.AsIterable(autoFetch: true);
 
         // Act.
-        iterator.MoveNext();
-        iterator.MoveNext();
+        iterator.MoveNext(); // 2 total and 1 cache read.
+        iterator.MoveNext(); // 2 total and 1 cache read.
         iterator.Reset();
-        iterator.MoveNext();
-        iterator.MoveNext();
-        iterator.MoveNext();
+        iterator.MoveNext(); // 2 total and 1 cache read.
+        iterator.MoveNext(); // 1 total and 1 cache read.
+        iterator.MoveNext(); // 1 total and 1 cache read.
 
         // Assert.
-        Assert.Equal(5, cacheRowsInput.TotalReads);
-        Assert.Equal(2, cacheRowsInput.CacheReads);
+        Assert.Equal(8, cacheRowsInput.TotalReads);
+        Assert.Equal(5, cacheRowsInput.CacheReads);
     }
 
     [Fact]
@@ -88,9 +88,9 @@ public class CacheRowsInputTests
         iterator.MoveNext(); // Read cache.
 
         // Assert.
-        Assert.Equal(3, cacheRowsInput.TotalReads);
+        Assert.Equal(5, cacheRowsInput.TotalReads);
         Assert.Equal(2, cacheRowsInput.TotalCacheEntries);
-        Assert.Equal(1, cacheRowsInput.CacheReads);
+        Assert.Equal(3, cacheRowsInput.CacheReads);
     }
 
     [Fact]
@@ -128,8 +128,8 @@ public class CacheRowsInputTests
         iterator.MoveNext(); // Read cache.
 
         // Assert.
-        Assert.Equal(4, cacheRowsInput.TotalReads);
+        Assert.Equal(7, cacheRowsInput.TotalReads);
         Assert.Equal(1, cacheRowsInput.TotalCacheEntries);
-        Assert.Equal(1, cacheRowsInput.CacheReads);
+        Assert.Equal(4, cacheRowsInput.CacheReads);
     }
 }
