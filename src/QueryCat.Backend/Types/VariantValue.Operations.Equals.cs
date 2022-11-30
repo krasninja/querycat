@@ -19,6 +19,8 @@ public partial struct VariantValue
         return function.Invoke(ref left, ref right);
     }
 
+    internal static BinaryFunction GetEqualsDelegate(DataType type) => GetEqualsDelegate(type, type);
+
     internal static BinaryFunction GetEqualsDelegate(DataType leftType, DataType rightType)
     {
         return leftType switch

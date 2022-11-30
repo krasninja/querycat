@@ -95,8 +95,7 @@ internal class CreateDelegateVisitor : AstVisitor
         if (node.IsSimpleCase)
         {
             var arg = NodeIdFuncMap[node.Argument!.Id];
-            var equalsDelegate = VariantValue.GetEqualsDelegate(node.Argument.GetDataType(),
-                node.Argument.GetDataType());
+            var equalsDelegate = VariantValue.GetEqualsDelegate(node.Argument.GetDataType());
 
             VariantValue Func()
             {
@@ -148,6 +147,7 @@ internal class CreateDelegateVisitor : AstVisitor
     {
         var actions = node.InExpressionValues.Values.Select(v => NodeIdFuncMap[v.Id]).ToArray();
         var valueAction = NodeIdFuncMap[node.Expression.Id];
+        var equalDelegate = VariantValue.GetEqualsDelegate(node.Expression.GetDataType());
 
         VariantValue Func()
         {
@@ -155,15 +155,14 @@ internal class CreateDelegateVisitor : AstVisitor
             for (int i = 0; i < actions.Length; i++)
             {
                 var rightValue = actions[i].Invoke();
-                var isEqual = VariantValue.Equals(ref leftValue, ref rightValue, out ErrorCode code);
-                ApplyStatistic(code);
-                if (code != ErrorCode.OK)
+                var isEqual = equalDelegate.Invoke(ref leftValue, ref rightValue);
+                if (isEqual.IsNull)
                 {
-                    return VariantValue.Null;
+                    continue;
                 }
-                if (!node.IsNot && isEqual.AsBoolean)
+                if (isEqual.AsBoolean)
                 {
-                    return isEqual;
+                    return new VariantValue(!node.IsNot);
                 }
             }
             return new VariantValue(node.IsNot);
