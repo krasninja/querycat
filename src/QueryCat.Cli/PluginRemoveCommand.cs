@@ -2,6 +2,7 @@ using McMaster.Extensions.CommandLineUtils;
 
 namespace QueryCat.Cli;
 
+#if ENABLE_PLUGINS
 [Command("remove", Description = "Remove the plugin.")]
 public class PluginRemoveCommand : BaseQueryCommand
 {
@@ -13,3 +14,4 @@ public class PluginRemoveCommand : BaseQueryCommand
         return 1;
     }
 }
+#endif

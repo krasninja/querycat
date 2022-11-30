@@ -2,6 +2,7 @@ using McMaster.Extensions.CommandLineUtils;
 
 namespace QueryCat.Cli;
 
+#if ENABLE_PLUGINS
 [Command("install", Description = "Install the plugin.")]
 public class PluginInstallCommand : BaseQueryCommand
 {
@@ -13,3 +14,4 @@ public class PluginInstallCommand : BaseQueryCommand
         return 1;
     }
 }
+#endif

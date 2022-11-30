@@ -40,10 +40,12 @@ public sealed class ExecutionOptions
     /// </summary>
     public List<Assembly> PluginAssemblies { get; } = new();
 
+#if ENABLE_PLUGINS
     /// <summary>
     /// List of directories to search for plugins.
     /// </summary>
     public List<string> PluginDirectories { get; } = new();
+#endif
 
     /// <summary>
     /// Do not save/load config.

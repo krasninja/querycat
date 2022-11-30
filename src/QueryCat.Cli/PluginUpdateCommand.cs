@@ -2,6 +2,7 @@ using McMaster.Extensions.CommandLineUtils;
 
 namespace QueryCat.Cli;
 
+#if ENABLE_PLUGINS
 [Command("update", Description = "Update the plugin.")]
 public class PluginUpdateCommand : BaseQueryCommand
 {
@@ -13,3 +14,4 @@ public class PluginUpdateCommand : BaseQueryCommand
         return 1;
     }
 }
+#endif

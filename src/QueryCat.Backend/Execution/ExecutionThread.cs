@@ -50,10 +50,12 @@ public sealed class ExecutionThread
     /// </summary>
     public ExecutionStatistic Statistic { get; } = new();
 
+#if ENABLE_PLUGINS
     /// <summary>
     /// Plugins manager.
     /// </summary>
     public PluginsManager PluginsManager { get; }
+#endif
 
     /// <summary>
     /// Last execution statement return value.
@@ -84,8 +86,10 @@ public sealed class ExecutionThread
 
         RootScope = new ExecutionScope();
         Options = options ?? new ExecutionOptions();
+#if ENABLE_PLUGINS
         PluginsManager = new PluginsManager(
             PluginsManager.GetPluginDirectories(appLocalDirectory).Union(Options.PluginDirectories));
+#endif
         _statementsVisitor = new StatementsVisitor(this);
         InputConfigStorage = new PersistentInputConfigStorage(Path.Combine(appLocalDirectory, ConfigFileName));
     }
@@ -147,6 +151,7 @@ public sealed class ExecutionThread
         return LastResult;
     }
 
+#if ENABLE_PLUGINS
     internal void LoadPlugins()
     {
         var pluginLoader = new PluginsLoader(PluginsManager.PluginDirectories);
@@ -157,4 +162,5 @@ public sealed class ExecutionThread
             FunctionsManager.RegisterFromAssembly(pluginAssembly);
         }
     }
+#endif
 }

@@ -15,8 +15,11 @@ namespace QueryCat.Cli;
     typeof(SchemaCommand),
     typeof(AstCommand),
     typeof(ExplainCommand),
-    typeof(ServeCommand),
-    typeof(PluginCommand))]
+#if ENABLE_PLUGINS
+    typeof(PluginCommand),
+#endif
+    typeof(ServeCommand)
+)]
 [HelpOption("-?|-h|--help")]
 public class QueryCommand : BaseQueryCommand
 {

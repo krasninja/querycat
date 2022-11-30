@@ -6,6 +6,7 @@ using QueryCat.Backend.Storage;
 
 namespace QueryCat.Cli;
 
+#if ENABLE_PLUGINS
 [Command("list", Description = "List all available plugins.")]
 public class PluginListCommand : BaseQueryCommand
 {
@@ -21,3 +22,4 @@ public class PluginListCommand : BaseQueryCommand
         return 1;
     }
 }
+#endif

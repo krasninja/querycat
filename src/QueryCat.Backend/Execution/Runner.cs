@@ -39,7 +39,9 @@ public class Runner
         ExecutionThread.FunctionsManager.RegisterWithFunction(StringFunctions.RegisterFunctions);
         ExecutionThread.FunctionsManager.RegisterWithFunction(AggregatesRegistration.RegisterFunctions);
         ExecutionThread.FunctionsManager.RegisterWithFunction(Providers.Registration.RegisterFunctions);
+#if ENABLE_PLUGINS
         ExecutionThread.LoadPlugins();
+#endif
 #if DEBUG
         timer.Stop();
         Logger.Instance.Trace($"Bootstrap time: {timer.Elapsed}.");

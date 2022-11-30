@@ -23,8 +23,10 @@ public abstract class BaseQueryCommand
         LogLevel.Info;
 #endif
 
+#if ENABLE_PLUGINS
     [Option("--plugin-dir", Description = "Plugin directory.")]
     public string[] PluginDirectories { get; } = Array.Empty<string>();
+#endif
 
     /// <summary>
     /// Command entry point.
@@ -53,7 +55,9 @@ public abstract class BaseQueryCommand
     protected Runner CreateRunner(ExecutionOptions? executionOptions = null)
     {
         executionOptions ??= new ExecutionOptions();
+#if ENABLE_PLUGINS
         executionOptions.PluginDirectories.AddRange(PluginDirectories);
+#endif
         var runner = new Runner(executionOptions);
         runner.ExecutionThread.Statistic.CountErrorRows = runner.ExecutionThread.Options.ShowDetailedStatistic;
         runner.Bootstrap();

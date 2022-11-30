@@ -59,6 +59,7 @@ public static class InfoFunctions
         return VariantValue.CreateFromObject(builder.BuildIterator(columns));
     }
 
+#if ENABLE_PLUGINS
     [Description("Return available plugins from repository.")]
     [FunctionSignature("_plugins(): object<IRowsIterator>")]
     public static VariantValue Plugins(FunctionCallInfo args)
@@ -71,6 +72,7 @@ public static class InfoFunctions
         var plugins = pluginsManager.ListAsync(CancellationToken.None).GetAwaiter().GetResult();
         return VariantValue.CreateFromObject(builder.BuildIterator(plugins));
     }
+#endif
 
     public static string GetVersion()
         => typeof(VariantValue).Assembly
@@ -87,7 +89,9 @@ public static class InfoFunctions
     {
         functionsManager.RegisterFunction(Functions);
         functionsManager.RegisterFunction(Schema);
+#if ENABLE_PLUGINS
         functionsManager.RegisterFunction(Plugins);
+#endif
         functionsManager.RegisterFunction(Version);
     }
 }

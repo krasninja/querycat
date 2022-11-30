@@ -2,6 +2,7 @@ using McMaster.Extensions.CommandLineUtils;
 
 namespace QueryCat.Cli;
 
+#if ENABLE_PLUGINS
 [Command("plugin", Description = "Command to work with plugins.")]
 [Subcommand(
     typeof(PluginListCommand),
@@ -17,3 +18,4 @@ public class PluginCommand : BaseQueryCommand
         return 1;
     }
 }
+#endif
