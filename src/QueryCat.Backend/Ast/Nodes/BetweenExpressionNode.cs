@@ -38,7 +38,7 @@ public sealed class BetweenExpressionNode : ExpressionNode
         }
         else
         {
-            throw new SemanticException(Resources.Errors.InvalidBetweenExpression);
+            throw new SemanticException("Invalid BETWEEN expression.");
         }
     }
 

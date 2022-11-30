@@ -212,7 +212,7 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
         QueryCatParser.BETWEEN => VariantValue.Operation.Between,
         QueryCatParser.IS => VariantValue.Operation.IsNull,
         QueryCatParser.LIKE => VariantValue.Operation.Like,
-        _ => throw new ArgumentOutOfRangeException(nameof(token), token, Resources.Errors.InvalidOperation)
+        _ => throw new ArgumentOutOfRangeException(nameof(token), token, "Invalid operation.")
     };
 
     /// <inheritdoc />

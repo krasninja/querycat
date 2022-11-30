@@ -215,7 +215,7 @@ internal class CreateDelegateVisitor : AstVisitor
                 var value = action.Invoke();
                 return new VariantValue(!value.IsNull);
             }),
-            _ => throw new QueryCatException(Resources.Errors.InvalidOperation)
+            _ => throw new QueryCatException("Invalid operation.")
         };
     }
 
@@ -308,8 +308,7 @@ internal class CreateDelegateVisitor : AstVisitor
                 continue;
             }
 
-            throw new InvalidFunctionArgumentException(
-                string.Format(Resources.Errors.CannotSetArgument, argument.Name));
+            throw new InvalidFunctionArgumentException($"Cannot set argument '{argument.Name}'.");
         }
 
         // Fill variadic.

@@ -63,7 +63,7 @@ public static class DateTimeFunctions
                 "MILLISECOND" => source.AsInterval.Milliseconds,
                 _ => throw new SemanticException("Incorrect part."),
             },
-            _ => throw new SemanticException(Resources.Errors.InvalidArgumentType),
+            _ => throw new SemanticException("Invalid argument type."),
         };
         return new VariantValue(result);
     }

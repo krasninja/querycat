@@ -30,7 +30,7 @@ public class QueryContextCondition
     {
         if (valueFuncs.Count < 1)
         {
-            throw new ArgumentException(Resources.Errors.NoValues, nameof(valueFuncs));
+            throw new ArgumentException("No values.", nameof(valueFuncs));
         }
 
         this.Column = column;

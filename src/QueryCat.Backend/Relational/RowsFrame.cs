@@ -43,7 +43,7 @@ public class RowsFrame : IRowsSchema, IEnumerable<Row>
         _columns = columns;
         if (_columns.Length < 1)
         {
-            throw new ArgumentException(Resources.Errors.NoColumns, nameof(columns));
+            throw new ArgumentException("There are no columns.", nameof(columns));
         }
         _rowsPerChunk = _chunkSize / _columns.Length;
         // Align.
@@ -111,7 +111,7 @@ public class RowsFrame : IRowsSchema, IEnumerable<Row>
         (int chunkIndex, int offset) = GetChunkAndOffset(rowIndex);
         if (chunkIndex > _storage.Count - 1)
         {
-            throw new QueryCatException(string.Format(Resources.Errors.InvalidRowIndex, rowIndex));
+            throw new QueryCatException($"Invalid row index {rowIndex}.");
         }
         Array.Copy(_storage[chunkIndex], offset, row.AsArray(), 0, _columns.Length);
     }
@@ -127,7 +127,7 @@ public class RowsFrame : IRowsSchema, IEnumerable<Row>
         (int chunkIndex, int offset) = GetChunkAndOffset(rowIndex);
         if (chunkIndex > _storage.Count - 1)
         {
-            throw new QueryCatException(string.Format(Resources.Errors.InvalidRowIndex, rowIndex));
+            throw new QueryCatException($"Invalid row index {rowIndex}.");
         }
         _storage[chunkIndex][offset + columnIndex] = value;
     }

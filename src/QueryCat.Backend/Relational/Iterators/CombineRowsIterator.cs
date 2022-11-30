@@ -46,14 +46,13 @@ internal sealed class CombineRowsIterator : IRowsIterator
         {
             if (rowsIterator.Columns.Length != Columns.Length)
             {
-                throw new SemanticException(Resources.Errors.InvalidUnionColumnsCount);
+                throw new SemanticException("Each UNION query must have the same number of columns.");
             }
             for (var i = 0; i < Columns.Length; i++)
             {
                 if (!DataTypeUtils.EqualsWithCast(rowsIterator.Columns[i].DataType, Columns[i].DataType))
                 {
-                    throw new SemanticException(
-                        string.Format(Resources.Errors.TypesMistmatch, Columns[i].Name));
+                    throw new SemanticException($"Types mismatch for column {Columns[i].Name}.");
                 }
             }
         }

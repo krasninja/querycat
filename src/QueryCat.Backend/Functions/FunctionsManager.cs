@@ -163,7 +163,7 @@ public sealed class FunctionsManager
         {
             if (functions.Length > 1 && functionArgumentsTypes != null)
             {
-                throw new CannotFindFunctionException(string.Format(Resources.Errors.FunctionMultipleSignatures, name));
+                throw new CannotFindFunctionException($"There are more than one signatures for function '{name}'.");
             }
             return functions.First();
         }
