@@ -32,6 +32,11 @@ public static class FileInputOutput
     public static VariantValue WriteFile(FunctionCallInfo args)
     {
         var path = args.GetAt(0);
+        if (path.IsNull || string.IsNullOrEmpty(path.AsString))
+        {
+            throw new QueryCatException("Path is not defined.");
+        }
+
         var formatter = args.GetAt(1).AsObject as IRowsFormatter;
         formatter ??= GetFormatter(path);
         var file = File.Open(path, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);

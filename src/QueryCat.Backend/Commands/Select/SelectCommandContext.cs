@@ -1,3 +1,4 @@
+using QueryCat.Backend.Functions;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Storage;
 using QueryCat.Backend.Types;
@@ -53,6 +54,11 @@ internal sealed class SelectCommandContext : CommandContext
     /// Set to <c>true</c> if the final result was prepared.
     /// </summary>
     public bool HasFinalRowsIterator { get; set; }
+
+    /// <summary>
+    /// The function to evaluate arguments for output.
+    /// </summary>
+    public IFuncUnit? OutputArgumentsFunc { get; set; }
 
     /// <summary>
     /// Constructor.

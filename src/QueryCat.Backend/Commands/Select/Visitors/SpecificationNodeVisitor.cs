@@ -68,6 +68,9 @@ internal sealed partial class SelectSpecificationNodeVisitor : SelectAstVisitor
 
         // ORDER BY.
         ApplyOrderBy(context, node.OrderBy);
+
+        // INTO and SELECT.
+        SetOutputFunction(context, node);
         SetSelectRowsSet(context, node.ColumnsList);
 
         // OFFSET, FETCH.
@@ -449,13 +452,10 @@ internal sealed partial class SelectSpecificationNodeVisitor : SelectAstVisitor
 
     #region INTO
 
-    private void CreateOutput(
+    private void SetOutputFunction(
         SelectCommandContext context,
         SelectQuerySpecificationNode querySpecificationNode)
     {
-        context.HasFinalRowsIterator = true;
-
-        var queryContext = new RowsOutputQueryContext(context.CurrentIterator.Columns);
         if (querySpecificationNode.Target == null)
         {
             return;
@@ -464,12 +464,27 @@ internal sealed partial class SelectSpecificationNodeVisitor : SelectAstVisitor
         ResolveNodesTypes(querySpecificationNode.Target, context);
         var makeDelegateVisitor = new SelectCreateDelegateVisitor(ExecutionThread, context);
         var func = makeDelegateVisitor.RunAndReturn(querySpecificationNode.Target);
+        context.OutputArgumentsFunc = func;
+    }
+
+    private void CreateOutput(
+        SelectCommandContext context,
+        SelectQuerySpecificationNode querySpecificationNode)
+    {
+        context.HasFinalRowsIterator = true;
+        if (querySpecificationNode.Target == null
+            || context.OutputArgumentsFunc == null)
+        {
+            return;
+        }
+
+        var queryContext = new RowsOutputQueryContext(context.CurrentIterator.Columns);
         var functionCallInfo = querySpecificationNode.Target
             .GetRequiredAttribute<FunctionCallInfo>(AstAttributeKeys.ArgumentsKey);
         var hasVaryingTarget = querySpecificationNode.Target.Arguments.Count > 0;
         var outputIterator = new VaryingOutputRowsIterator(
             context.CurrentIterator,
-            func,
+            context.OutputArgumentsFunc,
             functionCallInfo,
             ExecutionThread.Options.DefaultRowsOutput,
             queryContext);
