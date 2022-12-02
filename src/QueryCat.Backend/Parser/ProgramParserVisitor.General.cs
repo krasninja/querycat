@@ -331,6 +331,7 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
             QueryCatParser.TIMESTAMP => DataType.Timestamp,
             QueryCatParser.INTERVAL => DataType.Interval,
             QueryCatParser.ANY => DataType.Void,
+            QueryCatParser.VOID => DataType.Void,
             _ => DataType.Object,
         };
         return new TypeNode(value);

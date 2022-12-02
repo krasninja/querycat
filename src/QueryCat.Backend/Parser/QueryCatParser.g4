@@ -166,6 +166,7 @@ type
     | NUMERIC
     | OBJECT
     | ANY
+    | VOID
     ;
 
 // For reference: https://www.postgresql.org/docs/current/sql-syntax-lexical.html#SQL-PRECEDENCE

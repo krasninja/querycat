@@ -21,7 +21,8 @@ public static class DataTypeUtils
         DataType.Interval,
         DataType.Boolean,
         DataType.Numeric,
-        DataType.Object
+        DataType.Object,
+        DataType.Void,
     };
 
     /// <summary>

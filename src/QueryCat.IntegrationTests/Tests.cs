@@ -10,7 +10,7 @@ namespace QueryCat.IntegrationTests;
 /// </summary>
 public class Tests
 {
-    private readonly Backend.Tests.TestRunner _testRunner = new();
+    private readonly TestRunner _testRunner = new();
 
     [Theory]
     [MemberData(nameof(GetData))]
@@ -22,6 +22,8 @@ public class Tests
         _testRunner.ExecutionThread.FunctionsManager.RegisterFunction(FuncWithObject);
         _testRunner.ExecutionThread.FunctionsManager.RegisterFunction(ReturnObjFunc);
         _testRunner.ExecutionThread.FunctionsManager.RegisterFunction(SumIntegersOpt);
+        _testRunner.ExecutionThread.FunctionsManager.RegisterFunction(VoidFunc);
+
         var data = TestRunner.GetQueryData(fileName);
         _testRunner.Run(data.Query);
 
@@ -56,4 +58,7 @@ public class Tests
         return new VariantValue(callInfo.GetAt(0).AsInteger
             + callInfo.GetAt(1).AsInteger);
     }
+
+    [FunctionSignature("void_func(a: integer): void")]
+    internal static VariantValue VoidFunc(FunctionCallInfo callInfo) => VariantValue.Null;
 }
