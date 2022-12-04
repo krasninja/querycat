@@ -8,7 +8,7 @@ using QueryCat.Backend.Types;
 
 namespace QueryCat.Backend.Commands.Select.Visitors;
 
-internal sealed partial class SelectSpecificationNodeVisitor
+internal sealed partial class SpecificationNodeVisitor
 {
     /*
      * For aggregate queries we break pipeline execution and have to prepare new rows frame.

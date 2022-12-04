@@ -82,9 +82,9 @@ internal sealed class CreateContextVisitor : AstVisitor
     {
         IRowsInput CreateInputSourceFromSubQuery(SelectQueryExpressionBodyNode queryExpressionBodyNode)
         {
-            CreateForQuery(queryExpressionBodyNode.Queries);
+            CreateForQuery(queryExpressionBodyNode.Queries, parent);
             new CreateContextVisitor(_executionThread, parent).Run(queryExpressionBodyNode);
-            new BodyNodeVisitor(_executionThread).Run(queryExpressionBodyNode);
+            new SpecificationNodeVisitor(_executionThread).Run(queryExpressionBodyNode);
             var commandContext = queryExpressionBodyNode.GetRequiredAttribute<CommandContext>(AstAttributeKeys.ContextKey);
             if (commandContext.Invoke().AsObject is not IRowsIterator iterator)
             {
@@ -240,7 +240,7 @@ internal sealed class CreateContextVisitor : AstVisitor
             _rowsInputContextMap[rowsInput] = queryContext;
             rowsInput.SetContext(queryContext);
             rowsInput.Open();
-            Logger.Instance.Debug($"Open rows input {rowsInput}.", nameof(SelectSpecificationNodeVisitor));
+            Logger.Instance.Debug($"Open rows input {rowsInput}.", nameof(CreateContextVisitor));
             return rowsInput;
         }
         if (source.AsObject is IRowsIterator rowsIterator)

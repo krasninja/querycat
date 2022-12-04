@@ -16,7 +16,7 @@ public sealed class SelectCommand
         new CreateContextVisitor(executionThread).Run(selectStatementNode.QueryNode);
 
         // Create final execution delegate.
-        new BodyNodeVisitor(executionThread).Run(selectStatementNode.QueryNode);
+        new SpecificationNodeVisitor(executionThread).Run(selectStatementNode);
 
         return selectStatementNode.QueryNode.GetRequiredAttribute<CommandContext>(AstAttributeKeys.ContextKey);
     }

@@ -1,32 +1,15 @@
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Commands.Select.Iterators;
-using QueryCat.Backend.Execution;
 using QueryCat.Backend.Relational.Iterators;
 
 namespace QueryCat.Backend.Commands.Select.Visitors;
 
-/// <summary>
-/// The visitor is to process <see cref="SelectQueryExpressionBodyNode" /> nodes only in post order way.
-/// </summary>
-internal sealed class BodyNodeVisitor : SelectAstVisitor
+internal partial class SpecificationNodeVisitor
 {
-    public BodyNodeVisitor(ExecutionThread executionThread) : base(executionThread)
-    {
-    }
-
-    /// <inheritdoc />
-    public override void Run(IAstNode node)
-    {
-        AstTraversal.PostOrder(node);
-    }
-
     /// <inheritdoc />
     public override void Visit(SelectQueryExpressionBodyNode node)
     {
-        var selectQueryBodyVisitor = new SelectSpecificationNodeVisitor(ExecutionThread);
-        selectQueryBodyVisitor.Run(node.Queries);
-
         // Add all iterators and merge them into "combine" iterator.
         var combineRowsIterator = new CombineRowsIterator();
         var hasOutputInQuery = false;
