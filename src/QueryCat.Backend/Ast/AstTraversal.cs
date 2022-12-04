@@ -37,7 +37,7 @@ public class AstTraversal
     /// <typeparam name="TNode">Target type.</typeparam>
     /// <returns>Found parent node or null.</returns>
     public TNode? GetFirstParent<TNode>() where TNode : IAstNode
-        => GetParents().OfType<TNode>().FirstOrDefault();
+        => GetParents<TNode>().FirstOrDefault();
 
     /// <summary>
     /// Get first parent of type <see cref="TNode" /> that matches condition.
@@ -52,6 +52,13 @@ public class AstTraversal
     /// </summary>
     /// <returns>Enumerable of parents.</returns>
     public IEnumerable<IAstNode> GetParents() => _treeStack.Select(s => s.Node);
+
+    /// <summary>
+    /// Returns enumerable of all current node parents.
+    /// </summary>
+    /// <returns>Enumerable of parents.</returns>
+    public IEnumerable<TNode> GetParents<TNode>() where TNode : IAstNode
+        => _treeStack.Select(s => s.Node).OfType<TNode>();
 
     /// <summary>
     /// Pre-order traversal.

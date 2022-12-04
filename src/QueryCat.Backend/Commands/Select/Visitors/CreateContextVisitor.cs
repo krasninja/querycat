@@ -49,13 +49,8 @@ internal sealed class CreateContextVisitor : AstVisitor
         var parentTableExpressionNode = AstTraversal.GetFirstParent<SelectQuerySpecificationNode>(n => n.Id != node.Id);
         var parentContext = parentTableExpressionNode?.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
 
-        var context = CreateSourceContext(node.TableExpression, parentContext ?? _parentContext);
+        var context = CreateSourceContext(node, parentContext ?? _parentContext);
         node.SetAttribute(AstAttributeKeys.ContextKey, context);
-
-        if (context.RowsInputIterator != null)
-        {
-            FixInputColumnTypes(node, context.RowsInputIterator.RowsInput);
-        }
 
         base.Visit(node);
     }
@@ -72,7 +67,7 @@ internal sealed class CreateContextVisitor : AstVisitor
         {
             return node.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
         }
-        var context = CreateSourceContext(node.TableExpression);
+        var context = CreateSourceContext(node);
         if (parent != null)
         {
             context.SetParent(parent);
@@ -82,7 +77,7 @@ internal sealed class CreateContextVisitor : AstVisitor
     }
 
     private SelectCommandContext CreateSourceContext(
-        SelectTableExpressionNode? tableExpressionNode,
+        SelectQuerySpecificationNode querySpecificationNode,
         SelectCommandContext? parent = null)
     {
         IRowsInput CreateInputSourceFromSubQuery(SelectQueryExpressionBodyNode queryExpressionBodyNode)
@@ -104,11 +99,13 @@ internal sealed class CreateContextVisitor : AstVisitor
         IRowsInput[] CreateInputSourceFromTableFunction(SelectTableFunctionNode tableFunctionNode)
         {
             _resolveTypesVisitor.Run(tableFunctionNode.TableFunction);
-            var source = new Commands.CreateDelegateVisitor(_executionThread)
+            var source = new CreateDelegateVisitor(_executionThread)
                 .RunAndReturn(tableFunctionNode.TableFunction).Invoke();
             var isSubQuery = parent != null;
             var inputs = new List<IRowsInput>();
             var rowsInput = CreateRowsInput(source, isSubQuery);
+            var parentSpecificationNodes = AstTraversal.GetParents<SelectQuerySpecificationNode>().ToList();
+            FixInputColumnTypes(parentSpecificationNodes, rowsInput);
             inputs.Add(rowsInput);
             SetAlias(rowsInput, tableFunctionNode.Alias);
             foreach (var joinedNode in tableFunctionNode.JoinedNodes)
@@ -179,11 +176,12 @@ internal sealed class CreateContextVisitor : AstVisitor
             return string.Empty;
         }
 
+        //
         // Entry point here.
         //
 
         // No FROM - assumed this is the query with SELECT only.
-        if (tableExpressionNode == null)
+        if (querySpecificationNode.TableExpression == null)
         {
             return new(new SingleValueRowsInput().AsIterable());
         }
@@ -191,7 +189,7 @@ internal sealed class CreateContextVisitor : AstVisitor
         // Start with FROM statement, if none - there is only one SELECT row.
         var finalRowsInputs = new List<IRowsInput>();
         var inputContexts = new List<SelectInputQueryContext>();
-        foreach (var tableExpression in tableExpressionNode.Tables.TableFunctions)
+        foreach (var tableExpression in querySpecificationNode.TableExpression.Tables.TableFunctions)
         {
             var rowsInputs = GetRowsInputFromExpression(tableExpression);
             var finalRowInput = rowsInputs.Last();
@@ -328,20 +326,24 @@ internal sealed class CreateContextVisitor : AstVisitor
     /// <summary>
     /// Find the expressions in SELECT output area like CAST(id AS string).
     /// </summary>
-    private static void FixInputColumnTypes(SelectQuerySpecificationNode querySpecificationNode,
+    private static void FixInputColumnTypes(
+        IEnumerable<SelectQuerySpecificationNode> querySpecificationNodes,
         IRowsInput rowsInput)
     {
-        foreach (var castNode in querySpecificationNode.ColumnsList.GetAllChildren<CastFunctionNode>())
+        foreach (var querySpecificationNode in querySpecificationNodes)
         {
-            if (castNode.ExpressionNode is not IdentifierExpressionNode idNode)
+            foreach (var castNode in querySpecificationNode.ColumnsList.GetAllChildren<CastFunctionNode>())
             {
-                continue;
-            }
+                if (castNode.ExpressionNode is not IdentifierExpressionNode idNode)
+                {
+                    continue;
+                }
 
-            var columnIndex = rowsInput.GetColumnIndexByName(idNode.Name, idNode.SourceName);
-            if (columnIndex > -1)
-            {
-                rowsInput.Columns[columnIndex].DataType = castNode.TargetTypeNode.Type;
+                var columnIndex = rowsInput.GetColumnIndexByName(idNode.Name, idNode.SourceName);
+                if (columnIndex > -1)
+                {
+                    rowsInput.Columns[columnIndex].DataType = castNode.TargetTypeNode.Type;
+                }
             }
         }
     }
