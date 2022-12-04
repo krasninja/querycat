@@ -9,9 +9,9 @@ namespace QueryCat.Backend.Commands.Select.Visitors;
 /// <summary>
 /// The visitor is to process <see cref="SelectQueryExpressionBodyNode" /> nodes only in post order way.
 /// </summary>
-internal sealed class SelectBodyNodeVisitor : SelectAstVisitor
+internal sealed class BodyNodeVisitor : SelectAstVisitor
 {
-    public SelectBodyNodeVisitor(ExecutionThread executionThread) : base(executionThread)
+    public BodyNodeVisitor(ExecutionThread executionThread) : base(executionThread)
     {
     }
 

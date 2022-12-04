@@ -12,7 +12,7 @@ using QueryCat.Backend.Types;
 
 namespace QueryCat.Backend.Commands.Select.Visitors;
 
-internal sealed class SelectCreateContextVisitor : AstVisitor
+internal sealed class CreateContextVisitor : AstVisitor
 {
     private readonly ExecutionThread _executionThread;
     private readonly ResolveTypesVisitor _resolveTypesVisitor;
@@ -24,7 +24,7 @@ internal sealed class SelectCreateContextVisitor : AstVisitor
     /// </summary>
     public AstTraversal AstTraversal { get; }
 
-    public SelectCreateContextVisitor(ExecutionThread executionThread, SelectCommandContext? parentContext = null)
+    public CreateContextVisitor(ExecutionThread executionThread, SelectCommandContext? parentContext = null)
     {
         this._executionThread = executionThread;
         this._resolveTypesVisitor = new ResolveTypesVisitor(executionThread);
@@ -88,8 +88,8 @@ internal sealed class SelectCreateContextVisitor : AstVisitor
         IRowsInput CreateInputSourceFromSubQuery(SelectQueryExpressionBodyNode queryExpressionBodyNode)
         {
             CreateForQuery(queryExpressionBodyNode.Queries);
-            new SelectCreateContextVisitor(_executionThread, parent).Run(queryExpressionBodyNode);
-            new SelectBodyNodeVisitor(_executionThread).Run(queryExpressionBodyNode);
+            new CreateContextVisitor(_executionThread, parent).Run(queryExpressionBodyNode);
+            new BodyNodeVisitor(_executionThread).Run(queryExpressionBodyNode);
             var commandContext = queryExpressionBodyNode.GetRequiredAttribute<CommandContext>(AstAttributeKeys.ContextKey);
             if (commandContext.Invoke().AsObject is not IRowsIterator iterator)
             {
@@ -104,7 +104,7 @@ internal sealed class SelectCreateContextVisitor : AstVisitor
         IRowsInput[] CreateInputSourceFromTableFunction(SelectTableFunctionNode tableFunctionNode)
         {
             _resolveTypesVisitor.Run(tableFunctionNode.TableFunction);
-            var source = new CreateDelegateVisitor(_executionThread)
+            var source = new Commands.CreateDelegateVisitor(_executionThread)
                 .RunAndReturn(tableFunctionNode.TableFunction).Invoke();
             var isSubQuery = parent != null;
             var inputs = new List<IRowsInput>();

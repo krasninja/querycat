@@ -13,10 +13,10 @@ public sealed class SelectCommand
     public CommandContext Execute(ExecutionThread executionThread, SelectStatementNode selectStatementNode)
     {
         // Create command context for every FROM clause.
-        new SelectCreateContextVisitor(executionThread).Run(selectStatementNode.QueryNode);
+        new CreateContextVisitor(executionThread).Run(selectStatementNode.QueryNode);
 
         // Create final execution delegate.
-        new SelectBodyNodeVisitor(executionThread).Run(selectStatementNode.QueryNode);
+        new BodyNodeVisitor(executionThread).Run(selectStatementNode.QueryNode);
 
         return selectStatementNode.QueryNode.GetRequiredAttribute<CommandContext>(AstAttributeKeys.ContextKey);
     }
