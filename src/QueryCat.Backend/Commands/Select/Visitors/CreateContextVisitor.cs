@@ -176,7 +176,6 @@ internal sealed class CreateContextVisitor : AstVisitor
             return string.Empty;
         }
 
-        //
         // Entry point here.
         //
 

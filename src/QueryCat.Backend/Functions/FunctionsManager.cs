@@ -18,9 +18,17 @@ public sealed class FunctionsManager
 {
     public delegate VariantValue FunctionDelegate(FunctionCallInfo args);
 
-    private readonly Dictionary<string, List<Function>> _functions = new(capacity: 40);
-    private readonly Dictionary<string, (FunctionDelegate Delagate, MethodInfo MethodInfo)> _functionsPreRegistration = new();
-    private readonly Dictionary<string, IAggregateFunction> _aggregateFunctions = new(capacity: 40);
+    private record struct FunctionPreRegistration(FunctionDelegate Delegate, MethodInfo MethodInfo);
+
+    private readonly Dictionary<string, List<Function>> _functions = new(capacity: 42);
+    private readonly Dictionary<string, IAggregateFunction> _aggregateFunctions = new(capacity: 42);
+
+    private readonly Dictionary<string, FunctionPreRegistration> _functionsPreRegistration = new(capacity: 42);
+    private readonly List<Action<FunctionsManager>> _registerFunctions = new(capacity: 42);
+    private int _registerFunctionsLastIndex;
+
+    private readonly List<Action<FunctionsManager>> _registerAggregateFunctions = new(capacity: 42);
+    private int _registerAggregateFunctionsLastIndex;
 
     private static Function EmptyAggregate => new(
         _ =>
@@ -46,6 +54,8 @@ public sealed class FunctionsManager
         return functionDelegate.Invoke(callInfo);
     }
 
+    #region Registration
+
     public void RegisterFunctionsFromAssemblies(params Assembly[] assemblies)
     {
         foreach (var assembly in assemblies)
@@ -63,7 +73,10 @@ public sealed class FunctionsManager
             var registerMethod = registerType.GetMethod("RegisterFunctions");
             if (registerMethod != null)
             {
-                registerMethod.Invoke(null, new object?[] { this });
+                _registerFunctions.Add(fm =>
+                {
+                    registerMethod.Invoke(null, new object?[] { fm });
+                });
             }
         }
         else
@@ -91,91 +104,33 @@ public sealed class FunctionsManager
 
     public void RegisterFromType(Type type)
     {
-        var methods = type.GetMethods(BindingFlags.Static | BindingFlags.Public);
-        foreach (var method in methods)
+        _registerFunctions.Add(fm =>
         {
-            if (!method.GetCustomAttributes<FunctionSignatureAttribute>().Any())
+            var methods = type.GetMethods(BindingFlags.Static | BindingFlags.Public);
+            foreach (var method in methods)
             {
-                continue;
+                if (!method.GetCustomAttributes<FunctionSignatureAttribute>().Any())
+                {
+                    continue;
+                }
+
+                var args = Expression.Parameter(typeof(FunctionCallInfo), "input");
+                var func = Expression.Lambda<FunctionDelegate>(Expression.Call(method, args), args).Compile();
+                fm.RegisterFunctionFast(func, method);
             }
 
-            var args = Expression.Parameter(typeof(FunctionCallInfo), "input");
-            var func = Expression.Lambda<FunctionDelegate>(Expression.Call(method, args), args).Compile();
-            RegisterFunctionFast(func, method);
-        }
-
-        if (typeof(IAggregateFunction).IsAssignableFrom(type))
-        {
-            RegisterAggregate(type);
-        }
+            if (typeof(IAggregateFunction).IsAssignableFrom(type))
+            {
+                fm.RegisterAggregate(type);
+            }
+        });
     }
 
     /// <summary>
     /// Register the delegate that describe more functions.
     /// </summary>
     /// <param name="registerFunction">Register function delegate.</param>
-    public void RegisterWithFunction(Action<FunctionsManager> registerFunction) => registerFunction.Invoke(this);
-
-    public bool TryFindByName(
-        string name,
-        FunctionArgumentsTypes? functionArgumentsTypes,
-        out Function[] functions)
-    {
-        functions = Array.Empty<Function>();
-        name = NormalizeName(name);
-
-        var found = _functions.TryGetValue(name, out var outFunctions);
-        if (!found)
-        {
-            if (_functionsPreRegistration.TryGetValue(name, out var functionInfo))
-            {
-                outFunctions = RegisterFunctionInternal(functionInfo.Delagate, functionInfo.MethodInfo);
-            }
-            else
-            {
-                throw new CannotFindFunctionException(name);
-            }
-        }
-
-        if (functionArgumentsTypes == null)
-        {
-            functions = outFunctions!.ToArray();
-            return true;
-        }
-
-        foreach (var func in outFunctions!)
-        {
-            if (func.MatchesToArguments(functionArgumentsTypes))
-            {
-                functions = new[] { func };
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    public Function FindByName(
-        string name,
-        FunctionArgumentsTypes? functionArgumentsTypes = null)
-    {
-        if (TryFindByName(name, functionArgumentsTypes, out var functions))
-        {
-            if (functions.Length > 1 && functionArgumentsTypes != null)
-            {
-                throw new CannotFindFunctionException($"There are more than one signatures for function '{name}'.");
-            }
-            return functions.First();
-        }
-        if (functionArgumentsTypes != null)
-        {
-            throw new CannotFindFunctionException(name, functionArgumentsTypes);
-        }
-        throw new CannotFindFunctionException(name);
-    }
-
-    public void RegisterFunction(FunctionDelegate functionDelegate)
-        => RegisterFunctionFast(functionDelegate, functionDelegate.GetMethodInfo());
+    public void RegisterWithFunction(Action<FunctionsManager> registerFunction) => _registerFunctions.Add(registerFunction);
 
     private void RegisterFunctionFast(FunctionDelegate functionDelegate, MethodInfo methodInfo)
     {
@@ -200,12 +155,35 @@ public sealed class FunctionsManager
             }
             if (!_functionsPreRegistration.ContainsKey(functionName))
             {
-                _functionsPreRegistration.Add(functionName, (functionDelegate, methodInfo));
+                _functionsPreRegistration.Add(functionName, new FunctionPreRegistration(functionDelegate, methodInfo));
             }
         }
     }
 
-    private static string NormalizeName(string target) => target.ToUpper();
+    public void RegisterFunction(FunctionDelegate functionDelegate)
+        => RegisterFunctionFast(functionDelegate, functionDelegate.GetMethodInfo());
+
+    private bool TryGetPreRegistration(string name, out List<Function> functions)
+    {
+        if (_functionsPreRegistration.TryGetValue(name, out var functionInfo))
+        {
+            functions = RegisterFunctionInternal(functionInfo.Delegate, functionInfo.MethodInfo);
+            return true;
+        }
+
+        while (_registerFunctionsLastIndex < _registerFunctions.Count)
+        {
+            _registerFunctions[_registerFunctionsLastIndex++].Invoke(this);
+            if (_functionsPreRegistration.TryGetValue(name, out functionInfo))
+            {
+                functions = RegisterFunctionInternal(functionInfo.Delegate, functionInfo.MethodInfo);
+                return true;
+            }
+        }
+
+        functions = new List<Function>();
+        return false;
+    }
 
     private List<Function> RegisterFunctionInternal(FunctionDelegate functionDelegate, MethodInfo methodInfo)
     {
@@ -249,7 +227,15 @@ public sealed class FunctionsManager
         return functionsList ?? new List<Function>();
     }
 
+    public void RegisterAggregate<T>() where T : IAggregateFunction
+        => RegisterAggregate(typeof(T));
+
     public void RegisterAggregate(Type aggregateType)
+    {
+        _registerAggregateFunctions.Add(fm => RegisterAggregateInternal(fm, aggregateType));
+    }
+
+    private static void RegisterAggregateInternal(FunctionsManager functionsManager, Type aggregateType)
     {
         if (Activator.CreateInstance(aggregateType) is not IAggregateFunction aggregateFunctionInstance)
         {
@@ -257,12 +243,6 @@ public sealed class FunctionsManager
                 $"Type '{aggregateType.Name}' is not assignable from '{nameof(IAggregateFunction)}.");
         }
 
-        RegisterAggregate(aggregateFunctionInstance);
-    }
-
-    public void RegisterAggregate(IAggregateFunction aggregateFunctionInstance)
-    {
-        var aggregateType = aggregateFunctionInstance.GetType();
         var signatureAttributes = aggregateType.GetCustomAttributes<AggregateFunctionSignatureAttribute>();
         foreach (var signatureAttribute in signatureAttributes)
         {
@@ -274,7 +254,7 @@ public sealed class FunctionsManager
                 function.Description = descriptionAttribute.Description;
             }
             var functionName = NormalizeName(function.Name);
-            _functions!.AddOrUpdate(
+            functionsManager._functions!.AddOrUpdate(
                 functionName,
                 addValueFactory: _ => new List<Function>
                 {
@@ -286,22 +266,103 @@ public sealed class FunctionsManager
                 Logger.Instance.Debug($"Register aggregate: {function}.");
             }
 
-            if (!_aggregateFunctions.ContainsKey(functionName))
+            if (!functionsManager._aggregateFunctions.ContainsKey(functionName))
             {
-                _aggregateFunctions.Add(functionName, aggregateFunctionInstance);
+                functionsManager._aggregateFunctions.Add(functionName, aggregateFunctionInstance);
             }
         }
     }
 
+    #endregion
+
+    public bool TryFindByName(
+        string name,
+        FunctionArgumentsTypes? functionArgumentsTypes,
+        out Function[] functions)
+    {
+        functions = Array.Empty<Function>();
+        name = NormalizeName(name);
+
+        if (!_functions.TryGetValue(name, out var outFunctions))
+        {
+            if (!TryGetPreRegistration(name, out outFunctions))
+            {
+                if (!TryFindAggregateByName(name, out _))
+                {
+                    return false;
+                }
+                if (!_functions.TryGetValue(name, out outFunctions))
+                {
+                    return false;
+                }
+            }
+        }
+
+        if (functionArgumentsTypes == null)
+        {
+            functions = outFunctions!.ToArray();
+            return true;
+        }
+
+        foreach (var func in outFunctions!)
+        {
+            if (func.MatchesToArguments(functionArgumentsTypes))
+            {
+                functions = new[] { func };
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public Function FindByName(
+        string name,
+        FunctionArgumentsTypes? functionArgumentsTypes = null)
+    {
+        if (TryFindByName(name, functionArgumentsTypes, out var functions))
+        {
+            if (functions.Length > 1 && functionArgumentsTypes != null)
+            {
+                throw new CannotFindFunctionException($"There are more than one signatures for function '{name}'.");
+            }
+            return functions.First();
+        }
+        if (functionArgumentsTypes != null)
+        {
+            throw new CannotFindFunctionException(name, functionArgumentsTypes);
+        }
+        throw new CannotFindFunctionException(name);
+    }
+
+    private bool TryFindAggregateByName(string name, out IAggregateFunction aggregateFunction)
+    {
+        if (_aggregateFunctions.TryGetValue(name, out aggregateFunction!))
+        {
+            return true;
+        }
+
+        while (_registerAggregateFunctionsLastIndex < _registerAggregateFunctions.Count)
+        {
+            _registerAggregateFunctions[_registerAggregateFunctionsLastIndex++].Invoke(this);
+            if (_aggregateFunctions.TryGetValue(name, out aggregateFunction!))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public IAggregateFunction FindAggregateByName(string name)
     {
-        name = name.ToUpper();
-        _aggregateFunctions.TryGetValue(name, out var aggregateFunction);
-        if (aggregateFunction == null)
+        name = NormalizeName(name);
+        if (TryFindAggregateByName(name, out var aggregateFunction))
         {
-            throw new CannotFindFunctionException(name);
+            return aggregateFunction;
         }
-        return aggregateFunction;
+
+        throw new CannotFindFunctionException(name);
     }
 
     /// <summary>
@@ -321,4 +382,6 @@ public sealed class FunctionsManager
             }
         }
     }
+
+    private static string NormalizeName(string target) => target.ToUpper();
 }
