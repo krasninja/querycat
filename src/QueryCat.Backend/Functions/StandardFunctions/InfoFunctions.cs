@@ -74,6 +74,19 @@ public static class InfoFunctions
     }
 #endif
 
+    [Description("Get expression type.")]
+    [FunctionSignature("_typeof(arg: any): string")]
+    public static VariantValue TypeOf(FunctionCallInfo args)
+    {
+        var value = args.GetAt(0);
+        var type = value.GetInternalType();
+        if (type == DataType.Object && value.AsObject != null)
+        {
+            return new VariantValue($"object<{value.AsObject.GetType().Name}>");
+        }
+        return new VariantValue(type.ToString());
+    }
+
     public static string GetVersion()
         => typeof(VariantValue).Assembly
             .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? string.Empty;
@@ -92,6 +105,7 @@ public static class InfoFunctions
 #if ENABLE_PLUGINS
         functionsManager.RegisterFunction(Plugins);
 #endif
+        functionsManager.RegisterFunction(TypeOf);
         functionsManager.RegisterFunction(Version);
     }
 }

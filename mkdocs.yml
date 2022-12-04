@@ -32,7 +32,7 @@ nav:
   - 'Features':
     - 'Web Server': features/web-server.md
   - 'Development':
-    - 'Overview': development/overview.md
+    - 'Overview': development/index.md
   - 'Misc':
     - 'Alternative Tools': misc/alternative-tools.md
 theme: readthedocs

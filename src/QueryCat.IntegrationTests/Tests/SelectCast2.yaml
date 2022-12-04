@@ -1,0 +1,4 @@
+expected: |
+  1,String
+query: |
+  select num::string, _typeof(num) from 'Table1.csv' fetch 1;
