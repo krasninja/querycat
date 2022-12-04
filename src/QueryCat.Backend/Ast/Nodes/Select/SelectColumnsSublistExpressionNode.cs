@@ -30,4 +30,7 @@ public sealed class SelectColumnsSublistExpressionNode : SelectColumnsSublistNod
 
     /// <inheritdoc />
     public override void Accept(AstVisitor visitor) => visitor.Visit(this);
+
+    /// <inheritdoc />
+    public override string ToString() => ExpressionNode.ToString() ?? string.Empty;
 }

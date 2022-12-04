@@ -1,0 +1,11 @@
+expected: |
+  1,a,1,xxx
+  2,b,,
+query: |
+  select t1.num, t1.name, t3.num, t3.value
+  from 'Table1.csv' as t1
+  left join (
+    select * from 'Table2.csv' as t2 where t2.num > 8 and exists(select t4.value from 'Table2.csv' as t4)
+      union select * from 'Table2.csv'
+  ) as t3 on t1.num = t3.num
+  limit 2;

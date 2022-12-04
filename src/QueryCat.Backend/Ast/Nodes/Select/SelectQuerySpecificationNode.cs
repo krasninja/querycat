@@ -1,3 +1,4 @@
+using System.Text;
 using QueryCat.Backend.Ast.Nodes.Function;
 
 namespace QueryCat.Backend.Ast.Nodes.Select;
@@ -65,21 +66,17 @@ public sealed class SelectQuerySpecificationNode : AstNode
     public override IEnumerable<IAstNode> GetChildren()
     {
         yield return ColumnsList;
-        if (Target != null)
-        {
-            yield return Target;
-        }
         if (DistinctNode != null)
         {
             yield return DistinctNode;
         }
+        if (Target != null)
+        {
+            yield return Target;
+        }
         if (TableExpression != null)
         {
             yield return TableExpression;
-        }
-        if (OrderBy != null)
-        {
-            yield return OrderBy;
         }
         if (Offset != null)
         {
@@ -89,6 +86,10 @@ public sealed class SelectQuerySpecificationNode : AstNode
         {
             yield return Fetch;
         }
+        if (OrderBy != null)
+        {
+            yield return OrderBy;
+        }
     }
 
     /// <inheritdoc />
@@ -96,4 +97,40 @@ public sealed class SelectQuerySpecificationNode : AstNode
 
     /// <inheritdoc />
     public override void Accept(AstVisitor visitor) => visitor.Visit(this);
+
+    /// <inheritdoc />
+    public override string ToString()
+    {
+        var sb = new StringBuilder();
+        sb.Append("Select");
+        if (DistinctNode != null)
+        {
+            sb.Append($" {DistinctNode}");
+        }
+        foreach (var column in ColumnsList.Columns)
+        {
+            sb.Append($" {column}");
+        }
+        if (Target != null)
+        {
+            sb.Append($" Into {Target}");
+        }
+        if (TableExpression != null)
+        {
+            sb.Append($" From {TableExpression}");
+        }
+        if (Offset != null)
+        {
+            sb.Append($" Offset {Offset}");
+        }
+        if (Fetch != null)
+        {
+            sb.Append($" Fetch {Fetch}");
+        }
+        if (OrderBy != null)
+        {
+            sb.Append($" Order {OrderBy}");
+        }
+        return sb.ToString();
+    }
 }

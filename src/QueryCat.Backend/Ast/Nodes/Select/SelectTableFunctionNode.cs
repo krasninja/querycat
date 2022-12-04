@@ -36,6 +36,10 @@ public sealed class SelectTableFunctionNode : ExpressionNode
     public override IEnumerable<IAstNode> GetChildren()
     {
         yield return TableFunction;
+        foreach (var joinedNode in JoinedNodes)
+        {
+            yield return joinedNode;
+        }
     }
 
     /// <inheritdoc />

@@ -27,4 +27,7 @@ public sealed class SelectOffsetNode : AstNode
 
     /// <inheritdoc />
     public override void Accept(AstVisitor visitor) => visitor.Visit(this);
+
+    /// <inheritdoc />
+    public override string ToString() => CountNode.ToString() ?? string.Empty;
 }

@@ -12,11 +12,8 @@ public sealed class SelectCommand
 {
     public CommandContext Execute(ExecutionThread executionThread, SelectStatementNode selectStatementNode)
     {
-        // First we create context for SELECT command by analyzing FROM expression.
-        new SelectContextCreator(executionThread).CreateForQuery(selectStatementNode.QueryNode.Queries);
-
-        // Then create query context for remain sub queries.
-        new SelectCreateContextVisitor(executionThread).Run(selectStatementNode);
+        // Create command context for every FROM clause.
+        new SelectCreateContextVisitor(executionThread).Run(selectStatementNode.QueryNode);
 
         // Create final execution delegate.
         new SelectBodyNodeVisitor(executionThread).Run(selectStatementNode.QueryNode);

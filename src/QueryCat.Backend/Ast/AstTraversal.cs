@@ -37,7 +37,15 @@ public class AstTraversal
     /// <typeparam name="TNode">Target type.</typeparam>
     /// <returns>Found parent node or null.</returns>
     public TNode? GetFirstParent<TNode>() where TNode : IAstNode
-        => _treeStack.Select(s => s.Node).OfType<TNode>().FirstOrDefault();
+        => GetParents().OfType<TNode>().FirstOrDefault();
+
+    /// <summary>
+    /// Get first parent of type <see cref="TNode" /> that matches condition.
+    /// </summary>
+    /// <typeparam name="TNode">Target type.</typeparam>
+    /// <returns>Found parent node or null.</returns>
+    public TNode? GetFirstParent<TNode>(Func<IAstNode, bool> predicate) where TNode : IAstNode
+        => GetParents().Where(predicate).OfType<TNode>().FirstOrDefault();
 
     /// <summary>
     /// Returns enumerable of all current node parents.

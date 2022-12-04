@@ -37,6 +37,7 @@ public sealed class SelectTableJoinedNode : ExpressionNode
     {
         yield return RightTableNode;
         yield return SearchConditionNode;
+        yield return JoinTypeNode;
     }
 
     /// <inheritdoc />

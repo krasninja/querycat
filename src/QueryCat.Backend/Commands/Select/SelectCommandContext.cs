@@ -23,9 +23,9 @@ internal sealed class SelectCommandContext : CommandContext
     internal HashSet<int> PrefetchedColumnIndexes { get; } = new();
 
     /// <summary>
-    /// Parent select contexts.
+    /// Parent select context.
     /// </summary>
-    public SelectCommandContext[] ParentContexts { get; set; } = Array.Empty<SelectCommandContext>();
+    public SelectCommandContext? Parent { get; private set; }
 
     private readonly List<SelectCommandContext> _childContexts = new();
 
@@ -97,6 +97,12 @@ internal sealed class SelectCommandContext : CommandContext
         }
     }
 
+    internal void SetParent(SelectCommandContext context)
+    {
+        Parent = context;
+        Parent.AddChildContext(this);
+    }
+
     /// <summary>
     /// Get column index by name and return relate rows iterator.
     /// It also search within parent contexts.
@@ -107,24 +113,29 @@ internal sealed class SelectCommandContext : CommandContext
     /// <returns>Column index or -1.</returns>
     public int GetColumnIndexByName(string name, string source, out IRowsIterator? rowsIterator)
     {
-        var columnIndex = CurrentIterator.GetColumnIndexByName(name, source);
-        if (columnIndex > -1)
+        foreach (var iterator in GetAllIterators())
         {
-            rowsIterator = CurrentIterator;
-            return columnIndex;
-        }
-        foreach (var parentContext in ParentContexts)
-        {
-            columnIndex = parentContext.CurrentIterator.GetColumnIndexByName(name, source);
+            var columnIndex = iterator.GetColumnIndexByName(name, source);
             if (columnIndex > -1)
             {
-                rowsIterator = parentContext.CurrentIterator;
+                rowsIterator = iterator;
                 return columnIndex;
             }
         }
 
         rowsIterator = default;
         return -1;
+    }
+
+    private IEnumerable<IRowsIterator> GetAllIterators()
+    {
+        yield return CurrentIterator;
+        var parentContext = Parent;
+        while (parentContext != null)
+        {
+            yield return parentContext.CurrentIterator;
+            parentContext = parentContext.Parent;
+        }
     }
 
     /// <inheritdoc />

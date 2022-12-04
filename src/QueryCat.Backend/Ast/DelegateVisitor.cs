@@ -12,7 +12,7 @@ public abstract class DelegateVisitor : AstVisitor
 {
     private readonly AstTraversal _astTraversal;
 
-    protected AstTraversal AstTraversal => _astTraversal;
+    public AstTraversal AstTraversal => _astTraversal;
 
     protected DelegateVisitor()
     {

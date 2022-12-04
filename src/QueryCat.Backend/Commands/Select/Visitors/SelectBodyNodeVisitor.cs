@@ -2,9 +2,7 @@ using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Commands.Select.Iterators;
 using QueryCat.Backend.Execution;
-using QueryCat.Backend.Functions;
 using QueryCat.Backend.Relational.Iterators;
-using QueryCat.Backend.Types;
 
 namespace QueryCat.Backend.Commands.Select.Visitors;
 
@@ -35,7 +33,7 @@ internal sealed class SelectBodyNodeVisitor : SelectAstVisitor
 
         // Create compound context.
         var firstQueryContext = node.Queries[0].GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
-        var isSubQuery = firstQueryContext.ParentContexts.Length > 0;
+        var isSubQuery = firstQueryContext.Parent != null;
         var context = new SelectCommandContext(combineRowsIterator)
         {
             RowsInputIterator = firstQueryContext.RowsInputIterator,

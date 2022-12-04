@@ -224,6 +224,7 @@ internal sealed partial class SelectSpecificationNodeVisitor : SelectAstVisitor
         }
 
         var callbackVisitor = new CallbackDelegateVisitor();
+        callbackVisitor.AstTraversal.TypesToIgnore.Add(typeof(SelectQuerySpecificationNode));
         callbackVisitor.Callback = (node, traversal) =>
         {
             if (HandleBinaryOperation(node, traversal))
