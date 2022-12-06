@@ -1,3 +1,4 @@
+using System.Globalization;
 using QueryCat.Backend.Logging;
 using QueryCat.Backend.Utils;
 
@@ -24,6 +25,35 @@ public static class DataTypeUtils
         DataType.Object,
         DataType.Void,
     };
+
+    /// <summary>
+    /// Is this is a simple type (not an object).
+    /// </summary>
+    /// <param name="dataType">Data type.</param>
+    /// <returns><c>True</c> if type is simple, <c>false</c> otherwise.</returns>
+    public static bool IsSimple(DataType dataType)
+        =>
+            IsNumeric(dataType) || dataType == DataType.Boolean || dataType == DataType.String
+            || dataType == DataType.Timestamp || dataType == DataType.Interval;
+
+    /// <summary>
+    /// Is the data type numeric.
+    /// </summary>
+    /// <param name="dataType">Data type to check.</param>
+    /// <returns><c>True</c> if it is numeric, <c>false</c> otherwise.</returns>
+    public static bool IsNumeric(DataType dataType)
+        => dataType == DataType.Integer || dataType == DataType.Float || dataType == DataType.Numeric;
+
+    public static bool EqualsWithCast(DataType dataType1, DataType dataType2)
+    {
+        if (IsNumeric(dataType1) && IsNumeric(dataType2))
+        {
+            return true;
+        }
+        return dataType1 == dataType2;
+    }
+
+    #region Convert
 
     /// <summary>
     /// Convert QueryCat type into .NET BCL system type.
@@ -65,6 +95,14 @@ public static class DataTypeUtils
         {
             return DataType.Interval;
         }
+        if (type == typeof(string))
+        {
+            return DataType.String;
+        }
+        if (!type.IsValueType)
+        {
+            return DataType.Object;
+        }
 
         return GetTypeCode(type) switch
         {
@@ -80,7 +118,6 @@ public static class DataTypeUtils
             TypeCode.Single => DataType.Float,
             TypeCode.Boolean => DataType.Boolean,
             TypeCode.Decimal => DataType.Numeric,
-            TypeCode.String => DataType.String,
             TypeCode.DateTime => DataType.Timestamp,
             _ => DataType.Void
         };
@@ -94,31 +131,62 @@ public static class DataTypeUtils
     }
 
     /// <summary>
-    /// Is this is a simple type (not an object).
+    /// Convert variant value to enum.
     /// </summary>
-    /// <param name="dataType">Data type.</param>
-    /// <returns><c>True</c> if type is simple, <c>false</c> otherwise.</returns>
-    public static bool IsSimple(DataType dataType)
-        =>
-            IsNumeric(dataType) || dataType == DataType.Boolean || dataType == DataType.String
-                || dataType == DataType.Timestamp || dataType == DataType.Interval;
+    /// <param name="value">Variant value.</param>
+    /// <typeparam name="TEnum">Enum type.</typeparam>
+    /// <returns>Enum value.</returns>
+    public static TEnum ConvertToEnum<TEnum>(in VariantValue value) where TEnum : struct
+    {
+        var type = value.GetInternalType();
+        return type switch
+        {
+            DataType.Integer => (TEnum)Enum.ToObject(typeof(TEnum), value.AsInteger),
+            DataType.String => Enum.Parse<TEnum>(value.AsString, ignoreCase: true),
+            _ => throw new ArgumentException("Invalid value type."),
+        };
+    }
 
     /// <summary>
-    /// Is the data type numeric.
+    /// Convert value to the related system type.
     /// </summary>
-    /// <param name="dataType">Data type to check.</param>
-    /// <returns><c>True</c> if it is numeric, <c>false</c> otherwise.</returns>
-    public static bool IsNumeric(DataType dataType)
-        => dataType == DataType.Integer || dataType == DataType.Float || dataType == DataType.Numeric;
-
-    public static bool EqualsWithCast(DataType dataType1, DataType dataType2)
+    /// <param name="value">Variant value.</param>
+    /// <param name="targetType">Target type.</param>
+    /// <returns>Converted object.</returns>
+    public static object? ConvertValue(VariantValue value, Type targetType)
     {
-        if (IsNumeric(dataType1) && IsNumeric(dataType2))
+        if (value.IsNull)
         {
-            return true;
+            return null;
         }
-        return dataType1 == dataType2;
+
+        var relatedType = ConvertFromSystem(targetType);
+        var result = relatedType switch
+        {
+            DataType.Boolean => value.AsBoolean,
+            DataType.Float => value.AsFloat,
+            DataType.Integer => value.AsInteger,
+            DataType.Interval => value.AsInterval,
+            DataType.Null => null,
+            DataType.Numeric => value.AsNumeric,
+            DataType.Object => value.AsObject,
+            DataType.String => value.AsString,
+            DataType.Timestamp => value.AsTimestamp,
+            _ => throw new InvalidOperationException(
+                $"Cannot convert value from system type '{targetType}' to type '{relatedType}'."),
+        };
+
+        if (result != null && result.GetType() != targetType && result is IConvertible convertible)
+        {
+            return convertible.ToType(targetType, CultureInfo.InvariantCulture);
+        }
+
+        return result;
     }
+
+    #endregion
+
+    #region Timestamp / Interval
 
     /// <summary>
     /// Parse interval from string.
@@ -199,22 +267,7 @@ public static class DataTypeUtils
         throw new FormatException("Cannot parse interval.");
     }
 
-    /// <summary>
-    /// Convert variant value to enum.
-    /// </summary>
-    /// <param name="value">Variant value.</param>
-    /// <typeparam name="TEnum">Enum type.</typeparam>
-    /// <returns>Enum value.</returns>
-    public static TEnum ConvertToEnum<TEnum>(in VariantValue value) where TEnum : struct
-    {
-        var type = value.GetInternalType();
-        return type switch
-        {
-            DataType.Integer => (TEnum)Enum.ToObject(typeof(TEnum), value.AsInteger),
-            DataType.String => Enum.Parse<TEnum>(value.AsString, ignoreCase: true),
-            _ => throw new ArgumentException("Invalid value type."),
-        };
-    }
+    #endregion
 
     #region Serialization
 

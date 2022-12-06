@@ -306,6 +306,26 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
 
     #endregion
 
+    /// <summary>
+    /// Get object of specified type.
+    /// </summary>
+    /// <typeparam name="T">Type.</typeparam>
+    /// <returns>Object.</returns>
+    public T GetAsObject<T>()
+    {
+        var sourceObj = CheckTypeAndTryToCast(DataType.Object)._object;
+        if (sourceObj == null)
+        {
+            throw new InvalidOperationException("Object is null.");
+        }
+        if (sourceObj is T obj)
+        {
+            return obj;
+        }
+        throw new InvalidOperationException(
+            $"Cannot cast object of type '{sourceObj.GetType()}' to type '{typeof(T)}'.");
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private VariantValue CheckTypeAndTryToCast(DataType targetType)
     {

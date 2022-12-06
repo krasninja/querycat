@@ -74,4 +74,40 @@ public sealed class FunctionsManagerTests
         }
         return new VariantValue($"{str}: {sum}");
     }
+
+    [Fact]
+    public void RegisterFunction_RegisterFromClass_ShouldEvalCorrectly()
+    {
+        // Arrange.
+        _functionsManager.RegisterFromType<TestClass1>();
+
+        // Act.
+        var func1 = _functionsManager.FindByName("test_class1",
+            FunctionArgumentsTypes.FromPositionArguments(DataType.Integer, DataType.String));
+        var value1 = ExecutionThread.Empty.CallFunction(func1, 1, "2");
+        var func2 = _functionsManager.FindByName("test_class2",
+            FunctionArgumentsTypes.FromPositionArguments(DataType.Integer, DataType.String));
+        var value2 = ExecutionThread.Empty.CallFunction(func2, 1, "2");
+        var func3 = _functionsManager.FindByName("test_class3",
+            FunctionArgumentsTypes.FromPositionArguments(DataType.Integer, DataType.String));
+        var value3 = ExecutionThread.Empty.CallFunction(func3, 1, "2");
+
+        // Assert.
+        Assert.Equal("1 2", value1.GetAsObject<TestClass1>().Value);
+        Assert.Equal("1 2", value2.GetAsObject<TestClass1>().Value);
+        Assert.Equal("1 2", value3.GetAsObject<TestClass1>().Value);
+    }
+
+    [FunctionSignature]
+    [FunctionSignature("test_class2")]
+    [FunctionSignature("test_class3(a: integer, b: string): object")]
+    private class TestClass1
+    {
+        public string Value { get; }
+
+        public TestClass1(int a, string str)
+        {
+            Value = $"{a} {str}";
+        }
+    }
 }

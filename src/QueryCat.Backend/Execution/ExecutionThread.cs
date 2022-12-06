@@ -163,4 +163,16 @@ public sealed class ExecutionThread
         }
     }
 #endif
+
+    /// <summary>
+    /// Call function within execution thread.
+    /// </summary>
+    /// <param name="function">Function instance.</param>
+    /// <param name="args">Arguments.</param>
+    /// <returns>Return value.</returns>
+    public VariantValue CallFunction(Function function, params object[] args)
+    {
+        var functionCallInfo = FunctionCallInfo.CreateWithArguments(this, args);
+        return function.Delegate.Invoke(functionCallInfo);
+    }
 }

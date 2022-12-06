@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Text;
 using QueryCat.Backend.Ast.Nodes.Function;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Functions.AggregateFunctions;
@@ -16,18 +17,20 @@ namespace QueryCat.Backend.Functions;
 /// </summary>
 public sealed class FunctionsManager
 {
+    private const int DefaultCapacity = 42;
+
     public delegate VariantValue FunctionDelegate(FunctionCallInfo args);
 
-    private record struct FunctionPreRegistration(FunctionDelegate Delegate, MethodInfo MethodInfo);
+    private record FunctionPreRegistration(FunctionDelegate Delegate, MemberInfo MemberInfo, List<string> Signatures);
 
-    private readonly Dictionary<string, List<Function>> _functions = new(capacity: 42);
-    private readonly Dictionary<string, IAggregateFunction> _aggregateFunctions = new(capacity: 42);
+    private readonly Dictionary<string, List<Function>> _functions = new(capacity: DefaultCapacity);
+    private readonly Dictionary<string, IAggregateFunction> _aggregateFunctions = new(capacity: DefaultCapacity);
 
-    private readonly Dictionary<string, FunctionPreRegistration> _functionsPreRegistration = new(capacity: 42);
-    private readonly List<Action<FunctionsManager>> _registerFunctions = new(capacity: 42);
+    private readonly Dictionary<string, FunctionPreRegistration> _functionsPreRegistration = new(capacity: DefaultCapacity);
+    private readonly List<Action<FunctionsManager>> _registerFunctions = new(capacity: DefaultCapacity);
     private int _registerFunctionsLastIndex;
 
-    private readonly List<Action<FunctionsManager>> _registerAggregateFunctions = new(capacity: 42);
+    private readonly List<Action<FunctionsManager>> _registerAggregateFunctions = new(capacity: DefaultCapacity);
     private int _registerAggregateFunctionsLastIndex;
 
     private static Function EmptyAggregate => new(
@@ -100,12 +103,45 @@ public sealed class FunctionsManager
         }
     }
 
+    /// <summary>
+    /// Register type methods as functions.
+    /// </summary>
     public void RegisterFromType<T>() => RegisterFromType(typeof(T));
 
+    /// <summary>
+    /// Register type methods as functions.
+    /// </summary>
+    /// <param name="type">Target type.</param>
     public void RegisterFromType(Type type)
     {
         _registerFunctions.Add(fm =>
         {
+            // Try to register class as function.
+            var classAttribute = type.GetCustomAttributes<FunctionSignatureAttribute>().FirstOrDefault();
+            if (classAttribute != null)
+            {
+                var firstConstructor = type.GetConstructors(BindingFlags.Public | BindingFlags.Instance).FirstOrDefault();
+                if (firstConstructor != null)
+                {
+                    var functionName = GetFunctionName(classAttribute.Signature);
+                    if (string.IsNullOrEmpty(functionName))
+                    {
+                        functionName = ToSnakeCase(type.Name);
+                    }
+                    var proxy = new MethodFunctionProxy(firstConstructor, functionName);
+                    fm.RegisterFunctionFast(proxy.FunctionDelegate, type, proxy);
+                    return;
+                }
+            }
+
+            // Try to register aggregates from type.
+            if (typeof(IAggregateFunction).IsAssignableFrom(type))
+            {
+                fm.RegisterAggregate(type);
+                return;
+            }
+
+            // Try to register methods from type.
             var methods = type.GetMethods(BindingFlags.Static | BindingFlags.Public);
             foreach (var method in methods)
             {
@@ -118,11 +154,6 @@ public sealed class FunctionsManager
                 var func = Expression.Lambda<FunctionDelegate>(Expression.Call(method, args), args).Compile();
                 fm.RegisterFunctionFast(func, method);
             }
-
-            if (typeof(IAggregateFunction).IsAssignableFrom(type))
-            {
-                fm.RegisterAggregate(type);
-            }
         });
     }
 
@@ -132,30 +163,47 @@ public sealed class FunctionsManager
     /// <param name="registerFunction">Register function delegate.</param>
     public void RegisterWithFunction(Action<FunctionsManager> registerFunction) => _registerFunctions.Add(registerFunction);
 
-    private void RegisterFunctionFast(FunctionDelegate functionDelegate, MethodInfo methodInfo)
+    private void RegisterFunctionFast(FunctionDelegate functionDelegate, MemberInfo memberInfo, MethodFunctionProxy? proxy = null)
     {
-        var signatureAttributes = methodInfo.GetCustomAttributes<FunctionSignatureAttribute>();
+        var signatureAttributes = memberInfo.GetCustomAttributes<FunctionSignatureAttribute>();
         if (signatureAttributes == null)
         {
-            throw new QueryCatException($"Function {methodInfo.Name} must have {nameof(FunctionSignatureAttribute)}.");
+            throw new QueryCatException($"Function {memberInfo.Name} must have {nameof(FunctionSignatureAttribute)}.");
         }
 
         foreach (var signatureAttribute in signatureAttributes)
         {
-            var indexOfLeftParen = signatureAttribute.Signature.IndexOf("(", StringComparison.Ordinal);
-            if (indexOfLeftParen < 0)
+            var signature = signatureAttribute.Signature;
+            // Convert "" -> "func" (method/class name as snake case).
+            if (proxy != null && string.IsNullOrEmpty(signature))
             {
-                Logger.Instance.Warning($"Incorrect signature: {signatureAttribute.Signature}.");
-                return;
+                signature = proxy.GetSignature().ToString();
             }
-            var functionName = NormalizeName(signatureAttribute.Signature[..indexOfLeftParen]);
-            if (functionName.StartsWith('['))
+            // Convert "func" -> "func(a: integer): void (add signature from class/method definition).
+            if (proxy != null && signature.IndexOf('(') < 0)
             {
-                functionName = functionName.Substring(1, functionName.Length - 2);
+                signature = proxy.GetSignature(signature).ToString();
             }
-            if (!_functionsPreRegistration.ContainsKey(functionName))
+            if (string.IsNullOrEmpty(signature))
             {
-                _functionsPreRegistration.Add(functionName, new FunctionPreRegistration(functionDelegate, methodInfo));
+                throw new InvalidOperationException("Empty function signature.");
+            }
+
+            var functionName = GetFunctionName(signature);
+            if (string.IsNullOrEmpty(functionName) && proxy != null)
+            {
+                functionName = proxy.Name;
+            }
+
+            if (_functionsPreRegistration.TryGetValue(functionName, out var preRegistration))
+            {
+                preRegistration.Signatures.Add(signature);
+            }
+            else
+            {
+                var signatures = new List<string> { signature };
+                _functionsPreRegistration.Add(functionName,
+                    new FunctionPreRegistration(functionDelegate, memberInfo, signatures));
             }
         }
     }
@@ -167,7 +215,7 @@ public sealed class FunctionsManager
     {
         if (_functionsPreRegistration.TryGetValue(name, out var functionInfo))
         {
-            functions = RegisterFunctionInternal(functionInfo.Delegate, functionInfo.MethodInfo);
+            functions = RegisterFunctionInternal(functionInfo);
             return true;
         }
 
@@ -176,7 +224,7 @@ public sealed class FunctionsManager
             _registerFunctions[_registerFunctionsLastIndex++].Invoke(this);
             if (_functionsPreRegistration.TryGetValue(name, out functionInfo))
             {
-                functions = RegisterFunctionInternal(functionInfo.Delegate, functionInfo.MethodInfo);
+                functions = RegisterFunctionInternal(functionInfo);
                 return true;
             }
         }
@@ -185,20 +233,14 @@ public sealed class FunctionsManager
         return false;
     }
 
-    private List<Function> RegisterFunctionInternal(FunctionDelegate functionDelegate, MethodInfo methodInfo)
+    private List<Function> RegisterFunctionInternal(FunctionPreRegistration preRegistration)
     {
-        var signatureAttributes = methodInfo.GetCustomAttributes<FunctionSignatureAttribute>().ToList();
-        if (!signatureAttributes.Any())
-        {
-            throw new QueryCatException($"Function {methodInfo.Name} must have {nameof(FunctionSignatureAttribute)}.");
-        }
-
         List<Function>? functionsList = null;
-        foreach (var signatureAttribute in signatureAttributes)
+        foreach (var signature in preRegistration.Signatures)
         {
-            var signatureAst = AstBuilder.BuildFunctionSignatureFromString(signatureAttribute.Signature);
+            var signatureAst = AstBuilder.BuildFunctionSignatureFromString(signature);
 
-            var function = new Function(functionDelegate, signatureAst);
+            var function = new Function(preRegistration.Delegate, signatureAst);
             if (_functions.TryGetValue(NormalizeName(function.Name), out var sameNameFunctionsList))
             {
                 var similarFunction = sameNameFunctionsList.Find(f => f.IsSignatureEquals(function));
@@ -207,7 +249,7 @@ public sealed class FunctionsManager
                     Logger.Instance.Warning($"Possibly similar signature function: {function}.");
                 }
             }
-            var descriptionAttribute = methodInfo.GetCustomAttribute<DescriptionAttribute>();
+            var descriptionAttribute = preRegistration.MemberInfo.GetCustomAttribute<DescriptionAttribute>();
             if (descriptionAttribute != null)
             {
                 function.Description = descriptionAttribute.Description;
@@ -320,11 +362,12 @@ public sealed class FunctionsManager
         string name,
         FunctionArgumentsTypes? functionArgumentsTypes = null)
     {
+        name = NormalizeName(name);
         if (TryFindByName(name, functionArgumentsTypes, out var functions))
         {
             if (functions.Length > 1 && functionArgumentsTypes != null)
             {
-                throw new CannotFindFunctionException($"There are more than one signatures for function '{name}'.");
+                throw new CannotFindFunctionException($"There is more than one signature for function '{name}'.");
             }
             return functions.First();
         }
@@ -384,4 +427,40 @@ public sealed class FunctionsManager
     }
 
     private static string NormalizeName(string target) => target.ToUpper();
+
+    private static string GetFunctionName(string signature)
+    {
+        var indexOfLeftParen = signature.IndexOf("(", StringComparison.Ordinal);
+        if (indexOfLeftParen < 0)
+        {
+            return NormalizeName(signature);
+        }
+        var name = NormalizeName(signature[..indexOfLeftParen]);
+        if (name.StartsWith('['))
+        {
+            name = name.Substring(1, name.Length - 2);
+        }
+        return name;
+    }
+
+    private static string ToSnakeCase(string target)
+    {
+        // Based on https://stackoverflow.com/questions/63055621/how-to-convert-camel-case-to-snake-case-with-two-capitals-next-to-each-other.
+        var sb = new StringBuilder()
+            .Append(char.ToLower(target[0]));
+        for (var i = 1; i < target.Length; ++i)
+        {
+            var ch = target[i];
+            if (char.IsUpper(ch))
+            {
+                sb.Append('_');
+                sb.Append(char.ToLower(ch));
+            }
+            else
+            {
+                sb.Append(ch);
+            }
+        }
+        return sb.ToString();
+    }
 }
