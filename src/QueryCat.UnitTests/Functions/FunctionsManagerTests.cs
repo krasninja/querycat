@@ -110,4 +110,35 @@ public sealed class FunctionsManagerTests
             Value = $"{a} {str}";
         }
     }
+
+    [Fact]
+    public void RegisterFunction_RegisterFromType_ShouldEvalCorrectly()
+    {
+        // Arrange.
+        _functionsManager.RegisterFromType<TestClass2>();
+
+        // Act.
+        var func1 = _functionsManager.FindByName("function1");
+        ExecutionThread.Empty.CallFunction(func1);
+        var func2 = _functionsManager.FindByName("testfunc",
+            FunctionArgumentsTypes.FromPositionArguments(DataType.String));
+        var value2 = ExecutionThread.Empty.CallFunction(func2, "2");
+
+        // Assert.
+        Assert.Equal(2, value2.AsInteger);
+    }
+
+    private class TestClass2
+    {
+        [FunctionSignature]
+        public static void Function1()
+        {
+        }
+
+        [FunctionSignature("testfunc")]
+        public static int Function2(string str)
+        {
+            return int.Parse(str);
+        }
+    }
 }

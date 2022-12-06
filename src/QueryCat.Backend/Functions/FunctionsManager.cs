@@ -114,6 +114,16 @@ public sealed class FunctionsManager
     /// <param name="type">Target type.</param>
     public void RegisterFromType(Type type)
     {
+        string GetFunctionNameWithAlternate(string signature, MemberInfo memberInfo)
+        {
+            var functionName = GetFunctionName(signature);
+            if (string.IsNullOrEmpty(functionName))
+            {
+                functionName = ToSnakeCase(memberInfo.Name);
+            }
+            return functionName;
+        }
+
         _registerFunctions.Add(fm =>
         {
             // Try to register class as function.
@@ -123,11 +133,7 @@ public sealed class FunctionsManager
                 var firstConstructor = type.GetConstructors(BindingFlags.Public | BindingFlags.Instance).FirstOrDefault();
                 if (firstConstructor != null)
                 {
-                    var functionName = GetFunctionName(classAttribute.Signature);
-                    if (string.IsNullOrEmpty(functionName))
-                    {
-                        functionName = ToSnakeCase(type.Name);
-                    }
+                    var functionName = GetFunctionNameWithAlternate(classAttribute.Signature, type);
                     var proxy = new MethodFunctionProxy(firstConstructor, functionName);
                     fm.RegisterFunctionFast(proxy.FunctionDelegate, type, proxy);
                     return;
@@ -145,14 +151,26 @@ public sealed class FunctionsManager
             var methods = type.GetMethods(BindingFlags.Static | BindingFlags.Public);
             foreach (var method in methods)
             {
-                if (!method.GetCustomAttributes<FunctionSignatureAttribute>().Any())
+                var methodSignature = method.GetCustomAttributes<FunctionSignatureAttribute>().FirstOrDefault();
+                if (methodSignature == null)
                 {
                     continue;
                 }
 
-                var args = Expression.Parameter(typeof(FunctionCallInfo), "input");
-                var func = Expression.Lambda<FunctionDelegate>(Expression.Call(method, args), args).Compile();
-                fm.RegisterFunctionFast(func, method);
+                var methodParameters = method.GetParameters();
+                if (methodParameters.Length == 1 && methodParameters[0].ParameterType == typeof(FunctionCallInfo)
+                    && method.ReturnType == typeof(VariantValue))
+                {
+                    var args = Expression.Parameter(typeof(FunctionCallInfo), "input");
+                    var func = Expression.Lambda<FunctionDelegate>(Expression.Call(method, args), args).Compile();
+                    fm.RegisterFunctionFast(func, method);
+                }
+                else
+                {
+                    var functionName = GetFunctionNameWithAlternate(methodSignature.Signature, method);
+                    var proxy = new MethodFunctionProxy(method, functionName);
+                    fm.RegisterFunctionFast(proxy.FunctionDelegate, proxy.Method, proxy);
+                }
             }
         });
     }
@@ -161,7 +179,7 @@ public sealed class FunctionsManager
     /// Register the delegate that describe more functions.
     /// </summary>
     /// <param name="registerFunction">Register function delegate.</param>
-    public void RegisterWithFunction(Action<FunctionsManager> registerFunction) => _registerFunctions.Add(registerFunction);
+    public void RegisterFactory(Action<FunctionsManager> registerFunction) => _registerFunctions.Add(registerFunction);
 
     private void RegisterFunctionFast(FunctionDelegate functionDelegate, MemberInfo memberInfo, MethodFunctionProxy? proxy = null)
     {
@@ -175,14 +193,17 @@ public sealed class FunctionsManager
         {
             var signature = signatureAttribute.Signature;
             // Convert "" -> "func" (method/class name as snake case).
-            if (proxy != null && string.IsNullOrEmpty(signature))
+            if (proxy != null)
             {
-                signature = proxy.GetSignature().ToString();
-            }
-            // Convert "func" -> "func(a: integer): void (add signature from class/method definition).
-            if (proxy != null && signature.IndexOf('(') < 0)
-            {
-                signature = proxy.GetSignature(signature).ToString();
+                if (string.IsNullOrEmpty(signature))
+                {
+                    signature = proxy.GetSignature().ToString();
+                }
+                // Convert "func" -> "func(a: integer): void (add signature from class/method definition).
+                if (IsShortSignature(signature))
+                {
+                    signature = proxy.GetSignature(signature).ToString();
+                }
             }
             if (string.IsNullOrEmpty(signature))
             {
@@ -463,4 +484,7 @@ public sealed class FunctionsManager
         }
         return sb.ToString();
     }
+
+    private static bool IsShortSignature(string signature)
+        => signature.IndexOf("(", StringComparison.Ordinal) < 0;
 }

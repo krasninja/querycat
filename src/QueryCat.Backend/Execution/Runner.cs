@@ -28,17 +28,17 @@ public class Runner
         var timer = new Stopwatch();
         timer.Start();
 #endif
-        ExecutionThread.FunctionsManager.RegisterWithFunction(DsvFormatter.RegisterFunctions);
-        ExecutionThread.FunctionsManager.RegisterWithFunction(JsonFormatter.RegisterFunctions);
-        ExecutionThread.FunctionsManager.RegisterWithFunction(NullFormatter.RegisterFunctions);
-        ExecutionThread.FunctionsManager.RegisterWithFunction(TextLineFormatter.RegisterFunctions);
-        ExecutionThread.FunctionsManager.RegisterWithFunction(DateTimeFunctions.RegisterFunctions);
-        ExecutionThread.FunctionsManager.RegisterWithFunction(InfoFunctions.RegisterFunctions);
-        ExecutionThread.FunctionsManager.RegisterWithFunction(MathFunctions.RegisterFunctions);
-        ExecutionThread.FunctionsManager.RegisterWithFunction(MiscFunctions.RegisterFunctions);
-        ExecutionThread.FunctionsManager.RegisterWithFunction(StringFunctions.RegisterFunctions);
-        ExecutionThread.FunctionsManager.RegisterWithFunction(AggregatesRegistration.RegisterFunctions);
-        ExecutionThread.FunctionsManager.RegisterWithFunction(Providers.Registration.RegisterFunctions);
+        ExecutionThread.FunctionsManager.RegisterFactory(DsvFormatter.RegisterFunctions);
+        ExecutionThread.FunctionsManager.RegisterFactory(JsonFormatter.RegisterFunctions);
+        ExecutionThread.FunctionsManager.RegisterFactory(NullFormatter.RegisterFunctions);
+        ExecutionThread.FunctionsManager.RegisterFactory(TextLineFormatter.RegisterFunctions);
+        ExecutionThread.FunctionsManager.RegisterFactory(DateTimeFunctions.RegisterFunctions);
+        ExecutionThread.FunctionsManager.RegisterFactory(InfoFunctions.RegisterFunctions);
+        ExecutionThread.FunctionsManager.RegisterFactory(MathFunctions.RegisterFunctions);
+        ExecutionThread.FunctionsManager.RegisterFactory(MiscFunctions.RegisterFunctions);
+        ExecutionThread.FunctionsManager.RegisterFactory(StringFunctions.RegisterFunctions);
+        ExecutionThread.FunctionsManager.RegisterFactory(AggregatesRegistration.RegisterFunctions);
+        ExecutionThread.FunctionsManager.RegisterFactory(Providers.Registration.RegisterFunctions);
 #if ENABLE_PLUGINS
         ExecutionThread.LoadPlugins();
 #endif
