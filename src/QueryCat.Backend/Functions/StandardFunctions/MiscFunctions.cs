@@ -21,8 +21,16 @@ internal static class MiscFunctions
         return value1;
     }
 
+    [Description("The function returns a version 4 (random) UUID.")]
+    [FunctionSignature("get_random_uuid(): string")]
+    public static VariantValue GetRandomGuid(FunctionCallInfo args)
+    {
+        return new VariantValue(Guid.NewGuid().ToString("D"));
+    }
+
     public static void RegisterFunctions(FunctionsManager functionsManager)
     {
         functionsManager.RegisterFunction(NullIf);
+        functionsManager.RegisterFunction(GetRandomGuid);
     }
 }
