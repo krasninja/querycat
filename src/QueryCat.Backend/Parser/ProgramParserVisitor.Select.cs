@@ -40,7 +40,8 @@ internal partial class ProgramParserVisitor
     public override IAstNode VisitSelectQueryFull(QueryCatParser.SelectQueryFullContext context)
         => new SelectQuerySpecificationNode(this.Visit<SelectColumnsListNode>(context.selectList()))
         {
-            DistinctNode = this.VisitMaybe<SelectDistinctNode>(context.selectDistinctClause()),
+            With = this.VisitMaybe<SelectWithListNode>(context.selectWithClause()),
+            Distinct = this.VisitMaybe<SelectDistinctNode>(context.selectDistinctClause()),
             TableExpression = this.VisitMaybe<SelectTableExpressionNode>(context.selectFromClause()),
             Target = this.VisitMaybe<FunctionCallNode>(context.selectTarget()),
             OrderBy = this.VisitMaybe<SelectOrderByNode>(context.selectOrderByClause()),
@@ -73,6 +74,19 @@ internal partial class ProgramParserVisitor
     /// <inheritdoc />
     public override IAstNode VisitSelectList(QueryCatParser.SelectListContext context)
         => new SelectColumnsListNode(this.Visit<SelectColumnsSublistNode>(context.selectSublist()).ToList());
+
+    #endregion
+
+    #region With
+
+    /// <inheritdoc />
+    public override IAstNode VisitSelectWithClause(QueryCatParser.SelectWithClauseContext context)
+        => new SelectWithListNode(
+            this.Visit<SelectWithNode>(context.selectWithElement()).ToList());
+
+    /// <inheritdoc />
+    public override IAstNode VisitSelectWithElement(QueryCatParser.SelectWithElementContext context)
+        => new SelectWithNode(this.Visit<SelectQuerySpecificationNode>(context.query));
 
     #endregion
 
@@ -229,6 +243,10 @@ internal partial class ProgramParserVisitor
         var alias = this.Visit(context.selectAlias(), SelectAliasNode.Empty).AliasName;
         return new SelectTableFunctionNode(readFunction, alias);
     }
+
+    /// <inheritdoc />
+    public override IAstNode VisitSelectTablePrimaryIdentifier(QueryCatParser.SelectTablePrimaryIdentifierContext context)
+        => new IdentifierExpressionNode(GetUnwrappedText(context.name.Text));
 
     /// <inheritdoc />
     public override IAstNode VisitSelectTablePrimarySubquery(

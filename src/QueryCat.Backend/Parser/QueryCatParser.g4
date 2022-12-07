@@ -37,7 +37,9 @@ functionArg: variadic=ELLIPSIS? IDENTIFIER optional=QUESTION? COLON functionType
 selectStatement: selectQueryExpression;
 
 // Union.
-selectQueryExpression: selectQuery (UNION selectQuery)*
+selectQueryExpression:
+
+    selectQuery (UNION selectQuery)*
     selectOrderByClause?
     selectOffsetClause?
     selectFetchFirstClause?;
@@ -49,7 +51,9 @@ selectSortSpecification: expression (ASC | DESC)?;
 // Select query.
 selectAlias: AS (name=(IDENTIFIER | STRING_LITERAL));
 selectQuery
-    : SELECT
+    :
+        selectWithClause?
+        SELECT
         selectTopClause?
         selectDistinctClause?
         selectList
@@ -64,6 +68,11 @@ selectQuery
 selectList: selectSublist (COMMA selectSublist)*;
 selectDistinctClause: ALL | DISTINCT | selectDistinctOnClause;
 selectDistinctOnClause: DISTINCT ON '(' simpleExpression (COMMA simpleExpression)* ')';
+
+// With.
+selectWithClause: WITH RECURSIVE? selectWithElement (COMMA selectWithElement)*;
+selectWithElement: name=IDENTIFIER ('(' selectWithColumnList ')')? AS '(' query=selectQuery ')';
+selectWithColumnList: name=identifierChain (COMMA name=identifierChain)*;
 
 // Columns.
 selectSublist
@@ -89,6 +98,7 @@ selectTablePrimary
     | '-' # SelectTablePrimaryStdin
     | uri=STRING_LITERAL (FORMAT functionCall)? selectAlias? # SelectTablePrimaryWithFormat
     | '(' selectQueryExpression ')' selectAlias? # SelectTablePrimarySubquery
+    | name=IDENTIFIER # SelectTablePrimaryIdentifier
     ;
 selectTableJoined: selectJoinType? JOIN right=selectTablePrimary ON condition=expression;
 selectJoinType: INNER | (LEFT | RIGHT | FULL) OUTER?;

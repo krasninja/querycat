@@ -148,6 +148,24 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitSelectDistinctOnClause([NotNull] QueryCatParser.SelectDistinctOnClauseContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="QueryCatParser.selectWithClause"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSelectWithClause([NotNull] QueryCatParser.SelectWithClauseContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="QueryCatParser.selectWithElement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSelectWithElement([NotNull] QueryCatParser.SelectWithElementContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="QueryCatParser.selectWithColumnList"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSelectWithColumnList([NotNull] QueryCatParser.SelectWithColumnListContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>SelectSublistAll</c>
 	/// labeled alternative in <see cref="QueryCatParser.selectSublist"/>.
 	/// </summary>
@@ -220,6 +238,13 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitSelectTablePrimarySubquery([NotNull] QueryCatParser.SelectTablePrimarySubqueryContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>SelectTablePrimaryIdentifier</c>
+	/// labeled alternative in <see cref="QueryCatParser.selectTablePrimary"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSelectTablePrimaryIdentifier([NotNull] QueryCatParser.SelectTablePrimaryIdentifierContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="QueryCatParser.selectTableJoined"/>.
 	/// </summary>

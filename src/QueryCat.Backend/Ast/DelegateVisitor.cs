@@ -343,5 +343,17 @@ public abstract class DelegateVisitor : AstVisitor
         OnVisit(node);
     }
 
+    /// <inheritdoc />
+    public override void Visit(SelectWithListNode node)
+    {
+        OnVisit(node);
+    }
+
+    /// <inheritdoc />
+    public override void Visit(SelectWithNode node)
+    {
+        OnVisit(node);
+    }
+
     #endregion
 }

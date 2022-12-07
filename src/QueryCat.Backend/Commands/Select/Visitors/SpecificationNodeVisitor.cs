@@ -51,7 +51,7 @@ internal sealed partial class SpecificationNodeVisitor : SelectAstVisitor
         // Fetch remain data.
         CreatePrefetchProjection(context, new List<IAstNode?>
         {
-            node.ColumnsList, node.Target, node.DistinctNode, node.OrderBy, node.Offset, node.Fetch,
+            node.ColumnsList, node.Target, node.Distinct, node.OrderBy, node.Offset, node.Fetch,
             node.TableExpression
         });
 
@@ -219,14 +219,14 @@ internal sealed partial class SpecificationNodeVisitor : SelectAstVisitor
         SelectCommandContext context,
         SelectQuerySpecificationNode querySpecificationNode)
     {
-        if (querySpecificationNode.DistinctNode == null || querySpecificationNode.DistinctNode.IsEmpty)
+        if (querySpecificationNode.Distinct == null || querySpecificationNode.Distinct.IsEmpty)
         {
             return;
         }
 
-        ResolveNodesTypes(querySpecificationNode.DistinctNode, context);
+        ResolveNodesTypes(querySpecificationNode.Distinct, context);
         var makeDelegateVisitor = new SelectCreateDelegateVisitor(ExecutionThread, context);
-        var funcUnits = querySpecificationNode.DistinctNode.
+        var funcUnits = querySpecificationNode.Distinct.
             On.Select(d => makeDelegateVisitor.RunAndReturn(d)).ToArray();
         context.SetIterator(new DistinctRowsIterator(context.CurrentIterator, funcUnits));
     }

@@ -5,12 +5,20 @@ namespace QueryCat.Backend.Ast.Nodes.Select;
 
 public sealed class SelectQuerySpecificationNode : AstNode
 {
+    /// <summary>
+    /// CTE.
+    /// </summary>
+    public SelectWithListNode? With { get; set; }
+
+    /// <summary>
+    /// Select columns list.
+    /// </summary>
     public SelectColumnsListNode ColumnsList { get; }
 
     /// <summary>
     /// Distinct node.
     /// </summary>
-    public SelectDistinctNode? DistinctNode { get; set; }
+    public SelectDistinctNode? Distinct { get; set; }
 
     /// <summary>
     /// "Into" SQL statement. Use default if null.
@@ -43,9 +51,9 @@ public sealed class SelectQuerySpecificationNode : AstNode
         {
             Target = (FunctionCallNode)node.Target.Clone();
         }
-        if (node.DistinctNode != null)
+        if (node.Distinct != null)
         {
-            DistinctNode = (SelectDistinctNode)node.DistinctNode.Clone();
+            Distinct = (SelectDistinctNode)node.Distinct.Clone();
         }
         if (node.TableExpression != null)
         {
@@ -65,10 +73,14 @@ public sealed class SelectQuerySpecificationNode : AstNode
     /// <inheritdoc />
     public override IEnumerable<IAstNode> GetChildren()
     {
-        yield return ColumnsList;
-        if (DistinctNode != null)
+        if (With != null)
         {
-            yield return DistinctNode;
+            yield return With;
+        }
+        yield return ColumnsList;
+        if (Distinct != null)
+        {
+            yield return Distinct;
         }
         if (Target != null)
         {
@@ -103,9 +115,9 @@ public sealed class SelectQuerySpecificationNode : AstNode
     {
         var sb = new StringBuilder();
         sb.Append("Select");
-        if (DistinctNode != null)
+        if (Distinct != null)
         {
-            sb.Append($" {DistinctNode}");
+            sb.Append($" {Distinct}");
         }
         foreach (var column in ColumnsList.Columns)
         {

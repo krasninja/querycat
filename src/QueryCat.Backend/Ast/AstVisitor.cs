@@ -239,5 +239,13 @@ public abstract class AstVisitor
     {
     }
 
+    public virtual void Visit(SelectWithListNode node)
+    {
+    }
+
+    public virtual void Visit(SelectWithNode node)
+    {
+    }
+
     #endregion
 }

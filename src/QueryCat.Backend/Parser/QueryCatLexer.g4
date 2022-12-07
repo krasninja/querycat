@@ -131,6 +131,7 @@ NEXT:               'NEXT';
 OFFSET:             'OFFSET';
 ORDER:              'ORDER';
 OUTER:              'OUTER';
+RECURSIVE:          'RECURSIVE';
 RIGHT:              'RIGHT';
 ROW:                'ROW';
 ROWS:               'ROWS';
@@ -138,6 +139,7 @@ SELECT:             'SELECT';
 TOP:                'TOP';
 UNION:              'UNION';
 WHERE:              'WHERE';
+WITH:               'WITH';
 
 TYPE: INTEGER | STRING | FLOAT | TIMESTAMP | BOOLEAN | NUMERIC | OBJECT | ANY;
 
