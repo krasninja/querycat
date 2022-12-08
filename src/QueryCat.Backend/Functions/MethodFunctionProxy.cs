@@ -73,7 +73,11 @@ internal class MethodFunctionProxy
                 throw new InvalidOperationException($"Invalid parameter type '{parameter.ParameterType}'.");
             }
 
-            if (args.Arguments.Values.Length > i)
+            if (parameter.ParameterType == typeof(FunctionCallInfo))
+            {
+                arr[i] = args;
+            }
+            else if (args.Arguments.Values.Length > i)
             {
                 arr[i] = DataTypeUtils.ConvertValue(args.GetAt(i), parameter.ParameterType);
             }
@@ -89,6 +93,17 @@ internal class MethodFunctionProxy
         var result = _method is ConstructorInfo constructorInfo
             ? constructorInfo.Invoke(arr)
             : _method.Invoke(null, arr);
+
+        // If result is awaitable - try to wait.
+        if (result is Task task)
+        {
+            task.ConfigureAwait(false).GetAwaiter().GetResult();
+            if (_method is MethodInfo methodInfo &&
+                methodInfo.ReturnType.IsGenericType)
+            {
+                result = ((dynamic)task).Result;
+            }
+        }
         return VariantValue.CreateFromObject(result);
     }
 }
