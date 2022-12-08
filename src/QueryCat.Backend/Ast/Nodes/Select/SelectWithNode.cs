@@ -1,3 +1,5 @@
+using System.Text;
+
 namespace QueryCat.Backend.Ast.Nodes.Select;
 
 public sealed class SelectWithNode : AstNode
@@ -6,17 +8,20 @@ public sealed class SelectWithNode : AstNode
 
     public SelectQuerySpecificationNode Query { get; }
 
+    public string Name { get; }
+
     /// <inheritdoc />
     public override string Code => "with_elem";
 
     /// <inheritdoc />
-    public SelectWithNode(SelectQuerySpecificationNode query)
+    public SelectWithNode(string name, SelectQuerySpecificationNode query)
     {
+        Name = name;
         Query = query;
     }
 
     public SelectWithNode(SelectWithNode node)
-        : this((SelectQuerySpecificationNode)node.Query.Clone())
+        : this(node.Name, (SelectQuerySpecificationNode)node.Query.Clone())
     {
         Columns = node.Columns.Select(c => (SelectColumnsSublistNameNode)c.Clone()).ToList();
         node.CopyTo(this);
@@ -37,4 +42,16 @@ public sealed class SelectWithNode : AstNode
 
     /// <inheritdoc />
     public override void Accept(AstVisitor visitor) => visitor.Visit(this);
+
+    /// <inheritdoc />
+    public override string ToString()
+    {
+        var sb = new StringBuilder();
+        if (Columns.Count > 0)
+        {
+            sb.Append($" ({string.Join(", ", Columns.Select(c => c.ToString()))})");
+        }
+        sb.Append($" {Name} AS ({Query})");
+        return sb.ToString();
+    }
 }

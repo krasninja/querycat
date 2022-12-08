@@ -42,39 +42,39 @@ internal sealed partial class SpecificationNodeVisitor : SelectAstVisitor
         // Misc.
         ApplyStatistic(context);
         SubscribeOnErrorsFromInputSources(context);
-        ResolveSelectAllStatement(context.CurrentIterator, node.ColumnsList);
+        ResolveSelectAllStatement(context.CurrentIterator, node.ColumnsListNode);
         ResolveSelectSourceColumns(context, node);
 
         // WHERE.
-        ApplyFilter(context, node.TableExpression);
+        ApplyFilter(context, node.TableExpressionNode);
 
         // Fetch remain data.
         CreatePrefetchProjection(context, new List<IAstNode?>
         {
-            node.ColumnsList, node.Target, node.Distinct, node.OrderBy, node.Offset, node.Fetch,
-            node.TableExpression
+            node.ColumnsListNode, node.TargetNode, node.DistinctNode, node.OrderByNode, node.OffsetNode, node.FetchNode,
+            node.TableExpressionNode
         });
 
         // GROUP BY/HAVING.
         ApplyAggregate(context, node);
-        ApplyHaving(context, node.TableExpression?.HavingNode);
+        ApplyHaving(context, node.TableExpressionNode?.HavingNode);
 
         // SELECT.
-        AddSelectRowsSet(context, node.ColumnsList);
+        AddSelectRowsSet(context, node.ColumnsListNode);
         FillQueryContextConditions(node, context);
 
         // DISTINCT.
         CreateDistinctRowsSet(context, node);
 
         // ORDER BY.
-        ApplyOrderBy(context, node.OrderBy);
+        ApplyOrderBy(context, node.OrderByNode);
 
         // INTO and SELECT.
         SetOutputFunction(context, node);
-        SetSelectRowsSet(context, node.ColumnsList);
+        SetSelectRowsSet(context, node.ColumnsListNode);
 
         // OFFSET, FETCH.
-        ApplyOffsetFetch(context, node.Offset, node.Fetch);
+        ApplyOffsetFetch(context, node.OffsetNode, node.FetchNode);
 
         // INTO.
         CreateOutput(context, node);
@@ -123,7 +123,7 @@ internal sealed partial class SpecificationNodeVisitor : SelectAstVisitor
             return;
         }
 
-        foreach (var column in querySpecificationNode.ColumnsList.Columns.OfType<SelectColumnsSublistExpressionNode>())
+        foreach (var column in querySpecificationNode.ColumnsListNode.Columns.OfType<SelectColumnsSublistExpressionNode>())
         {
             if (column.ExpressionNode is IdentifierExpressionNode identifierExpressionNode)
             {
@@ -219,14 +219,14 @@ internal sealed partial class SpecificationNodeVisitor : SelectAstVisitor
         SelectCommandContext context,
         SelectQuerySpecificationNode querySpecificationNode)
     {
-        if (querySpecificationNode.Distinct == null || querySpecificationNode.Distinct.IsEmpty)
+        if (querySpecificationNode.DistinctNode == null || querySpecificationNode.DistinctNode.IsEmpty)
         {
             return;
         }
 
-        ResolveNodesTypes(querySpecificationNode.Distinct, context);
+        ResolveNodesTypes(querySpecificationNode.DistinctNode, context);
         var makeDelegateVisitor = new SelectCreateDelegateVisitor(ExecutionThread, context);
-        var funcUnits = querySpecificationNode.Distinct.
+        var funcUnits = querySpecificationNode.DistinctNode.
             On.Select(d => makeDelegateVisitor.RunAndReturn(d)).ToArray();
         context.SetIterator(new DistinctRowsIterator(context.CurrentIterator, funcUnits));
     }
@@ -322,14 +322,14 @@ internal sealed partial class SpecificationNodeVisitor : SelectAstVisitor
         SelectCommandContext context,
         SelectQuerySpecificationNode querySpecificationNode)
     {
-        if (querySpecificationNode.Target == null)
+        if (querySpecificationNode.TargetNode == null)
         {
             return;
         }
 
-        ResolveNodesTypes(querySpecificationNode.Target, context);
+        ResolveNodesTypes(querySpecificationNode.TargetNode, context);
         var makeDelegateVisitor = new SelectCreateDelegateVisitor(ExecutionThread, context);
-        var func = makeDelegateVisitor.RunAndReturn(querySpecificationNode.Target);
+        var func = makeDelegateVisitor.RunAndReturn(querySpecificationNode.TargetNode);
         context.OutputArgumentsFunc = func;
     }
 
@@ -338,16 +338,16 @@ internal sealed partial class SpecificationNodeVisitor : SelectAstVisitor
         SelectQuerySpecificationNode querySpecificationNode)
     {
         context.HasFinalRowsIterator = true;
-        if (querySpecificationNode.Target == null
+        if (querySpecificationNode.TargetNode == null
             || context.OutputArgumentsFunc == null)
         {
             return;
         }
 
         var queryContext = new RowsOutputQueryContext(context.CurrentIterator.Columns);
-        var functionCallInfo = querySpecificationNode.Target
+        var functionCallInfo = querySpecificationNode.TargetNode
             .GetRequiredAttribute<FunctionCallInfo>(AstAttributeKeys.ArgumentsKey);
-        var hasVaryingTarget = querySpecificationNode.Target.Arguments.Count > 0;
+        var hasVaryingTarget = querySpecificationNode.TargetNode.Arguments.Count > 0;
         var outputIterator = new VaryingOutputRowsIterator(
             context.CurrentIterator,
             context.OutputArgumentsFunc,

@@ -29,11 +29,11 @@ internal sealed partial class SpecificationNodeVisitor
         SelectCommandContext context,
         SelectQuerySpecificationNode selectQueryNode)
     {
-        var groupByNode = selectQueryNode.TableExpression?.GroupByNode;
+        var groupByNode = selectQueryNode.TableExpressionNode?.GroupByNode;
         ResolveNodesTypes(
-            new IAstNode?[] { groupByNode, selectQueryNode.TableExpression, selectQueryNode.ColumnsList },
+            new IAstNode?[] { groupByNode, selectQueryNode.TableExpressionNode, selectQueryNode.ColumnsListNode },
             context);
-        var targets = CreateAggregateTargets(context, selectQueryNode.TableExpression, selectQueryNode.ColumnsList);
+        var targets = CreateAggregateTargets(context, selectQueryNode.TableExpressionNode, selectQueryNode.ColumnsListNode);
 
         // If there is no group by and no aggregate functions used - skip aggregates
         // processing.
@@ -77,12 +77,12 @@ internal sealed partial class SpecificationNodeVisitor
             }
         };
 
-        var havingNode = selectQueryNode.TableExpression?.HavingNode;
+        var havingNode = selectQueryNode.TableExpressionNode?.HavingNode;
         if (havingNode != null)
         {
             aggregateReplaceDelegateVisitor.Run(havingNode);
         }
-        aggregateReplaceDelegateVisitor.Run(selectQueryNode.ColumnsList);
+        aggregateReplaceDelegateVisitor.Run(selectQueryNode.ColumnsListNode);
     }
 
     private AggregateTarget[] CreateAggregateTargets(

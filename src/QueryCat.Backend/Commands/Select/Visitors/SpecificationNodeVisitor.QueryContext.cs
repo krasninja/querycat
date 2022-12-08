@@ -20,10 +20,10 @@ internal partial class SpecificationNodeVisitor
         }
 
         // Fill "limit". For now we limit only of order is not defined.
-        if (querySpecificationNode.OrderBy == null && querySpecificationNode.Fetch != null)
+        if (querySpecificationNode.OrderByNode == null && querySpecificationNode.FetchNode != null)
         {
             var fetchCount = new SelectCreateDelegateVisitor(ExecutionThread, commandContext)
-                .RunAndReturn(querySpecificationNode.Fetch.CountNode).Invoke().AsInteger;
+                .RunAndReturn(querySpecificationNode.FetchNode.CountNode).Invoke().AsInteger;
             foreach (var queryContext in commandContext.InputQueryContextList)
             {
                 queryContext.QueryInfo.Limit = fetchCount;
@@ -36,7 +36,7 @@ internal partial class SpecificationNodeVisitor
         SelectInputQueryContext rowsInputContext,
         SelectCommandContext commandContext)
     {
-        var searchNode = querySpecificationNode.TableExpression?.SearchConditionNode;
+        var searchNode = querySpecificationNode.TableExpressionNode?.SearchConditionNode;
         if (searchNode == null)
         {
             return;

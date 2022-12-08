@@ -32,4 +32,7 @@ public sealed class SelectWithListNode : AstNode
 
     /// <inheritdoc />
     public override void Accept(AstVisitor visitor) => visitor.Visit(this);
+
+    /// <inheritdoc />
+    public override string ToString() => string.Join(", ", Nodes.Select(n => n.ToString()));
 }

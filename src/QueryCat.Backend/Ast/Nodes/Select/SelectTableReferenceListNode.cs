@@ -26,4 +26,7 @@ public sealed class SelectTableReferenceListNode : AstNode
 
     /// <inheritdoc />
     public override void Accept(AstVisitor visitor) => visitor.Visit(this);
+
+    /// <inheritdoc />
+    public override string ToString() => string.Join(", ", TableFunctions.Select(tf => tf.ToString()));
 }

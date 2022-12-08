@@ -230,6 +230,12 @@ public abstract class DelegateVisitor : AstVisitor
     }
 
     /// <inheritdoc />
+    public override void Visit(SelectCteIdentifierExpressionNode node)
+    {
+        OnVisit(node);
+    }
+
+    /// <inheritdoc />
     public override void Visit(SelectDistinctNode node)
     {
         OnVisit(node);

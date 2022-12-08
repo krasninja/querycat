@@ -19,17 +19,32 @@ internal sealed class CreateContextVisitor : AstVisitor
     private readonly Dictionary<IRowsInput, SelectInputQueryContext> _rowsInputContextMap = new();
     private readonly SelectCommandContext? _parentContext;
 
+    private record struct Cte(string Name, SelectCommandContext Context);
+
+    private Cte[] _ctes = Array.Empty<Cte>();
+
     /// <summary>
     /// AST traversal.
     /// </summary>
     public AstTraversal AstTraversal { get; }
 
-    public CreateContextVisitor(ExecutionThread executionThread, SelectCommandContext? parentContext = null)
+    public CreateContextVisitor(
+        ExecutionThread executionThread,
+        SelectCommandContext? parentContext = null)
     {
         this._executionThread = executionThread;
         this._resolveTypesVisitor = new ResolveTypesVisitor(executionThread);
         this._parentContext = parentContext;
         this.AstTraversal = new AstTraversal(this);
+    }
+
+    private CreateContextVisitor(
+        ExecutionThread executionThread,
+        SelectCommandContext? parentContext = null,
+        Cte[]? ctes = null)
+        : this(executionThread, parentContext)
+    {
+        this._ctes = ctes ?? Array.Empty<Cte>();
     }
 
     /// <inheritdoc />
@@ -46,22 +61,41 @@ internal sealed class CreateContextVisitor : AstVisitor
             return;
         }
 
+        _ctes = CreateInputCtes(node).Union(_ctes).ToArray();
+
         var parentTableExpressionNode = AstTraversal.GetFirstParent<SelectQuerySpecificationNode>(n => n.Id != node.Id);
         var parentContext = parentTableExpressionNode?.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
-
         var context = CreateSourceContext(node, parentContext ?? _parentContext);
         node.SetAttribute(AstAttributeKeys.ContextKey, context);
-
-        base.Visit(node);
     }
 
-    public IList<SelectCommandContext> CreateForQuery(IEnumerable<SelectQuerySpecificationNode> nodes,
+    private List<Cte> CreateInputCtes(SelectQuerySpecificationNode node)
+    {
+        if (node.WithNode == null)
+        {
+            return new List<Cte>();
+        }
+
+        var ctes = new List<Cte>();
+        foreach (var withNodeItem in node.WithNode.Nodes)
+        {
+            var cteCreateContextVisitor = new CreateContextVisitor(_executionThread, _parentContext, ctes.ToArray());
+            cteCreateContextVisitor.Run(withNodeItem.Query);
+            new SpecificationNodeVisitor(_executionThread).Run(withNodeItem);
+            var cte = new Cte(withNodeItem.Name, withNodeItem.Query
+                .GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey));
+            ctes.Add(cte);
+        }
+        return ctes;
+    }
+
+    private IList<SelectCommandContext> CreateForQuery(IEnumerable<SelectQuerySpecificationNode> nodes,
         SelectCommandContext? parent = null)
     {
         return nodes.Select(n => CreateForQuery(n, parent)).ToList();
     }
 
-    public SelectCommandContext CreateForQuery(SelectQuerySpecificationNode node, SelectCommandContext? parent = null)
+    private SelectCommandContext CreateForQuery(SelectQuerySpecificationNode node, SelectCommandContext? parent = null)
     {
         if (node.HasAttribute(AstAttributeKeys.ContextKey))
         {
@@ -80,107 +114,8 @@ internal sealed class CreateContextVisitor : AstVisitor
         SelectQuerySpecificationNode querySpecificationNode,
         SelectCommandContext? parent = null)
     {
-        IRowsInput CreateInputSourceFromSubQuery(SelectQueryExpressionBodyNode queryExpressionBodyNode)
-        {
-            CreateForQuery(queryExpressionBodyNode.Queries, parent);
-            new CreateContextVisitor(_executionThread, parent).Run(queryExpressionBodyNode);
-            new SpecificationNodeVisitor(_executionThread).Run(queryExpressionBodyNode);
-            var commandContext = queryExpressionBodyNode.GetRequiredAttribute<CommandContext>(AstAttributeKeys.ContextKey);
-            if (commandContext.Invoke().AsObject is not IRowsIterator iterator)
-            {
-                throw new QueryCatException("No iterator for subquery!");
-            }
-            var rowsInput = new RowsIteratorInput(iterator);
-            SetAlias(rowsInput, queryExpressionBodyNode.Alias);
-            return rowsInput;
-        }
-
-        // Last input is combine input.
-        IRowsInput[] CreateInputSourceFromTableFunction(SelectTableFunctionNode tableFunctionNode)
-        {
-            _resolveTypesVisitor.Run(tableFunctionNode.TableFunction);
-            var source = new CreateDelegateVisitor(_executionThread)
-                .RunAndReturn(tableFunctionNode.TableFunction).Invoke();
-            var isSubQuery = parent != null;
-            var inputs = new List<IRowsInput>();
-            var rowsInput = CreateRowsInput(source, isSubQuery);
-            var parentSpecificationNodes = AstTraversal.GetParents<SelectQuerySpecificationNode>().ToList();
-            FixInputColumnTypes(parentSpecificationNodes, rowsInput);
-            inputs.Add(rowsInput);
-            SetAlias(rowsInput, tableFunctionNode.Alias);
-            foreach (var joinedNode in tableFunctionNode.JoinedNodes)
-            {
-                rowsInput = CreateInputSourceFromTableJoin(rowsInput, joinedNode);
-                inputs.Add(rowsInput);
-            }
-            return inputs.ToArray();
-        }
-
-        IRowsInput CreateInputSourceFromTableJoin(IRowsInput left, SelectTableJoinedNode tableJoinedNode)
-        {
-            var right = GetRowsInputFromExpression(tableJoinedNode.RightTableNode).Last();
-            var alias = GetAliasFromExpression(tableJoinedNode.RightTableNode);
-            SetAlias(right, alias);
-
-            // For right join we swap left and right. But we keep columns in the same order.
-            var join = ConvertAstJoinType(tableJoinedNode.JoinTypeNode.JoinedType);
-            var reverseColumnsOrder = false;
-            if (join == JoinType.Right)
-            {
-                (left, right) = (right, left);
-                reverseColumnsOrder = true;
-            }
-            // Because of iterator specific conditions we must cache right input.
-            if (_rowsInputContextMap.TryGetValue(right, out var context))
-            {
-                right = new CacheRowsInput(right);
-                right.SetContext(context);
-            }
-
-            new InputResolveTypesVisitor(_executionThread, left, right)
-                .Run(tableJoinedNode.SearchConditionNode);
-            var searchFunc = new InputCreateDelegateVisitor(_executionThread, left, right)
-                .RunAndReturn(tableJoinedNode.SearchConditionNode);
-            return new SelectJoinRowsInput(left, right, join, searchFunc, reverseColumnsOrder);
-        }
-
-        IRowsInput[] GetRowsInputFromExpression(ExpressionNode expressionNode)
-        {
-            if (expressionNode is SelectQueryExpressionBodyNode selectQueryExpressionBodyNode)
-            {
-                return new[]
-                {
-                    CreateInputSourceFromSubQuery(selectQueryExpressionBodyNode)
-                };
-            }
-            else if (expressionNode is SelectTableFunctionNode tableFunctionNode)
-            {
-                return CreateInputSourceFromTableFunction(tableFunctionNode);
-            }
-            else
-            {
-                throw new InvalidOperationException($"Cannot process node {expressionNode} as input.");
-            }
-        }
-
-        string GetAliasFromExpression(ExpressionNode expressionNode)
-        {
-            if (expressionNode is SelectQueryExpressionBodyNode selectQueryExpressionBodyNode)
-            {
-                return selectQueryExpressionBodyNode.Alias;
-            }
-            else if (expressionNode is SelectTableFunctionNode tableFunctionNode)
-            {
-                return tableFunctionNode.Alias;
-            }
-            return string.Empty;
-        }
-
-        // Entry point here.
-        //
-
         // No FROM - assumed this is the query with SELECT only.
-        if (querySpecificationNode.TableExpression == null)
+        if (querySpecificationNode.TableExpressionNode == null)
         {
             return new(new SingleValueRowsInput().AsIterable());
         }
@@ -188,7 +123,7 @@ internal sealed class CreateContextVisitor : AstVisitor
         // Start with FROM statement, if none - there is only one SELECT row.
         var finalRowsInputs = new List<IRowsInput>();
         var inputContexts = new List<SelectInputQueryContext>();
-        foreach (var tableExpression in querySpecificationNode.TableExpression.Tables.TableFunctions)
+        foreach (var tableExpression in querySpecificationNode.TableExpressionNode.Tables.TableFunctions)
         {
             var rowsInputs = GetRowsInputFromExpression(tableExpression);
             var finalRowInput = rowsInputs.Last();
@@ -218,6 +153,128 @@ internal sealed class CreateContextVisitor : AstVisitor
             context.SetParent(parent);
         }
         return context;
+    }
+
+    private IRowsInput[] CreateInputSourceFromCte(IdentifierExpressionNode idNode)
+    {
+        var cteIndex = Array.FindIndex(_ctes, c => c.Name == idNode.FullName);
+        if (cteIndex < 0)
+        {
+            throw new InvalidOperationException($"Query with name '{idNode.FullName}' is not defined.");
+        }
+        var context = _ctes[cteIndex].Context;
+        if (context.RowsInputIterator == null)
+        {
+            throw new InvalidOperationException("Invalid CTE.");
+        }
+        return new[]
+        {
+            new RowsIteratorInput(context.CurrentIterator),
+        };
+    }
+
+    // Last input is combine input.
+    private IRowsInput[] CreateInputSourceFromTableFunction(
+        SelectTableFunctionNode tableFunctionNode,
+        SelectCommandContext? parent = null)
+    {
+        _resolveTypesVisitor.Run(tableFunctionNode.TableFunction);
+        var source = new CreateDelegateVisitor(_executionThread)
+            .RunAndReturn(tableFunctionNode.TableFunction).Invoke();
+        var isSubQuery = parent != null;
+        var inputs = new List<IRowsInput>();
+        var rowsInput = CreateRowsInput(source, isSubQuery);
+        var parentSpecificationNodes = AstTraversal.GetParents<SelectQuerySpecificationNode>().ToList();
+        FixInputColumnTypes(parentSpecificationNodes, rowsInput);
+        inputs.Add(rowsInput);
+        SetAlias(rowsInput, tableFunctionNode.Alias);
+        foreach (var joinedNode in tableFunctionNode.JoinedNodes)
+        {
+            rowsInput = CreateInputSourceFromTableJoin(rowsInput, joinedNode);
+            inputs.Add(rowsInput);
+        }
+        return inputs.ToArray();
+    }
+
+    private IRowsInput CreateInputSourceFromTableJoin(IRowsInput left, SelectTableJoinedNode tableJoinedNode)
+    {
+        var right = GetRowsInputFromExpression(tableJoinedNode.RightTableNode).Last();
+        var alias = GetAliasFromExpression(tableJoinedNode.RightTableNode);
+        SetAlias(right, alias);
+
+        // For right join we swap left and right. But we keep columns in the same order.
+        var join = ConvertAstJoinType(tableJoinedNode.JoinTypeNode.JoinedType);
+        var reverseColumnsOrder = false;
+        if (join == JoinType.Right)
+        {
+            (left, right) = (right, left);
+            reverseColumnsOrder = true;
+        }
+        // Because of iterator specific conditions we must cache right input.
+        if (_rowsInputContextMap.TryGetValue(right, out var context))
+        {
+            right = new CacheRowsInput(right);
+            right.SetContext(context);
+        }
+
+        new InputResolveTypesVisitor(_executionThread, left, right)
+            .Run(tableJoinedNode.SearchConditionNode);
+        var searchFunc = new InputCreateDelegateVisitor(_executionThread, left, right)
+            .RunAndReturn(tableJoinedNode.SearchConditionNode);
+        return new SelectJoinRowsInput(left, right, join, searchFunc, reverseColumnsOrder);
+    }
+
+    private IRowsInput[] GetRowsInputFromExpression(ExpressionNode expressionNode)
+    {
+        if (expressionNode is SelectQueryExpressionBodyNode selectQueryExpressionBodyNode)
+        {
+            return new[]
+            {
+                CreateInputSourceFromSubQuery(selectQueryExpressionBodyNode)
+            };
+        }
+        else if (expressionNode is SelectTableFunctionNode tableFunctionNode)
+        {
+            return CreateInputSourceFromTableFunction(tableFunctionNode);
+        }
+        else if (expressionNode is IdentifierExpressionNode idNode)
+        {
+            return CreateInputSourceFromCte(idNode);
+        }
+        else
+        {
+            throw new InvalidOperationException($"Cannot process node {expressionNode} as input.");
+        }
+    }
+
+    private static string GetAliasFromExpression(ExpressionNode expressionNode)
+    {
+        if (expressionNode is SelectQueryExpressionBodyNode selectQueryExpressionBodyNode)
+        {
+            return selectQueryExpressionBodyNode.Alias;
+        }
+        else if (expressionNode is SelectTableFunctionNode tableFunctionNode)
+        {
+            return tableFunctionNode.Alias;
+        }
+        return string.Empty;
+    }
+
+    private IRowsInput CreateInputSourceFromSubQuery(
+        SelectQueryExpressionBodyNode queryExpressionBodyNode,
+        SelectCommandContext? parent = null)
+    {
+        CreateForQuery(queryExpressionBodyNode.Queries, parent);
+        new CreateContextVisitor(_executionThread, parent).Run(queryExpressionBodyNode);
+        new SpecificationNodeVisitor(_executionThread).Run(queryExpressionBodyNode);
+        var commandContext = queryExpressionBodyNode.GetRequiredAttribute<CommandContext>(AstAttributeKeys.ContextKey);
+        if (commandContext.Invoke().AsObject is not IRowsIterator iterator)
+        {
+            throw new QueryCatException("No iterator for subquery!");
+        }
+        var rowsInput = new RowsIteratorInput(iterator);
+        SetAlias(rowsInput, queryExpressionBodyNode.Alias);
+        return rowsInput;
     }
 
     private IRowsInput CreateRowsInput(VariantValue source, bool isSubQuery)
@@ -331,7 +388,7 @@ internal sealed class CreateContextVisitor : AstVisitor
     {
         foreach (var querySpecificationNode in querySpecificationNodes)
         {
-            foreach (var castNode in querySpecificationNode.ColumnsList.GetAllChildren<CastFunctionNode>())
+            foreach (var castNode in querySpecificationNode.ColumnsListNode.GetAllChildren<CastFunctionNode>())
             {
                 if (castNode.ExpressionNode is not IdentifierExpressionNode idNode)
                 {

@@ -3,7 +3,7 @@ namespace QueryCat.Backend.Ast.Nodes;
 /// <summary>
 /// Variable identifier.
 /// </summary>
-public sealed class IdentifierExpressionNode : ExpressionNode
+public class IdentifierExpressionNode : ExpressionNode
 {
     /// <summary>
     /// Identifier name.

@@ -8,64 +8,64 @@ public sealed class SelectQuerySpecificationNode : AstNode
     /// <summary>
     /// CTE.
     /// </summary>
-    public SelectWithListNode? With { get; set; }
+    public SelectWithListNode? WithNode { get; set; }
 
     /// <summary>
     /// Select columns list.
     /// </summary>
-    public SelectColumnsListNode ColumnsList { get; }
+    public SelectColumnsListNode ColumnsListNode { get; }
 
     /// <summary>
     /// Distinct node.
     /// </summary>
-    public SelectDistinctNode? Distinct { get; set; }
+    public SelectDistinctNode? DistinctNode { get; set; }
 
     /// <summary>
     /// "Into" SQL statement. Use default if null.
     /// </summary>
-    public FunctionCallNode? Target { get; set; }
+    public FunctionCallNode? TargetNode { get; set; }
 
     /// <summary>
     /// "From" SQL statement.
     /// </summary>
-    public SelectTableExpressionNode? TableExpression { get; set; }
+    public SelectTableExpressionNode? TableExpressionNode { get; set; }
 
-    public SelectOrderByNode? OrderBy { get; set; }
+    public SelectOrderByNode? OrderByNode { get; set; }
 
-    public SelectOffsetNode? Offset { get; set; }
+    public SelectOffsetNode? OffsetNode { get; set; }
 
-    public SelectFetchNode? Fetch { get; set; }
+    public SelectFetchNode? FetchNode { get; set; }
 
     /// <inheritdoc />
     public override string Code => "select_query";
 
-    public SelectQuerySpecificationNode(SelectColumnsListNode columnsList)
+    public SelectQuerySpecificationNode(SelectColumnsListNode columnsListNode)
     {
-        ColumnsList = columnsList;
+        ColumnsListNode = columnsListNode;
     }
 
     public SelectQuerySpecificationNode(SelectQuerySpecificationNode node) :
-        this((SelectColumnsListNode)node.ColumnsList.Clone())
+        this((SelectColumnsListNode)node.ColumnsListNode.Clone())
     {
-        if (node.Target != null)
+        if (node.TargetNode != null)
         {
-            Target = (FunctionCallNode)node.Target.Clone();
+            TargetNode = (FunctionCallNode)node.TargetNode.Clone();
         }
-        if (node.Distinct != null)
+        if (node.DistinctNode != null)
         {
-            Distinct = (SelectDistinctNode)node.Distinct.Clone();
+            DistinctNode = (SelectDistinctNode)node.DistinctNode.Clone();
         }
-        if (node.TableExpression != null)
+        if (node.TableExpressionNode != null)
         {
-            TableExpression = (SelectTableExpressionNode)node.TableExpression.Clone();
+            TableExpressionNode = (SelectTableExpressionNode)node.TableExpressionNode.Clone();
         }
-        if (node.Offset != null)
+        if (node.OffsetNode != null)
         {
-            Offset = (SelectOffsetNode)node.Offset.Clone();
+            OffsetNode = (SelectOffsetNode)node.OffsetNode.Clone();
         }
-        if (node.Fetch != null)
+        if (node.FetchNode != null)
         {
-            Fetch = (SelectFetchNode)node.Fetch.Clone();
+            FetchNode = (SelectFetchNode)node.FetchNode.Clone();
         }
         node.CopyTo(this);
     }
@@ -73,34 +73,34 @@ public sealed class SelectQuerySpecificationNode : AstNode
     /// <inheritdoc />
     public override IEnumerable<IAstNode> GetChildren()
     {
-        if (With != null)
+        if (WithNode != null)
         {
-            yield return With;
+            yield return WithNode;
         }
-        yield return ColumnsList;
-        if (Distinct != null)
+        yield return ColumnsListNode;
+        if (DistinctNode != null)
         {
-            yield return Distinct;
+            yield return DistinctNode;
         }
-        if (Target != null)
+        if (TargetNode != null)
         {
-            yield return Target;
+            yield return TargetNode;
         }
-        if (TableExpression != null)
+        if (TableExpressionNode != null)
         {
-            yield return TableExpression;
+            yield return TableExpressionNode;
         }
-        if (Offset != null)
+        if (OffsetNode != null)
         {
-            yield return Offset;
+            yield return OffsetNode;
         }
-        if (Fetch != null)
+        if (FetchNode != null)
         {
-            yield return Fetch;
+            yield return FetchNode;
         }
-        if (OrderBy != null)
+        if (OrderByNode != null)
         {
-            yield return OrderBy;
+            yield return OrderByNode;
         }
     }
 
@@ -114,34 +114,38 @@ public sealed class SelectQuerySpecificationNode : AstNode
     public override string ToString()
     {
         var sb = new StringBuilder();
-        sb.Append("Select");
-        if (Distinct != null)
+        if (WithNode != null)
         {
-            sb.Append($" {Distinct}");
+            sb.Append($"With {WithNode}");
         }
-        foreach (var column in ColumnsList.Columns)
+        sb.Append(" Select");
+        if (DistinctNode != null)
+        {
+            sb.Append($" {DistinctNode}");
+        }
+        foreach (var column in ColumnsListNode.Columns)
         {
             sb.Append($" {column}");
         }
-        if (Target != null)
+        if (TargetNode != null)
         {
-            sb.Append($" Into {Target}");
+            sb.Append($" Into {TargetNode}");
         }
-        if (TableExpression != null)
+        if (TableExpressionNode != null)
         {
-            sb.Append($" From {TableExpression}");
+            sb.Append($" From {TableExpressionNode}");
         }
-        if (Offset != null)
+        if (OffsetNode != null)
         {
-            sb.Append($" Offset {Offset}");
+            sb.Append($" Offset {OffsetNode}");
         }
-        if (Fetch != null)
+        if (FetchNode != null)
         {
-            sb.Append($" Fetch {Fetch}");
+            sb.Append($" Fetch {FetchNode}");
         }
-        if (OrderBy != null)
+        if (OrderByNode != null)
         {
-            sb.Append($" Order {OrderBy}");
+            sb.Append($" Order {OrderByNode}");
         }
         return sb.ToString();
     }

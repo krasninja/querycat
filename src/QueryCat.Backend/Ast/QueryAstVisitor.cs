@@ -186,11 +186,11 @@ public class QueryAstVisitor : AstVisitor
     public override void Visit(SelectQuerySpecificationNode node)
     {
         var sb = new StringBuilder();
-        sb.Append($"SELECT {GetString(node.ColumnsList)}");
-        if (node.TableExpression != null)
+        sb.Append($"SELECT {GetString(node.ColumnsListNode)}");
+        if (node.TableExpressionNode != null)
         {
             sb.Append(Space);
-            sb.Append(GetString(node.TableExpression));
+            sb.Append(GetString(node.TableExpressionNode));
         }
         SetString(node, sb.ToString());
     }

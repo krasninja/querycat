@@ -1,3 +1,5 @@
+using System.Text;
+
 namespace QueryCat.Backend.Ast.Nodes.Select;
 
 public sealed class SelectTableExpressionNode : AstNode
@@ -59,4 +61,24 @@ public sealed class SelectTableExpressionNode : AstNode
 
     /// <inheritdoc />
     public override void Accept(AstVisitor visitor) => visitor.Visit(this);
+
+    /// <inheritdoc />
+    public override string ToString()
+    {
+        var sb = new StringBuilder();
+        sb.Append(string.Join(", ", Tables.ToString()));
+        if (SearchConditionNode != null)
+        {
+            sb.Append($" Where {SearchConditionNode}");
+        }
+        if (GroupByNode != null)
+        {
+            sb.Append($" Group By {GroupByNode}");
+        }
+        if (HavingNode != null)
+        {
+            sb.Append($" Having {HavingNode}");
+        }
+        return sb.ToString();
+    }
 }
