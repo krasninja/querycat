@@ -16,6 +16,7 @@ internal sealed class DsvOutput : RowsOutput, IDisposable
     private readonly StreamWriter _streamWriter;
     private readonly char _delimiter;
     private readonly bool _hasHeader;
+    private readonly bool _quoteStrings;
     private bool _wroteHeader;
 
     internal Stream Stream { get; }
@@ -28,6 +29,7 @@ internal sealed class DsvOutput : RowsOutput, IDisposable
             dsvOptions.InputOptions.DelimiterStreamReaderOptions.Delimiters[0]
             : DefaultDelimiter;
         _hasHeader = dsvOptions.HasHeader ?? true;
+        _quoteStrings = dsvOptions.QuoteStrings;
     }
 
     /// <inheritdoc />
@@ -115,7 +117,7 @@ internal sealed class DsvOutput : RowsOutput, IDisposable
 
     private void WriteString(string str)
     {
-        var containsDelimiter = str.IndexOf(_delimiter) > -1
+        var containsDelimiter = _quoteStrings || str.IndexOf(_delimiter) > -1
             || str.Contains('\n');
         if (containsDelimiter)
         {
