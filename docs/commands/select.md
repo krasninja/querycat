@@ -43,7 +43,7 @@ SELECT * FROM curl('https://tinyurl.com/24buj7mb')
 If column contains parenthesis or other special symbols, you can wrap it within square brackets `[]`:
 
 ```sql
-SELECT [cs(User-Agent)] FROM read_file('u_ex220826.log', formattre=>iisw3c());
+SELECT [cs(User-Agent)] FROM read_file('u_ex220826.log', formatter=>iisw3c());
 ```
 
 Also, you can use `FROM` syntax like this:
