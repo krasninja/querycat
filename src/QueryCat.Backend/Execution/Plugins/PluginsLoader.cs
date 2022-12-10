@@ -59,7 +59,7 @@ internal class PluginsLoader
         var directory = Path.GetDirectoryName(file);
         if (directory == null)
         {
-            throw new InvalidOperationException($"Cannot get plugin directory by file '{file}'.");
+            throw new PluginException($"Cannot get plugin directory by file '{file}'.");
         }
 
         Assembly? AssemblyResolve(object? sender, ResolveEventArgs args)

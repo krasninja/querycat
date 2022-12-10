@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using System.Xml;
 using QueryCat.Backend.Logging;
+using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Execution.Plugins;
 
@@ -10,19 +11,22 @@ namespace QueryCat.Backend.Execution.Plugins;
 public sealed class PluginsManager : IDisposable
 {
     private const string PluginsStorageUri = @"https://querycat.storage.yandexcloud.net/";
-    internal const string ApplicationPluginsDirectory = "plugins";
+    private const string ApplicationPluginsDirectory = "plugins";
+
+    private static readonly Regex KeyRegex = new(@"^(?<name>[a-zA-Z\.]+)\.(?<version>\d+\.\d+\.\d+)\.(dll|nupkg)$",
+        RegexOptions.Compiled);
 
     private readonly IEnumerable<string> _pluginDirectories;
     private readonly string _bucketUri;
     private readonly HttpClient _httpClient = new();
-    private static readonly Regex KeyRegex = new(@"^(?<name>[a-zA-Z\.]+)\.(?<version>\d+\.\d+\.\d+)\.(dll|nupkg)$", RegexOptions.Compiled);
+    private List<PluginInfo>? _remotePluginsCache;
 
     public IEnumerable<string> PluginDirectories => _pluginDirectories;
 
     public PluginsManager(IEnumerable<string> pluginDirectories, string? bucketUri = null)
     {
         _pluginDirectories = pluginDirectories;
-        _bucketUri = bucketUri ?? PluginsStorageUri;
+        _bucketUri = !string.IsNullOrEmpty(bucketUri) ? bucketUri : PluginsStorageUri;
     }
 
     /// <summary>
@@ -86,21 +90,27 @@ public sealed class PluginsManager : IDisposable
     /// </summary>
     /// <param name="name">Plugin name.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    public async Task InstallAsync(string name, CancellationToken cancellationToken = default)
+    /// <returns>Number of created files.</returns>
+    public async Task<int> InstallAsync(string name, CancellationToken cancellationToken = default)
     {
         var plugins = await GetRemotePluginsAsync(cancellationToken);
-        var plugin = plugins.FirstOrDefault(p => p.Name == name);
+        var plugin = plugins.FirstOrDefault(p => name.Equals(p.Name, StringComparison.OrdinalIgnoreCase));
         if (plugin == null)
         {
-            throw new InvalidOperationException($"Cannot find plugin {name} in repository.");
+            throw new PluginException($"Cannot find plugin '{name}' in repository.");
         }
 
+        // Create X.downloading file, download and then remove.
         var mainPluginDirectory = GetMainPluginDirectory();
         var stream = await _httpClient.GetStreamAsync(plugin.Uri, cancellationToken);
         var fullFileName = Path.Combine(mainPluginDirectory, Path.GetFileName(plugin.Uri));
-        await using var outputFileStream = new FileStream(fullFileName, FileMode.CreateNew);
+        var fullFileNameDownloading = fullFileName + ".downloading";
+        await using var outputFileStream = new FileStream(fullFileNameDownloading, FileMode.OpenOrCreate);
         await stream.CopyToAsync(outputFileStream, cancellationToken);
+        var overwrite = File.Exists(fullFileName);
+        File.Move(fullFileNameDownloading, fullFileName, overwrite);
         Logger.Instance.Info($"Save plugin file {fullFileName}.", nameof(PluginsManager));
+        return overwrite ? 1 : 0;
     }
 
     /// <summary>
@@ -110,8 +120,26 @@ public sealed class PluginsManager : IDisposable
     /// <param name="cancellationToken">Cancellation token.</param>
     public async Task UpdateAsync(string name, CancellationToken cancellationToken = default)
     {
-        await RemoveAsync(name, cancellationToken);
+        if (name == "*")
+        {
+            foreach (var localPlugin in GetLocalPlugins())
+            {
+                await UpdateAsyncInternal(localPlugin.Name, cancellationToken);
+            }
+        }
+        else
+        {
+            await UpdateAsyncInternal(name, cancellationToken);
+        }
+    }
+
+    private async Task UpdateAsyncInternal(string name, CancellationToken cancellationToken)
+    {
+        using var twoPhaseRemove = new TwoPhaseRemove(renameBeforeRemove: true);
+        var pluginsToRemove = GetLocalPlugins(name);
+        twoPhaseRemove.AddRange(pluginsToRemove.Select(p => p.Uri));
         await InstallAsync(name, cancellationToken);
+        twoPhaseRemove.Remove();
     }
 
     /// <summary>
@@ -135,6 +163,10 @@ public sealed class PluginsManager : IDisposable
 
     private async Task<IEnumerable<PluginInfo>> GetRemotePluginsAsync(CancellationToken cancellationToken = default)
     {
+        if (_remotePluginsCache != null)
+        {
+            return _remotePluginsCache;
+        }
         await using var stream = await _httpClient.GetStreamAsync(_bucketUri, cancellationToken);
         using var xmlReader = new XmlTextReader(stream);
         var xmlKeys = new List<string>();
@@ -142,17 +174,26 @@ public sealed class PluginsManager : IDisposable
         {
             xmlKeys.Add(xmlReader.ReadString());
         }
-        return xmlKeys.Select(k => CreatePluginInfoFromKey(k, _bucketUri)).ToList();
+        // Select only latest version.
+        _remotePluginsCache = xmlKeys
+            .Select(k => CreatePluginInfoFromKey(k, _bucketUri))
+            .GroupBy(k => k.Name, v => v)
+            .Select(v => v.MaxBy(q => q.Version))
+            .ToList()!;
+        return _remotePluginsCache;
     }
 
-    private IEnumerable<PluginInfo> GetLocalPlugins()
+    private IEnumerable<PluginInfo> GetLocalPlugins(string name = "*")
     {
         return GetPluginFiles(_pluginDirectories)
-            .Select(p => CreatePluginInfoFromKey(Path.GetFileName(p),
-                Path.GetDirectoryName(p) + Path.DirectorySeparatorChar));
+            .Select(p => CreatePluginInfoFromKey(
+                Path.GetFileName(p),
+                Path.GetDirectoryName(p) + Path.DirectorySeparatorChar,
+                isInstalled: true))
+            .Where(p => name == "*" || p.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
     }
 
-    private PluginInfo CreatePluginInfoFromKey(string key, string baseUri)
+    private PluginInfo CreatePluginInfoFromKey(string key, string baseUri, bool isInstalled = false)
     {
         var match = KeyRegex.Match(key);
         var name = match.Groups["name"].Value;
@@ -167,6 +208,7 @@ public sealed class PluginsManager : IDisposable
                 ? Version.Parse(match.Groups["version"].Value)
                 : new Version(),
             Uri = baseUri + key,
+            IsInstalled = isInstalled,
         };
     }
 
@@ -175,7 +217,7 @@ public sealed class PluginsManager : IDisposable
         var mainPluginDirectory = _pluginDirectories.FirstOrDefault();
         if (mainPluginDirectory == null)
         {
-            throw new InvalidOperationException("Cannot find a directory for plugins.");
+            throw new PluginException("Cannot find a directory for plugins.");
         }
         if (!Directory.Exists(mainPluginDirectory))
         {

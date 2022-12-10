@@ -67,6 +67,7 @@ public static class InfoFunctions
         var builder = new ClassRowsFrameBuilder<PluginInfo>()
             .AddProperty("name", p => p.Name)
             .AddProperty("version", p => p.Version.ToString())
+            .AddProperty("is_installed", p => p.IsInstalled)
             .AddProperty("uri", p => p.Uri);
         using var pluginsManager = new PluginsManager(args.ExecutionThread.PluginsManager.PluginDirectories);
         var plugins = pluginsManager.ListAsync(CancellationToken.None).GetAwaiter().GetResult();

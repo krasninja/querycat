@@ -45,6 +45,11 @@ public sealed class ExecutionOptions
     /// List of directories to search for plugins.
     /// </summary>
     public List<string> PluginDirectories { get; } = new();
+
+    /// <summary>
+    /// Plugins repository. If empty - default will be used.
+    /// </summary>
+    public string? PluginsRepositoryUri { get; init; }
 #endif
 
     /// <summary>

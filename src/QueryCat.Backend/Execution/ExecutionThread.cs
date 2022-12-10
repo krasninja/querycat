@@ -88,7 +88,8 @@ public sealed class ExecutionThread
         Options = options ?? new ExecutionOptions();
 #if ENABLE_PLUGINS
         PluginsManager = new PluginsManager(
-            PluginsManager.GetPluginDirectories(appLocalDirectory).Union(Options.PluginDirectories));
+            PluginsManager.GetPluginDirectories(appLocalDirectory).Union(Options.PluginDirectories),
+            Options.PluginsRepositoryUri);
 #endif
         _statementsVisitor = new StatementsVisitor(this);
         InputConfigStorage = new PersistentInputConfigStorage(Path.Combine(appLocalDirectory, ConfigFileName));

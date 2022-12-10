@@ -47,7 +47,7 @@ public class QueryCommand : BaseQueryCommand
     /// <inheritdoc />
     public override int OnExecute(CommandLineApplication app, IConsole console)
     {
-        PreInitialize();
+        base.OnExecute(app, console);
         OnExecuteInternal(console);
         return 0;
     }

@@ -8,11 +8,13 @@ namespace QueryCat.Cli;
 
 #if ENABLE_PLUGINS
 [Command("list", Description = "List all available plugins.")]
-public class PluginListCommand : BaseQueryCommand
+public class PluginListCommand : BasePluginCommand
 {
     /// <inheritdoc />
     public override int OnExecute(CommandLineApplication app, IConsole console)
     {
+        base.OnExecute(app, console);
+
         var runner = CreateRunner(new ExecutionOptions
         {
             PagingSize = -1

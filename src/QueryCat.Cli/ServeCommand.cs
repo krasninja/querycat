@@ -46,7 +46,7 @@ public class ServeCommand : BaseQueryCommand
     /// <inheritdoc />
     public override int OnExecute(CommandLineApplication app, IConsole console)
     {
-        PreInitialize();
+        base.OnExecute(app, console);
 
         var listener = new HttpListener();
         listener.Prefixes.Add(Urls);

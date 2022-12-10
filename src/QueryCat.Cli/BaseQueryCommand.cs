@@ -36,13 +36,14 @@ public abstract class BaseQueryCommand
     /// <returns>Error code.</returns>
     public virtual int OnExecute(CommandLineApplication app, IConsole console)
     {
+        PreInitialize();
         return 0;
     }
 
     /// <summary>
     /// Pre initialization steps.
     /// </summary>
-    protected void PreInitialize()
+    private void PreInitialize()
     {
         Logger.Instance.MinLevel = LogLevel;
 
@@ -52,7 +53,7 @@ public abstract class BaseQueryCommand
         }
     }
 
-    protected Runner CreateRunner(ExecutionOptions? executionOptions = null)
+    protected virtual Runner CreateRunner(ExecutionOptions? executionOptions = null)
     {
         executionOptions ??= new ExecutionOptions();
 #if ENABLE_PLUGINS

@@ -12,7 +12,7 @@ public class ExplainCommand : BaseQueryCommand
     /// <inheritdoc />
     public override int OnExecute(CommandLineApplication app, IConsole console)
     {
-        PreInitialize();
+        base.OnExecute(app, console);
 
         var runner = CreateRunner(new ExecutionOptions
         {

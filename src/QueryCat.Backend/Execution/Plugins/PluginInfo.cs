@@ -20,6 +20,11 @@ public class PluginInfo
     /// </summary>
     public Version Version { get; set; } = new();
 
+    /// <summary>
+    /// Is plugin installed and ready to use.
+    /// </summary>
+    public bool IsInstalled { get; set; }
+
     public PluginInfo(string name)
     {
         Name = name;

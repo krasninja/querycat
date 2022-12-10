@@ -4,11 +4,13 @@ namespace QueryCat.Cli;
 
 #if ENABLE_PLUGINS
 [Command("remove", Description = "Remove the plugin.")]
-public class PluginRemoveCommand : BaseQueryCommand
+public class PluginRemoveCommand : BasePluginCommand
 {
     /// <inheritdoc />
     public override int OnExecute(CommandLineApplication app, IConsole console)
     {
+        base.OnExecute(app, console);
+
         var runner = CreateRunner();
         runner.ExecutionThread.PluginsManager.RemoveAsync(Query, CancellationToken.None).GetAwaiter().GetResult();
         return 1;
