@@ -14,7 +14,7 @@ public sealed class SelectOrderBySpecificationNode : AstNode
     public SelectOrderBySpecificationNode(
         ExpressionNode expression,
         SelectOrderSpecification order = SelectOrderSpecification.Ascending,
-        SelectNullOrdering nullOrder = SelectNullOrdering.Unknown)
+        SelectNullOrdering nullOrder = SelectNullOrdering.NullsLast)
     {
         Expression = expression;
         Order = order;

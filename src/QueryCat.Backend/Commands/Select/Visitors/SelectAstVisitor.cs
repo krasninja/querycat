@@ -2,6 +2,7 @@ using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Commands.Select.Iterators;
 using QueryCat.Backend.Execution;
+using QueryCat.Backend.Indexes;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Relational.Iterators;
 
@@ -35,6 +36,7 @@ internal abstract class SelectAstVisitor : AstVisitor
             new OrderRowsIterator.OrderBy(
                 makeDelegateVisitor.RunAndReturn(n.Expression),
                 ConvertDirection(n.Order),
+                ConvertNullOrder(n.NullOrder),
                 n.GetDataType()
             )
         );
@@ -45,6 +47,13 @@ internal abstract class SelectAstVisitor : AstVisitor
     {
         SelectOrderSpecification.Ascending => OrderDirection.Ascending,
         SelectOrderSpecification.Descending => OrderDirection.Descending,
+        _ => throw new ArgumentOutOfRangeException(nameof(order)),
+    };
+
+    private static NullOrder ConvertNullOrder(SelectNullOrdering order) => order switch
+    {
+        SelectNullOrdering.NullsFirst => NullOrder.NullsFirst,
+        SelectNullOrdering.NullsLast => NullOrder.NullsLast,
         _ => throw new ArgumentOutOfRangeException(nameof(order)),
     };
 

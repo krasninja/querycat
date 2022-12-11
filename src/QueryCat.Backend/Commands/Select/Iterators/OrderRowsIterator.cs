@@ -21,7 +21,7 @@ internal sealed class OrderRowsIterator : IRowsIterator
 
     private bool _isInitialized;
 
-    internal record OrderBy(IFuncUnit Func, OrderDirection Direction, DataType DataType);
+    internal record OrderBy(IFuncUnit Func, OrderDirection Direction, NullOrder NullOrder, DataType DataType);
 
     /// <inheritdoc />
     public Column[] Columns => _rowsIterator.Columns;
@@ -44,6 +44,7 @@ internal sealed class OrderRowsIterator : IRowsIterator
         _orderIndex = new OrderColumnsIndex(
             _orderRowsFrame.GetIterator(),
             orders.Select(o => o.Direction).ToArray(),
+            orders.Select(o => o.NullOrder).ToArray(),
             orders.Select((_, index) => index).ToArray()
         );
         _orderIndexIterator = (ICursorRowsIterator)_orderIndex.GetOrderIterator();

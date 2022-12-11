@@ -1,0 +1,6 @@
+expected: |
+
+  1
+  2
+query: |
+  select * from (select 1 union select null::integer union select 2) as t order by [value] nulls first;

@@ -330,8 +330,21 @@ internal partial class ProgramParserVisitor
 
     /// <inheritdoc />
     public override IAstNode VisitSelectSortSpecification(QueryCatParser.SelectSortSpecificationContext context)
-        => new SelectOrderBySpecificationNode(this.Visit<ExpressionNode>(context.expression()),
-            context.DESC() != null ? SelectOrderSpecification.Descending : SelectOrderSpecification.Ascending);
+    {
+        var nullOrder = SelectNullOrdering.NullsLast;
+        if (context.LAST() != null)
+        {
+            nullOrder = SelectNullOrdering.NullsLast;
+        }
+        else if (context.FIRST() != null)
+        {
+            nullOrder = SelectNullOrdering.NullsFirst;
+        }
+        return new SelectOrderBySpecificationNode(
+            expression: this.Visit<ExpressionNode>(context.expression()),
+            order: context.DESC() != null ? SelectOrderSpecification.Descending : SelectOrderSpecification.Ascending,
+            nullOrder);
+    }
 
     #endregion
 
