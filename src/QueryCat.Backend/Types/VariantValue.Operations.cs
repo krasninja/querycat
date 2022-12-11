@@ -54,6 +54,13 @@ public readonly partial struct VariantValue
             => @delegate.Invoke(ref left, ref right, out _);
     }
 
+    internal static UnaryFunction GetOperationDelegate(Operation operation, DataType leftType)
+        => operation switch
+        {
+            Operation.Not => GetNotDelegate(leftType),
+            _ => throw new ArgumentOutOfRangeException("Invalid operation.", nameof(operation)),
+        };
+
     internal static OperationBinaryDelegate GetOperationDelegate(Operation operation)
         => operation switch
         {
@@ -70,13 +77,11 @@ public readonly partial struct VariantValue
             Operation.GreaterOrEquals => GreaterOrEquals,
             Operation.Less => Less,
             Operation.LessOrEquals => LessOrEquals,
-            Operation.And => And,
-            Operation.Or => Or,
             Operation.Concat => Concat,
             Operation.BetweenAnd => BetweenAnd,
             Operation.Like => Like,
             Operation.NotLike => NotLike,
-            _ => throw new ArgumentOutOfRangeException("Invalid operation.", nameof(operation))
+            _ => throw new ArgumentOutOfRangeException("Invalid operation.", nameof(operation)),
         };
 
     internal static BinaryFunction GetOperationDelegate(Operation operation, DataType leftType, DataType rightType)
@@ -90,6 +95,8 @@ public readonly partial struct VariantValue
             Operation.GreaterOrEquals => GetGreaterOrEqualsDelegate(leftType, rightType),
             Operation.Less => GetLessDelegate(leftType, rightType),
             Operation.LessOrEquals => GetLessOrEqualsDelegate(leftType, rightType),
+            Operation.And => GetAndDelegate(leftType, rightType),
+            Operation.Or => GetOrDelegate(leftType, rightType),
             _ => GetBinaryFunction(GetOperationDelegate(operation)),
         };
 
@@ -420,108 +427,6 @@ public readonly partial struct VariantValue
         }
 
         return likeResult.AsBoolean ? new VariantValue(false) : new VariantValue(true);
-    }
-
-    #endregion
-
-    #region Logical operations
-
-    public static VariantValue And(ref VariantValue left, ref VariantValue right, out ErrorCode errorCode)
-    {
-        if (left.IsNull)
-        {
-            errorCode = ErrorCode.OK;
-            return Null;
-        }
-        var leftType = left.GetInternalType();
-        if (leftType != DataType.Boolean)
-        {
-            errorCode = ErrorCode.CannotApplyOperator;
-            return Null;
-        }
-        if (!left.AsBoolean)
-        {
-            errorCode = ErrorCode.OK;
-            return left;
-        }
-
-        if (right.IsNull)
-        {
-            errorCode = ErrorCode.OK;
-            return Null;
-        }
-        var rightType = right.GetInternalType();
-        if (rightType != DataType.Boolean)
-        {
-            errorCode = ErrorCode.CannotApplyOperator;
-            return Null;
-        }
-        if (!right.AsBoolean)
-        {
-            errorCode = ErrorCode.OK;
-            return right;
-        }
-
-        errorCode = ErrorCode.OK;
-        return new VariantValue(true);
-    }
-
-    public static VariantValue Or(ref VariantValue left, ref VariantValue right, out ErrorCode errorCode)
-    {
-        if (left.IsNull)
-        {
-            errorCode = ErrorCode.OK;
-            return Null;
-        }
-        var leftType = left.GetInternalType();
-        if (leftType != DataType.Boolean)
-        {
-            errorCode = ErrorCode.CannotApplyOperator;
-            return Null;
-        }
-        if (left.AsBoolean)
-        {
-            errorCode = ErrorCode.OK;
-            return left;
-        }
-
-        if (right.IsNull)
-        {
-            errorCode = ErrorCode.OK;
-            return Null;
-        }
-        var rightType = right.GetInternalType();
-        if (rightType != DataType.Boolean)
-        {
-            errorCode = ErrorCode.CannotApplyOperator;
-            return Null;
-        }
-        if (right.AsBoolean)
-        {
-            errorCode = ErrorCode.OK;
-            return right;
-        }
-
-        errorCode = ErrorCode.OK;
-        return new VariantValue(false);
-    }
-
-    public static VariantValue Not(ref VariantValue right, out ErrorCode errorCode)
-    {
-        if (right.IsNull)
-        {
-            errorCode = ErrorCode.OK;
-            return Null;
-        }
-        var rightType = right.GetInternalType();
-        if (rightType != DataType.Boolean)
-        {
-            errorCode = ErrorCode.CannotApplyOperator;
-            return Null;
-        }
-
-        errorCode = ErrorCode.OK;
-        return new VariantValue(!right.AsBoolean);
     }
 
     #endregion

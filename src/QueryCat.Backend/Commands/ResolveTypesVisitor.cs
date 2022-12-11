@@ -105,7 +105,8 @@ internal class ResolveTypesVisitor : AstVisitor
     public override void Visit(UnaryOperationExpressionNode node)
     {
         if (node.Operation == VariantValue.Operation.IsNull
-            || node.Operation == VariantValue.Operation.IsNotNull)
+            || node.Operation == VariantValue.Operation.IsNotNull
+            || node.Operation == VariantValue.Operation.Not)
         {
             node.SetDataType(DataType.Boolean);
         }

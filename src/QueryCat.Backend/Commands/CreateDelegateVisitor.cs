@@ -187,6 +187,9 @@ internal class CreateDelegateVisitor : AstVisitor
     public override void Visit(UnaryOperationExpressionNode node)
     {
         var action = NodeIdFuncMap[node.Right.Id];
+        var notDelegate = node.Operation == VariantValue.Operation.Not
+            ? VariantValue.GetOperationDelegate(VariantValue.Operation.Not, node.GetDataType())
+            : VariantValue.UnaryNullDelegate;
 
         NodeIdFuncMap[node.Id] = node.Operation switch
         {
@@ -200,8 +203,7 @@ internal class CreateDelegateVisitor : AstVisitor
             VariantValue.Operation.Not => new FuncUnitDelegate(() =>
             {
                 var value = action.Invoke();
-                var result = VariantValue.Not(ref value, out ErrorCode code);
-                ApplyStatistic(code);
+                var result = notDelegate.Invoke(ref value);
                 return result;
             }),
             VariantValue.Operation.IsNull => new FuncUnitDelegate(() =>

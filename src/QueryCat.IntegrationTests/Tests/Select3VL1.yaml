@@ -1,0 +1,22 @@
+expected: |
+  ,False,,False
+  True,,True,
+  False,True,,
+query: |
+  select * from (
+    select
+      true and null,
+      false and null,
+      null and true,
+      null and false
+    union select
+      true or null,
+      false or null,
+      null or true,
+      null or false
+    union select
+      not true,
+      not false,
+      not null,
+      not not null
+  )
