@@ -50,7 +50,7 @@ internal class DsvFormatter : IRowsFormatter
     }
 
     public DsvFormatter(char? delimiter = null, bool? hasHeader = null, bool addFileNameColumn = true,
-        bool quoteStrings = true)
+        bool quoteStrings = false)
     {
         _delimiter = delimiter;
         _hasHeader = hasHeader;
