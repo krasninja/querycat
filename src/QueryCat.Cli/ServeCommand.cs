@@ -26,16 +26,16 @@ public class ServeCommand : BaseQueryCommand
     [Option("--urls", Description = "Endpoint to serve on.")]
     public string Urls { get; } = "http://localhost:6789/";
 
-    private static readonly Dictionary<string, Action<HttpListenerRequest, HttpListenerResponse, Runner>> Actions = new()
+    private static readonly Dictionary<string, Action<HttpListenerRequest, HttpListenerResponse, ExecutionThread>> Actions = new()
     {
         ["/api/query"] = HandleQueryApiAction
     };
 
-    private readonly Runner _runner;
+    private readonly ExecutionThread _executionThread;
 
     public ServeCommand()
     {
-        _runner = CreateRunner(new ExecutionOptions
+        _executionThread = CreateExecutionThread(new ExecutionOptions
         {
             PagingSize = -1,
             AddRowNumberColumn = false,
@@ -65,7 +65,7 @@ public class ServeCommand : BaseQueryCommand
             {
                 try
                 {
-                    action.Invoke(context.Request, response, _runner);
+                    action.Invoke(context.Request, response, _executionThread);
                 }
                 catch (QueryCatException e)
                 {
@@ -87,7 +87,8 @@ public class ServeCommand : BaseQueryCommand
         }
     }
 
-    private static void HandleQueryApiAction(HttpListenerRequest request, HttpListenerResponse response, Runner runner)
+    private static void HandleQueryApiAction(HttpListenerRequest request, HttpListenerResponse response,
+        ExecutionThread executionThread)
     {
         if (request.HttpMethod != PostMethod && request.HttpMethod != GetMethod)
         {
@@ -96,7 +97,7 @@ public class ServeCommand : BaseQueryCommand
         }
 
         var query = GetQueryFromRequest(request);
-        var lastResult = runner.Run(query);
+        var lastResult = executionThread.Run(query);
 
         var iterator = lastResult.GetInternalType() == DataType.Object
             ? (IRowsIterator)lastResult.AsObject!

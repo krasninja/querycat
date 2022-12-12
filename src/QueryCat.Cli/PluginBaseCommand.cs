@@ -17,16 +17,16 @@ public class BasePluginCommand : BaseQueryCommand
     }
 
     /// <inheritdoc />
-    protected override Runner CreateRunner(ExecutionOptions? executionOptions = null)
+    protected override ExecutionThread CreateExecutionThread(ExecutionOptions? executionOptions = null)
     {
         executionOptions ??= new ExecutionOptions
         {
             PluginsRepositoryUri = RepositoryUri
         };
         executionOptions.PluginDirectories.AddRange(PluginDirectories);
-        var runner = new Runner(executionOptions);
-        runner.Bootstrap();
-        return runner;
+        var executionThread = new ExecutionThread(executionOptions);
+        new ExecutionThreadBootstrapper().Bootstrap(executionThread);
+        return executionThread;
     }
 }
 #endif

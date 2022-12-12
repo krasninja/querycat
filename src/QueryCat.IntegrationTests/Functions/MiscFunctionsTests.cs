@@ -8,15 +8,15 @@ namespace QueryCat.IntegrationTests.Functions;
 /// </summary>
 public class MiscFunctionsTests
 {
-    private readonly Backend.Tests.TestRunner _testRunner = new();
+    private readonly Backend.Tests.TestThread _testThread = new();
 
     [Fact]
     public void Coalesce_SeveralArgs_ShouldReturnFirstNotNull()
     {
         // Act.
-        var result1 = _testRunner.Run(@"ECHO COALESCE(NULL, 10);");
-        var result2 = _testRunner.Run(@"ECHO COALESCE(NULL, 10, 20);");
-        var result3 = _testRunner.Run(@"ECHO COALESCE(NULL, 10 + NULL, NULL);");
+        var result1 = _testThread.Run(@"ECHO COALESCE(NULL, 10);");
+        var result2 = _testThread.Run(@"ECHO COALESCE(NULL, 10, 20);");
+        var result3 = _testThread.Run(@"ECHO COALESCE(NULL, 10 + NULL, NULL);");
 
         // Assert.
         Assert.Equal(10, result1.AsInteger);

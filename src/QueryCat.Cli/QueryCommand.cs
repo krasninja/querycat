@@ -54,19 +54,19 @@ public class QueryCommand : BaseQueryCommand
 
     internal void OnExecuteInternal(IConsole console)
     {
-        var runner = CreateRunner(new ExecutionOptions(OutputStyle)
+        var executionThread = CreateExecutionThread(new ExecutionOptions(OutputStyle)
         {
             AddRowNumberColumn = RowNumber,
             PagingSize = PageSize,
             ShowDetailedStatistic = ShowDetailedStatistic,
             MaxErrors = MaxErrors,
         });
-        RunQuery(runner);
+        RunQuery(executionThread);
 
         if (ShowStatistic || ShowDetailedStatistic)
         {
             console.WriteLine(new string('-', 5));
-            console.WriteLine(runner.ExecutionThread.Statistic.ToString());
+            console.WriteLine(executionThread.Statistic.ToString());
         }
     }
 }

@@ -15,12 +15,12 @@ public class PluginListCommand : BasePluginCommand
     {
         base.OnExecute(app, console);
 
-        var runner = CreateRunner(new ExecutionOptions
+        var executionThread = CreateExecutionThread(new ExecutionOptions
         {
             PagingSize = -1
         });
         var plugins = FunctionsManager.Call(InfoFunctions.Plugins);
-        runner.ExecutionThread.Options.DefaultRowsOutput.Write(plugins);
+        executionThread.Options.DefaultRowsOutput.Write(plugins);
         return 1;
     }
 }

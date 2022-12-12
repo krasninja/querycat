@@ -11,8 +11,8 @@ public class PluginInstallCommand : BasePluginCommand
     {
         base.OnExecute(app, console);
 
-        var runner = CreateRunner();
-        runner.ExecutionThread.PluginsManager.InstallAsync(Query, CancellationToken.None).GetAwaiter().GetResult();
+        var executionThread = CreateExecutionThread();
+        executionThread.PluginsManager.InstallAsync(Query, CancellationToken.None).GetAwaiter().GetResult();
         return 1;
     }
 }

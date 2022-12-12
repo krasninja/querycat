@@ -14,13 +14,13 @@ public class ExplainCommand : BaseQueryCommand
     {
         base.OnExecute(app, console);
 
-        var runner = CreateRunner(new ExecutionOptions
+        var executionThread = CreateExecutionThread(new ExecutionOptions
         {
             PagingSize = -1,
         });
-        runner.ExecutionThread.AfterStatementExecute += (_, args) =>
+        executionThread.AfterStatementExecute += (_, args) =>
         {
-            var result = runner.ExecutionThread.LastResult;
+            var result = executionThread.LastResult;
             if (result.GetInternalType() == DataType.Object
                 && result.AsObject is IRowsIterator rowsIterator)
             {
@@ -31,7 +31,7 @@ public class ExplainCommand : BaseQueryCommand
                 args.ContinueExecution = false;
             }
         };
-        RunQuery(runner);
+        RunQuery(executionThread);
 
         return 0;
     }

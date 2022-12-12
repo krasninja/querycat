@@ -1,3 +1,5 @@
+using System.Text;
+
 namespace QueryCat.Backend.Ast.Nodes.Select;
 
 public sealed class SelectQueryExpressionBodyNode : ExpressionNode
@@ -9,11 +11,11 @@ public sealed class SelectQueryExpressionBodyNode : ExpressionNode
     /// <inheritdoc />
     public override string Code => "select_query_body";
 
-    public SelectOrderByNode? OrderBy { get; set; }
+    public SelectOrderByNode? OrderByNode { get; set; }
 
-    public SelectOffsetNode? Offset { get; set; }
+    public SelectOffsetNode? OffsetNode { get; set; }
 
-    public SelectFetchNode? Fetch { get; set; }
+    public SelectFetchNode? FetchNode { get; set; }
 
     /// <inheritdoc />
     public SelectQueryExpressionBodyNode(params SelectQuerySpecificationNode[] queries)
@@ -24,13 +26,13 @@ public sealed class SelectQueryExpressionBodyNode : ExpressionNode
     public SelectQueryExpressionBodyNode(SelectQueryExpressionBodyNode node) :
         this(node.Queries.Select(q => (SelectQuerySpecificationNode)q.Clone()).ToArray())
     {
-        if (node.Offset != null)
+        if (node.OffsetNode != null)
         {
-            Offset = (SelectOffsetNode)node.Offset.Clone();
+            OffsetNode = (SelectOffsetNode)node.OffsetNode.Clone();
         }
-        if (node.Fetch != null)
+        if (node.FetchNode != null)
         {
-            Fetch = (SelectFetchNode)node.Fetch.Clone();
+            FetchNode = (SelectFetchNode)node.FetchNode.Clone();
         }
         node.CopyTo(this);
     }
@@ -42,17 +44,17 @@ public sealed class SelectQueryExpressionBodyNode : ExpressionNode
         {
             yield return query;
         }
-        if (OrderBy != null)
+        if (OrderByNode != null)
         {
-            yield return OrderBy;
+            yield return OrderByNode;
         }
-        if (Offset != null)
+        if (OffsetNode != null)
         {
-            yield return Offset;
+            yield return OffsetNode;
         }
-        if (Fetch != null)
+        if (FetchNode != null)
         {
-            yield return Fetch;
+            yield return FetchNode;
         }
     }
 
@@ -61,4 +63,26 @@ public sealed class SelectQueryExpressionBodyNode : ExpressionNode
 
     /// <inheritdoc />
     public override void Accept(AstVisitor visitor) => visitor.Visit(this);
+
+    /// <inheritdoc />
+    public override string ToString()
+    {
+        var sb = new StringBuilder();
+        sb.Append('(');
+        sb.Append(string.Join(" Union ", Queries.Select(q => q.ToString())));
+        sb.Append(')');
+        if (OffsetNode != null)
+        {
+            sb.Append($" Offset {OffsetNode}");
+        }
+        if (FetchNode != null)
+        {
+            sb.Append($" Fetch {FetchNode}");
+        }
+        if (OrderByNode != null)
+        {
+            sb.Append($" Order {OrderByNode}");
+        }
+        return sb.ToString();
+    }
 }

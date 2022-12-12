@@ -25,8 +25,8 @@ internal partial class SpecificationNodeVisitor
 
         // Process.
         CreateCombineRowsSet(context, node, isSubQuery, ref hasOutputInQuery);
-        ApplyOrderBy(context, node.OrderBy);
-        ApplyOffsetFetch(context, node.Offset, node.Fetch);
+        ApplyOrderBy(context, node.OrderByNode);
+        ApplyOffsetFetch(context, node.OffsetNode, node.FetchNode);
         var resultIterator = context.CurrentIterator;
         if (hasOutputInQuery)
         {

@@ -31,9 +31,9 @@ internal partial class ProgramParserVisitor
         => new SelectQueryExpressionBodyNode(
             this.Visit<SelectQuerySpecificationNode>(context.selectQuery()).ToArray())
         {
-            OrderBy = this.VisitMaybe<SelectOrderByNode>(context.selectOrderByClause()),
-            Offset = this.VisitMaybe<SelectOffsetNode>(context.selectOffsetClause()),
-            Fetch = this.VisitMaybe<SelectFetchNode>(context.selectFetchFirstClause()),
+            OrderByNode = this.VisitMaybe<SelectOrderByNode>(context.selectOrderByClause()),
+            OffsetNode = this.VisitMaybe<SelectOffsetNode>(context.selectOffsetClause()),
+            FetchNode = this.VisitMaybe<SelectFetchNode>(context.selectFetchFirstClause()),
         };
 
     /// <inheritdoc />

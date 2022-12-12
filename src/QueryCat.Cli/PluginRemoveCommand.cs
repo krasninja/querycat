@@ -11,8 +11,8 @@ public class PluginRemoveCommand : BasePluginCommand
     {
         base.OnExecute(app, console);
 
-        var runner = CreateRunner();
-        runner.ExecutionThread.PluginsManager.RemoveAsync(Query, CancellationToken.None).GetAwaiter().GetResult();
+        var executionThread = CreateExecutionThread();
+        executionThread.PluginsManager.RemoveAsync(Query, CancellationToken.None).GetAwaiter().GetResult();
         return 1;
     }
 }

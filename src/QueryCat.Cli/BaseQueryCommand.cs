@@ -48,30 +48,30 @@ public abstract class BaseQueryCommand
         Logger.Instance.MinLevel = LogLevel;
     }
 
-    protected virtual Runner CreateRunner(ExecutionOptions? executionOptions = null)
+    protected virtual ExecutionThread CreateExecutionThread(ExecutionOptions? executionOptions = null)
     {
         executionOptions ??= new ExecutionOptions();
 #if ENABLE_PLUGINS
         executionOptions.PluginDirectories.AddRange(PluginDirectories);
 #endif
-        var runner = new Runner(executionOptions);
-        runner.ExecutionThread.Statistic.CountErrorRows = runner.ExecutionThread.Options.ShowDetailedStatistic;
-        runner.Bootstrap();
-        return runner;
+        var executionThread = new ExecutionThread(executionOptions);
+        executionThread.Statistic.CountErrorRows = executionThread.Options.ShowDetailedStatistic;
+        new ExecutionThreadBootstrapper().Bootstrap(executionThread);
+        return executionThread;
     }
 
-    protected void RunQuery(Runner runner)
+    protected void RunQuery(ExecutionThread executionThread)
     {
         if (Files.Any())
         {
             foreach (var file in Files)
             {
-                runner.Run(File.ReadAllText(file));
+                executionThread.Run(File.ReadAllText(file));
             }
         }
         else
         {
-            runner.Run(Query);
+            executionThread.Run(Query);
         }
     }
 }

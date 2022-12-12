@@ -7,17 +7,17 @@ namespace QueryCat.IntegrationTests.Plugins;
 /// </summary>
 public class PluginsTests
 {
-    private readonly Backend.Tests.TestRunner _testRunner = new();
+    private readonly Backend.Tests.TestThread _testThread = new();
 
     [Fact]
     public void SamplePluginRowsInput_CreateAndRun_ReturnsResult()
     {
         // Arrange.
-        _testRunner.ExecutionThread.FunctionsManager.RegisterFunction(SamplePluginRowsInput.SamplePlugin);
+        _testThread.FunctionsManager.RegisterFunction(SamplePluginRowsInput.SamplePlugin);
 
         // Act.
-        _testRunner.Run(@"SELECT * FROM plugin();");
-        var result = PrepareResult(_testRunner.GetQueryResult());
+        _testThread.Run(@"SELECT * FROM plugin();");
+        var result = PrepareResult(_testThread.GetQueryResult());
 
         // Assert.
         Assert.Equal("123456789", result);
@@ -27,11 +27,11 @@ public class PluginsTests
     public void SamplePluginClassRowsInput_CreateAndRun_ReturnsResult()
     {
         // Arrange.
-        _testRunner.ExecutionThread.FunctionsManager.RegisterFunction(SamplePluginClassRowsInput.SamplePlugin);
+        _testThread.FunctionsManager.RegisterFunction(SamplePluginClassRowsInput.SamplePlugin);
 
         // Act.
-        _testRunner.Run(@"SELECT * FROM plugin();");
-        var result = PrepareResult(_testRunner.GetQueryResult());
+        _testThread.Run(@"SELECT * FROM plugin();");
+        var result = PrepareResult(_testThread.GetQueryResult());
 
         // Assert.
         Assert.Equal("123456789", result);
@@ -41,11 +41,11 @@ public class PluginsTests
     public void SamplePluginRowsIterator_CreateAndRun_ReturnsResult()
     {
         // Arrange.
-        _testRunner.ExecutionThread.FunctionsManager.RegisterFunction(SamplePluginRowsIterator.SamplePlugin);
+        _testThread.FunctionsManager.RegisterFunction(SamplePluginRowsIterator.SamplePlugin);
 
         // Act.
-        _testRunner.Run(@"SELECT * FROM plugin();");
-        var result = PrepareResult(_testRunner.GetQueryResult());
+        _testThread.Run(@"SELECT * FROM plugin();");
+        var result = PrepareResult(_testThread.GetQueryResult());
 
         // Assert.
         Assert.Equal("123456789", result);
@@ -55,11 +55,11 @@ public class PluginsTests
     public void SamplePluginEnumerableInput_CreateAndRun_ReturnsResult()
     {
         // Arrange.
-        _testRunner.ExecutionThread.FunctionsManager.RegisterFunction(SamplePluginEnumerableInput.SamplePlugin);
+        _testThread.FunctionsManager.RegisterFunction(SamplePluginEnumerableInput.SamplePlugin);
 
         // Act.
-        _testRunner.Run(@"SELECT * FROM plugin();");
-        var result = PrepareResult(_testRunner.GetQueryResult());
+        _testThread.Run(@"SELECT * FROM plugin();");
+        var result = PrepareResult(_testThread.GetQueryResult());
 
         // Assert.
         Assert.Equal("123456789", result);

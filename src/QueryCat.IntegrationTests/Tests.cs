@@ -1,3 +1,4 @@
+using QueryCat.Backend.Execution;
 using Xunit;
 using QueryCat.Backend.Functions;
 using QueryCat.Backend.Tests;
@@ -10,31 +11,31 @@ namespace QueryCat.IntegrationTests;
 /// </summary>
 public class Tests
 {
-    private readonly TestRunner _testRunner = new();
+    private readonly TestThread _testThread = new();
 
     [Theory]
     [MemberData(nameof(GetData))]
     public void Select(string fileName)
     {
         // Arrange.
-        _testRunner.Bootstrap();
-        _testRunner.ExecutionThread.FunctionsManager.RegisterFunction(SumIntegers);
-        _testRunner.ExecutionThread.FunctionsManager.RegisterFunction(FuncWithObject);
-        _testRunner.ExecutionThread.FunctionsManager.RegisterFunction(ReturnObjFunc);
-        _testRunner.ExecutionThread.FunctionsManager.RegisterFunction(SumIntegersOpt);
-        _testRunner.ExecutionThread.FunctionsManager.RegisterFunction(VoidFunc);
+        new ExecutionThreadBootstrapper().Bootstrap(_testThread);;
+        _testThread.FunctionsManager.RegisterFunction(SumIntegers);
+        _testThread.FunctionsManager.RegisterFunction(FuncWithObject);
+        _testThread.FunctionsManager.RegisterFunction(ReturnObjFunc);
+        _testThread.FunctionsManager.RegisterFunction(SumIntegersOpt);
+        _testThread.FunctionsManager.RegisterFunction(VoidFunc);
 
-        var data = TestRunner.GetQueryData(fileName);
-        _testRunner.Run(data.Query);
+        var data = TestThread.GetQueryData(fileName);
+        _testThread.Run(data.Query);
 
         // Act.
-        var result = _testRunner.GetQueryResult();
+        var result = _testThread.GetQueryResult();
 
         // Assert.
         Assert.Equal(data.Expected, result);
     }
 
-    public static IEnumerable<object[]> GetData() => Backend.Tests.TestRunner.GetTestFiles();
+    public static IEnumerable<object[]> GetData() => TestThread.GetTestFiles();
 
     [FunctionSignature("objfunc(a: integer, b: object): object")]
     internal static VariantValue FuncWithObject(FunctionCallInfo callInfo)

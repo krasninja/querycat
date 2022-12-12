@@ -1,8 +1,11 @@
 using System.Diagnostics;
+using System.Text;
+using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Commands;
 using QueryCat.Backend.Execution.Plugins;
 using QueryCat.Backend.Functions;
+using QueryCat.Backend.Parser;
 using QueryCat.Backend.Storage;
 using QueryCat.Backend.Types;
 
@@ -11,7 +14,7 @@ namespace QueryCat.Backend.Execution;
 /// <summary>
 /// Execution thread that includes statements to be executed, local variables, options and statistic.
 /// </summary>
-public sealed class ExecutionThread
+public class ExecutionThread
 {
     internal const string ApplicationDirectory = "qcat";
     internal const string ConfigFileName = "config.json";
@@ -96,9 +99,29 @@ public sealed class ExecutionThread
     }
 
     /// <summary>
+    /// Run text query.
+    /// </summary>
+    /// <param name="query">Query.</param>
+    public VariantValue Run(string query)
+    {
+        if (string.IsNullOrEmpty(query))
+        {
+            return VariantValue.Null;
+        }
+
+        var programNode = AstBuilder.BuildProgramFromString(query);
+
+        // Set first executing statement and run.
+        ExecutingStatement = programNode.Statements.FirstOrDefault();
+        var result = RunInternal();
+        ExecutingStatement = null;
+        return result;
+    }
+
+    /// <summary>
     /// Run the execution flow.
     /// </summary>
-    public VariantValue Run()
+    internal VariantValue RunInternal()
     {
         var stopwatch = new Stopwatch();
         stopwatch.Start();
@@ -175,5 +198,22 @@ public sealed class ExecutionThread
     {
         var functionCallInfo = FunctionCallInfo.CreateWithArguments(this, args);
         return function.Delegate.Invoke(functionCallInfo);
+    }
+
+    /// <summary>
+    /// Dumps current executing AST statement.
+    /// </summary>
+    /// <returns>AST string.</returns>
+    public string DumpAst()
+    {
+        if (ExecutingStatement == null)
+        {
+            return string.Empty;
+        }
+
+        var sb = new StringBuilder();
+        var visitor = new StringDumpAstVisitor(sb);
+        visitor.Run(ExecutingStatement);
+        return sb.ToString();
     }
 }

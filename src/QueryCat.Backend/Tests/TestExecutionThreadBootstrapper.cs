@@ -9,12 +9,12 @@ namespace QueryCat.Backend.Tests;
 /// <summary>
 /// The special runner configuration for tests.
 /// </summary>
-public class TestRunner : Runner
+public class TestThread : ExecutionThread
 {
     public const string DataDirectory = "../Data";
     public const string TestDirectory = "../Tests";
 
-    public TestRunner()
+    public TestThread()
         : base(new ExecutionOptions
         {
             DefaultRowsOutput = new DsvOutput(new DsvOptions(new MemoryStream())
@@ -57,7 +57,7 @@ public class TestRunner : Runner
     /// <returns>Result.</returns>
     public string GetQueryResult()
     {
-        var stream = (MemoryStream)((DsvOutput)ExecutionThread.Options.DefaultRowsOutput).Stream;
+        var stream = (MemoryStream)((DsvOutput)Options.DefaultRowsOutput).Stream;
         stream.Seek(0, SeekOrigin.Begin);
         using var sr = new StreamReader(stream);
         return sr.ReadToEnd().Replace("\r\n", "\n").Trim();

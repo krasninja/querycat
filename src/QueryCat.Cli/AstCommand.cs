@@ -11,13 +11,13 @@ public class AstCommand : BaseQueryCommand
     {
         base.OnExecute(app, console);
 
-        var runner = CreateRunner(new ExecutionOptions());
-        runner.ExecutionThread.BeforeStatementExecute += (_, args) =>
+        var executionThread = CreateExecutionThread(new ExecutionOptions());
+        executionThread.BeforeStatementExecute += (_, args) =>
         {
-            console.WriteLine(runner.DumpAst());
+            console.WriteLine(executionThread.DumpAst());
             args.ContinueExecution = false;
         };
-        RunQuery(runner);
+        RunQuery(executionThread);
 
         return 0;
     }
