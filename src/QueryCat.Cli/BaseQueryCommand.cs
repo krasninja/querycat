@@ -46,11 +46,6 @@ public abstract class BaseQueryCommand
     private void PreInitialize()
     {
         Logger.Instance.MinLevel = LogLevel;
-
-        if (Files.Any())
-        {
-            Query = string.Join(Environment.NewLine, Files.Select(File.ReadAllText));
-        }
     }
 
     protected virtual Runner CreateRunner(ExecutionOptions? executionOptions = null)
@@ -63,5 +58,20 @@ public abstract class BaseQueryCommand
         runner.ExecutionThread.Statistic.CountErrorRows = runner.ExecutionThread.Options.ShowDetailedStatistic;
         runner.Bootstrap();
         return runner;
+    }
+
+    protected void RunQuery(Runner runner)
+    {
+        if (Files.Any())
+        {
+            foreach (var file in Files)
+            {
+                runner.Run(File.ReadAllText(file));
+            }
+        }
+        else
+        {
+            runner.Run(Query);
+        }
     }
 }

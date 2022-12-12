@@ -35,7 +35,7 @@ public class SchemaCommand : BaseQueryCommand
             }
             args.ContinueExecution = false;
         };
-        runner.Run(Query);
+        RunQuery(runner);
 
         return 0;
     }

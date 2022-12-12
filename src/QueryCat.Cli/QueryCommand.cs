@@ -61,7 +61,7 @@ public class QueryCommand : BaseQueryCommand
             ShowDetailedStatistic = ShowDetailedStatistic,
             MaxErrors = MaxErrors,
         });
-        runner.Run(Query);
+        RunQuery(runner);
 
         if (ShowStatistic || ShowDetailedStatistic)
         {

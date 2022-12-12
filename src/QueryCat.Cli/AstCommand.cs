@@ -17,7 +17,7 @@ public class AstCommand : BaseQueryCommand
             console.WriteLine(runner.DumpAst());
             args.ContinueExecution = false;
         };
-        runner.Run(Query);
+        RunQuery(runner);
 
         return 0;
     }

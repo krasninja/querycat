@@ -31,7 +31,7 @@ public class ExplainCommand : BaseQueryCommand
                 args.ContinueExecution = false;
             }
         };
-        runner.Run(Query);
+        RunQuery(runner);
 
         return 0;
     }
