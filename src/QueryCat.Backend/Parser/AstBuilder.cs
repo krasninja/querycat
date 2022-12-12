@@ -1,7 +1,6 @@
 using Antlr4.Runtime;
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Function;
-using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Parser;
 
