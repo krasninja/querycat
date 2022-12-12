@@ -1,4 +1,5 @@
 using System.Collections;
+using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Types;
 using QueryCat.Backend.Utils;
 

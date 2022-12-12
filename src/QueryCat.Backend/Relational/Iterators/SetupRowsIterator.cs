@@ -1,3 +1,4 @@
+using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Relational.Iterators;

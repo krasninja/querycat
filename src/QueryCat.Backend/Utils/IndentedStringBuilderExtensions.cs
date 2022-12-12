@@ -1,6 +1,5 @@
+using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Functions;
-using QueryCat.Backend.Relational;
-using QueryCat.Backend.Storage;
 
 namespace QueryCat.Backend.Utils;
 

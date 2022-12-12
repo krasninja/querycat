@@ -1,8 +1,7 @@
-using QueryCat.Backend.Relational;
 using QueryCat.Backend.Types;
 using QueryCat.Backend.Utils;
 
-namespace QueryCat.Backend.Storage;
+namespace QueryCat.Backend.Abstractions;
 
 /// <summary>
 /// Class implements methods to get rows.

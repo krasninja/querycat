@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Functions;
 using QueryCat.Backend.Storage;
 using QueryCat.Backend.Types;

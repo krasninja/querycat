@@ -1,4 +1,6 @@
-namespace QueryCat.Backend.Relational;
+using QueryCat.Backend.Relational;
+
+namespace QueryCat.Backend.Abstractions;
 
 /// <summary>
 /// Rows iterator with cursor. It is possible to set cursor position and change

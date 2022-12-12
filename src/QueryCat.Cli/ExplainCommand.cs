@@ -1,6 +1,6 @@
 using McMaster.Extensions.CommandLineUtils;
+using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Execution;
-using QueryCat.Backend.Relational;
 using QueryCat.Backend.Types;
 using QueryCat.Backend.Utils;
 

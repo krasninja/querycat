@@ -1,4 +1,6 @@
-namespace QueryCat.Backend.Storage;
+using QueryCat.Backend.Storage;
+
+namespace QueryCat.Backend.Abstractions;
 
 /// <summary>
 /// The external provider of data. It can be files (CSV, logs), cloud providers, SSH/FTP

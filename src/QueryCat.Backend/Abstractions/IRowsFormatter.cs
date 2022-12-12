@@ -1,6 +1,4 @@
-using QueryCat.Backend.Storage;
-
-namespace QueryCat.Backend.Formatters;
+namespace QueryCat.Backend.Abstractions;
 
 /// <summary>
 /// Provides method to create input and output of specific format (type).

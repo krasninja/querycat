@@ -2,6 +2,7 @@ using System.Net;
 using System.Text.Json;
 using McMaster.Extensions.CommandLineUtils;
 using QueryCat.Backend;
+using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Formatters;
 using QueryCat.Backend.Logging;

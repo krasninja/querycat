@@ -1,5 +1,5 @@
+using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Formatters;
-using QueryCat.Backend.Relational;
 using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Types;
 

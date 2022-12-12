@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text;
+using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Commands;
@@ -14,7 +15,7 @@ namespace QueryCat.Backend.Execution;
 /// <summary>
 /// Execution thread that includes statements to be executed, local variables, options and statistic.
 /// </summary>
-public class ExecutionThread
+public class ExecutionThread : IExecutionThread
 {
     internal const string ApplicationDirectory = "qcat";
     internal const string ConfigFileName = "config.json";
@@ -98,10 +99,7 @@ public class ExecutionThread
         InputConfigStorage = new PersistentInputConfigStorage(Path.Combine(appLocalDirectory, ConfigFileName));
     }
 
-    /// <summary>
-    /// Run text query.
-    /// </summary>
-    /// <param name="query">Query.</param>
+    /// <inheritdoc />
     public VariantValue Run(string query)
     {
         if (string.IsNullOrEmpty(query))

@@ -1,4 +1,5 @@
 using System.Buffers;
+using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Logging;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Relational.Iterators;

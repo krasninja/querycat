@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Reflection;
+using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Execution.Plugins;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Storage;

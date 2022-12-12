@@ -1,4 +1,4 @@
-using QueryCat.Backend.Storage;
+using QueryCat.Backend.Abstractions;
 
 namespace QueryCat.Backend.Formatters;
 

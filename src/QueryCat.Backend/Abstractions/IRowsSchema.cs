@@ -1,4 +1,6 @@
-namespace QueryCat.Backend.Relational;
+using QueryCat.Backend.Relational;
+
+namespace QueryCat.Backend.Abstractions;
 
 /// <summary>
 /// The interface described rows schema (columns) information.

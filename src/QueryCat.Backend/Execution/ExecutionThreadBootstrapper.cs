@@ -1,12 +1,8 @@
 using System.Diagnostics;
-using System.Text;
-using QueryCat.Backend.Ast;
 using QueryCat.Backend.Formatters;
 using QueryCat.Backend.Functions.AggregateFunctions;
 using QueryCat.Backend.Functions.StandardFunctions;
 using QueryCat.Backend.Logging;
-using QueryCat.Backend.Parser;
-using QueryCat.Backend.Types;
 
 namespace QueryCat.Backend.Execution;
 

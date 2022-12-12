@@ -1,6 +1,7 @@
+using QueryCat.Backend.Relational;
 using QueryCat.Backend.Utils;
 
-namespace QueryCat.Backend.Relational;
+namespace QueryCat.Backend.Abstractions;
 
 /// <summary>
 /// Rows iterator.

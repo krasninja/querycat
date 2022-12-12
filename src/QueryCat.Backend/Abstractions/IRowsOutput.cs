@@ -1,6 +1,6 @@
 using QueryCat.Backend.Relational;
 
-namespace QueryCat.Backend.Storage;
+namespace QueryCat.Backend.Abstractions;
 
 /// <summary>
 /// The interface is to support rows writing to the output source.
