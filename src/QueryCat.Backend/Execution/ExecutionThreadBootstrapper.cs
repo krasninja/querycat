@@ -21,6 +21,7 @@ public class ExecutionThreadBootstrapper
         executionThread.FunctionsManager.RegisterFactory(JsonFormatter.RegisterFunctions);
         executionThread.FunctionsManager.RegisterFactory(NullFormatter.RegisterFunctions);
         executionThread.FunctionsManager.RegisterFactory(TextLineFormatter.RegisterFunctions);
+        executionThread.FunctionsManager.RegisterFactory(CryptoFunctions.RegisterFunctions);
         executionThread.FunctionsManager.RegisterFactory(DateTimeFunctions.RegisterFunctions);
         executionThread.FunctionsManager.RegisterFactory(InfoFunctions.RegisterFunctions);
         executionThread.FunctionsManager.RegisterFactory(MathFunctions.RegisterFunctions);

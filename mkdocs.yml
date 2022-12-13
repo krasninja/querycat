@@ -21,6 +21,7 @@ nav:
     - 'TSV': output/tsv.md
   - 'Functions':
     - 'Aggregate': functions/aggregate.md
+    - 'Crypto': functions/crypto.md
     - 'Date and Time': functions/datetime.md
     - 'Info': functions/info.md
     - 'Input': functions/input.md

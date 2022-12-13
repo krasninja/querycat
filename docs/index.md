@@ -26,13 +26,14 @@ Just imagine that everything in the world is a table, and you can process it usi
     - 6.4) [TSV](output/tsv)
 - 7) Functions
     - 7.1) [Aggregate](functions/aggregate)
-    - 7.2) [Date and Time](functions/datetime)
-    - 7.3) [Info](functions/info)
-    - 7.4) [Math](functions/math)
-    - 7.5) [Misc](functions/misc)
-    - 7.6) [Output](functions/output)
-    - 7.7) [String](functions/string)
-    - 7.8) [System](functions/system)
+    - 7.2) [Crypto](functions/crypto)
+    - 7.3) [Date and Time](functions/datetime)
+    - 7.4) [Info](functions/info)
+    - 7.5) [Math](functions/math)
+    - 7.6) [Misc](functions/misc)
+    - 7.7) [Output](functions/output)
+    - 7.8) [String](functions/string)
+    - 7.9) [System](functions/system)
 - 8) Features
     - 8.1) [Web Server](features/web-server)
 - 9) Development
