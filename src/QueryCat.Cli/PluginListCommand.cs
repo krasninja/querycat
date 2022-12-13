@@ -1,6 +1,5 @@
 using McMaster.Extensions.CommandLineUtils;
 using QueryCat.Backend.Execution;
-using QueryCat.Backend.Functions;
 using QueryCat.Backend.Functions.StandardFunctions;
 using QueryCat.Backend.Storage;
 
@@ -19,8 +18,8 @@ public class PluginListCommand : BasePluginCommand
         {
             PagingSize = -1
         });
-        var plugins = FunctionsManager.Call(InfoFunctions.Plugins);
-        executionThread.Options.DefaultRowsOutput.Write(plugins);
+        var result = executionThread.RunFunction(InfoFunctions.Plugins);
+        executionThread.Options.DefaultRowsOutput.Write(ExecutionThreadUtils.ConvertToIterator(result));
         return 1;
     }
 }

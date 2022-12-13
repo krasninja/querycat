@@ -1,7 +1,6 @@
 using McMaster.Extensions.CommandLineUtils;
 using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Execution;
-using QueryCat.Backend.Functions;
 using QueryCat.Backend.Functions.StandardFunctions;
 using QueryCat.Backend.Storage;
 using QueryCat.Backend.Types;
@@ -26,8 +25,9 @@ public class SchemaCommand : BaseQueryCommand
             if (!result.IsNull && result.GetInternalType() == DataType.Object
                 && result.AsObject is IRowsSchema rowsSchema)
             {
-                var schema = FunctionsManager.Call(InfoFunctions.Schema, rowsSchema);
-                executionThread.Options.DefaultRowsOutput.Write(schema);
+                var schema = executionThread.RunFunction(InfoFunctions.Schema, rowsSchema);
+                executionThread.Options.DefaultRowsOutput.Write(
+                    ExecutionThreadUtils.ConvertToIterator(schema));
             }
             else
             {

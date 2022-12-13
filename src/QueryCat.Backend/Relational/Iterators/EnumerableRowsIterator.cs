@@ -1,57 +1,48 @@
+using System.Collections;
 using QueryCat.Backend.Abstractions;
-using QueryCat.Backend.Types;
 using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Relational.Iterators;
 
 /// <summary>
-/// The iterator converts LINQ <see cref="IEnumerable{T}" /> into iterator.
+/// Represents iterator as enumerable of <see cref="Row" />.
 /// </summary>
-/// <typeparam name="TClass">Class type.</typeparam>
-public sealed class EnumerableRowsIterator<TClass> : IRowsIterator
+public sealed class EnumerableRowsIterator : IRowsIterator, IEnumerable<Row>
 {
-    private readonly IEnumerator<TClass> _enumerator;
-    private readonly Func<TClass, VariantValue>[] _valuesGetters;
-    private readonly Row _row;
+    private readonly IRowsIterator _rowsIterator;
 
     /// <inheritdoc />
-    public Column[] Columns { get; }
+    public Column[] Columns => _rowsIterator.Columns;
 
     /// <inheritdoc />
-    public Row Current => _row;
+    public Row Current => _rowsIterator.Current;
 
-    public EnumerableRowsIterator(Column[] columns, Func<TClass, VariantValue>[] valuesGetters, IEnumerable<TClass> enumerable)
+    public EnumerableRowsIterator(IRowsIterator rowsIterator)
     {
-        _valuesGetters = valuesGetters;
-        Columns = columns;
-        _row = new Row(this);
-        _enumerator = enumerable.GetEnumerator();
+        _rowsIterator = rowsIterator;
     }
 
     /// <inheritdoc />
-    public bool MoveNext()
-    {
-        var hasData = _enumerator.MoveNext();
-        hasData = hasData && _enumerator.Current != null;
-        if (hasData)
-        {
-            for (var i = 0; i < Columns.Length; i++)
-            {
-                _row[i] = _valuesGetters[i].Invoke(_enumerator.Current!);
-            }
-        }
-        return hasData;
-    }
+    public bool MoveNext() => _rowsIterator.MoveNext();
 
     /// <inheritdoc />
-    public void Reset()
-    {
-        _enumerator.Reset();
-    }
+    public void Reset() => _rowsIterator.MoveNext();
 
     /// <inheritdoc />
     public void Explain(IndentedStringBuilder stringBuilder)
     {
-        stringBuilder.AppendLine("Enumerable");
+        stringBuilder.AppendRowsIterator(_rowsIterator);
     }
+
+    /// <inheritdoc />
+    public IEnumerator<Row> GetEnumerator()
+    {
+        while (MoveNext())
+        {
+            yield return new Row(Current);
+        }
+    }
+
+    /// <inheritdoc />
+    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 }

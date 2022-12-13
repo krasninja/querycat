@@ -127,7 +127,7 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
     /// </summary>
     /// <param name="enumerable">Enumerable.</param>
     /// <returns>Enumerable iterator instance.</returns>
-    public EnumerableRowsIterator<TClass> BuildIterator(IEnumerable<TClass> enumerable)
+    public ClassRowsIterator<TClass> BuildIterator(IEnumerable<TClass> enumerable)
     {
         return new(
             _columns.Select(c => c.Column).ToArray(),

@@ -12,6 +12,8 @@ public class RowsInputIterator : IRowsIterator, IDisposable
 {
     private readonly IRowsInput _rowsInput;
     private readonly bool _autoFetch;
+    private readonly bool _autoOpen;
+    private bool _isOpened;
     private Row _row;
     private bool[] _fetchedColumnsIndexes = Array.Empty<bool>();
     private bool _hasInput;
@@ -30,10 +32,11 @@ public class RowsInputIterator : IRowsIterator, IDisposable
 
     public IRowsInput RowsInput => _rowsInput;
 
-    public RowsInputIterator(IRowsInput rowsInput, bool autoFetch = true)
+    public RowsInputIterator(IRowsInput rowsInput, bool autoFetch = true, bool autoOpen = false)
     {
         _rowsInput = rowsInput;
         _autoFetch = autoFetch;
+        _autoOpen = autoOpen;
         _row = new Row(this);
     }
 
@@ -90,6 +93,12 @@ public class RowsInputIterator : IRowsIterator, IDisposable
     /// <inheritdoc />
     public bool MoveNext()
     {
+        if (_autoOpen && !_isOpened)
+        {
+            _rowsInput.Open();
+            _isOpened = true;
+        }
+
         _hasInput = _rowsInput.ReadNext();
         if (_hasInput && _autoFetch)
         {

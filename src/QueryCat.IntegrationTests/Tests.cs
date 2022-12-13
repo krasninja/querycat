@@ -1,5 +1,5 @@
-using QueryCat.Backend.Execution;
 using Xunit;
+using QueryCat.Backend.Execution;
 using QueryCat.Backend.Functions;
 using QueryCat.Backend.Tests;
 using QueryCat.Backend.Types;
@@ -18,7 +18,7 @@ public class Tests
     public void Select(string fileName)
     {
         // Arrange.
-        new ExecutionThreadBootstrapper().Bootstrap(_testThread);;
+        new ExecutionThreadBootstrapper().Bootstrap(_testThread);
         _testThread.FunctionsManager.RegisterFunction(SumIntegers);
         _testThread.FunctionsManager.RegisterFunction(FuncWithObject);
         _testThread.FunctionsManager.RegisterFunction(ReturnObjFunc);

@@ -14,7 +14,7 @@ using QueryCat.Backend.Types;
 namespace QueryCat.Cli;
 
 [Command("serve", Description = "Run simple HTTP server.")]
-public class ServeCommand : BaseQueryCommand
+public sealed class ServeCommand : BaseQueryCommand
 {
     private const string PostMethod = "POST";
     private const string GetMethod = "GET";

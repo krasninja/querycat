@@ -1,7 +1,6 @@
 using System.ComponentModel;
 using System.Text;
 using QueryCat.Backend.Abstractions;
-using QueryCat.Backend.Formatters;
 using QueryCat.Backend.Functions;
 using QueryCat.Backend.Types;
 

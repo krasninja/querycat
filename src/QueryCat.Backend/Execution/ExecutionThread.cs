@@ -21,6 +21,7 @@ public class ExecutionThread : IExecutionThread
     internal const string ConfigFileName = "config.json";
 
     private readonly StatementsVisitor _statementsVisitor;
+    private bool _isRunning;
 
     internal PersistentInputConfigStorage InputConfigStorage { get; }
 
@@ -99,6 +100,17 @@ public class ExecutionThread : IExecutionThread
         InputConfigStorage = new PersistentInputConfigStorage(Path.Combine(appLocalDirectory, ConfigFileName));
     }
 
+    public ExecutionThread(ExecutionThread executionThread)
+    {
+        RootScope = new ExecutionScope();
+        Options = executionThread.Options;
+#if ENABLE_PLUGINS
+        PluginsManager = executionThread.PluginsManager;
+#endif
+        _statementsVisitor = executionThread._statementsVisitor;
+        InputConfigStorage = executionThread.InputConfigStorage;
+    }
+
     /// <inheritdoc />
     public VariantValue Run(string query)
     {
@@ -111,16 +123,20 @@ public class ExecutionThread : IExecutionThread
 
         // Set first executing statement and run.
         ExecutingStatement = programNode.Statements.FirstOrDefault();
-        var result = RunInternal();
-        ExecutingStatement = null;
-        return result;
+        return RunInternal();
     }
 
     /// <summary>
     /// Run the execution flow.
     /// </summary>
-    internal VariantValue RunInternal()
+    private VariantValue RunInternal()
     {
+        if (_isRunning)
+        {
+            throw new InvalidOperationException("The execution thread is already running.");
+        }
+        _isRunning = true;
+
         var stopwatch = new Stopwatch();
         stopwatch.Start();
         if (Options.UseConfig)
@@ -153,7 +169,8 @@ public class ExecutionThread : IExecutionThread
 
                 if (Options.DefaultRowsOutput != NullRowsOutput.Instance)
                 {
-                    Options.DefaultRowsOutput.Write(result);
+                    var iterator = ExecutionThreadUtils.ConvertToIterator(result);
+                    Options.DefaultRowsOutput.Write(iterator);
                 }
             }
             finally
@@ -168,8 +185,10 @@ public class ExecutionThread : IExecutionThread
         {
             InputConfigStorage.SaveAsync().GetAwaiter().GetResult();
         }
+        ExecutingStatement = null;
         stopwatch.Stop();
         Statistic.ExecutionTime = stopwatch.Elapsed;
+        _isRunning = false;
         return LastResult;
     }
 
@@ -189,13 +208,13 @@ public class ExecutionThread : IExecutionThread
     /// <summary>
     /// Call function within execution thread.
     /// </summary>
-    /// <param name="function">Function instance.</param>
+    /// <param name="functionDelegate">Function delegate instance.</param>
     /// <param name="args">Arguments.</param>
     /// <returns>Return value.</returns>
-    public VariantValue CallFunction(Function function, params object[] args)
+    public VariantValue RunFunction(FunctionsManager.FunctionDelegate functionDelegate, params object[] args)
     {
         var functionCallInfo = FunctionCallInfo.CreateWithArguments(this, args);
-        return function.Delegate.Invoke(functionCallInfo);
+        return functionDelegate.Invoke(functionCallInfo);
     }
 
     /// <summary>
