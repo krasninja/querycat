@@ -37,14 +37,13 @@ public static class ExecutionThreadUtils
             {
                 return new RowsInputIterator(rowsInput, autoOpen: true);
             }
+            // IRowsOutput.
+            else if (obj is IRowsOutput)
+            {
+                return new SingleValueRowsIterator();
+            }
         }
 
-        // VariantValue.
-        else if (!variantValue.IsNull)
-        {
-            return new SingleValueRowsIterator(variantValue);
-        }
-
-        throw new InvalidOperationException($"Cannot create iterator from '{variantValue}'.");
+        return new SingleValueRowsIterator(variantValue);
     }
 }

@@ -16,8 +16,16 @@ public sealed class SingleValueRowsIterator : IRowsIterator
 
     private bool _isIterated;
 
-    public SingleValueRowsIterator() : this(VariantValue.OneIntegerValue)
+    public SingleValueRowsIterator()
     {
+        Columns = new[]
+        {
+            new Column(ColumnTitle, DataType.Void)
+        };
+        Current = new Row(this)
+        {
+            [0] = VariantValue.Null
+        };
     }
 
     public SingleValueRowsIterator(VariantValue value)

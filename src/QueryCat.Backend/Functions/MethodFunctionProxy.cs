@@ -67,15 +67,18 @@ internal class MethodFunctionProxy
         for (var i = 0; i < parameters.Length; i++)
         {
             var parameter = parameters[i];
-            var relateVariantValueType = DataTypeUtils.ConvertFromSystem(parameter.ParameterType);
-            if (relateVariantValueType == DataType.Void)
-            {
-                throw new InvalidOperationException($"Invalid parameter type '{parameter.ParameterType}'.");
-            }
 
             if (parameter.ParameterType == typeof(FunctionCallInfo))
             {
                 arr[i] = args;
+            }
+            else if (parameter.ParameterType == typeof(ExecutionContext))
+            {
+                arr[i] = args.ExecutionThread;
+            }
+            else if (parameter.ParameterType == typeof(CancellationToken))
+            {
+                arr[i] = CancellationToken.None;
             }
             else if (args.Arguments.Values.Length > i)
             {
@@ -102,6 +105,10 @@ internal class MethodFunctionProxy
                 methodInfo.ReturnType.IsGenericType)
             {
                 result = ((dynamic)task).Result;
+            }
+            else
+            {
+                result = VariantValue.Null;
             }
         }
         return VariantValue.CreateFromObject(result);
