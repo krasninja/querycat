@@ -1,11 +1,11 @@
 using System.Net;
 using System.Text.Json;
 using McMaster.Extensions.CommandLineUtils;
+using Serilog;
 using QueryCat.Backend;
 using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Formatters;
-using QueryCat.Backend.Logging;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Storage;
@@ -77,7 +77,7 @@ public sealed class ServeCommand : BaseQueryCommand
                 }
                 catch (Exception e)
                 {
-                    Logger.Instance.Error("Error while processing request.", nameof(ServeCommand), e);
+                    Log.Logger.Error(e, "Error while processing request.");
                     response.StatusCode = (int)HttpStatusCode.InternalServerError;
                 }
             }

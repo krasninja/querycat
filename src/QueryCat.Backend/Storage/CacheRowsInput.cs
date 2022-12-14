@@ -1,6 +1,6 @@
 using System.Diagnostics;
+using Serilog;
 using QueryCat.Backend.Abstractions;
-using QueryCat.Backend.Logging;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Types;
 using QueryCat.Backend.Utils;
@@ -196,7 +196,7 @@ public sealed class CacheRowsInput : IRowsInput
         {
             if (cacheEntry.Key.Match(key))
             {
-                Logger.Instance.Debug($"Reuse existing cache with key {key}.", nameof(CacheRowsInput));
+                Log.Logger.Debug("Reuse existing cache with key {Key}.", key);
                 return cacheEntry;
             }
         }
@@ -215,7 +215,7 @@ public sealed class CacheRowsInput : IRowsInput
             // If we reset but persist the same key - just go ahead using existing input.
             if (_currentCacheEntry.Key.Equals(newCacheKey))
             {
-                Logger.Instance.Debug($"Reuse previous cache with key {_currentCacheEntry.Key}.", nameof(CacheRowsInput));
+                Log.Logger.Debug("Reuse previous cache with key {Key}.", _currentCacheEntry.Key);
                 return;
             }
         }

@@ -1,8 +1,7 @@
 ﻿using McMaster.Extensions.CommandLineUtils;
+using Serilog;
 using QueryCat.Backend;
 using QueryCat.Backend.Functions.StandardFunctions;
-using QueryCat.Backend.Logging;
-using QueryCat.Cli.Infrastructure;
 
 namespace QueryCat.Cli;
 
@@ -21,7 +20,6 @@ internal class Program
     public static int Main(string[] args)
     {
         AppDomain.CurrentDomain.UnhandledException += CurrentDomainOnUnhandledException;
-        Logger.Instance.AddHandlers(new ConsoleLogHandler());
 
         if (args.Length < 1)
         {
@@ -42,10 +40,10 @@ internal class Program
         switch (e.ExceptionObject)
         {
             case QueryCatException queryCatException:
-                Logger.Instance.Error(queryCatException.Message);
+                Log.Logger.Error(queryCatException.Message);
                 break;
             case Exception exception:
-                Logger.Instance.Fatal(exception.Message, exception: exception);
+                Log.Logger.Fatal(exception, exception.Message);
                 break;
         }
         Environment.Exit(1);

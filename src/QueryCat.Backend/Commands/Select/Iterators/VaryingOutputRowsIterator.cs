@@ -1,6 +1,6 @@
+using Serilog;
 using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Functions;
-using QueryCat.Backend.Logging;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Storage;
 using QueryCat.Backend.Types;
@@ -91,7 +91,7 @@ internal sealed class VaryingOutputRowsIterator : IRowsIterator, IDisposable
             }
             output.Open();
             output.SetContext(_queryContext);
-            Logger.Instance.Debug($"Open for args {_functionCallInfo.Arguments}.", nameof(VaryingOutputRowsIterator));
+            Log.Logger.Debug("VaryingOutput: Open for args {Arguments}.", _functionCallInfo.Arguments);
             _outputs.Add(args, output);
             CurrentOutput = output;
         }
@@ -115,7 +115,7 @@ internal sealed class VaryingOutputRowsIterator : IRowsIterator, IDisposable
     {
         foreach (var outputKeyValue in _outputs)
         {
-            Logger.Instance.Debug($"Close for args {outputKeyValue.Key}.", nameof(VaryingOutputRowsIterator));
+            Log.Logger.Debug("VaryingOutput: Close for args {Key}.", outputKeyValue.Key);
             outputKeyValue.Value.Close();
             if (dispose)
             {

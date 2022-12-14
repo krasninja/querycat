@@ -1,5 +1,5 @@
 using System.Text;
-using QueryCat.Backend.Logging;
+using Serilog;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Storage;
 using QueryCat.Backend.Types;
@@ -35,14 +35,14 @@ internal sealed class DsvOutput : RowsOutput, IDisposable
     /// <inheritdoc />
     public override void Open()
     {
-        Logger.Instance.Trace("Opened.", nameof(DsvOutput));
+        Log.Logger.Verbose("DSV opened.");
     }
 
     /// <inheritdoc />
     public override void Close()
     {
         _streamWriter.Close();
-        Logger.Instance.Trace("Closed.", nameof(DsvOutput));
+        Log.Logger.Verbose("DSV closed.");
     }
 
     /// <inheritdoc />

@@ -2,10 +2,10 @@ using System.ComponentModel;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
+using Serilog;
 using QueryCat.Backend.Ast.Nodes.Function;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Functions.AggregateFunctions;
-using QueryCat.Backend.Logging;
 using QueryCat.Backend.Parser;
 using QueryCat.Backend.Types;
 using QueryCat.Backend.Utils;
@@ -36,7 +36,7 @@ public sealed class FunctionsManager
     private static Function EmptyAggregate => new(
         _ =>
         {
-            Logger.Instance.Warning("Empty aggregate function is not intended to be called!");
+            Log.Logger.Warning("Empty aggregate function is not intended to be called!");
             return VariantValue.Null;
         }, new FunctionSignatureNode("Empty", DataType.Null));
 
@@ -267,7 +267,7 @@ public sealed class FunctionsManager
                 var similarFunction = sameNameFunctionsList.Find(f => f.IsSignatureEquals(function));
                 if (similarFunction != null)
                 {
-                    Logger.Instance.Warning($"Possibly similar signature function: {function}.");
+                    Log.Logger.Warning("Possibly similar signature function: {Function}.", function);
                 }
             }
             var descriptionAttribute = preRegistration.MemberInfo.GetCustomAttribute<DescriptionAttribute>();
@@ -282,10 +282,7 @@ public sealed class FunctionsManager
                     function
                 },
                 updateValueFactory: (_, value) => value!.Add(function));
-            if (Logger.Instance.IsEnabled(LogLevel.Trace))
-            {
-                Logger.Instance.Debug($"Register function: {function}.");
-            }
+            Log.Logger.Debug("Register function: {Function}.", function);
         }
         return functionsList ?? new List<Function>();
     }
@@ -324,11 +321,8 @@ public sealed class FunctionsManager
                     function
                 },
                 updateValueFactory: (_, value) => value!.Add(function));
-            if (Logger.Instance.IsEnabled(LogLevel.Trace))
-            {
-                Logger.Instance.Debug($"Register aggregate: {function}.");
-            }
 
+            Log.Logger.Debug("Register aggregate: {Function}.", function);
             if (!functionsManager._aggregateFunctions.ContainsKey(functionName))
             {
                 functionsManager._aggregateFunctions.Add(functionName, aggregateFunctionInstance);

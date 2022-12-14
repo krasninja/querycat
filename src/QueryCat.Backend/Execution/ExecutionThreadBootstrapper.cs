@@ -1,8 +1,8 @@
 using System.Diagnostics;
+using Serilog;
 using QueryCat.Backend.Formatters;
 using QueryCat.Backend.Functions.AggregateFunctions;
 using QueryCat.Backend.Functions.StandardFunctions;
-using QueryCat.Backend.Logging;
 
 namespace QueryCat.Backend.Execution;
 
@@ -34,7 +34,7 @@ public class ExecutionThreadBootstrapper
 #endif
 #if DEBUG
         timer.Stop();
-        Logger.Instance.Trace($"Bootstrap time: {timer.Elapsed}.");
+        Log.Logger.Verbose("Bootstrap time: {Time}.", timer.Elapsed);
 #endif
     }
 }

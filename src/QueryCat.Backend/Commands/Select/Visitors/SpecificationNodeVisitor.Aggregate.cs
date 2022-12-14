@@ -1,9 +1,9 @@
+using Serilog;
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes.Function;
 using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Commands.Select.Iterators;
 using QueryCat.Backend.Functions;
-using QueryCat.Backend.Logging;
 using QueryCat.Backend.Types;
 
 namespace QueryCat.Backend.Commands.Select.Visitors;
@@ -68,7 +68,7 @@ internal sealed partial class SpecificationNodeVisitor
                 var index = Array.FindIndex(targets, t => t.Node.Id == node.Id);
                 if (index < 0)
                 {
-                    Logger.Instance.Warning("Cannot find node!");
+                    Log.Logger.Warning("Cannot find node!");
                     return;
                 }
 

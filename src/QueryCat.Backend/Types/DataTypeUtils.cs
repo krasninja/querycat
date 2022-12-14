@@ -1,5 +1,5 @@
 using System.Globalization;
-using QueryCat.Backend.Logging;
+using Serilog;
 using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Types;
@@ -294,7 +294,7 @@ public static class DataTypeUtils
         var colonIndex = source.IndexOf(':');
         if (colonIndex == -1)
         {
-            Logger.Instance.Warning("Invalid deserialization source.");
+            Log.Logger.Warning("Invalid deserialization source.");
             return VariantValue.Null;
         }
 

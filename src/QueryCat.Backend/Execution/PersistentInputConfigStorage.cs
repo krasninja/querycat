@@ -1,5 +1,5 @@
 using System.Text.Json;
-using QueryCat.Backend.Logging;
+using Serilog;
 using QueryCat.Backend.Storage;
 using QueryCat.Backend.Types;
 
@@ -50,8 +50,8 @@ public class PersistentInputConfigStorage : MemoryInputConfigStorage
         {
             if (!DataTypeUtils.IsSimple(variantValueWithKey.Value.GetInternalType()))
             {
-                Logger.Instance.Trace($"Skip saving config with key '{variantValueWithKey.Key}'. Only simple types save is supported.",
-                    nameof(PersistentInputConfigStorage));
+                Log.Logger.Verbose("Skip saving config with key '{Key}'. Only simple types save is supported.",
+                    variantValueWithKey.Key);
             }
             var type = variantValueWithKey.Value.GetInternalType();
             if (!DataTypeUtils.IsSimple(type))

@@ -1,6 +1,7 @@
 using McMaster.Extensions.CommandLineUtils;
+using Serilog;
+using Serilog.Events;
 using QueryCat.Backend.Execution;
-using QueryCat.Backend.Logging;
 
 namespace QueryCat.Cli;
 
@@ -16,11 +17,11 @@ public abstract class BaseQueryCommand
     public List<string> Files { get; } = new();
 
     [Option("--log-level", Description = "Log level.")]
-    public LogLevel LogLevel { get; } =
+    public LogEventLevel LogLevel { get; } =
 #if DEBUG
-        LogLevel.Debug;
+        LogEventLevel.Debug;
 #else
-        LogLevel.Info;
+        LogEventLevel.Information;
 #endif
 
 #if ENABLE_PLUGINS
@@ -45,7 +46,10 @@ public abstract class BaseQueryCommand
     /// </summary>
     private void PreInitialize()
     {
-        Logger.Instance.MinLevel = LogLevel;
+        Log.Logger = new LoggerConfiguration()
+            .MinimumLevel.Is(LogLevel)
+            .WriteTo.Console()
+            .CreateLogger();
     }
 
     protected virtual ExecutionThread CreateExecutionThread(ExecutionOptions? executionOptions = null)

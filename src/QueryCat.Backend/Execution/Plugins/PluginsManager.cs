@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 using System.Xml;
-using QueryCat.Backend.Logging;
+using Serilog;
 using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Execution.Plugins;
@@ -109,7 +109,7 @@ public sealed class PluginsManager : IDisposable
         await stream.CopyToAsync(outputFileStream, cancellationToken);
         var overwrite = File.Exists(fullFileName);
         File.Move(fullFileNameDownloading, fullFileName, overwrite);
-        Logger.Instance.Info($"Save plugin file {fullFileName}.", nameof(PluginsManager));
+        Log.Logger.Information("Save plugin file {FullFileName}.", fullFileName);
         return overwrite ? 1 : 0;
     }
 
@@ -154,7 +154,7 @@ public sealed class PluginsManager : IDisposable
         {
             if (name == localPlugin.Name && File.Exists(localPlugin.Uri))
             {
-                Logger.Instance.Info($"Remove file {localPlugin.Uri}.", nameof(PluginsManager));
+                Log.Logger.Information("Remove file {Uri}.", localPlugin.Uri);
                 File.Delete(localPlugin.Uri);
             }
         }

@@ -1,6 +1,6 @@
 using System.Buffers;
+using Serilog;
 using QueryCat.Backend.Abstractions;
-using QueryCat.Backend.Logging;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Types;
@@ -98,7 +98,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     /// <inheritdoc />
     public void Close()
     {
-        Logger.Instance.Debug($"Close {this}.", nameof(StreamRowsInput));
+        Log.Logger.Debug("Close {Stream}.", this);
         Dispose(true);
     }
 
@@ -250,7 +250,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     /// <inheritdoc />
     public virtual void Reset()
     {
-        Logger.Instance.Debug("Reset.", nameof(StreamRowsInput));
+        Log.Logger.Debug("Reset stream.");
         StreamReader.DiscardBufferedData();
         StreamReader.BaseStream.Seek(0, SeekOrigin.Begin);
     }
@@ -300,7 +300,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     /// <inheritdoc />
     public virtual void Open()
     {
-        Logger.Instance.Debug("Start open.", nameof(StreamRowsInput));
+        Log.Logger.Debug("Start stream open.");
         _virtualColumnsCount = GetVirtualColumns().Length;
         var inputIterator = new RowsInputIterator(this, autoFetch: true);
 
@@ -321,7 +321,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
         cacheIterator.SeekToHead();
         cacheIterator.Freeze();
         _cacheIterator = cacheIterator;
-        Logger.Instance.Debug("Open finished.", nameof(StreamRowsInput));
+        Log.Logger.Debug("Open stream finished.");
     }
 
     /// <summary>
@@ -384,7 +384,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
 
     protected virtual void Dispose(bool disposing)
     {
-        Logger.Instance.Debug("Dispose.", nameof(StreamRowsInput));
+        Log.Logger.Debug("Stream dispose.");
         if (disposing)
         {
             StreamReader.Dispose();

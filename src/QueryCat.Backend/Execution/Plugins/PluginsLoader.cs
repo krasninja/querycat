@@ -1,6 +1,6 @@
 using System.IO.Compression;
 using System.Reflection;
-using QueryCat.Backend.Logging;
+using Serilog;
 
 namespace QueryCat.Backend.Execution.Plugins;
 
@@ -31,7 +31,7 @@ internal class PluginsLoader
         var assembliesList = new List<Assembly>();
         foreach (var pluginFile in PluginsManager.GetPluginFiles(_pluginDirectories))
         {
-            Logger.Instance.Debug($"Load plugin assembly '{pluginFile}'.");
+            Log.Logger.Debug("Load plugin assembly '{PluginFile}'.", pluginFile);
             var extension = Path.GetExtension(pluginFile);
             Assembly? assembly = null;
             if (extension.Equals(".dll"))
@@ -44,7 +44,7 @@ internal class PluginsLoader
             }
             if (assembly == null)
             {
-                Logger.Instance.Warning($"Cannot load from {pluginFile}.");
+                Log.Logger.Warning("Cannot load from {PluginFile}.", pluginFile);
                 continue;
             }
 

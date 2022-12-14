@@ -1,5 +1,5 @@
+using Serilog;
 using Antlr4.Runtime.Tree;
-using QueryCat.Backend.Logging;
 
 namespace QueryCat.Backend.Parser;
 
@@ -18,7 +18,7 @@ internal static class ProgramParserVisitorExtensions
         if (result == null)
         {
             var invalidQueryText = tree.GetText();
-            Logger.Instance.Fatal($"Invalid query: {invalidQueryText}");
+            Log.Logger.Fatal("Invalid query: {Query}", invalidQueryText);
             throw new InvalidOperationException("Parse tree value is not defined.");
         }
         return result;

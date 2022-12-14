@@ -1,4 +1,4 @@
-using QueryCat.Backend.Logging;
+using Serilog;
 
 namespace QueryCat.Backend.Storage;
 
@@ -101,7 +101,7 @@ public class ClassEnumerableInputFetch<TClass> where TClass : class
         bool hasMore;
         do
         {
-            Logger.Instance.Debug($"Run with offset {offset} and limit {Limit}.", GetType().Name);
+            Log.Logger.Debug("Run with offset {Offset} and limit {Limit}.", offset, Limit);
             var data = action(offset, Limit, cancellationToken).GetAwaiter().GetResult();
             fetchedCount = 0;
             foreach (var item in data.Items)
@@ -147,7 +147,7 @@ public class ClassEnumerableInputFetch<TClass> where TClass : class
         bool hasMore;
         do
         {
-            Logger.Instance.Debug($"Run with page {page} and limit {Limit}.", GetType().Name);
+            Log.Logger.Debug("Run with page {Page} and limit {Limit}.", page, Limit);
             var data = action(page, Limit, cancellationToken).GetAwaiter().GetResult();
             fetchedCount = 0;
             foreach (var item in data.Items)

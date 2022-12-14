@@ -1,4 +1,4 @@
-using QueryCat.Backend.Logging;
+using Serilog;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Storage;
@@ -63,14 +63,14 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
         {
             _streamWriter = new StreamWriter(_stream, encoding: null, bufferSize: -1, leaveOpen: true);
         }
-        Logger.Instance.Trace("Opened.", nameof(TextTableOutput));
+        Log.Logger.Information("Text table opened.");
     }
 
     /// <inheritdoc />
     public override void Close()
     {
         _streamWriter.Close();
-        Logger.Instance.Trace("Closed.", nameof(TextTableOutput));
+        Log.Logger.Verbose("Text table closed.");
     }
 
     /// <inheritdoc />
