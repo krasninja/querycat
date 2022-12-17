@@ -12,7 +12,7 @@ namespace QueryCat.Backend.Providers;
 public static class FileInputOutput
 {
     [Description("Read data from a file.")]
-    [FunctionSignature("read_file(path: string, formatter?: object<IRowsFormatter>): object<IRowsInput>")]
+    [FunctionSignature("read_file(path: string, fmt?: object<IRowsFormatter>): object<IRowsInput>")]
     public static VariantValue ReadFile(FunctionCallInfo args)
     {
         var path = args.GetAt(0);
@@ -28,7 +28,7 @@ public static class FileInputOutput
     }
 
     [Description("Write data to a file.")]
-    [FunctionSignature("write_file(path: string, formatter?: object<IRowsFormatter>): object<IRowsOutput>")]
+    [FunctionSignature("write_file(path: string, fmt?: object<IRowsFormatter>): object<IRowsOutput>")]
     public static VariantValue WriteFile(FunctionCallInfo args)
     {
         var path = args.GetAt(0);

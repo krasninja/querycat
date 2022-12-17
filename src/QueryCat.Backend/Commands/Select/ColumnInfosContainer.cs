@@ -27,7 +27,7 @@ internal class ColumnsInfoContainer
         /// Column redirection. It indicates that redirect column value should be used
         /// instead of current.
         /// </summary>
-        public Column? Redirect { get; set; }
+        public Column? Redirect { get; }
 
         /// <summary>
         /// Is this column is used as aggregate key.
