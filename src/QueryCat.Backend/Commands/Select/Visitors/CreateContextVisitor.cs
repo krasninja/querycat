@@ -126,7 +126,7 @@ internal sealed class CreateContextVisitor : AstVisitor
         var inputContexts = new List<SelectInputQueryContext>();
         foreach (var tableExpression in querySpecificationNode.TableExpressionNode.Tables.TableFunctions)
         {
-            var rowsInputs = GetRowsInputFromExpression(tableExpression);
+            var rowsInputs = GetRowsInputFromExpression(tableExpression, querySpecificationNode);
             var finalRowInput = rowsInputs.Last();
             var alias = GetAliasFromExpression(tableExpression);
             foreach (var rowsInput in rowsInputs)
@@ -225,13 +225,15 @@ internal sealed class CreateContextVisitor : AstVisitor
         return new SelectJoinRowsInput(left, right, join, searchFunc, reverseColumnsOrder);
     }
 
-    private IRowsInput[] GetRowsInputFromExpression(ExpressionNode expressionNode)
+    private IRowsInput[] GetRowsInputFromExpression(
+        ExpressionNode expressionNode,
+        SelectQuerySpecificationNode? parentSpecificationNode = null)
     {
         if (expressionNode is SelectQueryExpressionBodyNode selectQueryExpressionBodyNode)
         {
             return new[]
             {
-                CreateInputSourceFromSubQuery(selectQueryExpressionBodyNode)
+                CreateInputSourceFromSubQuery(selectQueryExpressionBodyNode, parentSpecificationNode)
             };
         }
         else if (expressionNode is SelectTableFunctionNode tableFunctionNode)
@@ -263,11 +265,11 @@ internal sealed class CreateContextVisitor : AstVisitor
 
     private IRowsInput CreateInputSourceFromSubQuery(
         SelectQueryExpressionBodyNode queryExpressionBodyNode,
-        SelectCommandContext? parent = null)
+        SelectQuerySpecificationNode? parentSpecificationNode = null)
     {
-        CreateForQuery(queryExpressionBodyNode.Queries, parent);
-        new CreateContextVisitor(_executionThread, parent).Run(queryExpressionBodyNode);
-        new SpecificationNodeVisitor(_executionThread).Run(queryExpressionBodyNode);
+        CreateForQuery(queryExpressionBodyNode.Queries);
+        new CreateContextVisitor(_executionThread, null).Run(queryExpressionBodyNode);
+        new SpecificationNodeVisitor(_executionThread, parentSpecificationNode).Run(queryExpressionBodyNode);
         var commandContext = queryExpressionBodyNode.GetRequiredAttribute<CommandContext>(AstAttributeKeys.ContextKey);
         if (commandContext.Invoke().AsObject is not IRowsIterator iterator)
         {

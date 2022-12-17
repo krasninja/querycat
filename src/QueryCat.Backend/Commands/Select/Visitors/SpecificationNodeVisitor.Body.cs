@@ -15,8 +15,8 @@ internal partial class SpecificationNodeVisitor
         var hasOutputInQuery = false;
 
         // Create compound context.
+        var isSubQuery = _parentSpecificationNode != null;
         var firstQueryContext = node.Queries[0].GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
-        var isSubQuery = firstQueryContext.Parent != null;
         var context = new SelectCommandContext(combineRowsIterator)
         {
             RowsInputIterator = firstQueryContext.RowsInputIterator,

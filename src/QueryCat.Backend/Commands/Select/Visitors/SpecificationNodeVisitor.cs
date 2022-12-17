@@ -18,8 +18,13 @@ internal sealed partial class SpecificationNodeVisitor : SelectAstVisitor
 {
     private const string SourceInputColumn = "source_input_column";
 
-    public SpecificationNodeVisitor(ExecutionThread executionThread) : base(executionThread)
+    private readonly SelectQuerySpecificationNode? _parentSpecificationNode;
+
+    public SpecificationNodeVisitor(
+        ExecutionThread executionThread,
+        SelectQuerySpecificationNode? parentSpecificationNode = null) : base(executionThread)
     {
+        _parentSpecificationNode = parentSpecificationNode;
     }
 
     /// <inheritdoc />
