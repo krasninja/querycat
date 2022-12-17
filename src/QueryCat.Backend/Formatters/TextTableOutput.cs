@@ -63,7 +63,7 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
         {
             _streamWriter = new StreamWriter(_stream, encoding: null, bufferSize: -1, leaveOpen: true);
         }
-        Log.Logger.Information("Text table opened.");
+        Log.Logger.Verbose("Text table opened.");
     }
 
     /// <inheritdoc />

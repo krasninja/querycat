@@ -250,7 +250,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     /// <inheritdoc />
     public virtual void Reset()
     {
-        Log.Logger.Debug("Reset stream.");
+        Log.Logger.Verbose("Reset stream.");
         StreamReader.DiscardBufferedData();
         StreamReader.BaseStream.Seek(0, SeekOrigin.Begin);
     }
