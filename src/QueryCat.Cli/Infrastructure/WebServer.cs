@@ -1,6 +1,5 @@
 using System.Net;
 using System.Text.Json;
-using McMaster.Extensions.CommandLineUtils;
 using Serilog;
 using QueryCat.Backend;
 using QueryCat.Backend.Abstractions;
@@ -11,10 +10,12 @@ using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Storage;
 using QueryCat.Backend.Types;
 
-namespace QueryCat.Cli;
+namespace QueryCat.Cli.Infrastructure;
 
-[Command("serve", Description = "Run simple HTTP server.")]
-public sealed class ServeCommand : BaseQueryCommand
+/// <summary>
+/// Simple web server that provides endpoint to run queries.
+/// </summary>
+internal sealed class WebServer
 {
     private const string PostMethod = "POST";
     private const string GetMethod = "GET";
@@ -24,8 +25,7 @@ public sealed class ServeCommand : BaseQueryCommand
     private const string ContentTypeHtml = "text/html";
     private const string ContentTypeForm = "application/x-www-form-urlencoded";
 
-    [Option("--urls", Description = "Endpoint to serve on.")]
-    public string Urls { get; } = "http://localhost:6789/";
+    public string Urls { get; }
 
     private static readonly Dictionary<string, Action<HttpListenerRequest, HttpListenerResponse, ExecutionThread>> Actions = new()
     {
@@ -34,25 +34,18 @@ public sealed class ServeCommand : BaseQueryCommand
 
     private readonly ExecutionThread _executionThread;
 
-    public ServeCommand()
+    public WebServer(ExecutionThread executionThread, string? urls = null)
     {
-        _executionThread = CreateExecutionThread(new ExecutionOptions
-        {
-            PagingSize = -1,
-            AddRowNumberColumn = false,
-            DefaultRowsOutput = NullRowsOutput.Instance,
-        });
+        _executionThread = executionThread;
+        Urls = urls ?? "http://localhost:6789/";
     }
 
-    /// <inheritdoc />
-    public override int OnExecute(CommandLineApplication app, IConsole console)
+    public int Run()
     {
-        base.OnExecute(app, console);
-
         var listener = new HttpListener();
         listener.Prefixes.Add(Urls);
         listener.Start();
-        console.Out.WriteLine($"Listening on {Urls}. Use /api/query endpoint.");
+        Console.Out.WriteLine($"Listening on {Urls}. Use /api/query endpoint.");
 
         while (true)
         {

@@ -10,6 +10,8 @@ namespace QueryCat.Backend.Execution;
 /// </summary>
 public sealed class ExecutionOptions
 {
+    public const int NoLimit = -1;
+
     /// <summary>
     /// Default output if FROM is not specified.
     /// </summary>
