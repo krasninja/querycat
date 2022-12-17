@@ -8,29 +8,59 @@ namespace QueryCat.Backend.Functions.StandardFunctions;
 /// <summary>
 /// Hashing and encryption functions.
 /// </summary>
-public class CryptoFunctions
+internal static class CryptoFunctions
 {
-    [Description("Computes a hash of the given data. Type is the algorithm to use.")]
-    [FunctionSignature("digest(text: string, type: string): string")]
-    public static VariantValue Digest(FunctionCallInfo args)
+    [Description("Computes the MD5 hash of the given data.")]
+    [FunctionSignature("md5(text: string): string")]
+    public static VariantValue Md5(FunctionCallInfo args)
     {
         var text = args.GetAt(0).AsString;
-        var type = args.GetAt(1).AsString.ToLower();
         var textData = Encoding.UTF8.GetBytes(text);
-        var hash = type switch
-        {
-            "md5" => MD5.HashData(textData),
-            "sha1" => SHA1.HashData(textData),
-            "sha256" => SHA256.HashData(textData),
-            "sha384" => SHA384.HashData(textData),
-            "sha512" => SHA512.HashData(textData),
-            _ => throw new QueryCatException("Invalid hash type."),
-        };
-        return new VariantValue(Convert.ToHexString(hash));
+        return new VariantValue(Convert.ToHexString(MD5.HashData(textData)));
+    }
+
+    [Description("Computes the SHA1 hash of the given data.")]
+    [FunctionSignature("sha1(text: string): string")]
+    public static VariantValue Sha1(FunctionCallInfo args)
+    {
+        var text = args.GetAt(0).AsString;
+        var textData = Encoding.UTF8.GetBytes(text);
+        return new VariantValue(Convert.ToHexString(SHA1.HashData(textData)));
+    }
+
+    [Description("Computes the SHA256 hash of the given data.")]
+    [FunctionSignature("sha256(text: string): string")]
+    public static VariantValue Sha256(FunctionCallInfo args)
+    {
+        var text = args.GetAt(0).AsString;
+        var textData = Encoding.UTF8.GetBytes(text);
+        return new VariantValue(Convert.ToHexString(SHA256.HashData(textData)));
+    }
+
+    [Description("Computes the SHA384 hash of the given data.")]
+    [FunctionSignature("sha384(text: string): string")]
+    public static VariantValue Sha384(FunctionCallInfo args)
+    {
+        var text = args.GetAt(0).AsString;
+        var textData = Encoding.UTF8.GetBytes(text);
+        return new VariantValue(Convert.ToHexString(SHA384.HashData(textData)));
+    }
+
+    [Description("Computes the SHA512 hash of the given data.")]
+    [FunctionSignature("sha512(text: string): string")]
+    public static VariantValue Sha512(FunctionCallInfo args)
+    {
+        var text = args.GetAt(0).AsString;
+        var textData = Encoding.UTF8.GetBytes(text);
+        return new VariantValue(Convert.ToHexString(SHA512.HashData(textData)));
     }
 
     public static void RegisterFunctions(FunctionsManager functionsManager)
     {
-        functionsManager.RegisterFunction(Digest);
+        functionsManager.RegisterFunction(Md5);
+        functionsManager.RegisterFunction(Sha1);
+        functionsManager.RegisterFunction(Sha256);
+        functionsManager.RegisterFunction(Sha384);
+        functionsManager.RegisterFunction(Sha512);
     }
 }
