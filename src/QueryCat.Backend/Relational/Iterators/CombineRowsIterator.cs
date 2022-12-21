@@ -12,10 +12,15 @@ internal sealed class CombineRowsIterator : IRowsIterator
 {
     private readonly IRowsIterator _leftIterator;
     private readonly IRowsIterator _rightIterator;
+    private readonly CombineType _combineType;
     private readonly bool _isDistinct;
     private readonly Func<bool> _moveDelegate;
-    private readonly HashSet<VariantValueArray> _values = new();
+    private readonly HashSet<VariantValueArray> _distinctValues = new();
     private IRowsIterator _currentIterator;
+
+    // For intersect and except methods.
+    private readonly HashSet<VariantValueArray> _leftRows = new();
+    private bool _isLeftInitialized;
 
     /// <inheritdoc />
     public Column[] Columns => _leftIterator.Columns;
@@ -28,6 +33,7 @@ internal sealed class CombineRowsIterator : IRowsIterator
         _leftIterator = leftIterator;
         _currentIterator = _leftIterator;
         _rightIterator = rightIterator;
+        _combineType = combineType;
         _isDistinct = isDistinct;
 
         _moveDelegate = combineType switch
@@ -38,9 +44,9 @@ internal sealed class CombineRowsIterator : IRowsIterator
             _ => throw new NotImplementedException($"{combineType} is not implemented."),
         };
 
-        if (!_leftIterator.IsSchemaEqual(_rightIterator, withSourceName: false))
+        if (!_leftIterator.IsSchemaEqual(_rightIterator))
         {
-            throw new SemanticException("Each combine query must have equal columns names and types.");
+            throw new SemanticException("Each combine query must have equal columns count and types.");
         }
     }
 
@@ -61,13 +67,33 @@ internal sealed class CombineRowsIterator : IRowsIterator
 
     private bool IntersectDelegate()
     {
-        // TODO:
+        InitializedLeft();
+
+        while (_currentIterator.MoveNext())
+        {
+            var arr = new VariantValueArray(_rightIterator.Current.AsArray(copy: false));
+            if (_leftRows.Contains(arr))
+            {
+                return true;
+            }
+        }
+
         return false;
     }
 
     private bool ExceptDelegate()
     {
-        // TODO:
+        InitializedLeft();
+
+        while (_currentIterator.MoveNext())
+        {
+            var arr = new VariantValueArray(_rightIterator.Current.AsArray(copy: false));
+            if (!_leftRows.Contains(arr))
+            {
+                return true;
+            }
+        }
+
         return false;
     }
 
@@ -80,9 +106,9 @@ internal sealed class CombineRowsIterator : IRowsIterator
             {
                 var arr = new VariantValueArray(Current.AsArray(copy: true));
 
-                if (!_values.Contains(arr))
+                if (!_distinctValues.Contains(arr))
                 {
-                    _values.Add(arr);
+                    _distinctValues.Add(arr);
                     return true;
                 }
             }
@@ -100,12 +126,33 @@ internal sealed class CombineRowsIterator : IRowsIterator
     {
         _leftIterator.Reset();
         _rightIterator.Reset();
+        _distinctValues.Clear();
+        _leftRows.Clear();
+        _isLeftInitialized = false;
         _currentIterator = _leftIterator;
     }
 
     /// <inheritdoc />
     public void Explain(IndentedStringBuilder stringBuilder)
     {
-        stringBuilder.AppendRowsIteratorsWithIndent("Combine", _leftIterator, _rightIterator);
+        stringBuilder.AppendRowsIteratorsWithIndent(
+            $"Combine (type={_combineType}, distinct={_isDistinct})", _leftIterator, _rightIterator);
+    }
+
+    private void InitializedLeft()
+    {
+        if (_isLeftInitialized)
+        {
+            return;
+        }
+
+        while (_leftIterator.MoveNext())
+        {
+            var arr = new VariantValueArray(_leftIterator.Current.AsArray(copy: true));
+            _leftRows.Add(arr);
+        }
+
+        _isLeftInitialized = true;
+        _currentIterator = _rightIterator;
     }
 }

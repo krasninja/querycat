@@ -1,3 +1,4 @@
+using System.Text;
 using QueryCat.Backend.Ast.Nodes.Function;
 
 namespace QueryCat.Backend.Ast.Nodes.Select;
@@ -47,4 +48,20 @@ public sealed class SelectTableFunctionNode : ExpressionNode
 
     /// <inheritdoc />
     public override void Accept(AstVisitor visitor) => visitor.Visit(this);
+
+    /// <inheritdoc />
+    public override string ToString()
+    {
+        var sb = new StringBuilder()
+            .Append(TableFunction);
+        if (!string.IsNullOrEmpty(Alias))
+        {
+            sb.Append(" As " + Alias);
+        }
+        foreach (var joinedNode in JoinedNodes)
+        {
+            sb.Append($" {joinedNode}");
+        }
+        return sb.ToString();
+    }
 }

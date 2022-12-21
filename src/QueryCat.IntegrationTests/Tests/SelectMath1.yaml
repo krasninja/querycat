@@ -1,16 +1,16 @@
 expected: |
-  3
-  -4
-  7
-  19
   1.5
+  19
+  7
+  -4
+  3
 query: |
-  SELECT 1+ 2
+  SELECT (1+ 2)::float
   UNION
-  SELECT 1 - 2 - 3
+  SELECT (1 - 2 - 3)::float
   UNION
-  SELECT 1 + 2 * 3
+  SELECT (1 + 2 * 3)::float
   UNION
-  SELECT 6 + (2 + (3 * 10) - 6) / 2
+  SELECT 6 + (2 + (3 * 10) - 6) / 2::float
   UNION
   SELECT 3 / 2.0

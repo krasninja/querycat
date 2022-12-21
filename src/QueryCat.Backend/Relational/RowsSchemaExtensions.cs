@@ -44,13 +44,13 @@ public static class RowsSchemaExtensions
     }
 
     /// <summary>
-    /// Compares two schemas.
+    /// Compares two schemas. It makes sure that tho schema can be combined. The only validation conditions
+    /// for that is columns types equality and columns count equality.
     /// </summary>
     /// <param name="schema">Source schema.</param>
     /// <param name="target">Target schema.</param>
-    /// <param name="withSourceName">Compare with column source name.</param>
     /// <returns>Returns <c>true</c> if schemas are equal, <c>false</c> otherwise.</returns>
-    public static bool IsSchemaEqual(this IRowsSchema schema, IRowsSchema target, bool withSourceName = true)
+    public static bool IsSchemaEqual(this IRowsSchema schema, IRowsSchema target)
     {
         if (schema.Columns.Length != target.Columns.Length)
         {
@@ -60,7 +60,7 @@ public static class RowsSchemaExtensions
         for (var i = 0; i < schema.Columns.Length; i++)
         {
             var sourceColumn = schema.Columns[i];
-            if (target.GetColumnIndexByName(sourceColumn.Name, withSourceName ? sourceColumn.SourceName : null) < 0)
+            if (sourceColumn.DataType != target.Columns[i].DataType)
             {
                 return false;
             }

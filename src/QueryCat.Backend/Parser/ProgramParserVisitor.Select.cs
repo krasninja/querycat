@@ -48,8 +48,9 @@ internal partial class ProgramParserVisitor
     /// <inheritdoc />
     public override IAstNode VisitSelectQueryExpressionFull(QueryCatParser.SelectQueryExpressionFullContext context)
     {
-        var query = this.Visit<SelectQuerySpecificationNode>(context.selectQueryExpressionBody());
-        return new SelectQueryExpressionBodyNode(query)
+        var query = this.Visit<SelectQueryExpressionBodyNode>(context.selectQueryExpressionBody());
+        // TODO: seems we skip here ordering and limit.
+        return new SelectQueryExpressionBodyNode(query.QueryNode)
         {
             OrderByNode = this.VisitMaybe<SelectOrderByNode>(context.selectOrderByClause()),
             OffsetNode = this.VisitMaybe<SelectOffsetNode>(context.selectOffsetClause()),
@@ -60,42 +61,45 @@ internal partial class ProgramParserVisitor
 
     /// <inheritdoc />
     public override IAstNode VisitSelectQueryExpressionBodyPrimary(QueryCatParser.SelectQueryExpressionBodyPrimaryContext context)
-        => this.Visit<SelectQuerySpecificationNode>(context.left);
+        => this.Visit<SelectQueryExpressionBodyNode>(context.left);
 
     /// <inheritdoc />
     public override IAstNode VisitSelectQueryExpressionBodyIntersect(QueryCatParser.SelectQueryExpressionBodyIntersectContext context)
-    {
-        var left = this.Visit<SelectQuerySpecificationNode>(context.left);
-        var right = this.Visit<SelectQuerySpecificationNode>(context.right);
-        left.AppendCombineQuery(right, SelectQueryExpressionCombineType.Intersect, isDistinct: context.ALL() == null);
-        return left;
-    }
+        => CreateCombineNode(context.left, context.right, SelectQueryExpressionCombineType.Intersect, isDistinct: context.ALL() == null);
 
     /// <inheritdoc />
     public override IAstNode VisitSelectQueryExpressionBodyUnion(QueryCatParser.SelectQueryExpressionBodyUnionContext context)
-    {
-        var left = this.Visit<SelectQuerySpecificationNode>(context.left);
-        var right = this.Visit<SelectQuerySpecificationNode>(context.right);
-        left.AppendCombineQuery(right, SelectQueryExpressionCombineType.Union, isDistinct: context.ALL() == null);
-        return left;
-    }
+        => CreateCombineNode(context.left, context.right, SelectQueryExpressionCombineType.Union, isDistinct: context.ALL() == null);
 
     /// <inheritdoc />
     public override IAstNode VisitSelectQueryExpressionBodyExcept(QueryCatParser.SelectQueryExpressionBodyExceptContext context)
+        => CreateCombineNode(context.left, context.right, SelectQueryExpressionCombineType.Except, isDistinct: context.ALL() == null);
+
+    private IAstNode CreateCombineNode(
+        QueryCatParser.SelectQueryExpressionBodyContext leftContext,
+        QueryCatParser.SelectQueryPrimaryContext rightContext,
+        SelectQueryExpressionCombineType combineType,
+        bool isDistinct)
     {
-        var left = this.Visit<SelectQuerySpecificationNode>(context.left);
-        var right = this.Visit<SelectQuerySpecificationNode>(context.right);
-        left.AppendCombineQuery(right, SelectQueryExpressionCombineType.Except, isDistinct: context.ALL() == null);
-        return left;
+        var left = this.Visit<SelectQueryExpressionBodyNode>(leftContext);
+        var right = this.Visit<SelectQueryExpressionBodyNode>(rightContext);
+        /*
+         * We swap left and right to correctly process expressions like this:
+         * <query1> UNION <query2> UNION ALL <query3>
+         * The distinct union should execute first.
+         */
+        right.QueryNode.AppendCombineQuery(left.QueryNode, combineType, isDistinct);
+        return right;
     }
 
     /// <inheritdoc />
     public override IAstNode VisitSelectQueryPrimaryNoParens(QueryCatParser.SelectQueryPrimaryNoParensContext context)
-        => this.Visit<SelectQuerySpecificationNode>(context.selectQuerySpecification());
+        => new SelectQueryExpressionBodyNode(
+            this.Visit<SelectQuerySpecificationNode>(context.selectQuerySpecification()));
 
     /// <inheritdoc />
     public override IAstNode VisitSelectQueryPrimaryParens(QueryCatParser.SelectQueryPrimaryParensContext context)
-        => this.Visit<SelectQuerySpecificationNode>(context.selectQueryExpression());
+        => this.Visit<SelectQueryExpressionBodyNode>(context.selectQueryExpression());
 
     /// <inheritdoc />
     public override IAstNode VisitSelectQuerySpecificationFull(QueryCatParser.SelectQuerySpecificationFullContext context)

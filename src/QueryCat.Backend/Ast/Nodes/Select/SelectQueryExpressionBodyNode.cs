@@ -65,6 +65,7 @@ public sealed class SelectQueryExpressionBodyNode : ExpressionNode
     public override string ToString()
     {
         var sb = new StringBuilder()
+            .Append('(')
             .Append(QueryNode);
         if (OffsetNode != null)
         {
@@ -78,6 +79,7 @@ public sealed class SelectQueryExpressionBodyNode : ExpressionNode
         {
             sb.Append($" Order {OrderByNode}");
         }
+        sb.Append(')');
         return sb.ToString();
     }
 }
