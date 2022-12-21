@@ -13,7 +13,7 @@ public sealed class SelectStatementNode : StatementNode
     }
 
     public SelectStatementNode(SelectStatementNode node) :
-        this((SelectQueryExpressionBodyNode)node.QueryNode.Clone())
+        this((SelectQueryExpressionBodyNode)node.Clone())
     {
         node.CopyTo(this);
     }
@@ -29,4 +29,7 @@ public sealed class SelectStatementNode : StatementNode
 
     /// <inheritdoc />
     public override void Accept(AstVisitor visitor) => visitor.Visit(this);
+
+    /// <inheritdoc />
+    public override string ToString() => QueryNode.ToString();
 }

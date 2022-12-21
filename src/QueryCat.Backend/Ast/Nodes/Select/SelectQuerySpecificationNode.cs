@@ -5,6 +5,10 @@ namespace QueryCat.Backend.Ast.Nodes.Select;
 
 public sealed class SelectQuerySpecificationNode : AstNode
 {
+    public string Alias { get; internal set; } = string.Empty;
+
+    public SelectQueryExpressionCombineNode? CombineQueryNode { get; private set; }
+
     /// <summary>
     /// CTE.
     /// </summary>
@@ -67,7 +71,26 @@ public sealed class SelectQuerySpecificationNode : AstNode
         {
             FetchNode = (SelectFetchNode)node.FetchNode.Clone();
         }
+        if (node.CombineQueryNode != null)
+        {
+            CombineQueryNode = (SelectQueryExpressionCombineNode)node.CombineQueryNode.Clone();
+        }
+        if (node.WithNode != null)
+        {
+            WithNode = (SelectWithListNode)node.WithNode.Clone();
+        }
         node.CopyTo(this);
+    }
+
+    public void AppendCombineQuery(SelectQuerySpecificationNode node, SelectQueryExpressionCombineType combineType,
+        bool isDistinct)
+    {
+        var next = this;
+        while (next.CombineQueryNode != null)
+        {
+            next = next.CombineQueryNode.QueryNode;
+        }
+        next.CombineQueryNode = new SelectQueryExpressionCombineNode(node, combineType, isDistinct);
     }
 
     /// <inheritdoc />
@@ -101,6 +124,10 @@ public sealed class SelectQuerySpecificationNode : AstNode
         if (OrderByNode != null)
         {
             yield return OrderByNode;
+        }
+        if (CombineQueryNode != null)
+        {
+            yield return CombineQueryNode;
         }
     }
 
@@ -146,6 +173,10 @@ public sealed class SelectQuerySpecificationNode : AstNode
         if (OrderByNode != null)
         {
             sb.Append($" Order {OrderByNode}");
+        }
+        if (CombineQueryNode != null)
+        {
+            sb.Append($" Combine {CombineQueryNode}");
         }
         return sb.ToString();
     }

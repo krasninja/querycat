@@ -27,18 +27,9 @@ internal partial class ProgramParserVisitor
         => new SelectAliasNode(GetUnwrappedText(context.name.Text));
 
     /// <inheritdoc />
-    public override IAstNode VisitSelectQueryExpression(QueryCatParser.SelectQueryExpressionContext context)
-        => new SelectQueryExpressionBodyNode(
-            this.Visit<SelectQuerySpecificationNode>(context.selectQuery()).ToArray())
-        {
-            OrderByNode = this.VisitMaybe<SelectOrderByNode>(context.selectOrderByClause()),
-            OffsetNode = this.VisitMaybe<SelectOffsetNode>(context.selectOffsetClause()),
-            FetchNode = this.VisitMaybe<SelectFetchNode>(context.selectFetchFirstClause()),
-        };
-
-    /// <inheritdoc />
-    public override IAstNode VisitSelectQueryFull(QueryCatParser.SelectQueryFullContext context)
-        => new SelectQuerySpecificationNode(this.Visit<SelectColumnsListNode>(context.selectList()))
+    public override IAstNode VisitSelectQueryExpressionSimple(QueryCatParser.SelectQueryExpressionSimpleContext context)
+    {
+        var query = new SelectQuerySpecificationNode(this.Visit<SelectColumnsListNode>(context.selectList()))
         {
             WithNode = this.VisitMaybe<SelectWithListNode>(context.selectWithClause()),
             DistinctNode = this.VisitMaybe<SelectDistinctNode>(context.selectDistinctClause()),
@@ -46,13 +37,79 @@ internal partial class ProgramParserVisitor
             TargetNode = this.VisitMaybe<FunctionCallNode>(context.selectTarget()),
             OrderByNode = this.VisitMaybe<SelectOrderByNode>(context.selectOrderByClause()),
             OffsetNode = this.VisitMaybe<SelectOffsetNode>(context.selectOffsetClause()),
-            FetchNode = this.VisitMaybe<SelectFetchNode>(context.selectFetchFirstClause())
+            FetchNode = this.VisitMaybe<SelectFetchNode>(context.selectTopClause())
+                ?? this.VisitMaybe<SelectFetchNode>(context.selectFetchFirstClause())
                 ?? this.VisitMaybe<SelectFetchNode>(context.selectLimitClause())
                 ?? this.VisitMaybe<SelectFetchNode>(context.selectTopClause())
         };
+        return new SelectQueryExpressionBodyNode(query);
+    }
 
     /// <inheritdoc />
-    public override IAstNode VisitSelectQuerySingle(QueryCatParser.SelectQuerySingleContext context)
+    public override IAstNode VisitSelectQueryExpressionFull(QueryCatParser.SelectQueryExpressionFullContext context)
+    {
+        var query = this.Visit<SelectQuerySpecificationNode>(context.selectQueryExpressionBody());
+        return new SelectQueryExpressionBodyNode(query)
+        {
+            OrderByNode = this.VisitMaybe<SelectOrderByNode>(context.selectOrderByClause()),
+            OffsetNode = this.VisitMaybe<SelectOffsetNode>(context.selectOffsetClause()),
+            FetchNode = this.VisitMaybe<SelectFetchNode>(context.selectFetchFirstClause())
+                ?? this.VisitMaybe<SelectFetchNode>(context.selectLimitClause()),
+        };
+    }
+
+    /// <inheritdoc />
+    public override IAstNode VisitSelectQueryExpressionBodyPrimary(QueryCatParser.SelectQueryExpressionBodyPrimaryContext context)
+        => this.Visit<SelectQuerySpecificationNode>(context.left);
+
+    /// <inheritdoc />
+    public override IAstNode VisitSelectQueryExpressionBodyIntersect(QueryCatParser.SelectQueryExpressionBodyIntersectContext context)
+    {
+        var left = this.Visit<SelectQuerySpecificationNode>(context.left);
+        var right = this.Visit<SelectQuerySpecificationNode>(context.right);
+        left.AppendCombineQuery(right, SelectQueryExpressionCombineType.Intersect, isDistinct: context.ALL() == null);
+        return left;
+    }
+
+    /// <inheritdoc />
+    public override IAstNode VisitSelectQueryExpressionBodyUnion(QueryCatParser.SelectQueryExpressionBodyUnionContext context)
+    {
+        var left = this.Visit<SelectQuerySpecificationNode>(context.left);
+        var right = this.Visit<SelectQuerySpecificationNode>(context.right);
+        left.AppendCombineQuery(right, SelectQueryExpressionCombineType.Union, isDistinct: context.ALL() == null);
+        return left;
+    }
+
+    /// <inheritdoc />
+    public override IAstNode VisitSelectQueryExpressionBodyExcept(QueryCatParser.SelectQueryExpressionBodyExceptContext context)
+    {
+        var left = this.Visit<SelectQuerySpecificationNode>(context.left);
+        var right = this.Visit<SelectQuerySpecificationNode>(context.right);
+        left.AppendCombineQuery(right, SelectQueryExpressionCombineType.Except, isDistinct: context.ALL() == null);
+        return left;
+    }
+
+    /// <inheritdoc />
+    public override IAstNode VisitSelectQueryPrimaryNoParens(QueryCatParser.SelectQueryPrimaryNoParensContext context)
+        => this.Visit<SelectQuerySpecificationNode>(context.selectQuerySpecification());
+
+    /// <inheritdoc />
+    public override IAstNode VisitSelectQueryPrimaryParens(QueryCatParser.SelectQueryPrimaryParensContext context)
+        => this.Visit<SelectQuerySpecificationNode>(context.selectQueryExpression());
+
+    /// <inheritdoc />
+    public override IAstNode VisitSelectQuerySpecificationFull(QueryCatParser.SelectQuerySpecificationFullContext context)
+        => new SelectQuerySpecificationNode(this.Visit<SelectColumnsListNode>(context.selectList()))
+        {
+            WithNode = this.VisitMaybe<SelectWithListNode>(context.selectWithClause()),
+            DistinctNode = this.VisitMaybe<SelectDistinctNode>(context.selectDistinctClause()),
+            TableExpressionNode = this.VisitMaybe<SelectTableExpressionNode>(context.selectFromClause()),
+            TargetNode = this.VisitMaybe<FunctionCallNode>(context.selectTarget()),
+            FetchNode = this.VisitMaybe<SelectFetchNode>(context.selectTopClause()),
+        };
+
+    /// <inheritdoc />
+    public override IAstNode VisitSelectQuerySpecificationSingle(QueryCatParser.SelectQuerySpecificationSingleContext context)
     {
         var selectColumnsSublistNodes = this.Visit<SelectColumnsSublistNode>(context.selectSublist()).ToList();
         SelectTableExpressionNode? selectTableExpressionNode = null;
@@ -88,7 +145,7 @@ internal partial class ProgramParserVisitor
     public override IAstNode VisitSelectWithElement(QueryCatParser.SelectWithElementContext context)
         => new SelectWithNode(
             name: GetUnwrappedText(context.name.Text),
-            query: this.Visit<SelectQuerySpecificationNode>(context.query));
+            queryNode: this.Visit<SelectQueryExpressionBodyNode>(context.query));
 
     #endregion
 

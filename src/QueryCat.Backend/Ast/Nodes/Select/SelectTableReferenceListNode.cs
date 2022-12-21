@@ -12,6 +12,11 @@ public sealed class SelectTableReferenceListNode : AstNode
         TableFunctions = tableFunctions;
     }
 
+    public SelectTableReferenceListNode(params ExpressionNode[] tableFunctions)
+    {
+        TableFunctions = tableFunctions;
+    }
+
     public SelectTableReferenceListNode(SelectTableReferenceListNode node) :
         this(node.TableFunctions.Select(tf => (ExpressionNode)tf.Clone()).ToList())
     {

@@ -61,7 +61,7 @@ internal sealed class SelectResolveTypesVisitor : ResolveTypesVisitor
     /// <inheritdoc />
     public override void Visit(SelectQueryExpressionBodyNode node)
     {
-        node.SetDataType(node.Queries[0].ColumnsListNode.Columns[0].GetDataType());
+        node.SetDataType(node.QueryNode.ColumnsListNode.Columns[0].GetDataType());
     }
 
     /// <inheritdoc />

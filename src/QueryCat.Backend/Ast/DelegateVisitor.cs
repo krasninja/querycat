@@ -284,7 +284,7 @@ public abstract class DelegateVisitor : AstVisitor
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectQueryExpressionBodyNode node)
+    public override void Visit(SelectQueryExpressionCombineNode node)
     {
         OnVisit(node);
     }

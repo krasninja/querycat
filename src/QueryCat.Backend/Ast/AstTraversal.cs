@@ -15,6 +15,11 @@ public class AstTraversal
     /// </summary>
     public List<Type> TypesToIgnore { get; } = new();
 
+    /// <summary>
+    /// If node type is within TypesToIgnore list it will be visited anyway, but children will not be traversed.
+    /// </summary>
+    public bool AcceptBeforeIgnore { get; set; }
+
     public AstTraversal(AstVisitor visitor)
     {
         _visitor = visitor ?? throw new ArgumentNullException(nameof(visitor));
@@ -89,6 +94,10 @@ public class AstTraversal
                     _treeStack.Push((current.Enumerator.Current, next.GetChildren().GetEnumerator()));
                     next.Accept(_visitor);
                 }
+                else if (AcceptBeforeIgnore)
+                {
+                    current.Enumerator.Current.Accept(_visitor);
+                }
             }
             else
             {
@@ -124,6 +133,10 @@ public class AstTraversal
                 if (Array.IndexOf(typesToIgnore, current.Enumerator.Current.GetType()) == -1)
                 {
                     _treeStack.Push((current.Enumerator.Current, next.GetChildren().GetEnumerator()));
+                }
+                else if (AcceptBeforeIgnore)
+                {
+                    current.Enumerator.Current.Accept(_visitor);
                 }
             }
             else

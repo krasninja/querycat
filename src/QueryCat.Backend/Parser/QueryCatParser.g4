@@ -36,34 +36,50 @@ functionArg: variadic=ELLIPSIS? IDENTIFIER optional=QUESTION? COLON functionType
 
 selectStatement: selectQueryExpression;
 
-// Union.
-selectQueryExpression:
-
-    selectQuery (UNION selectQuery)*
-    selectOrderByClause?
-    selectOffsetClause?
-    selectFetchFirstClause?;
-
 // Order.
 selectOrderByClause: ORDER BY selectSortSpecification (COMMA selectSortSpecification)*;
 selectSortSpecification: expression (ASC | DESC)? ((NULLS FIRST) | (NULLS LAST))?;
 
 // Select query.
 selectAlias: AS (name=(IDENTIFIER | STRING_LITERAL));
-selectQuery
-    :
-        selectWithClause?
-        SELECT
-        selectTopClause?
-        selectDistinctClause?
-        selectList
-        selectTarget?
-        selectFromClause
-        selectOrderByClause?
-        selectLimitClause?
-        selectOffsetClause?
-        selectFetchFirstClause? # SelectQueryFull
-    | SELECT selectSublist (COMMA selectSublist)* selectTarget? # SelectQuerySingle
+selectQueryExpression
+    : selectWithClause?
+      SELECT
+      selectTopClause?
+      selectDistinctClause?
+      selectList
+      selectTarget?
+      selectFromClause
+      selectOrderByClause?
+      selectLimitClause?
+      selectOffsetClause?
+      selectFetchFirstClause? # SelectQueryExpressionSimple
+    | selectWithClause?
+      selectQueryExpressionBody
+      selectOrderByClause?
+      selectLimitClause?
+      selectOffsetClause?
+      selectFetchFirstClause? # SelectQueryExpressionFull
+    ;
+selectQueryExpressionBody
+    : left=selectQueryPrimary # SelectQueryExpressionBodyPrimary
+    | left=selectQueryExpressionBody INTERSECT (DISTINCT | ALL)? right=selectQueryPrimary # SelectQueryExpressionBodyIntersect
+    | left=selectQueryExpressionBody UNION (DISTINCT | ALL)? right=selectQueryPrimary # SelectQueryExpressionBodyUnion
+    | left=selectQueryExpressionBody EXCEPT (DISTINCT | ALL)? right=selectQueryPrimary # SelectQueryExpressionBodyExcept
+    ;
+selectQueryPrimary
+    : selectQuerySpecification # SelectQueryPrimaryNoParens
+    | '(' selectQueryExpression ')' # SelectQueryPrimaryParens
+    ;
+selectQuerySpecification
+    : selectWithClause?
+      SELECT
+      selectTopClause?
+      selectDistinctClause?
+      selectList
+      selectTarget?
+      selectFromClause # SelectQuerySpecificationFull
+    | SELECT selectSublist (COMMA selectSublist)* selectTarget? # SelectQuerySpecificationSingle
     ;
 selectList: selectSublist (COMMA selectSublist)*;
 selectDistinctClause: ALL | DISTINCT | selectDistinctOnClause;
@@ -71,7 +87,7 @@ selectDistinctOnClause: DISTINCT ON '(' simpleExpression (COMMA simpleExpression
 
 // With.
 selectWithClause: WITH RECURSIVE? selectWithElement (COMMA selectWithElement)*;
-selectWithElement: name=IDENTIFIER ('(' selectWithColumnList ')')? AS '(' query=selectQuery ')';
+selectWithElement: name=IDENTIFIER ('(' selectWithColumnList ')')? AS '(' query=selectQueryExpression ')';
 selectWithColumnList: name=identifierChain (COMMA name=identifierChain)*;
 
 // Columns.

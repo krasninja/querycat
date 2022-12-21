@@ -84,6 +84,9 @@ internal sealed partial class SpecificationNodeVisitor : SelectAstVisitor
 
         // INTO.
         CreateOutput(context, node);
+
+        // UNION.
+        ApplyCombineRowsSet(context, node);
     }
 
     #endregion
@@ -383,6 +386,38 @@ internal sealed partial class SpecificationNodeVisitor : SelectAstVisitor
             context.SetIterator(actionIterator);
         }
     }
+
+    #endregion
+
+    #region UNION
+
+    private void ApplyCombineRowsSet(SelectCommandContext context, SelectQuerySpecificationNode node)
+    {
+        if (node.CombineQueryNode == null)
+        {
+            return;
+        }
+
+        new SpecificationNodeVisitor(ExecutionThread, node).Run(node.CombineQueryNode.QueryNode);
+
+        // Add all iterators and merge them into "combine" iterator.
+        var rightContext = node.CombineQueryNode.QueryNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
+        var combineRowsIterator = new CombineRowsIterator(
+            context.CurrentIterator,
+            rightContext.CurrentIterator,
+            ConvertCombineType(node.CombineQueryNode.CombineType),
+            node.CombineQueryNode.IsDistinct);
+
+        context.SetIterator(combineRowsIterator);
+    }
+
+    private static CombineType ConvertCombineType(SelectQueryExpressionCombineType combineType) => combineType switch
+    {
+        SelectQueryExpressionCombineType.Except => CombineType.Except,
+        SelectQueryExpressionCombineType.Intersect => CombineType.Intersect,
+        SelectQueryExpressionCombineType.Union => CombineType.Union,
+        _ => throw new NotImplementedException($"{combineType} is not implemented."),
+    };
 
     #endregion
 

@@ -2,14 +2,14 @@ namespace QueryCat.Backend.Ast.Nodes.Select;
 
 public sealed class SelectSubqueryExpressionNode : ExpressionNode
 {
-    public SelectQueryExpressionBodyNode QueryExpressionBodyNode { get; }
+    public SelectQueryExpressionBodyNode QueryNode { get; }
 
     /// <inheritdoc />
     public override string Code => "select_subquery";
 
-    public SelectSubqueryExpressionNode(SelectQueryExpressionBodyNode queryExpressionBodyNode)
+    public SelectSubqueryExpressionNode(SelectQueryExpressionBodyNode queryNode)
     {
-        QueryExpressionBodyNode = queryExpressionBodyNode;
+        QueryNode = queryNode;
     }
 
     public SelectSubqueryExpressionNode(SelectSubqueryExpressionNode node)
@@ -24,7 +24,7 @@ public sealed class SelectSubqueryExpressionNode : ExpressionNode
     /// <inheritdoc />
     public override IEnumerable<IAstNode> GetChildren()
     {
-        yield return QueryExpressionBodyNode;
+        yield return QueryNode;
     }
 
     /// <inheritdoc />

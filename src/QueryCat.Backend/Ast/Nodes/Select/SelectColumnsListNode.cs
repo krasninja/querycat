@@ -12,6 +12,12 @@ public sealed class SelectColumnsListNode : AstNode
         Columns = columns;
     }
 
+    public SelectColumnsListNode(params SelectColumnsSublistNode[] columns)
+    {
+        Columns = new List<SelectColumnsSublistNode>();
+        Columns.AddRange(columns);
+    }
+
     public SelectColumnsListNode(SelectColumnsListNode node) :
         this(node.Columns.Select(c => (SelectColumnsSublistNode)c.Clone()).ToList())
     {

@@ -81,9 +81,9 @@ internal sealed class CreateContextVisitor : AstVisitor
         foreach (var withNodeItem in node.WithNode.Nodes)
         {
             var cteCreateContextVisitor = new CreateContextVisitor(_executionThread, _parentContext, ctes.ToArray());
-            cteCreateContextVisitor.Run(withNodeItem.Query);
+            cteCreateContextVisitor.Run(withNodeItem.QueryNode);
             new SpecificationNodeVisitor(_executionThread).Run(withNodeItem);
-            var cte = new Cte(withNodeItem.Name, withNodeItem.Query
+            var cte = new Cte(withNodeItem.Name, withNodeItem.QueryNode
                 .GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey));
             ctes.Add(cte);
         }
@@ -229,11 +229,11 @@ internal sealed class CreateContextVisitor : AstVisitor
         ExpressionNode expressionNode,
         SelectQuerySpecificationNode? parentSpecificationNode = null)
     {
-        if (expressionNode is SelectQueryExpressionBodyNode selectQueryExpressionBodyNode)
+        if (expressionNode is SelectQueryExpressionBodyNode queryExpressionBodyNode)
         {
             return new[]
             {
-                CreateInputSourceFromSubQuery(selectQueryExpressionBodyNode, parentSpecificationNode)
+                CreateInputSourceFromSubQuery(queryExpressionBodyNode, parentSpecificationNode)
             };
         }
         else if (expressionNode is SelectTableFunctionNode tableFunctionNode)
@@ -252,9 +252,9 @@ internal sealed class CreateContextVisitor : AstVisitor
 
     private static string GetAliasFromExpression(ExpressionNode expressionNode)
     {
-        if (expressionNode is SelectQueryExpressionBodyNode selectQueryExpressionBodyNode)
+        if (expressionNode is SelectQueryExpressionBodyNode expressionBodyNode)
         {
-            return selectQueryExpressionBodyNode.Alias;
+            return expressionBodyNode.Alias;
         }
         else if (expressionNode is SelectTableFunctionNode tableFunctionNode)
         {
@@ -267,7 +267,7 @@ internal sealed class CreateContextVisitor : AstVisitor
         SelectQueryExpressionBodyNode queryExpressionBodyNode,
         SelectQuerySpecificationNode? parentSpecificationNode = null)
     {
-        CreateForQuery(queryExpressionBodyNode.Queries);
+        CreateForQuery(queryExpressionBodyNode.QueryNode);
         new CreateContextVisitor(_executionThread, null).Run(queryExpressionBodyNode);
         new SpecificationNodeVisitor(_executionThread, parentSpecificationNode).Run(queryExpressionBodyNode);
         var commandContext = queryExpressionBodyNode.GetRequiredAttribute<CommandContext>(AstAttributeKeys.ContextKey);

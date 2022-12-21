@@ -14,6 +14,7 @@ public sealed class SelectOffsetNode : AstNode
 
     public SelectOffsetNode(SelectOffsetNode node) : this((ExpressionNode)node.CountNode.Clone())
     {
+        node.CopyTo(this);
     }
 
     /// <inheritdoc />

@@ -204,7 +204,7 @@ public class QueryAstVisitor : AstVisitor
     /// <inheritdoc />
     public override void Visit(SelectQueryExpressionBodyNode node)
     {
-        SetString(node, string.Join(" UNION ", node.Queries.Select(GetString)));
+        SetString(node, GetString(node.QueryNode));
     }
 
     /// <inheritdoc />

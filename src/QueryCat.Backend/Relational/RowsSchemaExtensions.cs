@@ -42,4 +42,30 @@ public static class RowsSchemaExtensions
         }
         return null;
     }
+
+    /// <summary>
+    /// Compares two schemas.
+    /// </summary>
+    /// <param name="schema">Source schema.</param>
+    /// <param name="target">Target schema.</param>
+    /// <param name="withSourceName">Compare with column source name.</param>
+    /// <returns>Returns <c>true</c> if schemas are equal, <c>false</c> otherwise.</returns>
+    public static bool IsSchemaEqual(this IRowsSchema schema, IRowsSchema target, bool withSourceName = true)
+    {
+        if (schema.Columns.Length != target.Columns.Length)
+        {
+            return false;
+        }
+
+        for (var i = 0; i < schema.Columns.Length; i++)
+        {
+            var sourceColumn = schema.Columns[i];
+            if (target.GetColumnIndexByName(sourceColumn.Name, withSourceName ? sourceColumn.SourceName : null) < 0)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
 }

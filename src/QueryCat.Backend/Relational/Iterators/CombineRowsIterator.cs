@@ -5,103 +5,107 @@ using QueryCat.Backend.Utils;
 namespace QueryCat.Backend.Relational.Iterators;
 
 /// <summary>
-/// The iterator combines multiple iterators with the same schema into a single sequence.
+/// The iterator combines multiple iterators with the same schema into a single sequence using
+/// union, intersect and except methods.
 /// </summary>
 internal sealed class CombineRowsIterator : IRowsIterator
 {
-    /// <inheritdoc />
-    public Column[] Columns { get; private set; } = Array.Empty<Column>();
+    private readonly IRowsIterator _leftIterator;
+    private readonly IRowsIterator _rightIterator;
+    private readonly bool _isDistinct;
+    private readonly Func<bool> _moveDelegate;
+    private readonly HashSet<VariantValueArray> _values = new();
+    private IRowsIterator _currentIterator;
 
     /// <inheritdoc />
-    public Row Current
+    public Column[] Columns => _leftIterator.Columns;
+
+    /// <inheritdoc />
+    public Row Current => _currentIterator.Current;
+
+    public CombineRowsIterator(IRowsIterator leftIterator, IRowsIterator rightIterator, CombineType combineType, bool isDistinct)
     {
-        get
+        _leftIterator = leftIterator;
+        _currentIterator = _leftIterator;
+        _rightIterator = rightIterator;
+        _isDistinct = isDistinct;
+
+        _moveDelegate = combineType switch
         {
-            if (_currentRowIteratorNode == null)
-            {
-                throw new InvalidOperationException("Rows iterator is not initialized.");
-            }
-            return _currentRowIteratorNode.Value.Current;
+            CombineType.Union => UnionDelegate,
+            CombineType.Except => ExceptDelegate,
+            CombineType.Intersect => IntersectDelegate,
+            _ => throw new NotImplementedException($"{combineType} is not implemented."),
+        };
+
+        if (!_leftIterator.IsSchemaEqual(_rightIterator, withSourceName: false))
+        {
+            throw new SemanticException("Each combine query must have equal columns names and types.");
         }
     }
 
-    private LinkedListNode<IRowsIterator>? _currentRowIteratorNode;
-
-    private bool _firstMoveCall = true;
-
-    private readonly LinkedList<IRowsIterator> _rowIterators = new();
-
-    public IReadOnlyCollection<IRowsIterator> RowIterators => _rowIterators;
-
-    private bool AreColumnsInitialized => _currentRowIteratorNode != null;
-
-    public void AddRowsIterator(IRowsIterator rowsIterator)
+    private bool UnionDelegate()
     {
-        if (rowsIterator == null)
+        var result = _currentIterator.MoveNext();
+        if (!result)
         {
-            throw new ArgumentNullException(nameof(rowsIterator));
-        }
-
-        // Make sure the columns schema is valid.
-        if (AreColumnsInitialized)
-        {
-            if (rowsIterator.Columns.Length != Columns.Length)
+            if (_currentIterator == _leftIterator)
             {
-                throw new SemanticException("Each UNION query must have the same number of columns.");
-            }
-            for (var i = 0; i < Columns.Length; i++)
-            {
-                if (!DataTypeUtils.EqualsWithCast(rowsIterator.Columns[i].DataType, Columns[i].DataType))
-                {
-                    throw new SemanticException($"Types mismatch for column {Columns[i].Name}.");
-                }
+                _currentIterator = _rightIterator;
+                result = _currentIterator.MoveNext();
             }
         }
 
-        _rowIterators.AddLast(rowsIterator);
-        if (_currentRowIteratorNode == null)
-        {
-            _currentRowIteratorNode = _rowIterators.First;
-            Columns = rowsIterator.Columns;
-        }
+        return result;
+    }
+
+    private bool IntersectDelegate()
+    {
+        // TODO:
+        return false;
+    }
+
+    private bool ExceptDelegate()
+    {
+        // TODO:
+        return false;
     }
 
     /// <inheritdoc />
     public bool MoveNext()
     {
-        if (_firstMoveCall && _currentRowIteratorNode != null)
+        if (_isDistinct)
         {
-            _firstMoveCall = false;
-        }
+            while (_moveDelegate.Invoke())
+            {
+                var arr = new VariantValueArray(Current.AsArray(copy: true));
 
-        if (_currentRowIteratorNode == null)
-        {
+                if (!_values.Contains(arr))
+                {
+                    _values.Add(arr);
+                    return true;
+                }
+            }
+
             return false;
         }
-
-        if (_currentRowIteratorNode.Value.MoveNext())
+        else
         {
-            return true;
+            return _moveDelegate.Invoke();
         }
-
-        _currentRowIteratorNode = _currentRowIteratorNode.Next;
-        return MoveNext();
     }
 
     /// <inheritdoc />
     public void Reset()
     {
-        _firstMoveCall = true;
-        foreach (var rowsIterator in _rowIterators)
-        {
-            rowsIterator.Reset();
-        }
-        _currentRowIteratorNode = _rowIterators.First;
+        _leftIterator.Reset();
+        _rightIterator.Reset();
+        _currentIterator = _leftIterator;
     }
 
     /// <inheritdoc />
     public void Explain(IndentedStringBuilder stringBuilder)
     {
-        stringBuilder.AppendRowsIteratorsWithIndent("Combine", _rowIterators.ToArray());
+        stringBuilder.AppendRowsIteratorsWithIndent("Combine", _leftIterator, _rightIterator);
     }
 }

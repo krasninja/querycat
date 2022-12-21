@@ -4,7 +4,7 @@ namespace QueryCat.Backend.Ast.Nodes.Select;
 
 public sealed class SelectQueryExpressionBodyNode : ExpressionNode
 {
-    public SelectQuerySpecificationNode[] Queries { get; }
+    public SelectQuerySpecificationNode QueryNode { get; }
 
     public string Alias { get; internal set; } = string.Empty;
 
@@ -18,13 +18,13 @@ public sealed class SelectQueryExpressionBodyNode : ExpressionNode
     public SelectFetchNode? FetchNode { get; set; }
 
     /// <inheritdoc />
-    public SelectQueryExpressionBodyNode(params SelectQuerySpecificationNode[] queries)
+    public SelectQueryExpressionBodyNode(SelectQuerySpecificationNode queryNode)
     {
-        Queries = queries;
+        QueryNode = queryNode;
     }
 
     public SelectQueryExpressionBodyNode(SelectQueryExpressionBodyNode node) :
-        this(node.Queries.Select(q => (SelectQuerySpecificationNode)q.Clone()).ToArray())
+        this((SelectQuerySpecificationNode)node.QueryNode.Clone())
     {
         if (node.OffsetNode != null)
         {
@@ -40,10 +40,7 @@ public sealed class SelectQueryExpressionBodyNode : ExpressionNode
     /// <inheritdoc />
     public override IEnumerable<IAstNode> GetChildren()
     {
-        foreach (var query in Queries)
-        {
-            yield return query;
-        }
+        yield return QueryNode;
         if (OrderByNode != null)
         {
             yield return OrderByNode;
@@ -67,10 +64,8 @@ public sealed class SelectQueryExpressionBodyNode : ExpressionNode
     /// <inheritdoc />
     public override string ToString()
     {
-        var sb = new StringBuilder();
-        sb.Append('(');
-        sb.Append(string.Join(" Union ", Queries.Select(q => q.ToString())));
-        sb.Append(')');
+        var sb = new StringBuilder()
+            .Append(QueryNode);
         if (OffsetNode != null)
         {
             sb.Append($" Offset {OffsetNode}");

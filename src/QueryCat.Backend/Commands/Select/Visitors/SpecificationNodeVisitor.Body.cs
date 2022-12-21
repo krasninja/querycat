@@ -1,7 +1,6 @@
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Commands.Select.Iterators;
-using QueryCat.Backend.Relational.Iterators;
 
 namespace QueryCat.Backend.Commands.Select.Visitors;
 
@@ -10,25 +9,21 @@ internal partial class SpecificationNodeVisitor
     /// <inheritdoc />
     public override void Visit(SelectQueryExpressionBodyNode node)
     {
-        // Add all iterators and merge them into "combine" iterator.
-        var combineRowsIterator = new CombineRowsIterator();
-        var hasOutputInQuery = false;
-
         // Create compound context.
         var isSubQuery = _parentSpecificationNode != null;
-        var firstQueryContext = node.Queries[0].GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
-        var context = new SelectCommandContext(combineRowsIterator)
+        var firstQueryContext = node.QueryNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
+        var context = new SelectCommandContext(firstQueryContext.CurrentIterator)
         {
             RowsInputIterator = firstQueryContext.RowsInputIterator,
         };
         context.AddChildContext(firstQueryContext.ChildContexts);
 
         // Process.
-        CreateCombineRowsSet(context, node, isSubQuery, ref hasOutputInQuery);
+        ApplyRowIdIterator(context, isSubQuery);
         ApplyOrderBy(context, node.OrderByNode);
         ApplyOffsetFetch(context, node.OffsetNode, node.FetchNode);
         var resultIterator = context.CurrentIterator;
-        if (hasOutputInQuery)
+        if (context.HasOutput)
         {
             resultIterator = new ExecuteRowsIterator(resultIterator);
         }
@@ -39,33 +34,13 @@ internal partial class SpecificationNodeVisitor
         node.SetAttribute(AstAttributeKeys.ContextKey, context);
     }
 
-    private void CreateCombineRowsSet(
-        SelectCommandContext context,
-        SelectQueryExpressionBodyNode node,
-        bool isSubQuery,
-        ref bool hasOutputInQuery)
+    private void ApplyRowIdIterator(SelectCommandContext bodyContext, bool isSubQuery)
     {
-        // Add all iterators and merge them into "combine" iterator.
-        var combineRowsIterator = new CombineRowsIterator();
-        foreach (var queryNode in node.Queries)
-        {
-            var queryContext = queryNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
-            if (queryContext.HasOutput)
-            {
-                hasOutputInQuery = true;
-            }
-            combineRowsIterator.AddRowsIterator(queryContext.CurrentIterator);
-        }
-
-        // Format final result iterator.
-        var resultIterator = combineRowsIterator.RowIterators.Count == 1
-            ? combineRowsIterator.RowIterators.First()
-            : combineRowsIterator;
+        var resultIterator = bodyContext.CurrentIterator;
         if (ExecutionThread.Options.AddRowNumberColumn && !isSubQuery)
         {
             resultIterator = new RowIdRowsIterator(resultIterator);
         }
-
-        context.SetIterator(resultIterator);
+        bodyContext.SetIterator(resultIterator);
     }
 }

@@ -24,6 +24,7 @@ public sealed class SelectOrderBySpecificationNode : AstNode
     public SelectOrderBySpecificationNode(SelectOrderBySpecificationNode node)
         : this((ExpressionNode)node.Expression.Clone(), node.Order, node.NullOrder)
     {
+        node.CopyTo(this);
     }
 
     /// <inheritdoc />

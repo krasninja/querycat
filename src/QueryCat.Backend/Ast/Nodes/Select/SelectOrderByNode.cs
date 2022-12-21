@@ -15,6 +15,7 @@ public sealed class SelectOrderByNode : AstNode
     public SelectOrderByNode(SelectOrderByNode node)
         : this(node.OrderBySpecificationNodes.Select(n => (SelectOrderBySpecificationNode)n.Clone()).ToList())
     {
+        node.CopyTo(this);
     }
 
     /// <inheritdoc />

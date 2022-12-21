@@ -82,8 +82,21 @@ public class Row : IRowsSchema, ICloneable
     /// <summary>
     /// Return row as an array of values.
     /// </summary>
+    /// <param name="copy">Return the copy of row values, otherwise it returns internal array.</param>
     /// <returns>Array of values.</returns>
-    public VariantValue[] AsArray() => _values;
+    public VariantValue[] AsArray(bool copy = false)
+    {
+        if (!copy)
+        {
+            return _values;
+        }
+        else
+        {
+            var arr = new VariantValue[_values.Length];
+            Array.Copy(_values, arr, arr.Length);
+            return arr;
+        }
+    }
 
     /// <summary>
     /// Remove all the data, clear the row.
