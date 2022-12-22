@@ -1,6 +1,6 @@
 namespace QueryCat.Backend.Ast.Nodes.Select;
 
-public enum SelectQueryExpressionCombineType
+public enum SelectQueryCombineType
 {
     Intersect,
     Union,

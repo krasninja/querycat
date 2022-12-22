@@ -202,12 +202,6 @@ public class QueryAstVisitor : AstVisitor
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectQueryExpressionBodyNode node)
-    {
-        SetString(node, GetString(node.QueryNode));
-    }
-
-    /// <inheritdoc />
     public override void Visit(SelectStatementNode node)
     {
         SetString(node, GetString(node.QueryNode));

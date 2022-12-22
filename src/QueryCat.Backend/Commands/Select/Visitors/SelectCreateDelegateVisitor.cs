@@ -24,6 +24,7 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
     {
         _context = context;
         AstTraversal.TypesToIgnore.Add(typeof(SelectQuerySpecificationNode));
+        AstTraversal.AcceptBeforeIgnore = true;
     }
 
     /// <inheritdoc />
@@ -79,7 +80,7 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
     /// <inheritdoc />
     public override void Visit(SelectExistsExpressionNode node)
     {
-        var commandContext = node.SubQueryExpressionNode.GetRequiredAttribute<CommandContext>(AstAttributeKeys.ContextKey);
+        var commandContext = node.SubQueryNode.GetRequiredAttribute<CommandContext>(AstAttributeKeys.ContextKey);
         if (commandContext.Invoke().AsObject is not IRowsIterator rowsIterator)
         {
             throw new InvalidOperationException("Incorrect subquery type.");
@@ -160,7 +161,12 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
     #region Subqueries
 
     /// <inheritdoc />
-    public override void Visit(SelectQueryExpressionBodyNode node)
+    public override void Visit(SelectQuerySpecificationNode node) => VisitSelectQueryNode(node);
+
+    /// <inheritdoc />
+    public override void Visit(SelectQueryCombineNode node) => VisitSelectQueryNode(node);
+
+    private void VisitSelectQueryNode(SelectQueryNode node)
     {
         if (NodeIdFuncMap.ContainsKey(node.Id))
         {

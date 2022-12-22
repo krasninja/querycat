@@ -1,22 +1,31 @@
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Commands.Select.Iterators;
+using QueryCat.Backend.Relational.Iterators;
 
 namespace QueryCat.Backend.Commands.Select.Visitors;
 
 internal partial class SpecificationNodeVisitor
 {
+    #region UNION
+
     /// <inheritdoc />
-    public override void Visit(SelectQueryExpressionBodyNode node)
+    public override void Visit(SelectQueryCombineNode node)
     {
         // Create compound context.
         var isSubQuery = _parentSpecificationNode != null;
-        var firstQueryContext = node.QueryNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
-        var context = new SelectCommandContext(firstQueryContext.CurrentIterator)
+        var leftContext = node.LeftQueryNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
+        var rightContext = node.RightQueryNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
+        var combineRowsIterator = new CombineRowsIterator(
+            leftContext.CurrentIterator,
+            rightContext.CurrentIterator,
+            ConvertCombineType(node.CombineType),
+            node.IsDistinct);
+        var context = new SelectCommandContext(combineRowsIterator)
         {
-            RowsInputIterator = firstQueryContext.RowsInputIterator,
+            RowsInputIterator = leftContext.RowsInputIterator,
         };
-        context.AddChildContext(firstQueryContext.ChildContexts);
+        context.AddChildContext(context.ChildContexts);
 
         // Process.
         ApplyRowIdIterator(context, isSubQuery);
@@ -43,4 +52,14 @@ internal partial class SpecificationNodeVisitor
         }
         bodyContext.SetIterator(resultIterator);
     }
+
+    private static CombineType ConvertCombineType(SelectQueryCombineType combineType) => combineType switch
+    {
+        SelectQueryCombineType.Except => CombineType.Except,
+        SelectQueryCombineType.Intersect => CombineType.Intersect,
+        SelectQueryCombineType.Union => CombineType.Union,
+        _ => throw new NotImplementedException($"{combineType} is not implemented."),
+    };
+
+    #endregion
 }

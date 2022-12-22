@@ -1,9 +1,9 @@
 expected: |
-  1.5
-  19
-  7
-  -4
   3
+  -4
+  7
+  19
+  1.5
 query: |
   SELECT (1+ 2)::float
   UNION

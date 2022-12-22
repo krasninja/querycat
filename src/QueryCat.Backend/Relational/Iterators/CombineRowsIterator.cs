@@ -19,8 +19,8 @@ internal sealed class CombineRowsIterator : IRowsIterator
     private IRowsIterator _currentIterator;
 
     // For intersect and except methods.
-    private readonly HashSet<VariantValueArray> _leftRows = new();
-    private bool _isLeftInitialized;
+    private readonly HashSet<VariantValueArray> _rightRows = new();
+    private bool _isRightInitialized;
 
     /// <inheritdoc />
     public Column[] Columns => _leftIterator.Columns;
@@ -67,12 +67,12 @@ internal sealed class CombineRowsIterator : IRowsIterator
 
     private bool IntersectDelegate()
     {
-        InitializedLeft();
+        InitializedRight();
 
         while (_currentIterator.MoveNext())
         {
-            var arr = new VariantValueArray(_rightIterator.Current.AsArray(copy: false));
-            if (_leftRows.Contains(arr))
+            var arr = new VariantValueArray(_currentIterator.Current.AsArray(copy: false));
+            if (_rightRows.Contains(arr))
             {
                 return true;
             }
@@ -83,12 +83,12 @@ internal sealed class CombineRowsIterator : IRowsIterator
 
     private bool ExceptDelegate()
     {
-        InitializedLeft();
+        InitializedRight();
 
         while (_currentIterator.MoveNext())
         {
-            var arr = new VariantValueArray(_rightIterator.Current.AsArray(copy: false));
-            if (!_leftRows.Contains(arr))
+            var arr = new VariantValueArray(_currentIterator.Current.AsArray(copy: false));
+            if (!_rightRows.Contains(arr))
             {
                 return true;
             }
@@ -127,8 +127,8 @@ internal sealed class CombineRowsIterator : IRowsIterator
         _leftIterator.Reset();
         _rightIterator.Reset();
         _distinctValues.Clear();
-        _leftRows.Clear();
-        _isLeftInitialized = false;
+        _rightRows.Clear();
+        _isRightInitialized = false;
         _currentIterator = _leftIterator;
     }
 
@@ -139,20 +139,20 @@ internal sealed class CombineRowsIterator : IRowsIterator
             $"Combine (type={_combineType}, distinct={_isDistinct})", _leftIterator, _rightIterator);
     }
 
-    private void InitializedLeft()
+    private void InitializedRight()
     {
-        if (_isLeftInitialized)
+        if (_isRightInitialized)
         {
             return;
         }
 
-        while (_leftIterator.MoveNext())
+        while (_rightIterator.MoveNext())
         {
-            var arr = new VariantValueArray(_leftIterator.Current.AsArray(copy: true));
-            _leftRows.Add(arr);
+            var arr = new VariantValueArray(_rightIterator.Current.AsArray(copy: true));
+            _rightRows.Add(arr);
         }
 
-        _isLeftInitialized = true;
-        _currentIterator = _rightIterator;
+        _isRightInitialized = true;
+        _currentIterator = _leftIterator;
     }
 }

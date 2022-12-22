@@ -199,11 +199,7 @@ public abstract class AstVisitor
     {
     }
 
-    public virtual void Visit(SelectQueryExpressionBodyNode node)
-    {
-    }
-
-    public virtual void Visit(SelectQueryExpressionCombineNode node)
+    public virtual void Visit(SelectQueryCombineNode node)
     {
     }
 

@@ -2,15 +2,15 @@ namespace QueryCat.Backend.Ast.Nodes.Select;
 
 public sealed class SelectExistsExpressionNode : ExpressionNode
 {
-    public SelectQueryExpressionBodyNode SubQueryExpressionNode { get; }
+    public SelectQueryNode SubQueryNode { get; }
 
-    public SelectExistsExpressionNode(SelectQueryExpressionBodyNode subQueryExpressionNode)
+    public SelectExistsExpressionNode(SelectQueryNode subQueryNode)
     {
-        SubQueryExpressionNode = subQueryExpressionNode;
+        SubQueryNode = subQueryNode;
     }
 
     public SelectExistsExpressionNode(SelectExistsExpressionNode node) :
-        this((SelectQueryExpressionBodyNode)node.SubQueryExpressionNode.Clone())
+        this((SelectQueryNode)node.SubQueryNode.Clone())
     {
         node.CopyTo(this);
     }
@@ -24,7 +24,7 @@ public sealed class SelectExistsExpressionNode : ExpressionNode
     /// <inheritdoc />
     public override IEnumerable<IAstNode> GetChildren()
     {
-        yield return SubQueryExpressionNode;
+        yield return SubQueryNode;
     }
 
     /// <inheritdoc />

@@ -25,7 +25,7 @@ public sealed class ExecutionOptions
     /// <summary>
     /// Add row number to output.
     /// </summary>
-    public bool AddRowNumberColumn { get; set; } = true;
+    public bool AddRowNumberColumn { get; set; }
 
     /// <summary>
     /// Show detailed statistic.

@@ -2,18 +2,18 @@ namespace QueryCat.Backend.Ast.Nodes.Select;
 
 public sealed class SelectSubqueryExpressionNode : ExpressionNode
 {
-    public SelectQueryExpressionBodyNode QueryNode { get; }
+    public SelectQueryNode QueryNode { get; }
 
     /// <inheritdoc />
     public override string Code => "select_subquery";
 
-    public SelectSubqueryExpressionNode(SelectQueryExpressionBodyNode queryNode)
+    public SelectSubqueryExpressionNode(SelectQueryNode queryNode)
     {
         QueryNode = queryNode;
     }
 
     public SelectSubqueryExpressionNode(SelectSubqueryExpressionNode node)
-        : this((SelectQueryExpressionBodyNode)node.Clone())
+        : this((SelectQueryNode)node.Clone())
     {
         node.CopyTo(this);
     }

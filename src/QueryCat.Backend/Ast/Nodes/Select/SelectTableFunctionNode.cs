@@ -3,10 +3,11 @@ using QueryCat.Backend.Ast.Nodes.Function;
 
 namespace QueryCat.Backend.Ast.Nodes.Select;
 
-public sealed class SelectTableFunctionNode : ExpressionNode
+public sealed class SelectTableFunctionNode : ExpressionNode, ISelectAliasNode
 {
     public FunctionCallNode TableFunction { get; }
 
+    /// <inheritdoc />
     public string Alias { get; set; }
 
     public List<SelectTableJoinedNode> JoinedNodes { get; } = new();

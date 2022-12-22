@@ -1,6 +1,6 @@
 expected: |
-  3
   2
+  3
 query: |
   SELECT id FROM read_file('RestaurantPerzi.csv')
   WHERE price between 300 and 400

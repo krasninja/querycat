@@ -124,6 +124,13 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitSelectQueryExpressionFull([NotNull] QueryCatParser.SelectQueryExpressionFullContext context);
 	/// <summary>
+	/// Visit a parse tree produced by the <c>SelectQueryExpressionBodyUnionExcept</c>
+	/// labeled alternative in <see cref="QueryCatParser.selectQueryExpressionBody"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSelectQueryExpressionBodyUnionExcept([NotNull] QueryCatParser.SelectQueryExpressionBodyUnionExceptContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>SelectQueryExpressionBodyIntersect</c>
 	/// labeled alternative in <see cref="QueryCatParser.selectQueryExpressionBody"/>.
 	/// </summary>
@@ -131,26 +138,12 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitSelectQueryExpressionBodyIntersect([NotNull] QueryCatParser.SelectQueryExpressionBodyIntersectContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>SelectQueryExpressionBodyUnion</c>
-	/// labeled alternative in <see cref="QueryCatParser.selectQueryExpressionBody"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitSelectQueryExpressionBodyUnion([NotNull] QueryCatParser.SelectQueryExpressionBodyUnionContext context);
-	/// <summary>
 	/// Visit a parse tree produced by the <c>SelectQueryExpressionBodyPrimary</c>
 	/// labeled alternative in <see cref="QueryCatParser.selectQueryExpressionBody"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitSelectQueryExpressionBodyPrimary([NotNull] QueryCatParser.SelectQueryExpressionBodyPrimaryContext context);
-	/// <summary>
-	/// Visit a parse tree produced by the <c>SelectQueryExpressionBodyExcept</c>
-	/// labeled alternative in <see cref="QueryCatParser.selectQueryExpressionBody"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitSelectQueryExpressionBodyExcept([NotNull] QueryCatParser.SelectQueryExpressionBodyExceptContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>SelectQueryPrimaryNoParens</c>
 	/// labeled alternative in <see cref="QueryCatParser.selectQueryPrimary"/>.

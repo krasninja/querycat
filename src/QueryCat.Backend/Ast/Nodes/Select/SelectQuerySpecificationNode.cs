@@ -3,22 +3,8 @@ using QueryCat.Backend.Ast.Nodes.Function;
 
 namespace QueryCat.Backend.Ast.Nodes.Select;
 
-public sealed class SelectQuerySpecificationNode : AstNode
+public sealed class SelectQuerySpecificationNode : SelectQueryNode
 {
-    public string Alias { get; internal set; } = string.Empty;
-
-    public SelectQueryExpressionCombineNode? CombineQueryNode { get; private set; }
-
-    /// <summary>
-    /// CTE.
-    /// </summary>
-    public SelectWithListNode? WithNode { get; set; }
-
-    /// <summary>
-    /// Select columns list.
-    /// </summary>
-    public SelectColumnsListNode ColumnsListNode { get; }
-
     /// <summary>
     /// Distinct node.
     /// </summary>
@@ -34,22 +20,16 @@ public sealed class SelectQuerySpecificationNode : AstNode
     /// </summary>
     public SelectTableExpressionNode? TableExpressionNode { get; set; }
 
-    public SelectOrderByNode? OrderByNode { get; set; }
-
-    public SelectOffsetNode? OffsetNode { get; set; }
-
-    public SelectFetchNode? FetchNode { get; set; }
-
     /// <inheritdoc />
-    public override string Code => "select_query";
+    public override string Code => "select_query_spec";
 
     public SelectQuerySpecificationNode(SelectColumnsListNode columnsListNode)
+        : base(columnsListNode)
     {
-        ColumnsListNode = columnsListNode;
     }
 
     public SelectQuerySpecificationNode(SelectQuerySpecificationNode node) :
-        this((SelectColumnsListNode)node.ColumnsListNode.Clone())
+        base(node)
     {
         if (node.TargetNode != null)
         {
@@ -63,44 +43,11 @@ public sealed class SelectQuerySpecificationNode : AstNode
         {
             TableExpressionNode = (SelectTableExpressionNode)node.TableExpressionNode.Clone();
         }
-        if (node.OffsetNode != null)
-        {
-            OffsetNode = (SelectOffsetNode)node.OffsetNode.Clone();
-        }
-        if (node.FetchNode != null)
-        {
-            FetchNode = (SelectFetchNode)node.FetchNode.Clone();
-        }
-        if (node.CombineQueryNode != null)
-        {
-            CombineQueryNode = (SelectQueryExpressionCombineNode)node.CombineQueryNode.Clone();
-        }
-        if (node.WithNode != null)
-        {
-            WithNode = (SelectWithListNode)node.WithNode.Clone();
-        }
-        node.CopyTo(this);
-    }
-
-    public void AppendCombineQuery(SelectQuerySpecificationNode node, SelectQueryExpressionCombineType combineType,
-        bool isDistinct)
-    {
-        var next = this;
-        while (next.CombineQueryNode != null)
-        {
-            next = next.CombineQueryNode.QueryNode;
-        }
-        next.CombineQueryNode = new SelectQueryExpressionCombineNode(node, combineType, isDistinct);
     }
 
     /// <inheritdoc />
     public override IEnumerable<IAstNode> GetChildren()
     {
-        if (WithNode != null)
-        {
-            yield return WithNode;
-        }
-        yield return ColumnsListNode;
         if (DistinctNode != null)
         {
             yield return DistinctNode;
@@ -113,21 +60,9 @@ public sealed class SelectQuerySpecificationNode : AstNode
         {
             yield return TableExpressionNode;
         }
-        if (OffsetNode != null)
+        foreach (var astNode in base.GetChildren())
         {
-            yield return OffsetNode;
-        }
-        if (FetchNode != null)
-        {
-            yield return FetchNode;
-        }
-        if (OrderByNode != null)
-        {
-            yield return OrderByNode;
-        }
-        if (CombineQueryNode != null)
-        {
-            yield return CombineQueryNode;
+            yield return astNode;
         }
     }
 
@@ -173,10 +108,6 @@ public sealed class SelectQuerySpecificationNode : AstNode
         if (OrderByNode != null)
         {
             sb.Append($" Order {OrderByNode}");
-        }
-        if (CombineQueryNode != null)
-        {
-            sb.Append($" Combine {CombineQueryNode}");
         }
         return sb.ToString();
     }

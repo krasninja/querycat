@@ -2,18 +2,18 @@ namespace QueryCat.Backend.Ast.Nodes.Select;
 
 public sealed class SelectStatementNode : StatementNode
 {
-    public SelectQueryExpressionBodyNode QueryNode { get; }
+    public SelectQueryNode QueryNode { get; }
 
     /// <inheritdoc />
     public override string Code => "query_body_stmt";
 
-    public SelectStatementNode(SelectQueryExpressionBodyNode queryNode)
+    public SelectStatementNode(SelectQueryNode queryNode)
     {
         QueryNode = queryNode;
     }
 
     public SelectStatementNode(SelectStatementNode node) :
-        this((SelectQueryExpressionBodyNode)node.Clone())
+        this((SelectQueryNode)node.Clone())
     {
         node.CopyTo(this);
     }
@@ -31,5 +31,5 @@ public sealed class SelectStatementNode : StatementNode
     public override void Accept(AstVisitor visitor) => visitor.Visit(this);
 
     /// <inheritdoc />
-    public override string ToString() => QueryNode.ToString();
+    public override string ToString() => $"{QueryNode}";
 }

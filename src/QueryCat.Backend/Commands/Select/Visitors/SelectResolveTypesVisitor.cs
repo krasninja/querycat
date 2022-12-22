@@ -17,6 +17,7 @@ internal sealed class SelectResolveTypesVisitor : ResolveTypesVisitor
         _context = context;
         AstTraversal.TypesToIgnore.Add(typeof(SelectQuerySpecificationNode));
         AstTraversal.TypesToIgnore.Add(typeof(SelectTableJoinedNode));
+        AstTraversal.AcceptBeforeIgnore = true;
     }
 
     /// <inheritdoc />
@@ -34,6 +35,12 @@ internal sealed class SelectResolveTypesVisitor : ResolveTypesVisitor
             node.SetAttribute(AstAttributeKeys.InputColumnIndexKey, columnIndex);
             node.SetDataType(rowsIterator.Columns[columnIndex].DataType);
         }
+    }
+
+    /// <inheritdoc />
+    public override void Visit(SelectExistsExpressionNode node)
+    {
+        node.SetDataType(DataType.Boolean);
     }
 
     /// <inheritdoc />
@@ -59,21 +66,20 @@ internal sealed class SelectResolveTypesVisitor : ResolveTypesVisitor
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectQueryExpressionBodyNode node)
-    {
-        node.SetDataType(node.QueryNode.ColumnsListNode.Columns[0].GetDataType());
-    }
-
-    /// <inheritdoc />
-    public override void Visit(SelectExistsExpressionNode node)
-    {
-        node.SetDataType(DataType.Boolean);
-    }
-
-    /// <inheritdoc />
     public override void Visit(SelectOrderBySpecificationNode node)
     {
         node.SetDataType(node.Expression.GetDataType());
+    }
+
+    /// <inheritdoc />
+    public override void Visit(SelectQueryCombineNode node) => VisitSelectQueryNode(node);
+
+    /// <inheritdoc />
+    public override void Visit(SelectQuerySpecificationNode node) => VisitSelectQueryNode(node);
+
+    private void VisitSelectQueryNode(SelectQueryNode node)
+    {
+        node.SetDataType(node.ColumnsListNode.Columns[0].GetDataType());
     }
 
     /// <inheritdoc />

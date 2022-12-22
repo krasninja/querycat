@@ -16,14 +16,14 @@ public sealed class SelectSubqueryConditionExpressionNode : ExpressionNode
 
     public QuantifierOperator Operator { get; }
 
-    public SelectQueryExpressionBodyNode SubQueryNode { get; }
+    public SelectQueryNode SubQueryNode { get; }
 
     /// <inheritdoc />
     public SelectSubqueryConditionExpressionNode(
         ExpressionNode left,
         VariantValue.Operation operation,
         QuantifierOperator quantifierOperator,
-        SelectQueryExpressionBodyNode subQueryNode)
+        SelectQueryNode subQueryNode)
     {
         Left = left;
         Operation = operation;
@@ -36,7 +36,7 @@ public sealed class SelectSubqueryConditionExpressionNode : ExpressionNode
             (ExpressionNode)node.Left.Clone(),
             node.Operation,
             node.Operator,
-            (SelectQueryExpressionBodyNode)node.SubQueryNode.Clone())
+            (SelectQueryNode)node.SubQueryNode.Clone())
     {
         node.CopyTo(this);
     }

@@ -6,7 +6,7 @@ public sealed class SelectWithNode : AstNode
 {
     public List<SelectColumnsSublistNameNode> ColumnNodes { get; } = new();
 
-    public SelectQueryExpressionBodyNode QueryNode { get; }
+    public SelectQueryNode QueryNode { get; }
 
     public string Name { get; }
 
@@ -14,14 +14,14 @@ public sealed class SelectWithNode : AstNode
     public override string Code => "with_elem";
 
     /// <inheritdoc />
-    public SelectWithNode(string name, SelectQueryExpressionBodyNode queryNode)
+    public SelectWithNode(string name, SelectQueryNode queryNode)
     {
         Name = name;
         QueryNode = queryNode;
     }
 
     public SelectWithNode(SelectWithNode node)
-        : this(node.Name, (SelectQueryExpressionBodyNode)node.QueryNode.Clone())
+        : this(node.Name, (SelectQueryNode)node.QueryNode.Clone())
     {
         ColumnNodes = node.ColumnNodes.Select(c => (SelectColumnsSublistNameNode)c.Clone()).ToList();
         node.CopyTo(this);

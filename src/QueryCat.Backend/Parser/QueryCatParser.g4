@@ -63,9 +63,8 @@ selectQueryExpression
     ;
 selectQueryExpressionBody
     : left=selectQueryPrimary # SelectQueryExpressionBodyPrimary
-    | left=selectQueryExpressionBody INTERSECT (DISTINCT | ALL)? right=selectQueryPrimary # SelectQueryExpressionBodyIntersect
-    | left=selectQueryExpressionBody UNION (DISTINCT | ALL)? right=selectQueryPrimary # SelectQueryExpressionBodyUnion
-    | left=selectQueryExpressionBody EXCEPT (DISTINCT | ALL)? right=selectQueryPrimary # SelectQueryExpressionBodyExcept
+    | left=selectQueryExpressionBody INTERSECT (DISTINCT | ALL)? right=selectQueryExpressionBody # SelectQueryExpressionBodyIntersect
+    | left=selectQueryExpressionBody (UNION | EXCEPT) (DISTINCT | ALL)? right=selectQueryExpressionBody # SelectQueryExpressionBodyUnionExcept
     ;
 selectQueryPrimary
     : selectQuerySpecification # SelectQueryPrimaryNoParens

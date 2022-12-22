@@ -1,6 +1,6 @@
 expected: |
-  True,False,True,True
   True,True,False,False
+  True,False,True,True
 query: |
   SELECT
     2 > 1,

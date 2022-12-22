@@ -1,7 +1,7 @@
 expected: |
-  False,True,,
-  True,,True,
   ,False,,False
+  True,,True,
+  False,True,,
 query: |
   select * from (
     select

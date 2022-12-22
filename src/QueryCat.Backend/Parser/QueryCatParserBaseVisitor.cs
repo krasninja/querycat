@@ -183,6 +183,17 @@ public partial class QueryCatParserBaseVisitor<Result> : AbstractParseTreeVisito
 	/// <return>The visitor result.</return>
 	public virtual Result VisitSelectQueryExpressionFull([NotNull] QueryCatParser.SelectQueryExpressionFullContext context) { return VisitChildren(context); }
 	/// <summary>
+	/// Visit a parse tree produced by the <c>SelectQueryExpressionBodyUnionExcept</c>
+	/// labeled alternative in <see cref="QueryCatParser.selectQueryExpressionBody"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitSelectQueryExpressionBodyUnionExcept([NotNull] QueryCatParser.SelectQueryExpressionBodyUnionExceptContext context) { return VisitChildren(context); }
+	/// <summary>
 	/// Visit a parse tree produced by the <c>SelectQueryExpressionBodyIntersect</c>
 	/// labeled alternative in <see cref="QueryCatParser.selectQueryExpressionBody"/>.
 	/// <para>
@@ -194,17 +205,6 @@ public partial class QueryCatParserBaseVisitor<Result> : AbstractParseTreeVisito
 	/// <return>The visitor result.</return>
 	public virtual Result VisitSelectQueryExpressionBodyIntersect([NotNull] QueryCatParser.SelectQueryExpressionBodyIntersectContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by the <c>SelectQueryExpressionBodyUnion</c>
-	/// labeled alternative in <see cref="QueryCatParser.selectQueryExpressionBody"/>.
-	/// <para>
-	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
-	/// on <paramref name="context"/>.
-	/// </para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	public virtual Result VisitSelectQueryExpressionBodyUnion([NotNull] QueryCatParser.SelectQueryExpressionBodyUnionContext context) { return VisitChildren(context); }
-	/// <summary>
 	/// Visit a parse tree produced by the <c>SelectQueryExpressionBodyPrimary</c>
 	/// labeled alternative in <see cref="QueryCatParser.selectQueryExpressionBody"/>.
 	/// <para>
@@ -215,17 +215,6 @@ public partial class QueryCatParserBaseVisitor<Result> : AbstractParseTreeVisito
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	public virtual Result VisitSelectQueryExpressionBodyPrimary([NotNull] QueryCatParser.SelectQueryExpressionBodyPrimaryContext context) { return VisitChildren(context); }
-	/// <summary>
-	/// Visit a parse tree produced by the <c>SelectQueryExpressionBodyExcept</c>
-	/// labeled alternative in <see cref="QueryCatParser.selectQueryExpressionBody"/>.
-	/// <para>
-	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
-	/// on <paramref name="context"/>.
-	/// </para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	public virtual Result VisitSelectQueryExpressionBodyExcept([NotNull] QueryCatParser.SelectQueryExpressionBodyExceptContext context) { return VisitChildren(context); }
 	/// <summary>
 	/// Visit a parse tree produced by the <c>SelectQueryPrimaryNoParens</c>
 	/// labeled alternative in <see cref="QueryCatParser.selectQueryPrimary"/>.
