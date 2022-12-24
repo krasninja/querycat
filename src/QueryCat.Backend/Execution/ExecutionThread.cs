@@ -169,8 +169,7 @@ public class ExecutionThread : IExecutionThread
 
                 if (Options.DefaultRowsOutput != NullRowsOutput.Instance)
                 {
-                    var iterator = ExecutionThreadUtils.ConvertToIterator(result);
-                    Options.DefaultRowsOutput.Write(iterator);
+                    Write(result);
                 }
             }
             finally
@@ -232,5 +231,17 @@ public class ExecutionThread : IExecutionThread
         var visitor = new StringDumpAstVisitor(sb);
         visitor.Run(ExecutingStatement);
         return sb.ToString();
+    }
+
+    private void Write(VariantValue result)
+    {
+        var iterator = ExecutionThreadUtils.ConvertToIterator(result);
+        var rowsOutput = Options.DefaultRowsOutput;
+        if (result.GetInternalType() == DataType.Object
+            && result.AsObjectUnsafe is IRowsOutput alternateRowsOutput)
+        {
+            rowsOutput = alternateRowsOutput;
+        }
+        rowsOutput.Write(iterator);
     }
 }
