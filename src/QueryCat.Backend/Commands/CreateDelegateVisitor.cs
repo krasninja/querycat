@@ -17,17 +17,11 @@ internal class CreateDelegateVisitor : AstVisitor
 
     protected Dictionary<int, IFuncUnit> NodeIdFuncMap { get; } = new(capacity: 32);
 
-    /// <summary>
-    /// AST traversal.
-    /// </summary>
-    protected AstTraversal AstTraversal { get; }
-
     protected ExecutionThread ExecutionThread => _thread;
 
     public CreateDelegateVisitor(ExecutionThread thread)
     {
         _thread = thread;
-        AstTraversal = new AstTraversal(this);
     }
 
     /// <inheritdoc />

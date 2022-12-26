@@ -10,14 +10,11 @@ namespace QueryCat.Backend.Commands.Select.Visitors;
 
 internal abstract class SelectAstVisitor : AstVisitor
 {
-    protected AstTraversal AstTraversal { get; }
-
     protected ExecutionThread ExecutionThread { get; }
 
     protected SelectAstVisitor(ExecutionThread executionThread)
     {
         ExecutionThread = executionThread;
-        AstTraversal = new AstTraversal(this);
     }
 
     #region ORDER BY

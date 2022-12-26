@@ -10,15 +10,6 @@ namespace QueryCat.Backend.Ast;
 /// </summary>
 public abstract class DelegateVisitor : AstVisitor
 {
-    private readonly AstTraversal _astTraversal;
-
-    public AstTraversal AstTraversal => _astTraversal;
-
-    protected DelegateVisitor()
-    {
-        _astTraversal = new AstTraversal(this);
-    }
-
     /// <summary>
     /// Callback method.
     /// </summary>
@@ -28,7 +19,7 @@ public abstract class DelegateVisitor : AstVisitor
     /// <inheritdoc />
     public override void Run(IAstNode node)
     {
-        _astTraversal.PreOrder(node);
+        AstTraversal.PreOrder(node);
     }
 
     #region General

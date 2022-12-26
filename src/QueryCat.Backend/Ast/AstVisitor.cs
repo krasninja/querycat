@@ -8,6 +8,16 @@ namespace QueryCat.Backend.Ast;
 public abstract class AstVisitor
 {
     /// <summary>
+    /// AST traversal.
+    /// </summary>
+    internal AstTraversal AstTraversal { get; }
+
+    public AstVisitor()
+    {
+        AstTraversal = new AstTraversal(this);
+    }
+
+    /// <summary>
     /// Run visitor for the node.
     /// </summary>
     /// <param name="node">Start node.</param>

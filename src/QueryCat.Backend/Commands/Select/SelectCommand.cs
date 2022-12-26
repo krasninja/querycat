@@ -12,6 +12,9 @@ public sealed class SelectCommand
 {
     public CommandContext Execute(ExecutionThread executionThread, SelectStatementNode selectStatementNode)
     {
+        // For every ".. FROM func()" function we create IRowsInput.
+        new TableRowsInputVisitor(executionThread).Run(selectStatementNode);
+
         // Create command context for every FROM clause.
         new CreateContextVisitor(executionThread).Run(selectStatementNode.QueryNode);
 

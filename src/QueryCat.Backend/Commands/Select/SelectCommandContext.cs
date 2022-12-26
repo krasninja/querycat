@@ -84,7 +84,10 @@ internal sealed class SelectCommandContext : CommandContext
     /// </summary>
     /// <param name="context">Context.</param>
     internal void AddChildContext(SelectCommandContext context)
-        => _childContexts.Add(context);
+    {
+        context.Parent = this;
+        _childContexts.Add(context);
+    }
 
     /// <summary>
     /// Add child contexts list.

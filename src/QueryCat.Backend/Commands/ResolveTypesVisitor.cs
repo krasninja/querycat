@@ -15,12 +15,9 @@ internal class ResolveTypesVisitor : AstVisitor
 {
     protected ExecutionThread ExecutionThread { get; }
 
-    protected AstTraversal AstTraversal { get; }
-
     public ResolveTypesVisitor(ExecutionThread executionThread)
     {
         ExecutionThread = executionThread;
-        AstTraversal = new AstTraversal(this);
     }
 
     /// <inheritdoc />

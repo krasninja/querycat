@@ -1,15 +1,11 @@
-using Serilog;
 using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Select;
-using QueryCat.Backend.Ast.Nodes.SpecialFunctions;
 using QueryCat.Backend.Commands.Select.Inputs;
 using QueryCat.Backend.Execution;
-using QueryCat.Backend.Relational;
 using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Storage;
-using QueryCat.Backend.Types;
 
 namespace QueryCat.Backend.Commands.Select.Visitors;
 
@@ -24,11 +20,6 @@ internal sealed class CreateContextVisitor : AstVisitor
 
     private Cte[] _ctes = Array.Empty<Cte>();
 
-    /// <summary>
-    /// AST traversal.
-    /// </summary>
-    public AstTraversal AstTraversal { get; }
-
     public CreateContextVisitor(
         ExecutionThread executionThread,
         SelectCommandContext? parentContext = null)
@@ -36,7 +27,6 @@ internal sealed class CreateContextVisitor : AstVisitor
         this._executionThread = executionThread;
         this._resolveTypesVisitor = new ResolveTypesVisitor(executionThread);
         this._parentContext = parentContext;
-        this.AstTraversal = new AstTraversal(this);
     }
 
     private CreateContextVisitor(
@@ -147,7 +137,6 @@ internal sealed class CreateContextVisitor : AstVisitor
             }
 
             SetAlias(tableExpression, alias);
-            tableExpression.SetAttribute(AstAttributeKeys.RowsInputKey, rowsInputs);
             finalRowsInputs.Add(finalRowInput);
         }
 
@@ -213,13 +202,8 @@ internal sealed class CreateContextVisitor : AstVisitor
         SelectCommandContext? parent = null)
     {
         _resolveTypesVisitor.Run(tableFunctionNode.TableFunction);
-        var source = new CreateDelegateVisitor(_executionThread)
-            .RunAndReturn(tableFunctionNode.TableFunction).Invoke();
-        var isSubQuery = parent != null;
         var inputs = new List<IRowsInput>();
-        var rowsInput = CreateRowsInput(source, isSubQuery);
-        var parentSpecificationNodes = AstTraversal.GetParents<SelectQuerySpecificationNode>().ToList();
-        FixInputColumnTypes(parentSpecificationNodes, rowsInput);
+        var rowsInput = tableFunctionNode.GetRequiredAttribute<IRowsInput>(AstAttributeKeys.RowsInputKey);
         inputs.Add(rowsInput);
         SetAlias(rowsInput, tableFunctionNode.Alias);
         foreach (var joinedNode in tableFunctionNode.JoinedNodes)
@@ -245,11 +229,7 @@ internal sealed class CreateContextVisitor : AstVisitor
             reverseColumnsOrder = true;
         }
         // Because of iterator specific conditions we must cache right input.
-        if (_rowsInputContextMap.TryGetValue(right, out var context))
-        {
-            right = new CacheRowsInput(right);
-            right.SetContext(context);
-        }
+        right = new CacheRowsInput(right);
 
         new InputResolveTypesVisitor(_executionThread, left, right)
             .Run(tableJoinedNode.SearchConditionNode);
@@ -298,36 +278,6 @@ internal sealed class CreateContextVisitor : AstVisitor
         var rowsInput = new RowsIteratorInput(iterator);
         SetAlias(rowsInput, queryBodyNode.Alias);
         return rowsInput;
-    }
-
-    private IRowsInput CreateRowsInput(VariantValue source, bool isSubQuery)
-    {
-        if (DataTypeUtils.IsSimple(source.GetInternalType()))
-        {
-            return new SingleValueRowsInput(source);
-        }
-        if (source.AsObject is IRowsInput rowsInput)
-        {
-            var queryContext = new SelectInputQueryContext(rowsInput)
-            {
-                InputConfigStorage = _executionThread.InputConfigStorage
-            };
-            if (isSubQuery)
-            {
-                rowsInput = new CacheRowsInput(rowsInput);
-            }
-            _rowsInputContextMap[rowsInput] = queryContext;
-            rowsInput.SetContext(queryContext);
-            rowsInput.Open();
-            Log.Logger.Debug("Open rows input {RowsInput}.", rowsInput);
-            return rowsInput;
-        }
-        if (source.AsObject is IRowsIterator rowsIterator)
-        {
-            return new RowsIteratorInput(rowsIterator);
-        }
-
-        throw new QueryCatException("Invalid rows input.");
     }
 
     private static IRowsIterator CreateMultipleIterator(List<IRowsInput> rowsInputs)
@@ -401,29 +351,4 @@ internal sealed class CreateContextVisitor : AstVisitor
             SelectTableJoinedType.Right => JoinType.Right,
             _ => throw new ArgumentOutOfRangeException(nameof(tableJoinedType), tableJoinedType, null)
         };
-
-    /// <summary>
-    /// Find the expressions in SELECT output area like CAST(id AS string).
-    /// </summary>
-    private static void FixInputColumnTypes(
-        IEnumerable<SelectQuerySpecificationNode> querySpecificationNodes,
-        IRowsInput rowsInput)
-    {
-        foreach (var querySpecificationNode in querySpecificationNodes)
-        {
-            foreach (var castNode in querySpecificationNode.ColumnsListNode.GetAllChildren<CastFunctionNode>())
-            {
-                if (castNode.ExpressionNode is not IdentifierExpressionNode idNode)
-                {
-                    continue;
-                }
-
-                var columnIndex = rowsInput.GetColumnIndexByName(idNode.Name, idNode.SourceName);
-                if (columnIndex > -1)
-                {
-                    rowsInput.Columns[columnIndex].DataType = castNode.TargetTypeNode.Type;
-                }
-            }
-        }
-    }
 }
