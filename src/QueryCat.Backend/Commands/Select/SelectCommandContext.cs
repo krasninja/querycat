@@ -1,6 +1,7 @@
 using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Functions;
 using QueryCat.Backend.Relational;
+using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Storage;
 using QueryCat.Backend.Types;
 
@@ -11,16 +12,21 @@ namespace QueryCat.Backend.Commands.Select;
 /// </summary>
 internal sealed class SelectCommandContext : CommandContext
 {
+    private IRowsIterator? _currentIterator;
+
     /// <summary>
     /// Current iterator.
     /// </summary>
-    public IRowsIterator CurrentIterator { get; private set; }
+    public IRowsIterator CurrentIterator => _currentIterator ?? EmptyIterator.Instance;
 
     /// <summary>
     /// The instance of <see cref="RowsInputIterator" /> that is used in FROM clause.
     /// </summary>
     public RowsInputIterator? RowsInputIterator { get; set; }
 
+    /// <summary>
+    /// Column indexes to prefetch from rows input source.
+    /// </summary>
     internal HashSet<int> PrefetchedColumnIndexes { get; } = new();
 
     /// <summary>
@@ -62,12 +68,24 @@ internal sealed class SelectCommandContext : CommandContext
     public IFuncUnit? OutputArgumentsFunc { get; set; }
 
     /// <summary>
+    /// Common table expressions of the query.
+    /// </summary>
+    internal List<CommonTableExpression> CteList { get; } = new();
+
+    /// <summary>
+    /// Constructor.
+    /// </summary>
+    public SelectCommandContext()
+    {
+    }
+
+    /// <summary>
     /// Constructor.
     /// </summary>
     /// <param name="iterator">Input iterator.</param>
     public SelectCommandContext(IRowsIterator iterator)
     {
-        CurrentIterator = iterator;
+        _currentIterator = iterator;
     }
 
     /// <summary>
@@ -76,7 +94,7 @@ internal sealed class SelectCommandContext : CommandContext
     /// <param name="nextIterator">The next iterator.</param>
     public void SetIterator(IRowsIterator nextIterator)
     {
-        CurrentIterator = nextIterator;
+        _currentIterator = nextIterator;
     }
 
     /// <summary>
@@ -101,10 +119,10 @@ internal sealed class SelectCommandContext : CommandContext
         }
     }
 
-    internal void SetParent(SelectCommandContext context)
+    internal void SetParent(SelectCommandContext? context)
     {
         Parent = context;
-        Parent.AddChildContext(this);
+        Parent?.AddChildContext(this);
     }
 
     /// <summary>

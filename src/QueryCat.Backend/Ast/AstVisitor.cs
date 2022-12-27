@@ -21,7 +21,10 @@ public abstract class AstVisitor
     /// Run visitor for the node.
     /// </summary>
     /// <param name="node">Start node.</param>
-    public abstract void Run(IAstNode node);
+    public virtual void Run(IAstNode node)
+    {
+        AstTraversal.PreOrder(node);
+    }
 
     /// <summary>
     /// Run the visitor.

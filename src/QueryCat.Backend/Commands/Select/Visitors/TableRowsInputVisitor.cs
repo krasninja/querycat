@@ -29,12 +29,6 @@ internal sealed class TableRowsInputVisitor : AstVisitor
     }
 
     /// <inheritdoc />
-    public override void Run(IAstNode node)
-    {
-        AstTraversal.PreOrder(node);
-    }
-
-    /// <inheritdoc />
     public override void Visit(SelectQuerySpecificationNode node)
     {
         if (_rootQueryNode == null)

@@ -20,6 +20,11 @@ internal sealed partial class SpecificationNodeVisitor : SelectAstVisitor
 
     private readonly SelectQuerySpecificationNode? _parentSpecificationNode;
 
+    /*
+     * Before using this visitor make sure that all rows inputs are opened and
+     * query node has select command context.
+     */
+
     public SpecificationNodeVisitor(
         ExecutionThread executionThread,
         SelectQuerySpecificationNode? parentSpecificationNode = null) : base(executionThread)
