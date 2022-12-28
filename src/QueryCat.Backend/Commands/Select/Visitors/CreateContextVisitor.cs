@@ -119,7 +119,7 @@ internal sealed class CreateContextVisitor : AstVisitor
         var finalRowsInputs = new List<IRowsInput>();
         foreach (var tableExpression in querySpecificationNode.TableExpressionNode.Tables.TableFunctions)
         {
-            var rowsInputs = GetRowsInputFromExpression(context, tableExpression, querySpecificationNode);
+            var rowsInputs = GetRowsInputFromExpression(context, tableExpression);
             var finalRowInput = rowsInputs.Last();
             var alias = tableExpression is ISelectAliasNode selectAlias ? selectAlias.Alias : string.Empty;
 
@@ -218,16 +218,13 @@ internal sealed class CreateContextVisitor : AstVisitor
         return new SelectJoinRowsInput(left, right, join, searchFunc, reverseColumnsOrder);
     }
 
-    private IRowsInput[] GetRowsInputFromExpression(
-        SelectCommandContext context,
-        ExpressionNode expressionNode,
-        SelectQuerySpecificationNode? parentSpecificationNode = null)
+    private IRowsInput[] GetRowsInputFromExpression(SelectCommandContext context, ExpressionNode expressionNode)
     {
         if (expressionNode is SelectQueryNode queryNode)
         {
             return new[]
             {
-                CreateInputSourceFromSubQuery(queryNode, parentSpecificationNode)
+                CreateInputSourceFromSubQuery(queryNode)
             };
         }
         if (expressionNode is SelectTableFunctionNode tableFunctionNode)
@@ -242,13 +239,11 @@ internal sealed class CreateContextVisitor : AstVisitor
         throw new InvalidOperationException($"Cannot process node '{expressionNode}' as input.");
     }
 
-    private IRowsInput CreateInputSourceFromSubQuery(
-        SelectQueryNode queryBodyNode,
-        SelectQuerySpecificationNode? parentSpecificationNode = null)
+    private IRowsInput CreateInputSourceFromSubQuery(SelectQueryNode queryBodyNode)
     {
         PrepareContextInitialInput(queryBodyNode);
         new CreateContextVisitor(_executionThread).Run(queryBodyNode);
-        new SetIteratorVisitor(_executionThread, parentSpecificationNode).Run(queryBodyNode);
+        new SetIteratorVisitor(_executionThread).Run(queryBodyNode);
         var commandContext = queryBodyNode.GetRequiredAttribute<CommandContext>(AstAttributeKeys.ContextKey);
         if (commandContext.Invoke().AsObject is not IRowsIterator iterator)
         {

@@ -19,8 +19,6 @@ internal sealed partial class SetIteratorVisitor : AstVisitor
 {
     private const string SourceInputColumn = "source_input_column";
 
-    private readonly SelectQuerySpecificationNode? _parentSpecificationNode;
-
     private ExecutionThread ExecutionThread { get; }
 
     /*
@@ -28,12 +26,9 @@ internal sealed partial class SetIteratorVisitor : AstVisitor
      * query node has select command context.
      */
 
-    public SetIteratorVisitor(
-        ExecutionThread executionThread,
-        SelectQuerySpecificationNode? parentSpecificationNode = null)
+    public SetIteratorVisitor(ExecutionThread executionThread)
     {
         ExecutionThread = executionThread;
-        _parentSpecificationNode = parentSpecificationNode;
     }
 
     /// <inheritdoc />

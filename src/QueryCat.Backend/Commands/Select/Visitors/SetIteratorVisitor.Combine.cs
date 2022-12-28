@@ -12,8 +12,7 @@ internal partial class SetIteratorVisitor
     /// <inheritdoc />
     public override void Visit(SelectQueryCombineNode node)
     {
-        // Create compound context.
-        var isSubQuery = _parentSpecificationNode != null;
+        var context = node.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
         var leftContext = node.LeftQueryNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
         var rightContext = node.RightQueryNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
         var combineRowsIterator = new CombineRowsIterator(
@@ -21,15 +20,11 @@ internal partial class SetIteratorVisitor
             rightContext.CurrentIterator,
             ConvertCombineType(node.CombineType),
             node.IsDistinct);
-        var context = new SelectCommandContext
-        {
-            RowsInputIterator = leftContext.RowsInputIterator,
-        };
+        context.RowsInputIterator = leftContext.RowsInputIterator;
         context.SetIterator(combineRowsIterator);
-        context.AddChildContext(context.ChildContexts);
 
         // Process.
-        ApplyRowIdIterator(context, isSubQuery);
+        ApplyRowIdIterator(context, context.Parent != null);
         ApplyOrderBy(context, node.OrderByNode);
         ApplyOffsetFetch(context, node.OffsetNode, node.FetchNode);
         var resultIterator = context.CurrentIterator;
@@ -41,7 +36,6 @@ internal partial class SetIteratorVisitor
         // Set result. If INTO clause is specified we do not return IRowsIterator outside. Just
         // iterating it we will save rows into target. Otherwise we return it as is.
         node.SetAttribute(AstAttributeKeys.ResultKey, resultIterator);
-        node.SetAttribute(AstAttributeKeys.ContextKey, context);
     }
 
     private void ApplyRowIdIterator(SelectCommandContext bodyContext, bool isSubQuery)
