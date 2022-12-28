@@ -92,17 +92,10 @@ internal sealed class SelectCommandContext : CommandContext
     }
 
     /// <summary>
-    /// Add child contexts list.
+    /// Set parent query context. The method also updates child items.
+    /// If null - the context will be topmost.
     /// </summary>
-    /// <param name="contexts">Enumerable of contexts.</param>
-    internal void AddChildContext(IEnumerable<SelectCommandContext> contexts)
-    {
-        foreach (var selectCommandContext in contexts)
-        {
-            AddChildContext(selectCommandContext);
-        }
-    }
-
+    /// <param name="context">Parent context.</param>
     internal void SetParent(SelectCommandContext? context)
     {
         Parent = context;
@@ -144,6 +137,8 @@ internal sealed class SelectCommandContext : CommandContext
         }
     }
 
+    #region CommandContext
+
     /// <inheritdoc />
     public override VariantValue Invoke()
     {
@@ -160,4 +155,6 @@ internal sealed class SelectCommandContext : CommandContext
         }
         base.Dispose(disposing);
     }
+
+    #endregion
 }
