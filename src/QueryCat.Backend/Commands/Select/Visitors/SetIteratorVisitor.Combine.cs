@@ -53,7 +53,7 @@ internal partial class SetIteratorVisitor
         SelectQueryCombineType.Except => CombineType.Except,
         SelectQueryCombineType.Intersect => CombineType.Intersect,
         SelectQueryCombineType.Union => CombineType.Union,
-        _ => throw new NotImplementedException($"{combineType} is not implemented."),
+        _ => throw new ArgumentException($"{combineType} is not implemented.", nameof(combineType)),
     };
 
     #endregion

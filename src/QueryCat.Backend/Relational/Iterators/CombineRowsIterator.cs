@@ -41,7 +41,7 @@ internal sealed class CombineRowsIterator : IRowsIterator
             CombineType.Union => UnionDelegate,
             CombineType.Except => ExceptDelegate,
             CombineType.Intersect => IntersectDelegate,
-            _ => throw new NotImplementedException($"{combineType} is not implemented."),
+            _ => throw new ArgumentException($"{combineType} is not implemented.", nameof(combineType)),
         };
 
         if (!_leftIterator.IsSchemaEqual(_rightIterator))

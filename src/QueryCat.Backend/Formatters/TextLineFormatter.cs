@@ -24,7 +24,7 @@ internal class TextLineFormatter : IRowsFormatter
     /// <inheritdoc />
     public IRowsOutput OpenOutput(Stream output)
     {
-        throw new NotImplementedException();
+        throw new QueryCatException($"{nameof(TextLineFormatter)} does not support output.");
     }
 
     public static void RegisterFunctions(FunctionsManager functionsManager)
