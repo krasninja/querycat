@@ -38,9 +38,15 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
         }
         var context = queryNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
 
-        _resolveTypesVisitor.Run(node.TableFunction);
-        var source = new CreateDelegateVisitor(_executionThread)
-            .RunAndReturn(node.TableFunction).Invoke();
+        // Determine types for the node.
+        var typesVisitor = _resolveTypesVisitor;
+        if (context.Parent != null)
+        {
+            typesVisitor = new SelectResolveTypesVisitor(_executionThread, context.Parent);
+        }
+        typesVisitor.Run(node.TableFunction);
+
+        var source = new CreateDelegateVisitor(_executionThread).RunAndReturn(node.TableFunction).Invoke();
         var rowsInput = CreateRowsInput(context, source);
         FixInputColumnTypes(rowsInput);
         SetAlias(rowsInput, node.Alias);
@@ -55,11 +61,11 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
         }
         if (source.AsObject is IRowsInput rowsInput)
         {
-            context.InputQueryContextList.Add(new SelectInputQueryContext(rowsInput));
             var queryContext = new SelectInputQueryContext(rowsInput)
             {
                 InputConfigStorage = _executionThread.InputConfigStorage
             };
+            context.InputQueryContextList.Add(queryContext);
             if (context.Parent != null)
             {
                 rowsInput = new CacheRowsInput(rowsInput);
