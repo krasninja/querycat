@@ -45,7 +45,7 @@ internal sealed class SelectCommandContext : CommandContext
     /// Context information for rows inputs. We bypass this to input to provide additional information
     /// about a query. This would allow optimize execution.
     /// </summary>
-    public SelectInputQueryContext[] InputQueryContextList { get; set; } = Array.Empty<SelectInputQueryContext>();
+    public List<SelectInputQueryContext> InputQueryContextList { get; } = new();
 
     /// <summary>
     /// Container to get columns additional information.
@@ -71,22 +71,6 @@ internal sealed class SelectCommandContext : CommandContext
     /// Common table expressions of the query.
     /// </summary>
     internal List<CommonTableExpression> CteList { get; } = new();
-
-    /// <summary>
-    /// Constructor.
-    /// </summary>
-    public SelectCommandContext()
-    {
-    }
-
-    /// <summary>
-    /// Constructor.
-    /// </summary>
-    /// <param name="iterator">Input iterator.</param>
-    public SelectCommandContext(IRowsIterator iterator)
-    {
-        _currentIterator = iterator;
-    }
 
     /// <summary>
     /// Append (overwrite) current iterator.

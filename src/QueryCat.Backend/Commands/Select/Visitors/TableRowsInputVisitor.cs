@@ -20,7 +20,6 @@ internal sealed class TableRowsInputVisitor : AstVisitor
 {
     private readonly ExecutionThread _executionThread;
     private readonly ResolveTypesVisitor _resolveTypesVisitor;
-    private SelectQuerySpecificationNode? _rootQueryNode;
 
     public TableRowsInputVisitor(ExecutionThread executionThread)
     {
@@ -29,33 +28,26 @@ internal sealed class TableRowsInputVisitor : AstVisitor
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectQuerySpecificationNode node)
-    {
-        if (_rootQueryNode == null)
-        {
-            _rootQueryNode = node;
-        }
-    }
-
-    /// <inheritdoc />
     public override void Visit(SelectTableFunctionNode node)
     {
+        var queryNode = AstTraversal.GetFirstParent<SelectQueryNode>();
+        if (queryNode == null)
+        {
+            throw new InvalidOperationException(
+                $"{nameof(SelectTableFunctionNode)} does not have root query node. Invalid AST tree.");
+        }
+        var context = queryNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
+
         _resolveTypesVisitor.Run(node.TableFunction);
         var source = new CreateDelegateVisitor(_executionThread)
             .RunAndReturn(node.TableFunction).Invoke();
-        var rowsInput = CreateRowsInput(source, IsSubQuery());
+        var rowsInput = CreateRowsInput(context, source);
         FixInputColumnTypes(rowsInput);
         SetAlias(rowsInput, node.Alias);
         node.SetAttribute(AstAttributeKeys.RowsInputKey, rowsInput);
     }
 
-    private bool IsSubQuery()
-    {
-        var queryNode = AstTraversal.GetFirstParent<SelectQuerySpecificationNode>();
-        return queryNode != _rootQueryNode;
-    }
-
-    private IRowsInput CreateRowsInput(VariantValue source, bool isSubQuery)
+    private IRowsInput CreateRowsInput(SelectCommandContext context, VariantValue source)
     {
         if (DataTypeUtils.IsSimple(source.GetInternalType()))
         {
@@ -63,11 +55,12 @@ internal sealed class TableRowsInputVisitor : AstVisitor
         }
         if (source.AsObject is IRowsInput rowsInput)
         {
+            context.InputQueryContextList.Add(new SelectInputQueryContext(rowsInput));
             var queryContext = new SelectInputQueryContext(rowsInput)
             {
                 InputConfigStorage = _executionThread.InputConfigStorage
             };
-            if (isSubQuery)
+            if (context.Parent != null)
             {
                 rowsInput = new CacheRowsInput(rowsInput);
             }

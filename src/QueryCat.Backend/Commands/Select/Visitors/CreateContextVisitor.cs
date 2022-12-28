@@ -13,16 +13,12 @@ internal sealed class CreateContextVisitor : AstVisitor
 {
     private readonly ExecutionThread _executionThread;
     private readonly ResolveTypesVisitor _resolveTypesVisitor;
-    private readonly SelectCommandContext? _parentContext;
-    private readonly List<SelectQueryNode> _processed = new();
+    private readonly HashSet<SelectQueryNode> _processed = new();
 
-    public CreateContextVisitor(
-        ExecutionThread executionThread,
-        SelectCommandContext? parentContext = null)
+    public CreateContextVisitor(ExecutionThread executionThread)
     {
         _executionThread = executionThread;
         _resolveTypesVisitor = new ResolveTypesVisitor(executionThread);
-        _parentContext = parentContext;
     }
 
     /// <inheritdoc />
@@ -48,7 +44,7 @@ internal sealed class CreateContextVisitor : AstVisitor
         var context = node.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
 
         FillInputCteList(context, node);
-        FillContextInitialInput(node, context, context.Parent ?? _parentContext);
+        FillContextInitialInput(context, node);
 
         _processed.Add(node);
     }
@@ -63,7 +59,7 @@ internal sealed class CreateContextVisitor : AstVisitor
 
         foreach (var withNodeItem in node.WithNode.Nodes)
         {
-            var cteCreateContextVisitor = new CreateContextVisitor(_executionThread, context);
+            var cteCreateContextVisitor = new CreateContextVisitor(_executionThread);
             cteCreateContextVisitor.Run(withNodeItem.QueryNode);
             var cte = new CommonTableExpression(
                 withNodeItem.Name,
@@ -86,9 +82,7 @@ internal sealed class CreateContextVisitor : AstVisitor
         }
     }
 
-    private void FillContextInitialInput(
-        SelectQueryNode queryNode,
-        SelectCommandContext? parent = null)
+    private void FillContextInitialInput(SelectQueryNode queryNode)
     {
         var context = queryNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
         if (context.RowsInputIterator != null)
@@ -99,21 +93,20 @@ internal sealed class CreateContextVisitor : AstVisitor
 
         if (queryNode is SelectQuerySpecificationNode querySpecificationNode)
         {
-            FillContextInitialInput(querySpecificationNode, context, parent);
+            FillContextInitialInput(context, querySpecificationNode);
             return;
         }
         if (queryNode is SelectQueryCombineNode queryCombineNode)
         {
-            FillContextInitialInput(queryCombineNode, context, parent);
+            FillContextInitialInput(context, queryCombineNode);
             return;
         }
         throw new InvalidOperationException($"{queryNode.GetType().Name} cannot be processed.");
     }
 
     private void FillContextInitialInput(
-        SelectQuerySpecificationNode querySpecificationNode,
         SelectCommandContext context,
-        SelectCommandContext? parent = null)
+        SelectQuerySpecificationNode querySpecificationNode)
     {
         // No FROM - assumed this is the query with SELECT only.
         if (querySpecificationNode.TableExpressionNode == null)
@@ -124,7 +117,6 @@ internal sealed class CreateContextVisitor : AstVisitor
 
         // Start with FROM statement, if none - there is only one SELECT row.
         var finalRowsInputs = new List<IRowsInput>();
-        var inputContexts = new List<SelectInputQueryContext>();
         foreach (var tableExpression in querySpecificationNode.TableExpressionNode.Tables.TableFunctions)
         {
             var rowsInputs = GetRowsInputFromExpression(context, tableExpression, querySpecificationNode);
@@ -137,18 +129,16 @@ internal sealed class CreateContextVisitor : AstVisitor
 
         var resultRowsIterator = CreateMultipleIterator(finalRowsInputs);
         context.RowsInputIterator = resultRowsIterator as RowsInputIterator;
-        context.InputQueryContextList = inputContexts.ToArray();
         context.SetIterator(resultRowsIterator);
     }
 
     private void FillContextInitialInput(
-        SelectQueryCombineNode queryCombineNode,
         SelectCommandContext context,
-        SelectCommandContext? parent = null)
+        SelectQueryCombineNode queryCombineNode)
     {
-        FillContextInitialInput(queryCombineNode.LeftQueryNode, parent);
+        FillContextInitialInput(queryCombineNode.LeftQueryNode);
         var leftContext = queryCombineNode.LeftQueryNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
-        FillContextInitialInput(queryCombineNode.RightQueryNode, parent);
+        FillContextInitialInput(queryCombineNode.RightQueryNode);
         var rightContext = queryCombineNode.RightQueryNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
         var combineRowsIterator = new CombineRowsIterator(
             leftContext.CurrentIterator,
@@ -187,8 +177,7 @@ internal sealed class CreateContextVisitor : AstVisitor
     // Last input is combine input.
     private IRowsInput[] CreateInputSourceFromTableFunction(
         SelectCommandContext context,
-        SelectTableFunctionNode tableFunctionNode,
-        SelectCommandContext? parent = null)
+        SelectTableFunctionNode tableFunctionNode)
     {
         _resolveTypesVisitor.Run(tableFunctionNode.TableFunction);
         var inputs = new List<IRowsInput>();
@@ -259,7 +248,7 @@ internal sealed class CreateContextVisitor : AstVisitor
         SelectQuerySpecificationNode? parentSpecificationNode = null)
     {
         FillContextInitialInput(queryBodyNode);
-        new CreateContextVisitor(_executionThread, null).Run(queryBodyNode);
+        new CreateContextVisitor(_executionThread).Run(queryBodyNode);
         new SpecificationNodeVisitor(_executionThread, parentSpecificationNode).Run(queryBodyNode);
         var commandContext = queryBodyNode.GetRequiredAttribute<CommandContext>(AstAttributeKeys.ContextKey);
         if (commandContext.Invoke().AsObject is not IRowsIterator iterator)

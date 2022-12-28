@@ -21,10 +21,11 @@ internal partial class SpecificationNodeVisitor
             rightContext.CurrentIterator,
             ConvertCombineType(node.CombineType),
             node.IsDistinct);
-        var context = new SelectCommandContext(combineRowsIterator)
+        var context = new SelectCommandContext
         {
             RowsInputIterator = leftContext.RowsInputIterator,
         };
+        context.SetIterator(combineRowsIterator);
         context.AddChildContext(context.ChildContexts);
 
         // Process.
