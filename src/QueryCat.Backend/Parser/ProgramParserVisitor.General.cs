@@ -244,16 +244,8 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
 
     /// <inheritdoc />
     public override IAstNode VisitFunctionCall(QueryCatParser.FunctionCallContext context)
-    {
-        var functionCallNode = new FunctionCallNode(GetUnwrappedText(context.IDENTIFIER()),
+        => new FunctionCallNode(GetUnwrappedText(context.IDENTIFIER()),
             this.Visit<FunctionCallArgumentNode>(context.functionCallArg()).ToList());
-        if (functionCallNode.Arguments.Count == 0
-            && functionCallNode.FunctionName.Equals("count", StringComparison.OrdinalIgnoreCase))
-        {
-            functionCallNode.Arguments.Add(new FunctionCallArgumentNode(new LiteralNode(VariantValue.OneIntegerValue)));
-        }
-        return functionCallNode;
-    }
 
     /// <inheritdoc />
     public override IAstNode VisitFunctionCallArg(QueryCatParser.FunctionCallArgContext context)

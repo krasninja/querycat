@@ -18,6 +18,9 @@ public sealed class SelectCommand
         // For every ".. FROM func()" function we create IRowsInput.
         new CreateRowsInputVisitor(executionThread).Run(selectStatementNode);
 
+        // Do some AST transformations.
+        new TransformQueryAstVisitor().Run(selectStatementNode);
+
         // Iterate by select node in pre-order way and create correspond command context.
         new CreateContextVisitor(executionThread).Run(selectStatementNode);
 

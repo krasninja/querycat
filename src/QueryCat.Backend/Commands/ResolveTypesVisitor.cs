@@ -33,12 +33,12 @@ internal class ResolveTypesVisitor : AstVisitor
             .Where(arg => arg.IsPositional)
             .Select(arg => new KeyValuePair<int, DataType>(
                 callArguments.IndexOf(arg),
-                arg.ExpressionValue.GetDataType()))
+                arg.ExpressionValueNode.GetDataType()))
             .ToArray();
         var namedArgumentsTypes = callArguments
             .Where(arg => !arg.IsPositional)
             .Select(arg => new KeyValuePair<string, DataType>(
-                arg.Key!, arg.ExpressionValue.GetDataType()))
+                arg.Key!, arg.ExpressionValueNode.GetDataType()))
             .ToArray();
         return new FunctionArgumentsTypes(
             positionalArgumentsTypes,
@@ -149,7 +149,7 @@ internal class ResolveTypesVisitor : AstVisitor
     /// <inheritdoc />
     public override void Visit(FunctionCallArgumentNode node)
     {
-        node.ExpressionValue.CopyTo<DataType>(AstAttributeKeys.TypeKey, node);
+        node.ExpressionValueNode.CopyTo<DataType>(AstAttributeKeys.TypeKey, node);
     }
 
     /// <inheritdoc />
@@ -172,7 +172,7 @@ internal class ResolveTypesVisitor : AstVisitor
         {
             foreach (var callArgumentNode in node.Arguments)
             {
-                var argType = callArgumentNode.ExpressionValue.GetDataType();
+                var argType = callArgumentNode.ExpressionValueNode.GetDataType();
                 if (DataTypeUtils.RowDataTypes.Contains(argType))
                 {
                     returnType = argType;

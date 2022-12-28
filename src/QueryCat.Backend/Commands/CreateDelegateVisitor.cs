@@ -263,7 +263,7 @@ internal class CreateDelegateVisitor : AstVisitor
     /// <inheritdoc />
     public override void Visit(FunctionCallArgumentNode node)
     {
-        NodeIdFuncMap[node.Id] = NodeIdFuncMap[node.ExpressionValue.Id];
+        NodeIdFuncMap[node.Id] = NodeIdFuncMap[node.ExpressionValueNode.Id];
     }
 
     /// <inheritdoc />

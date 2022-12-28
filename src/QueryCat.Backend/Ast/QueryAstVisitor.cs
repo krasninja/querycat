@@ -102,7 +102,7 @@ public class QueryAstVisitor : AstVisitor
     /// <inheritdoc />
     public override void Visit(FunctionCallArgumentNode node)
     {
-        SetString(node, GetString(node.ExpressionValue));
+        SetString(node, GetString(node.ExpressionValueNode));
     }
 
     /// <inheritdoc />
