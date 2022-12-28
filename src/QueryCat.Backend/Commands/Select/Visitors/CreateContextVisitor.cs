@@ -28,7 +28,7 @@ internal sealed class CreateContextVisitor : AstVisitor
 
         foreach (var processedNode in _processed.AsEnumerable().Reverse())
         {
-            new SpecificationNodeVisitor(_executionThread).Run(processedNode);
+            new SetIteratorVisitor(_executionThread).Run(processedNode);
         }
     }
 
@@ -43,13 +43,13 @@ internal sealed class CreateContextVisitor : AstVisitor
     {
         var context = node.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
 
-        FillInputCteList(context, node);
-        FillContextInitialInput(context, node);
+        PrepareInputCteList(context, node);
+        PrepareContextInitialInput(context, node);
 
         _processed.Add(node);
     }
 
-    private void FillInputCteList(SelectCommandContext context, SelectQuerySpecificationNode node)
+    private void PrepareInputCteList(SelectCommandContext context, SelectQuerySpecificationNode node)
     {
         context.CteList.AddRange(GetParentCteList(context));
         if (node.WithNode == null)
@@ -65,7 +65,7 @@ internal sealed class CreateContextVisitor : AstVisitor
                 withNodeItem.Name,
                 withNodeItem.QueryNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey));
             context.CteList.Add(cte);
-            new SpecificationNodeVisitor(_executionThread).Run(withNodeItem);
+            new SetIteratorVisitor(_executionThread).Run(withNodeItem);
         }
     }
 
@@ -82,7 +82,7 @@ internal sealed class CreateContextVisitor : AstVisitor
         }
     }
 
-    private void FillContextInitialInput(SelectQueryNode queryNode)
+    private void PrepareContextInitialInput(SelectQueryNode queryNode)
     {
         var context = queryNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
         if (context.RowsInputIterator != null)
@@ -93,18 +93,18 @@ internal sealed class CreateContextVisitor : AstVisitor
 
         if (queryNode is SelectQuerySpecificationNode querySpecificationNode)
         {
-            FillContextInitialInput(context, querySpecificationNode);
+            PrepareContextInitialInput(context, querySpecificationNode);
             return;
         }
         if (queryNode is SelectQueryCombineNode queryCombineNode)
         {
-            FillContextInitialInput(context, queryCombineNode);
+            PrepareContextInitialInput(context, queryCombineNode);
             return;
         }
         throw new InvalidOperationException($"{queryNode.GetType().Name} cannot be processed.");
     }
 
-    private void FillContextInitialInput(
+    private void PrepareContextInitialInput(
         SelectCommandContext context,
         SelectQuerySpecificationNode querySpecificationNode)
     {
@@ -132,13 +132,13 @@ internal sealed class CreateContextVisitor : AstVisitor
         context.SetIterator(resultRowsIterator);
     }
 
-    private void FillContextInitialInput(
+    private void PrepareContextInitialInput(
         SelectCommandContext context,
         SelectQueryCombineNode queryCombineNode)
     {
-        FillContextInitialInput(queryCombineNode.LeftQueryNode);
+        PrepareContextInitialInput(queryCombineNode.LeftQueryNode);
         var leftContext = queryCombineNode.LeftQueryNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
-        FillContextInitialInput(queryCombineNode.RightQueryNode);
+        PrepareContextInitialInput(queryCombineNode.RightQueryNode);
         var rightContext = queryCombineNode.RightQueryNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
         var combineRowsIterator = new CombineRowsIterator(
             leftContext.CurrentIterator,
@@ -207,7 +207,8 @@ internal sealed class CreateContextVisitor : AstVisitor
             (left, right) = (right, left);
             reverseColumnsOrder = true;
         }
-        // Because of iterator specific conditions we must cache right input.
+        // Because of iterator specific conditions we better cache right input. Consider that resetting rows input
+        // is resource consuming operation.
         right = new CacheRowsInput(right);
 
         new InputResolveTypesVisitor(_executionThread, left, right)
@@ -229,27 +230,25 @@ internal sealed class CreateContextVisitor : AstVisitor
                 CreateInputSourceFromSubQuery(queryNode, parentSpecificationNode)
             };
         }
-        else if (expressionNode is SelectTableFunctionNode tableFunctionNode)
+        if (expressionNode is SelectTableFunctionNode tableFunctionNode)
         {
             return CreateInputSourceFromTableFunction(context, tableFunctionNode);
         }
-        else if (expressionNode is IdentifierExpressionNode idNode)
+        if (expressionNode is IdentifierExpressionNode idNode)
         {
             return CreateInputSourceFromCte(context, idNode);
         }
-        else
-        {
-            throw new InvalidOperationException($"Cannot process node '{expressionNode}' as input.");
-        }
+
+        throw new InvalidOperationException($"Cannot process node '{expressionNode}' as input.");
     }
 
     private IRowsInput CreateInputSourceFromSubQuery(
         SelectQueryNode queryBodyNode,
         SelectQuerySpecificationNode? parentSpecificationNode = null)
     {
-        FillContextInitialInput(queryBodyNode);
+        PrepareContextInitialInput(queryBodyNode);
         new CreateContextVisitor(_executionThread).Run(queryBodyNode);
-        new SpecificationNodeVisitor(_executionThread, parentSpecificationNode).Run(queryBodyNode);
+        new SetIteratorVisitor(_executionThread, parentSpecificationNode).Run(queryBodyNode);
         var commandContext = queryBodyNode.GetRequiredAttribute<CommandContext>(AstAttributeKeys.ContextKey);
         if (commandContext.Invoke().AsObject is not IRowsIterator iterator)
         {

@@ -5,7 +5,7 @@ using QueryCat.Backend.Relational.Iterators;
 
 namespace QueryCat.Backend.Commands.Select.Visitors;
 
-internal partial class SpecificationNodeVisitor
+internal partial class SetIteratorVisitor
 {
     #region UNION
 

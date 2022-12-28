@@ -16,9 +16,9 @@ public sealed class SelectCommand
         new PrepareContextVisitor().Run(selectStatementNode);
 
         // For every ".. FROM func()" function we create IRowsInput.
-        new TableRowsInputVisitor(executionThread).Run(selectStatementNode);
+        new CreateRowsInputVisitor(executionThread).Run(selectStatementNode);
 
-        // Iterate by select node in pre-order why and create correspond command context.
+        // Iterate by select node in pre-order way and create correspond command context.
         new CreateContextVisitor(executionThread).Run(selectStatementNode);
 
         return selectStatementNode.QueryNode.GetRequiredAttribute<CommandContext>(AstAttributeKeys.ContextKey);

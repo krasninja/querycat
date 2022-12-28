@@ -16,12 +16,12 @@ namespace QueryCat.Backend.Commands.Select.Visitors;
 /// So after that visitor all node types will be set. The <see cref="IRowsInput" /> input will be put into
 /// <see cref="SelectTableFunctionNode" /> node with AstAttributeKeys.RowsInputKey key.
 /// </summary>
-internal sealed class TableRowsInputVisitor : AstVisitor
+internal sealed class CreateRowsInputVisitor : AstVisitor
 {
     private readonly ExecutionThread _executionThread;
     private readonly ResolveTypesVisitor _resolveTypesVisitor;
 
-    public TableRowsInputVisitor(ExecutionThread executionThread)
+    public CreateRowsInputVisitor(ExecutionThread executionThread)
     {
         _executionThread = executionThread;
         _resolveTypesVisitor = new ResolveTypesVisitor(executionThread);

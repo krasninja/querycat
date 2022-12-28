@@ -7,7 +7,7 @@ using QueryCat.Backend.Types;
 
 namespace QueryCat.Backend.Commands.Select.Visitors;
 
-internal partial class SpecificationNodeVisitor
+internal partial class SetIteratorVisitor
 {
     private void FillQueryContextConditions(
         SelectQuerySpecificationNode querySpecificationNode,
