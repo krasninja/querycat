@@ -8,35 +8,37 @@ Just imagine that everything in the world is a table, and you can process it usi
 
 - 1) [Tutorial](tutorial)
 - 2) [Concepts](concepts)
-- 3) [Formatters](formatters)
-- 4) Commands
-    - 4.1) [SELECT](commands/select)
-    - 4.2) [ECHO](commands/echo)
-- 5) Input
-    - 5.1) [CSV](input/csv)
-    - 5.2) [IISW3C](input/iisw3c)
-    - 5.3) [JSON](input/json)
-    - 5.4) [STDIN](input/stdin)
-    - 5.5) [Text](input/text-line)
-    - 5.6) [TSV](output/tsv)
-- 6) Output
-    - 6.1) [CSV](output/csv)
-    - 6.2) [JSON](output/json)
-    - 6.3) [Text Table](output/text-table)
-    - 6.4) [TSV](output/tsv)
-- 7) Functions
-    - 7.1) [Aggregate](functions/aggregate)
-    - 7.2) [Crypto](functions/crypto)
-    - 7.3) [Date and Time](functions/datetime)
-    - 7.4) [Info](functions/info)
-    - 7.5) [Math](functions/math)
-    - 7.6) [Misc](functions/misc)
-    - 7.7) [Output](functions/output)
-    - 7.8) [String](functions/string)
-    - 7.9) [System](functions/system)
-- 8) Features
-    - 8.1) [Web Server](features/web-server)
-- 9) Development
-    - 9.1) [Overview](development/overview)
-- 10) Misc
-    - 10.1) [Alternatives](misc/alternative-tools)
+- 3) [Plugins](plugins)
+    - 3.1) [Logs](plugins/logs)
+- 4) [Formatters](formatters)
+- 5) Commands
+    - 5.1) [SELECT](commands/select)
+    - 5.2) [ECHO](commands/echo)
+- 6) Input
+    - 6.1) [CSV](input/csv)
+    - 6.2) [JSON](input/json)
+    - 6.3) [STDIN](input/stdin)
+    - 6.4) [Text](input/text-line)
+    - 6.5) [TSV](output/tsv)
+- 7) Output
+    - 7.1) [CSV](output/csv)
+    - 7.2) [JSON](output/json)
+    - 7.3) [Text Table](output/text-table)
+    - 7.4) [TSV](output/tsv)
+- 8) Functions
+    - 8.1) [Aggregate](functions/aggregate)
+    - 8.2) [Crypto](functions/crypto)
+    - 8.3) [Date and Time](functions/datetime)
+    - 8.4) [Info](functions/info)
+    - 8.5) [Math](functions/math)
+    - 8.6) [Misc](functions/misc)
+    - 8.7) [Output](functions/output)
+    - 8.8) [String](functions/string)
+    - 8.9) [System](functions/system)
+- 9) [FAQ](faq)
+- 10) Features
+    - 10.1) [Web Server](features/web-server)
+- 11) Development
+    - 11.1) [Overview](development/overview)
+- 12) Misc
+    - 12.1) [Alternatives](misc/alternative-tools)

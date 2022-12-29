@@ -1,15 +1,16 @@
 site_name: QueryCat Documentation
 nav:
   - 'Home': index.md
-  - 'Concepts': concepts.md
   - 'Tutorial': tutorial.md
+  - 'Concepts': concepts.md
+  - 'Plugins':
+    - 'Logs': plugins/logs.md
   - 'Formatters': formatters.md
   - 'Commands':
     - 'ECHO': commands/echo.md
     - 'SELECT': commands/select.md
   - 'Input':
     - 'CSV': input/csv.md
-    - 'IISW3C': input/iisw3c.md
     - 'JSON': input/json.md
     - 'STDIN': input/stdin.md
     - 'Text': input/text-line.md
@@ -30,6 +31,7 @@ nav:
     - 'Output': functions/output.md
     - 'String': functions/string.md
     - 'System': functions/system.md
+  - 'FAQ': faq.md
   - 'Features':
     - 'Web Server': features/web-server.md
   - 'Development':
