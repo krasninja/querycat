@@ -19,45 +19,45 @@ namespace QueryCat.Backend.Commands.Select.Visitors;
 internal sealed class CreateRowsInputVisitor : AstVisitor
 {
     private readonly ExecutionThread _executionThread;
+    private readonly SelectCommandContext _context;
     private readonly ResolveTypesVisitor _resolveTypesVisitor;
 
-    public CreateRowsInputVisitor(ExecutionThread executionThread)
+    public CreateRowsInputVisitor(ExecutionThread executionThread, SelectCommandContext context)
     {
         _executionThread = executionThread;
+        _context = context;
         _resolveTypesVisitor = new ResolveTypesVisitor(executionThread);
+        AstTraversal.TypesToIgnore.Add(typeof(SelectQueryNode));
+        AstTraversal.AcceptBeforeIgnore = true;
     }
 
     /// <inheritdoc />
     public override void Visit(SelectTableFunctionNode node)
     {
-        var queryNode = AstTraversal.GetFirstParent<SelectQueryNode>();
-        if (queryNode == null)
-        {
-            throw new InvalidOperationException(
-                $"{nameof(SelectTableFunctionNode)} does not have root query node. Invalid AST tree.");
-        }
-        var context = queryNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
-
         // Determine types for the node.
         var typesVisitor = _resolveTypesVisitor;
-        if (context.Parent != null)
+        if (_context.Parent != null)
         {
-            typesVisitor = new SelectResolveTypesVisitor(_executionThread, context.Parent);
+            typesVisitor = new SelectResolveTypesVisitor(_executionThread, _context.Parent);
         }
         typesVisitor.Run(node.TableFunction);
 
         var source = new CreateDelegateVisitor(_executionThread).RunAndReturn(node.TableFunction).Invoke();
-        var rowsInput = CreateRowsInput(context, source);
-        FixInputColumnTypes(rowsInput);
-        SetAlias(rowsInput, node.Alias);
-        node.SetAttribute(AstAttributeKeys.RowsInputKey, rowsInput);
+        var inputContext = CreateRowsInput(source);
+        inputContext.Alias = node.Alias;
+        _context.Inputs.Add(inputContext);
+
+        FixInputColumnTypes(inputContext.RowsInput);
+        SetAlias(inputContext.RowsInput, node.Alias);
+
+        node.SetAttribute(AstAttributeKeys.RowsInputKey, inputContext.RowsInput);
     }
 
-    private IRowsInput CreateRowsInput(SelectCommandContext context, VariantValue source)
+    private SelectCommandContextInput CreateRowsInput(VariantValue source)
     {
         if (DataTypeUtils.IsSimple(source.GetInternalType()))
         {
-            return new SingleValueRowsInput(source);
+            return new SelectCommandContextInput(new SingleValueRowsInput(source));
         }
         if (source.AsObject is IRowsInput rowsInput)
         {
@@ -65,19 +65,18 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
             {
                 InputConfigStorage = _executionThread.InputConfigStorage
             };
-            context.InputQueryContextList.Add(queryContext);
-            if (context.Parent != null)
+            if (_context.Parent != null)
             {
                 rowsInput = new CacheRowsInput(rowsInput);
             }
             rowsInput.SetContext(queryContext);
             rowsInput.Open();
             Log.Logger.Debug("Open rows input {RowsInput}.", rowsInput);
-            return rowsInput;
+            return new SelectCommandContextInput(rowsInput, queryContext);
         }
         if (source.AsObject is IRowsIterator rowsIterator)
         {
-            return new RowsIteratorInput(rowsIterator);
+            return new SelectCommandContextInput(new RowsIteratorInput(rowsIterator));
         }
 
         throw new QueryCatException("Invalid rows input.");

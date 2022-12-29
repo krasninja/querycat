@@ -15,9 +15,6 @@ public sealed class SelectCommand
         // Create initial empty context for every query.
         new PrepareContextVisitor().Run(selectStatementNode);
 
-        // For every ".. FROM func()" function we create IRowsInput.
-        new CreateRowsInputVisitor(executionThread).Run(selectStatementNode);
-
         // Do some AST transformations.
         new TransformQueryAstVisitor().Run(selectStatementNode);
 

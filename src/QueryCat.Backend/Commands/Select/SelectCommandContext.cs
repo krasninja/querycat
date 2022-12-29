@@ -12,12 +12,27 @@ namespace QueryCat.Backend.Commands.Select;
 /// </summary>
 internal sealed class SelectCommandContext : CommandContext
 {
+    #region Iterator
+
     private IRowsIterator? _currentIterator;
 
     /// <summary>
     /// Current iterator.
     /// </summary>
     public IRowsIterator CurrentIterator => _currentIterator ?? EmptyIterator.Instance;
+
+    /// <summary>
+    /// Append (overwrite) current iterator.
+    /// </summary>
+    /// <param name="nextIterator">The next iterator.</param>
+    public void SetIterator(IRowsIterator nextIterator)
+    {
+        _currentIterator = nextIterator;
+    }
+
+    #endregion
+
+    #region Inputs
 
     /// <summary>
     /// The instance of <see cref="RowsInputIterator" /> that is used in FROM clause.
@@ -28,6 +43,18 @@ internal sealed class SelectCommandContext : CommandContext
     /// Column indexes to prefetch from rows input source.
     /// </summary>
     internal HashSet<int> PrefetchedColumnIndexes { get; } = new();
+
+    internal List<SelectCommandContextInput> Inputs { get; } = new();
+
+    /// <summary>
+    /// Context information for rows inputs. We bypass this to input to provide additional information
+    /// about a query. This would allow optimize execution.
+    /// </summary>
+    public IEnumerable<SelectInputQueryContext> InputQueryContextList => Inputs.Select(i => i.InputQueryContext);
+
+    #endregion
+
+    #region Child-Parent
 
     /// <summary>
     /// Parent select context.
@@ -42,10 +69,27 @@ internal sealed class SelectCommandContext : CommandContext
     public IReadOnlyList<SelectCommandContext> ChildContexts => _childContexts;
 
     /// <summary>
-    /// Context information for rows inputs. We bypass this to input to provide additional information
-    /// about a query. This would allow optimize execution.
+    /// Add child context.
     /// </summary>
-    public List<SelectInputQueryContext> InputQueryContextList { get; } = new();
+    /// <param name="context">Context.</param>
+    internal void AddChildContext(SelectCommandContext context)
+    {
+        context.Parent = this;
+        _childContexts.Add(context);
+    }
+
+    /// <summary>
+    /// Set parent query context. The method also updates child items.
+    /// If null - the context will be topmost.
+    /// </summary>
+    /// <param name="context">Parent context.</param>
+    internal void SetParent(SelectCommandContext? context)
+    {
+        Parent = context;
+        Parent?.AddChildContext(this);
+    }
+
+    #endregion
 
     /// <summary>
     /// Container to get columns additional information.
@@ -71,36 +115,6 @@ internal sealed class SelectCommandContext : CommandContext
     /// Common table expressions of the query.
     /// </summary>
     internal List<CommonTableExpression> CteList { get; } = new();
-
-    /// <summary>
-    /// Append (overwrite) current iterator.
-    /// </summary>
-    /// <param name="nextIterator">The next iterator.</param>
-    public void SetIterator(IRowsIterator nextIterator)
-    {
-        _currentIterator = nextIterator;
-    }
-
-    /// <summary>
-    /// Add child context.
-    /// </summary>
-    /// <param name="context">Context.</param>
-    internal void AddChildContext(SelectCommandContext context)
-    {
-        context.Parent = this;
-        _childContexts.Add(context);
-    }
-
-    /// <summary>
-    /// Set parent query context. The method also updates child items.
-    /// If null - the context will be topmost.
-    /// </summary>
-    /// <param name="context">Parent context.</param>
-    internal void SetParent(SelectCommandContext? context)
-    {
-        Parent = context;
-        Parent?.AddChildContext(this);
-    }
 
     /// <summary>
     /// Get column index by name and return relate rows iterator.

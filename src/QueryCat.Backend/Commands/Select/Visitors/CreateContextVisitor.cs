@@ -43,10 +43,16 @@ internal sealed class CreateContextVisitor : AstVisitor
     {
         var context = node.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
 
+        InitializeRowsInputs(context, node);
         PrepareInputCteList(context, node);
         PrepareContextInitialInput(context, node);
 
         _processed.Add(node);
+    }
+
+    private void InitializeRowsInputs(SelectCommandContext context, SelectQueryNode node)
+    {
+        new CreateRowsInputVisitor(_executionThread, context).Run(node);
     }
 
     private void PrepareInputCteList(SelectCommandContext context, SelectQuerySpecificationNode node)
