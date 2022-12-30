@@ -23,18 +23,15 @@ internal sealed class SelectResolveTypesVisitor : ResolveTypesVisitor
     /// <inheritdoc />
     public override void Visit(IdentifierExpressionNode node)
     {
-        var columnIndex = _context
-            .GetColumnIndexByName(node.Name, node.SourceName, out var rowsIterator);
-        if (columnIndex < 0)
+        if (_context.TryGetInput(node.Name, node.SourceName, out var input, out var columnIndex))
         {
-            base.Visit(node);
-        }
-        else
-        {
-            node.SetAttribute(AstAttributeKeys.InputColumnKey, rowsIterator!.Columns[columnIndex]);
+            node.SetAttribute(AstAttributeKeys.InputColumnKey, input!.Columns[columnIndex]);
             node.SetAttribute(AstAttributeKeys.InputColumnIndexKey, columnIndex);
-            node.SetDataType(rowsIterator.Columns[columnIndex].DataType);
+            node.SetDataType(input.Columns[columnIndex].DataType);
+            return;
         }
+
+        base.Visit(node);
     }
 
     /// <inheritdoc />
@@ -52,17 +49,14 @@ internal sealed class SelectResolveTypesVisitor : ResolveTypesVisitor
     /// <inheritdoc />
     public override void Visit(SelectColumnsSublistNameNode node)
     {
-        var columnIndex = _context
-            .GetColumnIndexByName(node.ColumnName, node.SourceName, out var rowsIterator);
-        if (columnIndex < 0)
+        if (!_context.TryGetInput(node.ColumnName, node.SourceName, out var input, out var columnIndex))
         {
-            base.Visit(node);
+            return;
         }
-        else
-        {
-            node.SetAttribute(AstAttributeKeys.InputColumnKey, rowsIterator!.Columns[columnIndex]);
-            node.SetDataType(rowsIterator.Columns[columnIndex].DataType);
-        }
+
+        node.SetAttribute(AstAttributeKeys.InputColumnKey, input!.Columns[columnIndex]);
+        node.SetAttribute(AstAttributeKeys.InputColumnIndexKey, columnIndex);
+        node.SetDataType(input.Columns[columnIndex].DataType);
     }
 
     /// <inheritdoc />

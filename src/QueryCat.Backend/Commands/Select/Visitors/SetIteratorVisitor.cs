@@ -29,6 +29,7 @@ internal sealed partial class SetIteratorVisitor : AstVisitor
     public SetIteratorVisitor(ExecutionThread executionThread)
     {
         ExecutionThread = executionThread;
+        AstTraversal.TypesToIgnore.Add(typeof(SelectQueryNode));
     }
 
     /// <inheritdoc />

@@ -40,20 +40,12 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
     /// <inheritdoc />
     public override void Visit(IdentifierExpressionNode node)
     {
-        int columnIndex = _context.GetColumnIndexByName(node.Name, node.SourceName, out var rowsIterator);
-        if (columnIndex < 0)
+        if (VisitIdentifierNode(node, node.Name, node.SourceName))
         {
-            base.Visit(node);
+            return;
         }
-        else
-        {
-            var info = _context.ColumnsInfoContainer.GetByColumn(rowsIterator!.Columns[columnIndex]);
-            if (info.Redirect != null)
-            {
-                columnIndex = rowsIterator.GetColumnIndex(info.Redirect);
-            }
-            NodeIdFuncMap[node.Id] = new FuncUnitRowsIteratorColumn(rowsIterator, columnIndex);
-        }
+
+        base.Visit(node);
     }
 
     /// <inheritdoc />
@@ -65,16 +57,12 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
     /// <inheritdoc />
     public override void Visit(SelectColumnsSublistNameNode node)
     {
-        int columnIndex = _context.GetColumnIndexByName(node.ColumnName, node.SourceName, out var rowsIterator);
-        if (columnIndex < 0)
+        if (VisitIdentifierNode(node, node.ColumnName, node.SourceName))
         {
-            base.Visit(node);
+            return;
         }
-        else
-        {
-            var iterator = rowsIterator!;
-            NodeIdFuncMap[node.Id] = new FuncUnitRowsIteratorColumn(iterator, columnIndex);
-        }
+
+        base.Visit(node);
     }
 
     /// <inheritdoc />
@@ -156,6 +144,32 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
             Node: node,
             Name: name
         );
+    }
+
+    private bool VisitIdentifierNode(IAstNode node, string name, string source)
+    {
+        if (!_context.TryGetInput(name, source, out var input, out var columnIndex))
+        {
+            return false;
+        }
+
+        if (input is IRowsIterator rowsIterator)
+        {
+            var info = _context.ColumnsInfoContainer.GetByColumn(rowsIterator.Columns[columnIndex]);
+            if (info.Redirect != null)
+            {
+                columnIndex = rowsIterator.GetColumnIndex(info.Redirect);
+            }
+            NodeIdFuncMap[node.Id] = new FuncUnitRowsIteratorColumn(rowsIterator, columnIndex);
+            return true;
+        }
+        if (input is IRowsInput rowsInput)
+        {
+            NodeIdFuncMap[node.Id] = new FuncUnitRowsInputColumn(rowsInput, columnIndex);
+            return true;
+        }
+
+        return false;
     }
 
     #region Subqueries

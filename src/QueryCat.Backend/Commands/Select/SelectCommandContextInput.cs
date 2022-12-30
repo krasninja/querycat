@@ -13,6 +13,8 @@ internal class SelectCommandContextInput
 
     public string Alias { get; set; }
 
+    public HashSet<int> PrefetchColumnsIds { get; } = new();
+
     public SelectCommandContextInput(IRowsInput rowsInput, SelectInputQueryContext inputQueryContext, string? alias = null)
     {
         RowsInput = rowsInput;

@@ -30,6 +30,40 @@ internal sealed class SelectCommandContext : CommandContext
         _currentIterator = nextIterator;
     }
 
+    /// <summary>
+    /// Try get input by name.
+    /// </summary>
+    /// <param name="name">Column name.</param>
+    /// <param name="source">Column source.</param>
+    /// <param name="schema">The instance of <see cref="IRowsInput" /> or <see cref="IRowsIterator" />.</param>
+    /// <param name="columnIndex">Found column index or -1.</param>
+    /// <returns>Returns <c>true</c> if column is found, <c>false</c> otherwise.</returns>
+    public bool TryGetInput(string name, string source, out IRowsSchema? schema, out int columnIndex)
+    {
+        var index = CurrentIterator.GetColumnIndexByName(name, source);
+        if (index > -1)
+        {
+            schema = CurrentIterator;
+            columnIndex = index;
+            return true;
+        }
+
+        foreach (var input in GetParents(context => context.Inputs).SelectMany(c => c))
+        {
+            index = input.RowsInput.GetColumnIndexByName(name, source);
+            if (index > -1)
+            {
+                schema = input.RowsInput;
+                columnIndex = index;
+                return true;
+            }
+        }
+
+        schema = null;
+        columnIndex = -1;
+        return false;
+    }
+
     #endregion
 
     #region Inputs
@@ -116,41 +150,6 @@ internal sealed class SelectCommandContext : CommandContext
     /// </summary>
     internal List<CommonTableExpression> CteList { get; } = new();
 
-    /// <summary>
-    /// Get column index by name and return relate rows iterator.
-    /// It also search within parent contexts.
-    /// </summary>
-    /// <param name="name">Column name.</param>
-    /// <param name="source">Source name.</param>
-    /// <param name="rowsIterator">Related rows iterator.</param>
-    /// <returns>Column index or -1.</returns>
-    public int GetColumnIndexByName(string name, string source, out IRowsIterator? rowsIterator)
-    {
-        foreach (var iterator in GetAllIterators())
-        {
-            var columnIndex = iterator.GetColumnIndexByName(name, source);
-            if (columnIndex > -1)
-            {
-                rowsIterator = iterator;
-                return columnIndex;
-            }
-        }
-
-        rowsIterator = default;
-        return -1;
-    }
-
-    private IEnumerable<IRowsIterator> GetAllIterators()
-    {
-        yield return CurrentIterator;
-        var parentContext = Parent;
-        while (parentContext != null)
-        {
-            yield return parentContext.CurrentIterator;
-            parentContext = parentContext.Parent;
-        }
-    }
-
     #region CommandContext
 
     /// <inheritdoc />
@@ -171,4 +170,16 @@ internal sealed class SelectCommandContext : CommandContext
     }
 
     #endregion
+
+    internal IEnumerable<T> GetParents<T>(Func<SelectCommandContext, T> func)
+    {
+        yield return func.Invoke(this);
+
+        var parentContext = Parent;
+        while (parentContext != null)
+        {
+            yield return func.Invoke(parentContext);
+            parentContext = parentContext.Parent;
+        }
+    }
 }
