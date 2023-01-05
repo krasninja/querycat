@@ -13,6 +13,8 @@ internal partial class SetIteratorVisitor
         SelectQuerySpecificationNode querySpecificationNode,
         SelectCommandContext commandContext)
     {
+        var selectCreateDelegateVisitor = new SelectCreateDelegateVisitor(ExecutionThread, commandContext);
+
         // Fill conditions.
         foreach (var context in commandContext.InputQueryContextList)
         {
@@ -20,13 +22,25 @@ internal partial class SetIteratorVisitor
         }
 
         // Fill "limit". For now we limit only of order is not defined.
-        if (querySpecificationNode.OrderByNode == null && querySpecificationNode.FetchNode != null)
+        if (querySpecificationNode.OrderByNode == null)
         {
-            var fetchCount = new SelectCreateDelegateVisitor(ExecutionThread, commandContext)
-                .RunAndReturn(querySpecificationNode.FetchNode.CountNode).Invoke().AsInteger;
-            foreach (var queryContext in commandContext.InputQueryContextList)
+            if (querySpecificationNode.FetchNode != null)
             {
-                queryContext.QueryInfo.Limit = fetchCount;
+                var fetchCount = selectCreateDelegateVisitor
+                    .RunAndReturn(querySpecificationNode.FetchNode.CountNode).Invoke().AsInteger;
+                foreach (var queryContext in commandContext.InputQueryContextList)
+                {
+                    queryContext.QueryInfo.Limit += fetchCount;
+                }
+            }
+            if (querySpecificationNode.OffsetNode != null)
+            {
+                var offsetCount = selectCreateDelegateVisitor
+                    .RunAndReturn(querySpecificationNode.OffsetNode.CountNode).Invoke().AsInteger;
+                foreach (var queryContext in commandContext.InputQueryContextList)
+                {
+                    queryContext.QueryInfo.Limit += offsetCount;
+                }
             }
         }
     }

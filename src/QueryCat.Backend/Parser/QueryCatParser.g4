@@ -127,7 +127,7 @@ selectSearchCondition: WHERE expression;
 
 // Limit, offset.
 selectOffsetClause: OFFSET (offset=expression) (ROW | ROWS)?;
-selectFetchFirstClause: FETCH (FIRST | NEXT)? (limit=expression) (ROW | ROWS)? (ONLY | ONLY)?;
+selectFetchFirstClause: (FETCH | LIMIT) (FIRST | NEXT)? (limit=expression) (ROW | ROWS)? (ONLY | ONLY)?;
 selectTopClause: TOP limit=INTEGER_LITERAL;
 selectLimitClause: LIMIT limit=expression;
 

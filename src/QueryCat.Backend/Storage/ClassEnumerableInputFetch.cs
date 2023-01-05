@@ -25,7 +25,7 @@ public class ClassEnumerableInputFetch<TClass> where TClass : class
     /// <param name="enumerableInput">Enumerable input.</param>
     public ClassEnumerableInputFetch(ClassEnumerableInput<TClass> enumerableInput)
     {
-        var queryLimit = enumerableInput.QueryContext.QueryInfo.Limit;
+        var queryLimit = enumerableInput.QueryContext.QueryInfo.Limit + enumerableInput.QueryContext.QueryInfo.Offset;
         if (queryLimit.HasValue)
         {
             var keyConditionsCount = enumerableInput.QueryContext.GetKeyConditions().Count();
