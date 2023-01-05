@@ -99,7 +99,7 @@ public static class RowsIteratorUtils
                     continue;
                 }
                 wasTested = true;
-                if (!variantValue.Cast(dataType, out _))
+                if (!variantValue.TryCast(dataType, out _))
                 {
                     return false;
                 }

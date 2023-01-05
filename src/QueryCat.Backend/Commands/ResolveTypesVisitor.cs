@@ -89,7 +89,16 @@ internal class ResolveTypesVisitor : AstVisitor
     /// <inheritdoc />
     public override void Visit(IdentifierExpressionNode node)
     {
-        throw new CannotFindIdentifierException(node.Name);
+        if (string.IsNullOrEmpty(node.SourceName))
+        {
+            var varIndex = ExecutionThread.RootScope.GetVariableIndex(node.Name, out var scope);
+            if (varIndex > -1)
+            {
+                node.SetAttribute(AstAttributeKeys.TypeKey, scope!.Variables[varIndex].GetInternalType());
+                return;
+            }
+        }
+        throw new CannotFindIdentifierException(node.FullName);
     }
 
     /// <inheritdoc />

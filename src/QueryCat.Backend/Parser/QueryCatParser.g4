@@ -17,16 +17,35 @@ statement
     : selectStatement # StatementSelectExpression
     | functionCall # StatementFunctionCall
     | echoStatement # StatementEcho
+    | declareVariable # StatementDeclareVariable
+    | setVariable # StatementSetVariable
     | expression # StatementExpression
     ;
 
 /*
+ * ===============
  * FUNCTION command.
+ * ===============
  */
 
 functionSignature: name=IDENTIFIER '(' (functionArg (COMMA functionArg)*)? ')' (COLON functionType)? EOF;
 functionType: type ('<' IDENTIFIER '>')?;
 functionArg: variadic=ELLIPSIS? IDENTIFIER optional=QUESTION? COLON functionType isArray=LEFT_RIGHT_BRACKET? ('=' default=literal)?;
+
+functionCall
+    : IDENTIFIER '(' ( functionCallArg (COMMA functionCallArg)* )? ')'
+    | IDENTIFIER '(' '*' ')' // Special case for COUNT(*).
+    ;
+functionCallArg: (IDENTIFIER ASSOCIATION)? expression;
+
+/*
+ * ===============
+ * DECLARE/SET command.
+ * ===============
+ */
+
+declareVariable: DECLARE IDENTIFIER type (':=' statement)?;
+setVariable: SET IDENTIFIER ':=' statement;
 
 /*
  * ===============
@@ -152,11 +171,7 @@ identifierChain
 array: '(' expression (',' expression)* ')';
 intervalLiteral: INTERVAL interval=STRING_LITERAL;
 
-functionCall
-    : IDENTIFIER '(' ( functionCallArg (COMMA functionCallArg)* )? ')'
-    | IDENTIFIER '(' '*' ')' // Special case for COUNT(*).
-    ;
-functionCallArg: (IDENTIFIER ASSOCIATION)? expression;
+
 castOperand: CAST '(' value=simpleExpression AS type ')';
 caseExpression: CASE arg=simpleExpression? caseWhen* (ELSE default=expression)? END;
 caseWhen: WHEN condition=expression THEN result=expression;

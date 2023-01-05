@@ -332,11 +332,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         var currentType = GetInternalType();
         if (targetType != currentType)
         {
-            if (Cast(targetType, out var convertedValue))
-            {
-                return convertedValue;
-            }
-            throw new InvalidVariantTypeException(currentType, targetType);
+            return Cast(targetType);
         }
         return this;
     }
@@ -442,8 +438,8 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     /// </summary>
     /// <param name="targetType">Target type to convert.</param>
     /// <param name="output">Return value.</param>
-    /// <returns>True if cast was successful, false otherwise.</returns>
-    public bool Cast(in DataType targetType, out VariantValue output)
+    /// <returns><c>True</c> if cast was successful, <c>false</c> otherwise.</returns>
+    public bool TryCast(in DataType targetType, out VariantValue output)
     {
         // Null value is always null.
         if (IsNull)
@@ -508,6 +504,24 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
             _ => Null
         };
         return !output.IsNull && success;
+    }
+
+    /// <summary>
+    /// Convert to target type.
+    /// </summary>
+    /// <param name="targetType">Target data type.</param>
+    /// <returns>Result value.</returns>
+    public VariantValue Cast(in DataType targetType)
+    {
+        if (TryCast(targetType, out var result))
+        {
+            return result;
+        }
+        else
+        {
+            var sourceType = GetInternalType();
+            throw new InvalidVariantTypeException(sourceType, targetType);
+        }
     }
 
     /// <summary>

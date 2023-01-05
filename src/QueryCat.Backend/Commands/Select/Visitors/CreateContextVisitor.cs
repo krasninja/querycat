@@ -265,11 +265,7 @@ internal sealed class CreateContextVisitor : AstVisitor
         var commandContext = queryNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
         CreateFinalIterator(queryNode);
 
-        if (commandContext.Invoke().AsObject is not IRowsIterator iterator)
-        {
-            throw new QueryCatException("No iterator for subquery!");
-        }
-        var rowsInput = new RowsIteratorInput(iterator);
+        var rowsInput = new RowsIteratorInput(commandContext.CurrentIterator);
         context.AddInput(new SelectCommandInputContext(rowsInput));
         SetAlias(rowsInput, queryNode.Alias);
         return rowsInput;

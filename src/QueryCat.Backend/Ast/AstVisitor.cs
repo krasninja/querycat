@@ -1,4 +1,5 @@
 using QueryCat.Backend.Ast.Nodes;
+using QueryCat.Backend.Ast.Nodes.Declare;
 using QueryCat.Backend.Ast.Nodes.Function;
 using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Ast.Nodes.SpecialFunctions;
@@ -261,6 +262,26 @@ public abstract class AstVisitor
     }
 
     public virtual void Visit(SelectWithNode node)
+    {
+    }
+
+    #endregion
+
+    #region Declare/Set
+
+    public virtual void Visit(DeclareNode node)
+    {
+    }
+
+    public virtual void Visit(DeclareStatementNode node)
+    {
+    }
+
+    public virtual void Visit(SetNode node)
+    {
+    }
+
+    public virtual void Visit(SetStatementNode node)
     {
     }
 

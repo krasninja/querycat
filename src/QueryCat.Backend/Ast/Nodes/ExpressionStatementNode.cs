@@ -2,26 +2,17 @@ namespace QueryCat.Backend.Ast.Nodes;
 
 public sealed class ExpressionStatementNode : StatementNode
 {
-    public ExpressionNode ExpressionNode { get; }
+    public ExpressionNode ExpressionNode => (ExpressionNode)RootNode;
 
     /// <inheritdoc />
     public override string Code => "expr_stmt";
 
-    public ExpressionStatementNode(ExpressionNode expressionNode)
+    public ExpressionStatementNode(ExpressionNode expressionNode) : base(expressionNode)
     {
-        ExpressionNode = expressionNode;
     }
 
-    public ExpressionStatementNode(ExpressionStatementNode node) :
-        this((ExpressionNode)node.ExpressionNode.Clone())
+    public ExpressionStatementNode(ExpressionStatementNode node) : base(node)
     {
-        node.CopyTo(this);
-    }
-
-    /// <inheritdoc />
-    public override IEnumerable<IAstNode> GetChildren()
-    {
-        yield return ExpressionNode;
     }
 
     /// <inheritdoc />

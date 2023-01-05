@@ -6,11 +6,11 @@ namespace QueryCat.Backend.Commands;
 /// <summary>
 /// Command context implementation for function call.
 /// </summary>
-public class FunctionCommandContext : CommandContext
+public class FunctionCommandHandler : CommandHandler
 {
     private readonly IFuncUnit _funcUnit;
 
-    public FunctionCommandContext(IFuncUnit funcUnit)
+    public FunctionCommandHandler(IFuncUnit funcUnit)
     {
         _funcUnit = funcUnit;
     }

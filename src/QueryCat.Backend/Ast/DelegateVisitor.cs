@@ -1,4 +1,5 @@
 using QueryCat.Backend.Ast.Nodes;
+using QueryCat.Backend.Ast.Nodes.Declare;
 using QueryCat.Backend.Ast.Nodes.Function;
 using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Ast.Nodes.SpecialFunctions;
@@ -98,16 +99,6 @@ public abstract class DelegateVisitor : AstVisitor
 
     /// <inheritdoc />
     public override void Visit(UnaryOperationExpressionNode node)
-    {
-        OnVisit(node);
-    }
-
-    #endregion
-
-    #region Echo
-
-    /// <inheritdoc />
-    public override void Visit(ExpressionStatementNode node)
     {
         OnVisit(node);
     }
@@ -348,6 +339,34 @@ public abstract class DelegateVisitor : AstVisitor
 
     /// <inheritdoc />
     public override void Visit(SelectWithNode node)
+    {
+        OnVisit(node);
+    }
+
+    #endregion
+
+    #region Declare
+
+    /// <inheritdoc />
+    public override void Visit(DeclareNode node)
+    {
+        OnVisit(node);
+    }
+
+    /// <inheritdoc />
+    public override void Visit(DeclareStatementNode node)
+    {
+        OnVisit(node);
+    }
+
+    /// <inheritdoc />
+    public override void Visit(SetNode node)
+    {
+        OnVisit(node);
+    }
+
+    /// <inheritdoc />
+    public override void Visit(SetStatementNode node)
     {
         OnVisit(node);
     }

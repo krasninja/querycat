@@ -3,11 +3,11 @@ using QueryCat.Backend.Types;
 namespace QueryCat.Backend.Commands;
 
 /// <summary>
-/// Empty implementation for <see cref="CommandContext" />.
+/// Empty implementation for <see cref="CommandHandler" />.
 /// </summary>
-public class EmptyCommandContext : CommandContext
+public class EmptyCommandHandler : CommandHandler
 {
-    public static EmptyCommandContext Empty { get; } = new();
+    public static EmptyCommandHandler Empty { get; } = new();
 
     /// <inheritdoc />
     public override VariantValue Invoke()

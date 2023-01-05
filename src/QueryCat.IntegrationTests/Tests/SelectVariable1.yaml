@@ -1,0 +1,7 @@
+expected: |
+  35
+query: |
+  declare x integer := 10;
+  declare y integer := 15;
+  set x := x + 10 + y;
+  select x;

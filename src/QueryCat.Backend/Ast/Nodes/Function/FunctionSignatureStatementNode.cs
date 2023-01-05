@@ -2,20 +2,14 @@ namespace QueryCat.Backend.Ast.Nodes.Function;
 
 public sealed class FunctionSignatureStatementNode : StatementNode
 {
-    public FunctionSignatureNode FunctionSignatureNode { get; }
+    public FunctionSignatureNode FunctionSignatureNode => (FunctionSignatureNode)RootNode;
 
-    /// <inheritdoc />
-    public override string Code => "func_stmt";
-
-    public FunctionSignatureStatementNode(FunctionSignatureNode functionSignatureNode)
+    public FunctionSignatureStatementNode(FunctionSignatureNode functionSignatureNode) : base(functionSignatureNode)
     {
-        FunctionSignatureNode = functionSignatureNode;
     }
 
-    public FunctionSignatureStatementNode(FunctionSignatureStatementNode node) :
-        this((FunctionSignatureNode)node.FunctionSignatureNode.Clone())
+    public FunctionSignatureStatementNode(FunctionSignatureStatementNode node) : base(node)
     {
-        node.CopyTo(this);
     }
 
     /// <inheritdoc />
@@ -23,10 +17,4 @@ public sealed class FunctionSignatureStatementNode : StatementNode
 
     /// <inheritdoc />
     public override object Clone() => new FunctionSignatureStatementNode(this);
-
-    /// <inheritdoc />
-    public override IEnumerable<IAstNode> GetChildren()
-    {
-        yield return FunctionSignatureNode;
-    }
 }

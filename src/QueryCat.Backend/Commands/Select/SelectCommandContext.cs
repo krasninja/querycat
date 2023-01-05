@@ -4,14 +4,13 @@ using QueryCat.Backend.Functions;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Storage;
-using QueryCat.Backend.Types;
 
 namespace QueryCat.Backend.Commands.Select;
 
 /// <summary>
 /// Contains all necessary information to handle the query on all stages.
 /// </summary>
-internal sealed class SelectCommandContext : CommandContext
+internal sealed class SelectCommandContext : IDisposable
 {
     private SelectQueryNode _queryNode;
 
@@ -245,24 +244,13 @@ internal sealed class SelectCommandContext : CommandContext
     /// </summary>
     internal List<CommonTableExpression> CteList { get; } = new();
 
-    #region CommandContext
-
     /// <inheritdoc />
-    public override VariantValue Invoke()
-    {
-        return VariantValue.CreateFromObject(CurrentIterator);
-    }
-
-    /// <inheritdoc />
-    protected override void Dispose(bool disposing)
+    public void Dispose()
     {
         RowsInputIterator?.Dispose();
         foreach (var childContext in ChildContexts)
         {
             childContext.Dispose();
         }
-        base.Dispose(disposing);
     }
-
-    #endregion
 }

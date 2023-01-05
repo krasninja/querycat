@@ -61,6 +61,20 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitStatementEcho([NotNull] QueryCatParser.StatementEchoContext context);
 	/// <summary>
+	/// Visit a parse tree produced by the <c>StatementDeclareVariable</c>
+	/// labeled alternative in <see cref="QueryCatParser.statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitStatementDeclareVariable([NotNull] QueryCatParser.StatementDeclareVariableContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>StatementSetVariable</c>
+	/// labeled alternative in <see cref="QueryCatParser.statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitStatementSetVariable([NotNull] QueryCatParser.StatementSetVariableContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>StatementExpression</c>
 	/// labeled alternative in <see cref="QueryCatParser.statement"/>.
 	/// </summary>
@@ -85,6 +99,30 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitFunctionArg([NotNull] QueryCatParser.FunctionArgContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="QueryCatParser.functionCall"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitFunctionCall([NotNull] QueryCatParser.FunctionCallContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="QueryCatParser.functionCallArg"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitFunctionCallArg([NotNull] QueryCatParser.FunctionCallArgContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="QueryCatParser.declareVariable"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitDeclareVariable([NotNull] QueryCatParser.DeclareVariableContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="QueryCatParser.setVariable"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSetVariable([NotNull] QueryCatParser.SetVariableContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="QueryCatParser.selectStatement"/>.
 	/// </summary>
@@ -374,18 +412,6 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitIntervalLiteral([NotNull] QueryCatParser.IntervalLiteralContext context);
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="QueryCatParser.functionCall"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitFunctionCall([NotNull] QueryCatParser.FunctionCallContext context);
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="QueryCatParser.functionCallArg"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitFunctionCallArg([NotNull] QueryCatParser.FunctionCallArgContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="QueryCatParser.castOperand"/>.
 	/// </summary>

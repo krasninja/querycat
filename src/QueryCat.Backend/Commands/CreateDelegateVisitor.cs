@@ -133,6 +133,19 @@ internal class CreateDelegateVisitor : AstVisitor
     /// <inheritdoc />
     public override void Visit(IdentifierExpressionNode node)
     {
+        if (string.IsNullOrEmpty(node.SourceName))
+        {
+            var varIndex = ExecutionThread.RootScope.GetVariableIndex(node.Name, out var scope);
+            if (varIndex > -1)
+            {
+                VariantValue Func()
+                {
+                    return scope!.Variables[varIndex];
+                }
+                NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func);
+                return;
+            }
+        }
         throw new CannotFindIdentifierException(node.Name);
     }
 
@@ -226,7 +239,7 @@ internal class CreateDelegateVisitor : AstVisitor
         VariantValue Func()
         {
             var expressionValue = expressionAction.Invoke();
-            if (expressionValue.Cast(node.TargetTypeNode.Type, out VariantValue result))
+            if (expressionValue.TryCast(node.TargetTypeNode.Type, out VariantValue result))
             {
                 return result;
             }

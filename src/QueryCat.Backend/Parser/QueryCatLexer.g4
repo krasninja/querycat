@@ -145,6 +145,11 @@ UNION:              'UNION';
 WHERE:              'WHERE';
 WITH:               'WITH';
 
+// DECLARE/SET command.
+
+DECLARE:            'DECLARE';
+SET:                'SET';
+
 TYPE: INTEGER | STRING | FLOAT | TIMESTAMP | BOOLEAN | NUMERIC | OBJECT | ANY;
 
 // https://github.com/antlr/antlr4/blob/master/doc/lexicon.md#identifiers

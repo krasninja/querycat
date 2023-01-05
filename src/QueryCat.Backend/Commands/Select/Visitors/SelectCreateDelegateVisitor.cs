@@ -68,11 +68,8 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
     /// <inheritdoc />
     public override void Visit(SelectExistsExpressionNode node)
     {
-        var commandContext = node.SubQueryNode.GetRequiredAttribute<CommandContext>(AstAttributeKeys.ContextKey);
-        if (commandContext.Invoke().AsObject is not IRowsIterator rowsIterator)
-        {
-            throw new InvalidOperationException("Incorrect subquery type.");
-        }
+        var commandContext = node.SubQueryNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
+        var rowsIterator = commandContext.CurrentIterator;
 
         VariantValue Func()
         {
@@ -189,11 +186,8 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
             return;
         }
 
-        var commandContext = node.GetRequiredAttribute<CommandContext>(AstAttributeKeys.ContextKey);
-        if (commandContext.Invoke().AsObject is not IRowsIterator rowsIterator)
-        {
-            throw new InvalidOperationException("Invalid rows input type.");
-        }
+        var commandContext = node.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
+        var rowsIterator = commandContext.CurrentIterator;
 
         VariantValue Func()
         {
@@ -217,11 +211,9 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
             return;
         }
 
-        var commandContext = node.SubQueryNode.GetRequiredAttribute<CommandContext>(AstAttributeKeys.ContextKey);
-        if (commandContext.Invoke().AsObject is not IRowsIterator rowsIterator)
-        {
-            throw new InvalidOperationException("Invalid rows input type.");
-        }
+        var commandContext = node.SubQueryNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
+        var rowsIterator = commandContext.CurrentIterator;
+
         if (rowsIterator.Columns.Length > 1)
         {
             throw new QueryCatException($"Subquery returns {rowsIterator.Columns.Length} columns, expected 1.");
