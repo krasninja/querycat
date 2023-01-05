@@ -23,7 +23,7 @@ internal sealed class PrepareContextVisitor : AstVisitor
 
     private void CreateContext(SelectQueryNode node)
     {
-        var context = new SelectCommandContext();
+        var context = new SelectCommandContext(node);
         var parentQueryNode = AstTraversal.GetFirstParent<SelectQueryNode>(n => n.Id != node.Id);
         if (parentQueryNode != null)
         {

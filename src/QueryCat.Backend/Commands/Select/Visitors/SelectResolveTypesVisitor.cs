@@ -15,7 +15,7 @@ internal sealed class SelectResolveTypesVisitor : ResolveTypesVisitor
         base(executionThread)
     {
         _context = context;
-        AstTraversal.TypesToIgnore.Add(typeof(SelectQuerySpecificationNode));
+        AstTraversal.TypesToIgnore.Add(typeof(SelectQueryNode));
         AstTraversal.TypesToIgnore.Add(typeof(SelectTableJoinedNode));
         AstTraversal.AcceptBeforeIgnore = true;
     }
@@ -23,14 +23,10 @@ internal sealed class SelectResolveTypesVisitor : ResolveTypesVisitor
     /// <inheritdoc />
     public override void Visit(IdentifierExpressionNode node)
     {
-        if (_context.TryGetInput(node.Name, node.SourceName, out var input, out var columnIndex))
+        if (VisitIdentifierNode(node, node.Name, node.SourceName))
         {
-            node.SetAttribute(AstAttributeKeys.InputColumnKey, input!.Columns[columnIndex]);
-            node.SetAttribute(AstAttributeKeys.InputColumnIndexKey, columnIndex);
-            node.SetDataType(input.Columns[columnIndex].DataType);
             return;
         }
-
         base.Visit(node);
     }
 
@@ -49,14 +45,25 @@ internal sealed class SelectResolveTypesVisitor : ResolveTypesVisitor
     /// <inheritdoc />
     public override void Visit(SelectColumnsSublistNameNode node)
     {
-        if (!_context.TryGetInput(node.ColumnName, node.SourceName, out var input, out var columnIndex))
+        if (VisitIdentifierNode(node, node.ColumnName, node.SourceName))
         {
             return;
         }
+        base.Visit(node);
+    }
 
-        node.SetAttribute(AstAttributeKeys.InputColumnKey, input!.Columns[columnIndex]);
-        node.SetAttribute(AstAttributeKeys.InputColumnIndexKey, columnIndex);
-        node.SetDataType(input.Columns[columnIndex].DataType);
+    private bool VisitIdentifierNode(IAstNode node, string name, string source)
+    {
+        if (!_context.TryGetInputSourceByName(name, source, out var result)
+            || result == null)
+        {
+            return false;
+        }
+
+        node.SetAttribute(AstAttributeKeys.InputColumnKey, result.Input.Columns[result.ColumnIndex]);
+        node.SetAttribute(AstAttributeKeys.InputColumnIndexKey, result.ColumnIndex);
+        node.SetDataType(result.Input.Columns[result.ColumnIndex].DataType);
+        return true;
     }
 
     /// <inheritdoc />

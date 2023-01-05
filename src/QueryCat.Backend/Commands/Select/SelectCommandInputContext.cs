@@ -2,7 +2,7 @@ using QueryCat.Backend.Abstractions;
 
 namespace QueryCat.Backend.Commands.Select;
 
-internal class SelectCommandContextInput
+internal class SelectCommandInputContext
 {
     /// <summary>
     /// Rows input that is generated from function or subquery.
@@ -13,16 +13,17 @@ internal class SelectCommandContextInput
 
     public string Alias { get; set; }
 
-    public HashSet<int> PrefetchColumnsIds { get; } = new();
-
-    public SelectCommandContextInput(IRowsInput rowsInput, SelectInputQueryContext inputQueryContext, string? alias = null)
+    public SelectCommandInputContext(IRowsInput rowsInput, SelectInputQueryContext inputQueryContext, string? alias = null)
     {
         RowsInput = rowsInput;
         InputQueryContext = inputQueryContext;
         Alias = alias ?? string.Empty;
     }
 
-    public SelectCommandContextInput(IRowsInput rowsInput) : this(rowsInput, new SelectInputQueryContext(rowsInput))
+    public SelectCommandInputContext(IRowsInput rowsInput) : this(rowsInput, new SelectInputQueryContext(rowsInput))
     {
     }
+
+    /// <inheritdoc />
+    public override string ToString() => $"alias={Alias}, input={RowsInput}";
 }

@@ -11,7 +11,6 @@ namespace QueryCat.Backend.Storage;
 public class RowsInputIterator : IRowsIterator, IDisposable
 {
     private readonly IRowsInput _rowsInput;
-    private readonly bool _autoFetch;
     private readonly bool _autoOpen;
     private bool _isOpened;
     private Row _row;
@@ -26,6 +25,11 @@ public class RowsInputIterator : IRowsIterator, IDisposable
     public Row Current => _row;
 
     /// <summary>
+    /// Autofetch all values.
+    /// </summary>
+    public bool AutoFetch { get; set; }
+
+    /// <summary>
     /// The event occurs on data processing (reading) errors.
     /// </summary>
     public event EventHandler<RowsInputErrorEventArgs>? OnError;
@@ -35,7 +39,7 @@ public class RowsInputIterator : IRowsIterator, IDisposable
     public RowsInputIterator(IRowsInput rowsInput, bool autoFetch = true, bool autoOpen = false)
     {
         _rowsInput = rowsInput;
-        _autoFetch = autoFetch;
+        AutoFetch = autoFetch;
         _autoOpen = autoOpen;
         _row = new Row(this);
     }
@@ -75,7 +79,7 @@ public class RowsInputIterator : IRowsIterator, IDisposable
             OnError?.Invoke(this, new RowsInputErrorEventArgs(_rowIndex, columnIndex, errorCode));
         }
         _row[columnIndex] = variantValue;
-        if (!_autoFetch)
+        if (!AutoFetch)
         {
             _fetchedColumnsIndexes[columnIndex] = true;
         }
@@ -100,11 +104,11 @@ public class RowsInputIterator : IRowsIterator, IDisposable
         }
 
         _hasInput = _rowsInput.ReadNext();
-        if (_hasInput && _autoFetch)
+        if (_hasInput && AutoFetch)
         {
             FetchValuesForAllColumns();
         }
-        if (!_autoFetch)
+        if (!AutoFetch)
         {
             Array.Fill(_fetchedColumnsIndexes, false);
         }
@@ -123,7 +127,7 @@ public class RowsInputIterator : IRowsIterator, IDisposable
     /// <inheritdoc />
     public void Explain(IndentedStringBuilder stringBuilder)
     {
-        stringBuilder.AppendLine($"Input {_rowsInput.GetType().Name} (autofetch={_autoFetch})");
+        stringBuilder.AppendLine($"Input {_rowsInput.GetType().Name} (autofetch={AutoFetch})");
         stringBuilder.IncreaseIndent();
         _rowsInput.Explain(stringBuilder);
         stringBuilder.DecreaseIndent();

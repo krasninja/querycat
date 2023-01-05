@@ -89,7 +89,7 @@ public class AstTraversal
                 {
                     continue;
                 }
-                if (Array.IndexOf(typesToIgnore, current.Enumerator.Current.GetType()) == -1)
+                if (!IsIgnoreType(current.Enumerator.Current.GetType()))
                 {
                     _treeStack.Push((current.Enumerator.Current, next.GetChildren().GetEnumerator()));
                     next.Accept(_visitor);
@@ -130,7 +130,7 @@ public class AstTraversal
                 {
                     continue;
                 }
-                if (Array.IndexOf(typesToIgnore, current.Enumerator.Current.GetType()) == -1)
+                if (!IsIgnoreType(current.Enumerator.Current.GetType()))
                 {
                     _treeStack.Push((current.Enumerator.Current, next.GetChildren().GetEnumerator()));
                 }
@@ -146,5 +146,15 @@ public class AstTraversal
                 _treeStack.Pop();
             }
         }
+    }
+
+    private bool IsIgnoreType(Type type)
+    {
+        var foundIndex = TypesToIgnore.FindIndex(t => t.IsAssignableFrom(type));
+        if (foundIndex > -1)
+        {
+            return true;
+        }
+        return false;
     }
 }

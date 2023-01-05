@@ -1,11 +1,8 @@
 using Serilog;
 using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Ast;
-using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Select;
-using QueryCat.Backend.Ast.Nodes.SpecialFunctions;
 using QueryCat.Backend.Execution;
-using QueryCat.Backend.Relational;
 using QueryCat.Backend.Storage;
 using QueryCat.Backend.Types;
 
@@ -45,19 +42,18 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
         var source = new CreateDelegateVisitor(_executionThread).RunAndReturn(node.TableFunction).Invoke();
         var inputContext = CreateRowsInput(source);
         inputContext.Alias = node.Alias;
-        _context.Inputs.Add(inputContext);
+        _context.AddInput(inputContext);
 
-        FixInputColumnTypes(inputContext.RowsInput);
         SetAlias(inputContext.RowsInput, node.Alias);
 
         node.SetAttribute(AstAttributeKeys.RowsInputKey, inputContext.RowsInput);
     }
 
-    private SelectCommandContextInput CreateRowsInput(VariantValue source)
+    private SelectCommandInputContext CreateRowsInput(VariantValue source)
     {
         if (DataTypeUtils.IsSimple(source.GetInternalType()))
         {
-            return new SelectCommandContextInput(new SingleValueRowsInput(source));
+            return new SelectCommandInputContext(new SingleValueRowsInput(source));
         }
         if (source.AsObject is IRowsInput rowsInput)
         {
@@ -72,11 +68,11 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
             rowsInput.SetContext(queryContext);
             rowsInput.Open();
             Log.Logger.Debug("Open rows input {RowsInput}.", rowsInput);
-            return new SelectCommandContextInput(rowsInput, queryContext);
+            return new SelectCommandInputContext(rowsInput, queryContext);
         }
         if (source.AsObject is IRowsIterator rowsIterator)
         {
-            return new SelectCommandContextInput(new RowsIteratorInput(rowsIterator));
+            return new SelectCommandInputContext(new RowsIteratorInput(rowsIterator));
         }
 
         throw new QueryCatException("Invalid rows input.");
@@ -91,30 +87,6 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
         foreach (var column in input.Columns)
         {
             column.SourceName = alias;
-        }
-    }
-
-    /// <summary>
-    /// Find the expressions in SELECT output area like CAST(id AS string).
-    /// </summary>
-    private void FixInputColumnTypes(IRowsInput rowsInput)
-    {
-        var querySpecificationNodes = AstTraversal.GetParents<SelectQuerySpecificationNode>().ToList();
-        foreach (var querySpecificationNode in querySpecificationNodes)
-        {
-            foreach (var castNode in querySpecificationNode.ColumnsListNode.GetAllChildren<CastFunctionNode>())
-            {
-                if (castNode.ExpressionNode is not IdentifierExpressionNode idNode)
-                {
-                    continue;
-                }
-
-                var columnIndex = rowsInput.GetColumnIndexByName(idNode.Name, idNode.SourceName);
-                if (columnIndex > -1)
-                {
-                    rowsInput.Columns[columnIndex].DataType = castNode.TargetTypeNode.Type;
-                }
-            }
         }
     }
 }

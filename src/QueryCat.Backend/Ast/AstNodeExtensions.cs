@@ -25,21 +25,37 @@ internal static class AstNodeExtensions
     /// and yield only nodes of type <see cref="TNodeType" />.
     /// </summary>
     /// <param name="node">AST node.</param>
+    /// <param name="typesToIgnore">Ignore node types.</param>
     /// <typeparam name="TNodeType">Node type to select.</typeparam>
     /// <returns>Enumerable of nodes.</returns>
     public static IEnumerable<TNodeType> GetAllChildren<TNodeType>(
-        this IAstNode node)
+        this IAstNode node,
+        Type[]? typesToIgnore = null)
         where TNodeType : IAstNode
     {
         var stack = new Stack<IAstNode>();
         var currentNode = node;
         stack.Push(currentNode);
+        typesToIgnore ??= Array.Empty<Type>();
+
+        bool IsIgnoreType(Type type)
+        {
+            var foundIndex = Array.FindIndex(typesToIgnore, t => t.IsAssignableFrom(type));
+            if (foundIndex > -1)
+            {
+                return true;
+            }
+            return false;
+        }
 
         while (stack.Count > 0)
         {
             foreach (var childAstNode in currentNode.GetChildren())
             {
-                stack.Push(childAstNode);
+                if (!IsIgnoreType(childAstNode.GetType()))
+                {
+                    stack.Push(childAstNode);
+                }
             }
             currentNode = stack.Pop();
             if (currentNode is TNodeType foundNode)

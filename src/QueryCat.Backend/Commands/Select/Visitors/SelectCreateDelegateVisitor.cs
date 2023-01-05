@@ -148,24 +148,26 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
 
     private bool VisitIdentifierNode(IAstNode node, string name, string source)
     {
-        if (!_context.TryGetInput(name, source, out var input, out var columnIndex))
+        if (!_context.TryGetInputSourceByName(name, source, out var result)
+            || result == null)
         {
             return false;
         }
 
-        if (input is IRowsIterator rowsIterator)
+        if (result.Input is IRowsIterator rowsIterator)
         {
-            var info = _context.ColumnsInfoContainer.GetByColumn(rowsIterator.Columns[columnIndex]);
+            var info = _context.ColumnsInfoContainer.GetByColumn(rowsIterator.Columns[result.ColumnIndex]);
+            var index = result.ColumnIndex;
             if (info.Redirect != null)
             {
-                columnIndex = rowsIterator.GetColumnIndex(info.Redirect);
+                index = rowsIterator.GetColumnIndex(info.Redirect);
             }
-            NodeIdFuncMap[node.Id] = new FuncUnitRowsIteratorColumn(rowsIterator, columnIndex);
+            NodeIdFuncMap[node.Id] = new FuncUnitRowsIteratorColumn(rowsIterator, index);
             return true;
         }
-        if (input is IRowsInput rowsInput)
+        if (result.Input is IRowsInput rowsInput)
         {
-            NodeIdFuncMap[node.Id] = new FuncUnitRowsInputColumn(rowsInput, columnIndex);
+            NodeIdFuncMap[node.Id] = new FuncUnitRowsInputColumn(rowsInput, result.ColumnIndex);
             return true;
         }
 

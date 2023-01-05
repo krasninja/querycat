@@ -2,8 +2,10 @@ using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Select;
+using QueryCat.Backend.Ast.Nodes.SpecialFunctions;
 using QueryCat.Backend.Commands.Select.Inputs;
 using QueryCat.Backend.Execution;
+using QueryCat.Backend.Relational;
 using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Storage;
 
@@ -11,9 +13,12 @@ namespace QueryCat.Backend.Commands.Select.Visitors;
 
 internal sealed class CreateContextVisitor : AstVisitor
 {
+    private const string ContextInitializedKey = "_context_initialized";
+    private const string IteratorInitializedKey = "_iterator_initialized";
+
     private readonly ExecutionThread _executionThread;
     private readonly ResolveTypesVisitor _resolveTypesVisitor;
-    private readonly HashSet<SelectQueryNode> _processed = new();
+    private readonly HashSet<SelectQueryNode> _toProcess = new();
 
     public CreateContextVisitor(ExecutionThread executionThread)
     {
@@ -26,33 +31,42 @@ internal sealed class CreateContextVisitor : AstVisitor
     {
         AstTraversal.PreOrder(node);
 
-        foreach (var processedNode in _processed.AsEnumerable().Reverse())
+        foreach (var targetNode in _toProcess.AsEnumerable().Reverse())
         {
-            new SetIteratorVisitor(_executionThread).Run(processedNode);
+            CreateFinalIterator(targetNode);
         }
     }
 
     /// <inheritdoc />
     public override void Visit(SelectQueryCombineNode node)
     {
-        _processed.Add(node);
+        _toProcess.Add(node);
     }
 
     /// <inheritdoc />
     public override void Visit(SelectQuerySpecificationNode node)
     {
-        var context = node.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
+        if (node.HasAttribute(ContextInitializedKey))
+        {
+            return;
+        }
+        node.SetAttribute(ContextInitializedKey, 1);
 
+        var context = node.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
         InitializeRowsInputs(context, node);
         PrepareInputCteList(context, node);
         PrepareContextInitialInput(context, node);
 
-        _processed.Add(node);
+        _toProcess.Add(node);
     }
 
     private void InitializeRowsInputs(SelectCommandContext context, SelectQueryNode node)
     {
-        new CreateRowsInputVisitor(_executionThread, context).Run(node);
+        new CreateRowsInputVisitor(_executionThread, context).Run(node.GetChildren());
+        foreach (var input in context.Inputs)
+        {
+            FixInputColumnTypes(input.RowsInput);
+        }
     }
 
     private void PrepareInputCteList(SelectCommandContext context, SelectQuerySpecificationNode node)
@@ -71,7 +85,7 @@ internal sealed class CreateContextVisitor : AstVisitor
                 withNodeItem.Name,
                 withNodeItem.QueryNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey));
             context.CteList.Add(cte);
-            new SetIteratorVisitor(_executionThread).Run(withNodeItem);
+            CreateFinalIterator(withNodeItem.QueryNode);
         }
     }
 
@@ -230,7 +244,7 @@ internal sealed class CreateContextVisitor : AstVisitor
         {
             return new[]
             {
-                CreateInputSourceFromSubQuery(queryNode)
+                CreateInputSourceFromSubQuery(context, queryNode)
             };
         }
         if (expressionNode is SelectTableFunctionNode tableFunctionNode)
@@ -245,19 +259,30 @@ internal sealed class CreateContextVisitor : AstVisitor
         throw new InvalidOperationException($"Cannot process node '{expressionNode}' as input.");
     }
 
-    private IRowsInput CreateInputSourceFromSubQuery(SelectQueryNode queryBodyNode)
+    private IRowsInput CreateInputSourceFromSubQuery(SelectCommandContext context, SelectQueryNode queryNode)
     {
-        PrepareContextInitialInput(queryBodyNode);
-        new CreateContextVisitor(_executionThread).Run(queryBodyNode);
-        new SetIteratorVisitor(_executionThread).Run(queryBodyNode);
-        var commandContext = queryBodyNode.GetRequiredAttribute<CommandContext>(AstAttributeKeys.ContextKey);
+        new CreateContextVisitor(_executionThread).Run(queryNode);
+        var commandContext = queryNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
+        CreateFinalIterator(queryNode);
+
         if (commandContext.Invoke().AsObject is not IRowsIterator iterator)
         {
             throw new QueryCatException("No iterator for subquery!");
         }
         var rowsInput = new RowsIteratorInput(iterator);
-        SetAlias(rowsInput, queryBodyNode.Alias);
+        context.AddInput(new SelectCommandInputContext(rowsInput));
+        SetAlias(rowsInput, queryNode.Alias);
         return rowsInput;
+    }
+
+    private void CreateFinalIterator(SelectQueryNode queryNode)
+    {
+        if (queryNode.HasAttribute(IteratorInitializedKey))
+        {
+            return;
+        }
+        new SetIteratorVisitor(_executionThread).Run(queryNode);
+        queryNode.SetAttribute(IteratorInitializedKey, 1);
     }
 
     private static IRowsIterator CreateMultipleIterator(List<IRowsInput> rowsInputs)
@@ -306,6 +331,30 @@ internal sealed class CreateContextVisitor : AstVisitor
             foreach (var column in iterator.Columns)
             {
                 column.SourceName = alias;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Find the expressions in SELECT output area like CAST(id AS string).
+    /// </summary>
+    private void FixInputColumnTypes(IRowsInput rowsInput)
+    {
+        var querySpecificationNodes = AstTraversal.GetParents<SelectQuerySpecificationNode>().ToList();
+        foreach (var querySpecificationNode in querySpecificationNodes)
+        {
+            foreach (var castNode in querySpecificationNode.ColumnsListNode.GetAllChildren<CastFunctionNode>())
+            {
+                if (castNode.ExpressionNode is not IdentifierExpressionNode idNode)
+                {
+                    continue;
+                }
+
+                var columnIndex = rowsInput.GetColumnIndexByName(idNode.Name, idNode.SourceName);
+                if (columnIndex > -1)
+                {
+                    rowsInput.Columns[columnIndex].DataType = castNode.TargetTypeNode.Type;
+                }
             }
         }
     }

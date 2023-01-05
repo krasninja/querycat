@@ -14,8 +14,7 @@ public sealed class SelectColumnsListNode : AstNode
 
     public SelectColumnsListNode(params SelectColumnsSublistNode[] columns)
     {
-        Columns = new List<SelectColumnsSublistNode>();
-        Columns.AddRange(columns);
+        Columns = new List<SelectColumnsSublistNode>(columns);
     }
 
     public SelectColumnsListNode(SelectColumnsListNode node) :

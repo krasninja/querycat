@@ -53,18 +53,16 @@ internal sealed partial class SetIteratorVisitor : AstVisitor
         // Misc.
         ApplyStatistic(context);
         SubscribeOnErrorsFromInputSources(context);
-        ResolveSelectAllStatement(context.CurrentIterator, node.ColumnsListNode);
+        ResolveSelectAllStatement(context.CurrentIterator, node.ColumnsListNode, context);
         ResolveSelectSourceColumns(context, node);
 
         // WHERE.
         ApplyFilter(context, node.TableExpressionNode);
 
         // Fetch remain data.
-        CreatePrefetchProjection(context, new List<IAstNode?>
-        {
+        CreatePrefetchProjection(context,
             node.ColumnsListNode, node.TargetNode, node.DistinctNode, node.OrderByNode, node.OffsetNode, node.FetchNode,
-            node.TableExpressionNode
-        });
+            node.TableExpressionNode);
 
         // GROUP BY/HAVING.
         ApplyAggregate(context, node);
@@ -148,7 +146,8 @@ internal sealed partial class SetIteratorVisitor : AstVisitor
         }
     }
 
-    private static void ResolveSelectAllStatement(IRowsIterator rows, SelectColumnsListNode columnsNode)
+    private static void ResolveSelectAllStatement(IRowsIterator rows, SelectColumnsListNode columnsNode,
+        SelectCommandContext context)
     {
         for (int i = 0; i < columnsNode.Columns.Count; i++)
         {
@@ -318,7 +317,7 @@ internal sealed partial class SetIteratorVisitor : AstVisitor
         }
 
         ResolveNodesTypes(selectTableExpressionNode, context);
-        CreatePrefetchProjection(context, new List<IAstNode> { selectTableExpressionNode });
+        CreatePrefetchProjection(context, selectTableExpressionNode);
 
         var makeDelegateVisitor = new SelectCreateDelegateVisitor(ExecutionThread, context);
         var predicate = makeDelegateVisitor.RunAndReturn(selectTableExpressionNode.SearchConditionNode);
@@ -454,49 +453,44 @@ internal sealed partial class SetIteratorVisitor : AstVisitor
 
     #endregion
 
-    private void CreatePrefetchProjection(SelectCommandContext context, IEnumerable<IAstNode?> nodes)
+    private void CreatePrefetchProjection(SelectCommandContext context, params IAstNode?[] nodes)
     {
-        if (context.RowsInputIterator == null)
+        if (context.RowsInputIterator == null
+            || context.RowsInputIterator.AutoFetch)
         {
             return;
         }
 
-        var inputColumnIndexesForSelect = GetColumnsIdsFromNode(context.RowsInputIterator, nodes)
-            .ToArray();
-        if (inputColumnIndexesForSelect.Length < 1
-            || context.PrefetchedColumnIndexes.SetEquals(inputColumnIndexesForSelect))
+        // Find all identifiers within current query.
+        var allNodes = nodes.Where(n => n != null);
+        var idNodes = allNodes
+            .SelectMany(n => n!.GetAllChildren<IdentifierExpressionNode>(new[] { typeof(SelectQueryNode) }))
+            .Distinct();
+        var columnsToSelect = new HashSet<int>();
+        foreach (var idNode in idNodes)
         {
-            return;
-        }
-
-        foreach (var index in inputColumnIndexesForSelect)
-        {
-            context.PrefetchedColumnIndexes.Add(index);
-        }
-        var fetchIterator = new PrefetchRowsIterator(context.CurrentIterator, context.RowsInputIterator,
-            inputColumnIndexesForSelect);
-        context.SetIterator(fetchIterator);
-    }
-
-    private static ISet<int> GetColumnsIdsFromNode(IRowsIterator rowsIterator, IEnumerable<IAstNode?> nodes)
-    {
-        var columns = new HashSet<int>();
-        foreach (var node in nodes)
-        {
-            if (node == null)
+            if (context.TryGetInputSourceByName(idNode.Name, idNode.SourceName, out var result, ColumnFindOptions.IncludeInputSources)
+                && result?.Input is IRowsInput rowsInput)
             {
-                continue;
-            }
-            foreach (var idNode in node.GetAllChildren<IdentifierExpressionNode>())
-            {
-                var index = rowsIterator.GetColumnIndexByName(idNode.Name, idNode.SourceName);
-                if (index > -1)
+                var absoluteIndex = context.GetAbsoluteColumnIndex(rowsInput, result.ColumnIndex);
+                if (absoluteIndex > -1)
                 {
-                    columns.Add(index);
+                    columnsToSelect.Add(absoluteIndex);
                 }
             }
         }
-        return columns;
+
+        if (columnsToSelect.Count != context.RowsInputIterator.Columns.Length)
+        {
+            var fetchIterator = new PrefetchRowsIterator(context.CurrentIterator, context.RowsInputIterator,
+                columnsToSelect.ToArray());
+            context.SetIterator(fetchIterator);
+        }
+        // If we have to select all columns - just turn on the autofetch flag without fetch iterator.
+        else
+        {
+            context.RowsInputIterator.AutoFetch = true;
+        }
     }
 
     private void ResolveNodesTypes(IAstNode? node, SelectCommandContext context)
