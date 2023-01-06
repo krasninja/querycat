@@ -19,6 +19,7 @@ public class ExecutionThread : IExecutionThread
 {
     internal const string ApplicationDirectory = "qcat";
     internal const string ConfigFileName = "config.json";
+    internal const string BootstrapFileName = "rc.sql";
 
     private readonly StatementsVisitor _statementsVisitor;
     private bool _isRunning;
@@ -98,6 +99,7 @@ public class ExecutionThread : IExecutionThread
 #endif
         _statementsVisitor = new StatementsVisitor(this);
         InputConfigStorage = new PersistentInputConfigStorage(Path.Combine(appLocalDirectory, ConfigFileName));
+        RunBootstrapScript(appLocalDirectory);
     }
 
     public ExecutionThread(ExecutionThread executionThread)
@@ -243,5 +245,14 @@ public class ExecutionThread : IExecutionThread
             rowsOutput = alternateRowsOutput;
         }
         rowsOutput.Write(iterator);
+    }
+
+    private void RunBootstrapScript(string appLocalDirectory)
+    {
+        var rcFile = Path.Combine(appLocalDirectory, BootstrapFileName);
+        if (File.Exists(rcFile))
+        {
+            Run(File.ReadAllText(rcFile));
+        }
     }
 }
