@@ -56,7 +56,7 @@ internal class Program
         rootCommand.AddArgument(queryArgument);
         rootCommand.SetHandler(_ =>
         {
-            new QueryCommand().Invoke(args);
+            new QueryCommand().Parse(args).Invoke();
         }, queryArgument);
 
         var parser = new CommandLineBuilder(rootCommand)
@@ -80,21 +80,33 @@ internal class Program
                     context.HelpBuilder.CustomizeLayout(_ => layouts);
                 }
             })
+            .UseExceptionHandler((exception, ic) =>
+            {
+                ProcessException(exception);
+            }, errorExitCode: 1)
             .Build();
-        return parser.Invoke(args);
+
+        return parser.Parse(args).Invoke();
     }
 
-    private static void CurrentDomainOnUnhandledException(object sender, UnhandledExceptionEventArgs e)
+    private static void CurrentDomainOnUnhandledException(object? sender, UnhandledExceptionEventArgs e)
     {
-        switch (e.ExceptionObject)
+        if (e.ExceptionObject is Exception exception)
         {
-            case QueryCatException queryCatException:
-                Log.Logger.Error(queryCatException.Message);
-                break;
-            case Exception exception:
-                Log.Logger.Fatal(exception, exception.Message);
-                break;
+            ProcessException(exception);
         }
         Environment.Exit(1);
+    }
+
+    private static void ProcessException(Exception exception)
+    {
+        if (exception is QueryCatException domainException)
+        {
+            Log.Logger.Error(domainException.Message);
+        }
+        else
+        {
+            Log.Logger.Fatal(exception, exception.Message);
+        }
     }
 }
