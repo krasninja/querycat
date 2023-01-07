@@ -12,8 +12,10 @@ Just imagine that everything in the world is a table, and you can process it usi
     - 3.1) [Logs](plugins/logs)
 - 4) [Formatters](formatters)
 - 5) Commands
-    - 5.1) [SELECT](commands/select)
+    - 5.1) [DECLARE](commands/declare)
     - 5.2) [ECHO](commands/echo)
+    - 5.3) [SELECT](commands/select)
+    - 5.4) [SET](commands/set)
 - 6) Input
     - 6.1) [CSV](input/csv)
     - 6.2) [JSON](input/json)

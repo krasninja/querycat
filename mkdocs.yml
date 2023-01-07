@@ -7,8 +7,10 @@ nav:
     - 'Logs': plugins/logs.md
   - 'Formatters': formatters.md
   - 'Commands':
+    - 'DECLARE': commands/declare.md
     - 'ECHO': commands/echo.md
     - 'SELECT': commands/select.md
+    - 'SET': commands/set.md
   - 'Input':
     - 'CSV': input/csv.md
     - 'JSON': input/json.md
