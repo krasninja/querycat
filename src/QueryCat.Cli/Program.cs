@@ -111,7 +111,14 @@ internal class Program
 
     private static void ProcessException(Exception exception)
     {
-        if (exception is QueryCatException domainException)
+        if (exception is SyntaxException syntaxException)
+        {
+            Log.Logger.Information(syntaxException.GetErrorLine());
+            Log.Logger.Information(new string(' ', syntaxException.Position) + '^');
+            Log.Logger.Error("{Line}:{Position}: {Message}", syntaxException.Line, syntaxException.Position,
+                syntaxException.Message);
+        }
+        else if (exception is QueryCatException domainException)
         {
             Log.Logger.Error(domainException.Message);
         }

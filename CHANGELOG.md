@@ -19,6 +19,7 @@ case switch, distinct on, union, intersect, except.
 - Add "_typeof" function.
 - Allow to override auto-detected type by Cast.
 - Allow to use with shebang.
+- Show the line and position where syntax error occurs.
 
 ### Fixed
 

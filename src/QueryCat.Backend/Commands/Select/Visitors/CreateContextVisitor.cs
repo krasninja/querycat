@@ -181,12 +181,12 @@ internal sealed class CreateContextVisitor : AstVisitor
         var cteIndex = currentContext.CteList.FindIndex(c => c.Name == idNode.FullName);
         if (cteIndex < 0)
         {
-            throw new InvalidOperationException($"Query with name '{idNode.FullName}' is not defined.");
+            throw new QueryCatException($"Query with name '{idNode.FullName}' is not defined.");
         }
         var context = currentContext.CteList[cteIndex].Context;
         if (context.RowsInputIterator == null)
         {
-            throw new InvalidOperationException("Invalid CTE.");
+            throw new QueryCatException("Invalid CTE.");
         }
         return new[]
         {
