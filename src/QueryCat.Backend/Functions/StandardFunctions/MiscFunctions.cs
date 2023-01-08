@@ -22,7 +22,7 @@ internal static class MiscFunctions
     }
 
     [Description("The function returns a version 4 (random) UUID.")]
-    [FunctionSignature("get_random_uuid(): string")]
+    [FunctionSignature("uuid(): string")]
     public static VariantValue GetRandomGuid(FunctionCallInfo args)
     {
         return new VariantValue(Guid.NewGuid().ToString("D"));

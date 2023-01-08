@@ -4,7 +4,7 @@
 | --- |
 | `cast(expression as type): any`<br /><br /> The function convert an expression of one data type to another. |
 | `coalesce(...args: any[]): any`<br /><br /> The COALESCE function accepts an unlimited number of arguments. It returns the first argument that is not null. If all arguments are null, the COALESCE function will return null. |
-| `get_random_uuid(): string`<br /><br /> The function returns a version 4 (random) UUID. |
+| `uuid(): string`<br /><br /> The function returns a version 4 (random) UUID. |
 | `nullif(value1: any, value2: any): any`<br /><br /> The function returns a null value if value1 equals value2; otherwise it returns value1. |
 
 ## Type Cast
