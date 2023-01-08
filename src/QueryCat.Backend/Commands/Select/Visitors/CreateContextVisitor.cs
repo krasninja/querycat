@@ -11,7 +11,7 @@ using QueryCat.Backend.Storage;
 
 namespace QueryCat.Backend.Commands.Select.Visitors;
 
-internal sealed class CreateContextVisitor : AstVisitor
+internal sealed partial class CreateContextVisitor : AstVisitor
 {
     private const string ContextInitializedKey = "_context_initialized";
     private const string IteratorInitializedKey = "_iterator_initialized";
@@ -54,7 +54,7 @@ internal sealed class CreateContextVisitor : AstVisitor
 
         var context = node.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
         InitializeRowsInputs(context, node);
-        PrepareInputCteList(context, node);
+        Cte_PrepareInputList(context, node);
         PrepareContextInitialInput(context, node);
 
         _toProcess.Add(node);
@@ -66,39 +66,6 @@ internal sealed class CreateContextVisitor : AstVisitor
         foreach (var input in context.Inputs)
         {
             FixInputColumnTypes(input.RowsInput);
-        }
-    }
-
-    private void PrepareInputCteList(SelectCommandContext context, SelectQuerySpecificationNode node)
-    {
-        context.CteList.AddRange(GetParentCteList(context));
-        if (node.WithNode == null)
-        {
-            return;
-        }
-
-        foreach (var withNodeItem in node.WithNode.Nodes)
-        {
-            var cteCreateContextVisitor = new CreateContextVisitor(_executionThread);
-            cteCreateContextVisitor.Run(withNodeItem.QueryNode);
-            var cte = new CommonTableExpression(
-                withNodeItem.Name,
-                withNodeItem.QueryNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey));
-            context.CteList.Add(cte);
-            CreateFinalIterator(withNodeItem.QueryNode);
-        }
-    }
-
-    private static IEnumerable<CommonTableExpression> GetParentCteList(SelectCommandContext context)
-    {
-        var parentContext = context.Parent;
-        while (parentContext != null)
-        {
-            foreach (var cte in parentContext.CteList)
-            {
-                yield return cte;
-            }
-            parentContext = parentContext.Parent;
         }
     }
 
@@ -184,7 +151,7 @@ internal sealed class CreateContextVisitor : AstVisitor
             throw new QueryCatException($"Query with name '{idNode.FullName}' is not defined.");
         }
         var context = currentContext.CteList[cteIndex].Context;
-        if (context.RowsInputIterator == null)
+        if (context.CurrentIterator == null)
         {
             throw new QueryCatException("Invalid CTE.");
         }

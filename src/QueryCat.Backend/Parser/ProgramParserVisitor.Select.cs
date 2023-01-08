@@ -123,7 +123,8 @@ internal partial class ProgramParserVisitor
     /// <inheritdoc />
     public override IAstNode VisitSelectWithClause(QueryCatParser.SelectWithClauseContext context)
         => new SelectWithListNode(
-            this.Visit<SelectWithNode>(context.selectWithElement()).ToList());
+            this.Visit<SelectWithNode>(context.selectWithElement()).ToList(),
+            isRecursive: context.RECURSIVE() != null);
 
     /// <inheritdoc />
     public override IAstNode VisitSelectWithElement(QueryCatParser.SelectWithElementContext context)

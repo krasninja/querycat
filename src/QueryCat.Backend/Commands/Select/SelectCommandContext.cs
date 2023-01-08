@@ -41,7 +41,7 @@ internal sealed class SelectCommandContext : IDisposable
         IRowsSchema Input,
         int ColumnIndex,
         SelectCommandContext Context,
-        SelectCommandInputContext? InputContext);
+        SelectCommandInputContext? InputContext = null);
 
     /// <summary>
     /// Try get input by name.
@@ -62,7 +62,7 @@ internal sealed class SelectCommandContext : IDisposable
             index = CurrentIterator.GetColumnIndexByName(name, source);
             if (index > -1)
             {
-                result = new InputNameSearchResult(CurrentIterator, index, this, null);
+                result = new InputNameSearchResult(CurrentIterator, index, this);
                 return true;
             }
         }
@@ -80,6 +80,13 @@ internal sealed class SelectCommandContext : IDisposable
                         result = new InputNameSearchResult(input.RowsInput, index, commonTableExpression.Context, input);
                         return true;
                     }
+                }
+                index = commonTableExpression.Context.CurrentIterator.GetColumnIndexByName(name, source);
+                if (index > -1)
+                {
+                    result = new InputNameSearchResult(
+                        commonTableExpression.Context.CurrentIterator, index, commonTableExpression.Context);
+                    return true;
                 }
             }
         }
