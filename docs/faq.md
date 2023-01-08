@@ -23,3 +23,11 @@ To force QueryCat override column type apply `cast` operator to that column:
 ```sql
 select OrderId::string, Comment from 'orders.csv';
 ```
+
+## The fatal error occurs on application start
+
+It is possible that plugins are out of date and/or they do not conform the latest backend plugin API. So it is better try:
+
+1. Update QueryCat application to the latest version. You can find it here: https://github.com/krasninja/querycat/releases/.
+2. Update all plugins to the latest version. Command is `qcat plugin update "*"`.
+3. If error still there post new issue with the steps to reproduce and full stack trace here: https://github.com/krasninja/querycat/issues/new.

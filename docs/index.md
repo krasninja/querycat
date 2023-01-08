@@ -36,7 +36,6 @@ Just imagine that everything in the world is a table, and you can process it usi
     - 8.6) [Misc](functions/misc)
     - 8.7) [Output](functions/output)
     - 8.8) [String](functions/string)
-    - 8.9) [System](functions/system)
 - 9) [FAQ](faq)
 - 10) Features
     - 10.1) [Web Server](features/web-server)

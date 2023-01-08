@@ -16,7 +16,8 @@ case switch, distinct on, union, intersect, except.
 - Support bootstrap script "rc.sql".
 - Add "quote_strings" param to csv and tsv functions.
 - Add "uuid" function that generates UUID.
-- Add "_typeof" function
+- Add "_typeof" function.
+- Allow to override auto-detected type by Cast.
 
 ### Fixed
 

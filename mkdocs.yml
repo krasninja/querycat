@@ -4,6 +4,7 @@ nav:
   - 'Tutorial': tutorial.md
   - 'Concepts': concepts.md
   - 'Plugins':
+    - 'Overview': plugins.md
     - 'Logs': plugins/logs.md
   - 'Formatters': formatters.md
   - 'Commands':
@@ -32,7 +33,6 @@ nav:
     - 'Misc': functions/misc.md
     - 'Output': functions/output.md
     - 'String': functions/string.md
-    - 'System': functions/system.md
   - 'FAQ': faq.md
   - 'Features':
     - 'Web Server': features/web-server.md
