@@ -22,7 +22,7 @@ internal class DsvFormatter : IRowsFormatter
     private readonly bool _quoteStrings;
 
     [Description("CSV formatter.")]
-    [FunctionSignature("csv(has_header?: boolean, delimiter?: string = null, quote_strings?: boolean = false): object<IRowsFormatter>")]
+    [FunctionSignature("csv(has_header?: boolean, delimiter?: string = null, quote_strings?: boolean := false): object<IRowsFormatter>")]
     public static VariantValue Csv(FunctionCallInfo args)
     {
         var hasHeader = args.GetAt(0).AsBooleanNullable;

@@ -30,7 +30,8 @@ statement
 
 functionSignature: name=IDENTIFIER '(' (functionArg (COMMA functionArg)*)? ')' (COLON functionType)? EOF;
 functionType: type ('<' IDENTIFIER '>')?;
-functionArg: variadic=ELLIPSIS? IDENTIFIER optional=QUESTION? COLON functionType isArray=LEFT_RIGHT_BRACKET? ('=' default=literal)?;
+functionArg: variadic=ELLIPSIS? IDENTIFIER optional=QUESTION? COLON functionType isArray=LEFT_RIGHT_BRACKET?
+    (('=' | ':=' | DEFAULT) default=literal)?;
 
 functionCall
     : IDENTIFIER '(' ( functionCallArg (COMMA functionCallArg)* )? ')'
