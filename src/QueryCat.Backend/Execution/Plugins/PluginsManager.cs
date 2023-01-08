@@ -154,7 +154,7 @@ public sealed class PluginsManager : IDisposable
     {
         foreach (var localPlugin in GetLocalPlugins())
         {
-            if (name == localPlugin.Name && File.Exists(localPlugin.Uri))
+            if (name.Equals(localPlugin.Name, StringComparison.OrdinalIgnoreCase) && File.Exists(localPlugin.Uri))
             {
                 Log.Logger.Information("Remove file {Uri}.", localPlugin.Uri);
                 File.Delete(localPlugin.Uri);
