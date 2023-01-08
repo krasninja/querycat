@@ -39,7 +39,6 @@ internal partial class ProgramParserVisitor
             FetchNode = this.VisitMaybe<SelectFetchNode>(context.selectTopClause())
                 ?? this.VisitMaybe<SelectFetchNode>(context.selectFetchFirstClause())
                 ?? this.VisitMaybe<SelectFetchNode>(context.selectLimitClause())
-                ?? this.VisitMaybe<SelectFetchNode>(context.selectTopClause())
         };
 
     /// <inheritdoc />
@@ -128,9 +127,22 @@ internal partial class ProgramParserVisitor
 
     /// <inheritdoc />
     public override IAstNode VisitSelectWithElement(QueryCatParser.SelectWithElementContext context)
-        => new SelectWithNode(
+    {
+        var selectWithNode = new SelectWithNode(
             name: GetUnwrappedText(context.name.Text),
             queryNode: this.Visit<SelectQueryNode>(context.query));
+        selectWithNode.ColumnNodes.AddRange(
+            this.Visit(context.selectWithColumnList(), SelectColumnsListNode.Empty).Columns);
+        return selectWithNode;
+    }
+
+    /// <inheritdoc />
+    public override IAstNode VisitSelectWithColumnList(QueryCatParser.SelectWithColumnListContext context)
+    {
+        var columnsNodes = this.Visit<IdentifierExpressionNode>(context.identifierChain())
+            .Select(n => new SelectColumnsSublistExpressionNode(n)).ToList();
+        return new SelectColumnsListNode(columnsNodes.Cast<SelectColumnsSublistNode>().ToList());
+    }
 
     #endregion
 

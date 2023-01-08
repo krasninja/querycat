@@ -7,6 +7,8 @@ public sealed class SelectColumnsListNode : AstNode
 
     public List<SelectColumnsSublistNode> Columns { get; }
 
+    public static SelectColumnsListNode Empty { get; } = new(Array.Empty<SelectColumnsSublistNode>());
+
     public SelectColumnsListNode(List<SelectColumnsSublistNode> columns)
     {
         Columns = columns;

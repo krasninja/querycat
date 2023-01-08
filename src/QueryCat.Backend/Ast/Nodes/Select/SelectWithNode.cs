@@ -4,7 +4,7 @@ namespace QueryCat.Backend.Ast.Nodes.Select;
 
 public sealed class SelectWithNode : AstNode
 {
-    public List<SelectColumnsSublistNameNode> ColumnNodes { get; } = new();
+    public List<SelectColumnsSublistNode> ColumnNodes { get; } = new();
 
     public SelectQueryNode QueryNode { get; }
 
@@ -23,7 +23,7 @@ public sealed class SelectWithNode : AstNode
     public SelectWithNode(SelectWithNode node)
         : this(node.Name, (SelectQueryNode)node.QueryNode.Clone())
     {
-        ColumnNodes = node.ColumnNodes.Select(c => (SelectColumnsSublistNameNode)c.Clone()).ToList();
+        ColumnNodes = node.ColumnNodes.Select(c => (SelectColumnsSublistNode)c.Clone()).ToList();
         node.CopyTo(this);
     }
 

@@ -1,4 +1,5 @@
 using QueryCat.Backend.Ast;
+using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Select;
 
 namespace QueryCat.Backend.Commands.Select.Visitors;
@@ -13,18 +14,20 @@ internal sealed partial class CreateContextVisitor
             return;
         }
 
-        foreach (var withNodeItem in node.WithNode.Nodes)
+        foreach (var withNode in node.WithNode.Nodes)
         {
+            var processedAsRecursive = false;
             if (node.WithNode.IsRecursive)
             {
-                var processedAsRecursive = Cte_PrepareInputRecursiveList(context, withNodeItem);
-                if (processedAsRecursive)
-                {
-                    continue;
-                }
+                processedAsRecursive = Cte_PrepareInputRecursiveList(context, withNode);
             }
 
-            Cte_PrepareInputNonRecursiveList(context, withNodeItem);
+            if (!processedAsRecursive)
+            {
+                Cte_PrepareInputNonRecursiveList(context, withNode);
+            }
+
+            Cte_FixColumnsNames(context, withNode);
         }
     }
 
@@ -64,6 +67,21 @@ internal sealed partial class CreateContextVisitor
                 yield return cte;
             }
             parentContext = parentContext.Parent;
+        }
+    }
+
+    private static void Cte_FixColumnsNames(SelectCommandContext context, SelectWithNode withNode)
+    {
+        context = withNode.QueryNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
+        for (var columnIndex = 0; columnIndex < withNode.ColumnNodes.Count; columnIndex++)
+        {
+            var columns = context.CurrentIterator.Current.Columns;
+            if (columns.Length - 1 >= columnIndex
+                && withNode.ColumnNodes[columnIndex] is SelectColumnsSublistExpressionNode nameNode
+                && nameNode.ExpressionNode is IdentifierExpressionNode idNode)
+            {
+                columns[columnIndex].Name = idNode.FullName;
+            }
         }
     }
 }

@@ -295,7 +295,7 @@ internal sealed partial class SetIteratorVisitor : AstVisitor
                 ? new Column(columnName, columnSourceName, columnNode.GetDataType())
                 : new Column(i + 1, columnNode.GetDataType());
 
-            var sourceInputColumn = node.Columns[i].GetAttribute<Column>(SourceInputColumn);
+            var sourceInputColumn = columnNode.GetAttribute<Column>(SourceInputColumn);
             if (sourceInputColumn != null)
             {
                 column.Description = sourceInputColumn.Description;
