@@ -107,6 +107,8 @@ public sealed class PluginsManager : IDisposable
         var fullFileNameDownloading = fullFileName + ".downloading";
         await using var outputFileStream = new FileStream(fullFileNameDownloading, FileMode.OpenOrCreate);
         await stream.CopyToAsync(outputFileStream, cancellationToken);
+        stream.Close();
+        outputFileStream.Close();
         var overwrite = File.Exists(fullFileName);
         File.Move(fullFileNameDownloading, fullFileName, overwrite);
         Log.Logger.Information("Save plugin file {FullFileName}.", fullFileName);
