@@ -56,7 +56,18 @@ internal class Program
         rootCommand.AddArgument(queryArgument);
         rootCommand.SetHandler(_ =>
         {
-            new QueryCommand().Parse(args).Invoke();
+            // Allow to use with shebang.
+            if (args.Length == 1
+                && args[0].Length < 140
+                && !args[0].Contains(Environment.NewLine)
+                && File.Exists(args[0]))
+            {
+                new QueryCommand().Parse("-f", args[0]).Invoke();
+            }
+            else
+            {
+                new QueryCommand().Parse(args).Invoke();
+            }
         }, queryArgument);
 
         var parser = new CommandLineBuilder(rootCommand)

@@ -18,6 +18,7 @@ case switch, distinct on, union, intersect, except.
 - Add "uuid" function that generates UUID.
 - Add "_typeof" function.
 - Allow to override auto-detected type by Cast.
+- Allow to use with shebang.
 
 ### Fixed
 
