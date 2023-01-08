@@ -23,3 +23,5 @@ The plugin files are DLLs or NuGet packages that must contain "Plugin" within na
 - Current executable directory.
 - Within "plugins" directory of current executable directory.
 - With `--plugin-dirs` application argument.
+
+The official (and default) plugin storage can be found here: https://storage.yandexcloud.net/querycat/.
