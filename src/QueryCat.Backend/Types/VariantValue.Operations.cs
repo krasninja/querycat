@@ -58,7 +58,7 @@ public readonly partial struct VariantValue
         => operation switch
         {
             Operation.Not => GetNotDelegate(leftType),
-            _ => throw new ArgumentOutOfRangeException("Invalid operation.", nameof(operation)),
+            _ => throw new ArgumentOutOfRangeException(nameof(operation), "Invalid operation."),
         };
 
     internal static OperationBinaryDelegate GetOperationDelegate(Operation operation)
@@ -81,7 +81,7 @@ public readonly partial struct VariantValue
             Operation.BetweenAnd => BetweenAnd,
             Operation.Like => Like,
             Operation.NotLike => NotLike,
-            _ => throw new ArgumentOutOfRangeException("Invalid operation.", nameof(operation)),
+            _ => throw new ArgumentOutOfRangeException(nameof(operation), "Invalid operation."),
         };
 
     internal static BinaryFunction GetOperationDelegate(Operation operation, DataType leftType, DataType rightType)
@@ -89,6 +89,8 @@ public readonly partial struct VariantValue
         {
             Operation.Add => GetAddDelegate(leftType, rightType),
             Operation.Subtract => GetSubtractDelegate(leftType, rightType),
+            Operation.Multiple => GetMulDelegate(leftType, rightType),
+            Operation.Divide => GetDivDelegate(leftType, rightType),
             Operation.Equals => GetEqualsDelegate(leftType, rightType),
             Operation.NotEquals => GetNotEqualsDelegate(leftType, rightType),
             Operation.Greater => GetGreaterDelegate(leftType, rightType),
@@ -164,7 +166,7 @@ public readonly partial struct VariantValue
         if (operation == Operation.Add || operation == Operation.Subtract)
         {
             if ((left == DataType.Timestamp && right == DataType.Interval)
-                || (right == DataType.Interval && left == DataType.Timestamp))
+                || (left == DataType.Interval && right == DataType.Timestamp))
             {
                 return DataType.Timestamp;
             }
@@ -172,6 +174,20 @@ public readonly partial struct VariantValue
             {
                 return DataType.Interval;
             }
+        }
+
+        if (operation == Operation.Multiple)
+        {
+            if ((left == DataType.Integer && right == DataType.Interval)
+                || (left == DataType.Interval && right == DataType.Integer))
+            {
+                return DataType.Interval;
+            }
+        }
+
+        if (operation == Operation.Divide && left == DataType.Interval && right == DataType.Integer)
+        {
+            return DataType.Interval;
         }
 
         if (left == DataType.Null && right != DataType.Null)
@@ -237,72 +253,6 @@ public readonly partial struct VariantValue
 
         errorCode = ErrorCode.OK;
         return function.Invoke(ref left);
-    }
-
-    internal static VariantValue Mul(ref VariantValue left, ref VariantValue right, out ErrorCode errorCode)
-    {
-        var leftType = left.GetInternalType();
-        var rightType = right.GetInternalType();
-
-        var result = leftType switch
-        {
-            DataType.Integer => rightType switch
-            {
-                DataType.Integer => new VariantValue(left.AsInteger * right.AsInteger),
-                DataType.Float => new VariantValue(left.AsInteger * right.AsFloat),
-                DataType.Numeric => new VariantValue(left.AsInteger * right.AsNumeric),
-                _ => Null,
-            },
-            DataType.Float => rightType switch
-            {
-                DataType.Integer => new VariantValue(left.AsFloat * right.AsInteger),
-                DataType.Float => new VariantValue(left.AsFloat * right.AsFloat),
-                _ => Null,
-            },
-            DataType.Numeric => rightType switch
-            {
-                DataType.Integer => new VariantValue(left.AsNumeric * right.AsInteger),
-                DataType.Numeric => new VariantValue(left.AsNumeric * right.AsNumeric),
-                _ => Null,
-            },
-            _ => Null,
-        };
-
-        errorCode = !result.IsNull ? ErrorCode.OK : ErrorCode.CannotApplyOperator;
-        return result;
-    }
-
-    public static VariantValue Div(ref VariantValue left, ref VariantValue right, out ErrorCode errorCode)
-    {
-        var leftType = left.GetInternalType();
-        var rightType = right.GetInternalType();
-
-        var result = leftType switch
-        {
-            DataType.Integer => rightType switch
-            {
-                DataType.Integer => new VariantValue(left.AsInteger / right.AsInteger),
-                DataType.Float => new VariantValue(left.AsInteger / right.AsFloat),
-                DataType.Numeric => new VariantValue(left.AsInteger / right.AsNumeric),
-                _ => Null,
-            },
-            DataType.Float => rightType switch
-            {
-                DataType.Integer => new VariantValue(left.AsFloat / right.AsInteger),
-                DataType.Float => new VariantValue(left.AsFloat / right.AsFloat),
-                _ => Null,
-            },
-            DataType.Numeric => rightType switch
-            {
-                DataType.Integer => new VariantValue(left.AsNumeric / right.AsInteger),
-                DataType.Numeric => new VariantValue(left.AsNumeric / right.AsNumeric),
-                _ => Null,
-            },
-            _ => Null,
-        };
-
-        errorCode = !result.IsNull ? ErrorCode.OK : ErrorCode.CannotApplyOperator;
-        return result;
     }
 
     public static VariantValue Modulo(ref VariantValue left, ref VariantValue right, out ErrorCode errorCode)

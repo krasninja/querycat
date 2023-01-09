@@ -1,13 +1,13 @@
 namespace QueryCat.Backend.Types;
 
-public partial struct VariantValue
+public readonly partial struct VariantValue
 {
-    internal static VariantValue Add(ref VariantValue left, ref VariantValue right, out ErrorCode errorCode)
+    internal static VariantValue Mul(ref VariantValue left, ref VariantValue right, out ErrorCode errorCode)
     {
         var leftType = left.GetInternalType();
         var rightType = right.GetInternalType();
 
-        var function = GetAddDelegate(leftType, rightType);
+        var function = GetMulDelegate(leftType, rightType);
         if (function == BinaryNullDelegate)
         {
             errorCode = ErrorCode.CannotApplyOperator;
@@ -18,7 +18,7 @@ public partial struct VariantValue
         return function.Invoke(ref left, ref right);
     }
 
-    internal static BinaryFunction GetAddDelegate(DataType leftType, DataType rightType)
+    internal static BinaryFunction GetMulDelegate(DataType leftType, DataType rightType)
     {
         return leftType switch
         {
@@ -30,7 +30,7 @@ public partial struct VariantValue
                     {
                         return Null;
                     }
-                    return new VariantValue(left.AsIntegerUnsafe + right.AsIntegerUnsafe);
+                    return new VariantValue(left.AsIntegerUnsafe * right.AsIntegerUnsafe);
                 },
                 DataType.Float => (ref VariantValue left, ref VariantValue right) =>
                 {
@@ -38,7 +38,7 @@ public partial struct VariantValue
                     {
                         return Null;
                     }
-                    return new VariantValue(left.AsIntegerUnsafe + right.AsFloatUnsafe);
+                    return new VariantValue(left.AsIntegerUnsafe * right.AsFloatUnsafe);
                 },
                 DataType.Numeric => (ref VariantValue left, ref VariantValue right) =>
                 {
@@ -46,7 +46,15 @@ public partial struct VariantValue
                     {
                         return Null;
                     }
-                    return new VariantValue(left.AsIntegerUnsafe + right.AsNumericUnsafe);
+                    return new VariantValue(left.AsIntegerUnsafe * right.AsNumericUnsafe);
+                },
+                DataType.Interval => (ref VariantValue left, ref VariantValue right) =>
+                {
+                    if (left.IsNull || right.IsNull)
+                    {
+                        return Null;
+                    }
+                    return new VariantValue(left.AsIntegerUnsafe * right.AsIntervalUnsafe);
                 },
                 _ => BinaryNullDelegate,
             },
@@ -58,7 +66,7 @@ public partial struct VariantValue
                     {
                         return Null;
                     }
-                    return new VariantValue(left.AsFloatUnsafe + right.AsIntegerUnsafe);
+                    return new VariantValue(left.AsFloatUnsafe * right.AsIntegerUnsafe);
                 },
                 DataType.Float => (ref VariantValue left, ref VariantValue right) =>
                 {
@@ -66,7 +74,7 @@ public partial struct VariantValue
                     {
                         return Null;
                     }
-                    return new VariantValue(left.AsFloatUnsafe + right.AsFloatUnsafe);
+                    return new VariantValue(left.AsFloatUnsafe * right.AsFloatUnsafe);
                 },
                 _ => BinaryNullDelegate,
             },
@@ -78,7 +86,7 @@ public partial struct VariantValue
                     {
                         return Null;
                     }
-                    return new VariantValue(left.AsNumericUnsafe + right.AsIntegerUnsafe);
+                    return new VariantValue(left.AsNumericUnsafe * right.AsIntegerUnsafe);
                 },
                 DataType.Numeric => (ref VariantValue left, ref VariantValue right) =>
                 {
@@ -86,31 +94,19 @@ public partial struct VariantValue
                     {
                         return Null;
                     }
-                    return new VariantValue(left.AsNumericUnsafe + right.AsNumericUnsafe);
-                },
-                _ => BinaryNullDelegate,
-            },
-            DataType.Timestamp => rightType switch
-            {
-                DataType.Interval => (ref VariantValue left, ref VariantValue right) =>
-                {
-                    if (left.IsNull || right.IsNull)
-                    {
-                        return Null;
-                    }
-                    return new VariantValue(left.AsTimestampUnsafe + right.AsIntervalUnsafe);
+                    return new VariantValue(left.AsNumericUnsafe * right.AsNumericUnsafe);
                 },
                 _ => BinaryNullDelegate,
             },
             DataType.Interval => rightType switch
             {
-                DataType.Interval => (ref VariantValue left, ref VariantValue right) =>
+                DataType.Integer => (ref VariantValue left, ref VariantValue right) =>
                 {
                     if (left.IsNull || right.IsNull)
                     {
                         return Null;
                     }
-                    return new VariantValue(left.AsIntervalUnsafe + right.AsIntervalUnsafe);
+                    return new VariantValue(left.AsIntervalUnsafe * right.AsIntegerUnsafe);
                 },
                 _ => BinaryNullDelegate,
             },

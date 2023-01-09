@@ -381,7 +381,7 @@ internal sealed partial class SetIteratorVisitor : AstVisitor
         }
         if (fetchNode != null)
         {
-            ResolveNodesTypes(offsetNode, context);
+            ResolveNodesTypes(fetchNode, context);
             var count = makeDelegateVisitor.RunAndReturn(fetchNode.CountNode).Invoke().AsInteger;
             context.SetIterator(new LimitRowsIterator(context.CurrentIterator, count));
         }
