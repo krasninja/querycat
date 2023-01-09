@@ -68,7 +68,6 @@ internal sealed partial class SetIteratorVisitor
                 var index = Array.FindIndex(targets, t => t.Node.Id == node.Id);
                 if (index < 0)
                 {
-                    Log.Logger.Warning("Cannot find node!");
                     return;
                 }
 

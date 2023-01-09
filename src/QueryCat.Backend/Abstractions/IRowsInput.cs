@@ -24,11 +24,6 @@ public interface IRowsInput : IRowsSource, IRowsSchema
     bool ReadNext();
 
     /// <summary>
-    /// Sets the input to its initial position.
-    /// </summary>
-    void Reset();
-
-    /// <summary>
     /// Write explain information about the current input.
     /// </summary>
     /// <param name="stringBuilder">String builder to write.</param>

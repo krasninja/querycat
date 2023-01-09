@@ -25,4 +25,9 @@ public interface IRowsSource
     /// Close source.
     /// </summary>
     void Close();
+
+    /// <summary>
+    /// Sets the input or output to its initial position.
+    /// </summary>
+    void Reset();
 }

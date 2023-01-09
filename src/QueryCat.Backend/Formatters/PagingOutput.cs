@@ -35,6 +35,13 @@ public class PagingOutput : IRowsOutput
     public void Close() => _rowsOutput.Close();
 
     /// <inheritdoc />
+    public void Reset()
+    {
+        _rowsCounter = 0;
+        _rowsOutput.Reset();
+    }
+
+    /// <inheritdoc />
     public void Write(Row row)
     {
         if (PagingRowsCount != -1

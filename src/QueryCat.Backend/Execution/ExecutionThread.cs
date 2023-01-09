@@ -237,6 +237,10 @@ public class ExecutionThread : IExecutionThread
 
     private void Write(VariantValue result)
     {
+        if (result.IsNull)
+        {
+            return;
+        }
         var iterator = ExecutionThreadUtils.ConvertToIterator(result);
         var rowsOutput = Options.DefaultRowsOutput;
         if (result.GetInternalType() == DataType.Object
@@ -244,6 +248,7 @@ public class ExecutionThread : IExecutionThread
         {
             rowsOutput = alternateRowsOutput;
         }
+        rowsOutput.Reset();
         rowsOutput.Write(iterator);
     }
 

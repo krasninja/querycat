@@ -171,6 +171,10 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
             return Null;
         }
 
+        if (obj is VariantValue variantValue)
+        {
+            return variantValue;
+        }
         if (obj is long || obj is int || obj is short
             || obj is byte)
         {

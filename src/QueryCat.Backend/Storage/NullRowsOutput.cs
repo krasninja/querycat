@@ -30,6 +30,11 @@ public sealed class NullRowsOutput : IRowsOutput
     }
 
     /// <inheritdoc />
+    public void Reset()
+    {
+    }
+
+    /// <inheritdoc />
     public void Write(Row row)
     {
     }

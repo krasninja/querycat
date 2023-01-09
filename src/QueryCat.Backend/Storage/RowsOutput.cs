@@ -28,6 +28,12 @@ public abstract class RowsOutput : IRowsOutput
     public abstract void Close();
 
     /// <inheritdoc />
+    public void Reset()
+    {
+        _isFirstCall = true;
+    }
+
+    /// <inheritdoc />
     public void Write(Row row)
     {
         if (_isFirstCall)
