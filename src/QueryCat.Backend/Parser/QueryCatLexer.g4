@@ -20,6 +20,7 @@ QUESTION:           '?';
 LEFT_BRACKET:       '[';
 RIGHT_BRACKET:      ']';
 LEFT_RIGHT_BRACKET: '[]';
+PIPE:               '&>';
 
 // Math operations.
 
@@ -135,6 +136,8 @@ NULLS:              'NULLS';
 OFFSET:             'OFFSET';
 ORDER:              'ORDER';
 OUTER:              'OUTER';
+OVER:               'OVER';
+PARTITION:          'PARTITION';
 RECURSIVE:          'RECURSIVE';
 RIGHT:              'RIGHT';
 ROW:                'ROW';
@@ -143,6 +146,7 @@ SELECT:             'SELECT';
 TOP:                'TOP';
 UNION:              'UNION';
 WHERE:              'WHERE';
+WINDOW:             'WINDOW';
 WITH:               'WITH';
 
 // DECLARE/SET command.
