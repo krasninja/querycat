@@ -264,21 +264,21 @@ public readonly partial struct VariantValue
         {
             DataType.Integer => rightType switch
             {
-                DataType.Integer => new VariantValue(left.AsInteger % right.AsInteger),
-                DataType.Float => new VariantValue(left.AsInteger % right.AsFloat),
-                DataType.Numeric => new VariantValue(left.AsInteger % right.AsNumeric),
+                DataType.Integer => new VariantValue(left.AsIntegerUnsafe % right.AsIntegerUnsafe),
+                DataType.Float => new VariantValue(left.AsIntegerUnsafe % right.AsFloatUnsafe),
+                DataType.Numeric => new VariantValue(left.AsIntegerUnsafe % right.AsNumericUnsafe),
                 _ => Null,
             },
             DataType.Float => rightType switch
             {
-                DataType.Integer => new VariantValue(left.AsFloat % right.AsInteger),
-                DataType.Float => new VariantValue(left.AsFloat % right.AsFloat),
+                DataType.Integer => new VariantValue(left.AsFloatUnsafe % right.AsIntegerUnsafe),
+                DataType.Float => new VariantValue(left.AsFloatUnsafe % right.AsFloatUnsafe),
                 _ => Null,
             },
             DataType.Numeric => rightType switch
             {
-                DataType.Integer => new VariantValue(left.AsNumeric % right.AsInteger),
-                DataType.Numeric => new VariantValue(left.AsNumeric % right.AsNumeric),
+                DataType.Integer => new VariantValue(left.AsNumericUnsafe % right.AsIntegerUnsafe),
+                DataType.Numeric => new VariantValue(left.AsNumericUnsafe % right.AsNumericUnsafe),
                 _ => Null,
             },
             _ => Null,
@@ -297,7 +297,7 @@ public readonly partial struct VariantValue
         {
             DataType.Integer => rightType switch
             {
-                DataType.Integer => new VariantValue((int)left.AsInteger << (int)right.AsInteger),
+                DataType.Integer => new VariantValue((int)left.AsIntegerUnsafe << (int)right.AsIntegerUnsafe),
                 _ => Null,
             },
             _ => Null,
@@ -316,7 +316,7 @@ public readonly partial struct VariantValue
         {
             DataType.Integer => rightType switch
             {
-                DataType.Integer => new VariantValue((int)left.AsInteger >> (int)right.AsInteger),
+                DataType.Integer => new VariantValue((int)left.AsIntegerUnsafe >> (int)right.AsIntegerUnsafe),
                 _ => Null,
             },
             _ => Null,
@@ -392,7 +392,7 @@ public readonly partial struct VariantValue
         {
             DataType.String => rightType switch
             {
-                DataType.String => new VariantValue(string.Concat(left.AsString, right.AsString)),
+                DataType.String => new VariantValue(string.Concat(left.AsStringUnsafe, right.AsStringUnsafe)),
                 _ => Null,
             },
             _ => Null,
