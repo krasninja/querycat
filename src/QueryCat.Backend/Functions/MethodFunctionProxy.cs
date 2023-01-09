@@ -101,8 +101,8 @@ internal class MethodFunctionProxy
         if (result is Task task)
         {
             task.ConfigureAwait(false).GetAwaiter().GetResult();
-            if (_method is MethodInfo methodInfo &&
-                methodInfo.ReturnType.IsGenericType)
+            if (_method is MethodInfo methodInfo
+                && methodInfo.ReturnType.IsGenericType)
             {
                 result = ((dynamic)task).Result;
             }
