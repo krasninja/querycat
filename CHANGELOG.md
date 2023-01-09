@@ -30,6 +30,7 @@ case switch, distinct on, union, intersect, except.
 ### Changed
 
 - The IIS W3C logs parser was moved into a plugin. Take a look at "QueryCat.Plugins.Logs" plugin.
+- Improve Interval type support.
 
 ## [0.1.0] - 2022-11-17
 

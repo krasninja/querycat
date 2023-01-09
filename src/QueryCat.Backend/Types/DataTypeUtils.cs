@@ -192,8 +192,29 @@ public static class DataTypeUtils
     /// Parse interval from string.
     /// </summary>
     /// <param name="target">Target string.</param>
+    /// <param name="result">Parsed interval result.</param>
+    /// <returns><c>True</c> if parsed successfully, <c>false</c> otherwise.</returns>
+    internal static bool TryParseInterval(string target, out TimeSpan result)
+    {
+        var interval = ParseIntervalInternal(target, throwExceptions: false);
+        if (!interval.HasValue)
+        {
+            result = default;
+            return false;
+        }
+        result = interval.Value;
+        return true;
+    }
+
+    /// <summary>
+    /// Parse interval from string.
+    /// </summary>
+    /// <param name="target">Target string.</param>
     /// <returns>Time span.</returns>
     internal static TimeSpan ParseInterval(string target)
+        => ParseIntervalInternal(target, throwExceptions: true)!.Value;
+
+    private static TimeSpan? ParseIntervalInternal(string target, bool throwExceptions = true)
     {
         if (TimeSpan.TryParse(target, out var resultTimeSpan))
         {
@@ -221,23 +242,35 @@ public static class DataTypeUtils
             }
             else
             {
-                throw new FormatException("Incorrect number of items for interval.");
+                if (throwExceptions)
+                {
+                    throw new FormatException("Incorrect number of items for interval.");
+                }
+                return null;
             }
 
             // First must be double.
             if (!double.TryParse(intervalString, out var intervalDouble))
             {
-                throw new FormatException("Cannot parse interval as double.");
+                if (throwExceptions)
+                {
+                    throw new FormatException("Cannot parse interval as double.");
+                }
+                return null;
             }
 
-            var timeSpan = ParseIntervalInternal(intervalDouble, intervalType);
-            result += timeSpan;
+            var timeSpan = ParseIntervalType(intervalDouble, intervalType);
+            if (!timeSpan.HasValue)
+            {
+                return null;
+            }
+            result += timeSpan.Value;
         }
 
         return result;
     }
 
-    private static TimeSpan ParseIntervalInternal(double value, string type)
+    private static TimeSpan? ParseIntervalType(double value, string type, bool throwExceptions = true)
     {
         switch (type)
         {
@@ -264,7 +297,11 @@ public static class DataTypeUtils
             case "DAYS":
                 return TimeSpan.FromDays(value);
         }
-        throw new FormatException("Cannot parse interval.");
+        if (throwExceptions)
+        {
+            throw new FormatException("Cannot parse interval.");
+        }
+        return null;
     }
 
     #endregion

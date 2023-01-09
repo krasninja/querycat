@@ -364,7 +364,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
 
     private static VariantValue StringToInterval(in ReadOnlySpan<char> value, out bool success)
     {
-        success = TimeSpan.TryParse(value, CultureInfo.InvariantCulture, out var @out);
+        success = DataTypeUtils.TryParseInterval(value.ToString(), out var @out);
         return success ? new VariantValue(@out) : Null;
     }
 
