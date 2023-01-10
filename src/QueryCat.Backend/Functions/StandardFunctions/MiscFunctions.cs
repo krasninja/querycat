@@ -21,6 +21,13 @@ internal static class MiscFunctions
         return value1;
     }
 
+    [Description("Not operation. The function can be used to suppress output.")]
+    [FunctionSignature("nop(...args: any[]): void")]
+    public static VariantValue Nop(FunctionCallInfo args)
+    {
+        return VariantValue.Null;
+    }
+
     [Description("The function returns a version 4 (random) UUID.")]
     [FunctionSignature("uuid(): string")]
     public static VariantValue GetRandomGuid(FunctionCallInfo args)
@@ -31,6 +38,7 @@ internal static class MiscFunctions
     public static void RegisterFunctions(FunctionsManager functionsManager)
     {
         functionsManager.RegisterFunction(NullIf);
+        functionsManager.RegisterFunction(Nop);
         functionsManager.RegisterFunction(GetRandomGuid);
     }
 }

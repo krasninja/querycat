@@ -20,6 +20,7 @@ case switch, distinct on, union, intersect, except.
 - Allow to override auto-detected type by Cast.
 - Allow to use with shebang.
 - Show the line and position where syntax error occurs.
+- Add "nop" function.
 
 ### Fixed
 
