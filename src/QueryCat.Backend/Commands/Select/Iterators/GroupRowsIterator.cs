@@ -17,6 +17,11 @@ internal sealed class GroupRowsIterator : IRowsIterator
     private readonly SelectCommandContext _context;
     private readonly AggregateTarget[] _targets;
 
+    internal static IFuncUnit[] NoGroupsKeyFactory { get; } =
+    {
+        new FuncUnitStatic(VariantValue.OneIntegerValue)
+    };
+
     /*
      * For aggregate queries we break pipeline execution and have to prepare new rows frame.
      * We also prepare new columns. For example:
@@ -43,6 +48,9 @@ internal sealed class GroupRowsIterator : IRowsIterator
             AggregateStates = aggregateStates;
             RowIndex = rowIndex;
         }
+
+        /// <inheritdoc />
+        public override string ToString() => $"{RowIndex}: {AggregateStates}";
     }
 
     /// <inheritdoc />
@@ -98,7 +106,7 @@ internal sealed class GroupRowsIterator : IRowsIterator
 
     private void FillRows()
     {
-        var keysRowIndexesMap = new Dictionary<VariantValueArray, GroupKeyEntry>();
+        var keysRowIndexesMap = new Dictionary<VariantValueArray, GroupKeyEntry>(capacity: 1024);
 
         // Fill keysRowIndexesMap.
         while (_rowsIterator.MoveNext())
@@ -114,11 +122,11 @@ internal sealed class GroupRowsIterator : IRowsIterator
                 {
                     row[i] = _rowsIterator.Current[i];
                 }
-                var rowIndex = _rowsFrame.AddRow(row);
-                var initialStates = _targets.Select(t => t.AggregateFunction.GetInitialState(t.ReturnType)).ToArray();
-                groupKey = new GroupKeyEntry(initialStates, rowIndex);
+                VariantValueArray[] initialStates = _targets.Select(t => t.AggregateFunction.GetInitialState(t.ReturnType)).ToArray();
+                groupKey = new GroupKeyEntry(initialStates, _rowsFrame.AddRow(row));
                 keysRowIndexesMap.Add(key, groupKey);
             }
+
             for (int i = 0; i < _targets.Length; i++)
             {
                 _targets[i].ValueGenerator.Invoke(); // We need this call to fill FunctionCallInfo.
@@ -127,13 +135,22 @@ internal sealed class GroupRowsIterator : IRowsIterator
         }
 
         // Fill rows frame.
-        foreach (var mapValue in keysRowIndexesMap)
+        if (keysRowIndexesMap.Any())
         {
-            for (int i = 0; i < _targets.Length; i++)
+            foreach (var mapValue in keysRowIndexesMap)
             {
-                var value = _targets[i].AggregateFunction.GetResult(mapValue.Value.AggregateStates[i]);
-                _rowsFrame.UpdateValue(mapValue.Value.RowIndex, _aggregateColumnsOffset + i, value);
+                for (int i = 0; i < _targets.Length; i++)
+                {
+                    var value = _targets[i].AggregateFunction.GetResult(mapValue.Value.AggregateStates[i]);
+                    _rowsFrame.UpdateValue(mapValue.Value.RowIndex, _aggregateColumnsOffset + i, value);
+                }
             }
+        }
+        else if (_keys == NoGroupsKeyFactory)
+        {
+            // If no data at all - we produce just NULL result.
+            var nullRow = new Row(_rowsFrame);
+            _rowsFrame.AddRow(nullRow);
         }
     }
 

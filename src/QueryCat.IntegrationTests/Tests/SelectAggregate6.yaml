@@ -1,0 +1,13 @@
+expected: |
+  2,a
+  ,b
+  ,
+query: |
+  -- If no rows matched for group key should return NULL value. [0, 1]
+  SELECT sum(id),str FROM read_text('id,str\n1,a\n1,a\n,b\n', fmt=>csv()) group by str
+  union all
+  -- If no grouping and no data - just return NULL. [2] 
+  SELECT sum(id),'' as str FROM read_text('id,str\n1,a\n', fmt=>csv()) where id > 100
+  union all
+  -- If grouping and no data - return nothing. []
+  SELECT avg(id)::integer,'' as str FROM read_text('id,str\n1,a\n', fmt=>csv()) where id > 100 group by str;

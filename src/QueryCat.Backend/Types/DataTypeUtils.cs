@@ -34,7 +34,7 @@ public static class DataTypeUtils
     public static bool IsSimple(DataType dataType)
         =>
             IsNumeric(dataType) || dataType == DataType.Boolean || dataType == DataType.String
-            || dataType == DataType.Timestamp || dataType == DataType.Interval;
+                || dataType == DataType.Timestamp || dataType == DataType.Interval;
 
     /// <summary>
     /// Is the data type numeric.

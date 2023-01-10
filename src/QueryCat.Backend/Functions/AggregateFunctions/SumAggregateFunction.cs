@@ -15,16 +15,13 @@ internal sealed class SumAggregateFunction : IAggregateFunction
 {
     /// <inheritdoc />
     public VariantValueArray GetInitialState(DataType type)
-        => new(new VariantValue(type));
+        => new(VariantValue.Null);
 
     /// <inheritdoc />
     public void Invoke(VariantValueArray state, FunctionCallInfo callInfo)
     {
         var value = callInfo.GetAt(0);
-        if (!value.IsNull)
-        {
-            state.Values[0] += value;
-        }
+        AggregateFunctionsUtils.ExecuteWithNullInitialState(ref state.Values[0], ref value, VariantValue.Add);
     }
 
     /// <inheritdoc />
