@@ -1,6 +1,7 @@
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Function;
+using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Ast.Nodes.SpecialFunctions;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Functions;
@@ -338,6 +339,26 @@ internal class CreateDelegateVisitor : AstVisitor
             callInfo.InvokePushArgs();
             return function.Delegate(callInfo);
         });
+    }
+
+    #endregion
+
+    #region Select Command
+
+    /// <inheritdoc />
+    public override void Visit(SelectQuerySpecificationNode node)
+    {
+        var statementsVisitor = new StatementsVisitor(_thread);
+        var handler = statementsVisitor.RunAndReturn(node);
+        NodeIdFuncMap[node.Id] = new FuncUnitDelegate(handler.AsFunc());
+    }
+
+    /// <inheritdoc />
+    public override void Visit(SelectQueryCombineNode node)
+    {
+        var statementsVisitor = new StatementsVisitor(_thread);
+        var handler = statementsVisitor.RunAndReturn(node);
+        NodeIdFuncMap[node.Id] = new FuncUnitDelegate(handler.AsFunc());
     }
 
     #endregion

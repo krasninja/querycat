@@ -13,6 +13,8 @@ public abstract class CommandHandler : IDisposable
     /// <returns>Command result or null.</returns>
     public abstract VariantValue Invoke();
 
+    public Func<VariantValue> AsFunc() => Invoke;
+
     protected virtual void Dispose(bool disposing)
     {
         if (disposing)
