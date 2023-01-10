@@ -8,7 +8,7 @@ namespace QueryCat.Backend.Execution;
 public sealed class ExecutionScope
 {
     private readonly List<VariantValue> _variables = new();
-    private readonly Dictionary<string, int> _variablesNames = new();
+    private readonly Dictionary<string, int> _variablesNames = new(StringComparer.CurrentCultureIgnoreCase);
     private readonly ExecutionScope? _parent;
 
     /// <summary>
