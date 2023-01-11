@@ -258,10 +258,6 @@ internal sealed partial class SetIteratorVisitor : AstVisitor
             {
                 return identifierExpressionNode.Name;
             }
-            if (columnNode is SelectColumnsSublistNameNode selectResultColumnNode)
-            {
-                return selectResultColumnNode.ColumnName;
-            }
             return string.Empty;
         }
 
@@ -271,10 +267,6 @@ internal sealed partial class SetIteratorVisitor : AstVisitor
                 && expressionNode.ExpressionNode is IdentifierExpressionNode identifierExpressionNode)
             {
                 return identifierExpressionNode.SourceName;
-            }
-            if (columnNode is SelectColumnsSublistNameNode selectResultColumnNode)
-            {
-                return selectResultColumnNode.SourceName;
             }
             return string.Empty;
         }

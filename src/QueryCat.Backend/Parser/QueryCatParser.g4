@@ -116,7 +116,6 @@ selectSublist
     : STAR # SelectSublistAll
     | functionCall OVER (windowName=IDENTIFIER | selectWindowSpecification) # SelectSublistWindow
     | expression selectAlias? # SelectSublistExpression
-    | identifierChain selectAlias? # SelectSublistIdentifier
     ;
 
 // Into.

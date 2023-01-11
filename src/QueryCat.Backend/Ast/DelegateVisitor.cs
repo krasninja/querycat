@@ -200,12 +200,6 @@ public abstract class DelegateVisitor : AstVisitor
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectColumnsSublistNameNode node)
-    {
-        OnVisit(node);
-    }
-
-    /// <inheritdoc />
     public override void Visit(SelectColumnsSublistNode node)
     {
         OnVisit(node);

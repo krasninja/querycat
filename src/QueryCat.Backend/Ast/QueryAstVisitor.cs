@@ -147,12 +147,6 @@ public class QueryAstVisitor : AstVisitor
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectColumnsSublistNameNode node)
-    {
-        SetString(node, node.ToString());
-    }
-
-    /// <inheritdoc />
     public override void Visit(SelectFetchNode node)
     {
     }

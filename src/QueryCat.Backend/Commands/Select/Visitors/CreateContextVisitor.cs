@@ -282,12 +282,6 @@ internal sealed partial class CreateContextVisitor : AstVisitor
             inputColumn.SourceName = alias;
         }
 
-        foreach (var inputColumn in node.GetAllChildren<SelectColumnsSublistNameNode>()
-                     .Where(n => string.IsNullOrEmpty(n.SourceName)))
-        {
-            inputColumn.SourceName = alias;
-        }
-
         var iterator = node.GetAttribute<IRowsIterator>(AstAttributeKeys.ResultKey);
         if (iterator != null)
         {

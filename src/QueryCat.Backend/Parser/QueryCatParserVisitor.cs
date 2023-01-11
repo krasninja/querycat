@@ -268,13 +268,6 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitSelectSublistExpression([NotNull] QueryCatParser.SelectSublistExpressionContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>SelectSublistIdentifier</c>
-	/// labeled alternative in <see cref="QueryCatParser.selectSublist"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitSelectSublistIdentifier([NotNull] QueryCatParser.SelectSublistIdentifierContext context);
-	/// <summary>
 	/// Visit a parse tree produced by <see cref="QueryCatParser.selectTarget"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

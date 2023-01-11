@@ -55,17 +55,6 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectColumnsSublistNameNode node)
-    {
-        if (VisitIdentifierNode(node, node.ColumnName, node.SourceName))
-        {
-            return;
-        }
-
-        base.Visit(node);
-    }
-
-    /// <inheritdoc />
     public override void Visit(SelectExistsExpressionNode node)
     {
         var commandContext = node.SubQueryNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);

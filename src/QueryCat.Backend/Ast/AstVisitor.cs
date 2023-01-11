@@ -169,10 +169,6 @@ public abstract class AstVisitor
     {
     }
 
-    public virtual void Visit(SelectColumnsSublistNameNode node)
-    {
-    }
-
     public virtual void Visit(SelectColumnsSublistNode node)
     {
     }

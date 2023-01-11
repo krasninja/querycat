@@ -42,23 +42,6 @@ internal sealed class SelectResolveTypesVisitor : ResolveTypesVisitor
         node.ExpressionNode.CopyTo<DataType>(AstAttributeKeys.TypeKey, node);
     }
 
-    /// <inheritdoc />
-    public override void Visit(SelectColumnsSublistNameNode node)
-    {
-        if (VisitIdentifierNode(node, node.ColumnName, node.SourceName))
-        {
-            return;
-        }
-        if (string.IsNullOrEmpty(node.SourceName))
-        {
-            if (SetDataTypeFromVariable(node, node.ColumnName))
-            {
-                return;
-            }
-        }
-        throw new CannotFindIdentifierException(node.ColumnName);
-    }
-
     private bool VisitIdentifierNode(IAstNode node, string name, string source)
     {
         if (!_context.TryGetInputSourceByName(name, source, out var result)
