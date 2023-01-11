@@ -61,7 +61,7 @@ public class OrderColumnsIndex : IOrderIndex
             var greaterValue = new VariantValue(greater == -1);
             var lessValue = new VariantValue(!greaterValue.AsBooleanUnsafe);
             var func = VariantValue.GetGreaterDelegate(type, type);
-            return (ref VariantValue left, ref VariantValue right) =>
+            return (in VariantValue left, in VariantValue right) =>
             {
                 if (left.IsNull)
                 {
@@ -71,7 +71,7 @@ public class OrderColumnsIndex : IOrderIndex
                 {
                     return nullOrder == NullOrder.NullsFirst ? lessValue : greaterValue;
                 }
-                return func.Invoke(ref left, ref right);
+                return func.Invoke(in left, in right);
             };
         }
 
@@ -83,7 +83,7 @@ public class OrderColumnsIndex : IOrderIndex
             var lessValue = new VariantValue(less == -1);
             var greaterValue = new VariantValue(!lessValue.AsBooleanUnsafe);
             var func = VariantValue.GetLessDelegate(type, type);
-            return (ref VariantValue left, ref VariantValue right) =>
+            return (in VariantValue left, in VariantValue right) =>
             {
                 if (left.IsNull)
                 {
@@ -93,7 +93,7 @@ public class OrderColumnsIndex : IOrderIndex
                 {
                     return nullOrder == NullOrder.NullsFirst ? greaterValue : lessValue;
                 }
-                return func.Invoke(ref left, ref right);
+                return func.Invoke(in left, in right);
             };
         }
 
@@ -114,11 +114,11 @@ public class OrderColumnsIndex : IOrderIndex
 
             for (var i = 0; i < _values1.Length; i++)
             {
-                if (_greaterFunctions[i].Invoke(ref _values1[i], ref _values2[i]).AsBooleanUnsafe)
+                if (_greaterFunctions[i].Invoke(in _values1[i], in _values2[i]).AsBooleanUnsafe)
                 {
                     return _greaterValues[i];
                 }
-                if (_lessFunctions[i].Invoke(ref _values1[i], ref _values2[i]))
+                if (_lessFunctions[i].Invoke(in _values1[i], in _values2[i]))
                 {
                     return _lessValues[i];
                 }

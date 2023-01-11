@@ -2,7 +2,7 @@ namespace QueryCat.Backend.Types;
 
 public readonly partial struct VariantValue
 {
-    internal static VariantValue Mul(ref VariantValue left, ref VariantValue right, out ErrorCode errorCode)
+    internal static VariantValue Mul(in VariantValue left, in VariantValue right, out ErrorCode errorCode)
     {
         var leftType = left.GetInternalType();
         var rightType = right.GetInternalType();
@@ -15,7 +15,7 @@ public readonly partial struct VariantValue
         }
 
         errorCode = ErrorCode.OK;
-        return function.Invoke(ref left, ref right);
+        return function.Invoke(in left, in right);
     }
 
     internal static BinaryFunction GetMulDelegate(DataType leftType, DataType rightType)
@@ -24,7 +24,7 @@ public readonly partial struct VariantValue
         {
             DataType.Integer => rightType switch
             {
-                DataType.Integer => (ref VariantValue left, ref VariantValue right) =>
+                DataType.Integer => (in VariantValue left, in VariantValue right) =>
                 {
                     if (left.IsNull || right.IsNull)
                     {
@@ -32,7 +32,7 @@ public readonly partial struct VariantValue
                     }
                     return new VariantValue(left.AsIntegerUnsafe * right.AsIntegerUnsafe);
                 },
-                DataType.Float => (ref VariantValue left, ref VariantValue right) =>
+                DataType.Float => (in VariantValue left, in VariantValue right) =>
                 {
                     if (left.IsNull || right.IsNull)
                     {
@@ -40,7 +40,7 @@ public readonly partial struct VariantValue
                     }
                     return new VariantValue(left.AsIntegerUnsafe * right.AsFloatUnsafe);
                 },
-                DataType.Numeric => (ref VariantValue left, ref VariantValue right) =>
+                DataType.Numeric => (in VariantValue left, in VariantValue right) =>
                 {
                     if (left.IsNull || right.IsNull)
                     {
@@ -48,7 +48,7 @@ public readonly partial struct VariantValue
                     }
                     return new VariantValue(left.AsIntegerUnsafe * right.AsNumericUnsafe);
                 },
-                DataType.Interval => (ref VariantValue left, ref VariantValue right) =>
+                DataType.Interval => (in VariantValue left, in VariantValue right) =>
                 {
                     if (left.IsNull || right.IsNull)
                     {
@@ -60,7 +60,7 @@ public readonly partial struct VariantValue
             },
             DataType.Float => rightType switch
             {
-                DataType.Integer => (ref VariantValue left, ref VariantValue right) =>
+                DataType.Integer => (in VariantValue left, in VariantValue right) =>
                 {
                     if (left.IsNull || right.IsNull)
                     {
@@ -68,7 +68,7 @@ public readonly partial struct VariantValue
                     }
                     return new VariantValue(left.AsFloatUnsafe * right.AsIntegerUnsafe);
                 },
-                DataType.Float => (ref VariantValue left, ref VariantValue right) =>
+                DataType.Float => (in VariantValue left, in VariantValue right) =>
                 {
                     if (left.IsNull || right.IsNull)
                     {
@@ -80,7 +80,7 @@ public readonly partial struct VariantValue
             },
             DataType.Numeric => rightType switch
             {
-                DataType.Integer => (ref VariantValue left, ref VariantValue right) =>
+                DataType.Integer => (in VariantValue left, in VariantValue right) =>
                 {
                     if (left.IsNull || right.IsNull)
                     {
@@ -88,7 +88,7 @@ public readonly partial struct VariantValue
                     }
                     return new VariantValue(left.AsNumericUnsafe * right.AsIntegerUnsafe);
                 },
-                DataType.Numeric => (ref VariantValue left, ref VariantValue right) =>
+                DataType.Numeric => (in VariantValue left, in VariantValue right) =>
                 {
                     if (left.IsNull || right.IsNull)
                     {
@@ -100,7 +100,7 @@ public readonly partial struct VariantValue
             },
             DataType.Interval => rightType switch
             {
-                DataType.Integer => (ref VariantValue left, ref VariantValue right) =>
+                DataType.Integer => (in VariantValue left, in VariantValue right) =>
                 {
                     if (left.IsNull || right.IsNull)
                     {

@@ -21,7 +21,7 @@ internal sealed class SumAggregateFunction : IAggregateFunction
     public void Invoke(VariantValueArray state, FunctionCallInfo callInfo)
     {
         var value = callInfo.GetAt(0);
-        AggregateFunctionsUtils.ExecuteWithNullInitialState(ref state.Values[0], ref value, VariantValue.Add);
+        AggregateFunctionsUtils.ExecuteWithNullInitialState(ref state.Values[0], in value, VariantValue.Add);
     }
 
     /// <inheritdoc />

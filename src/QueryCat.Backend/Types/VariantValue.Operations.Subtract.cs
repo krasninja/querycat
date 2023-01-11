@@ -6,7 +6,7 @@ public partial struct VariantValue
     {
         return leftType switch
         {
-            DataType.Integer => (ref VariantValue left) =>
+            DataType.Integer => (in VariantValue left) =>
             {
                 if (left.IsNull)
                 {
@@ -14,7 +14,7 @@ public partial struct VariantValue
                 }
                 return new VariantValue(-left.AsIntegerUnsafe);
             },
-            DataType.Float => (ref VariantValue left) =>
+            DataType.Float => (in VariantValue left) =>
             {
                 if (left.IsNull)
                 {
@@ -22,7 +22,7 @@ public partial struct VariantValue
                 }
                 return new VariantValue(-left.AsFloatUnsafe);
             },
-            DataType.Numeric => (ref VariantValue left) =>
+            DataType.Numeric => (in VariantValue left) =>
             {
                 if (left.IsNull)
                 {
@@ -30,7 +30,7 @@ public partial struct VariantValue
                 }
                 return new VariantValue(-left.AsNumericUnsafe);
             },
-            DataType.Boolean => (ref VariantValue left) =>
+            DataType.Boolean => (in VariantValue left) =>
             {
                 if (left.IsNull)
                 {
@@ -38,7 +38,7 @@ public partial struct VariantValue
                 }
                 return new VariantValue(!left.AsBooleanUnsafe);
             },
-            DataType.Interval => (ref VariantValue left) =>
+            DataType.Interval => (in VariantValue left) =>
             {
                 if (left.IsNull)
                 {
@@ -50,7 +50,7 @@ public partial struct VariantValue
         };
     }
 
-    internal static VariantValue Subtract(ref VariantValue left, ref VariantValue right, out ErrorCode errorCode)
+    internal static VariantValue Subtract(in VariantValue left, in VariantValue right, out ErrorCode errorCode)
     {
         var leftType = left.GetInternalType();
         var rightType = right.GetInternalType();
@@ -63,7 +63,7 @@ public partial struct VariantValue
         }
 
         errorCode = ErrorCode.OK;
-        return function.Invoke(ref left, ref right);
+        return function.Invoke(in left, in right);
     }
 
     internal static BinaryFunction GetSubtractDelegate(DataType leftType, DataType rightType)
@@ -75,10 +75,10 @@ public partial struct VariantValue
             return BinaryNullDelegate;
         }
 
-        return (ref VariantValue left, ref VariantValue right) =>
+        return (in VariantValue left, in VariantValue right) =>
         {
-            var negativeRight = negativeFunction.Invoke(ref right);
-            return addFunction.Invoke(ref left, ref negativeRight);
+            var negativeRight = negativeFunction.Invoke(in right);
+            return addFunction.Invoke(in left, in negativeRight);
         };
     }
 }

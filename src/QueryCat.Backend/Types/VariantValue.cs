@@ -569,14 +569,14 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
 
     #endregion
 
-    public static bool Equals(in VariantValue value1, ref VariantValue value2) =>
+    public static bool Equals(in VariantValue value1, in VariantValue value2) =>
         value1._valueUnion.IntegerValue == value2._valueUnion.IntegerValue
             && ((value1._object == null && value2._object == null) || Equals(value1._object, value2._object));
 
     /// <inheritdoc />
     public override bool Equals(object? obj)
         => obj is VariantValue vv
-            && Equals(this, ref vv);
+            && Equals(this, in vv);
 
     /// <inheritdoc />
     public override int GetHashCode()
@@ -593,7 +593,16 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     public static bool operator !=(VariantValue left, VariantValue right) => !(left == right);
 
     public static VariantValue operator +(VariantValue left, VariantValue right)
-        => Add(ref left, ref right, out _);
+        => Add(in left, in right, out _);
+
+    public static VariantValue operator -(VariantValue left, VariantValue right)
+        => Subtract(in left, in right, out _);
+
+    public static VariantValue operator *(VariantValue left, VariantValue right)
+        => Mul(in left, in right, out _);
+
+    public static VariantValue operator /(VariantValue left, VariantValue right)
+        => Div(in left, in right, out _);
 
     public static implicit operator decimal(VariantValue value) => value.AsNumeric;
 
@@ -644,5 +653,5 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     };
 
     /// <inheritdoc />
-    public bool Equals(VariantValue other) => Equals(this, ref other);
+    public bool Equals(VariantValue other) => Equals(this, in other);
 }

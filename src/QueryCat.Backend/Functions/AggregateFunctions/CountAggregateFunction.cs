@@ -28,7 +28,7 @@ internal sealed class CountAggregateFunction : IAggregateFunction
         if (!callInfo.GetAt(0).IsNull)
         {
             state.Values[0] =
-                _addDelegate.Invoke(ref state.Values[0], ref VariantValue.OneIntegerValue);
+                _addDelegate.Invoke(in state.Values[0], in VariantValue.OneIntegerValue);
         }
     }
 

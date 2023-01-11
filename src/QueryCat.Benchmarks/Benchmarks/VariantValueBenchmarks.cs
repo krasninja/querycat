@@ -43,7 +43,7 @@ public class VariantValueBenchmarks
         for (int i = 0; i < TotalCount; i++)
         {
             var right = list[i];
-            value = addAction.Invoke(ref value, ref right);
+            value = addAction.Invoke(in value, in right);
         }
         return value;
     }

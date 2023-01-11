@@ -343,7 +343,7 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
         {
             committed += iterator.Size;
             iterator.Segment.SetIndex(globalStartIndex + committed);
-            iterator = IteratorNext(ref iterator);
+            iterator = IteratorNext(in iterator);
         }
 
         _endPosition += size;
@@ -430,7 +430,7 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
                 return localBuffer;
             }
 
-            iterator = IteratorNext(ref iterator);
+            iterator = IteratorNext(in iterator);
         }
         return localBuffer;
     }
@@ -457,7 +457,7 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
                 }
             }
 
-            iterator = IteratorNext(ref iterator);
+            iterator = IteratorNext(in iterator);
         }
 
         foundDelimiter = default;
@@ -542,7 +542,7 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
         return new SegmentChunk(bufferSegment, bufferStartIndex, bufferEndIndex, consumed);
     }
 
-    private SegmentChunk IteratorNext(ref SegmentChunk segmentChunk)
+    private SegmentChunk IteratorNext(in SegmentChunk segmentChunk)
     {
         if (segmentChunk.Segment.NextRef == null)
         {

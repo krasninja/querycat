@@ -49,7 +49,14 @@ internal sealed class SelectResolveTypesVisitor : ResolveTypesVisitor
         {
             return;
         }
-        base.Visit(node);
+        if (string.IsNullOrEmpty(node.SourceName))
+        {
+            if (SetDataTypeFromVariable(node, node.ColumnName))
+            {
+                return;
+            }
+        }
+        throw new CannotFindIdentifierException(node.ColumnName);
     }
 
     private bool VisitIdentifierNode(IAstNode node, string name, string source)

@@ -9,7 +9,7 @@ public partial struct VariantValue
             throw new SemanticException($"Cannot get NOT delegate for type '{leftType}'.");
         }
 
-        return (ref VariantValue left) =>
+        return (in VariantValue left) =>
         {
             if (left.IsNull)
             {
@@ -27,7 +27,7 @@ public partial struct VariantValue
             throw new SemanticException($"Cannot get AND delegate for types '{leftType}' and '{rightType}'.");
         }
 
-        return (ref VariantValue left, ref VariantValue right) =>
+        return (in VariantValue left, in VariantValue right) =>
         {
             if ((left.IsNull && right.AsBooleanUnsafe)
                 || (left.AsBooleanUnsafe && right.IsNull))
@@ -51,7 +51,7 @@ public partial struct VariantValue
             throw new SemanticException($"Cannot get OR delegate for types '{leftType}' and '{rightType}'.");
         }
 
-        return (ref VariantValue left, ref VariantValue right) =>
+        return (in VariantValue left, in VariantValue right) =>
         {
             if ((left.IsNull && right.AsBooleanUnsafe)
                 || (left.AsBooleanUnsafe && right.IsNull))

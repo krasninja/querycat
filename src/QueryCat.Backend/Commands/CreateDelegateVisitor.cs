@@ -52,7 +52,7 @@ internal class CreateDelegateVisitor : AstVisitor
             var value = valueAction.Invoke();
             var leftValue = leftAction.Invoke();
             var rightValue = rightAction.Invoke();
-            var result = VariantValue.Between(ref value, ref leftValue, ref rightValue, out ErrorCode code);
+            var result = VariantValue.Between(in value, in leftValue, in rightValue, out ErrorCode code);
             ApplyStatistic(code);
             var boolResult = result.AsBoolean;
             return node.IsNot ? new VariantValue(!boolResult) : new VariantValue(boolResult);
@@ -72,7 +72,7 @@ internal class CreateDelegateVisitor : AstVisitor
         {
             var leftValue = leftAction.Invoke();
             var rightValue = rightAction.Invoke();
-            var result = action.Invoke(ref leftValue, ref rightValue);
+            var result = action.Invoke(in leftValue, in rightValue);
             return result;
         }
         NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func);
@@ -98,7 +98,7 @@ internal class CreateDelegateVisitor : AstVisitor
                 for (var i = 0; i < whenConditions.Length; i++)
                 {
                     var conditionValue = whenConditions[i].Invoke();
-                    if (equalsDelegate.Invoke(ref argValue, ref conditionValue).AsBoolean)
+                    if (equalsDelegate.Invoke(in argValue, in conditionValue).AsBoolean)
                     {
                         var resultValue = whenResults[i].Invoke();
                         return resultValue;
@@ -163,7 +163,7 @@ internal class CreateDelegateVisitor : AstVisitor
             for (int i = 0; i < actions.Length; i++)
             {
                 var rightValue = actions[i].Invoke();
-                var isEqual = equalDelegate.Invoke(ref leftValue, ref rightValue);
+                var isEqual = equalDelegate.Invoke(in leftValue, in rightValue);
                 if (isEqual.IsNull)
                 {
                     continue;
@@ -204,14 +204,14 @@ internal class CreateDelegateVisitor : AstVisitor
             VariantValue.Operation.Subtract => new FuncUnitDelegate(() =>
             {
                 var value = action.Invoke();
-                var result = VariantValue.Negation(ref value, out ErrorCode code);
+                var result = VariantValue.Negation(in value, out ErrorCode code);
                 ApplyStatistic(code);
                 return result;
             }),
             VariantValue.Operation.Not => new FuncUnitDelegate(() =>
             {
                 var value = action.Invoke();
-                var result = notDelegate.Invoke(ref value);
+                var result = notDelegate.Invoke(in value);
                 return result;
             }),
             VariantValue.Operation.IsNull => new FuncUnitDelegate(() =>

@@ -150,7 +150,7 @@ public static class MathFunctions
         var maxValue = notNullArgs.First();
         for (var i = 1; i < notNullArgs.Length; i++)
         {
-            if (VariantValue.Greater(ref notNullArgs[i], ref maxValue, out _))
+            if (VariantValue.Greater(in notNullArgs[i], in maxValue, out _))
             {
                 maxValue = notNullArgs[i];
             }
@@ -170,7 +170,7 @@ public static class MathFunctions
         var maxValue = notNullArgs.First();
         for (var i = 1; i < notNullArgs.Length; i++)
         {
-            if (VariantValue.Less(ref notNullArgs[i], ref maxValue, out _))
+            if (VariantValue.Less(in notNullArgs[i], in maxValue, out _))
             {
                 maxValue = notNullArgs[i];
             }

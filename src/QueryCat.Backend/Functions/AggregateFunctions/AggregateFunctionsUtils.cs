@@ -15,7 +15,7 @@ internal static class AggregateFunctionsUtils
     /// <param name="value">New value.</param>
     /// <param name="func"></param>
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    internal static void ExecuteWithNullInitialState(ref VariantValue state, ref VariantValue value,
+    internal static void ExecuteWithNullInitialState(ref VariantValue state, in VariantValue value,
         VariantValue.OperationBinaryDelegate func)
     {
         if (!value.IsNull)
@@ -26,7 +26,7 @@ internal static class AggregateFunctionsUtils
             }
             else
             {
-                var newState = func.Invoke(ref state, ref value, out var errorCode);
+                var newState = func.Invoke(in state, in value, out var errorCode);
                 if (errorCode == ErrorCode.OK)
                 {
                     state = newState;

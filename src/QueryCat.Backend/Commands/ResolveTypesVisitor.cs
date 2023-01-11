@@ -91,14 +91,23 @@ internal class ResolveTypesVisitor : AstVisitor
     {
         if (string.IsNullOrEmpty(node.SourceName))
         {
-            var varIndex = ExecutionThread.RootScope.GetVariableIndex(node.Name, out var scope);
-            if (varIndex > -1)
+            if (SetDataTypeFromVariable(node, node.Name))
             {
-                node.SetAttribute(AstAttributeKeys.TypeKey, scope!.Variables[varIndex].GetInternalType());
                 return;
             }
         }
         throw new CannotFindIdentifierException(node.FullName);
+    }
+
+    protected bool SetDataTypeFromVariable(IAstNode node, string name)
+    {
+        var varIndex = ExecutionThread.RootScope.GetVariableIndex(name, out var scope);
+        if (varIndex > -1)
+        {
+            node.SetAttribute(AstAttributeKeys.TypeKey, scope!.Variables[varIndex].GetInternalType());
+            return true;
+        }
+        return false;
     }
 
     /// <inheritdoc />

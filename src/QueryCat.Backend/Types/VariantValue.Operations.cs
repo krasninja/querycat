@@ -45,13 +45,13 @@ public readonly partial struct VariantValue
         Concat = 300
     }
 
-    internal delegate VariantValue OperationBinaryDelegate(ref VariantValue left, ref VariantValue right,
+    internal delegate VariantValue OperationBinaryDelegate(in VariantValue left, in VariantValue right,
         out ErrorCode errorCode);
 
     internal static BinaryFunction GetBinaryFunction(OperationBinaryDelegate @delegate)
     {
-        return (ref VariantValue left, ref VariantValue right)
-            => @delegate.Invoke(ref left, ref right, out _);
+        return (in VariantValue left, in VariantValue right)
+            => @delegate.Invoke(in left, in right, out _);
     }
 
     internal static UnaryFunction GetOperationDelegate(Operation operation, DataType leftType)
@@ -102,7 +102,7 @@ public readonly partial struct VariantValue
             _ => GetBinaryFunction(GetOperationDelegate(operation)),
         };
 
-    internal delegate VariantValue OperationTernaryDelegate(ref VariantValue left, ref VariantValue right,
+    internal delegate VariantValue OperationTernaryDelegate(in VariantValue left, in VariantValue right,
         out ErrorCode errorCode);
 
     internal static Operation[] AlgebraicOperations { get; } =
@@ -231,16 +231,16 @@ public readonly partial struct VariantValue
 
     #region Algebraic operations
 
-    public delegate VariantValue UnaryFunction(ref VariantValue left);
+    public delegate VariantValue UnaryFunction(in VariantValue left);
 
-    public static VariantValue UnaryNullDelegate(ref VariantValue left) => Null;
+    public static VariantValue UnaryNullDelegate(in VariantValue left) => Null;
 
-    public delegate VariantValue BinaryFunction(ref VariantValue left, ref VariantValue right);
+    public delegate VariantValue BinaryFunction(in VariantValue left, in VariantValue right);
 
-    private static VariantValue BinaryNullDelegate(ref VariantValue left, ref VariantValue right)
+    private static VariantValue BinaryNullDelegate(in VariantValue left, in VariantValue right)
         => Null;
 
-    public static VariantValue Negation(ref VariantValue left, out ErrorCode errorCode)
+    public static VariantValue Negation(in VariantValue left, out ErrorCode errorCode)
     {
         var leftType = left.GetInternalType();
 
@@ -252,10 +252,10 @@ public readonly partial struct VariantValue
         }
 
         errorCode = ErrorCode.OK;
-        return function.Invoke(ref left);
+        return function.Invoke(in left);
     }
 
-    public static VariantValue Modulo(ref VariantValue left, ref VariantValue right, out ErrorCode errorCode)
+    public static VariantValue Modulo(in VariantValue left, in VariantValue right, out ErrorCode errorCode)
     {
         var leftType = left.GetInternalType();
         var rightType = right.GetInternalType();
@@ -288,7 +288,7 @@ public readonly partial struct VariantValue
         return result;
     }
 
-    public static VariantValue LeftShift(ref VariantValue left, ref VariantValue right, out ErrorCode errorCode)
+    public static VariantValue LeftShift(in VariantValue left, in VariantValue right, out ErrorCode errorCode)
     {
         var leftType = left.GetInternalType();
         var rightType = right.GetInternalType();
@@ -307,7 +307,7 @@ public readonly partial struct VariantValue
         return result;
     }
 
-    public static VariantValue RightShift(ref VariantValue left, ref VariantValue right, out ErrorCode errorCode)
+    public static VariantValue RightShift(in VariantValue left, in VariantValue right, out ErrorCode errorCode)
     {
         var leftType = left.GetInternalType();
         var rightType = right.GetInternalType();
@@ -330,8 +330,11 @@ public readonly partial struct VariantValue
 
     #region Comparision operations
 
-    public static VariantValue Between(ref VariantValue value,
-        ref VariantValue left, ref VariantValue right, out ErrorCode errorCode)
+    public static VariantValue Between(
+        in VariantValue value,
+        in VariantValue left,
+        in VariantValue right,
+        out ErrorCode errorCode)
     {
         if (value.IsNull || left.IsNull || right.IsNull)
         {
@@ -339,12 +342,12 @@ public readonly partial struct VariantValue
             return Null;
         }
 
-        var leftCondition = GreaterOrEquals(ref value, ref left, out errorCode);
+        var leftCondition = GreaterOrEquals(in value, in left, out errorCode);
         if (errorCode != ErrorCode.OK)
         {
             return Null;
         }
-        var rightCondition = LessOrEquals(ref value, ref right, out errorCode);
+        var rightCondition = LessOrEquals(in value, in right, out errorCode);
         if (errorCode != ErrorCode.OK)
         {
             return Null;
@@ -354,12 +357,12 @@ public readonly partial struct VariantValue
         return new VariantValue(leftCondition.AsBoolean && rightCondition.AsBoolean);
     }
 
-    public static VariantValue BetweenAnd(ref VariantValue left, ref VariantValue right, out ErrorCode errorCode)
+    public static VariantValue BetweenAnd(in VariantValue left, in VariantValue right, out ErrorCode errorCode)
     {
         throw new InvalidOperationException("AND operation should not be evaluated within BETWEEN expression!");
     }
 
-    public static VariantValue Like(ref VariantValue left, ref VariantValue right, out ErrorCode errorCode)
+    public static VariantValue Like(in VariantValue left, in VariantValue right, out ErrorCode errorCode)
     {
         var pattern = right.AsString;
         var str = left.AsString;
@@ -368,9 +371,9 @@ public readonly partial struct VariantValue
         return new VariantValue(StringUtils.MatchesToLikePattern(pattern, str));
     }
 
-    public static VariantValue NotLike(ref VariantValue left, ref VariantValue right, out ErrorCode errorCode)
+    public static VariantValue NotLike(in VariantValue left, in VariantValue right, out ErrorCode errorCode)
     {
-        var likeResult = Like(ref left, ref right, out errorCode);
+        var likeResult = Like(in left, in right, out errorCode);
         if (errorCode != ErrorCode.OK)
         {
             return Null;
@@ -383,7 +386,7 @@ public readonly partial struct VariantValue
 
     #region Concatenation operator
 
-    public static VariantValue Concat(ref VariantValue left, ref VariantValue right, out ErrorCode errorCode)
+    public static VariantValue Concat(in VariantValue left, in VariantValue right, out ErrorCode errorCode)
     {
         var leftType = left.GetInternalType();
         var rightType = right.GetInternalType();

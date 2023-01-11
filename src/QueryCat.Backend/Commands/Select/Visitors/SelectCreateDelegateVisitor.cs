@@ -227,7 +227,7 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
             while (rowsIterator.MoveNext())
             {
                 var rightValue = rowsIterator.Current[0];
-                var result = operationDelegate(ref leftValue, ref rightValue, out ErrorCode code);
+                var result = operationDelegate(in leftValue, in rightValue, out ErrorCode code);
                 ApplyStatistic(code);
                 if (!result.AsBoolean)
                 {
@@ -244,7 +244,7 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
             while (rowsIterator.MoveNext())
             {
                 var rightValue = rowsIterator.Current[0];
-                var result = operationDelegate(ref leftValue, ref rightValue, out ErrorCode code);
+                var result = operationDelegate(in leftValue, in rightValue, out ErrorCode code);
                 ApplyStatistic(code);
                 if (result.AsBoolean)
                 {

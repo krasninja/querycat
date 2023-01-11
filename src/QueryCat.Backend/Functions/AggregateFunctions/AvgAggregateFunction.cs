@@ -33,9 +33,9 @@ internal sealed class AvgAggregateFunction : IAggregateFunction
         var value = callInfo.GetAt(0);
         if (!value.IsNull)
         {
-            AggregateFunctionsUtils.ExecuteWithNullInitialState(ref state.Values[0], ref value, VariantValue.Add);
+            AggregateFunctionsUtils.ExecuteWithNullInitialState(ref state.Values[0], in value, VariantValue.Add);
             state.Values[1] =
-                _addDelegate.Invoke(ref state.Values[1], ref VariantValue.OneIntegerValue);
+                _addDelegate.Invoke(in state.Values[1], in VariantValue.OneIntegerValue);
         }
     }
 

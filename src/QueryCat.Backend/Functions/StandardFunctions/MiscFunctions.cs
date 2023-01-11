@@ -14,7 +14,7 @@ internal static class MiscFunctions
     {
         var value1 = args.GetAt(0);
         var value2 = args.GetAt(1);
-        if (VariantValue.Equals(ref value1, ref value2, out _))
+        if (VariantValue.Equals(in value1, in value2, out _))
         {
             return VariantValue.Null;
         }
