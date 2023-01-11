@@ -34,6 +34,7 @@ internal partial class ProgramParserVisitor
             DistinctNode = this.VisitMaybe<SelectDistinctNode>(context.selectDistinctClause()),
             TableExpressionNode = this.VisitMaybe<SelectTableExpressionNode>(context.selectFromClause()),
             TargetNode = this.VisitMaybe<FunctionCallNode>(context.selectTarget()),
+            WindowNode = this.VisitMaybe<SelectWindowNode>(context.selectWindow()),
             OrderByNode = this.VisitMaybe<SelectOrderByNode>(context.selectOrderByClause()),
             OffsetNode = this.VisitMaybe<SelectOffsetNode>(context.selectOffsetClause()),
             FetchNode = this.VisitMaybe<SelectFetchNode>(context.selectTopClause())
@@ -207,6 +208,11 @@ internal partial class ProgramParserVisitor
     }
 
     /// <inheritdoc />
+    public override IAstNode VisitSelectSublistWindow(QueryCatParser.SelectSublistWindowContext context)
+        => new SelectColumnsSublistWindowNode(
+            this.Visit<SelectWindowSpecificationNode>(context.selectWindowSpecification()));
+
+    /// <inheritdoc />
     public override IAstNode VisitExpressionSelect(QueryCatParser.ExpressionSelectContext context)
         => this.Visit<SelectQueryNode>(context.selectQueryExpression());
 
@@ -374,13 +380,47 @@ internal partial class ProgramParserVisitor
 
     #endregion
 
+    #region Window
+
+    /// <inheritdoc />
+    public override IAstNode VisitSelectWindowSpecification(QueryCatParser.SelectWindowSpecificationContext context)
+    {
+        if (context.existingWindowName != null)
+        {
+            return new SelectWindowSpecificationNode(GetUnwrappedText(context.existingWindowName.Text));
+        }
+        return new SelectWindowSpecificationNode(
+            this.VisitMaybe<SelectWindowPartitionClauseNode>(context.selectWindowPartitionClause()),
+            this.VisitMaybe<SelectWindowOrderClauseNode>(context.selectWindowOrderClause()));
+    }
+
+    /// <inheritdoc />
+    public override IAstNode VisitSelectWindowPartitionClause(QueryCatParser.SelectWindowPartitionClauseContext context)
+        => new SelectWindowPartitionClauseNode(this.Visit<ExpressionNode>(context.expression()));
+
+    /// <inheritdoc />
+    public override IAstNode VisitSelectWindowOrderClause(QueryCatParser.SelectWindowOrderClauseContext context)
+        => new SelectWindowOrderClauseNode(this.Visit<SelectOrderBySpecificationNode>(context.selectSortSpecification()));
+
+    /// <inheritdoc />
+    public override IAstNode VisitSelectWindow(QueryCatParser.SelectWindowContext context)
+        => new SelectWindowNode(this.Visit<SelectWindowDefinitionListNode>(context.selectWindowDefinitionList()));
+
+    /// <inheritdoc />
+    public override IAstNode VisitSelectWindowDefinitionList(QueryCatParser.SelectWindowDefinitionListContext context)
+        => new SelectWindowDefinitionListNode(
+            GetUnwrappedText(context.name.Text),
+            this.Visit<SelectWindowSpecificationNode>(context.selectWindowSpecification()));
+
+    #endregion
+
     #region Order
 
     // See: 7.17 <query expression>
 
     /// <inheritdoc />
     public override IAstNode VisitSelectOrderByClause(QueryCatParser.SelectOrderByClauseContext context)
-        => new SelectOrderByNode(this.Visit<SelectOrderBySpecificationNode>(context.selectSortSpecification()).ToList());
+        => new SelectOrderByNode(this.Visit<SelectOrderBySpecificationNode>(context.selectSortSpecification()));
 
     /// <inheritdoc />
     public override IAstNode VisitSelectSortSpecification(QueryCatParser.SelectSortSpecificationContext context)

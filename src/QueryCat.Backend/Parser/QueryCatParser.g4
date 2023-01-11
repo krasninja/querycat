@@ -70,6 +70,7 @@ selectQueryExpression
       selectList
       selectTarget?
       selectFromClause
+      selectWindow?
       selectOrderByClause?
       selectLimitClause?
       selectOffsetClause?
@@ -97,7 +98,8 @@ selectQuerySpecification
       selectDistinctClause?
       selectList
       selectTarget?
-      selectFromClause # SelectQuerySpecificationFull
+      selectFromClause
+      selectWindow? # SelectQuerySpecificationFull
     | SELECT selectSublist (COMMA selectSublist)* selectTarget? # SelectQuerySpecificationSingle
     ;
 selectList: selectSublist (COMMA selectSublist)*;
@@ -112,6 +114,7 @@ selectWithColumnList: name=identifierChain (COMMA name=identifierChain)*;
 // Columns.
 selectSublist
     : STAR # SelectSublistAll
+    | functionCall OVER (windowName=IDENTIFIER | selectWindowSpecification) # SelectSublistWindow
     | expression selectAlias? # SelectSublistExpression
     | identifierChain selectAlias? # SelectSublistIdentifier
     ;
@@ -145,6 +148,14 @@ selectHaving: HAVING expression;
 // Where.
 selectSearchCondition: WHERE expression;
 
+// Window.
+selectWindowSpecification: '(' existingWindowName=IDENTIFIER? selectWindowPartitionClause?
+    selectWindowOrderClause? ')';
+selectWindowPartitionClause: PARTITION BY expression (COMMA expression)*;
+selectWindowOrderClause: ORDER BY selectSortSpecification (COMMA selectSortSpecification)*;
+selectWindow: WINDOW selectWindowDefinitionList (COMMA selectWindowDefinitionList)*;
+selectWindowDefinitionList: name=IDENTIFIER AS selectWindowSpecification;
+
 // Limit, offset.
 selectOffsetClause: OFFSET (offset=expression) (ROW | ROWS)?;
 selectFetchFirstClause: (FETCH | LIMIT) (FIRST | NEXT)? (limit=expression) (ROW | ROWS)? (ONLY | ONLY)?;
@@ -171,7 +182,6 @@ identifierChain
     ;
 array: '(' expression (',' expression)* ')';
 intervalLiteral: INTERVAL interval=STRING_LITERAL;
-
 
 castOperand: CAST '(' value=simpleExpression AS type ')';
 caseExpression: CASE arg=simpleExpression? caseWhen* (ELSE default=expression)? END;

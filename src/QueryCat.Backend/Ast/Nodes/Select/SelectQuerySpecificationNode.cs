@@ -20,6 +20,11 @@ public sealed class SelectQuerySpecificationNode : SelectQueryNode
     /// </summary>
     public SelectTableExpressionNode? TableExpressionNode { get; set; }
 
+    /// <summary>
+    /// Window node.
+    /// </summary>
+    public SelectWindowNode? WindowNode { get; set; }
+
     /// <inheritdoc />
     public override string Code => "select_query_spec";
 
@@ -43,6 +48,10 @@ public sealed class SelectQuerySpecificationNode : SelectQueryNode
         {
             TableExpressionNode = (SelectTableExpressionNode)node.TableExpressionNode.Clone();
         }
+        if (node.WindowNode != null)
+        {
+            WindowNode = (SelectWindowNode)node.WindowNode.Clone();
+        }
     }
 
     /// <inheritdoc />
@@ -59,6 +68,10 @@ public sealed class SelectQuerySpecificationNode : SelectQueryNode
         if (TableExpressionNode != null)
         {
             yield return TableExpressionNode;
+        }
+        if (WindowNode != null)
+        {
+            yield return WindowNode;
         }
         foreach (var astNode in base.GetChildren())
         {
@@ -93,6 +106,10 @@ public sealed class SelectQuerySpecificationNode : SelectQueryNode
         if (TableExpressionNode != null)
         {
             sb.Append($" From {TableExpressionNode}");
+        }
+        if (WindowNode != null)
+        {
+            sb.Append($" Window {WindowNode}");
         }
         if (OffsetNode != null)
         {

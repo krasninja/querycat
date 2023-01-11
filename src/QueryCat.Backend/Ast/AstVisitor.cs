@@ -177,6 +177,10 @@ public abstract class AstVisitor
     {
     }
 
+    public virtual void Visit(SelectColumnsSublistWindowNode node)
+    {
+    }
+
     public virtual void Visit(SelectCteIdentifierExpressionNode node)
     {
     }
@@ -254,6 +258,26 @@ public abstract class AstVisitor
     }
 
     public virtual void Visit(SelectTableReferenceListNode node)
+    {
+    }
+
+    public virtual void Visit(SelectWindowDefinitionListNode node)
+    {
+    }
+
+    public virtual void Visit(SelectWindowNode node)
+    {
+    }
+
+    public virtual void Visit(SelectWindowOrderClauseNode node)
+    {
+    }
+
+    public virtual void Visit(SelectWindowPartitionClauseNode node)
+    {
+    }
+
+    public virtual void Visit(SelectWindowSpecificationNode node)
     {
     }
 

@@ -254,6 +254,13 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitSelectSublistAll([NotNull] QueryCatParser.SelectSublistAllContext context);
 	/// <summary>
+	/// Visit a parse tree produced by the <c>SelectSublistWindow</c>
+	/// labeled alternative in <see cref="QueryCatParser.selectSublist"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSelectSublistWindow([NotNull] QueryCatParser.SelectSublistWindowContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>SelectSublistExpression</c>
 	/// labeled alternative in <see cref="QueryCatParser.selectSublist"/>.
 	/// </summary>
@@ -356,6 +363,36 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitSelectSearchCondition([NotNull] QueryCatParser.SelectSearchConditionContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="QueryCatParser.selectWindowSpecification"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSelectWindowSpecification([NotNull] QueryCatParser.SelectWindowSpecificationContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="QueryCatParser.selectWindowPartitionClause"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSelectWindowPartitionClause([NotNull] QueryCatParser.SelectWindowPartitionClauseContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="QueryCatParser.selectWindowOrderClause"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSelectWindowOrderClause([NotNull] QueryCatParser.SelectWindowOrderClauseContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="QueryCatParser.selectWindow"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSelectWindow([NotNull] QueryCatParser.SelectWindowContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="QueryCatParser.selectWindowDefinitionList"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSelectWindowDefinitionList([NotNull] QueryCatParser.SelectWindowDefinitionListContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="QueryCatParser.selectOffsetClause"/>.
 	/// </summary>

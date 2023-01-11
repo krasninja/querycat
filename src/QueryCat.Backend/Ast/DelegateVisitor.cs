@@ -212,6 +212,12 @@ public abstract class DelegateVisitor : AstVisitor
     }
 
     /// <inheritdoc />
+    public override void Visit(SelectColumnsSublistWindowNode node)
+    {
+        OnVisit(node);
+    }
+
+    /// <inheritdoc />
     public override void Visit(SelectCteIdentifierExpressionNode node)
     {
         OnVisit(node);
@@ -327,6 +333,36 @@ public abstract class DelegateVisitor : AstVisitor
 
     /// <inheritdoc />
     public override void Visit(SelectTableReferenceListNode node)
+    {
+        OnVisit(node);
+    }
+
+    /// <inheritdoc />
+    public override void Visit(SelectWindowDefinitionListNode node)
+    {
+        OnVisit(node);
+    }
+
+    /// <inheritdoc />
+    public override void Visit(SelectWindowNode node)
+    {
+        OnVisit(node);
+    }
+
+    /// <inheritdoc />
+    public override void Visit(SelectWindowOrderClauseNode node)
+    {
+        OnVisit(node);
+    }
+
+    /// <inheritdoc />
+    public override void Visit(SelectWindowPartitionClauseNode node)
+    {
+        OnVisit(node);
+    }
+
+    /// <inheritdoc />
+    public override void Visit(SelectWindowSpecificationNode node)
     {
         OnVisit(node);
     }
