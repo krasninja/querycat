@@ -2,29 +2,29 @@ namespace QueryCat.Backend.Ast.Nodes.Select;
 
 public sealed class SelectTableReferenceListNode : AstNode
 {
-    public IList<ExpressionNode> TableFunctions { get; }
+    public List<ExpressionNode> TableFunctionsNodes { get; } = new();
 
     /// <inheritdoc />
     public override string Code => "from_list";
 
-    public SelectTableReferenceListNode(IList<ExpressionNode> tableFunctions)
+    public SelectTableReferenceListNode(IEnumerable<ExpressionNode> tableFunctionsNodes)
     {
-        TableFunctions = tableFunctions;
+        TableFunctionsNodes.AddRange(tableFunctionsNodes);
     }
 
-    public SelectTableReferenceListNode(params ExpressionNode[] tableFunctions)
+    public SelectTableReferenceListNode(params ExpressionNode[] tableFunctionsNodes)
     {
-        TableFunctions = tableFunctions;
+        TableFunctionsNodes.AddRange(tableFunctionsNodes);
     }
 
     public SelectTableReferenceListNode(SelectTableReferenceListNode node) :
-        this(node.TableFunctions.Select(tf => (ExpressionNode)tf.Clone()).ToList())
+        this(node.TableFunctionsNodes.Select(tf => (ExpressionNode)tf.Clone()).ToList())
     {
         node.CopyTo(this);
     }
 
     /// <inheritdoc />
-    public override IEnumerable<IAstNode> GetChildren() => TableFunctions;
+    public override IEnumerable<IAstNode> GetChildren() => TableFunctionsNodes;
 
     /// <inheritdoc />
     public override object Clone() => new SelectTableReferenceListNode(this);
@@ -33,5 +33,5 @@ public sealed class SelectTableReferenceListNode : AstNode
     public override void Accept(AstVisitor visitor) => visitor.Visit(this);
 
     /// <inheritdoc />
-    public override string ToString() => string.Join(", ", TableFunctions.Select(tf => tf.ToString()));
+    public override string ToString() => string.Join(", ", TableFunctionsNodes.Select(tf => tf.ToString()));
 }

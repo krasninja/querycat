@@ -65,8 +65,8 @@ internal class ResolveTypesVisitor : AstVisitor
     /// <inheritdoc />
     public override void Visit(BinaryOperationExpressionNode node)
     {
-        var leftType = node.Left.GetDataType();
-        var rightType = node.Right.GetDataType();
+        var leftType = node.LeftNode.GetDataType();
+        var rightType = node.RightNode.GetDataType();
         var targetType = VariantValue.GetResultType(leftType, rightType, node.Operation);
         if (targetType == DataType.Void)
         {
@@ -127,7 +127,7 @@ internal class ResolveTypesVisitor : AstVisitor
         }
         else
         {
-            node.Right.CopyTo<DataType>(AstAttributeKeys.TypeKey, node);
+            node.RightNode.CopyTo<DataType>(AstAttributeKeys.TypeKey, node);
         }
     }
 

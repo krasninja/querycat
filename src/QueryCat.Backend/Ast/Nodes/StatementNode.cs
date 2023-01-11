@@ -10,7 +10,7 @@ public abstract class StatementNode : AstNode
     /// <summary>
     /// Next statement.
     /// </summary>
-    public StatementNode? Next { get; set; }
+    public StatementNode? NextNode { get; set; }
 
     /// <inheritdoc />
     public override string Code => $"{RootNode.Code}_stmt";

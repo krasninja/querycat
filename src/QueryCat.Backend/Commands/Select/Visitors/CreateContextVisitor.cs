@@ -104,7 +104,7 @@ internal sealed partial class CreateContextVisitor : AstVisitor
 
         // Start with FROM statement, if none - there is only one SELECT row.
         var finalRowsInputs = new List<IRowsInput>();
-        foreach (var tableExpression in querySpecificationNode.TableExpressionNode.Tables.TableFunctions)
+        foreach (var tableExpression in querySpecificationNode.TableExpressionNode.TablesNode.TableFunctionsNodes)
         {
             var rowsInputs = GetRowsInputFromExpression(context, tableExpression);
             var finalRowInput = rowsInputs.Last();
@@ -166,7 +166,7 @@ internal sealed partial class CreateContextVisitor : AstVisitor
         SelectCommandContext context,
         SelectTableFunctionNode tableFunctionNode)
     {
-        _resolveTypesVisitor.Run(tableFunctionNode.TableFunction);
+        _resolveTypesVisitor.Run(tableFunctionNode.TableFunctionNode);
         var inputs = new List<IRowsInput>();
         var rowsInput = tableFunctionNode.GetRequiredAttribute<IRowsInput>(AstAttributeKeys.RowsInputKey);
         inputs.Add(rowsInput);

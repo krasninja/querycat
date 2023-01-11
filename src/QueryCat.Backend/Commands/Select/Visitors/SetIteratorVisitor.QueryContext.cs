@@ -122,7 +122,7 @@ internal partial class SetIteratorVisitor
                 return false;
             }
             // Make sure we have id node.
-            if (inOperationExpressionNode.Expression is not IdentifierExpressionNode identifierNode)
+            if (inOperationExpressionNode.ExpressionNode is not IdentifierExpressionNode identifierNode)
             {
                 return false;
             }
@@ -133,7 +133,7 @@ internal partial class SetIteratorVisitor
                 return false;
             }
             var values = new List<IFuncUnit>();
-            foreach (var inExpressionValue in inOperationExpressionNode.InExpressionValues.Values)
+            foreach (var inExpressionValue in inOperationExpressionNode.InExpressionValuesNodes.ValuesNodes)
             {
                 values.Add(makeDelegateVisitor.RunAndReturn(inExpressionValue));
             }

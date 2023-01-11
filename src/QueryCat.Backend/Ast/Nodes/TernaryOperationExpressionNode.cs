@@ -9,28 +9,28 @@ public sealed class TernaryOperationExpressionNode : ExpressionNode
 {
     public VariantValue.Operation Operation { get; }
 
-    public ExpressionNode Value { get; }
+    public ExpressionNode ValueNode { get; }
 
-    public ExpressionNode Left { get; }
+    public ExpressionNode LeftNode { get; }
 
-    public ExpressionNode Right { get; }
+    public ExpressionNode RightNode { get; }
 
     /// <inheritdoc />
     public override string Code => "ternop";
 
     /// <inheritdoc />
-    public TernaryOperationExpressionNode(VariantValue.Operation operation, ExpressionNode value,
-        ExpressionNode left, ExpressionNode right)
+    public TernaryOperationExpressionNode(VariantValue.Operation operation, ExpressionNode valueNode,
+        ExpressionNode leftNode, ExpressionNode rightNode)
     {
         Operation = operation;
-        Value = value;
-        Left = left;
-        Right = right;
+        ValueNode = valueNode;
+        LeftNode = leftNode;
+        RightNode = rightNode;
     }
 
     public TernaryOperationExpressionNode(TernaryOperationExpressionNode node)
-        : this(node.Operation, (ExpressionNode)node.Value.Clone(),
-            (ExpressionNode)node.Left.Clone(), (ExpressionNode)node.Right.Clone())
+        : this(node.Operation, (ExpressionNode)node.ValueNode.Clone(),
+            (ExpressionNode)node.LeftNode.Clone(), (ExpressionNode)node.RightNode.Clone())
     {
         node.CopyTo(this);
     }
@@ -38,9 +38,9 @@ public sealed class TernaryOperationExpressionNode : ExpressionNode
     /// <inheritdoc />
     public override IEnumerable<IAstNode> GetChildren()
     {
-        yield return Value;
-        yield return Left;
-        yield return Right;
+        yield return ValueNode;
+        yield return LeftNode;
+        yield return RightNode;
     }
 
     /// <inheritdoc />

@@ -5,7 +5,7 @@ namespace QueryCat.Backend.Ast.Nodes.Select;
 
 public sealed class SelectTableFunctionNode : ExpressionNode, ISelectAliasNode
 {
-    public FunctionCallNode TableFunction { get; }
+    public FunctionCallNode TableFunctionNode { get; }
 
     /// <inheritdoc />
     public string Alias { get; set; }
@@ -16,28 +16,29 @@ public sealed class SelectTableFunctionNode : ExpressionNode, ISelectAliasNode
     public override string Code => "tablefunc";
 
     /// <inheritdoc />
-    public SelectTableFunctionNode(FunctionCallNode tableFunction, string alias)
+    public SelectTableFunctionNode(FunctionCallNode tableFunctionNode, string alias)
     {
-        TableFunction = tableFunction;
+        TableFunctionNode = tableFunctionNode;
         Alias = alias;
     }
 
-    public SelectTableFunctionNode(FunctionCallNode tableFunction)
+    public SelectTableFunctionNode(FunctionCallNode tableFunctionNode)
     {
-        TableFunction = tableFunction;
+        TableFunctionNode = tableFunctionNode;
         Alias = string.Empty;
     }
 
     public SelectTableFunctionNode(SelectTableFunctionNode node)
-        : this((FunctionCallNode)node.TableFunction.Clone(), node.Alias)
+        : this((FunctionCallNode)node.TableFunctionNode.Clone(), node.Alias)
     {
+        JoinedNodes.AddRange(node.JoinedNodes.Select(n => (SelectTableJoinedNode)n.Clone()));
         node.CopyTo(this);
     }
 
     /// <inheritdoc />
     public override IEnumerable<IAstNode> GetChildren()
     {
-        yield return TableFunction;
+        yield return TableFunctionNode;
         foreach (var joinedNode in JoinedNodes)
         {
             yield return joinedNode;
@@ -54,7 +55,7 @@ public sealed class SelectTableFunctionNode : ExpressionNode, ISelectAliasNode
     public override string ToString()
     {
         var sb = new StringBuilder()
-            .Append(TableFunction);
+            .Append(TableFunctionNode);
         if (!string.IsNullOrEmpty(Alias))
         {
             sb.Append(" As " + Alias);

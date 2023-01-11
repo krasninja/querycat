@@ -37,9 +37,9 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
         {
             typesVisitor = new SelectResolveTypesVisitor(_executionThread, _context.Parent);
         }
-        typesVisitor.Run(node.TableFunction);
+        typesVisitor.Run(node.TableFunctionNode);
 
-        var source = new CreateDelegateVisitor(_executionThread).RunAndReturn(node.TableFunction).Invoke();
+        var source = new CreateDelegateVisitor(_executionThread).RunAndReturn(node.TableFunctionNode).Invoke();
         var inputContext = CreateRowsInput(source);
         inputContext.Alias = node.Alias;
         _context.AddInput(inputContext);

@@ -33,7 +33,7 @@ public class QueryAstVisitor : AstVisitor
     public override void Visit(BinaryOperationExpressionNode node)
     {
         SetString(node,
-            $"{GetStringWithParens(node.Left)} {GetOperationString(node.Operation)} {GetStringWithParens(node.Right)}");
+            $"{GetStringWithParens(node.LeftNode)} {GetOperationString(node.Operation)} {GetStringWithParens(node.RightNode)}");
     }
 
     /// <inheritdoc />
@@ -82,7 +82,7 @@ public class QueryAstVisitor : AstVisitor
     /// <inheritdoc />
     public override void Visit(UnaryOperationExpressionNode node)
     {
-        SetString(node, $"{GetOperationString(node.Operation)}{GetString(node.Right)}");
+        SetString(node, $"{GetOperationString(node.Operation)}{GetString(node.RightNode)}");
     }
 
     #endregion
@@ -131,7 +131,7 @@ public class QueryAstVisitor : AstVisitor
     /// <inheritdoc />
     public override void Visit(SelectColumnsListNode node)
     {
-        SetString(node, string.Join(", ", node.Columns.Select(GetString)));
+        SetString(node, string.Join(", ", node.ColumnsNodes.Select(GetString)));
     }
 
     /// <inheritdoc />
@@ -205,7 +205,7 @@ public class QueryAstVisitor : AstVisitor
     public override void Visit(SelectTableExpressionNode node)
     {
         var sb = new StringBuilder();
-        sb.Append(GetString(node.Tables));
+        sb.Append(GetString(node.TablesNode));
         if (node.GroupByNode != null)
         {
             sb.Append(Space);
@@ -227,7 +227,7 @@ public class QueryAstVisitor : AstVisitor
     /// <inheritdoc />
     public override void Visit(SelectTableFunctionNode node)
     {
-        var value = GetString(node.TableFunction);
+        var value = GetString(node.TableFunctionNode);
         if (!string.IsNullOrEmpty(node.Alias))
         {
             value += " AS " + node.Alias;
@@ -238,7 +238,7 @@ public class QueryAstVisitor : AstVisitor
     /// <inheritdoc />
     public override void Visit(SelectTableReferenceListNode node)
     {
-        SetString(node, string.Join(", ", node.TableFunctions.Select(GetString)));
+        SetString(node, string.Join(", ", node.TableFunctionsNodes.Select(GetString)));
     }
 
     #endregion

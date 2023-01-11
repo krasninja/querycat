@@ -2,10 +2,10 @@ namespace QueryCat.Backend.Ast.Nodes.Select;
 
 public sealed class SelectHavingNode : AstNode
 {
+    public ExpressionNode ExpressionNode { get; }
+
     /// <inheritdoc />
     public override string Code => "having";
-
-    public ExpressionNode ExpressionNode { get; }
 
     public SelectHavingNode(ExpressionNode expressionNode)
     {

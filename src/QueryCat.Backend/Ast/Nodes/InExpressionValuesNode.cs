@@ -5,19 +5,19 @@ namespace QueryCat.Backend.Ast.Nodes;
 /// </summary>
 public sealed class InExpressionValuesNode : ExpressionNode
 {
-    public IList<ExpressionNode> Values { get; }
+    public List<ExpressionNode> ValuesNodes { get; } = new();
 
     /// <inheritdoc />
     public override string Code => "in_values";
 
     /// <inheritdoc />
-    public InExpressionValuesNode(IList<ExpressionNode> values)
+    public InExpressionValuesNode(IEnumerable<ExpressionNode> valuesNodes)
     {
-        Values = values;
+        ValuesNodes.AddRange(valuesNodes);
     }
 
     public InExpressionValuesNode(InExpressionValuesNode node) :
-        this(node.Values.Select(v => (ExpressionNode)v.Clone()).ToList())
+        this(node.ValuesNodes.Select(v => (ExpressionNode)v.Clone()).ToList())
     {
         node.CopyTo(this);
     }
@@ -25,7 +25,7 @@ public sealed class InExpressionValuesNode : ExpressionNode
     /// <inheritdoc />
     public override IEnumerable<IAstNode> GetChildren()
     {
-        foreach (var inValue in Values)
+        foreach (var inValue in ValuesNodes)
         {
             yield return inValue;
         }

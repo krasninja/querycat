@@ -7,39 +7,39 @@ namespace QueryCat.Backend.Ast.Nodes;
 /// </summary>
 public sealed class CaseExpressionNode : ExpressionNode
 {
-    public ExpressionNode? Argument { get; }
+    public ExpressionNode? ArgumentNode { get; }
 
-    public List<CaseWhenThenNode> WhenNodes { get; }
+    public List<CaseWhenThenNode> WhenNodes { get; } = new();
 
     public ExpressionNode? DefaultNode { get; }
 
-    public bool IsSearchCase => Argument == null;
+    public bool IsSearchCase => ArgumentNode == null;
 
-    public bool IsSimpleCase => Argument != null;
+    public bool IsSimpleCase => ArgumentNode != null;
 
     /// <inheritdoc />
     public override string Code => "case_expr";
 
     public CaseExpressionNode(
-        ExpressionNode? argument,
-        List<CaseWhenThenNode> when,
+        ExpressionNode? argumentNode,
+        IEnumerable<CaseWhenThenNode> when,
         ExpressionNode? @default = null)
     {
-        Argument = argument;
-        WhenNodes = when;
+        ArgumentNode = argumentNode;
+        WhenNodes.AddRange(when);
         DefaultNode = @default;
     }
 
     public CaseExpressionNode(
-        List<CaseWhenThenNode> when,
+        IEnumerable<CaseWhenThenNode> when,
         ExpressionNode? @default = null) : this(null, when, @default)
     {
     }
 
     public CaseExpressionNode(CaseExpressionNode node)
         : this(
-            (ExpressionNode?)node.Argument?.Clone(),
-            node.WhenNodes.Select(n => (CaseWhenThenNode)n.Clone()).ToList(),
+            (ExpressionNode?)node.ArgumentNode?.Clone(),
+            node.WhenNodes.Select(n => (CaseWhenThenNode)n.Clone()),
             (ExpressionNode?)node.DefaultNode?.Clone())
     {
         node.CopyTo(this);
@@ -51,9 +51,9 @@ public sealed class CaseExpressionNode : ExpressionNode
     /// <inheritdoc />
     public override IEnumerable<IAstNode> GetChildren()
     {
-        if (Argument != null)
+        if (ArgumentNode != null)
         {
-            yield return Argument;
+            yield return ArgumentNode;
         }
         foreach (var whenNode in WhenNodes)
         {

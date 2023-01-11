@@ -30,7 +30,7 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
         // Make statements sequence.
         for (var i = 1; i < statements.Count; i++)
         {
-            statements[i - 1].Next = statements[i];
+            statements[i - 1].NextNode = statements[i];
         }
         return new ProgramNode(statements);
     }
@@ -173,8 +173,8 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
     /// <inheritdoc />
     public override IAstNode VisitCaseExpression(QueryCatParser.CaseExpressionContext context)
         => new CaseExpressionNode(
-            argument: this.VisitMaybe<ExpressionNode?>(context.arg),
-            when: this.Visit<CaseWhenThenNode>(context.caseWhen()).ToList(),
+            argumentNode: this.VisitMaybe<ExpressionNode?>(context.arg),
+            when: this.Visit<CaseWhenThenNode>(context.caseWhen()),
             @default: this.Visit<ExpressionNode>(context.@default));
 
     /// <inheritdoc />
@@ -217,7 +217,7 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
 
     /// <inheritdoc />
     public override IAstNode VisitArray(QueryCatParser.ArrayContext context)
-        => new InExpressionValuesNode(this.Visit<ExpressionNode>(context.expression()).ToList());
+        => new InExpressionValuesNode(this.Visit<ExpressionNode>(context.expression()));
 
     /// <inheritdoc />
     public override IAstNode VisitIdentifierChainFull(QueryCatParser.IdentifierChainFullContext context)
@@ -245,7 +245,7 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
     /// <inheritdoc />
     public override IAstNode VisitFunctionCall(QueryCatParser.FunctionCallContext context)
         => new FunctionCallNode(GetUnwrappedText(context.IDENTIFIER()),
-            this.Visit<FunctionCallArgumentNode>(context.functionCallArg()).ToList());
+            this.Visit<FunctionCallArgumentNode>(context.functionCallArg()));
 
     /// <inheritdoc />
     public override IAstNode VisitFunctionCallArg(QueryCatParser.FunctionCallArgContext context)

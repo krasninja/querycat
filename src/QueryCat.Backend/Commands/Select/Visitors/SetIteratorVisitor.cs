@@ -132,7 +132,7 @@ internal sealed partial class SetIteratorVisitor : AstVisitor
             return;
         }
 
-        foreach (var column in querySpecificationNode.ColumnsListNode.Columns.OfType<SelectColumnsSublistExpressionNode>())
+        foreach (var column in querySpecificationNode.ColumnsListNode.ColumnsNodes.OfType<SelectColumnsSublistExpressionNode>())
         {
             if (column.ExpressionNode is IdentifierExpressionNode identifierExpressionNode)
             {
@@ -149,21 +149,21 @@ internal sealed partial class SetIteratorVisitor : AstVisitor
     private static void ResolveSelectAllStatement(IRowsIterator rows, SelectColumnsListNode columnsNode,
         SelectCommandContext context)
     {
-        for (int i = 0; i < columnsNode.Columns.Count; i++)
+        for (int i = 0; i < columnsNode.ColumnsNodes.Count; i++)
         {
-            if (columnsNode.Columns[i] is not SelectColumnsSublistAll)
+            if (columnsNode.ColumnsNodes[i] is not SelectColumnsSublistAll)
             {
                 continue;
             }
 
-            columnsNode.Columns.Remove(columnsNode.Columns[i]);
+            columnsNode.ColumnsNodes.Remove(columnsNode.ColumnsNodes[i]);
             for (int columnIndex = 0; columnIndex < rows.Columns.Length; columnIndex++)
             {
                 var column = rows.Columns[columnIndex];
 
                 var astColumn = new SelectColumnsSublistExpressionNode(
                     new IdentifierExpressionNode(column.Name, column.SourceName));
-                columnsNode.Columns.Insert(i + columnIndex, astColumn);
+                columnsNode.ColumnsNodes.Insert(i + columnIndex, astColumn);
             }
         }
     }
@@ -185,10 +185,10 @@ internal sealed partial class SetIteratorVisitor : AstVisitor
         var makeDelegateVisitor = new SelectCreateDelegateVisitor(ExecutionThread, context);
         foreach (var selectColumn in selectColumns)
         {
-            var func = makeDelegateVisitor.RunAndReturn(columnsNode.Columns[selectColumn.ColumnIndex]);
+            var func = makeDelegateVisitor.RunAndReturn(columnsNode.ColumnsNodes[selectColumn.ColumnIndex]);
             var columnIndex = projectedIterator.AddFuncColumn(selectColumn.Column, func);
             var info = context.ColumnsInfoContainer.GetByColumn(projectedIterator.Columns[columnIndex]);
-            info.RelatedSelectSublistNode = columnsNode.Columns[selectColumn.ColumnIndex];
+            info.RelatedSelectSublistNode = columnsNode.ColumnsNodes[selectColumn.ColumnIndex];
         }
         context.SetIterator(projectedIterator);
     }
@@ -199,7 +199,7 @@ internal sealed partial class SetIteratorVisitor : AstVisitor
     {
         var projectedIterator = new ProjectedRowsIterator(context.CurrentIterator);
         var iterator = context.CurrentIterator;
-        foreach (var selectColumn in columnsNode.Columns)
+        foreach (var selectColumn in columnsNode.ColumnsNodes)
         {
             var columnInfo = context.ColumnsInfoContainer.Columns
                 .FirstOrDefault(c => c.RelatedSelectSublistNode == selectColumn);
@@ -237,7 +237,7 @@ internal sealed partial class SetIteratorVisitor : AstVisitor
         ResolveNodesTypes(querySpecificationNode.DistinctNode, context);
         var makeDelegateVisitor = new SelectCreateDelegateVisitor(ExecutionThread, context);
         var funcUnits = querySpecificationNode.DistinctNode.
-            On.Select(d => makeDelegateVisitor.RunAndReturn(d)).ToArray();
+            OnNodes.Select(d => makeDelegateVisitor.RunAndReturn(d)).ToArray();
         context.SetIterator(new DistinctRowsIterator(context.CurrentIterator, funcUnits));
     }
 
@@ -271,15 +271,15 @@ internal sealed partial class SetIteratorVisitor : AstVisitor
             return string.Empty;
         }
 
-        for (int i = 0; i < node.Columns.Count; i++)
+        for (int i = 0; i < node.ColumnsNodes.Count; i++)
         {
-            var columnNode = node.Columns[i];
+            var columnNode = node.ColumnsNodes[i];
             var columnName = GetColumnName(columnNode);
             // Do not set source name if alias is specified.
             var columnSourceName = string.IsNullOrEmpty(columnNode.Alias)
                 ? GetColumnSourceName(columnNode)
                 : string.Empty;
-            if (string.IsNullOrEmpty(columnName) && node.Columns.Count == 1)
+            if (string.IsNullOrEmpty(columnName) && node.ColumnsNodes.Count == 1)
             {
                 columnName = SingleValueRowsIterator.ColumnTitle;
             }
@@ -332,7 +332,7 @@ internal sealed partial class SetIteratorVisitor : AstVisitor
         var makeDelegateVisitor = new SelectCreateDelegateVisitor(ExecutionThread, context);
         var orderFunctions = orderByNode.OrderBySpecificationNodes.Select(n =>
             new OrderRowsIterator.OrderBy(
-                makeDelegateVisitor.RunAndReturn(n.Expression),
+                makeDelegateVisitor.RunAndReturn(n.ExpressionNode),
                 ConvertDirection(n.Order),
                 ConvertNullOrder(n.NullOrder),
                 n.GetDataType()
@@ -348,10 +348,10 @@ internal sealed partial class SetIteratorVisitor : AstVisitor
         _ => throw new ArgumentOutOfRangeException(nameof(order)),
     };
 
-    private static NullOrder ConvertNullOrder(SelectNullOrdering order) => order switch
+    private static NullOrder ConvertNullOrder(SelectNullOrder order) => order switch
     {
-        SelectNullOrdering.NullsFirst => NullOrder.NullsFirst,
-        SelectNullOrdering.NullsLast => NullOrder.NullsLast,
+        SelectNullOrder.NullsFirst => NullOrder.NullsFirst,
+        SelectNullOrder.NullsLast => NullOrder.NullsLast,
         _ => throw new ArgumentOutOfRangeException(nameof(order)),
     };
 

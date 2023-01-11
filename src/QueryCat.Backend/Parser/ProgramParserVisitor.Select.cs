@@ -95,7 +95,7 @@ internal partial class ProgramParserVisitor
     /// <inheritdoc />
     public override IAstNode VisitSelectQuerySpecificationSingle(QueryCatParser.SelectQuerySpecificationSingleContext context)
     {
-        var selectColumnsSublistNodes = this.Visit<SelectColumnsSublistNode>(context.selectSublist()).ToList();
+        var selectColumnsSublistNodes = this.Visit<SelectColumnsSublistNode>(context.selectSublist());
         SelectTableExpressionNode? selectTableExpressionNode = null;
         if (Console.IsInputRedirected && !Console.IsErrorRedirected && !Console.IsOutputRedirected)
         {
@@ -114,7 +114,7 @@ internal partial class ProgramParserVisitor
 
     /// <inheritdoc />
     public override IAstNode VisitSelectList(QueryCatParser.SelectListContext context)
-        => new SelectColumnsListNode(this.Visit<SelectColumnsSublistNode>(context.selectSublist()).ToList());
+        => new SelectColumnsListNode(this.Visit<SelectColumnsSublistNode>(context.selectSublist()));
 
     #endregion
 
@@ -123,7 +123,7 @@ internal partial class ProgramParserVisitor
     /// <inheritdoc />
     public override IAstNode VisitSelectWithClause(QueryCatParser.SelectWithClauseContext context)
         => new SelectWithListNode(
-            this.Visit<SelectWithNode>(context.selectWithElement()).ToList(),
+            this.Visit<SelectWithNode>(context.selectWithElement()),
             isRecursive: context.RECURSIVE() != null);
 
     /// <inheritdoc />
@@ -133,7 +133,7 @@ internal partial class ProgramParserVisitor
             name: GetUnwrappedText(context.name.Text),
             queryNode: this.Visit<SelectQueryNode>(context.query));
         selectWithNode.ColumnNodes.AddRange(
-            this.Visit(context.selectWithColumnList(), SelectColumnsListNode.Empty).Columns);
+            this.Visit(context.selectWithColumnList(), SelectColumnsListNode.Empty).ColumnsNodes);
         return selectWithNode;
     }
 
@@ -141,8 +141,8 @@ internal partial class ProgramParserVisitor
     public override IAstNode VisitSelectWithColumnList(QueryCatParser.SelectWithColumnListContext context)
     {
         var columnsNodes = this.Visit<IdentifierExpressionNode>(context.identifierChain())
-            .Select(n => new SelectColumnsSublistExpressionNode(n)).ToList();
-        return new SelectColumnsListNode(columnsNodes.Cast<SelectColumnsSublistNode>().ToList());
+            .Select(n => new SelectColumnsSublistExpressionNode(n));
+        return new SelectColumnsListNode(columnsNodes);
     }
 
     #endregion
@@ -175,7 +175,7 @@ internal partial class ProgramParserVisitor
         {
             return SelectDistinctNode.Empty;
         }
-        return new SelectDistinctNode(this.Visit<ExpressionNode>(context.simpleExpression()).ToList());
+        return new SelectDistinctNode(this.Visit<ExpressionNode>(context.simpleExpression()));
     }
 
     #endregion
@@ -222,7 +222,7 @@ internal partial class ProgramParserVisitor
 
         var operation = ConvertOperationTokenToAst(context.op.Type);
         return new SelectSubqueryConditionExpressionNode(
-            left: this.Visit<ExpressionNode>(context.left),
+            leftNode: this.Visit<ExpressionNode>(context.left),
             operation: operation,
             quantifierOperator: ConvertStringToOperation(context.condition.Type),
             subQueryNode: this.Visit<SelectQueryNode>(context.selectQueryExpression()));
@@ -264,8 +264,7 @@ internal partial class ProgramParserVisitor
 
     /// <inheritdoc />
     public override IAstNode VisitSelectTableReferenceList(QueryCatParser.SelectTableReferenceListContext context)
-        => new SelectTableReferenceListNode(this.Visit<ExpressionNode>(context.selectTableReference())
-            .ToList());
+        => new SelectTableReferenceListNode(this.Visit<ExpressionNode>(context.selectTableReference()));
 
     /// <inheritdoc />
     public override IAstNode VisitSelectTablePrimaryNoFormat(QueryCatParser.SelectTablePrimaryNoFormatContext context)
@@ -352,7 +351,7 @@ internal partial class ProgramParserVisitor
 
     /// <inheritdoc />
     public override IAstNode VisitSelectGroupBy(QueryCatParser.SelectGroupByContext context)
-        => new SelectGroupByNode(this.Visit<ExpressionNode>(context.expression()).ToList());
+        => new SelectGroupByNode(this.Visit<ExpressionNode>(context.expression()));
 
     /// <inheritdoc />
     public override IAstNode VisitSelectHaving(QueryCatParser.SelectHavingContext context)
@@ -413,17 +412,17 @@ internal partial class ProgramParserVisitor
     /// <inheritdoc />
     public override IAstNode VisitSelectSortSpecification(QueryCatParser.SelectSortSpecificationContext context)
     {
-        var nullOrder = SelectNullOrdering.NullsLast;
+        var nullOrder = SelectNullOrder.NullsLast;
         if (context.LAST() != null)
         {
-            nullOrder = SelectNullOrdering.NullsLast;
+            nullOrder = SelectNullOrder.NullsLast;
         }
         else if (context.FIRST() != null)
         {
-            nullOrder = SelectNullOrdering.NullsFirst;
+            nullOrder = SelectNullOrder.NullsFirst;
         }
         return new SelectOrderBySpecificationNode(
-            expression: this.Visit<ExpressionNode>(context.expression()),
+            expressionNode: this.Visit<ExpressionNode>(context.expression()),
             order: context.DESC() != null ? SelectOrderSpecification.Descending : SelectOrderSpecification.Ascending,
             nullOrder);
     }

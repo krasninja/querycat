@@ -98,7 +98,7 @@ public sealed class SelectQuerySpecificationNode : SelectQueryNode
         {
             sb.Append($" {DistinctNode}");
         }
-        sb.Append($" {string.Join(", ", ColumnsListNode.Columns)}");
+        sb.Append($" {string.Join(", ", ColumnsListNode.ColumnsNodes)}");
         if (TargetNode != null)
         {
             sb.Append($" Into {TargetNode}");

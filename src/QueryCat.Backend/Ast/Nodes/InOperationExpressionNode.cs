@@ -5,9 +5,9 @@ namespace QueryCat.Backend.Ast.Nodes;
 /// </summary>
 public sealed class InOperationExpressionNode : ExpressionNode
 {
-    public ExpressionNode Expression { get; }
+    public ExpressionNode ExpressionNode { get; }
 
-    public InExpressionValuesNode InExpressionValues { get; }
+    public InExpressionValuesNode InExpressionValuesNodes { get; }
 
     public bool IsNot { get; }
 
@@ -15,28 +15,28 @@ public sealed class InOperationExpressionNode : ExpressionNode
     public override string Code => "in_expr";
 
     /// <inheritdoc />
-    public InOperationExpressionNode(ExpressionNode expression, ExpressionNode inExpressionValues, bool isNot = false)
+    public InOperationExpressionNode(ExpressionNode expressionNode, ExpressionNode inExpressionValues, bool isNot = false)
     {
         if (inExpressionValues is InExpressionValuesNode inValuesNode)
         {
-            InExpressionValues = inValuesNode;
+            InExpressionValuesNodes = inValuesNode;
         }
         else
         {
-            InExpressionValues = new InExpressionValuesNode(new List<ExpressionNode>
+            InExpressionValuesNodes = new InExpressionValuesNode(new List<ExpressionNode>
             {
                 inExpressionValues
             });
         }
 
-        Expression = expression;
+        ExpressionNode = expressionNode;
         IsNot = isNot;
     }
 
     public InOperationExpressionNode(InOperationExpressionNode node)
         : this(
-            (ExpressionNode)node.Expression.Clone(),
-            (InExpressionValuesNode)node.InExpressionValues.Clone(),
+            (ExpressionNode)node.ExpressionNode.Clone(),
+            (InExpressionValuesNode)node.InExpressionValuesNodes.Clone(),
             isNot: node.IsNot)
     {
         node.CopyTo(this);
@@ -45,8 +45,8 @@ public sealed class InOperationExpressionNode : ExpressionNode
     /// <inheritdoc />
     public override IEnumerable<IAstNode> GetChildren()
     {
-        yield return Expression;
-        yield return InExpressionValues;
+        yield return ExpressionNode;
+        yield return InExpressionValuesNodes;
     }
 
     /// <inheritdoc />
@@ -56,5 +56,5 @@ public sealed class InOperationExpressionNode : ExpressionNode
     public override void Accept(AstVisitor visitor) => visitor.Visit(this);
 
     /// <inheritdoc />
-    public override string ToString() => $"{Expression} IN {InExpressionValues}";
+    public override string ToString() => $"{ExpressionNode} IN {InExpressionValuesNodes}";
 }

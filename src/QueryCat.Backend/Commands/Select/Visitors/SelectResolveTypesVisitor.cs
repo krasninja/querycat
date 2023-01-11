@@ -59,7 +59,7 @@ internal sealed class SelectResolveTypesVisitor : ResolveTypesVisitor
     /// <inheritdoc />
     public override void Visit(SelectOrderBySpecificationNode node)
     {
-        node.SetDataType(node.Expression.GetDataType());
+        node.SetDataType(node.ExpressionNode.GetDataType());
     }
 
     /// <inheritdoc />
@@ -70,7 +70,7 @@ internal sealed class SelectResolveTypesVisitor : ResolveTypesVisitor
 
     private void VisitSelectQueryNode(SelectQueryNode node)
     {
-        node.SetDataType(node.ColumnsListNode.Columns[0].GetDataType());
+        node.SetDataType(node.ColumnsListNode.ColumnsNodes[0].GetDataType());
     }
 
     /// <inheritdoc />

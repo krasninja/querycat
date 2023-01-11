@@ -1,6 +1,6 @@
 namespace QueryCat.Backend.Ast.Nodes.Select;
 
-public enum SelectNullOrdering
+public enum SelectNullOrder
 {
     NullsLast,
     NullsFirst,

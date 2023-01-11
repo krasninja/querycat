@@ -179,7 +179,7 @@ public class ExecutionThread : IExecutionThread
                 commandContext.Dispose();
             }
 
-            ExecutingStatement = ExecutingStatement.Next;
+            ExecutingStatement = ExecutingStatement.NextNode;
         }
 
         if (Options.UseConfig)

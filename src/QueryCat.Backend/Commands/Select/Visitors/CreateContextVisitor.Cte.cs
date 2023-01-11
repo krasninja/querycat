@@ -14,7 +14,7 @@ internal sealed partial class CreateContextVisitor
             return;
         }
 
-        foreach (var withNode in node.WithNode.Nodes)
+        foreach (var withNode in node.WithNode.WithNodes)
         {
             var processedAsRecursive = false;
             if (node.WithNode.IsRecursive)

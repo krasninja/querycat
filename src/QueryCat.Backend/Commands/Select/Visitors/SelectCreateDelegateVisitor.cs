@@ -88,7 +88,7 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
     /// <inheritdoc />
     public override void Visit(SelectTableFunctionNode node)
     {
-        NodeIdFuncMap[node.Id] = NodeIdFuncMap[node.TableFunction.Id];
+        NodeIdFuncMap[node.Id] = NodeIdFuncMap[node.TableFunctionNode.Id];
     }
 
     /// <inheritdoc />
@@ -211,7 +211,7 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
 
         VariantValue AllFunc()
         {
-            var leftValue = NodeIdFuncMap[node.Left.Id].Invoke();
+            var leftValue = NodeIdFuncMap[node.LeftNode.Id].Invoke();
             rowsIterator.Reset();
             while (rowsIterator.MoveNext())
             {
@@ -228,7 +228,7 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
 
         VariantValue AnyFunc()
         {
-            var leftValue = NodeIdFuncMap[node.Left.Id].Invoke();
+            var leftValue = NodeIdFuncMap[node.LeftNode.Id].Invoke();
             rowsIterator.Reset();
             while (rowsIterator.MoveNext())
             {

@@ -63,10 +63,10 @@ internal class CreateDelegateVisitor : AstVisitor
     /// <inheritdoc />
     public override void Visit(BinaryOperationExpressionNode node)
     {
-        var leftAction = NodeIdFuncMap[node.Left.Id];
-        var rightAction = NodeIdFuncMap[node.Right.Id];
+        var leftAction = NodeIdFuncMap[node.LeftNode.Id];
+        var rightAction = NodeIdFuncMap[node.RightNode.Id];
         var action = VariantValue.GetOperationDelegate(node.Operation,
-            node.Left.GetDataType(), node.Right.GetDataType());
+            node.LeftNode.GetDataType(), node.RightNode.GetDataType());
 
         VariantValue Func()
         {
@@ -89,8 +89,8 @@ internal class CreateDelegateVisitor : AstVisitor
 
         if (node.IsSimpleCase)
         {
-            var arg = NodeIdFuncMap[node.Argument!.Id];
-            var equalsDelegate = VariantValue.GetEqualsDelegate(node.Argument.GetDataType());
+            var arg = NodeIdFuncMap[node.ArgumentNode!.Id];
+            var equalsDelegate = VariantValue.GetEqualsDelegate(node.ArgumentNode.GetDataType());
 
             VariantValue Func()
             {
@@ -153,9 +153,9 @@ internal class CreateDelegateVisitor : AstVisitor
     /// <inheritdoc />
     public override void Visit(InOperationExpressionNode node)
     {
-        var actions = node.InExpressionValues.Values.Select(v => NodeIdFuncMap[v.Id]).ToArray();
-        var valueAction = NodeIdFuncMap[node.Expression.Id];
-        var equalDelegate = VariantValue.GetEqualsDelegate(node.Expression.GetDataType());
+        var actions = node.InExpressionValuesNodes.ValuesNodes.Select(v => NodeIdFuncMap[v.Id]).ToArray();
+        var valueAction = NodeIdFuncMap[node.ExpressionNode.Id];
+        var equalDelegate = VariantValue.GetEqualsDelegate(node.ExpressionNode.GetDataType());
 
         VariantValue Func()
         {
@@ -194,7 +194,7 @@ internal class CreateDelegateVisitor : AstVisitor
     /// <inheritdoc />
     public override void Visit(UnaryOperationExpressionNode node)
     {
-        var action = NodeIdFuncMap[node.Right.Id];
+        var action = NodeIdFuncMap[node.RightNode.Id];
         var notDelegate = node.Operation == VariantValue.Operation.Not
             ? VariantValue.GetOperationDelegate(VariantValue.Operation.Not, node.GetDataType())
             : VariantValue.UnaryNullDelegate;

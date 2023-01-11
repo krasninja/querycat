@@ -10,7 +10,7 @@ public sealed class SelectSubqueryConditionExpressionNode : ExpressionNode
         All
     }
 
-    public ExpressionNode Left { get; }
+    public ExpressionNode LeftNode { get; }
 
     public VariantValue.Operation Operation { get; }
 
@@ -20,12 +20,12 @@ public sealed class SelectSubqueryConditionExpressionNode : ExpressionNode
 
     /// <inheritdoc />
     public SelectSubqueryConditionExpressionNode(
-        ExpressionNode left,
+        ExpressionNode leftNode,
         VariantValue.Operation operation,
         QuantifierOperator quantifierOperator,
         SelectQueryNode subQueryNode)
     {
-        Left = left;
+        LeftNode = leftNode;
         Operation = operation;
         Operator = quantifierOperator;
         SubQueryNode = subQueryNode;
@@ -33,7 +33,7 @@ public sealed class SelectSubqueryConditionExpressionNode : ExpressionNode
 
     public SelectSubqueryConditionExpressionNode(SelectSubqueryConditionExpressionNode node)
         : this(
-            (ExpressionNode)node.Left.Clone(),
+            (ExpressionNode)node.LeftNode.Clone(),
             node.Operation,
             node.Operator,
             (SelectQueryNode)node.SubQueryNode.Clone())
@@ -50,7 +50,7 @@ public sealed class SelectSubqueryConditionExpressionNode : ExpressionNode
     /// <inheritdoc />
     public override IEnumerable<IAstNode> GetChildren()
     {
-        yield return Left;
+        yield return LeftNode;
         yield return SubQueryNode;
     }
 

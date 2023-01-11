@@ -6,14 +6,14 @@ namespace QueryCat.Backend.Ast.Nodes;
 /// </summary>
 public sealed class ProgramNode : AstNode
 {
-    public IList<StatementNode> Statements { get; }
+    public List<StatementNode> Statements { get; } = new();
 
     /// <inheritdoc />
     public override string Code => "program";
 
     public ProgramNode(IList<StatementNode> statements)
     {
-        Statements = statements;
+        Statements.AddRange(statements);
     }
 
     public ProgramNode(ProgramNode node) : this(

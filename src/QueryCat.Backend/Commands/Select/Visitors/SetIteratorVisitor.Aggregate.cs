@@ -123,11 +123,11 @@ internal sealed partial class SetIteratorVisitor
     {
         // If there is no GROUP BY statement but there are aggregates functions in SELECT -
         // just generate "fake" special key.
-        if (groupByNode == null || !groupByNode.GroupBy.Any())
+        if (groupByNode == null || !groupByNode.GroupByNodes.Any())
         {
             return GroupRowsIterator.NoGroupsKeyFactory;
         }
         var makeDelegateVisitor = new SelectCreateDelegateVisitor(ExecutionThread, context);
-        return groupByNode.GroupBy.Select(n => makeDelegateVisitor.RunAndReturn(n)).ToArray();
+        return groupByNode.GroupByNodes.Select(n => makeDelegateVisitor.RunAndReturn(n)).ToArray();
     }
 }

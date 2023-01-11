@@ -5,28 +5,28 @@ public sealed class SelectColumnsListNode : AstNode
     /// <inheritdoc />
     public override string Code => "columns_list";
 
-    public List<SelectColumnsSublistNode> Columns { get; }
+    public List<SelectColumnsSublistNode> ColumnsNodes { get; } = new();
 
     public static SelectColumnsListNode Empty { get; } = new(Array.Empty<SelectColumnsSublistNode>());
 
-    public SelectColumnsListNode(List<SelectColumnsSublistNode> columns)
+    public SelectColumnsListNode(IEnumerable<SelectColumnsSublistNode> columnsNodes)
     {
-        Columns = columns;
+        ColumnsNodes.AddRange(columnsNodes);
     }
 
     public SelectColumnsListNode(params SelectColumnsSublistNode[] columns)
     {
-        Columns = new List<SelectColumnsSublistNode>(columns);
+        ColumnsNodes = new List<SelectColumnsSublistNode>(columns);
     }
 
     public SelectColumnsListNode(SelectColumnsListNode node) :
-        this(node.Columns.Select(c => (SelectColumnsSublistNode)c.Clone()).ToList())
+        this(node.ColumnsNodes.Select(c => (SelectColumnsSublistNode)c.Clone()).ToList())
     {
         node.CopyTo(this);
     }
 
     /// <inheritdoc />
-    public override IEnumerable<IAstNode> GetChildren() => Columns;
+    public override IEnumerable<IAstNode> GetChildren() => ColumnsNodes;
 
     /// <inheritdoc />
     public override object Clone() => new SelectColumnsListNode(this);

@@ -15,5 +15,5 @@ internal partial class ProgramParserVisitor
 
     /// <inheritdoc />
     public override IAstNode VisitStandardFunctionCoalesce(QueryCatParser.StandardFunctionCoalesceContext context)
-        => new CoalesceFunctionNode(this.Visit<ExpressionNode>(context.expression()).ToList());
+        => new CoalesceFunctionNode(this.Visit<ExpressionNode>(context.expression()));
 }
