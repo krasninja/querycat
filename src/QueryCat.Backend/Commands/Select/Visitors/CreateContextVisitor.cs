@@ -8,6 +8,7 @@ using QueryCat.Backend.Execution;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Storage;
+using QueryCat.Backend.Types;
 
 namespace QueryCat.Backend.Commands.Select.Visitors;
 
@@ -148,7 +149,7 @@ internal sealed partial class CreateContextVisitor : AstVisitor
         var cteIndex = currentContext.CteList.FindIndex(c => c.Name == idNode.FullName);
         if (cteIndex < 0)
         {
-            throw new QueryCatException($"Query with name '{idNode.FullName}' is not defined.");
+            return Array.Empty<IRowsInput>();
         }
         var context = currentContext.CteList[cteIndex].Context;
         if (context.CurrentIterator == null)
@@ -159,6 +160,33 @@ internal sealed partial class CreateContextVisitor : AstVisitor
         {
             new RowsIteratorInput(context.CurrentIterator),
         };
+    }
+
+    private IRowsInput[] CreateInputSourceFromVariable(SelectCommandContext currentContext, IdentifierExpressionNode idNode)
+    {
+        var varIndex = _executionThread.TopScope.GetVariableIndex(idNode.FullName, out var scope);
+        if (varIndex < 0)
+        {
+            return Array.Empty<IRowsInput>();
+        }
+        var value = scope!.Variables[varIndex];
+        if (value.GetInternalType() != DataType.Object)
+        {
+            return Array.Empty<IRowsInput>();
+        }
+        var obj = value.AsObject;
+        if (obj is IRowsInput rowsInput)
+        {
+            currentContext.AddInput(new SelectCommandInputContext(rowsInput));
+            return new[] { new CacheRowsInput(rowsInput) };
+        }
+        if (obj is IRowsIterator rowsIterator)
+        {
+            rowsInput = new RowsIteratorInput(rowsIterator);
+            currentContext.AddInput(new SelectCommandInputContext(rowsInput));
+            return new[] { new CacheRowsInput(rowsInput) };
+        }
+        return Array.Empty<IRowsInput>();
     }
 
     // Last input is combine input.
@@ -220,7 +248,16 @@ internal sealed partial class CreateContextVisitor : AstVisitor
         }
         if (expressionNode is IdentifierExpressionNode idNode)
         {
-            return CreateInputSourceFromCte(context, idNode);
+            var inputs = CreateInputSourceFromCte(context, idNode);
+            if (inputs.Length == 0)
+            {
+                inputs = CreateInputSourceFromVariable(context, idNode);
+            }
+            if (inputs.Length == 0)
+            {
+                throw new QueryCatException($"Query with name '{idNode.FullName}' is not defined.");
+            }
+            return inputs;
         }
 
         throw new InvalidOperationException($"Cannot process node '{expressionNode}' as input.");

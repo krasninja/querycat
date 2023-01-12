@@ -1,0 +1,5 @@
+expected: |
+  1
+query: |
+  declare x object := (select 1);
+  select * from x;

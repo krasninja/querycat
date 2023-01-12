@@ -91,6 +91,23 @@ internal sealed class SelectCommandContext : IDisposable
             }
         }
 
+        // Rows input iterator.
+        if (options.HasFlag(ColumnFindOptions.IncludeRowsInputIterator))
+        {
+            foreach (var context in GetParents(context => context))
+            {
+                if (context.RowsInputIterator != null)
+                {
+                    index = context.RowsInputIterator.GetColumnIndexByName(name, source);
+                    if (index > -1)
+                    {
+                        result = new InputNameSearchResult(context.RowsInputIterator, index, context);
+                        return true;
+                    }
+                }
+            }
+        }
+
         // Inputs.
         if (options.HasFlag(ColumnFindOptions.IncludeInputSources))
         {

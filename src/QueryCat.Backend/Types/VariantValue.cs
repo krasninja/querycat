@@ -99,6 +99,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
             DataType.Float => FloatObject,
             DataType.Timestamp => TimestampObject,
             DataType.Interval => IntervalObject,
+            DataType.Object => null,
             _ => throw new ArgumentOutOfRangeException(nameof(type)),
         };
         _valueUnion = default;

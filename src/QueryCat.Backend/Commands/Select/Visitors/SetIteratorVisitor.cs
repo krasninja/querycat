@@ -461,8 +461,9 @@ internal sealed partial class SetIteratorVisitor : AstVisitor
         var columnsToSelect = new HashSet<int>();
         foreach (var idNode in idNodes)
         {
-            if (context.TryGetInputSourceByName(idNode.Name, idNode.SourceName, out var result, ColumnFindOptions.IncludeInputSources)
-                && result?.Input is IRowsInput rowsInput)
+            if (context.TryGetInputSourceByName(idNode.Name, idNode.SourceName, out var result,
+                options: ColumnFindOptions.IncludeInputSources)
+                    && result?.Input is IRowsInput rowsInput)
             {
                 var absoluteIndex = context.GetAbsoluteColumnIndex(rowsInput, result.ColumnIndex);
                 if (absoluteIndex > -1)

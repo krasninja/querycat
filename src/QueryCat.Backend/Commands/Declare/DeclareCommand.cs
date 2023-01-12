@@ -11,7 +11,7 @@ internal class DeclareCommand : ICommand
     public CommandHandler CreateHandler(ExecutionThread executionThread, StatementNode node)
     {
         var declareNode = (DeclareNode)node.RootNode;
-        var scope = executionThread.RootScope;
+        var scope = executionThread.TopScope;
 
         var valueHandler = declareNode.ValueNode != null
             ? new StatementsVisitor(executionThread).RunAndReturn(declareNode.ValueNode)

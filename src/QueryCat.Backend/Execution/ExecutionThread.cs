@@ -32,9 +32,14 @@ public class ExecutionThread : IExecutionThread
     public IInputConfigStorage ConfigStorage => InputConfigStorage;
 
     /// <summary>
-    /// Root scope.
+    /// Root (base) thread scope.
     /// </summary>
     internal ExecutionScope RootScope { get; }
+
+    /// <summary>
+    /// Current top scope.
+    /// </summary>
+    internal ExecutionScope TopScope => RootScope;
 
     /// <summary>
     /// Functions manager.

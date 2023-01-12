@@ -21,6 +21,11 @@ internal enum ColumnFindOptions
     IncludeCommonTableExpressions = 1 << 3,
 
     /// <summary>
+    /// Try to find in RowsInputIterator.
+    /// </summary>
+    IncludeRowsInputIterator = 1 << 4,
+
+    /// <summary>
     /// Default search option.
     /// </summary>
     Default = IncludeRowsIterators | IncludeInputSources | IncludeCommonTableExpressions,

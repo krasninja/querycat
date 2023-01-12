@@ -11,7 +11,7 @@ internal class SetCommand : ICommand
     public CommandHandler CreateHandler(ExecutionThread executionThread, StatementNode node)
     {
         var setNode = (SetNode)node.RootNode;
-        var varIndex = executionThread.RootScope.GetVariableIndex(setNode.Name, out var scope);
+        var varIndex = executionThread.TopScope.GetVariableIndex(setNode.Name, out var scope);
         if (varIndex < 0 || scope == null)
         {
             throw new CannotFindIdentifierException(setNode.Name);

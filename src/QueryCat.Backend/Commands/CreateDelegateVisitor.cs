@@ -136,7 +136,7 @@ internal class CreateDelegateVisitor : AstVisitor
     {
         if (string.IsNullOrEmpty(node.SourceName))
         {
-            var varIndex = ExecutionThread.RootScope.GetVariableIndex(node.Name, out var scope);
+            var varIndex = ExecutionThread.TopScope.GetVariableIndex(node.Name, out var scope);
             if (varIndex > -1)
             {
                 VariantValue Func()
