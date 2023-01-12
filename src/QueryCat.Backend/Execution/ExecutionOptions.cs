@@ -17,10 +17,23 @@ public sealed class ExecutionOptions
     /// </summary>
     public IRowsOutput DefaultRowsOutput { get; set; }
 
+    private int _pageSize = 20;
+
     /// <summary>
     /// Page size.
     /// </summary>
-    public int PagingSize { get; set; } = 20;
+    public int PagingSize
+    {
+        get => _pageSize;
+        set
+        {
+            _pageSize = value;
+            if (DefaultRowsOutput is PagingOutput pagingOutput)
+            {
+                pagingOutput.PagingRowsCount = _pageSize;
+            }
+        }
+    }
 
     /// <summary>
     /// Add row number to output.
