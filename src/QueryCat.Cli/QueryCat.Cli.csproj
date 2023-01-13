@@ -9,7 +9,7 @@
     <AssemblyName>qcat</AssemblyName>
     <Authors>Ivan Kozhin</Authors>
     <Product>QueryCat</Product>
-    <Copyright>Copyright (c) 2022</Copyright>
+    <Copyright>Copyright (c) 2023</Copyright>
     <LangVersion>default</LangVersion>
   </PropertyGroup>
 
