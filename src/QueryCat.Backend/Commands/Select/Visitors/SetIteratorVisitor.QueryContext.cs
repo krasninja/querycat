@@ -21,7 +21,7 @@ internal partial class SetIteratorVisitor
             FillQueryContextConditions(querySpecificationNode, context, commandContext);
         }
 
-        // Fill "limit". For now we limit only of order is not defined.
+        // Fill "limit". For now we limit only if order is not defined.
         if (querySpecificationNode.OrderByNode == null)
         {
             if (querySpecificationNode.FetchNode != null)
@@ -30,7 +30,7 @@ internal partial class SetIteratorVisitor
                     .RunAndReturn(querySpecificationNode.FetchNode.CountNode).Invoke().AsInteger;
                 foreach (var queryContext in commandContext.InputQueryContextList)
                 {
-                    queryContext.QueryInfo.Limit += fetchCount;
+                    queryContext.QueryInfo.Limit = (queryContext.QueryInfo.Limit ?? 0) + fetchCount;
                 }
             }
             if (querySpecificationNode.OffsetNode != null)
@@ -39,7 +39,7 @@ internal partial class SetIteratorVisitor
                     .RunAndReturn(querySpecificationNode.OffsetNode.CountNode).Invoke().AsInteger;
                 foreach (var queryContext in commandContext.InputQueryContextList)
                 {
-                    queryContext.QueryInfo.Limit += offsetCount;
+                    queryContext.QueryInfo.Limit = (queryContext.QueryInfo.Limit ?? 0) + offsetCount;
                 }
             }
         }

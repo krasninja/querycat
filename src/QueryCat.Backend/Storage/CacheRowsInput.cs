@@ -42,7 +42,7 @@ public sealed class CacheRowsInput : IRowsInput
         }
     }
 
-    private readonly List<CacheEntry> _cacheEntries = new();
+    private readonly Dictionary<CacheKey, CacheEntry> _cacheEntries = new();
     private readonly IRowsInput _rowsInput;
     private bool[] _cacheReadMap;
     private int _rowIndex = -1;
@@ -55,7 +55,9 @@ public sealed class CacheRowsInput : IRowsInput
 
     internal int CacheReads { get; private set; }
 
-    internal int TotalReads { get; private set; }
+    internal int InputReads { get; private set; }
+
+    internal int TotalReads => CacheReads + InputReads;
 
     internal int TotalCacheEntries => _cacheEntries.Count;
 
@@ -88,7 +90,6 @@ public sealed class CacheRowsInput : IRowsInput
         }
 
         var cacheEntry = GetCurrentCacheEntry();
-        TotalReads++;
 
         var offset = Columns.Length * _rowIndex + columnIndex;
         value = cacheEntry.Cache[offset];
@@ -146,7 +147,7 @@ public sealed class CacheRowsInput : IRowsInput
             || (cacheEntry.Key.Limit > 0 && _rowIndex + 1 >= cacheEntry.Key.Limit))
         {
             cacheEntry.Complete();
-            _cacheEntries.Add(cacheEntry);
+            _cacheEntries.Add(cacheEntry.Key, cacheEntry);
         }
 
         return hasData;
@@ -159,7 +160,7 @@ public sealed class CacheRowsInput : IRowsInput
         {
             var offset = Columns.Length * _rowIndex + columnIndex;
             _rowsInput.ReadValue(columnIndex, out var value);
-            TotalReads++;
+            InputReads++;
             cacheEntry.Cache[offset] = value;
         }
         Array.Fill(_cacheReadMap, true);
@@ -178,12 +179,13 @@ public sealed class CacheRowsInput : IRowsInput
 
     private void RemoveExpiredKeys()
     {
-        for (var i = 0; i < _cacheEntries.Count; i++)
+        var toRemove = _cacheEntries
+            .Where(ce => ce.Value.IsExpired && ce.Value != _currentCacheEntry)
+            .Select(ce => ce.Key)
+            .ToList();
+        for (var i = 0; i < toRemove.Count; i++)
         {
-            if (_cacheEntries[i].IsExpired)
-            {
-                _cacheEntries.RemoveAt(i);
-            }
+            _cacheEntries.Remove(toRemove[i]);
         }
     }
 
@@ -192,16 +194,24 @@ public sealed class CacheRowsInput : IRowsInput
         RemoveExpiredKeys();
 
         var key = new CacheKey(_queryContext);
-        foreach (var cacheEntry in _cacheEntries)
+        // Fast path.
+        if (_cacheEntries.TryGetValue(key, out var existingKey))
+        {
+            Log.Logger.Debug("Reuse existing cache entry with key {Key}.", key);
+            return existingKey;
+        }
+        foreach (var cacheEntry in _cacheEntries.Values)
         {
             if (cacheEntry.Key.Match(key))
             {
-                Log.Logger.Debug("Reuse existing cache with key {Key}.", key);
+                Log.Logger.Debug("Reuse existing cache entry with key {Key}.", key);
                 return cacheEntry;
             }
         }
 
-        return new CacheEntry(key, TimeSpan.FromSeconds(30));
+        var entry = new CacheEntry(key, TimeSpan.FromSeconds(120));
+        Log.Logger.Debug("Create new cache entry with key {Key}.", key);
+        return entry;
     }
 
     /// <inheritdoc />

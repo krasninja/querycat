@@ -29,7 +29,7 @@ public class CacheRowsInputTests
         iterator.MoveNext(); // 1 total and 1 cache read.
 
         // Assert.
-        Assert.Equal(6, cacheRowsInput.TotalReads);
+        Assert.Equal(2, cacheRowsInput.InputReads);
         Assert.Equal(4, cacheRowsInput.CacheReads);
     }
 
@@ -53,7 +53,7 @@ public class CacheRowsInputTests
         iterator.MoveNext(); // 1 total and 1 cache read.
 
         // Assert.
-        Assert.Equal(8, cacheRowsInput.TotalReads);
+        Assert.Equal(3, cacheRowsInput.InputReads);
         Assert.Equal(5, cacheRowsInput.CacheReads);
     }
 
@@ -88,7 +88,7 @@ public class CacheRowsInputTests
         iterator.MoveNext(); // Read cache.
 
         // Assert.
-        Assert.Equal(5, cacheRowsInput.TotalReads);
+        Assert.Equal(2, cacheRowsInput.InputReads);
         Assert.Equal(2, cacheRowsInput.TotalCacheEntries);
         Assert.Equal(3, cacheRowsInput.CacheReads);
     }
@@ -128,7 +128,7 @@ public class CacheRowsInputTests
         iterator.MoveNext(); // Read cache.
 
         // Assert.
-        Assert.Equal(7, cacheRowsInput.TotalReads);
+        Assert.Equal(3, cacheRowsInput.InputReads);
         Assert.Equal(1, cacheRowsInput.TotalCacheEntries);
         Assert.Equal(4, cacheRowsInput.CacheReads);
     }
