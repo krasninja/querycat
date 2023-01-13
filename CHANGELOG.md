@@ -4,6 +4,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [0.2.0] - 2023-01-13
+
 ### Added
 
 - Initial plugins support.
@@ -37,4 +39,4 @@ case switch, distinct on, union, intersect, except.
 
 ### Added
 
-This is the first pre-production release of the tool. For now, it is able to parse CSV and JSON files and do simple SQL queries. As an additional feature, it can parse IISW3C logs.
+- This is the first pre-production release of the tool. For now, it is able to parse CSV and JSON files and do simple SQL queries. As an additional feature, it can parse IISW3C logs.
