@@ -11,7 +11,7 @@ public class PublishGeneralSettings : DotNetPublishSettings
         PublishTrimmed = false;
         PublishSingleFile = true;
         NoLogo = true;
-        PublishReadyToRun = true;
+        PublishReadyToRun = false;
         IncludeAllContentForSelfExtract = false;
         EnableCompressionInSingleFile = true;
         SelfContained = true;
