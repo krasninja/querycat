@@ -61,6 +61,20 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitStatementEcho([NotNull] QueryCatParser.StatementEchoContext context);
 	/// <summary>
+	/// Visit a parse tree produced by the <c>StatementDeclareVariable</c>
+	/// labeled alternative in <see cref="QueryCatParser.statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitStatementDeclareVariable([NotNull] QueryCatParser.StatementDeclareVariableContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>StatementSetVariable</c>
+	/// labeled alternative in <see cref="QueryCatParser.statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitStatementSetVariable([NotNull] QueryCatParser.StatementSetVariableContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>StatementExpression</c>
 	/// labeled alternative in <see cref="QueryCatParser.statement"/>.
 	/// </summary>
@@ -86,17 +100,35 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitFunctionArg([NotNull] QueryCatParser.FunctionArgContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="QueryCatParser.functionCall"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitFunctionCall([NotNull] QueryCatParser.FunctionCallContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="QueryCatParser.functionCallArg"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitFunctionCallArg([NotNull] QueryCatParser.FunctionCallArgContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="QueryCatParser.declareVariable"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitDeclareVariable([NotNull] QueryCatParser.DeclareVariableContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="QueryCatParser.setVariable"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSetVariable([NotNull] QueryCatParser.SetVariableContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="QueryCatParser.selectStatement"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitSelectStatement([NotNull] QueryCatParser.SelectStatementContext context);
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="QueryCatParser.selectQueryExpression"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitSelectQueryExpression([NotNull] QueryCatParser.SelectQueryExpressionContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="QueryCatParser.selectOrderByClause"/>.
 	/// </summary>
@@ -116,19 +148,68 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitSelectAlias([NotNull] QueryCatParser.SelectAliasContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>SelectQueryFull</c>
-	/// labeled alternative in <see cref="QueryCatParser.selectQuery"/>.
+	/// Visit a parse tree produced by the <c>SelectQueryExpressionSimple</c>
+	/// labeled alternative in <see cref="QueryCatParser.selectQueryExpression"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitSelectQueryFull([NotNull] QueryCatParser.SelectQueryFullContext context);
+	Result VisitSelectQueryExpressionSimple([NotNull] QueryCatParser.SelectQueryExpressionSimpleContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>SelectQuerySingle</c>
-	/// labeled alternative in <see cref="QueryCatParser.selectQuery"/>.
+	/// Visit a parse tree produced by the <c>SelectQueryExpressionFull</c>
+	/// labeled alternative in <see cref="QueryCatParser.selectQueryExpression"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitSelectQuerySingle([NotNull] QueryCatParser.SelectQuerySingleContext context);
+	Result VisitSelectQueryExpressionFull([NotNull] QueryCatParser.SelectQueryExpressionFullContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>SelectQueryExpressionBodyUnionExcept</c>
+	/// labeled alternative in <see cref="QueryCatParser.selectQueryExpressionBody"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSelectQueryExpressionBodyUnionExcept([NotNull] QueryCatParser.SelectQueryExpressionBodyUnionExceptContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>SelectQueryExpressionBodyIntersect</c>
+	/// labeled alternative in <see cref="QueryCatParser.selectQueryExpressionBody"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSelectQueryExpressionBodyIntersect([NotNull] QueryCatParser.SelectQueryExpressionBodyIntersectContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>SelectQueryExpressionBodyPrimary</c>
+	/// labeled alternative in <see cref="QueryCatParser.selectQueryExpressionBody"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSelectQueryExpressionBodyPrimary([NotNull] QueryCatParser.SelectQueryExpressionBodyPrimaryContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>SelectQueryPrimaryNoParens</c>
+	/// labeled alternative in <see cref="QueryCatParser.selectQueryPrimary"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSelectQueryPrimaryNoParens([NotNull] QueryCatParser.SelectQueryPrimaryNoParensContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>SelectQueryPrimaryParens</c>
+	/// labeled alternative in <see cref="QueryCatParser.selectQueryPrimary"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSelectQueryPrimaryParens([NotNull] QueryCatParser.SelectQueryPrimaryParensContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>SelectQuerySpecificationFull</c>
+	/// labeled alternative in <see cref="QueryCatParser.selectQuerySpecification"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSelectQuerySpecificationFull([NotNull] QueryCatParser.SelectQuerySpecificationFullContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>SelectQuerySpecificationSingle</c>
+	/// labeled alternative in <see cref="QueryCatParser.selectQuerySpecification"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSelectQuerySpecificationSingle([NotNull] QueryCatParser.SelectQuerySpecificationSingleContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="QueryCatParser.selectList"/>.
 	/// </summary>
@@ -148,6 +229,24 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitSelectDistinctOnClause([NotNull] QueryCatParser.SelectDistinctOnClauseContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="QueryCatParser.selectWithClause"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSelectWithClause([NotNull] QueryCatParser.SelectWithClauseContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="QueryCatParser.selectWithElement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSelectWithElement([NotNull] QueryCatParser.SelectWithElementContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="QueryCatParser.selectWithColumnList"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSelectWithColumnList([NotNull] QueryCatParser.SelectWithColumnListContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>SelectSublistAll</c>
 	/// labeled alternative in <see cref="QueryCatParser.selectSublist"/>.
 	/// </summary>
@@ -155,19 +254,19 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitSelectSublistAll([NotNull] QueryCatParser.SelectSublistAllContext context);
 	/// <summary>
+	/// Visit a parse tree produced by the <c>SelectSublistWindow</c>
+	/// labeled alternative in <see cref="QueryCatParser.selectSublist"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSelectSublistWindow([NotNull] QueryCatParser.SelectSublistWindowContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>SelectSublistExpression</c>
 	/// labeled alternative in <see cref="QueryCatParser.selectSublist"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitSelectSublistExpression([NotNull] QueryCatParser.SelectSublistExpressionContext context);
-	/// <summary>
-	/// Visit a parse tree produced by the <c>SelectSublistIdentifier</c>
-	/// labeled alternative in <see cref="QueryCatParser.selectSublist"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitSelectSublistIdentifier([NotNull] QueryCatParser.SelectSublistIdentifierContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="QueryCatParser.selectTarget"/>.
 	/// </summary>
@@ -187,33 +286,58 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitSelectTableReferenceList([NotNull] QueryCatParser.SelectTableReferenceListContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>SelectTableReferenceNoFormat</c>
-	/// labeled alternative in <see cref="QueryCatParser.selectTableReference"/>.
+	/// Visit a parse tree produced by <see cref="QueryCatParser.selectTableReference"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitSelectTableReferenceNoFormat([NotNull] QueryCatParser.SelectTableReferenceNoFormatContext context);
+	Result VisitSelectTableReference([NotNull] QueryCatParser.SelectTableReferenceContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>SelectTableReferenceStdin</c>
-	/// labeled alternative in <see cref="QueryCatParser.selectTableReference"/>.
+	/// Visit a parse tree produced by the <c>SelectTablePrimaryNoFormat</c>
+	/// labeled alternative in <see cref="QueryCatParser.selectTablePrimary"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitSelectTableReferenceStdin([NotNull] QueryCatParser.SelectTableReferenceStdinContext context);
+	Result VisitSelectTablePrimaryNoFormat([NotNull] QueryCatParser.SelectTablePrimaryNoFormatContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>SelectTableReferenceWithFormat</c>
-	/// labeled alternative in <see cref="QueryCatParser.selectTableReference"/>.
+	/// Visit a parse tree produced by the <c>SelectTablePrimaryStdin</c>
+	/// labeled alternative in <see cref="QueryCatParser.selectTablePrimary"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitSelectTableReferenceWithFormat([NotNull] QueryCatParser.SelectTableReferenceWithFormatContext context);
+	Result VisitSelectTablePrimaryStdin([NotNull] QueryCatParser.SelectTablePrimaryStdinContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>SelectTableReferenceSubquery</c>
-	/// labeled alternative in <see cref="QueryCatParser.selectTableReference"/>.
+	/// Visit a parse tree produced by the <c>SelectTablePrimaryWithFormat</c>
+	/// labeled alternative in <see cref="QueryCatParser.selectTablePrimary"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitSelectTableReferenceSubquery([NotNull] QueryCatParser.SelectTableReferenceSubqueryContext context);
+	Result VisitSelectTablePrimaryWithFormat([NotNull] QueryCatParser.SelectTablePrimaryWithFormatContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>SelectTablePrimarySubquery</c>
+	/// labeled alternative in <see cref="QueryCatParser.selectTablePrimary"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSelectTablePrimarySubquery([NotNull] QueryCatParser.SelectTablePrimarySubqueryContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>SelectTablePrimaryIdentifier</c>
+	/// labeled alternative in <see cref="QueryCatParser.selectTablePrimary"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSelectTablePrimaryIdentifier([NotNull] QueryCatParser.SelectTablePrimaryIdentifierContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="QueryCatParser.selectTableJoined"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSelectTableJoined([NotNull] QueryCatParser.SelectTableJoinedContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="QueryCatParser.selectJoinType"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSelectJoinType([NotNull] QueryCatParser.SelectJoinTypeContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="QueryCatParser.selectGroupBy"/>.
 	/// </summary>
@@ -232,6 +356,36 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitSelectSearchCondition([NotNull] QueryCatParser.SelectSearchConditionContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="QueryCatParser.selectWindowSpecification"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSelectWindowSpecification([NotNull] QueryCatParser.SelectWindowSpecificationContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="QueryCatParser.selectWindowPartitionClause"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSelectWindowPartitionClause([NotNull] QueryCatParser.SelectWindowPartitionClauseContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="QueryCatParser.selectWindowOrderClause"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSelectWindowOrderClause([NotNull] QueryCatParser.SelectWindowOrderClauseContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="QueryCatParser.selectWindow"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSelectWindow([NotNull] QueryCatParser.SelectWindowContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="QueryCatParser.selectWindowDefinitionList"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSelectWindowDefinitionList([NotNull] QueryCatParser.SelectWindowDefinitionListContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="QueryCatParser.selectOffsetClause"/>.
 	/// </summary>
@@ -289,23 +443,23 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitIntervalLiteral([NotNull] QueryCatParser.IntervalLiteralContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="QueryCatParser.functionCall"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitFunctionCall([NotNull] QueryCatParser.FunctionCallContext context);
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="QueryCatParser.functionCallArg"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitFunctionCallArg([NotNull] QueryCatParser.FunctionCallArgContext context);
-	/// <summary>
 	/// Visit a parse tree produced by <see cref="QueryCatParser.castOperand"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitCastOperand([NotNull] QueryCatParser.CastOperandContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="QueryCatParser.caseExpression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitCaseExpression([NotNull] QueryCatParser.CaseExpressionContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="QueryCatParser.caseWhen"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitCaseWhen([NotNull] QueryCatParser.CaseWhenContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>standardFunctionCurrentDate</c>
 	/// labeled alternative in <see cref="QueryCatParser.standardFunction"/>.
@@ -381,6 +535,13 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitExpressionInParens([NotNull] QueryCatParser.ExpressionInParensContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>ExpressionCase</c>
+	/// labeled alternative in <see cref="QueryCatParser.expression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitExpressionCase([NotNull] QueryCatParser.ExpressionCaseContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>ExpressionCast</c>
 	/// labeled alternative in <see cref="QueryCatParser.expression"/>.
@@ -458,6 +619,13 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitExpressionExists([NotNull] QueryCatParser.ExpressionExistsContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>SimpleExpressionCase</c>
+	/// labeled alternative in <see cref="QueryCatParser.simpleExpression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSimpleExpressionCase([NotNull] QueryCatParser.SimpleExpressionCaseContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>SimpleExpressionLiteral</c>
 	/// labeled alternative in <see cref="QueryCatParser.simpleExpression"/>.

@@ -1,7 +1,9 @@
 using QueryCat.Backend;
+using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Storage;
 using QueryCat.Backend.Types;
+using QueryCat.Backend.Utils;
 
 namespace QueryCat.IntegrationTests.Storage;
 
@@ -39,6 +41,12 @@ public class ProxyRowsInput : IRowsInput
 
     /// <inheritdoc />
     public void Reset() => _rowsInput.Reset();
+
+    /// <inheritdoc />
+    public void Explain(IndentedStringBuilder stringBuilder)
+    {
+        stringBuilder.AppendRowsInputsWithIndent("Proxy", _rowsInput);
+    }
 
     public void SetInput(IRowsInput rowsInput, params string[] inputArguments)
     {

@@ -53,10 +53,6 @@ public class VariantValueArray
     /// <inheritdoc />
     public override bool Equals(object? obj)
     {
-        if (obj == null)
-        {
-            return false;
-        }
         if (obj is not VariantValueArray variantValues)
         {
             return false;
@@ -66,7 +62,7 @@ public class VariantValueArray
             return false;
         }
 
-        for (int i = 0; i < _values.Length; i++)
+        for (var i = 0; i < _values.Length; i++)
         {
             if (!variantValues._values[i].Equals(_values[i]))
             {
@@ -80,7 +76,7 @@ public class VariantValueArray
     public override int GetHashCode()
     {
         var hashCode = default(HashCode);
-        for (int i = 0; i < _values.Length; i++)
+        for (var i = 0; i < _values.Length; i++)
         {
             hashCode.Add(_values[i]);
         }

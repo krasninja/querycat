@@ -29,4 +29,7 @@ public sealed class SelectSearchConditionNode : AstNode
 
     /// <inheritdoc />
     public override void Accept(AstVisitor visitor) => visitor.Visit(this);
+
+    /// <inheritdoc />
+    public override string ToString() => $"({ExpressionNode})";
 }

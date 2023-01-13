@@ -1,4 +1,5 @@
 using QueryCat.Backend.Ast.Nodes;
+using QueryCat.Backend.Ast.Nodes.Declare;
 using QueryCat.Backend.Ast.Nodes.Function;
 using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Ast.Nodes.SpecialFunctions;
@@ -10,15 +11,6 @@ namespace QueryCat.Backend.Ast;
 /// </summary>
 public abstract class DelegateVisitor : AstVisitor
 {
-    private readonly AstTraversal _astTraversal;
-
-    protected AstTraversal AstTraversal => _astTraversal;
-
-    protected DelegateVisitor()
-    {
-        _astTraversal = new AstTraversal(this);
-    }
-
     /// <summary>
     /// Callback method.
     /// </summary>
@@ -28,7 +20,7 @@ public abstract class DelegateVisitor : AstVisitor
     /// <inheritdoc />
     public override void Run(IAstNode node)
     {
-        _astTraversal.PreOrder(node);
+        AstTraversal.PreOrder(node);
     }
 
     #region General
@@ -41,6 +33,18 @@ public abstract class DelegateVisitor : AstVisitor
 
     /// <inheritdoc />
     public override void Visit(BinaryOperationExpressionNode node)
+    {
+        OnVisit(node);
+    }
+
+    /// <inheritdoc />
+    public override void Visit(CaseExpressionNode node)
+    {
+        OnVisit(node);
+    }
+
+    /// <inheritdoc />
+    public override void Visit(CaseWhenThenNode node)
     {
         OnVisit(node);
     }
@@ -95,16 +99,6 @@ public abstract class DelegateVisitor : AstVisitor
 
     /// <inheritdoc />
     public override void Visit(UnaryOperationExpressionNode node)
-    {
-        OnVisit(node);
-    }
-
-    #endregion
-
-    #region Echo
-
-    /// <inheritdoc />
-    public override void Visit(ExpressionStatementNode node)
     {
         OnVisit(node);
     }
@@ -206,13 +200,19 @@ public abstract class DelegateVisitor : AstVisitor
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectColumnsSublistNameNode node)
+    public override void Visit(SelectColumnsSublistNode node)
     {
         OnVisit(node);
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectColumnsSublistNode node)
+    public override void Visit(SelectColumnsSublistWindowNode node)
+    {
+        OnVisit(node);
+    }
+
+    /// <inheritdoc />
+    public override void Visit(SelectCteIdentifierExpressionNode node)
     {
         OnVisit(node);
     }
@@ -266,7 +266,7 @@ public abstract class DelegateVisitor : AstVisitor
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectQueryExpressionBodyNode node)
+    public override void Visit(SelectQueryCombineNode node)
     {
         OnVisit(node);
     }
@@ -314,7 +314,89 @@ public abstract class DelegateVisitor : AstVisitor
     }
 
     /// <inheritdoc />
+    public override void Visit(SelectTableJoinedNode node)
+    {
+        OnVisit(node);
+    }
+
+    /// <inheritdoc />
+    public override void Visit(SelectTableJoinedTypeNode node)
+    {
+        OnVisit(node);
+    }
+
+    /// <inheritdoc />
     public override void Visit(SelectTableReferenceListNode node)
+    {
+        OnVisit(node);
+    }
+
+    /// <inheritdoc />
+    public override void Visit(SelectWindowDefinitionListNode node)
+    {
+        OnVisit(node);
+    }
+
+    /// <inheritdoc />
+    public override void Visit(SelectWindowNode node)
+    {
+        OnVisit(node);
+    }
+
+    /// <inheritdoc />
+    public override void Visit(SelectWindowOrderClauseNode node)
+    {
+        OnVisit(node);
+    }
+
+    /// <inheritdoc />
+    public override void Visit(SelectWindowPartitionClauseNode node)
+    {
+        OnVisit(node);
+    }
+
+    /// <inheritdoc />
+    public override void Visit(SelectWindowSpecificationNode node)
+    {
+        OnVisit(node);
+    }
+
+    /// <inheritdoc />
+    public override void Visit(SelectWithListNode node)
+    {
+        OnVisit(node);
+    }
+
+    /// <inheritdoc />
+    public override void Visit(SelectWithNode node)
+    {
+        OnVisit(node);
+    }
+
+    #endregion
+
+    #region Declare
+
+    /// <inheritdoc />
+    public override void Visit(DeclareNode node)
+    {
+        OnVisit(node);
+    }
+
+    /// <inheritdoc />
+    public override void Visit(DeclareStatementNode node)
+    {
+        OnVisit(node);
+    }
+
+    /// <inheritdoc />
+    public override void Visit(SetNode node)
+    {
+        OnVisit(node);
+    }
+
+    /// <inheritdoc />
+    public override void Visit(SetStatementNode node)
     {
         OnVisit(node);
     }

@@ -1,3 +1,5 @@
+using QueryCat.Backend.Abstractions;
+
 namespace QueryCat.Backend.Ast;
 
 /// <summary>
@@ -21,7 +23,7 @@ internal static class AstAttributeKeys
     public const string FunctionKey = "function_key";
 
     /// <summary>
-    /// Rows input of type <see cref="QueryCat.Backend.Storage.IRowsInput" />.
+    /// Rows input of type <see cref="IRowsInput" />.
     /// </summary>
     public const string RowsInputKey = "rows_input_key";
 
@@ -58,5 +60,10 @@ internal static class AstAttributeKeys
     /// <summary>
     /// Correspond identifier rows input column.
     /// </summary>
-    public const string InputColumn = "input_column";
+    public const string InputColumnKey = "input_column";
+
+    /// <summary>
+    /// Correspond identifier rows input column index.
+    /// </summary>
+    public const string InputColumnIndexKey = "input_column_index";
 }

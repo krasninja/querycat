@@ -17,16 +17,36 @@ statement
     : selectStatement # StatementSelectExpression
     | functionCall # StatementFunctionCall
     | echoStatement # StatementEcho
+    | declareVariable # StatementDeclareVariable
+    | setVariable # StatementSetVariable
     | expression # StatementExpression
     ;
 
 /*
+ * ===============
  * FUNCTION command.
+ * ===============
  */
 
 functionSignature: name=IDENTIFIER '(' (functionArg (COMMA functionArg)*)? ')' (COLON functionType)? EOF;
 functionType: type ('<' IDENTIFIER '>')?;
-functionArg: variadic=ELLIPSIS? IDENTIFIER optional=QUESTION? COLON functionType isArray=LEFT_RIGHT_BRACKET? ('=' default=literal)?;
+functionArg: variadic=ELLIPSIS? IDENTIFIER optional=QUESTION? COLON functionType isArray=LEFT_RIGHT_BRACKET?
+    (('=' | ':=' | DEFAULT) default=literal)?;
+
+functionCall
+    : IDENTIFIER '(' ( functionCallArg (COMMA functionCallArg)* )? ')'
+    | IDENTIFIER '(' '*' ')' // Special case for COUNT(*).
+    ;
+functionCallArg: (IDENTIFIER ASSOCIATION)? expression;
+
+/*
+ * ===============
+ * DECLARE/SET command.
+ * ===============
+ */
+
+declareVariable: DECLARE IDENTIFIER type (':=' statement)?;
+setVariable: SET IDENTIFIER ':=' statement;
 
 /*
  * ===============
@@ -36,40 +56,66 @@ functionArg: variadic=ELLIPSIS? IDENTIFIER optional=QUESTION? COLON functionType
 
 selectStatement: selectQueryExpression;
 
-// Union.
-selectQueryExpression: selectQuery (UNION selectQuery)*
-    selectOrderByClause?
-    selectOffsetClause?
-    selectFetchFirstClause?;
-
 // Order.
 selectOrderByClause: ORDER BY selectSortSpecification (COMMA selectSortSpecification)*;
-selectSortSpecification: expression (ASC | DESC)?;
+selectSortSpecification: expression (ASC | DESC)? ((NULLS FIRST) | (NULLS LAST))?;
 
 // Select query.
 selectAlias: AS (name=(IDENTIFIER | STRING_LITERAL));
-selectQuery
-    : SELECT
-        selectTopClause?
-        selectDistinctClause?
-        selectList
-        selectTarget?
-        selectFromClause
-        selectOrderByClause?
-        selectLimitClause?
-        selectOffsetClause?
-        selectFetchFirstClause? # SelectQueryFull
-    | SELECT selectSublist (COMMA selectSublist)* selectTarget? # SelectQuerySingle
+selectQueryExpression
+    : selectWithClause?
+      SELECT
+      selectTopClause?
+      selectDistinctClause?
+      selectList
+      selectTarget?
+      selectFromClause
+      selectWindow?
+      selectOrderByClause?
+      selectLimitClause?
+      selectOffsetClause?
+      selectFetchFirstClause? # SelectQueryExpressionSimple
+    | selectWithClause?
+      selectQueryExpressionBody
+      selectOrderByClause?
+      selectLimitClause?
+      selectOffsetClause?
+      selectFetchFirstClause? # SelectQueryExpressionFull
+    ;
+selectQueryExpressionBody
+    : left=selectQueryPrimary # SelectQueryExpressionBodyPrimary
+    | left=selectQueryExpressionBody INTERSECT (DISTINCT | ALL)? right=selectQueryExpressionBody # SelectQueryExpressionBodyIntersect
+    | left=selectQueryExpressionBody (UNION | EXCEPT) (DISTINCT | ALL)? right=selectQueryExpressionBody # SelectQueryExpressionBodyUnionExcept
+    ;
+selectQueryPrimary
+    : selectQuerySpecification # SelectQueryPrimaryNoParens
+    | '(' selectQueryExpression ')' # SelectQueryPrimaryParens
+    ;
+selectQuerySpecification
+    : selectWithClause?
+      SELECT
+      selectTopClause?
+      selectDistinctClause?
+      selectList
+      selectTarget?
+      selectFromClause
+      selectWindow? # SelectQuerySpecificationFull
+    | SELECT selectSublist (COMMA selectSublist)* selectTarget? # SelectQuerySpecificationSingle
     ;
 selectList: selectSublist (COMMA selectSublist)*;
 selectDistinctClause: ALL | DISTINCT | selectDistinctOnClause;
 selectDistinctOnClause: DISTINCT ON '(' simpleExpression (COMMA simpleExpression)* ')';
 
+// With.
+selectWithClause: WITH RECURSIVE? selectWithElement (COMMA selectWithElement)*;
+selectWithElement: name=IDENTIFIER ('(' selectWithColumnList ')')? AS '(' query=selectQueryExpression ')';
+selectWithColumnList: name=identifierChain (COMMA name=identifierChain)*;
+
 // Columns.
 selectSublist
     : STAR # SelectSublistAll
+    | functionCall OVER (windowName=IDENTIFIER | selectWindowSpecification) # SelectSublistWindow
     | expression selectAlias? # SelectSublistExpression
-    | identifierChain selectAlias? # SelectSublistIdentifier
     ;
 
 // Into.
@@ -83,12 +129,16 @@ selectFromClause:
     selectHaving?;
 selectTableReferenceList:
     FROM selectTableReference (COMMA selectTableReference)*;
-selectTableReference
-    : functionCall selectAlias? # SelectTableReferenceNoFormat
-    | '-' # SelectTableReferenceStdin
-    | uri=STRING_LITERAL (FORMAT functionCall)? selectAlias? # SelectTableReferenceWithFormat
-    | '(' selectQueryExpression ')' selectAlias? # SelectTableReferenceSubquery
+selectTableReference: selectTablePrimary selectTableJoined*;
+selectTablePrimary
+    : functionCall selectAlias? # SelectTablePrimaryNoFormat
+    | '-' # SelectTablePrimaryStdin
+    | uri=STRING_LITERAL (FORMAT functionCall)? selectAlias? # SelectTablePrimaryWithFormat
+    | '(' selectQueryExpression ')' selectAlias? # SelectTablePrimarySubquery
+    | name=IDENTIFIER # SelectTablePrimaryIdentifier
     ;
+selectTableJoined: selectJoinType? JOIN right=selectTablePrimary ON condition=expression;
+selectJoinType: INNER | (LEFT | RIGHT | FULL) OUTER?;
 
 // Group, Having.
 selectGroupBy: GROUP BY expression (COMMA expression)*;
@@ -97,9 +147,17 @@ selectHaving: HAVING expression;
 // Where.
 selectSearchCondition: WHERE expression;
 
+// Window.
+selectWindowSpecification: '(' existingWindowName=IDENTIFIER? selectWindowPartitionClause?
+    selectWindowOrderClause? ')';
+selectWindowPartitionClause: PARTITION BY expression (COMMA expression)*;
+selectWindowOrderClause: ORDER BY selectSortSpecification (COMMA selectSortSpecification)*;
+selectWindow: WINDOW selectWindowDefinitionList (COMMA selectWindowDefinitionList)*;
+selectWindowDefinitionList: name=IDENTIFIER AS selectWindowSpecification;
+
 // Limit, offset.
 selectOffsetClause: OFFSET (offset=expression) (ROW | ROWS)?;
-selectFetchFirstClause: FETCH (FIRST | NEXT)? (limit=expression) (ROW | ROWS)? (ONLY | ONLY)?;
+selectFetchFirstClause: (FETCH | LIMIT) (FIRST | NEXT)? (limit=expression) (ROW | ROWS)? (ONLY | ONLY)?;
 selectTopClause: TOP limit=INTEGER_LITERAL;
 selectLimitClause: LIMIT limit=expression;
 
@@ -124,12 +182,9 @@ identifierChain
 array: '(' expression (',' expression)* ')';
 intervalLiteral: INTERVAL interval=STRING_LITERAL;
 
-functionCall
-    : IDENTIFIER '(' ( functionCallArg (COMMA functionCallArg)* )? ')'
-    | IDENTIFIER '(' '*' ')' // Special case for COUNT(*).
-    ;
-functionCallArg: (IDENTIFIER ASSOCIATION)? expression;
 castOperand: CAST '(' value=simpleExpression AS type ')';
+caseExpression: CASE arg=simpleExpression? caseWhen* (ELSE default=expression)? END;
+caseWhen: WHEN condition=expression THEN result=expression;
 
 // SQL functions.
 standardFunction
@@ -161,6 +216,7 @@ type
     | NUMERIC
     | OBJECT
     | ANY
+    | VOID
     ;
 
 // For reference: https://www.postgresql.org/docs/current/sql-syntax-lexical.html#SQL-PRECEDENCE
@@ -169,6 +225,7 @@ expression
     | castOperand # ExpressionCast
     | standardFunction # ExpressionStandardFunctionCall
     | functionCall # ExpressionFunctionCall
+    | caseExpression # ExpressionCase
     | identifierChain # ExpressionIdentifier
     | '(' expression ')' # ExpressionInParens
     | '(' selectQueryExpression ')' # ExpressionSelect
@@ -198,6 +255,7 @@ simpleExpression
     | castOperand # SimpleExpressionCast
     | standardFunction # SimpleExpressionStandardFunctionCall
     | functionCall # SimpleExpressionFunctionCall
+    | caseExpression # SimpleExpressionCase
     | identifierChain # SimpleExpressionIdentifier
     | op=(PLUS | MINUS) right=expression # SimpleExpressionUnary
     | left=simpleExpression op=CONCAT right=simpleExpression # SimpleExpressionBinary

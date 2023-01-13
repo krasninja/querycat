@@ -1,0 +1,11 @@
+expected: |
+  1
+  2
+  3
+query: |
+  select num from 'Table1.csv'
+  union all
+  select num from 'Table1.csv'
+  union
+  select num from 'Table1.csv'
+  order by num;

@@ -1,7 +1,7 @@
 using System.ComponentModel;
+using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Formatters;
 using QueryCat.Backend.Functions;
-using QueryCat.Backend.Storage;
 using QueryCat.Backend.Types;
 
 namespace QueryCat.Backend.Providers;
@@ -12,7 +12,7 @@ namespace QueryCat.Backend.Providers;
 public static class FileInputOutput
 {
     [Description("Read data from a file.")]
-    [FunctionSignature("read_file(path: string, formatter?: object<IRowsFormatter>): object<IRowsInput>")]
+    [FunctionSignature("read_file(path: string, fmt?: object<IRowsFormatter>): object<IRowsInput>")]
     public static VariantValue ReadFile(FunctionCallInfo args)
     {
         var path = args.GetAt(0);
@@ -23,15 +23,20 @@ public static class FileInputOutput
         {
             throw new QueryCatException($"No files match '{path}'.");
         }
-        var input = new CombineRowsInput(files);
+        var input = files.Count == 1 ? files.First() : new CombineRowsInput(files);
         return VariantValue.CreateFromObject(input);
     }
 
     [Description("Write data to a file.")]
-    [FunctionSignature("write_file(path: string, formatter?: object<IRowsFormatter>): object<IRowsOutput>")]
+    [FunctionSignature("write_file(path: string, fmt?: object<IRowsFormatter>): object<IRowsOutput>")]
     public static VariantValue WriteFile(FunctionCallInfo args)
     {
         var path = args.GetAt(0);
+        if (path.IsNull || string.IsNullOrEmpty(path.AsString))
+        {
+            throw new QueryCatException("Path is not defined.");
+        }
+
         var formatter = args.GetAt(1).AsObject as IRowsFormatter;
         formatter ??= GetFormatter(path);
         var file = File.Open(path, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);

@@ -5,6 +5,6 @@ The output functions return object of type `IRowsOutput`.
 | Name and Description |
 | --- |
 | `fluid_template(template: string, out: string, var_name: string = 'rows'): object<IRowsOutput>`<br /><br /> Writes data to a Fluid template. |
-| `stdout(formatter?: object<IRowsFormatter>, page_size: integer = 10): object<IRowsOutput>`<br /><br /> Writes data to the system console. |
-| `write(uri: string, formatter?: object<IRowsFormatter>): object<IRowsInput>` <br /><br /> Write data to an URI. |
-| `write_file(path: string, formatter?: object<IRowsFormatter>): object<IRowsOutput>` <br /><br /> Writes data to a file. If `formatter` is omitted the formatter will be resolved by file extension. |
+| `stdout(fmt?: object<IRowsFormatter>, page_size: integer = 10): object<IRowsOutput>`<br /><br /> Writes data to the system console. |
+| `write(uri: string, fmt?: object<IRowsFormatter>): object<IRowsInput>` <br /><br /> Write data to an URI. |
+| `write_file(path: string, fmt?: object<IRowsFormatter>): object<IRowsOutput>` <br /><br /> Writes data to a file. If `fmt` is omitted the formatter will be resolved by file extension. |

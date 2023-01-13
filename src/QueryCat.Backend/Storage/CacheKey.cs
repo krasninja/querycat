@@ -1,4 +1,5 @@
 using System.Text;
+using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Types;
 using QueryCat.Backend.Utils;
@@ -135,7 +136,7 @@ internal readonly struct CacheKey
 
     internal string Serialize()
     {
-        var sb = new StringBuilder();
+        var sb = new StringBuilder(32);
         sb.Append(StringUtils.Quote($"F:{From}"));
         if (InputArguments.Length > 0)
         {

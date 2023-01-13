@@ -20,6 +20,7 @@ QUESTION:           '?';
 LEFT_BRACKET:       '[';
 RIGHT_BRACKET:      ']';
 LEFT_RIGHT_BRACKET: '[]';
+PIPE:               '&>';
 
 // Math operations.
 
@@ -116,22 +117,42 @@ ASC:                'ASC';
 BETWEEN:            'BETWEEN';
 DESC:               'DESC';
 DISTINCT:           'DISTINCT';
+EXCEPT:             'EXCEPT';
 FETCH:              'FETCH';
 FIRST:              'FIRST';
 FORMAT:             'FORMAT';
+FULL:               'FULL';
 GROUP:              'GROUP';
 HAVING:             'HAVING';
+INNER:              'INNER';
+INTERSECT:          'INTERSECT';
 INTO:               'INTO';
+JOIN:               'JOIN';
+LAST:               'LAST';
+LEFT:               'LEFT';
 LIMIT:              'LIMIT';
 NEXT:               'NEXT';
+NULLS:              'NULLS';
 OFFSET:             'OFFSET';
 ORDER:              'ORDER';
+OUTER:              'OUTER';
+OVER:               'OVER';
+PARTITION:          'PARTITION';
+RECURSIVE:          'RECURSIVE';
+RIGHT:              'RIGHT';
 ROW:                'ROW';
 ROWS:               'ROWS';
 SELECT:             'SELECT';
 TOP:                'TOP';
 UNION:              'UNION';
 WHERE:              'WHERE';
+WINDOW:             'WINDOW';
+WITH:               'WITH';
+
+// DECLARE/SET command.
+
+DECLARE:            'DECLARE';
+SET:                'SET';
 
 TYPE: INTEGER | STRING | FLOAT | TIMESTAMP | BOOLEAN | NUMERIC | OBJECT | ANY;
 
@@ -183,6 +204,6 @@ BOOLEAN_LITERAL: TRUE | FALSE;
 
 // Comments.
 
-SINGLE_LINE_COMMENT: '--' ~[\r\n]* (('\r'? '\n') | EOF) -> channel(HIDDEN);
+SINGLE_LINE_COMMENT: ('--' | '#!') ~[\r\n]* (('\r'? '\n') | EOF) -> channel(HIDDEN);
 MULTILINE_COMMENT: '/*' .*? '*/' -> channel(HIDDEN);
 SPACES: [ \u000B\t\r\n] -> channel(HIDDEN);

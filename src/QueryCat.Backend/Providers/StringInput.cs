@@ -1,6 +1,6 @@
 using System.ComponentModel;
 using System.Text;
-using QueryCat.Backend.Formatters;
+using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Functions;
 using QueryCat.Backend.Types;
 
@@ -12,7 +12,7 @@ namespace QueryCat.Backend.Providers;
 public static class StringInput
 {
     [Description("Reads data from a string.")]
-    [FunctionSignature("read_text(text: string, formatter: object<IRowsFormatter>): object<IRowsInput>")]
+    [FunctionSignature("read_text(text: string, fmt: object<IRowsFormatter>): object<IRowsInput>")]
     public static VariantValue ReadString(FunctionCallInfo args)
     {
         var text = args.GetAt(0).AsString;

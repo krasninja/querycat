@@ -1,15 +1,19 @@
 site_name: QueryCat Documentation
 nav:
   - 'Home': index.md
-  - 'Concepts': concepts.md
   - 'Tutorial': tutorial.md
+  - 'Concepts': concepts.md
+  - 'Plugins':
+    - 'Overview': plugins.md
+    - 'Logs': plugins/logs.md
   - 'Formatters': formatters.md
   - 'Commands':
+    - 'DECLARE': commands/declare.md
     - 'ECHO': commands/echo.md
     - 'SELECT': commands/select.md
+    - 'SET': commands/set.md
   - 'Input':
     - 'CSV': input/csv.md
-    - 'IISW3C': input/iisw3c.md
     - 'JSON': input/json.md
     - 'STDIN': input/stdin.md
     - 'Text': input/text-line.md
@@ -21,6 +25,7 @@ nav:
     - 'TSV': output/tsv.md
   - 'Functions':
     - 'Aggregate': functions/aggregate.md
+    - 'Crypto': functions/crypto.md
     - 'Date and Time': functions/datetime.md
     - 'Info': functions/info.md
     - 'Input': functions/input.md
@@ -28,11 +33,11 @@ nav:
     - 'Misc': functions/misc.md
     - 'Output': functions/output.md
     - 'String': functions/string.md
-    - 'System': functions/system.md
+  - 'FAQ': faq.md
   - 'Features':
     - 'Web Server': features/web-server.md
   - 'Development':
-    - 'Overview': development/overview.md
+    - 'Overview': development/index.md
   - 'Misc':
     - 'Alternative Tools': misc/alternative-tools.md
 theme: readthedocs

@@ -15,6 +15,11 @@ public class AstTraversal
     /// </summary>
     public List<Type> TypesToIgnore { get; } = new();
 
+    /// <summary>
+    /// If node type is within TypesToIgnore list it will be visited anyway, but children will not be traversed.
+    /// </summary>
+    public bool AcceptBeforeIgnore { get; set; }
+
     public AstTraversal(AstVisitor visitor)
     {
         _visitor = visitor ?? throw new ArgumentNullException(nameof(visitor));
@@ -37,13 +42,28 @@ public class AstTraversal
     /// <typeparam name="TNode">Target type.</typeparam>
     /// <returns>Found parent node or null.</returns>
     public TNode? GetFirstParent<TNode>() where TNode : IAstNode
-        => _treeStack.Select(s => s.Node).OfType<TNode>().FirstOrDefault();
+        => GetParents<TNode>().FirstOrDefault();
+
+    /// <summary>
+    /// Get first parent of type <see cref="TNode" /> that matches condition.
+    /// </summary>
+    /// <typeparam name="TNode">Target type.</typeparam>
+    /// <returns>Found parent node or null.</returns>
+    public TNode? GetFirstParent<TNode>(Func<IAstNode, bool> predicate) where TNode : IAstNode
+        => GetParents().Where(predicate).OfType<TNode>().FirstOrDefault();
 
     /// <summary>
     /// Returns enumerable of all current node parents.
     /// </summary>
     /// <returns>Enumerable of parents.</returns>
     public IEnumerable<IAstNode> GetParents() => _treeStack.Select(s => s.Node);
+
+    /// <summary>
+    /// Returns enumerable of all current node parents.
+    /// </summary>
+    /// <returns>Enumerable of parents.</returns>
+    public IEnumerable<TNode> GetParents<TNode>() where TNode : IAstNode
+        => _treeStack.Select(s => s.Node).OfType<TNode>();
 
     /// <summary>
     /// Pre-order traversal.
@@ -69,10 +89,14 @@ public class AstTraversal
                 {
                     continue;
                 }
-                if (Array.IndexOf(typesToIgnore, current.Enumerator.Current.GetType()) == -1)
+                if (!IsIgnoreType(current.Enumerator.Current.GetType()))
                 {
                     _treeStack.Push((current.Enumerator.Current, next.GetChildren().GetEnumerator()));
                     next.Accept(_visitor);
+                }
+                else if (AcceptBeforeIgnore)
+                {
+                    current.Enumerator.Current.Accept(_visitor);
                 }
             }
             else
@@ -106,9 +130,13 @@ public class AstTraversal
                 {
                     continue;
                 }
-                if (Array.IndexOf(typesToIgnore, current.Enumerator.Current.GetType()) == -1)
+                if (!IsIgnoreType(current.Enumerator.Current.GetType()))
                 {
                     _treeStack.Push((current.Enumerator.Current, next.GetChildren().GetEnumerator()));
+                }
+                else if (AcceptBeforeIgnore)
+                {
+                    current.Enumerator.Current.Accept(_visitor);
                 }
             }
             else
@@ -118,5 +146,15 @@ public class AstTraversal
                 _treeStack.Pop();
             }
         }
+    }
+
+    private bool IsIgnoreType(Type type)
+    {
+        var foundIndex = TypesToIgnore.FindIndex(t => t.IsAssignableFrom(type));
+        if (foundIndex > -1)
+        {
+            return true;
+        }
+        return false;
     }
 }

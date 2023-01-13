@@ -2,34 +2,35 @@ namespace QueryCat.Backend.Ast.Nodes.Select;
 
 public sealed class SelectOrderBySpecificationNode : AstNode
 {
-    public ExpressionNode Expression { get; }
+    public ExpressionNode ExpressionNode { get; }
 
     public SelectOrderSpecification Order { get; }
 
-    public SelectNullOrdering NullOrder { get; }
+    public SelectNullOrder NullOrder { get; }
 
     /// <inheritdoc />
     public override string Code => "sort_spec";
 
     public SelectOrderBySpecificationNode(
-        ExpressionNode expression,
+        ExpressionNode expressionNode,
         SelectOrderSpecification order = SelectOrderSpecification.Ascending,
-        SelectNullOrdering nullOrder = SelectNullOrdering.Unknown)
+        SelectNullOrder nullOrder = SelectNullOrder.NullsLast)
     {
-        Expression = expression;
+        ExpressionNode = expressionNode;
         Order = order;
         NullOrder = nullOrder;
     }
 
     public SelectOrderBySpecificationNode(SelectOrderBySpecificationNode node)
-        : this((ExpressionNode)node.Expression.Clone(), node.Order, node.NullOrder)
+        : this((ExpressionNode)node.ExpressionNode.Clone(), node.Order, node.NullOrder)
     {
+        node.CopyTo(this);
     }
 
     /// <inheritdoc />
     public override IEnumerable<IAstNode> GetChildren()
     {
-        yield return Expression;
+        yield return ExpressionNode;
     }
 
     /// <inheritdoc />

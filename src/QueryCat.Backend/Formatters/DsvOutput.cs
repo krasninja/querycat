@@ -1,5 +1,5 @@
 using System.Text;
-using QueryCat.Backend.Logging;
+using Serilog;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Storage;
 using QueryCat.Backend.Types;
@@ -16,28 +16,33 @@ internal sealed class DsvOutput : RowsOutput, IDisposable
     private readonly StreamWriter _streamWriter;
     private readonly char _delimiter;
     private readonly bool _hasHeader;
+    private readonly bool _quoteStrings;
     private bool _wroteHeader;
+
+    internal Stream Stream { get; }
 
     public DsvOutput(DsvOptions dsvOptions)
     {
-        _streamWriter = new StreamWriter(dsvOptions.Stream, Encoding.Default, -1, leaveOpen: true);
+        Stream = dsvOptions.Stream;
+        _streamWriter = new StreamWriter(Stream, Encoding.Default, -1, leaveOpen: true);
         _delimiter = dsvOptions.InputOptions.DelimiterStreamReaderOptions.Delimiters.Length > 0 ?
             dsvOptions.InputOptions.DelimiterStreamReaderOptions.Delimiters[0]
             : DefaultDelimiter;
         _hasHeader = dsvOptions.HasHeader ?? true;
+        _quoteStrings = dsvOptions.QuoteStrings;
     }
 
     /// <inheritdoc />
     public override void Open()
     {
-        Logger.Instance.Trace("Opened.", nameof(DsvOutput));
+        Log.Logger.Verbose("DSV opened.");
     }
 
     /// <inheritdoc />
     public override void Close()
     {
         _streamWriter.Close();
-        Logger.Instance.Trace("Closed.", nameof(DsvOutput));
+        Log.Logger.Verbose("DSV closed.");
     }
 
     /// <inheritdoc />
@@ -96,7 +101,7 @@ internal sealed class DsvOutput : RowsOutput, IDisposable
         if (_hasHeader && !_wroteHeader)
         {
             var length = columns.Count;
-            for (int i = 0; i < length; i++)
+            for (var i = 0; i < length; i++)
             {
                 WriteString(columns[i].Name);
                 if (i < length - 1)
@@ -112,7 +117,8 @@ internal sealed class DsvOutput : RowsOutput, IDisposable
 
     private void WriteString(string str)
     {
-        var containsDelimiter = str.IndexOf(_delimiter) > -1;
+        var containsDelimiter = _quoteStrings || str.IndexOf(_delimiter) > -1
+            || str.Contains('\n');
         if (containsDelimiter)
         {
             _streamWriter.Write('\"');

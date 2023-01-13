@@ -14,7 +14,7 @@ public class CannotFindFunctionException : QueryCatException
     /// </summary>
     /// <param name="name">Function name.</param>
     public CannotFindFunctionException(string name) :
-        base(string.Format(Resources.Errors.CannotFindFunction, name))
+        base($"Cannot find function '{name}'.")
     {
     }
 
@@ -24,7 +24,7 @@ public class CannotFindFunctionException : QueryCatException
     /// <param name="name">Function name.</param>
     /// <param name="argumentsTypes">Function arguments types.</param>
     public CannotFindFunctionException(string name, FunctionArgumentsTypes argumentsTypes) :
-        base(string.Format(Resources.Errors.CannotFindFunctionWithArgs, name, argumentsTypes))
+        base($"Cannot find function '{name}' matches arguments '{argumentsTypes}'.")
     {
     }
 }

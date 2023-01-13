@@ -1,3 +1,4 @@
+using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Function;
@@ -23,6 +24,7 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
     {
         _context = context;
         AstTraversal.TypesToIgnore.Add(typeof(SelectQuerySpecificationNode));
+        AstTraversal.AcceptBeforeIgnore = true;
     }
 
     /// <inheritdoc />
@@ -38,20 +40,12 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
     /// <inheritdoc />
     public override void Visit(IdentifierExpressionNode node)
     {
-        int columnIndex = _context.GetColumnIndexByName(node.Name, node.SourceName, out var rowsIterator);
-        if (columnIndex < 0)
+        if (VisitIdentifierNode(node, node.Name, node.SourceName))
         {
-            base.Visit(node);
+            return;
         }
-        else
-        {
-            var info = _context.ColumnsInfoContainer.GetByColumn(rowsIterator!.Columns[columnIndex]);
-            if (info.Redirect != null)
-            {
-                columnIndex = rowsIterator.GetColumnIndex(info.Redirect);
-            }
-            NodeIdFuncMap[node.Id] = new FuncUnitRowsIteratorColumn(rowsIterator, columnIndex);
-        }
+
+        base.Visit(node);
     }
 
     /// <inheritdoc />
@@ -61,27 +55,10 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectColumnsSublistNameNode node)
-    {
-        int columnIndex = _context.GetColumnIndexByName(node.ColumnName, node.SourceName, out var rowsIterator);
-        if (columnIndex < 0)
-        {
-            base.Visit(node);
-        }
-        else
-        {
-            var iterator = rowsIterator!;
-            NodeIdFuncMap[node.Id] = new FuncUnitRowsIteratorColumn(iterator, columnIndex);
-        }
-    }
-
-    /// <inheritdoc />
     public override void Visit(SelectExistsExpressionNode node)
     {
-        if (node.SubQueryExpressionNode.GetFunc().Invoke().AsObject is not IRowsIterator rowsIterator)
-        {
-            throw new InvalidOperationException("Incorrect subquery type.");
-        }
+        var commandContext = node.SubQueryNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
+        var rowsIterator = commandContext.CurrentIterator;
 
         VariantValue Func()
         {
@@ -111,7 +88,7 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
     /// <inheritdoc />
     public override void Visit(SelectTableFunctionNode node)
     {
-        NodeIdFuncMap[node.Id] = NodeIdFuncMap[node.TableFunction.Id];
+        NodeIdFuncMap[node.Id] = NodeIdFuncMap[node.TableFunctionNode.Id];
     }
 
     /// <inheritdoc />
@@ -127,7 +104,7 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
         base.Visit(node);
 
         var function = node.GetAttribute<Function>(AstAttributeKeys.FunctionKey);
-        if (function == null || !function.IsAggregate)
+        if (function is not { IsAggregate: true })
         {
             return;
         }
@@ -155,20 +132,51 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
         );
     }
 
+    private bool VisitIdentifierNode(IAstNode node, string name, string source)
+    {
+        if (!_context.TryGetInputSourceByName(name, source, out var result)
+            || result == null)
+        {
+            return false;
+        }
+
+        if (result.Input is IRowsIterator rowsIterator)
+        {
+            var info = _context.ColumnsInfoContainer.GetByColumn(rowsIterator.Columns[result.ColumnIndex]);
+            var index = result.ColumnIndex;
+            if (info.Redirect != null)
+            {
+                index = rowsIterator.GetColumnIndex(info.Redirect);
+            }
+            NodeIdFuncMap[node.Id] = new FuncUnitRowsIteratorColumn(rowsIterator, index);
+            return true;
+        }
+        if (result.Input is IRowsInput rowsInput)
+        {
+            NodeIdFuncMap[node.Id] = new FuncUnitRowsInputColumn(rowsInput, result.ColumnIndex);
+            return true;
+        }
+
+        return false;
+    }
+
     #region Subqueries
 
     /// <inheritdoc />
-    public override void Visit(SelectQueryExpressionBodyNode node)
+    public override void Visit(SelectQuerySpecificationNode node) => VisitSelectQueryNode(node);
+
+    /// <inheritdoc />
+    public override void Visit(SelectQueryCombineNode node) => VisitSelectQueryNode(node);
+
+    private void VisitSelectQueryNode(SelectQueryNode node)
     {
         if (NodeIdFuncMap.ContainsKey(node.Id))
         {
             return;
         }
 
-        if (node.GetFunc().Invoke().AsObject is not IRowsIterator rowsIterator)
-        {
-            throw new InvalidOperationException(Resources.Errors.InvalidRowsInputType);
-        }
+        var commandContext = node.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
+        var rowsIterator = commandContext.CurrentIterator;
 
         VariantValue Func()
         {
@@ -192,24 +200,23 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
             return;
         }
 
-        if (node.SubQueryNode.GetFunc().Invoke().AsObject is not IRowsIterator rowsIterator)
-        {
-            throw new InvalidOperationException(Resources.Errors.InvalidRowsInputType);
-        }
+        var commandContext = node.SubQueryNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
+        var rowsIterator = commandContext.CurrentIterator;
+
         if (rowsIterator.Columns.Length > 1)
         {
-            throw new QueryCatException(Resources.Errors.InvalidSubqueryColumnsCount);
+            throw new QueryCatException($"Subquery returns {rowsIterator.Columns.Length} columns, expected 1.");
         }
         var operationDelegate = VariantValue.GetOperationDelegate(node.Operation);
 
         VariantValue AllFunc()
         {
-            var leftValue = NodeIdFuncMap[node.Left.Id].Invoke();
+            var leftValue = NodeIdFuncMap[node.LeftNode.Id].Invoke();
             rowsIterator.Reset();
             while (rowsIterator.MoveNext())
             {
                 var rightValue = rowsIterator.Current[0];
-                var result = operationDelegate(ref leftValue, ref rightValue, out ErrorCode code);
+                var result = operationDelegate(in leftValue, in rightValue, out ErrorCode code);
                 ApplyStatistic(code);
                 if (!result.AsBoolean)
                 {
@@ -221,12 +228,12 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
 
         VariantValue AnyFunc()
         {
-            var leftValue = NodeIdFuncMap[node.Left.Id].Invoke();
+            var leftValue = NodeIdFuncMap[node.LeftNode.Id].Invoke();
             rowsIterator.Reset();
             while (rowsIterator.MoveNext())
             {
                 var rightValue = rowsIterator.Current[0];
-                var result = operationDelegate(ref leftValue, ref rightValue, out ErrorCode code);
+                var result = operationDelegate(in leftValue, in rightValue, out ErrorCode code);
                 ApplyStatistic(code);
                 if (result.AsBoolean)
                 {

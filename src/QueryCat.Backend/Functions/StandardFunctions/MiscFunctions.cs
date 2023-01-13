@@ -14,15 +14,31 @@ internal static class MiscFunctions
     {
         var value1 = args.GetAt(0);
         var value2 = args.GetAt(1);
-        if (VariantValue.Equals(ref value1, ref value2, out _))
+        if (VariantValue.Equals(in value1, in value2, out _))
         {
             return VariantValue.Null;
         }
         return value1;
     }
 
+    [Description("Not operation. The function can be used to suppress output.")]
+    [FunctionSignature("nop(...args: any[]): void")]
+    public static VariantValue Nop(FunctionCallInfo args)
+    {
+        return VariantValue.Null;
+    }
+
+    [Description("The function returns a version 4 (random) UUID.")]
+    [FunctionSignature("uuid(): string")]
+    public static VariantValue GetRandomGuid(FunctionCallInfo args)
+    {
+        return new VariantValue(Guid.NewGuid().ToString("D"));
+    }
+
     public static void RegisterFunctions(FunctionsManager functionsManager)
     {
         functionsManager.RegisterFunction(NullIf);
+        functionsManager.RegisterFunction(Nop);
+        functionsManager.RegisterFunction(GetRandomGuid);
     }
 }

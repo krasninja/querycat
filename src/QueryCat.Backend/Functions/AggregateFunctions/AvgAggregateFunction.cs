@@ -23,7 +23,7 @@ internal sealed class AvgAggregateFunction : IAggregateFunction
     /// <inheritdoc />
     public VariantValueArray GetInitialState(DataType type)
         => new(
-            new VariantValue(type), // 0: sum
+            VariantValue.Null, // 0: sum
             new VariantValue(DataType.Integer) // 1: count
         );
 
@@ -33,9 +33,9 @@ internal sealed class AvgAggregateFunction : IAggregateFunction
         var value = callInfo.GetAt(0);
         if (!value.IsNull)
         {
-            state.Values[0] += value;
+            AggregateFunctionsUtils.ExecuteWithNullInitialState(ref state.Values[0], in value, VariantValue.Add);
             state.Values[1] =
-                _addDelegate.Invoke(ref state.Values[1], ref VariantValue.OneIntegerValue);
+                _addDelegate.Invoke(in state.Values[1], in VariantValue.OneIntegerValue);
         }
     }
 

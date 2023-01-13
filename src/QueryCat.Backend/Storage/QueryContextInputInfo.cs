@@ -1,3 +1,5 @@
+using QueryCat.Backend.Abstractions;
+using QueryCat.Backend.Relational;
 using QueryCat.Backend.Types;
 
 namespace QueryCat.Backend.Storage;
@@ -7,7 +9,12 @@ namespace QueryCat.Backend.Storage;
 /// </summary>
 public sealed class QueryContextInputInfo
 {
-    public record struct KeyColumn(string ColumnName, VariantValue.Operation[] Operations);
+    public record KeyColumn(string ColumnName, VariantValue.Operation[] Operations)
+    {
+        public bool IsRequired { get; set; }
+
+        public Action<VariantValue>? Action { get; set; }
+    }
 
     private readonly List<KeyColumn> _keyColumns = new();
 
@@ -41,17 +48,91 @@ public sealed class QueryContextInputInfo
         RowsInputId = rowsInput.GetType().Name;
     }
 
+    #region Key columns
+
     /// <summary>
     /// Add key column information.
     /// </summary>
     /// <param name="columnName">Column name.</param>
-    /// <param name="operations">Key operations.</param>
+    /// <param name="isRequired">Is this the required condition.</param>
+    /// <param name="action">Action to be executed before get data.</param>
     /// <returns>Instance of <see cref="QueryContextInputInfo" />.</returns>
-    public QueryContextInputInfo AddKeyColumn(string columnName, params VariantValue.Operation[] operations)
+    public QueryContextInputInfo AddKeyColumn(
+        string columnName,
+        bool isRequired = false,
+        Action<VariantValue>? action = null)
     {
-        _keyColumns.Add(new KeyColumn(columnName, operations));
+        _keyColumns.Add(new KeyColumn(columnName, new[] { VariantValue.Operation.Equals })
+        {
+            IsRequired = isRequired,
+            Action = action,
+        });
         return this;
     }
+
+    /// <summary>
+    /// Add key column information.
+    /// </summary>
+    /// <param name="columnName">Column name.</param>
+    /// <param name="operation">Key operation.</param>
+    /// <param name="isRequired">Is this the required condition.</param>
+    /// <param name="action">Action to be executed before get data.</param>
+    /// <returns>Instance of <see cref="QueryContextInputInfo" />.</returns>
+    public QueryContextInputInfo AddKeyColumn(
+        string columnName,
+        VariantValue.Operation operation,
+        bool isRequired = false,
+        Action<VariantValue>? action = null)
+    {
+        _keyColumns.Add(new KeyColumn(columnName, new[] { operation })
+        {
+            IsRequired = isRequired,
+            Action = action,
+        });
+        return this;
+    }
+
+    /// <summary>
+    /// Add key column information.
+    /// </summary>
+    /// <param name="columnName">Column name.</param>
+    /// <param name="operation">Key operation.</param>
+    /// <param name="orOperation">Alternate key operation.</param>
+    /// <param name="isRequired">Is this the required condition.</param>
+    /// <param name="action">Action to be executed before get data.</param>
+    /// <returns>Instance of <see cref="QueryContextInputInfo" />.</returns>
+    public QueryContextInputInfo AddKeyColumn(
+        string columnName,
+        VariantValue.Operation operation,
+        VariantValue.Operation orOperation,
+        bool isRequired = false,
+        Action<VariantValue>? action = null)
+    {
+        _keyColumns.Add(new KeyColumn(columnName, new[] { operation, orOperation })
+        {
+            IsRequired = isRequired,
+            Action = action,
+        });
+        return this;
+    }
+
+    /// <summary>
+    /// Find key column.
+    /// </summary>
+    /// <param name="columnName">Column name.</param>
+    /// <param name="operation">Operation.</param>
+    /// <param name="orOperation">Alternative operation.</param>
+    /// <returns>Key column or null if not found.</returns>
+    internal KeyColumn? FindKeyColumn(string columnName,
+        VariantValue.Operation operation,
+        VariantValue.Operation? orOperation = null)
+    {
+        return KeyColumns.FirstOrDefault(k => Column.NameEquals(k.ColumnName, columnName)
+            && k.Operations.Contains(operation)
+            && (!orOperation.HasValue || k.Operations.Contains(orOperation.Value)));
+    }
+
+    #endregion
 
     /// <summary>
     /// Set rows input arguments to distinct it among other queries of the same input.

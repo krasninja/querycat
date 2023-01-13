@@ -16,4 +16,9 @@ public class StreamRowsInputOptions
     /// Add file name or any other source custom column.
     /// </summary>
     public bool AddInputSourceColumn { get; set; } = true;
+
+    /// <summary>
+    /// Unique cache key. If specified it will be used for persistent cache.
+    /// </summary>
+    public string[] CacheKeys { get; set; } = Array.Empty<string>();
 }

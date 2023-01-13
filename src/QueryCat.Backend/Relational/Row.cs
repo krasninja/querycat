@@ -1,4 +1,5 @@
 using System.Text;
+using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Types;
 
 namespace QueryCat.Backend.Relational;
@@ -81,8 +82,21 @@ public class Row : IRowsSchema, ICloneable
     /// <summary>
     /// Return row as an array of values.
     /// </summary>
+    /// <param name="copy">Return the copy of row values, otherwise it returns internal array.</param>
     /// <returns>Array of values.</returns>
-    public VariantValue[] AsArray() => _values;
+    public VariantValue[] AsArray(bool copy = false)
+    {
+        if (!copy)
+        {
+            return _values;
+        }
+        else
+        {
+            var arr = new VariantValue[_values.Length];
+            Array.Copy(_values, arr, arr.Length);
+            return arr;
+        }
+    }
 
     /// <summary>
     /// Remove all the data, clear the row.
@@ -109,8 +123,7 @@ public class Row : IRowsSchema, ICloneable
             var columnIndex = this.GetColumnIndexByName(columnName);
             if (columnIndex < 0)
             {
-                throw new ArgumentException(
-                    string.Format(Resources.Errors.CannotFindColumn, columnName), nameof(columnIndex));
+                throw new ArgumentException($"Cannot find column '{columnName}'.", nameof(columnIndex));
             }
             return _values[columnIndex];
         }
@@ -120,8 +133,7 @@ public class Row : IRowsSchema, ICloneable
             var columnIndex = this.GetColumnIndexByName(columnName);
             if (columnIndex < 0)
             {
-                throw new ArgumentException(string.Format(Resources.Errors.CannotFindColumn, columnName),
-                    nameof(columnIndex));
+                throw new ArgumentException($"Cannot find column '{columnName}'.", nameof(columnIndex));
             }
             _values[columnIndex] = value;
         }
@@ -130,10 +142,6 @@ public class Row : IRowsSchema, ICloneable
     /// <inheritdoc />
     public override bool Equals(object? obj)
     {
-        if (obj == null)
-        {
-            return false;
-        }
         if (obj is not Row row)
         {
             return false;
@@ -147,7 +155,7 @@ public class Row : IRowsSchema, ICloneable
             return false;
         }
 
-        for (int i = 0; i < _values.Length; i++)
+        for (var i = 0; i < _values.Length; i++)
         {
             if (!row._values[i].Equals(_values[i]))
             {
@@ -169,7 +177,7 @@ public class Row : IRowsSchema, ICloneable
     public override int GetHashCode()
     {
         var hashCode = default(HashCode);
-        for (int i = 0; i < _values.Length; i++)
+        for (var i = 0; i < _values.Length; i++)
         {
             hashCode.Add(_values[i]);
         }
@@ -180,7 +188,7 @@ public class Row : IRowsSchema, ICloneable
     public override string ToString()
     {
         var sb = new StringBuilder(Columns.Length * 20);
-        for (int i = 0; i < Columns.Length; i++)
+        for (var i = 0; i < Columns.Length; i++)
         {
             sb.Append(_values[i].ToString());
             if (i != Columns.Length - 1)

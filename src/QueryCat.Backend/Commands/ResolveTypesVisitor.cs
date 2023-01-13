@@ -15,12 +15,9 @@ internal class ResolveTypesVisitor : AstVisitor
 {
     protected ExecutionThread ExecutionThread { get; }
 
-    protected AstTraversal AstTraversal { get; }
-
     public ResolveTypesVisitor(ExecutionThread executionThread)
     {
         ExecutionThread = executionThread;
-        AstTraversal = new AstTraversal(this);
     }
 
     /// <inheritdoc />
@@ -36,12 +33,12 @@ internal class ResolveTypesVisitor : AstVisitor
             .Where(arg => arg.IsPositional)
             .Select(arg => new KeyValuePair<int, DataType>(
                 callArguments.IndexOf(arg),
-                arg.ExpressionValue.GetDataType()))
+                arg.ExpressionValueNode.GetDataType()))
             .ToArray();
         var namedArgumentsTypes = callArguments
             .Where(arg => !arg.IsPositional)
             .Select(arg => new KeyValuePair<string, DataType>(
-                arg.Key!, arg.ExpressionValue.GetDataType()))
+                arg.Key!, arg.ExpressionValueNode.GetDataType()))
             .ToArray();
         return new FunctionArgumentsTypes(
             positionalArgumentsTypes,
@@ -60,7 +57,7 @@ internal class ResolveTypesVisitor : AstVisitor
         if (targetType == DataType.Void)
         {
             throw new SemanticException(
-                string.Format(Resources.Errors.CannotApplyOperator, VariantValue.Operation.Between, leftType, rightType));
+                $"Cannot apply operation '{VariantValue.Operation.Between}' to arguments of types {leftType} and {rightType}.");
         }
         node.SetDataType(targetType);
     }
@@ -68,21 +65,49 @@ internal class ResolveTypesVisitor : AstVisitor
     /// <inheritdoc />
     public override void Visit(BinaryOperationExpressionNode node)
     {
-        var leftType = node.Left.GetDataType();
-        var rightType = node.Right.GetDataType();
+        var leftType = node.LeftNode.GetDataType();
+        var rightType = node.RightNode.GetDataType();
         var targetType = VariantValue.GetResultType(leftType, rightType, node.Operation);
         if (targetType == DataType.Void)
         {
             throw new SemanticException(
-                string.Format(Resources.Errors.CannotApplyOperator, node.Operation, leftType, rightType));
+                $"Cannot apply operation '{node.Operation}' to arguments of types {leftType} and {rightType}.");
         }
         node.SetDataType(targetType);
     }
 
     /// <inheritdoc />
+    public override void Visit(CaseExpressionNode node)
+    {
+        var lastWhenNode = node.WhenNodes.LastOrDefault();
+        if (lastWhenNode != null)
+        {
+            node.SetDataType(lastWhenNode.ResultNode.GetDataType());
+        }
+    }
+
+    /// <inheritdoc />
     public override void Visit(IdentifierExpressionNode node)
     {
-        throw new CannotFindIdentifierException(node.Name);
+        if (string.IsNullOrEmpty(node.SourceName))
+        {
+            if (SetDataTypeFromVariable(node, node.Name))
+            {
+                return;
+            }
+        }
+        throw new CannotFindIdentifierException(node.FullName);
+    }
+
+    protected bool SetDataTypeFromVariable(IAstNode node, string name)
+    {
+        var varIndex = ExecutionThread.TopScope.GetVariableIndex(name, out var scope);
+        if (varIndex > -1)
+        {
+            node.SetAttribute(AstAttributeKeys.TypeKey, scope!.Variables[varIndex].GetInternalType());
+            return true;
+        }
+        return false;
     }
 
     /// <inheritdoc />
@@ -95,13 +120,14 @@ internal class ResolveTypesVisitor : AstVisitor
     public override void Visit(UnaryOperationExpressionNode node)
     {
         if (node.Operation == VariantValue.Operation.IsNull
-            || node.Operation == VariantValue.Operation.IsNotNull)
+            || node.Operation == VariantValue.Operation.IsNotNull
+            || node.Operation == VariantValue.Operation.Not)
         {
             node.SetDataType(DataType.Boolean);
         }
         else
         {
-            node.Right.CopyTo<DataType>(AstAttributeKeys.TypeKey, node);
+            node.RightNode.CopyTo<DataType>(AstAttributeKeys.TypeKey, node);
         }
     }
 
@@ -141,7 +167,7 @@ internal class ResolveTypesVisitor : AstVisitor
     /// <inheritdoc />
     public override void Visit(FunctionCallArgumentNode node)
     {
-        node.ExpressionValue.CopyTo<DataType>(AstAttributeKeys.TypeKey, node);
+        node.ExpressionValueNode.CopyTo<DataType>(AstAttributeKeys.TypeKey, node);
     }
 
     /// <inheritdoc />
@@ -164,7 +190,7 @@ internal class ResolveTypesVisitor : AstVisitor
         {
             foreach (var callArgumentNode in node.Arguments)
             {
-                var argType = callArgumentNode.ExpressionValue.GetDataType();
+                var argType = callArgumentNode.ExpressionValueNode.GetDataType();
                 if (DataTypeUtils.RowDataTypes.Contains(argType))
                 {
                     returnType = argType;

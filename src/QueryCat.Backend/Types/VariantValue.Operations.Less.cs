@@ -2,7 +2,7 @@ namespace QueryCat.Backend.Types;
 
 public partial struct VariantValue
 {
-    internal static VariantValue Less(ref VariantValue left, ref VariantValue right, out ErrorCode errorCode)
+    internal static VariantValue Less(in VariantValue left, in VariantValue right, out ErrorCode errorCode)
     {
         var leftType = left.GetInternalType();
         var rightType = right.GetInternalType();
@@ -15,7 +15,7 @@ public partial struct VariantValue
         }
 
         errorCode = ErrorCode.OK;
-        return function.Invoke(ref left, ref right);
+        return function.Invoke(in left, in right);
     }
 
     internal static BinaryFunction GetLessDelegate(DataType leftType, DataType rightType)
@@ -24,7 +24,7 @@ public partial struct VariantValue
         {
             DataType.Integer => rightType switch
             {
-                DataType.Integer => (ref VariantValue left, ref VariantValue right) =>
+                DataType.Integer => (in VariantValue left, in VariantValue right) =>
                 {
                     if (left.IsNull || right.IsNull)
                     {
@@ -32,7 +32,7 @@ public partial struct VariantValue
                     }
                     return new VariantValue(left.AsIntegerUnsafe < right.AsIntegerUnsafe);
                 },
-                DataType.Float => (ref VariantValue left, ref VariantValue right) =>
+                DataType.Float => (in VariantValue left, in VariantValue right) =>
                 {
                     if (left.IsNull || right.IsNull)
                     {
@@ -40,7 +40,7 @@ public partial struct VariantValue
                     }
                     return new VariantValue(left.AsIntegerUnsafe < right.AsFloatUnsafe);
                 },
-                DataType.Numeric => (ref VariantValue left, ref VariantValue right) =>
+                DataType.Numeric => (in VariantValue left, in VariantValue right) =>
                 {
                     if (left.IsNull || right.IsNull)
                     {
@@ -52,7 +52,7 @@ public partial struct VariantValue
             },
             DataType.Float => rightType switch
             {
-                DataType.Integer => (ref VariantValue left, ref VariantValue right) =>
+                DataType.Integer => (in VariantValue left, in VariantValue right) =>
                 {
                     if (left.IsNull || right.IsNull)
                     {
@@ -60,7 +60,7 @@ public partial struct VariantValue
                     }
                     return new VariantValue(left.AsFloatUnsafe < right.AsFloatUnsafe);
                 },
-                DataType.Float => (ref VariantValue left, ref VariantValue right) =>
+                DataType.Float => (in VariantValue left, in VariantValue right) =>
                 {
                     if (left.IsNull || right.IsNull)
                     {
@@ -72,7 +72,7 @@ public partial struct VariantValue
             },
             DataType.Numeric => rightType switch
             {
-                DataType.Integer => (ref VariantValue left, ref VariantValue right) =>
+                DataType.Integer => (in VariantValue left, in VariantValue right) =>
                 {
                     if (left.IsNull || right.IsNull)
                     {
@@ -80,7 +80,7 @@ public partial struct VariantValue
                     }
                     return new VariantValue(left.AsNumericUnsafe < right.AsIntegerUnsafe);
                 },
-                DataType.Numeric => (ref VariantValue left, ref VariantValue right) =>
+                DataType.Numeric => (in VariantValue left, in VariantValue right) =>
                 {
                     if (left.IsNull || right.IsNull)
                     {
@@ -92,7 +92,7 @@ public partial struct VariantValue
             },
             DataType.Boolean => rightType switch
             {
-                DataType.Boolean or DataType.Integer => (ref VariantValue left, ref VariantValue right) =>
+                DataType.Boolean or DataType.Integer => (in VariantValue left, in VariantValue right) =>
                 {
                     if (left.IsNull || right.IsNull)
                     {
@@ -104,7 +104,7 @@ public partial struct VariantValue
             },
             DataType.String => rightType switch
             {
-                DataType.String => (ref VariantValue left, ref VariantValue right) =>
+                DataType.String => (in VariantValue left, in VariantValue right) =>
                 {
                     if (left.IsNull || right.IsNull)
                     {
@@ -116,7 +116,7 @@ public partial struct VariantValue
             },
             DataType.Timestamp => rightType switch
             {
-                DataType.Timestamp => (ref VariantValue left, ref VariantValue right) =>
+                DataType.Timestamp => (in VariantValue left, in VariantValue right) =>
                 {
                     if (left.IsNull || right.IsNull)
                     {
@@ -124,7 +124,7 @@ public partial struct VariantValue
                     }
                     return new VariantValue(left.AsTimestampUnsafe < right.AsTimestampUnsafe);
                 },
-                DataType.String => (ref VariantValue left, ref VariantValue right) =>
+                DataType.String => (in VariantValue left, in VariantValue right) =>
                 {
                     if (left.IsNull || right.IsNull)
                     {
@@ -136,7 +136,7 @@ public partial struct VariantValue
             },
             DataType.Interval => rightType switch
             {
-                DataType.Interval => (ref VariantValue left, ref VariantValue right) =>
+                DataType.Interval => (in VariantValue left, in VariantValue right) =>
                 {
                     if (left.IsNull || right.IsNull)
                     {
@@ -150,7 +150,7 @@ public partial struct VariantValue
         };
     }
 
-    internal static VariantValue LessOrEquals(ref VariantValue left, ref VariantValue right, out ErrorCode errorCode)
+    internal static VariantValue LessOrEquals(in VariantValue left, in VariantValue right, out ErrorCode errorCode)
     {
         var leftType = left.GetInternalType();
         var rightType = right.GetInternalType();
@@ -163,7 +163,7 @@ public partial struct VariantValue
         }
 
         errorCode = ErrorCode.OK;
-        return function.Invoke(ref left, ref right);
+        return function.Invoke(in left, in right);
     }
 
     internal static BinaryFunction GetLessOrEqualsDelegate(DataType leftType, DataType rightType)
@@ -171,14 +171,14 @@ public partial struct VariantValue
         var lessDelegate = GetLessDelegate(leftType, rightType);
         var equalsDelegate = GetEqualsDelegate(leftType, rightType);
 
-        return (ref VariantValue left, ref VariantValue right) =>
+        return (in VariantValue left, in VariantValue right) =>
         {
             if (left.IsNull || right.IsNull)
             {
                 return Null;
             }
-            var result = lessDelegate.Invoke(ref left, ref right).AsBooleanUnsafe
-                || equalsDelegate.Invoke(ref left, ref right).AsBooleanUnsafe;
+            var result = lessDelegate.Invoke(in left, in right).AsBooleanUnsafe
+                || equalsDelegate.Invoke(in left, in right).AsBooleanUnsafe;
             return new VariantValue(result);
         };
     }

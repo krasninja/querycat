@@ -32,7 +32,8 @@ public static class InputConfigStorageExtensions
     /// <param name="key">Key.</param>
     /// <param name="default">Default value.</param>
     /// <returns>The value.</returns>
-    public static VariantValue GetOrDefault(this IInputConfigStorage configStorage, string key, VariantValue @default)
+    public static VariantValue GetOrDefault(this IInputConfigStorage configStorage, string key,
+        VariantValue @default = default)
     {
         if (!configStorage.Has(key))
         {

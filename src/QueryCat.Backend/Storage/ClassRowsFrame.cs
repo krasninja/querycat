@@ -27,7 +27,7 @@ public class ClassRowsFrame<TClass> : RowsFrame where TClass : class
     /// <param name="obj">Object to add.</param>
     public void AddRow(TClass obj)
     {
-        for (int i = 0; i < Columns.Length; i++)
+        for (var i = 0; i < Columns.Length; i++)
         {
             _row[i] = _valuesGetters[i].Invoke(obj);
         }
@@ -42,7 +42,7 @@ public class ClassRowsFrame<TClass> : RowsFrame where TClass : class
     {
         foreach (var obj in objects)
         {
-            for (int i = 0; i < Columns.Length; i++)
+            for (var i = 0; i < Columns.Length; i++)
             {
                 _row[i] = _valuesGetters[i].Invoke(obj);
             }

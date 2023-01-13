@@ -1,7 +1,6 @@
+using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Formatters;
-using QueryCat.Backend.Relational;
 using QueryCat.Backend.Relational.Iterators;
-using QueryCat.Backend.Types;
 
 namespace QueryCat.Backend.Storage;
 
@@ -10,37 +9,6 @@ namespace QueryCat.Backend.Storage;
 /// </summary>
 public static class RowsOutputExtensions
 {
-    /// <summary>
-    /// Write variant value to rows output.
-    /// </summary>
-    /// <param name="rowsOutput">Instance of <see cref="IRowsOutput" />.</param>
-    /// <param name="variantValue">Value.</param>
-    public static void Write(this IRowsOutput rowsOutput, VariantValue variantValue)
-    {
-        var type = variantValue.GetInternalType();
-        if (type == DataType.Object)
-        {
-            var obj = variantValue.AsObject;
-            if (obj is IRowsIterator rowsIterator)
-            {
-                rowsOutput.Write(rowsIterator);
-            }
-            else if (obj is IRowsInput rowsInput)
-            {
-                rowsInput.Open();
-                rowsOutput.Write(new RowsInputIterator(rowsInput));
-                rowsInput.Close();
-            }
-            return;
-        }
-
-        if (!variantValue.IsNull)
-        {
-            var singleValueIterator = new SingleValueRowsIterator(variantValue);
-            rowsOutput.Write(singleValueIterator);
-        }
-    }
-
     /// <summary>
     /// Write rows iterator to output.
     /// </summary>
@@ -54,7 +22,7 @@ public static class RowsOutputExtensions
             rowsIterator = new AdjustColumnsLengthsIterator(rowsIterator);
         }
 
-        bool isOpened = false;
+        var isOpened = false;
         var queryContext = new RowsOutputQueryContext(rowsIterator.Columns);
         while (rowsIterator.MoveNext())
         {

@@ -1,0 +1,14 @@
+expected: |
+  K
+  K
+  K
+  S
+  S
+query: |
+  SELECT
+    CASE city
+      WHEN 'Krasnoyarsk' THEN 'K'
+      WHEN 'Sochi' THEN 'S'
+      ELSE ''
+    END as city_code
+  FROM 'Simple2.csv';

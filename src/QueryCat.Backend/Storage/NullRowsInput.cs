@@ -1,5 +1,7 @@
+using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Types;
+using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Storage;
 
@@ -44,5 +46,11 @@ public sealed class NullRowsInput : IRowsInput
     /// <inheritdoc />
     public void Reset()
     {
+    }
+
+    /// <inheritdoc />
+    public void Explain(IndentedStringBuilder stringBuilder)
+    {
+        stringBuilder.AppendLine("Null");
     }
 }

@@ -31,6 +31,11 @@ internal sealed class DsvOptions
     /// </summary>
     public bool? HasHeader { get; init; }
 
+    /// <summary>
+    /// Quote all strings.
+    /// </summary>
+    public bool QuoteStrings { get; init; }
+
     public DsvOptions(Stream stream)
     {
         Stream = stream;

@@ -1,5 +1,6 @@
+using Serilog;
+using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Execution;
-using QueryCat.Backend.Logging;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Utils;
 
@@ -35,8 +36,10 @@ public sealed class StatisticRowsIterator : IRowsIterator
     {
         if (MaxErrorsCount > -1 && _statistic.ErrorsCount >= MaxErrorsCount)
         {
-            Logger.Instance.Fatal(
-                $"Maximum number of errors reached! Maximum {MaxErrorsCount}, current {_statistic.ErrorsCount}.");
+            Log.Logger.Fatal(
+                "Maximum number of errors reached! Maximum {MaxErrorsCount}, current {ErrorsCount}.",
+                MaxErrorsCount,
+                _statistic.ErrorsCount);
             return false;
         }
 
@@ -58,6 +61,6 @@ public sealed class StatisticRowsIterator : IRowsIterator
     /// <inheritdoc />
     public void Explain(IndentedStringBuilder stringBuilder)
     {
-        stringBuilder.AppendRowsIteratorsWithIndent($"Count (count={_statistic.ProcessedCount})", _rowsIterator);
+        stringBuilder.AppendRowsIteratorsWithIndent($"Stat (count={_statistic.ProcessedCount})", _rowsIterator);
     }
 }

@@ -140,7 +140,7 @@ public sealed class ChunkList<T> : IList<T>, IList, IReadOnlyList<T>
         {
             var newChunk = new Chunk<T>(_chunkSize);
             _chunks.Insert(_chunks.IndexOf(chunk) + 1, newChunk);
-            int num2 = chunk.Items.Count / 2;
+            var num2 = chunk.Items.Count / 2;
             while (num2 < chunk.Items.Count)
             {
                 var item2 = chunk.Items[num2];
@@ -155,7 +155,7 @@ public sealed class ChunkList<T> : IList<T>, IList, IReadOnlyList<T>
     {
         var chunk = _chunks[startIndex];
         var count = chunk.PrevCount + chunk.Items.Count;
-        for (int i = startIndex + 1; i < _chunks.Count; i++)
+        for (var i = startIndex + 1; i < _chunks.Count; i++)
         {
             var chunk2 = _chunks[i];
             chunk2.PrevCount = count;
@@ -208,7 +208,7 @@ public sealed class ChunkList<T> : IList<T>, IList, IReadOnlyList<T>
         var chunkIndex = _chunks.Count - 1;
         while (num < chunkIndex)
         {
-            int num3 = num + (chunkIndex - num) / 2;
+            var num3 = num + (chunkIndex - num) / 2;
             if (index < _chunks[num3 + 1].PrevCount)
             {
                 chunkIndex = num3;
@@ -242,7 +242,7 @@ public sealed class ChunkList<T> : IList<T>, IList, IReadOnlyList<T>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Clear()
     {
-        foreach (Chunk<T> chunk in _chunks)
+        foreach (var chunk in _chunks)
         {
             chunk.Items.Clear();
         }
@@ -268,9 +268,9 @@ public sealed class ChunkList<T> : IList<T>, IList, IReadOnlyList<T>
 
     private IEnumerable<T> GetEnumerable()
     {
-        foreach (Chunk<T> chunk in _chunks)
+        foreach (var chunk in _chunks)
         {
-            foreach (T item in chunk.Items)
+            foreach (var item in chunk.Items)
             {
                 yield return item;
             }
@@ -314,7 +314,7 @@ public sealed class ChunkList<T> : IList<T>, IList, IReadOnlyList<T>
     /// <inheritdoc />
     void ICollection.CopyTo(Array array, int index)
     {
-        for (int i = 0; i < _count; i++)
+        for (var i = 0; i < _count; i++)
         {
             array.SetValue(this[i], i + index);
         }

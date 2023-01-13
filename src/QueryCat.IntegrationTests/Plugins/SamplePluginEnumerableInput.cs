@@ -31,7 +31,7 @@ public class SamplePluginEnumerableInput : ClassEnumerableInput<TestClass>
     }
 
     /// <inheritdoc />
-    protected override IEnumerable<TestClass> GetData()
+    protected override IEnumerable<TestClass> GetData(ClassEnumerableInputFetch<TestClass> fetch)
     {
         Trace.WriteLine(nameof(GetData));
         for (var i = 0; i < MaxValue; i++)

@@ -13,11 +13,10 @@ public class AstBuilderTests
     public void BuildFromString_QueryWithBetweenClause_ShouldAddBrackets()
     {
         // Arrange.
-        var astBuilder = new AstBuilder();
         var queryAstVisitor = new QueryAstVisitor();
 
         // Act.
-        var node = astBuilder.BuildProgramFromString(
+        var node = AstBuilder.BuildProgramFromString(
             "SELECT * FROM read_file('') WHERE id BETWEEN 10 + 20 AND 30 AND id BETWEEN 40 AND 50;");
 
         // Assert.

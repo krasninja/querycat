@@ -15,7 +15,7 @@ public sealed class SelectDistinctNode : AstNode
     /// <inheritdoc />
     public override string Code => "distinct";
 
-    public IList<ExpressionNode> On { get; } = new List<ExpressionNode>();
+    public List<ExpressionNode> OnNodes { get; } = new();
 
     public static SelectDistinctNode Empty { get; } = new()
     {
@@ -31,16 +31,16 @@ public sealed class SelectDistinctNode : AstNode
     {
     }
 
-    public SelectDistinctNode(IList<ExpressionNode> on)
+    public SelectDistinctNode(IEnumerable<ExpressionNode> onNodes)
     {
-        On = on;
+        OnNodes.AddRange(onNodes);
     }
 
     public SelectDistinctNode(SelectDistinctNode node) :
-        this(node.On.Select(g => (ExpressionNode)g.Clone()).ToList())
+        this(node.OnNodes.Select(g => (ExpressionNode)g.Clone()).ToList())
     {
-        node.IsAll = this.IsAll;
-        node.IsEmpty = this.IsEmpty;
+        IsAll = node.IsAll;
+        IsEmpty = node.IsEmpty;
         node.CopyTo(this);
     }
 
@@ -48,7 +48,7 @@ public sealed class SelectDistinctNode : AstNode
     public override object Clone() => new SelectDistinctNode(this);
 
     /// <inheritdoc />
-    public override IEnumerable<IAstNode> GetChildren() => On;
+    public override IEnumerable<IAstNode> GetChildren() => OnNodes;
 
     /// <inheritdoc />
     public override void Accept(AstVisitor visitor) => visitor.Visit(this);

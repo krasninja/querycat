@@ -1,5 +1,7 @@
 using System.ComponentModel;
 using System.Reflection;
+using QueryCat.Backend.Abstractions;
+using QueryCat.Backend.Execution.Plugins;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Storage;
 using QueryCat.Backend.Types;
@@ -12,19 +14,19 @@ namespace QueryCat.Backend.Functions.StandardFunctions;
 public static class InfoFunctions
 {
     [Description("Return all registered functions.")]
-    [FunctionSignature("_functions(): object")]
+    [FunctionSignature("_functions(): object<IRowsIterator>")]
     public static VariantValue Functions(FunctionCallInfo args)
     {
         var builder = new ClassRowsFrameBuilder<Function>()
             .AddProperty("signature", f => f.ToString())
             .AddProperty("description", f => f.Description);
-        var functions = args.FunctionsManager?.GetFunctions().OrderBy(f => f.Name)
+        var functions = args.ExecutionThread?.FunctionsManager.GetFunctions().OrderBy(f => f.Name)
             ?? Array.Empty<Function>().AsEnumerable();
         return VariantValue.CreateFromObject(builder.BuildIterator(functions));
     }
 
     [Description("Return row input columns information.")]
-    [FunctionSignature("_schema(input: object<IRowsInput>): object")]
+    [FunctionSignature("_schema(input: object<IRowsInput>): object<IRowsIterator>")]
     public static VariantValue Schema(FunctionCallInfo args)
     {
         var obj = args.GetAt(0).AsObject;
@@ -58,6 +60,35 @@ public static class InfoFunctions
         return VariantValue.CreateFromObject(builder.BuildIterator(columns));
     }
 
+#if ENABLE_PLUGINS
+    [Description("Return available plugins from repository.")]
+    [FunctionSignature("_plugins(): object<IRowsIterator>")]
+    public static VariantValue Plugins(FunctionCallInfo args)
+    {
+        var builder = new ClassRowsFrameBuilder<PluginInfo>()
+            .AddProperty("name", p => p.Name)
+            .AddProperty("version", p => p.Version.ToString())
+            .AddProperty("is_installed", p => p.IsInstalled)
+            .AddProperty("uri", p => p.Uri);
+        using var pluginsManager = new PluginsManager(args.ExecutionThread.PluginsManager.PluginDirectories);
+        var plugins = pluginsManager.ListAsync(CancellationToken.None).GetAwaiter().GetResult();
+        return VariantValue.CreateFromObject(builder.BuildIterator(plugins));
+    }
+#endif
+
+    [Description("Get expression type.")]
+    [FunctionSignature("_typeof(arg: any): string")]
+    public static VariantValue TypeOf(FunctionCallInfo args)
+    {
+        var value = args.GetAt(0);
+        var type = value.GetInternalType();
+        if (type == DataType.Object && value.AsObject != null)
+        {
+            return new VariantValue($"object<{value.AsObject.GetType().Name}>");
+        }
+        return new VariantValue(type.ToString());
+    }
+
     public static string GetVersion()
         => typeof(VariantValue).Assembly
             .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? string.Empty;
@@ -73,6 +104,10 @@ public static class InfoFunctions
     {
         functionsManager.RegisterFunction(Functions);
         functionsManager.RegisterFunction(Schema);
+#if ENABLE_PLUGINS
+        functionsManager.RegisterFunction(Plugins);
+#endif
+        functionsManager.RegisterFunction(TypeOf);
         functionsManager.RegisterFunction(Version);
     }
 }

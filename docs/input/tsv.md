@@ -14,9 +14,10 @@ date	name	action
 ## Syntax
 
 ```
-tsv(has_header?: boolean): object<IRowsFormatter>
+tsv(has_header?: boolean, quote_strings?: boolean = false): object<IRowsFormatter>
 ```
 
 Parameters:
 
 - `has_header`. Should be `true` if an input has header, `false` otherwise.
+- `quote_strings`. Force quote all strings.

@@ -1,0 +1,6 @@
+expected: |
+  1,a,1,xxx
+  3,c,3,yyy
+query: |
+  select t1.num, t1.name, t2.num, t2.value from 'Table1.csv' as t1
+  inner join 'Table2.csv' as t2 on t1.num = t2.num

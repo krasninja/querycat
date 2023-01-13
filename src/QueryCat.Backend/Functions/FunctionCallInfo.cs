@@ -1,3 +1,4 @@
+using QueryCat.Backend.Execution;
 using QueryCat.Backend.Types;
 
 namespace QueryCat.Backend.Functions;
@@ -11,18 +12,18 @@ public sealed class FunctionCallInfo
     private int _argsCursor;
     private readonly IFuncUnit[] _pushArgs;
 
-    public static FunctionCallInfo Empty { get; } = new();
+    public static FunctionCallInfo Empty { get; } = new(ExecutionThread.Empty);
 
     /// <summary>
-    /// The function manager of the current thread context.
+    /// Current execution thread.
     /// </summary>
-    public FunctionsManager? FunctionsManager { get; internal set; }
+    public ExecutionThread ExecutionThread { get; internal set; }
 
     public VariantValueArray Arguments => _args;
 
-    public static FunctionCallInfo CreateWithArguments(params VariantValue[] args)
+    public static FunctionCallInfo CreateWithArguments(ExecutionThread executionThread, params VariantValue[] args)
     {
-        var callInfo = new FunctionCallInfo();
+        var callInfo = new FunctionCallInfo(executionThread);
         foreach (var arg in args)
         {
             callInfo.Push(arg);
@@ -30,9 +31,9 @@ public sealed class FunctionCallInfo
         return callInfo;
     }
 
-    public static FunctionCallInfo CreateWithArguments(params object[] args)
+    public static FunctionCallInfo CreateWithArguments(ExecutionThread executionThread, params object[] args)
     {
-        var callInfo = new FunctionCallInfo();
+        var callInfo = new FunctionCallInfo(executionThread);
         foreach (var arg in args)
         {
             callInfo.Push(VariantValue.CreateFromObject(arg));
@@ -40,10 +41,11 @@ public sealed class FunctionCallInfo
         return callInfo;
     }
 
-    public FunctionCallInfo(params IFuncUnit[] pushArgs)
+    public FunctionCallInfo(ExecutionThread executionThread, params IFuncUnit[] pushArgs)
     {
         _pushArgs = pushArgs;
         _args = new VariantValueArray(pushArgs.Length);
+        ExecutionThread = executionThread;
     }
 
     public void Push(VariantValue value)
@@ -65,7 +67,7 @@ public sealed class FunctionCallInfo
 
     public void InvokePushArgs()
     {
-        for (int i = 0; i < _pushArgs.Length; i++)
+        for (var i = 0; i < _pushArgs.Length; i++)
         {
             _args.Values[i] = _pushArgs[i].Invoke();
         }

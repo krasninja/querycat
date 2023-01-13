@@ -99,6 +99,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
             DataType.Float => FloatObject,
             DataType.Timestamp => TimestampObject,
             DataType.Interval => IntervalObject,
+            DataType.Object => null,
             _ => throw new ArgumentOutOfRangeException(nameof(type)),
         };
         _valueUnion = default;
@@ -171,6 +172,10 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
             return Null;
         }
 
+        if (obj is VariantValue variantValue)
+        {
+            return variantValue;
+        }
         if (obj is long || obj is int || obj is short
             || obj is byte)
         {
@@ -306,17 +311,33 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
 
     #endregion
 
+    /// <summary>
+    /// Get object of specified type.
+    /// </summary>
+    /// <typeparam name="T">Type.</typeparam>
+    /// <returns>Object.</returns>
+    public T GetAsObject<T>()
+    {
+        var sourceObj = CheckTypeAndTryToCast(DataType.Object)._object;
+        if (sourceObj == null)
+        {
+            throw new InvalidOperationException("Object is null.");
+        }
+        if (sourceObj is T obj)
+        {
+            return obj;
+        }
+        throw new InvalidOperationException(
+            $"Cannot cast object of type '{sourceObj.GetType()}' to type '{typeof(T)}'.");
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private VariantValue CheckTypeAndTryToCast(DataType targetType)
     {
         var currentType = GetInternalType();
         if (targetType != currentType)
         {
-            if (Cast(targetType, out VariantValue convertedValue))
-            {
-                return convertedValue;
-            }
-            throw new InvalidVariantTypeException(currentType, targetType);
+            return Cast(targetType);
         }
         return this;
     }
@@ -348,7 +369,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
 
     private static VariantValue StringToInterval(in ReadOnlySpan<char> value, out bool success)
     {
-        success = TimeSpan.TryParse(value, CultureInfo.InvariantCulture, out var @out);
+        success = DataTypeUtils.TryParseInterval(value.ToString(), out var @out);
         return success ? new VariantValue(@out) : Null;
     }
 
@@ -422,8 +443,8 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     /// </summary>
     /// <param name="targetType">Target type to convert.</param>
     /// <param name="output">Return value.</param>
-    /// <returns>True if cast was successful, false otherwise.</returns>
-    public bool Cast(in DataType targetType, out VariantValue output)
+    /// <returns><c>True</c> if cast was successful, <c>false</c> otherwise.</returns>
+    public bool TryCast(in DataType targetType, out VariantValue output)
     {
         // Null value is always null.
         if (IsNull)
@@ -491,6 +512,24 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     }
 
     /// <summary>
+    /// Convert to target type.
+    /// </summary>
+    /// <param name="targetType">Target data type.</param>
+    /// <returns>Result value.</returns>
+    public VariantValue Cast(in DataType targetType)
+    {
+        if (TryCast(targetType, out var result))
+        {
+            return result;
+        }
+        else
+        {
+            var sourceType = GetInternalType();
+            throw new InvalidVariantTypeException(sourceType, targetType);
+        }
+    }
+
+    /// <summary>
     /// Try create variant value from string.
     /// </summary>
     /// <param name="value">String value.</param>
@@ -514,7 +553,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         in DataType targetType,
         out VariantValue variantValue)
     {
-        bool success = false;
+        var success = false;
         variantValue = targetType switch
         {
             DataType.Integer => StringToInteger(value, out success),
@@ -531,14 +570,14 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
 
     #endregion
 
-    public static bool Equals(in VariantValue value1, ref VariantValue value2) =>
+    public static bool Equals(in VariantValue value1, in VariantValue value2) =>
         value1._valueUnion.IntegerValue == value2._valueUnion.IntegerValue
             && ((value1._object == null && value2._object == null) || Equals(value1._object, value2._object));
 
     /// <inheritdoc />
     public override bool Equals(object? obj)
         => obj is VariantValue vv
-            && Equals(this, ref vv);
+            && Equals(this, in vv);
 
     /// <inheritdoc />
     public override int GetHashCode()
@@ -555,7 +594,16 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     public static bool operator !=(VariantValue left, VariantValue right) => !(left == right);
 
     public static VariantValue operator +(VariantValue left, VariantValue right)
-        => Add(ref left, ref right, out _);
+        => Add(in left, in right, out _);
+
+    public static VariantValue operator -(VariantValue left, VariantValue right)
+        => Subtract(in left, in right, out _);
+
+    public static VariantValue operator *(VariantValue left, VariantValue right)
+        => Mul(in left, in right, out _);
+
+    public static VariantValue operator /(VariantValue left, VariantValue right)
+        => Div(in left, in right, out _);
 
     public static implicit operator decimal(VariantValue value) => value.AsNumeric;
 
@@ -606,5 +654,5 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     };
 
     /// <inheritdoc />
-    public bool Equals(VariantValue other) => Equals(this, ref other);
+    public bool Equals(VariantValue other) => Equals(this, in other);
 }

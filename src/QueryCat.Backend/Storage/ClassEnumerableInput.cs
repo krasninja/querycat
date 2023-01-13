@@ -18,15 +18,31 @@ public abstract class ClassEnumerableInput<TClass> :
     public override Column[] Columns { get; protected set; } = Array.Empty<Column>();
 
     /// <summary>
+    /// Constructor.
+    /// </summary>
+    public ClassEnumerableInput()
+    {
+    }
+
+    /// <summary>
     /// Create rows frame.
     /// </summary>
     /// <param name="builder">Rows frame builder.</param>
     protected abstract void Initialize(ClassRowsFrameBuilder<TClass> builder);
 
+    /// <summary>
+    /// Initialize instance of <see cref="QueryContextInputInfo" />.
+    /// </summary>
+    /// <param name="inputInfo">Input info.</param>
+    protected virtual void InitializeInputInfo(QueryContextInputInfo inputInfo)
+    {
+    }
+
     /// <inheritdoc />
     public override void Open()
     {
         Initialize(_builder);
+        InitializeInputInfo(QueryContext.InputInfo);
         Columns = _builder.Columns.ToArray();
     }
 
@@ -43,7 +59,9 @@ public abstract class ClassEnumerableInput<TClass> :
     /// <inheritdoc />
     protected override void Load()
     {
-        _enumerator = GetData().GetEnumerator();
+        QueryContext.ValidateAndInvokeKeyConditions();
+        var fetch = new ClassEnumerableInputFetch<TClass>(this);
+        _enumerator = GetData(fetch).GetEnumerator();
     }
 
     /// <inheritdoc />
@@ -80,8 +98,9 @@ public abstract class ClassEnumerableInput<TClass> :
     /// <summary>
     /// Get data.
     /// </summary>
+    /// <param name="fetch">Fetch helper utilities.</param>
     /// <returns>Objects.</returns>
-    protected virtual IEnumerable<TClass> GetData()
+    protected virtual IEnumerable<TClass> GetData(ClassEnumerableInputFetch<TClass> fetch)
     {
         var enumerator = GetDataAsync().GetAsyncEnumerator();
         // Blocking all the way...

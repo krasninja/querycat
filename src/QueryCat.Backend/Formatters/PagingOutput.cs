@@ -1,3 +1,4 @@
+using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Storage;
 
@@ -34,19 +35,24 @@ public class PagingOutput : IRowsOutput
     public void Close() => _rowsOutput.Close();
 
     /// <inheritdoc />
+    public void Reset()
+    {
+        _rowsCounter = 0;
+        _rowsOutput.Reset();
+    }
+
+    /// <inheritdoc />
     public void Write(Row row)
     {
-        if (PagingRowsCount != -1 && _rowsCounter++ >= PagingRowsCount
+        if (PagingRowsCount != -1
+            && _rowsCounter++ >= PagingRowsCount
             && !Console.IsInputRedirected
             && !Console.IsOutputRedirected)
         {
-            Console.WriteLine(Resources.Messages.PagingMore);
-            Console.ReadKey();
             _rowsCounter = 0;
+            Console.WriteLine("--More--");
+            Console.ReadKey();
         }
-        else
-        {
-            _rowsOutput.Write(row);
-        }
+        _rowsOutput.Write(row);
     }
 }

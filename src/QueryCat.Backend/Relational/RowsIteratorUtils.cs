@@ -1,3 +1,4 @@
+using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Types;
 using QueryCat.Backend.Utils;
 
@@ -8,7 +9,7 @@ namespace QueryCat.Backend.Relational;
 /// </summary>
 public static class RowsIteratorUtils
 {
-    private class EmptyRowsIterator : IRowsIterator
+    private sealed class EmptyRowsIterator : IRowsIterator
     {
         /// <inheritdoc />
         public Column[] Columns => Array.Empty<Column>();
@@ -51,7 +52,7 @@ public static class RowsIteratorUtils
     {
         // Read.
         RowsFrame? rowsFrame = null;
-        for (int rowIndex = 0; rowIndex < numberOfRowsToAnalyze && rowsIterator.MoveNext(); rowIndex++)
+        for (var rowIndex = 0; rowIndex < numberOfRowsToAnalyze && rowsIterator.MoveNext(); rowIndex++)
         {
             // In some rows iterators the Columns property is initialized during first MoveNext() call,
             // so we postpone rows frame initialization.
@@ -90,7 +91,7 @@ public static class RowsIteratorUtils
 
         bool TestType(DataType dataType)
         {
-            bool wasTested = false;
+            var wasTested = false;
             foreach (var variantValue in variantValues)
             {
                 if (string.IsNullOrEmpty(variantValue.AsString))
@@ -98,7 +99,7 @@ public static class RowsIteratorUtils
                     continue;
                 }
                 wasTested = true;
-                if (!variantValue.Cast(dataType, out _))
+                if (!variantValue.TryCast(dataType, out _))
                 {
                     return false;
                 }
@@ -153,7 +154,7 @@ public static class RowsIteratorUtils
 
         int hasHeader = 0;
 
-        for (int columnIndex = 0; columnIndex < rowsFrame.Columns.Length; columnIndex++)
+        for (var columnIndex = 0; columnIndex < rowsFrame.Columns.Length; columnIndex++)
         {
             var values = rowsFrame.GetColumnValues(columnIndex);
             var headerType = DetermineTypeByValues(new[] { values.First() });

@@ -4,9 +4,9 @@ namespace QueryCat.Backend.Storage;
 /// This is the base exception for input/output storage
 /// operations.
 /// </summary>
-// ReSharper disable once InconsistentNaming
 [Serializable]
 #pragma warning disable CA2229
+// ReSharper disable once InconsistentNaming
 public class IOSourceException : QueryCatException
 #pragma warning restore CA2229
 {

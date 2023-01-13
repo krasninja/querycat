@@ -1,0 +1,10 @@
+expected: |
+  1
+  2
+  3
+query: |
+  select num from 'Table1.csv'
+  union all
+  select 2
+  intersect
+  (select 1 union all select 3);

@@ -1,0 +1,6 @@
+expected: |
+  2
+  3
+query: |
+  select num from 'Table1.csv'
+  except select 1

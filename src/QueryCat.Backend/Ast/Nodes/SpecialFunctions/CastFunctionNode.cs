@@ -1,3 +1,5 @@
+using QueryCat.Backend.Types;
+
 namespace QueryCat.Backend.Ast.Nodes.SpecialFunctions;
 
 public sealed class CastFunctionNode : ExpressionNode
@@ -12,6 +14,10 @@ public sealed class CastFunctionNode : ExpressionNode
     /// <inheritdoc />
     public CastFunctionNode(ExpressionNode expressionNode, TypeNode targetTypeNode)
     {
+        if (targetTypeNode.Type == DataType.Void)
+        {
+            throw new SemanticException("Cannot cast to type VOID.");
+        }
         ExpressionNode = expressionNode;
         TargetTypeNode = targetTypeNode;
     }
@@ -33,4 +39,7 @@ public sealed class CastFunctionNode : ExpressionNode
 
     /// <inheritdoc />
     public override void Accept(AstVisitor visitor) => visitor.Visit(this);
+
+    /// <inheritdoc />
+    public override string ToString() => $"Cast {ExpressionNode} As {TargetTypeNode}";
 }

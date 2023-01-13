@@ -1,27 +1,31 @@
 using QueryCat.Backend.Ast;
+using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Commands.Select.Visitors;
 using QueryCat.Backend.Execution;
-using QueryCat.Backend.Types;
 
 namespace QueryCat.Backend.Commands.Select;
 
 /// <summary>
 /// SELECT command.
 /// </summary>
-public sealed class SelectCommand
+public sealed class SelectCommand : ICommand
 {
-    public Func<VariantValue> Execute(ExecutionThread executionThread, SelectStatementNode selectStatementNode)
+    /// <inheritdoc />
+    public CommandHandler CreateHandler(ExecutionThread executionThread, StatementNode node)
     {
-        // First we create context for SELECT command by analyzing FROM expression.
-        new SelectContextCreator(executionThread).CreateForQuery(selectStatementNode.QueryNode.Queries);
+        var selectQueryNode = (SelectQueryNode)node.RootNode;
 
-        // Then create query context for remain sub queries.
-        new SelectCreateContextVisitor(executionThread).Run(selectStatementNode);
+        // Create initial empty context for every query.
+        new PrepareContextVisitor().Run(selectQueryNode);
 
-        // Create final execution delegate.
-        new SelectBodyNodeVisitor(executionThread).Run(selectStatementNode.QueryNode);
+        // Do some AST transformations.
+        new TransformQueryAstVisitor().Run(selectQueryNode);
 
-        return selectStatementNode.QueryNode.GetFunc();
+        // Iterate by select node in pre-order way and create correspond command context.
+        new CreateContextVisitor(executionThread).Run(selectQueryNode);
+
+        var context = selectQueryNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
+        return new SelectCommandHandler(context);
     }
 }

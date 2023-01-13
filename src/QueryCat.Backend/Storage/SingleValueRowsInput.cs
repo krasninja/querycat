@@ -1,6 +1,8 @@
+using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Types;
+using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Storage;
 
@@ -64,6 +66,12 @@ internal sealed class SingleValueRowsInput : IRowsInput
     public void Reset()
     {
         _wasRead = false;
+    }
+
+    /// <inheritdoc />
+    public void Explain(IndentedStringBuilder stringBuilder)
+    {
+        stringBuilder.AppendLine($"Single value input {_value}");
     }
 
     /// <inheritdoc />

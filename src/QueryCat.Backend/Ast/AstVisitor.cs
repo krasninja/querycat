@@ -1,4 +1,5 @@
 using QueryCat.Backend.Ast.Nodes;
+using QueryCat.Backend.Ast.Nodes.Declare;
 using QueryCat.Backend.Ast.Nodes.Function;
 using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Ast.Nodes.SpecialFunctions;
@@ -8,10 +9,23 @@ namespace QueryCat.Backend.Ast;
 public abstract class AstVisitor
 {
     /// <summary>
+    /// AST traversal.
+    /// </summary>
+    internal AstTraversal AstTraversal { get; }
+
+    public AstVisitor()
+    {
+        AstTraversal = new AstTraversal(this);
+    }
+
+    /// <summary>
     /// Run visitor for the node.
     /// </summary>
     /// <param name="node">Start node.</param>
-    public abstract void Run(IAstNode node);
+    public virtual void Run(IAstNode node)
+    {
+        AstTraversal.PreOrder(node);
+    }
 
     /// <summary>
     /// Run the visitor.
@@ -32,6 +46,14 @@ public abstract class AstVisitor
     }
 
     public virtual void Visit(BinaryOperationExpressionNode node)
+    {
+    }
+
+    public virtual void Visit(CaseExpressionNode node)
+    {
+    }
+
+    public virtual void Visit(CaseWhenThenNode node)
     {
     }
 
@@ -147,11 +169,15 @@ public abstract class AstVisitor
     {
     }
 
-    public virtual void Visit(SelectColumnsSublistNameNode node)
+    public virtual void Visit(SelectColumnsSublistNode node)
     {
     }
 
-    public virtual void Visit(SelectColumnsSublistNode node)
+    public virtual void Visit(SelectColumnsSublistWindowNode node)
+    {
+    }
+
+    public virtual void Visit(SelectCteIdentifierExpressionNode node)
     {
     }
 
@@ -187,6 +213,10 @@ public abstract class AstVisitor
     {
     }
 
+    public virtual void Visit(SelectQueryCombineNode node)
+    {
+    }
+
     public virtual void Visit(SelectQuerySpecificationNode node)
     {
     }
@@ -207,10 +237,6 @@ public abstract class AstVisitor
     {
     }
 
-    public virtual void Visit(SelectQueryExpressionBodyNode node)
-    {
-    }
-
     public virtual void Visit(SelectTableExpressionNode node)
     {
     }
@@ -219,7 +245,63 @@ public abstract class AstVisitor
     {
     }
 
+    public virtual void Visit(SelectTableJoinedNode node)
+    {
+    }
+
+    public virtual void Visit(SelectTableJoinedTypeNode node)
+    {
+    }
+
     public virtual void Visit(SelectTableReferenceListNode node)
+    {
+    }
+
+    public virtual void Visit(SelectWindowDefinitionListNode node)
+    {
+    }
+
+    public virtual void Visit(SelectWindowNode node)
+    {
+    }
+
+    public virtual void Visit(SelectWindowOrderClauseNode node)
+    {
+    }
+
+    public virtual void Visit(SelectWindowPartitionClauseNode node)
+    {
+    }
+
+    public virtual void Visit(SelectWindowSpecificationNode node)
+    {
+    }
+
+    public virtual void Visit(SelectWithListNode node)
+    {
+    }
+
+    public virtual void Visit(SelectWithNode node)
+    {
+    }
+
+    #endregion
+
+    #region Declare/Set
+
+    public virtual void Visit(DeclareNode node)
+    {
+    }
+
+    public virtual void Visit(DeclareStatementNode node)
+    {
+    }
+
+    public virtual void Visit(SetNode node)
+    {
+    }
+
+    public virtual void Visit(SetStatementNode node)
     {
     }
 

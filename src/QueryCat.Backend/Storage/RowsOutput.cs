@@ -1,3 +1,4 @@
+using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Relational;
 
 namespace QueryCat.Backend.Storage;
@@ -25,6 +26,12 @@ public abstract class RowsOutput : IRowsOutput
 
     /// <inheritdoc />
     public abstract void Close();
+
+    /// <inheritdoc />
+    public void Reset()
+    {
+        _isFirstCall = true;
+    }
 
     /// <inheritdoc />
     public void Write(Row row)

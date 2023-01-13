@@ -15,7 +15,7 @@ public class CannotFindArgumentException : QueryCatException
     /// <param name="functionName">Function name.</param>
     /// <param name="argumentName">Function argument.</param>
     public CannotFindArgumentException(string functionName, string argumentName) :
-        base(string.Format(Resources.Errors.CannotFindArgument, argumentName, functionName))
+        base($"Cannot find argument '{argumentName}' in function '{functionName}'.")
     {
     }
 }

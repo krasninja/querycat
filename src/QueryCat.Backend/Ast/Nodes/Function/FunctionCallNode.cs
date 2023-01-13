@@ -8,22 +8,25 @@ public class FunctionCallNode : ExpressionNode
 {
     public string FunctionName { get; }
 
-    public IList<FunctionCallArgumentNode> Arguments { get; }
+    public List<FunctionCallArgumentNode> Arguments { get; } = new();
 
     /// <inheritdoc />
     public override string Code => "func";
 
     /// <inheritdoc />
-    public FunctionCallNode(string functionName, List<FunctionCallArgumentNode>? arguments = null)
+    public FunctionCallNode(string functionName, IEnumerable<FunctionCallArgumentNode>? arguments = null)
     {
         FunctionName = functionName;
-        Arguments = arguments ?? new List<FunctionCallArgumentNode>();
+        if (arguments != null)
+        {
+            Arguments.AddRange(arguments);
+        }
     }
 
     public FunctionCallNode(string functionName, params FunctionCallArgumentNode[] arguments)
     {
         FunctionName = functionName;
-        Arguments = arguments.ToList();
+        Arguments.AddRange(arguments);
     }
 
     public FunctionCallNode(FunctionCallNode node) :

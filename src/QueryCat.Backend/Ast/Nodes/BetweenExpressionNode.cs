@@ -30,15 +30,15 @@ public sealed class BetweenExpressionNode : ExpressionNode
             && (binaryOperationExpressionNode.Operation == VariantValue.Operation.And
                 || binaryOperationExpressionNode.Operation == VariantValue.Operation.BetweenAnd))
         {
-            Left = binaryOperationExpressionNode.Left;
-            Right = binaryOperationExpressionNode.Right;
+            Left = binaryOperationExpressionNode.LeftNode;
+            Right = binaryOperationExpressionNode.RightNode;
             // Replace AND comparision by any another operation just to bypass types resolve.
             // The correct delegate will be generated anyway.
             binaryOperationExpressionNode.Operation = VariantValue.Operation.BetweenAnd;
         }
         else
         {
-            throw new SemanticException(Resources.Errors.InvalidBetweenExpression);
+            throw new SemanticException("Invalid BETWEEN expression.");
         }
     }
 

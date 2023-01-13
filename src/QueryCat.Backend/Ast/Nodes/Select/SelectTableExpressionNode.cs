@@ -1,3 +1,5 @@
+using System.Text;
+
 namespace QueryCat.Backend.Ast.Nodes.Select;
 
 public sealed class SelectTableExpressionNode : AstNode
@@ -5,7 +7,7 @@ public sealed class SelectTableExpressionNode : AstNode
     /// <inheritdoc />
     public override string Code => "table_expr";
 
-    public SelectTableReferenceListNode Tables { get; }
+    public SelectTableReferenceListNode TablesNode { get; }
 
     public SelectSearchConditionNode? SearchConditionNode { get; set; }
 
@@ -13,14 +15,14 @@ public sealed class SelectTableExpressionNode : AstNode
 
     public SelectHavingNode? HavingNode { get; set; }
 
-    public SelectTableExpressionNode(SelectTableReferenceListNode selectTableReferenceListNode)
+    public SelectTableExpressionNode(SelectTableReferenceListNode selectTableNodeReferenceListNode)
     {
-        Tables = selectTableReferenceListNode;
+        TablesNode = selectTableNodeReferenceListNode;
     }
 
     public SelectTableExpressionNode(SelectTableExpressionNode node)
     {
-        Tables = (SelectTableReferenceListNode)node.Tables.Clone();
+        TablesNode = (SelectTableReferenceListNode)node.TablesNode.Clone();
         if (node.SearchConditionNode != null)
         {
             SearchConditionNode = (SelectSearchConditionNode)node.SearchConditionNode.Clone();
@@ -39,7 +41,7 @@ public sealed class SelectTableExpressionNode : AstNode
     /// <inheritdoc />
     public override IEnumerable<IAstNode> GetChildren()
     {
-        yield return Tables;
+        yield return TablesNode;
         if (SearchConditionNode != null)
         {
             yield return SearchConditionNode;
@@ -59,4 +61,24 @@ public sealed class SelectTableExpressionNode : AstNode
 
     /// <inheritdoc />
     public override void Accept(AstVisitor visitor) => visitor.Visit(this);
+
+    /// <inheritdoc />
+    public override string ToString()
+    {
+        var sb = new StringBuilder();
+        sb.Append(string.Join(", ", TablesNode.ToString()));
+        if (SearchConditionNode != null)
+        {
+            sb.Append($" Where {SearchConditionNode}");
+        }
+        if (GroupByNode != null)
+        {
+            sb.Append($" Group By {GroupByNode}");
+        }
+        if (HavingNode != null)
+        {
+            sb.Append($" Having {HavingNode}");
+        }
+        return sb.ToString();
+    }
 }

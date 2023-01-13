@@ -138,7 +138,7 @@ public static class MathFunctions
         return new VariantValue(Math.Ceiling(x));
     }
 
-    [Description("The function select the largest value from a list of any number of values.")]
+    [Description("The function selects the largest value from a list of any number of values.")]
     [FunctionSignature("greatest(...args: any[]): any")]
     public static VariantValue Greatest(FunctionCallInfo args)
     {
@@ -150,7 +150,7 @@ public static class MathFunctions
         var maxValue = notNullArgs.First();
         for (var i = 1; i < notNullArgs.Length; i++)
         {
-            if (VariantValue.Greater(ref notNullArgs[i], ref maxValue, out _))
+            if (VariantValue.Greater(in notNullArgs[i], in maxValue, out _))
             {
                 maxValue = notNullArgs[i];
             }
@@ -158,7 +158,7 @@ public static class MathFunctions
         return maxValue;
     }
 
-    [Description("The function select the leas value from a list of any number of values.")]
+    [Description("The function selects the least value from a list of any number of values.")]
     [FunctionSignature("least(...args: any[]): any")]
     public static VariantValue Least(FunctionCallInfo args)
     {
@@ -170,7 +170,7 @@ public static class MathFunctions
         var maxValue = notNullArgs.First();
         for (var i = 1; i < notNullArgs.Length; i++)
         {
-            if (VariantValue.Less(ref notNullArgs[i], ref maxValue, out _))
+            if (VariantValue.Less(in notNullArgs[i], in maxValue, out _))
             {
                 maxValue = notNullArgs[i];
             }

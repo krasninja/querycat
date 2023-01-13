@@ -9,20 +9,20 @@ public sealed class UnaryOperationExpressionNode : ExpressionNode
 {
     public VariantValue.Operation Operation { get; }
 
-    public ExpressionNode Right { get; }
+    public ExpressionNode RightNode { get; }
 
     /// <inheritdoc />
     public override string Code => "unaryop";
 
     /// <inheritdoc />
-    public UnaryOperationExpressionNode(VariantValue.Operation operation, ExpressionNode right)
+    public UnaryOperationExpressionNode(VariantValue.Operation operation, ExpressionNode rightNode)
     {
         Operation = operation;
-        Right = right;
+        RightNode = rightNode;
     }
 
     public UnaryOperationExpressionNode(UnaryOperationExpressionNode node) :
-        this(node.Operation, (ExpressionNode)node.Right.Clone())
+        this(node.Operation, (ExpressionNode)node.RightNode.Clone())
     {
         node.CopyTo(this);
     }
@@ -30,7 +30,7 @@ public sealed class UnaryOperationExpressionNode : ExpressionNode
     /// <inheritdoc />
     public override IEnumerable<IAstNode> GetChildren()
     {
-        yield return Right;
+        yield return RightNode;
     }
 
     /// <inheritdoc />
@@ -40,5 +40,5 @@ public sealed class UnaryOperationExpressionNode : ExpressionNode
     public override void Accept(AstVisitor visitor) => visitor.Visit(this);
 
     /// <inheritdoc />
-    public override string ToString() => $"{Operation} {Right}";
+    public override string ToString() => $"{Operation} {RightNode}";
 }

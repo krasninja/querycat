@@ -1,0 +1,8 @@
+expected: |
+  yyy
+  xxx
+query: |
+  select t2.value
+  from 'Table1.csv' as t1
+  inner join 'Table2.csv' as t2 on t1.num = t2.num
+  order by t2.num desc;

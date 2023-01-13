@@ -2,7 +2,7 @@ namespace QueryCat.Backend.Types;
 
 public partial struct VariantValue
 {
-    internal static VariantValue Add(ref VariantValue left, ref VariantValue right, out ErrorCode errorCode)
+    internal static VariantValue Add(in VariantValue left, in VariantValue right, out ErrorCode errorCode)
     {
         var leftType = left.GetInternalType();
         var rightType = right.GetInternalType();
@@ -15,7 +15,7 @@ public partial struct VariantValue
         }
 
         errorCode = ErrorCode.OK;
-        return function.Invoke(ref left, ref right);
+        return function.Invoke(in left, in right);
     }
 
     internal static BinaryFunction GetAddDelegate(DataType leftType, DataType rightType)
@@ -24,7 +24,7 @@ public partial struct VariantValue
         {
             DataType.Integer => rightType switch
             {
-                DataType.Integer => (ref VariantValue left, ref VariantValue right) =>
+                DataType.Integer => (in VariantValue left, in VariantValue right) =>
                 {
                     if (left.IsNull || right.IsNull)
                     {
@@ -32,7 +32,7 @@ public partial struct VariantValue
                     }
                     return new VariantValue(left.AsIntegerUnsafe + right.AsIntegerUnsafe);
                 },
-                DataType.Float => (ref VariantValue left, ref VariantValue right) =>
+                DataType.Float => (in VariantValue left, in VariantValue right) =>
                 {
                     if (left.IsNull || right.IsNull)
                     {
@@ -40,77 +40,77 @@ public partial struct VariantValue
                     }
                     return new VariantValue(left.AsIntegerUnsafe + right.AsFloatUnsafe);
                 },
-                DataType.Numeric => (ref VariantValue left, ref VariantValue right) =>
+                DataType.Numeric => (in VariantValue left, in VariantValue right) =>
                 {
                     if (left.IsNull || right.IsNull)
                     {
                         return Null;
                     }
-                    return new VariantValue(left.AsInteger + right.AsNumeric);
+                    return new VariantValue(left.AsIntegerUnsafe + right.AsNumericUnsafe);
                 },
                 _ => BinaryNullDelegate,
             },
             DataType.Float => rightType switch
             {
-                DataType.Integer => (ref VariantValue left, ref VariantValue right) =>
+                DataType.Integer => (in VariantValue left, in VariantValue right) =>
                 {
                     if (left.IsNull || right.IsNull)
                     {
                         return Null;
                     }
-                    return new VariantValue(left.AsFloat + right.AsInteger);
+                    return new VariantValue(left.AsFloatUnsafe + right.AsIntegerUnsafe);
                 },
-                DataType.Float => (ref VariantValue left, ref VariantValue right) =>
+                DataType.Float => (in VariantValue left, in VariantValue right) =>
                 {
                     if (left.IsNull || right.IsNull)
                     {
                         return Null;
                     }
-                    return new VariantValue(left.AsFloat + right.AsFloat);
+                    return new VariantValue(left.AsFloatUnsafe + right.AsFloatUnsafe);
                 },
                 _ => BinaryNullDelegate,
             },
             DataType.Numeric => rightType switch
             {
-                DataType.Integer => (ref VariantValue left, ref VariantValue right) =>
+                DataType.Integer => (in VariantValue left, in VariantValue right) =>
                 {
                     if (left.IsNull || right.IsNull)
                     {
                         return Null;
                     }
-                    return new VariantValue(left.AsNumeric + right.AsInteger);
+                    return new VariantValue(left.AsNumericUnsafe + right.AsIntegerUnsafe);
                 },
-                DataType.Numeric => (ref VariantValue left, ref VariantValue right) =>
+                DataType.Numeric => (in VariantValue left, in VariantValue right) =>
                 {
                     if (left.IsNull || right.IsNull)
                     {
                         return Null;
                     }
-                    return new VariantValue(left.AsNumeric + right.AsNumeric);
+                    return new VariantValue(left.AsNumericUnsafe + right.AsNumericUnsafe);
                 },
                 _ => BinaryNullDelegate,
             },
             DataType.Timestamp => rightType switch
             {
-                DataType.Interval => (ref VariantValue left, ref VariantValue right) =>
+                DataType.Interval => (in VariantValue left, in VariantValue right) =>
                 {
                     if (left.IsNull || right.IsNull)
                     {
                         return Null;
                     }
-                    return new VariantValue(left.AsTimestamp + right.AsInterval);
+                    return new VariantValue(left.AsTimestampUnsafe + right.AsIntervalUnsafe);
                 },
                 _ => BinaryNullDelegate,
             },
             DataType.Interval => rightType switch
             {
-                DataType.Interval => (ref VariantValue left, ref VariantValue right) =>
+                DataType.Interval => (in VariantValue left, in VariantValue right) =>
                 {
                     if (left.IsNull || right.IsNull)
                     {
                         return Null;
                     }
-                    return new VariantValue(left.AsInterval + right.AsInterval);
+                    return new VariantValue(left.AsIntervalUnsafe + right.AsIntervalUnsafe);
                 },
                 _ => BinaryNullDelegate,
             },

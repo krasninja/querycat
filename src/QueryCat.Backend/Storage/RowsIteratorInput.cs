@@ -1,5 +1,7 @@
+using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Types;
+using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Storage;
 
@@ -60,5 +62,11 @@ public sealed class RowsIteratorInput : IRowsInput
             _queryContext.InputInfo.InputArguments = new[] { _id };
         }
         _rowsIterator.Reset();
+    }
+
+    /// <inheritdoc />
+    public void Explain(IndentedStringBuilder stringBuilder)
+    {
+        stringBuilder.AppendRowsIteratorsWithIndent("Iterator input", _rowsIterator);
     }
 }

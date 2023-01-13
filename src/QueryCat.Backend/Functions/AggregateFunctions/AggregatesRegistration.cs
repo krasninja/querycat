@@ -7,10 +7,10 @@ public static class AggregatesRegistration
 {
     public static void RegisterFunctions(FunctionsManager functionsManager)
     {
-        functionsManager.RegisterAggregate(new AvgAggregateFunction());
-        functionsManager.RegisterAggregate(new CountAggregateFunction());
-        functionsManager.RegisterAggregate(new MaxAggregateFunction());
-        functionsManager.RegisterAggregate(new MinAggregateFunction());
-        functionsManager.RegisterAggregate(new SumAggregateFunction());
+        functionsManager.RegisterAggregate<AvgAggregateFunction>();
+        functionsManager.RegisterAggregate<CountAggregateFunction>();
+        functionsManager.RegisterAggregate<MaxAggregateFunction>();
+        functionsManager.RegisterAggregate<MinAggregateFunction>();
+        functionsManager.RegisterAggregate<SumAggregateFunction>();
     }
 }

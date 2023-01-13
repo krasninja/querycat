@@ -1,0 +1,12 @@
+expected: |
+  1
+query: |
+  select 1;
+  /*
+  select 
+    name,
+    balance,
+    sum(balance) over (w1),
+    sum(balance) over (order by balance)
+  from 'Simple2.csv'
+  window w as (partition by country || '' order by balance), w1 as (w);*/

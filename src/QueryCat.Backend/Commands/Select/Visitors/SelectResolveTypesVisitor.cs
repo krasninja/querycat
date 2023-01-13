@@ -15,51 +15,19 @@ internal sealed class SelectResolveTypesVisitor : ResolveTypesVisitor
         base(executionThread)
     {
         _context = context;
-        AstTraversal.TypesToIgnore.Add(typeof(SelectQuerySpecificationNode));
+        AstTraversal.TypesToIgnore.Add(typeof(SelectQueryNode));
+        AstTraversal.TypesToIgnore.Add(typeof(SelectTableJoinedNode));
+        AstTraversal.AcceptBeforeIgnore = true;
     }
 
     /// <inheritdoc />
     public override void Visit(IdentifierExpressionNode node)
     {
-        var columnIndex = _context
-            .GetColumnIndexByName(node.Name, node.SourceName, out var rowsIterator);
-        if (columnIndex < 0)
+        if (VisitIdentifierNode(node, node.Name, node.SourceName))
         {
-            base.Visit(node);
+            return;
         }
-        else
-        {
-            node.SetAttribute(AstAttributeKeys.InputColumn, rowsIterator!.Columns[columnIndex]);
-            node.SetDataType(rowsIterator.Columns[columnIndex].DataType);
-        }
-    }
-
-    /// <inheritdoc />
-    public override void Visit(SelectColumnsSublistExpressionNode node)
-    {
-        node.ExpressionNode.CopyTo<DataType>(AstAttributeKeys.TypeKey, node);
-    }
-
-    /// <inheritdoc />
-    public override void Visit(SelectColumnsSublistNameNode node)
-    {
-        var columnIndex = _context
-            .GetColumnIndexByName(node.ColumnName, node.SourceName, out var rowsIterator);
-        if (columnIndex < 0)
-        {
-            base.Visit(node);
-        }
-        else
-        {
-            node.SetAttribute(AstAttributeKeys.InputColumn, rowsIterator!.Columns[columnIndex]);
-            node.SetDataType(rowsIterator.Columns[columnIndex].DataType);
-        }
-    }
-
-    /// <inheritdoc />
-    public override void Visit(SelectQueryExpressionBodyNode node)
-    {
-        node.SetDataType(node.Queries[0].ColumnsList.Columns[0].GetDataType());
+        base.Visit(node);
     }
 
     /// <inheritdoc />
@@ -69,9 +37,40 @@ internal sealed class SelectResolveTypesVisitor : ResolveTypesVisitor
     }
 
     /// <inheritdoc />
+    public override void Visit(SelectColumnsSublistExpressionNode node)
+    {
+        node.ExpressionNode.CopyTo<DataType>(AstAttributeKeys.TypeKey, node);
+    }
+
+    private bool VisitIdentifierNode(IAstNode node, string name, string source)
+    {
+        if (!_context.TryGetInputSourceByName(name, source, out var result)
+            || result == null)
+        {
+            return false;
+        }
+
+        node.SetAttribute(AstAttributeKeys.InputColumnKey, result.Input.Columns[result.ColumnIndex]);
+        node.SetAttribute(AstAttributeKeys.InputColumnIndexKey, result.ColumnIndex);
+        node.SetDataType(result.Input.Columns[result.ColumnIndex].DataType);
+        return true;
+    }
+
+    /// <inheritdoc />
     public override void Visit(SelectOrderBySpecificationNode node)
     {
-        node.SetDataType(node.Expression.GetDataType());
+        node.SetDataType(node.ExpressionNode.GetDataType());
+    }
+
+    /// <inheritdoc />
+    public override void Visit(SelectQueryCombineNode node) => VisitSelectQueryNode(node);
+
+    /// <inheritdoc />
+    public override void Visit(SelectQuerySpecificationNode node) => VisitSelectQueryNode(node);
+
+    private void VisitSelectQueryNode(SelectQueryNode node)
+    {
+        node.SetDataType(node.ColumnsListNode.ColumnsNodes[0].GetDataType());
     }
 
     /// <inheritdoc />

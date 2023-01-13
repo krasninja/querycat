@@ -1,7 +1,6 @@
 using System.Runtime.CompilerServices;
-using QueryCat.Backend.Logging;
+using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Relational;
-using QueryCat.Backend.Types;
 using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Storage;
@@ -9,10 +8,11 @@ namespace QueryCat.Backend.Storage;
 /// <summary>
 /// Iterator for <see cref="IRowsInput" />.
 /// </summary>
-public class RowsInputIterator : IRowsIterator
+public class RowsInputIterator : IRowsIterator, IDisposable
 {
     private readonly IRowsInput _rowsInput;
-    private readonly bool _autoFetch;
+    private readonly bool _autoOpen;
+    private bool _isOpened;
     private Row _row;
     private bool[] _fetchedColumnsIndexes = Array.Empty<bool>();
     private bool _hasInput;
@@ -25,14 +25,22 @@ public class RowsInputIterator : IRowsIterator
     public Row Current => _row;
 
     /// <summary>
+    /// Autofetch all values.
+    /// </summary>
+    public bool AutoFetch { get; set; }
+
+    /// <summary>
     /// The event occurs on data processing (reading) errors.
     /// </summary>
     public event EventHandler<RowsInputErrorEventArgs>? OnError;
 
-    public RowsInputIterator(IRowsInput rowsInput, bool autoFetch = true)
+    public IRowsInput RowsInput => _rowsInput;
+
+    public RowsInputIterator(IRowsInput rowsInput, bool autoFetch = true, bool autoOpen = false)
     {
         _rowsInput = rowsInput;
-        _autoFetch = autoFetch;
+        AutoFetch = autoFetch;
+        _autoOpen = autoOpen;
         _row = new Row(this);
     }
 
@@ -65,13 +73,13 @@ public class RowsInputIterator : IRowsIterator
         {
             return;
         }
-        var errorCode = _rowsInput.ReadValue(columnIndex, out VariantValue variantValue);
+        var errorCode = _rowsInput.ReadValue(columnIndex, out var variantValue);
         if (errorCode != ErrorCode.OK)
         {
             OnError?.Invoke(this, new RowsInputErrorEventArgs(_rowIndex, columnIndex, errorCode));
         }
         _row[columnIndex] = variantValue;
-        if (!_autoFetch)
+        if (!AutoFetch)
         {
             _fetchedColumnsIndexes[columnIndex] = true;
         }
@@ -79,7 +87,7 @@ public class RowsInputIterator : IRowsIterator
 
     public void FetchValuesForColumns(params int[] columnsIndexes)
     {
-        for (int i = 0; i < columnsIndexes.Length; i++)
+        for (var i = 0; i < columnsIndexes.Length; i++)
         {
             var index = columnsIndexes[i];
             FetchValueForColumn(index);
@@ -89,17 +97,18 @@ public class RowsInputIterator : IRowsIterator
     /// <inheritdoc />
     public bool MoveNext()
     {
-        _hasInput = _rowsInput.ReadNext();
-        if (!_hasInput)
+        if (_autoOpen && !_isOpened)
         {
-            Logger.Instance.Debug($"Close rows input {_rowsInput}.", nameof(RowsInputIterator));
-            _rowsInput.Close();
+            _rowsInput.Open();
+            _isOpened = true;
         }
-        if (_hasInput && _autoFetch)
+
+        _hasInput = _rowsInput.ReadNext();
+        if (_hasInput && AutoFetch)
         {
             FetchValuesForAllColumns();
         }
-        if (!_autoFetch)
+        if (!AutoFetch)
         {
             Array.Fill(_fetchedColumnsIndexes, false);
         }
@@ -118,13 +127,24 @@ public class RowsInputIterator : IRowsIterator
     /// <inheritdoc />
     public void Explain(IndentedStringBuilder stringBuilder)
     {
-        stringBuilder.AppendLine($"Input {_rowsInput.GetType().Name} (autofetch={_autoFetch})");
+        stringBuilder.AppendLine($"Input {_rowsInput.GetType().Name} (autofetch={AutoFetch})");
         stringBuilder.IncreaseIndent();
-        var rowsInputString = _rowsInput.ToString();
-        if (!string.IsNullOrEmpty(rowsInputString))
-        {
-            stringBuilder.AppendLine(rowsInputString);
-        }
+        _rowsInput.Explain(stringBuilder);
         stringBuilder.DecreaseIndent();
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _rowsInput.Close();
+        }
+    }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
     }
 }

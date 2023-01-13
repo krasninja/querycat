@@ -1,0 +1,7 @@
+expected: |
+  aleksander
+query: |
+  with [data1] as (select id, name from 'Simple2.csv'),
+    [data2] as (select * from [data1]),
+    [data3] as (select * from [data2] where id > 3)
+  select name from [data3] fetch 1;

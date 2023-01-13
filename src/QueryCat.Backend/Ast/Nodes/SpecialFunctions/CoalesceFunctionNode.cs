@@ -2,14 +2,14 @@ namespace QueryCat.Backend.Ast.Nodes.SpecialFunctions;
 
 public sealed class CoalesceFunctionNode : ExpressionNode
 {
-    public IList<ExpressionNode> Expressions { get; }
+    public List<ExpressionNode> Expressions { get; } = new();
 
     /// <inheritdoc />
     public override string Code => "coalesce";
 
-    public CoalesceFunctionNode(IList<ExpressionNode> expressions)
+    public CoalesceFunctionNode(IEnumerable<ExpressionNode> expressions)
     {
-        Expressions = expressions;
+        Expressions.AddRange(expressions);
     }
 
     public CoalesceFunctionNode(CoalesceFunctionNode node) : this(
@@ -22,10 +22,7 @@ public sealed class CoalesceFunctionNode : ExpressionNode
     public override object Clone() => new CoalesceFunctionNode(this);
 
     /// <inheritdoc />
-    public override IEnumerable<IAstNode> GetChildren()
-    {
-        return Expressions;
-    }
+    public override IEnumerable<IAstNode> GetChildren() => Expressions;
 
     /// <inheritdoc />
     public override void Accept(AstVisitor visitor) => visitor.Visit(this);

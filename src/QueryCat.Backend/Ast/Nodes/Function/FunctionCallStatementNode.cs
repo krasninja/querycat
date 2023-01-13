@@ -2,27 +2,15 @@ namespace QueryCat.Backend.Ast.Nodes.Function;
 
 public sealed class FunctionCallStatementNode : StatementNode
 {
-    public FunctionCallNode FunctionNode { get; }
+    public FunctionCallNode FunctionNode => (FunctionCallNode)RootNode;
 
     /// <inheritdoc />
-    public override string Code => "fcall_stmt";
-
-    /// <inheritdoc />
-    public FunctionCallStatementNode(FunctionCallNode functionNode)
+    public FunctionCallStatementNode(FunctionCallNode functionNode) : base(functionNode)
     {
-        FunctionNode = functionNode;
     }
 
-    public FunctionCallStatementNode(FunctionCallStatementNode node) :
-        this((FunctionCallNode)node.FunctionNode.Clone())
+    public FunctionCallStatementNode(FunctionCallStatementNode node) : base(node)
     {
-        node.CopyTo(this);
-    }
-
-    /// <inheritdoc />
-    public override IEnumerable<IAstNode> GetChildren()
-    {
-        yield return FunctionNode;
     }
 
     /// <inheritdoc />

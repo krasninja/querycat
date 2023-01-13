@@ -1,3 +1,4 @@
+using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Functions;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Types;
@@ -13,6 +14,7 @@ public class OrderColumnsIndex : IOrderIndex
     private int[] _rowsOrder = Array.Empty<int>();
     private readonly OrderDirection[] _directions;
     private readonly IFuncUnit[] _valueGetters;
+    private readonly NullOrder[] _nullOrders;
     private readonly int[] _columnIndexes;
 
     private ICursorRowsIterator RowsFrameIterator { get; }
@@ -43,14 +45,62 @@ public class OrderColumnsIndex : IOrderIndex
                 .Select(d => d == OrderDirection.Ascending ? -1 : 1).ToArray();
             var columnsTypes = _orderColumnsIndex._columnIndexes
                 .Select(i => _orderColumnsIndex.RowsFrameIterator.Columns[i].DataType).ToArray();
-            _greaterFunctions = columnsTypes.Select(t => VariantValue.GetGreaterDelegate(t, t)).ToArray();
-            _lessFunctions = columnsTypes.Select(t => VariantValue.GetLessDelegate(t, t)).ToArray();
+            _greaterFunctions = columnsTypes
+                .Select((t, i) => GetGreaterDelegate(t, _orderColumnsIndex._nullOrders[i], _greaterValues[i]))
+                .ToArray();
+            _lessFunctions = columnsTypes
+                .Select((t, i) => GetLessDelegate(t, _orderColumnsIndex._nullOrders[i], _lessValues[i]))
+                .ToArray();
+        }
+
+        private static VariantValue.BinaryFunction GetGreaterDelegate(
+            DataType type,
+            NullOrder nullOrder,
+            int greater)
+        {
+            var greaterValue = new VariantValue(greater == -1);
+            var lessValue = new VariantValue(!greaterValue.AsBooleanUnsafe);
+            var func = VariantValue.GetGreaterDelegate(type, type);
+            return (in VariantValue left, in VariantValue right) =>
+            {
+                if (left.IsNull)
+                {
+                    return nullOrder == NullOrder.NullsFirst ? greaterValue : lessValue;
+                }
+                else if (right.IsNull)
+                {
+                    return nullOrder == NullOrder.NullsFirst ? lessValue : greaterValue;
+                }
+                return func.Invoke(in left, in right);
+            };
+        }
+
+        private static VariantValue.BinaryFunction GetLessDelegate(
+            DataType type,
+            NullOrder nullOrder,
+            int less)
+        {
+            var lessValue = new VariantValue(less == -1);
+            var greaterValue = new VariantValue(!lessValue.AsBooleanUnsafe);
+            var func = VariantValue.GetLessDelegate(type, type);
+            return (in VariantValue left, in VariantValue right) =>
+            {
+                if (left.IsNull)
+                {
+                    return nullOrder == NullOrder.NullsFirst ? lessValue : greaterValue;
+                }
+                else if (right.IsNull)
+                {
+                    return nullOrder == NullOrder.NullsFirst ? greaterValue : lessValue;
+                }
+                return func.Invoke(in left, in right);
+            };
         }
 
         private void FillValues(VariantValue[] values, int rowIndex)
         {
             _orderColumnsIndex.RowsFrameIterator.Seek(rowIndex, CursorSeekOrigin.Begin);
-            for (int i = 0; i < values.Length; i++)
+            for (var i = 0; i < values.Length; i++)
             {
                 values[i] = _orderColumnsIndex._valueGetters[i].Invoke();
             }
@@ -62,13 +112,13 @@ public class OrderColumnsIndex : IOrderIndex
             FillValues(_values1, x);
             FillValues(_values2, y);
 
-            for (int i = 0; i < _values1.Length; i++)
+            for (var i = 0; i < _values1.Length; i++)
             {
-                if (_greaterFunctions[i].Invoke(ref _values1[i], ref _values2[i]).AsBooleanUnsafe)
+                if (_greaterFunctions[i].Invoke(in _values1[i], in _values2[i]).AsBooleanUnsafe)
                 {
                     return _greaterValues[i];
                 }
-                if (_lessFunctions[i].Invoke(ref _values1[i], ref _values2[i]))
+                if (_lessFunctions[i].Invoke(in _values1[i], in _values2[i]))
                 {
                     return _lessValues[i];
                 }
@@ -77,7 +127,7 @@ public class OrderColumnsIndex : IOrderIndex
         }
     }
 
-    private sealed class OrderColumnsIterator : IRowsIterator
+    private sealed class OrderColumnsIterator : ICursorRowsIterator
     {
         private readonly OrderColumnsIndex _orderColumnsIndex;
         private int _currentRowIndex = -1;
@@ -87,6 +137,12 @@ public class OrderColumnsIndex : IOrderIndex
 
         /// <inheritdoc />
         public Row Current => _orderColumnsIndex.RowsFrameIterator.Current;
+
+        /// <inheritdoc />
+        public int Position => _orderColumnsIndex._rowsOrder[_currentRowIndex];
+
+        /// <inheritdoc />
+        public int TotalRows => _orderColumnsIndex.RowsFrameIterator.TotalRows;
 
         public OrderColumnsIterator(OrderColumnsIndex orderColumnsIndex)
         {
@@ -117,15 +173,34 @@ public class OrderColumnsIndex : IOrderIndex
         {
             stringBuilder.AppendRowsIteratorsWithIndent("Sort", _orderColumnsIndex.RowsFrameIterator);
         }
+
+        /// <inheritdoc />
+        public void Seek(int offset, CursorSeekOrigin origin)
+        {
+            if (origin == CursorSeekOrigin.Begin)
+            {
+                _currentRowIndex = offset;
+            }
+            else if (origin == CursorSeekOrigin.Current)
+            {
+                _currentRowIndex += offset;
+            }
+            else if (origin == CursorSeekOrigin.End)
+            {
+                _currentRowIndex = TotalRows - offset;
+            }
+        }
     }
 
     public OrderColumnsIndex(
         ICursorRowsIterator rowsFrameIterator,
         IList<OrderDirection> directions,
+        IList<NullOrder> nullOrders,
         IList<int> columnIndexes)
     {
         RowsFrameIterator = rowsFrameIterator;
         _directions = directions.ToArray();
+        _nullOrders = nullOrders.ToArray();
         _columnIndexes = columnIndexes.ToArray();
         _valueGetters = columnIndexes.Select(index => new FuncUnitRowsIteratorColumn(rowsFrameIterator, index))
             .ToArray();

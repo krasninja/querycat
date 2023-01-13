@@ -14,13 +14,14 @@ Field values and labels might be enclosed within double-quote (") characters.
 ## Syntax
 
 ```
-csv(has_header?: boolean, delimiter?: string = null): object<IRowsFormatter>
+csv(has_header?: boolean, delimiter?: string = null, quote_strings?: boolean = false): object<IRowsFormatter>
 ```
 
 Parameters:
 
 - `has_header`. Should be `true` if an input has header, `false` otherwise.
 - `delimiter`. The delimiter character. If not specified the first line will be analyzed for that. The preferred delimiter is comma.
+- `quote_strings`. Force quote all strings.
 
 ## Examples
 

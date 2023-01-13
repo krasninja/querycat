@@ -34,13 +34,7 @@ public sealed class VariantValueTests
     public void Convert_FromTypeToMatchType_ShouldConvert()
     {
         VariantValue Cast(VariantValue value, DataType targetType)
-        {
-            if (!value.Cast(targetType, out VariantValue outValue))
-            {
-                throw new InvalidOperationException("Invalid cast.");
-            }
-            return outValue;
-        }
+            => value.Cast(targetType);
 
         // Assert.
         Assert.Equal(new VariantValue(1), Cast(new VariantValue("1"), DataType.Integer));

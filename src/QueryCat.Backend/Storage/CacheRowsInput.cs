@@ -1,5 +1,6 @@
 using System.Diagnostics;
-using QueryCat.Backend.Logging;
+using Serilog;
+using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Types;
 using QueryCat.Backend.Utils;
@@ -35,13 +36,13 @@ public sealed class CacheRowsInput : IRowsInput
             ExpireAt = DateTime.UtcNow + expireAt;
         }
 
-        public void Finish()
+        public void Complete()
         {
             IsCompleted = true;
         }
     }
 
-    private readonly List<CacheEntry> _cacheEntries = new();
+    private readonly Dictionary<CacheKey, CacheEntry> _cacheEntries = new();
     private readonly IRowsInput _rowsInput;
     private bool[] _cacheReadMap;
     private int _rowIndex = -1;
@@ -54,7 +55,9 @@ public sealed class CacheRowsInput : IRowsInput
 
     internal int CacheReads { get; private set; }
 
-    internal int TotalReads { get; private set; }
+    internal int InputReads { get; private set; }
+
+    internal int TotalReads => CacheReads + InputReads;
 
     internal int TotalCacheEntries => _cacheEntries.Count;
 
@@ -87,25 +90,16 @@ public sealed class CacheRowsInput : IRowsInput
         }
 
         var cacheEntry = GetCurrentCacheEntry();
-        TotalReads++;
 
         var offset = Columns.Length * _rowIndex + columnIndex;
-        if (_rowIndex < cacheEntry.CacheLength && _cacheReadMap[columnIndex])
-        {
-            value = cacheEntry.Cache[offset];
-            CacheReads++;
-            return ErrorCode.OK;
-        }
-
-        var errorCode = _rowsInput.ReadValue(columnIndex, out value);
-        cacheEntry.Cache[offset] = value;
-        _cacheReadMap[columnIndex] = true;
-        return errorCode;
+        value = cacheEntry.Cache[offset];
+        CacheReads++;
+        return ErrorCode.OK;
     }
 
     private void IncreaseCache(CacheEntry cacheEntry)
     {
-        for (int i = 0; i < Columns.Length; i++)
+        for (var i = 0; i < Columns.Length; i++)
         {
             cacheEntry.Cache.Add(VariantValue.Null);
         }
@@ -126,6 +120,11 @@ public sealed class CacheRowsInput : IRowsInput
             Array.Fill(_cacheReadMap, true);
             return true;
         }
+        // We cannot read cache data, but cache is completed.
+        if (cacheEntry.IsCompleted)
+        {
+            return false;
+        }
 
         var hasData = _rowsInput.ReadNext();
         if (hasData)
@@ -138,14 +137,33 @@ public sealed class CacheRowsInput : IRowsInput
             _rowIndex--;
         }
 
-        if (!hasData
-            || (cacheEntry.Key.Limit > 0 &&_rowIndex + 1 >= cacheEntry.Key.Limit))
+        if (hasData && _rowIndex > -1)
         {
-            cacheEntry.Finish();
-            _cacheEntries.Add(cacheEntry);
+            ReadAllItemsToCache();
+        }
+
+        // If we don't have data - this mean we can complete the cache line.
+        if (!hasData
+            || (cacheEntry.Key.Limit > 0 && _rowIndex + 1 >= cacheEntry.Key.Limit))
+        {
+            cacheEntry.Complete();
+            _cacheEntries.Add(cacheEntry.Key, cacheEntry);
         }
 
         return hasData;
+    }
+
+    private void ReadAllItemsToCache()
+    {
+        var cacheEntry = GetCurrentCacheEntry();
+        for (var columnIndex = 0; columnIndex < _cacheReadMap.Length; columnIndex++)
+        {
+            var offset = Columns.Length * _rowIndex + columnIndex;
+            _rowsInput.ReadValue(columnIndex, out var value);
+            InputReads++;
+            cacheEntry.Cache[offset] = value;
+        }
+        Array.Fill(_cacheReadMap, true);
     }
 
     private CacheEntry GetCurrentCacheEntry()
@@ -161,12 +179,13 @@ public sealed class CacheRowsInput : IRowsInput
 
     private void RemoveExpiredKeys()
     {
-        for (var i = 0; i < _cacheEntries.Count; i++)
+        var toRemove = _cacheEntries
+            .Where(ce => ce.Value.IsExpired && ce.Value != _currentCacheEntry)
+            .Select(ce => ce.Key)
+            .ToList();
+        for (var i = 0; i < toRemove.Count; i++)
         {
-            if (_cacheEntries[i].IsExpired)
-            {
-                _cacheEntries.RemoveAt(i);
-            }
+            _cacheEntries.Remove(toRemove[i]);
         }
     }
 
@@ -175,32 +194,51 @@ public sealed class CacheRowsInput : IRowsInput
         RemoveExpiredKeys();
 
         var key = new CacheKey(_queryContext);
-        foreach (var cacheEntry in _cacheEntries)
+        // Fast path.
+        if (_cacheEntries.TryGetValue(key, out var existingKey))
+        {
+            Log.Logger.Debug("Reuse existing cache entry with key {Key}.", key);
+            return existingKey;
+        }
+        foreach (var cacheEntry in _cacheEntries.Values)
         {
             if (cacheEntry.Key.Match(key))
             {
-                Logger.Instance.Debug("Reuse existing cache.", nameof(CacheRowsInput));
+                Log.Logger.Debug("Reuse existing cache entry with key {Key}.", key);
                 return cacheEntry;
             }
         }
 
-        return new CacheEntry(key, TimeSpan.FromSeconds(30));
+        var entry = new CacheEntry(key, TimeSpan.FromSeconds(120));
+        Log.Logger.Debug("Create new cache entry with key {Key}.", key);
+        return entry;
     }
 
     /// <inheritdoc />
     public void Reset()
     {
         _rowIndex = -1;
-        _rowsInput.Reset();
         var newCacheKey = new CacheKey(_queryContext);
+        _rowsInput.Reset();
         if (_currentCacheEntry != null)
         {
-            if (!_currentCacheEntry.IsCompleted && _currentCacheEntry.Key.Equals(newCacheKey))
+            // If we reset but persist the same key - just go ahead using existing input.
+            if (_currentCacheEntry.Key.Equals(newCacheKey))
             {
-                Logger.Instance.Debug("Reuse previous cache.", nameof(CacheRowsInput));
+                Log.Logger.Debug("Reuse previous cache with key {Key}.", _currentCacheEntry.Key);
                 return;
             }
         }
         _currentCacheEntry = CreateOrGetCacheEntry();
     }
+
+    /// <inheritdoc />
+    public void Explain(IndentedStringBuilder stringBuilder)
+    {
+        stringBuilder.AppendRowsInputsWithIndent("Cache", _rowsInput);
+    }
+
+    /// <inheritdoc />
+    public override string ToString()
+        => $"cache: {_rowsInput}, total = {TotalCacheEntries}, reads = {CacheReads}, total_reads = {TotalReads}";
 }

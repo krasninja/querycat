@@ -1,10 +1,12 @@
 using System.ComponentModel;
 using System.Diagnostics;
 using QueryCat.Backend;
+using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Functions;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Storage;
 using QueryCat.Backend.Types;
+using QueryCat.Backend.Utils;
 
 namespace QueryCat.IntegrationTests.Plugins;
 
@@ -86,5 +88,11 @@ public class SamplePluginRowsInput : IRowsInput
     {
         Trace.WriteLine(nameof(Reset));
         _currentState = 0;
+    }
+
+    /// <inheritdoc />
+    public void Explain(IndentedStringBuilder stringBuilder)
+    {
+        stringBuilder.AppendLine("Sample");
     }
 }

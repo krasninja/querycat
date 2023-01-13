@@ -1,5 +1,7 @@
+using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Types;
+using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Storage;
 
@@ -48,6 +50,11 @@ public abstract class RowsInput : IRowsInput
     public virtual void Reset()
     {
         _isFirstCall = true;
+    }
+
+    /// <inheritdoc />
+    public void Explain(IndentedStringBuilder stringBuilder)
+    {
     }
 
     /// <summary>

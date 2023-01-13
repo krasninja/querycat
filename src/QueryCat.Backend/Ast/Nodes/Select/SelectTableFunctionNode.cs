@@ -1,39 +1,48 @@
+using System.Text;
 using QueryCat.Backend.Ast.Nodes.Function;
 
 namespace QueryCat.Backend.Ast.Nodes.Select;
 
-public sealed class SelectTableFunctionNode : ExpressionNode
+public sealed class SelectTableFunctionNode : ExpressionNode, ISelectAliasNode
 {
-    public FunctionCallNode TableFunction { get; }
+    public FunctionCallNode TableFunctionNode { get; }
 
+    /// <inheritdoc />
     public string Alias { get; set; }
+
+    public List<SelectTableJoinedNode> JoinedNodes { get; } = new();
 
     /// <inheritdoc />
     public override string Code => "tablefunc";
 
     /// <inheritdoc />
-    public SelectTableFunctionNode(FunctionCallNode tableFunction, string alias)
+    public SelectTableFunctionNode(FunctionCallNode tableFunctionNode, string alias)
     {
-        TableFunction = tableFunction;
+        TableFunctionNode = tableFunctionNode;
         Alias = alias;
     }
 
-    public SelectTableFunctionNode(FunctionCallNode tableFunction)
+    public SelectTableFunctionNode(FunctionCallNode tableFunctionNode)
     {
-        TableFunction = tableFunction;
+        TableFunctionNode = tableFunctionNode;
         Alias = string.Empty;
     }
 
     public SelectTableFunctionNode(SelectTableFunctionNode node)
-        : this((FunctionCallNode)node.TableFunction.Clone(), node.Alias)
+        : this((FunctionCallNode)node.TableFunctionNode.Clone(), node.Alias)
     {
+        JoinedNodes.AddRange(node.JoinedNodes.Select(n => (SelectTableJoinedNode)n.Clone()));
         node.CopyTo(this);
     }
 
     /// <inheritdoc />
     public override IEnumerable<IAstNode> GetChildren()
     {
-        yield return TableFunction;
+        yield return TableFunctionNode;
+        foreach (var joinedNode in JoinedNodes)
+        {
+            yield return joinedNode;
+        }
     }
 
     /// <inheritdoc />
@@ -41,4 +50,20 @@ public sealed class SelectTableFunctionNode : ExpressionNode
 
     /// <inheritdoc />
     public override void Accept(AstVisitor visitor) => visitor.Visit(this);
+
+    /// <inheritdoc />
+    public override string ToString()
+    {
+        var sb = new StringBuilder()
+            .Append(TableFunctionNode);
+        if (!string.IsNullOrEmpty(Alias))
+        {
+            sb.Append(" As " + Alias);
+        }
+        foreach (var joinedNode in JoinedNodes)
+        {
+            sb.Append($" {joinedNode}");
+        }
+        return sb.ToString();
+    }
 }

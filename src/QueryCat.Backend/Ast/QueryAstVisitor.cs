@@ -33,7 +33,7 @@ public class QueryAstVisitor : AstVisitor
     public override void Visit(BinaryOperationExpressionNode node)
     {
         SetString(node,
-            $"{GetStringWithParens(node.Left)} {GetOperationString(node.Operation)} {GetStringWithParens(node.Right)}");
+            $"{GetStringWithParens(node.LeftNode)} {GetOperationString(node.Operation)} {GetStringWithParens(node.RightNode)}");
     }
 
     /// <inheritdoc />
@@ -82,7 +82,7 @@ public class QueryAstVisitor : AstVisitor
     /// <inheritdoc />
     public override void Visit(UnaryOperationExpressionNode node)
     {
-        SetString(node, $"{GetOperationString(node.Operation)}{GetString(node.Right)}");
+        SetString(node, $"{GetOperationString(node.Operation)}{GetString(node.RightNode)}");
     }
 
     #endregion
@@ -102,7 +102,7 @@ public class QueryAstVisitor : AstVisitor
     /// <inheritdoc />
     public override void Visit(FunctionCallArgumentNode node)
     {
-        SetString(node, GetString(node.ExpressionValue));
+        SetString(node, GetString(node.ExpressionValueNode));
     }
 
     /// <inheritdoc />
@@ -131,7 +131,7 @@ public class QueryAstVisitor : AstVisitor
     /// <inheritdoc />
     public override void Visit(SelectColumnsListNode node)
     {
-        SetString(node, string.Join(", ", node.Columns.Select(GetString)));
+        SetString(node, string.Join(", ", node.ColumnsNodes.Select(GetString)));
     }
 
     /// <inheritdoc />
@@ -144,12 +144,6 @@ public class QueryAstVisitor : AstVisitor
     public override void Visit(SelectColumnsSublistExpressionNode node)
     {
         SetString(node, GetString(node));
-    }
-
-    /// <inheritdoc />
-    public override void Visit(SelectColumnsSublistNameNode node)
-    {
-        SetString(node, node.ToString());
     }
 
     /// <inheritdoc />
@@ -186,11 +180,11 @@ public class QueryAstVisitor : AstVisitor
     public override void Visit(SelectQuerySpecificationNode node)
     {
         var sb = new StringBuilder();
-        sb.Append($"SELECT {GetString(node.ColumnsList)}");
-        if (node.TableExpression != null)
+        sb.Append($"SELECT {GetString(node.ColumnsListNode)}");
+        if (node.TableExpressionNode != null)
         {
             sb.Append(Space);
-            sb.Append(GetString(node.TableExpression));
+            sb.Append(GetString(node.TableExpressionNode));
         }
         SetString(node, sb.ToString());
     }
@@ -199,12 +193,6 @@ public class QueryAstVisitor : AstVisitor
     public override void Visit(SelectSearchConditionNode node)
     {
         SetString(node, $"WHERE {GetString(node.ExpressionNode)}");
-    }
-
-    /// <inheritdoc />
-    public override void Visit(SelectQueryExpressionBodyNode node)
-    {
-        SetString(node, string.Join(" UNION ", node.Queries.Select(GetString)));
     }
 
     /// <inheritdoc />
@@ -217,7 +205,7 @@ public class QueryAstVisitor : AstVisitor
     public override void Visit(SelectTableExpressionNode node)
     {
         var sb = new StringBuilder();
-        sb.Append(GetString(node.Tables));
+        sb.Append(GetString(node.TablesNode));
         if (node.GroupByNode != null)
         {
             sb.Append(Space);
@@ -239,7 +227,7 @@ public class QueryAstVisitor : AstVisitor
     /// <inheritdoc />
     public override void Visit(SelectTableFunctionNode node)
     {
-        var value = GetString(node.TableFunction);
+        var value = GetString(node.TableFunctionNode);
         if (!string.IsNullOrEmpty(node.Alias))
         {
             value += " AS " + node.Alias;
@@ -250,7 +238,7 @@ public class QueryAstVisitor : AstVisitor
     /// <inheritdoc />
     public override void Visit(SelectTableReferenceListNode node)
     {
-        SetString(node, string.Join(", ", node.TableFunctions.Select(GetString)));
+        SetString(node, string.Join(", ", node.TableFunctionsNodes.Select(GetString)));
     }
 
     #endregion

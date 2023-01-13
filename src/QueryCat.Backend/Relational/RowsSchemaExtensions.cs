@@ -1,3 +1,5 @@
+using QueryCat.Backend.Abstractions;
+
 namespace QueryCat.Backend.Relational;
 
 /// <summary>
@@ -39,5 +41,31 @@ public static class RowsSchemaExtensions
             return schema.Columns[index];
         }
         return null;
+    }
+
+    /// <summary>
+    /// Compares two schemas. It makes sure that tho schema can be combined. The only validation conditions
+    /// for that is columns types equality and columns count equality.
+    /// </summary>
+    /// <param name="schema">Source schema.</param>
+    /// <param name="target">Target schema.</param>
+    /// <returns>Returns <c>true</c> if schemas are equal, <c>false</c> otherwise.</returns>
+    public static bool IsSchemaEqual(this IRowsSchema schema, IRowsSchema target)
+    {
+        if (schema.Columns.Length != target.Columns.Length)
+        {
+            return false;
+        }
+
+        for (var i = 0; i < schema.Columns.Length; i++)
+        {
+            var sourceColumn = schema.Columns[i];
+            if (sourceColumn.DataType != target.Columns[i].DataType)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

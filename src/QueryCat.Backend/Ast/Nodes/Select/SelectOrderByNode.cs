@@ -2,19 +2,20 @@ namespace QueryCat.Backend.Ast.Nodes.Select;
 
 public sealed class SelectOrderByNode : AstNode
 {
-    public IList<SelectOrderBySpecificationNode> OrderBySpecificationNodes { get; }
+    public List<SelectOrderBySpecificationNode> OrderBySpecificationNodes { get; } = new();
 
     /// <inheritdoc />
     public override string Code => "orderby";
 
-    public SelectOrderByNode(IList<SelectOrderBySpecificationNode> orderBySpecificationNodes)
+    public SelectOrderByNode(IEnumerable<SelectOrderBySpecificationNode> orderBySpecificationNodes)
     {
-        OrderBySpecificationNodes = orderBySpecificationNodes;
+        OrderBySpecificationNodes.AddRange(orderBySpecificationNodes);
     }
 
     public SelectOrderByNode(SelectOrderByNode node)
         : this(node.OrderBySpecificationNodes.Select(n => (SelectOrderBySpecificationNode)n.Clone()).ToList())
     {
+        node.CopyTo(this);
     }
 
     /// <inheritdoc />

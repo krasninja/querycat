@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Formatters;
 using QueryCat.Backend.Functions;
 using QueryCat.Backend.Types;
@@ -15,13 +16,13 @@ public static class CurlInput
     private static readonly HttpClient HttpClient = new();
 
     [Description("Read the HTTP resource.")]
-    [FunctionSignature("curl(uri: string, formatter?: object<IRowsFormatter>): object<IRowsInput>")]
+    [FunctionSignature("curl(uri: string, fmt?: object<IRowsFormatter>): object<IRowsInput>")]
     public static VariantValue WGet(FunctionCallInfo args)
     {
         var uriArgument = args.GetAt(0);
         var formatter = args.GetAt(1).AsObject as IRowsFormatter;
 
-        if (!Uri.TryCreate(uriArgument, UriKind.Absolute, out Uri? uri))
+        if (!Uri.TryCreate(uriArgument, UriKind.Absolute, out var uri))
         {
             throw new QueryCatException("Invalid URI.");
         }

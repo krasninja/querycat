@@ -1,107 +1,158 @@
+using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Types;
 using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Relational.Iterators;
 
 /// <summary>
-/// The iterator combines multiple iterators with the same schema into a single sequence.
+/// The iterator combines multiple iterators with the same schema into a single sequence using
+/// union, intersect and except methods.
 /// </summary>
 internal sealed class CombineRowsIterator : IRowsIterator
 {
-    /// <inheritdoc />
-    public Column[] Columns { get; private set; } = Array.Empty<Column>();
+    private readonly IRowsIterator _leftIterator;
+    private readonly IRowsIterator _rightIterator;
+    private readonly CombineType _combineType;
+    private readonly bool _isDistinct;
+    private readonly Func<bool> _moveDelegate;
+    private readonly HashSet<VariantValueArray> _distinctValues = new();
+    private IRowsIterator _currentIterator;
+
+    // For intersect and except methods.
+    private readonly HashSet<VariantValueArray> _rightRows = new();
+    private bool _isRightInitialized;
 
     /// <inheritdoc />
-    public Row Current
+    public Column[] Columns => _leftIterator.Columns;
+
+    /// <inheritdoc />
+    public Row Current => _currentIterator.Current;
+
+    public CombineRowsIterator(IRowsIterator leftIterator, IRowsIterator rightIterator, CombineType combineType, bool isDistinct)
     {
-        get
+        _leftIterator = leftIterator;
+        _currentIterator = _leftIterator;
+        _rightIterator = rightIterator;
+        _combineType = combineType;
+        _isDistinct = isDistinct;
+
+        _moveDelegate = combineType switch
         {
-            if (_currentRowIteratorNode == null)
-            {
-                throw new InvalidOperationException("Rows iterator is not initialized.");
-            }
-            return _currentRowIteratorNode.Value.Current;
+            CombineType.Union => UnionDelegate,
+            CombineType.Except => ExceptDelegate,
+            CombineType.Intersect => IntersectDelegate,
+            _ => throw new ArgumentException($"{combineType} is not implemented.", nameof(combineType)),
+        };
+
+        if (!_leftIterator.IsSchemaEqual(_rightIterator))
+        {
+            throw new SemanticException("Each combine query must have equal columns count and types.");
         }
     }
 
-    private LinkedListNode<IRowsIterator>? _currentRowIteratorNode;
-
-    private bool _firstMoveCall = true;
-
-    private readonly LinkedList<IRowsIterator> _rowIterators = new();
-
-    public IReadOnlyCollection<IRowsIterator> RowIterators => _rowIterators;
-
-    private bool AreColumnsInitialized => _currentRowIteratorNode != null;
-
-    public void AddRowsIterator(IRowsIterator rowsIterator)
+    private bool UnionDelegate()
     {
-        if (rowsIterator == null)
+        var result = _currentIterator.MoveNext();
+        if (!result)
         {
-            throw new ArgumentNullException(nameof(rowsIterator));
-        }
-
-        // Make sure the columns schema is valid.
-        if (AreColumnsInitialized)
-        {
-            if (rowsIterator.Columns.Length != Columns.Length)
+            if (_currentIterator == _leftIterator)
             {
-                throw new SemanticException(Resources.Errors.InvalidUnionColumnsCount);
-            }
-            for (int i = 0; i < Columns.Length; i++)
-            {
-                if (!DataTypeUtils.EqualsWithCast(rowsIterator.Columns[i].DataType, Columns[i].DataType))
-                {
-                    throw new SemanticException(
-                        string.Format(Resources.Errors.TypesMistmatch, Columns[i].Name));
-                }
+                _currentIterator = _rightIterator;
+                result = _currentIterator.MoveNext();
             }
         }
 
-        _rowIterators.AddLast(rowsIterator);
-        if (_currentRowIteratorNode == null)
+        return result;
+    }
+
+    private bool IntersectDelegate()
+    {
+        InitializedRight();
+
+        while (_currentIterator.MoveNext())
         {
-            _currentRowIteratorNode = _rowIterators.First;
-            Columns = rowsIterator.Columns;
+            var arr = new VariantValueArray(_currentIterator.Current.AsArray(copy: false));
+            if (_rightRows.Contains(arr))
+            {
+                return true;
+            }
         }
+
+        return false;
+    }
+
+    private bool ExceptDelegate()
+    {
+        InitializedRight();
+
+        while (_currentIterator.MoveNext())
+        {
+            var arr = new VariantValueArray(_currentIterator.Current.AsArray(copy: false));
+            if (!_rightRows.Contains(arr))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /// <inheritdoc />
     public bool MoveNext()
     {
-        if (_firstMoveCall && _currentRowIteratorNode != null)
+        if (_isDistinct)
         {
-            _firstMoveCall = false;
-        }
+            while (_moveDelegate.Invoke())
+            {
+                var arr = new VariantValueArray(Current.AsArray(copy: true));
 
-        if (_currentRowIteratorNode == null)
-        {
+                if (!_distinctValues.Contains(arr))
+                {
+                    _distinctValues.Add(arr);
+                    return true;
+                }
+            }
+
             return false;
         }
-
-        if (_currentRowIteratorNode.Value.MoveNext())
+        else
         {
-            return true;
+            return _moveDelegate.Invoke();
         }
-
-        _currentRowIteratorNode = _currentRowIteratorNode.Next;
-        return MoveNext();
     }
 
     /// <inheritdoc />
     public void Reset()
     {
-        _firstMoveCall = true;
-        foreach (var rowsIterator in _rowIterators)
-        {
-            rowsIterator.Reset();
-        }
-        _currentRowIteratorNode = _rowIterators.First;
+        _leftIterator.Reset();
+        _rightIterator.Reset();
+        _distinctValues.Clear();
+        _rightRows.Clear();
+        _isRightInitialized = false;
+        _currentIterator = _leftIterator;
     }
 
     /// <inheritdoc />
     public void Explain(IndentedStringBuilder stringBuilder)
     {
-        stringBuilder.AppendRowsIteratorsWithIndent("Combine", _rowIterators.ToArray());
+        stringBuilder.AppendRowsIteratorsWithIndent(
+            $"Combine (type={_combineType}, distinct={_isDistinct})", _leftIterator, _rightIterator);
+    }
+
+    private void InitializedRight()
+    {
+        if (_isRightInitialized)
+        {
+            return;
+        }
+
+        while (_rightIterator.MoveNext())
+        {
+            var arr = new VariantValueArray(_rightIterator.Current.AsArray(copy: true));
+            _rightRows.Add(arr);
+        }
+
+        _isRightInitialized = true;
+        _currentIterator = _leftIterator;
     }
 }

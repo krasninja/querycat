@@ -1,3 +1,4 @@
+using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Relational.Iterators;
@@ -11,7 +12,7 @@ public class SetupRowsIterator : IRowsIterator
     private readonly string _message;
     private bool _isInitialized;
 
-    public virtual IRowsIterator RowsIterator => _rowsIterator;
+    public IRowsIterator RowsIterator => _rowsIterator;
 
     /// <inheritdoc />
     public virtual Column[] Columns => _rowsIterator.Columns;

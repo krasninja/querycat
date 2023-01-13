@@ -45,14 +45,21 @@ public readonly partial struct VariantValue
         Concat = 300
     }
 
-    internal delegate VariantValue OperationBinaryDelegate(ref VariantValue left, ref VariantValue right,
+    internal delegate VariantValue OperationBinaryDelegate(in VariantValue left, in VariantValue right,
         out ErrorCode errorCode);
 
     internal static BinaryFunction GetBinaryFunction(OperationBinaryDelegate @delegate)
     {
-        return (ref VariantValue left, ref VariantValue right)
-            => @delegate.Invoke(ref left, ref right, out var _);
+        return (in VariantValue left, in VariantValue right)
+            => @delegate.Invoke(in left, in right, out _);
     }
+
+    internal static UnaryFunction GetOperationDelegate(Operation operation, DataType leftType)
+        => operation switch
+        {
+            Operation.Not => GetNotDelegate(leftType),
+            _ => throw new ArgumentOutOfRangeException(nameof(operation), "Invalid operation."),
+        };
 
     internal static OperationBinaryDelegate GetOperationDelegate(Operation operation)
         => operation switch
@@ -70,13 +77,11 @@ public readonly partial struct VariantValue
             Operation.GreaterOrEquals => GreaterOrEquals,
             Operation.Less => Less,
             Operation.LessOrEquals => LessOrEquals,
-            Operation.And => And,
-            Operation.Or => Or,
             Operation.Concat => Concat,
             Operation.BetweenAnd => BetweenAnd,
             Operation.Like => Like,
             Operation.NotLike => NotLike,
-            _ => throw new ArgumentOutOfRangeException("Invalid operation.", nameof(operation))
+            _ => throw new ArgumentOutOfRangeException(nameof(operation), "Invalid operation."),
         };
 
     internal static BinaryFunction GetOperationDelegate(Operation operation, DataType leftType, DataType rightType)
@@ -84,16 +89,20 @@ public readonly partial struct VariantValue
         {
             Operation.Add => GetAddDelegate(leftType, rightType),
             Operation.Subtract => GetSubtractDelegate(leftType, rightType),
+            Operation.Multiple => GetMulDelegate(leftType, rightType),
+            Operation.Divide => GetDivDelegate(leftType, rightType),
             Operation.Equals => GetEqualsDelegate(leftType, rightType),
             Operation.NotEquals => GetNotEqualsDelegate(leftType, rightType),
             Operation.Greater => GetGreaterDelegate(leftType, rightType),
             Operation.GreaterOrEquals => GetGreaterOrEqualsDelegate(leftType, rightType),
             Operation.Less => GetLessDelegate(leftType, rightType),
             Operation.LessOrEquals => GetLessOrEqualsDelegate(leftType, rightType),
+            Operation.And => GetAndDelegate(leftType, rightType),
+            Operation.Or => GetOrDelegate(leftType, rightType),
             _ => GetBinaryFunction(GetOperationDelegate(operation)),
         };
 
-    internal delegate VariantValue OperationTernaryDelegate(ref VariantValue left, ref VariantValue right,
+    internal delegate VariantValue OperationTernaryDelegate(in VariantValue left, in VariantValue right,
         out ErrorCode errorCode);
 
     internal static Operation[] AlgebraicOperations { get; } =
@@ -157,7 +166,7 @@ public readonly partial struct VariantValue
         if (operation == Operation.Add || operation == Operation.Subtract)
         {
             if ((left == DataType.Timestamp && right == DataType.Interval)
-                || (right == DataType.Interval && left == DataType.Timestamp))
+                || (left == DataType.Interval && right == DataType.Timestamp))
             {
                 return DataType.Timestamp;
             }
@@ -165,6 +174,20 @@ public readonly partial struct VariantValue
             {
                 return DataType.Interval;
             }
+        }
+
+        if (operation == Operation.Multiple)
+        {
+            if ((left == DataType.Integer && right == DataType.Interval)
+                || (left == DataType.Interval && right == DataType.Integer))
+            {
+                return DataType.Interval;
+            }
+        }
+
+        if (operation == Operation.Divide && left == DataType.Interval && right == DataType.Integer)
+        {
+            return DataType.Interval;
         }
 
         if (left == DataType.Null && right != DataType.Null)
@@ -183,7 +206,7 @@ public readonly partial struct VariantValue
                 return right;
             }
 
-            bool canConvert = GetTargetType(left, right, out var target);
+            var canConvert = GetTargetType(left, right, out var target);
             if (!canConvert)
             {
                 canConvert = GetTargetType(right, left, out target);
@@ -208,16 +231,16 @@ public readonly partial struct VariantValue
 
     #region Algebraic operations
 
-    public delegate VariantValue UnaryFunction(ref VariantValue left);
+    public delegate VariantValue UnaryFunction(in VariantValue left);
 
-    public static VariantValue UnaryNullDelegate(ref VariantValue left) => Null;
+    public static VariantValue UnaryNullDelegate(in VariantValue left) => Null;
 
-    public delegate VariantValue BinaryFunction(ref VariantValue left, ref VariantValue right);
+    public delegate VariantValue BinaryFunction(in VariantValue left, in VariantValue right);
 
-    private static VariantValue BinaryNullDelegate(ref VariantValue left, ref VariantValue right)
+    private static VariantValue BinaryNullDelegate(in VariantValue left, in VariantValue right)
         => Null;
 
-    public static VariantValue Negation(ref VariantValue left, out ErrorCode errorCode)
+    public static VariantValue Negation(in VariantValue left, out ErrorCode errorCode)
     {
         var leftType = left.GetInternalType();
 
@@ -229,33 +252,33 @@ public readonly partial struct VariantValue
         }
 
         errorCode = ErrorCode.OK;
-        return function.Invoke(ref left);
+        return function.Invoke(in left);
     }
 
-    internal static VariantValue Mul(ref VariantValue left, ref VariantValue right, out ErrorCode errorCode)
+    public static VariantValue Modulo(in VariantValue left, in VariantValue right, out ErrorCode errorCode)
     {
         var leftType = left.GetInternalType();
         var rightType = right.GetInternalType();
 
-        VariantValue result = leftType switch
+        var result = leftType switch
         {
             DataType.Integer => rightType switch
             {
-                DataType.Integer => new VariantValue(left.AsInteger * right.AsInteger),
-                DataType.Float => new VariantValue(left.AsInteger * right.AsFloat),
-                DataType.Numeric => new VariantValue(left.AsInteger * right.AsNumeric),
+                DataType.Integer => new VariantValue(left.AsIntegerUnsafe % right.AsIntegerUnsafe),
+                DataType.Float => new VariantValue(left.AsIntegerUnsafe % right.AsFloatUnsafe),
+                DataType.Numeric => new VariantValue(left.AsIntegerUnsafe % right.AsNumericUnsafe),
                 _ => Null,
             },
             DataType.Float => rightType switch
             {
-                DataType.Integer => new VariantValue(left.AsFloat * right.AsInteger),
-                DataType.Float => new VariantValue(left.AsFloat * right.AsFloat),
+                DataType.Integer => new VariantValue(left.AsFloatUnsafe % right.AsIntegerUnsafe),
+                DataType.Float => new VariantValue(left.AsFloatUnsafe % right.AsFloatUnsafe),
                 _ => Null,
             },
             DataType.Numeric => rightType switch
             {
-                DataType.Integer => new VariantValue(left.AsNumeric * right.AsInteger),
-                DataType.Numeric => new VariantValue(left.AsNumeric * right.AsNumeric),
+                DataType.Integer => new VariantValue(left.AsNumericUnsafe % right.AsIntegerUnsafe),
+                DataType.Numeric => new VariantValue(left.AsNumericUnsafe % right.AsNumericUnsafe),
                 _ => Null,
             },
             _ => Null,
@@ -265,30 +288,16 @@ public readonly partial struct VariantValue
         return result;
     }
 
-    public static VariantValue Div(ref VariantValue left, ref VariantValue right, out ErrorCode errorCode)
+    public static VariantValue LeftShift(in VariantValue left, in VariantValue right, out ErrorCode errorCode)
     {
         var leftType = left.GetInternalType();
         var rightType = right.GetInternalType();
 
-        VariantValue result = leftType switch
+        var result = leftType switch
         {
             DataType.Integer => rightType switch
             {
-                DataType.Integer => new VariantValue(left.AsInteger / right.AsInteger),
-                DataType.Float => new VariantValue(left.AsInteger / right.AsFloat),
-                DataType.Numeric => new VariantValue(left.AsInteger / right.AsNumeric),
-                _ => Null,
-            },
-            DataType.Float => rightType switch
-            {
-                DataType.Integer => new VariantValue(left.AsFloat / right.AsInteger),
-                DataType.Float => new VariantValue(left.AsFloat / right.AsFloat),
-                _ => Null,
-            },
-            DataType.Numeric => rightType switch
-            {
-                DataType.Integer => new VariantValue(left.AsNumeric / right.AsInteger),
-                DataType.Numeric => new VariantValue(left.AsNumeric / right.AsNumeric),
+                DataType.Integer => new VariantValue((int)left.AsIntegerUnsafe << (int)right.AsIntegerUnsafe),
                 _ => Null,
             },
             _ => Null,
@@ -298,68 +307,16 @@ public readonly partial struct VariantValue
         return result;
     }
 
-    public static VariantValue Modulo(ref VariantValue left, ref VariantValue right, out ErrorCode errorCode)
+    public static VariantValue RightShift(in VariantValue left, in VariantValue right, out ErrorCode errorCode)
     {
         var leftType = left.GetInternalType();
         var rightType = right.GetInternalType();
 
-        VariantValue result = leftType switch
+        var result = leftType switch
         {
             DataType.Integer => rightType switch
             {
-                DataType.Integer => new VariantValue(left.AsInteger % right.AsInteger),
-                DataType.Float => new VariantValue(left.AsInteger % right.AsFloat),
-                DataType.Numeric => new VariantValue(left.AsInteger % right.AsNumeric),
-                _ => Null,
-            },
-            DataType.Float => rightType switch
-            {
-                DataType.Integer => new VariantValue(left.AsFloat % right.AsInteger),
-                DataType.Float => new VariantValue(left.AsFloat % right.AsFloat),
-                _ => Null,
-            },
-            DataType.Numeric => rightType switch
-            {
-                DataType.Integer => new VariantValue(left.AsNumeric % right.AsInteger),
-                DataType.Numeric => new VariantValue(left.AsNumeric % right.AsNumeric),
-                _ => Null,
-            },
-            _ => Null,
-        };
-
-        errorCode = !result.IsNull ? ErrorCode.OK : ErrorCode.CannotApplyOperator;
-        return result;
-    }
-
-    public static VariantValue LeftShift(ref VariantValue left, ref VariantValue right, out ErrorCode errorCode)
-    {
-        var leftType = left.GetInternalType();
-        var rightType = right.GetInternalType();
-
-        VariantValue result = leftType switch
-        {
-            DataType.Integer => rightType switch
-            {
-                DataType.Integer => new VariantValue((int)left.AsInteger << (int)right.AsInteger),
-                _ => Null,
-            },
-            _ => Null,
-        };
-
-        errorCode = !result.IsNull ? ErrorCode.OK : ErrorCode.CannotApplyOperator;
-        return result;
-    }
-
-    public static VariantValue RightShift(ref VariantValue left, ref VariantValue right, out ErrorCode errorCode)
-    {
-        var leftType = left.GetInternalType();
-        var rightType = right.GetInternalType();
-
-        VariantValue result = leftType switch
-        {
-            DataType.Integer => rightType switch
-            {
-                DataType.Integer => new VariantValue((int)left.AsInteger >> (int)right.AsInteger),
+                DataType.Integer => new VariantValue((int)left.AsIntegerUnsafe >> (int)right.AsIntegerUnsafe),
                 _ => Null,
             },
             _ => Null,
@@ -373,8 +330,11 @@ public readonly partial struct VariantValue
 
     #region Comparision operations
 
-    public static VariantValue Between(ref VariantValue value,
-        ref VariantValue left, ref VariantValue right, out ErrorCode errorCode)
+    public static VariantValue Between(
+        in VariantValue value,
+        in VariantValue left,
+        in VariantValue right,
+        out ErrorCode errorCode)
     {
         if (value.IsNull || left.IsNull || right.IsNull)
         {
@@ -382,12 +342,12 @@ public readonly partial struct VariantValue
             return Null;
         }
 
-        var leftCondition = GreaterOrEquals(ref value, ref left, out errorCode);
+        var leftCondition = GreaterOrEquals(in value, in left, out errorCode);
         if (errorCode != ErrorCode.OK)
         {
             return Null;
         }
-        var rightCondition = LessOrEquals(ref value, ref right, out errorCode);
+        var rightCondition = LessOrEquals(in value, in right, out errorCode);
         if (errorCode != ErrorCode.OK)
         {
             return Null;
@@ -397,12 +357,12 @@ public readonly partial struct VariantValue
         return new VariantValue(leftCondition.AsBoolean && rightCondition.AsBoolean);
     }
 
-    public static VariantValue BetweenAnd(ref VariantValue left, ref VariantValue right, out ErrorCode errorCode)
+    public static VariantValue BetweenAnd(in VariantValue left, in VariantValue right, out ErrorCode errorCode)
     {
         throw new InvalidOperationException("AND operation should not be evaluated within BETWEEN expression!");
     }
 
-    public static VariantValue Like(ref VariantValue left, ref VariantValue right, out ErrorCode errorCode)
+    public static VariantValue Like(in VariantValue left, in VariantValue right, out ErrorCode errorCode)
     {
         var pattern = right.AsString;
         var str = left.AsString;
@@ -411,9 +371,9 @@ public readonly partial struct VariantValue
         return new VariantValue(StringUtils.MatchesToLikePattern(pattern, str));
     }
 
-    public static VariantValue NotLike(ref VariantValue left, ref VariantValue right, out ErrorCode errorCode)
+    public static VariantValue NotLike(in VariantValue left, in VariantValue right, out ErrorCode errorCode)
     {
-        var likeResult = Like(ref left, ref right, out errorCode);
+        var likeResult = Like(in left, in right, out errorCode);
         if (errorCode != ErrorCode.OK)
         {
             return Null;
@@ -424,120 +384,18 @@ public readonly partial struct VariantValue
 
     #endregion
 
-    #region Logical operations
-
-    public static VariantValue And(ref VariantValue left, ref VariantValue right, out ErrorCode errorCode)
-    {
-        if (left.IsNull)
-        {
-            errorCode = ErrorCode.OK;
-            return Null;
-        }
-        var leftType = left.GetInternalType();
-        if (leftType != DataType.Boolean)
-        {
-            errorCode = ErrorCode.CannotApplyOperator;
-            return Null;
-        }
-        if (!left.AsBoolean)
-        {
-            errorCode = ErrorCode.OK;
-            return left;
-        }
-
-        if (right.IsNull)
-        {
-            errorCode = ErrorCode.OK;
-            return Null;
-        }
-        var rightType = right.GetInternalType();
-        if (rightType != DataType.Boolean)
-        {
-            errorCode = ErrorCode.CannotApplyOperator;
-            return Null;
-        }
-        if (!right.AsBoolean)
-        {
-            errorCode = ErrorCode.OK;
-            return right;
-        }
-
-        errorCode = ErrorCode.OK;
-        return new VariantValue(true);
-    }
-
-    public static VariantValue Or(ref VariantValue left, ref VariantValue right, out ErrorCode errorCode)
-    {
-        if (left.IsNull)
-        {
-            errorCode = ErrorCode.OK;
-            return Null;
-        }
-        var leftType = left.GetInternalType();
-        if (leftType != DataType.Boolean)
-        {
-            errorCode = ErrorCode.CannotApplyOperator;
-            return Null;
-        }
-        if (left.AsBoolean)
-        {
-            errorCode = ErrorCode.OK;
-            return left;
-        }
-
-        if (right.IsNull)
-        {
-            errorCode = ErrorCode.OK;
-            return Null;
-        }
-        var rightType = right.GetInternalType();
-        if (rightType != DataType.Boolean)
-        {
-            errorCode = ErrorCode.CannotApplyOperator;
-            return Null;
-        }
-        if (right.AsBoolean)
-        {
-            errorCode = ErrorCode.OK;
-            return right;
-        }
-
-        errorCode = ErrorCode.OK;
-        return new VariantValue(false);
-    }
-
-    public static VariantValue Not(ref VariantValue right, out ErrorCode errorCode)
-    {
-        if (right.IsNull)
-        {
-            errorCode = ErrorCode.OK;
-            return Null;
-        }
-        var rightType = right.GetInternalType();
-        if (rightType != DataType.Boolean)
-        {
-            errorCode = ErrorCode.CannotApplyOperator;
-            return Null;
-        }
-
-        errorCode = ErrorCode.OK;
-        return new VariantValue(!right.AsBoolean);
-    }
-
-    #endregion
-
     #region Concatenation operator
 
-    public static VariantValue Concat(ref VariantValue left, ref VariantValue right, out ErrorCode errorCode)
+    public static VariantValue Concat(in VariantValue left, in VariantValue right, out ErrorCode errorCode)
     {
         var leftType = left.GetInternalType();
         var rightType = right.GetInternalType();
 
-        VariantValue result = leftType switch
+        var result = leftType switch
         {
             DataType.String => rightType switch
             {
-                DataType.String => new VariantValue(string.Concat(left.AsString, right.AsString)),
+                DataType.String => new VariantValue(string.Concat(left.AsStringUnsafe, right.AsStringUnsafe)),
                 _ => Null,
             },
             _ => Null,

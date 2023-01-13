@@ -5,18 +5,24 @@ Executes the SQL query against input. If not output is specified (with `INTO` cl
 ## Syntax
 
 ```
-SELECT [ DISTINCT ] [ TOP number ]
+[ WITH with_query [, ...] ]
+SELECT [ ALL | DISTINCT [ ON ( expression [, ...] ) ] ] [ TOP number ]
     [ * | expression AS [ alias ] | column AS [ alias ] [, ...] ]
 [ INTO [ function : IRowsOutput ] ]
 [ FROM [ function : IRowsInput | uri ] FORMAT [ function : IRowsFormatter ] ]
 [ WHERE search_condition [, ...] ]
 [ GROUP BY [ expression ] [, ...] ]
 [ HAVING aggregate_search_condition [, ...] ]
-[ ORDER BY [ expression [ ASC | DESC ] ] ]
+[ { UNION | INTERSECT | EXCEPT } [ ALL | DISTINCT ] select ]
+[ ORDER BY [ expression [ ASC | DESC ] ] [ NULLS { FIRST | LAST } ] ]
 [ LIMIT number ]
 [ OFFSET number [ ROW | ROWS ] ]
 [ FETCH [ FIRST | NEXT ] number [ ROW | ROWS ] [ ONLY ]
 ```
+
+## WITH
+
+The WITH clause allows you to specify one or more subqueries that can be referenced by name in the primary query.
 
 ## SELECT
 
@@ -30,7 +36,7 @@ The non-standard T-SQL `TOP` clause is supported as well to limit result data se
 
 ## INTO
 
-The INTO clause specifies the custom output target. 
+The INTO clause specifies the custom output target.
 
 ## FROM
 
@@ -43,7 +49,7 @@ SELECT * FROM curl('https://tinyurl.com/24buj7mb')
 If column contains parenthesis or other special symbols, you can wrap it within square brackets `[]`:
 
 ```sql
-SELECT [cs(User-Agent)] FROM read_file('u_ex220826.log', formattre=>iisw3c());
+SELECT [cs(User-Agent)] FROM read_file('u_ex220826.log', fmt=>iisw3c());
 ```
 
 Also, you can use `FROM` syntax like this:
@@ -73,6 +79,14 @@ The HAVING clause is used to specify a boolean condition that must be satisfied 
 SELECT state, min(population) FROM 'https://tinyurl.com/24buj7mb' GROUP BY state HAVING max(population) > 7000000
 ```
 
+## UNION
+
+Using the operators UNION, INTERSECT, and EXCEPT, the output of more than one SELECT statement can be combined to form a single result set.
+- UNION - returns all rows that are in one or both of the result sets.
+- INTERSECT - returns all rows that are strictly in both result sets.
+- EXCEPT -  returns the rows that are in the first result set but not in the second.
+In all three cases, duplicate rows are eliminated unless ALL is specified. The noise word DISTINCT can be added to explicitly specify eliminating duplicate rows. Notice that DISTINCT is the default behavior here.
+
 ## WHERE
 
 The WHERE clause is used to specify a boolean condition that must be satisfied by an input record for that record to be output. Input records that do not satisfy the condition are discarded.
@@ -83,7 +97,7 @@ SELECT * FROM curl('https://tinyurl.com/24buj7mb') WHERE [year] = 2019
 
 ## ORDER BY
 
-The ORDER BY clause specifies which SELECT clause field-expressions the query output records should be sorted by.
+The ORDER BY clause specifies which SELECT clause field-expressions the query output records should be sorted by. If NULLS LAST is specified, null values sort after all non-null values; if NULLS FIRST is specified, null values sort before all non-null values.
 
 ```sql
 SELECT * FROM 'https://tinyurl.com/24buj7mb' ORDER BY [year], population DESC

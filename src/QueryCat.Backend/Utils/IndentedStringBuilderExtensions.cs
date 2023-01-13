@@ -1,5 +1,5 @@
+using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Functions;
-using QueryCat.Backend.Relational;
 
 namespace QueryCat.Backend.Utils;
 
@@ -25,6 +25,21 @@ public static class IndentedStringBuilderExtensions
         foreach (var rowsIterator in rowsIterators)
         {
             rowsIterator.Explain(stringBuilder);
+        }
+        stringBuilder.DecreaseIndent();
+        return stringBuilder;
+    }
+
+    public static IndentedStringBuilder AppendRowsInputsWithIndent(
+        this IndentedStringBuilder stringBuilder,
+        string text,
+        params IRowsInput[] rowsInputs)
+    {
+        stringBuilder.AppendLine(text);
+        stringBuilder.IncreaseIndent();
+        foreach (var rowsInput in rowsInputs)
+        {
+            rowsInput.Explain(stringBuilder);
         }
         stringBuilder.DecreaseIndent();
         return stringBuilder;

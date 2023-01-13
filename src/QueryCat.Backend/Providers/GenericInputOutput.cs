@@ -11,7 +11,7 @@ namespace QueryCat.Backend.Providers;
 public static class GenericInputOutput
 {
     [Description("Read data from a URI.")]
-    [FunctionSignature("read(uri: string, formatter?: object<IRowsFormatter>): object<IRowsInput>")]
+    [FunctionSignature("read(uri: string, fmt?: object<IRowsFormatter>): object<IRowsInput>")]
     public static VariantValue Read(FunctionCallInfo args)
     {
         var uri = args.GetAt(0).AsString;
@@ -25,7 +25,7 @@ public static class GenericInputOutput
     }
 
     [Description("Write data to a URI.")]
-    [FunctionSignature("write(uri: string, formatter?: object<IRowsFormatter>): object<IRowsOutput>")]
+    [FunctionSignature("write(uri: string, fmt?: object<IRowsFormatter>): object<IRowsOutput>")]
     public static VariantValue Write(FunctionCallInfo args)
     {
         return FileInputOutput.WriteFile(args);

@@ -137,12 +137,6 @@ internal sealed class StringDumpAstVisitor : DelegateVisitor
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectColumnsSublistNameNode node)
-    {
-        PrettyPrintNode(node, ("alias", node.Alias), ("col_name", node.ColumnName));
-    }
-
-    /// <inheritdoc />
     public override void Visit(SelectColumnsSublistNode node)
     {
         PrettyPrintNode(node, ("alias", node.Alias));

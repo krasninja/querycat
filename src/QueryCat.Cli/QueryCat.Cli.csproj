@@ -9,21 +9,29 @@
     <AssemblyName>qcat</AssemblyName>
     <Authors>Ivan Kozhin</Authors>
     <Product>QueryCat</Product>
-    <Copyright>Copyright (c) 2022</Copyright>
+    <Copyright>Copyright (c) 2023</Copyright>
     <LangVersion>default</LangVersion>
   </PropertyGroup>
 
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <DefineConstants>TRACE;ENABLE_PLUGINS</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <DefineConstants>TRACE;ENABLE_PLUGINS</DefineConstants>
+  </PropertyGroup>
+
   <ItemGroup>
-    <PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="4.0.1" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="4.1.0" />
     <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.435">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\QueryCat.Backend\QueryCat.Backend.csproj" />
-    <ProjectReference Include="..\QueryCat.DataProviders\QueryCat.DataProviders.csproj" />
   </ItemGroup>
 
 </Project>

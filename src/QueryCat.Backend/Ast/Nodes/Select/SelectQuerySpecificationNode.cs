@@ -1,11 +1,10 @@
+using System.Text;
 using QueryCat.Backend.Ast.Nodes.Function;
 
 namespace QueryCat.Backend.Ast.Nodes.Select;
 
-public sealed class SelectQuerySpecificationNode : AstNode
+public sealed class SelectQuerySpecificationNode : SelectQueryNode
 {
-    public SelectColumnsListNode ColumnsList { get; }
-
     /// <summary>
     /// Distinct node.
     /// </summary>
@@ -14,80 +13,69 @@ public sealed class SelectQuerySpecificationNode : AstNode
     /// <summary>
     /// "Into" SQL statement. Use default if null.
     /// </summary>
-    public FunctionCallNode? Target { get; set; }
+    public FunctionCallNode? TargetNode { get; set; }
 
     /// <summary>
     /// "From" SQL statement.
     /// </summary>
-    public SelectTableExpressionNode? TableExpression { get; set; }
+    public SelectTableExpressionNode? TableExpressionNode { get; set; }
 
-    public SelectOrderByNode? OrderBy { get; set; }
-
-    public SelectOffsetNode? Offset { get; set; }
-
-    public SelectFetchNode? Fetch { get; set; }
+    /// <summary>
+    /// Window node.
+    /// </summary>
+    public SelectWindowNode? WindowNode { get; set; }
 
     /// <inheritdoc />
-    public override string Code => "select_query";
+    public override string Code => "select_query_spec";
 
-    public SelectQuerySpecificationNode(SelectColumnsListNode columnsList)
+    public SelectQuerySpecificationNode(SelectColumnsListNode columnsListNode)
+        : base(columnsListNode)
     {
-        ColumnsList = columnsList;
     }
 
     public SelectQuerySpecificationNode(SelectQuerySpecificationNode node) :
-        this((SelectColumnsListNode)node.ColumnsList.Clone())
+        base(node)
     {
-        if (node.Target != null)
+        if (node.TargetNode != null)
         {
-            Target = (FunctionCallNode)node.Target.Clone();
+            TargetNode = (FunctionCallNode)node.TargetNode.Clone();
         }
         if (node.DistinctNode != null)
         {
             DistinctNode = (SelectDistinctNode)node.DistinctNode.Clone();
         }
-        if (node.TableExpression != null)
+        if (node.TableExpressionNode != null)
         {
-            TableExpression = (SelectTableExpressionNode)node.TableExpression.Clone();
+            TableExpressionNode = (SelectTableExpressionNode)node.TableExpressionNode.Clone();
         }
-        if (node.Offset != null)
+        if (node.WindowNode != null)
         {
-            Offset = (SelectOffsetNode)node.Offset.Clone();
+            WindowNode = (SelectWindowNode)node.WindowNode.Clone();
         }
-        if (node.Fetch != null)
-        {
-            Fetch = (SelectFetchNode)node.Fetch.Clone();
-        }
-        node.CopyTo(this);
     }
 
     /// <inheritdoc />
     public override IEnumerable<IAstNode> GetChildren()
     {
-        yield return ColumnsList;
-        if (Target != null)
-        {
-            yield return Target;
-        }
         if (DistinctNode != null)
         {
             yield return DistinctNode;
         }
-        if (TableExpression != null)
+        if (TargetNode != null)
         {
-            yield return TableExpression;
+            yield return TargetNode;
         }
-        if (OrderBy != null)
+        if (TableExpressionNode != null)
         {
-            yield return OrderBy;
+            yield return TableExpressionNode;
         }
-        if (Offset != null)
+        if (WindowNode != null)
         {
-            yield return Offset;
+            yield return WindowNode;
         }
-        if (Fetch != null)
+        foreach (var astNode in base.GetChildren())
         {
-            yield return Fetch;
+            yield return astNode;
         }
     }
 
@@ -96,4 +84,45 @@ public sealed class SelectQuerySpecificationNode : AstNode
 
     /// <inheritdoc />
     public override void Accept(AstVisitor visitor) => visitor.Visit(this);
+
+    /// <inheritdoc />
+    public override string ToString()
+    {
+        var sb = new StringBuilder();
+        if (WithNode != null)
+        {
+            sb.Append($"With {WithNode}");
+        }
+        sb.Append(" Select");
+        if (DistinctNode != null)
+        {
+            sb.Append($" {DistinctNode}");
+        }
+        sb.Append($" {string.Join(", ", ColumnsListNode.ColumnsNodes)}");
+        if (TargetNode != null)
+        {
+            sb.Append($" Into {TargetNode}");
+        }
+        if (TableExpressionNode != null)
+        {
+            sb.Append($" From {TableExpressionNode}");
+        }
+        if (WindowNode != null)
+        {
+            sb.Append($" Window {WindowNode}");
+        }
+        if (OffsetNode != null)
+        {
+            sb.Append($" Offset {OffsetNode}");
+        }
+        if (FetchNode != null)
+        {
+            sb.Append($" Fetch {FetchNode}");
+        }
+        if (OrderByNode != null)
+        {
+            sb.Append($" Order {OrderByNode}");
+        }
+        return sb.ToString();
+    }
 }

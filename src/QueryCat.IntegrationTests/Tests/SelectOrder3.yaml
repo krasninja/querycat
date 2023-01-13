@@ -5,4 +5,3 @@ expected: |
 query: |
   select 1 as num union select 2 as num union select 3 as num
   order by num desc;
-

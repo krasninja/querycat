@@ -1,7 +1,7 @@
 using System.Reflection;
+using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Formatters;
 using QueryCat.Backend.Providers;
-using QueryCat.Backend.Storage;
 
 namespace QueryCat.Backend.Execution;
 
@@ -10,20 +10,35 @@ namespace QueryCat.Backend.Execution;
 /// </summary>
 public sealed class ExecutionOptions
 {
+    public const int NoLimit = -1;
+
     /// <summary>
     /// Default output if FROM is not specified.
     /// </summary>
     public IRowsOutput DefaultRowsOutput { get; set; }
 
+    private int _pageSize = 20;
+
     /// <summary>
     /// Page size.
     /// </summary>
-    public int PagingSize { get; set; } = 20;
+    public int PagingSize
+    {
+        get => _pageSize;
+        set
+        {
+            _pageSize = value;
+            if (DefaultRowsOutput is PagingOutput pagingOutput)
+            {
+                pagingOutput.PagingRowsCount = _pageSize;
+            }
+        }
+    }
 
     /// <summary>
     /// Add row number to output.
     /// </summary>
-    public bool AddRowNumberColumn { get; set; } = true;
+    public bool AddRowNumberColumn { get; set; }
 
     /// <summary>
     /// Show detailed statistic.
@@ -40,10 +55,17 @@ public sealed class ExecutionOptions
     /// </summary>
     public List<Assembly> PluginAssemblies { get; } = new();
 
+#if ENABLE_PLUGINS
     /// <summary>
     /// List of directories to search for plugins.
     /// </summary>
     public List<string> PluginDirectories { get; } = new();
+
+    /// <summary>
+    /// Plugins repository. If empty - default will be used.
+    /// </summary>
+    public string? PluginsRepositoryUri { get; init; }
+#endif
 
     /// <summary>
     /// Do not save/load config.

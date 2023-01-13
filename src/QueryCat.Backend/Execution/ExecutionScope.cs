@@ -8,11 +8,17 @@ namespace QueryCat.Backend.Execution;
 public sealed class ExecutionScope
 {
     private readonly List<VariantValue> _variables = new();
-    private readonly Dictionary<string, int> _variablesNames = new();
+    private readonly Dictionary<string, int> _variablesNames = new(StringComparer.CurrentCultureIgnoreCase);
     private readonly ExecutionScope? _parent;
 
+    /// <summary>
+    /// Variables array.
+    /// </summary>
     public IReadOnlyList<VariantValue> Variables => _variables;
 
+    /// <summary>
+    /// Map of variable name and index.
+    /// </summary>
     public IReadOnlyDictionary<string, int> VariablesNames => _variablesNames;
 
     public ExecutionScope(ExecutionScope? parent = null)
@@ -20,23 +26,60 @@ public sealed class ExecutionScope
         _parent = parent;
     }
 
-    public Func<VariantValue> GetIdentifier(string name)
+    /// <summary>
+    /// Get variable index by name.
+    /// </summary>
+    /// <param name="name">Variable name.</param>
+    /// <param name="scope">Scope.</param>
+    /// <returns>Variable index or -1 if not found.</returns>
+    public int GetVariableIndex(string name, out ExecutionScope? scope)
     {
         var currentScope = this;
         while (currentScope != null)
         {
             if (currentScope.VariablesNames.TryGetValue(name, out int varIndex))
             {
-                return () => Variables[varIndex];
+                scope = currentScope;
+                return varIndex;
             }
             currentScope = currentScope._parent;
         }
-        throw new CannotFindIdentifierException(name);
+        scope = null;
+        return -1;
     }
 
-    public void DefineVariable(string name, DataType type)
+    /// <summary>
+    /// Set variable value by index.
+    /// </summary>
+    /// <param name="index">Variable index in memory list.</param>
+    /// <param name="value">New value.</param>
+    public void SetVariable(int index, VariantValue value)
     {
+        var sourceType = _variables[index].GetInternalType();
+        _variables[index] = value.Cast(sourceType);
+    }
+
+    /// <summary>
+    /// Define new variable.
+    /// </summary>
+    /// <param name="name">Variable name.</param>
+    /// <param name="type">Variable type.</param>
+    /// <param name="value">Optional value.</param>
+    /// <returns>Variable index within scope.</returns>
+    public int DefineVariable(string name, DataType type, VariantValue value = default)
+    {
+        if (_variablesNames.ContainsKey(name))
+        {
+            throw new QueryCatException($"The variable with name '{name}' is already declared.");
+        }
+
         _variables.Add(new VariantValue(type));
-        _variablesNames.Add(name, _variables.Count - 1);
+        var index = _variables.Count - 1;
+        _variablesNames.Add(name, index);
+        if (!value.IsNull)
+        {
+            _variables[index] = value.Cast(type);
+        }
+        return index;
     }
 }

@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Formatters;
 using QueryCat.Backend.Functions;
 using QueryCat.Backend.Types;
@@ -17,7 +18,7 @@ public static class StandardInputOutput
     private static readonly object ObjLock = new();
 
     [Description("Write data to the system standard output.")]
-    [FunctionSignature("stdout(formatter?: object<IRowsFormatter>, page_size: integer = 10): object<IRowsOutput>")]
+    [FunctionSignature("stdout(fmt?: object<IRowsFormatter>, page_size: integer = 10): object<IRowsOutput>")]
     public static VariantValue Stdout(FunctionCallInfo args)
     {
         var formatter = args.GetAt(0).AsObject as IRowsFormatter;
@@ -36,7 +37,7 @@ public static class StandardInputOutput
     }
 
     [Description("Read data from the system standard input.")]
-    [FunctionSignature("stdin(skip_lines: integer = 0, formatter?: object<IRowsFormatter>): object<IRowsInput>")]
+    [FunctionSignature("stdin(skip_lines: integer = 0, fmt?: object<IRowsFormatter>): object<IRowsInput>")]
     public static VariantValue Stdin(FunctionCallInfo args)
     {
         var skipLines = args.GetAt(0).AsInteger;

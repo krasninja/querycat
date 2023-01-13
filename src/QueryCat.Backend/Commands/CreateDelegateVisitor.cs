@@ -1,6 +1,7 @@
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Function;
+using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Ast.Nodes.SpecialFunctions;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Functions;
@@ -17,17 +18,11 @@ internal class CreateDelegateVisitor : AstVisitor
 
     protected Dictionary<int, IFuncUnit> NodeIdFuncMap { get; } = new(capacity: 32);
 
-    /// <summary>
-    /// AST traversal.
-    /// </summary>
-    protected AstTraversal AstTraversal { get; }
-
     protected ExecutionThread ExecutionThread => _thread;
 
     public CreateDelegateVisitor(ExecutionThread thread)
     {
         _thread = thread;
-        AstTraversal = new AstTraversal(this);
     }
 
     /// <inheritdoc />
@@ -57,7 +52,7 @@ internal class CreateDelegateVisitor : AstVisitor
             var value = valueAction.Invoke();
             var leftValue = leftAction.Invoke();
             var rightValue = rightAction.Invoke();
-            var result = VariantValue.Between(ref value, ref leftValue, ref rightValue, out ErrorCode code);
+            var result = VariantValue.Between(in value, in leftValue, in rightValue, out ErrorCode code);
             ApplyStatistic(code);
             var boolResult = result.AsBoolean;
             return node.IsNot ? new VariantValue(!boolResult) : new VariantValue(boolResult);
@@ -68,32 +63,99 @@ internal class CreateDelegateVisitor : AstVisitor
     /// <inheritdoc />
     public override void Visit(BinaryOperationExpressionNode node)
     {
-        var leftAction = NodeIdFuncMap[node.Left.Id];
-        var rightAction = NodeIdFuncMap[node.Right.Id];
+        var leftAction = NodeIdFuncMap[node.LeftNode.Id];
+        var rightAction = NodeIdFuncMap[node.RightNode.Id];
         var action = VariantValue.GetOperationDelegate(node.Operation,
-            node.Left.GetDataType(), node.Right.GetDataType());
+            node.LeftNode.GetDataType(), node.RightNode.GetDataType());
 
         VariantValue Func()
         {
             var leftValue = leftAction.Invoke();
             var rightValue = rightAction.Invoke();
-            var result = action.Invoke(ref leftValue, ref rightValue);
+            var result = action.Invoke(in leftValue, in rightValue);
             return result;
         }
         NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func);
     }
 
     /// <inheritdoc />
+    public override void Visit(CaseExpressionNode node)
+    {
+        var whenConditions = node.WhenNodes.Select(n => NodeIdFuncMap[n.ConditionNode.Id]).ToArray();
+        var whenResults = node.WhenNodes.Select(n => NodeIdFuncMap[n.ResultNode.Id]).ToArray();
+        var whenDefault = node.DefaultNode != null
+            ? NodeIdFuncMap[node.DefaultNode.Id]
+            : new FuncUnitStatic(VariantValue.Null);
+
+        if (node.IsSimpleCase)
+        {
+            var arg = NodeIdFuncMap[node.ArgumentNode!.Id];
+            var equalsDelegate = VariantValue.GetEqualsDelegate(node.ArgumentNode.GetDataType());
+
+            VariantValue Func()
+            {
+                var argValue = arg.Invoke();
+                for (var i = 0; i < whenConditions.Length; i++)
+                {
+                    var conditionValue = whenConditions[i].Invoke();
+                    if (equalsDelegate.Invoke(in argValue, in conditionValue).AsBoolean)
+                    {
+                        var resultValue = whenResults[i].Invoke();
+                        return resultValue;
+                    }
+                }
+                return whenDefault.Invoke();
+            }
+            NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func);
+        }
+        else if (node.IsSearchCase)
+        {
+            VariantValue Func()
+            {
+                for (var i = 0; i < whenConditions.Length; i++)
+                {
+                    var conditionValue = whenConditions[i].Invoke();
+                    if (conditionValue.AsBoolean)
+                    {
+                        var resultValue = whenResults[i].Invoke();
+                        return resultValue;
+                    }
+                }
+                return whenDefault.Invoke();
+            }
+            NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func);
+        }
+        else
+        {
+            throw new InvalidOperationException("Cannot create CASE delegate.");
+        }
+    }
+
+    /// <inheritdoc />
     public override void Visit(IdentifierExpressionNode node)
     {
+        if (string.IsNullOrEmpty(node.SourceName))
+        {
+            var varIndex = ExecutionThread.TopScope.GetVariableIndex(node.Name, out var scope);
+            if (varIndex > -1)
+            {
+                VariantValue Func()
+                {
+                    return scope!.Variables[varIndex];
+                }
+                NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func);
+                return;
+            }
+        }
         throw new CannotFindIdentifierException(node.Name);
     }
 
     /// <inheritdoc />
     public override void Visit(InOperationExpressionNode node)
     {
-        var actions = node.InExpressionValues.Values.Select(v => NodeIdFuncMap[v.Id]).ToArray();
-        var valueAction = NodeIdFuncMap[node.Expression.Id];
+        var actions = node.InExpressionValuesNodes.ValuesNodes.Select(v => NodeIdFuncMap[v.Id]).ToArray();
+        var valueAction = NodeIdFuncMap[node.ExpressionNode.Id];
+        var equalDelegate = VariantValue.GetEqualsDelegate(node.ExpressionNode.GetDataType());
 
         VariantValue Func()
         {
@@ -101,15 +163,14 @@ internal class CreateDelegateVisitor : AstVisitor
             for (int i = 0; i < actions.Length; i++)
             {
                 var rightValue = actions[i].Invoke();
-                var isEqual = VariantValue.Equals(ref leftValue, ref rightValue, out ErrorCode code);
-                ApplyStatistic(code);
-                if (code != ErrorCode.OK)
+                var isEqual = equalDelegate.Invoke(in leftValue, in rightValue);
+                if (isEqual.IsNull)
                 {
-                    return VariantValue.Null;
+                    continue;
                 }
-                if (!node.IsNot && isEqual.AsBoolean)
+                if (isEqual.AsBoolean)
                 {
-                    return isEqual;
+                    return new VariantValue(!node.IsNot);
                 }
             }
             return new VariantValue(node.IsNot);
@@ -133,45 +194,38 @@ internal class CreateDelegateVisitor : AstVisitor
     /// <inheritdoc />
     public override void Visit(UnaryOperationExpressionNode node)
     {
-        var action = NodeIdFuncMap[node.Right.Id];
+        var action = NodeIdFuncMap[node.RightNode.Id];
+        var notDelegate = node.Operation == VariantValue.Operation.Not
+            ? VariantValue.GetOperationDelegate(VariantValue.Operation.Not, node.GetDataType())
+            : VariantValue.UnaryNullDelegate;
 
-        switch (node.Operation)
+        NodeIdFuncMap[node.Id] = node.Operation switch
         {
-            case VariantValue.Operation.Subtract:
-                NodeIdFuncMap[node.Id] = new FuncUnitDelegate(() =>
-                {
-                    var value = action.Invoke();
-                    var result = VariantValue.Negation(ref value, out ErrorCode code);
-                    ApplyStatistic(code);
-                    return result;
-                });
-                break;
-            case VariantValue.Operation.Not:
-                NodeIdFuncMap[node.Id] = new FuncUnitDelegate(() =>
-                {
-                    var value = action.Invoke();
-                    var result = VariantValue.Not(ref value, out ErrorCode code);
-                    ApplyStatistic(code);
-                    return result;
-                });
-                break;
-            case VariantValue.Operation.IsNull:
-                NodeIdFuncMap[node.Id] = new FuncUnitDelegate(() =>
-                {
-                    var value = action.Invoke();
-                    return new VariantValue(value.IsNull);
-                });
-                break;
-            case VariantValue.Operation.IsNotNull:
-                NodeIdFuncMap[node.Id] = new FuncUnitDelegate(() =>
-                {
-                    var value = action.Invoke();
-                    return new VariantValue(!value.IsNull);
-                });
-                break;
-            default:
-                throw new QueryCatException(Resources.Errors.InvalidOperation);
-        }
+            VariantValue.Operation.Subtract => new FuncUnitDelegate(() =>
+            {
+                var value = action.Invoke();
+                var result = VariantValue.Negation(in value, out ErrorCode code);
+                ApplyStatistic(code);
+                return result;
+            }),
+            VariantValue.Operation.Not => new FuncUnitDelegate(() =>
+            {
+                var value = action.Invoke();
+                var result = notDelegate.Invoke(in value);
+                return result;
+            }),
+            VariantValue.Operation.IsNull => new FuncUnitDelegate(() =>
+            {
+                var value = action.Invoke();
+                return new VariantValue(value.IsNull);
+            }),
+            VariantValue.Operation.IsNotNull => new FuncUnitDelegate(() =>
+            {
+                var value = action.Invoke();
+                return new VariantValue(!value.IsNull);
+            }),
+            _ => throw new QueryCatException("Invalid operation.")
+        };
     }
 
     #endregion
@@ -186,7 +240,7 @@ internal class CreateDelegateVisitor : AstVisitor
         VariantValue Func()
         {
             var expressionValue = expressionAction.Invoke();
-            if (expressionValue.Cast(node.TargetTypeNode.Type, out VariantValue result))
+            if (expressionValue.TryCast(node.TargetTypeNode.Type, out VariantValue result))
             {
                 return result;
             }
@@ -223,7 +277,7 @@ internal class CreateDelegateVisitor : AstVisitor
     /// <inheritdoc />
     public override void Visit(FunctionCallArgumentNode node)
     {
-        NodeIdFuncMap[node.Id] = NodeIdFuncMap[node.ExpressionValue.Id];
+        NodeIdFuncMap[node.Id] = NodeIdFuncMap[node.ExpressionValueNode.Id];
     }
 
     /// <inheritdoc />
@@ -263,8 +317,7 @@ internal class CreateDelegateVisitor : AstVisitor
                 continue;
             }
 
-            throw new InvalidFunctionArgumentException(
-                string.Format(Resources.Errors.CannotSetArgument, argument.Name));
+            throw new InvalidFunctionArgumentException($"Cannot set argument '{argument.Name}'.");
         }
 
         // Fill variadic.
@@ -278,8 +331,7 @@ internal class CreateDelegateVisitor : AstVisitor
         }
 
         var argsDelegates = argsDelegatesList.ToArray();
-        var callInfo = new FunctionCallInfo(argsDelegates);
-        callInfo.FunctionsManager = _thread.FunctionsManager;
+        var callInfo = new FunctionCallInfo(_thread, argsDelegates);
         node.SetAttribute(AstAttributeKeys.ArgumentsKey, callInfo);
         NodeIdFuncMap[node.Id] = new FuncUnitDelegate(() =>
         {
@@ -287,6 +339,26 @@ internal class CreateDelegateVisitor : AstVisitor
             callInfo.InvokePushArgs();
             return function.Delegate(callInfo);
         });
+    }
+
+    #endregion
+
+    #region Select Command
+
+    /// <inheritdoc />
+    public override void Visit(SelectQuerySpecificationNode node)
+    {
+        var statementsVisitor = new StatementsVisitor(_thread);
+        var handler = statementsVisitor.RunAndReturn(node);
+        NodeIdFuncMap[node.Id] = new FuncUnitDelegate(handler.AsFunc());
+    }
+
+    /// <inheritdoc />
+    public override void Visit(SelectQueryCombineNode node)
+    {
+        var statementsVisitor = new StatementsVisitor(_thread);
+        var handler = statementsVisitor.RunAndReturn(node);
+        NodeIdFuncMap[node.Id] = new FuncUnitDelegate(handler.AsFunc());
     }
 
     #endregion
