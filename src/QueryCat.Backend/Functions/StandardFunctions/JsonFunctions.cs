@@ -97,7 +97,7 @@ public static class JsonFunctions
         }
         else
         {
-            node = JsonSerializer.SerializeToNode(obj);
+            node = JsonSerializer.SerializeToNode(obj.AsObject);
         }
         if (node == null)
         {
