@@ -8,7 +8,7 @@ namespace QueryCat.Backend.Functions.StandardFunctions;
 /// <summary>
 /// Hashing and encryption functions.
 /// </summary>
-internal static class CryptoFunctions
+public static class CryptoFunctions
 {
     [Description("Computes the MD5 hash of the given data.")]
     [FunctionSignature("md5(text: string): string")]

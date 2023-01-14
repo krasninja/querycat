@@ -9,7 +9,7 @@ namespace QueryCat.Backend.Commands.Select;
 /// <summary>
 /// SELECT command.
 /// </summary>
-public sealed class SelectCommand : ICommand
+internal sealed class SelectCommand : ICommand
 {
     /// <inheritdoc />
     public CommandHandler CreateHandler(ExecutionThread executionThread, StatementNode node)

@@ -6,7 +6,7 @@ namespace QueryCat.Backend.Commands.Select;
 /// <summary>
 /// Context for input rows source.
 /// </summary>
-public class SelectInputQueryContext : QueryContext
+internal class SelectInputQueryContext : QueryContext
 {
     /// <summary>
     /// The target rows input.

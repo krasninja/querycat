@@ -5,7 +5,7 @@ namespace QueryCat.Backend.Types;
 /// <summary>
 /// Array of <see cref="VariantValue" /> with Equals implementation.
 /// </summary>
-public class VariantValueArray
+public sealed class VariantValueArray
 {
     private VariantValue[] _values;
 

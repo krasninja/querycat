@@ -9,7 +9,7 @@ namespace QueryCat.Backend.Providers;
 /// <summary>
 /// Provider to create rows set from a string.
 /// </summary>
-public static class StringInput
+internal static class StringInput
 {
     [Description("Reads data from a string.")]
     [FunctionSignature("read_text(text: string, fmt: object<IRowsFormatter>): object<IRowsInput>")]

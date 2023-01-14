@@ -6,7 +6,7 @@ namespace QueryCat.Backend.Relational.Iterators;
 /// <summary>
 /// The iterator executes initialization delegates before rows processing.
 /// </summary>
-public class SetupRowsIterator : IRowsIterator
+internal class SetupRowsIterator : IRowsIterator
 {
     private readonly IRowsIterator _rowsIterator;
     private readonly string _message;

@@ -8,7 +8,7 @@ namespace QueryCat.Backend.Providers;
 /// The provider implements simple read and write functions. The actual function will
 /// be resolved by URI schema.
 /// </summary>
-public static class GenericInputOutput
+internal static class GenericInputOutput
 {
     [Description("Read data from a URI.")]
     [FunctionSignature("read(uri: string, fmt?: object<IRowsFormatter>): object<IRowsInput>")]

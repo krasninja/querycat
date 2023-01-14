@@ -3,7 +3,7 @@ namespace QueryCat.Backend.Utils;
 /// <summary>
 /// Extensions to <see cref="IAsyncEnumerable{T}" />.
 /// </summary>
-public static class AsyncEnumerableExtensions
+internal static class AsyncEnumerableExtensions
 {
     /// <summary>
     /// Converts async enumerable into list.

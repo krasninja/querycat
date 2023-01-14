@@ -9,7 +9,7 @@ namespace QueryCat.Backend.Commands.Select.Iterators;
 /// <summary>
 /// The iterator eliminates duplicated rows.
 /// </summary>
-public class DistinctRowsIterator : IRowsIterator
+internal class DistinctRowsIterator : IRowsIterator
 {
     private readonly IRowsIterator _rowsIterator;
     private readonly IFuncUnit[] _columnsFunctions;

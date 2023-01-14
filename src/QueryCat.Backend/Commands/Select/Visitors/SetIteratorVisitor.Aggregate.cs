@@ -1,10 +1,8 @@
-using Serilog;
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes.Function;
 using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Commands.Select.Iterators;
 using QueryCat.Backend.Functions;
-using QueryCat.Backend.Types;
 
 namespace QueryCat.Backend.Commands.Select.Visitors;
 
