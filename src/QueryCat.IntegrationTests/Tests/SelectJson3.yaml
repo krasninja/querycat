@@ -1,0 +1,29 @@
+expected: |
+  1,,,"Sport"
+  ,,"{""town"":""Cheltenham"",""county"":""Gloucestershire"",""country"":""England""}","[""Sport"",""Water polo""]"
+query: |
+  declare json string := '
+  {
+    "info": {
+      "type": 1,
+      "address": {
+        "town": "Cheltenham",
+        "county": "Gloucestershire",
+        "country": "England"
+      },
+      "tags": ["Sport", "Water polo"]
+    },
+    "type": "Basic"
+  }';
+
+  select
+    json_value(json, '$.info.type'), -- 1 -- value
+    json_value(json, '$.info.none'), -- NULL (no property)
+    json_value(json, '$.info.address'), -- NULL (object, not a value)
+    json_value(json, '$.info.tags[0]') -- NULL (object, not a value)
+  union all
+  select
+    json_query(json, '$.info.type'), -- NULL -- value (not an object)
+    json_query(json, '$.info.none'), -- NULL (no property)
+    json_query(json, '$.info.address'), -- NULL (object, not a value)
+    json_query(json, '$.info.tags') -- NULL (object, not a value)

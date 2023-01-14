@@ -19,6 +19,7 @@ public class ExecutionThreadBootstrapper
 #endif
         executionThread.FunctionsManager.RegisterFactory(DsvFormatter.RegisterFunctions);
         executionThread.FunctionsManager.RegisterFactory(JsonFormatter.RegisterFunctions);
+        executionThread.FunctionsManager.RegisterFactory(StringFunctions.RegisterFunctions);
         executionThread.FunctionsManager.RegisterFactory(NullFormatter.RegisterFunctions);
         executionThread.FunctionsManager.RegisterFactory(TextLineFormatter.RegisterFunctions);
         executionThread.FunctionsManager.RegisterFactory(CryptoFunctions.RegisterFunctions);
@@ -26,7 +27,7 @@ public class ExecutionThreadBootstrapper
         executionThread.FunctionsManager.RegisterFactory(InfoFunctions.RegisterFunctions);
         executionThread.FunctionsManager.RegisterFactory(MathFunctions.RegisterFunctions);
         executionThread.FunctionsManager.RegisterFactory(MiscFunctions.RegisterFunctions);
-        executionThread.FunctionsManager.RegisterFactory(StringFunctions.RegisterFunctions);
+        executionThread.FunctionsManager.RegisterFactory(JsonFunctions.RegisterFunctions);
         executionThread.FunctionsManager.RegisterFactory(AggregatesRegistration.RegisterFunctions);
         executionThread.FunctionsManager.RegisterFactory(Providers.Registration.RegisterFunctions);
 #if ENABLE_PLUGINS

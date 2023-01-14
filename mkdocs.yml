@@ -29,6 +29,7 @@ nav:
     - 'Date and Time': functions/datetime.md
     - 'Info': functions/info.md
     - 'Input': functions/input.md
+    - 'JSON': functions/json.md
     - 'Math': functions/math.md
     - 'Misc': functions/misc.md
     - 'Output': functions/output.md
