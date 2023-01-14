@@ -129,6 +129,14 @@ public static class StringFunctions
         return new VariantValue(new string(charArray));
     }
 
+    [Description("Returns the character with the given code.")]
+    [FunctionSignature("chr(code: integer): string")]
+    public static VariantValue Chr(FunctionCallInfo args)
+    {
+        var code = args.GetAt(0).AsInteger;
+        return new VariantValue(Convert.ToChar(code).ToString());
+    }
+
     public static void RegisterFunctions(FunctionsManager functionsManager)
     {
         functionsManager.RegisterFunction(Lower);
@@ -142,5 +150,6 @@ public static class StringFunctions
         functionsManager.RegisterFunction(Position);
         functionsManager.RegisterFunction(Replace);
         functionsManager.RegisterFunction(Reverse);
+        functionsManager.RegisterFunction(Chr);
     }
 }

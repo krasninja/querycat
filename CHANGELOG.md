@@ -4,6 +4,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Added
+
+- New "chr" string function.
+
 ## [0.2.0] - 2023-01-13
 
 ### Added
