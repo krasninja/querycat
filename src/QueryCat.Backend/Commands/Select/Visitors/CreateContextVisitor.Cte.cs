@@ -1,6 +1,10 @@
+using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Select;
+using QueryCat.Backend.Commands.Select.Iterators;
+using QueryCat.Backend.Relational;
+using QueryCat.Backend.Relational.Iterators;
 
 namespace QueryCat.Backend.Commands.Select.Visitors;
 
@@ -25,9 +29,8 @@ internal sealed partial class CreateContextVisitor
             if (!processedAsRecursive)
             {
                 Cte_PrepareInputNonRecursiveList(context, withNode);
+                Cte_FixColumnsNames(withNode.ColumnNodes, context.CurrentIterator);
             }
-
-            Cte_FixColumnsNames(context, withNode);
         }
     }
 
@@ -35,9 +38,10 @@ internal sealed partial class CreateContextVisitor
     {
         var cteCreateContextVisitor = new CreateContextVisitor(_executionThread);
         cteCreateContextVisitor.Run(withNode.QueryNode);
+        var withNodeContext = withNode.QueryNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
         var cte = new CommonTableExpression(
             withNode.Name,
-            withNode.QueryNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey));
+            withNodeContext.CurrentIterator);
         context.CteList.Add(cte);
         CreateFinalIterator(withNode.QueryNode);
     }
@@ -48,13 +52,52 @@ internal sealed partial class CreateContextVisitor
         {
             return false;
         }
-
         if (combineNode.CombineType != SelectQueryCombineType.Union)
         {
             throw new SemanticException("Recursive query must have UNION [ALL] term.");
         }
 
-        return false;
+        // Prepare and evaluate initial query.
+        var cteCreateContextVisitor = new CreateContextVisitor(_executionThread);
+        cteCreateContextVisitor.Run(combineNode.LeftQueryNode);
+        var initialQueryCommandContext = combineNode.LeftQueryNode
+            .GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
+        Cte_FixColumnsNames(
+            withNode.ColumnNodes,
+            initialQueryCommandContext.CurrentIterator);
+
+        // Add it into CTE list. Instead of exposing RowsIterator we wrap it into proxy.
+        // By switching that proxy to new rows set we evaluate recursive iterator with the new result.
+        var proxyRowsIterator = new ProxyRowsIterator(new EmptyIterator(initialQueryCommandContext.CurrentIterator));
+        context.CteList.Add(new CommonTableExpression(withNode.Name, proxyRowsIterator));
+
+        // Then prepare iterator for recursive part.
+        cteCreateContextVisitor.Run(combineNode.RightQueryNode);
+        var recursiveCommandContext = combineNode.RightQueryNode
+            .GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
+
+        // Final result.
+        var totalResult = new RowsFrame(initialQueryCommandContext.CurrentIterator.Columns);
+        var totalResultProxy = new ProxyRowsIterator(totalResult);
+        var writeRowsIterator = new WriteRowsFrameIterator(totalResult,
+            combineNode.IsDistinct ? new DistinctRowsIterator(totalResultProxy) : totalResultProxy);
+
+        // Merge current working frame and recalculate it based on new result.
+        var workingFrame = initialQueryCommandContext.CurrentIterator.ToFrame();
+        while (!workingFrame.IsEmpty)
+        {
+            proxyRowsIterator.Set(workingFrame.GetIterator());
+
+            // Append working iterator to the total result.
+            totalResultProxy.Set(proxyRowsIterator.CurrentIterator);
+            writeRowsIterator.WriteAll();
+
+            proxyRowsIterator.Reset();
+            workingFrame = recursiveCommandContext.CurrentIterator.ToFrame();
+        }
+
+        proxyRowsIterator.Set(totalResult.GetIterator());
+        return true;
     }
 
     private static IEnumerable<CommonTableExpression> Cte_GetParentList(SelectCommandContext context)
@@ -70,14 +113,15 @@ internal sealed partial class CreateContextVisitor
         }
     }
 
-    private static void Cte_FixColumnsNames(SelectCommandContext context, SelectWithNode withNode)
+    private static void Cte_FixColumnsNames(
+        IList<SelectColumnsSublistNode> targetColumns,
+        IRowsIterator iterator)
     {
-        context = withNode.QueryNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
-        for (var columnIndex = 0; columnIndex < withNode.ColumnNodes.Count; columnIndex++)
+        var columns = iterator.Current.Columns;
+        for (var columnIndex = 0; columnIndex < targetColumns.Count; columnIndex++)
         {
-            var columns = context.CurrentIterator.Current.Columns;
             if (columns.Length - 1 >= columnIndex
-                && withNode.ColumnNodes[columnIndex] is SelectColumnsSublistExpressionNode nameNode
+                && targetColumns[columnIndex] is SelectColumnsSublistExpressionNode nameNode
                 && nameNode.ExpressionNode is IdentifierExpressionNode idNode)
             {
                 columns[columnIndex].Name = idNode.FullName;

@@ -151,14 +151,9 @@ internal sealed partial class CreateContextVisitor : AstVisitor
         {
             return Array.Empty<IRowsInput>();
         }
-        var context = currentContext.CteList[cteIndex].Context;
-        if (context.CurrentIterator == null)
-        {
-            throw new QueryCatException("Invalid CTE.");
-        }
         return new[]
         {
-            new RowsIteratorInput(context.CurrentIterator),
+            new RowsIteratorInput(currentContext.CteList[cteIndex].RowsIterator),
         };
     }
 

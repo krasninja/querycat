@@ -1,0 +1,8 @@
+expected: |
+  28
+query: |
+  with recursive t(num) as (
+    select 1
+    union all
+    select num + 1 from t where num < 7)
+  select sum(num) from t;

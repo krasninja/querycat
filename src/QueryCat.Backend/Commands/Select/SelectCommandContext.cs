@@ -72,20 +72,11 @@ internal sealed class SelectCommandContext : IDisposable
         {
             foreach (var commonTableExpression in CteList)
             {
-                foreach (var input in commonTableExpression.Context.Inputs)
-                {
-                    index = input.RowsInput.GetColumnIndexByName(name, source);
-                    if (index > -1)
-                    {
-                        result = new InputNameSearchResult(input.RowsInput, index, commonTableExpression.Context, input);
-                        return true;
-                    }
-                }
-                index = commonTableExpression.Context.CurrentIterator.GetColumnIndexByName(name, source);
+                index = commonTableExpression.RowsIterator.GetColumnIndexByName(name, source);
                 if (index > -1)
                 {
                     result = new InputNameSearchResult(
-                        commonTableExpression.Context.CurrentIterator, index, commonTableExpression.Context);
+                        commonTableExpression.RowsIterator, index, this);
                     return true;
                 }
             }

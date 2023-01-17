@@ -5,7 +5,7 @@ Executes the SQL query against input. If not output is specified (with `INTO` cl
 ## Syntax
 
 ```
-[ WITH with_query [, ...] ]
+[ WITH [ RECURSIVE ] with_query [, ...] ]
 SELECT [ ALL | DISTINCT [ ON ( expression [, ...] ) ] ] [ TOP number ]
     [ * | expression AS [ alias ] | column AS [ alias ] [, ...] ]
 [ INTO [ function : IRowsOutput ] ]
@@ -22,7 +22,7 @@ SELECT [ ALL | DISTINCT [ ON ( expression [, ...] ) ] ] [ TOP number ]
 
 ## WITH
 
-The WITH clause allows you to specify one or more subqueries that can be referenced by name in the primary query.
+The WITH clause allows you to specify one or more subqueries that can be referenced by name in the primary query. The recursive syntax is also supported.
 
 ## SELECT
 
