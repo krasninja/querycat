@@ -6,7 +6,7 @@ using QueryCat.Backend.Types;
 namespace QueryCat.UnitTests.Relational;
 
 /// <summary>
-/// Tests for <see cref="DistinctRowsIterator" />.
+/// Tests for <see cref="DistinctRowsIteratorIterator" />.
 /// </summary>
 public class DistinctRowsIteratorTests
 {
@@ -23,7 +23,7 @@ public class DistinctRowsIteratorTests
         table.AddRow(30, "Marina M");
 
         // Act.
-        var resultRowsSet = new DistinctRowsIterator(table.GetIterator()).ToFrame();
+        var resultRowsSet = new DistinctRowsIteratorIterator(table.GetIterator()).ToFrame();
 
         // Assert.
         Assert.Equal(3, resultRowsSet.TotalRows);

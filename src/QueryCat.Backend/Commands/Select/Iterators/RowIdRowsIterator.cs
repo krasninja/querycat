@@ -8,7 +8,7 @@ namespace QueryCat.Backend.Commands.Select.Iterators;
 /// <summary>
 /// Adds row number column into target rows set.
 /// </summary>
-internal sealed class RowIdRowsIterator : IRowsIterator
+internal sealed class RowIdRowsIterator : IRowsIterator, IRowsIteratorParent
 {
     private readonly IRowsIterator _rowsIterator;
     private readonly Row _row;
@@ -56,5 +56,11 @@ internal sealed class RowIdRowsIterator : IRowsIterator
     public void Explain(IndentedStringBuilder stringBuilder)
     {
         stringBuilder.AppendRowsIteratorsWithIndent("Row Id", _rowsIterator);
+    }
+
+    /// <inheritdoc />
+    public IEnumerable<IRowsSchema> GetChildren()
+    {
+        yield return _rowsIterator;
     }
 }

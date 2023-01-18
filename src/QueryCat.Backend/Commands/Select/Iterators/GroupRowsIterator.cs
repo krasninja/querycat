@@ -6,7 +6,7 @@ using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Commands.Select.Iterators;
 
-internal sealed class GroupRowsIterator : IRowsIterator
+internal sealed class GroupRowsIterator : IRowsIterator, IRowsIteratorParent
 {
     private readonly IRowsIterator _rowsIterator;
     private bool _isInitialized;
@@ -170,5 +170,11 @@ internal sealed class GroupRowsIterator : IRowsIterator
             info.IsAggregateKey = true;
         }
         return columns.ToArray();
+    }
+
+    /// <inheritdoc />
+    public IEnumerable<IRowsSchema> GetChildren()
+    {
+        yield return _rowsIterator;
     }
 }

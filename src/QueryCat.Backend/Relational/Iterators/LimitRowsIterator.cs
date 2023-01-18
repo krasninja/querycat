@@ -6,7 +6,7 @@ namespace QueryCat.Backend.Relational.Iterators;
 /// <summary>
 /// The iterator limits the number of returned rows.
 /// </summary>
-internal sealed class LimitRowsIterator : IRowsIterator
+internal sealed class LimitRowsIterator : IRowsIterator, IRowsIteratorParent
 {
     private readonly long _limit;
     private readonly IRowsIterator _rowsIterator;
@@ -46,5 +46,11 @@ internal sealed class LimitRowsIterator : IRowsIterator
     public void Explain(IndentedStringBuilder stringBuilder)
     {
         stringBuilder.AppendRowsIteratorsWithIndent($"Limit (row={_limit})", _rowsIterator);
+    }
+
+    /// <inheritdoc />
+    public IEnumerable<IRowsSchema> GetChildren()
+    {
+        yield return _rowsIterator;
     }
 }

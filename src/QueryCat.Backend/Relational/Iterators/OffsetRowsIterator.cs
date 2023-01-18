@@ -6,7 +6,7 @@ namespace QueryCat.Backend.Relational.Iterators;
 /// <summary>
 /// The iterator makes offset in rows reading.
 /// </summary>
-internal sealed class OffsetRowsIterator : IRowsIterator
+internal sealed class OffsetRowsIterator : IRowsIterator, IRowsIteratorParent
 {
     private readonly long _offset;
     private readonly IRowsIterator _rowsIterator;
@@ -45,5 +45,11 @@ internal sealed class OffsetRowsIterator : IRowsIterator
     public void Explain(IndentedStringBuilder stringBuilder)
     {
         stringBuilder.AppendRowsIteratorsWithIndent($"Offset (rows={_offset})", _rowsIterator);
+    }
+
+    /// <inheritdoc />
+    public IEnumerable<IRowsSchema> GetChildren()
+    {
+        yield return _rowsIterator;
     }
 }

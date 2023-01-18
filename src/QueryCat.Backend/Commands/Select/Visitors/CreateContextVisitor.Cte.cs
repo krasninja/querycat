@@ -80,7 +80,7 @@ internal sealed partial class CreateContextVisitor
         var totalResult = new RowsFrame(initialQueryCommandContext.CurrentIterator.Columns);
         var totalResultProxy = new ProxyRowsIterator(totalResult);
         var writeRowsIterator = new WriteRowsFrameIterator(totalResult,
-            combineNode.IsDistinct ? new DistinctRowsIterator(totalResultProxy) : totalResultProxy);
+            combineNode.IsDistinct ? new DistinctRowsIteratorIterator(totalResultProxy) : totalResultProxy);
 
         // Merge current working frame and recalculate it based on new result.
         var workingFrame = initialQueryCommandContext.CurrentIterator.ToFrame();

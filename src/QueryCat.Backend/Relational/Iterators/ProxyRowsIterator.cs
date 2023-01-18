@@ -6,7 +6,7 @@ namespace QueryCat.Backend.Relational.Iterators;
 /// <summary>
 /// The iterator just proxies all the requests to inner iterator which can be replaced.
 /// </summary>
-public sealed class ProxyRowsIterator : IRowsIterator
+public sealed class ProxyRowsIterator : IRowsIterator, IRowsIteratorParent
 {
     private IRowsIterator _currentIterator;
 
@@ -52,6 +52,12 @@ public sealed class ProxyRowsIterator : IRowsIterator
     /// <inheritdoc />
     public void Explain(IndentedStringBuilder stringBuilder)
     {
-        stringBuilder.AppendRowsIteratorsWithIndent($"Proxy", _currentIterator);
+        stringBuilder.AppendRowsIteratorsWithIndent("Proxy", _currentIterator);
+    }
+
+    /// <inheritdoc />
+    public IEnumerable<IRowsSchema> GetChildren()
+    {
+        yield return _currentIterator;
     }
 }

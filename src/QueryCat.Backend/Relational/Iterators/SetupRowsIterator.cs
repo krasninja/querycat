@@ -6,7 +6,7 @@ namespace QueryCat.Backend.Relational.Iterators;
 /// <summary>
 /// The iterator executes initialization delegates before rows processing.
 /// </summary>
-internal class SetupRowsIterator : IRowsIterator
+internal class SetupRowsIterator : IRowsIterator, IRowsIteratorParent
 {
     private readonly IRowsIterator _rowsIterator;
     private readonly string _message;
@@ -58,5 +58,11 @@ internal class SetupRowsIterator : IRowsIterator
     public virtual void Explain(IndentedStringBuilder stringBuilder)
     {
         stringBuilder.AppendRowsIteratorsWithIndent($"Setup (msg='{_message}' init={_isInitialized})", _rowsIterator);
+    }
+
+    /// <inheritdoc />
+    public IEnumerable<IRowsSchema> GetChildren()
+    {
+        yield return _rowsIterator;
     }
 }

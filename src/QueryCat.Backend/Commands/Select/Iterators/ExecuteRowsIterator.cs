@@ -4,7 +4,7 @@ using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Commands.Select.Iterators;
 
-internal sealed class ExecuteRowsIterator : IRowsIterator
+internal sealed class ExecuteRowsIterator : IRowsIterator, IRowsIteratorParent
 {
     private readonly IRowsIterator _rowsIterator;
 
@@ -38,5 +38,11 @@ internal sealed class ExecuteRowsIterator : IRowsIterator
     public void Explain(IndentedStringBuilder stringBuilder)
     {
         stringBuilder.AppendRowsIteratorsWithIndent("Execute", _rowsIterator);
+    }
+
+    /// <inheritdoc />
+    public IEnumerable<IRowsSchema> GetChildren()
+    {
+        yield return _rowsIterator;
     }
 }

@@ -238,7 +238,7 @@ internal sealed partial class SetIteratorVisitor : AstVisitor
         var makeDelegateVisitor = new SelectCreateDelegateVisitor(ExecutionThread, context);
         var funcUnits = querySpecificationNode.DistinctNode.
             OnNodes.Select(d => makeDelegateVisitor.RunAndReturn(d)).ToArray();
-        context.SetIterator(new DistinctRowsIterator(context.CurrentIterator, funcUnits));
+        context.SetIterator(new DistinctRowsIteratorIterator(context.CurrentIterator, funcUnits));
     }
 
     private record struct ColumnWithIndex(

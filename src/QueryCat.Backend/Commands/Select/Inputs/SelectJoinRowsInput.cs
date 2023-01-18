@@ -7,7 +7,7 @@ using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Commands.Select.Inputs;
 
-internal sealed class SelectJoinRowsInput : IRowsInput
+internal sealed class SelectJoinRowsInput : IRowsInput, IRowsIteratorParent
 {
     private readonly IRowsInput _leftInput;
     private readonly IRowsInput _rightInput;
@@ -164,6 +164,13 @@ internal sealed class SelectJoinRowsInput : IRowsInput
     public void Explain(IndentedStringBuilder stringBuilder)
     {
         stringBuilder.AppendRowsInputsWithIndent($"{_joinType} join", _leftInput, _rightInput);
+    }
+
+    /// <inheritdoc />
+    public IEnumerable<IRowsSchema> GetChildren()
+    {
+        yield return _leftInput;
+        yield return _rightInput;
     }
 
     /// <inheritdoc />

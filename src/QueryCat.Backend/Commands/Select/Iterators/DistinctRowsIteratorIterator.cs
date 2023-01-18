@@ -9,7 +9,7 @@ namespace QueryCat.Backend.Commands.Select.Iterators;
 /// <summary>
 /// The iterator eliminates duplicated rows.
 /// </summary>
-internal class DistinctRowsIterator : IRowsIterator
+internal class DistinctRowsIteratorIterator : IRowsIterator, IRowsIteratorParent
 {
     private readonly IRowsIterator _rowsIterator;
     private readonly IFuncUnit[] _columnsFunctions;
@@ -21,7 +21,7 @@ internal class DistinctRowsIterator : IRowsIterator
     /// <inheritdoc />
     public Row Current => _rowsIterator.Current;
 
-    public DistinctRowsIterator(IRowsIterator rowsIterator,
+    public DistinctRowsIteratorIterator(IRowsIterator rowsIterator,
         params IFuncUnit[] columnsIndexes)
     {
         _rowsIterator = rowsIterator;
@@ -70,5 +70,11 @@ internal class DistinctRowsIterator : IRowsIterator
     public void Explain(IndentedStringBuilder stringBuilder)
     {
         stringBuilder.AppendRowsIteratorsWithIndent("Distinct", _rowsIterator);
+    }
+
+    /// <inheritdoc />
+    public IEnumerable<IRowsSchema> GetChildren()
+    {
+        yield return _rowsIterator;
     }
 }

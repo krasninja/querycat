@@ -170,18 +170,28 @@ internal sealed partial class CreateContextVisitor : AstVisitor
             return Array.Empty<IRowsInput>();
         }
         var obj = value.AsObject;
+
+        IRowsInput? rowsInputResult = null;
         if (obj is IRowsInput rowsInput)
         {
             currentContext.AddInput(new SelectCommandInputContext(rowsInput));
-            return new[] { new CacheRowsInput(rowsInput) };
+            rowsInputResult = rowsInput;
         }
         if (obj is IRowsIterator rowsIterator)
         {
             rowsInput = new RowsIteratorInput(rowsIterator);
             currentContext.AddInput(new SelectCommandInputContext(rowsInput));
-            return new[] { new CacheRowsInput(rowsInput) };
+            rowsInputResult = rowsInput;
         }
-        return Array.Empty<IRowsInput>();
+        if (rowsInputResult == null)
+        {
+            return Array.Empty<IRowsInput>();
+        }
+        if (CanUseInputCache(rowsInputResult))
+        {
+            rowsInputResult = new CacheRowsInput(rowsInputResult);
+        }
+        return new[] { rowsInputResult };
     }
 
     // Last input is combine input.
@@ -218,8 +228,11 @@ internal sealed partial class CreateContextVisitor : AstVisitor
             reverseColumnsOrder = true;
         }
         // Because of iterator specific conditions we better cache right input. Consider that resetting rows input
-        // is resource consuming operation.
-        right = new CacheRowsInput(right);
+        // might be resource consuming operation.
+        if (CanUseInputCache(right))
+        {
+            right = new CacheRowsInput(right);
+        }
 
         new InputResolveTypesVisitor(_executionThread, left, right)
             .Run(tableJoinedNode.SearchConditionNode);
@@ -346,6 +359,44 @@ internal sealed partial class CreateContextVisitor : AstVisitor
                 }
             }
         }
+    }
+
+    /// <summary>
+    /// The function determines if cache can be applied for the certain input.
+    /// </summary>
+    /// <param name="input">Rows input.</param>
+    /// <returns><c>True</c> if cache can be applied, <c>false</c> otherwise.</returns>
+    private static bool CanUseInputCache(IRowsInput input)
+    {
+        if (input is not IRowsIteratorParent rowsIteratorRoot)
+        {
+            return true;
+        }
+
+        var childNodes = rowsIteratorRoot.GetChildren().ToList();
+        while (childNodes.Any())
+        {
+            // If we have any proxy iterator we cannot guarantee inner input persistence.
+            foreach (var child in childNodes)
+            {
+                if (child is ProxyRowsIterator)
+                {
+                    return false;
+                }
+            }
+            // If all child nodes are already cache inputs - no need to cache twice.
+            if (childNodes.All(n => n is CacheRowsInput))
+            {
+                return false;
+            }
+
+            childNodes = childNodes
+                .OfType<IRowsIteratorParent>()
+                .SelectMany(n => n.GetChildren())
+                .ToList();
+        }
+
+        return true;
     }
 
     private static void SetAlias(IRowsInput input, string alias)

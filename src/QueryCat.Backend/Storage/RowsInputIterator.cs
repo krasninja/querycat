@@ -8,7 +8,7 @@ namespace QueryCat.Backend.Storage;
 /// <summary>
 /// Iterator for <see cref="IRowsInput" />.
 /// </summary>
-public class RowsInputIterator : IRowsIterator, IDisposable
+public class RowsInputIterator : IRowsIterator, IRowsIteratorParent, IDisposable
 {
     private readonly IRowsInput _rowsInput;
     private readonly bool _autoOpen;
@@ -131,6 +131,12 @@ public class RowsInputIterator : IRowsIterator, IDisposable
         stringBuilder.IncreaseIndent();
         _rowsInput.Explain(stringBuilder);
         stringBuilder.DecreaseIndent();
+    }
+
+    /// <inheritdoc />
+    public IEnumerable<IRowsSchema> GetChildren()
+    {
+        yield return _rowsInput;
     }
 
     protected virtual void Dispose(bool disposing)

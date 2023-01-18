@@ -6,7 +6,7 @@ namespace QueryCat.Backend.Relational.Iterators;
 /// <summary>
 /// The iterator writes new row into <see cref="RowsFrame" />.
 /// </summary>
-public sealed class WriteRowsFrameIterator : IRowsIterator
+public sealed class WriteRowsFrameIterator : IRowsIterator, IRowsIteratorParent
 {
     private readonly RowsFrame _rowsFrame;
     private readonly IRowsIterator _rowsIterator;
@@ -63,5 +63,11 @@ public sealed class WriteRowsFrameIterator : IRowsIterator
     public void Explain(IndentedStringBuilder stringBuilder)
     {
         stringBuilder.AppendLine("Write To Frame");
+    }
+
+    /// <inheritdoc />
+    public IEnumerable<IRowsSchema> GetChildren()
+    {
+        yield return _rowsIterator;
     }
 }

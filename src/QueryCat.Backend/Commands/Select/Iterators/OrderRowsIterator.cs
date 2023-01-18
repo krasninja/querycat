@@ -10,7 +10,7 @@ namespace QueryCat.Backend.Commands.Select.Iterators;
 /// <summary>
 /// Order iterator.
 /// </summary>
-internal sealed class OrderRowsIterator : IRowsIterator
+internal sealed class OrderRowsIterator : IRowsIterator, IRowsIteratorParent
 {
     private readonly IRowsIterator _rowsIterator;
     private readonly OrderBy[] _orders;
@@ -99,5 +99,11 @@ internal sealed class OrderRowsIterator : IRowsIterator
     public void Explain(IndentedStringBuilder stringBuilder)
     {
         stringBuilder.AppendRowsIteratorsWithIndent("Order", _rowsIterator);
+    }
+
+    /// <inheritdoc />
+    public IEnumerable<IRowsSchema> GetChildren()
+    {
+        yield return _rowsIterator;
     }
 }

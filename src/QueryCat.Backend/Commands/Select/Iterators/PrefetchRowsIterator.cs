@@ -9,7 +9,7 @@ namespace QueryCat.Backend.Commands.Select.Iterators;
 /// Prefetches the values. It is used to fill rows iterator with values from input.
 /// The main reason to use is to avoid reading (and converting) the values we are not going to process.
 /// </summary>
-internal sealed class PrefetchRowsIterator : IRowsIterator
+internal sealed class PrefetchRowsIterator : IRowsIterator, IRowsIteratorParent
 {
     private readonly RowsInputIterator _rowsInputIterator;
     private readonly IRowsIterator _rowsIterator;
@@ -60,5 +60,11 @@ internal sealed class PrefetchRowsIterator : IRowsIterator
     public void Explain(IndentedStringBuilder stringBuilder)
     {
         stringBuilder.AppendRowsIteratorsWithIndent($"Prefetch {string.Join(", ", _columnIds)}", _rowsIterator);
+    }
+
+    /// <inheritdoc />
+    public IEnumerable<IRowsSchema> GetChildren()
+    {
+        yield return _rowsIterator;
     }
 }

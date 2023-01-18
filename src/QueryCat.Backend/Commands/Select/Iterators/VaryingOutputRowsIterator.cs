@@ -13,7 +13,7 @@ namespace QueryCat.Backend.Commands.Select.Iterators;
 /// and opens new output source if needed. For example, it is needed if there is an expression
 /// in INTO clause (SELECT id, name FROM users INTO write_file(name || '.csv')).
 /// </summary>
-internal sealed class VaryingOutputRowsIterator : IRowsIterator, IDisposable
+internal sealed class VaryingOutputRowsIterator : IRowsIterator, IRowsIteratorParent, IDisposable
 {
     private readonly IRowsIterator _rowsIterator;
     private readonly QueryContext _queryContext;
@@ -136,5 +136,11 @@ internal sealed class VaryingOutputRowsIterator : IRowsIterator, IDisposable
     {
         stringBuilder.AppendRowsIteratorsWithIndent("Vary Output", _rowsIterator)
             .AppendSubQueriesWithIndent(_outputFactory);
+    }
+
+    /// <inheritdoc />
+    public IEnumerable<IRowsSchema> GetChildren()
+    {
+        yield return _rowsIterator;
     }
 }
