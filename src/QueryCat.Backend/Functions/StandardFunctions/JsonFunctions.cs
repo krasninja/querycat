@@ -122,12 +122,32 @@ public static class JsonFunctions
         }
     }
 
+    [Description("Tests whether a JSON path expression returns any SQL/JSON items.")]
+    [FunctionSignature("json_exists(json: string, query: string): boolean")]
+    public static VariantValue JsonExists(FunctionCallInfo args)
+    {
+        // Parse input.
+        var json = args.GetAt(0).AsString;
+        var query = args.GetAt(1).AsString;
+        var jsonPath = GetJsonPathFromString(query);
+        var jsonNode = GetJsonNodeFromString(json);
+
+        // Evaluate.
+        var pathResult = jsonPath.Evaluate(jsonNode);
+        if (pathResult.Error?.Length > 0)
+        {
+            throw new QueryCatException(pathResult.Error[0].ToString());
+        }
+        return new VariantValue(pathResult.Matches != null && pathResult.Matches.Count > 0);
+    }
+
     public static void RegisterFunctions(FunctionsManager functionsManager)
     {
         functionsManager.RegisterFunction(JsonQuery);
         functionsManager.RegisterFunction(JsonValue);
         functionsManager.RegisterFunction(ToJson);
         functionsManager.RegisterFunction(IsJson);
+        functionsManager.RegisterFunction(JsonExists);
     }
 
     private static JsonNode? GetJsonNodeFromString(string json)
