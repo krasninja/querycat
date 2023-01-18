@@ -1,0 +1,23 @@
+expected: |
+  2,1,Megan Berry
+  6,2,Bella Tucker
+  7,2,Ryan Metcalfe
+  8,2,Max Mills
+  9,2,Benjamin Glover
+  16,7,Piers Paige
+  17,7,Ryan Henderson
+  18,8,Frank Tucker
+  19,8,Nathan Ferguson
+  20,8,Kevin Rampling
+query: |
+  -- https://www.postgresqltutorial.com/postgresql-tutorial/postgresql-recursive-query/.
+  WITH RECURSIVE subordinates AS (
+    SELECT employee_id, manager_id, full_name
+    FROM 'Employees1.csv'
+    WHERE employee_id = 2
+    UNION
+    SELECT e.employee_id, e.manager_id, e.full_name
+    FROM 'Employees1.csv' AS e
+    INNER JOIN subordinates AS s ON s.employee_id = e.manager_id
+  )
+  SELECT * FROM subordinates;

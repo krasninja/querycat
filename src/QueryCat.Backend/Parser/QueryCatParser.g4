@@ -135,7 +135,7 @@ selectTablePrimary
     | '-' # SelectTablePrimaryStdin
     | uri=STRING_LITERAL (FORMAT functionCall)? selectAlias? # SelectTablePrimaryWithFormat
     | '(' selectQueryExpression ')' selectAlias? # SelectTablePrimarySubquery
-    | name=IDENTIFIER # SelectTablePrimaryIdentifier
+    | name=IDENTIFIER selectAlias? # SelectTablePrimaryIdentifier
     ;
 selectTableJoined: selectJoinType? JOIN right=selectTablePrimary ON condition=expression;
 selectJoinType: INNER | (LEFT | RIGHT | FULL) OUTER?;

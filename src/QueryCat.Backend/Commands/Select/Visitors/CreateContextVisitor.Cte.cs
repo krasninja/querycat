@@ -86,14 +86,14 @@ internal sealed partial class CreateContextVisitor
         var workingFrame = initialQueryCommandContext.CurrentIterator.ToFrame();
         while (!workingFrame.IsEmpty)
         {
-            proxyRowsIterator.Set(workingFrame.GetIterator());
-
             // Append working iterator to the total result.
-            totalResultProxy.Set(proxyRowsIterator.CurrentIterator);
+            totalResultProxy.Set(workingFrame.GetIterator());
             writeRowsIterator.WriteAll();
 
-            proxyRowsIterator.Reset();
+            // Run the recursive query based on new working rows set.
+            proxyRowsIterator.Set(workingFrame.GetIterator());
             workingFrame = recursiveCommandContext.CurrentIterator.ToFrame();
+            recursiveCommandContext.CurrentIterator.Reset();
         }
 
         proxyRowsIterator.Set(totalResult.GetIterator());
