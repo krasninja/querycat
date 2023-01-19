@@ -61,7 +61,7 @@ selectOrderByClause: ORDER BY selectSortSpecification (COMMA selectSortSpecifica
 selectSortSpecification: expression (ASC | DESC)? ((NULLS FIRST) | (NULLS LAST))?;
 
 // Select query.
-selectAlias: AS (name=(IDENTIFIER | STRING_LITERAL));
+selectAlias: AS? (name=(IDENTIFIER | STRING_LITERAL));
 selectQueryExpression
     : selectWithClause?
       SELECT

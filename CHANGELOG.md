@@ -8,7 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - New "chr" string function.
 - Add JSON functions: "is_json", "json_query", "json_value", "to_json", "json_exists".
-- Initial implementation of recuresive CTE.
+- Initial implementation of recursive CTE.
+- Make AS keyword optional for alias.
 
 ## [0.2.0] - 2023-01-13
 
