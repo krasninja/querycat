@@ -91,7 +91,9 @@ internal sealed partial class SetIteratorVisitor
         var selectAggregateTargetsVisitor = new SelectCreateDelegateVisitor(ExecutionThread, context);
 
         selectAggregateTargetsVisitor.Run(columnsNodes);
-        var aggregateTargets = columnsNodes.GetAllChildren<FunctionCallNode>()
+        var aggregateTargets = columnsNodes.ColumnsNodes
+            .OfType<SelectColumnsSublistExpressionNode>()
+            .SelectMany(n => n.GetAllChildren<FunctionCallNode>())
             .Select(n => n.GetAttribute<AggregateTarget>(AstAttributeKeys.AggregateFunctionKey));
         if (havingNode != null)
         {

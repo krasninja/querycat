@@ -72,6 +72,9 @@ internal sealed partial class SetIteratorVisitor : AstVisitor
         AddSelectRowsSet(context, node.ColumnsListNode);
         FillQueryContextConditions(node, context);
 
+        // WINDOW
+        Window_ApplyWindowFunctions(context, node);
+
         // DISTINCT.
         CreateDistinctRowsSet(context, node);
 

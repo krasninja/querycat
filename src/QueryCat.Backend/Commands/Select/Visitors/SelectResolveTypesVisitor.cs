@@ -42,6 +42,12 @@ internal sealed class SelectResolveTypesVisitor : ResolveTypesVisitor
         node.ExpressionNode.CopyTo<DataType>(AstAttributeKeys.TypeKey, node);
     }
 
+    /// <inheritdoc />
+    public override void Visit(SelectColumnsSublistWindowNode node)
+    {
+        node.AggregateFunctionNode.CopyTo<DataType>(AstAttributeKeys.TypeKey, node);
+    }
+
     private bool VisitIdentifierNode(IAstNode node, string name, string source)
     {
         if (!_context.TryGetInputSourceByName(name, source, out var result)

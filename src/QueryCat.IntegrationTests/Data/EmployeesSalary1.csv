@@ -1,0 +1,11 @@
+empno,depname,location,salary
+11,"develop","fi",5200
+7,"develop","fi",4200
+9,"develop","fi",4500
+8,"develop","fi",6000
+10,"develop","se",5200
+5,"personnel","fi",3500
+2,"personnel","fi",3900
+3,"sales","se",4800
+1,"sales","se",5000
+4,"sales","se",4800

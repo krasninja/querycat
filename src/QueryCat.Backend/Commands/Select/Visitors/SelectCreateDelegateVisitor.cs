@@ -55,6 +55,12 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
     }
 
     /// <inheritdoc />
+    public override void Visit(SelectColumnsSublistWindowNode node)
+    {
+        NodeIdFuncMap[node.Id] = NodeIdFuncMap[node.AggregateFunctionNode.Id];
+    }
+
+    /// <inheritdoc />
     public override void Visit(SelectExistsExpressionNode node)
     {
         var commandContext = node.SubQueryNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
