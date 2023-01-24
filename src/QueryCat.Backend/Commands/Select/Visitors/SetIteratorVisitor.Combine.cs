@@ -24,7 +24,6 @@ internal partial class SetIteratorVisitor
         context.SetIterator(combineRowsIterator);
 
         // Process.
-        ApplyRowIdIterator(context, context.Parent != null);
         ApplyOrderBy(context, node.OrderByNode);
         ApplyOffsetFetch(context, node.OffsetNode, node.FetchNode);
         var resultIterator = context.CurrentIterator;
@@ -36,16 +35,6 @@ internal partial class SetIteratorVisitor
         // Set result. If INTO clause is specified we do not return IRowsIterator outside. Just
         // iterating it we will save rows into target. Otherwise we return it as is.
         node.SetAttribute(AstAttributeKeys.ResultKey, resultIterator);
-    }
-
-    private void ApplyRowIdIterator(SelectCommandContext bodyContext, bool isSubQuery)
-    {
-        var resultIterator = bodyContext.CurrentIterator;
-        if (ExecutionThread.Options.AddRowNumberColumn && !isSubQuery)
-        {
-            resultIterator = new RowIdRowsIterator(resultIterator);
-        }
-        bodyContext.SetIterator(resultIterator);
     }
 
     private static CombineType ConvertCombineType(SelectQueryCombineType combineType) => combineType switch

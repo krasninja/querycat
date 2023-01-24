@@ -1,8 +1,10 @@
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Select;
+using QueryCat.Backend.Commands.Select.Iterators;
 using QueryCat.Backend.Commands.Select.Visitors;
 using QueryCat.Backend.Execution;
+using QueryCat.Backend.Relational;
 
 namespace QueryCat.Backend.Commands.Select;
 
@@ -24,8 +26,24 @@ internal sealed class SelectCommand : ICommand
 
         // Iterate by select node in pre-order way and create correspond command context.
         new CreateContextVisitor(executionThread).Run(selectQueryNode);
-
         var context = selectQueryNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
+
+        // Apply row_number column.
+        ApplyRowIdIterator(executionThread, context);
+
         return new SelectCommandHandler(context);
+    }
+
+    private void ApplyRowIdIterator(ExecutionThread executionThread, SelectCommandContext bodyContext)
+    {
+        var isSubQuery = bodyContext.Parent != null;
+        var resultIterator = bodyContext.CurrentIterator;
+        if (executionThread.Options.AddRowNumberColumn
+            && !isSubQuery
+            && resultIterator.GetColumnIndexByName(RowIdRowsIterator.ColumName) == -1)
+        {
+            resultIterator = new RowIdRowsIterator(resultIterator);
+        }
+        bodyContext.SetIterator(resultIterator);
     }
 }

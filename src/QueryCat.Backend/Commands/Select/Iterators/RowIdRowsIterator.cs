@@ -10,6 +10,8 @@ namespace QueryCat.Backend.Commands.Select.Iterators;
 /// </summary>
 internal sealed class RowIdRowsIterator : IRowsIterator, IRowsIteratorParent
 {
+    public const string ColumName = "row_number";
+
     private readonly IRowsIterator _rowsIterator;
     private readonly Row _row;
     private long _rowId;
@@ -22,7 +24,7 @@ internal sealed class RowIdRowsIterator : IRowsIterator, IRowsIteratorParent
         _rowsIterator = rowsIterator;
         Columns = new[]
         {
-            new Column("row_number", DataType.Integer, "Row number")
+            new Column(ColumName, DataType.Integer, "Row number.")
         }.Union(rowsIterator.Columns).ToArray();
         _row = new Row(this);
     }
@@ -37,13 +39,21 @@ internal sealed class RowIdRowsIterator : IRowsIterator, IRowsIteratorParent
             {
                 _row[i + 1] = current[i];
             }
-            _row[0] = new VariantValue(_rowId++);
+            _row[0] = new VariantValue(_rowId);
             return _row;
         }
     }
 
     /// <inheritdoc />
-    public bool MoveNext() => _rowsIterator.MoveNext();
+    public bool MoveNext()
+    {
+        var hasData = _rowsIterator.MoveNext();
+        if (hasData)
+        {
+            _rowId++;
+        }
+        return hasData;
+    }
 
     /// <inheritdoc />
     public void Reset()
