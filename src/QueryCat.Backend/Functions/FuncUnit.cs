@@ -17,7 +17,7 @@ internal abstract class FuncUnit : IFuncUnit
     /// <inheritdoc />
     public void SetData(int index, object obj)
     {
-        _objects ??= new SortedDictionary<int, object>();
+        _objects ??= new SortedList<int, object>();
         _objects[index] = obj;
     }
 

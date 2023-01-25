@@ -1,6 +1,3 @@
-using System.Collections;
-using System.Collections.Specialized;
-
 namespace QueryCat.Backend.Ast;
 
 /// <summary>
@@ -16,7 +13,7 @@ public abstract class AstNode : IAstNode
     /// </summary>
     public int Id { get; private set; } = nextId++;
 
-    private readonly ListDictionary _attributes = new();
+    private readonly SortedList<string, object?> _attributes = new();
 
     /// <inheritdoc />
     public abstract object Clone();
@@ -28,7 +25,7 @@ public abstract class AstNode : IAstNode
     protected void CopyTo(AstNode toNode)
     {
         toNode.Id = Id;
-        foreach (DictionaryEntry dictionaryEntry in _attributes)
+        foreach (var dictionaryEntry in _attributes)
         {
             toNode._attributes.Add(dictionaryEntry.Key, dictionaryEntry.Value);
         }
@@ -44,16 +41,15 @@ public abstract class AstNode : IAstNode
     /// <inheritdoc />
     public T? GetAttribute<T>(string key)
     {
-        var obj = _attributes[key];
-        if (obj == null)
+        if (_attributes.TryGetValue(key, out var obj))
         {
-            return default;
+            if (obj is not T obj1)
+            {
+                throw new InvalidOperationException($"Attribute is not of type {typeof(T).Name}.");
+            }
+            return obj1;
         }
-        if (obj is not T obj1)
-        {
-            throw new InvalidOperationException($"Attribute is not of type {typeof(T).Name}.");
-        }
-        return obj1;
+        return default;
     }
 
     /// <inheritdoc />
@@ -62,13 +58,10 @@ public abstract class AstNode : IAstNode
     internal IDictionary<string, object?> GetAttributes()
     {
         var dict = new Dictionary<string, object?>();
-        foreach (DictionaryEntry dictionaryEntry in _attributes)
+        foreach (var dictionaryEntry in _attributes)
         {
-            var key = dictionaryEntry.Key.ToString();
-            if (key != null)
-            {
-                dict[key] = dictionaryEntry.Value;
-            }
+            var key = dictionaryEntry.Key;
+            dict[key] = dictionaryEntry.Value;
         }
         return dict;
     }
