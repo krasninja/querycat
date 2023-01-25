@@ -22,7 +22,7 @@ public class ExecutionThread : IExecutionThread
     internal const string BootstrapFileName = "rc.sql";
 
     private readonly StatementsVisitor _statementsVisitor;
-    private bool _isRunning;
+    private readonly object _objLock = new();
 
     internal PersistentInputConfigStorage InputConfigStorage { get; }
 
@@ -130,7 +130,22 @@ public class ExecutionThread : IExecutionThread
 
         // Set first executing statement and run.
         ExecutingStatement = programNode.Statements.FirstOrDefault();
-        return RunInternal();
+
+        // Run with lock and timer.
+        lock (_objLock)
+        {
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
+            try
+            {
+                return RunInternal();
+            }
+            finally
+            {
+                stopwatch.Stop();
+                Statistic.ExecutionTime = stopwatch.Elapsed;
+            }
+        }
     }
 
     /// <summary>
@@ -138,14 +153,6 @@ public class ExecutionThread : IExecutionThread
     /// </summary>
     private VariantValue RunInternal()
     {
-        if (_isRunning)
-        {
-            throw new InvalidOperationException("The execution thread is already running.");
-        }
-        _isRunning = true;
-
-        var stopwatch = new Stopwatch();
-        stopwatch.Start();
         if (Options.UseConfig)
         {
             InputConfigStorage.LoadAsync().GetAwaiter().GetResult();
@@ -192,9 +199,7 @@ public class ExecutionThread : IExecutionThread
             InputConfigStorage.SaveAsync().GetAwaiter().GetResult();
         }
         ExecutingStatement = null;
-        stopwatch.Stop();
-        Statistic.ExecutionTime = stopwatch.Elapsed;
-        _isRunning = false;
+
         return LastResult;
     }
 
