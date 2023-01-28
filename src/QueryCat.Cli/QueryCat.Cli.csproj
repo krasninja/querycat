@@ -32,6 +32,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\QueryCat.Backend\QueryCat.Backend.csproj" />
+    <EmbeddedResource Include="Infrastructure\WebServerIndex.html" />
   </ItemGroup>
 
 </Project>

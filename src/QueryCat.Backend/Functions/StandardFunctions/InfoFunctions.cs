@@ -71,7 +71,7 @@ public static class InfoFunctions
             .AddProperty("is_installed", p => p.IsInstalled)
             .AddProperty("uri", p => p.Uri);
         using var pluginsManager = new PluginsManager(args.ExecutionThread.PluginsManager.PluginDirectories);
-        var plugins = pluginsManager.ListAsync(CancellationToken.None).GetAwaiter().GetResult();
+        var plugins = pluginsManager.ListAsync().GetAwaiter().GetResult();
         return VariantValue.CreateFromObject(builder.BuildIterator(plugins));
     }
 #endif

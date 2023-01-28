@@ -10,6 +10,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Add JSON functions: "is_json", "json_query", "json_value", "to_json", "json_exists".
 - Initial implementation of recursive CTE.
 - Make AS keyword optional for alias.
+- HTTP server now has simple web UI.
+- HTTP server supports CORS origin.
 
 ## [0.2.0] - 2023-01-13
 

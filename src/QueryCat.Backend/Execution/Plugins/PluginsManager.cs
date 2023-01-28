@@ -75,11 +75,16 @@ public sealed class PluginsManager : IDisposable
     /// <summary>
     /// List all local and remote plugins.
     /// </summary>
+    /// <param name="localOnly">List local plugins only.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of plugins info.</returns>
-    public async Task<IEnumerable<PluginInfo>> ListAsync(CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<PluginInfo>> ListAsync(
+        bool localOnly = false,
+        CancellationToken cancellationToken = default)
     {
-        var remote = await GetRemotePluginsAsync(cancellationToken);
+        var remote = !localOnly
+            ? await GetRemotePluginsAsync(cancellationToken)
+            : Array.Empty<PluginInfo>();
         var local = GetLocalPlugins();
 
         return remote.Union(local);
