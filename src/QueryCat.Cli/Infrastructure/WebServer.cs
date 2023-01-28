@@ -19,6 +19,8 @@ namespace QueryCat.Cli.Infrastructure;
 /// </summary>
 internal sealed class WebServer
 {
+    private const string DefaultEndpoint = "http://localhost:6789/";
+
     private const string PostMethod = "POST";
     private const string GetMethod = "GET";
     private const string OptionsMethod = "OPTIONS";
@@ -41,27 +43,38 @@ internal sealed class WebServer
     };
 
     private readonly ExecutionThread _executionThread;
+    private readonly string? _password;
 
-    public WebServer(ExecutionThread executionThread, string? urls = null)
+    public WebServer(
+        ExecutionThread executionThread,
+        string? urls = null,
+        string? password = null)
     {
         _executionThread = executionThread;
-        Urls = urls ?? "http://localhost:6789/";
+        _password = password;
+        Urls = urls ?? DefaultEndpoint;
     }
 
-    public int Run()
+    public void Run()
     {
-        var listener = new HttpListener();
+        using var listener = new HttpListener();
         listener.Prefixes.Add(Urls);
+        if (!string.IsNullOrEmpty(_password))
+        {
+            listener.AuthenticationSchemes = AuthenticationSchemes.Basic;
+        }
         listener.Start();
-        Console.Out.WriteLine($"Listening on {Urls}. Use /api/query endpoint.");
+        Console.Out.WriteLine($"Listening on {Urls}. Use `POST /api/query` endpoint.");
 
         while (true)
         {
+            // Common.
             var context = listener.GetContext();
             using HttpListenerResponse response = context.Response;
             response.Headers["User-Agent"] = $"{QueryCatApplication.GetProductFullName()}";
             response.StatusCode = (int)HttpStatusCode.OK;
 
+            // CORS.
             if (!string.IsNullOrEmpty(AllowOrigin))
             {
                 context.Response.Headers.Add("Access-Control-Allow-Origin", "*");
@@ -75,6 +88,18 @@ internal sealed class WebServer
                 }
             }
 
+            // Auth.
+            if (context.User?.Identity != null)
+            {
+                var identity = (HttpListenerBasicIdentity)context.User.Identity;
+                if (identity.Password != _password)
+                {
+                    response.StatusCode = (int)HttpStatusCode.Unauthorized;
+                    continue;
+                }
+            }
+
+            // Find action by path.
             var path = context.Request.Url?.LocalPath ?? string.Empty;
             if (Actions.TryGetValue(path, out var action))
             {

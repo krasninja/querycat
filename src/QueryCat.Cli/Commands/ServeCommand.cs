@@ -13,10 +13,12 @@ internal class ServeCommand : BaseCommand
     {
         var urlsOption = new Option<string>("--url", description: "Endpoint to serve on.");
         var allowOriginOption = new Option<string>("--allow-origin", description: "Enables CORS for the specified origin.");
+        var passwordOption = new Option<string>("--password", description: "Basic authentication password.");
 
-        this.AddOption(urlsOption);
-        this.AddOption(allowOriginOption);
-        this.SetHandler((queryOptions, urls, allowOrigin) =>
+        AddOption(urlsOption);
+        AddOption(allowOriginOption);
+        AddOption(passwordOption);
+        this.SetHandler((queryOptions, urls, allowOrigin, password) =>
         {
             var executionThread = queryOptions.CreateExecutionThread(new ExecutionOptions
             {
@@ -24,12 +26,16 @@ internal class ServeCommand : BaseCommand
                 AddRowNumberColumn = true,
                 DefaultRowsOutput = NullRowsOutput.Instance,
             });
-            var webServer = new WebServer(executionThread, urls);
+            var webServer = new WebServer(executionThread, urls, password);
             if (!string.IsNullOrEmpty(allowOrigin))
             {
                 webServer.AllowOrigin = allowOrigin;
             }
             webServer.Run();
-        }, new ApplicationOptionsBinder(LogLevelOption, PluginDirectoriesOption), urlsOption, allowOriginOption);
+        },
+            new ApplicationOptionsBinder(LogLevelOption, PluginDirectoriesOption),
+            urlsOption,
+            allowOriginOption,
+            passwordOption);
     }
 }

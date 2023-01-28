@@ -11,7 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Initial implementation of recursive CTE.
 - Make AS keyword optional for alias.
 - HTTP server now has simple web UI.
-- HTTP server supports CORS origin.
+- HTTP server supports CORS origin and basic authentication.
 
 ## [0.2.0] - 2023-01-13
 

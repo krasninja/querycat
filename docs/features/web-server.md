@@ -2,6 +2,13 @@
 
 The QueryCat has internal simple web server. You can also specify what network interface and port to use. Use the command below to run it.
 
+Features:
+
+- Simple web UI.
+- Basic authentication.
+- CORS.
+- JSON/HTML/Text output.
+
 ```
 $ qcat serve
 ```
