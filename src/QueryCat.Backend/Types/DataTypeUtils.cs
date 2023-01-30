@@ -313,12 +313,13 @@ public static class DataTypeUtils
         {
             DataType.Null => "null",
             DataType.Void => "void",
-            DataType.Integer => "i:" + value.AsIntegerUnsafe,
+            DataType.Integer => "i:" + value.AsIntegerUnsafe.ToString(CultureInfo.InvariantCulture),
             DataType.String => "s:" + StringUtils.Quote(value.AsStringUnsafe).ToString(),
-            DataType.Boolean => "bl:" + value.AsBooleanUnsafe,
-            DataType.Float => "fl:" + value.AsFloatUnsafe,
+            DataType.Boolean => "bl:" + value.AsBooleanUnsafe.ToString(CultureInfo.InvariantCulture),
+            DataType.Float => "fl:" + value.AsFloatUnsafe.ToString("G17", CultureInfo.InvariantCulture),
+            DataType.Numeric => "n:" + value.AsNumericUnsafe.ToString(CultureInfo.InvariantCulture),
             DataType.Timestamp => $"ts:{value.AsTimestampUnsafe.Ticks}:{(int)value.AsTimestampUnsafe.Kind}",
-            DataType.Interval => "in:" + value.AsInterval.Ticks,
+            DataType.Interval => "in:" + value.AsInterval.Ticks.ToString(CultureInfo.InvariantCulture),
             _ => string.Empty
         };
 
@@ -339,7 +340,7 @@ public static class DataTypeUtils
         var value = source[(colonIndex + 1)..];
         if (type == "i")
         {
-            return new VariantValue(int.Parse(value));
+            return new VariantValue(int.Parse(value, CultureInfo.InvariantCulture));
         }
         if (type == "s")
         {
@@ -351,17 +352,21 @@ public static class DataTypeUtils
         }
         if (type == "fl")
         {
-            return new VariantValue(float.Parse(value));
+            return new VariantValue(float.Parse(value, CultureInfo.InvariantCulture));
+        }
+        if (type == "n")
+        {
+            return new VariantValue(decimal.Parse(value, CultureInfo.InvariantCulture));
         }
         if (type == "ts")
         {
-            var ticks = long.Parse(value[..^2]);
-            var kind = (DateTimeKind)int.Parse(value[^1..]);
+            var ticks = long.Parse(value[..^2], CultureInfo.InvariantCulture);
+            var kind = (DateTimeKind)int.Parse(value[^1..], CultureInfo.InvariantCulture);
             return new VariantValue(new DateTime(ticks, kind));
         }
         if (type == "in")
         {
-            var ticks = long.Parse(value);
+            var ticks = long.Parse(value, CultureInfo.InvariantCulture);
             return new VariantValue(new TimeSpan(ticks));
         }
 
