@@ -198,7 +198,11 @@ standardFunction
 
 dateTimeField
     : YEAR
+    | DOY
+    | DAYOFYEAR
     | MONTH
+    | DOW
+    | WEEKDAY
     | DAY
     | HOUR
     | MINUTE

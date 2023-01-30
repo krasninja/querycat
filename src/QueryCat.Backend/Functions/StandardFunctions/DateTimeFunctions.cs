@@ -47,7 +47,11 @@ public static class DateTimeFunctions
             DataType.Timestamp => field switch
             {
                 "YEAR" => source.AsTimestamp.Year,
+                "DOY" => source.AsTimestamp.DayOfYear,
+                "DAYOFYEAR" => source.AsTimestamp.DayOfYear,
                 "MONTH" => source.AsTimestamp.Month,
+                "DOW" => (int)source.AsTimestamp.DayOfWeek,
+                "WEEKDAY" => (int)source.AsTimestamp.DayOfWeek,
                 "DAY" => source.AsTimestamp.Day,
                 "HOUR" => source.AsTimestamp.Hour,
                 "MINUTE" => source.AsTimestamp.Minute,
