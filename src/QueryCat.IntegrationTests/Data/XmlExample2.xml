@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<Messages>
+
+    <Message Date='2004-05-28T12:24:05'>
+        <From>Gabriele</From>
+        <To>Jeff</To>
+        <To>Steve</To>
+        <Body Language='ENU'>Review ready?</Body>
+        <Body Language='ITA'>E' pronta la review?</Body>
+    </Message>
+
+</Messages>

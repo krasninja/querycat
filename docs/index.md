@@ -21,12 +21,14 @@ Just imagine that everything in the world is a table, and you can process it usi
     - 6.2) [JSON](input/json)
     - 6.3) [STDIN](input/stdin)
     - 6.4) [Text](input/text-line)
-    - 6.5) [TSV](output/tsv)
+    - 6.5) [TSV](input/tsv)
+    - 6.6) [XML](input/xml)
 - 7) Output
     - 7.1) [CSV](output/csv)
     - 7.2) [JSON](output/json)
     - 7.3) [Text Table](output/text-table)
     - 7.4) [TSV](output/tsv)
+    - 7.5) [XML](output/xml)
 - 8) Functions
     - 8.1) [Aggregate](functions/aggregate)
     - 8.2) [Crypto](functions/crypto)

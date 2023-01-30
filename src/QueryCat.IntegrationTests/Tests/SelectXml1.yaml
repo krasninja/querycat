@@ -1,0 +1,10 @@
+expected: |
+  North America,USA,Redmond,
+  North America,USA,San Francisco,
+  North America,Canada,Vancouver,
+  North America,Canada,Toronto,
+  Europe,Italia,Roma,3350000
+  Europe,Italia,Milano,
+query: |
+  select ContinentName, CountryName,trim(City),Population
+  from 'XmlExample1.xml';

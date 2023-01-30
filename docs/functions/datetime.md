@@ -20,7 +20,7 @@ The following date and time parts are supported:
 - `h`, `hour`, `hours`;
 - `d`, `day`, `days`;
 
-Since `interval` is based on [TimeSpan](https://learn.microsoft.com/en-us/dotnet/api/system.timespan?view=net-6.0) .NET type, it represents time interval only. It cannot be used to present month, quarter, year.
+Since `interval` is based on [TimeSpan](https://learn.microsoft.com/en-us/dotnet/api/system.timespan) .NET type, it represents time interval only. It cannot be used to present month, quarter, year.
 
 ## Convert To String
 
@@ -42,12 +42,14 @@ The formatting is based on .NET framework conventions. You can read more about i
 - [Custom date and time format strings](https://learn.microsoft.com/en-us/dotnet/standard/base-types/custom-date-and-time-format-strings).
 - [Standard date and time format strings](https://learn.microsoft.com/en-us/dotnet/standard/base-types/standard-date-and-time-format-strings).
 
-## Date Part
+## Date Part (Extract)
 
-To get the date part use `EXTRACT` function. The syntax is `EXTRACT(part FROM timestamp)`. The valid parts are:
+To get the timestamp part use `EXTRACT` function. The syntax is `EXTRACT(part FROM timestamp)`. The valid parts are:
 
 - `YEAR`;
+- `DAYOFYEAR` (`DOY`);
 - `MONTH`;
+- `WEEKDAY` (`DOW`);
 - `DAY`;
 - `HOUR`;
 - `MINUTE`;
@@ -57,6 +59,16 @@ To get the date part use `EXTRACT` function. The syntax is `EXTRACT(part FROM ti
 - `MINUTE`;
 - `SECOND`;
 - `MILLISECOND`;
+
+Day of week (`dow`) indexes are:
+
+- `0`. Sunday,
+- `1`. Monday.
+- `2`. Tuesday.
+- `3`. Wednesday.
+- `4`. Thursday.
+- `5`. Friday.
+- `6`. Saturday.
 
 Example:
 

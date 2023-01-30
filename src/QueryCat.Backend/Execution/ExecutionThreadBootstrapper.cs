@@ -30,6 +30,7 @@ public class ExecutionThreadBootstrapper
         executionThread.FunctionsManager.RegisterFactory(JsonFunctions.RegisterFunctions);
         executionThread.FunctionsManager.RegisterFactory(AggregatesRegistration.RegisterFunctions);
         executionThread.FunctionsManager.RegisterFactory(Providers.Registration.RegisterFunctions);
+        executionThread.FunctionsManager.RegisterFactory(XmlFormatter.RegisterFunctions);
 #if ENABLE_PLUGINS
         executionThread.LoadPlugins();
 #endif

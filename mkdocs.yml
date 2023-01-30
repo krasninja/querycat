@@ -18,11 +18,13 @@ nav:
     - 'STDIN': input/stdin.md
     - 'Text': input/text-line.md
     - 'TSV': input/tsv.md
+    - 'XML': input/xml.md
   - 'Output':
     - 'CSV': output/csv.md
     - 'JSON': output/json.md
     - 'Text Table': output/text-table.md
     - 'TSV': output/tsv.md
+    - 'XML': output/xml.md
   - 'Functions':
     - 'Aggregate': functions/aggregate.md
     - 'Crypto': functions/crypto.md

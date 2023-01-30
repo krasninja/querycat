@@ -8,3 +8,4 @@
 | `json(): object<IRowsFormatter>` | JSON formatter. |
 | `text_line(): object<IRowsFormatter>` | Text line formatter. |
 | `tsv(has_header?: boolean): object<IRowsFormatter>` | Tab separated values (TSV) format. |
+| `xml(): object<IRowsFormatter>` | XML formatter. |

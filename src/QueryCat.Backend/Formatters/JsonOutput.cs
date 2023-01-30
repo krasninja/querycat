@@ -18,7 +18,7 @@ internal sealed class JsonOutput : RowsOutput, IDisposable
     /// <inheritdoc />
     public override void Open()
     {
-        Log.Logger.Verbose("JSON ppened.");
+        Log.Logger.Verbose("JSON opened.");
     }
 
     /// <inheritdoc />
