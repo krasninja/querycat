@@ -68,7 +68,7 @@ public partial struct VariantValue
 
     internal static BinaryFunction GetSubtractDelegate(DataType leftType, DataType rightType)
     {
-        var negativeFunction = GetNegationDelegate(leftType);
+        var negativeFunction = GetNegationDelegate(rightType);
         var addFunction = GetAddDelegate(leftType, rightType);
         if (negativeFunction == UnaryNullDelegate || addFunction == BinaryNullDelegate)
         {
