@@ -129,7 +129,7 @@ public abstract class QueryContext
         {
             var condition = QueryInfo.Conditions.FirstOrDefault(c =>
                 Column.NameEquals(c.Column, keyColumn.ColumnName)
-                && c.Operation == keyColumn.Operations[0]);
+                    && keyColumn.Operations.Contains(c.Operation));
             if (condition == null && keyColumn.IsRequired)
             {
                 var operations = string.Join(", ", keyColumn.Operations);
