@@ -2,11 +2,12 @@ using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes.Function;
 using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Commands.Select.Iterators;
+using QueryCat.Backend.Commands.Select.Visitors;
 using QueryCat.Backend.Functions;
 
-namespace QueryCat.Backend.Commands.Select.Visitors;
+namespace QueryCat.Backend.Commands.Select;
 
-internal sealed partial class SetIteratorVisitor
+internal sealed partial class SelectPlanner
 {
     /*
      * For aggregate queries we break pipeline execution and have to prepare new rows frame.
@@ -23,15 +24,12 @@ internal sealed partial class SetIteratorVisitor
      * aggregateColumnsOffset = 4
      */
 
-    private void ApplyAggregate(
+    private void PipelineAggregate_ApplyGrouping(
         SelectCommandContext context,
         SelectQuerySpecificationNode selectQueryNode)
     {
         var groupByNode = selectQueryNode.TableExpressionNode?.GroupByNode;
-        ResolveNodesTypes(
-            new IAstNode?[] { groupByNode, selectQueryNode.TableExpressionNode, selectQueryNode.ColumnsListNode },
-            context);
-        var targets = CreateAggregateTargets(context, selectQueryNode.TableExpressionNode, selectQueryNode.ColumnsListNode);
+        var targets = PipelineAggregate_CreateTargets(context, selectQueryNode.TableExpressionNode, selectQueryNode.ColumnsListNode);
 
         // If there is no group by and no aggregate functions used - skip aggregates
         // processing.
@@ -40,16 +38,16 @@ internal sealed partial class SetIteratorVisitor
             return;
         }
 
-        var keysFactory = CreateGroupKeyValuesFactory(groupByNode, context);
+        var keysFactory = PipelineAggregate_CreateGroupKeyValuesFactory(groupByNode, context);
         var aggregateColumnsOffset = context.CurrentIterator.Columns.Length;
 
         context.SetIterator(
             new GroupRowsIterator(context.CurrentIterator, keysFactory, context, targets));
 
-        ReplaceAggregateFunctionsByColumnReference(selectQueryNode, targets, aggregateColumnsOffset);
+        PipelineAggregate_ReplaceAggregateFunctionsByColumnReference(selectQueryNode, targets, aggregateColumnsOffset);
     }
 
-    private static void ReplaceAggregateFunctionsByColumnReference(
+    private static void PipelineAggregate_ReplaceAggregateFunctionsByColumnReference(
         SelectQuerySpecificationNode selectQueryNode,
         AggregateTarget[] targets,
         int aggregateColumnsOffset)
@@ -82,7 +80,7 @@ internal sealed partial class SetIteratorVisitor
         aggregateReplaceDelegateVisitor.Run(selectQueryNode.ColumnsListNode);
     }
 
-    private AggregateTarget[] CreateAggregateTargets(
+    private AggregateTarget[] PipelineAggregate_CreateTargets(
         SelectCommandContext context,
         SelectTableExpressionNode? tableExpressionNode,
         SelectColumnsListNode columnsNodes)
@@ -105,7 +103,7 @@ internal sealed partial class SetIteratorVisitor
         return aggregateTargets.OfType<AggregateTarget>().ToArray();
     }
 
-    private void ApplyHaving(
+    private void PipelineAggregate_ApplyHaving(
         SelectCommandContext context,
         SelectHavingNode? havingNode)
     {
@@ -118,7 +116,7 @@ internal sealed partial class SetIteratorVisitor
         context.SetIterator(new FilterRowsIterator(context.CurrentIterator, predicate));
     }
 
-    private IFuncUnit[] CreateGroupKeyValuesFactory(SelectGroupByNode? groupByNode,
+    private IFuncUnit[] PipelineAggregate_CreateGroupKeyValuesFactory(SelectGroupByNode? groupByNode,
         SelectCommandContext context)
     {
         // If there is no GROUP BY statement but there are aggregates functions in SELECT -

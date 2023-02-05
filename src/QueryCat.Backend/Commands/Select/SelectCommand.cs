@@ -18,14 +18,11 @@ internal sealed class SelectCommand : ICommand
     {
         var selectQueryNode = (SelectQueryNode)node.RootNode;
 
-        // Create initial empty context for every query.
-        new PrepareContextVisitor().Run(selectQueryNode);
-
         // Do some AST transformations.
         new TransformQueryAstVisitor().Run(selectQueryNode);
 
         // Iterate by select node in pre-order way and create correspond command context.
-        new CreateContextVisitor(executionThread).Run(selectQueryNode);
+        new SelectPlanner(executionThread).CreateIterator(selectQueryNode);
         var context = selectQueryNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
 
         // Apply row_number column.

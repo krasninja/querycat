@@ -6,13 +6,13 @@ using QueryCat.Backend.Commands.Select.Iterators;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Relational.Iterators;
 
-namespace QueryCat.Backend.Commands.Select.Visitors;
+namespace QueryCat.Backend.Commands.Select;
 
-internal sealed partial class CreateContextVisitor
+internal sealed partial class SelectPlanner
 {
-    private void Cte_PrepareInputList(SelectCommandContext context, SelectQuerySpecificationNode node)
+    private void ContextCte_PrepareInputList(SelectCommandContext context, SelectQuerySpecificationNode node)
     {
-        context.CteList.AddRange(Cte_GetParentList(context));
+        context.CteList.AddRange(ContextCte_GetParentList(context));
         if (node.WithNode == null)
         {
             return;
@@ -23,30 +23,27 @@ internal sealed partial class CreateContextVisitor
             var processedAsRecursive = false;
             if (node.WithNode.IsRecursive)
             {
-                processedAsRecursive = Cte_PrepareInputRecursiveList(context, withNode);
+                processedAsRecursive = ContextCte_PrepareInputRecursiveList(context, withNode);
             }
 
             if (!processedAsRecursive)
             {
-                Cte_PrepareInputNonRecursiveList(context, withNode);
-                Cte_FixColumnsNames(withNode.ColumnNodes, context.CurrentIterator);
+                ContextCte_PrepareInputNonRecursiveList(context, withNode);
+                ContextCte_FixColumnsNames(withNode.ColumnNodes, context.CurrentIterator);
             }
         }
     }
 
-    private void Cte_PrepareInputNonRecursiveList(SelectCommandContext context, SelectWithNode withNode)
+    private void ContextCte_PrepareInputNonRecursiveList(SelectCommandContext context, SelectWithNode withNode)
     {
-        var cteCreateContextVisitor = new CreateContextVisitor(_executionThread);
-        cteCreateContextVisitor.Run(withNode.QueryNode);
-        var withNodeContext = withNode.QueryNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
+        var rowsIterator = CreateIterator(withNode.QueryNode, context);
         var cte = new CommonTableExpression(
             withNode.Name,
-            withNodeContext.CurrentIterator);
+            rowsIterator);
         context.CteList.Add(cte);
-        CreateFinalIterator(withNode.QueryNode);
     }
 
-    private bool Cte_PrepareInputRecursiveList(SelectCommandContext context, SelectWithNode withNode)
+    private bool ContextCte_PrepareInputRecursiveList(SelectCommandContext context, SelectWithNode withNode)
     {
         if (withNode.QueryNode is not SelectQueryCombineNode combineNode)
         {
@@ -58,13 +55,12 @@ internal sealed partial class CreateContextVisitor
         }
 
         // Prepare and evaluate initial query.
-        var cteCreateContextVisitor = new CreateContextVisitor(_executionThread);
-        cteCreateContextVisitor.Run(combineNode.LeftQueryNode);
+        var leftIterator = CreateIterator(combineNode.LeftQueryNode, context);
         var initialQueryCommandContext = combineNode.LeftQueryNode
             .GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
-        Cte_FixColumnsNames(
+        ContextCte_FixColumnsNames(
             withNode.ColumnNodes,
-            initialQueryCommandContext.CurrentIterator);
+            leftIterator);
 
         // Add it into CTE list. Instead of exposing RowsIterator we wrap it into proxy.
         // By switching that proxy to new rows set we evaluate recursive iterator with the new result.
@@ -72,9 +68,7 @@ internal sealed partial class CreateContextVisitor
         context.CteList.Add(new CommonTableExpression(withNode.Name, proxyRowsIterator));
 
         // Then prepare iterator for recursive part.
-        cteCreateContextVisitor.Run(combineNode.RightQueryNode);
-        var recursiveCommandContext = combineNode.RightQueryNode
-            .GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
+        var rightIterator = CreateIterator(combineNode.RightQueryNode, context);
 
         // Final result.
         var totalResult = new RowsFrame(initialQueryCommandContext.CurrentIterator.Columns);
@@ -92,15 +86,15 @@ internal sealed partial class CreateContextVisitor
 
             // Run the recursive query based on new working rows set.
             proxyRowsIterator.Set(workingFrame.GetIterator());
-            workingFrame = recursiveCommandContext.CurrentIterator.ToFrame();
-            recursiveCommandContext.CurrentIterator.Reset();
+            workingFrame = rightIterator.ToFrame();
+            rightIterator.Reset();
         }
 
         proxyRowsIterator.Set(totalResult.GetIterator());
         return true;
     }
 
-    private static IEnumerable<CommonTableExpression> Cte_GetParentList(SelectCommandContext context)
+    private static IEnumerable<CommonTableExpression> ContextCte_GetParentList(SelectCommandContext context)
     {
         var parentContext = context.Parent;
         while (parentContext != null)
@@ -113,7 +107,7 @@ internal sealed partial class CreateContextVisitor
         }
     }
 
-    private static void Cte_FixColumnsNames(
+    private static void ContextCte_FixColumnsNames(
         IList<SelectColumnsSublistNode> targetColumns,
         IRowsIterator iterator)
     {

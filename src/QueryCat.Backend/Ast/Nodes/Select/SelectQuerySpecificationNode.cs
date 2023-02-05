@@ -5,6 +5,9 @@ namespace QueryCat.Backend.Ast.Nodes.Select;
 
 public sealed class SelectQuerySpecificationNode : SelectQueryNode
 {
+    public static SelectQuerySpecificationNode Empty { get; } = new(
+        new SelectColumnsListNode());
+
     /// <summary>
     /// Distinct node.
     /// </summary>

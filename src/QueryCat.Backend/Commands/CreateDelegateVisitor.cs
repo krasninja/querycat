@@ -15,14 +15,22 @@ namespace QueryCat.Backend.Commands;
 internal class CreateDelegateVisitor : AstVisitor
 {
     private readonly ExecutionThread _thread;
+    private readonly ResolveTypesVisitor _resolveTypesVisitor;
 
     protected Dictionary<int, IFuncUnit> NodeIdFuncMap { get; } = new(capacity: 32);
 
     protected ExecutionThread ExecutionThread => _thread;
 
-    public CreateDelegateVisitor(ExecutionThread thread)
+    protected ResolveTypesVisitor ResolveTypesVisitor => _resolveTypesVisitor;
+
+    public CreateDelegateVisitor(ExecutionThread thread) : this(thread, new ResolveTypesVisitor(thread))
+    {
+    }
+
+    public CreateDelegateVisitor(ExecutionThread thread, ResolveTypesVisitor resolveTypesVisitor)
     {
         _thread = thread;
+        _resolveTypesVisitor = resolveTypesVisitor;
     }
 
     /// <inheritdoc />
@@ -43,6 +51,8 @@ internal class CreateDelegateVisitor : AstVisitor
     /// <inheritdoc />
     public override void Visit(BetweenExpressionNode node)
     {
+        ResolveTypesVisitor.Visit(node);
+
         var valueAction = NodeIdFuncMap[node.Expression.Id];
         var leftAction = NodeIdFuncMap[node.Left.Id];
         var rightAction = NodeIdFuncMap[node.Right.Id];
@@ -63,6 +73,8 @@ internal class CreateDelegateVisitor : AstVisitor
     /// <inheritdoc />
     public override void Visit(BinaryOperationExpressionNode node)
     {
+        ResolveTypesVisitor.Visit(node);
+
         var leftAction = NodeIdFuncMap[node.LeftNode.Id];
         var rightAction = NodeIdFuncMap[node.RightNode.Id];
         var action = VariantValue.GetOperationDelegate(node.Operation,
@@ -81,6 +93,8 @@ internal class CreateDelegateVisitor : AstVisitor
     /// <inheritdoc />
     public override void Visit(CaseExpressionNode node)
     {
+        ResolveTypesVisitor.Visit(node);
+
         var whenConditions = node.WhenNodes.Select(n => NodeIdFuncMap[n.ConditionNode.Id]).ToArray();
         var whenResults = node.WhenNodes.Select(n => NodeIdFuncMap[n.ResultNode.Id]).ToArray();
         var whenDefault = node.DefaultNode != null
@@ -134,6 +148,8 @@ internal class CreateDelegateVisitor : AstVisitor
     /// <inheritdoc />
     public override void Visit(IdentifierExpressionNode node)
     {
+        ResolveTypesVisitor.Visit(node);
+
         if (string.IsNullOrEmpty(node.SourceName))
         {
             var varIndex = ExecutionThread.TopScope.GetVariableIndex(node.Name, out var scope);
@@ -153,6 +169,8 @@ internal class CreateDelegateVisitor : AstVisitor
     /// <inheritdoc />
     public override void Visit(InOperationExpressionNode node)
     {
+        ResolveTypesVisitor.Visit(node);
+
         var actions = node.InExpressionValuesNodes.ValuesNodes.Select(v => NodeIdFuncMap[v.Id]).ToArray();
         var valueAction = NodeIdFuncMap[node.ExpressionNode.Id];
         var equalDelegate = VariantValue.GetEqualsDelegate(node.ExpressionNode.GetDataType());
@@ -181,12 +199,14 @@ internal class CreateDelegateVisitor : AstVisitor
     /// <inheritdoc />
     public override void Visit(LiteralNode node)
     {
+        ResolveTypesVisitor.Visit(node);
         NodeIdFuncMap[node.Id] = new FuncUnitStatic(node.Value);
     }
 
     /// <inheritdoc />
     public override void Visit(ProgramNode node)
     {
+        ResolveTypesVisitor.Visit(node);
         var actions = node.Statements.Select(n => NodeIdFuncMap[n.Id]).ToArray();
         NodeIdFuncMap[node.Id] = new FuncUnitMultiDelegate(actions);
     }
@@ -194,6 +214,7 @@ internal class CreateDelegateVisitor : AstVisitor
     /// <inheritdoc />
     public override void Visit(UnaryOperationExpressionNode node)
     {
+        ResolveTypesVisitor.Visit(node);
         var action = NodeIdFuncMap[node.RightNode.Id];
         var notDelegate = node.Operation == VariantValue.Operation.Not
             ? VariantValue.GetOperationDelegate(VariantValue.Operation.Not, node.GetDataType())
@@ -235,6 +256,7 @@ internal class CreateDelegateVisitor : AstVisitor
     /// <inheritdoc />
     public override void Visit(CastFunctionNode node)
     {
+        ResolveTypesVisitor.Visit(node);
         var expressionAction = NodeIdFuncMap[node.ExpressionNode.Id];
 
         VariantValue Func()
@@ -253,6 +275,7 @@ internal class CreateDelegateVisitor : AstVisitor
     /// <inheritdoc />
     public override void Visit(CoalesceFunctionNode node)
     {
+        ResolveTypesVisitor.Visit(node);
         var expressionActions = node.Expressions.Select(e => NodeIdFuncMap[e.Id]).ToArray();
 
         VariantValue Func()
@@ -277,18 +300,14 @@ internal class CreateDelegateVisitor : AstVisitor
     /// <inheritdoc />
     public override void Visit(FunctionCallArgumentNode node)
     {
+        ResolveTypesVisitor.Visit(node);
         NodeIdFuncMap[node.Id] = NodeIdFuncMap[node.ExpressionValueNode.Id];
     }
 
     /// <inheritdoc />
     public override void Visit(FunctionCallNode node)
     {
-        var function = node.GetAttribute<Function>(AstAttributeKeys.FunctionKey);
-        if (function == null)
-        {
-            throw new InvalidOperationException("Function not set.");
-        }
-
+        var function = ResolveTypesVisitor.VisitFunctionCallNode(node);
         var argsDelegatesList = new List<IFuncUnit>(function.Arguments.Length + 1);
         for (int i = 0; i < function.Arguments.Length; i++)
         {
@@ -356,6 +375,7 @@ internal class CreateDelegateVisitor : AstVisitor
     /// <inheritdoc />
     public override void Visit(SelectQueryCombineNode node)
     {
+        _resolveTypesVisitor.Visit(node);
         var statementsVisitor = new StatementsVisitor(_thread);
         var handler = statementsVisitor.RunAndReturn(node);
         NodeIdFuncMap[node.Id] = new FuncUnitDelegate(handler.AsFunc());

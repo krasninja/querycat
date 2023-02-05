@@ -21,6 +21,12 @@ internal class DistinctRowsIteratorIterator : IRowsIterator, IRowsIteratorParent
     /// <inheritdoc />
     public Row Current => _rowsIterator.Current;
 
+    public DistinctRowsIteratorIterator(
+        IRowsIterator rowsIterator,
+        IEnumerable<IFuncUnit> columnsIndexes) : this(rowsIterator, columnsIndexes.ToArray())
+    {
+    }
+
     public DistinctRowsIteratorIterator(IRowsIterator rowsIterator,
         params IFuncUnit[] columnsIndexes)
     {

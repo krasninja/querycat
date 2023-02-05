@@ -1,6 +1,7 @@
 using System.Runtime.CompilerServices;
 using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Relational;
+using QueryCat.Backend.Types;
 using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Storage;
@@ -10,13 +11,60 @@ namespace QueryCat.Backend.Storage;
 /// </summary>
 public class RowsInputIterator : IRowsIterator, IRowsIteratorParent, IDisposable
 {
+    private sealed class CacheInputRow : Row
+    {
+        private readonly RowsInputIterator _rowsInputIterator;
+        private readonly bool[] _fetched;
+
+        public CacheInputRow(RowsInputIterator rowsInputIterator) : base(rowsInputIterator)
+        {
+            _rowsInputIterator = rowsInputIterator;
+            _fetched = new bool[rowsInputIterator.Columns.Length];
+        }
+
+        /// <inheritdoc />
+        public override VariantValue this[int columnIndex]
+        {
+            get
+            {
+                if (!_fetched[columnIndex])
+                {
+                    FetchValue(columnIndex);
+                    _fetched[columnIndex] = true;
+                    return base[columnIndex];
+                }
+                return base[columnIndex];
+            }
+
+            set
+            {
+                _fetched[columnIndex] = true;
+                base[columnIndex] = value;
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+        private void FetchValue(int columnIndex)
+        {
+            var errorCode = _rowsInputIterator._rowsInput.ReadValue(columnIndex, out var value);
+            if (errorCode != ErrorCode.OK)
+            {
+                _rowsInputIterator.OnError?.Invoke(this,
+                    new RowsInputErrorEventArgs(_rowsInputIterator._rowIndex, columnIndex, errorCode));
+            }
+            Values[columnIndex] = value;
+        }
+
+        public void Reset() => Array.Fill(_fetched, false);
+    }
+
     private readonly IRowsInput _rowsInput;
     private readonly bool _autoOpen;
     private bool _isOpened;
     private Row _row;
-    private bool[] _fetchedColumnsIndexes = Array.Empty<bool>();
     private bool _hasInput;
     private int _rowIndex;
+    private bool _isInitialized;
 
     /// <inheritdoc />
     public Column[] Columns => _rowsInput.Columns;
@@ -44,76 +92,59 @@ public class RowsInputIterator : IRowsIterator, IRowsIteratorParent, IDisposable
         _row = new Row(this);
     }
 
-    /// <summary>
-    /// Read values for all columns.
-    /// </summary>
-    public void FetchValuesForAllColumns()
-    {
-        for (var i = 0; i < Columns.Length; i++)
-        {
-            FetchValueForColumn(i);
-        }
-    }
-
-    /// <summary>
-    /// Read value for the specific column from rows input.
-    /// </summary>
-    /// <param name="columnIndex">Column index.</param>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void FetchValueForColumn(int columnIndex)
-    {
-        // Postpone columns and row initialization because some row inputs
-        // has columns initialized only after first MoveNext() call.
-        if (_fetchedColumnsIndexes.Length == 0)
-        {
-            _fetchedColumnsIndexes = new bool[Columns.Length];
-            _row = new Row(this);
-        }
-        if (!_hasInput || _fetchedColumnsIndexes[columnIndex])
-        {
-            return;
-        }
-        var errorCode = _rowsInput.ReadValue(columnIndex, out var variantValue);
-        if (errorCode != ErrorCode.OK)
-        {
-            OnError?.Invoke(this, new RowsInputErrorEventArgs(_rowIndex, columnIndex, errorCode));
-        }
-        _row[columnIndex] = variantValue;
-        if (!AutoFetch)
-        {
-            _fetchedColumnsIndexes[columnIndex] = true;
-        }
-    }
-
-    public void FetchValuesForColumns(params int[] columnsIndexes)
-    {
-        for (var i = 0; i < columnsIndexes.Length; i++)
-        {
-            var index = columnsIndexes[i];
-            FetchValueForColumn(index);
-        }
-    }
-
     /// <inheritdoc />
     public bool MoveNext()
     {
+        // Open rows input.
         if (_autoOpen && !_isOpened)
         {
             _rowsInput.Open();
             _isOpened = true;
         }
 
+        // Read.
         _hasInput = _rowsInput.ReadNext();
+
+        // Postpone columns and row initialization because some row inputs
+        // has columns initialized only after first MoveNext() call.
+        if (!_isInitialized)
+        {
+            _row = AutoFetch ? new Row(this) : new CacheInputRow(this);
+            _isInitialized = false;
+        }
+
+        // Reset row.
+        if (_row is CacheInputRow cacheInputRow)
+        {
+            cacheInputRow.Reset();
+        }
+        else
+        {
+            _row.Clear();
+        }
+
+        // Fetch.
         if (_hasInput && AutoFetch)
         {
-            FetchValuesForAllColumns();
+            FetchAll();
         }
-        if (!AutoFetch)
-        {
-            Array.Fill(_fetchedColumnsIndexes, false);
-        }
+
         _rowIndex++;
         return _hasInput;
+    }
+
+    private void FetchAll()
+    {
+        for (var i = 0; i < Columns.Length; i++)
+        {
+            var errorCode = _rowsInput.ReadValue(i, out var value);
+            if (errorCode != ErrorCode.OK)
+            {
+                OnError?.Invoke(this,
+                    new RowsInputErrorEventArgs(_rowIndex, i, errorCode));
+            }
+            _row[i] = value;
+        }
     }
 
     /// <inheritdoc />

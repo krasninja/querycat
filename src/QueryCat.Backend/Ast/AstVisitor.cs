@@ -31,11 +31,14 @@ public abstract class AstVisitor
     /// Run the visitor.
     /// </summary>
     /// <param name="nodes">Nodes to process.</param>
-    public void Run(IEnumerable<IAstNode> nodes)
+    public void Run(IEnumerable<IAstNode?> nodes)
     {
         foreach (var node in nodes)
         {
-            Run(node);
+            if (node != null)
+            {
+                Run(node);
+            }
         }
     }
 
@@ -215,6 +218,18 @@ public abstract class AstVisitor
 
     public virtual void Visit(SelectQueryCombineNode node)
     {
+    }
+
+    public virtual void Visit(SelectQueryNode node)
+    {
+        if (node is SelectQueryCombineNode combineNode)
+        {
+            Visit(combineNode);
+        }
+        else if (node is SelectQuerySpecificationNode specificationNode)
+        {
+            Visit(specificationNode);
+        }
     }
 
     public virtual void Visit(SelectQuerySpecificationNode node)

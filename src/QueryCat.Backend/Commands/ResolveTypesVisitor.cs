@@ -179,6 +179,11 @@ internal class ResolveTypesVisitor : AstVisitor
     /// <inheritdoc />
     public override void Visit(FunctionCallNode node)
     {
+        VisitFunctionCallNode(node);
+    }
+
+    public Function VisitFunctionCallNode(FunctionCallNode node)
+    {
         var functionArgumentsTypes = CreateFunctionArgumentsTypes(node.Arguments);
         var function = ExecutionThread.FunctionsManager.FindByName(
             node.FunctionName, functionArgumentsTypes);
@@ -201,6 +206,8 @@ internal class ResolveTypesVisitor : AstVisitor
 
         node.SetAttribute(AstAttributeKeys.FunctionKey, function);
         node.SetDataType(returnType);
+
+        return function;
     }
 
     /// <inheritdoc />

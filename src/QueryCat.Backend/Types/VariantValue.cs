@@ -607,6 +607,8 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
 
     public static implicit operator decimal(VariantValue value) => value.AsNumeric;
 
+    public static implicit operator int(VariantValue value) => (int)value.AsInteger;
+
     public static implicit operator long(VariantValue value) => value.AsInteger;
 
     public static implicit operator bool(VariantValue value) => value.AsBoolean;

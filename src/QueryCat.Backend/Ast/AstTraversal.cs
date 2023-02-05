@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace QueryCat.Backend.Ast;
 
 /// <summary>
@@ -69,13 +71,13 @@ public class AstTraversal
     /// Pre-order traversal.
     /// </summary>
     /// <param name="node">Node to start the traversal.</param>
+    [DebuggerStepThrough]
     public void PreOrder(IAstNode? node)
     {
         if (node == null)
         {
             return;
         }
-        var typesToIgnore = TypesToIgnore.ToArray();
 
         _treeStack.Push((node, node.GetChildren().GetEnumerator()));
         node.Accept(_visitor);
@@ -111,13 +113,13 @@ public class AstTraversal
     /// Post-order traversal.
     /// </summary>
     /// <param name="node">Node to start the traversal.</param>
+    [DebuggerStepThrough]
     public void PostOrder(IAstNode? node)
     {
         if (node == null)
         {
             return;
         }
-        var typesToIgnore = TypesToIgnore.ToArray();
 
         _treeStack.Push((node, node.GetChildren().GetEnumerator()));
         while (_treeStack.Count > 0)

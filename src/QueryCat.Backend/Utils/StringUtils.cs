@@ -290,4 +290,39 @@ internal static class StringUtils
 
         return record.ToArray();
     }
+
+    /// <summary>
+    /// Retrieves a substring from this instance. If the start index has negative value it will be replaced
+    /// to 0. If substring exceeds the length of the target string the end of the string will be returned. <c>null</c> will
+    /// be converted to the empty string.
+    /// </summary>
+    /// <param name="target">Target string.</param>
+    /// <param name="startIndex">The zero-based starting character position of a substring in this instance.</param>
+    /// <param name="length">The number of characters in the substring.</param>
+    /// <returns>Substring.</returns>
+    public static string SafeSubstring(string? target, int startIndex, int length = 0)
+    {
+        if (target == null)
+        {
+            return string.Empty;
+        }
+
+        if (startIndex < 0)
+        {
+            startIndex = 0;
+        }
+        else if (startIndex > target.Length)
+        {
+            return string.Empty;
+        }
+        if (length == 0)
+        {
+            length = target.Length;
+        }
+        else if (startIndex + length > target.Length)
+        {
+            length = target.Length - startIndex;
+        }
+        return target.Substring(startIndex, length);
+    }
 }

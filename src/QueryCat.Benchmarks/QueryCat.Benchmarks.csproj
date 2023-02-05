@@ -14,7 +14,7 @@
     <PackageReference Include="BenchmarkDotNet" Version="0.13.4" />
     <PackageReference Include="Bogus" Version="34.0.2" />
     <PackageReference Include="CsvHelper" Version="30.0.1" />
-    <PackageReference Include="DotNext" Version="4.9.0" />
+    <PackageReference Include="DotNext" Version="4.10.0" />
     <PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="4.0.2" />
     <PackageReference Include="NReco.Csv" Version="1.0.1" />
     <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.435">

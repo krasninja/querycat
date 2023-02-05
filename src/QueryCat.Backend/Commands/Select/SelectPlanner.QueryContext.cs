@@ -1,15 +1,16 @@
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Select;
+using QueryCat.Backend.Commands.Select.Visitors;
 using QueryCat.Backend.Functions;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Types;
 
-namespace QueryCat.Backend.Commands.Select.Visitors;
+namespace QueryCat.Backend.Commands.Select;
 
-internal partial class SetIteratorVisitor
+internal sealed partial class SelectPlanner
 {
-    private void FillQueryContextConditions(
+    private void QueryContext_FillQueryContextConditions(
         SelectQuerySpecificationNode querySpecificationNode,
         SelectCommandContext commandContext)
     {
@@ -18,7 +19,7 @@ internal partial class SetIteratorVisitor
         // Fill conditions.
         foreach (var context in commandContext.InputQueryContextList)
         {
-            FillQueryContextConditions(querySpecificationNode, context, commandContext);
+            QueryContext_FillQueryContextConditions(querySpecificationNode, context, commandContext);
         }
 
         // Fill "limit". For now we limit only if order is not defined.
@@ -45,7 +46,7 @@ internal partial class SetIteratorVisitor
         }
     }
 
-    private void FillQueryContextConditions(
+    private void QueryContext_FillQueryContextConditions(
         SelectQuerySpecificationNode querySpecificationNode,
         SelectInputQueryContext rowsInputContext,
         SelectCommandContext commandContext)

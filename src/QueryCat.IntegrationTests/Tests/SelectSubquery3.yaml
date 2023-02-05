@@ -3,6 +3,6 @@ expected: |
   2,cesar with chicken
 query: |
   SELECT id, product
-    FROM read_file('RestaurantPerzi.csv') AS rp
+  FROM read_file('RestaurantPerzi.csv') AS rp
   WHERE
     EXISTS(SELECT * FROM read_file('Countries1.csv') AS c WHERE c.id = rp.id)

@@ -4,7 +4,7 @@ using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Relational;
 
-namespace QueryCat.Backend.Commands.Select.Inputs;
+namespace QueryCat.Backend.Commands.Select.Visitors;
 
 internal class InputResolveTypesVisitor : ResolveTypesVisitor
 {

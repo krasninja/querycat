@@ -4,6 +4,7 @@ using QueryCat.Backend.Functions;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Storage;
+using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Commands.Select;
 
@@ -12,7 +13,11 @@ namespace QueryCat.Backend.Commands.Select;
 /// </summary>
 internal sealed class SelectCommandContext : IDisposable
 {
-    private SelectQueryNode _queryNode;
+    private static int nextId;
+
+    private readonly SelectQueryNode _queryNode;
+
+    internal int Id { get; } = Interlocked.Increment(ref nextId);
 
     public SelectCommandContext(SelectQueryNode queryNode)
     {
@@ -40,8 +45,7 @@ internal sealed class SelectCommandContext : IDisposable
     public record InputNameSearchResult(
         IRowsSchema Input,
         int ColumnIndex,
-        SelectCommandContext Context,
-        SelectCommandInputContext? InputContext = null);
+        SelectCommandContext Context);
 
     /// <summary>
     /// Try get input by name.
@@ -49,100 +53,36 @@ internal sealed class SelectCommandContext : IDisposable
     /// <param name="name">Column name.</param>
     /// <param name="source">Column source.</param>
     /// <param name="result">Search result, contains rows input, column index and found context.</param>
-    /// <param name="options">Options.</param>
     /// <returns>Returns <c>true</c> if column is found, <c>false</c> otherwise.</returns>
-    public bool TryGetInputSourceByName(string name, string source, out InputNameSearchResult? result,
-        ColumnFindOptions options = ColumnFindOptions.Default)
+    public bool TryGetInputSourceByName(string name, string source, out InputNameSearchResult? result)
     {
         int index;
 
-        // Iterators.
-        if (options.HasFlag(ColumnFindOptions.IncludeRowsIterators))
+        // Local CTE.
+        foreach (var commonTableExpression in CteList)
         {
-            index = CurrentIterator.GetColumnIndexByName(name, source);
+            index = commonTableExpression.RowsIterator.GetColumnIndexByName(name, source);
             if (index > -1)
             {
-                result = new InputNameSearchResult(CurrentIterator, index, this);
+                result = new InputNameSearchResult(
+                    commonTableExpression.RowsIterator, index, this);
                 return true;
             }
         }
 
-        // CTE.
-        if (options.HasFlag(ColumnFindOptions.IncludeCommonTableExpressions))
+        // Iterators.
+        foreach (var context in GetParents(context => context))
         {
-            foreach (var commonTableExpression in CteList)
+            index = context.CurrentIterator.GetColumnIndexByName(name, source);
+            if (index > -1)
             {
-                index = commonTableExpression.RowsIterator.GetColumnIndexByName(name, source);
-                if (index > -1)
-                {
-                    result = new InputNameSearchResult(
-                        commonTableExpression.RowsIterator, index, this);
-                    return true;
-                }
-            }
-        }
-
-        // Rows input iterator.
-        if (options.HasFlag(ColumnFindOptions.IncludeRowsInputIterator))
-        {
-            foreach (var context in GetParents(context => context))
-            {
-                if (context.RowsInputIterator != null)
-                {
-                    index = context.RowsInputIterator.GetColumnIndexByName(name, source);
-                    if (index > -1)
-                    {
-                        result = new InputNameSearchResult(context.RowsInputIterator, index, context);
-                        return true;
-                    }
-                }
-            }
-        }
-
-        // Inputs.
-        if (options.HasFlag(ColumnFindOptions.IncludeInputSources))
-        {
-            foreach (var context in GetParents(context => context))
-            {
-                foreach (var input in context.Inputs)
-                {
-                    index = input.RowsInput.GetColumnIndexByName(name, source);
-                    if (index > -1)
-                    {
-                        result = new InputNameSearchResult(input.RowsInput, index, context, input);
-                        return true;
-                    }
-                }
+                result = new InputNameSearchResult(context.CurrentIterator, index, context);
+                return true;
             }
         }
 
         result = default;
         return false;
-    }
-
-    internal int GetAbsoluteColumnIndex(IRowsSchema input, int columnIndex)
-    {
-        if (input is IRowsInput rowsInput)
-        {
-            var absoluteIndex = 0;
-            foreach (var inputContext in Inputs)
-            {
-                if (inputContext.RowsInput != rowsInput)
-                {
-                    absoluteIndex += inputContext.RowsInput.Columns.Length;
-                    continue;
-                }
-                return columnIndex + absoluteIndex;
-            }
-            return -1;
-        }
-
-        if (input is IRowsIterator)
-        {
-            return columnIndex;
-        }
-
-        return -1;
     }
 
     #endregion
@@ -258,6 +198,29 @@ internal sealed class SelectCommandContext : IDisposable
     /// Common table expressions of the query.
     /// </summary>
     internal List<CommonTableExpression> CteList { get; } = new();
+
+    public void Dump(IndentedStringBuilder stringBuilder)
+    {
+        stringBuilder.AppendLine();
+        var columns = string.Join(", ", CurrentIterator.Columns.Select(c => c.ToString()));
+        stringBuilder.AppendLine($"Id: {Id}");
+        if (Parent != null)
+        {
+            stringBuilder.AppendLine($"Parent: {Parent?.Id}");
+        }
+        if (_childContexts.Any())
+        {
+            stringBuilder.AppendLine($"Children: {string.Join(", ", _childContexts.Select(c => c.Id))}");
+        }
+        stringBuilder.AppendLine($"Output: {columns}");
+        stringBuilder.AppendLine($"Query: {StringUtils.SafeSubstring(_queryNode.ToString(), 0, 100)}");
+        foreach (var childContext in ChildContexts)
+        {
+            stringBuilder.IncreaseIndent();
+            childContext.Dump(stringBuilder);
+            stringBuilder.DecreaseIndent();
+        }
+    }
 
     /// <inheritdoc />
     public void Dispose()

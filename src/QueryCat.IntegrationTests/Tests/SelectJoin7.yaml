@@ -1,0 +1,7 @@
+expected: |
+  China
+query: |
+  select
+    (select name from 'Countries2.csv' where id = t2.num) 
+  from 'Table1.csv' as t1
+    inner join 'Table2.csv' AS t2 ON t1.num = t2.num

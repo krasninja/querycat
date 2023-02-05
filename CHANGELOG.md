@@ -15,6 +15,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Add "DAYOFYEAR", "WEEKDAY" timestamp parts.
 - Initial implementation of XML formatter (input and output).
 
+### Changed
+
+- SQL planner refactoring, fixed various cases where columns name resolve did not work.
+
+### Fixed
+
+- Columns input prefetcher didn't work in some cases.
+
 ## [0.2.0] - 2023-01-13
 
 ### Added

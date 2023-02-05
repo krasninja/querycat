@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using QueryCat.Backend.Types;
+using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Functions.StandardFunctions;
 
@@ -58,25 +59,7 @@ public static class StringFunctions
         var value = args.GetAt(0).AsString;
         var start = (int)args.GetAt(1).AsInteger - 1;
         var count = !args.GetAt(2).IsNull ? (int)args.GetAt(2).AsInteger : value.Length - start;
-
-        if (start < 0)
-        {
-            start = 0;
-        }
-        else if (start > value.Length)
-        {
-            return new VariantValue(string.Empty);
-        }
-        if (count == 0)
-        {
-            count = value.Length;
-        }
-        else if (start + count > value.Length)
-        {
-            count = value.Length - start;
-        }
-
-        return new VariantValue(value.Substring(start, count));
+        return new VariantValue(StringUtils.SafeSubstring(value, start, count));
     }
 
     [Description("Number of characters in string.")]
