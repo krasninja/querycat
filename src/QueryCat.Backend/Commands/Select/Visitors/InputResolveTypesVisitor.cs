@@ -28,7 +28,6 @@ internal class InputResolveTypesVisitor : ResolveTypesVisitor
             {
                 node.SetAttribute(AstAttributeKeys.InputColumnKey, rowsInput.Columns[columnIndex]);
                 node.SetAttribute(AstAttributeKeys.RowsInputKey, rowsInput);
-                node.SetAttribute(AstAttributeKeys.InputColumnIndexKey, columnIndex);
                 node.SetDataType(rowsInput.Columns[columnIndex].DataType);
                 return;
             }

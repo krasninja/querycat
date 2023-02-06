@@ -110,7 +110,7 @@ public class RowsInputIterator : IRowsIterator, IRowsIteratorParent, IDisposable
         if (!_isInitialized)
         {
             _row = AutoFetch ? new Row(this) : new CacheInputRow(this);
-            _isInitialized = false;
+            _isInitialized = true;
         }
 
         // Reset row.

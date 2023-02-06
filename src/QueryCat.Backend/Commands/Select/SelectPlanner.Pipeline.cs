@@ -15,41 +15,7 @@ internal sealed partial class SelectPlanner
 {
     private const string SourceInputColumn = "source_input_column";
 
-    private void Pipeline_ApplyStatistic(SelectCommandContext context)
-    {
-        context.SetIterator(new StatisticRowsIterator(context.CurrentIterator, ExecutionThread.Statistic)
-        {
-            MaxErrorsCount = ExecutionThread.Options.MaxErrors,
-        });
-    }
-
     #region SELECT
-
-    /// <summary>
-    /// Assign SourceInputColumn attribute based on rows input iterator.
-    /// </summary>
-    private static void Pipeline_ResolveSelectSourceColumns(
-        SelectCommandContext context,
-        SelectQuerySpecificationNode querySpecificationNode)
-    {
-        if (context.RowsInputIterator == null)
-        {
-            return;
-        }
-
-        foreach (var column in querySpecificationNode.ColumnsListNode.ColumnsNodes.OfType<SelectColumnsSublistExpressionNode>())
-        {
-            if (column.ExpressionNode is IdentifierExpressionNode identifierExpressionNode)
-            {
-                var sourceColumn = context.RowsInputIterator.GetColumnByName(
-                    identifierExpressionNode.Name, identifierExpressionNode.SourceName);
-                if (sourceColumn != null)
-                {
-                    column.SetAttribute(SourceInputColumn, sourceColumn);
-                }
-            }
-        }
-    }
 
     private static void Pipeline_ResolveSelectAllStatement(IRowsIterator rows, SelectColumnsListNode columnsNode)
     {
@@ -334,6 +300,16 @@ internal sealed partial class SelectPlanner
 
     #endregion
 
+    #region Misc
+
+    private void Pipeline_ApplyStatistic(SelectCommandContext context)
+    {
+        context.SetIterator(new StatisticRowsIterator(context.CurrentIterator, ExecutionThread.Statistic)
+        {
+            MaxErrorsCount = ExecutionThread.Options.MaxErrors,
+        });
+    }
+
     /// <summary>
     /// Update statistic if there is a error in rows input.
     /// </summary>
@@ -348,4 +324,32 @@ internal sealed partial class SelectPlanner
             ExecutionThread.Statistic.IncrementErrorsCount(args.ErrorCode, args.RowIndex, args.ColumnIndex);
         };
     }
+
+    /// <summary>
+    /// Assign SourceInputColumn attribute based on rows input iterator.
+    /// </summary>
+    private static void Pipeline_ResolveSelectSourceColumns(
+        SelectCommandContext context,
+        SelectQuerySpecificationNode querySpecificationNode)
+    {
+        if (context.RowsInputIterator == null)
+        {
+            return;
+        }
+
+        foreach (var column in querySpecificationNode.ColumnsListNode.ColumnsNodes.OfType<SelectColumnsSublistExpressionNode>())
+        {
+            if (column.ExpressionNode is IdentifierExpressionNode identifierExpressionNode)
+            {
+                var sourceColumn = context.RowsInputIterator.GetColumnByName(
+                    identifierExpressionNode.Name, identifierExpressionNode.SourceName);
+                if (sourceColumn != null)
+                {
+                    column.SetAttribute(SourceInputColumn, sourceColumn);
+                }
+            }
+        }
+    }
+
+    #endregion
 }

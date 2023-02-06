@@ -162,7 +162,6 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
         }
 
         node.SetAttribute(AstAttributeKeys.InputColumnKey, result.Input.Columns[result.ColumnIndex]);
-        node.SetAttribute(AstAttributeKeys.InputColumnIndexKey, result.ColumnIndex);
         node.SetDataType(result.Input.Columns[result.ColumnIndex].DataType);
 
         if (result.Input is IRowsIterator rowsIterator)

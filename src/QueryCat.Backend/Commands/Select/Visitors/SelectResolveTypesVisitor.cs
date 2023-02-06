@@ -57,7 +57,6 @@ internal sealed class SelectResolveTypesVisitor : ResolveTypesVisitor
         }
 
         node.SetAttribute(AstAttributeKeys.InputColumnKey, result.Input.Columns[result.ColumnIndex]);
-        node.SetAttribute(AstAttributeKeys.InputColumnIndexKey, result.ColumnIndex);
         node.SetDataType(result.Input.Columns[result.ColumnIndex].DataType);
         return true;
     }

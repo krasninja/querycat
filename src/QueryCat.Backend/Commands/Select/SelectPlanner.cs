@@ -33,7 +33,6 @@ internal sealed partial class SelectPlanner
     {
         // FROM.
         var context = Context_Create(node, parentContext);
-        Pipeline_ApplyStatistic(context);
 
         // Misc.
         Pipeline_ApplyStatistic(context);
