@@ -113,13 +113,6 @@ internal sealed partial class SelectPlanner
     {
         var projectedIterator = new ProjectedRowsIterator(context.CurrentIterator);
 
-        var iterator = context.CurrentIterator;
-        for (var i = 0; i < context.CurrentIterator.Columns.Length; i++)
-        {
-            projectedIterator.AddFuncColumn(
-                context.CurrentIterator.Columns[i], new FuncUnitRowsIteratorColumn(iterator, i));
-        }
-
         var funcs = columnsNode.ColumnsNodes.Select(c => Misc_CreateDelegate(c, context)).ToList();
         var selectColumns = CreateSelectColumns(columnsNode).ToList();
         for (var i = 0; i < columnsNode.ColumnsNodes.Count; i++)
@@ -128,6 +121,18 @@ internal sealed partial class SelectPlanner
             var info = context.ColumnsInfoContainer.GetByColumn(projectedIterator.Columns[columnIndex]);
             info.RelatedSelectSublistNode = columnsNode.ColumnsNodes[selectColumns[i].ColumnIndex];
         }
+
+        var iterator = context.CurrentIterator;
+        for (var i = 0; i < iterator.Columns.Length; i++)
+        {
+            var column = iterator.Columns[i];
+            if (projectedIterator.GetColumnIndexByName(column.Name, column.SourceName) == -1)
+            {
+                projectedIterator.AddFuncColumn(
+                    column, new FuncUnitRowsIteratorColumn(iterator, i));
+            }
+        }
+
         context.SetIterator(projectedIterator);
     }
 
