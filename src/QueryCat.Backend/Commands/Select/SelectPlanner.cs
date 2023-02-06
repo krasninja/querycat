@@ -50,15 +50,15 @@ internal sealed partial class SelectPlanner
         // DISTINCT.
         Pipeline_CreateDistinctRowsSet(context, node);
 
-        // ORDER BY.
-        Pipeline_ApplyOrderBy(context, node.OrderByNode);
-
         // SELECT.
         Pipeline_ResolveSelectAllStatement(context.CurrentIterator, node.ColumnsListNode);
         Pipeline_AddSelectRowsSet(context, node.ColumnsListNode);
         QueryContext_FillQueryContextConditions(node, context);
 
-        // WINDOW
+        // ORDER BY.
+        Pipeline_ApplyOrderBy(context, node.OrderByNode);
+
+        // WINDOW.
         Window_ApplyWindowFunctions(context, node);
 
         // INTO and SELECT.

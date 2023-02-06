@@ -147,12 +147,14 @@ internal sealed partial class SelectPlanner
     {
         var projectedIterator = new ProjectedRowsIterator(context.CurrentIterator);
 
-        var funcs = new List<IFuncUnit>();
-        foreach (var columnNode in columnsNode.ColumnsNodes)
+        var iterator = context.CurrentIterator;
+        for (var i = 0; i < context.CurrentIterator.Columns.Length; i++)
         {
-            var func = Misc_CreateDelegate(columnNode, context);
-            funcs.Add(func);
+            projectedIterator.AddFuncColumn(
+                context.CurrentIterator.Columns[i], new FuncUnitRowsIteratorColumn(iterator, i));
         }
+
+        var funcs = columnsNode.ColumnsNodes.Select(c => Misc_CreateDelegate(c, context)).ToList();
         var selectColumns = CreateSelectColumns(columnsNode).ToList();
         for (var i = 0; i < columnsNode.ColumnsNodes.Count; i++)
         {
