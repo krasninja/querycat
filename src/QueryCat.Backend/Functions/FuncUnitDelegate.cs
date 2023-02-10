@@ -7,9 +7,13 @@ internal sealed class FuncUnitDelegate : FuncUnit
 {
     private readonly Func<VariantValue> _func;
 
-    public FuncUnitDelegate(Func<VariantValue> func)
+    /// <inheritdoc />
+    public override DataType OutputType { get; }
+
+    public FuncUnitDelegate(Func<VariantValue> func, DataType outputType)
     {
         _func = func;
+        OutputType = outputType;
     }
 
     /// <inheritdoc />

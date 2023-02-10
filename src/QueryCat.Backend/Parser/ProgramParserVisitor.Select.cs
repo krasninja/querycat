@@ -199,7 +199,10 @@ internal partial class ProgramParserVisitor
     public override IAstNode VisitSelectSublistWindow(QueryCatParser.SelectSublistWindowContext context)
         => new SelectColumnsSublistWindowNode(
             this.Visit<FunctionCallNode>(context.functionCall()),
-            this.Visit<SelectWindowSpecificationNode>(context.selectWindowSpecification()));
+            this.Visit<SelectWindowSpecificationNode>(context.selectWindowSpecification()))
+        {
+            Alias = this.Visit(context.selectAlias(), SelectAliasNode.Empty).AliasName
+        };
 
     /// <inheritdoc />
     public override IAstNode VisitExpressionSelect(QueryCatParser.ExpressionSelectContext context)

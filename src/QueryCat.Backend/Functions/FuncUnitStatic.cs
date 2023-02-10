@@ -7,6 +7,9 @@ internal sealed class FuncUnitStatic : FuncUnit
 {
     private readonly VariantValue _value;
 
+    /// <inheritdoc />
+    public override DataType OutputType => _value.GetInternalType();
+
     public FuncUnitStatic(VariantValue value)
     {
         _value = value;

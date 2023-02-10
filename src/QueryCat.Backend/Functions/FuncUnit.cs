@@ -9,6 +9,9 @@ internal abstract class FuncUnit : IFuncUnit
     private IDictionary<int, object>? _objects;
 
     /// <inheritdoc />
+    public abstract DataType OutputType { get; }
+
+    /// <inheritdoc />
     public object? GetData(int index)
     {
         return _objects?[index];

@@ -194,20 +194,18 @@ public class OrderColumnsIndex : IOrderIndex
 
     public OrderColumnsIndex(
         ICursorRowsIterator rowsFrameIterator,
-        IList<OrderDirection> directions,
-        IList<NullOrder> nullOrders,
-        IList<int> columnIndexes)
+        OrderColumnData[] orderColumnData)
     {
         RowsFrameIterator = rowsFrameIterator;
-        _directions = directions.ToArray();
-        _nullOrders = nullOrders.ToArray();
-        _columnIndexes = columnIndexes.ToArray();
-        _valueGetters = columnIndexes.Select(index => new FuncUnitRowsIteratorColumn(rowsFrameIterator, index))
+        _directions = orderColumnData.Select(d => d.Direction).ToArray();
+        _nullOrders = orderColumnData.Select(d => d.NullOrder).ToArray();
+        _columnIndexes = orderColumnData.Select(d => d.Index).ToArray();
+        _valueGetters = _columnIndexes.Select(index => new FuncUnitRowsIteratorColumn(rowsFrameIterator, index))
             .ToArray();
     }
 
     /// <inheritdoc />
-    public IRowsIterator GetOrderIterator() => new OrderColumnsIterator(this);
+    public ICursorRowsIterator GetOrderIterator() => new OrderColumnsIterator(this);
 
     /// <inheritdoc />
     public void Rebuild()

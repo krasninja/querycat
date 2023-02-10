@@ -58,7 +58,7 @@ internal sealed partial class SelectPlanner
         Pipeline_ApplyOrderBy(context, node.OrderByNode);
 
         // WINDOW.
-        Window_ApplyWindowFunctions(context, node);
+        PipelineWindow_ApplyWindowFunctions(context, node);
 
         // INTO and SELECT.
         Pipeline_SetOutputFunction(context, node);

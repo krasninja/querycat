@@ -6,7 +6,7 @@ public sealed class SelectColumnsSublistWindowNode : SelectColumnsSublistNode
 {
     public FunctionCallNode AggregateFunctionNode { get; }
 
-    public SelectWindowSpecificationNode WindowSpecificationNode { get; }
+    public SelectWindowSpecificationNode WindowSpecificationNode { get; internal set; }
 
     /// <inheritdoc />
     public override string Code => "column_window";

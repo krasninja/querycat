@@ -11,5 +11,5 @@ public interface IOrderIndex : IIndex
     /// Get order iterator.
     /// </summary>
     /// <returns>The instance of <see cref="IRowsIterator" />.</returns>
-    IRowsIterator GetOrderIterator();
+    ICursorRowsIterator GetOrderIterator();
 }

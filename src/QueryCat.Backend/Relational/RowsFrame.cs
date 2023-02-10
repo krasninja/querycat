@@ -69,6 +69,12 @@ public class RowsFrame : IRowsSchema, IEnumerable<Row>
         return _storage[chunkIndex][offset];
     }
 
+    public VariantValue GetValue(int rowIndex = 0, int columnIndex = 0)
+    {
+        (int chunkIndex, int offset) = GetChunkAndOffset(rowIndex);
+        return _storage[chunkIndex][offset + columnIndex];
+    }
+
     /// <summary>
     /// Add row into rows frame.
     /// </summary>

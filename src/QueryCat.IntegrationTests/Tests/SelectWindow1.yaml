@@ -1,12 +1,15 @@
 expected: |
-  1
+  aleksander,999,1805,1999
+  elina,800,803,2799
+  ivan,1000,2289,1000
+  lena,780,1286,3579
+  sergey,500,503,4079
 query: |
-  select 1;
-  /*
-  select 
+  select
     name,
     balance,
-    sum(balance) over (w1),
-    sum(balance) over (order by balance)
-  from 'Simple2.csv'
-  window w as (partition by country || '' order by balance), w1 as (w);*/
+    sum(balance + 3) over (w1) as 'window1',
+    sum(balance) over (order by balance desc) as 'window2'
+  from '/mnt/data/work/querycat/src/QueryCat.IntegrationTests/Data/Simple2.csv'
+  window w as (partition by country || city order by balance), w1 as (w)
+  order by name;

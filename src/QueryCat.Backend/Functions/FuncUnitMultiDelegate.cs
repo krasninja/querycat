@@ -7,9 +7,13 @@ internal sealed class FuncUnitMultiDelegate : FuncUnit
 {
     private readonly IFuncUnit[] _functions;
 
-    public FuncUnitMultiDelegate(params IFuncUnit[] funcUnits)
+    /// <inheritdoc />
+    public override DataType OutputType { get; }
+
+    public FuncUnitMultiDelegate(DataType outputType, params IFuncUnit[] funcUnits)
     {
         _functions = funcUnits;
+        OutputType = outputType;
     }
 
     /// <inheritdoc />

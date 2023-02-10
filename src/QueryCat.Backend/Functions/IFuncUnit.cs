@@ -9,6 +9,11 @@ namespace QueryCat.Backend.Functions;
 public interface IFuncUnit
 {
     /// <summary>
+    /// The delegate output type.
+    /// </summary>
+    DataType OutputType { get; }
+
+    /// <summary>
     /// Get metadata object.
     /// </summary>
     /// <param name="index">Metadata key.</param>

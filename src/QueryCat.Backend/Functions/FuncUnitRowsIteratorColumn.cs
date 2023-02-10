@@ -9,6 +9,9 @@ internal sealed class FuncUnitRowsIteratorColumn : FuncUnit
     private readonly IRowsIterator _rowsIterator;
     private readonly int _columnIndex;
 
+    /// <inheritdoc />
+    public override DataType OutputType => _rowsIterator.Columns[_columnIndex].DataType;
+
     public FuncUnitRowsIteratorColumn(IRowsIterator rowsIterator, int columnIndex)
     {
         _rowsIterator = rowsIterator;

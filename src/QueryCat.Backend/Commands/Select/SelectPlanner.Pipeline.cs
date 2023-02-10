@@ -196,11 +196,10 @@ internal sealed partial class SelectPlanner
 
         // Create wrapper to initialize rows frame and create index.
         var orderFunctions = orderByNode.OrderBySpecificationNodes.Select(n =>
-            new OrderRowsIterator.OrderBy(
+            new OrderByData(
                 Misc_CreateDelegate(n.ExpressionNode, context),
                 Pipeline_ConvertDirection(n.Order),
-                Pipeline_ConvertNullOrder(n.NullOrder),
-                n.ExpressionNode.GetDataType()
+                Pipeline_ConvertNullOrder(n.NullOrder)
             )
         );
         context.SetIterator(new OrderRowsIterator(context.CurrentIterator, orderFunctions.ToArray()));

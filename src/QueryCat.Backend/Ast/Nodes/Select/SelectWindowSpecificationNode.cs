@@ -4,7 +4,7 @@ public sealed class SelectWindowSpecificationNode : AstNode
 {
     public string ExistingWindowName { get; } = string.Empty;
 
-    public SelectWindowPartitionClauseNode? PartitionNode { get; internal set; }
+    public SelectWindowPartitionClauseNode? PartitionNode { get; }
 
     public SelectWindowOrderClauseNode? OrderNode { get; }
 
