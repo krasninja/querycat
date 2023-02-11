@@ -95,6 +95,7 @@ internal sealed class GroupRowsIterator : IRowsIterator, IRowsIteratorParent
     {
         _isInitialized = false;
         _rowsFrame.Clear();
+        _rowsIterator.Reset();
     }
 
     /// <inheritdoc />

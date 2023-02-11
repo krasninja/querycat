@@ -88,10 +88,13 @@ internal sealed partial class SelectPlanner
         var havingNode = tableExpressionNode?.HavingNode;
         var selectAggregateTargetsVisitor = new SelectCreateDelegateVisitor(ExecutionThread, context);
 
-        selectAggregateTargetsVisitor.Run(columnsNodes);
-        var aggregateTargets = columnsNodes.ColumnsNodes
+        var columnsWithFunctions = columnsNodes.ColumnsNodes
             .OfType<SelectColumnsSublistExpressionNode>()
-            .SelectMany(n => n.GetAllChildren<FunctionCallNode>())
+            .SelectMany(n => n.GetAllChildren<FunctionCallNode>(new[] { typeof(SelectQueryNode) }))
+            .ToList();
+
+        selectAggregateTargetsVisitor.Run(columnsWithFunctions);
+        var aggregateTargets = columnsWithFunctions
             .Select(n => n.GetAttribute<AggregateTarget>(AstAttributeKeys.AggregateFunctionKey));
         if (havingNode != null)
         {

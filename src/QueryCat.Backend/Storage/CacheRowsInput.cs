@@ -219,7 +219,6 @@ public sealed class CacheRowsInput : IRowsInput
     {
         _rowIndex = -1;
         var newCacheKey = new CacheKey(_queryContext);
-        _rowsInput.Reset();
         if (_currentCacheEntry != null)
         {
             // If we reset but persist the same key - just go ahead using existing input.

@@ -1,0 +1,13 @@
+expected: |
+  Krasnoyarsk,1,1
+  Sochi,4,1
+query: |
+  -- This is not the standard case, because t1.id is not available since it is not in group clause.
+  select
+    city,
+    t1.id,
+    (select count(*) from
+      (select * from 'Simple2.csv' t2 where t1.id = t2.id)
+    ) as 'result'
+  from 'Simple2.csv' t1
+  group by city
