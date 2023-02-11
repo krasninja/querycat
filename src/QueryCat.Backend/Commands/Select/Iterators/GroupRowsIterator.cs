@@ -149,9 +149,15 @@ internal sealed class GroupRowsIterator : IRowsIterator, IRowsIteratorParent
         }
         else if (_keys == NoGroupsKeyFactory)
         {
-            // If no data at all - we produce just NULL result.
-            var nullRow = new Row(_rowsFrame);
-            _rowsFrame.AddRow(nullRow);
+            // If no data at all - we produce default result.
+            var defaultValuesRow = new Row(_rowsFrame);
+            for (var i = 0; i < _targets.Length; i++)
+            {
+                var target = _targets[i];
+                defaultValuesRow[_aggregateColumnsOffset + i] = target.AggregateFunction.GetResult(
+                    target.AggregateFunction.GetInitialState(target.ReturnType));
+            }
+            _rowsFrame.AddRow(defaultValuesRow);
         }
     }
 

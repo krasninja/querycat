@@ -1,0 +1,4 @@
+expected: |
+  0,,,,
+query: |
+  SELECT COUNT(*), SUM(id), AVG(id), MIN(id), MAX(id) FROM (SELECT 1 id EXCEPT SELECT 1 id) a;

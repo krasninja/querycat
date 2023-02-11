@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - HTTP server supports CORS origin and basic authentication.
 - Add "DAYOFYEAR", "WEEKDAY" timestamp parts.
 - Initial implementation of XML formatter (input and output).
+- Initial implementation of Window functions.
 
 ### Changed
 
@@ -22,6 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Fixed
 
 - Columns input prefetcher didn't work in some cases.
+- COUNT produced NULL result on empty dataset.
 
 ## [0.2.0] - 2023-01-13
 

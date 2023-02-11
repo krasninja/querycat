@@ -20,7 +20,7 @@ internal sealed class CountAggregateFunction : IAggregateFunction
 
     /// <inheritdoc />
     public VariantValueArray GetInitialState(DataType type)
-        => new(new VariantValue(type));
+        => new(new VariantValue(0));
 
     /// <inheritdoc />
     public void Invoke(VariantValueArray state, FunctionCallInfo callInfo)
