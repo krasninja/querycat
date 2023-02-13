@@ -229,11 +229,12 @@ public static class DataTypeUtils
             string intervalType;
             var intervalString = arr[i];
 
-            // Covert short value to full (like 1h -> 1 h).
-            if (char.IsLetter(arr[i][^1]))
+            // Put a space between number and part (like 1h -> 1 h, 2sec -> 2 sec).
+            var firstLetterIndex = GetFirstLetterIndex(intervalString);
+            if (firstLetterIndex > -1)
             {
-                intervalType = arr[i][^1].ToString();
-                intervalString = arr[i][..^1];
+                intervalType = arr[i].Substring(firstLetterIndex);
+                intervalString = arr[i].Substring(0, firstLetterIndex).Trim();
             }
             // Standard case like "1 min".
             else if (i < arr.Length - 1)
@@ -268,6 +269,18 @@ public static class DataTypeUtils
         }
 
         return result;
+    }
+
+    private static int GetFirstLetterIndex(string str)
+    {
+        for (var i = 0; i < str.Length; i++)
+        {
+            if (char.IsLetter(str[i]))
+            {
+                return i;
+            }
+        }
+        return -1;
     }
 
     private static TimeSpan? ParseIntervalType(double value, string type, bool throwExceptions = true)
