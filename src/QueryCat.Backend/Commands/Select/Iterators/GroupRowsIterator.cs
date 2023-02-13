@@ -170,7 +170,7 @@ internal sealed class GroupRowsIterator : IRowsIterator, IRowsIteratorParent
         }
         foreach (var target in targets)
         {
-            var columnName = !string.IsNullOrEmpty(target.Name) ? target.Name : $"a-{target.Node.Id}";
+            var columnName = !string.IsNullOrEmpty(target.Name) ? target.Name : $"__a-{target.Node.Id}";
             var column = new Column(columnName, target.ReturnType);
             columns.Add(column);
             var info = _context.ColumnsInfoContainer.GetByColumn(column);
