@@ -11,7 +11,7 @@ options {
  * Program statements.
  */
 
-program: statement (SEMICOLON statement)* SEMICOLON? EOF;
+program: SEMICOLON* statement (SEMICOLON statement)* SEMICOLON* EOF;
 
 statement
     : selectStatement # StatementSelectExpression

@@ -24,6 +24,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Columns input prefetcher didn't work in some cases.
 - COUNT produced NULL result on empty dataset.
+- Lot of various fixes and improvements.
 
 ## [0.2.0] - 2023-01-13
 
