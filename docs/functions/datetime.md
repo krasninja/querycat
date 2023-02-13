@@ -4,6 +4,7 @@
 | --- |
 | `date(datetime: timestamp): timestamp`<br /><br /> Takes the date part. |
 | `date_part(field: string, source: timestamp): integer`<br /><br /> The function retrieves subfields such as year or hour from date/time values. |
+| `date_trunc(field: string, source: timestamp): timestamp`<br />`date_trunc(field: string, source: interval): interval`<br /><br />The function rounds or truncates a timestamp or interval to the date part you need. |
 | `now(): timestamp`<br /><br /> Current date and time |
 | `to_date(target: string, fmt: string): timestamp`<br /><br /> Converts string to date according to the given format. |
 
@@ -30,11 +31,12 @@ You can use `to_char` function for date/time text representation. Example:
 select
     to_char(CURRENT_TIMESTAMP, 'yyyy-MM-dd ss:hh:mm z'),
     to_char(CURRENT_DATE, 'D'),
-    to_char(cast('2023-01-01' as timestamp), 'dddd');
+    to_char(cast('2023-01-01' as timestamp), 'dddd'),
+    to_char('4h 5m 44sec'::interval, 'hh\:mm');
 
-| column1                | column2                    | column3    |
-| ---------------------- | -------------------------- | ---------- |
-| 2022-10-19 34:10:32 +7 | Wednesday, 19 October 2022 | Sunday     |
+| column1                | column2                  | column3    | column4    |
+| ---------------------- | ------------------------ | ---------- | ---------- |
+| 2023-02-13 36:08:46 +7 | Monday, 13 February 2023 | Sunday     | 04:05      |
 ```
 
 The formatting is based on .NET framework conventions. You can read more about it using the links below:

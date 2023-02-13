@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - New "chr" string function.
 - Add JSON functions: "is_json", "json_query", "json_value", "to_json", "json_exists".
+- Add "date_trunc" function.
 - Initial implementation of recursive CTE.
 - Make AS keyword optional for alias.
 - HTTP server now has simple web UI.
