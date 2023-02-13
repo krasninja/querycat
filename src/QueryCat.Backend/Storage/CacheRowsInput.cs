@@ -30,6 +30,8 @@ public sealed class CacheRowsInput : IRowsInput
 
         public int CacheLength { get; set; }
 
+        public bool HasCacheEntries => Cache.Count > 0;
+
         public CacheEntry(CacheKey key, TimeSpan expireAt)
         {
             Key = key;
@@ -217,6 +219,7 @@ public sealed class CacheRowsInput : IRowsInput
     /// <inheritdoc />
     public void Reset()
     {
+        var hasReads = _currentCacheEntry != null && _rowIndex > -1;
         _rowIndex = -1;
         var newCacheKey = new CacheKey(_queryContext);
         if (_currentCacheEntry != null)
@@ -229,6 +232,10 @@ public sealed class CacheRowsInput : IRowsInput
             }
         }
         _currentCacheEntry = CreateOrGetCacheEntry();
+        if (hasReads)
+        {
+            _rowsInput.Reset();
+        }
     }
 
     /// <inheritdoc />
