@@ -41,6 +41,12 @@ nav:
     - 'Web Server': features/web-server.md
   - 'Development':
     - 'Overview': development/index.md
+    - 'Components': development/components.md
+    - 'Functions': development/functions.md
+    - 'Simple Plugin': development/plugin-simple.md
+    - 'Advanced Plugin': development/plugin-advanced.md
   - 'Misc':
     - 'Alternative Tools': misc/alternative-tools.md
 theme: readthedocs
+markdown_extensions:
+  - pymdownx.superfences
