@@ -19,8 +19,6 @@ public sealed class FunctionsManager
 {
     private const int DefaultCapacity = 42;
 
-    public delegate VariantValue FunctionDelegate(FunctionCallInfo args);
-
     private record FunctionPreRegistration(FunctionDelegate Delegate, MemberInfo MemberInfo, List<string> Signatures);
 
     private readonly Dictionary<string, List<Function>> _functions = new(capacity: DefaultCapacity);

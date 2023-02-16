@@ -36,7 +36,7 @@ public class SamplePluginEnumerableInput : ClassEnumerableInput<TestClass>
     {
         Trace.WriteLine(nameof(InitializeInputInfo));
         inputInfo.AddKeyColumn("Key",
-            isRequired: true,
+            isRequired: false,
             operation: VariantValue.Operation.Equals,
             action: value => _key = value.AsString);
     }

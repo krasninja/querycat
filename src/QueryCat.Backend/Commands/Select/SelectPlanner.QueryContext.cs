@@ -14,8 +14,6 @@ internal sealed partial class SelectPlanner
         SelectQuerySpecificationNode querySpecificationNode,
         SelectCommandContext commandContext)
     {
-        var selectCreateDelegateVisitor = new SelectCreateDelegateVisitor(ExecutionThread, commandContext);
-
         // Fill conditions.
         foreach (var context in commandContext.InputQueryContextList)
         {
@@ -27,8 +25,8 @@ internal sealed partial class SelectPlanner
         {
             if (querySpecificationNode.FetchNode != null)
             {
-                var fetchCount = selectCreateDelegateVisitor
-                    .RunAndReturn(querySpecificationNode.FetchNode.CountNode).Invoke().AsInteger;
+                var fetchCount = Misc_CreateDelegate(querySpecificationNode.FetchNode.CountNode)
+                    .Invoke().AsInteger;
                 foreach (var queryContext in commandContext.InputQueryContextList)
                 {
                     queryContext.QueryInfo.Limit = (queryContext.QueryInfo.Limit ?? 0) + fetchCount;
@@ -36,8 +34,8 @@ internal sealed partial class SelectPlanner
             }
             if (querySpecificationNode.OffsetNode != null)
             {
-                var offsetCount = selectCreateDelegateVisitor
-                    .RunAndReturn(querySpecificationNode.OffsetNode.CountNode).Invoke().AsInteger;
+                var offsetCount = Misc_CreateDelegate(querySpecificationNode.OffsetNode.CountNode)
+                    .Invoke().AsInteger;
                 foreach (var queryContext in commandContext.InputQueryContextList)
                 {
                     queryContext.QueryInfo.Limit = (queryContext.QueryInfo.Limit ?? 0) + offsetCount;

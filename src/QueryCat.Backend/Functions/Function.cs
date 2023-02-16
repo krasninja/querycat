@@ -11,7 +11,7 @@ public class Function
     /// <summary>
     /// Invocation delegate.
     /// </summary>
-    public FunctionsManager.FunctionDelegate Delegate { get; }
+    public FunctionDelegate Delegate { get; }
 
     private readonly FunctionSignatureNode _signatureNode;
 
@@ -40,7 +40,7 @@ public class Function
     public static Function Empty => new(
         _ => VariantValue.Null, new FunctionSignatureNode("Empty", DataType.Null));
 
-    internal Function(FunctionsManager.FunctionDelegate @delegate, FunctionSignatureNode signatureNode,
+    internal Function(FunctionDelegate @delegate, FunctionSignatureNode signatureNode,
         bool aggregate = false)
     {
         Delegate = @delegate;

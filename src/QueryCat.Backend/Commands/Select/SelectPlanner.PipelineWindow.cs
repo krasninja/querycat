@@ -12,14 +12,6 @@ internal sealed partial class SelectPlanner
         SelectCommandContext context,
         SelectQuerySpecificationNode querySpecificationNode)
     {
-        var windowTargets = querySpecificationNode.ColumnsListNode.ColumnsNodes
-            .OfType<SelectColumnsSublistWindowNode>()
-            .ToArray();
-        if (windowTargets.Length < 1)
-        {
-            return;
-        }
-
         var windowDataList = new List<WindowFunctionInfo>();
         for (var columnIndex = 0; columnIndex < querySpecificationNode.ColumnsListNode.ColumnsNodes.Count; columnIndex++)
         {
@@ -33,6 +25,10 @@ internal sealed partial class SelectPlanner
 
             var windowFunctionInfo = PipelineWindow_PrepareWindowFunctionInfo(columnIndex, windowTarget, context);
             windowDataList.Add(windowFunctionInfo);
+        }
+        if (windowDataList.Count < 1)
+        {
+            return;
         }
 
         // Create final context.

@@ -86,13 +86,13 @@ internal sealed partial class SelectPlanner
         SelectColumnsListNode columnsNodes)
     {
         var havingNode = tableExpressionNode?.HavingNode;
-        var selectAggregateTargetsVisitor = new SelectCreateDelegateVisitor(ExecutionThread, context);
 
         var columnsWithFunctions = columnsNodes.ColumnsNodes
             .OfType<SelectColumnsSublistExpressionNode>()
             .SelectMany(n => n.GetAllChildren<FunctionCallNode>(new[] { typeof(SelectQueryNode) }))
             .ToList();
 
+        var selectAggregateTargetsVisitor = new SelectCreateDelegateVisitor(ExecutionThread, context);
         selectAggregateTargetsVisitor.Run(columnsWithFunctions);
         var aggregateTargets = columnsWithFunctions
             .Select(n => n.GetAttribute<AggregateTarget>(AstAttributeKeys.AggregateFunctionKey));
@@ -115,7 +115,7 @@ internal sealed partial class SelectPlanner
             return;
         }
 
-        var predicate = new SelectCreateDelegateVisitor(ExecutionThread, context).RunAndReturn(havingNode);
+        var predicate = Misc_CreateDelegate(havingNode, context);
         context.SetIterator(new FilterRowsIterator(context.CurrentIterator, predicate));
     }
 
@@ -128,7 +128,6 @@ internal sealed partial class SelectPlanner
         {
             return GroupRowsIterator.NoGroupsKeyFactory;
         }
-        var makeDelegateVisitor = new SelectCreateDelegateVisitor(ExecutionThread, context);
-        return groupByNode.GroupByNodes.Select(n => makeDelegateVisitor.RunAndReturn(n)).ToArray();
+        return Misc_CreateDelegate(groupByNode.GroupByNodes, context).ToArray();
     }
 }
