@@ -145,8 +145,7 @@ public sealed class CacheRowsInput : IRowsInput
         }
 
         // If we don't have data - this mean we can complete the cache line.
-        if (!hasData
-            || (cacheEntry.Key.Limit > 0 && _rowIndex + 1 >= cacheEntry.Key.Limit))
+        if (!hasData)
         {
             cacheEntry.Complete();
             _cacheEntries.Add(cacheEntry.Key, cacheEntry);
