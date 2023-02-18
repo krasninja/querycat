@@ -1,6 +1,7 @@
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Function;
+using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Types;
 
 namespace QueryCat.Backend.Commands.Select.Visitors;
@@ -35,5 +36,16 @@ internal class TransformQueryAstVisitor : AstVisitor
                 node.Arguments.Add(new FunctionCallArgumentNode(new LiteralNode(VariantValue.OneIntegerValue)));
             });
         }
+    }
+
+    /// <inheritdoc />
+    public override void Visit(SelectExistsExpressionNode node)
+    {
+        node.SubQueryNode.ColumnsListNode.ColumnsNodes.Clear();
+        node.SubQueryNode.ColumnsListNode.ColumnsNodes.Add(
+            new SelectColumnsSublistExpressionNode(new LiteralNode(VariantValue.OneIntegerValue))
+        );
+        node.SubQueryNode.FetchNode = new SelectFetchNode(new LiteralNode(VariantValue.OneIntegerValue));
+        base.Visit(node);
     }
 }
