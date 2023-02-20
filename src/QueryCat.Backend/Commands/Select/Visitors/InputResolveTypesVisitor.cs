@@ -11,10 +11,11 @@ internal class InputResolveTypesVisitor : ResolveTypesVisitor
     private readonly IRowsInput[] _rowsInputs;
 
     /// <inheritdoc />
-    public InputResolveTypesVisitor(ExecutionThread executionThread, params IRowsInput[] rowsInputs)
+    public InputResolveTypesVisitor(ExecutionThread executionThread, IRowsInput leftInput,
+        IRowsInput rightInput)
         : base(executionThread)
     {
-        _rowsInputs = rowsInputs;
+        _rowsInputs = new[] { leftInput, rightInput };
     }
 
     /// <inheritdoc />

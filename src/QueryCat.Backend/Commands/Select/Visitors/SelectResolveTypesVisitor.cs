@@ -16,7 +16,8 @@ internal sealed class SelectResolveTypesVisitor : ResolveTypesVisitor
     {
         _context = context;
         AstTraversal.TypesToIgnore.Add(typeof(SelectQueryNode));
-        AstTraversal.TypesToIgnore.Add(typeof(SelectTableJoinedNode));
+        AstTraversal.TypesToIgnore.Add(typeof(SelectTableJoinedOnNode));
+        AstTraversal.TypesToIgnore.Add(typeof(SelectTableJoinedUsingNode));
         AstTraversal.AcceptBeforeIgnore = true;
     }
 

@@ -137,7 +137,10 @@ selectTablePrimary
     | '(' selectQueryExpression ')' selectAlias? # SelectTablePrimarySubquery
     | name=IDENTIFIER selectAlias? # SelectTablePrimaryIdentifier
     ;
-selectTableJoined: selectJoinType? JOIN right=selectTablePrimary ON condition=expression;
+selectTableJoined
+    : selectJoinType? JOIN right=selectTablePrimary ON condition=expression # SelectTableJoinedOn
+    | selectJoinType? JOIN right=selectTablePrimary USING '(' IDENTIFIER (COMMA IDENTIFIER)* ')' # SelectTableJoinedUsing
+    ;
 selectJoinType: INNER | (LEFT | RIGHT | FULL) OUTER?;
 
 // Group, Having.

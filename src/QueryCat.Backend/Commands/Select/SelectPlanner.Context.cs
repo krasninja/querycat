@@ -226,9 +226,19 @@ internal sealed partial class SelectPlanner
             right = new CacheRowsInput(right);
         }
 
-        var searchFunc = new InputCreateDelegateVisitor(ExecutionThread, context, left, right)
-            .RunAndReturn(tableJoinedNode.SearchConditionNode);
-        return new SelectJoinRowsInput(left, right, join, searchFunc, reverseColumnsOrder);
+        if (tableJoinedNode is SelectTableJoinedOnNode joinedOnNode)
+        {
+            var searchFunc = new InputCreateDelegateVisitor(ExecutionThread, context, left, right)
+                .RunAndReturn(joinedOnNode.SearchConditionNode);
+            return new SelectJoinRowsInput(left, right, join, searchFunc, reverseColumnsOrder);
+        }
+        if (tableJoinedNode is SelectTableJoinedUsingNode joinedUsingNode)
+        {
+            var searchFunc = new InputCreateDelegateVisitor(ExecutionThread, context, left, right)
+                .RunAndReturn(joinedUsingNode);
+            return new SelectJoinRowsInput(left, right, join, searchFunc, reverseColumnsOrder);
+        }
+        throw new ArgumentException("Unsupported join type.", nameof(tableJoinedNode));
     }
 
     private IRowsInput[] Context_GetRowsInputFromExpression(SelectCommandContext context, ExpressionNode expressionNode)

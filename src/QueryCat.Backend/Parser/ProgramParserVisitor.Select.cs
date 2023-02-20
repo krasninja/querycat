@@ -325,12 +325,26 @@ internal partial class ProgramParserVisitor
     }
 
     /// <inheritdoc />
-    public override IAstNode VisitSelectTableJoined(QueryCatParser.SelectTableJoinedContext context)
+    public override IAstNode VisitSelectTableJoinedOn(QueryCatParser.SelectTableJoinedOnContext context)
     {
-        return new SelectTableJoinedNode(
+        return new SelectTableJoinedOnNode(
             this.Visit<ExpressionNode>(context.right),
             this.Visit<SelectTableJoinedTypeNode>(context.selectJoinType()),
             this.Visit<ExpressionNode>(context.condition));
+    }
+
+    /// <inheritdoc />
+    public override IAstNode VisitSelectTableJoinedUsing(QueryCatParser.SelectTableJoinedUsingContext context)
+    {
+        if (context.IDENTIFIER().Length < 1)
+        {
+            throw new SemanticException("No USING join columns.");
+        }
+
+        return new SelectTableJoinedUsingNode(
+            this.Visit<ExpressionNode>(context.right),
+            this.Visit<SelectTableJoinedTypeNode>(context.selectJoinType()),
+            context.IDENTIFIER().Select(GetUnwrappedText));
     }
 
     /// <inheritdoc />

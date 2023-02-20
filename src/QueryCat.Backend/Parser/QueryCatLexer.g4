@@ -76,6 +76,7 @@ SOME:               'SOME';
 THEN:               'THEN';
 TO:                 'TO';
 TRUE:               'TRUE';
+USING:              'USING';
 VOID:               'VOID';
 
 // Trim function.
