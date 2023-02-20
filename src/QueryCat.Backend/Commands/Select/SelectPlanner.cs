@@ -37,7 +37,6 @@ internal sealed partial class SelectPlanner
         // Misc.
         Pipeline_ApplyStatistic(context);
         Pipeline_SubscribeOnErrorsFromInputSources(context);
-        Pipeline_ResolveSelectSourceColumns(context, node);
 
         // WHERE.
         Pipeline_ApplyFilter(context, node.TableExpressionNode);
@@ -51,6 +50,7 @@ internal sealed partial class SelectPlanner
 
         // SELECT.
         Pipeline_ResolveSelectAllStatement(context.CurrentIterator, node.ColumnsListNode);
+        Pipeline_ResolveSelectSourceColumns(context, node);
         Pipeline_AddSelectRowsSet(context, node.ColumnsListNode);
 
         // ORDER BY.
