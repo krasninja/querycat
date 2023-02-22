@@ -16,10 +16,10 @@ public interface IAggregateFunction
     VariantValueArray GetInitialState(DataType type);
 
     /// <summary>
-    /// Process the value. The function is call on every next row value.
+    /// Process the value. The function is called on every next row value.
     /// </summary>
     /// <param name="state">State.</param>
-    /// <param name="callInfo">Function call info. Arguments..</param>
+    /// <param name="callInfo">Function call info. Arguments.</param>
     void Invoke(VariantValueArray state, FunctionCallInfo callInfo);
 
     /// <summary>
