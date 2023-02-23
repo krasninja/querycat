@@ -270,4 +270,19 @@ public class ExecutionThread : IExecutionThread
             Run(File.ReadAllText(rcFile));
         }
     }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            PluginsManager.Dispose();
+        }
+    }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
 }

@@ -15,7 +15,7 @@ internal class PluginUpdateCommand : BaseCommand
         this.SetHandler((queryOptions, plugin) =>
         {
             queryOptions.InitializeLogger();
-            var executionThread = queryOptions.CreateExecutionThread();
+            using var executionThread = queryOptions.CreateExecutionThread();
             executionThread.PluginsManager.UpdateAsync(plugin, CancellationToken.None).GetAwaiter().GetResult();
         }, new ApplicationOptionsBinder(LogLevelOption, PluginDirectoriesOption), pluginArgument);
     }

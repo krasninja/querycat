@@ -5,7 +5,7 @@ namespace QueryCat.Backend.Abstractions;
 /// <summary>
 /// The execution thread allows to run string commands.
 /// </summary>
-public interface IExecutionThread
+public interface IExecutionThread : IDisposable
 {
     /// <summary>
     /// Run text query.

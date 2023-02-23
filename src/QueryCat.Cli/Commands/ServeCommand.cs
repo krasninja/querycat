@@ -20,7 +20,7 @@ internal class ServeCommand : BaseCommand
         AddOption(passwordOption);
         this.SetHandler((queryOptions, urls, allowOrigin, password) =>
         {
-            var executionThread = queryOptions.CreateExecutionThread(new ExecutionOptions
+            using var executionThread = queryOptions.CreateExecutionThread(new ExecutionOptions
             {
                 PagingSize = ExecutionOptions.NoLimit,
                 AddRowNumberColumn = true,
