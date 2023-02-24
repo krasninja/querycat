@@ -16,7 +16,9 @@ public sealed class FunctionSignatureNode : AstNode, IEquatable<FunctionSignatur
     /// <summary>
     /// Function return type. VOID - no return.
     /// </summary>
-    public DataType ReturnType { get; }
+    public FunctionTypeNode ReturnTypeNode { get; }
+
+    public DataType ReturnType => ReturnTypeNode.Type;
 
     /// <summary>
     /// Argument nodes.
@@ -29,11 +31,11 @@ public sealed class FunctionSignatureNode : AstNode, IEquatable<FunctionSignatur
     /// <inheritdoc />
     public FunctionSignatureNode(
         string name,
-        DataType returnType,
+        FunctionTypeNode returnTypeNode,
         IEnumerable<FunctionSignatureArgumentNode>? argumentNodes = null)
     {
         Name = name;
-        ReturnType = returnType;
+        ReturnTypeNode = returnTypeNode;
         ArgumentNodes = argumentNodes != null ? argumentNodes.ToArray()
             : Array.Empty<FunctionSignatureArgumentNode>();
     }
@@ -41,7 +43,7 @@ public sealed class FunctionSignatureNode : AstNode, IEquatable<FunctionSignatur
     public FunctionSignatureNode(FunctionSignatureNode node) :
         this(
             node.Name,
-            node.ReturnType,
+            node.ReturnTypeNode,
             node.ArgumentNodes.Select(an => (FunctionSignatureArgumentNode)an.Clone()))
     {
         node.CopyTo(this);
@@ -58,7 +60,7 @@ public sealed class FunctionSignatureNode : AstNode, IEquatable<FunctionSignatur
 
     /// <inheritdoc />
     public override string ToString()
-        => $"{Name}({string.Join(", ", ArgumentNodes.AsEnumerable())}): {ReturnType}";
+        => $"{Name}({string.Join(", ", ArgumentNodes.AsEnumerable())}): {ReturnTypeNode}";
 
     /// <inheritdoc />
     public bool Equals(FunctionSignatureNode? other)
@@ -72,7 +74,7 @@ public sealed class FunctionSignatureNode : AstNode, IEquatable<FunctionSignatur
             return true;
         }
         return Name == other.Name
-            && ReturnType == other.ReturnType
+            && ReturnTypeNode == other.ReturnTypeNode
             && ArgumentNodes.Equals(other.ArgumentNodes);
     }
 

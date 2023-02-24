@@ -4,6 +4,8 @@ namespace QueryCat.Backend.Ast.Nodes.Function;
 
 public sealed class FunctionTypeNode : TypeNode, IEquatable<FunctionTypeNode>
 {
+    public static FunctionTypeNode NullTypeInstance { get; } = new(DataType.Null);
+
     public string TypeName { get; }
 
     /// <inheritdoc />

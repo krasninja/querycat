@@ -31,14 +31,22 @@ public class Function
     public DataType ReturnType => _signatureNode.ReturnType;
 
     /// <summary>
+    /// Optional type of object return type.
+    /// </summary>
+    public string ReturnObjectName => _signatureNode.ReturnTypeNode.TypeName;
+
+    /// <summary>
     /// Can the function be used for aggregate queries. Aggregate queries requires state and initial value.
     /// </summary>
     public bool IsAggregate { get; }
 
-    internal FunctionSignatureArgumentNode[] Arguments => _signatureNode.ArgumentNodes;
+    /// <summary>
+    /// Arguments.
+    /// </summary>
+    public FunctionSignatureArgumentNode[] Arguments => _signatureNode.ArgumentNodes;
 
     public static Function Empty => new(
-        _ => VariantValue.Null, new FunctionSignatureNode("Empty", DataType.Null));
+        _ => VariantValue.Null, new FunctionSignatureNode("Empty", FunctionTypeNode.NullTypeInstance));
 
     internal Function(FunctionDelegate @delegate, FunctionSignatureNode signatureNode,
         bool aggregate = false)
