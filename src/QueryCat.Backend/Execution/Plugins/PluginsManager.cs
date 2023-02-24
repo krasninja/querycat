@@ -54,10 +54,20 @@ public sealed class PluginsManager : IDisposable
     {
         foreach (var source in pluginDirectories)
         {
+            if (File.Exists(source) && source.Contains("Plugin"))
+            {
+                var extension = Path.GetExtension(source);
+                if (!extension.Equals(".dll") && !extension.Equals(".nupkg"))
+                {
+                    continue;
+                }
+                yield return source;
+            }
             if (!Directory.Exists(source))
             {
                 continue;
             }
+
             var pluginFiles = Directory.GetFiles(source, "*Plugin*.dll");
             foreach (var pluginFile in pluginFiles)
             {
