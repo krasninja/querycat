@@ -9,6 +9,8 @@ namespace QueryCat.Backend.Formatters;
 /// </summary>
 public class PagingOutput : IRowsOutput
 {
+    private const string ContinueWord = "--More--";
+
     private readonly IRowsOutput _rowsOutput;
     private int _rowsCounter;
 
@@ -51,8 +53,9 @@ public class PagingOutput : IRowsOutput
             && !Console.IsOutputRedirected)
         {
             _rowsCounter = 0;
-            Console.WriteLine("--More--");
+            Console.Write(ContinueWord);
             Console.ReadKey();
+            Console.Write(new string('\r', ContinueWord.Length));
         }
     }
 }
