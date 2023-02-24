@@ -20,7 +20,7 @@ internal abstract class BaseCommand : Command
         description: "Plugin directories.")
     {
         AllowMultipleArgumentsPerToken = true,
-#if ENABLE_PLUGINS
+#if !ENABLE_PLUGINS
         IsHidden = true,
 #endif
     };

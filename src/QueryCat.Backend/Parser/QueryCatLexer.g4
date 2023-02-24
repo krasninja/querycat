@@ -76,6 +76,7 @@ SOME:               'SOME';
 THEN:               'THEN';
 TO:                 'TO';
 TRUE:               'TRUE';
+USING:              'USING';
 VOID:               'VOID';
 
 // Trim function.
@@ -91,7 +92,11 @@ CURRENT_DATE:       'CURRENT_DATE';
 CURRENT_TIMESTAMP:  'CURRENT_TIMESTAMP';
 INTERVAL:           'INTERVAL';
 YEAR:               'YEAR';
+DOY:                'DOY';
+DAYOFYEAR:          'DAYOFYEAR';
 MONTH:              'MONTH';
+DOW:                'DOW';
+WEEKDAY:            'WEEKDAY';
 DAY:                'DAY';
 HOUR:               'HOUR';
 MINUTE:             'MINUTE';

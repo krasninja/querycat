@@ -45,7 +45,7 @@ internal class MethodFunctionProxy
             returnType = DataType.Object;
         }
 
-        var node = new FunctionSignatureNode(nameOverride ?? _name, returnType, paramsList);
+        var node = new FunctionSignatureNode(nameOverride ?? _name, new FunctionTypeNode(returnType), paramsList);
         return node;
     }
 

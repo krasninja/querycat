@@ -9,7 +9,7 @@ namespace QueryCat.Backend.Commands.Select.Iterators;
 /// <summary>
 /// The iterator adds the statistic processing.
 /// </summary>
-public sealed class StatisticRowsIterator : IRowsIterator
+public sealed class StatisticRowsIterator : IRowsIterator, IRowsIteratorParent
 {
     private readonly IRowsIterator _rowsIterator;
     private readonly ExecutionStatistic _statistic;
@@ -62,5 +62,11 @@ public sealed class StatisticRowsIterator : IRowsIterator
     public void Explain(IndentedStringBuilder stringBuilder)
     {
         stringBuilder.AppendRowsIteratorsWithIndent($"Stat (count={_statistic.ProcessedCount})", _rowsIterator);
+    }
+
+    /// <inheritdoc />
+    public IEnumerable<IRowsSchema> GetChildren()
+    {
+        yield return _rowsIterator;
     }
 }

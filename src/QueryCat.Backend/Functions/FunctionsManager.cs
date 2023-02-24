@@ -19,8 +19,6 @@ public sealed class FunctionsManager
 {
     private const int DefaultCapacity = 42;
 
-    public delegate VariantValue FunctionDelegate(FunctionCallInfo args);
-
     private record FunctionPreRegistration(FunctionDelegate Delegate, MemberInfo MemberInfo, List<string> Signatures);
 
     private readonly Dictionary<string, List<Function>> _functions = new(capacity: DefaultCapacity);
@@ -38,7 +36,7 @@ public sealed class FunctionsManager
         {
             Log.Logger.Warning("Empty aggregate function is not intended to be called!");
             return VariantValue.Null;
-        }, new FunctionSignatureNode("Empty", DataType.Null));
+        }, new FunctionSignatureNode("Empty", FunctionTypeNode.NullTypeInstance));
 
     private static VariantValue EmptyFunction(FunctionCallInfo args)
     {
@@ -240,6 +238,7 @@ public sealed class FunctionsManager
             return true;
         }
 
+        // Execute function actions and try to find it again.
         while (_registerFunctionsLastIndex < _registerFunctions.Count)
         {
             _registerFunctions[_registerFunctionsLastIndex++].Invoke(this);
@@ -429,6 +428,11 @@ public sealed class FunctionsManager
     /// <returns>Functions enumerable.</returns>
     public IEnumerable<Function> GetFunctions()
     {
+        while (_registerFunctionsLastIndex < _registerFunctions.Count)
+        {
+            _registerFunctions[_registerFunctionsLastIndex++].Invoke(this);
+        }
+
         foreach (var functionItem in _functionsPreRegistration)
         {
             if (TryFindByName(functionItem.Key, null, out var functions))

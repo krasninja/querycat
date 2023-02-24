@@ -13,6 +13,8 @@ public class Row : IRowsSchema, ICloneable
 
     private readonly VariantValue[] _values;
 
+    protected VariantValue[] Values => _values;
+
     /// <inheritdoc />
     public Column[] Columns => _columns;
 
@@ -110,7 +112,7 @@ public class Row : IRowsSchema, ICloneable
     /// Index getter and setter.
     /// </summary>
     /// <param name="columnIndex">Column index.</param>
-    public VariantValue this[int columnIndex]
+    public virtual VariantValue this[int columnIndex]
     {
         get => _values[columnIndex];
         set => _values[columnIndex] = value;

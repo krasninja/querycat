@@ -1,10 +1,12 @@
 using System.Net;
+using System.Reflection;
 using System.Text.Json;
 using Serilog;
 using QueryCat.Backend;
 using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Formatters;
+using QueryCat.Backend.Functions.StandardFunctions;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Storage;
@@ -17,8 +19,11 @@ namespace QueryCat.Cli.Infrastructure;
 /// </summary>
 internal sealed class WebServer
 {
+    private const string DefaultEndpoint = "http://localhost:6789/";
+
     private const string PostMethod = "POST";
     private const string GetMethod = "GET";
+    private const string OptionsMethod = "OPTIONS";
 
     private const string ContentTypeJson = "application/json";
     private const string ContentTypeTextPlain = "text/plain";
@@ -27,33 +32,74 @@ internal sealed class WebServer
 
     public string Urls { get; }
 
+    public string AllowOrigin { get; set; } = string.Empty;
+
     private static readonly Dictionary<string, Action<HttpListenerRequest, HttpListenerResponse, ExecutionThread>> Actions = new()
     {
+        ["/"] = HandleIndexAction,
+        ["/index.html"] = HandleIndexAction,
+        ["/api/info"] = HandleInfoApiAction,
         ["/api/query"] = HandleQueryApiAction
     };
 
     private readonly ExecutionThread _executionThread;
+    private readonly string? _password;
 
-    public WebServer(ExecutionThread executionThread, string? urls = null)
+    public WebServer(
+        ExecutionThread executionThread,
+        string? urls = null,
+        string? password = null)
     {
         _executionThread = executionThread;
-        Urls = urls ?? "http://localhost:6789/";
+        _password = password;
+        Urls = urls ?? DefaultEndpoint;
     }
 
-    public int Run()
+    public void Run()
     {
-        var listener = new HttpListener();
+        using var listener = new HttpListener();
         listener.Prefixes.Add(Urls);
+        if (!string.IsNullOrEmpty(_password))
+        {
+            listener.AuthenticationSchemes = AuthenticationSchemes.Basic;
+        }
         listener.Start();
-        Console.Out.WriteLine($"Listening on {Urls}. Use /api/query endpoint.");
+        Console.Out.WriteLine($"Listening on {Urls}. Use `POST /api/query` endpoint.");
 
         while (true)
         {
+            // Common.
             var context = listener.GetContext();
             using HttpListenerResponse response = context.Response;
             response.Headers["User-Agent"] = $"{QueryCatApplication.GetProductFullName()}";
             response.StatusCode = (int)HttpStatusCode.OK;
 
+            // CORS.
+            if (!string.IsNullOrEmpty(AllowOrigin))
+            {
+                context.Response.Headers.Add("Access-Control-Allow-Origin", "*");
+                if (context.Request.HttpMethod.Equals(OptionsMethod))
+                {
+                    context.Response.Headers.Add("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
+                    context.Response.Headers.Add("Access-Control-Allow-Headers", "Content-Type");
+                    context.Response.Headers.Add("Access-Control-Max-Age", "86400");
+                    context.Response.StatusCode = (int)HttpStatusCode.OK;
+                    continue;
+                }
+            }
+
+            // Auth.
+            if (context.User?.Identity != null)
+            {
+                var identity = (HttpListenerBasicIdentity)context.User.Identity;
+                if (identity.Password != _password)
+                {
+                    response.StatusCode = (int)HttpStatusCode.Unauthorized;
+                    continue;
+                }
+            }
+
+            // Find action by path.
             var path = context.Request.Url?.LocalPath ?? string.Empty;
             if (Actions.TryGetValue(path, out var action))
             {
@@ -79,6 +125,7 @@ internal sealed class WebServer
                 response.StatusCode = (int)HttpStatusCode.NotFound;
             }
         }
+        // ReSharper disable once FunctionNeverReturns
     }
 
     private static void HandleQueryApiAction(HttpListenerRequest request, HttpListenerResponse response,
@@ -152,7 +199,11 @@ internal sealed class WebServer
             var query = request.QueryString.Get("q");
             if (!string.IsNullOrEmpty(query))
             {
-                return query;
+                query = request.QueryString.Get("query");
+                if (!string.IsNullOrEmpty(query))
+                {
+                    return query;
+                }
             }
             throw new QueryCatException("Cannot parse query.");
         }
@@ -291,5 +342,44 @@ internal sealed class WebServer
         jsonWriter.WritePropertyName("message");
         jsonWriter.WriteStringValue(message);
         jsonWriter.WriteEndObject();
+    }
+
+    private static void HandleIndexAction(HttpListenerRequest request, HttpListenerResponse response,
+        ExecutionThread executionThread)
+    {
+        WriteResourceToStream(@"QueryCat.Cli.Infrastructure.WebServerIndex.html", response.OutputStream);
+        var sr = new StreamWriter(response.OutputStream);
+        sr.WriteLine(@"</script></body></html>");
+        sr.Flush();
+    }
+
+    private static void WriteResourceToStream(string uri, Stream outputStream)
+    {
+        // Determine path.
+        var assembly = Assembly.GetExecutingAssembly();
+
+        // Format: "{Namespace}.{Folder}.{filename}.{Extension}"
+        using Stream? stream = assembly.GetManifestResourceStream(uri);
+        if (stream != null)
+        {
+            stream.CopyTo(outputStream);
+        }
+    }
+
+    private static void HandleInfoApiAction(HttpListenerRequest request, HttpListenerResponse response,
+        ExecutionThread executionThread)
+    {
+        var localPlugins = executionThread.PluginsManager.ListAsync(localOnly: true).GetAwaiter().GetResult();
+        var dict = new Dictionary<string, object>
+        {
+            ["installedPlugins"] = localPlugins,
+            ["version"] = InfoFunctions.GetVersion(),
+            ["os"] = System.Runtime.InteropServices.RuntimeInformation.OSDescription.Trim(),
+            ["date"] = DateTime.Now,
+        };
+        JsonSerializer.Serialize(response.OutputStream, dict, new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        });
     }
 }

@@ -1,6 +1,6 @@
 namespace QueryCat.Backend.Commands.Select.Inputs;
 
-public enum JoinType
+internal enum JoinType
 {
     Left,
     Right,

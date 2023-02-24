@@ -4,8 +4,8 @@ nav:
   - 'Tutorial': tutorial.md
   - 'Concepts': concepts.md
   - 'Plugins':
-    - 'Overview': plugins.md
-    - 'Logs': plugins/logs.md
+    - 'Overview': plugins/index.md
+    - 'List': plugins/list.md
   - 'Formatters': formatters.md
   - 'Commands':
     - 'DECLARE': commands/declare.md
@@ -18,17 +18,20 @@ nav:
     - 'STDIN': input/stdin.md
     - 'Text': input/text-line.md
     - 'TSV': input/tsv.md
+    - 'XML': input/xml.md
   - 'Output':
     - 'CSV': output/csv.md
     - 'JSON': output/json.md
     - 'Text Table': output/text-table.md
     - 'TSV': output/tsv.md
+    - 'XML': output/xml.md
   - 'Functions':
     - 'Aggregate': functions/aggregate.md
     - 'Crypto': functions/crypto.md
     - 'Date and Time': functions/datetime.md
     - 'Info': functions/info.md
     - 'Input': functions/input.md
+    - 'JSON': functions/json.md
     - 'Math': functions/math.md
     - 'Misc': functions/misc.md
     - 'Output': functions/output.md
@@ -38,6 +41,12 @@ nav:
     - 'Web Server': features/web-server.md
   - 'Development':
     - 'Overview': development/index.md
+    - 'Components': development/components.md
+    - 'Functions': development/functions.md
+    - 'Simple Plugin': development/plugin-simple.md
+    - 'Advanced Plugin': development/plugin-advanced.md
   - 'Misc':
     - 'Alternative Tools': misc/alternative-tools.md
 theme: readthedocs
+markdown_extensions:
+  - pymdownx.superfences

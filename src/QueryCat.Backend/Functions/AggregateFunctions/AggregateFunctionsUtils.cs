@@ -9,11 +9,14 @@ namespace QueryCat.Backend.Functions.AggregateFunctions;
 internal static class AggregateFunctionsUtils
 {
     /// <summary>
-    ///
+    /// The method applies following logic:
+    /// 1. If next value is null - return.
+    /// 2. If state is null - set it to the next value.
+    /// 3. If state is not null - apply delegate.
     /// </summary>
     /// <param name="state">Initial state.</param>
     /// <param name="value">New value.</param>
-    /// <param name="func"></param>
+    /// <param name="func">Delegate to invoke.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     internal static void ExecuteWithNullInitialState(ref VariantValue state, in VariantValue value,
         VariantValue.OperationBinaryDelegate func)

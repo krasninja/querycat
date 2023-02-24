@@ -122,6 +122,10 @@ internal class Program
         {
             Log.Logger.Error(domainException.Message);
         }
+        else if (exception is FormatException formatException)
+        {
+            Log.Logger.Error(formatException.Message);
+        }
         else
         {
             Log.Logger.Fatal(exception, exception.Message);

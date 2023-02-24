@@ -8,7 +8,7 @@ namespace QueryCat.Backend.Relational.Iterators;
 /// The iterator combines multiple iterators with the same schema into a single sequence using
 /// union, intersect and except methods.
 /// </summary>
-internal sealed class CombineRowsIterator : IRowsIterator
+internal sealed class CombineRowsIterator : IRowsIterator, IRowsIteratorParent
 {
     private readonly IRowsIterator _leftIterator;
     private readonly IRowsIterator _rightIterator;
@@ -154,5 +154,12 @@ internal sealed class CombineRowsIterator : IRowsIterator
 
         _isRightInitialized = true;
         _currentIterator = _leftIterator;
+    }
+
+    /// <inheritdoc />
+    public IEnumerable<IRowsSchema> GetChildren()
+    {
+        yield return _leftIterator;
+        yield return _rightIterator;
     }
 }

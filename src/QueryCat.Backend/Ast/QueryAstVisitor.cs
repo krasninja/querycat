@@ -9,7 +9,7 @@ namespace QueryCat.Backend.Ast;
 /// <summary>
 /// Serialize the AST representation of query into a text string.
 /// </summary>
-public class QueryAstVisitor : AstVisitor
+internal class QueryAstVisitor : AstVisitor
 {
     private const char Space = ' ';
 

@@ -9,6 +9,9 @@ internal abstract class FuncUnit : IFuncUnit
     private IDictionary<int, object>? _objects;
 
     /// <inheritdoc />
+    public abstract DataType OutputType { get; }
+
+    /// <inheritdoc />
     public object? GetData(int index)
     {
         return _objects?[index];
@@ -17,7 +20,7 @@ internal abstract class FuncUnit : IFuncUnit
     /// <inheritdoc />
     public void SetData(int index, object obj)
     {
-        _objects ??= new SortedDictionary<int, object>();
+        _objects ??= new SortedList<int, object>();
         _objects[index] = obj;
     }
 

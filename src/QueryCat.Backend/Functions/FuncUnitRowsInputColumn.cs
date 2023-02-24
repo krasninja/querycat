@@ -8,6 +8,9 @@ internal sealed class FuncUnitRowsInputColumn : FuncUnit
     private readonly IRowsInput _rowsInput;
     private readonly int _columnIndex;
 
+    /// <inheritdoc />
+    public override DataType OutputType => _rowsInput.Columns[_columnIndex].DataType;
+
     public FuncUnitRowsInputColumn(IRowsInput rowsInput, int columnIndex)
     {
         _rowsInput = rowsInput;

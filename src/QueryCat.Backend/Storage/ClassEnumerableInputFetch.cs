@@ -174,8 +174,10 @@ public class ClassEnumerableInputFetch<TClass> where TClass : class
         return FetchPaged(async (page, limit, ct) =>
         {
             var data = await action.Invoke(page, limit, ct);
-            return (data, true);
-        });
+            var enumerable = data as ICollection<TClass> ?? data.ToList();
+            var hasMore = enumerable.Count >= limit;
+            return (enumerable, hasMore);
+        }, cancellationToken);
     }
 
     /// <summary>

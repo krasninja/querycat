@@ -30,6 +30,8 @@ public sealed class CacheRowsInput : IRowsInput
 
         public int CacheLength { get; set; }
 
+        public bool HasCacheEntries => Cache.Count > 0;
+
         public CacheEntry(CacheKey key, TimeSpan expireAt)
         {
             Key = key;
@@ -143,8 +145,7 @@ public sealed class CacheRowsInput : IRowsInput
         }
 
         // If we don't have data - this mean we can complete the cache line.
-        if (!hasData
-            || (cacheEntry.Key.Limit > 0 && _rowIndex + 1 >= cacheEntry.Key.Limit))
+        if (!hasData)
         {
             cacheEntry.Complete();
             _cacheEntries.Add(cacheEntry.Key, cacheEntry);
@@ -217,9 +218,9 @@ public sealed class CacheRowsInput : IRowsInput
     /// <inheritdoc />
     public void Reset()
     {
+        var hasReads = _currentCacheEntry != null && _rowIndex > -1;
         _rowIndex = -1;
         var newCacheKey = new CacheKey(_queryContext);
-        _rowsInput.Reset();
         if (_currentCacheEntry != null)
         {
             // If we reset but persist the same key - just go ahead using existing input.
@@ -230,6 +231,10 @@ public sealed class CacheRowsInput : IRowsInput
             }
         }
         _currentCacheEntry = CreateOrGetCacheEntry();
+        if (hasReads)
+        {
+            _rowsInput.Reset();
+        }
     }
 
     /// <inheritdoc />

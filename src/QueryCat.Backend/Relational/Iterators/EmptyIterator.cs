@@ -22,6 +22,12 @@ public sealed class EmptyIterator : IRowsIterator
         frame.AddRow(Current);
     }
 
+    public EmptyIterator(IRowsSchema schema)
+    {
+        Columns = schema.Columns;
+        Current = new Row(schema);
+    }
+
     /// <inheritdoc />
     public bool MoveNext() => false;
 

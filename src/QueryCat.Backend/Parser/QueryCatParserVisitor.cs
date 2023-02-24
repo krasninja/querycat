@@ -327,11 +327,19 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitSelectTablePrimaryIdentifier([NotNull] QueryCatParser.SelectTablePrimaryIdentifierContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="QueryCatParser.selectTableJoined"/>.
+	/// Visit a parse tree produced by the <c>SelectTableJoinedOn</c>
+	/// labeled alternative in <see cref="QueryCatParser.selectTableJoined"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitSelectTableJoined([NotNull] QueryCatParser.SelectTableJoinedContext context);
+	Result VisitSelectTableJoinedOn([NotNull] QueryCatParser.SelectTableJoinedOnContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>SelectTableJoinedUsing</c>
+	/// labeled alternative in <see cref="QueryCatParser.selectTableJoined"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSelectTableJoinedUsing([NotNull] QueryCatParser.SelectTableJoinedUsingContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="QueryCatParser.selectJoinType"/>.
 	/// </summary>

@@ -8,7 +8,7 @@ namespace QueryCat.Backend.Relational.Iterators;
 /// The iterator uses first 10 (default) rows to adjust columns lengths
 /// appropriately to the content.
 /// </summary>
-public class AdjustColumnsLengthsIterator : IRowsIterator
+internal class AdjustColumnsLengthsIterator : IRowsIterator, IRowsIteratorParent
 {
     private const int MaxRowsToAnalyze = 10;
 
@@ -79,5 +79,11 @@ public class AdjustColumnsLengthsIterator : IRowsIterator
         }
         _isInitialized = true;
         _rowsIterator.Seek(-1, CursorSeekOrigin.Begin);
+    }
+
+    /// <inheritdoc />
+    public IEnumerable<IRowsSchema> GetChildren()
+    {
+        yield return _rowsIterator;
     }
 }

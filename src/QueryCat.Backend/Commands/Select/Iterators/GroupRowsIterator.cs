@@ -6,7 +6,7 @@ using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Commands.Select.Iterators;
 
-internal sealed class GroupRowsIterator : IRowsIterator
+internal sealed class GroupRowsIterator : IRowsIterator, IRowsIteratorParent
 {
     private readonly IRowsIterator _rowsIterator;
     private bool _isInitialized;
@@ -95,6 +95,7 @@ internal sealed class GroupRowsIterator : IRowsIterator
     {
         _isInitialized = false;
         _rowsFrame.Clear();
+        _rowsIterator.Reset();
     }
 
     /// <inheritdoc />
@@ -148,9 +149,15 @@ internal sealed class GroupRowsIterator : IRowsIterator
         }
         else if (_keys == NoGroupsKeyFactory)
         {
-            // If no data at all - we produce just NULL result.
-            var nullRow = new Row(_rowsFrame);
-            _rowsFrame.AddRow(nullRow);
+            // If no data at all - we produce default result.
+            var defaultValuesRow = new Row(_rowsFrame);
+            for (var i = 0; i < _targets.Length; i++)
+            {
+                var target = _targets[i];
+                defaultValuesRow[_aggregateColumnsOffset + i] = target.AggregateFunction.GetResult(
+                    target.AggregateFunction.GetInitialState(target.ReturnType));
+            }
+            _rowsFrame.AddRow(defaultValuesRow);
         }
     }
 
@@ -163,12 +170,18 @@ internal sealed class GroupRowsIterator : IRowsIterator
         }
         foreach (var target in targets)
         {
-            var columnName = !string.IsNullOrEmpty(target.Name) ? target.Name : $"a-{target.Node.Id}";
+            var columnName = !string.IsNullOrEmpty(target.Name) ? target.Name : $"__a-{target.Node.Id}";
             var column = new Column(columnName, target.ReturnType);
             columns.Add(column);
             var info = _context.ColumnsInfoContainer.GetByColumn(column);
             info.IsAggregateKey = true;
         }
         return columns.ToArray();
+    }
+
+    /// <inheritdoc />
+    public IEnumerable<IRowsSchema> GetChildren()
+    {
+        yield return _rowsIterator;
     }
 }

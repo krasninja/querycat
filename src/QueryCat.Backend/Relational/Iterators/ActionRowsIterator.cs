@@ -6,7 +6,7 @@ namespace QueryCat.Backend.Relational.Iterators;
 /// <summary>
 /// The iterator executes custom action before and/or after the next row fetch.
 /// </summary>
-internal sealed class ActionRowsIterator : IRowsIterator
+internal sealed class ActionRowsIterator : IRowsIterator, IRowsIteratorParent
 {
     public string Message { get; set; }
 
@@ -51,5 +51,11 @@ internal sealed class ActionRowsIterator : IRowsIterator
     {
         stringBuilder.AppendRowsIteratorsWithIndent(
             $"Action (msg='{Message}' before={BeforeMoveNext != null} after={AfterMoveNext != null})", _rowsIterator);
+    }
+
+    /// <inheritdoc />
+    public IEnumerable<IRowsSchema> GetChildren()
+    {
+        yield return _rowsIterator;
     }
 }

@@ -9,7 +9,7 @@ public class QueryBenchmark
     [Benchmark]
     public void QueryUsersCsvFile()
     {
-        var executionThread = new ExecutionThread();
+        using var executionThread = new ExecutionThread();
         new ExecutionThreadBootstrapper().Bootstrap(executionThread);
         var usersFile = UsersCsvFile.GetTestUsersFilePath();
         executionThread.Run(

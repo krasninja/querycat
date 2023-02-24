@@ -44,8 +44,9 @@ public class PagingOutput : IRowsOutput
     /// <inheritdoc />
     public void Write(Row row)
     {
+        _rowsOutput.Write(row);
         if (PagingRowsCount != -1
-            && _rowsCounter++ >= PagingRowsCount
+            && ++_rowsCounter >= PagingRowsCount
             && !Console.IsInputRedirected
             && !Console.IsOutputRedirected)
         {
@@ -53,6 +54,5 @@ public class PagingOutput : IRowsOutput
             Console.WriteLine("--More--");
             Console.ReadKey();
         }
-        _rowsOutput.Write(row);
     }
 }

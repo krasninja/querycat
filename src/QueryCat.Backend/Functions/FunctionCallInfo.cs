@@ -17,8 +17,16 @@ public sealed class FunctionCallInfo
     /// <summary>
     /// Current execution thread.
     /// </summary>
-    public ExecutionThread ExecutionThread { get; internal set; }
+    public ExecutionThread ExecutionThread { get; }
 
+    /// <summary>
+    /// Window information (optional).
+    /// </summary>
+    public IWindowInfo? WindowInfo { get; internal set; }
+
+    /// <summary>
+    /// Function call arguments.
+    /// </summary>
     public VariantValueArray Arguments => _args;
 
     public static FunctionCallInfo CreateWithArguments(ExecutionThread executionThread, params VariantValue[] args)
@@ -63,7 +71,11 @@ public sealed class FunctionCallInfo
     /// <summary>
     /// Clean current arguments stack.
     /// </summary>
-    public void Reset() => _argsCursor = 0;
+    public void Reset()
+    {
+        _argsCursor = 0;
+        WindowInfo = null;
+    }
 
     public void InvokePushArgs()
     {

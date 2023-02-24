@@ -37,6 +37,15 @@ public class IndentedStringBuilder
     }
 
     /// <summary>
+    /// Append new line.
+    /// </summary>
+    public IndentedStringBuilder AppendLine()
+    {
+        _stringBuilder.AppendLine();
+        return this;
+    }
+
+    /// <summary>
     /// Increment indent.
     /// </summary>
     public IndentedStringBuilder IncreaseIndent()

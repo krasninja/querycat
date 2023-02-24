@@ -26,8 +26,8 @@ public class GetFunctionsInMarkdownTask : AsyncFrostingTask<BuildContext>
             context.Log.Error("Type is not found.");
             return Task.CompletedTask;
         }
-        var sb = new StringBuilder();
-        sb.AppendLine("| Name and Description |")
+        var sb = new StringBuilder()
+            .AppendLine("| Name and Description |")
             .AppendLine("| --- |");
         foreach (var methodInfo in type.GetMethods().OrderBy(m => m.Name))
         {
@@ -38,8 +38,9 @@ public class GetFunctionsInMarkdownTask : AsyncFrostingTask<BuildContext>
             {
                 continue;
             }
-            sb.Append("| ");
-            sb.Append(string.Join("<br />", functionsSignatures.Select(f => "`" + f.Signature + "`")));
+            sb
+                .Append("| ")
+                .Append(string.Join("<br />", functionsSignatures.Select(f => "`" + f.Signature + "`")));
             if (methodInfo.GetCustomAttribute(typeof(DescriptionAttribute), false) is DescriptionAttribute descriptionAttribute)
             {
                 sb.Append($"<br /><br /> {descriptionAttribute.Description}");

@@ -32,17 +32,7 @@ public sealed class StatementsVisitor : AstVisitor
     /// <inheritdoc />
     public override void Run(IAstNode node)
     {
-        if (node is ProgramNode programNode)
-        {
-            foreach (var statementNode in programNode.Statements)
-            {
-                statementNode.Accept(this);
-            }
-        }
-        else if (node is StatementNode statementNode)
-        {
-            statementNode.Accept(this);
-        }
+        node.Accept(this);
     }
 
     /// <inheritdoc />

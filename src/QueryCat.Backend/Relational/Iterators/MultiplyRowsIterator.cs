@@ -6,7 +6,7 @@ namespace QueryCat.Backend.Relational.Iterators;
 /// <summary>
 /// Implements algebraic multiply between two rows iterators.
 /// </summary>
-internal sealed class MultiplyRowsIterator : IRowsIterator
+internal sealed class MultiplyRowsIterator : IRowsIterator, IRowsIteratorParent
 {
     private readonly IRowsIterator _leftRowsIterator;
     private readonly IRowsIterator _rightRowsIterator;
@@ -95,5 +95,12 @@ internal sealed class MultiplyRowsIterator : IRowsIterator
     public void Explain(IndentedStringBuilder stringBuilder)
     {
         stringBuilder.AppendRowsIteratorsWithIndent("Multiply", _leftRowsIterator, _rightRowsIterator);
+    }
+
+    /// <inheritdoc />
+    public IEnumerable<IRowsSchema> GetChildren()
+    {
+        yield return _leftRowsIterator;
+        yield return _rightRowsIterator;
     }
 }

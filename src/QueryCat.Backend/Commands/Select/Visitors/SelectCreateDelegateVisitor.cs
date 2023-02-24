@@ -5,7 +5,6 @@ using QueryCat.Backend.Ast.Nodes.Function;
 using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Functions;
-using QueryCat.Backend.Relational;
 using QueryCat.Backend.Types;
 
 namespace QueryCat.Backend.Commands.Select.Visitors;
@@ -19,11 +18,20 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
 
     private readonly List<IRowsIterator> _subQueryIterators = new();
 
+    public SelectCreateDelegateVisitor(
+        ExecutionThread thread,
+        SelectCommandContext context) : this(thread, context, new SelectResolveTypesVisitor(thread, context))
+    {
+    }
+
     /// <inheritdoc />
-    public SelectCreateDelegateVisitor(ExecutionThread thread, SelectCommandContext context) : base(thread)
+    public SelectCreateDelegateVisitor(
+        ExecutionThread thread,
+        SelectCommandContext context,
+        ResolveTypesVisitor resolveTypesVisitor) : base(thread, resolveTypesVisitor)
     {
         _context = context;
-        AstTraversal.TypesToIgnore.Add(typeof(SelectQuerySpecificationNode));
+        AstTraversal.TypesToIgnore.Add(typeof(SelectQueryNode));
         AstTraversal.AcceptBeforeIgnore = true;
     }
 
@@ -51,12 +59,21 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
     /// <inheritdoc />
     public override void Visit(SelectColumnsSublistExpressionNode node)
     {
+        ResolveTypesVisitor.Visit(node);
         NodeIdFuncMap[node.Id] = NodeIdFuncMap[node.ExpressionNode.Id];
+    }
+
+    /// <inheritdoc />
+    public override void Visit(SelectColumnsSublistWindowNode node)
+    {
+        ResolveTypesVisitor.Visit(node);
+        NodeIdFuncMap[node.Id] = NodeIdFuncMap[node.AggregateFunctionNode.Id];
     }
 
     /// <inheritdoc />
     public override void Visit(SelectExistsExpressionNode node)
     {
+        ResolveTypesVisitor.Visit(node);
         var commandContext = node.SubQueryNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
         var rowsIterator = commandContext.CurrentIterator;
 
@@ -70,30 +87,34 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
             return VariantValue.FalseValue;
         }
         _subQueryIterators.Add(rowsIterator);
-        NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func);
+        NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, node.GetDataType());
     }
 
     /// <inheritdoc />
     public override void Visit(SelectHavingNode node)
     {
+        ResolveTypesVisitor.Visit(node);
         NodeIdFuncMap[node.Id] = NodeIdFuncMap[node.ExpressionNode.Id];
     }
 
     /// <inheritdoc />
     public override void Visit(SelectSearchConditionNode node)
     {
+        ResolveTypesVisitor.Visit(node);
         NodeIdFuncMap[node.Id] = NodeIdFuncMap[node.ExpressionNode.Id];
     }
 
     /// <inheritdoc />
     public override void Visit(SelectTableFunctionNode node)
     {
+        ResolveTypesVisitor.Visit(node);
         NodeIdFuncMap[node.Id] = NodeIdFuncMap[node.TableFunctionNode.Id];
     }
 
     /// <inheritdoc />
     public override void Visit(FunctionCallNode node)
     {
+        ResolveTypesVisitor.Visit(node);
         if (node.HasAttribute(AstAttributeKeys.InputAggregateIndexKey))
         {
             var index = node.GetAttribute<int>(AstAttributeKeys.InputAggregateIndexKey);
@@ -140,15 +161,12 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
             return false;
         }
 
+        node.SetAttribute(AstAttributeKeys.InputColumnKey, result.Input.Columns[result.ColumnIndex]);
+        node.SetDataType(result.Input.Columns[result.ColumnIndex].DataType);
+
         if (result.Input is IRowsIterator rowsIterator)
         {
-            var info = _context.ColumnsInfoContainer.GetByColumn(rowsIterator.Columns[result.ColumnIndex]);
-            var index = result.ColumnIndex;
-            if (info.Redirect != null)
-            {
-                index = rowsIterator.GetColumnIndex(info.Redirect);
-            }
-            NodeIdFuncMap[node.Id] = new FuncUnitRowsIteratorColumn(rowsIterator, index);
+            NodeIdFuncMap[node.Id] = new FuncUnitRowsIteratorColumn(rowsIterator, result.ColumnIndex);
             return true;
         }
         if (result.Input is IRowsInput rowsInput)
@@ -175,8 +193,8 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
             return;
         }
 
-        var commandContext = node.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
-        var rowsIterator = commandContext.CurrentIterator;
+        var rowsIterator = new SelectPlanner(ExecutionThread).CreateIterator(node, _context);
+        ResolveTypesVisitor.Visit(node);
 
         VariantValue Func()
         {
@@ -189,7 +207,7 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
         }
 
         _subQueryIterators.Add(rowsIterator);
-        NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func);
+        NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, node.GetDataType());
     }
 
     /// <inheritdoc />
@@ -200,8 +218,8 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
             return;
         }
 
-        var commandContext = node.SubQueryNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
-        var rowsIterator = commandContext.CurrentIterator;
+        var rowsIterator = new SelectPlanner(ExecutionThread).CreateIterator(node.SubQueryNode, _context);
+        ResolveTypesVisitor.Visit(node);
 
         if (rowsIterator.Columns.Length > 1)
         {
@@ -246,11 +264,11 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
         _subQueryIterators.Add(rowsIterator);
         if (node.Operator == SelectSubqueryConditionExpressionNode.QuantifierOperator.Any)
         {
-            NodeIdFuncMap[node.Id] = new FuncUnitDelegate(AnyFunc);
+            NodeIdFuncMap[node.Id] = new FuncUnitDelegate(AnyFunc, DataType.Boolean);
         }
         else if (node.Operator == SelectSubqueryConditionExpressionNode.QuantifierOperator.All)
         {
-            NodeIdFuncMap[node.Id] = new FuncUnitDelegate(AllFunc);
+            NodeIdFuncMap[node.Id] = new FuncUnitDelegate(AllFunc, DataType.Boolean);
         }
         else
         {

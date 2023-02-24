@@ -22,12 +22,23 @@ public class SamplePluginEnumerableInput : ClassEnumerableInput<TestClass>
     }
 
     private long _currentState;
+    private string? _key;
 
     /// <inheritdoc />
     protected override void Initialize(ClassRowsFrameBuilder<TestClass> builder)
     {
         Trace.WriteLine(nameof(Initialize));
         builder.AddProperty(b => b.Key);
+    }
+
+    /// <inheritdoc />
+    protected override void InitializeInputInfo(QueryContextInputInfo inputInfo)
+    {
+        Trace.WriteLine(nameof(InitializeInputInfo));
+        inputInfo.AddKeyColumn("Key",
+            isRequired: false,
+            operation: VariantValue.Operation.Equals,
+            action: value => _key = value.AsString);
     }
 
     /// <inheritdoc />

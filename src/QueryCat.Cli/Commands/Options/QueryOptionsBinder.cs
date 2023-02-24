@@ -25,6 +25,13 @@ internal class QueryOptionsBinder : BinderBase<QueryOptions>
         _detailedStatisticOption = detailedStatisticOption;
         _rowNumberOption = rowNumberOption;
         _pageSizeOption = pageSizeOption;
+        _pageSizeOption.AddValidator(result =>
+        {
+            if (result.GetValueForOption(_pageSizeOption) < -1)
+            {
+                result.ErrorMessage = "Must be greater than 0.";
+            }
+        });
         _outputStyleOption = outputStyleOption;
     }
 

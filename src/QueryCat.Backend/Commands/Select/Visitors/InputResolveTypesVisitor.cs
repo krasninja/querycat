@@ -4,17 +4,18 @@ using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Relational;
 
-namespace QueryCat.Backend.Commands.Select.Inputs;
+namespace QueryCat.Backend.Commands.Select.Visitors;
 
 internal class InputResolveTypesVisitor : ResolveTypesVisitor
 {
     private readonly IRowsInput[] _rowsInputs;
 
     /// <inheritdoc />
-    public InputResolveTypesVisitor(ExecutionThread executionThread, params IRowsInput[] rowsInputs)
+    public InputResolveTypesVisitor(ExecutionThread executionThread, IRowsInput leftInput,
+        IRowsInput rightInput)
         : base(executionThread)
     {
-        _rowsInputs = rowsInputs;
+        _rowsInputs = new[] { leftInput, rightInput };
     }
 
     /// <inheritdoc />
@@ -28,7 +29,6 @@ internal class InputResolveTypesVisitor : ResolveTypesVisitor
             {
                 node.SetAttribute(AstAttributeKeys.InputColumnKey, rowsInput.Columns[columnIndex]);
                 node.SetAttribute(AstAttributeKeys.RowsInputKey, rowsInput);
-                node.SetAttribute(AstAttributeKeys.InputColumnIndexKey, columnIndex);
                 node.SetDataType(rowsInput.Columns[columnIndex].DataType);
                 return;
             }

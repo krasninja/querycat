@@ -40,6 +40,7 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
             column,
             obj => VariantValue.CreateFromObject(obj)
         ));
+        AddOrReplaceColumn(column, obj => VariantValue.CreateFromObject(obj));
         return this;
     }
 
@@ -64,10 +65,7 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
         {
             column.Length = defaultLength.Value;
         }
-        _columns.Add((
-            column,
-            obj => VariantValue.CreateFromObject(valueGetter(obj))
-        ));
+        AddOrReplaceColumn(column, obj => VariantValue.CreateFromObject(valueGetter.Invoke(obj)));
         return this;
     }
 
@@ -102,10 +100,7 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
         {
             column.Length = defaultLength.Value;
         }
-        _columns.Add((
-            column,
-            obj => VariantValue.CreateFromObject(valueGetter.Invoke(obj))
-        ));
+        AddOrReplaceColumn(column, obj => VariantValue.CreateFromObject(valueGetter.Invoke(obj)));
         return this;
     }
 
@@ -164,6 +159,22 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
     /// <param name="obj">Object.</param>
     /// <returns>Value.</returns>
     public VariantValue GetValue(int columnIndex, TClass obj) => _columns[columnIndex].ValueGetter(obj);
+
+    private void AddOrReplaceColumn(Column column, Func<TClass, VariantValue> valueGetter)
+    {
+        var existingColumnIndex = _columns.FindIndex(c => c.Column.Name == column.Name);
+        if (existingColumnIndex > -1)
+        {
+            _columns[existingColumnIndex] = (column, valueGetter);
+        }
+        else
+        {
+            _columns.Add((
+                column,
+                obj => VariantValue.CreateFromObject(valueGetter.Invoke(obj))
+            ));
+        }
+    }
 
     private string ConvertName(string name)
     {

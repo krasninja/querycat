@@ -229,11 +229,12 @@ public static class DataTypeUtils
             string intervalType;
             var intervalString = arr[i];
 
-            // Covert short value to full (like 1h -> 1 h).
-            if (char.IsLetter(arr[i][^1]))
+            // Put a space between number and part (like 1h -> 1 h, 2sec -> 2 sec).
+            var firstLetterIndex = GetFirstLetterIndex(intervalString);
+            if (firstLetterIndex > -1)
             {
-                intervalType = arr[i][^1].ToString();
-                intervalString = arr[i][..^1];
+                intervalType = arr[i].Substring(firstLetterIndex);
+                intervalString = arr[i].Substring(0, firstLetterIndex).Trim();
             }
             // Standard case like "1 min".
             else if (i < arr.Length - 1)
@@ -268,6 +269,18 @@ public static class DataTypeUtils
         }
 
         return result;
+    }
+
+    private static int GetFirstLetterIndex(string str)
+    {
+        for (var i = 0; i < str.Length; i++)
+        {
+            if (char.IsLetter(str[i]))
+            {
+                return i;
+            }
+        }
+        return -1;
     }
 
     private static TimeSpan? ParseIntervalType(double value, string type, bool throwExceptions = true)
@@ -313,12 +326,13 @@ public static class DataTypeUtils
         {
             DataType.Null => "null",
             DataType.Void => "void",
-            DataType.Integer => "i:" + value.AsIntegerUnsafe,
+            DataType.Integer => "i:" + value.AsIntegerUnsafe.ToString(CultureInfo.InvariantCulture),
             DataType.String => "s:" + StringUtils.Quote(value.AsStringUnsafe).ToString(),
-            DataType.Boolean => "bl:" + value.AsBooleanUnsafe,
-            DataType.Float => "fl:" + value.AsFloatUnsafe,
+            DataType.Boolean => "bl:" + value.AsBooleanUnsafe.ToString(CultureInfo.InvariantCulture),
+            DataType.Float => "fl:" + value.AsFloatUnsafe.ToString("G17", CultureInfo.InvariantCulture),
+            DataType.Numeric => "n:" + value.AsNumericUnsafe.ToString(CultureInfo.InvariantCulture),
             DataType.Timestamp => $"ts:{value.AsTimestampUnsafe.Ticks}:{(int)value.AsTimestampUnsafe.Kind}",
-            DataType.Interval => "in:" + value.AsInterval.Ticks,
+            DataType.Interval => "in:" + value.AsInterval.Ticks.ToString(CultureInfo.InvariantCulture),
             _ => string.Empty
         };
 
@@ -339,7 +353,7 @@ public static class DataTypeUtils
         var value = source[(colonIndex + 1)..];
         if (type == "i")
         {
-            return new VariantValue(int.Parse(value));
+            return new VariantValue(int.Parse(value, CultureInfo.InvariantCulture));
         }
         if (type == "s")
         {
@@ -351,17 +365,21 @@ public static class DataTypeUtils
         }
         if (type == "fl")
         {
-            return new VariantValue(float.Parse(value));
+            return new VariantValue(float.Parse(value, CultureInfo.InvariantCulture));
+        }
+        if (type == "n")
+        {
+            return new VariantValue(decimal.Parse(value, CultureInfo.InvariantCulture));
         }
         if (type == "ts")
         {
-            var ticks = long.Parse(value[..^2]);
-            var kind = (DateTimeKind)int.Parse(value[^1..]);
+            var ticks = long.Parse(value[..^2], CultureInfo.InvariantCulture);
+            var kind = (DateTimeKind)int.Parse(value[^1..], CultureInfo.InvariantCulture);
             return new VariantValue(new DateTime(ticks, kind));
         }
         if (type == "in")
         {
-            var ticks = long.Parse(value);
+            var ticks = long.Parse(value, CultureInfo.InvariantCulture);
             return new VariantValue(new TimeSpan(ticks));
         }
 

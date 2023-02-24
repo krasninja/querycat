@@ -7,7 +7,7 @@ using QueryCat.Backend.Utils;
 
 namespace QueryCat.IntegrationTests.Storage;
 
-public class ProxyRowsInput : IRowsInput
+public class ProxyRowsInput : IRowsInput, IRowsIteratorParent
 {
     private IRowsInput _rowsInput;
     private QueryContext? _queryContext;
@@ -55,5 +55,11 @@ public class ProxyRowsInput : IRowsInput
         {
             _queryContext.InputInfo.SetInputArguments(inputArguments);
         }
+    }
+
+    /// <inheritdoc />
+    public IEnumerable<IRowsSchema> GetChildren()
+    {
+        yield return _rowsInput;
     }
 }

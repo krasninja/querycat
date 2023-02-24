@@ -5,7 +5,7 @@ namespace QueryCat.Backend.Providers;
 /// <summary>
 /// Providers register.
 /// </summary>
-public static class Registration
+internal static class Registration
 {
     public static void RegisterFunctions(FunctionsManager functionsManager)
     {

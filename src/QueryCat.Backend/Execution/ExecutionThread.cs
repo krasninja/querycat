@@ -22,7 +22,7 @@ public class ExecutionThread : IExecutionThread
     internal const string BootstrapFileName = "rc.sql";
 
     private readonly StatementsVisitor _statementsVisitor;
-    private bool _isRunning;
+    private readonly object _objLock = new();
 
     internal PersistentInputConfigStorage InputConfigStorage { get; }
 
@@ -130,7 +130,22 @@ public class ExecutionThread : IExecutionThread
 
         // Set first executing statement and run.
         ExecutingStatement = programNode.Statements.FirstOrDefault();
-        return RunInternal();
+
+        // Run with lock and timer.
+        lock (_objLock)
+        {
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
+            try
+            {
+                return RunInternal();
+            }
+            finally
+            {
+                stopwatch.Stop();
+                Statistic.ExecutionTime = stopwatch.Elapsed;
+            }
+        }
     }
 
     /// <summary>
@@ -138,14 +153,6 @@ public class ExecutionThread : IExecutionThread
     /// </summary>
     private VariantValue RunInternal()
     {
-        if (_isRunning)
-        {
-            throw new InvalidOperationException("The execution thread is already running.");
-        }
-        _isRunning = true;
-
-        var stopwatch = new Stopwatch();
-        stopwatch.Start();
         if (Options.UseConfig)
         {
             InputConfigStorage.LoadAsync().GetAwaiter().GetResult();
@@ -192,9 +199,7 @@ public class ExecutionThread : IExecutionThread
             InputConfigStorage.SaveAsync().GetAwaiter().GetResult();
         }
         ExecutingStatement = null;
-        stopwatch.Stop();
-        Statistic.ExecutionTime = stopwatch.Elapsed;
-        _isRunning = false;
+
         return LastResult;
     }
 
@@ -217,7 +222,7 @@ public class ExecutionThread : IExecutionThread
     /// <param name="functionDelegate">Function delegate instance.</param>
     /// <param name="args">Arguments.</param>
     /// <returns>Return value.</returns>
-    public VariantValue RunFunction(FunctionsManager.FunctionDelegate functionDelegate, params object[] args)
+    public VariantValue RunFunction(FunctionDelegate functionDelegate, params object[] args)
     {
         var functionCallInfo = FunctionCallInfo.CreateWithArguments(this, args);
         return functionDelegate.Invoke(functionCallInfo);
@@ -264,5 +269,20 @@ public class ExecutionThread : IExecutionThread
         {
             Run(File.ReadAllText(rcFile));
         }
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            PluginsManager.Dispose();
+        }
+    }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
     }
 }

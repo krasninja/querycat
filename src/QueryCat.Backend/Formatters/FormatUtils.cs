@@ -24,6 +24,7 @@ public static class FormatUtils
             }
         }),
         [".json"] = () => new JsonFormatter(),
+        [".xml"] = () => new XmlFormatter(),
     };
 
     public static IRowsFormatter? GetFormatterByExtension(string extension)
@@ -43,6 +44,9 @@ public static class FormatUtils
         ["application/x-csv"] = () => new DsvFormatter(','),
         ["text/tab-separated-values"] = () => new DsvFormatter('\t'),
         ["application/json"] = () => new JsonFormatter(),
+        ["application/xml"] = () => new XmlFormatter(),
+        ["application/xhtml+xml"] = () => new XmlFormatter(),
+        ["application/soap+xml"] = () => new XmlFormatter(),
     };
 
     public static IRowsFormatter? GetFormatterByContentType(string contentType)

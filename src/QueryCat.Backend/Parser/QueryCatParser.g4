@@ -11,7 +11,7 @@ options {
  * Program statements.
  */
 
-program: statement (SEMICOLON statement)* SEMICOLON? EOF;
+program: SEMICOLON* statement (SEMICOLON statement)* SEMICOLON* EOF;
 
 statement
     : selectStatement # StatementSelectExpression
@@ -61,7 +61,7 @@ selectOrderByClause: ORDER BY selectSortSpecification (COMMA selectSortSpecifica
 selectSortSpecification: expression (ASC | DESC)? ((NULLS FIRST) | (NULLS LAST))?;
 
 // Select query.
-selectAlias: AS (name=(IDENTIFIER | STRING_LITERAL));
+selectAlias: AS? (name=(IDENTIFIER | STRING_LITERAL));
 selectQueryExpression
     : selectWithClause?
       SELECT
@@ -114,7 +114,7 @@ selectWithColumnList: name=identifierChain (COMMA name=identifierChain)*;
 // Columns.
 selectSublist
     : STAR # SelectSublistAll
-    | functionCall OVER (windowName=IDENTIFIER | selectWindowSpecification) # SelectSublistWindow
+    | functionCall OVER (windowName=IDENTIFIER | selectWindowSpecification) selectAlias? # SelectSublistWindow
     | expression selectAlias? # SelectSublistExpression
     ;
 
@@ -135,9 +135,12 @@ selectTablePrimary
     | '-' # SelectTablePrimaryStdin
     | uri=STRING_LITERAL (FORMAT functionCall)? selectAlias? # SelectTablePrimaryWithFormat
     | '(' selectQueryExpression ')' selectAlias? # SelectTablePrimarySubquery
-    | name=IDENTIFIER # SelectTablePrimaryIdentifier
+    | name=IDENTIFIER selectAlias? # SelectTablePrimaryIdentifier
     ;
-selectTableJoined: selectJoinType? JOIN right=selectTablePrimary ON condition=expression;
+selectTableJoined
+    : selectJoinType? JOIN right=selectTablePrimary ON condition=expression # SelectTableJoinedOn
+    | selectJoinType? JOIN right=selectTablePrimary USING '(' IDENTIFIER (COMMA IDENTIFIER)* ')' # SelectTableJoinedUsing
+    ;
 selectJoinType: INNER | (LEFT | RIGHT | FULL) OUTER?;
 
 // Group, Having.
@@ -198,7 +201,11 @@ standardFunction
 
 dateTimeField
     : YEAR
+    | DOY
+    | DAYOFYEAR
     | MONTH
+    | DOW
+    | WEEKDAY
     | DAY
     | HOUR
     | MINUTE

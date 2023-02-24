@@ -8,7 +8,7 @@ namespace QueryCat.Backend.Storage;
 /// <summary>
 /// Create input from rows iterator.
 /// </summary>
-public sealed class RowsIteratorInput : IRowsInput
+public sealed class RowsIteratorInput : IRowsInput, IRowsIteratorParent
 {
     private readonly IRowsIterator _rowsIterator;
     private QueryContext? _queryContext;
@@ -68,5 +68,11 @@ public sealed class RowsIteratorInput : IRowsInput
     public void Explain(IndentedStringBuilder stringBuilder)
     {
         stringBuilder.AppendRowsIteratorsWithIndent("Iterator input", _rowsIterator);
+    }
+
+    /// <inheritdoc />
+    public IEnumerable<IRowsSchema> GetChildren()
+    {
+        yield return _rowsIterator;
     }
 }

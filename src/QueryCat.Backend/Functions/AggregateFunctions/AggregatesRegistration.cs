@@ -3,7 +3,7 @@ namespace QueryCat.Backend.Functions.AggregateFunctions;
 /// <summary>
 /// Aggregates functions registration module.
 /// </summary>
-public static class AggregatesRegistration
+internal static class AggregatesRegistration
 {
     public static void RegisterFunctions(FunctionsManager functionsManager)
     {
@@ -12,5 +12,6 @@ public static class AggregatesRegistration
         functionsManager.RegisterAggregate<MaxAggregateFunction>();
         functionsManager.RegisterAggregate<MinAggregateFunction>();
         functionsManager.RegisterAggregate<SumAggregateFunction>();
+        functionsManager.RegisterAggregate<RowNumberAggregateFunction>();
     }
 }

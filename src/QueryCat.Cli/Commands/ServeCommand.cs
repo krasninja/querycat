@@ -12,18 +12,30 @@ internal class ServeCommand : BaseCommand
     public ServeCommand() : base("serve", "Run simple HTTP server.")
     {
         var urlsOption = new Option<string>("--url", description: "Endpoint to serve on.");
+        var allowOriginOption = new Option<string>("--allow-origin", description: "Enables CORS for the specified origin.");
+        var passwordOption = new Option<string>("--password", description: "Basic authentication password.");
 
-        this.AddOption(urlsOption);
-        this.SetHandler((queryOptions, urls) =>
+        AddOption(urlsOption);
+        AddOption(allowOriginOption);
+        AddOption(passwordOption);
+        this.SetHandler((queryOptions, urls, allowOrigin, password) =>
         {
-            var executionThread = queryOptions.CreateExecutionThread(new ExecutionOptions
+            using var executionThread = queryOptions.CreateExecutionThread(new ExecutionOptions
             {
                 PagingSize = ExecutionOptions.NoLimit,
-                AddRowNumberColumn = false,
+                AddRowNumberColumn = true,
                 DefaultRowsOutput = NullRowsOutput.Instance,
             });
-            var webServer = new WebServer(executionThread, urls);
+            var webServer = new WebServer(executionThread, urls, password);
+            if (!string.IsNullOrEmpty(allowOrigin))
+            {
+                webServer.AllowOrigin = allowOrigin;
+            }
             webServer.Run();
-        }, new ApplicationOptionsBinder(LogLevelOption, PluginDirectoriesOption), urlsOption);
+        },
+            new ApplicationOptionsBinder(LogLevelOption, PluginDirectoriesOption),
+            urlsOption,
+            allowOriginOption,
+            passwordOption);
     }
 }

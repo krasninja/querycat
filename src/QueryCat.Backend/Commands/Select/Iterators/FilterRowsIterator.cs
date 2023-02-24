@@ -8,7 +8,7 @@ namespace QueryCat.Backend.Commands.Select.Iterators;
 /// <summary>
 /// The iterator filters the row data by provided delegate.
 /// </summary>
-internal sealed class FilterRowsIterator : IRowsIterator
+internal sealed class FilterRowsIterator : IRowsIterator, IRowsIteratorParent
 {
     private readonly IRowsIterator _rowsIterator;
     private readonly IFuncUnit _predicate;
@@ -51,5 +51,11 @@ internal sealed class FilterRowsIterator : IRowsIterator
     {
         stringBuilder.AppendRowsIteratorsWithIndent("Filter", _rowsIterator)
             .AppendSubQueriesWithIndent(_predicate);
+    }
+
+    /// <inheritdoc />
+    public IEnumerable<IRowsSchema> GetChildren()
+    {
+        yield return _rowsIterator;
     }
 }

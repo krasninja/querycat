@@ -16,7 +16,8 @@ internal sealed class SelectResolveTypesVisitor : ResolveTypesVisitor
     {
         _context = context;
         AstTraversal.TypesToIgnore.Add(typeof(SelectQueryNode));
-        AstTraversal.TypesToIgnore.Add(typeof(SelectTableJoinedNode));
+        AstTraversal.TypesToIgnore.Add(typeof(SelectTableJoinedOnNode));
+        AstTraversal.TypesToIgnore.Add(typeof(SelectTableJoinedUsingNode));
         AstTraversal.AcceptBeforeIgnore = true;
     }
 
@@ -42,6 +43,12 @@ internal sealed class SelectResolveTypesVisitor : ResolveTypesVisitor
         node.ExpressionNode.CopyTo<DataType>(AstAttributeKeys.TypeKey, node);
     }
 
+    /// <inheritdoc />
+    public override void Visit(SelectColumnsSublistWindowNode node)
+    {
+        node.AggregateFunctionNode.CopyTo<DataType>(AstAttributeKeys.TypeKey, node);
+    }
+
     private bool VisitIdentifierNode(IAstNode node, string name, string source)
     {
         if (!_context.TryGetInputSourceByName(name, source, out var result)
@@ -51,7 +58,6 @@ internal sealed class SelectResolveTypesVisitor : ResolveTypesVisitor
         }
 
         node.SetAttribute(AstAttributeKeys.InputColumnKey, result.Input.Columns[result.ColumnIndex]);
-        node.SetAttribute(AstAttributeKeys.InputColumnIndexKey, result.ColumnIndex);
         node.SetDataType(result.Input.Columns[result.ColumnIndex].DataType);
         return true;
     }

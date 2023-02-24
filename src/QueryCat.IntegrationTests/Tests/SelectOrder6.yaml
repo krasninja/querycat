@@ -1,0 +1,8 @@
+expected: |
+  ca
+  ba
+  aa
+query: |
+  select name || 'a' as 'test'
+  from 'Table1.csv'
+  order by test desc;

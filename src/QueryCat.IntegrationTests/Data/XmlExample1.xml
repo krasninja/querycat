@@ -1,0 +1,28 @@
+<?xml version="1.0" ?>
+<World>
+    <!-- The example is taken from https://documentation.help/Log-Parser/XMLI_Fields.htm -->
+
+    <Continent ContinentName='North America'>
+
+        <Country CountryName='USA'>
+            <City>Redmond</City>
+            <City>San Francisco</City>
+        </Country>
+
+        <Country CountryName='Canada'>
+            <City> Vancouver </City>
+            <City> Toronto </City>
+        </Country>
+
+    </Continent>
+
+    <Continent ContinentName='Europe'>
+
+        <Country CountryName="Italia">
+            <City Population='3350000'> Roma </City>
+            <City> Milano </City>
+        </Country>
+
+    </Continent>
+
+</World>

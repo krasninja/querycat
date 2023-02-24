@@ -1,6 +1,7 @@
 using System.IO;
 using System.Threading.Tasks;
 using Cake.Common.IO;
+using Cake.Common.Tools.DotNet;
 using Cake.Compression;
 using Cake.Frosting;
 
@@ -13,7 +14,7 @@ public class PublishAll : AsyncFrostingTask<BuildContext>
     private const int ZipLevel = 9;
 
     /// <inheritdoc />
-    public override async Task RunAsync(BuildContext context)
+    public override Task RunAsync(BuildContext context)
     {
         var root = Path.Combine(context.OutputDirectory);
         const string licenseFileName = "LICENSE.txt";
@@ -21,7 +22,11 @@ public class PublishAll : AsyncFrostingTask<BuildContext>
             Path.Combine(context.OutputDirectory, licenseFileName));
 
         // Linux.
-        await new BuildLinuxTask().RunAsync(context);
+        context.DotNetPublish(context.ConsoleAppProjectDirectory, new PublishGeneralSettings(context)
+        {
+            OutputDirectory = context.OutputDirectory,
+            Runtime = DotNetConstants.RidLinuxX64,
+        });
         context.GZipCompress(
             root,
             Path.Combine(context.OutputDirectory, $"qcat-{context.Version}-{DotNetConstants.RidLinuxX64}.tar.gz"),
@@ -32,9 +37,28 @@ public class PublishAll : AsyncFrostingTask<BuildContext>
                 Path.Combine(context.OutputDirectory, licenseFileName),
             },
             level: ZipLevel);
+        context.DotNetPublish(context.ConsoleAppProjectDirectory, new PublishGeneralSettings(context)
+        {
+            OutputDirectory = context.OutputDirectory,
+            Runtime = DotNetConstants.RidLinuxArm64,
+        });
+        context.GZipCompress(
+            root,
+            Path.Combine(context.OutputDirectory, $"qcat-{context.Version}-{DotNetConstants.RidLinuxArm64}.tar.gz"),
+            new[]
+            {
+                Path.Combine(context.OutputDirectory, "qcat"),
+                Path.Combine(context.OutputDirectory, "qcat.pdb"),
+                Path.Combine(context.OutputDirectory, licenseFileName),
+            },
+            level: ZipLevel);
 
         // Windows.
-        await new BuildWindowsTask().RunAsync(context);
+        context.DotNetPublish(context.ConsoleAppProjectDirectory, new PublishGeneralSettings(context)
+        {
+            OutputDirectory = context.OutputDirectory,
+            Runtime = DotNetConstants.RidWindowsX64,
+        });
         context.GZipCompress(
             root,
             Path.Combine(context.OutputDirectory, $"qcat-{context.Version}-{DotNetConstants.RidWindowsX64}.tar.gz"),
@@ -45,5 +69,39 @@ public class PublishAll : AsyncFrostingTask<BuildContext>
                 Path.Combine(context.OutputDirectory, licenseFileName),
             },
             level: ZipLevel);
+
+        // mac OS.
+        context.DotNetPublish(context.ConsoleAppProjectDirectory, new PublishGeneralSettings(context)
+        {
+            OutputDirectory = context.OutputDirectory,
+            Runtime = DotNetConstants.RidMacOSX64,
+        });
+        context.GZipCompress(
+            root,
+            Path.Combine(context.OutputDirectory, $"qcat-{context.Version}-{DotNetConstants.RidMacOSX64}.tar.gz"),
+            new[]
+            {
+                Path.Combine(context.OutputDirectory, "qcat"),
+                Path.Combine(context.OutputDirectory, "qcat.pdb"),
+                Path.Combine(context.OutputDirectory, licenseFileName),
+            },
+            level: ZipLevel);
+        context.DotNetPublish(context.ConsoleAppProjectDirectory, new PublishGeneralSettings(context)
+        {
+            OutputDirectory = context.OutputDirectory,
+            Runtime = DotNetConstants.RidMacOSXArm64,
+        });
+        context.GZipCompress(
+            root,
+            Path.Combine(context.OutputDirectory, $"qcat-{context.Version}-{DotNetConstants.RidMacOSXArm64}.tar.gz"),
+            new[]
+            {
+                Path.Combine(context.OutputDirectory, "qcat"),
+                Path.Combine(context.OutputDirectory, "qcat.pdb"),
+                Path.Combine(context.OutputDirectory, licenseFileName),
+            },
+            level: ZipLevel);
+
+        return Task.CompletedTask;
     }
 }

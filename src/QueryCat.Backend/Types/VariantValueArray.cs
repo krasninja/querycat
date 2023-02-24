@@ -1,15 +1,16 @@
 using System.Text;
+using QueryCat.Backend.Functions;
 
 namespace QueryCat.Backend.Types;
 
 /// <summary>
 /// Array of <see cref="VariantValue" /> with Equals implementation.
 /// </summary>
-public class VariantValueArray
+public sealed class VariantValueArray
 {
     private VariantValue[] _values;
 
-    public static VariantValueArray Empty { get; } = new();
+    public static VariantValueArray Empty { get; } = new(Array.Empty<VariantValue>());
 
     /// <summary>
     /// Values array.
@@ -19,6 +20,14 @@ public class VariantValueArray
     public VariantValueArray(params VariantValue[] values)
     {
         _values = values;
+    }
+
+    public VariantValueArray(params IFuncUnit[] functions) : this(size: functions.Length)
+    {
+        for (var i = 0; i < functions.Length; i++)
+        {
+            _values[i] = functions[i].Invoke();
+        }
     }
 
     public VariantValueArray(IEnumerable<VariantValue> values) : this(values.ToArray())

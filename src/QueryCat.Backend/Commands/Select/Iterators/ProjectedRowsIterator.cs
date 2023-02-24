@@ -9,7 +9,7 @@ namespace QueryCat.Backend.Commands.Select.Iterators;
 /// The iterator implements relational projection from
 /// one rows set to another one.
 /// </summary>
-internal sealed class ProjectedRowsIterator : IRowsIterator
+internal sealed class ProjectedRowsIterator : IRowsIterator, IRowsIteratorParent
 {
     private readonly IRowsIterator _rowsIterator;
     private Row _currentRow;
@@ -63,5 +63,11 @@ internal sealed class ProjectedRowsIterator : IRowsIterator
     {
         stringBuilder.AppendRowsIteratorsWithIndent($"Projection (columns={_columns.Length})", _rowsIterator)
             .AppendSubQueriesWithIndent(_funcUnits);
+    }
+
+    /// <inheritdoc />
+    public IEnumerable<IRowsSchema> GetChildren()
+    {
+        yield return _rowsIterator;
     }
 }

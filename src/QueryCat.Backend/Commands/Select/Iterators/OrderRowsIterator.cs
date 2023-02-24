@@ -1,8 +1,6 @@
 using QueryCat.Backend.Abstractions;
-using QueryCat.Backend.Functions;
 using QueryCat.Backend.Indexes;
 using QueryCat.Backend.Relational;
-using QueryCat.Backend.Types;
 using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Commands.Select.Iterators;
@@ -10,10 +8,10 @@ namespace QueryCat.Backend.Commands.Select.Iterators;
 /// <summary>
 /// Order iterator.
 /// </summary>
-internal sealed class OrderRowsIterator : IRowsIterator
+internal sealed class OrderRowsIterator : IRowsIterator, IRowsIteratorParent
 {
     private readonly IRowsIterator _rowsIterator;
-    private readonly OrderBy[] _orders;
+    private readonly OrderByData[] _orders;
     private readonly OrderColumnsIndex _orderIndex;
     private readonly ICursorRowsIterator _orderIndexIterator;
     private readonly RowsFrame _rowsFrame;
@@ -21,8 +19,6 @@ internal sealed class OrderRowsIterator : IRowsIterator
     private readonly RowsFrame _orderRowsFrame;
 
     private bool _isInitialized;
-
-    internal record OrderBy(IFuncUnit Func, OrderDirection Direction, NullOrder NullOrder, DataType DataType);
 
     /// <inheritdoc />
     public Column[] Columns => _rowsIterator.Columns;
@@ -32,21 +28,21 @@ internal sealed class OrderRowsIterator : IRowsIterator
 
     internal RowsFrame RowsFrame => _rowsFrame;
 
-    public OrderRowsIterator(IRowsIterator rowsIterator, OrderBy[] orders)
+    public OrderRowsIterator(IRowsIterator rowsIterator, OrderByData[] orders)
     {
         _rowsIterator = rowsIterator;
         _orders = orders;
         _rowsFrame = new RowsFrame(_rowsIterator.Columns);
         _rowsFrameIterator = _rowsFrame.GetIterator();
 
-        var orderColumns = orders.Select((i, index) => new Column($"__order{index}", i.DataType));
+        var orderColumns = orders.Select((i, index) => new Column($"__order{index}", i.Func.OutputType));
         _orderRowsFrame = new RowsFrame(orderColumns.ToArray());
 
         _orderIndex = new OrderColumnsIndex(
             _orderRowsFrame.GetIterator(),
-            orders.Select(o => o.Direction).ToArray(),
-            orders.Select(o => o.NullOrder).ToArray(),
-            orders.Select((_, index) => index).ToArray()
+            orders.Select(
+                (o, index) => new OrderColumnData(index, o.Direction, o.NullOrder))
+                .ToArray()
         );
         _orderIndexIterator = (ICursorRowsIterator)_orderIndex.GetOrderIterator();
     }
@@ -99,5 +95,11 @@ internal sealed class OrderRowsIterator : IRowsIterator
     public void Explain(IndentedStringBuilder stringBuilder)
     {
         stringBuilder.AppendRowsIteratorsWithIndent("Order", _rowsIterator);
+    }
+
+    /// <inheritdoc />
+    public IEnumerable<IRowsSchema> GetChildren()
+    {
+        yield return _rowsIterator;
     }
 }

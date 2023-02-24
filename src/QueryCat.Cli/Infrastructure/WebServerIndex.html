@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <title>QueryCat Console</title>
+  <meta charset="UTF-8" />
+  <meta name="description" content="QueryCat web console" />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <link href="https://fonts.googleapis.com/css?family=Material+Icons" rel="stylesheet" type="text/css">
+  <link href="https://cdn.jsdelivr.net/npm/quasar@2.11/dist/quasar.prod.css" rel="stylesheet" type="text/css">
+
+  <style>
+    .sticky-header-table {
+      max-height: 700px;
+    }
+    .sticky-header-table thead tr:first-child th {
+      background-color: white;
+    }
+    .sticky-header-table thead tr th {
+      position: sticky;
+      z-index: 1;
+      user-select: text;
+    }
+    .sticky-header-table thead tr:first-child th {
+      top: 0;
+    }
+    .sticky-header-table .q-table--loading thead tr:last-child th {
+      top: 48px;
+    }
+    .query-editor {
+      font-family: monospace;
+      height: calc(100% - 40px);
+      outline: 0 none transparent;
+    }
+    ul {
+      padding-left: 1em;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="q-app">
+    <q-bar class="bg-primary text-white">
+      <div>QueryCat Console</div>
+    </q-bar>
+
+    <q-tabs dense no-caps align="left" class="bg-secondary text-white">
+      <q-route-tab to="/" label="Query"></q-route-tab>
+      <q-route-tab to="/info" label="Info"></q-route-tab>
+    </q-tabs>
+
+    <router-view v-slot="{ Component }">
+      <keep-alive>
+        <component :is="Component" />
+      </keep-alive>
+    </router-view>
+  </div>
+
+  <!-- QueryPage -->
+  <template id="query-page">
+    <q-splitter
+      v-model="splitterModel"
+      horizontal
+      style="height: calc(100vh - 75px);">
+      <template v-slot:before>
+        <form
+          @keydown.ctrl.enter.prevent="runQuery"
+          @submit.prevent="runQuery"
+          class="full-height">
+          <div>
+            <q-btn type="submit" label="Run" size="sm" color="primary" class="q-ma-xs" icon="send" />
+          </div>
+          <textarea
+            v-model="query"
+            class="full-width query-editor"
+            spellcheck="false"
+            autofocus>
+          </textarea>
+        </form>
+      </template>
+      <template v-slot:after>
+        <q-table
+          :rows="rows"
+          :columns="columns"
+          class="sticky-header-table full-height"
+          no-data-label="No data."
+          dense flat square bordered hide-no-data
+          separator="vertical"
+          row-key="row_number"
+          virtual-scroll
+          :filter="filter"
+          v-model:pagination="pagination"
+          :rows-per-page-options="[0]"
+          :virtual-scroll-sticky-size-start="48">
+          <template v-slot:top-right>
+            <q-input dense debounce="300" v-model="filter" placeholder="Search">
+              <template v-slot:append>
+                <q-icon name="search" />
+              </template>
+            </q-input>
+          </template>
+        </q-table>
+      </template>
+    </q-splitter>
+  </template>
+
+  <!-- InfoPage -->
+  <template id="info-page">
+    <div class="q-pa-md">
+      <div class="row">
+        <div class="col-2 text-bold">Version</div>
+        <div class="col-10" v-html="version"></div>
+      </div>
+      <div class="row">
+        <div class="col-2 text-bold">OS</div>
+        <div class="col-10" v-html="os"></div>
+      </div>
+      <div class="row">
+        <div class="col-2 text-bold">Installed plugins</div>
+        <div class="col-10">
+          <ul>
+            <li v-for="plugin in installedPlugins" :key="plugin.name">
+              {{ plugin.name }}
+              <code>({{ plugin.uri }})</code>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/quasar@2.11/dist/quasar.umd.prod.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios@1.2/dist/axios.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vue-router@4.1/dist/vue-router.global.min.js"></script>
+
+  <script>
+    /*
+     * QueryPage.
+     */
+    const queryPage = {
+      template: document.querySelector('#query-page'),
+      data() {
+        return {
+          query: Vue.ref(''),
+          rows: [],
+          filter: Vue.ref(''),
+          columns: [],
+          schema: []
+        }
+      },
+      methods: {
+        runQuery: function() {
+          const self = this;
+          axios({
+            method: 'post',
+            url: window.baseUrl + 'api/query',
+            data: {
+              query: self.query
+            }
+          })
+          .then(function(response) {
+            self.columns = response.data.schema.map(function(col) {
+              return {
+                label: col.name,
+                name: col.name,
+                field: col.name,
+                align: 'left',
+                sortable: true,
+                headerStyle: 'font-weight: bold'
+              }
+            });
+            self.rows = response.data.data;
+            localStorage.setItem('lastQuery', self.query);
+          });
+        }
+      },
+      setup: function() {
+        return {
+          pagination: Vue.ref({
+            rowsPerPage: 0
+          }),
+          splitterModel: Vue.ref(40)
+        }
+      },
+      mounted: function() {
+        this.query = localStorage.getItem('lastQuery');
+        if (location.protocol !== 'https:') {
+          Quasar.Notify.create({
+            type: 'warning',
+            message: 'You are using insecured HTTP connection!'
+          });
+        }
+      }
+    }
+
+    /*
+     * InfoPage.
+     */
+    const infoPage = {
+      template: document.querySelector('#info-page'),
+      data: function() {
+        return {
+          version: '',
+          os: '',
+          installedPlugins: ''
+        }
+      },
+      mounted: function() {
+        const self = this;
+        axios({
+            url: window.baseUrl + 'api/info'
+        })
+        .then(function(response) {
+          self.version = response.data.version;
+          self.os = response.data.os;
+          self.installedPlugins = response.data.installedPlugins;
+        });
+      }
+    }
+
+    /*
+     * Initialize the app.
+     */
+    const router = VueRouter.createRouter({
+      history: VueRouter.createWebHashHistory(),
+      routes: [
+        { path: '/', component: queryPage },
+        { path: '/info', component: infoPage }
+      ]
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+      axios.interceptors.response.use(
+        function(response) {
+          return response;
+        },
+        function(error) {
+          var errorMessage = error.message;
+          if (error.response && error.response.data && error.response.data.message)
+          {
+            errorMessage = error.response.data.message;
+          }
+          Quasar.Notify.create({
+            type: 'negative',
+            message: errorMessage
+          });
+          return Promise.reject(error);
+      });
+
+      const app = Vue.createApp();
+      app.use(Quasar, {
+        config: {
+          notify: {},
+          brand: {
+            primary: '#7f7f7f',
+            secondary: '#999999',
+            accent: '#9C27B0',
+
+            dark: '#1d1d1d',
+            'dark-page': '#121212',
+
+            positive: '#21BA45',
+            negative: '#C10015',
+            info: '#31CCEC',
+            warning: '#F2C037'
+          }
+        }
+      });
+      app.use(router);
+      app.mount('#q-app');
+    });
+  </script>
+  <script>
+    window.baseUrl = '';
+    <!-- There should not be any content below since footer is auto generated by QueryCat backend web server. -->

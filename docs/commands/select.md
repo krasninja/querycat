@@ -5,7 +5,7 @@ Executes the SQL query against input. If not output is specified (with `INTO` cl
 ## Syntax
 
 ```
-[ WITH with_query [, ...] ]
+[ WITH [ RECURSIVE ] with_query [, ...] ]
 SELECT [ ALL | DISTINCT [ ON ( expression [, ...] ) ] ] [ TOP number ]
     [ * | expression AS [ alias ] | column AS [ alias ] [, ...] ]
 [ INTO [ function : IRowsOutput ] ]
@@ -13,6 +13,7 @@ SELECT [ ALL | DISTINCT [ ON ( expression [, ...] ) ] ] [ TOP number ]
 [ WHERE search_condition [, ...] ]
 [ GROUP BY [ expression ] [, ...] ]
 [ HAVING aggregate_search_condition [, ...] ]
+[ WINDOW window_name AS ( window_definition ) [, ...] ]
 [ { UNION | INTERSECT | EXCEPT } [ ALL | DISTINCT ] select ]
 [ ORDER BY [ expression [ ASC | DESC ] ] [ NULLS { FIRST | LAST } ] ]
 [ LIMIT number ]
@@ -22,7 +23,7 @@ SELECT [ ALL | DISTINCT [ ON ( expression [, ...] ) ] ] [ TOP number ]
 
 ## WITH
 
-The WITH clause allows you to specify one or more subqueries that can be referenced by name in the primary query.
+The WITH clause allows you to specify one or more subqueries that can be referenced by name in the primary query. The recursive syntax is also supported.
 
 ## SELECT
 
@@ -78,6 +79,10 @@ The HAVING clause is used to specify a boolean condition that must be satisfied 
 ```sql
 SELECT state, min(population) FROM 'https://tinyurl.com/24buj7mb' GROUP BY state HAVING max(population) > 7000000
 ```
+
+## WINDOW
+
+A window function performs a calculation across a set of table rows that are somehow related to the current row. Right now, only PARTITION BY and ORDER clauses are supported.
 
 ## UNION
 

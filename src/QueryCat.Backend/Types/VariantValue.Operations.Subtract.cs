@@ -68,7 +68,29 @@ public partial struct VariantValue
 
     internal static BinaryFunction GetSubtractDelegate(DataType leftType, DataType rightType)
     {
-        var negativeFunction = GetNegationDelegate(leftType);
+        BinaryFunction func = leftType switch
+        {
+            DataType.Timestamp => rightType switch
+            {
+                DataType.Timestamp => (in VariantValue left, in VariantValue right) =>
+                {
+                    if (left.IsNull || right.IsNull)
+                    {
+                        return Null;
+                    }
+                    return new VariantValue(left.AsTimestampUnsafe - right.AsTimestampUnsafe);
+                },
+                _ => BinaryNullDelegate,
+            },
+            _ => BinaryNullDelegate,
+        };
+
+        if (func != BinaryNullDelegate)
+        {
+            return func;
+        }
+
+        var negativeFunction = GetNegationDelegate(rightType);
         var addFunction = GetAddDelegate(leftType, rightType);
         if (negativeFunction == UnaryNullDelegate || addFunction == BinaryNullDelegate)
         {

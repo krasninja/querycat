@@ -39,7 +39,7 @@ internal class QueryCommand : BaseQueryCommand
         this.SetHandler((applicationOptions, query, files, queryOptions) =>
         {
             applicationOptions.InitializeLogger();
-            var thread = applicationOptions.CreateExecutionThread(new ExecutionOptions(queryOptions.OutputStyle)
+            using var thread = applicationOptions.CreateExecutionThread(new ExecutionOptions(queryOptions.OutputStyle)
             {
                 AddRowNumberColumn = queryOptions.RowNumberOption,
                 PagingSize = queryOptions.PageSize,

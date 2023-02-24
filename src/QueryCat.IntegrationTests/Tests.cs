@@ -9,7 +9,7 @@ namespace QueryCat.IntegrationTests;
 /// <summary>
 /// Various SELECT query tests.
 /// </summary>
-public class Tests
+public sealed class Tests : IDisposable
 {
     private readonly TestThread _testThread = new();
 
@@ -62,4 +62,10 @@ public class Tests
 
     [FunctionSignature("void_func(a: integer): void")]
     internal static VariantValue VoidFunc(FunctionCallInfo callInfo) => VariantValue.Null;
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        _testThread.Dispose();
+    }
 }

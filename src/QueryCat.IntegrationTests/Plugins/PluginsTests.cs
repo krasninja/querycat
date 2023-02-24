@@ -5,7 +5,7 @@ namespace QueryCat.IntegrationTests.Plugins;
 /// <summary>
 /// Tests for plugins.
 /// </summary>
-public class PluginsTests
+public sealed class PluginsTests : IDisposable
 {
     private readonly Backend.Tests.TestThread _testThread = new();
 
@@ -68,5 +68,11 @@ public class PluginsTests
     private static string PrepareResult(string result)
     {
         return result.Replace("\n", string.Empty);
+    }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        _testThread.Dispose();
     }
 }

@@ -13,7 +13,8 @@ internal class SelectCommandInputContext
 
     public string Alias { get; set; }
 
-    public SelectCommandInputContext(IRowsInput rowsInput, SelectInputQueryContext inputQueryContext, string? alias = null)
+    public SelectCommandInputContext(IRowsInput rowsInput, SelectInputQueryContext inputQueryContext,
+        string? alias = null)
     {
         RowsInput = rowsInput;
         InputQueryContext = inputQueryContext;

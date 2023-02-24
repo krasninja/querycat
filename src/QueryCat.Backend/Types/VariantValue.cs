@@ -607,6 +607,8 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
 
     public static implicit operator decimal(VariantValue value) => value.AsNumeric;
 
+    public static implicit operator int(VariantValue value) => (int)value.AsInteger;
+
     public static implicit operator long(VariantValue value) => value.AsInteger;
 
     public static implicit operator bool(VariantValue value) => value.AsBoolean;
@@ -628,6 +630,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         DataType.String => AsString,
         DataType.Boolean => AsBoolean.ToString(CultureInfo.InvariantCulture),
         DataType.Float => AsFloat.ToString("F2", CultureInfo.InvariantCulture),
+        DataType.Numeric => AsNumeric.ToString("F", CultureInfo.InvariantCulture),
         DataType.Timestamp => AsTimestamp.ToString(CultureInfo.InvariantCulture),
         DataType.Interval => AsInterval.ToString("c", CultureInfo.InvariantCulture),
         DataType.Object => "object: " + AsObject,
@@ -647,6 +650,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         DataType.String => AsStringUnsafe,
         DataType.Boolean => AsBooleanUnsafe.ToString(),
         DataType.Float => AsFloatUnsafe.ToString(format, CultureInfo.InvariantCulture),
+        DataType.Numeric => AsNumeric.ToString(format, CultureInfo.InvariantCulture),
         DataType.Timestamp => AsTimestampUnsafe.ToString(format, CultureInfo.InvariantCulture),
         DataType.Interval => AsIntervalUnsafe.ToString(format, CultureInfo.InvariantCulture),
         DataType.Object => "object: " + AsObjectUnsafe,

@@ -7,7 +7,7 @@ namespace QueryCat.Backend.Relational.Iterators;
 /// <summary>
 /// Represents iterator as enumerable of <see cref="Row" />.
 /// </summary>
-public sealed class EnumerableRowsIterator : IRowsIterator, IEnumerable<Row>
+public sealed class EnumerableRowsIterator : IRowsIterator, IRowsIteratorParent, IEnumerable<Row>
 {
     private readonly IRowsIterator _rowsIterator;
 
@@ -45,4 +45,10 @@ public sealed class EnumerableRowsIterator : IRowsIterator, IEnumerable<Row>
 
     /// <inheritdoc />
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
+    /// <inheritdoc />
+    public IEnumerable<IRowsSchema> GetChildren()
+    {
+        yield return _rowsIterator;
+    }
 }

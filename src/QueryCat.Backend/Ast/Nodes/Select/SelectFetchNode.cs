@@ -7,9 +7,9 @@ public sealed class SelectFetchNode : AstNode
     /// <inheritdoc />
     public override string Code => "fetch";
 
-    public SelectFetchNode(ExpressionNode countNodeNode)
+    public SelectFetchNode(ExpressionNode countNode)
     {
-        CountNode = countNodeNode;
+        CountNode = countNode;
     }
 
     public SelectFetchNode(SelectFetchNode node) : this((ExpressionNode)node.CountNode.Clone())
@@ -28,4 +28,7 @@ public sealed class SelectFetchNode : AstNode
 
     /// <inheritdoc />
     public override void Accept(AstVisitor visitor) => visitor.Visit(this);
+
+    /// <inheritdoc />
+    public override string ToString() => $"{CountNode}";
 }
