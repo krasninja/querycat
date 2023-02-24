@@ -9,12 +9,6 @@ You can easily extend QueryCat functionality by installing plugins. Plugins allo
 
 Make sure you keep you plugins versions up to date.
 
-Here is the list of available plugins.
-
-| Name | Description |
-| --- | --- |
-| `QueryCat.Plugins.Logs` | Various functions to parse log files (IISW3C). |
-
 ## Locations
 
 The plugin files are DLLs or NuGet packages that must contain "Plugin" within name. For example, `QueryCat.Plugins.Logs.nupkg`, `Plugin.AWS.dll` are correct names. The application searchs plugins within following locations:

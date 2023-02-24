@@ -31,3 +31,11 @@ It is possible that plugins are out of date and/or they do not conform the lates
 1. Update QueryCat application to the latest version. You can find it here: https://github.com/krasninja/querycat/releases/.
 2. Update all plugins to the latest version. Command is `qcat plugin update "*"`.
 3. If error still there post new issue with the steps to reproduce and full stack trace here: https://github.com/krasninja/querycat/issues/new.
+
+## The query performance is poor
+
+The QueryCat is not a true database engine. It doesn't know anything about input sources and there is no information about total rows, indexes, statistics, etc. So query planner is simple and straightforward. You can try the following tips to improve query performance:
+
+1. Reorder join statements. Try to move most slow input sources to the right.
+2. Save slow input sources into files first.
+3. Create the GitHub issue with the detailed information. It might be an application bug.

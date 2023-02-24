@@ -4,8 +4,8 @@ nav:
   - 'Tutorial': tutorial.md
   - 'Concepts': concepts.md
   - 'Plugins':
-    - 'Overview': plugins.md
-    - 'Logs': plugins/logs.md
+    - 'Overview': plugins/index.md
+    - 'List': plugins/list.md
   - 'Formatters': formatters.md
   - 'Commands':
     - 'DECLARE': commands/declare.md

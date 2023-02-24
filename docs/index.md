@@ -8,8 +8,8 @@ Just imagine that everything in the world is a table, and you can process it usi
 
 - 1) [Tutorial](tutorial)
 - 2) [Concepts](concepts)
-- 3) [Plugins](plugins)
-    - 3.1) [Logs](plugins/logs)
+- 3) [Plugins](plugins/index)
+    - 3.1) [List](plugins/list)
 - 4) [Formatters](formatters)
 - 5) Commands
     - 5.1) [DECLARE](commands/declare)
