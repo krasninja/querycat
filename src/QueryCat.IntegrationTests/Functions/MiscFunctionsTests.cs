@@ -6,7 +6,7 @@ namespace QueryCat.IntegrationTests.Functions;
 /// <summary>
 /// Tests for <see cref="MiscFunctions" />.
 /// </summary>
-public class MiscFunctionsTests
+public sealed class MiscFunctionsTests : IDisposable
 {
     private readonly Backend.Tests.TestThread _testThread = new();
 
@@ -22,5 +22,11 @@ public class MiscFunctionsTests
         Assert.Equal(10, result1.AsInteger);
         Assert.Equal(10, result2.AsInteger);
         Assert.True(result3.IsNull);
+    }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        _testThread.Dispose();
     }
 }
