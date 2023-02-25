@@ -76,6 +76,10 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
         {
             operation = VariantValue.Operation.NotLike;
         }
+        else if (operation == VariantValue.Operation.Similar && context.NOT() != null)
+        {
+            operation = VariantValue.Operation.NotSimilar;
+        }
 
         var left = (ExpressionNode)Visit(context.left);
         var right = (ExpressionNode)Visit(context.right);
@@ -212,6 +216,7 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
         QueryCatParser.BETWEEN => VariantValue.Operation.Between,
         QueryCatParser.IS => VariantValue.Operation.IsNull,
         QueryCatParser.LIKE => VariantValue.Operation.Like,
+        QueryCatParser.SIMILAR => VariantValue.Operation.Similar,
         _ => throw new ArgumentOutOfRangeException(nameof(token), token, "Invalid operation.")
     };
 

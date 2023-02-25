@@ -100,6 +100,8 @@ The WHERE clause is used to specify a boolean condition that must be satisfied b
 SELECT * FROM curl('https://tinyurl.com/24buj7mb') WHERE [year] = 2019
 ```
 
+*Note: The `LIKE` and `SIMILAR` statements are also supported. However, `SIMILAR` is not SQL-compliant. It doesn't support "SQL regular expression". Instead, it supports .NET compliant regular expressions.*
+
 ## ORDER BY
 
 The ORDER BY clause specifies which SELECT clause field-expressions the query output records should be sorted by. If NULLS LAST is specified, null values sort after all non-null values; if NULLS FIRST is specified, null values sort before all non-null values.

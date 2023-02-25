@@ -244,6 +244,7 @@ expression
     | left=expression op=(PLUS | MINUS) right=expression # ExpressionBinary
     | left=expression op=(EQUALS | NOT_EQUALS | GREATER | GREATER_OR_EQUALS | LESS | LESS_OR_EQUALS) right=expression # ExpressionBinary
     | left=expression NOT? op=LIKE right=expression # ExpressionBinary
+    | left=expression NOT? op=SIMILAR TO right=expression # ExpressionBinary
     | left=expression NOT? op=IN right=array # ExpressionBinaryIn
     | expr=expression NOT? op=BETWEEN left=simpleExpression AND right=expression # ExpressionBetween
     | EXISTS '(' selectQueryExpression ')' # ExpressionExists
