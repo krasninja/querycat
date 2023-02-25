@@ -53,11 +53,11 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
     {
         if (DataTypeUtils.IsSimple(source.GetInternalType()))
         {
-            return new SelectCommandInputContext(new SingleValueRowsInput(source));
+            return new SelectCommandInputContext(new SingleValueRowsInput(source), _executionThread);
         }
         if (source.AsObject is IRowsInput rowsInput)
         {
-            var queryContext = new SelectInputQueryContext(rowsInput)
+            var queryContext = new SelectInputQueryContext(rowsInput, _executionThread)
             {
                 InputConfigStorage = _executionThread.InputConfigStorage
             };
@@ -72,7 +72,7 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
         }
         if (source.AsObject is IRowsIterator rowsIterator)
         {
-            return new SelectCommandInputContext(new RowsIteratorInput(rowsIterator));
+            return new SelectCommandInputContext(new RowsIteratorInput(rowsIterator), _executionThread);
         }
 
         throw new QueryCatException("Invalid rows input.");

@@ -34,13 +34,7 @@ internal sealed class WebServer
 
     public string AllowOrigin { get; set; } = string.Empty;
 
-    private static readonly Dictionary<string, Action<HttpListenerRequest, HttpListenerResponse, ExecutionThread>> Actions = new()
-    {
-        ["/"] = HandleIndexAction,
-        ["/index.html"] = HandleIndexAction,
-        ["/api/info"] = HandleInfoApiAction,
-        ["/api/query"] = HandleQueryApiAction
-    };
+    private readonly Dictionary<string, Action<HttpListenerRequest, HttpListenerResponse>> _actions;
 
     private readonly ExecutionThread _executionThread;
     private readonly string? _password;
@@ -50,6 +44,14 @@ internal sealed class WebServer
         string? urls = null,
         string? password = null)
     {
+        _actions = new Dictionary<string, Action<HttpListenerRequest, HttpListenerResponse>>
+        {
+            ["/"] = HandleIndexAction,
+            ["/index.html"] = HandleIndexAction,
+            ["/api/info"] = HandleInfoApiAction,
+            ["/api/query"] = HandleQueryApiAction
+        };
+
         _executionThread = executionThread;
         _password = password;
         Urls = urls ?? DefaultEndpoint;
@@ -101,11 +103,11 @@ internal sealed class WebServer
 
             // Find action by path.
             var path = context.Request.Url?.LocalPath ?? string.Empty;
-            if (Actions.TryGetValue(path, out var action))
+            if (_actions.TryGetValue(path, out var action))
             {
                 try
                 {
-                    action.Invoke(context.Request, response, _executionThread);
+                    action.Invoke(context.Request, response);
                 }
                 catch (QueryCatException e)
                 {
@@ -128,8 +130,7 @@ internal sealed class WebServer
         // ReSharper disable once FunctionNeverReturns
     }
 
-    private static void HandleQueryApiAction(HttpListenerRequest request, HttpListenerResponse response,
-        ExecutionThread executionThread)
+    private void HandleQueryApiAction(HttpListenerRequest request, HttpListenerResponse response)
     {
         if (request.HttpMethod != PostMethod && request.HttpMethod != GetMethod)
         {
@@ -138,7 +139,7 @@ internal sealed class WebServer
         }
 
         var query = GetQueryFromRequest(request);
-        var lastResult = executionThread.Run(query);
+        var lastResult = _executionThread.Run(query);
 
         var iterator = lastResult.GetInternalType() == DataType.Object
             ? (IRowsIterator)lastResult.AsObject!
@@ -247,11 +248,11 @@ internal sealed class WebServer
         streamWriter.WriteLine("</TABLE></BODY></HTML>");
     }
 
-    private static void WriteText(IRowsIterator iterator, Stream stream)
+    private void WriteText(IRowsIterator iterator, Stream stream)
     {
         var formatter = new TextTableFormatter();
         var output = formatter.OpenOutput(stream);
-        output.Write(iterator);
+        output.Write(iterator, _executionThread);
     }
 
     private static void WriteJson(IRowsIterator iterator, Utf8JsonWriter jsonWriter)
@@ -344,8 +345,7 @@ internal sealed class WebServer
         jsonWriter.WriteEndObject();
     }
 
-    private static void HandleIndexAction(HttpListenerRequest request, HttpListenerResponse response,
-        ExecutionThread executionThread)
+    private void HandleIndexAction(HttpListenerRequest request, HttpListenerResponse response)
     {
         WriteResourceToStream(@"QueryCat.Cli.Infrastructure.WebServerIndex.html", response.OutputStream);
         var sr = new StreamWriter(response.OutputStream);
@@ -366,10 +366,9 @@ internal sealed class WebServer
         }
     }
 
-    private static void HandleInfoApiAction(HttpListenerRequest request, HttpListenerResponse response,
-        ExecutionThread executionThread)
+    private void HandleInfoApiAction(HttpListenerRequest request, HttpListenerResponse response)
     {
-        var localPlugins = executionThread.PluginsManager.ListAsync(localOnly: true).GetAwaiter().GetResult();
+        var localPlugins = _executionThread.PluginsManager.ListAsync(localOnly: true).GetAwaiter().GetResult();
         var dict = new Dictionary<string, object>
         {
             ["installedPlugins"] = localPlugins,

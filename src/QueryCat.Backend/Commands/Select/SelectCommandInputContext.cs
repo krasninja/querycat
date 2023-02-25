@@ -21,7 +21,8 @@ internal class SelectCommandInputContext
         Alias = alias ?? string.Empty;
     }
 
-    public SelectCommandInputContext(IRowsInput rowsInput) : this(rowsInput, new SelectInputQueryContext(rowsInput))
+    public SelectCommandInputContext(IRowsInput rowsInput, IExecutionThread executionThread)
+        : this(rowsInput, new SelectInputQueryContext(rowsInput, executionThread))
     {
     }
 

@@ -1,3 +1,4 @@
+using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Types;
 
@@ -19,9 +20,19 @@ public abstract class QueryContext
     public abstract QueryContextQueryInfo QueryInfo { get; }
 
     /// <summary>
+    /// Current execution thread.
+    /// </summary>
+    public IExecutionThread ExecutionThread { get; }
+
+    /// <summary>
     /// Input config storage.
     /// </summary>
     public IInputConfigStorage InputConfigStorage { get; internal set; } = new MemoryInputConfigStorage();
+
+    public QueryContext(IExecutionThread executionThread)
+    {
+        ExecutionThread = executionThread;
+    }
 
     /// <summary>
     /// Returns <c>true</c> if we can find key column condition.

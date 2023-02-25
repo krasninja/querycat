@@ -14,7 +14,13 @@ public static class RowsOutputExtensions
     /// </summary>
     /// <param name="rowsOutput">Instance of <see cref="IRowsOutput" />.</param>
     /// <param name="rowsIterator">Instance of <see cref="IRowsIterator" />.</param>
-    public static void Write(this IRowsOutput rowsOutput, IRowsIterator rowsIterator)
+    /// <param name="executionThread">Execution thread.</param>
+    /// <param name="cancellationToken">Token to notify about query cancellation.</param>
+    public static void Write(
+        this IRowsOutput rowsOutput,
+        IRowsIterator rowsIterator,
+        IExecutionThread executionThread,
+        CancellationToken cancellationToken = default)
     {
         // For plain output let's adjust columns width first.
         if (rowsOutput is TextTableOutput || rowsOutput is PagingOutput)
@@ -23,9 +29,13 @@ public static class RowsOutputExtensions
         }
 
         var isOpened = false;
-        var queryContext = new RowsOutputQueryContext(rowsIterator.Columns);
+        var queryContext = new RowsOutputQueryContext(rowsIterator.Columns, executionThread);
         while (rowsIterator.MoveNext())
         {
+            if (cancellationToken.IsCancellationRequested)
+            {
+                break;
+            }
             if (!isOpened)
             {
                 rowsOutput.Open();

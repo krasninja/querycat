@@ -268,7 +268,7 @@ internal sealed partial class SelectPlanner
             return;
         }
 
-        var queryContext = new RowsOutputQueryContext(context.CurrentIterator.Columns);
+        var queryContext = new RowsOutputQueryContext(context.CurrentIterator.Columns, ExecutionThread);
         var functionCallInfo = querySpecificationNode.TargetNode
             .GetRequiredAttribute<FunctionCallInfo>(AstAttributeKeys.ArgumentsKey);
         var hasVaryingTarget = querySpecificationNode.TargetNode.Arguments.Count > 0;

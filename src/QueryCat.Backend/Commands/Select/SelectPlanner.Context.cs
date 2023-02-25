@@ -167,13 +167,13 @@ internal sealed partial class SelectPlanner
         IRowsInput? rowsInputResult = null;
         if (obj is IRowsInput rowsInput)
         {
-            currentContext.AddInput(new SelectCommandInputContext(rowsInput));
+            currentContext.AddInput(new SelectCommandInputContext(rowsInput, ExecutionThread));
             rowsInputResult = rowsInput;
         }
         if (obj is IRowsIterator rowsIterator)
         {
             rowsInput = new RowsIteratorInput(rowsIterator);
-            currentContext.AddInput(new SelectCommandInputContext(rowsInput));
+            currentContext.AddInput(new SelectCommandInputContext(rowsInput, ExecutionThread));
             rowsInputResult = rowsInput;
         }
         if (rowsInputResult == null)
@@ -276,7 +276,7 @@ internal sealed partial class SelectPlanner
         var rowsIterator = CreateIterator(queryNode, parentContext: context);
 
         var rowsInput = new RowsIteratorInput(rowsIterator);
-        context.AddInput(new SelectCommandInputContext(rowsInput));
+        context.AddInput(new SelectCommandInputContext(rowsInput, ExecutionThread));
         Context_SetAlias(rowsInput, queryNode.Alias);
         return rowsInput;
     }

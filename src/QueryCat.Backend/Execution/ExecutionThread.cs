@@ -85,6 +85,11 @@ public class ExecutionThread : IExecutionThread
 
     public static readonly ExecutionThread Empty = new();
 
+    /// <summary>
+    /// Is cancellation requested to cancel current command execution.
+    /// </summary>
+    public CancellationTokenSource CancellationTokenSource { get; } = new();
+
     internal static string GetApplicationDirectory()
     {
         return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
@@ -259,7 +264,7 @@ public class ExecutionThread : IExecutionThread
             rowsOutput = alternateRowsOutput;
         }
         rowsOutput.Reset();
-        rowsOutput.Write(iterator);
+        rowsOutput.Write(iterator, this, CancellationTokenSource.Token);
     }
 
     private void RunBootstrapScript(string appLocalDirectory)

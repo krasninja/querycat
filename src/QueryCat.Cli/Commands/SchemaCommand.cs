@@ -27,7 +27,7 @@ internal class SchemaCommand : BaseQueryCommand
                     && result.AsObject is IRowsSchema rowsSchema)
                 {
                     var schema = thread.RunFunction(InfoFunctions.Schema, rowsSchema);
-                    thread.Options.DefaultRowsOutput.Write(ExecutionThreadUtils.ConvertToIterator(schema));
+                    thread.Options.DefaultRowsOutput.Write(ExecutionThreadUtils.ConvertToIterator(schema), thread);
                 }
                 else
                 {
