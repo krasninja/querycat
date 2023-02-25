@@ -265,6 +265,7 @@ simpleExpression
     | functionCall # SimpleExpressionFunctionCall
     | caseExpression # SimpleExpressionCase
     | identifierChain # SimpleExpressionIdentifier
+    | '(' simpleExpression ')' # SimpleExpressionInParens
     | op=(PLUS | MINUS) right=expression # SimpleExpressionUnary
     | left=simpleExpression op=CONCAT right=simpleExpression # SimpleExpressionBinary
     | right=simpleExpression TYPECAST type # SimpleExpressionBinaryCast

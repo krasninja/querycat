@@ -168,6 +168,10 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
         => this.Visit<FunctionCallNode>(context.standardFunction());
 
     /// <inheritdoc />
+    public override IAstNode VisitSimpleExpressionInParens(QueryCatParser.SimpleExpressionInParensContext context)
+        => Visit(context.simpleExpression());
+
+    /// <inheritdoc />
     public override IAstNode VisitCastOperand(QueryCatParser.CastOperandContext context)
         => new CastFunctionNode(
             this.Visit<ExpressionNode>(context.value),

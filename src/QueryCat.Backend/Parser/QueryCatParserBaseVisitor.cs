@@ -1083,6 +1083,17 @@ public partial class QueryCatParserBaseVisitor<Result> : AbstractParseTreeVisito
 	/// <return>The visitor result.</return>
 	public virtual Result VisitSimpleExpressionFunctionCall([NotNull] QueryCatParser.SimpleExpressionFunctionCallContext context) { return VisitChildren(context); }
 	/// <summary>
+	/// Visit a parse tree produced by the <c>SimpleExpressionInParens</c>
+	/// labeled alternative in <see cref="QueryCatParser.simpleExpression"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitSimpleExpressionInParens([NotNull] QueryCatParser.SimpleExpressionInParensContext context) { return VisitChildren(context); }
+	/// <summary>
 	/// Visit a parse tree produced by the <c>SimpleExpressionIdentifier</c>
 	/// labeled alternative in <see cref="QueryCatParser.simpleExpression"/>.
 	/// <para>
