@@ -9,6 +9,8 @@ using Cake.Frosting;
 using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Functions;
+using QueryCat.Backend.Relational;
+using QueryCat.Backend.Storage;
 using QueryCat.Backend.Types;
 
 namespace QueryCat.Build.Tasks;
@@ -16,6 +18,23 @@ namespace QueryCat.Build.Tasks;
 [TaskName("Get-Inputs-Markdown")]
 public class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
 {
+    private static readonly string[] ExcludeList =
+    {
+        "read_file",
+        "read_text",
+    };
+
+    private sealed class CollectQueryContext : QueryContext
+    {
+        /// <inheritdoc />
+        public override QueryContextQueryInfo QueryInfo { get; } = new(Array.Empty<Column>());
+
+        /// <inheritdoc />
+        public CollectQueryContext() : base(QueryCat.Backend.Execution.ExecutionThread.Empty)
+        {
+        }
+    }
+
     /// <inheritdoc />
     public override Task RunAsync(BuildContext context)
     {
@@ -29,9 +48,9 @@ public class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
             .Where(f =>
                 f.ReturnType == DataType.Object
                 && !f.IsAggregate
-                && f.Arguments.Length == 0
                 && f.ReturnObjectName == nameof(IRowsInput)
                 && f.Name.Contains("_") // Usually plugin name should have name like "pluginName_method".
+                && !ExcludeList.Contains(f.Name)
             )
             .OrderBy(f => f.Name)
             .ToList();
@@ -41,9 +60,16 @@ public class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
         foreach (var inputFunction in pluginFunctions)
         {
             IRowsInput rowsInput;
+            var queryContext = new CollectQueryContext();
             try
             {
-                rowsInput = inputFunction.Delegate.Invoke(FunctionCallInfo.Empty).GetAsObject<IRowsInput>();
+                var functionCallInfo = new FunctionCallInfo(ExecutionThread.Empty);
+                for (var i = 0; i < inputFunction.Arguments.Length; i++)
+                {
+                    functionCallInfo.Push(VariantValue.Null);
+                }
+                rowsInput = inputFunction.Delegate.Invoke(functionCallInfo).GetAsObject<IRowsInput>();
+                rowsInput.SetContext(queryContext);
                 rowsInput.Open();
             }
             catch (Exception ex)
@@ -59,15 +85,22 @@ public class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
                 .AppendLine(inputFunction.ToString())
                 .AppendLine("```\n")
                 .AppendLine(inputFunction.Description)
-                .AppendLine("\n| Name | Type | Description |")
-                .AppendLine("| --- | --- | --- |");
+                .AppendLine("\n| Name | Type | Required | Description |")
+                .AppendLine("| --- | --- | --- | --- |");
             foreach (var column in rowsInput.Columns)
             {
                 if (column.IsHidden)
                 {
                     continue;
                 }
-                sb.AppendLine($"| `{column.Name}` | `{column.DataType}` | {column.Description} |");
+                var inputColumn =
+                    queryContext.InputInfo.KeyColumns.FirstOrDefault(c => c.ColumnName == column.Name);
+                if (inputColumn == null)
+                {
+                    inputColumn = new QueryContextInputInfo.KeyColumn(column.Name, Array.Empty<VariantValue.Operation>());
+                }
+                var operations = string.Join(", ", inputColumn.Operations.Select(o => $"`{o}`"));
+                sb.AppendLine($"| `{column.Name}` | `{column.DataType}` | {(inputColumn.IsRequired ? "yes" : string.Empty)} | {column.Description} |");
             }
         }
 
