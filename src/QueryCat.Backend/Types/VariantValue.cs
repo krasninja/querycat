@@ -176,8 +176,14 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         {
             return variantValue;
         }
-        if (obj is long || obj is int || obj is short
-            || obj is byte)
+        if (obj is Int64
+            || obj is Int32
+            || obj is Int16
+            || obj is Byte
+            || obj is UInt64
+            || obj is UInt32
+            || obj is UInt16
+            || obj is SByte)
         {
             return new VariantValue(Convert.ToInt64(obj));
         }
@@ -197,7 +203,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         {
             return new VariantValue(Convert.ToString(obj));
         }
-        if (obj is DateTime)
+        if (obj is DateTime || obj is DateOnly)
         {
             return new VariantValue(Convert.ToDateTime(obj));
         }
