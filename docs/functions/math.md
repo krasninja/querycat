@@ -8,6 +8,8 @@
 | `floor(x: float): float`<br /><br /> Nearest integer less than or equal to argument. |
 | `greatest(...args: any[]): any`<br /><br /> The function select the largest value from a list of any number of values. |
 | `least(...args: any[]): any`<br /><br /> The function select the leas value from a list of any number of values. |
+| `ln(x: integer): float`<br />`ln(x: float): float`<br /><br />Natural logarithm. |
+| `log(x: integer): float`<br />`log(x: float): float`<br /><br />Base 10 logarithm. |
 | `pi(): float`<br /><br /> "Pi" constant. |
 | `power(a: integer, b: integer): integer`<br />`power(a: float, b: float): float`<br />`power(a: integer, b: float): float`<br />`power(a: float, b: integer): float`<br /><br /> a raised to the power of b. |
 | `radians(deg: integer): float`<br />`radians(deg: float): float`<br /><br /> Converts degrees to radians. |

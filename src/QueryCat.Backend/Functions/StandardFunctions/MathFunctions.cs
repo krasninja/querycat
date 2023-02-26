@@ -178,6 +178,24 @@ public static class MathFunctions
         return maxValue;
     }
 
+    [Description("Natural logarithm.")]
+    [FunctionSignature("ln(x: integer): float")]
+    [FunctionSignature("ln(x: float): float")]
+    public static VariantValue Ln(FunctionCallInfo args)
+    {
+        var x = args.GetAt(0).AsFloat;
+        return new VariantValue(Math.Log(x));
+    }
+
+    [Description("Base 10 logarithm.")]
+    [FunctionSignature("log(x: integer): float")]
+    [FunctionSignature("log(x: float): float")]
+    public static VariantValue Log(FunctionCallInfo args)
+    {
+        var x = args.GetAt(0).AsFloat;
+        return new VariantValue(Math.Log10(x));
+    }
+
     public static void RegisterFunctions(FunctionsManager functionsManager)
     {
         functionsManager.RegisterFunction(Abs);
@@ -195,5 +213,7 @@ public static class MathFunctions
         functionsManager.RegisterFunction(Ceiling);
         functionsManager.RegisterFunction(Greatest);
         functionsManager.RegisterFunction(Least);
+        functionsManager.RegisterFunction(Ln);
+        functionsManager.RegisterFunction(Log);
     }
 }
