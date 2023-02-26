@@ -31,9 +31,12 @@ public class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
                 && !f.IsAggregate
                 && f.Arguments.Length == 0
                 && f.ReturnObjectName == nameof(IRowsInput)
-                && !(f.Delegate.Method.Module.Assembly.FullName ?? string.Empty).StartsWith("QueryCat.Backend"))
+                && f.Name.Contains("_") // Usually plugin name should have name like "pluginName_method".
+            )
+            .OrderBy(f => f.Name)
             .ToList();
-        var sb = new StringBuilder();
+        var sb = new StringBuilder()
+            .AppendLine("## Sources");
 
         foreach (var inputFunction in pluginFunctions)
         {
@@ -51,15 +54,19 @@ public class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
             }
 
             sb
-                .AppendLine($"\n## **{inputFunction.Name}**\n")
-                .AppendLine(inputFunction.Description)
+                .AppendLine($"\n### **{inputFunction.Name}**")
                 .AppendLine("\n```")
-                .AppendLine($"{inputFunction}")
+                .AppendLine(inputFunction.ToString())
                 .AppendLine("```\n")
-                .AppendLine("| Name | Type | Description |")
+                .AppendLine(inputFunction.Description)
+                .AppendLine("\n| Name | Type | Description |")
                 .AppendLine("| --- | --- | --- |");
             foreach (var column in rowsInput.Columns)
             {
+                if (column.IsHidden)
+                {
+                    continue;
+                }
                 sb.AppendLine($"| `{column.Name}` | `{column.DataType}` | {column.Description} |");
             }
         }
