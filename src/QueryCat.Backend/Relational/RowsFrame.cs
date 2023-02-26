@@ -30,6 +30,11 @@ public class RowsFrame : IRowsSchema, IEnumerable<Row>
     public Column[] Columns => _columns;
 
     /// <summary>
+    /// Empty instance.
+    /// </summary>
+    public static RowsFrame Empty { get; } = new(new Column("__empty", DataType.Integer));
+
+    /// <summary>
     /// Constructor.
     /// </summary>
     /// <param name="options">Options.</param>

@@ -19,12 +19,12 @@ internal sealed class WindowFunctionsRowsIterator : IRowsIterator
 
     private sealed class WindowInfo : IWindowInfo
     {
-        public long TotalRows { get; set; }
+        public RowsFrame RowsFrame { get; set; } = RowsFrame.Empty;
 
         public long CurrentRowPosition { get; set; }
 
         /// <inheritdoc />
-        public long GetTotalRows() => TotalRows;
+        public long GetTotalRows() => RowsFrame.TotalRows;
 
         /// <inheritdoc />
         public long GetCurrentRowPosition() => CurrentRowPosition;
@@ -74,23 +74,20 @@ internal sealed class WindowFunctionsRowsIterator : IRowsIterator
             WindowFunctionInfo = windowFunctionInfo;
             OriginalColumnIndex = originalColumnIndex;
             PartitionFormatter = partitionFormatter;
-            Columns = windowFunctionInfo.Orders
-                // Order.
-                .Select((o, i) => new Column("__o" + i, windowFunctionInfo.OrderFunctions[i].OutputType))
+            Columns = windowFunctionInfo
                 // Aggregates.
+                .AggregateValues.Select((o, i) => new Column("__a" + i, o.OutputType))
+                // Order.
                 .Concat(
-                    windowFunctionInfo.AggregateValues.Select((o, i) => new Column("__a" + i, o.OutputType))
-                )
+                    windowFunctionInfo.OrderFunctions.Select(
+                        (o, i) => new Column("__o" + i, windowFunctionInfo.OrderFunctions[i].OutputType)))
                 .ToArray();
 
             // Some aggregate functions has no input args (row_number, count). Since RowFrame cannot be without
             // rows - just make the fake one.
             if (Columns.Length == 0)
             {
-                Columns = new[]
-                {
-                    new Column("__0", DataType.Integer)
-                };
+                Columns = RowsFrame.Empty.Columns;
             }
             _row = new Row(Columns);
         }
@@ -101,11 +98,14 @@ internal sealed class WindowFunctionsRowsIterator : IRowsIterator
             {
                 var subRowsFrame = new RowsFrame(Columns);
                 ICursorRowsIterator subRowsFrameIterator;
+                var offset = WindowFunctionInfo.AggregateValues.Length;
                 if (WindowFunctionInfo.Orders.Length > 0)
                 {
                     var index = new OrderColumnsIndex(
                         subRowsFrame.GetIterator(),
-                        WindowFunctionInfo.Orders);
+                        WindowFunctionInfo.Orders
+                            .Select(o => new OrderColumnData(o.Index + offset, o.Direction, o.NullOrder))
+                            .ToArray());
                     indexes.Add(index);
                     // The index iterator implementation is lazy, so it will not be called right away.
                     subRowsFrameIterator = index.GetOrderIterator();
@@ -119,16 +119,16 @@ internal sealed class WindowFunctionsRowsIterator : IRowsIterator
             }
 
             // Format result rows frame. Format: agg_arg1, agg_arg2, order_col1, order_col2, rowId.
-            // Order.
             var nextIndex = 0;
-            for (var i = 0; i < WindowFunctionInfo.OrderFunctions.Length; i++)
-            {
-                _row[nextIndex++] = WindowFunctionInfo.OrderFunctions[i].Invoke();
-            }
             // Aggregates.
             for (var i = 0; i < WindowFunctionInfo.AggregateValues.Length; i++)
             {
                 _row[nextIndex++] = WindowFunctionInfo.AggregateValues[i].Invoke();
+            }
+            // Order.
+            for (var i = 0; i < WindowFunctionInfo.OrderFunctions.Length; i++)
+            {
+                _row[nextIndex++] = WindowFunctionInfo.OrderFunctions[i].Invoke();
             }
             var rowIndex = partitionData.RowsFrame.AddRow(_row);
             RowIdToPartition.Add(new RowIdData(partitionData, rowIndex));
@@ -139,13 +139,12 @@ internal sealed class WindowFunctionsRowsIterator : IRowsIterator
         public void FillAggregateFunctionArguments(FunctionCallInfo functionCallInfo, RowIdData rowIdData)
         {
             functionCallInfo.Reset();
-            _windowInfo.TotalRows = rowIdData.PartitionInstance.RowsFrame.TotalRows;
+            _windowInfo.RowsFrame = rowIdData.PartitionInstance.RowsFrame;
             _windowInfo.CurrentRowPosition = rowIdData.RowIdInPartition;
             functionCallInfo.WindowInfo = _windowInfo;
-            var offset = WindowFunctionInfo.OrderFunctions.Length;
             for (var aggregateIndex = 0; aggregateIndex < WindowFunctionInfo.AggregateValues.Length; aggregateIndex++)
             {
-                functionCallInfo.Push(rowIdData.PartitionInstance.RowsIterator.Current[aggregateIndex + offset]);
+                functionCallInfo.Push(rowIdData.PartitionInstance.RowsIterator.Current[aggregateIndex]);
             }
         }
     }
@@ -247,8 +246,9 @@ internal sealed class WindowFunctionsRowsIterator : IRowsIterator
         var partitionRow = rowIdData.PartitionInstance.RowsFrame.GetRow((int)rowIdData.RowIdInPartition);
 
         // Calculate aggregate values by certain window boundaries.
-        rowIdData.PartitionInstance.RowsIterator.Reset();
-        while (rowIdData.PartitionInstance.RowsIterator.MoveNext())
+        var rowsIterator = rowIdData.PartitionInstance.RowsIterator;
+        rowsIterator.Reset();
+        while (rowsIterator.MoveNext())
         {
             // Upper boundary.
 
@@ -258,8 +258,7 @@ internal sealed class WindowFunctionsRowsIterator : IRowsIterator
 
             // Lower boundary.
             if (partitionInfo.HasOrderData
-                && RowsEquals(partitionRow, rowIdData.PartitionInstance.RowsIterator.Current,
-                    partitionInfo.WindowFunctionInfo.Orders.Length))
+                && RowsEquals(partitionRow, rowsIterator.Current, partitionInfo.WindowFunctionInfo.Orders.Length))
             {
                 break;
             }

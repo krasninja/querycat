@@ -53,11 +53,11 @@ internal sealed partial class SelectPlanner
         Pipeline_ResolveSelectSourceColumns(context, node);
         Pipeline_AddSelectRowsSet(context, node.ColumnsListNode);
 
-        // ORDER BY.
-        Pipeline_ApplyOrderBy(context, node.OrderByNode);
-
         // WINDOW.
         PipelineWindow_ApplyWindowFunctions(context, node);
+
+        // ORDER BY.
+        Pipeline_ApplyOrderBy(context, node.OrderByNode);
 
         // INTO and SELECT.
         Pipeline_SetOutputFunction(context, node);
