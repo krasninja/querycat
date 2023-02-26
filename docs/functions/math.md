@@ -21,6 +21,9 @@
 
 | Name and Description |
 | --- |
+| `acos(x: integer): float`<br />`acos(x: float): float`<br /><br /> Inverse cosine, argument in radians. |
+| `asin(x: integer): float`<br />`asin(x: float): float`<br /><br /> Inverse sine, argument in radians. |
+| `atan(x: integer): float`<br />`atan(x: float): float`<br /><br /> Inverse tangent, argument in radians. |
 | `cos(x: integer): float`<br />`cos(x: float): float`<br /><br /> Cosine, argument in radians. |
 | `sin(x: integer): float`<br />`sin(x: float): float`<br /><br /> Sine, argument in radians. |
 | `tan(x: integer): float`<br />`tan(x: float): float`<br /><br /> Tangent, argument in radians. |

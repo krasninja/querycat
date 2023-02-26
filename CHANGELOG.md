@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Support SIMILAR TO statement.
 - Paginator now handles keys press. "A" to show all, "Q" to exit.
 - Initial implementation of "first_value" and "last_value" functions.
-- Add math "ln", "log" functions.
+- Add math "ln", "log", "asin", "acos", "atan" functions.
 
 ### Changed
 
