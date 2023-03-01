@@ -83,7 +83,10 @@ public class ExecutionThread : IExecutionThread
     /// </summary>
     public event EventHandler<ExecuteEventArgs>? AfterStatementExecute;
 
-    public static readonly ExecutionThread Empty = new();
+    public static readonly ExecutionThread Empty = new(new ExecutionOptions
+    {
+        RunBootstrapScript = false,
+    });
 
     /// <summary>
     /// Is cancellation requested to cancel current command execution.
@@ -270,7 +273,7 @@ public class ExecutionThread : IExecutionThread
     private void RunBootstrapScript(string appLocalDirectory)
     {
         var rcFile = Path.Combine(appLocalDirectory, BootstrapFileName);
-        if (File.Exists(rcFile))
+        if (Options.RunBootstrapScript && File.Exists(rcFile))
         {
             Run(File.ReadAllText(rcFile));
         }

@@ -72,6 +72,11 @@ public sealed class ExecutionOptions
     /// </summary>
     public bool UseConfig { get; set; } = true;
 
+    /// <summary>
+    /// Run RC file (rc.sql).
+    /// </summary>
+    public bool RunBootstrapScript { get; set; } = true;
+
     public ExecutionOptions(TextTableOutput.Style outputStyle = TextTableOutput.Style.Table)
     {
         var tableOutput = new TextTableOutput(
