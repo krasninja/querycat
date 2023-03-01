@@ -18,6 +18,11 @@ internal sealed partial class SelectPlanner
 
     public IRowsIterator CreateIterator(SelectQueryNode queryNode, SelectCommandContext? parentContext = null)
     {
+        if (queryNode.HasAttribute(AstAttributeKeys.ContextKey))
+        {
+            return queryNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey).CurrentIterator;
+        }
+
         if (queryNode is SelectQuerySpecificationNode querySpecificationNode)
         {
             return CreateIteratorInternal(querySpecificationNode, parentContext);

@@ -1,6 +1,8 @@
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Declare;
+using QueryCat.Backend.Commands.Select;
 using QueryCat.Backend.Execution;
+using QueryCat.Backend.Functions;
 using QueryCat.Backend.Types;
 
 namespace QueryCat.Backend.Commands.Declare;
@@ -13,9 +15,17 @@ internal class DeclareCommand : ICommand
         var declareNode = (DeclareNode)node.RootNode;
         var scope = executionThread.TopScope;
 
-        var valueHandler = declareNode.ValueNode != null
-            ? new StatementsVisitor(executionThread).RunAndReturn(declareNode.ValueNode)
-            : FuncCommandHandler.NullHandler;
+        CommandHandler valueHandler = FuncCommandHandler.NullHandler;
+        if (declareNode.ValueNode != null)
+        {
+            valueHandler = new StatementsVisitor(executionThread).RunAndReturn(declareNode.ValueNode);
+            // There is a special case for SELECT command. We prefer assign first value instead of iterator object.
+            if (valueHandler is SelectCommandHandler selectCommandHandler)
+            {
+                valueHandler = new FunctionCommandHandler(
+                    new FuncUnitRowsIteratorScalar(selectCommandHandler.SelectCommandContext.CurrentIterator));
+            }
+        }
 
         return new FuncCommandHandler(() =>
         {

@@ -29,6 +29,7 @@ internal sealed partial class SelectPlanner
 
     public SelectCommandContext Context_Create(SelectQuerySpecificationNode node, SelectCommandContext? parentContext = null)
     {
+        Misc_Transform(node);
         var context = Context_CreateInitialContext(node, parentContext);
         Context_InitializeRowsInputs(context, node);
         ContextCte_PrepareInputList(context, node);
