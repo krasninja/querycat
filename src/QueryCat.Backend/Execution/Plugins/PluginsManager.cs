@@ -57,7 +57,8 @@ public sealed class PluginsManager : IDisposable
             if (File.Exists(source) && source.Contains("Plugin"))
             {
                 var extension = Path.GetExtension(source);
-                if (!extension.Equals(".dll") && !extension.Equals(".nupkg"))
+                if (!extension.Equals(".dll", StringComparison.OrdinalIgnoreCase)
+                    && !extension.Equals(".nupkg", StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
                 }

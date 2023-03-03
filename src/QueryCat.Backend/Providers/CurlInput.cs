@@ -42,7 +42,7 @@ internal static class CurlInput
         if (formatter == null)
         {
             var absolutePath = (request.RequestUri ?? uri).AbsolutePath;
-            var extension = Path.GetExtension(absolutePath);
+            var extension = Path.GetExtension(absolutePath).ToLower();
             if (!string.IsNullOrEmpty(extension))
             {
                 formatter = FormatUtils.GetFormatterByExtension(extension);

@@ -61,11 +61,11 @@ internal sealed class PluginsLoader
             Log.Logger.Debug("Load plugin assembly '{PluginFile}'.", pluginFile);
             var extension = Path.GetExtension(pluginFile);
             Assembly? assembly = null;
-            if (extension.Equals(DllExtension))
+            if (extension.Equals(DllExtension, StringComparison.OrdinalIgnoreCase))
             {
                 assembly = LoadDll(pluginFile);
             }
-            else if (extension.Equals(NuGetExtensions))
+            else if (extension.Equals(NuGetExtensions, StringComparison.OrdinalIgnoreCase))
             {
                 assembly = LoadNuget(pluginFile);
             }
@@ -112,7 +112,7 @@ internal sealed class PluginsLoader
         {
             // Find plugin library.
             var pluginDll = zip.Entries.FirstOrDefault(
-                f => Path.GetExtension(f.FullName).Equals(DllExtension)
+                f => Path.GetExtension(f.FullName).Equals(DllExtension, StringComparison.OrdinalIgnoreCase)
                     && f.FullName.Contains("Plugin"));
             if (pluginDll == null)
             {

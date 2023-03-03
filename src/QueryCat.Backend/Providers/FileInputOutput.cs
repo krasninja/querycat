@@ -91,7 +91,7 @@ internal static class FileInputOutput
         var extension = Path.GetExtension(path).ToLower();
         if (CompressFilesExtensions.Contains(extension))
         {
-            extension = Path.GetExtension(path.Substring(0, path.Length - extension.Length));
+            extension = Path.GetExtension(path.Substring(0, path.Length - extension.Length)).ToLower();
         }
         var formatter = FormatUtils.GetFormatterByExtension(extension);
         return formatter ?? new TextLineFormatter();
