@@ -46,7 +46,7 @@ public sealed class StatementsVisitor : AstVisitor
     {
         new ResolveTypesVisitor(_executionThread).Run(node);
         var func = new CreateDelegateVisitor(_executionThread).RunAndReturn(node.ExpressionNode);
-        CommandContext = new FunctionCommandHandler(func);
+        CommandContext = new FuncUnitCommandHandler(func);
     }
 
     /// <inheritdoc />
@@ -54,7 +54,7 @@ public sealed class StatementsVisitor : AstVisitor
     {
         new ResolveTypesVisitor(_executionThread).Run(node);
         var func = new CreateDelegateVisitor(_executionThread).RunAndReturn(node.FunctionNode);
-        CommandContext = new FunctionCommandHandler(func);
+        CommandContext = new FuncUnitCommandHandler(func);
     }
 
     /// <inheritdoc />

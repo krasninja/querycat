@@ -22,7 +22,7 @@ internal class DeclareCommand : ICommand
             // There is a special case for SELECT command. We prefer assign first value instead of iterator object.
             if (valueHandler is SelectCommandHandler selectCommandHandler)
             {
-                valueHandler = new FunctionCommandHandler(
+                valueHandler = new FuncUnitCommandHandler(
                     new FuncUnitRowsIteratorScalar(selectCommandHandler.SelectCommandContext.CurrentIterator));
             }
         }

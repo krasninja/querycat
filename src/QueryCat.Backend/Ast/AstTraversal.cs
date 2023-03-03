@@ -5,7 +5,7 @@ namespace QueryCat.Backend.Ast;
 /// <summary>
 /// Traverse AST using different methods.
 /// </summary>
-public class AstTraversal
+public sealed class AstTraversal
 {
     // Theory: https://www.geeksforgeeks.org/tree-traversals-inorder-preorder-and-postorder/
 

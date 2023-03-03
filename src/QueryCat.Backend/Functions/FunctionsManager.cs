@@ -339,28 +339,25 @@ public sealed class FunctionsManager
         functions = Array.Empty<Function>();
         name = NormalizeName(name);
 
-        if (!_functions.TryGetValue(name, out var outFunctions))
+        if (!_functions.TryGetValue(name, out var outFunctions) && !TryGetPreRegistration(name, out outFunctions))
         {
-            if (!TryGetPreRegistration(name, out outFunctions))
+            if (!TryFindAggregateByName(name, out _))
             {
-                if (!TryFindAggregateByName(name, out _))
-                {
-                    return false;
-                }
-                if (!_functions.TryGetValue(name, out outFunctions))
-                {
-                    return false;
-                }
+                return false;
+            }
+            if (!_functions.TryGetValue(name, out outFunctions))
+            {
+                return false;
             }
         }
 
         if (functionArgumentsTypes == null)
         {
-            functions = outFunctions!.ToArray();
+            functions = outFunctions.ToArray();
             return true;
         }
 
-        foreach (var func in outFunctions!)
+        foreach (var func in outFunctions)
         {
             if (func.MatchesToArguments(functionArgumentsTypes))
             {

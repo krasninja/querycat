@@ -2,7 +2,7 @@ using QueryCat.Backend.Types;
 
 namespace QueryCat.Backend.Commands;
 
-public class FuncCommandHandler : CommandHandler
+internal sealed class FuncCommandHandler : CommandHandler
 {
     private readonly Func<VariantValue> _func;
 
