@@ -109,6 +109,7 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
 
         var columns = QueryContext.QueryInfo.Columns;
 
+        int writeCount = 0;
         for (int i = 0; i < columns.Count; i++)
         {
             if (columns[i].IsHidden)
@@ -121,8 +122,12 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
             _streamWriter.Write(_separatorWithSpace);
             _streamWriter.Write(columns[i].FullName.PadRight(_columnsLengths[i]));
             _streamWriter.Write(' ');
+            writeCount++;
         }
-        _streamWriter.Write(_separator);
+        if (writeCount > 0)
+        {
+            _streamWriter.Write(_separator);
+        }
         _streamWriter.WriteLine();
         _streamWriter.Flush();
 
@@ -143,12 +148,16 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
             _streamWriter.Write(new string('-', _columnsLengths[i]));
             _streamWriter.Write(' ');
         }
-        _streamWriter.Write(_separator);
+        if (writeCount > 0)
+        {
+            _streamWriter.Write(_separator);
+        }
         _streamWriter.WriteLine();
     }
 
     private void OnTableWrite(Row row)
     {
+        int writeCount = 0;
         for (int i = 0; i < row.Columns.Length; i++)
         {
             if (row.Columns[i].IsHidden)
@@ -162,8 +171,9 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
             var value = row[i];
             _streamWriter.Write(value.ToString().PadRight(_columnsLengths[i]));
             _streamWriter.Write(' ');
+            writeCount++;
         }
-        if (!_isSingleValue)
+        if (!_isSingleValue && writeCount > 0)
         {
             _streamWriter.Write(_separator);
         }
