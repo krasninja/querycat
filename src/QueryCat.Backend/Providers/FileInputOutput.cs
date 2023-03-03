@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.IO.Compression;
 using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Formatters;
 using QueryCat.Backend.Functions;
@@ -11,6 +12,8 @@ namespace QueryCat.Backend.Providers;
 /// </summary>
 internal static class FileInputOutput
 {
+    private static readonly string[] CompressFilesExtensions = { ".gz" };
+
     [Description("Read data from a file.")]
     [FunctionSignature("read_file(path: string, fmt?: object<IRowsFormatter>): object<IRowsInput>")]
     public static VariantValue ReadFile(FunctionCallInfo args)
@@ -39,7 +42,11 @@ internal static class FileInputOutput
 
         var formatter = args.GetAt(1).AsObject as IRowsFormatter;
         formatter ??= GetFormatter(path);
-        var file = File.Open(path, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
+        Stream file = File.Open(path, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
+        if (CompressFilesExtensions.Contains(Path.GetExtension(path).ToLower()))
+        {
+            file = new GZipStream(file, CompressionMode.Compress, leaveOpen: false);
+        }
         return VariantValue.CreateFromObject(formatter.OpenOutput(file));
     }
 
@@ -48,7 +55,11 @@ internal static class FileInputOutput
         foreach (var file in GetFilesByPath(path))
         {
             var fileFormatter = formatter ?? GetFormatter(file);
-            var fileStream = File.Open(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            Stream fileStream = File.Open(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            if (CompressFilesExtensions.Contains(Path.GetExtension(file).ToLower()))
+            {
+                fileStream = new GZipStream(fileStream, CompressionMode.Decompress);
+            }
             yield return fileFormatter.OpenInput(fileStream);
         }
     }
@@ -77,7 +88,12 @@ internal static class FileInputOutput
 
     private static IRowsFormatter GetFormatter(string path)
     {
-        var formatter = FormatUtils.GetFormatterByExtension(Path.GetExtension(path));
+        var extension = Path.GetExtension(path).ToLower();
+        if (CompressFilesExtensions.Contains(extension))
+        {
+            extension = Path.GetExtension(path.Substring(0, path.Length - extension.Length));
+        }
+        var formatter = FormatUtils.GetFormatterByExtension(extension);
         return formatter ?? new TextLineFormatter();
     }
 }
