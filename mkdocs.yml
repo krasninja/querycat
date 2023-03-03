@@ -34,6 +34,7 @@ nav:
     - 'JSON': functions/json.md
     - 'Math': functions/math.md
     - 'Misc': functions/misc.md
+    - 'Object': functions/object.md
     - 'Output': functions/output.md
     - 'String': functions/string.md
   - 'FAQ': faq.md
