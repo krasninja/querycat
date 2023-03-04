@@ -120,6 +120,36 @@ public static class StringFunctions
         return new VariantValue(Convert.ToChar(code).ToString());
     }
 
+    [Description("Returns true if string starts with prefix.")]
+    [FunctionSignature("starts_with(target: string, prefix: string): boolean")]
+    public static VariantValue StartsWith(FunctionCallInfo args)
+    {
+        var target = args.GetAt(0).AsString;
+        var prefix = args.GetAt(1).AsString;
+        return new VariantValue(target.StartsWith(prefix));
+    }
+
+    [Description("Splits string at occurrences of delimiter and returns the n'th field (counting from one).")]
+    [FunctionSignature("split_part(target: string, delimiter: string, n: integer): string")]
+    public static VariantValue SplitPart(FunctionCallInfo args)
+    {
+        var target = args.GetAt(0).AsString;
+        var delimiter = args.GetAt(1).AsString;
+        var n = args.GetAt(2).AsInteger;
+
+        var split = target.Split(delimiter);
+        if (n < 0)
+        {
+            n = split.Length + n + 1;
+        }
+        n--;
+        if (n < 0 || n >= split.Length)
+        {
+            return VariantValue.FalseValue;
+        }
+        return new VariantValue(split[n]);
+    }
+
     public static void RegisterFunctions(FunctionsManager functionsManager)
     {
         functionsManager.RegisterFunction(Lower);
@@ -134,5 +164,7 @@ public static class StringFunctions
         functionsManager.RegisterFunction(Replace);
         functionsManager.RegisterFunction(Reverse);
         functionsManager.RegisterFunction(Chr);
+        functionsManager.RegisterFunction(StartsWith);
+        functionsManager.RegisterFunction(SplitPart);
     }
 }
