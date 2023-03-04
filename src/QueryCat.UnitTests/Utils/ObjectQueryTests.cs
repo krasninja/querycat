@@ -12,14 +12,14 @@ public class ObjectQueryTests
     {
         public int Id { get; set; }
 
-        public Address Address { get; set; }
+        public Address? Address { get; set; }
     }
 
     private class Address
     {
-        public string City { get; set; }
+        public string City { get; set; } = string.Empty;
 
-        public string Street { get; set; }
+        public string Street { get; set; } = string.Empty;
     }
 
     [Fact]
