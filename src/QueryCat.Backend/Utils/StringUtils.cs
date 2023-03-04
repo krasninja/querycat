@@ -319,7 +319,7 @@ internal static class StringUtils
         {
             length = target.Length;
         }
-        else if (startIndex + length > target.Length)
+        if (startIndex + length > target.Length)
         {
             length = target.Length - startIndex;
         }

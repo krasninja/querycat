@@ -11,7 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Initial implementation of "first_value" and "last_value" functions.
 - Add math "ln", "log", "asin", "acos", "atan" functions.
 - Add "object_query" function.
-- Add string functions "starts_with", "split_part".
+- Add string functions "starts_with", "split_part", "regexp_count", "regexp_substr".
 - Allow to read/write from/to gzip archives.
 
 ### Changed
