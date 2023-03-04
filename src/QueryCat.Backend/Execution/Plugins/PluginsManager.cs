@@ -213,21 +213,33 @@ public sealed class PluginsManager : IDisposable
 
     private PluginInfo CreatePluginInfoFromKey(string key, string baseUri, bool isInstalled = false)
     {
+        var name = GetNameFromKey(key);
+        return new PluginInfo(name)
+        {
+            Version = GetVersionFromKey(key),
+            Uri = baseUri + key,
+            IsInstalled = isInstalled,
+        };
+    }
+
+    internal static Version GetVersionFromKey(string key)
+    {
+        var match = KeyRegex.Match(key);
+        var version = match.Groups["version"].Value;
+        return !string.IsNullOrEmpty(version) && version.Length > 3
+            ? Version.Parse(match.Groups["version"].Value)
+            : new Version();
+    }
+
+    internal static string GetNameFromKey(string key)
+    {
         var match = KeyRegex.Match(key);
         var name = match.Groups["name"].Value;
         if (string.IsNullOrEmpty(name))
         {
             name = Path.GetFileNameWithoutExtension(key);
         }
-        var version = match.Groups["version"].Value;
-        return new PluginInfo(name)
-        {
-            Version = !string.IsNullOrEmpty(version) && version.Length > 3
-                ? Version.Parse(match.Groups["version"].Value)
-                : new Version(),
-            Uri = baseUri + key,
-            IsInstalled = isInstalled,
-        };
+        return name;
     }
 
     private string GetMainPluginDirectory()

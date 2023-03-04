@@ -33,7 +33,7 @@ internal sealed class PluginsLoader
         {
             return assembly;
         }
-        else if (_rawAssembliesCache.TryGetValue(assemblyName.Name, out var bytes))
+        if (_rawAssembliesCache.TryGetValue(assemblyName.Name, out var bytes))
         {
             assembly = Assembly.Load(bytes);
             _loadedAssembliesCache[assemblyName.Name] = assembly;
@@ -56,8 +56,17 @@ internal sealed class PluginsLoader
         }
 
         var assembliesList = new List<Assembly>();
+        var loadedFiles = new HashSet<string>();
         foreach (var pluginFile in PluginsManager.GetPluginFiles(_pluginDirectories))
         {
+            var fileName = GetPluginName(pluginFile);
+            if (loadedFiles.Contains(fileName))
+            {
+                Log.Logger.Warning("Plugin assembly '{PluginFile}' has been already loaded.", pluginFile);
+                continue;
+            }
+            loadedFiles.Add(fileName);
+
             Log.Logger.Debug("Load plugin assembly '{PluginFile}'.", pluginFile);
             var extension = Path.GetExtension(pluginFile);
             Assembly? assembly = null;
@@ -71,7 +80,7 @@ internal sealed class PluginsLoader
             }
             if (assembly == null)
             {
-                Log.Logger.Warning("Cannot load from {PluginFile}.", pluginFile);
+                Log.Logger.Warning("Cannot load from '{PluginFile}'.", pluginFile);
                 continue;
             }
 
@@ -79,6 +88,12 @@ internal sealed class PluginsLoader
         }
 
         return assembliesList;
+    }
+
+    private static string GetPluginName(string fileName)
+    {
+        fileName = Path.GetFileName(fileName);
+        return PluginsManager.GetNameFromKey(fileName);
     }
 
     private Assembly LoadDll(string file)
@@ -116,7 +131,7 @@ internal sealed class PluginsLoader
                     && f.FullName.Contains("Plugin"));
             if (pluginDll == null)
             {
-                throw new InvalidOperationException($"Cannot find plugin dll in {file}.");
+                throw new InvalidOperationException($"Cannot find plugin dll in '{file}'.");
             }
 
             // Preload dependent libraries.
