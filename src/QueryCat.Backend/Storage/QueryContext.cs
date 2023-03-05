@@ -143,9 +143,7 @@ public abstract class QueryContext
                     && keyColumn.Operations.Contains(c.Operation));
             if (condition == null && keyColumn.IsRequired)
             {
-                var operations = string.Join(", ", keyColumn.Operations);
-                throw new InvalidOperationException(
-                    $"Cannot find required condition '{keyColumn.ColumnName}' with condition {operations}.");
+                throw new QueryContextMissedCondition(keyColumn.ColumnName, keyColumn.Operations);
             }
             if (keyColumn.Action != null && condition != null)
             {
