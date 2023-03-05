@@ -14,6 +14,7 @@ internal static class AggregatesRegistration
         functionsManager.RegisterAggregate<MaxAggregateFunction>();
         functionsManager.RegisterAggregate<MinAggregateFunction>();
         functionsManager.RegisterAggregate<SumAggregateFunction>();
+        functionsManager.RegisterAggregate<StringAggAggregateFunction>();
         functionsManager.RegisterAggregate<RowNumberAggregateFunction>();
     }
 }
