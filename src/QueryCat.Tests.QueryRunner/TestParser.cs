@@ -1,7 +1,7 @@
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
-namespace QueryCat.Backend.Tests;
+namespace QueryCat.Tests.QueryRunner;
 
 /// <summary>
 /// Test parser.
