@@ -242,13 +242,22 @@ internal sealed partial class SelectPlanner
         throw new ArgumentException("Unsupported join type.", nameof(tableJoinedNode));
     }
 
+    private IRowsInput Context_CreateInputSourceFromTable(SelectCommandContext context,
+        SelectTableNode tableNode)
+    {
+        var func = new SelectCreateDelegateVisitor(ExecutionThread, context)
+            .RunAndReturn(tableNode);
+        var rowsFrame = func.Invoke().GetAsObject<RowsFrame>();
+        return new RowsIteratorInput(rowsFrame.GetIterator());
+    }
+
     private IRowsInput[] Context_GetRowsInputFromExpression(SelectCommandContext context, ExpressionNode expressionNode)
     {
         if (expressionNode is SelectQueryNode queryNode)
         {
             return new[]
             {
-                Context_CreateInputSourceFromSubQuery(context, queryNode)
+                Context_CreateInputSourceFromSubQuery(context, queryNode),
             };
         }
         if (expressionNode is SelectTableFunctionNode tableFunctionNode)
@@ -267,6 +276,13 @@ internal sealed partial class SelectPlanner
                 throw new QueryCatException($"Query with name '{idNode.FullName}' is not defined.");
             }
             return inputs;
+        }
+        if (expressionNode is SelectTableNode tableNode)
+        {
+            return new[]
+            {
+                Context_CreateInputSourceFromTable(context, tableNode),
+            };
         }
 
         throw new InvalidOperationException($"Cannot process node '{expressionNode}' as input.");

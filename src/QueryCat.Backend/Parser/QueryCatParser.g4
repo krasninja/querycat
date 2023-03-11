@@ -130,12 +130,15 @@ selectFromClause:
 selectTableReferenceList:
     FROM selectTableReference (COMMA selectTableReference)*;
 selectTableReference: selectTablePrimary selectTableJoined*;
+selectTableRow: '(' simpleExpression (COMMA simpleExpression)* ')';
+selectTable: '(' VALUES selectTableRow (COMMA selectTableRow)* ')' selectAlias?;
 selectTablePrimary
     : functionCall selectAlias? # SelectTablePrimaryNoFormat
     | '-' # SelectTablePrimaryStdin
     | uri=STRING_LITERAL (FORMAT functionCall)? selectAlias? # SelectTablePrimaryWithFormat
     | '(' selectQueryExpression ')' selectAlias? # SelectTablePrimarySubquery
     | name=IDENTIFIER selectAlias? # SelectTablePrimaryIdentifier
+    | selectTable selectAlias? # SelectTablePrimaryTable
     ;
 selectTableJoined
     : selectJoinType? JOIN right=selectTablePrimary ON condition=expression # SelectTableJoinedOn

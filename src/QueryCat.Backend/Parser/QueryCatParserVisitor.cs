@@ -292,6 +292,18 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitSelectTableReference([NotNull] QueryCatParser.SelectTableReferenceContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="QueryCatParser.selectTableRow"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSelectTableRow([NotNull] QueryCatParser.SelectTableRowContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="QueryCatParser.selectTable"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSelectTable([NotNull] QueryCatParser.SelectTableContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>SelectTablePrimaryNoFormat</c>
 	/// labeled alternative in <see cref="QueryCatParser.selectTablePrimary"/>.
 	/// </summary>
@@ -326,6 +338,13 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitSelectTablePrimaryIdentifier([NotNull] QueryCatParser.SelectTablePrimaryIdentifierContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>SelectTablePrimaryTable</c>
+	/// labeled alternative in <see cref="QueryCatParser.selectTablePrimary"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSelectTablePrimaryTable([NotNull] QueryCatParser.SelectTablePrimaryTableContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>SelectTableJoinedOn</c>
 	/// labeled alternative in <see cref="QueryCatParser.selectTableJoined"/>.

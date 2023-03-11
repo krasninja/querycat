@@ -272,7 +272,15 @@ public abstract class AstVisitor
     {
     }
 
+    public virtual void Visit(SelectTableNode node)
+    {
+    }
+
     public virtual void Visit(SelectTableReferenceListNode node)
+    {
+    }
+
+    public virtual void Visit(SelectTableRowNode node)
     {
     }
 
