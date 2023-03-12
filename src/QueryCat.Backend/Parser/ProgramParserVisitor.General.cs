@@ -94,6 +94,17 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
         );
 
     /// <inheritdoc />
+    public override IAstNode VisitExpressionAtTimeZone(QueryCatParser.ExpressionAtTimeZoneContext context)
+    {
+        var tzNode = context.atTimeZone().LOCAL() == null
+            ? (ExpressionNode)Visit(context.atTimeZone().tz)
+            : new LiteralNode(new VariantValue(TimeZoneInfo.Local.Id));
+        return new AtTimeZoneNode(
+            this.Visit<ExpressionNode>(context.left),
+            tzNode);
+    }
+
+    /// <inheritdoc />
     public override IAstNode VisitExpressionUnary(QueryCatParser.ExpressionUnaryContext context)
     {
         var operation = ConvertOperationTokenToAst(context.op.Type);

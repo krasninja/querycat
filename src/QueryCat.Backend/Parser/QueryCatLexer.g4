@@ -55,6 +55,7 @@ ANY:                'ANY';
 
 AND:                'AND';
 AS:                 'AS';
+AT:                 'AT';
 BY:                 'BY';
 CAST:               'CAST';
 DEFAULT:            'DEFAULT';
@@ -102,6 +103,9 @@ HOUR:               'HOUR';
 MINUTE:             'MINUTE';
 SECOND:             'SECOND';
 MILLISECOND:        'MILLISECOND';
+LOCAL:              'LOCAL';
+TIME:               'TIME';
+ZONE:               'ZONE';
 
 // Other functions.
 

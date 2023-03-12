@@ -248,6 +248,20 @@ internal class CreateDelegateVisitor : AstVisitor
         };
     }
 
+    /// <inheritdoc />
+    public override void Visit(AtTimeZoneNode node)
+    {
+        ResolveTypesVisitor.Visit(node);
+        VariantValue Func()
+        {
+            var left = NodeIdFuncMap[node.LeftNode.Id].Invoke();
+            var tz = NodeIdFuncMap[node.TimeZoneNode.Id].Invoke();
+            var destinationTimestamp = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(left, tz);
+            return new VariantValue(destinationTimestamp);
+        }
+        NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, node.GetDataType());
+    }
+
     #endregion
 
     #region Special functions

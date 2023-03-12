@@ -10,10 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Paginator now handles keys press. "A" to show all, "Q" to exit.
 - Initial implementation of "string_agg", "first_value" and "last_value" aggregate functions.
 - Add math "ln", "log", "asin", "acos", "atan" functions.
-- Add "object_query", "_size_pretty" functions.
+- Add "object_query", "_size_pretty", "_timezone_names" functions.
 - Add string functions "starts_with", "split_part", "regexp_count", "regexp_substr".
 - Allow to read/write from/to gzip archives.
-- Add "VALUES" clause.
+- Add "VALUES", "AT TIME ZONE" clauses.
 
 ### Changed
 

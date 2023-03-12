@@ -26,6 +26,12 @@ public abstract class DelegateVisitor : AstVisitor
     #region General
 
     /// <inheritdoc />
+    public override void Visit(AtTimeZoneNode node)
+    {
+        OnVisit(node);
+    }
+
+    /// <inheritdoc />
     public override void Visit(BetweenExpressionNode node)
     {
         OnVisit(node);

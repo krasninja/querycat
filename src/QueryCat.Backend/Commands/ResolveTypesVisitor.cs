@@ -139,6 +139,12 @@ internal class ResolveTypesVisitor : AstVisitor
         node.SetDataType(DataType.Boolean);
     }
 
+    /// <inheritdoc />
+    public override void Visit(AtTimeZoneNode node)
+    {
+        node.SetDataType(DataType.Timestamp);
+    }
+
     #endregion
 
     #region Special functions

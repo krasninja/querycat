@@ -476,6 +476,12 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitCastOperand([NotNull] QueryCatParser.CastOperandContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="QueryCatParser.atTimeZone"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitAtTimeZone([NotNull] QueryCatParser.AtTimeZoneContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="QueryCatParser.caseExpression"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
@@ -562,6 +568,13 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitExpressionInParens([NotNull] QueryCatParser.ExpressionInParensContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>ExpressionAtTimeZone</c>
+	/// labeled alternative in <see cref="QueryCatParser.expression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitExpressionAtTimeZone([NotNull] QueryCatParser.ExpressionAtTimeZoneContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>ExpressionCase</c>
 	/// labeled alternative in <see cref="QueryCatParser.expression"/>.
@@ -667,6 +680,13 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitSimpleExpressionCast([NotNull] QueryCatParser.SimpleExpressionCastContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>SimpleExpressionAtTimeZone</c>
+	/// labeled alternative in <see cref="QueryCatParser.simpleExpression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSimpleExpressionAtTimeZone([NotNull] QueryCatParser.SimpleExpressionAtTimeZoneContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>SimpleExpressionStandardFunctionCall</c>
 	/// labeled alternative in <see cref="QueryCatParser.simpleExpression"/>.

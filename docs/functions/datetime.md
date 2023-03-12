@@ -77,3 +77,12 @@ Example:
 ```
 select extract(year from cast('2023-01-01' as timestamp));
 ```
+
+## Convert To Time Zone
+
+By default, the timestamp values have local time zone. You can convert timestamp value to another time zone using `AT TIME ZONE` syntax. Example:
+
+```
+SELECT '2023-03-12'::timestamp AT LOCAL -- 03/12/2023 00:00:00
+SELECT CURRENT_TIMESTAMP AT TIME ZONE 'America/Los_Angeles' -- 03/11/2023 19:43:48
+```

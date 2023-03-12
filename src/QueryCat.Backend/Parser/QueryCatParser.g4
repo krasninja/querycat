@@ -189,6 +189,7 @@ array: '(' expression (',' expression)* ')';
 intervalLiteral: INTERVAL interval=STRING_LITERAL;
 
 castOperand: CAST '(' value=simpleExpression AS type ')';
+atTimeZone: AT (LOCAL | TIME ZONE tz=simpleExpression);
 caseExpression: CASE arg=simpleExpression? caseWhen* (ELSE default=expression)? END;
 caseWhen: WHEN condition=expression THEN result=expression;
 
@@ -233,6 +234,7 @@ type
 expression
     : literal # ExpressionLiteral
     | castOperand # ExpressionCast
+    | left=expression atTimeZone # ExpressionAtTimeZone
     | standardFunction # ExpressionStandardFunctionCall
     | functionCall # ExpressionFunctionCall
     | caseExpression # ExpressionCase
@@ -264,6 +266,7 @@ expression
 simpleExpression
     : literal # SimpleExpressionLiteral
     | castOperand # SimpleExpressionCast
+    | atTimeZone # SimpleExpressionAtTimeZone
     | standardFunction # SimpleExpressionStandardFunctionCall
     | functionCall # SimpleExpressionFunctionCall
     | caseExpression # SimpleExpressionCase
