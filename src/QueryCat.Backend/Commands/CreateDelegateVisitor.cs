@@ -256,8 +256,15 @@ internal class CreateDelegateVisitor : AstVisitor
         {
             var left = NodeIdFuncMap[node.LeftNode.Id].Invoke();
             var tz = NodeIdFuncMap[node.TimeZoneNode.Id].Invoke();
-            var destinationTimestamp = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(left, tz);
-            return new VariantValue(destinationTimestamp);
+            try
+            {
+                var destinationTimestamp = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(left, tz);
+                return new VariantValue(destinationTimestamp);
+            }
+            catch (TimeZoneNotFoundException)
+            {
+                throw new QueryCatException($"Cannot find time zone '{tz}'.");
+            }
         }
         NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, node.GetDataType());
     }
