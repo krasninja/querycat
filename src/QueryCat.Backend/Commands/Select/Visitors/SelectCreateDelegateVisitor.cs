@@ -185,7 +185,7 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
         var firstRowTypes = node.RowsNodes.First().ExpressionNodes.Select(n => n.GetDataType());
         var rowsFrame = new RowsFrame(
             firstRowTypes
-                .Select((rt, i) => new Column($"column{i}", rt))
+                .Select((rt, i) => new Column($"column{i + 1}", rt))
                 .ToArray()
         );
 
