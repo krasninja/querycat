@@ -29,6 +29,9 @@ internal class QueryCommand : BaseQueryCommand
         var outputStyleOption = new Option<TextTableOutput.Style>("--output-style",
             description: "Output style.",
             getDefaultValue: () => TextTableOutput.Style.Table);
+        var analyzeRowsOption = new Option<int>("--analyze-rows",
+            description: "Number of rows to analyze. -1 to analyze all.",
+            getDefaultValue: () => 10);
 
         this.AddOption(maxErrorsOption);
         this.AddOption(statisticOption);
@@ -36,16 +39,23 @@ internal class QueryCommand : BaseQueryCommand
         this.AddOption(rowNumberOption);
         this.AddOption(pageSizeOption);
         this.AddOption(outputStyleOption);
+        this.AddOption(analyzeRowsOption);
         this.SetHandler((applicationOptions, query, files, queryOptions) =>
         {
             applicationOptions.InitializeLogger();
-            using var thread = applicationOptions.CreateExecutionThread(new ExecutionOptions(queryOptions.OutputStyle)
+            var options = new ExecutionOptions(queryOptions.OutputStyle)
             {
                 AddRowNumberColumn = queryOptions.RowNumberOption,
                 PagingSize = queryOptions.PageSize,
                 ShowDetailedStatistic = queryOptions.DetailedStatistic,
                 MaxErrors = queryOptions.MaxErrors,
-            });
+                AnalyzeRowsCount = queryOptions.AnalyzeRows,
+            };
+            if (queryOptions.AnalyzeRows < 0)
+            {
+                options.AnalyzeRowsCount = int.MaxValue;
+            }
+            using var thread = applicationOptions.CreateExecutionThread(options);
             RunQuery(thread, query, files);
 
             if (queryOptions.Statistic || queryOptions.DetailedStatistic)
@@ -63,7 +73,8 @@ internal class QueryCommand : BaseQueryCommand
                 detailedStatisticOption,
                 rowNumberOption,
                 pageSizeOption,
-                outputStyleOption)
+                outputStyleOption,
+                analyzeRowsOption)
             );
     }
 }

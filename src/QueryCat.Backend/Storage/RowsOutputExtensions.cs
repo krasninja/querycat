@@ -1,4 +1,5 @@
 using QueryCat.Backend.Abstractions;
+using QueryCat.Backend.Execution;
 using QueryCat.Backend.Formatters;
 using QueryCat.Backend.Relational.Iterators;
 
@@ -19,13 +20,14 @@ public static class RowsOutputExtensions
     public static void Write(
         this IRowsOutput rowsOutput,
         IRowsIterator rowsIterator,
-        IExecutionThread executionThread,
+        ExecutionThread executionThread,
         CancellationToken cancellationToken = default)
     {
         // For plain output let's adjust columns width first.
-        if (rowsOutput is TextTableOutput || rowsOutput is PagingOutput)
+        if ((rowsOutput is TextTableOutput || rowsOutput is PagingOutput)
+            && executionThread.Options.AnalyzeRowsCount > 0)
         {
-            rowsIterator = new AdjustColumnsLengthsIterator(rowsIterator);
+            rowsIterator = new AdjustColumnsLengthsIterator(rowsIterator, executionThread.Options.AnalyzeRowsCount);
         }
 
         var isOpened = false;

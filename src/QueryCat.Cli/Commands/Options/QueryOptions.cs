@@ -15,4 +15,6 @@ internal class QueryOptions
     public int PageSize { get; init; }
 
     public TextTableOutput.Style OutputStyle { get; init; }
+
+    public int AnalyzeRows { get; init; }
 }

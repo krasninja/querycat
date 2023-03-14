@@ -9,8 +9,8 @@ internal abstract class BaseQueryCommand : BaseCommand
         description: "SQL-like query or command argument.",
         getDefaultValue: () => string.Empty);
 
-    public static Option<string[]> FilesOption { get; } = new(new[] { "-f", "--files" },
-        description: "SQL files.")
+    public Option<string[]> FilesOption { get; } = new(new[] { "-f", "--files" },
+        description: "SQL files to execute.")
     {
         AllowMultipleArgumentsPerToken = true,
     };
