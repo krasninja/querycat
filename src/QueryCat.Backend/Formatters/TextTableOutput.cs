@@ -21,6 +21,7 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
     }
 
     private readonly Stream _stream;
+    private int _totalMaxLineLength;
     private StreamWriter _streamWriter = StreamWriter.Null;
     private bool _isSingleValue;
     private int _maxColumnNameWidth = 10;
@@ -123,10 +124,12 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
             _streamWriter.Write(columns[i].FullName.PadRight(_columnsLengths[i]));
             _streamWriter.Write(' ');
             writeCount++;
+            _totalMaxLineLength += columns[i].Length + 1 + _separatorWithSpace.Length;
         }
         if (writeCount > 0)
         {
             _streamWriter.Write(_separator);
+            _totalMaxLineLength += _separator.Length;
         }
         _streamWriter.WriteLine();
         _streamWriter.Flush();
@@ -167,11 +170,21 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
             if (!_isSingleValue)
             {
                 _streamWriter.Write(_separatorWithSpace);
+                writeCount += _separatorWithSpace.Length;
             }
             var value = row[i];
-            _streamWriter.Write(value.ToString().PadRight(_columnsLengths[i]));
+            var valueString = value.ToString();
+            var columnLength = _columnsLengths[i];
+            // For last value we can try to fit padding if previous columns were larger than expected.
+            if (i == row.Columns.Length - 1
+                && writeCount + _columnsLengths[i] + 1 > _totalMaxLineLength
+                && valueString.Length < _totalMaxLineLength - writeCount)
+            {
+                columnLength = _totalMaxLineLength - writeCount - _separatorWithSpace.Length;
+            }
+            _streamWriter.Write(valueString.PadRight(columnLength));
             _streamWriter.Write(' ');
-            writeCount++;
+            writeCount += valueString.Length + 1;
         }
         if (!_isSingleValue && writeCount > 0)
         {
