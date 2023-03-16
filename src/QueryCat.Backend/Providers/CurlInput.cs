@@ -35,7 +35,7 @@ internal static class CurlInput
             if (response.Headers.TryGetValues(ContentTypeHeader, out var contentTypes))
             {
                 var contentType = contentTypes.Last();
-                formatter = FormatUtils.GetFormatterByContentType(contentType);
+                formatter = FormattersInfo.CreateFormatter(contentType);
             }
         }
         // Try get formatter by extension from URI.
@@ -45,7 +45,7 @@ internal static class CurlInput
             var extension = Path.GetExtension(absolutePath).ToLower();
             if (!string.IsNullOrEmpty(extension))
             {
-                formatter = FormatUtils.GetFormatterByExtension(extension);
+                formatter = FormattersInfo.CreateFormatter(extension);
             }
         }
         formatter ??= new TextLineFormatter();

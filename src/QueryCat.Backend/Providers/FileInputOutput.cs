@@ -93,7 +93,7 @@ internal static class FileInputOutput
         {
             extension = Path.GetExtension(path.Substring(0, path.Length - extension.Length)).ToLower();
         }
-        var formatter = FormatUtils.GetFormatterByExtension(extension);
+        var formatter = FormattersInfo.CreateFormatter(extension);
         return formatter ?? new TextLineFormatter();
     }
 }
