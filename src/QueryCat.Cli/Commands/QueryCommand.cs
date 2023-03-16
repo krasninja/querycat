@@ -32,6 +32,11 @@ internal class QueryCommand : BaseQueryCommand
         var analyzeRowsOption = new Option<int>("--analyze-rows",
             description: "Number of rows to analyze. -1 to analyze all.",
             getDefaultValue: () => 10);
+        var columnsSeparatorOption = new Option<string?>("--columns-separator",
+            description: "Character to use to separate columns.")
+            {
+                IsRequired = false,
+            };
 
         this.AddOption(maxErrorsOption);
         this.AddOption(statisticOption);
@@ -40,10 +45,11 @@ internal class QueryCommand : BaseQueryCommand
         this.AddOption(pageSizeOption);
         this.AddOption(outputStyleOption);
         this.AddOption(analyzeRowsOption);
+        this.AddOption(columnsSeparatorOption);
         this.SetHandler((applicationOptions, query, files, queryOptions) =>
         {
             applicationOptions.InitializeLogger();
-            var options = new ExecutionOptions(queryOptions.OutputStyle)
+            var options = new ExecutionOptions(queryOptions.OutputStyle, queryOptions.ColumnsSeparator)
             {
                 AddRowNumberColumn = queryOptions.RowNumberOption,
                 PagingSize = queryOptions.PageSize,
@@ -74,7 +80,8 @@ internal class QueryCommand : BaseQueryCommand
                 rowNumberOption,
                 pageSizeOption,
                 outputStyleOption,
-                analyzeRowsOption)
+                analyzeRowsOption,
+                columnsSeparatorOption)
             );
     }
 }

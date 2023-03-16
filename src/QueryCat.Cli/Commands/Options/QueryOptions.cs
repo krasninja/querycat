@@ -17,4 +17,6 @@ internal class QueryOptions
     public TextTableOutput.Style OutputStyle { get; init; }
 
     public int AnalyzeRows { get; init; }
+
+    public string? ColumnsSeparator { get; init; }
 }

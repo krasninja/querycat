@@ -35,7 +35,12 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
 
     private int[] _columnsLengths = Array.Empty<int>();
 
-    public TextTableOutput(Stream stream, bool hasHeader = true, string separator = "",
+    /// <summary>
+    /// Columns separator.
+    /// </summary>
+    public string Separator => _separator;
+
+    public TextTableOutput(Stream stream, bool hasHeader = true, string? separator = null,
         Style style = Style.Table)
     {
         _stream = stream;
@@ -45,13 +50,13 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
         {
             _onInit = OnCardInit;
             _onWrite = OnCardWrite;
-            _separator = !string.IsNullOrEmpty(separator) ? separator : ":";
+            _separator = separator ?? ":";
         }
         else
         {
             _onInit = OnTableInit;
             _onWrite = OnTableWrite;
-            _separator = !string.IsNullOrEmpty(separator) ? separator : "|";
+            _separator = separator ?? "|";
         }
 
         _separatorWithSpace = !string.IsNullOrEmpty(_separator) ? _separator + " " : string.Empty;

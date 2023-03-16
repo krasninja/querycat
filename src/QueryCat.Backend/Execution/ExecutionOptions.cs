@@ -82,11 +82,20 @@ public sealed class ExecutionOptions
     /// </summary>
     public int AnalyzeRowsCount { get; set; } = 10;
 
-    public ExecutionOptions(TextTableOutput.Style outputStyle = TextTableOutput.Style.Table)
+    /// <summary>
+    /// Character to use to separate columns.
+    /// </summary>
+    public string? ColumnsSeparator { get; }
+
+    public ExecutionOptions(
+        TextTableOutput.Style outputStyle = TextTableOutput.Style.Table,
+        string? columnsSeparator = null)
     {
         var tableOutput = new TextTableOutput(
             stream: StandardInputOutput.GetConsoleOutput(),
+            separator: columnsSeparator,
             style: outputStyle);
+        ColumnsSeparator = tableOutput.Separator;
         DefaultRowsOutput = new PagingOutput(tableOutput)
         {
             PagingRowsCount = PagingSize,
