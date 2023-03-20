@@ -21,7 +21,7 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
     }
 
     private readonly Stream _stream;
-    private int _totalMaxLineLength;
+    private int[] _totalMaxLineLength = Array.Empty<int>();
     private StreamWriter _streamWriter = StreamWriter.Null;
     private bool _isSingleValue;
     private int _maxColumnNameWidth = 10;
@@ -108,14 +108,21 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
 
     private void OnTableInit()
     {
+        var columns = QueryContext.QueryInfo.Columns;
+        _totalMaxLineLength = new int[columns.Count];
+        int currentMaxLength = 0;
+
         if (!_hasHeader || _isSingleValue)
         {
+            for (int i = 0; i < columns.Count; i++)
+            {
+                currentMaxLength += _separatorWithSpace.Length + columns[i].Length + 1;
+                _totalMaxLineLength[i] = currentMaxLength;
+            }
             return;
         }
 
-        var columns = QueryContext.QueryInfo.Columns;
-
-        int writeCount = 0;
+        // Header.
         for (int i = 0; i < columns.Count; i++)
         {
             if (columns[i].IsHidden)
@@ -128,17 +135,17 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
             _streamWriter.Write(_separatorWithSpace);
             _streamWriter.Write(columns[i].FullName.PadRight(_columnsLengths[i]));
             _streamWriter.Write(' ');
-            writeCount++;
-            _totalMaxLineLength += columns[i].Length + 1 + _separatorWithSpace.Length;
+            currentMaxLength += _separatorWithSpace.Length + columns[i].Length + 1;
+            _totalMaxLineLength[i] = currentMaxLength;
         }
-        if (writeCount > 0)
+        if (currentMaxLength > 0)
         {
             _streamWriter.Write(_separator);
-            _totalMaxLineLength += _separator.Length;
         }
         _streamWriter.WriteLine();
         _streamWriter.Flush();
 
+        // Append header separator.
         for (int i = 0; i < columns.Count; i++)
         {
             if (columns[i].IsHidden)
@@ -156,7 +163,7 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
             _streamWriter.Write(new string('-', _columnsLengths[i]));
             _streamWriter.Write(' ');
         }
-        if (writeCount > 0)
+        if (currentMaxLength > 0)
         {
             _streamWriter.Write(_separator);
         }
@@ -179,17 +186,16 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
             }
             var value = row[i];
             var valueString = value.ToString();
-            var columnLength = _columnsLengths[i];
-            // For last value we can try to fit padding if previous columns were larger than expected.
-            if (i == row.Columns.Length - 1
-                && writeCount + _columnsLengths[i] + 1 > _totalMaxLineLength
-                && valueString.Length < _totalMaxLineLength - writeCount)
+            var padding = _columnsLengths[i];
+            var exceed = _totalMaxLineLength[i] - writeCount - _columnsLengths[i] - 1;
+            if (exceed < 0)
             {
-                columnLength = _totalMaxLineLength - writeCount - _separatorWithSpace.Length;
+                padding = Math.Max(0, exceed + padding);
             }
-            _streamWriter.Write(valueString.PadRight(columnLength));
+            var valueWithPadding = valueString.PadRight(padding);
+            _streamWriter.Write(valueWithPadding);
             _streamWriter.Write(' ');
-            writeCount += valueString.Length + 1;
+            writeCount += valueWithPadding.Length + 1;
         }
         if (!_isSingleValue && writeCount > 0)
         {
