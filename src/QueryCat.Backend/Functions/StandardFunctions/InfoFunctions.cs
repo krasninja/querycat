@@ -70,7 +70,7 @@ public static class InfoFunctions
             .AddProperty("is_installed", p => p.IsInstalled)
             .AddProperty("uri", p => p.Uri);
         using var pluginsManager = new PluginsManager(args.ExecutionThread.PluginsManager.PluginDirectories);
-        var plugins = pluginsManager.ListAsync().GetAwaiter().GetResult();
+        var plugins = pluginsManager.ListAsync().ConfigureAwait(false).GetAwaiter().GetResult();
         return VariantValue.CreateFromObject(builder.BuildIterator(plugins));
     }
 #endif
@@ -99,27 +99,6 @@ public static class InfoFunctions
         return new VariantValue(GetVersion());
     }
 
-    [Description("Converts a size in bytes into a more easily human-readable format with size units.")]
-    [FunctionSignature("_size_pretty(size: integer, base: integer = 1024): string")]
-    public static VariantValue SizePretty(FunctionCallInfo args)
-    {
-        var byteCount = args.GetAt(0).AsInteger;
-        var @base = args.GetAt(1).AsInteger;
-
-        // For reference: https://stackoverflow.com/questions/281640/how-do-i-get-a-human-readable-file-size-in-bytes-abbreviation-using-net.
-        string[] suffix = { "B", "K", "M", "G", "T", "P", "E" };
-        if (byteCount == 0)
-        {
-            return new VariantValue("0" + suffix[0]);
-        }
-        var bytes = Math.Abs(byteCount);
-        var place = Convert.ToInt64(Math.Floor(Math.Log(bytes, @base)));
-        var num = Math.Round(bytes / Math.Pow(@base, place), 1);
-        var size = Math.Sign(byteCount) * num + suffix[place];
-
-        return new VariantValue(size);
-    }
-
     [Description("Provide a list of OS time zone names.")]
     [FunctionSignature("_timezone_names(): object<IRowsIterator>")]
     public static VariantValue TimeZoneNames(FunctionCallInfo args)
@@ -141,7 +120,6 @@ public static class InfoFunctions
 #endif
         functionsManager.RegisterFunction(TypeOf);
         functionsManager.RegisterFunction(Version);
-        functionsManager.RegisterFunction(SizePretty);
         functionsManager.RegisterFunction(TimeZoneNames);
     }
 }
