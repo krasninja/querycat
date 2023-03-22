@@ -94,7 +94,7 @@ public sealed class PluginsManager : IDisposable
         CancellationToken cancellationToken = default)
     {
         var remote = !localOnly
-            ? await GetRemotePluginsAsync(cancellationToken)
+            ? await GetRemotePluginsAsync(cancellationToken).ConfigureAwait(false)
             : Array.Empty<PluginInfo>();
         var local = GetLocalPlugins();
 
@@ -109,7 +109,7 @@ public sealed class PluginsManager : IDisposable
     /// <returns>Number of created files.</returns>
     public async Task<int> InstallAsync(string name, CancellationToken cancellationToken = default)
     {
-        var plugins = await GetRemotePluginsAsync(cancellationToken);
+        var plugins = await GetRemotePluginsAsync(cancellationToken).ConfigureAwait(false);
         var plugin = plugins.FirstOrDefault(p => name.Equals(p.Name, StringComparison.OrdinalIgnoreCase));
         if (plugin == null)
         {
@@ -118,11 +118,12 @@ public sealed class PluginsManager : IDisposable
 
         // Create X.downloading file, download and then remove.
         var mainPluginDirectory = GetMainPluginDirectory();
-        var stream = await _httpClient.GetStreamAsync(plugin.Uri, cancellationToken);
+        var stream = await _httpClient.GetStreamAsync(plugin.Uri, cancellationToken).ConfigureAwait(false);
         var fullFileName = Path.Combine(mainPluginDirectory, Path.GetFileName(plugin.Uri));
         var fullFileNameDownloading = fullFileName + ".downloading";
         await using var outputFileStream = new FileStream(fullFileNameDownloading, FileMode.OpenOrCreate);
-        await stream.CopyToAsync(outputFileStream, cancellationToken);
+        await stream.CopyToAsync(outputFileStream, cancellationToken)
+            .ConfigureAwait(false);
         stream.Close();
         outputFileStream.Close();
         var overwrite = File.Exists(fullFileName);
@@ -142,12 +143,13 @@ public sealed class PluginsManager : IDisposable
         {
             foreach (var localPlugin in GetLocalPlugins())
             {
-                await UpdateAsyncInternal(localPlugin.Name, cancellationToken);
+                await UpdateAsyncInternal(localPlugin.Name, cancellationToken)
+                    .ConfigureAwait(false);
             }
         }
         else
         {
-            await UpdateAsyncInternal(name, cancellationToken);
+            await UpdateAsyncInternal(name, cancellationToken).ConfigureAwait(false);
         }
     }
 
@@ -156,7 +158,7 @@ public sealed class PluginsManager : IDisposable
         using var twoPhaseRemove = new TwoPhaseRemove(renameBeforeRemove: true);
         var pluginsToRemove = GetLocalPlugins(name);
         twoPhaseRemove.AddRange(pluginsToRemove.Select(p => p.Uri));
-        await InstallAsync(name, cancellationToken);
+        await InstallAsync(name, cancellationToken).ConfigureAwait(false);
         twoPhaseRemove.Remove();
     }
 
@@ -185,7 +187,8 @@ public sealed class PluginsManager : IDisposable
         {
             return _remotePluginsCache;
         }
-        await using var stream = await _httpClient.GetStreamAsync(_bucketUri, cancellationToken);
+        await using var stream = await _httpClient.GetStreamAsync(_bucketUri, cancellationToken)
+            .ConfigureAwait(false);
         using var xmlReader = new XmlTextReader(stream);
         var xmlKeys = new List<string>();
         while (xmlReader.ReadToFollowing("Key"))

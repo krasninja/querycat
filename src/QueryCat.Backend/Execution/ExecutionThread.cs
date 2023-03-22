@@ -163,7 +163,7 @@ public class ExecutionThread : IExecutionThread
     {
         if (Options.UseConfig)
         {
-            InputConfigStorage.LoadAsync().GetAwaiter().GetResult();
+            InputConfigStorage.LoadAsync().ConfigureAwait(false).GetAwaiter().GetResult();
         }
 
         while (ExecutingStatement != null)
@@ -204,7 +204,7 @@ public class ExecutionThread : IExecutionThread
 
         if (Options.UseConfig)
         {
-            InputConfigStorage.SaveAsync().GetAwaiter().GetResult();
+            InputConfigStorage.SaveAsync().ConfigureAwait(false).GetAwaiter().GetResult();
         }
         ExecutingStatement = null;
 
