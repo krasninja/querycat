@@ -71,6 +71,7 @@ internal class Program
         }, queryArgument);
 
         var parser = new CommandLineBuilder(rootCommand)
+            .UseVersionOption("-v", "--version")
             .UseDefaults()
             .UseHelp(context =>
             {
