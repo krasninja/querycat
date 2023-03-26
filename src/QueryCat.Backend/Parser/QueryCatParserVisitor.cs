@@ -438,6 +438,24 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitSelectLimitClause([NotNull] QueryCatParser.SelectLimitClauseContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="QueryCatParser.updateStatement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitUpdateStatement([NotNull] QueryCatParser.UpdateStatementContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="QueryCatParser.updateSet"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitUpdateSet([NotNull] QueryCatParser.UpdateSetContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="QueryCatParser.insertStatement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitInsertStatement([NotNull] QueryCatParser.InsertStatementContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="QueryCatParser.echoStatement"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

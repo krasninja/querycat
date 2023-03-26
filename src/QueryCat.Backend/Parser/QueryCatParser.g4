@@ -14,8 +14,10 @@ options {
 program: SEMICOLON* statement (SEMICOLON statement)* SEMICOLON* EOF;
 
 statement
-    : selectStatement # StatementSelectExpression
-    | functionCall # StatementFunctionCall
+    : functionCall # StatementFunctionCall
+    | selectStatement # StatementSelectExpression
+    | updateStatement # StatementUpdateExpression
+    | insertStatement # StatementInsertExpression
     | echoStatement # StatementEcho
     | declareVariable # StatementDeclareVariable
     | setVariable # StatementSetVariable
@@ -166,6 +168,27 @@ selectOffsetClause: OFFSET (offset=expression) (ROW | ROWS)?;
 selectFetchFirstClause: (FETCH | LIMIT) (FIRST | NEXT)? (limit=expression) (ROW | ROWS)? (ONLY | ONLY)?;
 selectTopClause: TOP limit=INTEGER_LITERAL;
 selectLimitClause: LIMIT limit=expression;
+
+/*
+ * ===============
+ * UPDATE command.
+ * ===============
+ */
+
+updateStatement: 'UPDATE' functionCall selectAlias? SET updateSet (COMMA updateSet)* selectSearchCondition?;
+updateSet: IDENTIFIER '=' expression;
+
+/*
+ * ===============
+ * INSERT command.
+ * ===============
+ */
+
+insertStatement: 'INSERT' 'INTO' functionCall '(' name=identifierChain (COMMA name=identifierChain)* ')' insertSource;
+insertSource
+    : selectQueryExpression # InsertSourceQuery
+    | selectTableRow (COMMA selectTableRow)* # InsertSourceValues
+    ;
 
 /*
  * =============

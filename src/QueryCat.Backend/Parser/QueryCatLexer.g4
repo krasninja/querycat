@@ -164,6 +164,14 @@ WHERE:              'WHERE';
 WINDOW:             'WINDOW';
 WITH:               'WITH';
 
+// UPDATE command.
+
+UPDATE:             'UPDATE';
+
+// INSERT command.
+
+INSERT:             'INSERT';
+
 // DECLARE/SET command.
 
 DECLARE:            'DECLARE';
