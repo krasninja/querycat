@@ -20,7 +20,7 @@ internal class PluginListCommand : BaseCommand
                 PagingSize = ExecutionOptions.NoLimit
             });
             var result = executionThread.RunFunction(InfoFunctions.Plugins);
-            executionThread.Options.DefaultRowsOutput.Write(ExecutionThreadUtils.ConvertToIterator(result));
+            executionThread.Options.DefaultRowsOutput.Write(ExecutionThreadUtils.ConvertToIterator(result), executionThread);
         }, new ApplicationOptionsBinder(LogLevelOption, PluginDirectoriesOption));
     }
 }

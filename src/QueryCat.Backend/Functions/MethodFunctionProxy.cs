@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Reflection;
+using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Ast.Nodes.Function;
 using QueryCat.Backend.Types;
 
@@ -36,17 +37,47 @@ internal class MethodFunctionProxy
             paramsList.Add(argNode);
         }
         var returnType = DataType.Void;
+        var returnTypeName = string.Empty;
         if (_method is MethodInfo methodInfo)
         {
             returnType = DataTypeUtils.ConvertFromSystem(methodInfo.ReturnType);
+            if (returnType == DataType.Object)
+            {
+                returnTypeName = GetTypeFromName(methodInfo.ReturnType);
+            }
         }
-        if (_method is ConstructorInfo)
+        if (_method is ConstructorInfo constructorInfo)
         {
             returnType = DataType.Object;
+            if (constructorInfo.DeclaringType != null)
+            {
+                returnTypeName = GetTypeFromName(constructorInfo.DeclaringType);
+            }
         }
 
-        var node = new FunctionSignatureNode(nameOverride ?? _name, new FunctionTypeNode(returnType), paramsList);
+        var node = new FunctionSignatureNode(nameOverride ?? _name, new FunctionTypeNode(returnType, returnTypeName), paramsList);
         return node;
+    }
+
+    private static string GetTypeFromName(Type type)
+    {
+        if (type.IsAssignableTo(typeof(IRowsInput)))
+        {
+            return nameof(IRowsInput);
+        }
+        if (type.IsAssignableTo(typeof(IRowsOutput)))
+        {
+            return nameof(IRowsOutput);
+        }
+        if (type.IsAssignableTo(typeof(IRowsIterator)))
+        {
+            return nameof(IRowsIterator);
+        }
+        if (type.IsAssignableTo(typeof(IRowsFormatter)))
+        {
+            return nameof(IRowsFormatter);
+        }
+        return string.Empty;
     }
 
     public Function GetFunction()

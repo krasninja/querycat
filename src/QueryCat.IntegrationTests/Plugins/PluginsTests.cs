@@ -1,4 +1,5 @@
 using Xunit;
+using QueryCat.Tests.QueryRunner;
 
 namespace QueryCat.IntegrationTests.Plugins;
 
@@ -7,7 +8,7 @@ namespace QueryCat.IntegrationTests.Plugins;
 /// </summary>
 public sealed class PluginsTests : IDisposable
 {
-    private readonly Backend.Tests.TestThread _testThread = new();
+    private readonly TestThread _testThread = new();
 
     [Fact]
     public void SamplePluginRowsInput_CreateAndRun_ReturnsResult()

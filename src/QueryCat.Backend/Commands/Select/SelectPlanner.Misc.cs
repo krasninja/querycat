@@ -1,4 +1,5 @@
 using QueryCat.Backend.Ast;
+using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Commands.Select.Visitors;
 using QueryCat.Backend.Functions;
 
@@ -24,5 +25,10 @@ internal sealed partial class SelectPlanner
             ? new SelectCreateDelegateVisitor(ExecutionThread, context)
             : new CreateDelegateVisitor(ExecutionThread);
         return nodes.Select(n => visitor.RunAndReturn(n));
+    }
+
+    private void Misc_Transform(SelectQueryNode node)
+    {
+        new TransformQueryAstVisitor().Run(node);
     }
 }

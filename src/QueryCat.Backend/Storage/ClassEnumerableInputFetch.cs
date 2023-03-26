@@ -68,7 +68,7 @@ public class ClassEnumerableInputFetch<TClass> where TClass : class
         FetchSingleDelegate action,
         CancellationToken cancellationToken = default)
     {
-        var item = action.Invoke(cancellationToken).GetAwaiter().GetResult();
+        var item = action.Invoke(cancellationToken).ConfigureAwait(false).GetAwaiter().GetResult();
         yield return item;
     }
 
@@ -82,7 +82,7 @@ public class ClassEnumerableInputFetch<TClass> where TClass : class
         FetchAllDelegate action,
         CancellationToken cancellationToken = default)
     {
-        return action.Invoke(cancellationToken).GetAwaiter().GetResult();
+        return action.Invoke(cancellationToken).ConfigureAwait(false).GetAwaiter().GetResult();
     }
 
     /// <summary>
@@ -102,7 +102,7 @@ public class ClassEnumerableInputFetch<TClass> where TClass : class
         do
         {
             Log.Logger.Debug("Run with offset {Offset} and limit {Limit}.", offset, Limit);
-            var data = action(offset, Limit, cancellationToken).GetAwaiter().GetResult();
+            var data = action(offset, Limit, cancellationToken).ConfigureAwait(false).GetAwaiter().GetResult();
             fetchedCount = 0;
             foreach (var item in data.Items)
             {
@@ -148,7 +148,7 @@ public class ClassEnumerableInputFetch<TClass> where TClass : class
         do
         {
             Log.Logger.Debug("Run with page {Page} and limit {Limit}.", page, Limit);
-            var data = action(page, Limit, cancellationToken).GetAwaiter().GetResult();
+            var data = action(page, Limit, cancellationToken).ConfigureAwait(false).GetAwaiter().GetResult();
             fetchedCount = 0;
             foreach (var item in data.Items)
             {
@@ -194,7 +194,7 @@ public class ClassEnumerableInputFetch<TClass> where TClass : class
         bool hasMore;
         do
         {
-            var data = action(cancellationToken).GetAwaiter().GetResult();
+            var data = action(cancellationToken).ConfigureAwait(false).GetAwaiter().GetResult();
             fetchedCount = 0;
             foreach (var item in data.Items)
             {

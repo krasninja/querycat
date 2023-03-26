@@ -1,7 +1,9 @@
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Function;
+using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Ast.Nodes.SpecialFunctions;
+using QueryCat.Backend.Commands.Select;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Functions;
 using QueryCat.Backend.Types;
@@ -137,6 +139,12 @@ internal class ResolveTypesVisitor : AstVisitor
         node.SetDataType(DataType.Boolean);
     }
 
+    /// <inheritdoc />
+    public override void Visit(AtTimeZoneNode node)
+    {
+        node.SetDataType(DataType.Timestamp);
+    }
+
     #endregion
 
     #region Special functions
@@ -214,6 +222,24 @@ internal class ResolveTypesVisitor : AstVisitor
     public override void Visit(FunctionCallStatementNode node)
     {
         node.CopyTo<DataType>(AstAttributeKeys.TypeKey, node.FunctionNode);
+    }
+
+    #endregion
+
+    #region Select Command
+
+    /// <inheritdoc />
+    public override void Visit(SelectQuerySpecificationNode node)
+    {
+        new SelectPlanner(ExecutionThread).CreateIterator(node);
+        node.ColumnsListNode.ColumnsNodes[0].CopyTo<DataType>(AstAttributeKeys.TypeKey, node);
+    }
+
+    /// <inheritdoc />
+    public override void Visit(SelectQueryCombineNode node)
+    {
+        new SelectPlanner(ExecutionThread).CreateIterator(node);
+        node.ColumnsListNode.ColumnsNodes[0].CopyTo<DataType>(AstAttributeKeys.TypeKey, node);
     }
 
     #endregion

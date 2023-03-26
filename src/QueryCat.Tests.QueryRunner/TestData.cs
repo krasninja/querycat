@@ -1,4 +1,4 @@
-namespace QueryCat.Backend.Tests;
+namespace QueryCat.Tests.QueryRunner;
 
 /// <summary>
 /// Test data class.

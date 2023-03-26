@@ -23,7 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\QueryCat.Backend\QueryCat.Backend.csproj" />
+    <ProjectReference Include="..\QueryCat.Tests.QueryRunner\QueryCat.Tests.QueryRunner.csproj" />
   </ItemGroup>
 
 </Project>

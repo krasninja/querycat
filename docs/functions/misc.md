@@ -7,6 +7,7 @@
 | `uuid(): string`<br /><br /> The function returns a version 4 (random) UUID. |
 | `nop(...args: any[]): void`<br /><br />Not operation. The function can be used to suppress output. |
 | `nullif(value1: any, value2: any): any`<br /><br /> The function returns a null value if value1 equals value2; otherwise it returns value1. |
+| `size_pretty(size: integer, base: integer = 1024): string`<br /><br /> Converts a size in bytes into a more easily human-readable format with size units. |
 
 ## Type Cast
 

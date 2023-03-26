@@ -311,7 +311,7 @@ internal static class StringUtils
         {
             startIndex = 0;
         }
-        else if (startIndex > target.Length)
+        else if (startIndex >= target.Length)
         {
             return string.Empty;
         }
@@ -319,7 +319,7 @@ internal static class StringUtils
         {
             length = target.Length;
         }
-        else if (startIndex + length > target.Length)
+        if (startIndex + length > target.Length)
         {
             length = target.Length - startIndex;
         }

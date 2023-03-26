@@ -14,8 +14,10 @@ options {
 program: SEMICOLON* statement (SEMICOLON statement)* SEMICOLON* EOF;
 
 statement
-    : selectStatement # StatementSelectExpression
-    | functionCall # StatementFunctionCall
+    : functionCall # StatementFunctionCall
+    | selectStatement # StatementSelectExpression
+    | updateStatement # StatementUpdateExpression
+    | insertStatement # StatementInsertExpression
     | echoStatement # StatementEcho
     | declareVariable # StatementDeclareVariable
     | setVariable # StatementSetVariable
@@ -130,12 +132,15 @@ selectFromClause:
 selectTableReferenceList:
     FROM selectTableReference (COMMA selectTableReference)*;
 selectTableReference: selectTablePrimary selectTableJoined*;
+selectTableRow: '(' simpleExpression (COMMA simpleExpression)* ')';
+selectTable: '(' VALUES selectTableRow (COMMA selectTableRow)* ')' selectAlias?;
 selectTablePrimary
     : functionCall selectAlias? # SelectTablePrimaryNoFormat
     | '-' # SelectTablePrimaryStdin
     | uri=STRING_LITERAL (FORMAT functionCall)? selectAlias? # SelectTablePrimaryWithFormat
     | '(' selectQueryExpression ')' selectAlias? # SelectTablePrimarySubquery
     | name=IDENTIFIER selectAlias? # SelectTablePrimaryIdentifier
+    | selectTable selectAlias? # SelectTablePrimaryTable
     ;
 selectTableJoined
     : selectJoinType? JOIN right=selectTablePrimary ON condition=expression # SelectTableJoinedOn
@@ -165,6 +170,27 @@ selectTopClause: TOP limit=INTEGER_LITERAL;
 selectLimitClause: LIMIT limit=expression;
 
 /*
+ * ===============
+ * UPDATE command.
+ * ===============
+ */
+
+updateStatement: 'UPDATE' functionCall selectAlias? SET updateSet (COMMA updateSet)* selectSearchCondition?;
+updateSet: IDENTIFIER '=' expression;
+
+/*
+ * ===============
+ * INSERT command.
+ * ===============
+ */
+
+insertStatement: 'INSERT' 'INTO' functionCall '(' name=identifierChain (COMMA name=identifierChain)* ')' insertSource;
+insertSource
+    : selectQueryExpression # InsertSourceQuery
+    | selectTableRow (COMMA selectTableRow)* # InsertSourceValues
+    ;
+
+/*
  * =============
  * ECHO command.
  * =============
@@ -186,6 +212,7 @@ array: '(' expression (',' expression)* ')';
 intervalLiteral: INTERVAL interval=STRING_LITERAL;
 
 castOperand: CAST '(' value=simpleExpression AS type ')';
+atTimeZone: AT (LOCAL | TIME ZONE tz=simpleExpression);
 caseExpression: CASE arg=simpleExpression? caseWhen* (ELSE default=expression)? END;
 caseWhen: WHEN condition=expression THEN result=expression;
 
@@ -230,6 +257,7 @@ type
 expression
     : literal # ExpressionLiteral
     | castOperand # ExpressionCast
+    | left=expression atTimeZone # ExpressionAtTimeZone
     | standardFunction # ExpressionStandardFunctionCall
     | functionCall # ExpressionFunctionCall
     | caseExpression # ExpressionCase
@@ -244,6 +272,7 @@ expression
     | left=expression op=(PLUS | MINUS) right=expression # ExpressionBinary
     | left=expression op=(EQUALS | NOT_EQUALS | GREATER | GREATER_OR_EQUALS | LESS | LESS_OR_EQUALS) right=expression # ExpressionBinary
     | left=expression NOT? op=LIKE right=expression # ExpressionBinary
+    | left=expression NOT? op=SIMILAR TO right=expression # ExpressionBinary
     | left=expression NOT? op=IN right=array # ExpressionBinaryIn
     | expr=expression NOT? op=BETWEEN left=simpleExpression AND right=expression # ExpressionBetween
     | EXISTS '(' selectQueryExpression ')' # ExpressionExists
@@ -260,10 +289,12 @@ expression
 simpleExpression
     : literal # SimpleExpressionLiteral
     | castOperand # SimpleExpressionCast
+    | atTimeZone # SimpleExpressionAtTimeZone
     | standardFunction # SimpleExpressionStandardFunctionCall
     | functionCall # SimpleExpressionFunctionCall
     | caseExpression # SimpleExpressionCase
     | identifierChain # SimpleExpressionIdentifier
+    | '(' simpleExpression ')' # SimpleExpressionInParens
     | op=(PLUS | MINUS) right=expression # SimpleExpressionUnary
     | left=simpleExpression op=CONCAT right=simpleExpression # SimpleExpressionBinary
     | right=simpleExpression TYPECAST type # SimpleExpressionBinaryCast

@@ -18,6 +18,11 @@ internal sealed partial class SelectPlanner
 
     public IRowsIterator CreateIterator(SelectQueryNode queryNode, SelectCommandContext? parentContext = null)
     {
+        if (queryNode.HasAttribute(AstAttributeKeys.ContextKey))
+        {
+            return queryNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey).CurrentIterator;
+        }
+
         if (queryNode is SelectQuerySpecificationNode querySpecificationNode)
         {
             return CreateIteratorInternal(querySpecificationNode, parentContext);
@@ -53,11 +58,11 @@ internal sealed partial class SelectPlanner
         Pipeline_ResolveSelectSourceColumns(context, node);
         Pipeline_AddSelectRowsSet(context, node.ColumnsListNode);
 
-        // ORDER BY.
-        Pipeline_ApplyOrderBy(context, node.OrderByNode);
-
         // WINDOW.
         PipelineWindow_ApplyWindowFunctions(context, node);
+
+        // ORDER BY.
+        Pipeline_ApplyOrderBy(context, node.OrderByNode);
 
         // INTO and SELECT.
         Pipeline_SetOutputFunction(context, node);

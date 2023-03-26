@@ -1,0 +1,15 @@
+expected: |
+  1,aleksander,999,aleksander,999
+  2,aleksander,999,elina,800
+  1,aleksander,999,ivan,1000
+  3,aleksander,999,lena,780
+  2,aleksander,999,sergey,500
+query: |
+  select
+    row_number() over (partition by city order by balance),
+    first_value(name) over (order by name),
+    first_value(balance) over (order by name),
+    last_value(name) over (order by name),
+    last_value(balance) over (order by name)
+  from 'Simple2.csv'
+  order by name;

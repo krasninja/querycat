@@ -1,3 +1,4 @@
+using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Types;
 
@@ -19,9 +20,19 @@ public abstract class QueryContext
     public abstract QueryContextQueryInfo QueryInfo { get; }
 
     /// <summary>
+    /// Current execution thread.
+    /// </summary>
+    public IExecutionThread ExecutionThread { get; }
+
+    /// <summary>
     /// Input config storage.
     /// </summary>
     public IInputConfigStorage InputConfigStorage { get; internal set; } = new MemoryInputConfigStorage();
+
+    public QueryContext(IExecutionThread executionThread)
+    {
+        ExecutionThread = executionThread;
+    }
 
     /// <summary>
     /// Returns <c>true</c> if we can find key column condition.
@@ -132,9 +143,7 @@ public abstract class QueryContext
                     && keyColumn.Operations.Contains(c.Operation));
             if (condition == null && keyColumn.IsRequired)
             {
-                var operations = string.Join(", ", keyColumn.Operations);
-                throw new InvalidOperationException(
-                    $"Cannot find required condition '{keyColumn.ColumnName}' with condition {operations}.");
+                throw new QueryContextMissedCondition(keyColumn.ColumnName, keyColumn.Operations);
             }
             if (keyColumn.Action != null && condition != null)
             {

@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Text.RegularExpressions;
 using QueryCat.Backend.Types;
 using QueryCat.Backend.Utils;
 
@@ -120,6 +121,73 @@ public static class StringFunctions
         return new VariantValue(Convert.ToChar(code).ToString());
     }
 
+    [Description("Returns true if string starts with prefix.")]
+    [FunctionSignature("starts_with(target: string, prefix: string): boolean")]
+    public static VariantValue StartsWith(FunctionCallInfo args)
+    {
+        var target = args.GetAt(0).AsString;
+        var prefix = args.GetAt(1).AsString;
+        return new VariantValue(target.StartsWith(prefix));
+    }
+
+    [Description("Splits string at occurrences of delimiter and returns the n'th field (counting from one).")]
+    [FunctionSignature("split_part(target: string, delimiter: string, n: integer): string")]
+    public static VariantValue SplitPart(FunctionCallInfo args)
+    {
+        var target = args.GetAt(0).AsString;
+        var delimiter = args.GetAt(1).AsString;
+        var n = args.GetAt(2).AsInteger;
+
+        var split = target.Split(delimiter);
+        if (n < 0)
+        {
+            n = split.Length + n + 1;
+        }
+        n--;
+        if (n < 0 || n >= split.Length)
+        {
+            return VariantValue.FalseValue;
+        }
+        return new VariantValue(split[n]);
+    }
+
+    [Description("Returns the substring within string that matches the N'th occurrence of the regular expression pattern, or NULL.")]
+    [FunctionSignature("regexp_substr(target: string, pattern: string, start?: integer = 1, n?: integer = 1, subexpr?: integer = 1): string")]
+    public static VariantValue RegexpSubstring(FunctionCallInfo args)
+    {
+        var target = args.GetAt(0).AsString;
+        var pattern = args.GetAt(1).AsString;
+        var start = (int)args.GetAt(2).AsInteger - 1;
+        var n = (int)args.GetAt(3).AsInteger - 1;
+        var subexpr = (int)args.GetAt(4).AsInteger - 1;
+
+        target = StringUtils.SafeSubstring(target, start);
+        var matches = Regex.Matches(target, pattern, RegexOptions.Compiled);
+        if (n < 0 || n > matches.Count - 1)
+        {
+            return VariantValue.Null;
+        }
+        var match = matches[n];
+        if (subexpr < 0 || subexpr > match.Groups.Count - 1)
+        {
+            return VariantValue.Null;
+        }
+        return new VariantValue(matches[n].Groups[subexpr].Value);
+    }
+
+    [Description("Returns the number of times the regular expression pattern matches in the string.")]
+    [FunctionSignature("regexp_count(target: string, pattern: string, start?: integer = 1): string")]
+    public static VariantValue RegexpCount(FunctionCallInfo args)
+    {
+        var target = args.GetAt(0).AsString;
+        var pattern = args.GetAt(1).AsString;
+        var start = (int)args.GetAt(2).AsInteger - 1;
+
+        target = StringUtils.SafeSubstring(target, start);
+        var matches = Regex.Matches(target, pattern, RegexOptions.Compiled);
+        return new VariantValue(matches.Count);
+    }
+
     public static void RegisterFunctions(FunctionsManager functionsManager)
     {
         functionsManager.RegisterFunction(Lower);
@@ -134,5 +202,9 @@ public static class StringFunctions
         functionsManager.RegisterFunction(Replace);
         functionsManager.RegisterFunction(Reverse);
         functionsManager.RegisterFunction(Chr);
+        functionsManager.RegisterFunction(StartsWith);
+        functionsManager.RegisterFunction(SplitPart);
+        functionsManager.RegisterFunction(RegexpSubstring);
+        functionsManager.RegisterFunction(RegexpCount);
     }
 }

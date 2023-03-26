@@ -83,7 +83,15 @@ public class ExecutionThread : IExecutionThread
     /// </summary>
     public event EventHandler<ExecuteEventArgs>? AfterStatementExecute;
 
-    public static readonly ExecutionThread Empty = new();
+    public static readonly ExecutionThread Empty = new(new ExecutionOptions
+    {
+        RunBootstrapScript = false,
+    });
+
+    /// <summary>
+    /// Is cancellation requested to cancel current command execution.
+    /// </summary>
+    public CancellationTokenSource CancellationTokenSource { get; } = new();
 
     internal static string GetApplicationDirectory()
     {
@@ -155,7 +163,7 @@ public class ExecutionThread : IExecutionThread
     {
         if (Options.UseConfig)
         {
-            InputConfigStorage.LoadAsync().GetAwaiter().GetResult();
+            InputConfigStorage.LoadAsync().ConfigureAwait(false).GetAwaiter().GetResult();
         }
 
         while (ExecutingStatement != null)
@@ -196,7 +204,7 @@ public class ExecutionThread : IExecutionThread
 
         if (Options.UseConfig)
         {
-            InputConfigStorage.SaveAsync().GetAwaiter().GetResult();
+            InputConfigStorage.SaveAsync().ConfigureAwait(false).GetAwaiter().GetResult();
         }
         ExecutingStatement = null;
 
@@ -259,13 +267,13 @@ public class ExecutionThread : IExecutionThread
             rowsOutput = alternateRowsOutput;
         }
         rowsOutput.Reset();
-        rowsOutput.Write(iterator);
+        rowsOutput.Write(iterator, this, CancellationTokenSource.Token);
     }
 
     private void RunBootstrapScript(string appLocalDirectory)
     {
         var rcFile = Path.Combine(appLocalDirectory, BootstrapFileName);
-        if (File.Exists(rcFile))
+        if (Options.RunBootstrapScript && File.Exists(rcFile))
         {
             Run(File.ReadAllText(rcFile));
         }

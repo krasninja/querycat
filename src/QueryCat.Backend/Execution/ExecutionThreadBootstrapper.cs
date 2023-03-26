@@ -28,6 +28,7 @@ public class ExecutionThreadBootstrapper
         executionThread.FunctionsManager.RegisterFactory(MathFunctions.RegisterFunctions);
         executionThread.FunctionsManager.RegisterFactory(MiscFunctions.RegisterFunctions);
         executionThread.FunctionsManager.RegisterFactory(JsonFunctions.RegisterFunctions);
+        executionThread.FunctionsManager.RegisterFactory(ObjectFunctions.RegisterFunctions);
         executionThread.FunctionsManager.RegisterFactory(AggregatesRegistration.RegisterFunctions);
         executionThread.FunctionsManager.RegisterFactory(Providers.Registration.RegisterFunctions);
         executionThread.FunctionsManager.RegisterFactory(XmlFormatter.RegisterFunctions);

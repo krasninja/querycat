@@ -1,5 +1,6 @@
 // ReSharper disable CompareOfFloatsByEqualityOperator
 
+using System.Text.RegularExpressions;
 using QueryCat.Backend.Utils;
 
 #pragma warning disable CS8509
@@ -34,6 +35,8 @@ public readonly partial struct VariantValue
         IsNotNull,
         Like,
         NotLike,
+        Similar,
+        NotSimilar,
         In,
 
         // Logical.
@@ -81,6 +84,8 @@ public readonly partial struct VariantValue
             Operation.BetweenAnd => BetweenAnd,
             Operation.Like => Like,
             Operation.NotLike => NotLike,
+            Operation.Similar => Similar,
+            Operation.NotSimilar => NotSimilar,
             _ => throw new ArgumentOutOfRangeException(nameof(operation), "Invalid operation."),
         };
 
@@ -122,17 +127,18 @@ public readonly partial struct VariantValue
         Operation.Greater, Operation.GreaterOrEquals,
         Operation.Less, Operation.LessOrEquals,
         Operation.Between, Operation.BetweenAnd,
-        Operation.Like, Operation.NotLike
+        Operation.Like, Operation.NotLike,
+        Operation.Similar, Operation.NotSimilar,
     };
 
     internal static Operation[] LogicalOperations { get; } =
     {
-        Operation.And, Operation.Or, Operation.Not
+        Operation.And, Operation.Or, Operation.Not,
     };
 
     internal static Operation[] MiscOperations { get; } =
     {
-        Operation.Concat
+        Operation.Concat,
     };
 
     /// <summary>
@@ -374,6 +380,27 @@ public readonly partial struct VariantValue
     public static VariantValue NotLike(in VariantValue left, in VariantValue right, out ErrorCode errorCode)
     {
         var likeResult = Like(in left, in right, out errorCode);
+        if (errorCode != ErrorCode.OK)
+        {
+            return Null;
+        }
+
+        return likeResult.AsBoolean ? new VariantValue(false) : new VariantValue(true);
+    }
+
+    public static VariantValue Similar(in VariantValue left, in VariantValue right, out ErrorCode errorCode)
+    {
+        var pattern = right.AsString;
+        var str = left.AsString;
+
+        errorCode = ErrorCode.OK;
+        var regex = new Regex(pattern, RegexOptions.Compiled | RegexOptions.CultureInvariant);
+        return new VariantValue(regex.IsMatch(str));
+    }
+
+    public static VariantValue NotSimilar(in VariantValue left, in VariantValue right, out ErrorCode errorCode)
+    {
+        var likeResult = Similar(in left, in right, out errorCode);
         if (errorCode != ErrorCode.OK)
         {
             return Null;

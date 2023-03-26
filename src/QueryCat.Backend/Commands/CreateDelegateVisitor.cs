@@ -1,7 +1,6 @@
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Function;
-using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Ast.Nodes.SpecialFunctions;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Functions;
@@ -14,12 +13,11 @@ namespace QueryCat.Backend.Commands;
 /// </summary>
 internal class CreateDelegateVisitor : AstVisitor
 {
-    private readonly ExecutionThread _thread;
     private readonly ResolveTypesVisitor _resolveTypesVisitor;
 
     protected Dictionary<int, IFuncUnit> NodeIdFuncMap { get; } = new(capacity: 32);
 
-    protected ExecutionThread ExecutionThread => _thread;
+    protected ExecutionThread ExecutionThread { get; }
 
     protected ResolveTypesVisitor ResolveTypesVisitor => _resolveTypesVisitor;
 
@@ -29,7 +27,7 @@ internal class CreateDelegateVisitor : AstVisitor
 
     public CreateDelegateVisitor(ExecutionThread thread, ResolveTypesVisitor resolveTypesVisitor)
     {
-        _thread = thread;
+        ExecutionThread = thread;
         _resolveTypesVisitor = resolveTypesVisitor;
     }
 
@@ -250,6 +248,27 @@ internal class CreateDelegateVisitor : AstVisitor
         };
     }
 
+    /// <inheritdoc />
+    public override void Visit(AtTimeZoneNode node)
+    {
+        ResolveTypesVisitor.Visit(node);
+        VariantValue Func()
+        {
+            var left = NodeIdFuncMap[node.LeftNode.Id].Invoke();
+            var tz = NodeIdFuncMap[node.TimeZoneNode.Id].Invoke();
+            try
+            {
+                var destinationTimestamp = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(left, tz);
+                return new VariantValue(destinationTimestamp);
+            }
+            catch (TimeZoneNotFoundException)
+            {
+                throw new QueryCatException($"Cannot find time zone '{tz}'.");
+            }
+        }
+        NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, node.GetDataType());
+    }
+
     #endregion
 
     #region Special functions
@@ -351,7 +370,7 @@ internal class CreateDelegateVisitor : AstVisitor
         }
 
         var argsDelegates = argsDelegatesList.ToArray();
-        var callInfo = new FunctionCallInfo(_thread, argsDelegates);
+        var callInfo = new FunctionCallInfo(ExecutionThread, argsDelegates);
         node.SetAttribute(AstAttributeKeys.ArgumentsKey, callInfo);
         NodeIdFuncMap[node.Id] = new FuncUnitDelegate(() =>
         {
@@ -363,32 +382,11 @@ internal class CreateDelegateVisitor : AstVisitor
 
     #endregion
 
-    #region Select Command
-
-    /// <inheritdoc />
-    public override void Visit(SelectQuerySpecificationNode node)
-    {
-        var statementsVisitor = new StatementsVisitor(_thread);
-        var handler = statementsVisitor.RunAndReturn(node);
-        NodeIdFuncMap[node.Id] = new FuncUnitDelegate(handler.AsFunc(), DataType.Object);
-    }
-
-    /// <inheritdoc />
-    public override void Visit(SelectQueryCombineNode node)
-    {
-        _resolveTypesVisitor.Visit(node);
-        var statementsVisitor = new StatementsVisitor(_thread);
-        var handler = statementsVisitor.RunAndReturn(node);
-        NodeIdFuncMap[node.Id] = new FuncUnitDelegate(handler.AsFunc(), node.GetDataType());
-    }
-
-    #endregion
-
     protected void ApplyStatistic(ErrorCode code)
     {
         if (code != ErrorCode.OK)
         {
-            _thread.Statistic.IncrementErrorsCount(code);
+            ExecutionThread.Statistic.IncrementErrorsCount(code);
         }
     }
 }

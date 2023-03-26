@@ -4,7 +4,7 @@ using QueryCat.Backend.Formatters;
 using QueryCat.Backend.Storage;
 using QueryCat.Backend.Utils;
 
-namespace QueryCat.Backend.Tests;
+namespace QueryCat.Tests.QueryRunner;
 
 /// <summary>
 /// The special runner configuration for tests.

@@ -11,6 +11,13 @@ namespace QueryCat.Backend.Functions.AggregateFunctions;
 // ReSharper disable once ClassNeverInstantiated.Global
 internal sealed class RowNumberAggregateFunction : IAggregateFunction
 {
+    private readonly VariantValue.BinaryFunction _addDelegate;
+
+    public RowNumberAggregateFunction()
+    {
+        _addDelegate = VariantValue.GetAddDelegate(DataType.Integer, DataType.Integer);
+    }
+
     /// <inheritdoc />
     public VariantValueArray GetInitialState(DataType type) => new(VariantValue.OneIntegerValue);
 
@@ -20,6 +27,11 @@ internal sealed class RowNumberAggregateFunction : IAggregateFunction
         if (callInfo.WindowInfo != null)
         {
             state.Values[0] = new(callInfo.WindowInfo.GetCurrentRowPosition() + 1);
+        }
+        else
+        {
+            state.Values[0] =
+                _addDelegate.Invoke(in state.Values[0], in VariantValue.OneIntegerValue);
         }
     }
 

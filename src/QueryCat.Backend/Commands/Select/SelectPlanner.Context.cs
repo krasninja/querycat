@@ -29,6 +29,7 @@ internal sealed partial class SelectPlanner
 
     public SelectCommandContext Context_Create(SelectQuerySpecificationNode node, SelectCommandContext? parentContext = null)
     {
+        Misc_Transform(node);
         var context = Context_CreateInitialContext(node, parentContext);
         Context_InitializeRowsInputs(context, node);
         ContextCte_PrepareInputList(context, node);
@@ -167,20 +168,20 @@ internal sealed partial class SelectPlanner
         IRowsInput? rowsInputResult = null;
         if (obj is IRowsInput rowsInput)
         {
-            currentContext.AddInput(new SelectCommandInputContext(rowsInput));
+            currentContext.AddInput(new SelectCommandInputContext(rowsInput, ExecutionThread));
             rowsInputResult = rowsInput;
         }
         if (obj is IRowsIterator rowsIterator)
         {
             rowsInput = new RowsIteratorInput(rowsIterator);
-            currentContext.AddInput(new SelectCommandInputContext(rowsInput));
+            currentContext.AddInput(new SelectCommandInputContext(rowsInput, ExecutionThread));
             rowsInputResult = rowsInput;
         }
         if (rowsInputResult == null)
         {
             return Array.Empty<IRowsInput>();
         }
-        if (Context_CanUseInputCache(rowsInputResult))
+        if (!ExecutionThread.Options.DisableCache && Context_CanUseInputCache(rowsInputResult))
         {
             rowsInputResult = new CacheRowsInput(rowsInputResult);
         }
@@ -221,7 +222,7 @@ internal sealed partial class SelectPlanner
         }
         // Because of iterator specific conditions we better cache right input. Consider that resetting rows input
         // might be resource consuming operation.
-        if (Context_CanUseInputCache(right))
+        if (!ExecutionThread.Options.DisableCache && Context_CanUseInputCache(right))
         {
             right = new CacheRowsInput(right);
         }
@@ -241,13 +242,22 @@ internal sealed partial class SelectPlanner
         throw new ArgumentException("Unsupported join type.", nameof(tableJoinedNode));
     }
 
+    private IRowsInput Context_CreateInputSourceFromTable(SelectCommandContext context,
+        SelectTableNode tableNode)
+    {
+        var func = new SelectCreateDelegateVisitor(ExecutionThread, context)
+            .RunAndReturn(tableNode);
+        var rowsFrame = func.Invoke().GetAsObject<RowsFrame>();
+        return new RowsIteratorInput(rowsFrame.GetIterator());
+    }
+
     private IRowsInput[] Context_GetRowsInputFromExpression(SelectCommandContext context, ExpressionNode expressionNode)
     {
         if (expressionNode is SelectQueryNode queryNode)
         {
             return new[]
             {
-                Context_CreateInputSourceFromSubQuery(context, queryNode)
+                Context_CreateInputSourceFromSubQuery(context, queryNode),
             };
         }
         if (expressionNode is SelectTableFunctionNode tableFunctionNode)
@@ -267,6 +277,13 @@ internal sealed partial class SelectPlanner
             }
             return inputs;
         }
+        if (expressionNode is SelectTableNode tableNode)
+        {
+            return new[]
+            {
+                Context_CreateInputSourceFromTable(context, tableNode),
+            };
+        }
 
         throw new InvalidOperationException($"Cannot process node '{expressionNode}' as input.");
     }
@@ -276,7 +293,7 @@ internal sealed partial class SelectPlanner
         var rowsIterator = CreateIterator(queryNode, parentContext: context);
 
         var rowsInput = new RowsIteratorInput(rowsIterator);
-        context.AddInput(new SelectCommandInputContext(rowsInput));
+        context.AddInput(new SelectCommandInputContext(rowsInput, ExecutionThread));
         Context_SetAlias(rowsInput, queryNode.Alias);
         return rowsInput;
     }

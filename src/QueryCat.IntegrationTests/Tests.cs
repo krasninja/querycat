@@ -1,8 +1,8 @@
 using Xunit;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Functions;
-using QueryCat.Backend.Tests;
 using QueryCat.Backend.Types;
+using QueryCat.Tests.QueryRunner;
 
 namespace QueryCat.IntegrationTests;
 

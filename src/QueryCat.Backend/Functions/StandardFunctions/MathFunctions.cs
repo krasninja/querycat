@@ -78,6 +78,15 @@ public static class MathFunctions
         return new VariantValue(Math.Cos(x.AsFloat));
     }
 
+    [Description("Inverse cosine, result in radians.")]
+    [FunctionSignature("acos(x: integer): float")]
+    [FunctionSignature("acos(x: float): float")]
+    public static VariantValue Acos(FunctionCallInfo args)
+    {
+        var x = args.GetAt(0);
+        return new VariantValue(Math.Acos(x.AsFloat));
+    }
+
     [Description("Sine, argument in radians.")]
     [FunctionSignature("sin(x: integer): float")]
     [FunctionSignature("sin(x: float): float")]
@@ -87,6 +96,15 @@ public static class MathFunctions
         return new VariantValue(Math.Sin(x.AsFloat));
     }
 
+    [Description("Inverse sine, result in radians.")]
+    [FunctionSignature("asin(x: integer): float")]
+    [FunctionSignature("asin(x: float): float")]
+    public static VariantValue Asin(FunctionCallInfo args)
+    {
+        var x = args.GetAt(0);
+        return new VariantValue(Math.Asin(x.AsFloat));
+    }
+
     [Description("Tangent, argument in radians.")]
     [FunctionSignature("tan(x: integer): float")]
     [FunctionSignature("tan(x: float): float")]
@@ -94,6 +112,15 @@ public static class MathFunctions
     {
         var x = args.GetAt(0);
         return new VariantValue(Math.Tan(x.AsFloat));
+    }
+
+    [Description("Inverse tangent, result in radians.")]
+    [FunctionSignature("atan(x: integer): float")]
+    [FunctionSignature("atan(x: float): float")]
+    public static VariantValue Atan(FunctionCallInfo args)
+    {
+        var x = args.GetAt(0);
+        return new VariantValue(Math.Atan(x.AsFloat));
     }
 
     #endregion
@@ -178,6 +205,24 @@ public static class MathFunctions
         return maxValue;
     }
 
+    [Description("Natural logarithm.")]
+    [FunctionSignature("ln(x: integer): float")]
+    [FunctionSignature("ln(x: float): float")]
+    public static VariantValue Ln(FunctionCallInfo args)
+    {
+        var x = args.GetAt(0).AsFloat;
+        return new VariantValue(Math.Log(x));
+    }
+
+    [Description("Base 10 logarithm.")]
+    [FunctionSignature("log(x: integer): float")]
+    [FunctionSignature("log(x: float): float")]
+    public static VariantValue Log(FunctionCallInfo args)
+    {
+        var x = args.GetAt(0).AsFloat;
+        return new VariantValue(Math.Log10(x));
+    }
+
     public static void RegisterFunctions(FunctionsManager functionsManager)
     {
         functionsManager.RegisterFunction(Abs);
@@ -187,13 +232,18 @@ public static class MathFunctions
         functionsManager.RegisterFunction(Round);
         functionsManager.RegisterFunction(Sqrt);
         functionsManager.RegisterFunction(Cos);
+        functionsManager.RegisterFunction(Acos);
         functionsManager.RegisterFunction(Sin);
+        functionsManager.RegisterFunction(Asin);
         functionsManager.RegisterFunction(Tan);
+        functionsManager.RegisterFunction(Atan);
         functionsManager.RegisterFunction(Power);
         functionsManager.RegisterFunction(Random);
         functionsManager.RegisterFunction(Floor);
         functionsManager.RegisterFunction(Ceiling);
         functionsManager.RegisterFunction(Greatest);
         functionsManager.RegisterFunction(Least);
+        functionsManager.RegisterFunction(Ln);
+        functionsManager.RegisterFunction(Log);
     }
 }

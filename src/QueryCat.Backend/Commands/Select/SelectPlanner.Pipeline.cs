@@ -268,7 +268,7 @@ internal sealed partial class SelectPlanner
             return;
         }
 
-        var queryContext = new RowsOutputQueryContext(context.CurrentIterator.Columns);
+        var queryContext = new RowsOutputQueryContext(context.CurrentIterator.Columns, ExecutionThread);
         var functionCallInfo = querySpecificationNode.TargetNode
             .GetRequiredAttribute<FunctionCallInfo>(AstAttributeKeys.ArgumentsKey);
         var hasVaryingTarget = querySpecificationNode.TargetNode.Arguments.Count > 0;
@@ -285,8 +285,8 @@ internal sealed partial class SelectPlanner
         if (outputIterator.HasOutputDefined)
         {
             context.HasOutput = true;
-            var resultIterator = !hasVaryingTarget
-                ? new AdjustColumnsLengthsIterator(outputIterator)
+            var resultIterator = !hasVaryingTarget && ExecutionThread.Options.AnalyzeRowsCount > 0
+                ? new AdjustColumnsLengthsIterator(outputIterator, ExecutionThread.Options.AnalyzeRowsCount)
                 : (IRowsIterator)outputIterator;
             var actionIterator = new ActionRowsIterator(resultIterator, "write to output")
             {

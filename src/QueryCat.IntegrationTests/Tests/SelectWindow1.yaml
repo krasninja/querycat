@@ -10,6 +10,6 @@ query: |
     balance,
     sum(balance + 3) over (w1) as 'window1',
     sum(balance) over (order by balance desc) as 'window2'
-  from '/mnt/data/work/querycat/src/QueryCat.IntegrationTests/Data/Simple2.csv'
+  from 'Simple2.csv'
   window w as (partition by country || city order by balance), w1 as (w)
   order by name;

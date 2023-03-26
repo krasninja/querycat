@@ -38,8 +38,9 @@ Just imagine that everything in the world is a table, and you can process it usi
     - 8.6) [JSON](functions/json)
     - 8.7) [Math](functions/math)
     - 8.8) [Misc](functions/misc)
-    - 8.9) [Output](functions/output)
-    - 8.10) [String](functions/string)
+    - 8.9) [Object](functions/object)
+    - 8.10) [Output](functions/output)
+    - 8.11) [String](functions/string)
 - 9) [FAQ](faq)
 - 10) Features
     - 10.1) [Web Server](features/web-server)

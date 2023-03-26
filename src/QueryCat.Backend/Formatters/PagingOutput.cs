@@ -9,8 +9,13 @@ namespace QueryCat.Backend.Formatters;
 /// </summary>
 public class PagingOutput : IRowsOutput
 {
+    private const string ContinueWord = "--More--";
+
+    private static readonly string ClearText = new('\r', ContinueWord.Length);
+
     private readonly IRowsOutput _rowsOutput;
     private int _rowsCounter;
+    private QueryContext? _queryContext;
 
     /// <summary>
     /// Return specific amount of rows and stop for user input. -1 means no paging.
@@ -28,6 +33,7 @@ public class PagingOutput : IRowsOutput
     /// <inheritdoc />
     public void SetContext(QueryContext queryContext)
     {
+        _queryContext = queryContext;
         _rowsOutput.SetContext(queryContext);
     }
 
@@ -51,8 +57,18 @@ public class PagingOutput : IRowsOutput
             && !Console.IsOutputRedirected)
         {
             _rowsCounter = 0;
-            Console.WriteLine("--More--");
-            Console.ReadKey();
+            Console.Write(ContinueWord);
+            var consoleKey = Console.ReadKey();
+            Console.Write(ClearText);
+
+            if (consoleKey.Key == ConsoleKey.A)
+            {
+                PagingRowsCount = -1;
+            }
+            else if (consoleKey.Key == ConsoleKey.Q && _queryContext != null)
+            {
+                _queryContext.ExecutionThread.CancellationTokenSource.Cancel();
+            }
         }
     }
 }

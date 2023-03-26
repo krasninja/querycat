@@ -12,13 +12,19 @@ internal class QueryOptionsBinder : BinderBase<QueryOptions>
     private readonly Option<bool> _rowNumberOption;
     private readonly Option<int> _pageSizeOption;
     private readonly Option<TextTableOutput.Style> _outputStyleOption;
+    private readonly Option<int> _analyzeRowsOption;
+    private readonly Option<string?> _columnsSeparatorOption;
+    private readonly Option<bool> _disableCacheOption;
 
     public QueryOptionsBinder(
         Option<int> maxErrorsOption,
         Option<bool> statisticOption,
         Option<bool> detailedStatisticOption,
         Option<bool> rowNumberOption,
-        Option<int> pageSizeOption, Option<TextTableOutput.Style> outputStyleOption)
+        Option<int> pageSizeOption, Option<TextTableOutput.Style> outputStyleOption,
+        Option<int> analyzeRowsOption,
+        Option<string?> columnsSeparatorOption,
+        Option<bool> disableCacheOption)
     {
         _maxErrorsOption = maxErrorsOption;
         _statisticOption = statisticOption;
@@ -33,6 +39,9 @@ internal class QueryOptionsBinder : BinderBase<QueryOptions>
             }
         });
         _outputStyleOption = outputStyleOption;
+        _analyzeRowsOption = analyzeRowsOption;
+        _columnsSeparatorOption = columnsSeparatorOption;
+        _disableCacheOption = disableCacheOption;
     }
 
     /// <inheritdoc />
@@ -46,6 +55,9 @@ internal class QueryOptionsBinder : BinderBase<QueryOptions>
             RowNumberOption = bindingContext.ParseResult.GetValueForOption(_rowNumberOption),
             PageSize = bindingContext.ParseResult.GetValueForOption(_pageSizeOption),
             OutputStyle = bindingContext.ParseResult.GetValueForOption(_outputStyleOption),
+            AnalyzeRows = bindingContext.ParseResult.GetValueForOption(_analyzeRowsOption),
+            ColumnsSeparator = bindingContext.ParseResult.GetValueForOption(_columnsSeparatorOption),
+            DisableCache = bindingContext.ParseResult.GetValueForOption(_disableCacheOption),
         };
     }
 }

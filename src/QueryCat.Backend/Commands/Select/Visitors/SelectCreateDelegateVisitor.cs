@@ -5,6 +5,7 @@ using QueryCat.Backend.Ast.Nodes.Function;
 using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Functions;
+using QueryCat.Backend.Relational;
 using QueryCat.Backend.Types;
 
 namespace QueryCat.Backend.Commands.Select.Visitors;
@@ -176,6 +177,36 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
         }
 
         return false;
+    }
+
+    /// <inheritdoc />
+    public override void Visit(SelectTableNode node)
+    {
+        var firstRowTypes = node.RowsNodes.First().ExpressionNodes.Select(n => n.GetDataType());
+        var rowsFrame = new RowsFrame(
+            firstRowTypes
+                .Select((rt, i) => new Column($"column{i + 1}", rt))
+                .ToArray()
+        );
+
+        node.SetDataType(DataType.Object);
+        NodeIdFuncMap[node.Id] = new FuncUnitDelegate(() =>
+        {
+            if (rowsFrame.IsEmpty)
+            {
+                // Initialize rows frame.
+                var row = new Row(rowsFrame);
+                foreach (var rowNode in node.RowsNodes)
+                {
+                    for (var i = 0; i < rowsFrame.Columns.Length && i < rowNode.ExpressionNodes.Length; i++)
+                    {
+                        row[i] = NodeIdFuncMap[rowNode.ExpressionNodes[i].Id].Invoke();
+                    }
+                    rowsFrame.AddRow(row);
+                }
+            }
+            return VariantValue.CreateFromObject(rowsFrame);
+        }, DataType.Object);
     }
 
     #region Subqueries

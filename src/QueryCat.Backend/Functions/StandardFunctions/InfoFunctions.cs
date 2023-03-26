@@ -70,7 +70,7 @@ public static class InfoFunctions
             .AddProperty("is_installed", p => p.IsInstalled)
             .AddProperty("uri", p => p.Uri);
         using var pluginsManager = new PluginsManager(args.ExecutionThread.PluginsManager.PluginDirectories);
-        var plugins = pluginsManager.ListAsync().GetAwaiter().GetResult();
+        var plugins = pluginsManager.ListAsync().ConfigureAwait(false).GetAwaiter().GetResult();
         return VariantValue.CreateFromObject(builder.BuildIterator(plugins));
     }
 #endif
@@ -99,6 +99,18 @@ public static class InfoFunctions
         return new VariantValue(GetVersion());
     }
 
+    [Description("Provide a list of OS time zone names.")]
+    [FunctionSignature("_timezone_names(): object<IRowsIterator>")]
+    public static VariantValue TimeZoneNames(FunctionCallInfo args)
+    {
+        var builder = new ClassRowsFrameBuilder<TimeZoneInfo>()
+            .AddProperty("id", p => p.Id, "Time zone code.")
+            .AddProperty("name", p => p.StandardName, "Time zone name.")
+            .AddProperty("utc_offset", p => p.BaseUtcOffset, "Offset from UTC (positive means east of Greenwich).")
+            .AddProperty("is_dst", p => p.SupportsDaylightSavingTime, "True if currently observing daylight savings");
+        return VariantValue.CreateFromObject(builder.BuildIterator(TimeZoneInfo.GetSystemTimeZones()));
+    }
+
     public static void RegisterFunctions(FunctionsManager functionsManager)
     {
         functionsManager.RegisterFunction(Functions);
@@ -108,5 +120,6 @@ public static class InfoFunctions
 #endif
         functionsManager.RegisterFunction(TypeOf);
         functionsManager.RegisterFunction(Version);
+        functionsManager.RegisterFunction(TimeZoneNames);
     }
 }

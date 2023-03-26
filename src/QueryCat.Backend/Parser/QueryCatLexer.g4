@@ -55,6 +55,7 @@ ANY:                'ANY';
 
 AND:                'AND';
 AS:                 'AS';
+AT:                 'AT';
 BY:                 'BY';
 CAST:               'CAST';
 DEFAULT:            'DEFAULT';
@@ -102,6 +103,9 @@ HOUR:               'HOUR';
 MINUTE:             'MINUTE';
 SECOND:             'SECOND';
 MILLISECOND:        'MILLISECOND';
+LOCAL:              'LOCAL';
+TIME:               'TIME';
+ZONE:               'ZONE';
 
 // Other functions.
 
@@ -120,11 +124,13 @@ ECHO:               'ECHO';
 ALL:                'ALL';
 ASC:                'ASC';
 BETWEEN:            'BETWEEN';
+CURRENT:            'CURRENT';
 DESC:               'DESC';
 DISTINCT:           'DISTINCT';
 EXCEPT:             'EXCEPT';
 FETCH:              'FETCH';
 FIRST:              'FIRST';
+FOLLOWING:          'FOLLOWING';
 FORMAT:             'FORMAT';
 FULL:               'FULL';
 GROUP:              'GROUP';
@@ -143,16 +149,28 @@ ORDER:              'ORDER';
 OUTER:              'OUTER';
 OVER:               'OVER';
 PARTITION:          'PARTITION';
+PRECEDING:          'PRECEDING';
 RECURSIVE:          'RECURSIVE';
 RIGHT:              'RIGHT';
 ROW:                'ROW';
 ROWS:               'ROWS';
 SELECT:             'SELECT';
+SIMILAR:            'SIMILAR';
 TOP:                'TOP';
+UNBOUNDED:          'UNBOUNDED';
 UNION:              'UNION';
+VALUES:             'VALUES';
 WHERE:              'WHERE';
 WINDOW:             'WINDOW';
 WITH:               'WITH';
+
+// UPDATE command.
+
+UPDATE:             'UPDATE';
+
+// INSERT command.
+
+INSERT:             'INSERT';
 
 // DECLARE/SET command.
 

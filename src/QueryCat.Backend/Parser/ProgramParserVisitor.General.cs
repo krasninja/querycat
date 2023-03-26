@@ -76,6 +76,10 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
         {
             operation = VariantValue.Operation.NotLike;
         }
+        else if (operation == VariantValue.Operation.Similar && context.NOT() != null)
+        {
+            operation = VariantValue.Operation.NotSimilar;
+        }
 
         var left = (ExpressionNode)Visit(context.left);
         var right = (ExpressionNode)Visit(context.right);
@@ -88,6 +92,17 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
             this.Visit<ExpressionNode>(context.right),
             this.VisitType(context.type())
         );
+
+    /// <inheritdoc />
+    public override IAstNode VisitExpressionAtTimeZone(QueryCatParser.ExpressionAtTimeZoneContext context)
+    {
+        var tzNode = context.atTimeZone().LOCAL() == null
+            ? (ExpressionNode)Visit(context.atTimeZone().tz)
+            : new LiteralNode(new VariantValue(TimeZoneInfo.Local.Id));
+        return new AtTimeZoneNode(
+            this.Visit<ExpressionNode>(context.left),
+            tzNode);
+    }
 
     /// <inheritdoc />
     public override IAstNode VisitExpressionUnary(QueryCatParser.ExpressionUnaryContext context)
@@ -164,6 +179,10 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
         => this.Visit<FunctionCallNode>(context.standardFunction());
 
     /// <inheritdoc />
+    public override IAstNode VisitSimpleExpressionInParens(QueryCatParser.SimpleExpressionInParensContext context)
+        => Visit(context.simpleExpression());
+
+    /// <inheritdoc />
     public override IAstNode VisitCastOperand(QueryCatParser.CastOperandContext context)
         => new CastFunctionNode(
             this.Visit<ExpressionNode>(context.value),
@@ -212,6 +231,7 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
         QueryCatParser.BETWEEN => VariantValue.Operation.Between,
         QueryCatParser.IS => VariantValue.Operation.IsNull,
         QueryCatParser.LIKE => VariantValue.Operation.Like,
+        QueryCatParser.SIMILAR => VariantValue.Operation.Similar,
         _ => throw new ArgumentOutOfRangeException(nameof(token), token, "Invalid operation.")
     };
 

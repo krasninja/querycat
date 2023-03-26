@@ -9,9 +9,12 @@ internal static class AggregatesRegistration
     {
         functionsManager.RegisterAggregate<AvgAggregateFunction>();
         functionsManager.RegisterAggregate<CountAggregateFunction>();
+        functionsManager.RegisterAggregate<FirstValueAggregateFunction>();
+        functionsManager.RegisterAggregate<LastValueAggregateFunction>();
         functionsManager.RegisterAggregate<MaxAggregateFunction>();
         functionsManager.RegisterAggregate<MinAggregateFunction>();
         functionsManager.RegisterAggregate<SumAggregateFunction>();
+        functionsManager.RegisterAggregate<StringAggAggregateFunction>();
         functionsManager.RegisterAggregate<RowNumberAggregateFunction>();
     }
 }

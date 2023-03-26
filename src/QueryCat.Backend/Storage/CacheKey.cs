@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using System.Text;
 using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Relational;
@@ -19,17 +20,17 @@ internal readonly struct CacheKey
     /// <summary>
     /// Input function arguments.
     /// </summary>
-    public string[] InputArguments { get; }
+    public ImmutableHashSet<string> InputArguments { get; }
 
     /// <summary>
     /// Columns selected from input.
     /// </summary>
-    public string[] SelectColumns { get; }
+    public ImmutableHashSet<string> SelectColumns { get; }
 
     /// <summary>
     /// Key conditions that were applied to the input.
     /// </summary>
-    public CacheKeyCondition[] Conditions { get; }
+    public ImmutableHashSet<CacheKeyCondition> Conditions { get; }
 
     /// <summary>
     /// Applied offset.
@@ -90,9 +91,9 @@ internal readonly struct CacheKey
         long? limit = null)
     {
         From = from;
-        InputArguments = inputArguments;
-        SelectColumns = selectColumns;
-        Conditions = conditions ?? Array.Empty<CacheKeyCondition>();
+        InputArguments = ImmutableHashSet.Create(inputArguments);
+        SelectColumns = ImmutableHashSet.Create(selectColumns);
+        Conditions = ImmutableHashSet.Create(conditions ?? Array.Empty<CacheKeyCondition>());
         Offset = offset;
         Limit = limit ?? -1;
     }
@@ -104,28 +105,27 @@ internal readonly struct CacheKey
     /// <returns>Returns <c>true</c> if the current cache key is withing other key subset, <c>false</c> otherwise.</returns>
     public bool Match(CacheKey key)
     {
-        // TODO: Make it smarter.
         if (From != key.From)
         {
             return false;
         }
-        if (!InputArguments.SequenceEqual(key.InputArguments))
+        if (!InputArguments.IsSubsetOf(key.InputArguments))
         {
             return false;
         }
-        if (!SelectColumns.SequenceEqual(key.SelectColumns))
+        if (!SelectColumns.IsSubsetOf(key.SelectColumns))
         {
             return false;
         }
-        if (!Conditions.SequenceEqual(key.Conditions))
+        if (!Conditions.IsSubsetOf(key.Conditions))
         {
             return false;
         }
-        if (Offset != key.Offset)
+        if (Offset < key.Offset)
         {
             return false;
         }
-        if (Limit != key.Limit)
+        if (Limit > key.Limit)
         {
             return false;
         }
@@ -138,16 +138,16 @@ internal readonly struct CacheKey
     {
         var sb = new StringBuilder(32);
         sb.Append(StringUtils.Quote($"F:{From}"));
-        if (InputArguments.Length > 0)
+        if (InputArguments.Count > 0)
         {
             sb.Append(' ');
-            var inputKeys = InputArguments.Select(ik => "I:" + StringUtils.Quote(ik).ToString());
+            var inputKeys = InputArguments.Select(ik => StringUtils.Quote("I:" + ik).ToString());
             sb.AppendJoin(' ', inputKeys);
         }
-        if (SelectColumns.Length > 0)
+        if (SelectColumns.Count > 0)
         {
             sb.Append(' ');
-            var columns = SelectColumns.Select(c => "S:" + StringUtils.Quote(c).ToString());
+            var columns = SelectColumns.Select(c => StringUtils.Quote("S:" + c).ToString());
             sb.AppendJoin(' ', columns);
         }
         if (Offset > 0)
@@ -158,7 +158,7 @@ internal readonly struct CacheKey
         {
             sb.Append($" L:{Limit}");
         }
-        if (Conditions.Length > 0)
+        if (Conditions.Count > 0)
         {
             sb.Append(' ');
             var conditions = Conditions.Select(c => StringUtils.Quote("W:" + c.Serialize()).ToString());

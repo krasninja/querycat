@@ -4,6 +4,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [0.3.5] - 2023-03-26
+
+### Added
+
+- Support SIMILAR TO statement.
+- Paginator now handles keys press. "A" to show all, "Q" to exit.
+- Initial implementation of "string_agg", "first_value" and "last_value" aggregate functions.
+- Add math "ln", "log", "asin", "acos", "atan" functions.
+- Add "object_query", "_size_pretty", "_timezone_names" functions.
+- Add string functions "starts_with", "split_part", "regexp_count", "regexp_substr".
+- Allow to read/write from/to gzip archives.
+- Add "VALUES", "AT TIME ZONE" clauses.
+- Add "analyze-rows", "columns-separator", "disable-cache" options.
+
+### Changed
+
+- "More" keyword is cleared on every page request.
+- Improve cache support.
+
+### Fixed
+
+- Fix files buffer reading handle.
+
+## [0.3.0] - 2023-02-24
+
 ### Added
 
 - New "chr" string function.

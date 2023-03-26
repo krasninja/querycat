@@ -366,6 +366,22 @@ internal partial class ProgramParserVisitor
         return new SelectTableJoinedTypeNode(type);
     }
 
+    /// <inheritdoc />
+    public override IAstNode VisitSelectTableRow(QueryCatParser.SelectTableRowContext context)
+        => new SelectTableRowNode(this.Visit<ExpressionNode>(context.simpleExpression()));
+
+    /// <inheritdoc />
+    public override IAstNode VisitSelectTable(QueryCatParser.SelectTableContext context)
+        => new SelectTableNode(this.Visit<SelectTableRowNode>(context.selectTableRow()));
+
+    /// <inheritdoc />
+    public override IAstNode VisitSelectTablePrimaryTable(QueryCatParser.SelectTablePrimaryTableContext context)
+    {
+        var query = this.Visit<SelectTableNode>(context.selectTable());
+        query.Alias = this.Visit(context.selectAlias(), SelectAliasNode.Empty).AliasName;
+        return query;
+    }
+
     #endregion
 
     #region Group, Having

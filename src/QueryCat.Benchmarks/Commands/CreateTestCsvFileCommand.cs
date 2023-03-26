@@ -2,6 +2,7 @@ using System.Diagnostics;
 using Bogus;
 using Bogus.DataSets;
 using McMaster.Extensions.CommandLineUtils;
+using QueryCat.Backend.Execution;
 using QueryCat.Backend.Formatters;
 using QueryCat.Backend.Storage;
 
@@ -60,7 +61,7 @@ internal class CreateTestCsvFileCommand
             var file = File.Create(filePath);
             var output = new DsvFormatter(',').OpenOutput(file);
             output.Open();
-            output.SetContext(new RowsOutputQueryContext(rowsFrame.Columns));
+            output.SetContext(new RowsOutputQueryContext(rowsFrame.Columns, ExecutionThread.Empty));
             for (int count = 0; count < NumberOfItems; count += ChunkSize)
             {
                 var usersToInsert = UsersFaker.GenerateForever().Take(ChunkSize);

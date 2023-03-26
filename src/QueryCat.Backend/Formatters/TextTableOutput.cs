@@ -21,6 +21,7 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
     }
 
     private readonly Stream _stream;
+    private int[] _totalMaxLineLength = Array.Empty<int>();
     private StreamWriter _streamWriter = StreamWriter.Null;
     private bool _isSingleValue;
     private int _maxColumnNameWidth = 10;
@@ -34,7 +35,12 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
 
     private int[] _columnsLengths = Array.Empty<int>();
 
-    public TextTableOutput(Stream stream, bool hasHeader = true, string separator = "",
+    /// <summary>
+    /// Columns separator.
+    /// </summary>
+    public string Separator => _separator;
+
+    public TextTableOutput(Stream stream, bool hasHeader = true, string? separator = null,
         Style style = Style.Table)
     {
         _stream = stream;
@@ -44,13 +50,13 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
         {
             _onInit = OnCardInit;
             _onWrite = OnCardWrite;
-            _separator = !string.IsNullOrEmpty(separator) ? separator : ":";
+            _separator = separator ?? ":";
         }
         else
         {
             _onInit = OnTableInit;
             _onWrite = OnTableWrite;
-            _separator = !string.IsNullOrEmpty(separator) ? separator : "|";
+            _separator = separator ?? "|";
         }
 
         _separatorWithSpace = !string.IsNullOrEmpty(_separator) ? _separator + " " : string.Empty;
@@ -102,13 +108,21 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
 
     private void OnTableInit()
     {
+        var columns = QueryContext.QueryInfo.Columns;
+        _totalMaxLineLength = new int[columns.Count];
+        int currentMaxLength = 0;
+
         if (!_hasHeader || _isSingleValue)
         {
+            for (int i = 0; i < columns.Count; i++)
+            {
+                currentMaxLength += _separatorWithSpace.Length + columns[i].Length + 1;
+                _totalMaxLineLength[i] = currentMaxLength;
+            }
             return;
         }
 
-        var columns = QueryContext.QueryInfo.Columns;
-
+        // Header.
         for (int i = 0; i < columns.Count; i++)
         {
             if (columns[i].IsHidden)
@@ -121,11 +135,17 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
             _streamWriter.Write(_separatorWithSpace);
             _streamWriter.Write(columns[i].FullName.PadRight(_columnsLengths[i]));
             _streamWriter.Write(' ');
+            currentMaxLength += _separatorWithSpace.Length + columns[i].Length + 1;
+            _totalMaxLineLength[i] = currentMaxLength;
         }
-        _streamWriter.Write(_separator);
+        if (currentMaxLength > 0)
+        {
+            _streamWriter.Write(_separator);
+        }
         _streamWriter.WriteLine();
         _streamWriter.Flush();
 
+        // Append header separator.
         for (int i = 0; i < columns.Count; i++)
         {
             if (columns[i].IsHidden)
@@ -143,12 +163,16 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
             _streamWriter.Write(new string('-', _columnsLengths[i]));
             _streamWriter.Write(' ');
         }
-        _streamWriter.Write(_separator);
+        if (currentMaxLength > 0)
+        {
+            _streamWriter.Write(_separator);
+        }
         _streamWriter.WriteLine();
     }
 
     private void OnTableWrite(Row row)
     {
+        int writeCount = 0;
         for (int i = 0; i < row.Columns.Length; i++)
         {
             if (row.Columns[i].IsHidden)
@@ -158,12 +182,22 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
             if (!_isSingleValue)
             {
                 _streamWriter.Write(_separatorWithSpace);
+                writeCount += _separatorWithSpace.Length;
             }
             var value = row[i];
-            _streamWriter.Write(value.ToString().PadRight(_columnsLengths[i]));
+            var valueString = value.ToString();
+            var padding = _columnsLengths[i];
+            var exceed = _totalMaxLineLength[i] - writeCount - _columnsLengths[i] - 1;
+            if (exceed < 0)
+            {
+                padding = Math.Max(0, exceed + padding);
+            }
+            var valueWithPadding = valueString.PadRight(padding);
+            _streamWriter.Write(valueWithPadding);
             _streamWriter.Write(' ');
+            writeCount += valueWithPadding.Length + 1;
         }
-        if (!_isSingleValue)
+        if (!_isSingleValue && writeCount > 0)
         {
             _streamWriter.Write(_separator);
         }

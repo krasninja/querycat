@@ -44,6 +44,10 @@ public abstract class AstVisitor
 
     #region General
 
+    public virtual void Visit(AtTimeZoneNode node)
+    {
+    }
+
     public virtual void Visit(BetweenExpressionNode node)
     {
     }
@@ -272,7 +276,15 @@ public abstract class AstVisitor
     {
     }
 
+    public virtual void Visit(SelectTableNode node)
+    {
+    }
+
     public virtual void Visit(SelectTableReferenceListNode node)
+    {
+    }
+
+    public virtual void Visit(SelectTableRowNode node)
     {
     }
 

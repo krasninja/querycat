@@ -12,6 +12,7 @@ internal class AdjustColumnsLengthsIterator : IRowsIterator, IRowsIteratorParent
 {
     private const int MaxRowsToAnalyze = 10;
 
+    private readonly int _maxRowsToAnalyze;
     private readonly CacheRowsIterator _rowsIterator;
     private bool _isInitialized;
 
@@ -21,9 +22,10 @@ internal class AdjustColumnsLengthsIterator : IRowsIterator, IRowsIteratorParent
     /// <inheritdoc />
     public Row Current => _rowsIterator.Current;
 
-    public AdjustColumnsLengthsIterator(IRowsIterator rowsIterator)
+    public AdjustColumnsLengthsIterator(IRowsIterator rowsIterator, int maxRowsToAnalyze = MaxRowsToAnalyze)
     {
-        _rowsIterator = new CacheRowsIterator(rowsIterator, MaxRowsToAnalyze);
+        _maxRowsToAnalyze = maxRowsToAnalyze;
+        _rowsIterator = new CacheRowsIterator(rowsIterator);
         Columns = rowsIterator.Columns;
     }
 
@@ -61,7 +63,7 @@ internal class AdjustColumnsLengthsIterator : IRowsIterator, IRowsIteratorParent
             }
         }
 
-        while (_rowsIterator.MoveNext() && _rowsIterator.Position < MaxRowsToAnalyze)
+        while (_rowsIterator.MoveNext() && _rowsIterator.Position < _maxRowsToAnalyze)
         {
             for (var i = 0; i < Columns.Length; i++)
             {

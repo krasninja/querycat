@@ -5,12 +5,13 @@ using QueryCat.Backend.Utils;
 namespace QueryCat.Backend.Formatters;
 
 /// <summary>
-/// Format utilities.
+/// Formatters storage.
 /// </summary>
-public static class FormatUtils
+public static class FormattersInfo
 {
-    private static readonly Dictionary<string, Func<IRowsFormatter>> FormatterByExtensionFactories = new()
+    private static readonly Dictionary<string, Func<IRowsFormatter>> Formatters = new()
     {
+        // File extensions.
         [".csv"] = () => new DsvFormatter(),
         [".tsv"] = () => new DsvFormatter('\t'),
         [".tab"] = () => new DsvFormatter('\t'),
@@ -25,19 +26,8 @@ public static class FormatUtils
         }),
         [".json"] = () => new JsonFormatter(),
         [".xml"] = () => new XmlFormatter(),
-    };
 
-    public static IRowsFormatter? GetFormatterByExtension(string extension)
-    {
-        if (FormatterByExtensionFactories.TryGetValue(extension.ToLower(), out var factory))
-        {
-            return factory.Invoke();
-        }
-        return null;
-    }
-
-    private static readonly Dictionary<string, Func<IRowsFormatter>> FormatterByContentTypeFactories = new()
-    {
+        // Content types.
         ["text/csv"] = () => new DsvFormatter(),
         ["text/x-csv"] = () => new DsvFormatter(','),
         ["application/csv"] = () => new DsvFormatter(','),
@@ -49,12 +39,27 @@ public static class FormatUtils
         ["application/soap+xml"] = () => new XmlFormatter(),
     };
 
-    public static IRowsFormatter? GetFormatterByContentType(string contentType)
+    /// <summary>
+    /// Create formatter by file extension or content type.
+    /// </summary>
+    /// <param name="id">File extension or content type.</param>
+    /// <returns>Instance of <see cref="IRowsFormatter" /> or null.</returns>
+    public static IRowsFormatter? CreateFormatter(string id)
     {
-        if (FormatterByContentTypeFactories.TryGetValue(contentType.ToLower(), out var factory))
+        if (Formatters.TryGetValue(id.ToLower(), out var factory))
         {
             return factory.Invoke();
         }
         return null;
+    }
+
+    /// <summary>
+    /// Register formatter.
+    /// </summary>
+    /// <param name="id">Identifier (file extension or content type).</param>
+    /// <param name="formatterFunc">Delegate to create formatter.</param>
+    public static void RegisterFormatter(string id, Func<IRowsFormatter> formatterFunc)
+    {
+        Formatters[id] = formatterFunc;
     }
 }
