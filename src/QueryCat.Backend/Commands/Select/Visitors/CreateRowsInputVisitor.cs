@@ -61,7 +61,7 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
             {
                 InputConfigStorage = _executionThread.InputConfigStorage
             };
-            if (_context.Parent != null)
+            if (_context.Parent != null && !_executionThread.Options.DisableCache)
             {
                 rowsInput = new CacheRowsInput(rowsInput);
             }

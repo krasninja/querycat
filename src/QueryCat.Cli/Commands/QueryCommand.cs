@@ -37,6 +37,8 @@ internal class QueryCommand : BaseQueryCommand
             {
                 IsRequired = false,
             };
+        var disableCacheOption = new Option<bool>("--disable-cache",
+            description: "Do not use memory cache for sub-queries.");
 
         this.AddOption(maxErrorsOption);
         this.AddOption(statisticOption);
@@ -46,6 +48,7 @@ internal class QueryCommand : BaseQueryCommand
         this.AddOption(outputStyleOption);
         this.AddOption(analyzeRowsOption);
         this.AddOption(columnsSeparatorOption);
+        this.AddOption(disableCacheOption);
         this.SetHandler((applicationOptions, query, files, queryOptions) =>
         {
             applicationOptions.InitializeLogger();
@@ -56,6 +59,7 @@ internal class QueryCommand : BaseQueryCommand
                 ShowDetailedStatistic = queryOptions.DetailedStatistic,
                 MaxErrors = queryOptions.MaxErrors,
                 AnalyzeRowsCount = queryOptions.AnalyzeRows,
+                DisableCache = queryOptions.DisableCache,
             };
             if (queryOptions.AnalyzeRows < 0)
             {
@@ -81,7 +85,8 @@ internal class QueryCommand : BaseQueryCommand
                 pageSizeOption,
                 outputStyleOption,
                 analyzeRowsOption,
-                columnsSeparatorOption)
+                columnsSeparatorOption,
+                disableCacheOption)
             );
     }
 }

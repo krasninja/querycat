@@ -181,7 +181,7 @@ internal sealed partial class SelectPlanner
         {
             return Array.Empty<IRowsInput>();
         }
-        if (Context_CanUseInputCache(rowsInputResult))
+        if (!ExecutionThread.Options.DisableCache && Context_CanUseInputCache(rowsInputResult))
         {
             rowsInputResult = new CacheRowsInput(rowsInputResult);
         }
@@ -222,7 +222,7 @@ internal sealed partial class SelectPlanner
         }
         // Because of iterator specific conditions we better cache right input. Consider that resetting rows input
         // might be resource consuming operation.
-        if (Context_CanUseInputCache(right))
+        if (!ExecutionThread.Options.DisableCache && Context_CanUseInputCache(right))
         {
             right = new CacheRowsInput(right);
         }

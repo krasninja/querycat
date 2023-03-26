@@ -87,6 +87,11 @@ public sealed class ExecutionOptions
     /// </summary>
     public string? ColumnsSeparator { get; }
 
+    /// <summary>
+    /// Disable in-memory cache for sub-queries.
+    /// </summary>
+    public bool DisableCache { get; init; }
+
     public ExecutionOptions(
         TextTableOutput.Style outputStyle = TextTableOutput.Style.Table,
         string? columnsSeparator = null)
