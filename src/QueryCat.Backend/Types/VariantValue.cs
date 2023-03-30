@@ -1,6 +1,8 @@
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace QueryCat.Backend.Types;
 
@@ -214,6 +216,41 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         if (obj is TimeSpan timeSpan)
         {
             return new VariantValue(timeSpan);
+        }
+        if (obj is JsonValue jsonValue)
+        {
+            var jsonType = jsonValue.GetValue<JsonElement>().ValueKind;
+            if (jsonType == JsonValueKind.Number)
+            {
+                if (jsonValue.TryGetValue(out long jsonLongValue))
+                {
+                    return new VariantValue(jsonLongValue);
+                }
+                if (jsonValue.TryGetValue(out decimal jsonDecimalValue))
+                {
+                    return new VariantValue(jsonDecimalValue);
+                }
+                if (jsonValue.TryGetValue(out double jsonDoubleValue))
+                {
+                    return new VariantValue(jsonDoubleValue);
+                }
+            }
+            if (jsonType == JsonValueKind.String && jsonValue.TryGetValue(out string? jsonStringValue))
+            {
+                return new VariantValue(jsonStringValue);
+            }
+            if (jsonType == JsonValueKind.True)
+            {
+                return TrueValue;
+            }
+            if (jsonType == JsonValueKind.False)
+            {
+                return FalseValue;
+            }
+            if (jsonType == JsonValueKind.Null || jsonType == JsonValueKind.Undefined)
+            {
+                return Null;
+            }
         }
         return new VariantValue(obj);
     }
