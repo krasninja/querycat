@@ -5,6 +5,8 @@ public sealed class SelectColumnsSublistAll : SelectColumnsSublistNode
     /// <inheritdoc />
     public override string Code => "column_all";
 
+    public static SelectColumnsSublistAll Instance { get; } = new();
+
     public SelectColumnsSublistAll()
     {
     }
