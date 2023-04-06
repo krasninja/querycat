@@ -5,4 +5,4 @@ expected: |
   4,Belarus,9399000
   5,Ukraine,41167336
 query: |
-  select id, name, population from read_file('Countries*.csv');
+  select c.[id], name, population from read_file('Countries*.csv') as c;

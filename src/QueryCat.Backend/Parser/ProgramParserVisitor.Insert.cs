@@ -54,7 +54,7 @@ internal partial class ProgramParserVisitor
     public override IAstNode VisitInsertWithFormat(QueryCatParser.InsertWithFormatContext context)
     {
         var readFunction = new FunctionCallNode("write");
-        var uri = GetUnwrappedText(context.uri.Text);
+        var uri = GetUnwrappedText(context.uri);
         readFunction.Arguments.Add(new FunctionCallArgumentNode("uri",
             new LiteralNode(new VariantValue(uri))));
         if (context.functionCall() != null)

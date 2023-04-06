@@ -4,6 +4,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Added
+
+- Initial implementation of Insert command.
+
+### Fixed
+
+- Correct processing names with aliases (like "tbl.[col]").
+
 ## [0.3.5] - 2023-03-26
 
 ### Added

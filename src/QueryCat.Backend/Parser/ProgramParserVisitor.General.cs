@@ -5,6 +5,7 @@ using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Function;
 using QueryCat.Backend.Ast.Nodes.SpecialFunctions;
 using QueryCat.Backend.Types;
+using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Parser;
 
@@ -66,7 +67,7 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
     /// <inheritdoc />
     public override IAstNode VisitLiteralInterval(QueryCatParser.LiteralIntervalContext context)
         => new LiteralNode(new VariantValue(
-            DataTypeUtils.ParseInterval(GetUnwrappedText(context.intervalLiteral().interval.Text))));
+            DataTypeUtils.ParseInterval(GetUnwrappedText(context.intervalLiteral().interval))));
 
     /// <inheritdoc />
     public override IAstNode VisitExpressionBinary(QueryCatParser.ExpressionBinaryContext context)
@@ -241,11 +242,11 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
 
     /// <inheritdoc />
     public override IAstNode VisitIdentifierChainFull(QueryCatParser.IdentifierChainFullContext context)
-        => new IdentifierExpressionNode(context.name.Text, GetUnwrappedText(context.source.Text));
+        => new IdentifierExpressionNode(context.name.Text, GetUnwrappedText(context.source));
 
     /// <inheritdoc />
     public override IAstNode VisitIdentifierChainSimple(QueryCatParser.IdentifierChainSimpleContext context)
-        => new IdentifierExpressionNode(GetUnwrappedText(context.name.Text));
+        => new IdentifierExpressionNode(StringUtils.GetUnwrappedText(context.name.Text));
 
     private static bool GetBooleanFromString(string text)
     {
@@ -315,7 +316,7 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
     {
         var targetNode = this.Visit<ExpressionNode>(context.@string);
         return new FunctionCallNode("position",
-            new FunctionCallArgumentNode(new LiteralNode(GetUnwrappedText(context.substring.Text))),
+            new FunctionCallArgumentNode(new LiteralNode(GetUnwrappedText(context.substring))),
             new FunctionCallArgumentNode(targetNode));
     }
 
@@ -324,7 +325,7 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
     {
         var targetNode = this.Visit<ExpressionNode>(context.source);
         return new FunctionCallNode("date_part",
-            new FunctionCallArgumentNode(new LiteralNode(GetUnwrappedText(context.extractField.GetText()))),
+            new FunctionCallArgumentNode(new LiteralNode(GetUnwrappedText(context.extractField))),
             new FunctionCallArgumentNode(targetNode));
     }
 
@@ -354,24 +355,22 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
     private static int GetChildType(ParserRuleContext context, int index)
         => ((ITerminalNode)context.GetChild(index)).Symbol.Type;
 
-    private static string GetUnwrappedText(string text)
-    {
-        if ((text.StartsWith("\'", StringComparison.Ordinal) && text.EndsWith("\'", StringComparison.Ordinal))
-            || (text.StartsWith("\"", StringComparison.Ordinal) && text.EndsWith("\"", StringComparison.Ordinal))
-            || (text.StartsWith("[", StringComparison.Ordinal) && text.EndsWith("]", StringComparison.Ordinal)))
-        {
-            return text.Substring(1, text.Length - 2);
-        }
-        return text;
-    }
-
     private static string GetUnwrappedText(IParseTree? node)
     {
         if (node == null)
         {
             return string.Empty;
         }
-        return GetUnwrappedText(node.GetText());
+        return StringUtils.GetUnwrappedText(node.GetText());
+    }
+
+    private static string GetUnwrappedText(IToken? token)
+    {
+        if (token == null)
+        {
+            return string.Empty;
+        }
+        return StringUtils.GetUnwrappedText(token.Text);
     }
 
     #endregion

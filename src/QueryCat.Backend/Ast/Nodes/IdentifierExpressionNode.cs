@@ -1,3 +1,5 @@
+using QueryCat.Backend.Utils;
+
 namespace QueryCat.Backend.Ast.Nodes;
 
 /// <summary>
@@ -28,13 +30,13 @@ public class IdentifierExpressionNode : ExpressionNode
     /// <inheritdoc />
     public IdentifierExpressionNode(string name)
     {
-        Name = name;
+        Name = StringUtils.GetUnwrappedText(name);
     }
 
     /// <inheritdoc />
     public IdentifierExpressionNode(string name, string sourceName) : this(name)
     {
-        SourceName = sourceName;
+        SourceName = StringUtils.GetUnwrappedText(sourceName);
     }
 
     public IdentifierExpressionNode(IdentifierExpressionNode node) : this(node.Name, node.SourceName)
