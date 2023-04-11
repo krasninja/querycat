@@ -60,12 +60,33 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
         int? defaultLength = null)
     {
         var dataType = DataTypeUtils.ConvertFromSystem(typeof(T));
+        AddProperty(name, dataType, obj => VariantValue.CreateFromObject(valueGetter.Invoke(obj)), description,
+            defaultLength);
+        return this;
+    }
+
+    /// <summary>
+    /// Add property.
+    /// </summary>
+    /// <param name="name">Property name.</param>
+    /// <param name="dataType">Property data type.</param>
+    /// <param name="valueGetter">The delegate to get property value by object.</param>
+    /// <param name="description">Property description.</param>
+    /// <param name="defaultLength">Default column length.</param>
+    /// <returns>The instance of <see cref="ClassRowsFrameBuilder{TClass}" />.</returns>
+    public ClassRowsFrameBuilder<TClass> AddProperty(
+        string name,
+        DataType dataType,
+        Func<TClass, VariantValue> valueGetter,
+        string? description = null,
+        int? defaultLength = null)
+    {
         var column = new Column(name, dataType, description);
         if (defaultLength.HasValue)
         {
             column.Length = defaultLength.Value;
         }
-        AddOrReplaceColumn(column, obj => VariantValue.CreateFromObject(valueGetter.Invoke(obj)));
+        AddOrReplaceColumn(column, valueGetter.Invoke);
         return this;
     }
 
@@ -102,6 +123,31 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
         }
         AddOrReplaceColumn(column, obj => VariantValue.CreateFromObject(valueGetter.Invoke(obj)));
         return this;
+    }
+
+    /// <summary>
+    /// Add all public properties as columns.
+    /// </summary>
+    /// <returns>The instance of <see cref="ClassRowsFrameBuilder{TClass}" />.</returns>
+    public ClassRowsFrameBuilder<TClass> AddPublicProperties()
+    {
+        AddPublicProperties(out _);
+        return this;
+    }
+
+    internal void AddPublicProperties(out List<PropertyInfo> properties)
+    {
+        var props = typeof(TClass).GetProperties().Where(p => p.CanRead);
+        properties = new List<PropertyInfo>();
+        foreach (var propertyInfo in props)
+        {
+            var description = propertyInfo.GetCustomAttributes<DescriptionAttribute>()
+                .Select(a => a.Description).FirstOrDefault();
+            var dataType = DataTypeUtils.ConvertFromSystem(propertyInfo.PropertyType);
+            AddProperty(propertyInfo.Name, dataType,
+                obj => VariantValue.CreateFromObject(propertyInfo.GetValue(obj)), description);
+            properties.Add(propertyInfo);
+        }
     }
 
     /// <summary>

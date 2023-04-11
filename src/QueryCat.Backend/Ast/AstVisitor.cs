@@ -4,6 +4,7 @@ using QueryCat.Backend.Ast.Nodes.Function;
 using QueryCat.Backend.Ast.Nodes.Insert;
 using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Ast.Nodes.SpecialFunctions;
+using QueryCat.Backend.Ast.Nodes.Update;
 
 namespace QueryCat.Backend.Ast;
 
@@ -350,6 +351,22 @@ public abstract class AstVisitor
     }
 
     public virtual void Visit(InsertStatementNode node)
+    {
+    }
+
+    #endregion
+
+    #region Update
+
+    public virtual void Visit(UpdateNode node)
+    {
+    }
+
+    public virtual void Visit(UpdateSetNode node)
+    {
+    }
+
+    public virtual void Visit(UpdateStatementNode node)
     {
     }
 

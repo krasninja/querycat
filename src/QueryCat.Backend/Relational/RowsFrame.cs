@@ -64,6 +64,21 @@ public class RowsFrame : IRowsSchema, IEnumerable<Row>
     }
 
     /// <summary>
+    /// Create rows frame from iterator.
+    /// </summary>
+    /// <param name="rowsIterator">Rows iterator.</param>
+    /// <returns>Instance of <see cref="RowsFrame" />.</returns>
+    public static RowsFrame CreateFromIterator(IRowsIterator rowsIterator)
+    {
+        var rowsFrame = new RowsFrame(rowsIterator.Columns);
+        while (rowsIterator.MoveNext())
+        {
+            rowsFrame.AddRow(rowsIterator.Current);
+        }
+        return rowsFrame;
+    }
+
+    /// <summary>
     /// Returns the value of first row and first column or null.
     /// </summary>
     /// <param name="rowIndex">Row index, zero by default.</param>
@@ -74,6 +89,12 @@ public class RowsFrame : IRowsSchema, IEnumerable<Row>
         return _storage[chunkIndex][offset];
     }
 
+    /// <summary>
+    /// Get value at specific row and column.
+    /// </summary>
+    /// <param name="rowIndex">Row index.</param>
+    /// <param name="columnIndex">Column index.</param>
+    /// <returns>Value.</returns>
     public VariantValue GetValue(int rowIndex = 0, int columnIndex = 0)
     {
         (int chunkIndex, int offset) = GetChunkAndOffset(rowIndex);
@@ -87,6 +108,10 @@ public class RowsFrame : IRowsSchema, IEnumerable<Row>
     /// <returns>Inserted row index.</returns>
     public int AddRow(Row row)
     {
+        if (row.Columns.Length != Columns.Length)
+        {
+            throw new QueryCatException("Columns count must match.");
+        }
         (int chunkIndex, int offset) = EnsureCapacityAndGetStartOffset(TotalRows);
         Array.Copy(row.AsArray(), 0, _storage[chunkIndex], offset, _columns.Length);
         return TotalRows++;

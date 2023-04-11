@@ -181,10 +181,6 @@ internal sealed partial class SelectPlanner
         {
             return Array.Empty<IRowsInput>();
         }
-        if (!ExecutionThread.Options.DisableCache && Context_CanUseInputCache(rowsInputResult))
-        {
-            rowsInputResult = new CacheRowsInput(rowsInputResult);
-        }
         return new[] { rowsInputResult };
     }
 

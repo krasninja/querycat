@@ -17,7 +17,7 @@ internal class InsertCommand : ICommand
         var insertNode = (InsertNode)node.RootNode;
 
         // Evaluate iterator for FROM block and get input source.
-        var iterator =new SelectPlanner(executionThread).CreateIterator(insertNode.QueryNode);
+        var iterator = new SelectPlanner(executionThread).CreateIterator(insertNode.QueryNode);
         var targetColumns = GetTargetColumns(iterator, insertNode);
 
         // Get output source.

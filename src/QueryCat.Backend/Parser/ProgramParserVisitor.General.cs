@@ -246,7 +246,7 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
 
     /// <inheritdoc />
     public override IAstNode VisitIdentifierChainSimple(QueryCatParser.IdentifierChainSimpleContext context)
-        => new IdentifierExpressionNode(StringUtils.GetUnwrappedText(context.name.Text));
+        => new IdentifierExpressionNode(GetUnwrappedText(context.name));
 
     private static bool GetBooleanFromString(string text)
     {

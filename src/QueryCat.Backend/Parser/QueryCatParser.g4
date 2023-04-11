@@ -175,8 +175,18 @@ selectLimitClause: LIMIT limit=expression;
  * ===============
  */
 
-updateStatement: UPDATE functionCall selectAlias? SET updateSet (',' updateSet)* selectSearchCondition?;
-updateSet: IDENTIFIER '=' expression;
+updateStatement:
+    UPDATE
+    updateSource
+    SET
+    updateSetClause (',' updateSetClause)*
+    selectSearchCondition?;
+updateSource
+    : functionCall selectAlias? # UpdateNoFormat
+    | uri=STRING_LITERAL (FORMAT functionCall)? # UpdateWithFormat
+    | name=identifierChain # UpdateFromVariable
+    ;
+updateSetClause: source=identifierChain '=' target=expression;
 
 /*
  * ===============
@@ -192,6 +202,7 @@ insertStatement:
 insertToSource
     : functionCall # InsertNoFormat
     | uri=STRING_LITERAL (FORMAT functionCall)? # InsertWithFormat
+    | name=identifierChain # InsertFromVariable
     ;
 insertColumnsList: '(' name=identifierChain (',' name=identifierChain)* ')';
 insertFromSource

@@ -20,6 +20,11 @@ public sealed class SelectTableExpressionNode : AstNode
         TablesNode = selectTableNodeReferenceListNode;
     }
 
+    public SelectTableExpressionNode(params ExpressionNode[] expressionNodes)
+    {
+        TablesNode = new SelectTableReferenceListNode(expressionNodes);
+    }
+
     public SelectTableExpressionNode(SelectTableExpressionNode node)
     {
         TablesNode = (SelectTableReferenceListNode)node.TablesNode.Clone();

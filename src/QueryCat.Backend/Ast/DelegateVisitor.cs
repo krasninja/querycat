@@ -4,6 +4,7 @@ using QueryCat.Backend.Ast.Nodes.Function;
 using QueryCat.Backend.Ast.Nodes.Insert;
 using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Ast.Nodes.SpecialFunctions;
+using QueryCat.Backend.Ast.Nodes.Update;
 
 namespace QueryCat.Backend.Ast;
 
@@ -444,6 +445,28 @@ public abstract class DelegateVisitor : AstVisitor
 
     /// <inheritdoc />
     public override void Visit(InsertStatementNode node)
+    {
+        OnVisit(node);
+    }
+
+    #endregion
+
+    #region Update
+
+    /// <inheritdoc />
+    public override void Visit(UpdateNode node)
+    {
+        OnVisit(node);
+    }
+
+    /// <inheritdoc />
+    public override void Visit(UpdateSetNode node)
+    {
+        OnVisit(node);
+    }
+
+    /// <inheritdoc />
+    public override void Visit(UpdateStatementNode node)
     {
         OnVisit(node);
     }

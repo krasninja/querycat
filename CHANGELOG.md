@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
-- Initial implementation of Insert command.
+- Initial implementation of Update and Insert commands.
 
 ### Fixed
 
