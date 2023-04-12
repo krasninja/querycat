@@ -64,6 +64,8 @@ internal class QueryCommand : BaseQueryCommand
                 MaxErrors = queryOptions.MaxErrors,
                 AnalyzeRowsCount = queryOptions.AnalyzeRows,
                 DisableCache = queryOptions.DisableCache,
+                UseConfig = true,
+                RunBootstrapScript = true,
                 DefaultRowsOutput = new PagingOutput(tableOutput)
                 {
                     PagingRowsCount = queryOptions.PageSize,
