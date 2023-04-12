@@ -5,7 +5,7 @@ Inserts data into the output source.
 ## Syntax
 
 ```
-INSERT INTO ( function : IRowsOutput ) [ ( column_name [, ...] )]
+INSERT INTO ( function : IRowsOutput ) [ ( column_name [, ...] ) ]
 [ VALUES ( value, ... ) [, ...] ]
 [ select_clause ]
 ```

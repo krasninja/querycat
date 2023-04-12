@@ -17,6 +17,7 @@ Just imagine that everything in the world is a table, and you can process it usi
     - 5.3) [INSERT](commands/insert)
     - 5.4) [SELECT](commands/select)
     - 5.5) [SET](commands/set)
+    - 5.6) [UPDATE](commands/update)
 - 6) Input
     - 6.1) [CSV](input/csv)
     - 6.2) [JSON](input/json)
