@@ -1,6 +1,5 @@
 using System.CommandLine;
 using QueryCat.Backend.Abstractions;
-using QueryCat.Backend.Execution;
 using QueryCat.Backend.Types;
 using QueryCat.Backend.Utils;
 using QueryCat.Cli.Commands.Options;
@@ -15,10 +14,7 @@ internal class ExplainCommand : BaseQueryCommand
         this.SetHandler((applicationOptions, query, files) =>
         {
             applicationOptions.InitializeLogger();
-            var thread = applicationOptions.CreateExecutionThread(new ExecutionOptions
-            {
-                PagingSize = ExecutionOptions.NoLimit,
-            });
+            var thread = applicationOptions.CreateStdoutExecutionThread();
             thread.AfterStatementExecute += (_, args) =>
             {
                 var result = thread.LastResult;

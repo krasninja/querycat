@@ -83,10 +83,10 @@ public class ExecutionThread : IExecutionThread
     /// </summary>
     public event EventHandler<ExecuteEventArgs>? AfterStatementExecute;
 
-    public static readonly ExecutionThread Empty = new(new ExecutionOptions
-    {
-        RunBootstrapScript = false,
-    });
+    /// <summary>
+    /// Default execution instance with default options.
+    /// </summary>
+    public static readonly ExecutionThread DefaultInstance = new();
 
     /// <summary>
     /// Is cancellation requested to cancel current command execution.

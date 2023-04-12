@@ -51,7 +51,7 @@ public sealed class FunctionsManager
     /// <returns>Result.</returns>
     public static VariantValue Call(FunctionDelegate functionDelegate, params object[] args)
     {
-        var callInfo = FunctionCallInfo.CreateWithArguments(ExecutionThread.Empty, args);
+        var callInfo = FunctionCallInfo.CreateWithArguments(ExecutionThread.DefaultInstance, args);
         return functionDelegate.Invoke(callInfo);
     }
 

@@ -11,7 +11,7 @@ namespace QueryCat.Backend.Providers;
 /// Standard IO streams data providers.
 /// </summary>
 // ReSharper disable once InconsistentNaming
-internal static class StandardInputOutput
+public static class StandardInputOutput
 {
     private static Stream? outputStream;
     private static Stream? inputStream;

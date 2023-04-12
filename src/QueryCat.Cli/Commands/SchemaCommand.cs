@@ -16,10 +16,7 @@ internal class SchemaCommand : BaseQueryCommand
         this.SetHandler((queryOptions, query, files) =>
         {
             queryOptions.InitializeLogger();
-            var thread = queryOptions.CreateExecutionThread(new ExecutionOptions
-            {
-                PagingSize = ExecutionOptions.NoLimit,
-            });
+            var thread = queryOptions.CreateStdoutExecutionThread();
             thread.AfterStatementExecute += (_, threadArgs) =>
             {
                 var result = thread.LastResult;

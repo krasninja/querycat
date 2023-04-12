@@ -1,6 +1,4 @@
 using System.CommandLine;
-using QueryCat.Backend.Execution;
-using QueryCat.Backend.Storage;
 using QueryCat.Cli.Commands.Options;
 using QueryCat.Cli.Infrastructure;
 
@@ -20,12 +18,8 @@ internal class ServeCommand : BaseCommand
         AddOption(passwordOption);
         this.SetHandler((queryOptions, urls, allowOrigin, password) =>
         {
-            using var executionThread = queryOptions.CreateExecutionThread(new ExecutionOptions
-            {
-                PagingSize = ExecutionOptions.NoLimit,
-                AddRowNumberColumn = true,
-                DefaultRowsOutput = NullRowsOutput.Instance,
-            });
+            using var executionThread = queryOptions.CreateExecutionThread();
+            executionThread.Options.AddRowNumberColumn = true;
             var webServer = new WebServer(executionThread, urls, password);
             if (!string.IsNullOrEmpty(allowOrigin))
             {

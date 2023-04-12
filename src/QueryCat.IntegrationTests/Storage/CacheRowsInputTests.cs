@@ -70,7 +70,7 @@ public class CacheRowsInputTests
         var input2 = new RowsIteratorInput(rowsFrame2.GetIterator());
         var proxyInput = new ProxyRowsInput(input1);
         var cacheRowsInput = new CacheRowsInput(proxyInput);
-        cacheRowsInput.SetContext(new SelectInputQueryContext(cacheRowsInput, ExecutionThread.Empty));
+        cacheRowsInput.SetContext(new SelectInputQueryContext(cacheRowsInput, ExecutionThread.DefaultInstance));
         var iterator = cacheRowsInput.AsIterable(autoFetch: true);
 
         // Act.
@@ -107,7 +107,7 @@ public class CacheRowsInputTests
         var input2 = new RowsIteratorInput(rowsFrame2.GetIterator());
         var proxyInput = new ProxyRowsInput(input1);
         var cacheRowsInput = new CacheRowsInput(proxyInput);
-        cacheRowsInput.SetContext(new SelectInputQueryContext(cacheRowsInput, ExecutionThread.Empty));
+        cacheRowsInput.SetContext(new SelectInputQueryContext(cacheRowsInput, ExecutionThread.DefaultInstance));
         var iterator = cacheRowsInput.AsIterable(autoFetch: true);
 
         // Act.

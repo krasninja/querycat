@@ -12,7 +12,7 @@ public sealed class FunctionCallInfo
     private int _argsCursor;
     private readonly IFuncUnit[] _pushArgs;
 
-    public static FunctionCallInfo Empty { get; } = new(ExecutionThread.Empty);
+    public static FunctionCallInfo Empty { get; } = new(ExecutionThread.DefaultInstance);
 
     /// <summary>
     /// Current execution thread.

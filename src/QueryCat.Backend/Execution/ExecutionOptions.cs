@@ -1,7 +1,6 @@
 using System.Reflection;
 using QueryCat.Backend.Abstractions;
-using QueryCat.Backend.Formatters;
-using QueryCat.Backend.Providers;
+using QueryCat.Backend.Storage;
 
 namespace QueryCat.Backend.Execution;
 
@@ -10,30 +9,10 @@ namespace QueryCat.Backend.Execution;
 /// </summary>
 public sealed class ExecutionOptions
 {
-    public const int NoLimit = -1;
-
     /// <summary>
     /// Default output if FROM is not specified.
     /// </summary>
-    public IRowsOutput DefaultRowsOutput { get; set; }
-
-    private int _pageSize = 20;
-
-    /// <summary>
-    /// Page size.
-    /// </summary>
-    public int PagingSize
-    {
-        get => _pageSize;
-        set
-        {
-            _pageSize = value;
-            if (DefaultRowsOutput is PagingOutput pagingOutput)
-            {
-                pagingOutput.PagingRowsCount = _pageSize;
-            }
-        }
-    }
+    public IRowsOutput DefaultRowsOutput { get; set; } = NullRowsOutput.Instance;
 
     /// <summary>
     /// Add row number to output.
@@ -70,12 +49,12 @@ public sealed class ExecutionOptions
     /// <summary>
     /// Do not save/load config.
     /// </summary>
-    public bool UseConfig { get; set; } = true;
+    public bool UseConfig { get; set; }
 
     /// <summary>
     /// Run RC file (rc.sql).
     /// </summary>
-    public bool RunBootstrapScript { get; set; } = true;
+    public bool RunBootstrapScript { get; set; }
 
     /// <summary>
     /// Number of rows to analyze. This affects columns types detection and column length adjustment. -1 to analyze all.
@@ -83,27 +62,7 @@ public sealed class ExecutionOptions
     public int AnalyzeRowsCount { get; set; } = 10;
 
     /// <summary>
-    /// Character to use to separate columns.
-    /// </summary>
-    public string? ColumnsSeparator { get; }
-
-    /// <summary>
     /// Disable in-memory cache for sub-queries.
     /// </summary>
     public bool DisableCache { get; init; }
-
-    public ExecutionOptions(
-        TextTableOutput.Style outputStyle = TextTableOutput.Style.Table,
-        string? columnsSeparator = null)
-    {
-        var tableOutput = new TextTableOutput(
-            stream: StandardInputOutput.GetConsoleOutput(),
-            separator: columnsSeparator,
-            style: outputStyle);
-        ColumnsSeparator = tableOutput.Separator;
-        DefaultRowsOutput = new PagingOutput(tableOutput)
-        {
-            PagingRowsCount = PagingSize,
-        };
-    }
 }

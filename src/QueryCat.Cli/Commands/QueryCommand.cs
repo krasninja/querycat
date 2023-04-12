@@ -1,6 +1,7 @@
 using System.CommandLine;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Formatters;
+using QueryCat.Backend.Providers;
 using QueryCat.Cli.Commands.Options;
 
 namespace QueryCat.Cli.Commands;
@@ -52,14 +53,21 @@ internal class QueryCommand : BaseQueryCommand
         this.SetHandler((applicationOptions, query, files, queryOptions) =>
         {
             applicationOptions.InitializeLogger();
-            var options = new ExecutionOptions(queryOptions.OutputStyle, queryOptions.ColumnsSeparator)
+            var tableOutput = new TextTableOutput(
+                stream: StandardInputOutput.GetConsoleOutput(),
+                separator: queryOptions.ColumnsSeparator,
+                style: queryOptions.OutputStyle);
+            var options = new ExecutionOptions
             {
                 AddRowNumberColumn = queryOptions.RowNumberOption,
-                PagingSize = queryOptions.PageSize,
                 ShowDetailedStatistic = queryOptions.DetailedStatistic,
                 MaxErrors = queryOptions.MaxErrors,
                 AnalyzeRowsCount = queryOptions.AnalyzeRows,
                 DisableCache = queryOptions.DisableCache,
+                DefaultRowsOutput = new PagingOutput(tableOutput)
+                {
+                    PagingRowsCount = queryOptions.PageSize,
+                },
             };
             if (queryOptions.AnalyzeRows < 0)
             {

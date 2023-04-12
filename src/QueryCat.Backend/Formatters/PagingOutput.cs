@@ -9,6 +9,7 @@ namespace QueryCat.Backend.Formatters;
 /// </summary>
 public class PagingOutput : IRowsOutput
 {
+    public const int NoLimit = -1;
     private const string ContinueWord = "--More--";
 
     private static readonly string ClearText = new('\r', ContinueWord.Length);
@@ -20,11 +21,12 @@ public class PagingOutput : IRowsOutput
     /// <summary>
     /// Return specific amount of rows and stop for user input. -1 means no paging.
     /// </summary>
-    public int PagingRowsCount { get; set; } = 10;
+    public int PagingRowsCount { get; set; }
 
-    public PagingOutput(IRowsOutput rowsOutput)
+    public PagingOutput(IRowsOutput rowsOutput, int pagingRowsCount = 20)
     {
         _rowsOutput = rowsOutput;
+        PagingRowsCount = pagingRowsCount;
     }
 
     /// <inheritdoc />
@@ -51,7 +53,7 @@ public class PagingOutput : IRowsOutput
     public void Write(Row row)
     {
         _rowsOutput.Write(row);
-        if (PagingRowsCount != -1
+        if (PagingRowsCount != NoLimit
             && ++_rowsCounter >= PagingRowsCount
             && !Console.IsInputRedirected
             && !Console.IsOutputRedirected)

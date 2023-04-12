@@ -15,10 +15,7 @@ internal class PluginListCommand : BaseCommand
         this.SetHandler(queryOptions =>
         {
             queryOptions.InitializeLogger();
-            using var executionThread = queryOptions.CreateExecutionThread(new ExecutionOptions
-            {
-                PagingSize = ExecutionOptions.NoLimit
-            });
+            using var executionThread = queryOptions.CreateStdoutExecutionThread();
             var result = executionThread.RunFunction(InfoFunctions.Plugins);
             executionThread.Options.DefaultRowsOutput.Write(ExecutionThreadUtils.ConvertToIterator(result), executionThread);
         }, new ApplicationOptionsBinder(LogLevelOption, PluginDirectoriesOption));

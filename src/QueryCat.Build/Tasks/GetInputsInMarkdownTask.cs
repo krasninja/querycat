@@ -30,7 +30,7 @@ public class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
         public override QueryContextQueryInfo QueryInfo { get; } = new(Array.Empty<Column>());
 
         /// <inheritdoc />
-        public CollectQueryContext() : base(QueryCat.Backend.Execution.ExecutionThread.Empty)
+        public CollectQueryContext() : base(QueryCat.Backend.Execution.ExecutionThread.DefaultInstance)
         {
         }
     }
@@ -63,7 +63,7 @@ public class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
             var queryContext = new CollectQueryContext();
             try
             {
-                var functionCallInfo = new FunctionCallInfo(ExecutionThread.Empty);
+                var functionCallInfo = new FunctionCallInfo(ExecutionThread.DefaultInstance);
                 for (var i = 0; i < inputFunction.Arguments.Length; i++)
                 {
                     functionCallInfo.Push(VariantValue.Null);
