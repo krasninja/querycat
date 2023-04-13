@@ -13,6 +13,7 @@ nav:
     - 'INSERT': commands/insert.md
     - 'SELECT': commands/select.md
     - 'SET': commands/set.md
+    - 'UPDATE': commands/update.md
   - 'Input':
     - 'CSV': input/csv.md
     - 'JSON': input/json.md
