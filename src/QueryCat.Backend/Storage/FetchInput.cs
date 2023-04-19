@@ -5,11 +5,10 @@ using QueryCat.Backend.Types;
 namespace QueryCat.Backend.Storage;
 
 /// <summary>
-/// Allows to create rows input from .NET objects.
+/// Allows to create rows input from .NET objects using remote source.
 /// </summary>
 /// <typeparam name="TClass">Object class.</typeparam>
-public abstract class ClassEnumerableInput<TClass> :
-    RowsInput, IDisposable where TClass : class
+public abstract class FetchInput<TClass> : RowsInput, IDisposable where TClass : class
 {
     private IEnumerator<TClass>? _enumerator;
     private readonly ClassRowsFrameBuilder<TClass> _builder = new();
@@ -20,7 +19,7 @@ public abstract class ClassEnumerableInput<TClass> :
     /// <summary>
     /// Constructor.
     /// </summary>
-    public ClassEnumerableInput()
+    public FetchInput()
     {
     }
 
@@ -60,7 +59,7 @@ public abstract class ClassEnumerableInput<TClass> :
     protected override void Load()
     {
         QueryContext.ValidateAndInvokeKeyConditions();
-        var fetch = new ClassEnumerableInputFetch<TClass>(this);
+        var fetch = new Fetcher<TClass>(this);
         _enumerator = GetData(fetch).GetEnumerator();
     }
 
@@ -98,9 +97,9 @@ public abstract class ClassEnumerableInput<TClass> :
     /// <summary>
     /// Get data.
     /// </summary>
-    /// <param name="fetch">Fetch helper utilities.</param>
+    /// <param name="fetcher">Remote data fetcher.</param>
     /// <returns>Objects.</returns>
-    protected virtual IEnumerable<TClass> GetData(ClassEnumerableInputFetch<TClass> fetch)
+    protected virtual IEnumerable<TClass> GetData(Fetcher<TClass> fetcher)
     {
         var enumerator = GetDataAsync().GetAsyncEnumerator();
         // Blocking all the way...

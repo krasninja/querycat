@@ -150,6 +150,254 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
         }
     }
 
+    #region AddProperty overloads
+
+    public ClassRowsFrameBuilder<TClass> AddProperty(
+        string name,
+        Func<TClass, short?> valueGetter,
+        string? description = null,
+        int? defaultLength = null)
+    {
+        var dataType = DataTypeUtils.ConvertFromSystem(typeof(short?));
+        AddProperty(name, dataType, obj =>
+            {
+                var value = valueGetter.Invoke(obj);
+                return value.HasValue ? new VariantValue(value.Value) : VariantValue.Null;
+            }, description,
+            defaultLength);
+        return this;
+    }
+
+    public ClassRowsFrameBuilder<TClass> AddProperty(
+        string name,
+        Func<TClass, short> valueGetter,
+        string? description = null,
+        int? defaultLength = null)
+    {
+        var dataType = DataTypeUtils.ConvertFromSystem(typeof(short));
+        AddProperty(name, dataType, obj => new VariantValue(valueGetter.Invoke(obj)),
+            description,
+            defaultLength);
+        return this;
+    }
+
+    public ClassRowsFrameBuilder<TClass> AddProperty(
+        string name,
+        Func<TClass, int?> valueGetter,
+        string? description = null,
+        int? defaultLength = null)
+    {
+        var dataType = DataTypeUtils.ConvertFromSystem(typeof(int?));
+        AddProperty(name, dataType, obj =>
+            {
+                var value = valueGetter.Invoke(obj);
+                return value.HasValue ? new VariantValue(value.Value) : VariantValue.Null;
+            }, description,
+            defaultLength);
+        return this;
+    }
+
+    public ClassRowsFrameBuilder<TClass> AddProperty(
+        string name,
+        Func<TClass, int> valueGetter,
+        string? description = null,
+        int? defaultLength = null)
+    {
+        var dataType = DataTypeUtils.ConvertFromSystem(typeof(int));
+        AddProperty(name, dataType, obj => new VariantValue(valueGetter.Invoke(obj)),
+            description,
+            defaultLength);
+        return this;
+    }
+
+    public ClassRowsFrameBuilder<TClass> AddProperty(
+        string name,
+        Func<TClass, long?> valueGetter,
+        string? description = null,
+        int? defaultLength = null)
+    {
+        var dataType = DataTypeUtils.ConvertFromSystem(typeof(long?));
+        AddProperty(name, dataType, obj =>
+            {
+                var value = valueGetter.Invoke(obj);
+                return value.HasValue ? new VariantValue(value.Value) : VariantValue.Null;
+            }, description,
+            defaultLength);
+        return this;
+    }
+
+    public ClassRowsFrameBuilder<TClass> AddProperty(
+        string name,
+        Func<TClass, long> valueGetter,
+        string? description = null,
+        int? defaultLength = null)
+    {
+        var dataType = DataTypeUtils.ConvertFromSystem(typeof(long));
+        AddProperty(name, dataType, obj => new VariantValue(valueGetter.Invoke(obj)),
+            description,
+            defaultLength);
+        return this;
+    }
+
+    public ClassRowsFrameBuilder<TClass> AddProperty(
+        string name,
+        Func<TClass, string?> valueGetter,
+        string? description = null,
+        int? defaultLength = null)
+    {
+        var dataType = DataTypeUtils.ConvertFromSystem(typeof(string));
+        AddProperty(name, dataType, obj => new VariantValue(valueGetter.Invoke(obj)), description,
+            defaultLength);
+        return this;
+    }
+
+    public ClassRowsFrameBuilder<TClass> AddProperty(
+        string name,
+        Func<TClass, DateTime?> valueGetter,
+        string? description = null,
+        int? defaultLength = null)
+    {
+        var dataType = DataTypeUtils.ConvertFromSystem(typeof(DateTime?));
+        AddProperty(name, dataType, obj =>
+            {
+                var value = valueGetter.Invoke(obj);
+                return value.HasValue ? new VariantValue(value.Value) : VariantValue.Null;
+            }, description,
+            defaultLength);
+        return this;
+    }
+
+    public ClassRowsFrameBuilder<TClass> AddProperty(
+        string name,
+        Func<TClass, DateTime> valueGetter,
+        string? description = null,
+        int? defaultLength = null)
+    {
+        var dataType = DataTypeUtils.ConvertFromSystem(typeof(DateTime));
+        AddProperty(name, dataType, obj => new VariantValue(valueGetter.Invoke(obj)),
+            description,
+            defaultLength);
+        return this;
+    }
+
+    public ClassRowsFrameBuilder<TClass> AddProperty(
+        string name,
+        Func<TClass, TimeSpan?> valueGetter,
+        string? description = null,
+        int? defaultLength = null)
+    {
+        var dataType = DataTypeUtils.ConvertFromSystem(typeof(TimeSpan?));
+        AddProperty(name, dataType, obj =>
+            {
+                var value = valueGetter.Invoke(obj);
+                return value.HasValue ? new VariantValue(value.Value) : VariantValue.Null;
+            }, description,
+            defaultLength);
+        return this;
+    }
+
+    public ClassRowsFrameBuilder<TClass> AddProperty(
+        string name,
+        Func<TClass, TimeSpan> valueGetter,
+        string? description = null,
+        int? defaultLength = null)
+    {
+        var dataType = DataTypeUtils.ConvertFromSystem(typeof(TimeSpan));
+        AddProperty(name, dataType, obj => new VariantValue(valueGetter.Invoke(obj)),
+            description,
+            defaultLength);
+        return this;
+    }
+
+    public ClassRowsFrameBuilder<TClass> AddProperty(
+        string name,
+        Func<TClass, bool?> valueGetter,
+        string? description = null,
+        int? defaultLength = null)
+    {
+        var dataType = DataTypeUtils.ConvertFromSystem(typeof(bool?));
+        AddProperty(name, dataType, obj =>
+            {
+                var value = valueGetter.Invoke(obj);
+                return value.HasValue ? new VariantValue(value.Value) : VariantValue.Null;
+            }, description,
+            defaultLength);
+        return this;
+    }
+
+    public ClassRowsFrameBuilder<TClass> AddProperty(
+        string name,
+        Func<TClass, bool> valueGetter,
+        string? description = null,
+        int? defaultLength = null)
+    {
+        var dataType = DataTypeUtils.ConvertFromSystem(typeof(bool));
+        AddProperty(name, dataType, obj => new VariantValue(valueGetter.Invoke(obj)),
+            description,
+            defaultLength);
+        return this;
+    }
+
+    public ClassRowsFrameBuilder<TClass> AddProperty(
+        string name,
+        Func<TClass, decimal?> valueGetter,
+        string? description = null,
+        int? defaultLength = null)
+    {
+        var dataType = DataTypeUtils.ConvertFromSystem(typeof(decimal?));
+        AddProperty(name, dataType, obj =>
+            {
+                var value = valueGetter.Invoke(obj);
+                return value.HasValue ? new VariantValue(value.Value) : VariantValue.Null;
+            }, description,
+            defaultLength);
+        return this;
+    }
+
+    public ClassRowsFrameBuilder<TClass> AddProperty(
+        string name,
+        Func<TClass, decimal> valueGetter,
+        string? description = null,
+        int? defaultLength = null)
+    {
+        var dataType = DataTypeUtils.ConvertFromSystem(typeof(decimal));
+        AddProperty(name, dataType, obj => new VariantValue(valueGetter.Invoke(obj)),
+            description,
+            defaultLength);
+        return this;
+    }
+
+    public ClassRowsFrameBuilder<TClass> AddProperty(
+        string name,
+        Func<TClass, double?> valueGetter,
+        string? description = null,
+        int? defaultLength = null)
+    {
+        var dataType = DataTypeUtils.ConvertFromSystem(typeof(double?));
+        AddProperty(name, dataType, obj =>
+            {
+                var value = valueGetter.Invoke(obj);
+                return value.HasValue ? new VariantValue(value.Value) : VariantValue.Null;
+            }, description,
+            defaultLength);
+        return this;
+    }
+
+    public ClassRowsFrameBuilder<TClass> AddProperty(
+        string name,
+        Func<TClass, double> valueGetter,
+        string? description = null,
+        int? defaultLength = null)
+    {
+        var dataType = DataTypeUtils.ConvertFromSystem(typeof(double));
+        AddProperty(name, dataType, obj => new VariantValue(valueGetter.Invoke(obj)),
+            description,
+            defaultLength);
+        return this;
+    }
+
+    #endregion
+
     /// <summary>
     /// Build instance of <see cref="RowsFrame" />.
     /// </summary>
