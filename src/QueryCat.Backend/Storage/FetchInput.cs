@@ -1,6 +1,7 @@
 using System.Runtime.CompilerServices;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Types;
+using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Storage;
 
@@ -102,18 +103,16 @@ public abstract class FetchInput<TClass> : RowsInput, IDisposable where TClass :
     protected virtual IEnumerable<TClass> GetData(Fetcher<TClass> fetcher)
     {
         var enumerator = GetDataAsync().GetAsyncEnumerator();
-        // Blocking all the way...
         try
         {
-            enumerator.ConfigureAwait(false);
-            while (enumerator.MoveNextAsync().AsTask().ConfigureAwait(false).GetAwaiter().GetResult())
+            while (AsyncUtils.RunSyncValueTask(enumerator.MoveNextAsync))
             {
                 yield return enumerator.Current;
             }
         }
         finally
         {
-            enumerator.DisposeAsync().AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
+            AsyncUtils.RunSyncValueTask(enumerator.DisposeAsync);
         }
     }
 

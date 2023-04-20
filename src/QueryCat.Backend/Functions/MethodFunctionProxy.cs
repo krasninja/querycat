@@ -3,6 +3,7 @@ using System.Reflection;
 using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Ast.Nodes.Function;
 using QueryCat.Backend.Types;
+using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Functions;
 
@@ -131,7 +132,7 @@ internal class MethodFunctionProxy
         // If result is awaitable - try to wait.
         if (result is Task task)
         {
-            task.ConfigureAwait(false).GetAwaiter().GetResult();
+            AsyncUtils.RunSync(async () => await task);
             if (_method is MethodInfo methodInfo
                 && methodInfo.ReturnType.IsGenericType)
             {

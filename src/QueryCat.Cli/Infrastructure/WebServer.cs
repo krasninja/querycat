@@ -11,6 +11,7 @@ using QueryCat.Backend.Relational;
 using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Storage;
 using QueryCat.Backend.Types;
+using QueryCat.Backend.Utils;
 
 namespace QueryCat.Cli.Infrastructure;
 
@@ -368,9 +369,8 @@ internal sealed class WebServer
 
     private void HandleInfoApiAction(HttpListenerRequest request, HttpListenerResponse response)
     {
-        var localPlugins = _executionThread.PluginsManager.ListAsync(localOnly: true)
-            .ConfigureAwait(false)
-            .GetAwaiter().GetResult();
+        var localPlugins = AsyncUtils.RunSync(async ()
+            => await _executionThread.PluginsManager.ListAsync(localOnly: true))!;
         var dict = new Dictionary<string, object>
         {
             ["installedPlugins"] = localPlugins,

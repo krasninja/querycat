@@ -5,6 +5,7 @@ using QueryCat.Backend.Execution.Plugins;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Storage;
 using QueryCat.Backend.Types;
+using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Functions.StandardFunctions;
 
@@ -69,9 +70,12 @@ public static class InfoFunctions
             .AddProperty("version", p => p.Version.ToString())
             .AddProperty("is_installed", p => p.IsInstalled)
             .AddProperty("uri", p => p.Uri);
-        using var pluginsManager = new PluginsManager(args.ExecutionThread.PluginsManager.PluginDirectories);
-        var plugins = pluginsManager.ListAsync().ConfigureAwait(false).GetAwaiter().GetResult();
-        return VariantValue.CreateFromObject(builder.BuildIterator(plugins));
+        var plugins = AsyncUtils.RunSync(async () =>
+        {
+            using var pluginsManager = new PluginsManager(args.ExecutionThread.PluginsManager.PluginDirectories);
+            return await pluginsManager.ListAsync();
+        });
+        return VariantValue.CreateFromObject(builder.BuildIterator(plugins!));
     }
 #endif
 

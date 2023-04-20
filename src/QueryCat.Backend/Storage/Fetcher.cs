@@ -1,3 +1,4 @@
+using QueryCat.Backend.Utils;
 using Serilog;
 
 namespace QueryCat.Backend.Storage;
@@ -68,8 +69,8 @@ public class Fetcher<TClass> where TClass : class
         FetchSingleDelegate action,
         CancellationToken cancellationToken = default)
     {
-        var item = action.Invoke(cancellationToken).ConfigureAwait(false).GetAwaiter().GetResult();
-        yield return item;
+        var item = AsyncUtils.RunSync(() => action.Invoke(cancellationToken));
+        yield return item!;
     }
 
     /// <summary>
@@ -82,7 +83,7 @@ public class Fetcher<TClass> where TClass : class
         FetchAllDelegate action,
         CancellationToken cancellationToken = default)
     {
-        return action.Invoke(cancellationToken).ConfigureAwait(false).GetAwaiter().GetResult();
+        return AsyncUtils.RunSync(() => action.Invoke(cancellationToken))!;
     }
 
     /// <summary>
@@ -102,7 +103,8 @@ public class Fetcher<TClass> where TClass : class
         do
         {
             Log.Logger.Debug("Run with offset {Offset} and limit {Limit}.", offset, Limit);
-            var data = action(offset, Limit, cancellationToken).ConfigureAwait(false).GetAwaiter().GetResult();
+            var localOffset = offset;
+            var data = AsyncUtils.RunSync(() => action(localOffset, Limit, cancellationToken));
             fetchedCount = 0;
             foreach (var item in data.Items)
             {
@@ -148,7 +150,8 @@ public class Fetcher<TClass> where TClass : class
         do
         {
             Log.Logger.Debug("Run with page {Page} and limit {Limit}.", page, Limit);
-            var data = action(page, Limit, cancellationToken).ConfigureAwait(false).GetAwaiter().GetResult();
+            var localPage = page;
+            var data = AsyncUtils.RunSync(() => action(localPage, Limit, cancellationToken));
             fetchedCount = 0;
             foreach (var item in data.Items)
             {
@@ -194,7 +197,7 @@ public class Fetcher<TClass> where TClass : class
         bool hasMore;
         do
         {
-            var data = action(cancellationToken).ConfigureAwait(false).GetAwaiter().GetResult();
+            var data = AsyncUtils.RunSync(() => action(cancellationToken));
             fetchedCount = 0;
             foreach (var item in data.Items)
             {

@@ -9,6 +9,7 @@ using QueryCat.Backend.Functions;
 using QueryCat.Backend.Parser;
 using QueryCat.Backend.Storage;
 using QueryCat.Backend.Types;
+using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Execution;
 
@@ -163,7 +164,7 @@ public class ExecutionThread : IExecutionThread
     {
         if (Options.UseConfig)
         {
-            InputConfigStorage.LoadAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+            AsyncUtils.RunSync(InputConfigStorage.LoadAsync);
         }
 
         while (ExecutingStatement != null)
@@ -204,7 +205,7 @@ public class ExecutionThread : IExecutionThread
 
         if (Options.UseConfig)
         {
-            InputConfigStorage.SaveAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+            AsyncUtils.RunSync(InputConfigStorage.SaveAsync);
         }
         ExecutingStatement = null;
 
