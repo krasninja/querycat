@@ -5,7 +5,7 @@ namespace QueryCat.Backend.Relational;
 /// </summary>
 public class RowsFrameOptions
 {
-    public const int DefaultChunkSize = 4096;
+    public const int DefaultChunkSize = 1024;
 
     /// <summary>
     /// Chunk size to grow.
