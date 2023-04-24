@@ -7,7 +7,11 @@ public sealed class InsertColumnsListNode : AstNode
     /// <inheritdoc />
     public override string Code => "columns_list";
 
-    public InsertColumnsListNode(IEnumerable<string> columns)
+    public InsertColumnsListNode()
+    {
+    }
+
+    public InsertColumnsListNode(IEnumerable<string> columns) : this()
     {
         Columns.AddRange(columns);
     }

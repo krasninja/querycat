@@ -84,7 +84,7 @@ public class CollectionInput<TClass> : IRowsOutput, IRowsInputUpdate where TClas
             {
                 continue;
             }
-            prop.SetValue(obj, row[i].GetGenericObject());
+            prop.SetValue(obj, ObjectUtils.ChangeType(row[i].GetGenericObject(), prop.PropertyType));
         }
         collection.Add(obj);
     }
@@ -101,7 +101,7 @@ public class CollectionInput<TClass> : IRowsOutput, IRowsInputUpdate where TClas
         {
             throw new QueryCatException($"Cannot write property '{prop.Name}'.");
         }
-        prop.SetValue(obj, Convert.ChangeType(value.GetGenericObject(), prop.PropertyType));
+        prop.SetValue(obj, ObjectUtils.ChangeType(value.GetGenericObject(), prop.PropertyType));
         return ErrorCode.OK;
     }
 

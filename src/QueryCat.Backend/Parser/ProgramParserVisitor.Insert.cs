@@ -13,7 +13,7 @@ internal partial class ProgramParserVisitor
     public override IAstNode VisitInsertStatement(QueryCatParser.InsertStatementContext context)
         => new InsertStatementNode(
             new InsertNode(
-                this.Visit<FunctionCallNode>(context.insertToSource()),
+                this.Visit<ExpressionNode>(context.insertToSource()),
                 this.Visit<SelectQueryNode>(context.insertFromSource())
             )
             {
@@ -64,6 +64,10 @@ internal partial class ProgramParserVisitor
         }
         return new FunctionCallNode(readFunction);
     }
+
+    /// <inheritdoc />
+    public override IAstNode VisitInsertFromVariable(QueryCatParser.InsertFromVariableContext context)
+        => this.Visit<IdentifierExpressionNode>(context.identifierChain());
 
     #endregion
 }

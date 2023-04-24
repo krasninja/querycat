@@ -16,25 +16,59 @@ internal class InsertCommand : ICommand
     {
         var insertNode = (InsertNode)node.RootNode;
 
-        // Evaluate iterator for FROM block and get input source.
-        var iterator = new SelectPlanner(executionThread).CreateIterator(insertNode.QueryNode);
-        var targetColumns = GetTargetColumns(iterator, insertNode);
-
         // Get output source.
         var rowsOutput = new CreateDelegateVisitor(executionThread)
             .RunAndReturn(insertNode.InsertTargetNode)
             .Invoke()
             .GetAsObject<IRowsOutput>();
 
+        // Evaluate iterator for FROM block and get input source.
+        var outputDefinedColumns = insertNode.HasDefinedColumns();
+        var inputDefinedColumns = insertNode.QueryNode.ColumnsListNode.HasDefinedColumns();
+        if (!outputDefinedColumns && inputDefinedColumns)
+        {
+            CopyInputColumnsToOutput(insertNode.QueryNode.ColumnsListNode, insertNode);
+        }
+        var inputIterator = new SelectPlanner(executionThread).CreateIterator(insertNode.QueryNode);
+
+        // If input list is not defined but for output we have columns - use them as target.
+        if (rowsOutput is IRowsSchema rowsOutputSchema && !inputDefinedColumns)
+        {
+            for (var i = 0; i < rowsOutputSchema.Columns.Length && i < inputIterator.Columns.Length; i++)
+            {
+                inputIterator.Columns[i].Name = rowsOutputSchema.Columns[i].Name;
+                inputIterator.Columns[i].SourceName = rowsOutputSchema.Columns[i].SourceName;
+            }
+        }
+
         // Find correspond from-to columns and create mapping.
-        var mapIterator = CreateFromToColumnsMapping(iterator, targetColumns);
+        var targetColumns = GetTargetColumns(inputIterator, insertNode);
+        var mapIterator = CreateFromToColumnsMappingByName(inputIterator, rowsOutput, targetColumns);
 
         // Handler.
         return new InsertCommandHandler(executionThread, mapIterator, rowsOutput);
     }
 
-    private static MapRowsIterator CreateFromToColumnsMapping(IRowsIterator inputIterator, List<string> targetColumns)
+    private static void CopyInputColumnsToOutput(SelectColumnsListNode inputColumnsListNode, InsertNode insertNode)
     {
+        var targetColumns = new InsertColumnsListNode();
+        foreach (var columnNode in inputColumnsListNode.ColumnsNodes)
+        {
+            if (columnNode is SelectColumnsSublistExpressionNode columnsSublistNode
+                && columnsSublistNode.ExpressionNode is IdentifierExpressionNode identifierExpressionNode)
+            {
+                targetColumns.Columns.Add(identifierExpressionNode.FullName);
+            }
+        }
+        insertNode.ColumnsNode = targetColumns;
+    }
+
+    private static MapRowsIterator CreateFromToColumnsMappingByName(
+        IRowsIterator inputIterator,
+        IRowsOutput rowsOutput,
+        List<string> targetColumns)
+    {
+        var outputColumns = rowsOutput as IRowsSchema;
         var mapIterator = new MapRowsIterator(inputIterator);
         foreach (var columnName in targetColumns)
         {
@@ -42,6 +76,15 @@ internal class InsertCommand : ICommand
             if (index < 0)
             {
                 throw new QueryCatException($"Cannot find column '{columnName}'.");
+            }
+            if (outputColumns != null)
+            {
+                var outputColumn = outputColumns.GetColumnByName(columnName);
+                if (outputColumn != null)
+                {
+                    mapIterator.Add(index, outputColumn.DataType);
+                    continue;
+                }
             }
             mapIterator.Add(index);
         }
