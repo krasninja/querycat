@@ -1,4 +1,4 @@
-using Serilog;
+using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Relational;
@@ -25,6 +25,8 @@ public sealed class StatisticRowsIterator : IRowsIterator, IRowsIteratorParent
     /// </summary>
     public int MaxErrorsCount { get; set; } = -1;
 
+    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger<StatisticRowsIterator>();
+
     public StatisticRowsIterator(IRowsIterator rowsIterator, ExecutionStatistic statistic)
     {
         _rowsIterator = rowsIterator;
@@ -36,7 +38,7 @@ public sealed class StatisticRowsIterator : IRowsIterator, IRowsIteratorParent
     {
         if (MaxErrorsCount > -1 && _statistic.ErrorsCount >= MaxErrorsCount)
         {
-            Log.Logger.Fatal(
+            _logger.LogCritical(
                 "Maximum number of errors reached! Maximum {MaxErrorsCount}, current {ErrorsCount}.",
                 MaxErrorsCount,
                 _statistic.ErrorsCount);

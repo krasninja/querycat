@@ -1,4 +1,4 @@
-using Serilog;
+using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes.Select;
@@ -18,6 +18,8 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
     private readonly ExecutionThread _executionThread;
     private readonly SelectCommandContext _context;
     private readonly ResolveTypesVisitor _resolveTypesVisitor;
+
+    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger<CreateRowsInputVisitor>();
 
     public CreateRowsInputVisitor(ExecutionThread executionThread, SelectCommandContext context)
     {
@@ -67,7 +69,7 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
             }
             rowsInput.SetContext(queryContext);
             rowsInput.Open();
-            Log.Logger.Debug("Open rows input {RowsInput}.", rowsInput);
+            _logger.LogDebug("Open rows input {RowsInput}.", rowsInput);
             return new SelectCommandInputContext(rowsInput, queryContext);
         }
         if (source.AsObject is IRowsIterator rowsIterator)

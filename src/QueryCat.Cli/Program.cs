@@ -3,7 +3,7 @@ using System.CommandLine.Builder;
 using System.CommandLine.Help;
 using System.CommandLine.Parsing;
 using System.Text;
-using Serilog;
+using Microsoft.Extensions.Logging;
 using QueryCat.Backend;
 using QueryCat.Cli.Commands;
 
@@ -14,6 +14,10 @@ namespace QueryCat.Cli;
 /// </summary>
 internal class Program
 {
+    private static readonly ILogger Logger = Application.LoggerFactory.CreateLogger<Program>();
+
+    private static readonly object ObjLock = new();
+
     /// <summary>
     /// Entry point.
     /// </summary>
@@ -112,24 +116,27 @@ internal class Program
 
     private static void ProcessException(Exception exception)
     {
-        if (exception is SyntaxException syntaxException)
+        lock (ObjLock)
         {
-            Log.Logger.Information(syntaxException.GetErrorLine());
-            Log.Logger.Information(new string(' ', syntaxException.Position) + '^');
-            Log.Logger.Error("{Line}:{Position}: {Message}", syntaxException.Line, syntaxException.Position,
-                syntaxException.Message);
-        }
-        else if (exception is QueryCatException domainException)
-        {
-            Log.Logger.Error(domainException.Message);
-        }
-        else if (exception is FormatException formatException)
-        {
-            Log.Logger.Error(formatException.Message);
-        }
-        else
-        {
-            Log.Logger.Fatal(exception, exception.Message);
+            if (exception is SyntaxException syntaxException)
+            {
+                Logger.LogInformation(syntaxException.GetErrorLine());
+                Logger.LogInformation(new string(' ', syntaxException.Position) + '^');
+                Logger.LogError("{Line}:{Position}: {Message}", syntaxException.Line, syntaxException.Position,
+                    syntaxException.Message);
+            }
+            else if (exception is QueryCatException domainException)
+            {
+                Logger.LogError(domainException.Message);
+            }
+            else if (exception is FormatException formatException)
+            {
+                Logger.LogError(formatException.Message);
+            }
+            else
+            {
+                Logger.LogCritical(exception, exception.Message);
+            }
         }
     }
 }

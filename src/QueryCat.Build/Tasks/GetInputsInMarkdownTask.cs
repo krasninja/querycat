@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 using Cake.Core;
 using Cake.Core.Diagnostics;
 using Cake.Frosting;
+using Microsoft.Extensions.Logging;
+using QueryCat.Backend;
 using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Functions;
@@ -18,6 +20,8 @@ namespace QueryCat.Build.Tasks;
 [TaskName("Get-Inputs-Markdown")]
 public class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
 {
+    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger<GetInputsInMarkdownTask>();
+
     private static readonly string[] ExcludeList =
     {
         "read_file",
@@ -74,7 +78,7 @@ public class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
             }
             catch (Exception ex)
             {
-                Serilog.Log.Logger.Warning("Cannot init rows input '{InputFunction}': {Message}",
+                _logger.LogWarning("Cannot init rows input '{InputFunction}': {Message}",
                     inputFunction, ex.Message);
                 continue;
             }

@@ -1,5 +1,5 @@
+using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Utils;
-using Serilog;
 
 namespace QueryCat.Backend.Storage;
 
@@ -19,6 +19,8 @@ public class Fetcher<TClass> where TClass : class
     /// Start page index. Zero by default.
     /// </summary>
     public int PageStart { get; set; }
+
+    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger<Fetcher<TClass>>();
 
     /// <summary>
     /// Constructor.
@@ -102,7 +104,7 @@ public class Fetcher<TClass> where TClass : class
         bool hasMore;
         do
         {
-            Log.Logger.Debug("Run with offset {Offset} and limit {Limit}.", offset, Limit);
+            _logger.LogDebug("Run with offset {Offset} and limit {Limit}.", offset, Limit);
             var localOffset = offset;
             var data = AsyncUtils.RunSync(() => action(localOffset, Limit, cancellationToken));
             fetchedCount = 0;
@@ -149,7 +151,7 @@ public class Fetcher<TClass> where TClass : class
         bool hasMore;
         do
         {
-            Log.Logger.Debug("Run with page {Page} and limit {Limit}.", page, Limit);
+            _logger.LogDebug("Run with page {Page} and limit {Limit}.", page, Limit);
             var localPage = page;
             var data = AsyncUtils.RunSync(() => action(localPage, Limit, cancellationToken));
             fetchedCount = 0;

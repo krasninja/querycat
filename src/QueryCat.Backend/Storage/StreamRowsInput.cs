@@ -1,5 +1,5 @@
 using System.Buffers;
-using Serilog;
+using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Relational.Iterators;
@@ -67,6 +67,8 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
 
     private readonly DelimiterStreamReader _delimiterStreamReader;
 
+    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger<StreamRowsInput>();
+
     /// <summary>
     /// Constructor.
     /// </summary>
@@ -98,7 +100,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     /// <inheritdoc />
     public void Close()
     {
-        Log.Logger.Debug("Close {Stream}.", this);
+        _logger.LogDebug("Close {Stream}.", this);
         Dispose(true);
     }
 
@@ -250,7 +252,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     /// <inheritdoc />
     public virtual void Reset()
     {
-        Log.Logger.Verbose("Reset stream.");
+        _logger.LogTrace("Reset stream.");
         // If we still read cache data - we just reset it. Otherwise there will be double read.
         if (_cacheIterator != null)
         {
@@ -308,7 +310,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     /// <inheritdoc />
     public virtual void Open()
     {
-        Log.Logger.Debug("Start stream open.");
+        _logger.LogDebug("Start stream open.");
         _virtualColumnsCount = GetVirtualColumns().Length;
         var inputIterator = new RowsInputIterator(this, autoFetch: true);
 
@@ -329,7 +331,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
         cacheIterator.SeekToHead();
         cacheIterator.Freeze();
         _cacheIterator = cacheIterator;
-        Log.Logger.Debug("Open stream finished.");
+        _logger.LogDebug("Open stream finished.");
     }
 
     /// <summary>
@@ -392,7 +394,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
 
     protected virtual void Dispose(bool disposing)
     {
-        Log.Logger.Debug("Stream dispose.");
+        _logger.LogDebug("Stream dispose.");
         if (disposing)
         {
             StreamReader.Dispose();

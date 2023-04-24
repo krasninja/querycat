@@ -1,5 +1,5 @@
 using System.Diagnostics;
-using Serilog;
+using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Formatters;
 using QueryCat.Backend.Functions.AggregateFunctions;
 using QueryCat.Backend.Functions.StandardFunctions;
@@ -11,6 +11,8 @@ namespace QueryCat.Backend.Execution;
 /// </summary>
 public class ExecutionThreadBootstrapper
 {
+    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger<ExecutionThreadBootstrapper>();
+
     public void Bootstrap(ExecutionThread executionThread)
     {
 #if DEBUG
@@ -37,7 +39,7 @@ public class ExecutionThreadBootstrapper
 #endif
 #if DEBUG
         timer.Stop();
-        Log.Logger.Verbose("Bootstrap time: {Time}.", timer.Elapsed);
+        _logger.LogTrace("Bootstrap time: {Time}.", timer.Elapsed);
 #endif
     }
 }

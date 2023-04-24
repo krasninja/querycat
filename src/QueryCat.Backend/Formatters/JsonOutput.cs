@@ -1,5 +1,5 @@
 using System.Text.Json;
-using Serilog;
+using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Storage;
 using QueryCat.Backend.Types;
@@ -10,6 +10,8 @@ internal sealed class JsonOutput : RowsOutput, IDisposable
 {
     private readonly Utf8JsonWriter _streamWriter;
 
+    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger<JsonOutput>();
+
     public JsonOutput(Stream stream)
     {
         _streamWriter = new Utf8JsonWriter(stream);
@@ -18,7 +20,7 @@ internal sealed class JsonOutput : RowsOutput, IDisposable
     /// <inheritdoc />
     public override void Open()
     {
-        Log.Logger.Verbose("JSON opened.");
+        _logger.LogTrace("JSON opened.");
     }
 
     /// <inheritdoc />
@@ -27,7 +29,7 @@ internal sealed class JsonOutput : RowsOutput, IDisposable
         _streamWriter.WriteEndArray();
         _streamWriter.Flush();
         _streamWriter.Dispose();
-        Log.Logger.Verbose("JSON closed.");
+        _logger.LogTrace("JSON closed.");
     }
 
     /// <inheritdoc />

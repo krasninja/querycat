@@ -1,6 +1,6 @@
 using System.IO.Compression;
 using System.Reflection;
-using Serilog;
+using Microsoft.Extensions.Logging;
 
 namespace QueryCat.Backend.Execution.Plugins;
 
@@ -15,6 +15,8 @@ internal sealed class PluginsLoader
     private readonly IEnumerable<string> _pluginDirectories;
     private readonly Dictionary<string, byte[]> _rawAssembliesCache = new();
     private readonly Dictionary<string, Assembly> _loadedAssembliesCache = new();
+
+    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger<PluginsLoader>();
 
     public PluginsLoader(IEnumerable<string> pluginDirectories)
     {
@@ -62,12 +64,12 @@ internal sealed class PluginsLoader
             var fileName = GetPluginName(pluginFile);
             if (loadedFiles.Contains(fileName))
             {
-                Log.Logger.Warning("Plugin assembly '{PluginFile}' has been already loaded.", pluginFile);
+                _logger.LogWarning("Plugin assembly '{PluginFile}' has been already loaded.", pluginFile);
                 continue;
             }
             loadedFiles.Add(fileName);
 
-            Log.Logger.Debug("Load plugin assembly '{PluginFile}'.", pluginFile);
+            _logger.LogDebug("Load plugin assembly '{PluginFile}'.", pluginFile);
             var extension = Path.GetExtension(pluginFile);
             Assembly? assembly = null;
             if (extension.Equals(DllExtension, StringComparison.OrdinalIgnoreCase))
@@ -80,7 +82,7 @@ internal sealed class PluginsLoader
             }
             if (assembly == null)
             {
-                Log.Logger.Warning("Cannot load from '{PluginFile}'.", pluginFile);
+                _logger.LogWarning("Cannot load from '{PluginFile}'.", pluginFile);
                 continue;
             }
 

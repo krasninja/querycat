@@ -2,8 +2,7 @@ using System.ComponentModel;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
-using Serilog;
-using QueryCat.Backend.Ast.Nodes.Function;
+using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Functions.AggregateFunctions;
 using QueryCat.Backend.Parser;
@@ -31,12 +30,9 @@ public sealed class FunctionsManager
     private readonly List<Action<FunctionsManager>> _registerAggregateFunctions = new(capacity: DefaultCapacity);
     private int _registerAggregateFunctionsLastIndex;
 
-    private static Function EmptyAggregate => new(
-        _ =>
-        {
-            Log.Logger.Warning("Empty aggregate function is not intended to be called!");
-            return VariantValue.Null;
-        }, new FunctionSignatureNode("Empty", FunctionTypeNode.NullTypeInstance));
+    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger<FunctionsManager>();
+
+    private static readonly ILogger Logger = Application.LoggerFactory.CreateLogger<FunctionsManager>();
 
     private static VariantValue EmptyFunction(FunctionCallInfo args)
     {
@@ -266,7 +262,7 @@ public sealed class FunctionsManager
                 var similarFunction = sameNameFunctionsList.Find(f => f.IsSignatureEquals(function));
                 if (similarFunction != null)
                 {
-                    Log.Logger.Warning("Possibly similar signature function: {Function}.", function);
+                    _logger.LogWarning("Possibly similar signature function: {Function}.", function);
                 }
             }
             var descriptionAttribute = preRegistration.MemberInfo.GetCustomAttribute<DescriptionAttribute>();
@@ -281,7 +277,7 @@ public sealed class FunctionsManager
                     function
                 },
                 updateValueFactory: (_, value) => value!.Add(function));
-            Log.Logger.Debug("Register function: {Function}.", function);
+            _logger.LogDebug("Register function: {Function}.", function);
         }
         return functionsList ?? new List<Function>();
     }
@@ -321,11 +317,8 @@ public sealed class FunctionsManager
                 },
                 updateValueFactory: (_, value) => value!.Add(function));
 
-            Log.Logger.Debug("Register aggregate: {Function}.", function);
-            if (!functionsManager._aggregateFunctions.ContainsKey(functionName))
-            {
-                functionsManager._aggregateFunctions.Add(functionName, aggregateFunctionInstance);
-            }
+            Logger.LogDebug("Register aggregate: {Function}.", function);
+            functionsManager._aggregateFunctions.TryAdd(functionName, aggregateFunctionInstance);
         }
     }
 

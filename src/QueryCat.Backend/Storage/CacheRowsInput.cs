@@ -1,5 +1,5 @@
 using System.Diagnostics;
-using Serilog;
+using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Types;
@@ -14,6 +14,8 @@ namespace QueryCat.Backend.Storage;
 public sealed class CacheRowsInput : IRowsInput
 {
     private const int ChunkSize = 4096;
+
+    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger<CacheRowsInput>();
 
     [DebuggerDisplay("Key = {Key}, IsExpired = {IsExpired}")]
     private sealed class CacheEntry
@@ -198,20 +200,20 @@ public sealed class CacheRowsInput : IRowsInput
         // Fast path.
         if (_cacheEntries.TryGetValue(key, out var existingKey))
         {
-            Log.Logger.Debug("Reuse existing cache entry with key {Key}.", key);
+            _logger.LogDebug("Reuse existing cache entry with key {Key}.", key);
             return existingKey;
         }
         foreach (var cacheEntry in _cacheEntries.Values)
         {
             if (cacheEntry.Key.Match(key))
             {
-                Log.Logger.Debug("Reuse existing cache entry with key {Key}.", key);
+                _logger.LogDebug("Reuse existing cache entry with key {Key}.", key);
                 return cacheEntry;
             }
         }
 
         var entry = new CacheEntry(key, TimeSpan.FromSeconds(120));
-        Log.Logger.Debug("Create new cache entry with key {Key}.", key);
+        _logger.LogDebug("Create new cache entry with key {Key}.", key);
         return entry;
     }
 
@@ -226,7 +228,7 @@ public sealed class CacheRowsInput : IRowsInput
             // If we reset but persist the same key - just go ahead using existing input.
             if (_currentCacheEntry.Key.Equals(newCacheKey))
             {
-                Log.Logger.Debug("Reuse previous cache with key {Key}.", _currentCacheEntry.Key);
+                _logger.LogDebug("Reuse previous cache with key {Key}.", _currentCacheEntry.Key);
                 return;
             }
         }

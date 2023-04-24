@@ -1,7 +1,7 @@
 using System.Net;
 using System.Reflection;
 using System.Text.Json;
-using Serilog;
+using Microsoft.Extensions.Logging;
 using QueryCat.Backend;
 using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Execution;
@@ -40,6 +40,8 @@ internal sealed class WebServer
     private readonly ExecutionThread _executionThread;
     private readonly string? _password;
 
+    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger<WebServer>();
+
     public WebServer(
         ExecutionThread executionThread,
         string? urls = null,
@@ -74,7 +76,7 @@ internal sealed class WebServer
             // Common.
             var context = listener.GetContext();
             using HttpListenerResponse response = context.Response;
-            response.Headers["User-Agent"] = $"{QueryCatApplication.GetProductFullName()}";
+            response.Headers["User-Agent"] = $"{Application.GetProductFullName()}";
             response.StatusCode = (int)HttpStatusCode.OK;
 
             // CORS.
@@ -119,7 +121,7 @@ internal sealed class WebServer
                 }
                 catch (Exception e)
                 {
-                    Log.Logger.Error(e, "Error while processing request.");
+                    _logger.LogError(e, "Error while processing request.");
                     response.StatusCode = (int)HttpStatusCode.InternalServerError;
                 }
             }

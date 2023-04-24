@@ -1,5 +1,5 @@
-using Serilog;
-using Serilog.Events;
+using Microsoft.Extensions.Logging;
+using QueryCat.Backend;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Formatters;
 using QueryCat.Backend.Providers;
@@ -11,7 +11,7 @@ namespace QueryCat.Cli.Commands.Options;
 /// </summary>
 internal class ApplicationOptions
 {
-    public LogEventLevel LogLevel { get; init; }
+    public LogLevel LogLevel { get; init; }
 
 #if ENABLE_PLUGINS
     public string[] PluginDirectories { get; init; } = Array.Empty<string>();
@@ -53,9 +53,15 @@ internal class ApplicationOptions
     /// </summary>
     public void InitializeLogger()
     {
-        Log.Logger = new LoggerConfiguration()
-            .MinimumLevel.Is(LogLevel)
-            .WriteTo.Console()
-            .CreateLogger();
+        Application.LoggerFactory = LoggerFactory.Create(builder =>
+            {
+                builder
+                    .SetMinimumLevel(LogLevel)
+                    .AddSimpleConsole(options =>
+                    {
+                        options.SingleLine = true;
+                    })
+                    .AddConsole();
+            });
     }
 }
