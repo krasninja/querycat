@@ -24,6 +24,7 @@ public class ExecutionThread : IExecutionThread
 
     private readonly StatementsVisitor _statementsVisitor;
     private readonly object _objLock = new();
+    private readonly List<IDisposable> _disposablesList = new();
 
     internal PersistentInputConfigStorage InputConfigStorage { get; }
 
@@ -170,6 +171,7 @@ public class ExecutionThread : IExecutionThread
         while (ExecutingStatement != null)
         {
             var commandContext = _statementsVisitor.RunAndReturn(ExecutingStatement);
+            _disposablesList.Add(commandContext);
 
             // Fire "before" event.
             var executeEventArgs = new ExecuteEventArgs();
@@ -277,6 +279,11 @@ public class ExecutionThread : IExecutionThread
     {
         if (disposing)
         {
+            foreach (var disposable in _disposablesList)
+            {
+                disposable.Dispose();
+            }
+            _disposablesList.Clear();
             PluginsManager.Dispose();
         }
     }
