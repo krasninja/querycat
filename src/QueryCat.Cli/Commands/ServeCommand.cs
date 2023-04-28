@@ -16,9 +16,10 @@ internal class ServeCommand : BaseCommand
         AddOption(urlsOption);
         AddOption(allowOriginOption);
         AddOption(passwordOption);
-        this.SetHandler((queryOptions, urls, allowOrigin, password) =>
+        this.SetHandler((applicationOptions, urls, allowOrigin, password) =>
         {
-            using var executionThread = queryOptions.CreateExecutionThread();
+            applicationOptions.InitializeLogger();
+            using var executionThread = applicationOptions.CreateExecutionThread();
             executionThread.Options.AddRowNumberColumn = true;
             var webServer = new WebServer(executionThread, urls, password);
             if (!string.IsNullOrEmpty(allowOrigin))

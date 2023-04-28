@@ -79,7 +79,15 @@ internal static class FileInputOutput
         {
             dir = ".";
         }
-        var files = Directory.EnumerateFiles(dir, pattern, SearchOption.TopDirectoryOnly);
+        IEnumerable<string> files = Array.Empty<string>();
+        try
+        {
+            Directory.EnumerateFiles(dir, pattern, SearchOption.TopDirectoryOnly);
+        }
+        catch (Exception e)
+        {
+            throw new QueryCatException($"Cannot enumerate files: {e.Message}");
+        }
         foreach (var file in files.OrderBy(f => f))
         {
             yield return file;

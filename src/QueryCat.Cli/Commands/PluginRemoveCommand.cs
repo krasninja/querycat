@@ -13,12 +13,12 @@ internal class PluginRemoveCommand : BaseCommand
         var pluginArgument = new Argument<string>("plugin", "Plugin name.");
 
         this.AddArgument(pluginArgument);
-        this.SetHandler((queryOptions, plugin) =>
+        this.SetHandler((applicationOptions, plugin) =>
         {
-            queryOptions.InitializeLogger();
+            applicationOptions.InitializeLogger();
             AsyncUtils.RunSync(async () =>
             {
-                using var executionThread = queryOptions.CreateExecutionThread();
+                using var executionThread = applicationOptions.CreateExecutionThread();
                 await executionThread.PluginsManager.RemoveAsync(plugin);
             });
         }, new ApplicationOptionsBinder(LogLevelOption, PluginDirectoriesOption), pluginArgument);

@@ -40,7 +40,7 @@ internal sealed class WebServer
     private readonly ExecutionThread _executionThread;
     private readonly string? _password;
 
-    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger<WebServer>();
+    private readonly Lazy<ILogger> _logger = new(() => Application.LoggerFactory.CreateLogger<WebServer>());
 
     public WebServer(
         ExecutionThread executionThread,
@@ -121,7 +121,7 @@ internal sealed class WebServer
                 }
                 catch (Exception e)
                 {
-                    _logger.LogError(e, "Error while processing request.");
+                    _logger.Value.LogError(e, "Error while processing request.");
                     response.StatusCode = (int)HttpStatusCode.InternalServerError;
                 }
             }
