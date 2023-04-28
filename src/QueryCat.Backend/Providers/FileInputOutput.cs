@@ -79,10 +79,10 @@ internal static class FileInputOutput
         {
             dir = ".";
         }
-        IEnumerable<string> files = Array.Empty<string>();
+        IEnumerable<string> files;
         try
         {
-            Directory.EnumerateFiles(dir, pattern, SearchOption.TopDirectoryOnly);
+            files = Directory.EnumerateFiles(dir, pattern, SearchOption.TopDirectoryOnly);
         }
         catch (Exception e)
         {
