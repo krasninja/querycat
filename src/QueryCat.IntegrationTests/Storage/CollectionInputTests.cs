@@ -22,7 +22,7 @@ public class CollectionInputTests
 
         public DateTime? BirthDay { get; set; }
 
-        public decimal Score { get; set; }
+        public decimal Score { get; set; } = 5;
 
         public Employee()
         {
@@ -85,6 +85,20 @@ public class CollectionInputTests
         });
         thread.TopScope.DefineVariable("employees", DataType.Object, VariantValue.CreateFromObject(_employeesList));
         thread.Run("insert into [employees] values (4, 'Abbie Cornish', '1982-08-07', 5);");
+        Assert.Equal(4, _employeesList.TargetCollection.Count());
+        Assert.Equal(5, _employeesList.TargetCollection.ElementAt(3).Score);
+    }
+
+    [Fact]
+    public void Insert_ListOfEmployeesWithPartialInsert_InsertItem()
+    {
+        var thread = new ExecutionThread(new ExecutionOptions
+        {
+            DefaultRowsOutput = NullRowsOutput.Instance,
+        });
+        thread.TopScope.DefineVariable("employees", DataType.Object, VariantValue.CreateFromObject(_employeesList));
+        new ExecutionThreadBootstrapper().Bootstrap(thread);
+        thread.Run("insert into self(employees) (id, name) values (4, 'Abbie Cornish');");
         Assert.Equal(4, _employeesList.TargetCollection.Count());
         Assert.Equal(5, _employeesList.TargetCollection.ElementAt(3).Score);
     }

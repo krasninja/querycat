@@ -13,9 +13,14 @@ INSERT INTO ( function : IRowsOutput ) [ ( column_name [, ...] ) ]
 ## Examples
 
 ```sql
+-- Insert into JSON file values.
 INSERT INTO 'test.json' (a, b)
 VALUES (1, 2), (3, 4);
 
+-- Insert without specifying columns.
 INSERT INTO 'test.csv'
 SELECT * FROM 'Countries1.csv';
+
+-- Insert into variable.
+INSERT INTO self(array_variable) (id, [name]) VALUES (4, 'Abbie Cornish');
 ```

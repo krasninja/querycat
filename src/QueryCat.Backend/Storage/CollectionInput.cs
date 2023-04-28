@@ -16,6 +16,7 @@ public class CollectionInput<TClass> : IRowsOutput, IRowsInputUpdate where TClas
     private readonly List<PropertyInfo> _columnsProperties = new();
     private readonly IEnumerator<TClass> _enumerator;
     private Column[] _columns = new Column[0];
+    private PropertyInfo[]? _propertiesMapping;
 
     public IEnumerable<TClass> TargetCollection => _list;
 
@@ -76,8 +77,11 @@ public class CollectionInput<TClass> : IRowsOutput, IRowsInputUpdate where TClas
         {
             throw new QueryCatException($"Cannot write to collection of type '{_list.GetType().Name}'.");
         }
+
+        var mapping = GetPropertiesToColumnsMapping(row.Columns);
+
         var obj = Activator.CreateInstance<TClass>();
-        for (var i = 0; i < _columnsProperties.Count; i++)
+        for (var i = 0; i < mapping.Length; i++)
         {
             var prop = _columnsProperties[i];
             if (!prop.CanWrite)
@@ -87,6 +91,26 @@ public class CollectionInput<TClass> : IRowsOutput, IRowsInputUpdate where TClas
             prop.SetValue(obj, ObjectUtils.ChangeType(row[i].GetGenericObject(), prop.PropertyType));
         }
         collection.Add(obj);
+    }
+
+    private PropertyInfo[] GetPropertiesToColumnsMapping(Column[] columns)
+    {
+        if (_propertiesMapping != null)
+        {
+            return _propertiesMapping;
+        }
+        var mapList = new List<PropertyInfo>();
+        foreach (var column in columns)
+        {
+            var columnIndex = this.GetColumnIndexByName(column.Name, column.SourceName);
+            if (columnIndex < 0)
+            {
+                throw new QueryCatException($"Cannot find colum '{column.FullName}'.");
+            }
+            mapList.Add(_columnsProperties[columnIndex]);
+        }
+        _propertiesMapping = mapList.ToArray();
+        return _propertiesMapping;
     }
 
     /// <inheritdoc />
