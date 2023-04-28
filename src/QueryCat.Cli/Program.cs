@@ -14,7 +14,7 @@ namespace QueryCat.Cli;
 /// </summary>
 internal class Program
 {
-    private static readonly ILogger Logger = Application.LoggerFactory.CreateLogger<Program>();
+    private static readonly Lazy<ILogger> Logger = new(() => Application.LoggerFactory.CreateLogger<Program>());
 
     private static readonly object ObjLock = new();
 
@@ -102,7 +102,9 @@ internal class Program
             }, errorExitCode: 1)
             .Build();
 
-        return parser.Parse(args).Invoke();
+        var returnCode = parser.Parse(args).Invoke();
+        Application.LoggerFactory.Dispose();
+        return returnCode;
     }
 
     private static void CurrentDomainOnUnhandledException(object? sender, UnhandledExceptionEventArgs e)
@@ -116,26 +118,27 @@ internal class Program
 
     private static void ProcessException(Exception exception)
     {
+        var logger = Logger.Value;
         lock (ObjLock)
         {
             if (exception is SyntaxException syntaxException)
             {
-                Logger.LogInformation(syntaxException.GetErrorLine());
-                Logger.LogInformation(new string(' ', syntaxException.Position) + '^');
-                Logger.LogError("{Line}:{Position}: {Message}", syntaxException.Line, syntaxException.Position,
+                logger.LogInformation(syntaxException.GetErrorLine());
+                logger.LogInformation(new string(' ', syntaxException.Position) + '^');
+                logger.LogError("{Line}:{Position}: {Message}", syntaxException.Line, syntaxException.Position,
                     syntaxException.Message);
             }
             else if (exception is QueryCatException domainException)
             {
-                Logger.LogError(domainException.Message);
+                logger.LogError(domainException.Message);
             }
             else if (exception is FormatException formatException)
             {
-                Logger.LogError(formatException.Message);
+                logger.LogError(formatException.Message);
             }
             else
             {
-                Logger.LogCritical(exception, exception.Message);
+                logger.LogCritical(exception, exception.Message);
             }
         }
     }
