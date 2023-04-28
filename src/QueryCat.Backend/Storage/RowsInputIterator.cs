@@ -129,6 +129,11 @@ public class RowsInputIterator : IRowsIterator, IRowsIteratorParent, IDisposable
             FetchAll();
         }
 
+        if (!_hasInput)
+        {
+            _rowsInput.Close();
+        }
+
         _rowIndex++;
         return _hasInput;
     }

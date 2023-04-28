@@ -171,33 +171,26 @@ public class ExecutionThread : IExecutionThread
         {
             var commandContext = _statementsVisitor.RunAndReturn(ExecutingStatement);
 
-            try
+            // Fire "before" event.
+            var executeEventArgs = new ExecuteEventArgs();
+            BeforeStatementExecute?.Invoke(this, executeEventArgs);
+            if (!executeEventArgs.ContinueExecution)
             {
-                // Fire "before" event.
-                var executeEventArgs = new ExecuteEventArgs();
-                BeforeStatementExecute?.Invoke(this, executeEventArgs);
-                if (!executeEventArgs.ContinueExecution)
-                {
-                    break;
-                }
-                var result = commandContext.Invoke();
-                LastResult = result;
-
-                // Fire "after" event.
-                AfterStatementExecute?.Invoke(this, executeEventArgs);
-                if (!executeEventArgs.ContinueExecution)
-                {
-                    break;
-                }
-
-                if (Options.DefaultRowsOutput != NullRowsOutput.Instance)
-                {
-                    Write(result);
-                }
+                break;
             }
-            finally
+            var result = commandContext.Invoke();
+            LastResult = result;
+
+            // Fire "after" event.
+            AfterStatementExecute?.Invoke(this, executeEventArgs);
+            if (!executeEventArgs.ContinueExecution)
             {
-                commandContext.Dispose();
+                break;
+            }
+
+            if (Options.DefaultRowsOutput != NullRowsOutput.Instance)
+            {
+                Write(result);
             }
 
             ExecutingStatement = ExecutingStatement.NextNode;
