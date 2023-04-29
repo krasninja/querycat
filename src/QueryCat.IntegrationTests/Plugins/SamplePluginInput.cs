@@ -9,7 +9,7 @@ namespace QueryCat.IntegrationTests.Plugins;
 /// <summary>
 /// Example simple rows input plugin based on <see cref="FetchInput{TClass}" />.
 /// </summary>
-public class SamplePluginEnumerableInput : FetchInput<TestClass>
+public class SamplePluginInput : FetchInput<TestClass>
 {
     private const long MaxValue = 9;
 
@@ -17,7 +17,7 @@ public class SamplePluginEnumerableInput : FetchInput<TestClass>
     [FunctionSignature("plugin(): object<IRowsInput>")]
     public static VariantValue SamplePlugin(FunctionCallInfo args)
     {
-        var rowsSource = new SamplePluginEnumerableInput();
+        var rowsSource = new SamplePluginInput();
         return VariantValue.CreateFromObject(rowsSource);
     }
 

@@ -69,15 +69,15 @@ public class SamplePluginRowsIterator : IRowsIterator
 }
 ```
 
-## Plugin Based On ClassEnumerableInput
+## Plugin Based On FetchInput
 
-Another way to define plugin. It is high-level wrapper for rows input.
+Another way to define plugin. It is high-level wrapper for rows input. The main purpose is to provide convenience wrapper for inputs that do external calls (API clients, etc).
 
 ```csharp
 /// <summary>
-/// Example simple rows input plugin based on <see cref="ClassEnumerableInput{TClass}" />.
+/// Example simple rows input plugin based on <see cref="FetchInput{TClass}" />.
 /// </summary>
-public class SamplePluginEnumerableInput : ClassEnumerableInput<TestClass>
+public class SamplePluginInput : FetchInput<TestClass>
 {
     private const long MaxValue = 9;
 
@@ -85,7 +85,7 @@ public class SamplePluginEnumerableInput : ClassEnumerableInput<TestClass>
     [FunctionSignature("plugin(): object<IRowsInput>")]
     public static VariantValue SamplePlugin(FunctionCallInfo args)
     {
-        var rowsSource = new SamplePluginEnumerableInput();
+        var rowsSource = new SamplePluginInput();
         return VariantValue.CreateFromObject(rowsSource);
     }
 
@@ -104,13 +104,13 @@ public class SamplePluginEnumerableInput : ClassEnumerableInput<TestClass>
     {
         Trace.WriteLine(nameof(InitializeInputInfo));
         inputInfo.AddKeyColumn("Key",
-            isRequired: true,
+            isRequired: false,
             operation: VariantValue.Operation.Equals,
             action: value => _key = value.AsString);
     }
 
     /// <inheritdoc />
-    protected override IEnumerable<TestClass> GetData(ClassEnumerableInputFetch<TestClass> fetch)
+    protected override IEnumerable<TestClass> GetData(Fetcher<TestClass> fetcher)
     {
         Trace.WriteLine(nameof(GetData));
         for (var i = 0; i < MaxValue; i++)
