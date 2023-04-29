@@ -279,7 +279,10 @@ internal partial class ProgramParserVisitor
 
     /// <inheritdoc />
     public override IAstNode VisitSelectTablePrimaryStdin(QueryCatParser.SelectTablePrimaryStdinContext context)
-        => new SelectTableFunctionNode(new FunctionCallNode("stdin"));
+        => new SelectTableFunctionNode(new FunctionCallNode("stdin"))
+        {
+            Alias = this.Visit(context.selectAlias(), SelectAliasNode.Empty).AliasName,
+        };
 
     /// <inheritdoc />
     public override IAstNode VisitSelectTablePrimaryWithFormat(QueryCatParser.SelectTablePrimaryWithFormatContext context)
