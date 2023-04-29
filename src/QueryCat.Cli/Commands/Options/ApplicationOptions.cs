@@ -3,6 +3,7 @@ using QueryCat.Backend;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Formatters;
 using QueryCat.Backend.Providers;
+using QueryCat.Cli.Infrastructure;
 
 namespace QueryCat.Cli.Commands.Options;
 
@@ -54,14 +55,10 @@ internal class ApplicationOptions
     public void InitializeLogger()
     {
         Application.LoggerFactory = LoggerFactory.Create(builder =>
-            {
-                builder
-                    .SetMinimumLevel(LogLevel)
-                    .AddSimpleConsole(options =>
-                    {
-                        options.SingleLine = true;
-                    })
-                    .AddConsole();
-            });
+        {
+            builder
+                .SetMinimumLevel(LogLevel)
+                .AddProvider(new QueryCatConsoleLoggerProvider());
+        });
     }
 }

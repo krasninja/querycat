@@ -123,8 +123,8 @@ internal class Program
         {
             if (exception is SyntaxException syntaxException)
             {
-                logger.LogInformation(syntaxException.GetErrorLine());
-                logger.LogInformation(new string(' ', syntaxException.Position) + '^');
+                logger.LogError(syntaxException.GetErrorLine());
+                logger.LogError(new string(' ', syntaxException.Position) + '^');
                 logger.LogError("{Line}:{Position}: {Message}", syntaxException.Line, syntaxException.Position,
                     syntaxException.Message);
             }
