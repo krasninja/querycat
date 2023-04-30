@@ -330,9 +330,12 @@ internal partial class ProgramParserVisitor
     /// <inheritdoc />
     public override IAstNode VisitSelectTableJoinedOn(QueryCatParser.SelectTableJoinedOnContext context)
     {
+        var joinTypeNode = context.selectJoinType() != null
+            ? this.Visit<SelectTableJoinedTypeNode>(context.selectJoinType())
+            : new SelectTableJoinedTypeNode(SelectTableJoinedType.Inner);
         return new SelectTableJoinedOnNode(
             this.Visit<ExpressionNode>(context.right),
-            this.Visit<SelectTableJoinedTypeNode>(context.selectJoinType()),
+            joinTypeNode,
             this.Visit<ExpressionNode>(context.condition));
     }
 
