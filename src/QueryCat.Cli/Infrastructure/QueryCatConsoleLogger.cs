@@ -51,6 +51,10 @@ internal sealed class QueryCatConsoleLogger : ILogger, IDisposable
         }
         writer.Write(": ");
         writer.WriteLine(formatter.Invoke(state, exception));
+        if (logLevel >= LogLevel.Error && exception != null)
+        {
+            writer.WriteLine(exception);
+        }
         writer.Flush();
     }
 
