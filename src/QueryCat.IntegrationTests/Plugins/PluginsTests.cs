@@ -56,7 +56,7 @@ public sealed class PluginsTests : IDisposable
     public void SamplePluginEnumerableInput_CreateAndRun_ReturnsResult()
     {
         // Arrange.
-        _testThread.FunctionsManager.RegisterFunction(SamplePluginEnumerableInput.SamplePlugin);
+        _testThread.FunctionsManager.RegisterFunction(SamplePluginInput.SamplePlugin);
 
         // Act.
         _testThread.Run(@"SELECT * FROM plugin();");

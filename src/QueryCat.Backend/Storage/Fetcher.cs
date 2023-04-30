@@ -1,4 +1,5 @@
-using Serilog;
+using Microsoft.Extensions.Logging;
+using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Storage;
 
@@ -7,7 +8,7 @@ namespace QueryCat.Backend.Storage;
 /// iteration (offset, limit, fetch).
 /// </summary>
 /// <typeparam name="TClass">Source class type.</typeparam>
-public class ClassEnumerableInputFetch<TClass> where TClass : class
+public class Fetcher<TClass> where TClass : class
 {
     /// <summary>
     /// Default limit to fetch.
@@ -19,11 +20,13 @@ public class ClassEnumerableInputFetch<TClass> where TClass : class
     /// </summary>
     public int PageStart { get; set; }
 
+    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger<Fetcher<TClass>>();
+
     /// <summary>
     /// Constructor.
     /// </summary>
     /// <param name="enumerableInput">Enumerable input.</param>
-    public ClassEnumerableInputFetch(ClassEnumerableInput<TClass> enumerableInput)
+    public Fetcher(FetchInput<TClass> enumerableInput)
     {
         var queryLimit = enumerableInput.QueryContext.QueryInfo.Limit + enumerableInput.QueryContext.QueryInfo.Offset;
         if (queryLimit.HasValue)
@@ -68,8 +71,8 @@ public class ClassEnumerableInputFetch<TClass> where TClass : class
         FetchSingleDelegate action,
         CancellationToken cancellationToken = default)
     {
-        var item = action.Invoke(cancellationToken).ConfigureAwait(false).GetAwaiter().GetResult();
-        yield return item;
+        var item = AsyncUtils.RunSync(() => action.Invoke(cancellationToken));
+        yield return item!;
     }
 
     /// <summary>
@@ -82,7 +85,7 @@ public class ClassEnumerableInputFetch<TClass> where TClass : class
         FetchAllDelegate action,
         CancellationToken cancellationToken = default)
     {
-        return action.Invoke(cancellationToken).ConfigureAwait(false).GetAwaiter().GetResult();
+        return AsyncUtils.RunSync(() => action.Invoke(cancellationToken))!;
     }
 
     /// <summary>
@@ -101,8 +104,9 @@ public class ClassEnumerableInputFetch<TClass> where TClass : class
         bool hasMore;
         do
         {
-            Log.Logger.Debug("Run with offset {Offset} and limit {Limit}.", offset, Limit);
-            var data = action(offset, Limit, cancellationToken).ConfigureAwait(false).GetAwaiter().GetResult();
+            _logger.LogDebug("Run with offset {Offset} and limit {Limit}.", offset, Limit);
+            var localOffset = offset;
+            var data = AsyncUtils.RunSync(() => action(localOffset, Limit, cancellationToken));
             fetchedCount = 0;
             foreach (var item in data.Items)
             {
@@ -147,8 +151,9 @@ public class ClassEnumerableInputFetch<TClass> where TClass : class
         bool hasMore;
         do
         {
-            Log.Logger.Debug("Run with page {Page} and limit {Limit}.", page, Limit);
-            var data = action(page, Limit, cancellationToken).ConfigureAwait(false).GetAwaiter().GetResult();
+            _logger.LogDebug("Run with page {Page} and limit {Limit}.", page, Limit);
+            var localPage = page;
+            var data = AsyncUtils.RunSync(() => action(localPage, Limit, cancellationToken));
             fetchedCount = 0;
             foreach (var item in data.Items)
             {
@@ -194,7 +199,7 @@ public class ClassEnumerableInputFetch<TClass> where TClass : class
         bool hasMore;
         do
         {
-            var data = action(cancellationToken).ConfigureAwait(false).GetAwaiter().GetResult();
+            var data = AsyncUtils.RunSync(() => action(cancellationToken));
             fetchedCount = 0;
             foreach (var item in data.Items)
             {

@@ -1,18 +1,18 @@
 using System.CommandLine;
-using Serilog.Events;
+using Microsoft.Extensions.Logging;
 
 namespace QueryCat.Cli.Commands;
 
 internal abstract class BaseCommand : Command
 {
-    public static Option<LogEventLevel> LogLevelOption { get; } = new("--log-level",
+    public static Option<LogLevel> LogLevelOption { get; } = new("--log-level",
         description: "Log level.",
         getDefaultValue: () =>
         {
 #if DEBUG
-            return LogEventLevel.Debug;
+            return LogLevel.Debug;
 #else
-            return LogEventLevel.Information;
+            return LogLevel.Information;
 #endif
         });
 

@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 using System.Xml;
-using Serilog;
+using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Execution.Plugins;
@@ -22,6 +22,8 @@ public sealed class PluginsManager : IDisposable
     private List<PluginInfo>? _remotePluginsCache;
 
     public IEnumerable<string> PluginDirectories => _pluginDirectories;
+
+    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger<PluginsManager>();
 
     public PluginsManager(IEnumerable<string> pluginDirectories, string? bucketUri = null)
     {
@@ -128,7 +130,7 @@ public sealed class PluginsManager : IDisposable
         outputFileStream.Close();
         var overwrite = File.Exists(fullFileName);
         File.Move(fullFileNameDownloading, fullFileName, overwrite);
-        Log.Logger.Information("Save plugin file {FullFileName}.", fullFileName);
+        _logger.LogInformation("Save plugin file {FullFileName}.", fullFileName);
         return overwrite ? 1 : 0;
     }
 
@@ -174,7 +176,7 @@ public sealed class PluginsManager : IDisposable
         {
             if (name.Equals(localPlugin.Name, StringComparison.OrdinalIgnoreCase) && File.Exists(localPlugin.Uri))
             {
-                Log.Logger.Information("Remove file {Uri}.", localPlugin.Uri);
+                _logger.LogInformation("Remove file {Uri}.", localPlugin.Uri);
                 File.Delete(localPlugin.Uri);
             }
         }

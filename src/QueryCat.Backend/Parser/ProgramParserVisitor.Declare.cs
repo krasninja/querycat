@@ -17,7 +17,7 @@ internal partial class ProgramParserVisitor
     /// <inheritdoc />
     public override IAstNode VisitDeclareVariable(QueryCatParser.DeclareVariableContext context)
         => new DeclareNode(
-            GetUnwrappedText(context.IDENTIFIER().GetText()),
+            GetUnwrappedText(context.IDENTIFIER()),
             this.Visit<TypeNode>(context.type()).Type,
             context.statement() != null ? this.Visit<StatementNode>(context.statement()) : null
         );
@@ -25,7 +25,7 @@ internal partial class ProgramParserVisitor
     /// <inheritdoc />
     public override IAstNode VisitSetVariable(QueryCatParser.SetVariableContext context)
         => new SetNode(
-            GetUnwrappedText(context.IDENTIFIER().GetText()),
+            GetUnwrappedText(context.IDENTIFIER()),
             this.Visit<StatementNode>(context.statement())
         );
 }

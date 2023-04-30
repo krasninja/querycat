@@ -7,9 +7,9 @@ using QueryCat.Backend.Types;
 namespace QueryCat.IntegrationTests.Plugins;
 
 /// <summary>
-/// Example simple rows input plugin based on <see cref="ClassEnumerableInput{TClass}" />.
+/// Example simple rows input plugin based on <see cref="FetchInput{TClass}" />.
 /// </summary>
-public class SamplePluginEnumerableInput : ClassEnumerableInput<TestClass>
+public class SamplePluginInput : FetchInput<TestClass>
 {
     private const long MaxValue = 9;
 
@@ -17,7 +17,7 @@ public class SamplePluginEnumerableInput : ClassEnumerableInput<TestClass>
     [FunctionSignature("plugin(): object<IRowsInput>")]
     public static VariantValue SamplePlugin(FunctionCallInfo args)
     {
-        var rowsSource = new SamplePluginEnumerableInput();
+        var rowsSource = new SamplePluginInput();
         return VariantValue.CreateFromObject(rowsSource);
     }
 
@@ -42,7 +42,7 @@ public class SamplePluginEnumerableInput : ClassEnumerableInput<TestClass>
     }
 
     /// <inheritdoc />
-    protected override IEnumerable<TestClass> GetData(ClassEnumerableInputFetch<TestClass> fetch)
+    protected override IEnumerable<TestClass> GetData(Fetcher<TestClass> fetcher)
     {
         Trace.WriteLine(nameof(GetData));
         for (var i = 0; i < MaxValue; i++)

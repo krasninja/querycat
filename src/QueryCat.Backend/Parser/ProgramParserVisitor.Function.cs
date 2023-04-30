@@ -9,7 +9,7 @@ internal partial class ProgramParserVisitor
     /// <inheritdoc />
     public override IAstNode VisitFunctionSignature(QueryCatParser.FunctionSignatureContext context)
         => new FunctionSignatureNode(
-            GetUnwrappedText(context.name.Text),
+            GetUnwrappedText(context.name),
             this.Visit<FunctionTypeNode>(context.functionType()),
             this.Visit<FunctionSignatureArgumentNode>(context.functionArg()));
 

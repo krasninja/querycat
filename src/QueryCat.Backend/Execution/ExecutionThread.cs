@@ -9,6 +9,7 @@ using QueryCat.Backend.Functions;
 using QueryCat.Backend.Parser;
 using QueryCat.Backend.Storage;
 using QueryCat.Backend.Types;
+using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Execution;
 
@@ -23,6 +24,7 @@ public class ExecutionThread : IExecutionThread
 
     private readonly StatementsVisitor _statementsVisitor;
     private readonly object _objLock = new();
+    private readonly List<IDisposable> _disposablesList = new();
 
     internal PersistentInputConfigStorage InputConfigStorage { get; }
 
@@ -83,10 +85,10 @@ public class ExecutionThread : IExecutionThread
     /// </summary>
     public event EventHandler<ExecuteEventArgs>? AfterStatementExecute;
 
-    public static readonly ExecutionThread Empty = new(new ExecutionOptions
-    {
-        RunBootstrapScript = false,
-    });
+    /// <summary>
+    /// Default execution instance with default options.
+    /// </summary>
+    public static readonly ExecutionThread DefaultInstance = new();
 
     /// <summary>
     /// Is cancellation requested to cancel current command execution.
@@ -163,40 +165,34 @@ public class ExecutionThread : IExecutionThread
     {
         if (Options.UseConfig)
         {
-            InputConfigStorage.LoadAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+            AsyncUtils.RunSync(InputConfigStorage.LoadAsync);
         }
 
         while (ExecutingStatement != null)
         {
             var commandContext = _statementsVisitor.RunAndReturn(ExecutingStatement);
+            _disposablesList.Add(commandContext);
 
-            try
+            // Fire "before" event.
+            var executeEventArgs = new ExecuteEventArgs();
+            BeforeStatementExecute?.Invoke(this, executeEventArgs);
+            if (!executeEventArgs.ContinueExecution)
             {
-                // Fire "before" event.
-                var executeEventArgs = new ExecuteEventArgs();
-                BeforeStatementExecute?.Invoke(this, executeEventArgs);
-                if (!executeEventArgs.ContinueExecution)
-                {
-                    break;
-                }
-                var result = commandContext.Invoke();
-                LastResult = result;
-
-                // Fire "after" event.
-                AfterStatementExecute?.Invoke(this, executeEventArgs);
-                if (!executeEventArgs.ContinueExecution)
-                {
-                    break;
-                }
-
-                if (Options.DefaultRowsOutput != NullRowsOutput.Instance)
-                {
-                    Write(result);
-                }
+                break;
             }
-            finally
+            var result = commandContext.Invoke();
+            LastResult = result;
+
+            // Fire "after" event.
+            AfterStatementExecute?.Invoke(this, executeEventArgs);
+            if (!executeEventArgs.ContinueExecution)
             {
-                commandContext.Dispose();
+                break;
+            }
+
+            if (Options.DefaultRowsOutput != NullRowsOutput.Instance)
+            {
+                Write(result);
             }
 
             ExecutingStatement = ExecutingStatement.NextNode;
@@ -204,7 +200,7 @@ public class ExecutionThread : IExecutionThread
 
         if (Options.UseConfig)
         {
-            InputConfigStorage.SaveAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+            AsyncUtils.RunSync(InputConfigStorage.SaveAsync);
         }
         ExecutingStatement = null;
 
@@ -283,6 +279,11 @@ public class ExecutionThread : IExecutionThread
     {
         if (disposing)
         {
+            foreach (var disposable in _disposablesList)
+            {
+                disposable.Dispose();
+            }
+            _disposablesList.Clear();
             PluginsManager.Dispose();
         }
     }

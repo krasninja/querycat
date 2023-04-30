@@ -325,4 +325,20 @@ internal static class StringUtils
         }
         return target.Substring(startIndex, length);
     }
+
+    /// <summary>
+    /// Unwrap text from quotes and square brackets.
+    /// </summary>
+    /// <param name="text">Text to unwrap.</param>
+    /// <returns>Unwrapped text.</returns>
+    internal static string GetUnwrappedText(string text)
+    {
+        if ((text.StartsWith("\'", StringComparison.Ordinal) && text.EndsWith("\'", StringComparison.Ordinal))
+            || (text.StartsWith("\"", StringComparison.Ordinal) && text.EndsWith("\"", StringComparison.Ordinal))
+            || (text.StartsWith("[", StringComparison.Ordinal) && text.EndsWith("]", StringComparison.Ordinal)))
+        {
+            return text.Substring(1, text.Length - 2);
+        }
+        return text;
+    }
 }

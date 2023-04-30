@@ -13,13 +13,10 @@ internal class SchemaCommand : BaseQueryCommand
     /// <inheritdoc />
     public SchemaCommand() : base("schema", "Show query result columns.")
     {
-        this.SetHandler((queryOptions, query, files) =>
+        this.SetHandler((applicationOptions, query, files) =>
         {
-            queryOptions.InitializeLogger();
-            var thread = queryOptions.CreateExecutionThread(new ExecutionOptions
-            {
-                PagingSize = ExecutionOptions.NoLimit,
-            });
+            applicationOptions.InitializeLogger();
+            var thread = applicationOptions.CreateStdoutExecutionThread();
             thread.AfterStatementExecute += (_, threadArgs) =>
             {
                 var result = thread.LastResult;

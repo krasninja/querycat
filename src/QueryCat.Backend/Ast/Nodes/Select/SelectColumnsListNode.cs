@@ -25,6 +25,23 @@ public sealed class SelectColumnsListNode : AstNode
         node.CopyTo(this);
     }
 
+    /// <summary>
+    /// Has defined columns. Returns false if there are no columns to select or "SELECT *" pattern.
+    /// </summary>
+    /// <returns>Returns <c>true</c> if select nodes has specific columns to select, <c>false</c> otherwise.</returns>
+    public bool HasDefinedColumns()
+    {
+        if (ColumnsNodes.Count == 0)
+        {
+            return false;
+        }
+        if (ColumnsNodes.Count == 1 && ColumnsNodes[0] is SelectColumnsSublistAll)
+        {
+            return false;
+        }
+        return true;
+    }
+
     /// <inheritdoc />
     public override IEnumerable<IAstNode> GetChildren() => ColumnsNodes;
 

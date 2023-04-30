@@ -19,10 +19,6 @@ internal class DsvInput : StreamRowsInput
         _hasHeader = Options.HasHeader;
     }
 
-    #region Header
-
-    #endregion
-
     /// <inheritdoc />
     protected override void Analyze(CacheRowsIterator iterator)
     {
@@ -51,6 +47,18 @@ internal class DsvInput : StreamRowsInput
         if (hasHeader)
         {
             iterator.RemoveRowAt(0);
+        }
+    }
+
+    /// <inheritdoc />
+    public override void Reset()
+    {
+        base.Reset();
+        // If we have header row the first values row would have non-zero
+        // position.
+        if (_hasHeader == true && StreamReader.BaseStream.Position == 0)
+        {
+            ReadNext();
         }
     }
 }

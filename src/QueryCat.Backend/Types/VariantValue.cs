@@ -1,6 +1,8 @@
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace QueryCat.Backend.Types;
 
@@ -215,6 +217,41 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         {
             return new VariantValue(timeSpan);
         }
+        if (obj is JsonValue jsonValue)
+        {
+            var jsonType = jsonValue.GetValue<JsonElement>().ValueKind;
+            if (jsonType == JsonValueKind.Number)
+            {
+                if (jsonValue.TryGetValue(out long jsonLongValue))
+                {
+                    return new VariantValue(jsonLongValue);
+                }
+                if (jsonValue.TryGetValue(out decimal jsonDecimalValue))
+                {
+                    return new VariantValue(jsonDecimalValue);
+                }
+                if (jsonValue.TryGetValue(out double jsonDoubleValue))
+                {
+                    return new VariantValue(jsonDoubleValue);
+                }
+            }
+            if (jsonType == JsonValueKind.String && jsonValue.TryGetValue(out string? jsonStringValue))
+            {
+                return new VariantValue(jsonStringValue);
+            }
+            if (jsonType == JsonValueKind.True)
+            {
+                return TrueValue;
+            }
+            if (jsonType == JsonValueKind.False)
+            {
+                return FalseValue;
+            }
+            if (jsonType == JsonValueKind.Null || jsonType == JsonValueKind.Undefined)
+            {
+                return Null;
+            }
+        }
         return new VariantValue(obj);
     }
 
@@ -336,6 +373,25 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         throw new InvalidOperationException(
             $"Cannot cast object of type '{sourceObj.GetType()}' to type '{typeof(T)}'.");
     }
+
+    /// <summary>
+    /// Get the internal value as .NET object.
+    /// </summary>
+    /// <returns>Value object.</returns>
+    public object? GetGenericObject() => GetInternalType() switch
+    {
+        DataType.Null => null,
+        DataType.Void => null,
+        DataType.Integer => AsIntegerUnsafe,
+        DataType.String => AsStringUnsafe,
+        DataType.Boolean => AsBooleanUnsafe,
+        DataType.Float => AsFloatUnsafe,
+        DataType.Numeric => AsNumericUnsafe,
+        DataType.Timestamp => AsTimestampUnsafe,
+        DataType.Interval => AsIntervalUnsafe,
+        DataType.Object => AsObjectUnsafe,
+        _ => null,
+    };
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private VariantValue CheckTypeAndTryToCast(DataType targetType)
@@ -632,14 +688,14 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     {
         DataType.Null => "NULL",
         DataType.Void => "VOID",
-        DataType.Integer => AsInteger.ToString(CultureInfo.InvariantCulture),
-        DataType.String => AsString,
-        DataType.Boolean => AsBoolean.ToString(CultureInfo.InvariantCulture),
-        DataType.Float => AsFloat.ToString("F2", CultureInfo.InvariantCulture),
-        DataType.Numeric => AsNumeric.ToString("F", CultureInfo.InvariantCulture),
-        DataType.Timestamp => AsTimestamp.ToString(CultureInfo.InvariantCulture),
-        DataType.Interval => AsInterval.ToString("c", CultureInfo.InvariantCulture),
-        DataType.Object => "object: " + AsObject,
+        DataType.Integer => AsIntegerUnsafe.ToString(CultureInfo.InvariantCulture),
+        DataType.String => AsStringUnsafe,
+        DataType.Boolean => AsBooleanUnsafe.ToString(CultureInfo.InvariantCulture),
+        DataType.Float => AsFloatUnsafe.ToString("F2", CultureInfo.InvariantCulture),
+        DataType.Numeric => AsNumericUnsafe.ToString("F", CultureInfo.InvariantCulture),
+        DataType.Timestamp => AsTimestampUnsafe.ToString(CultureInfo.InvariantCulture),
+        DataType.Interval => AsIntervalUnsafe.ToString("c", CultureInfo.InvariantCulture),
+        DataType.Object => "object: " + AsObjectUnsafe,
         _ => "unknown"
     };
 

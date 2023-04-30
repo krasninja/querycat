@@ -12,13 +12,10 @@ internal class PluginListCommand : BaseCommand
     /// <inheritdoc />
     public PluginListCommand() : base("list", "List all available plugins.")
     {
-        this.SetHandler(queryOptions =>
+        this.SetHandler(applicationOptions =>
         {
-            queryOptions.InitializeLogger();
-            using var executionThread = queryOptions.CreateExecutionThread(new ExecutionOptions
-            {
-                PagingSize = ExecutionOptions.NoLimit
-            });
+            applicationOptions.InitializeLogger();
+            using var executionThread = applicationOptions.CreateStdoutExecutionThread();
             var result = executionThread.RunFunction(InfoFunctions.Plugins);
             executionThread.Options.DefaultRowsOutput.Write(ExecutionThreadUtils.ConvertToIterator(result), executionThread);
         }, new ApplicationOptionsBinder(LogLevelOption, PluginDirectoriesOption));

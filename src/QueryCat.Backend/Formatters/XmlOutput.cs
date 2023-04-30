@@ -1,5 +1,5 @@
 using System.Xml;
-using Serilog;
+using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Storage;
 using QueryCat.Backend.Types;
@@ -12,6 +12,8 @@ internal sealed class XmlOutput : RowsOutput, IDisposable
     private const string RowTagName = "ROW";
 
     private readonly XmlWriter _xmlWriter;
+
+    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger<XmlOutput>();
 
     public XmlOutput(Stream stream)
     {
@@ -32,7 +34,7 @@ internal sealed class XmlOutput : RowsOutput, IDisposable
     /// <inheritdoc />
     public override void Open()
     {
-        Log.Logger.Verbose("XML opened.");
+        _logger.LogTrace("XML opened.");
     }
 
     /// <inheritdoc />
@@ -42,7 +44,7 @@ internal sealed class XmlOutput : RowsOutput, IDisposable
         _xmlWriter.WriteEndDocument();
         _xmlWriter.Flush();
         _xmlWriter.Close();
-        Log.Logger.Verbose("XML closed.");
+        _logger.LogTrace("XML closed.");
     }
 
     /// <inheritdoc />

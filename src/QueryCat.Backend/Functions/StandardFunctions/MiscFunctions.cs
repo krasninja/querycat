@@ -56,11 +56,19 @@ internal static class MiscFunctions
         return new VariantValue(size);
     }
 
+    [Description("Returns the object itself. Needed when you need to pass variable as function call.")]
+    [FunctionSignature("self(target: any): any")]
+    public static VariantValue Self(FunctionCallInfo args)
+    {
+        return args.GetAt(0);
+    }
+
     public static void RegisterFunctions(FunctionsManager functionsManager)
     {
         functionsManager.RegisterFunction(NullIf);
         functionsManager.RegisterFunction(Nop);
         functionsManager.RegisterFunction(GetRandomGuid);
         functionsManager.RegisterFunction(SizePretty);
+        functionsManager.RegisterFunction(Self);
     }
 }

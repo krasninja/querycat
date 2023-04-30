@@ -5,7 +5,7 @@ namespace QueryCat.Backend.Abstractions;
 /// <summary>
 /// Rows input that supports atomic values updates.
 /// </summary>
-public interface IRowsInputUpdate
+public interface IRowsInputUpdate : IRowsInput
 {
     /// <summary>
     /// Update the column value at the current position.

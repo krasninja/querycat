@@ -1,6 +1,9 @@
-using Serilog;
-using Serilog.Events;
+using Microsoft.Extensions.Logging;
+using QueryCat.Backend;
 using QueryCat.Backend.Execution;
+using QueryCat.Backend.Formatters;
+using QueryCat.Backend.Providers;
+using QueryCat.Cli.Infrastructure;
 
 namespace QueryCat.Cli.Commands.Options;
 
@@ -9,7 +12,7 @@ namespace QueryCat.Cli.Commands.Options;
 /// </summary>
 internal class ApplicationOptions
 {
-    public LogEventLevel LogLevel { get; init; }
+    public LogLevel LogLevel { get; init; }
 
 #if ENABLE_PLUGINS
     public string[] PluginDirectories { get; init; } = Array.Empty<string>();
@@ -17,7 +20,11 @@ internal class ApplicationOptions
 
     public ExecutionThread CreateExecutionThread(ExecutionOptions? executionOptions = null)
     {
-        executionOptions ??= new ExecutionOptions();
+        executionOptions ??= new ExecutionOptions
+        {
+            RunBootstrapScript = true,
+            UseConfig = true,
+        };
 #if ENABLE_PLUGINS
         executionOptions.PluginDirectories.AddRange(PluginDirectories);
 #endif
@@ -27,14 +34,31 @@ internal class ApplicationOptions
         return executionThread;
     }
 
+    public ExecutionThread CreateStdoutExecutionThread(
+        ExecutionOptions? executionOptions = null,
+        string? columnsSeparator = null,
+        TextTableOutput.Style outputStyle = TextTableOutput.Style.Table)
+    {
+        var thread = CreateExecutionThread(executionOptions);
+        var tableOutput = new TextTableOutput(
+            stream: StandardInputOutput.GetConsoleOutput(),
+            separator: columnsSeparator,
+            style: outputStyle);
+        thread.Options.DefaultRowsOutput = new PagingOutput(
+            tableOutput, pagingRowsCount: PagingOutput.NoLimit);
+        return thread;
+    }
+
     /// <summary>
     /// Pre initialization step for logger.
     /// </summary>
     public void InitializeLogger()
     {
-        Log.Logger = new LoggerConfiguration()
-            .MinimumLevel.Is(LogLevel)
-            .WriteTo.Console()
-            .CreateLogger();
+        Application.LoggerFactory = LoggerFactory.Create(builder =>
+        {
+            builder
+                .SetMinimumLevel(LogLevel)
+                .AddProvider(new QueryCatConsoleLoggerProvider());
+        });
     }
 }

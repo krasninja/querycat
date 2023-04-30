@@ -40,6 +40,13 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitProgram([NotNull] QueryCatParser.ProgramContext context);
 	/// <summary>
+	/// Visit a parse tree produced by the <c>StatementFunctionCall</c>
+	/// labeled alternative in <see cref="QueryCatParser.statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitStatementFunctionCall([NotNull] QueryCatParser.StatementFunctionCallContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>StatementSelectExpression</c>
 	/// labeled alternative in <see cref="QueryCatParser.statement"/>.
 	/// </summary>
@@ -47,12 +54,19 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitStatementSelectExpression([NotNull] QueryCatParser.StatementSelectExpressionContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>StatementFunctionCall</c>
+	/// Visit a parse tree produced by the <c>StatementUpdateExpression</c>
 	/// labeled alternative in <see cref="QueryCatParser.statement"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitStatementFunctionCall([NotNull] QueryCatParser.StatementFunctionCallContext context);
+	Result VisitStatementUpdateExpression([NotNull] QueryCatParser.StatementUpdateExpressionContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>StatementInsertExpression</c>
+	/// labeled alternative in <see cref="QueryCatParser.statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitStatementInsertExpression([NotNull] QueryCatParser.StatementInsertExpressionContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>StatementEcho</c>
 	/// labeled alternative in <see cref="QueryCatParser.statement"/>.
@@ -444,17 +458,79 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitUpdateStatement([NotNull] QueryCatParser.UpdateStatementContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="QueryCatParser.updateSet"/>.
+	/// Visit a parse tree produced by the <c>UpdateNoFormat</c>
+	/// labeled alternative in <see cref="QueryCatParser.updateSource"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitUpdateSet([NotNull] QueryCatParser.UpdateSetContext context);
+	Result VisitUpdateNoFormat([NotNull] QueryCatParser.UpdateNoFormatContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>UpdateWithFormat</c>
+	/// labeled alternative in <see cref="QueryCatParser.updateSource"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitUpdateWithFormat([NotNull] QueryCatParser.UpdateWithFormatContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>UpdateFromVariable</c>
+	/// labeled alternative in <see cref="QueryCatParser.updateSource"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitUpdateFromVariable([NotNull] QueryCatParser.UpdateFromVariableContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="QueryCatParser.updateSetClause"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitUpdateSetClause([NotNull] QueryCatParser.UpdateSetClauseContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="QueryCatParser.insertStatement"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitInsertStatement([NotNull] QueryCatParser.InsertStatementContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>InsertNoFormat</c>
+	/// labeled alternative in <see cref="QueryCatParser.insertToSource"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitInsertNoFormat([NotNull] QueryCatParser.InsertNoFormatContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>InsertWithFormat</c>
+	/// labeled alternative in <see cref="QueryCatParser.insertToSource"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitInsertWithFormat([NotNull] QueryCatParser.InsertWithFormatContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>InsertFromVariable</c>
+	/// labeled alternative in <see cref="QueryCatParser.insertToSource"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitInsertFromVariable([NotNull] QueryCatParser.InsertFromVariableContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="QueryCatParser.insertColumnsList"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitInsertColumnsList([NotNull] QueryCatParser.InsertColumnsListContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>InsertSourceQuery</c>
+	/// labeled alternative in <see cref="QueryCatParser.insertFromSource"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitInsertSourceQuery([NotNull] QueryCatParser.InsertSourceQueryContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>InsertSourceTable</c>
+	/// labeled alternative in <see cref="QueryCatParser.insertFromSource"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitInsertSourceTable([NotNull] QueryCatParser.InsertSourceTableContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="QueryCatParser.echoStatement"/>.
 	/// </summary>

@@ -10,6 +10,7 @@ public class SetStatementNode : StatementNode
     /// <inheritdoc />
     public SetStatementNode(SetStatementNode node) : base(node)
     {
+        node.CopyTo(this);
     }
 
     /// <inheritdoc />

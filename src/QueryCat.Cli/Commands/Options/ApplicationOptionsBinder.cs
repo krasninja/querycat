@@ -1,6 +1,6 @@
 using System.CommandLine;
 using System.CommandLine.Binding;
-using Serilog.Events;
+using Microsoft.Extensions.Logging;
 
 namespace QueryCat.Cli.Commands.Options;
 
@@ -9,7 +9,7 @@ namespace QueryCat.Cli.Commands.Options;
 /// </summary>
 internal class ApplicationOptionsBinder : BinderBase<ApplicationOptions>
 {
-    private readonly Option<LogEventLevel> _logLevelOption;
+    private readonly Option<LogLevel> _logLevelOption;
 
 #if ENABLE_PLUGINS
     private readonly Option<string[]> _pluginDirectoriesOption;
@@ -17,7 +17,7 @@ internal class ApplicationOptionsBinder : BinderBase<ApplicationOptions>
 
     /// <inheritdoc />
     public ApplicationOptionsBinder(
-        Option<LogEventLevel> logLevelOption,
+        Option<LogLevel> logLevelOption,
         Option<string[]> pluginDirectoriesOption)
     {
         _logLevelOption = logLevelOption;

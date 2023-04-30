@@ -133,14 +133,14 @@ selectTableReferenceList:
     FROM selectTableReference (COMMA selectTableReference)*;
 selectTableReference: selectTablePrimary selectTableJoined*;
 selectTableRow: '(' simpleExpression (COMMA simpleExpression)* ')';
-selectTable: '(' VALUES selectTableRow (COMMA selectTableRow)* ')' selectAlias?;
+selectTable: VALUES selectTableRow (COMMA selectTableRow)*;
 selectTablePrimary
     : functionCall selectAlias? # SelectTablePrimaryNoFormat
-    | '-' # SelectTablePrimaryStdin
+    | '-' selectAlias? # SelectTablePrimaryStdin
     | uri=STRING_LITERAL (FORMAT functionCall)? selectAlias? # SelectTablePrimaryWithFormat
     | '(' selectQueryExpression ')' selectAlias? # SelectTablePrimarySubquery
     | name=IDENTIFIER selectAlias? # SelectTablePrimaryIdentifier
-    | selectTable selectAlias? # SelectTablePrimaryTable
+    | '(' selectTable ')' selectAlias? # SelectTablePrimaryTable
     ;
 selectTableJoined
     : selectJoinType? JOIN right=selectTablePrimary ON condition=expression # SelectTableJoinedOn
@@ -175,8 +175,18 @@ selectLimitClause: LIMIT limit=expression;
  * ===============
  */
 
-updateStatement: 'UPDATE' functionCall selectAlias? SET updateSet (COMMA updateSet)* selectSearchCondition?;
-updateSet: IDENTIFIER '=' expression;
+updateStatement:
+    UPDATE
+    updateSource
+    SET
+    updateSetClause (',' updateSetClause)*
+    selectSearchCondition?;
+updateSource
+    : functionCall selectAlias? # UpdateNoFormat
+    | uri=STRING_LITERAL (FORMAT functionCall)? # UpdateWithFormat
+    | name=identifierChain # UpdateFromVariable
+    ;
+updateSetClause: source=identifierChain '=' target=expression;
 
 /*
  * ===============
@@ -184,10 +194,20 @@ updateSet: IDENTIFIER '=' expression;
  * ===============
  */
 
-insertStatement: 'INSERT' 'INTO' functionCall '(' name=identifierChain (COMMA name=identifierChain)* ')' insertSource;
-insertSource
+insertStatement:
+    INSERT INTO
+    insertToSource
+    insertColumnsList?
+    insertFromSource;
+insertToSource
+    : functionCall # InsertNoFormat
+    | uri=STRING_LITERAL (FORMAT functionCall)? # InsertWithFormat
+    | name=identifierChain # InsertFromVariable
+    ;
+insertColumnsList: '(' name=identifierChain (',' name=identifierChain)* ')';
+insertFromSource
     : selectQueryExpression # InsertSourceQuery
-    | selectTableRow (COMMA selectTableRow)* # InsertSourceValues
+    | selectTable # InsertSourceTable
     ;
 
 /*

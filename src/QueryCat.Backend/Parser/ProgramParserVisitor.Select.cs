@@ -24,7 +24,7 @@ internal partial class ProgramParserVisitor
 
     /// <inheritdoc />
     public override IAstNode VisitSelectAlias(QueryCatParser.SelectAliasContext context)
-        => new SelectAliasNode(GetUnwrappedText(context.name.Text));
+        => new SelectAliasNode(GetUnwrappedText(context.name));
 
     /// <inheritdoc />
     public override IAstNode VisitSelectQueryExpressionSimple(QueryCatParser.SelectQueryExpressionSimpleContext context)
@@ -130,7 +130,7 @@ internal partial class ProgramParserVisitor
     public override IAstNode VisitSelectWithElement(QueryCatParser.SelectWithElementContext context)
     {
         var selectWithNode = new SelectWithNode(
-            name: GetUnwrappedText(context.name.Text),
+            name: GetUnwrappedText(context.name),
             queryNode: this.Visit<SelectQueryNode>(context.query));
         selectWithNode.ColumnNodes.AddRange(
             this.Visit(context.selectWithColumnList(), SelectColumnsListNode.Empty).ColumnsNodes);
@@ -242,7 +242,7 @@ internal partial class ProgramParserVisitor
         if (context.uri != null)
         {
             var writeFunction = new FunctionCallNode("write");
-            var uri = GetUnwrappedText(context.uri.Text);
+            var uri = GetUnwrappedText(context.uri);
             writeFunction.Arguments.Add(new FunctionCallArgumentNode("uri",
                 new LiteralNode(new VariantValue(uri))));
             return writeFunction;
@@ -279,13 +279,16 @@ internal partial class ProgramParserVisitor
 
     /// <inheritdoc />
     public override IAstNode VisitSelectTablePrimaryStdin(QueryCatParser.SelectTablePrimaryStdinContext context)
-        => new SelectTableFunctionNode(new FunctionCallNode("stdin"));
+        => new SelectTableFunctionNode(new FunctionCallNode("stdin"))
+        {
+            Alias = this.Visit(context.selectAlias(), SelectAliasNode.Empty).AliasName,
+        };
 
     /// <inheritdoc />
     public override IAstNode VisitSelectTablePrimaryWithFormat(QueryCatParser.SelectTablePrimaryWithFormatContext context)
     {
         var readFunction = new FunctionCallNode("read");
-        var uri = GetUnwrappedText(context.uri.Text);
+        var uri = GetUnwrappedText(context.uri);
         readFunction.Arguments.Add(new FunctionCallArgumentNode("uri",
             new LiteralNode(new VariantValue(uri))));
         if (context.functionCall() != null)
@@ -299,7 +302,7 @@ internal partial class ProgramParserVisitor
 
     /// <inheritdoc />
     public override IAstNode VisitSelectTablePrimaryIdentifier(QueryCatParser.SelectTablePrimaryIdentifierContext context)
-        => new SelectCteIdentifierExpressionNode(GetUnwrappedText(context.name.Text))
+        => new SelectCteIdentifierExpressionNode(GetUnwrappedText(context.name))
         {
             Alias = this.Visit(context.selectAlias(), SelectAliasNode.Empty).AliasName,
         };
@@ -327,9 +330,12 @@ internal partial class ProgramParserVisitor
     /// <inheritdoc />
     public override IAstNode VisitSelectTableJoinedOn(QueryCatParser.SelectTableJoinedOnContext context)
     {
+        var joinTypeNode = context.selectJoinType() != null
+            ? this.Visit<SelectTableJoinedTypeNode>(context.selectJoinType())
+            : new SelectTableJoinedTypeNode(SelectTableJoinedType.Inner);
         return new SelectTableJoinedOnNode(
             this.Visit<ExpressionNode>(context.right),
-            this.Visit<SelectTableJoinedTypeNode>(context.selectJoinType()),
+            joinTypeNode,
             this.Visit<ExpressionNode>(context.condition));
     }
 
@@ -411,7 +417,7 @@ internal partial class ProgramParserVisitor
     {
         if (context.existingWindowName != null)
         {
-            return new SelectWindowSpecificationNode(GetUnwrappedText(context.existingWindowName.Text));
+            return new SelectWindowSpecificationNode(GetUnwrappedText(context.existingWindowName));
         }
         return new SelectWindowSpecificationNode(
             this.VisitMaybe<SelectWindowPartitionClauseNode>(context.selectWindowPartitionClause()),
@@ -433,7 +439,7 @@ internal partial class ProgramParserVisitor
     /// <inheritdoc />
     public override IAstNode VisitSelectWindowDefinitionList(QueryCatParser.SelectWindowDefinitionListContext context)
         => new SelectWindowDefinitionListNode(
-            GetUnwrappedText(context.name.Text),
+            GetUnwrappedText(context.name),
             this.Visit<SelectWindowSpecificationNode>(context.selectWindowSpecification()));
 
     #endregion
@@ -486,7 +492,7 @@ internal partial class ProgramParserVisitor
     public override IAstNode VisitSelectTopClause(QueryCatParser.SelectTopClauseContext context)
         => new SelectFetchNode(
             new LiteralNode(
-                new VariantValue(GetUnwrappedText(context.limit.Text)))
+                new VariantValue(GetUnwrappedText(context.limit)))
             );
 
     #endregion

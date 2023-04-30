@@ -1,7 +1,7 @@
 using System.Net;
 using System.Reflection;
 using System.Text.Json;
-using Serilog;
+using Microsoft.Extensions.Logging;
 using QueryCat.Backend;
 using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Execution;
@@ -11,6 +11,7 @@ using QueryCat.Backend.Relational;
 using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Storage;
 using QueryCat.Backend.Types;
+using QueryCat.Backend.Utils;
 
 namespace QueryCat.Cli.Infrastructure;
 
@@ -38,6 +39,8 @@ internal sealed class WebServer
 
     private readonly ExecutionThread _executionThread;
     private readonly string? _password;
+
+    private readonly Lazy<ILogger> _logger = new(() => Application.LoggerFactory.CreateLogger<WebServer>());
 
     public WebServer(
         ExecutionThread executionThread,
@@ -73,7 +76,7 @@ internal sealed class WebServer
             // Common.
             var context = listener.GetContext();
             using HttpListenerResponse response = context.Response;
-            response.Headers["User-Agent"] = $"{QueryCatApplication.GetProductFullName()}";
+            response.Headers["User-Agent"] = $"{Application.GetProductFullName()}";
             response.StatusCode = (int)HttpStatusCode.OK;
 
             // CORS.
@@ -118,7 +121,7 @@ internal sealed class WebServer
                 }
                 catch (Exception e)
                 {
-                    Log.Logger.Error(e, "Error while processing request.");
+                    _logger.Value.LogError(e, "Error while processing request.");
                     response.StatusCode = (int)HttpStatusCode.InternalServerError;
                 }
             }
@@ -368,9 +371,8 @@ internal sealed class WebServer
 
     private void HandleInfoApiAction(HttpListenerRequest request, HttpListenerResponse response)
     {
-        var localPlugins = _executionThread.PluginsManager.ListAsync(localOnly: true)
-            .ConfigureAwait(false)
-            .GetAwaiter().GetResult();
+        var localPlugins = AsyncUtils.RunSync(async ()
+            => await _executionThread.PluginsManager.ListAsync(localOnly: true))!;
         var dict = new Dictionary<string, object>
         {
             ["installedPlugins"] = localPlugins,

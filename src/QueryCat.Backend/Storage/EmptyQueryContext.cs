@@ -14,7 +14,7 @@ public class EmptyQueryContext : QueryContext
         columns: Array.Empty<Column>(),
         limit: null);
 
-    public EmptyQueryContext() : base(Execution.ExecutionThread.Empty)
+    public EmptyQueryContext() : base(Execution.ExecutionThread.DefaultInstance)
     {
     }
 }

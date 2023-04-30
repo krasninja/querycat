@@ -2,9 +2,13 @@ using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Declare;
 using QueryCat.Backend.Ast.Nodes.Function;
+using QueryCat.Backend.Ast.Nodes.Insert;
 using QueryCat.Backend.Ast.Nodes.Select;
+using QueryCat.Backend.Ast.Nodes.Update;
 using QueryCat.Backend.Commands.Declare;
+using QueryCat.Backend.Commands.Insert;
 using QueryCat.Backend.Commands.Select;
+using QueryCat.Backend.Commands.Update;
 using QueryCat.Backend.Execution;
 
 namespace QueryCat.Backend.Commands;
@@ -39,6 +43,18 @@ public sealed class StatementsVisitor : AstVisitor
     public override void Visit(SelectStatementNode node)
     {
         CommandContext = new SelectCommand().CreateHandler(_executionThread, node);
+    }
+
+    /// <inheritdoc />
+    public override void Visit(InsertStatementNode node)
+    {
+        CommandContext = new InsertCommand().CreateHandler(_executionThread, node);
+    }
+
+    /// <inheritdoc />
+    public override void Visit(UpdateStatementNode node)
+    {
+        CommandContext = new UpdateCommand().CreateHandler(_executionThread, node);
     }
 
     /// <inheritdoc />
