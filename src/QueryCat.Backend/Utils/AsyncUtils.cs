@@ -25,6 +25,14 @@ public static class AsyncUtils
 
         public Exception? InnerException { get; set; }
 
+        public ExclusiveSynchronizationContext(SynchronizationContext? oldContext)
+        {
+            if (oldContext is ExclusiveSynchronizationContext exclusiveSynchronizationContext)
+            {
+                this._postbackItems = exclusiveSynchronizationContext._postbackItems;
+            }
+        }
+
         /// <inheritdoc />
         public override void Send(SendOrPostCallback d, object? state)
         {
@@ -38,7 +46,7 @@ public static class AsyncUtils
             _workItemsWaiting.Set();
         }
 
-        public void EndMessageLoop()
+        internal void EndMessageLoop()
         {
             Post(_ =>
             {
@@ -46,7 +54,7 @@ public static class AsyncUtils
             }, null);
         }
 
-        public void BeginMessageLoop()
+        internal void BeginMessageLoop()
         {
             while (!_done)
             {
@@ -88,7 +96,7 @@ public static class AsyncUtils
     public static void RunSync(Func<Task> task)
     {
         var current = SynchronizationContext.Current;
-        var exclusiveSynchronizationContext = new ExclusiveSynchronizationContext();
+        var exclusiveSynchronizationContext = new ExclusiveSynchronizationContext(current);
         SynchronizationContext.SetSynchronizationContext(exclusiveSynchronizationContext);
         // ReSharper disable once AsyncVoidLambda
         exclusiveSynchronizationContext.Post(async _ =>
@@ -138,7 +146,7 @@ public static class AsyncUtils
     public static T? RunSync<T>(Func<Task<T>> task)
     {
         var current = SynchronizationContext.Current;
-        var exclusiveSynchronizationContext = new ExclusiveSynchronizationContext();
+        var exclusiveSynchronizationContext = new ExclusiveSynchronizationContext(current);
         SynchronizationContext.SetSynchronizationContext(exclusiveSynchronizationContext);
         T? result = default(T);
         // ReSharper disable once AsyncVoidLambda
