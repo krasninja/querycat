@@ -1,11 +1,16 @@
 namespace QueryCat.Backend.Utils;
 
+using EventTask = System.Tuple<System.Threading.SendOrPostCallback, object?>;
+using EventQueue = System.Collections.Concurrent.ConcurrentQueue<System.Tuple<System.Threading.SendOrPostCallback, object?>>;
+
 /// <summary>
 /// Helpers for asynchronous operations.
 /// </summary>
 public static class AsyncUtils
 {
-    // For reference: https://github.com/StephenCleary/AsyncEx/blob/master/src/Nito.AsyncEx.Context/AsyncContext.cs.
+    // For reference:
+    // - https://github.com/StephenCleary/AsyncEx/blob/master/src/Nito.AsyncEx.Context/AsyncContext.cs.
+    // - https://github.com/tejacques/AsyncBridge/blob/master/src/AsyncBridge/AsyncHelper.cs.
 
     /// <summary>
     /// Provides a context for asynchronous operations.
@@ -16,7 +21,7 @@ public static class AsyncUtils
 
         private readonly AutoResetEvent _workItemsWaiting = new(initialState: false);
 
-        private readonly Queue<Tuple<SendOrPostCallback, object?>> _postbackItems = new();
+        private readonly EventQueue _postbackItems = new();
 
         public Exception? InnerException { get; set; }
 
@@ -29,10 +34,7 @@ public static class AsyncUtils
         /// <inheritdoc />
         public override void Post(SendOrPostCallback d, object? state)
         {
-            lock (_postbackItems)
-            {
-                _postbackItems.Enqueue(Tuple.Create(d, state));
-            }
+            _postbackItems.Enqueue(new EventTask(d, state));
             _workItemsWaiting.Set();
         }
 
@@ -48,20 +50,16 @@ public static class AsyncUtils
         {
             while (!_done)
             {
-                Tuple<SendOrPostCallback, object?>? postback = null;
-                lock (_postbackItems)
+                if (!_postbackItems.TryDequeue(out EventTask? task))
                 {
-                    if (_postbackItems.Count > 0)
-                    {
-                        postback = _postbackItems.Dequeue();
-                    }
+                    task = null;
                 }
-                if (postback != null)
+                if (task != null)
                 {
-                    postback.Item1(postback.Item2);
+                    task.Item1(task.Item2);
                     if (InnerException != null)
                     {
-                        throw new AggregateException("AsyncHelpers.Run method threw an exception.", InnerException);
+                        throw new AggregateException("AsyncUtils.Run method threw an exception.", InnerException);
                     }
                 }
                 else
@@ -77,6 +75,8 @@ public static class AsyncUtils
         /// <inheritdoc />
         public void Dispose()
         {
+            _done = true;
+            _postbackItems.Clear();
             _workItemsWaiting.Dispose();
         }
     }
@@ -106,6 +106,7 @@ public static class AsyncUtils
             finally
             {
                 exclusiveSynchronizationContext.EndMessageLoop();
+                exclusiveSynchronizationContext.Dispose();
             }
         }, null);
         exclusiveSynchronizationContext.BeginMessageLoop();
