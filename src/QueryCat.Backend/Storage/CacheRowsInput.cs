@@ -51,6 +51,7 @@ public sealed class CacheRowsInput : IRowsInput
     private bool[] _cacheReadMap;
     private int _rowIndex = -1;
     private CacheEntry? _currentCacheEntry;
+    private bool _hadReadNextCalls;
 
     private QueryContext _queryContext = new EmptyQueryContext();
 
@@ -114,6 +115,7 @@ public sealed class CacheRowsInput : IRowsInput
     /// <inheritdoc />
     public bool ReadNext()
     {
+        _hadReadNextCalls = true;
         _rowIndex++;
         _cacheReadMap = _cacheReadMap.Length > 0 ? _cacheReadMap : new bool[_rowsInput.Columns.Length];
         var cacheEntry = GetCurrentCacheEntry();
@@ -220,7 +222,6 @@ public sealed class CacheRowsInput : IRowsInput
     /// <inheritdoc />
     public void Reset()
     {
-        var hasReads = _currentCacheEntry != null && _rowIndex > -1;
         _rowIndex = -1;
         var newCacheKey = new CacheKey(_queryContext);
         if (_currentCacheEntry != null)
@@ -233,8 +234,9 @@ public sealed class CacheRowsInput : IRowsInput
             }
         }
         _currentCacheEntry = CreateOrGetCacheEntry();
-        if (hasReads)
+        if (_hadReadNextCalls)
         {
+            _hadReadNextCalls = false;
             _rowsInput.Reset();
         }
     }
