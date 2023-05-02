@@ -1,0 +1,9 @@
+expected: |
+  3
+  0
+  3
+query: |
+  select
+    (select count(*) from 'MoviesActors.csv' a where a.imdb_id = t.column1) as cnt
+  from
+    (values ('tt0468569'), ('tt0468563'), ('tt0944947')) as t;
