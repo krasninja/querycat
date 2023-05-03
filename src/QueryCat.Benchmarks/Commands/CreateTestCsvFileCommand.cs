@@ -1,15 +1,14 @@
+using System.CommandLine;
 using System.Diagnostics;
 using Bogus;
 using Bogus.DataSets;
-using McMaster.Extensions.CommandLineUtils;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Formatters;
 using QueryCat.Backend.Storage;
 
 namespace QueryCat.Benchmarks.Commands;
 
-[Command("create-test-csv")]
-internal class CreateTestCsvFileCommand
+internal class CreateTestCsvFileCommand : Command
 {
     public const string UsersFileName = "Users.csv";
 
@@ -20,6 +19,42 @@ internal class CreateTestCsvFileCommand
     /// Number of items to generate.
     /// </summary>
     public int NumberOfItems { get; set; } = 200_000;
+
+    public CreateTestCsvFileCommand() : base("create-test-csv")
+    {
+        this.SetHandler(() =>
+        {
+            Randomizer.Seed = new Random(Seed);
+
+            var rowsFrame = User.ClassBuilder.BuildRowsFrame();
+
+            // Fill users.
+            var stopwatch = new Stopwatch();
+            try
+            {
+                stopwatch.Start();
+                var filePath = Path.Combine("../../..", UsersFileName); // Create at the project root.
+                var file = File.Create(filePath);
+                var output = new DsvFormatter(',').OpenOutput(file);
+                output.Open();
+                output.SetContext(new RowsOutputQueryContext(rowsFrame.Columns, ExecutionThread.DefaultInstance));
+                for (int count = 0; count < NumberOfItems; count += ChunkSize)
+                {
+                    var usersToInsert = UsersFaker.GenerateForever().Take(ChunkSize);
+                    rowsFrame.AddRows(usersToInsert);
+                }
+                foreach (var row in rowsFrame)
+                {
+                    output.Write(row);
+                }
+            }
+            finally
+            {
+                stopwatch.Stop();
+                Console.WriteLine($"Created {UsersFileName}. Overall time spent: {stopwatch.Elapsed:c}.");
+            }
+        });
+    }
 
     private static readonly Faker<User> UsersFaker = new Faker<User>()
         .RuleFor(u => u.Id, f => f.UniqueIndex)
@@ -39,43 +74,10 @@ internal class CreateTestCsvFileCommand
     {
         return gender switch
         {
-            Gender.Male => Name.Gender.Male,
-            Gender.Female => Name.Gender.Female,
-            Gender.Unknown => Name.Gender.Male,
+            Gender.Male => Bogus.DataSets.Name.Gender.Male,
+            Gender.Female => Bogus.DataSets.Name.Gender.Female,
+            Gender.Unknown => Bogus.DataSets.Name.Gender.Male,
             _ => throw new ArgumentOutOfRangeException(nameof(gender), gender, null)
         };
-    }
-
-    public void OnExecute()
-    {
-        Randomizer.Seed = new Random(Seed);
-
-        var rowsFrame = User.ClassBuilder.BuildRowsFrame();
-
-        // Fill users.
-        var stopwatch = new Stopwatch();
-        try
-        {
-            stopwatch.Start();
-            var filePath = Path.Combine("../../..", UsersFileName); // Create at the project root.
-            var file = File.Create(filePath);
-            var output = new DsvFormatter(',').OpenOutput(file);
-            output.Open();
-            output.SetContext(new RowsOutputQueryContext(rowsFrame.Columns, ExecutionThread.DefaultInstance));
-            for (int count = 0; count < NumberOfItems; count += ChunkSize)
-            {
-                var usersToInsert = UsersFaker.GenerateForever().Take(ChunkSize);
-                rowsFrame.AddRows(usersToInsert);
-            }
-            foreach (var row in rowsFrame)
-            {
-                output.Write(row);
-            }
-        }
-        finally
-        {
-            stopwatch.Stop();
-            Console.WriteLine($"Created {UsersFileName}. Overall time spent: {stopwatch.Elapsed:c}.");
-        }
     }
 }
