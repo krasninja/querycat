@@ -50,7 +50,7 @@ public static class AsyncUtils
         {
             Post(_ =>
             {
-                _done = true;
+                Dispose();
             }, null);
         }
 
@@ -114,7 +114,6 @@ public static class AsyncUtils
             finally
             {
                 exclusiveSynchronizationContext.EndMessageLoop();
-                exclusiveSynchronizationContext.Dispose();
             }
         }, null);
         exclusiveSynchronizationContext.BeginMessageLoop();
@@ -165,7 +164,6 @@ public static class AsyncUtils
             finally
             {
                 exclusiveSynchronizationContext.EndMessageLoop();
-                exclusiveSynchronizationContext.Dispose();
             }
         }, null);
         exclusiveSynchronizationContext.BeginMessageLoop();
