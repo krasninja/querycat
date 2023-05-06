@@ -151,4 +151,15 @@ public abstract class QueryContext
             }
         }
     }
+
+    /// <summary>
+    /// Merge arguments from the source query context.
+    /// </summary>
+    /// <param name="sourceContext">Source query context.</param>
+    /// <returns>Instance of <see cref="QueryContext" />.</returns>
+    internal virtual QueryContext Merge(QueryContext sourceContext)
+    {
+        InputInfo.MergeInputArguments(sourceContext.InputInfo.InputArguments);
+        return this;
+    }
 }

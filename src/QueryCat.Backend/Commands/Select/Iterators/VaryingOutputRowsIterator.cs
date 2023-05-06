@@ -92,7 +92,7 @@ internal sealed class VaryingOutputRowsIterator : IRowsIterator, IRowsIteratorPa
                 output = NullRowsOutput.Instance;
             }
             output.Open();
-            output.QueryContext = _queryContext;
+            output.QueryContext = _queryContext.Merge(output.QueryContext);
             _logger.LogDebug("Open for args {Arguments}.", _functionCallInfo.Arguments);
             _outputs.Add(args, output);
             CurrentOutput = output;

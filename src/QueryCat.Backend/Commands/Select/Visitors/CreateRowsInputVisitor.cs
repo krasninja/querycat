@@ -67,7 +67,7 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
             {
                 rowsInput = new CacheRowsInput(rowsInput);
             }
-            rowsInput.QueryContext = queryContext;
+            rowsInput.QueryContext = queryContext.Merge(rowsInput.QueryContext);
             rowsInput.Open();
             _logger.LogDebug("Open rows input {RowsInput}.", rowsInput);
             return new SelectCommandInputContext(rowsInput, queryContext);

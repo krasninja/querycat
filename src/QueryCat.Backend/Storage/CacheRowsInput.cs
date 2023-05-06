@@ -52,7 +52,7 @@ public sealed class CacheRowsInput : IRowsInput
     private int _rowIndex = -1;
     private CacheEntry? _currentCacheEntry;
     private bool _hadReadNextCalls;
-    private QueryContext _queryContext = new EmptyQueryContext();
+    private QueryContext _queryContext;
 
     /// <inheritdoc />
     public Column[] Columns => _rowsInput.Columns;
@@ -80,6 +80,7 @@ public sealed class CacheRowsInput : IRowsInput
     {
         _rowsInput = rowsInput;
         _cacheReadMap = Array.Empty<bool>();
+        _queryContext = rowsInput.QueryContext;
     }
 
     /// <inheritdoc />

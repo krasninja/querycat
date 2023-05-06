@@ -57,7 +57,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
         set
         {
             _queryContext = value;
-            _queryContext.InputInfo.SetInputArguments(_options.CacheKeys);
+            _queryContext.InputInfo.MergeInputArguments(_options.CacheKeys);
         }
     }
 

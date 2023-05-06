@@ -18,7 +18,7 @@ internal static class FileInputOutput
     [FunctionSignature("read_file(path: string, fmt?: object<IRowsFormatter>): object<IRowsInput>")]
     public static VariantValue ReadFile(FunctionCallInfo args)
     {
-        var path = args.GetAt(0);
+        var path = args.GetAt(0).AsString;
         var formatter = args.GetAt(1).AsObject as IRowsFormatter;
         formatter ??= GetFormatter(path);
         var files = GetFileInputsByPath(path, formatter).ToList();
@@ -27,6 +27,7 @@ internal static class FileInputOutput
             throw new QueryCatException($"No files match '{path}'.");
         }
         var input = files.Count == 1 ? files.First() : new CombineRowsInput(files);
+        input.QueryContext.InputInfo.InputArguments = new[] { path };
         return VariantValue.CreateFromObject(input);
     }
 
