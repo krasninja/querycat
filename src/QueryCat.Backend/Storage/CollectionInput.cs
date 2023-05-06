@@ -23,6 +23,9 @@ public class CollectionInput<TClass> : IRowsOutput, IRowsInputUpdate where TClas
     /// <inheritdoc />
     public Column[] Columns => _columns;
 
+    /// <inheritdoc />
+    public QueryContext QueryContext { get; set; } = new EmptyQueryContext();
+
     public CollectionInput(IEnumerable<TClass> list)
     {
         _list = list;
@@ -42,11 +45,6 @@ public class CollectionInput<TClass> : IRowsOutput, IRowsInputUpdate where TClas
 
     /// <inheritdoc />
     public void Open()
-    {
-    }
-
-    /// <inheritdoc />
-    public void SetContext(QueryContext queryContext)
     {
     }
 

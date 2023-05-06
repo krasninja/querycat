@@ -17,6 +17,9 @@ internal sealed class SingleValueRowsInput : IRowsInput
     /// <inheritdoc />
     public Column[] Columns { get; }
 
+    /// <inheritdoc />
+    public QueryContext QueryContext { get; set; } = new EmptyQueryContext();
+
     public SingleValueRowsInput()
     {
         Columns = new Column[]
@@ -36,11 +39,6 @@ internal sealed class SingleValueRowsInput : IRowsInput
 
     /// <inheritdoc />
     public void Open()
-    {
-    }
-
-    /// <inheritdoc />
-    public void SetContext(QueryContext queryContext)
     {
     }
 

@@ -49,7 +49,17 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
 
     private bool _isClosed;
 
-    public QueryContext QueryContext { get; private set; } = EmptyQueryContext.Empty;
+    private QueryContext _queryContext = new EmptyQueryContext();
+
+    public QueryContext QueryContext
+    {
+        get => _queryContext;
+        set
+        {
+            _queryContext = value;
+            _queryContext.InputInfo.SetInputArguments(_options.CacheKeys);
+        }
+    }
 
     // Current position in a reading row. We need it in a case if read current row and need to
     // fetch new data to finish. The current position will contain the start index.
@@ -88,13 +98,6 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     protected void SetOnDelimiterDelegate(DelimiterStreamReader.OnDelimiterDelegate onDelimiterDelegate)
     {
         _delimiterStreamReader.OnDelimiter = onDelimiterDelegate;
-    }
-
-    /// <inheritdoc />
-    public void SetContext(QueryContext queryContext)
-    {
-        QueryContext = queryContext;
-        queryContext.InputInfo.SetInputArguments(_options.CacheKeys);
     }
 
     /// <inheritdoc />

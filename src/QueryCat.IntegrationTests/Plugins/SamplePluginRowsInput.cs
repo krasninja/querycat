@@ -34,6 +34,13 @@ public class SamplePluginRowsInput : IRowsInput
         new("id", DataType.Integer, "Key.")
     };
 
+    /// <inheritdoc />
+    public QueryContext QueryContext
+    {
+        get => EmptyQueryContext.Empty;
+        set => Trace.WriteLine($"Set {nameof(QueryContext)}");
+    }
+
     public SamplePluginRowsInput(long initialValue)
     {
         _currentState = initialValue;
@@ -43,12 +50,6 @@ public class SamplePluginRowsInput : IRowsInput
     public void Open()
     {
         Trace.WriteLine(nameof(Open));
-    }
-
-    /// <inheritdoc />
-    public void SetContext(QueryContext queryContext)
-    {
-        Trace.WriteLine(nameof(SetContext));
     }
 
     /// <inheritdoc />

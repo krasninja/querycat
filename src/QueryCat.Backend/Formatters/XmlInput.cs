@@ -16,7 +16,6 @@ internal sealed class XmlInput : IRowsInput, IDisposable
     private const int RowsToAnalyze = 10;
 
     private readonly XmlReader _xmlReader;
-    private QueryContext _queryContext = EmptyQueryContext.Empty;
 
     // State.
     private readonly Dictionary<int, List<string>> _cache = new();
@@ -30,6 +29,9 @@ internal sealed class XmlInput : IRowsInput, IDisposable
 
     /// <inheritdoc />
     public Column[] Columns => _columns;
+
+    /// <inheritdoc />
+    public QueryContext QueryContext { get; set; } = new EmptyQueryContext();
 
     public XmlInput(StreamReader streamReader, string? xpath = null)
     {
@@ -101,12 +103,6 @@ internal sealed class XmlInput : IRowsInput, IDisposable
         RowsIteratorUtils.ResolveColumnsTypes(frame.GetIterator(), RowsToAnalyze);
 
         _initMode = false;
-    }
-
-    /// <inheritdoc />
-    public void SetContext(QueryContext queryContext)
-    {
-        _queryContext = queryContext;
     }
 
     /// <inheritdoc />

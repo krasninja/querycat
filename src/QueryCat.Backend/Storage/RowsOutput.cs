@@ -13,16 +13,10 @@ public abstract class RowsOutput : IRowsOutput
     /// <summary>
     /// Query context.
     /// </summary>
-    protected QueryContext QueryContext { get; private set; } = EmptyQueryContext.Empty;
+    public QueryContext QueryContext { get; set; } = new EmptyQueryContext();
 
     /// <inheritdoc />
     public abstract void Open();
-
-    /// <inheritdoc />
-    public void SetContext(QueryContext queryContext)
-    {
-        QueryContext = queryContext;
-    }
 
     /// <inheritdoc />
     public abstract void Close();

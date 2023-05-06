@@ -25,7 +25,7 @@ internal sealed class InsertCommandHandler : CommandHandler
         _rowsOutput.Open();
         try
         {
-            _rowsOutput.SetContext(new RowsOutputQueryContext(_rowsInput.Columns, _executionThread));
+            _rowsOutput.QueryContext = new RowsOutputQueryContext(_rowsInput.Columns, _executionThread);
             while (_rowsInput.MoveNext())
             {
                 _rowsOutput.Write(_rowsInput.Current);

@@ -41,7 +41,7 @@ public static class RowsOutputExtensions
             if (!isOpened)
             {
                 rowsOutput.Open();
-                rowsOutput.SetContext(queryContext);
+                rowsOutput.QueryContext = queryContext;
                 isOpened = true;
             }
             rowsOutput.Write(rowsIterator.Current);
