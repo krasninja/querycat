@@ -22,11 +22,11 @@ public static class JsonUtils
         {
             if (int.TryParse(part, out var indexPart))
             {
-                currentNode = node[indexPart];
+                currentNode = currentNode[indexPart];
             }
             else
             {
-                currentNode = node[part];
+                currentNode = currentNode[part];
             }
 
             if (currentNode == null)
