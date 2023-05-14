@@ -5,6 +5,7 @@ using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Storage;
 using QueryCat.Backend.Types;
+using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Commands.Select.Visitors;
 

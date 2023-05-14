@@ -1,5 +1,6 @@
 using Xunit;
 using QueryCat.Backend.Types;
+using QueryCat.Backend.Utils;
 
 namespace QueryCat.UnitTests.Types;
 
@@ -12,10 +13,10 @@ public class DataTypeUtilsTests
     public void ParseInterval_VariousValues_ShouldParse()
     {
         // Act.
-        var hour1 = DataTypeUtils.ParseInterval("1h");
-        var hour2 = DataTypeUtils.ParseInterval("2 hours");
-        var min1 = DataTypeUtils.ParseInterval("00:01:00");
-        var min1Sec1Hour1 = DataTypeUtils.ParseInterval(" 2 min 1 second  1h   2s ");
+        var hour1 = IntervalParser.ParseInterval("1h");
+        var hour2 = IntervalParser.ParseInterval("2 hours");
+        var min1 = IntervalParser.ParseInterval("00:01:00");
+        var min1Sec1Hour1 = IntervalParser.ParseInterval(" 2 min 1 second  1h   2s ");
 
         // Assert.
         Assert.Equal(TimeSpan.FromHours(1), hour1);

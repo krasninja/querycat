@@ -69,62 +69,9 @@ public static class RowsIteratorUtils
         {
             var column = rowsFrame.Columns[i];
             var values = rowsFrame.GetColumnValues(i);
-            var newType = DetermineTypeByValues(values);
+            var newType = DataTypeUtils.DetermineTypeByValues(values);
             column.DataType = newType;
         }
-    }
-
-    internal static DataType DetermineTypeByValues(IEnumerable<string> values)
-        => DetermineTypeByValues(values.Select(v => new VariantValue(v)));
-
-    /// <summary>
-    /// Try to guess optimal type by list of values. Null values are skipped.
-    /// The default type is string.
-    /// </summary>
-    /// <param name="values">List of values.</param>
-    /// <returns>Optimal type.</returns>
-    internal static DataType DetermineTypeByValues(IEnumerable<VariantValue> values)
-    {
-        var variantValues = values
-            .Where(v => !string.IsNullOrEmpty(v.AsString))
-            .ToArray();
-
-        bool TestType(DataType dataType)
-        {
-            var wasTested = false;
-            foreach (var variantValue in variantValues)
-            {
-                if (string.IsNullOrEmpty(variantValue.AsString))
-                {
-                    continue;
-                }
-                wasTested = true;
-                if (!variantValue.TryCast(dataType, out _))
-                {
-                    return false;
-                }
-            }
-            return wasTested;
-        }
-
-        if (TestType(DataType.Integer))
-        {
-            return DataType.Integer;
-        }
-        if (TestType(DataType.Float))
-        {
-            return DataType.Float;
-        }
-        if (TestType(DataType.Boolean))
-        {
-            return DataType.Boolean;
-        }
-        if (TestType(DataType.Timestamp))
-        {
-            return DataType.Timestamp;
-        }
-
-        return DataType.String;
     }
 
     /// <summary>
@@ -157,8 +104,8 @@ public static class RowsIteratorUtils
         for (var columnIndex = 0; columnIndex < rowsFrame.Columns.Length; columnIndex++)
         {
             var values = rowsFrame.GetColumnValues(columnIndex);
-            var headerType = DetermineTypeByValues(new[] { values.First() });
-            var rowsType = DetermineTypeByValues(values.Skip(1));
+            var headerType = DataTypeUtils.DetermineTypeByValues(new[] { values.First() });
+            var rowsType = DataTypeUtils.DetermineTypeByValues(values.Skip(1));
 
             // If the first row is string, but others are not - probably this is a header.
             if (headerType == DataType.String && rowsType != DataType.String)

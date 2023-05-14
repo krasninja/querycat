@@ -67,7 +67,7 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
     /// <inheritdoc />
     public override IAstNode VisitLiteralInterval(QueryCatParser.LiteralIntervalContext context)
         => new LiteralNode(new VariantValue(
-            DataTypeUtils.ParseInterval(GetUnwrappedText(context.intervalLiteral().interval))));
+            IntervalParser.ParseInterval(GetUnwrappedText(context.intervalLiteral().interval))));
 
     /// <inheritdoc />
     public override IAstNode VisitExpressionBinary(QueryCatParser.ExpressionBinaryContext context)
