@@ -29,6 +29,11 @@ public sealed class FunctionCallInfo
     /// </summary>
     public VariantValueArray Arguments => _args;
 
+    /// <summary>
+    /// Arguments count.
+    /// </summary>
+    public int Count => _args.Values.Length;
+
     public static FunctionCallInfo CreateWithArguments(ExecutionThread executionThread, params VariantValue[] args)
     {
         var callInfo = new FunctionCallInfo(executionThread);

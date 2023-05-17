@@ -291,9 +291,9 @@ internal partial class ProgramParserVisitor
         var uri = GetUnwrappedText(context.uri);
         readFunction.Arguments.Add(new FunctionCallArgumentNode("uri",
             new LiteralNode(new VariantValue(uri))));
-        if (context.functionCall() != null)
+        if (context.format != null)
         {
-            var formatterFunctionCallNode = this.Visit<FunctionCallNode>(context.functionCall());
+            var formatterFunctionCallNode = this.Visit<FunctionCallNode>(context.format);
             readFunction.Arguments.Add(new FunctionCallArgumentNode("fmt", formatterFunctionCallNode));
         }
         var alias = this.Visit(context.selectAlias(), SelectAliasNode.Empty).AliasName;
@@ -302,9 +302,10 @@ internal partial class ProgramParserVisitor
 
     /// <inheritdoc />
     public override IAstNode VisitSelectTablePrimaryIdentifier(QueryCatParser.SelectTablePrimaryIdentifierContext context)
-        => new SelectCteIdentifierExpressionNode(GetUnwrappedText(context.name))
+        => new SelectIdentifierExpressionNode(GetUnwrappedText(context.name))
         {
             Alias = this.Visit(context.selectAlias(), SelectAliasNode.Empty).AliasName,
+            Format = context.format != null ? this.Visit<FunctionCallNode>(context.format) : null,
         };
 
     /// <inheritdoc />

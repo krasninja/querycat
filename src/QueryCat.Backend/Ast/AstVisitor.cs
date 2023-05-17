@@ -186,7 +186,7 @@ public abstract class AstVisitor
     {
     }
 
-    public virtual void Visit(SelectCteIdentifierExpressionNode node)
+    public virtual void Visit(SelectIdentifierExpressionNode node)
     {
     }
 

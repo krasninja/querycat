@@ -41,7 +41,7 @@ public class ExecutionThread : IExecutionThread
     /// <summary>
     /// Current top scope.
     /// </summary>
-    internal ExecutionScope TopScope => RootScope;
+    public ExecutionScope TopScope => RootScope;
 
     /// <summary>
     /// Functions manager.

@@ -220,7 +220,7 @@ public abstract class DelegateVisitor : AstVisitor
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectCteIdentifierExpressionNode node)
+    public override void Visit(SelectIdentifierExpressionNode node)
     {
         OnVisit(node);
     }

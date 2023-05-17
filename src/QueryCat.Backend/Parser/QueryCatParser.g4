@@ -137,9 +137,9 @@ selectTable: VALUES selectTableRow (COMMA selectTableRow)*;
 selectTablePrimary
     : functionCall selectAlias? # SelectTablePrimaryNoFormat
     | '-' selectAlias? # SelectTablePrimaryStdin
-    | uri=STRING_LITERAL (FORMAT functionCall)? selectAlias? # SelectTablePrimaryWithFormat
+    | uri=STRING_LITERAL (FORMAT format=functionCall)? selectAlias? # SelectTablePrimaryWithFormat
     | '(' selectQueryExpression ')' selectAlias? # SelectTablePrimarySubquery
-    | name=IDENTIFIER selectAlias? # SelectTablePrimaryIdentifier
+    | name=IDENTIFIER (FORMAT format=functionCall)? selectAlias? # SelectTablePrimaryIdentifier
     | '(' selectTable ')' selectAlias? # SelectTablePrimaryTable
     ;
 selectTableJoined

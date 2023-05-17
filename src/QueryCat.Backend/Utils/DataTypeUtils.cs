@@ -55,12 +55,6 @@ public static class DataTypeUtils
         return dataType1 == dataType2;
     }
 
-    #region Convert
-
-
-
-    #endregion
-
     #region Serialization
 
     internal static string SerializeVariantValue(VariantValue value)

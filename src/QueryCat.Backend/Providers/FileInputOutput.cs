@@ -19,8 +19,7 @@ internal static class FileInputOutput
     public static VariantValue ReadFile(FunctionCallInfo args)
     {
         var path = args.GetAt(0).AsString;
-        var formatter = args.GetAt(1).AsObject as IRowsFormatter;
-        formatter ??= GetFormatter(path);
+        var formatter = args.Count > 1 ? args.GetAt(1).AsObject as IRowsFormatter : GetFormatter(path);
         var files = GetFileInputsByPath(path, formatter).ToList();
         if (!files.Any())
         {
