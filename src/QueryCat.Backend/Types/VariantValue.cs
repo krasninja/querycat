@@ -423,9 +423,20 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     private static VariantValue StringToTimestamp(string? value, out bool success)
         => StringToTimestamp((ReadOnlySpan<char>)value, out success);
 
+    private static readonly string[] DateTimeAdditionalFormats =
+    {
+        "yyMMdd",
+        "yyyyMMdd"
+    };
+
     private static VariantValue StringToTimestamp(in ReadOnlySpan<char> value, out bool success)
     {
         success = DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.None, out var @out);
+        if (!success)
+        {
+            success = DateTime.TryParseExact(value, DateTimeAdditionalFormats, null,
+                DateTimeStyles.AllowWhiteSpaces, out @out);
+        }
         return success ? new VariantValue(@out) : Null;
     }
 
