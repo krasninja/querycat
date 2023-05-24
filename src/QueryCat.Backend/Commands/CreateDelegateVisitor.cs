@@ -39,6 +39,10 @@ internal class CreateDelegateVisitor : AstVisitor
 
     public virtual IFuncUnit RunAndReturn(IAstNode node)
     {
+        if (NodeIdFuncMap.TryGetValue(node.Id, out var funcUnit))
+        {
+            return funcUnit;
+        }
         NodeIdFuncMap.Clear();
         Run(node);
         return NodeIdFuncMap[node.Id];

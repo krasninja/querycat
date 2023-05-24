@@ -54,6 +54,11 @@ public class ExecutionThread : IExecutionThread
     internal StatementNode? ExecutingStatement { get; set; }
 
     /// <summary>
+    /// Statements visitor.
+    /// </summary>
+    internal StatementsVisitor StatementsVisitor => _statementsVisitor;
+
+    /// <summary>
     /// Execution options.
     /// </summary>
     public ExecutionOptions Options { get; }
