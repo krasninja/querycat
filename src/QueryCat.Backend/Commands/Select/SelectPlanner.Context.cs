@@ -176,7 +176,15 @@ internal sealed partial class SelectPlanner
             var formatterNode = idNode is SelectIdentifierExpressionNode selectIdentifierExpressionNode
                 ? selectIdentifierExpressionNode.Format
                 : null;
-            return Context_CreateInputSourceFromStringVariable(currentContext, value.AsStringUnsafe, formatterNode);
+            var rowsInputs = Context_CreateInputSourceFromStringVariable(currentContext, value.AsStringUnsafe, formatterNode);
+            if (idNode is ISelectAliasNode selectAliasNode && !string.IsNullOrEmpty(selectAliasNode.Alias))
+            {
+                foreach (var rowsInput in rowsInputs)
+                {
+                    Context_SetAlias(rowsInput, selectAliasNode.Alias);
+                }
+            }
+            return rowsInputs;
         }
 
         return Array.Empty<IRowsInput>();

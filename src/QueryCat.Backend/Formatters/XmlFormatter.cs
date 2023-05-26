@@ -8,16 +8,23 @@ namespace QueryCat.Backend.Formatters;
 internal class XmlFormatter : IRowsFormatter
 {
     [Description("XML formatter.")]
-    [FunctionSignature("xml(): object<IRowsFormatter>")]
+    [FunctionSignature("xml(xpath?: string): object<IRowsFormatter>")]
     public static VariantValue Xml(FunctionCallInfo args)
     {
-        var rowsSource = new XmlFormatter();
+        var rowsSource = new XmlFormatter(args.GetAtOrDefault(0).AsString);
         return VariantValue.CreateFromObject(rowsSource);
+    }
+
+    private readonly string? _xpath;
+
+    public XmlFormatter(string? xpath = null)
+    {
+        _xpath = xpath;
     }
 
     /// <inheritdoc />
     public IRowsInput OpenInput(Stream input)
-        => new XmlInput(new StreamReader(input));
+        => new XmlInput(new StreamReader(input), _xpath);
 
     /// <inheritdoc />
     public IRowsOutput OpenOutput(Stream output)

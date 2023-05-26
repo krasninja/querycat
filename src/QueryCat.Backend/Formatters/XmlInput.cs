@@ -1,4 +1,5 @@
 using System.Xml;
+using System.Xml.XPath;
 using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Storage;
@@ -53,7 +54,9 @@ internal sealed class XmlInput : IRowsInput, IDisposable
     {
         var xmlDocument = new XmlDocument();
         xmlDocument.LoadXml(streamReader.ReadToEnd());
-        var nodes = xmlDocument.SelectNodes(xpath);
+        var xmlNamespaceManager = GetXmlNamespaceManager(xmlDocument);
+        var nodes = xmlDocument.SelectNodes(xpath, xmlNamespaceManager);
+
         var memoryStream = new MemoryStream();
         using var xmlWriter = XmlWriter.Create(memoryStream, new XmlWriterSettings
         {
@@ -76,6 +79,23 @@ internal sealed class XmlInput : IRowsInput, IDisposable
 
         memoryStream.Seek(0, SeekOrigin.Begin);
         return new StreamReader(memoryStream);
+    }
+
+    private static XmlNamespaceManager GetXmlNamespaceManager(XmlDocument xmlDocument)
+    {
+        // Adopted solution from here: https://www.codeproject.com/Messages/3665279/How-to-populate-an-XmlNamespaceManager.aspx
+        var namespaceManager = new XmlNamespaceManager(xmlDocument.NameTable);
+        var navigator = xmlDocument.CreateNavigator();
+        if (navigator == null)
+        {
+            throw new InvalidOperationException("Cannot create XPath navigator.");
+        }
+        navigator.MoveToFollowing(XPathNodeType.Element);
+        foreach (var ns in navigator.GetNamespacesInScope(XmlNamespaceScope.ExcludeXml))
+        {
+            namespaceManager.AddNamespace(ns.Key, ns.Value);
+        }
+        return namespaceManager;
     }
 
     /// <inheritdoc />
