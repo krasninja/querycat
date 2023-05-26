@@ -210,8 +210,8 @@ internal sealed partial class SelectPlanner
         callInfo.Push(new VariantValue(strVariable));
         if (formatterNode != null)
         {
-            var formatter = Misc_CreateDelegate(formatterNode, currentContext);
-            callInfo.Push(VariantValue.CreateFromObject(formatter));
+            var formatter = Misc_CreateDelegate(formatterNode, currentContext).Invoke();
+            callInfo.Push(formatter);
         }
         var inputValue = GenericInputOutput.Read(callInfo);
         var rowsInput = inputValue.GetAsObject<IRowsInput>();
