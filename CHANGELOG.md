@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Fix incorrect empty cache reuse bug.
 - Process double quotes on strings.
 - Improve XML XPath support.
+- Fix distinct method for all columns.
 - Minor improvements.
 
 ## [0.4.0] - 2023-04-30
