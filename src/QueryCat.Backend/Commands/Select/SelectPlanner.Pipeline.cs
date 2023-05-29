@@ -38,16 +38,34 @@ internal sealed partial class SelectPlanner
         }
     }
 
-    private void Pipeline_CreateDistinctRowsSet(
+    private void Pipeline_CreateDistinctOnRowsSet(
         SelectCommandContext context,
         SelectQuerySpecificationNode querySpecificationNode)
     {
-        if (querySpecificationNode.DistinctNode == null || querySpecificationNode.DistinctNode.IsEmpty)
+        if (querySpecificationNode.DistinctNode == null || querySpecificationNode.DistinctNode.IsEmpty
+            || !querySpecificationNode.DistinctNode.OnNodes.Any())
         {
             return;
         }
 
         var funcUnits = Misc_CreateDelegate(querySpecificationNode.DistinctNode.OnNodes, context);
+        context.SetIterator(new DistinctRowsIteratorIterator(context.CurrentIterator, funcUnits));
+    }
+
+    private void Pipeline_CreateDistinctAllRowsSet(
+        SelectCommandContext context,
+        SelectQuerySpecificationNode querySpecificationNode)
+    {
+        if (querySpecificationNode.DistinctNode == null || querySpecificationNode.DistinctNode.IsEmpty
+            || querySpecificationNode.DistinctNode.OnNodes.Any())
+        {
+            return;
+        }
+
+        var funcUnits = context.CurrentIterator.Columns
+            .Select((_, i) => new FuncUnitRowsIteratorColumn(context.CurrentIterator, i))
+            .Cast<IFuncUnit>()
+            .ToArray();
         context.SetIterator(new DistinctRowsIteratorIterator(context.CurrentIterator, funcUnits));
     }
 

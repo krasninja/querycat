@@ -19,8 +19,7 @@ namespace QueryCat.Backend.Commands;
 public sealed class StatementsVisitor : AstVisitor
 {
     private readonly ExecutionThread _executionThread;
-
-    public CommandHandler CommandContext { get; private set; } = EmptyCommandHandler.Empty;
+    private readonly Dictionary<int, CommandHandler> _commandHandlers = new();
 
     public StatementsVisitor(ExecutionThread executionThread)
     {
@@ -29,8 +28,12 @@ public sealed class StatementsVisitor : AstVisitor
 
     public CommandHandler RunAndReturn(IAstNode node)
     {
+        if (_commandHandlers.TryGetValue(node.Id, out var funcUnit))
+        {
+            return funcUnit;
+        }
         Run(node);
-        return CommandContext;
+        return _commandHandlers[node.Id];
     }
 
     /// <inheritdoc />
@@ -42,19 +45,22 @@ public sealed class StatementsVisitor : AstVisitor
     /// <inheritdoc />
     public override void Visit(SelectStatementNode node)
     {
-        CommandContext = new SelectCommand().CreateHandler(_executionThread, node);
+        var handler = new SelectCommand().CreateHandler(_executionThread, node);
+        _commandHandlers.Add(node.Id, handler);
     }
 
     /// <inheritdoc />
     public override void Visit(InsertStatementNode node)
     {
-        CommandContext = new InsertCommand().CreateHandler(_executionThread, node);
+        var handler = new InsertCommand().CreateHandler(_executionThread, node);
+        _commandHandlers.Add(node.Id, handler);
     }
 
     /// <inheritdoc />
     public override void Visit(UpdateStatementNode node)
     {
-        CommandContext = new UpdateCommand().CreateHandler(_executionThread, node);
+        var handler = new UpdateCommand().CreateHandler(_executionThread, node);
+        _commandHandlers.Add(node.Id, handler);
     }
 
     /// <inheritdoc />
@@ -62,7 +68,8 @@ public sealed class StatementsVisitor : AstVisitor
     {
         new ResolveTypesVisitor(_executionThread).Run(node);
         var func = new CreateDelegateVisitor(_executionThread).RunAndReturn(node.ExpressionNode);
-        CommandContext = new FuncUnitCommandHandler(func);
+        var handler = new FuncUnitCommandHandler(func);
+        _commandHandlers.Add(node.Id, handler);
     }
 
     /// <inheritdoc />
@@ -70,18 +77,21 @@ public sealed class StatementsVisitor : AstVisitor
     {
         new ResolveTypesVisitor(_executionThread).Run(node);
         var func = new CreateDelegateVisitor(_executionThread).RunAndReturn(node.FunctionNode);
-        CommandContext = new FuncUnitCommandHandler(func);
+        var handler = new FuncUnitCommandHandler(func);
+        _commandHandlers.Add(node.Id, handler);
     }
 
     /// <inheritdoc />
     public override void Visit(DeclareStatementNode node)
     {
-        CommandContext = new DeclareCommand().CreateHandler(_executionThread, node);
+        var handler = new DeclareCommand().CreateHandler(_executionThread, node);
+        _commandHandlers.Add(node.Id, handler);
     }
 
     /// <inheritdoc />
     public override void Visit(SetStatementNode node)
     {
-        CommandContext = new SetCommand().CreateHandler(_executionThread, node);
+        var handler = new SetCommand().CreateHandler(_executionThread, node);
+        _commandHandlers.Add(node.Id, handler);
     }
 }

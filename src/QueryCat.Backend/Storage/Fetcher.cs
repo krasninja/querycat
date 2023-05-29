@@ -46,10 +46,10 @@ public class Fetcher<TClass> where TClass : class
 
     public delegate Task<IEnumerable<TClass>> FetchAllDelegate(CancellationToken cancellationToken = default);
 
-    public delegate Task<(IEnumerable<TClass> Items, bool HasMore)> FetchLimitOffsetFlagDelegate(int offset, int limit,
+    public delegate Task<(IEnumerable<TClass> Items, bool HasMore)> FetchLimitOffsetFlagDelegate(int limit, int offset,
         CancellationToken cancellationToken = default);
 
-    public delegate Task<IEnumerable<TClass>> FetchLimitOffsetDelegate(int offset, int limit,
+    public delegate Task<IEnumerable<TClass>> FetchLimitOffsetDelegate(int limit, int offset,
         CancellationToken cancellationToken = default);
 
     public delegate Task<(IEnumerable<TClass> Items, bool HasMore)> FetchPagedFlagDelegate(int page, int limit,
@@ -106,7 +106,7 @@ public class Fetcher<TClass> where TClass : class
         {
             _logger.LogDebug("Run with offset {Offset} and limit {Limit}.", offset, Limit);
             var localOffset = offset;
-            var data = AsyncUtils.RunSync(() => action(localOffset, Limit, cancellationToken));
+            var data = AsyncUtils.RunSync(() => action(Limit, localOffset, cancellationToken));
             fetchedCount = 0;
             foreach (var item in data.Items)
             {
@@ -129,9 +129,9 @@ public class Fetcher<TClass> where TClass : class
         FetchLimitOffsetDelegate action,
         CancellationToken cancellationToken = default)
     {
-        return FetchLimitOffset(async (offset, limit, ct) =>
+        return FetchLimitOffset(async (limit, offset, ct) =>
         {
-            var data = await action.Invoke(offset, limit, ct);
+            var data = await action.Invoke(limit, offset, ct);
             return (data, true);
         });
     }

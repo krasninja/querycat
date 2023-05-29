@@ -29,6 +29,11 @@ public sealed class FunctionCallInfo
     /// </summary>
     public VariantValueArray Arguments => _args;
 
+    /// <summary>
+    /// Arguments count.
+    /// </summary>
+    public int Count => _args.Values.Length;
+
     public static FunctionCallInfo CreateWithArguments(ExecutionThread executionThread, params VariantValue[] args)
     {
         var callInfo = new FunctionCallInfo(executionThread);
@@ -66,7 +71,21 @@ public sealed class FunctionCallInfo
         _args.Values[_argsCursor - 1] = value;
     }
 
+    /// <summary>
+    /// Return argument at the specified index.
+    /// </summary>
+    /// <param name="position">Position index.</param>
+    /// <returns>Value.</returns>
     public VariantValue GetAt(int position) => _args.Values[position];
+
+    /// <summary>
+    /// Return argument at the specified index or default value.
+    /// </summary>
+    /// <param name="position">Position index.</param>
+    /// <param name="default">Default value.</param>
+    /// <returns>Value.</returns>
+    public VariantValue GetAtOrDefault(int position, VariantValue @default = default)
+        => _args.Values.Length > position ? _args.Values[position] : @default;
 
     /// <summary>
     /// Clean current arguments stack.

@@ -1,0 +1,5 @@
+expected: |
+  Krasnoyarsk
+  Sochi
+query: |
+  SELECT DISTINCT city id FROM 'Simple2.csv'

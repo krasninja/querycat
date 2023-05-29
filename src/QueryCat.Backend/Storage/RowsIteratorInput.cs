@@ -11,11 +11,25 @@ namespace QueryCat.Backend.Storage;
 public sealed class RowsIteratorInput : IRowsInput, IRowsIteratorParent
 {
     private readonly IRowsIterator _rowsIterator;
-    private QueryContext? _queryContext;
     private readonly string _id;
+    private QueryContext _queryContext = new EmptyQueryContext();
 
     /// <inheritdoc />
     public Column[] Columns { get; }
+
+    /// <inheritdoc />
+    public QueryContext QueryContext
+    {
+        get => _queryContext;
+        set
+        {
+            _queryContext = value;
+            if (!string.IsNullOrEmpty(_id))
+            {
+                _queryContext.InputInfo.InputArguments = new[] { _id };
+            }
+        }
+    }
 
     public RowsIteratorInput(IRowsIterator rowsIterator, string? id = null)
     {
@@ -27,16 +41,6 @@ public sealed class RowsIteratorInput : IRowsInput, IRowsIteratorParent
     /// <inheritdoc />
     public void Open()
     {
-    }
-
-    /// <inheritdoc />
-    public void SetContext(QueryContext queryContext)
-    {
-        _queryContext = queryContext;
-        if (!string.IsNullOrEmpty(_id))
-        {
-            queryContext.InputInfo.InputArguments = new[] { _id };
-        }
     }
 
     /// <inheritdoc />

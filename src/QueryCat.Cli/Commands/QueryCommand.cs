@@ -50,7 +50,7 @@ internal class QueryCommand : BaseQueryCommand
         this.AddOption(analyzeRowsOption);
         this.AddOption(columnsSeparatorOption);
         this.AddOption(disableCacheOption);
-        this.SetHandler((applicationOptions, query, files, queryOptions) =>
+        this.SetHandler((applicationOptions, query, variables, files, queryOptions) =>
         {
             applicationOptions.InitializeLogger();
             var tableOutput = new TextTableOutput(
@@ -76,6 +76,7 @@ internal class QueryCommand : BaseQueryCommand
                 options.AnalyzeRowsCount = int.MaxValue;
             }
             using var thread = applicationOptions.CreateExecutionThread(options);
+            AddVariables(thread, variables);
             RunQuery(thread, query, files);
 
             if (queryOptions.Statistic || queryOptions.DetailedStatistic)
@@ -86,6 +87,7 @@ internal class QueryCommand : BaseQueryCommand
         },
             new ApplicationOptionsBinder(LogLevelOption, PluginDirectoriesOption),
             QueryArgument,
+            VariablesOption,
             FilesOption,
             new QueryOptionsBinder(
                 maxErrorsOption,

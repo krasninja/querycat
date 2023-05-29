@@ -24,6 +24,17 @@ internal sealed class SelectJoinRowsInput : IRowsInput, IRowsIteratorParent
     /// <inheritdoc />
     public Column[] Columns { get; }
 
+    /// <inheritdoc />
+    public QueryContext QueryContext
+    {
+        get => _leftInput.QueryContext;
+        set
+        {
+            _leftInput.QueryContext = value;
+            _rightInput.QueryContext = value;
+        }
+    }
+
     public SelectJoinRowsInput(IRowsInput leftInput, IRowsInput rightInput, JoinType joinType, IFuncUnit condition,
         bool reverseColumnsOrder = false)
     {
@@ -49,13 +60,6 @@ internal sealed class SelectJoinRowsInput : IRowsInput, IRowsIteratorParent
     {
         _leftInput.Open();
         _rightInput.Open();
-    }
-
-    /// <inheritdoc />
-    public void SetContext(QueryContext queryContext)
-    {
-        _leftInput.SetContext(queryContext);
-        _rightInput.SetContext(queryContext);
     }
 
     /// <inheritdoc />

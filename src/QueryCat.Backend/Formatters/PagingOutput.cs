@@ -16,12 +16,18 @@ public class PagingOutput : IRowsOutput
 
     private readonly IRowsOutput _rowsOutput;
     private int _rowsCounter;
-    private QueryContext? _queryContext;
 
     /// <summary>
     /// Return specific amount of rows and stop for user input. -1 means no paging.
     /// </summary>
     public int PagingRowsCount { get; set; }
+
+    /// <inheritdoc />
+    public QueryContext QueryContext
+    {
+        get => _rowsOutput.QueryContext;
+        set => _rowsOutput.QueryContext = value;
+    }
 
     public PagingOutput(IRowsOutput rowsOutput, int pagingRowsCount = 20)
     {
@@ -31,13 +37,6 @@ public class PagingOutput : IRowsOutput
 
     /// <inheritdoc />
     public void Open() => _rowsOutput.Open();
-
-    /// <inheritdoc />
-    public void SetContext(QueryContext queryContext)
-    {
-        _queryContext = queryContext;
-        _rowsOutput.SetContext(queryContext);
-    }
 
     /// <inheritdoc />
     public void Close() => _rowsOutput.Close();
@@ -67,9 +66,9 @@ public class PagingOutput : IRowsOutput
             {
                 PagingRowsCount = -1;
             }
-            else if (consoleKey.Key == ConsoleKey.Q && _queryContext != null)
+            else if (consoleKey.Key == ConsoleKey.Q)
             {
-                _queryContext.ExecutionThread.CancellationTokenSource.Cancel();
+                QueryContext.ExecutionThread.CancellationTokenSource.Cancel();
             }
         }
     }

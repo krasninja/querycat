@@ -33,7 +33,7 @@ internal class MethodFunctionProxy
         {
             var argNode = new FunctionSignatureArgumentNode(
                 parameterInfo.Name ?? "p",
-                new FunctionTypeNode(DataTypeUtils.ConvertFromSystem(parameterInfo.ParameterType)),
+                new FunctionTypeNode(Converter.ConvertFromSystem(parameterInfo.ParameterType)),
                 parameterInfo.HasDefaultValue ? VariantValue.CreateFromObject(parameterInfo.DefaultValue!) : null);
             paramsList.Add(argNode);
         }
@@ -41,7 +41,7 @@ internal class MethodFunctionProxy
         var returnTypeName = string.Empty;
         if (_method is MethodInfo methodInfo)
         {
-            returnType = DataTypeUtils.ConvertFromSystem(methodInfo.ReturnType);
+            returnType = Converter.ConvertFromSystem(methodInfo.ReturnType);
             if (returnType == DataType.Object)
             {
                 returnTypeName = GetTypeFromName(methodInfo.ReturnType);
@@ -114,7 +114,7 @@ internal class MethodFunctionProxy
             }
             else if (args.Arguments.Values.Length > i)
             {
-                arr[i] = DataTypeUtils.ConvertValue(args.GetAt(i), parameter.ParameterType);
+                arr[i] = Converter.ConvertValue(args.GetAt(i), parameter.ParameterType);
             }
             else if (parameter.HasDefaultValue)
             {

@@ -63,6 +63,15 @@ public sealed class ExecutionScope
     /// Define new variable.
     /// </summary>
     /// <param name="name">Variable name.</param>
+    /// <param name="value">Optional value.</param>
+    /// <returns>Variable index within scope.</returns>
+    public int DefineVariable(string name, VariantValue value = default)
+        => DefineVariable(name, value.GetInternalType(), value);
+
+    /// <summary>
+    /// Define new variable.
+    /// </summary>
+    /// <param name="name">Variable name.</param>
     /// <param name="type">Variable type.</param>
     /// <param name="value">Optional value.</param>
     /// <returns>Variable index within scope.</returns>

@@ -59,7 +59,7 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
         string? description = null,
         int? defaultLength = null)
     {
-        var dataType = DataTypeUtils.ConvertFromSystem(typeof(T));
+        var dataType = Converter.ConvertFromSystem(typeof(T));
         AddProperty(name, dataType, obj => VariantValue.CreateFromObject(valueGetter.Invoke(obj)), description,
             defaultLength);
         return this;
@@ -114,7 +114,7 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
             description = propertyInfo.GetCustomAttributes<DescriptionAttribute>()
                 .Select(a => a.Description).FirstOrDefault();
         }
-        var dataType = DataTypeUtils.ConvertFromSystem(typeof(T));
+        var dataType = Converter.ConvertFromSystem(typeof(T));
         var valueGetter = valueGetterExpression.Compile();
         var column = new Column(propertyName, dataType, description);
         if (defaultLength.HasValue)
@@ -143,7 +143,7 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
         {
             var description = propertyInfo.GetCustomAttributes<DescriptionAttribute>()
                 .Select(a => a.Description).FirstOrDefault();
-            var dataType = DataTypeUtils.ConvertFromSystem(propertyInfo.PropertyType);
+            var dataType = Converter.ConvertFromSystem(propertyInfo.PropertyType);
             AddProperty(propertyInfo.Name, dataType,
                 obj => VariantValue.CreateFromObject(propertyInfo.GetValue(obj)), description);
             properties.Add(propertyInfo);
@@ -158,7 +158,7 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
         string? description = null,
         int? defaultLength = null)
     {
-        var dataType = DataTypeUtils.ConvertFromSystem(typeof(short?));
+        var dataType = Converter.ConvertFromSystem(typeof(short?));
         AddProperty(name, dataType, obj =>
             {
                 var value = valueGetter.Invoke(obj);
@@ -174,7 +174,7 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
         string? description = null,
         int? defaultLength = null)
     {
-        var dataType = DataTypeUtils.ConvertFromSystem(typeof(short));
+        var dataType = Converter.ConvertFromSystem(typeof(short));
         AddProperty(name, dataType, obj => new VariantValue(valueGetter.Invoke(obj)),
             description,
             defaultLength);
@@ -187,7 +187,7 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
         string? description = null,
         int? defaultLength = null)
     {
-        var dataType = DataTypeUtils.ConvertFromSystem(typeof(int?));
+        var dataType = Converter.ConvertFromSystem(typeof(int?));
         AddProperty(name, dataType, obj =>
             {
                 var value = valueGetter.Invoke(obj);
@@ -203,7 +203,7 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
         string? description = null,
         int? defaultLength = null)
     {
-        var dataType = DataTypeUtils.ConvertFromSystem(typeof(int));
+        var dataType = Converter.ConvertFromSystem(typeof(int));
         AddProperty(name, dataType, obj => new VariantValue(valueGetter.Invoke(obj)),
             description,
             defaultLength);
@@ -216,7 +216,7 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
         string? description = null,
         int? defaultLength = null)
     {
-        var dataType = DataTypeUtils.ConvertFromSystem(typeof(long?));
+        var dataType = Converter.ConvertFromSystem(typeof(long?));
         AddProperty(name, dataType, obj =>
             {
                 var value = valueGetter.Invoke(obj);
@@ -232,7 +232,7 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
         string? description = null,
         int? defaultLength = null)
     {
-        var dataType = DataTypeUtils.ConvertFromSystem(typeof(long));
+        var dataType = Converter.ConvertFromSystem(typeof(long));
         AddProperty(name, dataType, obj => new VariantValue(valueGetter.Invoke(obj)),
             description,
             defaultLength);
@@ -245,7 +245,7 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
         string? description = null,
         int? defaultLength = null)
     {
-        var dataType = DataTypeUtils.ConvertFromSystem(typeof(string));
+        var dataType = Converter.ConvertFromSystem(typeof(string));
         AddProperty(name, dataType, obj => new VariantValue(valueGetter.Invoke(obj)), description,
             defaultLength);
         return this;
@@ -257,7 +257,7 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
         string? description = null,
         int? defaultLength = null)
     {
-        var dataType = DataTypeUtils.ConvertFromSystem(typeof(DateTime?));
+        var dataType = Converter.ConvertFromSystem(typeof(DateTime?));
         AddProperty(name, dataType, obj =>
             {
                 var value = valueGetter.Invoke(obj);
@@ -273,7 +273,7 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
         string? description = null,
         int? defaultLength = null)
     {
-        var dataType = DataTypeUtils.ConvertFromSystem(typeof(DateTime));
+        var dataType = Converter.ConvertFromSystem(typeof(DateTime));
         AddProperty(name, dataType, obj => new VariantValue(valueGetter.Invoke(obj)),
             description,
             defaultLength);
@@ -286,7 +286,7 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
         string? description = null,
         int? defaultLength = null)
     {
-        var dataType = DataTypeUtils.ConvertFromSystem(typeof(TimeSpan?));
+        var dataType = Converter.ConvertFromSystem(typeof(TimeSpan?));
         AddProperty(name, dataType, obj =>
             {
                 var value = valueGetter.Invoke(obj);
@@ -302,7 +302,7 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
         string? description = null,
         int? defaultLength = null)
     {
-        var dataType = DataTypeUtils.ConvertFromSystem(typeof(TimeSpan));
+        var dataType = Converter.ConvertFromSystem(typeof(TimeSpan));
         AddProperty(name, dataType, obj => new VariantValue(valueGetter.Invoke(obj)),
             description,
             defaultLength);
@@ -315,7 +315,7 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
         string? description = null,
         int? defaultLength = null)
     {
-        var dataType = DataTypeUtils.ConvertFromSystem(typeof(bool?));
+        var dataType = Converter.ConvertFromSystem(typeof(bool?));
         AddProperty(name, dataType, obj =>
             {
                 var value = valueGetter.Invoke(obj);
@@ -331,7 +331,7 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
         string? description = null,
         int? defaultLength = null)
     {
-        var dataType = DataTypeUtils.ConvertFromSystem(typeof(bool));
+        var dataType = Converter.ConvertFromSystem(typeof(bool));
         AddProperty(name, dataType, obj => new VariantValue(valueGetter.Invoke(obj)),
             description,
             defaultLength);
@@ -344,7 +344,7 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
         string? description = null,
         int? defaultLength = null)
     {
-        var dataType = DataTypeUtils.ConvertFromSystem(typeof(decimal?));
+        var dataType = Converter.ConvertFromSystem(typeof(decimal?));
         AddProperty(name, dataType, obj =>
             {
                 var value = valueGetter.Invoke(obj);
@@ -360,7 +360,7 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
         string? description = null,
         int? defaultLength = null)
     {
-        var dataType = DataTypeUtils.ConvertFromSystem(typeof(decimal));
+        var dataType = Converter.ConvertFromSystem(typeof(decimal));
         AddProperty(name, dataType, obj => new VariantValue(valueGetter.Invoke(obj)),
             description,
             defaultLength);
@@ -373,7 +373,7 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
         string? description = null,
         int? defaultLength = null)
     {
-        var dataType = DataTypeUtils.ConvertFromSystem(typeof(double?));
+        var dataType = Converter.ConvertFromSystem(typeof(double?));
         AddProperty(name, dataType, obj =>
             {
                 var value = valueGetter.Invoke(obj);
@@ -389,7 +389,7 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
         string? description = null,
         int? defaultLength = null)
     {
-        var dataType = DataTypeUtils.ConvertFromSystem(typeof(double));
+        var dataType = Converter.ConvertFromSystem(typeof(double));
         AddProperty(name, dataType, obj => new VariantValue(valueGetter.Invoke(obj)),
             description,
             defaultLength);

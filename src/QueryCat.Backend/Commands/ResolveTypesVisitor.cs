@@ -7,6 +7,7 @@ using QueryCat.Backend.Commands.Select;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Functions;
 using QueryCat.Backend.Types;
+using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Commands;
 

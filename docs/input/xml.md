@@ -44,3 +44,23 @@ Result:
 | 1     | John       |
 | 3     | Ali        |
 ```
+
+**Select from XML using XPath**
+
+Query:
+
+```
+select distinct q.type, q.name
+from f format xml('//xs:element[@type]') as q
+where q.type not in ('NV', 'PN') and not starts_with(q.name, 'e');
+```
+
+Result:
+
+```
+| q.type                            | q.name                               |
+| --------------------------------- | ------------------------------------ |
+| EMSAgencyStateID                  | EMS Agency Unique State ID           |
+| StateCertificationLicensureLevels | Level of Service                     |
+| OrganizationStatus                | Organization Status                  |
+```

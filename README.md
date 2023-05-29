@@ -64,6 +64,14 @@ $ ps aux | qcat "SELECT column4 USER, ps.PID, ps.COMMAND FROM - AS ps JOIN (SELE
 | PolicyKit daemon | 976 | /usr/lib/polkit-1/polkitd  |
 ```
 
+Query CSV file with "a" and "b" numeric columns.
+
+```
+$ qcat --var csv=/tmp/1.csv "select a + b from csv"
+3
+7
+```
+
 ## Information
 
 - Home: [GitHub](https://github.com/krasninja/querycat)

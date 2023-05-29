@@ -50,7 +50,7 @@ public sealed class ObjectsRowsInput<T> : RowsInput
                 continue;
             }
 
-            var dataType = DataTypeUtils.ConvertFromSystem(propertyInfo.PropertyType);
+            var dataType = Converter.ConvertFromSystem(propertyInfo.PropertyType);
             if (dataType == DataType.Void)
             {
                 continue;

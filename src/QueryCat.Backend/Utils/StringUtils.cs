@@ -333,11 +333,17 @@ internal static class StringUtils
     /// <returns>Unwrapped text.</returns>
     internal static string GetUnwrappedText(string text)
     {
-        if ((text.StartsWith("\'", StringComparison.Ordinal) && text.EndsWith("\'", StringComparison.Ordinal))
-            || (text.StartsWith("\"", StringComparison.Ordinal) && text.EndsWith("\"", StringComparison.Ordinal))
-            || (text.StartsWith("[", StringComparison.Ordinal) && text.EndsWith("]", StringComparison.Ordinal)))
+        if (text.StartsWith("[", StringComparison.Ordinal) && text.EndsWith("]", StringComparison.Ordinal))
         {
             return text.Substring(1, text.Length - 2);
+        }
+        if (text.StartsWith("\'", StringComparison.Ordinal) && text.EndsWith("\'", StringComparison.Ordinal))
+        {
+            return text.Substring(1, text.Length - 2).Replace("''", "'");
+        }
+        if (text.StartsWith("\"", StringComparison.Ordinal) && text.EndsWith("\"", StringComparison.Ordinal))
+        {
+            return text.Substring(1, text.Length - 2).Replace("\"\"", "\"");
         }
         return text;
     }

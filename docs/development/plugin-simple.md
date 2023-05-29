@@ -20,10 +20,19 @@ The tutorial explains how to create custom plugin based on `IRowsInput` interfac
 
 3. Add any new input source based on `IRowsInput` interface.
 
-    ```
+    ```csharp
     public class SamplePluginRowsInput : IRowsInput
     {
         private const long MaxValue = 9;
+
+        [Description("Sample input.")]
+        [FunctionSignature("plugin(start: integer = 0): object<IRowsInput>")]
+        public static VariantValue SamplePlugin(FunctionCallInfo args)
+        {
+            var startValue = args.GetAt(0).AsInteger;
+            var rowsSource = new SamplePluginRowsInput(startValue);
+            return VariantValue.CreateFromObject(rowsSource);
+        }
 
         private long _currentState;
 
@@ -32,6 +41,13 @@ The tutorial explains how to create custom plugin based on `IRowsInput` interfac
         {
             new("id", DataType.Integer, "Key.")
         };
+
+        /// <inheritdoc />
+        public QueryContext QueryContext
+        {
+            get => EmptyQueryContext.Empty;
+            set => Trace.WriteLine($"Set {nameof(QueryContext)}");
+        }
 
         public SamplePluginRowsInput(long initialValue)
         {
@@ -42,12 +58,6 @@ The tutorial explains how to create custom plugin based on `IRowsInput` interfac
         public void Open()
         {
             Trace.WriteLine(nameof(Open));
-        }
-
-        /// <inheritdoc />
-        public void SetContext(QueryContext queryContext)
-        {
-            Trace.WriteLine(nameof(SetContext));
         }
 
         /// <inheritdoc />

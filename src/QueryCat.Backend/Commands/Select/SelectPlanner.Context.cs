@@ -1,10 +1,13 @@
 using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
+using QueryCat.Backend.Ast.Nodes.Function;
 using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Ast.Nodes.SpecialFunctions;
 using QueryCat.Backend.Commands.Select.Inputs;
 using QueryCat.Backend.Commands.Select.Visitors;
+using QueryCat.Backend.Functions;
+using QueryCat.Backend.Providers;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Storage;
@@ -102,6 +105,10 @@ internal sealed partial class SelectPlanner
         foreach (var tableExpression in querySpecificationNode.TableExpressionNode.TablesNode.TableFunctionsNodes)
         {
             var rowsInputs = Context_GetRowsInputFromExpression(context, tableExpression);
+            if (rowsInputs.Length == 0)
+            {
+                throw new QueryCatException($"Cannot resolve input source '{tableExpression}'.");
+            }
             var finalRowInput = rowsInputs.Last();
             var alias = tableExpression is ISelectAliasNode selectAlias ? selectAlias.Alias : string.Empty;
 
@@ -159,19 +166,39 @@ internal sealed partial class SelectPlanner
             return Array.Empty<IRowsInput>();
         }
         var value = scope!.Variables[varIndex];
-        if (value.GetInternalType() != DataType.Object)
+        var internalValueType = value.GetInternalType();
+        if (internalValueType == DataType.Object && value.AsObjectUnsafe != null)
         {
-            return Array.Empty<IRowsInput>();
+            return Context_CreateInputSourceFromObjectVariable(currentContext, value.AsObjectUnsafe);
         }
-        var obj = value.AsObject;
+        if (internalValueType == DataType.String && !string.IsNullOrEmpty(value.AsStringUnsafe))
+        {
+            var formatterNode = idNode is SelectIdentifierExpressionNode selectIdentifierExpressionNode
+                ? selectIdentifierExpressionNode.Format
+                : null;
+            var rowsInputs = Context_CreateInputSourceFromStringVariable(currentContext, value.AsStringUnsafe, formatterNode);
+            if (idNode is ISelectAliasNode selectAliasNode && !string.IsNullOrEmpty(selectAliasNode.Alias))
+            {
+                foreach (var rowsInput in rowsInputs)
+                {
+                    Context_SetAlias(rowsInput, selectAliasNode.Alias);
+                }
+            }
+            return rowsInputs;
+        }
 
+        return Array.Empty<IRowsInput>();
+    }
+
+    private IRowsInput[] Context_CreateInputSourceFromObjectVariable(SelectCommandContext currentContext, object objVariable)
+    {
         IRowsInput? rowsInputResult = null;
-        if (obj is IRowsInput rowsInput)
+        if (objVariable is IRowsInput rowsInput)
         {
             currentContext.AddInput(new SelectCommandInputContext(rowsInput, ExecutionThread));
             rowsInputResult = rowsInput;
         }
-        if (obj is IRowsIterator rowsIterator)
+        if (objVariable is IRowsIterator rowsIterator)
         {
             rowsInput = new RowsIteratorInput(rowsIterator);
             currentContext.AddInput(new SelectCommandInputContext(rowsInput, ExecutionThread));
@@ -182,6 +209,23 @@ internal sealed partial class SelectPlanner
             return Array.Empty<IRowsInput>();
         }
         return new[] { rowsInputResult };
+    }
+
+    private IRowsInput[] Context_CreateInputSourceFromStringVariable(SelectCommandContext currentContext,
+        string strVariable, FunctionCallNode? formatterNode)
+    {
+        var callInfo = new FunctionCallInfo(ExecutionThread);
+        callInfo.Push(new VariantValue(strVariable));
+        if (formatterNode != null)
+        {
+            var formatter = Misc_CreateDelegate(formatterNode, currentContext).Invoke();
+            callInfo.Push(formatter);
+        }
+        var inputValue = GenericInputOutput.Read(callInfo);
+        var rowsInput = inputValue.GetAsObject<IRowsInput>();
+        rowsInput.QueryContext = new SelectInputQueryContext(rowsInput, ExecutionThread);
+        rowsInput.Open();
+        return new[] { rowsInput };
     }
 
     // Last input is combine input.
@@ -266,10 +310,6 @@ internal sealed partial class SelectPlanner
             if (inputs.Length == 0)
             {
                 inputs = Context_CreateInputSourceFromVariable(context, idNode);
-            }
-            if (inputs.Length == 0)
-            {
-                throw new QueryCatException($"Query with name '{idNode.FullName}' is not defined.");
             }
             return inputs;
         }

@@ -1,5 +1,5 @@
 using System.ComponentModel.DataAnnotations;
-using QueryCat.Backend.Types;
+using QueryCat.Backend.Utils;
 using DataType = QueryCat.Backend.Types.DataType;
 
 namespace QueryCat.Backend.Relational;

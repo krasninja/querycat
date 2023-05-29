@@ -5,6 +5,7 @@ using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Storage;
 using QueryCat.Backend.Types;
+using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Commands.Select.Visitors;
 
@@ -67,7 +68,7 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
             {
                 rowsInput = new CacheRowsInput(rowsInput);
             }
-            rowsInput.SetContext(queryContext);
+            rowsInput.QueryContext = queryContext.Merge(rowsInput.QueryContext);
             rowsInput.Open();
             _logger.LogDebug("Open rows input {RowsInput}.", rowsInput);
             return new SelectCommandInputContext(rowsInput, queryContext);

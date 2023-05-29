@@ -41,7 +41,7 @@ public class ExecutionThread : IExecutionThread
     /// <summary>
     /// Current top scope.
     /// </summary>
-    internal ExecutionScope TopScope => RootScope;
+    public ExecutionScope TopScope => RootScope;
 
     /// <summary>
     /// Functions manager.
@@ -52,6 +52,11 @@ public class ExecutionThread : IExecutionThread
     /// Current executing statement.
     /// </summary>
     internal StatementNode? ExecutingStatement { get; set; }
+
+    /// <summary>
+    /// Statements visitor.
+    /// </summary>
+    internal StatementsVisitor StatementsVisitor => _statementsVisitor;
 
     /// <summary>
     /// Execution options.

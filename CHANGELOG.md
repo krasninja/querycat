@@ -2,6 +2,24 @@
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Ability to pass variables as command line arguments (`qcat --var size=10`).
+- Support "yyMMdd", "yyyyMMdd" timestamp formats.
+
+### Fixed
+
+- Alias is not taken into account in "SELECT * FROM (VALUES (...), ...) AS a" expression.
+- Fix limit-offset order in Fetcher.
+- Fix async utils problem in case of exception.
+- Fix incorrect empty cache reuse bug.
+- Process double quotes on strings.
+- Improve XML XPath support.
+- Fix distinct method for all columns.
+- Minor improvements.
+
 ## [0.4.0] - 2023-04-30
 
 ### Added

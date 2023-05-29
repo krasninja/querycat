@@ -51,8 +51,8 @@ public sealed class CacheRowsInput : IRowsInput
     private bool[] _cacheReadMap;
     private int _rowIndex = -1;
     private CacheEntry? _currentCacheEntry;
-
-    private QueryContext _queryContext = new EmptyQueryContext();
+    private bool _hadReadNextCalls;
+    private QueryContext _queryContext;
 
     /// <inheritdoc />
     public Column[] Columns => _rowsInput.Columns;
@@ -65,21 +65,26 @@ public sealed class CacheRowsInput : IRowsInput
 
     internal int TotalCacheEntries => _cacheEntries.Count;
 
+    /// <inheritdoc />
+    public QueryContext QueryContext
+    {
+        get => _queryContext;
+        set
+        {
+            _queryContext = value;
+            _rowsInput.QueryContext = _queryContext;
+        }
+    }
+
     public CacheRowsInput(IRowsInput rowsInput)
     {
         _rowsInput = rowsInput;
         _cacheReadMap = Array.Empty<bool>();
+        _queryContext = rowsInput.QueryContext;
     }
 
     /// <inheritdoc />
     public void Open() => _rowsInput.Open();
-
-    /// <inheritdoc />
-    public void SetContext(QueryContext queryContext)
-    {
-        _queryContext = queryContext;
-        _rowsInput.SetContext(queryContext);
-    }
 
     /// <inheritdoc />
     public void Close() => _rowsInput.Close();
@@ -114,6 +119,7 @@ public sealed class CacheRowsInput : IRowsInput
     /// <inheritdoc />
     public bool ReadNext()
     {
+        _hadReadNextCalls = true;
         _rowIndex++;
         _cacheReadMap = _cacheReadMap.Length > 0 ? _cacheReadMap : new bool[_rowsInput.Columns.Length];
         var cacheEntry = GetCurrentCacheEntry();
@@ -220,7 +226,6 @@ public sealed class CacheRowsInput : IRowsInput
     /// <inheritdoc />
     public void Reset()
     {
-        var hasReads = _currentCacheEntry != null && _rowIndex > -1;
         _rowIndex = -1;
         var newCacheKey = new CacheKey(_queryContext);
         if (_currentCacheEntry != null)
@@ -233,8 +238,9 @@ public sealed class CacheRowsInput : IRowsInput
             }
         }
         _currentCacheEntry = CreateOrGetCacheEntry();
-        if (hasReads)
+        if (_hadReadNextCalls)
         {
+            _hadReadNextCalls = false;
             _rowsInput.Reset();
         }
     }

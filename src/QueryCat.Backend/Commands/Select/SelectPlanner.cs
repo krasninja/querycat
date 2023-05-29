@@ -50,8 +50,8 @@ internal sealed partial class SelectPlanner
         PipelineAggregate_ApplyGrouping(context, node);
         PipelineAggregate_ApplyHaving(context, node.TableExpressionNode?.HavingNode);
 
-        // DISTINCT.
-        Pipeline_CreateDistinctRowsSet(context, node);
+        // DISTINCT ON.
+        Pipeline_CreateDistinctOnRowsSet(context, node);
 
         // SELECT.
         Pipeline_ResolveSelectAllStatement(context.CurrentIterator, node.ColumnsListNode);
@@ -67,6 +67,9 @@ internal sealed partial class SelectPlanner
         // INTO and SELECT.
         Pipeline_SetOutputFunction(context, node);
         Pipeline_SetSelectRowsSet(context, node.ColumnsListNode);
+
+        // DISTINCT ALL.
+        Pipeline_CreateDistinctAllRowsSet(context, node);
 
         // OFFSET, FETCH.
         Pipeline_ApplyOffsetFetch(context, node.OffsetNode, node.FetchNode);

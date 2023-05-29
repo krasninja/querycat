@@ -1,36 +1,40 @@
-using System.ComponentModel.DataAnnotations;
-using McMaster.Extensions.CommandLineUtils;
+using System.CommandLine;
 
 namespace QueryCat.Benchmarks.Commands;
 
-[Command("call-benchmark")]
-internal class CallBenchmarkMethodCommand
+internal class CallBenchmarkMethodCommand : Command
 {
-    [Option("-b <benchmark>.<method>")]
-    [Required]
-    public string BenchmarkToRun { get; set; } = string.Empty;
-
-    public void OnExecute()
+    public CallBenchmarkMethodCommand() : base("call-benchmark", "Call the specific benchmark method.")
     {
-        var split = BenchmarkToRun.Split('.');
-        if (split.Length != 2)
-        {
-            throw new InvalidOperationException("Incorrect benchmark format.");
-        }
+        var methodNameOption = new Option<string>(new[] { "-m", "--method" },
+            description: "Benchmark method.")
+            {
+                IsRequired = true
+            };
 
-        var type = typeof(RunBenchmarkCommand).Assembly.GetTypes().FirstOrDefault(t =>
-            t.Name.Equals(split[0], StringComparison.OrdinalIgnoreCase));
-        if (type == null)
+        this.AddOption(methodNameOption);
+        this.SetHandler(methodName =>
         {
-            throw new InvalidOperationException($"Cannot find benchmark '{split[0]}'.");
-        }
-        var instance = Activator.CreateInstance(type);
-        var method = type.GetMethod(split[1]);
-        if (method == null)
-        {
-            throw new InvalidOperationException("Cannot find method.");
-        }
+            var split = methodName.Split('.');
+            if (split.Length != 2)
+            {
+                throw new InvalidOperationException("Incorrect benchmark format.");
+            }
 
-        method.Invoke(instance, Array.Empty<object>());
+            var type = typeof(RunBenchmarkCommand).Assembly.GetTypes().FirstOrDefault(t =>
+                t.Name.Equals(split[0], StringComparison.OrdinalIgnoreCase));
+            if (type == null)
+            {
+                throw new InvalidOperationException($"Cannot find benchmark '{split[0]}'.");
+            }
+            var instance = Activator.CreateInstance(type);
+            var method = type.GetMethod(split[1]);
+            if (method == null)
+            {
+                throw new InvalidOperationException("Cannot find method.");
+            }
+
+            method.Invoke(instance, Array.Empty<object>());
+        }, methodNameOption);
     }
 }

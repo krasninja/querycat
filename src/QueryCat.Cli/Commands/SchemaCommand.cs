@@ -13,7 +13,7 @@ internal class SchemaCommand : BaseQueryCommand
     /// <inheritdoc />
     public SchemaCommand() : base("schema", "Show query result columns.")
     {
-        this.SetHandler((applicationOptions, query, files) =>
+        this.SetHandler((applicationOptions, query, variables, files) =>
         {
             applicationOptions.InitializeLogger();
             var thread = applicationOptions.CreateStdoutExecutionThread();
@@ -32,7 +32,12 @@ internal class SchemaCommand : BaseQueryCommand
                 }
                 threadArgs.ContinueExecution = false;
             };
+            AddVariables(thread, variables);
             RunQuery(thread, query, files);
-        }, new ApplicationOptionsBinder(LogLevelOption, PluginDirectoriesOption), QueryArgument, FilesOption);
+        },
+            new ApplicationOptionsBinder(LogLevelOption, PluginDirectoriesOption),
+            QueryArgument,
+            VariablesOption,
+            FilesOption);
     }
 }

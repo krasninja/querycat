@@ -144,4 +144,18 @@ public sealed class QueryContextInputInfo
         InputArguments = arguments;
         return this;
     }
+
+    /// <summary>
+    /// Merge rows input arguments to distinct it among other queries of the same input.
+    /// </summary>
+    /// <param name="arguments">Input arguments (file name, ids).</param>
+    /// <returns>Instance of <see cref="QueryContextInputInfo" />.</returns>
+    public QueryContextInputInfo MergeInputArguments(params string[] arguments)
+    {
+        if (arguments.Length > 0)
+        {
+            SetInputArguments(InputArguments.Concat(arguments).ToArray());
+        }
+        return this;
+    }
 }

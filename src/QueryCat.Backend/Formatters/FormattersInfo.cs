@@ -26,6 +26,7 @@ public static class FormattersInfo
         }),
         [".json"] = () => new JsonFormatter(),
         [".xml"] = () => new XmlFormatter(),
+        [".xsd"] = () => new XmlFormatter(),
 
         // Content types.
         ["text/csv"] = () => new DsvFormatter(),

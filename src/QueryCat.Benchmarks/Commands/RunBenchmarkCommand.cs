@@ -1,27 +1,31 @@
-using System.ComponentModel.DataAnnotations;
+using System.CommandLine;
 using BenchmarkDotNet.Running;
-using McMaster.Extensions.CommandLineUtils;
 
 namespace QueryCat.Benchmarks.Commands;
 
 /// <summary>
 /// Run all or certain benchmarks.
 /// </summary>
-[Command("benchmark")]
-internal class RunBenchmarkCommand
+internal class RunBenchmarkCommand : Command
 {
-    [Option("-b <benchmark>")]
-    [Required]
-    public string BenchmarkToRun { get; set; } = string.Empty;
-
-    public void OnExecute()
+    public RunBenchmarkCommand() : base("benchmark")
     {
-        var type = typeof(RunBenchmarkCommand).Assembly.GetTypes().FirstOrDefault(t =>
-            t.Name.Equals(BenchmarkToRun, StringComparison.OrdinalIgnoreCase));
-        if (type == null)
+        var benchmarkOption = new Option<string>("-b",
+            description: "Benchmark to run")
+            {
+                IsRequired = true,
+            };
+
+        this.AddOption(benchmarkOption);
+        this.SetHandler(benchmark =>
         {
-            throw new InvalidOperationException($"Cannot find benchmark '{BenchmarkToRun}'.");
-        }
-        BenchmarkRunner.Run(type);
+            var type = typeof(RunBenchmarkCommand).Assembly.GetTypes().FirstOrDefault(t =>
+                t.Name.Equals(benchmark, StringComparison.OrdinalIgnoreCase));
+            if (type == null)
+            {
+                throw new InvalidOperationException($"Cannot find benchmark '{benchmark}'.");
+            }
+            BenchmarkRunner.Run(type);
+        }, benchmarkOption);
     }
 }

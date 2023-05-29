@@ -10,10 +10,21 @@ namespace QueryCat.IntegrationTests.Storage;
 public class ProxyRowsInput : IRowsInput, IRowsIteratorParent
 {
     private IRowsInput _rowsInput;
-    private QueryContext? _queryContext;
+    private QueryContext _queryContext = new EmptyQueryContext();
 
     /// <inheritdoc />
     public Column[] Columns => _rowsInput.Columns;
+
+    /// <inheritdoc />
+    public QueryContext QueryContext
+    {
+        get => _queryContext;
+        set
+        {
+            _queryContext = value;
+            _rowsInput.QueryContext = _queryContext;
+        }
+    }
 
     public ProxyRowsInput(IRowsInput rowsInput)
     {
@@ -22,13 +33,6 @@ public class ProxyRowsInput : IRowsInput, IRowsIteratorParent
 
     /// <inheritdoc />
     public void Open() => _rowsInput.Open();
-
-    /// <inheritdoc />
-    public void SetContext(QueryContext queryContext)
-    {
-        _queryContext = queryContext;
-        _rowsInput.SetContext(queryContext);
-    }
 
     /// <inheritdoc />
     public void Close() => _rowsInput.Close();
@@ -51,9 +55,9 @@ public class ProxyRowsInput : IRowsInput, IRowsIteratorParent
     public void SetInput(IRowsInput rowsInput, params string[] inputArguments)
     {
         _rowsInput = rowsInput;
-        if (_queryContext != null && inputArguments.Any())
+        if (inputArguments.Any())
         {
-            _queryContext.InputInfo.SetInputArguments(inputArguments);
+            QueryContext.InputInfo.SetInputArguments(inputArguments);
         }
     }
 

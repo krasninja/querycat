@@ -11,7 +11,7 @@ internal class ExplainCommand : BaseQueryCommand
     /// <inheritdoc />
     public ExplainCommand() : base("explain", "Show query plan for debugging.")
     {
-        this.SetHandler((applicationOptions, query, files) =>
+        this.SetHandler((applicationOptions, query, variables, files) =>
         {
             applicationOptions.InitializeLogger();
             var thread = applicationOptions.CreateStdoutExecutionThread();
@@ -28,7 +28,12 @@ internal class ExplainCommand : BaseQueryCommand
                     args.ContinueExecution = false;
                 }
             };
+            AddVariables(thread, variables);
             RunQuery(thread, query, files);
-        }, new ApplicationOptionsBinder(LogLevelOption, PluginDirectoriesOption), QueryArgument, FilesOption);
+        },
+            new ApplicationOptionsBinder(LogLevelOption, PluginDirectoriesOption),
+            QueryArgument,
+            VariablesOption,
+            FilesOption);
     }
 }

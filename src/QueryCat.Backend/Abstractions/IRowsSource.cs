@@ -9,17 +9,16 @@ namespace QueryCat.Backend.Abstractions;
 public interface IRowsSource
 {
     /// <summary>
+    /// Query context.
+    /// </summary>
+    QueryContext QueryContext { get; set; }
+
+    /// <summary>
     /// Initialize rows output for reading or writing. If it is used for writing
     /// it should prepare all necessary data (handles, connections) to be able
     /// to write rows. As for reading, it should initialize Columns.
     /// </summary>
     void Open();
-
-    /// <summary>
-    /// Set query execution context.
-    /// </summary>
-    /// <param name="queryContext">Query context.</param>
-    void SetContext(QueryContext queryContext);
 
     /// <summary>
     /// Close source.

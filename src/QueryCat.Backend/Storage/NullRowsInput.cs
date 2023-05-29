@@ -16,12 +16,10 @@ public sealed class NullRowsInput : IRowsInput
     public Column[] Columns => Array.Empty<Column>();
 
     /// <inheritdoc />
-    public void Open()
-    {
-    }
+    public QueryContext QueryContext { get; set; } = EmptyQueryContext.Empty;
 
     /// <inheritdoc />
-    public void SetContext(QueryContext queryContext)
+    public void Open()
     {
     }
 

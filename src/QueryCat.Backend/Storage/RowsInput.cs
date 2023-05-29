@@ -15,19 +15,13 @@ public abstract class RowsInput : IRowsInput
     /// <summary>
     /// Query context.
     /// </summary>
-    protected internal QueryContext QueryContext { get; private set; } = EmptyQueryContext.Empty;
+    public QueryContext QueryContext { get; set; } = new EmptyQueryContext();
 
     /// <inheritdoc />
     public abstract Column[] Columns { get; protected set; }
 
     /// <inheritdoc />
     public abstract void Open();
-
-    /// <inheritdoc />
-    public virtual void SetContext(QueryContext queryContext)
-    {
-        QueryContext = queryContext;
-    }
 
     /// <inheritdoc />
     public abstract void Close();

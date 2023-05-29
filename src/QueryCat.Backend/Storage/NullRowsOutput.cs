@@ -10,17 +10,15 @@ public sealed class NullRowsOutput : IRowsOutput
 {
     public static NullRowsOutput Instance { get; } = new();
 
+    /// <inheritdoc />
+    public QueryContext QueryContext { get; set; } = EmptyQueryContext.Empty;
+
     private NullRowsOutput()
     {
     }
 
     /// <inheritdoc />
     public void Open()
-    {
-    }
-
-    /// <inheritdoc />
-    public void SetContext(QueryContext queryContext)
     {
     }
 

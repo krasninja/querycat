@@ -1,4 +1,5 @@
 using System.Xml;
+using System.Xml.XPath;
 using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Storage;
@@ -16,7 +17,6 @@ internal sealed class XmlInput : IRowsInput, IDisposable
     private const int RowsToAnalyze = 10;
 
     private readonly XmlReader _xmlReader;
-    private QueryContext _queryContext = EmptyQueryContext.Empty;
 
     // State.
     private readonly Dictionary<int, List<string>> _cache = new();
@@ -30,6 +30,9 @@ internal sealed class XmlInput : IRowsInput, IDisposable
 
     /// <inheritdoc />
     public Column[] Columns => _columns;
+
+    /// <inheritdoc />
+    public QueryContext QueryContext { get; set; } = new EmptyQueryContext();
 
     public XmlInput(StreamReader streamReader, string? xpath = null)
     {
@@ -51,7 +54,9 @@ internal sealed class XmlInput : IRowsInput, IDisposable
     {
         var xmlDocument = new XmlDocument();
         xmlDocument.LoadXml(streamReader.ReadToEnd());
-        var nodes = xmlDocument.SelectNodes(xpath);
+        var xmlNamespaceManager = GetXmlNamespaceManager(xmlDocument);
+        var nodes = xmlDocument.SelectNodes(xpath, xmlNamespaceManager);
+
         var memoryStream = new MemoryStream();
         using var xmlWriter = XmlWriter.Create(memoryStream, new XmlWriterSettings
         {
@@ -74,6 +79,23 @@ internal sealed class XmlInput : IRowsInput, IDisposable
 
         memoryStream.Seek(0, SeekOrigin.Begin);
         return new StreamReader(memoryStream);
+    }
+
+    private static XmlNamespaceManager GetXmlNamespaceManager(XmlDocument xmlDocument)
+    {
+        // Adopted solution from here: https://www.codeproject.com/Messages/3665279/How-to-populate-an-XmlNamespaceManager.aspx
+        var namespaceManager = new XmlNamespaceManager(xmlDocument.NameTable);
+        var navigator = xmlDocument.CreateNavigator();
+        if (navigator == null)
+        {
+            throw new InvalidOperationException("Cannot create XPath navigator.");
+        }
+        navigator.MoveToFollowing(XPathNodeType.Element);
+        foreach (var ns in navigator.GetNamespacesInScope(XmlNamespaceScope.ExcludeXml))
+        {
+            namespaceManager.AddNamespace(ns.Key, ns.Value);
+        }
+        return namespaceManager;
     }
 
     /// <inheritdoc />
@@ -101,12 +123,6 @@ internal sealed class XmlInput : IRowsInput, IDisposable
         RowsIteratorUtils.ResolveColumnsTypes(frame.GetIterator(), RowsToAnalyze);
 
         _initMode = false;
-    }
-
-    /// <inheritdoc />
-    public void SetContext(QueryContext queryContext)
-    {
-        _queryContext = queryContext;
     }
 
     /// <inheritdoc />
