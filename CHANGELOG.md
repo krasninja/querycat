@@ -4,6 +4,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [0.4.5] - 2023-05-29
+
 ### Added
 
 - Ability to pass variables as command line arguments (`qcat --var size=10`).
