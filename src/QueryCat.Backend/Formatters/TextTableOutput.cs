@@ -17,7 +17,8 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
     public enum Style
     {
         Table,
-        Card
+        NoSpaceTable,
+        Card,
     }
 
     private readonly Stream _stream;
@@ -54,11 +55,21 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
             _onWrite = OnCardWrite;
             _separator = separator ?? ":";
         }
-        else
+        else if (style == Style.Table)
         {
             _onInit = OnTableInit;
             _onWrite = OnTableWrite;
             _separator = separator ?? "|";
+        }
+        else if (style == Style.NoSpaceTable)
+        {
+            _onInit = OnNoSpaceTableInit;
+            _onWrite = OnNoSpaceTableWrite;
+            _separator = separator ?? "|";
+        }
+        else
+        {
+            throw new ArgumentOutOfRangeException(nameof(style));
         }
 
         _separatorWithSpace = !string.IsNullOrEmpty(_separator) ? _separator + " " : string.Empty;
@@ -200,6 +211,51 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
             writeCount += valueWithPadding.Length + 1;
         }
         if (!_isSingleValue && writeCount > 0)
+        {
+            _streamWriter.Write(_separator);
+        }
+        _streamWriter.WriteLine();
+    }
+
+    #endregion
+
+    #region No Space Table
+
+    private void OnNoSpaceTableInit()
+    {
+        var columns = QueryContext.QueryInfo.Columns;
+
+        // Header.
+        for (int i = 0; i < columns.Count; i++)
+        {
+            if (columns[i].IsHidden)
+            {
+                continue;
+            }
+
+            _streamWriter.Write(_separator);
+            _streamWriter.Write(columns[i].FullName);
+            _columnsLengths[i] = columns[i].Length;
+        }
+        _streamWriter.Write(_separator);
+        _streamWriter.WriteLine();
+        _streamWriter.Flush();
+    }
+
+    private void OnNoSpaceTableWrite(Row row)
+    {
+        for (int i = 0; i < row.Columns.Length; i++)
+        {
+            if (row.Columns[i].IsHidden)
+            {
+                continue;
+            }
+            var value = row[i];
+            var valueString = value.ToString();
+            _streamWriter.Write(valueString);
+            _streamWriter.Write(_separator);
+        }
+        if (!_isSingleValue)
         {
             _streamWriter.Write(_separator);
         }
