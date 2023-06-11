@@ -21,4 +21,6 @@ internal class QueryOptions
     public string? ColumnsSeparator { get; init; }
 
     public bool DisableCache { get; init; }
+
+    public bool NoHeader { get; init; }
 }

@@ -4,6 +4,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Added
+
+- Add "--no-header" command line argument.
+
 ## [0.4.5] - 2023-05-29
 
 ### Added
