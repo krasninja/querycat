@@ -224,6 +224,10 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
     private void OnNoSpaceTableInit()
     {
         var columns = QueryContext.QueryInfo.Columns;
+        if (!_hasHeader || _isSingleValue)
+        {
+            return;
+        }
 
         // Header.
         for (int i = 0; i < columns.Count; i++)
@@ -252,8 +256,8 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
             }
             var value = row[i];
             var valueString = value.ToString();
-            _streamWriter.Write(valueString);
             _streamWriter.Write(_separator);
+            _streamWriter.Write(valueString);
         }
         if (!_isSingleValue)
         {
