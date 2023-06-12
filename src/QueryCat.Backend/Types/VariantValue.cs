@@ -16,6 +16,8 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     public const string FalseValueString = "FALSE";
     public const string NullValueString = "NULL";
 
+    public const string FloatNumberFormat = "F";
+
     private static readonly DataTypeObject IntegerObject = new("INT");
     private static readonly DataTypeObject FloatObject = new("FLOAT");
     private static readonly DataTypeObject TimestampObject = new("TIMESTAMP");
@@ -703,8 +705,8 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         DataType.Integer => AsIntegerUnsafe.ToString(CultureInfo.InvariantCulture),
         DataType.String => AsStringUnsafe,
         DataType.Boolean => AsBooleanUnsafe.ToString(CultureInfo.InvariantCulture),
-        DataType.Float => AsFloatUnsafe.ToString("F2", CultureInfo.InvariantCulture),
-        DataType.Numeric => AsNumericUnsafe.ToString("F", CultureInfo.InvariantCulture),
+        DataType.Float => AsFloatUnsafe.ToString(FloatNumberFormat, CultureInfo.InvariantCulture),
+        DataType.Numeric => AsNumericUnsafe.ToString(FloatNumberFormat, CultureInfo.InvariantCulture),
         DataType.Timestamp => AsTimestampUnsafe.ToString(CultureInfo.InvariantCulture),
         DataType.Interval => AsIntervalUnsafe.ToString("c", CultureInfo.InvariantCulture),
         DataType.Object => "object: " + AsObjectUnsafe,

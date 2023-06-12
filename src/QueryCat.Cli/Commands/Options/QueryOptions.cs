@@ -1,4 +1,5 @@
 using QueryCat.Backend.Formatters;
+using QueryCat.Backend.Types;
 
 namespace QueryCat.Cli.Commands.Options;
 
@@ -23,4 +24,6 @@ internal class QueryOptions
     public bool DisableCache { get; init; }
 
     public bool NoHeader { get; init; }
+
+    public string FloatNumberFormat { get; init; } = VariantValue.FloatNumberFormat;
 }

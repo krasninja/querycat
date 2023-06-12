@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
-- Add "--no-header" command line argument.
+- Add "--no-header", "--float-format" command line arguments.
 - Add "NoSpaceTable" output style.
 
 ### Fixed
