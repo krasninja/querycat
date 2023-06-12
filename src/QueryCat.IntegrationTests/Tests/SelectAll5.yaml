@@ -1,0 +1,4 @@
+expected: |
+  no-new-line-string
+query: |
+  select column0 from 'Small.csv'
