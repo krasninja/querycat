@@ -149,7 +149,8 @@ public static class DataTypeUtils
             var wasTested = false;
             foreach (var variantValue in variantValues)
             {
-                if (string.IsNullOrEmpty(variantValue.AsString))
+                if (string.IsNullOrEmpty(variantValue.AsString)
+                    || variantValue.AsString.Equals(VariantValue.NullValueString, StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
                 }

@@ -14,6 +14,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
 {
     public const string TrueValueString = "TRUE";
     public const string FalseValueString = "FALSE";
+    public const string NullValueString = "NULL";
 
     private static readonly DataTypeObject IntegerObject = new("INT");
     private static readonly DataTypeObject FloatObject = new("FLOAT");
@@ -697,7 +698,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     /// <inheritdoc />
     public override string ToString() => GetInternalType() switch
     {
-        DataType.Null => "NULL",
+        DataType.Null => NullValueString,
         DataType.Void => "VOID",
         DataType.Integer => AsIntegerUnsafe.ToString(CultureInfo.InvariantCulture),
         DataType.String => AsStringUnsafe,
@@ -717,7 +718,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     /// <returns>String representation.</returns>
     public string ToString(string format) => GetInternalType() switch
     {
-        DataType.Null => "NULL",
+        DataType.Null => NullValueString,
         DataType.Void => "VOID",
         DataType.Integer => AsIntegerUnsafe.ToString(format, CultureInfo.InvariantCulture),
         DataType.String => AsStringUnsafe,
