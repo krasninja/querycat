@@ -16,7 +16,7 @@ public class Program
             return 0;
         }
 
-        var process = new Process();
+        using var process = new Process();
         process.StartInfo.FileName = args[0];
         if (args.Length > 1)
         {
