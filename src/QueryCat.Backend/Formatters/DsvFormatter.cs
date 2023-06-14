@@ -3,6 +3,7 @@ using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Functions;
 using QueryCat.Backend.Storage;
 using QueryCat.Backend.Types;
+using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Formatters;
 
@@ -26,7 +27,7 @@ internal class DsvFormatter : IRowsFormatter
     public static VariantValue Csv(FunctionCallInfo args)
     {
         var hasHeader = args.GetAt(0).AsBooleanNullable;
-        var delimiter = args.GetAt(1).AsString;
+        var delimiter = StringUtils.Unescape(args.GetAt(1).AsString);
         var quoteStrings = args.GetAt(2).AsBoolean;
         if (delimiter.Length != 0 && delimiter.Length > 1)
         {

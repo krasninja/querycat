@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Add "--no-header", "--float-format" command line arguments.
 - Add "NoSpaceTable" output style.
+- Improve escape characters support.
 
 ### Fixed
 

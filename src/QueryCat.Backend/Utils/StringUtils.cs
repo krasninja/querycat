@@ -347,4 +347,84 @@ internal static class StringUtils
         }
         return text;
     }
+
+    /// <summary>
+    /// Convert all \X escapes to their bytes representation.
+    /// </summary>
+    /// <param name="str">String pattern.</param>
+    /// <returns>Converted string.</returns>
+    internal static string Unescape(string str)
+    {
+        if (str.IndexOf('\\') < 0)
+        {
+            return str;
+        }
+
+        var sb = new StringBuilder(str.Length);
+        var escapeMode = false;
+        // Based on https://github.com/coreutils/coreutils/blob/master/src/tr.c#L433 .
+        for (var i = 0; i < str.Length; i++)
+        {
+            var ch = str[i];
+            if (ch == '\\')
+            {
+                escapeMode = true;
+                continue;
+            }
+
+            if (!escapeMode)
+            {
+                sb.Append(ch);
+                continue;
+            }
+
+            switch (ch)
+            {
+                case '\\':
+                    sb.Append('\\');
+                    break;
+                case 'a':
+                    sb.Append('\u0007');
+                    break;
+                case 'b':
+                    sb.Append('\b');
+                    break;
+                case 'e':
+                    sb.Append('\u001B');
+                    break;
+                case 'f':
+                    sb.Append('\f');
+                    break;
+                case 'n':
+                    sb.Append('\n');
+                    break;
+                case 'r':
+                    sb.Append('\r');
+                    break;
+                case 't':
+                    sb.Append('\t');
+                    break;
+                case 'v':
+                    sb.Append('\u000B');
+                    break;
+                // Not implemented yet cases.
+                case '0':
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                case '5':
+                case '6':
+                case '7':
+                    break;
+                case 'x':
+                    break;
+                case 'u':
+                    break;
+            }
+
+            escapeMode = false;
+        }
+        return sb.ToString();
+    }
 }
