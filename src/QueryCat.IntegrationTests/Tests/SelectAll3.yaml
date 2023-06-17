@@ -3,4 +3,4 @@ expected: |
   2
   3
 query: |
-  select * from read_text('1\n2\n3', fmt=>csv(has_header=>false));
+  select * from read_text(e'1\n2\n3', fmt=>csv(has_header=>false));

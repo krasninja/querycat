@@ -27,7 +27,7 @@ internal class DsvFormatter : IRowsFormatter
     public static VariantValue Csv(FunctionCallInfo args)
     {
         var hasHeader = args.GetAt(0).AsBooleanNullable;
-        var delimiter = StringUtils.Unescape(args.GetAt(1).AsString);
+        var delimiter = args.GetAt(1).AsString;
         var quoteStrings = args.GetAt(2).AsBoolean;
         if (delimiter.Length != 0 && delimiter.Length > 1)
         {

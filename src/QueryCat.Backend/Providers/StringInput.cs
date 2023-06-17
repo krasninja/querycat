@@ -3,7 +3,6 @@ using System.Text;
 using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Functions;
 using QueryCat.Backend.Types;
-using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Providers;
 
@@ -18,8 +17,6 @@ internal static class StringInput
     {
         var text = args.GetAt(0).AsString;
         var formatter = (IRowsFormatter)args.GetAt(1).AsObject!;
-
-        text = StringUtils.Unescape(text);
 
         var stringStream = new MemoryStream(Encoding.UTF8.GetBytes(text));
         return VariantValue.CreateFromObject(formatter.OpenInput(stringStream));

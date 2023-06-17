@@ -361,7 +361,12 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
         {
             return string.Empty;
         }
-        return StringUtils.GetUnwrappedText(node.GetText());
+        var text = node.GetText();
+        if (text.StartsWith("E\'", StringComparison.OrdinalIgnoreCase))
+        {
+            text = StringUtils.Unescape(text.Substring(2, text.Length - 3));
+        }
+        return StringUtils.GetUnwrappedText(text);
     }
 
     private static string GetUnwrappedText(IToken? token)

@@ -29,6 +29,8 @@ There are following column data types are supported:
 | NULL | | Special type that represents "nothing" value. |
 | OBJECT | |
 
-For boolean `true` additional values can be used: `1`, `yes`, `on`, `t`. Boolean `false`: `0`, `no`, `off`, `f`.
+* For boolean `true` additional values can be used: `1`, `yes`, `on`, `t`. Boolean `false`: `0`, `no`, `off`, `f`.
 
-Every column is considered to be nullable. If value is empty it will be parsed as NULL.
+* Every column is considered to be nullable. If value is empty it will be parsed as NULL.
+
+* You can unescape string by preceding 'E' character (upper or lower case) before string. For example: `E'Hello,\n\nHow are you?'`.
