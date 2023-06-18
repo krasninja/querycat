@@ -30,6 +30,7 @@ public sealed class FunctionsManager
     private readonly List<Action<FunctionsManager>> _registerAggregateFunctions = new(capacity: DefaultCapacity);
     private int _registerAggregateFunctionsLastIndex;
 
+    private readonly ExecutionThread _thread;
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger<FunctionsManager>();
 
     private static readonly ILogger Logger = Application.LoggerFactory.CreateLogger<FunctionsManager>();
@@ -39,16 +40,9 @@ public sealed class FunctionsManager
         return VariantValue.Null;
     }
 
-    /// <summary>
-    /// Call application function with the specific arguments.
-    /// </summary>
-    /// <param name="functionDelegate">Function delegate.</param>
-    /// <param name="args">Arguments.</param>
-    /// <returns>Result.</returns>
-    public static VariantValue Call(FunctionDelegate functionDelegate, params object[] args)
+    public FunctionsManager(ExecutionThread thread)
     {
-        var callInfo = FunctionCallInfo.CreateWithArguments(ExecutionThread.DefaultInstance, args);
-        return functionDelegate.Invoke(callInfo);
+        _thread = thread;
     }
 
     #region Registration
@@ -324,6 +318,13 @@ public sealed class FunctionsManager
 
     #endregion
 
+    /// <summary>
+    /// Tries to find the function by name and it arguments types.
+    /// </summary>
+    /// <param name="name">Function name.</param>
+    /// <param name="functionArgumentsTypes">Function arguments types.</param>
+    /// <param name="functions">Found functions.</param>
+    /// <returns>Returns <c>true</c> if functions were found, <c>false</c> otherwise.</returns>
     public bool TryFindByName(
         string name,
         FunctionArgumentsTypes? functionArgumentsTypes,
@@ -434,6 +435,53 @@ public sealed class FunctionsManager
             }
         }
     }
+
+    /// <summary>
+    /// Call function with arguments.
+    /// </summary>
+    /// <param name="functionName">Function name.</param>
+    /// <param name="arguments">Call arguments.</param>
+    /// <returns>Return result.</returns>
+    public VariantValue CallFunction(string functionName, FunctionArguments? arguments = null)
+    {
+        arguments ??= new FunctionArguments();
+
+        var function = FindByName(functionName, arguments.GetTypes());
+        var info = new FunctionCallInfo(_thread);
+        int positionalIndex = 0;
+
+        for (var i = 0; i < function.Arguments.Length; i++)
+        {
+            var argument = function.Arguments[i];
+
+            if (arguments.Positional.Count >= positionalIndex + 1)
+            {
+                info.Push(arguments.Positional[positionalIndex++]);
+                continue;
+            }
+
+            if (arguments.Named.TryGetValue(argument.Name, out var value))
+            {
+                info.Push(value);
+            }
+            else
+            {
+                info.Push(argument.DefaultValue);
+            }
+        }
+
+        return function.Delegate.Invoke(info);
+    }
+
+    /// <summary>
+    /// Call function with arguments.
+    /// </summary>
+    /// <param name="functionName">Function name.</param>
+    /// <param name="arguments">Call arguments.</param>
+    /// <typeparam name="T">Return type.</typeparam>
+    /// <returns>Return result.</returns>
+    public T CallFunction<T>(string functionName, FunctionArguments? arguments = null)
+        => CallFunction(functionName, arguments).As<T>();
 
     private static string NormalizeName(string target) => target.ToUpper();
 

@@ -161,6 +161,12 @@ internal static class StringUtils
 
     private const string QuoteChar = "\"";
 
+    /// <summary>
+    /// Quote the specified string.
+    /// </summary>
+    /// <param name="target">Target string.</param>
+    /// <param name="separator">The separator condition. If not exists - the string will not be quoted.</param>
+    /// <returns>Quoted string.</returns>
     public static ReadOnlySpan<char> Quote(ReadOnlySpan<char> target, char separator = ' ')
     {
         if (target.IndexOf(separator) == -1)
@@ -175,6 +181,11 @@ internal static class StringUtils
         return sb.ToString();
     }
 
+    /// <summary>
+    /// Unquote the specified string.
+    /// </summary>
+    /// <param name="target">String to unquote.</param>
+    /// <returns>Unquoted string.</returns>
     public static ReadOnlySpan<char> Unquote(ReadOnlySpan<char> target)
     {
         if (target.Length == 0 || target[..1].ToString() != QuoteChar)
@@ -187,6 +198,9 @@ internal static class StringUtils
         return sb.ToString();
     }
 
+    /// <summary>
+    /// Get fields array from string using the specified delimiter.
+    /// </summary>
     /// <remarks>
     /// Source: https://www.codeproject.com/Tips/823670/Csharp-Light-and-Fast-CSV-Parser.
     /// </remarks>

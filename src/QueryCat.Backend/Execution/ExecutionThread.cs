@@ -46,7 +46,7 @@ public class ExecutionThread : IExecutionThread
     /// <summary>
     /// Functions manager.
     /// </summary>
-    public FunctionsManager FunctionsManager { get; } = new();
+    public FunctionsManager FunctionsManager { get; }
 
     /// <summary>
     /// Current executing statement.
@@ -118,6 +118,7 @@ public class ExecutionThread : IExecutionThread
             Options.PluginsRepositoryUri);
 #endif
         _statementsVisitor = new StatementsVisitor(this);
+        FunctionsManager = new FunctionsManager(this);
         InputConfigStorage = new PersistentInputConfigStorage(Path.Combine(appLocalDirectory, ConfigFileName));
         RunBootstrapScript(appLocalDirectory);
     }
@@ -129,6 +130,7 @@ public class ExecutionThread : IExecutionThread
 #if ENABLE_PLUGINS
         PluginsManager = executionThread.PluginsManager;
 #endif
+        FunctionsManager = new FunctionsManager(this);
         _statementsVisitor = executionThread._statementsVisitor;
         InputConfigStorage = executionThread.InputConfigStorage;
     }

@@ -68,7 +68,7 @@ public class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
                 {
                     functionCallInfo.Push(VariantValue.Null);
                 }
-                rowsInput = inputFunction.Delegate.Invoke(functionCallInfo).GetAsObject<IRowsInput>();
+                rowsInput = inputFunction.Delegate.Invoke(functionCallInfo).As<IRowsInput>();
                 rowsInput.QueryContext = queryContext;
                 rowsInput.Open();
             }

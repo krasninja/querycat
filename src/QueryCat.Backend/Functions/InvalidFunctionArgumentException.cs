@@ -1,4 +1,4 @@
-namespace QueryCat.Backend.Commands;
+namespace QueryCat.Backend.Functions;
 
 /// <summary>
 /// The exception occurs when function has invalid argument.

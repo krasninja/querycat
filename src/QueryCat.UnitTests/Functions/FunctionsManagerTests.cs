@@ -10,7 +10,12 @@ namespace QueryCat.UnitTests.Functions;
 /// </summary>
 public sealed class FunctionsManagerTests
 {
-    private readonly FunctionsManager _functionsManager = new();
+    private readonly FunctionsManager _functionsManager;
+
+    public FunctionsManagerTests()
+    {
+        _functionsManager = new(ExecutionThread.DefaultInstance);
+    }
 
     [Fact]
     public void RegisterFunction_SimpleFunction_ShouldEvalCorrectly()
@@ -93,9 +98,9 @@ public sealed class FunctionsManagerTests
         var value3 = ExecutionThread.DefaultInstance.RunFunction(func3.Delegate, 1, "2");
 
         // Assert.
-        Assert.Equal("1 2", value1.GetAsObject<TestClass1>().Value);
-        Assert.Equal("1 2", value2.GetAsObject<TestClass1>().Value);
-        Assert.Equal("1 2", value3.GetAsObject<TestClass1>().Value);
+        Assert.Equal("1 2", value1.As<TestClass1>().Value);
+        Assert.Equal("1 2", value2.As<TestClass1>().Value);
+        Assert.Equal("1 2", value3.As<TestClass1>().Value);
     }
 
     [FunctionSignature]

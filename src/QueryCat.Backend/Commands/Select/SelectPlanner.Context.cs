@@ -222,7 +222,7 @@ internal sealed partial class SelectPlanner
             callInfo.Push(formatter);
         }
         var inputValue = GenericInputOutput.Read(callInfo);
-        var rowsInput = inputValue.GetAsObject<IRowsInput>();
+        var rowsInput = inputValue.As<IRowsInput>();
         rowsInput.QueryContext = new SelectInputQueryContext(rowsInput, ExecutionThread);
         rowsInput.Open();
         return new[] { rowsInput };
@@ -287,7 +287,7 @@ internal sealed partial class SelectPlanner
     {
         var func = new SelectCreateDelegateVisitor(ExecutionThread, context)
             .RunAndReturn(tableNode);
-        var rowsFrame = func.Invoke().GetAsObject<RowsFrame>();
+        var rowsFrame = func.Invoke().As<RowsFrame>();
         return new RowsIteratorInput(rowsFrame.GetIterator());
     }
 
