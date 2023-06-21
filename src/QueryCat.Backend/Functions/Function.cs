@@ -132,6 +132,7 @@ public class Function
     /// <returns>Position.</returns>
     public int GetArgumentPosition(string name)
     {
+        name = name.ToUpper();
         var argumentPosition = Array.FindIndex(Arguments, node => node.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
         if (argumentPosition < 0)
         {

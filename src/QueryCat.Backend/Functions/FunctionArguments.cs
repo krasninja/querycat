@@ -1,4 +1,5 @@
 using QueryCat.Backend.Types;
+using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Functions;
 
@@ -21,20 +22,63 @@ public sealed class FunctionArguments
     public IReadOnlyList<VariantValue> Positional => _positional;
 
     /// <summary>
-    /// Create instance.
+    /// Create from query string. Example string: arg1=10&Name=John.
     /// </summary>
+    /// <param name="query">Query.</param>
     /// <returns>Instance of <see cref="FunctionArguments" />.</returns>
-    public static FunctionArguments Create() => new();
+    public static FunctionArguments FromQueryString(string query)
+    {
+        var args = StringUtils.GetFieldsFromLine(query, delimiter: '&');
+        var fa = new FunctionArguments();
+        if (args.Length == 1 && args[0].IndexOf('=') == -1)
+        {
+            fa.Add(CreateValueFromString(args[0]));
+        }
+        else
+        {
+            foreach (var arg in args)
+            {
+                var delimiterIndex = arg.IndexOf('=');
+                if (delimiterIndex == -1)
+                {
+                    continue;
+                }
+                var name = arg.Substring(0, delimiterIndex);
+                var value = CreateValueFromString(arg.Substring(delimiterIndex + 1));
+                fa.Add(name, value);
+            }
+        }
+        return fa;
+    }
+
+    private static VariantValue CreateValueFromString(string str)
+    {
+        var type = DataTypeUtils.DetermineTypeByValue(str);
+        if (type == DataType.String)
+        {
+            return new VariantValue(StringUtils.Unescape(str));
+        }
+        if (VariantValue.TryCreateFromString(str, type, out var value))
+        {
+            return value;
+        }
+        throw new InvalidOperationException($"Cannot parse value '{str}'.");
+    }
 
     /// <summary>
     /// Add named argument.
     /// </summary>
     /// <param name="name">Argument name.</param>
     /// <param name="value">Argument value.</param>
+    /// <param name="overwrite">Overwrite if arguments with the same name exists.</param>
     /// <returns>Instance of <see cref="FunctionArguments" />.</returns>
-    public FunctionArguments Add(string name, VariantValue value)
+    public FunctionArguments Add(string name, VariantValue value, bool overwrite = false)
     {
-        _named[name] = value;
+        name = name.ToUpper();
+        if (overwrite || !_named.ContainsKey(name))
+        {
+            _named[name] = value;
+        }
         return this;
     }
 
@@ -43,11 +87,16 @@ public sealed class FunctionArguments
     /// </summary>
     /// <param name="name">Argument name.</param>
     /// <param name="value">Argument value.</param>
+    /// <param name="overwrite">Overwrite if arguments with the same name exists.</param>
     /// <typeparam name="T">Argument type.</typeparam>
     /// <returns>Instance of <see cref="FunctionArguments" />.</returns>
-    public FunctionArguments Add<T>(string name, T value)
+    public FunctionArguments Add<T>(string name, T value, bool overwrite = false)
     {
-        _named[name] = VariantValue.CreateFromObject(value);
+        name = name.ToUpper();
+        if (overwrite || !_named.ContainsKey(name))
+        {
+            _named[name] = VariantValue.CreateFromObject(value);
+        }
         return this;
     }
 
