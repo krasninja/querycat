@@ -56,7 +56,9 @@ public sealed class FunctionArguments
         var type = DataTypeUtils.DetermineTypeByValue(str);
         if (type == DataType.String)
         {
-            return new VariantValue(StringUtils.Unescape(str));
+            var stringValue = StringUtils.Unquote(str);
+            stringValue = StringUtils.Unquote(stringValue, quoteChar: "'");
+            return new VariantValue(StringUtils.Unescape(stringValue.ToString()));
         }
         if (VariantValue.TryCreateFromString(str, type, out var value))
         {

@@ -51,7 +51,7 @@ Query:
 
 ```
 select distinct q.type, q.name
-from f format xml('//xs:element[@type]') as q
+from 'file.xml??//xs:element[@type]' as q
 where q.type not in ('NV', 'PN') and not starts_with(q.name, 'e');
 ```
 

@@ -20,8 +20,12 @@ internal static class FileInputOutput
     public static VariantValue ReadFile(FunctionCallInfo args)
     {
         var path = args.GetAt(0).AsString;
-        var formatter = args.Count > 1 ? args.GetAt(1).AsObject as IRowsFormatter : GetFormatter(path, args.ExecutionThread);
-        var files = GetFileInputsByPath(path, args.ExecutionThread, formatter).ToList();
+        (path, var funcArgs) = QueryStringParser.ParseUri(path);
+
+        var formatter = args.Count > 1
+            ? args.GetAt(1).AsObject as IRowsFormatter
+            : GetFormatter(path, args.ExecutionThread, funcArgs);
+        var files = GetFileInputsByPath(path, args.ExecutionThread, formatter, funcArgs).ToList();
         if (!files.Any())
         {
             throw new QueryCatException($"No files match '{path}'.");
@@ -35,14 +39,15 @@ internal static class FileInputOutput
     [FunctionSignature("write_file(path: string, fmt?: object<IRowsFormatter>): object<IRowsOutput>")]
     public static VariantValue WriteFile(FunctionCallInfo args)
     {
-        var path = args.GetAt(0);
-        if (path.IsNull || string.IsNullOrEmpty(path.AsString))
+        var pathArgument = args.GetAt(0);
+        if (pathArgument.IsNull || string.IsNullOrEmpty(pathArgument.AsString))
         {
             throw new QueryCatException("Path is not defined.");
         }
+        var (path, funcArgs) = QueryStringParser.ParseUri(pathArgument.AsString);
 
         var formatter = args.GetAt(1).AsObject as IRowsFormatter;
-        formatter ??= GetFormatter(path, args.ExecutionThread);
+        formatter ??= GetFormatter(path, args.ExecutionThread, funcArgs);
         Stream file = File.Open(path, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
         if (CompressFilesExtensions.Contains(Path.GetExtension(path).ToLower()))
         {
@@ -51,12 +56,15 @@ internal static class FileInputOutput
         return VariantValue.CreateFromObject(formatter.OpenOutput(file));
     }
 
-    private static IEnumerable<IRowsInput> GetFileInputsByPath(string path,
-        ExecutionThread thread, IRowsFormatter? formatter = null)
+    private static IEnumerable<IRowsInput> GetFileInputsByPath(
+        string path,
+        ExecutionThread thread,
+        IRowsFormatter? formatter = null,
+        FunctionArguments? funcArgs = null)
     {
         foreach (var file in GetFilesByPath(path))
         {
-            var fileFormatter = formatter ?? GetFormatter(file, thread);
+            var fileFormatter = formatter ?? GetFormatter(file, thread, funcArgs);
             Stream fileStream = File.Open(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             if (CompressFilesExtensions.Contains(Path.GetExtension(file).ToLower()))
             {
@@ -96,14 +104,15 @@ internal static class FileInputOutput
         }
     }
 
-    private static IRowsFormatter GetFormatter(string path, ExecutionThread thread)
+    private static IRowsFormatter GetFormatter(string path, ExecutionThread thread,
+        FunctionArguments? funcArgs = null)
     {
         var extension = Path.GetExtension(path).ToLower();
         if (CompressFilesExtensions.Contains(extension))
         {
             extension = Path.GetExtension(path.Substring(0, path.Length - extension.Length)).ToLower();
         }
-        var formatter = FormattersInfo.CreateFormatter(extension, thread);
+        var formatter = FormattersInfo.CreateFormatter(extension, thread, funcArgs);
         return formatter ?? new TextLineFormatter();
     }
 }

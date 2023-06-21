@@ -185,16 +185,17 @@ internal static class StringUtils
     /// Unquote the specified string.
     /// </summary>
     /// <param name="target">String to unquote.</param>
+    /// <param name="quoteChar">Quote character.</param>
     /// <returns>Unquoted string.</returns>
-    public static ReadOnlySpan<char> Unquote(ReadOnlySpan<char> target)
+    public static ReadOnlySpan<char> Unquote(ReadOnlySpan<char> target, string quoteChar = QuoteChar)
     {
-        if (target.Length == 0 || target[..1].ToString() != QuoteChar)
+        if (target.Length == 0 || target[..1].ToString() != quoteChar)
         {
             return target;
         }
         var sb = new StringBuilder(target.Length)
             .Append(target.Slice(1, target.Length - 2))
-            .Replace(QuoteChar + QuoteChar, QuoteChar);
+            .Replace(quoteChar + quoteChar, quoteChar);
         return sb.ToString();
     }
 
