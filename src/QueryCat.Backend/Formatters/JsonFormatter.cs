@@ -11,16 +11,25 @@ namespace QueryCat.Backend.Formatters;
 internal sealed class JsonFormatter : IRowsFormatter
 {
     [Description("JSON formatter.")]
-    [FunctionSignature("json(): object<IRowsFormatter>")]
+    [FunctionSignature("json(jsonpath?: string): object<IRowsFormatter>")]
     public static VariantValue Json(FunctionCallInfo args)
     {
-        var rowsSource = new JsonFormatter();
+        var rowsSource = new JsonFormatter(args.GetAtOrDefault(0).AsString);
         return VariantValue.CreateFromObject(rowsSource);
+    }
+
+    private readonly string? _jsonPath;
+
+    public JsonFormatter(string? jsonPath)
+    {
+        _jsonPath = jsonPath;
     }
 
     /// <inheritdoc />
     public IRowsInput OpenInput(Stream input)
-        => new JsonInput(new StreamReader(input));
+    {
+        return new JsonInput(new StreamReader(input), jsonPath: _jsonPath);
+    }
 
     /// <inheritdoc />
     public IRowsOutput OpenOutput(Stream output)

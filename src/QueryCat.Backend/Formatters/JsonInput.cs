@@ -1,5 +1,7 @@
 using System.Buffers;
 using System.Text.Json;
+using System.Text.Json.Nodes;
+using Json.Path;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Storage;
@@ -19,21 +21,72 @@ internal sealed class JsonInput : StreamRowsInput
     private string[] _properties = Array.Empty<string>();
 
     /// <inheritdoc />
-    public JsonInput(StreamReader streamReader, bool addFileNameColumn = true) : base(streamReader, new StreamRowsInputOptions
-    {
-        DelimiterStreamReaderOptions = new DelimiterStreamReader.ReaderOptions
+    public JsonInput(StreamReader streamReader, bool addFileNameColumn = true, string? jsonPath = null)
+        : base(
+            GetEvaluatedStream(streamReader, jsonPath), new StreamRowsInputOptions
         {
-            Delimiters = new[] { '{', '}' },
-            QuoteChars = new[] { '"' },
-            SkipEmptyLines = true,
-            CompleteOnEndOfLine = false,
-            QuotesEscapeStyle = DelimiterStreamReader.QuotesMode.Backslash,
-            IncludeDelimiter = true,
-        },
-        AddInputSourceColumn = addFileNameColumn,
-    })
+            DelimiterStreamReaderOptions = new DelimiterStreamReader.ReaderOptions
+            {
+                Delimiters = new[] { '{', '}' },
+                QuoteChars = new[] { '"' },
+                SkipEmptyLines = true,
+                CompleteOnEndOfLine = false,
+                QuotesEscapeStyle = DelimiterStreamReader.QuotesMode.Backslash,
+                IncludeDelimiter = true,
+            },
+            AddInputSourceColumn = addFileNameColumn,
+        })
     {
         SetOnDelimiterDelegate(OnDelimiter);
+    }
+
+    private static StreamReader GetEvaluatedStream(StreamReader streamReader, string? jsonPath = null)
+    {
+        if (string.IsNullOrEmpty(jsonPath))
+        {
+            return streamReader;
+        }
+
+        JsonNode? jsonNode;
+        try
+        {
+            jsonNode = JsonNode.Parse(streamReader.ReadToEnd());
+        }
+        catch (JsonException ex)
+        {
+            throw new QueryCatException($"Invalid JSON: {ex}");
+        }
+        if (jsonNode == null)
+        {
+            throw new QueryCatException("Invalid JSON.");
+        }
+
+        if (!JsonPath.TryParse(jsonPath, out var path))
+        {
+            throw new SemanticException("Incorrect JSON path input.");
+        }
+        var pathResult = path.Evaluate(jsonNode);
+        if (pathResult.Error?.Length > 0)
+        {
+            throw new QueryCatException(pathResult.Error[0].ToString());
+        }
+        if (pathResult.Matches == null)
+        {
+            throw new QueryCatException("JSON path error.");
+        }
+        var matches = pathResult.Matches.Where(m => m.Value != null).ToList();
+
+        var ms = new MemoryStream();
+        using var jsonWriter = new Utf8JsonWriter(ms);
+        jsonWriter.WriteStartArray();
+        foreach (var match in matches)
+        {
+            match.Value!.WriteTo(jsonWriter);
+        }
+        jsonWriter.WriteEndArray();
+        jsonWriter.Flush();
+        ms.Seek(0, SeekOrigin.Begin);
+        return new StreamReader(ms);
     }
 
     private void OnDelimiter(char ch, long pos, out bool countField, out bool completeLine)

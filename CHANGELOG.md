@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Support strings unescape.
 - Add more arguments to function "csv".
 - Allow to pass arguments to formatters. Example: "SELECT * FROM '1.csv??has_header=false'".
+- Add JSON path argument to function "json".
 
 ### Fixed
 
