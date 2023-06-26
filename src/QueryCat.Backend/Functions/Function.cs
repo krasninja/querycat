@@ -57,9 +57,9 @@ public class Function
         IsAggregate = aggregate;
     }
 
-    public bool MatchesToArguments(FunctionArgumentsTypes functionArgumentsTypes)
+    internal bool MatchesToArguments(FunctionArgumentsTypes functionArgumentsTypes)
     {
-        var argumentsNodes = _signatureNode.ArgumentNodes;
+        var argumentsNodes = Arguments;
         var variadicArgument = argumentsNodes.Length > 0 && argumentsNodes[^1].IsVariadic
             ? argumentsNodes[^1] : null;
 
@@ -102,12 +102,7 @@ public class Function
         // Place named arguments.
         for (int i = 0; i < functionArgumentsTypes.Named.Length; i++)
         {
-            var argumentPosition = Array.FindIndex(argumentsNodes, node => node.Name.Equals(
-                functionArgumentsTypes.Named[i].Key, StringComparison.OrdinalIgnoreCase));
-            if (argumentPosition < 0)
-            {
-                throw new CannotFindArgumentException(Name, functionArgumentsTypes.Named[i].Key);
-            }
+            var argumentPosition = GetArgumentPosition(functionArgumentsTypes.Named[i].Key);
             typesArr[argumentPosition] = functionArgumentsTypes.Named[i].Value;
         }
 
@@ -128,6 +123,22 @@ public class Function
         }
 
         return true;
+    }
+
+    /// <summary>
+    /// Get argument position.
+    /// </summary>
+    /// <param name="name">Argument name.</param>
+    /// <returns>Position.</returns>
+    public int GetArgumentPosition(string name)
+    {
+        name = name.ToUpper();
+        var argumentPosition = Array.FindIndex(Arguments, node => node.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+        if (argumentPosition < 0)
+        {
+            throw new CannotFindArgumentException(Name, name);
+        }
+        return argumentPosition;
     }
 
     public bool IsSignatureEquals(Function function)

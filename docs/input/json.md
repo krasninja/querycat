@@ -5,8 +5,12 @@ JSON (JavaScript Object Notation) is a lightweight data-interchange format. It i
 ## Syntax
 
 ```
-json(): object<IRowsFormatter>
+json(jsonpath?: string): object<IRowsFormatter>
 ```
+
+Parameters:
+
+- `jsonpath`. Evaluate JSON path expression on data before processing.
 
 ## Examples
 
@@ -25,4 +29,10 @@ select 'test' as 'propertyName' into write_file('/tmp/test.json', json());
 ```bash
 $ cat /tmp/test.json 
 [{"propertyName":"test"}]
+```
+
+**Query JSON path**
+
+```
+select *number* from 'person.json??$.phoneNumbers.*';
 ```

@@ -76,6 +76,9 @@ public class TestThread : ExecutionThread
         }
     }
 
+    public static IList<string> GetTestFilesList()
+        => GetTestFiles().Select(f => f[0].ToString() ?? string.Empty).ToList();
+
     private static string GetDataDirectory()
         => Path.Combine(TestParser.FindTestsDirectory(), DataDirectory);
 

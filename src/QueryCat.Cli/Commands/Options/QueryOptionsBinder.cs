@@ -1,6 +1,7 @@
 using System.CommandLine;
 using System.CommandLine.Binding;
 using QueryCat.Backend.Formatters;
+using QueryCat.Backend.Types;
 
 namespace QueryCat.Cli.Commands.Options;
 
@@ -15,6 +16,8 @@ internal class QueryOptionsBinder : BinderBase<QueryOptions>
     private readonly Option<int> _analyzeRowsOption;
     private readonly Option<string?> _columnsSeparatorOption;
     private readonly Option<bool> _disableCacheOption;
+    private readonly Option<bool> _noHeaderOption;
+    private readonly Option<string> _floatNumberOption;
 
     public QueryOptionsBinder(
         Option<int> maxErrorsOption,
@@ -24,7 +27,9 @@ internal class QueryOptionsBinder : BinderBase<QueryOptions>
         Option<int> pageSizeOption, Option<TextTableOutput.Style> outputStyleOption,
         Option<int> analyzeRowsOption,
         Option<string?> columnsSeparatorOption,
-        Option<bool> disableCacheOption)
+        Option<bool> disableCacheOption,
+        Option<bool> noHeaderOption,
+        Option<string> floatNumberOption)
     {
         _maxErrorsOption = maxErrorsOption;
         _statisticOption = statisticOption;
@@ -42,6 +47,8 @@ internal class QueryOptionsBinder : BinderBase<QueryOptions>
         _analyzeRowsOption = analyzeRowsOption;
         _columnsSeparatorOption = columnsSeparatorOption;
         _disableCacheOption = disableCacheOption;
+        _noHeaderOption = noHeaderOption;
+        _floatNumberOption = floatNumberOption;
     }
 
     /// <inheritdoc />
@@ -58,6 +65,9 @@ internal class QueryOptionsBinder : BinderBase<QueryOptions>
             AnalyzeRows = bindingContext.ParseResult.GetValueForOption(_analyzeRowsOption),
             ColumnsSeparator = bindingContext.ParseResult.GetValueForOption(_columnsSeparatorOption),
             DisableCache = bindingContext.ParseResult.GetValueForOption(_disableCacheOption),
+            NoHeader = bindingContext.ParseResult.GetValueForOption(_noHeaderOption),
+            FloatNumberFormat = bindingContext.ParseResult.GetValueForOption(_floatNumberOption)
+                ?? VariantValue.FloatNumberFormat,
         };
     }
 }

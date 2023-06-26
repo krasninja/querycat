@@ -161,6 +161,12 @@ internal static class StringUtils
 
     private const string QuoteChar = "\"";
 
+    /// <summary>
+    /// Quote the specified string.
+    /// </summary>
+    /// <param name="target">Target string.</param>
+    /// <param name="separator">The separator condition. If not exists - the string will not be quoted.</param>
+    /// <returns>Quoted string.</returns>
     public static ReadOnlySpan<char> Quote(ReadOnlySpan<char> target, char separator = ' ')
     {
         if (target.IndexOf(separator) == -1)
@@ -175,18 +181,27 @@ internal static class StringUtils
         return sb.ToString();
     }
 
-    public static ReadOnlySpan<char> Unquote(ReadOnlySpan<char> target)
+    /// <summary>
+    /// Unquote the specified string.
+    /// </summary>
+    /// <param name="target">String to unquote.</param>
+    /// <param name="quoteChar">Quote character.</param>
+    /// <returns>Unquoted string.</returns>
+    public static ReadOnlySpan<char> Unquote(ReadOnlySpan<char> target, string quoteChar = QuoteChar)
     {
-        if (target.Length == 0 || target[..1].ToString() != QuoteChar)
+        if (target.Length == 0 || target[..1].ToString() != quoteChar)
         {
             return target;
         }
         var sb = new StringBuilder(target.Length)
             .Append(target.Slice(1, target.Length - 2))
-            .Replace(QuoteChar + QuoteChar, QuoteChar);
+            .Replace(quoteChar + quoteChar, quoteChar);
         return sb.ToString();
     }
 
+    /// <summary>
+    /// Get fields array from string using the specified delimiter.
+    /// </summary>
     /// <remarks>
     /// Source: https://www.codeproject.com/Tips/823670/Csharp-Light-and-Fast-CSV-Parser.
     /// </remarks>
@@ -346,5 +361,85 @@ internal static class StringUtils
             return text.Substring(1, text.Length - 2).Replace("\"\"", "\"");
         }
         return text;
+    }
+
+    /// <summary>
+    /// Convert all \X escapes to their bytes representation.
+    /// </summary>
+    /// <param name="str">String pattern.</param>
+    /// <returns>Converted string.</returns>
+    internal static string Unescape(string str)
+    {
+        if (str.IndexOf('\\') < 0)
+        {
+            return str;
+        }
+
+        var sb = new StringBuilder(str.Length);
+        var escapeMode = false;
+        // Based on https://github.com/coreutils/coreutils/blob/master/src/tr.c#L433 .
+        for (var i = 0; i < str.Length; i++)
+        {
+            var ch = str[i];
+            if (ch == '\\')
+            {
+                escapeMode = true;
+                continue;
+            }
+
+            if (!escapeMode)
+            {
+                sb.Append(ch);
+                continue;
+            }
+
+            switch (ch)
+            {
+                case '\\':
+                    sb.Append('\\');
+                    break;
+                case 'a':
+                    sb.Append('\u0007');
+                    break;
+                case 'b':
+                    sb.Append('\b');
+                    break;
+                case 'e':
+                    sb.Append('\u001B');
+                    break;
+                case 'f':
+                    sb.Append('\f');
+                    break;
+                case 'n':
+                    sb.Append('\n');
+                    break;
+                case 'r':
+                    sb.Append('\r');
+                    break;
+                case 't':
+                    sb.Append('\t');
+                    break;
+                case 'v':
+                    sb.Append('\u000B');
+                    break;
+                // Not implemented yet cases.
+                case '0':
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                case '5':
+                case '6':
+                case '7':
+                    break;
+                case 'x':
+                    break;
+                case 'u':
+                    break;
+            }
+
+            escapeMode = false;
+        }
+        return sb.ToString();
     }
 }

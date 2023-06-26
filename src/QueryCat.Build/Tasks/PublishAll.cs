@@ -1,5 +1,3 @@
-using System.IO;
-using System.Threading.Tasks;
 using Cake.Common.IO;
 using Cake.Common.Tools.DotNet;
 using Cake.Compression;

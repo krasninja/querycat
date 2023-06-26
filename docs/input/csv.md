@@ -14,7 +14,12 @@ Field values and labels might be enclosed within double-quote (") characters.
 ## Syntax
 
 ```
-csv(has_header?: boolean, delimiter?: string = null, quote_strings?: boolean = false): object<IRowsFormatter>
+csv(
+    has_header?: boolean,
+    delimiter?: string := null,
+    quote_strings?: boolean = false,
+    skip_empty_lines?: boolean := true,
+    delimiter_can_repeat?: boolean := false): object<IRowsFormatter>
 ```
 
 Parameters:
@@ -22,6 +27,8 @@ Parameters:
 - `has_header`. Should be `true` if an input has header, `false` otherwise.
 - `delimiter`. The delimiter character. If not specified the first line will be analyzed for that. The preferred delimiter is comma.
 - `quote_strings`. Force quote all strings.
+- `skip_empty_lines`. Do not process empty lines. `true` by default.
+- `delimiter_can_repeat`. Consider repeated delimiters as one. Can be useful to process whitespaces.
 
 ## Examples
 

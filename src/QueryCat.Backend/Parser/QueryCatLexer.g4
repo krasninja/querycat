@@ -222,6 +222,7 @@ NUMERIC_LITERAL: FLOAT_LITERAL'M';
 STRING_LITERAL
     : '\'' ( ~'\'' | '\'\'')* '\''
     | '"' ( ~'"' | '""')* '"'
+    | ('E\'' | 'e\'') ( ~'\'' | '\'\'')* '\''
     ;
 BOOLEAN_LITERAL: TRUE | FALSE;
 

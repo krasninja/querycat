@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Storage;
+using QueryCat.Backend.Types;
 
 namespace QueryCat.Backend.Formatters;
 
@@ -17,7 +18,8 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
     public enum Style
     {
         Table,
-        Card
+        NoSpaceTable,
+        Card,
     }
 
     private readonly Stream _stream;
@@ -29,6 +31,7 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
     private readonly bool _hasHeader;
     private readonly string _separator;
     private readonly string _separatorWithSpace;
+    private readonly string _floatNumberFormat;
 
     private readonly Action _onInit;
     private readonly Action<Row> _onWrite;
@@ -42,11 +45,16 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
     /// </summary>
     public string Separator => _separator;
 
-    public TextTableOutput(Stream stream, bool hasHeader = true, string? separator = null,
-        Style style = Style.Table)
+    public TextTableOutput(
+        Stream stream,
+        bool hasHeader = true,
+        string? separator = null,
+        Style style = Style.Table,
+        string? floatNumberFormat = null)
     {
         _stream = stream;
         _hasHeader = hasHeader;
+        _floatNumberFormat = floatNumberFormat ?? VariantValue.FloatNumberFormat;
 
         if (style == Style.Card)
         {
@@ -54,11 +62,21 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
             _onWrite = OnCardWrite;
             _separator = separator ?? ":";
         }
-        else
+        else if (style == Style.Table)
         {
             _onInit = OnTableInit;
             _onWrite = OnTableWrite;
             _separator = separator ?? "|";
+        }
+        else if (style == Style.NoSpaceTable)
+        {
+            _onInit = OnNoSpaceTableInit;
+            _onWrite = OnNoSpaceTableWrite;
+            _separator = separator ?? "|";
+        }
+        else
+        {
+            throw new ArgumentOutOfRangeException(nameof(style));
         }
 
         _separatorWithSpace = !string.IsNullOrEmpty(_separator) ? _separator + " " : string.Empty;
@@ -97,13 +115,6 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
 
         _onInit.Invoke();
         _streamWriter.Flush();
-    }
-
-    /// <inheritdoc />
-    public void Dispose()
-    {
-        Close();
-        _stream.Dispose();
     }
 
     #region Table
@@ -187,7 +198,7 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
                 writeCount += _separatorWithSpace.Length;
             }
             var value = row[i];
-            var valueString = value.ToString();
+            var valueString = ToStringWithFormat(value);
             var padding = _columnsLengths[i];
             var exceed = _totalMaxLineLength[i] - writeCount - _columnsLengths[i] - 1;
             if (exceed < 0)
@@ -200,6 +211,54 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
             writeCount += valueWithPadding.Length + 1;
         }
         if (!_isSingleValue && writeCount > 0)
+        {
+            _streamWriter.Write(_separator);
+        }
+        _streamWriter.WriteLine();
+    }
+
+    #endregion
+
+    #region No Space Table
+
+    private void OnNoSpaceTableInit()
+    {
+        var columns = QueryContext.QueryInfo.Columns;
+        if (!_hasHeader || _isSingleValue)
+        {
+            return;
+        }
+
+        // Header.
+        for (int i = 0; i < columns.Count; i++)
+        {
+            if (columns[i].IsHidden)
+            {
+                continue;
+            }
+
+            _streamWriter.Write(_separator);
+            _streamWriter.Write(columns[i].FullName);
+            _columnsLengths[i] = columns[i].Length;
+        }
+        _streamWriter.Write(_separator);
+        _streamWriter.WriteLine();
+        _streamWriter.Flush();
+    }
+
+    private void OnNoSpaceTableWrite(Row row)
+    {
+        for (int i = 0; i < row.Columns.Length; i++)
+        {
+            if (row.Columns[i].IsHidden)
+            {
+                continue;
+            }
+            var valueString = ToStringWithFormat(row[i]);
+            _streamWriter.Write(_separator);
+            _streamWriter.Write(valueString);
+        }
+        if (!_isSingleValue)
         {
             _streamWriter.Write(_separator);
         }
@@ -226,12 +285,29 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
             {
                 continue;
             }
-            var value = row[i];
+            var valueString = ToStringWithFormat(row[i]);
             _streamWriter.Write(row.Columns[i].FullName.PadLeft(_maxColumnNameWidth));
-            _streamWriter.Write($" {_separator} {value}\n");
+            _streamWriter.Write($" {_separator} {valueString}\n");
         }
         _streamWriter.WriteLine();
     }
 
     #endregion
+
+    private string ToStringWithFormat(in VariantValue value)
+    {
+        var type = value.GetInternalType();
+        if (type == DataType.Float || type == DataType.Numeric)
+        {
+            return value.ToString(_floatNumberFormat);
+        }
+        return value.ToString();
+    }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        Close();
+        _stream.Dispose();
+    }
 }

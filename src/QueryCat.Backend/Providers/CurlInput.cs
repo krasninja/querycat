@@ -19,8 +19,10 @@ internal static class CurlInput
     [FunctionSignature("curl(uri: string, fmt?: object<IRowsFormatter>): object<IRowsInput>")]
     public static VariantValue WGet(FunctionCallInfo args)
     {
-        var uriArgument = args.GetAt(0);
+        var uriArgument = args.GetAt(0).AsString;
         var formatter = args.GetAt(1).AsObject as IRowsFormatter;
+
+        (uriArgument, var funcArgs) = QueryStringParser.ParseUri(uriArgument);
 
         if (!Uri.TryCreate(uriArgument, UriKind.Absolute, out var uri))
         {
@@ -35,7 +37,7 @@ internal static class CurlInput
             if (response.Headers.TryGetValues(ContentTypeHeader, out var contentTypes))
             {
                 var contentType = contentTypes.Last();
-                formatter = FormattersInfo.CreateFormatter(contentType);
+                formatter = FormattersInfo.CreateFormatter(contentType, args.ExecutionThread, funcArgs);
             }
         }
         // Try get formatter by extension from URI.
@@ -45,7 +47,7 @@ internal static class CurlInput
             var extension = Path.GetExtension(absolutePath).ToLower();
             if (!string.IsNullOrEmpty(extension))
             {
-                formatter = FormattersInfo.CreateFormatter(extension);
+                formatter = FormattersInfo.CreateFormatter(extension, args.ExecutionThread, funcArgs);
             }
         }
         formatter ??= new TextLineFormatter();

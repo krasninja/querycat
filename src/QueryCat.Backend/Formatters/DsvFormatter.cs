@@ -3,6 +3,7 @@ using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Functions;
 using QueryCat.Backend.Storage;
 using QueryCat.Backend.Types;
+using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Formatters;
 
@@ -20,14 +21,26 @@ internal class DsvFormatter : IRowsFormatter
     private readonly bool? _hasHeader;
     private readonly bool _addFileNameColumn;
     private readonly bool _quoteStrings;
+    private readonly bool _skipEmptyLines;
+    private readonly bool _delimiterCanRepeat;
 
     [Description("CSV formatter.")]
-    [FunctionSignature("csv(has_header?: boolean, delimiter?: string = null, quote_strings?: boolean := false): object<IRowsFormatter>")]
+    [FunctionSignature("""
+        csv(
+            has_header?: boolean,
+            delimiter?: string := null,
+            quote_strings?: boolean := false,
+            skip_empty_lines?: boolean := true,
+            delimiter_can_repeat?: boolean := false)
+                : object<IRowsFormatter>
+        """)]
     public static VariantValue Csv(FunctionCallInfo args)
     {
         var hasHeader = args.GetAt(0).AsBooleanNullable;
         var delimiter = args.GetAt(1).AsString;
         var quoteStrings = args.GetAt(2).AsBoolean;
+        var skipEmptyLines = args.GetAt(3).AsBoolean;
+        var delimiterCanRepeat = args.GetAt(4).AsBoolean;
         if (delimiter.Length != 0 && delimiter.Length > 1)
         {
             throw new QueryCatException("Delimiter must be one character.");
@@ -36,7 +49,9 @@ internal class DsvFormatter : IRowsFormatter
         var rowsSource = new DsvFormatter(
             delimiter: delimiter.Length == 1 ? delimiter[0] : null,
             hasHeader: hasHeader,
-            quoteStrings: quoteStrings);
+            quoteStrings: quoteStrings,
+            skipEmptyLines: skipEmptyLines,
+            delimiterCanRepeat: delimiterCanRepeat);
         return VariantValue.CreateFromObject(rowsSource);
     }
 
@@ -50,13 +65,20 @@ internal class DsvFormatter : IRowsFormatter
         return VariantValue.CreateFromObject(rowsSource);
     }
 
-    public DsvFormatter(char? delimiter = null, bool? hasHeader = null, bool addFileNameColumn = true,
-        bool quoteStrings = false)
+    public DsvFormatter(
+        char? delimiter = null,
+        bool? hasHeader = null,
+        bool addFileNameColumn = true,
+        bool quoteStrings = false,
+        bool skipEmptyLines = true,
+        bool delimiterCanRepeat = false)
     {
         _delimiter = delimiter;
         _hasHeader = hasHeader;
         _addFileNameColumn = addFileNameColumn;
         _quoteStrings = quoteStrings;
+        _skipEmptyLines = skipEmptyLines;
+        _delimiterCanRepeat = delimiterCanRepeat;
     }
 
     public DsvFormatter(StreamRowsInputOptions streamRowsInputOptions)
@@ -88,6 +110,8 @@ internal class DsvFormatter : IRowsFormatter
             if (_delimiter.HasValue)
             {
                 options.InputOptions.DelimiterStreamReaderOptions.Delimiters = new[] { _delimiter.Value };
+                options.InputOptions.DelimiterStreamReaderOptions.DelimitersCanRepeat = _delimiterCanRepeat;
+                options.InputOptions.DelimiterStreamReaderOptions.SkipEmptyLines = _skipEmptyLines;
             }
             options.InputOptions.DelimiterStreamReaderOptions.PreferredDelimiter = ',';
             options.InputOptions.AddInputSourceColumn = _addFileNameColumn;

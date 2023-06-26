@@ -207,14 +207,14 @@ public class DelimiterStreamReader
     /// Read the line ignoring delimiters and quotes.
     /// </summary>
     /// <returns><c>True</c> if the next data is available, <c>false</c> otherwise.</returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public bool ReadLine() => ReadInternal(lineMode: true);
 
     /// <summary>
     /// Read the line.
     /// </summary>
     /// <returns><c>True</c> if the next data is available, <c>false</c> otherwise.</returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public bool Read() => ReadInternal(lineMode: false);
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
@@ -375,6 +375,8 @@ public class DelimiterStreamReader
         // We are at the end of the stream. Update remain index and exit.
         _currentDelimiterPosition += sequenceReader.Remaining;
         currentField.EndIndex = _currentDelimiterPosition + 1;
+        // Move next field index next to correct calculate total columns count.
+        currentField = ref GetNextFieldInfo();
         return !IsEmpty();
     }
 
@@ -526,7 +528,8 @@ public class DelimiterStreamReader
             _currentSequence = _dynamicBuffer.GetSequence();
             sequenceReader = new SequenceReader<char>(_currentSequence);
         }
-        while (!sequenceReader.TryReadToAny(out line, EndOfLineCharacters));
+        while (!sequenceReader.TryReadToAny(out line, EndOfLineCharacters)
+               && ReadNextBufferData() > 0);
 
         if (!TryDetectDelimiter(line, out var delimiter))
         {

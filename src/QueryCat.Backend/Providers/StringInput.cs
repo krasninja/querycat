@@ -18,8 +18,6 @@ internal static class StringInput
         var text = args.GetAt(0).AsString;
         var formatter = (IRowsFormatter)args.GetAt(1).AsObject!;
 
-        text = text.Replace("\\n", Environment.NewLine);
-
         var stringStream = new MemoryStream(Encoding.UTF8.GetBytes(text));
         return VariantValue.CreateFromObject(formatter.OpenInput(stringStream));
     }

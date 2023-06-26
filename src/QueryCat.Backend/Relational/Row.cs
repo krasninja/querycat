@@ -152,10 +152,6 @@ public class Row : IRowsSchema, ICloneable
         {
             return false;
         }
-        if (_columns != row._columns)
-        {
-            return false;
-        }
 
         for (var i = 0; i < _values.Length; i++)
         {

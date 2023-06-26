@@ -9,6 +9,6 @@ expected: |
   Marina,Chocolate,Work
 query: |
   SELECT * FROM
-    read_text('name\nIvan\nMarina', fmt=>csv()) AS t1,
-    read_text('food\nWine\nChocolate', fmt=>csv()) AS t2,
-    read_text('place\nHome\nWork', fmt=>csv()) AS t3;
+    read_text(E'name\nIvan\nMarina', fmt=>csv()) AS t1,
+    read_text(E'food\nWine\nChocolate', fmt=>csv()) AS t2,
+    read_text(E'place\nHome\nWork', fmt=>csv()) AS t3;

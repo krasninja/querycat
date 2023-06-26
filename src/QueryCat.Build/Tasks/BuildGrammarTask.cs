@@ -1,4 +1,3 @@
-using System.Threading.Tasks;
 using Cake.Common;
 using Cake.Frosting;
 

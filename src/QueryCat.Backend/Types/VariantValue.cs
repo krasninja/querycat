@@ -14,6 +14,9 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
 {
     public const string TrueValueString = "TRUE";
     public const string FalseValueString = "FALSE";
+    public const string NullValueString = "NULL";
+
+    public const string FloatNumberFormat = "F";
 
     private static readonly DataTypeObject IntegerObject = new("INT");
     private static readonly DataTypeObject FloatObject = new("FLOAT");
@@ -355,12 +358,50 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     #endregion
 
     /// <summary>
-    /// Get object of specified type.
+    /// Get object of the specified type.
     /// </summary>
     /// <typeparam name="T">Type.</typeparam>
     /// <returns>Object.</returns>
-    public T GetAsObject<T>()
+    public T As<T>()
     {
+        var retType = typeof(T);
+
+        if (retType == typeof(Int64)
+            || retType == typeof(Int32)
+            || retType == typeof(Int16)
+            || retType == typeof(Byte)
+            || retType == typeof(UInt64)
+            || retType == typeof(UInt32)
+            || retType == typeof(UInt16)
+            || retType == typeof(SByte))
+        {
+            return (T)Convert.ChangeType(AsInteger, typeof(T));
+        }
+        if (retType == typeof(bool))
+        {
+            return (T)Convert.ChangeType(AsBoolean, typeof(T));
+        }
+        if (retType == typeof(double) || retType == typeof(float))
+        {
+            return (T)Convert.ChangeType(AsFloat, typeof(T));
+        }
+        if (retType == typeof(decimal))
+        {
+            return (T)Convert.ChangeType(AsNumeric, typeof(T));
+        }
+        if (retType == typeof(string))
+        {
+            return (T)Convert.ChangeType(AsString, typeof(T));
+        }
+        if (retType == typeof(DateTime) || retType == typeof(DateTimeOffset))
+        {
+            return (T)Convert.ChangeType(AsTimestamp, typeof(T));
+        }
+        if (retType == typeof(TimeSpan))
+        {
+            return (T)Convert.ChangeType(AsInterval, typeof(T));
+        }
+
         var sourceObj = CheckTypeAndTryToCast(DataType.Object)._object;
         if (sourceObj == null)
         {
@@ -697,13 +738,13 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     /// <inheritdoc />
     public override string ToString() => GetInternalType() switch
     {
-        DataType.Null => "NULL",
+        DataType.Null => NullValueString,
         DataType.Void => "VOID",
         DataType.Integer => AsIntegerUnsafe.ToString(CultureInfo.InvariantCulture),
         DataType.String => AsStringUnsafe,
         DataType.Boolean => AsBooleanUnsafe.ToString(CultureInfo.InvariantCulture),
-        DataType.Float => AsFloatUnsafe.ToString("F2", CultureInfo.InvariantCulture),
-        DataType.Numeric => AsNumericUnsafe.ToString("F", CultureInfo.InvariantCulture),
+        DataType.Float => AsFloatUnsafe.ToString(FloatNumberFormat, CultureInfo.InvariantCulture),
+        DataType.Numeric => AsNumericUnsafe.ToString(FloatNumberFormat, CultureInfo.InvariantCulture),
         DataType.Timestamp => AsTimestampUnsafe.ToString(CultureInfo.InvariantCulture),
         DataType.Interval => AsIntervalUnsafe.ToString("c", CultureInfo.InvariantCulture),
         DataType.Object => "object: " + AsObjectUnsafe,
@@ -717,7 +758,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     /// <returns>String representation.</returns>
     public string ToString(string format) => GetInternalType() switch
     {
-        DataType.Null => "NULL",
+        DataType.Null => NullValueString,
         DataType.Void => "VOID",
         DataType.Integer => AsIntegerUnsafe.ToString(format, CultureInfo.InvariantCulture),
         DataType.String => AsStringUnsafe,

@@ -1,10 +1,6 @@
-using System;
 using System.ComponentModel;
-using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Text;
-using System.Threading.Tasks;
 using Cake.Core;
 using Cake.Core.Diagnostics;
 using Cake.Frosting;

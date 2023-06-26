@@ -24,10 +24,10 @@ public sealed class FunctionArgumentsTypes
     public int TotalCount => Positional.Length + Named.Length;
 
     public FunctionArgumentsTypes(
-        KeyValuePair<int, DataType>[] positional,
+        KeyValuePair<int, DataType>[]? positional = null,
         KeyValuePair<string, DataType>[]? namedArguments = null)
     {
-        Positional = positional;
+        Positional = positional ?? Array.Empty<KeyValuePair<int, DataType>>();
         Named = namedArguments ?? Array.Empty<KeyValuePair<string, DataType>>();
     }
 

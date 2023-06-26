@@ -16,7 +16,10 @@ public sealed class FunctionCallArgumentNode : AstNode
 
     public FunctionCallArgumentNode(string? key, ExpressionNode expressionValueNode)
     {
-        Key = key;
+        if (!string.IsNullOrEmpty(key))
+        {
+            Key = key.ToUpper();
+        }
         ExpressionValueNode = expressionValueNode;
     }
 

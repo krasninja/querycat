@@ -27,7 +27,7 @@ internal sealed class StringAggAggregateFunction : IAggregateFunction
             return;
         }
 
-        var sb = state.Values[0].GetAsObject<StringBuilder>();
+        var sb = state.Values[0].As<StringBuilder>();
         if (sb.Length > 0)
         {
             sb.Append(delimiter);
@@ -37,5 +37,5 @@ internal sealed class StringAggAggregateFunction : IAggregateFunction
 
     /// <inheritdoc />
     public VariantValue GetResult(VariantValueArray state)
-        => new(state.Values[0].GetAsObject<StringBuilder>().ToString());
+        => new(state.Values[0].As<StringBuilder>().ToString());
 }

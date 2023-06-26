@@ -2,7 +2,23 @@
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.4.7] - 2023-06-26
+
+### Added
+
+- Add "--no-header", "--float-format" command line arguments.
+- Add "NoSpaceTable" output style.
+- Support strings unescape.
+- Add more arguments to function "csv".
+- Allow to pass arguments to formatters. Example: "SELECT * FROM '1.csv??has_header=false'".
+- Add JSON path argument to function "json".
+
+### Fixed
+
+- Fix file parsing without a new line at the end.
+- Function arguments are case insensitive.
+
+## [0.4.5] - 2023-05-29
 
 ### Added
 

@@ -40,6 +40,11 @@ internal class QueryCommand : BaseQueryCommand
             };
         var disableCacheOption = new Option<bool>("--disable-cache",
             description: "Do not use memory cache for sub-queries.");
+        var noHeaderOption = new Option<bool>("--no-header",
+            description: "Do not render header.");
+        var floatNumberOption = new Option<string>("--float-format",
+            description: "Float numbers format.",
+            getDefaultValue: () => "F");
 
         this.AddOption(maxErrorsOption);
         this.AddOption(statisticOption);
@@ -50,13 +55,17 @@ internal class QueryCommand : BaseQueryCommand
         this.AddOption(analyzeRowsOption);
         this.AddOption(columnsSeparatorOption);
         this.AddOption(disableCacheOption);
+        this.AddOption(noHeaderOption);
+        this.AddOption(floatNumberOption);
         this.SetHandler((applicationOptions, query, variables, files, queryOptions) =>
         {
             applicationOptions.InitializeLogger();
             var tableOutput = new TextTableOutput(
                 stream: StandardInputOutput.GetConsoleOutput(),
+                hasHeader: !queryOptions.NoHeader,
                 separator: queryOptions.ColumnsSeparator,
-                style: queryOptions.OutputStyle);
+                style: queryOptions.OutputStyle,
+                floatNumberFormat: queryOptions.FloatNumberFormat);
             var options = new ExecutionOptions
             {
                 AddRowNumberColumn = queryOptions.RowNumberOption,
@@ -98,7 +107,9 @@ internal class QueryCommand : BaseQueryCommand
                 outputStyleOption,
                 analyzeRowsOption,
                 columnsSeparatorOption,
-                disableCacheOption)
+                disableCacheOption,
+                noHeaderOption,
+                floatNumberOption)
             );
     }
 }

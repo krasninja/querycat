@@ -1,6 +1,6 @@
 using QueryCat.Backend.Abstractions;
-using QueryCat.Backend.Storage;
-using QueryCat.Backend.Utils;
+using QueryCat.Backend.Execution;
+using QueryCat.Backend.Functions;
 
 namespace QueryCat.Backend.Formatters;
 
@@ -9,47 +9,42 @@ namespace QueryCat.Backend.Formatters;
 /// </summary>
 public static class FormattersInfo
 {
-    private static readonly Dictionary<string, Func<IRowsFormatter>> Formatters = new()
+    private static readonly Dictionary<string, Func<FunctionsManager, FunctionArguments, IRowsFormatter>> Formatters = new()
     {
         // File extensions.
-        [".csv"] = () => new DsvFormatter(),
-        [".tsv"] = () => new DsvFormatter('\t'),
-        [".tab"] = () => new DsvFormatter('\t'),
-        [".log"] = () => new DsvFormatter(new StreamRowsInputOptions
-        {
-            DelimiterStreamReaderOptions = new DelimiterStreamReader.ReaderOptions
-            {
-                Delimiters = new[] { ' ' },
-                DelimitersCanRepeat = true,
-                SkipEmptyLines = true,
-            }
-        }),
-        [".json"] = () => new JsonFormatter(),
-        [".xml"] = () => new XmlFormatter(),
-        [".xsd"] = () => new XmlFormatter(),
+        [".csv"] = (fm, args) => fm.CallFunction<IRowsFormatter>("csv", args),
+        [".tsv"] = (fm, args) => fm.CallFunction<IRowsFormatter>("csv", args.Add("delimiter", '\t')),
+        [".tab"] = (fm, args) => fm.CallFunction<IRowsFormatter>("csv", args.Add("delimiter", '\t')),
+        [".log"] = (fm, args) =>
+            fm.CallFunction<IRowsFormatter>("csv", args.Add("delimiter", ' ').Add("delimiter_can_repeat", false)),
+        [".json"] = (fm, args) => fm.CallFunction<IRowsFormatter>("json", args),
+        [".xml"] = (fm, args) => fm.CallFunction<IRowsFormatter>("xml", args),
+        [".xsd"] = (fm, args) => fm.CallFunction<IRowsFormatter>("xml", args),
 
         // Content types.
-        ["text/csv"] = () => new DsvFormatter(),
-        ["text/x-csv"] = () => new DsvFormatter(','),
-        ["application/csv"] = () => new DsvFormatter(','),
-        ["application/x-csv"] = () => new DsvFormatter(','),
-        ["text/tab-separated-values"] = () => new DsvFormatter('\t'),
-        ["application/json"] = () => new JsonFormatter(),
-        ["application/xml"] = () => new XmlFormatter(),
-        ["application/xhtml+xml"] = () => new XmlFormatter(),
-        ["application/soap+xml"] = () => new XmlFormatter(),
+        ["text/csv"] = (fm, args) => fm.CallFunction<IRowsFormatter>("csv", args),
+        ["text/x-csv"] = (fm, args) => fm.CallFunction<IRowsFormatter>("csv", args),
+        ["application/csv"] = (fm, args) => fm.CallFunction<IRowsFormatter>("csv", args),
+        ["application/x-csv"] = (fm, args) => fm.CallFunction<IRowsFormatter>("csv", args),
+        ["text/tab-separated-values"] = (fm, args) => fm.CallFunction<IRowsFormatter>("csv", args.Add("delimiter", '\t')),
+        ["application/json"] = (fm, args)=> fm.CallFunction<IRowsFormatter>("json", args),
+        ["application/xml"] = (fm, args) => fm.CallFunction<IRowsFormatter>("xml", args),
+        ["application/xhtml+xml"] = (fm, args) => fm.CallFunction<IRowsFormatter>("xml", args),
+        ["application/soap+xml"] = (fm, args) => fm.CallFunction<IRowsFormatter>("xml", args),
     };
 
     /// <summary>
     /// Create formatter by file extension or content type.
     /// </summary>
     /// <param name="id">File extension or content type.</param>
+    /// <param name="thread">Execution thread.</param>
+    /// <param name="args">Arguments.</param>
     /// <returns>Instance of <see cref="IRowsFormatter" /> or null.</returns>
-    public static IRowsFormatter? CreateFormatter(string id)
+    public static IRowsFormatter? CreateFormatter(string id, ExecutionThread thread, FunctionArguments? args = null)
     {
         if (Formatters.TryGetValue(id.ToLower(), out var factory))
         {
-            return factory.Invoke();
+            return factory.Invoke(thread.FunctionsManager, args ?? new FunctionArguments());
         }
         return null;
     }
@@ -59,7 +54,7 @@ public static class FormattersInfo
     /// </summary>
     /// <param name="id">Identifier (file extension or content type).</param>
     /// <param name="formatterFunc">Delegate to create formatter.</param>
-    public static void RegisterFormatter(string id, Func<IRowsFormatter> formatterFunc)
+    public static void RegisterFormatter(string id, Func<FunctionsManager, FunctionArguments, IRowsFormatter> formatterFunc)
     {
         Formatters[id] = formatterFunc;
     }

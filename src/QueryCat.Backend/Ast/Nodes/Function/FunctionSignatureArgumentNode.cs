@@ -54,7 +54,7 @@ public sealed class FunctionSignatureArgumentNode : AstNode, IEquatable<Function
         bool isArray = false,
         bool isVariadic = false)
     {
-        Name = name;
+        Name = name.ToUpper();
         TypeNode = typeNode;
         IsOptional = isOptional;
         HasDefaultValue = defaultValue != null;

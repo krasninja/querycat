@@ -1,8 +1,4 @@
-using System;
-using System.IO;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using Cake.Core;
 using Cake.Core.Diagnostics;
 using Cake.Frosting;
@@ -72,7 +68,7 @@ public class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
                 {
                     functionCallInfo.Push(VariantValue.Null);
                 }
-                rowsInput = inputFunction.Delegate.Invoke(functionCallInfo).GetAsObject<IRowsInput>();
+                rowsInput = inputFunction.Delegate.Invoke(functionCallInfo).As<IRowsInput>();
                 rowsInput.QueryContext = queryContext;
                 rowsInput.Open();
             }
