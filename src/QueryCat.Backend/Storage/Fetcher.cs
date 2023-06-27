@@ -31,7 +31,7 @@ public class Fetcher<TClass> where TClass : class
         var queryLimit = enumerableInput.QueryContext.QueryInfo.Limit + enumerableInput.QueryContext.QueryInfo.Offset;
         if (queryLimit.HasValue)
         {
-            var keyConditionsCount = enumerableInput.QueryContext.GetKeyConditions().Count();
+            var keyConditionsCount = enumerableInput.QueryContext.QueryInfo.GetKeyConditions(enumerableInput).Count();
             var allConditionsCount = enumerableInput.QueryContext.QueryInfo.Conditions.Count;
             // If we only have key conditions in query it means that all results will match
             // it. So we can natively limit output page size.

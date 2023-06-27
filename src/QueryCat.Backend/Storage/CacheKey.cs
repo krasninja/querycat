@@ -51,11 +51,11 @@ internal readonly struct CacheKey
         Array.Empty<string>(),
         Array.Empty<QueryContextCondition>());
 
-    public CacheKey(QueryContext queryContext) : this(
+    public CacheKey(IRowsInput rowsInput, QueryContext queryContext) : this(
         from: queryContext.InputInfo.RowsInputId,
         inputArguments: queryContext.InputInfo.InputArguments.ToArray(),
         selectColumns: queryContext.QueryInfo.Columns.Select(c => c.Name).ToArray(),
-        conditions: queryContext.GetKeyConditions().ToArray(),
+        conditions: rowsInput is IRowsInputKeys rowsInputKeys ? queryContext.QueryInfo.GetKeyConditions(rowsInputKeys).ToArray() : null,
         offset: queryContext.QueryInfo.Offset,
         limit: queryContext.QueryInfo.Limit)
     {

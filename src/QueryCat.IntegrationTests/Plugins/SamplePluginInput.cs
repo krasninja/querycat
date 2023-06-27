@@ -35,10 +35,10 @@ public class SamplePluginInput : FetchInput<TestClass>
     protected override void InitializeInputInfo(QueryContextInputInfo inputInfo)
     {
         Trace.WriteLine(nameof(InitializeInputInfo));
-        inputInfo.AddKeyColumn("Key",
+        AddKeyColumn("Key",
             isRequired: false,
             operation: VariantValue.Operation.Equals,
-            action: value => _key = value.AsString);
+            set: value => _key = value.AsString);
     }
 
     /// <inheritdoc />

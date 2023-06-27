@@ -59,7 +59,7 @@ public class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
 
         foreach (var inputFunction in pluginFunctions)
         {
-            IRowsInput rowsInput;
+            IRowsInputKeys rowsInput;
             var queryContext = new CollectQueryContext();
             try
             {
@@ -68,7 +68,7 @@ public class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
                 {
                     functionCallInfo.Push(VariantValue.Null);
                 }
-                rowsInput = inputFunction.Delegate.Invoke(functionCallInfo).As<IRowsInput>();
+                rowsInput = inputFunction.Delegate.Invoke(functionCallInfo).As<IRowsInputKeys>();
                 rowsInput.QueryContext = queryContext;
                 rowsInput.Open();
             }
@@ -94,10 +94,10 @@ public class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
                     continue;
                 }
                 var inputColumn =
-                    queryContext.InputInfo.KeyColumns.FirstOrDefault(c => c.ColumnName == column.Name);
+                    rowsInput.GetKeyColumns().FirstOrDefault(c => Column.NameEquals(c.ColumnName, column.Name));
                 if (inputColumn == null)
                 {
-                    inputColumn = new QueryContextInputInfo.KeyColumn(column.Name, Array.Empty<VariantValue.Operation>());
+                    inputColumn = new KeyColumn(column.Name);
                 }
                 var operations = string.Join(", ", inputColumn.Operations.Select(o => $"`{o}`"));
                 sb.AppendLine($"| `{column.Name}` | `{column.DataType}` | {(inputColumn.IsRequired ? "yes" : string.Empty)} | {column.Description} |");

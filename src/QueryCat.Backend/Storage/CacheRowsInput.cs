@@ -181,7 +181,7 @@ public sealed class CacheRowsInput : IRowsInput
         {
             return _currentCacheEntry;
         }
-        var key = new CacheKey(_queryContext);
+        var key = new CacheKey(_rowsInput, _queryContext);
         _currentCacheEntry = new CacheEntry(key, TimeSpan.FromMinutes(1));
         return _currentCacheEntry;
     }
@@ -202,7 +202,7 @@ public sealed class CacheRowsInput : IRowsInput
     {
         RemoveExpiredKeys();
 
-        var key = new CacheKey(_queryContext);
+        var key = new CacheKey(_rowsInput, _queryContext);
         // Fast path.
         if (_cacheEntries.TryGetValue(key, out var existingKey))
         {
@@ -227,7 +227,7 @@ public sealed class CacheRowsInput : IRowsInput
     public void Reset()
     {
         _rowIndex = -1;
-        var newCacheKey = new CacheKey(_queryContext);
+        var newCacheKey = new CacheKey(_rowsInput, _queryContext);
         if (_currentCacheEntry != null)
         {
             // If we reset but persist the same key - just go ahead using existing input.

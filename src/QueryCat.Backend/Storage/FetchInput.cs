@@ -59,9 +59,30 @@ public abstract class FetchInput<TClass> : RowsInput, IDisposable where TClass :
     /// <inheritdoc />
     protected override void Load()
     {
-        QueryContext.ValidateAndInvokeKeyConditions();
+        ValidateAndInvokeKeyConditions();
         var fetch = new Fetcher<TClass>(this);
         _enumerator = GetData(fetch).GetEnumerator();
+    }
+
+    /// <summary>
+    /// Validate key columns and execute property actions.
+    /// </summary>
+    private void ValidateAndInvokeKeyConditions()
+    {
+        foreach (var keyColumn in GetKeyColumns())
+        {
+            var condition = QueryContext.QueryInfo.Conditions.FirstOrDefault(c =>
+                Column.NameEquals(c.Column, keyColumn.ColumnName)
+                && keyColumn.Operations.Contains(c.Operation));
+            if (condition == null && keyColumn.IsRequired)
+            {
+                throw new QueryContextMissedCondition(keyColumn.ColumnName, keyColumn.Operations);
+            }
+            if (condition != null)
+            {
+                SetKeyColumnValue(keyColumn.ColumnName, condition.ValueFunc.Invoke());
+            }
+        }
     }
 
     /// <inheritdoc />

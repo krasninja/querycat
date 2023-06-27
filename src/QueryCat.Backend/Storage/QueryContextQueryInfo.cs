@@ -43,6 +43,21 @@ public sealed class QueryContextQueryInfo
     }
 
     /// <summary>
+    /// Get key conditions.
+    /// </summary>
+    /// <returns>Key condition.</returns>
+    internal IEnumerable<QueryContextCondition> GetKeyConditions(IRowsInputKeys rowsInputKeys)
+    {
+        foreach (var condition in Conditions)
+        {
+            if (rowsInputKeys.FindKeyColumn(condition.Column.Name, condition.Operation) != null)
+            {
+                yield return condition;
+            }
+        }
+    }
+
+    /// <summary>
     /// Add condition.
     /// </summary>
     /// <param name="condition">Condition instance.</param>

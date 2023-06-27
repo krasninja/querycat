@@ -117,42 +117,6 @@ public abstract class QueryContext
         => GetConditionValue(columnName, VariantValue.Operation.Equals, VariantValue.Operation.Equals);
 
     /// <summary>
-    /// Get key conditions.
-    /// </summary>
-    /// <returns>Key condition.</returns>
-    internal IEnumerable<QueryContextCondition> GetKeyConditions()
-    {
-        foreach (var condition in QueryInfo.Conditions)
-        {
-            if (InputInfo.FindKeyColumn(condition.Column.Name, condition.Operation) != null)
-            {
-                yield return condition;
-            }
-        }
-    }
-
-    /// <summary>
-    /// Validate key columns and execute property actions.
-    /// </summary>
-    internal void ValidateAndInvokeKeyConditions()
-    {
-        foreach (var keyColumn in InputInfo.KeyColumns)
-        {
-            var condition = QueryInfo.Conditions.FirstOrDefault(c =>
-                Column.NameEquals(c.Column, keyColumn.ColumnName)
-                    && keyColumn.Operations.Contains(c.Operation));
-            if (condition == null && keyColumn.IsRequired)
-            {
-                throw new QueryContextMissedCondition(keyColumn.ColumnName, keyColumn.Operations);
-            }
-            if (keyColumn.Action != null && condition != null)
-            {
-                keyColumn.Action.Invoke(condition.ValueFunc.Invoke());
-            }
-        }
-    }
-
-    /// <summary>
     /// Merge arguments from the source query context.
     /// </summary>
     /// <param name="sourceContext">Source query context.</param>

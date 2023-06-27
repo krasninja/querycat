@@ -8,9 +8,11 @@ namespace QueryCat.Backend.Storage;
 /// <summary>
 /// The class simplifies <see cref="IRowsInput" /> interface implementation.
 /// </summary>
-public abstract class RowsInput : IRowsInput
+public abstract class RowsInput : IRowsInputKeys
 {
     private bool _isFirstCall = true;
+    private readonly List<KeyColumn> _keyColumns = new();
+    private readonly Dictionary<string, Action<VariantValue>> _initKeysColumnsCallbacks = new();
 
     /// <summary>
     /// Query context.
@@ -57,4 +59,90 @@ public abstract class RowsInput : IRowsInput
     protected virtual void Load()
     {
     }
+
+    #region IRowsInputKeys
+
+    /// <inheritdoc />
+    public IReadOnlyList<KeyColumn> GetKeyColumns() => _keyColumns;
+
+    /// <inheritdoc />
+    public virtual void SetKeyColumnValue(string columnName, VariantValue value)
+    {
+        if (_initKeysColumnsCallbacks.TryGetValue(columnName, out var action))
+        {
+            action.Invoke(value);
+        }
+    }
+
+    #endregion
+
+    #region Key columns
+
+    /// <summary>
+    /// Add key column information.
+    /// </summary>
+    /// <param name="columnName">Column name.</param>
+    /// <param name="isRequired">Is this the required condition.</param>
+    /// <param name="set">Initialization action.</param>
+    /// <returns>Instance of <see cref="RowsInput" />.</returns>
+    public RowsInput AddKeyColumn(
+        string columnName,
+        bool isRequired = false,
+        Action<VariantValue>? set = null)
+    {
+        _keyColumns.Add(new KeyColumn(columnName, isRequired, VariantValue.Operation.Equals));
+        if (set != null)
+        {
+            _initKeysColumnsCallbacks[columnName] = set;
+        }
+        return this;
+    }
+
+    /// <summary>
+    /// Add key column information.
+    /// </summary>
+    /// <param name="columnName">Column name.</param>
+    /// <param name="operation">Key operation.</param>
+    /// <param name="isRequired">Is this the required condition.</param>
+    /// <param name="set">Initialization action.</param>
+    /// <returns>Instance of <see cref="RowsInput" />.</returns>
+    public RowsInput AddKeyColumn(
+        string columnName,
+        VariantValue.Operation operation,
+        bool isRequired = false,
+        Action<VariantValue>? set = null)
+    {
+        _keyColumns.Add(new KeyColumn(columnName, isRequired, operation));
+        if (set != null)
+        {
+            _initKeysColumnsCallbacks[columnName] = set;
+        }
+        return this;
+    }
+
+    /// <summary>
+    /// Add key column information.
+    /// </summary>
+    /// <param name="columnName">Column name.</param>
+    /// <param name="operation">Key operation.</param>
+    /// <param name="orOperation">Alternate key operation.</param>
+    /// <param name="isRequired">Is this the required condition.</param>
+    /// <param name="set">Initialization action.</param>
+    /// <returns>Instance of <see cref="RowsInput" />.</returns>
+    public RowsInput AddKeyColumn(
+        string columnName,
+        VariantValue.Operation operation,
+        VariantValue.Operation orOperation,
+        bool isRequired = false,
+        Action<VariantValue>? set = null)
+    {
+        _keyColumns.Add(new KeyColumn(columnName, isRequired, operation, orOperation));
+        if (set != null)
+        {
+            _initKeysColumnsCallbacks[columnName] = set;
+        }
+        return this;
+    }
+
+    #endregion
 }
