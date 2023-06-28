@@ -84,8 +84,7 @@ public abstract class RowsInput : IRowsInputKeys
     /// <param name="columnName">Column name.</param>
     /// <param name="isRequired">Is this the required condition.</param>
     /// <param name="set">Initialization action.</param>
-    /// <returns>Instance of <see cref="RowsInput" />.</returns>
-    public RowsInput AddKeyColumn(
+    public void AddKeyColumn(
         string columnName,
         bool isRequired = false,
         Action<VariantValue>? set = null)
@@ -95,7 +94,6 @@ public abstract class RowsInput : IRowsInputKeys
         {
             _initKeysColumnsCallbacks[columnName] = set;
         }
-        return this;
     }
 
     /// <summary>
@@ -105,8 +103,7 @@ public abstract class RowsInput : IRowsInputKeys
     /// <param name="operation">Key operation.</param>
     /// <param name="isRequired">Is this the required condition.</param>
     /// <param name="set">Initialization action.</param>
-    /// <returns>Instance of <see cref="RowsInput" />.</returns>
-    public RowsInput AddKeyColumn(
+    public void AddKeyColumn(
         string columnName,
         VariantValue.Operation operation,
         bool isRequired = false,
@@ -117,7 +114,6 @@ public abstract class RowsInput : IRowsInputKeys
         {
             _initKeysColumnsCallbacks[columnName] = set;
         }
-        return this;
     }
 
     /// <summary>
@@ -128,8 +124,7 @@ public abstract class RowsInput : IRowsInputKeys
     /// <param name="orOperation">Alternate key operation.</param>
     /// <param name="isRequired">Is this the required condition.</param>
     /// <param name="set">Initialization action.</param>
-    /// <returns>Instance of <see cref="RowsInput" />.</returns>
-    public RowsInput AddKeyColumn(
+    public void AddKeyColumn(
         string columnName,
         VariantValue.Operation operation,
         VariantValue.Operation orOperation,
@@ -141,7 +136,6 @@ public abstract class RowsInput : IRowsInputKeys
         {
             _initKeysColumnsCallbacks[columnName] = set;
         }
-        return this;
     }
 
     #endregion
