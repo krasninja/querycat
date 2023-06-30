@@ -264,7 +264,7 @@ internal sealed partial class SelectPlanner
         // might be resource consuming operation.
         if (!ExecutionThread.Options.DisableCache && Context_CanUseInputCache(right))
         {
-            right = new CacheRowsInput(right);
+            right = new CacheRowsInput(right, context.Conditions);
         }
 
         if (tableJoinedNode is SelectTableJoinedOnNode joinedOnNode)

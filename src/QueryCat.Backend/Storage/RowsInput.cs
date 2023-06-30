@@ -12,12 +12,18 @@ public abstract class RowsInput : IRowsInputKeys
 {
     private bool _isFirstCall = true;
     private readonly List<KeyColumn> _keyColumns = new();
-    private readonly Dictionary<string, Action<VariantValue>> _initKeysColumnsCallbacks = new();
+    private readonly Dictionary<string, Action<VariantValue>> _initKeysColumnsCallbacks = new(IgnoreCaseStringEqualityComparer.Instance);
+    private readonly Dictionary<string, VariantValue> _setKeyColumns = new(IgnoreCaseStringEqualityComparer.Instance);
 
     /// <summary>
     /// Query context.
     /// </summary>
     public QueryContext QueryContext { get; set; } = new EmptyQueryContext();
+
+    /// <summary>
+    /// Is <c>true</c> if user set all key columns in his query.
+    /// </summary>
+    public bool AreAllKeyColumnsSet => _keyColumns.Count == _setKeyColumns.Count;
 
     /// <inheritdoc />
     public abstract Column[] Columns { get; protected set; }
@@ -68,6 +74,11 @@ public abstract class RowsInput : IRowsInputKeys
     /// <inheritdoc />
     public virtual void SetKeyColumnValue(string columnName, VariantValue value)
     {
+        if (!_keyColumns.Any(c => Column.NameEquals(c.ColumnName, columnName)))
+        {
+            throw new QueryCatException($"The column '{columnName} is not found among key columns.");
+        }
+        _setKeyColumns[columnName] = value;
         if (_initKeysColumnsCallbacks.TryGetValue(columnName, out var action))
         {
             action.Invoke(value);
@@ -136,6 +147,20 @@ public abstract class RowsInput : IRowsInputKeys
         {
             _initKeysColumnsCallbacks[columnName] = set;
         }
+    }
+
+    /// <summary>
+    /// Get key column value by column name.
+    /// </summary>
+    /// <param name="columnName">Column name.</param>
+    /// <returns>Value or null.</returns>
+    public VariantValue GetKeyColumnValue(string columnName)
+    {
+        if (_setKeyColumns.TryGetValue(columnName, out var value))
+        {
+            return value;
+        }
+        return VariantValue.Null;
     }
 
     #endregion

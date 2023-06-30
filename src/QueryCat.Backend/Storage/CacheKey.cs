@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using System.Text;
 using QueryCat.Backend.Abstractions;
+using QueryCat.Backend.Commands.Select;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Types;
 using QueryCat.Backend.Utils;
@@ -49,13 +50,13 @@ internal readonly struct CacheKey
         from: "empty",
         Array.Empty<string>(),
         Array.Empty<string>(),
-        Array.Empty<QueryContextCondition>());
+        Array.Empty<SelectQueryCondition>());
 
-    public CacheKey(IRowsInput rowsInput, QueryContext queryContext) : this(
+    public CacheKey(IRowsInput rowsInput, QueryContext queryContext, SelectQueryConditions conditions) : this(
         from: queryContext.InputInfo.RowsInputId,
         inputArguments: queryContext.InputInfo.InputArguments.ToArray(),
         selectColumns: queryContext.QueryInfo.Columns.Select(c => c.Name).ToArray(),
-        conditions: rowsInput is IRowsInputKeys rowsInputKeys ? queryContext.QueryInfo.GetKeyConditions(rowsInputKeys).ToArray() : null,
+        conditions: rowsInput is IRowsInputKeys rowsInputKeys ? conditions.GetKeyConditions(rowsInputKeys).ToArray() : null,
         offset: queryContext.QueryInfo.Offset,
         limit: queryContext.QueryInfo.Limit)
     {
@@ -65,13 +66,13 @@ internal readonly struct CacheKey
         string from,
         string[] inputArguments,
         string[] selectColumns,
-        QueryContextCondition[]? conditions = null,
+        SelectQueryCondition[]? conditions = null,
         long offset = 0,
         long? limit = null) : this(
             from,
             inputArguments,
             selectColumns,
-            (conditions ?? Array.Empty<QueryContextCondition>()).Select(c =>
+            (conditions ?? Array.Empty<SelectQueryCondition>()).Select(c =>
                 new CacheKeyCondition(
                     c.Column,
                     c.Operation,

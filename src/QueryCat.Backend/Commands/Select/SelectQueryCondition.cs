@@ -2,12 +2,12 @@ using QueryCat.Backend.Functions;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Types;
 
-namespace QueryCat.Backend.Storage;
+namespace QueryCat.Backend.Commands.Select;
 
 /// <summary>
 /// Query filter condition.
 /// </summary>
-public class QueryContextCondition
+public class SelectQueryCondition
 {
     public Column Column { get; }
 
@@ -23,7 +23,7 @@ public class QueryContextCondition
     /// <param name="column">Filter column.</param>
     /// <param name="operation">Filter operation.</param>
     /// <param name="valueFuncs">Filter values.</param>
-    public QueryContextCondition(
+    public SelectQueryCondition(
         Column column,
         VariantValue.Operation operation,
         IReadOnlyList<IFuncUnit> valueFuncs)
@@ -44,7 +44,7 @@ public class QueryContextCondition
     /// <param name="column">Filter column.</param>
     /// <param name="operation">Filter operation.</param>
     /// <param name="value">Filter value.</param>
-    public QueryContextCondition(
+    public SelectQueryCondition(
         Column column,
         VariantValue.Operation operation,
         IFuncUnit value) : this(column, operation, new[] { value })

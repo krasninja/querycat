@@ -2,16 +2,17 @@ using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Relational;
+using QueryCat.Backend.Storage;
 using QueryCat.Backend.Types;
 using QueryCat.Backend.Utils;
 
-namespace QueryCat.Backend.Storage;
+namespace QueryCat.Backend.Commands.Select.Inputs;
 
 /// <summary>
 /// The input caches input data and after reset reads it from memory instead.
 /// </summary>
 [DebuggerDisplay("Count = {TotalCacheEntries}, CacheReads = {CacheReads}, TotalReads = {TotalReads}")]
-public sealed class CacheRowsInput : IRowsInput
+internal sealed class CacheRowsInput : IRowsInput
 {
     private const int ChunkSize = 4096;
 
@@ -48,6 +49,7 @@ public sealed class CacheRowsInput : IRowsInput
 
     private readonly Dictionary<CacheKey, CacheEntry> _cacheEntries = new();
     private readonly IRowsInput _rowsInput;
+    private readonly SelectQueryConditions _conditions;
     private bool[] _cacheReadMap;
     private int _rowIndex = -1;
     private CacheEntry? _currentCacheEntry;
@@ -76,9 +78,10 @@ public sealed class CacheRowsInput : IRowsInput
         }
     }
 
-    public CacheRowsInput(IRowsInput rowsInput)
+    public CacheRowsInput(IRowsInput rowsInput, SelectQueryConditions? conditions = null)
     {
         _rowsInput = rowsInput;
+        _conditions = conditions ?? new SelectQueryConditions();
         _cacheReadMap = Array.Empty<bool>();
         _queryContext = rowsInput.QueryContext;
     }
@@ -181,7 +184,7 @@ public sealed class CacheRowsInput : IRowsInput
         {
             return _currentCacheEntry;
         }
-        var key = new CacheKey(_rowsInput, _queryContext);
+        var key = new CacheKey(_rowsInput, _queryContext, _conditions);
         _currentCacheEntry = new CacheEntry(key, TimeSpan.FromMinutes(1));
         return _currentCacheEntry;
     }
@@ -202,7 +205,7 @@ public sealed class CacheRowsInput : IRowsInput
     {
         RemoveExpiredKeys();
 
-        var key = new CacheKey(_rowsInput, _queryContext);
+        var key = new CacheKey(_rowsInput, _queryContext, _conditions);
         // Fast path.
         if (_cacheEntries.TryGetValue(key, out var existingKey))
         {
@@ -227,7 +230,7 @@ public sealed class CacheRowsInput : IRowsInput
     public void Reset()
     {
         _rowIndex = -1;
-        var newCacheKey = new CacheKey(_rowsInput, _queryContext);
+        var newCacheKey = new CacheKey(_rowsInput, _queryContext, _conditions);
         if (_currentCacheEntry != null)
         {
             // If we reset but persist the same key - just go ahead using existing input.

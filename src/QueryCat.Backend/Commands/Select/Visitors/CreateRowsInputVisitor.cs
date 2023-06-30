@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes.Select;
+using QueryCat.Backend.Commands.Select.Inputs;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Storage;
 using QueryCat.Backend.Types;
@@ -66,7 +67,7 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
             };
             if (_context.Parent != null && !_executionThread.Options.DisableCache)
             {
-                rowsInput = new CacheRowsInput(rowsInput);
+                rowsInput = new CacheRowsInput(rowsInput, _context.Conditions);
             }
             rowsInput.QueryContext = queryContext.Merge(rowsInput.QueryContext);
             rowsInput.Open();

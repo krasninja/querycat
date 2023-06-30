@@ -19,6 +19,8 @@ internal sealed class SelectCommandContext : IDisposable
 
     internal int Id { get; } = Interlocked.Increment(ref nextId);
 
+    public SelectQueryConditions Conditions { get; } = new();
+
     public SelectCommandContext(SelectQueryNode queryNode)
     {
         _queryNode = queryNode;

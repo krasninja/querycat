@@ -1,5 +1,6 @@
 using Xunit;
 using QueryCat.Backend.Commands.Select;
+using QueryCat.Backend.Commands.Select.Inputs;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Storage;
