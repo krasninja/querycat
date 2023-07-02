@@ -13,6 +13,11 @@ public class ExecutionThreadBootstrapper
 {
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger<ExecutionThreadBootstrapper>();
 
+    /// <summary>
+    /// Load plugins.
+    /// </summary>
+    public bool LoadPlugins { get; set; }
+
     public void Bootstrap(ExecutionThread executionThread)
     {
 #if DEBUG
@@ -35,7 +40,10 @@ public class ExecutionThreadBootstrapper
         executionThread.FunctionsManager.RegisterFactory(Providers.Registration.RegisterFunctions);
         executionThread.FunctionsManager.RegisterFactory(XmlFormatter.RegisterFunctions);
 #if ENABLE_PLUGINS
-        executionThread.LoadPlugins();
+        if (LoadPlugins)
+        {
+            executionThread.LoadPlugins();
+        }
 #endif
 #if DEBUG
         timer.Stop();

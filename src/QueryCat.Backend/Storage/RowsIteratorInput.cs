@@ -18,17 +18,13 @@ public sealed class RowsIteratorInput : IRowsInput, IRowsIteratorParent
     public Column[] Columns { get; }
 
     /// <inheritdoc />
+    public string[] UniqueKey { get; }
+
+    /// <inheritdoc />
     public QueryContext QueryContext
     {
         get => _queryContext;
-        set
-        {
-            _queryContext = value;
-            if (!string.IsNullOrEmpty(_id))
-            {
-                _queryContext.InputInfo.InputArguments = new[] { _id };
-            }
-        }
+        set => _queryContext = value;
     }
 
     public RowsIteratorInput(IRowsIterator rowsIterator, string? id = null)
@@ -36,6 +32,7 @@ public sealed class RowsIteratorInput : IRowsInput, IRowsIteratorParent
         _rowsIterator = rowsIterator;
         Columns = rowsIterator.Columns;
         _id = id ?? string.Empty;
+        UniqueKey = new[] { _id };
     }
 
     /// <inheritdoc />
@@ -61,10 +58,6 @@ public sealed class RowsIteratorInput : IRowsInput, IRowsIteratorParent
     /// <inheritdoc />
     public void Reset()
     {
-        if (_queryContext?.InputInfo != null && !string.IsNullOrEmpty(_id))
-        {
-            _queryContext.InputInfo.InputArguments = new[] { _id };
-        }
         _rowsIterator.Reset();
     }
 

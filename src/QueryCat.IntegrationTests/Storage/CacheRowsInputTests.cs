@@ -67,25 +67,25 @@ public class CacheRowsInputTests
         rowsFrame1.AddRow("Ivan");
         var rowsFrame2 = new RowsFrame(new Column("Name", DataType.String));
         rowsFrame2.AddRow("Marina");
-        var input1 = new RowsIteratorInput(rowsFrame1.GetIterator());
-        var input2 = new RowsIteratorInput(rowsFrame2.GetIterator());
+        var input1 = new RowsIteratorInput(rowsFrame1.GetIterator(), "input1");
+        var input2 = new RowsIteratorInput(rowsFrame2.GetIterator(), "input2");
         var proxyInput = new ProxyRowsInput(input1);
         var cacheRowsInput = new CacheRowsInput(proxyInput);
         cacheRowsInput.QueryContext = new SelectInputQueryContext(cacheRowsInput, ExecutionThread.DefaultInstance);
         var iterator = cacheRowsInput.AsIterable(autoFetch: true);
 
         // Act.
-        proxyInput.SetInput(input1, nameof(input1));
+        proxyInput.SetInput(input1);
         cacheRowsInput.Reset();
         iterator.MoveNext(); // Read.
         iterator.MoveNext(); // Read EOF.
 
-        proxyInput.SetInput(input2, nameof(input2));
+        proxyInput.SetInput(input2);
         cacheRowsInput.Reset();
         iterator.MoveNext(); // Read.
         iterator.MoveNext(); // Read EOF.
 
-        proxyInput.SetInput(input1, nameof(input1));
+        proxyInput.SetInput(input1);
         cacheRowsInput.Reset();
         iterator.MoveNext(); // Read cache.
 
@@ -104,28 +104,28 @@ public class CacheRowsInputTests
         rowsFrame1.AddRow("Vladimir");
         var rowsFrame2 = new RowsFrame(new Column("Name", DataType.String));
         rowsFrame2.AddRow("Marina");
-        var input1 = new RowsIteratorInput(rowsFrame1.GetIterator());
-        var input2 = new RowsIteratorInput(rowsFrame2.GetIterator());
+        var input1 = new RowsIteratorInput(rowsFrame1.GetIterator(), "input1");
+        var input2 = new RowsIteratorInput(rowsFrame2.GetIterator(), "input2");
         var proxyInput = new ProxyRowsInput(input1);
         var cacheRowsInput = new CacheRowsInput(proxyInput);
         cacheRowsInput.QueryContext = new SelectInputQueryContext(cacheRowsInput, ExecutionThread.DefaultInstance);
         var iterator = cacheRowsInput.AsIterable(autoFetch: true);
 
         // Act.
-        proxyInput.SetInput(input1, nameof(input1));
+        proxyInput.SetInput(input1);
         cacheRowsInput.Reset();
         iterator.MoveNext(); // Read.
 
-        proxyInput.SetInput(input2, nameof(input2));
+        proxyInput.SetInput(input2);
         cacheRowsInput.Reset();
         iterator.MoveNext(); // Read.
         iterator.MoveNext(); // Read EOF.
 
-        proxyInput.SetInput(input1, nameof(input1));
+        proxyInput.SetInput(input1);
         cacheRowsInput.Reset();
         iterator.MoveNext(); // Read.
 
-        proxyInput.SetInput(input2, nameof(input2));
+        proxyInput.SetInput(input2);
         cacheRowsInput.Reset();
         iterator.MoveNext(); // Read cache.
 

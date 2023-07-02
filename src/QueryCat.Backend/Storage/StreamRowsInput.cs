@@ -49,17 +49,8 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
 
     private bool _isClosed;
 
-    private QueryContext _queryContext = new EmptyQueryContext();
-
-    public QueryContext QueryContext
-    {
-        get => _queryContext;
-        set
-        {
-            _queryContext = value;
-            _queryContext.InputInfo.MergeInputArguments(_options.CacheKeys);
-        }
-    }
+    /// <inheritdoc />
+    public QueryContext QueryContext { get; set; } = new EmptyQueryContext();
 
     // Current position in a reading row. We need it in a case if read current row and need to
     // fetch new data to finish. The current position will contain the start index.
@@ -73,6 +64,9 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     /// <inheritdoc />
     public Column[] Columns => _columns;
 
+    /// <inheritdoc />
+    public string[] UniqueKey { get; set; }
+
     private int _virtualColumnsCount;
 
     private readonly DelimiterStreamReader _delimiterStreamReader;
@@ -84,10 +78,15 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     /// </summary>
     /// <param name="streamReader">Stream reader.</param>
     /// <param name="options">The options.</param>
-    protected StreamRowsInput(StreamReader streamReader, StreamRowsInputOptions? options = null)
+    /// <param name="keys">Unique keys.</param>
+    protected StreamRowsInput(
+        StreamReader streamReader,
+        StreamRowsInputOptions? options = null,
+        params string[] keys)
     {
         _options = options ?? new();
         _delimiterStreamReader = new DelimiterStreamReader(streamReader, _options.DelimiterStreamReaderOptions);
+        UniqueKey = keys.Concat(_options.CacheKeys).ToArray();
         StreamReader = streamReader;
     }
 

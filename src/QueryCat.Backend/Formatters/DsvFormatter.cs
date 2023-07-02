@@ -86,8 +86,8 @@ internal class DsvFormatter : IRowsFormatter
     }
 
     /// <inheritdoc />
-    public IRowsInput OpenInput(Stream input)
-        => new DsvInput(GetOptions(input));
+    public IRowsInput OpenInput(Stream input, string? key = null)
+        => new DsvInput(GetOptions(input), key);
 
     /// <inheritdoc />
     public IRowsOutput OpenOutput(Stream output)

@@ -9,8 +9,9 @@ public interface IRowsFormatter
     /// Create input formatter.
     /// </summary>
     /// <param name="input">Input stream.</param>
+    /// <param name="key">Unique key.</param>
     /// <returns>Instance of <see cref="IRowsInput" />.</returns>
-    IRowsInput OpenInput(Stream input);
+    IRowsInput OpenInput(Stream input, string? key = null);
 
     /// <summary>
     /// Create output formatter.

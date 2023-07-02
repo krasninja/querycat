@@ -54,7 +54,7 @@ internal readonly struct CacheKey
 
     public CacheKey(IRowsInput rowsInput, QueryContext queryContext, SelectQueryConditions conditions) : this(
         from: queryContext.InputInfo.RowsInputId,
-        inputArguments: queryContext.InputInfo.InputArguments.ToArray(),
+        inputArguments: rowsInput.UniqueKey,
         selectColumns: queryContext.QueryInfo.Columns.Select(c => c.Name).ToArray(),
         conditions: rowsInput is IRowsInputKeys rowsInputKeys ? conditions.GetKeyConditions(rowsInputKeys).ToArray() : null,
         offset: queryContext.QueryInfo.Offset,
@@ -70,7 +70,7 @@ internal readonly struct CacheKey
         long offset = 0,
         long? limit = null) : this(
             from,
-            inputArguments,
+            inputArguments.Where(a => !string.IsNullOrEmpty(a)).ToArray(),
             selectColumns,
             (conditions ?? Array.Empty<SelectQueryCondition>()).Select(c =>
                 new CacheKeyCondition(

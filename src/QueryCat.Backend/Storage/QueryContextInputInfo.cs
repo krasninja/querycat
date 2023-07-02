@@ -18,11 +18,6 @@ public sealed class QueryContextInputInfo
     public string RowsInputId { get; }
 
     /// <summary>
-    /// Input arguments.
-    /// </summary>
-    public string[] InputArguments { get; set; } = Array.Empty<string>();
-
-    /// <summary>
     /// Constructor.
     /// </summary>
     /// <param name="rowsInput">Rows input.</param>
@@ -30,30 +25,5 @@ public sealed class QueryContextInputInfo
     {
         RowsInput = rowsInput;
         RowsInputId = rowsInput.GetType().Name;
-    }
-
-    /// <summary>
-    /// Set rows input arguments to distinct it among other queries of the same input.
-    /// </summary>
-    /// <param name="arguments">Input arguments (file name, ids).</param>
-    /// <returns>Instance of <see cref="QueryContextInputInfo" />.</returns>
-    public QueryContextInputInfo SetInputArguments(params string[] arguments)
-    {
-        InputArguments = arguments;
-        return this;
-    }
-
-    /// <summary>
-    /// Merge rows input arguments to distinct it among other queries of the same input.
-    /// </summary>
-    /// <param name="arguments">Input arguments (file name, ids).</param>
-    /// <returns>Instance of <see cref="QueryContextInputInfo" />.</returns>
-    public QueryContextInputInfo MergeInputArguments(params string[] arguments)
-    {
-        if (arguments.Length > 0)
-        {
-            SetInputArguments(InputArguments.Concat(arguments).ToArray());
-        }
-        return this;
     }
 }

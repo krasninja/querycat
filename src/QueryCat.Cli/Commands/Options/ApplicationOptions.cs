@@ -30,7 +30,10 @@ internal class ApplicationOptions
 #endif
         var executionThread = new ExecutionThread(executionOptions);
         executionThread.Statistic.CountErrorRows = executionThread.Options.ShowDetailedStatistic;
-        new ExecutionThreadBootstrapper().Bootstrap(executionThread);
+        new ExecutionThreadBootstrapper
+        {
+            LoadPlugins = true
+        }.Bootstrap(executionThread);
         return executionThread;
     }
 

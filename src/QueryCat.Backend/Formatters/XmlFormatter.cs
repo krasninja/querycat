@@ -23,8 +23,8 @@ internal class XmlFormatter : IRowsFormatter
     }
 
     /// <inheritdoc />
-    public IRowsInput OpenInput(Stream input)
-        => new XmlInput(new StreamReader(input), _xpath);
+    public IRowsInput OpenInput(Stream input, string? key = null)
+        => new XmlInput(new StreamReader(input), _xpath, key ?? string.Empty);
 
     /// <inheritdoc />
     public IRowsOutput OpenOutput(Stream output)

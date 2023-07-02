@@ -43,7 +43,10 @@ public class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
         {
             PluginDirectories = { assemblyFile }
         });
-        new ExecutionThreadBootstrapper().Bootstrap(thread);
+        new ExecutionThreadBootstrapper
+        {
+            LoadPlugins = true,
+        }.Bootstrap(thread);
         var pluginFunctions = thread.FunctionsManager.GetFunctions()
             .Where(f =>
                 f.ReturnType == DataType.Object

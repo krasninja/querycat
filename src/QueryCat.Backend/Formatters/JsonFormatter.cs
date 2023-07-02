@@ -26,9 +26,9 @@ internal sealed class JsonFormatter : IRowsFormatter
     }
 
     /// <inheritdoc />
-    public IRowsInput OpenInput(Stream input)
+    public IRowsInput OpenInput(Stream input, string? key = null)
     {
-        return new JsonInput(new StreamReader(input), jsonPath: _jsonPath);
+        return new JsonInput(new StreamReader(input), jsonPath: _jsonPath, key: key);
     }
 
     /// <inheritdoc />

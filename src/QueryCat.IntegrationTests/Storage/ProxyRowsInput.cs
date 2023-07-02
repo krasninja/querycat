@@ -16,6 +16,9 @@ public class ProxyRowsInput : IRowsInput, IRowsIteratorParent
     public Column[] Columns => _rowsInput.Columns;
 
     /// <inheritdoc />
+    public string[] UniqueKey => _rowsInput.UniqueKey;
+
+    /// <inheritdoc />
     public QueryContext QueryContext
     {
         get => _queryContext;
@@ -52,13 +55,9 @@ public class ProxyRowsInput : IRowsInput, IRowsIteratorParent
         stringBuilder.AppendRowsInputsWithIndent("Proxy", _rowsInput);
     }
 
-    public void SetInput(IRowsInput rowsInput, params string[] inputArguments)
+    public void SetInput(IRowsInput rowsInput)
     {
         _rowsInput = rowsInput;
-        if (inputArguments.Any())
-        {
-            QueryContext.InputInfo.SetInputArguments(inputArguments);
-        }
     }
 
     /// <inheritdoc />

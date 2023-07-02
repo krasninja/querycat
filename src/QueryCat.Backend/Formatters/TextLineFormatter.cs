@@ -19,7 +19,7 @@ internal class TextLineFormatter : IRowsFormatter
     }
 
     /// <inheritdoc />
-    public IRowsInput OpenInput(Stream input) => new TextLineInput(input);
+    public IRowsInput OpenInput(Stream input, string? key = null) => new TextLineInput(input, key);
 
     /// <inheritdoc />
     public IRowsOutput OpenOutput(Stream output)

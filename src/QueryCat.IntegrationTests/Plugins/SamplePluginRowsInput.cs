@@ -35,6 +35,9 @@ public class SamplePluginRowsInput : IRowsInput
     };
 
     /// <inheritdoc />
+    public string[] UniqueKey { get; } = Array.Empty<string>();
+
+    /// <inheritdoc />
     public QueryContext QueryContext
     {
         get => EmptyQueryContext.Empty;

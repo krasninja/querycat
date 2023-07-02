@@ -24,6 +24,9 @@ public class CollectionInput<TClass> : IRowsOutput, IRowsInputUpdate where TClas
     public Column[] Columns => _columns;
 
     /// <inheritdoc />
+    public string[] UniqueKey { get; } = Array.Empty<string>();
+
+    /// <inheritdoc />
     public QueryContext QueryContext { get; set; } = new EmptyQueryContext();
 
     public CollectionInput(IEnumerable<TClass> list)

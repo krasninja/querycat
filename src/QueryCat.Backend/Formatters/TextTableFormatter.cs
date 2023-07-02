@@ -8,8 +8,8 @@ namespace QueryCat.Backend.Formatters;
 public class TextTableFormatter : IRowsFormatter
 {
     /// <inheritdoc />
-    public IRowsInput OpenInput(Stream input)
-        => new TextTableInput(input);
+    public IRowsInput OpenInput(Stream input, string? key = null)
+        => new TextTableInput(input, key);
 
     /// <inheritdoc />
     public IRowsOutput OpenOutput(Stream output)

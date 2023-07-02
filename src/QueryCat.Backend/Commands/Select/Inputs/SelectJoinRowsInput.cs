@@ -25,6 +25,9 @@ internal sealed class SelectJoinRowsInput : IRowsInput, IRowsIteratorParent
     public Column[] Columns { get; }
 
     /// <inheritdoc />
+    public string[] UniqueKey => _leftInput.UniqueKey.Concat(_rightInput.UniqueKey).ToArray();
+
+    /// <inheritdoc />
     public QueryContext QueryContext
     {
         get => _leftInput.QueryContext;

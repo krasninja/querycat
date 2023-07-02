@@ -29,6 +29,9 @@ public abstract class RowsInput : IRowsInputKeys
     public abstract Column[] Columns { get; protected set; }
 
     /// <inheritdoc />
+    public virtual string[] UniqueKey { get; protected set; } = Array.Empty<string>();
+
+    /// <inheritdoc />
     public abstract void Open();
 
     /// <inheritdoc />

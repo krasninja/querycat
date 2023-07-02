@@ -9,6 +9,11 @@ namespace QueryCat.Backend.Abstractions;
 public interface IRowsInput : IRowsSource, IRowsSchema
 {
     /// <summary>
+    /// Unique keys identifies rows input among others. It can be used by cache layer.
+    /// </summary>
+    string[] UniqueKey { get; }
+
+    /// <summary>
     /// Read the column's value at current position. The column target type is expected, otherwise
     /// the cast will be performed.
     /// </summary>

@@ -20,7 +20,7 @@ internal sealed class NullFormatter : IRowsFormatter
     }
 
     /// <inheritdoc />
-    public IRowsInput OpenInput(Stream input)
+    public IRowsInput OpenInput(Stream input, string? key = null)
         => new NullRowsInput();
 
     /// <inheritdoc />

@@ -21,7 +21,7 @@ internal sealed class JsonInput : StreamRowsInput
     private string[] _properties = Array.Empty<string>();
 
     /// <inheritdoc />
-    public JsonInput(StreamReader streamReader, bool addFileNameColumn = true, string? jsonPath = null)
+    public JsonInput(StreamReader streamReader, bool addFileNameColumn = true, string? jsonPath = null, string? key = null)
         : base(
             GetEvaluatedStream(streamReader, jsonPath), new StreamRowsInputOptions
         {
@@ -35,7 +35,7 @@ internal sealed class JsonInput : StreamRowsInput
                 IncludeDelimiter = true,
             },
             AddInputSourceColumn = addFileNameColumn,
-        })
+        }, key ?? string.Empty)
     {
         SetOnDelimiterDelegate(OnDelimiter);
     }

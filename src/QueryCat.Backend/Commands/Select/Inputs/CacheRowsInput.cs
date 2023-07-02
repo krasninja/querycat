@@ -59,6 +59,9 @@ internal sealed class CacheRowsInput : IRowsInput
     /// <inheritdoc />
     public Column[] Columns => _rowsInput.Columns;
 
+    /// <inheritdoc />
+    public string[] UniqueKey => _rowsInput.UniqueKey;
+
     internal int CacheReads { get; private set; }
 
     internal int InputReads { get; private set; }

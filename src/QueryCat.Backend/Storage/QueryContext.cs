@@ -1,6 +1,4 @@
 using QueryCat.Backend.Abstractions;
-using QueryCat.Backend.Relational;
-using QueryCat.Backend.Types;
 
 namespace QueryCat.Backend.Storage;
 
@@ -32,16 +30,5 @@ public abstract class QueryContext
     public QueryContext(IExecutionThread executionThread)
     {
         ExecutionThread = executionThread;
-    }
-
-    /// <summary>
-    /// Merge arguments from the source query context.
-    /// </summary>
-    /// <param name="sourceContext">Source query context.</param>
-    /// <returns>Instance of <see cref="QueryContext" />.</returns>
-    internal virtual QueryContext Merge(QueryContext sourceContext)
-    {
-        InputInfo.MergeInputArguments(sourceContext.InputInfo.InputArguments);
-        return this;
     }
 }
