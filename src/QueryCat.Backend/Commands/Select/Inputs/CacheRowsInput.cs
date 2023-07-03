@@ -12,7 +12,7 @@ namespace QueryCat.Backend.Commands.Select.Inputs;
 /// The input caches input data and after reset reads it from memory instead.
 /// </summary>
 [DebuggerDisplay("Count = {TotalCacheEntries}, CacheReads = {CacheReads}, TotalReads = {TotalReads}")]
-internal sealed class CacheRowsInput : IRowsInput
+internal sealed class CacheRowsInput : IRowsInputKeys
 {
     private const int ChunkSize = 4096;
 
@@ -255,6 +255,25 @@ internal sealed class CacheRowsInput : IRowsInput
     public void Explain(IndentedStringBuilder stringBuilder)
     {
         stringBuilder.AppendRowsInputsWithIndent("Cache", _rowsInput);
+    }
+
+    /// <inheritdoc />
+    public IReadOnlyList<KeyColumn> GetKeyColumns()
+    {
+        if (_rowsInput is IRowsInputKeys rowsInputKeys)
+        {
+            return rowsInputKeys.GetKeyColumns();
+        }
+        return new List<KeyColumn>();
+    }
+
+    /// <inheritdoc />
+    public void SetKeyColumnValue(string columnName, VariantValue value)
+    {
+        if (_rowsInput is IRowsInputKeys rowsInputKeys)
+        {
+            rowsInputKeys.SetKeyColumnValue(columnName, value);
+        }
     }
 
     /// <inheritdoc />

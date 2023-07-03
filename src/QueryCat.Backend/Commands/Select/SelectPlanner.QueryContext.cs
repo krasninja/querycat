@@ -1,6 +1,7 @@
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Select;
+using QueryCat.Backend.Commands.Select.Iterators;
 using QueryCat.Backend.Commands.Select.Visitors;
 using QueryCat.Backend.Functions;
 using QueryCat.Backend.Relational;
@@ -161,28 +162,34 @@ internal sealed partial class SelectPlanner
     }
 
     /// <summary>
-    /// Validate key columns and set values.
+    /// Validate key columns values.
     /// </summary>
-    private void QueryContext_SetKeyColumnsValues(SelectCommandContext context)
+    private void QueryContext_ValidateKeyColumnsValues(SelectCommandContext context)
     {
-        var rowsInputs = context.Inputs.Select(i => i.RowsInput).OfType<IRowsInputKeys>();
-
-        foreach (var input in rowsInputs)
+        foreach (var keyCondition in context.GetConditionsColumns())
         {
-            foreach (var keyColumn in input.GetKeyColumns())
+            if (keyCondition.KeyColumn.IsRequired && keyCondition.Conditions.Length < 1)
             {
-                var condition = context.Conditions.FirstOrDefault(c =>
-                    Column.NameEquals(c.Column, keyColumn.ColumnName)
-                    && keyColumn.Operations.Contains(c.Operation));
-                if (condition == null && keyColumn.IsRequired)
-                {
-                    throw new QueryContextMissedCondition(keyColumn.ColumnName, keyColumn.Operations);
-                }
-                if (condition != null)
-                {
-                    input.SetKeyColumnValue(keyColumn.ColumnName, condition.ValueFunc.Invoke());
-                }
+                throw new QueryContextMissedCondition(keyCondition.KeyColumn.ColumnName, keyCondition.KeyColumn.Operations);
             }
         }
+    }
+
+    private void QueryContext_SetKeyColumns(SelectCommandContext context)
+    {
+        var rowsInputWithKeys = context.Inputs.Select(i => i.RowsInput).OfType<IRowsInputKeys>().ToArray();
+        if (!rowsInputWithKeys.Any())
+        {
+            return;
+        }
+        var keysColumns = rowsInputWithKeys.SelectMany(i => i.GetKeyColumns());
+        if (!keysColumns.Any())
+        {
+            return;
+        }
+
+        var setKeysColumnsIterator = new SetKeyColumnsRowsIterator(context.CurrentIterator,
+            context.GetConditionsColumns().ToArray());
+        context.SetIterator(setKeysColumnsIterator);
     }
 }

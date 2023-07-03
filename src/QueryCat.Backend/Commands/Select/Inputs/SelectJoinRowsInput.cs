@@ -7,7 +7,7 @@ using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Commands.Select.Inputs;
 
-internal sealed class SelectJoinRowsInput : IRowsInput, IRowsIteratorParent
+internal sealed class SelectJoinRowsInput : IRowsInputKeys, IRowsIteratorParent
 {
     private readonly IRowsInput _leftInput;
     private readonly IRowsInput _rightInput;
@@ -178,6 +178,28 @@ internal sealed class SelectJoinRowsInput : IRowsInput, IRowsIteratorParent
     {
         yield return _leftInput;
         yield return _rightInput;
+    }
+
+    /// <inheritdoc />
+    public IReadOnlyList<KeyColumn> GetKeyColumns()
+    {
+        return new[] { _leftInput, _rightInput }
+            .OfType<IRowsInputKeys>()
+            .SelectMany(i => i.GetKeyColumns())
+            .ToArray();
+    }
+
+    /// <inheritdoc />
+    public void SetKeyColumnValue(string columnName, VariantValue value)
+    {
+        if (_leftInput is IRowsInputKeys leftInputKeys)
+        {
+            leftInputKeys.SetKeyColumnValue(columnName, value);
+        }
+        if (_rightInput is IRowsInputKeys rightInputKeys)
+        {
+            rightInputKeys.SetKeyColumnValue(columnName, value);
+        }
     }
 
     /// <inheritdoc />

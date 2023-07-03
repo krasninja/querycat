@@ -76,7 +76,8 @@ internal sealed partial class SelectPlanner
 
         // Fill query context.
         QueryContext_FillQueryContextConditions(context, node);
-        QueryContext_SetKeyColumnsValues(context);
+        QueryContext_ValidateKeyColumnsValues(context);
+        QueryContext_SetKeyColumns(context);
 
         // INTO.
         Pipeline_CreateOutput(context, node);

@@ -79,7 +79,7 @@ public abstract class RowsInput : IRowsInputKeys
     {
         if (!_keyColumns.Any(c => Column.NameEquals(c.ColumnName, columnName)))
         {
-            throw new QueryCatException($"The column '{columnName} is not found among key columns.");
+            throw new QueryCatException($"The column '{columnName}' is not found among key columns.");
         }
         _setKeyColumns[columnName] = value;
         if (_initKeysColumnsCallbacks.TryGetValue(columnName, out var action))
