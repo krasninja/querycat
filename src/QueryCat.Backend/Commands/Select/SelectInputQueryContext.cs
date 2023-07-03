@@ -20,7 +20,6 @@ internal class SelectInputQueryContext : QueryContext
     public SelectInputQueryContext(IRowsInput rowsInput)
     {
         RowsInput = rowsInput;
-        InputInfo = new QueryContextInputInfo(rowsInput);
         QueryInfo = new QueryContextQueryInfo(rowsInput.Columns);
     }
 }

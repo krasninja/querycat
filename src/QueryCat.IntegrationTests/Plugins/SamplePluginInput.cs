@@ -29,12 +29,6 @@ public class SamplePluginInput : FetchInput<TestClass>
     {
         Trace.WriteLine(nameof(Initialize));
         builder.AddProperty(b => b.Key);
-    }
-
-    /// <inheritdoc />
-    protected override void InitializeInputInfo(QueryContextInputInfo inputInfo)
-    {
-        Trace.WriteLine(nameof(InitializeInputInfo));
         AddKeyColumn("Key",
             isRequired: false,
             operation: VariantValue.Operation.Equals,

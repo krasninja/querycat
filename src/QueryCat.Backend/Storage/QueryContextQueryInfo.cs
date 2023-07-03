@@ -10,7 +10,7 @@ public sealed class QueryContextQueryInfo
     /// <summary>
     /// Get columns for select.
     /// </summary>
-    public IReadOnlyList<Column> Columns { get; internal set; }
+    public IReadOnlyList<Column> Columns { get; }
 
     /// <summary>
     /// Rows offset.

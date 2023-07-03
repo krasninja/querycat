@@ -30,19 +30,10 @@ public abstract class FetchInput<TClass> : RowsInput, IDisposable where TClass :
     /// <param name="builder">Rows frame builder.</param>
     protected abstract void Initialize(ClassRowsFrameBuilder<TClass> builder);
 
-    /// <summary>
-    /// Initialize instance of <see cref="QueryContextInputInfo" />.
-    /// </summary>
-    /// <param name="inputInfo">Input info.</param>
-    protected virtual void InitializeInputInfo(QueryContextInputInfo inputInfo)
-    {
-    }
-
     /// <inheritdoc />
     public override void Open()
     {
         Initialize(_builder);
-        InitializeInputInfo(QueryContext.InputInfo);
         Columns = _builder.Columns.ToArray();
     }
 
