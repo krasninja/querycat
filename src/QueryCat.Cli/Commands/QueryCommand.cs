@@ -75,16 +75,16 @@ internal class QueryCommand : BaseQueryCommand
                 DisableCache = queryOptions.DisableCache,
                 UseConfig = true,
                 RunBootstrapScript = true,
-                DefaultRowsOutput = new PagingOutput(tableOutput)
-                {
-                    PagingRowsCount = queryOptions.PageSize,
-                },
             };
             if (queryOptions.AnalyzeRows < 0)
             {
                 options.AnalyzeRowsCount = int.MaxValue;
             }
             using var thread = applicationOptions.CreateExecutionThread(options);
+            options.DefaultRowsOutput = new PagingOutput(tableOutput, thread: thread)
+            {
+                PagingRowsCount = queryOptions.PageSize,
+            };
             AddVariables(thread, variables);
             RunQuery(thread, query, files);
 

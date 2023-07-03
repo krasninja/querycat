@@ -37,7 +37,7 @@ internal class CreateTestCsvFileCommand : Command
                 var file = File.Create(filePath);
                 var output = new DsvFormatter(',').OpenOutput(file);
                 output.Open();
-                output.QueryContext = new RowsOutputQueryContext(rowsFrame.Columns, ExecutionThread.DefaultInstance);
+                output.QueryContext = new RowsOutputQueryContext(rowsFrame.Columns);
                 for (int count = 0; count < NumberOfItems; count += ChunkSize)
                 {
                     var usersToInsert = UsersFaker.GenerateForever().Take(ChunkSize);

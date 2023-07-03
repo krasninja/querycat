@@ -195,13 +195,13 @@ internal sealed partial class SelectPlanner
         IRowsInput? rowsInputResult = null;
         if (objVariable is IRowsInput rowsInput)
         {
-            currentContext.AddInput(new SelectCommandInputContext(rowsInput, ExecutionThread));
+            currentContext.AddInput(new SelectCommandInputContext(rowsInput));
             rowsInputResult = rowsInput;
         }
         if (objVariable is IRowsIterator rowsIterator)
         {
             rowsInput = new RowsIteratorInput(rowsIterator);
-            currentContext.AddInput(new SelectCommandInputContext(rowsInput, ExecutionThread));
+            currentContext.AddInput(new SelectCommandInputContext(rowsInput));
             rowsInputResult = rowsInput;
         }
         if (rowsInputResult == null)
@@ -223,7 +223,7 @@ internal sealed partial class SelectPlanner
         }
         var inputValue = GenericInputOutput.Read(callInfo);
         var rowsInput = inputValue.As<IRowsInput>();
-        rowsInput.QueryContext = new SelectInputQueryContext(rowsInput, ExecutionThread);
+        rowsInput.QueryContext = new SelectInputQueryContext(rowsInput);
         rowsInput.Open();
         return new[] { rowsInput };
     }
@@ -329,7 +329,7 @@ internal sealed partial class SelectPlanner
         var rowsIterator = CreateIterator(queryNode, parentContext: context);
 
         var rowsInput = new RowsIteratorInput(rowsIterator);
-        context.AddInput(new SelectCommandInputContext(rowsInput, ExecutionThread));
+        context.AddInput(new SelectCommandInputContext(rowsInput));
         Context_SetAlias(rowsInput, queryNode.Alias);
         return rowsInput;
     }

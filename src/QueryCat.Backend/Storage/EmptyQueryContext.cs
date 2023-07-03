@@ -13,8 +13,4 @@ public class EmptyQueryContext : QueryContext
     public override QueryContextQueryInfo QueryInfo { get; } = new(
         columns: Array.Empty<Column>(),
         limit: null);
-
-    public EmptyQueryContext() : base(Execution.ExecutionThread.DefaultInstance)
-    {
-    }
 }

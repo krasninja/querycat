@@ -1,4 +1,5 @@
 using QueryCat.Backend.Abstractions;
+using QueryCat.Backend.Execution;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Storage;
 
@@ -15,6 +16,7 @@ public class PagingOutput : IRowsOutput
     private static readonly string ClearText = new('\r', ContinueWord.Length);
 
     private readonly IRowsOutput _rowsOutput;
+    private readonly IExecutionThread _thread;
     private int _rowsCounter;
 
     /// <summary>
@@ -29,9 +31,10 @@ public class PagingOutput : IRowsOutput
         set => _rowsOutput.QueryContext = value;
     }
 
-    public PagingOutput(IRowsOutput rowsOutput, int pagingRowsCount = 20)
+    public PagingOutput(IRowsOutput rowsOutput, int pagingRowsCount = 20, IExecutionThread? thread = null)
     {
         _rowsOutput = rowsOutput;
+        _thread = thread ?? ExecutionThread.DefaultInstance;
         PagingRowsCount = pagingRowsCount;
     }
 
@@ -68,7 +71,7 @@ public class PagingOutput : IRowsOutput
             }
             else if (consoleKey.Key == ConsoleKey.Q)
             {
-                QueryContext.ExecutionThread.CancellationTokenSource.Cancel();
+                _thread.CancellationTokenSource.Cancel();
             }
         }
     }

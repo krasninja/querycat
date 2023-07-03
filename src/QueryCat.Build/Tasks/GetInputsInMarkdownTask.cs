@@ -28,11 +28,6 @@ public class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
     {
         /// <inheritdoc />
         public override QueryContextQueryInfo QueryInfo { get; } = new(Array.Empty<Column>());
-
-        /// <inheritdoc />
-        public CollectQueryContext() : base(QueryCat.Backend.Execution.ExecutionThread.DefaultInstance)
-        {
-        }
     }
 
     /// <inheritdoc />
