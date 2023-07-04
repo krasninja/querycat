@@ -204,7 +204,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         {
             return new VariantValue(objDecimal);
         }
-        if (obj is string || typeof(T).IsEnum)
+        if (obj is string || typeof(T).IsEnum || obj is char)
         {
             return new VariantValue(Convert.ToString(obj));
         }
@@ -389,7 +389,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         {
             return (T)Convert.ChangeType(AsNumeric, typeof(T));
         }
-        if (retType == typeof(string))
+        if (retType == typeof(string) || retType == typeof(char))
         {
             return (T)Convert.ChangeType(AsString, typeof(T));
         }

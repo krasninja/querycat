@@ -16,7 +16,7 @@ public static class FormattersInfo
         [".tsv"] = (fm, args) => fm.CallFunction<IRowsFormatter>("csv", args.Add("delimiter", '\t')),
         [".tab"] = (fm, args) => fm.CallFunction<IRowsFormatter>("csv", args.Add("delimiter", '\t')),
         [".log"] = (fm, args) =>
-            fm.CallFunction<IRowsFormatter>("csv", args.Add("delimiter", ' ').Add("delimiter_can_repeat", false)),
+            fm.CallFunction<IRowsFormatter>("csv", args.Add("delimiter", ' ').Add("delimiter_can_repeat", true)),
         [".json"] = (fm, args) => fm.CallFunction<IRowsFormatter>("json", args),
         [".xml"] = (fm, args) => fm.CallFunction<IRowsFormatter>("xml", args),
         [".xsd"] = (fm, args) => fm.CallFunction<IRowsFormatter>("xml", args),
