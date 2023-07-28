@@ -9,6 +9,7 @@ using QueryCat.Backend.Execution;
 using QueryCat.Backend.Functions;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Storage;
+using QueryCat.Backend.ThriftPlugins;
 using QueryCat.Backend.Types;
 
 namespace QueryCat.Build.Tasks;
@@ -38,10 +39,8 @@ public class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
         {
             PluginDirectories = { assemblyFile }
         });
-        new ExecutionThreadBootstrapper
-        {
-            LoadPlugins = true,
-        }.Bootstrap(thread);
+        var pluginsLoader = new ThriftPluginsLoader(thread, new[] { assemblyFile });
+        new ExecutionThreadBootstrapper().Bootstrap(thread, pluginsLoader);
         var pluginFunctions = thread.FunctionsManager.GetFunctions()
             .Where(f =>
                 f.ReturnType == DataType.Object
@@ -66,6 +65,7 @@ public class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
                 {
                     functionCallInfo.Push(VariantValue.Null);
                 }
+                functionCallInfo.FunctionName = inputFunction.Name;
                 rowsInput = inputFunction.Delegate.Invoke(functionCallInfo).As<IRowsInputKeys>();
                 rowsInput.QueryContext = queryContext;
                 rowsInput.Open();
@@ -105,6 +105,9 @@ public class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
         var file = Path.Combine(context.OutputDirectory, "plugin.md");
         File.WriteAllText(file, sb.ToString());
         context.Log.Information($"Wrote to {file}.");
+
+        pluginsLoader.Dispose();
+        thread.Dispose();
         return Task.CompletedTask;
     }
 }

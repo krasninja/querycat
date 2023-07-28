@@ -35,7 +35,8 @@ public class PersistentInputConfigStorage : MemoryInputConfigStorage
         base.Set(key, value);
     }
 
-    public async Task SaveAsync(CancellationToken cancellationToken = default)
+    /// <inheritdoc />
+    public override async Task SaveAsync(CancellationToken cancellationToken = default)
     {
         if (_writesCount < 1)
         {
@@ -71,7 +72,8 @@ public class PersistentInputConfigStorage : MemoryInputConfigStorage
         _writesCount = 0;
     }
 
-    public async Task LoadAsync(CancellationToken cancellationToken = default)
+    /// <inheritdoc />
+    public override async Task LoadAsync(CancellationToken cancellationToken = default)
     {
         if (!File.Exists(_configFile))
         {

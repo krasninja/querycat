@@ -405,14 +405,14 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         var sourceObj = CheckTypeAndTryToCast(DataType.Object)._object;
         if (sourceObj == null)
         {
-            throw new InvalidOperationException("Object is null.");
+            throw new InvalidOperationException($"Object is null. Target type is '{typeof(T).Name}'.");
         }
         if (sourceObj is T obj)
         {
             return obj;
         }
         throw new InvalidOperationException(
-            $"Cannot cast object of type '{sourceObj.GetType()}' to type '{typeof(T)}'.");
+            $"Cannot cast object of type '{sourceObj.GetType().Name}' to type '{typeof(T).Name}'.");
     }
 
     /// <summary>

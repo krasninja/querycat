@@ -19,9 +19,9 @@ internal class ServeCommand : BaseCommand
         this.SetHandler((applicationOptions, urls, allowOrigin, password) =>
         {
             applicationOptions.InitializeLogger();
-            using var executionThread = applicationOptions.CreateExecutionThread();
-            executionThread.Options.AddRowNumberColumn = true;
-            var webServer = new WebServer(executionThread, urls, password);
+            using var root = applicationOptions.CreateApplicationRoot();
+            root.Thread.Options.AddRowNumberColumn = true;
+            var webServer = new WebServer(root.Thread, urls, password);
             if (!string.IsNullOrEmpty(allowOrigin))
             {
                 webServer.AllowOrigin = allowOrigin;

@@ -1,8 +1,10 @@
 using System.Diagnostics;
 using Microsoft.Extensions.Logging;
+using QueryCat.Backend.Abstractions.Plugins;
 using QueryCat.Backend.Formatters;
 using QueryCat.Backend.Functions.AggregateFunctions;
 using QueryCat.Backend.Functions.StandardFunctions;
+using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Execution;
 
@@ -13,12 +15,7 @@ public class ExecutionThreadBootstrapper
 {
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger<ExecutionThreadBootstrapper>();
 
-    /// <summary>
-    /// Load plugins.
-    /// </summary>
-    public bool LoadPlugins { get; set; }
-
-    public void Bootstrap(ExecutionThread executionThread)
+    public void Bootstrap(ExecutionThread executionThread, PluginsLoader pluginsLoader)
     {
 #if DEBUG
         var timer = new Stopwatch();
@@ -39,12 +36,7 @@ public class ExecutionThreadBootstrapper
         executionThread.FunctionsManager.RegisterFactory(AggregatesRegistration.RegisterFunctions);
         executionThread.FunctionsManager.RegisterFactory(Providers.Registration.RegisterFunctions);
         executionThread.FunctionsManager.RegisterFactory(XmlFormatter.RegisterFunctions);
-#if ENABLE_PLUGINS
-        if (LoadPlugins)
-        {
-            executionThread.LoadPlugins();
-        }
-#endif
+        AsyncUtils.RunSync(pluginsLoader.LoadAsync);
 #if DEBUG
         timer.Stop();
         _logger.LogTrace("Bootstrap time: {Time}.", timer.Elapsed);

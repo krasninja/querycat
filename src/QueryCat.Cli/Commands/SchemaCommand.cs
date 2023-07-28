@@ -16,8 +16,9 @@ internal class SchemaCommand : BaseQueryCommand
         this.SetHandler((applicationOptions, query, variables, files) =>
         {
             applicationOptions.InitializeLogger();
-            var thread = applicationOptions.CreateStdoutExecutionThread();
-            thread.AfterStatementExecute += (_, threadArgs) =>
+            var root = applicationOptions.CreateStdoutApplicationRoot();
+            var thread = root.Thread;
+            root.Thread.AfterStatementExecute += (_, threadArgs) =>
             {
                 var result = thread.LastResult;
                 if (!result.IsNull && result.GetInternalType() == DataType.Object

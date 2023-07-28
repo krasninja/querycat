@@ -63,7 +63,7 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
         {
             var queryContext = new SelectInputQueryContext(rowsInput)
             {
-                InputConfigStorage = _executionThread.InputConfigStorage
+                InputConfigStorage = _executionThread.ConfigStorage,
             };
             if (_context.Parent != null && !_executionThread.Options.DisableCache)
             {

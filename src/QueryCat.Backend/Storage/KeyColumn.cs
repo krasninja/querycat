@@ -22,4 +22,7 @@ public sealed class KeyColumn
         IsRequired = isRequired;
         Operations = operations;
     }
+
+    /// <inheritdoc />
+    public override string ToString() => $"{(IsRequired ? "* " : "")} {ColumnName} ({string.Join(", ", Operations)})";
 }

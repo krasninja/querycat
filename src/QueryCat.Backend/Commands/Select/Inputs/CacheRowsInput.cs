@@ -268,11 +268,11 @@ internal sealed class CacheRowsInput : IRowsInputKeys
     }
 
     /// <inheritdoc />
-    public void SetKeyColumnValue(string columnName, VariantValue value)
+    public void SetKeyColumnValue(string columnName, VariantValue value, VariantValue.Operation operation)
     {
         if (_rowsInput is IRowsInputKeys rowsInputKeys)
         {
-            rowsInputKeys.SetKeyColumnValue(columnName, value);
+            rowsInputKeys.SetKeyColumnValue(columnName, value, operation);
         }
     }
 

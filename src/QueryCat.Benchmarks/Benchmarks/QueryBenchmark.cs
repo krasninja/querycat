@@ -10,7 +10,7 @@ public class QueryBenchmark
     public void QueryUsersCsvFile()
     {
         using var executionThread = new ExecutionThread();
-        new ExecutionThreadBootstrapper().Bootstrap(executionThread);
+        new ExecutionThreadBootstrapper().Bootstrap(executionThread, NullPluginsLoader.Instance);
         var usersFile = UsersCsvFile.GetTestUsersFilePath();
         executionThread.Run(
             @$"select substr(email, position('@' in email)) as domain, avg(balance) into write_null() from '{usersFile}'" +

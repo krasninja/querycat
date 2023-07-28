@@ -18,8 +18,8 @@ internal class PluginUpdateCommand : BaseCommand
             applicationOptions.InitializeLogger();
             AsyncUtils.RunSync(async () =>
             {
-                using var executionThread = applicationOptions.CreateExecutionThread();
-                await executionThread.PluginsManager.UpdateAsync(plugin);
+                using var root = applicationOptions.CreateApplicationRoot();
+                await root.PluginsManager.UpdateAsync(plugin);
             });
         }, new ApplicationOptionsBinder(LogLevelOption, PluginDirectoriesOption), pluginArgument);
     }

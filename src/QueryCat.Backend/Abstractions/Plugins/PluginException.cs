@@ -1,4 +1,4 @@
-namespace QueryCat.Backend.Execution.Plugins;
+namespace QueryCat.Backend.Abstractions.Plugins;
 
 [Serializable]
 #pragma warning disable CA2229

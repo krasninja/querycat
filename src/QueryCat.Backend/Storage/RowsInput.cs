@@ -10,10 +10,16 @@ namespace QueryCat.Backend.Storage;
 /// </summary>
 public abstract class RowsInput : IRowsInputKeys
 {
+    private sealed class KeyColumnData
+    {
+        public VariantValue Value { get; set; } = VariantValue.Null;
+
+        public Action<VariantValue>? Callback { get; set; }
+    }
+
     private bool _isFirstCall = true;
     private readonly List<KeyColumn> _keyColumns = new();
-    private readonly Dictionary<string, Action<VariantValue>> _initKeysColumnsCallbacks = new(IgnoreCaseStringEqualityComparer.Instance);
-    private readonly Dictionary<string, VariantValue> _setKeyColumns = new(IgnoreCaseStringEqualityComparer.Instance);
+    private readonly Dictionary<KeyColumn, KeyColumnData> _setKeyColumns = new();
 
     /// <summary>
     /// Query context.
@@ -75,17 +81,15 @@ public abstract class RowsInput : IRowsInputKeys
     public IReadOnlyList<KeyColumn> GetKeyColumns() => _keyColumns;
 
     /// <inheritdoc />
-    public virtual void SetKeyColumnValue(string columnName, VariantValue value)
+    public virtual void SetKeyColumnValue(string columnName, VariantValue value, VariantValue.Operation operation)
     {
-        if (!_keyColumns.Any(c => Column.NameEquals(c.ColumnName, columnName)))
+        var data = GetKeyColumnData(columnName, operation);
+        if (data == null)
         {
-            throw new QueryCatException($"The column '{columnName}' is not found among key columns.");
+            return;
         }
-        _setKeyColumns[columnName] = value;
-        if (_initKeysColumnsCallbacks.TryGetValue(columnName, out var action))
-        {
-            action.Invoke(value);
-        }
+        data.Value = value;
+        data.Callback?.Invoke(data.Value);
     }
 
     #endregion
@@ -103,10 +107,12 @@ public abstract class RowsInput : IRowsInputKeys
         bool isRequired = false,
         Action<VariantValue>? set = null)
     {
-        _keyColumns.Add(new KeyColumn(columnName, isRequired, VariantValue.Operation.Equals));
+        var keyColumn = new KeyColumn(columnName, isRequired, VariantValue.Operation.Equals);
+        _keyColumns.Add(keyColumn);
+        _setKeyColumns[keyColumn] = new KeyColumnData();
         if (set != null)
         {
-            _initKeysColumnsCallbacks[columnName] = set;
+            _setKeyColumns[keyColumn].Callback = set;
         }
     }
 
@@ -123,10 +129,12 @@ public abstract class RowsInput : IRowsInputKeys
         bool isRequired = false,
         Action<VariantValue>? set = null)
     {
-        _keyColumns.Add(new KeyColumn(columnName, isRequired, operation));
+        var keyColumn = new KeyColumn(columnName, isRequired, operation);
+        _keyColumns.Add(keyColumn);
+        _setKeyColumns[keyColumn] = new KeyColumnData();
         if (set != null)
         {
-            _initKeysColumnsCallbacks[columnName] = set;
+            _setKeyColumns[keyColumn].Callback = set;
         }
     }
 
@@ -145,10 +153,12 @@ public abstract class RowsInput : IRowsInputKeys
         bool isRequired = false,
         Action<VariantValue>? set = null)
     {
-        _keyColumns.Add(new KeyColumn(columnName, isRequired, operation, orOperation));
+        var keyColumn = new KeyColumn(columnName, isRequired, operation, orOperation);
+        _keyColumns.Add(keyColumn);
+        _setKeyColumns[keyColumn] = new KeyColumnData();
         if (set != null)
         {
-            _initKeysColumnsCallbacks[columnName] = set;
+            _setKeyColumns[keyColumn].Callback = set;
         }
     }
 
@@ -156,14 +166,36 @@ public abstract class RowsInput : IRowsInputKeys
     /// Get key column value by column name.
     /// </summary>
     /// <param name="columnName">Column name.</param>
+    /// <param name="operation">Operation.</param>
     /// <returns>Value or null.</returns>
-    public VariantValue GetKeyColumnValue(string columnName)
+    public VariantValue GetKeyColumnValue(string columnName, VariantValue.Operation operation)
     {
-        if (_setKeyColumns.TryGetValue(columnName, out var value))
+        var data = GetKeyColumnData(columnName, operation);
+        if (data != null)
         {
-            return value;
+            return data.Value;
         }
         return VariantValue.Null;
+    }
+
+    private KeyColumnData? GetKeyColumnData(
+        string columnName,
+        VariantValue.Operation operation = VariantValue.Operation.Equals,
+        VariantValue.Operation? orOperation = null)
+    {
+        var keyColumn = _keyColumns.Find(c =>
+            c.Operations[0] == operation
+            && (orOperation == null || c.Operations[0] == orOperation)
+            && Column.NameEquals(c.ColumnName, columnName));
+        if (keyColumn == null)
+        {
+            throw new QueryCatException($"The column '{columnName}' is not found among key columns.");
+        }
+        if (_setKeyColumns.TryGetValue(keyColumn, out var data))
+        {
+            return data;
+        }
+        return null;
     }
 
     #endregion

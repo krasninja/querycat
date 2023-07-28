@@ -80,18 +80,18 @@ internal class QueryCommand : BaseQueryCommand
             {
                 options.AnalyzeRowsCount = int.MaxValue;
             }
-            using var thread = applicationOptions.CreateExecutionThread(options);
-            options.DefaultRowsOutput = new PagingOutput(tableOutput, thread: thread)
+            using var root = applicationOptions.CreateApplicationRoot(options);
+            options.DefaultRowsOutput = new PagingOutput(tableOutput, thread: root.Thread)
             {
                 PagingRowsCount = queryOptions.PageSize,
             };
-            AddVariables(thread, variables);
-            RunQuery(thread, query, files);
+            AddVariables(root.Thread, variables);
+            RunQuery(root.Thread, query, files);
 
             if (queryOptions.Statistic || queryOptions.DetailedStatistic)
             {
                 Console.WriteLine(new string('-', 5));
-                Console.WriteLine(thread.Statistic.ToString());
+                Console.WriteLine(root.Thread.Statistic.ToString());
             }
         },
             new ApplicationOptionsBinder(LogLevelOption, PluginDirectoriesOption),

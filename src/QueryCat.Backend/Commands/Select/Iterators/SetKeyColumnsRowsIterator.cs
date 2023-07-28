@@ -35,7 +35,7 @@ internal class SetKeyColumnsRowsIterator : IRowsIterator
                 if (condition != null)
                 {
                     inputKeyCondition.RowsInput.SetKeyColumnValue(
-                        inputKeyCondition.KeyColumn.ColumnName, condition.ValueFunc.Invoke());
+                        inputKeyCondition.KeyColumn.ColumnName, condition.ValueFunc.Invoke(), condition.Operation);
                 }
             }
             _setColumns = false;

@@ -19,5 +19,6 @@ public interface IRowsInputKeys : IRowsInput
     /// </summary>
     /// <param name="columnName">Column name.</param>
     /// <param name="value">The value.</param>
-    void SetKeyColumnValue(string columnName, VariantValue value);
+    /// <param name="operation">Key operation.</param>
+    void SetKeyColumnValue(string columnName, VariantValue value, VariantValue.Operation operation);
 }
