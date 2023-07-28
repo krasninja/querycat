@@ -81,7 +81,7 @@ internal class QueryCommand : BaseQueryCommand
                 options.AnalyzeRowsCount = int.MaxValue;
             }
             using var root = applicationOptions.CreateApplicationRoot(options);
-            options.DefaultRowsOutput = new PagingOutput(tableOutput, thread: root.Thread)
+            options.DefaultRowsOutput = new PagingOutput(tableOutput, cts: root.Thread.CancellationTokenSource)
             {
                 PagingRowsCount = queryOptions.PageSize,
             };

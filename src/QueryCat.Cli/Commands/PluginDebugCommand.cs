@@ -1,11 +1,14 @@
 using System.CommandLine;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend;
+using QueryCat.Backend.Execution;
+using QueryCat.Backend.Formatters;
+using QueryCat.Backend.Providers;
+using QueryCat.Cli.Commands.Options;
 #if ENABLE_PLUGINS && PLUGIN_THRIFT
 using QueryCat.Backend.ThriftPlugins;
-using QueryCat.Backend.Utils;
-#endif
 using QueryCat.Cli.Commands.Options;
+#endif
 
 namespace QueryCat.Cli.Commands;
 
@@ -34,9 +37,8 @@ internal class PluginDebugCommand : BaseQueryCommand
             var storage = new PersistentInputConfigStorage(
                 Path.Combine(ExecutionThread.GetApplicationDirectory(), ApplicationOptions.ConfigFileName));
             var thread = new ExecutionThread(options, storage);
-            // TODO: pass cts instead of thread.
             options.PluginDirectories.AddRange(applicationOptions.PluginDirectories);
-            options.DefaultRowsOutput = new PagingOutput(tableOutput, thread: thread);
+            options.DefaultRowsOutput = new PagingOutput(tableOutput, cts: thread.CancellationTokenSource);
             var pluginsLoader = new ThriftPluginsLoader(thread, applicationOptions.PluginDirectories, PipeName)
             {
                 ForceAuthToken = AuthToken,

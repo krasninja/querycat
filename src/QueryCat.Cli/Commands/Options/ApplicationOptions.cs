@@ -84,7 +84,7 @@ internal class ApplicationOptions
             separator: columnsSeparator,
             style: outputStyle);
         root.Thread.Options.DefaultRowsOutput = new PagingOutput(
-            tableOutput, pagingRowsCount: PagingOutput.NoLimit, thread: root.Thread);
+            tableOutput, pagingRowsCount: PagingOutput.NoLimit, cts: root.Thread.CancellationTokenSource);
         return root;
     }
 
