@@ -323,7 +323,7 @@ public class DynamicBufferTests
 
         // Assert.
         Assert.True(success);
-        Assert.Equal("123", outputBuffer);
+        Assert.Equal("123", new string(outputBuffer));
     }
 
     [Fact]
@@ -339,7 +339,7 @@ public class DynamicBufferTests
 
         // Assert.
         Assert.True(success);
-        Assert.Equal("123", outputBuffer.ToArray());
+        Assert.Equal("123", new string(outputBuffer));
     }
 
     [Fact]
