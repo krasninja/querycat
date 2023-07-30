@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Thrift;
 using Thrift.Processor;
 using Thrift.Protocol;
@@ -32,8 +33,13 @@ public sealed partial class ThriftPluginsServer : IDisposable
 
     internal IReadOnlyCollection<PluginContext> Plugins => _plugins;
 
+    internal bool IgnoreThriftLogs { get; set; } = true;
+
     public ThriftPluginsServer(ExecutionThread executionThread, string? serverPipeName = null)
     {
+#if DEBUG
+        IgnoreThriftLogs = false;
+#endif
         _executionThread = executionThread;
         _inputConfigStorage = executionThread.ConfigStorage;
         if (!string.IsNullOrEmpty(serverPipeName))
@@ -42,7 +48,7 @@ public sealed partial class ThriftPluginsServer : IDisposable
         }
 
         var transport = new TNamedPipeServerTransport(ServerPipeName, new TConfiguration(),
-            NamedPipeServerFlags.OnlyLocalClients, 2);
+            NamedPipeServerFlags.OnlyLocalClients, 1);
         var transportFactory = new TFramedTransport.Factory();
         var binaryProtocolFactory = new TBinaryProtocol.Factory();
         var processor = new TMultiplexedProcessor();
@@ -56,7 +62,9 @@ public sealed partial class ThriftPluginsServer : IDisposable
             binaryProtocolFactory,
             binaryProtocolFactory,
             default,
-            Application.LoggerFactory.CreateLogger<TSimpleAsyncServer>());
+            IgnoreThriftLogs
+                ? NullLoggerFactory.Instance.CreateLogger<TSimpleAsyncServer>()
+                : Application.LoggerFactory.CreateLogger<TSimpleAsyncServer>());
     }
 
     public void Start()

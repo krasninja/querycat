@@ -30,11 +30,10 @@ public partial class ThriftPluginClient : IDisposable
 
     private readonly PluginExecutionThread _executionThread;
     private readonly FunctionsManager _functionsManager;
-    private readonly List<object?> _objects = new();
-    private readonly object _objLock = new();
+    private readonly ObjectsStorage _objectsStorage = new();
     private string _debugServerPath = string.Empty;
     private string _debugServerPathArgs = string.Empty;
-    private int _parentPid = 0;
+    private int _parentPid;
     private Process? _qcatProcess;
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger<ThriftPluginClient>();
 
@@ -143,71 +142,6 @@ public partial class ThriftPluginClient : IDisposable
     {
         _debugServerPathArgs = value;
     }
-
-    #region Objects API
-
-    private int AddObject(object obj)
-    {
-        lock (_objLock)
-        {
-            _objects.Add(obj);
-            return _objects.Count - 1;
-        }
-    }
-
-    private T GetObject<T>(int index) where T : class
-    {
-        lock (_objLock)
-        {
-            if (_objects.Count - 1 > index)
-            {
-                throw new QueryCatPluginException(ErrorType.INVALID_OBJECT, "Invalid object handle.");
-            }
-            var rawObject = _objects[index];
-            if (rawObject == null)
-            {
-                throw new QueryCatPluginException(ErrorType.INVALID_OBJECT, "Object has been release.");
-            }
-            var obj = rawObject as T;
-            if (obj == null)
-            {
-                throw new QueryCatPluginException(ErrorType.INVALID_OBJECT,
-                    $"Invalid object type '{rawObject.GetType().Name}', expected '{typeof(T).Name}'.");
-            }
-            return obj;
-        }
-    }
-
-    private void RemoveObject(int index)
-    {
-        lock (_objLock)
-        {
-            if (_objects[index] is IRowsSource rowsSource)
-            {
-                rowsSource.Close();
-            }
-            if (_objects[index] is IDisposable disposable)
-            {
-                disposable.Dispose();
-            }
-            _objects[index] = null;
-        }
-    }
-
-    private void CleanObjects()
-    {
-        var totalObjects = 0;
-        lock (_objLock)
-        {
-            totalObjects = _objects.Count;
-        }
-        for (var i = 0; i < totalObjects; i++)
-        {
-            RemoveObject(i);
-        }
-    }
-
-    #endregion
 
     public async Task Start(CancellationToken cancellationToken = default)
     {

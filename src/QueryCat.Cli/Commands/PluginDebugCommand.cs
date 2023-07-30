@@ -7,7 +7,6 @@ using QueryCat.Backend.Providers;
 using QueryCat.Cli.Commands.Options;
 #if ENABLE_PLUGINS && PLUGIN_THRIFT
 using QueryCat.Backend.ThriftPlugins;
-using QueryCat.Cli.Commands.Options;
 #endif
 
 namespace QueryCat.Cli.Commands;

@@ -192,7 +192,7 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         }
         if (result.Object.Type == ObjectType.ROWS_INPUT)
         {
-            var iterator = new ThriftRemoteRowsIterator(context.Client, result.Object.Id);
+            var iterator = new ThriftRemoteRowsIterator(context.Client, result.Object.Handle);
             iterator.Open();
             return iterator;
         }

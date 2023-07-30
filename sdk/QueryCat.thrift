@@ -20,12 +20,14 @@ struct DecimalValue {
 }
 
 enum ObjectType {
-  ROWS_INPUT = 0
+  ROWS_INPUT = 0,
+  ROWS_ITERATOR = 1
 }
 
+// To refer to objects we use special identifiers: handles.
 struct ObjectValue {
   1: required ObjectType type,
-  2: required i32 id,
+  2: required i32 handle,
   3: required string name
 }
 
@@ -172,40 +174,50 @@ service Plugin {
   // Shutdown plugin. This should release all objects.
   void Shutdown() throws (1: QueryCatPluginException e),
 
+  // Get columns.
   list<Column> RowsSet_GetColumns(
     1: Handle object_handle
   ) throws (1: QueryCatPluginException e),
 
+  // Open rows set.
   void RowsSet_Open(
     1: Handle object_handle
   ) throws (1: QueryCatPluginException e),
 
+  // Close rows set.
   void RowsSet_Close(
     1: Handle object_handle
   ) throws (1: QueryCatPluginException e),
 
+  // Reset rows set.
   void RowsSet_Reset(
     1: Handle object_handle
   ) throws (1: QueryCatPluginException e),
 
+  // Set context for rows set.
   void RowsSet_SetContext(
     1: Handle object_handle,
     2: ContextQueryInfo context_query_info
   ) throws (1: QueryCatPluginException e),
 
+  // Get rows.
   RowsList RowsSet_GetRows(
     1: Handle object_handle,
     2: i32 count
   ) throws (1: QueryCatPluginException e),
 
+  // Get unique key. It is a list of input data (input arguments) that
+  // can be used to format cache key.
   list<string> RowsSet_GetUniqueKey(
     1: Handle object_handle
   ) throws (1: QueryCatPluginException e),
 
+  // Get key columns.
   list<KeyColumn> RowsSet_GetKeyColumns(
     1: Handle object_handle
   ),
 
+  // Set value for a key column.
   void RowsSet_SetKeyColumnValue(
     1: Handle object_handle,
     2: required string column_name,

@@ -15,5 +15,6 @@ namespace QueryCat.Plugins.Sdk
   public enum ObjectType
   {
     ROWS_INPUT = 0,
+    ROWS_ITERATOR = 1,
   }
 }

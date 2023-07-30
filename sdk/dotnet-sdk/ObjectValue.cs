@@ -41,7 +41,7 @@ namespace QueryCat.Plugins.Sdk
     /// </summary>
     public global::QueryCat.Plugins.Sdk.ObjectType Type { get; set; } = default;
 
-    public int Id { get; set; } = 0;
+    public int Handle { get; set; } = 0;
 
     public string Name { get; set; } = string.Empty;
 
@@ -49,10 +49,10 @@ namespace QueryCat.Plugins.Sdk
     {
     }
 
-    public ObjectValue(global::QueryCat.Plugins.Sdk.ObjectType type, int id, string name) : this()
+    public ObjectValue(global::QueryCat.Plugins.Sdk.ObjectType type, int handle, string name) : this()
     {
       this.Type = type;
-      this.Id = id;
+      this.Handle = handle;
       this.Name = name;
     }
 
@@ -62,7 +62,7 @@ namespace QueryCat.Plugins.Sdk
       try
       {
         bool isset_type = false;
-        bool isset_id = false;
+        bool isset_handle = false;
         bool isset_name = false;
         TField field;
         await iprot.ReadStructBeginAsync(cancellationToken);
@@ -90,8 +90,8 @@ namespace QueryCat.Plugins.Sdk
             case 2:
               if (field.Type == TType.I32)
               {
-                Id = await iprot.ReadI32Async(cancellationToken);
-                isset_id = true;
+                Handle = await iprot.ReadI32Async(cancellationToken);
+                isset_handle = true;
               }
               else
               {
@@ -122,7 +122,7 @@ namespace QueryCat.Plugins.Sdk
         {
           throw new TProtocolException(TProtocolException.INVALID_DATA);
         }
-        if (!isset_id)
+        if (!isset_handle)
         {
           throw new TProtocolException(TProtocolException.INVALID_DATA);
         }
@@ -151,11 +151,11 @@ namespace QueryCat.Plugins.Sdk
         await oprot.WriteFieldBeginAsync(tmp5, cancellationToken);
         await oprot.WriteI32Async((int)Type, cancellationToken);
         await oprot.WriteFieldEndAsync(cancellationToken);
-        tmp5.Name = "id";
+        tmp5.Name = "handle";
         tmp5.Type = TType.I32;
         tmp5.ID = 2;
         await oprot.WriteFieldBeginAsync(tmp5, cancellationToken);
-        await oprot.WriteI32Async(Id, cancellationToken);
+        await oprot.WriteI32Async(Handle, cancellationToken);
         await oprot.WriteFieldEndAsync(cancellationToken);
         if((Name != null))
         {
@@ -180,7 +180,7 @@ namespace QueryCat.Plugins.Sdk
       if (that is not ObjectValue other) return false;
       if (ReferenceEquals(this, other)) return true;
       return global::System.Object.Equals(Type, other.Type)
-        && global::System.Object.Equals(Id, other.Id)
+        && global::System.Object.Equals(Handle, other.Handle)
         && global::System.Object.Equals(Name, other.Name);
     }
 
@@ -188,7 +188,7 @@ namespace QueryCat.Plugins.Sdk
       int hashcode = 157;
       unchecked {
         hashcode = (hashcode * 397) + Type.GetHashCode();
-        hashcode = (hashcode * 397) + Id.GetHashCode();
+        hashcode = (hashcode * 397) + Handle.GetHashCode();
         if((Name != null))
         {
           hashcode = (hashcode * 397) + Name.GetHashCode();
@@ -202,8 +202,8 @@ namespace QueryCat.Plugins.Sdk
       var tmp6 = new StringBuilder("ObjectValue(");
       tmp6.Append(", Type: ");
       Type.ToString(tmp6);
-      tmp6.Append(", Id: ");
-      Id.ToString(tmp6);
+      tmp6.Append(", Handle: ");
+      Handle.ToString(tmp6);
       if((Name != null))
       {
         tmp6.Append(", Name: ");

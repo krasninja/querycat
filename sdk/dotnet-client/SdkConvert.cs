@@ -58,7 +58,7 @@ public static class SdkConvert
             {
                 Object = new ObjectValue
                 {
-                    Id = (int)value.AsIntegerUnsafe,
+                    Handle = (int)value.AsIntegerUnsafe,
                     Name = value.AsObjectUnsafe?.GetType().Name ?? string.Empty,
                 }
             },
