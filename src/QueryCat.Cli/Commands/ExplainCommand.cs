@@ -14,10 +14,10 @@ internal class ExplainCommand : BaseQueryCommand
         this.SetHandler((applicationOptions, query, variables, files) =>
         {
             applicationOptions.InitializeLogger();
-            var thread = applicationOptions.CreateStdoutExecutionThread();
-            thread.AfterStatementExecute += (_, args) =>
+            var root = applicationOptions.CreateStdoutApplicationRoot();
+            root.Thread.AfterStatementExecute += (_, args) =>
             {
-                var result = thread.LastResult;
+                var result = root.Thread.LastResult;
                 if (result.GetInternalType() == DataType.Object
                     && result.AsObject is IRowsIterator rowsIterator)
                 {
@@ -28,8 +28,8 @@ internal class ExplainCommand : BaseQueryCommand
                     args.ContinueExecution = false;
                 }
             };
-            AddVariables(thread, variables);
-            RunQuery(thread, query, files);
+            AddVariables(root.Thread, variables);
+            RunQuery(root.Thread, query, files);
         },
             new ApplicationOptionsBinder(LogLevelOption, PluginDirectoriesOption),
             QueryArgument,

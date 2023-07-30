@@ -33,4 +33,18 @@ public interface IInputConfigStorage
     /// <param name="key">Key.</param>
     /// <returns>Value.</returns>
     VariantValue Get(string key);
+
+    /// <summary>
+    /// Save state.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Awaitable task.</returns>
+    Task SaveAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Load state.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Awaitable task.</returns>
+    Task LoadAsync(CancellationToken cancellationToken = default);
 }

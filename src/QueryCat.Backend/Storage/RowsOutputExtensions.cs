@@ -31,7 +31,7 @@ public static class RowsOutputExtensions
         }
 
         var isOpened = false;
-        var queryContext = new RowsOutputQueryContext(rowsIterator.Columns, executionThread);
+        var queryContext = new RowsOutputQueryContext(rowsIterator.Columns);
         while (rowsIterator.MoveNext())
         {
             if (cancellationToken.IsCancellationRequested)

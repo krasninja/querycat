@@ -8,10 +8,11 @@
 
   <ItemGroup>
     <PackageReference Include="Cake.Compression" Version="0.3.0" />
-    <PackageReference Include="Cake.Frosting" Version="3.0.0" />
+    <PackageReference Include="Cake.Frosting" Version="3.1.0" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\QueryCat.Backend.ThriftPlugins\QueryCat.Backend.ThriftPlugins.csproj" />
     <ProjectReference Include="..\QueryCat.Backend\QueryCat.Backend.csproj" />
   </ItemGroup>
 

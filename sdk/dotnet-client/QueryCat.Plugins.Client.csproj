@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\QueryCat.Backend\QueryCat.Backend.csproj" />
+    <ProjectReference Include="..\dotnet-sdk\QueryCat.Plugins.Sdk.csproj" />
+  </ItemGroup>
+
+</Project>

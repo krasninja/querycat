@@ -45,6 +45,11 @@ public class Function
     /// </summary>
     public FunctionSignatureArgumentNode[] Arguments => _signatureNode.ArgumentNodes;
 
+    /// <summary>
+    /// Full signature.
+    /// </summary>
+    public string Signature => _signatureNode.ToString();
+
     public static Function Empty => new(
         _ => VariantValue.Null, new FunctionSignatureNode("Empty", FunctionTypeNode.NullTypeInstance));
 

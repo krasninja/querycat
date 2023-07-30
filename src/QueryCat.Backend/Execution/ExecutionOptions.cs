@@ -1,4 +1,3 @@
-using System.Reflection;
 using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Storage;
 
@@ -28,11 +27,6 @@ public sealed class ExecutionOptions
     /// Max number of errors before abort.
     /// </summary>
     public int MaxErrors { get; set; } = -1;
-
-    /// <summary>
-    /// List of assemblies with additional functionality (functions, inputs, outputs, etc).
-    /// </summary>
-    public List<Assembly> PluginAssemblies { get; } = new();
 
 #if ENABLE_PLUGINS
     /// <summary>

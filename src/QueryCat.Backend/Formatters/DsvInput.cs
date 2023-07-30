@@ -13,7 +13,8 @@ internal class DsvInput : StreamRowsInput
 
     public DsvOptions Options { get; }
 
-    public DsvInput(DsvOptions dsvOptions) : base(new StreamReader(dsvOptions.Stream), dsvOptions.InputOptions)
+    public DsvInput(DsvOptions dsvOptions, string? key = null)
+        : base(new StreamReader(dsvOptions.Stream), dsvOptions.InputOptions, key ?? string.Empty)
     {
         Options = dsvOptions;
         _hasHeader = Options.HasHeader;

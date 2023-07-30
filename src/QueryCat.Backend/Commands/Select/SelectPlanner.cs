@@ -75,7 +75,9 @@ internal sealed partial class SelectPlanner
         Pipeline_ApplyOffsetFetch(context, node.OffsetNode, node.FetchNode);
 
         // Fill query context.
-        QueryContext_FillQueryContextConditions(node, context);
+        QueryContext_FillQueryContextConditions(context, node);
+        QueryContext_ValidateKeyColumnsValues(context);
+        QueryContext_SetKeyColumns(context);
 
         // INTO.
         Pipeline_CreateOutput(context, node);

@@ -75,23 +75,23 @@ internal class QueryCommand : BaseQueryCommand
                 DisableCache = queryOptions.DisableCache,
                 UseConfig = true,
                 RunBootstrapScript = true,
-                DefaultRowsOutput = new PagingOutput(tableOutput)
-                {
-                    PagingRowsCount = queryOptions.PageSize,
-                },
             };
             if (queryOptions.AnalyzeRows < 0)
             {
                 options.AnalyzeRowsCount = int.MaxValue;
             }
-            using var thread = applicationOptions.CreateExecutionThread(options);
-            AddVariables(thread, variables);
-            RunQuery(thread, query, files);
+            using var root = applicationOptions.CreateApplicationRoot(options);
+            options.DefaultRowsOutput = new PagingOutput(tableOutput, cts: root.Thread.CancellationTokenSource)
+            {
+                PagingRowsCount = queryOptions.PageSize,
+            };
+            AddVariables(root.Thread, variables);
+            RunQuery(root.Thread, query, files);
 
             if (queryOptions.Statistic || queryOptions.DetailedStatistic)
             {
                 Console.WriteLine(new string('-', 5));
-                Console.WriteLine(thread.Statistic.ToString());
+                Console.WriteLine(root.Thread.Statistic.ToString());
             }
         },
             new ApplicationOptionsBinder(LogLevelOption, PluginDirectoriesOption),

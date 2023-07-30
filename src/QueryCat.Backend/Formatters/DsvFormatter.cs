@@ -3,7 +3,6 @@ using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Functions;
 using QueryCat.Backend.Storage;
 using QueryCat.Backend.Types;
-using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Formatters;
 
@@ -87,8 +86,8 @@ internal class DsvFormatter : IRowsFormatter
     }
 
     /// <inheritdoc />
-    public IRowsInput OpenInput(Stream input)
-        => new DsvInput(GetOptions(input));
+    public IRowsInput OpenInput(Stream input, string? key = null)
+        => new DsvInput(GetOptions(input), key);
 
     /// <inheritdoc />
     public IRowsOutput OpenOutput(Stream output)

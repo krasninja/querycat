@@ -1,3 +1,4 @@
+using System.Collections;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Types;
 
@@ -6,7 +7,7 @@ namespace QueryCat.Backend.Functions;
 /// <summary>
 /// Function call information: arguments values, execution scope.
 /// </summary>
-public sealed class FunctionCallInfo
+public sealed class FunctionCallInfo : IEnumerable<VariantValue>
 {
     private readonly VariantValueArray _args;
     private int _argsCursor;
@@ -33,6 +34,11 @@ public sealed class FunctionCallInfo
     /// Arguments count.
     /// </summary>
     public int Count => _args.Values.Length;
+
+    /// <summary>
+    /// Calling function name.
+    /// </summary>
+    public string FunctionName { get; set; } = string.Empty;
 
     public static FunctionCallInfo CreateWithArguments(ExecutionThread executionThread, params VariantValue[] args)
     {
@@ -96,13 +102,25 @@ public sealed class FunctionCallInfo
         WindowInfo = null;
     }
 
-    public void InvokePushArgs()
+    internal void InvokePushArgs()
     {
         for (var i = 0; i < _pushArgs.Length; i++)
         {
             _args.Values[i] = _pushArgs[i].Invoke();
         }
     }
+
+    /// <inheritdoc />
+    public IEnumerator<VariantValue> GetEnumerator()
+    {
+        foreach (var arg in _args.Values)
+        {
+            yield return arg;
+        }
+    }
+
+    /// <inheritdoc />
+    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
     /// <inheritdoc />
     public override string ToString() => _args.ToString();

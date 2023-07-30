@@ -9,6 +9,7 @@ using QueryCat.Backend.Execution;
 using QueryCat.Backend.Functions;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Storage;
+using QueryCat.Backend.ThriftPlugins;
 using QueryCat.Backend.Types;
 
 namespace QueryCat.Build.Tasks;
@@ -28,11 +29,6 @@ public class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
     {
         /// <inheritdoc />
         public override QueryContextQueryInfo QueryInfo { get; } = new(Array.Empty<Column>());
-
-        /// <inheritdoc />
-        public CollectQueryContext() : base(QueryCat.Backend.Execution.ExecutionThread.DefaultInstance)
-        {
-        }
     }
 
     /// <inheritdoc />
@@ -43,7 +39,8 @@ public class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
         {
             PluginDirectories = { assemblyFile }
         });
-        new ExecutionThreadBootstrapper().Bootstrap(thread);
+        var pluginsLoader = new ThriftPluginsLoader(thread, new[] { assemblyFile });
+        new ExecutionThreadBootstrapper().Bootstrap(thread, pluginsLoader);
         var pluginFunctions = thread.FunctionsManager.GetFunctions()
             .Where(f =>
                 f.ReturnType == DataType.Object
@@ -59,7 +56,7 @@ public class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
 
         foreach (var inputFunction in pluginFunctions)
         {
-            IRowsInput rowsInput;
+            IRowsInputKeys rowsInput;
             var queryContext = new CollectQueryContext();
             try
             {
@@ -68,7 +65,8 @@ public class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
                 {
                     functionCallInfo.Push(VariantValue.Null);
                 }
-                rowsInput = inputFunction.Delegate.Invoke(functionCallInfo).As<IRowsInput>();
+                functionCallInfo.FunctionName = inputFunction.Name;
+                rowsInput = inputFunction.Delegate.Invoke(functionCallInfo).As<IRowsInputKeys>();
                 rowsInput.QueryContext = queryContext;
                 rowsInput.Open();
             }
@@ -94,10 +92,10 @@ public class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
                     continue;
                 }
                 var inputColumn =
-                    queryContext.InputInfo.KeyColumns.FirstOrDefault(c => c.ColumnName == column.Name);
+                    rowsInput.GetKeyColumns().FirstOrDefault(c => Column.NameEquals(c.ColumnName, column.Name));
                 if (inputColumn == null)
                 {
-                    inputColumn = new QueryContextInputInfo.KeyColumn(column.Name, Array.Empty<VariantValue.Operation>());
+                    inputColumn = new KeyColumn(column.Name);
                 }
                 var operations = string.Join(", ", inputColumn.Operations.Select(o => $"`{o}`"));
                 sb.AppendLine($"| `{column.Name}` | `{column.DataType}` | {(inputColumn.IsRequired ? "yes" : string.Empty)} | {column.Description} |");
@@ -107,6 +105,9 @@ public class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
         var file = Path.Combine(context.OutputDirectory, "plugin.md");
         File.WriteAllText(file, sb.ToString());
         context.Log.Information($"Wrote to {file}.");
+
+        pluginsLoader.Dispose();
+        thread.Dispose();
         return Task.CompletedTask;
     }
 }

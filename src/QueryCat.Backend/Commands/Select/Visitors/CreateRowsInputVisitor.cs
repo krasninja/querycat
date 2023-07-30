@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes.Select;
+using QueryCat.Backend.Commands.Select.Inputs;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Storage;
 using QueryCat.Backend.Types;
@@ -56,26 +57,26 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
     {
         if (DataTypeUtils.IsSimple(source.GetInternalType()))
         {
-            return new SelectCommandInputContext(new SingleValueRowsInput(source), _executionThread);
+            return new SelectCommandInputContext(new SingleValueRowsInput(source));
         }
         if (source.AsObject is IRowsInput rowsInput)
         {
-            var queryContext = new SelectInputQueryContext(rowsInput, _executionThread)
+            var queryContext = new SelectInputQueryContext(rowsInput)
             {
-                InputConfigStorage = _executionThread.InputConfigStorage
+                InputConfigStorage = _executionThread.ConfigStorage,
             };
             if (_context.Parent != null && !_executionThread.Options.DisableCache)
             {
-                rowsInput = new CacheRowsInput(rowsInput);
+                rowsInput = new CacheRowsInput(rowsInput, _context.Conditions);
             }
-            rowsInput.QueryContext = queryContext.Merge(rowsInput.QueryContext);
+            rowsInput.QueryContext = queryContext;
             rowsInput.Open();
             _logger.LogDebug("Open rows input {RowsInput}.", rowsInput);
             return new SelectCommandInputContext(rowsInput, queryContext);
         }
         if (source.AsObject is IRowsIterator rowsIterator)
         {
-            return new SelectCommandInputContext(new RowsIteratorInput(rowsIterator), _executionThread);
+            return new SelectCommandInputContext(new RowsIteratorInput(rowsIterator));
         }
 
         throw new QueryCatException("Invalid rows input.");

@@ -135,7 +135,7 @@ public class Column : ICloneable
         return size;
     }
 
-    internal static bool NameEquals(string name1, string name2)
+    public static bool NameEquals(string name1, string name2)
         => name1.Equals(name2, StringComparison.OrdinalIgnoreCase);
 
     public static bool NameEquals(Column sourceColumn, string columnName, string? sourceName = null)

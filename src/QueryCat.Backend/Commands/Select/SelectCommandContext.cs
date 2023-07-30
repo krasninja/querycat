@@ -19,6 +19,8 @@ internal sealed class SelectCommandContext : IDisposable
 
     internal int Id { get; } = Interlocked.Increment(ref nextId);
 
+    public SelectQueryConditions Conditions { get; } = new();
+
     public SelectCommandContext(SelectQueryNode queryNode)
     {
         _queryNode = queryNode;
@@ -111,6 +113,32 @@ internal sealed class SelectCommandContext : IDisposable
     internal void AddInput(SelectCommandInputContext input)
     {
         _inputs.Add(input);
+    }
+
+    internal IEnumerable<SelectInputKeysConditions> GetConditionsColumns()
+    {
+        foreach (var inputContext in _inputs)
+        {
+            if (inputContext.RowsInput is not IRowsInputKeys inputKeys)
+            {
+                continue;
+            }
+            foreach (var keyColumn in inputKeys.GetKeyColumns())
+            {
+                var column = inputKeys.GetColumnByName(keyColumn.ColumnName);
+                if (column == null)
+                {
+                    throw new QueryCatException($"Cannot find key column '{keyColumn.ColumnName}'.");
+                }
+                var matchConditions = Conditions
+                    .Where(c =>
+                        Column.NameEquals(c.Column, keyColumn.ColumnName)
+                        && column.SourceName == inputContext.Alias
+                        && keyColumn.Operations.Contains(c.Operation))
+                    .ToArray();
+                yield return new SelectInputKeysConditions(inputKeys, column, keyColumn, matchConditions);
+            }
+        }
     }
 
     #endregion

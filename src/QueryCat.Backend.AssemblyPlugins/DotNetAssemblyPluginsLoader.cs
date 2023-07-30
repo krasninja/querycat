@@ -1,26 +1,31 @@
 using System.IO.Compression;
 using System.Reflection;
 using Microsoft.Extensions.Logging;
+using QueryCat.Backend.Abstractions.Plugins;
+using QueryCat.Backend.Functions;
 
-namespace QueryCat.Backend.Execution.Plugins;
+namespace QueryCat.Backend.AssemblyPlugins;
 
 /// <summary>
 /// Plugins loader.
 /// </summary>
-internal sealed class PluginsLoader
+public sealed class DotNetAssemblyPluginsLoader : PluginsLoader
 {
     private const string DllExtension = ".dll";
     private const string NuGetExtensions = ".nupkg";
 
-    private readonly IEnumerable<string> _pluginDirectories;
     private readonly Dictionary<string, byte[]> _rawAssembliesCache = new();
     private readonly Dictionary<string, Assembly> _loadedAssembliesCache = new();
+    private readonly FunctionsManager _functionsManager;
+    private readonly HashSet<Assembly> _loadedAssemblies = new();
 
-    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger<PluginsLoader>();
+    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger<DotNetAssemblyPluginsLoader>();
 
-    public PluginsLoader(IEnumerable<string> pluginDirectories)
+    public IEnumerable<Assembly> LoadedAssemblies => _loadedAssembliesCache.Values;
+
+    public DotNetAssemblyPluginsLoader(FunctionsManager functionsManager, IEnumerable<string> pluginDirectories) : base(pluginDirectories)
     {
-        _pluginDirectories = pluginDirectories;
+        _functionsManager = functionsManager;
         AppDomain.CurrentDomain.AssemblyResolve += CurrentDomainOnAssemblyResolve;
     }
 
@@ -45,30 +50,11 @@ internal sealed class PluginsLoader
         return null;
     }
 
-    /// <summary>
-    /// Load plugins.
-    /// </summary>
-    /// <returns>Loaded assemblies.</returns>
-    public IEnumerable<Assembly> LoadPlugins()
+    /// <inheritdoc />
+    public override Task LoadAsync(CancellationToken cancellationToken = default)
     {
-        var path = Path.GetDirectoryName(AppDomain.CurrentDomain.BaseDirectory);
-        if (string.IsNullOrEmpty(path))
+        foreach (var pluginFile in GetPluginFiles())
         {
-            return Enumerable.Empty<Assembly>();
-        }
-
-        var assembliesList = new List<Assembly>();
-        var loadedFiles = new HashSet<string>();
-        foreach (var pluginFile in PluginsManager.GetPluginFiles(_pluginDirectories))
-        {
-            var fileName = GetPluginName(pluginFile);
-            if (loadedFiles.Contains(fileName))
-            {
-                _logger.LogWarning("Plugin assembly '{PluginFile}' has been already loaded.", pluginFile);
-                continue;
-            }
-            loadedFiles.Add(fileName);
-
             _logger.LogDebug("Load plugin assembly '{PluginFile}'.", pluginFile);
             var extension = Path.GetExtension(pluginFile);
             Assembly? assembly = null;
@@ -85,17 +71,47 @@ internal sealed class PluginsLoader
                 _logger.LogWarning("Cannot load from '{PluginFile}'.", pluginFile);
                 continue;
             }
-
-            assembliesList.Add(assembly);
+            _loadedAssemblies.Add(assembly);
         }
 
-        return assembliesList;
+        RegisterFunctions(_functionsManager);
+
+        return Task.CompletedTask;
     }
 
-    private static string GetPluginName(string fileName)
+    /// <inheritdoc />
+    public override bool IsCorrectPluginFile(string file)
     {
-        fileName = Path.GetFileName(fileName);
-        return PluginsManager.GetNameFromKey(fileName);
+        var fileName = Path.GetFileName(file);
+
+        if (!File.Exists(file) || !fileName.Contains("Plugin"))
+        {
+            return false;
+        }
+
+        var extension = Path.GetExtension(fileName);
+        if (!extension.Equals(".dll", StringComparison.OrdinalIgnoreCase)
+            && !extension.Equals(".nupkg", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        if (fileName.StartsWith("QueryCat.Plugins.Client")
+            || fileName.StartsWith("QueryCat.Plugins.Sdk")
+            || fileName.StartsWith("QueryCat.Backend"))
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    private void RegisterFunctions(FunctionsManager functionsManager)
+    {
+        foreach (var pluginAssembly in _loadedAssemblies)
+        {
+            functionsManager.RegisterFromAssembly(pluginAssembly);
+        }
     }
 
     private Assembly LoadDll(string file)

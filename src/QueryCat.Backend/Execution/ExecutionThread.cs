@@ -1,10 +1,10 @@
 using System.Diagnostics;
 using System.Text;
 using QueryCat.Backend.Abstractions;
+using QueryCat.Backend.Abstractions.Plugins;
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Commands;
-using QueryCat.Backend.Execution.Plugins;
 using QueryCat.Backend.Functions;
 using QueryCat.Backend.Parser;
 using QueryCat.Backend.Storage;
@@ -19,19 +19,13 @@ namespace QueryCat.Backend.Execution;
 public class ExecutionThread : IExecutionThread
 {
     internal const string ApplicationDirectory = "qcat";
-    internal const string ConfigFileName = "config.json";
     internal const string BootstrapFileName = "rc.sql";
 
     private readonly StatementsVisitor _statementsVisitor;
     private readonly object _objLock = new();
     private readonly List<IDisposable> _disposablesList = new();
 
-    internal PersistentInputConfigStorage InputConfigStorage { get; }
-
-    /// <summary>
-    /// Configuration storage.
-    /// </summary>
-    public IInputConfigStorage ConfigStorage => InputConfigStorage;
+    public IInputConfigStorage ConfigStorage { get; protected set; }
 
     /// <summary>
     /// Root (base) thread scope.
@@ -68,12 +62,10 @@ public class ExecutionThread : IExecutionThread
     /// </summary>
     public ExecutionStatistic Statistic { get; } = new();
 
-#if ENABLE_PLUGINS
     /// <summary>
     /// Plugins manager.
     /// </summary>
-    public PluginsManager PluginsManager { get; }
-#endif
+    public PluginsManager PluginsManager { get; set; } = NullPluginsManager.Instance;
 
     /// <summary>
     /// Last execution statement return value.
@@ -100,39 +92,23 @@ public class ExecutionThread : IExecutionThread
     /// </summary>
     public CancellationTokenSource CancellationTokenSource { get; } = new();
 
-    internal static string GetApplicationDirectory()
+    public static string GetApplicationDirectory()
     {
         return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             ApplicationDirectory);
     }
 
-    public ExecutionThread(ExecutionOptions? options = null)
+    public ExecutionThread(
+        ExecutionOptions? options = null,
+        IInputConfigStorage? configStorage = null)
     {
         var appLocalDirectory = GetApplicationDirectory();
-
         RootScope = new ExecutionScope();
         Options = options ?? new ExecutionOptions();
-#if ENABLE_PLUGINS
-        PluginsManager = new PluginsManager(
-            PluginsManager.GetPluginDirectories(appLocalDirectory).Union(Options.PluginDirectories),
-            Options.PluginsRepositoryUri);
-#endif
         _statementsVisitor = new StatementsVisitor(this);
         FunctionsManager = new FunctionsManager(this);
-        InputConfigStorage = new PersistentInputConfigStorage(Path.Combine(appLocalDirectory, ConfigFileName));
+        ConfigStorage = configStorage ?? NullInputConfigStorage.Instance;
         RunBootstrapScript(appLocalDirectory);
-    }
-
-    public ExecutionThread(ExecutionThread executionThread)
-    {
-        RootScope = new ExecutionScope();
-        Options = executionThread.Options;
-#if ENABLE_PLUGINS
-        PluginsManager = executionThread.PluginsManager;
-#endif
-        FunctionsManager = new FunctionsManager(this);
-        _statementsVisitor = executionThread._statementsVisitor;
-        InputConfigStorage = executionThread.InputConfigStorage;
     }
 
     /// <inheritdoc />
@@ -172,7 +148,7 @@ public class ExecutionThread : IExecutionThread
     {
         if (Options.UseConfig)
         {
-            AsyncUtils.RunSync(InputConfigStorage.LoadAsync);
+            AsyncUtils.RunSync(ConfigStorage.LoadAsync);
         }
 
         while (ExecutingStatement != null)
@@ -207,25 +183,12 @@ public class ExecutionThread : IExecutionThread
 
         if (Options.UseConfig)
         {
-            AsyncUtils.RunSync(InputConfigStorage.SaveAsync);
+            AsyncUtils.RunSync(ConfigStorage.SaveAsync);
         }
         ExecutingStatement = null;
 
         return LastResult;
     }
-
-#if ENABLE_PLUGINS
-    internal void LoadPlugins()
-    {
-        var pluginLoader = new PluginsLoader(PluginsManager.PluginDirectories);
-        Options.PluginAssemblies.AddRange(pluginLoader.LoadPlugins());
-
-        foreach (var pluginAssembly in Options.PluginAssemblies)
-        {
-            FunctionsManager.RegisterFromAssembly(pluginAssembly);
-        }
-    }
-#endif
 
     /// <summary>
     /// Call function within execution thread.
@@ -291,7 +254,6 @@ public class ExecutionThread : IExecutionThread
                 disposable.Dispose();
             }
             _disposablesList.Clear();
-            PluginsManager.Dispose();
         }
     }
 

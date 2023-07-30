@@ -1,9 +1,11 @@
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Select;
+using QueryCat.Backend.Commands.Select.Iterators;
 using QueryCat.Backend.Commands.Select.Visitors;
 using QueryCat.Backend.Functions;
 using QueryCat.Backend.Relational;
+using QueryCat.Backend.Storage;
 using QueryCat.Backend.Types;
 
 namespace QueryCat.Backend.Commands.Select;
@@ -11,13 +13,13 @@ namespace QueryCat.Backend.Commands.Select;
 internal sealed partial class SelectPlanner
 {
     private void QueryContext_FillQueryContextConditions(
-        SelectQuerySpecificationNode querySpecificationNode,
-        SelectCommandContext commandContext)
+        SelectCommandContext context,
+        SelectQuerySpecificationNode querySpecificationNode)
     {
         // Fill conditions.
-        foreach (var context in commandContext.InputQueryContextList)
+        foreach (var inputContext in context.InputQueryContextList)
         {
-            QueryContext_FillQueryContextConditions(querySpecificationNode, context, commandContext);
+            QueryContext_FillQueryContextConditions(querySpecificationNode, inputContext, context);
         }
 
         // Fill "limit". For now we limit only if order is not defined.
@@ -27,7 +29,7 @@ internal sealed partial class SelectPlanner
             {
                 var fetchCount = Misc_CreateDelegate(querySpecificationNode.FetchNode.CountNode)
                     .Invoke().AsInteger;
-                foreach (var queryContext in commandContext.InputQueryContextList)
+                foreach (var queryContext in context.InputQueryContextList)
                 {
                     queryContext.QueryInfo.Limit = (queryContext.QueryInfo.Limit ?? 0) + fetchCount;
                 }
@@ -36,7 +38,7 @@ internal sealed partial class SelectPlanner
             {
                 var offsetCount = Misc_CreateDelegate(querySpecificationNode.OffsetNode.CountNode)
                     .Invoke().AsInteger;
-                foreach (var queryContext in commandContext.InputQueryContextList)
+                foreach (var queryContext in context.InputQueryContextList)
                 {
                     queryContext.QueryInfo.Limit = (queryContext.QueryInfo.Limit ?? 0) + offsetCount;
                 }
@@ -83,7 +85,7 @@ internal sealed partial class SelectPlanner
                 return false;
             }
             var valueFunc = makeDelegateVisitor.RunAndReturn(expressionNode!);
-            rowsInputContext.QueryInfo.AddCondition(column, binaryOperationExpressionNode.Operation, valueFunc);
+            commandContext.Conditions.AddCondition(column, binaryOperationExpressionNode.Operation, valueFunc);
             return true;
         }
 
@@ -108,8 +110,8 @@ internal sealed partial class SelectPlanner
             }
             var leftValueFunc = makeDelegateVisitor.RunAndReturn(betweenExpressionNode.Left);
             var rightValueFunc = makeDelegateVisitor.RunAndReturn(betweenExpressionNode.Right);
-            rowsInputContext.QueryInfo.AddCondition(column, VariantValue.Operation.GreaterOrEquals, leftValueFunc);
-            rowsInputContext.QueryInfo.AddCondition(column, VariantValue.Operation.LessOrEquals, rightValueFunc);
+            commandContext.Conditions.AddCondition(column, VariantValue.Operation.GreaterOrEquals, leftValueFunc);
+            commandContext.Conditions.AddCondition(column, VariantValue.Operation.LessOrEquals, rightValueFunc);
             return true;
         }
 
@@ -136,7 +138,7 @@ internal sealed partial class SelectPlanner
             {
                 values.Add(makeDelegateVisitor.RunAndReturn(inExpressionValue));
             }
-            rowsInputContext.QueryInfo.AddCondition(column, VariantValue.Operation.In, values.ToArray());
+            commandContext.Conditions.AddCondition(column, VariantValue.Operation.In, values.ToArray());
             return true;
         }
 
@@ -157,5 +159,37 @@ internal sealed partial class SelectPlanner
             }
         };
         callbackVisitor.Run(searchNode);
+    }
+
+    /// <summary>
+    /// Validate key columns values.
+    /// </summary>
+    private void QueryContext_ValidateKeyColumnsValues(SelectCommandContext context)
+    {
+        foreach (var keyCondition in context.GetConditionsColumns())
+        {
+            if (keyCondition.KeyColumn.IsRequired && keyCondition.Conditions.Length < 1)
+            {
+                throw new QueryContextMissedCondition(keyCondition.KeyColumn.ColumnName, keyCondition.KeyColumn.Operations);
+            }
+        }
+    }
+
+    private void QueryContext_SetKeyColumns(SelectCommandContext context)
+    {
+        var rowsInputWithKeys = context.Inputs.Select(i => i.RowsInput).OfType<IRowsInputKeys>().ToArray();
+        if (!rowsInputWithKeys.Any())
+        {
+            return;
+        }
+        var keysColumns = rowsInputWithKeys.SelectMany(i => i.GetKeyColumns());
+        if (!keysColumns.Any())
+        {
+            return;
+        }
+
+        var setKeysColumnsIterator = new SetKeyColumnsRowsIterator(context.CurrentIterator,
+            context.GetConditionsColumns().ToArray());
+        context.SetIterator(setKeysColumnsIterator);
     }
 }

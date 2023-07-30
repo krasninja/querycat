@@ -1,7 +1,7 @@
 using System.ComponentModel;
 using System.Reflection;
 using QueryCat.Backend.Abstractions;
-using QueryCat.Backend.Execution.Plugins;
+using QueryCat.Backend.Abstractions.Plugins;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Storage;
 using QueryCat.Backend.Types;
@@ -69,11 +69,12 @@ public static class InfoFunctions
             .AddProperty("name", p => p.Name)
             .AddProperty("version", p => p.Version.ToString())
             .AddProperty("is_installed", p => p.IsInstalled)
+            .AddProperty("platform", p => p.Platform)
+            .AddProperty("arch", p => p.Architecture)
             .AddProperty("uri", p => p.Uri);
         var plugins = AsyncUtils.RunSync(async () =>
         {
-            using var pluginsManager = new PluginsManager(args.ExecutionThread.PluginsManager.PluginDirectories);
-            return await pluginsManager.ListAsync();
+            return await args.ExecutionThread.PluginsManager.ListAsync();
         });
         return VariantValue.CreateFromObject(builder.BuildIterator(plugins!));
     }

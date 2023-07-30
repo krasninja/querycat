@@ -17,11 +17,9 @@ internal class SelectInputQueryContext : QueryContext
     public override QueryContextQueryInfo QueryInfo { get; }
 
     /// <inheritdoc />
-    public SelectInputQueryContext(IRowsInput rowsInput, IExecutionThread executionThread)
-        : base(executionThread)
+    public SelectInputQueryContext(IRowsInput rowsInput)
     {
         RowsInput = rowsInput;
-        InputInfo = new QueryContextInputInfo(rowsInput);
         QueryInfo = new QueryContextQueryInfo(rowsInput.Columns);
     }
 }

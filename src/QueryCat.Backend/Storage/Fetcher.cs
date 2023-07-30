@@ -25,21 +25,8 @@ public class Fetcher<TClass> where TClass : class
     /// <summary>
     /// Constructor.
     /// </summary>
-    /// <param name="enumerableInput">Enumerable input.</param>
-    public Fetcher(FetchInput<TClass> enumerableInput)
+    public Fetcher()
     {
-        var queryLimit = enumerableInput.QueryContext.QueryInfo.Limit + enumerableInput.QueryContext.QueryInfo.Offset;
-        if (queryLimit.HasValue)
-        {
-            var keyConditionsCount = enumerableInput.QueryContext.GetKeyConditions().Count();
-            var allConditionsCount = enumerableInput.QueryContext.QueryInfo.Conditions.Count;
-            // If we only have key conditions in query it means that all results will match
-            // it. So we can natively limit output page size.
-            if (keyConditionsCount == allConditionsCount)
-            {
-                Limit = Math.Min((int)queryLimit.Value, Limit);
-            }
-        }
     }
 
     public delegate Task<TClass> FetchSingleDelegate(CancellationToken cancellationToken = default);

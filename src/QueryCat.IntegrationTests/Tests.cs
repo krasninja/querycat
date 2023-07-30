@@ -18,7 +18,7 @@ public sealed class Tests : IDisposable
     public void Select(string fileName)
     {
         // Arrange.
-        new ExecutionThreadBootstrapper().Bootstrap(_testThread);
+        new ExecutionThreadBootstrapper().Bootstrap(_testThread, NullPluginsLoader.Instance);
         _testThread.FunctionsManager.RegisterFunction(SumIntegers);
         _testThread.FunctionsManager.RegisterFunction(FuncWithObject);
         _testThread.FunctionsManager.RegisterFunction(ReturnObjFunc);

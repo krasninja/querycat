@@ -31,7 +31,6 @@ internal static class FileInputOutput
             throw new QueryCatException($"No files match '{path}'.");
         }
         var input = files.Count == 1 ? files.First() : new CombineRowsInput(files);
-        input.QueryContext.InputInfo.InputArguments = new[] { path };
         return VariantValue.CreateFromObject(input);
     }
 
@@ -70,7 +69,7 @@ internal static class FileInputOutput
             {
                 fileStream = new GZipStream(fileStream, CompressionMode.Decompress);
             }
-            yield return fileFormatter.OpenInput(fileStream);
+            yield return fileFormatter.OpenInput(fileStream, path);
         }
     }
 

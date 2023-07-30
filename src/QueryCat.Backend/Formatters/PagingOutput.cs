@@ -15,6 +15,7 @@ public class PagingOutput : IRowsOutput
     private static readonly string ClearText = new('\r', ContinueWord.Length);
 
     private readonly IRowsOutput _rowsOutput;
+    private readonly CancellationTokenSource? _cts;
     private int _rowsCounter;
 
     /// <summary>
@@ -29,9 +30,10 @@ public class PagingOutput : IRowsOutput
         set => _rowsOutput.QueryContext = value;
     }
 
-    public PagingOutput(IRowsOutput rowsOutput, int pagingRowsCount = 20)
+    public PagingOutput(IRowsOutput rowsOutput, int pagingRowsCount = 20, CancellationTokenSource? cts = null)
     {
         _rowsOutput = rowsOutput;
+        _cts = cts;
         PagingRowsCount = pagingRowsCount;
     }
 
@@ -68,7 +70,7 @@ public class PagingOutput : IRowsOutput
             }
             else if (consoleKey.Key == ConsoleKey.Q)
             {
-                QueryContext.ExecutionThread.CancellationTokenSource.Cancel();
+                _cts?.Cancel();
             }
         }
     }

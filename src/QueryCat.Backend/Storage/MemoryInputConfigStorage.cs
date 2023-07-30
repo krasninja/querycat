@@ -25,5 +25,18 @@ public class MemoryInputConfigStorage : IInputConfigStorage
     public virtual bool Has(string key) => Map.ContainsKey(key);
 
     /// <inheritdoc />
-    public virtual VariantValue Get(string key) => Map[key];
+    public virtual VariantValue Get(string key)
+    {
+        if (Map.TryGetValue(key, out var value))
+        {
+            return value;
+        }
+        return VariantValue.Null;
+    }
+
+    /// <inheritdoc />
+    public virtual Task SaveAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+
+    /// <inheritdoc />
+    public virtual Task LoadAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
 }

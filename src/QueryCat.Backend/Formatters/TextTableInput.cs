@@ -9,7 +9,7 @@ namespace QueryCat.Backend.Formatters;
 internal sealed class TextTableInput : DsvInput
 {
     /// <inheritdoc />
-    public TextTableInput(Stream stream)
+    public TextTableInput(Stream stream, string? key = null)
         : base(new DsvOptions(stream)
         {
             InputOptions = new StreamRowsInputOptions
@@ -22,7 +22,7 @@ internal sealed class TextTableInput : DsvInput
                     SkipEmptyLines = true,
                 },
             }
-        })
+        }, key)
     {
     }
 }

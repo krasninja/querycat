@@ -27,9 +27,9 @@ public static class StandardInputOutput
         var stream = GetConsoleOutput();
         formatter ??= new TextTableFormatter();
         var output = formatter.OpenOutput(stream);
-        var pagingOutput = new PagingOutput(output)
+        var pagingOutput = new PagingOutput(output, cts: args.ExecutionThread.CancellationTokenSource)
         {
-            PagingRowsCount = pageSize
+            PagingRowsCount = pageSize,
         };
         pagingOutput.PagingRowsCount = pageSize;
 

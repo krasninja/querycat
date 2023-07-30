@@ -380,6 +380,7 @@ internal class CreateDelegateVisitor : AstVisitor
         {
             callInfo.Reset();
             callInfo.InvokePushArgs();
+            callInfo.FunctionName = function.Name;
             return function.Delegate(callInfo);
         }, node.GetDataType());
     }

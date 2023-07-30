@@ -18,7 +18,7 @@ public sealed class FunctionsManager
 {
     private const int DefaultCapacity = 42;
 
-    private record FunctionPreRegistration(FunctionDelegate Delegate, MemberInfo MemberInfo, List<string> Signatures);
+    private record FunctionPreRegistration(FunctionDelegate Delegate, MemberInfo? MemberInfo, List<string> Signatures);
 
     private readonly Dictionary<string, List<Function>> _functions = new(capacity: DefaultCapacity);
     private readonly Dictionary<string, IAggregateFunction> _aggregateFunctions = new(capacity: DefaultCapacity);
@@ -224,7 +224,7 @@ public sealed class FunctionsManager
     {
         if (_functionsPreRegistration.TryGetValue(name, out var functionInfo))
         {
-            functions = RegisterFunctionInternal(functionInfo);
+            functions = RegisterFunction(functionInfo);
             return true;
         }
 
@@ -234,7 +234,7 @@ public sealed class FunctionsManager
             _registerFunctions[_registerFunctionsLastIndex++].Invoke(this);
             if (_functionsPreRegistration.TryGetValue(name, out functionInfo))
             {
-                functions = RegisterFunctionInternal(functionInfo);
+                functions = RegisterFunction(functionInfo);
                 return true;
             }
         }
@@ -243,7 +243,24 @@ public sealed class FunctionsManager
         return false;
     }
 
-    private List<Function> RegisterFunctionInternal(FunctionPreRegistration preRegistration)
+    public Function RegisterFunction(string signature, FunctionDelegate @delegate,
+        string? description = null)
+    {
+        var function = RegisterFunction(new FunctionPreRegistration(
+            @delegate,
+            null,
+            new List<string>
+            {
+                signature
+            })).First();
+        if (!string.IsNullOrEmpty(description))
+        {
+            function.Description = description;
+        }
+        return function;
+    }
+
+    private List<Function> RegisterFunction(FunctionPreRegistration preRegistration)
     {
         List<Function>? functionsList = null;
         foreach (var signature in preRegistration.Signatures)
@@ -259,21 +276,27 @@ public sealed class FunctionsManager
                     _logger.LogWarning("Possibly similar signature function: {Function}.", function);
                 }
             }
-            var descriptionAttribute = preRegistration.MemberInfo.GetCustomAttribute<DescriptionAttribute>();
+            var descriptionAttribute = preRegistration.MemberInfo?.GetCustomAttribute<DescriptionAttribute>();
             if (descriptionAttribute != null)
             {
                 function.Description = descriptionAttribute.Description;
             }
-            functionsList = _functions!.AddOrUpdate(
-                NormalizeName(function.Name),
-                addValueFactory: _ => new List<Function>
-                {
-                    function
-                },
-                updateValueFactory: (_, value) => value!.Add(function));
-            _logger.LogDebug("Register function: {Function}.", function);
+            functionsList = AddFunctionInternal(function);
         }
         return functionsList ?? new List<Function>();
+    }
+
+    private List<Function> AddFunctionInternal(Function function)
+    {
+        var list = _functions!.AddOrUpdate(
+            NormalizeName(function.Name),
+            addValueFactory: _ => new List<Function>
+            {
+                function
+            },
+            updateValueFactory: (_, value) => value!.Add(function))!;
+        _logger.LogDebug("Register function: {Function}.", function);
+        return list;
     }
 
     public void RegisterAggregate<T>() where T : IAggregateFunction
@@ -448,6 +471,7 @@ public sealed class FunctionsManager
 
         var function = FindByName(functionName, arguments.GetTypes());
         var info = new FunctionCallInfo(_thread);
+        info.FunctionName = function.Name;
         int positionalIndex = 0;
 
         for (var i = 0; i < function.Arguments.Length; i++)

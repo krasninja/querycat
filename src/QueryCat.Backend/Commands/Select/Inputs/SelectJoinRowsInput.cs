@@ -7,7 +7,7 @@ using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Commands.Select.Inputs;
 
-internal sealed class SelectJoinRowsInput : IRowsInput, IRowsIteratorParent
+internal sealed class SelectJoinRowsInput : IRowsInputKeys, IRowsIteratorParent
 {
     private readonly IRowsInput _leftInput;
     private readonly IRowsInput _rightInput;
@@ -23,6 +23,9 @@ internal sealed class SelectJoinRowsInput : IRowsInput, IRowsIteratorParent
 
     /// <inheritdoc />
     public Column[] Columns { get; }
+
+    /// <inheritdoc />
+    public string[] UniqueKey => _leftInput.UniqueKey.Concat(_rightInput.UniqueKey).ToArray();
 
     /// <inheritdoc />
     public QueryContext QueryContext
@@ -175,6 +178,28 @@ internal sealed class SelectJoinRowsInput : IRowsInput, IRowsIteratorParent
     {
         yield return _leftInput;
         yield return _rightInput;
+    }
+
+    /// <inheritdoc />
+    public IReadOnlyList<KeyColumn> GetKeyColumns()
+    {
+        return new[] { _leftInput, _rightInput }
+            .OfType<IRowsInputKeys>()
+            .SelectMany(i => i.GetKeyColumns())
+            .ToArray();
+    }
+
+    /// <inheritdoc />
+    public void SetKeyColumnValue(string columnName, VariantValue value, VariantValue.Operation operation)
+    {
+        if (_leftInput is IRowsInputKeys leftInputKeys)
+        {
+            leftInputKeys.SetKeyColumnValue(columnName, value, operation);
+        }
+        if (_rightInput is IRowsInputKeys rightInputKeys)
+        {
+            rightInputKeys.SetKeyColumnValue(columnName, value, operation);
+        }
     }
 
     /// <inheritdoc />

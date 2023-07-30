@@ -204,7 +204,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         {
             return new VariantValue(objDecimal);
         }
-        if (obj is string || typeof(T).IsEnum)
+        if (obj is string || typeof(T).IsEnum || obj is char)
         {
             return new VariantValue(Convert.ToString(obj));
         }
@@ -389,7 +389,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         {
             return (T)Convert.ChangeType(AsNumeric, typeof(T));
         }
-        if (retType == typeof(string))
+        if (retType == typeof(string) || retType == typeof(char))
         {
             return (T)Convert.ChangeType(AsString, typeof(T));
         }
@@ -405,14 +405,14 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         var sourceObj = CheckTypeAndTryToCast(DataType.Object)._object;
         if (sourceObj == null)
         {
-            throw new InvalidOperationException("Object is null.");
+            throw new InvalidOperationException($"Object is null. Target type is '{typeof(T).Name}'.");
         }
         if (sourceObj is T obj)
         {
             return obj;
         }
         throw new InvalidOperationException(
-            $"Cannot cast object of type '{sourceObj.GetType()}' to type '{typeof(T)}'.");
+            $"Cannot cast object of type '{sourceObj.GetType().Name}' to type '{typeof(T).Name}'.");
     }
 
     /// <summary>

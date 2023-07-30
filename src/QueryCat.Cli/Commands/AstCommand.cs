@@ -11,14 +11,14 @@ internal class AstCommand : BaseQueryCommand
         this.SetHandler((applicationOptions, query, variables, files) =>
         {
             applicationOptions.InitializeLogger();
-            var thread = applicationOptions.CreateExecutionThread();
-            thread.BeforeStatementExecute += (_, threadArgs) =>
+            var root = applicationOptions.CreateApplicationRoot();
+            root.Thread.BeforeStatementExecute += (_, threadArgs) =>
             {
-                Console.WriteLine(thread.DumpAst());
+                Console.WriteLine(root.Thread.DumpAst());
                 threadArgs.ContinueExecution = false;
             };
-            AddVariables(thread, variables);
-            RunQuery(thread, query, files);
+            AddVariables(root.Thread, variables);
+            RunQuery(root.Thread, query, files);
         },
             new ApplicationOptionsBinder(LogLevelOption, PluginDirectoriesOption),
             QueryArgument,

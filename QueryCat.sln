@@ -1,12 +1,12 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueryCat.Cli", "QueryCat.Cli\QueryCat.Cli.csproj", "{D00EA705-8029-44A5-AF11-4BE4BF832B6D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueryCat.Cli", "src\QueryCat.Cli\QueryCat.Cli.csproj", "{D00EA705-8029-44A5-AF11-4BE4BF832B6D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueryCat.UnitTests", "QueryCat.UnitTests\QueryCat.UnitTests.csproj", "{B56F2192-6BF7-444C-BB89-7B004AD95BE3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueryCat.UnitTests", "src\QueryCat.UnitTests\QueryCat.UnitTests.csproj", "{B56F2192-6BF7-444C-BB89-7B004AD95BE3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueryCat.Benchmarks", "QueryCat.Benchmarks\QueryCat.Benchmarks.csproj", "{3368063D-C0BF-49CB-932E-CFA2AA4B2F4D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueryCat.Benchmarks", "src\QueryCat.Benchmarks\QueryCat.Benchmarks.csproj", "{3368063D-C0BF-49CB-932E-CFA2AA4B2F4D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueryCat.Backend", "QueryCat.Backend\QueryCat.Backend.csproj", "{A37B1E67-A350-4BFB-B9AC-BAFE034DCCA0}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueryCat.Backend", "src\QueryCat.Backend\QueryCat.Backend.csproj", "{A37B1E67-A350-4BFB-B9AC-BAFE034DCCA0}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{7A650DCD-768D-4219-B945-810A610089C5}"
 EndProject
@@ -16,13 +16,23 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Client", "Client", "{64761C
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{EAED1896-3858-4752-89B4-8769995CE246}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueryCat.Build", "QueryCat.Build\QueryCat.Build.csproj", "{AC2ACE47-78CF-4DD9-980D-365A7AD01155}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueryCat.Build", "src\QueryCat.Build\QueryCat.Build.csproj", "{AC2ACE47-78CF-4DD9-980D-365A7AD01155}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TimeIt", "TimeIt\TimeIt.csproj", "{46A69755-9F59-4F0D-BF98-DC30B2F5B957}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TimeIt", "src\TimeIt\TimeIt.csproj", "{46A69755-9F59-4F0D-BF98-DC30B2F5B957}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueryCat.IntegrationTests", "QueryCat.IntegrationTests\QueryCat.IntegrationTests.csproj", "{FA58EC0D-8A8F-43A5-8F5A-A3F09147B841}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueryCat.IntegrationTests", "src\QueryCat.IntegrationTests\QueryCat.IntegrationTests.csproj", "{FA58EC0D-8A8F-43A5-8F5A-A3F09147B841}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueryCat.Tests.QueryRunner", "QueryCat.Tests.QueryRunner\QueryCat.Tests.QueryRunner.csproj", "{EDB1F59A-C8D8-433F-8541-0168D4A118C8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueryCat.Tests.QueryRunner", "src\QueryCat.Tests.QueryRunner\QueryCat.Tests.QueryRunner.csproj", "{EDB1F59A-C8D8-433F-8541-0168D4A118C8}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Plugin", "Plugin", "{3A91C0A2-3489-4CC5-981B-9337510B3898}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueryCat.Plugins.Sdk", "sdk\dotnet-sdk\QueryCat.Plugins.Sdk.csproj", "{F9F52BBF-8435-4D70-B691-A6FEFB38E21B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueryCat.Backend.ThriftPlugins", "src\QueryCat.Backend.ThriftPlugins\QueryCat.Backend.ThriftPlugins.csproj", "{AD098131-E4CB-44CB-93BF-284D350F1807}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueryCat.Backend.AssemblyPlugins", "src\QueryCat.Backend.AssemblyPlugins\QueryCat.Backend.AssemblyPlugins.csproj", "{13F41570-44A1-4FA8-8FB0-40F945DC534E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueryCat.Plugins.Client", "sdk\dotnet-client\QueryCat.Plugins.Client.csproj", "{6FEC731B-218C-45EB-8F47-C409C5E2CA3D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -62,6 +72,22 @@ Global
 		{EDB1F59A-C8D8-433F-8541-0168D4A118C8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EDB1F59A-C8D8-433F-8541-0168D4A118C8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EDB1F59A-C8D8-433F-8541-0168D4A118C8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F9F52BBF-8435-4D70-B691-A6FEFB38E21B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F9F52BBF-8435-4D70-B691-A6FEFB38E21B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F9F52BBF-8435-4D70-B691-A6FEFB38E21B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F9F52BBF-8435-4D70-B691-A6FEFB38E21B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AD098131-E4CB-44CB-93BF-284D350F1807}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AD098131-E4CB-44CB-93BF-284D350F1807}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AD098131-E4CB-44CB-93BF-284D350F1807}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AD098131-E4CB-44CB-93BF-284D350F1807}.Release|Any CPU.Build.0 = Release|Any CPU
+		{13F41570-44A1-4FA8-8FB0-40F945DC534E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{13F41570-44A1-4FA8-8FB0-40F945DC534E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{13F41570-44A1-4FA8-8FB0-40F945DC534E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{13F41570-44A1-4FA8-8FB0-40F945DC534E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6FEC731B-218C-45EB-8F47-C409C5E2CA3D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6FEC731B-218C-45EB-8F47-C409C5E2CA3D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6FEC731B-218C-45EB-8F47-C409C5E2CA3D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6FEC731B-218C-45EB-8F47-C409C5E2CA3D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{B56F2192-6BF7-444C-BB89-7B004AD95BE3} = {7A650DCD-768D-4219-B945-810A610089C5}
@@ -72,5 +98,9 @@ Global
 		{46A69755-9F59-4F0D-BF98-DC30B2F5B957} = {7A650DCD-768D-4219-B945-810A610089C5}
 		{FA58EC0D-8A8F-43A5-8F5A-A3F09147B841} = {7A650DCD-768D-4219-B945-810A610089C5}
 		{EDB1F59A-C8D8-433F-8541-0168D4A118C8} = {7A650DCD-768D-4219-B945-810A610089C5}
+		{F9F52BBF-8435-4D70-B691-A6FEFB38E21B} = {3A91C0A2-3489-4CC5-981B-9337510B3898}
+		{AD098131-E4CB-44CB-93BF-284D350F1807} = {AF9802E7-50BA-4257-8703-F58F29BCCDBA}
+		{13F41570-44A1-4FA8-8FB0-40F945DC534E} = {AF9802E7-50BA-4257-8703-F58F29BCCDBA}
+		{6FEC731B-218C-45EB-8F47-C409C5E2CA3D} = {3A91C0A2-3489-4CC5-981B-9337510B3898}
 	EndGlobalSection
 EndGlobal

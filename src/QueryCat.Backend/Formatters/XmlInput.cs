@@ -27,19 +27,24 @@ internal sealed class XmlInput : IRowsInput, IDisposable
     private bool _initMode; // In open mode we should fill cache.
     private bool _skipNextRead; // On next row read we do not need to read XML since it was done before.
     private readonly Stack<int> _attributesColumns = new(); // The stack is used to reset attribute values on tag close.
+    private readonly string[] _uniqueKey;
 
     /// <inheritdoc />
     public Column[] Columns => _columns;
 
     /// <inheritdoc />
+    public string[] UniqueKey => _uniqueKey;
+
+    /// <inheritdoc />
     public QueryContext QueryContext { get; set; } = new EmptyQueryContext();
 
-    public XmlInput(StreamReader streamReader, string? xpath = null)
+    public XmlInput(StreamReader streamReader, string? xpath = null, params string[] uniqueKeys)
     {
         if (!string.IsNullOrEmpty(xpath))
         {
             streamReader = RunXPath(streamReader, xpath);
         }
+        _uniqueKey = ArrayUtils.Append(uniqueKeys, xpath);
 
         _xmlReader = XmlReader.Create(streamReader, new XmlReaderSettings
         {

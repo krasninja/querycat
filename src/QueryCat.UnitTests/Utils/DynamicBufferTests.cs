@@ -311,6 +311,38 @@ public class DynamicBufferTests
     }
 
     [Fact]
+    public void TryCopyExact_BufferWithData_ShouldCopy()
+    {
+        // Arrange.
+        var dynamicBuffer = new DynamicBuffer<char>(chunkSize: 5);
+        dynamicBuffer.Write("123456789");
+
+        // Act.
+        var outputBuffer = new char[3];
+        var success = dynamicBuffer.TryCopyExact(outputBuffer.AsSpan(), advance: true);
+
+        // Assert.
+        Assert.True(success);
+        Assert.Equal("123", new string(outputBuffer));
+    }
+
+    [Fact]
+    public void TryReadExact_BufferWithData_ShouldRead()
+    {
+        // Arrange.
+        var dynamicBuffer = new DynamicBuffer<char>(chunkSize: 3);
+        dynamicBuffer.Write("01234567890123456789");
+        dynamicBuffer.Advance(11); // 123456789
+
+        // Act.
+        var success = dynamicBuffer.TryReadExact(3, out var outputBuffer, advance: true);
+
+        // Assert.
+        Assert.True(success);
+        Assert.Equal("123", new string(outputBuffer));
+    }
+
+    [Fact]
     public void Write_DataOverBuffer_ShouldExpand()
     {
         // Arrange.
@@ -363,6 +395,22 @@ public class DynamicBufferTests
 
         // Assert.
         Assert.Equal("4567890", dynamicBuffer.GetSequence().ToString());
+    }
+
+    [Fact]
+    public void Write_ArrayOverBufferAdvanceAndWrite2_ShouldExpand()
+    {
+        // Arrange.
+        var dynamicBuffer = new DynamicBuffer<char>(chunkSize: 32);
+
+        // Act.
+        dynamicBuffer.Write("123456789012345"); // 15 items.
+        dynamicBuffer.Advance(15);
+        dynamicBuffer.Write("123456789012345"); // 15 items.
+        dynamicBuffer.Advance(15);
+
+        // Assert.
+        Assert.Empty(dynamicBuffer.GetSequence().ToString());
     }
 
     [Fact]

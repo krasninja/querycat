@@ -159,6 +159,12 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
             }
             return head;
         }
+
+        public void Clear()
+        {
+            Head = null;
+            Tail = null;
+        }
     }
 
     private sealed class BufferSegment : ReadOnlySequenceSegment<T>
@@ -180,6 +186,7 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
         [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
         internal void SetIndex(long index) => RunningIndex = index;
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
         internal ReadOnlySpan<T> GetSpan(int startIndex, int endIndex)
             => new(Buffer, startIndex, endIndex - startIndex);
 
@@ -497,6 +504,9 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
 
         public static SegmentChunk Empty { get; } = new(new BufferSegment(Array.Empty<T>(), 0), -1, 0, 0);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+        public ReadOnlySpan<T> GetSpan() => Segment.GetSpan(StartIndex, EndIndex);
+
         public SegmentChunk(BufferSegment segment, int startIndex, int endIndex, int consumed)
         {
             Segment = segment;
@@ -573,7 +583,7 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
     /// Get the total buffer without advanced data.
     /// </summary>
     /// <returns>The total sequence.</returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public ReadOnlySequence<T> GetSequence()
     {
         if (_buffersList.Head == null)
@@ -583,6 +593,98 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
         var headStartIndex = GetSegmentStartIndex(_buffersList.Head);
         var tailEndIndex = GetSegmentEndIndex(_buffersList.Tail);
         return new ReadOnlySequence<T>(_buffersList.Head, headStartIndex, _buffersList.Tail!, tailEndIndex);
+    }
+
+    /// <summary>
+    /// Attempt to copy exact buffer size items.
+    /// </summary>
+    /// <param name="buffer">Output buffer.</param>
+    /// <param name="advance">Should advance dynamic buffer.</param>
+    /// <returns><c>True</c> if all data was read, <c>false</c> otherwise.</returns>
+    public bool TryCopyExact(Span<T> buffer, bool advance = true)
+    {
+        var totalRead = 0;
+        var bufferSize = buffer.Length;
+
+        if (IsEmpty || bufferSize == 0)
+        {
+            return false;
+        }
+
+        var startIndex = GetSegmentStartIndex(_buffersList.Head);
+        var endIndex = GetSegmentEndIndex(_buffersList.Head);
+
+        // Fast path.
+        if (_buffersList.Head != null && endIndex - startIndex >= bufferSize)
+        {
+            var span = _buffersList.Head.Buffer.AsSpan(0, bufferSize);
+            span.CopyTo(buffer);
+            totalRead = span.Length;
+        }
+        // Slow path.
+        else
+        {
+            var iterator = IteratorStart();
+            while (iterator.IsNotEmpty)
+            {
+                var span = iterator.GetSpan();
+                if (span.Length > buffer.Length)
+                {
+                    span = span.Slice(0, buffer.Length);
+                }
+                span.CopyTo(buffer);
+                buffer = buffer.Slice(span.Length);
+                totalRead += span.Length;
+                iterator = IteratorNext(in iterator);
+            }
+        }
+
+        if (advance)
+        {
+            Advance(totalRead);
+        }
+
+        return totalRead == bufferSize;
+    }
+
+    /// <summary>
+    /// Attempt to read exact buffer size items.
+    /// </summary>
+    /// <param name="count">Items to read.</param>
+    /// <param name="buffer">Output buffer.</param>
+    /// <param name="advance">Should advance dynamic buffer.</param>
+    /// <returns><c>True</c> if all data was read, <c>false</c> otherwise.</returns>
+    public bool TryReadExact(int count, out ReadOnlySpan<T> buffer, bool advance = true)
+    {
+        if (IsEmpty || count == 0)
+        {
+            buffer = ReadOnlySpan<T>.Empty;
+            return false;
+        }
+
+        var startIndex = GetSegmentStartIndex(_buffersList.Head);
+        var endIndex = GetSegmentEndIndex(_buffersList.Head);
+
+        // Fast path.
+        if (_buffersList.Head != null && endIndex - startIndex >= count)
+        {
+            buffer = _buffersList.Head.Buffer.AsSpan(0, count);
+        }
+        // Slow path.
+        else
+        {
+            var sequence = GetSequence();
+            var newBuffer = new T[sequence.Length > count ? count : sequence.Length];
+            sequence.Slice(0, count).CopyTo(newBuffer);
+            buffer = newBuffer;
+        }
+
+        if (advance)
+        {
+            Advance(buffer.Length);
+        }
+
+        return buffer.Length == count;
     }
 
     #endregion
@@ -615,10 +717,6 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
         {
             var buffer = _buffersList.Tail?.Buffer ?? AllocateInternal();
             var remainBuffer = (int)_allocatedPosition - (int)_endPosition;
-            if (_buffersList.Tail == _buffersList.Head)
-            {
-                remainBuffer -= (int)_startPosition;
-            }
             if (remainBuffer < 1)
             {
                 buffer = AllocateInternal();
@@ -667,6 +765,19 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
     }
 
     #endregion
+
+    /// <summary>
+    /// Clear the buffer.
+    /// </summary>
+    public void Clear()
+    {
+        _buffersList.Clear();
+        _freeBuffersList.Clear();
+        _allocatedPosition = 0;
+        _startPosition = 0;
+        _endPosition = 0;
+        _allocatedFlag = false;
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     private static ulong Min(ulong val1, ulong val2, ulong val3)
