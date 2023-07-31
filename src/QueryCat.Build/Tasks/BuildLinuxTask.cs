@@ -24,7 +24,7 @@ public sealed class BuildLinuxTask : AsyncFrostingTask<BuildContext>
         {
             OutputDirectory = context.OutputDirectory,
             Runtime = DotNetConstants.RidLinuxX64,
-            PublishTrimmed = true,
+            PublishTrimmed = false,
             PublishSingleFile = true,
         });
         return Task.CompletedTask;

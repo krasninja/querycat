@@ -48,7 +48,7 @@ public partial class ThriftPluginClient
                 if (result.AsObject is IRowsIterator rowsIterator)
                 {
                     var index = _thriftPluginClient._objectsStorage.Add(rowsIterator);
-                    _thriftPluginClient._logger.LogDebug("Added new object {Object} with handle {Handle}.",
+                    _thriftPluginClient._logger.LogDebug("Added new object '{Object}' with handle {Handle}.",
                         rowsIterator.ToString(), index);
                     return Task.FromResult(new VariantValue
                     {
@@ -61,7 +61,7 @@ public partial class ThriftPluginClient
                         new QueryContextQueryInfo(new List<QueryCat.Backend.Relational.Column>()),
                         _thriftPluginClient._executionThread.ConfigStorage);
                     var index =_thriftPluginClient._objectsStorage.Add(rowsInput);
-                    _thriftPluginClient._logger.LogDebug("Added new object {Object} with handle {Handle}.",
+                    _thriftPluginClient._logger.LogDebug("Added new object '{Object}' with handle {Handle}.",
                         rowsInput.ToString(), index);
                     return Task.FromResult(new VariantValue
                     {
@@ -282,20 +282,20 @@ public partial class ThriftPluginClient
         /// <inheritdoc />
         public Task<List<KeyColumn>> RowsSet_GetKeyColumnsAsync(int object_handle, CancellationToken cancellationToken = default)
         {
-            var rowsInput = _thriftPluginClient._objectsStorage.Get<IRowsInput>(object_handle);
-            if (rowsInput is not IRowsInputKeys rowsInputKeys)
-            {
-                return Task.FromResult(new List<KeyColumn>());
-            }
             try
             {
-                var result = rowsInputKeys.GetKeyColumns()
-                    .Select(c => new KeyColumn(
-                        c.ColumnName,
-                        c.IsRequired,
-                        c.Operations.Select(o => o.ToString()).ToList())
-                    );
-                return Task.FromResult(result.ToList());
+                if (_thriftPluginClient._objectsStorage.TryGet<IRowsInput>(object_handle, out var rowsInput)
+                    && rowsInput != null
+                    && rowsInput is IRowsInputKeys rowsInputKeys)
+                {
+                    var result = rowsInputKeys.GetKeyColumns()
+                        .Select(c => new KeyColumn(
+                            c.ColumnName,
+                            c.IsRequired,
+                            c.Operations.Select(o => o.ToString()).ToList())
+                        );
+                    return Task.FromResult(result.ToList());
+                }
             }
             catch (QueryCatException ex)
             {
@@ -304,21 +304,24 @@ public partial class ThriftPluginClient
                     ObjectHandle = object_handle,
                 };
             }
+
+            return Task.FromResult(new List<KeyColumn>());
         }
 
         /// <inheritdoc />
         public Task RowsSet_SetKeyColumnValueAsync(int object_handle, string column_name, string operation, VariantValue? value,
             CancellationToken cancellationToken = default)
         {
-            var rowsInput = _thriftPluginClient._objectsStorage.Get<IRowsInput>(object_handle);
-            if (value == null || rowsInput is not IRowsInputKeys rowsInputKeys)
-            {
-                return Task.CompletedTask;
-            }
             try
             {
-                rowsInputKeys.SetKeyColumnValue(column_name, SdkConvert.Convert(value),
-                    Enum.Parse<QueryCat.Backend.Types.VariantValue.Operation>(operation));
+                if (value != null
+                    && _thriftPluginClient._objectsStorage.TryGet<IRowsInput>(object_handle, out var rowsInput)
+                    && rowsInput != null
+                    && rowsInput is IRowsInputKeys rowsInputKeys)
+                {
+                    rowsInputKeys.SetKeyColumnValue(column_name, SdkConvert.Convert(value),
+                        Enum.Parse<QueryCat.Backend.Types.VariantValue.Operation>(operation));
+                }
             }
             catch (QueryCatException ex)
             {

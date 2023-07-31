@@ -168,12 +168,9 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
                 var result = AsyncUtils.RunSync(() => plugin.Client.CallFunctionAsync(args.FunctionName, arguments, 0));
                 if (result != null && result.__isset.@object && result.Object != null)
                 {
-                    if (result.Object.Type == ObjectType.ROWS_INPUT)
-                    {
-                        var obj = CreateObjectFromResult(result, plugin);
-                        plugin.ObjectsStorage.Add(obj);
-                        return Types.VariantValue.CreateFromObject(obj);
-                    }
+                    var obj = CreateObjectFromResult(result, plugin);
+                    plugin.ObjectsStorage.Add(obj);
+                    return Types.VariantValue.CreateFromObject(obj);
                 }
                 return Types.VariantValue.Null;
             }
@@ -190,7 +187,7 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         {
             throw new InvalidOperationException("No connection.");
         }
-        if (result.Object.Type == ObjectType.ROWS_INPUT)
+        if (result.Object.Type == ObjectType.ROWS_INPUT || result.Object.Type == ObjectType.ROWS_ITERATOR)
         {
             var iterator = new ThriftRemoteRowsIterator(context.Client, result.Object.Handle);
             iterator.Open();
