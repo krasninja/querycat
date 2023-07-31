@@ -111,6 +111,18 @@ public class ExecutionThread : IExecutionThread
         RunBootstrapScript(appLocalDirectory);
     }
 
+    public ExecutionThread(ExecutionThread executionThread)
+    {
+        RootScope = new ExecutionScope();
+        Options = executionThread.Options;
+#if ENABLE_PLUGINS
+        PluginsManager = executionThread.PluginsManager;
+#endif
+        _statementsVisitor = executionThread._statementsVisitor;
+        FunctionsManager = executionThread.FunctionsManager;
+        ConfigStorage = executionThread.ConfigStorage;
+    }
+
     /// <inheritdoc />
     public VariantValue Run(string query)
     {
