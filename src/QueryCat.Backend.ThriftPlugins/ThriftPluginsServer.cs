@@ -67,6 +67,9 @@ public sealed partial class ThriftPluginsServer : IDisposable
                 : Application.LoggerFactory.CreateLogger<TSimpleAsyncServer>());
     }
 
+    /// <summary>
+    /// Start local host server.
+    /// </summary>
     public void Start()
     {
         if (_serverListenThread != null)

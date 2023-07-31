@@ -26,7 +26,7 @@ public partial class ThriftPluginClient
         }
 
         /// <inheritdoc />
-        public async Task<VariantValue> CallFunctionAsync(
+        public Task<VariantValue> CallFunctionAsync(
             string function_name,
             List<VariantValue>? args,
             int object_handle,
@@ -50,10 +50,10 @@ public partial class ThriftPluginClient
                     var index = _thriftPluginClient._objectsStorage.Add(rowsIterator);
                     _thriftPluginClient._logger.LogDebug("Added new object {Object} with handle {Handle}.",
                         rowsIterator.ToString(), index);
-                    return new VariantValue
+                    return Task.FromResult(new VariantValue
                     {
-                        Object = new ObjectValue(ObjectType.ROWS_INPUT, index, rowsIterator.ToString() ?? string.Empty),
-                    };
+                        Object = new ObjectValue(ObjectType.ROWS_ITERATOR, index, rowsIterator.ToString() ?? string.Empty),
+                    });
                 }
                 else if (result.AsObject is IRowsInput rowsInput)
                 {
@@ -63,15 +63,15 @@ public partial class ThriftPluginClient
                     var index =_thriftPluginClient._objectsStorage.Add(rowsInput);
                     _thriftPluginClient._logger.LogDebug("Added new object {Object} with handle {Handle}.",
                         rowsInput.ToString(), index);
-                    return new VariantValue
+                    return Task.FromResult(new VariantValue
                     {
                         Object = new ObjectValue(ObjectType.ROWS_INPUT, index, rowsInput.ToString() ?? string.Empty),
-                    };
+                    });
                 }
                 throw new QueryCatPluginException(ErrorType.INVALID_OBJECT, $"Cannot register object '{result.AsObject}'.");
             }
 
-            return SdkConvert.Convert(result);
+            return Task.FromResult(SdkConvert.Convert(result));
         }
 
         /// <inheritdoc />
@@ -242,12 +242,9 @@ public partial class ThriftPluginClient
                 var hasMore = rowsIterator.MoveNext();
                 for (var i = 0; i < count && (hasMore = rowsIterator.MoveNext()); i++)
                 {
-                    for (var colIndex = 0; colIndex < rowsIterator.Columns.Length; colIndex++)
+                    foreach (var value in rowsIterator.Current.AsArray())
                     {
-                        foreach (var value in rowsIterator.Current.AsArray())
-                        {
-                            values.Add(SdkConvert.Convert(value));
-                        }
+                        values.Add(SdkConvert.Convert(value));
                     }
                 }
                 var result = new RowsList(values)

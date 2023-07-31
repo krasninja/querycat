@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
@@ -15,7 +14,6 @@ using Thrift.Transport.Client;
 using Thrift.Transport.Server;
 using PluginsManager = QueryCat.Plugins.Sdk.PluginsManager;
 using QueryCat.Backend;
-using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Abstractions.Plugins;
 using QueryCat.Backend.Functions;
 using QueryCat.Plugins.Sdk;
@@ -54,7 +52,12 @@ public partial class ThriftPluginClient : IDisposable
 
     public ThriftPluginClient(string[] args)
     {
-        foreach (var arg in args.Skip(1))
+        if (args.Length == 0)
+        {
+            throw new InvalidOperationException("The application is intended to be executed by QueryCat host application.");
+        }
+
+        foreach (var arg in args)
         {
             var separatorIndex = arg.IndexOf('=', StringComparison.Ordinal);
             if (separatorIndex == -1)
@@ -110,6 +113,17 @@ public partial class ThriftPluginClient : IDisposable
                     options.SingleLine = true;
                 });
         });
+
+        AppDomain.CurrentDomain.UnhandledException += CurrentDomainOnUnhandledException;
+    }
+
+    private static void CurrentDomainOnUnhandledException(object sender, UnhandledExceptionEventArgs e)
+    {
+        if (e.ExceptionObject is Exception exception)
+        {
+            Console.Error.WriteLine(exception.Message);
+        }
+        Environment.Exit(1);
     }
 
     private void ParseServerPipe(string value)
@@ -143,6 +157,10 @@ public partial class ThriftPluginClient : IDisposable
         _debugServerPathArgs = value;
     }
 
+    /// <summary>
+    /// Start client server and register the plugin.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
     public async Task Start(CancellationToken cancellationToken = default)
     {
         if (!string.IsNullOrEmpty(_debugServerPath))
@@ -240,6 +258,10 @@ public partial class ThriftPluginClient : IDisposable
         _qcatProcess.BeginErrorReadLine();
     }
 
+    /// <summary>
+    /// Wait for parent QCat process exit.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
     public async Task WaitForParentProcessExitAsync(CancellationToken cancellationToken = default)
     {
         if (_qcatProcess != null)
@@ -257,7 +279,7 @@ public partial class ThriftPluginClient : IDisposable
     {
         if (disposing)
         {
-            // Connection.
+            // Connection to plugin manager.
             _protocol.Dispose();
             _client.Dispose();
 

@@ -171,7 +171,7 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
                     if (result.Object.Type == ObjectType.ROWS_INPUT)
                     {
                         var obj = CreateObjectFromResult(result, plugin);
-                        plugin.Objects.Add(obj);
+                        plugin.ObjectsStorage.Add(obj);
                         return Types.VariantValue.CreateFromObject(obj);
                     }
                 }

@@ -18,11 +18,11 @@ public partial class ThriftPluginsServer
 
         public TProtocol? Protocol { get; set; }
 
-        public Plugins.Sdk.Plugin.Client? Client { get; set; }
+        public Plugin.Client? Client { get; set; }
 
         public HashSet<string> Functions { get; } = new();
 
-        public List<object> Objects { get; } = new();
+        public ObjectsStorage ObjectsStorage { get; } = new();
     }
 
     private class Handler : PluginsManager.IAsync

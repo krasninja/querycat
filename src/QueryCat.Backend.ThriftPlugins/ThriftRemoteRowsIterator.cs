@@ -82,7 +82,7 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys
 
         if (!_cache.IsEmpty)
         {
-            _cache.Advance(LoadCount);
+            _cache.Advance(Columns.Length);
             if (!_cache.IsEmpty)
             {
                 return true;
