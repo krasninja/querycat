@@ -30,6 +30,12 @@ public class PagingOutput : IRowsOutput
         set => _rowsOutput.QueryContext = value;
     }
 
+    /// <inheritdoc />
+    public RowsOutputOptions Options { get; } = new()
+    {
+        RequiresColumnsLengthAdjust = true,
+    };
+
     public PagingOutput(IRowsOutput rowsOutput, int pagingRowsCount = 20, CancellationTokenSource? cts = null)
     {
         _rowsOutput = rowsOutput;

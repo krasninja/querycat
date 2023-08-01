@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Storage;
@@ -55,6 +56,10 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
         _stream = stream;
         _hasHeader = hasHeader;
         _floatNumberFormat = floatNumberFormat ?? VariantValue.FloatNumberFormat;
+        Options = new RowsOutputOptions
+        {
+            RequiresColumnsLengthAdjust = true,
+        };
 
         if (style == Style.Card)
         {

@@ -29,6 +29,9 @@ public class CollectionInput<TClass> : IRowsOutput, IRowsInputUpdate where TClas
     /// <inheritdoc />
     public QueryContext QueryContext { get; set; } = new EmptyQueryContext();
 
+    /// <inheritdoc />
+    public RowsOutputOptions Options { get; } = new();
+
     public CollectionInput(IEnumerable<TClass> list)
     {
         _list = list;

@@ -24,8 +24,7 @@ public static class RowsOutputExtensions
         CancellationToken cancellationToken = default)
     {
         // For plain output let's adjust columns width first.
-        if ((rowsOutput is TextTableOutput || rowsOutput is PagingOutput)
-            && executionThread.Options.AnalyzeRowsCount > 0)
+        if (rowsOutput.Options.RequiresColumnsLengthAdjust && executionThread.Options.AnalyzeRowsCount > 0)
         {
             rowsIterator = new AdjustColumnsLengthsIterator(rowsIterator, executionThread.Options.AnalyzeRowsCount);
         }

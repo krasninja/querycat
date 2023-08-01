@@ -13,6 +13,9 @@ public sealed class NullRowsOutput : IRowsOutput
     /// <inheritdoc />
     public QueryContext QueryContext { get; set; } = EmptyQueryContext.Empty;
 
+    /// <inheritdoc />
+    public RowsOutputOptions Options { get; } = new();
+
     private NullRowsOutput()
     {
     }

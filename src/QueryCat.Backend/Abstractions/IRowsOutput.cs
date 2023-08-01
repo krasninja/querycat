@@ -8,6 +8,11 @@ namespace QueryCat.Backend.Abstractions;
 public interface IRowsOutput : IRowsSource
 {
     /// <summary>
+    /// Options.
+    /// </summary>
+    RowsOutputOptions Options { get; }
+
+    /// <summary>
     /// Write row.
     /// </summary>
     /// <param name="row">Row to write.</param>

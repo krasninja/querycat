@@ -28,6 +28,9 @@ public abstract class RowsOutput : IRowsOutput
     }
 
     /// <inheritdoc />
+    public RowsOutputOptions Options { get; protected set; } = new();
+
+    /// <inheritdoc />
     public void Write(Row row)
     {
         if (_isFirstCall)
