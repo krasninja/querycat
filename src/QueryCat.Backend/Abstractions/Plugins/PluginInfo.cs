@@ -31,12 +31,12 @@ public class PluginInfo
     /// <summary>
     /// Plugin platform.
     /// </summary>
-    public string Platform { get; set; } = string.Empty;
+    public string Platform { get; set; } = Application.PlatformUnknown;
 
     /// <summary>
     /// Plugin architecture.
     /// </summary>
-    public string Architecture { get; set; } = string.Empty;
+    public string Architecture { get; set; } = Application.ArchitectureUnknown;
 
     /// <summary>
     /// Is plugin installed and ready to use.
@@ -66,15 +66,15 @@ public class PluginInfo
             return new PluginInfo(match.Groups["name"].Value)
             {
                 Version = new Version(match.Groups["version"].Value),
-                Architecture = "msil",
-                Platform = "multi"
+                Architecture = Application.ArchitectureMsil,
+                Platform = Application.PlatformMulti,
             };
         }
         return new PluginInfo(Path.GetFileName(name))
         {
             Version = new Version(0, 0),
-            Architecture = "msil",
-            Platform = "multi"
+            Architecture = Application.ArchitectureMsil,
+            Platform = Application.PlatformMulti,
         };
     }
 

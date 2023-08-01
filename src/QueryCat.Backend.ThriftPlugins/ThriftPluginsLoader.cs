@@ -55,7 +55,7 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         foreach (var pluginDirectory in PluginDirectories)
         {
             _logger.LogTrace("Search in '{Directory}'.", pluginDirectory);
-            if (IsCorrectPluginFile(pluginDirectory))
+            if (IsCorrectPluginFile(pluginDirectory) && IsMatchPlatform(pluginDirectory))
             {
                 LoadPlugin(pluginDirectory, cancellationToken);
                 continue;
@@ -68,7 +68,7 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
 
             foreach (var pluginFile in Directory.EnumerateFiles(pluginDirectory))
             {
-                if (IsCorrectPluginFile(pluginFile))
+                if (IsCorrectPluginFile(pluginFile) && IsMatchPlatform(pluginFile))
                 {
                     LoadPlugin(pluginFile, cancellationToken);
                 }
@@ -104,6 +104,19 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         return true;
     }
 
+    private bool IsMatchPlatform(string pluginFile)
+    {
+        var plugin = new PluginInfo(pluginFile);
+        // If we cannot detect platform and arch - let skip the check.
+        if (plugin.Platform == Application.PlatformUnknown && plugin.Architecture == Application.ArchitectureUnknown)
+        {
+            return true;
+        }
+        var currentPlatform = Application.GetPlatform();
+        var currentArchitecture = Application.GetArchitecture();
+        return currentPlatform == plugin.Platform && currentArchitecture == plugin.Architecture;
+    }
+
     private void LoadPlugin(string file, CancellationToken cancellationToken)
     {
         var authToken = !string.IsNullOrEmpty(ForceAuthToken) ? ForceAuthToken : Guid.NewGuid().ToString("N");
@@ -128,7 +141,7 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
             process.StartInfo.ArgumentList.Add($"--server-pipe-name=net.pipe://localhost/{_server.ServerPipeName}");
             process.StartInfo.ArgumentList.Add($"--token={authToken}");
             process.StartInfo.ArgumentList.Add($"--parent-pid={Process.GetCurrentProcess().Id}");
-            process.OutputDataReceived += (_, args) => _logger.LogInformation($"[{fileName}]: {args.Data}");
+            process.OutputDataReceived += (_, args) => _logger.LogTrace($"[{fileName}]: {args.Data}");
             process.ErrorDataReceived += (_, args) => _logger.LogError($"[{fileName}]: {args.Data}");
             process.Start();
             process.BeginOutputReadLine();
