@@ -16,6 +16,7 @@ nav:
     - 'UPDATE': commands/update.md
   - 'Input':
     - 'CSV': input/csv.md
+    - 'IISW3C': input/iisw3c.md
     - 'JSON': input/json.md
     - 'STDIN': input/stdin.md
     - 'Text': input/text-line.md

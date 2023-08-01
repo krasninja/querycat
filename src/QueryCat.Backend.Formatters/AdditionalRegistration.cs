@@ -9,6 +9,7 @@ public static class AdditionalRegistration
     {
         functionsManager.RegisterFactory(JsonFormatter.RegisterFunctions);
         functionsManager.RegisterFactory(XmlFormatter.RegisterFunctions);
+        functionsManager.RegisterFunction(IISW3CFormatter.IISW3C);
 
         FormattersInfo.RegisterFormatter(".json", (fm, args) => fm.CallFunction<IRowsFormatter>("json", args));
         FormattersInfo.RegisterFormatter(".xml", (fm, args) => fm.CallFunction<IRowsFormatter>("xml", args));
