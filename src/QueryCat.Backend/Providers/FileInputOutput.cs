@@ -47,6 +47,11 @@ internal static class FileInputOutput
 
         var formatter = args.GetAt(1).AsObject as IRowsFormatter;
         formatter ??= GetFormatter(path, args.ExecutionThread, funcArgs);
+        var fullDirectory = Path.GetDirectoryName(path);
+        if (!string.IsNullOrEmpty(fullDirectory) && !Directory.Exists(fullDirectory))
+        {
+            Directory.CreateDirectory(fullDirectory);
+        }
         Stream file = File.Open(path, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
         if (CompressFilesExtensions.Contains(Path.GetExtension(path).ToLower()))
         {
