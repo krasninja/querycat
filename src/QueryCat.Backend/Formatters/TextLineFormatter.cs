@@ -8,7 +8,7 @@ namespace QueryCat.Backend.Formatters;
 /// <summary>
 /// Formats the data as a single text line.
 /// </summary>
-internal class TextLineFormatter : IRowsFormatter
+public class TextLineFormatter : IRowsFormatter
 {
     [Description("Text line formatter.")]
     [FunctionSignature("text_line(): object<IRowsFormatter>")]

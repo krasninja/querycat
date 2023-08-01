@@ -1,3 +1,5 @@
+using System;
+using System.IO;
 using System.Xml;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Relational;

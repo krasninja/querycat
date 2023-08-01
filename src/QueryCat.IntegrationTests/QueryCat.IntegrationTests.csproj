@@ -17,6 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\QueryCat.Backend.Formatters\QueryCat.Backend.Formatters.csproj" />
     <ProjectReference Include="..\QueryCat.Tests.QueryRunner\QueryCat.Tests.QueryRunner.csproj" />
   </ItemGroup>
 

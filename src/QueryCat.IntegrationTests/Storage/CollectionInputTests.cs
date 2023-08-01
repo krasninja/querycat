@@ -97,7 +97,8 @@ public class CollectionInputTests
             DefaultRowsOutput = NullRowsOutput.Instance,
         });
         thread.TopScope.DefineVariable("employees", DataType.Object, VariantValue.CreateFromObject(_employeesList));
-        new ExecutionThreadBootstrapper().Bootstrap(thread, NullPluginsLoader.Instance);
+        new ExecutionThreadBootstrapper().Bootstrap(thread, NullPluginsLoader.Instance,
+            Backend.Formatters.AdditionalRegistration.Register);
         thread.Run("insert into self(employees) (id, name) values (4, 'Abbie Cornish');");
         Assert.Equal(4, _employeesList.TargetCollection.Count());
         Assert.Equal(5, _employeesList.TargetCollection.ElementAt(3).Score);
