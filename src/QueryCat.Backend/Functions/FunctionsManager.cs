@@ -233,7 +233,7 @@ public sealed class FunctionsManager
 
     private bool TryGetPreRegistration(string name, out List<Function> functions)
     {
-        if (_functionsPreRegistration.TryGetValue(name, out var functionInfo))
+        if (_functionsPreRegistration.Remove(name, out var functionInfo))
         {
             functions = RegisterFunction(functionInfo);
             return true;
@@ -243,7 +243,7 @@ public sealed class FunctionsManager
         while (_registerFunctionsLastIndex < _registerFunctions.Count)
         {
             _registerFunctions[_registerFunctionsLastIndex++].Invoke(this);
-            if (_functionsPreRegistration.TryGetValue(name, out functionInfo))
+            if (_functionsPreRegistration.Remove(name, out functionInfo))
             {
                 functions = RegisterFunction(functionInfo);
                 return true;
@@ -456,6 +456,11 @@ public sealed class FunctionsManager
         while (_registerFunctionsLastIndex < _registerFunctions.Count)
         {
             _registerFunctions[_registerFunctionsLastIndex++].Invoke(this);
+        }
+
+        foreach (var function in _functions.Values.SelectMany(f => f))
+        {
+            yield return function;
         }
 
         foreach (var functionItem in _functionsPreRegistration)
