@@ -167,7 +167,18 @@ public sealed class FunctionsManager
     /// Register the delegate that describe more functions.
     /// </summary>
     /// <param name="registerFunction">Register function delegate.</param>
-    public void RegisterFactory(Action<FunctionsManager> registerFunction) => _registerFunctions.Add(registerFunction);
+    /// <param name="postpone">Postpone actual registration and add to pending list instead.</param>
+    public void RegisterFactory(Action<FunctionsManager> registerFunction, bool postpone = true)
+    {
+        if (postpone)
+        {
+            _registerFunctions.Add(registerFunction);
+        }
+        else
+        {
+            registerFunction.Invoke(_thread.FunctionsManager);
+        }
+    }
 
     private void RegisterFunctionFast(FunctionDelegate functionDelegate, MemberInfo memberInfo, MethodFunctionProxy? proxy = null)
     {

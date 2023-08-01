@@ -32,10 +32,10 @@ public sealed class ExecutionThreadBootstrapper
         executionThread.FunctionsManager.RegisterFactory(ObjectFunctions.RegisterFunctions);
         executionThread.FunctionsManager.RegisterFactory(AggregatesRegistration.RegisterFunctions);
         executionThread.FunctionsManager.RegisterFactory(Providers.Registration.RegisterFunctions);
-        executionThread.FunctionsManager.RegisterFactory(Formatters.Registration.Register);
+        executionThread.FunctionsManager.RegisterFactory(Formatters.Registration.Register, postpone: false);
         foreach (var registration in registrations)
         {
-            registration.Invoke(executionThread.FunctionsManager);
+            executionThread.FunctionsManager.RegisterFactory(registration, postpone: false);
         }
         AsyncUtils.RunSync(pluginsLoader.LoadAsync);
 #if DEBUG
