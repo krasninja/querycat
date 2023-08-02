@@ -13,6 +13,7 @@ public class Program
         using var client = new ThriftPluginClient(args);
         client.FunctionsManager.RegisterFromType<AddressIterator>();
         client.FunctionsManager.RegisterFromType<AddressRowsInput>();
+        client.FunctionsManager.RegisterFunction(TestFunctions.TestCombineFunction);
         await client.Start();
         await client.WaitForParentProcessExitAsync();
     }

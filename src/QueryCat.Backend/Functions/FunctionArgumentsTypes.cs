@@ -45,6 +45,6 @@ public sealed class FunctionArgumentsTypes
     {
         var positionalArguments = Positional.Select(a => a.Value.ToString());
         var namedArguments = Named.Select(a => string.Join(", ", string.Concat(a.Key, "=", a.Value)));
-        return string.Join(", ", positionalArguments.Union(namedArguments));
+        return string.Join(", ", positionalArguments.Concat(namedArguments));
     }
 }

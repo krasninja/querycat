@@ -179,13 +179,17 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
 
                 var arguments = args.Select(SdkConvert.Convert).ToList();
                 var result = AsyncUtils.RunSync(() => plugin.Client.CallFunctionAsync(args.FunctionName, arguments, 0));
-                if (result != null && result.__isset.@object && result.Object != null)
+                if (result == null)
+                {
+                    return Types.VariantValue.Null;
+                }
+                if (result.__isset.@object && result.Object != null)
                 {
                     var obj = CreateObjectFromResult(result, plugin);
                     plugin.ObjectsStorage.Add(obj);
                     return Types.VariantValue.CreateFromObject(obj);
                 }
-                return Types.VariantValue.Null;
+                return SdkConvert.Convert(result);
             }
         }
     }

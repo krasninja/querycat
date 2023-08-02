@@ -150,6 +150,8 @@ public partial class ThriftPluginClient : IDisposable
     private void ParseDebugServer(string value)
     {
         _debugServerPath = value;
+        _authToken = "test";
+        ParseServerPipe("net.pipe://localhost/qcat-test");
     }
 
     private void ParseDebugServerArgs(string value)
@@ -183,12 +185,13 @@ public partial class ThriftPluginClient : IDisposable
 
         var assemblyName = Assembly.GetEntryAssembly()?.GetName();
         var version = assemblyName?.Version;
+        var functions = _functionsManager.GetFunctions().Select(f => f.Signature).ToList();
         await _client.RegisterPluginAsync(
             _authToken,
             $"net.pipe://localhost/{_clientServerNamedPipe}",
             new PluginData
             {
-                Functions = _functionsManager.GetFunctions().Select(f => f.Signature).ToList(),
+                Functions = functions,
                 Name = assemblyName?.Name ?? string.Empty,
                 Version = version?.ToString() ?? "0.0.0",
             },
@@ -246,16 +249,18 @@ public partial class ThriftPluginClient : IDisposable
                 FileName = _debugServerPath,
             }
         };
-        _qcatProcess.StartInfo.Arguments = $"plugin debug --log-level=trace --plugin-dirs=\"{modulePath}\"";
+        _qcatProcess.StartInfo.Arguments = "plugin debug";
         if (!string.IsNullOrEmpty(_debugServerPathArgs))
         {
-            _qcatProcess.StartInfo.Arguments += " " + _debugServerPathArgs;
+            _qcatProcess.StartInfo.Arguments += " " + _debugServerPathArgs + " ";
         }
+        _qcatProcess.StartInfo.Arguments += $"--log-level=trace --plugin-dirs=\"{modulePath}\"";
         _qcatProcess.OutputDataReceived += (_, args) => Console.Out.WriteLine($"> {args.Data}");
         _qcatProcess.ErrorDataReceived += (_, args) => Console.Error.WriteLine($"> {args.Data}");
         _qcatProcess.Start();
         _qcatProcess.BeginOutputReadLine();
         _qcatProcess.BeginErrorReadLine();
+        _logger.LogDebug("Start qcat host.");
     }
 
     /// <summary>
