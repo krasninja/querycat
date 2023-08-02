@@ -214,7 +214,7 @@ public partial class ThriftPluginClient
                 && rowsInput != null)
             {
                 var values = new List<VariantValue>();
-                var hasMore = rowsInput.ReadNext();
+                var hasMore = true;
                 for (var i = 0; i < count && (hasMore = rowsInput.ReadNext()); i++)
                 {
                     for (var colIndex = 0; colIndex < rowsInput.Columns.Length; colIndex++)
@@ -238,7 +238,7 @@ public partial class ThriftPluginClient
                 && rowsIterator != null)
             {
                 var values = new List<VariantValue>();
-                var hasMore = rowsIterator.MoveNext();
+                var hasMore = true;
                 for (var i = 0; i < count && (hasMore = rowsIterator.MoveNext()); i++)
                 {
                     foreach (var value in rowsIterator.Current.AsArray())
