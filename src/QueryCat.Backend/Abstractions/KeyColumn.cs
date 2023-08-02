@@ -1,6 +1,6 @@
 using QueryCat.Backend.Types;
 
-namespace QueryCat.Backend.Storage;
+namespace QueryCat.Backend.Abstractions;
 
 /// <summary>
 /// Key column.

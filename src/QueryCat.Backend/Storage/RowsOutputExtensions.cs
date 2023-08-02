@@ -1,6 +1,5 @@
 using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Execution;
-using QueryCat.Backend.Formatters;
 using QueryCat.Backend.Relational.Iterators;
 
 namespace QueryCat.Backend.Storage;

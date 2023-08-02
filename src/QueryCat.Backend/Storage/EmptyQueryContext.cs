@@ -1,4 +1,4 @@
-using QueryCat.Backend.Relational;
+using QueryCat.Backend.Abstractions;
 
 namespace QueryCat.Backend.Storage;
 

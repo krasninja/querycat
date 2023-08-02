@@ -1,5 +1,5 @@
 using System.Reflection;
-using QueryCat.Backend.Relational;
+using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Types;
 
 namespace QueryCat.Backend.Storage;

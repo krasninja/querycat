@@ -1,5 +1,5 @@
 using System.Runtime.CompilerServices;
-using QueryCat.Backend.Relational;
+using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Types;
 using QueryCat.Backend.Utils;
 

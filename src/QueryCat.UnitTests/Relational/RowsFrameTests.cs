@@ -1,4 +1,5 @@
 ﻿using Xunit;
+using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Types;
 

@@ -22,13 +22,6 @@ public class PersistentInputConfigStorage : MemoryInputConfigStorage
     }
 
     /// <inheritdoc />
-    public override void Unset(string key)
-    {
-        _writesCount++;
-        base.Unset(key);
-    }
-
-    /// <inheritdoc />
     public override void Set(string key, VariantValue value)
     {
         _writesCount++;

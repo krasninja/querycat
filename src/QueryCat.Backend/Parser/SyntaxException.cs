@@ -1,4 +1,4 @@
-namespace QueryCat.Backend;
+namespace QueryCat.Backend.Parser;
 
 /// <summary>
 /// The exception occurs on semantic error.

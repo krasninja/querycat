@@ -1,6 +1,4 @@
-using QueryCat.Backend.Relational;
-
-namespace QueryCat.Backend.Storage;
+namespace QueryCat.Backend.Abstractions;
 
 /// <summary>
 /// The class contains information about query - selected columns, conditions.

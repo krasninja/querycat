@@ -1,6 +1,6 @@
 using QueryCat.Backend.Types;
 
-namespace QueryCat.Backend.Storage;
+namespace QueryCat.Backend.Abstractions;
 
 /// <summary>
 /// Storage for rows input config.
@@ -13,12 +13,6 @@ public interface IInputConfigStorage
     /// <param name="key">Key.</param>
     /// <param name="value">Value.</param>
     void Set(string key, VariantValue value);
-
-    /// <summary>
-    /// Remove value by key.
-    /// </summary>
-    /// <param name="key">Key.</param>
-    void Unset(string key);
 
     /// <summary>
     /// Returns <c>true</c> if storage has such key, <c>false</c> otherwise.

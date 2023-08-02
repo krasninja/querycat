@@ -5,6 +5,7 @@ using System.CommandLine.Parsing;
 using System.Text;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend;
+using QueryCat.Backend.Parser;
 using QueryCat.Cli.Commands;
 
 namespace QueryCat.Cli;

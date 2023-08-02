@@ -1,4 +1,4 @@
-namespace QueryCat.Backend.Relational;
+namespace QueryCat.Backend.Abstractions;
 
 /// <summary>
 /// Cursor seek origin to move from.

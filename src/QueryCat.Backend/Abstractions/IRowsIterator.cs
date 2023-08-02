@@ -1,4 +1,3 @@
-using QueryCat.Backend.Relational;
 using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Abstractions;

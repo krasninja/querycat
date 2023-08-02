@@ -103,7 +103,7 @@ public static class SdkConvert
         throw new ArgumentOutOfRangeException(nameof(value));
     }
 
-    public static Backend.Types.DataType Convert(Sdk.DataType type)
+    public static Backend.Types.DataType Convert(DataType type)
     {
         return type switch
         {
@@ -138,7 +138,7 @@ public static class SdkConvert
         };
     }
 
-    public static Column Convert(QueryCat.Backend.Relational.Column column)
+    public static Column Convert(Backend.Abstractions.Column column)
     {
         return new Column(column.Name, Convert(column.DataType))
         {
@@ -146,9 +146,9 @@ public static class SdkConvert
         };
     }
 
-    public static QueryCat.Backend.Relational.Column Convert(Column column)
+    public static Backend.Abstractions.Column Convert(Column column)
     {
-        return new QueryCat.Backend.Relational.Column(column.Name, Convert(column.Type))
+        return new Backend.Abstractions.Column(column.Name, Convert(column.Type))
         {
             Description = column.Description ?? string.Empty,
         };

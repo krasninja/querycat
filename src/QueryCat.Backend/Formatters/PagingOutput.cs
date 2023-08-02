@@ -1,6 +1,4 @@
 using QueryCat.Backend.Abstractions;
-using QueryCat.Backend.Relational;
-using QueryCat.Backend.Storage;
 
 namespace QueryCat.Backend.Formatters;
 

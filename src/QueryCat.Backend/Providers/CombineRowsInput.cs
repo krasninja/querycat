@@ -1,14 +1,13 @@
 using QueryCat.Backend.Abstractions;
-using QueryCat.Backend.Relational;
 using QueryCat.Backend.Storage;
 using QueryCat.Backend.Types;
 
-namespace QueryCat.Backend.Formatters;
+namespace QueryCat.Backend.Providers;
 
 /// <summary>
 /// The class combines multiple rows inputs (of the same schema) into a single rows input.
 /// </summary>
-public sealed class CombineRowsInput : RowsInput, IDisposable
+internal sealed class CombineRowsInput : RowsInput, IDisposable
 {
     private readonly IReadOnlyList<IRowsInput> _rowsInputs;
     private int _currentInputIndex = -1;

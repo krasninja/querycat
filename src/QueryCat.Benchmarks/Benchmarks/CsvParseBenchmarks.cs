@@ -2,6 +2,7 @@ using System.Globalization;
 using BenchmarkDotNet.Attributes;
 using CsvHelper;
 using CsvHelper.Configuration;
+using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Formatters;
 using Sylvan.Data.Csv;
 using CsvDataReader = Sylvan.Data.Csv.CsvDataReader;

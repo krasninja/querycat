@@ -2,7 +2,6 @@ using System.Collections.Immutable;
 using System.Text;
 using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Commands.Select;
-using QueryCat.Backend.Relational;
 using QueryCat.Backend.Types;
 using QueryCat.Backend.Utils;
 

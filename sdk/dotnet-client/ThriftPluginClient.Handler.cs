@@ -7,7 +7,6 @@ using Microsoft.Extensions.Logging;
 using QueryCat.Backend;
 using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Functions;
-using QueryCat.Backend.Storage;
 using QueryCat.Plugins.Sdk;
 using DataType = QueryCat.Backend.Types.DataType;
 using KeyColumn = QueryCat.Plugins.Sdk.KeyColumn;
@@ -58,7 +57,7 @@ public partial class ThriftPluginClient
                 else if (result.AsObject is IRowsInput rowsInput)
                 {
                     rowsInput.QueryContext = new PluginQueryContext(
-                        new QueryContextQueryInfo(new List<QueryCat.Backend.Relational.Column>()),
+                        new QueryContextQueryInfo(new List<Backend.Abstractions.Column>()),
                         _thriftPluginClient._executionThread.ConfigStorage);
                     var index =_thriftPluginClient._objectsStorage.Add(rowsInput);
                     _thriftPluginClient._logger.LogDebug("Added new object '{Object}' with handle {Handle}.",
@@ -85,7 +84,7 @@ public partial class ThriftPluginClient
         }
 
         /// <inheritdoc />
-        public Task<List<Column>> RowsSet_GetColumnsAsync(int object_handle, CancellationToken cancellationToken = default)
+        public Task<List<Sdk.Column>> RowsSet_GetColumnsAsync(int object_handle, CancellationToken cancellationToken = default)
         {
             var rowsSchema = _thriftPluginClient._objectsStorage.Get<IRowsSchema>(object_handle);
             try
@@ -182,7 +181,7 @@ public partial class ThriftPluginClient
                     if (context_query_info == null)
                     {
                         rowsInput.QueryContext = new PluginQueryContext(
-                            new QueryContextQueryInfo(Array.Empty<QueryCat.Backend.Relational.Column>()),
+                            new QueryContextQueryInfo(Array.Empty<Backend.Abstractions.Column>()),
                             _thriftPluginClient._executionThread.ConfigStorage
                         );
                     }
@@ -190,7 +189,7 @@ public partial class ThriftPluginClient
                     {
                         rowsInput.QueryContext = new PluginQueryContext(
                             new QueryContextQueryInfo(
-                                new List<QueryCat.Backend.Relational.Column>(),
+                                new List<Backend.Abstractions.Column>(),
                                 context_query_info.Limit),
                             _thriftPluginClient._executionThread.ConfigStorage
                         );

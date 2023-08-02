@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using QueryCat.Backend.Utils;
 using DataType = QueryCat.Backend.Types.DataType;
 
-namespace QueryCat.Backend.Relational;
+namespace QueryCat.Backend.Abstractions;
 
 /// <summary>
 /// Represents a relational column.

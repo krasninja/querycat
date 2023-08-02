@@ -1,4 +1,4 @@
-using QueryCat.Backend.Storage;
+using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Types;
 
 namespace QueryCat.Backend.Execution;
@@ -12,11 +12,6 @@ public class NullInputConfigStorage : IInputConfigStorage
 
     /// <inheritdoc />
     public void Set(string key, VariantValue value)
-    {
-    }
-
-    /// <inheritdoc />
-    public void Unset(string key)
     {
     }
 

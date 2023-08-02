@@ -1,5 +1,4 @@
 using QueryCat.Backend.Abstractions;
-using QueryCat.Backend.Relational;
 using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Commands.Select.Iterators;

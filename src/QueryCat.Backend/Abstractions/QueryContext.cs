@@ -1,4 +1,6 @@
-namespace QueryCat.Backend.Storage;
+using QueryCat.Backend.Storage;
+
+namespace QueryCat.Backend.Abstractions;
 
 /// <summary>
 /// Can be used to explore more about executing query.

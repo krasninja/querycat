@@ -1,3 +1,4 @@
+using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Types;
 
 namespace QueryCat.Backend.Storage;

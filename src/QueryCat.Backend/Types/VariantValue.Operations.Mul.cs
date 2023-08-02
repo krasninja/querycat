@@ -1,3 +1,5 @@
+using QueryCat.Backend.Abstractions;
+
 namespace QueryCat.Backend.Types;
 
 public readonly partial struct VariantValue

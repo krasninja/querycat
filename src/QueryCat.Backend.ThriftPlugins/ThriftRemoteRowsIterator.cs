@@ -1,8 +1,9 @@
+using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Storage;
 using QueryCat.Backend.Types;
 using QueryCat.Backend.Utils;
 using QueryCat.Plugins.Client;
-using Column = QueryCat.Backend.Relational.Column;
+using Column = QueryCat.Backend.Abstractions.Column;
 
 namespace QueryCat.Backend.ThriftPlugins;
 

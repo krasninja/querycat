@@ -1,8 +1,8 @@
 using System.Text;
-using QueryCat.Backend.Abstractions;
+using QueryCat.Backend.Relational;
 using QueryCat.Backend.Types;
 
-namespace QueryCat.Backend.Relational;
+namespace QueryCat.Backend.Abstractions;
 
 /// <summary>
 /// Represents a single query record.

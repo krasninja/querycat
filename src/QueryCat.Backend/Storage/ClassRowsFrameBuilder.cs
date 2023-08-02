@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
+using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Types;

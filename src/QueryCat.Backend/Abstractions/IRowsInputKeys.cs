@@ -1,7 +1,6 @@
-using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Types;
 
-namespace QueryCat.Backend.Storage;
+namespace QueryCat.Backend.Abstractions;
 
 /// <summary>
 /// Rows input keys.

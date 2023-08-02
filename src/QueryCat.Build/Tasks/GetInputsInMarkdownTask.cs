@@ -7,8 +7,6 @@ using QueryCat.Backend;
 using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Functions;
-using QueryCat.Backend.Relational;
-using QueryCat.Backend.Storage;
 using QueryCat.Backend.ThriftPlugins;
 using QueryCat.Backend.Types;
 

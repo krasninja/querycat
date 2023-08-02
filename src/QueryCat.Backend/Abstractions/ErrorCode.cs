@@ -1,4 +1,4 @@
-namespace QueryCat.Backend;
+namespace QueryCat.Backend.Abstractions;
 
 /// <summary>
 /// Error codes that used while query processing.
