@@ -26,7 +26,7 @@ internal sealed class SubRipInput : RowsInput
         new("counter", DataType.Integer, "A numeric counter identifying each sequential subtitle."),
         new("start_time", DataType.Timestamp, "The start time that the subtitle should appear on the screen."),
         new("end_time", DataType.Timestamp, "The end time that the subtitle should disappear from the screen."),
-        new("text", DataType.Timestamp, "Subtitle text."),
+        new("text", DataType.String, "Subtitle text."),
     };
 
     /// <inheritdoc />
