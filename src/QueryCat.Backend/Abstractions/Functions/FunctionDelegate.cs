@@ -1,6 +1,7 @@
+using QueryCat.Backend.Functions;
 using QueryCat.Backend.Types;
 
-namespace QueryCat.Backend.Functions;
+namespace QueryCat.Backend.Abstractions.Functions;
 
 /// <summary>
 /// QueryCat function signature.

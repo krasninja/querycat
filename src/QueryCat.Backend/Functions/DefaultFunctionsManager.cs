@@ -3,8 +3,8 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 using Microsoft.Extensions.Logging;
-using QueryCat.Backend.Execution;
-using QueryCat.Backend.Functions.AggregateFunctions;
+using QueryCat.Backend.Abstractions;
+using QueryCat.Backend.Abstractions.Functions;
 using QueryCat.Backend.Parser;
 using QueryCat.Backend.Types;
 using QueryCat.Backend.Utils;
@@ -14,7 +14,7 @@ namespace QueryCat.Backend.Functions;
 /// <summary>
 /// Manages functions search and registration.
 /// </summary>
-public sealed class FunctionsManager
+public sealed class DefaultFunctionsManager : FunctionsManager
 {
     private const int DefaultCapacity = 42;
 
@@ -24,13 +24,13 @@ public sealed class FunctionsManager
     private readonly Dictionary<string, IAggregateFunction> _aggregateFunctions = new(capacity: DefaultCapacity);
 
     private readonly Dictionary<string, FunctionPreRegistration> _functionsPreRegistration = new(capacity: DefaultCapacity);
-    private readonly List<Action<FunctionsManager>> _registerFunctions = new(capacity: DefaultCapacity);
+    private readonly List<Action<DefaultFunctionsManager>> _registerFunctions = new(capacity: DefaultCapacity);
     private int _registerFunctionsLastIndex;
 
-    private readonly List<Action<FunctionsManager>> _registerAggregateFunctions = new(capacity: DefaultCapacity);
+    private readonly List<Action<DefaultFunctionsManager>> _registerAggregateFunctions = new(capacity: DefaultCapacity);
     private int _registerAggregateFunctionsLastIndex;
 
-    private readonly ExecutionThread _thread;
+    private readonly IExecutionThread _thread;
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger<FunctionsManager>();
 
     private static readonly ILogger Logger = Application.LoggerFactory.CreateLogger<FunctionsManager>();
@@ -40,67 +40,18 @@ public sealed class FunctionsManager
         return VariantValue.Null;
     }
 
-    public FunctionsManager(ExecutionThread thread)
+    public DefaultFunctionsManager(IExecutionThread thread)
     {
         _thread = thread;
     }
 
     #region Registration
 
-    public void RegisterFunctionsFromAssemblies(params Assembly[] assemblies)
-    {
-        foreach (var assembly in assemblies)
-        {
-            RegisterFromAssembly(assembly);
-        }
-    }
-
-    public void RegisterFromAssembly(Assembly assembly)
-    {
-        // If there is class Registration with RegisterFunctions method - call it instead. Use reflection otherwise.
-        var registerType = assembly.GetType(assembly.GetName().Name + ".Registration");
-        if (registerType != null)
-        {
-            var registerMethod = registerType.GetMethod("RegisterFunctions");
-            if (registerMethod != null)
-            {
-                _registerFunctions.Add(fm =>
-                {
-                    registerMethod.Invoke(null, new object?[] { fm });
-                });
-            }
-        }
-        else
-        {
-            foreach (var type in assembly.GetTypes())
-            {
-                RegisterFromType(type);
-            }
-        }
-    }
-
-    /// <summary>
-    /// Try to find and register functions from types.
-    /// </summary>
-    /// <param name="types">Types to analyze.</param>
-    public void RegisterFromTypes(params Type[] types)
-    {
-        foreach (var type in types)
-        {
-            RegisterFromType(type);
-        }
-    }
-
-    /// <summary>
-    /// Register type methods as functions.
-    /// </summary>
-    public void RegisterFromType<T>() => RegisterFromType(typeof(T));
-
     /// <summary>
     /// Register type methods as functions.
     /// </summary>
     /// <param name="type">Target type.</param>
-    public void RegisterFromType(Type type)
+    public override void RegisterFromType(Type type)
     {
         string GetFunctionNameWithAlternate(string signature, MemberInfo memberInfo)
         {
@@ -163,12 +114,8 @@ public sealed class FunctionsManager
         });
     }
 
-    /// <summary>
-    /// Register the delegate that describe more functions.
-    /// </summary>
-    /// <param name="registerFunction">Register function delegate.</param>
-    /// <param name="postpone">Postpone actual registration and add to pending list instead.</param>
-    public void RegisterFactory(Action<FunctionsManager> registerFunction, bool postpone = true)
+    /// <inheritdoc />
+    public override void RegisterFactory(Action<FunctionsManager> registerFunction, bool postpone = true)
     {
         if (postpone)
         {
@@ -228,7 +175,7 @@ public sealed class FunctionsManager
         }
     }
 
-    public void RegisterFunction(FunctionDelegate functionDelegate)
+    public override void RegisterFunction(FunctionDelegate functionDelegate)
         => RegisterFunctionFast(functionDelegate, functionDelegate.GetMethodInfo());
 
     private bool TryGetPreRegistration(string name, out List<Function> functions)
@@ -254,7 +201,7 @@ public sealed class FunctionsManager
         return false;
     }
 
-    public Function RegisterFunction(string signature, FunctionDelegate @delegate,
+    public override Function RegisterFunction(string signature, FunctionDelegate @delegate,
         string? description = null)
     {
         var function = RegisterFunction(new FunctionPreRegistration(
@@ -310,15 +257,14 @@ public sealed class FunctionsManager
         return list;
     }
 
-    public void RegisterAggregate<T>() where T : IAggregateFunction
-        => RegisterAggregate(typeof(T));
+    public override void RegisterAggregate<T>() => RegisterAggregate(typeof(T));
 
     public void RegisterAggregate(Type aggregateType)
     {
         _registerAggregateFunctions.Add(fm => RegisterAggregateInternal(fm, aggregateType));
     }
 
-    private static void RegisterAggregateInternal(FunctionsManager functionsManager, Type aggregateType)
+    private static void RegisterAggregateInternal(DefaultFunctionsManager functionsManager, Type aggregateType)
     {
         if (Activator.CreateInstance(aggregateType) is not IAggregateFunction aggregateFunctionInstance)
         {
@@ -397,7 +343,7 @@ public sealed class FunctionsManager
         return false;
     }
 
-    public Function FindByName(
+    public override Function FindByName(
         string name,
         FunctionArgumentsTypes? functionArgumentsTypes = null)
     {
@@ -436,7 +382,7 @@ public sealed class FunctionsManager
         return false;
     }
 
-    public IAggregateFunction FindAggregateByName(string name)
+    public override IAggregateFunction FindAggregateByName(string name)
     {
         name = NormalizeName(name);
         if (TryFindAggregateByName(name, out var aggregateFunction))
@@ -451,7 +397,7 @@ public sealed class FunctionsManager
     /// Get all registered functions.
     /// </summary>
     /// <returns>Functions enumerable.</returns>
-    public IEnumerable<Function> GetFunctions()
+    public override IEnumerable<Function> GetFunctions()
     {
         while (_registerFunctionsLastIndex < _registerFunctions.Count)
         {
@@ -475,13 +421,8 @@ public sealed class FunctionsManager
         }
     }
 
-    /// <summary>
-    /// Call function with arguments.
-    /// </summary>
-    /// <param name="functionName">Function name.</param>
-    /// <param name="arguments">Call arguments.</param>
-    /// <returns>Return result.</returns>
-    public VariantValue CallFunction(string functionName, FunctionArguments? arguments = null)
+    /// <inheritdoc />
+    public override VariantValue CallFunction(string functionName, FunctionArguments? arguments = null)
     {
         arguments ??= new FunctionArguments();
 
@@ -512,16 +453,6 @@ public sealed class FunctionsManager
 
         return function.Delegate.Invoke(info);
     }
-
-    /// <summary>
-    /// Call function with arguments.
-    /// </summary>
-    /// <param name="functionName">Function name.</param>
-    /// <param name="arguments">Call arguments.</param>
-    /// <typeparam name="T">Return type.</typeparam>
-    /// <returns>Return result.</returns>
-    public T CallFunction<T>(string functionName, FunctionArguments? arguments = null)
-        => CallFunction(functionName, arguments).As<T>();
 
     private static string NormalizeName(string target) => target.ToUpper();
 

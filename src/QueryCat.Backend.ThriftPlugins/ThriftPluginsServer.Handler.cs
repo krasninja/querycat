@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using QueryCat.Backend.Abstractions.Functions;
 using Thrift;
 using Thrift.Protocol;
 using Thrift.Transport;
@@ -6,7 +7,6 @@ using Thrift.Transport.Client;
 using QueryCat.Plugins.Client;
 using QueryCat.Plugins.Sdk;
 using LogLevel = QueryCat.Plugins.Sdk.LogLevel;
-using QueryCat.Backend.Functions;
 
 namespace QueryCat.Backend.ThriftPlugins;
 

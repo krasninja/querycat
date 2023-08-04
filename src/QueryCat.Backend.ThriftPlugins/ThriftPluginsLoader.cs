@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Microsoft.Extensions.Logging;
+using QueryCat.Backend.Abstractions.Functions;
 using QueryCat.Backend.Abstractions.Plugins;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Functions;

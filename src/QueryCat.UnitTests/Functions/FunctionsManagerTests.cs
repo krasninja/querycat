@@ -1,4 +1,5 @@
 using Xunit;
+using QueryCat.Backend.Abstractions.Functions;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Functions;
 using QueryCat.Backend.Types;
@@ -14,7 +15,7 @@ public sealed class FunctionsManagerTests
 
     public FunctionsManagerTests()
     {
-        _functionsManager = new(ExecutionThread.DefaultInstance);
+        _functionsManager = new DefaultFunctionsManager(ExecutionThread.DefaultInstance);
     }
 
     [Fact]

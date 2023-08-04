@@ -1,3 +1,5 @@
+using QueryCat.Backend.Abstractions.Functions;
+using QueryCat.Backend.Abstractions.Plugins;
 using QueryCat.Backend.Types;
 
 namespace QueryCat.Backend.Abstractions;
@@ -11,6 +13,21 @@ public interface IExecutionThread : IDisposable
     /// The token source to force current query cancel.
     /// </summary>
     CancellationTokenSource CancellationTokenSource { get; }
+
+    /// <summary>
+    /// Functions manager.
+    /// </summary>
+    FunctionsManager FunctionsManager { get; }
+
+    /// <summary>
+    /// Plugins manager.
+    /// </summary>
+    PluginsManager PluginsManager { get; }
+
+    /// <summary>
+    /// Config storage.
+    /// </summary>
+    IInputConfigStorage ConfigStorage { get; }
 
     /// <summary>
     /// Run text query.

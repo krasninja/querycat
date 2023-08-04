@@ -1,6 +1,6 @@
 using QueryCat.Backend.Types;
 
-namespace QueryCat.Backend.Functions;
+namespace QueryCat.Backend.Abstractions.Functions;
 
 /// <summary>
 /// The class contains extracted function arguments types separated

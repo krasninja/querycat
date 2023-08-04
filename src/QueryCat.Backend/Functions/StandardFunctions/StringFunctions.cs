@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Text.RegularExpressions;
+using QueryCat.Backend.Abstractions.Functions;
 using QueryCat.Backend.Types;
 using QueryCat.Backend.Utils;
 

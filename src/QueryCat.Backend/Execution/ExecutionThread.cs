@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Text;
 using QueryCat.Backend.Abstractions;
+using QueryCat.Backend.Abstractions.Functions;
 using QueryCat.Backend.Abstractions.Plugins;
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
@@ -25,6 +26,7 @@ public class ExecutionThread : IExecutionThread
     private readonly object _objLock = new();
     private readonly List<IDisposable> _disposablesList = new();
 
+    /// <inheritdoc />
     public IInputConfigStorage ConfigStorage { get; protected set; }
 
     /// <summary>
@@ -106,7 +108,7 @@ public class ExecutionThread : IExecutionThread
         RootScope = new ExecutionScope();
         Options = options ?? new ExecutionOptions();
         _statementsVisitor = new StatementsVisitor(this);
-        FunctionsManager = new FunctionsManager(this);
+        FunctionsManager = new DefaultFunctionsManager(this);
         ConfigStorage = configStorage ?? NullInputConfigStorage.Instance;
         RunBootstrapScript(appLocalDirectory);
     }

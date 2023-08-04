@@ -1,6 +1,6 @@
+using QueryCat.Backend.Abstractions.Functions;
 using QueryCat.Backend.Ast.Nodes.Function;
 using QueryCat.Backend.Functions;
-using QueryCat.Backend.Functions.AggregateFunctions;
 using QueryCat.Backend.Types;
 
 namespace QueryCat.Backend.Commands.Select;

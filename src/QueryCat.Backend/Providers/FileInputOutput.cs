@@ -1,7 +1,7 @@
 using System.ComponentModel;
 using System.IO.Compression;
 using QueryCat.Backend.Abstractions;
-using QueryCat.Backend.Execution;
+using QueryCat.Backend.Abstractions.Functions;
 using QueryCat.Backend.Formatters;
 using QueryCat.Backend.Functions;
 using QueryCat.Backend.Types;
@@ -62,7 +62,7 @@ internal static class FileInputOutput
 
     private static IEnumerable<IRowsInput> GetFileInputsByPath(
         string path,
-        ExecutionThread thread,
+        IExecutionThread thread,
         IRowsFormatter? formatter = null,
         FunctionArguments? funcArgs = null)
     {
@@ -108,7 +108,7 @@ internal static class FileInputOutput
         }
     }
 
-    private static IRowsFormatter GetFormatter(string path, ExecutionThread thread,
+    private static IRowsFormatter GetFormatter(string path, IExecutionThread thread,
         FunctionArguments? funcArgs = null)
     {
         var extension = Path.GetExtension(path).ToLower();

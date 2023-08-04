@@ -1,7 +1,7 @@
 using QueryCat.Backend.Types;
 using QueryCat.Backend.Utils;
 
-namespace QueryCat.Backend.Functions;
+namespace QueryCat.Backend.Abstractions.Functions;
 
 /// <summary>
 /// Represents the input arguments for function.
@@ -115,7 +115,7 @@ public sealed class FunctionArguments
 
     /// <summary>
     /// Add named argument.
-    /// </summary
+    /// </summary>
     /// <param name="value">Argument value.</param>
     /// <typeparam name="T">Argument type.</typeparam>
     /// <returns>Instance of <see cref="FunctionArguments" />.</returns>

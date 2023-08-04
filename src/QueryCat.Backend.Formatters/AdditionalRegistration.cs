@@ -1,5 +1,5 @@
 using QueryCat.Backend.Abstractions;
-using QueryCat.Backend.Functions;
+using QueryCat.Backend.Abstractions.Functions;
 
 namespace QueryCat.Backend.Formatters;
 

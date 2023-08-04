@@ -1,6 +1,7 @@
+using QueryCat.Backend.Functions;
 using QueryCat.Backend.Types;
 
-namespace QueryCat.Backend.Functions.AggregateFunctions;
+namespace QueryCat.Backend.Abstractions.Functions;
 
 /// <summary>
 /// Aggregate function. The aggregate function is the special type of functions

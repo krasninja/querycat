@@ -14,6 +14,7 @@ using Thrift.Transport.Client;
 using Thrift.Transport.Server;
 using PluginsManager = QueryCat.Plugins.Sdk.PluginsManager;
 using QueryCat.Backend;
+using QueryCat.Backend.Abstractions.Functions;
 using QueryCat.Backend.Abstractions.Plugins;
 using QueryCat.Backend.Functions;
 using QueryCat.Plugins.Sdk;
@@ -99,7 +100,7 @@ public partial class ThriftPluginClient : IDisposable
         _client = new PluginsManager.Client(_protocol);
 
         _executionThread = new PluginExecutionThread(_client);
-        _functionsManager = new FunctionsManager(_executionThread);
+        _functionsManager = new DefaultFunctionsManager(_executionThread);
     }
 
     public static void SetupApplicationLogging()

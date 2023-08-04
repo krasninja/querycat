@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Reflection;
 using QueryCat.Backend.Abstractions;
+using QueryCat.Backend.Abstractions.Functions;
 using QueryCat.Backend.Abstractions.Plugins;
 using QueryCat.Backend.Storage;
 using QueryCat.Backend.Types;

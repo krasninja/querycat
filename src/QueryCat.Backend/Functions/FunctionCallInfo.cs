@@ -1,4 +1,5 @@
 using System.Collections;
+using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Types;
 
@@ -13,12 +14,12 @@ public sealed class FunctionCallInfo : IEnumerable<VariantValue>
     private int _argsCursor;
     private readonly IFuncUnit[] _pushArgs;
 
-    public static FunctionCallInfo Empty { get; } = new(ExecutionThread.DefaultInstance);
+    public static FunctionCallInfo Empty { get; } = new(QueryCat.Backend.Execution.ExecutionThread.DefaultInstance);
 
     /// <summary>
     /// Current execution thread.
     /// </summary>
-    public ExecutionThread ExecutionThread { get; }
+    public IExecutionThread ExecutionThread { get; }
 
     /// <summary>
     /// Window information (optional).
@@ -60,7 +61,7 @@ public sealed class FunctionCallInfo : IEnumerable<VariantValue>
         return callInfo;
     }
 
-    public FunctionCallInfo(ExecutionThread executionThread, params IFuncUnit[] pushArgs)
+    public FunctionCallInfo(IExecutionThread executionThread, params IFuncUnit[] pushArgs)
     {
         _pushArgs = pushArgs;
         _args = new VariantValueArray(pushArgs.Length);

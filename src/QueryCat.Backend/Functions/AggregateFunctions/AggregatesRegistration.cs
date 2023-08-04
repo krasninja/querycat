@@ -1,3 +1,5 @@
+using QueryCat.Backend.Abstractions.Functions;
+
 namespace QueryCat.Backend.Functions.AggregateFunctions;
 
 /// <summary>

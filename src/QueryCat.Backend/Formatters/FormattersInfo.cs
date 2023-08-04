@@ -1,6 +1,5 @@
 using QueryCat.Backend.Abstractions;
-using QueryCat.Backend.Execution;
-using QueryCat.Backend.Functions;
+using QueryCat.Backend.Abstractions.Functions;
 
 namespace QueryCat.Backend.Formatters;
 
@@ -18,7 +17,7 @@ public static class FormattersInfo
     /// <param name="thread">Execution thread.</param>
     /// <param name="args">Arguments.</param>
     /// <returns>Instance of <see cref="IRowsFormatter" /> or null.</returns>
-    public static IRowsFormatter? CreateFormatter(string id, ExecutionThread thread, FunctionArguments? args = null)
+    public static IRowsFormatter? CreateFormatter(string id, IExecutionThread thread, FunctionArguments? args = null)
     {
         if (Formatters.TryGetValue(id.ToLower(), out var factory))
         {

@@ -1,3 +1,4 @@
+using QueryCat.Backend.Abstractions.Functions;
 using QueryCat.Backend.Ast.Nodes.Function;
 using QueryCat.Backend.Types;
 

@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Json.Path;
+using QueryCat.Backend.Abstractions.Functions;
 using QueryCat.Backend.Types;
 using QueryCat.Backend.Utils;
 
