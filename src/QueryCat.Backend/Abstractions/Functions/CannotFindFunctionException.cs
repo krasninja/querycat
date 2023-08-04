@@ -1,6 +1,4 @@
-using QueryCat.Backend.Abstractions.Functions;
-
-namespace QueryCat.Backend.Functions;
+namespace QueryCat.Backend.Abstractions.Functions;
 
 /// <summary>
 /// The exception occurs when function cannot be found within

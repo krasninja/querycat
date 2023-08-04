@@ -37,12 +37,23 @@ public abstract class FunctionsManager
     /// <param name="postpone">Postpone actual registration and add to pending list instead.</param>
     public abstract void RegisterFactory(Action<FunctionsManager> registerFunction, bool postpone = true);
 
+    /// <summary>
+    /// Register functions, aggregate functions from the specific type.
+    /// </summary>
+    /// <param name="type">Type to analyze.</param>
     public abstract void RegisterFromType(Type type);
 
     /// <summary>
-    /// Register type methods as functions.
+    /// Tries to find the function by name and it arguments types.
     /// </summary>
-    public void RegisterFromType<T>() => RegisterFromType(typeof(T));
+    /// <param name="name">Function name.</param>
+    /// <param name="functionArgumentsTypes">Function arguments types.</param>
+    /// <param name="functions">Found functions.</param>
+    /// <returns>Returns <c>true</c> if functions were found, <c>false</c> otherwise.</returns>
+    public abstract bool TryFindByName(
+        string name,
+        FunctionArgumentsTypes? functionArgumentsTypes,
+        out Function[] functions);
 
     /// <summary>
     /// Find function by name.
@@ -50,11 +61,47 @@ public abstract class FunctionsManager
     /// <param name="name">Function name.</param>
     /// <param name="functionArgumentsTypes">Argument types to find. Can be used to find the specific overload.</param>
     /// <returns>Instance of <see cref="Function" />.</returns>
-    public abstract Function FindByName(
+    public Function FindByName(
         string name,
-        FunctionArgumentsTypes? functionArgumentsTypes = null);
+        FunctionArgumentsTypes? functionArgumentsTypes = null)
+    {
+        if (TryFindByName(name, functionArgumentsTypes, out var functions))
+        {
+            if (functions.Length > 1 && functionArgumentsTypes != null)
+            {
+                throw new CannotFindFunctionException($"There is more than one signature for function '{name}'.");
+            }
+            return functions.First();
+        }
+        if (functionArgumentsTypes != null)
+        {
+            throw new CannotFindFunctionException(name, functionArgumentsTypes);
+        }
+        throw new CannotFindFunctionException(name);
+    }
 
-    public abstract IAggregateFunction FindAggregateByName(string name);
+    /// <summary>
+    /// Try to find aggregate function by name.
+    /// </summary>
+    /// <param name="name">Function name.</param>
+    /// <param name="aggregateFunction">Found aggregate function.</param>
+    /// <returns><c>True</c> if found, <c>false</c> otherwise.</returns>
+    public abstract bool TryFindAggregateByName(string name, out IAggregateFunction aggregateFunction);
+
+    /// <summary>
+    /// Find aggregate function by name.
+    /// </summary>
+    /// <param name="name">Function name.</param>
+    /// <returns>Found aggregate function.</returns>
+    public IAggregateFunction FindAggregateByName(string name)
+    {
+        if (TryFindAggregateByName(name, out var aggregateFunction))
+        {
+            return aggregateFunction;
+        }
+
+        throw new CannotFindFunctionException(name);
+    }
 
     /// <summary>
     /// Get all registered functions.
@@ -69,14 +116,4 @@ public abstract class FunctionsManager
     /// <param name="arguments">Arguments to pass.</param>
     /// <returns>Result.</returns>
     public abstract VariantValue CallFunction(string functionName, FunctionArguments? arguments = null);
-
-    /// <summary>
-    /// Call function with arguments.
-    /// </summary>
-    /// <param name="functionName">Function name.</param>
-    /// <param name="arguments">Call arguments.</param>
-    /// <typeparam name="T">Return type.</typeparam>
-    /// <returns>Return result.</returns>
-    public T CallFunction<T>(string functionName, FunctionArguments? arguments = null)
-        => CallFunction(functionName, arguments).As<T>();
 }

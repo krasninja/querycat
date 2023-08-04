@@ -85,7 +85,7 @@ public sealed class FunctionsManagerTests
     public void RegisterFunction_RegisterFromClass_ShouldEvalCorrectly()
     {
         // Arrange.
-        _functionsManager.RegisterFromType<TestClass1>();
+        _functionsManager.RegisterFromType(typeof(TestClass1));
 
         // Act.
         var func1 = _functionsManager.FindByName("test_class1",
@@ -121,7 +121,7 @@ public sealed class FunctionsManagerTests
     public void RegisterFunction_RegisterFromType_ShouldEvalCorrectly()
     {
         // Arrange.
-        _functionsManager.RegisterFromType<TestClass2>();
+        _functionsManager.RegisterFromType(typeof(TestClass2));
 
         // Act.
         var func1 = _functionsManager.FindByName("function1");

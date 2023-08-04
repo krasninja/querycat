@@ -11,8 +11,8 @@ public class Program
     {
         ThriftPluginClient.SetupApplicationLogging();
         using var client = new ThriftPluginClient(args);
-        client.FunctionsManager.RegisterFromType<AddressIterator>();
-        client.FunctionsManager.RegisterFromType<AddressRowsInput>();
+        client.FunctionsManager.RegisterFromType(typeof(AddressIterator));
+        client.FunctionsManager.RegisterFromType(typeof(AddressRowsInput));
         client.FunctionsManager.RegisterFunction(TestFunctions.TestCombineFunction);
         await client.Start();
         await client.WaitForParentProcessExitAsync();

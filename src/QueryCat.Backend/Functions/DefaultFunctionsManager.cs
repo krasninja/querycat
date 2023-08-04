@@ -132,7 +132,7 @@ public sealed class DefaultFunctionsManager : FunctionsManager
         var signatureAttributes = memberInfo.GetCustomAttributes<FunctionSignatureAttribute>();
         if (signatureAttributes == null)
         {
-            throw new QueryCatException($"Function {memberInfo.Name} must have {nameof(FunctionSignatureAttribute)}.");
+            throw new QueryCatException($"Function '{memberInfo.Name}' must have {nameof(FunctionSignatureAttribute)}.");
         }
 
         foreach (var signatureAttribute in signatureAttributes)
@@ -201,6 +201,7 @@ public sealed class DefaultFunctionsManager : FunctionsManager
         return false;
     }
 
+    /// <inheritdoc />
     public override Function RegisterFunction(string signature, FunctionDelegate @delegate,
         string? description = null)
     {
@@ -257,9 +258,10 @@ public sealed class DefaultFunctionsManager : FunctionsManager
         return list;
     }
 
+    /// <inheritdoc />
     public override void RegisterAggregate<T>() => RegisterAggregate(typeof(T));
 
-    public void RegisterAggregate(Type aggregateType)
+    private void RegisterAggregate(Type aggregateType)
     {
         _registerAggregateFunctions.Add(fm => RegisterAggregateInternal(fm, aggregateType));
     }
@@ -298,14 +300,8 @@ public sealed class DefaultFunctionsManager : FunctionsManager
 
     #endregion
 
-    /// <summary>
-    /// Tries to find the function by name and it arguments types.
-    /// </summary>
-    /// <param name="name">Function name.</param>
-    /// <param name="functionArgumentsTypes">Function arguments types.</param>
-    /// <param name="functions">Found functions.</param>
-    /// <returns>Returns <c>true</c> if functions were found, <c>false</c> otherwise.</returns>
-    public bool TryFindByName(
+    /// <inheritdoc />
+    public override bool TryFindByName(
         string name,
         FunctionArgumentsTypes? functionArgumentsTypes,
         out Function[] functions)
@@ -343,28 +339,10 @@ public sealed class DefaultFunctionsManager : FunctionsManager
         return false;
     }
 
-    public override Function FindByName(
-        string name,
-        FunctionArgumentsTypes? functionArgumentsTypes = null)
+    /// <inheritdoc />
+    public override bool TryFindAggregateByName(string name, out IAggregateFunction aggregateFunction)
     {
         name = NormalizeName(name);
-        if (TryFindByName(name, functionArgumentsTypes, out var functions))
-        {
-            if (functions.Length > 1 && functionArgumentsTypes != null)
-            {
-                throw new CannotFindFunctionException($"There is more than one signature for function '{name}'.");
-            }
-            return functions.First();
-        }
-        if (functionArgumentsTypes != null)
-        {
-            throw new CannotFindFunctionException(name, functionArgumentsTypes);
-        }
-        throw new CannotFindFunctionException(name);
-    }
-
-    private bool TryFindAggregateByName(string name, out IAggregateFunction aggregateFunction)
-    {
         if (_aggregateFunctions.TryGetValue(name, out aggregateFunction!))
         {
             return true;
@@ -380,17 +358,6 @@ public sealed class DefaultFunctionsManager : FunctionsManager
         }
 
         return false;
-    }
-
-    public override IAggregateFunction FindAggregateByName(string name)
-    {
-        name = NormalizeName(name);
-        if (TryFindAggregateByName(name, out var aggregateFunction))
-        {
-            return aggregateFunction;
-        }
-
-        throw new CannotFindFunctionException(name);
     }
 
     /// <summary>
