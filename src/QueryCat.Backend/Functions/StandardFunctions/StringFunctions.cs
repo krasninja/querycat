@@ -1,6 +1,8 @@
 using System.ComponentModel;
 using System.Text.RegularExpressions;
+using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Abstractions.Functions;
+using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Types;
 using QueryCat.Backend.Utils;
 
@@ -152,6 +154,60 @@ public static class StringFunctions
         return new VariantValue(split[n]);
     }
 
+    [Description("Splits the string at occurrences of delimiter and returns the resulting fields as a set of text rows.")]
+    [FunctionSignature("string_to_table(target: string, delimiter?: string, null_string?: string := null): object<IRowsIterator>")]
+    public static VariantValue StringToTable(FunctionCallInfo args)
+    {
+        IEnumerable<VariantValue> GetSplitItems(string target, string? delimiter, string? nullString)
+        {
+            // If delimiter is null - return every character.
+            if (delimiter == null)
+            {
+                foreach (var chr in target)
+                {
+                    yield return new VariantValue(chr.ToString());
+                }
+                yield break;
+            }
+
+            // If delimiter is empty string - return the whole line.
+            if (delimiter.Length == 0)
+            {
+                yield return new VariantValue(target);
+                yield break;
+            }
+
+            int currentIndex, prevIndex = 0;
+            string part;
+            while ((currentIndex = target.IndexOf(delimiter, prevIndex, StringComparison.Ordinal)) > -1)
+            {
+                part = target.Substring(prevIndex, currentIndex - prevIndex);
+                yield return part != nullString ? new VariantValue(part) : VariantValue.Null;
+                prevIndex = currentIndex + delimiter.Length;
+            }
+
+            part = target.Substring(prevIndex);
+            yield return part != nullString ? new VariantValue(target.Substring(prevIndex)) : VariantValue.Null;
+        }
+
+        var target = args.GetAt(0).AsString;
+        string? delimiter = !args.GetAt(1).IsNull ? args.GetAt(1) : null;
+        var nullString = args.GetAt(2).AsString;
+
+        var result = GetSplitItems(target, delimiter, nullString);
+        var iterator = new ClassRowsIterator<VariantValue>(
+            new[]
+            {
+                new Column("value", DataType.String, "String part."),
+            },
+            new Func<VariantValue, VariantValue>[]
+            {
+                part => part,
+            },
+            result);
+        return VariantValue.CreateFromObject(iterator);
+    }
+
     [Description("Returns the substring within string that matches the N'th occurrence of the regular expression pattern, or NULL.")]
     [FunctionSignature("regexp_substr(target: string, pattern: string, start?: integer = 1, n?: integer = 1, subexpr?: integer = 1): string")]
     public static VariantValue RegexpSubstring(FunctionCallInfo args)
@@ -205,6 +261,7 @@ public static class StringFunctions
         functionsManager.RegisterFunction(Chr);
         functionsManager.RegisterFunction(StartsWith);
         functionsManager.RegisterFunction(SplitPart);
+        functionsManager.RegisterFunction(StringToTable);
         functionsManager.RegisterFunction(RegexpSubstring);
         functionsManager.RegisterFunction(RegexpCount);
     }

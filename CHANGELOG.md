@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Move IISW3C formatter and input back from plugin to core.
 - Add SubRip (.srt) files formatter.
+- Add function "string_to_table".
 
 ## Fixed
 

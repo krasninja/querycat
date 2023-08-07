@@ -14,6 +14,7 @@
 | `rtrim(target: string, characters: string = ' '): string`<br /><br /> Removes the longest string containing only characters in characters from the end of string. |
 | `split_part(target: string, delimiter: string, n: integer): string`<br /><br /> Splits string at occurrences of delimiter and returns the n'th field (counting from one). |
 | `starts_with(target: string, prefix: string): boolean`<br /><br /> Returns true if string starts with prefix. |
+| `string_to_table(target: string, delimiter?: string, null_string?: string := null): object<IRowsIterator>`<br /><br /> Splits the string at occurrences of delimiter and returns the resulting fields as a set of text rows. |
 | `substr(target: string, start: integer, count?: integer): string`<br /><br /> Extracts the substring of string starting at the start'th character, and extending for count characters if that is specified. |
 | `to_char(args: any, fmt?: string): string`<br /><br /> Convert value to string according to the given format. |
 | `upper(target: string): string`<br /><br /> Convert a string to upper case. |
