@@ -1,4 +1,5 @@
 using Xunit;
+using QueryCat.Backend.Abstractions.Plugins;
 using QueryCat.Backend.Commands.Update;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Relational;

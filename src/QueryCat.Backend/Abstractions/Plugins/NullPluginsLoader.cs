@@ -1,6 +1,4 @@
-using QueryCat.Backend.Abstractions.Plugins;
-
-namespace QueryCat.Backend.Execution;
+namespace QueryCat.Backend.Abstractions.Plugins;
 
 /// <summary>
 /// Plugin loading system with no implementation.

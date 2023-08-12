@@ -1,6 +1,4 @@
-using QueryCat.Backend.Abstractions.Plugins;
-
-namespace QueryCat.Backend.Execution;
+namespace QueryCat.Backend.Abstractions.Plugins;
 
 public sealed class NullPluginsManager : PluginsManager
 {
