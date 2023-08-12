@@ -110,10 +110,23 @@ public abstract class FunctionsManager
     public abstract IEnumerable<Function> GetFunctions();
 
     /// <summary>
-    /// Call function by name.
+    /// Call the function.
+    /// </summary>
+    /// <param name="function">Function.</param>
+    /// <param name="arguments">Arguments to pass.</param>
+    /// <returns>Result.</returns>
+    public abstract VariantValue CallFunction(Function function, FunctionArguments arguments);
+
+    /// <summary>
+    /// Call the function by name.
     /// </summary>
     /// <param name="functionName">Function name.</param>
     /// <param name="arguments">Arguments to pass.</param>
     /// <returns>Result.</returns>
-    public abstract VariantValue CallFunction(string functionName, FunctionArguments? arguments = null);
+    public VariantValue CallFunction(string functionName, FunctionArguments? arguments = null)
+    {
+        arguments ??= FunctionArguments.Empty;
+        var function = FindByName(functionName, arguments.GetTypes());
+        return CallFunction(function, arguments);
+    }
 }

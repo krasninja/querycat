@@ -389,11 +389,8 @@ public sealed class DefaultFunctionsManager : FunctionsManager
     }
 
     /// <inheritdoc />
-    public override VariantValue CallFunction(string functionName, FunctionArguments? arguments = null)
+    public override VariantValue CallFunction(Function function, FunctionArguments arguments)
     {
-        arguments ??= new FunctionArguments();
-
-        var function = FindByName(functionName, arguments.GetTypes());
         var info = new FunctionCallInfo(_thread);
         info.FunctionName = function.Name;
         int positionalIndex = 0;

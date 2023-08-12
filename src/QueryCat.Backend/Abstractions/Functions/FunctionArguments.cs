@@ -11,6 +11,8 @@ public sealed class FunctionArguments
     private readonly Dictionary<string, VariantValue> _named = new();
     private readonly List<VariantValue> _positional = new();
 
+    internal static FunctionArguments Empty { get; } = new();
+
     /// <summary>
     /// Named arguments.
     /// </summary>
