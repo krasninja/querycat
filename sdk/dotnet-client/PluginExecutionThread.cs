@@ -2,8 +2,9 @@ using System.Threading;
 using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Abstractions.Functions;
 using QueryCat.Backend.Abstractions.Plugins;
-using QueryCat.Backend.Types;
+using QueryCat.Plugins.Sdk;
 using PluginsManager = QueryCat.Plugins.Sdk.PluginsManager;
+using VariantValue = QueryCat.Backend.Types.VariantValue;
 
 namespace QueryCat.Plugins.Client;
 
@@ -34,7 +35,7 @@ public sealed class PluginExecutionThread : IExecutionThread
     /// <inheritdoc />
     public VariantValue Run(string query)
     {
-        throw new System.NotImplementedException();
+        throw new QueryCatPluginException(ErrorType.GENERIC, "Query run is not supported within plugins.");
     }
 
     /// <inheritdoc />

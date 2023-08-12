@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using QueryCat.Backend.Abstractions.Functions;
 using QueryCat.Backend.Functions;
+using QueryCat.Plugins.Sdk;
 using VariantValue = QueryCat.Backend.Types.VariantValue;
 
 namespace QueryCat.Plugins.Client;
@@ -11,54 +12,60 @@ public sealed class PluginFunctionsManager : FunctionsManager
     /// <inheritdoc />
     public override void RegisterAggregate<T>()
     {
-        throw new NotImplementedException();
+        throw ThrowNotImplementedException();
     }
 
     /// <inheritdoc />
     public override void RegisterFunction(FunctionDelegate functionDelegate)
     {
-        throw new NotImplementedException();
+        throw ThrowNotImplementedException();
     }
 
     /// <inheritdoc />
     public override Function RegisterFunction(string signature, FunctionDelegate @delegate, string? description = null)
     {
-        throw new NotImplementedException();
+        throw ThrowNotImplementedException();
     }
 
     /// <inheritdoc />
     public override void RegisterFactory(Action<FunctionsManager> registerFunction, bool postpone = true)
     {
-        throw new NotImplementedException();
+        throw ThrowNotImplementedException();
     }
 
     /// <inheritdoc />
     public override void RegisterFromType(Type type)
     {
-        throw new NotImplementedException();
+        throw ThrowNotImplementedException();
     }
 
     /// <inheritdoc />
     public override bool TryFindByName(string name, FunctionArgumentsTypes? functionArgumentsTypes, out Function[] functions)
     {
-        throw new NotImplementedException();
+        throw ThrowNotImplementedException();
     }
 
     /// <inheritdoc />
     public override bool TryFindAggregateByName(string name, out IAggregateFunction aggregateFunction)
     {
-        throw new NotImplementedException();
+        throw ThrowNotImplementedException();
     }
 
     /// <inheritdoc />
     public override IEnumerable<Function> GetFunctions()
     {
-        throw new NotImplementedException();
+        throw ThrowNotImplementedException();
     }
 
     /// <inheritdoc />
     public override VariantValue CallFunction(Function function, FunctionArguments arguments)
     {
-        throw new NotImplementedException();
+        throw ThrowNotImplementedException();
+    }
+
+    private Exception ThrowNotImplementedException()
+    {
+        return new QueryCatPluginException(ErrorType.GENERIC,
+            "Plugins execution context does not support functions manager.");
     }
 }
