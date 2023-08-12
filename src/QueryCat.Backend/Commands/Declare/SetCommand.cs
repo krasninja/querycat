@@ -17,7 +17,7 @@ internal class SetCommand : ICommand
             throw new CannotFindIdentifierException(setNode.Name);
         }
 
-        var valueHandler = executionThread.StatementsVisitor.RunAndReturn(setNode.ValueNode);
+        var valueHandler = new StatementsVisitor(executionThread).RunAndReturn(setNode.ValueNode);
 
         return new FuncCommandHandler(() =>
         {

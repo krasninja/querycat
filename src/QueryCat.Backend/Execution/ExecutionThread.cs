@@ -27,7 +27,7 @@ public class ExecutionThread : IExecutionThread
     private readonly List<IDisposable> _disposablesList = new();
 
     /// <inheritdoc />
-    public IInputConfigStorage ConfigStorage { get; protected set; }
+    public IInputConfigStorage ConfigStorage { get; }
 
     /// <summary>
     /// Root (base) thread scope.
@@ -48,11 +48,6 @@ public class ExecutionThread : IExecutionThread
     /// Current executing statement.
     /// </summary>
     internal StatementNode? ExecutingStatement { get; set; }
-
-    /// <summary>
-    /// Statements visitor.
-    /// </summary>
-    internal StatementsVisitor StatementsVisitor => _statementsVisitor;
 
     /// <summary>
     /// Execution options.
