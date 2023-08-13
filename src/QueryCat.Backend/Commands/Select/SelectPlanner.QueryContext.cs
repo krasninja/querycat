@@ -135,9 +135,21 @@ internal sealed partial class SelectPlanner
                 return false;
             }
             var values = new List<IFuncUnit>();
-            foreach (var inExpressionValue in inOperationExpressionNode.InExpressionValuesNodes.ValuesNodes)
+            if (inOperationExpressionNode.InExpressionValuesNodes is not InExpressionValuesNode inExpressionValuesNode)
             {
+                return false;
+            }
+            foreach (var inExpressionValue in inExpressionValuesNode.ValuesNodes)
+            {
+                if (inExpressionValue is SelectQueryNode)
+                {
+                    continue;
+                }
                 values.Add(makeDelegateVisitor.RunAndReturn(inExpressionValue));
+            }
+            if (!values.Any())
+            {
+                return false;
             }
             commandContext.Conditions.AddCondition(column, VariantValue.Operation.In, values.ToArray());
             return true;

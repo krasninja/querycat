@@ -209,6 +209,43 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
         }, DataType.Object);
     }
 
+    /// <inheritdoc />
+    public override void Visit(InOperationExpressionNode node)
+    {
+        if (node.InExpressionValuesNodes is SelectQueryNode queryNode)
+        {
+            var valueAction = NodeIdFuncMap[node.ExpressionNode.Id];
+            var rowsIterator = new SelectPlanner(ExecutionThread).CreateIterator(queryNode, _context);
+            var equalDelegate = VariantValue.GetEqualsDelegate(node.ExpressionNode.GetDataType());
+
+            VariantValue Func()
+            {
+                var leftValue = valueAction.Invoke();
+                rowsIterator.Reset();
+                while (rowsIterator.MoveNext())
+                {
+                    var rightValue = rowsIterator.Current[0];
+                    var isEqual = equalDelegate.Invoke(in leftValue, in rightValue);
+                    if (isEqual.IsNull)
+                    {
+                        continue;
+                    }
+                    if (isEqual.AsBoolean)
+                    {
+                        return new VariantValue(!node.IsNot);
+                    }
+                }
+                return new VariantValue(node.IsNot);
+            }
+
+            NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, node.GetDataType());
+
+            return;
+        }
+
+        base.Visit(node);
+    }
+
     #region Subqueries
 
     /// <inheritdoc />

@@ -174,7 +174,11 @@ internal class CreateDelegateVisitor : AstVisitor
     {
         ResolveTypesVisitor.Visit(node);
 
-        var actions = node.InExpressionValuesNodes.ValuesNodes.Select(v => NodeIdFuncMap[v.Id]).ToArray();
+        var actions = Array.Empty<IFuncUnit>();
+        if (node.InExpressionValuesNodes is InExpressionValuesNode inExpressionValuesNode)
+        {
+            actions = inExpressionValuesNode.ValuesNodes.Select(v => NodeIdFuncMap[v.Id]).ToArray();
+        }
         var valueAction = NodeIdFuncMap[node.ExpressionNode.Id];
         var equalDelegate = VariantValue.GetEqualsDelegate(node.ExpressionNode.GetDataType());
 
@@ -196,6 +200,7 @@ internal class CreateDelegateVisitor : AstVisitor
             }
             return new VariantValue(node.IsNot);
         }
+
         NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, node.GetDataType());
     }
 

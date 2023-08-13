@@ -669,6 +669,13 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitType([NotNull] QueryCatParser.TypeContext context);
 	/// <summary>
+	/// Visit a parse tree produced by the <c>ExpressionBinaryInSubquery</c>
+	/// labeled alternative in <see cref="QueryCatParser.expression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitExpressionBinaryInSubquery([NotNull] QueryCatParser.ExpressionBinaryInSubqueryContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>ExpressionBinary</c>
 	/// labeled alternative in <see cref="QueryCatParser.expression"/>.
 	/// </summary>
@@ -718,13 +725,6 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitExpressionBetween([NotNull] QueryCatParser.ExpressionBetweenContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>ExpressionBinaryIn</c>
-	/// labeled alternative in <see cref="QueryCatParser.expression"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitExpressionBinaryIn([NotNull] QueryCatParser.ExpressionBinaryInContext context);
-	/// <summary>
 	/// Visit a parse tree produced by the <c>ExpressionUnary</c>
 	/// labeled alternative in <see cref="QueryCatParser.expression"/>.
 	/// </summary>
@@ -738,6 +738,13 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitExpressionSubquery([NotNull] QueryCatParser.ExpressionSubqueryContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>ExpressionBinaryInArray</c>
+	/// labeled alternative in <see cref="QueryCatParser.expression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitExpressionBinaryInArray([NotNull] QueryCatParser.ExpressionBinaryInArrayContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>ExpressionBinaryCast</c>
 	/// labeled alternative in <see cref="QueryCatParser.expression"/>.

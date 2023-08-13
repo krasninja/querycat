@@ -194,7 +194,7 @@ public static class StringFunctions
         string? delimiter = !args.GetAt(1).IsNull ? args.GetAt(1) : null;
         var nullString = args.GetAt(2).AsString;
 
-        var result = GetSplitItems(target, delimiter, nullString);
+        var result = GetSplitItems(target, delimiter, nullString).ToList();
         var iterator = new ClassRowsIterator<VariantValue>(
             new[]
             {

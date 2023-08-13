@@ -134,7 +134,15 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
     }
 
     /// <inheritdoc />
-    public override IAstNode VisitExpressionBinaryIn(QueryCatParser.ExpressionBinaryInContext context)
+    public override IAstNode VisitExpressionBinaryInArray(QueryCatParser.ExpressionBinaryInArrayContext context)
+    {
+        var left = (ExpressionNode)Visit(context.left);
+        var right = (ExpressionNode)Visit(context.right);
+        return new InOperationExpressionNode(left, right, isNot: context.NOT() != null);
+    }
+
+    /// <inheritdoc />
+    public override IAstNode VisitExpressionBinaryInSubquery(QueryCatParser.ExpressionBinaryInSubqueryContext context)
     {
         var left = (ExpressionNode)Visit(context.left);
         var right = (ExpressionNode)Visit(context.right);
