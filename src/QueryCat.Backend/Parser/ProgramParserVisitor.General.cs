@@ -329,6 +329,34 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
             new FunctionCallArgumentNode(targetNode));
     }
 
+    /// <inheritdoc />
+    public override IAstNode VisitStandardOccurrencesRegex(QueryCatParser.StandardOccurrencesRegexContext context)
+    {
+        var targetNode = this.Visit<ExpressionNode>(context.@string);
+        return new FunctionCallNode("regexp_count",
+            new FunctionCallArgumentNode(targetNode),
+            new FunctionCallArgumentNode(new LiteralNode(GetUnwrappedText(context.pattern))));
+    }
+
+    /// <inheritdoc />
+    public override IAstNode VisitStandardSubstringRegex(QueryCatParser.StandardSubstringRegexContext context)
+    {
+        var targetNode = this.Visit<ExpressionNode>(context.@string);
+        return new FunctionCallNode("regexp_substr",
+            new FunctionCallArgumentNode(targetNode),
+            new FunctionCallArgumentNode(new LiteralNode(GetUnwrappedText(context.pattern))));
+    }
+
+    /// <inheritdoc />
+    public override IAstNode VisitStandardTranslateRegex(QueryCatParser.StandardTranslateRegexContext context)
+    {
+        var targetNode = this.Visit<ExpressionNode>(context.@string);
+        return new FunctionCallNode("regexp_replace",
+            new FunctionCallArgumentNode(targetNode),
+            new FunctionCallArgumentNode(new LiteralNode(GetUnwrappedText(context.pattern))),
+            new FunctionCallArgumentNode(new LiteralNode(GetUnwrappedText(context.replacement))));
+    }
+
     #endregion
 
     /// <inheritdoc />

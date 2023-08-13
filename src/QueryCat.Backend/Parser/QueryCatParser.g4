@@ -244,6 +244,10 @@ standardFunction
     | POSITION '(' substring=STRING_LITERAL IN string=simpleExpression ')' # standardFunctionPosition
     | EXTRACT '(' extractField=dateTimeField FROM source=simpleExpression ')' # standardFunctionExtract
     | COALESCE '(' expression (COMMA expression)* ')' # standardFunctionCoalesce
+    | OCCURRENCES_REGEX '(' pattern=STRING_LITERAL IN string=simpleExpression ')' # standardOccurrencesRegex
+    | SUBSTRING_REGEX '(' pattern=STRING_LITERAL IN string=simpleExpression ')' # standardSubstringRegex
+    | POSITION_REGEX '(' pattern=STRING_LITERAL IN string=simpleExpression ')' # standardPositionRegex
+    | TRANSLATE_REGEX '(' pattern=STRING_LITERAL IN string=simpleExpression WITH replacement=STRING_LITERAL ')' # standardTranslateRegex
     ;
 
 dateTimeField

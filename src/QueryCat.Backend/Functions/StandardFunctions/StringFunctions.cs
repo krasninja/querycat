@@ -245,6 +245,20 @@ public static class StringFunctions
         return new VariantValue(matches.Count);
     }
 
+    [Description("Provides substitution of new text for substrings that match regular expression patterns.")]
+    [FunctionSignature("regexp_replace(target: string, pattern: string, replacement: string, start?: integer = 1): string")]
+    public static VariantValue RegexpReplace(FunctionCallInfo args)
+    {
+        var target = args.GetAt(0).AsString;
+        var pattern = args.GetAt(1).AsString;
+        var replacement = args.GetAt(2).AsString;
+        var start = (int)args.GetAt(3).AsInteger - 1;
+
+        target = StringUtils.SafeSubstring(target, start);
+        var result = Regex.Replace(target, pattern, replacement);
+        return new VariantValue(result);
+    }
+
     public static void RegisterFunctions(FunctionsManager functionsManager)
     {
         functionsManager.RegisterFunction(Lower);
@@ -264,5 +278,6 @@ public static class StringFunctions
         functionsManager.RegisterFunction(StringToTable);
         functionsManager.RegisterFunction(RegexpSubstring);
         functionsManager.RegisterFunction(RegexpCount);
+        functionsManager.RegisterFunction(RegexpReplace);
     }
 }

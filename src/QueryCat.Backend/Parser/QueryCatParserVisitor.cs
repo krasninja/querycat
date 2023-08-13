@@ -629,6 +629,34 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitStandardFunctionCoalesce([NotNull] QueryCatParser.StandardFunctionCoalesceContext context);
 	/// <summary>
+	/// Visit a parse tree produced by the <c>standardOccurrencesRegex</c>
+	/// labeled alternative in <see cref="QueryCatParser.standardFunction"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitStandardOccurrencesRegex([NotNull] QueryCatParser.StandardOccurrencesRegexContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>standardSubstringRegex</c>
+	/// labeled alternative in <see cref="QueryCatParser.standardFunction"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitStandardSubstringRegex([NotNull] QueryCatParser.StandardSubstringRegexContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>standardPositionRegex</c>
+	/// labeled alternative in <see cref="QueryCatParser.standardFunction"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitStandardPositionRegex([NotNull] QueryCatParser.StandardPositionRegexContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>standardTranslateRegex</c>
+	/// labeled alternative in <see cref="QueryCatParser.standardFunction"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitStandardTranslateRegex([NotNull] QueryCatParser.StandardTranslateRegexContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="QueryCatParser.dateTimeField"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

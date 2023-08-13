@@ -68,6 +68,7 @@ IF:                 'IF';
 IN:                 'IN';
 IS:                 'IS';
 LIKE:               'LIKE';
+LIKE_REGEX:         'LIKE_REGEX';
 NOT:                'NOT';
 NULL:               'NULL';
 ON:                 'ON';
@@ -114,6 +115,10 @@ COALESCE:           'COALESCE';
 EXTRACT:            'EXTRACT';
 POSITION:           'POSITION';
 WHEN:               'WHEN';
+OCCURRENCES_REGEX:  'OCCURRENCES_REGEX';
+SUBSTRING_REGEX:    'SUBSTRING_REGEX';
+POSITION_REGEX:     'POSITION_REGEX';
+TRANSLATE_REGEX:    'TRANSLATE_REGEX';
 
 // ECHO command.
 
