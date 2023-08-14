@@ -33,17 +33,18 @@ internal sealed class JsonOutput : RowsOutput, IDisposable
     }
 
     /// <inheritdoc />
-    protected override void OnWrite(Row row)
+    protected override void OnWrite(in VariantValue[] values)
     {
         _streamWriter.WriteStartObject();
-        for (var i = 0; i < row.Columns.Length; i++)
+        var columns = QueryContext.QueryInfo.Columns;
+        for (var i = 0; i < columns.Count; i++)
         {
-            if (row.Columns[i].IsHidden)
+            if (columns[i].IsHidden)
             {
                 continue;
             }
-            _streamWriter.WritePropertyName(row.Columns[i].Name);
-            WriteJsonVariantValue(_streamWriter, row[i]);
+            _streamWriter.WritePropertyName(columns[i].Name);
+            WriteJsonVariantValue(_streamWriter, values[i]);
         }
         _streamWriter.WriteEndObject();
         _streamWriter.Flush();

@@ -75,14 +75,15 @@ public class CollectionInput<TClass> : IRowsOutput, IRowsInputUpdate where TClas
     }
 
     /// <inheritdoc />
-    public void Write(Row row)
+    public void Write(in VariantValue[] values)
     {
         if (_list is not ICollection<TClass> collection)
         {
             throw new QueryCatException($"Cannot write to collection of type '{_list.GetType().Name}'.");
         }
 
-        var mapping = GetPropertiesToColumnsMapping(row.Columns);
+        var columns = QueryContext.QueryInfo.Columns.ToArray();
+        var mapping = GetPropertiesToColumnsMapping(columns);
 
         var obj = Activator.CreateInstance<TClass>();
         for (var i = 0; i < mapping.Length; i++)
@@ -92,7 +93,7 @@ public class CollectionInput<TClass> : IRowsOutput, IRowsInputUpdate where TClas
             {
                 continue;
             }
-            prop.SetValue(obj, ObjectUtils.ChangeType(row[i].GetGenericObject(), prop.PropertyType));
+            prop.SetValue(obj, ObjectUtils.ChangeType(values[i].GetGenericObject(), prop.PropertyType));
         }
         collection.Add(obj);
     }

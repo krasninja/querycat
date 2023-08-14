@@ -27,7 +27,7 @@ internal sealed class NullOutput : RowsOutput
     }
 
     /// <inheritdoc />
-    protected override void OnWrite(Row row)
+    protected override void OnWrite(in VariantValue[] values)
     {
     }
 }

@@ -48,38 +48,39 @@ internal sealed class XmlOutput : RowsOutput, IDisposable
     }
 
     /// <inheritdoc />
-    protected override void OnWrite(Row row)
+    protected override void OnWrite(in VariantValue[] values)
     {
         _xmlWriter.WriteStartElement(RowTagName);
-        for (var i = 0; i < row.Columns.Length; i++)
+        var columns = QueryContext.QueryInfo.Columns;
+        for (var i = 0; i < columns.Count; i++)
         {
-            if (row.Columns[i].IsHidden)
+            if (columns[i].IsHidden)
             {
                 continue;
             }
-            _xmlWriter.WriteStartElement(row.Columns[i].Name);
-            switch (row.Columns[i].DataType)
+            _xmlWriter.WriteStartElement(columns[i].Name);
+            switch (columns[i].DataType)
             {
                 case DataType.Boolean:
-                    _xmlWriter.WriteValue(row[i].AsBoolean);
+                    _xmlWriter.WriteValue(values[i].AsBoolean);
                     break;
                 case DataType.Float:
-                    _xmlWriter.WriteValue(row[i].AsFloat);
+                    _xmlWriter.WriteValue(values[i].AsFloat);
                     break;
                 case DataType.Integer:
-                    _xmlWriter.WriteValue(row[i].AsInteger);
+                    _xmlWriter.WriteValue(values[i].AsInteger);
                     break;
                 case DataType.Numeric:
-                    _xmlWriter.WriteValue(row[i].AsNumeric);
+                    _xmlWriter.WriteValue(values[i].AsNumeric);
                     break;
                 case DataType.String:
-                    _xmlWriter.WriteValue(row[i].AsString);
+                    _xmlWriter.WriteValue(values[i].AsString);
                     break;
                 case DataType.Timestamp:
-                    _xmlWriter.WriteValue(row[i].AsTimestamp);
+                    _xmlWriter.WriteValue(values[i].AsTimestamp);
                     break;
                 default:
-                    _xmlWriter.WriteValue(row[i].ToString());
+                    _xmlWriter.WriteValue(values[i].ToString());
                     break;
             }
             _xmlWriter.WriteEndElement();

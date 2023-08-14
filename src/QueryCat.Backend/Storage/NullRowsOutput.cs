@@ -1,4 +1,5 @@
 using QueryCat.Backend.Abstractions;
+using QueryCat.Backend.Types;
 
 namespace QueryCat.Backend.Storage;
 
@@ -35,7 +36,7 @@ public sealed class NullRowsOutput : IRowsOutput
     }
 
     /// <inheritdoc />
-    public void Write(Row row)
+    public void Write(in VariantValue[] values)
     {
     }
 }

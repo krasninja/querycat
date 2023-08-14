@@ -1,4 +1,5 @@
 using QueryCat.Backend.Abstractions;
+using QueryCat.Backend.Types;
 
 namespace QueryCat.Backend.Storage;
 
@@ -30,21 +31,21 @@ public abstract class RowsOutput : IRowsOutput
     public RowsOutputOptions Options { get; protected set; } = new();
 
     /// <inheritdoc />
-    public void Write(Row row)
+    public void Write(in VariantValue[] values)
     {
         if (_isFirstCall)
         {
             Initialize();
             _isFirstCall = false;
         }
-        OnWrite(row);
+        OnWrite(values);
     }
 
     /// <summary>
     /// Write a row.
     /// </summary>
-    /// <param name="row">Row to write.</param>
-    protected abstract void OnWrite(Row row);
+    /// <param name="values">Values to write.</param>
+    protected abstract void OnWrite(in VariantValue[] values);
 
     /// <summary>
     /// The method is called before first Write to initialize input.

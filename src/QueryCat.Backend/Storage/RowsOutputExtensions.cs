@@ -42,7 +42,7 @@ public static class RowsOutputExtensions
                 rowsOutput.QueryContext = queryContext;
                 isOpened = true;
             }
-            rowsOutput.Write(rowsIterator.Current);
+            rowsOutput.Write(rowsIterator.Current.Values);
         }
         if (isOpened)
         {

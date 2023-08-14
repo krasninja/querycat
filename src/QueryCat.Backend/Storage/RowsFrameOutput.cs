@@ -1,5 +1,6 @@
 using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Relational;
+using QueryCat.Backend.Types;
 
 namespace QueryCat.Backend.Storage;
 
@@ -26,8 +27,8 @@ public class RowsFrameOutput : RowsOutput
     }
 
     /// <inheritdoc />
-    protected override void OnWrite(Row row)
+    protected override void OnWrite(in VariantValue[] values)
     {
-        _rowsFrame.AddRow(row);
+        _rowsFrame.AddRow(values);
     }
 }

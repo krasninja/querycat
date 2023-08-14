@@ -48,36 +48,36 @@ internal sealed class DsvOutput : RowsOutput, IDisposable
     }
 
     /// <inheritdoc />
-    protected override void OnWrite(Row row)
+    protected override void OnWrite(in VariantValue[] values)
     {
-        var columns = row.Columns;
-        var length = columns.Length;
+        var columns = QueryContext.QueryInfo.Columns;
+        var length = columns.Count;
         for (int i = 0; i < length; i++)
         {
-            if (!row[i].IsNull)
+            if (!values[i].IsNull)
             {
                 switch (columns[i].DataType)
                 {
                     case DataType.Integer:
-                        _streamWriter.Write(row[i].AsInteger);
+                        _streamWriter.Write(values[i].AsInteger);
                         break;
                     case DataType.Float:
-                        _streamWriter.Write(row[i].AsFloat);
+                        _streamWriter.Write(values[i].AsFloat);
                         break;
                     case DataType.Numeric:
-                        _streamWriter.Write(row[i].AsNumeric);
+                        _streamWriter.Write(values[i].AsNumeric);
                         break;
                     case DataType.String:
-                        WriteString(row[i].AsString);
+                        WriteString(values[i].AsString);
                         break;
                     case DataType.Timestamp:
-                        _streamWriter.Write(row[i].AsTimestamp);
+                        _streamWriter.Write(values[i].AsTimestamp);
                         break;
                     case DataType.Interval:
-                        _streamWriter.Write(row[i].AsInterval);
+                        _streamWriter.Write(values[i].AsInterval);
                         break;
                     case DataType.Boolean:
-                        _streamWriter.Write(row[i].AsBoolean);
+                        _streamWriter.Write(values[i].AsBoolean);
                         break;
                 }
             }

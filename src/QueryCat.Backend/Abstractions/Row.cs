@@ -13,7 +13,10 @@ public class Row : IRowsSchema, ICloneable
 
     private readonly VariantValue[] _values;
 
-    protected VariantValue[] Values => _values;
+    /// <summary>
+    /// Row values array.
+    /// </summary>
+    protected internal VariantValue[] Values => _values;
 
     /// <inheritdoc />
     public Column[] Columns => _columns;

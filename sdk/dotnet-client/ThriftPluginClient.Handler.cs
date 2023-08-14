@@ -274,16 +274,7 @@ public partial class ThriftPluginClient
                 && _thriftPluginClient._objectsStorage.TryGet<IRowsOutput>(object_handle, out var rowsOutput)
                 && rowsOutput != null)
             {
-                if (rowsOutput is not IRowsSchema rowsSchema)
-                {
-                    throw new QueryCatException($"The object must support {nameof(IRowsSchema)} interface.");
-                }
-                var row = new Row(rowsSchema.Columns);
-                for (var i = 0; i < values.Count; i++)
-                {
-                    row[i] = SdkConvert.Convert(values[i]);
-                }
-                rowsOutput.Write(row);
+                rowsOutput.Write(values.Select(SdkConvert.Convert).ToArray());
                 return Task.CompletedTask;
             }
             return Task.CompletedTask;

@@ -1,4 +1,5 @@
 using QueryCat.Backend.Abstractions;
+using QueryCat.Backend.Types;
 
 namespace QueryCat.Backend.Formatters;
 
@@ -55,9 +56,9 @@ public class PagingOutput : IRowsOutput
     }
 
     /// <inheritdoc />
-    public void Write(Row row)
+    public void Write(in VariantValue[] values)
     {
-        _rowsOutput.Write(row);
+        _rowsOutput.Write(values);
         if (PagingRowsCount != NoLimit
             && ++_rowsCounter >= PagingRowsCount
             && !Console.IsInputRedirected

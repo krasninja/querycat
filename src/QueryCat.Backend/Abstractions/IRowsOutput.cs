@@ -1,3 +1,5 @@
+using QueryCat.Backend.Types;
+
 namespace QueryCat.Backend.Abstractions;
 
 /// <summary>
@@ -13,6 +15,6 @@ public interface IRowsOutput : IRowsSource
     /// <summary>
     /// Write row.
     /// </summary>
-    /// <param name="row">Row to write.</param>
-    void Write(Row row);
+    /// <param name="values">Values to write.</param>
+    void Write(in VariantValue[] values);
 }

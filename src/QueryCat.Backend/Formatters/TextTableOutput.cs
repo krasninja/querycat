@@ -34,7 +34,7 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
     private readonly string _floatNumberFormat;
 
     private readonly Action _onInit;
-    private readonly Action<Row> _onWrite;
+    private readonly Action<VariantValue[]> _onWrite;
 
     private int[] _columnsLengths = Array.Empty<int>();
 
@@ -104,9 +104,9 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
     }
 
     /// <inheritdoc />
-    protected override void OnWrite(Row row)
+    protected override void OnWrite(in VariantValue[] values)
     {
-        _onWrite.Invoke(row);
+        _onWrite.Invoke(values);
         _streamWriter.Flush();
     }
 
@@ -187,12 +187,13 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
         _streamWriter.WriteLine();
     }
 
-    private void OnTableWrite(Row row)
+    private void OnTableWrite(VariantValue[] values)
     {
         int writeCount = 0;
-        for (int i = 0; i < row.Columns.Length; i++)
+        var columns = QueryContext.QueryInfo.Columns;
+        for (int i = 0; i < columns.Count; i++)
         {
-            if (row.Columns[i].IsHidden)
+            if (columns[i].IsHidden)
             {
                 continue;
             }
@@ -201,7 +202,7 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
                 _streamWriter.Write(_separatorWithSpace);
                 writeCount += _separatorWithSpace.Length;
             }
-            var value = row[i];
+            var value = values[i];
             var valueString = ToStringWithFormat(value);
             var padding = _columnsLengths[i];
             var exceed = _totalMaxLineLength[i] - writeCount - _columnsLengths[i] - 1;
@@ -250,15 +251,16 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
         _streamWriter.Flush();
     }
 
-    private void OnNoSpaceTableWrite(Row row)
+    private void OnNoSpaceTableWrite(VariantValue[] values)
     {
-        for (int i = 0; i < row.Columns.Length; i++)
+        var columns = QueryContext.QueryInfo.Columns;
+        for (int i = 0; i < columns.Count; i++)
         {
-            if (row.Columns[i].IsHidden)
+            if (columns[i].IsHidden)
             {
                 continue;
             }
-            var valueString = ToStringWithFormat(row[i]);
+            var valueString = ToStringWithFormat(values[i]);
             _streamWriter.Write(_separator);
             _streamWriter.Write(valueString);
         }
@@ -281,16 +283,17 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
             .Max(), 20);
     }
 
-    private void OnCardWrite(Row row)
+    private void OnCardWrite(VariantValue[] values)
     {
-        for (int i = 0; i < row.Columns.Length; i++)
+        var columns = QueryContext.QueryInfo.Columns;
+        for (int i = 0; i < columns.Count; i++)
         {
-            if (row.Columns[i].IsHidden)
+            if (columns[i].IsHidden)
             {
                 continue;
             }
-            var valueString = ToStringWithFormat(row[i]);
-            _streamWriter.Write(row.Columns[i].FullName.PadLeft(_maxColumnNameWidth));
+            var valueString = ToStringWithFormat(values[i]);
+            _streamWriter.Write(columns[i].FullName.PadLeft(_maxColumnNameWidth));
             _streamWriter.Write($" {_separator} {valueString}\n");
         }
         _streamWriter.WriteLine();
