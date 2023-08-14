@@ -19,9 +19,11 @@ struct DecimalValue {
   2: i32 nanos
 }
 
+// Supported plugins objects types.
 enum ObjectType {
-  ROWS_INPUT = 0,
-  ROWS_ITERATOR = 1
+  ROWS_INPUT = 0, // Interfaces: IRowsInput, IRowsSource, IRowsInputKeys, IRowsSchema.
+  ROWS_ITERATOR = 1, // Interfaces: IRowsIterator.
+  ROWS_OUTPUT = 2 // Interfaces: IRowsOutput, IRowsSource.
 }
 
 // To refer to objects we use special identifiers: handles.
@@ -52,7 +54,7 @@ enum DataType {
   BOOLEAN = 5,
   NUMERIC = 6,
   INTERVAL = 7,
-  OBJECT = 40
+  OBJECT = 40 // See ObjectType.
 }
 
 enum LogLevel {
@@ -69,6 +71,7 @@ enum ErrorType {
   SUCCESS = 0,
   GENERIC = 1,
   INVALID_OBJECT = 2,
+  NOT_SUPPORTED = 3,
 
   INVALID_AUTH_TOKEN = 10,
   INVALID_FUNCTION = 11
@@ -90,18 +93,19 @@ struct PluginData {
   1: required list<string> functions,
   // Plugin name.
   2: required string name,
-  // Version.
+  // Version. Format is MAJOR.MINOR.PATCH .
   3: required string version
 }
 
 service PluginsManager {
-  // Register plugin data.
+  // Register plugin with all its data.
   void RegisterPlugin(
-    // Token for initialization.
+    // Token for initialization. It is provided thru command line arguments.
     1: required string auth_token,
     // Callback plugin server endpoint.
+    // The endpoint is used to call plugin functions by qcat host.
     2: required string callback_uri,
-    // Plugin data.
+    // Plugin information.
     3: required PluginData plugin_data
   ) throws (1: QueryCatPluginException e),
 
@@ -109,7 +113,12 @@ service PluginsManager {
   VariantValue CallFunction(
     1: required string function_name,
     2: required list<VariantValue> args,
-    3: Handle object_handle
+    3: Handle object_handle // Optional. It is used to call function of a specific object.
+  ) throws (1: QueryCatPluginException e),
+
+  // Run the query and return the last result.
+  VariantValue RunQuery(
+    1: required string query
   ) throws (1: QueryCatPluginException e),
 
   // Set configuration value.
@@ -144,8 +153,8 @@ struct Column {
 }
 
 struct RowsList {
-  1: bool has_more,
-  2: required list<VariantValue> values
+  1: bool has_more, // True if has more values. If false - no need to call MoveNext() method.
+  2: required list<VariantValue> values // Values, in total should be ColumnsCount * BatchSize.
 }
 
 struct KeyColumn {
@@ -154,6 +163,7 @@ struct KeyColumn {
   3: required list<string> operations
 }
 
+// Contains the information about the executing query. Can be used for optimization.
 struct ContextQueryInfo {
   1: required list<string> columns,
   2: required i64 offset,
@@ -165,7 +175,7 @@ service Plugin {
   VariantValue CallFunction(
     1: required string function_name,
     2: required list<VariantValue> args,
-    3: Handle object_handle
+    3: Handle object_handle // Optional. It is used to call function of a specific object.
   ) throws (1: QueryCatPluginException e),
 
   // Initialize plugin.
@@ -174,54 +184,78 @@ service Plugin {
   // Shutdown plugin. This should release all objects.
   void Shutdown() throws (1: QueryCatPluginException e),
 
-  // Get columns.
+  // Get columns of a rows set.
+  // Supported objects: ROWS_INPUT, ROWS_ITERATOR, ROWS_OUTPUT.
   list<Column> RowsSet_GetColumns(
-    1: Handle object_handle
+    1: required Handle object_handle
   ) throws (1: QueryCatPluginException e),
 
   // Open rows set.
+  // Supported objects: ROWS_INPUT, ROWS_OUTPUT.
   void RowsSet_Open(
-    1: Handle object_handle
+    1: required Handle object_handle
   ) throws (1: QueryCatPluginException e),
 
   // Close rows set.
+  // Supported objects: ROWS_INPUT, ROWS_OUTPUT.
   void RowsSet_Close(
-    1: Handle object_handle
+    1: required Handle object_handle
   ) throws (1: QueryCatPluginException e),
 
   // Reset rows set.
+  // Supported objects: ROWS_INPUT, ROWS_ITERATOR, ROWS_OUTPUT.
   void RowsSet_Reset(
-    1: Handle object_handle
+    1: required Handle object_handle
   ) throws (1: QueryCatPluginException e),
 
   // Set context for rows set.
+  // Supported objects: ROWS_INPUT, ROWS_OUTPUT.
   void RowsSet_SetContext(
-    1: Handle object_handle,
-    2: ContextQueryInfo context_query_info
+    1: required Handle object_handle,
+    2: required ContextQueryInfo context_query_info
   ) throws (1: QueryCatPluginException e),
 
   // Get rows.
+  // Supported objects: ROWS_INPUT, ROWS_ITERATOR.
   RowsList RowsSet_GetRows(
-    1: Handle object_handle,
+    1: required Handle object_handle,
     2: i32 count
   ) throws (1: QueryCatPluginException e),
 
   // Get unique key. It is a list of input data (input arguments) that
   // can be used to format cache key.
+  // Supported objects: ROWS_INPUT.
   list<string> RowsSet_GetUniqueKey(
-    1: Handle object_handle
+    1: required Handle object_handle
   ) throws (1: QueryCatPluginException e),
 
   // Get key columns.
+  // Supported objects: ROWS_INPUT with keys columns support (IRowsInputKeys).
   list<KeyColumn> RowsSet_GetKeyColumns(
     1: Handle object_handle
   ),
 
   // Set value for a key column.
+  // Supported objects: ROWS_INPUT with keys columns support (IRowsInputKeys).
   void RowsSet_SetKeyColumnValue(
-    1: Handle object_handle,
+    1: required Handle object_handle,
     2: required string column_name,
     3: required string operation,
     4: required VariantValue value
   ),
+
+  // Update the rows set value.
+  // Supported objects: ROWS_INPUT with rows update support.
+  bool RowsSet_UpdateValue(
+    1: required Handle object_handle,
+    2: required i32 column_index,
+    3: required VariantValue value
+  ) throws (1: QueryCatPluginException e),
+
+  // Write new row (values) to rows set.
+  // Supported objects: ROWS_OUTPUT.
+  void RowsSet_WriteValue(
+    1: required Handle object_handle,
+    2: required list<VariantValue> values // Should match columns count.
+  )
 }

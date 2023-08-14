@@ -52,7 +52,8 @@ public sealed partial class ThriftPluginsServer : IDisposable
         var transportFactory = new TFramedTransport.Factory();
         var binaryProtocolFactory = new TBinaryProtocol.Factory();
         var processor = new TMultiplexedProcessor();
-        var asyncProcessor = new Plugins.Sdk.PluginsManager.AsyncProcessor(new Handler(this));
+        var handler = new HandlerWithExceptionIntercept(new Handler(this));
+        var asyncProcessor = new Plugins.Sdk.PluginsManager.AsyncProcessor(handler);
         processor.RegisterProcessor(QueryCat.Plugins.Client.ThriftPluginClient.PluginsManagerServiceName, asyncProcessor);
         _server = new TThreadPoolAsyncServer(
             new TSingletonProcessorFactory(processor),

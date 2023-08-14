@@ -25,7 +25,7 @@ public partial class ThriftPluginsServer
         public ObjectsStorage ObjectsStorage { get; } = new();
     }
 
-    private class Handler : PluginsManager.IAsync
+    private sealed class Handler : PluginsManager.IAsync
     {
         private readonly ThriftPluginsServer _thriftPluginsServer;
 
@@ -112,6 +112,13 @@ public partial class ThriftPluginsServer
         }
 
         /// <inheritdoc />
+        public Task<VariantValue> RunQueryAsync(string query, CancellationToken cancellationToken = default)
+        {
+            var result = _thriftPluginsServer._executionThread.Run(query);
+            return Task.FromResult(SdkConvert.Convert(result));
+        }
+
+        /// <inheritdoc />
         public Task SetConfigValueAsync(string key, VariantValue? value, CancellationToken cancellationToken = default)
         {
             var internalValue = value != null ? SdkConvert.Convert(value) : Types.VariantValue.Null;
@@ -148,6 +155,99 @@ public partial class ThriftPluginsServer
                 _thriftPluginsServer._logger.Log(logLevel, message);
             }
             return Task.CompletedTask;
+        }
+    }
+
+    private sealed class HandlerWithExceptionIntercept : PluginsManager.IAsync
+    {
+        private readonly PluginsManager.IAsync _handler;
+
+        public HandlerWithExceptionIntercept(PluginsManager.IAsync handler)
+        {
+            _handler = handler;
+        }
+
+        /// <inheritdoc />
+        public Task RegisterPluginAsync(string auth_token, string callback_uri, PluginData? plugin_data,
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return _handler.RegisterPluginAsync(auth_token, callback_uri, plugin_data, cancellationToken);
+            }
+            catch (QueryCatException ex)
+            {
+                throw new QueryCatPluginException(ErrorType.GENERIC, ex.Message);
+            }
+        }
+
+        /// <inheritdoc />
+        public Task<VariantValue> CallFunctionAsync(string function_name, List<VariantValue>? args, int object_handle,
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return _handler.CallFunctionAsync(function_name, args, object_handle, cancellationToken);
+            }
+            catch (QueryCatException ex)
+            {
+                throw new QueryCatPluginException(ErrorType.GENERIC, ex.Message)
+                {
+                    ObjectHandle = object_handle,
+                };
+            }
+        }
+
+        /// <inheritdoc />
+        public Task<VariantValue> RunQueryAsync(string query, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return _handler.RunQueryAsync(query, cancellationToken);
+            }
+            catch (QueryCatException ex)
+            {
+                throw new QueryCatPluginException(ErrorType.GENERIC, ex.Message);
+            }
+        }
+
+        /// <inheritdoc />
+        public Task SetConfigValueAsync(string key, VariantValue? value, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return _handler.SetConfigValueAsync(key, value, cancellationToken);
+            }
+            catch (QueryCatException ex)
+            {
+                throw new QueryCatPluginException(ErrorType.GENERIC, ex.Message);
+            }
+        }
+
+        /// <inheritdoc />
+        public Task<VariantValue> GetConfigValueAsync(string key, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return _handler.GetConfigValueAsync(key, cancellationToken);
+            }
+            catch (QueryCatException ex)
+            {
+                throw new QueryCatPluginException(ErrorType.GENERIC, ex.Message);
+            }
+        }
+
+        /// <inheritdoc />
+        public Task LogAsync(LogLevel level, string message, List<string>? arguments, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return _handler.LogAsync(level, message, arguments, cancellationToken);
+            }
+            catch (QueryCatException ex)
+            {
+                throw new QueryCatPluginException(ErrorType.GENERIC, ex.Message);
+            }
         }
     }
 }

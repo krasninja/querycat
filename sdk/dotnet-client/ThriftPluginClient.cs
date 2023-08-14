@@ -205,7 +205,8 @@ public partial class ThriftPluginClient : IDisposable
         var transportFactory = new TFramedTransport.Factory();
         var binaryProtocolFactory = new TBinaryProtocol.Factory();
         var processor = new TMultiplexedProcessor();
-        var asyncProcessor = new Plugin.AsyncProcessor(new Handler(this));
+        var handler = new HandlerWithExceptionIntercept(new Handler(this));
+        var asyncProcessor = new Plugin.AsyncProcessor(handler);
         processor.RegisterProcessor(PluginServerName, asyncProcessor);
         _clientServer = new TThreadPoolAsyncServer(
             new TSingletonProcessorFactory(processor),
