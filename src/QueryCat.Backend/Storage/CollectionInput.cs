@@ -75,7 +75,7 @@ public class CollectionInput<TClass> : IRowsOutput, IRowsInputUpdate where TClas
     }
 
     /// <inheritdoc />
-    public void Write(in VariantValue[] values)
+    public void WriteValues(in VariantValue[] values)
     {
         if (_list is not ICollection<TClass> collection)
         {

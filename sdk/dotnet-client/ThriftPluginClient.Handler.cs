@@ -274,7 +274,7 @@ public partial class ThriftPluginClient
                 && _thriftPluginClient._objectsStorage.TryGet<IRowsOutput>(object_handle, out var rowsOutput)
                 && rowsOutput != null)
             {
-                rowsOutput.Write(values.Select(SdkConvert.Convert).ToArray());
+                rowsOutput.WriteValues(values.Select(SdkConvert.Convert).ToArray());
                 return Task.CompletedTask;
             }
             return Task.CompletedTask;

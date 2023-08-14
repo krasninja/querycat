@@ -312,7 +312,7 @@ internal sealed partial class SelectPlanner
                 {
                     while (outputIterator.MoveNext())
                     {
-                        outputIterator.CurrentOutput.Write(resultIterator.Current.Values);
+                        outputIterator.CurrentOutput.WriteValues(resultIterator.Current.Values);
                     }
                 },
             };

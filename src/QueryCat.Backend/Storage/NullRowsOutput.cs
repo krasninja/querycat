@@ -36,7 +36,7 @@ public sealed class NullRowsOutput : IRowsOutput
     }
 
     /// <inheritdoc />
-    public void Write(in VariantValue[] values)
+    public void WriteValues(in VariantValue[] values)
     {
     }
 }

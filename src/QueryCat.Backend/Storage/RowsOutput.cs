@@ -31,7 +31,7 @@ public abstract class RowsOutput : IRowsOutput
     public RowsOutputOptions Options { get; protected set; } = new();
 
     /// <inheritdoc />
-    public void Write(in VariantValue[] values)
+    public void WriteValues(in VariantValue[] values)
     {
         if (_isFirstCall)
         {

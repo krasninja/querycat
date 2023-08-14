@@ -56,9 +56,9 @@ public class PagingOutput : IRowsOutput
     }
 
     /// <inheritdoc />
-    public void Write(in VariantValue[] values)
+    public void WriteValues(in VariantValue[] values)
     {
-        _rowsOutput.Write(values);
+        _rowsOutput.WriteValues(values);
         if (PagingRowsCount != NoLimit
             && ++_rowsCounter >= PagingRowsCount
             && !Console.IsInputRedirected

@@ -28,7 +28,7 @@ internal sealed class InsertCommandHandler : CommandHandler
             _rowsOutput.QueryContext = new RowsOutputQueryContext(_rowsInput.Columns);
             while (_rowsInput.MoveNext())
             {
-                _rowsOutput.Write(_rowsInput.Current.Values);
+                _rowsOutput.WriteValues(_rowsInput.Current.Values);
                 insertCount++;
             }
         }

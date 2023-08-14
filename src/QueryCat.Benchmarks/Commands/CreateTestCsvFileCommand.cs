@@ -44,7 +44,7 @@ internal class CreateTestCsvFileCommand : Command
                 }
                 foreach (var row in rowsFrame)
                 {
-                    output.Write(row.Values);
+                    output.WriteValues(row.Values);
                 }
             }
             finally

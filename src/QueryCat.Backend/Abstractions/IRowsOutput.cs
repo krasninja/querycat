@@ -16,5 +16,5 @@ public interface IRowsOutput : IRowsSource
     /// Write row.
     /// </summary>
     /// <param name="values">Values to write.</param>
-    void Write(in VariantValue[] values);
+    void WriteValues(in VariantValue[] values);
 }
