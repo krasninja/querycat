@@ -52,7 +52,6 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
     /// <inheritdoc />
     public override Task LoadAsync(CancellationToken cancellationToken = default)
     {
-        _server.Start();
         foreach (var pluginDirectory in PluginDirectories)
         {
             _logger.LogTrace("Search in '{Directory}'.", pluginDirectory);
@@ -120,6 +119,8 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
 
     private void LoadPlugin(string file, CancellationToken cancellationToken)
     {
+        _server.Start();
+
         var authToken = !string.IsNullOrEmpty(ForceAuthToken) ? ForceAuthToken : Guid.NewGuid().ToString("N");
         _server.RegisterAuthToken(authToken);
         Process? process = null;
