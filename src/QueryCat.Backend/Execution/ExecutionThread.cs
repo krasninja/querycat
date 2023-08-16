@@ -160,13 +160,13 @@ public class ExecutionThread : IExecutionThread
             AsyncUtils.RunSync(ConfigStorage.LoadAsync);
         }
 
+        var executeEventArgs = new ExecuteEventArgs();
         while (ExecutingStatement != null)
         {
             var commandContext = _statementsVisitor.RunAndReturn(ExecutingStatement);
             _disposablesList.Add(commandContext);
 
             // Fire "before" event.
-            var executeEventArgs = new ExecuteEventArgs();
             BeforeStatementExecute?.Invoke(this, executeEventArgs);
             if (!executeEventArgs.ContinueExecution)
             {
