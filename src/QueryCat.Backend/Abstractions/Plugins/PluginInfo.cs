@@ -3,7 +3,10 @@ using System.Text.RegularExpressions;
 namespace QueryCat.Backend.Abstractions.Plugins;
 
 /// <summary>
-/// Plugin information.
+/// Plugin information. Usually we get it from file name. Right now the following patterns are supported:
+/// - QCat.Plugins.Yandex-0.1.0-linux-x64.
+/// - QCat.Plugins.Yandex-0.1.0-win-x64.exe.
+/// - QCat.Plugins.Yandex.0.1.0.nupkg.
 /// </summary>
 public class PluginInfo
 {
