@@ -46,7 +46,7 @@ public class PluginInfo
     /// </summary>
     public bool IsInstalled { get; set; }
 
-    public PluginInfo(string name)
+    private PluginInfo(string name)
     {
         Name = name;
     }
@@ -76,8 +76,8 @@ public class PluginInfo
         return new PluginInfo(Path.GetFileName(name))
         {
             Version = new Version(0, 0),
-            Architecture = Application.ArchitectureMsil,
-            Platform = Application.PlatformMulti,
+            Architecture = Application.ArchitectureUnknown,
+            Platform = Application.PlatformUnknown,
         };
     }
 

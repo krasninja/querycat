@@ -9,6 +9,14 @@ namespace QueryCat.Plugins.Client;
 
 public sealed class PluginFunctionsManager : FunctionsManager
 {
+    public record struct FunctionInfo(
+        string Signature,
+        string Description);
+
+    private readonly List<FunctionInfo> _functions = new();
+
+    public IReadOnlyList<FunctionInfo> Functions => _functions;
+
     /// <inheritdoc />
     public override void RegisterAggregate<T>()
     {
@@ -16,15 +24,9 @@ public sealed class PluginFunctionsManager : FunctionsManager
     }
 
     /// <inheritdoc />
-    public override void RegisterFunction(FunctionDelegate functionDelegate)
+    public override void RegisterFunction(string signature, FunctionDelegate @delegate, string? description = null)
     {
-        throw ThrowNotImplementedException();
-    }
-
-    /// <inheritdoc />
-    public override Function RegisterFunction(string signature, FunctionDelegate @delegate, string? description = null)
-    {
-        throw ThrowNotImplementedException();
+        _functions.Add(new FunctionInfo(signature, description ?? string.Empty));
     }
 
     /// <inheritdoc />

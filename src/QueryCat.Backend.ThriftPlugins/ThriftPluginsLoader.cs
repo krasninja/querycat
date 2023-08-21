@@ -106,7 +106,7 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
 
     private bool IsMatchPlatform(string pluginFile)
     {
-        var plugin = new PluginInfo(pluginFile);
+        var plugin = PluginInfo.CreateFromUniversalName(pluginFile);
         // If we cannot detect platform and arch - let skip the check.
         if (plugin.Platform == Application.PlatformUnknown && plugin.Architecture == Application.ArchitectureUnknown)
         {
