@@ -11,8 +11,7 @@ public abstract class FunctionsManager
     /// <summary>
     /// Register aggregate function.
     /// </summary>
-    /// <typeparam name="T">Aggregate type.</typeparam>
-    public abstract void RegisterAggregate<T>() where T : IAggregateFunction;
+    public abstract void RegisterAggregate(Type type);
 
     /// <summary>
     /// Register function.
@@ -29,12 +28,6 @@ public abstract class FunctionsManager
     /// <param name="registerFunction">Register function delegate.</param>
     /// <param name="postpone">Postpone actual registration and add to pending list instead.</param>
     public abstract void RegisterFactory(Action<FunctionsManager> registerFunction, bool postpone = true);
-
-    /// <summary>
-    /// Register functions, aggregate functions from the specific type.
-    /// </summary>
-    /// <param name="type">Type to analyze.</param>
-    public abstract void RegisterFromType(Type type);
 
     /// <summary>
     /// Tries to find the function by name and it arguments types.

@@ -1,7 +1,5 @@
 using System.ComponentModel;
-using System.Linq.Expressions;
 using System.Reflection;
-using System.Text;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Abstractions.Functions;
@@ -47,73 +45,6 @@ public sealed class DefaultFunctionsManager : FunctionsManager
 
     #region Registration
 
-    /// <summary>
-    /// Register type methods as functions.
-    /// </summary>
-    /// <param name="type">Target type.</param>
-    public override void RegisterFromType(Type type)
-    {
-        string GetFunctionNameWithAlternate(string signature, MemberInfo memberInfo)
-        {
-            var functionName = GetFunctionName(signature);
-            if (string.IsNullOrEmpty(functionName))
-            {
-                functionName = ToSnakeCase(memberInfo.Name);
-            }
-            return functionName;
-        }
-
-        _registerFunctions.Add(fm =>
-        {
-            // Try to register class as function.
-            var classAttribute = type.GetCustomAttributes<FunctionSignatureAttribute>().FirstOrDefault();
-            if (classAttribute != null)
-            {
-                var firstConstructor = type.GetConstructors(BindingFlags.Public | BindingFlags.Instance).FirstOrDefault();
-                if (firstConstructor != null)
-                {
-                    var functionName = GetFunctionNameWithAlternate(classAttribute.Signature, type);
-                    var proxy = new MethodFunctionProxy(firstConstructor, functionName);
-                    fm.RegisterFunctionFast(proxy.FunctionDelegate, type, proxy);
-                    return;
-                }
-            }
-
-            // Try to register aggregates from type.
-            if (typeof(IAggregateFunction).IsAssignableFrom(type))
-            {
-                fm.RegisterAggregate(type);
-                return;
-            }
-
-            // Try to register methods from type.
-            var methods = type.GetMethods(BindingFlags.Static | BindingFlags.Public);
-            foreach (var method in methods)
-            {
-                var methodSignature = method.GetCustomAttributes<FunctionSignatureAttribute>().FirstOrDefault();
-                if (methodSignature == null)
-                {
-                    continue;
-                }
-
-                var methodParameters = method.GetParameters();
-                if (methodParameters.Length == 1 && methodParameters[0].ParameterType == typeof(FunctionCallInfo)
-                    && method.ReturnType == typeof(VariantValue))
-                {
-                    var args = Expression.Parameter(typeof(FunctionCallInfo), "input");
-                    var func = Expression.Lambda<FunctionDelegate>(Expression.Call(method, args), args).Compile();
-                    fm.RegisterFunctionFast(func, method);
-                }
-                else
-                {
-                    var functionName = GetFunctionNameWithAlternate(methodSignature.Signature, method);
-                    var proxy = new MethodFunctionProxy(method, functionName);
-                    fm.RegisterFunctionFast(proxy.FunctionDelegate, proxy.Method, proxy);
-                }
-            }
-        });
-    }
-
     /// <inheritdoc />
     public override void RegisterFactory(Action<FunctionsManager> registerFunction, bool postpone = true)
     {
@@ -124,45 +55,6 @@ public sealed class DefaultFunctionsManager : FunctionsManager
         else
         {
             registerFunction.Invoke(_thread.FunctionsManager);
-        }
-    }
-
-    private void RegisterFunctionFast(FunctionDelegate functionDelegate, MemberInfo memberInfo, MethodFunctionProxy? proxy = null)
-    {
-        var signatureAttributes = memberInfo.GetCustomAttributes<FunctionSignatureAttribute>();
-        if (signatureAttributes == null)
-        {
-            throw new QueryCatException($"Function '{memberInfo.Name}' must have {nameof(FunctionSignatureAttribute)}.");
-        }
-
-        foreach (var signatureAttribute in signatureAttributes)
-        {
-            var signature = signatureAttribute.Signature;
-            // Convert "" -> "func" (method/class name as snake case).
-            if (proxy != null)
-            {
-                if (string.IsNullOrEmpty(signature))
-                {
-                    signature = proxy.GetSignature().ToString();
-                }
-                // Convert "func" -> "func(a: integer): void (add signature from class/method definition).
-                if (IsShortSignature(signature))
-                {
-                    signature = proxy.GetSignature(signature).ToString();
-                }
-            }
-            if (string.IsNullOrEmpty(signature))
-            {
-                throw new InvalidOperationException("Empty function signature.");
-            }
-
-            var functionName = GetFunctionName(signature);
-            if (string.IsNullOrEmpty(functionName) && proxy != null)
-            {
-                functionName = proxy.Name;
-            }
-
-            PreRegisterFunction(signature, functionDelegate, functionName, memberInfo: memberInfo);
         }
     }
 
@@ -214,6 +106,11 @@ public sealed class DefaultFunctionsManager : FunctionsManager
     public override void RegisterFunction(string signature, FunctionDelegate @delegate,
         string? description = null)
     {
+        if (string.IsNullOrEmpty(signature))
+        {
+            throw new ArgumentNullException(nameof(signature));
+        }
+
         PreRegisterFunction(signature, @delegate, description: description);
     }
 
@@ -257,9 +154,7 @@ public sealed class DefaultFunctionsManager : FunctionsManager
     }
 
     /// <inheritdoc />
-    public override void RegisterAggregate<T>() => RegisterAggregate(typeof(T));
-
-    private void RegisterAggregate(Type aggregateType)
+    public override void RegisterAggregate(Type aggregateType)
     {
         _registerAggregateFunctions.Add(fm => RegisterAggregateInternal(fm, aggregateType));
     }
@@ -432,28 +327,4 @@ public sealed class DefaultFunctionsManager : FunctionsManager
         }
         return name;
     }
-
-    private static string ToSnakeCase(string target)
-    {
-        // Based on https://stackoverflow.com/questions/63055621/how-to-convert-camel-case-to-snake-case-with-two-capitals-next-to-each-other.
-        var sb = new StringBuilder()
-            .Append(char.ToLower(target[0]));
-        for (var i = 1; i < target.Length; ++i)
-        {
-            var ch = target[i];
-            if (char.IsUpper(ch))
-            {
-                sb.Append('_');
-                sb.Append(char.ToLower(ch));
-            }
-            else
-            {
-                sb.Append(ch);
-            }
-        }
-        return sb.ToString();
-    }
-
-    private static bool IsShortSignature(string signature)
-        => signature.IndexOf("(", StringComparison.Ordinal) < 0;
 }

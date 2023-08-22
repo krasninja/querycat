@@ -18,7 +18,7 @@ public sealed class PluginFunctionsManager : FunctionsManager
     public IReadOnlyList<FunctionInfo> Functions => _functions;
 
     /// <inheritdoc />
-    public override void RegisterAggregate<T>()
+    public override void RegisterAggregate(Type type)
     {
         throw ThrowNotImplementedException();
     }
@@ -31,12 +31,6 @@ public sealed class PluginFunctionsManager : FunctionsManager
 
     /// <inheritdoc />
     public override void RegisterFactory(Action<FunctionsManager> registerFunction, bool postpone = true)
-    {
-        throw ThrowNotImplementedException();
-    }
-
-    /// <inheritdoc />
-    public override void RegisterFromType(Type type)
     {
         throw ThrowNotImplementedException();
     }
