@@ -1,4 +1,5 @@
 using QueryCat.Backend.Abstractions.Functions;
+using QueryCat.Backend.Functions;
 
 namespace QueryCat.Backend.Providers;
 

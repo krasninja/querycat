@@ -1,4 +1,5 @@
 ﻿using QueryCat.Plugins.Client;
+using QueryCat.Backend.Functions;
 
 namespace QueryCat.Plugin.Test;
 

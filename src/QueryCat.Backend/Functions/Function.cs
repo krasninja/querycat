@@ -7,28 +7,20 @@ namespace QueryCat.Backend.Functions;
 /// <summary>
 /// Custom .NET function that can be invoked from query.
 /// </summary>
-public class Function
+public class Function : IFunction
 {
-    /// <summary>
-    /// Invocation delegate.
-    /// </summary>
+    /// <inheritdoc />
     public FunctionDelegate Delegate { get; }
 
     private readonly FunctionSignatureNode _signatureNode;
 
-    /// <summary>
-    /// Function name.
-    /// </summary>
+    /// <inheritdoc />
     public string Name { get; }
 
-    /// <summary>
-    /// Function description.
-    /// </summary>
+    /// <inheritdoc />
     public string Description { get; internal set; } = string.Empty;
 
-    /// <summary>
-    /// Function return type.
-    /// </summary>
+    /// <inheritdoc />
     public DataType ReturnType => _signatureNode.ReturnType;
 
     /// <summary>
@@ -36,14 +28,10 @@ public class Function
     /// </summary>
     public string ReturnObjectName => _signatureNode.ReturnTypeNode.TypeName;
 
-    /// <summary>
-    /// Can the function be used for aggregate queries. Aggregate queries requires state and initial value.
-    /// </summary>
+    /// <inheritdoc />
     public bool IsAggregate { get; }
 
-    /// <summary>
-    /// Arguments.
-    /// </summary>
+    /// <inheritdoc />
     public FunctionSignatureArgumentNode[] Arguments => _signatureNode.ArgumentNodes;
 
     /// <summary>

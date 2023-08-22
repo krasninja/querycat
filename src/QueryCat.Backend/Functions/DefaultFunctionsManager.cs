@@ -162,21 +162,30 @@ public sealed class DefaultFunctionsManager : FunctionsManager
                 functionName = proxy.Name;
             }
 
-            if (_functionsPreRegistration.TryGetValue(functionName, out var preRegistration))
-            {
-                preRegistration.Signatures.Add(signature);
-            }
-            else
-            {
-                var signatures = new List<string> { signature };
-                _functionsPreRegistration.Add(functionName,
-                    new FunctionPreRegistration(functionDelegate, memberInfo, signatures));
-            }
+            PreRegisterFunction(signature, functionDelegate, functionName, memberInfo: memberInfo);
         }
     }
 
-    public override void RegisterFunction(FunctionDelegate functionDelegate)
-        => RegisterFunctionFast(functionDelegate, functionDelegate.GetMethodInfo());
+    private void PreRegisterFunction(
+        string signature,
+        FunctionDelegate functionDelegate,
+        string? functionName = null,
+        string? description = null,
+        MemberInfo? memberInfo = null)
+    {
+        functionName ??= GetFunctionName(signature);
+
+        if (_functionsPreRegistration.TryGetValue(functionName, out var preRegistration))
+        {
+            preRegistration.Signatures.Add(signature);
+        }
+        else
+        {
+            var signatures = new List<string> { signature };
+            _functionsPreRegistration.Add(functionName,
+                new FunctionPreRegistration(functionDelegate, memberInfo, signatures));
+        }
+    }
 
     private bool TryGetPreRegistration(string name, out List<Function> functions)
     {
@@ -202,21 +211,10 @@ public sealed class DefaultFunctionsManager : FunctionsManager
     }
 
     /// <inheritdoc />
-    public override Function RegisterFunction(string signature, FunctionDelegate @delegate,
+    public override void RegisterFunction(string signature, FunctionDelegate @delegate,
         string? description = null)
     {
-        var function = RegisterFunction(new FunctionPreRegistration(
-            @delegate,
-            null,
-            new List<string>
-            {
-                signature
-            })).First();
-        if (!string.IsNullOrEmpty(description))
-        {
-            function.Description = description;
-        }
-        return function;
+        PreRegisterFunction(signature, @delegate, description: description);
     }
 
     private List<Function> RegisterFunction(FunctionPreRegistration preRegistration)

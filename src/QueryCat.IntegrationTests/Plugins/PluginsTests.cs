@@ -1,5 +1,6 @@
 using Xunit;
 using QueryCat.Tests.QueryRunner;
+using QueryCat.Backend.Functions;
 
 namespace QueryCat.IntegrationTests.Plugins;
 

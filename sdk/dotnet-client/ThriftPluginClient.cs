@@ -28,7 +28,7 @@ public partial class ThriftPluginClient : IDisposable
     public const string PluginServerName = "plugin";
 
     private readonly PluginExecutionThread _executionThread;
-    private readonly FunctionsManager _functionsManager;
+    private readonly PluginFunctionsManager _functionsManager;
     private readonly ObjectsStorage _objectsStorage = new();
     private string _debugServerPath = string.Empty;
     private string _debugServerPathArgs = string.Empty;
@@ -100,7 +100,7 @@ public partial class ThriftPluginClient : IDisposable
         _client = new PluginsManager.Client(_protocol);
 
         _executionThread = new PluginExecutionThread(_client);
-        _functionsManager = new DefaultFunctionsManager(_executionThread);
+        _functionsManager = new PluginFunctionsManager();
     }
 
     public static void SetupApplicationLogging()
@@ -186,7 +186,7 @@ public partial class ThriftPluginClient : IDisposable
 
         var assemblyName = Assembly.GetEntryAssembly()?.GetName();
         var version = assemblyName?.Version;
-        var functions = _functionsManager.GetFunctions().Select(f => f.Signature).ToList();
+        var functions = _functionsManager.Functions.Select(f => f.Signature).ToList();
         await _client.RegisterPluginAsync(
             _authToken,
             $"net.pipe://localhost/{_clientServerNamedPipe}",

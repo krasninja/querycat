@@ -17,21 +17,14 @@ public abstract class FunctionsManager
     /// <summary>
     /// Register function.
     /// </summary>
-    /// <param name="functionDelegate">Function delegate.</param>
-    public abstract void RegisterFunction(FunctionDelegate functionDelegate);
-
-    /// <summary>
-    /// Register function.
-    /// </summary>
     /// <param name="signature">Function signature.</param>
     /// <param name="delegate">Function delegate.</param>
     /// <param name="description">Optional description.</param>
-    /// <returns>Instance of <see cref="Function" />.</returns>
-    public abstract Function RegisterFunction(string signature, FunctionDelegate @delegate,
+    public abstract void RegisterFunction(string signature, FunctionDelegate @delegate,
         string? description = null);
 
     /// <summary>
-    /// Register the delegate that describe more functions.
+    /// Register the delegate that describes more functions.
     /// </summary>
     /// <param name="registerFunction">Register function delegate.</param>
     /// <param name="postpone">Postpone actual registration and add to pending list instead.</param>
@@ -116,17 +109,4 @@ public abstract class FunctionsManager
     /// <param name="arguments">Arguments to pass.</param>
     /// <returns>Result.</returns>
     public abstract VariantValue CallFunction(Function function, FunctionArguments arguments);
-
-    /// <summary>
-    /// Call the function by name.
-    /// </summary>
-    /// <param name="functionName">Function name.</param>
-    /// <param name="arguments">Arguments to pass.</param>
-    /// <returns>Result.</returns>
-    public VariantValue CallFunction(string functionName, FunctionArguments? arguments = null)
-    {
-        arguments ??= FunctionArguments.Empty;
-        var function = FindByName(functionName, arguments.GetTypes());
-        return CallFunction(function, arguments);
-    }
 }
