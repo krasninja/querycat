@@ -1,5 +1,4 @@
 using System.ComponentModel;
-using System.Reflection;
 using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Abstractions.Functions;
 using QueryCat.Backend.Abstractions.Plugins;
@@ -93,15 +92,11 @@ public static class InfoFunctions
         return new VariantValue(type.ToString());
     }
 
-    public static string GetVersion()
-        => typeof(VariantValue).Assembly
-            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? string.Empty;
-
     [Description("Application version.")]
     [FunctionSignature("_version(): string")]
     public static VariantValue Version(FunctionCallInfo args)
     {
-        return new VariantValue(GetVersion());
+        return new VariantValue(Application.GetVersion());
     }
 
     [Description("Provide a list of OS time zone names.")]

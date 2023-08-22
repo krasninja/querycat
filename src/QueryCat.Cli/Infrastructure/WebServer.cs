@@ -6,7 +6,6 @@ using QueryCat.Backend;
 using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Formatters;
-using QueryCat.Backend.Functions.StandardFunctions;
 using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Storage;
 using QueryCat.Backend.Types;
@@ -375,7 +374,7 @@ internal sealed class WebServer
         var dict = new Dictionary<string, object>
         {
             ["installedPlugins"] = localPlugins,
-            ["version"] = InfoFunctions.GetVersion(),
+            ["version"] = Application.GetVersion(),
             ["os"] = System.Runtime.InteropServices.RuntimeInformation.OSDescription.Trim(),
             ["date"] = DateTime.Now,
         };

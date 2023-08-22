@@ -1,7 +1,7 @@
+using System.Reflection;
 using System.Runtime.InteropServices;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using QueryCat.Backend.Functions.StandardFunctions;
 
 namespace QueryCat.Backend;
 
@@ -37,12 +37,16 @@ public static class Application
     /// </summary>
     public const string ProductName = "QueryCat";
 
+    public static string GetVersion()
+        => typeof(Application).Assembly
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? string.Empty;
+
     /// <summary>
     /// Full product name with version.
     /// </summary>
     /// <returns></returns>
     public static string GetProductFullName()
-        => $"{ProductName} {InfoFunctions.GetVersion()}";
+        => $"{ProductName} {GetVersion()}";
 
     /// <summary>
     /// Get current platform identifier.

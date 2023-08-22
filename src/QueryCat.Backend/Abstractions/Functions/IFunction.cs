@@ -1,4 +1,3 @@
-using QueryCat.Backend.Ast.Nodes.Function;
 using QueryCat.Backend.Types;
 
 namespace QueryCat.Backend.Abstractions.Functions;
@@ -29,9 +28,4 @@ public interface IFunction
     /// Is aggregate function or standard function.
     /// </summary>
     bool IsAggregate { get; }
-
-    /// <summary>
-    /// Arguments.
-    /// </summary>
-    FunctionSignatureArgumentNode[] Arguments { get; }
 }

@@ -1,8 +1,8 @@
 using System.Globalization;
 using Microsoft.Extensions.Logging;
-using QueryCat.Backend.Types;
+using QueryCat.Backend.Utils;
 
-namespace QueryCat.Backend.Utils;
+namespace QueryCat.Backend.Types;
 
 /// <summary>
 /// The helper class allows to work with types system.

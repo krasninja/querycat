@@ -1,7 +1,6 @@
-using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Types;
 
-namespace QueryCat.Backend.Execution;
+namespace QueryCat.Backend.Abstractions;
 
 /// <summary>
 /// Empty input config storage implementation.

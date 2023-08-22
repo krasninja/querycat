@@ -1,6 +1,4 @@
-using QueryCat.Backend.Abstractions;
-
-namespace QueryCat.Backend.Relational;
+namespace QueryCat.Backend.Abstractions;
 
 /// <summary>
 /// Extensions for <see cref="IRowsSchema" />.

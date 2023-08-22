@@ -1,5 +1,5 @@
 using System.ComponentModel.DataAnnotations;
-using QueryCat.Backend.Utils;
+using QueryCat.Backend.Types;
 using DataType = QueryCat.Backend.Types.DataType;
 
 namespace QueryCat.Backend.Abstractions;

@@ -1,5 +1,3 @@
-using QueryCat.Backend.Storage;
-
 namespace QueryCat.Backend.Abstractions;
 
 /// <summary>
@@ -15,5 +13,5 @@ public abstract class QueryContext
     /// <summary>
     /// Input config storage.
     /// </summary>
-    public IInputConfigStorage InputConfigStorage { get; set; } = new MemoryInputConfigStorage();
+    public IInputConfigStorage InputConfigStorage { get; set; } = new NullInputConfigStorage();
 }
