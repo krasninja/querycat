@@ -28,4 +28,9 @@ public interface IFunction
     /// Is aggregate function or standard function.
     /// </summary>
     bool IsAggregate { get; }
+
+    /// <summary>
+    /// Signature arguments.
+    /// </summary>
+    FunctionSignatureArgument[] Arguments { get; }
 }

@@ -22,9 +22,9 @@ public class CannotFindFunctionException : QueryCatException
     /// Constructor.
     /// </summary>
     /// <param name="name">Function name.</param>
-    /// <param name="arguments">Function arguments types.</param>
-    public CannotFindFunctionException(string name, FunctionArgumentsTypes arguments) :
-        base($"Cannot find function '{name}' matches arguments '{arguments}'.")
+    /// <param name="callArguments">Function arguments types.</param>
+    public CannotFindFunctionException(string name, FunctionCallArgumentsTypes callArguments) :
+        base($"Cannot find function '{name}' matches arguments '{callArguments}'.")
     {
     }
 }

@@ -64,7 +64,7 @@ internal static class FileInputOutput
         string path,
         IExecutionThread thread,
         IRowsFormatter? formatter = null,
-        FunctionArguments? funcArgs = null)
+        FunctionCallArguments? funcArgs = null)
     {
         foreach (var file in GetFilesByPath(path))
         {
@@ -109,7 +109,7 @@ internal static class FileInputOutput
     }
 
     private static IRowsFormatter GetFormatter(string path, IExecutionThread thread,
-        FunctionArguments? funcArgs = null)
+        FunctionCallArguments? funcArgs = null)
     {
         var extension = Path.GetExtension(path).ToLower();
         if (CompressFilesExtensions.Contains(extension))

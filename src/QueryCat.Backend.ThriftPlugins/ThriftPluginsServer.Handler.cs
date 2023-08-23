@@ -101,7 +101,7 @@ public partial class ThriftPluginsServer
             CancellationToken cancellationToken = default)
         {
             args ??= new List<VariantValue>();
-            var argsForFunction = new FunctionArguments();
+            var argsForFunction = new FunctionCallArguments();
             foreach (var arg in args)
             {
                 argsForFunction.Add(SdkConvert.Convert(arg));

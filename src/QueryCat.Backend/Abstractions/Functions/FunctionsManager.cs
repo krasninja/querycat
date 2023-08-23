@@ -38,7 +38,7 @@ public abstract class FunctionsManager
     /// <returns>Returns <c>true</c> if functions were found, <c>false</c> otherwise.</returns>
     public abstract bool TryFindByName(
         string name,
-        FunctionArgumentsTypes? functionArgumentsTypes,
+        FunctionCallArgumentsTypes? functionArgumentsTypes,
         out Function[] functions);
 
     /// <summary>
@@ -49,7 +49,7 @@ public abstract class FunctionsManager
     /// <returns>Instance of <see cref="Function" />.</returns>
     public Function FindByName(
         string name,
-        FunctionArgumentsTypes? functionArgumentsTypes = null)
+        FunctionCallArgumentsTypes? functionArgumentsTypes = null)
     {
         if (TryFindByName(name, functionArgumentsTypes, out var functions))
         {
@@ -99,7 +99,7 @@ public abstract class FunctionsManager
     /// Call the function.
     /// </summary>
     /// <param name="function">Function.</param>
-    /// <param name="arguments">Arguments to pass.</param>
+    /// <param name="callArguments">Arguments to pass.</param>
     /// <returns>Result.</returns>
-    public abstract VariantValue CallFunction(Function function, FunctionArguments arguments);
+    public abstract VariantValue CallFunction(Function function, FunctionCallArguments callArguments);
 }

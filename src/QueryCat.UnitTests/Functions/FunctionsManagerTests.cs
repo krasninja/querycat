@@ -25,7 +25,7 @@ public sealed class FunctionsManagerTests
         _functionsManager.RegisterFunction(SumIntegers);
 
         var func = _functionsManager.FindByName("add",
-            FunctionArgumentsTypes.FromPositionArguments(DataType.Integer, DataType.Integer));
+            FunctionCallArgumentsTypes.FromPositionArguments(DataType.Integer, DataType.Integer));
         var functionCallInfo = FunctionCallInfo.CreateWithArguments(ExecutionThread.DefaultInstance,
             new VariantValue(5), new VariantValue(6));
         var ret = func.Delegate(functionCallInfo);
@@ -46,7 +46,7 @@ public sealed class FunctionsManagerTests
         _functionsManager.RegisterFunction(SumIntegersVariadic);
 
         var func = _functionsManager.FindByName("add",
-            FunctionArgumentsTypes.FromPositionArguments(
+            FunctionCallArgumentsTypes.FromPositionArguments(
                 DataType.String, DataType.Integer, DataType.Integer));
         var functionCallInfo = FunctionCallInfo.CreateWithArguments(ExecutionThread.DefaultInstance,
             new VariantValue("sum"), new VariantValue(5), new VariantValue(5));
@@ -62,7 +62,7 @@ public sealed class FunctionsManagerTests
         _functionsManager.RegisterFunction(SumIntegersVariadic);
 
         var func = _functionsManager.FindByName("add",
-            FunctionArgumentsTypes.FromPositionArguments(DataType.String));
+            FunctionCallArgumentsTypes.FromPositionArguments(DataType.String));
         var functionCallInfo = FunctionCallInfo.CreateWithArguments(ExecutionThread.DefaultInstance, new VariantValue("sum"));
         var ret = func.Delegate(functionCallInfo);
 
@@ -89,13 +89,13 @@ public sealed class FunctionsManagerTests
 
         // Act.
         var func1 = _functionsManager.FindByName("test_class1",
-            FunctionArgumentsTypes.FromPositionArguments(DataType.Integer, DataType.String));
+            FunctionCallArgumentsTypes.FromPositionArguments(DataType.Integer, DataType.String));
         var value1 = ExecutionThread.DefaultInstance.RunFunction(func1.Delegate, 1, "2");
         var func2 = _functionsManager.FindByName("test_class2",
-            FunctionArgumentsTypes.FromPositionArguments(DataType.Integer, DataType.String));
+            FunctionCallArgumentsTypes.FromPositionArguments(DataType.Integer, DataType.String));
         var value2 = ExecutionThread.DefaultInstance.RunFunction(func2.Delegate, 1, "2");
         var func3 = _functionsManager.FindByName("test_class3",
-            FunctionArgumentsTypes.FromPositionArguments(DataType.Integer, DataType.String));
+            FunctionCallArgumentsTypes.FromPositionArguments(DataType.Integer, DataType.String));
         var value3 = ExecutionThread.DefaultInstance.RunFunction(func3.Delegate, 1, "2");
 
         // Assert.
@@ -127,7 +127,7 @@ public sealed class FunctionsManagerTests
         var func1 = _functionsManager.FindByName("function1");
         ExecutionThread.DefaultInstance.RunFunction(func1.Delegate);
         var func2 = _functionsManager.FindByName("testfunc",
-            FunctionArgumentsTypes.FromPositionArguments(DataType.String));
+            FunctionCallArgumentsTypes.FromPositionArguments(DataType.String));
         var value2 = ExecutionThread.DefaultInstance.RunFunction(func2.Delegate, "2");
 
         // Assert.

@@ -30,7 +30,7 @@ internal class ResolveTypesVisitor : AstVisitor
         AstTraversal.PostOrder(node);
     }
 
-    public static FunctionArgumentsTypes CreateFunctionArgumentsTypes(
+    public static FunctionCallArgumentsTypes CreateFunctionArgumentsTypes(
         IList<FunctionCallArgumentNode> callArguments)
     {
         var positionalArgumentsTypes = callArguments
@@ -44,7 +44,7 @@ internal class ResolveTypesVisitor : AstVisitor
             .Select(arg => new KeyValuePair<string, DataType>(
                 arg.Key!, arg.ExpressionValueNode.GetDataType()))
             .ToArray();
-        return new FunctionArgumentsTypes(
+        return new FunctionCallArgumentsTypes(
             positionalArgumentsTypes,
             namedArgumentsTypes
         );

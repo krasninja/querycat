@@ -196,7 +196,7 @@ public sealed class DefaultFunctionsManager : FunctionsManager
     /// <inheritdoc />
     public override bool TryFindByName(
         string name,
-        FunctionArgumentsTypes? functionArgumentsTypes,
+        FunctionCallArgumentsTypes? functionArgumentsTypes,
         out Function[] functions)
     {
         functions = Array.Empty<Function>();
@@ -282,7 +282,7 @@ public sealed class DefaultFunctionsManager : FunctionsManager
     }
 
     /// <inheritdoc />
-    public override VariantValue CallFunction(Function function, FunctionArguments arguments)
+    public override VariantValue CallFunction(Function function, FunctionCallArguments callArguments)
     {
         var info = new FunctionCallInfo(_thread);
         info.FunctionName = function.Name;
@@ -292,13 +292,13 @@ public sealed class DefaultFunctionsManager : FunctionsManager
         {
             var argument = function.Arguments[i];
 
-            if (arguments.Positional.Count >= positionalIndex + 1)
+            if (callArguments.Positional.Count >= positionalIndex + 1)
             {
-                info.Push(arguments.Positional[positionalIndex++]);
+                info.Push(callArguments.Positional[positionalIndex++]);
                 continue;
             }
 
-            if (arguments.Named.TryGetValue(argument.Name, out var value))
+            if (callArguments.Named.TryGetValue(argument.Name, out var value))
             {
                 info.Push(value);
             }

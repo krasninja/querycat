@@ -41,9 +41,9 @@ public static class FunctionsManagerExtensions
     /// <param name="arguments">Arguments to pass.</param>
     /// <returns>Result.</returns>
     public static VariantValue CallFunction(this FunctionsManager functionsManager,
-        string functionName, FunctionArguments? arguments = null)
+        string functionName, FunctionCallArguments? arguments = null)
     {
-        arguments ??= FunctionArguments.Empty;
+        arguments ??= FunctionCallArguments.Empty;
         var function = functionsManager.FindByName(functionName, arguments.GetTypes());
         return functionsManager.CallFunction(function, arguments);
     }

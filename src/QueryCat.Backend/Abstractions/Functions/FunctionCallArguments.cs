@@ -6,12 +6,12 @@ namespace QueryCat.Backend.Abstractions.Functions;
 /// <summary>
 /// Represents the input arguments for function.
 /// </summary>
-public sealed class FunctionArguments
+public sealed class FunctionCallArguments
 {
     private readonly Dictionary<string, VariantValue> _named = new();
     private readonly List<VariantValue> _positional = new();
 
-    internal static FunctionArguments Empty { get; } = new();
+    internal static FunctionCallArguments Empty { get; } = new();
 
     /// <summary>
     /// Named arguments.
@@ -27,11 +27,11 @@ public sealed class FunctionArguments
     /// Create from query string. Example string: arg1=10&Name=John.
     /// </summary>
     /// <param name="query">Query.</param>
-    /// <returns>Instance of <see cref="FunctionArguments" />.</returns>
-    public static FunctionArguments FromQueryString(string query)
+    /// <returns>Instance of <see cref="FunctionCallArguments" />.</returns>
+    public static FunctionCallArguments FromQueryString(string query)
     {
         var args = StringUtils.GetFieldsFromLine(query, delimiter: '&');
-        var fa = new FunctionArguments();
+        var fa = new FunctionCallArguments();
         if (args.Length == 1 && args[0].IndexOf('=') == -1)
         {
             fa.Add(CreateValueFromString(args[0]));
@@ -75,8 +75,8 @@ public sealed class FunctionArguments
     /// <param name="name">Argument name.</param>
     /// <param name="value">Argument value.</param>
     /// <param name="overwrite">Overwrite if arguments with the same name exists.</param>
-    /// <returns>Instance of <see cref="FunctionArguments" />.</returns>
-    public FunctionArguments Add(string name, VariantValue value, bool overwrite = false)
+    /// <returns>Instance of <see cref="FunctionCallArguments" />.</returns>
+    public FunctionCallArguments Add(string name, VariantValue value, bool overwrite = false)
     {
         name = name.ToUpper();
         if (overwrite || !_named.ContainsKey(name))
@@ -93,8 +93,8 @@ public sealed class FunctionArguments
     /// <param name="value">Argument value.</param>
     /// <param name="overwrite">Overwrite if arguments with the same name exists.</param>
     /// <typeparam name="T">Argument type.</typeparam>
-    /// <returns>Instance of <see cref="FunctionArguments" />.</returns>
-    public FunctionArguments Add<T>(string name, T value, bool overwrite = false)
+    /// <returns>Instance of <see cref="FunctionCallArguments" />.</returns>
+    public FunctionCallArguments Add<T>(string name, T value, bool overwrite = false)
     {
         name = name.ToUpper();
         if (overwrite || !_named.ContainsKey(name))
@@ -108,8 +108,8 @@ public sealed class FunctionArguments
     /// Add named argument.
     /// </summary>
     /// <param name="value">Argument value.</param>
-    /// <returns>Instance of <see cref="FunctionArguments" />.</returns>
-    public FunctionArguments Add(VariantValue value)
+    /// <returns>Instance of <see cref="FunctionCallArguments" />.</returns>
+    public FunctionCallArguments Add(VariantValue value)
     {
         _positional.Add(value);
         return this;
@@ -120,16 +120,16 @@ public sealed class FunctionArguments
     /// </summary>
     /// <param name="value">Argument value.</param>
     /// <typeparam name="T">Argument type.</typeparam>
-    /// <returns>Instance of <see cref="FunctionArguments" />.</returns>
-    public FunctionArguments Add<T>(T value)
+    /// <returns>Instance of <see cref="FunctionCallArguments" />.</returns>
+    public FunctionCallArguments Add<T>(T value)
     {
         _positional.Add(VariantValue.CreateFromObject(value));
         return this;
     }
 
-    public FunctionArgumentsTypes GetTypes()
+    public FunctionCallArgumentsTypes GetTypes()
     {
-        return new FunctionArgumentsTypes(
+        return new FunctionCallArgumentsTypes(
             _positional.Select((p, i) => new KeyValuePair<int, DataType>(i, p.GetInternalType())).ToArray(),
             _named.Select(p => new KeyValuePair<string, DataType>(p.Key, p.Value.GetInternalType())).ToArray()
         );

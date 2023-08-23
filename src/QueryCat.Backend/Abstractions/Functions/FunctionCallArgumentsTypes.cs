@@ -6,7 +6,7 @@ namespace QueryCat.Backend.Abstractions.Functions;
 /// The class contains extracted function arguments types separated
 /// by positional and named.
 /// </summary>
-public sealed class FunctionArgumentsTypes
+public sealed class FunctionCallArgumentsTypes
 {
     /// <summary>
     /// Positional arguments.
@@ -23,7 +23,7 @@ public sealed class FunctionArgumentsTypes
     /// </summary>
     public int TotalCount => Positional.Length + Named.Length;
 
-    public FunctionArgumentsTypes(
+    public FunctionCallArgumentsTypes(
         KeyValuePair<int, DataType>[]? positional = null,
         KeyValuePair<string, DataType>[]? namedArguments = null)
     {
@@ -31,10 +31,10 @@ public sealed class FunctionArgumentsTypes
         Named = namedArguments ?? Array.Empty<KeyValuePair<string, DataType>>();
     }
 
-    public static FunctionArgumentsTypes FromPositionArguments(
+    public static FunctionCallArgumentsTypes FromPositionArguments(
         params DataType[] positional)
     {
-        return new FunctionArgumentsTypes(
+        return new FunctionCallArgumentsTypes(
             positional.Select((arg, pos) =>
                 new KeyValuePair<int, DataType>(pos, arg))
                     .ToArray());

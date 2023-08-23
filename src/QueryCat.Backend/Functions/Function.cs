@@ -31,8 +31,16 @@ public class Function : IFunction
     /// <inheritdoc />
     public bool IsAggregate { get; }
 
+    private FunctionSignatureArgument[]? _arguments;
+
     /// <inheritdoc />
-    public FunctionSignatureArgumentNode[] Arguments => _signatureNode.ArgumentNodes;
+    public FunctionSignatureArgument[] Arguments
+    {
+        get
+        {
+            return _arguments ??= _signatureNode.ArgumentNodes.Select(n => n.SignatureArgument).ToArray();
+        }
+    }
 
     /// <summary>
     /// Full signature.
@@ -51,7 +59,7 @@ public class Function : IFunction
         IsAggregate = aggregate;
     }
 
-    internal bool MatchesToArguments(FunctionArgumentsTypes functionArgumentsTypes)
+    internal bool MatchesToArguments(FunctionCallArgumentsTypes functionCallArgumentsTypes)
     {
         var argumentsNodes = Arguments;
         var variadicArgument = argumentsNodes.Length > 0 && argumentsNodes[^1].IsVariadic
@@ -65,25 +73,25 @@ public class Function : IFunction
         {
             if (argumentsNodes[i].HasDefaultValue || argumentsNodes[i].IsOptional)
             {
-                typesArr[i] = argumentsNodes[i].TypeNode.Type;
+                typesArr[i] = argumentsNodes[i].Type;
             }
         }
-        if (functionArgumentsTypes.Positional.Length > typesArr.Length && variadicArgument == null)
+        if (functionCallArgumentsTypes.Positional.Length > typesArr.Length && variadicArgument == null)
         {
             return false;
         }
 
         // Place positional arguments.
-        for (int i = 0; i < functionArgumentsTypes.Positional.Length; i++)
+        for (int i = 0; i < functionCallArgumentsTypes.Positional.Length; i++)
         {
-            var arg = functionArgumentsTypes.Positional[i];
+            var arg = functionCallArgumentsTypes.Positional[i];
             if (arg.Key > typesArr.Length - 1)
             {
                 if (variadicArgument != null)
                 {
                     Array.Resize(ref typesArr, arg.Key + 1);
                     Array.Resize(ref argumentsNodes, arg.Key + 1);
-                    argumentsNodes[^1] = (FunctionSignatureArgumentNode)variadicArgument.Clone();
+                    argumentsNodes[^1] = (FunctionSignatureArgument)variadicArgument.Clone();
                 }
                 else
                 {
@@ -94,10 +102,10 @@ public class Function : IFunction
         }
 
         // Place named arguments.
-        for (int i = 0; i < functionArgumentsTypes.Named.Length; i++)
+        for (int i = 0; i < functionCallArgumentsTypes.Named.Length; i++)
         {
-            var argumentPosition = GetArgumentPosition(functionArgumentsTypes.Named[i].Key);
-            typesArr[argumentPosition] = functionArgumentsTypes.Named[i].Value;
+            var argumentPosition = GetArgumentPosition(functionCallArgumentsTypes.Named[i].Key);
+            typesArr[argumentPosition] = functionCallArgumentsTypes.Named[i].Value;
         }
 
         // Make sure we resolved all arguments nodes.
@@ -110,7 +118,7 @@ public class Function : IFunction
             }
 
             // The VOID data type is used with ANY argument type.
-            if (argumentsNodes[i].TypeNode.Type != DataType.Void && typesArr[i] != argumentsNodes[i].TypeNode.Type)
+            if (argumentsNodes[i].Type != DataType.Void && typesArr[i] != argumentsNodes[i].Type)
             {
                 return false;
             }
