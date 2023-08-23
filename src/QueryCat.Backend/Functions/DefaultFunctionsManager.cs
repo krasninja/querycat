@@ -197,9 +197,9 @@ public sealed class DefaultFunctionsManager : FunctionsManager
     public override bool TryFindByName(
         string name,
         FunctionCallArgumentsTypes? functionArgumentsTypes,
-        out Function[] functions)
+        out IFunction[] functions)
     {
-        functions = Array.Empty<Function>();
+        functions = Array.Empty<IFunction>();
         name = NormalizeName(name);
 
         if (!_functions.TryGetValue(name, out var outFunctions) && !TryGetPreRegistration(name, out outFunctions))
@@ -257,7 +257,7 @@ public sealed class DefaultFunctionsManager : FunctionsManager
     /// Get all registered functions.
     /// </summary>
     /// <returns>Functions enumerable.</returns>
-    public override IEnumerable<Function> GetFunctions()
+    public override IEnumerable<IFunction> GetFunctions()
     {
         while (_registerFunctionsLastIndex < _registerFunctions.Count)
         {
@@ -282,7 +282,7 @@ public sealed class DefaultFunctionsManager : FunctionsManager
     }
 
     /// <inheritdoc />
-    public override VariantValue CallFunction(Function function, FunctionCallArguments callArguments)
+    public override VariantValue CallFunction(IFunction function, FunctionCallArguments callArguments)
     {
         var info = new FunctionCallInfo(_thread);
         info.FunctionName = function.Name;

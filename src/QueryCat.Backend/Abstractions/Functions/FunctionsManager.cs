@@ -1,4 +1,3 @@
-using QueryCat.Backend.Functions;
 using QueryCat.Backend.Types;
 
 namespace QueryCat.Backend.Abstractions.Functions;
@@ -39,15 +38,15 @@ public abstract class FunctionsManager
     public abstract bool TryFindByName(
         string name,
         FunctionCallArgumentsTypes? functionArgumentsTypes,
-        out Function[] functions);
+        out IFunction[] functions);
 
     /// <summary>
     /// Find function by name.
     /// </summary>
     /// <param name="name">Function name.</param>
     /// <param name="functionArgumentsTypes">Argument types to find. Can be used to find the specific overload.</param>
-    /// <returns>Instance of <see cref="Function" />.</returns>
-    public Function FindByName(
+    /// <returns>Instance of <see cref="IFunction" />.</returns>
+    public IFunction FindByName(
         string name,
         FunctionCallArgumentsTypes? functionArgumentsTypes = null)
     {
@@ -93,7 +92,7 @@ public abstract class FunctionsManager
     /// Get all registered functions.
     /// </summary>
     /// <returns>Enumerable of all registered functions.</returns>
-    public abstract IEnumerable<Function> GetFunctions();
+    public abstract IEnumerable<IFunction> GetFunctions();
 
     /// <summary>
     /// Call the function.
@@ -101,5 +100,5 @@ public abstract class FunctionsManager
     /// <param name="function">Function.</param>
     /// <param name="callArguments">Arguments to pass.</param>
     /// <returns>Result.</returns>
-    public abstract VariantValue CallFunction(Function function, FunctionCallArguments callArguments);
+    public abstract VariantValue CallFunction(IFunction function, FunctionCallArguments callArguments);
 }

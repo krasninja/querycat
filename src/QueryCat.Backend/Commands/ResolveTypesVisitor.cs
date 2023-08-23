@@ -6,7 +6,6 @@ using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Ast.Nodes.SpecialFunctions;
 using QueryCat.Backend.Commands.Select;
 using QueryCat.Backend.Execution;
-using QueryCat.Backend.Functions;
 using QueryCat.Backend.Types;
 
 namespace QueryCat.Backend.Commands;
@@ -191,7 +190,7 @@ internal class ResolveTypesVisitor : AstVisitor
         VisitFunctionCallNode(node);
     }
 
-    public Function VisitFunctionCallNode(FunctionCallNode node)
+    public IFunction VisitFunctionCallNode(FunctionCallNode node)
     {
         var functionArgumentsTypes = CreateFunctionArgumentsTypes(node.Arguments);
         var function = ExecutionThread.FunctionsManager.FindByName(

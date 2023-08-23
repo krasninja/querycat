@@ -17,7 +17,7 @@ public static class InfoFunctions
     [FunctionSignature("_functions(): object<IRowsIterator>")]
     public static VariantValue Functions(FunctionCallInfo args)
     {
-        var builder = new ClassRowsFrameBuilder<Function>()
+        var builder = new ClassRowsFrameBuilder<IFunction>()
             .AddProperty("signature", f => f.ToString())
             .AddProperty("description", f => f.Description);
         var functions = args.ExecutionThread.FunctionsManager.GetFunctions().OrderBy(f => f.Name);

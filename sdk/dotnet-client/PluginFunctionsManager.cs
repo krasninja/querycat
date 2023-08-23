@@ -36,7 +36,7 @@ public sealed class PluginFunctionsManager : FunctionsManager
     }
 
     /// <inheritdoc />
-    public override bool TryFindByName(string name, FunctionCallArgumentsTypes? functionArgumentsTypes, out Function[] functions)
+    public override bool TryFindByName(string name, FunctionCallArgumentsTypes? functionArgumentsTypes, out IFunction[] functions)
     {
         throw ThrowNotImplementedException();
     }
@@ -54,7 +54,7 @@ public sealed class PluginFunctionsManager : FunctionsManager
     }
 
     /// <inheritdoc />
-    public override VariantValue CallFunction(Function function, FunctionCallArguments callArguments)
+    public override VariantValue CallFunction(IFunction function, FunctionCallArguments callArguments)
     {
         throw ThrowNotImplementedException();
     }

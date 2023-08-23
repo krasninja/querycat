@@ -25,6 +25,11 @@ public interface IFunction
     DataType ReturnType { get; }
 
     /// <summary>
+    /// Optional type of object return type.
+    /// </summary>
+    public string ReturnObjectName { get; }
+
+    /// <summary>
     /// Is aggregate function or standard function.
     /// </summary>
     bool IsAggregate { get; }
