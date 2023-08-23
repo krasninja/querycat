@@ -4,7 +4,6 @@ using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Functions;
 using QueryCat.Backend.Storage;
 using QueryCat.Backend.Types;
-using QueryCat.Backend.Utils;
 
 namespace QueryCat.IntegrationTests.Plugins;
 

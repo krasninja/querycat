@@ -6,7 +6,6 @@ using QueryCat.Backend.Ast.Nodes.Update;
 using QueryCat.Backend.Commands.Select;
 using QueryCat.Backend.Commands.Select.Visitors;
 using QueryCat.Backend.Execution;
-using QueryCat.Backend.Relational;
 
 namespace QueryCat.Backend.Commands.Update;
 

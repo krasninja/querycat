@@ -16,7 +16,6 @@ using PluginsManager = QueryCat.Plugins.Sdk.PluginsManager;
 using QueryCat.Backend;
 using QueryCat.Backend.Abstractions.Functions;
 using QueryCat.Backend.Abstractions.Plugins;
-using QueryCat.Backend.Functions;
 using QueryCat.Plugins.Sdk;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 

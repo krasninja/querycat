@@ -1,7 +1,6 @@
 using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Types;
-using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Storage;
 

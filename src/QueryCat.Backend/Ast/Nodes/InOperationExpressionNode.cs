@@ -1,5 +1,3 @@
-using QueryCat.Backend.Ast.Nodes.Select;
-
 namespace QueryCat.Backend.Ast.Nodes;
 
 /// <summary>

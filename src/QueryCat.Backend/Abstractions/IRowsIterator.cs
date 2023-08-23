@@ -1,5 +1,3 @@
-using QueryCat.Backend.Utils;
-
 namespace QueryCat.Backend.Abstractions;
 
 /// <summary>

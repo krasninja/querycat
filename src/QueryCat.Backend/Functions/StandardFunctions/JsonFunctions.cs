@@ -5,7 +5,6 @@ using System.Text.Json.Nodes;
 using Json.Path;
 using QueryCat.Backend.Abstractions.Functions;
 using QueryCat.Backend.Types;
-using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Functions.StandardFunctions;
 

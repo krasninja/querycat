@@ -3,7 +3,6 @@ using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Functions;
-using QueryCat.Backend.Relational;
 using QueryCat.Backend.Types;
 
 namespace QueryCat.Backend.Commands.Select.Visitors;

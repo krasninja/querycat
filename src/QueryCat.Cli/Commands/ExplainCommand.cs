@@ -1,7 +1,6 @@
 using System.CommandLine;
 using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Types;
-using QueryCat.Backend.Utils;
 using QueryCat.Cli.Commands.Options;
 
 namespace QueryCat.Cli.Commands;

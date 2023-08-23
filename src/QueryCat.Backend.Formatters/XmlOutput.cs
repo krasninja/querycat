@@ -1,6 +1,5 @@
 using System.Xml;
 using Microsoft.Extensions.Logging;
-using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Storage;
 using QueryCat.Backend.Types;
 

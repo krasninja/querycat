@@ -4,7 +4,6 @@ using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Commands.Select.Iterators;
 using QueryCat.Backend.Execution;
-using QueryCat.Backend.Relational;
 
 namespace QueryCat.Backend.Commands.Select;
 

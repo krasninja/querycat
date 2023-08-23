@@ -1,7 +1,6 @@
 using System.Runtime.CompilerServices;
 using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Types;
-using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Storage;
 
