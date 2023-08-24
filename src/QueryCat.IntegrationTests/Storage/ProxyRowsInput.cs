@@ -1,6 +1,6 @@
-using QueryCat.Backend.Abstractions;
-using QueryCat.Backend.Storage;
-using QueryCat.Backend.Types;
+using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Utils;
 
 namespace QueryCat.IntegrationTests.Storage;
@@ -8,7 +8,7 @@ namespace QueryCat.IntegrationTests.Storage;
 public class ProxyRowsInput : IRowsInput, IRowsIteratorParent
 {
     private IRowsInput _rowsInput;
-    private QueryContext _queryContext = new EmptyQueryContext();
+    private QueryContext _queryContext = NullQueryContext.Instance;
 
     /// <inheritdoc />
     public Column[] Columns => _rowsInput.Columns;

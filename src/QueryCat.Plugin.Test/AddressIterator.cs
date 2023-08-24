@@ -1,7 +1,8 @@
 using Bogus;
-using QueryCat.Backend.Abstractions;
-using QueryCat.Backend.Functions;
-using QueryCat.Backend.Types;
+using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Functions;
+using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Plugin.Test;
 

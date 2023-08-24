@@ -1,5 +1,5 @@
+using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Formatters;
-using QueryCat.Backend.Types;
 
 namespace QueryCat.Cli.Commands.Options;
 

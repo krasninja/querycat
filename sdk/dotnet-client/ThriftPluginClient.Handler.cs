@@ -4,12 +4,12 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using QueryCat.Backend;
-using QueryCat.Backend.Abstractions;
-using QueryCat.Backend.Abstractions.Functions;
+using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Functions;
 using QueryCat.Plugins.Sdk;
 using Column = QueryCat.Plugins.Sdk.Column;
-using DataType = QueryCat.Backend.Types.DataType;
+using DataType = QueryCat.Backend.Core.Types.DataType;
 using KeyColumn = QueryCat.Plugins.Sdk.KeyColumn;
 
 namespace QueryCat.Plugins.Client;
@@ -58,7 +58,7 @@ public partial class ThriftPluginClient
                 else if (result.AsObject is IRowsInput rowsInput)
                 {
                     rowsInput.QueryContext = new PluginQueryContext(
-                        new QueryContextQueryInfo(new List<Backend.Abstractions.Column>()),
+                        new QueryContextQueryInfo(new List<Backend.Core.Data.Column>()),
                         _thriftPluginClient._executionThread.ConfigStorage);
                     var index =_thriftPluginClient._objectsStorage.Add(rowsInput);
                     _thriftPluginClient._logger.LogDebug("Added new object '{Object}' with handle {Handle}.",
@@ -140,7 +140,7 @@ public partial class ThriftPluginClient
                 if (context_query_info == null)
                 {
                     rowsInput.QueryContext = new PluginQueryContext(
-                        new QueryContextQueryInfo(Array.Empty<Backend.Abstractions.Column>()),
+                        new QueryContextQueryInfo(Array.Empty<Backend.Core.Data.Column>()),
                         _thriftPluginClient._executionThread.ConfigStorage
                     );
                 }
@@ -148,7 +148,7 @@ public partial class ThriftPluginClient
                 {
                     rowsInput.QueryContext = new PluginQueryContext(
                         new QueryContextQueryInfo(
-                            new List<Backend.Abstractions.Column>(),
+                            new List<Backend.Core.Data.Column>(),
                             context_query_info.Limit),
                         _thriftPluginClient._executionThread.ConfigStorage
                     );
@@ -247,7 +247,7 @@ public partial class ThriftPluginClient
                 && rowsInput is IRowsInputKeys rowsInputKeys)
             {
                 rowsInputKeys.SetKeyColumnValue(column_name, SdkConvert.Convert(value),
-                    Enum.Parse<QueryCat.Backend.Types.VariantValue.Operation>(operation));
+                    Enum.Parse<Backend.Core.Types.VariantValue.Operation>(operation));
             }
             return Task.CompletedTask;
         }

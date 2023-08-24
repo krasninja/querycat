@@ -3,12 +3,12 @@ using Cake.Core;
 using Cake.Core.Diagnostics;
 using Cake.Frosting;
 using Microsoft.Extensions.Logging;
-using QueryCat.Backend;
-using QueryCat.Backend.Abstractions;
-using QueryCat.Backend.Abstractions.Functions;
+using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Functions;
+using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.ThriftPlugins;
-using QueryCat.Backend.Types;
 
 namespace QueryCat.Build.Tasks;
 

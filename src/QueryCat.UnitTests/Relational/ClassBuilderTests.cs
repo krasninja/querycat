@@ -1,6 +1,7 @@
 using Xunit;
+using QueryCat.Backend.Core.Fetch;
+using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Storage;
-using QueryCat.Backend.Types;
 
 namespace QueryCat.UnitTests.Relational;
 

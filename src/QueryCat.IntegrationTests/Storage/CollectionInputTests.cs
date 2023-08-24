@@ -1,10 +1,10 @@
 using Xunit;
-using QueryCat.Backend.Abstractions.Plugins;
 using QueryCat.Backend.Commands.Update;
+using QueryCat.Backend.Core.Plugins;
+using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Storage;
-using QueryCat.Backend.Types;
 
 namespace QueryCat.IntegrationTests.Storage;
 

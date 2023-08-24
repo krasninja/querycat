@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using QueryCat.Backend.Abstractions;
+using QueryCat.Backend.Core.Data;
 using QueryCat.Plugins.Sdk;
 
 namespace QueryCat.Plugins.Client;

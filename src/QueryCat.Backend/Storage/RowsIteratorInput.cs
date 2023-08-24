@@ -1,5 +1,6 @@
-using QueryCat.Backend.Abstractions;
-using QueryCat.Backend.Types;
+using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Storage;
@@ -11,7 +12,7 @@ public sealed class RowsIteratorInput : IRowsInput, IRowsIteratorParent
 {
     private readonly IRowsIterator _rowsIterator;
     private readonly string _id;
-    private QueryContext _queryContext = new EmptyQueryContext();
+    private QueryContext _queryContext = NullQueryContext.Instance;
 
     /// <inheritdoc />
     public Column[] Columns { get; }

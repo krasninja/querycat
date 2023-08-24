@@ -1,5 +1,5 @@
-using QueryCat.Backend.Abstractions;
-using QueryCat.Backend.Abstractions.Functions;
+using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Functions;
 
 namespace QueryCat.Backend.Ast;
 

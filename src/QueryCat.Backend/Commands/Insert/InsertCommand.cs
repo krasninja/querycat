@@ -1,8 +1,9 @@
-using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Insert;
 using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Commands.Select;
+using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Relational.Iterators;
 

@@ -1,9 +1,10 @@
 using System.Xml;
 using System.Xml.XPath;
-using QueryCat.Backend.Abstractions;
+using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Relational;
-using QueryCat.Backend.Storage;
-using QueryCat.Backend.Types;
 using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Formatters;
@@ -36,7 +37,7 @@ internal sealed class XmlInput : IRowsInput, IDisposable
     public string[] UniqueKey => _uniqueKey;
 
     /// <inheritdoc />
-    public QueryContext QueryContext { get; set; } = new EmptyQueryContext();
+    public QueryContext QueryContext { get; set; } = NullQueryContext.Instance;
 
     public XmlInput(StreamReader streamReader, string? xpath = null, params string[] uniqueKeys)
     {

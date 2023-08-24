@@ -13,48 +13,48 @@ public static class SdkConvert
     /// </summary>
     private static readonly DateTime UnixEpoch = new(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
-    public static VariantValue Convert(QueryCat.Backend.Types.VariantValue value)
+    public static VariantValue Convert(Backend.Core.Types.VariantValue value)
     {
         var type = value.GetInternalType();
         return type switch
         {
-            Backend.Types.DataType.Void => new VariantValue
+            Backend.Core.Types.DataType.Void => new VariantValue
             {
                 IsNull = true,
             },
-            Backend.Types.DataType.Null => new VariantValue
+            Backend.Core.Types.DataType.Null => new VariantValue
             {
                 IsNull = true,
             },
-            Backend.Types.DataType.Integer => new VariantValue
+            Backend.Core.Types.DataType.Integer => new VariantValue
             {
                 Integer = value.AsIntegerUnsafe,
             },
-            Backend.Types.DataType.String => new VariantValue
+            Backend.Core.Types.DataType.String => new VariantValue
             {
                 String = value.AsStringUnsafe,
             },
-            Backend.Types.DataType.Float => new VariantValue
+            Backend.Core.Types.DataType.Float => new VariantValue
             {
                 Float = value.AsFloatUnsafe,
             },
-            Backend.Types.DataType.Timestamp => new VariantValue
+            Backend.Core.Types.DataType.Timestamp => new VariantValue
             {
                 Timestamp = (long)(value.AsTimestampUnsafe - UnixEpoch).TotalSeconds,
             },
-            Backend.Types.DataType.Boolean => new VariantValue
+            Backend.Core.Types.DataType.Boolean => new VariantValue
             {
                 Boolean = value.AsBooleanUnsafe,
             },
-            Backend.Types.DataType.Numeric => new VariantValue
+            Backend.Core.Types.DataType.Numeric => new VariantValue
             {
                 Decimal = Convert(value.AsNumericUnsafe),
             },
-            Backend.Types.DataType.Interval => new VariantValue
+            Backend.Core.Types.DataType.Interval => new VariantValue
             {
                 Interval = (long)value.AsIntervalUnsafe.TotalMilliseconds,
             },
-            Backend.Types.DataType.Object => new VariantValue
+            Backend.Core.Types.DataType.Object => new VariantValue
             {
                 Object = new ObjectValue
                 {
@@ -66,79 +66,79 @@ public static class SdkConvert
         };
     }
 
-    public static Backend.Types.VariantValue Convert(VariantValue value)
+    public static Backend.Core.Types.VariantValue Convert(VariantValue value)
     {
         if (value.__isset.isNull)
         {
-            return Backend.Types.VariantValue.Null;
+            return Backend.Core.Types.VariantValue.Null;
         }
         if (value.__isset.integer)
         {
-            return new Backend.Types.VariantValue(value.Integer);
+            return new Backend.Core.Types.VariantValue(value.Integer);
         }
         if (value.__isset.@string)
         {
-            return new Backend.Types.VariantValue(value.String);
+            return new Backend.Core.Types.VariantValue(value.String);
         }
         if (value.__isset.@float)
         {
-            return new Backend.Types.VariantValue(value.Float);
+            return new Backend.Core.Types.VariantValue(value.Float);
         }
         if (value.__isset.timestamp)
         {
-            return new Backend.Types.VariantValue(UnixEpoch.AddSeconds(value.Timestamp));
+            return new Backend.Core.Types.VariantValue(UnixEpoch.AddSeconds(value.Timestamp));
         }
         if (value.__isset.boolean)
         {
-            return new Backend.Types.VariantValue(value.Boolean);
+            return new Backend.Core.Types.VariantValue(value.Boolean);
         }
         if (value.__isset.@decimal)
         {
-            return new Backend.Types.VariantValue(Convert(value.Decimal!));
+            return new Backend.Core.Types.VariantValue(Convert(value.Decimal!));
         }
         if (value.__isset.interval)
         {
-            return new Backend.Types.VariantValue(new TimeSpan(0, 0, 0, 0, (int)value.Interval));
+            return new Backend.Core.Types.VariantValue(new TimeSpan(0, 0, 0, 0, (int)value.Interval));
         }
         throw new ArgumentOutOfRangeException(nameof(value));
     }
 
-    public static Backend.Types.DataType Convert(DataType type)
+    public static Backend.Core.Types.DataType Convert(DataType type)
     {
         return type switch
         {
-            DataType.NULL => Backend.Types.DataType.Null,
-            DataType.INTEGER => Backend.Types.DataType.Integer,
-            DataType.STRING => Backend.Types.DataType.String,
-            DataType.FLOAT => Backend.Types.DataType.Float,
-            DataType.TIMESTAMP => Backend.Types.DataType.Timestamp,
-            DataType.BOOLEAN => Backend.Types.DataType.Boolean,
-            DataType.NUMERIC => Backend.Types.DataType.Numeric,
-            DataType.INTERVAL => Backend.Types.DataType.Interval,
-            DataType.OBJECT => Backend.Types.DataType.Object,
+            DataType.NULL => Backend.Core.Types.DataType.Null,
+            DataType.INTEGER => Backend.Core.Types.DataType.Integer,
+            DataType.STRING => Backend.Core.Types.DataType.String,
+            DataType.FLOAT => Backend.Core.Types.DataType.Float,
+            DataType.TIMESTAMP => Backend.Core.Types.DataType.Timestamp,
+            DataType.BOOLEAN => Backend.Core.Types.DataType.Boolean,
+            DataType.NUMERIC => Backend.Core.Types.DataType.Numeric,
+            DataType.INTERVAL => Backend.Core.Types.DataType.Interval,
+            DataType.OBJECT => Backend.Core.Types.DataType.Object,
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
         };
     }
 
-    public static DataType Convert(Backend.Types.DataType type)
+    public static DataType Convert(Backend.Core.Types.DataType type)
     {
         return type switch
         {
-            Backend.Types.DataType.Null => DataType.NULL,
-            Backend.Types.DataType.Integer => DataType.INTEGER,
-            Backend.Types.DataType.String => DataType.STRING,
-            Backend.Types.DataType.Float => DataType.FLOAT,
-            Backend.Types.DataType.Timestamp => DataType.TIMESTAMP,
-            Backend.Types.DataType.Boolean => DataType.BOOLEAN,
-            Backend.Types.DataType.Numeric => DataType.NUMERIC,
-            Backend.Types.DataType.Interval => DataType.INTERVAL,
-            Backend.Types.DataType.Object => DataType.OBJECT,
-            Backend.Types.DataType.Void => DataType.NULL,
+            Backend.Core.Types.DataType.Null => DataType.NULL,
+            Backend.Core.Types.DataType.Integer => DataType.INTEGER,
+            Backend.Core.Types.DataType.String => DataType.STRING,
+            Backend.Core.Types.DataType.Float => DataType.FLOAT,
+            Backend.Core.Types.DataType.Timestamp => DataType.TIMESTAMP,
+            Backend.Core.Types.DataType.Boolean => DataType.BOOLEAN,
+            Backend.Core.Types.DataType.Numeric => DataType.NUMERIC,
+            Backend.Core.Types.DataType.Interval => DataType.INTERVAL,
+            Backend.Core.Types.DataType.Object => DataType.OBJECT,
+            Backend.Core.Types.DataType.Void => DataType.NULL,
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
         };
     }
 
-    public static Column Convert(Backend.Abstractions.Column column)
+    public static Column Convert(Backend.Core.Data.Column column)
     {
         return new Column(column.Name, Convert(column.DataType))
         {
@@ -146,9 +146,9 @@ public static class SdkConvert
         };
     }
 
-    public static Backend.Abstractions.Column Convert(Column column)
+    public static Backend.Core.Data.Column Convert(Column column)
     {
-        return new Backend.Abstractions.Column(column.Name, Convert(column.Type))
+        return new Backend.Core.Data.Column(column.Name, Convert(column.Type))
         {
             Description = column.Description ?? string.Empty,
         };

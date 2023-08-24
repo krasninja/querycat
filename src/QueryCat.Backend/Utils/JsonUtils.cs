@@ -1,5 +1,5 @@
 using System.Text.Json.Nodes;
-using QueryCat.Backend.Types;
+using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Utils;
 

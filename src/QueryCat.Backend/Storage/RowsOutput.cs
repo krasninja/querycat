@@ -1,5 +1,5 @@
-using QueryCat.Backend.Abstractions;
-using QueryCat.Backend.Types;
+using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Storage;
 
@@ -13,7 +13,7 @@ public abstract class RowsOutput : IRowsOutput
     /// <summary>
     /// Query context.
     /// </summary>
-    public QueryContext QueryContext { get; set; } = new EmptyQueryContext();
+    public QueryContext QueryContext { get; set; } = NullQueryContext.Instance;
 
     /// <inheritdoc />
     public abstract void Open();

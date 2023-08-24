@@ -1,6 +1,6 @@
 using System.CommandLine;
 using Microsoft.Extensions.Logging;
-using QueryCat.Backend;
+using QueryCat.Backend.Core;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Providers;
 using QueryCat.Cli.Commands.Options;

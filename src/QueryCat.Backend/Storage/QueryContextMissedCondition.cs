@@ -1,4 +1,5 @@
-using QueryCat.Backend.Types;
+using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Storage;
 

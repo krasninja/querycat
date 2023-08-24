@@ -1,6 +1,9 @@
 using System.Reflection;
-using QueryCat.Backend.Abstractions;
-using QueryCat.Backend.Types;
+using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Fetch;
+using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Storage;
@@ -26,7 +29,7 @@ public class CollectionInput<TClass> : IRowsOutput, IRowsInputUpdate where TClas
     public string[] UniqueKey { get; } = Array.Empty<string>();
 
     /// <inheritdoc />
-    public QueryContext QueryContext { get; set; } = new EmptyQueryContext();
+    public QueryContext QueryContext { get; set; } = NullQueryContext.Instance;
 
     /// <inheritdoc />
     public RowsOutputOptions Options { get; } = new();

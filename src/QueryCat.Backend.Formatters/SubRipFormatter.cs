@@ -1,8 +1,8 @@
 using System.ComponentModel;
-using QueryCat.Backend.Abstractions;
-using QueryCat.Backend.Abstractions.Functions;
-using QueryCat.Backend.Functions;
-using QueryCat.Backend.Types;
+using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Functions;
+using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Formatters;
 

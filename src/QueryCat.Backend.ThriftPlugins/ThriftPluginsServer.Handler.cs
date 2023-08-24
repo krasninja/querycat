@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
-using QueryCat.Backend.Abstractions.Functions;
+using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Functions;
 using Thrift;
 using Thrift.Protocol;
 using Thrift.Transport;
@@ -123,7 +124,7 @@ public partial class ThriftPluginsServer
         /// <inheritdoc />
         public Task SetConfigValueAsync(string key, VariantValue? value, CancellationToken cancellationToken = default)
         {
-            var internalValue = value != null ? SdkConvert.Convert(value) : Types.VariantValue.Null;
+            var internalValue = value != null ? SdkConvert.Convert(value) : Core.Types.VariantValue.Null;
             _thriftPluginsServer._inputConfigStorage.Set(key, internalValue);
             return Task.CompletedTask;
         }

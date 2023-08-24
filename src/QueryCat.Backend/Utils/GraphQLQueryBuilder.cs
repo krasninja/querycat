@@ -1,5 +1,5 @@
 using System.Globalization;
-using QueryCat.Backend.Abstractions;
+using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend.Utils;
 

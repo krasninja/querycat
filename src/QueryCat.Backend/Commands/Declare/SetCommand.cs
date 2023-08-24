@@ -1,7 +1,7 @@
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Declare;
+using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Execution;
-using QueryCat.Backend.Types;
 
 namespace QueryCat.Backend.Commands.Declare;
 

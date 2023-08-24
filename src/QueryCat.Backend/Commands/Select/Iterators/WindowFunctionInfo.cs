@@ -1,4 +1,4 @@
-using QueryCat.Backend.Abstractions.Functions;
+using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Indexes;
 
 namespace QueryCat.Backend.Commands.Select.Iterators;

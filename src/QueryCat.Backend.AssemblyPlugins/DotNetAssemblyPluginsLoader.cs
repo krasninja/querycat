@@ -1,9 +1,9 @@
 using System.IO.Compression;
 using System.Reflection;
 using Microsoft.Extensions.Logging;
-using QueryCat.Backend.Abstractions.Functions;
-using QueryCat.Backend.Functions;
-using QueryCat.Backend.Abstractions.Plugins;
+using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Functions;
+using QueryCat.Backend.Core.Plugins;
 
 namespace QueryCat.Backend.AssemblyPlugins;
 

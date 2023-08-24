@@ -1,10 +1,11 @@
 using System.Threading;
-using QueryCat.Backend.Abstractions;
-using QueryCat.Backend.Abstractions.Functions;
-using QueryCat.Backend.Abstractions.Plugins;
+using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Functions;
+using QueryCat.Backend.Core.Plugins;
 using QueryCat.Plugins.Sdk;
 using PluginsManager = QueryCat.Plugins.Sdk.PluginsManager;
-using VariantValue = QueryCat.Backend.Types.VariantValue;
+using VariantValue = QueryCat.Backend.Core.Types.VariantValue;
 
 namespace QueryCat.Plugins.Client;
 
@@ -20,7 +21,7 @@ public sealed class PluginExecutionThread : IExecutionThread
     public FunctionsManager FunctionsManager { get; }
 
     /// <inheritdoc />
-    public Backend.Abstractions.Plugins.PluginsManager PluginsManager { get; }
+    public Backend.Core.Plugins.PluginsManager PluginsManager { get; }
 
     /// <inheritdoc />
     public IInputConfigStorage ConfigStorage { get; }

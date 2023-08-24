@@ -1,5 +1,5 @@
-﻿using QueryCat.Plugins.Client;
-using QueryCat.Backend.Functions;
+﻿using QueryCat.Backend.Core.Functions;
+using QueryCat.Plugins.Client;
 
 namespace QueryCat.Plugin.Test;
 

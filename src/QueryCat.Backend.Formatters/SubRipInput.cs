@@ -1,9 +1,8 @@
 using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
-using QueryCat.Backend.Abstractions;
-using QueryCat.Backend.Storage;
-using QueryCat.Backend.Types;
+using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Formatters;
 

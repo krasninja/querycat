@@ -1,16 +1,17 @@
 using System.Collections.Concurrent;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Plugins;
+using QueryCat.Backend.Core.Utils;
 using Thrift;
 using Thrift.Processor;
 using Thrift.Protocol;
 using Thrift.Server;
 using Thrift.Transport;
 using Thrift.Transport.Server;
-using QueryCat.Backend.Abstractions;
-using QueryCat.Backend.Abstractions.Plugins;
 using QueryCat.Backend.Execution;
-using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.ThriftPlugins;
 

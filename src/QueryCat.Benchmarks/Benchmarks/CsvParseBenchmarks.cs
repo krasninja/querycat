@@ -2,13 +2,13 @@ using System.Globalization;
 using BenchmarkDotNet.Attributes;
 using CsvHelper;
 using CsvHelper.Configuration;
-using QueryCat.Backend.Abstractions;
+using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Formatters;
 using Sylvan.Data.Csv;
 using CsvDataReader = Sylvan.Data.Csv.CsvDataReader;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Storage;
-using QueryCat.Backend.Types;
 using QueryCat.Backend.Utils;
 
 namespace QueryCat.Benchmarks.Benchmarks;

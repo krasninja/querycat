@@ -1,10 +1,11 @@
 using System.Diagnostics;
 using Microsoft.Extensions.Logging;
-using QueryCat.Backend.Abstractions.Functions;
-using QueryCat.Backend.Abstractions.Plugins;
+using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Functions;
+using QueryCat.Backend.Core.Plugins;
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Functions.AggregateFunctions;
 using QueryCat.Backend.Functions.StandardFunctions;
-using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Execution;
 

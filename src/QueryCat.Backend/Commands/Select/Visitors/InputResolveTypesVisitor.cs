@@ -1,6 +1,6 @@
-using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
+using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Execution;
 
 namespace QueryCat.Backend.Commands.Select.Visitors;

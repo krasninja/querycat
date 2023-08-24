@@ -4,7 +4,8 @@ using System.Text;
 using Cake.Core;
 using Cake.Core.Diagnostics;
 using Cake.Frosting;
-using QueryCat.Backend.Functions;
+using QueryCat.Backend.Core.Functions;
+using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Build.Tasks;
 
@@ -15,7 +16,7 @@ public class GetFunctionsInMarkdownTask : AsyncFrostingTask<BuildContext>
     public override Task RunAsync(BuildContext context)
     {
         var typeName = context.Arguments.GetArgument("Type");
-        var type = typeof(Backend.Types.VariantValue).Assembly
+        var type = typeof(VariantValue).Assembly
             .GetTypes().FirstOrDefault(t => t.Name.Equals(typeName, StringComparison.OrdinalIgnoreCase));
         if (type == null)
         {

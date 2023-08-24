@@ -1,10 +1,11 @@
-using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Ast.Nodes.Update;
 using QueryCat.Backend.Commands.Select;
 using QueryCat.Backend.Commands.Select.Visitors;
+using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Execution;
 
 namespace QueryCat.Backend.Commands.Update;

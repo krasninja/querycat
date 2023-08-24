@@ -1,5 +1,6 @@
 using Antlr4.Runtime.Tree;
 using Microsoft.Extensions.Logging;
+using QueryCat.Backend.Core;
 
 namespace QueryCat.Backend.Parser;
 

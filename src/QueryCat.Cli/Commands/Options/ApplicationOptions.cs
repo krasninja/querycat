@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Logging;
-using QueryCat.Backend;
-using QueryCat.Backend.Abstractions.Plugins;
+using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Plugins;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Providers;
 using QueryCat.Cli.Infrastructure;

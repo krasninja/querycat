@@ -1,9 +1,8 @@
-using QueryCat.Backend.Abstractions.Functions;
 using Xunit;
-using QueryCat.Backend.Abstractions.Plugins;
+using QueryCat.Backend.Core.Functions;
+using QueryCat.Backend.Core.Plugins;
+using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Execution;
-using QueryCat.Backend.Functions;
-using QueryCat.Backend.Types;
 using QueryCat.Tests.QueryRunner;
 
 namespace QueryCat.IntegrationTests;

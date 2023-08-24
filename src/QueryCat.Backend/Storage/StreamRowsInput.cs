@@ -1,8 +1,10 @@
 using System.Buffers;
 using Microsoft.Extensions.Logging;
-using QueryCat.Backend.Abstractions;
+using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Relational.Iterators;
-using QueryCat.Backend.Types;
 using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Storage;
@@ -49,7 +51,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     private bool _isClosed;
 
     /// <inheritdoc />
-    public QueryContext QueryContext { get; set; } = new EmptyQueryContext();
+    public QueryContext QueryContext { get; set; } = NullQueryContext.Instance;
 
     // Current position in a reading row. We need it in a case if read current row and need to
     // fetch new data to finish. The current position will contain the start index.

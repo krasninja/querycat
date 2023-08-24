@@ -1,8 +1,8 @@
 using Xunit;
-using QueryCat.Backend.Abstractions.Functions;
+using QueryCat.Backend.Core.Functions;
+using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Functions;
-using QueryCat.Backend.Types;
 
 namespace QueryCat.UnitTests.Functions;
 

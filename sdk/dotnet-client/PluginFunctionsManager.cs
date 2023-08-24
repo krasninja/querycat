@@ -1,9 +1,8 @@
 using System;
 using System.Collections.Generic;
-using QueryCat.Backend.Abstractions.Functions;
-using QueryCat.Backend.Functions;
+using QueryCat.Backend.Core.Functions;
 using QueryCat.Plugins.Sdk;
-using VariantValue = QueryCat.Backend.Types.VariantValue;
+using VariantValue = QueryCat.Backend.Core.Types.VariantValue;
 
 namespace QueryCat.Plugins.Client;
 
@@ -42,13 +41,13 @@ public sealed class PluginFunctionsManager : FunctionsManager
     }
 
     /// <inheritdoc />
-    public override bool TryFindAggregateByName(string name, out IAggregateFunction aggregateFunction)
+    public override bool TryFindAggregateByName(string name, out IAggregateFunction? aggregateFunction)
     {
         throw ThrowNotImplementedException();
     }
 
     /// <inheritdoc />
-    public override IEnumerable<Function> GetFunctions()
+    public override IEnumerable<IFunction> GetFunctions()
     {
         throw ThrowNotImplementedException();
     }

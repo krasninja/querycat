@@ -1,10 +1,11 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Microsoft.Extensions.Logging;
-using QueryCat.Backend.Abstractions.Functions;
-using QueryCat.Backend.Abstractions.Plugins;
+using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Functions;
+using QueryCat.Backend.Core.Plugins;
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Execution;
-using QueryCat.Backend.Utils;
 using QueryCat.Plugins.Client;
 using QueryCat.Plugins.Sdk;
 
@@ -171,24 +172,24 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
                 functionsManager.RegisterFunction(functionSignature, FunctionDelegate);
             }
 
-            Types.VariantValue FunctionDelegate(FunctionCallInfo args)
+            Core.Types.VariantValue FunctionDelegate(FunctionCallInfo args)
             {
                 if (plugin.Client == null)
                 {
-                    return Types.VariantValue.Null;
+                    return Core.Types.VariantValue.Null;
                 }
 
                 var arguments = args.Select(SdkConvert.Convert).ToList();
                 var result = AsyncUtils.RunSync(() => plugin.Client.CallFunctionAsync(args.FunctionName, arguments, 0));
                 if (result == null)
                 {
-                    return Types.VariantValue.Null;
+                    return Core.Types.VariantValue.Null;
                 }
                 if (result.__isset.@object && result.Object != null)
                 {
                     var obj = CreateObjectFromResult(result, plugin);
                     plugin.ObjectsStorage.Add(obj);
-                    return Types.VariantValue.CreateFromObject(obj);
+                    return Core.Types.VariantValue.CreateFromObject(obj);
                 }
                 return SdkConvert.Convert(result);
             }

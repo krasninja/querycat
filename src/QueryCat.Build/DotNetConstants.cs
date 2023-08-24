@@ -1,6 +1,6 @@
 // ReSharper disable InconsistentNaming
 
-using QueryCat.Backend;
+using QueryCat.Backend.Core;
 
 namespace QueryCat.Build;
 

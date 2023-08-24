@@ -1,10 +1,10 @@
 using System.ComponentModel;
 using System.Reflection;
 using Microsoft.Extensions.Logging;
-using QueryCat.Backend.Abstractions;
-using QueryCat.Backend.Abstractions.Functions;
+using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Functions;
+using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Parser;
-using QueryCat.Backend.Types;
 using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Functions;
