@@ -4,7 +4,6 @@ using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Abstractions.Functions;
 using QueryCat.Backend.Abstractions.Plugins;
 using QueryCat.Backend.Execution;
-using QueryCat.Backend.Functions;
 using QueryCat.Backend.Utils;
 using QueryCat.Plugins.Client;
 using QueryCat.Plugins.Sdk;

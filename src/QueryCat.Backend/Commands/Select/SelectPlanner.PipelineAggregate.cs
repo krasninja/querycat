@@ -1,9 +1,9 @@
+using QueryCat.Backend.Abstractions.Functions;
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes.Function;
 using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Commands.Select.Iterators;
 using QueryCat.Backend.Commands.Select.Visitors;
-using QueryCat.Backend.Functions;
 
 namespace QueryCat.Backend.Commands.Select;
 

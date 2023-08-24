@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Diagnostics;
+using QueryCat.Backend.Abstractions.Functions;
 using QueryCat.Backend.Functions;
 using QueryCat.Backend.Storage;
 using QueryCat.Backend.Types;

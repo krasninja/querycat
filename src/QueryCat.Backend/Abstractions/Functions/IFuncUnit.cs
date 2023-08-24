@@ -1,6 +1,6 @@
 using QueryCat.Backend.Types;
 
-namespace QueryCat.Backend.Functions;
+namespace QueryCat.Backend.Abstractions.Functions;
 
 /// <summary>
 /// The class is the delegate implementation for QueryCat project. It contains all the data

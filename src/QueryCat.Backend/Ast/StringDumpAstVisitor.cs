@@ -1,8 +1,8 @@
 using System.Text;
+using QueryCat.Backend.Abstractions.Functions;
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Function;
 using QueryCat.Backend.Ast.Nodes.Select;
-using QueryCat.Backend.Functions;
 using QueryCat.Backend.Types;
 
 namespace QueryCat.Backend.Ast;

@@ -1,4 +1,4 @@
-using QueryCat.Backend.Functions;
+using QueryCat.Backend.Abstractions.Functions;
 
 namespace QueryCat.Backend.Commands.Update;
 

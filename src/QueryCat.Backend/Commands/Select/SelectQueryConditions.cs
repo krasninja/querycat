@@ -1,6 +1,6 @@
 using System.Collections;
 using QueryCat.Backend.Abstractions;
-using QueryCat.Backend.Functions;
+using QueryCat.Backend.Abstractions.Functions;
 using QueryCat.Backend.Storage;
 using QueryCat.Backend.Types;
 

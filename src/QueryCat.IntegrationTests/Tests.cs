@@ -1,3 +1,4 @@
+using QueryCat.Backend.Abstractions.Functions;
 using Xunit;
 using QueryCat.Backend.Abstractions.Plugins;
 using QueryCat.Backend.Execution;

@@ -5,8 +5,8 @@ using Cake.Frosting;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend;
 using QueryCat.Backend.Abstractions;
+using QueryCat.Backend.Abstractions.Functions;
 using QueryCat.Backend.Execution;
-using QueryCat.Backend.Functions;
 using QueryCat.Backend.ThriftPlugins;
 using QueryCat.Backend.Types;
 

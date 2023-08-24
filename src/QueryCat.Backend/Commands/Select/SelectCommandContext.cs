@@ -1,6 +1,6 @@
 using QueryCat.Backend.Abstractions;
+using QueryCat.Backend.Abstractions.Functions;
 using QueryCat.Backend.Ast.Nodes.Select;
-using QueryCat.Backend.Functions;
 using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Storage;
 using QueryCat.Backend.Utils;

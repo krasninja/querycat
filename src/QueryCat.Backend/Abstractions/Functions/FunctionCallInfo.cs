@@ -1,9 +1,8 @@
 using System.Collections;
-using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Types;
 
-namespace QueryCat.Backend.Functions;
+namespace QueryCat.Backend.Abstractions.Functions;
 
 /// <summary>
 /// Function call information: arguments values, execution scope.

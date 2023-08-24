@@ -1,4 +1,4 @@
-namespace QueryCat.Backend.Functions;
+namespace QueryCat.Backend.Abstractions.Functions;
 
 /// <summary>
 /// The interface describes window information if function is run within window clause.

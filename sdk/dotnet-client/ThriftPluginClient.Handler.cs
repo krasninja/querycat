@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend;
 using QueryCat.Backend.Abstractions;
-using QueryCat.Backend.Functions;
+using QueryCat.Backend.Abstractions.Functions;
 using QueryCat.Plugins.Sdk;
 using Column = QueryCat.Plugins.Sdk.Column;
 using DataType = QueryCat.Backend.Types.DataType;
