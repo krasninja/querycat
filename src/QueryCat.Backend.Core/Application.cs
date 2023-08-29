@@ -45,8 +45,7 @@ public static class Application
     /// Full product name with version.
     /// </summary>
     /// <returns></returns>
-    public static string GetProductFullName()
-        => $"{ProductName} {GetVersion()}";
+    public static string GetProductFullName() => $"{ProductName} {GetVersion()}";
 
     /// <summary>
     /// Get current platform identifier.

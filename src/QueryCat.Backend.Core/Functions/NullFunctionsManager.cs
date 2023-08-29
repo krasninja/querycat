@@ -2,6 +2,9 @@ using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Core.Functions;
 
+/// <summary>
+/// Functions manager with no implementation.
+/// </summary>
 public sealed class NullFunctionsManager : FunctionsManager
 {
     public static NullFunctionsManager Instance { get; } = new();

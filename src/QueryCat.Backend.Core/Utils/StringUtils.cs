@@ -346,7 +346,7 @@ internal static class StringUtils
     /// </summary>
     /// <param name="text">Text to unwrap.</param>
     /// <returns>Unwrapped text.</returns>
-    internal static string GetUnwrappedText(string text)
+    public static string GetUnwrappedText(string text)
     {
         if (text.StartsWith("[", StringComparison.Ordinal) && text.EndsWith("]", StringComparison.Ordinal))
         {
@@ -368,7 +368,7 @@ internal static class StringUtils
     /// </summary>
     /// <param name="str">String pattern.</param>
     /// <returns>Converted string.</returns>
-    internal static string Unescape(string str)
+    public static string Unescape(string str)
     {
         if (str.IndexOf('\\') < 0)
         {

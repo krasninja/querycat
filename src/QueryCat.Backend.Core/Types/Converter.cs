@@ -2,6 +2,9 @@ using System.Globalization;
 
 namespace QueryCat.Backend.Core.Types;
 
+/// <summary>
+/// Convert to/from QueryCat types and .NET types.
+/// </summary>
 public static class Converter
 {
     /// <summary>
