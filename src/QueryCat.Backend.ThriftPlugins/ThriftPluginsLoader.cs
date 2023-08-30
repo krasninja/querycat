@@ -19,6 +19,7 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
     private readonly ExecutionThread _thread;
     private readonly ThriftPluginsServer _server;
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger<ThriftPluginsLoader>();
+    private readonly HashSet<string> _loadedPlugins = new();
 
     /// <summary>
     /// Skip actual plugins loading. For debug purposes.
@@ -55,7 +56,8 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         foreach (var pluginDirectory in PluginDirectories)
         {
             _logger.LogTrace("Search in '{Directory}'.", pluginDirectory);
-            if (IsCorrectPluginFile(pluginDirectory) && IsMatchPlatform(pluginDirectory))
+            if (IsCorrectPluginFile(pluginDirectory) && IsMatchPlatform(pluginDirectory)
+                && !_loadedPlugins.Contains(GetPluginName(pluginDirectory)))
             {
                 LoadPlugin(pluginDirectory, cancellationToken);
                 continue;
@@ -66,9 +68,10 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
                 continue;
             }
 
-            foreach (var pluginFile in Directory.EnumerateFiles(pluginDirectory))
+            foreach (var pluginFile in Directory.EnumerateFiles(pluginDirectory).ToList())
             {
-                if (IsCorrectPluginFile(pluginFile) && IsMatchPlatform(pluginFile))
+                if (IsCorrectPluginFile(pluginFile) && IsMatchPlatform(pluginFile)
+                    && !_loadedPlugins.Contains(GetPluginName(pluginFile)))
                 {
                     LoadPlugin(pluginFile, cancellationToken);
                 }
@@ -104,7 +107,7 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         return true;
     }
 
-    private bool IsMatchPlatform(string pluginFile)
+    private static bool IsMatchPlatform(string pluginFile)
     {
         var plugin = PluginInfo.CreateFromUniversalName(pluginFile);
         // If we cannot detect platform and arch - let skip the check.
@@ -115,6 +118,12 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         var currentPlatform = Application.GetPlatform();
         var currentArchitecture = Application.GetArchitecture();
         return currentPlatform == plugin.Platform && currentArchitecture == plugin.Architecture;
+    }
+
+    private static string GetPluginName(string pluginFile)
+    {
+        var plugin = PluginInfo.CreateFromUniversalName(pluginFile);
+        return plugin.Name;
     }
 
     private void LoadPlugin(string file, CancellationToken cancellationToken)
@@ -161,6 +170,8 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         }
 
         RegisterFunctions(_thread.FunctionsManager);
+
+        _loadedPlugins.Add(GetPluginName(file));
     }
 
     private void RegisterFunctions(FunctionsManager functionsManager)
