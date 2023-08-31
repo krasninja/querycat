@@ -2,9 +2,12 @@ using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Function;
 using QueryCat.Backend.Ast.Nodes.SpecialFunctions;
+using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Functions;
+using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Functions;
-using QueryCat.Backend.Types;
 
 namespace QueryCat.Backend.Commands;
 
@@ -173,7 +176,11 @@ internal class CreateDelegateVisitor : AstVisitor
     {
         ResolveTypesVisitor.Visit(node);
 
-        var actions = node.InExpressionValuesNodes.ValuesNodes.Select(v => NodeIdFuncMap[v.Id]).ToArray();
+        var actions = Array.Empty<IFuncUnit>();
+        if (node.InExpressionValuesNodes is InExpressionValuesNode inExpressionValuesNode)
+        {
+            actions = inExpressionValuesNode.ValuesNodes.Select(v => NodeIdFuncMap[v.Id]).ToArray();
+        }
         var valueAction = NodeIdFuncMap[node.ExpressionNode.Id];
         var equalDelegate = VariantValue.GetEqualsDelegate(node.ExpressionNode.GetDataType());
 
@@ -195,6 +202,7 @@ internal class CreateDelegateVisitor : AstVisitor
             }
             return new VariantValue(node.IsNot);
         }
+
         NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, node.GetDataType());
     }
 

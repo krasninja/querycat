@@ -1,15 +1,17 @@
 using System.Collections.Concurrent;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Plugins;
+using QueryCat.Backend.Core.Utils;
 using Thrift;
 using Thrift.Processor;
 using Thrift.Protocol;
 using Thrift.Server;
 using Thrift.Transport;
 using Thrift.Transport.Server;
-using QueryCat.Backend.Abstractions.Plugins;
 using QueryCat.Backend.Execution;
-using QueryCat.Backend.Storage;
-using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.ThriftPlugins;
 
@@ -32,8 +34,13 @@ public sealed partial class ThriftPluginsServer : IDisposable
 
     internal IReadOnlyCollection<PluginContext> Plugins => _plugins;
 
+    internal bool IgnoreThriftLogs { get; set; } = true;
+
     public ThriftPluginsServer(ExecutionThread executionThread, string? serverPipeName = null)
     {
+#if DEBUG
+        IgnoreThriftLogs = false;
+#endif
         _executionThread = executionThread;
         _inputConfigStorage = executionThread.ConfigStorage;
         if (!string.IsNullOrEmpty(serverPipeName))
@@ -42,11 +49,12 @@ public sealed partial class ThriftPluginsServer : IDisposable
         }
 
         var transport = new TNamedPipeServerTransport(ServerPipeName, new TConfiguration(),
-            NamedPipeServerFlags.OnlyLocalClients, 2);
+            NamedPipeServerFlags.OnlyLocalClients, 1);
         var transportFactory = new TFramedTransport.Factory();
         var binaryProtocolFactory = new TBinaryProtocol.Factory();
         var processor = new TMultiplexedProcessor();
-        var asyncProcessor = new Plugins.Sdk.PluginsManager.AsyncProcessor(new Handler(this));
+        var handler = new HandlerWithExceptionIntercept(new Handler(this));
+        var asyncProcessor = new Plugins.Sdk.PluginsManager.AsyncProcessor(handler);
         processor.RegisterProcessor(QueryCat.Plugins.Client.ThriftPluginClient.PluginsManagerServiceName, asyncProcessor);
         _server = new TThreadPoolAsyncServer(
             new TSingletonProcessorFactory(processor),
@@ -56,9 +64,14 @@ public sealed partial class ThriftPluginsServer : IDisposable
             binaryProtocolFactory,
             binaryProtocolFactory,
             default,
-            Application.LoggerFactory.CreateLogger<TSimpleAsyncServer>());
+            IgnoreThriftLogs
+                ? NullLoggerFactory.Instance.CreateLogger<TSimpleAsyncServer>()
+                : Application.LoggerFactory.CreateLogger<TSimpleAsyncServer>());
     }
 
+    /// <summary>
+    /// Start local host server.
+    /// </summary>
     public void Start()
     {
         if (_serverListenThread != null)

@@ -1,11 +1,12 @@
 using System.ComponentModel;
-using System.Reflection;
-using QueryCat.Backend.Abstractions;
-using QueryCat.Backend.Abstractions.Plugins;
-using QueryCat.Backend.Relational;
+using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Fetch;
+using QueryCat.Backend.Core.Functions;
+using QueryCat.Backend.Core.Plugins;
+using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Storage;
-using QueryCat.Backend.Types;
-using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Functions.StandardFunctions;
 
@@ -18,7 +19,7 @@ public static class InfoFunctions
     [FunctionSignature("_functions(): object<IRowsIterator>")]
     public static VariantValue Functions(FunctionCallInfo args)
     {
-        var builder = new ClassRowsFrameBuilder<Function>()
+        var builder = new ClassRowsFrameBuilder<IFunction>()
             .AddProperty("signature", f => f.ToString())
             .AddProperty("description", f => f.Description);
         var functions = args.ExecutionThread.FunctionsManager.GetFunctions().OrderBy(f => f.Name);
@@ -93,15 +94,11 @@ public static class InfoFunctions
         return new VariantValue(type.ToString());
     }
 
-    public static string GetVersion()
-        => typeof(VariantValue).Assembly
-            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? string.Empty;
-
     [Description("Application version.")]
     [FunctionSignature("_version(): string")]
     public static VariantValue Version(FunctionCallInfo args)
     {
-        return new VariantValue(GetVersion());
+        return new VariantValue(Application.GetVersion());
     }
 
     [Description("Provide a list of OS time zone names.")]

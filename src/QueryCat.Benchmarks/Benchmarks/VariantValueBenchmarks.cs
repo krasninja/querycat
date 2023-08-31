@@ -1,6 +1,6 @@
 using System.Runtime.CompilerServices;
 using BenchmarkDotNet.Attributes;
-using QueryCat.Backend.Types;
+using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Benchmarks.Benchmarks;
 

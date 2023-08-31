@@ -1,6 +1,7 @@
 using System.Collections;
-using QueryCat.Backend.Abstractions;
-using QueryCat.Backend.Types;
+using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Relational;
@@ -106,14 +107,21 @@ public class RowsFrame : IRowsSchema, IEnumerable<Row>
     /// </summary>
     /// <param name="row">Row to add.</param>
     /// <returns>Inserted row index.</returns>
-    public int AddRow(Row row)
+    public int AddRow(Row row) => AddRow(row.Values);
+
+    /// <summary>
+    /// Add values into rows frame.
+    /// </summary>
+    /// <param name="values">Values to add.</param>
+    /// <returns>Inserted row index.</returns>
+    public int AddRow(VariantValue[] values)
     {
-        if (row.Columns.Length != Columns.Length)
+        if (values.Length != Columns.Length)
         {
             throw new QueryCatException("Columns count must match.");
         }
         (int chunkIndex, int offset) = EnsureCapacityAndGetStartOffset(TotalRows);
-        Array.Copy(row.AsArray(), 0, _storage[chunkIndex], offset, _columns.Length);
+        Array.Copy(values, 0, _storage[chunkIndex], offset, _columns.Length);
         return TotalRows++;
     }
 

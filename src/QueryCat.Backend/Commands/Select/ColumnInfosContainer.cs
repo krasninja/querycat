@@ -1,5 +1,5 @@
 using QueryCat.Backend.Ast.Nodes.Select;
-using QueryCat.Backend.Relational;
+using QueryCat.Backend.Core.Data;
 
 namespace QueryCat.Backend.Commands.Select;
 

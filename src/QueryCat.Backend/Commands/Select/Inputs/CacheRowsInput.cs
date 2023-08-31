@@ -1,9 +1,10 @@
 using System.Diagnostics;
 using Microsoft.Extensions.Logging;
-using QueryCat.Backend.Abstractions;
-using QueryCat.Backend.Relational;
+using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Storage;
-using QueryCat.Backend.Types;
 using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Commands.Select.Inputs;

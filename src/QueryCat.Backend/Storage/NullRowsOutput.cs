@@ -1,5 +1,5 @@
-using QueryCat.Backend.Abstractions;
-using QueryCat.Backend.Relational;
+using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Storage;
 
@@ -11,7 +11,10 @@ public sealed class NullRowsOutput : IRowsOutput
     public static NullRowsOutput Instance { get; } = new();
 
     /// <inheritdoc />
-    public QueryContext QueryContext { get; set; } = EmptyQueryContext.Empty;
+    public QueryContext QueryContext { get; set; } = NullQueryContext.Instance;
+
+    /// <inheritdoc />
+    public RowsOutputOptions Options { get; } = new();
 
     private NullRowsOutput()
     {
@@ -33,7 +36,7 @@ public sealed class NullRowsOutput : IRowsOutput
     }
 
     /// <inheritdoc />
-    public void Write(Row row)
+    public void WriteValues(in VariantValue[] values)
     {
     }
 }

@@ -1,4 +1,4 @@
-using QueryCat.Backend.Abstractions;
+using QueryCat.Backend.Core.Data;
 
 namespace QueryCat.Backend.Indexes;
 

@@ -244,6 +244,10 @@ standardFunction
     | POSITION '(' substring=STRING_LITERAL IN string=simpleExpression ')' # standardFunctionPosition
     | EXTRACT '(' extractField=dateTimeField FROM source=simpleExpression ')' # standardFunctionExtract
     | COALESCE '(' expression (COMMA expression)* ')' # standardFunctionCoalesce
+    | OCCURRENCES_REGEX '(' pattern=STRING_LITERAL IN string=simpleExpression ')' # standardOccurrencesRegex
+    | SUBSTRING_REGEX '(' pattern=STRING_LITERAL IN string=simpleExpression ')' # standardSubstringRegex
+    | POSITION_REGEX '(' pattern=STRING_LITERAL IN string=simpleExpression ')' # standardPositionRegex
+    | TRANSLATE_REGEX '(' pattern=STRING_LITERAL IN string=simpleExpression WITH replacement=STRING_LITERAL ')' # standardTranslateRegex
     ;
 
 dateTimeField
@@ -293,7 +297,8 @@ expression
     | left=expression op=(EQUALS | NOT_EQUALS | GREATER | GREATER_OR_EQUALS | LESS | LESS_OR_EQUALS) right=expression # ExpressionBinary
     | left=expression NOT? op=LIKE right=expression # ExpressionBinary
     | left=expression NOT? op=SIMILAR TO right=expression # ExpressionBinary
-    | left=expression NOT? op=IN right=array # ExpressionBinaryIn
+    | left=expression NOT? op=IN right=array # ExpressionBinaryInArray
+    | left=expression NOT? op=IN right=selectQueryExpression # ExpressionBinaryInSubquery
     | expr=expression NOT? op=BETWEEN left=simpleExpression AND right=expression # ExpressionBetween
     | EXISTS '(' selectQueryExpression ')' # ExpressionExists
     | left=simpleExpression op=(EQUALS | NOT_EQUALS | GREATER | GREATER_OR_EQUALS | LESS | LESS_OR_EQUALS)

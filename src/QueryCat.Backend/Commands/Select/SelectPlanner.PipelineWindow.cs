@@ -1,7 +1,8 @@
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Commands.Select.Iterators;
-using QueryCat.Backend.Functions;
+using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Indexes;
 
 namespace QueryCat.Backend.Commands.Select;

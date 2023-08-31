@@ -1,7 +1,8 @@
 using Xunit;
+using QueryCat.Backend.Core.Functions;
+using QueryCat.Backend.Core.Plugins;
+using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Execution;
-using QueryCat.Backend.Functions;
-using QueryCat.Backend.Types;
 using QueryCat.Tests.QueryRunner;
 
 namespace QueryCat.IntegrationTests;
@@ -18,7 +19,8 @@ public sealed class Tests : IDisposable
     public void Select(string fileName)
     {
         // Arrange.
-        new ExecutionThreadBootstrapper().Bootstrap(_testThread, NullPluginsLoader.Instance);
+        new ExecutionThreadBootstrapper().Bootstrap(_testThread, NullPluginsLoader.Instance,
+            Backend.Formatters.AdditionalRegistration.Register);
         _testThread.FunctionsManager.RegisterFunction(SumIntegers);
         _testThread.FunctionsManager.RegisterFunction(FuncWithObject);
         _testThread.FunctionsManager.RegisterFunction(ReturnObjFunc);

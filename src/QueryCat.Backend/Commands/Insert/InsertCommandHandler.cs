@@ -1,7 +1,7 @@
-using QueryCat.Backend.Abstractions;
+using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Storage;
-using QueryCat.Backend.Types;
 
 namespace QueryCat.Backend.Commands.Insert;
 
@@ -28,7 +28,7 @@ internal sealed class InsertCommandHandler : CommandHandler
             _rowsOutput.QueryContext = new RowsOutputQueryContext(_rowsInput.Columns);
             while (_rowsInput.MoveNext())
             {
-                _rowsOutput.Write(_rowsInput.Current);
+                _rowsOutput.WriteValues(_rowsInput.Current.Values);
                 insertCount++;
             }
         }

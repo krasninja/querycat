@@ -20,11 +20,12 @@ Just imagine that everything in the world is a table, and you can process it usi
     - 5.6) [UPDATE](commands/update)
 - 6) Input
     - 6.1) [CSV](input/csv)
-    - 6.2) [JSON](input/json)
-    - 6.3) [STDIN](input/stdin)
-    - 6.4) [Text](input/text-line)
-    - 6.5) [TSV](input/tsv)
-    - 6.6) [XML](input/xml)
+    - 6.2) [IISW3C](input/iisw3c)
+    - 6.3) [JSON](input/json)
+    - 6.4) [STDIN](input/stdin)
+    - 6.5) [Text](input/text-line)
+    - 6.6) [TSV](input/tsv)
+    - 6.7) [XML](input/xml)
 - 7) Output
     - 7.1) [CSV](output/csv)
     - 7.2) [JSON](output/json)

@@ -1,8 +1,7 @@
 using Microsoft.Extensions.Logging;
-using QueryCat.Backend;
-using QueryCat.Backend.Abstractions.Plugins;
+using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Plugins;
 using QueryCat.Backend.Execution;
-using QueryCat.Backend.Formatters;
 using QueryCat.Backend.Providers;
 using QueryCat.Cli.Infrastructure;
 
@@ -53,7 +52,8 @@ internal class ApplicationOptions
         executionThread.PluginsManager = pluginsManager;
 #endif
         executionThread.Statistic.CountErrorRows = executionThread.Options.ShowDetailedStatistic;
-        new ExecutionThreadBootstrapper().Bootstrap(executionThread, pluginsLoader);
+        new ExecutionThreadBootstrapper().Bootstrap(executionThread, pluginsLoader,
+            Backend.Formatters.AdditionalRegistration.Register);
         return new ApplicationRoot(executionThread, pluginsManager, pluginsLoader);
     }
 
@@ -76,15 +76,15 @@ internal class ApplicationOptions
     public ApplicationRoot CreateStdoutApplicationRoot(
         ExecutionOptions? executionOptions = null,
         string? columnsSeparator = null,
-        TextTableOutput.Style outputStyle = TextTableOutput.Style.Table)
+        Backend.Formatters.TextTableOutput.Style outputStyle = Backend.Formatters.TextTableOutput.Style.Table)
     {
         var root = CreateApplicationRoot(executionOptions);
-        var tableOutput = new TextTableOutput(
+        var tableOutput = new Backend.Formatters.TextTableOutput(
             stream: StandardInputOutput.GetConsoleOutput(),
             separator: columnsSeparator,
             style: outputStyle);
-        root.Thread.Options.DefaultRowsOutput = new PagingOutput(
-            tableOutput, pagingRowsCount: PagingOutput.NoLimit, cts: root.Thread.CancellationTokenSource);
+        root.Thread.Options.DefaultRowsOutput = new Backend.Formatters.PagingOutput(
+            tableOutput, pagingRowsCount: Backend.Formatters.PagingOutput.NoLimit, cts: root.Thread.CancellationTokenSource);
         return root;
     }
 

@@ -1,10 +1,10 @@
 using System.ComponentModel;
 using System.IO.Compression;
-using QueryCat.Backend.Abstractions;
-using QueryCat.Backend.Execution;
+using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Functions;
+using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Formatters;
-using QueryCat.Backend.Functions;
-using QueryCat.Backend.Types;
 
 namespace QueryCat.Backend.Providers;
 
@@ -47,6 +47,11 @@ internal static class FileInputOutput
 
         var formatter = args.GetAt(1).AsObject as IRowsFormatter;
         formatter ??= GetFormatter(path, args.ExecutionThread, funcArgs);
+        var fullDirectory = Path.GetDirectoryName(path);
+        if (!string.IsNullOrEmpty(fullDirectory) && !Directory.Exists(fullDirectory))
+        {
+            Directory.CreateDirectory(fullDirectory);
+        }
         Stream file = File.Open(path, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
         if (CompressFilesExtensions.Contains(Path.GetExtension(path).ToLower()))
         {
@@ -57,9 +62,9 @@ internal static class FileInputOutput
 
     private static IEnumerable<IRowsInput> GetFileInputsByPath(
         string path,
-        ExecutionThread thread,
+        IExecutionThread thread,
         IRowsFormatter? formatter = null,
-        FunctionArguments? funcArgs = null)
+        FunctionCallArguments? funcArgs = null)
     {
         foreach (var file in GetFilesByPath(path))
         {
@@ -103,8 +108,8 @@ internal static class FileInputOutput
         }
     }
 
-    private static IRowsFormatter GetFormatter(string path, ExecutionThread thread,
-        FunctionArguments? funcArgs = null)
+    private static IRowsFormatter GetFormatter(string path, IExecutionThread thread,
+        FunctionCallArguments? funcArgs = null)
     {
         var extension = Path.GetExtension(path).ToLower();
         if (CompressFilesExtensions.Contains(extension))

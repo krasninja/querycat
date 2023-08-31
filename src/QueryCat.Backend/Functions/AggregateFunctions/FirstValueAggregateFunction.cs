@@ -1,5 +1,6 @@
 using System.ComponentModel;
-using QueryCat.Backend.Types;
+using QueryCat.Backend.Core.Functions;
+using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Functions.AggregateFunctions;
 

@@ -1,15 +1,17 @@
 using System.Diagnostics;
 using System.Text;
-using QueryCat.Backend.Abstractions;
-using QueryCat.Backend.Abstractions.Plugins;
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Commands;
+using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Functions;
+using QueryCat.Backend.Core.Plugins;
+using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Functions;
 using QueryCat.Backend.Parser;
 using QueryCat.Backend.Storage;
-using QueryCat.Backend.Types;
-using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Execution;
 
@@ -25,7 +27,8 @@ public class ExecutionThread : IExecutionThread
     private readonly object _objLock = new();
     private readonly List<IDisposable> _disposablesList = new();
 
-    public IInputConfigStorage ConfigStorage { get; protected set; }
+    /// <inheritdoc />
+    public IInputConfigStorage ConfigStorage { get; }
 
     /// <summary>
     /// Root (base) thread scope.
@@ -46,11 +49,6 @@ public class ExecutionThread : IExecutionThread
     /// Current executing statement.
     /// </summary>
     internal StatementNode? ExecutingStatement { get; set; }
-
-    /// <summary>
-    /// Statements visitor.
-    /// </summary>
-    internal StatementsVisitor StatementsVisitor => _statementsVisitor;
 
     /// <summary>
     /// Execution options.
@@ -106,9 +104,21 @@ public class ExecutionThread : IExecutionThread
         RootScope = new ExecutionScope();
         Options = options ?? new ExecutionOptions();
         _statementsVisitor = new StatementsVisitor(this);
-        FunctionsManager = new FunctionsManager(this);
+        FunctionsManager = new DefaultFunctionsManager(this);
         ConfigStorage = configStorage ?? NullInputConfigStorage.Instance;
         RunBootstrapScript(appLocalDirectory);
+    }
+
+    public ExecutionThread(ExecutionThread executionThread)
+    {
+        RootScope = new ExecutionScope();
+        Options = executionThread.Options;
+#if ENABLE_PLUGINS
+        PluginsManager = executionThread.PluginsManager;
+#endif
+        _statementsVisitor = executionThread._statementsVisitor;
+        FunctionsManager = executionThread.FunctionsManager;
+        ConfigStorage = executionThread.ConfigStorage;
     }
 
     /// <inheritdoc />
@@ -151,13 +161,13 @@ public class ExecutionThread : IExecutionThread
             AsyncUtils.RunSync(ConfigStorage.LoadAsync);
         }
 
+        var executeEventArgs = new ExecuteEventArgs();
         while (ExecutingStatement != null)
         {
             var commandContext = _statementsVisitor.RunAndReturn(ExecutingStatement);
             _disposablesList.Add(commandContext);
 
             // Fire "before" event.
-            var executeEventArgs = new ExecuteEventArgs();
             BeforeStatementExecute?.Invoke(this, executeEventArgs);
             if (!executeEventArgs.ContinueExecution)
             {

@@ -1,12 +1,9 @@
 using System.ComponentModel;
 using System.Diagnostics;
-using QueryCat.Backend;
-using QueryCat.Backend.Abstractions;
-using QueryCat.Backend.Functions;
-using QueryCat.Backend.Relational;
-using QueryCat.Backend.Storage;
-using QueryCat.Backend.Types;
-using QueryCat.Backend.Utils;
+using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Functions;
+using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.IntegrationTests.Plugins;
 
@@ -40,7 +37,7 @@ public class SamplePluginRowsInput : IRowsInput
     /// <inheritdoc />
     public QueryContext QueryContext
     {
-        get => EmptyQueryContext.Empty;
+        get => NullQueryContext.Instance;
         set => Trace.WriteLine($"Set {nameof(QueryContext)}");
     }
 

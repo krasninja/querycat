@@ -1,10 +1,9 @@
 using System.Collections.Immutable;
 using System.Text;
-using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Commands.Select;
-using QueryCat.Backend.Relational;
-using QueryCat.Backend.Types;
-using QueryCat.Backend.Utils;
+using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend.Storage;
 

@@ -4,6 +4,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Added
+
+- Move IISW3C formatter and input back from plugin to core.
+- Add SubRip (.srt) files formatter.
+- Add functions "string_to_table", "regexp_replace".
+- Allow to use subqueries with IN clause.
+
+## Fixed
+
+- Create directory for file if it is not exists.
+- "_functions" doesn't work correctly for formatters.
+
+### Changed
+
+- Improved Thieft plugins support system.
+- Various refactorings to improve system modularity.
+
+## [0.4.8] - 2023-07-30
+
 ### Changed
 
 - Refactor query context.

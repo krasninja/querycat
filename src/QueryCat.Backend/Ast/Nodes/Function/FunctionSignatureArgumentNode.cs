@@ -1,5 +1,6 @@
 using System.Text;
-using QueryCat.Backend.Types;
+using QueryCat.Backend.Core.Functions;
+using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Ast.Nodes.Function;
 
@@ -9,9 +10,14 @@ namespace QueryCat.Backend.Ast.Nodes.Function;
 public sealed class FunctionSignatureArgumentNode : AstNode, IEquatable<FunctionSignatureArgumentNode>
 {
     /// <summary>
+    /// Signature argument.
+    /// </summary>
+    public FunctionSignatureArgument SignatureArgument { get; }
+
+    /// <summary>
     /// Argument name.
     /// </summary>
-    public string Name { get; }
+    public string Name => SignatureArgument.Name;
 
     /// <summary>
     /// Argument type.
@@ -21,27 +27,27 @@ public sealed class FunctionSignatureArgumentNode : AstNode, IEquatable<Function
     /// <summary>
     /// The argument is optional.
     /// </summary>
-    public bool IsOptional { get; }
+    public bool IsOptional => SignatureArgument.IsOptional;
 
     /// <summary>
     /// Default argument value (if it was not set).
     /// </summary>
-    public VariantValue DefaultValue { get; }
+    public VariantValue DefaultValue => SignatureArgument.DefaultValue;
 
     /// <summary>
     /// Returns <c>true</c> if the argument has default value, <c>false</c> otherwise.
     /// </summary>
-    public bool HasDefaultValue { get; }
+    public bool HasDefaultValue => SignatureArgument.HasDefaultValue;
 
     /// <summary>
     /// Is the argument array. It can be only the last argument.
     /// </summary>
-    public bool IsArray { get; }
+    public bool IsArray => SignatureArgument.IsArray;
 
     /// <summary>
     /// The function accepts variable number of arguments. There can be only one last variadic argument.
     /// </summary>
-    public bool IsVariadic { get; }
+    public bool IsVariadic => SignatureArgument.IsVariadic;
 
     /// <inheritdoc />
     public override string Code => "func_arg";
@@ -54,29 +60,13 @@ public sealed class FunctionSignatureArgumentNode : AstNode, IEquatable<Function
         bool isArray = false,
         bool isVariadic = false)
     {
-        Name = name.ToUpper();
         TypeNode = typeNode;
-        IsOptional = isOptional;
-        HasDefaultValue = defaultValue != null;
-        DefaultValue = defaultValue ?? VariantValue.Null;
-        IsArray = isArray;
-        IsVariadic = isVariadic;
-        if (IsVariadic && !IsArray)
-        {
-            throw new ArgumentException("Variadic type must be array.", nameof(isVariadic));
-        }
-        if (IsOptional && !HasDefaultValue)
-        {
-            DefaultValue = VariantValue.Null;
-            HasDefaultValue = true;
-        }
+        SignatureArgument = new FunctionSignatureArgument(name, typeNode.Type, defaultValue, isOptional, isArray, isVariadic);
     }
 
     public FunctionSignatureArgumentNode(FunctionSignatureArgumentNode node) :
-        this(node.Name, node.TypeNode, node.DefaultValue, node.IsOptional, node.IsArray, node.IsVariadic)
+        this(node.Name, node.TypeNode, node.HasDefaultValue ? node.DefaultValue : null, node.IsOptional, node.IsArray, node.IsVariadic)
     {
-        HasDefaultValue = node.HasDefaultValue;
-        DefaultValue = node.DefaultValue;
         node.CopyTo(this);
     }
 

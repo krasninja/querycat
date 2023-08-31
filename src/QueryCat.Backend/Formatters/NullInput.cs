@@ -1,6 +1,5 @@
-using QueryCat.Backend.Relational;
-using QueryCat.Backend.Storage;
-using QueryCat.Backend.Types;
+using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Formatters;
 

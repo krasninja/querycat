@@ -1,3 +1,5 @@
+using QueryCat.Backend.Core;
+
 namespace QueryCat.Backend.Execution;
 
 /// <summary>

@@ -1,10 +1,11 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Microsoft.Extensions.Logging;
-using QueryCat.Backend.Abstractions.Plugins;
+using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Functions;
+using QueryCat.Backend.Core.Plugins;
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Execution;
-using QueryCat.Backend.Functions;
-using QueryCat.Backend.Utils;
 using QueryCat.Plugins.Client;
 using QueryCat.Plugins.Sdk;
 
@@ -18,6 +19,7 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
     private readonly ExecutionThread _thread;
     private readonly ThriftPluginsServer _server;
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger<ThriftPluginsLoader>();
+    private readonly HashSet<string> _loadedPlugins = new();
 
     /// <summary>
     /// Skip actual plugins loading. For debug purposes.
@@ -51,11 +53,11 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
     /// <inheritdoc />
     public override Task LoadAsync(CancellationToken cancellationToken = default)
     {
-        _server.Start();
         foreach (var pluginDirectory in PluginDirectories)
         {
             _logger.LogTrace("Search in '{Directory}'.", pluginDirectory);
-            if (IsCorrectPluginFile(pluginDirectory))
+            if (IsCorrectPluginFile(pluginDirectory) && IsMatchPlatform(pluginDirectory)
+                && !_loadedPlugins.Contains(GetPluginName(pluginDirectory)))
             {
                 LoadPlugin(pluginDirectory, cancellationToken);
                 continue;
@@ -66,9 +68,10 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
                 continue;
             }
 
-            foreach (var pluginFile in Directory.EnumerateFiles(pluginDirectory))
+            foreach (var pluginFile in Directory.EnumerateFiles(pluginDirectory).ToList())
             {
-                if (IsCorrectPluginFile(pluginFile))
+                if (IsCorrectPluginFile(pluginFile) && IsMatchPlatform(pluginFile)
+                    && !_loadedPlugins.Contains(GetPluginName(pluginFile)))
                 {
                     LoadPlugin(pluginFile, cancellationToken);
                 }
@@ -104,8 +107,29 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         return true;
     }
 
+    private static bool IsMatchPlatform(string pluginFile)
+    {
+        var plugin = PluginInfo.CreateFromUniversalName(pluginFile);
+        // If we cannot detect platform and arch - let skip the check.
+        if (plugin.Platform == Application.PlatformUnknown && plugin.Architecture == Application.ArchitectureUnknown)
+        {
+            return true;
+        }
+        var currentPlatform = Application.GetPlatform();
+        var currentArchitecture = Application.GetArchitecture();
+        return currentPlatform == plugin.Platform && currentArchitecture == plugin.Architecture;
+    }
+
+    private static string GetPluginName(string pluginFile)
+    {
+        var plugin = PluginInfo.CreateFromUniversalName(pluginFile);
+        return plugin.Name;
+    }
+
     private void LoadPlugin(string file, CancellationToken cancellationToken)
     {
+        _server.Start();
+
         var authToken = !string.IsNullOrEmpty(ForceAuthToken) ? ForceAuthToken : Guid.NewGuid().ToString("N");
         _server.RegisterAuthToken(authToken);
         Process? process = null;
@@ -128,7 +152,7 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
             process.StartInfo.ArgumentList.Add($"--server-pipe-name=net.pipe://localhost/{_server.ServerPipeName}");
             process.StartInfo.ArgumentList.Add($"--token={authToken}");
             process.StartInfo.ArgumentList.Add($"--parent-pid={Process.GetCurrentProcess().Id}");
-            process.OutputDataReceived += (_, args) => _logger.LogInformation($"[{fileName}]: {args.Data}");
+            process.OutputDataReceived += (_, args) => _logger.LogTrace($"[{fileName}]: {args.Data}");
             process.ErrorDataReceived += (_, args) => _logger.LogError($"[{fileName}]: {args.Data}");
             process.Start();
             process.BeginOutputReadLine();
@@ -146,6 +170,8 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         }
 
         RegisterFunctions(_thread.FunctionsManager);
+
+        _loadedPlugins.Add(GetPluginName(file));
     }
 
     private void RegisterFunctions(FunctionsManager functionsManager)
@@ -157,25 +183,26 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
                 functionsManager.RegisterFunction(functionSignature, FunctionDelegate);
             }
 
-            Types.VariantValue FunctionDelegate(FunctionCallInfo args)
+            Core.Types.VariantValue FunctionDelegate(FunctionCallInfo args)
             {
                 if (plugin.Client == null)
                 {
-                    return Types.VariantValue.Null;
+                    return Core.Types.VariantValue.Null;
                 }
 
                 var arguments = args.Select(SdkConvert.Convert).ToList();
                 var result = AsyncUtils.RunSync(() => plugin.Client.CallFunctionAsync(args.FunctionName, arguments, 0));
-                if (result != null && result.__isset.@object && result.Object != null)
+                if (result == null)
                 {
-                    if (result.Object.Type == ObjectType.ROWS_INPUT)
-                    {
-                        var obj = CreateObjectFromResult(result, plugin);
-                        plugin.Objects.Add(obj);
-                        return Types.VariantValue.CreateFromObject(obj);
-                    }
+                    return Core.Types.VariantValue.Null;
                 }
-                return Types.VariantValue.Null;
+                if (result.__isset.@object && result.Object != null)
+                {
+                    var obj = CreateObjectFromResult(result, plugin);
+                    plugin.ObjectsStorage.Add(obj);
+                    return Core.Types.VariantValue.CreateFromObject(obj);
+                }
+                return SdkConvert.Convert(result);
             }
         }
     }
@@ -190,9 +217,9 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         {
             throw new InvalidOperationException("No connection.");
         }
-        if (result.Object.Type == ObjectType.ROWS_INPUT)
+        if (result.Object.Type == ObjectType.ROWS_INPUT || result.Object.Type == ObjectType.ROWS_ITERATOR)
         {
-            var iterator = new ThriftRemoteRowsIterator(context.Client, result.Object.Id);
+            var iterator = new ThriftRemoteRowsIterator(context.Client, result.Object.Handle);
             iterator.Open();
             return iterator;
         }

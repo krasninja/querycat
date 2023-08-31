@@ -20,6 +20,13 @@ public sealed class BuildLinuxTask : AsyncFrostingTask<BuildContext>
             OutputDirectory = context.OutputDirectory,
             Runtime = DotNetConstants.RidLinuxX64,
         });
+        context.DotNetPublish(context.TestPluginAppProjectDirectory, new PublishGeneralSettings(context)
+        {
+            OutputDirectory = context.OutputDirectory,
+            Runtime = DotNetConstants.RidLinuxX64,
+            PublishTrimmed = false,
+            PublishSingleFile = true,
+        });
         return Task.CompletedTask;
     }
 }

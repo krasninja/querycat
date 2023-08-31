@@ -1,4 +1,4 @@
-using QueryCat.Backend.Abstractions.Plugins;
+using QueryCat.Backend.Core.Plugins;
 using QueryCat.Backend.Execution;
 
 namespace QueryCat.Cli.Commands.Options;

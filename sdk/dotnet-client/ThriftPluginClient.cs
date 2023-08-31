@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
@@ -14,10 +13,9 @@ using Thrift.Transport;
 using Thrift.Transport.Client;
 using Thrift.Transport.Server;
 using PluginsManager = QueryCat.Plugins.Sdk.PluginsManager;
-using QueryCat.Backend;
-using QueryCat.Backend.Abstractions;
-using QueryCat.Backend.Abstractions.Plugins;
-using QueryCat.Backend.Functions;
+using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Functions;
+using QueryCat.Backend.Core.Plugins;
 using QueryCat.Plugins.Sdk;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
@@ -29,12 +27,11 @@ public partial class ThriftPluginClient : IDisposable
     public const string PluginServerName = "plugin";
 
     private readonly PluginExecutionThread _executionThread;
-    private readonly FunctionsManager _functionsManager;
-    private readonly List<object?> _objects = new();
-    private readonly object _objLock = new();
+    private readonly PluginFunctionsManager _functionsManager;
+    private readonly ObjectsStorage _objectsStorage = new();
     private string _debugServerPath = string.Empty;
     private string _debugServerPathArgs = string.Empty;
-    private int _parentPid = 0;
+    private int _parentPid;
     private Process? _qcatProcess;
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger<ThriftPluginClient>();
 
@@ -55,7 +52,12 @@ public partial class ThriftPluginClient : IDisposable
 
     public ThriftPluginClient(string[] args)
     {
-        foreach (var arg in args.Skip(1))
+        if (args.Length == 0)
+        {
+            throw new InvalidOperationException("The application is intended to be executed by QueryCat host application.");
+        }
+
+        foreach (var arg in args)
         {
             var separatorIndex = arg.IndexOf('=', StringComparison.Ordinal);
             if (separatorIndex == -1)
@@ -97,7 +99,7 @@ public partial class ThriftPluginClient : IDisposable
         _client = new PluginsManager.Client(_protocol);
 
         _executionThread = new PluginExecutionThread(_client);
-        _functionsManager = new FunctionsManager(_executionThread);
+        _functionsManager = new PluginFunctionsManager();
     }
 
     public static void SetupApplicationLogging()
@@ -111,6 +113,17 @@ public partial class ThriftPluginClient : IDisposable
                     options.SingleLine = true;
                 });
         });
+
+        AppDomain.CurrentDomain.UnhandledException += CurrentDomainOnUnhandledException;
+    }
+
+    private static void CurrentDomainOnUnhandledException(object sender, UnhandledExceptionEventArgs e)
+    {
+        if (e.ExceptionObject is Exception exception)
+        {
+            Console.Error.WriteLine(exception.Message);
+        }
+        Environment.Exit(1);
     }
 
     private void ParseServerPipe(string value)
@@ -137,6 +150,8 @@ public partial class ThriftPluginClient : IDisposable
     private void ParseDebugServer(string value)
     {
         _debugServerPath = value;
+        _authToken = "test";
+        ParseServerPipe("net.pipe://localhost/qcat-test");
     }
 
     private void ParseDebugServerArgs(string value)
@@ -144,71 +159,10 @@ public partial class ThriftPluginClient : IDisposable
         _debugServerPathArgs = value;
     }
 
-    #region Objects API
-
-    private int AddObject(object obj)
-    {
-        lock (_objLock)
-        {
-            _objects.Add(obj);
-            return _objects.Count - 1;
-        }
-    }
-
-    private T GetObject<T>(int index) where T : class
-    {
-        lock (_objLock)
-        {
-            if (_objects.Count - 1 > index)
-            {
-                throw new QueryCatPluginException(ErrorType.INVALID_OBJECT, "Invalid object handle.");
-            }
-            var rawObject = _objects[index];
-            if (rawObject == null)
-            {
-                throw new QueryCatPluginException(ErrorType.INVALID_OBJECT, "Object has been release.");
-            }
-            var obj = rawObject as T;
-            if (obj == null)
-            {
-                throw new QueryCatPluginException(ErrorType.INVALID_OBJECT,
-                    $"Invalid object type '{rawObject.GetType().Name}', expected '{typeof(T).Name}'.");
-            }
-            return obj;
-        }
-    }
-
-    private void RemoveObject(int index)
-    {
-        lock (_objLock)
-        {
-            if (_objects[index] is IRowsSource rowsSource)
-            {
-                rowsSource.Close();
-            }
-            if (_objects[index] is IDisposable disposable)
-            {
-                disposable.Dispose();
-            }
-            _objects[index] = null;
-        }
-    }
-
-    private void CleanObjects()
-    {
-        var totalObjects = 0;
-        lock (_objLock)
-        {
-            totalObjects = _objects.Count;
-        }
-        for (var i = 0; i < totalObjects; i++)
-        {
-            RemoveObject(i);
-        }
-    }
-
-    #endregion
-
+    /// <summary>
+    /// Start client server and register the plugin.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
     public async Task Start(CancellationToken cancellationToken = default)
     {
         if (!string.IsNullOrEmpty(_debugServerPath))
@@ -236,7 +190,7 @@ public partial class ThriftPluginClient : IDisposable
             $"net.pipe://localhost/{_clientServerNamedPipe}",
             new PluginData
             {
-                Functions = _functionsManager.GetFunctions().Select(f => f.Signature).ToList(),
+                Functions = _functionsManager.GetSignatures(),
                 Name = assemblyName?.Name ?? string.Empty,
                 Version = version?.ToString() ?? "0.0.0",
             },
@@ -249,7 +203,8 @@ public partial class ThriftPluginClient : IDisposable
         var transportFactory = new TFramedTransport.Factory();
         var binaryProtocolFactory = new TBinaryProtocol.Factory();
         var processor = new TMultiplexedProcessor();
-        var asyncProcessor = new Plugin.AsyncProcessor(new Handler(this));
+        var handler = new HandlerWithExceptionIntercept(new Handler(this));
+        var asyncProcessor = new Plugin.AsyncProcessor(handler);
         processor.RegisterProcessor(PluginServerName, asyncProcessor);
         _clientServer = new TThreadPoolAsyncServer(
             new TSingletonProcessorFactory(processor),
@@ -294,18 +249,24 @@ public partial class ThriftPluginClient : IDisposable
                 FileName = _debugServerPath,
             }
         };
-        _qcatProcess.StartInfo.Arguments = $"plugin debug --log-level=trace --plugin-dirs=\"{modulePath}\"";
+        _qcatProcess.StartInfo.Arguments = "plugin debug";
         if (!string.IsNullOrEmpty(_debugServerPathArgs))
         {
-            _qcatProcess.StartInfo.Arguments += " " + _debugServerPathArgs;
+            _qcatProcess.StartInfo.Arguments += " " + _debugServerPathArgs + " ";
         }
+        _qcatProcess.StartInfo.Arguments += $"--log-level=trace --plugin-dirs=\"{modulePath}\"";
         _qcatProcess.OutputDataReceived += (_, args) => Console.Out.WriteLine($"> {args.Data}");
         _qcatProcess.ErrorDataReceived += (_, args) => Console.Error.WriteLine($"> {args.Data}");
         _qcatProcess.Start();
         _qcatProcess.BeginOutputReadLine();
         _qcatProcess.BeginErrorReadLine();
+        _logger.LogDebug("Start qcat host.");
     }
 
+    /// <summary>
+    /// Wait for parent QCat process exit.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
     public async Task WaitForParentProcessExitAsync(CancellationToken cancellationToken = default)
     {
         if (_qcatProcess != null)
@@ -323,7 +284,7 @@ public partial class ThriftPluginClient : IDisposable
     {
         if (disposing)
         {
-            // Connection.
+            // Connection to plugin manager.
             _protocol.Dispose();
             _client.Dispose();
 

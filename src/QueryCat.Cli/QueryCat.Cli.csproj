@@ -10,7 +10,7 @@
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-    <DefineConstants>TRACE;ENABLE_PLUGINS;PLUGIN_ASSEMBLY</DefineConstants>
+    <DefineConstants>TRACE;ENABLE_PLUGINS;PLUGIN_THRIFT</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
@@ -24,6 +24,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\QueryCat.Backend.AssemblyPlugins\QueryCat.Backend.AssemblyPlugins.csproj" />
+    <ProjectReference Include="..\QueryCat.Backend.Formatters\QueryCat.Backend.Formatters.csproj" />
     <ProjectReference Include="..\QueryCat.Backend.ThriftPlugins\QueryCat.Backend.ThriftPlugins.csproj" />
     <ProjectReference Include="..\QueryCat.Backend\QueryCat.Backend.csproj" />
     <EmbeddedResource Include="Infrastructure\WebServerIndex.html" />

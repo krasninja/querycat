@@ -1,8 +1,9 @@
-using QueryCat.Backend.Storage;
-using QueryCat.Backend.Types;
+using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Utils;
 using QueryCat.Plugins.Client;
-using Column = QueryCat.Backend.Relational.Column;
+using Column = QueryCat.Backend.Core.Data.Column;
 
 namespace QueryCat.Backend.ThriftPlugins;
 
@@ -22,7 +23,7 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys
     public Column[] Columns { get; private set; } = Array.Empty<Column>();
 
     /// <inheritdoc />
-    public QueryContext QueryContext { get; set; } = EmptyQueryContext.Empty;
+    public QueryContext QueryContext { get; set; } = NullQueryContext.Instance;
 
     public ThriftRemoteRowsIterator(Plugins.Sdk.Plugin.Client client, int objectHandle)
     {
@@ -57,11 +58,6 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys
     /// <inheritdoc />
     public ErrorCode ReadValue(int columnIndex, out VariantValue value)
     {
-        if (!_hasRecords)
-        {
-            value = VariantValue.Null;
-            return ErrorCode.OK;
-        }
         if (columnIndex > Columns.Length - 1)
         {
             value = VariantValue.Null;
@@ -75,25 +71,30 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys
     /// <inheritdoc />
     public bool ReadNext()
     {
-        if (!_hasRecords)
-        {
-            return false;
-        }
-
         if (!_cache.IsEmpty)
         {
-            _cache.Advance(LoadCount);
+            _cache.Advance(Columns.Length);
             if (!_cache.IsEmpty)
             {
                 return true;
             }
         }
 
-        var result = AsyncUtils.RunSync(() => _client.RowsSet_GetRowsAsync(_objectHandle, LoadCount));
-        if (result == null || result.Values == null || result.Values.Count == 0 || !result.HasMore)
+        if (!_hasRecords)
+        {
+            return false;
+        }
+
+        var result = AsyncUtils.RunSync(() => _client.RowsSet_GetRowsAsync(_objectHandle, LoadCount * Columns.Length));
+        if (result == null || result.Values == null || result.Values.Count == 0)
         {
             _hasRecords = false;
             return false;
+        }
+
+        if (!result.HasMore)
+        {
+            _hasRecords = false;
         }
 
         var values = result.Values.Select(SdkConvert.Convert).ToArray();

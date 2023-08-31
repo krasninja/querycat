@@ -1,4 +1,4 @@
-using QueryCat.Backend.Functions;
+using QueryCat.Backend.Core.Functions;
 
 namespace QueryCat.Backend.Providers;
 
@@ -11,18 +11,18 @@ internal static class QueryStringParser
     /// </summary>
     /// <param name="uri">URI string.</param>
     /// <returns>URI and arguments.</returns>
-    public static (string Uri, FunctionArguments Args) ParseUri(string uri)
+    public static (string Uri, FunctionCallArguments Args) ParseUri(string uri)
     {
         var delimiterIndex = uri.IndexOf(QueryDelimiter, StringComparison.Ordinal);
         if (delimiterIndex == -1)
         {
-            return (uri, new FunctionArguments());
+            return (uri, new FunctionCallArguments());
         }
         else
         {
             return (
                 uri.Substring(0, delimiterIndex),
-                FunctionArguments.FromQueryString(uri.Substring(delimiterIndex + QueryDelimiter.Length))
+                FunctionCallArguments.FromQueryString(uri.Substring(delimiterIndex + QueryDelimiter.Length))
             );
         }
     }

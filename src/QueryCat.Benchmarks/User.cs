@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using QueryCat.Backend.Storage;
+using QueryCat.Backend.Core.Fetch;
 
 namespace QueryCat.Benchmarks;
 

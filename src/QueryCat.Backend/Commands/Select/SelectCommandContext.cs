@@ -1,10 +1,10 @@
-using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Ast.Nodes.Select;
-using QueryCat.Backend.Functions;
-using QueryCat.Backend.Relational;
+using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Functions;
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Storage;
-using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Commands.Select;
 

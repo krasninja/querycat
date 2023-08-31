@@ -1,12 +1,14 @@
-using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Function;
 using QueryCat.Backend.Ast.Nodes.Select;
+using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Functions;
+using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Functions;
 using QueryCat.Backend.Relational;
-using QueryCat.Backend.Types;
 
 namespace QueryCat.Backend.Commands.Select.Visitors;
 
@@ -207,6 +209,43 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
             }
             return VariantValue.CreateFromObject(rowsFrame);
         }, DataType.Object);
+    }
+
+    /// <inheritdoc />
+    public override void Visit(InOperationExpressionNode node)
+    {
+        if (node.InExpressionValuesNodes is SelectQueryNode queryNode)
+        {
+            var valueAction = NodeIdFuncMap[node.ExpressionNode.Id];
+            var rowsIterator = new SelectPlanner(ExecutionThread).CreateIterator(queryNode, _context);
+            var equalDelegate = VariantValue.GetEqualsDelegate(node.ExpressionNode.GetDataType());
+
+            VariantValue Func()
+            {
+                var leftValue = valueAction.Invoke();
+                rowsIterator.Reset();
+                while (rowsIterator.MoveNext())
+                {
+                    var rightValue = rowsIterator.Current[0];
+                    var isEqual = equalDelegate.Invoke(in leftValue, in rightValue);
+                    if (isEqual.IsNull)
+                    {
+                        continue;
+                    }
+                    if (isEqual.AsBoolean)
+                    {
+                        return new VariantValue(!node.IsNot);
+                    }
+                }
+                return new VariantValue(node.IsNot);
+            }
+
+            NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, node.GetDataType());
+
+            return;
+        }
+
+        base.Visit(node);
     }
 
     #region Subqueries

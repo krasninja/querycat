@@ -1,4 +1,4 @@
-using QueryCat.Backend.Abstractions;
+using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Storage;
 
 namespace QueryCat.Backend.Execution;

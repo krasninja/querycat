@@ -1,8 +1,7 @@
-using QueryCat.Backend.Abstractions;
-using QueryCat.Backend.Relational;
+using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Relational.Iterators;
-using QueryCat.Backend.Types;
-using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Storage;
 
@@ -21,7 +20,7 @@ internal sealed class SingleValueRowsInput : IRowsInput
     public string[] UniqueKey { get; } = Array.Empty<string>();
 
     /// <inheritdoc />
-    public QueryContext QueryContext { get; set; } = new EmptyQueryContext();
+    public QueryContext QueryContext { get; set; } = NullQueryContext.Instance;
 
     public SingleValueRowsInput()
     {

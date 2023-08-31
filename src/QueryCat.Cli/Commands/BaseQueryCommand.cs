@@ -1,8 +1,7 @@
 using System.CommandLine;
-using QueryCat.Backend;
+using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Execution;
-using QueryCat.Backend.Types;
-using QueryCat.Backend.Utils;
 
 namespace QueryCat.Cli.Commands;
 

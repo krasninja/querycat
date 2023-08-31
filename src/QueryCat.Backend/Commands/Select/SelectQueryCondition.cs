@@ -1,6 +1,6 @@
-using QueryCat.Backend.Functions;
-using QueryCat.Backend.Relational;
-using QueryCat.Backend.Types;
+using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Functions;
+using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Commands.Select;
 

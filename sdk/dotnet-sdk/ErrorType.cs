@@ -17,6 +17,7 @@ namespace QueryCat.Plugins.Sdk
     SUCCESS = 0,
     GENERIC = 1,
     INVALID_OBJECT = 2,
+    NOT_SUPPORTED = 3,
     INVALID_AUTH_TOKEN = 10,
     INVALID_FUNCTION = 11,
   }

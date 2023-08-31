@@ -4,8 +4,8 @@ using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Function;
 using QueryCat.Backend.Ast.Nodes.SpecialFunctions;
-using QueryCat.Backend.Types;
-using QueryCat.Backend.Utils;
+using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend.Parser;
 
@@ -134,7 +134,15 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
     }
 
     /// <inheritdoc />
-    public override IAstNode VisitExpressionBinaryIn(QueryCatParser.ExpressionBinaryInContext context)
+    public override IAstNode VisitExpressionBinaryInArray(QueryCatParser.ExpressionBinaryInArrayContext context)
+    {
+        var left = (ExpressionNode)Visit(context.left);
+        var right = (ExpressionNode)Visit(context.right);
+        return new InOperationExpressionNode(left, right, isNot: context.NOT() != null);
+    }
+
+    /// <inheritdoc />
+    public override IAstNode VisitExpressionBinaryInSubquery(QueryCatParser.ExpressionBinaryInSubqueryContext context)
     {
         var left = (ExpressionNode)Visit(context.left);
         var right = (ExpressionNode)Visit(context.right);
@@ -327,6 +335,34 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
         return new FunctionCallNode("date_part",
             new FunctionCallArgumentNode(new LiteralNode(GetUnwrappedText(context.extractField))),
             new FunctionCallArgumentNode(targetNode));
+    }
+
+    /// <inheritdoc />
+    public override IAstNode VisitStandardOccurrencesRegex(QueryCatParser.StandardOccurrencesRegexContext context)
+    {
+        var targetNode = this.Visit<ExpressionNode>(context.@string);
+        return new FunctionCallNode("regexp_count",
+            new FunctionCallArgumentNode(targetNode),
+            new FunctionCallArgumentNode(new LiteralNode(GetUnwrappedText(context.pattern))));
+    }
+
+    /// <inheritdoc />
+    public override IAstNode VisitStandardSubstringRegex(QueryCatParser.StandardSubstringRegexContext context)
+    {
+        var targetNode = this.Visit<ExpressionNode>(context.@string);
+        return new FunctionCallNode("regexp_substr",
+            new FunctionCallArgumentNode(targetNode),
+            new FunctionCallArgumentNode(new LiteralNode(GetUnwrappedText(context.pattern))));
+    }
+
+    /// <inheritdoc />
+    public override IAstNode VisitStandardTranslateRegex(QueryCatParser.StandardTranslateRegexContext context)
+    {
+        var targetNode = this.Visit<ExpressionNode>(context.@string);
+        return new FunctionCallNode("regexp_replace",
+            new FunctionCallArgumentNode(targetNode),
+            new FunctionCallArgumentNode(new LiteralNode(GetUnwrappedText(context.pattern))),
+            new FunctionCallArgumentNode(new LiteralNode(GetUnwrappedText(context.replacement))));
     }
 
     #endregion

@@ -1,4 +1,3 @@
-using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Function;
@@ -6,12 +5,14 @@ using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Ast.Nodes.SpecialFunctions;
 using QueryCat.Backend.Commands.Select.Inputs;
 using QueryCat.Backend.Commands.Select.Visitors;
-using QueryCat.Backend.Functions;
+using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Functions;
+using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Providers;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Storage;
-using QueryCat.Backend.Types;
 
 namespace QueryCat.Backend.Commands.Select;
 

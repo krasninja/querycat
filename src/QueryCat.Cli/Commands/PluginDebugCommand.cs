@@ -1,13 +1,11 @@
 using System.CommandLine;
 using Microsoft.Extensions.Logging;
-using QueryCat.Backend;
+using QueryCat.Backend.Core;
 using QueryCat.Backend.Execution;
-using QueryCat.Backend.Formatters;
 using QueryCat.Backend.Providers;
 using QueryCat.Cli.Commands.Options;
 #if ENABLE_PLUGINS && PLUGIN_THRIFT
 using QueryCat.Backend.ThriftPlugins;
-using QueryCat.Cli.Commands.Options;
 #endif
 
 namespace QueryCat.Cli.Commands;
@@ -27,7 +25,7 @@ internal class PluginDebugCommand : BaseQueryCommand
         {
 #if ENABLE_PLUGINS && PLUGIN_THRIFT
             applicationOptions.InitializeLogger();
-            var tableOutput = new TextTableOutput(
+            var tableOutput = new Backend.Formatters.TextTableOutput(
                 stream: StandardInputOutput.GetConsoleOutput());
             var options = new ExecutionOptions
             {
@@ -38,13 +36,16 @@ internal class PluginDebugCommand : BaseQueryCommand
                 Path.Combine(ExecutionThread.GetApplicationDirectory(), ApplicationOptions.ConfigFileName));
             var thread = new ExecutionThread(options, storage);
             options.PluginDirectories.AddRange(applicationOptions.PluginDirectories);
-            options.DefaultRowsOutput = new PagingOutput(tableOutput, cts: thread.CancellationTokenSource);
+            options.DefaultRowsOutput = new Backend.Formatters.PagingOutput(tableOutput, cts: thread.CancellationTokenSource);
             var pluginsLoader = new ThriftPluginsLoader(thread, applicationOptions.PluginDirectories, PipeName)
             {
                 ForceAuthToken = AuthToken,
                 SkipPluginsExecution = true,
             };
-            new ExecutionThreadBootstrapper().Bootstrap(thread, pluginsLoader);
+            new ExecutionThreadBootstrapper().Bootstrap(
+                thread,
+                pluginsLoader,
+                Backend.Formatters.AdditionalRegistration.Register);
             AddVariables(thread, variables);
             RunQuery(thread, query, files);
             thread.Dispose();

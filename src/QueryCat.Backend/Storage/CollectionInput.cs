@@ -1,7 +1,9 @@
 using System.Reflection;
-using QueryCat.Backend.Abstractions;
-using QueryCat.Backend.Relational;
-using QueryCat.Backend.Types;
+using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Fetch;
+using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Storage;
@@ -27,7 +29,10 @@ public class CollectionInput<TClass> : IRowsOutput, IRowsInputUpdate where TClas
     public string[] UniqueKey { get; } = Array.Empty<string>();
 
     /// <inheritdoc />
-    public QueryContext QueryContext { get; set; } = new EmptyQueryContext();
+    public QueryContext QueryContext { get; set; } = NullQueryContext.Instance;
+
+    /// <inheritdoc />
+    public RowsOutputOptions Options { get; } = new();
 
     public CollectionInput(IEnumerable<TClass> list)
     {
@@ -72,14 +77,15 @@ public class CollectionInput<TClass> : IRowsOutput, IRowsInputUpdate where TClas
     }
 
     /// <inheritdoc />
-    public void Write(Row row)
+    public void WriteValues(in VariantValue[] values)
     {
         if (_list is not ICollection<TClass> collection)
         {
             throw new QueryCatException($"Cannot write to collection of type '{_list.GetType().Name}'.");
         }
 
-        var mapping = GetPropertiesToColumnsMapping(row.Columns);
+        var columns = QueryContext.QueryInfo.Columns.ToArray();
+        var mapping = GetPropertiesToColumnsMapping(columns);
 
         var obj = Activator.CreateInstance<TClass>();
         for (var i = 0; i < mapping.Length; i++)
@@ -89,7 +95,7 @@ public class CollectionInput<TClass> : IRowsOutput, IRowsInputUpdate where TClas
             {
                 continue;
             }
-            prop.SetValue(obj, ObjectUtils.ChangeType(row[i].GetGenericObject(), prop.PropertyType));
+            prop.SetValue(obj, ObjectUtils.ChangeType(values[i].GetGenericObject(), prop.PropertyType));
         }
         collection.Add(obj);
     }

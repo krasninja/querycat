@@ -1,9 +1,10 @@
 using Xunit;
 using QueryCat.Backend.Commands.Select;
 using QueryCat.Backend.Commands.Select.Inputs;
+using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Storage;
-using QueryCat.Backend.Types;
 
 namespace QueryCat.IntegrationTests.Storage;
 

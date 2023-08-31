@@ -1,8 +1,9 @@
 using System.Collections;
-using QueryCat.Backend.Functions;
-using QueryCat.Backend.Relational;
+using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Functions;
+using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Storage;
-using QueryCat.Backend.Types;
 
 namespace QueryCat.Backend.Commands.Select;
 

@@ -4,10 +4,10 @@ using QueryCat.Backend.Ast.Nodes.Function;
 using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Ast.Nodes.SpecialFunctions;
 using QueryCat.Backend.Commands.Select;
+using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Functions;
+using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Execution;
-using QueryCat.Backend.Functions;
-using QueryCat.Backend.Types;
-using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Commands;
 
@@ -29,7 +29,7 @@ internal class ResolveTypesVisitor : AstVisitor
         AstTraversal.PostOrder(node);
     }
 
-    public static FunctionArgumentsTypes CreateFunctionArgumentsTypes(
+    public static FunctionCallArgumentsTypes CreateFunctionArgumentsTypes(
         IList<FunctionCallArgumentNode> callArguments)
     {
         var positionalArgumentsTypes = callArguments
@@ -43,7 +43,7 @@ internal class ResolveTypesVisitor : AstVisitor
             .Select(arg => new KeyValuePair<string, DataType>(
                 arg.Key!, arg.ExpressionValueNode.GetDataType()))
             .ToArray();
-        return new FunctionArgumentsTypes(
+        return new FunctionCallArgumentsTypes(
             positionalArgumentsTypes,
             namedArgumentsTypes
         );
@@ -191,7 +191,7 @@ internal class ResolveTypesVisitor : AstVisitor
         VisitFunctionCallNode(node);
     }
 
-    public Function VisitFunctionCallNode(FunctionCallNode node)
+    public IFunction VisitFunctionCallNode(FunctionCallNode node)
     {
         var functionArgumentsTypes = CreateFunctionArgumentsTypes(node.Arguments);
         var function = ExecutionThread.FunctionsManager.FindByName(

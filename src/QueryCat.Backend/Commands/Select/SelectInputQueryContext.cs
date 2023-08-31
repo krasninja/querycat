@@ -1,5 +1,4 @@
-using QueryCat.Backend.Abstractions;
-using QueryCat.Backend.Storage;
+using QueryCat.Backend.Core.Data;
 
 namespace QueryCat.Backend.Commands.Select;
 

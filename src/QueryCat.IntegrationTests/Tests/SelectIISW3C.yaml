@@ -1,0 +1,5 @@
+expected: |
+  08/26/2022 00:00:10,172.69.42.32,"Mozilla/5.0+(Windows+NT+10.0;+Win64;+x64)+AppleWebKit/537.36+(KHTML,+like+Gecko)+Chrome/104.0.0.0+Safari/537.36"
+  08/26/2022 00:02:23,172.70.206.244,"Mozilla/5.0+(Windows+NT+10.0;+Win64;+x64)+AppleWebKit/537.36+(KHTML,+like+Gecko)+Chrome/104.0.5112.102+Safari/537.36+Edg/104.0.1293.63"
+query: |
+  SELECT date, [c-ip], [cs(User-Agent)] FROM 'u_ex220826.log' FORMAT iisw3c() AS t;

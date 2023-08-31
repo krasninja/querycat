@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\QueryCat.Backend\QueryCat.Backend.csproj" />
+    <ProjectReference Include="..\..\src\QueryCat.Backend.Core\QueryCat.Backend.Core.csproj" />
     <ProjectReference Include="..\dotnet-sdk\QueryCat.Plugins.Sdk.csproj" />
   </ItemGroup>
 

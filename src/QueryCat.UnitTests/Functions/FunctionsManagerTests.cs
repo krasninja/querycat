@@ -1,7 +1,8 @@
 using Xunit;
+using QueryCat.Backend.Core.Functions;
+using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Functions;
-using QueryCat.Backend.Types;
 
 namespace QueryCat.UnitTests.Functions;
 
@@ -14,7 +15,7 @@ public sealed class FunctionsManagerTests
 
     public FunctionsManagerTests()
     {
-        _functionsManager = new(ExecutionThread.DefaultInstance);
+        _functionsManager = new DefaultFunctionsManager(ExecutionThread.DefaultInstance);
     }
 
     [Fact]
@@ -24,7 +25,7 @@ public sealed class FunctionsManagerTests
         _functionsManager.RegisterFunction(SumIntegers);
 
         var func = _functionsManager.FindByName("add",
-            FunctionArgumentsTypes.FromPositionArguments(DataType.Integer, DataType.Integer));
+            FunctionCallArgumentsTypes.FromPositionArguments(DataType.Integer, DataType.Integer));
         var functionCallInfo = FunctionCallInfo.CreateWithArguments(ExecutionThread.DefaultInstance,
             new VariantValue(5), new VariantValue(6));
         var ret = func.Delegate(functionCallInfo);
@@ -45,7 +46,7 @@ public sealed class FunctionsManagerTests
         _functionsManager.RegisterFunction(SumIntegersVariadic);
 
         var func = _functionsManager.FindByName("add",
-            FunctionArgumentsTypes.FromPositionArguments(
+            FunctionCallArgumentsTypes.FromPositionArguments(
                 DataType.String, DataType.Integer, DataType.Integer));
         var functionCallInfo = FunctionCallInfo.CreateWithArguments(ExecutionThread.DefaultInstance,
             new VariantValue("sum"), new VariantValue(5), new VariantValue(5));
@@ -61,7 +62,7 @@ public sealed class FunctionsManagerTests
         _functionsManager.RegisterFunction(SumIntegersVariadic);
 
         var func = _functionsManager.FindByName("add",
-            FunctionArgumentsTypes.FromPositionArguments(DataType.String));
+            FunctionCallArgumentsTypes.FromPositionArguments(DataType.String));
         var functionCallInfo = FunctionCallInfo.CreateWithArguments(ExecutionThread.DefaultInstance, new VariantValue("sum"));
         var ret = func.Delegate(functionCallInfo);
 
@@ -84,17 +85,17 @@ public sealed class FunctionsManagerTests
     public void RegisterFunction_RegisterFromClass_ShouldEvalCorrectly()
     {
         // Arrange.
-        _functionsManager.RegisterFromType<TestClass1>();
+        _functionsManager.RegisterFromType(typeof(TestClass1));
 
         // Act.
         var func1 = _functionsManager.FindByName("test_class1",
-            FunctionArgumentsTypes.FromPositionArguments(DataType.Integer, DataType.String));
+            FunctionCallArgumentsTypes.FromPositionArguments(DataType.Integer, DataType.String));
         var value1 = ExecutionThread.DefaultInstance.RunFunction(func1.Delegate, 1, "2");
         var func2 = _functionsManager.FindByName("test_class2",
-            FunctionArgumentsTypes.FromPositionArguments(DataType.Integer, DataType.String));
+            FunctionCallArgumentsTypes.FromPositionArguments(DataType.Integer, DataType.String));
         var value2 = ExecutionThread.DefaultInstance.RunFunction(func2.Delegate, 1, "2");
         var func3 = _functionsManager.FindByName("test_class3",
-            FunctionArgumentsTypes.FromPositionArguments(DataType.Integer, DataType.String));
+            FunctionCallArgumentsTypes.FromPositionArguments(DataType.Integer, DataType.String));
         var value3 = ExecutionThread.DefaultInstance.RunFunction(func3.Delegate, 1, "2");
 
         // Assert.
@@ -120,13 +121,13 @@ public sealed class FunctionsManagerTests
     public void RegisterFunction_RegisterFromType_ShouldEvalCorrectly()
     {
         // Arrange.
-        _functionsManager.RegisterFromType<TestClass2>();
+        _functionsManager.RegisterFromType(typeof(TestClass2));
 
         // Act.
         var func1 = _functionsManager.FindByName("function1");
         ExecutionThread.DefaultInstance.RunFunction(func1.Delegate);
         var func2 = _functionsManager.FindByName("testfunc",
-            FunctionArgumentsTypes.FromPositionArguments(DataType.String));
+            FunctionCallArgumentsTypes.FromPositionArguments(DataType.String));
         var value2 = ExecutionThread.DefaultInstance.RunFunction(func2.Delegate, "2");
 
         // Assert.

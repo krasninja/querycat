@@ -3,8 +3,9 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Json.Path;
-using QueryCat.Backend.Types;
-using QueryCat.Backend.Utils;
+using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Functions;
+using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Functions.StandardFunctions;
 

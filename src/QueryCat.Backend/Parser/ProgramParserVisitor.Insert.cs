@@ -3,7 +3,7 @@ using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Function;
 using QueryCat.Backend.Ast.Nodes.Insert;
 using QueryCat.Backend.Ast.Nodes.Select;
-using QueryCat.Backend.Types;
+using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Parser;
 

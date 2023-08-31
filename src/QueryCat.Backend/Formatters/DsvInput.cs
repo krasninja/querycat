@@ -1,3 +1,4 @@
+using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Storage;

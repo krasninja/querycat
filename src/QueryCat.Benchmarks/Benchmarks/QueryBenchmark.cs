@@ -1,4 +1,5 @@
 using BenchmarkDotNet.Attributes;
+using QueryCat.Backend.Core.Plugins;
 using QueryCat.Backend.Execution;
 
 namespace QueryCat.Benchmarks.Benchmarks;

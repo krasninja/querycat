@@ -1,8 +1,7 @@
 using System.ComponentModel;
-using QueryCat.Backend.Functions;
-using QueryCat.Backend.Relational;
+using QueryCat.Backend.Core.Functions;
+using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Storage;
-using QueryCat.Backend.Types;
 
 namespace QueryCat.Backend.Formatters;
 
@@ -27,7 +26,7 @@ internal sealed class NullOutput : RowsOutput
     }
 
     /// <inheritdoc />
-    protected override void OnWrite(Row row)
+    protected override void OnWrite(in VariantValue[] values)
     {
     }
 }

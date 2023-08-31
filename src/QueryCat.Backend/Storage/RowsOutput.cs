@@ -1,5 +1,5 @@
-using QueryCat.Backend.Abstractions;
-using QueryCat.Backend.Relational;
+using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Storage;
 
@@ -13,7 +13,7 @@ public abstract class RowsOutput : IRowsOutput
     /// <summary>
     /// Query context.
     /// </summary>
-    public QueryContext QueryContext { get; set; } = new EmptyQueryContext();
+    public QueryContext QueryContext { get; set; } = NullQueryContext.Instance;
 
     /// <inheritdoc />
     public abstract void Open();
@@ -28,21 +28,24 @@ public abstract class RowsOutput : IRowsOutput
     }
 
     /// <inheritdoc />
-    public void Write(Row row)
+    public RowsOutputOptions Options { get; protected set; } = new();
+
+    /// <inheritdoc />
+    public void WriteValues(in VariantValue[] values)
     {
         if (_isFirstCall)
         {
             Initialize();
             _isFirstCall = false;
         }
-        OnWrite(row);
+        OnWrite(values);
     }
 
     /// <summary>
     /// Write a row.
     /// </summary>
-    /// <param name="row">Row to write.</param>
-    protected abstract void OnWrite(Row row);
+    /// <param name="values">Values to write.</param>
+    protected abstract void OnWrite(in VariantValue[] values);
 
     /// <summary>
     /// The method is called before first Write to initialize input.

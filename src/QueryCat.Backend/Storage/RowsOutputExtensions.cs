@@ -1,6 +1,5 @@
-using QueryCat.Backend.Abstractions;
+using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Execution;
-using QueryCat.Backend.Formatters;
 using QueryCat.Backend.Relational.Iterators;
 
 namespace QueryCat.Backend.Storage;
@@ -24,8 +23,7 @@ public static class RowsOutputExtensions
         CancellationToken cancellationToken = default)
     {
         // For plain output let's adjust columns width first.
-        if ((rowsOutput is TextTableOutput || rowsOutput is PagingOutput)
-            && executionThread.Options.AnalyzeRowsCount > 0)
+        if (rowsOutput.Options.RequiresColumnsLengthAdjust && executionThread.Options.AnalyzeRowsCount > 0)
         {
             rowsIterator = new AdjustColumnsLengthsIterator(rowsIterator, executionThread.Options.AnalyzeRowsCount);
         }
@@ -44,7 +42,7 @@ public static class RowsOutputExtensions
                 rowsOutput.QueryContext = queryContext;
                 isOpened = true;
             }
-            rowsOutput.Write(rowsIterator.Current);
+            rowsOutput.WriteValues(rowsIterator.Current.Values);
         }
         if (isOpened)
         {

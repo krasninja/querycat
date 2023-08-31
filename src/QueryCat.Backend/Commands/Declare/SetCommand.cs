@@ -1,7 +1,7 @@
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Declare;
+using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Execution;
-using QueryCat.Backend.Types;
 
 namespace QueryCat.Backend.Commands.Declare;
 
@@ -17,7 +17,7 @@ internal class SetCommand : ICommand
             throw new CannotFindIdentifierException(setNode.Name);
         }
 
-        var valueHandler = executionThread.StatementsVisitor.RunAndReturn(setNode.ValueNode);
+        var valueHandler = new StatementsVisitor(executionThread).RunAndReturn(setNode.ValueNode);
 
         return new FuncCommandHandler(() =>
         {

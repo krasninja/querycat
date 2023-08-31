@@ -1,3 +1,5 @@
+using QueryCat.Backend.Core.Data;
+
 namespace QueryCat.Backend.Storage;
 
 /// <summary>

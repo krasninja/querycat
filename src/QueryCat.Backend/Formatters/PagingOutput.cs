@@ -1,6 +1,5 @@
-using QueryCat.Backend.Abstractions;
-using QueryCat.Backend.Relational;
-using QueryCat.Backend.Storage;
+using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Formatters;
 
@@ -30,6 +29,12 @@ public class PagingOutput : IRowsOutput
         set => _rowsOutput.QueryContext = value;
     }
 
+    /// <inheritdoc />
+    public RowsOutputOptions Options { get; } = new()
+    {
+        RequiresColumnsLengthAdjust = true,
+    };
+
     public PagingOutput(IRowsOutput rowsOutput, int pagingRowsCount = 20, CancellationTokenSource? cts = null)
     {
         _rowsOutput = rowsOutput;
@@ -51,9 +56,9 @@ public class PagingOutput : IRowsOutput
     }
 
     /// <inheritdoc />
-    public void Write(Row row)
+    public void WriteValues(in VariantValue[] values)
     {
-        _rowsOutput.Write(row);
+        _rowsOutput.WriteValues(values);
         if (PagingRowsCount != NoLimit
             && ++_rowsCounter >= PagingRowsCount
             && !Console.IsInputRedirected

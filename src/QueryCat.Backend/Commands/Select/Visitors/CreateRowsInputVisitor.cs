@@ -1,12 +1,12 @@
 using Microsoft.Extensions.Logging;
-using QueryCat.Backend.Abstractions;
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Commands.Select.Inputs;
+using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Storage;
-using QueryCat.Backend.Types;
-using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Commands.Select.Visitors;
 

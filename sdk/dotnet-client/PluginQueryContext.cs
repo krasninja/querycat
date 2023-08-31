@@ -1,7 +1,10 @@
-using QueryCat.Backend.Storage;
+using QueryCat.Backend.Core.Data;
 
 namespace QueryCat.Plugins.Client;
 
+/// <summary>
+/// Query context oriented for plugins.
+/// </summary>
 public sealed class PluginQueryContext : QueryContext
 {
     /// <inheritdoc />

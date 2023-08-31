@@ -7,7 +7,7 @@ public sealed class InOperationExpressionNode : ExpressionNode
 {
     public ExpressionNode ExpressionNode { get; }
 
-    public InExpressionValuesNode InExpressionValuesNodes { get; }
+    public ExpressionNode InExpressionValuesNodes { get; }
 
     public bool IsNot { get; }
 
@@ -17,19 +17,8 @@ public sealed class InOperationExpressionNode : ExpressionNode
     /// <inheritdoc />
     public InOperationExpressionNode(ExpressionNode expressionNode, ExpressionNode inExpressionValues, bool isNot = false)
     {
-        if (inExpressionValues is InExpressionValuesNode inValuesNode)
-        {
-            InExpressionValuesNodes = inValuesNode;
-        }
-        else
-        {
-            InExpressionValuesNodes = new InExpressionValuesNode(new List<ExpressionNode>
-            {
-                inExpressionValues
-            });
-        }
-
         ExpressionNode = expressionNode;
+        InExpressionValuesNodes = inExpressionValues;
         IsNot = isNot;
     }
 

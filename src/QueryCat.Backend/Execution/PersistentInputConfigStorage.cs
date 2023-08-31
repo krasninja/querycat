@@ -1,8 +1,8 @@
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
+using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Storage;
-using QueryCat.Backend.Types;
-using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Execution;
 
@@ -19,13 +19,6 @@ public class PersistentInputConfigStorage : MemoryInputConfigStorage
     public PersistentInputConfigStorage(string configFile)
     {
         _configFile = configFile;
-    }
-
-    /// <inheritdoc />
-    public override void Unset(string key)
-    {
-        _writesCount++;
-        base.Unset(key);
     }
 
     /// <inheritdoc />

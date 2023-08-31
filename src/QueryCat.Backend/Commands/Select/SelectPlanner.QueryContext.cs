@@ -3,10 +3,10 @@ using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Commands.Select.Iterators;
 using QueryCat.Backend.Commands.Select.Visitors;
-using QueryCat.Backend.Functions;
-using QueryCat.Backend.Relational;
+using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Functions;
+using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Storage;
-using QueryCat.Backend.Types;
 
 namespace QueryCat.Backend.Commands.Select;
 
@@ -134,9 +134,21 @@ internal sealed partial class SelectPlanner
                 return false;
             }
             var values = new List<IFuncUnit>();
-            foreach (var inExpressionValue in inOperationExpressionNode.InExpressionValuesNodes.ValuesNodes)
+            if (inOperationExpressionNode.InExpressionValuesNodes is not InExpressionValuesNode inExpressionValuesNode)
             {
+                return false;
+            }
+            foreach (var inExpressionValue in inExpressionValuesNode.ValuesNodes)
+            {
+                if (inExpressionValue is SelectQueryNode)
+                {
+                    continue;
+                }
                 values.Add(makeDelegateVisitor.RunAndReturn(inExpressionValue));
+            }
+            if (!values.Any())
+            {
+                return false;
             }
             commandContext.Conditions.AddCondition(column, VariantValue.Operation.In, values.ToArray());
             return true;

@@ -1,8 +1,9 @@
 using System.IO.Compression;
 using System.Reflection;
 using Microsoft.Extensions.Logging;
-using QueryCat.Backend.Abstractions.Plugins;
-using QueryCat.Backend.Functions;
+using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Functions;
+using QueryCat.Backend.Core.Plugins;
 
 namespace QueryCat.Backend.AssemblyPlugins;
 
@@ -110,7 +111,35 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader
     {
         foreach (var pluginAssembly in _loadedAssemblies)
         {
-            functionsManager.RegisterFromAssembly(pluginAssembly);
+            RegisterFromAssembly(pluginAssembly);
+        }
+    }
+
+    public void RegisterFromAssembly(Assembly assembly)
+    {
+        // If there is class Registration with RegisterFunctions method - call it instead. Use reflection otherwise.
+        var registerType = assembly.GetType(assembly.GetName().Name + ".Registration");
+        if (registerType != null)
+        {
+            var registerMethod = registerType.GetMethod("RegisterFunctions");
+            if (registerMethod != null)
+            {
+                _functionsManager.RegisterFactory(fm =>
+                {
+                    registerMethod.Invoke(null, new object?[] { fm });
+                });
+                /*_registerFunctions.Add(fm =>
+                {
+                    registerMethod.Invoke(null, new object?[] { fm });
+                });*/
+            }
+        }
+        else
+        {
+            foreach (var type in assembly.GetTypes())
+            {
+                _functionsManager.RegisterFromType(type);
+            }
         }
     }
 

@@ -2,16 +2,14 @@ using System.Net;
 using System.Reflection;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
-using QueryCat.Backend;
-using QueryCat.Backend.Abstractions;
+using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Formatters;
-using QueryCat.Backend.Functions.StandardFunctions;
-using QueryCat.Backend.Relational;
 using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Storage;
-using QueryCat.Backend.Types;
-using QueryCat.Backend.Utils;
 
 namespace QueryCat.Cli.Infrastructure;
 
@@ -376,7 +374,7 @@ internal sealed class WebServer
         var dict = new Dictionary<string, object>
         {
             ["installedPlugins"] = localPlugins,
-            ["version"] = InfoFunctions.GetVersion(),
+            ["version"] = Application.GetVersion(),
             ["os"] = System.Runtime.InteropServices.RuntimeInformation.OSDescription.Trim(),
             ["date"] = DateTime.Now,
         };

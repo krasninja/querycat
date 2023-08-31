@@ -1,4 +1,4 @@
-using QueryCat.Backend.Types;
+using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Commands;
 

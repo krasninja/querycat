@@ -1,5 +1,5 @@
-using QueryCat.Backend.Abstractions;
-using QueryCat.Backend.Utils;
+using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend.Relational.Iterators;
 
