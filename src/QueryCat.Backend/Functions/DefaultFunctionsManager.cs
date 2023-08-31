@@ -16,7 +16,11 @@ public sealed class DefaultFunctionsManager : FunctionsManager
 {
     private const int DefaultCapacity = 42;
 
-    private record FunctionPreRegistration(FunctionDelegate Delegate, MemberInfo? MemberInfo, List<string> Signatures);
+    private record FunctionPreRegistration(
+        FunctionDelegate Delegate,
+        MemberInfo? MemberInfo,
+        List<string> Signatures,
+        string? Description = null);
 
     private readonly Dictionary<string, List<Function>> _functions = new(capacity: DefaultCapacity);
     private readonly Dictionary<string, IAggregateFunction> _aggregateFunctions = new(capacity: DefaultCapacity);
@@ -75,7 +79,7 @@ public sealed class DefaultFunctionsManager : FunctionsManager
         {
             var signatures = new List<string> { signature };
             _functionsPreRegistration.Add(functionName,
-                new FunctionPreRegistration(functionDelegate, memberInfo, signatures));
+                new FunctionPreRegistration(functionDelegate, memberInfo, signatures, description));
         }
     }
 
@@ -121,7 +125,10 @@ public sealed class DefaultFunctionsManager : FunctionsManager
         {
             var signatureAst = AstBuilder.BuildFunctionSignatureFromString(signature);
 
-            var function = new Function(preRegistration.Delegate, signatureAst);
+            var function = new Function(preRegistration.Delegate, signatureAst)
+            {
+                Description = preRegistration.Description ?? string.Empty,
+            };
             if (_functions.TryGetValue(NormalizeName(function.Name), out var sameNameFunctionsList))
             {
                 var similarFunction = sameNameFunctionsList.Find(f => f.IsSignatureEquals(function));

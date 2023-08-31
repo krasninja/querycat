@@ -77,6 +77,9 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
                 }
             }
         }
+
+        RegisterFunctions(_thread.FunctionsManager);
+
         return Task.CompletedTask;
     }
 
@@ -168,8 +171,6 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
             process?.Close();
             throw;
         }
-
-        RegisterFunctions(_thread.FunctionsManager);
 
         _loadedPlugins.Add(GetPluginName(file));
     }
