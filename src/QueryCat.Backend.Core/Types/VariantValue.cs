@@ -220,6 +220,10 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         {
             return new VariantValue(timeSpan);
         }
+        if (obj is Enum)
+        {
+            return new VariantValue(obj.ToString());
+        }
         if (obj is JsonValue jsonValue)
         {
             var jsonType = jsonValue.GetValue<JsonElement>().ValueKind;

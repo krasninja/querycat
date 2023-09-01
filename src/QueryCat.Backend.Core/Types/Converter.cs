@@ -34,17 +34,16 @@ public static class Converter
     /// <returns>Application type.</returns>
     public static DataType ConvertFromSystem(Type type)
     {
-        if (type.IsEnum)
-        {
-            return DataType.String;
-        }
-
         if (type.IsGenericType
             && type.GetGenericTypeDefinition() == typeof(Nullable<>))
         {
             type = type.GetGenericArguments()[0];
         }
 
+        if (type.IsEnum)
+        {
+            return DataType.String;
+        }
         if (typeof(DateTimeOffset).IsAssignableFrom(type))
         {
             return DataType.Timestamp;
