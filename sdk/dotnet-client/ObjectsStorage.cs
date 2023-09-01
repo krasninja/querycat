@@ -26,7 +26,7 @@ public sealed class ObjectsStorage
     {
         lock (_objLock)
         {
-            if (_objects.Count - 1 > index)
+            if (index > _objects.Count - 1)
             {
                 throw new QueryCatPluginException(ErrorType.INVALID_OBJECT, "Invalid object handle.");
             }
