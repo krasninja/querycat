@@ -49,7 +49,7 @@ public sealed class ObjectsStorage
     {
         lock (_objLock)
         {
-            if (_objects.Count - 1 > index)
+            if (index > _objects.Count - 1)
             {
                 obj = null;
                 return false;
