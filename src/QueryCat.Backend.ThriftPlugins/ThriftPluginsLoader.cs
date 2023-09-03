@@ -87,8 +87,7 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
     public override bool IsCorrectPluginFile(string pluginFile)
     {
         if (!File.Exists(pluginFile)
-            || !pluginFile.Contains("plugin", StringComparison.OrdinalIgnoreCase)
-            || Path.GetExtension(pluginFile).Equals(".dll", StringComparison.OrdinalIgnoreCase))
+            || !Path.GetFileName(pluginFile).Contains("plugin", StringComparison.OrdinalIgnoreCase))
         {
             return false;
         }
