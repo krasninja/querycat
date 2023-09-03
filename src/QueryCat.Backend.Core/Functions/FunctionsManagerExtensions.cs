@@ -75,7 +75,8 @@ public static class FunctionsManagerExtensions
                     var functionName = GetFunctionNameWithAlternate(classAttribute.Signature, type);
                     var signature = FunctionFormatter.FormatSignatureFromParameters(functionName, firstConstructor.GetParameters(), typeof(object));
                     var @delegate = FunctionFormatter.CreateDelegateFromMethod(firstConstructor);
-                    functionsManager.RegisterFunction(signature, @delegate);
+                    var description = type.GetCustomAttribute<DescriptionAttribute>()?.Description ?? string.Empty;
+                    functionsManager.RegisterFunction(signature, @delegate, description);
                 }
             }
             return;
@@ -99,6 +100,7 @@ public static class FunctionsManagerExtensions
             }
 
             var methodParameters = method.GetParameters();
+            var description = type.GetCustomAttribute<DescriptionAttribute>()?.Description ?? string.Empty;
             // The standard case: VariantValue FunctionName(FunctionCallInfo args).
             if (methodParameters.Length == 1
                 && methodParameters[0].ParameterType == typeof(FunctionCallInfo)
@@ -106,7 +108,7 @@ public static class FunctionsManagerExtensions
             {
                 var args = Expression.Parameter(typeof(FunctionCallInfo), "input");
                 var func = Expression.Lambda<FunctionDelegate>(Expression.Call(method, args), args).Compile();
-                functionsManager.RegisterFunction(methodSignature.Signature, func);
+                functionsManager.RegisterFunction(methodSignature.Signature, func, description);
             }
             // Non-standard case. Construct signature from function definition.
             else
@@ -114,7 +116,7 @@ public static class FunctionsManagerExtensions
                 var functionName = GetFunctionNameWithAlternate(methodSignature.Signature, method);
                 var signature = FunctionFormatter.FormatSignatureFromParameters(functionName, method.GetParameters(), method.ReturnType);
                 var @delegate = FunctionFormatter.CreateDelegateFromMethod(method);
-                functionsManager.RegisterFunction(signature, @delegate);
+                functionsManager.RegisterFunction(signature, @delegate, description);
             }
         }
     }
