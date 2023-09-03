@@ -32,24 +32,24 @@ using Thrift.Processor;
 namespace QueryCat.Plugins.Sdk
 {
 
-  public partial class KeyColumn : TBase
+  public partial class Function : TBase
   {
 
-    public string Name { get; set; } = string.Empty;
+    public string Signature { get; set; } = string.Empty;
 
-    public bool IsRequired { get; set; } = false;
+    public string Description { get; set; } = string.Empty;
 
-    public List<string>? Operations { get; set; }
+    public bool IsAggregate { get; set; } = false;
 
-    public KeyColumn()
+    public Function()
     {
     }
 
-    public KeyColumn(string name, bool is_required, List<string>? operations) : this()
+    public Function(string signature, string description, bool is_aggregate) : this()
     {
-      this.Name = name;
-      this.IsRequired = is_required;
-      this.Operations = operations;
+      this.Signature = signature;
+      this.Description = description;
+      this.IsAggregate = is_aggregate;
     }
 
     public async global::System.Threading.Tasks.Task ReadAsync(TProtocol iprot, CancellationToken cancellationToken)
@@ -57,9 +57,9 @@ namespace QueryCat.Plugins.Sdk
       iprot.IncrementRecursionDepth();
       try
       {
-        bool isset_name = false;
-        bool isset_is_required = false;
-        bool isset_operations = false;
+        bool isset_signature = false;
+        bool isset_description = false;
+        bool isset_is_aggregate = false;
         TField field;
         await iprot.ReadStructBeginAsync(cancellationToken);
         while (true)
@@ -75,8 +75,8 @@ namespace QueryCat.Plugins.Sdk
             case 1:
               if (field.Type == TType.String)
               {
-                Name = await iprot.ReadStringAsync(cancellationToken);
-                isset_name = true;
+                Signature = await iprot.ReadStringAsync(cancellationToken);
+                isset_signature = true;
               }
               else
               {
@@ -84,10 +84,10 @@ namespace QueryCat.Plugins.Sdk
               }
               break;
             case 2:
-              if (field.Type == TType.Bool)
+              if (field.Type == TType.String)
               {
-                IsRequired = await iprot.ReadBoolAsync(cancellationToken);
-                isset_is_required = true;
+                Description = await iprot.ReadStringAsync(cancellationToken);
+                isset_description = true;
               }
               else
               {
@@ -95,20 +95,10 @@ namespace QueryCat.Plugins.Sdk
               }
               break;
             case 3:
-              if (field.Type == TType.List)
+              if (field.Type == TType.Bool)
               {
-                {
-                  var _list48 = await iprot.ReadListBeginAsync(cancellationToken);
-                  Operations = new List<string>(_list48.Count);
-                  for(int _i49 = 0; _i49 < _list48.Count; ++_i49)
-                  {
-                    string _elem50;
-                    _elem50 = await iprot.ReadStringAsync(cancellationToken);
-                    Operations.Add(_elem50);
-                  }
-                  await iprot.ReadListEndAsync(cancellationToken);
-                }
-                isset_operations = true;
+                IsAggregate = await iprot.ReadBoolAsync(cancellationToken);
+                isset_is_aggregate = true;
               }
               else
               {
@@ -124,15 +114,15 @@ namespace QueryCat.Plugins.Sdk
         }
 
         await iprot.ReadStructEndAsync(cancellationToken);
-        if (!isset_name)
+        if (!isset_signature)
         {
           throw new TProtocolException(TProtocolException.INVALID_DATA);
         }
-        if (!isset_is_required)
+        if (!isset_description)
         {
           throw new TProtocolException(TProtocolException.INVALID_DATA);
         }
-        if (!isset_operations)
+        if (!isset_is_aggregate)
         {
           throw new TProtocolException(TProtocolException.INVALID_DATA);
         }
@@ -148,38 +138,33 @@ namespace QueryCat.Plugins.Sdk
       oprot.IncrementRecursionDepth();
       try
       {
-        var tmp51 = new TStruct("KeyColumn");
-        await oprot.WriteStructBeginAsync(tmp51, cancellationToken);
-        var tmp52 = new TField();
-        if((Name != null))
+        var tmp16 = new TStruct("Function");
+        await oprot.WriteStructBeginAsync(tmp16, cancellationToken);
+        var tmp17 = new TField();
+        if((Signature != null))
         {
-          tmp52.Name = "name";
-          tmp52.Type = TType.String;
-          tmp52.ID = 1;
-          await oprot.WriteFieldBeginAsync(tmp52, cancellationToken);
-          await oprot.WriteStringAsync(Name, cancellationToken);
+          tmp17.Name = "signature";
+          tmp17.Type = TType.String;
+          tmp17.ID = 1;
+          await oprot.WriteFieldBeginAsync(tmp17, cancellationToken);
+          await oprot.WriteStringAsync(Signature, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
-        tmp52.Name = "is_required";
-        tmp52.Type = TType.Bool;
-        tmp52.ID = 2;
-        await oprot.WriteFieldBeginAsync(tmp52, cancellationToken);
-        await oprot.WriteBoolAsync(IsRequired, cancellationToken);
+        if((Description != null))
+        {
+          tmp17.Name = "description";
+          tmp17.Type = TType.String;
+          tmp17.ID = 2;
+          await oprot.WriteFieldBeginAsync(tmp17, cancellationToken);
+          await oprot.WriteStringAsync(Description, cancellationToken);
+          await oprot.WriteFieldEndAsync(cancellationToken);
+        }
+        tmp17.Name = "is_aggregate";
+        tmp17.Type = TType.Bool;
+        tmp17.ID = 3;
+        await oprot.WriteFieldBeginAsync(tmp17, cancellationToken);
+        await oprot.WriteBoolAsync(IsAggregate, cancellationToken);
         await oprot.WriteFieldEndAsync(cancellationToken);
-        if((Operations != null))
-        {
-          tmp52.Name = "operations";
-          tmp52.Type = TType.List;
-          tmp52.ID = 3;
-          await oprot.WriteFieldBeginAsync(tmp52, cancellationToken);
-          await oprot.WriteListBeginAsync(new TList(TType.String, Operations.Count), cancellationToken);
-          foreach (string _iter53 in Operations)
-          {
-            await oprot.WriteStringAsync(_iter53, cancellationToken);
-          }
-          await oprot.WriteListEndAsync(cancellationToken);
-          await oprot.WriteFieldEndAsync(cancellationToken);
-        }
         await oprot.WriteFieldStopAsync(cancellationToken);
         await oprot.WriteStructEndAsync(cancellationToken);
       }
@@ -191,46 +176,46 @@ namespace QueryCat.Plugins.Sdk
 
     public override bool Equals(object? that)
     {
-      if (that is not KeyColumn other) return false;
+      if (that is not Function other) return false;
       if (ReferenceEquals(this, other)) return true;
-      return global::System.Object.Equals(Name, other.Name)
-        && global::System.Object.Equals(IsRequired, other.IsRequired)
-        && TCollections.Equals(Operations, other.Operations);
+      return global::System.Object.Equals(Signature, other.Signature)
+        && global::System.Object.Equals(Description, other.Description)
+        && global::System.Object.Equals(IsAggregate, other.IsAggregate);
     }
 
     public override int GetHashCode() {
       int hashcode = 157;
       unchecked {
-        if((Name != null))
+        if((Signature != null))
         {
-          hashcode = (hashcode * 397) + Name.GetHashCode();
+          hashcode = (hashcode * 397) + Signature.GetHashCode();
         }
-        hashcode = (hashcode * 397) + IsRequired.GetHashCode();
-        if((Operations != null))
+        if((Description != null))
         {
-          hashcode = (hashcode * 397) + TCollections.GetHashCode(Operations);
+          hashcode = (hashcode * 397) + Description.GetHashCode();
         }
+        hashcode = (hashcode * 397) + IsAggregate.GetHashCode();
       }
       return hashcode;
     }
 
     public override string ToString()
     {
-      var tmp54 = new StringBuilder("KeyColumn(");
-      if((Name != null))
+      var tmp18 = new StringBuilder("Function(");
+      if((Signature != null))
       {
-        tmp54.Append(", Name: ");
-        Name.ToString(tmp54);
+        tmp18.Append(", Signature: ");
+        Signature.ToString(tmp18);
       }
-      tmp54.Append(", IsRequired: ");
-      IsRequired.ToString(tmp54);
-      if((Operations != null))
+      if((Description != null))
       {
-        tmp54.Append(", Operations: ");
-        Operations.ToString(tmp54);
+        tmp18.Append(", Description: ");
+        Description.ToString(tmp18);
       }
-      tmp54.Append(')');
-      return tmp54.ToString();
+      tmp18.Append(", IsAggregate: ");
+      IsAggregate.ToString(tmp18);
+      tmp18.Append(')');
+      return tmp18.ToString();
     }
   }
 

@@ -13,6 +13,10 @@ namespace QueryCat.Backend.ThriftPlugins;
 
 public partial class ThriftPluginsServer
 {
+    internal record PluginContextFunction(
+        string Signature,
+        string Description);
+
     internal class PluginContext
     {
         public string Name { get; set; } = string.Empty;
@@ -21,7 +25,7 @@ public partial class ThriftPluginsServer
 
         public Plugin.Client? Client { get; set; }
 
-        public HashSet<string> Functions { get; } = new();
+        public HashSet<PluginContextFunction> Functions { get; } = new();
 
         public ObjectsStorage ObjectsStorage { get; } = new();
     }
@@ -36,7 +40,7 @@ public partial class ThriftPluginsServer
         }
 
         /// <inheritdoc />
-        public async Task RegisterPluginAsync(
+        public async Task<RegistrationResult> RegisterPluginAsync(
             string auth_token,
             string callback_uri,
             PluginData? plugin_data,
@@ -44,7 +48,7 @@ public partial class ThriftPluginsServer
         {
             if (plugin_data == null)
             {
-                return;
+                return CreateEmptyRegistrationResult();
             }
 
             _thriftPluginsServer._logger.LogTrace(
@@ -64,7 +68,8 @@ public partial class ThriftPluginsServer
             {
                 foreach (var function in plugin_data.Functions)
                 {
-                    context.Functions.Add(function);
+                    context.Functions.Add(
+                        new PluginContextFunction(function.Signature, function.Description));
                 }
             }
 
@@ -72,7 +77,11 @@ public partial class ThriftPluginsServer
             semaphoreSlim?.Release();
 
             _thriftPluginsServer._logger.LogDebug("Registered plugin '{PluginName}'.", plugin_data.Name);
+            return CreateEmptyRegistrationResult();
         }
+
+        private static RegistrationResult CreateEmptyRegistrationResult()
+            => new(Application.GetVersion(), new List<int>());
 
         private async Task<PluginContext> CreateClientConnection(
             string callbackUri,
@@ -171,7 +180,7 @@ public partial class ThriftPluginsServer
         }
 
         /// <inheritdoc />
-        public Task RegisterPluginAsync(string auth_token, string callback_uri, PluginData? plugin_data,
+        public Task<RegistrationResult> RegisterPluginAsync(string auth_token, string callback_uri, PluginData? plugin_data,
             CancellationToken cancellationToken = default)
         {
             try

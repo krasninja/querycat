@@ -185,12 +185,14 @@ public partial class ThriftPluginClient : IDisposable
 
         var assemblyName = Assembly.GetEntryAssembly()?.GetName();
         var version = assemblyName?.Version;
+        var functions = _functionsManager.GetPluginFunctions().Select(f =>
+            new Function(f.Signature, f.Description, false));
         await _client.RegisterPluginAsync(
             _authToken,
             $"net.pipe://localhost/{_clientServerNamedPipe}",
             new PluginData
             {
-                Functions = _functionsManager.GetSignatures(),
+                Functions = functions.ToList(),
                 Name = assemblyName?.Name ?? string.Empty,
                 Version = version?.ToString() ?? "0.0.0",
             },

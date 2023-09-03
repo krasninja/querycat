@@ -32,39 +32,21 @@ using Thrift.Processor;
 namespace QueryCat.Plugins.Sdk
 {
 
-  public partial class RowsList : TBase
+  public partial class RegistrationResult : TBase
   {
-    private bool _has_more;
 
-    public bool HasMore
-    {
-      get
-      {
-        return _has_more;
-      }
-      set
-      {
-        __isset.has_more = true;
-        this._has_more = value;
-      }
-    }
+    public string Version { get; set; } = string.Empty;
 
-    public List<global::QueryCat.Plugins.Sdk.VariantValue>? Values { get; set; }
+    public List<int>? FunctionsIds { get; set; }
 
-
-    public Isset __isset;
-    public struct Isset
-    {
-      public bool has_more;
-    }
-
-    public RowsList()
+    public RegistrationResult()
     {
     }
 
-    public RowsList(List<global::QueryCat.Plugins.Sdk.VariantValue>? values) : this()
+    public RegistrationResult(string version, List<int>? functions_ids) : this()
     {
-      this.Values = values;
+      this.Version = version;
+      this.FunctionsIds = functions_ids;
     }
 
     public async global::System.Threading.Tasks.Task ReadAsync(TProtocol iprot, CancellationToken cancellationToken)
@@ -72,7 +54,8 @@ namespace QueryCat.Plugins.Sdk
       iprot.IncrementRecursionDepth();
       try
       {
-        bool isset_values = false;
+        bool isset_version = false;
+        bool isset_functions_ids = false;
         TField field;
         await iprot.ReadStructBeginAsync(cancellationToken);
         while (true)
@@ -86,9 +69,10 @@ namespace QueryCat.Plugins.Sdk
           switch (field.ID)
           {
             case 1:
-              if (field.Type == TType.Bool)
+              if (field.Type == TType.String)
               {
-                HasMore = await iprot.ReadBoolAsync(cancellationToken);
+                Version = await iprot.ReadStringAsync(cancellationToken);
+                isset_version = true;
               }
               else
               {
@@ -99,18 +83,17 @@ namespace QueryCat.Plugins.Sdk
               if (field.Type == TType.List)
               {
                 {
-                  var _list40 = await iprot.ReadListBeginAsync(cancellationToken);
-                  Values = new List<global::QueryCat.Plugins.Sdk.VariantValue>(_list40.Count);
-                  for(int _i41 = 0; _i41 < _list40.Count; ++_i41)
+                  var _list28 = await iprot.ReadListBeginAsync(cancellationToken);
+                  FunctionsIds = new List<int>(_list28.Count);
+                  for(int _i29 = 0; _i29 < _list28.Count; ++_i29)
                   {
-                    global::QueryCat.Plugins.Sdk.VariantValue _elem42;
-                    _elem42 = new global::QueryCat.Plugins.Sdk.VariantValue();
-                    await _elem42.ReadAsync(iprot, cancellationToken);
-                    Values.Add(_elem42);
+                    int _elem30;
+                    _elem30 = await iprot.ReadI32Async(cancellationToken);
+                    FunctionsIds.Add(_elem30);
                   }
                   await iprot.ReadListEndAsync(cancellationToken);
                 }
-                isset_values = true;
+                isset_functions_ids = true;
               }
               else
               {
@@ -126,7 +109,11 @@ namespace QueryCat.Plugins.Sdk
         }
 
         await iprot.ReadStructEndAsync(cancellationToken);
-        if (!isset_values)
+        if (!isset_version)
+        {
+          throw new TProtocolException(TProtocolException.INVALID_DATA);
+        }
+        if (!isset_functions_ids)
         {
           throw new TProtocolException(TProtocolException.INVALID_DATA);
         }
@@ -142,28 +129,28 @@ namespace QueryCat.Plugins.Sdk
       oprot.IncrementRecursionDepth();
       try
       {
-        var tmp43 = new TStruct("RowsList");
-        await oprot.WriteStructBeginAsync(tmp43, cancellationToken);
-        var tmp44 = new TField();
-        if(__isset.has_more)
+        var tmp31 = new TStruct("RegistrationResult");
+        await oprot.WriteStructBeginAsync(tmp31, cancellationToken);
+        var tmp32 = new TField();
+        if((Version != null))
         {
-          tmp44.Name = "has_more";
-          tmp44.Type = TType.Bool;
-          tmp44.ID = 1;
-          await oprot.WriteFieldBeginAsync(tmp44, cancellationToken);
-          await oprot.WriteBoolAsync(HasMore, cancellationToken);
+          tmp32.Name = "version";
+          tmp32.Type = TType.String;
+          tmp32.ID = 1;
+          await oprot.WriteFieldBeginAsync(tmp32, cancellationToken);
+          await oprot.WriteStringAsync(Version, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
-        if((Values != null))
+        if((FunctionsIds != null))
         {
-          tmp44.Name = "values";
-          tmp44.Type = TType.List;
-          tmp44.ID = 2;
-          await oprot.WriteFieldBeginAsync(tmp44, cancellationToken);
-          await oprot.WriteListBeginAsync(new TList(TType.Struct, Values.Count), cancellationToken);
-          foreach (global::QueryCat.Plugins.Sdk.VariantValue _iter45 in Values)
+          tmp32.Name = "functions_ids";
+          tmp32.Type = TType.List;
+          tmp32.ID = 2;
+          await oprot.WriteFieldBeginAsync(tmp32, cancellationToken);
+          await oprot.WriteListBeginAsync(new TList(TType.I32, FunctionsIds.Count), cancellationToken);
+          foreach (int _iter33 in FunctionsIds)
           {
-            await _iter45.WriteAsync(oprot, cancellationToken);
+            await oprot.WriteI32Async(_iter33, cancellationToken);
           }
           await oprot.WriteListEndAsync(cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
@@ -179,22 +166,22 @@ namespace QueryCat.Plugins.Sdk
 
     public override bool Equals(object? that)
     {
-      if (that is not RowsList other) return false;
+      if (that is not RegistrationResult other) return false;
       if (ReferenceEquals(this, other)) return true;
-      return ((__isset.has_more == other.__isset.has_more) && ((!__isset.has_more) || (global::System.Object.Equals(HasMore, other.HasMore))))
-        && TCollections.Equals(Values, other.Values);
+      return global::System.Object.Equals(Version, other.Version)
+        && TCollections.Equals(FunctionsIds, other.FunctionsIds);
     }
 
     public override int GetHashCode() {
       int hashcode = 157;
       unchecked {
-        if(__isset.has_more)
+        if((Version != null))
         {
-          hashcode = (hashcode * 397) + HasMore.GetHashCode();
+          hashcode = (hashcode * 397) + Version.GetHashCode();
         }
-        if((Values != null))
+        if((FunctionsIds != null))
         {
-          hashcode = (hashcode * 397) + TCollections.GetHashCode(Values);
+          hashcode = (hashcode * 397) + TCollections.GetHashCode(FunctionsIds);
         }
       }
       return hashcode;
@@ -202,22 +189,19 @@ namespace QueryCat.Plugins.Sdk
 
     public override string ToString()
     {
-      var tmp46 = new StringBuilder("RowsList(");
-      int tmp47 = 0;
-      if(__isset.has_more)
+      var tmp34 = new StringBuilder("RegistrationResult(");
+      if((Version != null))
       {
-        if(0 < tmp47++) { tmp46.Append(", "); }
-        tmp46.Append("HasMore: ");
-        HasMore.ToString(tmp46);
+        tmp34.Append(", Version: ");
+        Version.ToString(tmp34);
       }
-      if((Values != null))
+      if((FunctionsIds != null))
       {
-        if(0 < tmp47) { tmp46.Append(", "); }
-        tmp46.Append("Values: ");
-        Values.ToString(tmp46);
+        tmp34.Append(", FunctionsIds: ");
+        FunctionsIds.ToString(tmp34);
       }
-      tmp46.Append(')');
-      return tmp46.ToString();
+      tmp34.Append(')');
+      return tmp34.ToString();
     }
   }
 

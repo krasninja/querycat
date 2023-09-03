@@ -70,7 +70,7 @@ public sealed class PluginFunctionsManager : FunctionsManager
     /// Get all functions signatures.
     /// </summary>
     /// <returns>Signatures strings.</returns>
-    public List<string> GetSignatures() => _functions.Values.Select(f => f.Signature).ToList();
+    public IEnumerable<PluginFunction> GetPluginFunctions() => _functions.Values;
 
     /// <inheritdoc />
     public override VariantValue CallFunction(IFunction function, FunctionCallArguments callArguments)

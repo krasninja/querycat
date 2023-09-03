@@ -179,9 +179,10 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
     {
         foreach (var plugin in _server.Plugins)
         {
-            foreach (var functionSignature in plugin.Functions)
+            foreach (var function in plugin.Functions)
             {
-                functionsManager.RegisterFunction(functionSignature, FunctionDelegate);
+                functionsManager.RegisterFunction(function.Signature, FunctionDelegate,
+                    function.Description);
             }
 
             Core.Types.VariantValue FunctionDelegate(FunctionCallInfo args)

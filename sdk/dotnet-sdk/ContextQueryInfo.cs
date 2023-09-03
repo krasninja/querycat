@@ -93,13 +93,13 @@ namespace QueryCat.Plugins.Sdk
               if (field.Type == TType.List)
               {
                 {
-                  var _list44 = await iprot.ReadListBeginAsync(cancellationToken);
-                  Columns = new List<string>(_list44.Count);
-                  for(int _i45 = 0; _i45 < _list44.Count; ++_i45)
+                  var _list56 = await iprot.ReadListBeginAsync(cancellationToken);
+                  Columns = new List<string>(_list56.Count);
+                  for(int _i57 = 0; _i57 < _list56.Count; ++_i57)
                   {
-                    string _elem46;
-                    _elem46 = await iprot.ReadStringAsync(cancellationToken);
-                    Columns.Add(_elem46);
+                    string _elem58;
+                    _elem58 = await iprot.ReadStringAsync(cancellationToken);
+                    Columns.Add(_elem58);
                   }
                   await iprot.ReadListEndAsync(cancellationToken);
                 }
@@ -160,35 +160,35 @@ namespace QueryCat.Plugins.Sdk
       oprot.IncrementRecursionDepth();
       try
       {
-        var tmp47 = new TStruct("ContextQueryInfo");
-        await oprot.WriteStructBeginAsync(tmp47, cancellationToken);
-        var tmp48 = new TField();
+        var tmp59 = new TStruct("ContextQueryInfo");
+        await oprot.WriteStructBeginAsync(tmp59, cancellationToken);
+        var tmp60 = new TField();
         if((Columns != null))
         {
-          tmp48.Name = "columns";
-          tmp48.Type = TType.List;
-          tmp48.ID = 1;
-          await oprot.WriteFieldBeginAsync(tmp48, cancellationToken);
+          tmp60.Name = "columns";
+          tmp60.Type = TType.List;
+          tmp60.ID = 1;
+          await oprot.WriteFieldBeginAsync(tmp60, cancellationToken);
           await oprot.WriteListBeginAsync(new TList(TType.String, Columns.Count), cancellationToken);
-          foreach (string _iter49 in Columns)
+          foreach (string _iter61 in Columns)
           {
-            await oprot.WriteStringAsync(_iter49, cancellationToken);
+            await oprot.WriteStringAsync(_iter61, cancellationToken);
           }
           await oprot.WriteListEndAsync(cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
-        tmp48.Name = "offset";
-        tmp48.Type = TType.I64;
-        tmp48.ID = 2;
-        await oprot.WriteFieldBeginAsync(tmp48, cancellationToken);
+        tmp60.Name = "offset";
+        tmp60.Type = TType.I64;
+        tmp60.ID = 2;
+        await oprot.WriteFieldBeginAsync(tmp60, cancellationToken);
         await oprot.WriteI64Async(Offset, cancellationToken);
         await oprot.WriteFieldEndAsync(cancellationToken);
         if(__isset.limit)
         {
-          tmp48.Name = "limit";
-          tmp48.Type = TType.I64;
-          tmp48.ID = 3;
-          await oprot.WriteFieldBeginAsync(tmp48, cancellationToken);
+          tmp60.Name = "limit";
+          tmp60.Type = TType.I64;
+          tmp60.ID = 3;
+          await oprot.WriteFieldBeginAsync(tmp60, cancellationToken);
           await oprot.WriteI64Async(Limit, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
@@ -228,21 +228,21 @@ namespace QueryCat.Plugins.Sdk
 
     public override string ToString()
     {
-      var tmp50 = new StringBuilder("ContextQueryInfo(");
+      var tmp62 = new StringBuilder("ContextQueryInfo(");
       if((Columns != null))
       {
-        tmp50.Append(", Columns: ");
-        Columns.ToString(tmp50);
+        tmp62.Append(", Columns: ");
+        Columns.ToString(tmp62);
       }
-      tmp50.Append(", Offset: ");
-      Offset.ToString(tmp50);
+      tmp62.Append(", Offset: ");
+      Offset.ToString(tmp62);
       if(__isset.limit)
       {
-        tmp50.Append(", Limit: ");
-        Limit.ToString(tmp50);
+        tmp62.Append(", Limit: ");
+        Limit.ToString(tmp62);
       }
-      tmp50.Append(')');
-      return tmp50.ToString();
+      tmp62.Append(')');
+      return tmp62.ToString();
     }
   }
 

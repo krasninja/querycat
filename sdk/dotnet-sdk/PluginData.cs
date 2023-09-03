@@ -35,7 +35,7 @@ namespace QueryCat.Plugins.Sdk
   public partial class PluginData : TBase
   {
 
-    public List<string>? Functions { get; set; }
+    public List<global::QueryCat.Plugins.Sdk.Function>? Functions { get; set; }
 
     public string Name { get; set; } = string.Empty;
 
@@ -45,7 +45,7 @@ namespace QueryCat.Plugins.Sdk
     {
     }
 
-    public PluginData(List<string>? functions, string name, string version) : this()
+    public PluginData(List<global::QueryCat.Plugins.Sdk.Function>? functions, string name, string version) : this()
     {
       this.Functions = functions;
       this.Name = name;
@@ -76,13 +76,14 @@ namespace QueryCat.Plugins.Sdk
               if (field.Type == TType.List)
               {
                 {
-                  var _list16 = await iprot.ReadListBeginAsync(cancellationToken);
-                  Functions = new List<string>(_list16.Count);
-                  for(int _i17 = 0; _i17 < _list16.Count; ++_i17)
+                  var _list20 = await iprot.ReadListBeginAsync(cancellationToken);
+                  Functions = new List<global::QueryCat.Plugins.Sdk.Function>(_list20.Count);
+                  for(int _i21 = 0; _i21 < _list20.Count; ++_i21)
                   {
-                    string _elem18;
-                    _elem18 = await iprot.ReadStringAsync(cancellationToken);
-                    Functions.Add(_elem18);
+                    global::QueryCat.Plugins.Sdk.Function _elem22;
+                    _elem22 = new global::QueryCat.Plugins.Sdk.Function();
+                    await _elem22.ReadAsync(iprot, cancellationToken);
+                    Functions.Add(_elem22);
                   }
                   await iprot.ReadListEndAsync(cancellationToken);
                 }
@@ -148,38 +149,38 @@ namespace QueryCat.Plugins.Sdk
       oprot.IncrementRecursionDepth();
       try
       {
-        var tmp19 = new TStruct("PluginData");
-        await oprot.WriteStructBeginAsync(tmp19, cancellationToken);
-        var tmp20 = new TField();
+        var tmp23 = new TStruct("PluginData");
+        await oprot.WriteStructBeginAsync(tmp23, cancellationToken);
+        var tmp24 = new TField();
         if((Functions != null))
         {
-          tmp20.Name = "functions";
-          tmp20.Type = TType.List;
-          tmp20.ID = 1;
-          await oprot.WriteFieldBeginAsync(tmp20, cancellationToken);
-          await oprot.WriteListBeginAsync(new TList(TType.String, Functions.Count), cancellationToken);
-          foreach (string _iter21 in Functions)
+          tmp24.Name = "functions";
+          tmp24.Type = TType.List;
+          tmp24.ID = 1;
+          await oprot.WriteFieldBeginAsync(tmp24, cancellationToken);
+          await oprot.WriteListBeginAsync(new TList(TType.Struct, Functions.Count), cancellationToken);
+          foreach (global::QueryCat.Plugins.Sdk.Function _iter25 in Functions)
           {
-            await oprot.WriteStringAsync(_iter21, cancellationToken);
+            await _iter25.WriteAsync(oprot, cancellationToken);
           }
           await oprot.WriteListEndAsync(cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         if((Name != null))
         {
-          tmp20.Name = "name";
-          tmp20.Type = TType.String;
-          tmp20.ID = 2;
-          await oprot.WriteFieldBeginAsync(tmp20, cancellationToken);
+          tmp24.Name = "name";
+          tmp24.Type = TType.String;
+          tmp24.ID = 2;
+          await oprot.WriteFieldBeginAsync(tmp24, cancellationToken);
           await oprot.WriteStringAsync(Name, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         if((Version != null))
         {
-          tmp20.Name = "version";
-          tmp20.Type = TType.String;
-          tmp20.ID = 3;
-          await oprot.WriteFieldBeginAsync(tmp20, cancellationToken);
+          tmp24.Name = "version";
+          tmp24.Type = TType.String;
+          tmp24.ID = 3;
+          await oprot.WriteFieldBeginAsync(tmp24, cancellationToken);
           await oprot.WriteStringAsync(Version, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
@@ -222,24 +223,24 @@ namespace QueryCat.Plugins.Sdk
 
     public override string ToString()
     {
-      var tmp22 = new StringBuilder("PluginData(");
+      var tmp26 = new StringBuilder("PluginData(");
       if((Functions != null))
       {
-        tmp22.Append(", Functions: ");
-        Functions.ToString(tmp22);
+        tmp26.Append(", Functions: ");
+        Functions.ToString(tmp26);
       }
       if((Name != null))
       {
-        tmp22.Append(", Name: ");
-        Name.ToString(tmp22);
+        tmp26.Append(", Name: ");
+        Name.ToString(tmp26);
       }
       if((Version != null))
       {
-        tmp22.Append(", Version: ");
-        Version.ToString(tmp22);
+        tmp26.Append(", Version: ");
+        Version.ToString(tmp26);
       }
-      tmp22.Append(')');
-      return tmp22.ToString();
+      tmp26.Append(')');
+      return tmp26.ToString();
     }
   }
 
