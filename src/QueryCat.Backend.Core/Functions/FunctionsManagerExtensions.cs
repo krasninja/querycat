@@ -100,7 +100,7 @@ public static class FunctionsManagerExtensions
             }
 
             var methodParameters = method.GetParameters();
-            var description = type.GetCustomAttribute<DescriptionAttribute>()?.Description ?? string.Empty;
+            var description = method.GetCustomAttribute<DescriptionAttribute>()?.Description ?? string.Empty;
             // The standard case: VariantValue FunctionName(FunctionCallInfo args).
             if (methodParameters.Length == 1
                 && methodParameters[0].ParameterType == typeof(FunctionCallInfo)
