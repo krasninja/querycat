@@ -19,6 +19,7 @@ nav:
     - 'IISW3C': input/iisw3c.md
     - 'JSON': input/json.md
     - 'STDIN': input/stdin.md
+    - 'SUBRIP': input/subrip.md
     - 'Text': input/text-line.md
     - 'TSV': input/tsv.md
     - 'XML': input/xml.md

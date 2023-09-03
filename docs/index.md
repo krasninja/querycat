@@ -23,9 +23,10 @@ Just imagine that everything in the world is a table, and you can process it usi
     - 6.2) [IISW3C](input/iisw3c)
     - 6.3) [JSON](input/json)
     - 6.4) [STDIN](input/stdin)
-    - 6.5) [Text](input/text-line)
-    - 6.6) [TSV](input/tsv)
-    - 6.7) [XML](input/xml)
+    - 6.5) [SUBRIP](input/subrip)
+    - 6.6) [Text](input/text-line)
+    - 6.7) [TSV](input/tsv)
+    - 6.8) [XML](input/xml)
 - 7) Output
     - 7.1) [CSV](output/csv)
     - 7.2) [JSON](output/json)
