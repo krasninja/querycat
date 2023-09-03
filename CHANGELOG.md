@@ -4,6 +4,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Added
+
+- Add "generate_series()" function.
+
 ### Fixed
 
 - Fix description column text for "_functions()" function output.

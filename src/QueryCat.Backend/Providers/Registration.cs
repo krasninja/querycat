@@ -21,5 +21,7 @@ internal static class Registration
         functionsManager.RegisterFunction(StringInput.ReadString);
 
         functionsManager.RegisterFunction(CurlInput.WGet);
+
+        functionsManager.RegisterFunction(GenerateSeriesInput.GenerateSeries);
     }
 }
