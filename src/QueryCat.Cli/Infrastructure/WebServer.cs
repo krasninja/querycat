@@ -73,8 +73,8 @@ internal sealed class WebServer
         {
             // Common.
             var context = listener.GetContext();
-            using HttpListenerResponse response = context.Response;
-            response.Headers["User-Agent"] = $"{Application.GetProductFullName()}";
+            var response = context.Response;
+            response.Headers["User-Agent"] = Application.GetProductFullName();
             response.StatusCode = (int)HttpStatusCode.OK;
 
             // CORS.
@@ -127,6 +127,8 @@ internal sealed class WebServer
             {
                 response.StatusCode = (int)HttpStatusCode.NotFound;
             }
+
+            response.Close();
         }
         // ReSharper disable once FunctionNeverReturns
     }
