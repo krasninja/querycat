@@ -80,13 +80,14 @@ internal sealed class WebServer
             // CORS.
             if (!string.IsNullOrEmpty(AllowOrigin))
             {
-                context.Response.Headers.Add("Access-Control-Allow-Origin", "*");
+                response.Headers.Add("Access-Control-Allow-Origin", "*");
                 if (context.Request.HttpMethod.Equals(OptionsMethod))
                 {
-                    context.Response.Headers.Add("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
-                    context.Response.Headers.Add("Access-Control-Allow-Headers", "Content-Type");
-                    context.Response.Headers.Add("Access-Control-Max-Age", "86400");
-                    context.Response.StatusCode = (int)HttpStatusCode.OK;
+                    response.Headers.Add("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
+                    response.Headers.Add("Access-Control-Allow-Headers", "Content-Type");
+                    response.Headers.Add("Access-Control-Max-Age", "86400");
+                    response.StatusCode = (int)HttpStatusCode.OK;
+                    response.Close();
                     continue;
                 }
             }
@@ -98,6 +99,7 @@ internal sealed class WebServer
                 if (identity.Password != _password)
                 {
                     response.StatusCode = (int)HttpStatusCode.Unauthorized;
+                    response.Close();
                     continue;
                 }
             }
@@ -112,7 +114,7 @@ internal sealed class WebServer
                 }
                 catch (QueryCatException e)
                 {
-                    using var jsonWriter = new Utf8JsonWriter(context.Response.OutputStream);
+                    using var jsonWriter = new Utf8JsonWriter(response.OutputStream);
                     WriteJsonMessage(jsonWriter, e.Message);
                     response.ContentType = ContentTypeJson;
                     response.StatusCode = (int)HttpStatusCode.BadRequest;
