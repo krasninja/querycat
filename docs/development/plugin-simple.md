@@ -2,23 +2,7 @@
 
 The tutorial explains how to create custom plugin based on `IRowsInput` interface.
 
-1. Create new empty library project.
-
-    ```
-    dotnet new classlib --name SimplePlugin
-    ```
-
-    **NOTE:** The plugin must contain "Plugin" word in its name.
-
-2. Reference `QueryCat.Backend` project. Right now it is not available in NuGet, you can clone the repository somewhere and reference it. For example:
-
-    ```
-    <ItemGroup>
-        <ProjectReference Include="..\querycat\src\QueryCat.Backend\QueryCat.Backend.csproj" />
-    </ItemGroup>
-    ```
-
-3. Add any new input source based on `IRowsInput` interface.
+1. Add any new input source based on `IRowsInput` interface.
 
     ```csharp
     public class SamplePluginRowsInput : IRowsInput
@@ -43,9 +27,12 @@ The tutorial explains how to create custom plugin based on `IRowsInput` interfac
         };
 
         /// <inheritdoc />
+        public string[] UniqueKey { get; } = Array.Empty<string>();
+
+        /// <inheritdoc />
         public QueryContext QueryContext
         {
-            get => EmptyQueryContext.Empty;
+            get => NullQueryContext.Instance;
             set => Trace.WriteLine($"Set {nameof(QueryContext)}");
         }
 
@@ -107,7 +94,7 @@ The tutorial explains how to create custom plugin based on `IRowsInput` interfac
     }
     ```
 
-4. Add function definition for the new source. For example:
+2. Add function definition for the new source. For example:
 
     ```csharp
     [Description("Sample input.")]
@@ -120,15 +107,15 @@ The tutorial explains how to create custom plugin based on `IRowsInput` interfac
     }
     ```
 
-5. Publish the plugin:
+3. Publish the plugin:
 
-    ```
+    ```bash
     dotnet publish ./SimplePlugin/
     ```
 
-6. Run QueryCat with the new plugin.
+4. Run QueryCat with the new plugin.
 
-    ```
+    ```bash
     qcat "select * from plugin()" --plugin-dirs /mnt/data/work/SimplePlugin/SimplePlugin/bin/Debug/net7.0/publish/
     ```
 

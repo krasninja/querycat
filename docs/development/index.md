@@ -4,7 +4,20 @@ QueryCat allows to develop custom input formats and functions. Right now, only .
 
 Read the following sections for better internals understanding:
 
-- 1) [Components](components). General information about main classes and abstractions.
-- 2) [Functions](functions). The basics about QueryCat functions.
-- 3) [Simple Plugin](plugin-simple). How to create simple plugin.
-- 4) [Advanced Plugin](plugin-advanced). Other ways to define plugin.
+1. [Components](components). General information about main classes and abstractions.
+2. [Functions](functions). The basics about QueryCat functions.
+3. [.NET Assembly Connection](connector-assembly). Implement your plugin as .NET assembly.
+4. [Thrift Connector](connector-thrift). Implement your plugin as standalone application.
+5. [Simple Plugin](plugin-simple). How to create simple plugin.
+6. [Advanced Plugin](plugin-advanced). Other ways to define plugin.
+
+## Plugin Search
+
+By default the QueryCat CLI searches the plugins files within following directories:
+
+1. The current OS application directory. On Linux systems it looks like this: `/home/ivan/.local/share/qcat/plugins`. On Windows systems it is like TODO.
+2. The directory of the `qcat` executable.
+3. The directory `plugins` within the `qcat` executable.
+4. The directories specified by `--plugin-dirs` command line argument.
+
+Once observed the QueryCat tries to register it observing all functions within it.
