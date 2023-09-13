@@ -201,6 +201,11 @@ public partial class ThriftPluginClient : IDisposable
 
     private void StartServer()
     {
+        if (_clientServer != null)
+        {
+            return;
+        }
+
         var transport = new TNamedPipeServerTransport(_clientServerNamedPipe, new TConfiguration(), NamedPipeServerFlags.OnlyLocalClients, 1);
         var transportFactory = new TFramedTransport.Factory();
         var binaryProtocolFactory = new TBinaryProtocol.Factory();
@@ -224,6 +229,24 @@ public partial class ThriftPluginClient : IDisposable
             _clientServerCts.Token,
             TaskCreationOptions.LongRunning,
             TaskScheduler.Current);
+    }
+
+    private void StopServer()
+    {
+        if (_clientServer == null)
+        {
+            return;
+        }
+
+        // Connection to plugin manager.
+        _protocol.Dispose();
+        _client.Dispose();
+
+        // Server.
+        _clientServerCts.Dispose();
+        _clientServer?.Stop();
+
+        _clientServer = null;
     }
 
     private void StartQueryCatDebugServer()
@@ -286,13 +309,7 @@ public partial class ThriftPluginClient : IDisposable
     {
         if (disposing)
         {
-            // Connection to plugin manager.
-            _protocol.Dispose();
-            _client.Dispose();
-
-            // Server.
-            _clientServerCts.Dispose();
-            _clientServer?.Stop();
+            StopServer();
 
             _executionThread.Dispose();
             _qcatProcess?.Dispose();

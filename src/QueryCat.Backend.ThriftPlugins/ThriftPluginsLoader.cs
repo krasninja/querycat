@@ -59,7 +59,7 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
             if (IsCorrectPluginFile(pluginDirectory) && IsMatchPlatform(pluginDirectory)
                 && !_loadedPlugins.Contains(GetPluginName(pluginDirectory)))
             {
-                LoadPlugin(pluginDirectory, cancellationToken);
+                LoadPluginSafe(pluginDirectory, cancellationToken);
                 continue;
             }
             if (!Directory.Exists(pluginDirectory))
@@ -73,7 +73,7 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
                 if (IsCorrectPluginFile(pluginFile) && IsMatchPlatform(pluginFile)
                     && !_loadedPlugins.Contains(GetPluginName(pluginFile)))
                 {
-                    LoadPlugin(pluginFile, cancellationToken);
+                    LoadPluginSafe(pluginFile, cancellationToken);
                 }
             }
         }
@@ -128,14 +128,30 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         return plugin.Name;
     }
 
+    private void LoadPluginSafe(string file, CancellationToken cancellationToken)
+    {
+        try
+        {
+            LoadPlugin(file, cancellationToken);
+        }
+        catch (Exception e)
+        {
+            _logger.LogWarning(e, "Cannot load plugin.");
+            throw;
+        }
+    }
+
     private void LoadPlugin(string file, CancellationToken cancellationToken)
     {
+        // Start host server.
         _server.Start();
 
+        // Create auth token and save it into temp memory.
         var authToken = !string.IsNullOrEmpty(ForceAuthToken) ? ForceAuthToken : Guid.NewGuid().ToString("N");
         _server.RegisterAuthToken(authToken);
-        Process? process = null;
 
+        // Start plugin process.
+        Process? process = null;
         if (!SkipPluginsExecution)
         {
             var fileName = Path.GetFileNameWithoutExtension(file);
@@ -161,6 +177,7 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
             process.BeginErrorReadLine();
         }
 
+        // Wait when plugin is loaded and it calls RegisterPlugin method.
         try
         {
             _server.WaitForPluginRegistration(authToken, cancellationToken);
@@ -171,6 +188,7 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
             throw;
         }
 
+        // Plugin has been loaded.
         _loadedPlugins.Add(GetPluginName(file));
     }
 

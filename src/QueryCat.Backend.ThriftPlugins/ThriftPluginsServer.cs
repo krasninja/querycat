@@ -30,16 +30,22 @@ public sealed partial class ThriftPluginsServer : IDisposable
 
     public string ServerPipeName { get; } = "qcat-" + Guid.NewGuid().ToString("N");
 
+    /// <summary>
+    /// Do not verify token for debug purpose.
+    /// </summary>
     public bool SkipTokenVerification { get; set; }
 
     internal IReadOnlyCollection<PluginContext> Plugins => _plugins;
 
-    internal bool IgnoreThriftLogs { get; set; } = true;
+    /// <summary>
+    /// Do not use application logger for Thrift internal logs.
+    /// </summary>
+    internal bool IgnoreThriftLogs { get; set; }
 
     public ThriftPluginsServer(ExecutionThread executionThread, string? serverPipeName = null)
     {
-#if DEBUG
-        IgnoreThriftLogs = false;
+#if !DEBUG
+        IgnoreThriftLogs = true;
 #endif
         _executionThread = executionThread;
         _inputConfigStorage = executionThread.ConfigStorage;
@@ -119,7 +125,7 @@ public sealed partial class ThriftPluginsServer : IDisposable
         if (!_authTokens.TryGetValue(authToken, out var semaphoreSlim))
         {
             throw new InvalidOperationException(
-                $"Token is not registered '{authToken}', did you call {nameof(RegisterAuthToken)}?");
+                $"Token '{authToken}' is not registered, did you call {nameof(RegisterAuthToken)}?");
         }
         _logger.LogTrace("Waiting for token activation '{Token}'.", authToken);
         if (!semaphoreSlim.Wait(TimeSpan.FromSeconds(PluginRegistrationTimeoutSeconds), cancellationToken))

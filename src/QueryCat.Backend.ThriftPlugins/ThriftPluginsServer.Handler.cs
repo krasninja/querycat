@@ -25,7 +25,7 @@ public partial class ThriftPluginsServer
 
         public Plugin.Client? Client { get; set; }
 
-        public HashSet<PluginContextFunction> Functions { get; } = new();
+        public List<PluginContextFunction> Functions { get; } = new();
 
         public ObjectsStorage ObjectsStorage { get; } = new();
     }
@@ -52,8 +52,11 @@ public partial class ThriftPluginsServer
             }
 
             _thriftPluginsServer._logger.LogTrace(
-                "Pre-register plugin '{PluginName}' with token '{Token}' and callback URI '{CallbackUri}'.",
-                plugin_data.Version, auth_token, callback_uri);
+                "Pre-register plugin '{PluginName}' ({PluginVersion}) with token '{Token}' and callback URI '{CallbackUri}'.",
+                plugin_data.Name,
+                plugin_data.Version,
+                auth_token,
+                callback_uri);
             SemaphoreSlim? semaphoreSlim = null;
             if (!_thriftPluginsServer.SkipTokenVerification &&
                 (string.IsNullOrEmpty(auth_token)
