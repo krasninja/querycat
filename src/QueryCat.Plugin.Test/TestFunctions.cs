@@ -21,4 +21,11 @@ internal static class TestFunctions
         var result = string.Join(" ", integer, str, dec, fl, bl, tim, inter.ToString());
         return new VariantValue(result);
     }
+
+    [Description("Test function.")]
+    [FunctionSignature("test_simple(): timestamp")]
+    public static VariantValue TestSimpleFunction(FunctionCallInfo args)
+    {
+        return new VariantValue(DateTime.Now);
+    }
 }

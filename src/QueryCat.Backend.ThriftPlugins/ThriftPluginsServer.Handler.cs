@@ -13,11 +13,7 @@ namespace QueryCat.Backend.ThriftPlugins;
 
 public partial class ThriftPluginsServer
 {
-    internal record PluginContextFunction(
-        string Signature,
-        string Description);
-
-    internal class PluginContext
+    internal sealed class PluginContext
     {
         public string Name { get; set; } = string.Empty;
 
@@ -51,6 +47,7 @@ public partial class ThriftPluginsServer
                 return CreateEmptyRegistrationResult();
             }
 
+            // Validate authentication token.
             _thriftPluginsServer._logger.LogTrace(
                 "Pre-register plugin '{PluginName}' ({PluginVersion}) with token '{Token}' and callback URI '{CallbackUri}'.",
                 plugin_data.Name,
@@ -65,8 +62,9 @@ public partial class ThriftPluginsServer
                 throw new QueryCatPluginException(ErrorType.INVALID_AUTH_TOKEN, "Invalid token.");
             }
 
+            // Create plugin context, init and add it to a list.
             var context = await CreateClientConnection(callback_uri, cancellationToken);
-
+            context.Name = plugin_data.Name;
             if (plugin_data.Functions != null)
             {
                 foreach (var function in plugin_data.Functions)
@@ -75,11 +73,12 @@ public partial class ThriftPluginsServer
                         new PluginContextFunction(function.Signature, function.Description));
                 }
             }
+            _thriftPluginsServer.RegisterPluginContext(context, auth_token);
 
-            _thriftPluginsServer._plugins.Add(context);
+            // Since we registered plugin we can release semaphore and notify loader.
             semaphoreSlim?.Release();
-
             _thriftPluginsServer._logger.LogDebug("Registered plugin '{PluginName}'.", plugin_data.Name);
+
             return CreateEmptyRegistrationResult();
         }
 

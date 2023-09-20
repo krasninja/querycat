@@ -1,5 +1,7 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Functions;
@@ -16,10 +18,18 @@ namespace QueryCat.Backend.ThriftPlugins;
 /// </summary>
 public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
 {
+    private const string FunctionsCacheFileExtension = ".fcache.json";
+
     private readonly ExecutionThread _thread;
     private readonly ThriftPluginsServer _server;
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger<ThriftPluginsLoader>();
     private readonly HashSet<string> _loadedPlugins = new();
+    private readonly string _functionsCacheDirectory;
+
+    // Lazy loading.
+    private readonly Dictionary<string, string> _fileTokenMap = new(); // file-token.
+    private readonly Dictionary<string, ThriftPluginsServer.PluginContext> _tokenContextMap = new(); // token-context.
+    private readonly HashSet<string> _filesWithLoadedFunctions = new(); // List of plugins with loaded pre-cached functions.
 
     /// <summary>
     /// Skip actual plugins loading. For debug purposes.
@@ -36,11 +46,20 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
     /// </summary>
     public string ServerPipeName { get; } = "qcat-" + Guid.NewGuid().ToString("N");
 
-    /// <inheritdoc />
+    private sealed record FunctionsCache(
+        [property:JsonPropertyName("createdAt")] long CreatedAt,
+        [property:JsonPropertyName("functions")] List<PluginContextFunction> Functions);
+
+    private static readonly JsonSerializerOptions JsonSerializerOptions = new()
+    {
+        WriteIndented = false,
+    };
+
     public ThriftPluginsLoader(
         ExecutionThread thread,
         IEnumerable<string> pluginDirectories,
-        string? serverPipeName = null) : base(pluginDirectories)
+        string? serverPipeName = null,
+        string? functionsCacheDirectory = null) : base(pluginDirectories)
     {
         _thread = thread;
         if (!string.IsNullOrEmpty(serverPipeName))
@@ -48,6 +67,29 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
             ServerPipeName = serverPipeName;
         }
         _server = new ThriftPluginsServer(thread, ServerPipeName);
+        _server.OnPluginRegistration += OnPluginRegistration;
+        _functionsCacheDirectory = functionsCacheDirectory ?? string.Empty;
+    }
+
+    private void OnPluginRegistration(object? sender, ThriftPluginsServer.PluginRegistrationEventArgs e)
+    {
+        _tokenContextMap.Add(e.AuthToken, e.PluginContext);
+
+        var file = GetFileByContext(e.PluginContext);
+        if (!_filesWithLoadedFunctions.Contains(file))
+        {
+            RegisterFunctions(_thread.FunctionsManager, e.PluginContext);
+            _filesWithLoadedFunctions.Add(file);
+        }
+
+        try
+        {
+            CacheFunctions(e.PluginContext, file);
+        }
+        catch (Exception exception)
+        {
+            _logger.LogWarning(exception, "Cannot write functions cache.");
+        }
     }
 
     /// <inheritdoc />
@@ -56,8 +98,7 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         foreach (var pluginDirectory in PluginDirectories)
         {
             _logger.LogTrace("Search in '{Directory}'.", pluginDirectory);
-            if (IsCorrectPluginFile(pluginDirectory) && IsMatchPlatform(pluginDirectory)
-                && !_loadedPlugins.Contains(GetPluginName(pluginDirectory)))
+            if (IsCorrectPluginFile(pluginDirectory) && IsMatchPlatform(pluginDirectory))
             {
                 LoadPluginSafe(pluginDirectory, cancellationToken);
                 continue;
@@ -70,15 +111,12 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
 
             foreach (var pluginFile in Directory.EnumerateFiles(pluginDirectory).ToList())
             {
-                if (IsCorrectPluginFile(pluginFile) && IsMatchPlatform(pluginFile)
-                    && !_loadedPlugins.Contains(GetPluginName(pluginFile)))
+                if (IsCorrectPluginFile(pluginFile) && IsMatchPlatform(pluginFile))
                 {
                     LoadPluginSafe(pluginFile, cancellationToken);
                 }
             }
         }
-
-        RegisterFunctions(_thread.FunctionsManager);
 
         return Task.CompletedTask;
     }
@@ -132,7 +170,7 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
     {
         try
         {
-            LoadPlugin(file, cancellationToken);
+            LoadPluginLazy(file, cancellationToken);
         }
         catch (Exception e)
         {
@@ -141,14 +179,56 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         }
     }
 
-    private void LoadPlugin(string file, CancellationToken cancellationToken)
+    private void LoadPluginLazy(string file, CancellationToken cancellationToken = default)
     {
+        var pluginName = GetPluginName(file);
+        if (_loadedPlugins.Contains(pluginName))
+        {
+            return;
+        }
+
+        try
+        {
+            if (TryGetCachedFunctions(file, out var functions))
+            {
+                RegisterFunctions(_thread.FunctionsManager, file, functions);
+                _filesWithLoadedFunctions.Add(file);
+                return;
+            }
+        }
+        catch (Exception e)
+        {
+            _logger.LogWarning(e, "Error while reading cache functions.");
+        }
+
+        LoadPlugin(file, cancellationToken);
+    }
+
+    private ThriftPluginsServer.PluginContext LoadPlugin(string file, CancellationToken cancellationToken = default)
+    {
+        ThriftPluginsServer.PluginContext GetContext()
+        {
+            var pluginContext = GetContextByFile(file);
+            if (pluginContext == null)
+            {
+                throw new InvalidOperationException($"Cannot get plugin context for file '{file}'.");
+            }
+            return pluginContext;
+        }
+
+        var pluginName = GetPluginName(file);
+        if (_loadedPlugins.Contains(pluginName))
+        {
+            return GetContext();
+        }
+
         // Start host server.
         _server.Start();
 
         // Create auth token and save it into temp memory.
         var authToken = !string.IsNullOrEmpty(ForceAuthToken) ? ForceAuthToken : Guid.NewGuid().ToString("N");
         _server.RegisterAuthToken(authToken);
+        _fileTokenMap.Add(file, authToken);
 
         // Start plugin process.
         Process? process = null;
@@ -189,41 +269,101 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         }
 
         // Plugin has been loaded.
-        _loadedPlugins.Add(GetPluginName(file));
+        _loadedPlugins.Add(pluginName);
+
+        return GetContext();
     }
 
-    private void RegisterFunctions(FunctionsManager functionsManager)
+    private void RegisterFunctions(FunctionsManager functionsManager, string file,
+        IEnumerable<PluginContextFunction> functions)
     {
-        foreach (var plugin in _server.Plugins)
+        foreach (var function in functions)
         {
-            foreach (var function in plugin.Functions)
-            {
-                functionsManager.RegisterFunction(function.Signature, FunctionDelegate,
-                    function.Description);
-            }
+            functionsManager.RegisterFunction(function.Signature, FunctionDelegate,
+                function.Description);
+        }
 
-            Core.Types.VariantValue FunctionDelegate(FunctionCallInfo args)
-            {
-                if (plugin.Client == null)
-                {
-                    return Core.Types.VariantValue.Null;
-                }
+        // This wrapper delegate is used to call external functions.
+        Core.Types.VariantValue FunctionDelegate(FunctionCallInfo args)
+        {
+            var pluginContext = LoadPlugin(file, CancellationToken.None);
+            return FunctionDelegateCall(args, pluginContext);
+        }
+    }
 
-                var arguments = args.Select(SdkConvert.Convert).ToList();
-                var result = AsyncUtils.RunSync(() => plugin.Client.CallFunctionAsync(args.FunctionName, arguments, 0));
-                if (result == null)
-                {
-                    return Core.Types.VariantValue.Null;
-                }
-                if (result.__isset.@object && result.Object != null)
-                {
-                    var obj = CreateObjectFromResult(result, plugin);
-                    plugin.ObjectsStorage.Add(obj);
-                    return Core.Types.VariantValue.CreateFromObject(obj);
-                }
-                return SdkConvert.Convert(result);
+    private ThriftPluginsServer.PluginContext? GetContextByFile(string file)
+    {
+        if (_fileTokenMap.TryGetValue(file, out var token))
+        {
+            if (_tokenContextMap.TryGetValue(token, out var context))
+            {
+                return context;
             }
         }
+
+        return null;
+    }
+
+    private static bool TryGetKeyByValue<TKey, TValue>(Dictionary<TKey, TValue> dict, TValue value, out TKey? key)
+        where TKey : notnull
+    {
+        key = default;
+        foreach (KeyValuePair<TKey, TValue> pair in dict)
+        {
+            if (EqualityComparer<TValue>.Default.Equals(pair.Value, value))
+            {
+                key = pair.Key;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private string GetFileByContext(ThriftPluginsServer.PluginContext context)
+    {
+        if (TryGetKeyByValue(_tokenContextMap, context, out var token) && token != null)
+        {
+            if (TryGetKeyByValue(_fileTokenMap, token, out var file) && file != null)
+            {
+                return file;
+            }
+        }
+
+        return string.Empty;
+    }
+
+    private void RegisterFunctions(FunctionsManager functionsManager, ThriftPluginsServer.PluginContext pluginContext)
+    {
+        foreach (var function in pluginContext.Functions)
+        {
+            functionsManager.RegisterFunction(function.Signature, FunctionDelegate,
+                function.Description);
+        }
+
+        // This wrapper delegate is used to call external functions.
+        Core.Types.VariantValue FunctionDelegate(FunctionCallInfo args) => FunctionDelegateCall(args, pluginContext);
+    }
+
+    private static Core.Types.VariantValue FunctionDelegateCall(FunctionCallInfo args, ThriftPluginsServer.PluginContext pluginContext)
+    {
+        if (pluginContext.Client == null)
+        {
+            return Core.Types.VariantValue.Null;
+        }
+
+        var arguments = args.Select(SdkConvert.Convert).ToList();
+        var result = AsyncUtils.RunSync(() => pluginContext.Client.CallFunctionAsync(args.FunctionName, arguments, -1));
+        if (result == null)
+        {
+            return Core.Types.VariantValue.Null;
+        }
+        if (result.__isset.@object && result.Object != null)
+        {
+            var obj = CreateObjectFromResult(result, pluginContext);
+            pluginContext.ObjectsStorage.Add(obj);
+            return Core.Types.VariantValue.CreateFromObject(obj);
+        }
+        return SdkConvert.Convert(result);
     }
 
     private static object CreateObjectFromResult(VariantValue result, ThriftPluginsServer.PluginContext context)
@@ -245,8 +385,66 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         throw new PluginException("Cannot create object.");
     }
 
+    #region Cache
+
+    private void CacheFunctions(ThriftPluginsServer.PluginContext context, string fileName)
+    {
+        if (string.IsNullOrEmpty(_functionsCacheDirectory))
+        {
+            return;
+        }
+
+        var fileInfo = new FileInfo(fileName);
+        var cacheEntry = new FunctionsCache(fileInfo.CreationTimeUtc.Ticks, context.Functions);
+        var pluginName = PluginInfo.CreateFromUniversalName(fileName).Name;
+        var cacheFile = Path.Combine(_functionsCacheDirectory, pluginName + FunctionsCacheFileExtension);
+        Directory.CreateDirectory(_functionsCacheDirectory);
+        using var cacheFileStream = File.Create(cacheFile);
+        JsonSerializer.Serialize(cacheFileStream, cacheEntry, options: JsonSerializerOptions);
+    }
+
+    private bool TryGetCachedFunctions(string fileName, out IEnumerable<PluginContextFunction> functions)
+    {
+        functions = Enumerable.Empty<PluginContextFunction>();
+
+        if (string.IsNullOrEmpty(_functionsCacheDirectory))
+        {
+            return false;
+        }
+
+        var pluginName = PluginInfo.CreateFromUniversalName(fileName).Name;
+        var cacheFile = Path.Combine(_functionsCacheDirectory, pluginName + FunctionsCacheFileExtension);
+        if (!File.Exists(cacheFile))
+        {
+            return false;
+        }
+        var fileInfo = new FileInfo(fileName);
+
+        using var cacheFileStream = File.OpenRead(cacheFile);
+        var cacheEntry = JsonSerializer.Deserialize<FunctionsCache>(cacheFileStream, JsonSerializerOptions);
+        if (cacheEntry == null)
+        {
+            return false;
+        }
+
+        // If plugin file has changed - invalidate the cache.
+        if (cacheEntry.CreatedAt != fileInfo.CreationTimeUtc.Ticks)
+        {
+            _logger.LogDebug("Update plugin cache '{PluginName}'.", pluginName);
+            File.Delete(cacheFile);
+            return false;
+        }
+
+        functions = cacheEntry.Functions;
+        return true;
+    }
+
+    #endregion
+
+    /// <inheritdoc />
     public void Dispose()
     {
+        _server.OnPluginRegistration -= OnPluginRegistration;
         _server.Dispose();
     }
 }

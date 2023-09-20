@@ -53,7 +53,10 @@ public class PluginInfo
 
     public static PluginInfo CreateFromUniversalName(string name)
     {
-        var match = NewKeyRegex.Match(name);
+        var fileName = Path.GetFileName(name);
+        var uri = File.Exists(name) ? name : string.Empty;
+
+        var match = NewKeyRegex.Match(fileName);
         if (match.Success)
         {
             return new PluginInfo(match.Groups["name"].Value)
@@ -61,9 +64,10 @@ public class PluginInfo
                 Version = new Version(match.Groups["version"].Value),
                 Platform = match.Groups["platform"].Value,
                 Architecture = match.Groups["arch"].Value,
+                Uri = uri,
             };
         }
-        match = KeyRegex.Match(name);
+        match = KeyRegex.Match(fileName);
         if (match.Success)
         {
             return new PluginInfo(match.Groups["name"].Value)
@@ -71,6 +75,7 @@ public class PluginInfo
                 Version = new Version(match.Groups["version"].Value),
                 Architecture = Application.ArchitectureMsil,
                 Platform = Application.PlatformMulti,
+                Uri = uri,
             };
         }
         return new PluginInfo(Path.GetFileName(name))
@@ -78,6 +83,7 @@ public class PluginInfo
             Version = new Version(0, 0),
             Architecture = Application.ArchitectureUnknown,
             Platform = Application.PlatformUnknown,
+            Uri = uri,
         };
     }
 
