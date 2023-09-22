@@ -17,17 +17,17 @@ Rows Input -> SQL backend -> Rows Output
 
 There are following column data types are supported:
 
-| Name | Range | Comment |
-| --- | --- | --- |
-| INTEGER | -9,223,372,036,854,775,808 to 9,223,372,036,854,775,807 | |
-| FLOAT | ±5.0 × 10−324 to ±1.7 × 10308 | Precision is ~15-17 digits. |
-| NUMERIC | ±1.0 x 10-28 to ±7.9228 x 1028 | Precision is 28-29 digits. |
-| BOOLEAN | `true` or `false` | |
+| Name | Aliases | Range | Comment |
+| --- | --- | --- | --- |
+| INTEGER | INT, INT8 | -9,223,372,036,854,775,808 to 9,223,372,036,854,775,807 | |
+| FLOAT | REAL | ±5.0 × 10−324 to ±1.7 × 10308 | Precision is ~15-17 digits. |
+| NUMERIC | DECIMAL | ±1.0 x 10-28 to ±7.9228 x 1028 | Precision is 28-29 digits. |
+| BOOLEAN | BOOL | `true` or `false` | |
 | TIMESTAMP | | Date and time values. |
-| STRING | | Text data. |
-| INTERVAL | | Time interval. |
-| NULL | | Special type that represents "nothing" value. |
-| OBJECT | |
+| STRING | TEXT | Text data. |
+| INTERVAL | | | Time interval. |
+| NULL | | | Special type that represents "nothing" value. |
+| OBJECT | | |
 
 * For boolean `true` additional values can be used: `1`, `yes`, `on`, `t`. Boolean `false`: `0`, `no`, `off`, `f`.
 

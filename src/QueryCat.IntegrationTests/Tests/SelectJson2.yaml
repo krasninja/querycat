@@ -2,4 +2,4 @@ expected: |
   10,test,11/14/2022 00:00:00,True,3.141592
   1,test,,,
 query: |
-  select id, name, date, bool, double from 'Json1.json';
+  select id, name, date, [bool], double from 'Json1.json';

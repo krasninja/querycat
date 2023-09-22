@@ -265,13 +265,13 @@ dateTimeField
     ;
 
 type
-    : INTEGER
-    | STRING
-    | FLOAT
+    : INTEGER | INT | INT8
+    | STRING | TEXT
+    | FLOAT | REAL
     | TIMESTAMP
     | INTERVAL
-    | BOOLEAN
-    | NUMERIC
+    | BOOLEAN | BOOL
+    | NUMERIC | DECIMAL
     | OBJECT
     | ANY
     | VOID

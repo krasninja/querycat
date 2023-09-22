@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Added
 
 - Add "generate_series()" function.
+- Add aliases for types integer (int, int8), float (real), numeric (decimal), boolean (bool) and string (text).
 
 ### Fixed
 
