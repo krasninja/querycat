@@ -88,18 +88,29 @@ exception QueryCatPluginException {
  * ---------------
  */
 
+struct Function {
+  1: required string signature,
+  2: required string description,
+  3: required bool is_aggregate
+}
+
 struct PluginData {
   // List of all functions signatures that plugin provides.
-  1: required list<string> functions,
+  1: required list<Function> functions,
   // Plugin name.
   2: required string name,
   // Version. Format is MAJOR.MINOR.PATCH .
   3: required string version
 }
 
+struct RegistrationResult {
+  1: required string version,
+  2: required list<i32> functions_ids
+}
+
 service PluginsManager {
   // Register plugin with all its data.
-  void RegisterPlugin(
+  RegistrationResult RegisterPlugin(
     // Token for initialization. It is provided thru command line arguments.
     1: required string auth_token,
     // Callback plugin server endpoint.

@@ -1,9 +1,11 @@
+using System.ComponentModel;
 using Bogus;
 using QueryCat.Backend.Core.Fetch;
 using QueryCat.Backend.Core.Functions;
 
 namespace QueryCat.Plugin.Test;
 
+[Description("Test function.")]
 [FunctionSignature("test_addresses_1")]
 internal sealed class AddressRowsInput : FetchInput<Address>
 {

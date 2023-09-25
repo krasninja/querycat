@@ -1,6 +1,6 @@
 # Functions
 
-To extend the QueryCat functionality the functions is the essential thing. The QueryCat compliant functions must match the following delegate signature (`QueryCat.Backend.Functions` namespace):
+To extend the QueryCat functionality the functions is the essential thing. The QueryCat compliant functions must match the following delegate signature (`QueryCat.Backend.Core.Functions` namespace):
 
 ```csharp
 delegate VariantValue FunctionDelegate(FunctionCallInfo args);
@@ -24,5 +24,3 @@ public static VariantValue SumIntegers(FunctionCallInfo callInfo)
 3. The second argument (`b`) is optional, and the default value is `2`.
 4. The `callInfo` argument is used to get arguments values (use `GetAt` method).
 5. The `FunctionSignature` attribute might appear several times for method.
-
-For plugins, the reflection is used to scan all the classes and find all static methods that match the function definition signature.

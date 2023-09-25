@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
+- Add "generate_series()" function.
+- Add aliases for types integer (int, int8), float (real), numeric (decimal), boolean (bool) and string (text).
+
+### Fixed
+
+- Fix description column text for "_functions()" function output.
+
+## [0.4.11] - 2023-08-31
+
+### Added
+
 - Move IISW3C formatter and input back from plugin to core.
 - Add SubRip (.srt) files formatter.
 - Add functions "string_to_table", "regexp_replace".
@@ -18,7 +29,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Changed
 
-- Improved Thieft plugins support system.
+- Improved Thrift plugins support system.
 - Various refactorings to improve system modularity.
 
 ## [0.4.8] - 2023-07-30

@@ -14,6 +14,7 @@ internal class ApplicationOptions
 {
     internal const string ConfigFileName = "config.json";
     internal const string ApplicationPluginsDirectory = "plugins";
+    internal const string ApplicationPluginsFunctionsCacheDirectory = "func-cache";
 
     public LogLevel LogLevel { get; init; }
 
@@ -39,7 +40,10 @@ internal class ApplicationOptions
         executionOptions.PluginDirectories.AddRange(PluginDirectories);
 #endif
 #if ENABLE_PLUGINS && PLUGIN_THRIFT
-        pluginsLoader = new Backend.ThriftPlugins.ThriftPluginsLoader(executionThread, executionOptions.PluginDirectories);
+        pluginsLoader = new Backend.ThriftPlugins.ThriftPluginsLoader(
+            executionThread,
+            executionOptions.PluginDirectories,
+            functionsCacheDirectory: Path.Combine(ExecutionThread.GetApplicationDirectory(), ApplicationPluginsFunctionsCacheDirectory));
 #endif
 #if ENABLE_PLUGINS && PLUGIN_ASSEMBLY
         pluginsLoader = new Backend.AssemblyPlugins.DotNetAssemblyPluginsLoader(executionThread.FunctionsManager,

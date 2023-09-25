@@ -100,6 +100,11 @@ public static class SdkConvert
         {
             return new Backend.Core.Types.VariantValue(new TimeSpan(0, 0, 0, 0, (int)value.Interval));
         }
+        if (value.__isset.@object && value.Object != null)
+        {
+            return Backend.Core.Types.VariantValue.CreateFromObject(
+                new RemoteObject(value.Object.Handle, value.Object.Type.ToString()));
+        }
         throw new ArgumentOutOfRangeException(nameof(value));
     }
 

@@ -1,16 +1,16 @@
 using System.Collections.Concurrent;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using QueryCat.Backend.Core;
-using QueryCat.Backend.Core.Data;
-using QueryCat.Backend.Core.Plugins;
-using QueryCat.Backend.Core.Utils;
 using Thrift;
 using Thrift.Processor;
 using Thrift.Protocol;
 using Thrift.Server;
 using Thrift.Transport;
 using Thrift.Transport.Server;
+using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Plugins;
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Execution;
 
 namespace QueryCat.Backend.ThriftPlugins;
@@ -30,16 +30,38 @@ public sealed partial class ThriftPluginsServer : IDisposable
 
     public string ServerPipeName { get; } = "qcat-" + Guid.NewGuid().ToString("N");
 
+    /// <summary>
+    /// Do not verify token for debug purpose.
+    /// </summary>
     public bool SkipTokenVerification { get; set; }
 
     internal IReadOnlyCollection<PluginContext> Plugins => _plugins;
 
-    internal bool IgnoreThriftLogs { get; set; } = true;
+    /// <summary>
+    /// Do not use application logger for Thrift internal logs.
+    /// </summary>
+    internal bool IgnoreThriftLogs { get; set; }
+
+    internal sealed class PluginRegistrationEventArgs : EventArgs
+    {
+        public PluginContext PluginContext { get; }
+
+        public string AuthToken { get; }
+
+        /// <inheritdoc />
+        public PluginRegistrationEventArgs(PluginContext pluginContext, string authToken)
+        {
+            PluginContext = pluginContext;
+            AuthToken = authToken;
+        }
+    }
+
+    internal event EventHandler<PluginRegistrationEventArgs>? OnPluginRegistration;
 
     public ThriftPluginsServer(ExecutionThread executionThread, string? serverPipeName = null)
     {
-#if DEBUG
-        IgnoreThriftLogs = false;
+#if !DEBUG
+        IgnoreThriftLogs = true;
 #endif
         _executionThread = executionThread;
         _inputConfigStorage = executionThread.ConfigStorage;
@@ -109,6 +131,12 @@ public sealed partial class ThriftPluginsServer : IDisposable
         _serverListenThread = null;
     }
 
+    private void RegisterPluginContext(PluginContext context, string authToken)
+    {
+        _plugins.Add(context);
+        OnPluginRegistration?.Invoke(this, new PluginRegistrationEventArgs(context, authToken));
+    }
+
     public void RegisterAuthToken(string token)
     {
         _authTokens[token] = new SemaphoreSlim(0, 1);
@@ -119,7 +147,7 @@ public sealed partial class ThriftPluginsServer : IDisposable
         if (!_authTokens.TryGetValue(authToken, out var semaphoreSlim))
         {
             throw new InvalidOperationException(
-                $"Token is not registered '{authToken}', did you call {nameof(RegisterAuthToken)}?");
+                $"Token '{authToken}' is not registered, did you call {nameof(RegisterAuthToken)}?");
         }
         _logger.LogTrace("Waiting for token activation '{Token}'.", authToken);
         if (!semaphoreSlim.Wait(TimeSpan.FromSeconds(PluginRegistrationTimeoutSeconds), cancellationToken))

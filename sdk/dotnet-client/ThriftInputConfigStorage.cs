@@ -11,6 +11,9 @@ using VariantValue = QueryCat.Backend.Core.Types.VariantValue;
 
 namespace QueryCat.Plugins.Client;
 
+/// <summary>
+/// Config storage that calls Thrift host to store variables. Object variables are saved locally.
+/// </summary>
 public sealed class ThriftInputConfigStorage : IInputConfigStorage
 {
     private readonly PluginsManager.Client _client;
@@ -41,7 +44,7 @@ public sealed class ThriftInputConfigStorage : IInputConfigStorage
     }
 
     /// <inheritdoc />
-    public bool Has(string key) => Get(key).IsNull;
+    public bool Has(string key) => !Get(key).IsNull;
 
     /// <inheritdoc />
     public VariantValue Get(string key)

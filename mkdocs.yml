@@ -19,6 +19,7 @@ nav:
     - 'IISW3C': input/iisw3c.md
     - 'JSON': input/json.md
     - 'STDIN': input/stdin.md
+    - 'SUBRIP': input/subrip.md
     - 'Text': input/text-line.md
     - 'TSV': input/tsv.md
     - 'XML': input/xml.md
@@ -47,6 +48,7 @@ nav:
     - 'Overview': development/index.md
     - 'Components': development/components.md
     - 'Functions': development/functions.md
+    - 'Thrift': development/connector-thrift.md
     - 'Simple Plugin': development/plugin-simple.md
     - 'Advanced Plugin': development/plugin-advanced.md
   - 'Misc':

@@ -373,10 +373,16 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
         var value = GetChildType(context, 0) switch
         {
             QueryCatParser.INTEGER => DataType.Integer,
+            QueryCatParser.INT => DataType.Integer,
+            QueryCatParser.INT8 => DataType.Integer,
             QueryCatParser.FLOAT => DataType.Float,
+            QueryCatParser.REAL => DataType.Float,
             QueryCatParser.NUMERIC => DataType.Numeric,
+            QueryCatParser.DECIMAL => DataType.Numeric,
             QueryCatParser.STRING => DataType.String,
+            QueryCatParser.TEXT => DataType.String,
             QueryCatParser.BOOLEAN => DataType.Boolean,
+            QueryCatParser.BOOL => DataType.Boolean,
             QueryCatParser.TIMESTAMP => DataType.Timestamp,
             QueryCatParser.INTERVAL => DataType.Interval,
             QueryCatParser.ANY => DataType.Void,

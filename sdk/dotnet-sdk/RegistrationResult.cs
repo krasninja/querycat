@@ -32,28 +32,21 @@ using Thrift.Processor;
 namespace QueryCat.Plugins.Sdk
 {
 
-  public partial class ObjectValue : TBase
+  public partial class RegistrationResult : TBase
   {
 
-    /// <summary>
-    /// 
-    /// <seealso cref="global::QueryCat.Plugins.Sdk.ObjectType"/>
-    /// </summary>
-    public global::QueryCat.Plugins.Sdk.ObjectType Type { get; set; } = default;
+    public string Version { get; set; } = string.Empty;
 
-    public int Handle { get; set; } = 0;
+    public List<int>? FunctionsIds { get; set; }
 
-    public string Name { get; set; } = string.Empty;
-
-    public ObjectValue()
+    public RegistrationResult()
     {
     }
 
-    public ObjectValue(global::QueryCat.Plugins.Sdk.ObjectType @type, int @handle, string @name) : this()
+    public RegistrationResult(string @version, List<int>? functions_ids) : this()
     {
-      this.Type = @type;
-      this.Handle = @handle;
-      this.Name = @name;
+      this.Version = @version;
+      this.FunctionsIds = functions_ids;
     }
 
     public async global::System.Threading.Tasks.Task ReadAsync(TProtocol iprot, CancellationToken cancellationToken)
@@ -61,9 +54,8 @@ namespace QueryCat.Plugins.Sdk
       iprot.IncrementRecursionDepth();
       try
       {
-        bool isset_type = false;
-        bool isset_handle = false;
-        bool isset_name = false;
+        bool isset_version = false;
+        bool isset_functions_ids = false;
         TField field;
         await iprot.ReadStructBeginAsync(cancellationToken);
         while (true)
@@ -77,10 +69,10 @@ namespace QueryCat.Plugins.Sdk
           switch (field.ID)
           {
             case 1:
-              if (field.Type == TType.I32)
+              if (field.Type == TType.String)
               {
-                Type = (global::QueryCat.Plugins.Sdk.ObjectType)await iprot.ReadI32Async(cancellationToken);
-                isset_type = true;
+                Version = await iprot.ReadStringAsync(cancellationToken);
+                isset_version = true;
               }
               else
               {
@@ -88,21 +80,20 @@ namespace QueryCat.Plugins.Sdk
               }
               break;
             case 2:
-              if (field.Type == TType.I32)
+              if (field.Type == TType.List)
               {
-                Handle = await iprot.ReadI32Async(cancellationToken);
-                isset_handle = true;
-              }
-              else
-              {
-                await TProtocolUtil.SkipAsync(iprot, field.Type, cancellationToken);
-              }
-              break;
-            case 3:
-              if (field.Type == TType.String)
-              {
-                Name = await iprot.ReadStringAsync(cancellationToken);
-                isset_name = true;
+                {
+                  var _list28 = await iprot.ReadListBeginAsync(cancellationToken);
+                  FunctionsIds = new List<int>(_list28.Count);
+                  for(int _i29 = 0; _i29 < _list28.Count; ++_i29)
+                  {
+                    int _elem30;
+                    _elem30 = await iprot.ReadI32Async(cancellationToken);
+                    FunctionsIds.Add(_elem30);
+                  }
+                  await iprot.ReadListEndAsync(cancellationToken);
+                }
+                isset_functions_ids = true;
               }
               else
               {
@@ -118,15 +109,11 @@ namespace QueryCat.Plugins.Sdk
         }
 
         await iprot.ReadStructEndAsync(cancellationToken);
-        if (!isset_type)
+        if (!isset_version)
         {
           throw new TProtocolException(TProtocolException.INVALID_DATA);
         }
-        if (!isset_handle)
-        {
-          throw new TProtocolException(TProtocolException.INVALID_DATA);
-        }
-        if (!isset_name)
+        if (!isset_functions_ids)
         {
           throw new TProtocolException(TProtocolException.INVALID_DATA);
         }
@@ -142,28 +129,30 @@ namespace QueryCat.Plugins.Sdk
       oprot.IncrementRecursionDepth();
       try
       {
-        var tmp4 = new TStruct("ObjectValue");
-        await oprot.WriteStructBeginAsync(tmp4, cancellationToken);
-        var tmp5 = new TField();
-        tmp5.Name = "type";
-        tmp5.Type = TType.I32;
-        tmp5.ID = 1;
-        await oprot.WriteFieldBeginAsync(tmp5, cancellationToken);
-        await oprot.WriteI32Async((int)Type, cancellationToken);
-        await oprot.WriteFieldEndAsync(cancellationToken);
-        tmp5.Name = "handle";
-        tmp5.Type = TType.I32;
-        tmp5.ID = 2;
-        await oprot.WriteFieldBeginAsync(tmp5, cancellationToken);
-        await oprot.WriteI32Async(Handle, cancellationToken);
-        await oprot.WriteFieldEndAsync(cancellationToken);
-        if((Name != null))
+        var tmp31 = new TStruct("RegistrationResult");
+        await oprot.WriteStructBeginAsync(tmp31, cancellationToken);
+        var tmp32 = new TField();
+        if((Version != null))
         {
-          tmp5.Name = "name";
-          tmp5.Type = TType.String;
-          tmp5.ID = 3;
-          await oprot.WriteFieldBeginAsync(tmp5, cancellationToken);
-          await oprot.WriteStringAsync(Name, cancellationToken);
+          tmp32.Name = "version";
+          tmp32.Type = TType.String;
+          tmp32.ID = 1;
+          await oprot.WriteFieldBeginAsync(tmp32, cancellationToken);
+          await oprot.WriteStringAsync(Version, cancellationToken);
+          await oprot.WriteFieldEndAsync(cancellationToken);
+        }
+        if((FunctionsIds != null))
+        {
+          tmp32.Name = "functions_ids";
+          tmp32.Type = TType.List;
+          tmp32.ID = 2;
+          await oprot.WriteFieldBeginAsync(tmp32, cancellationToken);
+          await oprot.WriteListBeginAsync(new TList(TType.I32, FunctionsIds.Count), cancellationToken);
+          foreach (int _iter33 in FunctionsIds)
+          {
+            await oprot.WriteI32Async(_iter33, cancellationToken);
+          }
+          await oprot.WriteListEndAsync(cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         await oprot.WriteFieldStopAsync(cancellationToken);
@@ -177,21 +166,22 @@ namespace QueryCat.Plugins.Sdk
 
     public override bool Equals(object? that)
     {
-      if (that is not ObjectValue other) return false;
+      if (that is not RegistrationResult other) return false;
       if (ReferenceEquals(this, other)) return true;
-      return global::System.Object.Equals(Type, other.Type)
-        && global::System.Object.Equals(Handle, other.Handle)
-        && global::System.Object.Equals(Name, other.Name);
+      return global::System.Object.Equals(Version, other.Version)
+        && TCollections.Equals(FunctionsIds, other.FunctionsIds);
     }
 
     public override int GetHashCode() {
       int hashcode = 157;
       unchecked {
-        hashcode = (hashcode * 397) + Type.GetHashCode();
-        hashcode = (hashcode * 397) + Handle.GetHashCode();
-        if((Name != null))
+        if((Version != null))
         {
-          hashcode = (hashcode * 397) + Name.GetHashCode();
+          hashcode = (hashcode * 397) + Version.GetHashCode();
+        }
+        if((FunctionsIds != null))
+        {
+          hashcode = (hashcode * 397) + TCollections.GetHashCode(FunctionsIds);
         }
       }
       return hashcode;
@@ -199,18 +189,19 @@ namespace QueryCat.Plugins.Sdk
 
     public override string ToString()
     {
-      var tmp6 = new StringBuilder("ObjectValue(");
-      tmp6.Append(", Type: ");
-      Type.ToString(tmp6);
-      tmp6.Append(", Handle: ");
-      Handle.ToString(tmp6);
-      if((Name != null))
+      var tmp34 = new StringBuilder("RegistrationResult(");
+      if((Version != null))
       {
-        tmp6.Append(", Name: ");
-        Name.ToString(tmp6);
+        tmp34.Append(", Version: ");
+        Version.ToString(tmp34);
       }
-      tmp6.Append(')');
-      return tmp6.ToString();
+      if((FunctionsIds != null))
+      {
+        tmp34.Append(", FunctionsIds: ");
+        FunctionsIds.ToString(tmp34);
+      }
+      tmp34.Append(')');
+      return tmp34.ToString();
     }
   }
 

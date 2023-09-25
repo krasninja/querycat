@@ -42,14 +42,20 @@ TYPECAST:           '::';
 
 // Types.
 
-INTEGER:            'INTEGER';
-STRING:             'STRING';
-FLOAT:              'FLOAT';
-TIMESTAMP:          'TIMESTAMP';
+ANY:                'ANY';
+BOOL:               'BOOL';
 BOOLEAN:            'BOOLEAN';
+DECIMAL:            'DECIMAL';
+FLOAT:              'FLOAT';
+INT:                'INT';
+INT8:               'INT8';
+INTEGER:            'INTEGER';
 NUMERIC:            'NUMERIC';
 OBJECT:             'OBJECT';
-ANY:                'ANY';
+REAL:               'REAL';
+STRING:             'STRING';
+TEXT:               'TEXT';
+TIMESTAMP:          'TIMESTAMP';
 
 // General grammar keywords.
 
@@ -182,7 +188,8 @@ INSERT:             'INSERT';
 DECLARE:            'DECLARE';
 SET:                'SET';
 
-TYPE: INTEGER | STRING | FLOAT | TIMESTAMP | BOOLEAN | NUMERIC | OBJECT | ANY;
+TYPE: ANY | BOOL | BOOLEAN | DECIMAL | FLOAT | INT | INT8 | INTEGER | NUMERIC | OBJECT | REAL | STRING | TEXT
+    | TIMESTAMP;
 
 // https://github.com/antlr/antlr4/blob/master/doc/lexicon.md#identifiers
 

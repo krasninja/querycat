@@ -32,46 +32,24 @@ using Thrift.Processor;
 namespace QueryCat.Plugins.Sdk
 {
 
-  public partial class QueryCatPluginException : TException, TBase
+  public partial class Function : TBase
   {
-    private int _object_handle;
 
-    /// <summary>
-    /// 
-    /// <seealso cref="global::QueryCat.Plugins.Sdk.ErrorType"/>
-    /// </summary>
-    public global::QueryCat.Plugins.Sdk.ErrorType Type { get; set; } = default;
+    public string Signature { get; set; } = string.Empty;
 
-    public string ErrorMessage { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
 
-    public int ObjectHandle
-    {
-      get
-      {
-        return _object_handle;
-      }
-      set
-      {
-        __isset.object_handle = true;
-        this._object_handle = value;
-      }
-    }
+    public bool IsAggregate { get; set; } = false;
 
-
-    public Isset __isset;
-    public struct Isset
-    {
-      public bool object_handle;
-    }
-
-    public QueryCatPluginException()
+    public Function()
     {
     }
 
-    public QueryCatPluginException(global::QueryCat.Plugins.Sdk.ErrorType @type, string error_message) : this()
+    public Function(string @signature, string @description, bool is_aggregate) : this()
     {
-      this.Type = @type;
-      this.ErrorMessage = error_message;
+      this.Signature = @signature;
+      this.Description = @description;
+      this.IsAggregate = is_aggregate;
     }
 
     public async global::System.Threading.Tasks.Task ReadAsync(TProtocol iprot, CancellationToken cancellationToken)
@@ -79,8 +57,9 @@ namespace QueryCat.Plugins.Sdk
       iprot.IncrementRecursionDepth();
       try
       {
-        bool isset_type = false;
-        bool isset_error_message = false;
+        bool isset_signature = false;
+        bool isset_description = false;
+        bool isset_is_aggregate = false;
         TField field;
         await iprot.ReadStructBeginAsync(cancellationToken);
         while (true)
@@ -94,10 +73,10 @@ namespace QueryCat.Plugins.Sdk
           switch (field.ID)
           {
             case 1:
-              if (field.Type == TType.I32)
+              if (field.Type == TType.String)
               {
-                Type = (global::QueryCat.Plugins.Sdk.ErrorType)await iprot.ReadI32Async(cancellationToken);
-                isset_type = true;
+                Signature = await iprot.ReadStringAsync(cancellationToken);
+                isset_signature = true;
               }
               else
               {
@@ -107,8 +86,8 @@ namespace QueryCat.Plugins.Sdk
             case 2:
               if (field.Type == TType.String)
               {
-                ErrorMessage = await iprot.ReadStringAsync(cancellationToken);
-                isset_error_message = true;
+                Description = await iprot.ReadStringAsync(cancellationToken);
+                isset_description = true;
               }
               else
               {
@@ -116,9 +95,10 @@ namespace QueryCat.Plugins.Sdk
               }
               break;
             case 3:
-              if (field.Type == TType.I32)
+              if (field.Type == TType.Bool)
               {
-                ObjectHandle = await iprot.ReadI32Async(cancellationToken);
+                IsAggregate = await iprot.ReadBoolAsync(cancellationToken);
+                isset_is_aggregate = true;
               }
               else
               {
@@ -134,11 +114,15 @@ namespace QueryCat.Plugins.Sdk
         }
 
         await iprot.ReadStructEndAsync(cancellationToken);
-        if (!isset_type)
+        if (!isset_signature)
         {
           throw new TProtocolException(TProtocolException.INVALID_DATA);
         }
-        if (!isset_error_message)
+        if (!isset_description)
+        {
+          throw new TProtocolException(TProtocolException.INVALID_DATA);
+        }
+        if (!isset_is_aggregate)
         {
           throw new TProtocolException(TProtocolException.INVALID_DATA);
         }
@@ -154,33 +138,33 @@ namespace QueryCat.Plugins.Sdk
       oprot.IncrementRecursionDepth();
       try
       {
-        var tmp12 = new TStruct("QueryCatPluginException");
-        await oprot.WriteStructBeginAsync(tmp12, cancellationToken);
-        var tmp13 = new TField();
-        tmp13.Name = "type";
-        tmp13.Type = TType.I32;
-        tmp13.ID = 1;
-        await oprot.WriteFieldBeginAsync(tmp13, cancellationToken);
-        await oprot.WriteI32Async((int)Type, cancellationToken);
+        var tmp16 = new TStruct("Function");
+        await oprot.WriteStructBeginAsync(tmp16, cancellationToken);
+        var tmp17 = new TField();
+        if((Signature != null))
+        {
+          tmp17.Name = "signature";
+          tmp17.Type = TType.String;
+          tmp17.ID = 1;
+          await oprot.WriteFieldBeginAsync(tmp17, cancellationToken);
+          await oprot.WriteStringAsync(Signature, cancellationToken);
+          await oprot.WriteFieldEndAsync(cancellationToken);
+        }
+        if((Description != null))
+        {
+          tmp17.Name = "description";
+          tmp17.Type = TType.String;
+          tmp17.ID = 2;
+          await oprot.WriteFieldBeginAsync(tmp17, cancellationToken);
+          await oprot.WriteStringAsync(Description, cancellationToken);
+          await oprot.WriteFieldEndAsync(cancellationToken);
+        }
+        tmp17.Name = "is_aggregate";
+        tmp17.Type = TType.Bool;
+        tmp17.ID = 3;
+        await oprot.WriteFieldBeginAsync(tmp17, cancellationToken);
+        await oprot.WriteBoolAsync(IsAggregate, cancellationToken);
         await oprot.WriteFieldEndAsync(cancellationToken);
-        if((ErrorMessage != null))
-        {
-          tmp13.Name = "error_message";
-          tmp13.Type = TType.String;
-          tmp13.ID = 2;
-          await oprot.WriteFieldBeginAsync(tmp13, cancellationToken);
-          await oprot.WriteStringAsync(ErrorMessage, cancellationToken);
-          await oprot.WriteFieldEndAsync(cancellationToken);
-        }
-        if(__isset.object_handle)
-        {
-          tmp13.Name = "object_handle";
-          tmp13.Type = TType.I32;
-          tmp13.ID = 3;
-          await oprot.WriteFieldBeginAsync(tmp13, cancellationToken);
-          await oprot.WriteI32Async(ObjectHandle, cancellationToken);
-          await oprot.WriteFieldEndAsync(cancellationToken);
-        }
         await oprot.WriteFieldStopAsync(cancellationToken);
         await oprot.WriteStructEndAsync(cancellationToken);
       }
@@ -192,46 +176,46 @@ namespace QueryCat.Plugins.Sdk
 
     public override bool Equals(object? that)
     {
-      if (that is not QueryCatPluginException other) return false;
+      if (that is not Function other) return false;
       if (ReferenceEquals(this, other)) return true;
-      return global::System.Object.Equals(Type, other.Type)
-        && global::System.Object.Equals(ErrorMessage, other.ErrorMessage)
-        && ((__isset.object_handle == other.__isset.object_handle) && ((!__isset.object_handle) || (global::System.Object.Equals(ObjectHandle, other.ObjectHandle))));
+      return global::System.Object.Equals(Signature, other.Signature)
+        && global::System.Object.Equals(Description, other.Description)
+        && global::System.Object.Equals(IsAggregate, other.IsAggregate);
     }
 
     public override int GetHashCode() {
       int hashcode = 157;
       unchecked {
-        hashcode = (hashcode * 397) + Type.GetHashCode();
-        if((ErrorMessage != null))
+        if((Signature != null))
         {
-          hashcode = (hashcode * 397) + ErrorMessage.GetHashCode();
+          hashcode = (hashcode * 397) + Signature.GetHashCode();
         }
-        if(__isset.object_handle)
+        if((Description != null))
         {
-          hashcode = (hashcode * 397) + ObjectHandle.GetHashCode();
+          hashcode = (hashcode * 397) + Description.GetHashCode();
         }
+        hashcode = (hashcode * 397) + IsAggregate.GetHashCode();
       }
       return hashcode;
     }
 
     public override string ToString()
     {
-      var tmp14 = new StringBuilder("QueryCatPluginException(");
-      tmp14.Append(", Type: ");
-      Type.ToString(tmp14);
-      if((ErrorMessage != null))
+      var tmp18 = new StringBuilder("Function(");
+      if((Signature != null))
       {
-        tmp14.Append(", ErrorMessage: ");
-        ErrorMessage.ToString(tmp14);
+        tmp18.Append(", Signature: ");
+        Signature.ToString(tmp18);
       }
-      if(__isset.object_handle)
+      if((Description != null))
       {
-        tmp14.Append(", ObjectHandle: ");
-        ObjectHandle.ToString(tmp14);
+        tmp18.Append(", Description: ");
+        Description.ToString(tmp18);
       }
-      tmp14.Append(')');
-      return tmp14.ToString();
+      tmp18.Append(", IsAggregate: ");
+      IsAggregate.ToString(tmp18);
+      tmp18.Append(')');
+      return tmp18.ToString();
     }
   }
 

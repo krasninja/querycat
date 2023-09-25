@@ -13,7 +13,7 @@ namespace QueryCat.Backend.ThriftPlugins;
 
 public partial class ThriftPluginsServer
 {
-    internal class PluginContext
+    internal sealed class PluginContext
     {
         public string Name { get; set; } = string.Empty;
 
@@ -21,7 +21,7 @@ public partial class ThriftPluginsServer
 
         public Plugin.Client? Client { get; set; }
 
-        public HashSet<string> Functions { get; } = new();
+        public List<PluginContextFunction> Functions { get; } = new();
 
         public ObjectsStorage ObjectsStorage { get; } = new();
     }
@@ -36,7 +36,7 @@ public partial class ThriftPluginsServer
         }
 
         /// <inheritdoc />
-        public async Task RegisterPluginAsync(
+        public async Task<RegistrationResult> RegisterPluginAsync(
             string auth_token,
             string callback_uri,
             PluginData? plugin_data,
@@ -44,12 +44,16 @@ public partial class ThriftPluginsServer
         {
             if (plugin_data == null)
             {
-                return;
+                return CreateEmptyRegistrationResult();
             }
 
+            // Validate authentication token.
             _thriftPluginsServer._logger.LogTrace(
-                "Pre-register plugin '{PluginName}' with token '{Token}' and callback URI '{CallbackUri}'.",
-                plugin_data.Version, auth_token, callback_uri);
+                "Pre-register plugin '{PluginName}' ({PluginVersion}) with token '{Token}' and callback URI '{CallbackUri}'.",
+                plugin_data.Name,
+                plugin_data.Version,
+                auth_token,
+                callback_uri);
             SemaphoreSlim? semaphoreSlim = null;
             if (!_thriftPluginsServer.SkipTokenVerification &&
                 (string.IsNullOrEmpty(auth_token)
@@ -58,21 +62,28 @@ public partial class ThriftPluginsServer
                 throw new QueryCatPluginException(ErrorType.INVALID_AUTH_TOKEN, "Invalid token.");
             }
 
+            // Create plugin context, init and add it to a list.
             var context = await CreateClientConnection(callback_uri, cancellationToken);
-
+            context.Name = plugin_data.Name;
             if (plugin_data.Functions != null)
             {
                 foreach (var function in plugin_data.Functions)
                 {
-                    context.Functions.Add(function);
+                    context.Functions.Add(
+                        new PluginContextFunction(function.Signature, function.Description));
                 }
             }
+            _thriftPluginsServer.RegisterPluginContext(context, auth_token);
 
-            _thriftPluginsServer._plugins.Add(context);
+            // Since we registered plugin we can release semaphore and notify loader.
             semaphoreSlim?.Release();
-
             _thriftPluginsServer._logger.LogDebug("Registered plugin '{PluginName}'.", plugin_data.Name);
+
+            return CreateEmptyRegistrationResult();
         }
+
+        private static RegistrationResult CreateEmptyRegistrationResult()
+            => new(Application.GetVersion(), new List<int>());
 
         private async Task<PluginContext> CreateClientConnection(
             string callbackUri,
@@ -171,7 +182,7 @@ public partial class ThriftPluginsServer
         }
 
         /// <inheritdoc />
-        public Task RegisterPluginAsync(string auth_token, string callback_uri, PluginData? plugin_data,
+        public Task<RegistrationResult> RegisterPluginAsync(string auth_token, string callback_uri, PluginData? plugin_data,
             CancellationToken cancellationToken = default)
         {
             try
