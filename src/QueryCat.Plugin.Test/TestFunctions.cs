@@ -7,7 +7,7 @@ namespace QueryCat.Plugin.Test;
 internal static class TestFunctions
 {
     [Description("Test function.")]
-    [FunctionSignature("test_combine(int: integer, str: string, dec: numeric, fl: float, bl: boolean, tim: timestamp, inter: interval): string")]
+    [FunctionSignature("test_combine([int]: integer, str: string, dec: numeric, fl: float, bl: boolean, tim: timestamp, inter: interval): string")]
     public static VariantValue TestCombineFunction(FunctionCallInfo args)
     {
         // Call: test_combine(1, 'str', 2.5::numeric, 5.2, True, '2023-08-02'::timestamp, interval '3d');
