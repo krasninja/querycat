@@ -52,6 +52,23 @@ internal static class FunctionFormatter
             return string.Empty;
         }
 
+        // Unwrap generic types.
+        if (type.IsGenericType)
+        {
+            if (type.GetGenericTypeDefinition() == typeof(Nullable<>))
+            {
+                type = Nullable.GetUnderlyingType(type)!;
+            }
+            else if (type.GetGenericTypeDefinition() == typeof(Task<>))
+            {
+                type = type.GetGenericArguments()[0];
+            }
+        }
+        else if (type == typeof(Task))
+        {
+            type = typeof(void);
+        }
+
         var dataType = Converter.ConvertFromSystem(type);
         if (dataType == DataType.Object)
         {

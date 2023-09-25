@@ -73,7 +73,7 @@ public static class FunctionsManagerExtensions
                 if (firstConstructor != null)
                 {
                     var functionName = GetFunctionNameWithAlternate(classAttribute.Signature, type);
-                    var signature = FunctionFormatter.FormatSignatureFromParameters(functionName, firstConstructor.GetParameters(), typeof(object));
+                    var signature = FunctionFormatter.FormatSignatureFromParameters(functionName, firstConstructor.GetParameters(), type);
                     var @delegate = FunctionFormatter.CreateDelegateFromMethod(firstConstructor);
                     var description = type.GetCustomAttribute<DescriptionAttribute>()?.Description ?? string.Empty;
                     functionsManager.RegisterFunction(signature, @delegate, description);
