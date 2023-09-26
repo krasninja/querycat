@@ -6,7 +6,7 @@ namespace QueryCat.Plugin.Test;
 
 internal static class TestFunctions
 {
-    [Description("Test function.")]
+    [Description("Test function (combine).")]
     [FunctionSignature("test_combine([int]: integer, str: string, dec: numeric, fl: float, bl: boolean, tim: timestamp, inter: interval): string")]
     public static VariantValue TestCombineFunction(FunctionCallInfo args)
     {
@@ -22,7 +22,7 @@ internal static class TestFunctions
         return new VariantValue(result);
     }
 
-    [Description("Test function.")]
+    [Description("Test function (simple).")]
     [FunctionSignature("test_simple(): timestamp")]
     public static VariantValue TestSimpleFunction(FunctionCallInfo args)
     {
