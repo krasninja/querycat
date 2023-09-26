@@ -40,6 +40,10 @@ internal sealed class WebServer
 
     private readonly Lazy<ILogger> _logger = new(() => Application.LoggerFactory.CreateLogger<WebServer>());
 
+    internal sealed class WebServerReply : Dictionary<string, object>
+    {
+    }
+
     public WebServer(
         ExecutionThread executionThread,
         string? urls = null,
@@ -175,7 +179,7 @@ internal sealed class WebServer
         }
     }
 
-    private sealed class QueryWrapper
+    internal sealed class QueryWrapper
     {
         public string? Query { get; set; }
     }
@@ -193,10 +197,7 @@ internal sealed class WebServer
             }
             else if (request.ContentType == ContentTypeJson)
             {
-                var wrapper = JsonSerializer.Deserialize<QueryWrapper>(text, new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                });
+                var wrapper = JsonSerializer.Deserialize(text, SourceGenerationContext.Default.QueryWrapper);
                 return wrapper?.Query ?? string.Empty;
             }
         }
@@ -375,7 +376,7 @@ internal sealed class WebServer
     {
         var localPlugins = AsyncUtils.RunSync(async ()
             => await _executionThread.PluginsManager.ListAsync(localOnly: true))!;
-        var dict = new Dictionary<string, object>
+        var dict = new WebServerReply
         {
             ["installedPlugins"] = localPlugins,
             ["version"] = Application.GetVersion(),
@@ -384,7 +385,8 @@ internal sealed class WebServer
         };
         JsonSerializer.Serialize(response.OutputStream, dict, new JsonSerializerOptions
         {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            TypeInfoResolver = SourceGenerationContext.Default,
         });
     }
 }

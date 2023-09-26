@@ -46,13 +46,14 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
     /// </summary>
     public string ServerPipeName { get; } = "qcat-" + Guid.NewGuid().ToString("N");
 
-    private sealed record FunctionsCache(
+    internal sealed record FunctionsCache(
         [property:JsonPropertyName("createdAt")] long CreatedAt,
         [property:JsonPropertyName("functions")] List<PluginContextFunction> Functions);
 
     private static readonly JsonSerializerOptions JsonSerializerOptions = new()
     {
         WriteIndented = false,
+        TypeInfoResolver = SourceGenerationContext.Default,
     };
 
     public ThriftPluginsLoader(
