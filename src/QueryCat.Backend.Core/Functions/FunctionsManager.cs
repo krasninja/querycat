@@ -10,7 +10,8 @@ public abstract class FunctionsManager
     /// <summary>
     /// Register aggregate function.
     /// </summary>
-    public abstract void RegisterAggregate(Type type);
+    public abstract void RegisterAggregate<TAggregate>(Func<IExecutionThread, TAggregate> factory)
+        where TAggregate : IAggregateFunction;
 
     /// <summary>
     /// Register function.

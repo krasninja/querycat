@@ -161,19 +161,17 @@ public sealed class DefaultFunctionsManager : FunctionsManager
     }
 
     /// <inheritdoc />
-    public override void RegisterAggregate(Type aggregateType)
+    public override void RegisterAggregate<TAggregate>(Func<IExecutionThread, TAggregate> factory)
     {
-        _registerAggregateFunctions.Add(fm => RegisterAggregateInternal(fm, aggregateType));
+        _registerAggregateFunctions.Add(fm => RegisterAggregateInternal(fm, factory));
     }
 
-    private static void RegisterAggregateInternal(DefaultFunctionsManager functionsManager, Type aggregateType)
+    private static void RegisterAggregateInternal<TAggregate>(
+        DefaultFunctionsManager functionsManager,
+        Func<IExecutionThread, TAggregate> factory)
+        where TAggregate : IAggregateFunction
     {
-        if (Activator.CreateInstance(aggregateType) is not IAggregateFunction aggregateFunctionInstance)
-        {
-            throw new InvalidOperationException(
-                $"Type '{aggregateType.Name}' is not assignable from '{nameof(IAggregateFunction)}.");
-        }
-
+        var aggregateType = typeof(TAggregate);
         var signatureAttributes = aggregateType.GetCustomAttributes<AggregateFunctionSignatureAttribute>();
         foreach (var signatureAttribute in signatureAttributes)
         {
@@ -194,6 +192,7 @@ public sealed class DefaultFunctionsManager : FunctionsManager
                 updateValueFactory: (_, value) => value!.Add(function));
 
             Logger.LogDebug("Register aggregate: {Function}.", function);
+            var aggregateFunctionInstance = factory.Invoke(functionsManager._thread);
             functionsManager._aggregateFunctions.TryAdd(functionName, aggregateFunctionInstance);
         }
     }

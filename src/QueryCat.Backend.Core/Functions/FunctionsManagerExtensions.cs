@@ -85,7 +85,7 @@ public static class FunctionsManagerExtensions
         // Try to register aggregates from type.
         if (typeof(IAggregateFunction).IsAssignableFrom(type))
         {
-            functionsManager.RegisterAggregate(type);
+            functionsManager.RegisterAggregate(_ => (IAggregateFunction)Activator.CreateInstance(type)!);
             return;
         }
 

@@ -10,7 +10,7 @@ public sealed class NullFunctionsManager : FunctionsManager
     public static NullFunctionsManager Instance { get; } = new();
 
     /// <inheritdoc />
-    public override void RegisterAggregate(Type type)
+    public override void RegisterAggregate<TAggregate>(Func<IExecutionThread, TAggregate> factory)
     {
     }
 
