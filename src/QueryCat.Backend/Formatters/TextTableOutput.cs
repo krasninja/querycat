@@ -39,7 +39,7 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
 
     private int[] _columnsLengths = Array.Empty<int>();
 
-    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger<TextTableOutput>();
+    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(TextTableOutput));
 
     /// <summary>
     /// Columns separator.

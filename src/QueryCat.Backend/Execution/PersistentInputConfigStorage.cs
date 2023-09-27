@@ -14,7 +14,7 @@ public class PersistentInputConfigStorage : MemoryInputConfigStorage
     private readonly string _configFile;
     private int _writesCount;
 
-    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger<PersistentInputConfigStorage>();
+    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(PersistentInputConfigStorage));
 
     public PersistentInputConfigStorage(string configFile)
     {

@@ -33,7 +33,7 @@ internal sealed class VaryingOutputRowsIterator : IRowsIterator, IRowsIteratorPa
 
     public bool HasOutputDefined => _functionCallInfo != FunctionCallInfo.Empty;
 
-    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger<VaryingOutputRowsIterator>();
+    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(VaryingOutputRowsIterator));
 
     public VaryingOutputRowsIterator(
         IRowsIterator rowsIterator,

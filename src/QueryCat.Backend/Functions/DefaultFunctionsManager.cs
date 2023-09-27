@@ -33,9 +33,8 @@ public sealed class DefaultFunctionsManager : FunctionsManager
     private int _registerAggregateFunctionsLastIndex;
 
     private readonly IExecutionThread _thread;
-    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger<FunctionsManager>();
-
-    private static readonly ILogger Logger = Application.LoggerFactory.CreateLogger<FunctionsManager>();
+    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(FunctionsManager));
+    private static readonly ILogger Logger = Application.LoggerFactory.CreateLogger(nameof(FunctionsManager));
 
     private static VariantValue EmptyFunction(FunctionCallInfo args)
     {

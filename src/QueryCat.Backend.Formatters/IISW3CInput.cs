@@ -22,7 +22,7 @@ public sealed class IISW3CInput : StreamRowsInput
     private int _dateColumnIndex = -1;
     private bool _isInitialized;
 
-    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger<IISW3CInput>();
+    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(IISW3CInput));
 
     // https://procodeguide.com/programming/iis-logs/.
     private static readonly Dictionary<string, Column> AvailableFields = new()

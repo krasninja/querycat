@@ -21,7 +21,7 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
     private readonly SelectCommandContext _context;
     private readonly ResolveTypesVisitor _resolveTypesVisitor;
 
-    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger<CreateRowsInputVisitor>();
+    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(CreateRowsInputVisitor));
 
     public CreateRowsInputVisitor(ExecutionThread executionThread, SelectCommandContext context)
     {

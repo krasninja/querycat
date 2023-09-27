@@ -21,7 +21,7 @@ public sealed class DefaultPluginsManager : PluginsManager, IDisposable
 
     public IEnumerable<string> PluginDirectories => _pluginDirectories;
 
-    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger<DefaultPluginsManager>();
+    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(DefaultPluginsManager));
 
     public DefaultPluginsManager(
         IEnumerable<string> pluginDirectories,

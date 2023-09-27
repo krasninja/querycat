@@ -97,11 +97,11 @@ internal class ApplicationOptions
     /// </summary>
     public void InitializeLogger()
     {
-        Application.LoggerFactory = LoggerFactory.Create(builder =>
-        {
-            builder
-                .SetMinimumLevel(LogLevel)
-                .AddProvider(new QueryCatConsoleLoggerProvider());
-        });
+        Application.LoggerFactory = new LoggerFactory(
+            providers: new[] { new QueryCatConsoleLoggerProvider() },
+            new LoggerFilterOptions
+            {
+                MinLevel = LogLevel,
+            });
     }
 }

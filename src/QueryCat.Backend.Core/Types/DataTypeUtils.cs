@@ -9,7 +9,7 @@ namespace QueryCat.Backend.Core.Types;
 /// </summary>
 public static class DataTypeUtils
 {
-    private static readonly ILogger Logger = Application.LoggerFactory.CreateLogger(typeof(DataTypeUtils));
+    private static readonly ILogger Logger = Application.LoggerFactory.CreateLogger(nameof(DataTypeUtils));
 
     /// <summary>
     /// Contains the types that can be used for row column.

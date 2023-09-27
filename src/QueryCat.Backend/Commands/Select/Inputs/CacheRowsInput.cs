@@ -17,7 +17,7 @@ internal sealed class CacheRowsInput : IRowsInputKeys
 {
     private const int ChunkSize = 4096;
 
-    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger<CacheRowsInput>();
+    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(CacheRowsInput));
 
     [DebuggerDisplay("Key = {Key}, IsExpired = {IsExpired}")]
     private sealed class CacheEntry

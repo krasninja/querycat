@@ -18,7 +18,7 @@ public sealed class ThriftInputConfigStorage : IInputConfigStorage
 {
     private readonly PluginsManager.Client _client;
     private readonly Dictionary<string, VariantValue> _objectsStorage = new();
-    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger<ThriftInputConfigStorage>();
+    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(ThriftInputConfigStorage));
 
     public ThriftInputConfigStorage(PluginsManager.Client client)
     {

@@ -72,7 +72,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
 
     private readonly DelimiterStreamReader _delimiterStreamReader;
 
-    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger<StreamRowsInput>();
+    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(StreamRowsInput));
 
     /// <summary>
     /// Constructor.

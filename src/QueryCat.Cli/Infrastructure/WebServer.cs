@@ -38,7 +38,7 @@ internal sealed class WebServer
     private readonly ExecutionThread _executionThread;
     private readonly string? _password;
 
-    private readonly Lazy<ILogger> _logger = new(() => Application.LoggerFactory.CreateLogger<WebServer>());
+    private readonly Lazy<ILogger> _logger = new(() => Application.LoggerFactory.CreateLogger(nameof(WebServer)));
 
     internal sealed class WebServerReply : Dictionary<string, object>
     {
@@ -383,10 +383,6 @@ internal sealed class WebServer
             ["os"] = System.Runtime.InteropServices.RuntimeInformation.OSDescription.Trim(),
             ["date"] = DateTime.Now,
         };
-        JsonSerializer.Serialize(response.OutputStream, dict, new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            TypeInfoResolver = SourceGenerationContext.Default,
-        });
+        JsonSerializer.Serialize(response.OutputStream, dict, SourceGenerationContext.Default.WebServerReply);
     }
 }

@@ -13,7 +13,7 @@ internal sealed class XmlOutput : RowsOutput, IDisposable
 
     private readonly XmlWriter _xmlWriter;
 
-    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger<XmlOutput>();
+    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(XmlOutput));
 
     public XmlOutput(Stream stream)
     {

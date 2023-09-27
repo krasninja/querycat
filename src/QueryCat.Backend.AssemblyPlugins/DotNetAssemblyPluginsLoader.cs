@@ -20,7 +20,7 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader
     private readonly FunctionsManager _functionsManager;
     private readonly HashSet<Assembly> _loadedAssemblies = new();
 
-    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger<DotNetAssemblyPluginsLoader>();
+    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(DotNetAssemblyPluginsLoader));
 
     public IEnumerable<Assembly> LoadedAssemblies => _loadedAssembliesCache.Values;
 
