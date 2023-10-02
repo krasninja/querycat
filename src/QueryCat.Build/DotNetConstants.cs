@@ -7,7 +7,7 @@ namespace QueryCat.Build;
 /// <summary>
 /// .NET related constants.
 /// </summary>
-internal static class DotNetConstants
+public static class DotNetConstants
 {
     #region Target
 
