@@ -7,7 +7,7 @@ namespace QueryCat.Build;
 /// <summary>
 /// .NET related constants.
 /// </summary>
-public static class DotNetConstants
+internal static class DotNetConstants
 {
     #region Target
 
@@ -26,6 +26,12 @@ public static class DotNetConstants
     public const string RidWindowsX64 = $"{Application.PlatformWindows}-{Application.ArchitectureX64}";
     public const string RidMacOSX64 = $"osx.12-{Application.ArchitectureX64}";
     public const string RidMacOSXArm64 = $"osx.12-{Application.ArchitectureArm64}";
+
+    #endregion
+
+    #region Arguments
+
+    public const string PublishAotArgument = "PublishAot";
 
     #endregion
 }
