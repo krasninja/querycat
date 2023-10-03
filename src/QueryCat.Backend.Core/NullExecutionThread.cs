@@ -16,10 +16,10 @@ public sealed class NullExecutionThread : IExecutionThread
     public CancellationTokenSource CancellationTokenSource { get; } = new();
 
     /// <inheritdoc />
-    public FunctionsManager FunctionsManager { get; } = NullFunctionsManager.Instance;
+    public IFunctionsManager FunctionsManager { get; } = NullFunctionsManager.Instance;
 
     /// <inheritdoc />
-    public PluginsManager PluginsManager { get; } = NullPluginsManager.Instance;
+    public IPluginsManager PluginsManager { get; } = NullPluginsManager.Instance;
 
     /// <inheritdoc />
     public IInputConfigStorage ConfigStorage { get; } = NullInputConfigStorage.Instance;

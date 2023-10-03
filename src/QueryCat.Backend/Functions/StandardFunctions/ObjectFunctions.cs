@@ -19,7 +19,7 @@ public static class ObjectFunctions
         return VariantValue.CreateFromObject(value);
     }
 
-    public static void RegisterFunctions(FunctionsManager functionsManager)
+    public static void RegisterFunctions(IFunctionsManager functionsManager)
     {
         functionsManager.RegisterFunction(ObjectQuery);
     }

@@ -9,7 +9,7 @@ namespace QueryCat.Backend.Execution;
 /// <summary>
 /// The class allows to search, install, remove and update plugins.
 /// </summary>
-public sealed class DefaultPluginsManager : PluginsManager, IDisposable
+public sealed class DefaultPluginsManager : IPluginsManager, IDisposable
 {
     private const string PluginsStorageUri = @"https://querycat.storage.yandexcloud.net/";
 
@@ -49,7 +49,7 @@ public sealed class DefaultPluginsManager : PluginsManager, IDisposable
     }
 
     /// <inheritdoc />
-    public override async Task<IEnumerable<PluginInfo>> ListAsync(
+    public async Task<IEnumerable<PluginInfo>> ListAsync(
         bool localOnly = false,
         CancellationToken cancellationToken = default)
     {
@@ -62,7 +62,7 @@ public sealed class DefaultPluginsManager : PluginsManager, IDisposable
     }
 
     /// <inheritdoc />
-    public override async Task<int> InstallAsync(string name, CancellationToken cancellationToken = default)
+    public async Task<int> InstallAsync(string name, CancellationToken cancellationToken = default)
     {
         var plugins = await GetRemotePluginsAsync(cancellationToken).ConfigureAwait(false);
         var plugin = plugins.FirstOrDefault(p => name.Equals(p.Name, StringComparison.OrdinalIgnoreCase));
@@ -88,7 +88,7 @@ public sealed class DefaultPluginsManager : PluginsManager, IDisposable
     }
 
     /// <inheritdoc />
-    public override async Task UpdateAsync(string name, CancellationToken cancellationToken = default)
+    public async Task UpdateAsync(string name, CancellationToken cancellationToken = default)
     {
         if (name == "*")
         {
@@ -114,7 +114,7 @@ public sealed class DefaultPluginsManager : PluginsManager, IDisposable
     }
 
     /// <inheritdoc />
-    public override Task RemoveAsync(string name, CancellationToken cancellationToken = default)
+    public Task RemoveAsync(string name, CancellationToken cancellationToken = default)
     {
         foreach (var localPlugin in GetLocalPlugins())
         {

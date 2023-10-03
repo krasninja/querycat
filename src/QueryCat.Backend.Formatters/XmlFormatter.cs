@@ -30,7 +30,7 @@ internal class XmlFormatter : IRowsFormatter
     public IRowsOutput OpenOutput(Stream output)
         => new XmlOutput(output);
 
-    public static void RegisterFunctions(FunctionsManager functionsManager)
+    public static void RegisterFunctions(IFunctionsManager functionsManager)
     {
         functionsManager.RegisterFunction(Xml);
     }

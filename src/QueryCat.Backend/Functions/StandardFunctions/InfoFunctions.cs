@@ -113,7 +113,7 @@ public static class InfoFunctions
         return VariantValue.CreateFromObject(builder.BuildIterator(TimeZoneInfo.GetSystemTimeZones()));
     }
 
-    public static void RegisterFunctions(FunctionsManager functionsManager)
+    public static void RegisterFunctions(IFunctionsManager functionsManager)
     {
         functionsManager.RegisterFunction(Functions);
         functionsManager.RegisterFunction(Schema);

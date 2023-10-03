@@ -12,7 +12,7 @@ namespace QueryCat.Backend.Functions;
 /// <summary>
 /// Manages functions search and registration.
 /// </summary>
-public sealed class DefaultFunctionsManager : FunctionsManager
+public sealed class DefaultFunctionsManager : IFunctionsManager
 {
     private const int DefaultCapacity = 42;
 
@@ -33,8 +33,8 @@ public sealed class DefaultFunctionsManager : FunctionsManager
     private int _registerAggregateFunctionsLastIndex;
 
     private readonly IExecutionThread _thread;
-    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(FunctionsManager));
-    private static readonly ILogger Logger = Application.LoggerFactory.CreateLogger(nameof(FunctionsManager));
+    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(DefaultFunctionsManager));
+    private static readonly ILogger Logger = Application.LoggerFactory.CreateLogger(nameof(DefaultFunctionsManager));
 
     private static VariantValue EmptyFunction(FunctionCallInfo args)
     {
@@ -49,7 +49,7 @@ public sealed class DefaultFunctionsManager : FunctionsManager
     #region Registration
 
     /// <inheritdoc />
-    public override void RegisterFactory(Action<FunctionsManager> registerFunction, bool postpone = true)
+    public void RegisterFactory(Action<IFunctionsManager> registerFunction, bool postpone = true)
     {
         if (postpone)
         {
@@ -106,7 +106,7 @@ public sealed class DefaultFunctionsManager : FunctionsManager
     }
 
     /// <inheritdoc />
-    public override void RegisterFunction(string signature, FunctionDelegate @delegate,
+    public void RegisterFunction(string signature, FunctionDelegate @delegate,
         string? description = null)
     {
         if (string.IsNullOrEmpty(signature))
@@ -160,7 +160,8 @@ public sealed class DefaultFunctionsManager : FunctionsManager
     }
 
     /// <inheritdoc />
-    public override void RegisterAggregate<TAggregate>(Func<IExecutionThread, TAggregate> factory)
+    public void RegisterAggregate<TAggregate>(Func<IExecutionThread, TAggregate> factory)
+        where TAggregate : IAggregateFunction
     {
         _registerAggregateFunctions.Add(fm => RegisterAggregateInternal(fm, factory));
     }
@@ -199,7 +200,7 @@ public sealed class DefaultFunctionsManager : FunctionsManager
     #endregion
 
     /// <inheritdoc />
-    public override bool TryFindByName(
+    public bool TryFindByName(
         string name,
         FunctionCallArgumentsTypes? functionArgumentsTypes,
         out IFunction[] functions)
@@ -238,7 +239,7 @@ public sealed class DefaultFunctionsManager : FunctionsManager
     }
 
     /// <inheritdoc />
-    public override bool TryFindAggregateByName(string name, out IAggregateFunction aggregateFunction)
+    public bool TryFindAggregateByName(string name, out IAggregateFunction aggregateFunction)
     {
         name = NormalizeName(name);
         if (_aggregateFunctions.TryGetValue(name, out aggregateFunction!))
@@ -262,7 +263,7 @@ public sealed class DefaultFunctionsManager : FunctionsManager
     /// Get all registered functions.
     /// </summary>
     /// <returns>Functions enumerable.</returns>
-    public override IEnumerable<IFunction> GetFunctions()
+    public IEnumerable<IFunction> GetFunctions()
     {
         while (_registerFunctionsLastIndex < _registerFunctions.Count)
         {
@@ -287,7 +288,7 @@ public sealed class DefaultFunctionsManager : FunctionsManager
     }
 
     /// <inheritdoc />
-    public override VariantValue CallFunction(IFunction function, FunctionCallArguments callArguments)
+    public VariantValue CallFunction(IFunction function, FunctionCallArguments callArguments)
     {
         var info = new FunctionCallInfo(_thread);
         info.FunctionName = function.Name;

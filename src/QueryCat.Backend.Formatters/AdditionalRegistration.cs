@@ -5,7 +5,7 @@ namespace QueryCat.Backend.Formatters;
 
 public static class AdditionalRegistration
 {
-    public static void Register(FunctionsManager functionsManager)
+    public static void Register(IFunctionsManager functionsManager)
     {
         functionsManager.RegisterFactory(JsonFormatter.RegisterFunctions);
         functionsManager.RegisterFactory(SubRipFormatter.RegisterFunctions);

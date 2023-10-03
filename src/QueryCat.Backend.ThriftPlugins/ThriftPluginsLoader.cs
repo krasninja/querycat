@@ -274,7 +274,7 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         return GetContext();
     }
 
-    private void RegisterFunctions(FunctionsManager functionsManager, string file,
+    private void RegisterFunctions(IFunctionsManager functionsManager, string file,
         IEnumerable<PluginContextFunction> functions)
     {
         foreach (var function in functions)
@@ -332,7 +332,7 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         return string.Empty;
     }
 
-    private void RegisterFunctions(FunctionsManager functionsManager, ThriftPluginsServer.PluginContext pluginContext)
+    private void RegisterFunctions(IFunctionsManager functionsManager, ThriftPluginsServer.PluginContext pluginContext)
     {
         foreach (var function in pluginContext.Functions)
         {

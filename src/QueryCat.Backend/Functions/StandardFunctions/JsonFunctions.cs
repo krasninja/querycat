@@ -143,7 +143,7 @@ public static class JsonFunctions
         return new VariantValue(pathResult.Matches != null && pathResult.Matches.Count > 0);
     }
 
-    public static void RegisterFunctions(FunctionsManager functionsManager)
+    public static void RegisterFunctions(IFunctionsManager functionsManager)
     {
         functionsManager.RegisterFunction(JsonQuery);
         functionsManager.RegisterFunction(JsonValue);

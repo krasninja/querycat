@@ -5,7 +5,7 @@ namespace QueryCat.Backend.Formatters;
 
 internal static class Registration
 {
-    public static void Register(FunctionsManager functionsManager)
+    public static void Register(IFunctionsManager functionsManager)
     {
         functionsManager.RegisterFactory(DsvFormatter.RegisterFunctions);
         functionsManager.RegisterFactory(NullFormatter.RegisterFunctions);

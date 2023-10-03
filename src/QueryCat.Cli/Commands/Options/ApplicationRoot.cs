@@ -10,11 +10,11 @@ internal sealed class ApplicationRoot : IDisposable
 {
     public ExecutionThread Thread { get; }
 
-    public PluginsManager PluginsManager { get; }
+    public IPluginsManager PluginsManager { get; }
 
     public PluginsLoader PluginsLoader { get; }
 
-    public ApplicationRoot(ExecutionThread thread, PluginsManager pluginsManager, PluginsLoader pluginsLoader)
+    public ApplicationRoot(ExecutionThread thread, IPluginsManager pluginsManager, PluginsLoader pluginsLoader)
     {
         Thread = thread;
         PluginsManager = pluginsManager;

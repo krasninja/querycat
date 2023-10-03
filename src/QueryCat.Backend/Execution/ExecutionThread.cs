@@ -43,7 +43,7 @@ public class ExecutionThread : IExecutionThread
     /// <summary>
     /// Functions manager.
     /// </summary>
-    public FunctionsManager FunctionsManager { get; }
+    public IFunctionsManager FunctionsManager { get; }
 
     /// <summary>
     /// Current executing statement.
@@ -63,7 +63,7 @@ public class ExecutionThread : IExecutionThread
     /// <summary>
     /// Plugins manager.
     /// </summary>
-    public PluginsManager PluginsManager { get; set; } = NullPluginsManager.Instance;
+    public IPluginsManager PluginsManager { get; set; } = NullPluginsManager.Instance;
 
     /// <summary>
     /// Last execution statement return value.

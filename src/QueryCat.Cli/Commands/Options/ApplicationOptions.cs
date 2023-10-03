@@ -49,7 +49,7 @@ internal class ApplicationOptions
         pluginsLoader = new Backend.AssemblyPlugins.DotNetAssemblyPluginsLoader(executionThread.FunctionsManager,
             executionOptions.PluginDirectories);
 #endif
-        PluginsManager pluginsManager = NullPluginsManager.Instance;
+        IPluginsManager pluginsManager = NullPluginsManager.Instance;
 #if ENABLE_PLUGINS
         pluginsManager = new DefaultPluginsManager(executionOptions.PluginDirectories, pluginsLoader,
             executionOptions.PluginsRepositoryUri);

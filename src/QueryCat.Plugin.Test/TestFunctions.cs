@@ -28,4 +28,11 @@ internal static class TestFunctions
     {
         return new VariantValue(DateTime.Now);
     }
+
+    [Description("Test non standard function (simple).")]
+    [FunctionSignature("test_simple_2(a: int, b: int): int")]
+    public static int TestSimpleNonStandardFunction(int a, int b)
+    {
+        return new VariantValue(a + b);
+    }
 }

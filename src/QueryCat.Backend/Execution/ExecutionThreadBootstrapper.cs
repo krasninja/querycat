@@ -16,7 +16,7 @@ public sealed class ExecutionThreadBootstrapper
 {
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(ExecutionThreadBootstrapper));
 
-    public void Bootstrap(ExecutionThread executionThread, PluginsLoader pluginsLoader, params Action<FunctionsManager>[] registrations)
+    public void Bootstrap(ExecutionThread executionThread, PluginsLoader pluginsLoader, params Action<IFunctionsManager>[] registrations)
     {
 #if DEBUG
         var timer = new Stopwatch();

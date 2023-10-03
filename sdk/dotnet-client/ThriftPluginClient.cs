@@ -48,7 +48,7 @@ public partial class ThriftPluginClient : IDisposable
     private Task? _clientServerListenThread;
     private readonly CancellationTokenSource _clientServerCts = new();
 
-    public FunctionsManager FunctionsManager => _functionsManager;
+    public IFunctionsManager FunctionsManager => _functionsManager;
 
     public ThriftPluginClient(string[] args)
     {

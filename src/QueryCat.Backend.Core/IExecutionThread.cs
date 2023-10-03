@@ -18,12 +18,12 @@ public interface IExecutionThread : IDisposable
     /// <summary>
     /// Functions manager.
     /// </summary>
-    FunctionsManager FunctionsManager { get; }
+    IFunctionsManager FunctionsManager { get; }
 
     /// <summary>
     /// Plugins manager.
     /// </summary>
-    PluginsManager PluginsManager { get; }
+    IPluginsManager PluginsManager { get; }
 
     /// <summary>
     /// Config storage.

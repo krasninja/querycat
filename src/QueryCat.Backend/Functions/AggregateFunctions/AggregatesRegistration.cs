@@ -7,7 +7,7 @@ namespace QueryCat.Backend.Functions.AggregateFunctions;
 /// </summary>
 internal static class AggregatesRegistration
 {
-    public static void RegisterFunctions(FunctionsManager functionsManager)
+    public static void RegisterFunctions(IFunctionsManager functionsManager)
     {
         functionsManager.RegisterAggregate(_ => new AvgAggregateFunction());
         functionsManager.RegisterAggregate(_ => new CountAggregateFunction());

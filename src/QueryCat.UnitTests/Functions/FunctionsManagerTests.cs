@@ -7,11 +7,11 @@ using QueryCat.Backend.Functions;
 namespace QueryCat.UnitTests.Functions;
 
 /// <summary>
-/// Tests for <see cref="FunctionsManager" />.
+/// Tests for <see cref="DefaultFunctionsManager" />.
 /// </summary>
 public sealed class FunctionsManagerTests
 {
-    private readonly FunctionsManager _functionsManager;
+    private readonly DefaultFunctionsManager _functionsManager;
 
     public FunctionsManagerTests()
     {

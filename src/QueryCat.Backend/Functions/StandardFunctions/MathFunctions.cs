@@ -224,7 +224,7 @@ public static class MathFunctions
         return new VariantValue(Math.Log10(x));
     }
 
-    public static void RegisterFunctions(FunctionsManager functionsManager)
+    public static void RegisterFunctions(IFunctionsManager functionsManager)
     {
         functionsManager.RegisterFunction(Abs);
         functionsManager.RegisterFunction(Degrees);
