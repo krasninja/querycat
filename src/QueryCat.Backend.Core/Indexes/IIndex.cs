@@ -1,4 +1,4 @@
-namespace QueryCat.Backend.Indexes;
+namespace QueryCat.Backend.Core.Indexes;
 
 /// <summary>
 /// General index interface.

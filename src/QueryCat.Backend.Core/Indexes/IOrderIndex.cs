@@ -1,6 +1,6 @@
 using QueryCat.Backend.Core.Data;
 
-namespace QueryCat.Backend.Indexes;
+namespace QueryCat.Backend.Core.Indexes;
 
 /// <summary>
 /// Index that allows ordered access.
