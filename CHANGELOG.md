@@ -4,6 +4,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## Added
+
+- Initial "follow" mode implementation.
+
 ## Fixed
 
 - JsonInput now produces warning on parse error instead of crash.

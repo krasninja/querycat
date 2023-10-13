@@ -7,6 +7,8 @@ namespace QueryCat.Cli.Commands.Options;
 
 internal class QueryOptionsBinder : BinderBase<QueryOptions>
 {
+    private static readonly TimeSpan FollowDefaultTimeout = TimeSpan.FromSeconds(2);
+
     private readonly Option<int> _maxErrorsOption;
     private readonly Option<bool> _statisticOption;
     private readonly Option<bool> _detailedStatisticOption;
@@ -18,6 +20,7 @@ internal class QueryOptionsBinder : BinderBase<QueryOptions>
     private readonly Option<bool> _disableCacheOption;
     private readonly Option<bool> _noHeaderOption;
     private readonly Option<string> _floatNumberOption;
+    private readonly Option<bool> _followOption;
 
     public QueryOptionsBinder(
         Option<int> maxErrorsOption,
@@ -29,7 +32,8 @@ internal class QueryOptionsBinder : BinderBase<QueryOptions>
         Option<string?> columnsSeparatorOption,
         Option<bool> disableCacheOption,
         Option<bool> noHeaderOption,
-        Option<string> floatNumberOption)
+        Option<string> floatNumberOption,
+        Option<bool> followOption)
     {
         _maxErrorsOption = maxErrorsOption;
         _statisticOption = statisticOption;
@@ -49,6 +53,7 @@ internal class QueryOptionsBinder : BinderBase<QueryOptions>
         _disableCacheOption = disableCacheOption;
         _noHeaderOption = noHeaderOption;
         _floatNumberOption = floatNumberOption;
+        _followOption = followOption;
     }
 
     /// <inheritdoc />
@@ -68,6 +73,7 @@ internal class QueryOptionsBinder : BinderBase<QueryOptions>
             NoHeader = bindingContext.ParseResult.GetValueForOption(_noHeaderOption),
             FloatNumberFormat = bindingContext.ParseResult.GetValueForOption(_floatNumberOption)
                 ?? VariantValue.FloatNumberFormat,
+            FollowTimeout = bindingContext.ParseResult.GetValueForOption(_followOption) ? FollowDefaultTimeout : TimeSpan.Zero,
         };
     }
 }

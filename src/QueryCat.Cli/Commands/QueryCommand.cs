@@ -45,6 +45,8 @@ internal class QueryCommand : BaseQueryCommand
         var floatNumberOption = new Option<string>("--float-format",
             description: "Float numbers format.",
             getDefaultValue: () => "F");
+        var followOption = new Option<bool>("--follow",
+            description: "Output appended data as the input source grows.");
 
         this.AddOption(maxErrorsOption);
         this.AddOption(statisticOption);
@@ -57,6 +59,7 @@ internal class QueryCommand : BaseQueryCommand
         this.AddOption(disableCacheOption);
         this.AddOption(noHeaderOption);
         this.AddOption(floatNumberOption);
+        this.AddOption(followOption);
         this.SetHandler((applicationOptions, query, variables, files, queryOptions) =>
         {
             applicationOptions.InitializeLogger();
@@ -75,6 +78,7 @@ internal class QueryCommand : BaseQueryCommand
                 DisableCache = queryOptions.DisableCache,
                 UseConfig = true,
                 RunBootstrapScript = true,
+                FollowTimeoutMs = (int)queryOptions.FollowTimeout.TotalMilliseconds,
             };
             if (queryOptions.AnalyzeRows < 0)
             {
@@ -109,7 +113,8 @@ internal class QueryCommand : BaseQueryCommand
                 columnsSeparatorOption,
                 disableCacheOption,
                 noHeaderOption,
-                floatNumberOption)
+                floatNumberOption,
+                followOption)
             );
     }
 }
