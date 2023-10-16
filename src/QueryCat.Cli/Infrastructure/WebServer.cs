@@ -18,7 +18,7 @@ namespace QueryCat.Cli.Infrastructure;
 /// </summary>
 internal sealed class WebServer
 {
-    private const string DefaultEndpoint = "http://localhost:6789/";
+    private const string DefaultEndpointUri = "http://localhost:6789/";
 
     private const string PostMethod = "POST";
     private const string GetMethod = "GET";
@@ -29,7 +29,10 @@ internal sealed class WebServer
     private const string ContentTypeHtml = "text/html";
     private const string ContentTypeForm = "application/x-www-form-urlencoded";
 
-    public string Urls { get; }
+    /// <summary>
+    /// Endpoint uri.
+    /// </summary>
+    public string Uri { get; }
 
     public string AllowOrigin { get; set; } = string.Empty;
 
@@ -59,19 +62,22 @@ internal sealed class WebServer
 
         _executionThread = executionThread;
         _password = password;
-        Urls = urls ?? DefaultEndpoint;
+        Uri = urls ?? DefaultEndpointUri;
     }
 
+    /// <summary>
+    /// Run web server.
+    /// </summary>
     public void Run()
     {
         using var listener = new HttpListener();
-        listener.Prefixes.Add(Urls);
+        listener.Prefixes.Add(Uri);
         if (!string.IsNullOrEmpty(_password))
         {
             listener.AuthenticationSchemes = AuthenticationSchemes.Basic;
         }
         listener.Start();
-        Console.Out.WriteLine($"Listening on {Urls}. Use `POST /api/query` endpoint.");
+        Console.Out.WriteLine($"Listening on {Uri}. Use `POST /api/query` endpoint.");
 
         while (true)
         {
