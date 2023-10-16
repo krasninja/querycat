@@ -63,5 +63,5 @@ public sealed class ExecutionOptions
     /// <summary>
     /// Write appended data as source grows. Specifies check timeout. 0 means do not follow.
     /// </summary>
-    public int FollowTimeoutMs { get; init; } = 5000;
+    public int FollowTimeoutMs { get; init; }
 }
