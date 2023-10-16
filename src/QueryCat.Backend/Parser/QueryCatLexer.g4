@@ -43,6 +43,7 @@ TYPECAST:           '::';
 // Types.
 
 ANY:                'ANY';
+BLOB:               'BLOB';
 BOOL:               'BOOL';
 BOOLEAN:            'BOOLEAN';
 DECIMAL:            'DECIMAL';
@@ -188,7 +189,7 @@ INSERT:             'INSERT';
 DECLARE:            'DECLARE';
 SET:                'SET';
 
-TYPE: ANY | BOOL | BOOLEAN | DECIMAL | FLOAT | INT | INT8 | INTEGER | NUMERIC | OBJECT | REAL | STRING | TEXT
+TYPE: ANY | BLOB | BOOL | BOOLEAN | DECIMAL | FLOAT | INT | INT8 | INTEGER | NUMERIC | OBJECT | REAL | STRING | TEXT
     | TIMESTAMP;
 
 // https://github.com/antlr/antlr4/blob/master/doc/lexicon.md#identifiers
