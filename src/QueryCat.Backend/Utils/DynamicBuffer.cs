@@ -334,7 +334,7 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
         }
 
         // Allocate new buffer segment.
-        var newBufferSegment = new BufferSegment(new T[_chunkSize], GetNextRunningIndex());
+        var newBufferSegment = new BufferSegment(GC.AllocateUninitializedArray<T>(_chunkSize), GetNextRunningIndex());
         _buffersList.AddLast(newBufferSegment);
         _allocatedPosition += _chunkSize;
         return newBufferSegment.Buffer;
@@ -426,7 +426,7 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
                 {
                     return new Span<T>(iterator.Segment.Buffer, iterator.StartIndex, spanSize);
                 }
-                localBuffer = new T[spanSize];
+                localBuffer = GC.AllocateUninitializedArray<T>(spanSize);
                 Array.Copy(iterator.Segment.Buffer, iterator.StartIndex,
                     localBuffer, localBufferStartIndex, iterator.Size);
                 localBufferStartIndex += iterator.Size;
@@ -674,7 +674,7 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
         else
         {
             var sequence = GetSequence();
-            var newBuffer = new T[sequence.Length > count ? count : sequence.Length];
+            var newBuffer = GC.AllocateUninitializedArray<T>(sequence.Length > count ? count : (int)sequence.Length);
             sequence.Slice(0, count).CopyTo(newBuffer);
             buffer = newBuffer;
         }
