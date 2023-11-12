@@ -111,6 +111,9 @@ public class CacheRowsIterator : ICursorRowsIterator, IRowsIteratorParent
         _cursor = -1;
     }
 
+    /// <summary>
+    /// Move cursor position to the beginning of data.
+    /// </summary>
     public void SeekToHead() => Seek(-1, CursorSeekOrigin.Begin);
 
     /// <inheritdoc />

@@ -8,6 +8,7 @@ public static class AdditionalRegistration
     public static void Register(IFunctionsManager functionsManager)
     {
         functionsManager.RegisterFactory(JsonFormatter.RegisterFunctions);
+        functionsManager.RegisterFactory(RegexpFormatter.RegisterFunctions);
         functionsManager.RegisterFactory(SubRipFormatter.RegisterFunctions);
         functionsManager.RegisterFactory(XmlFormatter.RegisterFunctions);
         functionsManager.RegisterFunction(IISW3CFormatter.IISW3C);

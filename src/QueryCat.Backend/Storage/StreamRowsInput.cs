@@ -181,9 +181,15 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     /// Initialize columns with the new set.
     /// </summary>
     /// <param name="columns">New columns.</param>
-    protected void SetColumns(IEnumerable<Column> columns)
+    protected void SetColumns(IReadOnlyList<Column> columns)
     {
+        if (columns.Count < 1)
+        {
+            throw new QueryCatException("Columns not set.");
+        }
+
         var virtualColumns = GetVirtualColumns();
+        _virtualColumnsCount = virtualColumns.Length;
         var nonVirtualColumns = columns.Where(c => !virtualColumns.Contains(c)).ToArray();
         Array.Resize(ref _columns, nonVirtualColumns.Length + _virtualColumnsCount);
 
@@ -342,9 +348,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     /// The data that was read by iterator will be cached.
     /// </summary>
     /// <param name="iterator">Rows iterator.</param>
-    protected virtual void Analyze(CacheRowsIterator iterator)
-    {
-    }
+    protected abstract void Analyze(CacheRowsIterator iterator);
 
     /// <summary>
     /// The method should return custom (virtual) columns array.

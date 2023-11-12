@@ -62,6 +62,12 @@ public class DelimiterStreamReader
         public char[] Delimiters { get; set; } = Array.Empty<char>();
 
         /// <summary>
+        /// Attempt to find delimiter if it is not specified. If not found the PreferredDelimiter
+        /// will be used (if set).
+        /// </summary>
+        public bool DetectDelimiter { get; set; } = true;
+
+        /// <summary>
         /// Get the preferred delimiter if we cannot determine any from line.
         /// </summary>
         public char? PreferredDelimiter { get; set; }
@@ -165,6 +171,7 @@ public class DelimiterStreamReader
         _stopCharacters = _options.Delimiters
             .Union(_options.QuoteChars)
             .Union(endOfLineCharacters)
+            .Distinct()
             .ToArray();
     }
 
@@ -531,11 +538,15 @@ public class DelimiterStreamReader
         while (!sequenceReader.TryReadToAny(out line, EndOfLineCharacters)
                && ReadNextBufferData() > 0);
 
-        if (!TryDetectDelimiter(line, out var delimiter))
+        if (_options.DetectDelimiter)
         {
-            if (_options.PreferredDelimiter.HasValue)
+            if (TryDetectDelimiter(line, out var delimiter))
             {
-                delimiter = _options.PreferredDelimiter.Value;
+                _options.Delimiters = new[] { delimiter };
+            }
+            else if (_options.PreferredDelimiter.HasValue)
+            {
+                _options.Delimiters = new[] { _options.PreferredDelimiter.Value };
             }
             else
             {
@@ -543,7 +554,6 @@ public class DelimiterStreamReader
             }
         }
 
-        _options.Delimiters = new[] { delimiter };
         InitStopCharacters();
     }
 

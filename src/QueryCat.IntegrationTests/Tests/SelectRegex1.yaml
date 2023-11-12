@@ -1,0 +1,7 @@
+expected: |
+  ,value
+  1,xxx
+  3,yyy
+  5,zzz
+query: |
+  select id, val from 'Table2.csv' format regex('(?<id>\d+)?,(?<val>.+)$');

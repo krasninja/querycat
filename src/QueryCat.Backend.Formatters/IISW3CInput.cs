@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Storage;
 using QueryCat.Backend.Utils;
 
@@ -55,7 +56,7 @@ public sealed class IISW3CInput : StreamRowsInput
     {
         DelimiterStreamReaderOptions = new DelimiterStreamReader.ReaderOptions
         {
-            Delimiters = new[] { ' ' }
+            Delimiters = new[] { ' ' },
         }
     }, key ?? string.Empty)
     {
@@ -134,6 +135,11 @@ public sealed class IISW3CInput : StreamRowsInput
         {
             throw new QueryCatException("Cannot find IIS fields.");
         }
+    }
+
+    /// <inheritdoc />
+    protected override void Analyze(CacheRowsIterator iterator)
+    {
     }
 
     private void ParseHeaders(ReadOnlySpan<char> header)
