@@ -7,10 +7,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## Added
 
 - Initial "follow" mode implementation.
+- Add regular expressions formatter "regex".
 
 ## Fixed
 
 - JsonInput now produces warning on parse error instead of crash.
+- Minor fixes and improvements.
 
 ## [0.4.12] - 2023-09-25
 
