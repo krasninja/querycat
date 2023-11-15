@@ -10,7 +10,7 @@ namespace QueryCat.Backend.Parser;
 internal static class ProgramParserVisitorExtensions
 {
     private static readonly ILogger Logger =
-        Application.LoggerFactory.CreateLogger(typeof(ProgramParserVisitorExtensions));
+        Application.LoggerFactory.CreateLogger(nameof(ProgramParserVisitorExtensions));
 
     #region Return single item
 

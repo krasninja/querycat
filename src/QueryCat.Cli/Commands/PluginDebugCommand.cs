@@ -16,7 +16,7 @@ internal class PluginDebugCommand : BaseQueryCommand
     private const string PipeName = "qcat-test";
     private const string AuthToken = "test";
 
-    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger<PluginDebugCommand>();
+    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(PluginDebugCommand));
 
     /// <inheritdoc />
     public PluginDebugCommand() : base("debug", "Setup debug server.")

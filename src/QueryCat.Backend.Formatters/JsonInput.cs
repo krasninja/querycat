@@ -2,6 +2,7 @@ using System.Buffers;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Json.Path;
+using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
@@ -19,8 +20,10 @@ internal sealed class JsonInput : StreamRowsInput
 {
     private int _bracketsCount;
 
-    private JsonDocument? _jsonDocument;
+    private JsonElement? _jsonElement;
     private string[] _properties = Array.Empty<string>();
+
+    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(JsonInput));
 
     /// <inheritdoc />
     public JsonInput(StreamReader streamReader, bool addFileNameColumn = true, string? jsonPath = null, string? key = null)
@@ -110,13 +113,13 @@ internal sealed class JsonInput : StreamRowsInput
     /// <inheritdoc />
     protected override ErrorCode ReadValueInternal(int nonVirtualColumnIndex, DataType type, out VariantValue value)
     {
-        if (_jsonDocument == null)
+        if (_jsonElement == null)
         {
             value = VariantValue.Null;
             return ErrorCode.Error;
         }
 
-        if (!_jsonDocument.RootElement.TryGetProperty(_properties[nonVirtualColumnIndex], out var property))
+        if (!_jsonElement.Value.TryGetProperty(_properties[nonVirtualColumnIndex], out var property))
         {
             value = VariantValue.Null;
             return ErrorCode.OK;
@@ -166,36 +169,47 @@ internal sealed class JsonInput : StreamRowsInput
     /// <inheritdoc />
     protected override bool ReadNextInternal()
     {
-        var hasData = base.ReadNextInternal();
-        if (hasData)
+        // Read until success.
+        while (true)
         {
-            _jsonDocument?.Dispose();
-            var text = GetRowText();
-            var reader = new SequenceReader<char>(text);
-            if (reader.TryAdvanceTo('{', advancePastDelimiter: false))
+            var hasData = base.ReadNextInternal();
+            if (hasData)
             {
-                var json = reader.UnreadSequence.ToString();
-                _jsonDocument = JsonSerializer.Deserialize<JsonDocument>(json);
+                var text = GetRowText();
+                var reader = new SequenceReader<char>(text);
+                if (reader.TryAdvanceTo('{', advancePastDelimiter: false))
+                {
+                    var json = reader.UnreadSequence.ToString();
+                    try
+                    {
+                        _jsonElement = JsonSerializer.Deserialize<JsonElement>(json);
+                    }
+                    catch (JsonException jsonException)
+                    {
+                        _logger.LogWarning("Cannot parse row {RowIndex}: {Error}", RowIndex, jsonException.Message);
+                        continue;
+                    }
+                }
+                else
+                {
+                    hasData = false;
+                }
             }
-            else
-            {
-                hasData = false;
-            }
+            return hasData;
         }
-        return hasData;
     }
 
     /// <inheritdoc />
     protected override void SetDefaultColumns(int columnsCount)
     {
-        using var jsonDocument = GetParsedJsonDocument();
-        if (jsonDocument == null)
+        var jsonElement = GetParsedJsonDocument();
+        if (jsonElement == null)
         {
             throw new InvalidOperationException("Cannot initialize JSON columns.");
         }
 
         var list = new List<string>();
-        foreach (var jsonProperty in jsonDocument.RootElement.EnumerateObject())
+        foreach (var jsonProperty in jsonElement.Value.EnumerateObject())
         {
             list.Add(jsonProperty.Name);
         }
@@ -215,25 +229,15 @@ internal sealed class JsonInput : StreamRowsInput
         RowsIteratorUtils.ResolveColumnsTypes(iterator);
     }
 
-    private JsonDocument? GetParsedJsonDocument()
+    private JsonElement? GetParsedJsonDocument()
     {
         var text = GetRowText();
         var reader = new SequenceReader<char>(text);
         if (reader.TryAdvanceTo('{', advancePastDelimiter: false))
         {
             var json = reader.UnreadSequence.ToString();
-            return JsonSerializer.Deserialize<JsonDocument>(json);
+            return JsonSerializer.Deserialize<JsonElement>(json);
         }
         return null;
-    }
-
-    /// <inheritdoc />
-    protected override void Dispose(bool disposing)
-    {
-        if (disposing)
-        {
-            _jsonDocument?.Dispose();
-        }
-        base.Dispose(disposing);
     }
 }

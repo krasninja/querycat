@@ -15,7 +15,7 @@ namespace QueryCat.Cli;
 /// </summary>
 internal class Program
 {
-    private static readonly Lazy<ILogger> Logger = new(() => Application.LoggerFactory.CreateLogger<Program>());
+    private static readonly Lazy<ILogger> Logger = new(() => Application.LoggerFactory.CreateLogger(nameof(Program)));
 
     private static readonly object ObjLock = new();
 

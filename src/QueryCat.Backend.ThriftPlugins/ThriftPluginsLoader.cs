@@ -22,7 +22,7 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
 
     private readonly ExecutionThread _thread;
     private readonly ThriftPluginsServer _server;
-    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger<ThriftPluginsLoader>();
+    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(ThriftPluginsLoader));
     private readonly HashSet<string> _loadedPlugins = new();
     private readonly string _functionsCacheDirectory;
 
@@ -46,14 +46,9 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
     /// </summary>
     public string ServerPipeName { get; } = "qcat-" + Guid.NewGuid().ToString("N");
 
-    private sealed record FunctionsCache(
+    internal sealed record FunctionsCache(
         [property:JsonPropertyName("createdAt")] long CreatedAt,
         [property:JsonPropertyName("functions")] List<PluginContextFunction> Functions);
-
-    private static readonly JsonSerializerOptions JsonSerializerOptions = new()
-    {
-        WriteIndented = false,
-    };
 
     public ThriftPluginsLoader(
         ExecutionThread thread,
@@ -126,6 +121,11 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
     {
         if (!File.Exists(pluginFile)
             || !Path.GetFileName(pluginFile).Contains("plugin", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        if (pluginFile.EndsWith(".dbg"))
         {
             return false;
         }
@@ -274,7 +274,7 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         return GetContext();
     }
 
-    private void RegisterFunctions(FunctionsManager functionsManager, string file,
+    private void RegisterFunctions(IFunctionsManager functionsManager, string file,
         IEnumerable<PluginContextFunction> functions)
     {
         foreach (var function in functions)
@@ -332,7 +332,7 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         return string.Empty;
     }
 
-    private void RegisterFunctions(FunctionsManager functionsManager, ThriftPluginsServer.PluginContext pluginContext)
+    private void RegisterFunctions(IFunctionsManager functionsManager, ThriftPluginsServer.PluginContext pluginContext)
     {
         foreach (var function in pluginContext.Functions)
         {
@@ -400,7 +400,7 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         var cacheFile = Path.Combine(_functionsCacheDirectory, pluginName + FunctionsCacheFileExtension);
         Directory.CreateDirectory(_functionsCacheDirectory);
         using var cacheFileStream = File.Create(cacheFile);
-        JsonSerializer.Serialize(cacheFileStream, cacheEntry, options: JsonSerializerOptions);
+        JsonSerializer.Serialize(cacheFileStream, cacheEntry, SourceGenerationContext.Default.FunctionsCache);
     }
 
     private bool TryGetCachedFunctions(string fileName, out IEnumerable<PluginContextFunction> functions)
@@ -421,7 +421,7 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         var fileInfo = new FileInfo(fileName);
 
         using var cacheFileStream = File.OpenRead(cacheFile);
-        var cacheEntry = JsonSerializer.Deserialize<FunctionsCache>(cacheFileStream, JsonSerializerOptions);
+        var cacheEntry = JsonSerializer.Deserialize(cacheFileStream, SourceGenerationContext.Default.FunctionsCache);
         if (cacheEntry == null)
         {
             return false;

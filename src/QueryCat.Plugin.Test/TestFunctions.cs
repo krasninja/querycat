@@ -6,8 +6,8 @@ namespace QueryCat.Plugin.Test;
 
 internal static class TestFunctions
 {
-    [Description("Test function.")]
-    [FunctionSignature("test_combine(int: integer, str: string, dec: numeric, fl: float, bl: boolean, tim: timestamp, inter: interval): string")]
+    [Description("Test function (combine).")]
+    [FunctionSignature("test_combine([int]: integer, str: string, dec: numeric, fl: float, bl: boolean, tim: timestamp, inter: interval): string")]
     public static VariantValue TestCombineFunction(FunctionCallInfo args)
     {
         // Call: test_combine(1, 'str', 2.5::numeric, 5.2, True, '2023-08-02'::timestamp, interval '3d');
@@ -22,10 +22,17 @@ internal static class TestFunctions
         return new VariantValue(result);
     }
 
-    [Description("Test function.")]
+    [Description("Test function (simple).")]
     [FunctionSignature("test_simple(): timestamp")]
     public static VariantValue TestSimpleFunction(FunctionCallInfo args)
     {
         return new VariantValue(DateTime.Now);
+    }
+
+    [Description("Test non standard function (simple).")]
+    [FunctionSignature("test_simple_2(a: int, b: int): int")]
+    public static int TestSimpleNonStandardFunction(int a, int b)
+    {
+        return new VariantValue(a + b);
     }
 }

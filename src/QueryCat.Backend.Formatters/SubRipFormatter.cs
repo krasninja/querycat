@@ -29,7 +29,7 @@ internal sealed class SubRipFormatter : IRowsFormatter
         throw new QueryCatException($"{nameof(SubRipInput)} does not support output.");
     }
 
-    public static void RegisterFunctions(FunctionsManager functionsManager)
+    public static void RegisterFunctions(IFunctionsManager functionsManager)
     {
         functionsManager.RegisterFunction(Srt);
     }

@@ -9,7 +9,7 @@ namespace QueryCat.Backend.Formatters;
 /// </summary>
 public static class FormattersInfo
 {
-    private static readonly Dictionary<string, Func<FunctionsManager, FunctionCallArguments, IRowsFormatter>> Formatters = new(capacity: 64);
+    private static readonly Dictionary<string, Func<IFunctionsManager, FunctionCallArguments, IRowsFormatter>> Formatters = new(capacity: 64);
 
     /// <summary>
     /// Create formatter by file extension or content type.
@@ -32,7 +32,7 @@ public static class FormattersInfo
     /// </summary>
     /// <param name="id">Identifier (file extension or content type).</param>
     /// <param name="formatterFunc">Delegate to create formatter.</param>
-    public static void RegisterFormatter(string id, Func<FunctionsManager, FunctionCallArguments, IRowsFormatter> formatterFunc)
+    public static void RegisterFormatter(string id, Func<IFunctionsManager, FunctionCallArguments, IRowsFormatter> formatterFunc)
     {
         Formatters[id] = formatterFunc;
     }

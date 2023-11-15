@@ -56,7 +56,7 @@ public static class CryptoFunctions
         return new VariantValue(Convert.ToHexString(SHA512.HashData(textData)));
     }
 
-    public static void RegisterFunctions(FunctionsManager functionsManager)
+    public static void RegisterFunctions(IFunctionsManager functionsManager)
     {
         functionsManager.RegisterFunction(Md5);
         functionsManager.RegisterFunction(Sha1);

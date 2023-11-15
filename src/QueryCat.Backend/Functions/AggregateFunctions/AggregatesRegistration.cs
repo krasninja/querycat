@@ -7,16 +7,16 @@ namespace QueryCat.Backend.Functions.AggregateFunctions;
 /// </summary>
 internal static class AggregatesRegistration
 {
-    public static void RegisterFunctions(FunctionsManager functionsManager)
+    public static void RegisterFunctions(IFunctionsManager functionsManager)
     {
-        functionsManager.RegisterAggregate(typeof(AvgAggregateFunction));
-        functionsManager.RegisterAggregate(typeof(CountAggregateFunction));
-        functionsManager.RegisterAggregate(typeof(FirstValueAggregateFunction));
-        functionsManager.RegisterAggregate(typeof(LastValueAggregateFunction));
-        functionsManager.RegisterAggregate(typeof(MaxAggregateFunction));
-        functionsManager.RegisterAggregate(typeof(MinAggregateFunction));
-        functionsManager.RegisterAggregate(typeof(SumAggregateFunction));
-        functionsManager.RegisterAggregate(typeof(StringAggAggregateFunction));
-        functionsManager.RegisterAggregate(typeof(RowNumberAggregateFunction));
+        functionsManager.RegisterAggregate(_ => new AvgAggregateFunction());
+        functionsManager.RegisterAggregate(_ => new CountAggregateFunction());
+        functionsManager.RegisterAggregate(_ => new FirstValueAggregateFunction());
+        functionsManager.RegisterAggregate(_ => new LastValueAggregateFunction());
+        functionsManager.RegisterAggregate(_ => new MaxAggregateFunction());
+        functionsManager.RegisterAggregate(_ => new MinAggregateFunction());
+        functionsManager.RegisterAggregate(_ => new SumAggregateFunction());
+        functionsManager.RegisterAggregate(_ => new StringAggAggregateFunction());
+        functionsManager.RegisterAggregate(_ => new RowNumberAggregateFunction());
     }
 }

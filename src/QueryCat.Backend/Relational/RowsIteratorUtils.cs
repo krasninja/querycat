@@ -84,7 +84,7 @@ public static class RowsIteratorUtils
     public static bool DetermineIfHasHeader(IRowsIterator rowsIterator, int numberOfRowsToAnalyze = 10)
     {
         // Probably it should be something like this:
-        // https://github.com/python/cpython/blob/main/Lib/csv.py#L392.
+        // https://github.com/python/cpython/blob/main/Lib/csv.py#L390.
 
         var rowsFrame = new RowsFrame(rowsIterator.Columns);
         var countDown = numberOfRowsToAnalyze;
@@ -106,6 +106,18 @@ public static class RowsIteratorUtils
             var values = rowsFrame.GetColumnValues(columnIndex);
             var headerType = DataTypeUtils.DetermineTypeByValues(new[] { values.First() });
             var rowsType = DataTypeUtils.DetermineTypeByValues(values.Skip(1));
+
+            // If there are more than 70% empty values - probably it is a bad header column. Skip if first value
+            // is not empty.
+            if (string.IsNullOrWhiteSpace(values.First()))
+            {
+                var emptyValuesPercent = (float)values.Count(v => string.IsNullOrWhiteSpace(v)) / values.Count;
+                if (emptyValuesPercent > 0.7f)
+                {
+                    hasHeader--;
+                    continue;
+                }
+            }
 
             // If the first row is string, but others are not - probably this is a header.
             if (headerType == DataType.String && rowsType != DataType.String)

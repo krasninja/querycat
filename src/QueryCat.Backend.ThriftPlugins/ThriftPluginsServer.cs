@@ -26,7 +26,7 @@ public sealed partial class ThriftPluginsServer : IDisposable
     private readonly CancellationTokenSource _serverCts = new();
     private readonly ConcurrentDictionary<string, SemaphoreSlim> _authTokens = new();
     private readonly List<PluginContext> _plugins = new();
-    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger<ThriftPluginsServer>();
+    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(ThriftPluginsServer));
 
     public string ServerPipeName { get; } = "qcat-" + Guid.NewGuid().ToString("N");
 
@@ -87,8 +87,8 @@ public sealed partial class ThriftPluginsServer : IDisposable
             binaryProtocolFactory,
             default,
             IgnoreThriftLogs
-                ? NullLoggerFactory.Instance.CreateLogger<TSimpleAsyncServer>()
-                : Application.LoggerFactory.CreateLogger<TSimpleAsyncServer>());
+                ? NullLoggerFactory.Instance.CreateLogger(nameof(TSimpleAsyncServer))
+                : Application.LoggerFactory.CreateLogger(nameof(TSimpleAsyncServer)));
     }
 
     /// <summary>

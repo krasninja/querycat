@@ -26,7 +26,7 @@ public sealed class StatisticRowsIterator : IRowsIterator, IRowsIteratorParent
     /// </summary>
     public int MaxErrorsCount { get; set; } = -1;
 
-    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger<StatisticRowsIterator>();
+    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(StatisticRowsIterator));
 
     public StatisticRowsIterator(IRowsIterator rowsIterator, ExecutionStatistic statistic)
     {

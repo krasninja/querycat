@@ -26,4 +26,6 @@ internal class QueryOptions
     public bool NoHeader { get; init; }
 
     public string FloatNumberFormat { get; init; } = VariantValue.FloatNumberFormat;
+
+    public TimeSpan FollowTimeout { get; init; }
 }

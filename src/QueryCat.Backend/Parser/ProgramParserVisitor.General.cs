@@ -381,6 +381,7 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
             QueryCatParser.DECIMAL => DataType.Numeric,
             QueryCatParser.STRING => DataType.String,
             QueryCatParser.TEXT => DataType.String,
+            QueryCatParser.BLOB => DataType.Blob,
             QueryCatParser.BOOLEAN => DataType.Boolean,
             QueryCatParser.BOOL => DataType.Boolean,
             QueryCatParser.TIMESTAMP => DataType.Timestamp,

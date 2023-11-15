@@ -17,14 +17,14 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader
 
     private readonly Dictionary<string, byte[]> _rawAssembliesCache = new();
     private readonly Dictionary<string, Assembly> _loadedAssembliesCache = new();
-    private readonly FunctionsManager _functionsManager;
+    private readonly IFunctionsManager _functionsManager;
     private readonly HashSet<Assembly> _loadedAssemblies = new();
 
-    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger<DotNetAssemblyPluginsLoader>();
+    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(DotNetAssemblyPluginsLoader));
 
     public IEnumerable<Assembly> LoadedAssemblies => _loadedAssembliesCache.Values;
 
-    public DotNetAssemblyPluginsLoader(FunctionsManager functionsManager, IEnumerable<string> pluginDirectories) : base(pluginDirectories)
+    public DotNetAssemblyPluginsLoader(IFunctionsManager functionsManager, IEnumerable<string> pluginDirectories) : base(pluginDirectories)
     {
         _functionsManager = functionsManager;
         AppDomain.CurrentDomain.AssemblyResolve += CurrentDomainOnAssemblyResolve;
@@ -107,7 +107,7 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader
         return true;
     }
 
-    private void RegisterFunctions(FunctionsManager functionsManager)
+    private void RegisterFunctions(IFunctionsManager functionsManager)
     {
         foreach (var pluginAssembly in _loadedAssemblies)
         {

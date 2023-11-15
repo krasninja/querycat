@@ -35,7 +35,7 @@ internal sealed class JsonFormatter : IRowsFormatter
     public IRowsOutput OpenOutput(Stream output)
         => new JsonOutput(output);
 
-    public static void RegisterFunctions(FunctionsManager functionsManager)
+    public static void RegisterFunctions(IFunctionsManager functionsManager)
     {
         functionsManager.RegisterFunction(Json);
     }

@@ -20,7 +20,7 @@ public class Fetcher<TClass> where TClass : class
     /// </summary>
     public int PageStart { get; set; }
 
-    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger<Fetcher<TClass>>();
+    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(Fetcher<TClass>));
 
     /// <summary>
     /// Constructor.

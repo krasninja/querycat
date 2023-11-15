@@ -21,7 +21,7 @@ internal sealed class TextLineInput : StreamRowsInput
     {
         DelimiterStreamReaderOptions = new DelimiterStreamReader.ReaderOptions
         {
-            PreferredDelimiter = '\t'
+            DetectDelimiter = false,
         }
     }, key ?? string.Empty)
     {
@@ -36,7 +36,6 @@ internal sealed class TextLineInput : StreamRowsInput
     {
         RowsIteratorUtils.ResolveColumnsTypes(iterator);
         Columns[^1].Name = "text";
-        base.Analyze(iterator);
     }
 
     /// <inheritdoc />

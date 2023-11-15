@@ -59,4 +59,9 @@ public sealed class ExecutionOptions
     /// Disable in-memory cache for sub-queries.
     /// </summary>
     public bool DisableCache { get; init; }
+
+    /// <summary>
+    /// Write appended data as source grows. Specifies check timeout. 0 means do not follow.
+    /// </summary>
+    public int FollowTimeoutMs { get; init; }
 }

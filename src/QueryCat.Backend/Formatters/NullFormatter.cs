@@ -27,7 +27,7 @@ internal sealed class NullFormatter : IRowsFormatter
     public IRowsOutput OpenOutput(Stream output)
         => new NullOutput();
 
-    public static void RegisterFunctions(FunctionsManager functionsManager)
+    public static void RegisterFunctions(IFunctionsManager functionsManager)
     {
         functionsManager.RegisterFunction(Null);
         functionsManager.RegisterFunction(NullOutput.Null);

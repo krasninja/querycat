@@ -12,12 +12,10 @@ public sealed class BuildMacTask : AsyncFrostingTask<BuildContext>
     {
         context.DotNetPublish(context.ConsoleAppProjectDirectory, new PublishGeneralSettings(context)
         {
-            OutputDirectory = context.OutputDirectory,
             Runtime = DotNetConstants.RidMacOSXArm64,
         });
         context.DotNetPublish(context.TimeItAppProjectDirectory, new PublishGeneralSettings(context)
         {
-            OutputDirectory = context.OutputDirectory,
             Runtime = DotNetConstants.RidMacOSXArm64,
         });
         return Task.CompletedTask;

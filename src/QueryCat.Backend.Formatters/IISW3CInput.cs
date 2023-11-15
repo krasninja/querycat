@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Storage;
 using QueryCat.Backend.Utils;
 
@@ -22,7 +23,7 @@ public sealed class IISW3CInput : StreamRowsInput
     private int _dateColumnIndex = -1;
     private bool _isInitialized;
 
-    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger<IISW3CInput>();
+    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(IISW3CInput));
 
     // https://procodeguide.com/programming/iis-logs/.
     private static readonly Dictionary<string, Column> AvailableFields = new()
@@ -55,7 +56,7 @@ public sealed class IISW3CInput : StreamRowsInput
     {
         DelimiterStreamReaderOptions = new DelimiterStreamReader.ReaderOptions
         {
-            Delimiters = new[] { ' ' }
+            Delimiters = new[] { ' ' },
         }
     }, key ?? string.Empty)
     {
@@ -69,7 +70,7 @@ public sealed class IISW3CInput : StreamRowsInput
             value = VariantValue.Null;
             if (_timeColumnIndex == -1)
             {
-                if (DateTime.TryParseExact(GetColumnValue(_dateColumnIndex), "yyyy'-'MM'-'dd",
+                if (DateTime.TryParseExact(GetInputColumnValue(_dateColumnIndex), "yyyy'-'MM'-'dd",
                         CultureInfo.InvariantCulture, DateTimeStyles.None, out var date))
                 {
                     value = new VariantValue(date);
@@ -79,7 +80,7 @@ public sealed class IISW3CInput : StreamRowsInput
             }
             else
             {
-                var stringDate = string.Concat(GetColumnValue(_dateColumnIndex), " ", GetColumnValue(_timeColumnIndex));
+                var stringDate = string.Concat(GetInputColumnValue(_dateColumnIndex), " ", GetInputColumnValue(_timeColumnIndex));
                 if (DateTime.TryParseExact(stringDate, "yyyy'-'MM'-'dd HH:mm:ss",
                         CultureInfo.InvariantCulture, DateTimeStyles.None, out var datetime))
                 {
@@ -134,6 +135,11 @@ public sealed class IISW3CInput : StreamRowsInput
         {
             throw new QueryCatException("Cannot find IIS fields.");
         }
+    }
+
+    /// <inheritdoc />
+    protected override void Analyze(CacheRowsIterator iterator)
+    {
     }
 
     private void ParseHeaders(ReadOnlySpan<char> header)

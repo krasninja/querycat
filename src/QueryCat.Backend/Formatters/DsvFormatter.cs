@@ -119,7 +119,7 @@ internal class DsvFormatter : IRowsFormatter
         return options;
     }
 
-    public static void RegisterFunctions(FunctionsManager functionsManager)
+    public static void RegisterFunctions(IFunctionsManager functionsManager)
     {
         functionsManager.RegisterFunction(Csv);
         functionsManager.RegisterFunction(Tsv);

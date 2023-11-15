@@ -7,7 +7,7 @@ namespace QueryCat.Backend.Providers;
 /// </summary>
 internal static class Registration
 {
-    public static void RegisterFunctions(FunctionsManager functionsManager)
+    public static void RegisterFunctions(IFunctionsManager functionsManager)
     {
         functionsManager.RegisterFunction(StandardInputOutput.Stdout);
         functionsManager.RegisterFunction(StandardInputOutput.Stdin);

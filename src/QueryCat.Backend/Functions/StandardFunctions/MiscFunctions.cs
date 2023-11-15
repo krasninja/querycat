@@ -64,7 +64,7 @@ internal static class MiscFunctions
         return args.GetAt(0);
     }
 
-    public static void RegisterFunctions(FunctionsManager functionsManager)
+    public static void RegisterFunctions(IFunctionsManager functionsManager)
     {
         functionsManager.RegisterFunction(NullIf);
         functionsManager.RegisterFunction(Nop);

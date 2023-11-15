@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Plugins.Sdk;
 using VariantValue = QueryCat.Backend.Core.Types.VariantValue;
@@ -11,18 +11,19 @@ namespace QueryCat.Plugins.Client;
 /// Plugin functions manager. This is the simplified and limited version of functions manager.
 /// It does not support aggregates and does not parse functions signature. No overloading.
 /// </summary>
-public sealed class PluginFunctionsManager : FunctionsManager
+public sealed class PluginFunctionsManager : IFunctionsManager
 {
     private readonly Dictionary<string, PluginFunction> _functions = new();
 
     /// <inheritdoc />
-    public override void RegisterAggregate(Type type)
+    public void RegisterAggregate<TAggregate>(Func<IExecutionThread, TAggregate> factory)
+        where TAggregate : IAggregateFunction
     {
         throw ThrowNotImplementedException();
     }
 
     /// <inheritdoc />
-    public override void RegisterFunction(string signature, FunctionDelegate @delegate, string? description = null)
+    public void RegisterFunction(string signature, FunctionDelegate @delegate, string? description = null)
     {
         var firstBracketIndex = signature.IndexOf('(');
         if (firstBracketIndex < 0)
@@ -40,13 +41,13 @@ public sealed class PluginFunctionsManager : FunctionsManager
     }
 
     /// <inheritdoc />
-    public override void RegisterFactory(Action<FunctionsManager> registerFunction, bool postpone = true)
+    public void RegisterFactory(Action<IFunctionsManager> registerFunction, bool postpone = true)
     {
         throw ThrowNotImplementedException();
     }
 
     /// <inheritdoc />
-    public override bool TryFindByName(string name, FunctionCallArgumentsTypes? functionArgumentsTypes, out IFunction[] functions)
+    public bool TryFindByName(string name, FunctionCallArgumentsTypes? functionArgumentsTypes, out IFunction[] functions)
     {
         if (_functions.TryGetValue(name.ToUpper(), out var functionInfo))
         {
@@ -58,13 +59,13 @@ public sealed class PluginFunctionsManager : FunctionsManager
     }
 
     /// <inheritdoc />
-    public override bool TryFindAggregateByName(string name, out IAggregateFunction? aggregateFunction)
+    public bool TryFindAggregateByName(string name, out IAggregateFunction? aggregateFunction)
     {
         throw ThrowNotImplementedException();
     }
 
     /// <inheritdoc />
-    public override IEnumerable<IFunction> GetFunctions() => _functions.Values;
+    public IEnumerable<IFunction> GetFunctions() => _functions.Values;
 
     /// <summary>
     /// Get all functions signatures.
@@ -73,7 +74,7 @@ public sealed class PluginFunctionsManager : FunctionsManager
     public IEnumerable<PluginFunction> GetPluginFunctions() => _functions.Values;
 
     /// <inheritdoc />
-    public override VariantValue CallFunction(IFunction function, FunctionCallArguments callArguments)
+    public VariantValue CallFunction(IFunction function, FunctionCallArguments callArguments)
     {
         throw ThrowNotImplementedException();
     }

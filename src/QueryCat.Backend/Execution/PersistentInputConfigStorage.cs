@@ -14,7 +14,7 @@ public class PersistentInputConfigStorage : MemoryInputConfigStorage
     private readonly string _configFile;
     private int _writesCount;
 
-    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger<PersistentInputConfigStorage>();
+    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(PersistentInputConfigStorage));
 
     public PersistentInputConfigStorage(string configFile)
     {
@@ -42,7 +42,7 @@ public class PersistentInputConfigStorage : MemoryInputConfigStorage
             Directory.CreateDirectory(directory);
         }
 
-        var dict = new Dictionary<string, string>();
+        var dict = new ConfigDictionary();
         foreach (var variantValueWithKey in Map)
         {
             if (!DataTypeUtils.IsSimple(variantValueWithKey.Value.GetInternalType()))
@@ -59,7 +59,7 @@ public class PersistentInputConfigStorage : MemoryInputConfigStorage
             dict[variantValueWithKey.Key] = DataTypeUtils.SerializeVariantValue(variantValueWithKey.Value);
         }
 
-        var json = JsonSerializer.Serialize(dict);
+        var json = JsonSerializer.Serialize(dict, SourceGenerationContext.Default.ConfigDictionary);
         await File.WriteAllTextAsync(_configFile, json, cancellationToken);
 
         _writesCount = 0;
@@ -73,8 +73,9 @@ public class PersistentInputConfigStorage : MemoryInputConfigStorage
             return;
         }
 
-        var dict = JsonSerializer.Deserialize<Dictionary<string, string>>(
-            await File.ReadAllTextAsync(_configFile, cancellationToken));
+        var dict = JsonSerializer.Deserialize(
+            await File.ReadAllTextAsync(_configFile, cancellationToken),
+            SourceGenerationContext.Default.ConfigDictionary);
         if (dict == null)
         {
             return;

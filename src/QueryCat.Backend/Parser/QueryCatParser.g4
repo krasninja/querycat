@@ -270,6 +270,7 @@ type
     | FLOAT | REAL
     | TIMESTAMP
     | INTERVAL
+    | BLOB
     | BOOLEAN | BOOL
     | NUMERIC | DECIMAL
     | OBJECT

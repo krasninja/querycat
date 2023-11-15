@@ -15,7 +15,7 @@ namespace QueryCat.Build.Tasks;
 [TaskName("Get-Inputs-Markdown")]
 public class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
 {
-    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger<GetInputsInMarkdownTask>();
+    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(GetInputsInMarkdownTask));
 
     private static readonly string[] ExcludeList =
     {

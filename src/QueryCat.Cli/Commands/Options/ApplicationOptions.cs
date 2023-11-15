@@ -49,7 +49,7 @@ internal class ApplicationOptions
         pluginsLoader = new Backend.AssemblyPlugins.DotNetAssemblyPluginsLoader(executionThread.FunctionsManager,
             executionOptions.PluginDirectories);
 #endif
-        PluginsManager pluginsManager = NullPluginsManager.Instance;
+        IPluginsManager pluginsManager = NullPluginsManager.Instance;
 #if ENABLE_PLUGINS
         pluginsManager = new DefaultPluginsManager(executionOptions.PluginDirectories, pluginsLoader,
             executionOptions.PluginsRepositoryUri);
@@ -97,11 +97,11 @@ internal class ApplicationOptions
     /// </summary>
     public void InitializeLogger()
     {
-        Application.LoggerFactory = LoggerFactory.Create(builder =>
-        {
-            builder
-                .SetMinimumLevel(LogLevel)
-                .AddProvider(new QueryCatConsoleLoggerProvider());
-        });
+        Application.LoggerFactory = new LoggerFactory(
+            providers: new[] { new QueryCatConsoleLoggerProvider() },
+            new LoggerFilterOptions
+            {
+                MinLevel = LogLevel,
+            });
     }
 }

@@ -5,18 +5,24 @@ namespace QueryCat.Build.Tasks;
 
 public class PublishGeneralSettings : DotNetPublishSettings
 {
-    public PublishGeneralSettings(BuildContext context)
+    public PublishGeneralSettings(BuildContext context, bool publishAot = false)
     {
+        OutputDirectory = context.OutputDirectory;
         Configuration = DotNetConstants.ConfigurationRelease;
-        PublishTrimmed = false;
-        PublishSingleFile = true;
+        PublishTrimmed = publishAot;
+        PublishSingleFile = publishAot ? null : true;
         NoLogo = true;
-        PublishReadyToRun = false;
-        IncludeAllContentForSelfExtract = false;
-        EnableCompressionInSingleFile = true;
-        SelfContained = true;
+        IncludeAllContentForSelfExtract = publishAot ? null : true;
+        EnableCompressionInSingleFile = publishAot ? null : true;
+        SelfContained = publishAot ? null : true;
         ArgumentCustomization = pag =>
         {
+            if (publishAot)
+            {
+                pag.Append(new TextArgument("-p:PublishAot=true"));
+                pag.Append(new TextArgument("-p:OptimizationPreference=Speed"));
+                pag.Append(new TextArgument("-p:StripSymbols=true"));
+            }
             // https://docs.microsoft.com/en-us/dotnet/core/deploying/trimming/trimming-options.
             pag.Append(new TextArgument("-p:AutoreleasePoolSupport=false"));
             pag.Append(new TextArgument("-p:DebuggerSupport=false"));

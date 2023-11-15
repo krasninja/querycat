@@ -59,6 +59,14 @@ public sealed class VariantValueArray
         Array.Copy(oldValues, _values, oldValues.Length);
     }
 
+    /// <summary>
+    /// Make every value NULL.
+    /// </summary>
+    public void Clear()
+    {
+        Array.Fill(_values, VariantValue.Null);
+    }
+
     /// <inheritdoc />
     public override bool Equals(object? obj)
     {

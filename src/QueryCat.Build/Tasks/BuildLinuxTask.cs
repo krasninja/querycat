@@ -1,4 +1,5 @@
 using Cake.Common.Tools.DotNet;
+using Cake.Core;
 using Cake.Frosting;
 
 namespace QueryCat.Build.Tasks;
@@ -7,26 +8,27 @@ namespace QueryCat.Build.Tasks;
 [TaskDescription("Build project for Linux target")]
 public sealed class BuildLinuxTask : AsyncFrostingTask<BuildContext>
 {
+    private const bool PublishAotDefault = false;
+
     /// <inheritdoc />
     public override Task RunAsync(BuildContext context)
     {
-        context.DotNetPublish(context.ConsoleAppProjectDirectory, new PublishGeneralSettings(context)
+        var publishAot = bool.Parse(context.Arguments.GetArgument(DotNetConstants.PublishAotArgument)
+            ?? PublishAotDefault.ToString());
+
+        context.DotNetPublish(context.ConsoleAppProjectDirectory, new PublishGeneralSettings(context, publishAot)
         {
-            OutputDirectory = context.OutputDirectory,
             Runtime = DotNetConstants.RidLinuxX64,
         });
-        context.DotNetPublish(context.TimeItAppProjectDirectory, new PublishGeneralSettings(context)
+        context.DotNetPublish(context.TimeItAppProjectDirectory, new PublishGeneralSettings(context, publishAot: true)
         {
-            OutputDirectory = context.OutputDirectory,
             Runtime = DotNetConstants.RidLinuxX64,
         });
-        context.DotNetPublish(context.TestPluginAppProjectDirectory, new PublishGeneralSettings(context)
+        context.DotNetPublish(context.TestPluginAppProjectDirectory, new PublishGeneralSettings(context, publishAot)
         {
-            OutputDirectory = context.OutputDirectory,
             Runtime = DotNetConstants.RidLinuxX64,
-            PublishTrimmed = false,
-            PublishSingleFile = true,
         });
+
         return Task.CompletedTask;
     }
 }

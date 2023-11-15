@@ -15,6 +15,7 @@ public class Program
         client.FunctionsManager.RegisterFromType(typeof(AddressIterator));
         client.FunctionsManager.RegisterFromType(typeof(AddressRowsInput));
         client.FunctionsManager.RegisterFunction(TestFunctions.TestCombineFunction);
+        client.FunctionsManager.RegisterFunction(TestFunctions.TestSimpleNonStandardFunction);
         client.FunctionsManager.RegisterFunction(TestFunctions.TestSimpleFunction);
         await client.Start();
         await client.WaitForParentProcessExitAsync();

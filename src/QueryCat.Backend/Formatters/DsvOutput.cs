@@ -22,7 +22,7 @@ internal sealed class DsvOutput : RowsOutput, IDisposable
 
     internal Stream Stream { get; }
 
-    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger<DsvOutput>();
+    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(DsvOutput));
 
     public DsvOutput(DsvOptions dsvOptions)
     {

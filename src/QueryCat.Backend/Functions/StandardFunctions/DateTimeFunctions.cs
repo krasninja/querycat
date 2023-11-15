@@ -119,7 +119,7 @@ public static class DateTimeFunctions
         throw new SemanticException("Invalid argument type.");
     }
 
-    public static void RegisterFunctions(FunctionsManager functionsManager)
+    public static void RegisterFunctions(IFunctionsManager functionsManager)
     {
         functionsManager.RegisterFunction(ToDate);
         functionsManager.RegisterFunction(Now);

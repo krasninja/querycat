@@ -4,7 +4,6 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net7.0</TargetFramework>
     <AssemblyName>qcat-plugin-test</AssemblyName>
-    <PublishAot>false</PublishAot>
   </PropertyGroup>
 
   <ItemGroup>

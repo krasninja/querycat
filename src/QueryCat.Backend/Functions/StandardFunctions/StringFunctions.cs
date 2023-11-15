@@ -259,7 +259,7 @@ public static class StringFunctions
         return new VariantValue(result);
     }
 
-    public static void RegisterFunctions(FunctionsManager functionsManager)
+    public static void RegisterFunctions(IFunctionsManager functionsManager)
     {
         functionsManager.RegisterFunction(Lower);
         functionsManager.RegisterFunction(Upper);

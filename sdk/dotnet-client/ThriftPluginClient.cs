@@ -33,7 +33,7 @@ public partial class ThriftPluginClient : IDisposable
     private string _debugServerPathArgs = string.Empty;
     private int _parentPid;
     private Process? _qcatProcess;
-    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger<ThriftPluginClient>();
+    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(ThriftPluginClient));
 
     // Connection to plugin manager.
     private Func<TTransport> _transportFactory;
@@ -48,7 +48,7 @@ public partial class ThriftPluginClient : IDisposable
     private Task? _clientServerListenThread;
     private readonly CancellationTokenSource _clientServerCts = new();
 
-    public FunctionsManager FunctionsManager => _functionsManager;
+    public IFunctionsManager FunctionsManager => _functionsManager;
 
     public ThriftPluginClient(string[] args)
     {
@@ -221,7 +221,7 @@ public partial class ThriftPluginClient : IDisposable
             binaryProtocolFactory,
             binaryProtocolFactory,
             default,
-            Application.LoggerFactory.CreateLogger<ThriftPluginClient>());
+            Application.LoggerFactory.CreateLogger(nameof(ThriftPluginClient)));
 
         _clientServer.Start();
         _clientServerListenThread = Task.Factory.StartNew(

@@ -5,42 +5,43 @@ namespace QueryCat.Backend.Core.Functions;
 /// <summary>
 /// Functions manager with no implementation.
 /// </summary>
-public sealed class NullFunctionsManager : FunctionsManager
+public sealed class NullFunctionsManager : IFunctionsManager
 {
     public static NullFunctionsManager Instance { get; } = new();
 
     /// <inheritdoc />
-    public override void RegisterAggregate(Type type)
+    public void RegisterAggregate<TAggregate>(Func<IExecutionThread, TAggregate> factory)
+        where TAggregate : IAggregateFunction
     {
     }
 
     /// <inheritdoc />
-    public override void RegisterFunction(string signature, FunctionDelegate @delegate, string? description = null)
+    public void RegisterFunction(string signature, FunctionDelegate @delegate, string? description = null)
     {
     }
 
     /// <inheritdoc />
-    public override void RegisterFactory(Action<FunctionsManager> registerFunction, bool postpone = true)
+    public void RegisterFactory(Action<IFunctionsManager> registerFunction, bool postpone = true)
     {
     }
 
     /// <inheritdoc />
-    public override bool TryFindByName(string name, FunctionCallArgumentsTypes? functionArgumentsTypes, out IFunction[] functions)
+    public bool TryFindByName(string name, FunctionCallArgumentsTypes? functionArgumentsTypes, out IFunction[] functions)
     {
         functions = Array.Empty<IFunction>();
         return false;
     }
 
     /// <inheritdoc />
-    public override bool TryFindAggregateByName(string name, out IAggregateFunction? aggregateFunction)
+    public bool TryFindAggregateByName(string name, out IAggregateFunction? aggregateFunction)
     {
         aggregateFunction = null;
         return false;
     }
 
     /// <inheritdoc />
-    public override IEnumerable<IFunction> GetFunctions() => Array.Empty<IFunction>();
+    public IEnumerable<IFunction> GetFunctions() => Array.Empty<IFunction>();
 
     /// <inheritdoc />
-    public override VariantValue CallFunction(IFunction function, FunctionCallArguments callArguments) => VariantValue.Null;
+    public VariantValue CallFunction(IFunction function, FunctionCallArguments callArguments) => VariantValue.Null;
 }

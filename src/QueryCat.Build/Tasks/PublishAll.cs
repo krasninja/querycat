@@ -57,9 +57,9 @@ public class PublishAll : AsyncFrostingTask<BuildContext>
             OutputDirectory = context.OutputDirectory,
             Runtime = DotNetConstants.RidWindowsX64,
         });
-        context.GZipCompress(
+        context.ZipCompress(
             root,
-            Path.Combine(context.OutputDirectory, $"qcat-{context.Version}-{DotNetConstants.RidWindowsX64}.tar.gz"),
+            Path.Combine(context.OutputDirectory, $"qcat-{context.Version}-{DotNetConstants.RidWindowsX64}.zip"),
             new[]
             {
                 Path.Combine(context.OutputDirectory, "qcat.exe"),

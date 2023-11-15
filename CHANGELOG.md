@@ -4,6 +4,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## Added
+
+- Initial "follow" mode implementation.
+- Add regular expressions formatter "regex".
+
+## Fixed
+
+- JsonInput now produces warning on parse error instead of crash.
+- Minor fixes and improvements.
+
+## [0.4.12] - 2023-09-25
+
 ### Added
 
 - Add "generate_series()" function.
@@ -12,6 +24,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Fixed
 
 - Fix description column text for "_functions()" function output.
+
+### Changed
+
+- Use ZIP format for Windows target.
 
 ## [0.4.11] - 2023-08-31
 

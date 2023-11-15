@@ -28,4 +28,10 @@ public static class DotNetConstants
     public const string RidMacOSXArm64 = $"osx.12-{Application.ArchitectureArm64}";
 
     #endregion
+
+    #region Arguments
+
+    public const string PublishAotArgument = "PublishAot";
+
+    #endregion
 }

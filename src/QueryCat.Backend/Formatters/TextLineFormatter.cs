@@ -28,7 +28,7 @@ public class TextLineFormatter : IRowsFormatter
         throw new QueryCatException($"{nameof(TextLineFormatter)} does not support output.");
     }
 
-    public static void RegisterFunctions(FunctionsManager functionsManager)
+    public static void RegisterFunctions(IFunctionsManager functionsManager)
     {
         functionsManager.RegisterFunction(TextLine);
     }

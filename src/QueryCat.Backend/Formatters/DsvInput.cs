@@ -26,7 +26,7 @@ internal class DsvInput : StreamRowsInput
     {
         var hasHeader = _hasHeader ?? RowsIteratorUtils.DetermineIfHasHeader(iterator);
         _hasHeader = hasHeader;
-        iterator.Seek(-1, CursorSeekOrigin.Begin);
+        iterator.SeekToHead();
 
         if (hasHeader)
         {

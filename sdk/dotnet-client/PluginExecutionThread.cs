@@ -18,10 +18,10 @@ public sealed class PluginExecutionThread : IExecutionThread
     public CancellationTokenSource CancellationTokenSource { get; } = new();
 
     /// <inheritdoc />
-    public FunctionsManager FunctionsManager { get; }
+    public IFunctionsManager FunctionsManager { get; }
 
     /// <inheritdoc />
-    public Backend.Core.Plugins.PluginsManager PluginsManager { get; }
+    public IPluginsManager PluginsManager { get; }
 
     /// <inheritdoc />
     public IInputConfigStorage ConfigStorage { get; }

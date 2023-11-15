@@ -10,7 +10,7 @@ internal sealed class JsonOutput : RowsOutput, IDisposable
 {
     private readonly Utf8JsonWriter _streamWriter;
 
-    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger<JsonOutput>();
+    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(JsonOutput));
 
     public JsonOutput(Stream stream)
     {

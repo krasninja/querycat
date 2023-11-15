@@ -28,25 +28,45 @@ public static class RowsOutputExtensions
             rowsIterator = new AdjustColumnsLengthsIterator(rowsIterator, executionThread.Options.AnalyzeRowsCount);
         }
 
+        // Write the main data.
         var isOpened = false;
-        var queryContext = new RowsOutputQueryContext(rowsIterator.Columns);
-        while (rowsIterator.MoveNext())
+        StartWriterLoop();
+
+        // Append grow data.
+        if (executionThread.Options.FollowTimeoutMs > 0)
         {
-            if (cancellationToken.IsCancellationRequested)
+            while (true)
             {
-                break;
+                Thread.Sleep(executionThread.Options.FollowTimeoutMs);
+                StartWriterLoop();
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    break;
+                }
             }
-            if (!isOpened)
-            {
-                rowsOutput.Open();
-                rowsOutput.QueryContext = queryContext;
-                isOpened = true;
-            }
-            rowsOutput.WriteValues(rowsIterator.Current.Values);
         }
+
         if (isOpened)
         {
             rowsOutput.Close();
+        }
+
+        void StartWriterLoop()
+        {
+            while (rowsIterator.MoveNext())
+            {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    break;
+                }
+                if (!isOpened)
+                {
+                    rowsOutput.Open();
+                    rowsOutput.QueryContext = new RowsOutputQueryContext(rowsIterator.Columns);
+                    isOpened = true;
+                }
+                rowsOutput.WriteValues(rowsIterator.Current.Values);
+            }
         }
     }
 }
