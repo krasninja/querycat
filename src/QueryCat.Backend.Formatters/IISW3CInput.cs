@@ -70,7 +70,7 @@ public sealed class IISW3CInput : StreamRowsInput
             value = VariantValue.Null;
             if (_timeColumnIndex == -1)
             {
-                if (DateTime.TryParseExact(GetInputColumnValue(_dateColumnIndex), "yyyy'-'MM'-'dd",
+                if (DateTimeOffset.TryParseExact(GetInputColumnValue(_dateColumnIndex), "yyyy'-'MM'-'dd",
                         CultureInfo.InvariantCulture, DateTimeStyles.None, out var date))
                 {
                     value = new VariantValue(date);
@@ -81,7 +81,7 @@ public sealed class IISW3CInput : StreamRowsInput
             else
             {
                 var stringDate = string.Concat(GetInputColumnValue(_dateColumnIndex), " ", GetInputColumnValue(_timeColumnIndex));
-                if (DateTime.TryParseExact(stringDate, "yyyy'-'MM'-'dd HH:mm:ss",
+                if (DateTimeOffset.TryParseExact(stringDate, "yyyy'-'MM'-'dd HH:mm:ss",
                         CultureInfo.InvariantCulture, DateTimeStyles.None, out var datetime))
                 {
                     value = new VariantValue(datetime);

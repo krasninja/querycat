@@ -1,5 +1,5 @@
 expected: |
-  10,test,11/14/2022 00:00:00,True,3.141592
-  1,test,,,
+  10,test,2022-11-14,True,3.141592
+  1,test,NULL,,
 query: |
-  select id, name, date, [bool], double from 'Json1.json';
+  select id, name, to_char(date, 'yyyy-MM-dd'), [bool], double from 'Json1.json';

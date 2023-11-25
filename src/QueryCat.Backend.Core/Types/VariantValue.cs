@@ -38,7 +38,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         internal readonly double DoubleValue;
 
         [FieldOffset(0)]
-        internal readonly DateTime DateTimeValue;
+        internal readonly DateTimeOffset DateTimeValue;
 
         [FieldOffset(0)]
         internal readonly bool BooleanValue;
@@ -59,7 +59,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal TypeUnion(DateTime value) : this()
+        internal TypeUnion(DateTimeOffset value) : this()
         {
             DateTimeValue = value;
         }
@@ -141,6 +141,12 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     }
 
     public VariantValue(DateTime value)
+    {
+        _valueUnion = new TypeUnion(value);
+        _object = TimestampObject;
+    }
+
+    public VariantValue(DateTimeOffset value)
     {
         _valueUnion = new TypeUnion(value);
         _object = TimestampObject;
@@ -335,9 +341,9 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
 
     internal double AsFloatUnsafe => _valueUnion.DoubleValue;
 
-    public DateTime AsTimestamp => CheckTypeAndTryToCast(DataType.Timestamp)._valueUnion.DateTimeValue;
+    public DateTimeOffset AsTimestamp => CheckTypeAndTryToCast(DataType.Timestamp)._valueUnion.DateTimeValue;
 
-    internal DateTime AsTimestampUnsafe => _valueUnion.DateTimeValue;
+    internal DateTimeOffset AsTimestampUnsafe => _valueUnion.DateTimeValue;
 
     public TimeSpan AsInterval => CheckTypeAndTryToCast(DataType.Interval)._valueUnion.TimeSpanValue;
 
@@ -476,10 +482,10 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
 
     private static VariantValue StringToTimestamp(in ReadOnlySpan<char> value, out bool success)
     {
-        success = DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.None, out var @out);
+        success = DateTimeOffset.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.None, out var @out);
         if (!success)
         {
-            success = DateTime.TryParseExact(value, DateTimeAdditionalFormats, null,
+            success = DateTimeOffset.TryParseExact(value, DateTimeAdditionalFormats, null,
                 DateTimeStyles.AllowWhiteSpaces, out @out);
         }
         return success ? new VariantValue(@out) : Null;
@@ -735,7 +741,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
 
     public static implicit operator string(VariantValue value) => value.AsString;
 
-    public static implicit operator DateTime(VariantValue value) => value.AsTimestamp;
+    public static implicit operator DateTimeOffset(VariantValue value) => value.AsTimestamp;
 
     public static implicit operator TimeSpan(VariantValue value) => value.AsInterval;
 
@@ -743,7 +749,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     public override string ToString() => GetInternalType() switch
     {
         DataType.Null => NullValueString,
-        DataType.Void => "VOID",
+        DataType.Void => "void",
         DataType.Integer => AsIntegerUnsafe.ToString(CultureInfo.InvariantCulture),
         DataType.String => AsStringUnsafe,
         DataType.Boolean => AsBooleanUnsafe.ToString(CultureInfo.InvariantCulture),
@@ -752,6 +758,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         DataType.Timestamp => AsTimestampUnsafe.ToString(CultureInfo.InvariantCulture),
         DataType.Interval => AsIntervalUnsafe.ToString("c", CultureInfo.InvariantCulture),
         DataType.Object => "object: " + AsObjectUnsafe,
+        DataType.Blob => "blob",
         _ => "unknown"
     };
 
@@ -763,7 +770,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     public string ToString(string format) => GetInternalType() switch
     {
         DataType.Null => NullValueString,
-        DataType.Void => "VOID",
+        DataType.Void => "void",
         DataType.Integer => AsIntegerUnsafe.ToString(format, CultureInfo.InvariantCulture),
         DataType.String => AsStringUnsafe,
         DataType.Boolean => AsBooleanUnsafe.ToString(),
@@ -772,6 +779,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         DataType.Timestamp => AsTimestampUnsafe.ToString(format, CultureInfo.InvariantCulture),
         DataType.Interval => AsIntervalUnsafe.ToString(format, CultureInfo.InvariantCulture),
         DataType.Object => "object: " + AsObjectUnsafe,
+        DataType.Blob => "blob",
         _ => "unknown"
     };
 

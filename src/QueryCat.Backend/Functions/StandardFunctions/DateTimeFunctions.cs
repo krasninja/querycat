@@ -17,14 +17,14 @@ public static class DateTimeFunctions
     {
         var target = args.GetAt(0).AsString;
         var format = args.GetAt(1).AsString;
-        return new VariantValue(DateTime.ParseExact(target, format, CultureInfo.InvariantCulture));
+        return new VariantValue(DateTimeOffset.ParseExact(target, format, CultureInfo.InvariantCulture));
     }
 
     [Description("Current date and time")]
     [FunctionSignature("now(): timestamp")]
     public static VariantValue Now(FunctionCallInfo args)
     {
-        return new VariantValue(DateTime.Now);
+        return new VariantValue(DateTimeOffset.Now);
     }
 
     [Description("Takes the date part.")]
@@ -91,13 +91,13 @@ public static class DateTimeFunctions
             var target = source.AsTimestamp;
             var timestamp = field switch
             {
-                "YEAR" or "Y" => new DateTime(target.Year, 1, 1, 0, 0, 0, target.Kind),
-                "DAY" or "D" => new DateTime(target.Year, target.Month, target.Day, 0, 0, 0, target.Kind),
-                "HOUR" or "H" => new DateTime(target.Year, target.Month, target.Day, target.Hour, 0, 0, target.Kind),
+                "YEAR" or "Y" => new DateTimeOffset(target.Year, 1, 1, 0, 0, 0, target.Offset),
+                "DAY" or "D" => new DateTimeOffset(target.Year, target.Month, target.Day, 0, 0, 0, target.Offset),
+                "HOUR" or "H" => new DateTimeOffset(target.Year, target.Month, target.Day, target.Hour, 0, 0, target.Offset),
                 "MINUTE" or "MIN" or "M" =>
-                    new DateTime(target.Year, target.Month, target.Day, target.Hour, target.Minute, 0, target.Kind),
+                    new DateTimeOffset(target.Year, target.Month, target.Day, target.Hour, target.Minute, 0, target.Offset),
                 "SECOND" or "SEC" or "S" =>
-                    new DateTime(target.Year, target.Month, target.Day, target.Hour, target.Minute, target.Second, target.Kind),
+                    new DateTimeOffset(target.Year, target.Month, target.Day, target.Hour, target.Minute, target.Second, target.Offset),
                 _ => throw new SemanticException("Incorrect field."),
             };
             return new VariantValue(timestamp);

@@ -1,5 +1,5 @@
 expected: |
-  1,pepperoni,460,01/02/2022 00:00:00,True
+  1,pepperoni,460,2022-01-02,True
 query: |
-  SELECT id,product,price,date,is_active FROM read_file('RestaurantPerzi.csv')
+  SELECT id,product,price,to_char(date, 'yyyy-MM-dd'),is_active FROM read_file('RestaurantPerzi.csv')
   WHERE product = 'pepperoni' and price <= 1000 and is_active = TRUE;

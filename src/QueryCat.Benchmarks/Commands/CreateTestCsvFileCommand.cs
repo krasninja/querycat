@@ -65,7 +65,7 @@ internal class CreateTestCsvFileCommand : Command
         .RuleFor(u => u.State, (f, u) => f.Address.StateAbbr())
         .RuleFor(u => u.Zip, (f, u) => f.Address.ZipCode())
         .RuleFor(u => u.Phone, (f, u) => f.Phone.PhoneNumber())
-        .RuleFor(u => u.DateOfBirth, (f, u) => f.Date.PastOffset(70, DateTime.Now.AddYears(-18)).Date)
+        .RuleFor(u => u.DateOfBirth, (f, u) => f.Date.PastOffset(70, DateTimeOffset.Now.AddYears(-18)).Date)
         .RuleFor(u => u.Balance, (f, u) => f.Random.Number(-5, 1000) * 100)
         .RuleFor(u => u.Phrase, (f, u) => f.Hacker.Phrase());
 

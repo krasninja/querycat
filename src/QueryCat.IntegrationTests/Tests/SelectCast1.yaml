@@ -1,7 +1,7 @@
 expected: |
-  06/12/1987 00:00:00,20,10
+  1987-06-12,20,10
 query: |
   select
-    cast('1987-06-12' as timestamp),
+    to_char(cast('1987-06-12 +00' as timestamp) at time zone 'utc', 'yyyy-MM-dd'),
     cast(10 + 10 as float),
     cast(10.23 as integer)

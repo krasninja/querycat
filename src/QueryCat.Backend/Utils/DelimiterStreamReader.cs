@@ -493,8 +493,10 @@ public class DelimiterStreamReader
     /// </summary>
     /// <param name="columnIndex">Column index.</param>
     /// <returns>The value.</returns>
-    public DateTime GetDateTime(int columnIndex) => DateTime.Parse(GetField(columnIndex),
-        styles: DateTimeStyles.None, provider: _options.Culture);
+    public DateTimeOffset GetDateTime(int columnIndex) => DateTimeOffset.Parse(
+        GetField(columnIndex),
+        styles: DateTimeStyles.None,
+        formatProvider: _options.Culture);
 
     /// <summary>
     /// Get boolean value of the specific column.
