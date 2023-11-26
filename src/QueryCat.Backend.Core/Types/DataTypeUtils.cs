@@ -109,8 +109,9 @@ public static class DataTypeUtils
         }
         if (type == "ts")
         {
-            var ticks = long.Parse(value[..^2], CultureInfo.InvariantCulture);
-            var ts = new TimeSpan(long.Parse(value[^1..], CultureInfo.InvariantCulture));
+            var colonIndex2 = value.IndexOf(':');
+            var ticks = long.Parse(value[..colonIndex2], CultureInfo.InvariantCulture);
+            var ts = new TimeSpan(long.Parse(value[(colonIndex2 + 1)..], CultureInfo.InvariantCulture));
             return new VariantValue(new DateTimeOffset(ticks, ts));
         }
         if (type == "in")

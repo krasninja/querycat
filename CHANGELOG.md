@@ -4,6 +4,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## Added
+
+- Support hexadecimal numbers parsing.
+
 ## Changed
 
 - Date and time type now takes into account time zone offset.

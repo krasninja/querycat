@@ -467,7 +467,14 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
 
     private static VariantValue StringToInteger(in ReadOnlySpan<char> value, out bool success)
     {
-        success = int.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out var @out);
+        success = long.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out var @out);
+        if (!success)
+        {
+            // Try HEX format.
+            success = value.StartsWith("0x") &&
+                long.TryParse(value[2..], NumberStyles.HexNumber | NumberStyles.AllowHexSpecifier,
+                    CultureInfo.InvariantCulture, out @out);
+        }
         return success ? new VariantValue(@out) : Null;
     }
 
@@ -633,7 +640,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
             _ => Null
         };
         return !output.IsNull && success;
-    }
+}
 
     /// <summary>
     /// Convert to target type.
