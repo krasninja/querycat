@@ -1,0 +1,7 @@
+expected: |
+  string,"quote",2023-10-01
+query: |
+  select T1, str, to_char([date], 'yyyy-MM-dd') from
+    read_text(
+      'string - "quote" - [10/1/2023]',
+      fmt => grok('%{T1} - %{QS:str} - \[%{DATE_US:date}\]'));
