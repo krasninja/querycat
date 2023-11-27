@@ -112,6 +112,10 @@ public static class DataTypeUtils
             var colonIndex2 = value.IndexOf(':');
             var ticks = long.Parse(value[..colonIndex2], CultureInfo.InvariantCulture);
             var ts = new TimeSpan(long.Parse(value[(colonIndex2 + 1)..], CultureInfo.InvariantCulture));
+            if (ts.TotalMinutes < 1)
+            {
+                ts = TimeSpan.Zero;
+            }
             return new VariantValue(new DateTimeOffset(ticks, ts));
         }
         if (type == "in")
