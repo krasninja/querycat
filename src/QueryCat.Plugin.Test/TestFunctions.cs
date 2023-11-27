@@ -26,7 +26,7 @@ internal static class TestFunctions
     [FunctionSignature("test_simple(): timestamp")]
     public static VariantValue TestSimpleFunction(FunctionCallInfo args)
     {
-        return new VariantValue(DateTimeOffset.Now);
+        return new VariantValue(DateTime.Now);
     }
 
     [Description("Test non standard function (simple).")]

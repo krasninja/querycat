@@ -49,7 +49,7 @@ public class CsvParseBenchmarks
             row[2] = new VariantValue(csv.GetField(2)); // FirstName.
             row[3] = new VariantValue(csv.GetField(3)); // LastName.
             var emailVerified = csv.GetField(4);
-            row[4] = !emailVerified.IsEmpty ? new VariantValue(DateTimeOffset.Parse(emailVerified))
+            row[4] = !emailVerified.IsEmpty ? new VariantValue(DateTime.Parse(emailVerified))
                 : VariantValue.Null; // EmailVerifiedAt.
             row[5] = new VariantValue(csv.GetField(5)); // Address.
             row[6] = new VariantValue(csv.GetField(6)); // State.

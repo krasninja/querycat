@@ -67,7 +67,7 @@ public static class DataTypeUtils
             DataType.Boolean => "bl:" + value.AsBooleanUnsafe.ToString(CultureInfo.InvariantCulture),
             DataType.Float => "fl:" + value.AsFloatUnsafe.ToString("G17", CultureInfo.InvariantCulture),
             DataType.Numeric => "n:" + value.AsNumericUnsafe.ToString(CultureInfo.InvariantCulture),
-            DataType.Timestamp => $"ts:{value.AsTimestampUnsafe.Ticks}:{value.AsTimestampUnsafe.Offset.Ticks}",
+            DataType.Timestamp => $"ts:{value.AsTimestampUnsafe.Ticks}:{(int)value.AsTimestampUnsafe.Kind}",
             DataType.Interval => "in:" + value.AsInterval.Ticks.ToString(CultureInfo.InvariantCulture),
             _ => string.Empty
         };
@@ -109,14 +109,9 @@ public static class DataTypeUtils
         }
         if (type == "ts")
         {
-            var colonIndex2 = value.IndexOf(':');
-            var ticks = long.Parse(value[..colonIndex2], CultureInfo.InvariantCulture);
-            var ts = new TimeSpan(long.Parse(value[(colonIndex2 + 1)..], CultureInfo.InvariantCulture));
-            if (ts.TotalMinutes < 1)
-            {
-                ts = TimeSpan.Zero;
-            }
-            return new VariantValue(new DateTimeOffset(ticks, ts));
+            var ticks = long.Parse(value[..^2], CultureInfo.InvariantCulture);
+            var kind = (DateTimeKind)int.Parse(value[^1..], CultureInfo.InvariantCulture);
+            return new VariantValue(new DateTime(ticks, kind));
         }
         if (type == "in")
         {

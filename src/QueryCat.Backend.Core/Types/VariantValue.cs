@@ -38,7 +38,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         internal readonly double DoubleValue;
 
         [FieldOffset(0)]
-        internal readonly DateTimeOffset DateTimeValue;
+        internal readonly DateTime DateTimeValue;
 
         [FieldOffset(0)]
         internal readonly bool BooleanValue;
@@ -59,7 +59,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal TypeUnion(DateTimeOffset value) : this()
+        internal TypeUnion(DateTime value) : this()
         {
             DateTimeValue = value;
         }
@@ -148,7 +148,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
 
     public VariantValue(DateTimeOffset value)
     {
-        _valueUnion = new TypeUnion(value);
+        _valueUnion = new TypeUnion(value.DateTime);
         _object = TimestampObject;
     }
 
@@ -341,9 +341,9 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
 
     internal double AsFloatUnsafe => _valueUnion.DoubleValue;
 
-    public DateTimeOffset AsTimestamp => CheckTypeAndTryToCast(DataType.Timestamp)._valueUnion.DateTimeValue;
+    public DateTime AsTimestamp => CheckTypeAndTryToCast(DataType.Timestamp)._valueUnion.DateTimeValue;
 
-    internal DateTimeOffset AsTimestampUnsafe => _valueUnion.DateTimeValue;
+    internal DateTime AsTimestampUnsafe => _valueUnion.DateTimeValue;
 
     public TimeSpan AsInterval => CheckTypeAndTryToCast(DataType.Interval)._valueUnion.TimeSpanValue;
 
@@ -489,10 +489,10 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
 
     private static VariantValue StringToTimestamp(in ReadOnlySpan<char> value, out bool success)
     {
-        success = DateTimeOffset.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.None, out var @out);
+        success = DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.None, out var @out);
         if (!success)
         {
-            success = DateTimeOffset.TryParseExact(value, DateTimeAdditionalFormats, null,
+            success = DateTime.TryParseExact(value, DateTimeAdditionalFormats, null,
                 DateTimeStyles.AllowWhiteSpaces, out @out);
         }
         return success ? new VariantValue(@out) : Null;
@@ -748,7 +748,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
 
     public static implicit operator string(VariantValue value) => value.AsString;
 
-    public static implicit operator DateTimeOffset(VariantValue value) => value.AsTimestamp;
+    public static implicit operator DateTime(VariantValue value) => value.AsTimestamp;
 
     public static implicit operator TimeSpan(VariantValue value) => value.AsInterval;
 

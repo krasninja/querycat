@@ -21,7 +21,7 @@ public class CollectionInputTests
 
         public string Name { get; set; } = string.Empty;
 
-        public DateTimeOffset? BirthDay { get; set; }
+        public DateTime? BirthDay { get; set; }
 
         public decimal Score { get; set; } = 5;
 

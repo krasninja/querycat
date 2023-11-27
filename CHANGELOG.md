@@ -9,10 +9,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Support hexadecimal numbers parsing.
 - Initial Grok patterns support.
 
-## Changed
-
-- Date and time type now takes into account time zone offset.
-
 ## [0.4.14] - 2023-11-15
 
 ## Added

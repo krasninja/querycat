@@ -44,7 +44,7 @@ public static class Converter
         {
             return DataType.String;
         }
-        if (typeof(DateTimeOffset).IsAssignableFrom(type))
+        if (typeof(DateTime).IsAssignableFrom(type))
         {
             return DataType.Timestamp;
         }
