@@ -273,10 +273,18 @@ internal partial class ProgramParserVisitor
 
     /// <inheritdoc />
     public override IAstNode VisitSelectTablePrimaryNoFormat(QueryCatParser.SelectTablePrimaryNoFormatContext context)
-        => new SelectTableFunctionNode(this.Visit<FunctionCallNode>(context.functionCall()))
+    {
+        var functionCallNode = this.Visit<FunctionCallNode>(context.func);
+        if (context.format != null)
+        {
+            var formatterFunctionCallNode = this.Visit<FunctionCallNode>(context.format);
+            functionCallNode.Arguments.Add(new FunctionCallArgumentNode("fmt", formatterFunctionCallNode));
+        }
+        return new SelectTableFunctionNode(functionCallNode)
         {
             Alias = this.Visit(context.selectAlias(), SelectAliasNode.Empty).AliasName,
         };
+    }
 
     /// <inheritdoc />
     public override IAstNode VisitSelectTablePrimaryStdin(QueryCatParser.SelectTablePrimaryStdinContext context)
@@ -290,8 +298,7 @@ internal partial class ProgramParserVisitor
     {
         var readFunction = new FunctionCallNode("read");
         var uri = GetUnwrappedText(context.uri);
-        readFunction.Arguments.Add(new FunctionCallArgumentNode("uri",
-            new LiteralNode(new VariantValue(uri))));
+        readFunction.Arguments.Add(new FunctionCallArgumentNode("uri", new LiteralNode(new VariantValue(uri))));
         if (context.format != null)
         {
             var formatterFunctionCallNode = this.Visit<FunctionCallNode>(context.format);

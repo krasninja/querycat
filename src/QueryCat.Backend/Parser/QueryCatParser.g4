@@ -135,7 +135,7 @@ selectTableReference: selectTablePrimary selectTableJoined*;
 selectTableRow: '(' simpleExpression (COMMA simpleExpression)* ')';
 selectTable: VALUES selectTableRow (COMMA selectTableRow)*;
 selectTablePrimary
-    : functionCall selectAlias? # SelectTablePrimaryNoFormat
+    : func=functionCall (FORMAT format=functionCall)? selectAlias? # SelectTablePrimaryNoFormat
     | '-' selectAlias? # SelectTablePrimaryStdin
     | uri=STRING_LITERAL (FORMAT format=functionCall)? selectAlias? # SelectTablePrimaryWithFormat
     | '(' selectQueryExpression ')' selectAlias? # SelectTablePrimarySubquery
