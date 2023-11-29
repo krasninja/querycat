@@ -102,7 +102,7 @@ internal sealed partial class GrokInput : IRowsInput
                         break;
                     case "TIMESTAMP_ISO8601":
                         column.DataType = DataType.Timestamp;
-                        converter = v => TryParseDateTimeOffsetOrNull(v.AsString, "o");
+                        converter = v => TryParseDateTimeOffsetOrNull(v.AsString, "yyyy-MM-ddTHH:mm:sszzzz");
                         break;
                     case "DATE":
                         column.DataType = DataType.Timestamp;
@@ -125,10 +125,13 @@ internal sealed partial class GrokInput : IRowsInput
                         column.DataType = DataType.Timestamp;
                         converter = v => TryParseDateTimeOffsetOrNull(v.AsString, "d/MMMM/yyyy':'H':'m':'s zzz");
                         break;
+                    case "DATESTAMP_EVENTLOG":
+                        column.DataType = DataType.Timestamp;
+                        converter = v => TryParseDateTimeOffsetOrNull(v.AsString, "yyyyMMddHHmmss");
+                        break;
                     case "DATESTAMP":
                     case "DATESTAMP_RFC822":
                     case "DATESTAMP_OTHER":
-                    case "DATESTAMP_EVENTLOG":
                     case "HTTPDERROR_DATE":
                     case "SYSLOGTIMESTAMP":
                         // TODO:
