@@ -259,6 +259,19 @@ public static class StringFunctions
         return new VariantValue(result);
     }
 
+    internal static RegexOptions FlagsToRegexOptions(string? flags)
+    {
+        var options = RegexOptions.None;
+        foreach (var flag in (flags ?? string.Empty).ToLowerInvariant())
+        {
+            switch (flag)
+            {
+                case 'i': options |= RegexOptions.IgnoreCase; break;
+            }
+        }
+        return options;
+    }
+
     public static void RegisterFunctions(IFunctionsManager functionsManager)
     {
         functionsManager.RegisterFunction(Lower);

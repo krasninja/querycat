@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Functions.StandardFunctions;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Storage;
@@ -18,7 +19,7 @@ internal sealed class RegexpInput : StreamRowsInput
     private readonly int[] _targetColumnIndexes;
 
     /// <inheritdoc />
-    public RegexpInput(Stream stream, string pattern, string? key = null)
+    public RegexpInput(Stream stream, string pattern, string? flags = null, string? key = null)
         : base(new StreamReader(stream), new StreamRowsInputOptions
     {
         DelimiterStreamReaderOptions = new DelimiterStreamReader.ReaderOptions
@@ -28,7 +29,7 @@ internal sealed class RegexpInput : StreamRowsInput
         },
     }, key ?? string.Empty)
     {
-        _regex = new Regex(pattern.Replace("\n", string.Empty));
+        _regex = new Regex(pattern.Replace("\n", string.Empty), StringFunctions.FlagsToRegexOptions(flags));
 
         // Fill columns.
         var numbers = _regex.GetGroupNumbers().Select(gn => gn.ToString()).ToArray();
