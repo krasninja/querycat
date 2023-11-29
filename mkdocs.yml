@@ -16,8 +16,10 @@ nav:
     - 'UPDATE': commands/update.md
   - 'Input':
     - 'CSV': input/csv.md
+    - 'Grok': input/grok.md
     - 'IISW3C': input/iisw3c.md
     - 'JSON': input/json.md
+    - 'RegEx': input/regex.md
     - 'STDIN': input/stdin.md
     - 'SUBRIP': input/subrip.md
     - 'Text': input/text-line.md
