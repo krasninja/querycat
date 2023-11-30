@@ -136,7 +136,7 @@ selectTableRow: '(' simpleExpression (COMMA simpleExpression)* ')';
 selectTable: VALUES selectTableRow (COMMA selectTableRow)*;
 selectTablePrimary
     : func=functionCall (FORMAT format=functionCall)? selectAlias? # SelectTablePrimaryNoFormat
-    | '-' selectAlias? # SelectTablePrimaryStdin
+    | '-' (FORMAT format=functionCall)? selectAlias? # SelectTablePrimaryStdin
     | uri=STRING_LITERAL (FORMAT format=functionCall)? selectAlias? # SelectTablePrimaryWithFormat
     | '(' selectQueryExpression ')' selectAlias? # SelectTablePrimarySubquery
     | name=IDENTIFIER (FORMAT format=functionCall)? selectAlias? # SelectTablePrimaryIdentifier

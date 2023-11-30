@@ -288,10 +288,18 @@ internal partial class ProgramParserVisitor
 
     /// <inheritdoc />
     public override IAstNode VisitSelectTablePrimaryStdin(QueryCatParser.SelectTablePrimaryStdinContext context)
-        => new SelectTableFunctionNode(new FunctionCallNode("stdin"))
+    {
+        var functionCallNode = new FunctionCallNode("stdin");
+        if (context.format != null)
+        {
+            var formatterFunctionCallNode = this.Visit<FunctionCallNode>(context.format);
+            functionCallNode.Arguments.Add(new FunctionCallArgumentNode("fmt", formatterFunctionCallNode));
+        }
+        return new SelectTableFunctionNode(new FunctionCallNode("stdin"))
         {
             Alias = this.Visit(context.selectAlias(), SelectAliasNode.Empty).AliasName,
         };
+    }
 
     /// <inheritdoc />
     public override IAstNode VisitSelectTablePrimaryWithFormat(QueryCatParser.SelectTablePrimaryWithFormatContext context)
