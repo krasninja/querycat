@@ -91,14 +91,14 @@ public sealed class AstTraversal
                 {
                     continue;
                 }
-                if (!IsIgnoreType(current.Enumerator.Current.GetType()))
+                if (!IsIgnoreType(next.GetType()))
                 {
-                    _treeStack.Push((current.Enumerator.Current, next.GetChildren().GetEnumerator()));
+                    _treeStack.Push((next, next.GetChildren().GetEnumerator()));
                     next.Accept(_visitor);
                 }
                 else if (AcceptBeforeIgnore)
                 {
-                    current.Enumerator.Current.Accept(_visitor);
+                    next.Accept(_visitor);
                 }
             }
             else
@@ -134,11 +134,11 @@ public sealed class AstTraversal
                 }
                 if (!IsIgnoreType(current.Enumerator.Current.GetType()))
                 {
-                    _treeStack.Push((current.Enumerator.Current, next.GetChildren().GetEnumerator()));
+                    _treeStack.Push((next, next.GetChildren().GetEnumerator()));
                 }
                 else if (AcceptBeforeIgnore)
                 {
-                    current.Enumerator.Current.Accept(_visitor);
+                    next.Accept(_visitor);
                 }
             }
             else
