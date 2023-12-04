@@ -10,7 +10,7 @@ namespace QueryCat.Backend.Utils;
 /// <typeparam name="T">The type of elements in the ChunkList collection.</typeparam>
 [DebuggerDisplay("Count = {Count}")]
 [Serializable]
-public sealed class ChunkList<T> : IList<T>, IList, IReadOnlyList<T>
+internal sealed class ChunkList<T> : IList<T>, IList, IReadOnlyList<T>
 {
     private sealed class Chunk<TChunk>
     {

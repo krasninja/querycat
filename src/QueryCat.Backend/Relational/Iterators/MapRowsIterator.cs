@@ -8,7 +8,7 @@ namespace QueryCat.Backend.Relational.Iterators;
 /// <summary>
 /// The iterator maps input columns into another set of columns.
 /// </summary>
-public sealed class MapRowsIterator : IRowsIterator, IRowsIteratorParent
+internal sealed class MapRowsIterator : IRowsIterator, IRowsIteratorParent
 {
     private readonly IRowsIterator _rowsIterator;
     // ReSharper disable once UseArrayEmptyMethod

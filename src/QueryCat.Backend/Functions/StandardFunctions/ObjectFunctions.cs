@@ -7,7 +7,7 @@ namespace QueryCat.Backend.Functions.StandardFunctions;
 /// <summary>
 /// Object functions.
 /// </summary>
-public static class ObjectFunctions
+internal static class ObjectFunctions
 {
     [Description("Extracts a scalar value from a POCO .NET object.")]
     [FunctionSignature("object_query(obj: void, query: string): string")]

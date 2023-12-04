@@ -7,7 +7,7 @@ namespace QueryCat.Backend.Relational.Iterators;
 /// <summary>
 /// The iterator just proxies all the requests to inner iterator which can be replaced.
 /// </summary>
-public sealed class ProxyRowsIterator : IRowsIterator, IRowsIteratorParent
+internal sealed class ProxyRowsIterator : IRowsIterator, IRowsIteratorParent
 {
     private IRowsIterator _currentIterator;
 

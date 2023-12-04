@@ -12,7 +12,7 @@ namespace QueryCat.Backend.Functions.StandardFunctions;
 /// <summary>
 /// JSON functions.
 /// </summary>
-public static class JsonFunctions
+internal static class JsonFunctions
 {
     [Description("Extracts an object or an array from a JSON string.")]
     [FunctionSignature("json_query(json: string, query: string): string")]

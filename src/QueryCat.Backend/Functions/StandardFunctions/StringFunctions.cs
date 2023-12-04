@@ -11,7 +11,7 @@ namespace QueryCat.Backend.Functions.StandardFunctions;
 /// <summary>
 /// String functions.
 /// </summary>
-public static class StringFunctions
+internal static class StringFunctions
 {
     [Description("Convert a string to lower case.")]
     [FunctionSignature("lower(target: string): string")]

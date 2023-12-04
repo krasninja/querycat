@@ -9,7 +9,7 @@ namespace QueryCat.Backend.Functions.StandardFunctions;
 /// <summary>
 /// Date time functions.
 /// </summary>
-public static class DateTimeFunctions
+internal static class DateTimeFunctions
 {
     [Description("Converts string to date according to the given format.")]
     [FunctionSignature("to_date(target: string, fmt: string): timestamp")]

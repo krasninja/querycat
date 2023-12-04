@@ -8,7 +8,7 @@ namespace QueryCat.Backend.Relational.Iterators;
 /// Read the rows iterator and cache its data. If it goes above max cache size - read
 /// rows directly from original rows iterator.
 /// </summary>
-public class CacheRowsIterator : ICursorRowsIterator, IRowsIteratorParent
+public sealed class CacheRowsIterator : ICursorRowsIterator, IRowsIteratorParent
 {
     private readonly IRowsIterator _rowsIterator;
     private readonly int _cacheSize;

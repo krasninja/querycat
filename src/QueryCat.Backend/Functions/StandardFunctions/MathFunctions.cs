@@ -7,7 +7,7 @@ namespace QueryCat.Backend.Functions.StandardFunctions;
 /// <summary>
 /// Math functions.
 /// </summary>
-public static class MathFunctions
+internal static class MathFunctions
 {
     [Description("Absolute value.")]
     [FunctionSignature("abs(x: integer): integer")]

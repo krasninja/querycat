@@ -12,7 +12,7 @@ namespace QueryCat.Backend.Indexes;
 /// <summary>
 /// Order columns according to expression.
 /// </summary>
-public class OrderColumnsIndex : IOrderIndex
+internal sealed class OrderColumnsIndex : IOrderIndex
 {
     private int[] _rowsOrder = Array.Empty<int>();
     private readonly OrderDirection[] _directions;

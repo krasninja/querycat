@@ -3,7 +3,7 @@ namespace QueryCat.Backend.Utils;
 /// <summary>
 /// Utils for system console.
 /// </summary>
-public static class ConsoleUtils
+internal static class ConsoleUtils
 {
     /// <summary>
     /// Reads the standard input stream to the end of line.
