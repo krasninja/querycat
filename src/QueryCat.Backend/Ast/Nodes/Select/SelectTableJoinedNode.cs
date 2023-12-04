@@ -1,6 +1,6 @@
 namespace QueryCat.Backend.Ast.Nodes.Select;
 
-public abstract class SelectTableJoinedNode : ExpressionNode
+internal abstract class SelectTableJoinedNode : ExpressionNode
 {
     public ExpressionNode RightTableNode { get; }
 

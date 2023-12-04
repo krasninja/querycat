@@ -5,7 +5,7 @@ namespace QueryCat.Backend.Ast.Nodes;
 /// <summary>
 /// Unary operation.
 /// </summary>
-public sealed class UnaryOperationExpressionNode : ExpressionNode
+internal sealed class UnaryOperationExpressionNode : ExpressionNode
 {
     public VariantValue.Operation Operation { get; }
 

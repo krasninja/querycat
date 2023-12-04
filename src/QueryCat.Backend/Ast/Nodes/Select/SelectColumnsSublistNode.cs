@@ -1,6 +1,6 @@
 namespace QueryCat.Backend.Ast.Nodes.Select;
 
-public abstract class SelectColumnsSublistNode : AstNode
+internal abstract class SelectColumnsSublistNode : AstNode
 {
     public string Alias { get; internal set; } = string.Empty;
 

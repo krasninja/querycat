@@ -1,6 +1,6 @@
 namespace QueryCat.Backend.Ast.Nodes.Select;
 
-public sealed class SelectWindowPartitionClauseNode : AstNode
+internal sealed class SelectWindowPartitionClauseNode : AstNode
 {
     /// <summary>
     /// Partition by expressions.

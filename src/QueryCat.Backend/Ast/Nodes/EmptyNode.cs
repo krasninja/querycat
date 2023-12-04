@@ -3,7 +3,7 @@ namespace QueryCat.Backend.Ast.Nodes;
 /// <summary>
 /// The node that does nothing.
 /// </summary>
-public sealed class EmptyNode : AstNode
+internal sealed class EmptyNode : AstNode
 {
     /// <summary>
     /// Value.

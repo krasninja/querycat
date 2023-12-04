@@ -1,6 +1,6 @@
 namespace QueryCat.Backend.Ast.Nodes.Select;
 
-public sealed class SelectGroupByNode : AstNode
+internal sealed class SelectGroupByNode : AstNode
 {
     public List<ExpressionNode> GroupByNodes { get; } = new();
 

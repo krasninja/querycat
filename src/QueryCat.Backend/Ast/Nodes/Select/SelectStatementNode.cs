@@ -1,6 +1,6 @@
 namespace QueryCat.Backend.Ast.Nodes.Select;
 
-public sealed class SelectStatementNode : StatementNode
+internal sealed class SelectStatementNode : StatementNode
 {
     public SelectQueryNode QueryNode => (SelectQueryNode)RootNode;
 

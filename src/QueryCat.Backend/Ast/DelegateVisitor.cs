@@ -11,7 +11,7 @@ namespace QueryCat.Backend.Ast;
 /// <summary>
 /// The visitor that calls OnVisit abstract method on every node visit.
 /// </summary>
-public abstract class DelegateVisitor : AstVisitor
+internal abstract class DelegateVisitor : AstVisitor
 {
     /// <summary>
     /// Callback method.

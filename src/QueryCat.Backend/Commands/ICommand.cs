@@ -6,7 +6,7 @@ namespace QueryCat.Backend.Commands;
 /// <summary>
 /// QueryCat statement command executor.
 /// </summary>
-public interface ICommand
+internal interface ICommand
 {
     /// <summary>
     /// Process the statement node and create execution handler.

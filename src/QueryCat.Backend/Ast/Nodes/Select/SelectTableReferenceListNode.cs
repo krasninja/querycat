@@ -1,6 +1,6 @@
 namespace QueryCat.Backend.Ast.Nodes.Select;
 
-public sealed class SelectTableReferenceListNode : AstNode
+internal sealed class SelectTableReferenceListNode : AstNode
 {
     public List<ExpressionNode> TableFunctionsNodes { get; } = new();
 

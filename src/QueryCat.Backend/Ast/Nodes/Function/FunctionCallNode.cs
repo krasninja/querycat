@@ -4,7 +4,7 @@ namespace QueryCat.Backend.Ast.Nodes.Function;
 /// Call a function. Function always has name, arguments list and
 /// return value (can be void).
 /// </summary>
-public class FunctionCallNode : ExpressionNode
+internal sealed class FunctionCallNode : ExpressionNode
 {
     public string FunctionName { get; }
 

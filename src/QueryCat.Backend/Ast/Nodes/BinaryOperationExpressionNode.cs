@@ -5,7 +5,7 @@ namespace QueryCat.Backend.Ast.Nodes;
 /// <summary>
 /// Operation between two expressions: Left op Right.
 /// </summary>
-public sealed class BinaryOperationExpressionNode : ExpressionNode
+internal sealed class BinaryOperationExpressionNode : ExpressionNode
 {
     public VariantValue.Operation Operation { get; internal set; }
 

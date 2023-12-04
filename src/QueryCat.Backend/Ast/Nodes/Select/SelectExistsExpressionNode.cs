@@ -1,6 +1,6 @@
 namespace QueryCat.Backend.Ast.Nodes.Select;
 
-public sealed class SelectExistsExpressionNode : ExpressionNode
+internal sealed class SelectExistsExpressionNode : ExpressionNode
 {
     public SelectQueryNode SubQueryNode { get; }
 

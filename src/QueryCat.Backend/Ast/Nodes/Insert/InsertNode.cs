@@ -2,7 +2,7 @@ using QueryCat.Backend.Ast.Nodes.Select;
 
 namespace QueryCat.Backend.Ast.Nodes.Insert;
 
-public class InsertNode : AstNode
+internal sealed class InsertNode : AstNode
 {
     /// <inheritdoc />
     public override string Code => "insert";

@@ -3,7 +3,7 @@ namespace QueryCat.Backend.Ast.Nodes;
 /// <summary>
 /// Program building block.
 /// </summary>
-public abstract class StatementNode : AstNode
+internal abstract class StatementNode : AstNode
 {
     public IAstNode RootNode { get; }
 

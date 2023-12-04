@@ -1,6 +1,6 @@
 namespace QueryCat.Backend.Ast.Nodes.Select;
 
-public sealed class SelectColumnsListNode : AstNode
+internal sealed class SelectColumnsListNode : AstNode
 {
     /// <inheritdoc />
     public override string Code => "columns_list";

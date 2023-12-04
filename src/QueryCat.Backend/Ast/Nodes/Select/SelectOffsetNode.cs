@@ -1,6 +1,6 @@
 namespace QueryCat.Backend.Ast.Nodes.Select;
 
-public sealed class SelectOffsetNode : AstNode
+internal sealed class SelectOffsetNode : AstNode
 {
     public ExpressionNode CountNode { get; }
 

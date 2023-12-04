@@ -7,7 +7,7 @@ namespace QueryCat.Backend.Commands.Select;
 /// <summary>
 /// Query filter condition.
 /// </summary>
-public class SelectQueryCondition
+internal sealed class SelectQueryCondition
 {
     public Column Column { get; }
 

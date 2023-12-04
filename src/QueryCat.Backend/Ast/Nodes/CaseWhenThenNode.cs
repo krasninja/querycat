@@ -1,6 +1,6 @@
 namespace QueryCat.Backend.Ast.Nodes;
 
-public sealed class CaseWhenThenNode : AstNode
+internal sealed class CaseWhenThenNode : AstNode
 {
     public ExpressionNode ConditionNode { get; }
 

@@ -6,7 +6,7 @@ namespace QueryCat.Backend.Ast.Nodes;
 /// <summary>
 /// Between expression: Expression BETWEEN Left AND Right.
 /// </summary>
-public sealed class BetweenExpressionNode : ExpressionNode
+internal sealed class BetweenExpressionNode : ExpressionNode
 {
     public ExpressionNode Expression { get; }
 

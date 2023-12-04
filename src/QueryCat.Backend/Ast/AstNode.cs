@@ -4,7 +4,7 @@ namespace QueryCat.Backend.Ast;
 /// Base abstract AST node class. Every AST node contains short code, child nodes and
 /// set of attributes. Attributes can be used to store additional data while processing.
 /// </summary>
-public abstract class AstNode : IAstNode
+internal abstract class AstNode : IAstNode
 {
     private static int nextId = 1;
 

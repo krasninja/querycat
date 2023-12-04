@@ -1,6 +1,6 @@
 namespace QueryCat.Backend.Ast.Nodes.Function;
 
-public sealed class FunctionCallExpressionNode : ExpressionNode
+internal sealed class FunctionCallExpressionNode : ExpressionNode
 {
     public FunctionCallNode FunctionNode { get; }
 

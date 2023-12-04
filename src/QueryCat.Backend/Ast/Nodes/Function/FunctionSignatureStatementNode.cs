@@ -1,6 +1,6 @@
 namespace QueryCat.Backend.Ast.Nodes.Function;
 
-public sealed class FunctionSignatureStatementNode : StatementNode
+internal sealed class FunctionSignatureStatementNode : StatementNode
 {
     public FunctionSignatureNode FunctionSignatureNode => (FunctionSignatureNode)RootNode;
 

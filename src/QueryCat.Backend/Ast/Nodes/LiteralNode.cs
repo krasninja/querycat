@@ -5,7 +5,7 @@ namespace QueryCat.Backend.Ast.Nodes;
 /// <summary>
 /// Terminal.
 /// </summary>
-public sealed class LiteralNode : ExpressionNode
+internal sealed class LiteralNode : ExpressionNode
 {
     /// <summary>
     /// Literal value.

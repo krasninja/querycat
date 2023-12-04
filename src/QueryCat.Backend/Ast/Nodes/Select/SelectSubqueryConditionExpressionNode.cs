@@ -2,7 +2,7 @@ using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Ast.Nodes.Select;
 
-public sealed class SelectSubqueryConditionExpressionNode : ExpressionNode
+internal sealed class SelectSubqueryConditionExpressionNode : ExpressionNode
 {
     public enum QuantifierOperator
     {

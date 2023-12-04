@@ -3,7 +3,7 @@ namespace QueryCat.Backend.Ast.Nodes.Function;
 /// <summary>
 /// Function call argument node.
 /// </summary>
-public sealed class FunctionCallArgumentNode : AstNode
+internal sealed class FunctionCallArgumentNode : AstNode
 {
     public string? Key { get; }
 

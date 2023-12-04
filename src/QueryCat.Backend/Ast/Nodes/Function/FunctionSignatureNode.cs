@@ -6,7 +6,7 @@ namespace QueryCat.Backend.Ast.Nodes.Function;
 /// Function signature contains function name, argument and
 /// return type.
 /// </summary>
-public sealed class FunctionSignatureNode : AstNode, IEquatable<FunctionSignatureNode>
+internal sealed class FunctionSignatureNode : AstNode, IEquatable<FunctionSignatureNode>
 {
     /// <summary>
     /// Function name.

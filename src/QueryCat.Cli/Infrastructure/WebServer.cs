@@ -387,6 +387,7 @@ internal sealed class WebServer
             ["installedPlugins"] = localPlugins,
             ["version"] = Application.GetVersion(),
             ["os"] = System.Runtime.InteropServices.RuntimeInformation.OSDescription.Trim(),
+            ["platform"] = Environment.Version,
             ["date"] = DateTimeOffset.Now,
         };
         JsonSerializer.Serialize(response.OutputStream, dict, SourceGenerationContext.Default.WebServerReply);

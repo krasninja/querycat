@@ -4,7 +4,7 @@ namespace QueryCat.Backend.Ast.Nodes;
 /// Root node, program entry point. Program consist of the list of
 /// statements.
 /// </summary>
-public sealed class ProgramNode : AstNode
+internal sealed class ProgramNode : AstNode
 {
     public List<StatementNode> Statements { get; } = new();
 

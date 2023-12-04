@@ -5,7 +5,7 @@ namespace QueryCat.Backend.Ast.Nodes;
 /// - Search case: CASE WHEN a=1 THEN 1 WHEN a=2 THEN 2 ELSE 3 END;
 /// - Simple form: CASE a WHEN 1 THEN 1 WHEN 2 THEN 2 ELSE 3 END;.
 /// </summary>
-public sealed class CaseExpressionNode : ExpressionNode
+internal sealed class CaseExpressionNode : ExpressionNode
 {
     public ExpressionNode? ArgumentNode { get; }
 

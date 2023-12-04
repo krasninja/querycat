@@ -9,7 +9,7 @@ using QueryCat.Backend.Relational.Iterators;
 
 namespace QueryCat.Backend.Commands.Insert;
 
-internal class InsertCommand : ICommand
+internal sealed class InsertCommand : ICommand
 {
     /// <inheritdoc />
     public CommandHandler CreateHandler(ExecutionThread executionThread, StatementNode node)

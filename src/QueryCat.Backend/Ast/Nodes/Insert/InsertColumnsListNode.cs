@@ -1,6 +1,6 @@
 namespace QueryCat.Backend.Ast.Nodes.Insert;
 
-public sealed class InsertColumnsListNode : AstNode
+internal sealed class InsertColumnsListNode : AstNode
 {
     public List<string> Columns { get; } = new();
 

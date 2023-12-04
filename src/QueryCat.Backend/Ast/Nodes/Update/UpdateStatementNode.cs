@@ -1,6 +1,6 @@
 namespace QueryCat.Backend.Ast.Nodes.Update;
 
-public sealed class UpdateStatementNode : StatementNode
+internal sealed class UpdateStatementNode : StatementNode
 {
     /// <inheritdoc />
     public UpdateStatementNode(UpdateNode rootNode) : base(rootNode)

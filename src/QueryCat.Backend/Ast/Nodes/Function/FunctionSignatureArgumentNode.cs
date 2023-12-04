@@ -7,7 +7,7 @@ namespace QueryCat.Backend.Ast.Nodes.Function;
 /// <summary>
 /// Function argument.
 /// </summary>
-public sealed class FunctionSignatureArgumentNode : AstNode, IEquatable<FunctionSignatureArgumentNode>
+internal sealed class FunctionSignatureArgumentNode : AstNode, IEquatable<FunctionSignatureArgumentNode>
 {
     /// <summary>
     /// Signature argument.

@@ -16,7 +16,7 @@ namespace QueryCat.Backend.Commands;
 /// <summary>
 /// Visit only program top-level building blocks (statements) and generate execution delegate.
 /// </summary>
-public sealed class StatementsVisitor : AstVisitor
+internal sealed class StatementsVisitor : AstVisitor
 {
     private readonly ExecutionThread _executionThread;
     private readonly Dictionary<int, CommandHandler> _commandHandlers = new();

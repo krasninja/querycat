@@ -1,6 +1,6 @@
 namespace QueryCat.Backend.Ast.Nodes.Select;
 
-public sealed class SelectWindowDefinitionListNode : AstNode
+internal sealed class SelectWindowDefinitionListNode : AstNode
 {
     public string Name { get; }
 

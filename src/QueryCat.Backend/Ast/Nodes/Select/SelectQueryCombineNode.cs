@@ -2,7 +2,7 @@ using System.Text;
 
 namespace QueryCat.Backend.Ast.Nodes.Select;
 
-public sealed class SelectQueryCombineNode : SelectQueryNode
+internal sealed class SelectQueryCombineNode : SelectQueryNode
 {
     public SelectQueryNode LeftQueryNode { get; }
 

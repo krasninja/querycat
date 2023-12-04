@@ -1,6 +1,6 @@
 namespace QueryCat.Backend.Ast.Nodes.Select;
 
-public abstract class SelectQueryNode : ExpressionNode, ISelectAliasNode
+internal abstract class SelectQueryNode : ExpressionNode, ISelectAliasNode
 {
     /// <inheritdoc />
     public string Alias { get; internal set; } = string.Empty;

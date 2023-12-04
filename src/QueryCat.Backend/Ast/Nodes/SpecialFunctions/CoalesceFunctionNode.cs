@@ -1,6 +1,6 @@
 namespace QueryCat.Backend.Ast.Nodes.SpecialFunctions;
 
-public sealed class CoalesceFunctionNode : ExpressionNode
+internal sealed class CoalesceFunctionNode : ExpressionNode
 {
     public List<ExpressionNode> Expressions { get; } = new();
 

@@ -8,7 +8,7 @@ using QueryCat.Backend.Ast.Nodes.Update;
 
 namespace QueryCat.Backend.Ast;
 
-public abstract class AstVisitor
+internal abstract class AstVisitor
 {
     /// <summary>
     /// AST traversal.

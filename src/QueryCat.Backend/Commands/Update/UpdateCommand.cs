@@ -10,7 +10,7 @@ using QueryCat.Backend.Execution;
 
 namespace QueryCat.Backend.Commands.Update;
 
-internal class UpdateCommand : ICommand
+internal sealed class UpdateCommand : ICommand
 {
     /// <inheritdoc />
     public CommandHandler CreateHandler(ExecutionThread executionThread, StatementNode node)

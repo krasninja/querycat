@@ -2,7 +2,7 @@ using QueryCat.Backend.Ast.Nodes.Function;
 
 namespace QueryCat.Backend.Ast.Nodes.Select;
 
-public sealed class SelectColumnsSublistWindowNode : SelectColumnsSublistNode
+internal sealed class SelectColumnsSublistWindowNode : SelectColumnsSublistNode
 {
     public FunctionCallNode AggregateFunctionNode { get; }
 

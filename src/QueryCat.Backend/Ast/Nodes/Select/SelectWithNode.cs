@@ -2,7 +2,7 @@ using System.Text;
 
 namespace QueryCat.Backend.Ast.Nodes.Select;
 
-public sealed class SelectWithNode : AstNode
+internal sealed class SelectWithNode : AstNode
 {
     public List<SelectColumnsSublistNode> ColumnNodes { get; } = new();
 

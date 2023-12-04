@@ -3,7 +3,7 @@ using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Ast.Nodes.SpecialFunctions;
 
-public sealed class CastFunctionNode : ExpressionNode
+internal sealed class CastFunctionNode : ExpressionNode
 {
     public ExpressionNode ExpressionNode { get; }
 

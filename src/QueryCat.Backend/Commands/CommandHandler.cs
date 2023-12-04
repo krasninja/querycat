@@ -5,7 +5,7 @@ namespace QueryCat.Backend.Commands;
 /// <summary>
 /// Base class for commands.
 /// </summary>
-public abstract class CommandHandler : IDisposable
+internal abstract class CommandHandler : IDisposable
 {
     /// <summary>
     /// Invoke the command and return value.

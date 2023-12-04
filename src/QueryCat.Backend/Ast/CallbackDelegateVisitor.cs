@@ -3,7 +3,7 @@ namespace QueryCat.Backend.Ast;
 /// <summary>
 /// Calls the callback on every node visit.
 /// </summary>
-public sealed class CallbackDelegateVisitor : DelegateVisitor
+internal sealed class CallbackDelegateVisitor : DelegateVisitor
 {
     /// <summary>
     /// The delegate to be called on every node visit.

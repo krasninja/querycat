@@ -1,6 +1,6 @@
 namespace QueryCat.Backend.Ast.Nodes.Declare;
 
-public class SetNode : AstNode
+internal sealed class SetNode : AstNode
 {
     public string Name { get; }
 

@@ -5,7 +5,7 @@ using QueryCat.Backend.Execution;
 
 namespace QueryCat.Backend.Commands.Declare;
 
-internal class SetCommand : ICommand
+internal sealed class SetCommand : ICommand
 {
     /// <inheritdoc />
     public CommandHandler CreateHandler(ExecutionThread executionThread, StatementNode node)

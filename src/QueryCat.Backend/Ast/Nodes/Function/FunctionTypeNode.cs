@@ -2,7 +2,7 @@ using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Ast.Nodes.Function;
 
-public sealed class FunctionTypeNode : TypeNode, IEquatable<FunctionTypeNode>
+internal sealed class FunctionTypeNode : TypeNode, IEquatable<FunctionTypeNode>
 {
     public static FunctionTypeNode NullTypeInstance { get; } = new(DataType.Null);
 

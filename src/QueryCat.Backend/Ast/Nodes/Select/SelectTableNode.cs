@@ -1,6 +1,6 @@
 namespace QueryCat.Backend.Ast.Nodes.Select;
 
-public sealed class SelectTableNode : ExpressionNode, ISelectAliasNode
+internal sealed class SelectTableNode : ExpressionNode, ISelectAliasNode
 {
     public List<SelectTableRowNode> RowsNodes { get; } = new();
 

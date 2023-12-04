@@ -3,7 +3,7 @@ namespace QueryCat.Backend.Ast.Nodes;
 /// <summary>
 /// In operation: Expression IN (InExpressionValues).
 /// </summary>
-public sealed class InOperationExpressionNode : ExpressionNode
+internal sealed class InOperationExpressionNode : ExpressionNode
 {
     public ExpressionNode ExpressionNode { get; }
 

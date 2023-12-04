@@ -1,6 +1,6 @@
 namespace QueryCat.Backend.Ast.Nodes.Insert;
 
-public class InsertStatementNode : StatementNode
+internal sealed class InsertStatementNode : StatementNode
 {
     /// <inheritdoc />
     public InsertStatementNode(InsertNode rootNode) : base(rootNode)

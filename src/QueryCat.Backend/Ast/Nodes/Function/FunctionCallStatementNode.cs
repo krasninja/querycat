@@ -1,6 +1,6 @@
 namespace QueryCat.Backend.Ast.Nodes.Function;
 
-public sealed class FunctionCallStatementNode : StatementNode
+internal sealed class FunctionCallStatementNode : StatementNode
 {
     public FunctionCallNode FunctionNode => (FunctionCallNode)RootNode;
 
