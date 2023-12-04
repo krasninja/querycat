@@ -51,7 +51,7 @@ public enum DataType : sbyte
     Interval = 7,
 
     /// <summary>
-    ///  Binary Large Object.
+    /// Binary Large Object.
     /// </summary>
     Blob = 8,
 

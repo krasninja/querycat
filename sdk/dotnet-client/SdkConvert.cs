@@ -54,7 +54,7 @@ public static class SdkConvert
             {
                 Interval = (long)value.AsIntervalUnsafe.TotalMilliseconds,
             },
-            Backend.Core.Types.DataType.Object => new VariantValue
+            Backend.Core.Types.DataType.Object or Backend.Core.Types.DataType.Blob => new VariantValue
             {
                 Object = new ObjectValue
                 {
@@ -121,6 +121,7 @@ public static class SdkConvert
             DataType.NUMERIC => Backend.Core.Types.DataType.Numeric,
             DataType.INTERVAL => Backend.Core.Types.DataType.Interval,
             DataType.OBJECT => Backend.Core.Types.DataType.Object,
+            DataType.BLOB => Backend.Core.Types.DataType.Blob,
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
         };
     }
@@ -138,6 +139,7 @@ public static class SdkConvert
             Backend.Core.Types.DataType.Numeric => DataType.NUMERIC,
             Backend.Core.Types.DataType.Interval => DataType.INTERVAL,
             Backend.Core.Types.DataType.Object => DataType.OBJECT,
+            Backend.Core.Types.DataType.Blob => DataType.BLOB,
             Backend.Core.Types.DataType.Void => DataType.NULL,
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
         };

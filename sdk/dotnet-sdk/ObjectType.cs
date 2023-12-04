@@ -17,5 +17,6 @@ namespace QueryCat.Plugins.Sdk
     ROWS_INPUT = 0,
     ROWS_ITERATOR = 1,
     ROWS_OUTPUT = 2,
+    BLOB = 3,
   }
 }

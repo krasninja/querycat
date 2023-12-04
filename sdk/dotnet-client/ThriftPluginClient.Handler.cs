@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -7,6 +9,7 @@ using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Functions;
+using QueryCat.Backend.Core.Types.Blob;
 using QueryCat.Plugins.Sdk;
 using Column = QueryCat.Plugins.Sdk.Column;
 using DataType = QueryCat.Backend.Core.Types.DataType;
@@ -16,6 +19,7 @@ namespace QueryCat.Plugins.Client;
 
 public partial class ThriftPluginClient
 {
+    [SuppressMessage("ReSharper", "InconsistentNaming")]
     private sealed class Handler : Plugin.IAsync
     {
         private readonly ThriftPluginClient _thriftPluginClient;
@@ -263,7 +267,7 @@ public partial class ThriftPluginClient
                 var result = rowsInputUpdate.UpdateValue(column_index, SdkConvert.Convert(value));
                 return Task.FromResult(result == ErrorCode.OK);
             }
-            return Task.FromResult(false);
+            throw new QueryCatPluginException(ErrorType.INVALID_OBJECT, $"Object is not a '{typeof(IRowsInputUpdate)}'.");
         }
 
         /// <inheritdoc />
@@ -277,7 +281,23 @@ public partial class ThriftPluginClient
                 rowsOutput.WriteValues(values.Select(SdkConvert.Convert).ToArray());
                 return Task.CompletedTask;
             }
-            return Task.CompletedTask;
+            throw new QueryCatPluginException(ErrorType.INVALID_OBJECT, $"Object is not a '{typeof(IRowsOutput)}'.");
+        }
+
+        /// <inheritdoc />
+        public Task<byte[]> Blob_ReadAsync(int object_handle, int offset, int count, CancellationToken cancellationToken = default)
+        {
+            if (_thriftPluginClient._objectsStorage.TryGet<IBlobData>(object_handle, out var blobData)
+                && blobData != null)
+            {
+                var buffer = new MemoryStream();
+                blobData.ApplyAction((b, cnt) =>
+                {
+                    buffer.Write(b);
+                }, offset, count);
+                return Task.FromResult(buffer.ToArray());
+            }
+            throw new QueryCatPluginException(ErrorType.INVALID_OBJECT, "Object is not a BLOB.");
         }
     }
 
@@ -502,6 +522,22 @@ public partial class ThriftPluginClient
             try
             {
                 return _handler.RowsSet_WriteValueAsync(object_handle, values, cancellationToken);
+            }
+            catch (QueryCatException ex)
+            {
+                throw new QueryCatPluginException(ErrorType.GENERIC, ex.Message)
+                {
+                    ObjectHandle = object_handle,
+                };
+            }
+        }
+
+        /// <inheritdoc />
+        public Task<byte[]> Blob_ReadAsync(int object_handle, int offset, int count, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return _handler.Blob_ReadAsync(object_handle, offset, count, cancellationToken);
             }
             catch (QueryCatException ex)
             {

@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using QueryCat.Backend.Core.Types.Blob;
 
 namespace QueryCat.Backend.Core.Types;
 
@@ -105,6 +106,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
             DataType.Timestamp => TimestampObject,
             DataType.Interval => IntervalObject,
             DataType.Object => null,
+            DataType.Blob => EmptyBlobData.Instance,
             _ => throw new ArgumentOutOfRangeException(nameof(type)),
         };
         _valueUnion = default;
@@ -173,6 +175,18 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     private VariantValue(object obj)
     {
         _object = obj;
+        _valueUnion = default;
+    }
+
+    private VariantValue(IBlobData blob)
+    {
+        _object = blob;
+        _valueUnion = default;
+    }
+
+    private VariantValue(byte[] bytes)
+    {
+        _object = new StreamBlobData(() => new MemoryStream(bytes, writable: false));
         _valueUnion = default;
     }
 
@@ -265,6 +279,10 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
                 return Null;
             }
         }
+        if (obj is IBlobData blobData)
+        {
+            return new VariantValue(blobData);
+        }
         return new VariantValue(obj);
     }
 
@@ -305,6 +323,10 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         if (_object is decimal)
         {
             return DataType.Numeric;
+        }
+        if (_object is IBlobData)
+        {
+            return DataType.Blob;
         }
         if (_object != null)
         {
@@ -364,6 +386,10 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     public object? AsObject => CheckTypeAndTryToCast(DataType.Object)._object;
 
     internal object? AsObjectUnsafe => _object;
+
+    public IBlobData AsBlob => (IBlobData)CheckTypeAndTryToCast(DataType.Blob)._object!;
+
+    internal IBlobData AsBlobUnsafe => (IBlobData)_object!;
 
     #endregion
 

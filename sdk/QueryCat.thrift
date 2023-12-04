@@ -23,7 +23,8 @@ struct DecimalValue {
 enum ObjectType {
   ROWS_INPUT = 0, // Interfaces: IRowsInput, IRowsSource, IRowsInputKeys, IRowsSchema.
   ROWS_ITERATOR = 1, // Interfaces: IRowsIterator.
-  ROWS_OUTPUT = 2 // Interfaces: IRowsOutput, IRowsSource.
+  ROWS_OUTPUT = 2, // Interfaces: IRowsOutput, IRowsSource.
+  BLOB = 3
 }
 
 // To refer to objects we use special identifiers: handles.
@@ -54,6 +55,7 @@ enum DataType {
   BOOLEAN = 5,
   NUMERIC = 6,
   INTERVAL = 7,
+  BLOB = 8,
   OBJECT = 40 // See ObjectType.
 }
 
@@ -268,5 +270,12 @@ service Plugin {
   void RowsSet_WriteValue(
     1: required Handle object_handle,
     2: required list<VariantValue> values // Should match columns count.
-  )
+  ) throws (1: QueryCatPluginException e),
+
+  // Read binary data.
+  binary Blob_Read(
+    1: required Handle object_handle,
+    2: required i32 offset,
+    3: required i32 count
+  ) throws (1: QueryCatPluginException e),
 }
