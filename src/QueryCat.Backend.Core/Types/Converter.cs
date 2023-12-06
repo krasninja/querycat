@@ -1,4 +1,5 @@
 using System.Globalization;
+using QueryCat.Backend.Core.Types.Blob;
 
 namespace QueryCat.Backend.Core.Types;
 
@@ -23,6 +24,7 @@ public static class Converter
         DataType.Null => typeof(void),
         DataType.Void => typeof(void),
         DataType.Numeric => typeof(decimal),
+        DataType.Blob => typeof(byte[]),
         DataType.Object => typeof(object),
         _ => typeof(void)
     };
@@ -55,6 +57,10 @@ public static class Converter
         if (type == typeof(string))
         {
             return DataType.String;
+        }
+        if (typeof(byte[]).IsAssignableFrom(type) || typeof(IBlobData).IsAssignableFrom(type))
+        {
+            return DataType.Blob;
         }
         if (!type.IsValueType)
         {
@@ -129,6 +135,7 @@ public static class Converter
             DataType.Object => value.AsObject,
             DataType.String => value.AsString,
             DataType.Timestamp => value.AsTimestamp,
+            DataType.Blob => value.AsBlob,
             _ => throw new InvalidOperationException(
                 $"Cannot convert value from system type '{targetType}' to type '{relatedType}'."),
         };

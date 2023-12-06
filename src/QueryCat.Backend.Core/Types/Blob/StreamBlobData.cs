@@ -14,7 +14,17 @@ public class StreamBlobData : IBlobData
     }
 
     /// <inheritdoc />
-    public int GetBytes(byte[] buffer, int offset = 0, int count = int.MaxValue)
+    public long Length
+    {
+        get
+        {
+            using var stream = _streamFactory.Invoke();
+            return stream.Length;
+        }
+    }
+
+    /// <inheritdoc />
+    public int GetBytes(byte[] buffer, int offset, int count)
     {
         using var stream = _streamFactory.Invoke();
         stream.Seek(offset, SeekOrigin.Begin);
@@ -22,11 +32,11 @@ public class StreamBlobData : IBlobData
         {
             count = buffer.Length;
         }
-        return stream.Read(buffer, offset, count);
+        return stream.Read(buffer, 0, count);
     }
 
     /// <inheritdoc />
-    public int ApplyAction<T>(ReadOnlySpanAction<byte, T?> action, int offset = 0, T? state = default)
+    public int ApplyAction<T>(ReadOnlySpanAction<byte, T?> action, int offset, T? state = default)
     {
         var buffer = ArrayPool<byte>.Shared.Rent(BufferSize);
         using var stream = _streamFactory.Invoke();

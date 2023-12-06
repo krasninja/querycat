@@ -1,3 +1,4 @@
+using System.Buffers;
 using System.Text;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
@@ -79,6 +80,12 @@ internal sealed class DsvOutput : RowsOutput, IDisposable
                         break;
                     case DataType.Boolean:
                         _streamWriter.Write(values[i].AsBoolean);
+                        break;
+                    case DataType.Blob:
+                        values[i].AsBlob.ApplyAction(new ReadOnlySpanAction<byte, object?>((span, o) =>
+                        {
+                            _streamWriter.Write(Convert.ToHexString(span));
+                        }), 0);
                         break;
                 }
             }

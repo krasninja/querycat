@@ -25,6 +25,7 @@ public static class DataTypeUtils
         DataType.Boolean,
         DataType.Numeric,
         DataType.Object,
+        DataType.Blob,
         DataType.Void,
     };
 
