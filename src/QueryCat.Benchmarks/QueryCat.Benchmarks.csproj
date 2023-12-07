@@ -1,13 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <OutputType>Exe</OutputType>
     <PublishSingleFile>true</PublishSingleFile>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="BenchmarkDotNet" Version="0.13.10" />
+    <PackageReference Include="BenchmarkDotNet" Version="0.13.11" />
     <PackageReference Include="Bogus" Version="34.0.2" />
     <PackageReference Include="CsvHelper" Version="30.0.1" />
     <PackageReference Include="DotNext" Version="4.15.2" />

@@ -27,10 +27,12 @@ public class PublishGeneralSettings : DotNetPublishSettings
             pag.Append(new TextArgument("-p:AutoreleasePoolSupport=false"));
             pag.Append(new TextArgument("-p:DebuggerSupport=false"));
             pag.Append(new TextArgument("-p:EnableUnsafeBinaryFormatterSerialization=false"));
+            pag.Append(new TextArgument("-p:EnableUnsafeUTF7Encoding=true"));
             pag.Append(new TextArgument("-p:EventSourceSupport=false"));
             pag.Append(new TextArgument("-p:HttpActivityPropagationSupport=false"));
             pag.Append(new TextArgument("-p:InvariantGlobalization=true"));
             pag.Append(new TextArgument("-p:MetadataUpdaterSupport=false"));
+            pag.Append(new TextArgument("-p:UseNativeHttpHandler=true"));
             // For reference: https://andrewlock.net/version-vs-versionsuffix-vs-packageversion-what-do-they-all-mean/.
             pag.Append(new TextArgument($"-p:InformationalVersion={context.Version}"));
             return pag;
