@@ -80,7 +80,7 @@ internal class ApplicationOptions
     public ApplicationRoot CreateStdoutApplicationRoot(
         ExecutionOptions? executionOptions = null,
         string? columnsSeparator = null,
-        Backend.Formatters.TextTableOutput.Style outputStyle = Backend.Formatters.TextTableOutput.Style.Table)
+        Backend.Formatters.TextTableOutput.Style outputStyle = Backend.Formatters.TextTableOutput.Style.Table1)
     {
         var root = CreateApplicationRoot(executionOptions);
         var tableOutput = new Backend.Formatters.TextTableOutput(

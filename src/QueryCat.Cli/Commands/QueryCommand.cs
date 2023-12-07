@@ -29,7 +29,7 @@ internal class QueryCommand : BaseQueryCommand
             getDefaultValue: () => 20);
         var outputStyleOption = new Option<TextTableOutput.Style>("--output-style",
             description: "Output style.",
-            getDefaultValue: () => TextTableOutput.Style.Table);
+            getDefaultValue: () => TextTableOutput.Style.Table1);
         var analyzeRowsOption = new Option<int>("--analyze-rows",
             description: "Number of rows to analyze. -1 to analyze all.",
             getDefaultValue: () => 10);

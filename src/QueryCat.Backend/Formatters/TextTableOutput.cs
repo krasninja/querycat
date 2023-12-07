@@ -18,7 +18,8 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
     /// </summary>
     public enum Style
     {
-        Table,
+        Table1,
+        Table2,
         NoSpaceTable,
         Card,
     }
@@ -50,7 +51,7 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
         Stream stream,
         bool hasHeader = true,
         string? separator = null,
-        Style style = Style.Table,
+        Style style = Style.Table1,
         string? floatNumberFormat = null)
     {
         _stream = stream;
@@ -67,10 +68,16 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
             _onWrite = OnCardWrite;
             _separator = separator ?? ":";
         }
-        else if (style == Style.Table)
+        else if (style == Style.Table1)
         {
-            _onInit = OnTableInit;
-            _onWrite = OnTableWrite;
+            _onInit = OnTable1Init;
+            _onWrite = OnTable1Write;
+            _separator = separator ?? "|";
+        }
+        else if (style == Style.Table2)
+        {
+            _onInit = OnTable2Init;
+            _onWrite = OnTable2Write;
             _separator = separator ?? "|";
         }
         else if (style == Style.NoSpaceTable)
@@ -122,9 +129,9 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
         _streamWriter.Flush();
     }
 
-    #region Table
+    #region Table1
 
-    private void OnTableInit()
+    private void OnTable1Init()
     {
         var columns = QueryContext.QueryInfo.Columns;
         _totalMaxLineLength = new int[columns.Count];
@@ -188,7 +195,7 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
         _streamWriter.WriteLine();
     }
 
-    private void OnTableWrite(VariantValue[] values)
+    private void OnTable1Write(VariantValue[] values)
     {
         int writeCount = 0;
         var columns = QueryContext.QueryInfo.Columns;
@@ -219,6 +226,109 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
         if (!_isSingleValue && writeCount > 0)
         {
             _streamWriter.Write(_separator);
+        }
+        _streamWriter.WriteLine();
+    }
+
+    #endregion
+
+    #region Table2
+
+    private void OnTable2Init()
+    {
+        var columns = QueryContext.QueryInfo.Columns;
+        _totalMaxLineLength = new int[columns.Count];
+        int currentMaxLength = 0;
+
+        if (!_hasHeader || _isSingleValue)
+        {
+            for (int i = 0; i < columns.Count; i++)
+            {
+                var separatorLength = 0;
+                if (i > 0)
+                {
+                    _streamWriter.Write(_separatorWithSpace);
+                    separatorLength = _separatorWithSpace.Length;
+                }
+                currentMaxLength += separatorLength + columns[i].Length;
+                _totalMaxLineLength[i] = currentMaxLength;
+            }
+            return;
+        }
+
+        // Header.
+        for (int i = 0; i < columns.Count; i++)
+        {
+            if (columns[i].IsHidden)
+            {
+                continue;
+            }
+
+            _columnsLengths[i] = columns[i].Length;
+
+            var separatorLength = 0;
+            if (i > 0)
+            {
+                _streamWriter.Write(_separatorWithSpace);
+                separatorLength = _separatorWithSpace.Length;
+            }
+            _streamWriter.Write(columns[i].FullName.PadRight(_columnsLengths[i]));
+            currentMaxLength += separatorLength + columns[i].Length;
+            _totalMaxLineLength[i] = currentMaxLength;
+        }
+        _streamWriter.WriteLine();
+        _streamWriter.Flush();
+
+        // Append header separator.
+        for (int i = 0; i < columns.Count; i++)
+        {
+            if (columns[i].IsHidden)
+            {
+                continue;
+            }
+
+            var lengths = new[]
+            {
+                columns[i].Length
+            };
+            _columnsLengths[i] = lengths.Max();
+
+            if (i > 0)
+            {
+                _streamWriter.Write("+-");
+            }
+            _streamWriter.Write(new string('-', _columnsLengths[i]));
+        }
+        _streamWriter.WriteLine();
+    }
+
+    private void OnTable2Write(VariantValue[] values)
+    {
+        int writeCount = 0;
+        var columns = QueryContext.QueryInfo.Columns;
+        for (int i = 0; i < columns.Count; i++)
+        {
+            if (columns[i].IsHidden)
+            {
+                continue;
+            }
+            if (!_isSingleValue && i > 0)
+            {
+                _streamWriter.Write(_separatorWithSpace);
+                writeCount += _separatorWithSpace.Length;
+            }
+            var value = values[i];
+            var valueString = ToStringWithFormat(value);
+            var padding = _columnsLengths[i];
+            var exceed = _totalMaxLineLength[i] - writeCount - _columnsLengths[i] - 1;
+            if (exceed < 0)
+            {
+                padding = Math.Max(0, exceed + padding);
+            }
+            var valueWithPadding = valueString.PadRight(padding);
+            _streamWriter.Write(valueWithPadding);
+            _streamWriter.Write(' ');
+            writeCount += valueWithPadding.Length + 1;
         }
         _streamWriter.WriteLine();
     }
