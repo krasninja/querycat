@@ -17,7 +17,7 @@ public static class InfoFunctions
 {
     [Description("Return all registered functions.")]
     [FunctionSignature("_functions(): object<IRowsIterator>")]
-    public static VariantValue Functions(FunctionCallInfo args)
+    internal static VariantValue Functions(FunctionCallInfo args)
     {
         var builder = new ClassRowsFrameBuilder<IFunction>()
             .AddProperty("signature", f => f.ToString())
@@ -83,7 +83,7 @@ public static class InfoFunctions
 
     [Description("Get expression type.")]
     [FunctionSignature("_typeof(arg: any): string")]
-    public static VariantValue TypeOf(FunctionCallInfo args)
+    internal static VariantValue TypeOf(FunctionCallInfo args)
     {
         var value = args.GetAt(0);
         var type = value.GetInternalType();
@@ -103,7 +103,7 @@ public static class InfoFunctions
 
     [Description("Provide a list of OS time zone names.")]
     [FunctionSignature("_timezone_names(): object<IRowsIterator>")]
-    public static VariantValue TimeZoneNames(FunctionCallInfo args)
+    internal static VariantValue TimeZoneNames(FunctionCallInfo args)
     {
         var builder = new ClassRowsFrameBuilder<TimeZoneInfo>()
             .AddProperty("id", p => p.Id, "Time zone code.")
@@ -113,7 +113,7 @@ public static class InfoFunctions
         return VariantValue.CreateFromObject(builder.BuildIterator(TimeZoneInfo.GetSystemTimeZones()));
     }
 
-    public static void RegisterFunctions(IFunctionsManager functionsManager)
+    internal static void RegisterFunctions(IFunctionsManager functionsManager)
     {
         functionsManager.RegisterFunction(Functions);
         functionsManager.RegisterFunction(Schema);
