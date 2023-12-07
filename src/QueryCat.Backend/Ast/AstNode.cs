@@ -1,3 +1,5 @@
+using System.Collections.Frozen;
+
 namespace QueryCat.Backend.Ast;
 
 /// <summary>
@@ -55,7 +57,7 @@ internal abstract class AstNode : IAstNode
     /// <inheritdoc />
     public void SetAttribute(string key, object? value) => _attributes[key] = value;
 
-    internal IDictionary<string, object?> GetAttributes()
+    internal IReadOnlyDictionary<string, object?> GetAttributes()
     {
         var dict = new Dictionary<string, object?>();
         foreach (var dictionaryEntry in _attributes)
@@ -63,7 +65,7 @@ internal abstract class AstNode : IAstNode
             var key = dictionaryEntry.Key;
             dict[key] = dictionaryEntry.Value;
         }
-        return dict;
+        return dict.ToFrozenDictionary();
     }
 
     #endregion

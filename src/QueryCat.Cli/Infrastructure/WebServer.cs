@@ -1,3 +1,4 @@
+using System.Collections.Frozen;
 using System.Net;
 using System.Reflection;
 using System.Text.Json;
@@ -36,16 +37,14 @@ internal sealed class WebServer
 
     public string AllowOrigin { get; set; } = string.Empty;
 
-    private readonly Dictionary<string, Action<HttpListenerRequest, HttpListenerResponse>> _actions;
+    private readonly IDictionary<string, Action<HttpListenerRequest, HttpListenerResponse>> _actions;
 
     private readonly ExecutionThread _executionThread;
     private readonly string? _password;
 
     private readonly Lazy<ILogger> _logger = new(() => Application.LoggerFactory.CreateLogger(nameof(WebServer)));
 
-    internal sealed class WebServerReply : Dictionary<string, object>
-    {
-    }
+    internal sealed class WebServerReply : Dictionary<string, object>;
 
     public WebServer(
         ExecutionThread executionThread,
@@ -58,7 +57,7 @@ internal sealed class WebServer
             ["/index.html"] = HandleIndexAction,
             ["/api/info"] = HandleInfoApiAction,
             ["/api/query"] = HandleQueryApiAction
-        };
+        }.ToFrozenDictionary();
 
         _executionThread = executionThread;
         _password = password;

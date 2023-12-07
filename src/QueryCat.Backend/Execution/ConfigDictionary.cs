@@ -1,5 +1,3 @@
 namespace QueryCat.Backend.Execution;
 
-internal sealed class ConfigDictionary : Dictionary<string, string>
-{
-}
+internal sealed class ConfigDictionary : Dictionary<string, string>;

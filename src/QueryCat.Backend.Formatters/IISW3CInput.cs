@@ -1,3 +1,4 @@
+using System.Collections.Frozen;
 using System.Globalization;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
@@ -26,7 +27,7 @@ public sealed class IISW3CInput : StreamRowsInput
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(IISW3CInput));
 
     // https://procodeguide.com/programming/iis-logs/.
-    private static readonly Dictionary<string, Column> AvailableFields = new()
+    private static readonly IDictionary<string, Column> AvailableFields = new Dictionary<string, Column>
     {
         ["date"] = new("date", DataType.Timestamp, "Date of request."),
         ["time"] = new("time", DataType.String, "Time of request in UTC."),
@@ -50,7 +51,7 @@ public sealed class IISW3CInput : StreamRowsInput
         ["cs(User-Agent)"] = new("cs(User-Agent)", DataType.String, "The browser type that client used for request."),
         ["cs(Cookie)"] = new("cs(Cookie)", DataType.String, "The content of the cookie sent or received."),
         ["cs(Referer)"] = new("cs(Referer)", DataType.String, "The site that the user last visited."),
-    };
+    }.ToFrozenDictionary();
 
     public IISW3CInput(Stream stream, string? key = null) : base(new StreamReader(stream), new StreamRowsInputOptions
     {
