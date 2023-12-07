@@ -8,7 +8,7 @@
   <meta name="robots" content="noindex, nofollow" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <link href="https://fonts.googleapis.com/css?family=Material+Icons" rel="stylesheet" type="text/css">
-  <link href="https://cdn.jsdelivr.net/npm/quasar@2.12/dist/quasar.prod.css" rel="stylesheet" type="text/css">
+  <link href="https://cdn.jsdelivr.net/npm/quasar@2.14/dist/quasar.prod.css" rel="stylesheet" type="text/css">
 
   <style>
     .sticky-header-table {
@@ -64,20 +64,21 @@
       horizontal
       style="height: calc(100vh - 75px);">
       <template v-slot:before>
-        <form
-          @keydown.ctrl.enter.prevent="runQuery"
+        <q-form
           @submit.prevent="runQuery"
+          method="post"
           class="full-height">
           <div>
-            <q-btn type="submit" label="Run" size="sm" color="primary" class="q-ma-xs" icon="send" />
+            <q-btn type="submit" label="Run" size="sm" color="primary" class="q-ma-xs" icon="send"></q-btn>
           </div>
           <textarea
             v-model="query"
+            @keydown.ctrl.enter.prevent="runQuery"
             class="full-width query-editor"
             spellcheck="false"
             autofocus>
           </textarea>
-        </form>
+        </q-form>
       </template>
       <template v-slot:after>
         <q-table
@@ -117,6 +118,10 @@
         <div class="col-10" v-html="os"></div>
       </div>
       <div class="row">
+        <div class="col-2 text-bold">Platform</div>
+        <div class="col-10" v-html="platform"></div>
+      </div>
+      <div class="row">
         <div class="col-2 text-bold">Installed plugins</div>
         <div class="col-10">
           <ul>
@@ -131,9 +136,9 @@
   </template>
 
   <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/quasar@2.12/dist/quasar.umd.prod.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/axios@1.5/dist/axios.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/vue-router@4.2/dist/vue-router.global.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/quasar@2.14/dist/quasar.umd.prod.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios@1.6/dist/axios.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vue-router@4/dist/vue-router.global.min.js"></script>
 
   <script>
     /*
@@ -151,7 +156,7 @@
         }
       },
       methods: {
-        runQuery: function() {
+        runQuery: function(evt) {
           const self = this;
           axios({
             method: 'post',
@@ -204,7 +209,8 @@
         return {
           version: '',
           os: '',
-          installedPlugins: ''
+          installedPlugins: '',
+          platform: ''
         }
       },
       mounted: function() {
@@ -216,6 +222,7 @@
           self.version = response.data.version;
           self.os = response.data.os;
           self.installedPlugins = response.data.installedPlugins;
+          self.platform = response.data.platform;
         });
       }
     }

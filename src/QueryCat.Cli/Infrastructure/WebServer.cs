@@ -154,6 +154,7 @@ internal sealed class WebServer
         }
 
         var query = GetQueryFromRequest(request);
+        _logger.Value.LogInformation($"[{request.RemoteEndPoint.Address}] Run query: {query}");
         var lastResult = _executionThread.Run(query);
 
         var iterator = lastResult.GetInternalType() == DataType.Object
@@ -372,16 +373,13 @@ internal sealed class WebServer
 
         // Format: "{Namespace}.{Folder}.{filename}.{Extension}"
         using Stream? stream = assembly.GetManifestResourceStream(uri);
-        if (stream != null)
-        {
-            stream.CopyTo(outputStream);
-        }
+        stream?.CopyTo(outputStream);
     }
 
     private void HandleInfoApiAction(HttpListenerRequest request, HttpListenerResponse response)
     {
         var localPlugins = AsyncUtils.RunSync(async ()
-            => await _executionThread.PluginsManager.ListAsync(localOnly: true))!;
+            => await _executionThread.PluginsManager.ListAsync(localOnly: true))!.ToList();
         var dict = new WebServerReply
         {
             ["installedPlugins"] = localPlugins,
