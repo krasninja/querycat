@@ -23,7 +23,6 @@ csharp_new_line_before_open_brace = all
 csharp_new_line_before_else = true
 csharp_new_line_before_catch = true
 csharp_new_line_before_finally = true
-csharp_new_line_before_members_in_object_initializers = true
 csharp_new_line_before_members_in_anonymous_types = true
 csharp_new_line_between_query_expression_clauses = true
 
@@ -58,6 +57,13 @@ dotnet_naming_rule.constant_fields_should_be_pascal_case.style = pascal_case_sty
 dotnet_naming_symbols.constant_fields.applicable_kinds = field
 dotnet_naming_symbols.constant_fields.required_modifiers = const
 dotnet_naming_style.pascal_case_style.capitalization = pascal_case
+dotnet_naming_rule.private_members_with_underscore.symbols  = private_fields
+dotnet_naming_rule.private_members_with_underscore.style = prefix_underscore
+dotnet_naming_rule.private_members_with_underscore.severity = suggestion
+dotnet_naming_symbols.private_fields.applicable_kinds = field
+dotnet_naming_symbols.private_fields.applicable_accessibilities = private
+dotnet_naming_style.prefix_underscore.capitalization = camel_case
+dotnet_naming_style.prefix_underscore.required_prefix = _
 
 # Code style defaults
 csharp_using_directive_placement = outside_namespace:suggestion
@@ -165,7 +171,6 @@ end_of_line = crlf
 
 # Code files
 [*.{cs,vb}]
-
 dotnet_diagnostic.CA1001.severity = warning
 dotnet_diagnostic.CA1009.severity = warning
 dotnet_diagnostic.CA1016.severity = warning
@@ -268,7 +273,9 @@ dotnet_diagnostic.SA1028.severity = warning
 dotnet_diagnostic.SA1100.severity = none
 dotnet_diagnostic.SA1101.severity = none
 dotnet_diagnostic.SA1107.severity = warning
+dotnet_diagnostic.SA1110.severity = none
 dotnet_diagnostic.SA1111.severity = none
+dotnet_diagnostic.SA1112.severity = none
 dotnet_diagnostic.SA1116.severity = none
 dotnet_diagnostic.SA1117.severity = none
 dotnet_diagnostic.SA1118.severity = none
@@ -362,3 +369,6 @@ dotnet_diagnostic.SA1651.severity = none
 dotnet_diagnostic.SA1652.severity = none
 dotnet_diagnostic.SX1309.severity = warning
 dotnet_diagnostic.SX1309S.severity = none
+
+resharper_bad_parens_line_breaks_highlighting = none
+resharper_bad_list_line_breaks_highlighting = none
