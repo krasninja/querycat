@@ -19,9 +19,9 @@ General development notes.
 
 We use MkDocs for static documentation generation and Read the Docs as hosting platform. To run the documentation site locally follow the steps below:
 
-1. Make sure the [pyenv](https://github.com/pyenv/pyenv) is installed.
-2. Install Python 3.11 `pyenv install 3.12`.
-3. Create virtual environment `pyenv virtualenv qcat`.
+1. Make sure the [pyenv](https://github.com/pyenv/pyenv) and [pyenv-virtualenv](https://github.com/pyenv/pyenv-virtualenv) are installed.
+2. Install Python 3.12 `pyenv install 3.12`.
+3. Create virtual environment `pyenv virtualenv 3.12 qcat`.
 4. Activate it `pyenv activate qcat`.
 5. Being in the project root directory Install the required packages `pip install -r ./docs/requirements.txt`.
 6. Start simple local web server `mkdocs serve`. The documentation will be available on http://127.0.0.1:8000/ address.

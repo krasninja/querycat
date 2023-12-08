@@ -4,12 +4,12 @@ QueryCat allows to develop custom input formats and functions. Right now, only .
 
 Read the following sections for better internals understanding:
 
-1. [Components](components). General information about main classes and abstractions.
-2. [Functions](functions). The basics about QueryCat functions.
-3. [.NET Assembly Connection](connector-assembly). Implement your plugin as .NET assembly.
-4. [Thrift Connector](connector-thrift). Implement your plugin as standalone application.
-5. [Simple Plugin](plugin-simple). How to create simple plugin.
-6. [Advanced Plugin](plugin-advanced). Other ways to define plugin.
+1. [Components](components.md). General information about main classes and abstractions.
+2. [Functions](functions.md). The basics about QueryCat functions.
+3. [.NET Assembly Connection](connector-assembly.md). Implement your plugin as .NET assembly.
+4. [Thrift Connector](connector-thrift.md). Implement your plugin as standalone application.
+5. [Simple Plugin](plugin-simple.md). How to create simple plugin.
+6. [Advanced Plugin](plugin-advanced.md). Other ways to define plugin.
 
 ## Plugin Search
 
