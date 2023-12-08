@@ -278,4 +278,9 @@ service Plugin {
     2: required i32 offset,
     3: required i32 count
   ) throws (1: QueryCatPluginException e),
+
+  // Get total binary length.
+  i64 Blob_GetLength(
+    1: required Handle object_handle
+  ) throws (1: QueryCatPluginException e)
 }

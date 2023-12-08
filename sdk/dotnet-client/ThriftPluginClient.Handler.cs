@@ -299,6 +299,18 @@ public partial class ThriftPluginClient
             }
             throw new QueryCatPluginException(ErrorType.INVALID_OBJECT, "Object is not a BLOB.");
         }
+
+        /// <inheritdoc />
+        public Task<long> Blob_GetLengthAsync(int object_handle, CancellationToken cancellationToken = default)
+        {
+            if (_thriftPluginClient._objectsStorage.TryGet<IBlobData>(object_handle, out var blobData)
+                && blobData != null)
+            {
+                var length = blobData.Length;
+                return Task.FromResult(length);
+            }
+            throw new QueryCatPluginException(ErrorType.INVALID_OBJECT, "Object is not a BLOB.");
+        }
     }
 
     private sealed class HandlerWithExceptionIntercept : Plugin.IAsync
@@ -538,6 +550,22 @@ public partial class ThriftPluginClient
             try
             {
                 return _handler.Blob_ReadAsync(object_handle, offset, count, cancellationToken);
+            }
+            catch (QueryCatException ex)
+            {
+                throw new QueryCatPluginException(ErrorType.GENERIC, ex.Message)
+                {
+                    ObjectHandle = object_handle,
+                };
+            }
+        }
+
+        /// <inheritdoc />
+        public Task<long> Blob_GetLengthAsync(int object_handle, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return _handler.Blob_GetLengthAsync(object_handle, cancellationToken);
             }
             catch (QueryCatException ex)
             {
