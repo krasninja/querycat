@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Thrift;
 using Thrift.Processor;
 using Thrift.Protocol;
@@ -26,20 +27,29 @@ public partial class ThriftPluginClient : IDisposable
     public const string PluginsManagerServiceName = "plugins-manager";
     public const string PluginServerName = "plugin";
 
+    public const string PluginServerPipeParameter = "server-pipe-name";
+    public const string PluginTokenParameter = "token";
+    public const string PluginParentPidParameter = "parent-pid";
+    public const string PluginDebugServerParameter = "debug-server";
+    public const string PluginDebugServerArgumentsParameter = "debug-server-args";
+
+    public const string PluginMainFunctionName = "QueryCatPlugin_Main";
+
     private readonly PluginExecutionThread _executionThread;
     private readonly PluginFunctionsManager _functionsManager;
     private readonly ObjectsStorage _objectsStorage = new();
-    private string _debugServerPath = string.Empty;
-    private string _debugServerPathArgs = string.Empty;
-    private int _parentPid;
+    private readonly string _debugServerPath = string.Empty;
+    private readonly string _debugServerPathArgs = string.Empty;
+    private readonly int _parentPid;
     private Process? _qcatProcess;
+    private readonly SemaphoreSlim _exitSemaphore = new SemaphoreSlim(0, 1);
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(ThriftPluginClient));
 
     // Connection to plugin manager.
-    private Func<TTransport> _transportFactory;
-    private string _pluginServerUri = string.Empty;
-    private string _authToken = string.Empty;
-    private string _clientServerNamedPipe = $"qcat-{Guid.NewGuid():N}";
+    private readonly Func<TTransport> _transportFactory;
+    private readonly string _pluginServerUri = string.Empty;
+    private readonly string _authToken;
+    private readonly string _clientServerNamedPipe = $"qcat-{Guid.NewGuid():N}";
     private readonly TProtocol _protocol;
     private readonly PluginsManager.Client _client;
 
@@ -48,46 +58,56 @@ public partial class ThriftPluginClient : IDisposable
     private Task? _clientServerListenThread;
     private readonly CancellationTokenSource _clientServerCts = new();
 
+    /// <summary>
+    /// Functions manager.
+    /// </summary>
     public IFunctionsManager FunctionsManager => _functionsManager;
 
-    public ThriftPluginClient(string[] args)
+    /// <summary>
+    /// Do not use application logger for Thrift internal logs.
+    /// </summary>
+    internal bool IgnoreThriftLogs { get; set; }
+
+    public ThriftPluginClient(ThriftPluginClientArguments args)
     {
-        if (args.Length == 0)
+#if !DEBUG
+        IgnoreThriftLogs = true;
+#endif
+
+        // Server pipe.
+        var serverPipe = args.ServerPipe;
+        if (!string.IsNullOrEmpty(args.DebugServerPath))
         {
-            throw new InvalidOperationException("The application is intended to be executed by QueryCat host application.");
+            serverPipe = "net.pipe://localhost/qcat-test";
+        }
+        if (!string.IsNullOrEmpty(serverPipe))
+        {
+            var serverPipeUri = new Uri(serverPipe);
+            _pluginServerUri = args.ServerPipe;
+            _transportFactory = () => new TNamedPipeTransport(serverPipeUri.Segments[1], new TConfiguration());
         }
 
-        foreach (var arg in args)
+        // Auth token.
+        if (string.IsNullOrEmpty(args.DebugServerPath))
         {
-            var separatorIndex = arg.IndexOf('=', StringComparison.Ordinal);
-            if (separatorIndex == -1)
-            {
-                throw new InvalidOperationException($"Invalid argument '{arg}'.");
-            }
-            var name = arg.Substring(2, separatorIndex - 2);
-            var value = arg.Substring(separatorIndex + 1);
-            switch (name)
-            {
-                case "server-pipe-name":
-                    ParseServerPipe(value);
-                    break;
-                case "token":
-                    ParseAuthToken(value);
-                    break;
-                case "parent-pid":
-                    ParseParentPid(value);
-                    break;
-                case "debug-server":
-                    ParseDebugServer(value);
-                    break;
-                case "debug-server-args":
-                    ParseDebugServerArgs(value);
-                    break;
-                default:
-                    continue;
-            }
+            _authToken = args.Token;
+        }
+        else
+        {
+            _authToken = "test";
         }
 
+        // Parent PID.
+        _parentPid = args.ParentPid;
+
+        // Debug server.
+        if (!string.IsNullOrEmpty(args.DebugServerPath))
+        {
+            _debugServerPath = args.DebugServerPath;
+            _debugServerPathArgs = args.DebugServerPathArgs;
+        }
+
+        // Bootstrap.
         if (_transportFactory == null)
         {
             throw new InvalidOperationException("Transport is not initialized.");
@@ -100,6 +120,52 @@ public partial class ThriftPluginClient : IDisposable
 
         _executionThread = new PluginExecutionThread(_client);
         _functionsManager = new PluginFunctionsManager();
+    }
+
+    public ThriftPluginClient(string[] args) : this(ConvertCommandLineArguments(args))
+    {
+    }
+
+    private static ThriftPluginClientArguments ConvertCommandLineArguments(string[] args)
+    {
+        if (args.Length == 0)
+        {
+            throw new InvalidOperationException("The application is intended to be executed by QueryCat host application.");
+        }
+
+        var appArgs = new ThriftPluginClientArguments();
+        foreach (var arg in args)
+        {
+            var separatorIndex = arg.IndexOf('=', StringComparison.Ordinal);
+            if (separatorIndex == -1)
+            {
+                throw new InvalidOperationException($"Invalid argument '{arg}'.");
+            }
+            var name = arg.Substring(2, separatorIndex - 2);
+            var value = arg.Substring(separatorIndex + 1);
+            switch (name)
+            {
+                case PluginServerPipeParameter:
+                    appArgs.ServerPipe = value;
+                    break;
+                case PluginTokenParameter:
+                    appArgs.Token = value;
+                    break;
+                case PluginParentPidParameter:
+                    appArgs.ParentPid = int.Parse(value);
+                    break;
+                case PluginDebugServerParameter:
+                    appArgs.DebugServerPath = value;
+                    break;
+                case PluginDebugServerArgumentsParameter:
+                    appArgs.DebugServerPathArgs = value;
+                    break;
+                default:
+                    continue;
+            }
+        }
+
+        return appArgs;
     }
 
     public static void SetupApplicationLogging()
@@ -124,39 +190,6 @@ public partial class ThriftPluginClient : IDisposable
             Console.Error.WriteLine(exception.Message);
         }
         Environment.Exit(1);
-    }
-
-    private void ParseServerPipe(string value)
-    {
-        var uri = new Uri(value);
-        _pluginServerUri = value;
-
-        _transportFactory = () =>
-        {
-            return new TNamedPipeTransport(uri.Segments[1], new TConfiguration());
-        };
-    }
-
-    private void ParseAuthToken(string value)
-    {
-        _authToken = value;
-    }
-
-    private void ParseParentPid(string value)
-    {
-        _parentPid = int.Parse(value);
-    }
-
-    private void ParseDebugServer(string value)
-    {
-        _debugServerPath = value;
-        _authToken = "test";
-        ParseServerPipe("net.pipe://localhost/qcat-test");
-    }
-
-    private void ParseDebugServerArgs(string value)
-    {
-        _debugServerPathArgs = value;
     }
 
     /// <summary>
@@ -221,7 +254,9 @@ public partial class ThriftPluginClient : IDisposable
             binaryProtocolFactory,
             binaryProtocolFactory,
             default,
-            Application.LoggerFactory.CreateLogger(nameof(ThriftPluginClient)));
+            IgnoreThriftLogs
+                ? NullLoggerFactory.Instance.CreateLogger(nameof(TSimpleAsyncServer))
+                : Application.LoggerFactory.CreateLogger(nameof(TSimpleAsyncServer)));
 
         _clientServer.Start();
         _clientServerListenThread = Task.Factory.StartNew(
@@ -244,9 +279,11 @@ public partial class ThriftPluginClient : IDisposable
 
         // Server.
         _clientServerCts.Dispose();
-        _clientServer?.Stop();
+        _clientServer.Stop();
 
         _clientServer = null;
+        _exitSemaphore.Release();
+        _exitSemaphore.Dispose();
     }
 
     private void StartQueryCatDebugServer()
@@ -289,10 +326,10 @@ public partial class ThriftPluginClient : IDisposable
     }
 
     /// <summary>
-    /// Wait for parent QCat process exit.
+    /// Wait for server (parent QCat process or thread) exit.
     /// </summary>
     /// <param name="cancellationToken">Cancellation token.</param>
-    public async Task WaitForParentProcessExitAsync(CancellationToken cancellationToken = default)
+    public async Task WaitForServerExitAsync(CancellationToken cancellationToken = default)
     {
         if (_qcatProcess != null)
         {
@@ -303,6 +340,12 @@ public partial class ThriftPluginClient : IDisposable
             var process = Process.GetProcessById(_parentPid);
             await process.WaitForExitAsync(cancellationToken);
         }
+        await _exitSemaphore.WaitAsync(cancellationToken);
+    }
+
+    public void SignalExit()
+    {
+        _exitSemaphore.Release();
     }
 
     protected virtual void Dispose(bool disposing)

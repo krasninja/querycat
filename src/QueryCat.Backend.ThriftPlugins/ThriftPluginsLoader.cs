@@ -119,32 +119,53 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
     /// <inheritdoc />
     public override bool IsCorrectPluginFile(string pluginFile)
     {
+        var extension = Path.GetExtension(pluginFile);
+
+        // File name must contain "plugin" word.
         if (!File.Exists(pluginFile)
             || !Path.GetFileName(pluginFile).Contains("plugin", StringComparison.OrdinalIgnoreCase))
         {
             return false;
         }
 
+        // Skip debug files.
         if (pluginFile.EndsWith(".dbg"))
         {
             return false;
         }
 
+        // UNIX library.
+        if ((RuntimeInformation.IsOSPlatform(OSPlatform.OSX)
+            || RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
+            || RuntimeInformation.IsOSPlatform(OSPlatform.FreeBSD)) && extension.Equals(".so", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        // Windows library.
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            && extension.Equals(".dll", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        // UNIX executable.
         if ((RuntimeInformation.IsOSPlatform(OSPlatform.OSX)
             || RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
             || RuntimeInformation.IsOSPlatform(OSPlatform.FreeBSD))
-            && (File.GetUnixFileMode(pluginFile) & UnixFileMode.UserExecute) == 0)
+            && File.GetUnixFileMode(pluginFile).HasFlag(UnixFileMode.UserExecute))
         {
-            return false;
+            return true;
         }
 
+        // Windows executable.
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
-            && !Path.GetExtension(pluginFile).Equals(".exe", StringComparison.OrdinalIgnoreCase))
+            && extension.Equals(".exe", StringComparison.OrdinalIgnoreCase))
         {
-            return false;
+            return true;
         }
 
-        return true;
+        return false;
     }
 
     private static bool IsMatchPlatform(string pluginFile)
@@ -204,31 +225,45 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         LoadPlugin(file, cancellationToken);
     }
 
+    private ThriftPluginsServer.PluginContext GetContext(string file)
+    {
+        var pluginContext = GetContextByFile(file);
+        if (pluginContext == null)
+        {
+            throw new InvalidOperationException($"Cannot get plugin context for file '{file}'.");
+        }
+        return pluginContext;
+    }
+
     private ThriftPluginsServer.PluginContext LoadPlugin(string file, CancellationToken cancellationToken = default)
     {
-        ThriftPluginsServer.PluginContext GetContext()
-        {
-            var pluginContext = GetContextByFile(file);
-            if (pluginContext == null)
-            {
-                throw new InvalidOperationException($"Cannot get plugin context for file '{file}'.");
-            }
-            return pluginContext;
-        }
-
         var pluginName = GetPluginName(file);
         if (_loadedPlugins.Contains(pluginName))
         {
-            return GetContext();
+            return GetContext(file);
         }
 
         // Start host server.
         _server.Start();
 
         // Create auth token and save it into temp memory.
-        var authToken = !string.IsNullOrEmpty(ForceAuthToken) ? ForceAuthToken : Guid.NewGuid().ToString("N");
-        _server.RegisterAuthToken(authToken);
-        _fileTokenMap.Add(file, authToken);
+        var authToken = CreateAuthTokenAndSave(file);
+
+        var extension = Path.GetExtension(file);
+        if (extension.Equals(".so", StringComparison.OrdinalIgnoreCase) ||
+            extension.Equals(".dll", StringComparison.OrdinalIgnoreCase))
+        {
+            return LoadPluginLibrary(file, authToken, cancellationToken);
+        }
+        return LoadPluginExecutable(file, authToken, cancellationToken);
+    }
+
+    private ThriftPluginsServer.PluginContext LoadPluginExecutable(
+        string file,
+        string authToken,
+        CancellationToken cancellationToken = default)
+    {
+        string FormatParameter(string key, string value) => $"--{key}={value}";
 
         // Start plugin process.
         Process? process = null;
@@ -247,9 +282,10 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
                     FileName = file,
                 }
             };
-            process.StartInfo.ArgumentList.Add($"--server-pipe-name=net.pipe://localhost/{_server.ServerPipeName}");
-            process.StartInfo.ArgumentList.Add($"--token={authToken}");
-            process.StartInfo.ArgumentList.Add($"--parent-pid={Process.GetCurrentProcess().Id}");
+            process.StartInfo.ArgumentList.Add(FormatParameter(ThriftPluginClient.PluginServerPipeParameter, GetPipeName()));
+            process.StartInfo.ArgumentList.Add(FormatParameter(ThriftPluginClient.PluginTokenParameter, authToken));
+            process.StartInfo.ArgumentList.Add(FormatParameter(ThriftPluginClient.PluginParentPidParameter,
+                Process.GetCurrentProcess().Id.ToString()));
             process.OutputDataReceived += (_, args) => _logger.LogTrace($"[{fileName}]: {args.Data}");
             process.ErrorDataReceived += (_, args) => _logger.LogError($"[{fileName}]: {args.Data}");
             process.Start();
@@ -269,10 +305,69 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         }
 
         // Plugin has been loaded.
+        var pluginName = GetPluginName(file);
         _loadedPlugins.Add(pluginName);
 
-        return GetContext();
+        return GetContext(file);
     }
+
+    private ThriftPluginsServer.PluginContext LoadPluginLibrary(
+        string file,
+        string authToken,
+        CancellationToken cancellationToken = default)
+    {
+        var pluginName = GetPluginName(file);
+
+        // Load library.
+        var handle = NativeLibrary.Load(file);
+        if (!NativeLibrary.TryGetExport(handle, ThriftPluginClient.PluginMainFunctionName, out var mainAddress))
+        {
+            throw new PluginException("Cannot get address of the plugin main function.");
+        }
+
+        // Call DLL plugin method.
+        var mainFunction = Marshal.GetDelegateForFunctionPointer<QueryCatPluginMainDelegate>(mainAddress);
+        var args = new QueryCatPluginArguments
+        {
+            ServerPipeName = Marshal.StringToHGlobalAuto(GetPipeName()),
+            Token = Marshal.StringToHGlobalAuto(authToken),
+        };
+        var pluginThread = new Thread(() =>
+        {
+            mainFunction.Invoke(args);
+        })
+        {
+            Name = pluginName,
+            IsBackground = true,
+        };
+        pluginThread.Start();
+
+        // Wait when plugin is loaded and it calls RegisterPlugin method.
+        try
+        {
+            _server.WaitForPluginRegistration(authToken, cancellationToken);
+        }
+        catch (Exception)
+        {
+            NativeLibrary.Free(handle);
+            throw;
+        }
+
+        // Plugin has been loaded.
+        _loadedPlugins.Add(pluginName);
+
+        return GetContext(file);
+    }
+
+    private string CreateAuthTokenAndSave(string pluginFile)
+    {
+        var authToken = !string.IsNullOrEmpty(ForceAuthToken) ? ForceAuthToken : Guid.NewGuid().ToString("N");
+        _server.RegisterAuthToken(authToken);
+        _fileTokenMap.Add(pluginFile, authToken);
+        return authToken;
+    }
+
+    private string GetPipeName() => $"net.pipe://localhost/{_server.ServerPipeName}";
 
     private void RegisterFunctions(IFunctionsManager functionsManager, string file,
         IEnumerable<PluginContextFunction> functions)
@@ -293,12 +388,10 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
 
     private ThriftPluginsServer.PluginContext? GetContextByFile(string file)
     {
-        if (_fileTokenMap.TryGetValue(file, out var token))
+        if (_fileTokenMap.TryGetValue(file, out var token) &&
+            _tokenContextMap.TryGetValue(token, out var context))
         {
-            if (_tokenContextMap.TryGetValue(token, out var context))
-            {
-                return context;
-            }
+            return context;
         }
 
         return null;

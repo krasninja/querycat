@@ -85,6 +85,7 @@ public partial class ThriftPluginClient
         public Task ShutdownAsync(CancellationToken cancellationToken = default)
         {
             _thriftPluginClient._objectsStorage.Clean();
+            _thriftPluginClient.SignalExit();
             return Task.CompletedTask;
         }
 

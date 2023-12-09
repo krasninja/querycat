@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Initial Grok patterns support.
 - Log web server queries, update dependencies.
 - Add new table output style "Table2".
+- Support library plugins.
 
 ## [0.4.14] - 2023-11-15
 
