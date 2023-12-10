@@ -54,17 +54,21 @@ public partial class ThriftPluginsServer
                 plugin_data.Version,
                 auth_token,
                 callback_uri);
-            SemaphoreSlim? semaphoreSlim = null;
-            if (!_thriftPluginsServer.SkipTokenVerification &&
-                (string.IsNullOrEmpty(auth_token)
-                    || !_thriftPluginsServer._authTokens.TryGetValue(auth_token, out semaphoreSlim)))
+            if (!_thriftPluginsServer.SkipTokenVerification && !_thriftPluginsServer.VerifyAuthToken(auth_token))
             {
                 throw new QueryCatPluginException(ErrorType.INVALID_AUTH_TOKEN, "Invalid token.");
             }
 
-            // Create plugin context, init and add it to a list.
+            // Create plugin context, init and add it to a list.GetFileByContext
             var context = await CreateClientConnection(callback_uri, cancellationToken);
-            context.Name = plugin_data.Name;
+            if (!string.IsNullOrEmpty(plugin_data.Name))
+            {
+                context.Name = plugin_data.Name;
+            }
+            if (string.IsNullOrEmpty(context.Name))
+            {
+                context.Name = _thriftPluginsServer.GetPluginNameByAuthToken(auth_token);
+            }
             if (plugin_data.Functions != null)
             {
                 foreach (var function in plugin_data.Functions)
@@ -76,8 +80,8 @@ public partial class ThriftPluginsServer
             _thriftPluginsServer.RegisterPluginContext(context, auth_token);
 
             // Since we registered plugin we can release semaphore and notify loader.
-            semaphoreSlim?.Release();
-            _thriftPluginsServer._logger.LogDebug("Registered plugin '{PluginName}'.", plugin_data.Name);
+            _thriftPluginsServer.ConfirmAuthToken(auth_token);
+            _thriftPluginsServer._logger.LogDebug("Registered plugin '{PluginName}'.", context.Name);
 
             return CreateEmptyRegistrationResult();
         }
@@ -97,7 +101,7 @@ public partial class ThriftPluginsServer
                         new TFramedTransport(
                             new TNamedPipeTransport(uri.Segments[1], new TConfiguration()))
                         ),
-                    ThriftPluginClient.PluginServerName)
+                    ThriftPluginClient.PluginServerName),
             };
             context.Client = new Plugins.Sdk.Plugin.Client(context.Protocol);
             await context.Client.OpenTransportAsync(cancellationToken);

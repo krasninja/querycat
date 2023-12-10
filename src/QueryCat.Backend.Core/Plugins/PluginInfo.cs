@@ -10,7 +10,7 @@ namespace QueryCat.Backend.Core.Plugins;
 /// </summary>
 public class PluginInfo
 {
-    private static readonly Regex KeyRegex = new(@"^(?<name>[a-zA-Z\.]+)\.(?<version>\d+\.\d+\.\d+)\.(dll|nupkg)$",
+    private static readonly Regex KeyRegex = new(@"^(?<name>[a-zA-Z\.]+)\.(?<version>\d+\.\d+\.\d+)\.(so|dll|nupkg)$",
         RegexOptions.Compiled);
 
     private static readonly Regex NewKeyRegex = new(@"^(?<name>.+)-(?<version>\d+\.\d+\.\d+)-(?<platform>[a-z0-9]+)-(?<arch>[a-z0-9]+)(\.exe)?$",
@@ -78,7 +78,7 @@ public class PluginInfo
                 Uri = uri,
             };
         }
-        return new PluginInfo(Path.GetFileName(name))
+        return new PluginInfo(Path.GetFileNameWithoutExtension(name))
         {
             Version = new Version(0, 0),
             Architecture = Application.ArchitectureUnknown,

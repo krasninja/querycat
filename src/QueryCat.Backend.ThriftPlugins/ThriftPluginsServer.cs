@@ -22,6 +22,10 @@ public sealed partial class ThriftPluginsServer : IDisposable
         NamedPipes,
     }
 
+    private readonly record struct AuthTokenData(
+        SemaphoreSlim Semaphore,
+        string PluginName);
+
     private const int PluginRegistrationTimeoutSeconds = 10;
 
     private readonly IInputConfigStorage _inputConfigStorage;
@@ -29,7 +33,7 @@ public sealed partial class ThriftPluginsServer : IDisposable
     private readonly TServer _server;
     private Task? _serverListenThread;
     private readonly CancellationTokenSource _serverCts = new();
-    private readonly ConcurrentDictionary<string, SemaphoreSlim> _authTokens = new();
+    private readonly ConcurrentDictionary<string, AuthTokenData> _authTokens = new();
     private readonly List<PluginContext> _plugins = new();
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(ThriftPluginsServer));
 
@@ -156,25 +160,44 @@ public sealed partial class ThriftPluginsServer : IDisposable
         OnPluginRegistration?.Invoke(this, new PluginRegistrationEventArgs(context, authToken));
     }
 
-    public void RegisterAuthToken(string token)
+    public void RegisterAuthToken(string token, string pluginName)
     {
-        _authTokens[token] = new SemaphoreSlim(0, 1);
+        _authTokens[token] = new AuthTokenData(new SemaphoreSlim(0, 1), pluginName);
+    }
+
+    public bool VerifyAuthToken(string token) => _authTokens.ContainsKey(token);
+
+    public string GetPluginNameByAuthToken(string token)
+    {
+        if (_authTokens.TryGetValue(token, out var data))
+        {
+            return data.PluginName;
+        }
+        return string.Empty;
+    }
+
+    public void ConfirmAuthToken(string token)
+    {
+        if (_authTokens.TryGetValue(token, out var data))
+        {
+            data.Semaphore.Release();
+        }
     }
 
     public void WaitForPluginRegistration(string authToken, CancellationToken cancellationToken = default)
     {
-        if (!_authTokens.TryGetValue(authToken, out var semaphoreSlim))
+        if (!_authTokens.TryGetValue(authToken, out var authTokenData))
         {
             throw new InvalidOperationException(
                 $"Token '{authToken}' is not registered, did you call {nameof(RegisterAuthToken)}?");
         }
         _logger.LogTrace("Waiting for token activation '{Token}'.", authToken);
-        if (!semaphoreSlim.Wait(TimeSpan.FromSeconds(PluginRegistrationTimeoutSeconds), cancellationToken))
+        if (!authTokenData.Semaphore.Wait(TimeSpan.FromSeconds(PluginRegistrationTimeoutSeconds), cancellationToken))
         {
             throw new PluginException($"Plugin '{authToken}' registration timeout.");
         }
         _authTokens.Remove(authToken, out _);
-        semaphoreSlim.Dispose();
+        authTokenData.Semaphore.Dispose();
     }
 
     /// <inheritdoc />

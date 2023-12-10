@@ -107,7 +107,7 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
 
             foreach (var pluginFile in Directory.EnumerateFiles(pluginDirectory).ToList())
             {
-                if (IsCorrectPluginFile(pluginFile) && IsMatchPlatform(pluginFile))
+                if (IsMatchPlatform(pluginFile) && IsCorrectPluginFile(pluginFile))
                 {
                     LoadPluginSafe(pluginFile, cancellationToken);
                 }
@@ -248,7 +248,7 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         _server.Start();
 
         // Create auth token and save it into temp memory.
-        var authToken = CreateAuthTokenAndSave(file);
+        var authToken = CreateAuthTokenAndSave(file, pluginName);
 
         var extension = Path.GetExtension(file);
         if (extension.Equals(".so", StringComparison.OrdinalIgnoreCase) ||
@@ -360,10 +360,10 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         return GetContext(file);
     }
 
-    private string CreateAuthTokenAndSave(string pluginFile)
+    private string CreateAuthTokenAndSave(string pluginFile, string pluginName)
     {
         var authToken = !string.IsNullOrEmpty(ForceAuthToken) ? ForceAuthToken : Guid.NewGuid().ToString("N");
-        _server.RegisterAuthToken(authToken);
+        _server.RegisterAuthToken(authToken, pluginName);
         _fileTokenMap.Add(pluginFile, authToken);
         return authToken;
     }
