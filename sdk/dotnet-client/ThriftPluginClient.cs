@@ -27,13 +27,15 @@ public partial class ThriftPluginClient : IDisposable
     public const string PluginsManagerServiceName = "plugins-manager";
     public const string PluginServerName = "plugin";
 
-    public const string PluginServerPipeParameter = "server-pipe-name";
+    public const string PluginServerPipeParameter = "server-endpoint";
     public const string PluginTokenParameter = "token";
     public const string PluginParentPidParameter = "parent-pid";
     public const string PluginDebugServerParameter = "debug-server";
     public const string PluginDebugServerArgumentsParameter = "debug-server-args";
 
     public const string PluginMainFunctionName = "QueryCatPlugin_Main";
+
+    public const string PluginTransportNamedPipes = "net.pipe";
 
     private readonly PluginExecutionThread _executionThread;
     private readonly PluginFunctionsManager _functionsManager;
@@ -42,7 +44,7 @@ public partial class ThriftPluginClient : IDisposable
     private readonly string _debugServerPathArgs = string.Empty;
     private readonly int _parentPid;
     private Process? _qcatProcess;
-    private readonly SemaphoreSlim _exitSemaphore = new SemaphoreSlim(0, 1);
+    private readonly SemaphoreSlim _exitSemaphore = new(0, 1);
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(ThriftPluginClient));
 
     // Connection to plugin manager.
@@ -75,16 +77,15 @@ public partial class ThriftPluginClient : IDisposable
 #endif
 
         // Server pipe.
-        var serverPipe = args.ServerPipe;
+        var serverEndpoint = args.ServerEndpoint;
         if (!string.IsNullOrEmpty(args.DebugServerPath))
         {
-            serverPipe = "net.pipe://localhost/qcat-test";
+            serverEndpoint = $"{PluginTransportNamedPipes}://localhost/qcat-test";
         }
-        if (!string.IsNullOrEmpty(serverPipe))
+        if (!string.IsNullOrEmpty(serverEndpoint))
         {
-            var serverPipeUri = new Uri(serverPipe);
-            _pluginServerUri = args.ServerPipe;
-            _transportFactory = () => new TNamedPipeTransport(serverPipeUri.Segments[1], new TConfiguration());
+            _pluginServerUri = args.ServerEndpoint;
+            _transportFactory = () => CreateTransport(serverEndpoint);
         }
 
         // Auth token.
@@ -126,6 +127,18 @@ public partial class ThriftPluginClient : IDisposable
     {
     }
 
+    private static TTransport CreateTransport(string endpoint)
+    {
+        var serverPipeUri = new Uri(endpoint);
+        switch (serverPipeUri.Scheme.ToLower())
+        {
+            case PluginTransportNamedPipes:
+                return new TNamedPipeTransport(serverPipeUri.Segments[1], new TConfiguration());
+                break;
+        }
+        throw new ArgumentOutOfRangeException(nameof(endpoint));
+    }
+
     private static ThriftPluginClientArguments ConvertCommandLineArguments(string[] args)
     {
         if (args.Length == 0)
@@ -146,7 +159,9 @@ public partial class ThriftPluginClient : IDisposable
             switch (name)
             {
                 case PluginServerPipeParameter:
-                    appArgs.ServerPipe = value;
+                // Legacy.
+                case "server-pipe-name":
+                    appArgs.ServerEndpoint = value;
                     break;
                 case PluginTokenParameter:
                     appArgs.Token = value;

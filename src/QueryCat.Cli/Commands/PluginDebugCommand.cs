@@ -37,7 +37,7 @@ internal class PluginDebugCommand : BaseQueryCommand
             var thread = new ExecutionThread(options, storage);
             options.PluginDirectories.AddRange(applicationOptions.PluginDirectories);
             options.DefaultRowsOutput = new Backend.Formatters.PagingOutput(tableOutput, cts: thread.CancellationTokenSource);
-            var pluginsLoader = new ThriftPluginsLoader(thread, applicationOptions.PluginDirectories, PipeName)
+            var pluginsLoader = new ThriftPluginsLoader(thread, applicationOptions.PluginDirectories, serverPipeName: PipeName)
             {
                 ForceAuthToken = AuthToken,
                 SkipPluginsExecution = true,

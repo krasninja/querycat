@@ -42,7 +42,7 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
     public string ForceAuthToken { get; set; } = string.Empty;
 
     /// <summary>
-    /// The used server pipe name.
+    /// The using server pipe name.
     /// </summary>
     public string ServerPipeName { get; } = "qcat-" + Guid.NewGuid().ToString("N");
 
@@ -53,6 +53,7 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
     public ThriftPluginsLoader(
         ExecutionThread thread,
         IEnumerable<string> pluginDirectories,
+        ThriftPluginsServer.TransportType transportType = ThriftPluginsServer.TransportType.NamedPipes,
         string? serverPipeName = null,
         string? functionsCacheDirectory = null) : base(pluginDirectories)
     {
@@ -61,7 +62,7 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         {
             ServerPipeName = serverPipeName;
         }
-        _server = new ThriftPluginsServer(thread, ServerPipeName);
+        _server = new ThriftPluginsServer(thread, transportType, ServerPipeName);
         _server.OnPluginRegistration += OnPluginRegistration;
         _functionsCacheDirectory = functionsCacheDirectory ?? string.Empty;
     }
@@ -329,7 +330,7 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         var mainFunction = Marshal.GetDelegateForFunctionPointer<QueryCatPluginMainDelegate>(mainAddress);
         var args = new QueryCatPluginArguments
         {
-            ServerPipeName = Marshal.StringToHGlobalAuto(GetPipeName()),
+            ServerEndpoint = Marshal.StringToHGlobalAuto(GetPipeName()),
             Token = Marshal.StringToHGlobalAuto(authToken),
         };
         var pluginThread = new Thread(() =>
@@ -367,7 +368,7 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         return authToken;
     }
 
-    private string GetPipeName() => $"net.pipe://localhost/{_server.ServerPipeName}";
+    private string GetPipeName() => $"{ThriftPluginClient.PluginTransportNamedPipes}://localhost/{_server.ServerEndpoint}";
 
     private void RegisterFunctions(IFunctionsManager functionsManager, string file,
         IEnumerable<PluginContextFunction> functions)

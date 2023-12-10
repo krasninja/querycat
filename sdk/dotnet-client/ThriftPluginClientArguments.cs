@@ -2,7 +2,7 @@ namespace QueryCat.Plugins.Client;
 
 public sealed class ThriftPluginClientArguments
 {
-    public string ServerPipe { get; set; } = string.Empty;
+    public string ServerEndpoint { get; set; } = string.Empty;
 
     public string Token { get; set; } = string.Empty;
 

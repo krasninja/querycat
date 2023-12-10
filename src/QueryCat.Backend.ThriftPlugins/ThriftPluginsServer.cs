@@ -17,6 +17,11 @@ namespace QueryCat.Backend.ThriftPlugins;
 
 public sealed partial class ThriftPluginsServer : IDisposable
 {
+    public enum TransportType
+    {
+        NamedPipes,
+    }
+
     private const int PluginRegistrationTimeoutSeconds = 10;
 
     private readonly IInputConfigStorage _inputConfigStorage;
@@ -28,7 +33,7 @@ public sealed partial class ThriftPluginsServer : IDisposable
     private readonly List<PluginContext> _plugins = new();
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(ThriftPluginsServer));
 
-    public string ServerPipeName { get; } = "qcat-" + Guid.NewGuid().ToString("N");
+    public string ServerEndpoint { get; } = "qcat-" + Guid.NewGuid().ToString("N");
 
     /// <summary>
     /// Do not verify token for debug purpose.
@@ -58,20 +63,22 @@ public sealed partial class ThriftPluginsServer : IDisposable
 
     internal event EventHandler<PluginRegistrationEventArgs>? OnPluginRegistration;
 
-    public ThriftPluginsServer(ExecutionThread executionThread, string? serverPipeName = null)
+    public ThriftPluginsServer(
+        ExecutionThread executionThread,
+        TransportType transportType = TransportType.NamedPipes,
+        string? serverEndpoint = null)
     {
 #if !DEBUG
         IgnoreThriftLogs = true;
 #endif
         _executionThread = executionThread;
         _inputConfigStorage = executionThread.ConfigStorage;
-        if (!string.IsNullOrEmpty(serverPipeName))
+        if (!string.IsNullOrEmpty(serverEndpoint))
         {
-            ServerPipeName = serverPipeName;
+            ServerEndpoint = serverEndpoint;
         }
 
-        var transport = new TNamedPipeServerTransport(ServerPipeName, new TConfiguration(),
-            NamedPipeServerFlags.OnlyLocalClients, 1);
+        var transport = CreateTransport(transportType, ServerEndpoint);
         var transportFactory = new TFramedTransport.Factory();
         var binaryProtocolFactory = new TBinaryProtocol.Factory();
         var processor = new TMultiplexedProcessor();
@@ -91,6 +98,18 @@ public sealed partial class ThriftPluginsServer : IDisposable
                 : Application.LoggerFactory.CreateLogger(nameof(TSimpleAsyncServer)));
     }
 
+    private static TServerTransport CreateTransport(TransportType transportType, string endpoint)
+    {
+        switch (transportType)
+        {
+            case TransportType.NamedPipes:
+                return new TNamedPipeServerTransport(endpoint, new TConfiguration(),
+                    NamedPipeServerFlags.OnlyLocalClients, 1);
+                break;
+        }
+        throw new ArgumentOutOfRangeException(nameof(transportType));
+    }
+
     /// <summary>
     /// Start local host server.
     /// </summary>
@@ -106,7 +125,7 @@ public sealed partial class ThriftPluginsServer : IDisposable
             _serverCts.Token,
             TaskCreationOptions.LongRunning,
             TaskScheduler.Current);
-        _logger.LogDebug("Started named pipe server on '{Uri}'.", ServerPipeName);
+        _logger.LogDebug("Started named pipe server on '{Uri}'.", ServerEndpoint);
     }
 
     /// <summary>
