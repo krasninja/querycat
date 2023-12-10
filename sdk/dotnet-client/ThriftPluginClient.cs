@@ -185,15 +185,12 @@ public partial class ThriftPluginClient : IDisposable
 
     public static void SetupApplicationLogging()
     {
-        Application.LoggerFactory = LoggerFactory.Create(builder =>
-        {
-            builder
-                .SetMinimumLevel(LogLevel.Trace)
-                .AddSimpleConsole(options =>
-                {
-                    options.SingleLine = true;
-                });
-        });
+        Application.LoggerFactory = new LoggerFactory(
+            providers: new[] { new SimpleConsoleLoggerProvider() },
+            new LoggerFilterOptions
+            {
+                MinLevel = LogLevel.Information,
+            });
 
         AppDomain.CurrentDomain.UnhandledException += CurrentDomainOnUnhandledException;
     }
