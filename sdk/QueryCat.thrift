@@ -21,10 +21,12 @@ struct DecimalValue {
 
 // Supported plugins objects types.
 enum ObjectType {
-  ROWS_INPUT = 0, // Interfaces: IRowsInput, IRowsSource, IRowsInputKeys, IRowsSchema.
-  ROWS_ITERATOR = 1, // Interfaces: IRowsIterator.
-  ROWS_OUTPUT = 2, // Interfaces: IRowsOutput, IRowsSource.
-  BLOB = 3
+  GENERIC = 0,
+  ROWS_INPUT = 10, // Interfaces: IRowsInput, IRowsSource, IRowsInputKeys, IRowsSchema.
+  ROWS_ITERATOR = 11, // Interfaces: IRowsIterator.
+  ROWS_OUTPUT = 12, // Interfaces: IRowsOutput, IRowsSource.
+  BLOB = 13, // Binary data.
+  JSON = 14
 }
 
 // To refer to objects we use special identifiers: handles.
@@ -43,7 +45,8 @@ union VariantValue {
   6: bool boolean,
   7: DecimalValue decimal,
   8: Duration interval,
-  9: ObjectValue object
+  9: ObjectValue object,
+  10: string json
 }
 
 enum DataType {

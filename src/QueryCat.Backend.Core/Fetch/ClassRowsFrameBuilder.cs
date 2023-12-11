@@ -432,12 +432,13 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
     /// <returns>Value.</returns>
     public VariantValue GetValue(int columnIndex, TClass obj) => _columns[columnIndex].ValueGetter(obj);
 
-    private void AddOrReplaceColumn(Column column, Func<TClass, VariantValue> valueGetter)
+    private bool AddOrReplaceColumn(Column column, Func<TClass, VariantValue> valueGetter)
     {
         var existingColumnIndex = _columns.FindIndex(c => c.Column.Name == column.Name);
         if (existingColumnIndex > -1)
         {
             _columns[existingColumnIndex] = (column, valueGetter);
+            return false;
         }
         else
         {
@@ -445,6 +446,7 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
                 column,
                 obj => VariantValue.CreateFromObject(valueGetter.Invoke(obj))
             ));
+            return true;
         }
     }
 

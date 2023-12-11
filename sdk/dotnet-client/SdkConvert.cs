@@ -1,4 +1,7 @@
 using System;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using QueryCat.Backend.Core.Types.Blob;
 using QueryCat.Plugins.Sdk;
 
 namespace QueryCat.Plugins.Client;
@@ -54,15 +57,53 @@ public static class SdkConvert
             {
                 Interval = (long)value.AsIntervalUnsafe.TotalMilliseconds,
             },
-            Backend.Core.Types.DataType.Object or Backend.Core.Types.DataType.Blob => new VariantValue
+            Backend.Core.Types.DataType.Object or Backend.Core.Types.DataType.Blob => ConvertObject(value),
+            _ => throw new ArgumentOutOfRangeException(),
+        };
+    }
+
+    private static JsonSerializerOptions JsonSerializerOptions = new()
+    {
+        WriteIndented = false,
+    };
+
+    private static VariantValue ConvertObject(Backend.Core.Types.VariantValue value)
+    {
+        if (value.AsObjectUnsafe == null)
+        {
+            return new VariantValue
             {
                 Object = new ObjectValue
                 {
-                    Handle = (int)value.AsIntegerUnsafe,
-                    Name = value.AsObjectUnsafe?.GetType().Name ?? string.Empty,
+                    Handle = 0,
+                    Name = "NULL",
+                    Type = ObjectType.GENERIC,
                 }
-            },
-            _ => throw new ArgumentOutOfRangeException()
+            };
+        }
+
+        // JSON.
+        if (value.AsObjectUnsafe is JsonNode)
+        {
+            return new VariantValue
+            {
+                Json = JsonSerializer.Serialize(value.AsObjectUnsafe, JsonSerializerOptions),
+            };
+        }
+
+        var type = ObjectType.GENERIC;
+        if (value.AsObjectUnsafe is IBlobData)
+        {
+            type = ObjectType.BLOB;
+        }
+        return new VariantValue
+        {
+            Object = new ObjectValue
+            {
+                Handle = (int)value.AsIntegerUnsafe,
+                Name = value.AsObjectUnsafe.GetType().Name,
+                Type = type,
+            }
         };
     }
 
@@ -104,6 +145,10 @@ public static class SdkConvert
         {
             return Backend.Core.Types.VariantValue.CreateFromObject(
                 new RemoteObject(value.Object.Handle, value.Object.Type.ToString()));
+        }
+        if (value.__isset.json && value.Json != null)
+        {
+            return Backend.Core.Types.VariantValue.CreateFromObject(JsonNode.Parse(value.Json));
         }
         throw new ArgumentOutOfRangeException(nameof(value));
     }

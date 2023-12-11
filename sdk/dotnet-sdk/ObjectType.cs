@@ -14,9 +14,11 @@ namespace QueryCat.Plugins.Sdk
 {
   public enum ObjectType
   {
-    ROWS_INPUT = 0,
-    ROWS_ITERATOR = 1,
-    ROWS_OUTPUT = 2,
-    BLOB = 3,
+    GENERIC = 0,
+    ROWS_INPUT = 10,
+    ROWS_ITERATOR = 11,
+    ROWS_OUTPUT = 12,
+    BLOB = 13,
+    JSON = 14,
   }
 }
