@@ -109,7 +109,6 @@ public sealed partial class ThriftPluginsServer : IDisposable
             case TransportType.NamedPipes:
                 return new TNamedPipeServerTransport(endpoint, new TConfiguration(),
                     NamedPipeServerFlags.OnlyLocalClients, 1);
-                break;
         }
         throw new ArgumentOutOfRangeException(nameof(transportType));
     }

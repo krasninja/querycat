@@ -130,7 +130,6 @@ public partial class ThriftPluginClient : IDisposable
         {
             case PluginTransportNamedPipes:
                 return new TNamedPipeTransport(serverPipeUri.Segments[1], new TConfiguration());
-                break;
         }
         throw new ArgumentOutOfRangeException(nameof(endpoint));
     }

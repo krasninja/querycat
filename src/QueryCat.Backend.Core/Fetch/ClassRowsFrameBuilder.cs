@@ -69,6 +69,10 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
                 {
                     return VariantValue.Null;
                 }
+                catch (Exception)
+                {
+                    return VariantValue.Null;
+                }
             }));
         AddOrReplaceColumn(column, obj => VariantValue.CreateFromObject(obj));
         return this;
