@@ -36,4 +36,41 @@ internal static class ArrayUtils
         }
         return source.Concat(items).ToArray();
     }
+
+    /// <summary>
+    /// Returns true if all items of both arrays are equal.
+    /// </summary>
+    /// <param name="source">Source array.</param>
+    /// <param name="dest">Destination array.</param>
+    /// <typeparam name="T">Type.</typeparam>
+    /// <returns>True if all items are equal, false otherwise.</returns>
+    public static bool EqualsAll<T>(T[]? source, T[]? dest)
+    {
+        if (source == null && dest == null)
+        {
+            return true;
+        }
+        source ??= Array.Empty<T>();
+        dest ??= Array.Empty<T>();
+        if (source.Length != dest.Length)
+        {
+            return false;
+        }
+        for (var i = 0; i < source.Length; i++)
+        {
+            if (source[i] == null && dest[i] == null)
+            {
+                continue;
+            }
+            if (source[i] == null && dest[i] != null)
+            {
+                return false;
+            }
+            if (!source[i]!.Equals(dest[i]))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
 }

@@ -1,4 +1,5 @@
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Ast.Nodes.Function;
 
@@ -75,7 +76,7 @@ internal sealed class FunctionSignatureNode : AstNode, IEquatable<FunctionSignat
         }
         return Name == other.Name
             && ReturnTypeNode == other.ReturnTypeNode
-            && ArgumentNodes.Equals(other.ArgumentNodes);
+            && ArrayUtils.EqualsAll(ArgumentNodes, other.ArgumentNodes);
     }
 
     /// <inheritdoc />
