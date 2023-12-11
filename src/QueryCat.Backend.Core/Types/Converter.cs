@@ -50,6 +50,10 @@ public static class Converter
         {
             return DataType.Timestamp;
         }
+        if (typeof(DateTimeOffset).IsAssignableFrom(type))
+        {
+            return DataType.Timestamp;
+        }
         if (typeof(TimeSpan).IsAssignableFrom(type))
         {
             return DataType.Interval;

@@ -10,20 +10,24 @@ namespace QueryCat.Plugin.Test;
 /// </summary>
 public class Program
 {
-    [UnmanagedCallersOnly(EntryPoint = ThriftPluginClient.PluginMainFunctionName)]
-    public static void DllMain(QueryCatPluginArguments args)
+    public static void Main(ThriftPluginClientArguments args)
     {
         ThriftPluginClient.SetupApplicationLogging();
         AsyncUtils.RunSync(async () =>
         {
-            using var client = new ThriftPluginClient(args.ConvertToPluginClientArguments());
+            using var client = new ThriftPluginClient(args);
             client.FunctionsManager.RegisterFromType(typeof(AddressIterator));
             client.FunctionsManager.RegisterFromType(typeof(AddressRowsInput));
             client.FunctionsManager.RegisterFunction(TestFunctions.TestCombineFunction);
             client.FunctionsManager.RegisterFunction(TestFunctions.TestSimpleNonStandardFunction);
             client.FunctionsManager.RegisterFunction(TestFunctions.TestSimpleFunction);
-            await client.Start();
+            await client.StartAsync();
             await client.WaitForServerExitAsync();
         });
     }
+
+    [UnmanagedCallersOnly(EntryPoint = ThriftPluginClient.PluginMainFunctionName)]
+    public static void DllMain(QueryCatPluginArguments args) => Main(args.ConvertToPluginClientArguments());
+
+    public static void Main(string[] args) => Main(ThriftPluginClient.ConvertCommandLineArguments(args));
 }

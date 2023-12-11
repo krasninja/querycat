@@ -179,6 +179,7 @@ public partial class ThriftPluginsServer
     private sealed class HandlerWithExceptionIntercept : PluginsManager.IAsync
     {
         private readonly PluginsManager.IAsync _handler;
+        private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(Handler));
 
         public HandlerWithExceptionIntercept(PluginsManager.IAsync handler)
         {
@@ -197,6 +198,11 @@ public partial class ThriftPluginsServer
             {
                 throw new QueryCatPluginException(ErrorType.GENERIC, ex.Message);
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Handler internal error.");
+                throw new QueryCatPluginException(ErrorType.INTERNAL, ex.Message);
+            }
         }
 
         /// <inheritdoc />
@@ -214,6 +220,11 @@ public partial class ThriftPluginsServer
                     ObjectHandle = object_handle,
                 };
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Handler internal error.");
+                throw new QueryCatPluginException(ErrorType.INTERNAL, ex.Message);
+            }
         }
 
         /// <inheritdoc />
@@ -226,6 +237,11 @@ public partial class ThriftPluginsServer
             catch (QueryCatException ex)
             {
                 throw new QueryCatPluginException(ErrorType.GENERIC, ex.Message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Handler internal error.");
+                throw new QueryCatPluginException(ErrorType.INTERNAL, ex.Message);
             }
         }
 
@@ -240,6 +256,11 @@ public partial class ThriftPluginsServer
             {
                 throw new QueryCatPluginException(ErrorType.GENERIC, ex.Message);
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Handler internal error.");
+                throw new QueryCatPluginException(ErrorType.INTERNAL, ex.Message);
+            }
         }
 
         /// <inheritdoc />
@@ -253,6 +274,11 @@ public partial class ThriftPluginsServer
             {
                 throw new QueryCatPluginException(ErrorType.GENERIC, ex.Message);
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Handler internal error.");
+                throw new QueryCatPluginException(ErrorType.INTERNAL, ex.Message);
+            }
         }
 
         /// <inheritdoc />
@@ -265,6 +291,11 @@ public partial class ThriftPluginsServer
             catch (QueryCatException ex)
             {
                 throw new QueryCatPluginException(ErrorType.GENERIC, ex.Message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Handler internal error.");
+                throw new QueryCatPluginException(ErrorType.INTERNAL, ex.Message);
             }
         }
     }

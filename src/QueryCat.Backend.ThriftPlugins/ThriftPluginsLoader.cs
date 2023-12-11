@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
@@ -476,7 +477,19 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
             iterator.Open();
             return iterator;
         }
-        throw new PluginException("Cannot create object.");
+        if (result.Object.Type == ObjectType.JSON && !string.IsNullOrEmpty(result.Json))
+        {
+            var node = JsonNode.Parse(result.Json);
+            if (node != null)
+            {
+                return node;
+            }
+        }
+        if (result.Object.Type == ObjectType.BLOB)
+        {
+            // TODO:
+        }
+        throw new PluginException($"Cannot create object. Type = {result.Object.Type}.");
     }
 
     #region Cache

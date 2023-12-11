@@ -1,8 +1,10 @@
 using System;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types.Blob;
 using QueryCat.Plugins.Sdk;
+using Column = QueryCat.Plugins.Sdk.Column;
 
 namespace QueryCat.Plugins.Client;
 
@@ -62,7 +64,7 @@ public static class SdkConvert
         };
     }
 
-    private static JsonSerializerOptions JsonSerializerOptions = new()
+    private static readonly JsonSerializerOptions JsonSerializerOptions = new()
     {
         WriteIndented = false,
     };
@@ -95,6 +97,18 @@ public static class SdkConvert
         if (value.AsObjectUnsafe is IBlobData)
         {
             type = ObjectType.BLOB;
+        }
+        else if (value.AsObjectUnsafe is IRowsInput)
+        {
+            type = ObjectType.BLOB;
+        }
+        else if (value.AsObjectUnsafe is IRowsIterator)
+        {
+            type = ObjectType.ROWS_ITERATOR;
+        }
+        else if (value.AsObjectUnsafe is IRowsOutput)
+        {
+            type = ObjectType.ROWS_OUTPUT;
         }
         return new VariantValue
         {

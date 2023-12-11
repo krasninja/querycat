@@ -123,10 +123,6 @@ public partial class ThriftPluginClient : IDisposable
         _functionsManager = new PluginFunctionsManager();
     }
 
-    public ThriftPluginClient(string[] args) : this(ConvertCommandLineArguments(args))
-    {
-    }
-
     private static TTransport CreateTransport(string endpoint)
     {
         var serverPipeUri = new Uri(endpoint);
@@ -139,7 +135,7 @@ public partial class ThriftPluginClient : IDisposable
         throw new ArgumentOutOfRangeException(nameof(endpoint));
     }
 
-    private static ThriftPluginClientArguments ConvertCommandLineArguments(string[] args)
+    public static ThriftPluginClientArguments ConvertCommandLineArguments(string[] args)
     {
         if (args.Length == 0)
         {
@@ -208,7 +204,7 @@ public partial class ThriftPluginClient : IDisposable
     /// Start client server and register the plugin.
     /// </summary>
     /// <param name="cancellationToken">Cancellation token.</param>
-    public async Task Start(CancellationToken cancellationToken = default)
+    public async Task StartAsync(CancellationToken cancellationToken = default)
     {
         if (!string.IsNullOrEmpty(_debugServerPath))
         {

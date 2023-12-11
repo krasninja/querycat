@@ -317,6 +317,7 @@ public partial class ThriftPluginClient
     private sealed class HandlerWithExceptionIntercept : Plugin.IAsync
     {
         private readonly Plugin.IAsync _handler;
+        private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(Handler));
 
         public HandlerWithExceptionIntercept(Plugin.IAsync handler)
         {
@@ -338,6 +339,11 @@ public partial class ThriftPluginClient
                     ObjectHandle = object_handle,
                 };
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Handler internal error.");
+                throw new QueryCatPluginException(ErrorType.INTERNAL, ex.Message);
+            }
         }
 
         /// <inheritdoc />
@@ -351,6 +357,11 @@ public partial class ThriftPluginClient
             {
                 throw new QueryCatPluginException(ErrorType.GENERIC, ex.Message);
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Handler internal error.");
+                throw new QueryCatPluginException(ErrorType.INTERNAL, ex.Message);
+            }
         }
 
         /// <inheritdoc />
@@ -363,6 +374,11 @@ public partial class ThriftPluginClient
             catch (QueryCatException ex)
             {
                 throw new QueryCatPluginException(ErrorType.GENERIC, ex.Message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Handler internal error.");
+                throw new QueryCatPluginException(ErrorType.INTERNAL, ex.Message);
             }
         }
 
@@ -380,6 +396,11 @@ public partial class ThriftPluginClient
                     ObjectHandle = object_handle,
                 };
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Handler internal error.");
+                throw new QueryCatPluginException(ErrorType.INTERNAL, ex.Message);
+            }
         }
 
         /// <inheritdoc />
@@ -395,6 +416,11 @@ public partial class ThriftPluginClient
                 {
                     ObjectHandle = object_handle,
                 };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Handler internal error.");
+                throw new QueryCatPluginException(ErrorType.INTERNAL, ex.Message);
             }
         }
 
@@ -412,6 +438,11 @@ public partial class ThriftPluginClient
                     ObjectHandle = object_handle,
                 };
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Handler internal error.");
+                throw new QueryCatPluginException(ErrorType.INTERNAL, ex.Message);
+            }
         }
 
         /// <inheritdoc />
@@ -427,6 +458,11 @@ public partial class ThriftPluginClient
                 {
                     ObjectHandle = object_handle,
                 };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Handler internal error.");
+                throw new QueryCatPluginException(ErrorType.INTERNAL, ex.Message);
             }
         }
 
@@ -445,6 +481,11 @@ public partial class ThriftPluginClient
                     ObjectHandle = object_handle,
                 };
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Handler internal error.");
+                throw new QueryCatPluginException(ErrorType.INTERNAL, ex.Message);
+            }
         }
 
         /// <inheritdoc />
@@ -460,6 +501,11 @@ public partial class ThriftPluginClient
                 {
                     ObjectHandle = object_handle,
                 };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Handler internal error.");
+                throw new QueryCatPluginException(ErrorType.INTERNAL, ex.Message);
             }
         }
 
@@ -477,6 +523,11 @@ public partial class ThriftPluginClient
                     ObjectHandle = object_handle,
                 };
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Handler internal error.");
+                throw new QueryCatPluginException(ErrorType.INTERNAL, ex.Message);
+            }
         }
 
         /// <inheritdoc />
@@ -492,6 +543,11 @@ public partial class ThriftPluginClient
                 {
                     ObjectHandle = object_handle,
                 };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Handler internal error.");
+                throw new QueryCatPluginException(ErrorType.INTERNAL, ex.Message);
             }
         }
 
@@ -510,6 +566,11 @@ public partial class ThriftPluginClient
                     ObjectHandle = object_handle,
                 };
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Handler internal error.");
+                throw new QueryCatPluginException(ErrorType.INTERNAL, ex.Message);
+            }
         }
 
         /// <inheritdoc />
@@ -527,6 +588,11 @@ public partial class ThriftPluginClient
                     ObjectHandle = object_handle,
                 };
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Handler internal error.");
+                throw new QueryCatPluginException(ErrorType.INTERNAL, ex.Message);
+            }
         }
 
         /// <inheritdoc />
@@ -542,6 +608,11 @@ public partial class ThriftPluginClient
                 {
                     ObjectHandle = object_handle,
                 };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Handler internal error.");
+                throw new QueryCatPluginException(ErrorType.INTERNAL, ex.Message);
             }
         }
 
@@ -559,6 +630,11 @@ public partial class ThriftPluginClient
                     ObjectHandle = object_handle,
                 };
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Handler internal error.");
+                throw new QueryCatPluginException(ErrorType.INTERNAL, ex.Message);
+            }
         }
 
         /// <inheritdoc />
@@ -574,6 +650,11 @@ public partial class ThriftPluginClient
                 {
                     ObjectHandle = object_handle,
                 };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Handler internal error.");
+                throw new QueryCatPluginException(ErrorType.INTERNAL, ex.Message);
             }
         }
     }
