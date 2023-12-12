@@ -1,12 +1,14 @@
+using System.Runtime.InteropServices;
 using Microsoft.Extensions.Logging;
-using QueryCat.Backend.Core;
-using QueryCat.Backend.Core.Functions;
 using Thrift;
 using Thrift.Protocol;
 using Thrift.Transport;
 using Thrift.Transport.Client;
 using QueryCat.Plugins.Client;
 using QueryCat.Plugins.Sdk;
+using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Functions;
+using QueryCat.Backend.Core.Utils;
 using LogLevel = QueryCat.Plugins.Sdk.LogLevel;
 
 namespace QueryCat.Backend.ThriftPlugins;
@@ -24,6 +26,21 @@ public partial class ThriftPluginsServer
         public List<PluginContextFunction> Functions { get; } = new();
 
         public ObjectsStorage ObjectsStorage { get; } = new();
+
+        public IntPtr? LibraryHandle { get; set; }
+
+        public void Shutdown()
+        {
+            ObjectsStorage.Clean();
+            if (Client != null)
+            {
+                AsyncUtils.RunSync(Client.ShutdownAsync);
+            }
+            if (LibraryHandle.HasValue)
+            {
+                NativeLibrary.Free(LibraryHandle.Value);
+            }
+        }
     }
 
     private sealed class Handler : PluginsManager.IAsync

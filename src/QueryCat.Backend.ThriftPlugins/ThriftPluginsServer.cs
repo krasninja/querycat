@@ -210,7 +210,7 @@ public sealed partial class ThriftPluginsServer : IDisposable
             {
                 continue;
             }
-            AsyncUtils.RunSync(pluginContext.Client.ShutdownAsync);
+            pluginContext.Shutdown();
         }
     }
 }

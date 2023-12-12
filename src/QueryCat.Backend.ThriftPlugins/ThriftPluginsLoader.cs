@@ -358,7 +358,9 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         // Plugin has been loaded.
         _loadedPlugins.Add(pluginName);
 
-        return GetContext(file);
+        var context = GetContext(file);
+        context.LibraryHandle = handle;
+        return context;
     }
 
     private string CreateAuthTokenAndSave(string pluginFile, string pluginName)
