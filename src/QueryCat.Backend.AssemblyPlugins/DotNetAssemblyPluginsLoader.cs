@@ -97,6 +97,11 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader
             return false;
         }
 
+        if (IsAppSpecificFile(file))
+        {
+            return false;
+        }
+
         return true;
     }
 

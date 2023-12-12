@@ -121,8 +121,6 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
     /// <inheritdoc />
     public override bool IsCorrectPluginFile(string pluginFile)
     {
-        var extension = Path.GetExtension(pluginFile);
-
         // File name must contain "plugin" word.
         if (!File.Exists(pluginFile)
             || !Path.GetFileName(pluginFile).Contains("plugin", StringComparison.OrdinalIgnoreCase))
@@ -136,7 +134,12 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
             return false;
         }
 
-        // UNIX executable.
+        if (IsAppSpecificFile(pluginFile))
+        {
+            return false;
+        }
+
+        // Executable or library.
         if (IsLibrary(pluginFile) || IsExecutable(pluginFile))
         {
             return true;
