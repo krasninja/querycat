@@ -136,25 +136,23 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
             return false;
         }
 
-        // UNIX library.
-        if ((RuntimeInformation.IsOSPlatform(OSPlatform.OSX)
-            || RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
-            || RuntimeInformation.IsOSPlatform(OSPlatform.FreeBSD)) && extension.Equals(".so", StringComparison.OrdinalIgnoreCase))
+        // UNIX executable.
+        if (IsLibrary(pluginFile) || IsExecutable(pluginFile))
         {
             return true;
         }
 
-        // Windows library.
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
-            && extension.Equals(".dll", StringComparison.OrdinalIgnoreCase))
-        {
-            return true;
-        }
+        return false;
+    }
+
+    private static bool IsExecutable(string pluginFile)
+    {
+        var extension = Path.GetExtension(pluginFile);
 
         // UNIX executable.
         if ((RuntimeInformation.IsOSPlatform(OSPlatform.OSX)
-            || RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
-            || RuntimeInformation.IsOSPlatform(OSPlatform.FreeBSD))
+                || RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
+                || RuntimeInformation.IsOSPlatform(OSPlatform.FreeBSD))
             && File.GetUnixFileMode(pluginFile).HasFlag(UnixFileMode.UserExecute))
         {
             return true;
@@ -163,6 +161,28 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         // Windows executable.
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
             && extension.Equals(".exe", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    private static bool IsLibrary(string pluginFile)
+    {
+        var extension = Path.GetExtension(pluginFile);
+
+        // UNIX library.
+        if ((RuntimeInformation.IsOSPlatform(OSPlatform.OSX)
+                || RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
+                || RuntimeInformation.IsOSPlatform(OSPlatform.FreeBSD)) && extension.Equals(".so", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        // Windows library.
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            && extension.Equals(".dll", StringComparison.OrdinalIgnoreCase))
         {
             return true;
         }
@@ -251,9 +271,7 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         // Create auth token and save it into temp memory.
         var authToken = CreateAuthTokenAndSave(file, pluginName);
 
-        var extension = Path.GetExtension(file);
-        if (extension.Equals(".so", StringComparison.OrdinalIgnoreCase) ||
-            extension.Equals(".dll", StringComparison.OrdinalIgnoreCase))
+        if (IsLibrary(file))
         {
             return LoadPluginLibrary(file, authToken, cancellationToken);
         }
@@ -489,7 +507,7 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         }
         if (result.Object.Type == ObjectType.BLOB)
         {
-            // TODO:
+            return new RemoteBlobData(result.Object.Handle, context.Client);
         }
         throw new PluginException($"Cannot create object. Type = {result.Object.Type}.");
     }

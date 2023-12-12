@@ -41,11 +41,20 @@ public sealed class DefaultPluginsManager : IPluginsManager, IDisposable
     {
         foreach (var file in _pluginsLoader.GetPluginFiles())
         {
-            if (_pluginsLoader.IsCorrectPluginFile(file))
+            if (!IsAppSpecificFile(file) && _pluginsLoader.IsCorrectPluginFile(file))
             {
                 yield return file;
             }
         }
+    }
+
+    private static bool IsAppSpecificFile(string file)
+    {
+        var fileName = Path.GetFileName(file);
+        return fileName.StartsWith("QueryCat.Plugins.Client")
+            || fileName.StartsWith("QueryCat.Plugins.Sdk")
+            || fileName.StartsWith("QueryCat.Backend")
+            || fileName.StartsWith("QueryCat.Backend.AssemblyPlugins");
     }
 
     /// <inheritdoc />
