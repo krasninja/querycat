@@ -36,7 +36,7 @@ public class StreamBlobData : IBlobData
     }
 
     /// <inheritdoc />
-    public int ApplyAction<T>(ReadOnlySpanAction<byte, T?> action, int offset, T? state = default)
+    public int ApplyAction(ReadOnlySpanAction<byte, object?> action, int offset, object? state = default)
     {
         var buffer = ArrayPool<byte>.Shared.Rent(BufferSize);
         using var stream = _streamFactory.Invoke();

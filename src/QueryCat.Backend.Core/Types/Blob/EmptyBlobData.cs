@@ -13,5 +13,5 @@ internal sealed class EmptyBlobData : IBlobData
     public int GetBytes(byte[] buffer, int offset, int count) => 0;
 
     /// <inheritdoc />
-    public int ApplyAction<TState>(ReadOnlySpanAction<byte, TState?> action, int offset, TState? state = default) => 0;
+    public int ApplyAction(ReadOnlySpanAction<byte, object?> action, int offset, object? state = default) => 0;
 }

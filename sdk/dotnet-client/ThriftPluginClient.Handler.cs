@@ -52,7 +52,7 @@ public partial class ThriftPluginClient
                 if (result.AsObject is IRowsIterator rowsIterator)
                 {
                     var index = _thriftPluginClient._objectsStorage.Add(rowsIterator);
-                    _thriftPluginClient._logger.LogDebug("Added new object '{Object}' with handle {Handle}.",
+                    _thriftPluginClient._logger.LogDebug("Added new iterator object '{Object}' with handle {Handle}.",
                         rowsIterator.ToString(), index);
                     return Task.FromResult(new VariantValue
                     {
@@ -65,7 +65,7 @@ public partial class ThriftPluginClient
                         new QueryContextQueryInfo(new List<Backend.Core.Data.Column>()),
                         _thriftPluginClient._executionThread.ConfigStorage);
                     var index =_thriftPluginClient._objectsStorage.Add(rowsInput);
-                    _thriftPluginClient._logger.LogDebug("Added new object '{Object}' with handle {Handle}.",
+                    _thriftPluginClient._logger.LogDebug("Added new input object '{Object}' with handle {Handle}.",
                         rowsInput.ToString(), index);
                     return Task.FromResult(new VariantValue
                     {
@@ -73,6 +73,15 @@ public partial class ThriftPluginClient
                     });
                 }
                 throw new QueryCatPluginException(ErrorType.INVALID_OBJECT, $"Cannot register object '{result.AsObject}'.");
+            }
+            if (resultType == DataType.Blob)
+            {
+                var index = _thriftPluginClient._objectsStorage.Add(result.AsBlob);
+                _thriftPluginClient._logger.LogDebug("Added new blob object with handle {Handle}.", index);
+                return Task.FromResult(new VariantValue
+                {
+                    Object = new ObjectValue(ObjectType.BLOB, index, "BLOB"),
+                });
             }
 
             return Task.FromResult(SdkConvert.Convert(result));

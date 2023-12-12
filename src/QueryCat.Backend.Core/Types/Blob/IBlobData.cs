@@ -28,5 +28,5 @@ public interface IBlobData
     /// <param name="offset">Offset within the BLOB.</param>
     /// <param name="state">State to be passed to delegate.</param>
     /// <returns>The total number of bytes read.</returns>
-    int ApplyAction<TState>(ReadOnlySpanAction<byte, TState?> action, int offset, TState? state = default);
+    int ApplyAction(ReadOnlySpanAction<byte, object?> action, int offset, object? state = default);
 }

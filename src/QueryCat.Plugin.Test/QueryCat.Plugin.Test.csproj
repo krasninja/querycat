@@ -7,6 +7,7 @@
     <OptimizationPreference>Size</OptimizationPreference>
     <PublishTrimmed>true</PublishTrimmed>
     <StripSymbols>true</StripSymbols>
+    <OutputType>Exe</OutputType>
   </PropertyGroup>
 
   <ItemGroup>

@@ -27,7 +27,7 @@ public class BytesBlobData : IBlobData
     }
 
     /// <inheritdoc />
-    public int ApplyAction<TState>(ReadOnlySpanAction<byte, TState?> action, int offset, TState? state = default)
+    public int ApplyAction(ReadOnlySpanAction<byte, object?> action, int offset, object? state = default)
     {
         var span = new ReadOnlySpan<byte>(_bytes, offset, _bytes.Length - offset);
         action.Invoke(span, state);

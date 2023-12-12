@@ -1,4 +1,5 @@
 ﻿using System.Runtime.InteropServices;
+using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Utils;
 using QueryCat.Plugins.Client;
@@ -12,7 +13,7 @@ public class Program
 {
     public static void Main(ThriftPluginClientArguments args)
     {
-        ThriftPluginClient.SetupApplicationLogging();
+        ThriftPluginClient.SetupApplicationLogging(logLevel: LogLevel.Debug);
         AsyncUtils.RunSync(async () =>
         {
             using var client = new ThriftPluginClient(args);
@@ -21,6 +22,7 @@ public class Program
             client.FunctionsManager.RegisterFunction(TestFunctions.TestCombineFunction);
             client.FunctionsManager.RegisterFunction(TestFunctions.TestSimpleNonStandardFunction);
             client.FunctionsManager.RegisterFunction(TestFunctions.TestSimpleFunction);
+            client.FunctionsManager.RegisterFunction(TestFunctions.TestBlobFunction);
             await client.StartAsync();
             await client.WaitForServerExitAsync();
         });
