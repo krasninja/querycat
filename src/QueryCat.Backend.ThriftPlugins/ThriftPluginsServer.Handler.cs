@@ -36,9 +36,13 @@ public partial class ThriftPluginsServer
             {
                 AsyncUtils.RunSync(Client.ShutdownAsync);
             }
-            if (LibraryHandle.HasValue)
+            if (LibraryHandle.HasValue && LibraryHandle.Value != IntPtr.Zero)
             {
-                NativeLibrary.Free(LibraryHandle.Value);
+                // For some reason it causes SIGSEGV (Address boundary error) on Linux.
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    NativeLibrary.Free(LibraryHandle.Value);
+                }
             }
         }
     }
