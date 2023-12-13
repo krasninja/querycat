@@ -61,11 +61,27 @@ public sealed class DefaultPluginsManager : IPluginsManager, IDisposable
         return remote.Union(local);
     }
 
+    private static readonly string[] _prefixes = { string.Empty, "qcat-plugins-", "qcat.plugins.", "plugins-", "plugins." };
+
+    private static PluginInfo? TryFindPlugin(string name, IReadOnlyCollection<PluginInfo> allPlugins)
+    {
+        foreach (var prefix in _prefixes)
+        {
+            var newName = prefix + name;
+            var plugin = allPlugins.FirstOrDefault(p => newName.Equals(p.Name, StringComparison.OrdinalIgnoreCase));
+            if (plugin != null)
+            {
+                return plugin;
+            }
+        }
+        return null;
+    }
+
     /// <inheritdoc />
     public async Task<int> InstallAsync(string name, CancellationToken cancellationToken = default)
     {
         var plugins = await GetRemotePluginsAsync(cancellationToken).ConfigureAwait(false);
-        var plugin = plugins.FirstOrDefault(p => name.Equals(p.Name, StringComparison.OrdinalIgnoreCase));
+        var plugin = TryFindPlugin(name, plugins.ToList());
         if (plugin == null)
         {
             throw new PluginException($"Cannot find plugin '{name}' in repository.");
@@ -116,14 +132,18 @@ public sealed class DefaultPluginsManager : IPluginsManager, IDisposable
     /// <inheritdoc />
     public Task RemoveAsync(string name, CancellationToken cancellationToken = default)
     {
-        foreach (var localPlugin in GetLocalPlugins())
+        var plugins = GetLocalPlugins();
+        var plugin = TryFindPlugin(name, plugins.ToList());
+        if (plugin == null)
         {
-            if (name.Equals(localPlugin.Name, StringComparison.OrdinalIgnoreCase) && File.Exists(localPlugin.Uri))
-            {
-                _logger.LogInformation("Remove file {Uri}.", localPlugin.Uri);
-                File.Delete(localPlugin.Uri);
-            }
+            throw new PluginException($"Cannot find plugin '{name}' in repository.");
         }
+        if (File.Exists(plugin.Uri))
+        {
+            _logger.LogInformation("Remove file {Uri}.", plugin.Uri);
+            File.Delete(plugin.Uri);
+        }
+
         return Task.CompletedTask;
     }
 
