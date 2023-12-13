@@ -6,6 +6,7 @@ using QueryCat.Backend.Providers;
 using QueryCat.Cli.Commands.Options;
 #if ENABLE_PLUGINS && PLUGIN_THRIFT
 using QueryCat.Backend.ThriftPlugins;
+using QueryCat.Plugins.Client;
 #endif
 
 namespace QueryCat.Cli.Commands;
@@ -13,9 +14,6 @@ namespace QueryCat.Cli.Commands;
 #if ENABLE_PLUGINS
 internal class PluginDebugCommand : BaseQueryCommand
 {
-    private const string PipeName = "qcat-test";
-    private const string AuthToken = "test";
-
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(PluginDebugCommand));
 
     /// <inheritdoc />
@@ -35,21 +33,31 @@ internal class PluginDebugCommand : BaseQueryCommand
             var storage = new PersistentInputConfigStorage(
                 Path.Combine(ExecutionThread.GetApplicationDirectory(), ApplicationOptions.ConfigFileName));
             var thread = new ExecutionThread(options, storage);
-            options.PluginDirectories.AddRange(applicationOptions.PluginDirectories);
-            options.DefaultRowsOutput = new Backend.Formatters.PagingOutput(tableOutput, cts: thread.CancellationTokenSource);
-            var pluginsLoader = new ThriftPluginsLoader(thread, applicationOptions.PluginDirectories, serverPipeName: PipeName)
+            var pluginsLoader = new ThriftPluginsLoader(thread, applicationOptions.PluginDirectories,
+                serverPipeName: ThriftPluginClient.TestPipeName)
             {
-                ForceAuthToken = AuthToken,
+                ForceAuthToken = ThriftPluginClient.TestAuthToken,
                 SkipPluginsExecution = true,
             };
-            new ExecutionThreadBootstrapper().Bootstrap(
-                thread,
-                pluginsLoader,
-                Backend.Formatters.AdditionalRegistration.Register);
-            AddVariables(thread, variables);
-            RunQuery(thread, query, files);
-            thread.Dispose();
-            pluginsLoader.Dispose();
+
+            try
+            {
+                options.PluginDirectories.AddRange(applicationOptions.PluginDirectories);
+                options.DefaultRowsOutput = new Backend.Formatters.PagingOutput(tableOutput, cts: thread.CancellationTokenSource);
+
+                new ExecutionThreadBootstrapper().Bootstrap(
+                    thread,
+                    pluginsLoader,
+                    Backend.Formatters.AdditionalRegistration.Register);
+                AddVariables(thread, variables);
+                RunQuery(thread, query, files);
+            }
+            finally
+            {
+                pluginsLoader.Dispose();
+                thread.Dispose();
+            }
+
 #else
             _logger.LogCritical("Plugins debug is only available for Thrift plugins system.");
 #endif

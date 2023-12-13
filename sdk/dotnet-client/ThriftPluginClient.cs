@@ -26,6 +26,8 @@ public partial class ThriftPluginClient : IDisposable
 {
     public const string PluginsManagerServiceName = "plugins-manager";
     public const string PluginServerName = "plugin";
+    public const string TestAuthToken = "test";
+    public const string TestPipeName = "qcat-test";
 
     public const string PluginServerPipeParameter = "server-endpoint";
     public const string PluginTokenParameter = "token";
@@ -80,7 +82,7 @@ public partial class ThriftPluginClient : IDisposable
         var serverEndpoint = args.ServerEndpoint;
         if (!string.IsNullOrEmpty(args.DebugServerPath))
         {
-            serverEndpoint = $"{PluginTransportNamedPipes}://localhost/qcat-test";
+            serverEndpoint = $"{PluginTransportNamedPipes}://localhost/{TestPipeName}";
         }
         if (!string.IsNullOrEmpty(serverEndpoint))
         {
@@ -95,7 +97,7 @@ public partial class ThriftPluginClient : IDisposable
         }
         else
         {
-            _authToken = "test";
+            _authToken = TestAuthToken;
         }
 
         // Parent PID.
