@@ -42,7 +42,7 @@ internal sealed class FunctionTypeNode : TypeNode, IEquatable<FunctionTypeNode>
         {
             return true;
         }
-        return TypeName == other.TypeName;
+        return Type == other.Type && TypeName == other.TypeName;
     }
 
     /// <inheritdoc />
@@ -51,7 +51,12 @@ internal sealed class FunctionTypeNode : TypeNode, IEquatable<FunctionTypeNode>
 
     /// <inheritdoc />
     public override int GetHashCode()
-        => TypeName.GetHashCode();
+    {
+        var hash = default(HashCode);
+        hash.Add(Type);
+        hash.Add(TypeName);
+        return hash.ToHashCode();
+    }
 
     public static bool operator ==(FunctionTypeNode? left, FunctionTypeNode? right)
         => Equals(left, right);
