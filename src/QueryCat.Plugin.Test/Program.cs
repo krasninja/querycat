@@ -14,7 +14,7 @@ public class Program
     public static void Main(ThriftPluginClientArguments args)
     {
         ThriftPluginClient.SetupApplicationLogging(logLevel: LogLevel.Debug);
-        AsyncUtils.RunSync(async () =>
+        AsyncUtils.RunSync(async ct =>
         {
             using var client = new ThriftPluginClient(args);
             client.FunctionsManager.RegisterFromType(typeof(AddressIterator));
@@ -23,8 +23,8 @@ public class Program
             client.FunctionsManager.RegisterFunction(TestFunctions.TestSimpleNonStandardFunction);
             client.FunctionsManager.RegisterFunction(TestFunctions.TestSimpleFunction);
             client.FunctionsManager.RegisterFunction(TestFunctions.TestBlobFunction);
-            await client.StartAsync();
-            await client.WaitForServerExitAsync();
+            await client.StartAsync(ct);
+            await client.WaitForServerExitAsync(ct);
         });
     }
 

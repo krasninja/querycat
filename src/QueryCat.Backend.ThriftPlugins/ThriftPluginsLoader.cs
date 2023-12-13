@@ -470,7 +470,7 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         }
 
         var arguments = args.Select(SdkConvert.Convert).ToList();
-        var result = AsyncUtils.RunSync(() => pluginContext.Client.CallFunctionAsync(args.FunctionName, arguments, -1));
+        var result = AsyncUtils.RunSync(ct => pluginContext.Client.CallFunctionAsync(args.FunctionName, arguments, -1, ct));
         if (result == null)
         {
             return Core.Types.VariantValue.Null;

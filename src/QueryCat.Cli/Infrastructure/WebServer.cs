@@ -377,8 +377,8 @@ internal sealed class WebServer
 
     private void HandleInfoApiAction(HttpListenerRequest request, HttpListenerResponse response)
     {
-        var localPlugins = AsyncUtils.RunSync(async ()
-            => await _executionThread.PluginsManager.ListAsync(localOnly: true))!.ToList();
+        var localPlugins = AsyncUtils.RunSync(async ct
+            => await _executionThread.PluginsManager.ListAsync(localOnly: true, ct))!.ToList();
         var dict = new WebServerReply
         {
             ["installedPlugins"] = localPlugins,

@@ -73,9 +73,9 @@ public static class InfoFunctions
             .AddProperty("platform", p => p.Platform)
             .AddProperty("arch", p => p.Architecture)
             .AddProperty("uri", p => p.Uri);
-        var plugins = AsyncUtils.RunSync(async () =>
+        var plugins = AsyncUtils.RunSync(async ct =>
         {
-            return await args.ExecutionThread.PluginsManager.ListAsync();
+            return await args.ExecutionThread.PluginsManager.ListAsync(cancellationToken: ct);
         });
         return VariantValue.CreateFromObject(builder.BuildIterator(plugins!));
     }
