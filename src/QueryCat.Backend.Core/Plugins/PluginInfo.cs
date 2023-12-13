@@ -10,10 +10,12 @@ namespace QueryCat.Backend.Core.Plugins;
 /// </summary>
 public class PluginInfo
 {
-    private static readonly Regex KeyRegex = new(@"^(?<name>[a-zA-Z\.]+)\.(?<version>\d+\.\d+\.\d+)\.(so|dll|nupkg)$",
+    private static readonly Regex KeyRegex = new(
+        @"^(?<name>[a-zA-Z\.]+)\.(?<version>\d+\.\d+\.\d+)\.(so|dll|nupkg)$",
         RegexOptions.Compiled);
 
-    private static readonly Regex NewKeyRegex = new(@"^(?<name>.+)-(?<version>\d+\.\d+\.\d+)-(?<platform>[a-z0-9]+)-(?<arch>[a-z0-9]+)(\.exe)?$",
+    private static readonly Regex NewKeyRegex =
+        new(@"^(?<name>.+)-(?<version>\d+\.\d+\.\d+)-?(?<platform>[a-z0-9]+)?-?(?<arch>[a-z0-9]+)?(\.so|\.dll|\.exe)?$",
         RegexOptions.Compiled);
 
     /// <summary>
@@ -59,11 +61,13 @@ public class PluginInfo
         var match = NewKeyRegex.Match(fileName);
         if (match.Success)
         {
+            var architecture = match.Groups["arch"].Value;
+            var platform = match.Groups["platform"].Value;
             return new PluginInfo(match.Groups["name"].Value)
             {
                 Version = new Version(match.Groups["version"].Value),
-                Platform = match.Groups["platform"].Value,
-                Architecture = match.Groups["arch"].Value,
+                Architecture = !string.IsNullOrEmpty(architecture) ? architecture : Application.ArchitectureUnknown,
+                Platform = !string.IsNullOrEmpty(platform) ? platform : Application.PlatformUnknown,
                 Uri = uri,
             };
         }
