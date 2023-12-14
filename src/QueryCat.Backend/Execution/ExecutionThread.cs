@@ -26,6 +26,7 @@ public class ExecutionThread : IExecutionThread
     private readonly StatementsVisitor _statementsVisitor;
     private readonly object _objLock = new();
     private readonly List<IDisposable> _disposablesList = new();
+    private bool _isInCallback;
 
     /// <inheritdoc />
     public IInputConfigStorage ConfigStorage { get; }
@@ -168,16 +169,26 @@ public class ExecutionThread : IExecutionThread
             _disposablesList.Add(commandContext);
 
             // Fire "before" event.
-            BeforeStatementExecute?.Invoke(this, executeEventArgs);
+            if (BeforeStatementExecute != null && !_isInCallback)
+            {
+                _isInCallback = true;
+                BeforeStatementExecute.Invoke(this, executeEventArgs);
+                _isInCallback = false;
+            }
             if (!executeEventArgs.ContinueExecution)
             {
                 break;
             }
-            var result = commandContext.Invoke();
-            LastResult = result;
+
+            LastResult = commandContext.Invoke();
 
             // Fire "after" event.
-            AfterStatementExecute?.Invoke(this, executeEventArgs);
+            if (AfterStatementExecute != null && !_isInCallback)
+            {
+                _isInCallback = true;
+                AfterStatementExecute.Invoke(this, executeEventArgs);
+                _isInCallback = false;
+            }
             if (!executeEventArgs.ContinueExecution)
             {
                 break;
@@ -185,7 +196,7 @@ public class ExecutionThread : IExecutionThread
 
             if (Options.DefaultRowsOutput != NullRowsOutput.Instance)
             {
-                Write(result);
+                Write(LastResult);
             }
 
             ExecutingStatement = ExecutingStatement.NextNode;
