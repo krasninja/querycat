@@ -53,4 +53,4 @@ Just imagine that everything in the world is a table, and you can process it usi
 - 11) Development
     - 11.1) [Overview](development/index.md)
 - 12) Misc
-    - 12.1) [Alternatives](misc/alternative-tools.md)
+    - 12.1) [Alternatives](misc/alternatives.md)

@@ -56,7 +56,7 @@ nav:
     - 'Simple Plugin': development/plugin-simple.md
     - 'Advanced Plugin': development/plugin-advanced.md
   - 'Misc':
-    - 'Alternative Tools': misc/alternative-tools.md
+    - 'Alternative Tools': misc/alternatives.md
 theme: readthedocs
 exclude_docs: |
   internal
