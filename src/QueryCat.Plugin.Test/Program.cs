@@ -11,7 +11,7 @@ namespace QueryCat.Plugin.Test;
 /// </summary>
 public class Program
 {
-    public static void Main(ThriftPluginClientArguments args)
+    public static void QueryCatMain(ThriftPluginClientArguments args)
     {
         ThriftPluginClient.SetupApplicationLogging(logLevel: LogLevel.Debug);
         AsyncUtils.RunSync(async ct =>
@@ -29,7 +29,7 @@ public class Program
     }
 
     [UnmanagedCallersOnly(EntryPoint = ThriftPluginClient.PluginMainFunctionName)]
-    public static void DllMain(QueryCatPluginArguments args) => Main(args.ConvertToPluginClientArguments());
+    public static void DllMain(QueryCatPluginArguments args) => QueryCatMain(args.ConvertToPluginClientArguments());
 
-    public static void Main(string[] args) => Main(ThriftPluginClient.ConvertCommandLineArguments(args));
+    public static void Main(string[] args) => QueryCatMain(ThriftPluginClient.ConvertCommandLineArguments(args));
 }
