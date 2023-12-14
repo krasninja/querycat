@@ -17,7 +17,8 @@ internal class PluginListCommand : BaseCommand
             applicationOptions.InitializeLogger();
             using var root = applicationOptions.CreateStdoutApplicationRoot();
             var result = root.Thread.RunFunction(InfoFunctions.Plugins);
-            root.Thread.Options.DefaultRowsOutput.Write(ExecutionThreadUtils.ConvertToIterator(result), root.Thread);
+            root.Thread.TopScope.DefineVariable("result", result);
+            root.Thread.Run("result");
         }, new ApplicationOptionsBinder(LogLevelOption, PluginDirectoriesOption));
     }
 }

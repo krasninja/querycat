@@ -18,14 +18,23 @@ internal class SchemaCommand : BaseQueryCommand
             applicationOptions.InitializeLogger();
             var root = applicationOptions.CreateStdoutApplicationRoot();
             var thread = root.Thread;
-            root.Thread.AfterStatementExecute += (_, threadArgs) =>
+            thread.AfterStatementExecute += (_, threadArgs) =>
             {
                 var result = thread.LastResult;
                 if (!result.IsNull && result.GetInternalType() == DataType.Object
                     && result.AsObject is IRowsSchema rowsSchema)
                 {
                     var schema = thread.RunFunction(InfoFunctions.Schema, rowsSchema);
-                    thread.Options.DefaultRowsOutput.Write(ExecutionThreadUtils.ConvertToIterator(schema), thread);
+                    var resultIndex = thread.TopScope.GetVariableIndex("result", out var _);
+                    if (resultIndex > -1)
+                    {
+                        thread.TopScope.SetVariable(resultIndex, schema);
+                    }
+                    else
+                    {
+                        thread.TopScope.DefineVariable("result", schema);
+                    }
+                    thread.Run("result");
                 }
                 else
                 {

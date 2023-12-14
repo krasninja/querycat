@@ -8,7 +8,7 @@ namespace QueryCat.Backend.Execution;
 /// <summary>
 /// Utilities for <see cref="ExecutionThread" />.
 /// </summary>
-public static class ExecutionThreadUtils
+internal static class ExecutionThreadUtils
 {
     /// <summary>
     /// Convert variant value to enumerable of rows. It analyzes the internal
