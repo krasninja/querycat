@@ -85,11 +85,11 @@ public static class SdkConvert
         }
 
         // JSON.
-        if (value.AsObjectUnsafe is JsonNode)
+        if (value.AsObjectUnsafe is JsonNode jsonNode)
         {
             return new VariantValue
             {
-                Json = JsonSerializer.Serialize(value.AsObjectUnsafe, JsonSerializerOptions),
+                Json = jsonNode.ToJsonString(JsonSerializerOptions),
             };
         }
 
