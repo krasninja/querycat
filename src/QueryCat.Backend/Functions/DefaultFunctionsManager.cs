@@ -290,8 +290,7 @@ public sealed class DefaultFunctionsManager : IFunctionsManager
     /// <inheritdoc />
     public VariantValue CallFunction(IFunction function, FunctionCallArguments callArguments)
     {
-        var info = new FunctionCallInfo(_thread);
-        info.FunctionName = function.Name;
+        var info = new FunctionCallInfo(_thread, function.Name);
         int positionalIndex = 0;
 
         for (var i = 0; i < function.Arguments.Length; i++)

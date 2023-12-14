@@ -382,13 +382,12 @@ internal class CreateDelegateVisitor : AstVisitor
         }
 
         var argsDelegates = argsDelegatesList.ToArray();
-        var callInfo = new FunctionCallInfo(ExecutionThread, argsDelegates);
+        var callInfo = new FunctionCallInfo(ExecutionThread, function.Name, argsDelegates);
         node.SetAttribute(AstAttributeKeys.ArgumentsKey, callInfo);
         NodeIdFuncMap[node.Id] = new FuncUnitDelegate(() =>
         {
             callInfo.Reset();
             callInfo.InvokePushArgs();
-            callInfo.FunctionName = function.Name;
             return function.Delegate(callInfo);
         }, node.GetDataType());
     }

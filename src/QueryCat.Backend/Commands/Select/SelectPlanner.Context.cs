@@ -215,7 +215,7 @@ internal sealed partial class SelectPlanner
     private IRowsInput[] Context_CreateInputSourceFromStringVariable(SelectCommandContext currentContext,
         string strVariable, FunctionCallNode? formatterNode)
     {
-        var callInfo = new FunctionCallInfo(ExecutionThread);
+        var callInfo = new FunctionCallInfo(ExecutionThread, "read");
         callInfo.Push(new VariantValue(strVariable));
         if (formatterNode != null)
         {

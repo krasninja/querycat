@@ -74,7 +74,7 @@ public sealed class FunctionsManagerTests
     {
         var str = callInfo.GetAt(0);
         long sum = 0;
-        for (int i = 1; i < callInfo.Arguments.Values.Length; i++)
+        for (int i = 1; i < callInfo.Count; i++)
         {
             sum += callInfo.GetAt(i).AsInteger;
         }

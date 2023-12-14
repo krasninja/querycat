@@ -8,11 +8,13 @@ namespace QueryCat.Backend.Core.Functions;
 /// </summary>
 public sealed class FunctionCallInfo : IEnumerable<VariantValue>
 {
+    private const string UndefinedFunctionName = "self";
+
     private readonly VariantValueArray _args;
     private int _argsCursor;
     private readonly IFuncUnit[] _pushArgs;
 
-    public static FunctionCallInfo Empty { get; } = new(NullExecutionThread.Instance);
+    public static FunctionCallInfo Empty { get; } = new(NullExecutionThread.Instance, UndefinedFunctionName);
 
     /// <summary>
     /// Current execution thread.
@@ -25,11 +27,6 @@ public sealed class FunctionCallInfo : IEnumerable<VariantValue>
     public IWindowInfo? WindowInfo { get; internal set; }
 
     /// <summary>
-    /// Function call arguments.
-    /// </summary>
-    public VariantValueArray Arguments => _args;
-
-    /// <summary>
     /// Arguments count.
     /// </summary>
     public int Count => _args.Values.Length;
@@ -37,11 +34,11 @@ public sealed class FunctionCallInfo : IEnumerable<VariantValue>
     /// <summary>
     /// Calling function name.
     /// </summary>
-    public string FunctionName { get; set; } = string.Empty;
+    public string FunctionName { get; }
 
     public static FunctionCallInfo CreateWithArguments(IExecutionThread executionThread, params VariantValue[] args)
     {
-        var callInfo = new FunctionCallInfo(executionThread);
+        var callInfo = new FunctionCallInfo(executionThread, UndefinedFunctionName);
         foreach (var arg in args)
         {
             callInfo.Push(arg);
@@ -51,7 +48,7 @@ public sealed class FunctionCallInfo : IEnumerable<VariantValue>
 
     public static FunctionCallInfo CreateWithArguments(IExecutionThread executionThread, params object[] args)
     {
-        var callInfo = new FunctionCallInfo(executionThread);
+        var callInfo = new FunctionCallInfo(executionThread, UndefinedFunctionName);
         foreach (var arg in args)
         {
             callInfo.Push(VariantValue.CreateFromObject(arg));
@@ -59,11 +56,12 @@ public sealed class FunctionCallInfo : IEnumerable<VariantValue>
         return callInfo;
     }
 
-    public FunctionCallInfo(IExecutionThread executionThread, params IFuncUnit[] pushArgs)
+    public FunctionCallInfo(IExecutionThread executionThread, string functionName, params IFuncUnit[] pushArgs)
     {
         _pushArgs = pushArgs;
         _args = new VariantValueArray(pushArgs.Length);
         ExecutionThread = executionThread;
+        FunctionName = functionName;
     }
 
     public void Push(VariantValue value)

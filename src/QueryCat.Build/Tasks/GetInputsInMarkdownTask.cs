@@ -58,12 +58,11 @@ public class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
             var queryContext = new CollectQueryContext();
             try
             {
-                var functionCallInfo = new FunctionCallInfo(ExecutionThread.DefaultInstance);
+                var functionCallInfo = new FunctionCallInfo(ExecutionThread.DefaultInstance, inputFunction.Name);
                 for (var i = 0; i < inputFunction.Arguments.Length; i++)
                 {
                     functionCallInfo.Push(VariantValue.Null);
                 }
-                functionCallInfo.FunctionName = inputFunction.Name;
                 rowsInput = inputFunction.Delegate.Invoke(functionCallInfo).As<IRowsInputKeys>();
                 rowsInput.QueryContext = queryContext;
                 rowsInput.Open();
@@ -105,7 +104,6 @@ public class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
         context.Log.Information($"Wrote to {file}.");
 
         pluginsLoader.Dispose();
-        thread.Dispose();
         return Task.CompletedTask;
     }
 }

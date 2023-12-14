@@ -121,7 +121,7 @@ internal static class FunctionFormatter
                 {
                     arr[i] = CancellationToken.None;
                 }
-                else if (args.Arguments.Values.Length > i)
+                else if (args.Count > i)
                 {
                     arr[i] = Converter.ConvertValue(args.GetAt(i), parameter.ParameterType);
                 }
