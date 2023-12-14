@@ -90,7 +90,7 @@ public sealed class FunctionCallInfo : IEnumerable<VariantValue>
     /// <param name="default">Default value.</param>
     /// <returns>Value.</returns>
     public VariantValue GetAtOrDefault(int position, VariantValue @default = default)
-        => _args.Values.Length > position ? _args.Values[position] : @default;
+        => _args.Values.Length > position && position > -1 ? _args.Values[position] : @default;
 
     /// <summary>
     /// Clean current arguments stack.

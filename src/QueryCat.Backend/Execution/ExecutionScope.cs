@@ -15,12 +15,12 @@ public sealed class ExecutionScope
     /// <summary>
     /// Variables array.
     /// </summary>
-    public IReadOnlyList<VariantValue> Variables => _variables;
+    internal IReadOnlyList<VariantValue> Variables => _variables;
 
     /// <summary>
     /// Map of variable name and index.
     /// </summary>
-    public IReadOnlyDictionary<string, int> VariablesNames => _variablesNames;
+    internal IReadOnlyDictionary<string, int> VariablesNames => _variablesNames;
 
     public ExecutionScope(ExecutionScope? parent = null)
     {
@@ -68,6 +68,15 @@ public sealed class ExecutionScope
     /// <returns>Variable index within scope.</returns>
     public int DefineVariable(string name, VariantValue value = default)
         => DefineVariable(name, value.GetInternalType(), value);
+
+    /// <summary>
+    /// Define new variable.
+    /// </summary>
+    /// <param name="name">Variable name.</param>
+    /// <param name="value">Optional value.</param>
+    /// <returns>Variable index within scope.</returns>
+    public int DefineVariable(string name, object value)
+        => DefineVariable(name, VariantValue.CreateFromObject(value));
 
     /// <summary>
     /// Define new variable.

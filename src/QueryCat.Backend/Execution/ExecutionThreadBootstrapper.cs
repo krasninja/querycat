@@ -16,7 +16,10 @@ public sealed class ExecutionThreadBootstrapper
 {
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(ExecutionThreadBootstrapper));
 
-    public void Bootstrap(ExecutionThread executionThread, PluginsLoader pluginsLoader, params Action<IFunctionsManager>[] registrations)
+    public void Bootstrap(
+        ExecutionThread executionThread,
+        PluginsLoader? pluginsLoader = null,
+        params Action<IFunctionsManager>[] registrations)
     {
 #if DEBUG
         var timer = new Stopwatch();
@@ -38,7 +41,10 @@ public sealed class ExecutionThreadBootstrapper
         {
             executionThread.FunctionsManager.RegisterFactory(registration, postpone: false);
         }
-        AsyncUtils.RunSync(pluginsLoader.LoadAsync);
+        if (pluginsLoader != null)
+        {
+            AsyncUtils.RunSync(pluginsLoader.LoadAsync);
+        }
 #if DEBUG
         timer.Stop();
         _logger.LogTrace("Bootstrap time: {Time}.", timer.Elapsed);
