@@ -64,12 +64,16 @@ public sealed class FunctionCallInfo : IEnumerable<VariantValue>
         FunctionName = functionName;
     }
 
+    /// <summary>
+    /// Push new value to argument stack.
+    /// </summary>
+    /// <param name="value">Argument value.</param>
     public void Push(VariantValue value)
     {
         _argsCursor++;
         if (_argsCursor > _args.Values.Length)
         {
-            _args.Resize(_argsCursor);
+            _args.EnsureResize(_argsCursor);
         }
         _args.Values[_argsCursor - 1] = value;
     }

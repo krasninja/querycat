@@ -44,19 +44,21 @@ public sealed class VariantValueArray
         Array.Copy(variantValueArray._values, _values, variantValueArray._values.Length);
     }
 
-    public void Resize(int newSize)
+    /// <summary>
+    /// Ensure that array has enough size. Resize if needed.
+    /// </summary>
+    /// <param name="newSize">New size.</param>
+    public void EnsureResize(int newSize)
     {
         if (newSize < 1)
         {
             throw new ArgumentOutOfRangeException(nameof(newSize));
         }
-        if (newSize == _values.Length)
+        if (newSize <= _values.Length)
         {
             return;
         }
-        var oldValues = _values;
-        _values = new VariantValue[newSize];
-        Array.Copy(oldValues, _values, oldValues.Length);
+        Array.Resize(ref _values, newSize);
     }
 
     /// <summary>
