@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
+  <metadata>
+    <id>QueryCat</id>
+    <title>QueryCat</title>
+    <summary>Simple experssions evaluator and SQL engine</summary>
+    <version>0.5.0</version>
+    <description>The QueryCat package provides functionality that allows you to evaluate SQL-like expressions and queries to your CLR objects.</description>
+    <authors>Ivan Kozhin</authors>
+    <owners>Ivan Kozhin</owners>
+    <license type="file">LICENSE.txt</license>
+    <projectUrl>https://github.com/krasninja/querycat</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <copyright>(c) Ivan Kozhin, 2022-2023</copyright>
+    <tags>sql csv tsv iisw3c json regexp xml subrip grok logs</tags>
+    <repository type="git" url="https://github.com/krasninja/querycat" commit="$(CommitHash)" />
+    <dependencies>
+      <group targetFramework="net7.0" />
+      <group targetFramework="net8.0" />
+    </dependencies>
+    <releaseNotes>You can find changelog at https://github.com/krasninja/querycat/blob/develop/CHANGELOG.md</releaseNotes>
+  </metadata>
+  <files>
+    <file src="bin\Release\**\QueryCat.Backend.dll" target="lib" />
+    <file src="bin\Release\**\QueryCat.Backend.pdb" target="lib" />
+    <file src="bin\Release\**\QueryCat.Backend.xml" target="lib" />
+    <file src="bin\Release\**\QueryCat.Backend.Core.dll" target="lib" />
+    <file src="bin\Release\**\QueryCat.Backend.Core.pdb" target="lib" />
+    <file src="bin\Release\**\QueryCat.Backend.Core.xml" target="lib" />
+    <file src="..\..\README.md" target="README.md" />
+    <file src="..\..\LICENSE.txt" target="LICENSE.txt" />
+  </files>
+</package>
