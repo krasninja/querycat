@@ -14,11 +14,11 @@ namespace QueryCat.Backend.Functions.AggregateFunctions;
 internal sealed class StringAggAggregateFunction : IAggregateFunction
 {
     /// <inheritdoc />
-    public VariantValueArray GetInitialState(DataType type) =>
-        new(VariantValue.CreateFromObject(new StringBuilder()));
+    public VariantValue[] GetInitialState(DataType type) =>
+        new[] { VariantValue.CreateFromObject(new StringBuilder()) };
 
     /// <inheritdoc />
-    public void Invoke(VariantValueArray state, FunctionCallInfo callInfo)
+    public void Invoke(VariantValue[] state, FunctionCallInfo callInfo)
     {
         var target = callInfo.GetAt(0);
         var delimiter = callInfo.GetAt(1).AsString;
@@ -28,7 +28,7 @@ internal sealed class StringAggAggregateFunction : IAggregateFunction
             return;
         }
 
-        var sb = state.Values[0].As<StringBuilder>();
+        var sb = state[0].As<StringBuilder>();
         if (sb.Length > 0)
         {
             sb.Append(delimiter);
@@ -37,6 +37,5 @@ internal sealed class StringAggAggregateFunction : IAggregateFunction
     }
 
     /// <inheritdoc />
-    public VariantValue GetResult(VariantValueArray state)
-        => new(state.Values[0].As<StringBuilder>().ToString());
+    public VariantValue GetResult(VariantValue[] state) => new(state[0].As<StringBuilder>().ToString());
 }

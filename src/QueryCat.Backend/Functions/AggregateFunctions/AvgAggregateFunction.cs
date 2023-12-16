@@ -22,29 +22,30 @@ internal sealed class AvgAggregateFunction : IAggregateFunction
     }
 
     /// <inheritdoc />
-    public VariantValueArray GetInitialState(DataType type)
-        => new(
+    public VariantValue[] GetInitialState(DataType type)
+        => new[]
+        {
             VariantValue.Null, // 0: sum
             new VariantValue(DataType.Integer) // 1: count
-        );
+        };
 
     /// <inheritdoc />
-    public void Invoke(VariantValueArray state, FunctionCallInfo callInfo)
+    public void Invoke(VariantValue[] state, FunctionCallInfo callInfo)
     {
         var value = callInfo.GetAt(0);
         if (!value.IsNull)
         {
-            AggregateFunctionsUtils.ExecuteWithNullInitialState(ref state.Values[0], in value, VariantValue.Add);
-            state.Values[1] =
-                _addDelegate.Invoke(in state.Values[1], in VariantValue.OneIntegerValue);
+            AggregateFunctionsUtils.ExecuteWithNullInitialState(ref state[0], in value, VariantValue.Add);
+            state[1] =
+                _addDelegate.Invoke(in state[1], in VariantValue.OneIntegerValue);
         }
     }
 
     /// <inheritdoc />
-    public VariantValue GetResult(VariantValueArray state)
+    public VariantValue GetResult(VariantValue[] state)
     {
-        var sum = state.Values[0];
-        var count = state.Values[1];
+        var sum = state[0];
+        var count = state[1];
 
         if (count == 0)
         {

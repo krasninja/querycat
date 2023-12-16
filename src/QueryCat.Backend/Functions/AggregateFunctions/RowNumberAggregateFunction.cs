@@ -20,22 +20,21 @@ internal sealed class RowNumberAggregateFunction : IAggregateFunction
     }
 
     /// <inheritdoc />
-    public VariantValueArray GetInitialState(DataType type) => new(VariantValue.OneIntegerValue);
+    public VariantValue[] GetInitialState(DataType type) => new[] { VariantValue.OneIntegerValue };
 
     /// <inheritdoc />
-    public void Invoke(VariantValueArray state, FunctionCallInfo callInfo)
+    public void Invoke(VariantValue[] state, FunctionCallInfo callInfo)
     {
         if (callInfo.WindowInfo != null)
         {
-            state.Values[0] = new(callInfo.WindowInfo.GetCurrentRowPosition() + 1);
+            state[0] = new(callInfo.WindowInfo.GetCurrentRowPosition() + 1);
         }
         else
         {
-            state.Values[0] =
-                _addDelegate.Invoke(in state.Values[0], in VariantValue.OneIntegerValue);
+            state[0] = _addDelegate.Invoke(in state[0], in VariantValue.OneIntegerValue);
         }
     }
 
     /// <inheritdoc />
-    public VariantValue GetResult(VariantValueArray state) => state.Values[0];
+    public VariantValue GetResult(VariantValue[] state) => state[0];
 }

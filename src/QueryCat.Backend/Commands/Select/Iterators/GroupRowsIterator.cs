@@ -19,6 +19,44 @@ internal sealed class GroupRowsIterator : IRowsIterator, IRowsIteratorParent
     private readonly SelectCommandContext _context;
     private readonly AggregateTarget[] _targets;
 
+    private sealed class ArrayEqualityComparer : IEqualityComparer<VariantValue[]>
+    {
+        public static ArrayEqualityComparer Instance { get; } = new();
+
+        /// <inheritdoc />
+        public bool Equals(VariantValue[]? x, VariantValue[]? y)
+        {
+            if (x == y)
+            {
+                return true;
+            }
+            if (x == null || y == null)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < x.Length; i++)
+            {
+                if (!x[i].Equals(y[i]))
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        /// <inheritdoc />
+        public int GetHashCode(VariantValue[] obj)
+        {
+            var hashCode = default(HashCode);
+            for (var i = 0; i < obj.Length; i++)
+            {
+                hashCode.Add(obj[i]);
+            }
+            return hashCode.ToHashCode();
+        }
+    }
+
     internal static IFuncUnit[] NoGroupsKeyFactory { get; } =
     {
         new FuncUnitStatic(VariantValue.OneIntegerValue)
@@ -41,11 +79,11 @@ internal sealed class GroupRowsIterator : IRowsIterator, IRowsIteratorParent
 
     private readonly struct GroupKeyEntry
     {
-        public VariantValueArray[] AggregateStates { get; }
+        public VariantValue[][] AggregateStates { get; }
 
         public int RowIndex { get; }
 
-        public GroupKeyEntry(VariantValueArray[] aggregateStates, int rowIndex)
+        public GroupKeyEntry(VariantValue[][] aggregateStates, int rowIndex)
         {
             AggregateStates = aggregateStates;
             RowIndex = rowIndex;
@@ -107,17 +145,38 @@ internal sealed class GroupRowsIterator : IRowsIterator, IRowsIteratorParent
             .AppendSubQueriesWithIndent(_keys);
     }
 
+    private static VariantValue[] KeysToArray(IFuncUnit[] keys)
+    {
+        var arr = new VariantValue[keys.Length];
+        for (var i = 0; i < keys.Length; i++)
+        {
+            arr[i] = keys[i].Invoke();
+        }
+        return arr;
+    }
+
+    private static VariantValue[][] TargetsToInitialStates(AggregateTarget[] targets)
+    {
+        var arr = new VariantValue[targets.Length][];
+        for (var i = 0; i < targets.Length; i++)
+        {
+            arr[i] = targets[i].AggregateFunction.GetInitialState(targets[i].ReturnType);
+        }
+        return arr;
+    }
+
     private void FillRows()
     {
-        var keysRowIndexesMap = new Dictionary<VariantValueArray, GroupKeyEntry>(capacity: 1024);
+        var keysRowIndexesMap = new Dictionary<VariantValue[], GroupKeyEntry>(
+            comparer: ArrayEqualityComparer.Instance,
+            capacity: 1024);
 
         // Fill keysRowIndexesMap.
         while (_rowsIterator.MoveNext())
         {
             // Format key and fill aggregate values.
             _keys[0].Invoke();
-            var keyValues = _keys.Select(f => f.Invoke()).ToArray();
-            var key = new VariantValueArray(keyValues);
+            var key = KeysToArray(_keys);
             if (!keysRowIndexesMap.TryGetValue(key, out GroupKeyEntry groupKey))
             {
                 var row = new Row(_rowsFrame);
@@ -125,27 +184,28 @@ internal sealed class GroupRowsIterator : IRowsIterator, IRowsIteratorParent
                 {
                     row[i] = _rowsIterator.Current[i];
                 }
-                VariantValueArray[] initialStates = _targets.Select(t => t.AggregateFunction.GetInitialState(t.ReturnType)).ToArray();
+                VariantValue[][] initialStates = TargetsToInitialStates(_targets);
                 groupKey = new GroupKeyEntry(initialStates, _rowsFrame.AddRow(row));
                 keysRowIndexesMap.Add(key, groupKey);
             }
 
-            for (int i = 0; i < _targets.Length; i++)
+            for (var i = 0; i < _targets.Length; i++)
             {
-                _targets[i].ValueGenerator.Invoke(); // We need this call to fill FunctionCallInfo.
-                _targets[i].AggregateFunction.Invoke(groupKey.AggregateStates[i], _targets[i].FunctionCallInfo);
+                var target = _targets[i];
+                target.ValueGenerator.Invoke(); // We need this call to fill FunctionCallInfo.
+                target.AggregateFunction.Invoke(groupKey.AggregateStates[i], target.FunctionCallInfo);
             }
         }
 
         // Fill rows frame.
-        if (keysRowIndexesMap.Any())
+        if (keysRowIndexesMap.Count > 0)
         {
-            foreach (var mapValue in keysRowIndexesMap)
+            foreach (var mapValue in keysRowIndexesMap.Values)
             {
-                for (int i = 0; i < _targets.Length; i++)
+                for (var i = 0; i < _targets.Length; i++)
                 {
-                    var value = _targets[i].AggregateFunction.GetResult(mapValue.Value.AggregateStates[i]);
-                    _rowsFrame.UpdateValue(mapValue.Value.RowIndex, _aggregateColumnsOffset + i, value);
+                    var value = _targets[i].AggregateFunction.GetResult(mapValue.AggregateStates[i]);
+                    _rowsFrame.UpdateValue(mapValue.RowIndex, _aggregateColumnsOffset + i, value);
                 }
             }
         }

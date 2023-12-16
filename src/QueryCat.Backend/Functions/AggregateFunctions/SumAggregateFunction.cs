@@ -15,16 +15,15 @@ namespace QueryCat.Backend.Functions.AggregateFunctions;
 internal sealed class SumAggregateFunction : IAggregateFunction
 {
     /// <inheritdoc />
-    public VariantValueArray GetInitialState(DataType type)
-        => new(VariantValue.Null);
+    public VariantValue[] GetInitialState(DataType type) => new[] { VariantValue.Null };
 
     /// <inheritdoc />
-    public void Invoke(VariantValueArray state, FunctionCallInfo callInfo)
+    public void Invoke(VariantValue[] state, FunctionCallInfo callInfo)
     {
         var value = callInfo.GetAt(0);
-        AggregateFunctionsUtils.ExecuteWithNullInitialState(ref state.Values[0], in value, VariantValue.Add);
+        AggregateFunctionsUtils.ExecuteWithNullInitialState(ref state[0], in value, VariantValue.Add);
     }
 
     /// <inheritdoc />
-    public VariantValue GetResult(VariantValueArray state) => state.Values[0];
+    public VariantValue GetResult(VariantValue[] state) => state[0];
 }

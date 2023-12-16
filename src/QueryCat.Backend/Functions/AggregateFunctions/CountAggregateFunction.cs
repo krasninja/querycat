@@ -20,19 +20,19 @@ internal sealed class CountAggregateFunction : IAggregateFunction
     }
 
     /// <inheritdoc />
-    public VariantValueArray GetInitialState(DataType type)
-        => new(new VariantValue(0));
+    public VariantValue[] GetInitialState(DataType type)
+        => new[] { new VariantValue(0) };
 
     /// <inheritdoc />
-    public void Invoke(VariantValueArray state, FunctionCallInfo callInfo)
+    public void Invoke(VariantValue[] state, FunctionCallInfo callInfo)
     {
         if (!callInfo.GetAt(0).IsNull)
         {
-            state.Values[0] =
-                _addDelegate.Invoke(in state.Values[0], in VariantValue.OneIntegerValue);
+            state[0] =
+                _addDelegate.Invoke(in state[0], in VariantValue.OneIntegerValue);
         }
     }
 
     /// <inheritdoc />
-    public VariantValue GetResult(VariantValueArray state) => state.Values[0];
+    public VariantValue GetResult(VariantValue[] state) => state[0];
 }
