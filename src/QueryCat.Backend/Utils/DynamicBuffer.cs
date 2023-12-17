@@ -357,6 +357,10 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
         {
             throw new ArgumentOutOfRangeException(nameof(size));
         }
+        if (size == 0)
+        {
+            return;
+        }
 
         var iterator = IteratorStart();
         while (iterator.IsNotEmpty)

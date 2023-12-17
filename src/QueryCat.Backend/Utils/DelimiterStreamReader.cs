@@ -394,11 +394,6 @@ public class DelimiterStreamReader
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     private int ReadNextBufferData()
     {
-        if (_streamReader.EndOfStream)
-        {
-            return 0;
-        }
-
         var buffer = _dynamicBuffer.Allocate();
         var readBytes = _streamReader.Read(buffer);
         _dynamicBuffer.Commit(readBytes);
