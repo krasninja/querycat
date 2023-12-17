@@ -72,8 +72,9 @@ public sealed class DefaultPluginsManager : IPluginsManager, IDisposable
         foreach (var prefix in _prefixes)
         {
             var newName = prefix + name;
-            var plugin = allPlugins.FirstOrDefault(p => newName.Equals(p.Name, StringComparison.OrdinalIgnoreCase));
-            if (plugin != null && (plugin.Platform == platform || string.IsNullOrEmpty(platform)))
+            var plugin = allPlugins.FirstOrDefault(p => newName.Equals(p.Name, StringComparison.OrdinalIgnoreCase)
+                && (p.Platform == platform || string.IsNullOrEmpty(platform)));
+            if (plugin != null)
             {
                 return plugin;
             }
