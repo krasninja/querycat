@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using System.Xml;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
@@ -15,6 +16,7 @@ public sealed class DefaultPluginsManager : IPluginsManager, IDisposable
 
     private readonly IEnumerable<string> _pluginDirectories;
     private readonly PluginsLoader _pluginsLoader;
+    private readonly string? _platform;
     private readonly string _bucketUri;
     private readonly HttpClient _httpClient = new();
     private List<PluginInfo>? _remotePluginsCache;
@@ -26,10 +28,12 @@ public sealed class DefaultPluginsManager : IPluginsManager, IDisposable
     public DefaultPluginsManager(
         IEnumerable<string> pluginDirectories,
         PluginsLoader pluginsLoader,
+        string? platform = null,
         string? bucketUri = null)
     {
         _pluginDirectories = pluginDirectories;
         _pluginsLoader = pluginsLoader;
+        _platform = platform;
         _bucketUri = !string.IsNullOrEmpty(bucketUri) ? bucketUri : PluginsStorageUri;
     }
 
@@ -58,18 +62,18 @@ public sealed class DefaultPluginsManager : IPluginsManager, IDisposable
             : Array.Empty<PluginInfo>();
         var local = GetLocalPlugins();
 
-        return remote.Union(local);
+        return remote.Union(local).OrderBy(p => p.Name);
     }
 
     private static readonly string[] _prefixes = { string.Empty, "qcat-plugins-", "qcat.plugins.", "plugins-", "plugins." };
 
-    private static PluginInfo? TryFindPlugin(string name, IReadOnlyCollection<PluginInfo> allPlugins)
+    private static PluginInfo? TryFindPlugin(string name, string? platform, IReadOnlyCollection<PluginInfo> allPlugins)
     {
         foreach (var prefix in _prefixes)
         {
             var newName = prefix + name;
             var plugin = allPlugins.FirstOrDefault(p => newName.Equals(p.Name, StringComparison.OrdinalIgnoreCase));
-            if (plugin != null)
+            if (plugin != null && (plugin.Platform == platform || string.IsNullOrEmpty(platform)))
             {
                 return plugin;
             }
@@ -81,7 +85,7 @@ public sealed class DefaultPluginsManager : IPluginsManager, IDisposable
     public async Task<int> InstallAsync(string name, CancellationToken cancellationToken = default)
     {
         var plugins = await GetRemotePluginsAsync(cancellationToken).ConfigureAwait(false);
-        var plugin = TryFindPlugin(name, plugins.ToList());
+        var plugin = TryFindPlugin(name, Application.GetPlatform(), plugins.ToList());
         if (plugin == null)
         {
             throw new PluginException($"Cannot find plugin '{name}' in repository.");
@@ -99,8 +103,21 @@ public sealed class DefaultPluginsManager : IPluginsManager, IDisposable
         outputFileStream.Close();
         var overwrite = File.Exists(fullFileName);
         File.Move(fullFileNameDownloading, fullFileName, overwrite);
+        MakeUnixExecutable(fullFileName);
         _logger.LogInformation("Save plugin file {FullFileName}.", fullFileName);
         return overwrite ? 1 : 0;
+    }
+
+    private static void MakeUnixExecutable(string file)
+    {
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX)
+            || RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
+            || RuntimeInformation.IsOSPlatform(OSPlatform.FreeBSD))
+        {
+            var mode = File.GetUnixFileMode(file);
+            mode |= UnixFileMode.UserExecute | UnixFileMode.GroupExecute | UnixFileMode.OtherExecute;
+            File.SetUnixFileMode(file, mode);
+        }
     }
 
     /// <inheritdoc />
@@ -133,7 +150,7 @@ public sealed class DefaultPluginsManager : IPluginsManager, IDisposable
     public Task RemoveAsync(string name, CancellationToken cancellationToken = default)
     {
         var plugins = GetLocalPlugins();
-        var plugin = TryFindPlugin(name, plugins.ToList());
+        var plugin = TryFindPlugin(name, _platform, plugins.ToList());
         if (plugin == null)
         {
             throw new PluginException($"Cannot find plugin '{name}' in repository.");
@@ -147,7 +164,7 @@ public sealed class DefaultPluginsManager : IPluginsManager, IDisposable
         return Task.CompletedTask;
     }
 
-    private async Task<IEnumerable<PluginInfo>> GetRemotePluginsAsync(CancellationToken cancellationToken = default)
+    private async Task<IReadOnlyList<PluginInfo>> GetRemotePluginsAsync(CancellationToken cancellationToken = default)
     {
         if (_remotePluginsCache != null)
         {
@@ -164,7 +181,7 @@ public sealed class DefaultPluginsManager : IPluginsManager, IDisposable
         // Select only latest version.
         _remotePluginsCache = xmlKeys
             .Select(k => CreatePluginInfoFromKey(k, _bucketUri))
-            .GroupBy(k => k.Name, v => v)
+            .GroupBy(k => Tuple.Create(k.Name, k.Platform, k.Architecture), v => v)
             .Select(v => v.MaxBy(q => q.Version))
             .ToList()!;
         return _remotePluginsCache;
