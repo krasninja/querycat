@@ -51,8 +51,11 @@ internal class ApplicationOptions
 #endif
         IPluginsManager pluginsManager = NullPluginsManager.Instance;
 #if ENABLE_PLUGINS
-        pluginsManager = new DefaultPluginsManager(executionOptions.PluginDirectories, pluginsLoader,
-            executionOptions.PluginsRepositoryUri);
+        pluginsManager = new DefaultPluginsManager(
+            executionOptions.PluginDirectories,
+            pluginsLoader,
+            platform: Application.GetPlatform(),
+            bucketUri: executionOptions.PluginsRepositoryUri);
         executionThread.PluginsManager = pluginsManager;
 #endif
         executionThread.Statistic.CountErrorRows = executionThread.Options.ShowDetailedStatistic;

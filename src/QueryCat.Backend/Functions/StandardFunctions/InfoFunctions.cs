@@ -113,6 +113,13 @@ public static class InfoFunctions
         return VariantValue.CreateFromObject(builder.BuildIterator(TimeZoneInfo.GetSystemTimeZones()));
     }
 
+    [Description("Get current running platform/OS.")]
+    [FunctionSignature("_platform(): string")]
+    internal static VariantValue Platform(FunctionCallInfo args)
+    {
+        return new VariantValue(Application.GetPlatform());
+    }
+
     internal static void RegisterFunctions(IFunctionsManager functionsManager)
     {
         functionsManager.RegisterFunction(Functions);
@@ -123,5 +130,6 @@ public static class InfoFunctions
         functionsManager.RegisterFunction(TypeOf);
         functionsManager.RegisterFunction(Version);
         functionsManager.RegisterFunction(TimeZoneNames);
+        functionsManager.RegisterFunction(Platform);
     }
 }

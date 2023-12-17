@@ -63,6 +63,16 @@ public class PluginInfo
         {
             var architecture = match.Groups["arch"].Value;
             var platform = match.Groups["platform"].Value;
+
+            // With certain extensions we can be sure it is Windows.
+            var extension = Path.GetExtension(fileName);
+            if (string.IsNullOrEmpty(platform)
+                && (extension.Equals(".exe", StringComparison.OrdinalIgnoreCase)
+                    || extension.Equals(".dll", StringComparison.OrdinalIgnoreCase)))
+            {
+                platform = Application.PlatformWindows;
+            }
+
             return new PluginInfo(match.Groups["name"].Value)
             {
                 Version = new Version(match.Groups["version"].Value),
