@@ -39,7 +39,7 @@ internal sealed class AstTraversal
     public IEnumerable<IAstNode> GetCurrentStack() => _treeStack.Select(s => s.Node);
 
     /// <summary>
-    /// Get first parent of type <see cref="TNode" />.
+    /// Get first parent of type <see ref="TNode" />.
     /// </summary>
     /// <typeparam name="TNode">Target type.</typeparam>
     /// <returns>Found parent node or null.</returns>
@@ -47,7 +47,7 @@ internal sealed class AstTraversal
         => GetParents<TNode>().FirstOrDefault();
 
     /// <summary>
-    /// Get first parent of type <see cref="TNode" /> that matches condition.
+    /// Get first parent of type <see ref="TNode" /> that matches condition.
     /// </summary>
     /// <typeparam name="TNode">Target type.</typeparam>
     /// <returns>Found parent node or null.</returns>

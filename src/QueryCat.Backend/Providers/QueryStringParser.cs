@@ -7,7 +7,7 @@ internal static class QueryStringParser
     public const string QueryDelimiter = "??";
 
     /// <summary>
-    /// Split uri string to URI and arguments. For example: /tmp/1.json&&q=123 => /tmp/1.json, q=123.
+    /// Split uri string to URI and arguments. For example: /tmp/1.json&amp;&amp;q=123 => /tmp/1.json, q=123.
     /// </summary>
     /// <param name="uri">URI string.</param>
     /// <returns>URI and arguments.</returns>

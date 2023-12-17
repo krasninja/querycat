@@ -23,7 +23,7 @@ internal static class AstNodeExtensions
 
     /// <summary>
     /// Pre-order traverse the tree starting from the node
-    /// and yield only nodes of type <see cref="TNodeType" />.
+    /// and yield only nodes of type <see ref="TNodeType" />.
     /// </summary>
     /// <param name="node">AST node.</param>
     /// <param name="typesToIgnore">Ignore node types.</param>

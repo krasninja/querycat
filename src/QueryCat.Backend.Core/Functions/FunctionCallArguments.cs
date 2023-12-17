@@ -24,7 +24,7 @@ public sealed class FunctionCallArguments
     public IReadOnlyList<VariantValue> Positional => _positional;
 
     /// <summary>
-    /// Create from query string. Example string: arg1=10&Name=John.
+    /// Create from query string. Example string: arg1=10&amp;Name=John.
     /// </summary>
     /// <param name="query">Query.</param>
     /// <returns>Instance of <see cref="FunctionCallArguments" />.</returns>
