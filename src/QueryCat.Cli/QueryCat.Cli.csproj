@@ -14,7 +14,7 @@
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-    <DefineConstants>TRACE;ENABLE_PLUGINS;PLUGIN_ASSEMBLY</DefineConstants>
+    <DefineConstants>TRACE;ENABLE_PLUGINS;PLUGIN_THRIFT</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
