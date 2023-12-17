@@ -1,4 +1,5 @@
 using System.Text;
+using Microsoft.Extensions.ObjectPool;
 
 namespace QueryCat.Backend.Core.Utils;
 
@@ -7,6 +8,10 @@ namespace QueryCat.Backend.Core.Utils;
 /// </summary>
 internal static class StringUtils
 {
+    private const string QuoteChar = "\"";
+
+    private static readonly ObjectPool<List<char>> ListCharPool = ObjectPool.Create<List<char>>();
+
     /// <summary>
     /// Implements SQL LIKE pattern comparision.
     /// </summary>
@@ -24,7 +29,7 @@ internal static class StringUtils
             endOfPattern = false;
         var lastWildCard = -1;
         var patternIndex = 0;
-        var set = new List<char>();
+        var set = ListCharPool.Get();
         char p = '\0';
 
         for (var i = 0; i < str.Length; i++)
@@ -156,10 +161,11 @@ internal static class StringUtils
                 endOfPattern = true;
             }
         }
+
+        set.Clear();
+        ListCharPool.Return(set);
         return isMatch && endOfPattern;
     }
-
-    private const string QuoteChar = "\"";
 
     /// <summary>
     /// Quote the specified string.
