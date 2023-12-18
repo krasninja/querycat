@@ -95,7 +95,7 @@ internal static class JsonFunctions
             {
                 ["value"] = obj.ToString(),
             };
-            node = JsonSerializer.SerializeToNode(dict);
+            node = JsonSerializer.SerializeToNode(dict, SourceGenerationContext.Default.DictionaryStringObject);
         }
         else
         {
