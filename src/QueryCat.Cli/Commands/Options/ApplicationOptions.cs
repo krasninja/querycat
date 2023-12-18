@@ -2,7 +2,6 @@ using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Plugins;
 using QueryCat.Backend.Execution;
-using QueryCat.Backend.Providers;
 using QueryCat.Cli.Infrastructure;
 
 namespace QueryCat.Cli.Commands.Options;
@@ -87,7 +86,7 @@ internal class ApplicationOptions
     {
         var root = CreateApplicationRoot(executionOptions);
         var tableOutput = new Backend.Formatters.TextTableOutput(
-            stream: StandardInputOutput.GetConsoleOutput(),
+            stream: Backend.IO.Stdio.GetConsoleOutput(),
             separator: columnsSeparator,
             style: outputStyle);
         root.Thread.Options.DefaultRowsOutput = new Backend.Formatters.PagingOutput(

@@ -5,25 +5,20 @@ using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Formatters;
 
-namespace QueryCat.Backend.Providers;
+namespace QueryCat.Backend.IO;
 
-/// <summary>
-/// Web request providers.
-/// </summary>
-internal static class CurlInput
+internal static partial class Functions
 {
-    private const string ContentTypeHeader = "Content-Type";
-
     private static readonly HttpClient HttpClient = new();
 
     [Description("Read the HTTP resource.")]
     [FunctionSignature("curl(uri: string, fmt?: object<IRowsFormatter>): object<IRowsInput>")]
-    public static VariantValue WGet(FunctionCallInfo args)
+    public static VariantValue Curl_Curl(FunctionCallInfo args)
     {
         var uriArgument = args.GetAt(0).AsString;
         var formatter = args.GetAt(1).AsObject as IRowsFormatter;
 
-        (uriArgument, var funcArgs) = QueryStringParser.ParseUri(uriArgument);
+        (uriArgument, var funcArgs) = Utils_ParseUri(uriArgument);
 
         if (!Uri.TryCreate(uriArgument, UriKind.Absolute, out var uri))
         {

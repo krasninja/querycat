@@ -2,7 +2,6 @@ using System.CommandLine;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Execution;
-using QueryCat.Backend.Providers;
 using QueryCat.Cli.Commands.Options;
 #if ENABLE_PLUGINS && PLUGIN_THRIFT
 using QueryCat.Backend.ThriftPlugins;
@@ -24,7 +23,7 @@ internal class PluginDebugCommand : BaseQueryCommand
 #if ENABLE_PLUGINS && PLUGIN_THRIFT
             applicationOptions.InitializeLogger();
             var tableOutput = new Backend.Formatters.TextTableOutput(
-                stream: StandardInputOutput.GetConsoleOutput());
+                stream: Backend.IO.Stdio.GetConsoleOutput());
             var options = new ExecutionOptions
             {
                 UseConfig = true,

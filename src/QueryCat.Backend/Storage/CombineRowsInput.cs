@@ -1,7 +1,7 @@
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
 
-namespace QueryCat.Backend.Providers;
+namespace QueryCat.Backend.Storage;
 
 /// <summary>
 /// The class combines multiple rows inputs (of the same schema) into a single rows input.

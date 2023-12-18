@@ -9,7 +9,6 @@ using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Providers;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Storage;
@@ -222,7 +221,7 @@ internal sealed partial class SelectPlanner
             var formatter = Misc_CreateDelegate(formatterNode, currentContext).Invoke();
             callInfo.Push(formatter);
         }
-        var inputValue = GenericInputOutput.Read(callInfo);
+        var inputValue = IO.Functions.Read(callInfo);
         var rowsInput = inputValue.As<IRowsInput>();
         rowsInput.QueryContext = new SelectInputQueryContext(rowsInput);
         rowsInput.Open();

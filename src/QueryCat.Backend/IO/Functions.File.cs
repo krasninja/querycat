@@ -5,27 +5,25 @@ using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Formatters;
+using QueryCat.Backend.Storage;
 
-namespace QueryCat.Backend.Providers;
+namespace QueryCat.Backend.IO;
 
-/// <summary>
-/// Data provider that uses local files to read/write rows.
-/// </summary>
-internal static class FileInputOutput
+internal static partial class Functions
 {
     private static readonly string[] CompressFilesExtensions = { ".gz" };
 
     [Description("Read data from a file.")]
     [FunctionSignature("read_file(path: string, fmt?: object<IRowsFormatter>): object<IRowsInput>")]
-    public static VariantValue ReadFile(FunctionCallInfo args)
+    public static VariantValue File_ReadFile(FunctionCallInfo args)
     {
         var path = args.GetAt(0).AsString;
-        (path, var funcArgs) = QueryStringParser.ParseUri(path);
+        (path, var funcArgs) = Utils_ParseUri(path);
 
         var formatter = args.Count > 1
             ? args.GetAt(1).AsObject as IRowsFormatter
-            : GetFormatter(path, args.ExecutionThread, funcArgs);
-        var files = GetFileInputsByPath(path, args.ExecutionThread, formatter, funcArgs).ToList();
+            : File_GetFormatter(path, args.ExecutionThread, funcArgs);
+        var files = File_GetFileInputsByPath(path, args.ExecutionThread, formatter, funcArgs).ToList();
         if (!files.Any())
         {
             throw new QueryCatException($"No files match '{path}'.");
@@ -36,17 +34,17 @@ internal static class FileInputOutput
 
     [Description("Write data to a file.")]
     [FunctionSignature("write_file(path: string, fmt?: object<IRowsFormatter>): object<IRowsOutput>")]
-    public static VariantValue WriteFile(FunctionCallInfo args)
+    public static VariantValue File_WriteFile(FunctionCallInfo args)
     {
         var pathArgument = args.GetAt(0);
         if (pathArgument.IsNull || string.IsNullOrEmpty(pathArgument.AsString))
         {
             throw new QueryCatException("Path is not defined.");
         }
-        var (path, funcArgs) = QueryStringParser.ParseUri(pathArgument.AsString);
+        var (path, funcArgs) = Utils_ParseUri(pathArgument.AsString);
 
         var formatter = args.GetAt(1).AsObject as IRowsFormatter;
-        formatter ??= GetFormatter(path, args.ExecutionThread, funcArgs);
+        formatter ??= File_GetFormatter(path, args.ExecutionThread, funcArgs);
         var fullDirectory = Path.GetDirectoryName(path);
         if (!string.IsNullOrEmpty(fullDirectory) && !Directory.Exists(fullDirectory))
         {
@@ -60,15 +58,15 @@ internal static class FileInputOutput
         return VariantValue.CreateFromObject(formatter.OpenOutput(file));
     }
 
-    private static IEnumerable<IRowsInput> GetFileInputsByPath(
+    private static IEnumerable<IRowsInput> File_GetFileInputsByPath(
         string path,
         IExecutionThread thread,
         IRowsFormatter? formatter = null,
         FunctionCallArguments? funcArgs = null)
     {
-        foreach (var file in GetFilesByPath(path))
+        foreach (var file in File_GetFilesByPath(path))
         {
-            var fileFormatter = formatter ?? GetFormatter(file, thread, funcArgs);
+            var fileFormatter = formatter ?? File_GetFormatter(file, thread, funcArgs);
             Stream fileStream = File.Open(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             if (CompressFilesExtensions.Contains(Path.GetExtension(file).ToLower()))
             {
@@ -78,7 +76,7 @@ internal static class FileInputOutput
         }
     }
 
-    private static IEnumerable<string> GetFilesByPath(string path)
+    private static IEnumerable<string> File_GetFilesByPath(string path)
     {
         // The case when we query from a single file.
         if (File.Exists(path))
@@ -108,7 +106,7 @@ internal static class FileInputOutput
         }
     }
 
-    private static IRowsFormatter GetFormatter(string path, IExecutionThread thread,
+    private static IRowsFormatter File_GetFormatter(string path, IExecutionThread thread,
         FunctionCallArguments? funcArgs = null)
     {
         var extension = Path.GetExtension(path).ToLower();

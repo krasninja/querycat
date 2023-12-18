@@ -1,8 +1,8 @@
 using QueryCat.Backend.Core.Functions;
 
-namespace QueryCat.Backend.Providers;
+namespace QueryCat.Backend.IO;
 
-internal static class QueryStringParser
+internal static partial class Functions
 {
     public const string QueryDelimiter = "??";
 
@@ -11,7 +11,7 @@ internal static class QueryStringParser
     /// </summary>
     /// <param name="uri">URI string.</param>
     /// <returns>URI and arguments.</returns>
-    public static (string Uri, FunctionCallArguments Args) ParseUri(string uri)
+    public static (string Uri, FunctionCallArguments Args) Utils_ParseUri(string uri)
     {
         var delimiterIndex = uri.IndexOf(QueryDelimiter, StringComparison.Ordinal);
         if (delimiterIndex == -1)

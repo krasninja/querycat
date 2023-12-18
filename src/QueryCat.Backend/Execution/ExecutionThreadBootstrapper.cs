@@ -35,7 +35,8 @@ public sealed class ExecutionThreadBootstrapper
         executionThread.FunctionsManager.RegisterFactory(JsonFunctions.RegisterFunctions);
         executionThread.FunctionsManager.RegisterFactory(ObjectFunctions.RegisterFunctions);
         executionThread.FunctionsManager.RegisterFactory(AggregatesRegistration.RegisterFunctions);
-        executionThread.FunctionsManager.RegisterFactory(Providers.Registration.RegisterFunctions);
+        executionThread.FunctionsManager.RegisterFactory(Inputs.Registration.RegisterFunctions);
+        executionThread.FunctionsManager.RegisterFactory(IO.Functions.RegisterFunctions);
         executionThread.FunctionsManager.RegisterFactory(Formatters.Registration.Register, postpone: false);
         foreach (var registration in registrations)
         {
