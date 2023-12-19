@@ -5,7 +5,7 @@ using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.IO;
 
-internal static partial class Functions
+internal static partial class IOFunctions
 {
     private const string ContentTypeHeader = "Content-Type";
 

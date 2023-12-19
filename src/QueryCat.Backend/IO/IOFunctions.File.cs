@@ -9,7 +9,7 @@ using QueryCat.Backend.Storage;
 
 namespace QueryCat.Backend.IO;
 
-internal static partial class Functions
+internal static partial class IOFunctions
 {
     private static readonly string[] CompressFilesExtensions = { ".gz" };
 

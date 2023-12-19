@@ -7,7 +7,7 @@ using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.IO;
 
-internal static partial class Functions
+internal static partial class IOFunctions
 {
     [Description("Write data to the system standard output.")]
     [FunctionSignature("stdout(fmt?: object<IRowsFormatter>, page_size: integer = 10): object<IRowsOutput>")]

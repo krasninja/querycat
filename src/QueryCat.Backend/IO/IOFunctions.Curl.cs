@@ -7,7 +7,7 @@ using QueryCat.Backend.Formatters;
 
 namespace QueryCat.Backend.IO;
 
-internal static partial class Functions
+internal static partial class IOFunctions
 {
     private static readonly HttpClient HttpClient = new();
 

@@ -221,7 +221,7 @@ internal sealed partial class SelectPlanner
             var formatter = Misc_CreateDelegate(formatterNode, currentContext).Invoke();
             callInfo.Push(formatter);
         }
-        var inputValue = IO.Functions.Read(callInfo);
+        var inputValue = IO.IOFunctions.Read(callInfo);
         var rowsInput = inputValue.As<IRowsInput>();
         rowsInput.QueryContext = new SelectInputQueryContext(rowsInput);
         rowsInput.Open();

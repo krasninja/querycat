@@ -2,7 +2,7 @@ using QueryCat.Backend.Core.Functions;
 
 namespace QueryCat.Backend.IO;
 
-internal static partial class Functions
+internal static partial class IOFunctions
 {
     public const string QueryDelimiter = "??";
 
