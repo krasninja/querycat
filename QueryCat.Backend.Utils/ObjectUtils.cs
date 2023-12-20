@@ -3,7 +3,7 @@ namespace QueryCat.Backend.Utils;
 /// <summary>
 /// Object utils.
 /// </summary>
-public static class ObjectUtils
+internal static class ObjectUtils
 {
     /// <summary>
     /// Change object type. The method takes into account also nullable types.

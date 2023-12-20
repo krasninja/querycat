@@ -3,7 +3,7 @@ namespace QueryCat.Backend.Utils;
 /// <summary>
 /// Class that allows to make simple C#-like queries to POCO.
 /// </summary>
-public static class ObjectQuery
+internal static class ObjectQuery
 {
     private enum TokenType
     {

@@ -3,7 +3,7 @@ namespace QueryCat.Backend.Utils;
 /// <summary>
 /// Extensions for <see cref="IDictionary{TKey, TValue}" />.
 /// </summary>
-public static class DictionaryExtensions
+internal static class DictionaryExtensions
 {
     /// <summary>
     /// Add or update dictionary value.

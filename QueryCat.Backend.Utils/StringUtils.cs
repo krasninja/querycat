@@ -6,7 +6,7 @@ namespace QueryCat.Backend.Utils;
 /// <summary>
 /// String utils.
 /// </summary>
-public static class StringUtils
+internal static class StringUtils
 {
     private const string QuoteChar = "\"";
 

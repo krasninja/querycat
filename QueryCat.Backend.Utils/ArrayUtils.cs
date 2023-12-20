@@ -3,7 +3,7 @@ namespace QueryCat.Backend.Utils;
 /// <summary>
 /// Array utils.
 /// </summary>
-public static class ArrayUtils
+internal static class ArrayUtils
 {
     /// <summary>
     /// Append source array to another.

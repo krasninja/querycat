@@ -1,12 +1,10 @@
-namespace QueryCat.Backend.Utils;
+namespace QueryCat.Backend.PluginsManager;
 
 /// <summary>
 /// The class implements files removing in two phase with ability to rollback.
 /// </summary>
 public sealed class TwoPhaseRemove : IDisposable
 {
-    private const string Suffix = ".old";
-
     private readonly List<string> _files = new();
     private readonly Random _random = new();
 
