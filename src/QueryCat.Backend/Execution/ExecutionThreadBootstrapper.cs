@@ -17,7 +17,7 @@ public sealed class ExecutionThreadBootstrapper
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(ExecutionThreadBootstrapper));
 
     public void Bootstrap(
-        ExecutionThread executionThread,
+        IExecutionThread executionThread,
         PluginsLoader? pluginsLoader = null,
         params Action<IFunctionsManager>[] registrations)
     {

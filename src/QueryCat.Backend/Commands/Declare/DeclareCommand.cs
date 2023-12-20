@@ -30,7 +30,8 @@ internal sealed class DeclareCommand : ICommand
         return new FuncCommandHandler(() =>
         {
             var value = valueHandler.Invoke();
-            scope.DefineVariable(declareNode.Name, declareNode.Type, value);
+            value = value.Cast(declareNode.Type);
+            scope.Variables[declareNode.Name] = value;
             return VariantValue.Null;
         });
     }

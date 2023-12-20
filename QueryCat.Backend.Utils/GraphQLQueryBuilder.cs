@@ -143,7 +143,7 @@ public sealed class GraphQLQueryBuilder
         return this;
     }
 
-    public IndentedStringBuilder Build()
+    internal IndentedStringBuilder Build()
     {
         var stringBuilder = new IndentedStringBuilder(skipFirstLineIndent: !IsRoot);
         stringBuilder.IncreaseIndent(_level);

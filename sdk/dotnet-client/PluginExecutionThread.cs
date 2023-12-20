@@ -26,6 +26,9 @@ public sealed class PluginExecutionThread : IExecutionThread
     /// <inheritdoc />
     public IInputConfigStorage ConfigStorage { get; }
 
+    /// <inheritdoc />
+    public IExecutionScope TopScope { get; } = NullExecutionScope.Instance;
+
     public PluginExecutionThread(PluginsManager.Client client)
     {
         PluginsManager = NullPluginsManager.Instance;

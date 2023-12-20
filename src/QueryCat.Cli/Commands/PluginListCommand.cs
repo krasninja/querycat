@@ -22,7 +22,7 @@ internal class PluginListCommand : BaseCommand
                 query += " AND platform = _platform();";
             }
             var result = root.Thread.Run(query);
-            root.Thread.TopScope.DefineVariable("result", result);
+            root.Thread.TopScope.Variables["result"] = result;
             root.Thread.Run("result");
         }, new ApplicationOptionsBinder(LogLevelOption, PluginDirectoriesOption), listAllArgument);
     }

@@ -25,6 +25,9 @@ public sealed class NullExecutionThread : IExecutionThread
     public IInputConfigStorage ConfigStorage { get; } = NullInputConfigStorage.Instance;
 
     /// <inheritdoc />
+    public IExecutionScope TopScope { get; } = NullExecutionScope.Instance;
+
+    /// <inheritdoc />
     public VariantValue Run(string query) => VariantValue.Null;
 
     /// <inheritdoc />

@@ -28,7 +28,7 @@ internal abstract class BaseQueryCommand : BaseCommand
         Add(VariablesOption);
     }
 
-    public void RunQuery(ExecutionThread executionThread, string query, string[]? files = null)
+    public void RunQuery(IExecutionThread executionThread, string query, string[]? files = null)
     {
         if (files != null && files.Any())
         {
@@ -64,7 +64,7 @@ internal abstract class BaseQueryCommand : BaseCommand
             {
                 throw new QueryCatException($"Cannot define variable '{name}'.");
             }
-            executionThread.TopScope.DefineVariable(name, targetType, value);
+            executionThread.TopScope.Variables[name] = value.Cast(targetType);
         }
     }
 }

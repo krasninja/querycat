@@ -31,6 +31,11 @@ public interface IExecutionThread : IDisposable
     IInputConfigStorage ConfigStorage { get; }
 
     /// <summary>
+    /// Top execution scope.
+    /// </summary>
+    IExecutionScope TopScope { get; }
+
+    /// <summary>
     /// Run text query.
     /// </summary>
     /// <param name="query">Query.</param>

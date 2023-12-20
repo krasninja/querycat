@@ -160,12 +160,10 @@ internal sealed partial class SelectPlanner
 
     private IRowsInput[] Context_CreateInputSourceFromVariable(SelectCommandContext currentContext, IdentifierExpressionNode idNode)
     {
-        var varIndex = ExecutionThread.TopScope.GetVariableIndex(idNode.FullName, out var scope);
-        if (varIndex < 0)
+        if (!ExecutionThread.TopScope.Variables.TryGetValue(idNode.FullName, out var value))
         {
             return Array.Empty<IRowsInput>();
         }
-        var value = scope!.Variables[varIndex];
         var internalValueType = value.GetInternalType();
         if (internalValueType == DataType.Object && value.AsObjectUnsafe != null)
         {

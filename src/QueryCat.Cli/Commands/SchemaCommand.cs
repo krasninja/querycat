@@ -23,15 +23,7 @@ internal class SchemaCommand : BaseQueryCommand
                     && result.AsObject is IRowsSchema rowsSchema)
                 {
                     var schema = thread.RunFunction(InfoFunctions.Schema, rowsSchema);
-                    var resultIndex = thread.TopScope.GetVariableIndex("result", out var _);
-                    if (resultIndex > -1)
-                    {
-                        thread.TopScope.SetVariable(resultIndex, schema);
-                    }
-                    else
-                    {
-                        thread.TopScope.DefineVariable("result", schema);
-                    }
+                    thread.TopScope.Variables["result"] = schema;
                     thread.Run("result");
                 }
                 else
