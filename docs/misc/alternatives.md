@@ -8,6 +8,8 @@ There are alternative and similar tools:
 
 - [osquery](https://osquery.io/). Uses SQL to provide various device info: disks, processes, apps, users and lot more. Written in C++.
 
+- [LNAV](https://github.com/tstack/lnav). The Logfile Navigator. It is a terminal application that can understand your log files and make it easy for you to find problems with little to no setup.
+
 - [csvq](https://mithrandie.github.io/csvq/). Can query CSV files. It can run SELECT, INSERT, UPDATE, DELETE queries. Written in Go.
 
 - [csvkit](https://github.com/wireservice/csvkit/). This is a suite of command-line tools for converting to and working with CSV, the king of tabular file formats. Written in Python.
