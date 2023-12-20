@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Core.Utils;
+using QueryCat.Backend.Utils;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Formatters;
 using QueryCat.Backend.Relational.Iterators;
@@ -41,6 +41,7 @@ internal sealed class WebServer
 
     private readonly ExecutionThread _executionThread;
     private readonly string? _password;
+    private readonly string? _filesRoot;
 
     private readonly Lazy<ILogger> _logger = new(() => Application.LoggerFactory.CreateLogger(nameof(WebServer)));
 
@@ -49,18 +50,21 @@ internal sealed class WebServer
     public WebServer(
         ExecutionThread executionThread,
         string? urls = null,
-        string? password = null)
+        string? password = null,
+        string? filesRoot = null)
     {
         _actions = new Dictionary<string, Action<HttpListenerRequest, HttpListenerResponse>>
         {
             ["/"] = HandleIndexAction,
             ["/index.html"] = HandleIndexAction,
             ["/api/info"] = HandleInfoApiAction,
-            ["/api/query"] = HandleQueryApiAction
+            ["/api/query"] = HandleQueryApiAction,
+            ["/api/files"] = HandleFilesApiAction,
         }.ToFrozenDictionary();
 
         _executionThread = executionThread;
         _password = password;
+        _filesRoot = filesRoot;
         Uri = urls ?? DefaultEndpointUri;
     }
 
@@ -144,6 +148,16 @@ internal sealed class WebServer
         // ReSharper disable once FunctionNeverReturns
     }
 
+    #region Handles
+
+    private void HandleIndexAction(HttpListenerRequest request, HttpListenerResponse response)
+    {
+        WriteResourceToStream(@"QueryCat.Cli.Infrastructure.WebServerIndex.html", response.OutputStream);
+        var sr = new StreamWriter(response.OutputStream);
+        sr.WriteLine(@"</script></body></html>");
+        sr.Flush();
+    }
+
     private void HandleQueryApiAction(HttpListenerRequest request, HttpListenerResponse response)
     {
         if (request.HttpMethod != PostMethod && request.HttpMethod != GetMethod)
@@ -153,13 +167,49 @@ internal sealed class WebServer
         }
 
         var query = GetQueryFromRequest(request);
-        _logger.Value.LogInformation($"[{request.RemoteEndPoint.Address}] Run query: {query}");
+        _logger.Value.LogInformation($"[{request.RemoteEndPoint.Address}] Query: {query}");
         var lastResult = _executionThread.Run(query);
 
         var iterator = lastResult.GetInternalType() == DataType.Object
             ? (IRowsIterator)lastResult.AsObject!
             : new SingleValueRowsIterator(lastResult);
+        WriteIterator(iterator, request, response);
+    }
 
+    private void HandleFilesApiAction(HttpListenerRequest request, HttpListenerResponse response)
+    {
+        if (request.HttpMethod != GetMethod)
+        {
+            response.StatusCode = (int)HttpStatusCode.MethodNotAllowed;
+            return;
+        }
+
+        var query = GetQueryFromRequest(request);
+        _logger.Value.LogInformation($"[{request.RemoteEndPoint.Address}] Files: {query}");
+    }
+
+    private void HandleInfoApiAction(HttpListenerRequest request, HttpListenerResponse response)
+    {
+        var localPlugins = AsyncUtils.RunSync(async ct
+            => await _executionThread.PluginsManager.ListAsync(localOnly: true, ct))!.ToList();
+        var dict = new WebServerReply
+        {
+            ["installedPlugins"] = localPlugins,
+            ["version"] = Application.GetVersion(),
+            ["os"] = System.Runtime.InteropServices.RuntimeInformation.OSDescription.Trim(),
+            ["platform"] = Environment.Version,
+            ["date"] = DateTimeOffset.Now,
+        };
+        JsonSerializer.Serialize(response.OutputStream, dict, SourceGenerationContext.Default.WebServerReply);
+    }
+
+    #endregion
+
+    private void WriteIterator(
+        IRowsIterator iterator,
+        HttpListenerRequest request,
+        HttpListenerResponse response)
+    {
         var acceptedType = request.AcceptTypes?.FirstOrDefault();
         if (string.IsNullOrEmpty(acceptedType) || acceptedType == "*/*")
         {
@@ -357,14 +407,6 @@ internal sealed class WebServer
         jsonWriter.WriteEndObject();
     }
 
-    private void HandleIndexAction(HttpListenerRequest request, HttpListenerResponse response)
-    {
-        WriteResourceToStream(@"QueryCat.Cli.Infrastructure.WebServerIndex.html", response.OutputStream);
-        var sr = new StreamWriter(response.OutputStream);
-        sr.WriteLine(@"</script></body></html>");
-        sr.Flush();
-    }
-
     private static void WriteResourceToStream(string uri, Stream outputStream)
     {
         // Determine path.
@@ -373,20 +415,5 @@ internal sealed class WebServer
         // Format: "{Namespace}.{Folder}.{filename}.{Extension}"
         using Stream? stream = assembly.GetManifestResourceStream(uri);
         stream?.CopyTo(outputStream);
-    }
-
-    private void HandleInfoApiAction(HttpListenerRequest request, HttpListenerResponse response)
-    {
-        var localPlugins = AsyncUtils.RunSync(async ct
-            => await _executionThread.PluginsManager.ListAsync(localOnly: true, ct))!.ToList();
-        var dict = new WebServerReply
-        {
-            ["installedPlugins"] = localPlugins,
-            ["version"] = Application.GetVersion(),
-            ["os"] = System.Runtime.InteropServices.RuntimeInformation.OSDescription.Trim(),
-            ["platform"] = Environment.Version,
-            ["date"] = DateTimeOffset.Now,
-        };
-        JsonSerializer.Serialize(response.OutputStream, dict, SourceGenerationContext.Default.WebServerReply);
     }
 }

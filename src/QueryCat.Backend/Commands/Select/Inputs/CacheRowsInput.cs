@@ -3,9 +3,8 @@ using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Core.Utils;
-using QueryCat.Backend.Storage;
 using QueryCat.Backend.Utils;
+using QueryCat.Backend.Storage;
 
 namespace QueryCat.Backend.Commands.Select.Inputs;
 

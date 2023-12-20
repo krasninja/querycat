@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using QueryCat.Backend;
 
 namespace QueryCat.Cli.Infrastructure;
 
@@ -10,7 +11,7 @@ internal sealed class QueryCatConsoleLogger : ILogger, IDisposable
     public QueryCatConsoleLogger(string name)
     {
         _name = name;
-        _streamWriter = new StreamWriter(Backend.IO.Stdio.GetConsoleOutput());
+        _streamWriter = new StreamWriter(Stdio.GetConsoleOutput());
     }
 
     private static string GetLogLevelString(LogLevel logLevel)

@@ -1,4 +1,4 @@
-using QueryCat.Backend.Core.Utils;
+using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Ast.Nodes;
 

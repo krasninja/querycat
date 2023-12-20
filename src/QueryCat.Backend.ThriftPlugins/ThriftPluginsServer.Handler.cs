@@ -8,7 +8,7 @@ using QueryCat.Plugins.Client;
 using QueryCat.Plugins.Sdk;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Functions;
-using QueryCat.Backend.Core.Utils;
+using QueryCat.Backend.Utils;
 using LogLevel = QueryCat.Plugins.Sdk.LogLevel;
 
 namespace QueryCat.Backend.ThriftPlugins;

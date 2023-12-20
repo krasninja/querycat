@@ -7,8 +7,7 @@ using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Plugins;
-using QueryCat.Backend.Core.Utils;
-using QueryCat.Backend.Execution;
+using QueryCat.Backend.Utils;
 using QueryCat.Plugins.Client;
 using QueryCat.Plugins.Sdk;
 
@@ -21,7 +20,7 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
 {
     private const string FunctionsCacheFileExtension = ".fcache.json";
 
-    private readonly ExecutionThread _thread;
+    private readonly IExecutionThread _thread;
     private readonly ThriftPluginsServer _server;
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(ThriftPluginsLoader));
     private readonly HashSet<string> _loadedPlugins = new();
@@ -52,7 +51,7 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         [property:JsonPropertyName("functions")] List<PluginContextFunction> Functions);
 
     public ThriftPluginsLoader(
-        ExecutionThread thread,
+        IExecutionThread thread,
         IEnumerable<string> pluginDirectories,
         ThriftPluginsServer.TransportType transportType = ThriftPluginsServer.TransportType.NamedPipes,
         string? serverPipeName = null,

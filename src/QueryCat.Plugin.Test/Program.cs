@@ -1,7 +1,7 @@
 ﻿using System.Runtime.InteropServices;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core.Functions;
-using QueryCat.Backend.Core.Utils;
+using QueryCat.Backend.Utils;
 using QueryCat.Plugins.Client;
 
 namespace QueryCat.Plugin.Test;

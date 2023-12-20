@@ -1,4 +1,5 @@
 using System.CommandLine;
+using QueryCat.Backend;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Formatters;
 using QueryCat.Cli.Commands.Options;
@@ -63,7 +64,7 @@ internal class QueryCommand : BaseQueryCommand
         {
             applicationOptions.InitializeLogger();
             var tableOutput = new TextTableOutput(
-                stream: Backend.IO.Stdio.GetConsoleOutput(),
+                stream: Stdio.GetConsoleOutput(),
                 hasHeader: !queryOptions.NoHeader,
                 separator: queryOptions.ColumnsSeparator,
                 style: queryOptions.OutputStyle,

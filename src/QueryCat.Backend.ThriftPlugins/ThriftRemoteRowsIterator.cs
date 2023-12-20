@@ -1,6 +1,5 @@
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Utils;
 using QueryCat.Plugins.Client;
 using Column = QueryCat.Backend.Core.Data.Column;

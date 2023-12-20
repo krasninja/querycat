@@ -1,5 +1,6 @@
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Functions;
+using QueryCat.Backend.FunctionsManager;
 
 namespace QueryCat.Backend.Ast;
 
@@ -14,7 +15,7 @@ internal static class AstAttributeKeys
     public const string TypeKey = "type_key";
 
     /// <summary>
-    /// Associated function (of type <see cref="QueryCat.Backend.Functions.Function" />).
+    /// Associated function (of type <see cref="Function" />).
     /// </summary>
     public const string FunctionKey = "function_key";
 

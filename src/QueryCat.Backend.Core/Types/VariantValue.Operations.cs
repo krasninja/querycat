@@ -2,7 +2,7 @@
 
 using System.Text.RegularExpressions;
 using QueryCat.Backend.Core.Data;
-using QueryCat.Backend.Core.Utils;
+using QueryCat.Backend.Utils;
 
 #pragma warning disable CS8509
 namespace QueryCat.Backend.Core.Types;

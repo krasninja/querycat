@@ -21,6 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\QueryCat.Backend.Utils\QueryCat.Backend.Utils.csproj" />
     <ProjectReference Include="..\QueryCat.Backend.Core\QueryCat.Backend.Core.csproj" />
   </ItemGroup>
 

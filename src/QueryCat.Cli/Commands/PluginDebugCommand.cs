@@ -1,5 +1,6 @@
 using System.CommandLine;
 using Microsoft.Extensions.Logging;
+using QueryCat.Backend;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Execution;
 using QueryCat.Cli.Commands.Options;
@@ -23,7 +24,7 @@ internal class PluginDebugCommand : BaseQueryCommand
 #if ENABLE_PLUGINS && PLUGIN_THRIFT
             applicationOptions.InitializeLogger();
             var tableOutput = new Backend.Formatters.TextTableOutput(
-                stream: Backend.IO.Stdio.GetConsoleOutput());
+                stream: Stdio.GetConsoleOutput());
             var options = new ExecutionOptions
             {
                 UseConfig = true,

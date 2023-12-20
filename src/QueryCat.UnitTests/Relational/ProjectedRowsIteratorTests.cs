@@ -2,7 +2,7 @@ using Xunit;
 using QueryCat.Backend.Commands.Select.Iterators;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Functions;
+using QueryCat.Backend.FunctionsManager;
 using QueryCat.Backend.Relational;
 
 namespace QueryCat.UnitTests.Relational;

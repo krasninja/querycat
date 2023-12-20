@@ -1,9 +1,8 @@
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Core.Utils;
-using QueryCat.Backend.Functions;
 using QueryCat.Backend.Utils;
+using QueryCat.Backend.FunctionsManager;
 
 namespace QueryCat.Backend.Commands.Select.Iterators;
 

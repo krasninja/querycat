@@ -1,5 +1,5 @@
 using Xunit;
-using QueryCat.Backend.Core.Utils;
+using QueryCat.Backend.Utils;
 
 namespace QueryCat.UnitTests.Utils;
 

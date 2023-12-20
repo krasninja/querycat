@@ -7,7 +7,7 @@ using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Execution;
-using QueryCat.Backend.Functions;
+using QueryCat.Backend.FunctionsManager;
 
 namespace QueryCat.Backend.Commands;
 

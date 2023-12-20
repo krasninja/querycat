@@ -10,8 +10,6 @@ using Thrift.Transport.Server;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Plugins;
-using QueryCat.Backend.Core.Utils;
-using QueryCat.Backend.Execution;
 
 namespace QueryCat.Backend.ThriftPlugins;
 
@@ -29,7 +27,7 @@ public sealed partial class ThriftPluginsServer : IDisposable
     private const int PluginRegistrationTimeoutSeconds = 10;
 
     private readonly IInputConfigStorage _inputConfigStorage;
-    private readonly ExecutionThread _executionThread;
+    private readonly IExecutionThread _executionThread;
     private readonly TServer _server;
     private Task? _serverListenThread;
     private readonly CancellationTokenSource _serverCts = new();
@@ -68,7 +66,7 @@ public sealed partial class ThriftPluginsServer : IDisposable
     internal event EventHandler<PluginRegistrationEventArgs>? OnPluginRegistration;
 
     public ThriftPluginsServer(
-        ExecutionThread executionThread,
+        IExecutionThread executionThread,
         TransportType transportType = TransportType.NamedPipes,
         string? serverEndpoint = null)
     {

@@ -1,5 +1,5 @@
 using System.CommandLine;
-using QueryCat.Backend.Core.Utils;
+using QueryCat.Backend.Utils;
 using QueryCat.Cli.Commands.Options;
 
 namespace QueryCat.Cli.Commands;

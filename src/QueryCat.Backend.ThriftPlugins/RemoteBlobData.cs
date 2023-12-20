@@ -1,6 +1,6 @@
 using System.Buffers;
 using QueryCat.Backend.Core.Types.Blob;
-using QueryCat.Backend.Core.Utils;
+using QueryCat.Backend.Utils;
 using QueryCat.Plugins.Sdk;
 
 namespace QueryCat.Backend.ThriftPlugins;
