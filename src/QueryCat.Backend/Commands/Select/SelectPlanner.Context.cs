@@ -214,15 +214,14 @@ internal sealed partial class SelectPlanner
     private IRowsInput[] Context_CreateInputSourceFromStringVariable(SelectCommandContext currentContext,
         string strVariable, FunctionCallNode? formatterNode)
     {
-        var callInfo = new FunctionCallInfo(ExecutionThread, "read");
-        callInfo.Push(new VariantValue(strVariable));
+        var args = new FunctionCallArguments()
+            .Add("uri", new VariantValue(strVariable));
         if (formatterNode != null)
         {
             var formatter = Misc_CreateDelegate(formatterNode, currentContext).Invoke();
-            callInfo.Push(formatter);
+            args.Add(formatter);
         }
-        var inputValue = IO.IOFunctions.Read(callInfo);
-        var rowsInput = inputValue.As<IRowsInput>();
+        var rowsInput = ExecutionThread.FunctionsManager.CallFunction("read", args).As<IRowsInput>();
         rowsInput.QueryContext = new SelectInputQueryContext(rowsInput);
         rowsInput.Open();
         return new[] { rowsInput };
