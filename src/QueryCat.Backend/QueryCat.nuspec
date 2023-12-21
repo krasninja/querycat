@@ -15,7 +15,11 @@
     <tags>sql csv tsv iisw3c json regexp xml subrip grok logs</tags>
     <repository type="git" url="https://github.com/krasninja/querycat" commit="$(CommitHash)" />
     <dependencies>
-      <group targetFramework="net8.0" />
+      <group targetFramework="net8.0">
+        <dependency id="Antlr4.Runtime.Standard" version="[4.13.1, )" />
+        <dependency id="JsonPath.Net" version="[0.7.0, )" />
+        <dependency id="Microsoft.Extensions.Logging.Abstractions" version="[8.0.0, )" />
+      </group>
     </dependencies>
     <readme>README.md</readme>
     <releaseNotes>You can find changelog at https://github.com/krasninja/querycat/blob/develop/CHANGELOG.md</releaseNotes>
