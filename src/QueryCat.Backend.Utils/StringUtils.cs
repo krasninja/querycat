@@ -1,5 +1,4 @@
 using System.Text;
-using Microsoft.Extensions.ObjectPool;
 
 namespace QueryCat.Backend.Utils;
 
@@ -10,7 +9,7 @@ internal static class StringUtils
 {
     private const string QuoteChar = "\"";
 
-    private static readonly ObjectPool<List<char>> ListCharPool = ObjectPool.Create<List<char>>();
+    private static readonly SimpleObjectPool<List<char>> ListCharPool = new(() => new List<char>());
 
     /// <summary>
     /// Implements SQL LIKE pattern comparision.
