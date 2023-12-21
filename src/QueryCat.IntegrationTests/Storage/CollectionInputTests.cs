@@ -11,7 +11,7 @@ namespace QueryCat.IntegrationTests.Storage;
 /// <summary>
 /// Tests for <see cref="UpdateCommand" />.
 /// </summary>
-public class CollectionInputTests
+public sealed class CollectionInputTests : IDisposable
 {
     private readonly CollectionInput<Employee> _employeesList;
 
@@ -103,5 +103,11 @@ public class CollectionInputTests
         thread.Run("insert into self(employees) (id, name) values (4, 'Abbie Cornish');");
         Assert.Equal(4, _employeesList.TargetCollection.Count());
         Assert.Equal(5, _employeesList.TargetCollection.ElementAt(3).Score);
+    }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        _employeesList.Dispose();
     }
 }

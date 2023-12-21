@@ -11,7 +11,7 @@ namespace QueryCat.Backend.Storage;
 /// The class that allow to represent enumerable as rows input/output.
 /// </summary>
 /// <typeparam name="TClass">Enumerable item type.</typeparam>
-public class CollectionInput<TClass> : IRowsOutput, IDisposable, IRowsInputUpdate where TClass : class
+public class CollectionInput<TClass> : IRowsOutput, IDisposable, IRowsInputUpdate where TClass : class, new()
 {
     private readonly IEnumerable<TClass> _list;
     private readonly List<PropertyInfo> _columnsProperties = new();
@@ -86,7 +86,7 @@ public class CollectionInput<TClass> : IRowsOutput, IDisposable, IRowsInputUpdat
         var columns = QueryContext.QueryInfo.Columns.ToArray();
         var mapping = GetPropertiesToColumnsMapping(columns);
 
-        var obj = Activator.CreateInstance<TClass>();
+        var obj = new TClass();
         for (var i = 0; i < mapping.Length; i++)
         {
             var prop = _columnsProperties[i];
