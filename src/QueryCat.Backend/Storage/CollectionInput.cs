@@ -11,7 +11,7 @@ namespace QueryCat.Backend.Storage;
 /// The class that allow to represent enumerable as rows input/output.
 /// </summary>
 /// <typeparam name="TClass">Enumerable item type.</typeparam>
-public class CollectionInput<TClass> : IRowsOutput, IRowsInputUpdate where TClass : class
+public class CollectionInput<TClass> : IRowsOutput, IDisposable, IRowsInputUpdate where TClass : class
 {
     private readonly IEnumerable<TClass> _list;
     private readonly List<PropertyInfo> _columnsProperties = new();
@@ -139,5 +139,20 @@ public class CollectionInput<TClass> : IRowsOutput, IRowsInputUpdate where TClas
     public void Explain(IndentedStringBuilder stringBuilder)
     {
         stringBuilder.AppendLine($"Collection (type={typeof(TClass).Name})");
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            Close();
+        }
+    }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
     }
 }
