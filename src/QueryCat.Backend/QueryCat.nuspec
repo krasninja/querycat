@@ -4,7 +4,7 @@
     <id>QueryCat</id>
     <title>QueryCat</title>
     <summary>Simple experssions evaluator and SQL engine</summary>
-    <version>0.5.0</version>
+    <version>0.0.0</version>
     <description>The QueryCat package provides functionality that allows you to evaluate SQL-like expressions and queries to your CLR objects.</description>
     <authors>Ivan Kozhin</authors>
     <owners>Ivan Kozhin</owners>
@@ -13,7 +13,7 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <copyright>(c) Ivan Kozhin, 2022-2023</copyright>
     <tags>sql csv tsv iisw3c json regexp xml subrip grok logs</tags>
-    <repository type="git" url="https://github.com/krasninja/querycat" commit="$(CommitHash)" />
+    <repository type="git" url="https://github.com/krasninja/querycat" commit="$CommitHash$" />
     <dependencies>
       <group targetFramework="net8.0">
         <dependency id="Antlr4.Runtime.Standard" version="[4.13.1, )" />
