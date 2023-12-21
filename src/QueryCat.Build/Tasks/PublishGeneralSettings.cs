@@ -20,7 +20,7 @@ public class PublishGeneralSettings : DotNetPublishSettings
             if (publishAot)
             {
                 pag.Append(new TextArgument("-p:PublishAot=true"));
-                pag.Append(new TextArgument("-p:OptimizationPreference=Speed"));
+                pag.Append(new TextArgument("-p:OptimizationPreference=Size"));
                 pag.Append(new TextArgument("-p:StripSymbols=true"));
             }
             // https://docs.microsoft.com/en-us/dotnet/core/deploying/trimming/trimming-options.
@@ -33,6 +33,7 @@ public class PublishGeneralSettings : DotNetPublishSettings
             pag.Append(new TextArgument("-p:InvariantGlobalization=true"));
             pag.Append(new TextArgument("-p:MetadataUpdaterSupport=false"));
             pag.Append(new TextArgument("-p:UseNativeHttpHandler=true"));
+            pag.Append(new TextArgument("-p:UseSystemResourceKeys=true"));
             // For reference: https://andrewlock.net/version-vs-versionsuffix-vs-packageversion-what-do-they-all-mean/.
             pag.Append(new TextArgument($"-p:InformationalVersion={context.Version}"));
             return pag;
