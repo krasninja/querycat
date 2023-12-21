@@ -44,7 +44,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueryCat.Samples", "src\Que
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{D8E923C0-FB16-44AF-BB6E-A1A27AC10289}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueryCat.Backend.Utils", "QueryCat.Backend.Utils\QueryCat.Backend.Utils.csproj", "{D6747E58-6F54-4027-B52C-DA18BBE6FBCB}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueryCat.Backend.Utils", "src\QueryCat.Backend.Utils\QueryCat.Backend.Utils.csproj", "{D6747E58-6F54-4027-B52C-DA18BBE6FBCB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
