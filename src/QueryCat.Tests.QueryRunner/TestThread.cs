@@ -1,8 +1,8 @@
 using System.Globalization;
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Formatters;
 using QueryCat.Backend.Storage;
-using QueryCat.Backend.Utils;
 
 namespace QueryCat.Tests.QueryRunner;
 

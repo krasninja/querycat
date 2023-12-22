@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 
-namespace QueryCat.Backend.Utils;
+namespace QueryCat.Backend.Core.Utils;
 
 /// <summary>
 /// Simple object pool implementation based on Microsoft.Extensions.ObjectPool .

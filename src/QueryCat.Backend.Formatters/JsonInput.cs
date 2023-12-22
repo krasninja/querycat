@@ -6,10 +6,10 @@ using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Storage;
-using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Formatters;
 
@@ -182,7 +182,7 @@ internal sealed class JsonInput : StreamRowsInput
                     var json = reader.UnreadSequence.ToString();
                     try
                     {
-                        _jsonElement = JsonSerializer.Deserialize<JsonElement>(json);
+                        _jsonElement = JsonSerializer.Deserialize(json, SourceGenerationContext.Default.JsonElement);
                     }
                     catch (JsonException jsonException)
                     {
@@ -236,7 +236,7 @@ internal sealed class JsonInput : StreamRowsInput
         if (reader.TryAdvanceTo('{', advancePastDelimiter: false))
         {
             var json = reader.UnreadSequence.ToString();
-            return JsonSerializer.Deserialize<JsonElement>(json);
+            return JsonSerializer.Deserialize(json, SourceGenerationContext.Default.JsonElement);
         }
         return null;
     }

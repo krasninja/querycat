@@ -2,7 +2,6 @@
 
 using System.Text.RegularExpressions;
 using QueryCat.Backend.Core.Data;
-using QueryCat.Backend.Utils;
 
 #pragma warning disable CS8509
 namespace QueryCat.Backend.Core.Types;
@@ -375,7 +374,7 @@ public readonly partial struct VariantValue
         var str = left.AsString;
 
         errorCode = ErrorCode.OK;
-        return new VariantValue(StringUtils.MatchesToLikePattern(pattern, str));
+        return new VariantValue(StringLikeEquals.Equals(pattern, str));
     }
 
     public static VariantValue NotLike(in VariantValue left, in VariantValue right, out ErrorCode errorCode)

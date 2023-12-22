@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
@@ -54,6 +55,8 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
     /// </summary>
     /// <param name="description">Property description.</param>
     /// <returns>The instance of <see cref="ClassRowsFrameBuilder{TClass}" />.</returns>
+    [RequiresUnreferencedCode("Calls System.Text.Json.JsonSerializer.Serialize(object)")]
+    [RequiresDynamicCode("Calls System.Text.Json.JsonSerializer.Serialize(object)")]
     public ClassRowsFrameBuilder<TClass> AddDataPropertyAsJson(string? description = null)
     {
         var column = new Column(DataColumn, DataType.String, description ?? "The raw JSON data representation.");

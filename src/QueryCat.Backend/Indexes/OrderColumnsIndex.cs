@@ -4,7 +4,6 @@ using QueryCat.Backend.Core.Indexes;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.FunctionsManager;
 using QueryCat.Backend.Relational;
-using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Indexes;
 

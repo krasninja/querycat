@@ -1,12 +1,12 @@
 using Xunit;
-using QueryCat.Backend.Utils;
+using QueryCat.Backend.Functions;
 
-namespace QueryCat.UnitTests.Utils;
+namespace QueryCat.UnitTests.Functions;
 
 /// <summary>
-/// Tests for <see cref="ObjectQuery" />.
+/// Tests for <see cref="ObjectFunctions" />.
 /// </summary>
-public class ObjectQueryTests
+public class ObjectFunctionsTests
 {
     private class User
     {
@@ -32,7 +32,7 @@ public class ObjectQueryTests
         };
 
         // Act.
-        var value = ObjectQuery.Query(user, "Id");
+        var value = ObjectFunctions.Query(user, "Id");
 
         // Assert.
         Assert.Equal(10, value);
@@ -52,7 +52,7 @@ public class ObjectQueryTests
         };
 
         // Act.
-        var value = ObjectQuery.Query(user, "this.Address.City");
+        var value = ObjectFunctions.Query(user, "this.Address.City");
 
         // Assert.
         Assert.Equal("Borodino", value);
@@ -68,7 +68,7 @@ public class ObjectQueryTests
         };
 
         // Act.
-        var value = ObjectQuery.Query(user, "this.Address.City");
+        var value = ObjectFunctions.Query(user, "this.Address.City");
 
         // Assert.
         Assert.Null(value);

@@ -8,7 +8,7 @@ using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Plugins;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Utils;
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.FunctionsManager;
 using QueryCat.Backend.Parser;
 using QueryCat.Backend.Storage;

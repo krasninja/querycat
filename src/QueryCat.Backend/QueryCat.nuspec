@@ -31,9 +31,6 @@
     <file src="bin\Release\net8.0\QueryCat.Backend.Core.dll" target="lib\net8.0" />
     <file src="bin\Release\net8.0\QueryCat.Backend.Core.pdb" target="lib\net8.0" />
     <file src="bin\Release\net8.0\QueryCat.Backend.Core.xml" target="lib\net8.0" />
-    <file src="bin\Release\net8.0\QueryCat.Backend.Utils.dll" target="lib\net8.0" />
-    <file src="bin\Release\net8.0\QueryCat.Backend.Utils.pdb" target="lib\net8.0" />
-    <file src="bin\Release\net8.0\QueryCat.Backend.Utils.xml" target="lib\net8.0" />
     <file src="..\..\README.md" target="README.md" />
     <file src="..\..\LICENSE.txt" target="LICENSE.txt" />
   </files>

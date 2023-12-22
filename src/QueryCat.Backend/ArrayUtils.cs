@@ -1,4 +1,4 @@
-namespace QueryCat.Backend.Utils;
+namespace QueryCat.Backend;
 
 /// <summary>
 /// Array utils.

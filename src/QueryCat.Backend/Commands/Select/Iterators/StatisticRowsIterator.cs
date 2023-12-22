@@ -2,7 +2,6 @@ using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Execution;
-using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Commands.Select.Iterators;
 

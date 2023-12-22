@@ -1,5 +1,4 @@
 using QueryCat.Backend.Core.Data;
-using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Relational;
 

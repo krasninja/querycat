@@ -2,10 +2,10 @@
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
+    <IsAotCompatible>true</IsAotCompatible>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\QueryCat.Backend.Utils\QueryCat.Backend.Utils.csproj" />
     <ProjectReference Include="..\QueryCat.Backend.Core\QueryCat.Backend.Core.csproj" />
     <ProjectReference Include="..\..\sdk\dotnet-sdk\QueryCat.Plugins.Sdk.csproj" />
     <ProjectReference Include="..\..\sdk\dotnet-client\QueryCat.Plugins.Client.csproj" />

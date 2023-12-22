@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 
 // ReSharper disable LocalizableElement
 
-namespace QueryCat.Backend.Utils;
+namespace QueryCat.Backend.Core.Utils;
 
 /// <summary>
 /// The class encapsulates the linked list of buffers. It keeps the ordered

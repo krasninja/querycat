@@ -3,7 +3,6 @@ using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Fetch;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Storage;
 
@@ -94,7 +93,7 @@ public class CollectionInput<TClass> : IRowsOutput, IDisposable, IRowsInputUpdat
             {
                 continue;
             }
-            prop.SetValue(obj, ObjectUtils.ChangeType(values[i].GetGenericObject(), prop.PropertyType));
+            prop.SetValue(obj, ChangeType(values[i].GetGenericObject(), prop.PropertyType));
         }
         collection.Add(obj);
     }
@@ -131,7 +130,7 @@ public class CollectionInput<TClass> : IRowsOutput, IDisposable, IRowsInputUpdat
         {
             throw new QueryCatException($"Cannot write property '{prop.Name}'.");
         }
-        prop.SetValue(obj, ObjectUtils.ChangeType(value.GetGenericObject(), prop.PropertyType));
+        prop.SetValue(obj, ChangeType(value.GetGenericObject(), prop.PropertyType));
         return ErrorCode.OK;
     }
 
@@ -139,6 +138,26 @@ public class CollectionInput<TClass> : IRowsOutput, IDisposable, IRowsInputUpdat
     public void Explain(IndentedStringBuilder stringBuilder)
     {
         stringBuilder.AppendLine($"Collection (type={typeof(TClass).Name})");
+    }
+
+    /// <summary>
+    /// Change object type. The method takes into account also nullable types.
+    /// </summary>
+    /// <param name="value">Object to type change.</param>
+    /// <param name="conversionType">Conversion type.</param>
+    /// <returns>New object with target type.</returns>
+    internal static object? ChangeType(object? value, Type conversionType)
+    {
+        if (value == null)
+        {
+            return null;
+        }
+
+        if (Nullable.GetUnderlyingType(conversionType) != null)
+        {
+            conversionType = Nullable.GetUnderlyingType(conversionType) ?? conversionType;
+        }
+        return Convert.ChangeType(value, conversionType);
     }
 
     protected virtual void Dispose(bool disposing)

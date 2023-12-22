@@ -4,6 +4,7 @@ using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Formatters;
 using QueryCat.Backend.Storage;
 
@@ -223,9 +224,55 @@ internal static class IOFunctions
         {
             return (
                 uri.Substring(0, delimiterIndex),
-                FunctionCallArguments.FromQueryString(uri.Substring(delimiterIndex + QueryDelimiter.Length))
+                FromQueryString(uri.Substring(delimiterIndex + QueryDelimiter.Length))
             );
         }
+    }
+
+    /// <summary>
+    /// Create from query string. Example string: arg1=10&amp;Name=John.
+    /// </summary>
+    /// <param name="query">Query.</param>
+    /// <returns>Instance of <see cref="FunctionCallArguments" />.</returns>
+    private static FunctionCallArguments FromQueryString(string query)
+    {
+        var args = StringUtils.GetFieldsFromLine(query, delimiter: '&');
+        var fa = new FunctionCallArguments();
+        if (args.Length == 1 && args[0].IndexOf('=') == -1)
+        {
+            fa.Add(CreateValueFromString(args[0]));
+        }
+        else
+        {
+            foreach (var arg in args)
+            {
+                var delimiterIndex = arg.IndexOf('=');
+                if (delimiterIndex == -1)
+                {
+                    continue;
+                }
+                var name = arg.Substring(0, delimiterIndex);
+                var value = CreateValueFromString(arg.Substring(delimiterIndex + 1));
+                fa.Add(name, value);
+            }
+        }
+        return fa;
+    }
+
+    private static VariantValue CreateValueFromString(string str)
+    {
+        var type = DataTypeUtils.DetermineTypeByValue(str);
+        if (type == DataType.String)
+        {
+            var stringValue = StringUtils.Unquote(str);
+            stringValue = StringUtils.Unquote(stringValue, quoteChar: "'");
+            return new VariantValue(StringUtils.Unescape(stringValue.ToString()));
+        }
+        if (VariantValue.TryCreateFromString(str, type, out var value))
+        {
+            return value;
+        }
+        throw new InvalidOperationException($"Cannot parse value '{str}'.");
     }
 
     #endregion

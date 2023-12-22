@@ -2,6 +2,7 @@ using Cake.Common.Tools.DotNet;
 using Cake.Common.Tools.DotNet.Pack;
 using Cake.Core.IO.Arguments;
 using Cake.Frosting;
+using Cake.Git;
 
 namespace QueryCat.Build.Tasks;
 
@@ -12,6 +13,7 @@ public sealed class BuildPackageTask : AsyncFrostingTask<BuildContext>
     /// <inheritdoc />
     public override Task RunAsync(BuildContext context)
     {
+        var currentSha = context.GitLogTip("../../").Sha;
         context.DotNetPack(context.BackendProjectDirectory, new DotNetPackSettings
         {
             NoLogo = true,
@@ -21,6 +23,7 @@ public sealed class BuildPackageTask : AsyncFrostingTask<BuildContext>
             ArgumentCustomization = pag =>
             {
                 pag.Append(new TextArgument("-p:NuspecFile=QueryCat.nuspec"));
+                pag.Append(new TextArgument($"-p:NuspecProperties=\"version={context.Version};CommitHash={currentSha}\""));
                 return pag;
             },
         });

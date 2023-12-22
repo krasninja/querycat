@@ -3,7 +3,7 @@ using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Plugins;
-using QueryCat.Backend.Utils;
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Functions;
 using QueryCat.Backend.Functions.Aggregate;
 

@@ -2,13 +2,19 @@ using System.ComponentModel;
 using Bogus;
 using QueryCat.Backend.Core.Fetch;
 using QueryCat.Backend.Core.Functions;
+using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Plugin.Test;
 
-[Description("Test function.")]
-[FunctionSignature("test_addresses_1")]
 internal sealed class AddressRowsInput : FetchInput<Address>
 {
+    [Description("Test function.")]
+    [FunctionSignature("test_addresses_1(): object<IRowsInput>")]
+    public static VariantValue AddressRowsInputFunction(FunctionCallInfo args)
+    {
+        return VariantValue.CreateFromObject(new AddressIterator());
+    }
+
     private const int Count = 100;
 
     /// <inheritdoc />

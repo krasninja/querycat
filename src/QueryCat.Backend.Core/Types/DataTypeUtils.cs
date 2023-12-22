@@ -1,6 +1,6 @@
 using System.Globalization;
 using Microsoft.Extensions.Logging;
-using QueryCat.Backend.Utils;
+using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend.Core.Types;
 

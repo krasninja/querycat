@@ -3,7 +3,7 @@ using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
 
-namespace QueryCat.Backend.Utils;
+namespace QueryCat.Backend.Core.Utils;
 
 /// <summary>
 /// Simple text parser with the delimiters. Can be used to parse CSV, DSV, stdin stream, etc.

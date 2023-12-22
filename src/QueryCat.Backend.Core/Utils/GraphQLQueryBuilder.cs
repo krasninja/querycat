@@ -1,6 +1,7 @@
 using System.Globalization;
+using QueryCat.Backend.Core.Data;
 
-namespace QueryCat.Backend.Utils;
+namespace QueryCat.Backend.Core.Utils;
 
 /// <summary>
 /// Simple Graph QL query builder.

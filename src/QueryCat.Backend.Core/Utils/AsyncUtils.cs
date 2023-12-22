@@ -1,4 +1,4 @@
-namespace QueryCat.Backend.Utils;
+namespace QueryCat.Backend.Core.Utils;
 
 using EventTask = System.Tuple<System.Threading.SendOrPostCallback, object?>;
 using EventQueue = System.Collections.Concurrent.ConcurrentQueue<System.Tuple<System.Threading.SendOrPostCallback, object?>>;

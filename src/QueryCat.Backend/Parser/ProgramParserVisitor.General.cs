@@ -5,7 +5,7 @@ using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Function;
 using QueryCat.Backend.Ast.Nodes.SpecialFunctions;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Utils;
+using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend.Parser;
 

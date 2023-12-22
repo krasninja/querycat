@@ -1,7 +1,7 @@
 ﻿using System.Runtime.InteropServices;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core.Functions;
-using QueryCat.Backend.Utils;
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Plugins.Client;
 
 namespace QueryCat.Plugin.Test;
@@ -17,8 +17,8 @@ public class Program
         AsyncUtils.RunSync(async ct =>
         {
             using var client = new ThriftPluginClient(args);
-            client.FunctionsManager.RegisterFromType(typeof(AddressIterator));
-            client.FunctionsManager.RegisterFromType(typeof(AddressRowsInput));
+            client.FunctionsManager.RegisterFunction(AddressIterator.AddressIteratorFunction);
+            client.FunctionsManager.RegisterFunction(AddressRowsInput.AddressRowsInputFunction);
             client.FunctionsManager.RegisterFunction(TestFunctions.TestCombineFunction);
             client.FunctionsManager.RegisterFunction(TestFunctions.TestSimpleNonStandardFunction);
             client.FunctionsManager.RegisterFunction(TestFunctions.TestSimpleFunction);

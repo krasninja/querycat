@@ -2,7 +2,7 @@ using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Functions;
-using QueryCat.Backend.Utils;
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Storage;
 

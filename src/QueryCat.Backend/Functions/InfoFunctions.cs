@@ -5,7 +5,7 @@ using QueryCat.Backend.Core.Fetch;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Plugins;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Utils;
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Storage;
 
 namespace QueryCat.Backend.Functions;

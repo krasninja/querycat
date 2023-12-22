@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Reflection;
 using QueryCat.Backend.Core.Types;
@@ -46,7 +47,9 @@ public static class FunctionsManagerExtensions
     /// </summary>
     /// <param name="functionsManager">Instance of <see cref="IFunctionsManager" />.</param>
     /// <param name="type">Target type.</param>
-    public static void RegisterFromType(this IFunctionsManager functionsManager, Type type)
+    public static void RegisterFromType(
+        this IFunctionsManager functionsManager,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicMethods)] Type type)
     {
         // Try to register class as function.
         var classAttributes = type.GetCustomAttributes<FunctionSignatureAttribute>().ToArray();

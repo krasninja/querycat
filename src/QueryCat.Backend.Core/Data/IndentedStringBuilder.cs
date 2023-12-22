@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace QueryCat.Backend.Utils;
+namespace QueryCat.Backend.Core.Data;
 
 /// <summary>
 /// A thin wrapper around <see cref="StringBuilder" /> that adds indent

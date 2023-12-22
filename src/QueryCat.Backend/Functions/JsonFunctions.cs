@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -82,6 +83,8 @@ internal static class JsonFunctions
         return new VariantValue(GetJsonStringFromJsonNode(result.Value));
     }
 
+    [RequiresUnreferencedCode("Calls System.Text.Json.JsonSerializer.SerializeToNode<TValue>(TValue, JsonSerializerOptions)")]
+    [RequiresDynamicCode("Calls System.Text.Json.JsonSerializer.SerializeToNode<TValue>(TValue, JsonSerializerOptions)")]
     [Description("Constructs JSON text from object.")]
     [FunctionSignature("to_json(obj: any): string")]
     public static VariantValue ToJson(FunctionCallInfo args)
@@ -143,6 +146,8 @@ internal static class JsonFunctions
         return new VariantValue(pathResult.Matches != null && pathResult.Matches.Count > 0);
     }
 
+    [UnconditionalSuppressMessage("AOT", "IL3050:Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.", Justification = "<Pending>")]
+    [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "<Pending>")]
     public static void RegisterFunctions(IFunctionsManager functionsManager)
     {
         functionsManager.RegisterFunction(JsonQuery);

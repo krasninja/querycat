@@ -1,12 +1,12 @@
 using Xunit;
-using QueryCat.Backend.Utils;
+using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.UnitTests.Utils;
 
 /// <summary>
-/// Tests for <see cref="StringUtils" />.
+/// Tests for <see cref="StringLikeEquals" />.
 /// </summary>
-public class StringUtilsTests
+public class StringLikeEqualsTests
 {
     [Theory]
     [InlineData("%", "", true)]
@@ -15,7 +15,7 @@ public class StringUtilsTests
     public void MatchesToLikePattern(string pattern, string str, bool shouldMatch)
     {
         // Act.
-        var result = StringUtils.MatchesToLikePattern(pattern, str);
+        var result = StringLikeEquals.Equals(pattern, str);
 
         // Assert.
         Assert.Equal(shouldMatch, result);

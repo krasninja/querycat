@@ -3,7 +3,6 @@ using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.FunctionsManager;
 using QueryCat.Backend.Relational;
-using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Commands.Select.Iterators;
 
