@@ -97,6 +97,7 @@ public abstract class FetchInput<TClass> : RowsInput, IDisposable where TClass :
     /// <returns>Objects.</returns>
     protected virtual IEnumerable<TClass> GetData(Fetcher<TClass> fetcher)
     {
+        // ReSharper disable once NotDisposedResource
         var enumerator = GetDataAsync().GetAsyncEnumerator();
         try
         {

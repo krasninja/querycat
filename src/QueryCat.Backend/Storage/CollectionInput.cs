@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
@@ -10,7 +11,9 @@ namespace QueryCat.Backend.Storage;
 /// The class that allow to represent enumerable as rows input/output.
 /// </summary>
 /// <typeparam name="TClass">Enumerable item type.</typeparam>
-public class CollectionInput<TClass> : IRowsOutput, IDisposable, IRowsInputUpdate where TClass : class, new()
+public class CollectionInput<
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] TClass>
+    : IRowsOutput, IDisposable, IRowsInputUpdate where TClass : class, new()
 {
     private readonly IEnumerable<TClass> _list;
     private readonly List<PropertyInfo> _columnsProperties = new();

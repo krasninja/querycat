@@ -162,31 +162,6 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
         return this;
     }
 
-    /// <summary>
-    /// Add all public properties as columns.
-    /// </summary>
-    /// <returns>The instance of <see cref="ClassRowsFrameBuilder{TClass}" />.</returns>
-    public ClassRowsFrameBuilder<TClass> AddPublicProperties()
-    {
-        AddPublicProperties(out _);
-        return this;
-    }
-
-    internal void AddPublicProperties(out List<PropertyInfo> properties)
-    {
-        var props = typeof(TClass).GetProperties().Where(p => p.CanRead);
-        properties = new List<PropertyInfo>();
-        foreach (var propertyInfo in props)
-        {
-            var description = propertyInfo.GetCustomAttributes<DescriptionAttribute>()
-                .Select(a => a.Description).FirstOrDefault();
-            var dataType = Converter.ConvertFromSystem(propertyInfo.PropertyType);
-            AddProperty(propertyInfo.Name, dataType,
-                obj => VariantValue.CreateFromObject(propertyInfo.GetValue(obj)), description);
-            properties.Add(propertyInfo);
-        }
-    }
-
     #region AddProperty overloads
 
     public ClassRowsFrameBuilder<TClass> AddProperty(
