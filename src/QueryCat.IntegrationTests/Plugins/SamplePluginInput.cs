@@ -7,9 +7,9 @@ using QueryCat.Backend.Core.Types;
 namespace QueryCat.IntegrationTests.Plugins;
 
 /// <summary>
-/// Example simple rows input plugin based on <see cref="FetchInput{TClass}" />.
+/// Example simple rows input plugin based on <see cref="FetchRowsInput{TClass}" />.
 /// </summary>
-public class SamplePluginInput : FetchInput<TestClass>
+public class SamplePluginInput : FetchRowsInput<TestClass>
 {
     private const long MaxValue = 9;
 

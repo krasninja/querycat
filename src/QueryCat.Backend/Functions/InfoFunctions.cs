@@ -1,12 +1,10 @@
 using System.ComponentModel;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
-using QueryCat.Backend.Core.Fetch;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Plugins;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Core.Utils;
-using QueryCat.Backend.Storage;
 
 namespace QueryCat.Backend.Functions;
 
@@ -19,11 +17,13 @@ public static class InfoFunctions
     [FunctionSignature("_functions(): object<IRowsIterator>")]
     internal static VariantValue Functions(FunctionCallInfo args)
     {
-        var builder = new ClassRowsFrameBuilder<IFunction>()
-            .AddProperty("signature", f => f.ToString())
-            .AddProperty("description", f => f.Description);
         var functions = args.ExecutionThread.FunctionsManager.GetFunctions().OrderBy(f => f.Name);
-        return VariantValue.CreateFromObject(builder.BuildIterator(functions));
+        var input = new EnumerableRowsInput<IFunction>(functions,
+            builder => builder
+                .AddProperty("signature", p => p.ToString())
+                .AddProperty("description", f => f.Description)
+            );
+        return VariantValue.CreateFromObject(input);
     }
 
     [Description("Return row input columns information.")]
@@ -47,37 +47,40 @@ public static class InfoFunctions
             throw new QueryCatException("Invalid rows input type.");
         }
 
-        var builder = new ClassRowsFrameBuilder<Column>()
+        var inputResult = new EnumerableRowsInput<Column>(columns,
+            builder => builder
 #if DEBUG
-            .AddProperty("id", f => f.Id)
+                .AddProperty("id", f => f.Id)
 #endif
-            .AddProperty("name", f => f.Name, defaultLength: 25)
-            .AddProperty("type", f => f.DataType)
+                .AddProperty("name", f => f.Name, defaultLength: 25)
+                .AddProperty("type", f => f.DataType)
 #if DEBUG
-            .AddProperty("length", f => f.Length)
+                .AddProperty("length", f => f.Length)
 #endif
-            .AddProperty("description", f => f.Description);
-
-        return VariantValue.CreateFromObject(builder.BuildIterator(columns));
+                .AddProperty("description", f => f.Description)
+            );
+        return VariantValue.CreateFromObject(inputResult);
     }
 
 #if ENABLE_PLUGINS
     [Description("Return available plugins from repository.")]
-    [FunctionSignature("_plugins(): object<IRowsIterator>")]
+    [FunctionSignature("_plugins(): object<IRowsInput>")]
     public static VariantValue Plugins(FunctionCallInfo args)
     {
-        var builder = new ClassRowsFrameBuilder<PluginInfo>()
-            .AddProperty("name", p => p.Name)
-            .AddProperty("version", p => p.Version.ToString())
-            .AddProperty("is_installed", p => p.IsInstalled)
-            .AddProperty("platform", p => p.Platform)
-            .AddProperty("arch", p => p.Architecture)
-            .AddProperty("uri", p => p.Uri);
         var plugins = AsyncUtils.RunSync(async ct =>
         {
             return await args.ExecutionThread.PluginsManager.ListAsync(cancellationToken: ct);
         });
-        return VariantValue.CreateFromObject(builder.BuildIterator(plugins!));
+        var input = new EnumerableRowsInput<PluginInfo>(plugins!,
+            builder => builder
+                .AddProperty("name", p => p.Name)
+                .AddProperty("version", p => p.Version.ToString())
+                .AddProperty("is_installed", p => p.IsInstalled)
+                .AddProperty("platform", p => p.Platform)
+                .AddProperty("arch", p => p.Architecture)
+                .AddProperty("uri", p => p.Uri)
+        );
+        return VariantValue.CreateFromObject(input);
     }
 #endif
 
@@ -105,12 +108,14 @@ public static class InfoFunctions
     [FunctionSignature("_timezone_names(): object<IRowsIterator>")]
     internal static VariantValue TimeZoneNames(FunctionCallInfo args)
     {
-        var builder = new ClassRowsFrameBuilder<TimeZoneInfo>()
-            .AddProperty("id", p => p.Id, "Time zone code.")
-            .AddProperty("name", p => p.StandardName, "Time zone name.")
-            .AddProperty("utc_offset", p => p.BaseUtcOffset, "Offset from UTC (positive means east of Greenwich).")
-            .AddProperty("is_dst", p => p.SupportsDaylightSavingTime, "True if currently observing daylight savings");
-        return VariantValue.CreateFromObject(builder.BuildIterator(TimeZoneInfo.GetSystemTimeZones()));
+        var input = new EnumerableRowsInput<TimeZoneInfo>(TimeZoneInfo.GetSystemTimeZones(),
+            builder => builder
+                .AddProperty("id", p => p.Id, "Time zone code.")
+                .AddProperty("name", p => p.StandardName, "Time zone name.")
+                .AddProperty("utc_offset", p => p.BaseUtcOffset, "Offset from UTC (positive means east of Greenwich).")
+                .AddProperty("is_dst", p => p.SupportsDaylightSavingTime, "True if currently observing daylight savings")
+            );
+        return VariantValue.CreateFromObject(input);
     }
 
     [Description("Get current running platform/OS.")]

@@ -4,7 +4,6 @@ using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Core.Utils;
-using QueryCat.Backend.Relational.Iterators;
 
 namespace QueryCat.Backend.Functions;
 
@@ -158,14 +157,14 @@ internal static class StringFunctions
     [FunctionSignature("string_to_table(target: string, delimiter?: string, null_string?: string := null): object<IRowsIterator>")]
     public static VariantValue StringToTable(FunctionCallInfo args)
     {
-        IEnumerable<VariantValue> GetSplitItems(string target, string? delimiter, string? nullString)
+        IEnumerable<string> GetSplitItems(string target, string? delimiter, string? nullString)
         {
             // If delimiter is null - return every character.
             if (delimiter == null)
             {
                 foreach (var chr in target)
                 {
-                    yield return new VariantValue(chr.ToString());
+                    yield return chr.ToString();
                 }
                 yield break;
             }
@@ -195,17 +194,9 @@ internal static class StringFunctions
         var nullString = args.GetAt(2).AsString;
 
         var result = GetSplitItems(target, delimiter, nullString).ToList();
-        var iterator = new ClassRowsIterator<VariantValue>(
-            new[]
-            {
-                new Column("value", DataType.String, "String part."),
-            },
-            new Func<VariantValue, VariantValue>[]
-            {
-                part => part,
-            },
-            result);
-        return VariantValue.CreateFromObject(iterator);
+        var input = new EnumerableRowsInput<string>(result,
+            builder => builder.AddProperty("value", p => p, "String part."));
+        return VariantValue.CreateFromObject(input);
     }
 
     [Description("Returns the substring within string that matches the N'th occurrence of the regular expression pattern, or NULL.")]
@@ -266,7 +257,9 @@ internal static class StringFunctions
         {
             switch (flag)
             {
-                case 'i': options |= RegexOptions.IgnoreCase; break;
+                case 'i':
+                    options |= RegexOptions.IgnoreCase;
+                    break;
             }
         }
         return options;

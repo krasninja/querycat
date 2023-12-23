@@ -6,7 +6,7 @@ using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Plugin.Test;
 
-internal sealed class AddressRowsInput : FetchInput<Address>
+internal sealed class AddressRowsInput : FetchRowsInput<Address>
 {
     [Description("Test function.")]
     [FunctionSignature("test_addresses_1(): object<IRowsInput>")]

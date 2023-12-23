@@ -1,6 +1,5 @@
 using QueryCat.Backend.Core.Fetch;
 using QueryCat.Backend.Relational;
-using QueryCat.Backend.Relational.Iterators;
 
 namespace QueryCat.Backend.Storage;
 
@@ -22,20 +21,5 @@ public static class ClassRowsFrameBuilderExtensions
             options ?? new RowsFrameOptions(),
             classRowsFrame.Columns.ToArray(),
             classRowsFrame.Getters.ToArray());
-    }
-
-    /// <summary>
-    /// Build iterator based on <see cref="IEnumerable{T}" />.
-    /// </summary>
-    /// <param name="classRowsFrame">Instance of <see cref="ClassRowsFrameBuilder{TClass} " />.</param>
-    /// <param name="enumerable">Enumerable.</param>
-    /// <returns>Enumerable iterator instance.</returns>
-    public static ClassRowsIterator<TClass> BuildIterator<TClass>(this ClassRowsFrameBuilder<TClass> classRowsFrame, IEnumerable<TClass> enumerable)
-        where TClass : class
-    {
-        return new(
-            classRowsFrame.Columns.ToArray(),
-            classRowsFrame.Getters.ToArray(),
-            enumerable);
     }
 }
