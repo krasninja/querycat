@@ -19,10 +19,16 @@ internal static class IOFunctions
     public static VariantValue Read(FunctionCallInfo args)
     {
         var uri = args.GetAt(0).AsString;
+
         if (uri.StartsWith(@"http://", StringComparison.OrdinalIgnoreCase) ||
             uri.StartsWith(@"https://", StringComparison.OrdinalIgnoreCase))
         {
             return Curl(args);
+        }
+
+        if (Directory.Exists(uri))
+        {
+            return ListDirectory(args);
         }
 
         return ReadFile(args);
@@ -153,6 +159,80 @@ internal static class IOFunctions
         }
         var formatter = FormattersInfo.CreateFormatter(extension, thread, funcArgs);
         return formatter ?? new TextLineFormatter();
+    }
+
+    private sealed class ListDirectoryEntry
+    {
+        [Description("File or directory.")]
+        public string Type { get; set; }
+
+        [Description("Name of the file or directory.")]
+        public string Name { get; set; }
+
+        [Description("Full path of the file or directory.")]
+        public string Path { get; set; }
+
+        [Description("Size of the file, in bytes.")]
+        public long? Size { get; set; }
+
+        [Description("Date and time at (UTC) which the file or directory has been created ")]
+        public DateTime CreatedAt { get; set; }
+
+        [Description("Date and time (UTC) at which the file or directory has been last accessed.")]
+        public DateTime LastAccessedAt { get; set; }
+
+        [Description("Date and time (UTC) at which the file or directory has been last modified.")]
+        public DateTime LastWriteTime { get; set; }
+    }
+
+    private static IEnumerable<ListDirectoryEntry> ListDirectoryInternal(string path)
+    {
+        var dirInfo = new DirectoryInfo(path);
+
+        foreach (var dir in dirInfo.EnumerateDirectories())
+        {
+            yield return new ListDirectoryEntry
+            {
+                Type = "d",
+                Name = dir.Name,
+                Path = dir.FullName,
+                CreatedAt = dir.CreationTimeUtc,
+                LastWriteTime = dir.LastWriteTimeUtc,
+                LastAccessedAt = dir.LastAccessTimeUtc,
+            };
+        }
+
+        foreach (var file in dirInfo.EnumerateFiles())
+        {
+            yield return new ListDirectoryEntry
+            {
+                Type = "f",
+                Name = file.Name,
+                Size = file.Length,
+                Path = file.FullName,
+                CreatedAt = file.CreationTimeUtc,
+                LastWriteTime = file.LastWriteTimeUtc,
+                LastAccessedAt = file.LastAccessTimeUtc,
+            };
+        }
+    }
+
+    [Description("List directory content (files and sub-directories).")]
+    [FunctionSignature("ls_dir(path: string): object<IRowsInput>")]
+    public static VariantValue ListDirectory(FunctionCallInfo args)
+    {
+        var path = args.GetAt(0).AsString;
+        var items = ListDirectoryInternal(path);
+        var input = new EnumerableRowsInput<ListDirectoryEntry>(items,
+            builder => builder
+                .AddProperty("type", f => f.Type)
+                .AddProperty("name", f => f.Name)
+                .AddProperty("path", f => f.Path)
+                .AddProperty("size", f => f.Size)
+                .AddProperty("creation_time", f => f.CreatedAt)
+                .AddProperty("last_access_time", f => f.LastAccessedAt)
+                .AddProperty("last_write_time", f => f.LastWriteTime));
+        return VariantValue.CreateFromObject(input);
     }
 
     #endregion
@@ -350,6 +430,7 @@ internal static class IOFunctions
 
         functionsManager.RegisterFunction(Read);
         functionsManager.RegisterFunction(Write);
+        functionsManager.RegisterFunction(ListDirectory);
 
         functionsManager.RegisterFunction(ReadFile);
         functionsManager.RegisterFunction(WriteFile);
