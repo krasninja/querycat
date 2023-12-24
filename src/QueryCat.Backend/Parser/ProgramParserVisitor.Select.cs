@@ -341,6 +341,10 @@ internal partial class ProgramParserVisitor
         {
             functionNode.JoinedNodes.AddRange(this.Visit<SelectTableJoinedNode>(context.selectTableJoined()));
         }
+        else if (expressionNode is SelectIdentifierExpressionNode identifierExpressionNode)
+        {
+            identifierExpressionNode.JoinedNodes.AddRange(this.Visit<SelectTableJoinedNode>(context.selectTableJoined()));
+        }
         return expressionNode;
     }
 

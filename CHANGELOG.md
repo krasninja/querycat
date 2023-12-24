@@ -15,6 +15,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Support library plugins.
 - Add "ls_dir" function.
 
+## Fixed
+
+- Fix using aliases with tables from variables.
+
 ## [0.4.14] - 2023-11-15
 
 ## Added

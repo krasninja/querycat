@@ -1,3 +1,4 @@
+using System.Text;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
@@ -92,6 +93,63 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
         }
 
         _separatorWithSpace = !string.IsNullOrEmpty(_separator) ? _separator + " " : string.Empty;
+    }
+
+    /// <summary>
+    /// Simple wrapper to write to string builder as to stream.
+    /// </summary>
+    /// <param name="stringBuilder">String builder instance.</param>
+    private sealed class StringBuilderStream(StringBuilder stringBuilder) : Stream
+    {
+        /// <inheritdoc />
+        public override void Flush()
+        {
+        }
+
+        /// <inheritdoc />
+        public override int Read(byte[] buffer, int offset, int count) => throw new NotImplementedException();
+
+        /// <inheritdoc />
+        public override long Seek(long offset, SeekOrigin origin) => throw new NotImplementedException();
+
+        /// <inheritdoc />
+        public override void SetLength(long value) => throw new NotImplementedException();
+
+        /// <inheritdoc />
+        public override void Write(byte[] buffer, int offset, int count)
+        {
+            var str = Encoding.UTF8.GetString(new ReadOnlySpan<byte>(buffer, offset, count));
+            stringBuilder.Append(str);
+        }
+
+        /// <inheritdoc />
+        public override bool CanRead => false;
+
+        /// <inheritdoc />
+        public override bool CanSeek => false;
+
+        /// <inheritdoc />
+        public override bool CanWrite => true;
+
+        /// <inheritdoc />
+        public override long Length => stringBuilder.Length;
+
+        /// <inheritdoc />
+        public override long Position { get; set; }
+    }
+
+    public TextTableOutput(
+        StringBuilder stringBuilder,
+        bool hasHeader = true,
+        string? separator = null,
+        Style style = Style.Table1,
+        string? floatNumberFormat = null) : this(
+            new StringBuilderStream(stringBuilder),
+            hasHeader,
+            separator,
+            style,
+            floatNumberFormat)
+    {
     }
 
     /// <inheritdoc />

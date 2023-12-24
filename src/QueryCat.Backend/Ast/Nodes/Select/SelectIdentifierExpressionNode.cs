@@ -19,6 +19,8 @@ internal sealed class SelectIdentifierExpressionNode : IdentifierExpressionNode,
     /// </summary>
     public FunctionCallNode? Format { get; set; }
 
+    public List<SelectTableJoinedNode> JoinedNodes { get; } = new();
+
     /// <inheritdoc />
     public SelectIdentifierExpressionNode(string name) : base(name)
     {
