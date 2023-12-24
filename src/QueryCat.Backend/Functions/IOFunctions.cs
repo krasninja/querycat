@@ -164,13 +164,13 @@ internal static class IOFunctions
     private sealed class ListDirectoryEntry
     {
         [Description("File or directory.")]
-        public string Type { get; set; }
+        public string Type { get; set; } = string.Empty;
 
         [Description("Name of the file or directory.")]
-        public string Name { get; set; }
+        public required string Name { get; init; }
 
         [Description("Full path of the file or directory.")]
-        public string Path { get; set; }
+        public string Path { get; set; } = string.Empty;
 
         [Description("Size of the file, in bytes.")]
         public long? Size { get; set; }
