@@ -69,15 +69,15 @@ public class SamplePluginRowsIterator : IRowsIterator
 }
 ```
 
-## Plugin Based On FetchInput
+## Plugin Based On FetchRowsInput
 
 Another way to define plugin. It is high-level wrapper for rows input. The main purpose is to provide convenience wrapper for inputs that do external calls (API clients, etc).
 
 ```csharp
 /// <summary>
-/// Example simple rows input plugin based on <see cref="FetchInput{TClass}" />.
+/// Example simple rows input plugin based on <see cref="FetchRowsInput{TClass}" />.
 /// </summary>
-public class SamplePluginInput : FetchInput<TestClass>
+public class SamplePluginInput : FetchRowsInput<TestClass>
 {
     private const long MaxValue = 9;
 
@@ -97,16 +97,10 @@ public class SamplePluginInput : FetchInput<TestClass>
     {
         Trace.WriteLine(nameof(Initialize));
         builder.AddProperty(b => b.Key);
-    }
-
-    /// <inheritdoc />
-    protected override void InitializeInputInfo(QueryContextInputInfo inputInfo)
-    {
-        Trace.WriteLine(nameof(InitializeInputInfo));
-        inputInfo.AddKeyColumn("Key",
+        AddKeyColumn("Key",
             isRequired: false,
             operation: VariantValue.Operation.Equals,
-            action: value => _key = value.AsString);
+            set: value => _key = value.AsString);
     }
 
     /// <inheritdoc />

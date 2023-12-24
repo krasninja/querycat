@@ -50,10 +50,9 @@ The guide below describes how to write a plugin.
         {
             ThriftPluginClient.SetupApplicationLogging();
             using var client = new ThriftPluginClient(args);
-            client.FunctionsManager.RegisterFromType(typeof(TestRowsInput));
             client.FunctionsManager.RegisterFunction(TestFunctions.TestCombineFunction);
             await client.Start();
-            await client.WaitForParentProcessExitAsync();
+            await client.WaitForServerExitAsync();
         }
     }
     ```

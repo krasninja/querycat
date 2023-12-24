@@ -14,7 +14,9 @@ There are alternative and similar tools:
 
 - [csvkit](https://github.com/wireservice/csvkit/). This is a suite of command-line tools for converting to and working with CSV, the king of tabular file formats. Written in Python.
 
-- [Musoq](https://github.com/Puchaczov/Musoq) Very similar tool written in C#. The tool allows to use SQL on different data source (CSV, JSON, XML, Git, Websites and a lot more!).
+- [Musoq](https://github.com/Puchaczov/Musoq). Very similar tool written in C#. The tool allows to use SQL on different data source (CSV, JSON, XML, Git, Websites and a lot more!).
+
+- [RBQL](https://rbql.org). RBQL is a technology that provides SQL-like language for data-transformation and data-analysis queries for structured data (e.g. CSV files, log files, Python lists, JS arrays). RBQL evaluates input query using one of the available general-purpose "backend" languages (currently Python or JavaScript).
 
 No active support:
 

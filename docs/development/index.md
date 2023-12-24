@@ -10,6 +10,7 @@ Read the following sections for better internals understanding:
 4. [Thrift Connector](connector-thrift.md). Implement your plugin as standalone application.
 5. [Simple Plugin](plugin-simple.md). How to create simple plugin.
 6. [Advanced Plugin](plugin-advanced.md). Other ways to define plugin.
+7. [SDK](sdk.md). NuGet package.
 
 ## Plugin Search
 

@@ -9,7 +9,7 @@ namespace QueryCat.Backend.Execution;
 public sealed class ExecutionOptions
 {
     /// <summary>
-    /// Default output if FROM is not specified.
+    /// Default output target if INTO clause is not specified.
     /// </summary>
     public IRowsOutput DefaultRowsOutput { get; set; } = NullRowsOutput.Instance;
 
@@ -24,7 +24,7 @@ public sealed class ExecutionOptions
     public bool ShowDetailedStatistic { get; set; }
 
     /// <summary>
-    /// Max number of errors before abort.
+    /// Max number of errors before query abort.
     /// </summary>
     public int MaxErrors { get; set; } = -1;
 
