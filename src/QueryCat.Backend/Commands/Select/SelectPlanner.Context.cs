@@ -152,40 +152,53 @@ internal sealed partial class SelectPlanner
         {
             return Array.Empty<IRowsInput>();
         }
-        return new[]
-        {
-            new RowsIteratorInput(currentContext.CteList[cteIndex].RowsIterator),
-        };
+        return
+        [
+            new RowsIteratorInput(currentContext.CteList[cteIndex].RowsIterator)
+        ];
     }
 
-    private IRowsInput[] Context_CreateInputSourceFromVariable(SelectCommandContext currentContext, IdentifierExpressionNode idNode)
+    private IRowsInput[] Context_CreateInputSourceFromVariable(SelectCommandContext context, IdentifierExpressionNode idNode)
     {
         if (!ExecutionThread.TopScope.Variables.TryGetValue(idNode.FullName, out var value))
         {
             return Array.Empty<IRowsInput>();
         }
         var internalValueType = value.GetInternalType();
+        var rowsInputs = Array.Empty<IRowsInput>();
+
         if (internalValueType == DataType.Object && value.AsObjectUnsafe != null)
         {
-            return Context_CreateInputSourceFromObjectVariable(currentContext, value.AsObjectUnsafe);
+            rowsInputs = Context_CreateInputSourceFromObjectVariable(context, value.AsObjectUnsafe);
         }
-        if (internalValueType == DataType.String && !string.IsNullOrEmpty(value.AsStringUnsafe))
+        else if (internalValueType == DataType.String && !string.IsNullOrEmpty(value.AsStringUnsafe))
         {
-            var formatterNode = idNode is SelectIdentifierExpressionNode selectIdentifierExpressionNode
-                ? selectIdentifierExpressionNode.Format
-                : null;
-            var rowsInputs = Context_CreateInputSourceFromStringVariable(currentContext, value.AsStringUnsafe, formatterNode);
-            if (idNode is ISelectAliasNode selectAliasNode && !string.IsNullOrEmpty(selectAliasNode.Alias))
-            {
-                foreach (var rowsInput in rowsInputs)
-                {
-                    Context_SetAlias(rowsInput, selectAliasNode.Alias);
-                }
-            }
-            return rowsInputs;
+            rowsInputs = Context_CreateInputSourceFromStringVariable(context, value.AsStringUnsafe,
+                (idNode as SelectIdentifierExpressionNode)?.Format);
         }
 
-        return Array.Empty<IRowsInput>();
+        // Alias.
+        if (idNode is ISelectAliasNode selectAliasNode && !string.IsNullOrEmpty(selectAliasNode.Alias))
+        {
+            foreach (var rowsInput in rowsInputs)
+            {
+                Context_SetAlias(rowsInput, selectAliasNode.Alias);
+            }
+        }
+
+        // Joined nodes processing.
+        if (idNode is SelectIdentifierExpressionNode selectIdentifierExpressionNode)
+        {
+            var joinedInputs = new List<IRowsInput>(rowsInputs);
+            foreach (var joinedNode in selectIdentifierExpressionNode.JoinedNodes)
+            {
+                var joinRowsInput = Context_CreateInputSourceFromTableJoin(context, rowsInputs[0], joinedNode);
+                joinedInputs.Add(joinRowsInput);
+            }
+            rowsInputs = joinedInputs.ToArray();
+        }
+
+        return rowsInputs;
     }
 
     private IRowsInput[] Context_CreateInputSourceFromObjectVariable(SelectCommandContext currentContext, object objVariable)
@@ -194,6 +207,7 @@ internal sealed partial class SelectPlanner
         if (objVariable is IRowsInput rowsInput)
         {
             currentContext.AddInput(new SelectCommandInputContext(rowsInput));
+            rowsInput.Open();
             rowsInputResult = rowsInput;
         }
         if (objVariable is IRowsIterator rowsIterator)
@@ -206,23 +220,23 @@ internal sealed partial class SelectPlanner
         {
             return Array.Empty<IRowsInput>();
         }
-        return new[] { rowsInputResult };
+        return [rowsInputResult];
     }
 
-    private IRowsInput[] Context_CreateInputSourceFromStringVariable(SelectCommandContext currentContext,
+    private IRowsInput[] Context_CreateInputSourceFromStringVariable(SelectCommandContext context,
         string strVariable, FunctionCallNode? formatterNode)
     {
         var args = new FunctionCallArguments()
             .Add("uri", new VariantValue(strVariable));
         if (formatterNode != null)
         {
-            var formatter = Misc_CreateDelegate(formatterNode, currentContext).Invoke();
+            var formatter = Misc_CreateDelegate(formatterNode, context).Invoke();
             args.Add(formatter);
         }
         var rowsInput = ExecutionThread.FunctionsManager.CallFunction("read", args).As<IRowsInput>();
         rowsInput.QueryContext = new SelectInputQueryContext(rowsInput);
         rowsInput.Open();
-        return new[] { rowsInput };
+        return [rowsInput];
     }
 
     // Last input is combine input.
@@ -292,10 +306,10 @@ internal sealed partial class SelectPlanner
     {
         if (expressionNode is SelectQueryNode queryNode)
         {
-            return new[]
-            {
-                Context_CreateInputSourceFromSubQuery(context, queryNode),
-            };
+            return
+            [
+                Context_CreateInputSourceFromSubQuery(context, queryNode)
+            ];
         }
         if (expressionNode is SelectTableFunctionNode tableFunctionNode)
         {
@@ -312,10 +326,10 @@ internal sealed partial class SelectPlanner
         }
         if (expressionNode is SelectTableNode tableNode)
         {
-            return new[]
-            {
-                Context_CreateInputSourceFromTable(context, tableNode),
-            };
+            return
+            [
+                Context_CreateInputSourceFromTable(context, tableNode)
+            ];
         }
 
         throw new InvalidOperationException($"Cannot process node '{expressionNode}' as input.");
