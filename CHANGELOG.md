@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Add new table output style "Table2".
 - Support library plugins.
 - Add "ls_dir" function.
+- Add glob pattern to search thru all directories. For example, "select * from '/home/user/**/*.txt".
 
 ## Fixed
 

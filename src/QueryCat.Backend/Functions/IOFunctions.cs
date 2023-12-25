@@ -128,7 +128,13 @@ internal static class IOFunctions
             yield break;
         }
 
-        var dir = Path.GetDirectoryName(path);
+        var dir = Path.GetDirectoryName(path) ?? string.Empty;
+        var options = SearchOption.TopDirectoryOnly;
+        if (path.EndsWith("**") || path.EndsWith("**/") || dir.EndsWith("**"))
+        {
+            dir = dir.Replace("**", string.Empty);
+            options = SearchOption.AllDirectories;
+        }
         var pattern = Path.GetFileName(path);
         if (string.IsNullOrEmpty(dir))
         {
@@ -137,7 +143,7 @@ internal static class IOFunctions
         IEnumerable<string> files;
         try
         {
-            files = Directory.EnumerateFiles(dir, pattern, SearchOption.TopDirectoryOnly);
+            files = Directory.EnumerateFiles(dir, pattern, options);
         }
         catch (Exception e)
         {
