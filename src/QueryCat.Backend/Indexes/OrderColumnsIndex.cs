@@ -2,7 +2,6 @@ using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Indexes;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.FunctionsManager;
 using QueryCat.Backend.Relational;
 
 namespace QueryCat.Backend.Indexes;

@@ -47,8 +47,8 @@ internal sealed class FilterRowsIterator : IRowsIterator, IRowsIteratorParent
     /// <inheritdoc />
     public void Explain(IndentedStringBuilder stringBuilder)
     {
-        stringBuilder.AppendRowsIteratorsWithIndent("Filter", _rowsIterator)
-            .AppendSubQueriesWithIndent(_predicate);
+        stringBuilder.AppendRowsIteratorsWithIndent("Filter", _rowsIterator);
+        IndentedStringBuilderUtils.AppendSubQueriesWithIndent(stringBuilder, _predicate);
     }
 
     /// <inheritdoc />

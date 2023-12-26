@@ -14,20 +14,6 @@ public interface IFuncUnit
     DataType OutputType { get; }
 
     /// <summary>
-    /// Get metadata object.
-    /// </summary>
-    /// <param name="index">Metadata key.</param>
-    /// <returns>Object instance or null.</returns>
-    object? GetData(int index);
-
-    /// <summary>
-    /// Set metadata object.
-    /// </summary>
-    /// <param name="index">Object index.</param>
-    /// <param name="obj">Object instance.</param>
-    void SetData(int index, object obj);
-
-    /// <summary>
     /// Invoke and get value.
     /// </summary>
     /// <returns>Value.</returns>

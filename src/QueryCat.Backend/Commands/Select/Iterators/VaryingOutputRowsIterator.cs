@@ -3,7 +3,6 @@ using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.FunctionsManager;
 using QueryCat.Backend.Storage;
 
 namespace QueryCat.Backend.Commands.Select.Iterators;
@@ -136,8 +135,8 @@ internal sealed class VaryingOutputRowsIterator : IRowsIterator, IRowsIteratorPa
     /// <inheritdoc />
     public void Explain(IndentedStringBuilder stringBuilder)
     {
-        stringBuilder.AppendRowsIteratorsWithIndent("Vary Output", _rowsIterator)
-            .AppendSubQueriesWithIndent(_outputFactory);
+        stringBuilder.AppendRowsIteratorsWithIndent("Vary Output", _rowsIterator);
+        IndentedStringBuilderUtils.AppendSubQueriesWithIndent(stringBuilder, _outputFactory);
     }
 
     /// <inheritdoc />

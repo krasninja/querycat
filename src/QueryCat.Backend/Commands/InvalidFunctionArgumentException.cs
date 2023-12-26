@@ -1,6 +1,6 @@
 using QueryCat.Backend.Core;
 
-namespace QueryCat.Backend.FunctionsManager;
+namespace QueryCat.Backend.Commands;
 
 /// <summary>
 /// The exception occurs when function has invalid argument.
