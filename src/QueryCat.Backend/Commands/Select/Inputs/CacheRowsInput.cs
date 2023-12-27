@@ -186,7 +186,7 @@ internal sealed class CacheRowsInput : IRowsInputKeys
         {
             return _currentCacheEntry;
         }
-        var key = new CacheKey(_rowsInput, _queryContext, _conditions);
+        var key = CreateCacheKey(_rowsInput, _queryContext);
         _currentCacheEntry = new CacheEntry(key, TimeSpan.FromMinutes(1));
         return _currentCacheEntry;
     }
@@ -203,11 +203,24 @@ internal sealed class CacheRowsInput : IRowsInputKeys
         }
     }
 
+    private CacheKey CreateCacheKey(IRowsInput rowsInput, QueryContext queryContext)
+    {
+        return new CacheKey(
+            from: rowsInput.GetType().Name,
+            inputArguments: rowsInput.UniqueKey,
+            selectColumns: queryContext.QueryInfo.Columns.Select(c => c.Name).ToArray(),
+            conditions: rowsInput is IRowsInputKeys rowsInputKeys
+                ? _conditions.GetKeyConditions(rowsInputKeys).Select(c => c.ToCacheCondition()).ToArray()
+                : null,
+            offset: queryContext.QueryInfo.Offset,
+            limit: queryContext.QueryInfo.Limit);
+    }
+
     private CacheEntry CreateOrGetCacheEntry()
     {
         RemoveExpiredKeys();
 
-        var key = new CacheKey(_rowsInput, _queryContext, _conditions);
+        var key = CreateCacheKey(_rowsInput, _queryContext);
         // Fast path.
         if (_cacheEntries.TryGetValue(key, out var existingKey))
         {
@@ -232,7 +245,7 @@ internal sealed class CacheRowsInput : IRowsInputKeys
     public void Reset()
     {
         _rowIndex = -1;
-        var newCacheKey = new CacheKey(_rowsInput, _queryContext, _conditions);
+        var newCacheKey = CreateCacheKey(_rowsInput, _queryContext);
         if (_currentCacheEntry != null)
         {
             // If we reset but persist the same key - just go ahead using existing input.

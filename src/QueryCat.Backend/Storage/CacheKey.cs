@@ -1,8 +1,5 @@
-using System.Collections.Immutable;
 using System.Text;
-using QueryCat.Backend.Commands.Select;
 using QueryCat.Backend.Core.Data;
-using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend.Storage;
@@ -20,17 +17,17 @@ internal readonly struct CacheKey
     /// <summary>
     /// Input function arguments.
     /// </summary>
-    public ImmutableHashSet<string> InputArguments { get; }
+    public IReadOnlySet<string> InputArguments { get; }
 
     /// <summary>
     /// Columns selected from input.
     /// </summary>
-    public ImmutableHashSet<string> SelectColumns { get; }
+    public IReadOnlySet<string> SelectColumns { get; }
 
     /// <summary>
     /// Key conditions that were applied to the input.
     /// </summary>
-    public ImmutableHashSet<CacheKeyCondition> Conditions { get; }
+    public IReadOnlySet<CacheKeyCondition> Conditions { get; }
 
     /// <summary>
     /// Applied offset.
@@ -42,46 +39,6 @@ internal readonly struct CacheKey
     /// </summary>
     public long Limit { get; }
 
-    /// <summary>
-    /// Empty instance.
-    /// </summary>
-    public static CacheKey Empty { get; } = new(
-        from: "empty",
-        Array.Empty<string>(),
-        Array.Empty<string>(),
-        Array.Empty<SelectQueryCondition>());
-
-    public CacheKey(IRowsInput rowsInput, QueryContext queryContext, SelectQueryConditions conditions) : this(
-        from: rowsInput.GetType().Name,
-        inputArguments: rowsInput.UniqueKey,
-        selectColumns: queryContext.QueryInfo.Columns.Select(c => c.Name).ToArray(),
-        conditions: rowsInput is IRowsInputKeys rowsInputKeys ? conditions.GetKeyConditions(rowsInputKeys).ToArray() : null,
-        offset: queryContext.QueryInfo.Offset,
-        limit: queryContext.QueryInfo.Limit)
-    {
-    }
-
-    public CacheKey(
-        string from,
-        string[] inputArguments,
-        string[] selectColumns,
-        SelectQueryCondition[]? conditions = null,
-        long offset = 0,
-        long? limit = null) : this(
-            from,
-            inputArguments.Where(a => !string.IsNullOrEmpty(a)).ToArray(),
-            selectColumns,
-            (conditions ?? Array.Empty<SelectQueryCondition>()).Select(c =>
-                new CacheKeyCondition(
-                    c.Column,
-                    c.Operation,
-                    new VariantValueArray(c.ValueFuncs.Select(f => f.Invoke()))
-                )).ToArray(),
-            offset,
-            limit)
-    {
-    }
-
     internal CacheKey(
         string from,
         string[] inputArguments,
@@ -91,9 +48,9 @@ internal readonly struct CacheKey
         long? limit = null)
     {
         From = from;
-        InputArguments = ImmutableHashSet.Create(inputArguments);
-        SelectColumns = ImmutableHashSet.Create(selectColumns);
-        Conditions = ImmutableHashSet.Create(conditions ?? Array.Empty<CacheKeyCondition>());
+        InputArguments = inputArguments.Where(a => !string.IsNullOrEmpty(a)).ToHashSet();
+        SelectColumns = selectColumns.ToHashSet();
+        Conditions = (conditions ?? Array.Empty<CacheKeyCondition>()).ToHashSet();
         Offset = offset;
         Limit = limit ?? -1;
     }
@@ -212,6 +169,34 @@ internal readonly struct CacheKey
         }
         return new CacheKey(from, inputKeys.ToArray(), selectColumns.ToArray(), conditions.ToArray(), offset, limit);
     }
+
+    /// <inheritdoc />
+    public override bool Equals(object? obj) => obj is CacheKey other && Equals(other);
+
+    public bool Equals(CacheKey other) => From == other.From
+        && InputArguments.SetEquals(other.InputArguments)
+        && SelectColumns.SetEquals(other.SelectColumns)
+        && Conditions.SetEquals(other.Conditions)
+        && Offset == other.Offset
+        && Limit == other.Limit;
+
+    private static int GetSetHashCode<T>(IReadOnlySet<T> set)
+    {
+        var hashcode = default(HashCode);
+        foreach (var setItem in set)
+        {
+            hashcode.Add(setItem);
+        }
+        return hashcode.ToHashCode();
+    }
+
+    /// <inheritdoc />
+    public override int GetHashCode() => HashCode.Combine(From, GetSetHashCode(InputArguments),
+        GetSetHashCode(SelectColumns), GetSetHashCode(Conditions), Offset, Limit);
+
+    public static bool operator ==(CacheKey left, CacheKey right) => left.Equals(right);
+
+    public static bool operator !=(CacheKey left, CacheKey right) => !left.Equals(right);
 
     #endregion
 

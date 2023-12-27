@@ -73,4 +73,17 @@ internal static class ArrayUtils
         }
         return true;
     }
+
+    /// <summary>
+    /// Calculates hash code of every array element and combines it.
+    /// </summary>
+    /// <param name="values">Array values.</param>
+    /// <typeparam name="T">Array type.</typeparam>
+    /// <returns>Calculated hash code.</returns>
+    public static int GetHashCode<T>(T[] values)
+    {
+        var hashCode = default(HashCode);
+        Array.ForEach(values, el => hashCode.Add(el));
+        return hashCode.ToHashCode();
+    }
 }

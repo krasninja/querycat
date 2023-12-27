@@ -13,29 +13,22 @@ internal readonly struct CacheKeyCondition : IEquatable<CacheKeyCondition>
     /// <summary>
     /// First value.
     /// </summary>
-    public VariantValue Value => ValuesArray.Values[0];
+    public VariantValue Value => ValuesArray[0];
 
-    public VariantValueArray ValuesArray { get; }
+    public VariantValue[] ValuesArray { get; }
 
-    public CacheKeyCondition(Column column, VariantValue.Operation operation, VariantValueArray valuesArray)
+    public CacheKeyCondition(Column column, VariantValue.Operation operation, params VariantValue[] valuesArray)
     {
         Column = column;
         Operation = operation;
         ValuesArray = valuesArray;
     }
 
-    public CacheKeyCondition(Column column, VariantValue.Operation operation, params VariantValue[] values)
-    {
-        Column = column;
-        Operation = operation;
-        ValuesArray = new VariantValueArray(values);
-    }
-
     #region Serialization
 
     internal string Serialize()
     {
-        var values = ValuesArray.Values.Select(DataTypeUtils.SerializeVariantValue);
+        var values = ValuesArray.Select(DataTypeUtils.SerializeVariantValue);
         return $"{Column.Name},{(int)Operation},{string.Join(",", values)}";
     }
 
@@ -66,7 +59,7 @@ internal readonly struct CacheKeyCondition : IEquatable<CacheKeyCondition>
         condition = new CacheKeyCondition(
             column,
             (VariantValue.Operation)int.Parse(arr[1]),
-            new VariantValueArray(values.ToArray()));
+            values.ToArray());
         return true;
     }
 
@@ -76,14 +69,14 @@ internal readonly struct CacheKeyCondition : IEquatable<CacheKeyCondition>
 
     /// <inheritdoc />
     public bool Equals(CacheKeyCondition other)
-        => Column.Equals(other.Column) && Operation == other.Operation && ValuesArray.Equals(other.ValuesArray);
+        => Column.Equals(other.Column) && Operation == other.Operation && ArrayUtils.EqualsAll(ValuesArray, other.ValuesArray);
 
     /// <inheritdoc />
     public override bool Equals(object? obj)
         => obj is CacheKeyCondition other && Equals(other);
 
     /// <inheritdoc />
-    public override int GetHashCode() => HashCode.Combine(Column, (int)Operation, ValuesArray);
+    public override int GetHashCode() => HashCode.Combine(Column, (int)Operation, ArrayUtils.GetHashCode(ValuesArray));
 
     public static bool operator ==(CacheKeyCondition left, CacheKeyCondition right) => left.Equals(right);
 

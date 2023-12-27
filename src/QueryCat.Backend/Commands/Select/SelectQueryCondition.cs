@@ -1,6 +1,7 @@
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Storage;
 
 namespace QueryCat.Backend.Commands.Select;
 
@@ -50,6 +51,9 @@ internal sealed class SelectQueryCondition
         IFuncUnit value) : this(column, operation, new[] { value })
     {
     }
+
+    public CacheKeyCondition ToCacheCondition()
+        => new(Column, Operation, ValueFuncs.Select(f => f.Invoke()).ToArray());
 
     /// <inheritdoc />
     public override string ToString() => $"Column = {Column}, Operation = {Operation}";
