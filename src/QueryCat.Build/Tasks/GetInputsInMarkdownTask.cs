@@ -3,6 +3,7 @@ using Cake.Core;
 using Cake.Core.Diagnostics;
 using Cake.Frosting;
 using Microsoft.Extensions.Logging;
+using QueryCat.Backend;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Functions;
@@ -33,12 +34,12 @@ public class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
     public override Task RunAsync(BuildContext context)
     {
         var assemblyFile = context.Arguments.GetArgument("Assembly");
-        using var thread = new ExecutionThread(new ExecutionOptions
-        {
-            PluginDirectories = { assemblyFile }
-        });
-        var pluginsLoader = new ThriftPluginsLoader(thread, new[] { assemblyFile });
-        new ExecutionThreadBootstrapper().Bootstrap(thread, pluginsLoader);
+        using var thread = new ExecutionThreadBootstrapper(new ExecutionOptions
+            {
+                PluginDirectories = { assemblyFile }
+            })
+            .WithPluginsLoader(thread => new ThriftPluginsLoader(thread, new[] { assemblyFile }))
+            .Create();
         var pluginFunctions = thread.FunctionsManager.GetFunctions()
             .Where(f =>
                 f.ReturnType == DataType.Object
@@ -58,7 +59,7 @@ public class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
             var queryContext = new CollectQueryContext();
             try
             {
-                var functionCallInfo = new FunctionCallInfo(ExecutionThread.DefaultInstance, inputFunction.Name);
+                var functionCallInfo = new FunctionCallInfo(Executor.Thread, inputFunction.Name);
                 for (var i = 0; i < inputFunction.Arguments.Length; i++)
                 {
                     functionCallInfo.Push(VariantValue.Null);
@@ -103,7 +104,6 @@ public class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
         File.WriteAllText(file, sb.ToString());
         context.Log.Information($"Wrote to {file}.");
 
-        pluginsLoader.Dispose();
         return Task.CompletedTask;
     }
 }

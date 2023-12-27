@@ -31,18 +31,12 @@ public sealed class DefaultFunctionsManager : IFunctionsManager
     private readonly List<Action<DefaultFunctionsManager>> _registerAggregateFunctions = new(capacity: DefaultCapacity);
     private int _registerAggregateFunctionsLastIndex;
 
-    private readonly IExecutionThread _thread;
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(DefaultFunctionsManager));
     private static readonly ILogger Logger = Application.LoggerFactory.CreateLogger(nameof(DefaultFunctionsManager));
 
     private static VariantValue EmptyFunction(FunctionCallInfo args)
     {
         return VariantValue.Null;
-    }
-
-    public DefaultFunctionsManager(IExecutionThread thread)
-    {
-        _thread = thread;
     }
 
     #region Registration
@@ -56,7 +50,7 @@ public sealed class DefaultFunctionsManager : IFunctionsManager
         }
         else
         {
-            registerFunction.Invoke(_thread.FunctionsManager);
+            registerFunction.Invoke(this);
         }
     }
 
@@ -159,7 +153,7 @@ public sealed class DefaultFunctionsManager : IFunctionsManager
     }
 
     /// <inheritdoc />
-    public void RegisterAggregate<TAggregate>(Func<IExecutionThread, TAggregate> factory)
+    public void RegisterAggregate<TAggregate>(Func<TAggregate> factory)
         where TAggregate : IAggregateFunction
     {
         _registerAggregateFunctions.Add(fm => RegisterAggregateInternal(fm, factory));
@@ -167,7 +161,7 @@ public sealed class DefaultFunctionsManager : IFunctionsManager
 
     private static void RegisterAggregateInternal<TAggregate>(
         DefaultFunctionsManager functionsManager,
-        Func<IExecutionThread, TAggregate> factory)
+        Func<TAggregate> factory)
         where TAggregate : IAggregateFunction
     {
         var aggregateType = typeof(TAggregate);
@@ -191,7 +185,7 @@ public sealed class DefaultFunctionsManager : IFunctionsManager
                 updateValueFactory: (_, value) => value!.Add(function));
 
             Logger.LogDebug("Register aggregate: {Function}.", function);
-            var aggregateFunctionInstance = factory.Invoke(functionsManager._thread);
+            var aggregateFunctionInstance = factory.Invoke();
             functionsManager._aggregateFunctions.TryAdd(functionName, aggregateFunctionInstance);
         }
     }
@@ -229,7 +223,7 @@ public sealed class DefaultFunctionsManager : IFunctionsManager
         {
             if (func.MatchesToArguments(functionArgumentsTypes))
             {
-                functions = new[] { func };
+                functions = [func];
                 return true;
             }
         }
@@ -287,9 +281,9 @@ public sealed class DefaultFunctionsManager : IFunctionsManager
     }
 
     /// <inheritdoc />
-    public VariantValue CallFunction(IFunction function, FunctionCallArguments callArguments)
+    public VariantValue CallFunction(IFunction function, IExecutionThread executionThread, FunctionCallArguments callArguments)
     {
-        var info = new FunctionCallInfo(_thread, function.Name);
+        var info = new FunctionCallInfo(executionThread, function.Name);
         int positionalIndex = 0;
 
         for (var i = 0; i < function.Arguments.Length; i++)

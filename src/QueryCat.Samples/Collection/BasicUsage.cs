@@ -1,5 +1,5 @@
+using QueryCat.Backend;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Execution;
 
 namespace QueryCat.Samples.Collection;
 
@@ -8,9 +8,8 @@ internal class BasicUsage : BaseUsage
     /// <inheritdoc />
     public override void Run()
     {
-        var executionThread = new ExecutionThread();
         // Add standard functions.
-        new ExecutionThreadBootstrapper().Bootstrap(executionThread);
+        using var executionThread = new ExecutionThreadBootstrapper().Create();
         var result = VariantValue.Null;
 
         result = executionThread.Run("1+1");

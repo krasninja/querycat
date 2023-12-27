@@ -1,4 +1,5 @@
 using System.CommandLine;
+using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Functions;
@@ -22,7 +23,7 @@ internal class SchemaCommand : BaseQueryCommand
                 if (!result.IsNull && result.GetInternalType() == DataType.Object
                     && result.AsObject is IRowsSchema rowsSchema)
                 {
-                    var schema = thread.RunFunction(InfoFunctions.Schema, rowsSchema);
+                    var schema = thread.CallFunction(InfoFunctions.Schema, rowsSchema);
                     thread.TopScope.Variables["result"] = schema;
                     thread.Run("result");
                 }

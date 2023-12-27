@@ -14,15 +14,15 @@ public static class AdditionalRegistration
         functionsManager.RegisterFactory(XmlFormatter.RegisterFunctions);
         functionsManager.RegisterFunction(IISW3CFormatter.IISW3C);
 
-        FormattersInfo.RegisterFormatter(".json", (fm, args) => fm.CallFunction("json", args).As<IRowsFormatter>());
-        FormattersInfo.RegisterFormatter(".srt", (fm, args) => fm.CallFunction("srt", args).As<IRowsFormatter>());
-        FormattersInfo.RegisterFormatter(".xml", (fm, args) => fm.CallFunction("xml", args).As<IRowsFormatter>());
-        FormattersInfo.RegisterFormatter(".xsd", (fm, args) => fm.CallFunction("xml", args).As<IRowsFormatter>());
+        FormattersInfo.RegisterFormatter(".json", (fm, et, args) => fm.CallFunction("json", et, args).As<IRowsFormatter>());
+        FormattersInfo.RegisterFormatter(".srt", (fm, et, args) => fm.CallFunction("srt", et, args).As<IRowsFormatter>());
+        FormattersInfo.RegisterFormatter(".xml", (fm, et, args) => fm.CallFunction("xml", et, args).As<IRowsFormatter>());
+        FormattersInfo.RegisterFormatter(".xsd", (fm, et, args) => fm.CallFunction("xml", et, args).As<IRowsFormatter>());
 
-        FormattersInfo.RegisterFormatter("application/json", (fm, args) => fm.CallFunction("json", args).As<IRowsFormatter>());
-        FormattersInfo.RegisterFormatter("application/x-subrip", (fm, args) => fm.CallFunction("srt", args).As<IRowsFormatter>());
-        FormattersInfo.RegisterFormatter("application/xml", (fm, args) => fm.CallFunction("xml", args).As<IRowsFormatter>());
-        FormattersInfo.RegisterFormatter("application/xhtml+xml", (fm, args) => fm.CallFunction("xml", args).As<IRowsFormatter>());
-        FormattersInfo.RegisterFormatter("application/soap+xml", (fm, args) => fm.CallFunction("xml", args).As<IRowsFormatter>());
+        FormattersInfo.RegisterFormatter("application/json", (fm, et, args) => fm.CallFunction("json", et, args).As<IRowsFormatter>());
+        FormattersInfo.RegisterFormatter("application/x-subrip", (fm, et, args) => fm.CallFunction("srt", et, args).As<IRowsFormatter>());
+        FormattersInfo.RegisterFormatter("application/xml", (fm, et, args) => fm.CallFunction("xml", et, args).As<IRowsFormatter>());
+        FormattersInfo.RegisterFormatter("application/xhtml+xml", (fm, et, args) => fm.CallFunction("xml", et, args).As<IRowsFormatter>());
+        FormattersInfo.RegisterFormatter("application/soap+xml", (fm, et, args) => fm.CallFunction("xml", et, args).As<IRowsFormatter>());
     }
 }

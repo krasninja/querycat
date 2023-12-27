@@ -1,5 +1,5 @@
+using QueryCat.Backend;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Execution;
 
 namespace QueryCat.Samples.Collection;
 
@@ -8,7 +8,7 @@ internal class VariablesUsage : BaseUsage
     /// <inheritdoc />
     public override void Run()
     {
-        var executionThread = new ExecutionThread();
+        var executionThread = new ExecutionThreadBootstrapper().Create();
         // Define variable in script.
         executionThread.Run("declare x int := 10;");
         // Define variable in code.

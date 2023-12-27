@@ -11,7 +11,7 @@ public interface IFunctionsManager
     /// Register aggregate function.
     /// </summary>
     /// <param name="factory">Factory method that creates aggregate instance.</param>
-    void RegisterAggregate<TAggregate>(Func<IExecutionThread, TAggregate> factory)
+    void RegisterAggregate<TAggregate>(Func<TAggregate> factory)
         where TAggregate : IAggregateFunction;
 
     /// <summary>
@@ -60,7 +60,8 @@ public interface IFunctionsManager
     /// Call the function.
     /// </summary>
     /// <param name="function">Function.</param>
+    /// <param name="executionThread">Execution thread.</param>
     /// <param name="callArguments">Arguments to pass.</param>
     /// <returns>Result.</returns>
-    VariantValue CallFunction(IFunction function, FunctionCallArguments callArguments);
+    VariantValue CallFunction(IFunction function, IExecutionThread executionThread, FunctionCallArguments callArguments);
 }

@@ -15,9 +15,6 @@ namespace QueryCat.Plugins.Client;
 public sealed class PluginExecutionThread : IExecutionThread
 {
     /// <inheritdoc />
-    public CancellationTokenSource CancellationTokenSource { get; } = new();
-
-    /// <inheritdoc />
     public IFunctionsManager FunctionsManager { get; }
 
     /// <inheritdoc />
@@ -37,7 +34,7 @@ public sealed class PluginExecutionThread : IExecutionThread
     }
 
     /// <inheritdoc />
-    public VariantValue Run(string query)
+    public VariantValue Run(string query, CancellationToken cancellationToken = default)
     {
         throw new QueryCatPluginException(ErrorType.GENERIC, "Query run is not supported within plugins.");
     }

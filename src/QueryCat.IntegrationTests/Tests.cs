@@ -1,8 +1,8 @@
 using Xunit;
+using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Functions;
-using QueryCat.Backend.Core.Plugins;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Execution;
+using QueryCat.Backend.Formatters;
 using QueryCat.Tests.QueryRunner;
 
 namespace QueryCat.IntegrationTests;
@@ -12,15 +12,20 @@ namespace QueryCat.IntegrationTests;
 /// </summary>
 public sealed class Tests : IDisposable
 {
-    private readonly TestThread _testThread = new();
+    private readonly IExecutionThread _testThread;
+
+    public Tests()
+    {
+        _testThread = TestThread.CreateBootstrapper()
+            .WithRegistrations(AdditionalRegistration.Register)
+            .Create();
+    }
 
     [Theory]
     [MemberData(nameof(GetData))]
     public void Select(string fileName)
     {
         // Arrange.
-        new ExecutionThreadBootstrapper().Bootstrap(_testThread, NullPluginsLoader.Instance,
-            Backend.Formatters.AdditionalRegistration.Register);
         _testThread.FunctionsManager.RegisterFunction(SumIntegers);
         _testThread.FunctionsManager.RegisterFunction(FuncWithObject);
         _testThread.FunctionsManager.RegisterFunction(ReturnObjFunc);
@@ -31,7 +36,7 @@ public sealed class Tests : IDisposable
         _testThread.Run(data.Query);
 
         // Act.
-        var result = _testThread.GetQueryResult();
+        var result = TestThread.GetQueryResult(_testThread);
 
         // Assert.
         Assert.Equal(data.Expected, result);

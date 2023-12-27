@@ -13,9 +13,6 @@ public sealed class NullExecutionThread : IExecutionThread
     public static NullExecutionThread Instance { get; } = new();
 
     /// <inheritdoc />
-    public CancellationTokenSource CancellationTokenSource { get; } = new();
-
-    /// <inheritdoc />
     public IFunctionsManager FunctionsManager { get; } = NullFunctionsManager.Instance;
 
     /// <inheritdoc />
@@ -28,7 +25,7 @@ public sealed class NullExecutionThread : IExecutionThread
     public IExecutionScope TopScope { get; } = NullExecutionScope.Instance;
 
     /// <inheritdoc />
-    public VariantValue Run(string query) => VariantValue.Null;
+    public VariantValue Run(string query, CancellationToken cancellationToken = default) => VariantValue.Null;
 
     /// <inheritdoc />
     public void Dispose()

@@ -9,9 +9,8 @@ using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Plugins;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Core.Utils;
-using QueryCat.Backend.FunctionsManager;
 using QueryCat.Backend.Parser;
-using QueryCat.Backend.Storage;
+using QueryCat.Backend.Relational.Iterators;
 
 namespace QueryCat.Backend.Execution;
 
@@ -36,15 +35,8 @@ public class ExecutionThread : IExecutionThread
     /// </summary>
     internal ExecutionScope RootScope { get; }
 
-    /// <summary>
-    /// Current top scope.
-    /// </summary>
+    /// <inheritdoc />
     public IExecutionScope TopScope => RootScope;
-
-    /// <summary>
-    /// Functions manager.
-    /// </summary>
-    public IFunctionsManager FunctionsManager { get; }
 
     /// <summary>
     /// Current executing statement.
@@ -61,9 +53,10 @@ public class ExecutionThread : IExecutionThread
     /// </summary>
     public ExecutionStatistic Statistic { get; } = new();
 
-    /// <summary>
-    /// Plugins manager.
-    /// </summary>
+    /// <inheritdoc />
+    public IFunctionsManager FunctionsManager { get; }
+
+    /// <inheritdoc />
     public IPluginsManager PluginsManager { get; set; } = NullPluginsManager.Instance;
 
     /// <summary>
@@ -81,32 +74,23 @@ public class ExecutionThread : IExecutionThread
     /// </summary>
     public event EventHandler<ExecuteEventArgs>? AfterStatementExecute;
 
-    /// <summary>
-    /// Default execution instance with default options.
-    /// </summary>
-    public static readonly ExecutionThread DefaultInstance = new();
-
-    /// <summary>
-    /// Is cancellation requested to cancel current command execution.
-    /// </summary>
-    public CancellationTokenSource CancellationTokenSource { get; } = new();
-
     public static string GetApplicationDirectory()
     {
         return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             ApplicationDirectory);
     }
 
-    public ExecutionThread(
-        ExecutionOptions? options = null,
-        IInputConfigStorage? configStorage = null)
+    internal ExecutionThread(
+        ExecutionOptions options,
+        IFunctionsManager functionsManager,
+        IInputConfigStorage configStorage)
     {
         var appLocalDirectory = GetApplicationDirectory();
         RootScope = new ExecutionScope();
-        Options = options ?? new ExecutionOptions();
+        Options = options;
+        FunctionsManager = functionsManager;
         _statementsVisitor = new StatementsVisitor(this);
-        FunctionsManager = new DefaultFunctionsManager(this);
-        ConfigStorage = configStorage ?? NullInputConfigStorage.Instance;
+        ConfigStorage = configStorage;
         RunBootstrapScript(appLocalDirectory);
     }
 
@@ -123,7 +107,7 @@ public class ExecutionThread : IExecutionThread
     }
 
     /// <inheritdoc />
-    public VariantValue Run(string query)
+    public VariantValue Run(string query, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrEmpty(query))
         {
@@ -142,7 +126,7 @@ public class ExecutionThread : IExecutionThread
             stopwatch.Start();
             try
             {
-                return RunInternal();
+                return RunInternal(cancellationToken);
             }
             finally
             {
@@ -152,10 +136,7 @@ public class ExecutionThread : IExecutionThread
         }
     }
 
-    /// <summary>
-    /// Run the execution flow.
-    /// </summary>
-    private VariantValue RunInternal()
+    private VariantValue RunInternal(CancellationToken cancellationToken)
     {
         if (Options.UseConfig)
         {
@@ -196,7 +177,7 @@ public class ExecutionThread : IExecutionThread
 
             if (Options.DefaultRowsOutput != NullRowsOutput.Instance)
             {
-                Write(LastResult);
+                Write(LastResult, cancellationToken);
             }
 
             ExecutingStatement = ExecutingStatement.NextNode;
@@ -209,18 +190,6 @@ public class ExecutionThread : IExecutionThread
         ExecutingStatement = null;
 
         return LastResult;
-    }
-
-    /// <summary>
-    /// Call function within execution thread.
-    /// </summary>
-    /// <param name="functionDelegate">Function delegate instance.</param>
-    /// <param name="args">Arguments.</param>
-    /// <returns>Return value.</returns>
-    public VariantValue RunFunction(FunctionDelegate functionDelegate, params object[] args)
-    {
-        var functionCallInfo = FunctionCallInfo.CreateWithArguments(this, args);
-        return functionDelegate.Invoke(functionCallInfo);
     }
 
     /// <summary>
@@ -240,7 +209,7 @@ public class ExecutionThread : IExecutionThread
         return sb.ToString();
     }
 
-    private void Write(VariantValue result)
+    private void Write(VariantValue result, CancellationToken cancellationToken)
     {
         if (result.IsNull)
         {
@@ -254,7 +223,60 @@ public class ExecutionThread : IExecutionThread
             rowsOutput = alternateRowsOutput;
         }
         rowsOutput.Reset();
-        rowsOutput.Write(iterator, this, CancellationTokenSource.Token);
+        Write(rowsOutput, iterator, cancellationToken);
+    }
+
+    private void Write(
+        IRowsOutput rowsOutput,
+        IRowsIterator rowsIterator,
+        CancellationToken cancellationToken = default)
+    {
+        // For plain output let's adjust columns width first.
+        if (rowsOutput.Options.RequiresColumnsLengthAdjust && Options.AnalyzeRowsCount > 0)
+        {
+            rowsIterator = new AdjustColumnsLengthsIterator(rowsIterator, Options.AnalyzeRowsCount);
+        }
+
+        // Write the main data.
+        var isOpened = false;
+        StartWriterLoop();
+
+        // Append grow data.
+        if (Options.FollowTimeoutMs > 0)
+        {
+            while (true)
+            {
+                Thread.Sleep(Options.FollowTimeoutMs);
+                StartWriterLoop();
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    break;
+                }
+            }
+        }
+
+        if (isOpened)
+        {
+            rowsOutput.Close();
+        }
+
+        void StartWriterLoop()
+        {
+            while (rowsIterator.MoveNext())
+            {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    break;
+                }
+                if (!isOpened)
+                {
+                    rowsOutput.Open();
+                    rowsOutput.QueryContext = new RowsOutputQueryContext(rowsIterator.Columns);
+                    isOpened = true;
+                }
+                rowsOutput.WriteValues(rowsIterator.Current.Values);
+            }
+        }
     }
 
     private void RunBootstrapScript(string appLocalDirectory)

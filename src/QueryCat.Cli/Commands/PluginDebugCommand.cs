@@ -30,33 +30,24 @@ internal class PluginDebugCommand : BaseQueryCommand
                 UseConfig = true,
                 RunBootstrapScript = true,
             };
-            var storage = new PersistentInputConfigStorage(
-                Path.Combine(ExecutionThread.GetApplicationDirectory(), ApplicationOptions.ConfigFileName));
-            var thread = new ExecutionThread(options, storage);
-            var pluginsLoader = new ThriftPluginsLoader(thread, applicationOptions.PluginDirectories,
-                serverPipeName: ThriftPluginClient.TestPipeName)
-            {
-                ForceAuthToken = ThriftPluginClient.TestAuthToken,
-                SkipPluginsExecution = true,
-            };
+            using var cts = new CancellationTokenSource();
 
-            try
-            {
-                options.PluginDirectories.AddRange(applicationOptions.PluginDirectories);
-                options.DefaultRowsOutput = new Backend.Formatters.PagingOutput(tableOutput, cts: thread.CancellationTokenSource);
+            options.PluginDirectories.AddRange(applicationOptions.PluginDirectories);
+            options.DefaultRowsOutput = new Backend.Formatters.PagingOutput(tableOutput, cts: cts);
 
-                new ExecutionThreadBootstrapper().Bootstrap(
-                    thread,
-                    pluginsLoader,
-                    Backend.Formatters.AdditionalRegistration.Register);
-                AddVariables(thread, variables);
-                RunQuery(thread, query, files);
-            }
-            finally
-            {
-                pluginsLoader.Dispose();
-                thread.Dispose();
-            }
+            using var thread = new ExecutionThreadBootstrapper(options)
+                .WithConfigStorage(new PersistentInputConfigStorage(
+                    Path.Combine(ExecutionThread.GetApplicationDirectory(), ApplicationOptions.ConfigFileName)))
+                .WithPluginsLoader(th => new ThriftPluginsLoader(th, applicationOptions.PluginDirectories,
+                    serverPipeName: ThriftPluginClient.TestPipeName)
+                {
+                    ForceAuthToken = ThriftPluginClient.TestAuthToken,
+                    SkipPluginsExecution = true,
+                })
+                .WithRegistrations(Backend.Formatters.AdditionalRegistration.Register)
+                .Create();
+            AddVariables(thread, variables);
+            RunQuery(thread, query, files, cts.Token);
 
 #else
             _logger.LogCritical("Plugins debug is only available for Thrift plugins system.");

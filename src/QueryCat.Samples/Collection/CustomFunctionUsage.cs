@@ -1,5 +1,5 @@
+using QueryCat.Backend;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Execution;
 
 namespace QueryCat.Samples.Collection;
 
@@ -8,7 +8,7 @@ internal class CustomFunctionUsage : BaseUsage
     /// <inheritdoc />
     public override void Run()
     {
-        var executionThread = new ExecutionThread();
+        var executionThread = new ExecutionThreadBootstrapper().Create();
         executionThread.FunctionsManager.RegisterFunction("secret(a: string, b: numeric): string", args =>
         {
             var a = args.GetAt(0);

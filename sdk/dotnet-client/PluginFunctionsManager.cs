@@ -16,7 +16,7 @@ public sealed class PluginFunctionsManager : IFunctionsManager
     private readonly Dictionary<string, PluginFunction> _functions = new();
 
     /// <inheritdoc />
-    public void RegisterAggregate<TAggregate>(Func<IExecutionThread, TAggregate> factory)
+    public void RegisterAggregate<TAggregate>(Func<TAggregate> factory)
         where TAggregate : IAggregateFunction
     {
         throw ThrowNotImplementedException();
@@ -74,7 +74,7 @@ public sealed class PluginFunctionsManager : IFunctionsManager
     public IEnumerable<PluginFunction> GetPluginFunctions() => _functions.Values;
 
     /// <inheritdoc />
-    public VariantValue CallFunction(IFunction function, FunctionCallArguments callArguments)
+    public VariantValue CallFunction(IFunction function, IExecutionThread executionThread, FunctionCallArguments callArguments)
     {
         throw ThrowNotImplementedException();
     }

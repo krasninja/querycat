@@ -375,7 +375,7 @@ internal static class IOFunctions
         var stream = Stdio.GetConsoleOutput();
         formatter ??= new TextTableFormatter();
         var output = formatter.OpenOutput(stream);
-        var pagingOutput = new PagingOutput(output, cts: args.ExecutionThread.CancellationTokenSource)
+        var pagingOutput = new PagingOutput(output)
         {
             PagingRowsCount = pageSize,
         };

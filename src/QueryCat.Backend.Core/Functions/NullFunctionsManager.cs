@@ -10,7 +10,7 @@ public sealed class NullFunctionsManager : IFunctionsManager
     public static NullFunctionsManager Instance { get; } = new();
 
     /// <inheritdoc />
-    public void RegisterAggregate<TAggregate>(Func<IExecutionThread, TAggregate> factory)
+    public void RegisterAggregate<TAggregate>(Func<TAggregate> factory)
         where TAggregate : IAggregateFunction
     {
     }
@@ -43,5 +43,6 @@ public sealed class NullFunctionsManager : IFunctionsManager
     public IEnumerable<IFunction> GetFunctions() => Array.Empty<IFunction>();
 
     /// <inheritdoc />
-    public VariantValue CallFunction(IFunction function, FunctionCallArguments callArguments) => VariantValue.Null;
+    public VariantValue CallFunction(IFunction function, IExecutionThread executionThread,
+        FunctionCallArguments callArguments) => VariantValue.Null;
 }

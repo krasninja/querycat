@@ -145,8 +145,8 @@ public partial class ThriftPluginsServer
             }
             var function = _thriftPluginsServer._executionThread
                 .FunctionsManager.FindByName(function_name, argsForFunction.GetTypes());
-            var result = _thriftPluginsServer._executionThread.FunctionsManager.CallFunction(function,
-                argsForFunction);
+            var result = _thriftPluginsServer._executionThread.FunctionsManager.CallFunction(
+                function, _thriftPluginsServer._executionThread, argsForFunction);
             return Task.FromResult(SdkConvert.Convert(result));
         }
 

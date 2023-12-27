@@ -1,9 +1,7 @@
 using System.Text;
+using QueryCat.Backend;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Execution;
-using QueryCat.Backend.Formatters;
-using QueryCat.Backend.Storage;
 
 namespace QueryCat.Samples.Collection;
 
@@ -27,7 +25,7 @@ internal class CollectionsUsage : BaseUsage
     public override void Run()
     {
         // Arrange.
-        var executionThread = new ExecutionThread();
+        var executionThread = new ExecutionThreadBootstrapper().Create();
         var buildings = new List<Building>
         {
             new("Hotel Indigo San Diego-Gaslamp Quarter, an IHG Hotel", "92101"),
@@ -64,7 +62,7 @@ internal class CollectionsUsage : BaseUsage
 
         // Out.
         var sb = new StringBuilder();
-        new TextTableOutput(sb).Write(result.As<IRowsIterator>(), executionThread);
+        //new TextTableOutput(sb).Writeresult.As<IRowsIterator>(), executionThread);
         Console.WriteLine(sb);
     }
 }

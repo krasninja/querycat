@@ -11,11 +11,6 @@ namespace QueryCat.Backend.Core;
 public interface IExecutionThread : IDisposable
 {
     /// <summary>
-    /// The token source to force current query cancel.
-    /// </summary>
-    CancellationTokenSource CancellationTokenSource { get; }
-
-    /// <summary>
     /// Functions manager.
     /// </summary>
     IFunctionsManager FunctionsManager { get; }
@@ -39,5 +34,6 @@ public interface IExecutionThread : IDisposable
     /// Run text query.
     /// </summary>
     /// <param name="query">Query.</param>
-    VariantValue Run(string query);
+    /// <param name="cancellationToken">Cancellation token to cancel the request execution.</param>
+    VariantValue Run(string query, CancellationToken cancellationToken = default);
 }

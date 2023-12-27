@@ -28,9 +28,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\QueryCat.Backend\QueryCat.Backend.csproj" />
-    <ProjectReference Include="..\QueryCat.Backend.AssemblyPlugins\QueryCat.Backend.AssemblyPlugins.csproj" />
     <ProjectReference Include="..\QueryCat.Backend.Formatters\QueryCat.Backend.Formatters.csproj" />
     <ProjectReference Include="..\QueryCat.Backend.ThriftPlugins\QueryCat.Backend.ThriftPlugins.csproj" />
+    <ProjectReference Include="..\QueryCat.Backend.AssemblyPlugins\QueryCat.Backend.AssemblyPlugins.csproj" />
     <EmbeddedResource Include="Infrastructure\WebServerIndex.html" />
   </ItemGroup>
 
