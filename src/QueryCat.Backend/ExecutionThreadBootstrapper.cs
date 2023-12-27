@@ -9,6 +9,7 @@ using QueryCat.Backend.Execution;
 using QueryCat.Backend.Functions;
 using QueryCat.Backend.Functions.Aggregate;
 using QueryCat.Backend.FunctionsManager;
+using QueryCat.Backend.Parser;
 
 namespace QueryCat.Backend;
 
@@ -21,9 +22,9 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
 
     private readonly ExecutionOptions _executionOptions = options ?? new ExecutionOptions();
 
-    private IInputConfigStorage _inputConfigStorage = new NullInputConfigStorage();
+    private IInputConfigStorage _inputConfigStorage = NullInputConfigStorage.Instance;
 
-    private IFunctionsManager _functionsManager = new DefaultFunctionsManager();
+    private IFunctionsManager _functionsManager = new DefaultFunctionsManager(new AstBuilder());
 
     private bool _registerStandardLibrary;
 
@@ -106,9 +107,10 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
 
         // Create thread.
         var thread = new ExecutionThread(
-            _executionOptions,
+            options: _executionOptions,
             functionsManager: _functionsManager,
-            configStorage: _inputConfigStorage
+            configStorage: _inputConfigStorage,
+            astBuilder: new AstBuilder()
         );
         thread.Statistic.CountErrorRows = thread.Options.ShowDetailedStatistic;
 

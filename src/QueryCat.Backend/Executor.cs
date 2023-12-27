@@ -1,7 +1,4 @@
 using QueryCat.Backend.Core;
-using QueryCat.Backend.Core.Functions;
-using QueryCat.Backend.Core.Types;
-using IFunction = QueryCat.Backend.Core.Functions.IFunction;
 
 namespace QueryCat.Backend;
 

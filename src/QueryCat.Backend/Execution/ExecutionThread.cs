@@ -9,7 +9,6 @@ using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Plugins;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Core.Utils;
-using QueryCat.Backend.Parser;
 using QueryCat.Backend.Relational.Iterators;
 
 namespace QueryCat.Backend.Execution;
@@ -19,6 +18,7 @@ namespace QueryCat.Backend.Execution;
 /// </summary>
 public class ExecutionThread : IExecutionThread
 {
+    private readonly IAstBuilder _astBuilder;
     internal const string ApplicationDirectory = "qcat";
     internal const string BootstrapFileName = "rc.sql";
 
@@ -83,15 +83,17 @@ public class ExecutionThread : IExecutionThread
     internal ExecutionThread(
         ExecutionOptions options,
         IFunctionsManager functionsManager,
-        IInputConfigStorage configStorage)
+        IInputConfigStorage configStorage,
+        IAstBuilder astBuilder)
     {
-        var appLocalDirectory = GetApplicationDirectory();
+        _astBuilder = astBuilder;
         RootScope = new ExecutionScope();
         Options = options;
         FunctionsManager = functionsManager;
-        _statementsVisitor = new StatementsVisitor(this);
         ConfigStorage = configStorage;
-        RunBootstrapScript(appLocalDirectory);
+
+        _statementsVisitor = new StatementsVisitor(this);
+        RunBootstrapScript(GetApplicationDirectory());
     }
 
     public ExecutionThread(ExecutionThread executionThread)
@@ -101,9 +103,10 @@ public class ExecutionThread : IExecutionThread
 #if ENABLE_PLUGINS
         PluginsManager = executionThread.PluginsManager;
 #endif
-        _statementsVisitor = executionThread._statementsVisitor;
         FunctionsManager = executionThread.FunctionsManager;
         ConfigStorage = executionThread.ConfigStorage;
+        _statementsVisitor = executionThread._statementsVisitor;
+        _astBuilder = executionThread._astBuilder;
     }
 
     /// <inheritdoc />
@@ -114,7 +117,7 @@ public class ExecutionThread : IExecutionThread
             return VariantValue.Null;
         }
 
-        var programNode = AstBuilder.BuildProgramFromString(query);
+        var programNode = _astBuilder.BuildProgramFromString(query);
 
         // Set first executing statement and run.
         ExecutingStatement = programNode.Statements.FirstOrDefault();

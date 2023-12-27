@@ -4,19 +4,20 @@ using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.FunctionsManager;
+using QueryCat.Backend.Parser;
 
 namespace QueryCat.UnitTests.Functions;
 
 /// <summary>
 /// Tests for <see cref="DefaultFunctionsManager" />.
 /// </summary>
-public sealed class FunctionsManagerTests
+public sealed class DefaultFunctionsManagerTests
 {
     private readonly DefaultFunctionsManager _functionsManager;
 
-    public FunctionsManagerTests()
+    public DefaultFunctionsManagerTests()
     {
-        _functionsManager = new DefaultFunctionsManager();
+        _functionsManager = new DefaultFunctionsManager(new AstBuilder());
     }
 
     [Fact]

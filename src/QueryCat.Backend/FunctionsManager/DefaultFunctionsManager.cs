@@ -1,10 +1,10 @@
 using System.ComponentModel;
 using System.Reflection;
 using Microsoft.Extensions.Logging;
+using QueryCat.Backend.Ast;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Parser;
 
 namespace QueryCat.Backend.FunctionsManager;
 
@@ -14,6 +14,8 @@ namespace QueryCat.Backend.FunctionsManager;
 public sealed class DefaultFunctionsManager : IFunctionsManager
 {
     private const int DefaultCapacity = 42;
+
+    private readonly IAstBuilder _astBuilder;
 
     private record FunctionPreRegistration(
         FunctionDelegate Delegate,
@@ -37,6 +39,11 @@ public sealed class DefaultFunctionsManager : IFunctionsManager
     private static VariantValue EmptyFunction(FunctionCallInfo args)
     {
         return VariantValue.Null;
+    }
+
+    internal DefaultFunctionsManager(IAstBuilder astBuilder)
+    {
+        _astBuilder = astBuilder;
     }
 
     #region Registration
@@ -115,7 +122,7 @@ public sealed class DefaultFunctionsManager : IFunctionsManager
         List<Function>? functionsList = null;
         foreach (var signature in preRegistration.Signatures)
         {
-            var signatureAst = AstBuilder.BuildFunctionSignatureFromString(signature);
+            var signatureAst = _astBuilder.BuildFunctionSignatureFromString(signature);
 
             var function = new Function(preRegistration.Delegate, signatureAst)
             {
@@ -156,11 +163,10 @@ public sealed class DefaultFunctionsManager : IFunctionsManager
     public void RegisterAggregate<TAggregate>(Func<TAggregate> factory)
         where TAggregate : IAggregateFunction
     {
-        _registerAggregateFunctions.Add(fm => RegisterAggregateInternal(fm, factory));
+        _registerAggregateFunctions.Add(_ => RegisterAggregateInternal(factory));
     }
 
-    private static void RegisterAggregateInternal<TAggregate>(
-        DefaultFunctionsManager functionsManager,
+    private void RegisterAggregateInternal<TAggregate>(
         Func<TAggregate> factory)
         where TAggregate : IAggregateFunction
     {
@@ -168,7 +174,7 @@ public sealed class DefaultFunctionsManager : IFunctionsManager
         var signatureAttributes = aggregateType.GetCustomAttributes<AggregateFunctionSignatureAttribute>();
         foreach (var signatureAttribute in signatureAttributes)
         {
-            var signatureAst = AstBuilder.BuildFunctionSignatureFromString(signatureAttribute.Signature);
+            var signatureAst = _astBuilder.BuildFunctionSignatureFromString(signatureAttribute.Signature);
             var function = new Function(EmptyFunction, signatureAst, aggregate: true);
             var descriptionAttribute = aggregateType.GetCustomAttribute<DescriptionAttribute>();
             if (descriptionAttribute != null)
@@ -176,7 +182,7 @@ public sealed class DefaultFunctionsManager : IFunctionsManager
                 function.Description = descriptionAttribute.Description;
             }
             var functionName = NormalizeName(function.Name);
-            functionsManager._functions!.AddOrUpdate(
+            _functions!.AddOrUpdate(
                 functionName,
                 addValueFactory: _ => new List<Function>
                 {
@@ -186,7 +192,7 @@ public sealed class DefaultFunctionsManager : IFunctionsManager
 
             Logger.LogDebug("Register aggregate: {Function}.", function);
             var aggregateFunctionInstance = factory.Invoke();
-            functionsManager._aggregateFunctions.TryAdd(functionName, aggregateFunctionInstance);
+            _aggregateFunctions.TryAdd(functionName, aggregateFunctionInstance);
         }
     }
 
