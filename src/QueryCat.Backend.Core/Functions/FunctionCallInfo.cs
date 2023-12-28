@@ -10,8 +10,7 @@ public sealed class FunctionCallInfo : IEnumerable<VariantValue>
 {
     private const string UndefinedFunctionName = "self";
 
-    private readonly VariantValueArray _args;
-    private int _argsCursor;
+    private readonly List<VariantValue> _args;
     private readonly IFuncUnit[] _pushArgs;
 
     public static FunctionCallInfo Empty { get; } = new(NullExecutionThread.Instance, UndefinedFunctionName);
@@ -29,7 +28,7 @@ public sealed class FunctionCallInfo : IEnumerable<VariantValue>
     /// <summary>
     /// Arguments count.
     /// </summary>
-    public int Count => _args.Values.Length;
+    public int Count => _args.Count;
 
     /// <summary>
     /// Calling function name.
@@ -59,7 +58,7 @@ public sealed class FunctionCallInfo : IEnumerable<VariantValue>
     public FunctionCallInfo(IExecutionThread executionThread, string functionName, params IFuncUnit[] pushArgs)
     {
         _pushArgs = pushArgs;
-        _args = new VariantValueArray(pushArgs.Length);
+        _args = new List<VariantValue>(capacity: pushArgs.Length);
         ExecutionThread = executionThread;
         FunctionName = functionName;
     }
@@ -70,8 +69,7 @@ public sealed class FunctionCallInfo : IEnumerable<VariantValue>
     /// <param name="value">Argument value.</param>
     public void Push(VariantValue value)
     {
-        _args.EnsureResize(_argsCursor + 1);
-        _args.Values[_argsCursor++] = value;
+        _args.Add(value);
     }
 
     /// <summary>
@@ -79,7 +77,7 @@ public sealed class FunctionCallInfo : IEnumerable<VariantValue>
     /// </summary>
     /// <param name="position">Position index.</param>
     /// <returns>Value.</returns>
-    public VariantValue GetAt(int position) => _args.Values[position];
+    public VariantValue GetAt(int position) => _args[position];
 
     /// <summary>
     /// Return argument at the specified index or default value.
@@ -88,29 +86,30 @@ public sealed class FunctionCallInfo : IEnumerable<VariantValue>
     /// <param name="default">Default value.</param>
     /// <returns>Value.</returns>
     public VariantValue GetAtOrDefault(int position, VariantValue @default = default)
-        => _args.Values.Length > position && position > -1 ? _args.Values[position] : @default;
+        => _args.Count > position && position > -1 ? _args[position] : @default;
 
     /// <summary>
     /// Clean current arguments stack.
     /// </summary>
     public void Reset()
     {
-        _argsCursor = 0;
+        _args.Clear();
         WindowInfo = null;
     }
 
     internal void InvokePushArgs()
     {
+        _args.Clear();
         for (var i = 0; i < _pushArgs.Length; i++)
         {
-            _args.Values[i] = _pushArgs[i].Invoke();
+            _args.Add(_pushArgs[i].Invoke());
         }
     }
 
     /// <inheritdoc />
     public IEnumerator<VariantValue> GetEnumerator()
     {
-        foreach (var arg in _args.Values)
+        foreach (var arg in _args)
         {
             yield return arg;
         }
@@ -120,5 +119,5 @@ public sealed class FunctionCallInfo : IEnumerable<VariantValue>
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
     /// <inheritdoc />
-    public override string ToString() => _args.ToString();
+    public override string ToString() => string.Join("; ", _args.Select(a => a.ToString()));
 }

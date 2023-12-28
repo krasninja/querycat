@@ -384,7 +384,6 @@ internal class CreateDelegateVisitor : AstVisitor
         node.SetAttribute(AstAttributeKeys.ArgumentsKey, callInfo);
         NodeIdFuncMap[node.Id] = new FuncUnitDelegate(() =>
         {
-            callInfo.Reset();
             callInfo.InvokePushArgs();
             return function.Delegate(callInfo);
         }, node.GetDataType());
