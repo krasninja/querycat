@@ -33,20 +33,6 @@ public sealed class PluginsTests : IDisposable
     }
 
     [Fact]
-    public void SamplePluginClassRowsInput_CreateAndRun_ReturnsResult()
-    {
-        // Arrange.
-        _testThread.FunctionsManager.RegisterFunction(SamplePluginClassRowsInput.SamplePlugin);
-
-        // Act.
-        _testThread.Run(@"SELECT * FROM plugin();");
-        var result = PrepareResult(TestThread.GetQueryResult(_testThread));
-
-        // Assert.
-        Assert.Equal("123456789", result);
-    }
-
-    [Fact]
     public void SamplePluginRowsIterator_CreateAndRun_ReturnsResult()
     {
         // Arrange.
