@@ -1,4 +1,4 @@
-namespace QueryCat.Backend.Core.Data;
+namespace QueryCat.Backend.Core;
 
 /// <summary>
 /// Error codes that used while query processing.

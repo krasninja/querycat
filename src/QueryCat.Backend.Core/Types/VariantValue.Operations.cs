@@ -1,7 +1,6 @@
 // ReSharper disable CompareOfFloatsByEqualityOperator
 
 using System.Text.RegularExpressions;
-using QueryCat.Backend.Core.Data;
 
 #pragma warning disable CS8509
 namespace QueryCat.Backend.Core.Types;

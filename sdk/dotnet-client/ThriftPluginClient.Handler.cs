@@ -14,6 +14,7 @@ using QueryCat.Plugins.Sdk;
 using Column = QueryCat.Plugins.Sdk.Column;
 using DataType = QueryCat.Backend.Core.Types.DataType;
 using KeyColumn = QueryCat.Plugins.Sdk.KeyColumn;
+using VariantValue = QueryCat.Plugins.Sdk.VariantValue;
 
 namespace QueryCat.Plugins.Client;
 

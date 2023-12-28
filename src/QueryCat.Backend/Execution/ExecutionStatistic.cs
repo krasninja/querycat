@@ -1,5 +1,5 @@
 using System.Text;
-using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core;
 
 namespace QueryCat.Backend.Execution;
 

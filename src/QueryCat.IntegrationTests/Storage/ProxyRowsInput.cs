@@ -1,4 +1,5 @@
 using QueryCat.Backend;
+using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
 
