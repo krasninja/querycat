@@ -1,7 +1,7 @@
-using QueryCat.Backend.Core.Fetch;
+using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
 
-namespace QueryCat.Backend.Core.Data;
+namespace QueryCat.Backend.Core.Fetch;
 
 /// <summary>
 /// Implements <see cref="IRowsInput" /> from enumerable.

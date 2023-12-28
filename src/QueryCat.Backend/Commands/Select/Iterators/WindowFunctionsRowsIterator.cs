@@ -174,10 +174,20 @@ internal sealed class WindowFunctionsRowsIterator : IRowsIterator
         _partitions = windowFunctionInfos
             .Select(info => new PartitionInfo(
                 originalColumnIndex: info.ColumnIndex,
-                partitionFormatter: () => new VariantValueArray(info.PartitionFormatters),
+                partitionFormatter: () => CreateValuesArray(info.PartitionFormatters),
                 windowFunctionInfo: info
             ))
             .ToArray();
+    }
+
+    private static VariantValueArray CreateValuesArray(IFuncUnit[] functions)
+    {
+        var arr = new VariantValueArray(functions.Length);
+        for (var i = 0; i < functions.Length; i++)
+        {
+            arr.Values[i] = functions[i].Invoke();
+        }
+        return arr;
     }
 
     /// <inheritdoc />

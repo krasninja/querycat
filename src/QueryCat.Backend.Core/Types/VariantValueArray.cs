@@ -1,5 +1,4 @@
 using System.Text;
-using QueryCat.Backend.Core.Functions;
 
 namespace QueryCat.Backend.Core.Types;
 
@@ -20,14 +19,6 @@ public sealed class VariantValueArray
     public VariantValueArray(params VariantValue[] values)
     {
         _values = values;
-    }
-
-    public VariantValueArray(params IFuncUnit[] functions) : this(size: functions.Length)
-    {
-        for (var i = 0; i < functions.Length; i++)
-        {
-            _values[i] = functions[i].Invoke();
-        }
     }
 
     public VariantValueArray(IEnumerable<VariantValue> values) : this(values.ToArray())

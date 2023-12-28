@@ -1,6 +1,6 @@
 using System.Text;
 using QueryCat.Backend;
-using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Fetch;
 using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Samples.Collection;

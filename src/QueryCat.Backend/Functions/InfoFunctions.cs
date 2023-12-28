@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Fetch;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Plugins;
 using QueryCat.Backend.Core.Types;
