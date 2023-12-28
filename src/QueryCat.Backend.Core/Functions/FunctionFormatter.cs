@@ -145,7 +145,11 @@ internal static class FunctionFormatter
                 if (method is MethodInfo methodInfo
                     && methodInfo.ReturnType.IsGenericType)
                 {
-                    result = ((dynamic)task).Result;
+                    var resultProperty = task.GetType().GetProperty("Result");
+                    if (resultProperty != null)
+                    {
+                        result = resultProperty.GetValue(task);
+                    }
                 }
                 else
                 {
