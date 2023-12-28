@@ -17,7 +17,7 @@ public readonly struct VariantValueArray(params VariantValue[] values)
     {
     }
 
-    public VariantValueArray(int size) : this(new VariantValue[size])
+    internal VariantValueArray(int size) : this(new VariantValue[size])
     {
     }
 
@@ -85,4 +85,6 @@ public readonly struct VariantValueArray(params VariantValue[] values)
 
     public static bool operator !=(VariantValueArray left, VariantValueArray right)
         => !(left == right);
+
+    public static implicit operator VariantValue[](VariantValueArray value) => value._values;
 }
