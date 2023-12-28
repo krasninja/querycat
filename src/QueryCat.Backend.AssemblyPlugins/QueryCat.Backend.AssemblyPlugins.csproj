@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\QueryCat.Backend\QueryCat.Backend.csproj" />
+    <ProjectReference Include="..\QueryCat.Backend.Core\QueryCat.Backend.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>
