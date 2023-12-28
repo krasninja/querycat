@@ -3,7 +3,6 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <AssemblyName>qcat-plugin-test</AssemblyName>
-    <PublishAot>true</PublishAot>
     <OptimizationPreference>Size</OptimizationPreference>
     <PublishTrimmed>true</PublishTrimmed>
     <StripSymbols>true</StripSymbols>

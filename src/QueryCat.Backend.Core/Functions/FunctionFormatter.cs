@@ -99,7 +99,7 @@ internal static class FunctionFormatter
         return sb.ToString();
     }
 
-    public static FunctionDelegate CreateDelegateFromMethod(MethodBase method)
+    internal static FunctionDelegate CreateDelegateFromMethod(MethodBase method)
     {
         VariantValue FunctionDelegate(FunctionCallInfo args)
         {

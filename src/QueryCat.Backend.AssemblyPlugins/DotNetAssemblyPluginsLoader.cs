@@ -124,7 +124,7 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader
             {
                 _functionsManager.RegisterFactory(fm =>
                 {
-                    registerMethod.Invoke(null, new object?[] { fm });
+                    registerMethod.Invoke(null, [fm]);
                 });
             }
         }
