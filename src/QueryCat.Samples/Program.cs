@@ -6,9 +6,11 @@ internal class Program
 {
     private static readonly BaseUsage[] _samples =
     {
+        new AsyncFunctionUsage(),
         new BasicUsage(),
         new CollectionsUsage(),
         new CustomFunctionUsage(),
+        new CustomInlineFunctionUsage(),
         new VariablesUsage(),
     };
 
