@@ -551,6 +551,7 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
 
         using var cacheFileStream = File.OpenRead(cacheFile);
         var cacheEntry = JsonSerializer.Deserialize(cacheFileStream, SourceGenerationContext.Default.FunctionsCache);
+        cacheFileStream.Close();
         if (cacheEntry == null)
         {
             return false;
