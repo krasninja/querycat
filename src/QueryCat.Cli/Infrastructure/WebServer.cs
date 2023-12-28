@@ -10,6 +10,7 @@ using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Formatters;
 using QueryCat.Backend.Relational.Iterators;
+using QueryCat.Backend.Storage;
 
 namespace QueryCat.Cli.Infrastructure;
 
@@ -314,11 +315,7 @@ internal sealed class WebServer
         var formatter = new TextTableFormatter();
         var output = formatter.OpenOutput(stream);
         output.Open();
-        iterator = new AdjustColumnsLengthsIterator(iterator);
-        while (iterator.MoveNext())
-        {
-            output.WriteValues(iterator.Current.AsArray());
-        }
+        output.Write(iterator, adjustColumnsLengths: true);
     }
 
     private static void WriteJson(IRowsIterator iterator, Utf8JsonWriter jsonWriter)

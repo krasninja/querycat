@@ -4,7 +4,7 @@ using Bogus;
 using Bogus.DataSets;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Formatters;
-using QueryCat.Backend.Storage;
+using QueryCat.Backend.Relational;
 
 namespace QueryCat.Benchmarks.Commands;
 

@@ -9,7 +9,9 @@ internal class BasicUsage : BaseUsage
     public override void Run()
     {
         // Add standard functions.
-        using var executionThread = new ExecutionThreadBootstrapper().Create();
+        using var executionThread = new ExecutionThreadBootstrapper()
+            .WithStandardFunctions()
+            .Create();
         var result = VariantValue.Null;
 
         result = executionThread.Run("1+1");

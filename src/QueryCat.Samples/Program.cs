@@ -14,8 +14,17 @@ internal class Program
 
     internal static void Main(string[] args)
     {
+        var pattern = args.Length > 0 ? args[0] : string.Empty;
+
         foreach (var sample in _samples)
         {
+            var name = sample.GetType().Name;
+            if (!string.IsNullOrEmpty(pattern) && !name.Contains(pattern, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+            Console.WriteLine(name);
+            Console.WriteLine(new string('=', 50));
             sample.Run();
         }
     }

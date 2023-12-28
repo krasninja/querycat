@@ -1,7 +1,10 @@
 using System.Text;
 using QueryCat.Backend;
+using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Fetch;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Formatters;
+using QueryCat.Backend.Storage;
 
 namespace QueryCat.Samples.Collection;
 
@@ -62,7 +65,7 @@ internal class CollectionsUsage : BaseUsage
 
         // Out.
         var sb = new StringBuilder();
-        //new TextTableOutput(sb).Writeresult.As<IRowsIterator>(), executionThread);
+        new TextTableOutput(sb).Write(result.As<IRowsIterator>(), adjustColumnsLengths: true);
         Console.WriteLine(sb);
     }
 }

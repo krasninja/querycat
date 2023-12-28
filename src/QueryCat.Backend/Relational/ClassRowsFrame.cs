@@ -1,8 +1,7 @@
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Relational;
 
-namespace QueryCat.Backend.Storage;
+namespace QueryCat.Backend.Relational;
 
 /// <summary>
 /// Rows frame that contains objects of specific class.

@@ -1,7 +1,6 @@
 using QueryCat.Backend.Core.Fetch;
-using QueryCat.Backend.Relational;
 
-namespace QueryCat.Backend.Storage;
+namespace QueryCat.Backend.Relational;
 
 /// <summary>
 /// Extensions for <see cref="ClassRowsFrameBuilder{TClass} " />.
