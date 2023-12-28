@@ -173,7 +173,7 @@ internal readonly struct CacheKey
     /// <inheritdoc />
     public override bool Equals(object? obj) => obj is CacheKey other && Equals(other);
 
-    public bool Equals(CacheKey other) => From == other.From
+    public bool Equals(in CacheKey other) => From == other.From
         && InputArguments.SetEquals(other.InputArguments)
         && SelectColumns.SetEquals(other.SelectColumns)
         && Conditions.SetEquals(other.Conditions)

@@ -3,53 +3,27 @@ using System.Text;
 namespace QueryCat.Backend.Core.Types;
 
 /// <summary>
-/// Array of <see cref="VariantValue" /> with Equals implementation.
+/// Array of <see cref="VariantValue" /> with Equals, GetHashCode implementation.
 /// </summary>
-public sealed class VariantValueArray
+public readonly struct VariantValueArray(params VariantValue[] values)
 {
-    private VariantValue[] _values;
+    public static VariantValueArray Empty { get; } = new(0);
 
-    public static VariantValueArray Empty { get; } = new(Array.Empty<VariantValue>());
+    private readonly VariantValue[] _values = values;
 
-    /// <summary>
-    /// Values array.
-    /// </summary>
-    public VariantValue[] Values => _values;
-
-    public VariantValueArray(params VariantValue[] values)
-    {
-        _values = values;
-    }
+    public VariantValue this[int index] => _values[index];
 
     public VariantValueArray(IEnumerable<VariantValue> values) : this(values.ToArray())
     {
     }
 
-    public VariantValueArray(int size)
+    public VariantValueArray(int size) : this(new VariantValue[size])
     {
-        _values = new VariantValue[size];
     }
 
     public VariantValueArray(VariantValueArray variantValueArray) : this(variantValueArray._values.Length)
     {
         Array.Copy(variantValueArray._values, _values, variantValueArray._values.Length);
-    }
-
-    /// <summary>
-    /// Ensure that array has enough size. Resize if needed.
-    /// </summary>
-    /// <param name="newSize">New size.</param>
-    public void EnsureResize(int newSize)
-    {
-        if (newSize < 1)
-        {
-            throw new ArgumentOutOfRangeException(nameof(newSize));
-        }
-        if (newSize <= _values.Length)
-        {
-            return;
-        }
-        Array.Resize(ref _values, newSize);
     }
 
     /// <summary>
@@ -61,20 +35,18 @@ public sealed class VariantValueArray
     }
 
     /// <inheritdoc />
-    public override bool Equals(object? obj)
+    public override bool Equals(object? obj) => obj is VariantValueArray other && Equals(other);
+
+    public bool Equals(in VariantValueArray obj)
     {
-        if (obj is not VariantValueArray variantValues)
-        {
-            return false;
-        }
-        if (variantValues._values.Length != _values.Length)
+        if (obj._values.Length != _values.Length)
         {
             return false;
         }
 
         for (var i = 0; i < _values.Length; i++)
         {
-            if (!variantValues._values[i].Equals(_values[i]))
+            if (!obj._values[i].Equals(_values[i]))
             {
                 return false;
             }

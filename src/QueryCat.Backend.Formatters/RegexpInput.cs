@@ -15,7 +15,7 @@ namespace QueryCat.Backend.Formatters;
 internal sealed class RegexpInput : StreamRowsInput
 {
     private readonly Regex _regex;
-    private readonly VariantValueArray _valuesArray;
+    private readonly VariantValue[] _valuesArray;
     private readonly int[] _targetColumnIndexes;
 
     /// <inheritdoc />
@@ -49,7 +49,7 @@ internal sealed class RegexpInput : StreamRowsInput
             _targetColumnIndexes[i] = columns.Count - 1;
         }
         SetColumns(columns);
-        _valuesArray = new VariantValueArray(Columns.Length);
+        _valuesArray = new VariantValue[Columns.Length];
     }
 
     /// <inheritdoc />
@@ -68,7 +68,7 @@ internal sealed class RegexpInput : StreamRowsInput
     /// <inheritdoc />
     protected override ErrorCode ReadValueInternal(int nonVirtualColumnIndex, DataType type, out VariantValue value)
     {
-        value = _valuesArray.Values[nonVirtualColumnIndex];
+        value = _valuesArray[nonVirtualColumnIndex];
         return ErrorCode.OK;
     }
 
@@ -96,11 +96,11 @@ internal sealed class RegexpInput : StreamRowsInput
                 if (match.Groups[i].Success && VariantValue.TryCreateFromString(
                         match.Groups[i].ValueSpan, Columns[colIndex].DataType, out var value))
                 {
-                    _valuesArray.Values[colIndex] = value;
+                    _valuesArray[colIndex] = value;
                 }
                 else
                 {
-                    _valuesArray.Values[colIndex] = VariantValue.Null;
+                    _valuesArray[colIndex] = VariantValue.Null;
                 }
             }
             match = match.NextMatch();
