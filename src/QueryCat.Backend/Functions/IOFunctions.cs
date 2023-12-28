@@ -27,6 +27,7 @@ internal static class IOFunctions
             return Curl(args);
         }
 
+        uri = ResolveHomeDirectory(uri);
         if (Directory.Exists(uri))
         {
             return ListDirectory(args);
@@ -229,6 +230,8 @@ internal static class IOFunctions
     public static VariantValue ListDirectory(FunctionCallInfo args)
     {
         var path = args.GetAt(0).AsString;
+        path = ResolveHomeDirectory(path);
+
         var items = ListDirectoryInternal(path);
         var input = new EnumerableRowsInput<ListDirectoryEntry>(items,
             builder => builder
@@ -240,6 +243,22 @@ internal static class IOFunctions
                 .AddProperty("last_access_time", f => f.LastAccessedAt)
                 .AddProperty("last_write_time", f => f.LastWriteTime));
         return VariantValue.CreateFromObject(input);
+    }
+
+    private static string ResolveHomeDirectory(string dir)
+    {
+        var homeDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        if (dir == "~")
+        {
+            return homeDirectory;
+        }
+        if (dir.Length > 1 && dir[0] == '~' && (dir[1] == '\\' || dir[1] == '/'))
+        {
+            return Path.Combine(
+                homeDirectory,
+                dir.Substring(2, dir.Length - 2));
+        }
+        return dir;
     }
 
     #endregion
@@ -305,12 +324,14 @@ internal static class IOFunctions
         var delimiterIndex = uri.IndexOf(QueryDelimiter, StringComparison.Ordinal);
         if (delimiterIndex == -1)
         {
-            return (uri, new FunctionCallArguments());
+            return (
+                ResolveHomeDirectory(uri),
+                new FunctionCallArguments());
         }
         else
         {
             return (
-                uri.Substring(0, delimiterIndex),
+                ResolveHomeDirectory(uri.Substring(0, delimiterIndex)),
                 FromQueryString(uri.Substring(delimiterIndex + QueryDelimiter.Length))
             );
         }
