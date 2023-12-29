@@ -379,7 +379,7 @@ internal class CreateDelegateVisitor : AstVisitor
         }
 
         var argsDelegates = argsDelegatesList.ToArray();
-        var callInfo = new FunctionCallInfo(ExecutionThread, function.Name, argsDelegates);
+        var callInfo = new FuncUnitCallInfo(ExecutionThread, function.Name, argsDelegates);
         node.SetAttribute(AstAttributeKeys.ArgumentsKey, callInfo);
         NodeIdFuncMap[node.Id] = new FuncUnitDelegate(() =>
         {

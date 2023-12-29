@@ -6,14 +6,15 @@ namespace QueryCat.Backend.Core.Functions;
 /// <summary>
 /// Function call information: arguments values, execution scope.
 /// </summary>
-public sealed class FunctionCallInfo : IEnumerable<VariantValue>
+public class FunctionCallInfo : IEnumerable<VariantValue>
 {
-    private const string UndefinedFunctionName = "self";
+    internal const string UndefinedFunctionName = "self";
 
     private readonly List<VariantValue> _args;
-    private readonly IFuncUnit[] _pushArgs;
 
     public static FunctionCallInfo Empty { get; } = new(NullExecutionThread.Instance, UndefinedFunctionName);
+
+    protected List<VariantValue> Arguments => _args;
 
     /// <summary>
     /// Current execution thread.
@@ -55,10 +56,9 @@ public sealed class FunctionCallInfo : IEnumerable<VariantValue>
         return callInfo;
     }
 
-    public FunctionCallInfo(IExecutionThread executionThread, string functionName, params IFuncUnit[] pushArgs)
+    public FunctionCallInfo(IExecutionThread executionThread, string functionName, params VariantValue[] args)
     {
-        _pushArgs = pushArgs;
-        _args = new List<VariantValue>(capacity: pushArgs.Length);
+        _args = new List<VariantValue>(args);
         ExecutionThread = executionThread;
         FunctionName = functionName;
     }
@@ -95,15 +95,6 @@ public sealed class FunctionCallInfo : IEnumerable<VariantValue>
     {
         _args.Clear();
         WindowInfo = null;
-    }
-
-    internal void InvokePushArgs()
-    {
-        _args.Clear();
-        for (var i = 0; i < _pushArgs.Length; i++)
-        {
-            _args.Add(_pushArgs[i].Invoke());
-        }
     }
 
     /// <inheritdoc />

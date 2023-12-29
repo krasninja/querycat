@@ -16,7 +16,7 @@ internal sealed class VaryingOutputRowsIterator : IRowsIterator, IRowsIteratorPa
     private readonly IRowsIterator _rowsIterator;
     private readonly QueryContext _queryContext;
     private readonly IFuncUnit _outputFactory;
-    private readonly FunctionCallInfo _functionCallInfo;
+    private readonly FuncUnitCallInfo _functionCallInfo;
     private readonly Dictionary<VariantValueArray, IRowsOutput> _outputs = new();
 
     /// <inheritdoc />
@@ -34,7 +34,7 @@ internal sealed class VaryingOutputRowsIterator : IRowsIterator, IRowsIteratorPa
     public VaryingOutputRowsIterator(
         IRowsIterator rowsIterator,
         IFuncUnit func,
-        FunctionCallInfo functionCallInfo,
+        FuncUnitCallInfo functionCallInfo,
         IRowsOutput defaultRowsOutput,
         QueryContext queryContext)
     {
@@ -53,7 +53,7 @@ internal sealed class VaryingOutputRowsIterator : IRowsIterator, IRowsIteratorPa
         QueryContext queryContext) : this(
             rowsIterator: rowsIterator,
             func: new FuncUnitDelegate(() => VariantValue.CreateFromObject(defaultRowsOutput), DataType.Object),
-            functionCallInfo: FunctionCallInfo.Empty,
+            functionCallInfo: FuncUnitCallInfo.Empty,
             defaultRowsOutput,
             queryContext)
     {
