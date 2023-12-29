@@ -8,7 +8,7 @@ namespace QueryCat.Backend.Execution;
 /// <summary>
 /// Utilities for <see cref="ExecutionThread" />.
 /// </summary>
-internal static class ExecutionThreadUtils
+public static class ExecutionThreadUtils
 {
     /// <summary>
     /// Convert variant value to enumerable of rows. It analyzes the internal
@@ -21,7 +21,7 @@ internal static class ExecutionThreadUtils
         var type = variantValue.GetInternalType();
         if (type == DataType.Null)
         {
-            return new EmptyIterator();
+            return EmptyIterator.Instance;
         }
 
         if (type == DataType.Object)

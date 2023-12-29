@@ -10,6 +10,7 @@ using QueryCat.Backend.Core.Plugins;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Relational.Iterators;
+using QueryCat.Backend.Storage;
 
 namespace QueryCat.Backend.Execution;
 

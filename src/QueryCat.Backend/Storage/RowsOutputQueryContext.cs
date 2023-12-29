@@ -1,6 +1,6 @@
 using QueryCat.Backend.Core.Data;
 
-namespace QueryCat.Backend.Execution;
+namespace QueryCat.Backend.Storage;
 
 /// <summary>
 /// Context for rows output.

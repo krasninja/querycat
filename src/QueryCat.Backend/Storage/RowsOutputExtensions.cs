@@ -16,13 +16,23 @@ public static class RowsOutputExtensions
     /// <param name="adjustColumnsLengths">Should update columns widths.</param>
     public static void Write(this IRowsOutput output, IRowsIterator iterator, bool adjustColumnsLengths = false)
     {
-        if (adjustColumnsLengths)
+        output.Open();
+        try
         {
-            iterator = new AdjustColumnsLengthsIterator(iterator);
+            output.QueryContext = new RowsOutputQueryContext(iterator.Columns);
+
+            if (adjustColumnsLengths)
+            {
+                iterator = new AdjustColumnsLengthsIterator(iterator);
+            }
+            while (iterator.MoveNext())
+            {
+                output.WriteValues(iterator.Current.Values);
+            }
         }
-        while (iterator.MoveNext())
+        finally
         {
-            output.WriteValues(iterator.Current.Values);
+            output.Close();
         }
     }
 
