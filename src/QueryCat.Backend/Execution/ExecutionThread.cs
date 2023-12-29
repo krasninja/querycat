@@ -22,7 +22,7 @@ public class ExecutionThread : IExecutionThread
     internal const string ApplicationDirectory = "qcat";
     internal const string BootstrapFileName = "rc.sql";
 
-    private readonly StatementsVisitor _statementsVisitor;
+    private readonly AstVisitor _statementsVisitor;
     private readonly object _objLock = new();
     private readonly List<IDisposable> _disposablesList = new();
     private bool _isInCallback;
@@ -86,13 +86,13 @@ public class ExecutionThread : IExecutionThread
         IInputConfigStorage configStorage,
         IAstBuilder astBuilder)
     {
-        _astBuilder = astBuilder;
-        RootScope = new ExecutionScope();
         Options = options;
         FunctionsManager = functionsManager;
         ConfigStorage = configStorage;
-
+        _astBuilder = astBuilder;
         _statementsVisitor = new StatementsVisitor(this);
+
+        RootScope = new ExecutionScope();
         RunBootstrapScript(GetApplicationDirectory());
     }
 

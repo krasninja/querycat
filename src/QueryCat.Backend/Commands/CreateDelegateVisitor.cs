@@ -37,7 +37,8 @@ internal class CreateDelegateVisitor : AstVisitor
         AstTraversal.PostOrder(node);
     }
 
-    public virtual IFuncUnit RunAndReturn(IAstNode node)
+    /// <inheritdoc />
+    public override IFuncUnit RunAndReturn(IAstNode node)
     {
         if (NodeIdFuncMap.TryGetValue(node.Id, out var funcUnit))
         {

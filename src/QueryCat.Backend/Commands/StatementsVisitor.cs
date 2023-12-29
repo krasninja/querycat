@@ -26,7 +26,8 @@ internal sealed class StatementsVisitor : AstVisitor
         _executionThread = executionThread;
     }
 
-    public IFuncUnit RunAndReturn(IAstNode node)
+    /// <inheritdoc />
+    public override IFuncUnit RunAndReturn(IAstNode node)
     {
         if (_commandHandlers.TryGetValue(node.Id, out var funcUnit))
         {
