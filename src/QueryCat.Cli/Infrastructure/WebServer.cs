@@ -5,7 +5,6 @@ using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
-using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Execution;
@@ -17,7 +16,7 @@ namespace QueryCat.Cli.Infrastructure;
 /// <summary>
 /// Simple web server that provides endpoint to run queries.
 /// </summary>
-internal sealed class WebServer
+internal sealed partial class WebServer
 {
     private const string DefaultEndpointUri = "http://localhost:6789/";
 
@@ -29,6 +28,7 @@ internal sealed class WebServer
     private const string ContentTypeTextPlain = "text/plain";
     private const string ContentTypeHtml = "text/html";
     private const string ContentTypeForm = "application/x-www-form-urlencoded";
+    private const string ContentTypeOctetStream = "application/octet-stream";
 
     /// <summary>
     /// MIME types conversion table.
@@ -42,13 +42,14 @@ internal sealed class WebServer
             [".css"] = "text/css",
             [".flv"] = "video/x-flv",
             [".gif"] = "image/gif",
-            [".htm"] = "text/html",
-            [".html"] = "text/html",
+            [".htm"] = ContentTypeHtml,
+            [".html"] = ContentTypeHtml,
             [".ico"] = "image/x-icon",
             [".jpeg"] = "image/jpeg",
             [".jpg"] = "image/jpeg",
             [".js"] = "application/x-javascript",
-            [".log"] = "text/plain",
+            [".json"] = ContentTypeJson,
+            [".log"] = ContentTypeTextPlain,
             [".mov"] = "video/quicktime",
             [".mp3"] = "audio/mpeg",
             [".mpeg"] = "video/mpeg",
@@ -58,9 +59,9 @@ internal sealed class WebServer
             [".png"] = "image/png",
             [".rar"] = "application/x-rar-compressed",
             [".rss"] = "text/xml",
-            [".shtml"] = "text/html",
+            [".shtml"] = ContentTypeHtml,
             [".swf"] = "application/x-shockwave-flash",
-            [".txt"] = "text/plain",
+            [".txt"] = ContentTypeTextPlain,
             [".wbmp"] = "image/vnd.wap.wbmp",
             [".wmv"] = "video/x-ms-wmv",
             [".xml"] = "text/xml",
@@ -68,7 +69,7 @@ internal sealed class WebServer
         }.ToFrozenDictionary();
 
     /// <summary>
-    /// Endpoint uri.
+    /// Endpoint URI.
     /// </summary>
     public string Uri { get; }
 
@@ -80,7 +81,7 @@ internal sealed class WebServer
     private readonly string? _password;
     private readonly string? _filesRoot;
 
-    private readonly Lazy<ILogger> _logger = new(() => Application.LoggerFactory.CreateLogger(nameof(WebServer)));
+    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(WebServer));
 
     internal sealed class WebServerReply : Dictionary<string, object>;
 
@@ -96,7 +97,7 @@ internal sealed class WebServer
             ["/index.html"] = HandleIndexAction,
             ["/api/info"] = HandleInfoApiAction,
             ["/api/query"] = HandleQueryApiAction,
-            ["/api/files"] = HandleFilesApiAction,
+            ["/api/files"] = Files_HandleFilesApiAction,
         }.ToFrozenDictionary();
 
         _executionThread = executionThread;
@@ -112,6 +113,7 @@ internal sealed class WebServer
     {
         using var listener = new HttpListener();
         listener.Prefixes.Add(Uri);
+        listener.IgnoreWriteExceptions = true;
         if (!string.IsNullOrEmpty(_password))
         {
             listener.AuthenticationSchemes = AuthenticationSchemes.Basic;
@@ -121,12 +123,16 @@ internal sealed class WebServer
 
         while (true)
         {
-            // Common.
+            SemaphoreSlim semaphore = new(0, 1);
             listener.GetContextAsync()
                 .ContinueWith(t =>
                 {
+                    semaphore.Release();
+                    semaphore.Dispose();
                     HandleRequest(t.Result);
-                });
+                })
+                .ConfigureAwait(false);
+            semaphore.Wait();
         }
         // ReSharper disable once FunctionNeverReturns
     }
@@ -135,6 +141,7 @@ internal sealed class WebServer
     {
         var response = context.Response;
         response.Headers["User-Agent"] = Application.GetProductFullName();
+        response.Headers["Accept-Ranges"] = "bytes";
         response.StatusCode = (int)HttpStatusCode.OK;
 
         // CORS.
@@ -174,14 +181,14 @@ internal sealed class WebServer
             }
             catch (QueryCatException e)
             {
-                using var jsonWriter = new Utf8JsonWriter(response.OutputStream);
-                WriteJsonMessage(jsonWriter, e.Message);
                 response.ContentType = ContentTypeJson;
                 response.StatusCode = (int)HttpStatusCode.BadRequest;
+                using var jsonWriter = new Utf8JsonWriter(response.OutputStream);
+                WriteJsonMessage(jsonWriter, e.Message);
             }
             catch (Exception e)
             {
-                _logger.Value.LogError(e, "Error while processing request.");
+                _logger.LogError(e, "Error while processing request.");
                 response.StatusCode = (int)HttpStatusCode.InternalServerError;
             }
         }
@@ -212,66 +219,10 @@ internal sealed class WebServer
         }
 
         var query = GetQueryFromRequest(request);
-        _logger.Value.LogInformation($"[{request.RemoteEndPoint.Address}] Query: {query}");
+        _logger.LogInformation($"[{request.RemoteEndPoint.Address}] Query: {query}");
         var lastResult = _executionThread.Run(query);
 
         WriteIterator(ExecutionThreadUtils.ConvertToIterator(lastResult), request, response);
-    }
-
-    private void HandleFilesApiAction(HttpListenerRequest request, HttpListenerResponse response)
-    {
-        if (request.HttpMethod != GetMethod)
-        {
-            response.StatusCode = (int)HttpStatusCode.MethodNotAllowed;
-            return;
-        }
-        if (string.IsNullOrEmpty(_filesRoot))
-        {
-            response.StatusCode = (int)HttpStatusCode.NotFound;
-            return;
-        }
-
-        var query = GetQueryFromRequest(request);
-
-        if (query.StartsWith("/"))
-        {
-            query = query.Substring(1, query.Length - 1);
-        }
-        var path = Path.Combine(_filesRoot, query);
-
-        if (Directory.Exists(path))
-        {
-            var lsDirFunction = _executionThread.FunctionsManager.FindByName("ls_dir");
-            var result = _executionThread.FunctionsManager.CallFunction(lsDirFunction, _executionThread,
-                new FunctionCallArguments().Add(path));
-            _logger.Value.LogInformation($"[{request.RemoteEndPoint.Address}] Dir: {path}");
-            WriteIterator(ExecutionThreadUtils.ConvertToIterator(result), request, response);
-        }
-        else if (File.Exists(path))
-        {
-            using var fileInput = new FileStream(path, FileMode.Open, FileAccess.ReadWrite);
-            response.ContentType = _mimeTypeMappings.TryGetValue(Path.GetExtension(path), out var mime)
-                ? mime
-                : "application/octet-stream";
-            response.ContentLength64 = fileInput.Length;
-            response.AddHeader("Date", DateTime.Now.ToString("r"));
-            response.AddHeader("Last-Modified", File.GetLastWriteTime(path).ToString("r"));
-
-            var buffer = new byte[1024 * 32];
-            int bytesRead;
-            _logger.Value.LogInformation($"[{request.RemoteEndPoint.Address}] File: {path}");
-            while ((bytesRead = fileInput.Read(buffer, 0, buffer.Length)) > 0)
-            {
-                response.OutputStream.Write(buffer, 0, bytesRead);
-            }
-            fileInput.Close();
-            response.OutputStream.Flush();
-            response.StatusCode = (int) HttpStatusCode.OK;
-        }
-        else
-        {
-            response.StatusCode = (int)HttpStatusCode.NotFound;
-        }
     }
 
     private void HandleInfoApiAction(HttpListenerRequest request, HttpListenerResponse response)

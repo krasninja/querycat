@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Add "ls_dir" function.
 - Add glob pattern to search thru all directories. For example, "select * from '/home/user/**/*.txt".
 - Resolve '~' to user home directory.
+- Implement simple HTTP files server API.
 
 ## Fixed
 
