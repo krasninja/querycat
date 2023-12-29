@@ -13,7 +13,7 @@ namespace QueryCat.Backend.Commands.Update;
 internal sealed class UpdateCommand : ICommand
 {
     /// <inheritdoc />
-    public CommandHandler CreateHandler(ExecutionThread executionThread, StatementNode node)
+    public IFuncUnit CreateHandler(ExecutionThread executionThread, StatementNode node)
     {
         var insertNode = (UpdateNode)node.RootNode;
 

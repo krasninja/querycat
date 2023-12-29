@@ -1,5 +1,4 @@
 using QueryCat.Backend.Core.Data;
-using QueryCat.Backend.Core.Functions;
 
 namespace QueryCat.Backend.Commands;
 

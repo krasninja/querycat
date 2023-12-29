@@ -2,15 +2,15 @@ using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Commands;
 
-/// <summary>
-/// Empty implementation for <see cref="CommandHandler" />.
-/// </summary>
-internal sealed class EmptyCommandHandler : CommandHandler
+internal sealed class EmptyCommandHandler : IFuncUnit
 {
     public static EmptyCommandHandler Empty { get; } = new();
 
     /// <inheritdoc />
-    public override VariantValue Invoke()
+    public DataType OutputType => DataType.Null;
+
+    /// <inheritdoc />
+    public VariantValue Invoke()
     {
         return VariantValue.Null;
     }

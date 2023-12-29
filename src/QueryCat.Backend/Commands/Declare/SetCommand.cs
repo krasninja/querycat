@@ -8,7 +8,7 @@ namespace QueryCat.Backend.Commands.Declare;
 internal sealed class SetCommand : ICommand
 {
     /// <inheritdoc />
-    public CommandHandler CreateHandler(ExecutionThread executionThread, StatementNode node)
+    public IFuncUnit CreateHandler(ExecutionThread executionThread, StatementNode node)
     {
         var setNode = (SetNode)node.RootNode;
         var scope = executionThread.TopScope;

@@ -19,14 +19,14 @@ namespace QueryCat.Backend.Commands;
 internal sealed class StatementsVisitor : AstVisitor
 {
     private readonly ExecutionThread _executionThread;
-    private readonly Dictionary<int, CommandHandler> _commandHandlers = new();
+    private readonly Dictionary<int, IFuncUnit> _commandHandlers = new();
 
     public StatementsVisitor(ExecutionThread executionThread)
     {
         _executionThread = executionThread;
     }
 
-    public CommandHandler RunAndReturn(IAstNode node)
+    public IFuncUnit RunAndReturn(IAstNode node)
     {
         if (_commandHandlers.TryGetValue(node.Id, out var funcUnit))
         {
@@ -68,8 +68,7 @@ internal sealed class StatementsVisitor : AstVisitor
     {
         new ResolveTypesVisitor(_executionThread).Run(node);
         var func = new CreateDelegateVisitor(_executionThread).RunAndReturn(node.ExpressionNode);
-        var handler = new FuncUnitCommandHandler(func);
-        _commandHandlers.Add(node.Id, handler);
+        _commandHandlers.Add(node.Id, func);
     }
 
     /// <inheritdoc />
@@ -77,8 +76,7 @@ internal sealed class StatementsVisitor : AstVisitor
     {
         new ResolveTypesVisitor(_executionThread).Run(node);
         var func = new CreateDelegateVisitor(_executionThread).RunAndReturn(node.FunctionNode);
-        var handler = new FuncUnitCommandHandler(func);
-        _commandHandlers.Add(node.Id, handler);
+        _commandHandlers.Add(node.Id, func);
     }
 
     /// <inheritdoc />

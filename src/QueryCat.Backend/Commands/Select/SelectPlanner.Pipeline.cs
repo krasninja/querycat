@@ -3,7 +3,6 @@ using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Commands.Select.Iterators;
 using QueryCat.Backend.Core.Data;
-using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Indexes;
 using QueryCat.Backend.Relational;

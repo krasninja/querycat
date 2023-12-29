@@ -1,5 +1,4 @@
 using System.Runtime.CompilerServices;
-using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Commands;

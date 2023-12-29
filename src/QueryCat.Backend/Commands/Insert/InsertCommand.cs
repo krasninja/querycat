@@ -12,7 +12,7 @@ namespace QueryCat.Backend.Commands.Insert;
 internal sealed class InsertCommand : ICommand
 {
     /// <inheritdoc />
-    public CommandHandler CreateHandler(ExecutionThread executionThread, StatementNode node)
+    public IFuncUnit CreateHandler(ExecutionThread executionThread, StatementNode node)
     {
         var insertNode = (InsertNode)node.RootNode;
 
@@ -46,7 +46,7 @@ internal sealed class InsertCommand : ICommand
         var mapIterator = CreateFromToColumnsMappingByName(inputIterator, rowsOutput, targetColumns);
 
         // Handler.
-        return new InsertCommandHandler(executionThread, mapIterator, rowsOutput);
+        return new InsertCommandHandler(mapIterator, rowsOutput);
     }
 
     private static void CopyInputColumnsToOutput(SelectColumnsListNode inputColumnsListNode, InsertNode insertNode)

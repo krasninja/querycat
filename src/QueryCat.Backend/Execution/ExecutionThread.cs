@@ -150,7 +150,10 @@ public class ExecutionThread : IExecutionThread
         while (ExecutingStatement != null)
         {
             var commandContext = _statementsVisitor.RunAndReturn(ExecutingStatement);
-            _disposablesList.Add(commandContext);
+            if (commandContext is IDisposable disposable)
+            {
+                _disposablesList.Add(disposable);
+            }
 
             // Fire "before" event.
             if (BeforeStatementExecute != null && !_isInCallback)

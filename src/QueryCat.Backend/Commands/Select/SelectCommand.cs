@@ -13,7 +13,7 @@ namespace QueryCat.Backend.Commands.Select;
 internal sealed class SelectCommand : ICommand
 {
     /// <inheritdoc />
-    public CommandHandler CreateHandler(ExecutionThread executionThread, StatementNode node)
+    public IFuncUnit CreateHandler(ExecutionThread executionThread, StatementNode node)
     {
         var selectQueryNode = (SelectQueryNode)node.RootNode;
 

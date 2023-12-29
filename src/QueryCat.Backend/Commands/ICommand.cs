@@ -13,6 +13,6 @@ internal interface ICommand
     /// </summary>
     /// <param name="executionThread">Current execution thread.</param>
     /// <param name="node">Statement node.</param>
-    /// <returns>Instance of <see cref="CommandHandler" />.</returns>
-    CommandHandler CreateHandler(ExecutionThread executionThread, StatementNode node);
+    /// <returns>Instance of <see cref="IFuncUnit" />.</returns>
+    IFuncUnit CreateHandler(ExecutionThread executionThread, StatementNode node);
 }
