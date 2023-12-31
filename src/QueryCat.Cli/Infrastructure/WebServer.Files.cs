@@ -2,7 +2,7 @@ using System.Buffers;
 using System.Diagnostics;
 using System.Net;
 using Microsoft.Extensions.Logging;
-using QueryCat.Backend.Core.Functions;
+using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Execution;
 
 namespace QueryCat.Cli.Infrastructure;
@@ -30,7 +30,7 @@ internal partial class WebServer
             set => _end = value > 0 && value > _start ? value : _start;
         }
 
-        public long Size => End - Start + 1;
+        public long Size => End - Start;
 
         public Range(long start, long end)
         {
@@ -55,7 +55,8 @@ internal partial class WebServer
         var query = GetQueryFromRequest(request);
 
         // Get absolute path.
-        if (query.StartsWith("/"))
+        query = query.Replace("..", string.Empty);
+        while (query.StartsWith("/"))
         {
             query = query.Substring(1, query.Length - 1);
         }
@@ -77,9 +78,8 @@ internal partial class WebServer
 
     private void Files_ServeDirectory(string path, HttpListenerRequest request, HttpListenerResponse response)
     {
-        var lsDirFunction = _executionThread.FunctionsManager.FindByName("ls_dir");
-        var result = _executionThread.FunctionsManager.CallFunction(lsDirFunction, _executionThread,
-            new FunctionCallArguments().Add(path));
+        _executionThread.TopScope.Variables["path"] = new VariantValue(path);
+        var result = _executionThread.Run("select *, size_pretty(size) as 'size_pretty' from ls_dir(path);");
         _logger.LogInformation($"[{request.RemoteEndPoint.Address}] Dir: {path}");
         WriteIterator(ExecutionThreadUtils.ConvertToIterator(result), request, response);
     }
@@ -95,7 +95,8 @@ internal partial class WebServer
 
         response.AddHeader("Date", DateTime.Now.ToString("r"));
         response.AddHeader("Last-Modified", File.GetLastWriteTime(file).ToString("r"));
-        response.AddHeader($"Content-disposition", $"attachment; filename={Path.GetFileName(file)}");
+        response.AddHeader(
+            "Content-Disposition", $"filename={System.Web.HttpUtility.UrlEncode(Path.GetFileName(file))}");
         response.ContentType = _mimeTypeMappings.TryGetValue(Path.GetExtension(file), out var mime)
             ? mime
             : ContentTypeOctetStream;
@@ -130,9 +131,9 @@ internal partial class WebServer
         }
         finally
         {
-            ArrayPool<byte>.Shared.Return(buffer);
             fileInput.Close();
             response.OutputStream.Flush();
+            ArrayPool<byte>.Shared.Return(buffer);
         }
         _logger.LogDebug("End range {Start}-{End}, Total: {TotalWrite}", range.Start, range.End, totalBytesWrite);
     }

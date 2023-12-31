@@ -40,11 +40,16 @@ internal static class MiscFunctions
     [FunctionSignature("size_pretty(size: integer, base: integer = 1024): string")]
     public static VariantValue SizePretty(FunctionCallInfo args)
     {
+        if (args.GetAt(0).IsNull)
+        {
+            return VariantValue.Null;
+        }
+
         var byteCount = args.GetAt(0).AsInteger;
         var @base = args.GetAt(1).AsInteger;
 
         // For reference: https://stackoverflow.com/questions/281640/how-do-i-get-a-human-readable-file-size-in-bytes-abbreviation-using-net.
-        string[] suffix = { "B", "K", "M", "G", "T", "P", "E" };
+        string[] suffix = ["B", "K", "M", "G", "T", "P", "E"];
         if (byteCount == 0)
         {
             return new VariantValue("0" + suffix[0]);
@@ -52,7 +57,7 @@ internal static class MiscFunctions
         var bytes = Math.Abs(byteCount);
         var place = Convert.ToInt64(Math.Floor(Math.Log(bytes, @base)));
         var num = Math.Round(bytes / Math.Pow(@base, place), 1);
-        var size = Math.Sign(byteCount) * num + suffix[place];
+        var size = Math.Sign(byteCount) * num + ' ' + suffix[place];
 
         return new VariantValue(size);
     }

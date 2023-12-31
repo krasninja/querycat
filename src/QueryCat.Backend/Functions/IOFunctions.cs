@@ -197,20 +197,33 @@ internal static class IOFunctions
     {
         var dirInfo = new DirectoryInfo(path);
 
-        foreach (var dir in dirInfo.EnumerateDirectories())
+        if (dirInfo.Parent != null)
         {
             yield return new ListDirectoryEntry
             {
                 Type = "d",
-                Name = dir.Name,
-                Path = dir.FullName,
+                Name = "../",
+                Path = dirInfo.FullName,
+                CreatedAt = dirInfo.CreationTimeUtc,
+                LastWriteTime = dirInfo.LastWriteTimeUtc,
+                LastAccessedAt = dirInfo.LastAccessTimeUtc,
+            };
+        }
+
+        foreach (var dir in dirInfo.EnumerateDirectories().OrderBy(d => d.Name))
+        {
+            yield return new ListDirectoryEntry
+            {
+                Type = "d",
+                Name = dir.Name + '/',
+                Path = dir.FullName + '/',
                 CreatedAt = dir.CreationTimeUtc,
                 LastWriteTime = dir.LastWriteTimeUtc,
                 LastAccessedAt = dir.LastAccessTimeUtc,
             };
         }
 
-        foreach (var file in dirInfo.EnumerateFiles())
+        foreach (var file in dirInfo.EnumerateFiles().OrderBy(f => f.Name))
         {
             yield return new ListDirectoryEntry
             {

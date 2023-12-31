@@ -301,12 +301,7 @@ internal sealed partial class WebServer
             {
                 return query;
             }
-            query = request.QueryString.Get("query");
-            if (!string.IsNullOrEmpty(query))
-            {
-                return query;
-            }
-            throw new QueryCatException("Cannot parse query.");
+            return request.QueryString.Get("query") ?? string.Empty;
         }
         throw new QueryCatException("Incorrect content type.");
     }
