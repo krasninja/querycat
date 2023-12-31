@@ -91,7 +91,7 @@ internal partial class WebServer
         var range = Files_ParseRange(request.Headers["Range"], maxLength).FirstOrDefault();
         var isRangeRequest = range != null;
         range ??= new Range(0, maxLength);
-        _logger.LogDebug("Start range {Start}-{End}", range.Start, range.End);
+        _logger.LogTrace("Start range {Start}-{End}", range.Start, range.End);
 
         response.AddHeader("Date", DateTime.Now.ToString("r"));
         response.AddHeader("Last-Modified", File.GetLastWriteTime(file).ToString("r"));
@@ -125,8 +125,16 @@ internal partial class WebServer
                     bytesRead -= totalBytesRead - (int)range.Size;
                     finish = true;
                 }
-                response.OutputStream.Write(buffer, 0, bytesRead);
-                totalBytesWrite += bytesRead;
+                try
+                {
+                    response.OutputStream.Write(buffer, 0, bytesRead);
+                    totalBytesWrite += bytesRead;
+                }
+                catch (HttpListenerException e)
+                {
+                    _logger.LogDebug(e, "Cannot write to output stream: {Error}", e.Message);
+                    finish = true;
+                }
             }
         }
         finally
@@ -135,7 +143,7 @@ internal partial class WebServer
             response.OutputStream.Flush();
             ArrayPool<byte>.Shared.Return(buffer);
         }
-        _logger.LogDebug("End range {Start}-{End}, Total: {TotalWrite}", range.Start, range.End, totalBytesWrite);
+        _logger.LogTrace("End range {Start}-{End}, Total: {TotalWrite}", range.Start, range.End, totalBytesWrite);
     }
 
     private static IEnumerable<Range> Files_ParseRange(string? rangeValue, long maxLength)

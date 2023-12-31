@@ -113,7 +113,6 @@ internal sealed partial class WebServer
     {
         using var listener = new HttpListener();
         listener.Prefixes.Add(Uri);
-        listener.IgnoreWriteExceptions = true;
         if (!string.IsNullOrEmpty(_password))
         {
             listener.AuthenticationSchemes = AuthenticationSchemes.Basic;
