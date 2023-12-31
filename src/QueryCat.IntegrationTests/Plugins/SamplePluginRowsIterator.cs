@@ -1,10 +1,9 @@
 using System.ComponentModel;
 using System.Diagnostics;
+using QueryCat.Backend;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Core.Utils;
-using QueryCat.Backend.Utils;
 
 namespace QueryCat.IntegrationTests.Plugins;
 

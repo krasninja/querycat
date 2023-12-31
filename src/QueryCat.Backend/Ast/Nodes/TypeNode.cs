@@ -5,7 +5,7 @@ namespace QueryCat.Backend.Ast.Nodes;
 /// <summary>
 /// Application type definition.
 /// </summary>
-public class TypeNode : AstNode
+internal class TypeNode : AstNode
 {
     public DataType Type { get; }
 

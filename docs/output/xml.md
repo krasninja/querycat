@@ -1,6 +1,6 @@
 # XML
 
-See the main documentation [here](/input/xml).
+See the main documentation [here](../input/xml.md).
 
 Sample XML output:
 

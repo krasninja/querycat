@@ -1,7 +1,6 @@
 using System.CommandLine;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Core.Utils;
 using QueryCat.Cli.Commands.Options;
 
 namespace QueryCat.Cli.Commands;
@@ -29,7 +28,7 @@ internal class ExplainCommand : BaseQueryCommand
                 }
             };
             AddVariables(root.Thread, variables);
-            RunQuery(root.Thread, query, files);
+            RunQuery(root.Thread, query, files, root.CancellationTokenSource.Token);
         },
             new ApplicationOptionsBinder(LogLevelOption, PluginDirectoriesOption),
             QueryArgument,

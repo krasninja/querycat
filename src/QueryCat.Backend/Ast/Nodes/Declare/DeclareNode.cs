@@ -2,7 +2,7 @@ using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Ast.Nodes.Declare;
 
-public class DeclareNode : AstNode
+internal sealed class DeclareNode : AstNode
 {
     public string Name { get; }
 

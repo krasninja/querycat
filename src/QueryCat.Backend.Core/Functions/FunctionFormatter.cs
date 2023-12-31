@@ -99,7 +99,7 @@ internal static class FunctionFormatter
         return sb.ToString();
     }
 
-    public static FunctionDelegate CreateDelegateFromMethod(MethodBase method)
+    internal static FunctionDelegate CreateDelegateFromMethod(MethodBase method)
     {
         VariantValue FunctionDelegate(FunctionCallInfo args)
         {
@@ -121,7 +121,7 @@ internal static class FunctionFormatter
                 {
                     arr[i] = CancellationToken.None;
                 }
-                else if (args.Arguments.Values.Length > i)
+                else if (args.Count > i)
                 {
                     arr[i] = Converter.ConvertValue(args.GetAt(i), parameter.ParameterType);
                 }
@@ -145,7 +145,11 @@ internal static class FunctionFormatter
                 if (method is MethodInfo methodInfo
                     && methodInfo.ReturnType.IsGenericType)
                 {
-                    result = ((dynamic)task).Result;
+                    var resultProperty = task.GetType().GetProperty("Result");
+                    if (resultProperty != null)
+                    {
+                        result = resultProperty.GetValue(task);
+                    }
                 }
                 else
                 {

@@ -6,13 +6,13 @@ namespace QueryCat.Backend.Commands;
 /// <summary>
 /// QueryCat statement command executor.
 /// </summary>
-public interface ICommand
+internal interface ICommand
 {
     /// <summary>
     /// Process the statement node and create execution handler.
     /// </summary>
     /// <param name="executionThread">Current execution thread.</param>
     /// <param name="node">Statement node.</param>
-    /// <returns>Instance of <see cref="CommandHandler" />.</returns>
-    CommandHandler CreateHandler(ExecutionThread executionThread, StatementNode node);
+    /// <returns>Instance of <see cref="IFuncUnit" />.</returns>
+    IFuncUnit CreateHandler(ExecutionThread executionThread, StatementNode node);
 }

@@ -1,7 +1,6 @@
 using System.CommandLine;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Execution;
 
 namespace QueryCat.Cli.Commands;
 
@@ -28,9 +27,13 @@ internal abstract class BaseQueryCommand : BaseCommand
         Add(VariablesOption);
     }
 
-    public void RunQuery(ExecutionThread executionThread, string query, string[]? files = null)
+    public void RunQuery(
+        IExecutionThread executionThread,
+        string query,
+        string[] files,
+        CancellationToken cancellationToken = default)
     {
-        if (files != null && files.Any())
+        if (files.Any())
         {
             foreach (var file in files)
             {
@@ -43,7 +46,7 @@ internal abstract class BaseQueryCommand : BaseCommand
         }
     }
 
-    public void AddVariables(ExecutionThread executionThread, string[]? variables = null)
+    public void AddVariables(IExecutionThread executionThread, string[]? variables = null)
     {
         if (variables == null || !variables.Any())
         {
@@ -64,7 +67,7 @@ internal abstract class BaseQueryCommand : BaseCommand
             {
                 throw new QueryCatException($"Cannot define variable '{name}'.");
             }
-            executionThread.TopScope.DefineVariable(name, targetType, value);
+            executionThread.TopScope.Variables[name] = value.Cast(targetType);
         }
     }
 }

@@ -1,6 +1,6 @@
 namespace QueryCat.Backend.Ast.Nodes.Select;
 
-public sealed class SelectWindowOrderClauseNode : AstNode
+internal sealed class SelectWindowOrderClauseNode : AstNode
 {
     public List<SelectOrderBySpecificationNode> OrderBySpecificationNodes { get; } = new();
 

@@ -16,17 +16,18 @@ namespace QueryCat.Backend.Commands;
 /// <summary>
 /// Visit only program top-level building blocks (statements) and generate execution delegate.
 /// </summary>
-public sealed class StatementsVisitor : AstVisitor
+internal sealed class StatementsVisitor : AstVisitor
 {
     private readonly ExecutionThread _executionThread;
-    private readonly Dictionary<int, CommandHandler> _commandHandlers = new();
+    private readonly Dictionary<int, IFuncUnit> _commandHandlers = new();
 
     public StatementsVisitor(ExecutionThread executionThread)
     {
         _executionThread = executionThread;
     }
 
-    public CommandHandler RunAndReturn(IAstNode node)
+    /// <inheritdoc />
+    public override IFuncUnit RunAndReturn(IAstNode node)
     {
         if (_commandHandlers.TryGetValue(node.Id, out var funcUnit))
         {
@@ -68,8 +69,7 @@ public sealed class StatementsVisitor : AstVisitor
     {
         new ResolveTypesVisitor(_executionThread).Run(node);
         var func = new CreateDelegateVisitor(_executionThread).RunAndReturn(node.ExpressionNode);
-        var handler = new FuncUnitCommandHandler(func);
-        _commandHandlers.Add(node.Id, handler);
+        _commandHandlers.Add(node.Id, func);
     }
 
     /// <inheritdoc />
@@ -77,8 +77,7 @@ public sealed class StatementsVisitor : AstVisitor
     {
         new ResolveTypesVisitor(_executionThread).Run(node);
         var func = new CreateDelegateVisitor(_executionThread).RunAndReturn(node.FunctionNode);
-        var handler = new FuncUnitCommandHandler(func);
-        _commandHandlers.Add(node.Id, handler);
+        _commandHandlers.Add(node.Id, func);
     }
 
     /// <inheritdoc />

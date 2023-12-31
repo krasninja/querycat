@@ -4,11 +4,14 @@ using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Commands.Update;
 
-internal sealed class UpdateCommandHandler : CommandHandler
+internal sealed class UpdateCommandHandler : IFuncUnit
 {
     private readonly SelectCommandContext _selectCommandContext;
     private readonly UpdateSetter[] _setters;
     private readonly IRowsInputUpdate _rowsInput;
+
+    /// <inheritdoc />
+    public DataType OutputType => DataType.Null;
 
     public UpdateCommandHandler(
         SelectCommandContext selectCommandContext,
@@ -25,7 +28,7 @@ internal sealed class UpdateCommandHandler : CommandHandler
     }
 
     /// <inheritdoc />
-    public override VariantValue Invoke()
+    public VariantValue Invoke()
     {
         var updateCount = 0;
         while (_selectCommandContext.CurrentIterator.MoveNext())

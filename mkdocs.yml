@@ -1,4 +1,5 @@
 site_name: QueryCat Documentation
+site_author: Ivan Kozhin
 nav:
   - 'Home': index.md
   - 'Tutorial': tutorial.md
@@ -16,8 +17,10 @@ nav:
     - 'UPDATE': commands/update.md
   - 'Input':
     - 'CSV': input/csv.md
+    - 'Grok': input/grok.md
     - 'IISW3C': input/iisw3c.md
     - 'JSON': input/json.md
+    - 'RegEx': input/regex.md
     - 'STDIN': input/stdin.md
     - 'SUBRIP': input/subrip.md
     - 'Text': input/text-line.md
@@ -48,11 +51,14 @@ nav:
     - 'Overview': development/index.md
     - 'Components': development/components.md
     - 'Functions': development/functions.md
+    - 'Assembly': development/connector-assembly.md
     - 'Thrift': development/connector-thrift.md
     - 'Simple Plugin': development/plugin-simple.md
     - 'Advanced Plugin': development/plugin-advanced.md
   - 'Misc':
-    - 'Alternative Tools': misc/alternative-tools.md
+    - 'Alternative Tools': misc/alternatives.md
 theme: readthedocs
+exclude_docs: |
+  internal
 markdown_extensions:
   - pymdownx.superfences

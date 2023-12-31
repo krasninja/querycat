@@ -1,6 +1,6 @@
 namespace QueryCat.Backend.Ast.Nodes.Select;
 
-public sealed class SelectTableJoinedTypeNode : AstNode
+internal sealed class SelectTableJoinedTypeNode : AstNode
 {
     public SelectTableJoinedType JoinedType { get; }
 

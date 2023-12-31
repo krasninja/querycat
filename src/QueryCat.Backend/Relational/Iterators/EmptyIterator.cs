@@ -1,10 +1,9 @@
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend.Relational.Iterators;
 
-public sealed class EmptyIterator : IRowsIterator
+internal sealed class EmptyIterator : IRowsIterator
 {
     /// <inheritdoc />
     public Column[] Columns { get; }

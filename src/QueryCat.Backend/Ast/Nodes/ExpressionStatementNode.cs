@@ -1,6 +1,6 @@
 namespace QueryCat.Backend.Ast.Nodes;
 
-public sealed class ExpressionStatementNode : StatementNode
+internal sealed class ExpressionStatementNode : StatementNode
 {
     public ExpressionNode ExpressionNode => (ExpressionNode)RootNode;
 

@@ -1,6 +1,7 @@
+using QueryCat.Backend;
 using Xunit;
 using QueryCat.Backend.Commands.Update;
-using QueryCat.Backend.Core.Plugins;
+using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Relational;
@@ -11,7 +12,7 @@ namespace QueryCat.IntegrationTests.Storage;
 /// <summary>
 /// Tests for <see cref="UpdateCommand" />.
 /// </summary>
-public class CollectionInputTests
+public sealed class CollectionInputTests : IDisposable
 {
     private readonly CollectionInput<Employee> _employeesList;
 
@@ -53,11 +54,11 @@ public class CollectionInputTests
     public void Select_ListOfEmployees_CopyToRowsFrame()
     {
         var rowsFrame = new RowsFrame(_employeesList.Columns);
-        var thread = new ExecutionThread(new ExecutionOptions
+        var thread = new ExecutionThreadBootstrapper(new ExecutionOptions
         {
             DefaultRowsOutput = new RowsFrameOutput(rowsFrame),
-        });
-        thread.TopScope.DefineVariable("employees", DataType.Object, VariantValue.CreateFromObject(_employeesList));
+        }).Create();
+        thread.TopScope.Variables["employees"] = VariantValue.CreateFromObject(_employeesList);
         thread.Run("select * from [employees];");
         Assert.Equal(DataType.Integer, rowsFrame.Columns[0].DataType);
         Assert.Equal(3, rowsFrame.TotalRows);
@@ -66,11 +67,11 @@ public class CollectionInputTests
     [Fact]
     public void Update_ListOfEmployees_UpdateItems()
     {
-        var thread = new ExecutionThread(new ExecutionOptions
+        var thread = new ExecutionThreadBootstrapper(new ExecutionOptions
         {
             DefaultRowsOutput = NullRowsOutput.Instance,
-        });
-        thread.TopScope.DefineVariable("employees", DataType.Object, VariantValue.CreateFromObject(_employeesList));
+        }).Create();
+        thread.TopScope.Variables["employees"] = VariantValue.CreateFromObject(_employeesList);
         thread.Run("update [employees] set id = id + 1, score = 10 where id > 1;");
         Assert.Equal(1, _employeesList.TargetCollection.ElementAt(0).Id);
         Assert.Equal(3, _employeesList.TargetCollection.ElementAt(1).Id);
@@ -80,11 +81,11 @@ public class CollectionInputTests
     [Fact]
     public void Insert_ListOfEmployees_InsertItem()
     {
-        var thread = new ExecutionThread(new ExecutionOptions
+        var thread = new ExecutionThreadBootstrapper(new ExecutionOptions
         {
             DefaultRowsOutput = NullRowsOutput.Instance,
-        });
-        thread.TopScope.DefineVariable("employees", DataType.Object, VariantValue.CreateFromObject(_employeesList));
+        }).Create();
+        thread.TopScope.Variables["employees"] = VariantValue.CreateFromObject(_employeesList);
         thread.Run("insert into [employees] values (4, 'Abbie Cornish', '1982-08-07', 5);");
         Assert.Equal(4, _employeesList.TargetCollection.Count());
         Assert.Equal(5, _employeesList.TargetCollection.ElementAt(3).Score);
@@ -93,15 +94,22 @@ public class CollectionInputTests
     [Fact]
     public void Insert_ListOfEmployeesWithPartialInsert_InsertItem()
     {
-        var thread = new ExecutionThread(new ExecutionOptions
-        {
-            DefaultRowsOutput = NullRowsOutput.Instance,
-        });
-        thread.TopScope.DefineVariable("employees", DataType.Object, VariantValue.CreateFromObject(_employeesList));
-        new ExecutionThreadBootstrapper().Bootstrap(thread, NullPluginsLoader.Instance,
-            Backend.Formatters.AdditionalRegistration.Register);
+        using var thread = new ExecutionThreadBootstrapper(new ExecutionOptions
+            {
+                DefaultRowsOutput = NullRowsOutput.Instance,
+            })
+            .WithStandardFunctions()
+            .WithRegistrations(Backend.Formatters.AdditionalRegistration.Register)
+            .Create();
+        thread.TopScope.Variables["employees"] = VariantValue.CreateFromObject(_employeesList);
         thread.Run("insert into self(employees) (id, name) values (4, 'Abbie Cornish');");
         Assert.Equal(4, _employeesList.TargetCollection.Count());
         Assert.Equal(5, _employeesList.TargetCollection.ElementAt(3).Score);
+    }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        _employeesList.Dispose();
     }
 }

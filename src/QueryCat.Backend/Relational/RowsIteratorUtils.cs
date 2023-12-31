@@ -1,6 +1,5 @@
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend.Relational;
 
@@ -48,8 +47,12 @@ public static class RowsIteratorUtils
     /// </summary>
     /// <param name="rowsIterator">Rows iterator to read.</param>
     /// <param name="numberOfRowsToAnalyze">Number of rows to analyze, default is 10.</param>
-    public static void ResolveColumnsTypes(IRowsIterator rowsIterator, int numberOfRowsToAnalyze = 10)
+    /// <param name="skipColumnsIndexes">Skip certain columns by indexes.</param>
+    public static void ResolveColumnsTypes(IRowsIterator rowsIterator, int numberOfRowsToAnalyze = 10,
+        int[]? skipColumnsIndexes = null)
     {
+        skipColumnsIndexes ??= Array.Empty<int>();
+
         // Read.
         RowsFrame? rowsFrame = null;
         for (var rowIndex = 0; rowIndex < numberOfRowsToAnalyze && rowsIterator.MoveNext(); rowIndex++)
@@ -68,6 +71,11 @@ public static class RowsIteratorUtils
         for (var i = 0; i < rowsFrame.Columns.Length; i++)
         {
             var column = rowsFrame.Columns[i];
+            if (column.DataType != DataType.String || skipColumnsIndexes.Contains(i))
+            {
+                continue;
+            }
+
             var values = rowsFrame.GetColumnValues(i);
             var newType = DataTypeUtils.DetermineTypeByValues(values);
             column.DataType = newType;

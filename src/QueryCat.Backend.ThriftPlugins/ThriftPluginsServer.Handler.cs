@@ -1,12 +1,14 @@
+using System.Runtime.InteropServices;
 using Microsoft.Extensions.Logging;
-using QueryCat.Backend.Core;
-using QueryCat.Backend.Core.Functions;
 using Thrift;
 using Thrift.Protocol;
 using Thrift.Transport;
 using Thrift.Transport.Client;
 using QueryCat.Plugins.Client;
 using QueryCat.Plugins.Sdk;
+using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Functions;
+using QueryCat.Backend.Core.Utils;
 using LogLevel = QueryCat.Plugins.Sdk.LogLevel;
 
 namespace QueryCat.Backend.ThriftPlugins;
@@ -24,6 +26,25 @@ public partial class ThriftPluginsServer
         public List<PluginContextFunction> Functions { get; } = new();
 
         public ObjectsStorage ObjectsStorage { get; } = new();
+
+        public IntPtr? LibraryHandle { get; set; }
+
+        public void Shutdown()
+        {
+            ObjectsStorage.Clean();
+            if (Client != null)
+            {
+                AsyncUtils.RunSync(Client.ShutdownAsync);
+            }
+            if (LibraryHandle.HasValue && LibraryHandle.Value != IntPtr.Zero)
+            {
+                // For some reason it causes SIGSEGV (Address boundary error) on Linux.
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    NativeLibrary.Free(LibraryHandle.Value);
+                }
+            }
+        }
     }
 
     private sealed class Handler : PluginsManager.IAsync
@@ -54,17 +75,21 @@ public partial class ThriftPluginsServer
                 plugin_data.Version,
                 auth_token,
                 callback_uri);
-            SemaphoreSlim? semaphoreSlim = null;
-            if (!_thriftPluginsServer.SkipTokenVerification &&
-                (string.IsNullOrEmpty(auth_token)
-                    || !_thriftPluginsServer._authTokens.TryGetValue(auth_token, out semaphoreSlim)))
+            if (!_thriftPluginsServer.SkipTokenVerification && !_thriftPluginsServer.VerifyAuthToken(auth_token))
             {
                 throw new QueryCatPluginException(ErrorType.INVALID_AUTH_TOKEN, "Invalid token.");
             }
 
-            // Create plugin context, init and add it to a list.
+            // Create plugin context, init and add it to a list.GetFileByContext
             var context = await CreateClientConnection(callback_uri, cancellationToken);
-            context.Name = plugin_data.Name;
+            if (!string.IsNullOrEmpty(plugin_data.Name))
+            {
+                context.Name = plugin_data.Name;
+            }
+            if (string.IsNullOrEmpty(context.Name))
+            {
+                context.Name = _thriftPluginsServer.GetPluginNameByAuthToken(auth_token);
+            }
             if (plugin_data.Functions != null)
             {
                 foreach (var function in plugin_data.Functions)
@@ -76,8 +101,8 @@ public partial class ThriftPluginsServer
             _thriftPluginsServer.RegisterPluginContext(context, auth_token);
 
             // Since we registered plugin we can release semaphore and notify loader.
-            semaphoreSlim?.Release();
-            _thriftPluginsServer._logger.LogDebug("Registered plugin '{PluginName}'.", plugin_data.Name);
+            _thriftPluginsServer.ConfirmAuthToken(auth_token);
+            _thriftPluginsServer._logger.LogDebug("Registered plugin '{PluginName}'.", context.Name);
 
             return CreateEmptyRegistrationResult();
         }
@@ -97,7 +122,7 @@ public partial class ThriftPluginsServer
                         new TFramedTransport(
                             new TNamedPipeTransport(uri.Segments[1], new TConfiguration()))
                         ),
-                    ThriftPluginClient.PluginServerName)
+                    ThriftPluginClient.PluginServerName),
             };
             context.Client = new Plugins.Sdk.Plugin.Client(context.Protocol);
             await context.Client.OpenTransportAsync(cancellationToken);
@@ -120,8 +145,8 @@ public partial class ThriftPluginsServer
             }
             var function = _thriftPluginsServer._executionThread
                 .FunctionsManager.FindByName(function_name, argsForFunction.GetTypes());
-            var result = _thriftPluginsServer._executionThread.FunctionsManager.CallFunction(function,
-                argsForFunction);
+            var result = _thriftPluginsServer._executionThread.FunctionsManager.CallFunction(
+                function, _thriftPluginsServer._executionThread, argsForFunction);
             return Task.FromResult(SdkConvert.Convert(result));
         }
 
@@ -175,6 +200,7 @@ public partial class ThriftPluginsServer
     private sealed class HandlerWithExceptionIntercept : PluginsManager.IAsync
     {
         private readonly PluginsManager.IAsync _handler;
+        private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(Handler));
 
         public HandlerWithExceptionIntercept(PluginsManager.IAsync handler)
         {
@@ -193,6 +219,11 @@ public partial class ThriftPluginsServer
             {
                 throw new QueryCatPluginException(ErrorType.GENERIC, ex.Message);
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Handler internal error.");
+                throw new QueryCatPluginException(ErrorType.INTERNAL, ex.Message);
+            }
         }
 
         /// <inheritdoc />
@@ -210,6 +241,11 @@ public partial class ThriftPluginsServer
                     ObjectHandle = object_handle,
                 };
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Handler internal error.");
+                throw new QueryCatPluginException(ErrorType.INTERNAL, ex.Message);
+            }
         }
 
         /// <inheritdoc />
@@ -222,6 +258,11 @@ public partial class ThriftPluginsServer
             catch (QueryCatException ex)
             {
                 throw new QueryCatPluginException(ErrorType.GENERIC, ex.Message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Handler internal error.");
+                throw new QueryCatPluginException(ErrorType.INTERNAL, ex.Message);
             }
         }
 
@@ -236,6 +277,11 @@ public partial class ThriftPluginsServer
             {
                 throw new QueryCatPluginException(ErrorType.GENERIC, ex.Message);
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Handler internal error.");
+                throw new QueryCatPluginException(ErrorType.INTERNAL, ex.Message);
+            }
         }
 
         /// <inheritdoc />
@@ -249,6 +295,11 @@ public partial class ThriftPluginsServer
             {
                 throw new QueryCatPluginException(ErrorType.GENERIC, ex.Message);
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Handler internal error.");
+                throw new QueryCatPluginException(ErrorType.INTERNAL, ex.Message);
+            }
         }
 
         /// <inheritdoc />
@@ -261,6 +312,11 @@ public partial class ThriftPluginsServer
             catch (QueryCatException ex)
             {
                 throw new QueryCatPluginException(ErrorType.GENERIC, ex.Message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Handler internal error.");
+                throw new QueryCatPluginException(ErrorType.INTERNAL, ex.Message);
             }
         }
     }

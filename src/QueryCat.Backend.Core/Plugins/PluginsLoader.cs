@@ -41,9 +41,8 @@ public abstract class PluginsLoader
         {
             var fileName = Path.GetFileName(pluginDirectory);
             if (IsCorrectPluginFile(pluginDirectory)
-                && !loaded.Contains(fileName))
+                && loaded.Add(fileName))
             {
-                loaded.Add(fileName);
                 yield return pluginDirectory;
             }
 
@@ -55,12 +54,20 @@ public abstract class PluginsLoader
             foreach (var pluginFile in Directory.EnumerateFiles(pluginDirectory))
             {
                 fileName = Path.GetFileName(pluginFile);
-                if (IsCorrectPluginFile(pluginFile) && !loaded.Contains(fileName))
+                if (IsCorrectPluginFile(pluginFile) && loaded.Add(fileName))
                 {
-                    loaded.Add(fileName);
                     yield return pluginFile;
                 }
             }
         }
+    }
+
+    protected static bool IsAppSpecificFile(string file)
+    {
+        var fileName = Path.GetFileName(file);
+        return fileName.StartsWith("QueryCat.Plugins.Client")
+            || fileName.StartsWith("QueryCat.Plugins.Sdk")
+            || fileName.StartsWith("QueryCat.Backend")
+            || fileName.StartsWith("QueryCat.Backend.AssemblyPlugins");
     }
 }

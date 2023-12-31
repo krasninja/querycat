@@ -1,62 +1,29 @@
 using System.Text;
-using QueryCat.Backend.Core.Functions;
 
 namespace QueryCat.Backend.Core.Types;
 
 /// <summary>
-/// Array of <see cref="VariantValue" /> with Equals implementation.
+/// Array of <see cref="VariantValue" /> with Equals, GetHashCode implementation.
 /// </summary>
-public sealed class VariantValueArray
+public readonly struct VariantValueArray(params VariantValue[] values)
 {
-    private VariantValue[] _values;
+    public static VariantValueArray Empty { get; } = new(0);
 
-    public static VariantValueArray Empty { get; } = new(Array.Empty<VariantValue>());
+    private readonly VariantValue[] _values = values;
 
-    /// <summary>
-    /// Values array.
-    /// </summary>
-    public VariantValue[] Values => _values;
-
-    public VariantValueArray(params VariantValue[] values)
-    {
-        _values = values;
-    }
-
-    public VariantValueArray(params IFuncUnit[] functions) : this(size: functions.Length)
-    {
-        for (var i = 0; i < functions.Length; i++)
-        {
-            _values[i] = functions[i].Invoke();
-        }
-    }
+    public VariantValue this[int index] => _values[index];
 
     public VariantValueArray(IEnumerable<VariantValue> values) : this(values.ToArray())
     {
     }
 
-    public VariantValueArray(int size)
+    internal VariantValueArray(int size) : this(new VariantValue[size])
     {
-        _values = new VariantValue[size];
     }
 
     public VariantValueArray(VariantValueArray variantValueArray) : this(variantValueArray._values.Length)
     {
         Array.Copy(variantValueArray._values, _values, variantValueArray._values.Length);
-    }
-
-    public void Resize(int newSize)
-    {
-        if (newSize < 1)
-        {
-            throw new ArgumentOutOfRangeException(nameof(newSize));
-        }
-        if (newSize == _values.Length)
-        {
-            return;
-        }
-        var oldValues = _values;
-        _values = new VariantValue[newSize];
-        Array.Copy(oldValues, _values, oldValues.Length);
     }
 
     /// <summary>
@@ -68,20 +35,18 @@ public sealed class VariantValueArray
     }
 
     /// <inheritdoc />
-    public override bool Equals(object? obj)
+    public override bool Equals(object? obj) => obj is VariantValueArray other && Equals(other);
+
+    public bool Equals(in VariantValueArray obj)
     {
-        if (obj is not VariantValueArray variantValues)
-        {
-            return false;
-        }
-        if (variantValues._values.Length != _values.Length)
+        if (obj._values.Length != _values.Length)
         {
             return false;
         }
 
         for (var i = 0; i < _values.Length; i++)
         {
-            if (!variantValues._values[i].Equals(_values[i]))
+            if (!obj._values[i].Equals(_values[i]))
             {
                 return false;
             }
@@ -120,4 +85,6 @@ public sealed class VariantValueArray
 
     public static bool operator !=(VariantValueArray left, VariantValueArray right)
         => !(left == right);
+
+    public static implicit operator VariantValue[](VariantValueArray value) => value._values;
 }

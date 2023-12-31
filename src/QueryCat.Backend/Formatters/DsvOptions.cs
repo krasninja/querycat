@@ -1,5 +1,5 @@
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Storage;
-using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Formatters;
 

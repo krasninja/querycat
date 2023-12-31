@@ -1,40 +1,43 @@
 using System.Globalization;
+using QueryCat.Backend;
+using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Formatters;
 using QueryCat.Backend.Storage;
-using QueryCat.Backend.Utils;
 
 namespace QueryCat.Tests.QueryRunner;
 
 /// <summary>
 /// The special runner configuration for tests.
 /// </summary>
-public class TestThread : ExecutionThread
+public static class TestThread
 {
     public const string DataDirectory = "../Data";
     public const string TestDirectory = "../Tests";
 
-    public TestThread()
-        : base(new ExecutionOptions
-        {
-            DefaultRowsOutput = new DsvOutput(new DsvOptions(new MemoryStream())
-            {
-                HasHeader = false,
-                InputOptions = new StreamRowsInputOptions
-                {
-                    DelimiterStreamReaderOptions = new DelimiterStreamReader.ReaderOptions
-                    {
-                        QuoteChars = new[] { '"' },
-                        Delimiters = new[] { ',' },
-                        BufferSize = 13,
-                    },
-                    AddInputSourceColumn = false,
-                }
-            }),
-            UseConfig = false,
-            AddRowNumberColumn = false,
-        })
+    public static ExecutionThreadBootstrapper CreateBootstrapper()
     {
+        return new ExecutionThreadBootstrapper(new ExecutionOptions
+            {
+                DefaultRowsOutput = new DsvOutput(new DsvOptions(new MemoryStream())
+                {
+                    HasHeader = false,
+                    InputOptions = new StreamRowsInputOptions
+                    {
+                        DelimiterStreamReaderOptions = new DelimiterStreamReader.ReaderOptions
+                        {
+                            QuoteChars = ['"'],
+                            Delimiters = [','],
+                            BufferSize = 13,
+                        },
+                        AddInputSourceColumn = false,
+                    }
+                }),
+                UseConfig = false,
+                AddRowNumberColumn = false,
+            })
+            .WithStandardFunctions();
     }
 
     /// <summary>
@@ -55,9 +58,10 @@ public class TestThread : ExecutionThread
     /// Get last query execution result as string.
     /// </summary>
     /// <returns>Result.</returns>
-    public string GetQueryResult()
+    public static string GetQueryResult(IExecutionThread executionThread)
     {
-        var stream = (MemoryStream)((DsvOutput)Options.DefaultRowsOutput).Stream;
+        var options = ((ExecutionThread)executionThread).Options;
+        var stream = (MemoryStream)((DsvOutput)options.DefaultRowsOutput).Stream;
         stream.Seek(0, SeekOrigin.Begin);
         using var sr = new StreamReader(stream);
         return sr.ReadToEnd().Replace("\r\n", "\n").Trim();
@@ -72,7 +76,7 @@ public class TestThread : ExecutionThread
         var rootDir = GetTestsDirectory();
         foreach (var testFile in Directory.EnumerateFiles(rootDir, "*.yaml"))
         {
-            yield return new object[] { Path.GetFileNameWithoutExtension(testFile) };
+            yield return [Path.GetFileNameWithoutExtension(testFile)];
         }
     }
 

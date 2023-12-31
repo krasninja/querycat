@@ -11,24 +11,27 @@ namespace QueryCat.Backend.Formatters;
 internal sealed class RegexpFormatter : IRowsFormatter
 {
     [Description("Regular expression formatter.")]
-    [FunctionSignature("regex(pattern: string): object<IRowsFormatter>")]
+    [FunctionSignature("regex(pattern: string, flags?: string): object<IRowsFormatter>")]
     public static VariantValue Regex(FunctionCallInfo args)
     {
         var pattern = args.GetAt(0).AsString;
-        return VariantValue.CreateFromObject(new RegexpFormatter(pattern));
+        var flags = args.GetAt(1).AsString;
+        return VariantValue.CreateFromObject(new RegexpFormatter(pattern, flags));
     }
 
     private readonly string _pattern;
+    private readonly string? _flags;
 
-    public RegexpFormatter(string pattern)
+    public RegexpFormatter(string pattern, string? flags = null)
     {
         _pattern = pattern;
+        _flags = flags;
     }
 
     /// <inheritdoc />
     public IRowsInput OpenInput(Stream input, string? key = null)
     {
-        return new RegexpInput(input, _pattern, key);
+        return new RegexpInput(input, _pattern, _flags, key);
     }
 
     /// <inheritdoc />

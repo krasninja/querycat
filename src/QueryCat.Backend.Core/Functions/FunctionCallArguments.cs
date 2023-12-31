@@ -1,5 +1,4 @@
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend.Core.Functions;
 
@@ -22,52 +21,6 @@ public sealed class FunctionCallArguments
     /// Positional arguments.
     /// </summary>
     public IReadOnlyList<VariantValue> Positional => _positional;
-
-    /// <summary>
-    /// Create from query string. Example string: arg1=10&Name=John.
-    /// </summary>
-    /// <param name="query">Query.</param>
-    /// <returns>Instance of <see cref="FunctionCallArguments" />.</returns>
-    public static FunctionCallArguments FromQueryString(string query)
-    {
-        var args = StringUtils.GetFieldsFromLine(query, delimiter: '&');
-        var fa = new FunctionCallArguments();
-        if (args.Length == 1 && args[0].IndexOf('=') == -1)
-        {
-            fa.Add(CreateValueFromString(args[0]));
-        }
-        else
-        {
-            foreach (var arg in args)
-            {
-                var delimiterIndex = arg.IndexOf('=');
-                if (delimiterIndex == -1)
-                {
-                    continue;
-                }
-                var name = arg.Substring(0, delimiterIndex);
-                var value = CreateValueFromString(arg.Substring(delimiterIndex + 1));
-                fa.Add(name, value);
-            }
-        }
-        return fa;
-    }
-
-    private static VariantValue CreateValueFromString(string str)
-    {
-        var type = DataTypeUtils.DetermineTypeByValue(str);
-        if (type == DataType.String)
-        {
-            var stringValue = StringUtils.Unquote(str);
-            stringValue = StringUtils.Unquote(stringValue, quoteChar: "'");
-            return new VariantValue(StringUtils.Unescape(stringValue.ToString()));
-        }
-        if (VariantValue.TryCreateFromString(str, type, out var value))
-        {
-            return value;
-        }
-        throw new InvalidOperationException($"Cannot parse value '{str}'.");
-    }
 
     /// <summary>
     /// Add named argument.

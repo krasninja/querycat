@@ -5,7 +5,6 @@ using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Relational.Iterators;
-using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Storage;
 
@@ -67,6 +66,8 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
 
     /// <inheritdoc />
     public string[] UniqueKey { get; set; }
+
+    internal bool DetectColumnsTypes { get; set; } = true;
 
     private int _virtualColumnsCount;
 
@@ -323,23 +324,27 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
         _virtualColumnsCount = GetVirtualColumns().Length;
         var inputIterator = new RowsInputIterator(this, autoFetch: true);
 
-        // Move iterator, after that we are able to fill initial columns set.
-        var hasData = inputIterator.MoveNext();
-        if (!hasData)
+        if (DetectColumnsTypes)
         {
-            return;
+            // Move iterator, after that we are able to fill initial columns set.
+            var hasData = inputIterator.MoveNext();
+            if (!hasData)
+            {
+                return;
+            }
+
+            // Prepare cache iterator. Analyze might read data which we cache and
+            // then provide from memory instead from input source.
+            var cacheIterator = new CacheRowsIterator(inputIterator);
+            cacheIterator.AddRow(inputIterator.Current);
+            cacheIterator.SeekToHead();
+
+            Analyze(cacheIterator);
+            cacheIterator.SeekToHead();
+            cacheIterator.Freeze();
+            _cacheIterator = cacheIterator;
         }
 
-        // Prepare cache iterator. Analyze might read data which we cache and
-        // then provide from memory instead from input source.
-        var cacheIterator = new CacheRowsIterator(inputIterator);
-        cacheIterator.AddRow(inputIterator.Current);
-        cacheIterator.SeekToHead();
-
-        Analyze(cacheIterator);
-        cacheIterator.SeekToHead();
-        cacheIterator.Freeze();
-        _cacheIterator = cacheIterator;
         _logger.LogDebug("Open stream finished.");
     }
 

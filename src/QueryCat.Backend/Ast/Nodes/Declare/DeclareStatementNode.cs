@@ -1,6 +1,6 @@
 namespace QueryCat.Backend.Ast.Nodes.Declare;
 
-public class DeclareStatementNode : StatementNode
+internal class DeclareStatementNode : StatementNode
 {
     /// <inheritdoc />
     public DeclareStatementNode(DeclareNode rootNode) : base(rootNode)

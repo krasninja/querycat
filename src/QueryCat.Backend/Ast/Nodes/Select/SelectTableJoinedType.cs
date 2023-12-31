@@ -1,6 +1,6 @@
 namespace QueryCat.Backend.Ast.Nodes.Select;
 
-public enum SelectTableJoinedType
+internal enum SelectTableJoinedType
 {
     Left,
     Right,

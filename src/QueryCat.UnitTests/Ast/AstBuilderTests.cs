@@ -14,9 +14,10 @@ public class AstBuilderTests
     {
         // Arrange.
         var queryAstVisitor = new QueryAstVisitor();
+        var astBuilder = new AstBuilder();
 
         // Act.
-        var node = AstBuilder.BuildProgramFromString(
+        var node = astBuilder.BuildProgramFromString(
             "SELECT * FROM read_file('') WHERE id BETWEEN 10 + 20 AND 30 AND id BETWEEN 40 AND 50;");
 
         // Assert.

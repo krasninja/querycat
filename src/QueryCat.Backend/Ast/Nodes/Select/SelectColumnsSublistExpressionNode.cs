@@ -1,6 +1,6 @@
 namespace QueryCat.Backend.Ast.Nodes.Select;
 
-public sealed class SelectColumnsSublistExpressionNode : SelectColumnsSublistNode
+internal sealed class SelectColumnsSublistExpressionNode : SelectColumnsSublistNode
 {
     public ExpressionNode ExpressionNode { get; }
 

@@ -2,7 +2,7 @@ using System.Text;
 
 namespace QueryCat.Backend.Ast.Nodes.Select;
 
-public sealed class SelectTableExpressionNode : AstNode
+internal sealed class SelectTableExpressionNode : AstNode
 {
     /// <inheritdoc />
     public override string Code => "table_expr";

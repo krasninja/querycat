@@ -1,0 +1,7 @@
+expected: |
+  0.02,255,2023,59,String
+query: |
+  select fl, [int], yr, sec, _typeof(sec) from
+    read_text(
+      '0.02,0xFF,2023,59',
+      fmt => grok('%{BASE16FLOAT:fl},%{BASE16NUM:int},%{YEAR:yr},%{SECOND:sec:str}'));

@@ -3,11 +3,8 @@ using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Function;
 using QueryCat.Backend.Ast.Nodes.SpecialFunctions;
 using QueryCat.Backend.Core;
-using QueryCat.Backend.Core.Data;
-using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Execution;
-using QueryCat.Backend.Functions;
 
 namespace QueryCat.Backend.Commands;
 
@@ -40,7 +37,8 @@ internal class CreateDelegateVisitor : AstVisitor
         AstTraversal.PostOrder(node);
     }
 
-    public virtual IFuncUnit RunAndReturn(IAstNode node)
+    /// <inheritdoc />
+    public override IFuncUnit RunAndReturn(IAstNode node)
     {
         if (NodeIdFuncMap.TryGetValue(node.Id, out var funcUnit))
         {
@@ -157,12 +155,11 @@ internal class CreateDelegateVisitor : AstVisitor
 
         if (string.IsNullOrEmpty(node.SourceName))
         {
-            var varIndex = ExecutionThread.TopScope.GetVariableIndex(node.Name, out var scope);
-            if (varIndex > -1)
+            if (ExecutionThread.TopScope.Variables.ContainsKey(node.Name))
             {
                 VariantValue Func()
                 {
-                    return scope!.Variables[varIndex];
+                    return ExecutionThread.TopScope.Variables[node.Name];
                 }
                 NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, node.GetDataType());
                 return;
@@ -382,13 +379,11 @@ internal class CreateDelegateVisitor : AstVisitor
         }
 
         var argsDelegates = argsDelegatesList.ToArray();
-        var callInfo = new FunctionCallInfo(ExecutionThread, argsDelegates);
+        var callInfo = new FuncUnitCallInfo(ExecutionThread, function.Name, argsDelegates);
         node.SetAttribute(AstAttributeKeys.ArgumentsKey, callInfo);
         NodeIdFuncMap[node.Id] = new FuncUnitDelegate(() =>
         {
-            callInfo.Reset();
             callInfo.InvokePushArgs();
-            callInfo.FunctionName = function.Name;
             return function.Delegate(callInfo);
         }, node.GetDataType());
     }

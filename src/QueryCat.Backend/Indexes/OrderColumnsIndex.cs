@@ -1,18 +1,14 @@
 using QueryCat.Backend.Core.Data;
-using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Indexes;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Core.Utils;
-using QueryCat.Backend.Functions;
 using QueryCat.Backend.Relational;
-using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Indexes;
 
 /// <summary>
 /// Order columns according to expression.
 /// </summary>
-public class OrderColumnsIndex : IOrderIndex
+internal sealed class OrderColumnsIndex : IOrderIndex
 {
     private int[] _rowsOrder = Array.Empty<int>();
     private readonly OrderDirection[] _directions;

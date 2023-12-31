@@ -1,7 +1,9 @@
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
+using System.Text.Json;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
 
@@ -44,6 +46,37 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
             column,
             obj => VariantValue.CreateFromObject(obj)
         ));
+        AddOrReplaceColumn(column, obj => VariantValue.CreateFromObject(obj));
+        return this;
+    }
+
+    /// <summary>
+    /// Add data property that adds source object itself and convert it into JSON.
+    /// </summary>
+    /// <param name="description">Property description.</param>
+    /// <returns>The instance of <see cref="ClassRowsFrameBuilder{TClass}" />.</returns>
+    [RequiresUnreferencedCode("Calls System.Text.Json.JsonSerializer.Serialize(object)")]
+    [RequiresDynamicCode("Calls System.Text.Json.JsonSerializer.Serialize(object)")]
+    public ClassRowsFrameBuilder<TClass> AddDataPropertyAsJson(string? description = null)
+    {
+        var column = new Column(DataColumn, DataType.String, description ?? "The raw JSON data representation.");
+        _columns.Add((
+            column,
+            obj =>
+            {
+                try
+                {
+                    return VariantValue.CreateFromObject(JsonSerializer.Serialize(obj));
+                }
+                catch (JsonException)
+                {
+                    return VariantValue.Null;
+                }
+                catch (Exception)
+                {
+                    return VariantValue.Null;
+                }
+            }));
         AddOrReplaceColumn(column, obj => VariantValue.CreateFromObject(obj));
         return this;
     }
@@ -127,31 +160,6 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
         }
         AddOrReplaceColumn(column, obj => VariantValue.CreateFromObject(valueGetter.Invoke(obj)));
         return this;
-    }
-
-    /// <summary>
-    /// Add all public properties as columns.
-    /// </summary>
-    /// <returns>The instance of <see cref="ClassRowsFrameBuilder{TClass}" />.</returns>
-    public ClassRowsFrameBuilder<TClass> AddPublicProperties()
-    {
-        AddPublicProperties(out _);
-        return this;
-    }
-
-    internal void AddPublicProperties(out List<PropertyInfo> properties)
-    {
-        var props = typeof(TClass).GetProperties().Where(p => p.CanRead);
-        properties = new List<PropertyInfo>();
-        foreach (var propertyInfo in props)
-        {
-            var description = propertyInfo.GetCustomAttributes<DescriptionAttribute>()
-                .Select(a => a.Description).FirstOrDefault();
-            var dataType = Converter.ConvertFromSystem(propertyInfo.PropertyType);
-            AddProperty(propertyInfo.Name, dataType,
-                obj => VariantValue.CreateFromObject(propertyInfo.GetValue(obj)), description);
-            properties.Add(propertyInfo);
-        }
     }
 
     #region AddProperty overloads
@@ -432,12 +440,13 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
     /// <returns>Value.</returns>
     public VariantValue GetValue(int columnIndex, TClass obj) => _columns[columnIndex].ValueGetter(obj);
 
-    private void AddOrReplaceColumn(Column column, Func<TClass, VariantValue> valueGetter)
+    private bool AddOrReplaceColumn(Column column, Func<TClass, VariantValue> valueGetter)
     {
         var existingColumnIndex = _columns.FindIndex(c => c.Column.Name == column.Name);
         if (existingColumnIndex > -1)
         {
             _columns[existingColumnIndex] = (column, valueGetter);
+            return false;
         }
         else
         {
@@ -445,6 +454,7 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
                 column,
                 obj => VariantValue.CreateFromObject(valueGetter.Invoke(obj))
             ));
+            return true;
         }
     }
 

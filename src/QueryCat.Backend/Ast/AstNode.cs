@@ -1,10 +1,12 @@
+using System.Collections.Frozen;
+
 namespace QueryCat.Backend.Ast;
 
 /// <summary>
 /// Base abstract AST node class. Every AST node contains short code, child nodes and
 /// set of attributes. Attributes can be used to store additional data while processing.
 /// </summary>
-public abstract class AstNode : IAstNode
+internal abstract class AstNode : IAstNode
 {
     private static int nextId = 1;
 
@@ -55,7 +57,7 @@ public abstract class AstNode : IAstNode
     /// <inheritdoc />
     public void SetAttribute(string key, object? value) => _attributes[key] = value;
 
-    internal IDictionary<string, object?> GetAttributes()
+    internal IReadOnlyDictionary<string, object?> GetAttributes()
     {
         var dict = new Dictionary<string, object?>();
         foreach (var dictionaryEntry in _attributes)
@@ -63,7 +65,7 @@ public abstract class AstNode : IAstNode
             var key = dictionaryEntry.Key;
             dict[key] = dictionaryEntry.Value;
         }
-        return dict;
+        return dict.ToFrozenDictionary();
     }
 
     #endregion

@@ -21,9 +21,12 @@ struct DecimalValue {
 
 // Supported plugins objects types.
 enum ObjectType {
-  ROWS_INPUT = 0, // Interfaces: IRowsInput, IRowsSource, IRowsInputKeys, IRowsSchema.
-  ROWS_ITERATOR = 1, // Interfaces: IRowsIterator.
-  ROWS_OUTPUT = 2 // Interfaces: IRowsOutput, IRowsSource.
+  GENERIC = 0,
+  ROWS_INPUT = 10, // Interfaces: IRowsInput, IRowsSource, IRowsInputKeys, IRowsSchema.
+  ROWS_ITERATOR = 11, // Interfaces: IRowsIterator.
+  ROWS_OUTPUT = 12, // Interfaces: IRowsOutput, IRowsSource.
+  BLOB = 13, // Binary data.
+  JSON = 14
 }
 
 // To refer to objects we use special identifiers: handles.
@@ -42,7 +45,8 @@ union VariantValue {
   6: bool boolean,
   7: DecimalValue decimal,
   8: Duration interval,
-  9: ObjectValue object
+  9: ObjectValue object,
+  10: string json
 }
 
 enum DataType {
@@ -54,6 +58,7 @@ enum DataType {
   BOOLEAN = 5,
   NUMERIC = 6,
   INTERVAL = 7,
+  BLOB = 8,
   OBJECT = 40 // See ObjectType.
 }
 
@@ -72,6 +77,7 @@ enum ErrorType {
   GENERIC = 1,
   INVALID_OBJECT = 2,
   NOT_SUPPORTED = 3,
+  INTERNAL = 4,
 
   INVALID_AUTH_TOKEN = 10,
   INVALID_FUNCTION = 11
@@ -268,5 +274,17 @@ service Plugin {
   void RowsSet_WriteValue(
     1: required Handle object_handle,
     2: required list<VariantValue> values // Should match columns count.
-  )
+  ) throws (1: QueryCatPluginException e),
+
+  // Read binary data.
+  binary Blob_Read(
+    1: required Handle object_handle,
+    2: required i32 offset,
+    3: required i32 count
+  ) throws (1: QueryCatPluginException e),
+
+  // Get total binary length.
+  i64 Blob_GetLength(
+    1: required Handle object_handle
+  ) throws (1: QueryCatPluginException e)
 }

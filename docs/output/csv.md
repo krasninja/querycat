@@ -1,3 +1,3 @@
 # CSV
 
-See the main documentation [here](/input/csv).
+See the main documentation [here](../input/csv.md).

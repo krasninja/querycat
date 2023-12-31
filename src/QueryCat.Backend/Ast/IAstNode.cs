@@ -3,7 +3,7 @@ namespace QueryCat.Backend.Ast;
 /// <summary>
 /// AST node. Every AST node should be able to dump its state.
 /// </summary>
-public interface IAstNode : ICloneable
+internal interface IAstNode : ICloneable
 {
     /// <summary>
     /// Node id.

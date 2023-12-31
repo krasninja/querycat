@@ -12,20 +12,19 @@ internal sealed class ApplicationRoot : IDisposable
 
     public IPluginsManager PluginsManager { get; }
 
-    public PluginsLoader PluginsLoader { get; }
+    public CancellationTokenSource CancellationTokenSource { get; } = new();
 
-    public ApplicationRoot(ExecutionThread thread, IPluginsManager pluginsManager, PluginsLoader pluginsLoader)
+    public ApplicationRoot(ExecutionThread thread, IPluginsManager pluginsManager)
     {
         Thread = thread;
         PluginsManager = pluginsManager;
-        PluginsLoader = pluginsLoader;
     }
 
     /// <inheritdoc />
     public void Dispose()
     {
         (PluginsManager as IDisposable)?.Dispose();
-        (PluginsLoader as IDisposable)?.Dispose();
         Thread.Dispose();
+        CancellationTokenSource.Dispose();
     }
 }

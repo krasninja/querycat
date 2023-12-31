@@ -1,5 +1,4 @@
 using QueryCat.Backend.Core.Data;
-using QueryCat.Backend.Execution;
 using QueryCat.Backend.Relational.Iterators;
 
 namespace QueryCat.Backend.Storage;
@@ -10,63 +9,41 @@ namespace QueryCat.Backend.Storage;
 public static class RowsOutputExtensions
 {
     /// <summary>
-    /// Write rows iterator to output.
+    /// Write rows iterator into output.
     /// </summary>
-    /// <param name="rowsOutput">Instance of <see cref="IRowsOutput" />.</param>
-    /// <param name="rowsIterator">Instance of <see cref="IRowsIterator" />.</param>
-    /// <param name="executionThread">Execution thread.</param>
-    /// <param name="cancellationToken">Token to notify about query cancellation.</param>
-    public static void Write(
-        this IRowsOutput rowsOutput,
-        IRowsIterator rowsIterator,
-        ExecutionThread executionThread,
-        CancellationToken cancellationToken = default)
+    /// <param name="output">Rows output.</param>
+    /// <param name="iterator">Rows iterator.</param>
+    /// <param name="adjustColumnsLengths">Should update columns widths.</param>
+    public static void Write(this IRowsOutput output, IRowsIterator iterator, bool adjustColumnsLengths = false)
     {
-        // For plain output let's adjust columns width first.
-        if (rowsOutput.Options.RequiresColumnsLengthAdjust && executionThread.Options.AnalyzeRowsCount > 0)
+        output.Open();
+        try
         {
-            rowsIterator = new AdjustColumnsLengthsIterator(rowsIterator, executionThread.Options.AnalyzeRowsCount);
-        }
+            output.QueryContext = new RowsOutputQueryContext(iterator.Columns);
 
-        // Write the main data.
-        var isOpened = false;
-        StartWriterLoop();
-
-        // Append grow data.
-        if (executionThread.Options.FollowTimeoutMs > 0)
-        {
-            while (true)
+            if (adjustColumnsLengths)
             {
-                Thread.Sleep(executionThread.Options.FollowTimeoutMs);
-                StartWriterLoop();
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    break;
-                }
+                iterator = new AdjustColumnsLengthsIterator(iterator);
+            }
+            while (iterator.MoveNext())
+            {
+                output.WriteValues(iterator.Current.Values);
             }
         }
-
-        if (isOpened)
+        finally
         {
-            rowsOutput.Close();
+            output.Close();
         }
+    }
 
-        void StartWriterLoop()
-        {
-            while (rowsIterator.MoveNext())
-            {
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    break;
-                }
-                if (!isOpened)
-                {
-                    rowsOutput.Open();
-                    rowsOutput.QueryContext = new RowsOutputQueryContext(rowsIterator.Columns);
-                    isOpened = true;
-                }
-                rowsOutput.WriteValues(rowsIterator.Current.Values);
-            }
-        }
+    /// <summary>
+    /// Write rows iterator into output.
+    /// </summary>
+    /// <param name="output">Rows output.</param>
+    /// <param name="input">Rows input.</param>
+    /// <param name="adjustColumnsLengths">Should update columns widths.</param>
+    public static void Write(this IRowsOutput output, IRowsInput input, bool adjustColumnsLengths = false)
+    {
+        Write(output, new RowsInputIterator(input), adjustColumnsLengths);
     }
 }

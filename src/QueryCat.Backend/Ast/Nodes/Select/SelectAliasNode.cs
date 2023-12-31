@@ -3,7 +3,7 @@ namespace QueryCat.Backend.Ast.Nodes.Select;
 /// <summary>
 /// Select alias (SELECT name as alias_name).
 /// </summary>
-public sealed class SelectAliasNode : AstNode
+internal sealed class SelectAliasNode : AstNode
 {
     public string AliasName { get; }
 

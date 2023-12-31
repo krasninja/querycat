@@ -1,0 +1,26 @@
+using System.ComponentModel;
+using QueryCat.Backend;
+using QueryCat.Backend.Core.Functions;
+using QueryCat.Backend.Core.Types;
+
+namespace QueryCat.Samples.Collection;
+
+internal class CustomFunctionUsage : BaseUsage
+{
+    [Description("Energy calculator.")]
+    [FunctionSignature("e(m: numeric): numeric")]
+    public static VariantValue EnergyFunction(FunctionCallInfo args)
+    {
+        var lightSpeedMetersPerSecond = 299_792_458;
+        var mass = args.GetAt(0).AsNumeric;
+        return new VariantValue(mass * lightSpeedMetersPerSecond * lightSpeedMetersPerSecond);
+    }
+
+    /// <inheritdoc />
+    public override void Run()
+    {
+        var executionThread = new ExecutionThreadBootstrapper().Create();
+        executionThread.FunctionsManager.RegisterFunction(EnergyFunction);
+        Console.WriteLine(executionThread.Run("e(100::numeric)").ToString());
+    }
+}

@@ -273,25 +273,40 @@ internal partial class ProgramParserVisitor
 
     /// <inheritdoc />
     public override IAstNode VisitSelectTablePrimaryNoFormat(QueryCatParser.SelectTablePrimaryNoFormatContext context)
-        => new SelectTableFunctionNode(this.Visit<FunctionCallNode>(context.functionCall()))
+    {
+        var functionCallNode = this.Visit<FunctionCallNode>(context.func);
+        if (context.format != null)
+        {
+            var formatterFunctionCallNode = this.Visit<FunctionCallNode>(context.format);
+            functionCallNode.Arguments.Add(new FunctionCallArgumentNode("fmt", formatterFunctionCallNode));
+        }
+        return new SelectTableFunctionNode(functionCallNode)
         {
             Alias = this.Visit(context.selectAlias(), SelectAliasNode.Empty).AliasName,
         };
+    }
 
     /// <inheritdoc />
     public override IAstNode VisitSelectTablePrimaryStdin(QueryCatParser.SelectTablePrimaryStdinContext context)
-        => new SelectTableFunctionNode(new FunctionCallNode("stdin"))
+    {
+        var functionCallNode = new FunctionCallNode("stdin");
+        if (context.format != null)
+        {
+            var formatterFunctionCallNode = this.Visit<FunctionCallNode>(context.format);
+            functionCallNode.Arguments.Add(new FunctionCallArgumentNode("fmt", formatterFunctionCallNode));
+        }
+        return new SelectTableFunctionNode(new FunctionCallNode("stdin"))
         {
             Alias = this.Visit(context.selectAlias(), SelectAliasNode.Empty).AliasName,
         };
+    }
 
     /// <inheritdoc />
     public override IAstNode VisitSelectTablePrimaryWithFormat(QueryCatParser.SelectTablePrimaryWithFormatContext context)
     {
         var readFunction = new FunctionCallNode("read");
         var uri = GetUnwrappedText(context.uri);
-        readFunction.Arguments.Add(new FunctionCallArgumentNode("uri",
-            new LiteralNode(new VariantValue(uri))));
+        readFunction.Arguments.Add(new FunctionCallArgumentNode("uri", new LiteralNode(new VariantValue(uri))));
         if (context.format != null)
         {
             var formatterFunctionCallNode = this.Visit<FunctionCallNode>(context.format);
@@ -325,6 +340,10 @@ internal partial class ProgramParserVisitor
         if (expressionNode is SelectTableFunctionNode functionNode)
         {
             functionNode.JoinedNodes.AddRange(this.Visit<SelectTableJoinedNode>(context.selectTableJoined()));
+        }
+        else if (expressionNode is SelectIdentifierExpressionNode identifierExpressionNode)
+        {
+            identifierExpressionNode.JoinedNodes.AddRange(this.Visit<SelectTableJoinedNode>(context.selectTableJoined()));
         }
         return expressionNode;
     }

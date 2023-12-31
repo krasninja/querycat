@@ -21,7 +21,7 @@ public static class ExecutionThreadUtils
         var type = variantValue.GetInternalType();
         if (type == DataType.Null)
         {
-            return new EmptyIterator();
+            return EmptyIterator.Instance;
         }
 
         if (type == DataType.Object)

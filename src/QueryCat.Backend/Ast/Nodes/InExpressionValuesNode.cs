@@ -3,7 +3,7 @@ namespace QueryCat.Backend.Ast.Nodes;
 /// <summary>
 /// In expression array: (1, 2, 3 + 4).
 /// </summary>
-public sealed class InExpressionValuesNode : ExpressionNode
+internal sealed class InExpressionValuesNode : ExpressionNode
 {
     public List<ExpressionNode> ValuesNodes { get; } = new();
 

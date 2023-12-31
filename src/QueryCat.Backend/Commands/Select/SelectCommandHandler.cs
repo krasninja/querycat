@@ -2,9 +2,12 @@ using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Commands.Select;
 
-internal sealed class SelectCommandHandler : CommandHandler
+internal sealed class SelectCommandHandler : IFuncUnit, IDisposable
 {
     public SelectCommandContext SelectCommandContext { get; }
+
+    /// <inheritdoc />
+    public DataType OutputType => DataType.Null;
 
     public SelectCommandHandler(SelectCommandContext selectCommandContext)
     {
@@ -12,15 +15,14 @@ internal sealed class SelectCommandHandler : CommandHandler
     }
 
     /// <inheritdoc />
-    public override VariantValue Invoke()
+    public VariantValue Invoke()
     {
         return VariantValue.CreateFromObject(SelectCommandContext.CurrentIterator);
     }
 
     /// <inheritdoc />
-    protected override void Dispose(bool disposing)
+    public void Dispose()
     {
         SelectCommandContext.Dispose();
-        base.Dispose(disposing);
     }
 }

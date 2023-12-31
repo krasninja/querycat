@@ -5,7 +5,7 @@ namespace QueryCat.Backend.Ast.Nodes;
 /// <summary>
 /// Operation that involves three expressions.
 /// </summary>
-public sealed class TernaryOperationExpressionNode : ExpressionNode
+internal sealed class TernaryOperationExpressionNode : ExpressionNode
 {
     public VariantValue.Operation Operation { get; }
 

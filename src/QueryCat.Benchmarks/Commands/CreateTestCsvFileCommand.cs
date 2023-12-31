@@ -3,6 +3,7 @@ using System.Diagnostics;
 using Bogus;
 using Bogus.DataSets;
 using QueryCat.Backend.Formatters;
+using QueryCat.Backend.Relational;
 using QueryCat.Backend.Storage;
 
 namespace QueryCat.Benchmarks.Commands;

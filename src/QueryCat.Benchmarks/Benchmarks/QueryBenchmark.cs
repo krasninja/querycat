@@ -1,6 +1,5 @@
 using BenchmarkDotNet.Attributes;
-using QueryCat.Backend.Core.Plugins;
-using QueryCat.Backend.Execution;
+using QueryCat.Backend;
 
 namespace QueryCat.Benchmarks.Benchmarks;
 
@@ -10,8 +9,7 @@ public class QueryBenchmark
     [Benchmark]
     public void QueryUsersCsvFile()
     {
-        using var executionThread = new ExecutionThread();
-        new ExecutionThreadBootstrapper().Bootstrap(executionThread, NullPluginsLoader.Instance);
+        using var executionThread = new ExecutionThreadBootstrapper().Create();
         var usersFile = UsersCsvFile.GetTestUsersFilePath();
         executionThread.Run(
             @$"select substr(email, position('@' in email)) as domain, avg(balance) into write_null() from '{usersFile}'" +

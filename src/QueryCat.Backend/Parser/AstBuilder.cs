@@ -5,15 +5,13 @@ using QueryCat.Backend.Ast.Nodes.Function;
 
 namespace QueryCat.Backend.Parser;
 
-/// <summary>
-/// The class is to build AST (abstract syntax tree) from user query string.
-/// </summary>
-internal static class AstBuilder
+internal sealed class AstBuilder : IAstBuilder
 {
-    public static ProgramNode BuildProgramFromString(string program)
-        => Build<ProgramNode>(program, p => p.program());
+    /// <inheritdoc />
+    public ProgramNode BuildProgramFromString(string program) => Build<ProgramNode>(program, p => p.program());
 
-    public static FunctionSignatureNode BuildFunctionSignatureFromString(string function)
+    /// <inheritdoc />
+    public FunctionSignatureNode BuildFunctionSignatureFromString(string function)
         => Build<FunctionSignatureNode>(function, p => p.functionSignature());
 
     private static TNode Build<TNode>(string input, Func<QueryCatParser, ParserRuleContext> signatureFunc) where TNode : IAstNode

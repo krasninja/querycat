@@ -5,7 +5,7 @@ namespace QueryCat.Backend.Ast;
 /// <summary>
 /// Traverse AST using different methods.
 /// </summary>
-public sealed class AstTraversal
+internal sealed class AstTraversal
 {
     // Theory: https://www.geeksforgeeks.org/tree-traversals-inorder-preorder-and-postorder/
 
@@ -39,7 +39,7 @@ public sealed class AstTraversal
     public IEnumerable<IAstNode> GetCurrentStack() => _treeStack.Select(s => s.Node);
 
     /// <summary>
-    /// Get first parent of type <see cref="TNode" />.
+    /// Get first parent of type <see ref="TNode" />.
     /// </summary>
     /// <typeparam name="TNode">Target type.</typeparam>
     /// <returns>Found parent node or null.</returns>
@@ -47,7 +47,7 @@ public sealed class AstTraversal
         => GetParents<TNode>().FirstOrDefault();
 
     /// <summary>
-    /// Get first parent of type <see cref="TNode" /> that matches condition.
+    /// Get first parent of type <see ref="TNode" /> that matches condition.
     /// </summary>
     /// <typeparam name="TNode">Target type.</typeparam>
     /// <returns>Found parent node or null.</returns>
@@ -91,14 +91,14 @@ public sealed class AstTraversal
                 {
                     continue;
                 }
-                if (!IsIgnoreType(current.Enumerator.Current.GetType()))
+                if (!IsIgnoreType(next.GetType()))
                 {
-                    _treeStack.Push((current.Enumerator.Current, next.GetChildren().GetEnumerator()));
+                    _treeStack.Push((next, next.GetChildren().GetEnumerator()));
                     next.Accept(_visitor);
                 }
                 else if (AcceptBeforeIgnore)
                 {
-                    current.Enumerator.Current.Accept(_visitor);
+                    next.Accept(_visitor);
                 }
             }
             else
@@ -134,11 +134,11 @@ public sealed class AstTraversal
                 }
                 if (!IsIgnoreType(current.Enumerator.Current.GetType()))
                 {
-                    _treeStack.Push((current.Enumerator.Current, next.GetChildren().GetEnumerator()));
+                    _treeStack.Push((next, next.GetChildren().GetEnumerator()));
                 }
                 else if (AcceptBeforeIgnore)
                 {
-                    current.Enumerator.Current.Accept(_visitor);
+                    next.Accept(_visitor);
                 }
             }
             else

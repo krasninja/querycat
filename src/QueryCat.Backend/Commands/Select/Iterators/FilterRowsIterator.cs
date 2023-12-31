@@ -1,7 +1,4 @@
 using QueryCat.Backend.Core.Data;
-using QueryCat.Backend.Core.Functions;
-using QueryCat.Backend.Core.Utils;
-using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Commands.Select.Iterators;
 
@@ -49,8 +46,8 @@ internal sealed class FilterRowsIterator : IRowsIterator, IRowsIteratorParent
     /// <inheritdoc />
     public void Explain(IndentedStringBuilder stringBuilder)
     {
-        stringBuilder.AppendRowsIteratorsWithIndent("Filter", _rowsIterator)
-            .AppendSubQueriesWithIndent(_predicate);
+        stringBuilder.AppendRowsIteratorsWithIndent("Filter", _rowsIterator);
+        IndentedStringBuilderUtils.AppendSubQueriesWithIndent(stringBuilder, _predicate);
     }
 
     /// <inheritdoc />

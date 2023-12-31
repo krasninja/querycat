@@ -1,6 +1,6 @@
 namespace QueryCat.Backend.Ast.Nodes;
 
-public sealed class AtTimeZoneNode : ExpressionNode
+internal sealed class AtTimeZoneNode : ExpressionNode
 {
     public ExpressionNode LeftNode { get; }
 

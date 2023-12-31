@@ -1,7 +1,7 @@
 using BenchmarkDotNet.Attributes;
 using DotNext.Buffers;
 using DotNext.IO;
-using QueryCat.Backend.Utils;
+using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Benchmarks.Benchmarks;
 

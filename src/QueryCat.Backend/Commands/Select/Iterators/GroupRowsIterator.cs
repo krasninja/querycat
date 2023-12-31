@@ -1,10 +1,6 @@
 using QueryCat.Backend.Core.Data;
-using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Core.Utils;
-using QueryCat.Backend.Functions;
 using QueryCat.Backend.Relational;
-using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Commands.Select.Iterators;
 
@@ -107,6 +103,26 @@ internal sealed class GroupRowsIterator : IRowsIterator, IRowsIteratorParent
             .AppendSubQueriesWithIndent(_keys);
     }
 
+    private static VariantValueArray KeysToArray(IFuncUnit[] keys)
+    {
+        var arr = new VariantValue[keys.Length];
+        for (var i = 0; i < keys.Length; i++)
+        {
+            arr[i] = keys[i].Invoke();
+        }
+        return new VariantValueArray(arr);
+    }
+
+    private static VariantValueArray[] TargetsToInitialStates(AggregateTarget[] targets)
+    {
+        var arr = new VariantValueArray[targets.Length];
+        for (var i = 0; i < targets.Length; i++)
+        {
+            arr[i] = new VariantValueArray(targets[i].AggregateFunction.GetInitialState(targets[i].ReturnType));
+        }
+        return arr;
+    }
+
     private void FillRows()
     {
         var keysRowIndexesMap = new Dictionary<VariantValueArray, GroupKeyEntry>(capacity: 1024);
@@ -116,8 +132,7 @@ internal sealed class GroupRowsIterator : IRowsIterator, IRowsIteratorParent
         {
             // Format key and fill aggregate values.
             _keys[0].Invoke();
-            var keyValues = _keys.Select(f => f.Invoke()).ToArray();
-            var key = new VariantValueArray(keyValues);
+            var key = KeysToArray(_keys);
             if (!keysRowIndexesMap.TryGetValue(key, out GroupKeyEntry groupKey))
             {
                 var row = new Row(_rowsFrame);
@@ -125,27 +140,28 @@ internal sealed class GroupRowsIterator : IRowsIterator, IRowsIteratorParent
                 {
                     row[i] = _rowsIterator.Current[i];
                 }
-                VariantValueArray[] initialStates = _targets.Select(t => t.AggregateFunction.GetInitialState(t.ReturnType)).ToArray();
+                VariantValueArray[] initialStates = TargetsToInitialStates(_targets);
                 groupKey = new GroupKeyEntry(initialStates, _rowsFrame.AddRow(row));
                 keysRowIndexesMap.Add(key, groupKey);
             }
 
-            for (int i = 0; i < _targets.Length; i++)
+            for (var i = 0; i < _targets.Length; i++)
             {
-                _targets[i].ValueGenerator.Invoke(); // We need this call to fill FunctionCallInfo.
-                _targets[i].AggregateFunction.Invoke(groupKey.AggregateStates[i], _targets[i].FunctionCallInfo);
+                var target = _targets[i];
+                target.ValueGenerator.Invoke(); // We need this call to fill FunctionCallInfo.
+                target.AggregateFunction.Invoke(groupKey.AggregateStates[i], target.FunctionCallInfo);
             }
         }
 
         // Fill rows frame.
-        if (keysRowIndexesMap.Any())
+        if (keysRowIndexesMap.Count > 0)
         {
-            foreach (var mapValue in keysRowIndexesMap)
+            foreach (var mapValue in keysRowIndexesMap.Values)
             {
-                for (int i = 0; i < _targets.Length; i++)
+                for (var i = 0; i < _targets.Length; i++)
                 {
-                    var value = _targets[i].AggregateFunction.GetResult(mapValue.Value.AggregateStates[i]);
-                    _rowsFrame.UpdateValue(mapValue.Value.RowIndex, _aggregateColumnsOffset + i, value);
+                    var value = _targets[i].AggregateFunction.GetResult(mapValue.AggregateStates[i]);
+                    _rowsFrame.UpdateValue(mapValue.RowIndex, _aggregateColumnsOffset + i, value);
                 }
             }
         }

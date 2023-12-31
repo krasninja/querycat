@@ -1,7 +1,7 @@
+using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Core.Utils;
-using QueryCat.Backend.Utils;
 using QueryCat.Plugins.Client;
 using Column = QueryCat.Backend.Core.Data.Column;
 
@@ -34,24 +34,24 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys
     /// <inheritdoc />
     public void Open()
     {
-        AsyncUtils.RunSync(async () =>
+        AsyncUtils.RunSync(async ct =>
         {
-            await _client.RowsSet_OpenAsync(_objectHandle);
-            Columns = (await _client.RowsSet_GetColumnsAsync(_objectHandle)).Select(SdkConvert.Convert).ToArray();
-            UniqueKey = (await _client.RowsSet_GetUniqueKeyAsync(_objectHandle)).ToArray();
+            await _client.RowsSet_OpenAsync(_objectHandle, ct);
+            Columns = (await _client.RowsSet_GetColumnsAsync(_objectHandle, ct)).Select(SdkConvert.Convert).ToArray();
+            UniqueKey = (await _client.RowsSet_GetUniqueKeyAsync(_objectHandle, ct)).ToArray();
         });
     }
 
     /// <inheritdoc />
     public void Close()
     {
-        AsyncUtils.RunSync(() => _client.RowsSet_CloseAsync(_objectHandle));
+        AsyncUtils.RunSync(ct => _client.RowsSet_CloseAsync(_objectHandle, ct));
     }
 
     /// <inheritdoc />
     public void Reset()
     {
-        AsyncUtils.RunSync(() => _client.RowsSet_ResetAsync(_objectHandle));
+        AsyncUtils.RunSync(ct => _client.RowsSet_ResetAsync(_objectHandle, ct));
         _hasRecords = true;
     }
 
@@ -85,7 +85,7 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys
             return false;
         }
 
-        var result = AsyncUtils.RunSync(() => _client.RowsSet_GetRowsAsync(_objectHandle, LoadCount * Columns.Length));
+        var result = AsyncUtils.RunSync(ct => _client.RowsSet_GetRowsAsync(_objectHandle, LoadCount * Columns.Length, ct));
         if (result == null || result.Values == null || result.Values.Count == 0)
         {
             _hasRecords = false;
@@ -105,9 +105,9 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys
     /// <inheritdoc />
     public IReadOnlyList<KeyColumn> GetKeyColumns()
     {
-        var result = AsyncUtils.RunSync(async () =>
+        var result = AsyncUtils.RunSync(async ct =>
             {
-                return (await _client.RowsSet_GetKeyColumnsAsync(_objectHandle))
+                return (await _client.RowsSet_GetKeyColumnsAsync(_objectHandle, ct))
                     .Select(c => new KeyColumn(
                         c.Name,
                         c.IsRequired,
@@ -121,8 +121,8 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys
     /// <inheritdoc />
     public void SetKeyColumnValue(string columnName, VariantValue value, VariantValue.Operation operation)
     {
-        AsyncUtils.RunSync(() =>
-            _client.RowsSet_SetKeyColumnValueAsync(_objectHandle, columnName, operation.ToString(), SdkConvert.Convert(value)));
+        AsyncUtils.RunSync(ct =>
+            _client.RowsSet_SetKeyColumnValueAsync(_objectHandle, columnName, operation.ToString(), SdkConvert.Convert(value), ct));
     }
 
     /// <inheritdoc />

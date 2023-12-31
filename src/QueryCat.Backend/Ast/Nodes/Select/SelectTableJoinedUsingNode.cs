@@ -1,6 +1,6 @@
 namespace QueryCat.Backend.Ast.Nodes.Select;
 
-public sealed class SelectTableJoinedUsingNode : SelectTableJoinedNode
+internal sealed class SelectTableJoinedUsingNode : SelectTableJoinedNode
 {
     public List<string> ColumnList { get; } = new();
 

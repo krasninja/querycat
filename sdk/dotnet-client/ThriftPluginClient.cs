@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Thrift;
 using Thrift.Processor;
 using Thrift.Protocol;
@@ -25,21 +26,34 @@ public partial class ThriftPluginClient : IDisposable
 {
     public const string PluginsManagerServiceName = "plugins-manager";
     public const string PluginServerName = "plugin";
+    public const string TestAuthToken = "test";
+    public const string TestPipeName = "qcat-test";
+
+    public const string PluginServerPipeParameter = "server-endpoint";
+    public const string PluginTokenParameter = "token";
+    public const string PluginParentPidParameter = "parent-pid";
+    public const string PluginDebugServerParameter = "debug-server";
+    public const string PluginDebugServerArgumentsParameter = "debug-server-args";
+
+    public const string PluginMainFunctionName = "QueryCatPlugin_Main";
+
+    public const string PluginTransportNamedPipes = "net.pipe";
 
     private readonly PluginExecutionThread _executionThread;
     private readonly PluginFunctionsManager _functionsManager;
     private readonly ObjectsStorage _objectsStorage = new();
-    private string _debugServerPath = string.Empty;
-    private string _debugServerPathArgs = string.Empty;
-    private int _parentPid;
+    private readonly string _debugServerPath = string.Empty;
+    private readonly string _debugServerPathArgs = string.Empty;
+    private readonly int _parentPid;
     private Process? _qcatProcess;
+    private readonly SemaphoreSlim _exitSemaphore = new(0, 1);
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(ThriftPluginClient));
 
     // Connection to plugin manager.
-    private Func<TTransport> _transportFactory;
-    private string _pluginServerUri = string.Empty;
-    private string _authToken = string.Empty;
-    private string _clientServerNamedPipe = $"qcat-{Guid.NewGuid():N}";
+    private readonly Func<TTransport> _transportFactory;
+    private readonly string _pluginServerUri = string.Empty;
+    private readonly string _authToken;
+    private readonly string _clientServerNamedPipe = $"qcat-{Guid.NewGuid():N}";
     private readonly TProtocol _protocol;
     private readonly PluginsManager.Client _client;
 
@@ -48,46 +62,55 @@ public partial class ThriftPluginClient : IDisposable
     private Task? _clientServerListenThread;
     private readonly CancellationTokenSource _clientServerCts = new();
 
+    /// <summary>
+    /// Functions manager.
+    /// </summary>
     public IFunctionsManager FunctionsManager => _functionsManager;
 
-    public ThriftPluginClient(string[] args)
+    /// <summary>
+    /// Do not use application logger for Thrift internal logs.
+    /// </summary>
+    internal bool IgnoreThriftLogs { get; set; }
+
+    public ThriftPluginClient(ThriftPluginClientArguments args)
     {
-        if (args.Length == 0)
+#if !DEBUG
+        IgnoreThriftLogs = true;
+#endif
+
+        // Server pipe.
+        var serverEndpoint = args.ServerEndpoint;
+        if (!string.IsNullOrEmpty(args.DebugServerPath))
         {
-            throw new InvalidOperationException("The application is intended to be executed by QueryCat host application.");
+            serverEndpoint = $"{PluginTransportNamedPipes}://localhost/{TestPipeName}";
+        }
+        if (!string.IsNullOrEmpty(serverEndpoint))
+        {
+            _pluginServerUri = args.ServerEndpoint;
+            _transportFactory = () => CreateTransport(serverEndpoint);
         }
 
-        foreach (var arg in args)
+        // Auth token.
+        if (string.IsNullOrEmpty(args.DebugServerPath))
         {
-            var separatorIndex = arg.IndexOf('=', StringComparison.Ordinal);
-            if (separatorIndex == -1)
-            {
-                throw new InvalidOperationException($"Invalid argument '{arg}'.");
-            }
-            var name = arg.Substring(2, separatorIndex - 2);
-            var value = arg.Substring(separatorIndex + 1);
-            switch (name)
-            {
-                case "server-pipe-name":
-                    ParseServerPipe(value);
-                    break;
-                case "token":
-                    ParseAuthToken(value);
-                    break;
-                case "parent-pid":
-                    ParseParentPid(value);
-                    break;
-                case "debug-server":
-                    ParseDebugServer(value);
-                    break;
-                case "debug-server-args":
-                    ParseDebugServerArgs(value);
-                    break;
-                default:
-                    continue;
-            }
+            _authToken = args.Token;
+        }
+        else
+        {
+            _authToken = TestAuthToken;
         }
 
+        // Parent PID.
+        _parentPid = args.ParentPid;
+
+        // Debug server.
+        if (!string.IsNullOrEmpty(args.DebugServerPath))
+        {
+            _debugServerPath = args.DebugServerPath;
+            _debugServerPathArgs = args.DebugServerPathArgs;
+        }
+
+        // Bootstrap.
         if (_transportFactory == null)
         {
             throw new InvalidOperationException("Transport is not initialized.");
@@ -102,17 +125,78 @@ public partial class ThriftPluginClient : IDisposable
         _functionsManager = new PluginFunctionsManager();
     }
 
-    public static void SetupApplicationLogging()
+    private static TTransport CreateTransport(string endpoint)
     {
-        Application.LoggerFactory = LoggerFactory.Create(builder =>
+        var serverPipeUri = new Uri(endpoint);
+        switch (serverPipeUri.Scheme.ToLower())
         {
-            builder
-                .SetMinimumLevel(LogLevel.Trace)
-                .AddSimpleConsole(options =>
-                {
-                    options.SingleLine = true;
-                });
-        });
+            case PluginTransportNamedPipes:
+                return new TNamedPipeTransport(serverPipeUri.Segments[1], new TConfiguration());
+        }
+        throw new ArgumentOutOfRangeException(nameof(endpoint));
+    }
+
+    public static ThriftPluginClientArguments ConvertCommandLineArguments(string[] args)
+    {
+        if (args.Length == 0)
+        {
+            throw new InvalidOperationException("The application is intended to be executed by QueryCat host application.");
+        }
+
+        var appArgs = new ThriftPluginClientArguments();
+        foreach (var arg in args)
+        {
+            var separatorIndex = arg.IndexOf('=', StringComparison.Ordinal);
+            if (separatorIndex == -1)
+            {
+                throw new InvalidOperationException($"Invalid argument '{arg}'.");
+            }
+            var name = arg.Substring(2, separatorIndex - 2);
+            var value = arg.Substring(separatorIndex + 1);
+            switch (name)
+            {
+                case PluginServerPipeParameter:
+                // Legacy.
+                case "server-pipe-name":
+                    appArgs.ServerEndpoint = value;
+                    break;
+                case PluginTokenParameter:
+                    appArgs.Token = value;
+                    break;
+                case PluginParentPidParameter:
+                    appArgs.ParentPid = int.Parse(value);
+                    break;
+                case PluginDebugServerParameter:
+                    appArgs.DebugServerPath = value;
+                    break;
+                case PluginDebugServerArgumentsParameter:
+                    appArgs.DebugServerPathArgs = value;
+                    break;
+                default:
+                    continue;
+            }
+        }
+
+        return appArgs;
+    }
+
+    public static void SetupApplicationLogging(LogLevel? logLevel = null)
+    {
+        var minLogLevel = LogLevel.Information;
+#if DEBUG
+        minLogLevel = LogLevel.Debug;
+#endif
+        if (logLevel.HasValue)
+        {
+            minLogLevel = logLevel.Value;
+        }
+
+        Application.LoggerFactory = new LoggerFactory(
+            providers: new[] { new SimpleConsoleLoggerProvider() },
+            new LoggerFilterOptions
+            {
+                MinLevel = minLogLevel,
+            });
 
         AppDomain.CurrentDomain.UnhandledException += CurrentDomainOnUnhandledException;
     }
@@ -126,44 +210,11 @@ public partial class ThriftPluginClient : IDisposable
         Environment.Exit(1);
     }
 
-    private void ParseServerPipe(string value)
-    {
-        var uri = new Uri(value);
-        _pluginServerUri = value;
-
-        _transportFactory = () =>
-        {
-            return new TNamedPipeTransport(uri.Segments[1], new TConfiguration());
-        };
-    }
-
-    private void ParseAuthToken(string value)
-    {
-        _authToken = value;
-    }
-
-    private void ParseParentPid(string value)
-    {
-        _parentPid = int.Parse(value);
-    }
-
-    private void ParseDebugServer(string value)
-    {
-        _debugServerPath = value;
-        _authToken = "test";
-        ParseServerPipe("net.pipe://localhost/qcat-test");
-    }
-
-    private void ParseDebugServerArgs(string value)
-    {
-        _debugServerPathArgs = value;
-    }
-
     /// <summary>
     /// Start client server and register the plugin.
     /// </summary>
     /// <param name="cancellationToken">Cancellation token.</param>
-    public async Task Start(CancellationToken cancellationToken = default)
+    public async Task StartAsync(CancellationToken cancellationToken = default)
     {
         if (!string.IsNullOrEmpty(_debugServerPath))
         {
@@ -185,15 +236,17 @@ public partial class ThriftPluginClient : IDisposable
 
         var assemblyName = Assembly.GetEntryAssembly()?.GetName();
         var version = assemblyName?.Version;
+        var pluginName = assemblyName?.Name ?? string.Empty;
+
         var functions = _functionsManager.GetPluginFunctions().Select(f =>
             new Function(f.Signature, f.Description, false));
         await _client.RegisterPluginAsync(
             _authToken,
-            $"net.pipe://localhost/{_clientServerNamedPipe}",
+            $"{PluginTransportNamedPipes}://localhost/{_clientServerNamedPipe}",
             new PluginData
             {
                 Functions = functions.ToList(),
-                Name = assemblyName?.Name ?? string.Empty,
+                Name = pluginName,
                 Version = version?.ToString() ?? "0.0.0",
             },
             cancellationToken);
@@ -221,7 +274,9 @@ public partial class ThriftPluginClient : IDisposable
             binaryProtocolFactory,
             binaryProtocolFactory,
             default,
-            Application.LoggerFactory.CreateLogger(nameof(ThriftPluginClient)));
+            IgnoreThriftLogs
+                ? NullLoggerFactory.Instance.CreateLogger(nameof(TSimpleAsyncServer))
+                : Application.LoggerFactory.CreateLogger(nameof(TSimpleAsyncServer)));
 
         _clientServer.Start();
         _clientServerListenThread = Task.Factory.StartNew(
@@ -244,9 +299,11 @@ public partial class ThriftPluginClient : IDisposable
 
         // Server.
         _clientServerCts.Dispose();
-        _clientServer?.Stop();
+        _clientServer.Stop();
 
         _clientServer = null;
+        _exitSemaphore.Release();
+        _exitSemaphore.Dispose();
     }
 
     private void StartQueryCatDebugServer()
@@ -289,10 +346,10 @@ public partial class ThriftPluginClient : IDisposable
     }
 
     /// <summary>
-    /// Wait for parent QCat process exit.
+    /// Wait for server (parent QCat process or thread) exit.
     /// </summary>
     /// <param name="cancellationToken">Cancellation token.</param>
-    public async Task WaitForParentProcessExitAsync(CancellationToken cancellationToken = default)
+    public async Task WaitForServerExitAsync(CancellationToken cancellationToken = default)
     {
         if (_qcatProcess != null)
         {
@@ -303,6 +360,12 @@ public partial class ThriftPluginClient : IDisposable
             var process = Process.GetProcessById(_parentPid);
             await process.WaitForExitAsync(cancellationToken);
         }
+        await _exitSemaphore.WaitAsync(cancellationToken);
+    }
+
+    public void SignalExit()
+    {
+        _exitSemaphore.Release();
     }
 
     protected virtual void Dispose(bool disposing)

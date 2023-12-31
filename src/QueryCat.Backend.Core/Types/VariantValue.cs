@@ -1,8 +1,10 @@
+using System.Buffers;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using QueryCat.Backend.Core.Types.Blob;
 
 namespace QueryCat.Backend.Core.Types;
 
@@ -105,6 +107,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
             DataType.Timestamp => TimestampObject,
             DataType.Interval => IntervalObject,
             DataType.Object => null,
+            DataType.Blob => EmptyBlobData.Instance,
             _ => throw new ArgumentOutOfRangeException(nameof(type)),
         };
         _valueUnion = default;
@@ -146,6 +149,12 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         _object = TimestampObject;
     }
 
+    public VariantValue(DateTimeOffset value)
+    {
+        _valueUnion = new TypeUnion(value.DateTime);
+        _object = TimestampObject;
+    }
+
     public VariantValue(TimeSpan value)
     {
         _valueUnion = new TypeUnion(value);
@@ -167,6 +176,18 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     private VariantValue(object obj)
     {
         _object = obj;
+        _valueUnion = default;
+    }
+
+    private VariantValue(IBlobData blob)
+    {
+        _object = blob;
+        _valueUnion = default;
+    }
+
+    private VariantValue(byte[] bytes)
+    {
+        _object = new StreamBlobData(() => new MemoryStream(bytes, writable: false));
         _valueUnion = default;
     }
 
@@ -259,6 +280,10 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
                 return Null;
             }
         }
+        if (obj is IBlobData blobData)
+        {
+            return new VariantValue(blobData);
+        }
         return new VariantValue(obj);
     }
 
@@ -299,6 +324,10 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         if (_object is decimal)
         {
             return DataType.Numeric;
+        }
+        if (_object is IBlobData)
+        {
+            return DataType.Blob;
         }
         if (_object != null)
         {
@@ -358,6 +387,10 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     public object? AsObject => CheckTypeAndTryToCast(DataType.Object)._object;
 
     internal object? AsObjectUnsafe => _object;
+
+    public IBlobData AsBlob => (IBlobData)CheckTypeAndTryToCast(DataType.Blob)._object!;
+
+    internal IBlobData AsBlobUnsafe => (IBlobData)_object!;
 
     #endregion
 
@@ -461,7 +494,14 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
 
     private static VariantValue StringToInteger(in ReadOnlySpan<char> value, out bool success)
     {
-        success = int.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out var @out);
+        success = long.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out var @out);
+        if (!success)
+        {
+            // Try HEX format.
+            success = value.StartsWith("0x") &&
+                long.TryParse(value[2..], NumberStyles.HexNumber | NumberStyles.AllowHexSpecifier,
+                    CultureInfo.InvariantCulture, out @out);
+        }
         return success ? new VariantValue(@out) : Null;
     }
 
@@ -535,7 +575,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         return Null;
     }
 
-    private static VariantValue StringToNumeric(string? value, out bool success)
+    private static VariantValue StringToNumeric(in string? value, out bool success)
         => StringToNumeric((ReadOnlySpan<char>)value, out success);
 
     private static VariantValue StringToNumeric(in ReadOnlySpan<char> value, out bool success)
@@ -544,7 +584,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         return success ? new VariantValue(@out) : Null;
     }
 
-    private static VariantValue StringToString(string? value, out bool success)
+    private static VariantValue StringToString(in string? value, out bool success)
     {
         success = true;
         return new VariantValue(value);
@@ -554,6 +594,26 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     {
         success = true;
         return new VariantValue(value);
+    }
+
+    private static VariantValue StringToBlob(in string? value, out bool success)
+    {
+        success = true;
+
+        var bytes = System.Text.Encoding.UTF8.GetBytes(value ?? string.Empty);
+        var blobData = new BytesBlobData(bytes);
+        return new VariantValue(blobData);
+    }
+
+    private static VariantValue BlobToString(IBlobData? value, out bool success)
+    {
+        success = true;
+
+        value ??= EmptyBlobData.Instance;
+        var stringBytes = new byte[value.Length];
+        value.GetBytes(stringBytes, 0, stringBytes.Length);
+        var str = System.Text.Encoding.UTF8.GetString(stringBytes);
+        return new VariantValue(str);
     }
 
     /// <summary>
@@ -597,6 +657,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
                 DataType.Boolean => StringToBoolean(_object as string, out success),
                 DataType.Numeric => StringToNumeric(_object as string, out success),
                 DataType.Interval => StringToInterval(_object as string, out success),
+                DataType.Blob => StringToBlob(_object as string, out success),
                 _ => Null
             },
             DataType.Float => targetType switch
@@ -624,10 +685,15 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
                 DataType.Float => new(decimal.ToDouble((decimal)_object!)),
                 _ => Null
             },
+            DataType.Blob => targetType switch
+            {
+                DataType.String => BlobToString((IBlobData?)_object, out success),
+                _ => Null
+            },
             _ => Null
         };
         return !output.IsNull && success;
-    }
+}
 
     /// <summary>
     /// Convert to target type.
@@ -743,7 +809,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     public override string ToString() => GetInternalType() switch
     {
         DataType.Null => NullValueString,
-        DataType.Void => "VOID",
+        DataType.Void => "void",
         DataType.Integer => AsIntegerUnsafe.ToString(CultureInfo.InvariantCulture),
         DataType.String => AsStringUnsafe,
         DataType.Boolean => AsBooleanUnsafe.ToString(CultureInfo.InvariantCulture),
@@ -751,7 +817,8 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         DataType.Numeric => AsNumericUnsafe.ToString(FloatNumberFormat, CultureInfo.InvariantCulture),
         DataType.Timestamp => AsTimestampUnsafe.ToString(CultureInfo.InvariantCulture),
         DataType.Interval => AsIntervalUnsafe.ToString("c", CultureInfo.InvariantCulture),
-        DataType.Object => "object: " + AsObjectUnsafe,
+        DataType.Object => "object:" + AsObjectUnsafe,
+        DataType.Blob => "X" + BlobToShortString(AsBlobUnsafe, 16),
         _ => "unknown"
     };
 
@@ -763,7 +830,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     public string ToString(string format) => GetInternalType() switch
     {
         DataType.Null => NullValueString,
-        DataType.Void => "VOID",
+        DataType.Void => "void",
         DataType.Integer => AsIntegerUnsafe.ToString(format, CultureInfo.InvariantCulture),
         DataType.String => AsStringUnsafe,
         DataType.Boolean => AsBooleanUnsafe.ToString(),
@@ -771,9 +838,19 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         DataType.Numeric => AsNumeric.ToString(format, CultureInfo.InvariantCulture),
         DataType.Timestamp => AsTimestampUnsafe.ToString(format, CultureInfo.InvariantCulture),
         DataType.Interval => AsIntervalUnsafe.ToString(format, CultureInfo.InvariantCulture),
-        DataType.Object => "object: " + AsObjectUnsafe,
+        DataType.Object => "object:" + AsObjectUnsafe,
+        DataType.Blob => "X"+ BlobToShortString(AsBlobUnsafe, 16),
         _ => "unknown"
     };
+
+    private static string BlobToShortString(IBlobData blobData, int numberOfBytes)
+    {
+        var arr = ArrayPool<byte>.Shared.Rent(numberOfBytes);
+        var readBytes = blobData.GetBytes(arr, 0, arr.Length);
+        var str = Convert.ToHexString(arr.AsSpan(0, readBytes));
+        ArrayPool<byte>.Shared.Return(arr);
+        return str;
+    }
 
     /// <inheritdoc />
     public bool Equals(VariantValue other) => Equals(this, in other);

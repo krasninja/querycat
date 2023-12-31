@@ -8,7 +8,7 @@ namespace QueryCat.Build.Tasks;
 [TaskDescription("Build project for Windows target")]
 public sealed class BuildWindowsTask : AsyncFrostingTask<BuildContext>
 {
-    private const bool PublishAotDefault = false;
+    private const bool PublishAotDefault = true;
 
     /// <inheritdoc />
     public override Task RunAsync(BuildContext context)

@@ -5,7 +5,7 @@ namespace QueryCat.Backend.Indexes;
 /// <summary>
 /// Data to specify how to order the column.
 /// </summary>
-public sealed class OrderColumnData
+internal sealed class OrderColumnData
 {
     public int Index { get; }
 

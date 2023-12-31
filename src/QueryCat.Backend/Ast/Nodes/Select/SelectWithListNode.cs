@@ -1,6 +1,6 @@
 namespace QueryCat.Backend.Ast.Nodes.Select;
 
-public sealed class SelectWithListNode : AstNode
+internal sealed class SelectWithListNode : AstNode
 {
     public List<SelectWithNode> WithNodes { get; } = new();
 

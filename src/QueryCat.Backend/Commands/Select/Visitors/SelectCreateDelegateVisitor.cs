@@ -7,8 +7,8 @@ using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Execution;
-using QueryCat.Backend.Functions;
 using QueryCat.Backend.Relational;
+using QueryCat.Backend.Storage;
 
 namespace QueryCat.Backend.Commands.Select.Visitors;
 
@@ -44,7 +44,10 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
         _subQueryIterators.Clear();
         base.RunAndReturn(node);
         var funcUnit = NodeIdFuncMap[node.Id];
-        funcUnit.SetData(FuncUnit.SubqueriesRowsIterators, _subQueryIterators);
+        if (funcUnit is FuncUnitDelegate funcUnitDelegate)
+        {
+            funcUnitDelegate.SubQueryIterators = _subQueryIterators;
+        }
         return funcUnit;
     }
 
@@ -127,7 +130,7 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
 
         base.Visit(node);
 
-        var function = node.GetAttribute<Function>(AstAttributeKeys.FunctionKey);
+        var function = node.GetAttribute<IFunction>(AstAttributeKeys.FunctionKey);
         if (function is not { IsAggregate: true })
         {
             return;
@@ -137,7 +140,7 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
         node.SetAttribute(AstAttributeKeys.AggregateFunctionKey, target);
     }
 
-    private AggregateTarget CreateAggregateTarget(FunctionCallNode node, Function function)
+    private AggregateTarget CreateAggregateTarget(FunctionCallNode node, IFunction function)
     {
         var functionCallInfo = node.GetRequiredAttribute<FunctionCallInfo>(AstAttributeKeys.ArgumentsKey);
 

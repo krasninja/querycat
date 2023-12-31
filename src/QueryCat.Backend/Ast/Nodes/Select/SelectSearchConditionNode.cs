@@ -1,6 +1,6 @@
 namespace QueryCat.Backend.Ast.Nodes.Select;
 
-public sealed class SelectSearchConditionNode : AstNode
+internal sealed class SelectSearchConditionNode : AstNode
 {
     /// <inheritdoc />
     public override string Code => "where_cond";

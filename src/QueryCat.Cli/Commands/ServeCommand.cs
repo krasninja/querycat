@@ -12,16 +12,18 @@ internal class ServeCommand : BaseCommand
         var urlsOption = new Option<string>("--url", description: "Endpoint to serve on.");
         var allowOriginOption = new Option<string>("--allow-origin", description: "Enables CORS for the specified origin.");
         var passwordOption = new Option<string>("--password", description: "Basic authentication password.");
+        var rootDirectoryOption = new Option<string>(aliases: ["-r", "--root-dir"], description: "Root directory for files serve.");
 
         AddOption(urlsOption);
         AddOption(allowOriginOption);
         AddOption(passwordOption);
-        this.SetHandler((applicationOptions, urls, allowOrigin, password) =>
+        AddOption(rootDirectoryOption);
+        this.SetHandler((applicationOptions, urls, allowOrigin, password, rootDirectory) =>
         {
             applicationOptions.InitializeLogger();
             using var root = applicationOptions.CreateApplicationRoot();
             root.Thread.Options.AddRowNumberColumn = true;
-            var webServer = new WebServer(root.Thread, urls, password);
+            var webServer = new WebServer(root.Thread, urls, password, rootDirectory);
             if (!string.IsNullOrEmpty(allowOrigin))
             {
                 webServer.AllowOrigin = allowOrigin;
@@ -31,6 +33,7 @@ internal class ServeCommand : BaseCommand
             new ApplicationOptionsBinder(LogLevelOption, PluginDirectoriesOption),
             urlsOption,
             allowOriginOption,
-            passwordOption);
+            passwordOption,
+            rootDirectoryOption);
     }
 }

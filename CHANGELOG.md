@@ -6,6 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Added
 
+- Use Native AOT compilaton mode. It reduces file size and startup time.
+- Migraton to Thrift plugins system.
+- Support hexadecimal numbers parsing.
+- Initial Grok patterns support.
+- Log web server queries, update dependencies.
+- Add new table output style "Table2".
+- Support library plugins.
+- Add "ls_dir" function.
+- Add glob pattern to search thru all directories. For example, "select * from '/home/user/**/*.txt".
+- Resolve '~' to user home directory.
+- Implement simple HTTP files server (beta).
+
+## Fixed
+
+- Fix using aliases with tables from variables.
+
+## [0.4.14] - 2023-11-15
+
+## Added
+
 - Initial "follow" mode implementation.
 - Add regular expressions formatter "regex".
 

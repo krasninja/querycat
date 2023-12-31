@@ -9,8 +9,7 @@ using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Plugins;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Core.Utils;
-using QueryCat.Backend.Functions;
-using QueryCat.Backend.Parser;
+using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Storage;
 
 namespace QueryCat.Backend.Execution;
@@ -20,12 +19,14 @@ namespace QueryCat.Backend.Execution;
 /// </summary>
 public class ExecutionThread : IExecutionThread
 {
+    private readonly IAstBuilder _astBuilder;
     internal const string ApplicationDirectory = "qcat";
     internal const string BootstrapFileName = "rc.sql";
 
-    private readonly StatementsVisitor _statementsVisitor;
+    private readonly AstVisitor _statementsVisitor;
     private readonly object _objLock = new();
     private readonly List<IDisposable> _disposablesList = new();
+    private bool _isInCallback;
 
     /// <inheritdoc />
     public IInputConfigStorage ConfigStorage { get; }
@@ -35,15 +36,8 @@ public class ExecutionThread : IExecutionThread
     /// </summary>
     internal ExecutionScope RootScope { get; }
 
-    /// <summary>
-    /// Current top scope.
-    /// </summary>
-    public ExecutionScope TopScope => RootScope;
-
-    /// <summary>
-    /// Functions manager.
-    /// </summary>
-    public IFunctionsManager FunctionsManager { get; }
+    /// <inheritdoc />
+    public IExecutionScope TopScope => RootScope;
 
     /// <summary>
     /// Current executing statement.
@@ -60,9 +54,10 @@ public class ExecutionThread : IExecutionThread
     /// </summary>
     public ExecutionStatistic Statistic { get; } = new();
 
-    /// <summary>
-    /// Plugins manager.
-    /// </summary>
+    /// <inheritdoc />
+    public IFunctionsManager FunctionsManager { get; }
+
+    /// <inheritdoc />
     public IPluginsManager PluginsManager { get; set; } = NullPluginsManager.Instance;
 
     /// <summary>
@@ -80,33 +75,26 @@ public class ExecutionThread : IExecutionThread
     /// </summary>
     public event EventHandler<ExecuteEventArgs>? AfterStatementExecute;
 
-    /// <summary>
-    /// Default execution instance with default options.
-    /// </summary>
-    public static readonly ExecutionThread DefaultInstance = new();
-
-    /// <summary>
-    /// Is cancellation requested to cancel current command execution.
-    /// </summary>
-    public CancellationTokenSource CancellationTokenSource { get; } = new();
-
     public static string GetApplicationDirectory()
     {
         return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             ApplicationDirectory);
     }
 
-    public ExecutionThread(
-        ExecutionOptions? options = null,
-        IInputConfigStorage? configStorage = null)
+    internal ExecutionThread(
+        ExecutionOptions options,
+        IFunctionsManager functionsManager,
+        IInputConfigStorage configStorage,
+        IAstBuilder astBuilder)
     {
-        var appLocalDirectory = GetApplicationDirectory();
-        RootScope = new ExecutionScope();
-        Options = options ?? new ExecutionOptions();
+        Options = options;
+        FunctionsManager = functionsManager;
+        ConfigStorage = configStorage;
+        _astBuilder = astBuilder;
         _statementsVisitor = new StatementsVisitor(this);
-        FunctionsManager = new DefaultFunctionsManager(this);
-        ConfigStorage = configStorage ?? NullInputConfigStorage.Instance;
-        RunBootstrapScript(appLocalDirectory);
+
+        RootScope = new ExecutionScope();
+        RunBootstrapScript(GetApplicationDirectory());
     }
 
     public ExecutionThread(ExecutionThread executionThread)
@@ -116,20 +104,21 @@ public class ExecutionThread : IExecutionThread
 #if ENABLE_PLUGINS
         PluginsManager = executionThread.PluginsManager;
 #endif
-        _statementsVisitor = executionThread._statementsVisitor;
         FunctionsManager = executionThread.FunctionsManager;
         ConfigStorage = executionThread.ConfigStorage;
+        _statementsVisitor = executionThread._statementsVisitor;
+        _astBuilder = executionThread._astBuilder;
     }
 
     /// <inheritdoc />
-    public VariantValue Run(string query)
+    public VariantValue Run(string query, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrEmpty(query))
         {
             return VariantValue.Null;
         }
 
-        var programNode = AstBuilder.BuildProgramFromString(query);
+        var programNode = _astBuilder.BuildProgramFromString(query);
 
         // Set first executing statement and run.
         ExecutingStatement = programNode.Statements.FirstOrDefault();
@@ -141,7 +130,7 @@ public class ExecutionThread : IExecutionThread
             stopwatch.Start();
             try
             {
-                return RunInternal();
+                return RunInternal(cancellationToken);
             }
             finally
             {
@@ -151,10 +140,7 @@ public class ExecutionThread : IExecutionThread
         }
     }
 
-    /// <summary>
-    /// Run the execution flow.
-    /// </summary>
-    private VariantValue RunInternal()
+    private VariantValue RunInternal(CancellationToken cancellationToken)
     {
         if (Options.UseConfig)
         {
@@ -165,19 +151,32 @@ public class ExecutionThread : IExecutionThread
         while (ExecutingStatement != null)
         {
             var commandContext = _statementsVisitor.RunAndReturn(ExecutingStatement);
-            _disposablesList.Add(commandContext);
+            if (commandContext is IDisposable disposable)
+            {
+                _disposablesList.Add(disposable);
+            }
 
             // Fire "before" event.
-            BeforeStatementExecute?.Invoke(this, executeEventArgs);
+            if (BeforeStatementExecute != null && !_isInCallback)
+            {
+                _isInCallback = true;
+                BeforeStatementExecute.Invoke(this, executeEventArgs);
+                _isInCallback = false;
+            }
             if (!executeEventArgs.ContinueExecution)
             {
                 break;
             }
-            var result = commandContext.Invoke();
-            LastResult = result;
+
+            LastResult = commandContext.Invoke();
 
             // Fire "after" event.
-            AfterStatementExecute?.Invoke(this, executeEventArgs);
+            if (AfterStatementExecute != null && !_isInCallback)
+            {
+                _isInCallback = true;
+                AfterStatementExecute.Invoke(this, executeEventArgs);
+                _isInCallback = false;
+            }
             if (!executeEventArgs.ContinueExecution)
             {
                 break;
@@ -185,7 +184,7 @@ public class ExecutionThread : IExecutionThread
 
             if (Options.DefaultRowsOutput != NullRowsOutput.Instance)
             {
-                Write(result);
+                Write(LastResult, cancellationToken);
             }
 
             ExecutingStatement = ExecutingStatement.NextNode;
@@ -198,18 +197,6 @@ public class ExecutionThread : IExecutionThread
         ExecutingStatement = null;
 
         return LastResult;
-    }
-
-    /// <summary>
-    /// Call function within execution thread.
-    /// </summary>
-    /// <param name="functionDelegate">Function delegate instance.</param>
-    /// <param name="args">Arguments.</param>
-    /// <returns>Return value.</returns>
-    public VariantValue RunFunction(FunctionDelegate functionDelegate, params object[] args)
-    {
-        var functionCallInfo = FunctionCallInfo.CreateWithArguments(this, args);
-        return functionDelegate.Invoke(functionCallInfo);
     }
 
     /// <summary>
@@ -229,7 +216,7 @@ public class ExecutionThread : IExecutionThread
         return sb.ToString();
     }
 
-    private void Write(VariantValue result)
+    private void Write(VariantValue result, CancellationToken cancellationToken)
     {
         if (result.IsNull)
         {
@@ -243,7 +230,60 @@ public class ExecutionThread : IExecutionThread
             rowsOutput = alternateRowsOutput;
         }
         rowsOutput.Reset();
-        rowsOutput.Write(iterator, this, CancellationTokenSource.Token);
+        Write(rowsOutput, iterator, cancellationToken);
+    }
+
+    private void Write(
+        IRowsOutput rowsOutput,
+        IRowsIterator rowsIterator,
+        CancellationToken cancellationToken = default)
+    {
+        // For plain output let's adjust columns width first.
+        if (rowsOutput.Options.RequiresColumnsLengthAdjust && Options.AnalyzeRowsCount > 0)
+        {
+            rowsIterator = new AdjustColumnsLengthsIterator(rowsIterator, Options.AnalyzeRowsCount);
+        }
+
+        // Write the main data.
+        var isOpened = false;
+        StartWriterLoop();
+
+        // Append grow data.
+        if (Options.FollowTimeoutMs > 0)
+        {
+            while (true)
+            {
+                Thread.Sleep(Options.FollowTimeoutMs);
+                StartWriterLoop();
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    break;
+                }
+            }
+        }
+
+        if (isOpened)
+        {
+            rowsOutput.Close();
+        }
+
+        void StartWriterLoop()
+        {
+            while (rowsIterator.MoveNext())
+            {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    break;
+                }
+                if (!isOpened)
+                {
+                    rowsOutput.Open();
+                    rowsOutput.QueryContext = new RowsOutputQueryContext(rowsIterator.Columns);
+                    isOpened = true;
+                }
+                rowsOutput.WriteValues(rowsIterator.Current.Values);
+            }
+        }
     }
 
     private void RunBootstrapScript(string appLocalDirectory)

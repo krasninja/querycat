@@ -1,7 +1,7 @@
 using System.Buffers;
 using Xunit;
 using System.Text;
-using QueryCat.Backend.Utils;
+using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.UnitTests.Utils;
 

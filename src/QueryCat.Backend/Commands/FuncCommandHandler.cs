@@ -2,7 +2,7 @@ using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Commands;
 
-internal sealed class FuncCommandHandler : CommandHandler
+internal sealed class FuncCommandHandler : IFuncUnit
 {
     private readonly Func<VariantValue> _func;
 
@@ -14,5 +14,8 @@ internal sealed class FuncCommandHandler : CommandHandler
     }
 
     /// <inheritdoc />
-    public override VariantValue Invoke() => _func.Invoke();
+    public DataType OutputType => DataType.Null;
+
+    /// <inheritdoc />
+    public VariantValue Invoke() => _func.Invoke();
 }

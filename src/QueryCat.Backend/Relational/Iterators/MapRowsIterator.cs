@@ -1,14 +1,12 @@
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Core.Utils;
-using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Relational.Iterators;
 
 /// <summary>
 /// The iterator maps input columns into another set of columns.
 /// </summary>
-public sealed class MapRowsIterator : IRowsIterator, IRowsIteratorParent
+internal sealed class MapRowsIterator : IRowsIterator, IRowsIteratorParent
 {
     private readonly IRowsIterator _rowsIterator;
     // ReSharper disable once UseArrayEmptyMethod

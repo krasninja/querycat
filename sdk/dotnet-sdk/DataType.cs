@@ -22,6 +22,7 @@ namespace QueryCat.Plugins.Sdk
     BOOLEAN = 5,
     NUMERIC = 6,
     INTERVAL = 7,
+    BLOB = 8,
     @OBJECT = 40,
   }
 }

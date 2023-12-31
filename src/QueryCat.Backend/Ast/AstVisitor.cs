@@ -8,7 +8,7 @@ using QueryCat.Backend.Ast.Nodes.Update;
 
 namespace QueryCat.Backend.Ast;
 
-public abstract class AstVisitor
+internal abstract class AstVisitor
 {
     /// <summary>
     /// AST traversal.
@@ -43,6 +43,13 @@ public abstract class AstVisitor
             }
         }
     }
+
+    /// <summary>
+    /// Run the visitor and return the result as <see cref="IFuncUnit" />.
+    /// </summary>
+    /// <param name="node">Start node.</param>
+    /// <returns>Instance of <see cref="IFuncUnit" />.</returns>
+    public virtual IFuncUnit RunAndReturn(IAstNode node) => EmptyFuncUnit.Instance;
 
     #region General
 

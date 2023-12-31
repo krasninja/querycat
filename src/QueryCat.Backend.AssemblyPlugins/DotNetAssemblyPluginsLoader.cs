@@ -91,15 +91,13 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader
         }
 
         var extension = Path.GetExtension(fileName);
-        if (!extension.Equals(".dll", StringComparison.OrdinalIgnoreCase)
-            && !extension.Equals(".nupkg", StringComparison.OrdinalIgnoreCase))
+        if (!extension.Equals(DllExtension, StringComparison.OrdinalIgnoreCase)
+            && !extension.Equals(NuGetExtensions, StringComparison.OrdinalIgnoreCase))
         {
             return false;
         }
 
-        if (fileName.StartsWith("QueryCat.Plugins.Client")
-            || fileName.StartsWith("QueryCat.Plugins.Sdk")
-            || fileName.StartsWith("QueryCat.Backend"))
+        if (IsAppSpecificFile(file))
         {
             return false;
         }
@@ -126,12 +124,8 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader
             {
                 _functionsManager.RegisterFactory(fm =>
                 {
-                    registerMethod.Invoke(null, new object?[] { fm });
+                    registerMethod.Invoke(null, [fm]);
                 });
-                /*_registerFunctions.Add(fm =>
-                {
-                    registerMethod.Invoke(null, new object?[] { fm });
-                });*/
             }
         }
         else

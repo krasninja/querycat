@@ -2,7 +2,7 @@ using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Ast.Nodes.Function;
 
-public sealed class FunctionTypeNode : TypeNode, IEquatable<FunctionTypeNode>
+internal sealed class FunctionTypeNode : TypeNode, IEquatable<FunctionTypeNode>
 {
     public static FunctionTypeNode NullTypeInstance { get; } = new(DataType.Null);
 
@@ -42,7 +42,7 @@ public sealed class FunctionTypeNode : TypeNode, IEquatable<FunctionTypeNode>
         {
             return true;
         }
-        return TypeName == other.TypeName;
+        return Type == other.Type && TypeName == other.TypeName;
     }
 
     /// <inheritdoc />
@@ -51,7 +51,12 @@ public sealed class FunctionTypeNode : TypeNode, IEquatable<FunctionTypeNode>
 
     /// <inheritdoc />
     public override int GetHashCode()
-        => TypeName.GetHashCode();
+    {
+        var hash = default(HashCode);
+        hash.Add(Type);
+        hash.Add(TypeName);
+        return hash.ToHashCode();
+    }
 
     public static bool operator ==(FunctionTypeNode? left, FunctionTypeNode? right)
         => Equals(left, right);

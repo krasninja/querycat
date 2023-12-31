@@ -1,5 +1,3 @@
-using QueryCat.Backend.Core.Utils;
-
 namespace QueryCat.Backend.Core.Data;
 
 /// <summary>

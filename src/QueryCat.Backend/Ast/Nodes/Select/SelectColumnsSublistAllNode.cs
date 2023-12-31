@@ -1,6 +1,6 @@
 namespace QueryCat.Backend.Ast.Nodes.Select;
 
-public sealed class SelectColumnsSublistAll : SelectColumnsSublistNode
+internal sealed class SelectColumnsSublistAll : SelectColumnsSublistNode
 {
     /// <inheritdoc />
     public override string Code => "column_all";

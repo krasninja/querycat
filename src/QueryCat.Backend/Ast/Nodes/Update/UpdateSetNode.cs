@@ -1,6 +1,6 @@
 namespace QueryCat.Backend.Ast.Nodes.Update;
 
-public sealed class UpdateSetNode : AstNode
+internal sealed class UpdateSetNode : AstNode
 {
     public IdentifierExpressionNode SetTargetNode { get; }
 

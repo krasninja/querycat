@@ -3,7 +3,7 @@ using QueryCat.Backend.Ast.Nodes.Select;
 
 namespace QueryCat.Backend.Ast.Nodes.Update;
 
-public sealed class UpdateNode : AstNode, ISelectAliasNode
+internal sealed class UpdateNode : AstNode, ISelectAliasNode
 {
     public ExpressionNode TargetExpressionNode { get; }
 

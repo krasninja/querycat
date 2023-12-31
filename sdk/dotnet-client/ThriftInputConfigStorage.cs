@@ -39,7 +39,7 @@ public sealed class ThriftInputConfigStorage : IInputConfigStorage
             {
                 _objectsStorage.Remove(key);
             }
-            AsyncUtils.RunSync(() => _client.SetConfigValueAsync(key, SdkConvert.Convert(value)));
+            AsyncUtils.RunSync(ct => _client.SetConfigValueAsync(key, SdkConvert.Convert(value), ct));
         }
     }
 
@@ -55,7 +55,7 @@ public sealed class ThriftInputConfigStorage : IInputConfigStorage
             return objectValue;
         }
 
-        var value = AsyncUtils.RunSync(() => _client.GetConfigValueAsync(key));
+        var value = AsyncUtils.RunSync(ct => _client.GetConfigValueAsync(key, ct));
         if (value == null)
         {
             return VariantValue.Null;

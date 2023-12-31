@@ -1,12 +1,11 @@
 using QueryCat.Backend.Core.Data;
-using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend.Relational.Iterators;
 
 /// <summary>
 /// The iterator writes new row into <see cref="RowsFrame" />.
 /// </summary>
-public sealed class WriteRowsFrameIterator : IRowsIterator, IRowsIteratorParent
+internal sealed class WriteRowsFrameIterator : IRowsIterator, IRowsIteratorParent
 {
     private readonly RowsFrame _rowsFrame;
     private readonly IRowsIterator _rowsIterator;

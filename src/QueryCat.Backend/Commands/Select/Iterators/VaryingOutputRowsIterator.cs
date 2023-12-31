@@ -3,10 +3,6 @@ using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Core.Utils;
-using QueryCat.Backend.Functions;
-using QueryCat.Backend.Storage;
-using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Commands.Select.Iterators;
 
@@ -20,7 +16,7 @@ internal sealed class VaryingOutputRowsIterator : IRowsIterator, IRowsIteratorPa
     private readonly IRowsIterator _rowsIterator;
     private readonly QueryContext _queryContext;
     private readonly IFuncUnit _outputFactory;
-    private readonly FunctionCallInfo _functionCallInfo;
+    private readonly FuncUnitCallInfo _functionCallInfo;
     private readonly Dictionary<VariantValueArray, IRowsOutput> _outputs = new();
 
     /// <inheritdoc />
@@ -38,7 +34,7 @@ internal sealed class VaryingOutputRowsIterator : IRowsIterator, IRowsIteratorPa
     public VaryingOutputRowsIterator(
         IRowsIterator rowsIterator,
         IFuncUnit func,
-        FunctionCallInfo functionCallInfo,
+        FuncUnitCallInfo functionCallInfo,
         IRowsOutput defaultRowsOutput,
         QueryContext queryContext)
     {
@@ -57,7 +53,7 @@ internal sealed class VaryingOutputRowsIterator : IRowsIterator, IRowsIteratorPa
         QueryContext queryContext) : this(
             rowsIterator: rowsIterator,
             func: new FuncUnitDelegate(() => VariantValue.CreateFromObject(defaultRowsOutput), DataType.Object),
-            functionCallInfo: FunctionCallInfo.Empty,
+            functionCallInfo: FuncUnitCallInfo.Empty,
             defaultRowsOutput,
             queryContext)
     {
@@ -74,7 +70,7 @@ internal sealed class VaryingOutputRowsIterator : IRowsIterator, IRowsIteratorPa
         }
 
         _functionCallInfo.InvokePushArgs();
-        var argValues = _functionCallInfo.Arguments.Values
+        var argValues = _functionCallInfo
             .Where(a => a.GetInternalType() != DataType.Object)
             .ToArray();
         var args = new VariantValueArray(argValues);
@@ -95,7 +91,7 @@ internal sealed class VaryingOutputRowsIterator : IRowsIterator, IRowsIteratorPa
             }
             output.Open();
             output.QueryContext = _queryContext;
-            _logger.LogDebug("Open for args {Arguments}.", _functionCallInfo.Arguments);
+            _logger.LogDebug("Open for args {Arguments}.", _functionCallInfo);
             _outputs.Add(args, output);
             CurrentOutput = output;
         }
@@ -138,8 +134,8 @@ internal sealed class VaryingOutputRowsIterator : IRowsIterator, IRowsIteratorPa
     /// <inheritdoc />
     public void Explain(IndentedStringBuilder stringBuilder)
     {
-        stringBuilder.AppendRowsIteratorsWithIndent("Vary Output", _rowsIterator)
-            .AppendSubQueriesWithIndent(_outputFactory);
+        stringBuilder.AppendRowsIteratorsWithIndent("Vary Output", _rowsIterator);
+        IndentedStringBuilderUtils.AppendSubQueriesWithIndent(stringBuilder, _outputFactory);
     }
 
     /// <inheritdoc />

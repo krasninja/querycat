@@ -126,6 +126,7 @@ public class Column : ICloneable
             DataType.Timestamp => 14,
             DataType.Boolean => 5,
             DataType.Numeric => 8,
+            DataType.Blob => 25,
             _ => 4
         };
         if (Name.Length > size)

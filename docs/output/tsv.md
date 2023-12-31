@@ -1,3 +1,3 @@
 # TSV
 
-See the main documentation [here](/input/tsv).
+See the main documentation [here](../input/tsv.md).

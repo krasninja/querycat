@@ -1,4 +1,4 @@
 expected: |
-  3,ravioli,260,01/03/2022 00:00:00,False
+  3,ravioli,260,2022-01-03,False
 query: |
-  SELECT id, product, price, date, is_active FROM 'RestaurantPerzi.csv' WHERE id > 2
+  SELECT id, product, price, to_char(date, 'yyyy-MM-dd'), is_active FROM 'RestaurantPerzi.csv' WHERE id > 2

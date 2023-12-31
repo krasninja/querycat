@@ -1,5 +1,6 @@
 using Xunit;
-using QueryCat.Backend.Functions.StandardFunctions;
+using QueryCat.Backend.Core;
+using QueryCat.Backend.Functions;
 using QueryCat.Tests.QueryRunner;
 
 namespace QueryCat.IntegrationTests.Functions;
@@ -9,7 +10,13 @@ namespace QueryCat.IntegrationTests.Functions;
 /// </summary>
 public sealed class MiscFunctionsTests : IDisposable
 {
-    private readonly TestThread _testThread = new();
+    private readonly IExecutionThread _testThread;
+
+    public MiscFunctionsTests()
+    {
+        _testThread = TestThread.CreateBootstrapper()
+            .Create();
+    }
 
     [Fact]
     public void Coalesce_SeveralArgs_ShouldReturnFirstNotNull()

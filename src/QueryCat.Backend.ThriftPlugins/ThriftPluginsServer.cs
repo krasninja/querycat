@@ -10,25 +10,32 @@ using Thrift.Transport.Server;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Plugins;
-using QueryCat.Backend.Core.Utils;
-using QueryCat.Backend.Execution;
 
 namespace QueryCat.Backend.ThriftPlugins;
 
 public sealed partial class ThriftPluginsServer : IDisposable
 {
+    public enum TransportType
+    {
+        NamedPipes,
+    }
+
+    private readonly record struct AuthTokenData(
+        SemaphoreSlim Semaphore,
+        string PluginName);
+
     private const int PluginRegistrationTimeoutSeconds = 10;
 
     private readonly IInputConfigStorage _inputConfigStorage;
-    private readonly ExecutionThread _executionThread;
+    private readonly IExecutionThread _executionThread;
     private readonly TServer _server;
     private Task? _serverListenThread;
     private readonly CancellationTokenSource _serverCts = new();
-    private readonly ConcurrentDictionary<string, SemaphoreSlim> _authTokens = new();
+    private readonly ConcurrentDictionary<string, AuthTokenData> _authTokens = new();
     private readonly List<PluginContext> _plugins = new();
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(ThriftPluginsServer));
 
-    public string ServerPipeName { get; } = "qcat-" + Guid.NewGuid().ToString("N");
+    public string ServerEndpoint { get; } = "qcat-" + Guid.NewGuid().ToString("N");
 
     /// <summary>
     /// Do not verify token for debug purpose.
@@ -58,20 +65,22 @@ public sealed partial class ThriftPluginsServer : IDisposable
 
     internal event EventHandler<PluginRegistrationEventArgs>? OnPluginRegistration;
 
-    public ThriftPluginsServer(ExecutionThread executionThread, string? serverPipeName = null)
+    public ThriftPluginsServer(
+        IExecutionThread executionThread,
+        TransportType transportType = TransportType.NamedPipes,
+        string? serverEndpoint = null)
     {
 #if !DEBUG
         IgnoreThriftLogs = true;
 #endif
         _executionThread = executionThread;
         _inputConfigStorage = executionThread.ConfigStorage;
-        if (!string.IsNullOrEmpty(serverPipeName))
+        if (!string.IsNullOrEmpty(serverEndpoint))
         {
-            ServerPipeName = serverPipeName;
+            ServerEndpoint = serverEndpoint;
         }
 
-        var transport = new TNamedPipeServerTransport(ServerPipeName, new TConfiguration(),
-            NamedPipeServerFlags.OnlyLocalClients, 1);
+        var transport = CreateTransport(transportType, ServerEndpoint);
         var transportFactory = new TFramedTransport.Factory();
         var binaryProtocolFactory = new TBinaryProtocol.Factory();
         var processor = new TMultiplexedProcessor();
@@ -91,6 +100,17 @@ public sealed partial class ThriftPluginsServer : IDisposable
                 : Application.LoggerFactory.CreateLogger(nameof(TSimpleAsyncServer)));
     }
 
+    private static TServerTransport CreateTransport(TransportType transportType, string endpoint)
+    {
+        switch (transportType)
+        {
+            case TransportType.NamedPipes:
+                return new TNamedPipeServerTransport(endpoint, new TConfiguration(),
+                    NamedPipeServerFlags.OnlyLocalClients, 1);
+        }
+        throw new ArgumentOutOfRangeException(nameof(transportType));
+    }
+
     /// <summary>
     /// Start local host server.
     /// </summary>
@@ -106,7 +126,7 @@ public sealed partial class ThriftPluginsServer : IDisposable
             _serverCts.Token,
             TaskCreationOptions.LongRunning,
             TaskScheduler.Current);
-        _logger.LogDebug("Started named pipe server on '{Uri}'.", ServerPipeName);
+        _logger.LogDebug("Started named pipe server on '{Uri}'.", ServerEndpoint);
     }
 
     /// <summary>
@@ -137,25 +157,44 @@ public sealed partial class ThriftPluginsServer : IDisposable
         OnPluginRegistration?.Invoke(this, new PluginRegistrationEventArgs(context, authToken));
     }
 
-    public void RegisterAuthToken(string token)
+    public void RegisterAuthToken(string token, string pluginName)
     {
-        _authTokens[token] = new SemaphoreSlim(0, 1);
+        _authTokens[token] = new AuthTokenData(new SemaphoreSlim(0, 1), pluginName);
+    }
+
+    public bool VerifyAuthToken(string token) => _authTokens.ContainsKey(token);
+
+    public string GetPluginNameByAuthToken(string token)
+    {
+        if (_authTokens.TryGetValue(token, out var data))
+        {
+            return data.PluginName;
+        }
+        return string.Empty;
+    }
+
+    public void ConfirmAuthToken(string token)
+    {
+        if (_authTokens.TryGetValue(token, out var data))
+        {
+            data.Semaphore.Release();
+        }
     }
 
     public void WaitForPluginRegistration(string authToken, CancellationToken cancellationToken = default)
     {
-        if (!_authTokens.TryGetValue(authToken, out var semaphoreSlim))
+        if (!_authTokens.TryGetValue(authToken, out var authTokenData))
         {
             throw new InvalidOperationException(
                 $"Token '{authToken}' is not registered, did you call {nameof(RegisterAuthToken)}?");
         }
         _logger.LogTrace("Waiting for token activation '{Token}'.", authToken);
-        if (!semaphoreSlim.Wait(TimeSpan.FromSeconds(PluginRegistrationTimeoutSeconds), cancellationToken))
+        if (!authTokenData.Semaphore.Wait(TimeSpan.FromSeconds(PluginRegistrationTimeoutSeconds), cancellationToken))
         {
             throw new PluginException($"Plugin '{authToken}' registration timeout.");
         }
         _authTokens.Remove(authToken, out _);
-        semaphoreSlim.Dispose();
+        authTokenData.Semaphore.Dispose();
     }
 
     /// <inheritdoc />
@@ -169,7 +208,7 @@ public sealed partial class ThriftPluginsServer : IDisposable
             {
                 continue;
             }
-            AsyncUtils.RunSync(pluginContext.Client.ShutdownAsync);
+            pluginContext.Shutdown();
         }
     }
 }

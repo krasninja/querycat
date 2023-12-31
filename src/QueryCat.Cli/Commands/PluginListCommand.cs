@@ -1,7 +1,4 @@
 using System.CommandLine;
-using QueryCat.Backend.Execution;
-using QueryCat.Backend.Functions.StandardFunctions;
-using QueryCat.Backend.Storage;
 using QueryCat.Cli.Commands.Options;
 
 namespace QueryCat.Cli.Commands;
@@ -10,15 +7,24 @@ namespace QueryCat.Cli.Commands;
 internal class PluginListCommand : BaseCommand
 {
     /// <inheritdoc />
-    public PluginListCommand() : base("list", "List all available plugins.")
+    public PluginListCommand() : base("list", "List available plugins for the current platform.")
     {
-        this.SetHandler(applicationOptions =>
+        var listAllArgument = new Option<bool>("--all", "List all plugins.");
+
+        this.AddOption(listAllArgument);
+        this.SetHandler((applicationOptions, listAll) =>
         {
             applicationOptions.InitializeLogger();
             using var root = applicationOptions.CreateStdoutApplicationRoot();
-            var result = root.Thread.RunFunction(InfoFunctions.Plugins);
-            root.Thread.Options.DefaultRowsOutput.Write(ExecutionThreadUtils.ConvertToIterator(result), root.Thread);
-        }, new ApplicationOptionsBinder(LogLevelOption, PluginDirectoriesOption));
+            var query = "SELECT * FROM _plugins() WHERE 1=1";
+            if (!listAll)
+            {
+                query += " AND platform = _platform();";
+            }
+            var result = root.Thread.Run(query);
+            root.Thread.TopScope.Variables["result"] = result;
+            root.Thread.Run("result");
+        }, new ApplicationOptionsBinder(LogLevelOption, PluginDirectoriesOption), listAllArgument);
     }
 }
 #endif

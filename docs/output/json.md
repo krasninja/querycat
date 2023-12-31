@@ -1,3 +1,3 @@
 # JSON
 
-See the main documentation [here](/input/json).
+See the main documentation [here](../input/json.md).

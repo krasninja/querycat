@@ -1,4 +1,3 @@
-using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Indexes;
 using QueryCat.Backend.Relational;
 

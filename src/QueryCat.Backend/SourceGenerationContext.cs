@@ -5,6 +5,6 @@ namespace QueryCat.Backend;
 
 [JsonSourceGenerationOptions(WriteIndented = false)]
 [JsonSerializable(typeof(ConfigDictionary))]
-internal partial class SourceGenerationContext : JsonSerializerContext
-{
-}
+[JsonSerializable(typeof(DateTimeOffset))]
+[JsonSerializable(typeof(Dictionary<string, object>))]
+internal partial class SourceGenerationContext : JsonSerializerContext;

@@ -1,6 +1,6 @@
 namespace QueryCat.Backend.Ast.Nodes.Select;
 
-public sealed class SelectDistinctNode : AstNode
+internal sealed class SelectDistinctNode : AstNode
 {
     /// <summary>
     /// Make distinct by all values.

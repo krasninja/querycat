@@ -2,10 +2,8 @@ using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Indexes;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Indexes;
 using QueryCat.Backend.Relational;
-using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Commands.Select.Iterators;
 
@@ -176,7 +174,7 @@ internal sealed class WindowFunctionsRowsIterator : IRowsIterator
         _partitions = windowFunctionInfos
             .Select(info => new PartitionInfo(
                 originalColumnIndex: info.ColumnIndex,
-                partitionFormatter: () => new VariantValueArray(info.PartitionFormatters),
+                partitionFormatter: () => new VariantValueArray(info.PartitionFormatters.Select(f => f.Invoke())),
                 windowFunctionInfo: info
             ))
             .ToArray();

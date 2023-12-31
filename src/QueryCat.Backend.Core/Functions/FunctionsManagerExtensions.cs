@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Reflection;
 using QueryCat.Backend.Core.Types;
@@ -46,7 +47,9 @@ public static class FunctionsManagerExtensions
     /// </summary>
     /// <param name="functionsManager">Instance of <see cref="IFunctionsManager" />.</param>
     /// <param name="type">Target type.</param>
-    public static void RegisterFromType(this IFunctionsManager functionsManager, Type type)
+    public static void RegisterFromType(
+        this IFunctionsManager functionsManager,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicMethods)] Type type)
     {
         // Try to register class as function.
         var classAttributes = type.GetCustomAttributes<FunctionSignatureAttribute>().ToArray();
@@ -70,7 +73,7 @@ public static class FunctionsManagerExtensions
         // Try to register aggregates from type.
         if (typeof(IAggregateFunction).IsAssignableFrom(type))
         {
-            functionsManager.RegisterAggregate(_ => (IAggregateFunction)Activator.CreateInstance(type)!);
+            functionsManager.RegisterAggregate(() => (IAggregateFunction)Activator.CreateInstance(type)!);
             return;
         }
 
@@ -197,13 +200,17 @@ public static class FunctionsManagerExtensions
     /// </summary>
     /// <param name="functionsManager">Instance of <see cref="IFunctionsManager" />.</param>
     /// <param name="functionName">Function name.</param>
+    /// <param name="executionThread">Execution thread.</param>
     /// <param name="arguments">Arguments to pass.</param>
     /// <returns>Result.</returns>
-    public static VariantValue CallFunction(this IFunctionsManager functionsManager,
-        string functionName, FunctionCallArguments? arguments = null)
+    public static VariantValue CallFunction(
+        this IFunctionsManager functionsManager,
+        string functionName,
+        IExecutionThread executionThread,
+        FunctionCallArguments? arguments = null)
     {
         arguments ??= FunctionCallArguments.Empty;
         var function = functionsManager.FindByName(functionName, arguments.GetTypes());
-        return functionsManager.CallFunction(function, arguments);
+        return functionsManager.CallFunction(function, executionThread, arguments);
     }
 }

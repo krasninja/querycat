@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -7,15 +9,18 @@ using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Functions;
+using QueryCat.Backend.Core.Types.Blob;
 using QueryCat.Plugins.Sdk;
 using Column = QueryCat.Plugins.Sdk.Column;
 using DataType = QueryCat.Backend.Core.Types.DataType;
 using KeyColumn = QueryCat.Plugins.Sdk.KeyColumn;
+using VariantValue = QueryCat.Plugins.Sdk.VariantValue;
 
 namespace QueryCat.Plugins.Client;
 
 public partial class ThriftPluginClient
 {
+    [SuppressMessage("ReSharper", "InconsistentNaming")]
     private sealed class Handler : Plugin.IAsync
     {
         private readonly ThriftPluginClient _thriftPluginClient;
@@ -35,8 +40,7 @@ public partial class ThriftPluginClient
             args ??= new List<VariantValue>();
 
             var func = _thriftPluginClient.FunctionsManager.FindByName(function_name);
-            var callInfo = new FunctionCallInfo(_thriftPluginClient._executionThread);
-            callInfo.FunctionName = func.Name;
+            var callInfo = new FunctionCallInfo(_thriftPluginClient._executionThread, func.Name);
             foreach (var arg in args)
             {
                 callInfo.Push(SdkConvert.Convert(arg));
@@ -48,7 +52,7 @@ public partial class ThriftPluginClient
                 if (result.AsObject is IRowsIterator rowsIterator)
                 {
                     var index = _thriftPluginClient._objectsStorage.Add(rowsIterator);
-                    _thriftPluginClient._logger.LogDebug("Added new object '{Object}' with handle {Handle}.",
+                    _thriftPluginClient._logger.LogDebug("Added new iterator object '{Object}' with handle {Handle}.",
                         rowsIterator.ToString(), index);
                     return Task.FromResult(new VariantValue
                     {
@@ -61,7 +65,7 @@ public partial class ThriftPluginClient
                         new QueryContextQueryInfo(new List<Backend.Core.Data.Column>()),
                         _thriftPluginClient._executionThread.ConfigStorage);
                     var index =_thriftPluginClient._objectsStorage.Add(rowsInput);
-                    _thriftPluginClient._logger.LogDebug("Added new object '{Object}' with handle {Handle}.",
+                    _thriftPluginClient._logger.LogDebug("Added new input object '{Object}' with handle {Handle}.",
                         rowsInput.ToString(), index);
                     return Task.FromResult(new VariantValue
                     {
@@ -69,6 +73,15 @@ public partial class ThriftPluginClient
                     });
                 }
                 throw new QueryCatPluginException(ErrorType.INVALID_OBJECT, $"Cannot register object '{result.AsObject}'.");
+            }
+            if (resultType == DataType.Blob)
+            {
+                var index = _thriftPluginClient._objectsStorage.Add(result.AsBlob);
+                _thriftPluginClient._logger.LogDebug("Added new blob object with handle {Handle}.", index);
+                return Task.FromResult(new VariantValue
+                {
+                    Object = new ObjectValue(ObjectType.BLOB, index, "BLOB"),
+                });
             }
 
             return Task.FromResult(SdkConvert.Convert(result));
@@ -81,6 +94,7 @@ public partial class ThriftPluginClient
         public Task ShutdownAsync(CancellationToken cancellationToken = default)
         {
             _thriftPluginClient._objectsStorage.Clean();
+            _thriftPluginClient.SignalExit();
             return Task.CompletedTask;
         }
 
@@ -263,7 +277,7 @@ public partial class ThriftPluginClient
                 var result = rowsInputUpdate.UpdateValue(column_index, SdkConvert.Convert(value));
                 return Task.FromResult(result == ErrorCode.OK);
             }
-            return Task.FromResult(false);
+            throw new QueryCatPluginException(ErrorType.INVALID_OBJECT, $"Object is not a '{typeof(IRowsInputUpdate)}'.");
         }
 
         /// <inheritdoc />
@@ -277,13 +291,42 @@ public partial class ThriftPluginClient
                 rowsOutput.WriteValues(values.Select(SdkConvert.Convert).ToArray());
                 return Task.CompletedTask;
             }
-            return Task.CompletedTask;
+            throw new QueryCatPluginException(ErrorType.INVALID_OBJECT, $"Object is not a '{typeof(IRowsOutput)}'.");
+        }
+
+        /// <inheritdoc />
+        public Task<byte[]> Blob_ReadAsync(int object_handle, int offset, int count, CancellationToken cancellationToken = default)
+        {
+            if (_thriftPluginClient._objectsStorage.TryGet<IBlobData>(object_handle, out var blobData)
+                && blobData != null)
+            {
+                var buffer = new MemoryStream();
+                blobData.ApplyAction((b, cnt) =>
+                {
+                    buffer.Write(b);
+                }, offset, count);
+                return Task.FromResult(buffer.ToArray());
+            }
+            throw new QueryCatPluginException(ErrorType.INVALID_OBJECT, "Object is not a BLOB.");
+        }
+
+        /// <inheritdoc />
+        public Task<long> Blob_GetLengthAsync(int object_handle, CancellationToken cancellationToken = default)
+        {
+            if (_thriftPluginClient._objectsStorage.TryGet<IBlobData>(object_handle, out var blobData)
+                && blobData != null)
+            {
+                var length = blobData.Length;
+                return Task.FromResult(length);
+            }
+            throw new QueryCatPluginException(ErrorType.INVALID_OBJECT, "Object is not a BLOB.");
         }
     }
 
     private sealed class HandlerWithExceptionIntercept : Plugin.IAsync
     {
         private readonly Plugin.IAsync _handler;
+        private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(Handler));
 
         public HandlerWithExceptionIntercept(Plugin.IAsync handler)
         {
@@ -305,6 +348,11 @@ public partial class ThriftPluginClient
                     ObjectHandle = object_handle,
                 };
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Handler internal error.");
+                throw new QueryCatPluginException(ErrorType.INTERNAL, ex.Message);
+            }
         }
 
         /// <inheritdoc />
@@ -318,6 +366,11 @@ public partial class ThriftPluginClient
             {
                 throw new QueryCatPluginException(ErrorType.GENERIC, ex.Message);
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Handler internal error.");
+                throw new QueryCatPluginException(ErrorType.INTERNAL, ex.Message);
+            }
         }
 
         /// <inheritdoc />
@@ -330,6 +383,11 @@ public partial class ThriftPluginClient
             catch (QueryCatException ex)
             {
                 throw new QueryCatPluginException(ErrorType.GENERIC, ex.Message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Handler internal error.");
+                throw new QueryCatPluginException(ErrorType.INTERNAL, ex.Message);
             }
         }
 
@@ -347,6 +405,11 @@ public partial class ThriftPluginClient
                     ObjectHandle = object_handle,
                 };
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Handler internal error.");
+                throw new QueryCatPluginException(ErrorType.INTERNAL, ex.Message);
+            }
         }
 
         /// <inheritdoc />
@@ -362,6 +425,11 @@ public partial class ThriftPluginClient
                 {
                     ObjectHandle = object_handle,
                 };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Handler internal error.");
+                throw new QueryCatPluginException(ErrorType.INTERNAL, ex.Message);
             }
         }
 
@@ -379,6 +447,11 @@ public partial class ThriftPluginClient
                     ObjectHandle = object_handle,
                 };
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Handler internal error.");
+                throw new QueryCatPluginException(ErrorType.INTERNAL, ex.Message);
+            }
         }
 
         /// <inheritdoc />
@@ -394,6 +467,11 @@ public partial class ThriftPluginClient
                 {
                     ObjectHandle = object_handle,
                 };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Handler internal error.");
+                throw new QueryCatPluginException(ErrorType.INTERNAL, ex.Message);
             }
         }
 
@@ -412,6 +490,11 @@ public partial class ThriftPluginClient
                     ObjectHandle = object_handle,
                 };
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Handler internal error.");
+                throw new QueryCatPluginException(ErrorType.INTERNAL, ex.Message);
+            }
         }
 
         /// <inheritdoc />
@@ -427,6 +510,11 @@ public partial class ThriftPluginClient
                 {
                     ObjectHandle = object_handle,
                 };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Handler internal error.");
+                throw new QueryCatPluginException(ErrorType.INTERNAL, ex.Message);
             }
         }
 
@@ -444,6 +532,11 @@ public partial class ThriftPluginClient
                     ObjectHandle = object_handle,
                 };
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Handler internal error.");
+                throw new QueryCatPluginException(ErrorType.INTERNAL, ex.Message);
+            }
         }
 
         /// <inheritdoc />
@@ -459,6 +552,11 @@ public partial class ThriftPluginClient
                 {
                     ObjectHandle = object_handle,
                 };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Handler internal error.");
+                throw new QueryCatPluginException(ErrorType.INTERNAL, ex.Message);
             }
         }
 
@@ -477,6 +575,11 @@ public partial class ThriftPluginClient
                     ObjectHandle = object_handle,
                 };
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Handler internal error.");
+                throw new QueryCatPluginException(ErrorType.INTERNAL, ex.Message);
+            }
         }
 
         /// <inheritdoc />
@@ -494,6 +597,11 @@ public partial class ThriftPluginClient
                     ObjectHandle = object_handle,
                 };
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Handler internal error.");
+                throw new QueryCatPluginException(ErrorType.INTERNAL, ex.Message);
+            }
         }
 
         /// <inheritdoc />
@@ -509,6 +617,53 @@ public partial class ThriftPluginClient
                 {
                     ObjectHandle = object_handle,
                 };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Handler internal error.");
+                throw new QueryCatPluginException(ErrorType.INTERNAL, ex.Message);
+            }
+        }
+
+        /// <inheritdoc />
+        public Task<byte[]> Blob_ReadAsync(int object_handle, int offset, int count, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return _handler.Blob_ReadAsync(object_handle, offset, count, cancellationToken);
+            }
+            catch (QueryCatException ex)
+            {
+                throw new QueryCatPluginException(ErrorType.GENERIC, ex.Message)
+                {
+                    ObjectHandle = object_handle,
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Handler internal error.");
+                throw new QueryCatPluginException(ErrorType.INTERNAL, ex.Message);
+            }
+        }
+
+        /// <inheritdoc />
+        public Task<long> Blob_GetLengthAsync(int object_handle, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return _handler.Blob_GetLengthAsync(object_handle, cancellationToken);
+            }
+            catch (QueryCatException ex)
+            {
+                throw new QueryCatPluginException(ErrorType.GENERIC, ex.Message)
+                {
+                    ObjectHandle = object_handle,
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Handler internal error.");
+                throw new QueryCatPluginException(ErrorType.INTERNAL, ex.Message);
             }
         }
     }

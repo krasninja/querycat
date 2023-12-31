@@ -1,6 +1,6 @@
 namespace QueryCat.Backend.Ast.Nodes.Declare;
 
-public class SetStatementNode : StatementNode
+internal sealed class SetStatementNode : StatementNode
 {
     /// <inheritdoc />
     public SetStatementNode(SetNode rootNode) : base(rootNode)

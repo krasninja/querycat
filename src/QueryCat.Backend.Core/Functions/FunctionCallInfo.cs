@@ -6,13 +6,15 @@ namespace QueryCat.Backend.Core.Functions;
 /// <summary>
 /// Function call information: arguments values, execution scope.
 /// </summary>
-public sealed class FunctionCallInfo : IEnumerable<VariantValue>
+public class FunctionCallInfo : IEnumerable<VariantValue>
 {
-    private readonly VariantValueArray _args;
-    private int _argsCursor;
-    private readonly IFuncUnit[] _pushArgs;
+    internal const string UndefinedFunctionName = "self";
 
-    public static FunctionCallInfo Empty { get; } = new(NullExecutionThread.Instance);
+    private readonly List<VariantValue> _args;
+
+    public static FunctionCallInfo Empty { get; } = new(NullExecutionThread.Instance, UndefinedFunctionName);
+
+    protected List<VariantValue> Arguments => _args;
 
     /// <summary>
     /// Current execution thread.
@@ -25,23 +27,18 @@ public sealed class FunctionCallInfo : IEnumerable<VariantValue>
     public IWindowInfo? WindowInfo { get; internal set; }
 
     /// <summary>
-    /// Function call arguments.
-    /// </summary>
-    public VariantValueArray Arguments => _args;
-
-    /// <summary>
     /// Arguments count.
     /// </summary>
-    public int Count => _args.Values.Length;
+    public int Count => _args.Count;
 
     /// <summary>
     /// Calling function name.
     /// </summary>
-    public string FunctionName { get; set; } = string.Empty;
+    public string FunctionName { get; }
 
     public static FunctionCallInfo CreateWithArguments(IExecutionThread executionThread, params VariantValue[] args)
     {
-        var callInfo = new FunctionCallInfo(executionThread);
+        var callInfo = new FunctionCallInfo(executionThread, UndefinedFunctionName);
         foreach (var arg in args)
         {
             callInfo.Push(arg);
@@ -51,7 +48,7 @@ public sealed class FunctionCallInfo : IEnumerable<VariantValue>
 
     public static FunctionCallInfo CreateWithArguments(IExecutionThread executionThread, params object[] args)
     {
-        var callInfo = new FunctionCallInfo(executionThread);
+        var callInfo = new FunctionCallInfo(executionThread, UndefinedFunctionName);
         foreach (var arg in args)
         {
             callInfo.Push(VariantValue.CreateFromObject(arg));
@@ -59,21 +56,20 @@ public sealed class FunctionCallInfo : IEnumerable<VariantValue>
         return callInfo;
     }
 
-    public FunctionCallInfo(IExecutionThread executionThread, params IFuncUnit[] pushArgs)
+    public FunctionCallInfo(IExecutionThread executionThread, string functionName, params VariantValue[] args)
     {
-        _pushArgs = pushArgs;
-        _args = new VariantValueArray(pushArgs.Length);
+        _args = new List<VariantValue>(args);
         ExecutionThread = executionThread;
+        FunctionName = functionName;
     }
 
+    /// <summary>
+    /// Push new value to argument stack.
+    /// </summary>
+    /// <param name="value">Argument value.</param>
     public void Push(VariantValue value)
     {
-        _argsCursor++;
-        if (_argsCursor > _args.Values.Length)
-        {
-            _args.Resize(_argsCursor);
-        }
-        _args.Values[_argsCursor - 1] = value;
+        _args.Add(value);
     }
 
     /// <summary>
@@ -81,7 +77,7 @@ public sealed class FunctionCallInfo : IEnumerable<VariantValue>
     /// </summary>
     /// <param name="position">Position index.</param>
     /// <returns>Value.</returns>
-    public VariantValue GetAt(int position) => _args.Values[position];
+    public VariantValue GetAt(int position) => _args[position];
 
     /// <summary>
     /// Return argument at the specified index or default value.
@@ -90,29 +86,21 @@ public sealed class FunctionCallInfo : IEnumerable<VariantValue>
     /// <param name="default">Default value.</param>
     /// <returns>Value.</returns>
     public VariantValue GetAtOrDefault(int position, VariantValue @default = default)
-        => _args.Values.Length > position ? _args.Values[position] : @default;
+        => _args.Count > position && position > -1 ? _args[position] : @default;
 
     /// <summary>
     /// Clean current arguments stack.
     /// </summary>
     public void Reset()
     {
-        _argsCursor = 0;
+        _args.Clear();
         WindowInfo = null;
-    }
-
-    internal void InvokePushArgs()
-    {
-        for (var i = 0; i < _pushArgs.Length; i++)
-        {
-            _args.Values[i] = _pushArgs[i].Invoke();
-        }
     }
 
     /// <inheritdoc />
     public IEnumerator<VariantValue> GetEnumerator()
     {
-        foreach (var arg in _args.Values)
+        foreach (var arg in _args)
         {
             yield return arg;
         }
@@ -122,5 +110,5 @@ public sealed class FunctionCallInfo : IEnumerable<VariantValue>
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
     /// <inheritdoc />
-    public override string ToString() => _args.ToString();
+    public override string ToString() => string.Join("; ", _args.Select(a => a.ToString()));
 }

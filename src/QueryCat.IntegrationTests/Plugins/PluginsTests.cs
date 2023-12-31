@@ -1,4 +1,5 @@
 using Xunit;
+using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Tests.QueryRunner;
 
@@ -9,7 +10,13 @@ namespace QueryCat.IntegrationTests.Plugins;
 /// </summary>
 public sealed class PluginsTests : IDisposable
 {
-    private readonly TestThread _testThread = new();
+    private readonly IExecutionThread _testThread;
+
+    public PluginsTests()
+    {
+        _testThread = TestThread.CreateBootstrapper()
+            .Create();
+    }
 
     [Fact]
     public void SamplePluginRowsInput_CreateAndRun_ReturnsResult()
@@ -19,21 +26,7 @@ public sealed class PluginsTests : IDisposable
 
         // Act.
         _testThread.Run(@"SELECT * FROM plugin();");
-        var result = PrepareResult(_testThread.GetQueryResult());
-
-        // Assert.
-        Assert.Equal("123456789", result);
-    }
-
-    [Fact]
-    public void SamplePluginClassRowsInput_CreateAndRun_ReturnsResult()
-    {
-        // Arrange.
-        _testThread.FunctionsManager.RegisterFunction(SamplePluginClassRowsInput.SamplePlugin);
-
-        // Act.
-        _testThread.Run(@"SELECT * FROM plugin();");
-        var result = PrepareResult(_testThread.GetQueryResult());
+        var result = PrepareResult(TestThread.GetQueryResult(_testThread));
 
         // Assert.
         Assert.Equal("123456789", result);
@@ -47,7 +40,7 @@ public sealed class PluginsTests : IDisposable
 
         // Act.
         _testThread.Run(@"SELECT * FROM plugin();");
-        var result = PrepareResult(_testThread.GetQueryResult());
+        var result = PrepareResult(TestThread.GetQueryResult(_testThread));
 
         // Assert.
         Assert.Equal("123456789", result);
@@ -61,7 +54,7 @@ public sealed class PluginsTests : IDisposable
 
         // Act.
         _testThread.Run(@"SELECT * FROM plugin();");
-        var result = PrepareResult(_testThread.GetQueryResult());
+        var result = PrepareResult(TestThread.GetQueryResult(_testThread));
 
         // Assert.
         Assert.Equal("123456789", result);

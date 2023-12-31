@@ -1,7 +1,5 @@
 // ReSharper disable CompareOfFloatsByEqualityOperator
 
-using QueryCat.Backend.Core.Data;
-
 namespace QueryCat.Backend.Core.Types;
 
 public partial struct VariantValue

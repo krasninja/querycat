@@ -3,7 +3,7 @@ namespace QueryCat.Backend.Ast.Nodes.Select;
 /// <summary>
 /// Node that can have alias name.
 /// </summary>
-public interface ISelectAliasNode
+internal interface ISelectAliasNode
 {
     /// <summary>
     /// Query alias name.

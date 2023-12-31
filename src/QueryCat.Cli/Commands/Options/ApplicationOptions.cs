@@ -1,8 +1,8 @@
 using Microsoft.Extensions.Logging;
+using QueryCat.Backend;
 using QueryCat.Backend.Core;
-using QueryCat.Backend.Core.Plugins;
 using QueryCat.Backend.Execution;
-using QueryCat.Backend.Providers;
+using QueryCat.Backend.PluginsManager;
 using QueryCat.Cli.Infrastructure;
 
 namespace QueryCat.Cli.Commands.Options;
@@ -29,36 +29,41 @@ internal class ApplicationOptions
             RunBootstrapScript = true,
             UseConfig = true,
         };
-        // ReSharper disable once RedundantAssignment
-        PluginsLoader pluginsLoader = NullPluginsLoader.Instance;
-        var storage = new PersistentInputConfigStorage(
-            Path.Combine(ExecutionThread.GetApplicationDirectory(), ConfigFileName));
-        var executionThread = new ExecutionThread(executionOptions, configStorage: storage);
         executionOptions.PluginDirectories.AddRange(
             GetPluginDirectories(ExecutionThread.GetApplicationDirectory()));
 #if ENABLE_PLUGINS
         executionOptions.PluginDirectories.AddRange(PluginDirectories);
 #endif
+
+        var bootstrapper = new ExecutionThreadBootstrapper(executionOptions)
+            .WithConfigStorage(new PersistentInputConfigStorage(
+                Path.Combine(ExecutionThread.GetApplicationDirectory(), ConfigFileName))
+            )
+            .WithStandardFunctions()
+            .WithRegistrations(Backend.Formatters.AdditionalRegistration.Register);
 #if ENABLE_PLUGINS && PLUGIN_THRIFT
-        pluginsLoader = new Backend.ThriftPlugins.ThriftPluginsLoader(
-            executionThread,
+        bootstrapper.WithPluginsLoader(thread => new Backend.ThriftPlugins.ThriftPluginsLoader(
+            thread,
             executionOptions.PluginDirectories,
-            functionsCacheDirectory: Path.Combine(ExecutionThread.GetApplicationDirectory(), ApplicationPluginsFunctionsCacheDirectory));
+            functionsCacheDirectory: Path.Combine(ExecutionThread.GetApplicationDirectory(),
+                ApplicationPluginsFunctionsCacheDirectory))
+        );
 #endif
 #if ENABLE_PLUGINS && PLUGIN_ASSEMBLY
-        pluginsLoader = new Backend.AssemblyPlugins.DotNetAssemblyPluginsLoader(executionThread.FunctionsManager,
-            executionOptions.PluginDirectories);
+        bootstrapper.WithPluginsLoader(thread =>
+            new QueryCat.Backend.AssemblyPlugins.DotNetAssemblyPluginsLoader(thread.FunctionsManager,
+            executionOptions.PluginDirectories));
 #endif
-        IPluginsManager pluginsManager = NullPluginsManager.Instance;
 #if ENABLE_PLUGINS
-        pluginsManager = new DefaultPluginsManager(executionOptions.PluginDirectories, pluginsLoader,
-            executionOptions.PluginsRepositoryUri);
-        executionThread.PluginsManager = pluginsManager;
+        bootstrapper.WithPluginsManager(pluginsLoader => new DefaultPluginsManager(
+            executionOptions.PluginDirectories,
+            pluginsLoader,
+            platform: Application.GetPlatform(),
+            bucketUri: executionOptions.PluginsRepositoryUri));
 #endif
-        executionThread.Statistic.CountErrorRows = executionThread.Options.ShowDetailedStatistic;
-        new ExecutionThreadBootstrapper().Bootstrap(executionThread, pluginsLoader,
-            Backend.Formatters.AdditionalRegistration.Register);
-        return new ApplicationRoot(executionThread, pluginsManager, pluginsLoader);
+        var thread = bootstrapper.Create();
+
+        return new ApplicationRoot(thread, thread.PluginsManager);
     }
 
     /// <summary>
@@ -80,15 +85,15 @@ internal class ApplicationOptions
     public ApplicationRoot CreateStdoutApplicationRoot(
         ExecutionOptions? executionOptions = null,
         string? columnsSeparator = null,
-        Backend.Formatters.TextTableOutput.Style outputStyle = Backend.Formatters.TextTableOutput.Style.Table)
+        Backend.Formatters.TextTableOutput.Style outputStyle = Backend.Formatters.TextTableOutput.Style.Table1)
     {
         var root = CreateApplicationRoot(executionOptions);
         var tableOutput = new Backend.Formatters.TextTableOutput(
-            stream: StandardInputOutput.GetConsoleOutput(),
+            stream: Stdio.GetConsoleOutput(),
             separator: columnsSeparator,
             style: outputStyle);
         root.Thread.Options.DefaultRowsOutput = new Backend.Formatters.PagingOutput(
-            tableOutput, pagingRowsCount: Backend.Formatters.PagingOutput.NoLimit, cts: root.Thread.CancellationTokenSource);
+            tableOutput, pagingRowsCount: Backend.Formatters.PagingOutput.NoLimit, cts: root.CancellationTokenSource);
         return root;
     }
 

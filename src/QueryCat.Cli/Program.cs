@@ -123,6 +123,11 @@ internal class Program
         var logger = Logger.Value;
         lock (ObjLock)
         {
+            if (exception is AggregateException aggregateException)
+            {
+                exception = aggregateException.InnerExceptions[0];
+            }
+
             if (exception is SyntaxException syntaxException)
             {
                 logger.LogError(syntaxException.GetErrorLine());

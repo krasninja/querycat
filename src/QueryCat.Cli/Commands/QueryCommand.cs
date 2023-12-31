@@ -1,7 +1,7 @@
 using System.CommandLine;
+using QueryCat.Backend;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Formatters;
-using QueryCat.Backend.Providers;
 using QueryCat.Cli.Commands.Options;
 
 namespace QueryCat.Cli.Commands;
@@ -29,7 +29,7 @@ internal class QueryCommand : BaseQueryCommand
             getDefaultValue: () => 20);
         var outputStyleOption = new Option<TextTableOutput.Style>("--output-style",
             description: "Output style.",
-            getDefaultValue: () => TextTableOutput.Style.Table);
+            getDefaultValue: () => TextTableOutput.Style.Table1);
         var analyzeRowsOption = new Option<int>("--analyze-rows",
             description: "Number of rows to analyze. -1 to analyze all.",
             getDefaultValue: () => 10);
@@ -64,7 +64,7 @@ internal class QueryCommand : BaseQueryCommand
         {
             applicationOptions.InitializeLogger();
             var tableOutput = new TextTableOutput(
-                stream: StandardInputOutput.GetConsoleOutput(),
+                stream: Stdio.GetConsoleOutput(),
                 hasHeader: !queryOptions.NoHeader,
                 separator: queryOptions.ColumnsSeparator,
                 style: queryOptions.OutputStyle,
@@ -85,12 +85,12 @@ internal class QueryCommand : BaseQueryCommand
                 options.AnalyzeRowsCount = int.MaxValue;
             }
             using var root = applicationOptions.CreateApplicationRoot(options);
-            options.DefaultRowsOutput = new PagingOutput(tableOutput, cts: root.Thread.CancellationTokenSource)
+            options.DefaultRowsOutput = new PagingOutput(tableOutput, cts: root.CancellationTokenSource)
             {
                 PagingRowsCount = queryOptions.PageSize,
             };
             AddVariables(root.Thread, variables);
-            RunQuery(root.Thread, query, files);
+            RunQuery(root.Thread, query, files, root.CancellationTokenSource.Token);
 
             if (queryOptions.Statistic || queryOptions.DetailedStatistic)
             {

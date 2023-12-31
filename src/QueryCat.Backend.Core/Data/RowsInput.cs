@@ -1,5 +1,4 @@
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend.Core.Data;
 
@@ -189,11 +188,7 @@ public abstract class RowsInput : IRowsInputKeys
         {
             throw new QueryCatException($"The column '{columnName}' is not found among key columns.");
         }
-        if (_setKeyColumns.TryGetValue(keyColumn, out var data))
-        {
-            return data;
-        }
-        return null;
+        return _setKeyColumns.GetValueOrDefault(keyColumn);
     }
 
     #endregion

@@ -43,6 +43,7 @@ namespace QueryCat.Plugins.Sdk
     private global::QueryCat.Plugins.Sdk.DecimalValue? _decimal;
     private long _interval;
     private global::QueryCat.Plugins.Sdk.ObjectValue? _object;
+    private string? _json;
 
     public bool IsNull
     {
@@ -161,6 +162,19 @@ namespace QueryCat.Plugins.Sdk
       }
     }
 
+    public string? Json
+    {
+      get
+      {
+        return _json;
+      }
+      set
+      {
+        __isset.@json = true;
+        this._json = value;
+      }
+    }
+
 
     public Isset __isset;
     public struct Isset
@@ -174,6 +188,7 @@ namespace QueryCat.Plugins.Sdk
       public bool @decimal;
       public bool @interval;
       public bool @object;
+      public bool @json;
     }
 
     public VariantValue()
@@ -289,6 +304,16 @@ namespace QueryCat.Plugins.Sdk
                 await TProtocolUtil.SkipAsync(iprot, field.Type, cancellationToken);
               }
               break;
+            case 10:
+              if (field.Type == TType.String)
+              {
+                Json = await iprot.ReadStringAsync(cancellationToken);
+              }
+              else
+              {
+                await TProtocolUtil.SkipAsync(iprot, field.Type, cancellationToken);
+              }
+              break;
             default: 
               await TProtocolUtil.SkipAsync(iprot, field.Type, cancellationToken);
               break;
@@ -394,6 +419,15 @@ namespace QueryCat.Plugins.Sdk
           await Object.WriteAsync(oprot, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
+        if((Json != null) && __isset.@json)
+        {
+          tmp9.Name = "json";
+          tmp9.Type = TType.String;
+          tmp9.ID = 10;
+          await oprot.WriteFieldBeginAsync(tmp9, cancellationToken);
+          await oprot.WriteStringAsync(Json, cancellationToken);
+          await oprot.WriteFieldEndAsync(cancellationToken);
+        }
         await oprot.WriteFieldStopAsync(cancellationToken);
         await oprot.WriteStructEndAsync(cancellationToken);
       }
@@ -415,7 +449,8 @@ namespace QueryCat.Plugins.Sdk
         && ((__isset.@boolean == other.__isset.@boolean) && ((!__isset.@boolean) || (global::System.Object.Equals(Boolean, other.Boolean))))
         && ((__isset.@decimal == other.__isset.@decimal) && ((!__isset.@decimal) || (global::System.Object.Equals(Decimal, other.Decimal))))
         && ((__isset.@interval == other.__isset.@interval) && ((!__isset.@interval) || (global::System.Object.Equals(Interval, other.Interval))))
-        && ((__isset.@object == other.__isset.@object) && ((!__isset.@object) || (global::System.Object.Equals(Object, other.Object))));
+        && ((__isset.@object == other.__isset.@object) && ((!__isset.@object) || (global::System.Object.Equals(Object, other.Object))))
+        && ((__isset.@json == other.__isset.@json) && ((!__isset.@json) || (global::System.Object.Equals(Json, other.Json))));
     }
 
     public override int GetHashCode() {
@@ -456,6 +491,10 @@ namespace QueryCat.Plugins.Sdk
         if((Object != null) && __isset.@object)
         {
           hashcode = (hashcode * 397) + Object.GetHashCode();
+        }
+        if((Json != null) && __isset.@json)
+        {
+          hashcode = (hashcode * 397) + Json.GetHashCode();
         }
       }
       return hashcode;
@@ -518,6 +557,12 @@ namespace QueryCat.Plugins.Sdk
         if(0 < tmp11++) { tmp10.Append(", "); }
         tmp10.Append("Object: ");
         Object.ToString(tmp10);
+      }
+      if((Json != null) && __isset.@json)
+      {
+        if(0 < tmp11++) { tmp10.Append(", "); }
+        tmp10.Append("Json: ");
+        Json.ToString(tmp10);
       }
       tmp10.Append(')');
       return tmp10.ToString();
