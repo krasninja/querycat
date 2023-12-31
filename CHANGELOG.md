@@ -6,8 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Added
 
-- Use Native AOT compilaton mode. It reduces file size and startup time.
-- Migraton to Thrift plugins system.
+- Use Native AOT compilation mode. It reduces file size and startup time.
+- Migration to Thrift plugins system.
 - Support hexadecimal numbers parsing.
 - Initial Grok patterns support.
 - Log web server queries, update dependencies.
