@@ -5,7 +5,7 @@ namespace QueryCat.Build.Tasks;
 
 public class PublishGeneralSettings : DotNetPublishSettings
 {
-    public PublishGeneralSettings(BuildContext context, bool publishAot = false)
+    public PublishGeneralSettings(BuildContext context, bool publishAot = true)
     {
         OutputDirectory = context.OutputDirectory;
         Configuration = DotNetConstants.ConfigurationRelease;
