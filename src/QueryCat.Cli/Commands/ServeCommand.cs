@@ -23,7 +23,12 @@ internal class ServeCommand : BaseCommand
             applicationOptions.InitializeLogger();
             using var root = applicationOptions.CreateApplicationRoot();
             root.Thread.Options.AddRowNumberColumn = true;
-            var webServer = new WebServer(root.Thread, urls, password, rootDirectory);
+            var webServer = new WebServer(root.Thread, new WebServerOptions
+            {
+                Urls = urls,
+                Password = password,
+                FilesRoot = rootDirectory,
+            });
             if (!string.IsNullOrEmpty(allowOrigin))
             {
                 webServer.AllowOrigin = allowOrigin;

@@ -97,9 +97,7 @@ internal partial class WebServer
         response.AddHeader("Last-Modified", File.GetLastWriteTime(file).ToString("r"));
         response.AddHeader(
             "Content-Disposition", $"filename={System.Web.HttpUtility.UrlEncode(Path.GetFileName(file))}");
-        response.ContentType = _mimeTypeMappings.TryGetValue(Path.GetExtension(file), out var mime)
-            ? mime
-            : ContentTypeOctetStream;
+        response.ContentType = GetContentType(Path.GetExtension(file));
         response.ContentLength64 = range.Size;
         if (isRangeRequest)
         {
