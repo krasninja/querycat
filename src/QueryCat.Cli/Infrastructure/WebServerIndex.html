@@ -139,6 +139,13 @@
   <!-- Files -->
   <template id="files-page">
     <div class="q-pa-md">
+      <q-breadcrumbs>
+        <q-breadcrumbs-el
+          v-for="(name, index) in pathElements">
+          <router-link :to="{ path: 'files', query: { q: getFullPath('', index + 1) + '/' }}">{{ name }}</router-link>
+        </q-breadcrumbs-el>
+      </q-breadcrumbs>
+      <q-separator></q-separator>
       <q-table
         :rows="rows"
         :columns="columns"
@@ -152,7 +159,6 @@
               <q-icon v-if="props.row.type === 'd'" name="folder"></q-icon>
               <q-icon v-if="props.row.type === 'f'" name="description"></q-icon>
               &nbsp;&nbsp;
-
               <router-link :to="{ path: 'files', query: { q: getFullPath(props.row.name) }}">{{ props.row.name }}</router-link>
             </q-td>
             <q-td key="last_write_time" :props="props">

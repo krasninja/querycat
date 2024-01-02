@@ -51,7 +51,7 @@ const queryPage = {
         if (location.protocol !== 'https:') {
             Quasar.Notify.create({
                 type: 'warning',
-                message: 'You are using insecured HTTP connection!'
+                message: 'You are using insecure HTTP connection!'
             });
         }
     }
@@ -124,14 +124,15 @@ const filesPage = {
         }
     },
     methods: {
-        getFullPath: function(name) {
-            if (this.pathElements.length === 0) {
-                this.pathElements.push('/');
-            }
-            var fullPath = name !== '../' ? this.pathElements.join('/')
-                : this.pathElements.slice(0, -1).join('/') + '/';
+        getFullPath: function(name, index) {
+            var fullPath = '/';
+            fullPath += name !== '../' ? this.pathElements.slice(1, index).join('/')
+                : this.pathElements.slice(1, -1).join('/') + '/';
             if (name.length > 0 && name !== '../') {
-                fullPath += '/' + name;
+                if (!fullPath.endsWith('/')) {
+                    fullPath += '/';
+                }
+                fullPath += name;
             }
             return fullPath;
         },
@@ -156,7 +157,7 @@ const filesPage = {
         },
         setPathElements: function(to) {
             to = to ?? '';
-            const elements = to.split('/');
+            const elements = ['/'].concat(to.split('/'));
             // Convert /home/user/temp/.. to /home/user/.
             for (var i = 1; i < elements.length; i++) {
                 if (elements[i] === '..') {
