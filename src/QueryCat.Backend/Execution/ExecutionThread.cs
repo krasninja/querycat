@@ -120,12 +120,12 @@ public class ExecutionThread : IExecutionThread
 
         var programNode = _astBuilder.BuildProgramFromString(query);
 
-        // Set first executing statement and run.
-        ExecutingStatement = programNode.Statements.FirstOrDefault();
-
         // Run with lock and timer.
         lock (_objLock)
         {
+            // Set first executing statement and run.
+            ExecutingStatement = programNode.Statements.FirstOrDefault();
+
             var stopwatch = new Stopwatch();
             stopwatch.Start();
             try
