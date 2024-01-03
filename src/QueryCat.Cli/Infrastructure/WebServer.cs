@@ -95,6 +95,7 @@ internal sealed partial class WebServer
             ["/index.js"] = HandleIndexJsAction,
             ["/api/info"] = HandleInfoApiAction,
             ["/api/query"] = HandleQueryApiAction,
+            ["/api/schema"] = HandleSchemaApiAction,
             ["/api/files"] = Files_HandleFilesApiAction,
         }.ToFrozenDictionary();
 
@@ -222,6 +223,41 @@ internal sealed partial class WebServer
         var lastResult = _executionThread.Run(query);
 
         WriteIterator(ExecutionThreadUtils.ConvertToIterator(lastResult), request, response);
+    }
+
+    private void HandleSchemaApiAction(HttpListenerRequest request, HttpListenerResponse response)
+    {
+        if (request.HttpMethod != PostMethod && request.HttpMethod != GetMethod)
+        {
+            response.StatusCode = (int)HttpStatusCode.MethodNotAllowed;
+            return;
+        }
+
+        var query = GetQueryFromRequest(request);
+        _logger.LogInformation($"[{request.RemoteEndPoint.Address}] Schema: {query}");
+
+        var thread = (ExecutionThread)_executionThread;
+        void ThreadOnAfterStatementExecute(object? sender, ExecuteEventArgs e)
+        {
+            var result = thread.LastResult;
+            if (!result.IsNull && result.GetInternalType() == DataType.Object
+                && result.AsObject is IRowsSchema rowsSchema)
+            {
+                var schema = thread.CallFunction(Backend.Functions.InfoFunctions.Schema, rowsSchema);
+                WriteIterator(ExecutionThreadUtils.ConvertToIterator(schema), request, response);
+                e.ContinueExecution = false;
+            }
+        }
+
+        try
+        {
+            thread.AfterStatementExecute += ThreadOnAfterStatementExecute;
+            _executionThread.Run(query);
+        }
+        finally
+        {
+            thread.AfterStatementExecute -= ThreadOnAfterStatementExecute;
+        }
     }
 
     #endregion

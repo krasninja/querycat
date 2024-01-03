@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## Added
 
 - Add breadcrumbs in files UI.
+- Add schema and reset web UI buttons.
 
 ## [0.5.0] - 2023-12-31
 

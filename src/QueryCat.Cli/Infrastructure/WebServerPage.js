@@ -13,6 +13,33 @@ const queryPage = {
         }
     },
     methods: {
+        renderResult: function(result) {
+            const self = this;
+            self.columns = result.schema.map(function(col) {
+                return {
+                    label: col.name,
+                    name: col.name,
+                    field: col.name,
+                    align: 'left',
+                    sortable: true,
+                    headerStyle: 'font-weight: bold'
+                }
+            });
+            self.rows = result.data;
+            localStorage.setItem('lastQuery', self.query);
+        },
+        runSchema: function() {
+            const self = this;
+            axios({
+                method: 'post',
+                url: window.baseUrl + 'api/schema',
+                data: {
+                    query: self.query
+                }
+            }).then(function(response) {
+                self.renderResult(response.data);
+            });
+        },
         runQuery: function(evt) {
             const self = this;
             axios({
@@ -21,21 +48,9 @@ const queryPage = {
                 data: {
                     query: self.query
                 }
-            })
-                .then(function(response) {
-                    self.columns = response.data.schema.map(function(col) {
-                        return {
-                            label: col.name,
-                            name: col.name,
-                            field: col.name,
-                            align: 'left',
-                            sortable: true,
-                            headerStyle: 'font-weight: bold'
-                        }
-                    });
-                    self.rows = response.data.data;
-                    localStorage.setItem('lastQuery', self.query);
-                });
+            }).then(function(response) {
+                self.renderResult(response.data);
+            });
         },
         reset: function() {
             this.query = '';
