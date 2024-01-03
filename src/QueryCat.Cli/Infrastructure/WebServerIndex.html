@@ -53,7 +53,7 @@
 
     <router-view v-slot="{ Component }">
       <keep-alive>
-        <component :is="Component" />
+        <component :is="Component"></component>
       </keep-alive>
     </router-view>
   </div>
@@ -72,6 +72,7 @@
           :ref="query">
           <div>
             <q-btn type="submit" label="Run" size="sm" color="primary" class="q-ma-xs" icon="send"></q-btn>
+            <q-btn label="Reset" size="sm" color="secondary" class="q-ma-xs" icon="clear_all" @click.native="reset()"></q-btn>
           </div>
           <textarea
             v-model="query"
