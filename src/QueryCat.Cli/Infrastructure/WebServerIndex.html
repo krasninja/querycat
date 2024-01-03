@@ -68,7 +68,8 @@
         <q-form
           @submit.prevent="runQuery"
           method="post"
-          class="full-height">
+          class="full-height"
+          :ref="query">
           <div>
             <q-btn type="submit" label="Run" size="sm" color="primary" class="q-ma-xs" icon="send"></q-btn>
           </div>
@@ -167,6 +168,11 @@
             <q-td key="size" :props="props">
               {{ props.row.size_pretty }}
             </q-td>
+            <q-td key="actions" :props="props">
+              <router-link
+                @click.native="setPathQuery(props.row.path)"
+                :to="{ path: 'query' }">[ query ]</router-link>
+            </q-td>
           </q-tr>
         </template>
       </q-table>
@@ -185,6 +191,7 @@
         history: VueRouter.createWebHashHistory(),
         routes: [
           { path: '/', component: queryPage },
+          { path: '/query', component: queryPage },
           { path: '/info', component: infoPage },
           { path: '/files', component: filesPage }
         ]
@@ -196,8 +203,7 @@
         },
         function(error) {
           var errorMessage = error.message;
-          if (error.response && error.response.data && error.response.data.message)
-          {
+          if (error.response && error.response.data && error.response.data.message) {
             errorMessage = error.response.data.message;
           }
           Quasar.Notify.create({
@@ -228,6 +234,7 @@
       });
       app.use(router);
       app.mount('#q-app');
+      window.app = app;
     });
   </script>
   <script>

@@ -3,7 +3,7 @@
  */
 const queryPage = {
     template: document.querySelector('#query-page'),
-    data() {
+    data: function() {
         return {
             query: Vue.ref(''),
             rows: [],
@@ -36,6 +36,13 @@ const queryPage = {
                     self.rows = response.data.data;
                     localStorage.setItem('lastQuery', self.query);
                 });
+        },
+        reset: function() {
+            this.query = '';
+            this.rows = [];
+            this.filter = '';
+            this.columns = [];
+            this.schema = [];
         }
     },
     setup: function() {
@@ -47,13 +54,25 @@ const queryPage = {
         }
     },
     mounted: function() {
-        this.query = localStorage.getItem('lastQuery');
+        const self = this;
+        self.query = localStorage.getItem('lastQuery');
         if (location.protocol !== 'https:') {
             Quasar.Notify.create({
                 type: 'warning',
                 message: 'You are using insecure HTTP connection!'
             });
         }
+    },
+    beforeRouteEnter: function(to, from, next) {
+        const globalProperties = window.app.config.globalProperties;
+        next(function(vm){
+            if (globalProperties.path) {
+                vm.reset();
+                vm.query = 'SELECT * FROM \'' + globalProperties.path + '\';';
+                vm.runQuery();
+                globalProperties.path = '';
+            }
+        });
     }
 }
 
@@ -114,6 +133,12 @@ const filesPage = {
                 align: 'left',
                 headerStyle: 'font-weight: bold',
                 sortable: true
+            }, {
+                name: 'actions',
+                label: 'Actions',
+                align: 'left',
+                headerStyle: 'font-weight: bold',
+                sortable: false
             }]
         }
     },
@@ -168,6 +193,9 @@ const filesPage = {
             this.pathElements = elements.filter(function (el) {
                 return el.length > 0;
             });
+        },
+        setPathQuery: function(path) {
+            app.config.globalProperties.path = path;
         }
     },
     mounted: function() {
