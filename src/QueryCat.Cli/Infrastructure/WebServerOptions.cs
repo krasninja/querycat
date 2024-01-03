@@ -1,3 +1,5 @@
+using System.Net;
+
 namespace QueryCat.Cli.Infrastructure;
 
 internal sealed class WebServerOptions
@@ -7,4 +9,6 @@ internal sealed class WebServerOptions
     public string Password { get; set; } = string.Empty;
 
     public string FilesRoot { get; set; } = string.Empty;
+
+    public IPAddress[] AllowedAddresses { get; set; } = Array.Empty<IPAddress>();
 }

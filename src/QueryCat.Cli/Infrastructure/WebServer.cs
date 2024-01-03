@@ -32,7 +32,7 @@ internal sealed partial class WebServer
     /// <summary>
     /// MIME types conversion table.
     /// </summary>
-    private static IDictionary<string, string> _mimeTypeMappings =
+    private static readonly IDictionary<string, string> _mimeTypeMappings =
         new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase)
         {
             [".asf"] = "video/x-ms-asf",
@@ -81,6 +81,7 @@ internal sealed partial class WebServer
     private readonly IExecutionThread _executionThread;
     private readonly string? _password;
     private readonly string? _filesRoot;
+    private readonly IPAddress[] _allowedAddresses;
 
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(WebServer));
 
@@ -102,6 +103,7 @@ internal sealed partial class WebServer
         _executionThread = executionThread;
         _password = options.Password;
         _filesRoot = options.FilesRoot;
+        _allowedAddresses = options.AllowedAddresses;
         Uri = options.Urls ?? DefaultEndpointUri;
     }
 
@@ -155,6 +157,15 @@ internal sealed partial class WebServer
                 response.Close();
                 return;
             }
+        }
+
+        // Validate IP.
+        if (_allowedAddresses.Any() && !_allowedAddresses.Contains(context.Request.RemoteEndPoint.Address))
+        {
+            _logger.LogInformation($"[{context.Request.RemoteEndPoint.Address}]: unauthorized access.");
+            response.StatusCode = (int)HttpStatusCode.Unauthorized;
+            response.Close();
+            return;
         }
 
         // Auth.
