@@ -9,7 +9,7 @@ using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Functions;
-using QueryCat.Backend.Core.Types.Blob;
+using QueryCat.Backend.Core.Types;
 using QueryCat.Plugins.Sdk;
 using Column = QueryCat.Plugins.Sdk.Column;
 using DataType = QueryCat.Backend.Core.Types.DataType;
@@ -300,12 +300,10 @@ public partial class ThriftPluginClient
             if (_thriftPluginClient._objectsStorage.TryGet<IBlobData>(object_handle, out var blobData)
                 && blobData != null)
             {
-                var buffer = new MemoryStream();
-                blobData.ApplyAction((b, cnt) =>
-                {
-                    buffer.Write(b);
-                }, offset, count);
-                return Task.FromResult(buffer.ToArray());
+                using var stream = blobData.GetStream();
+                var arr = new byte[stream.Length];
+                _ = stream.Read(arr, 0, arr.Length);
+                return Task.FromResult(arr);
             }
             throw new QueryCatPluginException(ErrorType.INVALID_OBJECT, "Object is not a BLOB.");
         }

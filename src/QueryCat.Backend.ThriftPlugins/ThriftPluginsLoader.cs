@@ -7,9 +7,11 @@ using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Plugins;
+using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Core.Utils;
 using QueryCat.Plugins.Client;
 using QueryCat.Plugins.Sdk;
+using VariantValue = QueryCat.Plugins.Sdk.VariantValue;
 
 namespace QueryCat.Backend.ThriftPlugins;
 
@@ -509,7 +511,7 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         }
         if (result.Object.Type == ObjectType.BLOB)
         {
-            return new RemoteBlobData(result.Object.Handle, context.Client);
+            return new StreamBlobData(() => new RemoteStream(result.Object.Handle, context.Client));
         }
         throw new PluginException($"Cannot create object. Type = {result.Object.Type}.");
     }

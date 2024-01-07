@@ -1,5 +1,4 @@
 using System.Globalization;
-using QueryCat.Backend.Core.Types.Blob;
 
 namespace QueryCat.Backend.Core.Types;
 

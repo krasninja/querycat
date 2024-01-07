@@ -2,9 +2,11 @@ using System;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using QueryCat.Backend.Core.Data;
-using QueryCat.Backend.Core.Types.Blob;
+using QueryCat.Backend.Core.Types;
 using QueryCat.Plugins.Sdk;
 using Column = QueryCat.Plugins.Sdk.Column;
+using DataType = QueryCat.Plugins.Sdk.DataType;
+using VariantValue = QueryCat.Plugins.Sdk.VariantValue;
 
 namespace QueryCat.Plugins.Client;
 
