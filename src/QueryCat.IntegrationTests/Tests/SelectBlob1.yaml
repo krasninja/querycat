@@ -1,0 +1,4 @@
+expected: |
+  313233333435
+query: |
+  select '123'::blob || '345'::blob;
