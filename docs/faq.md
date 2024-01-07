@@ -39,3 +39,7 @@ The QueryCat is not a true database engine. It doesn't know anything about input
 1. Reorder join statements. Try to move most slow input sources to the right.
 2. Save slow input sources into files first.
 3. Create the GitHub issue with the detailed information. It might be an application bug.
+
+## Does it send any local or personal information
+
+The QueryCat does not send any local or personal information to the author or any company.
