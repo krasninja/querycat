@@ -83,7 +83,7 @@ const queryPage = {
         next(function(vm){
             if (globalProperties.path) {
                 vm.reset();
-                vm.query = 'SELECT * FROM \'' + globalProperties.path + '\';';
+                vm.query = 'SELECT TOP 200 * FROM \'' + globalProperties.path + '\';';
                 vm.runQuery();
                 globalProperties.path = '';
             }
