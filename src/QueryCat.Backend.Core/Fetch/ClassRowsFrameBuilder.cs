@@ -4,6 +4,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
 
@@ -42,11 +43,10 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
     public ClassRowsFrameBuilder<TClass> AddDataProperty(string? description = null)
     {
         var column = new Column(DataColumn, DataType.Object, description ?? "The raw data representation.");
-        _columns.Add((
+        AddOrReplaceColumn(
             column,
             obj => VariantValue.CreateFromObject(obj)
-        ));
-        AddOrReplaceColumn(column, obj => VariantValue.CreateFromObject(obj));
+        );
         return this;
     }
 
@@ -60,7 +60,7 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
     public ClassRowsFrameBuilder<TClass> AddDataPropertyAsJson(string? description = null)
     {
         var column = new Column(DataColumn, DataType.String, description ?? "The raw JSON data representation.");
-        _columns.Add((
+        AddOrReplaceColumn(
             column,
             obj =>
             {
@@ -76,8 +76,34 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
                 {
                     return VariantValue.Null;
                 }
-            }));
-        AddOrReplaceColumn(column, obj => VariantValue.CreateFromObject(obj));
+            });
+        return this;
+    }
+
+    /// <summary>
+    /// Add data property that adds source object itself as JSON.
+    /// </summary>
+    /// <param name="valueGetter">The delegate to get property JSON value by object.</param>
+    /// <param name="description">Property description.</param>
+    /// <returns>The instance of <see cref="ClassRowsFrameBuilder{TClass}" />.</returns>
+    public ClassRowsFrameBuilder<TClass> AddDataPropertyAsJson(
+        Func<TClass, JsonNode> valueGetter,
+        string? description = null)
+    {
+        var column = new Column(DataColumn, DataType.String, description ?? "The raw JSON data representation.");
+        AddOrReplaceColumn(
+            column,
+            obj =>
+            {
+                try
+                {
+                    return VariantValue.CreateFromObject(valueGetter.Invoke(obj));
+                }
+                catch (JsonException)
+                {
+                    return VariantValue.Null;
+                }
+            });
         return this;
     }
 

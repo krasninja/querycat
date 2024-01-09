@@ -279,6 +279,10 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
                 return Null;
             }
         }
+        if (obj is JsonNode jsonNode)
+        {
+            return new VariantValue(jsonNode.ToString());
+        }
         if (obj is IBlobData blobData)
         {
             return new VariantValue(blobData);
