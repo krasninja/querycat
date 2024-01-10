@@ -4,6 +4,7 @@ using QueryCat.Backend;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Execution;
 using QueryCat.Cli.Commands.Options;
+using QueryCat.Cli.Infrastructure;
 #if ENABLE_PLUGINS && PLUGIN_THRIFT
 using QueryCat.Backend.ThriftPlugins;
 using QueryCat.Plugins.Client;
@@ -33,7 +34,7 @@ internal class PluginDebugCommand : BaseQueryCommand
             using var cts = new CancellationTokenSource();
 
             options.PluginDirectories.AddRange(applicationOptions.PluginDirectories);
-            options.DefaultRowsOutput = new Backend.Formatters.PagingOutput(tableOutput, cts: cts);
+            options.DefaultRowsOutput = new PagingOutput(tableOutput, cts: cts);
 
             using var thread = new ExecutionThreadBootstrapper(options)
                 .WithConfigStorage(new PersistentInputConfigStorage(

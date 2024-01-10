@@ -3,6 +3,7 @@ using QueryCat.Backend;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Formatters;
 using QueryCat.Cli.Commands.Options;
+using QueryCat.Cli.Infrastructure;
 
 namespace QueryCat.Cli.Commands;
 

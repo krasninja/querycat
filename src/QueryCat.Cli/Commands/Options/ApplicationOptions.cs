@@ -92,8 +92,8 @@ internal class ApplicationOptions
             stream: Stdio.GetConsoleOutput(),
             separator: columnsSeparator,
             style: outputStyle);
-        root.Thread.Options.DefaultRowsOutput = new Backend.Formatters.PagingOutput(
-            tableOutput, pagingRowsCount: Backend.Formatters.PagingOutput.NoLimit, cts: root.CancellationTokenSource);
+        root.Thread.Options.DefaultRowsOutput = new PagingOutput(
+            tableOutput, pagingRowsCount: PagingOutput.NoLimit, cts: root.CancellationTokenSource);
         return root;
     }
 

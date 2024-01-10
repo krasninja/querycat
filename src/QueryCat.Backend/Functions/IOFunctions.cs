@@ -401,22 +401,16 @@ internal static class IOFunctions
     #region Stdio
 
     [Description("Write data to the system standard output.")]
-    [FunctionSignature("stdout(fmt?: object<IRowsFormatter>, page_size: integer = 10): object<IRowsOutput>")]
+    [FunctionSignature("stdout(fmt?: object<IRowsFormatter>): object<IRowsOutput>")]
     public static VariantValue Stdout(FunctionCallInfo args)
     {
         var formatter = args.GetAt(0).AsObject as IRowsFormatter;
-        var pageSize = (int)args.GetAt(1).AsInteger;
 
         var stream = Stdio.GetConsoleOutput();
         formatter ??= new TextTableFormatter();
         var output = formatter.OpenOutput(stream);
-        var pagingOutput = new PagingOutput(output)
-        {
-            PagingRowsCount = pageSize,
-        };
-        pagingOutput.PagingRowsCount = pageSize;
 
-        return VariantValue.CreateFromObject(pagingOutput);
+        return VariantValue.CreateFromObject(output);
     }
 
     [Description("Read data from the system standard input.")]
