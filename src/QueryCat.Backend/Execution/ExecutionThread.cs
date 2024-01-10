@@ -150,6 +150,7 @@ public class ExecutionThread : IExecutionThread
         var executeEventArgs = new ExecuteEventArgs();
         while (ExecutingStatement != null)
         {
+            // Evaluate the command.
             var commandContext = _statementsVisitor.RunAndReturn(ExecutingStatement);
             if (commandContext is IDisposable disposable)
             {
@@ -168,6 +169,7 @@ public class ExecutionThread : IExecutionThread
                 break;
             }
 
+            // Run the command.
             LastResult = commandContext.Invoke();
 
             // Fire "after" event.
@@ -182,11 +184,18 @@ public class ExecutionThread : IExecutionThread
                 break;
             }
 
+            // Write result.
             if (Options.DefaultRowsOutput != NullRowsOutput.Instance)
             {
                 Write(LastResult, cancellationToken);
             }
 
+            if (cancellationToken.IsCancellationRequested)
+            {
+                break;
+            }
+
+            // Get the next statement to execute.
             ExecutingStatement = ExecutingStatement.NextNode;
         }
 
@@ -236,7 +245,7 @@ public class ExecutionThread : IExecutionThread
     private void Write(
         IRowsOutput rowsOutput,
         IRowsIterator rowsIterator,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken)
     {
         // For plain output let's adjust columns width first.
         if (rowsOutput.Options.RequiresColumnsLengthAdjust && Options.AnalyzeRowsCount > 0)
