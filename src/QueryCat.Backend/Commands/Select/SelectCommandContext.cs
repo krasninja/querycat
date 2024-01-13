@@ -217,6 +217,11 @@ internal sealed class SelectCommandContext : IDisposable
     public bool HasFinalRowsIterator { get; set; }
 
     /// <summary>
+    /// Set to <c>true</c> if there are not "SELECT *" matches.
+    /// </summary>
+    public bool HasExactColumnsSelect { get; set; }
+
+    /// <summary>
     /// The function to evaluate arguments for output.
     /// </summary>
     public IFuncUnit? OutputArgumentsFunc { get; set; }

@@ -54,7 +54,7 @@ internal sealed partial class SelectPlanner
         Pipeline_CreateDistinctOnRowsSet(context, node);
 
         // SELECT.
-        Pipeline_ResolveSelectAllStatement(context.CurrentIterator, node.ColumnsListNode);
+        Pipeline_ResolveSelectAllStatement(context, node.ColumnsListNode);
         Pipeline_ResolveSelectSourceColumns(context, node);
         Pipeline_AddSelectRowsSet(context, node.ColumnsListNode);
 
@@ -62,6 +62,7 @@ internal sealed partial class SelectPlanner
         PipelineWindow_ApplyWindowFunctions(context, node);
 
         // ORDER BY.
+        Pipeline_AddRowIdColumn(context, node.ColumnsListNode);
         Pipeline_ApplyOrderBy(context, node.OrderByNode);
 
         // INTO and SELECT.

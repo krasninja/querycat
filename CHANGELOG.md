@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Add schema and reset web UI buttons.
 - Allow restrict web UI access by IP addresses.
 
+## Fixed
+
+- Can apply expressions on "row_number" column.
+
 ## [0.5.0] - 2023-12-31
 
 ## Added

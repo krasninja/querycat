@@ -16,8 +16,9 @@ internal sealed partial class SelectPlanner
 
     #region SELECT
 
-    private static void Pipeline_ResolveSelectAllStatement(IRowsIterator rows, SelectColumnsListNode columnsNode)
+    private static void Pipeline_ResolveSelectAllStatement(SelectCommandContext context, SelectColumnsListNode columnsNode)
     {
+        context.HasExactColumnsSelect = true;
         for (int i = 0; i < columnsNode.ColumnsNodes.Count; i++)
         {
             if (columnsNode.ColumnsNodes[i] is not SelectColumnsSublistAll)
@@ -25,10 +26,12 @@ internal sealed partial class SelectPlanner
                 continue;
             }
 
+            context.HasExactColumnsSelect = false;
+            var iterator = context.CurrentIterator;
             columnsNode.ColumnsNodes.Remove(columnsNode.ColumnsNodes[i]);
-            for (var columnIndex = 0; columnIndex < rows.Columns.Length; columnIndex++)
+            for (var columnIndex = 0; columnIndex < iterator.Columns.Length; columnIndex++)
             {
-                var column = rows.Columns[columnIndex];
+                var column = iterator.Columns[columnIndex];
 
                 var astColumn = new SelectColumnsSublistExpressionNode(
                     new IdentifierExpressionNode(column.Name, column.SourceName));
@@ -165,6 +168,7 @@ internal sealed partial class SelectPlanner
                 .FirstOrDefault(c => c.RelatedSelectSublistNode == selectColumn);
             if (columnInfo == null)
             {
+                System.Diagnostics.Debug.Write("Columns info not found!");
                 continue;
             }
 
@@ -322,6 +326,29 @@ internal sealed partial class SelectPlanner
     #endregion
 
     #region Misc
+
+    private void Pipeline_AddRowIdColumn(SelectCommandContext context, SelectColumnsListNode columnsNode)
+    {
+        var isSubQuery = context.Parent != null;
+        var resultIterator = context.CurrentIterator;
+        if (ExecutionThread.Options.AddRowNumberColumn
+            && !isSubQuery
+            && resultIterator.GetColumnIndexByName(RowIdRowsIterator.ColumName) == -1)
+        {
+            var rowIdIterator = new RowIdRowsIterator(resultIterator);
+            resultIterator = rowIdIterator;
+
+            if (!context.HasExactColumnsSelect)
+            {
+                var columnInfo = context.ColumnsInfoContainer.GetByColumn(rowIdIterator.RowNumberColumn);
+                var rowNumberExpressionNode = new SelectColumnsSublistExpressionNode(
+                    new IdentifierExpressionNode(rowIdIterator.RowNumberColumn.Name));
+                columnInfo.RelatedSelectSublistNode = rowNumberExpressionNode;
+                columnsNode.ColumnsNodes.Insert(0, rowNumberExpressionNode);
+            }
+        }
+        context.SetIterator(resultIterator);
+    }
 
     private void Pipeline_ApplyStatistic(SelectCommandContext context)
     {

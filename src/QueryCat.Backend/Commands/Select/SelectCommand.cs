@@ -21,22 +21,6 @@ internal sealed class SelectCommand : ICommand
         new SelectPlanner(executionThread).CreateIterator(selectQueryNode);
         var context = selectQueryNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
 
-        // Apply row_number column.
-        ApplyRowIdIterator(executionThread, context);
-
         return new SelectCommandHandler(context);
-    }
-
-    private void ApplyRowIdIterator(ExecutionThread executionThread, SelectCommandContext bodyContext)
-    {
-        var isSubQuery = bodyContext.Parent != null;
-        var resultIterator = bodyContext.CurrentIterator;
-        if (executionThread.Options.AddRowNumberColumn
-            && !isSubQuery
-            && resultIterator.GetColumnIndexByName(RowIdRowsIterator.ColumName) == -1)
-        {
-            resultIterator = new RowIdRowsIterator(resultIterator);
-        }
-        bodyContext.SetIterator(resultIterator);
     }
 }
