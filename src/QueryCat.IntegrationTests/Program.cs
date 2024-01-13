@@ -18,6 +18,7 @@ public class Program
         {
             var name = System.Reflection.Assembly.GetEntryAssembly()?.GetName().Name;
             Console.WriteLine($"Usage: {name} <qcat exe> <test directory>");
+            return -1;
         }
 
         var qcatExecutable = args[0];
