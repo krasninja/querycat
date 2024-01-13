@@ -37,12 +37,12 @@ internal abstract class BaseQueryCommand : BaseCommand
         {
             foreach (var file in files)
             {
-                executionThread.Run(File.ReadAllText(file), cancellationToken);
+                executionThread.Run(File.ReadAllText(file), cancellationToken: cancellationToken);
             }
         }
         else
         {
-            executionThread.Run(query, cancellationToken);
+            executionThread.Run(query, cancellationToken: cancellationToken);
         }
     }
 

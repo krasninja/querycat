@@ -31,13 +31,16 @@ public class ExecutionThread : IExecutionThread
     /// <inheritdoc />
     public IInputConfigStorage ConfigStorage { get; }
 
+    private IExecutionScope _topScope;
+    private readonly IExecutionScope _rootScope;
+
     /// <summary>
     /// Root (base) thread scope.
     /// </summary>
-    internal ExecutionScope RootScope { get; }
+    internal IExecutionScope RootScope => _rootScope;
 
     /// <inheritdoc />
-    public IExecutionScope TopScope => RootScope;
+    public IExecutionScope TopScope => _topScope;
 
     /// <summary>
     /// Current executing statement.
@@ -93,25 +96,27 @@ public class ExecutionThread : IExecutionThread
         _astBuilder = astBuilder;
         _statementsVisitor = new StatementsVisitor(this);
 
-        RootScope = new ExecutionScope();
+        _rootScope = new ExecutionScope(parent: null);
+        _topScope = _rootScope;
         RunBootstrapScript(GetApplicationDirectory());
     }
 
-    public ExecutionThread(ExecutionThread executionThread)
+    public ExecutionThread(ExecutionThread executionThread) :
+        this(executionThread.Options,
+            executionThread.FunctionsManager,
+            executionThread.ConfigStorage,
+            executionThread._astBuilder)
     {
-        RootScope = new ExecutionScope();
-        Options = executionThread.Options;
+        _rootScope = new ExecutionScope(parent: null);
 #if ENABLE_PLUGINS
         PluginsManager = executionThread.PluginsManager;
 #endif
-        FunctionsManager = executionThread.FunctionsManager;
-        ConfigStorage = executionThread.ConfigStorage;
         _statementsVisitor = executionThread._statementsVisitor;
-        _astBuilder = executionThread._astBuilder;
     }
 
     /// <inheritdoc />
-    public VariantValue Run(string query, CancellationToken cancellationToken = default)
+    public VariantValue Run(string query, IDictionary<string, VariantValue>? parameters = null,
+        CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrEmpty(query))
         {
@@ -130,13 +135,48 @@ public class ExecutionThread : IExecutionThread
             stopwatch.Start();
             try
             {
+                if (parameters != null)
+                {
+                    var scope = PushScope();
+                    SetScopeVariables(scope, parameters);
+                }
                 return RunInternal(cancellationToken);
             }
             finally
             {
+                if (parameters != null)
+                {
+                    PullScope();
+                }
                 stopwatch.Stop();
                 Statistic.ExecutionTime = stopwatch.Elapsed;
             }
+        }
+    }
+
+    private IExecutionScope PushScope()
+    {
+        var scope = new ExecutionScope(TopScope);
+        _topScope = scope;
+        return scope;
+    }
+
+    private IExecutionScope? PullScope()
+    {
+        if (_topScope.Parent == null)
+        {
+            return null;
+        }
+        var oldScope = _topScope;
+        _topScope = _topScope.Parent;
+        return oldScope;
+    }
+
+    private static void SetScopeVariables(IExecutionScope scope, IDictionary<string, VariantValue> parameters)
+    {
+        foreach (var parameter in parameters)
+        {
+            scope.Variables[parameter.Key] = parameter.Value;
         }
     }
 

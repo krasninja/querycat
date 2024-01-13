@@ -155,11 +155,11 @@ internal class CreateDelegateVisitor : AstVisitor
 
         if (string.IsNullOrEmpty(node.SourceName))
         {
-            if (ExecutionThread.TopScope.Variables.ContainsKey(node.Name))
+            if (ExecutionThread.TopScope.TryGet(node.Name, out _))
             {
                 VariantValue Func()
                 {
-                    return ExecutionThread.TopScope.Variables[node.Name];
+                    return ExecutionThread.TopScope.Get(node.Name);
                 }
                 NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, node.GetDataType());
                 return;

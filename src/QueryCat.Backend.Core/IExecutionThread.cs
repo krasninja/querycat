@@ -34,6 +34,10 @@ public interface IExecutionThread : IDisposable
     /// Run text query.
     /// </summary>
     /// <param name="query">Query.</param>
+    /// <param name="parameters">Query parameters.</param>
     /// <param name="cancellationToken">Cancellation token to cancel the request execution.</param>
-    VariantValue Run(string query, CancellationToken cancellationToken = default);
+    VariantValue Run(
+        string query,
+        IDictionary<string, VariantValue>? parameters = null,
+        CancellationToken cancellationToken = default);
 }

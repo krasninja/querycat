@@ -25,7 +25,8 @@ public sealed class NullExecutionThread : IExecutionThread
     public IExecutionScope TopScope { get; } = NullExecutionScope.Instance;
 
     /// <inheritdoc />
-    public VariantValue Run(string query, CancellationToken cancellationToken = default) => VariantValue.Null;
+    public VariantValue Run(string query, IDictionary<string, VariantValue>? parameters = null,
+        CancellationToken cancellationToken = default) => VariantValue.Null;
 
     /// <inheritdoc />
     public void Dispose()

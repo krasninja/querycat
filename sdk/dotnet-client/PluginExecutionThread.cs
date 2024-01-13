@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
@@ -34,7 +35,8 @@ public sealed class PluginExecutionThread : IExecutionThread
     }
 
     /// <inheritdoc />
-    public VariantValue Run(string query, CancellationToken cancellationToken = default)
+    public VariantValue Run(string query, IDictionary<string, VariantValue>? parameters = null,
+        CancellationToken cancellationToken = default)
     {
         throw new QueryCatPluginException(ErrorType.GENERIC, "Query run is not supported within plugins.");
     }

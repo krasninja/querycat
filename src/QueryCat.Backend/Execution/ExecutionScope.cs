@@ -8,7 +8,7 @@ namespace QueryCat.Backend.Execution;
 /// </summary>
 public sealed class ExecutionScope : IExecutionScope
 {
-    private readonly ExecutionScope? _parent;
+    private readonly IExecutionScope? _parent;
 
     /// <summary>
     /// Variables array.
@@ -19,7 +19,7 @@ public sealed class ExecutionScope : IExecutionScope
     /// <inheritdoc />
     public IExecutionScope? Parent => _parent;
 
-    public ExecutionScope(ExecutionScope? parent = null)
+    public ExecutionScope(IExecutionScope? parent)
     {
         _parent = parent;
     }
