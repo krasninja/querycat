@@ -60,6 +60,7 @@ internal partial class WebServer
         {
             query = query.Substring(1, query.Length - 1);
         }
+        query = query.Replace('/', Path.DirectorySeparatorChar);
         var path = Path.Combine(_filesRoot, query);
 
         if (Directory.Exists(path))
