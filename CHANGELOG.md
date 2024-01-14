@@ -12,7 +12,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Fixed
 
-- Can apply expressions on "row_number" column.
+- Cannot apply expressions on "row_number" column.
+- Fix files download 404 problem on Windows.
+- Fix "size_pretty" function format.
+- Fix the bug when 'q' press doesn't close the app.
+- Other minor fixes.
 
 ## [0.5.0] - 2023-12-31
 

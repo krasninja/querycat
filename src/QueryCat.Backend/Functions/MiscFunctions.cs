@@ -52,12 +52,12 @@ internal static class MiscFunctions
         string[] suffix = ["B", "K", "M", "G", "T", "P", "E"];
         if (byteCount == 0)
         {
-            return new VariantValue("0" + suffix[0]);
+            return new VariantValue("0 " + suffix[0]);
         }
         var bytes = Math.Abs(byteCount);
         var place = Convert.ToInt64(Math.Floor(Math.Log(bytes, @base)));
         var num = Math.Round(bytes / Math.Pow(@base, place), 1);
-        var size = Math.Sign(byteCount) * num + ' ' + suffix[place];
+        var size = string.Concat(Math.Sign(byteCount) * num, ' ', suffix[place]);
 
         return new VariantValue(size);
     }
