@@ -8,17 +8,18 @@ internal class BasicUsage : BaseUsage
     /// <inheritdoc />
     public override void Run()
     {
-        // Add standard functions.
+        // Use "ExecutionThreadBootstrapper" class to create execution thread. It allows
+        // run queries.
         using var executionThread = new ExecutionThreadBootstrapper()
-            .WithStandardFunctions()
+            .WithStandardFunctions() // Add standard functions (math, string, JSON and others).
             .Create();
         var result = VariantValue.Null;
 
         result = executionThread.Run("1+1");
-        Console.WriteLine(result.ToString());
+        Console.WriteLine(result.AsString);
 
         result = executionThread.Run("2 + 3 * 2");
-        Console.WriteLine(result.ToString());
+        Console.WriteLine(result.AsString);
 
         result = executionThread.Run("sqrt(2) / 3");
         Console.WriteLine(result.ToString("0.00000"));
