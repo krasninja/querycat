@@ -40,13 +40,14 @@ const queryPage = {
                 self.renderResult(response.data);
             });
         },
-        runQuery: function(evt) {
+        runQuery: function(params) {
             const self = this;
             axios({
                 method: 'post',
                 url: window.baseUrl + 'api/query',
                 data: {
-                    query: self.query
+                    query: self.query,
+                    parameters: params
                 }
             }).then(function(response) {
                 self.renderResult(response.data);
@@ -81,12 +82,17 @@ const queryPage = {
     beforeRouteEnter: function(to, from, next) {
         const globalProperties = window.app.config.globalProperties;
         next(function(vm){
-            if (globalProperties.path) {
-                vm.reset();
-                vm.query = 'SELECT TOP 200 * FROM \'' + globalProperties.path + '\';';
-                vm.runQuery();
-                globalProperties.path = '';
+            if (!globalProperties.path) {
+                return;
             }
+            setTimeout(function() {
+                vm.reset();
+                vm.query = "SELECT TOP 200 * FROM '" + globalProperties.path.replaceAll("'", "''") + "';";
+                vm.runQuery([{
+                    'path': 's:' + globalProperties.path
+                }]);
+                globalProperties.path = '';
+            });
         });
     }
 }
@@ -109,12 +115,12 @@ const infoPage = {
         axios({
             url: window.baseUrl + 'api/info'
         })
-            .then(function(response) {
-                self.version = response.data.version;
-                self.os = response.data.os;
-                self.installedPlugins = response.data.installedPlugins;
-                self.platform = response.data.platform;
-            });
+        .then(function(response) {
+            self.version = response.data.version;
+            self.os = response.data.os;
+            self.installedPlugins = response.data.installedPlugins;
+            self.platform = response.data.platform;
+        });
     }
 }
 
@@ -191,9 +197,9 @@ const filesPage = {
                     q: path
                 }
             })
-                .then(function(response) {
-                    self.rows = response.data.data;
-                });
+            .then(function(response) {
+                self.rows = response.data.data;
+            });
         },
         setPathElements: function(to) {
             to = to ?? '';
