@@ -73,7 +73,7 @@ public static class DataTypeUtils
             _ => string.Empty
         };
 
-    internal static VariantValue DeserializeVariantValue(ReadOnlySpan<char> source)
+    internal static VariantValue DeserializeVariantValue(ReadOnlySpan<char> source, bool strongDeserialization = true)
     {
         if (source == "null" || source == "void")
         {
@@ -82,6 +82,12 @@ public static class DataTypeUtils
         var colonIndex = source.IndexOf(':');
         if (colonIndex == -1)
         {
+            if (!strongDeserialization)
+            {
+                var str = source.ToString();
+                var targetType = DetermineTypeByValue(str);
+                return new VariantValue(str).Cast(targetType);
+            }
             Logger.LogWarning("Invalid deserialization source.");
             return VariantValue.Null;
         }

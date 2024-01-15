@@ -2,6 +2,7 @@ using System.Collections.Frozen;
 using System.Net;
 using System.Reflection;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
@@ -246,9 +247,9 @@ internal sealed partial class WebServer
             return;
         }
 
-        var query = GetQueryFromRequest(request);
-        _logger.LogInformation($"[{request.RemoteEndPoint.Address}] Query: {query}");
-        var lastResult = _executionThread.Run(query);
+        var queryData = GetQueryDataFromRequest(request);
+        _logger.LogInformation($"[{request.RemoteEndPoint.Address}] Query: {queryData}");
+        var lastResult = _executionThread.Run(queryData.Query, queryData.ParametersAsDict);
 
         WriteIterator(ExecutionThreadUtils.ConvertToIterator(lastResult), request, response);
     }
@@ -261,7 +262,7 @@ internal sealed partial class WebServer
             return;
         }
 
-        var query = GetQueryFromRequest(request);
+        var query = GetQueryDataFromRequest(request);
         _logger.LogInformation($"[{request.RemoteEndPoint.Address}] Schema: {query}");
 
         var thread = (ExecutionThread)_executionThread;
@@ -280,7 +281,7 @@ internal sealed partial class WebServer
         try
         {
             thread.AfterStatementExecute += ThreadOnAfterStatementExecute;
-            _executionThread.Run(query);
+            _executionThread.Run(query.Query, query.ParametersAsDict);
         }
         finally
         {
@@ -320,12 +321,36 @@ internal sealed partial class WebServer
         }
     }
 
-    internal sealed class QueryWrapper
+    internal sealed class WebServerQueryData
     {
-        public string? Query { get; set; }
+        public string Query { get; set; } = string.Empty;
+
+        public List<WebServerQueryDataParameter> Parameters { get; set; } = new();
+
+        public IDictionary<string, VariantValue> ParametersAsDict => Parameters.ToDictionary(k => k.Key, k => k.Value);
+
+        public WebServerQueryData()
+        {
+        }
+
+        public WebServerQueryData(string query)
+        {
+            Query = query;
+        }
+
+        /// <inheritdoc />
+        public override string ToString() => Query;
     }
 
-    private static string GetQueryFromRequest(HttpListenerRequest request)
+    internal class WebServerQueryDataParameter
+    {
+        public string Key { get; set; } = string.Empty;
+
+        [JsonConverter(typeof(VariantValueJsonConverter))]
+        public VariantValue Value { get; set; }
+    }
+
+    private static WebServerQueryData GetQueryDataFromRequest(HttpListenerRequest request)
     {
         if (request.HttpMethod == PostMethod)
         {
@@ -334,12 +359,12 @@ internal sealed partial class WebServer
             if (request.ContentType == ContentTypeTextPlain
                 || request.ContentType == ContentTypeForm)
             {
-                return text;
+                return new WebServerQueryData(text);
             }
             else if (request.ContentType == ContentTypeJson)
             {
-                var wrapper = JsonSerializer.Deserialize(text, SourceGenerationContext.Default.QueryWrapper);
-                return wrapper?.Query ?? string.Empty;
+                return JsonSerializer.Deserialize(text, SourceGenerationContext.Default.WebServerQueryData)
+                    ?? new WebServerQueryData();
             }
         }
         else if (request.HttpMethod == GetMethod)
@@ -347,9 +372,9 @@ internal sealed partial class WebServer
             var query = request.QueryString.Get("q");
             if (!string.IsNullOrEmpty(query))
             {
-                return query;
+                return new WebServerQueryData(query);
             }
-            return request.QueryString.Get("query") ?? string.Empty;
+            return new WebServerQueryData(request.QueryString.Get("query") ?? string.Empty);
         }
         throw new QueryCatException("Incorrect content type.");
     }

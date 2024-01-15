@@ -52,7 +52,7 @@ internal partial class WebServer
             return;
         }
 
-        var query = GetQueryFromRequest(request);
+        var query = GetQueryDataFromRequest(request).Query;
 
         // Get absolute path.
         query = query.Replace("..", string.Empty);
