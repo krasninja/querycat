@@ -10,20 +10,11 @@ namespace QueryCat.Backend.Commands.Select;
 /// <summary>
 /// Contains all necessary information to handle the query on all stages.
 /// </summary>
-internal sealed class SelectCommandContext : IDisposable
+internal sealed class SelectCommandContext(SelectQueryNode queryNode) : CommandContext, IDisposable
 {
-    private static int nextId;
-
-    private readonly SelectQueryNode _queryNode;
-
-    internal int Id { get; } = Interlocked.Increment(ref nextId);
-
     public SelectQueryConditions Conditions { get; } = new();
 
-    public SelectCommandContext(SelectQueryNode queryNode)
-    {
-        _queryNode = queryNode;
-    }
+    public IExecutionScope CapturedScope { get; set; } = NullExecutionScope.Instance;
 
     #region Iterator
 
@@ -174,7 +165,11 @@ internal sealed class SelectCommandContext : IDisposable
     internal void SetParent(SelectCommandContext? context)
     {
         Parent = context;
-        Parent?.AddChildContext(this);
+        if (context != null)
+        {
+            CapturedScope = context.CapturedScope;
+            context.AddChildContext(this);
+        }
     }
 
     internal IEnumerable<T> GetParents<T>(Func<SelectCommandContext, T> func)
@@ -245,7 +240,7 @@ internal sealed class SelectCommandContext : IDisposable
             stringBuilder.AppendLine($"Children: {string.Join(", ", _childContexts.Select(c => c.Id))}");
         }
         stringBuilder.AppendLine($"Output: {columns}");
-        stringBuilder.AppendLine($"Query: {StringUtils.SafeSubstring(_queryNode.ToString(), 0, 100)}");
+        stringBuilder.AppendLine($"Query: {StringUtils.SafeSubstring(queryNode.ToString(), 0, 100)}");
         foreach (var childContext in ChildContexts)
         {
             stringBuilder.IncreaseIndent();

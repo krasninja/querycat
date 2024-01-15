@@ -104,7 +104,8 @@ internal class ResolveTypesVisitor : AstVisitor
 
     protected bool SetDataTypeFromVariable(IAstNode node, string name)
     {
-        if (ExecutionThread.TopScope.TryGet(name, out var value))
+        var scope = ExecutionThread.TopScope;
+        if (scope.TryGet(name, out var value))
         {
             node.SetAttribute(AstAttributeKeys.TypeKey, value.GetInternalType());
             return true;

@@ -50,6 +50,7 @@ internal sealed partial class SelectPlanner
     private SelectCommandContext Context_CreateInitialContext(SelectQueryNode node, SelectCommandContext? parentContext = null)
     {
         var context = new SelectCommandContext(node);
+        context.CapturedScope = ExecutionThread.TopScope;
         context.SetParent(parentContext);
         node.SetAttribute(AstAttributeKeys.ContextKey, context);
         return context;
@@ -160,7 +161,7 @@ internal sealed partial class SelectPlanner
 
     private IRowsInput[] Context_CreateInputSourceFromVariable(SelectCommandContext context, IdentifierExpressionNode idNode)
     {
-        if (!ExecutionThread.TopScope.Variables.TryGetValue(idNode.FullName, out var value))
+        if (!context.CapturedScope.TryGet(idNode.FullName, out var value))
         {
             return Array.Empty<IRowsInput>();
         }
