@@ -204,10 +204,6 @@ public sealed partial class ThriftPluginsServer : IDisposable
         _serverCts.Dispose();
         foreach (var pluginContext in _plugins)
         {
-            if (pluginContext.Client == null)
-            {
-                continue;
-            }
             pluginContext.Shutdown();
         }
     }
