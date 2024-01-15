@@ -89,7 +89,8 @@ const queryPage = {
                 vm.reset();
                 vm.query = "SELECT TOP 200 * FROM '" + globalProperties.path.replaceAll("'", "''") + "';";
                 vm.runQuery([{
-                    'path': 's:' + globalProperties.path
+                    key: '_path',
+                    value: 's:' + globalProperties.path
                 }]);
                 globalProperties.path = '';
             });
