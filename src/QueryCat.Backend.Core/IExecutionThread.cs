@@ -41,3 +41,15 @@ public interface IExecutionThread : IDisposable
         IDictionary<string, VariantValue>? parameters = null,
         CancellationToken cancellationToken = default);
 }
+
+/// <summary>
+/// Execution thread with options.
+/// </summary>
+/// <typeparam name="TOptions">Options type.</typeparam>
+public interface IExecutionThread<out TOptions> : IExecutionThread
+{
+    /// <summary>
+    /// Application options.
+    /// </summary>
+    TOptions Options { get; }
+}

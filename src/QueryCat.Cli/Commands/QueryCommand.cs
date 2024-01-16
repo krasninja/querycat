@@ -70,7 +70,7 @@ internal class QueryCommand : BaseQueryCommand
                 separator: queryOptions.ColumnsSeparator,
                 style: queryOptions.OutputStyle,
                 floatNumberFormat: queryOptions.FloatNumberFormat);
-            var options = new ExecutionOptions
+            var options = new AppExecutionOptions
             {
                 AddRowNumberColumn = queryOptions.RowNumberOption,
                 ShowDetailedStatistic = queryOptions.DetailedStatistic,

@@ -26,7 +26,7 @@ internal class PluginDebugCommand : BaseQueryCommand
             applicationOptions.InitializeLogger();
             var tableOutput = new Backend.Formatters.TextTableOutput(
                 stream: Stdio.GetConsoleOutput());
-            var options = new ExecutionOptions
+            var options = new AppExecutionOptions
             {
                 UseConfig = true,
                 RunBootstrapScript = true,

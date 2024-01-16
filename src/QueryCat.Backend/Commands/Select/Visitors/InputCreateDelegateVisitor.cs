@@ -25,7 +25,7 @@ internal class InputCreateDelegateVisitor : CreateDelegateVisitor
         _context = context;
         _leftInput = leftInput;
         _rightInput = rightInput;
-        _rowsInputs = new[] { leftInput, rightInput };
+        _rowsInputs = [leftInput, rightInput];
     }
 
     /// <inheritdoc />

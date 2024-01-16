@@ -17,7 +17,7 @@ namespace QueryCat.Backend.Execution;
 /// <summary>
 /// Execution thread that includes statements to be executed, local variables, options and statistic.
 /// </summary>
-public class ExecutionThread : IExecutionThread
+public class ExecutionThread : IExecutionThread<ExecutionOptions>
 {
     private readonly IAstBuilder _astBuilder;
     internal const string ApplicationDirectory = "qcat";

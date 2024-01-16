@@ -1,11 +1,11 @@
 using QueryCat.Backend.Core.Data;
 
-namespace QueryCat.Backend.Execution;
+namespace QueryCat.Backend;
 
 /// <summary>
 /// Execution options.
 /// </summary>
-public sealed class ExecutionOptions
+public class ExecutionOptions
 {
     /// <summary>
     /// Default output target if INTO clause is not specified.
@@ -26,18 +26,6 @@ public sealed class ExecutionOptions
     /// Max number of errors before query abort.
     /// </summary>
     public int MaxErrors { get; set; } = -1;
-
-#if ENABLE_PLUGINS
-    /// <summary>
-    /// List of directories to search for plugins.
-    /// </summary>
-    public List<string> PluginDirectories { get; } = new();
-
-    /// <summary>
-    /// Plugins repository. If empty - default will be used.
-    /// </summary>
-    public string? PluginsRepositoryUri { get; init; }
-#endif
 
     /// <summary>
     /// Do not save/load config.

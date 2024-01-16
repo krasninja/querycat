@@ -22,9 +22,9 @@ internal class ApplicationOptions
     public string[] PluginDirectories { get; init; } = Array.Empty<string>();
 #endif
 
-    public ApplicationRoot CreateApplicationRoot(ExecutionOptions? executionOptions = null)
+    public ApplicationRoot CreateApplicationRoot(AppExecutionOptions? executionOptions = null)
     {
-        executionOptions ??= new ExecutionOptions
+        executionOptions ??= new AppExecutionOptions
         {
             RunBootstrapScript = true,
             UseConfig = true,
@@ -83,7 +83,7 @@ internal class ApplicationOptions
     }
 
     public ApplicationRoot CreateStdoutApplicationRoot(
-        ExecutionOptions? executionOptions = null,
+        AppExecutionOptions? executionOptions = null,
         string? columnsSeparator = null,
         Backend.Formatters.TextTableOutput.Style outputStyle = Backend.Formatters.TextTableOutput.Style.Table1)
     {
