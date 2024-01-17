@@ -1,9 +1,8 @@
-using QueryCat.Backend;
 using Xunit;
+using QueryCat.Backend;
 using QueryCat.Backend.Commands.Update;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Execution;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Storage;
 

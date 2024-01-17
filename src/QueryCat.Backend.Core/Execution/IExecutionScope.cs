@@ -1,6 +1,6 @@
 using QueryCat.Backend.Core.Types;
 
-namespace QueryCat.Backend.Core;
+namespace QueryCat.Backend.Core.Execution;
 
 /// <summary>
 /// The execution scope contains variables, variables names and parent scope.

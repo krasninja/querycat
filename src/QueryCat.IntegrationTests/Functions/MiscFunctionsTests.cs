@@ -1,5 +1,5 @@
 using Xunit;
-using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Functions;
 using QueryCat.Tests.QueryRunner;
 

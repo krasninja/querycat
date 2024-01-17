@@ -3,7 +3,7 @@ using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Plugins;
 using QueryCat.Backend.Core.Types;
 
-namespace QueryCat.Backend.Core;
+namespace QueryCat.Backend.Core.Execution;
 
 /// <summary>
 /// The execution thread allows to run string commands.

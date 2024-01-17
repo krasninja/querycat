@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Reflection;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Core.Functions;

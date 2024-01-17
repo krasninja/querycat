@@ -1,7 +1,7 @@
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 
-namespace QueryCat.Backend.Core;
+namespace QueryCat.Backend.Core.Execution;
 
 /// <summary>
 /// Extensions for <see cref="IExecutionThread" />.

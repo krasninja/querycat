@@ -1,6 +1,6 @@
 using QueryCat.Backend.Core.Types;
 
-namespace QueryCat.Backend.Core;
+namespace QueryCat.Backend.Core.Execution;
 
 /// <summary>
 /// Execution scope that does nothing.

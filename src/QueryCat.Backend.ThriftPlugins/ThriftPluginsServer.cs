@@ -9,6 +9,7 @@ using Thrift.Transport;
 using Thrift.Transport.Server;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Plugins;
 
 namespace QueryCat.Backend.ThriftPlugins;

@@ -1,5 +1,5 @@
 using Xunit;
-using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Formatters;

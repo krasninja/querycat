@@ -1,3 +1,4 @@
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Core.Functions;
