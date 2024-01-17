@@ -112,7 +112,6 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
             configStorage: _inputConfigStorage,
             astBuilder: new AstBuilder()
         );
-        thread.Statistic.CountErrorRows = thread.Options.ShowDetailedStatistic;
 
         // Register functions.
         if (_registerStandardLibrary)

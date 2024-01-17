@@ -96,7 +96,7 @@ internal class QueryCommand : BaseQueryCommand
             if (queryOptions.Statistic || queryOptions.DetailedStatistic)
             {
                 Console.WriteLine(new string('-', 5));
-                Console.WriteLine(root.Thread.Statistic.ToString());
+                Console.WriteLine(root.Thread.Statistic.Dump(queryOptions.DetailedStatistic));
             }
         },
             new ApplicationOptionsBinder(LogLevelOption, PluginDirectoriesOption),

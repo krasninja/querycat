@@ -16,22 +16,22 @@ public sealed class ExecutionStatistic
     /// <summary>
     /// Detailed row error info.
     /// </summary>
-    public readonly struct RowErrorInfo
+    public readonly struct RowErrorInfo(
+        ErrorCode errorCode,
+        long rowIndex,
+        int columnIndex,
+        string? value = null)
     {
-        public long RowIndex { get; }
+        public long RowIndex { get; } = rowIndex;
 
-        public int ColumnIndex { get; }
+        public int ColumnIndex { get; } = columnIndex;
 
-        public ErrorCode ErrorCode { get; }
+        public ErrorCode ErrorCode { get; } = errorCode;
 
-        public string Value { get; }
+        public string Value { get; } = value ?? string.Empty;
 
-        public RowErrorInfo(long rowIndex, int columnIndex, ErrorCode errorCode, string? value = null)
+        public RowErrorInfo(ErrorCode errorCode) : this(errorCode, -1, -1)
         {
-            RowIndex = rowIndex;
-            ColumnIndex = columnIndex;
-            ErrorCode = errorCode;
-            Value = value ?? string.Empty;
         }
     }
 
@@ -50,7 +50,7 @@ public sealed class ExecutionStatistic
     /// <summary>
     /// Errors count.
     /// </summary>
-    public long ErrorsCount { get; internal set; }
+    public long ErrorsCount { get; private set; }
 
     /// <summary>
     /// Does it have errors.
@@ -63,37 +63,20 @@ public sealed class ExecutionStatistic
     public IReadOnlyList<RowErrorInfo> ErrorRows => _errorRows;
 
     /// <summary>
-    /// Save rows with errors and show them in statistic.
-    /// </summary>
-    public bool CountErrorRows { get; set; }
-
-    /// <summary>
     /// Add error to the query statistic.
     /// </summary>
-    /// <param name="code">Error code.</param>
-    public void IncrementErrorsCount(ErrorCode code)
+    /// <param name="info">Errors info.</param>
+    public void AddError(in RowErrorInfo info)
     {
-        if (code == ErrorCode.OK)
+        if (info.ErrorCode == ErrorCode.OK)
         {
             return;
         }
         ErrorsCount++;
-        _statistic.AddOrUpdate(code, _ => 1, (_, value) => ++value);
-    }
-
-    /// <summary>
-    /// Add error to the query statistic.
-    /// </summary>
-    /// <param name="code">Error code.</param>
-    /// <param name="row">Row index.</param>
-    /// <param name="column">Column index.</param>
-    /// <param name="value">Error value.</param>
-    public void IncrementErrorsCount(ErrorCode code, long row, int column, string? value = null)
-    {
-        IncrementErrorsCount(code);
-        if (CountErrorRows)
+        _statistic.AddOrUpdate(info.ErrorCode, _ => 1, (_, value) => ++value);
+        if (info.RowIndex > -1)
         {
-            _errorRows.Add(new RowErrorInfo(row, column, code, value));
+            _errorRows.Add(info);
         }
     }
 
@@ -108,8 +91,11 @@ public sealed class ExecutionStatistic
         _statistic.Clear();
     }
 
-    /// <inheritdoc />
-    public override string ToString()
+    /// <summary>
+    /// Dump statistic as string.
+    /// </summary>
+    /// <returns>Statistic info.</returns>
+    public string Dump(bool detailed)
     {
         var sb = new StringBuilder();
         sb.AppendLine("Execution time: " + ExecutionTime);
@@ -125,7 +111,7 @@ public sealed class ExecutionStatistic
             }
         }
 
-        if (CountErrorRows && _errorRows.Any())
+        if (detailed && _errorRows.Any())
         {
             sb.AppendLine(new string('-', 5));
             sb.AppendLine("Rows with error(-s):");
@@ -140,4 +126,7 @@ public sealed class ExecutionStatistic
 
         return sb.ToString();
     }
+
+    /// <inheritdoc />
+    public override string ToString() => $"Execution time: {ExecutionTime}, rows processed: {ProcessedCount}";
 }

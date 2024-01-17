@@ -393,9 +393,6 @@ internal class CreateDelegateVisitor : AstVisitor
 
     protected void ApplyStatistic(ErrorCode code)
     {
-        if (code != ErrorCode.OK)
-        {
-            ExecutionThread.Statistic.IncrementErrorsCount(code);
-        }
+        ExecutionThread.Statistic.AddError(new ExecutionStatistic.RowErrorInfo(code));
     }
 }
