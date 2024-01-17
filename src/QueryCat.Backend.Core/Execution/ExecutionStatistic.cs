@@ -15,12 +15,12 @@ public abstract class ExecutionStatistic
         string? value = null)
     {
         /// <summary>
-        /// Zero-based row index.
+        /// One-based row index.
         /// </summary>
         public long RowIndex { get; } = rowIndex;
 
         /// <summary>
-        /// Zero-based column index.
+        /// One-based column index.
         /// </summary>
         public int ColumnIndex { get; } = columnIndex;
 
