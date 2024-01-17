@@ -1,4 +1,5 @@
 using Xunit;
+using QueryCat.Backend;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
@@ -12,7 +13,7 @@ namespace QueryCat.IntegrationTests;
 /// </summary>
 public sealed class Tests : IDisposable
 {
-    private readonly IExecutionThread _testThread;
+    private readonly IExecutionThread<ExecutionOptions> _testThread;
 
     public Tests()
     {

@@ -1,5 +1,5 @@
 using QueryCat.Backend.Ast.Nodes;
-using QueryCat.Backend.Execution;
+using QueryCat.Backend.Core.Execution;
 
 namespace QueryCat.Backend.Commands;
 
@@ -14,5 +14,5 @@ internal interface ICommand
     /// <param name="executionThread">Current execution thread.</param>
     /// <param name="node">Statement node.</param>
     /// <returns>Instance of <see cref="IFuncUnit" />.</returns>
-    IFuncUnit CreateHandler(ExecutionThread executionThread, StatementNode node);
+    IFuncUnit CreateHandler(IExecutionThread<ExecutionOptions> executionThread, StatementNode node);
 }

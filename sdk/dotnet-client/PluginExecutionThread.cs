@@ -27,6 +27,9 @@ public sealed class PluginExecutionThread : IExecutionThread
     /// <inheritdoc />
     public IExecutionScope TopScope { get; } = NullExecutionScope.Instance;
 
+    /// <inheritdoc />
+    public ExecutionStatistic Statistic { get; } = NullExecutionStatistic.Instance;
+
     public PluginExecutionThread(PluginsManager.Client client)
     {
         PluginsManager = NullPluginsManager.Instance;

@@ -3,7 +3,7 @@ using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Commands.Select.Iterators;
 using QueryCat.Backend.Core.Data;
-using QueryCat.Backend.Execution;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Indexes;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Relational.Iterators;
@@ -370,9 +370,16 @@ internal sealed partial class SelectPlanner
         }
         context.RowsInputIterator.OnError += (_, args) =>
         {
-            var rowIndex = ExecutionThread.Options.ShowDetailedStatistic ? args.RowIndex : -1;
-            ExecutionThread.Statistic.AddError(
-                new ExecutionStatistic.RowErrorInfo(args.ErrorCode, rowIndex, args.ColumnIndex));
+            if (ExecutionThread.Options.ShowDetailedStatistic)
+            {
+                ExecutionThread.Statistic.AddError(
+                    new ExecutionStatistic.RowErrorInfo(args.ErrorCode, args.RowIndex, args.ColumnIndex));
+            }
+            else
+            {
+                ExecutionThread.Statistic.AddError(
+                    new ExecutionStatistic.RowErrorInfo(args.ErrorCode));
+            }
         };
     }
 

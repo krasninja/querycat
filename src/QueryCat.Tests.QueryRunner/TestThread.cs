@@ -2,7 +2,6 @@ using System.Globalization;
 using QueryCat.Backend;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Utils;
-using QueryCat.Backend.Execution;
 using QueryCat.Backend.Formatters;
 using QueryCat.Backend.Storage;
 
@@ -58,9 +57,9 @@ public static class TestThread
     /// Get last query execution result as string.
     /// </summary>
     /// <returns>Result.</returns>
-    public static string GetQueryResult(IExecutionThread executionThread)
+    public static string GetQueryResult(IExecutionThread<ExecutionOptions> executionThread)
     {
-        var options = ((ExecutionThread)executionThread).Options;
+        var options = executionThread.Options;
         var stream = (MemoryStream)((DsvOutput)options.DefaultRowsOutput).Stream;
         stream.Seek(0, SeekOrigin.Begin);
         using var sr = new StreamReader(stream);

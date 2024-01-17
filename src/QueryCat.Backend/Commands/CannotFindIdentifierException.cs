@@ -1,6 +1,6 @@
 using QueryCat.Backend.Core;
 
-namespace QueryCat.Backend.Execution;
+namespace QueryCat.Backend.Commands;
 
 /// <summary>
 /// The exception occurs when application cannot find

@@ -1,7 +1,7 @@
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Core.Data;
-using QueryCat.Backend.Execution;
+using QueryCat.Backend.Core.Execution;
 
 namespace QueryCat.Backend.Commands.Select.Visitors;
 
@@ -10,11 +10,11 @@ internal class InputResolveTypesVisitor : ResolveTypesVisitor
     private readonly IRowsInput[] _rowsInputs;
 
     /// <inheritdoc />
-    public InputResolveTypesVisitor(ExecutionThread executionThread, IRowsInput leftInput,
+    public InputResolveTypesVisitor(IExecutionThread<ExecutionOptions> executionThread, IRowsInput leftInput,
         IRowsInput rightInput)
         : base(executionThread)
     {
-        _rowsInputs = new[] { leftInput, rightInput };
+        _rowsInputs = [leftInput, rightInput];
     }
 
     /// <inheritdoc />

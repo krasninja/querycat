@@ -12,7 +12,7 @@ namespace QueryCat.IntegrationTests.Execution;
 /// </summary>
 public class ExecutionThreadTests
 {
-    private readonly IExecutionThread _testThread;
+    private readonly ExecutionThread _testThread;
 
     public ExecutionThreadTests()
     {

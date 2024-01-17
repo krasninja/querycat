@@ -8,7 +8,6 @@ using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Execution;
 
 namespace QueryCat.Backend.Commands;
 
@@ -17,9 +16,9 @@ namespace QueryCat.Backend.Commands;
 /// </summary>
 internal class ResolveTypesVisitor : AstVisitor
 {
-    protected ExecutionThread ExecutionThread { get; }
+    protected IExecutionThread<ExecutionOptions> ExecutionThread { get; }
 
-    public ResolveTypesVisitor(ExecutionThread executionThread)
+    public ResolveTypesVisitor(IExecutionThread<ExecutionOptions> executionThread)
     {
         ExecutionThread = executionThread;
     }

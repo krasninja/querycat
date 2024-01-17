@@ -47,15 +47,11 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
     /// </summary>
     internal StatementNode? ExecutingStatement { get; set; }
 
-    /// <summary>
-    /// Execution options.
-    /// </summary>
+    /// <inheritdoc />
     public ExecutionOptions Options { get; }
 
-    /// <summary>
-    /// Statistic.
-    /// </summary>
-    public ExecutionStatistic Statistic { get; } = new();
+    /// <inheritdoc />
+    public ExecutionStatistic Statistic { get; } = new DefaultExecutionStatistic();
 
     /// <inheritdoc />
     public IFunctionsManager FunctionsManager { get; }

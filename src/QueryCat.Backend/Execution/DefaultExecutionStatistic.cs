@@ -1,72 +1,23 @@
 using System.Text;
 using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Execution;
 
 namespace QueryCat.Backend.Execution;
 
 /// <summary>
 /// The class contains execution statistic (execution time, errors, etc).
 /// </summary>
-public sealed class ExecutionStatistic
+public sealed class DefaultExecutionStatistic : ExecutionStatistic
 {
     /// <summary>
     /// Errors total count by codes.
     /// </summary>
     private readonly Dictionary<ErrorCode, long> _statistic = new();
 
-    /// <summary>
-    /// Detailed row error info.
-    /// </summary>
-    public readonly struct RowErrorInfo(
-        ErrorCode errorCode,
-        long rowIndex,
-        int columnIndex,
-        string? value = null)
-    {
-        public long RowIndex { get; } = rowIndex;
-
-        public int ColumnIndex { get; } = columnIndex;
-
-        public ErrorCode ErrorCode { get; } = errorCode;
-
-        public string Value { get; } = value ?? string.Empty;
-
-        public RowErrorInfo(ErrorCode errorCode) : this(errorCode, -1, -1)
-        {
-        }
-    }
-
     private readonly List<RowErrorInfo> _errorRows = new();
 
-    /// <summary>
-    /// Query processing execution time.
-    /// </summary>
-    public TimeSpan ExecutionTime { get; internal set; }
-
-    /// <summary>
-    /// Total number of processed rows.
-    /// </summary>
-    public long ProcessedCount { get; internal set; }
-
-    /// <summary>
-    /// Errors count.
-    /// </summary>
-    public long ErrorsCount { get; private set; }
-
-    /// <summary>
-    /// Does it have errors.
-    /// </summary>
-    public bool HasErrors => ErrorsCount > 0;
-
-    /// <summary>
-    /// Rows indexes with error details.
-    /// </summary>
-    public IReadOnlyList<RowErrorInfo> ErrorRows => _errorRows;
-
-    /// <summary>
-    /// Add error to the query statistic.
-    /// </summary>
-    /// <param name="info">Errors info.</param>
-    public void AddError(in RowErrorInfo info)
+    /// <inheritdoc />
+    public override void AddError(in RowErrorInfo info)
     {
         if (info.ErrorCode == ErrorCode.OK)
         {
@@ -80,22 +31,15 @@ public sealed class ExecutionStatistic
         }
     }
 
-    /// <summary>
-    /// Clear.
-    /// </summary>
-    public void Clear()
+    /// <inheritdoc />
+    public override void Clear()
     {
-        ExecutionTime = TimeSpan.Zero;
-        ProcessedCount = 0;
-        ErrorsCount = 0;
+        base.Clear();
         _statistic.Clear();
     }
 
-    /// <summary>
-    /// Dump statistic as string.
-    /// </summary>
-    /// <returns>Statistic info.</returns>
-    public string Dump(bool detailed)
+    /// <inheritdoc />
+    public override string Dump()
     {
         var sb = new StringBuilder();
         sb.AppendLine("Execution time: " + ExecutionTime);
@@ -111,7 +55,7 @@ public sealed class ExecutionStatistic
             }
         }
 
-        if (detailed && _errorRows.Any())
+        if (_errorRows.Any())
         {
             sb.AppendLine(new string('-', 5));
             sb.AppendLine("Rows with error(-s):");

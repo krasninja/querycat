@@ -1,8 +1,8 @@
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Select;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Execution;
 
 namespace QueryCat.Backend.Commands.Select.Visitors;
 
@@ -11,7 +11,7 @@ internal sealed class SelectResolveTypesVisitor : ResolveTypesVisitor
     private readonly SelectCommandContext _context;
 
     /// <inheritdoc />
-    public SelectResolveTypesVisitor(ExecutionThread executionThread, SelectCommandContext context) :
+    public SelectResolveTypesVisitor(IExecutionThread<ExecutionOptions> executionThread, SelectCommandContext context) :
         base(executionThread)
     {
         _context = context;

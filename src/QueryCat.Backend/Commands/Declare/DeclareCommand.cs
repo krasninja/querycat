@@ -1,8 +1,8 @@
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Declare;
 using QueryCat.Backend.Commands.Select;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Execution;
 using QueryCat.Backend.Relational;
 
 namespace QueryCat.Backend.Commands.Declare;
@@ -10,7 +10,7 @@ namespace QueryCat.Backend.Commands.Declare;
 internal sealed class DeclareCommand : ICommand
 {
     /// <inheritdoc />
-    public IFuncUnit CreateHandler(ExecutionThread executionThread, StatementNode node)
+    public IFuncUnit CreateHandler(IExecutionThread<ExecutionOptions> executionThread, StatementNode node)
     {
         var declareNode = (DeclareNode)node.RootNode;
         var scope = executionThread.TopScope;

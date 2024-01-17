@@ -5,7 +5,6 @@ using QueryCat.Backend.Ast.Nodes.SpecialFunctions;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Execution;
 
 namespace QueryCat.Backend.Commands;
 
@@ -18,15 +17,15 @@ internal class CreateDelegateVisitor : AstVisitor
 
     protected Dictionary<int, IFuncUnit> NodeIdFuncMap { get; } = new(capacity: 32);
 
-    protected ExecutionThread ExecutionThread { get; }
+    protected IExecutionThread<ExecutionOptions> ExecutionThread { get; }
 
     protected ResolveTypesVisitor ResolveTypesVisitor => _resolveTypesVisitor;
 
-    public CreateDelegateVisitor(ExecutionThread thread) : this(thread, new ResolveTypesVisitor(thread))
+    public CreateDelegateVisitor(IExecutionThread<ExecutionOptions> thread) : this(thread, new ResolveTypesVisitor(thread))
     {
     }
 
-    public CreateDelegateVisitor(ExecutionThread thread, ResolveTypesVisitor resolveTypesVisitor)
+    public CreateDelegateVisitor(IExecutionThread<ExecutionOptions> thread, ResolveTypesVisitor resolveTypesVisitor)
     {
         ExecutionThread = thread;
         _resolveTypesVisitor = resolveTypesVisitor;

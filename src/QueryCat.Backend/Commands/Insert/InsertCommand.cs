@@ -4,7 +4,7 @@ using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Commands.Select;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
-using QueryCat.Backend.Execution;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Relational.Iterators;
 
 namespace QueryCat.Backend.Commands.Insert;
@@ -12,7 +12,7 @@ namespace QueryCat.Backend.Commands.Insert;
 internal sealed class InsertCommand : ICommand
 {
     /// <inheritdoc />
-    public IFuncUnit CreateHandler(ExecutionThread executionThread, StatementNode node)
+    public IFuncUnit CreateHandler(IExecutionThread<ExecutionOptions> executionThread, StatementNode node)
     {
         var insertNode = (InsertNode)node.RootNode;
 

@@ -31,6 +31,11 @@ public interface IExecutionThread : IDisposable
     IExecutionScope TopScope { get; }
 
     /// <summary>
+    /// Execution statistic.
+    /// </summary>
+    ExecutionStatistic Statistic { get; }
+
+    /// <summary>
     /// Run text query.
     /// </summary>
     /// <param name="query">Query.</param>

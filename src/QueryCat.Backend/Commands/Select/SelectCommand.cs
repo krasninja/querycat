@@ -1,7 +1,7 @@
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Select;
-using QueryCat.Backend.Execution;
+using QueryCat.Backend.Core.Execution;
 
 namespace QueryCat.Backend.Commands.Select;
 
@@ -11,7 +11,7 @@ namespace QueryCat.Backend.Commands.Select;
 internal sealed class SelectCommand : ICommand
 {
     /// <inheritdoc />
-    public IFuncUnit CreateHandler(ExecutionThread executionThread, StatementNode node)
+    public IFuncUnit CreateHandler(IExecutionThread<ExecutionOptions> executionThread, StatementNode node)
     {
         var selectQueryNode = (SelectQueryNode)node.RootNode;
 
