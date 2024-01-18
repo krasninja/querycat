@@ -9,8 +9,6 @@ namespace QueryCat.Cli.Infrastructure;
 
 internal partial class WebServer
 {
-    private const long MaxRange = 1024 * 1024; // 1MB.
-
     [DebuggerDisplay("{Start}-{End}")]
     private sealed class Range
     {
@@ -98,7 +96,7 @@ internal partial class WebServer
         response.AddHeader("Last-Modified", File.GetLastWriteTime(file).ToString("r"));
         response.AddHeader(
             "Content-Disposition", $"filename={System.Web.HttpUtility.UrlEncode(Path.GetFileName(file))}");
-        response.ContentType = GetContentType(Path.GetExtension(file));
+        response.ContentType = _mimeTypeProvider.GetContentType(Path.GetExtension(file));
         response.ContentLength64 = range.Size;
         if (isRangeRequest)
         {

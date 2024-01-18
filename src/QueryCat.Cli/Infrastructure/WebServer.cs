@@ -25,69 +25,6 @@ internal sealed partial class WebServer
     private const string GetMethod = "GET";
     private const string OptionsMethod = "OPTIONS";
 
-    private const string ContentTypeJson = "application/json";
-    private const string ContentTypeTextPlain = "text/plain";
-    private const string ContentTypeHtml = "text/html";
-    private const string ContentTypeForm = "application/x-www-form-urlencoded";
-    private const string ContentTypeOctetStream = "application/octet-stream";
-
-    /// <summary>
-    /// MIME types conversion table.
-    /// </summary>
-    private static readonly IDictionary<string, string> _mimeTypeMappings =
-        new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase)
-        {
-            [".7z"] = "application/x-7z-compressed",
-            [".asf"] = "video/x-ms-asf",
-            [".asx"] = "video/x-ms-asf",
-            [".avi"] = "video/x-msvideo",
-            [".css"] = "text/css",
-            [".csv"] = "text/csv",
-            [".doc"] = "application/msword",
-            [".docx"] = "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            [".flv"] = "video/x-flv",
-            [".gif"] = "image/gif",
-            [".htm"] = ContentTypeHtml,
-            [".html"] = ContentTypeHtml,
-            [".ico"] = "image/x-icon",
-            [".jpeg"] = "image/jpeg",
-            [".jpg"] = "image/jpeg",
-            [".js"] = "application/x-javascript",
-            [".json"] = ContentTypeJson,
-            [".log"] = ContentTypeTextPlain,
-            [".mka"] = "audio/x-matroska",
-            [".mkv"] = "video/x-matroska",
-            [".mov"] = "video/quicktime",
-            [".mp3"] = "audio/mpeg",
-            [".mp4"] = "video/mp4",
-            [".mpeg"] = "video/mpeg",
-            [".mpg"] = "video/mpeg",
-            [".odp"] = "application/vnd.oasis.opendocument.presentation",
-            [".ods"] = "application/vnd.oasis.opendocument.spreadsheet",
-            [".odt"] = "application/vnd.oasis.opendocument.text",
-            [".ogv"] = "video/ogg",
-            [".pdf"] = "application/pdf",
-            [".pem"] = "application/x-x509-ca-cert",
-            [".png"] = "image/png",
-            [".rar"] = "application/x-rar-compressed",
-            [".rss"] = "text/xml",
-            [".shtml"] = ContentTypeHtml,
-            [".swf"] = "application/x-shockwave-flash",
-            [".ts"] = "video/mp2t",
-            [".txt"] = ContentTypeTextPlain,
-            [".wav"] = "audio/wav",
-            [".wbmp"] = "image/vnd.wap.wbmp",
-            [".weba"] = "audio/webm",
-            [".webm"] = "video/webm",
-            [".webp"] = "image/webp",
-            [".wmv"] = "video/x-ms-wmv",
-            [".xhtml"] = "application/xhtml+xml",
-            [".xls"] = "application/vnd.ms-excel",
-            [".xlsx"] = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            [".xml"] = "text/xml",
-            [".zip"] = "application/zip",
-        }.ToFrozenDictionary();
-
     /// <summary>
     /// Endpoint URI.
     /// </summary>
@@ -101,6 +38,7 @@ internal sealed partial class WebServer
     private readonly string? _password;
     private readonly string? _filesRoot;
     private readonly IPAddress[] _allowedAddresses;
+    private readonly MimeTypeProvider _mimeTypeProvider = new();
 
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(WebServer));
 
@@ -209,7 +147,7 @@ internal sealed partial class WebServer
             }
             catch (QueryCatException e)
             {
-                response.ContentType = ContentTypeJson;
+                response.ContentType = MimeTypeProvider.ContentTypeJson;
                 response.StatusCode = (int)HttpStatusCode.BadRequest;
                 using var jsonWriter = new Utf8JsonWriter(response.OutputStream);
                 WriteJsonMessage(jsonWriter, e.Message);
@@ -303,21 +241,21 @@ internal sealed partial class WebServer
             acceptedType = request.ContentType;
         }
 
-        if (acceptedType == ContentTypeHtml)
+        if (acceptedType == MimeTypeProvider.ContentTypeHtml)
         {
-            response.ContentType = ContentTypeHtml;
+            response.ContentType = MimeTypeProvider.ContentTypeHtml;
             using var streamWriter = new StreamWriter(response.OutputStream);
             WriteHtml(iterator, streamWriter);
         }
-        else if (acceptedType == ContentTypeJson)
+        else if (acceptedType == MimeTypeProvider.ContentTypeJson)
         {
-            response.ContentType = ContentTypeJson;
+            response.ContentType = MimeTypeProvider.ContentTypeJson;
             using var jsonWriter = new Utf8JsonWriter(response.OutputStream);
             WriteJson(iterator, jsonWriter);
         }
         else
         {
-            response.ContentType = ContentTypeTextPlain;
+            response.ContentType = MimeTypeProvider.ContentTypeTextPlain;
             WriteText(iterator, response.OutputStream);
         }
     }
@@ -357,12 +295,12 @@ internal sealed partial class WebServer
         {
             using var sr = new StreamReader(request.InputStream);
             var text = sr.ReadToEnd();
-            if (request.ContentType == ContentTypeTextPlain
-                || request.ContentType == ContentTypeForm)
+            if (request.ContentType == MimeTypeProvider.ContentTypeTextPlain
+                || request.ContentType == MimeTypeProvider.ContentTypeForm)
             {
                 return new WebServerQueryData(text);
             }
-            else if (request.ContentType == ContentTypeJson)
+            else if (request.ContentType == MimeTypeProvider.ContentTypeJson)
             {
                 return JsonSerializer.Deserialize(text, SourceGenerationContext.Default.WebServerQueryData)
                     ?? new WebServerQueryData();
@@ -514,24 +452,17 @@ internal sealed partial class WebServer
         jsonWriter.WriteEndObject();
     }
 
-    private static void WriteResourceToStream(string uri, HttpListenerResponse response)
+    private void WriteResourceToStream(string uri, HttpListenerResponse response)
     {
         // Determine path.
         var assembly = Assembly.GetExecutingAssembly();
 
         // Set content type.
         var extension = Path.GetExtension(uri);
-        response.ContentType = GetContentType(extension);
+        response.ContentType = _mimeTypeProvider.GetContentType(extension);
 
         // Format: "{Namespace}.{Folder}.{filename}.{Extension}"
         using Stream? stream = assembly.GetManifestResourceStream(uri);
         stream?.CopyTo(response.OutputStream);
-    }
-
-    private static string GetContentType(string extension)
-    {
-        return _mimeTypeMappings.TryGetValue(extension, out var mime)
-            ? mime
-            : ContentTypeOctetStream;
     }
 }
