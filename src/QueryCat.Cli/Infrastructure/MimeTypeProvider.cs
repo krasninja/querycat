@@ -16,7 +16,7 @@ public sealed class MimeTypeProvider
     /// <summary>
     /// MIME types conversion table.
     /// </summary>
-    private static readonly IDictionary<string, string> _extensionMimeMapping =
+    private static readonly IReadOnlyDictionary<string, string> _extensionMimeMapping =
         new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
             [".7z"] = "application/x-7z-compressed",
@@ -25,12 +25,15 @@ public sealed class MimeTypeProvider
             [".asx"] = "video/x-ms-asf",
             [".avi"] = "video/x-msvideo",
             [".bmp"] = "image/bmp",
+            [".bz"] = "application/x-bzip",
+            [".bz2"] = "application/x-bzip2",
             [".css"] = "text/css",
             [".csv"] = "text/csv",
             [".doc"] = "application/msword",
             [".docx"] = "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             [".dot"] = "application/msword",
             [".eml"] = "message/rfc822",
+            [".epub"] = "application/epub+zip",
             [".flv"] = "video/x-flv",
             [".gz"] = "application/x-gzip",
             [".gif"] = "image/gif",
@@ -81,6 +84,7 @@ public sealed class MimeTypeProvider
             [".tiff"] = "image/tiff",
             [".ts"] = "video/mp2t",
             [".tsv"] = "text/tab-separated-values",
+            [".ttf"] = "font/ttf",
             [".tts"] = "video/vnd.dlna.mpeg-tts",
             [".txt"] = ContentTypeTextPlain,
             [".vsd"] = "application/vnd.visio",
@@ -103,17 +107,17 @@ public sealed class MimeTypeProvider
             [".zip"] = "application/zip",
         }.ToFrozenDictionary();
 
-    private readonly IDictionary<string, string> _additionalExtensionMimeMapping;
+    private readonly IReadOnlyDictionary<string, string> _additionalExtensionMimeMapping;
 
-    private static readonly IDictionary<string, string> _emptyDictionary = new Dictionary<string, string>();
+    private static readonly IReadOnlyDictionary<string, string> _emptyDictionary = new Dictionary<string, string>();
 
     /// <summary>
     /// Constructor.
     /// </summary>
     /// <param name="mapping">Additional mappings.</param>
-    public MimeTypeProvider(IDictionary<string, string>? mapping = null)
+    public MimeTypeProvider(IReadOnlyDictionary<string, string>? mapping = null)
     {
-        _additionalExtensionMimeMapping = mapping ?? _emptyDictionary;
+        _additionalExtensionMimeMapping = (mapping ?? _emptyDictionary).ToFrozenDictionary();
     }
 
     /// <summary>
