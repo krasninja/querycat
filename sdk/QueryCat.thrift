@@ -135,7 +135,8 @@ service PluginsManager {
 
   // Run the query and return the last result.
   VariantValue RunQuery(
-    1: required string query
+    1: required string query,
+    2: map<string, VariantValue> parameters
   ) throws (1: QueryCatPluginException e),
 
   // Set configuration value.

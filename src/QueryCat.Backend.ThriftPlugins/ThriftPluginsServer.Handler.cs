@@ -151,9 +151,12 @@ public partial class ThriftPluginsServer
         }
 
         /// <inheritdoc />
-        public Task<VariantValue> RunQueryAsync(string query, CancellationToken cancellationToken = default)
+        public Task<VariantValue> RunQueryAsync(string query, Dictionary<string, VariantValue>? parameters,
+            CancellationToken cancellationToken = default)
         {
-            var result = _thriftPluginsServer._executionThread.Run(query);
+            var @params = (parameters ?? new Dictionary<string, VariantValue>())
+                .ToDictionary(k => k.Key, v => SdkConvert.Convert(v.Value));
+            var result = _thriftPluginsServer._executionThread.Run(query, @params, cancellationToken);
             return Task.FromResult(SdkConvert.Convert(result));
         }
 
@@ -249,11 +252,12 @@ public partial class ThriftPluginsServer
         }
 
         /// <inheritdoc />
-        public Task<VariantValue> RunQueryAsync(string query, CancellationToken cancellationToken = default)
+        public Task<VariantValue> RunQueryAsync(string query, Dictionary<string, VariantValue>? parameters,
+            CancellationToken cancellationToken = default)
         {
             try
             {
-                return _handler.RunQueryAsync(query, cancellationToken);
+                return _handler.RunQueryAsync(query, parameters, cancellationToken);
             }
             catch (QueryCatException ex)
             {
