@@ -5,6 +5,9 @@ namespace QueryCat.Backend.Core.Execution;
 /// </summary>
 public class NullExecutionStatistic : ExecutionStatistic
 {
+    /// <summary>
+    /// Static instance of <see cref="ExecutionStatistic" />.
+    /// </summary>
     public static ExecutionStatistic Instance { get; } = new NullExecutionStatistic();
 
     /// <inheritdoc />

@@ -7,6 +7,9 @@ namespace QueryCat.Backend.Core.Execution;
 /// </summary>
 public sealed class NullExecutionScope : IExecutionScope
 {
+    /// <summary>
+    /// Static instance of <see cref="NullExecutionScope" />.
+    /// </summary>
     public static NullExecutionScope Instance { get; } = new();
 
     /// <inheritdoc />

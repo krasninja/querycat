@@ -10,6 +10,9 @@ namespace QueryCat.Backend.Core.Execution;
 /// </summary>
 public sealed class NullExecutionThread : IExecutionThread
 {
+    /// <summary>
+    /// Static instance of <see cref="NullExecutionThread" />.
+    /// </summary>
     public static NullExecutionThread Instance { get; } = new();
 
     /// <inheritdoc />

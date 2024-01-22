@@ -5,6 +5,9 @@ namespace QueryCat.Backend.Core.Plugins;
 /// </summary>
 public class NullPluginsLoader : PluginsLoader
 {
+    /// <summary>
+    /// Instance of <see cref="NullPluginsLoader" />.
+    /// </summary>
     public static NullPluginsLoader Instance { get; } = new(Array.Empty<string>());
 
     /// <inheritdoc />

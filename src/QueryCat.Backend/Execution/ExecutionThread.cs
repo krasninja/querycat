@@ -74,6 +74,10 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
     /// </summary>
     public event EventHandler<ExecuteEventArgs>? AfterStatementExecute;
 
+    /// <summary>
+    /// Get application directory to store local data.
+    /// </summary>
+    /// <returns>Default application directory.</returns>
     public static string GetApplicationDirectory()
     {
         return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
@@ -97,6 +101,10 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
         RunBootstrapScript(GetApplicationDirectory());
     }
 
+    /// <summary>
+    /// Copy constructor.
+    /// </summary>
+    /// <param name="executionThread">Execution thread to copy from.</param>
     public ExecutionThread(ExecutionThread executionThread) :
         this(executionThread.Options,
             executionThread.FunctionsManager,

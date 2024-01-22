@@ -47,15 +47,6 @@ public static class DataTypeUtils
     public static bool IsNumeric(DataType dataType)
         => dataType == DataType.Integer || dataType == DataType.Float || dataType == DataType.Numeric;
 
-    public static bool EqualsWithCast(DataType dataType1, DataType dataType2)
-    {
-        if (IsNumeric(dataType1) && IsNumeric(dataType2))
-        {
-            return true;
-        }
-        return dataType1 == dataType2;
-    }
-
     #region Serialization
 
     internal static string SerializeVariantValue(VariantValue value)
@@ -133,6 +124,12 @@ public static class DataTypeUtils
 
     #region Types detection
 
+    /// <summary>
+    /// Try to guess optimal type by value. Null values are skipped.
+    /// The default type is string.
+    /// </summary>
+    /// <param name="value">Value.</param>
+    /// <returns>Optimal type.</returns>
     public static DataType DetermineTypeByValue(string value)
         => DetermineTypeByValues(new[] { value });
 

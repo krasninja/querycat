@@ -8,6 +8,9 @@ namespace QueryCat.Backend.Core.Functions;
 /// </summary>
 public sealed class NullFunctionsManager : IFunctionsManager
 {
+    /// <summary>
+    /// Instance of <see cref="NullFunctionsManager" />.
+    /// </summary>
     public static NullFunctionsManager Instance { get; } = new();
 
     /// <inheritdoc />

@@ -11,6 +11,10 @@ namespace QueryCat.Backend.Commands;
 public class CannotFindIdentifierException : SemanticException
 #pragma warning restore CA2229
 {
+    /// <summary>
+    /// Constructor.
+    /// </summary>
+    /// <param name="name">The name of the identifier.</param>
     public CannotFindIdentifierException(string name)
         : base($"Column or variable '{name}' does not exist.")
     {

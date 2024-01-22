@@ -420,7 +420,7 @@ internal static class IOFunctions
     {
         var skipLines = args.GetAt(0).AsInteger;
         var formatter = args.GetAt(1).AsObject as IRowsFormatter;
-        var stream = Stdio.CreateConsoleInput();
+        var stream = Stdio.GetConsoleInput();
 
         for (var i = 0; i < skipLines; i++)
         {

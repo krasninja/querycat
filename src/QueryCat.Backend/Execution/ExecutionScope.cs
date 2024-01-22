@@ -19,6 +19,10 @@ public sealed class ExecutionScope : IExecutionScope
     /// <inheritdoc />
     public IExecutionScope? Parent => _parent;
 
+    /// <summary>
+    /// Constructor.
+    /// </summary>
+    /// <param name="parent">Parent execution scope.</param>
     public ExecutionScope(IExecutionScope? parent)
     {
         _parent = parent;

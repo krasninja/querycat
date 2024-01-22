@@ -2,6 +2,9 @@ using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Core.Functions;
 
+/// <summary>
+/// Function is a subprogram with input arguments and optional output value.
+/// </summary>
 public interface IFunction
 {
     /// <summary>

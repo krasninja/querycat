@@ -1,7 +1,13 @@
 namespace QueryCat.Backend.Core.Plugins;
 
+/// <summary>
+/// Plugins manager with no implementation.
+/// </summary>
 public sealed class NullPluginsManager : IPluginsManager
 {
+    /// <summary>
+    /// Instance of <see cref="NullPluginsManager" />.
+    /// </summary>
     public static IPluginsManager Instance { get; } = new NullPluginsManager();
 
     /// <inheritdoc />

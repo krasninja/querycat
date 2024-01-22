@@ -13,8 +13,14 @@ public class FunctionCallInfo : IEnumerable<VariantValue>
 
     private readonly List<VariantValue> _args;
 
+    /// <summary>
+    /// Empty instance of <see cref="FunctionCallInfo" />.
+    /// </summary>
     public static FunctionCallInfo Empty { get; } = new(NullExecutionThread.Instance, UndefinedFunctionName);
 
+    /// <summary>
+    /// Arguments list.
+    /// </summary>
     protected List<VariantValue> Arguments => _args;
 
     /// <summary>
@@ -23,7 +29,7 @@ public class FunctionCallInfo : IEnumerable<VariantValue>
     public IExecutionThread ExecutionThread { get; }
 
     /// <summary>
-    /// Window information (optional).
+    /// Window information. Only needed for SELECT WINDOW functions call.
     /// </summary>
     public IWindowInfo? WindowInfo { get; internal set; }
 
@@ -37,16 +43,23 @@ public class FunctionCallInfo : IEnumerable<VariantValue>
     /// </summary>
     public string FunctionName { get; }
 
+    /// <summary>
+    /// Create instance of <see cref="FunctionCallInfo" /> from array of arguments.
+    /// </summary>
+    /// <param name="executionThread">Execution thread.</param>
+    /// <param name="args">Arguments array.</param>
+    /// <returns>Instance of <see cref="FunctionCallInfo" />.</returns>
     public static FunctionCallInfo CreateWithArguments(IExecutionThread executionThread, params VariantValue[] args)
     {
-        var callInfo = new FunctionCallInfo(executionThread, UndefinedFunctionName);
-        foreach (var arg in args)
-        {
-            callInfo.Push(arg);
-        }
-        return callInfo;
+        return new FunctionCallInfo(executionThread, UndefinedFunctionName, args);
     }
 
+    /// <summary>
+    /// Create instance of <see cref="FunctionCallInfo" /> from array of arguments.
+    /// </summary>
+    /// <param name="executionThread">Execution thread.</param>
+    /// <param name="args">Arguments array.</param>
+    /// <returns>Instance of <see cref="FunctionCallInfo" />.</returns>
     public static FunctionCallInfo CreateWithArguments(IExecutionThread executionThread, params object[] args)
     {
         var callInfo = new FunctionCallInfo(executionThread, UndefinedFunctionName);
@@ -57,6 +70,12 @@ public class FunctionCallInfo : IEnumerable<VariantValue>
         return callInfo;
     }
 
+    /// <summary>
+    /// Constructor.
+    /// </summary>
+    /// <param name="executionThread">Execution thread instance.</param>
+    /// <param name="functionName">Function name.</param>
+    /// <param name="args">Call arguments.</param>
     public FunctionCallInfo(IExecutionThread executionThread, string functionName, params VariantValue[] args)
     {
         _args = new List<VariantValue>(args);
