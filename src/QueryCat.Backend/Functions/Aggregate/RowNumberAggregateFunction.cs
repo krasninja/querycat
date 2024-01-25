@@ -7,6 +7,7 @@ namespace QueryCat.Backend.Functions.Aggregate;
 /// <summary>
 /// Implements ROW_NUMBER aggregation function.
 /// </summary>
+[SafeFunction]
 [Description("Returns the number of the current row within its partition, counting from 1.")]
 [AggregateFunctionSignature("row_number(): integer")]
 // ReSharper disable once ClassNeverInstantiated.Global
@@ -20,7 +21,7 @@ internal sealed class RowNumberAggregateFunction : IAggregateFunction
     }
 
     /// <inheritdoc />
-    public VariantValue[] GetInitialState(DataType type) => new[] { VariantValue.OneIntegerValue };
+    public VariantValue[] GetInitialState(DataType type) => [VariantValue.OneIntegerValue];
 
     /// <inheritdoc />
     public void Invoke(VariantValue[] state, FunctionCallInfo callInfo)

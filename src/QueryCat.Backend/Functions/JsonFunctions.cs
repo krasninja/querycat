@@ -15,6 +15,7 @@ namespace QueryCat.Backend.Functions;
 /// </summary>
 internal static class JsonFunctions
 {
+    [SafeFunction]
     [Description("Extracts an object or an array from a JSON string.")]
     [FunctionSignature("json_query(json: string, query: string): string")]
     public static VariantValue JsonQuery(FunctionCallInfo args)
@@ -49,6 +50,7 @@ internal static class JsonFunctions
         return new VariantValue(GetJsonStringFromJsonNode(result.Value));
     }
 
+    [SafeFunction]
     [Description("Extracts a scalar value from a JSON string.")]
     [FunctionSignature("json_value(json: string, query: string): string")]
     public static VariantValue JsonValue(FunctionCallInfo args)
@@ -83,6 +85,7 @@ internal static class JsonFunctions
         return new VariantValue(GetJsonStringFromJsonNode(result.Value));
     }
 
+    [SafeFunction]
     [RequiresUnreferencedCode("Calls System.Text.Json.JsonSerializer.SerializeToNode<TValue>(TValue, JsonSerializerOptions)")]
     [RequiresDynamicCode("Calls System.Text.Json.JsonSerializer.SerializeToNode<TValue>(TValue, JsonSerializerOptions)")]
     [Description("Constructs JSON text from object.")]
@@ -111,6 +114,7 @@ internal static class JsonFunctions
         return new VariantValue(GetJsonStringFromJsonNode(node));
     }
 
+    [SafeFunction]
     [Description("Tests whether a string contains valid JSON.")]
     [FunctionSignature("is_json(json: string): boolean")]
     public static VariantValue IsJson(FunctionCallInfo args)
@@ -127,6 +131,7 @@ internal static class JsonFunctions
         }
     }
 
+    [SafeFunction]
     [Description("Tests whether a JSON path expression returns any SQL/JSON items.")]
     [FunctionSignature("json_exists(json: string, query: string): boolean")]
     public static VariantValue JsonExists(FunctionCallInfo args)

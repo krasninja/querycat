@@ -9,6 +9,7 @@ namespace QueryCat.Backend.Functions;
 /// </summary>
 internal static class MiscFunctions
 {
+    [SafeFunction]
     [Description("The function returns a null value if value1 equals value2; otherwise it returns value1.")]
     [FunctionSignature("[nullif](value1: any, value2: any): any")]
     public static VariantValue NullIf(FunctionCallInfo args)
@@ -22,6 +23,7 @@ internal static class MiscFunctions
         return value1;
     }
 
+    [SafeFunction]
     [Description("Not operation. The function can be used to suppress output.")]
     [FunctionSignature("nop(...args: any[]): void")]
     public static VariantValue Nop(FunctionCallInfo args)
@@ -29,6 +31,7 @@ internal static class MiscFunctions
         return VariantValue.Null;
     }
 
+    [SafeFunction]
     [Description("The function returns a version 4 (random) UUID.")]
     [FunctionSignature("uuid(): string")]
     public static VariantValue GetRandomGuid(FunctionCallInfo args)
@@ -36,6 +39,7 @@ internal static class MiscFunctions
         return new VariantValue(Guid.NewGuid().ToString("D"));
     }
 
+    [SafeFunction]
     [Description("Converts a size in bytes into a more easily human-readable format with size units.")]
     [FunctionSignature("size_pretty(size: integer, base: integer = 1024): string")]
     public static VariantValue SizePretty(FunctionCallInfo args)
@@ -62,6 +66,7 @@ internal static class MiscFunctions
         return new VariantValue(size);
     }
 
+    [SafeFunction]
     [Description("Returns the object itself. Needed when you need to pass variable as function call.")]
     [FunctionSignature("self(target: any): any")]
     public static VariantValue Self(FunctionCallInfo args)

@@ -12,6 +12,7 @@ namespace QueryCat.Backend.Functions;
 /// </summary>
 internal static class StringFunctions
 {
+    [SafeFunction]
     [Description("Convert a string to lower case.")]
     [FunctionSignature("lower(target: string): string")]
     public static VariantValue Lower(FunctionCallInfo args)
@@ -20,6 +21,7 @@ internal static class StringFunctions
         return new VariantValue(value.AsString.ToLower());
     }
 
+    [SafeFunction]
     [Description("Convert a string to upper case.")]
     [FunctionSignature("upper(target: string): string")]
     public static VariantValue Upper(FunctionCallInfo args)
@@ -28,6 +30,7 @@ internal static class StringFunctions
         return new VariantValue(value.AsString.ToUpper());
     }
 
+    [SafeFunction]
     [Description("Removes the longest string containing only characters in characters from the start of string.")]
     [FunctionSignature("ltrim(target: string, characters: string = ' '): string")]
     public static VariantValue LTrim(FunctionCallInfo args)
@@ -37,6 +40,7 @@ internal static class StringFunctions
         return new VariantValue(value.TrimStart(trimCharacters.ToArray()));
     }
 
+    [SafeFunction]
     [Description("Removes the longest string containing only characters in characters from the end of string.")]
     [FunctionSignature("rtrim(target: string, characters: string = ' '): string")]
     public static VariantValue RTrim(FunctionCallInfo args)
@@ -46,6 +50,7 @@ internal static class StringFunctions
         return new VariantValue(value.TrimEnd(trimCharacters.ToArray()));
     }
 
+    [SafeFunction]
     [Description("Remove the longest string consisting only of characters in characters from the start and end of string.")]
     [FunctionSignature("btrim(target: string, characters: string = ' '): string")]
     public static VariantValue BTrim(FunctionCallInfo args)
@@ -55,6 +60,7 @@ internal static class StringFunctions
         return new VariantValue(value.Trim(trimCharacters.ToArray()));
     }
 
+    [SafeFunction]
     [Description("Extracts the substring of string starting at the start'th character, and extending for count characters if that is specified.")]
     [FunctionSignature("substr(target: string, start: integer, count?: integer): string")]
     public static VariantValue SubString(FunctionCallInfo args)
@@ -65,6 +71,7 @@ internal static class StringFunctions
         return new VariantValue(StringUtils.SafeSubstring(value, start, count));
     }
 
+    [SafeFunction]
     [Description("Number of characters in string.")]
     [FunctionSignature("length(target: string): integer")]
     [FunctionSignature("char_length(target: string): integer")]
@@ -75,6 +82,7 @@ internal static class StringFunctions
         return new VariantValue(value.Length);
     }
 
+    [SafeFunction]
     [Description("Convert value to string according to the given format.")]
     [FunctionSignature("to_char(args: any, fmt?: string): string")]
     public static VariantValue ToChar(FunctionCallInfo args)
@@ -86,6 +94,7 @@ internal static class StringFunctions
             : new VariantValue(arg.ToString());
     }
 
+    [SafeFunction]
     [Description("Returns first starting index of the specified substring within string, or zero if it's not present.")]
     [FunctionSignature("[position](substring: string, target: string): integer")]
     public static VariantValue Position(FunctionCallInfo args)
@@ -95,6 +104,7 @@ internal static class StringFunctions
         return new VariantValue(target.IndexOf(substring, StringComparison.InvariantCulture) + 1);
     }
 
+    [SafeFunction]
     [Description("Replaces all occurrences in string of substring from with substring to.")]
     [FunctionSignature("replace(target: string, old: string, new: string): string")]
     public static VariantValue Replace(FunctionCallInfo args)
@@ -105,6 +115,7 @@ internal static class StringFunctions
         return new VariantValue(target.Replace(from, to));
     }
 
+    [SafeFunction]
     [Description("Reverses the order of the characters in the string.")]
     [FunctionSignature("reverse(target: string): string")]
     public static VariantValue Reverse(FunctionCallInfo args)
@@ -115,6 +126,7 @@ internal static class StringFunctions
         return new VariantValue(new string(charArray));
     }
 
+    [SafeFunction]
     [Description("Returns the character with the given code.")]
     [FunctionSignature("chr(code: integer): string")]
     public static VariantValue Chr(FunctionCallInfo args)
@@ -123,6 +135,7 @@ internal static class StringFunctions
         return new VariantValue(Convert.ToChar(code).ToString());
     }
 
+    [SafeFunction]
     [Description("Returns true if string starts with prefix.")]
     [FunctionSignature("starts_with(target: string, prefix: string): boolean")]
     public static VariantValue StartsWith(FunctionCallInfo args)
@@ -132,6 +145,7 @@ internal static class StringFunctions
         return new VariantValue(target.StartsWith(prefix));
     }
 
+    [SafeFunction]
     [Description("Splits string at occurrences of delimiter and returns the n'th field (counting from one).")]
     [FunctionSignature("split_part(target: string, delimiter: string, n: integer): string")]
     public static VariantValue SplitPart(FunctionCallInfo args)
@@ -153,6 +167,7 @@ internal static class StringFunctions
         return new VariantValue(split[n]);
     }
 
+    [SafeFunction]
     [Description("Splits the string at occurrences of delimiter and returns the resulting fields as a set of text rows.")]
     [FunctionSignature("string_to_table(target: string, delimiter?: string, null_string?: string := null): object<IRowsIterator>")]
     public static VariantValue StringToTable(FunctionCallInfo args)
@@ -199,6 +214,7 @@ internal static class StringFunctions
         return VariantValue.CreateFromObject(input);
     }
 
+    [SafeFunction]
     [Description("Returns the substring within string that matches the N'th occurrence of the regular expression pattern, or NULL.")]
     [FunctionSignature("regexp_substr(target: string, pattern: string, start?: integer = 1, n?: integer = 1, subexpr?: integer = 1): string")]
     public static VariantValue RegexpSubstring(FunctionCallInfo args)
@@ -223,6 +239,7 @@ internal static class StringFunctions
         return new VariantValue(matches[n].Groups[subexpr].Value);
     }
 
+    [SafeFunction]
     [Description("Returns the number of times the regular expression pattern matches in the string.")]
     [FunctionSignature("regexp_count(target: string, pattern: string, start?: integer = 1): string")]
     public static VariantValue RegexpCount(FunctionCallInfo args)
@@ -236,6 +253,7 @@ internal static class StringFunctions
         return new VariantValue(matches.Count);
     }
 
+    [SafeFunction]
     [Description("Provides substitution of new text for substrings that match regular expression patterns.")]
     [FunctionSignature("regexp_replace(target: string, pattern: string, replacement: string, start?: integer = 1): string")]
     public static VariantValue RegexpReplace(FunctionCallInfo args)

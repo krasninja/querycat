@@ -7,6 +7,7 @@ namespace QueryCat.Backend.Functions.Aggregate;
 /// <summary>
 /// Implements "LAST_VALUE" aggregation function.
 /// </summary>
+[SafeFunction]
 [Description("Returns value evaluated at the row that is the last row of the window frame.")]
 [AggregateFunctionSignature("last_value(value: integer): integer")]
 [AggregateFunctionSignature("last_value(value: numeric): numeric")]
@@ -19,8 +20,7 @@ namespace QueryCat.Backend.Functions.Aggregate;
 internal sealed class LastValueAggregateFunction : IAggregateFunction
 {
     /// <inheritdoc />
-    public VariantValue[] GetInitialState(DataType type)
-        => new[] { VariantValue.Null };
+    public VariantValue[] GetInitialState(DataType type) => [VariantValue.Null];
 
     /// <inheritdoc />
     public void Invoke(VariantValue[] state, FunctionCallInfo callInfo)

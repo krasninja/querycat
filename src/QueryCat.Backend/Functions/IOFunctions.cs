@@ -16,6 +16,7 @@ internal static class IOFunctions
 {
     private const string ContentTypeHeader = "Content-Type";
 
+    [SafeFunction]
     [Description("Read data from a URI.")]
     [FunctionSignature("read(uri: string, fmt?: object<IRowsFormatter>): object<IRowsInput>")]
     public static VariantValue Read(FunctionCallInfo args)
@@ -44,6 +45,7 @@ internal static class IOFunctions
         return WriteFile(args);
     }
 
+    [SafeFunction]
     [Description("Reads data from a string.")]
     [FunctionSignature("read_text([text]: string, fmt: object<IRowsFormatter>): object<IRowsInput>")]
     public static VariantValue ReadString(FunctionCallInfo args)
@@ -59,6 +61,7 @@ internal static class IOFunctions
 
     private static readonly string[] CompressFilesExtensions = { ".gz" };
 
+    [SafeFunction]
     [Description("Read data from a file.")]
     [FunctionSignature("read_file(path: string, fmt?: object<IRowsFormatter>): object<IRowsInput>")]
     public static VariantValue ReadFile(FunctionCallInfo args)
@@ -239,6 +242,7 @@ internal static class IOFunctions
         }
     }
 
+    [SafeFunction]
     [Description("List directory content (files and sub-directories).")]
     [FunctionSignature("ls_dir(path: string): object<IRowsInput>")]
     public static VariantValue ListDirectory(FunctionCallInfo args)
@@ -281,6 +285,7 @@ internal static class IOFunctions
 
     private static readonly HttpClient HttpClient = new();
 
+    [SafeFunction]
     [Description("Read the HTTP resource.")]
     [FunctionSignature("curl(uri: string, fmt?: object<IRowsFormatter>): object<IRowsInput>")]
     public static VariantValue Curl(FunctionCallInfo args)
@@ -333,7 +338,7 @@ internal static class IOFunctions
     /// </summary>
     /// <param name="uri">URI string.</param>
     /// <returns>URI and arguments.</returns>
-    public static (string Uri, FunctionCallArguments Args) Utils_ParseUri(string uri)
+    private static (string Uri, FunctionCallArguments Args) Utils_ParseUri(string uri)
     {
         var delimiterIndex = uri.IndexOf(QueryDelimiter, StringComparison.Ordinal);
         if (delimiterIndex == -1)
@@ -401,6 +406,7 @@ internal static class IOFunctions
 
     #region Stdio
 
+    [SafeFunction]
     [Description("Write data to the system standard output.")]
     [FunctionSignature("stdout(fmt?: object<IRowsFormatter>): object<IRowsOutput>")]
     public static VariantValue Stdout(FunctionCallInfo args)
@@ -414,6 +420,7 @@ internal static class IOFunctions
         return VariantValue.CreateFromObject(output);
     }
 
+    [SafeFunction]
     [Description("Read data from the system standard input.")]
     [FunctionSignature("stdin(skip_lines: integer = 0, fmt?: object<IRowsFormatter>): object<IRowsInput>")]
     public static VariantValue Stdin(FunctionCallInfo args)

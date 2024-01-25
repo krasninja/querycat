@@ -11,6 +11,7 @@ namespace QueryCat.Backend.Functions;
 /// </summary>
 internal static class CryptoFunctions
 {
+    [SafeFunction]
     [Description("Computes the MD5 hash of the given data.")]
     [FunctionSignature("md5([text]: string): string")]
     public static VariantValue Md5(FunctionCallInfo args)
@@ -20,6 +21,7 @@ internal static class CryptoFunctions
         return new VariantValue(Convert.ToHexString(MD5.HashData(textData)));
     }
 
+    [SafeFunction]
     [Description("Computes the SHA1 hash of the given data.")]
     [FunctionSignature("sha1([text]: string): string")]
     public static VariantValue Sha1(FunctionCallInfo args)
@@ -29,6 +31,7 @@ internal static class CryptoFunctions
         return new VariantValue(Convert.ToHexString(SHA1.HashData(textData)));
     }
 
+    [SafeFunction]
     [Description("Computes the SHA256 hash of the given data.")]
     [FunctionSignature("sha256([text]: string): string")]
     public static VariantValue Sha256(FunctionCallInfo args)
@@ -38,6 +41,7 @@ internal static class CryptoFunctions
         return new VariantValue(Convert.ToHexString(SHA256.HashData(textData)));
     }
 
+    [SafeFunction]
     [Description("Computes the SHA384 hash of the given data.")]
     [FunctionSignature("sha384([text]: string): string")]
     public static VariantValue Sha384(FunctionCallInfo args)
@@ -47,6 +51,7 @@ internal static class CryptoFunctions
         return new VariantValue(Convert.ToHexString(SHA384.HashData(textData)));
     }
 
+    [SafeFunction]
     [Description("Computes the SHA512 hash of the given data.")]
     [FunctionSignature("sha512([text]: string): string")]
     public static VariantValue Sha512(FunctionCallInfo args)

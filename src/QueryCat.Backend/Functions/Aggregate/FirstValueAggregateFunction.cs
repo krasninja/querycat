@@ -7,6 +7,7 @@ namespace QueryCat.Backend.Functions.Aggregate;
 /// <summary>
 /// Implements "FIRST_VALUE" aggregation function.
 /// </summary>
+[SafeFunction]
 [Description("Returns value evaluated at the row that is the first row of the window frame.")]
 [AggregateFunctionSignature("first_value(value: integer): integer")]
 [AggregateFunctionSignature("first_value(value: numeric): numeric")]
@@ -19,7 +20,7 @@ namespace QueryCat.Backend.Functions.Aggregate;
 internal sealed class FirstValueAggregateFunction : IAggregateFunction
 {
     /// <inheritdoc />
-    public VariantValue[] GetInitialState(DataType type) => new[] { VariantValue.Null };
+    public VariantValue[] GetInitialState(DataType type) => [VariantValue.Null];
 
     /// <inheritdoc />
     public void Invoke(VariantValue[] state, FunctionCallInfo callInfo)

@@ -7,6 +7,7 @@ namespace QueryCat.Backend.Functions.Aggregate;
 /// <summary>
 /// Implements "average" aggregation function.
 /// </summary>
+[SafeFunction]
 [Description("Computes the average value.")]
 [AggregateFunctionSignature("avg(value: integer): float")]
 [AggregateFunctionSignature("avg(value: float): float")]
@@ -23,11 +24,11 @@ internal sealed class AvgAggregateFunction : IAggregateFunction
 
     /// <inheritdoc />
     public VariantValue[] GetInitialState(DataType type)
-        => new[]
-        {
+        =>
+        [
             VariantValue.Null, // 0: sum
             new VariantValue(DataType.Integer) // 1: count
-        };
+        ];
 
     /// <inheritdoc />
     public void Invoke(VariantValue[] state, FunctionCallInfo callInfo)

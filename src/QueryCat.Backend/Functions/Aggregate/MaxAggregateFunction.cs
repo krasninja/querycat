@@ -7,6 +7,7 @@ namespace QueryCat.Backend.Functions.Aggregate;
 /// <summary>
 /// Implements "maximum" aggregation function.
 /// </summary>
+[SafeFunction]
 [Description("Computes the maximum value.")]
 [AggregateFunctionSignature("max(value: integer): integer")]
 [AggregateFunctionSignature("max(value: float): float")]
@@ -15,7 +16,7 @@ namespace QueryCat.Backend.Functions.Aggregate;
 internal sealed class MaxAggregateFunction : IAggregateFunction
 {
     /// <inheritdoc />
-    public VariantValue[] GetInitialState(DataType type) => new[] { VariantValue.Null };
+    public VariantValue[] GetInitialState(DataType type) => [VariantValue.Null];
 
     /// <inheritdoc />
     public void Invoke(VariantValue[] state, FunctionCallInfo callInfo)

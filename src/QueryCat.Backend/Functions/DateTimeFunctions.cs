@@ -11,6 +11,7 @@ namespace QueryCat.Backend.Functions;
 /// </summary>
 internal static class DateTimeFunctions
 {
+    [SafeFunction]
     [Description("Converts string to date according to the given format.")]
     [FunctionSignature("to_date(target: string, fmt: string): timestamp")]
     public static VariantValue ToDate(FunctionCallInfo args)
@@ -20,6 +21,7 @@ internal static class DateTimeFunctions
         return new VariantValue(DateTime.ParseExact(target, format, CultureInfo.InvariantCulture));
     }
 
+    [SafeFunction]
     [Description("Current date and time")]
     [FunctionSignature("now(): timestamp")]
     public static VariantValue Now(FunctionCallInfo args)
@@ -27,6 +29,7 @@ internal static class DateTimeFunctions
         return new VariantValue(DateTime.Now);
     }
 
+    [SafeFunction]
     [Description("Takes the date part.")]
     [FunctionSignature("date(datetime: timestamp): timestamp")]
     public static VariantValue Date(FunctionCallInfo args)
@@ -34,6 +37,7 @@ internal static class DateTimeFunctions
         return new VariantValue(args.GetAt(0).AsTimestamp.Date);
     }
 
+    [SafeFunction]
     [Description("The function retrieves subfields such as year or hour from date/time values.")]
     [FunctionSignature("date_part(field: string, source: timestamp): integer")]
     public static VariantValue Extract(FunctionCallInfo args)
@@ -74,6 +78,7 @@ internal static class DateTimeFunctions
         return new VariantValue(result);
     }
 
+    [SafeFunction]
     [Description("The function rounds or truncates a timestamp or interval to the date part you need.")]
     [FunctionSignature("date_trunc(field: string, source: timestamp): timestamp")]
     [FunctionSignature("date_trunc(field: string, source: interval): interval")]

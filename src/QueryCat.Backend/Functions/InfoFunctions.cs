@@ -14,6 +14,7 @@ namespace QueryCat.Backend.Functions;
 /// </summary>
 public static class InfoFunctions
 {
+    [SafeFunction]
     [Description("Return all registered functions.")]
     [FunctionSignature("_functions(): object<IRowsIterator>")]
     internal static VariantValue Functions(FunctionCallInfo args)
@@ -22,11 +23,14 @@ public static class InfoFunctions
         var input = new EnumerableRowsInput<IFunction>(functions,
             builder => builder
                 .AddProperty("signature", p => p.ToString())
-                .AddProperty("description", f => f.Description)
+                .AddProperty("is_aggregate", p => p.IsAggregate)
+                .AddProperty("description", p => p.Description)
+                .AddProperty("is_safe", p => p.IsSafe)
             );
         return VariantValue.CreateFromObject(input);
     }
 
+    [SafeFunction]
     [Description("Return row input columns information.")]
     [FunctionSignature("_schema(input: object<IRowsInput>): object<IRowsIterator>")]
     public static VariantValue Schema(FunctionCallInfo args)
@@ -64,6 +68,7 @@ public static class InfoFunctions
     }
 
 #if ENABLE_PLUGINS
+    [SafeFunction]
     [Description("Return available plugins from repository.")]
     [FunctionSignature("_plugins(): object<IRowsInput>")]
     public static VariantValue Plugins(FunctionCallInfo args)
@@ -85,6 +90,7 @@ public static class InfoFunctions
     }
 #endif
 
+    [SafeFunction]
     [Description("Get expression type.")]
     [FunctionSignature("_typeof(arg: any): string")]
     internal static VariantValue TypeOf(FunctionCallInfo args)
@@ -98,6 +104,7 @@ public static class InfoFunctions
         return new VariantValue(type.ToString());
     }
 
+    [SafeFunction]
     [Description("Application version.")]
     [FunctionSignature("_version(): string")]
     public static VariantValue Version(FunctionCallInfo args)
@@ -105,6 +112,7 @@ public static class InfoFunctions
         return new VariantValue(Application.GetVersion());
     }
 
+    [SafeFunction]
     [Description("Provide a list of OS time zone names.")]
     [FunctionSignature("_timezone_names(): object<IRowsIterator>")]
     internal static VariantValue TimeZoneNames(FunctionCallInfo args)
@@ -119,6 +127,7 @@ public static class InfoFunctions
         return VariantValue.CreateFromObject(input);
     }
 
+    [SafeFunction]
     [Description("Get current running platform/OS.")]
     [FunctionSignature("_platform(): string")]
     internal static VariantValue Platform(FunctionCallInfo args)

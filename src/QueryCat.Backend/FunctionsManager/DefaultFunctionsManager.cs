@@ -20,7 +20,6 @@ public sealed class DefaultFunctionsManager : IFunctionsManager
 
     private record FunctionPreRegistration(
         FunctionDelegate Delegate,
-        MemberInfo? MemberInfo,
         List<string> Signatures,
         string? Description = null);
 
@@ -66,8 +65,7 @@ public sealed class DefaultFunctionsManager : IFunctionsManager
         string signature,
         FunctionDelegate functionDelegate,
         string? functionName = null,
-        string? description = null,
-        MemberInfo? memberInfo = null)
+        string? description = null)
     {
         functionName ??= GetFunctionName(signature);
 
@@ -79,7 +77,7 @@ public sealed class DefaultFunctionsManager : IFunctionsManager
         {
             var signatures = new List<string> { signature };
             _functionsPreRegistration.Add(functionName,
-                new FunctionPreRegistration(functionDelegate, memberInfo, signatures, description));
+                new FunctionPreRegistration(functionDelegate, signatures, description));
         }
     }
 
@@ -137,10 +135,16 @@ public sealed class DefaultFunctionsManager : IFunctionsManager
                     _logger.LogWarning("Possibly similar signature function: {Function}.", function);
                 }
             }
-            var descriptionAttribute = preRegistration.MemberInfo?.GetCustomAttribute<DescriptionAttribute>();
+            var memberInfo = preRegistration.Delegate.Method;
+            var descriptionAttribute = memberInfo.GetCustomAttribute<DescriptionAttribute>();
             if (descriptionAttribute != null)
             {
                 function.Description = descriptionAttribute.Description;
+            }
+            var safeAttribute = memberInfo.GetCustomAttribute<SafeFunctionAttribute>();
+            if (safeAttribute != null)
+            {
+                function.IsSafe = true;
             }
             functionsList = AddFunctionInternal(function);
         }
@@ -181,6 +185,11 @@ public sealed class DefaultFunctionsManager : IFunctionsManager
             if (descriptionAttribute != null)
             {
                 function.Description = descriptionAttribute.Description;
+            }
+            var safeAttribute = aggregateType.GetCustomAttribute<SafeFunctionAttribute>();
+            if (safeAttribute != null)
+            {
+                function.IsSafe = true;
             }
             var functionName = NormalizeName(function.Name);
             _functions!.AddOrUpdate(
