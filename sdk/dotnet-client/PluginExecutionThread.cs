@@ -30,6 +30,9 @@ public sealed class PluginExecutionThread : IExecutionThread
     /// <inheritdoc />
     public ExecutionStatistic Statistic { get; } = NullExecutionStatistic.Instance;
 
+    /// <inheritdoc />
+    public object? Tag { get; } = null;
+
     public PluginExecutionThread(PluginsManager.Client client)
     {
         PluginsManager = NullPluginsManager.Instance;

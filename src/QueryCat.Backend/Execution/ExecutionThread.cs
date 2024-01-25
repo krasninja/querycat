@@ -54,6 +54,9 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
     public ExecutionStatistic Statistic { get; } = new DefaultExecutionStatistic();
 
     /// <inheritdoc />
+    public object? Tag { get; internal set; } = null;
+
+    /// <inheritdoc />
     public IFunctionsManager FunctionsManager { get; }
 
     /// <inheritdoc />

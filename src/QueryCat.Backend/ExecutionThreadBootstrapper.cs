@@ -35,6 +35,8 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
 
     private Func<PluginsLoader, IPluginsManager> _pluginsManagerFactory = _ => new NullPluginsManager();
 
+    private object? _tag;
+
     public ExecutionThreadBootstrapper WithConfigStorage(IInputConfigStorage configStorage)
     {
         _inputConfigStorage = configStorage;
@@ -96,6 +98,17 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
     }
 
     /// <summary>
+    /// With tag (custom user information).
+    /// </summary>
+    /// <param name="tag">Custom user information object.</param>
+    /// <returns>Instance of <see cref="ExecutionThread" />.</returns>
+    public ExecutionThreadBootstrapper WithTag(object? tag)
+    {
+        _tag = tag;
+        return this;
+    }
+
+    /// <summary>
     /// Create the instance of execution thread.
     /// </summary>
     /// <returns>Instance of <see cref="ExecutionThread" />.</returns>
@@ -113,6 +126,7 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
             configStorage: _inputConfigStorage,
             astBuilder: new AstBuilder()
         );
+        thread.Tag = _tag;
 
         // Register functions.
         if (_registerStandardLibrary)

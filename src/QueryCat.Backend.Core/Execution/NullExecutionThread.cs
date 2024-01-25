@@ -31,6 +31,9 @@ public sealed class NullExecutionThread : IExecutionThread
     public ExecutionStatistic Statistic { get; } = NullExecutionStatistic.Instance;
 
     /// <inheritdoc />
+    public object? Tag { get; } = null;
+
+    /// <inheritdoc />
     public VariantValue Run(string query, IDictionary<string, VariantValue>? parameters = null,
         CancellationToken cancellationToken = default) => VariantValue.Null;
 

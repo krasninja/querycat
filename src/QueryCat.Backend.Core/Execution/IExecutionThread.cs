@@ -36,6 +36,11 @@ public interface IExecutionThread : IDisposable
     ExecutionStatistic Statistic { get; }
 
     /// <summary>
+    /// Store custom execution thread information.
+    /// </summary>
+    object? Tag { get; }
+
+    /// <summary>
     /// Run text query.
     /// </summary>
     /// <param name="query">Query.</param>
