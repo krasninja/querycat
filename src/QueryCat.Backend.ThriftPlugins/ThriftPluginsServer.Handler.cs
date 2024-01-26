@@ -218,14 +218,10 @@ public partial class ThriftPluginsServer
             {
                 return _handler.RegisterPluginAsync(auth_token, callback_uri, plugin_data, cancellationToken);
             }
-            catch (QueryCatException ex)
-            {
-                throw new QueryCatPluginException(ErrorType.GENERIC, ex.Message);
-            }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Handler internal error.");
-                throw new QueryCatPluginException(ErrorType.INTERNAL, ex.Message);
+                _logger.LogError(ex, Messages.HandlerInternalError);
+                throw QueryCatPluginExceptionUtils.Create(ex);
             }
         }
 
@@ -237,17 +233,10 @@ public partial class ThriftPluginsServer
             {
                 return _handler.CallFunctionAsync(function_name, args, object_handle, cancellationToken);
             }
-            catch (QueryCatException ex)
-            {
-                throw new QueryCatPluginException(ErrorType.GENERIC, ex.Message)
-                {
-                    ObjectHandle = object_handle,
-                };
-            }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Handler internal error.");
-                throw new QueryCatPluginException(ErrorType.INTERNAL, ex.Message);
+                _logger.LogError(ex, Messages.HandlerInternalError);
+                throw QueryCatPluginExceptionUtils.Create(ex);
             }
         }
 
@@ -259,14 +248,10 @@ public partial class ThriftPluginsServer
             {
                 return _handler.RunQueryAsync(query, parameters, cancellationToken);
             }
-            catch (QueryCatException ex)
-            {
-                throw new QueryCatPluginException(ErrorType.GENERIC, ex.Message);
-            }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Handler internal error.");
-                throw new QueryCatPluginException(ErrorType.INTERNAL, ex.Message);
+                _logger.LogError(ex, Messages.HandlerInternalError);
+                throw QueryCatPluginExceptionUtils.Create(ex);
             }
         }
 
@@ -277,14 +262,10 @@ public partial class ThriftPluginsServer
             {
                 return _handler.SetConfigValueAsync(key, value, cancellationToken);
             }
-            catch (QueryCatException ex)
-            {
-                throw new QueryCatPluginException(ErrorType.GENERIC, ex.Message);
-            }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Handler internal error.");
-                throw new QueryCatPluginException(ErrorType.INTERNAL, ex.Message);
+                _logger.LogError(ex, Messages.HandlerInternalError);
+                throw QueryCatPluginExceptionUtils.Create(ex);
             }
         }
 
@@ -295,14 +276,10 @@ public partial class ThriftPluginsServer
             {
                 return _handler.GetConfigValueAsync(key, cancellationToken);
             }
-            catch (QueryCatException ex)
-            {
-                throw new QueryCatPluginException(ErrorType.GENERIC, ex.Message);
-            }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Handler internal error.");
-                throw new QueryCatPluginException(ErrorType.INTERNAL, ex.Message);
+                _logger.LogError(ex, Messages.HandlerInternalError);
+                throw QueryCatPluginExceptionUtils.Create(ex);
             }
         }
 
@@ -313,14 +290,10 @@ public partial class ThriftPluginsServer
             {
                 return _handler.LogAsync(level, message, arguments, cancellationToken);
             }
-            catch (QueryCatException ex)
-            {
-                throw new QueryCatPluginException(ErrorType.GENERIC, ex.Message);
-            }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Handler internal error.");
-                throw new QueryCatPluginException(ErrorType.INTERNAL, ex.Message);
+                _logger.LogError(ex, Messages.HandlerInternalError);
+                throw QueryCatPluginExceptionUtils.Create(ex);
             }
         }
     }
