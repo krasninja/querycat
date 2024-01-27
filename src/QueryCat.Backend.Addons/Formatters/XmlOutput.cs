@@ -4,7 +4,7 @@ using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Storage;
 
-namespace QueryCat.Backend.Formatters;
+namespace QueryCat.Backend.Addons.Formatters;
 
 internal sealed class XmlOutput : RowsOutput, IDisposable
 {

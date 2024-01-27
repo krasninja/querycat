@@ -28,7 +28,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\QueryCat.Backend\QueryCat.Backend.csproj" />
-    <ProjectReference Include="..\QueryCat.Backend.Formatters\QueryCat.Backend.Formatters.csproj" />
+    <ProjectReference Include="..\QueryCat.Backend.Addons\QueryCat.Backend.Addons.csproj" />
     <ProjectReference Include="..\QueryCat.Backend.ThriftPlugins\QueryCat.Backend.ThriftPlugins.csproj" />
     <ProjectReference Condition="$(DefineConstants.Contains('PLUGIN_ASSEMBLY'))" Include="..\QueryCat.Backend.AssemblyPlugins\QueryCat.Backend.AssemblyPlugins.csproj" />
     <EmbeddedResource Include="Infrastructure\WebServerIndex.html" />

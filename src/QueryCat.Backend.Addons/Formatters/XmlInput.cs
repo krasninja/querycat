@@ -5,7 +5,7 @@ using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Relational;
 
-namespace QueryCat.Backend.Formatters;
+namespace QueryCat.Backend.Addons.Formatters;
 
 /// <summary>
 /// XML input.

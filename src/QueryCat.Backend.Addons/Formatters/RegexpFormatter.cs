@@ -3,7 +3,7 @@ using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 
-namespace QueryCat.Backend.Formatters;
+namespace QueryCat.Backend.Addons.Formatters;
 
 /// <summary>
 /// The formatter allows to use regular expression to split string to columns.

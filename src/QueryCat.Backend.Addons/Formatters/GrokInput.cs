@@ -5,7 +5,7 @@ using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
 
-namespace QueryCat.Backend.Formatters;
+namespace QueryCat.Backend.Addons.Formatters;
 
 /// <summary>
 /// Grok expressions input parser.
@@ -177,7 +177,7 @@ internal sealed partial class GrokInput : IRowsInput
     {
         var assembly = Assembly.GetExecutingAssembly();
 
-        using var stream = assembly.GetManifestResourceStream("QueryCat.Backend.Formatters.grok-patterns");
+        using var stream = assembly.GetManifestResourceStream("QueryCat.Backend.Addons.Formatters.grok-patterns");
         if (stream == null)
         {
             return string.Empty;

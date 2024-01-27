@@ -1,6 +1,7 @@
 using System.CommandLine;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend;
+using QueryCat.Backend.Addons.Formatters;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Execution;
 using QueryCat.Cli.Commands.Options;
@@ -45,7 +46,7 @@ internal class PluginDebugCommand : BaseQueryCommand
                     ForceAuthToken = ThriftPluginClient.TestAuthToken,
                     SkipPluginsExecution = true,
                 })
-                .WithRegistrations(Backend.Formatters.AdditionalRegistration.Register)
+                .WithRegistrations(AdditionalRegistration.Register)
                 .Create();
             AddVariables(thread, variables);
             RunQuery(thread, query, files, cts.Token);

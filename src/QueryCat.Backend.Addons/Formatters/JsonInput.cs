@@ -4,14 +4,13 @@ using System.Text.Json.Nodes;
 using Json.Path;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
-using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Storage;
 
-namespace QueryCat.Backend.Formatters;
+namespace QueryCat.Backend.Addons.Formatters;
 
 /// <summary>
 /// Input that parser JSON data.
@@ -182,7 +181,7 @@ internal sealed class JsonInput : StreamRowsInput
                     var json = reader.UnreadSequence.ToString();
                     try
                     {
-                        _jsonElement = JsonSerializer.Deserialize(json, SourceGenerationContext.Default.JsonElement);
+                        _jsonElement = JsonSerializer.Deserialize(json, Addons.SourceGenerationContext.Default.JsonElement);
                     }
                     catch (JsonException jsonException)
                     {
@@ -236,7 +235,7 @@ internal sealed class JsonInput : StreamRowsInput
         if (reader.TryAdvanceTo('{', advancePastDelimiter: false))
         {
             var json = reader.UnreadSequence.ToString();
-            return JsonSerializer.Deserialize(json, SourceGenerationContext.Default.JsonElement);
+            return JsonSerializer.Deserialize(json, Addons.SourceGenerationContext.Default.JsonElement);
         }
         return null;
     }

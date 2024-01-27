@@ -30,7 +30,7 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
 
     private bool _registerStandardLibrary;
 
-    private Action<IFunctionsManager>[] _registrations = Array.Empty<Action<IFunctionsManager>>();
+    private List<Action<IFunctionsManager>> _registrations = new();
 
     private Func<IExecutionThread, PluginsLoader> _pluginsLoaderFactory = _ => new NullPluginsLoader(Array.Empty<string>());
 
@@ -85,7 +85,7 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
     /// <returns>The instance of <see cref="ExecutionThreadBootstrapper" />.</returns>
     public ExecutionThreadBootstrapper WithRegistrations(params Action<IFunctionsManager>[] registrations)
     {
-        _registrations = registrations;
+        _registrations.AddRange(registrations);
         return this;
     }
 
@@ -157,7 +157,6 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
             thread.FunctionsManager.RegisterFactory(InfoFunctions.RegisterFunctions);
             thread.FunctionsManager.RegisterFactory(MathFunctions.RegisterFunctions);
             thread.FunctionsManager.RegisterFactory(MiscFunctions.RegisterFunctions);
-            thread.FunctionsManager.RegisterFactory(JsonFunctions.RegisterFunctions);
             thread.FunctionsManager.RegisterFactory(ObjectFunctions.RegisterFunctions);
             thread.FunctionsManager.RegisterFactory(AggregatesRegistration.RegisterFunctions);
             thread.FunctionsManager.RegisterFactory(Inputs.Registration.RegisterFunctions);

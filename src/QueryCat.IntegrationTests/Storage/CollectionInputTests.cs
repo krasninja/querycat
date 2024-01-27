@@ -1,5 +1,6 @@
 using Xunit;
 using QueryCat.Backend;
+using QueryCat.Backend.Addons.Formatters;
 using QueryCat.Backend.Commands.Update;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
@@ -99,7 +100,7 @@ public sealed class CollectionInputTests : IDisposable
             })
             .WithStandardUriResolvers()
             .WithStandardFunctions()
-            .WithRegistrations(Backend.Formatters.AdditionalRegistration.Register)
+            .WithRegistrations(AdditionalRegistration.Register)
             .Create();
         thread.TopScope.Variables["employees"] = VariantValue.CreateFromObject(_employeesList);
         thread.Run("insert into self(employees) (id, name) values (4, 'Abbie Cornish');");

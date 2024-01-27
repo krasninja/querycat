@@ -8,12 +8,12 @@ using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 
-namespace QueryCat.Backend.Functions;
+namespace QueryCat.Backend.Addons.Functions;
 
 /// <summary>
 /// JSON functions.
 /// </summary>
-internal static class JsonFunctions
+public static class JsonFunctions
 {
     [SafeFunction]
     [Description("Extracts an object or an array from a JSON string.")]

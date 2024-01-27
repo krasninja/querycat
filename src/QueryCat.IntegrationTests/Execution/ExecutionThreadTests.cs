@@ -1,8 +1,7 @@
 using Xunit;
-using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Execution;
-using QueryCat.Backend.Formatters;
+using QueryCat.Backend.Addons.Formatters;
 using QueryCat.Tests.QueryRunner;
 
 namespace QueryCat.IntegrationTests.Execution;

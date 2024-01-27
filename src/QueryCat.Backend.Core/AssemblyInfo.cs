@@ -1,7 +1,7 @@
 using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("QueryCat.Plugins.Client")]
-[assembly: InternalsVisibleTo("QueryCat.Backend.Formatters")]
+[assembly: InternalsVisibleTo("QueryCat.Backend.Addons")]
 [assembly: InternalsVisibleTo("QueryCat.Backend")]
 
 [assembly: InternalsVisibleTo("QueryCat.UnitTests")]

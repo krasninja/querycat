@@ -1,7 +1,8 @@
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Functions;
+using QueryCat.Backend.Formatters;
 
-namespace QueryCat.Backend.Formatters;
+namespace QueryCat.Backend.Addons.Formatters;
 
 public static class AdditionalRegistration
 {

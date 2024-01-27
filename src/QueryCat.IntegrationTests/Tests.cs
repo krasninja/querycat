@@ -3,7 +3,7 @@ using QueryCat.Backend;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Formatters;
+using QueryCat.Backend.Addons.Formatters;
 using QueryCat.Tests.QueryRunner;
 
 namespace QueryCat.IntegrationTests;
@@ -19,6 +19,7 @@ public sealed class Tests : IDisposable
     {
         _testThread = TestThread.CreateBootstrapper()
             .WithRegistrations(AdditionalRegistration.Register)
+            .WithRegistrations(Backend.Addons.Functions.JsonFunctions.RegisterFunctions)
             .Create();
     }
 

@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend;
+using QueryCat.Backend.Addons.Formatters;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.PluginsManager;
@@ -40,8 +41,9 @@ internal class ApplicationOptions
                 Path.Combine(ExecutionThread.GetApplicationDirectory(), ConfigFileName))
             )
             .WithStandardFunctions()
+            .WithRegistrations(Backend.Addons.Functions.JsonFunctions.RegisterFunctions)
             .WithStandardUriResolvers()
-            .WithRegistrations(Backend.Formatters.AdditionalRegistration.Register);
+            .WithRegistrations(AdditionalRegistration.Register);
 #if ENABLE_PLUGINS && PLUGIN_THRIFT
         bootstrapper.WithPluginsLoader(thread => new Backend.ThriftPlugins.ThriftPluginsLoader(
             thread,

@@ -8,7 +8,7 @@ using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Storage;
 
-namespace QueryCat.Backend.Formatters;
+namespace QueryCat.Backend.Addons.Formatters;
 
 /// <summary>
 /// Input for IIS W3C logs.
