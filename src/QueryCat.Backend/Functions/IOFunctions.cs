@@ -23,16 +23,10 @@ internal static class IOFunctions
     {
         var uri = args.GetAt(0).AsString;
 
-        if (uri.StartsWith(@"http://", StringComparison.OrdinalIgnoreCase) ||
-            uri.StartsWith(@"https://", StringComparison.OrdinalIgnoreCase))
+        var function = args.ExecutionThread.FunctionsManager.ResolveUri(uri);
+        if (function != null)
         {
-            return Curl(args);
-        }
-
-        uri = ResolveHomeDirectory(uri);
-        if (Directory.Exists(uri))
-        {
-            return ListDirectory(args);
+            return function.Delegate.Invoke(args);
         }
 
         return ReadFile(args);
@@ -263,7 +257,7 @@ internal static class IOFunctions
         return VariantValue.CreateFromObject(input);
     }
 
-    private static string ResolveHomeDirectory(string dir)
+    internal static string ResolveHomeDirectory(string dir)
     {
         var homeDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         if (dir == "~")

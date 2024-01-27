@@ -45,10 +45,10 @@ public class ExecutionOptions
     /// <summary>
     /// Disable in-memory cache for sub-queries.
     /// </summary>
-    public bool DisableCache { get; init; }
+    public bool DisableCache { get; set; }
 
     /// <summary>
     /// Write appended data as source grows. Specifies check timeout. 0 means do not follow.
     /// </summary>
-    public int FollowTimeoutMs { get; init; }
+    public int FollowTimeoutMs { get; set; }
 }

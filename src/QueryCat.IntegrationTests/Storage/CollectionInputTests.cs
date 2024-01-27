@@ -97,6 +97,7 @@ public sealed class CollectionInputTests : IDisposable
             {
                 DefaultRowsOutput = NullRowsOutput.Instance,
             })
+            .WithStandardUriResolvers()
             .WithStandardFunctions()
             .WithRegistrations(Backend.Formatters.AdditionalRegistration.Register)
             .Create();

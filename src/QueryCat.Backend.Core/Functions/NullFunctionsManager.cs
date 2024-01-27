@@ -14,6 +14,9 @@ public sealed class NullFunctionsManager : IFunctionsManager
     public static NullFunctionsManager Instance { get; } = new();
 
     /// <inheritdoc />
+    public IFunction? ResolveUri(string uri) => null;
+
+    /// <inheritdoc />
     public void RegisterAggregate<TAggregate>(Func<TAggregate> factory)
         where TAggregate : IAggregateFunction
     {

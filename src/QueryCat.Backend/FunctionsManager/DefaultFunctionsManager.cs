@@ -17,6 +17,7 @@ public sealed class DefaultFunctionsManager : IFunctionsManager
     private const int DefaultCapacity = 42;
 
     private readonly IAstBuilder _astBuilder;
+    private readonly List<IUriResolver> _uriResolvers = new();
 
     private record FunctionPreRegistration(
         FunctionDelegate Delegate,
@@ -34,16 +35,19 @@ public sealed class DefaultFunctionsManager : IFunctionsManager
     private int _registerAggregateFunctionsLastIndex;
 
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(DefaultFunctionsManager));
-    private static readonly ILogger Logger = Application.LoggerFactory.CreateLogger(nameof(DefaultFunctionsManager));
 
     private static VariantValue EmptyFunction(FunctionCallInfo args)
     {
         return VariantValue.Null;
     }
 
-    internal DefaultFunctionsManager(IAstBuilder astBuilder)
+    internal DefaultFunctionsManager(IAstBuilder astBuilder, IEnumerable<IUriResolver>? uriResolvers = null)
     {
         _astBuilder = astBuilder;
+        if (uriResolvers != null)
+        {
+            _uriResolvers.AddRange(uriResolvers);
+        }
     }
 
     #region Registration
@@ -165,6 +169,23 @@ public sealed class DefaultFunctionsManager : IFunctionsManager
     }
 
     /// <inheritdoc />
+    public IFunction? ResolveUri(string uri)
+    {
+        foreach (var uriResolver in _uriResolvers)
+        {
+            if (uriResolver.TryResolve(uri, out var functionName)
+                && !string.IsNullOrEmpty(functionName))
+            {
+                return this.FindByName(functionName);
+            }
+        }
+
+        return null;
+    }
+
+    internal void AddUriResolver(IUriResolver uriResolver) => _uriResolvers.Add(uriResolver);
+
+    /// <inheritdoc />
     public void RegisterAggregate<TAggregate>(Func<TAggregate> factory)
         where TAggregate : IAggregateFunction
     {
@@ -200,7 +221,7 @@ public sealed class DefaultFunctionsManager : IFunctionsManager
                 },
                 updateValueFactory: (_, value) => value!.Add(function));
 
-            Logger.LogDebug("Register aggregate: {Function}.", function);
+            _logger.LogDebug("Register aggregate: {Function}.", function);
             var aggregateFunctionInstance = factory.Invoke();
             _aggregateFunctions.TryAdd(functionName, aggregateFunctionInstance);
         }

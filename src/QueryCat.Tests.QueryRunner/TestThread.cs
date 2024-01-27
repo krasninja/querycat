@@ -36,7 +36,8 @@ public static class TestThread
                 UseConfig = false,
                 AddRowNumberColumn = false,
             })
-            .WithStandardFunctions();
+            .WithStandardFunctions()
+            .WithStandardUriResolvers();
     }
 
     /// <summary>

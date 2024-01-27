@@ -9,6 +9,7 @@ using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Functions;
 using QueryCat.Backend.Functions.Aggregate;
+using QueryCat.Backend.Functions.UriResolvers;
 using QueryCat.Backend.FunctionsManager;
 using QueryCat.Backend.Parser;
 
@@ -25,7 +26,7 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
 
     private IInputConfigStorage _inputConfigStorage = NullInputConfigStorage.Instance;
 
-    private IFunctionsManager _functionsManager = new DefaultFunctionsManager(new AstBuilder());
+    private IFunctionsManager? _functionsManager = null;
 
     private bool _registerStandardLibrary;
 
@@ -34,6 +35,8 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
     private Func<IExecutionThread, PluginsLoader> _pluginsLoaderFactory = _ => new NullPluginsLoader(Array.Empty<string>());
 
     private Func<PluginsLoader, IPluginsManager> _pluginsManagerFactory = _ => new NullPluginsManager();
+
+    private readonly List<IUriResolver> _uriResolvers = new();
 
     private object? _tag;
 
@@ -61,6 +64,17 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
     public ExecutionThreadBootstrapper WithStandardFunctions()
     {
         _registerStandardLibrary = true;
+        return this;
+    }
+
+    /// <summary>
+    /// Use CURL and directory resolvers for "SELECT FROM" clause.
+    /// </summary>
+    /// <returns>The instance of <see cref="ExecutionThreadBootstrapper" />.</returns>
+    public ExecutionThreadBootstrapper WithStandardUriResolvers()
+    {
+        _uriResolvers.Add(new CurlUriResolver());
+        _uriResolvers.Add(new DirectoryUriResolver());
         return this;
     }
 
@@ -118,6 +132,12 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
         var timer = new Stopwatch();
         timer.Start();
 #endif
+
+        // Create functions manager.
+        if (_functionsManager == null)
+        {
+            _functionsManager = new DefaultFunctionsManager(new AstBuilder(), _uriResolvers);
+        }
 
         // Create thread.
         var thread = new ExecutionThread(

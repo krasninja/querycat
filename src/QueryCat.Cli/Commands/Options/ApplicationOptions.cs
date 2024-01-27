@@ -40,6 +40,7 @@ internal class ApplicationOptions
                 Path.Combine(ExecutionThread.GetApplicationDirectory(), ConfigFileName))
             )
             .WithStandardFunctions()
+            .WithStandardUriResolvers()
             .WithRegistrations(Backend.Formatters.AdditionalRegistration.Register);
 #if ENABLE_PLUGINS && PLUGIN_THRIFT
         bootstrapper.WithPluginsLoader(thread => new Backend.ThriftPlugins.ThriftPluginsLoader(

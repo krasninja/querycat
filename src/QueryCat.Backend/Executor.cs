@@ -18,6 +18,7 @@ public static class Executor
     {
         return new ExecutionThreadBootstrapper()
             .WithStandardFunctions()
+            .WithStandardUriResolvers()
             .Create();
     }
 }

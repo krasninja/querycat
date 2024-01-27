@@ -9,6 +9,13 @@ namespace QueryCat.Backend.Core.Functions;
 public interface IFunctionsManager
 {
     /// <summary>
+    /// Resolve URI into the specific function call.
+    /// </summary>
+    /// <param name="uri">URI.</param>
+    /// <returns>Function or null if cannot be resolved.</returns>
+    IFunction? ResolveUri(string uri);
+
+    /// <summary>
     /// Register aggregate function.
     /// </summary>
     /// <param name="factory">Factory method that creates aggregate instance.</param>

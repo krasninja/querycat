@@ -16,6 +16,12 @@ public sealed class PluginFunctionsManager : IFunctionsManager
     private readonly Dictionary<string, PluginFunction> _functions = new();
 
     /// <inheritdoc />
+    public IFunction? ResolveUri(string uri)
+    {
+        throw new NotImplementedException();
+    }
+
+    /// <inheritdoc />
     public void RegisterAggregate<TAggregate>(Func<TAggregate> factory)
         where TAggregate : IAggregateFunction
     {
