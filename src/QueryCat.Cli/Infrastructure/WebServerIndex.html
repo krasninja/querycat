@@ -162,7 +162,10 @@
               <q-icon v-if="props.row.type === 'd'" name="folder"></q-icon>
               <q-icon v-if="props.row.type === 'f'" name="description"></q-icon>
               &nbsp;&nbsp;
-              <router-link :to="{ path: 'files', query: { q: getFullPath(props.row.name) }}">{{ props.row.name }}</router-link>
+              <router-link :to="{ path: 'files', query: { q: getFullPath(props.row.name) }}"
+                           custom v-slot="{ href, navigate, isActive }">
+                <a :href="getFullDownloadPath(getFullPath(props.row.name))" @click="navigate">{{ props.row.name }}</a>
+              </router-link>
             </q-td>
             <q-td key="last_write_time" :props="props">
               {{ props.row.last_write_time }}

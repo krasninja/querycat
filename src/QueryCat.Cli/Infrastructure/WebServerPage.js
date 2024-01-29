@@ -183,13 +183,16 @@ const filesPage = {
             }
             return fullPath;
         },
+        getFullDownloadPath: function(path) {
+            return window.baseUrl + 'api/files?q=' + path;
+        },
         runQuery: function() {
             const self = this;
             const path = self.$route.query.q;
             // Download file.
             if (path && path.length > 0 && path[path.length - 1] !== '/') {
                 self.$router.go(-1);
-                window.location.assign(window.baseUrl + 'api/files?q=' + path);
+                window.location.assign(self.getFullDownloadPath(path));
                 return;
             }
             axios({
