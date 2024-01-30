@@ -2,13 +2,13 @@
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.5.3] - 2024-01-30
 
 ## Added
 
 - Add breadcrumbs in files UI, overall web UI improvements.
 - Add schema and reset web UI buttons.
-- Allow restrict web UI access by IP addresses.
+- Allow restricting web UI access by IP addresses.
 
 ## Fixed
 
