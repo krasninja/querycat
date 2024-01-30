@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Added
 
-- Add breadcrumbs in files UI.
+- Add breadcrumbs in files UI, overall web UI improvements.
 - Add schema and reset web UI buttons.
 - Allow restrict web UI access by IP addresses.
 
@@ -30,7 +30,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Add new table output style "Table2".
 - Support library plugins.
 - Add "ls_dir" function.
-- Add glob pattern to search thru all directories. For example, "select * from '/home/user/**/*.txt".
+- Add glob pattern to search thru all directories. For example, "select * from '/home/user/**/*.txt'".
 - Resolve '~' to user home directory.
 - Implement simple HTTP files server (beta).
 

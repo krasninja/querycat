@@ -33,6 +33,8 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
 
     private IExecutionScope _topScope;
     private readonly IExecutionScope _rootScope;
+    private bool _bootstrapScriptExecuted;
+    private bool _configLoaded;
 
     /// <summary>
     /// Root (base) thread scope.
@@ -101,7 +103,6 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
 
         _rootScope = new ExecutionScope(parent: null);
         _topScope = _rootScope;
-        RunBootstrapScript(GetApplicationDirectory());
     }
 
     /// <summary>
@@ -189,10 +190,8 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
 
     private VariantValue RunInternal(CancellationToken cancellationToken)
     {
-        if (Options.UseConfig)
-        {
-            AsyncUtils.RunSync(ConfigStorage.LoadAsync);
-        }
+        LoadConfig();
+        RunBootstrapScript();
 
         var executeEventArgs = new ExecuteEventArgs();
         while (ExecutingStatement != null)
@@ -342,12 +341,22 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
         }
     }
 
-    private void RunBootstrapScript(string appLocalDirectory)
+    private void LoadConfig()
     {
-        var rcFile = Path.Combine(appLocalDirectory, BootstrapFileName);
-        if (Options.RunBootstrapScript && File.Exists(rcFile))
+        if (!_configLoaded && Options.UseConfig)
+        {
+            AsyncUtils.RunSync(ConfigStorage.LoadAsync);
+            _configLoaded = true;
+        }
+    }
+
+    private void RunBootstrapScript()
+    {
+        var rcFile = Path.Combine(GetApplicationDirectory(), BootstrapFileName);
+        if (!_bootstrapScriptExecuted && Options.RunBootstrapScript && File.Exists(rcFile))
         {
             Run(File.ReadAllText(rcFile));
+            _bootstrapScriptExecuted = true;
         }
     }
 
