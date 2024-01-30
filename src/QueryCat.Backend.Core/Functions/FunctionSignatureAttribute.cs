@@ -8,10 +8,17 @@ public class FunctionSignatureAttribute : Attribute
 {
     public string Signature { get; } = string.Empty;
 
+    /// <summary>
+    /// Constructor. The signature will be determined from type.
+    /// </summary>
     public FunctionSignatureAttribute()
     {
     }
 
+    /// <summary>
+    /// Constructor.
+    /// </summary>
+    /// <param name="signature">Function signature.</param>
     public FunctionSignatureAttribute(string signature)
     {
         Signature = signature;

@@ -10,6 +10,10 @@ public abstract class PluginsLoader
     /// </summary>
     protected IEnumerable<string> PluginDirectories { get; }
 
+    /// <summary>
+    /// Constructor.
+    /// </summary>
+    /// <param name="pluginDirectories">Directories.</param>
     public PluginsLoader(IEnumerable<string> pluginDirectories)
     {
         PluginDirectories = pluginDirectories;
@@ -62,6 +66,12 @@ public abstract class PluginsLoader
         }
     }
 
+    /// <summary>
+    /// Sometimes application specific file can be considered as plugin file.
+    /// We must skip them.
+    /// </summary>
+    /// <param name="file">File path.</param>
+    /// <returns><c>True</c> if this is application specific file, <c>false</c> otherwise.</returns>
     protected static bool IsAppSpecificFile(string file)
     {
         var fileName = Path.GetFileName(file);

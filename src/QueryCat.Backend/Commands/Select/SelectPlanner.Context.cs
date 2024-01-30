@@ -7,6 +7,7 @@ using QueryCat.Backend.Commands.Select.Inputs;
 using QueryCat.Backend.Commands.Select.Visitors;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Relational;
@@ -50,6 +51,7 @@ internal sealed partial class SelectPlanner
     private SelectCommandContext Context_CreateInitialContext(SelectQueryNode node, SelectCommandContext? parentContext = null)
     {
         var context = new SelectCommandContext(node);
+        context.CapturedScope = ExecutionThread.TopScope;
         context.SetParent(parentContext);
         node.SetAttribute(AstAttributeKeys.ContextKey, context);
         return context;
@@ -160,7 +162,7 @@ internal sealed partial class SelectPlanner
 
     private IRowsInput[] Context_CreateInputSourceFromVariable(SelectCommandContext context, IdentifierExpressionNode idNode)
     {
-        if (!ExecutionThread.TopScope.Variables.TryGetValue(idNode.FullName, out var value))
+        if (!context.CapturedScope.TryGet(idNode.FullName, out var value))
         {
             return Array.Empty<IRowsInput>();
         }

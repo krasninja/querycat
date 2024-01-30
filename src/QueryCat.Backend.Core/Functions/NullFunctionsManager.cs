@@ -1,3 +1,4 @@
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Core.Functions;
@@ -7,7 +8,13 @@ namespace QueryCat.Backend.Core.Functions;
 /// </summary>
 public sealed class NullFunctionsManager : IFunctionsManager
 {
+    /// <summary>
+    /// Instance of <see cref="NullFunctionsManager" />.
+    /// </summary>
     public static NullFunctionsManager Instance { get; } = new();
+
+    /// <inheritdoc />
+    public IFunction? ResolveUri(string uri) => null;
 
     /// <inheritdoc />
     public void RegisterAggregate<TAggregate>(Func<TAggregate> factory)

@@ -1,8 +1,8 @@
 using System.CommandLine;
 using QueryCat.Backend;
-using QueryCat.Backend.Execution;
 using QueryCat.Backend.Formatters;
 using QueryCat.Cli.Commands.Options;
+using QueryCat.Cli.Infrastructure;
 
 namespace QueryCat.Cli.Commands;
 
@@ -69,7 +69,7 @@ internal class QueryCommand : BaseQueryCommand
                 separator: queryOptions.ColumnsSeparator,
                 style: queryOptions.OutputStyle,
                 floatNumberFormat: queryOptions.FloatNumberFormat);
-            var options = new ExecutionOptions
+            var options = new AppExecutionOptions
             {
                 AddRowNumberColumn = queryOptions.RowNumberOption,
                 ShowDetailedStatistic = queryOptions.DetailedStatistic,
@@ -95,7 +95,7 @@ internal class QueryCommand : BaseQueryCommand
             if (queryOptions.Statistic || queryOptions.DetailedStatistic)
             {
                 Console.WriteLine(new string('-', 5));
-                Console.WriteLine(root.Thread.Statistic.ToString());
+                Console.WriteLine(root.Thread.Statistic.Dump());
             }
         },
             new ApplicationOptionsBinder(LogLevelOption, PluginDirectoriesOption),

@@ -6,14 +6,14 @@ using QueryCat.Backend.Commands.Select;
 using QueryCat.Backend.Commands.Select.Visitors;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
-using QueryCat.Backend.Execution;
+using QueryCat.Backend.Core.Execution;
 
 namespace QueryCat.Backend.Commands.Update;
 
 internal sealed class UpdateCommand : ICommand
 {
     /// <inheritdoc />
-    public IFuncUnit CreateHandler(ExecutionThread executionThread, StatementNode node)
+    public IFuncUnit CreateHandler(IExecutionThread<ExecutionOptions> executionThread, StatementNode node)
     {
         var insertNode = (UpdateNode)node.RootNode;
 

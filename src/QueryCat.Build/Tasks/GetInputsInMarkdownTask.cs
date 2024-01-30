@@ -34,10 +34,7 @@ public class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
     public override Task RunAsync(BuildContext context)
     {
         var assemblyFile = context.Arguments.GetArgument("Assembly");
-        using var thread = new ExecutionThreadBootstrapper(new ExecutionOptions
-            {
-                PluginDirectories = { assemblyFile }
-            })
+        using var thread = new ExecutionThreadBootstrapper()
             .WithPluginsLoader(thread => new ThriftPluginsLoader(thread, new[] { assemblyFile }))
             .Create();
         var pluginFunctions = thread.FunctionsManager.GetFunctions()

@@ -2,6 +2,9 @@ using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Core.Functions;
 
+/// <summary>
+/// Function is a subprogram with input arguments and optional output value.
+/// </summary>
 public interface IFunction
 {
     /// <summary>
@@ -38,4 +41,9 @@ public interface IFunction
     /// Signature arguments.
     /// </summary>
     FunctionSignatureArgument[] Arguments { get; }
+
+    /// <summary>
+    /// Does function has side effects (can write anything to the system).
+    /// </summary>
+    bool IsSafe { get; }
 }

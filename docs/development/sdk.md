@@ -6,6 +6,12 @@ You can use QueryCat directly in your .NET app. Install the following NuGet pack
 Install-Package QueryCat
 ```
 
+or
+
+```
+$ dotnet add package QueryCat
+```
+
 ## Basic Usage
 
 The main object is `ExecutionThread` that allows to execute queries. Basic usage:

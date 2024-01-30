@@ -2,7 +2,6 @@ using System.ComponentModel;
 using System.Text;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Core.Types.Blob;
 
 namespace QueryCat.Plugin.Test;
 
@@ -48,6 +47,6 @@ internal static class TestFunctions
             sb.Append("THIS IS THE TEST TEXT ");
         }
         var bytes = Encoding.UTF8.GetBytes(sb.ToString());
-        return VariantValue.CreateFromObject(new BytesBlobData(bytes));
+        return VariantValue.CreateFromObject(new StreamBlobData(() => new MemoryStream(bytes)));
     }
 }

@@ -9,6 +9,7 @@ namespace QueryCat.Backend.Functions;
 /// </summary>
 internal static class ObjectFunctions
 {
+    [SafeFunction]
     [Description("Extracts a scalar value from a POCO .NET object.")]
     [FunctionSignature("object_query(obj: void, query: string): string")]
     public static VariantValue ObjectQuery(FunctionCallInfo args)

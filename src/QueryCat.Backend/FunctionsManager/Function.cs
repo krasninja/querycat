@@ -42,6 +42,9 @@ public class Function : IFunction
         }
     }
 
+    /// <inheritdoc />
+    public bool IsSafe { get; internal set; } = false;
+
     /// <summary>
     /// Full signature.
     /// </summary>

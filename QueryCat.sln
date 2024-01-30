@@ -36,7 +36,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueryCat.Plugins.Client", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueryCat.Plugin.Test", "src\QueryCat.Plugin.Test\QueryCat.Plugin.Test.csproj", "{60EABF81-EACC-452C-8164-A6569391CBAA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueryCat.Backend.Formatters", "src\QueryCat.Backend.Formatters\QueryCat.Backend.Formatters.csproj", "{373EAE2B-B887-45C1-B5FA-6DE3E2D40A72}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueryCat.Backend.Addons", "src\QueryCat.Backend.Addons\QueryCat.Backend.Addons.csproj", "{373EAE2B-B887-45C1-B5FA-6DE3E2D40A72}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueryCat.Backend.Core", "src\QueryCat.Backend.Core\QueryCat.Backend.Core.csproj", "{D9BEA5FA-A7C9-4D49-AD64-7B5179DDD9C0}"
 EndProject

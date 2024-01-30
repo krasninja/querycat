@@ -8,13 +8,14 @@ QueryCat is the command line tool that provides the universal access to a text-b
 
 ## Features
 
-1. Can query CSV, TSV, JSON, XML, log files and other input sources.
+1. Query CSV, TSV, JSON, XML, log files and other input sources.
 2. Has simple SQL-engine that supports select, filter, [group](https://querycat.readthedocs.io/en/latest/functions/aggregate/), joins, order, limit, offset, union, subqueries, CTE (recursive CTE), window functions.
-3. JSONPath, XPath expressions are supported.
+3. JSONPath, XPath expressions.
 4. Supports regex and Grok patterns.
-5. Primitive [Web UI](https://querycat.readthedocs.io/en/latest/features/web-server/) and [REST API](https://querycat.readthedocs.io/en/latest/features/web-server/) are available.
-6. Can be extended using [plugins](https://querycat.readthedocs.io/en/latest/plugins/).
-7. [Variables](https://querycat.readthedocs.io/en/latest/commands/declare/) support.
+5. Simple [Web UI](https://querycat.readthedocs.io/en/latest/features/web-server/) and [REST API](https://querycat.readthedocs.io/en/latest/features/web-server/).
+6. Simple files server (with partial request support).
+7. [Plugins](https://querycat.readthedocs.io/en/latest/plugins/) ecosystem.
+8. [Variables](https://querycat.readthedocs.io/en/latest/commands/declare/) support.
 
 ## In Action
 
@@ -74,6 +75,14 @@ $ qcat --var csv=/tmp/1.csv "select a + b from csv"
 7
 ```
 
+## NuGet Package
+
+You can use the QueryCat library in your project. See [SDK](https://querycat.readthedocs.io/en/latest/development/sdk/) sections in the docs.
+
+```
+$ dotnet add package QueryCat
+```
+
 ## Information
 
 - Home: [GitHub](https://github.com/krasninja/querycat)
@@ -82,5 +91,5 @@ $ qcat --var csv=/tmp/1.csv "select a + b from csv"
 
 ## Limitations
 
-- Not the whole SQL standard is implemented. It is huge.
-- Only limited amount of rows sources support INSERT and UPDATE command.
+- Not the whole SQL standard is implemented.
+- Only limited amount of rows sources supports INSERT and UPDATE commands.

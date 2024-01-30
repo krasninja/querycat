@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.IO.Compression;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Fetch;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
@@ -15,22 +16,17 @@ internal static class IOFunctions
 {
     private const string ContentTypeHeader = "Content-Type";
 
+    [SafeFunction]
     [Description("Read data from a URI.")]
     [FunctionSignature("read(uri: string, fmt?: object<IRowsFormatter>): object<IRowsInput>")]
     public static VariantValue Read(FunctionCallInfo args)
     {
         var uri = args.GetAt(0).AsString;
 
-        if (uri.StartsWith(@"http://", StringComparison.OrdinalIgnoreCase) ||
-            uri.StartsWith(@"https://", StringComparison.OrdinalIgnoreCase))
+        var function = args.ExecutionThread.FunctionsManager.ResolveUri(uri);
+        if (function != null)
         {
-            return Curl(args);
-        }
-
-        uri = ResolveHomeDirectory(uri);
-        if (Directory.Exists(uri))
-        {
-            return ListDirectory(args);
+            return function.Delegate.Invoke(args);
         }
 
         return ReadFile(args);
@@ -43,6 +39,7 @@ internal static class IOFunctions
         return WriteFile(args);
     }
 
+    [SafeFunction]
     [Description("Reads data from a string.")]
     [FunctionSignature("read_text([text]: string, fmt: object<IRowsFormatter>): object<IRowsInput>")]
     public static VariantValue ReadString(FunctionCallInfo args)
@@ -58,6 +55,7 @@ internal static class IOFunctions
 
     private static readonly string[] CompressFilesExtensions = { ".gz" };
 
+    [SafeFunction]
     [Description("Read data from a file.")]
     [FunctionSignature("read_file(path: string, fmt?: object<IRowsFormatter>): object<IRowsInput>")]
     public static VariantValue ReadFile(FunctionCallInfo args)
@@ -238,6 +236,7 @@ internal static class IOFunctions
         }
     }
 
+    [SafeFunction]
     [Description("List directory content (files and sub-directories).")]
     [FunctionSignature("ls_dir(path: string): object<IRowsInput>")]
     public static VariantValue ListDirectory(FunctionCallInfo args)
@@ -258,7 +257,7 @@ internal static class IOFunctions
         return VariantValue.CreateFromObject(input);
     }
 
-    private static string ResolveHomeDirectory(string dir)
+    internal static string ResolveHomeDirectory(string dir)
     {
         var homeDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         if (dir == "~")
@@ -280,6 +279,7 @@ internal static class IOFunctions
 
     private static readonly HttpClient HttpClient = new();
 
+    [SafeFunction]
     [Description("Read the HTTP resource.")]
     [FunctionSignature("curl(uri: string, fmt?: object<IRowsFormatter>): object<IRowsInput>")]
     public static VariantValue Curl(FunctionCallInfo args)
@@ -332,7 +332,7 @@ internal static class IOFunctions
     /// </summary>
     /// <param name="uri">URI string.</param>
     /// <returns>URI and arguments.</returns>
-    public static (string Uri, FunctionCallArguments Args) Utils_ParseUri(string uri)
+    private static (string Uri, FunctionCallArguments Args) Utils_ParseUri(string uri)
     {
         var delimiterIndex = uri.IndexOf(QueryDelimiter, StringComparison.Ordinal);
         if (delimiterIndex == -1)
@@ -400,32 +400,28 @@ internal static class IOFunctions
 
     #region Stdio
 
+    [SafeFunction]
     [Description("Write data to the system standard output.")]
-    [FunctionSignature("stdout(fmt?: object<IRowsFormatter>, page_size: integer = 10): object<IRowsOutput>")]
+    [FunctionSignature("stdout(fmt?: object<IRowsFormatter>): object<IRowsOutput>")]
     public static VariantValue Stdout(FunctionCallInfo args)
     {
         var formatter = args.GetAt(0).AsObject as IRowsFormatter;
-        var pageSize = (int)args.GetAt(1).AsInteger;
 
         var stream = Stdio.GetConsoleOutput();
         formatter ??= new TextTableFormatter();
         var output = formatter.OpenOutput(stream);
-        var pagingOutput = new PagingOutput(output)
-        {
-            PagingRowsCount = pageSize,
-        };
-        pagingOutput.PagingRowsCount = pageSize;
 
-        return VariantValue.CreateFromObject(pagingOutput);
+        return VariantValue.CreateFromObject(output);
     }
 
+    [SafeFunction]
     [Description("Read data from the system standard input.")]
     [FunctionSignature("stdin(skip_lines: integer = 0, fmt?: object<IRowsFormatter>): object<IRowsInput>")]
     public static VariantValue Stdin(FunctionCallInfo args)
     {
         var skipLines = args.GetAt(0).AsInteger;
         var formatter = args.GetAt(1).AsObject as IRowsFormatter;
-        var stream = Stdio.CreateConsoleInput();
+        var stream = Stdio.GetConsoleInput();
 
         for (var i = 0; i < skipLines; i++)
         {

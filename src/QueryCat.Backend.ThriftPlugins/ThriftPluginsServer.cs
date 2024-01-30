@@ -9,6 +9,7 @@ using Thrift.Transport;
 using Thrift.Transport.Server;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Plugins;
 
 namespace QueryCat.Backend.ThriftPlugins;
@@ -204,10 +205,6 @@ public sealed partial class ThriftPluginsServer : IDisposable
         _serverCts.Dispose();
         foreach (var pluginContext in _plugins)
         {
-            if (pluginContext.Client == null)
-            {
-                continue;
-            }
             pluginContext.Shutdown();
         }
     }

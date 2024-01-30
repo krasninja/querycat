@@ -2,12 +2,14 @@ using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Plugins;
 using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Functions;
 using QueryCat.Backend.Functions.Aggregate;
+using QueryCat.Backend.Functions.UriResolvers;
 using QueryCat.Backend.FunctionsManager;
 using QueryCat.Backend.Parser;
 
@@ -24,15 +26,19 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
 
     private IInputConfigStorage _inputConfigStorage = NullInputConfigStorage.Instance;
 
-    private IFunctionsManager _functionsManager = new DefaultFunctionsManager(new AstBuilder());
+    private IFunctionsManager? _functionsManager = null;
 
     private bool _registerStandardLibrary;
 
-    private Action<IFunctionsManager>[] _registrations = Array.Empty<Action<IFunctionsManager>>();
+    private List<Action<IFunctionsManager>> _registrations = new();
 
     private Func<IExecutionThread, PluginsLoader> _pluginsLoaderFactory = _ => new NullPluginsLoader(Array.Empty<string>());
 
     private Func<PluginsLoader, IPluginsManager> _pluginsManagerFactory = _ => new NullPluginsManager();
+
+    private readonly List<IUriResolver> _uriResolvers = new();
+
+    private object? _tag;
 
     public ExecutionThreadBootstrapper WithConfigStorage(IInputConfigStorage configStorage)
     {
@@ -62,13 +68,24 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
     }
 
     /// <summary>
+    /// Use CURL and directory resolvers for "SELECT FROM" clause.
+    /// </summary>
+    /// <returns>The instance of <see cref="ExecutionThreadBootstrapper" />.</returns>
+    public ExecutionThreadBootstrapper WithStandardUriResolvers()
+    {
+        _uriResolvers.Add(new CurlUriResolver());
+        _uriResolvers.Add(new DirectoryUriResolver());
+        return this;
+    }
+
+    /// <summary>
     /// Add functions registrations.
     /// </summary>
     /// <param name="registrations">Registration delegates.</param>
     /// <returns>The instance of <see cref="ExecutionThreadBootstrapper" />.</returns>
     public ExecutionThreadBootstrapper WithRegistrations(params Action<IFunctionsManager>[] registrations)
     {
-        _registrations = registrations;
+        _registrations.AddRange(registrations);
         return this;
     }
 
@@ -95,6 +112,17 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
     }
 
     /// <summary>
+    /// With tag (custom user information).
+    /// </summary>
+    /// <param name="tag">Custom user information object.</param>
+    /// <returns>Instance of <see cref="ExecutionThread" />.</returns>
+    public ExecutionThreadBootstrapper WithTag(object? tag)
+    {
+        _tag = tag;
+        return this;
+    }
+
+    /// <summary>
     /// Create the instance of execution thread.
     /// </summary>
     /// <returns>Instance of <see cref="ExecutionThread" />.</returns>
@@ -105,6 +133,12 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
         timer.Start();
 #endif
 
+        // Create functions manager.
+        if (_functionsManager == null)
+        {
+            _functionsManager = new DefaultFunctionsManager(new AstBuilder(), _uriResolvers);
+        }
+
         // Create thread.
         var thread = new ExecutionThread(
             options: _executionOptions,
@@ -112,7 +146,7 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
             configStorage: _inputConfigStorage,
             astBuilder: new AstBuilder()
         );
-        thread.Statistic.CountErrorRows = thread.Options.ShowDetailedStatistic;
+        thread.Tag = _tag;
 
         // Register functions.
         if (_registerStandardLibrary)
@@ -123,7 +157,6 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
             thread.FunctionsManager.RegisterFactory(InfoFunctions.RegisterFunctions);
             thread.FunctionsManager.RegisterFactory(MathFunctions.RegisterFunctions);
             thread.FunctionsManager.RegisterFactory(MiscFunctions.RegisterFunctions);
-            thread.FunctionsManager.RegisterFactory(JsonFunctions.RegisterFunctions);
             thread.FunctionsManager.RegisterFactory(ObjectFunctions.RegisterFunctions);
             thread.FunctionsManager.RegisterFactory(AggregatesRegistration.RegisterFunctions);
             thread.FunctionsManager.RegisterFactory(Inputs.Registration.RegisterFunctions);

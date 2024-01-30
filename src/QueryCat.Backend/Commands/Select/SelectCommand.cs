@@ -1,9 +1,7 @@
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Select;
-using QueryCat.Backend.Commands.Select.Iterators;
-using QueryCat.Backend.Core.Data;
-using QueryCat.Backend.Execution;
+using QueryCat.Backend.Core.Execution;
 
 namespace QueryCat.Backend.Commands.Select;
 
@@ -13,7 +11,7 @@ namespace QueryCat.Backend.Commands.Select;
 internal sealed class SelectCommand : ICommand
 {
     /// <inheritdoc />
-    public IFuncUnit CreateHandler(ExecutionThread executionThread, StatementNode node)
+    public IFuncUnit CreateHandler(IExecutionThread<ExecutionOptions> executionThread, StatementNode node)
     {
         var selectQueryNode = (SelectQueryNode)node.RootNode;
 
@@ -21,22 +19,6 @@ internal sealed class SelectCommand : ICommand
         new SelectPlanner(executionThread).CreateIterator(selectQueryNode);
         var context = selectQueryNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
 
-        // Apply row_number column.
-        ApplyRowIdIterator(executionThread, context);
-
         return new SelectCommandHandler(context);
-    }
-
-    private void ApplyRowIdIterator(ExecutionThread executionThread, SelectCommandContext bodyContext)
-    {
-        var isSubQuery = bodyContext.Parent != null;
-        var resultIterator = bodyContext.CurrentIterator;
-        if (executionThread.Options.AddRowNumberColumn
-            && !isSubQuery
-            && resultIterator.GetColumnIndexByName(RowIdRowsIterator.ColumName) == -1)
-        {
-            resultIterator = new RowIdRowsIterator(resultIterator);
-        }
-        bodyContext.SetIterator(resultIterator);
     }
 }

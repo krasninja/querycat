@@ -78,6 +78,7 @@ enum ErrorType {
   INVALID_OBJECT = 2,
   NOT_SUPPORTED = 3,
   INTERNAL = 4,
+  ARGUMENT = 5,
 
   INVALID_AUTH_TOKEN = 10,
   INVALID_FUNCTION = 11
@@ -86,7 +87,10 @@ enum ErrorType {
 exception QueryCatPluginException {
   1: required ErrorType type,
   2: required string error_message,
-  3: optional i32 object_handle
+  3: optional i32 object_handle,
+  4: optional string exception_type,
+  5: optional string exception_stack_trace,
+  6: optional QueryCatPluginException exception_nested
 }
 
 /*
@@ -135,7 +139,8 @@ service PluginsManager {
 
   // Run the query and return the last result.
   VariantValue RunQuery(
-    1: required string query
+    1: required string query,
+    2: map<string, VariantValue> parameters
   ) throws (1: QueryCatPluginException e),
 
   // Set configuration value.

@@ -7,6 +7,7 @@ namespace QueryCat.Backend.Functions.Aggregate;
 /// <summary>
 /// Implements "minimum" aggregation function.
 /// </summary>
+[SafeFunction]
 [Description("Computes the minimum value.")]
 [AggregateFunctionSignature("min(value: integer): integer")]
 [AggregateFunctionSignature("min(value: float): float")]
@@ -15,7 +16,7 @@ namespace QueryCat.Backend.Functions.Aggregate;
 internal sealed class MinAggregateFunction : IAggregateFunction
 {
     /// <inheritdoc />
-    public VariantValue[] GetInitialState(DataType type) => new[] { VariantValue.Null };
+    public VariantValue[] GetInitialState(DataType type) => [VariantValue.Null];
 
     /// <inheritdoc />
     public void Invoke(VariantValue[] state, FunctionCallInfo callInfo)

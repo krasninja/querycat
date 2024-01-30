@@ -168,6 +168,12 @@ public readonly partial struct VariantValue
             return DataType.String;
         }
 
+        if (MiscOperations.Contains(operation)
+            && left == DataType.Blob && right == DataType.Blob)
+        {
+            return DataType.Blob;
+        }
+
         if (operation == Operation.Add || operation == Operation.Subtract)
         {
             if ((left == DataType.Timestamp && right == DataType.Interval)
@@ -417,11 +423,23 @@ public readonly partial struct VariantValue
         var leftType = left.GetInternalType();
         var rightType = right.GetInternalType();
 
+        VariantValue CreateCombinedBlob(IBlobData leftBlob, IBlobData rightBlob)
+        {
+            return new VariantValue(new StreamBlobData(
+                () => new MultiStream(leftBlob.GetStream(), rightBlob.GetStream()))
+            );
+        }
+
         var result = leftType switch
         {
             DataType.String => rightType switch
             {
                 DataType.String => new VariantValue(string.Concat(left.AsStringUnsafe, right.AsStringUnsafe)),
+                _ => Null,
+            },
+            DataType.Blob => rightType switch
+            {
+                DataType.Blob => CreateCombinedBlob(left.AsBlob, right.AsBlob),
                 _ => Null,
             },
             _ => Null,

@@ -49,7 +49,7 @@ public class RowsInputIterator : IRowsIterator, IRowsIteratorParent, IDisposable
             if (errorCode != ErrorCode.OK)
             {
                 _rowsInputIterator.OnError?.Invoke(this,
-                    new RowsInputErrorEventArgs(_rowsInputIterator._rowIndex, columnIndex, errorCode));
+                    new RowsInputErrorEventArgs(_rowsInputIterator._rowIndex, columnIndex + 1, errorCode));
             }
             Values[columnIndex] = value;
         }
@@ -140,7 +140,7 @@ public class RowsInputIterator : IRowsIterator, IRowsIteratorParent, IDisposable
             if (errorCode != ErrorCode.OK)
             {
                 OnError?.Invoke(this,
-                    new RowsInputErrorEventArgs(_rowIndex, i, errorCode));
+                    new RowsInputErrorEventArgs(_rowIndex, i + 1, errorCode));
             }
             _row[i] = value;
         }

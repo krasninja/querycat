@@ -4,9 +4,9 @@ using QueryCat.Backend.Ast.Nodes.Function;
 using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Execution;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Storage;
 
@@ -22,14 +22,14 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
     private readonly List<IRowsIterator> _subQueryIterators = new();
 
     public SelectCreateDelegateVisitor(
-        ExecutionThread thread,
+        IExecutionThread<ExecutionOptions> thread,
         SelectCommandContext context) : this(thread, context, new SelectResolveTypesVisitor(thread, context))
     {
     }
 
     /// <inheritdoc />
     public SelectCreateDelegateVisitor(
-        ExecutionThread thread,
+        IExecutionThread<ExecutionOptions> thread,
         SelectCommandContext context,
         ResolveTypesVisitor resolveTypesVisitor) : base(thread, resolveTypesVisitor)
     {

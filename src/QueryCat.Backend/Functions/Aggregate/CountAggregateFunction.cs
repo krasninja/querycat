@@ -7,6 +7,7 @@ namespace QueryCat.Backend.Functions.Aggregate;
 /// <summary>
 /// Implements "count" aggregation function.
 /// </summary>
+[SafeFunction]
 [Description("Computes the number of input rows.")]
 [AggregateFunctionSignature("count(value: any): integer")]
 // ReSharper disable once ClassNeverInstantiated.Global
@@ -20,8 +21,7 @@ internal sealed class CountAggregateFunction : IAggregateFunction
     }
 
     /// <inheritdoc />
-    public VariantValue[] GetInitialState(DataType type)
-        => new[] { new VariantValue(0) };
+    public VariantValue[] GetInitialState(DataType type) => [new VariantValue(0)];
 
     /// <inheritdoc />
     public void Invoke(VariantValue[] state, FunctionCallInfo callInfo)

@@ -1,6 +1,7 @@
+using System.Collections.Generic;
 using System.Threading;
-using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Plugins;
 using QueryCat.Plugins.Sdk;
@@ -26,6 +27,12 @@ public sealed class PluginExecutionThread : IExecutionThread
     /// <inheritdoc />
     public IExecutionScope TopScope { get; } = NullExecutionScope.Instance;
 
+    /// <inheritdoc />
+    public ExecutionStatistic Statistic { get; } = NullExecutionStatistic.Instance;
+
+    /// <inheritdoc />
+    public object? Tag { get; } = null;
+
     public PluginExecutionThread(PluginsManager.Client client)
     {
         PluginsManager = NullPluginsManager.Instance;
@@ -34,7 +41,8 @@ public sealed class PluginExecutionThread : IExecutionThread
     }
 
     /// <inheritdoc />
-    public VariantValue Run(string query, CancellationToken cancellationToken = default)
+    public VariantValue Run(string query, IDictionary<string, VariantValue>? parameters = null,
+        CancellationToken cancellationToken = default)
     {
         throw new QueryCatPluginException(ErrorType.GENERIC, "Query run is not supported within plugins.");
     }

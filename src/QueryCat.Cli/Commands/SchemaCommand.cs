@@ -1,6 +1,6 @@
 using System.CommandLine;
-using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Functions;
 using QueryCat.Cli.Commands.Options;
@@ -23,6 +23,7 @@ internal class SchemaCommand : BaseQueryCommand
                 if (!result.IsNull && result.GetInternalType() == DataType.Object
                     && result.AsObject is IRowsSchema rowsSchema)
                 {
+                    threadArgs.ContinueExecution = false;
                     var schema = thread.CallFunction(InfoFunctions.Schema, rowsSchema);
                     thread.TopScope.Variables["result"] = schema;
                     thread.Run("result");
@@ -31,7 +32,6 @@ internal class SchemaCommand : BaseQueryCommand
                 {
                     Console.Error.WriteLine("Incorrect SQL expression.");
                 }
-                threadArgs.ContinueExecution = false;
             };
             AddVariables(thread, variables);
             RunQuery(thread, query, files);

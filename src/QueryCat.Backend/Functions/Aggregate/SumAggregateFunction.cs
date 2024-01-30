@@ -7,6 +7,7 @@ namespace QueryCat.Backend.Functions.Aggregate;
 /// <summary>
 /// Implements "summary" aggregation function.
 /// </summary>
+[SafeFunction]
 [Description("Computes the sum of values.")]
 [AggregateFunctionSignature("sum(value: integer): integer")]
 [AggregateFunctionSignature("sum(value: float): float")]
@@ -15,7 +16,7 @@ namespace QueryCat.Backend.Functions.Aggregate;
 internal sealed class SumAggregateFunction : IAggregateFunction
 {
     /// <inheritdoc />
-    public VariantValue[] GetInitialState(DataType type) => new[] { VariantValue.Null };
+    public VariantValue[] GetInitialState(DataType type) => [VariantValue.Null];
 
     /// <inheritdoc />
     public void Invoke(VariantValue[] state, FunctionCallInfo callInfo)

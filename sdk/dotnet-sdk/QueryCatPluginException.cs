@@ -35,6 +35,9 @@ namespace QueryCat.Plugins.Sdk
   public partial class QueryCatPluginException : TException, TBase
   {
     private int _object_handle;
+    private string? _exception_type;
+    private string? _exception_stack_trace;
+    private global::QueryCat.Plugins.Sdk.QueryCatPluginException? _exception_nested;
 
     /// <summary>
     /// 
@@ -57,11 +60,53 @@ namespace QueryCat.Plugins.Sdk
       }
     }
 
+    public string? ExceptionType
+    {
+      get
+      {
+        return _exception_type;
+      }
+      set
+      {
+        __isset.exception_type = true;
+        this._exception_type = value;
+      }
+    }
+
+    public string? ExceptionStackTrace
+    {
+      get
+      {
+        return _exception_stack_trace;
+      }
+      set
+      {
+        __isset.exception_stack_trace = true;
+        this._exception_stack_trace = value;
+      }
+    }
+
+    public global::QueryCat.Plugins.Sdk.QueryCatPluginException? ExceptionNested
+    {
+      get
+      {
+        return _exception_nested;
+      }
+      set
+      {
+        __isset.exception_nested = true;
+        this._exception_nested = value;
+      }
+    }
+
 
     public Isset __isset;
     public struct Isset
     {
       public bool object_handle;
+      public bool exception_type;
+      public bool exception_stack_trace;
+      public bool exception_nested;
     }
 
     public QueryCatPluginException()
@@ -125,6 +170,37 @@ namespace QueryCat.Plugins.Sdk
                 await TProtocolUtil.SkipAsync(iprot, field.Type, cancellationToken);
               }
               break;
+            case 4:
+              if (field.Type == TType.String)
+              {
+                ExceptionType = await iprot.ReadStringAsync(cancellationToken);
+              }
+              else
+              {
+                await TProtocolUtil.SkipAsync(iprot, field.Type, cancellationToken);
+              }
+              break;
+            case 5:
+              if (field.Type == TType.String)
+              {
+                ExceptionStackTrace = await iprot.ReadStringAsync(cancellationToken);
+              }
+              else
+              {
+                await TProtocolUtil.SkipAsync(iprot, field.Type, cancellationToken);
+              }
+              break;
+            case 6:
+              if (field.Type == TType.Struct)
+              {
+                ExceptionNested = new global::QueryCat.Plugins.Sdk.QueryCatPluginException();
+                await ExceptionNested.ReadAsync(iprot, cancellationToken);
+              }
+              else
+              {
+                await TProtocolUtil.SkipAsync(iprot, field.Type, cancellationToken);
+              }
+              break;
             default: 
               await TProtocolUtil.SkipAsync(iprot, field.Type, cancellationToken);
               break;
@@ -181,6 +257,33 @@ namespace QueryCat.Plugins.Sdk
           await oprot.WriteI32Async(ObjectHandle, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
+        if((ExceptionType != null) && __isset.exception_type)
+        {
+          tmp13.Name = "exception_type";
+          tmp13.Type = TType.String;
+          tmp13.ID = 4;
+          await oprot.WriteFieldBeginAsync(tmp13, cancellationToken);
+          await oprot.WriteStringAsync(ExceptionType, cancellationToken);
+          await oprot.WriteFieldEndAsync(cancellationToken);
+        }
+        if((ExceptionStackTrace != null) && __isset.exception_stack_trace)
+        {
+          tmp13.Name = "exception_stack_trace";
+          tmp13.Type = TType.String;
+          tmp13.ID = 5;
+          await oprot.WriteFieldBeginAsync(tmp13, cancellationToken);
+          await oprot.WriteStringAsync(ExceptionStackTrace, cancellationToken);
+          await oprot.WriteFieldEndAsync(cancellationToken);
+        }
+        if((ExceptionNested != null) && __isset.exception_nested)
+        {
+          tmp13.Name = "exception_nested";
+          tmp13.Type = TType.Struct;
+          tmp13.ID = 6;
+          await oprot.WriteFieldBeginAsync(tmp13, cancellationToken);
+          await ExceptionNested.WriteAsync(oprot, cancellationToken);
+          await oprot.WriteFieldEndAsync(cancellationToken);
+        }
         await oprot.WriteFieldStopAsync(cancellationToken);
         await oprot.WriteStructEndAsync(cancellationToken);
       }
@@ -196,7 +299,10 @@ namespace QueryCat.Plugins.Sdk
       if (ReferenceEquals(this, other)) return true;
       return global::System.Object.Equals(Type, other.Type)
         && global::System.Object.Equals(ErrorMessage, other.ErrorMessage)
-        && ((__isset.object_handle == other.__isset.object_handle) && ((!__isset.object_handle) || (global::System.Object.Equals(ObjectHandle, other.ObjectHandle))));
+        && ((__isset.object_handle == other.__isset.object_handle) && ((!__isset.object_handle) || (global::System.Object.Equals(ObjectHandle, other.ObjectHandle))))
+        && ((__isset.exception_type == other.__isset.exception_type) && ((!__isset.exception_type) || (global::System.Object.Equals(ExceptionType, other.ExceptionType))))
+        && ((__isset.exception_stack_trace == other.__isset.exception_stack_trace) && ((!__isset.exception_stack_trace) || (global::System.Object.Equals(ExceptionStackTrace, other.ExceptionStackTrace))))
+        && ((__isset.exception_nested == other.__isset.exception_nested) && ((!__isset.exception_nested) || (global::System.Object.Equals(ExceptionNested, other.ExceptionNested))));
     }
 
     public override int GetHashCode() {
@@ -210,6 +316,18 @@ namespace QueryCat.Plugins.Sdk
         if(__isset.object_handle)
         {
           hashcode = (hashcode * 397) + ObjectHandle.GetHashCode();
+        }
+        if((ExceptionType != null) && __isset.exception_type)
+        {
+          hashcode = (hashcode * 397) + ExceptionType.GetHashCode();
+        }
+        if((ExceptionStackTrace != null) && __isset.exception_stack_trace)
+        {
+          hashcode = (hashcode * 397) + ExceptionStackTrace.GetHashCode();
+        }
+        if((ExceptionNested != null) && __isset.exception_nested)
+        {
+          hashcode = (hashcode * 397) + ExceptionNested.GetHashCode();
         }
       }
       return hashcode;
@@ -229,6 +347,21 @@ namespace QueryCat.Plugins.Sdk
       {
         tmp14.Append(", ObjectHandle: ");
         ObjectHandle.ToString(tmp14);
+      }
+      if((ExceptionType != null) && __isset.exception_type)
+      {
+        tmp14.Append(", ExceptionType: ");
+        ExceptionType.ToString(tmp14);
+      }
+      if((ExceptionStackTrace != null) && __isset.exception_stack_trace)
+      {
+        tmp14.Append(", ExceptionStackTrace: ");
+        ExceptionStackTrace.ToString(tmp14);
+      }
+      if((ExceptionNested != null) && __isset.exception_nested)
+      {
+        tmp14.Append(", ExceptionNested: ");
+        ExceptionNested.ToString(tmp14);
       }
       tmp14.Append(')');
       return tmp14.ToString();

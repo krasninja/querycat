@@ -8,6 +8,7 @@ namespace QueryCat.Backend.Functions.Aggregate;
 /// <summary>
 /// Implements string_agg aggregation function.
 /// </summary>
+[SafeFunction]
 [Description("Concatenates the non-null input values into a string.")]
 [AggregateFunctionSignature("string_agg(target: string, delimiter: string): string")]
 // ReSharper disable once ClassNeverInstantiated.Global
@@ -15,7 +16,7 @@ internal sealed class StringAggAggregateFunction : IAggregateFunction
 {
     /// <inheritdoc />
     public VariantValue[] GetInitialState(DataType type) =>
-        new[] { VariantValue.CreateFromObject(new StringBuilder()) };
+        [VariantValue.CreateFromObject(new StringBuilder())];
 
     /// <inheritdoc />
     public void Invoke(VariantValue[] state, FunctionCallInfo callInfo)

@@ -6,15 +6,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Added
 
-- Use Native AOT compilaton mode. It reduces file size and startup time.
-- Migraton to Thrift plugins system.
+- Add breadcrumbs in files UI, overall web UI improvements.
+- Add schema and reset web UI buttons.
+- Allow restrict web UI access by IP addresses.
+
+## Fixed
+
+- Cannot apply expressions on "row_number" column.
+- Fix files download 404 problem on Windows.
+- Fix "size_pretty" function format.
+- Fix the bug when 'q' press doesn't close the app.
+- Other minor fixes.
+
+## [0.5.0] - 2023-12-31
+
+## Added
+
+- Use Native AOT compilation mode. It reduces file size and startup time.
+- Migration to Thrift plugins system.
 - Support hexadecimal numbers parsing.
 - Initial Grok patterns support.
 - Log web server queries, update dependencies.
 - Add new table output style "Table2".
 - Support library plugins.
 - Add "ls_dir" function.
-- Add glob pattern to search thru all directories. For example, "select * from '/home/user/**/*.txt".
+- Add glob pattern to search thru all directories. For example, "select * from '/home/user/**/*.txt'".
 - Resolve '~' to user home directory.
 - Implement simple HTTP files server (beta).
 

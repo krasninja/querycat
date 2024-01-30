@@ -3,6 +3,7 @@ using System.Reflection;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 
@@ -16,10 +17,10 @@ public sealed class DefaultFunctionsManager : IFunctionsManager
     private const int DefaultCapacity = 42;
 
     private readonly IAstBuilder _astBuilder;
+    private readonly List<IUriResolver> _uriResolvers = new();
 
     private record FunctionPreRegistration(
         FunctionDelegate Delegate,
-        MemberInfo? MemberInfo,
         List<string> Signatures,
         string? Description = null);
 
@@ -34,16 +35,19 @@ public sealed class DefaultFunctionsManager : IFunctionsManager
     private int _registerAggregateFunctionsLastIndex;
 
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(DefaultFunctionsManager));
-    private static readonly ILogger Logger = Application.LoggerFactory.CreateLogger(nameof(DefaultFunctionsManager));
 
     private static VariantValue EmptyFunction(FunctionCallInfo args)
     {
         return VariantValue.Null;
     }
 
-    internal DefaultFunctionsManager(IAstBuilder astBuilder)
+    internal DefaultFunctionsManager(IAstBuilder astBuilder, IEnumerable<IUriResolver>? uriResolvers = null)
     {
         _astBuilder = astBuilder;
+        if (uriResolvers != null)
+        {
+            _uriResolvers.AddRange(uriResolvers);
+        }
     }
 
     #region Registration
@@ -65,8 +69,7 @@ public sealed class DefaultFunctionsManager : IFunctionsManager
         string signature,
         FunctionDelegate functionDelegate,
         string? functionName = null,
-        string? description = null,
-        MemberInfo? memberInfo = null)
+        string? description = null)
     {
         functionName ??= GetFunctionName(signature);
 
@@ -78,7 +81,7 @@ public sealed class DefaultFunctionsManager : IFunctionsManager
         {
             var signatures = new List<string> { signature };
             _functionsPreRegistration.Add(functionName,
-                new FunctionPreRegistration(functionDelegate, memberInfo, signatures, description));
+                new FunctionPreRegistration(functionDelegate, signatures, description));
         }
     }
 
@@ -136,10 +139,16 @@ public sealed class DefaultFunctionsManager : IFunctionsManager
                     _logger.LogWarning("Possibly similar signature function: {Function}.", function);
                 }
             }
-            var descriptionAttribute = preRegistration.MemberInfo?.GetCustomAttribute<DescriptionAttribute>();
+            var memberInfo = preRegistration.Delegate.Method;
+            var descriptionAttribute = memberInfo.GetCustomAttribute<DescriptionAttribute>();
             if (descriptionAttribute != null)
             {
                 function.Description = descriptionAttribute.Description;
+            }
+            var safeAttribute = memberInfo.GetCustomAttribute<SafeFunctionAttribute>();
+            if (safeAttribute != null)
+            {
+                function.IsSafe = true;
             }
             functionsList = AddFunctionInternal(function);
         }
@@ -158,6 +167,23 @@ public sealed class DefaultFunctionsManager : IFunctionsManager
         _logger.LogDebug("Register function: {Function}.", function);
         return list;
     }
+
+    /// <inheritdoc />
+    public IFunction? ResolveUri(string uri)
+    {
+        foreach (var uriResolver in _uriResolvers)
+        {
+            if (uriResolver.TryResolve(uri, out var functionName)
+                && !string.IsNullOrEmpty(functionName))
+            {
+                return this.FindByName(functionName);
+            }
+        }
+
+        return null;
+    }
+
+    internal void AddUriResolver(IUriResolver uriResolver) => _uriResolvers.Add(uriResolver);
 
     /// <inheritdoc />
     public void RegisterAggregate<TAggregate>(Func<TAggregate> factory)
@@ -181,6 +207,11 @@ public sealed class DefaultFunctionsManager : IFunctionsManager
             {
                 function.Description = descriptionAttribute.Description;
             }
+            var safeAttribute = aggregateType.GetCustomAttribute<SafeFunctionAttribute>();
+            if (safeAttribute != null)
+            {
+                function.IsSafe = true;
+            }
             var functionName = NormalizeName(function.Name);
             _functions!.AddOrUpdate(
                 functionName,
@@ -190,7 +221,7 @@ public sealed class DefaultFunctionsManager : IFunctionsManager
                 },
                 updateValueFactory: (_, value) => value!.Add(function));
 
-            Logger.LogDebug("Register aggregate: {Function}.", function);
+            _logger.LogDebug("Register aggregate: {Function}.", function);
             var aggregateFunctionInstance = factory.Invoke();
             _aggregateFunctions.TryAdd(functionName, aggregateFunctionInstance);
         }

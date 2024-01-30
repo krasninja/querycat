@@ -11,6 +11,10 @@ public class RowsFrameOutput : RowsOutput
 {
     private readonly RowsFrame _rowsFrame;
 
+    /// <summary>
+    /// Constructor.
+    /// </summary>
+    /// <param name="rowsFrame">Instance of <see cref="RowsFrame" />.</param>
     public RowsFrameOutput(RowsFrame rowsFrame)
     {
         _rowsFrame = rowsFrame;

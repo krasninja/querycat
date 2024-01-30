@@ -47,15 +47,6 @@ public static class DataTypeUtils
     public static bool IsNumeric(DataType dataType)
         => dataType == DataType.Integer || dataType == DataType.Float || dataType == DataType.Numeric;
 
-    public static bool EqualsWithCast(DataType dataType1, DataType dataType2)
-    {
-        if (IsNumeric(dataType1) && IsNumeric(dataType2))
-        {
-            return true;
-        }
-        return dataType1 == dataType2;
-    }
-
     #region Serialization
 
     internal static string SerializeVariantValue(VariantValue value)
@@ -73,7 +64,7 @@ public static class DataTypeUtils
             _ => string.Empty
         };
 
-    internal static VariantValue DeserializeVariantValue(ReadOnlySpan<char> source)
+    internal static VariantValue DeserializeVariantValue(ReadOnlySpan<char> source, bool strongDeserialization = true)
     {
         if (source == "null" || source == "void")
         {
@@ -82,6 +73,12 @@ public static class DataTypeUtils
         var colonIndex = source.IndexOf(':');
         if (colonIndex == -1)
         {
+            if (!strongDeserialization)
+            {
+                var str = source.ToString();
+                var targetType = DetermineTypeByValue(str);
+                return new VariantValue(str).Cast(targetType);
+            }
             Logger.LogWarning("Invalid deserialization source.");
             return VariantValue.Null;
         }
@@ -127,6 +124,12 @@ public static class DataTypeUtils
 
     #region Types detection
 
+    /// <summary>
+    /// Try to guess optimal type by value. Null values are skipped.
+    /// The default type is string.
+    /// </summary>
+    /// <param name="value">Value.</param>
+    /// <returns>Optimal type.</returns>
     public static DataType DetermineTypeByValue(string value)
         => DetermineTypeByValues(new[] { value });
 

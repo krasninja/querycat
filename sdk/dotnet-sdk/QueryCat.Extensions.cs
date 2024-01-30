@@ -27,6 +27,21 @@ namespace QueryCat.Plugins.Sdk
 {
   public static class QueryCatExtensions
   {
+    public static bool Equals(this Dictionary<string, global::QueryCat.Plugins.Sdk.VariantValue> instance, object that)
+    {
+      if (that is not Dictionary<string, global::QueryCat.Plugins.Sdk.VariantValue> other) return false;
+      if (ReferenceEquals(instance, other)) return true;
+
+      return TCollections.Equals(instance, other);
+    }
+
+
+    public static int GetHashCode(this Dictionary<string, global::QueryCat.Plugins.Sdk.VariantValue> instance)
+    {
+      return TCollections.GetHashCode(instance);
+    }
+
+
     public static bool Equals(this List<global::QueryCat.Plugins.Sdk.Column> instance, object that)
     {
       if (that is not List<global::QueryCat.Plugins.Sdk.Column> other) return false;

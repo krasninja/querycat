@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend;
+using QueryCat.Backend.Addons.Formatters;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.PluginsManager;
@@ -22,9 +23,9 @@ internal class ApplicationOptions
     public string[] PluginDirectories { get; init; } = Array.Empty<string>();
 #endif
 
-    public ApplicationRoot CreateApplicationRoot(ExecutionOptions? executionOptions = null)
+    public ApplicationRoot CreateApplicationRoot(AppExecutionOptions? executionOptions = null)
     {
-        executionOptions ??= new ExecutionOptions
+        executionOptions ??= new AppExecutionOptions
         {
             RunBootstrapScript = true,
             UseConfig = true,
@@ -40,7 +41,9 @@ internal class ApplicationOptions
                 Path.Combine(ExecutionThread.GetApplicationDirectory(), ConfigFileName))
             )
             .WithStandardFunctions()
-            .WithRegistrations(Backend.Formatters.AdditionalRegistration.Register);
+            .WithRegistrations(Backend.Addons.Functions.JsonFunctions.RegisterFunctions)
+            .WithStandardUriResolvers()
+            .WithRegistrations(AdditionalRegistration.Register);
 #if ENABLE_PLUGINS && PLUGIN_THRIFT
         bootstrapper.WithPluginsLoader(thread => new Backend.ThriftPlugins.ThriftPluginsLoader(
             thread,
@@ -83,7 +86,7 @@ internal class ApplicationOptions
     }
 
     public ApplicationRoot CreateStdoutApplicationRoot(
-        ExecutionOptions? executionOptions = null,
+        AppExecutionOptions? executionOptions = null,
         string? columnsSeparator = null,
         Backend.Formatters.TextTableOutput.Style outputStyle = Backend.Formatters.TextTableOutput.Style.Table1)
     {
@@ -92,8 +95,8 @@ internal class ApplicationOptions
             stream: Stdio.GetConsoleOutput(),
             separator: columnsSeparator,
             style: outputStyle);
-        root.Thread.Options.DefaultRowsOutput = new Backend.Formatters.PagingOutput(
-            tableOutput, pagingRowsCount: Backend.Formatters.PagingOutput.NoLimit, cts: root.CancellationTokenSource);
+        root.Thread.Options.DefaultRowsOutput = new PagingOutput(
+            tableOutput, pagingRowsCount: PagingOutput.NoLimit, cts: root.CancellationTokenSource);
         return root;
     }
 

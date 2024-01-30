@@ -23,6 +23,11 @@ public sealed class FunctionCallArgumentsTypes
     /// </summary>
     public int TotalCount => Positional.Length + Named.Length;
 
+    /// <summary>
+    /// Constructor.
+    /// </summary>
+    /// <param name="positional">Positional arguments types.</param>
+    /// <param name="namedArguments">Named arguments types.</param>
     public FunctionCallArgumentsTypes(
         KeyValuePair<int, DataType>[]? positional = null,
         KeyValuePair<string, DataType>[]? namedArguments = null)
@@ -31,6 +36,12 @@ public sealed class FunctionCallArgumentsTypes
         Named = namedArguments ?? Array.Empty<KeyValuePair<string, DataType>>();
     }
 
+    /// <summary>
+    /// Create instance of <see cref="FunctionCallArgumentsTypes"/> from
+    /// only positional arguments types.
+    /// </summary>
+    /// <param name="positional">Positional types.</param>
+    /// <returns>Instance of <see cref="FunctionCallArgumentsTypes" />.</returns>
     public static FunctionCallArgumentsTypes FromPositionArguments(
         params DataType[] positional)
     {

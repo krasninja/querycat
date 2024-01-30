@@ -2,8 +2,8 @@ using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Execution;
 using QueryCat.Backend.Storage;
 
 namespace QueryCat.Backend.Commands.Select.Visitors;
@@ -17,7 +17,7 @@ internal class InputCreateDelegateVisitor : CreateDelegateVisitor
 
     /// <inheritdoc />
     public InputCreateDelegateVisitor(
-        ExecutionThread thread,
+        IExecutionThread<ExecutionOptions> thread,
         SelectCommandContext context,
         IRowsInput leftInput,
         IRowsInput rightInput) : base(thread, new InputResolveTypesVisitor(thread, leftInput, rightInput))
@@ -25,7 +25,7 @@ internal class InputCreateDelegateVisitor : CreateDelegateVisitor
         _context = context;
         _leftInput = leftInput;
         _rightInput = rightInput;
-        _rowsInputs = new[] { leftInput, rightInput };
+        _rowsInputs = [leftInput, rightInput];
     }
 
     /// <inheritdoc />

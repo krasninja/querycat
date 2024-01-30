@@ -1,5 +1,6 @@
 using System.CommandLine;
 using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Cli.Commands;
@@ -37,12 +38,12 @@ internal abstract class BaseQueryCommand : BaseCommand
         {
             foreach (var file in files)
             {
-                executionThread.Run(File.ReadAllText(file));
+                executionThread.Run(File.ReadAllText(file), cancellationToken: cancellationToken);
             }
         }
         else
         {
-            executionThread.Run(query);
+            executionThread.Run(query, cancellationToken: cancellationToken);
         }
     }
 

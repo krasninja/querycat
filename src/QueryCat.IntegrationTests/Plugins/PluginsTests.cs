@@ -1,5 +1,6 @@
 using Xunit;
-using QueryCat.Backend.Core;
+using QueryCat.Backend;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Tests.QueryRunner;
 
@@ -10,7 +11,7 @@ namespace QueryCat.IntegrationTests.Plugins;
 /// </summary>
 public sealed class PluginsTests : IDisposable
 {
-    private readonly IExecutionThread _testThread;
+    private readonly IExecutionThread<ExecutionOptions> _testThread;
 
     public PluginsTests()
     {

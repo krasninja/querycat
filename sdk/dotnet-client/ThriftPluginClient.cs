@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
@@ -351,16 +352,18 @@ public partial class ThriftPluginClient : IDisposable
     /// <param name="cancellationToken">Cancellation token.</param>
     public async Task WaitForServerExitAsync(CancellationToken cancellationToken = default)
     {
+        var waitingTasks = new List<Task>();
         if (_qcatProcess != null)
         {
-            await _qcatProcess.WaitForExitAsync(cancellationToken);
+            waitingTasks.Add(_qcatProcess.WaitForExitAsync(cancellationToken));
         }
         if (_parentPid > 0)
         {
             var process = Process.GetProcessById(_parentPid);
-            await process.WaitForExitAsync(cancellationToken);
+            waitingTasks.Add(process.WaitForExitAsync(cancellationToken));
         }
-        await _exitSemaphore.WaitAsync(cancellationToken);
+        waitingTasks.Add(_exitSemaphore.WaitAsync(cancellationToken));
+        await Task.WhenAny(waitingTasks);
     }
 
     public void SignalExit()

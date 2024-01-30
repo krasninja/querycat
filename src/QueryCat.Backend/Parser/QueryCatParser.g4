@@ -282,6 +282,7 @@ type
 expression
     : literal # ExpressionLiteral
     | castOperand # ExpressionCast
+    | right=expression TYPECAST type # ExpressionBinaryCast
     | left=expression atTimeZone # ExpressionAtTimeZone
     | standardFunction # ExpressionStandardFunctionCall
     | functionCall # ExpressionFunctionCall
@@ -290,7 +291,6 @@ expression
     | '(' expression ')' # ExpressionInParens
     | '(' selectQueryExpression ')' # ExpressionSelect
     | left=expression op=CONCAT right=expression # ExpressionBinary
-    | right=expression TYPECAST type # ExpressionBinaryCast
     | op=(PLUS | MINUS) right=expression # ExpressionUnary
     | left=expression op=(LESS_LESS | GREATER_GREATER) right=expression # ExpressionBinary
     | left=expression op=(STAR | DIV | MOD) right=expression # ExpressionBinary
@@ -315,6 +315,7 @@ expression
 simpleExpression
     : literal # SimpleExpressionLiteral
     | castOperand # SimpleExpressionCast
+    | right=simpleExpression TYPECAST type # SimpleExpressionBinaryCast
     | atTimeZone # SimpleExpressionAtTimeZone
     | standardFunction # SimpleExpressionStandardFunctionCall
     | functionCall # SimpleExpressionFunctionCall
@@ -323,7 +324,6 @@ simpleExpression
     | '(' simpleExpression ')' # SimpleExpressionInParens
     | op=(PLUS | MINUS) right=expression # SimpleExpressionUnary
     | left=simpleExpression op=CONCAT right=simpleExpression # SimpleExpressionBinary
-    | right=simpleExpression TYPECAST type # SimpleExpressionBinaryCast
     | left=simpleExpression op=(STAR | DIV | MOD) right=simpleExpression # SimpleExpressionBinary
     | left=simpleExpression op=(PLUS | MINUS) right=simpleExpression # SimpleExpressionBinary
     | left=simpleExpression op=(EQUALS | NOT_EQUALS | GREATER | GREATER_OR_EQUALS | LESS | LESS_OR_EQUALS) right=simpleExpression # SimpleExpressionBinary

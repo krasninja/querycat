@@ -1,4 +1,4 @@
-using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Execution;
 
 namespace QueryCat.Backend;
 
@@ -18,6 +18,7 @@ public static class Executor
     {
         return new ExecutionThreadBootstrapper()
             .WithStandardFunctions()
+            .WithStandardUriResolvers()
             .Create();
     }
 }

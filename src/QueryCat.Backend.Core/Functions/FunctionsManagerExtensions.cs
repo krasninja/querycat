@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Reflection;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Core.Functions;
@@ -20,16 +21,18 @@ public static class FunctionsManagerExtensions
     /// <param name="functionDelegate">Function delegate.</param>
     public static void RegisterFunction(this IFunctionsManager functionsManager, FunctionDelegate functionDelegate)
     {
-        var classAttributes = functionDelegate.Method.GetCustomAttributes<FunctionSignatureAttribute>().ToArray();
-        if (!classAttributes.Any())
+        var methodAttributes = functionDelegate.Method.GetCustomAttributes<FunctionSignatureAttribute>().ToArray();
+        if (!methodAttributes.Any())
         {
             throw new QueryCatException($"Delegate must have {nameof(FunctionSignatureAttribute)}.");
         }
 
-        foreach (var classAttribute in classAttributes)
+        foreach (var methodAttribute in methodAttributes)
         {
             var descriptionAttribute = functionDelegate.Method.GetCustomAttribute<DescriptionAttribute>();
-            functionsManager.RegisterFunction(classAttribute.Signature, functionDelegate,
+            functionsManager.RegisterFunction(
+                methodAttribute.Signature,
+                functionDelegate,
                 descriptionAttribute != null ? descriptionAttribute.Description : string.Empty);
         }
     }

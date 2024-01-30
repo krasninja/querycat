@@ -9,6 +9,7 @@ namespace QueryCat.Backend.Functions;
 /// </summary>
 internal static class MathFunctions
 {
+    [SafeFunction]
     [Description("Absolute value.")]
     [FunctionSignature("abs(x: integer): integer")]
     [FunctionSignature("abs(x: float): float")]
@@ -25,6 +26,7 @@ internal static class MathFunctions
         };
     }
 
+    [SafeFunction]
     [Description("Converts radians to degrees.")]
     [FunctionSignature("degrees(rad: integer): float")]
     [FunctionSignature("degrees(rad: float): float")]
@@ -34,6 +36,7 @@ internal static class MathFunctions
         return new VariantValue(180d / Math.PI * rad);
     }
 
+    [SafeFunction]
     [Description("\"Pi\" constant.")]
     [FunctionSignature("pi(): float")]
     public static VariantValue Pi(FunctionCallInfo args)
@@ -41,6 +44,7 @@ internal static class MathFunctions
         return new VariantValue(Math.PI);
     }
 
+    [SafeFunction]
     [Description("Converts degrees to radians.")]
     [FunctionSignature("radians(deg: integer): float")]
     [FunctionSignature("radians(deg: float): float")]
@@ -50,6 +54,7 @@ internal static class MathFunctions
         return new VariantValue(Math.PI / 180d * deg);
     }
 
+    [SafeFunction]
     [Description("Rounds to nearest integer.")]
     [FunctionSignature("round(x: integer): float")]
     [FunctionSignature("round(x: float): float")]
@@ -59,6 +64,7 @@ internal static class MathFunctions
         return new VariantValue(Math.Round(x.AsFloat));
     }
 
+    [SafeFunction]
     [Description("Square root.")]
     [FunctionSignature("sqrt(x: integer): float")]
     [FunctionSignature("sqrt(x: float): float")]
@@ -70,6 +76,7 @@ internal static class MathFunctions
 
     #region Trigonometric Functions
 
+    [SafeFunction]
     [Description("Cosine, argument in radians.")]
     [FunctionSignature("cos(x: integer): float")]
     [FunctionSignature("cos(x: float): float")]
@@ -79,6 +86,7 @@ internal static class MathFunctions
         return new VariantValue(Math.Cos(x.AsFloat));
     }
 
+    [SafeFunction]
     [Description("Inverse cosine, result in radians.")]
     [FunctionSignature("acos(x: integer): float")]
     [FunctionSignature("acos(x: float): float")]
@@ -88,6 +96,7 @@ internal static class MathFunctions
         return new VariantValue(Math.Acos(x.AsFloat));
     }
 
+    [SafeFunction]
     [Description("Sine, argument in radians.")]
     [FunctionSignature("sin(x: integer): float")]
     [FunctionSignature("sin(x: float): float")]
@@ -97,6 +106,7 @@ internal static class MathFunctions
         return new VariantValue(Math.Sin(x.AsFloat));
     }
 
+    [SafeFunction]
     [Description("Inverse sine, result in radians.")]
     [FunctionSignature("asin(x: integer): float")]
     [FunctionSignature("asin(x: float): float")]
@@ -106,6 +116,7 @@ internal static class MathFunctions
         return new VariantValue(Math.Asin(x.AsFloat));
     }
 
+    [SafeFunction]
     [Description("Tangent, argument in radians.")]
     [FunctionSignature("tan(x: integer): float")]
     [FunctionSignature("tan(x: float): float")]
@@ -115,6 +126,7 @@ internal static class MathFunctions
         return new VariantValue(Math.Tan(x.AsFloat));
     }
 
+    [SafeFunction]
     [Description("Inverse tangent, result in radians.")]
     [FunctionSignature("atan(x: integer): float")]
     [FunctionSignature("atan(x: float): float")]
@@ -126,6 +138,7 @@ internal static class MathFunctions
 
     #endregion
 
+    [SafeFunction]
     [Description("a raised to the power of b.")]
     [FunctionSignature("power(a: integer, b: integer): integer")]
     [FunctionSignature("power(a: float, b: float): float")]
@@ -143,6 +156,7 @@ internal static class MathFunctions
         };
     }
 
+    [SafeFunction]
     [Description("Returns a random value in the range 0.0 <= x < 1.0.")]
     [FunctionSignature("random(): float")]
     public static VariantValue Random(FunctionCallInfo args)
@@ -150,6 +164,7 @@ internal static class MathFunctions
         return new VariantValue(System.Random.Shared.NextDouble());
     }
 
+    [SafeFunction]
     [Description("Nearest integer less than or equal to argument.")]
     [FunctionSignature("floor(x: float): float")]
     public static VariantValue Floor(FunctionCallInfo args)
@@ -158,6 +173,7 @@ internal static class MathFunctions
         return new VariantValue(Math.Floor(x));
     }
 
+    [SafeFunction]
     [Description("Nearest integer greater than or equal to argument (same as ceil).")]
     [FunctionSignature("ceiling(x: float): float")]
     public static VariantValue Ceiling(FunctionCallInfo args)
@@ -166,6 +182,7 @@ internal static class MathFunctions
         return new VariantValue(Math.Ceiling(x));
     }
 
+    [SafeFunction]
     [Description("The function selects the largest value from a list of any number of values.")]
     [FunctionSignature("greatest(...args: any[]): any")]
     public static VariantValue Greatest(FunctionCallInfo args)
@@ -186,6 +203,7 @@ internal static class MathFunctions
         return maxValue;
     }
 
+    [SafeFunction]
     [Description("The function selects the least value from a list of any number of values.")]
     [FunctionSignature("least(...args: any[]): any")]
     public static VariantValue Least(FunctionCallInfo args)
@@ -206,6 +224,7 @@ internal static class MathFunctions
         return maxValue;
     }
 
+    [SafeFunction]
     [Description("Natural logarithm.")]
     [FunctionSignature("ln(x: integer): float")]
     [FunctionSignature("ln(x: float): float")]
@@ -215,6 +234,7 @@ internal static class MathFunctions
         return new VariantValue(Math.Log(x));
     }
 
+    [SafeFunction]
     [Description("Base 10 logarithm.")]
     [FunctionSignature("log(x: integer): float")]
     [FunctionSignature("log(x: float): float")]

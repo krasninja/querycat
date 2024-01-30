@@ -2,16 +2,16 @@ using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Commands.Select.Iterators;
 using QueryCat.Backend.Core.Data;
-using QueryCat.Backend.Execution;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Relational.Iterators;
 
 namespace QueryCat.Backend.Commands.Select;
 
 internal sealed partial class SelectPlanner
 {
-    internal ExecutionThread ExecutionThread { get; }
+    internal IExecutionThread<ExecutionOptions> ExecutionThread { get; }
 
-    public SelectPlanner(ExecutionThread executionThread)
+    public SelectPlanner(IExecutionThread<ExecutionOptions> executionThread)
     {
         ExecutionThread = executionThread;
     }
@@ -54,7 +54,7 @@ internal sealed partial class SelectPlanner
         Pipeline_CreateDistinctOnRowsSet(context, node);
 
         // SELECT.
-        Pipeline_ResolveSelectAllStatement(context.CurrentIterator, node.ColumnsListNode);
+        Pipeline_ResolveSelectAllStatement(context, node.ColumnsListNode);
         Pipeline_ResolveSelectSourceColumns(context, node);
         Pipeline_AddSelectRowsSet(context, node.ColumnsListNode);
 
@@ -62,6 +62,7 @@ internal sealed partial class SelectPlanner
         PipelineWindow_ApplyWindowFunctions(context, node);
 
         // ORDER BY.
+        Pipeline_AddRowIdColumn(context, node.ColumnsListNode);
         Pipeline_ApplyOrderBy(context, node.OrderByNode);
 
         // INTO and SELECT.

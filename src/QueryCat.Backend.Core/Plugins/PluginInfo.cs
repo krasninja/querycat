@@ -53,6 +53,11 @@ public class PluginInfo
         Name = name;
     }
 
+    /// <summary>
+    /// Create plugin info from plugin name pattern.
+    /// </summary>
+    /// <param name="name">Plugin name.</param>
+    /// <returns>Instance of <see cref="PluginInfo" />.</returns>
     public static PluginInfo CreateFromUniversalName(string name)
     {
         var fileName = Path.GetFileName(name);

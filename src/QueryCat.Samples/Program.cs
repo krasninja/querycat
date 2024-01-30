@@ -11,6 +11,7 @@ internal class Program
         new CollectionsUsage(),
         new CustomFunctionUsage(),
         new CustomInlineFunctionUsage(),
+        new ParametersUsage(),
         new VariablesUsage(),
     };
 

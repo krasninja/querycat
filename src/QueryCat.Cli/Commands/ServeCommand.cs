@@ -1,4 +1,5 @@
 using System.CommandLine;
+using System.Net;
 using QueryCat.Cli.Commands.Options;
 using QueryCat.Cli.Infrastructure;
 
@@ -13,17 +14,28 @@ internal class ServeCommand : BaseCommand
         var allowOriginOption = new Option<string>("--allow-origin", description: "Enables CORS for the specified origin.");
         var passwordOption = new Option<string>("--password", description: "Basic authentication password.");
         var rootDirectoryOption = new Option<string>(aliases: ["-r", "--root-dir"], description: "Root directory for files serve.");
+        var allowedIPsOptions = new Option<string[]>("--allowed-ips", description: "Allowed IP addresses to connect.")
+        {
+            AllowMultipleArgumentsPerToken = true,
+        };
 
         AddOption(urlsOption);
         AddOption(allowOriginOption);
         AddOption(passwordOption);
         AddOption(rootDirectoryOption);
-        this.SetHandler((applicationOptions, urls, allowOrigin, password, rootDirectory) =>
+        AddOption(allowedIPsOptions);
+        this.SetHandler((applicationOptions, urls, allowOrigin, password, rootDirectory, allowedIPs) =>
         {
             applicationOptions.InitializeLogger();
             using var root = applicationOptions.CreateApplicationRoot();
             root.Thread.Options.AddRowNumberColumn = true;
-            var webServer = new WebServer(root.Thread, urls, password, rootDirectory);
+            var webServer = new WebServer(root.Thread, new WebServerOptions
+            {
+                Urls = urls,
+                Password = password,
+                FilesRoot = rootDirectory,
+                AllowedAddresses = allowedIPs.Select(IPAddress.Parse).ToArray(),
+            });
             if (!string.IsNullOrEmpty(allowOrigin))
             {
                 webServer.AllowOrigin = allowOrigin;
@@ -34,6 +46,7 @@ internal class ServeCommand : BaseCommand
             urlsOption,
             allowOriginOption,
             passwordOption,
-            rootDirectoryOption);
+            rootDirectoryOption,
+            allowedIPsOptions);
     }
 }

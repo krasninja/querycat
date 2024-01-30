@@ -9,8 +9,6 @@ namespace QueryCat.Cli.Infrastructure;
 
 internal partial class WebServer
 {
-    private const long MaxRange = 1024 * 1024; // 1MB.
-
     [DebuggerDisplay("{Start}-{End}")]
     private sealed class Range
     {
@@ -52,7 +50,7 @@ internal partial class WebServer
             return;
         }
 
-        var query = GetQueryFromRequest(request);
+        var query = GetQueryDataFromRequest(request).Query;
 
         // Get absolute path.
         query = query.Replace("..", string.Empty);
@@ -60,6 +58,7 @@ internal partial class WebServer
         {
             query = query.Substring(1, query.Length - 1);
         }
+        query = query.Replace('/', Path.DirectorySeparatorChar);
         var path = Path.Combine(_filesRoot, query);
 
         if (Directory.Exists(path))
@@ -91,15 +90,13 @@ internal partial class WebServer
         var range = Files_ParseRange(request.Headers["Range"], maxLength).FirstOrDefault();
         var isRangeRequest = range != null;
         range ??= new Range(0, maxLength);
-        _logger.LogDebug("Start range {Start}-{End}", range.Start, range.End);
+        _logger.LogTrace("Start range {Start}-{End}", range.Start, range.End);
 
         response.AddHeader("Date", DateTime.Now.ToString("r"));
         response.AddHeader("Last-Modified", File.GetLastWriteTime(file).ToString("r"));
         response.AddHeader(
             "Content-Disposition", $"filename={System.Web.HttpUtility.UrlEncode(Path.GetFileName(file))}");
-        response.ContentType = _mimeTypeMappings.TryGetValue(Path.GetExtension(file), out var mime)
-            ? mime
-            : ContentTypeOctetStream;
+        response.ContentType = _mimeTypeProvider.GetContentType(Path.GetExtension(file));
         response.ContentLength64 = range.Size;
         if (isRangeRequest)
         {
@@ -125,8 +122,16 @@ internal partial class WebServer
                     bytesRead -= totalBytesRead - (int)range.Size;
                     finish = true;
                 }
-                response.OutputStream.Write(buffer, 0, bytesRead);
-                totalBytesWrite += bytesRead;
+                try
+                {
+                    response.OutputStream.Write(buffer, 0, bytesRead);
+                    totalBytesWrite += bytesRead;
+                }
+                catch (HttpListenerException e)
+                {
+                    _logger.LogDebug(e, "Cannot write to output stream: {Error}", e.Message);
+                    finish = true;
+                }
             }
         }
         finally
@@ -135,7 +140,7 @@ internal partial class WebServer
             response.OutputStream.Flush();
             ArrayPool<byte>.Shared.Return(buffer);
         }
-        _logger.LogDebug("End range {Start}-{End}, Total: {TotalWrite}", range.Start, range.End, totalBytesWrite);
+        _logger.LogTrace("End range {Start}-{End}, Total: {TotalWrite}", range.Start, range.End, totalBytesWrite);
     }
 
     private static IEnumerable<Range> Files_ParseRange(string? rangeValue, long maxLength)

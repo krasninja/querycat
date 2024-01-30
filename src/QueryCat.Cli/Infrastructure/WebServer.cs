@@ -2,11 +2,12 @@ using System.Collections.Frozen;
 using System.Net;
 using System.Reflection;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Formatters;
 using QueryCat.Backend.Storage;
@@ -24,50 +25,6 @@ internal sealed partial class WebServer
     private const string GetMethod = "GET";
     private const string OptionsMethod = "OPTIONS";
 
-    private const string ContentTypeJson = "application/json";
-    private const string ContentTypeTextPlain = "text/plain";
-    private const string ContentTypeHtml = "text/html";
-    private const string ContentTypeForm = "application/x-www-form-urlencoded";
-    private const string ContentTypeOctetStream = "application/octet-stream";
-
-    /// <summary>
-    /// MIME types conversion table.
-    /// </summary>
-    private static IDictionary<string, string> _mimeTypeMappings =
-        new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase)
-        {
-            [".asf"] = "video/x-ms-asf",
-            [".asx"] = "video/x-ms-asf",
-            [".avi"] = "video/x-msvideo",
-            [".css"] = "text/css",
-            [".flv"] = "video/x-flv",
-            [".gif"] = "image/gif",
-            [".htm"] = ContentTypeHtml,
-            [".html"] = ContentTypeHtml,
-            [".ico"] = "image/x-icon",
-            [".jpeg"] = "image/jpeg",
-            [".jpg"] = "image/jpeg",
-            [".js"] = "application/x-javascript",
-            [".json"] = ContentTypeJson,
-            [".log"] = ContentTypeTextPlain,
-            [".mov"] = "video/quicktime",
-            [".mp3"] = "audio/mpeg",
-            [".mpeg"] = "video/mpeg",
-            [".mpg"] = "video/mpeg",
-            [".pdf"] = "application/pdf",
-            [".pem"] = "application/x-x509-ca-cert",
-            [".png"] = "image/png",
-            [".rar"] = "application/x-rar-compressed",
-            [".rss"] = "text/xml",
-            [".shtml"] = ContentTypeHtml,
-            [".swf"] = "application/x-shockwave-flash",
-            [".txt"] = ContentTypeTextPlain,
-            [".wbmp"] = "image/vnd.wap.wbmp",
-            [".wmv"] = "video/x-ms-wmv",
-            [".xml"] = "text/xml",
-            [".zip"] = "application/zip",
-        }.ToFrozenDictionary();
-
     /// <summary>
     /// Endpoint URI.
     /// </summary>
@@ -80,30 +37,31 @@ internal sealed partial class WebServer
     private readonly IExecutionThread _executionThread;
     private readonly string? _password;
     private readonly string? _filesRoot;
+    private readonly IPAddress[] _allowedAddresses;
+    private readonly MimeTypeProvider _mimeTypeProvider = new();
 
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(WebServer));
 
     internal sealed class WebServerReply : Dictionary<string, object>;
 
-    public WebServer(
-        ExecutionThread executionThread,
-        string? urls = null,
-        string? password = null,
-        string? filesRoot = null)
+    public WebServer(ExecutionThread executionThread, WebServerOptions options)
     {
         _actions = new Dictionary<string, Action<HttpListenerRequest, HttpListenerResponse>>
         {
             ["/"] = HandleIndexAction,
             ["/index.html"] = HandleIndexAction,
+            ["/index.js"] = HandleIndexJsAction,
             ["/api/info"] = HandleInfoApiAction,
             ["/api/query"] = HandleQueryApiAction,
+            ["/api/schema"] = HandleSchemaApiAction,
             ["/api/files"] = Files_HandleFilesApiAction,
         }.ToFrozenDictionary();
 
         _executionThread = executionThread;
-        _password = password;
-        _filesRoot = filesRoot;
-        Uri = urls ?? DefaultEndpointUri;
+        _password = options.Password;
+        _filesRoot = options.FilesRoot;
+        _allowedAddresses = options.AllowedAddresses;
+        Uri = options.Urls ?? DefaultEndpointUri;
     }
 
     /// <summary>
@@ -113,7 +71,6 @@ internal sealed partial class WebServer
     {
         using var listener = new HttpListener();
         listener.Prefixes.Add(Uri);
-        listener.IgnoreWriteExceptions = true;
         if (!string.IsNullOrEmpty(_password))
         {
             listener.AuthenticationSchemes = AuthenticationSchemes.Basic;
@@ -159,6 +116,15 @@ internal sealed partial class WebServer
             }
         }
 
+        // Validate IP.
+        if (_allowedAddresses.Any() && !_allowedAddresses.Contains(context.Request.RemoteEndPoint.Address))
+        {
+            _logger.LogInformation($"[{context.Request.RemoteEndPoint.Address}]: unauthorized access.");
+            response.StatusCode = (int)HttpStatusCode.Unauthorized;
+            response.Close();
+            return;
+        }
+
         // Auth.
         if (context.User?.Identity != null)
         {
@@ -181,7 +147,7 @@ internal sealed partial class WebServer
             }
             catch (QueryCatException e)
             {
-                response.ContentType = ContentTypeJson;
+                response.ContentType = MimeTypeProvider.ContentTypeJson;
                 response.StatusCode = (int)HttpStatusCode.BadRequest;
                 using var jsonWriter = new Utf8JsonWriter(response.OutputStream);
                 WriteJsonMessage(jsonWriter, e.Message);
@@ -204,10 +170,12 @@ internal sealed partial class WebServer
 
     private void HandleIndexAction(HttpListenerRequest request, HttpListenerResponse response)
     {
-        WriteResourceToStream(@"QueryCat.Cli.Infrastructure.WebServerIndex.html", response.OutputStream);
-        var sr = new StreamWriter(response.OutputStream);
-        sr.WriteLine(@"</script></body></html>");
-        sr.Flush();
+        WriteResourceToStream(@"QueryCat.Cli.Infrastructure.WebServerIndex.html", response);
+    }
+
+    private void HandleIndexJsAction(HttpListenerRequest request, HttpListenerResponse response)
+    {
+        WriteResourceToStream(@"QueryCat.Cli.Infrastructure.WebServerPage.js", response);
     }
 
     private void HandleQueryApiAction(HttpListenerRequest request, HttpListenerResponse response)
@@ -218,26 +186,46 @@ internal sealed partial class WebServer
             return;
         }
 
-        var query = GetQueryFromRequest(request);
-        _logger.LogInformation($"[{request.RemoteEndPoint.Address}] Query: {query}");
-        var lastResult = _executionThread.Run(query);
+        var queryData = GetQueryDataFromRequest(request);
+        _logger.LogInformation($"[{request.RemoteEndPoint.Address}] Query: {queryData}");
+        var lastResult = _executionThread.Run(queryData.Query, queryData.ParametersAsDict);
 
         WriteIterator(ExecutionThreadUtils.ConvertToIterator(lastResult), request, response);
     }
 
-    private void HandleInfoApiAction(HttpListenerRequest request, HttpListenerResponse response)
+    private void HandleSchemaApiAction(HttpListenerRequest request, HttpListenerResponse response)
     {
-        var localPlugins = AsyncUtils.RunSync(async ct
-            => await _executionThread.PluginsManager.ListAsync(localOnly: true, ct))!.ToList();
-        var dict = new WebServerReply
+        if (request.HttpMethod != PostMethod && request.HttpMethod != GetMethod)
         {
-            ["installedPlugins"] = localPlugins,
-            ["version"] = Application.GetVersion(),
-            ["os"] = System.Runtime.InteropServices.RuntimeInformation.OSDescription.Trim(),
-            ["platform"] = Environment.Version,
-            ["date"] = DateTimeOffset.Now,
-        };
-        JsonSerializer.Serialize(response.OutputStream, dict, SourceGenerationContext.Default.WebServerReply);
+            response.StatusCode = (int)HttpStatusCode.MethodNotAllowed;
+            return;
+        }
+
+        var query = GetQueryDataFromRequest(request);
+        _logger.LogInformation($"[{request.RemoteEndPoint.Address}] Schema: {query}");
+
+        var thread = (ExecutionThread)_executionThread;
+        void ThreadOnAfterStatementExecute(object? sender, ExecuteEventArgs e)
+        {
+            var result = thread.LastResult;
+            if (!result.IsNull && result.GetInternalType() == DataType.Object
+                && result.AsObject is IRowsSchema rowsSchema)
+            {
+                var schema = thread.CallFunction(Backend.Functions.InfoFunctions.Schema, rowsSchema);
+                WriteIterator(ExecutionThreadUtils.ConvertToIterator(schema), request, response);
+                e.ContinueExecution = false;
+            }
+        }
+
+        try
+        {
+            thread.AfterStatementExecute += ThreadOnAfterStatementExecute;
+            _executionThread.Run(query.Query, query.ParametersAsDict);
+        }
+        finally
+        {
+            thread.AfterStatementExecute -= ThreadOnAfterStatementExecute;
+        }
     }
 
     #endregion
@@ -253,45 +241,69 @@ internal sealed partial class WebServer
             acceptedType = request.ContentType;
         }
 
-        if (acceptedType == ContentTypeHtml)
+        if (acceptedType == MimeTypeProvider.ContentTypeHtml)
         {
-            response.ContentType = ContentTypeHtml;
+            response.ContentType = MimeTypeProvider.ContentTypeHtml;
             using var streamWriter = new StreamWriter(response.OutputStream);
             WriteHtml(iterator, streamWriter);
         }
-        else if (acceptedType == ContentTypeJson)
+        else if (acceptedType == MimeTypeProvider.ContentTypeJson)
         {
-            response.ContentType = ContentTypeJson;
+            response.ContentType = MimeTypeProvider.ContentTypeJson;
             using var jsonWriter = new Utf8JsonWriter(response.OutputStream);
             WriteJson(iterator, jsonWriter);
         }
         else
         {
-            response.ContentType = ContentTypeTextPlain;
+            response.ContentType = MimeTypeProvider.ContentTypeTextPlain;
             WriteText(iterator, response.OutputStream);
         }
     }
 
-    internal sealed class QueryWrapper
+    internal sealed class WebServerQueryData
     {
-        public string? Query { get; set; }
+        public string Query { get; set; } = string.Empty;
+
+        public List<WebServerQueryDataParameter> Parameters { get; set; } = new();
+
+        public IDictionary<string, VariantValue> ParametersAsDict => Parameters.ToDictionary(k => k.Key, k => k.Value);
+
+        public WebServerQueryData()
+        {
+        }
+
+        public WebServerQueryData(string query)
+        {
+            Query = query;
+        }
+
+        /// <inheritdoc />
+        public override string ToString() => Query;
     }
 
-    private static string GetQueryFromRequest(HttpListenerRequest request)
+    internal class WebServerQueryDataParameter
+    {
+        public string Key { get; set; } = string.Empty;
+
+        [JsonConverter(typeof(VariantValueJsonConverter))]
+        public VariantValue Value { get; set; }
+    }
+
+    private static WebServerQueryData GetQueryDataFromRequest(HttpListenerRequest request)
     {
         if (request.HttpMethod == PostMethod)
         {
             using var sr = new StreamReader(request.InputStream);
             var text = sr.ReadToEnd();
-            if (request.ContentType == ContentTypeTextPlain
-                || request.ContentType == ContentTypeForm)
+            if (request.ContentType == MimeTypeProvider.ContentTypeTextPlain
+                || request.ContentType == MimeTypeProvider.ContentTypeForm)
             {
-                return text;
+                return new WebServerQueryData(text);
             }
-            else if (request.ContentType == ContentTypeJson)
+            else if (request.ContentType == MimeTypeProvider.ContentTypeJson)
             {
-                var wrapper = JsonSerializer.Deserialize(text, SourceGenerationContext.Default.QueryWrapper);
-                return wrapper?.Query ?? string.Empty;
+                return JsonSerializer.Deserialize(text, SourceGenerationContext.Default.WebServerQueryData)
+                    ?? new WebServerQueryData();
             }
         }
         else if (request.HttpMethod == GetMethod)
@@ -299,9 +311,9 @@ internal sealed partial class WebServer
             var query = request.QueryString.Get("q");
             if (!string.IsNullOrEmpty(query))
             {
-                return query;
+                return new WebServerQueryData(query);
             }
-            return request.QueryString.Get("query") ?? string.Empty;
+            return new WebServerQueryData(request.QueryString.Get("query") ?? string.Empty);
         }
         throw new QueryCatException("Incorrect content type.");
     }
@@ -440,13 +452,17 @@ internal sealed partial class WebServer
         jsonWriter.WriteEndObject();
     }
 
-    private static void WriteResourceToStream(string uri, Stream outputStream)
+    private void WriteResourceToStream(string uri, HttpListenerResponse response)
     {
         // Determine path.
         var assembly = Assembly.GetExecutingAssembly();
 
+        // Set content type.
+        var extension = Path.GetExtension(uri);
+        response.ContentType = _mimeTypeProvider.GetContentType(extension);
+
         // Format: "{Namespace}.{Folder}.{filename}.{Extension}"
         using Stream? stream = assembly.GetManifestResourceStream(uri);
-        stream?.CopyTo(outputStream);
+        stream?.CopyTo(response.OutputStream);
     }
 }

@@ -1,9 +1,9 @@
-using QueryCat.Backend;
 using Xunit;
+using QueryCat.Backend;
+using QueryCat.Backend.Addons.Formatters;
 using QueryCat.Backend.Commands.Update;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Execution;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Storage;
 
@@ -98,8 +98,9 @@ public sealed class CollectionInputTests : IDisposable
             {
                 DefaultRowsOutput = NullRowsOutput.Instance,
             })
+            .WithStandardUriResolvers()
             .WithStandardFunctions()
-            .WithRegistrations(Backend.Formatters.AdditionalRegistration.Register)
+            .WithRegistrations(AdditionalRegistration.Register)
             .Create();
         thread.TopScope.Variables["employees"] = VariantValue.CreateFromObject(_employeesList);
         thread.Run("insert into self(employees) (id, name) values (4, 'Abbie Cornish');");

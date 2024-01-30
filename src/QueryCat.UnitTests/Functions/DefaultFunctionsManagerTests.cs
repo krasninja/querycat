@@ -1,6 +1,6 @@
 using Xunit;
 using QueryCat.Backend;
-using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.FunctionsManager;

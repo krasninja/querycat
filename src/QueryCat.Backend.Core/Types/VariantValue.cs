@@ -4,7 +4,6 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using QueryCat.Backend.Core.Types.Blob;
 
 namespace QueryCat.Backend.Core.Types;
 
@@ -107,7 +106,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
             DataType.Timestamp => TimestampObject,
             DataType.Interval => IntervalObject,
             DataType.Object => null,
-            DataType.Blob => EmptyBlobData.Instance,
+            DataType.Blob => StreamBlobData.Empty,
             _ => throw new ArgumentOutOfRangeException(nameof(type)),
         };
         _valueUnion = default;
@@ -279,6 +278,10 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
             {
                 return Null;
             }
+        }
+        if (obj is JsonNode jsonNode)
+        {
+            return new VariantValue(jsonNode.ToString());
         }
         if (obj is IBlobData blobData)
         {
@@ -601,7 +604,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         success = true;
 
         var bytes = System.Text.Encoding.UTF8.GetBytes(value ?? string.Empty);
-        var blobData = new BytesBlobData(bytes);
+        var blobData = new StreamBlobData(bytes);
         return new VariantValue(blobData);
     }
 
@@ -609,11 +612,9 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     {
         success = true;
 
-        value ??= EmptyBlobData.Instance;
-        var stringBytes = new byte[value.Length];
-        value.GetBytes(stringBytes, 0, stringBytes.Length);
-        var str = System.Text.Encoding.UTF8.GetString(stringBytes);
-        return new VariantValue(str);
+        value ??= StreamBlobData.Empty;
+        var sr = new StreamReader(value.GetStream());
+        return new VariantValue(sr.ReadToEnd());
     }
 
     /// <summary>
@@ -839,14 +840,15 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         DataType.Timestamp => AsTimestampUnsafe.ToString(format, CultureInfo.InvariantCulture),
         DataType.Interval => AsIntervalUnsafe.ToString(format, CultureInfo.InvariantCulture),
         DataType.Object => "object:" + AsObjectUnsafe,
-        DataType.Blob => "X"+ BlobToShortString(AsBlobUnsafe, 16),
+        DataType.Blob => "X" + BlobToShortString(AsBlobUnsafe, 16),
         _ => "unknown"
     };
 
     private static string BlobToShortString(IBlobData blobData, int numberOfBytes)
     {
         var arr = ArrayPool<byte>.Shared.Rent(numberOfBytes);
-        var readBytes = blobData.GetBytes(arr, 0, arr.Length);
+        using var stream = blobData.GetStream();
+        var readBytes = stream.Read(arr, 0, arr.Length);
         var str = Convert.ToHexString(arr.AsSpan(0, readBytes));
         ArrayPool<byte>.Shared.Return(arr);
         return str;

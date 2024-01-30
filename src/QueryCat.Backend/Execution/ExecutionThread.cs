@@ -3,8 +3,8 @@ using System.Text;
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Commands;
-using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Plugins;
 using QueryCat.Backend.Core.Types;
@@ -17,7 +17,7 @@ namespace QueryCat.Backend.Execution;
 /// <summary>
 /// Execution thread that includes statements to be executed, local variables, options and statistic.
 /// </summary>
-public class ExecutionThread : IExecutionThread
+public class ExecutionThread : IExecutionThread<ExecutionOptions>
 {
     private readonly IAstBuilder _astBuilder;
     internal const string ApplicationDirectory = "qcat";
@@ -31,28 +31,32 @@ public class ExecutionThread : IExecutionThread
     /// <inheritdoc />
     public IInputConfigStorage ConfigStorage { get; }
 
+    private IExecutionScope _topScope;
+    private readonly IExecutionScope _rootScope;
+    private bool _bootstrapScriptExecuted;
+    private bool _configLoaded;
+
     /// <summary>
     /// Root (base) thread scope.
     /// </summary>
-    internal ExecutionScope RootScope { get; }
+    internal IExecutionScope RootScope => _rootScope;
 
     /// <inheritdoc />
-    public IExecutionScope TopScope => RootScope;
+    public IExecutionScope TopScope => _topScope;
 
     /// <summary>
     /// Current executing statement.
     /// </summary>
     internal StatementNode? ExecutingStatement { get; set; }
 
-    /// <summary>
-    /// Execution options.
-    /// </summary>
+    /// <inheritdoc />
     public ExecutionOptions Options { get; }
 
-    /// <summary>
-    /// Statistic.
-    /// </summary>
-    public ExecutionStatistic Statistic { get; } = new();
+    /// <inheritdoc />
+    public ExecutionStatistic Statistic { get; } = new DefaultExecutionStatistic();
+
+    /// <inheritdoc />
+    public object? Tag { get; internal set; } = null;
 
     /// <inheritdoc />
     public IFunctionsManager FunctionsManager { get; }
@@ -75,6 +79,10 @@ public class ExecutionThread : IExecutionThread
     /// </summary>
     public event EventHandler<ExecuteEventArgs>? AfterStatementExecute;
 
+    /// <summary>
+    /// Get application directory to store local data.
+    /// </summary>
+    /// <returns>Default application directory.</returns>
     public static string GetApplicationDirectory()
     {
         return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
@@ -93,25 +101,30 @@ public class ExecutionThread : IExecutionThread
         _astBuilder = astBuilder;
         _statementsVisitor = new StatementsVisitor(this);
 
-        RootScope = new ExecutionScope();
-        RunBootstrapScript(GetApplicationDirectory());
+        _rootScope = new ExecutionScope(parent: null);
+        _topScope = _rootScope;
     }
 
-    public ExecutionThread(ExecutionThread executionThread)
+    /// <summary>
+    /// Copy constructor.
+    /// </summary>
+    /// <param name="executionThread">Execution thread to copy from.</param>
+    public ExecutionThread(ExecutionThread executionThread) :
+        this(executionThread.Options,
+            executionThread.FunctionsManager,
+            executionThread.ConfigStorage,
+            executionThread._astBuilder)
     {
-        RootScope = new ExecutionScope();
-        Options = executionThread.Options;
+        _rootScope = new ExecutionScope(parent: null);
 #if ENABLE_PLUGINS
         PluginsManager = executionThread.PluginsManager;
 #endif
-        FunctionsManager = executionThread.FunctionsManager;
-        ConfigStorage = executionThread.ConfigStorage;
         _statementsVisitor = executionThread._statementsVisitor;
-        _astBuilder = executionThread._astBuilder;
     }
 
     /// <inheritdoc />
-    public VariantValue Run(string query, CancellationToken cancellationToken = default)
+    public VariantValue Run(string query, IDictionary<string, VariantValue>? parameters = null,
+        CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrEmpty(query))
         {
@@ -120,36 +133,70 @@ public class ExecutionThread : IExecutionThread
 
         var programNode = _astBuilder.BuildProgramFromString(query);
 
-        // Set first executing statement and run.
-        ExecutingStatement = programNode.Statements.FirstOrDefault();
-
         // Run with lock and timer.
         lock (_objLock)
         {
+            RunBootstrapScript();
+            LoadConfig();
+
+            // Set first executing statement and run.
+            ExecutingStatement = programNode.Statements.FirstOrDefault();
+
             var stopwatch = new Stopwatch();
             stopwatch.Start();
             try
             {
+                if (parameters != null)
+                {
+                    var scope = PushScope();
+                    SetScopeVariables(scope, parameters);
+                }
                 return RunInternal(cancellationToken);
             }
             finally
             {
+                if (parameters != null)
+                {
+                    PullScope();
+                }
                 stopwatch.Stop();
                 Statistic.ExecutionTime = stopwatch.Elapsed;
             }
         }
     }
 
+    private IExecutionScope PushScope()
+    {
+        var scope = new ExecutionScope(TopScope);
+        _topScope = scope;
+        return scope;
+    }
+
+    private IExecutionScope? PullScope()
+    {
+        if (_topScope.Parent == null)
+        {
+            return null;
+        }
+        var oldScope = _topScope;
+        _topScope = _topScope.Parent;
+        return oldScope;
+    }
+
+    private static void SetScopeVariables(IExecutionScope scope, IDictionary<string, VariantValue> parameters)
+    {
+        foreach (var parameter in parameters)
+        {
+            scope.Variables[parameter.Key] = parameter.Value;
+        }
+    }
+
     private VariantValue RunInternal(CancellationToken cancellationToken)
     {
-        if (Options.UseConfig)
-        {
-            AsyncUtils.RunSync(ConfigStorage.LoadAsync);
-        }
-
         var executeEventArgs = new ExecuteEventArgs();
         while (ExecutingStatement != null)
         {
+            // Evaluate the command.
             var commandContext = _statementsVisitor.RunAndReturn(ExecutingStatement);
             if (commandContext is IDisposable disposable)
             {
@@ -168,6 +215,7 @@ public class ExecutionThread : IExecutionThread
                 break;
             }
 
+            // Run the command.
             LastResult = commandContext.Invoke();
 
             // Fire "after" event.
@@ -182,11 +230,18 @@ public class ExecutionThread : IExecutionThread
                 break;
             }
 
+            // Write result.
             if (Options.DefaultRowsOutput != NullRowsOutput.Instance)
             {
                 Write(LastResult, cancellationToken);
             }
 
+            if (cancellationToken.IsCancellationRequested)
+            {
+                break;
+            }
+
+            // Get the next statement to execute.
             ExecutingStatement = ExecutingStatement.NextNode;
         }
 
@@ -236,7 +291,7 @@ public class ExecutionThread : IExecutionThread
     private void Write(
         IRowsOutput rowsOutput,
         IRowsIterator rowsIterator,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken)
     {
         // For plain output let's adjust columns width first.
         if (rowsOutput.Options.RequiresColumnsLengthAdjust && Options.AnalyzeRowsCount > 0)
@@ -286,12 +341,25 @@ public class ExecutionThread : IExecutionThread
         }
     }
 
-    private void RunBootstrapScript(string appLocalDirectory)
+    private void LoadConfig()
     {
-        var rcFile = Path.Combine(appLocalDirectory, BootstrapFileName);
-        if (Options.RunBootstrapScript && File.Exists(rcFile))
+        if (!_configLoaded && Options.UseConfig)
         {
-            Run(File.ReadAllText(rcFile));
+            AsyncUtils.RunSync(ConfigStorage.LoadAsync);
+            _configLoaded = true;
+        }
+    }
+
+    private void RunBootstrapScript()
+    {
+        var rcFile = Path.Combine(GetApplicationDirectory(), BootstrapFileName);
+        if (!_bootstrapScriptExecuted && Options.RunBootstrapScript)
+        {
+            _bootstrapScriptExecuted = true;
+            if (File.Exists(rcFile))
+            {
+                Run(File.ReadAllText(rcFile));
+            }
         }
     }
 

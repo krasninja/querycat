@@ -9,7 +9,7 @@ using QueryCat.Backend.Commands.Declare;
 using QueryCat.Backend.Commands.Insert;
 using QueryCat.Backend.Commands.Select;
 using QueryCat.Backend.Commands.Update;
-using QueryCat.Backend.Execution;
+using QueryCat.Backend.Core.Execution;
 
 namespace QueryCat.Backend.Commands;
 
@@ -18,10 +18,10 @@ namespace QueryCat.Backend.Commands;
 /// </summary>
 internal sealed class StatementsVisitor : AstVisitor
 {
-    private readonly ExecutionThread _executionThread;
+    private readonly IExecutionThread<ExecutionOptions> _executionThread;
     private readonly Dictionary<int, IFuncUnit> _commandHandlers = new();
 
-    public StatementsVisitor(ExecutionThread executionThread)
+    public StatementsVisitor(IExecutionThread<ExecutionOptions> executionThread)
     {
         _executionThread = executionThread;
     }

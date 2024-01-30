@@ -82,10 +82,16 @@ internal sealed class DsvOutput : RowsOutput, IDisposable
                         _streamWriter.Write(values[i].AsBoolean);
                         break;
                     case DataType.Blob:
-                        values[i].AsBlob.ApplyAction(new ReadOnlySpanAction<byte, object?>((span, o) =>
                         {
-                            _streamWriter.Write(Convert.ToHexString(span));
-                        }), 0);
+                            using var stream = values[i].AsBlob.GetStream();
+                            var arr = ArrayPool<byte>.Shared.Rent(4096);
+                            int bytesRead;
+                            while ((bytesRead = stream.Read(arr)) > 0)
+                            {
+                                _streamWriter.Write(Convert.ToHexString(arr, 0, bytesRead));
+                            }
+                            ArrayPool<byte>.Shared.Return(arr);
+                        }
                         break;
                 }
             }

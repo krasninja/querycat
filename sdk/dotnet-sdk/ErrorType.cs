@@ -19,6 +19,7 @@ namespace QueryCat.Plugins.Sdk
     INVALID_OBJECT = 2,
     NOT_SUPPORTED = 3,
     @INTERNAL = 4,
+    ARGUMENT = 5,
     INVALID_AUTH_TOKEN = 10,
     INVALID_FUNCTION = 11,
   }

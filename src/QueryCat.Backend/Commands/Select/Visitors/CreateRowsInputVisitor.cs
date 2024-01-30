@@ -4,8 +4,8 @@ using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Commands.Select.Inputs;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Execution;
 using QueryCat.Backend.Storage;
 
 namespace QueryCat.Backend.Commands.Select.Visitors;
@@ -17,13 +17,13 @@ namespace QueryCat.Backend.Commands.Select.Visitors;
 /// </summary>
 internal sealed class CreateRowsInputVisitor : AstVisitor
 {
-    private readonly ExecutionThread _executionThread;
+    private readonly IExecutionThread<ExecutionOptions> _executionThread;
     private readonly SelectCommandContext _context;
     private readonly ResolveTypesVisitor _resolveTypesVisitor;
 
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(CreateRowsInputVisitor));
 
-    public CreateRowsInputVisitor(ExecutionThread executionThread, SelectCommandContext context)
+    public CreateRowsInputVisitor(IExecutionThread<ExecutionOptions> executionThread, SelectCommandContext context)
     {
         _executionThread = executionThread;
         _context = context;

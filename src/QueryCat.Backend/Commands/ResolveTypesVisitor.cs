@@ -5,9 +5,9 @@ using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Ast.Nodes.SpecialFunctions;
 using QueryCat.Backend.Commands.Select;
 using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Execution;
 
 namespace QueryCat.Backend.Commands;
 
@@ -16,9 +16,9 @@ namespace QueryCat.Backend.Commands;
 /// </summary>
 internal class ResolveTypesVisitor : AstVisitor
 {
-    protected ExecutionThread ExecutionThread { get; }
+    protected IExecutionThread<ExecutionOptions> ExecutionThread { get; }
 
-    public ResolveTypesVisitor(ExecutionThread executionThread)
+    public ResolveTypesVisitor(IExecutionThread<ExecutionOptions> executionThread)
     {
         ExecutionThread = executionThread;
     }
@@ -104,7 +104,8 @@ internal class ResolveTypesVisitor : AstVisitor
 
     protected bool SetDataTypeFromVariable(IAstNode node, string name)
     {
-        if (ExecutionThread.TopScope.Variables.TryGetValue(name, out var value))
+        var scope = ExecutionThread.TopScope;
+        if (scope.TryGet(name, out var value))
         {
             node.SetAttribute(AstAttributeKeys.TypeKey, value.GetInternalType());
             return true;

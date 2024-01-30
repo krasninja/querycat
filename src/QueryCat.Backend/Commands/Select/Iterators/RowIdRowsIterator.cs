@@ -17,13 +17,12 @@ internal sealed class RowIdRowsIterator : IRowsIterator, IRowsIteratorParent
     /// <inheritdoc />
     public Column[] Columns { get; }
 
+    internal Column RowNumberColumn { get; } = new(ColumName, DataType.Integer, "Row number.");
+
     public RowIdRowsIterator(IRowsIterator rowsIterator)
     {
         _rowsIterator = rowsIterator;
-        Columns = new[]
-        {
-            new Column(ColumName, DataType.Integer, "Row number.")
-        }.Union(rowsIterator.Columns).ToArray();
+        Columns = new[] { RowNumberColumn }.Union(rowsIterator.Columns).ToArray();
         _row = new Row(this);
     }
 
