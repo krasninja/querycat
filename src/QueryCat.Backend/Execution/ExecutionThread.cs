@@ -136,6 +136,9 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
         // Run with lock and timer.
         lock (_objLock)
         {
+            RunBootstrapScript();
+            LoadConfig();
+
             // Set first executing statement and run.
             ExecutingStatement = programNode.Statements.FirstOrDefault();
 
@@ -190,9 +193,6 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
 
     private VariantValue RunInternal(CancellationToken cancellationToken)
     {
-        LoadConfig();
-        RunBootstrapScript();
-
         var executeEventArgs = new ExecuteEventArgs();
         while (ExecutingStatement != null)
         {
@@ -353,10 +353,13 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
     private void RunBootstrapScript()
     {
         var rcFile = Path.Combine(GetApplicationDirectory(), BootstrapFileName);
-        if (!_bootstrapScriptExecuted && Options.RunBootstrapScript && File.Exists(rcFile))
+        if (!_bootstrapScriptExecuted && Options.RunBootstrapScript)
         {
-            Run(File.ReadAllText(rcFile));
             _bootstrapScriptExecuted = true;
+            if (File.Exists(rcFile))
+            {
+                Run(File.ReadAllText(rcFile));
+            }
         }
     }
 
