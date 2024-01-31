@@ -10,7 +10,7 @@ grok(pattern: string): object<IRowsFormatter>
 
 ## Example
 
-** Parse systemd journal**
+**Parse systemd journal**
 
 ```
 journalctl -o short-iso | qcat "select * from stdin() format grok('%{TIMESTAMP_ISO8601:date} %{HOSTNAME:host} %{PROG:proc}\[%{POSINT:pid}\]: %{GREEDYDATA:message}')"

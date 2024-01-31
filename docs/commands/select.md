@@ -18,7 +18,7 @@ SELECT [ ALL | DISTINCT [ ON ( expression [, ...] ) ] ] [ TOP number ]
 [ ORDER BY [ expression [ ASC | DESC ] ] [ NULLS { FIRST | LAST } ] ]
 [ LIMIT number ]
 [ OFFSET number [ ROW | ROWS ] ]
-[ FETCH [ FIRST | NEXT ] number [ ROW | ROWS ] [ ONLY ]
+[ FETCH [ FIRST | NEXT ] number [ ROW | ROWS ] [ ONLY ] ]
 ```
 
 ## WITH

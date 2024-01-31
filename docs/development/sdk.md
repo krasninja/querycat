@@ -17,18 +17,15 @@ $ dotnet add package QueryCat
 The main object is `ExecutionThread` that allows to execute queries. Basic usage:
 
 ```csharp
-var executionThread = new ExecutionThread();
-var result = executionThread.Run("1+1");
+var executionThread = new ExecutionThreadBootstrapper()
+    .WithStandardFunctions()
+    .WithStandardUriResolvers()
+    .Create();
+var result1 = executionThread.Run("1+1");
+var result2 = executionThread.Run('uuid()'); // 63af7231-f182-4d29-816c-b83b9dc9cff5
 ```
 
 Result is the `VariantValue` returned by the last statement in the script.
-
-To be able to use standard functions use `ExecutionThreadBootstrapper` bootstraper. Example:
-
-```csharp
-new ExecutionThreadBootstrapper().Bootstrap(executionThread);
-var result = executionThread.Run('uuid()'); // 63af7231-f182-4d29-816c-b83b9dc9cff5
-```
 
 ## Execution Thread Options
 

@@ -1,5 +1,4 @@
-How to Contribute
-=================
+# How to Contribute
 
 Thanks for you interest to the project! We appreciate for any issue and/or pull request.
 
@@ -8,7 +7,7 @@ Thanks for you interest to the project! We appreciate for any issue and/or pull 
 You need the following software installed:
 
 - And IDE to be able to work on the project. For example, Visual Studio (https://www.visualstudio.com/downloads/download-visual-studio-vs.aspx) or JetBrains Rider (https://www.jetbrains.com/rider/).
-- .NET Core 7 (https://www.microsoft.com/net/core).
+- .NET 8 (https://dotnet.microsoft.com/en-us/download).
 - ANTLR v4 to build project grammar.
 - GitVersion (https://gitversion.net/docs/usage/cli/installation).
 
