@@ -1,22 +1,25 @@
 # Changelog
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-## Added
+### Added
 
 - Safe mode.
 
 ## [0.5.3] - 2024-01-30
 
-## Added
+### Added
 
 - Add breadcrumbs in files UI, overall web UI improvements.
 - Add schema and reset web UI buttons.
 - Allow restricting web UI access by IP addresses.
 
-## Fixed
+### Fixed
 
 - Cannot apply expressions on "row_number" column.
 - Fix files download 404 problem on Windows.
@@ -26,7 +29,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [0.5.0] - 2023-12-31
 
-## Added
+### Added
 
 - Use Native AOT compilation mode. It reduces file size and startup time.
 - Migration to Thrift plugins system.
@@ -40,18 +43,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Resolve '~' to user home directory.
 - Implement simple HTTP files server (beta).
 
-## Fixed
+### Fixed
 
 - Fix using aliases with tables from variables.
 
 ## [0.4.14] - 2023-11-15
 
-## Added
+### Added
 
 - Initial "follow" mode implementation.
 - Add regular expressions formatter "regex".
 
-## Fixed
+### Fixed
 
 - JsonInput now produces warning on parse error instead of crash.
 - Minor fixes and improvements.
@@ -80,7 +83,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Add functions "string_to_table", "regexp_replace".
 - Allow to use subqueries with IN clause.
 
-## Fixed
+### Fixed
 
 - Create directory for file if it is not exists.
 - "_functions" doesn't work correctly for formatters.
