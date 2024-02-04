@@ -24,6 +24,7 @@ internal class DsvFormatter : IRowsFormatter
     private readonly bool _skipEmptyLines;
     private readonly bool _delimiterCanRepeat;
 
+    [SafeFunction]
     [Description("CSV formatter.")]
     [FunctionSignature("""
         csv(

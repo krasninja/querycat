@@ -10,6 +10,7 @@ namespace QueryCat.Backend.Formatters;
 /// </summary>
 internal sealed class NullFormatter : IRowsFormatter
 {
+    [SafeFunction]
     [Description("NULL formatter.")]
     [FunctionSignature("null_fmt(): object<IRowsFormatter>")]
     public static VariantValue Null(FunctionCallInfo args)

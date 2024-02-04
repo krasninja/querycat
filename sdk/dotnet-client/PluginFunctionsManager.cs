@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Plugins.Sdk;
@@ -43,6 +44,7 @@ public sealed class PluginFunctionsManager : IFunctionsManager
             @delegate)
         {
             Description = description ?? string.Empty,
+            IsSafe = @delegate.Method.GetCustomAttribute<SafeFunctionAttribute>() != null,
         };
     }
 
@@ -57,7 +59,7 @@ public sealed class PluginFunctionsManager : IFunctionsManager
     {
         if (_functions.TryGetValue(name.ToUpper(), out var functionInfo))
         {
-            functions = new[] { functionInfo };
+            functions = [functionInfo];
             return true;
         }
         functions = Array.Empty<IFunction>();

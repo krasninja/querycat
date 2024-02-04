@@ -8,6 +8,7 @@ namespace QueryCat.Plugin.Test;
 
 internal sealed class AddressRowsInput : FetchRowsInput<Address>
 {
+    [SafeFunction]
     [Description("Test function.")]
     [FunctionSignature("test_addresses_1(): object<IRowsInput>")]
     public static VariantValue AddressRowsInputFunction(FunctionCallInfo args)

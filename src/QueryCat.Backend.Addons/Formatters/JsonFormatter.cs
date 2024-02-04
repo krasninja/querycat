@@ -10,6 +10,7 @@ namespace QueryCat.Backend.Addons.Formatters;
 /// </summary>
 internal sealed class JsonFormatter : IRowsFormatter
 {
+    [SafeFunction]
     [Description("JSON formatter.")]
     [FunctionSignature("json(jsonpath?: string): object<IRowsFormatter>")]
     public static VariantValue Json(FunctionCallInfo args)

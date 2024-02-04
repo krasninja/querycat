@@ -7,6 +7,7 @@ namespace QueryCat.Backend.Addons.Formatters;
 
 internal class XmlFormatter : IRowsFormatter
 {
+    [SafeFunction]
     [Description("XML formatter.")]
     [FunctionSignature("xml(xpath?: string): object<IRowsFormatter>")]
     public static VariantValue Xml(FunctionCallInfo args)

@@ -36,7 +36,7 @@ public sealed class PluginFunction : IFunction
     public FunctionSignatureArgument[] Arguments { get; set; } = Array.Empty<FunctionSignatureArgument>();
 
     /// <inheritdoc />
-    public bool IsSafe { get; } = false;
+    public bool IsSafe { get; internal set; } = false;
 
     public PluginFunction(string name, string signature, FunctionDelegate @delegate)
     {

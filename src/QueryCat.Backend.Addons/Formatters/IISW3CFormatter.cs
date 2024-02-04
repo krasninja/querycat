@@ -10,6 +10,7 @@ namespace QueryCat.Backend.Addons.Formatters;
 // ReSharper disable once InconsistentNaming
 public sealed class IISW3CFormatter : IRowsFormatter
 {
+    [SafeFunction]
     [Description("IIS W3C log files formatter.")]
     [FunctionSignature("iisw3c(): object<IRowsFormatter>")]
     // ReSharper disable once IdentifierTypo

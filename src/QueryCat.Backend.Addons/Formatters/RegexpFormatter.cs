@@ -10,6 +10,7 @@ namespace QueryCat.Backend.Addons.Formatters;
 /// </summary>
 internal sealed class RegexpFormatter : IRowsFormatter
 {
+    [SafeFunction]
     [Description("Regular expression formatter.")]
     [FunctionSignature("regex(pattern: string, flags?: string): object<IRowsFormatter>")]
     public static VariantValue Regex(FunctionCallInfo args)
