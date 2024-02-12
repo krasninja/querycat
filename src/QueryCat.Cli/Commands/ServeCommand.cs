@@ -14,6 +14,8 @@ internal class ServeCommand : BaseCommand
         var allowOriginOption = new Option<string>("--allow-origin", description: "Enables CORS for the specified origin.");
         var passwordOption = new Option<string>("--password", description: "Basic authentication password.");
         var rootDirectoryOption = new Option<string>(aliases: ["-r", "--root-dir"], description: "Root directory for files serve.");
+        var safeModeOption = new Option<bool>("--safe-mode",
+            description: "Allow to call only safe (no modifications) functions.");
         var allowedIPsSlotsOption = new Option<int?>("--allowed-ips-slots",
             description: "Number of IPs that will be added to authorized list on first connect.");
         var allowedIPsOption = new Option<string[]>("--allowed-ips",
@@ -26,13 +28,15 @@ internal class ServeCommand : BaseCommand
         AddOption(allowOriginOption);
         AddOption(passwordOption);
         AddOption(rootDirectoryOption);
+        AddOption(safeModeOption);
         AddOption(allowedIPsOption);
         AddOption(allowedIPsSlotsOption);
-        this.SetHandler((applicationOptions, urls, allowOrigin, password, rootDirectory, allowedIPs, allowedIPsSlots) =>
+        this.SetHandler((applicationOptions, urls, allowOrigin, password, safeMode, rootDirectory, allowedIPs, allowedIPsSlots) =>
         {
             applicationOptions.InitializeLogger();
             using var root = applicationOptions.CreateApplicationRoot();
             root.Thread.Options.AddRowNumberColumn = true;
+            root.Thread.Options.SafeMode = safeMode;
             var webServer = new WebServer(root.Thread, new WebServerOptions
             {
                 Urls = urls,
@@ -51,6 +55,7 @@ internal class ServeCommand : BaseCommand
             urlsOption,
             allowOriginOption,
             passwordOption,
+            safeModeOption,
             rootDirectoryOption,
             allowedIPsOption,
             allowedIPsSlotsOption);
