@@ -10,5 +10,7 @@ internal sealed class WebServerOptions
 
     public string FilesRoot { get; set; } = string.Empty;
 
-    public IPAddress[] AllowedAddresses { get; set; } = Array.Empty<IPAddress>();
+    public IList<IPAddress> AllowedAddresses { get; set; } = Array.Empty<IPAddress>();
+
+    public int? AllowedAddressesSlots { get; set; }
 }

@@ -37,8 +37,10 @@ internal sealed partial class WebServer
     private readonly IExecutionThread _executionThread;
     private readonly string? _password;
     private readonly string? _filesRoot;
-    private readonly IPAddress[] _allowedAddresses;
+    private readonly HashSet<IPAddress> _allowedAddresses;
     private readonly MimeTypeProvider _mimeTypeProvider = new();
+    private int? _allowedAddressesSlots;
+    private readonly object _lockObj = new();
 
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(WebServer));
 
@@ -60,7 +62,8 @@ internal sealed partial class WebServer
         _executionThread = executionThread;
         _password = options.Password;
         _filesRoot = options.FilesRoot;
-        _allowedAddresses = options.AllowedAddresses;
+        _allowedAddresses = new HashSet<IPAddress>(options.AllowedAddresses);
+        _allowedAddressesSlots = options.AllowedAddressesSlots;
         Uri = options.Urls ?? DefaultEndpointUri;
     }
 
@@ -117,12 +120,28 @@ internal sealed partial class WebServer
         }
 
         // Validate IP.
-        if (_allowedAddresses.Any() && !_allowedAddresses.Contains(context.Request.RemoteEndPoint.Address))
+        if ((_allowedAddresses.Any() || _allowedAddressesSlots.HasValue)
+            && !_allowedAddresses.Contains(context.Request.RemoteEndPoint.Address))
         {
-            _logger.LogInformation($"[{context.Request.RemoteEndPoint.Address}]: unauthorized access.");
-            response.StatusCode = (int)HttpStatusCode.Unauthorized;
-            response.Close();
-            return;
+            if (_allowedAddressesSlots > 0)
+            {
+                lock (_lockObj)
+                {
+                    if (_allowedAddressesSlots > 0)
+                    {
+                        _allowedAddresses.Add(context.Request.RemoteEndPoint.Address);
+                        _allowedAddressesSlots--;
+                        _logger.LogInformation($"[{context.Request.RemoteEndPoint.Address}]: added to authorized list.");
+                    }
+                }
+            }
+            else
+            {
+                _logger.LogInformation($"[{context.Request.RemoteEndPoint.Address}]: unauthorized access.");
+                response.StatusCode = (int)HttpStatusCode.Unauthorized;
+                response.Close();
+                return;
+            }
         }
 
         // Auth.

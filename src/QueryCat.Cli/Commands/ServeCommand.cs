@@ -14,7 +14,10 @@ internal class ServeCommand : BaseCommand
         var allowOriginOption = new Option<string>("--allow-origin", description: "Enables CORS for the specified origin.");
         var passwordOption = new Option<string>("--password", description: "Basic authentication password.");
         var rootDirectoryOption = new Option<string>(aliases: ["-r", "--root-dir"], description: "Root directory for files serve.");
-        var allowedIPsOptions = new Option<string[]>("--allowed-ips", description: "Allowed IP addresses to connect.")
+        var allowedIPsSlotsOption = new Option<int?>("--allowed-ips-slots",
+            description: "Number of IPs that will be added to authorized list on first connect.");
+        var allowedIPsOption = new Option<string[]>("--allowed-ips",
+            description: "Allowed IP addresses to connect.\nExample: http://192.168.1.125:5555/")
         {
             AllowMultipleArgumentsPerToken = true,
         };
@@ -23,8 +26,9 @@ internal class ServeCommand : BaseCommand
         AddOption(allowOriginOption);
         AddOption(passwordOption);
         AddOption(rootDirectoryOption);
-        AddOption(allowedIPsOptions);
-        this.SetHandler((applicationOptions, urls, allowOrigin, password, rootDirectory, allowedIPs) =>
+        AddOption(allowedIPsOption);
+        AddOption(allowedIPsSlotsOption);
+        this.SetHandler((applicationOptions, urls, allowOrigin, password, rootDirectory, allowedIPs, allowedIPsSlots) =>
         {
             applicationOptions.InitializeLogger();
             using var root = applicationOptions.CreateApplicationRoot();
@@ -35,6 +39,7 @@ internal class ServeCommand : BaseCommand
                 Password = password,
                 FilesRoot = rootDirectory,
                 AllowedAddresses = allowedIPs.Select(IPAddress.Parse).ToArray(),
+                AllowedAddressesSlots = allowedIPsSlots,
             });
             if (!string.IsNullOrEmpty(allowOrigin))
             {
@@ -47,6 +52,7 @@ internal class ServeCommand : BaseCommand
             allowOriginOption,
             passwordOption,
             rootDirectoryOption,
-            allowedIPsOptions);
+            allowedIPsOption,
+            allowedIPsSlotsOption);
     }
 }

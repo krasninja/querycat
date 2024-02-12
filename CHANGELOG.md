@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Safe mode.
+- Allow web UI access restriction by available IPs slots count.
 
 ## [0.5.3] - 2024-01-30
 
