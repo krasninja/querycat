@@ -233,7 +233,7 @@ internal sealed partial class SelectPlanner
         if (formatterNode != null)
         {
             var formatter = Misc_CreateDelegate(formatterNode, context).Invoke();
-            args.Add(formatter);
+            args.Add("fmt", formatter);
         }
         var rowsInput = ExecutionThread.FunctionsManager.CallFunction("read", ExecutionThread, args).As<IRowsInput>();
         rowsInput.QueryContext = new SelectInputQueryContext(rowsInput);
