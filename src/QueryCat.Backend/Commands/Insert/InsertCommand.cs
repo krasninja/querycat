@@ -14,6 +14,11 @@ internal sealed class InsertCommand : ICommand
     /// <inheritdoc />
     public IFuncUnit CreateHandler(IExecutionThread<ExecutionOptions> executionThread, StatementNode node)
     {
+        if (executionThread.Options.SafeMode)
+        {
+            throw new SafeModeException();
+        }
+
         var insertNode = (InsertNode)node.RootNode;
 
         // Get output source.

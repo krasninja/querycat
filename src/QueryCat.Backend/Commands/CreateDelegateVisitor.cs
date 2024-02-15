@@ -340,7 +340,7 @@ internal class CreateDelegateVisitor : AstVisitor
         var function = ResolveTypesVisitor.VisitFunctionCallNode(node);
         if (ExecutionThread.Options.SafeMode && !function.IsSafe)
         {
-            throw new QueryCatException($"Cannot use unsafe function '{function.Name}' in safe mode.");
+            throw new SafeModeException($"Cannot use unsafe function '{function.Name}' in safe mode.");
         }
         var argsDelegatesList = new List<IFuncUnit>(function.Arguments.Length + 1);
         for (int i = 0; i < function.Arguments.Length; i++)
