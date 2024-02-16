@@ -60,7 +60,7 @@ public readonly partial struct VariantValue
         => operation switch
         {
             Operation.Not => GetNotDelegate(leftType),
-            _ => throw new ArgumentOutOfRangeException(nameof(operation), "Invalid operation."),
+            _ => throw new ArgumentOutOfRangeException(nameof(operation), Resources.Errors.InvalidOperation),
         };
 
     internal static OperationBinaryDelegate GetOperationDelegate(Operation operation)
@@ -85,7 +85,7 @@ public readonly partial struct VariantValue
             Operation.NotLike => NotLike,
             Operation.Similar => Similar,
             Operation.NotSimilar => NotSimilar,
-            _ => throw new ArgumentOutOfRangeException(nameof(operation), "Invalid operation."),
+            _ => throw new ArgumentOutOfRangeException(nameof(operation), Resources.Errors.InvalidOperation),
         };
 
     internal static BinaryFunction GetOperationDelegate(Operation operation, DataType leftType, DataType rightType)

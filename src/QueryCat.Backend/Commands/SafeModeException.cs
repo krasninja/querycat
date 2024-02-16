@@ -11,7 +11,7 @@ public sealed class SafeModeException : QueryCatException
     /// <summary>
     /// Constructor.
     /// </summary>
-    public SafeModeException() : base("Cannot run the operation in safe mode.")
+    public SafeModeException() : base(Resources.Errors.CannotRunInSafeMode)
     {
     }
 

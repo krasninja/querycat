@@ -81,7 +81,7 @@ internal class InputCreateDelegateVisitor : CreateDelegateVisitor
             var rightColumnIndex = _rightInput.GetColumnIndexByName(columnName);
             if (rightColumnIndex < 0 || leftFunc == null)
             {
-                throw new SemanticException($"Cannot find column '{columnName}'.");
+                throw new SemanticException(string.Format(Resources.Errors.CannotFindColumn, columnName));
             }
             leftColumnSources[i] = leftFunc;
             rightColumnSources[i] = new FuncUnitRowsInputColumn(_rightInput, rightColumnIndex);

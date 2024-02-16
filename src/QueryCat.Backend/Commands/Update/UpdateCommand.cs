@@ -46,7 +46,8 @@ internal sealed class UpdateCommand : ICommand
                 setNode.SetTargetNode.SourceName);
             if (columnIndex < 0)
             {
-                throw new QueryCatException($"Cannot find column '{setNode.SetTargetNode.FullName}'.");
+                throw new QueryCatException(
+                    string.Format(Resources.Errors.CannotFindColumn, setNode.SetTargetNode.FullName));
             }
             var func = createDelegateVisitor.RunAndReturn(setNode.SetSourceNode);
             setters.Add(new UpdateSetter(columnIndex, func));

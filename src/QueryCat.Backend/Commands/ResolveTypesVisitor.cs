@@ -60,7 +60,7 @@ internal class ResolveTypesVisitor : AstVisitor
         if (targetType == DataType.Void)
         {
             throw new SemanticException(
-                $"Cannot apply operation '{VariantValue.Operation.Between}' to arguments of types {leftType} and {rightType}.");
+                string.Format(Resources.Errors.CannotApplyOperationForTypes, VariantValue.Operation.Between, leftType, rightType));
         }
         node.SetDataType(targetType);
     }
@@ -74,7 +74,7 @@ internal class ResolveTypesVisitor : AstVisitor
         if (targetType == DataType.Void)
         {
             throw new SemanticException(
-                $"Cannot apply operation '{node.Operation}' to arguments of types {leftType} and {rightType}.");
+                string.Format(Resources.Errors.CannotApplyOperationForTypes, node.Operation, leftType, rightType));
         }
         node.SetDataType(targetType);
     }

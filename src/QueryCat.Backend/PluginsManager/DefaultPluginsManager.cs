@@ -88,7 +88,7 @@ public sealed class DefaultPluginsManager : IPluginsManager, IDisposable
         var plugin = TryFindPlugin(name, Application.GetPlatform(), plugins.ToList());
         if (plugin == null)
         {
-            throw new PluginException($"Cannot find plugin '{name}' in repository.");
+            throw new PluginException(string.Format(Resources.Errors.CannotFindPlugin, name));
         }
 
         // Create X.downloading file, download and then remove.
@@ -153,7 +153,7 @@ public sealed class DefaultPluginsManager : IPluginsManager, IDisposable
         var plugin = TryFindPlugin(name, _platform, plugins.ToList());
         if (plugin == null)
         {
-            throw new PluginException($"Cannot find plugin '{name}' in repository.");
+            throw new PluginException(string.Format(Resources.Errors.CannotFindPlugin, name));
         }
         if (File.Exists(plugin.Uri))
         {

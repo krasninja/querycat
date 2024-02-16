@@ -254,7 +254,7 @@ internal class CreateDelegateVisitor : AstVisitor
                 var value = action.Invoke();
                 return new VariantValue(!value.IsNull);
             }, nodeType),
-            _ => throw new QueryCatException("Invalid operation.")
+            _ => throw new QueryCatException(Resources.Errors.InvalidOperation);
         };
     }
 
@@ -273,7 +273,7 @@ internal class CreateDelegateVisitor : AstVisitor
             }
             catch (TimeZoneNotFoundException)
             {
-                throw new QueryCatException($"Cannot find time zone '{tz}'.");
+                throw new QueryCatException(string.Format(Resources.Errors.CannotFindTimeZone, tz));
             }
         }
         NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, node.GetDataType());
@@ -340,7 +340,7 @@ internal class CreateDelegateVisitor : AstVisitor
         var function = ResolveTypesVisitor.VisitFunctionCallNode(node);
         if (ExecutionThread.Options.SafeMode && !function.IsSafe)
         {
-            throw new SafeModeException($"Cannot use unsafe function '{function.Name}' in safe mode.");
+            throw new SafeModeException(string.Format(Resources.Errors.CannotUseUnsafeFunction, function.Name));
         }
         var argsDelegatesList = new List<IFuncUnit>(function.Arguments.Length + 1);
         for (int i = 0; i < function.Arguments.Length; i++)
@@ -370,7 +370,7 @@ internal class CreateDelegateVisitor : AstVisitor
                 continue;
             }
 
-            throw new InvalidFunctionArgumentException($"Cannot set argument '{argument.Name}'.");
+            throw new InvalidFunctionArgumentException(string.Format(Resources.Errors.CannotSetArgument, argument.Name));
         }
 
         // Fill variadic.

@@ -73,7 +73,7 @@ internal static class DateTimeFunctions
                 "MILLISECOND" or "MS" => source.AsInterval.Milliseconds,
                 _ => throw new SemanticException("Incorrect field."),
             },
-            _ => throw new SemanticException("Invalid argument type."),
+            _ => throw new SemanticException(Resources.Errors.InvalidArgumentType),
         };
         return new VariantValue(result);
     }
@@ -121,7 +121,7 @@ internal static class DateTimeFunctions
             };
             return new VariantValue(interval);
         }
-        throw new SemanticException("Invalid argument type.");
+        throw new SemanticException(Resources.Errors.InvalidArgumentType);
     }
 
     public static void RegisterFunctions(IFunctionsManager functionsManager)

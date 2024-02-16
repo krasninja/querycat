@@ -80,7 +80,7 @@ internal sealed class InsertCommand : ICommand
             var index = inputIterator.GetColumnIndexByName(columnName);
             if (index < 0)
             {
-                throw new QueryCatException($"Cannot find column '{columnName}'.");
+                throw new QueryCatException(string.Format(Resources.Errors.CannotFindColumn, columnName));
             }
             if (outputColumns != null)
             {

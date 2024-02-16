@@ -24,7 +24,7 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
             var statement = this.Visit<StatementNode>(statementContext);
             if (statement == null)
             {
-                throw new InvalidOperationException("Invalid statement.");
+                throw new InvalidOperationException(Resources.Errors.InvalidStatement);
             }
             statements.Add(statement);
         }
@@ -241,7 +241,7 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
         QueryCatParser.IS => VariantValue.Operation.IsNull,
         QueryCatParser.LIKE => VariantValue.Operation.Like,
         QueryCatParser.SIMILAR => VariantValue.Operation.Similar,
-        _ => throw new ArgumentOutOfRangeException(nameof(token), token, "Invalid operation.")
+        _ => throw new ArgumentOutOfRangeException(nameof(token), token, Resources.Errors.InvalidOperation)
     };
 
     /// <inheritdoc />
