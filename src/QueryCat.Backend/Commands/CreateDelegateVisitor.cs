@@ -254,7 +254,7 @@ internal class CreateDelegateVisitor : AstVisitor
                 var value = action.Invoke();
                 return new VariantValue(!value.IsNull);
             }, nodeType),
-            _ => throw new QueryCatException(Resources.Errors.InvalidOperation);
+            _ => throw new QueryCatException(Resources.Errors.InvalidOperation),
         };
     }
 
