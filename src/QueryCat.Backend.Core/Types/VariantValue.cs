@@ -844,6 +844,27 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         _ => "unknown"
     };
 
+    /// <summary>
+    /// Convert to string according to the format.
+    /// </summary>
+    /// <param name="formatProvider">Culture specific formatting information.</param>
+    /// <returns>String representation.</returns>
+    public string ToString(IFormatProvider? formatProvider) => GetInternalType() switch
+    {
+        DataType.Null => NullValueString,
+        DataType.Void => "void",
+        DataType.Integer => AsIntegerUnsafe.ToString(formatProvider),
+        DataType.String => AsStringUnsafe,
+        DataType.Boolean => AsBooleanUnsafe.ToString(),
+        DataType.Float => AsFloatUnsafe.ToString(formatProvider),
+        DataType.Numeric => AsNumeric.ToString(formatProvider),
+        DataType.Timestamp => AsTimestampUnsafe.ToString(formatProvider),
+        DataType.Interval => AsIntervalUnsafe.ToString(null, formatProvider),
+        DataType.Object => "object:" + AsObjectUnsafe,
+        DataType.Blob => "X" + BlobToShortString(AsBlobUnsafe, 16),
+        _ => "unknown"
+    };
+
     private static string BlobToShortString(IBlobData blobData, int numberOfBytes)
     {
         var arr = ArrayPool<byte>.Shared.Rent(numberOfBytes);
