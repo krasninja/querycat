@@ -20,7 +20,7 @@ internal sealed class CombineRowsInput : RowsInput, IDisposable
     {
         if (!rowsInputs.Any())
         {
-            throw new ArgumentException("No inputs.", nameof(rowsInputs));
+            throw new ArgumentException(Resources.Errors.NoInputs, nameof(rowsInputs));
         }
         _rowsInputs = rowsInputs;
     }

@@ -24,7 +24,7 @@
   <data name="CannotFindColumn" xml:space="preserve">
     <value>Cannot find column '{0}'.</value>
   </data>
-  <data name="CannotFindPlugin" xml:space="preserve">
+  <data name="Plugins_CannotFind" xml:space="preserve">
     <value>Cannot find plugin '{0}' in repository.</value>
   </data>
   <data name="InvalidRowIndex" xml:space="preserve">
@@ -56,5 +56,41 @@
   </data>
   <data name="CannotApplyOperationForTypes" xml:space="preserve">
     <value>Cannot apply operation '{0}' to arguments of types {1} and {2}.</value>
+  </data>
+  <data name="CannotCastToVoid" xml:space="preserve">
+    <value>Cannot cast to type VOID.</value>
+  </data>
+  <data name="InvalidBetweenExpression" xml:space="preserve">
+    <value>Invalid BETWEEN expression.</value>
+  </data>
+  <data name="RecursiveMustHaveUnion" xml:space="preserve">
+    <value>Recursive query must have UNION [ALL] term.</value>
+  </data>
+  <data name="CoalesceMustHaveSameArguments" xml:space="preserve">
+    <value>COALESCE function must have identical argument types. Found {0}.</value>
+  </data>
+  <data name="NotImplemented" xml:space="preserve">
+    <value>{0} is not implemented.</value>
+  </data>
+  <data name="NoColumns" xml:space="preserve">
+    <value>Columns not set.</value>
+  </data>
+  <data name="NoInputs" xml:space="preserve">
+    <value>No inputs.</value>
+  </data>
+  <data name="CombineMustHaveSameColumns" xml:space="preserve">
+    <value>Each combine query must have equal columns count and types.</value>
+  </data>
+  <data name="Plugins_NoDirectory" xml:space="preserve">
+    <value>Cannot find a directory for plugins.</value>
+  </data>
+  <data name="NoUsingJoinColumns" xml:space="preserve">
+    <value>No USING join columns.</value>
+  </data>
+  <data name="ColumnsCountNoMatch" xml:space="preserve">
+    <value>Columns count must match.</value>
+  </data>
+  <data name="InvalidField" xml:space="preserve">
+    <value>Invalid field '{0}'.</value>
   </data>
 </root>

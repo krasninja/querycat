@@ -62,7 +62,7 @@ internal static class DateTimeFunctions
                 "HOUR" or "H" => source.AsTimestamp.Hour,
                 "MINUTE" or "MIN" or "M" => source.AsTimestamp.Minute,
                 "SECOND" or "SEC" or "S" => source.AsTimestamp.Second,
-                _ => throw new SemanticException("Incorrect field."),
+                _ => throw new SemanticException(string.Format(Resources.Errors.InvalidField, field)),
             },
             DataType.Interval => field switch
             {
@@ -71,7 +71,7 @@ internal static class DateTimeFunctions
                 "MINUTE" or "MIN" or "M" => source.AsInterval.Minutes,
                 "SECOND" or "SEC" or "S" => source.AsInterval.Seconds,
                 "MILLISECOND" or "MS" => source.AsInterval.Milliseconds,
-                _ => throw new SemanticException("Incorrect field."),
+                _ => throw new SemanticException(string.Format(Resources.Errors.InvalidField, field)),
             },
             _ => throw new SemanticException(Resources.Errors.InvalidArgumentType),
         };
@@ -103,7 +103,7 @@ internal static class DateTimeFunctions
                     new DateTime(target.Year, target.Month, target.Day, target.Hour, target.Minute, 0, target.Kind),
                 "SECOND" or "SEC" or "S" =>
                     new DateTime(target.Year, target.Month, target.Day, target.Hour, target.Minute, target.Second, target.Kind),
-                _ => throw new SemanticException("Incorrect field."),
+                _ => throw new SemanticException(string.Format(Resources.Errors.InvalidField, field)),
             };
             return new VariantValue(timestamp);
         }
@@ -117,7 +117,7 @@ internal static class DateTimeFunctions
                 "MINUTE" or "MIN" or "M" => new TimeSpan(target.Days, target.Hours, target.Minutes, 0),
                 "SECOND" or "SEC" or "S" =>
                     new TimeSpan(target.Days, target.Hours, target.Minutes, target.Seconds, 0),
-                _ => throw new SemanticException("Incorrect field."),
+                _ => throw new SemanticException(string.Format(Resources.Errors.InvalidField, field)),
             };
             return new VariantValue(interval);
         }

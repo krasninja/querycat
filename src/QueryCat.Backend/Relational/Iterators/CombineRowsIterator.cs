@@ -41,12 +41,12 @@ internal sealed class CombineRowsIterator : IRowsIterator, IRowsIteratorParent
             CombineType.Union => UnionDelegate,
             CombineType.Except => ExceptDelegate,
             CombineType.Intersect => IntersectDelegate,
-            _ => throw new ArgumentException($"{combineType} is not implemented.", nameof(combineType)),
+            _ => throw new ArgumentException(string.Format(Resources.Errors.NotImplemented, combineType), nameof(combineType)),
         };
 
         if (!_leftIterator.IsSchemaEqual(_rightIterator))
         {
-            throw new SemanticException("Each combine query must have equal columns count and types.");
+            throw new SemanticException(Resources.Errors.CombineMustHaveSameColumns);
         }
     }
 

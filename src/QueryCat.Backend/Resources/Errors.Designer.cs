@@ -57,9 +57,9 @@ namespace QueryCat.Backend.Resources {
             }
         }
         
-        internal static string CannotFindPlugin {
+        internal static string Plugins_CannotFind {
             get {
-                return ResourceManager.GetString("CannotFindPlugin", resourceCulture);
+                return ResourceManager.GetString("Plugins_CannotFind", resourceCulture);
             }
         }
         
@@ -120,6 +120,78 @@ namespace QueryCat.Backend.Resources {
         internal static string CannotApplyOperationForTypes {
             get {
                 return ResourceManager.GetString("CannotApplyOperationForTypes", resourceCulture);
+            }
+        }
+        
+        internal static string CannotCastToVoid {
+            get {
+                return ResourceManager.GetString("CannotCastToVoid", resourceCulture);
+            }
+        }
+        
+        internal static string InvalidBetweenExpression {
+            get {
+                return ResourceManager.GetString("InvalidBetweenExpression", resourceCulture);
+            }
+        }
+        
+        internal static string RecursiveMustHaveUnion {
+            get {
+                return ResourceManager.GetString("RecursiveMustHaveUnion", resourceCulture);
+            }
+        }
+        
+        internal static string CoalesceMustHaveSameArguments {
+            get {
+                return ResourceManager.GetString("CoalesceMustHaveSameArguments", resourceCulture);
+            }
+        }
+        
+        internal static string NotImplemented {
+            get {
+                return ResourceManager.GetString("NotImplemented", resourceCulture);
+            }
+        }
+        
+        internal static string NoColumns {
+            get {
+                return ResourceManager.GetString("NoColumns", resourceCulture);
+            }
+        }
+        
+        internal static string NoInputs {
+            get {
+                return ResourceManager.GetString("NoInputs", resourceCulture);
+            }
+        }
+        
+        internal static string CombineMustHaveSameColumns {
+            get {
+                return ResourceManager.GetString("CombineMustHaveSameColumns", resourceCulture);
+            }
+        }
+        
+        internal static string Plugins_NoDirectory {
+            get {
+                return ResourceManager.GetString("Plugins_NoDirectory", resourceCulture);
+            }
+        }
+        
+        internal static string NoUsingJoinColumns {
+            get {
+                return ResourceManager.GetString("NoUsingJoinColumns", resourceCulture);
+            }
+        }
+        
+        internal static string ColumnsCountNoMatch {
+            get {
+                return ResourceManager.GetString("ColumnsCountNoMatch", resourceCulture);
+            }
+        }
+        
+        internal static string InvalidField {
+            get {
+                return ResourceManager.GetString("InvalidField", resourceCulture);
             }
         }
     }

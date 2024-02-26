@@ -118,7 +118,7 @@ internal sealed partial class SelectPlanner
             SelectQueryCombineType.Except => CombineType.Except,
             SelectQueryCombineType.Intersect => CombineType.Intersect,
             SelectQueryCombineType.Union => CombineType.Union,
-            _ => throw new ArgumentException($"{combineType} is not implemented.", nameof(combineType)),
+            _ => throw new ArgumentException(string.Format(Resources.Errors.NotImplemented, combineType), nameof(combineType)),
         };
     }
 }

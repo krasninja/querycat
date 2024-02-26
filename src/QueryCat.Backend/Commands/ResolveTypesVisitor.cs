@@ -164,7 +164,7 @@ internal class ResolveTypesVisitor : AstVisitor
         if (generalType.Count > 1)
         {
             var foundTypes = string.Join(", ", generalType);
-            throw new SemanticException($"COALESCE function must have identical argument types. Found ({foundTypes}).");
+            throw new SemanticException(string.Format(Resources.Errors.CoalesceMustHaveSameArguments, foundTypes));
         }
         node.SetDataType(generalType.First());
     }

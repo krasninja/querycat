@@ -186,7 +186,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     {
         if (columns.Count < 1)
         {
-            throw new QueryCatException("Columns not set.");
+            throw new QueryCatException(Resources.Errors.NoColumns);
         }
 
         var virtualColumns = GetVirtualColumns();

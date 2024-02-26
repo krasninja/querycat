@@ -49,7 +49,7 @@ public class RowsFrame : IRowsSchema, IEnumerable<Row>
         _columns = columns;
         if (_columns.Length < 1)
         {
-            throw new ArgumentException("There are no columns.", nameof(columns));
+            throw new ArgumentException(Resources.Errors.NoColumns, nameof(columns));
         }
         _rowsPerChunk = _chunkSize / _columns.Length;
         // Align.
@@ -117,7 +117,7 @@ public class RowsFrame : IRowsSchema, IEnumerable<Row>
     {
         if (values.Length != Columns.Length)
         {
-            throw new QueryCatException("Columns count must match.");
+            throw new QueryCatException(Resources.Errors.ColumnsCountNoMatch);
         }
         (int chunkIndex, int offset) = EnsureCapacityAndGetStartOffset(TotalRows);
         Array.Copy(values, 0, _storage[chunkIndex], offset, _columns.Length);
