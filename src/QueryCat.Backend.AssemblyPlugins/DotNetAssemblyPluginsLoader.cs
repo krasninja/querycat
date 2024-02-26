@@ -83,21 +83,17 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader
     /// <inheritdoc />
     public override bool IsCorrectPluginFile(string file)
     {
-        var fileName = Path.GetFileName(file);
-
-        if (!File.Exists(file) || !fileName.Contains("Plugin"))
+        // Base verification.
+        if (!base.IsCorrectPluginFile(file))
         {
             return false;
         }
+
+        var fileName = Path.GetFileName(file);
 
         var extension = Path.GetExtension(fileName);
         if (!extension.Equals(DllExtension, StringComparison.OrdinalIgnoreCase)
             && !extension.Equals(NuGetExtensions, StringComparison.OrdinalIgnoreCase))
-        {
-            return false;
-        }
-
-        if (IsAppSpecificFile(file))
         {
             return false;
         }
