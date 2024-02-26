@@ -75,6 +75,7 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
     {
         _uriResolvers.Add(new CurlUriResolver());
         _uriResolvers.Add(new DirectoryUriResolver());
+        _uriResolvers.Add(new FileUriResolver());
         return this;
     }
 

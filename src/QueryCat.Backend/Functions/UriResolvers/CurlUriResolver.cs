@@ -5,15 +5,15 @@ namespace QueryCat.Backend.Functions.UriResolvers;
 internal sealed class CurlUriResolver : IUriResolver
 {
     /// <inheritdoc />
-    public bool TryResolve(string uri, out string? functionDelegate)
+    public bool TryResolve(string uri, out string? functionName)
     {
         if (uri.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
             || uri.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
         {
-            functionDelegate = "curl";
+            functionName = "curl";
             return true;
         }
-        functionDelegate = null;
+        functionName = null;
         return false;
     }
 }

@@ -121,6 +121,12 @@ internal static class IOFunctions
 
     private static IEnumerable<string> File_GetFilesByPath(string path)
     {
+        // Try parse file URI scheme.
+        if (Uri.TryCreate(path, UriKind.Absolute, out var uri))
+        {
+            path = uri.LocalPath;
+        }
+
         // The case when we query from a single file.
         if (File.Exists(path))
         {
