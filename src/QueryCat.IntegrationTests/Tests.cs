@@ -46,14 +46,17 @@ public sealed class Tests : IDisposable
 
     public static IEnumerable<object[]> GetData() => TestThread.GetTestFiles();
 
+    [SafeFunction]
     [FunctionSignature("objfunc(a: integer, b: object): object")]
     internal static VariantValue FuncWithObject(FunctionCallInfo callInfo)
         => VariantValue.CreateFromObject(new object());
 
+    [SafeFunction]
     [FunctionSignature("objret(): object")]
     internal static VariantValue ReturnObjFunc(FunctionCallInfo args)
         => VariantValue.CreateFromObject(new object());
 
+    [SafeFunction]
     [FunctionSignature("addopt(a: integer, b?: integer = 2): integer")]
     internal static VariantValue SumIntegersOpt(FunctionCallInfo callInfo)
     {
@@ -62,6 +65,7 @@ public sealed class Tests : IDisposable
         return new VariantValue(a.AsInteger + b.AsInteger);
     }
 
+    [SafeFunction]
     [FunctionSignature("add(a: integer, b: integer): integer")]
     internal static VariantValue SumIntegers(FunctionCallInfo callInfo)
     {
@@ -69,6 +73,7 @@ public sealed class Tests : IDisposable
             + callInfo.GetAt(1).AsInteger);
     }
 
+    [SafeFunction]
     [FunctionSignature("void_func(a: integer): void")]
     internal static VariantValue VoidFunc(FunctionCallInfo callInfo) => VariantValue.Null;
 

@@ -11,6 +11,7 @@ namespace QueryCat.Backend.Addons.Formatters;
 /// </summary>
 internal sealed class SubRipFormatter : IRowsFormatter
 {
+    [SafeFunction]
     [Description("SubRip (SRT) formatter.")]
     [FunctionSignature("srt(path: string): object<IRowsFormatter>")]
     public static VariantValue Srt(FunctionCallInfo args)

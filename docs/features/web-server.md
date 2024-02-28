@@ -8,6 +8,10 @@ Features:
 - Basic authentication.
 - CORS.
 - JSON/HTML/Text output.
+- Files browser.
+- Partial requests (RANGE HTTP header).
+- Show basic system info.
+- IP filtering.
 
 ```
 $ qcat serve

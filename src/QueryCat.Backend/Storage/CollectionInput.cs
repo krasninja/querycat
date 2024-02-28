@@ -113,7 +113,7 @@ public class CollectionInput<
             var columnIndex = this.GetColumnIndexByName(column.Name, column.SourceName);
             if (columnIndex < 0)
             {
-                throw new QueryCatException($"Cannot find colum '{column.FullName}'.");
+                throw new QueryCatException(string.Format(Resources.Errors.CannotFindColumn, column.FullName));
             }
             mapList.Add(_columnsProperties[columnIndex]);
         }

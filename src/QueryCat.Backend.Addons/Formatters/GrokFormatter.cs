@@ -7,6 +7,7 @@ namespace QueryCat.Backend.Addons.Formatters;
 
 internal sealed class GrokFormatter : IRowsFormatter
 {
+    [SafeFunction]
     [Description("Grok expression formatter.")]
     [FunctionSignature("grok(pattern: string): object<IRowsFormatter>")]
     public static VariantValue Grok(FunctionCallInfo args)

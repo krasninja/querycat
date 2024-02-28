@@ -94,26 +94,11 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
     /// <inheritdoc />
     public override Task LoadAsync(CancellationToken cancellationToken = default)
     {
-        foreach (var pluginDirectory in PluginDirectories)
+        foreach (var pluginFile in GetPluginFiles())
         {
-            _logger.LogTrace("Search in '{Directory}'.", pluginDirectory);
-            if (IsCorrectPluginFile(pluginDirectory) && IsMatchPlatform(pluginDirectory))
+            if (IsMatchPlatform(pluginFile))
             {
-                LoadPluginSafe(pluginDirectory, cancellationToken);
-                continue;
-            }
-            if (!Directory.Exists(pluginDirectory))
-            {
-                _logger.LogDebug("Directory '{Directory}' not exists.", pluginDirectory);
-                continue;
-            }
-
-            foreach (var pluginFile in Directory.EnumerateFiles(pluginDirectory).ToList())
-            {
-                if (IsMatchPlatform(pluginFile) && IsCorrectPluginFile(pluginFile))
-                {
-                    LoadPluginSafe(pluginFile, cancellationToken);
-                }
+                LoadPluginSafe(pluginFile, cancellationToken);
             }
         }
 
@@ -121,28 +106,16 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
     }
 
     /// <inheritdoc />
-    public override bool IsCorrectPluginFile(string pluginFile)
+    public override bool IsCorrectPluginFile(string file)
     {
-        // File name must contain "plugin" word.
-        if (!File.Exists(pluginFile)
-            || !Path.GetFileName(pluginFile).Contains("plugin", StringComparison.OrdinalIgnoreCase))
-        {
-            return false;
-        }
-
-        // Skip debug files.
-        if (pluginFile.EndsWith(".dbg"))
-        {
-            return false;
-        }
-
-        if (IsAppSpecificFile(pluginFile))
+        // Base verification.
+        if (!base.IsCorrectPluginFile(file))
         {
             return false;
         }
 
         // Executable or library.
-        if (IsLibrary(pluginFile) || IsExecutable(pluginFile))
+        if (IsLibrary(file) || IsExecutable(file))
         {
             return true;
         }
@@ -218,11 +191,12 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
     {
         try
         {
+            _logger.LogDebug("Load plugin file '{PluginFile}'.", file);
             LoadPluginLazy(file, cancellationToken);
         }
         catch (Exception e)
         {
-            _logger.LogWarning(e, "Cannot load plugin.");
+            _logger.LogWarning(e, "Cannot load plugin file '{PluginFile}'.", file);
             throw;
         }
     }

@@ -1,5 +1,4 @@
-Smoke Test Plan
-===============
+# Smoke Test Plan
 
 1. Plugins.
     - List/Install/Remove.

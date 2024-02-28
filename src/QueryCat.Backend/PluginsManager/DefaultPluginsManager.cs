@@ -42,7 +42,7 @@ public sealed class DefaultPluginsManager : IPluginsManager, IDisposable
     /// <returns>Files.</returns>
     public IEnumerable<string> GetPluginFiles()
     {
-        foreach (var file in _pluginsLoader.GetPluginFiles())
+        foreach (var file in _pluginsLoader.GetPluginFiles(skipDuplicates: false))
         {
             if (_pluginsLoader.IsCorrectPluginFile(file))
             {
@@ -88,7 +88,7 @@ public sealed class DefaultPluginsManager : IPluginsManager, IDisposable
         var plugin = TryFindPlugin(name, Application.GetPlatform(), plugins.ToList());
         if (plugin == null)
         {
-            throw new PluginException($"Cannot find plugin '{name}' in repository.");
+            throw new PluginException(string.Format(Resources.Errors.Plugins_CannotFind, name));
         }
 
         // Create X.downloading file, download and then remove.
@@ -153,7 +153,7 @@ public sealed class DefaultPluginsManager : IPluginsManager, IDisposable
         var plugin = TryFindPlugin(name, _platform, plugins.ToList());
         if (plugin == null)
         {
-            throw new PluginException($"Cannot find plugin '{name}' in repository.");
+            throw new PluginException(string.Format(Resources.Errors.Plugins_CannotFind, name));
         }
         if (File.Exists(plugin.Uri))
         {
@@ -210,7 +210,7 @@ public sealed class DefaultPluginsManager : IPluginsManager, IDisposable
         var mainPluginDirectory = _pluginDirectories.FirstOrDefault();
         if (mainPluginDirectory == null)
         {
-            throw new PluginException("Cannot find a directory for plugins.");
+            throw new PluginException(Resources.Errors.Plugins_NoDirectory);
         }
         if (!Directory.Exists(mainPluginDirectory))
         {

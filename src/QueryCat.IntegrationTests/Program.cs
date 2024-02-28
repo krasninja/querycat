@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Text;
+using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Formatters;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Storage;
@@ -80,7 +81,7 @@ public class Program
         var expectedRowsFrame = expectedInput.AsIterable(autoFetch: true).ToFrame();
         expectedInput.Close();
 
-        output = output.Replace("NULL", string.Empty);
+        output = output.Replace(VariantValue.NullValueString, string.Empty);
         var outputInput = new DsvFormatter('|', hasHeader: false, addFileNameColumn: false).OpenInput(
             GetStreamFromString(TrimFirstAndLastDelimiters(output, '|')));
         outputInput.Open();

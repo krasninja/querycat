@@ -6,7 +6,7 @@ public partial struct VariantValue
     {
         if (!(leftType == DataType.Boolean || leftType == DataType.Null))
         {
-            throw new SemanticException($"Cannot get NOT delegate for type '{leftType}'.");
+            throw new SemanticException(string.Format(Resources.Errors.CannotGetOrDelegate, leftType));
         }
 
         return (in VariantValue left) =>
@@ -24,7 +24,7 @@ public partial struct VariantValue
         if (!((leftType == DataType.Boolean || leftType == DataType.Null)
             && (rightType == DataType.Boolean || rightType == DataType.Null)))
         {
-            throw new SemanticException($"Cannot get AND delegate for types '{leftType}' and '{rightType}'.");
+            throw new SemanticException(string.Format(Resources.Errors.CannotGetAndDelegate, leftType, rightType));
         }
 
         return (in VariantValue left, in VariantValue right) =>
@@ -48,7 +48,7 @@ public partial struct VariantValue
         if (!((leftType == DataType.Boolean || leftType == DataType.Null)
             && (rightType == DataType.Boolean || rightType == DataType.Null)))
         {
-            throw new SemanticException($"Cannot get OR delegate for types '{leftType}' and '{rightType}'.");
+            throw new SemanticException(string.Format(Resources.Errors.CannotGetOrDelegate, leftType, rightType));
         }
 
         return (in VariantValue left, in VariantValue right) =>

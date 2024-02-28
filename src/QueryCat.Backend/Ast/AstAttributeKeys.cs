@@ -33,11 +33,6 @@ internal static class AstAttributeKeys
     public const string InputAggregateIndexKey = "aggregate_index_key";
 
     /// <summary>
-    /// Set string representation data.
-    /// </summary>
-    public const string StringKey = "string_key";
-
-    /// <summary>
     /// Aggregate function data.
     /// </summary>
     public const string AggregateFunctionKey = "aggregate_function_key";

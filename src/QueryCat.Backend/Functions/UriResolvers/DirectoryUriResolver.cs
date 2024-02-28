@@ -5,15 +5,15 @@ namespace QueryCat.Backend.Functions.UriResolvers;
 internal sealed class DirectoryUriResolver : IUriResolver
 {
     /// <inheritdoc />
-    public bool TryResolve(string uri, out string? functionDelegate)
+    public bool TryResolve(string uri, out string? functionName)
     {
         uri = IOFunctions.ResolveHomeDirectory(uri);
         if (Directory.Exists(uri))
         {
-            functionDelegate = "ls_dir";
+            functionName = "ls_dir";
             return true;
         }
-        functionDelegate = null;
+        functionName = null;
         return false;
     }
 }

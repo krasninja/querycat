@@ -109,7 +109,7 @@ public static class Converter
         {
             DataType.Integer => (TEnum)Enum.ToObject(typeof(TEnum), value.AsInteger),
             DataType.String => Enum.Parse<TEnum>(value.AsString, ignoreCase: true),
-            _ => throw new ArgumentException("Invalid value type."),
+            _ => throw new ArgumentException(Resources.Errors.InvalidValueType),
         };
     }
 

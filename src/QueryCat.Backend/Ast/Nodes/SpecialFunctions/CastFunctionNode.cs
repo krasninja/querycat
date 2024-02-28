@@ -17,7 +17,7 @@ internal sealed class CastFunctionNode : ExpressionNode
     {
         if (targetTypeNode.Type == DataType.Void)
         {
-            throw new SemanticException("Cannot cast to type VOID.");
+            throw new SemanticException(Resources.Errors.CannotCastToVoid);
         }
         ExpressionNode = expressionNode;
         TargetTypeNode = targetTypeNode;

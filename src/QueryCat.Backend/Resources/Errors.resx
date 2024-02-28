@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="root" msdata:IsDataSet="true">
+
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>1.3</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="CannotRunInSafeMode" xml:space="preserve">
+    <value>Cannot run the operation in safe mode.</value>
+  </data>
+  <data name="CannotFindColumn" xml:space="preserve">
+    <value>Cannot find column '{0}'.</value>
+  </data>
+  <data name="Plugins_CannotFind" xml:space="preserve">
+    <value>Cannot find plugin '{0}' in repository.</value>
+  </data>
+  <data name="InvalidRowIndex" xml:space="preserve">
+    <value>Invalid row index {0}.</value>
+  </data>
+  <data name="InvalidOperation" xml:space="preserve">
+    <value>Invalid operation.</value>
+  </data>
+  <data name="CannotUseUnsafeFunction" xml:space="preserve">
+    <value>Cannot use unsafe function '{0}' in safe mode.</value>
+  </data>
+  <data name="CannotSetArgument" xml:space="preserve">
+    <value>Cannot set argument '{0}'.</value>
+  </data>
+  <data name="CannotFindTimeZone" xml:space="preserve">
+    <value>Cannot find time zone '{0}'.</value>
+  </data>
+  <data name="InvalidArgumentType" xml:space="preserve">
+    <value>Invalid argument type.</value>
+  </data>
+  <data name="CannotFindArgumentInFunction" xml:space="preserve">
+    <value>Cannot find argument '{0}' in function '{1}'.</value>
+  </data>
+  <data name="InvalidStatement" xml:space="preserve">
+    <value>Invalid statement.</value>
+  </data>
+  <data name="NoValues" xml:space="preserve">
+    <value>No values.</value>
+  </data>
+  <data name="CannotApplyOperationForTypes" xml:space="preserve">
+    <value>Cannot apply operation '{0}' to arguments of types {1} and {2}.</value>
+  </data>
+  <data name="CannotCastToVoid" xml:space="preserve">
+    <value>Cannot cast to type VOID.</value>
+  </data>
+  <data name="InvalidBetweenExpression" xml:space="preserve">
+    <value>Invalid BETWEEN expression.</value>
+  </data>
+  <data name="RecursiveMustHaveUnion" xml:space="preserve">
+    <value>Recursive query must have UNION [ALL] term.</value>
+  </data>
+  <data name="CoalesceMustHaveSameArguments" xml:space="preserve">
+    <value>COALESCE function must have identical argument types. Found {0}.</value>
+  </data>
+  <data name="NotImplemented" xml:space="preserve">
+    <value>{0} is not implemented.</value>
+  </data>
+  <data name="NoColumns" xml:space="preserve">
+    <value>Columns not set.</value>
+  </data>
+  <data name="NoInputs" xml:space="preserve">
+    <value>No inputs.</value>
+  </data>
+  <data name="CombineMustHaveSameColumns" xml:space="preserve">
+    <value>Each combine query must have equal columns count and types.</value>
+  </data>
+  <data name="Plugins_NoDirectory" xml:space="preserve">
+    <value>Cannot find a directory for plugins.</value>
+  </data>
+  <data name="NoUsingJoinColumns" xml:space="preserve">
+    <value>No USING join columns.</value>
+  </data>
+  <data name="ColumnsCountNoMatch" xml:space="preserve">
+    <value>Columns count must match.</value>
+  </data>
+  <data name="InvalidField" xml:space="preserve">
+    <value>Invalid field '{0}'.</value>
+  </data>
+</root>

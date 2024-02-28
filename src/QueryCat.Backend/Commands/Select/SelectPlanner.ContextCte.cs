@@ -52,7 +52,7 @@ internal sealed partial class SelectPlanner
         }
         if (combineNode.CombineType != SelectQueryCombineType.Union)
         {
-            throw new SemanticException("Recursive query must have UNION [ALL] term.");
+            throw new SemanticException(Resources.Errors.RecursiveMustHaveUnion);
         }
 
         // Prepare and evaluate initial query.

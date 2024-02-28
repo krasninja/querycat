@@ -12,6 +12,7 @@ internal class BasicUsage : BaseUsage
         // run queries.
         using var executionThread = new ExecutionThreadBootstrapper()
             .WithStandardFunctions() // Add standard functions (math, string, JSON and others).
+            .WithStandardUriResolvers()
             .Create();
         var result = VariantValue.Null;
 

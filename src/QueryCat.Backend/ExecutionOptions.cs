@@ -38,6 +38,11 @@ public class ExecutionOptions
     public bool RunBootstrapScript { get; set; }
 
     /// <summary>
+    /// Can execute only safe functions.
+    /// </summary>
+    public bool SafeMode { get; set; }
+
+    /// <summary>
     /// Number of rows to analyze. This affects columns types detection and column length adjustment. -1 to analyze all.
     /// </summary>
     public int AnalyzeRowsCount { get; set; } = 10;

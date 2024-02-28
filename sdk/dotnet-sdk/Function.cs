@@ -34,12 +34,33 @@ namespace QueryCat.Plugins.Sdk
 
   public partial class Function : TBase
   {
+    private bool _is_safe;
 
     public string Signature { get; set; } = string.Empty;
 
     public string Description { get; set; } = string.Empty;
 
     public bool IsAggregate { get; set; } = false;
+
+    public bool IsSafe
+    {
+      get
+      {
+        return _is_safe;
+      }
+      set
+      {
+        __isset.is_safe = true;
+        this._is_safe = value;
+      }
+    }
+
+
+    public Isset __isset;
+    public struct Isset
+    {
+      public bool is_safe;
+    }
 
     public Function()
     {
@@ -99,6 +120,16 @@ namespace QueryCat.Plugins.Sdk
               {
                 IsAggregate = await iprot.ReadBoolAsync(cancellationToken);
                 isset_is_aggregate = true;
+              }
+              else
+              {
+                await TProtocolUtil.SkipAsync(iprot, field.Type, cancellationToken);
+              }
+              break;
+            case 4:
+              if (field.Type == TType.Bool)
+              {
+                IsSafe = await iprot.ReadBoolAsync(cancellationToken);
               }
               else
               {
@@ -165,6 +196,15 @@ namespace QueryCat.Plugins.Sdk
         await oprot.WriteFieldBeginAsync(tmp17, cancellationToken);
         await oprot.WriteBoolAsync(IsAggregate, cancellationToken);
         await oprot.WriteFieldEndAsync(cancellationToken);
+        if(__isset.is_safe)
+        {
+          tmp17.Name = "is_safe";
+          tmp17.Type = TType.Bool;
+          tmp17.ID = 4;
+          await oprot.WriteFieldBeginAsync(tmp17, cancellationToken);
+          await oprot.WriteBoolAsync(IsSafe, cancellationToken);
+          await oprot.WriteFieldEndAsync(cancellationToken);
+        }
         await oprot.WriteFieldStopAsync(cancellationToken);
         await oprot.WriteStructEndAsync(cancellationToken);
       }
@@ -180,7 +220,8 @@ namespace QueryCat.Plugins.Sdk
       if (ReferenceEquals(this, other)) return true;
       return global::System.Object.Equals(Signature, other.Signature)
         && global::System.Object.Equals(Description, other.Description)
-        && global::System.Object.Equals(IsAggregate, other.IsAggregate);
+        && global::System.Object.Equals(IsAggregate, other.IsAggregate)
+        && ((__isset.is_safe == other.__isset.is_safe) && ((!__isset.is_safe) || (global::System.Object.Equals(IsSafe, other.IsSafe))));
     }
 
     public override int GetHashCode() {
@@ -195,6 +236,10 @@ namespace QueryCat.Plugins.Sdk
           hashcode = (hashcode * 397) + Description.GetHashCode();
         }
         hashcode = (hashcode * 397) + IsAggregate.GetHashCode();
+        if(__isset.is_safe)
+        {
+          hashcode = (hashcode * 397) + IsSafe.GetHashCode();
+        }
       }
       return hashcode;
     }
@@ -214,6 +259,11 @@ namespace QueryCat.Plugins.Sdk
       }
       tmp18.Append(", IsAggregate: ");
       IsAggregate.ToString(tmp18);
+      if(__isset.is_safe)
+      {
+        tmp18.Append(", IsSafe: ");
+        IsSafe.ToString(tmp18);
+      }
       tmp18.Append(')');
       return tmp18.ToString();
     }

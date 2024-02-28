@@ -101,7 +101,8 @@ exception QueryCatPluginException {
 struct Function {
   1: required string signature,
   2: required string description,
-  3: required bool is_aggregate
+  3: required bool is_aggregate,
+  4: bool is_safe
 }
 
 struct PluginData {

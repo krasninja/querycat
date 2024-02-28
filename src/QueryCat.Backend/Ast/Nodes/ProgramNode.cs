@@ -16,6 +16,10 @@ internal sealed class ProgramNode : AstNode
         Statements.AddRange(statements);
     }
 
+    public ProgramNode(params StatementNode[] statements) : this(statements.ToList())
+    {
+    }
+
     public ProgramNode(ProgramNode node) : this(
         node.Statements.Select(s => (StatementNode)s.Clone()).ToList())
     {

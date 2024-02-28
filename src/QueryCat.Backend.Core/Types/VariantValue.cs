@@ -16,6 +16,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     public const string TrueValueString = "TRUE";
     public const string FalseValueString = "FALSE";
     public const string NullValueString = "NULL";
+    public const string VoidValueString = "VOID";
 
     public const string FloatNumberFormat = "F";
 
@@ -810,7 +811,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     public override string ToString() => GetInternalType() switch
     {
         DataType.Null => NullValueString,
-        DataType.Void => "void",
+        DataType.Void => VoidValueString,
         DataType.Integer => AsIntegerUnsafe.ToString(CultureInfo.InvariantCulture),
         DataType.String => AsStringUnsafe,
         DataType.Boolean => AsBooleanUnsafe.ToString(CultureInfo.InvariantCulture),
@@ -831,7 +832,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     public string ToString(string format) => GetInternalType() switch
     {
         DataType.Null => NullValueString,
-        DataType.Void => "void",
+        DataType.Void => VoidValueString,
         DataType.Integer => AsIntegerUnsafe.ToString(format, CultureInfo.InvariantCulture),
         DataType.String => AsStringUnsafe,
         DataType.Boolean => AsBooleanUnsafe.ToString(),
@@ -839,6 +840,27 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         DataType.Numeric => AsNumeric.ToString(format, CultureInfo.InvariantCulture),
         DataType.Timestamp => AsTimestampUnsafe.ToString(format, CultureInfo.InvariantCulture),
         DataType.Interval => AsIntervalUnsafe.ToString(format, CultureInfo.InvariantCulture),
+        DataType.Object => "object:" + AsObjectUnsafe,
+        DataType.Blob => "X" + BlobToShortString(AsBlobUnsafe, 16),
+        _ => "unknown"
+    };
+
+    /// <summary>
+    /// Convert to string according to the format.
+    /// </summary>
+    /// <param name="formatProvider">Culture specific formatting information.</param>
+    /// <returns>String representation.</returns>
+    public string ToString(IFormatProvider? formatProvider) => GetInternalType() switch
+    {
+        DataType.Null => NullValueString,
+        DataType.Void => VoidValueString,
+        DataType.Integer => AsIntegerUnsafe.ToString(formatProvider),
+        DataType.String => AsStringUnsafe,
+        DataType.Boolean => AsBooleanUnsafe.ToString(),
+        DataType.Float => AsFloatUnsafe.ToString(formatProvider),
+        DataType.Numeric => AsNumeric.ToString(formatProvider),
+        DataType.Timestamp => AsTimestampUnsafe.ToString(formatProvider),
+        DataType.Interval => AsIntervalUnsafe.ToString(null, formatProvider),
         DataType.Object => "object:" + AsObjectUnsafe,
         DataType.Blob => "X" + BlobToShortString(AsBlobUnsafe, 16),
         _ => "unknown"

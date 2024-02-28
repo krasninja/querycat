@@ -31,23 +31,70 @@ public abstract class PluginsLoader
     /// </summary>
     /// <param name="file">File.</param>
     /// <returns><c>True</c> if correct plugin file, <c>false</c> otherwise.</returns>
-    public abstract bool IsCorrectPluginFile(string file);
+    public virtual bool IsCorrectPluginFile(string file)
+    {
+        // File name must contain "plugin" word.
+        if (!File.Exists(file)
+            || !Path.GetFileName(file).Contains("plugin", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        // Skip debug files.
+        if (file.EndsWith(".dbg"))
+        {
+            return false;
+        }
+
+        // The file refers to internal QueryCat file and should be skipped.
+        if (IsAppSpecificFile(file))
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    private readonly record struct PluginInfoWithPath(PluginInfo PluginInfo, string Path)
+    {
+        public string PluginName => this.PluginInfo.Name;
+
+        public Version PluginVersion => this.PluginInfo.Version;
+    }
 
     /// <summary>
     /// Get correct plugins files.
     /// </summary>
+    /// <param name="skipDuplicates">Skip duplicate files to avoid double loading.</param>
     /// <returns>Plugins files.</returns>
-    protected internal IEnumerable<string> GetPluginFiles()
+    protected internal IEnumerable<string> GetPluginFiles(bool skipDuplicates = true)
     {
-        var loaded = new HashSet<string>();
+        var plugins = new Dictionary<string, PluginInfoWithPath>();
+        var files = new List<string>();
+
+        void AddOrReplace(Dictionary<string, PluginInfoWithPath> dict, PluginInfoWithPath plugin)
+        {
+            // If there is duplicate we try to loading the latest version only.
+            if (dict.TryGetValue(plugin.PluginName, out var existing))
+            {
+                if (plugin.PluginVersion > existing.PluginInfo.Version)
+                {
+                    dict[plugin.PluginName] = plugin;
+                }
+            }
+            else
+            {
+                dict[plugin.PluginName] = plugin;
+            }
+        }
 
         foreach (var pluginDirectory in PluginDirectories)
         {
-            var fileName = Path.GetFileName(pluginDirectory);
-            if (IsCorrectPluginFile(pluginDirectory)
-                && loaded.Add(fileName))
+            if (IsCorrectPluginFile(pluginDirectory))
             {
-                yield return pluginDirectory;
+                var plugin = PluginInfo.CreateFromUniversalName(pluginDirectory);
+                AddOrReplace(plugins, new PluginInfoWithPath(plugin, pluginDirectory));
+                files.Add(pluginDirectory);
             }
 
             if (!Directory.Exists(pluginDirectory))
@@ -57,13 +104,16 @@ public abstract class PluginsLoader
 
             foreach (var pluginFile in Directory.EnumerateFiles(pluginDirectory))
             {
-                fileName = Path.GetFileName(pluginFile);
-                if (IsCorrectPluginFile(pluginFile) && loaded.Add(fileName))
+                if (IsCorrectPluginFile(pluginFile))
                 {
-                    yield return pluginFile;
+                    var plugin = PluginInfo.CreateFromUniversalName(pluginFile);
+                    AddOrReplace(plugins, new PluginInfoWithPath(plugin, pluginFile));
+                    files.Add(pluginFile);
                 }
             }
         }
+
+        return skipDuplicates ? plugins.Values.Select(v => v.Path) : files;
     }
 
     /// <summary>
@@ -72,7 +122,7 @@ public abstract class PluginsLoader
     /// </summary>
     /// <param name="file">File path.</param>
     /// <returns><c>True</c> if this is application specific file, <c>false</c> otherwise.</returns>
-    protected static bool IsAppSpecificFile(string file)
+    private static bool IsAppSpecificFile(string file)
     {
         var fileName = Path.GetFileName(file);
         return fileName.StartsWith("QueryCat.Plugins.Client")

@@ -1,5 +1,4 @@
-Thrift Plugins System
-=====================
+# Thrift Plugins System
 
 ## How to build
 

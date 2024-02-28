@@ -39,7 +39,7 @@ internal sealed class BetweenExpressionNode : ExpressionNode
         }
         else
         {
-            throw new SemanticException("Invalid BETWEEN expression.");
+            throw new SemanticException(Resources.Errors.InvalidBetweenExpression);
         }
     }
 

@@ -26,8 +26,9 @@ There are following column data types are supported:
 | TIMESTAMP | | Date and time values. |
 | STRING | TEXT | Text data. |
 | INTERVAL | | | Time interval. |
-| NULL | | | Special type that represents "nothing" value. |
+| BLOB | | | Binary large object. |
 | OBJECT | | |
+| NULL | | | Special type that represents "nothing" value. |
 
 * For boolean `true` additional values can be used: `1`, `yes`, `on`, `t`. Boolean `false`: `0`, `no`, `off`, `f`.
 

@@ -47,6 +47,8 @@ internal class QueryCommand : BaseQueryCommand
             getDefaultValue: () => "F");
         var followOption = new Option<bool>("--follow",
             description: "Output appended data as the input source grows.");
+        var safeModeOption = new Option<bool>("--safe-mode",
+            description: "Allow to call only safe (no modifications) functions.");
 
         this.AddOption(maxErrorsOption);
         this.AddOption(statisticOption);
@@ -60,6 +62,7 @@ internal class QueryCommand : BaseQueryCommand
         this.AddOption(noHeaderOption);
         this.AddOption(floatNumberOption);
         this.AddOption(followOption);
+        this.AddOption(safeModeOption);
         this.SetHandler((applicationOptions, query, variables, files, queryOptions) =>
         {
             applicationOptions.InitializeLogger();
@@ -79,6 +82,7 @@ internal class QueryCommand : BaseQueryCommand
                 UseConfig = true,
                 RunBootstrapScript = true,
                 FollowTimeoutMs = (int)queryOptions.FollowTimeout.TotalMilliseconds,
+                SafeMode = queryOptions.SafeMode,
             };
             if (queryOptions.AnalyzeRows < 0)
             {
@@ -114,7 +118,8 @@ internal class QueryCommand : BaseQueryCommand
                 disableCacheOption,
                 noHeaderOption,
                 floatNumberOption,
-                followOption)
+                followOption,
+                safeModeOption)
             );
     }
 }

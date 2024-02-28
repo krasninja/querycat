@@ -107,10 +107,6 @@ internal sealed class StringDumpAstVisitor : DelegateVisitor
 
     #endregion
 
-    #region Echo
-
-    #endregion
-
     #region Function
 
     /// <inheritdoc />

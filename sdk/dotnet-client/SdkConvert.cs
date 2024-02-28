@@ -80,7 +80,7 @@ public static class SdkConvert
                 Object = new ObjectValue
                 {
                     Handle = 0,
-                    Name = "NULL",
+                    Name = QueryCat.Backend.Core.Types.VariantValue.NullValueString,
                     Type = ObjectType.GENERIC,
                 }
             };

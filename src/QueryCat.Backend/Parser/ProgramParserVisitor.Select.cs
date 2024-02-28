@@ -365,7 +365,7 @@ internal partial class ProgramParserVisitor
     {
         if (context.IDENTIFIER().Length < 1)
         {
-            throw new SemanticException("No USING join columns.");
+            throw new SemanticException(Resources.Errors.NoUsingJoinColumns);
         }
 
         return new SelectTableJoinedUsingNode(

@@ -28,4 +28,6 @@ internal class QueryOptions
     public string FloatNumberFormat { get; init; } = VariantValue.FloatNumberFormat;
 
     public TimeSpan FollowTimeout { get; init; }
+
+    public bool SafeMode { get; init; }
 }

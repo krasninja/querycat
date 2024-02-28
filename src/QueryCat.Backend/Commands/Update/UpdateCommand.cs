@@ -15,6 +15,11 @@ internal sealed class UpdateCommand : ICommand
     /// <inheritdoc />
     public IFuncUnit CreateHandler(IExecutionThread<ExecutionOptions> executionThread, StatementNode node)
     {
+        if (executionThread.Options.SafeMode)
+        {
+            throw new SafeModeException();
+        }
+
         var insertNode = (UpdateNode)node.RootNode;
 
         // Format SELECT statement and use it for further iterations.
@@ -41,7 +46,8 @@ internal sealed class UpdateCommand : ICommand
                 setNode.SetTargetNode.SourceName);
             if (columnIndex < 0)
             {
-                throw new QueryCatException($"Cannot find column '{setNode.SetTargetNode.FullName}'.");
+                throw new QueryCatException(
+                    string.Format(Resources.Errors.CannotFindColumn, setNode.SetTargetNode.FullName));
             }
             var func = createDelegateVisitor.RunAndReturn(setNode.SetSourceNode);
             setters.Add(new UpdateSetter(columnIndex, func));

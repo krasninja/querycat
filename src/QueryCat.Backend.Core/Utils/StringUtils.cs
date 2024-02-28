@@ -10,22 +10,29 @@ internal static class StringUtils
     private const string QuoteChar = "\"";
 
     /// <summary>
-    /// Quote the specified string.
+    /// Quote the specified string. If string doesn't contain the quote character
+    /// the target string will be returned instead.
     /// </summary>
     /// <param name="target">Target string.</param>
+    /// <param name="quote">Quote character.</param>
     /// <param name="separator">The separator condition. If not exists - the string will not be quoted.</param>
+    /// <param name="force">Force quote.</param>
     /// <returns>Quoted string.</returns>
-    public static ReadOnlySpan<char> Quote(ReadOnlySpan<char> target, char separator = ' ')
+    public static ReadOnlySpan<char> Quote(
+        ReadOnlySpan<char> target,
+        string quote = QuoteChar,
+        char separator = ' ',
+        bool force = false)
     {
-        if (target.IndexOf(separator) == -1)
+        if (target.IndexOf(separator) == -1 && !force)
         {
             return target;
         }
         var sb = new StringBuilder(target.Length + 2)
-            .Append(QuoteChar)
+            .Append(quote)
             .Append(target)
-            .Replace(QuoteChar, QuoteChar + QuoteChar, 1, target.Length)
-            .Append(QuoteChar);
+            .Replace(quote, quote + quote, 1, target.Length)
+            .Append(quote);
         return sb.ToString();
     }
 

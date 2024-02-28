@@ -7,6 +7,7 @@ namespace QueryCat.Plugin.Test;
 
 public sealed class AddressIterator : IRowsIterator
 {
+    [SafeFunction]
     [FunctionSignature("test_addresses_2(): object<IRowsIterator>")]
     public static VariantValue AddressIteratorFunction(FunctionCallInfo args)
     {
