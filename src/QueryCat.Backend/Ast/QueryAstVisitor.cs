@@ -1,8 +1,10 @@
 using System.Text;
 using QueryCat.Backend.Ast.Nodes;
+using QueryCat.Backend.Ast.Nodes.Declare;
 using QueryCat.Backend.Ast.Nodes.Function;
 using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend.Ast;
 
@@ -12,6 +14,8 @@ namespace QueryCat.Backend.Ast;
 internal class QueryAstVisitor : AstVisitor
 {
     private const char Space = ' ';
+
+    private readonly Dictionary<int, string> _nodeIdStringMap = new(capacity: 32);
 
     /// <inheritdoc />
     public override void Run(IAstNode node)
@@ -25,21 +29,33 @@ internal class QueryAstVisitor : AstVisitor
     /// <inheritdoc />
     public override void Visit(BetweenExpressionNode node)
     {
-        SetString(node,
-            $"{GetStringWithParens(node.Expression)} BETWEEN {GetStringWithParens(node.Left)} AND {GetStringWithParens(node.Right)}");
+        Set(node, string.Join(Space,
+            GetStringWithParens(node.Expression),
+            GetOperationString(VariantValue.Operation.Between),
+            GetStringWithParens(node.Left),
+            GetOperationString(VariantValue.Operation.And),
+            GetStringWithParens(node.Right)));
     }
 
     /// <inheritdoc />
     public override void Visit(BinaryOperationExpressionNode node)
     {
-        SetString(node,
-            $"{GetStringWithParens(node.LeftNode)} {GetOperationString(node.Operation)} {GetStringWithParens(node.RightNode)}");
+        Set(node, string.Join(Space,
+            GetStringWithParens(node.LeftNode),
+            GetOperationString(node.Operation),
+            GetStringWithParens(node.RightNode)));
+    }
+
+    /// <inheritdoc />
+    public override void Visit(ExpressionStatementNode node)
+    {
+        Copy(node, node.ExpressionNode);
     }
 
     /// <inheritdoc />
     public override void Visit(IdentifierExpressionNode node)
     {
-        SetString(node, node.Name);
+        Set(node, node.Name);
     }
 
     /// <inheritdoc />
@@ -55,18 +71,30 @@ internal class QueryAstVisitor : AstVisitor
     /// <inheritdoc />
     public override void Visit(LiteralNode node)
     {
-        var value = node.Value.ToString();
-        if (node.Value.GetInternalType() == DataType.String)
+        var type = node.Value.GetInternalType();
+        string value;
+        if (type == DataType.String)
         {
-            value = string.Concat("'", value, "'");
+            value = StringUtils.Quote(node.Value.AsStringUnsafe, quote: "'", force: true).ToString();
         }
-        SetString(node, value);
+        else
+        {
+            value = node.Value.ToString();
+        }
+        Set(node, value);
     }
 
     /// <inheritdoc />
     public override void Visit(ProgramNode node)
     {
-        SetString(node, string.Join("; ", node.Statements.Select(GetString)));
+        var sb = new StringBuilder();
+        foreach (var statementNode in node.Statements)
+        {
+            sb.Append(Get(statementNode));
+            sb.Append(';');
+            sb.Append('\n');
+        }
+        Set(node, sb.ToString());
     }
 
     /// <inheritdoc />
@@ -82,17 +110,30 @@ internal class QueryAstVisitor : AstVisitor
     /// <inheritdoc />
     public override void Visit(UnaryOperationExpressionNode node)
     {
-        SetString(node, $"{GetOperationString(node.Operation)}{GetString(node.RightNode)}");
+        Set(node, string.Join(Space,
+            GetOperationString(node.Operation),
+            Get(node.RightNode)));
     }
 
     #endregion
 
-    #region Echo
+    #region Declare
 
     /// <inheritdoc />
-    public override void Visit(ExpressionStatementNode node)
+    public override void Visit(DeclareNode node)
     {
-        SetString(node, $"ECHO {GetString(node)}");
+        var str = $"DECLARE {node.Name} {GetTypeString(node.Type)}";
+        if (node.ValueNode != null)
+        {
+            str += " := " + Get(node.ValueNode);
+        }
+        Set(node, str);
+    }
+
+    /// <inheritdoc />
+    public override void Visit(DeclareStatementNode node)
+    {
+        Copy(node, node.RootNode);
     }
 
     #endregion
@@ -102,26 +143,26 @@ internal class QueryAstVisitor : AstVisitor
     /// <inheritdoc />
     public override void Visit(FunctionCallArgumentNode node)
     {
-        SetString(node, GetString(node.ExpressionValueNode));
+        Set(node, Get(node.ExpressionValueNode));
     }
 
     /// <inheritdoc />
     public override void Visit(FunctionCallExpressionNode node)
     {
-        SetString(node, GetString(node.FunctionNode));
+        Set(node, Get(node.FunctionNode));
     }
 
     /// <inheritdoc />
     public override void Visit(FunctionCallNode node)
     {
-        var args = string.Join(", ", node.Arguments.Select(GetString));
-        SetString(node, $"{node.FunctionName}({args})");
+        var args = string.Join(", ", node.Arguments.Select(Get));
+        Set(node, $"{node.FunctionName}({args})");
     }
 
     /// <inheritdoc />
     public override void Visit(FunctionCallStatementNode node)
     {
-        SetString(node, GetString(node.FunctionNode));
+        Set(node, Get(node.FunctionNode));
     }
 
     #endregion
@@ -131,19 +172,19 @@ internal class QueryAstVisitor : AstVisitor
     /// <inheritdoc />
     public override void Visit(SelectColumnsListNode node)
     {
-        SetString(node, string.Join(", ", node.ColumnsNodes.Select(GetString)));
+        Set(node, string.Join(", ", node.ColumnsNodes.Select(Get)));
     }
 
     /// <inheritdoc />
     public override void Visit(SelectColumnsSublistAll node)
     {
-        SetString(node, "*");
+        Set(node, "*");
     }
 
     /// <inheritdoc />
     public override void Visit(SelectColumnsSublistExpressionNode node)
     {
-        SetString(node, GetString(node));
+        Copy(node, node.ExpressionNode);
     }
 
     /// <inheritdoc />
@@ -180,74 +221,73 @@ internal class QueryAstVisitor : AstVisitor
     public override void Visit(SelectQuerySpecificationNode node)
     {
         var sb = new StringBuilder();
-        sb.Append($"SELECT {GetString(node.ColumnsListNode)}");
+        sb.Append($"SELECT {Get(node.ColumnsListNode)}");
         if (node.TableExpressionNode != null)
         {
-            sb.Append(Space);
-            sb.Append(GetString(node.TableExpressionNode));
+            sb.Append(Get(node.TableExpressionNode));
         }
-        SetString(node, sb.ToString());
+        Set(node, sb.ToString());
     }
 
     /// <inheritdoc />
     public override void Visit(SelectSearchConditionNode node)
     {
-        SetString(node, $"WHERE {GetString(node.ExpressionNode)}");
+        Set(node, $" WHERE {Get(node.ExpressionNode)}");
     }
 
     /// <inheritdoc />
     public override void Visit(SelectStatementNode node)
     {
-        SetString(node, GetString(node.QueryNode));
+        Set(node, Get(node.QueryNode));
     }
 
     /// <inheritdoc />
     public override void Visit(SelectTableExpressionNode node)
     {
         var sb = new StringBuilder();
-        sb.Append(GetString(node.TablesNode));
+        sb.Append(" FROM ");
+        sb.Append(Get(node.TablesNode));
         if (node.GroupByNode != null)
         {
-            sb.Append(Space);
-            sb.Append(GetString(node.GroupByNode));
+            sb.Append(Get(node.GroupByNode));
         }
         if (node.HavingNode != null)
         {
-            sb.Append(Space);
-            sb.Append(GetString(node.HavingNode));
+            sb.Append(Get(node.HavingNode));
         }
         if (node.SearchConditionNode != null)
         {
-            sb.Append(Space);
-            sb.Append(GetString(node.SearchConditionNode));
+            sb.Append(Get(node.SearchConditionNode));
         }
-        SetString(node, sb.ToString());
+        Set(node, sb.ToString());
     }
 
     /// <inheritdoc />
     public override void Visit(SelectTableFunctionNode node)
     {
-        var value = GetString(node.TableFunctionNode);
+        var value = Get(node.TableFunctionNode);
         if (!string.IsNullOrEmpty(node.Alias))
         {
             value += " AS " + node.Alias;
         }
-        SetString(node, value);
+        Set(node, value);
     }
 
     /// <inheritdoc />
     public override void Visit(SelectTableReferenceListNode node)
     {
-        SetString(node, string.Join(", ", node.TableFunctionsNodes.Select(GetString)));
+        Set(node, string.Join(", ", node.TableFunctionsNodes.Select(Get)));
     }
 
     #endregion
 
-    private static void SetString(IAstNode node, string value) => node.SetAttribute(AstAttributeKeys.StringKey, value);
+    private void Set(IAstNode node, string value) => _nodeIdStringMap[node.Id] = value;
 
-    public static string GetString(IAstNode node) => node.GetAttribute<string>(AstAttributeKeys.StringKey) ?? string.Empty;
+    internal string Get(IAstNode node) => _nodeIdStringMap.GetValueOrDefault(node.Id, string.Empty);
 
-    public static string GetStringWithParens(IAstNode node) => string.Concat("(", GetString(node), ")");
+    private string Copy(IAstNode node, IAstNode fromNode) => _nodeIdStringMap[node.Id] = Get(fromNode);
+
+    private string GetStringWithParens(IAstNode node) => string.Concat("(", Get(node), ")");
 
     private static string GetOperationString(VariantValue.Operation operation) => operation switch
     {
@@ -255,6 +295,9 @@ internal class QueryAstVisitor : AstVisitor
         VariantValue.Operation.Subtract => "-",
         VariantValue.Operation.Multiple => "*",
         VariantValue.Operation.Divide => "/",
+        VariantValue.Operation.Modulo => "%",
+        VariantValue.Operation.LeftShift => "<<",
+        VariantValue.Operation.RightShift => ">>",
 
         VariantValue.Operation.Equals => "=",
         VariantValue.Operation.NotEquals => "!=",
@@ -263,13 +306,47 @@ internal class QueryAstVisitor : AstVisitor
         VariantValue.Operation.Less => "<",
         VariantValue.Operation.LessOrEquals => "<=",
         VariantValue.Operation.Between => "BETWEEN",
+        VariantValue.Operation.BetweenAnd => string.Empty,
         VariantValue.Operation.IsNull => "IS NULL",
         VariantValue.Operation.IsNotNull => "IS NOT NULL",
+        VariantValue.Operation.Like => "LIKE",
+        VariantValue.Operation.NotLike => "NOT LIKE",
+        VariantValue.Operation.Similar => "SIMILAR",
+        VariantValue.Operation.NotSimilar => "NOT SIMILAR",
+        VariantValue.Operation.In => "IN",
+
         VariantValue.Operation.And => "AND",
         VariantValue.Operation.Or => "OR",
-        VariantValue.Operation.Not => "-",
-        VariantValue.Operation.BetweenAnd => string.Empty,
+        VariantValue.Operation.Not => "NOT",
+
         VariantValue.Operation.Concat => "||",
         _ => throw new ArgumentOutOfRangeException(nameof(operation), operation, null)
     };
+
+    private static string GetTypeString(DataType type) => type switch
+    {
+        DataType.Void => VariantValue.VoidValueString,
+        DataType.Null => VariantValue.NullValueString,
+        DataType.Integer => "INTEGER",
+        DataType.String => "STRING",
+        DataType.Float => "FLOAT",
+        DataType.Timestamp => "TIMESTAMP",
+        DataType.Boolean => "BOOL",
+        DataType.Numeric => "NUMERIC",
+        DataType.Interval => "INTERVAL",
+        DataType.Blob => "BLOB",
+        DataType.Object => "OBJECT",
+        _ => throw new ArgumentOutOfRangeException(nameof(type), type, Resources.Errors.InvalidArgumentType),
+    };
+
+    /// <summary>
+    /// Dump as a string.
+    /// </summary>
+    /// <param name="node">Node.</param>
+    /// <returns>Query expression.</returns>
+    public string Dump(IAstNode node)
+    {
+        this.Run(node);
+        return Get(node);
+    }
 }

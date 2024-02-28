@@ -22,8 +22,8 @@ public class AstBuilderTests
 
         // Assert.
         queryAstVisitor.Run(node);
-        var newQuery = QueryAstVisitor.GetString(node);
-        Assert.Equal("SELECT * read_file('') WHERE ((id) BETWEEN ((10) + (20)) AND (30)) AND ((id) BETWEEN (40) AND (50))",
-            newQuery);
+        var newQuery = queryAstVisitor.Get(node);
+        Assert.Equal("SELECT * FROM read_file('') WHERE ((id) BETWEEN ((10) + (20)) AND (30)) AND ((id) BETWEEN (40) AND (50));",
+            newQuery.Trim());
     }
 }
