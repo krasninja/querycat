@@ -9,7 +9,7 @@ internal static class TestBlob
 {
     [SafeFunction]
     [Description("Test blob function (simple).")]
-    [FunctionSignature("test_simple_3(): blob")]
+    [FunctionSignature("sample_simple_3(): blob")]
     public static VariantValue TestBlobFunction(FunctionCallInfo args)
     {
         var sb = new StringBuilder();

@@ -1,6 +1,6 @@
 using Bogus;
 
-namespace QueryCat.Plugins.Samples.Inputs;
+namespace QueryCat.Plugins.Samples.Models;
 
 /// <summary>
 /// Test address class.

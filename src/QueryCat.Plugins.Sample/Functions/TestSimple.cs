@@ -8,7 +8,7 @@ internal static class TestSimple
 {
     [SafeFunction]
     [Description("Test function (simple).")]
-    [FunctionSignature("test_simple(): timestamp")]
+    [FunctionSignature("sample_simple(): timestamp")]
     public static VariantValue TestSimpleFunction(FunctionCallInfo args)
     {
         return new VariantValue(DateTime.Now);

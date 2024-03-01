@@ -3,6 +3,7 @@ using Bogus;
 using QueryCat.Backend.Core.Fetch;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Plugins.Samples.Models;
 
 namespace QueryCat.Plugins.Samples.Inputs;
 
@@ -10,7 +11,7 @@ internal sealed class AddressRowsInput : FetchRowsInput<Address>
 {
     [SafeFunction]
     [Description("Test function.")]
-    [FunctionSignature("test_addresses_1(): object<IRowsInput>")]
+    [FunctionSignature("sample_get_addresses_1(): object<IRowsInput>")]
     public static VariantValue AddressRowsInputFunction(FunctionCallInfo args)
     {
         return VariantValue.CreateFromObject(new AddressIterator());

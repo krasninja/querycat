@@ -2,13 +2,14 @@ using Bogus;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Plugins.Samples.Models;
 
 namespace QueryCat.Plugins.Samples.Inputs;
 
 internal sealed class AddressIterator : IRowsIterator
 {
     [SafeFunction]
-    [FunctionSignature("test_addresses_2(): object<IRowsIterator>")]
+    [FunctionSignature("sample_get_addresses_2(): object<IRowsIterator>")]
     public static VariantValue AddressIteratorFunction(FunctionCallInfo args)
     {
         return VariantValue.CreateFromObject(new AddressIterator());
