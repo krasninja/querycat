@@ -27,10 +27,10 @@ public sealed class PluginFunction : IFunction
     public DataType ReturnType { get; set; } = DataType.Void;
 
     /// <inheritdoc />
-    public string ReturnObjectName { get; } = string.Empty;
+    public string ReturnObjectName => string.Empty;
 
     /// <inheritdoc />
-    public bool IsAggregate { get; } = false;
+    public bool IsAggregate => false;
 
     /// <inheritdoc />
     public FunctionSignatureArgument[] Arguments { get; set; } = Array.Empty<FunctionSignatureArgument>();

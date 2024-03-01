@@ -25,13 +25,13 @@ public sealed class PluginExecutionThread : IExecutionThread
     public IInputConfigStorage ConfigStorage { get; }
 
     /// <inheritdoc />
-    public IExecutionScope TopScope { get; } = NullExecutionScope.Instance;
+    public IExecutionScope TopScope => NullExecutionScope.Instance;
 
     /// <inheritdoc />
-    public ExecutionStatistic Statistic { get; } = NullExecutionStatistic.Instance;
+    public ExecutionStatistic Statistic => NullExecutionStatistic.Instance;
 
     /// <inheritdoc />
-    public object? Tag { get; } = null;
+    public object? Tag => null;
 
     public PluginExecutionThread(PluginsManager.Client client)
     {
@@ -44,7 +44,7 @@ public sealed class PluginExecutionThread : IExecutionThread
     public VariantValue Run(string query, IDictionary<string, VariantValue>? parameters = null,
         CancellationToken cancellationToken = default)
     {
-        throw new QueryCatPluginException(ErrorType.GENERIC, "Query run is not supported within plugins.");
+        throw new QueryCatPluginException(ErrorType.GENERIC, Resources.Errors.NotSupported_QueryRun);
     }
 
     /// <inheritdoc />

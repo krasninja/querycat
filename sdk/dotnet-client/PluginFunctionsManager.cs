@@ -89,7 +89,6 @@ public sealed class PluginFunctionsManager : IFunctionsManager
 
     private Exception ThrowNotImplementedException()
     {
-        return new QueryCatPluginException(ErrorType.GENERIC,
-            "Plugins execution context does not support functions manager.");
+        return new QueryCatPluginException(ErrorType.GENERIC, Resources.Errors.NotSupported_FunctionsManager);
     }
 }

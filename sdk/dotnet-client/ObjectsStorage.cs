@@ -28,18 +28,19 @@ public sealed class ObjectsStorage
         {
             if (index > _objects.Count - 1)
             {
-                throw new QueryCatPluginException(ErrorType.INVALID_OBJECT, "Invalid object handle.");
+                throw new QueryCatPluginException(ErrorType.INVALID_OBJECT, Resources.Errors.Object_InvalidHandle);
             }
             var rawObject = _objects[index];
             if (rawObject == null)
             {
-                throw new QueryCatPluginException(ErrorType.INVALID_OBJECT, "Object has been release.");
+                throw new QueryCatPluginException(ErrorType.INVALID_OBJECT, Resources.Errors.Object_Released);
             }
             var obj = rawObject as T;
             if (obj == null)
             {
-                throw new QueryCatPluginException(ErrorType.INVALID_OBJECT,
-                    $"Invalid object type '{rawObject.GetType().Name}', expected '{typeof(T).Name}'.");
+                throw new QueryCatPluginException(
+                    ErrorType.INVALID_OBJECT,
+                    string.Format(Resources.Errors.Object_InvalidTypeSource, rawObject.GetType().Name, typeof(T).Name));
             }
             return obj;
         }

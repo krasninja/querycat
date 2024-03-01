@@ -7,7 +7,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace QueryCat.Plugins.Client {
+namespace QueryCat.Plugins.Client.Resources {
     using System;
     
     
@@ -28,7 +28,7 @@ namespace QueryCat.Plugins.Client {
         internal static System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.Equals(null, resourceMan)) {
-                    System.Resources.ResourceManager temp = new System.Resources.ResourceManager("QueryCat.Plugins.Client.Messages", typeof(Messages).Assembly);
+                    System.Resources.ResourceManager temp = new System.Resources.ResourceManager("QueryCat.Plugins.Client.Resources.Messages", typeof(Messages).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
@@ -42,12 +42,6 @@ namespace QueryCat.Plugins.Client {
             }
             set {
                 resourceCulture = value;
-            }
-        }
-        
-        internal static string HandlerInternalError {
-            get {
-                return ResourceManager.GetString("HandlerInternalError", resourceCulture);
             }
         }
     }
