@@ -3,9 +3,9 @@ using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 
-namespace QueryCat.Plugin.Test;
+namespace QueryCat.Plugins.Samples.Inputs;
 
-public sealed class AddressIterator : IRowsIterator
+internal sealed class AddressIterator : IRowsIterator
 {
     [SafeFunction]
     [FunctionSignature("test_addresses_2(): object<IRowsIterator>")]

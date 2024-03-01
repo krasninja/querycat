@@ -34,7 +34,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueryCat.Backend.AssemblyPl
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueryCat.Plugins.Client", "sdk\dotnet-client\QueryCat.Plugins.Client.csproj", "{6FEC731B-218C-45EB-8F47-C409C5E2CA3D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueryCat.Plugin.Test", "src\QueryCat.Plugin.Test\QueryCat.Plugin.Test.csproj", "{60EABF81-EACC-452C-8164-A6569391CBAA}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueryCat.Plugins.Sample", "src\QueryCat.Plugins.Sample\QueryCat.Plugins.Sample.csproj", "{60EABF81-EACC-452C-8164-A6569391CBAA}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueryCat.Backend.Addons", "src\QueryCat.Backend.Addons\QueryCat.Backend.Addons.csproj", "{373EAE2B-B887-45C1-B5FA-6DE3E2D40A72}"
 EndProject

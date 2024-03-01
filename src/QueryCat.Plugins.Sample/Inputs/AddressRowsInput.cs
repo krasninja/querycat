@@ -4,7 +4,7 @@ using QueryCat.Backend.Core.Fetch;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 
-namespace QueryCat.Plugin.Test;
+namespace QueryCat.Plugins.Samples.Inputs;
 
 internal sealed class AddressRowsInput : FetchRowsInput<Address>
 {

@@ -19,7 +19,7 @@ public class BuildContext : FrostingContext
 
     public ConvertableDirectoryPath TimeItAppProjectDirectory => this.Directory("../TimeIt");
 
-    public ConvertableDirectoryPath TestPluginAppProjectDirectory => this.Directory("../QueryCat.Plugin.Test");
+    public ConvertableDirectoryPath TestPluginAppProjectDirectory => this.Directory("../QueryCat.Plugins.Sample");
 
     public ConvertableDirectoryPath OutputDirectory => this.Directory("../../output");
 

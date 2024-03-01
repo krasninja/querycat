@@ -3,8 +3,10 @@ using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Utils;
 using QueryCat.Plugins.Client;
+using QueryCat.Plugins.Samples.Functions;
+using QueryCat.Plugins.Samples.Inputs;
 
-namespace QueryCat.Plugin.Test;
+namespace QueryCat.Plugins.Samples;
 
 /// <summary>
 /// Program entry point.
@@ -19,10 +21,10 @@ public class Program
             using var client = new ThriftPluginClient(args);
             client.FunctionsManager.RegisterFunction(AddressIterator.AddressIteratorFunction);
             client.FunctionsManager.RegisterFunction(AddressRowsInput.AddressRowsInputFunction);
-            client.FunctionsManager.RegisterFunction(TestFunctions.TestCombineFunction);
-            client.FunctionsManager.RegisterFunction(TestFunctions.TestSimpleNonStandardFunction);
-            client.FunctionsManager.RegisterFunction(TestFunctions.TestSimpleFunction);
-            client.FunctionsManager.RegisterFunction(TestFunctions.TestBlobFunction);
+            client.FunctionsManager.RegisterFunction(TestCombine.TestCombineFunction);
+            client.FunctionsManager.RegisterFunction(TestSimpleNonStandard.TestSimpleNonStandardFunction);
+            client.FunctionsManager.RegisterFunction(TestSimple.TestSimpleFunction);
+            client.FunctionsManager.RegisterFunction(TestBlob.TestBlobFunction);
             await client.StartAsync(ct);
             await client.WaitForServerExitAsync(ct);
         });
