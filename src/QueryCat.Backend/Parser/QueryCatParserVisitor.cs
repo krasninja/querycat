@@ -74,6 +74,13 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitStatementEcho([NotNull] QueryCatParser.StatementEchoContext context);
 	/// <summary>
+	/// Visit a parse tree produced by the <c>StatementCall</c>
+	/// labeled alternative in <see cref="QueryCatParser.statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitStatementCall([NotNull] QueryCatParser.StatementCallContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>StatementDeclareVariable</c>
 	/// labeled alternative in <see cref="QueryCatParser.statement"/>.
 	/// </summary>
@@ -536,6 +543,12 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitEchoStatement([NotNull] QueryCatParser.EchoStatementContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="QueryCatParser.callStatement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitCallStatement([NotNull] QueryCatParser.CallStatementContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>identifierChainFull</c>
 	/// labeled alternative in <see cref="QueryCatParser.identifierChain"/>.

@@ -63,15 +63,14 @@ TIMESTAMP:          'TIMESTAMP';
 AND:                'AND';
 AS:                 'AS';
 AT:                 'AT';
+BEGIN:              'BEGIN';
 BY:                 'BY';
 CAST:               'CAST';
 DEFAULT:            'DEFAULT';
-ELSE:               'ELSE';
 END:                'END';
 EXISTS:             'EXISTS';
 FALSE:              'FALSE';
 FROM:               'FROM';
-IF:                 'IF';
 IN:                 'IN';
 IS:                 'IS';
 LIKE:               'LIKE';
@@ -82,7 +81,6 @@ ON:                 'ON';
 ONLY:               'ONLY';
 OR:                 'OR';
 SOME:               'SOME';
-THEN:               'THEN';
 TO:                 'TO';
 TRUE:               'TRUE';
 USING:              'USING';
@@ -188,6 +186,26 @@ INSERT:             'INSERT';
 
 DECLARE:            'DECLARE';
 SET:                'SET';
+
+// CALL command.
+
+CALL:               'CALL';
+
+// IF command.
+
+IF:                 'IF';
+THEN:               'THEN';
+ELSE:               'ELSE';
+
+// WHILE command.
+
+WHILE:              'WHILE';
+BREAK:              'BREAK';
+CONTINUE:           'CONTINUE';
+
+// FOR command.
+
+FOR:                'FOR';
 
 TYPE: ANY | BLOB | BOOL | BOOLEAN | DECIMAL | FLOAT | INT | INT8 | INTEGER | NUMERIC | OBJECT | REAL | STRING | TEXT
     | TIMESTAMP;

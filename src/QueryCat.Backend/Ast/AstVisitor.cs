@@ -1,4 +1,5 @@
 using QueryCat.Backend.Ast.Nodes;
+using QueryCat.Backend.Ast.Nodes.Call;
 using QueryCat.Backend.Ast.Nodes.Declare;
 using QueryCat.Backend.Ast.Nodes.Function;
 using QueryCat.Backend.Ast.Nodes.Insert;
@@ -114,6 +115,18 @@ internal abstract class AstVisitor
     #region Echo
 
     public virtual void Visit(ExpressionStatementNode node)
+    {
+    }
+
+    #endregion
+
+    #region Call
+
+    public virtual void Visit(CallFunctionNode node)
+    {
+    }
+
+    public virtual void Visit(CallFunctionStatementNode node)
     {
     }
 
