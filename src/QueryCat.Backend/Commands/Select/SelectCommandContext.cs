@@ -173,6 +173,17 @@ internal sealed class SelectCommandContext(SelectQueryNode queryNode) : CommandC
         }
     }
 
+    private IEnumerable<SelectCommandContext> GetParents()
+    {
+        yield return this;
+        var parentContext = Parent;
+        while (parentContext != null)
+        {
+            yield return parentContext;
+            parentContext = parentContext.Parent;
+        }
+    }
+
     internal IEnumerable<T> GetParents<T>(Func<SelectCommandContext, T> func)
     {
         yield return func.Invoke(this);

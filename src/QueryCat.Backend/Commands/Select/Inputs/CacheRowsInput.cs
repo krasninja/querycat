@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
@@ -13,46 +14,18 @@ namespace QueryCat.Backend.Commands.Select.Inputs;
 [DebuggerDisplay("Count = {TotalCacheEntries}, CacheReads = {CacheReads}, TotalReads = {TotalReads}")]
 internal sealed class CacheRowsInput : IRowsInputKeys
 {
-    private const int ChunkSize = 4096;
+    private static readonly TimeSpan _defaultLifeTime = TimeSpan.FromMinutes(1);
 
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(CacheRowsInput));
 
-    [DebuggerDisplay("Key = {Key}, IsExpired = {IsExpired}")]
-    private sealed class CacheEntry
-    {
-        public CacheKey Key { get; }
-
-        public DateTime ExpireAt { get; }
-
-        public ChunkList<VariantValue> Cache { get; } = new(ChunkSize);
-
-        public bool IsExpired => DateTime.UtcNow >= ExpireAt;
-
-        public bool IsCompleted { get; private set; }
-
-        public int CacheLength { get; set; }
-
-        public bool HasCacheEntries => Cache.Count > 0;
-
-        public CacheEntry(CacheKey key, TimeSpan expireAt)
-        {
-            Key = key;
-            ExpireAt = DateTime.UtcNow + expireAt;
-        }
-
-        public void Complete()
-        {
-            IsCompleted = true;
-        }
-    }
-
-    private readonly Dictionary<CacheKey, CacheEntry> _cacheEntries = new();
+    private readonly ICacheEntryStorage _cacheEntries = new CacheEntryStorage();
     private readonly IRowsInput _rowsInput;
     private readonly SelectQueryConditions _conditions;
     private bool[] _cacheReadMap;
     private int _rowIndex = -1;
     private CacheEntry? _currentCacheEntry;
     private bool _hadReadNextCalls;
+    private bool _isOpened;
     private QueryContext _queryContext;
 
     /// <inheritdoc />
@@ -89,10 +62,26 @@ internal sealed class CacheRowsInput : IRowsInputKeys
     }
 
     /// <inheritdoc />
-    public void Open() => _rowsInput.Open();
+    public void Open()
+    {
+        if (_isOpened)
+        {
+            return;
+        }
+        _rowsInput.Open();
+        _isOpened = true;
+    }
 
     /// <inheritdoc />
-    public void Close() => _rowsInput.Close();
+    public void Close()
+    {
+        if (!_isOpened)
+        {
+            return;
+        }
+        _rowsInput.Close();
+        _isOpened = false;
+    }
 
     /// <inheritdoc />
     public ErrorCode ReadValue(int columnIndex, out VariantValue value)
@@ -103,12 +92,17 @@ internal sealed class CacheRowsInput : IRowsInputKeys
             return ErrorCode.Error;
         }
 
-        var cacheEntry = GetCurrentCacheEntry();
-
-        var offset = Columns.Length * _rowIndex + columnIndex;
-        value = cacheEntry.Cache[offset];
-        CacheReads++;
+        value = ReadValueByPosition(_rowIndex, columnIndex);
         return ErrorCode.OK;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private VariantValue ReadValueByPosition(int rowIndex, int columnIndex)
+    {
+        var cacheEntry = GetCurrentCacheEntry();
+        var offset = (Columns.Length * rowIndex) + columnIndex;
+        CacheReads++;
+        return cacheEntry.Cache[offset];
     }
 
     private void IncreaseCache(CacheEntry cacheEntry)
@@ -157,11 +151,10 @@ internal sealed class CacheRowsInput : IRowsInputKeys
             ReadAllItemsToCache();
         }
 
-        // If we don't have data - this mean we can complete the cache line.
+        // If we don't have data - this means we can complete the cache line.
         if (!hasData)
         {
             cacheEntry.Complete();
-            _cacheEntries.Add(cacheEntry.Key, cacheEntry);
         }
 
         return hasData;
@@ -170,9 +163,10 @@ internal sealed class CacheRowsInput : IRowsInputKeys
     private void ReadAllItemsToCache()
     {
         var cacheEntry = GetCurrentCacheEntry();
+        var baseOffset = Columns.Length * _rowIndex;
         for (var columnIndex = 0; columnIndex < _cacheReadMap.Length; columnIndex++)
         {
-            var offset = Columns.Length * _rowIndex + columnIndex;
+            var offset = baseOffset + columnIndex;
             _rowsInput.ReadValue(columnIndex, out var value);
             InputReads++;
             cacheEntry.Cache[offset] = value;
@@ -184,68 +178,34 @@ internal sealed class CacheRowsInput : IRowsInputKeys
     {
         if (_currentCacheEntry != null)
         {
+            Debug.Assert(CreateCacheKey(_rowsInput, _queryContext, _conditions) == _currentCacheEntry.Key, "Cache key has been changed!");
             return _currentCacheEntry;
         }
-        var key = CreateCacheKey(_rowsInput, _queryContext);
-        _currentCacheEntry = new CacheEntry(key, TimeSpan.FromMinutes(1));
+        var key = CreateCacheKey(_rowsInput, _queryContext, _conditions);
+        _currentCacheEntry = new CacheEntry(key, _defaultLifeTime);
         return _currentCacheEntry;
     }
 
-    private void RemoveExpiredKeys()
-    {
-        var toRemove = _cacheEntries
-            .Where(ce => ce.Value.IsExpired && ce.Value != _currentCacheEntry)
-            .Select(ce => ce.Key)
-            .ToList();
-        for (var i = 0; i < toRemove.Count; i++)
-        {
-            _cacheEntries.Remove(toRemove[i]);
-        }
-    }
+    private CacheKey CreateCacheKey() => CreateCacheKey(_rowsInput, _queryContext, _conditions);
 
-    private CacheKey CreateCacheKey(IRowsInput rowsInput, QueryContext queryContext)
+    private static CacheKey CreateCacheKey(IRowsInput rowsInput, QueryContext queryContext, SelectQueryConditions conditions)
     {
         return new CacheKey(
             from: rowsInput.GetType().Name,
             inputArguments: rowsInput.UniqueKey,
             selectColumns: queryContext.QueryInfo.Columns.Select(c => c.Name).ToArray(),
             conditions: rowsInput is IRowsInputKeys rowsInputKeys
-                ? _conditions.GetKeyConditions(rowsInputKeys).Select(c => c.ToCacheCondition()).ToArray()
+                ? conditions.GetKeyConditions(rowsInputKeys).Select(c => c.ToCacheCondition()).ToArray()
                 : null,
             offset: queryContext.QueryInfo.Offset,
             limit: queryContext.QueryInfo.Limit);
-    }
-
-    private CacheEntry CreateOrGetCacheEntry()
-    {
-        RemoveExpiredKeys();
-
-        var key = CreateCacheKey(_rowsInput, _queryContext);
-        // Fast path.
-        if (_cacheEntries.TryGetValue(key, out var existingKey))
-        {
-            _logger.LogDebug("Reuse existing cache entry with key {Key}.", key);
-            return existingKey;
-        }
-        foreach (var cacheEntry in _cacheEntries.Values)
-        {
-            if (cacheEntry.Key.Match(key))
-            {
-                _logger.LogDebug("Reuse existing cache entry with key {Key}.", key);
-                return cacheEntry;
-            }
-        }
-
-        var entry = new CacheEntry(key, TimeSpan.FromSeconds(120));
-        _logger.LogDebug("Create new cache entry with key {Key}.", key);
-        return entry;
     }
 
     /// <inheritdoc />
     public void Reset()
     {
         _rowIndex = -1;
-        var newCacheKey = CreateCacheKey(_rowsInput, _queryContext);
+        var newCacheKey = CreateCacheKey();
         if (_currentCacheEntry != null)
         {
             // If we reset but persist the same key - just go ahead using existing input.
@@ -254,8 +214,9 @@ internal sealed class CacheRowsInput : IRowsInputKeys
                 _logger.LogDebug("Reuse previous cache with key {Key}.", _currentCacheEntry.Key);
                 return;
             }
+            _currentCacheEntry.RefCount--;
         }
-        _currentCacheEntry = CreateOrGetCacheEntry();
+        _currentCacheEntry = _cacheEntries.GetOrCreateEntry(newCacheKey);
         if (_hadReadNextCalls)
         {
             _hadReadNextCalls = false;
@@ -290,5 +251,5 @@ internal sealed class CacheRowsInput : IRowsInputKeys
 
     /// <inheritdoc />
     public override string ToString()
-        => $"cache: {_rowsInput}, total = {TotalCacheEntries}, reads = {CacheReads}, total_reads = {TotalReads}";
+        => $"Cache = {_rowsInput}, Count = {TotalCacheEntries}, Reads = {CacheReads}, TotalReads = {TotalReads}";
 }
