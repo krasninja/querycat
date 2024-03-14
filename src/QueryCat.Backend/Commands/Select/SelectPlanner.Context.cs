@@ -154,10 +154,12 @@ internal sealed partial class SelectPlanner
         {
             return Array.Empty<IRowsInput>();
         }
-        return
-        [
-            new RowsIteratorInput(currentContext.CteList[cteIndex].RowsIterator)
-        ];
+        var rowsInput = new RowsIteratorInput(currentContext.CteList[cteIndex].RowsIterator);
+        if (idNode is ISelectAliasNode aliasNode)
+        {
+            Context_SetAlias(rowsInput, aliasNode.Alias);
+        }
+        return [rowsInput];
     }
 
     private IRowsInput[] Context_CreateInputSourceFromVariable(SelectCommandContext context, IdentifierExpressionNode idNode)

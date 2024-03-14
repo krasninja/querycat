@@ -1,0 +1,10 @@
+expected: |
+  1
+  2
+query: |
+  with pr as (
+    select 1 as "q"
+    union
+    select 2
+  )
+  select pr.q from pr;
