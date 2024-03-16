@@ -109,6 +109,19 @@ public class EnumerableRowsInput<TClass> : RowsInput, IRowsInputKeys, IDisposabl
         return _setKeyColumns.GetValueOrDefault(keyColumn, VariantValue.Null);
     }
 
+    /// <summary>
+    /// Try get key column value by column name.
+    /// </summary>
+    /// <param name="columnName">Column name.</param>
+    /// <param name="operation">Operation.</param>
+    /// <param name="value">Out value or null.</param>
+    /// <returns><c>True</c> if found, <c>false</c> otherwise.</returns>
+    public bool TryGetKeyColumnValue(string columnName, VariantValue.Operation operation, out VariantValue value)
+    {
+        var keyColumn = GetKeyColumnData(columnName, operation);
+        return _setKeyColumns.TryGetValue(keyColumn, out value);
+    }
+
     private KeyColumn GetKeyColumnData(
         string columnName,
         VariantValue.Operation? operation = null,
