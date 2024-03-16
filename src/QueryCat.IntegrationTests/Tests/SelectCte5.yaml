@@ -6,5 +6,8 @@ query: |
     select 1 as "q"
     union
     select 2
+  ),
+  pr2 as (
+    select 3, 4, 5 from pr where pr.q = 1
   )
   select pr.q from pr;

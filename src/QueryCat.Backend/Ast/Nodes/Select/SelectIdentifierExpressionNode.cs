@@ -46,6 +46,23 @@ internal sealed class SelectIdentifierExpressionNode : IdentifierExpressionNode,
     }
 
     /// <inheritdoc />
+    public override IEnumerable<IAstNode> GetChildren()
+    {
+        foreach (var astNode in base.GetChildren())
+        {
+            yield return astNode;
+        }
+        if (Format != null)
+        {
+            yield return Format;
+        }
+        foreach (var selectTableJoinedNode in JoinedNodes)
+        {
+            yield return selectTableJoinedNode;
+        }
+    }
+
+    /// <inheritdoc />
     public override void Accept(AstVisitor visitor) => visitor.Visit(this);
 
     /// <inheritdoc />
