@@ -181,7 +181,7 @@ internal sealed partial class SelectPlanner
         {
             if (keyCondition.KeyColumn.IsRequired && keyCondition.Conditions.Length < 1)
             {
-                throw new QueryContextMissedCondition(keyCondition.KeyColumn.ColumnName, keyCondition.KeyColumn.Operations);
+                throw new QueryContextMissedCondition(keyCondition.KeyColumn.ColumnName, keyCondition.KeyColumn.GetOperations());
             }
         }
     }

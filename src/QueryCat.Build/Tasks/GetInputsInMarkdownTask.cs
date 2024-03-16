@@ -92,7 +92,6 @@ public class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
                 {
                     inputColumn = new KeyColumn(column.Name);
                 }
-                var operations = string.Join(", ", inputColumn.Operations.Select(o => $"`{o}`"));
                 sb.AppendLine($"| `{column.Name}` | `{column.DataType}` | {(inputColumn.IsRequired ? "yes" : string.Empty)} | {column.Description} |");
             }
         }

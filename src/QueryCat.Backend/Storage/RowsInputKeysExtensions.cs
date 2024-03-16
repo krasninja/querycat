@@ -24,7 +24,7 @@ public static class RowsInputKeysExtensions
     {
         return rowsInputKeys.GetKeyColumns()
             .FirstOrDefault(k => Column.NameEquals(k.ColumnName, columnName)
-                && k.Operations.Contains(operation)
-                && (!orOperation.HasValue || k.Operations.Contains(orOperation.Value)));
+                && k.ContainsOperation(operation)
+                && (!orOperation.HasValue || k.ContainsOperation(orOperation.Value)));
     }
 }

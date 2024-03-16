@@ -24,6 +24,7 @@ public abstract class FetchRowsInput<TClass> : EnumerableRowsInput<TClass> where
     {
         Initialize(Builder);
         Columns = Builder.Columns.ToArray();
+        AddKeyColumns(Builder.KeyColumns);
     }
 
     /// <inheritdoc />

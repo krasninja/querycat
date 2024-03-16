@@ -125,7 +125,7 @@ internal sealed class SelectCommandContext(SelectQueryNode queryNode) : CommandC
                     .Where(c =>
                         Column.NameEquals(c.Column, keyColumn.ColumnName)
                         && column.SourceName == inputContext.Alias
-                        && keyColumn.Operations.Contains(c.Operation))
+                        && keyColumn.ContainsOperation(c.Operation))
                     .ToArray();
                 yield return new SelectInputKeysConditions(inputKeys, column, keyColumn, matchConditions);
             }

@@ -245,7 +245,7 @@ public partial class ThriftPluginClient
                     .Select(c => new KeyColumn(
                         c.ColumnName,
                         c.IsRequired,
-                        c.Operations.Select(o => o.ToString()).ToList())
+                        c.GetOperations().Select(o => o.ToString()).ToList())
                     );
                 return Task.FromResult(result.ToList());
             }
