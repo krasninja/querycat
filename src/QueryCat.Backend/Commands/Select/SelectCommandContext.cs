@@ -64,7 +64,7 @@ internal sealed class SelectCommandContext(SelectQueryNode queryNode) : CommandC
         }
 
         // Iterators.
-        foreach (var context in GetParents(context => context))
+        foreach (var context in GetParents())
         {
             index = context.CurrentIterator.GetColumnIndexByName(name, source);
             if (index > -1)
@@ -180,18 +180,6 @@ internal sealed class SelectCommandContext(SelectQueryNode queryNode) : CommandC
         while (parentContext != null)
         {
             yield return parentContext;
-            parentContext = parentContext.Parent;
-        }
-    }
-
-    internal IEnumerable<T> GetParents<T>(Func<SelectCommandContext, T> func)
-    {
-        yield return func.Invoke(this);
-
-        var parentContext = Parent;
-        while (parentContext != null)
-        {
-            yield return func.Invoke(parentContext);
             parentContext = parentContext.Parent;
         }
     }

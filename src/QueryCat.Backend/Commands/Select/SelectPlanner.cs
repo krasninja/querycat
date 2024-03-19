@@ -61,6 +61,10 @@ internal sealed partial class SelectPlanner
         // WINDOW.
         PipelineWindow_ApplyWindowFunctions(context, node);
 
+        // Fill query context.
+        QueryContext_FillQueryContextConditions(context, node);
+        QueryContext_ValidateKeyColumnsValues(context);
+
         // ORDER BY.
         Pipeline_AddRowIdColumn(context, node.ColumnsListNode);
         Pipeline_ApplyOrderBy(context, node.OrderByNode);
@@ -75,10 +79,6 @@ internal sealed partial class SelectPlanner
         // OFFSET, FETCH.
         Pipeline_ApplyOffsetFetch(context, node.OffsetNode, node.FetchNode);
 
-        // Fill query context.
-        QueryContext_FillQueryContextConditions(context, node);
-        QueryContext_ValidateKeyColumnsValues(context);
-        QueryContext_SetKeyColumns(context);
 
         // INTO.
         Pipeline_CreateOutput(context, node);

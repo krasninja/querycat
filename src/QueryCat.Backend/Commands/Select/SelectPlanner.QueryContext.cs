@@ -1,7 +1,6 @@
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Select;
-using QueryCat.Backend.Commands.Select.Iterators;
 using QueryCat.Backend.Commands.Select.Visitors;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
@@ -18,7 +17,17 @@ internal sealed partial class SelectPlanner
         // Fill conditions.
         foreach (var inputContext in context.InputQueryContextList)
         {
-            QueryContext_FillQueryContextConditions(querySpecificationNode, inputContext, context);
+            QueryContext_FillQueryContextConditions(
+                querySpecificationNode.TableExpressionNode?.SearchConditionNode?.ExpressionNode,
+                inputContext,
+                context);
+            foreach (var joinedOnNode in querySpecificationNode.GetAllChildren<SelectTableJoinedOnNode>())
+            {
+                QueryContext_FillQueryContextConditions(
+                    joinedOnNode.SearchConditionNode,
+                    inputContext,
+                    context);
+            }
         }
 
         // Fill "limit". For now we limit only if order is not defined.
@@ -46,12 +55,11 @@ internal sealed partial class SelectPlanner
     }
 
     private void QueryContext_FillQueryContextConditions(
-        SelectQuerySpecificationNode querySpecificationNode,
+        ExpressionNode? predicateNode,
         SelectInputQueryContext rowsInputContext,
         SelectCommandContext commandContext)
     {
-        var searchNode = querySpecificationNode.TableExpressionNode?.SearchConditionNode;
-        if (searchNode == null)
+        if (predicateNode == null)
         {
             return;
         }
@@ -169,7 +177,7 @@ internal sealed partial class SelectPlanner
             {
             }
         };
-        callbackVisitor.Run(searchNode);
+        callbackVisitor.Run(predicateNode);
     }
 
     /// <summary>
@@ -184,23 +192,5 @@ internal sealed partial class SelectPlanner
                 throw new QueryContextMissedCondition(keyCondition.KeyColumn.ColumnName, keyCondition.KeyColumn.GetOperations());
             }
         }
-    }
-
-    private void QueryContext_SetKeyColumns(SelectCommandContext context)
-    {
-        var rowsInputWithKeys = context.Inputs.Select(i => i.RowsInput).OfType<IRowsInputKeys>().ToArray();
-        if (!rowsInputWithKeys.Any())
-        {
-            return;
-        }
-        var keysColumns = rowsInputWithKeys.SelectMany(i => i.GetKeyColumns());
-        if (!keysColumns.Any())
-        {
-            return;
-        }
-
-        var setKeysColumnsIterator = new SetKeyColumnsRowsIterator(context.CurrentIterator,
-            context.GetConditionsColumns().ToArray());
-        context.SetIterator(setKeysColumnsIterator);
     }
 }

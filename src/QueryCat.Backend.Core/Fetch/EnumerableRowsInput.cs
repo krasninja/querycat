@@ -53,6 +53,7 @@ public class EnumerableRowsInput<TClass> : RowsInput, IRowsInputKeys, IDisposabl
     /// <inheritdoc />
     public override void Reset()
     {
+        _setKeyColumns.Clear();
         Close();
         base.Reset();
     }
@@ -103,7 +104,7 @@ public class EnumerableRowsInput<TClass> : RowsInput, IRowsInputKeys, IDisposabl
     /// <param name="columnName">Column name.</param>
     /// <param name="operation">Operation.</param>
     /// <returns>Value or null.</returns>
-    public VariantValue GetKeyColumnValue(string columnName, VariantValue.Operation operation = VariantValue.Operation.Equals)
+    public VariantValue GetKeyColumnValue(string columnName, VariantValue.Operation? operation = null)
     {
         var keyColumn = GetKeyColumnData(columnName, operation);
         return _setKeyColumns.GetValueOrDefault(keyColumn, VariantValue.Null);
@@ -116,7 +117,7 @@ public class EnumerableRowsInput<TClass> : RowsInput, IRowsInputKeys, IDisposabl
     /// <param name="operation">Operation.</param>
     /// <param name="value">Out value or null.</param>
     /// <returns><c>True</c> if found, <c>false</c> otherwise.</returns>
-    public bool TryGetKeyColumnValue(string columnName, VariantValue.Operation operation, out VariantValue value)
+    public bool TryGetKeyColumnValue(string columnName, VariantValue.Operation? operation, out VariantValue value)
     {
         var keyColumn = GetKeyColumnData(columnName, operation);
         return _setKeyColumns.TryGetValue(keyColumn, out value);

@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Storage;
 

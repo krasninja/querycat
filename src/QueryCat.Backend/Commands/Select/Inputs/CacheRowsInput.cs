@@ -14,8 +14,6 @@ namespace QueryCat.Backend.Commands.Select.Inputs;
 [DebuggerDisplay("Count = {TotalCacheEntries}, CacheReads = {CacheReads}, TotalReads = {TotalReads}")]
 internal sealed class CacheRowsInput : IRowsInputKeys
 {
-    private static readonly TimeSpan _defaultLifeTime = TimeSpan.FromMinutes(1);
-
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(CacheRowsInput));
 
     private readonly ICacheEntryStorage _cacheEntries = new CacheEntryStorage();
@@ -25,6 +23,7 @@ internal sealed class CacheRowsInput : IRowsInputKeys
     private int _rowIndex = -1;
     private CacheEntry? _currentCacheEntry;
     private bool _hadReadNextCalls;
+    private bool _resetRequested;
     private bool _isOpened;
     private QueryContext _queryContext;
 
@@ -99,7 +98,7 @@ internal sealed class CacheRowsInput : IRowsInputKeys
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private VariantValue ReadValueByPosition(int rowIndex, int columnIndex)
     {
-        var cacheEntry = GetCurrentCacheEntry();
+        var cacheEntry = GetOrCreateCacheEntry();
         var offset = (Columns.Length * rowIndex) + columnIndex;
         CacheReads++;
         return cacheEntry.Cache[offset];
@@ -118,10 +117,10 @@ internal sealed class CacheRowsInput : IRowsInputKeys
     /// <inheritdoc />
     public bool ReadNext()
     {
-        _hadReadNextCalls = true;
         _rowIndex++;
         _cacheReadMap = _cacheReadMap.Length > 0 ? _cacheReadMap : new bool[_rowsInput.Columns.Length];
-        var cacheEntry = GetCurrentCacheEntry();
+        var cacheEntry = GetOrCreateCacheEntry();
+        _hadReadNextCalls = true;
 
         // Read cache data if possible.
         if (_rowIndex < cacheEntry.CacheLength)
@@ -162,7 +161,7 @@ internal sealed class CacheRowsInput : IRowsInputKeys
 
     private void ReadAllItemsToCache()
     {
-        var cacheEntry = GetCurrentCacheEntry();
+        var cacheEntry = GetOrCreateCacheEntry();
         var baseOffset = Columns.Length * _rowIndex;
         for (var columnIndex = 0; columnIndex < _cacheReadMap.Length; columnIndex++)
         {
@@ -174,19 +173,41 @@ internal sealed class CacheRowsInput : IRowsInputKeys
         Array.Fill(_cacheReadMap, true);
     }
 
-    private CacheEntry GetCurrentCacheEntry()
+    private CacheEntry GetOrCreateCacheEntry()
     {
-        if (_currentCacheEntry != null)
+        if (_resetRequested || _currentCacheEntry == null)
         {
-            Debug.Assert(CreateCacheKey(_rowsInput, _queryContext, _conditions) == _currentCacheEntry.Key, "Cache key has been changed!");
-            return _currentCacheEntry;
+            _resetRequested = false;
+            var newCacheKey = CreateCacheKey(_rowsInput, _queryContext, _conditions);
+            if (_currentCacheEntry != null)
+            {
+                // If we reset but persist the same key - just go ahead using existing input.
+                if (!_currentCacheEntry.Key.Equals(newCacheKey))
+                {
+                    _currentCacheEntry.RefCount--;
+                    _currentCacheEntry = null;
+                }
+                else
+                {
+                    _logger.LogDebug("Reuse previous cache with key {Key}.", _currentCacheEntry.Key);
+                    return _currentCacheEntry;
+                }
+            }
+            var isNew = _cacheEntries.GetOrCreateEntry(newCacheKey, out _currentCacheEntry);
+            if (isNew && _hadReadNextCalls)
+            {
+                _hadReadNextCalls = false;
+                _rowsInput.Reset();
+            }
+            _currentCacheEntry.RefCount++;
         }
-        var key = CreateCacheKey(_rowsInput, _queryContext, _conditions);
-        _currentCacheEntry = new CacheEntry(key, _defaultLifeTime);
+
+#if DEBUG
+        var keyForCheck = CreateCacheKey(_rowsInput, _queryContext, _conditions);
+        Debug.Assert(keyForCheck == _currentCacheEntry.Key, "Cache key has been changed!");
+#endif
         return _currentCacheEntry;
     }
-
-    private CacheKey CreateCacheKey() => CreateCacheKey(_rowsInput, _queryContext, _conditions);
 
     private static CacheKey CreateCacheKey(IRowsInput rowsInput, QueryContext queryContext, SelectQueryConditions conditions)
     {
@@ -205,23 +226,7 @@ internal sealed class CacheRowsInput : IRowsInputKeys
     public void Reset()
     {
         _rowIndex = -1;
-        var newCacheKey = CreateCacheKey();
-        if (_currentCacheEntry != null)
-        {
-            // If we reset but persist the same key - just go ahead using existing input.
-            if (_currentCacheEntry.Key.Equals(newCacheKey))
-            {
-                _logger.LogDebug("Reuse previous cache with key {Key}.", _currentCacheEntry.Key);
-                return;
-            }
-            _currentCacheEntry.RefCount--;
-        }
-        _currentCacheEntry = _cacheEntries.GetOrCreateEntry(newCacheKey);
-        if (_hadReadNextCalls)
-        {
-            _hadReadNextCalls = false;
-            _rowsInput.Reset();
-        }
+        _resetRequested = true;
     }
 
     /// <inheritdoc />

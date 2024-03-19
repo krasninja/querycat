@@ -118,6 +118,8 @@ internal sealed partial class SelectPlanner
             finalRowsInputs.Add(finalRowInput);
         }
 
+        finalRowsInputs = Context_WrapKeysInput(finalRowsInputs, context.Conditions);
+
         var resultRowsIterator = Context_CreateMultipleIterator(finalRowsInputs);
         context.RowsInputIterator = resultRowsIterator as RowsInputIterator;
         context.SetIterator(resultRowsIterator);
@@ -277,6 +279,8 @@ internal sealed partial class SelectPlanner
         var right = Context_GetRowsInputFromExpression(context, tableJoinedNode.RightTableNode).Last();
         var alias = tableJoinedNode.RightTableNode is ISelectAliasNode selectAlias ? selectAlias.Alias : string.Empty;
         Context_SetAlias(right, alias);
+        right = Context_WrapKeysInput(right, context.Conditions);
+        left = Context_WrapKeysInput(left, context.Conditions);
 
         // For right join we swap left and right. But we keep columns in the same order.
         var join = Context_ConvertAstJoinType(tableJoinedNode.JoinTypeNode.JoinedType);
@@ -308,6 +312,19 @@ internal sealed partial class SelectPlanner
         throw new ArgumentException(string.Format(Resources.Errors.NotSupported, tableJoinedNode.GetType().Name),
             nameof(tableJoinedNode));
     }
+
+    private IRowsInput Context_WrapKeysInput(IRowsInput rowsInput, SelectQueryConditions conditions)
+    {
+        if (rowsInput is IRowsInputKeys rowsInputKeys
+            && rowsInputKeys is not SetKeysRowsInput)
+        {
+            return new SetKeysRowsInput(rowsInputKeys, conditions);
+        }
+        return rowsInput;
+    }
+
+    private List<IRowsInput> Context_WrapKeysInput(IReadOnlyList<IRowsInput> rowsInputs, SelectQueryConditions conditions)
+        => rowsInputs.Select(ri => Context_WrapKeysInput(ri, conditions)).ToList();
 
     private IRowsInput Context_CreateInputSourceFromTable(SelectCommandContext context,
         SelectTableNode tableNode)
@@ -365,7 +382,7 @@ internal sealed partial class SelectPlanner
     {
         if (rowsInputs.Count == 0)
         {
-            throw new QueryCatException("No rows inputs.");
+            throw new QueryCatException(Resources.Errors.NoInputs);
         }
         if (rowsInputs.Count == 1)
         {

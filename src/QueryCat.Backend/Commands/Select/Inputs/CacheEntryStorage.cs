@@ -15,29 +15,28 @@ internal sealed class CacheEntryStorage : ICacheEntryStorage
     public int Count => _entries.Count;
 
     /// <inheritdoc />
-    public CacheEntry GetOrCreateEntry(CacheKey key)
+    public bool GetOrCreateEntry(CacheKey key, out CacheEntry entry)
     {
         RemoveExpiredAndIncompleteKeys();
 
-        if (_entries.TryGetValue(key, out var existingKey))
+        if (_entries.TryGetValue(key, out entry!))
         {
             _logger.LogDebug("Reuse existing cache entry with key {Key}.", key);
-            return existingKey;
+            return false;
         }
         foreach (var cacheEntry in _entries.Values)
         {
             if (cacheEntry.Key.Match(key))
             {
                 _logger.LogDebug("Reuse existing cache entry with key {Key}.", key);
-                return cacheEntry;
+                return false;
             }
         }
 
-        var entry = new CacheEntry(key, _expireTime);
+        entry = new CacheEntry(key, _expireTime);
         _entries.Add(key, entry);
-        entry.RefCount++;
         _logger.LogDebug("Create new cache entry with key {Key}.", key);
-        return entry;
+        return true;
     }
 
     private void RemoveExpiredAndIncompleteKeys()
