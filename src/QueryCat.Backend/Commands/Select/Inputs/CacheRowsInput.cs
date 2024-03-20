@@ -16,6 +16,9 @@ internal sealed class CacheRowsInput : IRowsInputKeys
 {
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(CacheRowsInput));
 
+#if DEBUG
+    private readonly Guid _id = Guid.NewGuid();
+#endif
     private readonly ICacheEntryStorage _cacheEntries = new CacheEntryStorage();
     private readonly IRowsInput _rowsInput;
     private readonly SelectQueryConditions _conditions;
@@ -197,7 +200,6 @@ internal sealed class CacheRowsInput : IRowsInputKeys
             if (isNew && _hadReadNextCalls)
             {
                 _hadReadNextCalls = false;
-                _rowsInput.Reset();
             }
             _currentCacheEntry.RefCount++;
         }
@@ -227,6 +229,7 @@ internal sealed class CacheRowsInput : IRowsInputKeys
     {
         _rowIndex = -1;
         _resetRequested = true;
+        _rowsInput.Reset();
     }
 
     /// <inheritdoc />
@@ -253,8 +256,4 @@ internal sealed class CacheRowsInput : IRowsInputKeys
             rowsInputKeys.SetKeyColumnValue(columnName, value, operation);
         }
     }
-
-    /// <inheritdoc />
-    public override string ToString()
-        => $"Cache = {_rowsInput}, Count = {TotalCacheEntries}, Reads = {CacheReads}, TotalReads = {TotalReads}";
 }

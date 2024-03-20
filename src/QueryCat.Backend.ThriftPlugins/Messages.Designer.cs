@@ -50,5 +50,17 @@ namespace QueryCat.Backend.ThriftPlugins {
                 return ResourceManager.GetString("HandlerInternalError", resourceCulture);
             }
         }
+        
+        internal static string InvalidToken {
+            get {
+                return ResourceManager.GetString("InvalidToken", resourceCulture);
+            }
+        }
+        
+        internal static string CannotGetLibraryAddress {
+            get {
+                return ResourceManager.GetString("CannotGetLibraryAddress", resourceCulture);
+            }
+        }
     }
 }

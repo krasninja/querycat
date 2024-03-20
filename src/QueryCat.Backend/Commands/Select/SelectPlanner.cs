@@ -79,7 +79,6 @@ internal sealed partial class SelectPlanner
         // OFFSET, FETCH.
         Pipeline_ApplyOffsetFetch(context, node.OffsetNode, node.FetchNode);
 
-
         // INTO.
         Pipeline_CreateOutput(context, node);
 

@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
@@ -8,6 +9,7 @@ internal sealed class SetKeysRowsInput : IRowsInputKeys
 {
     private readonly IRowsInputKeys _rowsInput;
     private readonly SelectQueryConditions _conditions;
+    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(SetKeysRowsInput));
 
     /// <inheritdoc />
     public QueryContext QueryContext

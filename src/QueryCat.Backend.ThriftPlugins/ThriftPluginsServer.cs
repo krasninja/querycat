@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Text;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Thrift;
@@ -164,6 +165,16 @@ public sealed partial class ThriftPluginsServer : IDisposable
     }
 
     public bool VerifyAuthToken(string token) => _authTokens.ContainsKey(token);
+
+    internal string DumpAuthTokens()
+    {
+        var sb = new StringBuilder();
+        foreach (var authToken in _authTokens)
+        {
+            sb.AppendFormat($"{authToken.Key}: {authToken.Value}");
+        }
+        return sb.ToString();
+    }
 
     public string GetPluginNameByAuthToken(string token)
     {

@@ -77,10 +77,14 @@ public partial class ThriftPluginsServer
                 callback_uri);
             if (!_thriftPluginsServer.SkipTokenVerification && !_thriftPluginsServer.VerifyAuthToken(auth_token))
             {
-                throw new QueryCatPluginException(ErrorType.INVALID_AUTH_TOKEN, "Invalid token.");
+                if (_thriftPluginsServer._logger.IsEnabled(Microsoft.Extensions.Logging.LogLevel.Debug))
+                {
+                    _thriftPluginsServer._logger.LogDebug("Available tokens:\n" + _thriftPluginsServer.DumpAuthTokens());
+                }
+                throw new QueryCatPluginException(ErrorType.INVALID_AUTH_TOKEN, Messages.InvalidToken);
             }
 
-            // Create plugin context, init and add it to a list.GetFileByContext
+            // Create plugin context, init and add it to a list.
             var context = await CreateClientConnection(callback_uri, cancellationToken);
             if (!string.IsNullOrEmpty(plugin_data.Name))
             {

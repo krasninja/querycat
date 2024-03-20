@@ -24,6 +24,7 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
     private const string FunctionsCacheFileExtension = ".fcache.json";
 
     private readonly IExecutionThread _thread;
+    private readonly bool _debugMode;
     private readonly ThriftPluginsServer _server;
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(ThriftPluginsLoader));
     private readonly HashSet<string> _loadedPlugins = new();
@@ -58,14 +59,21 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         IEnumerable<string> pluginDirectories,
         ThriftPluginsServer.TransportType transportType = ThriftPluginsServer.TransportType.NamedPipes,
         string? serverPipeName = null,
-        string? functionsCacheDirectory = null) : base(pluginDirectories)
+        string? functionsCacheDirectory = null,
+        bool debugMode = false) : base(pluginDirectories)
     {
         _thread = thread;
+        _debugMode = debugMode;
         if (!string.IsNullOrEmpty(serverPipeName))
         {
             ServerPipeName = serverPipeName;
         }
         _server = new ThriftPluginsServer(thread, transportType, ServerPipeName);
+        if (_debugMode)
+        {
+            _server.SkipTokenVerification = true;
+            _server.Start();
+        }
         _server.OnPluginRegistration += OnPluginRegistration;
         _functionsCacheDirectory = functionsCacheDirectory ?? string.Empty;
     }
@@ -100,6 +108,13 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
             {
                 LoadPluginSafe(pluginFile, cancellationToken);
             }
+        }
+
+        if (_debugMode && !string.IsNullOrEmpty(ForceAuthToken) && !_loadedPlugins.Any())
+        {
+            _logger.LogDebug("Waiting for any plugin registration.");
+            _server.RegisterAuthToken(ForceAuthToken, ".plugin");
+            _server.WaitForPluginRegistration(ForceAuthToken, cancellationToken);
         }
 
         return Task.CompletedTask;
@@ -318,28 +333,32 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         var pluginName = GetPluginName(file);
 
         // Load library.
-        var handle = NativeLibrary.Load(file);
-        if (!NativeLibrary.TryGetExport(handle, ThriftPluginClient.PluginMainFunctionName, out var mainAddress))
+        var handle = nint.Zero;
+        if (!SkipPluginsExecution)
         {
-            throw new PluginException("Cannot get address of the plugin main function.");
-        }
+            handle = NativeLibrary.Load(file);
+            if (!NativeLibrary.TryGetExport(handle, ThriftPluginClient.PluginMainFunctionName, out var mainAddress))
+            {
+                throw new PluginException(Messages.CannotGetLibraryAddress);
+            }
 
-        // Call DLL plugin method.
-        var mainFunction = Marshal.GetDelegateForFunctionPointer<QueryCatPluginMainDelegate>(mainAddress);
-        var args = new QueryCatPluginArguments
-        {
-            ServerEndpoint = Marshal.StringToHGlobalAuto(GetPipeName()),
-            Token = Marshal.StringToHGlobalAuto(authToken),
-        };
-        var pluginThread = new Thread(() =>
-        {
-            mainFunction.Invoke(args);
-        })
-        {
-            Name = pluginName,
-            IsBackground = true,
-        };
-        pluginThread.Start();
+            // Call DLL plugin method.
+            var mainFunction = Marshal.GetDelegateForFunctionPointer<QueryCatPluginMainDelegate>(mainAddress);
+            var args = new QueryCatPluginArguments
+            {
+                ServerEndpoint = Marshal.StringToHGlobalAuto(GetPipeName()),
+                Token = Marshal.StringToHGlobalAuto(authToken),
+            };
+            var pluginThread = new Thread(() =>
+            {
+                mainFunction.Invoke(args);
+            })
+            {
+                Name = pluginName,
+                IsBackground = true,
+            };
+            pluginThread.Start();
+        }
 
         // Wait when plugin is loaded and it calls RegisterPlugin method.
         try
@@ -348,7 +367,10 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         }
         catch (Exception)
         {
-            NativeLibrary.Free(handle);
+            if (handle != nint.Zero)
+            {
+                NativeLibrary.Free(handle);
+            }
             throw;
         }
 

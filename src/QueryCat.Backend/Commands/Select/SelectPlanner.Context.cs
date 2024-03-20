@@ -115,10 +115,9 @@ internal sealed partial class SelectPlanner
             var alias = tableExpression is ISelectAliasNode selectAlias ? selectAlias.Alias : string.Empty;
 
             Context_SetAlias(tableExpression, alias);
+            finalRowInput = Context_WrapKeysInput(finalRowInput, context.Conditions);
             finalRowsInputs.Add(finalRowInput);
         }
-
-        finalRowsInputs = Context_WrapKeysInput(finalRowsInputs, context.Conditions);
 
         var resultRowsIterator = Context_CreateMultipleIterator(finalRowsInputs);
         context.RowsInputIterator = resultRowsIterator as RowsInputIterator;

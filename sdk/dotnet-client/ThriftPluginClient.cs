@@ -314,7 +314,11 @@ public partial class ThriftPluginClient : IDisposable
             return;
         }
 
-        var modulePath = Process.GetCurrentProcess().MainModule?.FileName;
+        var modulePath = Assembly.GetEntryAssembly()?.Location;
+        if (string.IsNullOrEmpty(modulePath))
+        {
+            modulePath = Process.GetCurrentProcess().MainModule?.FileName;
+        }
         if (string.IsNullOrEmpty(modulePath))
         {
             throw new InvalidOperationException(Resources.Errors.CannotGetPath);
