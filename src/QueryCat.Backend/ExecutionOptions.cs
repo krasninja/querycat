@@ -55,5 +55,10 @@ public class ExecutionOptions
     /// <summary>
     /// Write appended data as source grows. Specifies check timeout. 0 means do not follow.
     /// </summary>
-    public int FollowTimeoutMs { get; set; }
+    public TimeSpan FollowTimeout { get; set; }
+
+    /// <summary>
+    /// Throw time out exception if query hasn't been executed within the time.
+    /// </summary>
+    public TimeSpan QueryTimeout { get; set; }
 }

@@ -21,6 +21,7 @@ internal class QueryOptionsBinder : BinderBase<QueryOptions>
     private readonly Option<bool> _noHeaderOption;
     private readonly Option<string> _floatNumberOption;
     private readonly Option<bool> _followOption;
+    private readonly Option<int> _timeoutOption;
     private readonly Option<bool> _safeModeOption;
 
     public QueryOptionsBinder(
@@ -36,6 +37,7 @@ internal class QueryOptionsBinder : BinderBase<QueryOptions>
         Option<bool> noHeaderOption,
         Option<string> floatNumberOption,
         Option<bool> followOption,
+        Option<int> timeoutOption,
         Option<bool> safeModeOption)
     {
         _maxErrorsOption = maxErrorsOption;
@@ -57,6 +59,7 @@ internal class QueryOptionsBinder : BinderBase<QueryOptions>
         _noHeaderOption = noHeaderOption;
         _floatNumberOption = floatNumberOption;
         _followOption = followOption;
+        _timeoutOption = timeoutOption;
         _safeModeOption = safeModeOption;
     }
 
@@ -78,6 +81,7 @@ internal class QueryOptionsBinder : BinderBase<QueryOptions>
             FloatNumberFormat = bindingContext.ParseResult.GetValueForOption(_floatNumberOption)
                 ?? VariantValue.FloatNumberFormat,
             FollowTimeout = bindingContext.ParseResult.GetValueForOption(_followOption) ? FollowDefaultTimeout : TimeSpan.Zero,
+            QueryTimeout = TimeSpan.FromMilliseconds(bindingContext.ParseResult.GetValueForOption(_timeoutOption)),
             SafeMode = bindingContext.ParseResult.GetValueForOption(_safeModeOption),
         };
     }
