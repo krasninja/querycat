@@ -200,16 +200,7 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
         {
             return task.Result;
         }
-        var completedTask = Task.WhenAny(task, Task.Delay(Options.FollowTimeout, cancellationToken))
-            .GetAwaiter().GetResult();
-        if (completedTask == task)
-        {
-            return task.Result;
-        }
-        else
-        {
-            throw new TimeoutException();
-        }
+        return task.WaitAsync(Options.QueryTimeout, cancellationToken).GetAwaiter().GetResult();
     }
 
     private VariantValue RunInternal(CancellationToken cancellationToken)
