@@ -47,13 +47,13 @@ internal sealed class SetKeysRowsInput : IRowsInputKeys
     {
         foreach (var inputKeyCondition in _conditions)
         {
-            if (Array.IndexOf(Columns, inputKeyCondition.Column) == -1)
+            var columnIndex = Array.IndexOf(Columns, inputKeyCondition.Column);
+            if (columnIndex == -1)
             {
                 continue;
             }
             var value = inputKeyCondition.ValueFunc.Invoke();
-            _rowsInput.SetKeyColumnValue(
-                inputKeyCondition.Column.Name, value, inputKeyCondition.Operation);
+            _rowsInput.SetKeyColumnValue(columnIndex, value, inputKeyCondition.Operation);
         }
         return _rowsInput.ReadNext();
     }
@@ -68,6 +68,8 @@ internal sealed class SetKeysRowsInput : IRowsInputKeys
     public IReadOnlyList<KeyColumn> GetKeyColumns() => _rowsInput.GetKeyColumns();
 
     /// <inheritdoc />
-    public void SetKeyColumnValue(string columnName, VariantValue value, VariantValue.Operation operation)
-        => _rowsInput.SetKeyColumnValue(columnName, value, operation);
+    public void SetKeyColumnValue(int columnIndex, VariantValue value, VariantValue.Operation operation)
+    {
+        // Do not passthru set key value calls.
+    }
 }

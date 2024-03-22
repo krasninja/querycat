@@ -16,8 +16,8 @@ public interface IRowsInputKeys : IRowsInput
     /// <summary>
     /// Set key column value. Initialize rows input source.
     /// </summary>
-    /// <param name="columnName">Column name.</param>
+    /// <param name="columnIndex">Column index within rows input.</param>
     /// <param name="value">The value.</param>
     /// <param name="operation">Key operation.</param>
-    void SetKeyColumnValue(string columnName, VariantValue value, VariantValue.Operation operation);
+    void SetKeyColumnValue(int columnIndex, VariantValue value, VariantValue.Operation operation);
 }

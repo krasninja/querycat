@@ -7,7 +7,7 @@ namespace QueryCat.Backend.Core.Data;
 /// </summary>
 public sealed class KeyColumn
 {
-    public string ColumnName { get; }
+    public int ColumnIndex { get; }
 
     public bool IsRequired { get; }
 
@@ -22,22 +22,22 @@ public sealed class KeyColumn
     public VariantValue.Operation? Operation2 { get; }
 
     public KeyColumn(
-        string columnName,
+        int columnIndex,
         bool isRequired = false,
         VariantValue.Operation operation1 = VariantValue.Operation.Equals,
         VariantValue.Operation? operation2 = null)
     {
-        ColumnName = columnName;
+        ColumnIndex = columnIndex;
         IsRequired = isRequired;
         Operation1 = operation1;
         Operation2 = operation2;
     }
 
     public KeyColumn(
-        string columnName,
+        int columnIndex,
         bool isRequired,
         VariantValue.Operation[] operations) : this(
-            columnName,
+            columnIndex,
             isRequired,
             operations.Length > 0 ? operations[0] : VariantValue.Operation.Equals,
             operations.Length > 1 ? operations[1] : null)
@@ -57,5 +57,5 @@ public sealed class KeyColumn
         => Operation1 == operation || (Operation2.HasValue && Operation2.Value == operation);
 
     /// <inheritdoc />
-    public override string ToString() => $"{(IsRequired ? "* " : "")} {ColumnName} ({Operation1}, {Operation2})";
+    public override string ToString() => $"{(IsRequired ? "* " : "")} {ColumnIndex} ({Operation1}, {Operation2})";
 }

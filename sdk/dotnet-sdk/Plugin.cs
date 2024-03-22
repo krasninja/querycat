@@ -57,7 +57,7 @@ namespace QueryCat.Plugins.Sdk
 
       global::System.Threading.Tasks.Task<List<global::QueryCat.Plugins.Sdk.KeyColumn>> RowsSet_GetKeyColumnsAsync(int object_handle, CancellationToken cancellationToken = default);
 
-      global::System.Threading.Tasks.Task RowsSet_SetKeyColumnValueAsync(int object_handle, string column_name, string @operation, global::QueryCat.Plugins.Sdk.VariantValue? @value, CancellationToken cancellationToken = default);
+      global::System.Threading.Tasks.Task RowsSet_SetKeyColumnValueAsync(int object_handle, int column_index, string @operation, global::QueryCat.Plugins.Sdk.VariantValue? @value, CancellationToken cancellationToken = default);
 
       global::System.Threading.Tasks.Task<bool> RowsSet_UpdateValueAsync(int object_handle, int column_index, global::QueryCat.Plugins.Sdk.VariantValue? @value, CancellationToken cancellationToken = default);
 
@@ -532,19 +532,19 @@ namespace QueryCat.Plugins.Sdk
         throw new TApplicationException(TApplicationException.ExceptionType.MissingResult, "RowsSet_GetKeyColumnsAsync failed: unknown result");
       }
 
-      public async global::System.Threading.Tasks.Task RowsSet_SetKeyColumnValueAsync(int object_handle, string column_name, string @operation, global::QueryCat.Plugins.Sdk.VariantValue? @value, CancellationToken cancellationToken = default)
+      public async global::System.Threading.Tasks.Task RowsSet_SetKeyColumnValueAsync(int object_handle, int column_index, string @operation, global::QueryCat.Plugins.Sdk.VariantValue? @value, CancellationToken cancellationToken = default)
       {
-        await send_RowsSet_SetKeyColumnValueAsync(object_handle, column_name, @operation, @value, cancellationToken);
+        await send_RowsSet_SetKeyColumnValueAsync(object_handle, column_index, @operation, @value, cancellationToken);
         await recv_RowsSet_SetKeyColumnValueAsync(cancellationToken);
       }
 
-      public async global::System.Threading.Tasks.Task send_RowsSet_SetKeyColumnValueAsync(int object_handle, string column_name, string @operation, global::QueryCat.Plugins.Sdk.VariantValue? @value, CancellationToken cancellationToken = default)
+      public async global::System.Threading.Tasks.Task send_RowsSet_SetKeyColumnValueAsync(int object_handle, int column_index, string @operation, global::QueryCat.Plugins.Sdk.VariantValue? @value, CancellationToken cancellationToken = default)
       {
         await OutputProtocol.WriteMessageBeginAsync(new TMessage("RowsSet_SetKeyColumnValue", TMessageType.Call, SeqId), cancellationToken);
         
         var tmp229 = new InternalStructs.RowsSet_SetKeyColumnValue_args() {
           ObjectHandle = object_handle,
-          ColumnName = column_name,
+          ColumnIndex = column_index,
           Operation = @operation,
           Value = @value,
         };
@@ -1233,7 +1233,7 @@ namespace QueryCat.Plugins.Sdk
         var tmp315 = new InternalStructs.RowsSet_SetKeyColumnValue_result();
         try
         {
-          await _iAsync.RowsSet_SetKeyColumnValueAsync(tmp314.ObjectHandle, tmp314.ColumnName, tmp314.Operation, tmp314.Value, cancellationToken);
+          await _iAsync.RowsSet_SetKeyColumnValueAsync(tmp314.ObjectHandle, tmp314.ColumnIndex, tmp314.Operation, tmp314.Value, cancellationToken);
           await oprot.WriteMessageBeginAsync(new TMessage("RowsSet_SetKeyColumnValue", TMessageType.Reply, seqid), cancellationToken); 
           await tmp315.WriteAsync(oprot, cancellationToken);
         }
@@ -4541,7 +4541,7 @@ namespace QueryCat.Plugins.Sdk
 
         public int ObjectHandle { get; set; } = 0;
 
-        public string ColumnName { get; set; } = string.Empty;
+        public int ColumnIndex { get; set; } = 0;
 
         public string Operation { get; set; } = string.Empty;
 
@@ -4551,10 +4551,10 @@ namespace QueryCat.Plugins.Sdk
         {
         }
 
-        public RowsSet_SetKeyColumnValue_args(int object_handle, string column_name, string @operation, global::QueryCat.Plugins.Sdk.VariantValue? @value) : this()
+        public RowsSet_SetKeyColumnValue_args(int object_handle, int column_index, string @operation, global::QueryCat.Plugins.Sdk.VariantValue? @value) : this()
         {
           this.ObjectHandle = object_handle;
-          this.ColumnName = column_name;
+          this.ColumnIndex = column_index;
           this.Operation = @operation;
           this.Value = @value;
         }
@@ -4565,7 +4565,7 @@ namespace QueryCat.Plugins.Sdk
           try
           {
             bool isset_object_handle = false;
-            bool isset_column_name = false;
+            bool isset_column_index = false;
             bool isset_operation = false;
             bool isset_value = false;
             TField field;
@@ -4592,10 +4592,10 @@ namespace QueryCat.Plugins.Sdk
                   }
                   break;
                 case 2:
-                  if (field.Type == TType.String)
+                  if (field.Type == TType.I32)
                   {
-                    ColumnName = await iprot.ReadStringAsync(cancellationToken);
-                    isset_column_name = true;
+                    ColumnIndex = await iprot.ReadI32Async(cancellationToken);
+                    isset_column_index = true;
                   }
                   else
                   {
@@ -4638,7 +4638,7 @@ namespace QueryCat.Plugins.Sdk
             {
               throw new TProtocolException(TProtocolException.INVALID_DATA);
             }
-            if (!isset_column_name)
+            if (!isset_column_index)
             {
               throw new TProtocolException(TProtocolException.INVALID_DATA);
             }
@@ -4671,15 +4671,12 @@ namespace QueryCat.Plugins.Sdk
             await oprot.WriteFieldBeginAsync(tmp446, cancellationToken);
             await oprot.WriteI32Async(ObjectHandle, cancellationToken);
             await oprot.WriteFieldEndAsync(cancellationToken);
-            if((ColumnName != null))
-            {
-              tmp446.Name = "column_name";
-              tmp446.Type = TType.String;
-              tmp446.ID = 2;
-              await oprot.WriteFieldBeginAsync(tmp446, cancellationToken);
-              await oprot.WriteStringAsync(ColumnName, cancellationToken);
-              await oprot.WriteFieldEndAsync(cancellationToken);
-            }
+            tmp446.Name = "column_index";
+            tmp446.Type = TType.I32;
+            tmp446.ID = 2;
+            await oprot.WriteFieldBeginAsync(tmp446, cancellationToken);
+            await oprot.WriteI32Async(ColumnIndex, cancellationToken);
+            await oprot.WriteFieldEndAsync(cancellationToken);
             if((Operation != null))
             {
               tmp446.Name = "operation";
@@ -4712,7 +4709,7 @@ namespace QueryCat.Plugins.Sdk
           if (that is not RowsSet_SetKeyColumnValue_args other) return false;
           if (ReferenceEquals(this, other)) return true;
           return global::System.Object.Equals(ObjectHandle, other.ObjectHandle)
-            && global::System.Object.Equals(ColumnName, other.ColumnName)
+            && global::System.Object.Equals(ColumnIndex, other.ColumnIndex)
             && global::System.Object.Equals(Operation, other.Operation)
             && global::System.Object.Equals(Value, other.Value);
         }
@@ -4721,10 +4718,7 @@ namespace QueryCat.Plugins.Sdk
           int hashcode = 157;
           unchecked {
             hashcode = (hashcode * 397) + ObjectHandle.GetHashCode();
-            if((ColumnName != null))
-            {
-              hashcode = (hashcode * 397) + ColumnName.GetHashCode();
-            }
+            hashcode = (hashcode * 397) + ColumnIndex.GetHashCode();
             if((Operation != null))
             {
               hashcode = (hashcode * 397) + Operation.GetHashCode();
@@ -4742,11 +4736,8 @@ namespace QueryCat.Plugins.Sdk
           var tmp447 = new StringBuilder("RowsSet_SetKeyColumnValue_args(");
           tmp447.Append(", ObjectHandle: ");
           ObjectHandle.ToString(tmp447);
-          if((ColumnName != null))
-          {
-            tmp447.Append(", ColumnName: ");
-            ColumnName.ToString(tmp447);
-          }
+          tmp447.Append(", ColumnIndex: ");
+          ColumnIndex.ToString(tmp447);
           if((Operation != null))
           {
             tmp447.Append(", Operation: ");

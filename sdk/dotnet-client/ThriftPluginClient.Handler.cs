@@ -243,7 +243,7 @@ public partial class ThriftPluginClient
             {
                 var result = rowsInputKeys.GetKeyColumns()
                     .Select(c => new KeyColumn(
-                        c.ColumnName,
+                        c.ColumnIndex,
                         c.IsRequired,
                         c.GetOperations().Select(o => o.ToString()).ToList())
                     );
@@ -253,7 +253,7 @@ public partial class ThriftPluginClient
         }
 
         /// <inheritdoc />
-        public Task RowsSet_SetKeyColumnValueAsync(int object_handle, string column_name, string operation, VariantValue? value,
+        public Task RowsSet_SetKeyColumnValueAsync(int object_handle, int column_index, string operation, VariantValue? value,
             CancellationToken cancellationToken = default)
         {
             if (value != null
@@ -261,7 +261,7 @@ public partial class ThriftPluginClient
                 && rowsInput != null
                 && rowsInput is IRowsInputKeys rowsInputKeys)
             {
-                rowsInputKeys.SetKeyColumnValue(column_name, SdkConvert.Convert(value),
+                rowsInputKeys.SetKeyColumnValue(column_index, SdkConvert.Convert(value),
                     Enum.Parse<Backend.Core.Types.VariantValue.Operation>(operation));
             }
             return Task.CompletedTask;
@@ -493,12 +493,12 @@ public partial class ThriftPluginClient
         }
 
         /// <inheritdoc />
-        public Task RowsSet_SetKeyColumnValueAsync(int object_handle, string column_name, string operation, VariantValue? value,
+        public Task RowsSet_SetKeyColumnValueAsync(int object_handle, int column_index, string operation, VariantValue? value,
             CancellationToken cancellationToken = default)
         {
             try
             {
-                return _handler.RowsSet_SetKeyColumnValueAsync(object_handle, column_name, operation, value, cancellationToken);
+                return _handler.RowsSet_SetKeyColumnValueAsync(object_handle, column_index, operation, value, cancellationToken);
             }
             catch (Exception ex)
             {

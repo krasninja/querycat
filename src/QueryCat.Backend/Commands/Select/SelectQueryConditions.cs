@@ -23,7 +23,7 @@ internal sealed class SelectQueryConditions : IEnumerable<SelectQueryCondition>
     {
         foreach (var condition in Conditions)
         {
-            if (rowsInputKeys.FindKeyColumn(condition.Column.Name, condition.Operation) != null)
+            if (rowsInputKeys.FindKeyColumn(condition.Column, condition.Operation) != null)
             {
                 yield return condition;
             }

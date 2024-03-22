@@ -12,14 +12,28 @@ public class EnumerableRowsInput<TClass> : RowsInput, IRowsInputKeys, IDisposabl
     private readonly ClassRowsFrameBuilder<TClass> _builder = new();
 
     private readonly List<KeyColumn> _keyColumns = new();
-    private readonly Dictionary<KeyColumn, VariantValue> _setKeyColumns = new();
+
+    private sealed class KeyColumnValue
+    {
+        public KeyColumn KeyColumn { get; }
+
+        public VariantValue Value { get; set; }
+
+        public KeyColumnValue(KeyColumn keyColumn, VariantValue value = default)
+        {
+            KeyColumn = keyColumn;
+            Value = value;
+        }
+    }
+
+    private KeyColumnValue[][] _setKeyColumns = Array.Empty<KeyColumnValue[]>();
 
     protected IEnumerator<TClass>? Enumerator { get; set; }
 
     /// <summary>
     /// Is <c>true</c> if user set all key columns in his query.
     /// </summary>
-    public bool AreAllKeyColumnsSet => _keyColumns.Count == _setKeyColumns.Count;
+    public bool AreAllKeyColumnsSet => _keyColumns.Count == _setKeyColumns.Length;
 
     protected ClassRowsFrameBuilder<TClass> Builder => _builder;
 
@@ -39,6 +53,23 @@ public class EnumerableRowsInput<TClass> : RowsInput, IRowsInputKeys, IDisposabl
         Enumerator = enumerable.GetEnumerator();
     }
 
+    private void InitializeKeyColumns(bool force = false)
+    {
+        if (_setKeyColumns.Length == Columns.Length && !force)
+        {
+            return;
+        }
+
+        _setKeyColumns = new KeyColumnValue[Columns.Length][];
+        for (var i = 0; i < Columns.Length; i++)
+        {
+            _setKeyColumns[i] = _keyColumns
+                .Where(kc => kc.ColumnIndex == i)
+                .Select(kc => new KeyColumnValue(kc))
+                .ToArray();
+        }
+    }
+
     /// <inheritdoc />
     public override void Open()
     {
@@ -53,7 +84,7 @@ public class EnumerableRowsInput<TClass> : RowsInput, IRowsInputKeys, IDisposabl
     /// <inheritdoc />
     public override void Reset()
     {
-        _setKeyColumns.Clear();
+        _setKeyColumns = Array.Empty<KeyColumnValue[]>();
         Close();
         base.Reset();
     }
@@ -75,6 +106,7 @@ public class EnumerableRowsInput<TClass> : RowsInput, IRowsInputKeys, IDisposabl
     public override bool ReadNext()
     {
         base.ReadNext();
+        InitializeKeyColumns();
         if (Enumerator == null)
         {
             return false;
@@ -88,10 +120,11 @@ public class EnumerableRowsInput<TClass> : RowsInput, IRowsInputKeys, IDisposabl
     public IReadOnlyList<KeyColumn> GetKeyColumns() => _keyColumns;
 
     /// <inheritdoc />
-    public virtual void SetKeyColumnValue(string columnName, VariantValue value, VariantValue.Operation operation)
+    public virtual void SetKeyColumnValue(int columnIndex, VariantValue value, VariantValue.Operation operation)
     {
-        var keyColumn = GetKeyColumnData(columnName, operation);
-        _setKeyColumns[keyColumn] = value;
+        InitializeKeyColumns();
+        var kcv = _setKeyColumns[columnIndex].First(kc => kc.KeyColumn.ContainsOperation(operation));
+        kcv.Value = value;
     }
 
     #endregion
@@ -106,8 +139,9 @@ public class EnumerableRowsInput<TClass> : RowsInput, IRowsInputKeys, IDisposabl
     /// <returns>Value or null.</returns>
     public VariantValue GetKeyColumnValue(string columnName, VariantValue.Operation? operation = null)
     {
-        var keyColumn = GetKeyColumnData(columnName, operation);
-        return _setKeyColumns.GetValueOrDefault(keyColumn, VariantValue.Null);
+        var columnIndex = this.GetColumnIndexByName(columnName);
+        var keyValue = GetKeyColumn(_setKeyColumns[columnIndex], operation);
+        return keyValue?.Value ?? VariantValue.Null;
     }
 
     /// <summary>
@@ -119,24 +153,30 @@ public class EnumerableRowsInput<TClass> : RowsInput, IRowsInputKeys, IDisposabl
     /// <returns><c>True</c> if found, <c>false</c> otherwise.</returns>
     public bool TryGetKeyColumnValue(string columnName, VariantValue.Operation? operation, out VariantValue value)
     {
-        var keyColumn = GetKeyColumnData(columnName, operation);
-        return _setKeyColumns.TryGetValue(keyColumn, out value);
+        var columnIndex = this.GetColumnIndexByName(columnName);
+        if (columnIndex < 0)
+        {
+            value = VariantValue.Null;
+            return false;
+        }
+        var keyValue = GetKeyColumn(_setKeyColumns[columnIndex], operation);
+        if (keyValue == null)
+        {
+            value = VariantValue.Null;
+            return false;
+        }
+        value = keyValue.Value;
+        return true;
     }
 
-    private KeyColumn GetKeyColumnData(
-        string columnName,
+    private KeyColumnValue? GetKeyColumn(
+        KeyColumnValue[] keyColumnValues,
         VariantValue.Operation? operation = null,
         VariantValue.Operation? orOperation = null)
     {
-        var keyColumn = _keyColumns.Find(c =>
-            (operation == null || c.ContainsOperation(operation.Value))
-            && (orOperation == null || c.ContainsOperation(orOperation.Value))
-            && Column.NameEquals(c.ColumnName, columnName));
-        if (keyColumn == null)
-        {
-            throw new QueryCatException(string.Format(Resources.Errors.CannotFindColumn, columnName));
-        }
-        return keyColumn;
+        return keyColumnValues.FirstOrDefault(c =>
+            (operation == null || c.KeyColumn.ContainsOperation(operation.Value))
+            && (orOperation == null || c.KeyColumn.ContainsOperation(orOperation.Value)));
     }
 
     protected void AddKeyColumns(IReadOnlyCollection<KeyColumn> keyColumns) => _keyColumns.AddRange(keyColumns);

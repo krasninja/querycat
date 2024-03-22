@@ -116,14 +116,10 @@ internal sealed class SelectCommandContext(SelectQueryNode queryNode) : CommandC
             }
             foreach (var keyColumn in inputKeys.GetKeyColumns())
             {
-                var column = inputKeys.GetColumnByName(keyColumn.ColumnName);
-                if (column == null)
-                {
-                    throw new QueryCatException($"Cannot find key column '{keyColumn.ColumnName}'.");
-                }
+                var column = inputKeys.Columns[keyColumn.ColumnIndex];
                 var matchConditions = Conditions
                     .Where(c =>
-                        Column.NameEquals(c.Column, keyColumn.ColumnName)
+                        c.Column == column
                         && column.SourceName == inputContext.Alias
                         && keyColumn.ContainsOperation(c.Operation))
                     .ToArray();

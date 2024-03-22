@@ -109,7 +109,7 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys
             {
                 return (await _client.RowsSet_GetKeyColumnsAsync(_objectHandle, ct))
                     .Select(c => new KeyColumn(
-                        c.Name,
+                        c.ColumnIndex,
                         c.IsRequired,
                         (c.Operations ?? new List<string>()).Select(Enum.Parse<VariantValue.Operation>).ToArray()
                     ));
@@ -119,10 +119,10 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys
     }
 
     /// <inheritdoc />
-    public void SetKeyColumnValue(string columnName, VariantValue value, VariantValue.Operation operation)
+    public void SetKeyColumnValue(int columnIndex, VariantValue value, VariantValue.Operation operation)
     {
         AsyncUtils.RunSync(ct =>
-            _client.RowsSet_SetKeyColumnValueAsync(_objectHandle, columnName, operation.ToString(), SdkConvert.Convert(value), ct));
+            _client.RowsSet_SetKeyColumnValueAsync(_objectHandle, columnIndex, operation.ToString(), SdkConvert.Convert(value), ct));
     }
 
     /// <inheritdoc />
