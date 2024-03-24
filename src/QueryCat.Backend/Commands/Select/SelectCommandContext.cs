@@ -1,5 +1,5 @@
+using System.Diagnostics;
 using QueryCat.Backend.Ast.Nodes.Select;
-using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Utils;
@@ -11,6 +11,7 @@ namespace QueryCat.Backend.Commands.Select;
 /// <summary>
 /// Contains all necessary information to handle the query on all stages.
 /// </summary>
+[DebuggerDisplay("Id = {Id}, Iterator = {CurrentIterator}")]
 internal sealed class SelectCommandContext(SelectQueryNode queryNode) : CommandContext, IDisposable
 {
     public SelectQueryConditions Conditions { get; } = new();
@@ -106,24 +107,13 @@ internal sealed class SelectCommandContext(SelectQueryNode queryNode) : CommandC
         _inputs.Add(input);
     }
 
-    internal IEnumerable<SelectInputKeysConditions> GetConditionsColumns()
+    internal IEnumerable<SelectInputKeysConditions> GetAllConditionsColumns()
     {
         foreach (var inputContext in _inputs)
         {
-            if (inputContext.RowsInput is not IRowsInputKeys inputKeys)
+            foreach (var condition in Conditions.GetConditionsColumns(inputContext.RowsInput, inputContext.Alias))
             {
-                continue;
-            }
-            foreach (var keyColumn in inputKeys.GetKeyColumns())
-            {
-                var column = inputKeys.Columns[keyColumn.ColumnIndex];
-                var matchConditions = Conditions
-                    .Where(c =>
-                        c.Column == column
-                        && column.SourceName == inputContext.Alias
-                        && keyColumn.ContainsOperation(c.Operation))
-                    .ToArray();
-                yield return new SelectInputKeysConditions(inputKeys, column, keyColumn, matchConditions);
+                yield return condition;
             }
         }
     }

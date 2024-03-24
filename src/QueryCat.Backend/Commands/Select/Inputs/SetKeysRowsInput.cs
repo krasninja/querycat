@@ -5,61 +5,73 @@ using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Commands.Select.Inputs;
 
-internal sealed class SetKeysRowsInput : IRowsInputKeys
+internal sealed class SetKeysRowsInput : RowsInput, IRowsInputKeys
 {
+    private SelectInputKeysConditions[] _conditions = Array.Empty<SelectInputKeysConditions>();
     private readonly IRowsInputKeys _rowsInput;
-    private readonly SelectQueryConditions _conditions;
+    private readonly SelectQueryConditions _selectQueryConditions;
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(SetKeysRowsInput));
 
     /// <inheritdoc />
-    public QueryContext QueryContext
+    public override QueryContext QueryContext
     {
         get => _rowsInput.QueryContext;
         set => _rowsInput.QueryContext = value;
     }
 
     /// <inheritdoc />
-    public Column[] Columns => _rowsInput.Columns;
+    public override Column[] Columns { get; protected set; }
 
-    /// <inheritdoc />
-    public string[] UniqueKey => _rowsInput.UniqueKey;
+    public IRowsInputKeys InnerRowsInput => _rowsInput;
 
     public SetKeysRowsInput(IRowsInputKeys rowsInput, SelectQueryConditions conditions)
     {
+        Columns = rowsInput.Columns;
         _rowsInput = rowsInput;
-        _conditions = conditions;
+        _selectQueryConditions = conditions;
     }
 
     /// <inheritdoc />
-    public void Open() => _rowsInput.Open();
+    public override void Open() => _rowsInput.Open();
 
     /// <inheritdoc />
-    public void Close() => _rowsInput.Close();
+    public override void Close() => _rowsInput.Close();
 
     /// <inheritdoc />
-    public void Reset() => _rowsInput.Reset();
-
-    /// <inheritdoc />
-    public ErrorCode ReadValue(int columnIndex, out VariantValue value) => _rowsInput.ReadValue(columnIndex, out value);
-
-    /// <inheritdoc />
-    public bool ReadNext()
+    public override void Reset()
     {
-        foreach (var inputKeyCondition in _conditions)
+        _rowsInput.Reset();
+    }
+
+    /// <inheritdoc />
+    public override ErrorCode ReadValue(int columnIndex, out VariantValue value) => _rowsInput.ReadValue(columnIndex, out value);
+
+    /// <inheritdoc />
+    public override bool ReadNext()
+    {
+        base.ReadNext();
+
+        foreach (var condition in _conditions)
         {
-            var columnIndex = Array.IndexOf(Columns, inputKeyCondition.Column);
-            if (columnIndex == -1)
+            foreach (var inputKeyCondition in condition.Conditions)
             {
-                continue;
+                var value = inputKeyCondition.ValueFunc.Invoke();
+                _rowsInput.SetKeyColumnValue(condition.KeyColumn.ColumnIndex, value, inputKeyCondition.Operation);
             }
-            var value = inputKeyCondition.ValueFunc.Invoke();
-            _rowsInput.SetKeyColumnValue(columnIndex, value, inputKeyCondition.Operation);
         }
+
         return _rowsInput.ReadNext();
     }
 
     /// <inheritdoc />
-    public void Explain(IndentedStringBuilder stringBuilder)
+    protected override void Load()
+    {
+        _conditions = _selectQueryConditions.GetConditionsColumns(_rowsInput).ToArray();
+        base.Load();
+    }
+
+    /// <inheritdoc />
+    public override void Explain(IndentedStringBuilder stringBuilder)
     {
         stringBuilder.AppendRowsInputsWithIndent("SetKeys", _rowsInput);
     }

@@ -12,7 +12,7 @@ public abstract class RowsInput : IRowsInput
     /// <summary>
     /// Query context.
     /// </summary>
-    public QueryContext QueryContext { get; set; } = NullQueryContext.Instance;
+    public virtual QueryContext QueryContext { get; set; } = NullQueryContext.Instance;
 
     /// <inheritdoc />
     public abstract Column[] Columns { get; protected set; }

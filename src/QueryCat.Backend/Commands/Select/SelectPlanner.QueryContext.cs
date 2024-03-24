@@ -185,11 +185,12 @@ internal sealed partial class SelectPlanner
     /// </summary>
     private void QueryContext_ValidateKeyColumnsValues(SelectCommandContext context)
     {
-        foreach (var keyCondition in context.GetConditionsColumns())
+        foreach (var keyCondition in context.GetAllConditionsColumns())
         {
             if (keyCondition.KeyColumn.IsRequired && keyCondition.Conditions.Length < 1)
             {
-                throw new QueryContextMissedCondition(keyCondition.KeyColumn.ColumnIndex.ToString(), keyCondition.KeyColumn.GetOperations());
+                var column = keyCondition.RowsInput.Columns[keyCondition.KeyColumn.ColumnIndex];
+                throw new QueryContextMissedCondition(column.FullName, keyCondition.KeyColumn.GetOperations());
             }
         }
     }
