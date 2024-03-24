@@ -29,6 +29,7 @@ internal sealed class CacheRowsInput : IRowsInputKeys
     private bool _resetRequested;
     private bool _isOpened;
     private QueryContext _queryContext;
+    private readonly string _innerRowsInputType;
 
     /// <inheritdoc />
     public Column[] Columns => _rowsInput.Columns;
@@ -58,6 +59,7 @@ internal sealed class CacheRowsInput : IRowsInputKeys
     public CacheRowsInput(IRowsInput rowsInput, SelectQueryConditions? conditions = null)
     {
         _rowsInput = rowsInput;
+        _innerRowsInputType = GetRowsInputId(_rowsInput);
         _conditions = conditions ?? new SelectQueryConditions();
         _cacheReadMap = Array.Empty<bool>();
         _queryContext = rowsInput.QueryContext;
@@ -181,7 +183,7 @@ internal sealed class CacheRowsInput : IRowsInputKeys
         if (_resetRequested || _currentCacheEntry == null)
         {
             _resetRequested = false;
-            var newCacheKey = CreateCacheKey(_rowsInput, _queryContext, _conditions);
+            var newCacheKey = CreateCacheKey(_innerRowsInputType, _rowsInput, _queryContext, _conditions);
             if (_currentCacheEntry != null)
             {
                 // If we reset but persist the same key - just go ahead using existing input.
@@ -205,16 +207,16 @@ internal sealed class CacheRowsInput : IRowsInputKeys
         }
 
 #if DEBUG
-        var keyForCheck = CreateCacheKey(_rowsInput, _queryContext, _conditions);
+        var keyForCheck = CreateCacheKey(_innerRowsInputType, _rowsInput, _queryContext, _conditions);
         Debug.Assert(keyForCheck == _currentCacheEntry.Key, "Cache key has been changed!");
 #endif
         return _currentCacheEntry;
     }
 
-    private static CacheKey CreateCacheKey(IRowsInput rowsInput, QueryContext queryContext, SelectQueryConditions conditions)
+    private static CacheKey CreateCacheKey(string from, IRowsInput rowsInput, QueryContext queryContext, SelectQueryConditions conditions)
     {
         return new CacheKey(
-            from: rowsInput.GetType().Name,
+            from: from,
             inputArguments: rowsInput.UniqueKey,
             selectColumns: queryContext.QueryInfo.Columns.Select(c => c.Name).ToArray(),
             conditions: rowsInput is IRowsInputKeys rowsInputKeys
@@ -222,6 +224,15 @@ internal sealed class CacheRowsInput : IRowsInputKeys
                 : null,
             offset: queryContext.QueryInfo.Offset,
             limit: queryContext.QueryInfo.Limit);
+    }
+
+    private static string GetRowsInputId(IRowsInput rowsInput)
+    {
+        if (rowsInput is SetKeysRowsInput setKeysRowsInput)
+        {
+            return setKeysRowsInput.InnerRowsInput.GetType().Name;
+        }
+        return rowsInput.GetType().Name;
     }
 
     /// <inheritdoc />
