@@ -74,7 +74,7 @@ internal sealed class SelectQueryConditions : IEnumerable<SelectQueryCondition>
             // Straight conditions check.
             var matchConditions = relatedConditions.Where(c => keyColumn.ContainsOperation(c.Operation)).ToArray();
 
-            // The special condition for equals check. For example, input contains key column date with ">=" and "<=" conditions.
+            // The special condition for equals check. For example, input contains key column "date" with ">=" and "<=" conditions.
             // But the query is called like "date = now()". Instead of fail we convert it into "date >= now() AND date <= now()".
             if (matchConditions.Length == 0)
             {
@@ -86,6 +86,21 @@ internal sealed class SelectQueryConditions : IEnumerable<SelectQueryCondition>
                     [
                         new(column, VariantValue.Operation.GreaterOrEquals, equalsCondition.ValueFuncs),
                         new(column, VariantValue.Operation.LessOrEquals, equalsCondition.ValueFuncs),
+                    ];
+                }
+            }
+
+            // The special condition for equals check. For example, input contains key column "id" with equals condition.
+            // But the query is called like "id in (1, 2, 3)'. Instead, we should "rewrite" the query to call it 3 times with
+            // keys 1, 2 and 3.
+            if (matchConditions.Length == 0)
+            {
+                var inCondition = relatedConditions.FirstOrDefault(c => c.Operation == VariantValue.Operation.In);
+                if (inCondition != null && keyColumn.ContainsOperation(VariantValue.Operation.Equals))
+                {
+                    matchConditions =
+                    [
+                        new(column, VariantValue.Operation.Equals, inCondition.ValueFuncs),
                     ];
                 }
             }

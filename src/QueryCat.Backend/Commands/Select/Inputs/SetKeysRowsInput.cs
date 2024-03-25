@@ -7,9 +7,15 @@ namespace QueryCat.Backend.Commands.Select.Inputs;
 
 internal sealed class SetKeysRowsInput : RowsInput, IRowsInputKeys
 {
-    private SelectInputKeysConditions[] _conditions = Array.Empty<SelectInputKeysConditions>();
+    private record struct ConditionJoint(SelectQueryCondition Condition, int ColumnIndex);
+
+    private ConditionJoint[] _conditions = Array.Empty<ConditionJoint>();
     private readonly IRowsInputKeys _rowsInput;
     private readonly SelectQueryConditions _selectQueryConditions;
+    private bool _keysFilled;
+    private int _currentFuncValueIndex = -1;
+    // Special mode for "WHERE id IN (x, y, z)" condition.
+    private bool _multipleRowsMode;
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(SetKeysRowsInput));
 
     /// <inheritdoc />
@@ -40,6 +46,8 @@ internal sealed class SetKeysRowsInput : RowsInput, IRowsInputKeys
     /// <inheritdoc />
     public override void Reset()
     {
+        _currentFuncValueIndex = -1;
+        _keysFilled = false;
         _rowsInput.Reset();
     }
 
@@ -51,22 +59,73 @@ internal sealed class SetKeysRowsInput : RowsInput, IRowsInputKeys
     {
         base.ReadNext();
 
-        foreach (var condition in _conditions)
+        if (!_keysFilled)
         {
-            foreach (var inputKeyCondition in condition.Conditions)
+            FillKeys();
+            _keysFilled = true;
+        }
+
+        var hasData = _rowsInput.ReadNext();
+
+        // We need to repeat "ReadNext" call in case of multiple func values.
+        if (_multipleRowsMode && !hasData)
+        {
+            _rowsInput.Reset();
+            hasData = FillKeys();
+            if (!hasData)
             {
-                var value = inputKeyCondition.ValueFunc.Invoke();
-                _rowsInput.SetKeyColumnValue(condition.KeyColumn.ColumnIndex, value, inputKeyCondition.Operation);
+                return false;
+            }
+            hasData = _rowsInput.ReadNext();
+        }
+
+        return hasData;
+    }
+
+    private bool FillKeys()
+    {
+        if (_multipleRowsMode)
+        {
+            _currentFuncValueIndex++;
+            var valueFuncs = _conditions[0].Condition.ValueFuncs;
+            if (_currentFuncValueIndex >= valueFuncs.Count)
+            {
+                return false;
+            }
+            var value = valueFuncs[_currentFuncValueIndex].Invoke();
+            _rowsInput.SetKeyColumnValue(_conditions[0].ColumnIndex, value, _conditions[0].Condition.Operation);
+        }
+        else
+        {
+            foreach (var conditionJoint in _conditions)
+            {
+                var value = conditionJoint.Condition.ValueFunc.Invoke();
+                _rowsInput.SetKeyColumnValue(conditionJoint.ColumnIndex, value, conditionJoint.Condition.Operation);
             }
         }
 
-        return _rowsInput.ReadNext();
+        return true;
     }
 
     /// <inheritdoc />
     protected override void Load()
     {
-        _conditions = _selectQueryConditions.GetConditionsColumns(_rowsInput).ToArray();
+        // Find all related conditions.
+        var list = new List<ConditionJoint>();
+        foreach (var condition in _selectQueryConditions.GetConditionsColumns(_rowsInput))
+        {
+            foreach (var inputKeyCondition in condition.Conditions)
+            {
+                list.Add(new ConditionJoint(inputKeyCondition, condition.KeyColumn.ColumnIndex));
+            }
+        }
+        _conditions = list.ToArray();
+
+        // Special mode for "WHERE id IN (x, y, z)" condition.
+        _multipleRowsMode = _conditions.Length == 1
+            && _conditions[0].Condition.Operation == VariantValue.Operation.Equals
+            && _conditions[0].Condition.ValueFuncs.Count > 1;
+
         base.Load();
     }
 

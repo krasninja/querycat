@@ -22,6 +22,8 @@ public sealed class ItStocksRowsInput : FetchRowsInput<Stock>
         new Stock("AMD", "Advanced Micro Devices, Inc.", 191.06m),
         new Stock("INTC", "Intel Corp", 42.64m),
         new Stock("TSLA", "Tesla Inc", 163.57m),
+        new Stock("BABA", "Alibaba Group Holdings Ltd ADR", 72.12m),
+        new Stock("LNVGY", "Lenovo Group Limited", 24.85m),
     ];
 
     /// <inheritdoc />
