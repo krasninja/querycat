@@ -197,13 +197,12 @@ public sealed partial class ThriftPluginsServer : IDisposable
     {
         if (!_authTokens.TryGetValue(authToken, out var authTokenData))
         {
-            throw new InvalidOperationException(
-                $"Token '{authToken}' is not registered, did you call {nameof(RegisterAuthToken)}?");
+            throw new InvalidOperationException(string.Format(Resources.Errors.TokenNotRegistered, authToken));
         }
         _logger.LogTrace("Waiting for token activation '{Token}'.", authToken);
         if (!authTokenData.Semaphore.Wait(TimeSpan.FromSeconds(PluginRegistrationTimeoutSeconds), cancellationToken))
         {
-            throw new PluginException($"Plugin '{authToken}' registration timeout.");
+            throw new PluginException(string.Format(Resources.Errors.TokenRegistrationTimeout, authToken));
         }
         _authTokens.Remove(authToken, out _);
         authTokenData.Semaphore.Dispose();

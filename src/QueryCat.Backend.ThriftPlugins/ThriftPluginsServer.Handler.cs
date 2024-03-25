@@ -81,7 +81,7 @@ public partial class ThriftPluginsServer
                 {
                     _thriftPluginsServer._logger.LogDebug("Available tokens:\n" + _thriftPluginsServer.DumpAuthTokens());
                 }
-                throw new QueryCatPluginException(ErrorType.INVALID_AUTH_TOKEN, Messages.InvalidToken);
+                throw new QueryCatPluginException(ErrorType.INVALID_AUTH_TOKEN, Resources.Errors.InvalidToken);
             }
 
             // Create plugin context, init and add it to a list.
@@ -224,7 +224,7 @@ public partial class ThriftPluginsServer
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, Messages.HandlerInternalError);
+                _logger.LogError(ex, Resources.Errors.HandlerInternalError);
                 throw QueryCatPluginExceptionUtils.Create(ex);
             }
         }
@@ -239,7 +239,7 @@ public partial class ThriftPluginsServer
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, Messages.HandlerInternalError);
+                _logger.LogError(ex, Resources.Errors.HandlerInternalError);
                 throw QueryCatPluginExceptionUtils.Create(ex);
             }
         }
@@ -254,7 +254,7 @@ public partial class ThriftPluginsServer
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, Messages.HandlerInternalError);
+                _logger.LogError(ex, Resources.Errors.HandlerInternalError);
                 throw QueryCatPluginExceptionUtils.Create(ex);
             }
         }
@@ -268,7 +268,7 @@ public partial class ThriftPluginsServer
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, Messages.HandlerInternalError);
+                _logger.LogError(ex, Resources.Errors.HandlerInternalError);
                 throw QueryCatPluginExceptionUtils.Create(ex);
             }
         }
@@ -282,7 +282,7 @@ public partial class ThriftPluginsServer
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, Messages.HandlerInternalError);
+                _logger.LogError(ex, Resources.Errors.HandlerInternalError);
                 throw QueryCatPluginExceptionUtils.Create(ex);
             }
         }
@@ -296,7 +296,7 @@ public partial class ThriftPluginsServer
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, Messages.HandlerInternalError);
+                _logger.LogError(ex, Resources.Errors.HandlerInternalError);
                 throw QueryCatPluginExceptionUtils.Create(ex);
             }
         }

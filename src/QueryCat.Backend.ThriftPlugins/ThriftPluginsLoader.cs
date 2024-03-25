@@ -246,7 +246,7 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         var pluginContext = GetContextByFile(file);
         if (pluginContext == null)
         {
-            throw new InvalidOperationException($"Cannot get plugin context for file '{file}'.");
+            throw new InvalidOperationException(string.Format(Resources.Errors.CannotGetPluginContext, file));
         }
         return pluginContext;
     }
@@ -339,7 +339,7 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
             handle = NativeLibrary.Load(file);
             if (!NativeLibrary.TryGetExport(handle, ThriftPluginClient.PluginMainFunctionName, out var mainAddress))
             {
-                throw new PluginException(Messages.CannotGetLibraryAddress);
+                throw new PluginException(Resources.Errors.CannotGetLibraryAddress);
             }
 
             // Call DLL plugin method.
@@ -486,11 +486,11 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
     {
         if (result.Object == null)
         {
-            throw new InvalidOperationException("No object.");
+            throw new InvalidOperationException(Resources.Errors.NoObject);
         }
         if (context.Client == null)
         {
-            throw new InvalidOperationException("No connection.");
+            throw new InvalidOperationException(Resources.Errors.NoConnection);
         }
         if (result.Object.Type == ObjectType.ROWS_INPUT || result.Object.Type == ObjectType.ROWS_ITERATOR)
         {
@@ -510,7 +510,7 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         {
             return new StreamBlobData(() => new RemoteStream(result.Object.Handle, context.Client));
         }
-        throw new PluginException($"Cannot create object. Type = {result.Object.Type}.");
+        throw new PluginException(string.Format(Resources.Errors.CannotCreateObject, result.Object.Type));
     }
 
     #region Cache

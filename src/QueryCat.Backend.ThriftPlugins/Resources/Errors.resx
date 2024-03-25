@@ -27,4 +27,22 @@
   <data name="CannotGetLibraryAddress" xml:space="preserve">
     <value>Cannot get address of the plugin main function.</value>
   </data>
+  <data name="NoObject" xml:space="preserve">
+    <value>No object.</value>
+  </data>
+  <data name="NoConnection" xml:space="preserve">
+    <value>No connection.</value>
+  </data>
+  <data name="CannotCreateObject" xml:space="preserve">
+    <value>Cannot create object. Type '{0}'.</value>
+  </data>
+  <data name="CannotGetPluginContext" xml:space="preserve">
+    <value>Cannot get plugin context for file '{0}'.</value>
+  </data>
+  <data name="TokenNotRegistered" xml:space="preserve">
+    <value>Token '{0}' is not registered, did you call 'RegisterAuthToken'?</value>
+  </data>
+  <data name="TokenRegistrationTimeout" xml:space="preserve">
+    <value>Token '{0}' registration timeout.</value>
+  </data>
 </root>
