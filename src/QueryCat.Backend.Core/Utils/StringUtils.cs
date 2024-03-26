@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 
 namespace QueryCat.Backend.Core.Utils;
@@ -8,6 +9,9 @@ namespace QueryCat.Backend.Core.Utils;
 internal static class StringUtils
 {
     private const string QuoteChar = "\"";
+    private static readonly SimpleObjectPool<StringBuilder> _stringBuilderPool = new(
+        createFunc: () => new StringBuilder(),
+        beforeReturn: sb => sb.Clear());
 
     /// <summary>
     /// Quote the specified string. If string doesn't contain the quote character
@@ -28,12 +32,14 @@ internal static class StringUtils
         {
             return target;
         }
-        var sb = new StringBuilder(target.Length + 2)
+        var sb = _stringBuilderPool.Get()
             .Append(quote)
             .Append(target)
             .Replace(quote, quote + quote, 1, target.Length)
             .Append(quote);
-        return sb.ToString();
+        var result = sb.ToString();
+        _stringBuilderPool.Return(sb);
+        return result;
     }
 
     /// <summary>
@@ -48,10 +54,12 @@ internal static class StringUtils
         {
             return target;
         }
-        var sb = new StringBuilder(target.Length)
+        var sb = _stringBuilderPool.Get()
             .Append(target.Slice(1, target.Length - 2))
             .Replace(quoteChar + quoteChar, quoteChar);
-        return sb.ToString();
+        var result = sb.ToString();
+        _stringBuilderPool.Return(sb);
+        return result;
     }
 
     /// <summary>
@@ -64,7 +72,7 @@ internal static class StringUtils
     {
         var inQuote = false;
         var record = new List<string>();
-        var sb = new StringBuilder();
+        var sb = _stringBuilderPool.Get();
         var reader = new StringReader(line);
 
         while (reader.Peek() != -1)
@@ -158,6 +166,7 @@ internal static class StringUtils
             record.Add(sb.ToString());
         }
 
+        _stringBuilderPool.Return(sb);
         return record.ToArray();
     }
 
@@ -230,9 +239,10 @@ internal static class StringUtils
             return str;
         }
 
-        var sb = new StringBuilder(str.Length);
+        var sb = _stringBuilderPool.Get();
         var escapeMode = false;
-        // Based on https://github.com/coreutils/coreutils/blob/master/src/tr.c#L433 .
+        // Based on https://github.com/coreutils/coreutils/blob/master/src/tr.c#L433 and
+        // https://www.postgresql.org/docs/current/sql-syntax-lexical.html#SQL-SYNTAX-STRINGS-ESCAPE.
         for (var i = 0; i < str.Length; i++)
         {
             var ch = str[i];
@@ -277,7 +287,6 @@ internal static class StringUtils
                 case 'v':
                     sb.Append('\u000B');
                     break;
-                // Not implemented yet cases.
                 case '0':
                 case '1':
                 case '2':
@@ -286,15 +295,43 @@ internal static class StringUtils
                 case '5':
                 case '6':
                 case '7':
+                    sb.Append(char.ConvertFromUtf32(GetOctetNumberInAdvance(ref i, str)));
                     break;
                 case 'x':
+                    i++;
+                    sb.Append(char.ConvertFromUtf32(GetHexNumberInAdvance(ref i, str)));
                     break;
                 case 'u':
+                case 'U':
+                    i++;
+                    sb.Append(char.ConvertFromUtf32(GetHexNumberInAdvance(ref i, str)));
                     break;
             }
 
             escapeMode = false;
         }
-        return sb.ToString();
+        var result = sb.ToString();
+        _stringBuilderPool.Return(sb);
+        return result;
+    }
+
+    private static int GetOctetNumberInAdvance(ref int index, ReadOnlySpan<char> target)
+    {
+        var startIndex = index;
+        for (; index < target.Length && char.IsBetween(target[index], '0', '7'); index++)
+        {
+        }
+        var result = target.Slice(startIndex, index - startIndex);
+        return Convert.ToInt32(result.ToString(), 8);
+    }
+
+    private static int GetHexNumberInAdvance(ref int index, ReadOnlySpan<char> target)
+    {
+        var startIndex = index;
+        for (; index < target.Length && char.IsAsciiHexDigit(target[index]); index++)
+        {
+        }
+        var result = target.Slice(startIndex, index - startIndex);
+        return int.Parse(result, NumberStyles.HexNumber);
     }
 }

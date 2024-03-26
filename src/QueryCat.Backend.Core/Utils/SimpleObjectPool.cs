@@ -11,6 +11,7 @@ internal sealed class SimpleObjectPool<T> where T : class
     // Based on .NET implementation: https://github.com/dotnet/aspnetcore/blob/main/src/ObjectPool/src/DefaultObjectPool.cs
 
     private readonly Func<T> _createFunc;
+    private readonly Action<T>? _beforeReturn;
     private readonly int _maxCapacity;
     private int _numItems;
 
@@ -21,8 +22,10 @@ internal sealed class SimpleObjectPool<T> where T : class
     /// Creates an instance of <see cref="SimpleObjectPool{T}" />.
     /// </summary>
     /// <param name="createFunc">Object factory function.</param>
-    public SimpleObjectPool(Func<T> createFunc) : this(createFunc, Environment.ProcessorCount * 2)
+    /// <param name="beforeReturn">The action is called before return object to the pool.</param>
+    public SimpleObjectPool(Func<T> createFunc, Action<T>? beforeReturn = null) : this(createFunc, Environment.ProcessorCount * 2)
     {
+        _beforeReturn = beforeReturn;
     }
 
     /// <summary>
@@ -70,6 +73,7 @@ internal sealed class SimpleObjectPool<T> where T : class
     /// <returns>True if the object was returned to the pool.</returns>
     private bool ReturnCore(T obj)
     {
+        _beforeReturn?.Invoke(obj);
         if (_fastItem != null || Interlocked.CompareExchange(ref _fastItem, obj, null) != null)
         {
             if (Interlocked.Increment(ref _numItems) <= _maxCapacity)

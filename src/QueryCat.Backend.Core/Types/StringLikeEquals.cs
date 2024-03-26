@@ -4,7 +4,7 @@ namespace QueryCat.Backend.Core.Types;
 
 internal static class StringLikeEquals
 {
-    private static readonly SimpleObjectPool<List<char>> ListCharPool = new(() => new List<char>());
+    private static readonly SimpleObjectPool<List<char>> _listCharPool = new(() => new List<char>());
 
     /// <summary>
     /// Implements SQL LIKE pattern comparision.
@@ -23,7 +23,7 @@ internal static class StringLikeEquals
             endOfPattern = false;
         var lastWildCard = -1;
         var patternIndex = 0;
-        var set = ListCharPool.Get();
+        var set = _listCharPool.Get();
         char p = '\0';
 
         for (var i = 0; i < str.Length; i++)
@@ -157,7 +157,7 @@ internal static class StringLikeEquals
         }
 
         set.Clear();
-        ListCharPool.Return(set);
+        _listCharPool.Return(set);
         return isMatch && endOfPattern;
     }
 }
