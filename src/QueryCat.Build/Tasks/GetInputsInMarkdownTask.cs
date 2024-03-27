@@ -80,19 +80,19 @@ public class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
                 .AppendLine(inputFunction.Description)
                 .AppendLine("\n| Name | Type | Required | Description |")
                 .AppendLine("| --- | --- | --- | --- |");
-            foreach (var column in rowsInput.Columns)
+            for (var i = 0; i < rowsInput.Columns.Length; i++)
             {
+                var column = rowsInput.Columns[i];
                 if (column.IsHidden)
                 {
                     continue;
                 }
                 var inputColumn =
-                    rowsInput.GetKeyColumns().FirstOrDefault(c => Column.NameEquals(c.ColumnName, column.Name));
+                    rowsInput.GetKeyColumns().FirstOrDefault(c => rowsInput.Columns[c.ColumnIndex] == column);
                 if (inputColumn == null)
                 {
-                    inputColumn = new KeyColumn(column.Name);
+                    inputColumn = new KeyColumn(i);
                 }
-                var operations = string.Join(", ", inputColumn.Operations.Select(o => $"`{o}`"));
                 sb.AppendLine($"| `{column.Name}` | `{column.DataType}` | {(inputColumn.IsRequired ? "yes" : string.Empty)} | {column.Description} |");
             }
         }

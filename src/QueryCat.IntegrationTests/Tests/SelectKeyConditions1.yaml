@@ -1,0 +1,4 @@
+expected: |
+  NVDA,NVIDIA Corp
+query: |
+  SELECT id, name FROM it_stocks() where id = 'NVDA';

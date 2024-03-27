@@ -40,8 +40,11 @@ internal class PluginDebugCommand : BaseQueryCommand
             using var thread = new ExecutionThreadBootstrapper(options)
                 .WithConfigStorage(new PersistentInputConfigStorage(
                     Path.Combine(ExecutionThread.GetApplicationDirectory(), ApplicationOptions.ConfigFileName)))
-                .WithPluginsLoader(th => new ThriftPluginsLoader(th, applicationOptions.PluginDirectories,
-                    serverPipeName: ThriftPluginClient.TestPipeName)
+                .WithPluginsLoader(th => new ThriftPluginsLoader(
+                    th,
+                    applicationOptions.PluginDirectories,
+                    serverPipeName: ThriftPluginClient.TestPipeName,
+                    debugMode: true)
                 {
                     ForceAuthToken = ThriftPluginClient.TestAuthToken,
                     SkipPluginsExecution = true,

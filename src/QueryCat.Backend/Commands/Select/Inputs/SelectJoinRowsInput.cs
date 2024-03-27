@@ -187,15 +187,15 @@ internal sealed class SelectJoinRowsInput : IRowsInputKeys, IRowsIteratorParent
     }
 
     /// <inheritdoc />
-    public void SetKeyColumnValue(string columnName, VariantValue value, VariantValue.Operation operation)
+    public void SetKeyColumnValue(int columnIndex, VariantValue value, VariantValue.Operation operation)
     {
         if (_leftInput is IRowsInputKeys leftInputKeys)
         {
-            leftInputKeys.SetKeyColumnValue(columnName, value, operation);
+            leftInputKeys.SetKeyColumnValue(columnIndex, value, operation);
         }
         if (_rightInput is IRowsInputKeys rightInputKeys)
         {
-            rightInputKeys.SetKeyColumnValue(columnName, value, operation);
+            rightInputKeys.SetKeyColumnValue(columnIndex, value, operation);
         }
     }
 

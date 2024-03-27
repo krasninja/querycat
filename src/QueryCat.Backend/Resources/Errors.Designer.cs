@@ -194,5 +194,11 @@ namespace QueryCat.Backend.Resources {
                 return ResourceManager.GetString("InvalidField", resourceCulture);
             }
         }
+        
+        internal static string NotSupported {
+            get {
+                return ResourceManager.GetString("NotSupported", resourceCulture);
+            }
+        }
     }
 }

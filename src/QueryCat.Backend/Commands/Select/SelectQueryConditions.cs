@@ -23,7 +23,7 @@ internal sealed class SelectQueryConditions : IEnumerable<SelectQueryCondition>
     {
         foreach (var condition in Conditions)
         {
-            if (rowsInputKeys.FindKeyColumn(condition.Column.Name, condition.Operation) != null)
+            if (rowsInputKeys.FindKeyColumn(condition.Column, condition.Operation) != null)
             {
                 yield return condition;
             }
@@ -55,87 +55,59 @@ internal sealed class SelectQueryConditions : IEnumerable<SelectQueryCondition>
         return queryContextCondition;
     }
 
-    /// <summary>
-    /// Returns <c>true</c> if we can find key column condition.
-    /// </summary>
-    /// <param name="columnName">Column name.</param>
-    /// <param name="operation">Column operation.</param>
-    /// <param name="orOperation">Alternative operation.</param>
-    /// <param name="value">Condition value.</param>
-    /// <returns><c>True</c> if found, <c>false</c> otherwise.</returns>
-    public bool TryGetConditionValue(string columnName, VariantValue.Operation operation,
-        VariantValue.Operation orOperation, out VariantValue value)
+    internal IEnumerable<SelectInputKeysConditions> GetConditionsColumns(IRowsInput input, string? alias = null)
     {
-        foreach (var condition in Conditions)
+        if (input is not IRowsInputKeys inputKey)
         {
-            if (Column.NameEquals(condition.Column, columnName)
-                && (condition.Operation == operation || condition.Operation == orOperation))
+            yield break;
+        }
+
+        foreach (var keyColumn in inputKey.GetKeyColumns())
+        {
+            var column = inputKey.Columns[keyColumn.ColumnIndex];
+            var relatedConditions = Conditions
+                .Where(c =>
+                    c.Column == column
+                    && (alias == null || column.SourceName == alias))
+                .ToArray();
+
+            // Straight conditions check.
+            var matchConditions = relatedConditions.Where(c => keyColumn.ContainsOperation(c.Operation)).ToArray();
+
+            // The special condition for equals check. For example, input contains key column "date" with ">=" and "<=" conditions.
+            // But the query is called like "date = now()". Instead of fail we convert it into "date >= now() AND date <= now()".
+            if (matchConditions.Length == 0)
             {
-                value = condition.ValueFunc.Invoke();
-                return true;
+                var equalsCondition = relatedConditions.FirstOrDefault(c => c.Operation == VariantValue.Operation.Equals);
+                if (equalsCondition != null
+                    && (keyColumn.ContainsOperation(VariantValue.Operation.GreaterOrEquals) || keyColumn.ContainsOperation(VariantValue.Operation.LessOrEquals)))
+                {
+                    matchConditions =
+                    [
+                        new(column, VariantValue.Operation.GreaterOrEquals, equalsCondition.ValueFuncs),
+                        new(column, VariantValue.Operation.LessOrEquals, equalsCondition.ValueFuncs),
+                    ];
+                }
             }
-        }
 
-        value = VariantValue.Null;
-        return false;
-    }
+            // The special condition for equals check. For example, input contains key column "id" with equals condition.
+            // But the query is called like "id in (1, 2, 3)'. Instead, we should "rewrite" the query to call it 3 times with
+            // keys 1, 2 and 3.
+            if (matchConditions.Length == 0)
+            {
+                var inCondition = relatedConditions.FirstOrDefault(c => c.Operation == VariantValue.Operation.In);
+                if (inCondition != null && keyColumn.ContainsOperation(VariantValue.Operation.Equals))
+                {
+                    matchConditions =
+                    [
+                        new(column, VariantValue.Operation.Equals, inCondition.ValueFuncs),
+                    ];
+                }
+            }
 
-    /// <summary>
-    /// Get required column condition or throw exception.
-    /// </summary>
-    /// <param name="columnName">Column name.</param>
-    /// <param name="operation">Column operation.</param>
-    /// <param name="orOperation">Alternative operation.</param>
-    /// <returns>Variant value.</returns>
-    public VariantValue GetConditionValue(string columnName, VariantValue.Operation operation,
-        VariantValue.Operation orOperation)
-    {
-        if (TryGetConditionValue(columnName, operation, orOperation, out VariantValue value))
-        {
-            return value;
-        }
-        else
-        {
-            var operations = string.Join(", ", new[] { operation, orOperation }.Distinct());
-            throw new QueryCatException($"The input do not have {operations} condition(-s) on column {columnName}.");
+            yield return new SelectInputKeysConditions(inputKey, column, keyColumn, matchConditions);
         }
     }
-
-    /// <summary>
-    /// Returns <c>true</c> if we can find key column condition.
-    /// </summary>
-    /// <param name="columnName">Column name.</param>
-    /// <param name="operation">Column operation.</param>
-    /// <param name="value">Condition value.</param>
-    /// <returns><c>True</c> if found, <c>false</c> otherwise.</returns>
-    public bool TryGetConditionValue(string columnName, VariantValue.Operation operation, out VariantValue value)
-        => TryGetConditionValue(columnName, operation, operation, out value);
-
-    /// <summary>
-    /// Get required column condition or throw exception.
-    /// </summary>
-    /// <param name="columnName">Column name.</param>
-    /// <param name="operation">Column operation.</param>
-    /// <returns>Variant value.</returns>
-    public VariantValue GetConditionValue(string columnName, VariantValue.Operation operation)
-        => GetConditionValue(columnName, operation, operation);
-
-    /// <summary>
-    /// Returns <c>true</c> if we can find key column equal condition.
-    /// </summary>
-    /// <param name="columnName">Column name.</param>
-    /// <param name="value">Equal condition value.</param>
-    /// <returns><c>True</c> if found, <c>false</c> otherwise.</returns>
-    public bool TryGetConditionValue(string columnName, out VariantValue value)
-        => TryGetConditionValue(columnName, VariantValue.Operation.Equals, VariantValue.Operation.Equals, out value);
-
-    /// <summary>
-    /// Get required column condition or throw exception.
-    /// </summary>
-    /// <param name="columnName">Column name.</param>
-    /// <returns>Variant value.</returns>
-    public VariantValue GetConditionValue(string columnName)
-        => GetConditionValue(columnName, VariantValue.Operation.Equals, VariantValue.Operation.Equals);
 
     /// <inheritdoc />
     public IEnumerator<SelectQueryCondition> GetEnumerator()

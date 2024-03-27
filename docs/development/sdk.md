@@ -1,6 +1,6 @@
 # SDK
 
-You can use QueryCat directly in your .NET app. Install the following NuGet package:
+You can use QueryCat directly in your .NET app. Install the following [NuGet](https://www.nuget.org/packages/QueryCat) package:
 
 ```
 Install-Package QueryCat
@@ -21,7 +21,7 @@ var executionThread = new ExecutionThreadBootstrapper()
     .WithStandardFunctions()
     .WithStandardUriResolvers()
     .Create();
-var result1 = executionThread.Run("1+1");
+var result1 = executionThread.Run("1+1"); // 2
 var result2 = executionThread.Run('uuid()'); // 63af7231-f182-4d29-816c-b83b9dc9cff5
 ```
 
@@ -37,6 +37,8 @@ Result is the `VariantValue` returned by the last statement in the script.
 - `MaxErrors: int`. Max number of errors before query abort.
 - `AnalyzeRowsCount: int`. How many rows to analyze for types detection. 10 by default.
 - `DisableCache: bool`. Do not use cache for subqueries. False by default.
+- `FollowTimeout: TimeSpan`. Write appended data as source grows. Specifies check timeout. 0 means do not follow.
+- `QueryTimeout: TimeSpan`. Throw time out exception if query hasn't been executed within the time.
 
 ## More Examples
 

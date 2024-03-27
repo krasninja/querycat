@@ -9,6 +9,7 @@ nav:
     - 'List': plugins/list.md
   - 'Formatters': formatters.md
   - 'Commands':
+    - 'CALL': commands/call.md
     - 'DECLARE': commands/declare.md
     - 'ECHO': commands/echo.md
     - 'INSERT': commands/insert.md

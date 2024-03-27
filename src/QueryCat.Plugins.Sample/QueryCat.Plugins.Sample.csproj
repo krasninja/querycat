@@ -2,7 +2,12 @@
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
-    <AssemblyName>qcat-plugin-test</AssemblyName>
+    <RootNamespace>QueryCat.Plugins.Samples</RootNamespace>
+    <PackageVersion>0.1.0</PackageVersion>
+    <Title>Sample Plugin</Title>
+    <Authors>Ivan Kozhin</Authors>
+    <PackageTags>sample</PackageTags>
+    <AssemblyName Condition=" '$(UseAssemblyName)' == 'true' ">qcat-plugins-sample-$(PackageVersion)-$(Runtime)</AssemblyName>
     <OptimizationPreference>Size</OptimizationPreference>
     <PublishTrimmed>true</PublishTrimmed>
     <StripSymbols>true</StripSymbols>
@@ -10,7 +15,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Bogus" Version="35.4.0" />
+    <PackageReference Include="Bogus" Version="35.5.0" />
     <PackageReference Update="StyleCop.Analyzers.Unstable" Version="1.2.0.556">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

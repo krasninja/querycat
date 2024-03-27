@@ -181,7 +181,7 @@ struct RowsList {
 }
 
 struct KeyColumn {
-  1: required string name,
+  1: required i32 column_index,
   2: required bool is_required,
   3: required list<string> operations
 }
@@ -262,7 +262,7 @@ service Plugin {
   // Supported objects: ROWS_INPUT with keys columns support (IRowsInputKeys).
   void RowsSet_SetKeyColumnValue(
     1: required Handle object_handle,
-    2: required string column_name,
+    2: required i32 column_index,
     3: required string operation,
     4: required VariantValue value
   ),

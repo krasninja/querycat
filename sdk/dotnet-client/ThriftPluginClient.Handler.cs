@@ -71,7 +71,9 @@ public partial class ThriftPluginClient
                         Object = new ObjectValue(ObjectType.ROWS_INPUT, index, rowsInput.ToString() ?? string.Empty),
                     });
                 }
-                throw new QueryCatPluginException(ErrorType.INVALID_OBJECT, $"Cannot register object '{result.AsObject}'.");
+                throw new QueryCatPluginException(
+                    ErrorType.INVALID_OBJECT,
+                    string.Format(Resources.Errors.Object_CannotRegister, result.AsObject));
             }
             if (resultType == DataType.Blob)
             {
@@ -241,9 +243,9 @@ public partial class ThriftPluginClient
             {
                 var result = rowsInputKeys.GetKeyColumns()
                     .Select(c => new KeyColumn(
-                        c.ColumnName,
+                        c.ColumnIndex,
                         c.IsRequired,
-                        c.Operations.Select(o => o.ToString()).ToList())
+                        c.GetOperations().Select(o => o.ToString()).ToList())
                     );
                 return Task.FromResult(result.ToList());
             }
@@ -251,7 +253,7 @@ public partial class ThriftPluginClient
         }
 
         /// <inheritdoc />
-        public Task RowsSet_SetKeyColumnValueAsync(int object_handle, string column_name, string operation, VariantValue? value,
+        public Task RowsSet_SetKeyColumnValueAsync(int object_handle, int column_index, string operation, VariantValue? value,
             CancellationToken cancellationToken = default)
         {
             if (value != null
@@ -259,7 +261,7 @@ public partial class ThriftPluginClient
                 && rowsInput != null
                 && rowsInput is IRowsInputKeys rowsInputKeys)
             {
-                rowsInputKeys.SetKeyColumnValue(column_name, SdkConvert.Convert(value),
+                rowsInputKeys.SetKeyColumnValue(column_index, SdkConvert.Convert(value),
                     Enum.Parse<Backend.Core.Types.VariantValue.Operation>(operation));
             }
             return Task.CompletedTask;
@@ -276,7 +278,9 @@ public partial class ThriftPluginClient
                 var result = rowsInputUpdate.UpdateValue(column_index, SdkConvert.Convert(value));
                 return Task.FromResult(result == ErrorCode.OK);
             }
-            throw new QueryCatPluginException(ErrorType.INVALID_OBJECT, $"Object is not a '{typeof(IRowsInputUpdate)}'.");
+            throw new QueryCatPluginException(
+                ErrorType.INVALID_OBJECT,
+                string.Format(Resources.Errors.Object_InvalidType, typeof(IRowsInputUpdate)));
         }
 
         /// <inheritdoc />
@@ -290,7 +294,9 @@ public partial class ThriftPluginClient
                 rowsOutput.WriteValues(values.Select(SdkConvert.Convert).ToArray());
                 return Task.CompletedTask;
             }
-            throw new QueryCatPluginException(ErrorType.INVALID_OBJECT, $"Object is not a '{typeof(IRowsOutput)}'.");
+            throw new QueryCatPluginException(
+                ErrorType.INVALID_OBJECT,
+                string.Format(Resources.Errors.Object_InvalidType, typeof(IRowsOutput)));
         }
 
         /// <inheritdoc />
@@ -304,7 +310,7 @@ public partial class ThriftPluginClient
                 _ = stream.Read(arr, 0, arr.Length);
                 return Task.FromResult(arr);
             }
-            throw new QueryCatPluginException(ErrorType.INVALID_OBJECT, "Object is not a BLOB.");
+            throw new QueryCatPluginException(ErrorType.INVALID_OBJECT, Resources.Errors.Object_IsNotBlob);
         }
 
         /// <inheritdoc />
@@ -316,7 +322,7 @@ public partial class ThriftPluginClient
                 var length = blobData.Length;
                 return Task.FromResult(length);
             }
-            throw new QueryCatPluginException(ErrorType.INVALID_OBJECT, "Object is not a BLOB.");
+            throw new QueryCatPluginException(ErrorType.INVALID_OBJECT, Resources.Errors.Object_IsNotBlob);
         }
     }
 
@@ -340,7 +346,7 @@ public partial class ThriftPluginClient
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, Messages.HandlerInternalError);
+                _logger.LogError(ex, Resources.Errors.HandlerInternalError);
                 throw QueryCatPluginExceptionUtils.Create(ex, objectHandle: object_handle);
             }
         }
@@ -354,7 +360,7 @@ public partial class ThriftPluginClient
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, Messages.HandlerInternalError);
+                _logger.LogError(ex, Resources.Errors.HandlerInternalError);
                 throw QueryCatPluginExceptionUtils.Create(ex);
             }
         }
@@ -368,7 +374,7 @@ public partial class ThriftPluginClient
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, Messages.HandlerInternalError);
+                _logger.LogError(ex, Resources.Errors.HandlerInternalError);
                 throw QueryCatPluginExceptionUtils.Create(ex);
             }
         }
@@ -382,7 +388,7 @@ public partial class ThriftPluginClient
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, Messages.HandlerInternalError);
+                _logger.LogError(ex, Resources.Errors.HandlerInternalError);
                 throw QueryCatPluginExceptionUtils.Create(ex, objectHandle: object_handle);
             }
         }
@@ -396,7 +402,7 @@ public partial class ThriftPluginClient
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, Messages.HandlerInternalError);
+                _logger.LogError(ex, Resources.Errors.HandlerInternalError);
                 throw QueryCatPluginExceptionUtils.Create(ex, objectHandle: object_handle);
             }
         }
@@ -410,7 +416,7 @@ public partial class ThriftPluginClient
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, Messages.HandlerInternalError);
+                _logger.LogError(ex, Resources.Errors.HandlerInternalError);
                 throw QueryCatPluginExceptionUtils.Create(ex, objectHandle: object_handle);
             }
         }
@@ -424,7 +430,7 @@ public partial class ThriftPluginClient
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, Messages.HandlerInternalError);
+                _logger.LogError(ex, Resources.Errors.HandlerInternalError);
                 throw QueryCatPluginExceptionUtils.Create(ex, objectHandle: object_handle);
             }
         }
@@ -439,7 +445,7 @@ public partial class ThriftPluginClient
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, Messages.HandlerInternalError);
+                _logger.LogError(ex, Resources.Errors.HandlerInternalError);
                 throw QueryCatPluginExceptionUtils.Create(ex, objectHandle: object_handle);
             }
         }
@@ -453,7 +459,7 @@ public partial class ThriftPluginClient
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, Messages.HandlerInternalError);
+                _logger.LogError(ex, Resources.Errors.HandlerInternalError);
                 throw QueryCatPluginExceptionUtils.Create(ex, objectHandle: object_handle);
             }
         }
@@ -467,7 +473,7 @@ public partial class ThriftPluginClient
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, Messages.HandlerInternalError);
+                _logger.LogError(ex, Resources.Errors.HandlerInternalError);
                 throw QueryCatPluginExceptionUtils.Create(ex,objectHandle: object_handle);
             }
         }
@@ -481,22 +487,22 @@ public partial class ThriftPluginClient
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, Messages.HandlerInternalError);
+                _logger.LogError(ex, Resources.Errors.HandlerInternalError);
                 throw QueryCatPluginExceptionUtils.Create(ex, objectHandle: object_handle);
             }
         }
 
         /// <inheritdoc />
-        public Task RowsSet_SetKeyColumnValueAsync(int object_handle, string column_name, string operation, VariantValue? value,
+        public Task RowsSet_SetKeyColumnValueAsync(int object_handle, int column_index, string operation, VariantValue? value,
             CancellationToken cancellationToken = default)
         {
             try
             {
-                return _handler.RowsSet_SetKeyColumnValueAsync(object_handle, column_name, operation, value, cancellationToken);
+                return _handler.RowsSet_SetKeyColumnValueAsync(object_handle, column_index, operation, value, cancellationToken);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, Messages.HandlerInternalError);
+                _logger.LogError(ex, Resources.Errors.HandlerInternalError);
                 throw QueryCatPluginExceptionUtils.Create(ex, objectHandle: object_handle);
             }
         }
@@ -511,7 +517,7 @@ public partial class ThriftPluginClient
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, Messages.HandlerInternalError);
+                _logger.LogError(ex, Resources.Errors.HandlerInternalError);
                 throw QueryCatPluginExceptionUtils.Create(ex, objectHandle: object_handle);
             }
         }
@@ -525,7 +531,7 @@ public partial class ThriftPluginClient
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, Messages.HandlerInternalError);
+                _logger.LogError(ex, Resources.Errors.HandlerInternalError);
                 throw QueryCatPluginExceptionUtils.Create(ex, objectHandle: object_handle);
             }
         }
@@ -539,7 +545,7 @@ public partial class ThriftPluginClient
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, Messages.HandlerInternalError);
+                _logger.LogError(ex, Resources.Errors.HandlerInternalError);
                 throw QueryCatPluginExceptionUtils.Create(ex, objectHandle: object_handle);
             }
         }
@@ -553,7 +559,7 @@ public partial class ThriftPluginClient
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, Messages.HandlerInternalError);
+                _logger.LogError(ex, Resources.Errors.HandlerInternalError);
                 throw QueryCatPluginExceptionUtils.Create(ex, objectHandle: object_handle);
             }
         }

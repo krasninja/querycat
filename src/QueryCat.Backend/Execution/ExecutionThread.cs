@@ -151,7 +151,9 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
                     var scope = PushScope();
                     SetScopeVariables(scope, parameters);
                 }
-                return RunInternal(cancellationToken);
+                return Options.QueryTimeout != TimeSpan.Zero
+                    ? RunWithTimeout(RunInternal, cancellationToken)
+                    : RunInternal(cancellationToken);
             }
             finally
             {
@@ -189,6 +191,16 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
         {
             scope.Variables[parameter.Key] = parameter.Value;
         }
+    }
+
+    private T RunWithTimeout<T>(Func<CancellationToken, T> func, CancellationToken cancellationToken)
+    {
+        var task = Task.Run(() => func(cancellationToken), cancellationToken);
+        if (task.IsCompleted)
+        {
+            return task.Result;
+        }
+        return task.WaitAsync(Options.QueryTimeout, cancellationToken).GetAwaiter().GetResult();
     }
 
     private VariantValue RunInternal(CancellationToken cancellationToken)
@@ -304,11 +316,11 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
         StartWriterLoop();
 
         // Append grow data.
-        if (Options.FollowTimeoutMs > 0)
+        if (Options.FollowTimeout != TimeSpan.Zero)
         {
             while (true)
             {
-                Thread.Sleep(Options.FollowTimeoutMs);
+                Thread.Sleep(Options.FollowTimeout);
                 StartWriterLoop();
                 if (cancellationToken.IsCancellationRequested)
                 {

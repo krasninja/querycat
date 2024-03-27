@@ -7,22 +7,55 @@ namespace QueryCat.Backend.Core.Data;
 /// </summary>
 public sealed class KeyColumn
 {
-    public string ColumnName { get; }
+    public int ColumnIndex { get; }
 
     public bool IsRequired { get; }
 
     /// <summary>
-    /// The operations under which the key can be applied.
+    /// The first operation under which the key can be applied.
     /// </summary>
-    public VariantValue.Operation[] Operations { get; }
+    public VariantValue.Operation Operation1 { get; }
 
-    public KeyColumn(string columnName, bool isRequired = false, params VariantValue.Operation[] operations)
+    /// <summary>
+    /// The second alternative operation under which the key can be applied.
+    /// </summary>
+    public VariantValue.Operation? Operation2 { get; }
+
+    public KeyColumn(
+        int columnIndex,
+        bool isRequired = false,
+        VariantValue.Operation operation1 = VariantValue.Operation.Equals,
+        VariantValue.Operation? operation2 = null)
     {
-        ColumnName = columnName;
+        ColumnIndex = columnIndex;
         IsRequired = isRequired;
-        Operations = operations;
+        Operation1 = operation1;
+        Operation2 = operation2;
     }
 
+    public KeyColumn(
+        int columnIndex,
+        bool isRequired,
+        VariantValue.Operation[] operations) : this(
+            columnIndex,
+            isRequired,
+            operations.Length > 0 ? operations[0] : VariantValue.Operation.Equals,
+            operations.Length > 1 ? operations[1] : null)
+    {
+    }
+
+    public IEnumerable<VariantValue.Operation> GetOperations()
+    {
+        yield return Operation1;
+        if (Operation2 != null)
+        {
+            yield return Operation2.Value;
+        }
+    }
+
+    public bool ContainsOperation(VariantValue.Operation operation)
+        => Operation1 == operation || (Operation2.HasValue && Operation2.Value == operation);
+
     /// <inheritdoc />
-    public override string ToString() => $"{(IsRequired ? "* " : "")} {ColumnName} ({string.Join(", ", Operations)})";
+    public override string ToString() => $"{(IsRequired ? "* " : "")} {ColumnIndex} ({Operation1}, {Operation2})";
 }

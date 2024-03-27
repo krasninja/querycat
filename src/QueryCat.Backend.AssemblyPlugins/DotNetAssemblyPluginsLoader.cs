@@ -138,7 +138,7 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader
         var directory = Path.GetDirectoryName(file);
         if (directory == null)
         {
-            throw new PluginException($"Cannot get plugin directory by file '{file}'.");
+            throw new PluginException(string.Format(Resources.Errors.CannotGetFileDirectory, file));
         }
 
         var directoryInfo = new DirectoryInfo(directory);
@@ -168,7 +168,7 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader
                     && f.FullName.Contains("Plugin"));
             if (pluginDll == null)
             {
-                throw new InvalidOperationException($"Cannot find plugin dll in '{file}'.");
+                throw new InvalidOperationException(string.Format(Resources.Errors.CannotFindPluginDll, file));
             }
 
             // Preload dependent libraries.

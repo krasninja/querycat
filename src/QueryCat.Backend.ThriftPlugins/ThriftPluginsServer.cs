@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Text;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Thrift;
@@ -165,6 +166,16 @@ public sealed partial class ThriftPluginsServer : IDisposable
 
     public bool VerifyAuthToken(string token) => _authTokens.ContainsKey(token);
 
+    internal string DumpAuthTokens()
+    {
+        var sb = new StringBuilder();
+        foreach (var authToken in _authTokens)
+        {
+            sb.AppendFormat($"{authToken.Key}: {authToken.Value}");
+        }
+        return sb.ToString();
+    }
+
     public string GetPluginNameByAuthToken(string token)
     {
         if (_authTokens.TryGetValue(token, out var data))
@@ -186,13 +197,12 @@ public sealed partial class ThriftPluginsServer : IDisposable
     {
         if (!_authTokens.TryGetValue(authToken, out var authTokenData))
         {
-            throw new InvalidOperationException(
-                $"Token '{authToken}' is not registered, did you call {nameof(RegisterAuthToken)}?");
+            throw new InvalidOperationException(string.Format(Resources.Errors.TokenNotRegistered, authToken));
         }
         _logger.LogTrace("Waiting for token activation '{Token}'.", authToken);
         if (!authTokenData.Semaphore.Wait(TimeSpan.FromSeconds(PluginRegistrationTimeoutSeconds), cancellationToken))
         {
-            throw new PluginException($"Plugin '{authToken}' registration timeout.");
+            throw new PluginException(string.Format(Resources.Errors.TokenRegistrationTimeout, authToken));
         }
         _authTokens.Remove(authToken, out _);
         authTokenData.Semaphore.Dispose();

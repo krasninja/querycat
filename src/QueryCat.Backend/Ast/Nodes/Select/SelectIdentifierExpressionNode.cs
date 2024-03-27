@@ -9,7 +9,7 @@ namespace QueryCat.Backend.Ast.Nodes.Select;
 internal sealed class SelectIdentifierExpressionNode : IdentifierExpressionNode, ISelectAliasNode
 {
     /// <inheritdoc />
-    public string Alias { get; set; } = string.Empty;
+    public string Alias { get; set; }
 
     /// <inheritdoc />
     public override string Code => "cte_or_id";
@@ -22,18 +22,44 @@ internal sealed class SelectIdentifierExpressionNode : IdentifierExpressionNode,
     public List<SelectTableJoinedNode> JoinedNodes { get; } = new();
 
     /// <inheritdoc />
-    public SelectIdentifierExpressionNode(string name) : base(name)
+    public SelectIdentifierExpressionNode(string name, string alias) : base(name)
     {
+        Alias = !string.IsNullOrEmpty(alias) ? alias : name;
     }
 
     /// <inheritdoc />
-    public SelectIdentifierExpressionNode(string name, string sourceName) : base(name, sourceName)
+    public SelectIdentifierExpressionNode(string name, string sourceName, string alias) : base(name, sourceName)
     {
+        Alias = !string.IsNullOrEmpty(alias) ? alias : name;
     }
 
     /// <inheritdoc />
-    public SelectIdentifierExpressionNode(IdentifierExpressionNode node) : base(node)
+    public SelectIdentifierExpressionNode(SelectIdentifierExpressionNode node) : base((SelectIdentifierExpressionNode)node.Clone())
     {
+        Alias = node.Alias;
+        if (node.Format != null)
+        {
+            Format = (FunctionCallNode)node.Format.Clone();
+        }
+        JoinedNodes = node.JoinedNodes.Select(jn => (SelectTableJoinedNode)jn.Clone()).ToList();
+        node.CopyTo(this);
+    }
+
+    /// <inheritdoc />
+    public override IEnumerable<IAstNode> GetChildren()
+    {
+        foreach (var astNode in base.GetChildren())
+        {
+            yield return astNode;
+        }
+        if (Format != null)
+        {
+            yield return Format;
+        }
+        foreach (var selectTableJoinedNode in JoinedNodes)
+        {
+            yield return selectTableJoinedNode;
+        }
     }
 
     /// <inheritdoc />

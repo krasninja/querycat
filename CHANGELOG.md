@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add "Call" command to execute functions.
+- Add "timeout" option.
+- Unescape support for octet and hex numbers.
+
+### Fixed
+
+- Fix inner join bug on CTE.
+
+## [0.5.4] - 2024-02-28
+
+### Added
+
 - Safe mode.
 - Allow web UI access restriction by available IPs slots count.
 - Support file URI scheme.

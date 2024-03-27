@@ -7,28 +7,28 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace QueryCat.Backend.ThriftPlugins {
+namespace QueryCat.Backend.ThriftPlugins.Resources {
     using System;
     
     
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
     [System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    internal class Messages {
+    internal class Errors {
         
         private static System.Resources.ResourceManager resourceMan;
         
         private static System.Globalization.CultureInfo resourceCulture;
         
         [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
-        internal Messages() {
+        internal Errors() {
         }
         
         [System.ComponentModel.EditorBrowsableAttribute(System.ComponentModel.EditorBrowsableState.Advanced)]
         internal static System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.Equals(null, resourceMan)) {
-                    System.Resources.ResourceManager temp = new System.Resources.ResourceManager("QueryCat.Backend.ThriftPlugins.Messages", typeof(Messages).Assembly);
+                    System.Resources.ResourceManager temp = new System.Resources.ResourceManager("QueryCat.Backend.ThriftPlugins.Resources.Errors", typeof(Errors).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
@@ -48,6 +48,54 @@ namespace QueryCat.Backend.ThriftPlugins {
         internal static string HandlerInternalError {
             get {
                 return ResourceManager.GetString("HandlerInternalError", resourceCulture);
+            }
+        }
+        
+        internal static string InvalidToken {
+            get {
+                return ResourceManager.GetString("InvalidToken", resourceCulture);
+            }
+        }
+        
+        internal static string CannotGetLibraryAddress {
+            get {
+                return ResourceManager.GetString("CannotGetLibraryAddress", resourceCulture);
+            }
+        }
+        
+        internal static string NoObject {
+            get {
+                return ResourceManager.GetString("NoObject", resourceCulture);
+            }
+        }
+        
+        internal static string NoConnection {
+            get {
+                return ResourceManager.GetString("NoConnection", resourceCulture);
+            }
+        }
+        
+        internal static string CannotCreateObject {
+            get {
+                return ResourceManager.GetString("CannotCreateObject", resourceCulture);
+            }
+        }
+        
+        internal static string CannotGetPluginContext {
+            get {
+                return ResourceManager.GetString("CannotGetPluginContext", resourceCulture);
+            }
+        }
+        
+        internal static string TokenNotRegistered {
+            get {
+                return ResourceManager.GetString("TokenNotRegistered", resourceCulture);
+            }
+        }
+        
+        internal static string TokenRegistrationTimeout {
+            get {
+                return ResourceManager.GetString("TokenRegistrationTimeout", resourceCulture);
             }
         }
     }

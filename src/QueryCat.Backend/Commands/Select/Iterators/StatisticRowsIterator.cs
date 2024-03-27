@@ -56,7 +56,6 @@ public sealed class StatisticRowsIterator : IRowsIterator, IRowsIteratorParent
     public void Reset()
     {
         _rowsIterator.Reset();
-        _statistic.Clear();
     }
 
     /// <inheritdoc />

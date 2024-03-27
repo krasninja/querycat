@@ -1,5 +1,5 @@
+using System.Diagnostics;
 using QueryCat.Backend.Ast.Nodes.Select;
-using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Utils;
@@ -11,6 +11,7 @@ namespace QueryCat.Backend.Commands.Select;
 /// <summary>
 /// Contains all necessary information to handle the query on all stages.
 /// </summary>
+[DebuggerDisplay("Id = {Id}, Iterator = {CurrentIterator}")]
 internal sealed class SelectCommandContext(SelectQueryNode queryNode) : CommandContext, IDisposable
 {
     public SelectQueryConditions Conditions { get; } = new();
@@ -64,7 +65,7 @@ internal sealed class SelectCommandContext(SelectQueryNode queryNode) : CommandC
         }
 
         // Iterators.
-        foreach (var context in GetParents(context => context))
+        foreach (var context in GetParents())
         {
             index = context.CurrentIterator.GetColumnIndexByName(name, source);
             if (index > -1)
@@ -106,28 +107,13 @@ internal sealed class SelectCommandContext(SelectQueryNode queryNode) : CommandC
         _inputs.Add(input);
     }
 
-    internal IEnumerable<SelectInputKeysConditions> GetConditionsColumns()
+    internal IEnumerable<SelectInputKeysConditions> GetAllConditionsColumns()
     {
         foreach (var inputContext in _inputs)
         {
-            if (inputContext.RowsInput is not IRowsInputKeys inputKeys)
+            foreach (var condition in Conditions.GetConditionsColumns(inputContext.RowsInput, inputContext.Alias))
             {
-                continue;
-            }
-            foreach (var keyColumn in inputKeys.GetKeyColumns())
-            {
-                var column = inputKeys.GetColumnByName(keyColumn.ColumnName);
-                if (column == null)
-                {
-                    throw new QueryCatException($"Cannot find key column '{keyColumn.ColumnName}'.");
-                }
-                var matchConditions = Conditions
-                    .Where(c =>
-                        Column.NameEquals(c.Column, keyColumn.ColumnName)
-                        && column.SourceName == inputContext.Alias
-                        && keyColumn.Operations.Contains(c.Operation))
-                    .ToArray();
-                yield return new SelectInputKeysConditions(inputKeys, column, keyColumn, matchConditions);
+                yield return condition;
             }
         }
     }
@@ -173,14 +159,13 @@ internal sealed class SelectCommandContext(SelectQueryNode queryNode) : CommandC
         }
     }
 
-    internal IEnumerable<T> GetParents<T>(Func<SelectCommandContext, T> func)
+    private IEnumerable<SelectCommandContext> GetParents()
     {
-        yield return func.Invoke(this);
-
+        yield return this;
         var parentContext = Parent;
         while (parentContext != null)
         {
-            yield return func.Invoke(parentContext);
+            yield return parentContext;
             parentContext = parentContext.Parent;
         }
     }

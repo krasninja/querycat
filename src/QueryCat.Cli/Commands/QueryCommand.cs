@@ -47,6 +47,8 @@ internal class QueryCommand : BaseQueryCommand
             getDefaultValue: () => "F");
         var followOption = new Option<bool>("--follow",
             description: "Output appended data as the input source grows.");
+        var timeoutOption = new Option<int>("--timeout",
+            description: "Query timeout in ms.");
         var safeModeOption = new Option<bool>("--safe-mode",
             description: "Allow to call only safe (no modifications) functions.");
 
@@ -62,6 +64,7 @@ internal class QueryCommand : BaseQueryCommand
         this.AddOption(noHeaderOption);
         this.AddOption(floatNumberOption);
         this.AddOption(followOption);
+        this.AddOption(timeoutOption);
         this.AddOption(safeModeOption);
         this.SetHandler((applicationOptions, query, variables, files, queryOptions) =>
         {
@@ -81,7 +84,8 @@ internal class QueryCommand : BaseQueryCommand
                 DisableCache = queryOptions.DisableCache,
                 UseConfig = true,
                 RunBootstrapScript = true,
-                FollowTimeoutMs = (int)queryOptions.FollowTimeout.TotalMilliseconds,
+                FollowTimeout = queryOptions.FollowTimeout,
+                QueryTimeout = queryOptions.QueryTimeout,
                 SafeMode = queryOptions.SafeMode,
             };
             if (queryOptions.AnalyzeRows < 0)
@@ -119,6 +123,7 @@ internal class QueryCommand : BaseQueryCommand
                 noHeaderOption,
                 floatNumberOption,
                 followOption,
+                timeoutOption,
                 safeModeOption)
             );
     }

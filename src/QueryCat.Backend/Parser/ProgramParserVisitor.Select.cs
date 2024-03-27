@@ -318,11 +318,13 @@ internal partial class ProgramParserVisitor
 
     /// <inheritdoc />
     public override IAstNode VisitSelectTablePrimaryIdentifier(QueryCatParser.SelectTablePrimaryIdentifierContext context)
-        => new SelectIdentifierExpressionNode(GetUnwrappedText(context.name))
+    {
+        var alias = this.Visit(context.selectAlias(), SelectAliasNode.Empty).AliasName;
+        return new SelectIdentifierExpressionNode(GetUnwrappedText(context.name), alias)
         {
-            Alias = this.Visit(context.selectAlias(), SelectAliasNode.Empty).AliasName,
             Format = context.format != null ? this.Visit<FunctionCallNode>(context.format) : null,
         };
+    }
 
     /// <inheritdoc />
     public override IAstNode VisitSelectTablePrimarySubquery(

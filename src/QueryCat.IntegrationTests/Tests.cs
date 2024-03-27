@@ -4,7 +4,10 @@ using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Addons.Formatters;
+using QueryCat.Backend.Core.Data;
+using QueryCat.IntegrationTests.Inputs;
 using QueryCat.Tests.QueryRunner;
+using Xunit.Abstractions;
 
 namespace QueryCat.IntegrationTests;
 
@@ -13,10 +16,12 @@ namespace QueryCat.IntegrationTests;
 /// </summary>
 public sealed class Tests : IDisposable
 {
+    private readonly ITestOutputHelper _output;
     private readonly IExecutionThread<ExecutionOptions> _testThread;
 
-    public Tests()
+    public Tests(ITestOutputHelper output)
     {
+        _output = output;
         _testThread = TestThread.CreateBootstrapper()
             .WithRegistrations(AdditionalRegistration.Register)
             .WithRegistrations(Backend.Addons.Functions.JsonFunctions.RegisterFunctions)
@@ -33,9 +38,17 @@ public sealed class Tests : IDisposable
         _testThread.FunctionsManager.RegisterFunction(ReturnObjFunc);
         _testThread.FunctionsManager.RegisterFunction(SumIntegersOpt);
         _testThread.FunctionsManager.RegisterFunction(VoidFunc);
+        _testThread.FunctionsManager.RegisterFunction(ItStocksRowsInput.ItStocks);
 
         var data = TestThread.GetQueryData(fileName);
-        _testThread.Run(data.Query);
+        var value = _testThread.Run(data.Query);
+        if (value.GetInternalType() == DataType.Object
+            && value.AsObject is IRowsIterator rowsIterator)
+        {
+            var sb = new IndentedStringBuilder();
+            rowsIterator.Explain(sb);
+            _output.WriteLine(sb.ToString());
+        }
 
         // Act.
         var result = TestThread.GetQueryResult(_testThread);

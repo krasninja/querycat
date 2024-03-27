@@ -18,7 +18,10 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
 {
     private const string DataColumn = "__data";
 
-    private readonly List<(Data.Column Column, Func<TClass, VariantValue> ValueGetter)> _columns = new();
+    private record struct ColumnGetter(Data.Column Column, Func<TClass, VariantValue> ValueGetter);
+
+    private readonly List<ColumnGetter> _columns = new();
+    private readonly List<KeyColumn> _keyColumns = new();
 
     /// <summary>
     /// Property naming convention when used from expressions.
@@ -28,12 +31,17 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
     /// <summary>
     /// Columns.
     /// </summary>
-    public IEnumerable<Column> Columns => _columns.Select(c => c.Column);
+    public IReadOnlyList<Column> Columns => _columns.Select(c => c.Column).ToList();
+
+    /// <summary>
+    /// Key columns.
+    /// </summary>
+    public IReadOnlyList<KeyColumn> KeyColumns => _keyColumns;
 
     /// <summary>
     /// Columns.
     /// </summary>
-    public IEnumerable<Func<TClass, VariantValue>> Getters => _columns.Select(c => c.ValueGetter);
+    public IReadOnlyList<Func<TClass, VariantValue>> Getters => _columns.Select(c => c.ValueGetter).ToList();
 
     /// <summary>
     /// Add data property that adds source object itself.
@@ -471,12 +479,12 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
         var existingColumnIndex = _columns.FindIndex(c => c.Column.Name == column.Name);
         if (existingColumnIndex > -1)
         {
-            _columns[existingColumnIndex] = (column, valueGetter);
+            _columns[existingColumnIndex] = new ColumnGetter(column, valueGetter);
             return false;
         }
         else
         {
-            _columns.Add((
+            _columns.Add(new ColumnGetter(
                 column,
                 obj => VariantValue.CreateFromObject(valueGetter.Invoke(obj))
             ));
@@ -521,5 +529,73 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
         }
 
         return name;
+    }
+
+    #region Keys
+
+    /// <summary>
+    /// Add key column information.
+    /// </summary>
+    /// <param name="columnName">Column name.</param>
+    /// <param name="isRequired">Is this the required condition.</param>
+    /// <returns>Instance of <see cref="ClassRowsFrameBuilder{TClass}" />.</returns>
+    public ClassRowsFrameBuilder<TClass> AddKeyColumn(
+        string columnName,
+        bool isRequired = false)
+    {
+        var columnIndex = GetColumnIndexByName(columnName);
+        var keyColumn = new KeyColumn(columnIndex, isRequired);
+        _keyColumns.Add(keyColumn);
+        return this;
+    }
+
+    /// <summary>
+    /// Add key column information.
+    /// </summary>
+    /// <param name="columnName">Column name.</param>
+    /// <param name="operation">Key operation.</param>
+    /// <param name="isRequired">Is this the required condition.</param>
+    /// <returns>Instance of <see cref="ClassRowsFrameBuilder{TClass}" />.</returns>
+    public ClassRowsFrameBuilder<TClass> AddKeyColumn(
+        string columnName,
+        VariantValue.Operation operation,
+        bool isRequired = false)
+    {
+        var columnIndex = GetColumnIndexByName(columnName);
+        var keyColumn = new KeyColumn(columnIndex, isRequired, operation);
+        _keyColumns.Add(keyColumn);
+        return this;
+    }
+
+    /// <summary>
+    /// Add key column information.
+    /// </summary>
+    /// <param name="columnName">Column name.</param>
+    /// <param name="operation">Key operation.</param>
+    /// <param name="orOperation">Alternate key operation.</param>
+    /// <param name="isRequired">Is this the required condition.</param>
+    /// <returns>Instance of <see cref="ClassRowsFrameBuilder{TClass}" />.</returns>
+    public ClassRowsFrameBuilder<TClass> AddKeyColumn(
+        string columnName,
+        VariantValue.Operation operation,
+        VariantValue.Operation orOperation,
+        bool isRequired = false)
+    {
+        var columnIndex = GetColumnIndexByName(columnName);
+        var keyColumn = new KeyColumn(columnIndex, isRequired, operation, orOperation);
+        _keyColumns.Add(keyColumn);
+        return this;
+    }
+
+    #endregion
+
+    private int GetColumnIndexByName(string columnName)
+    {
+        var columnIndex = _columns.FindIndex(c => Column.NameEquals(c.Column, columnName));
+        if (columnIndex < 0)
+        {
+            throw new QueryCatException(string.Format(Resources.Errors.CannotFindColumn, columnName));
+        }
+        return columnIndex;
     }
 }

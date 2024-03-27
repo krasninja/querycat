@@ -19,6 +19,7 @@ statement
     | updateStatement # StatementUpdateExpression
     | insertStatement # StatementInsertExpression
     | echoStatement # StatementEcho
+    | callStatement # StatementCall
     | declareVariable # StatementDeclareVariable
     | setVariable # StatementSetVariable
     | expression # StatementExpression
@@ -217,6 +218,14 @@ insertFromSource
  */
 
 echoStatement: ECHO expression;
+
+/*
+ * =============
+ * CALL command.
+ * =============
+ */
+
+callStatement: CALL functionCall;
 
 /*
  * ========

@@ -22,23 +22,23 @@ public class SamplePluginInput : FetchRowsInput<TestClass>
     }
 
     private long _currentState;
-    private string? _key;
 
     /// <inheritdoc />
     protected override void Initialize(ClassRowsFrameBuilder<TestClass> builder)
     {
         Trace.WriteLine(nameof(Initialize));
-        builder.AddProperty(b => b.Key);
-        AddKeyColumn("Key",
-            isRequired: false,
-            operation: VariantValue.Operation.Equals,
-            set: value => _key = value.AsString);
+        builder
+            .AddProperty(b => b.Key)
+            .AddKeyColumn("key",
+                isRequired: false,
+                operation: VariantValue.Operation.Equals);
     }
 
     /// <inheritdoc />
     protected override IEnumerable<TestClass> GetData(Fetcher<TestClass> fetcher)
     {
         Trace.WriteLine(nameof(GetData));
+        var key = GetKeyColumnValue("key");
         for (var i = 0; i < MaxValue; i++)
         {
             yield return new TestClass(++_currentState);

@@ -1,0 +1,8 @@
+expected: |
+  191.06
+  42.64
+query: |
+  with
+    cte as (select 'AMD' as 'ticket' union select 'INTC')
+  select its.usd from cte
+  inner join it_stocks() its on its.id = cte.ticket;

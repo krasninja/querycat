@@ -1,4 +1,5 @@
 using QueryCat.Backend.Ast.Nodes;
+using QueryCat.Backend.Ast.Nodes.Call;
 using QueryCat.Backend.Ast.Nodes.Declare;
 using QueryCat.Backend.Ast.Nodes.Function;
 using QueryCat.Backend.Ast.Nodes.Insert;
@@ -107,6 +108,22 @@ internal abstract class DelegateVisitor : AstVisitor
 
     /// <inheritdoc />
     public override void Visit(UnaryOperationExpressionNode node)
+    {
+        OnVisit(node);
+    }
+
+    #endregion
+
+    #region Call
+
+    /// <inheritdoc />
+    public override void Visit(CallFunctionNode node)
+    {
+        OnVisit(node);
+    }
+
+    /// <inheritdoc />
+    public override void Visit(CallFunctionStatementNode node)
     {
         OnVisit(node);
     }

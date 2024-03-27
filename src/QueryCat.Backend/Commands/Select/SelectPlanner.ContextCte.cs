@@ -30,7 +30,6 @@ internal sealed partial class SelectPlanner
             if (!processedAsRecursive)
             {
                 ContextCte_PrepareInputNonRecursiveList(context, withNode);
-                ContextCte_FixColumnsNames(withNode.ColumnNodes, context.CurrentIterator);
             }
         }
     }
@@ -112,12 +111,10 @@ internal sealed partial class SelectPlanner
         IList<SelectColumnsSublistNode> targetColumns,
         IRowsIterator iterator)
     {
-        var columns = iterator.Current.Columns;
-        for (var columnIndex = 0; columnIndex < targetColumns.Count; columnIndex++)
+        var columns = iterator.Columns;
+        for (var columnIndex = 0; columnIndex < targetColumns.Count && columns.Length - 1 >= columnIndex; columnIndex++)
         {
-            if (columns.Length - 1 >= columnIndex
-                && targetColumns[columnIndex] is SelectColumnsSublistExpressionNode nameNode
-                && nameNode.ExpressionNode is IdentifierExpressionNode idNode)
+            if (targetColumns[columnIndex] is SelectColumnsSublistExpressionNode { ExpressionNode: IdentifierExpressionNode idNode })
             {
                 columns[columnIndex].Name = idNode.FullName;
             }

@@ -35,7 +35,7 @@ namespace QueryCat.Plugins.Sdk
   public partial class KeyColumn : TBase
   {
 
-    public string Name { get; set; } = string.Empty;
+    public int ColumnIndex { get; set; } = 0;
 
     public bool IsRequired { get; set; } = false;
 
@@ -45,9 +45,9 @@ namespace QueryCat.Plugins.Sdk
     {
     }
 
-    public KeyColumn(string @name, bool is_required, List<string>? @operations) : this()
+    public KeyColumn(int column_index, bool is_required, List<string>? @operations) : this()
     {
-      this.Name = @name;
+      this.ColumnIndex = column_index;
       this.IsRequired = is_required;
       this.Operations = @operations;
     }
@@ -57,7 +57,7 @@ namespace QueryCat.Plugins.Sdk
       iprot.IncrementRecursionDepth();
       try
       {
-        bool isset_name = false;
+        bool isset_column_index = false;
         bool isset_is_required = false;
         bool isset_operations = false;
         TField field;
@@ -73,10 +73,10 @@ namespace QueryCat.Plugins.Sdk
           switch (field.ID)
           {
             case 1:
-              if (field.Type == TType.String)
+              if (field.Type == TType.I32)
               {
-                Name = await iprot.ReadStringAsync(cancellationToken);
-                isset_name = true;
+                ColumnIndex = await iprot.ReadI32Async(cancellationToken);
+                isset_column_index = true;
               }
               else
               {
@@ -124,7 +124,7 @@ namespace QueryCat.Plugins.Sdk
         }
 
         await iprot.ReadStructEndAsync(cancellationToken);
-        if (!isset_name)
+        if (!isset_column_index)
         {
           throw new TProtocolException(TProtocolException.INVALID_DATA);
         }
@@ -151,15 +151,12 @@ namespace QueryCat.Plugins.Sdk
         var tmp51 = new TStruct("KeyColumn");
         await oprot.WriteStructBeginAsync(tmp51, cancellationToken);
         var tmp52 = new TField();
-        if((Name != null))
-        {
-          tmp52.Name = "name";
-          tmp52.Type = TType.String;
-          tmp52.ID = 1;
-          await oprot.WriteFieldBeginAsync(tmp52, cancellationToken);
-          await oprot.WriteStringAsync(Name, cancellationToken);
-          await oprot.WriteFieldEndAsync(cancellationToken);
-        }
+        tmp52.Name = "column_index";
+        tmp52.Type = TType.I32;
+        tmp52.ID = 1;
+        await oprot.WriteFieldBeginAsync(tmp52, cancellationToken);
+        await oprot.WriteI32Async(ColumnIndex, cancellationToken);
+        await oprot.WriteFieldEndAsync(cancellationToken);
         tmp52.Name = "is_required";
         tmp52.Type = TType.Bool;
         tmp52.ID = 2;
@@ -193,7 +190,7 @@ namespace QueryCat.Plugins.Sdk
     {
       if (that is not KeyColumn other) return false;
       if (ReferenceEquals(this, other)) return true;
-      return global::System.Object.Equals(Name, other.Name)
+      return global::System.Object.Equals(ColumnIndex, other.ColumnIndex)
         && global::System.Object.Equals(IsRequired, other.IsRequired)
         && TCollections.Equals(Operations, other.Operations);
     }
@@ -201,10 +198,7 @@ namespace QueryCat.Plugins.Sdk
     public override int GetHashCode() {
       int hashcode = 157;
       unchecked {
-        if((Name != null))
-        {
-          hashcode = (hashcode * 397) + Name.GetHashCode();
-        }
+        hashcode = (hashcode * 397) + ColumnIndex.GetHashCode();
         hashcode = (hashcode * 397) + IsRequired.GetHashCode();
         if((Operations != null))
         {
@@ -217,11 +211,8 @@ namespace QueryCat.Plugins.Sdk
     public override string ToString()
     {
       var tmp54 = new StringBuilder("KeyColumn(");
-      if((Name != null))
-      {
-        tmp54.Append(", Name: ");
-        Name.ToString(tmp54);
-      }
+      tmp54.Append(", ColumnIndex: ");
+      ColumnIndex.ToString(tmp54);
       tmp54.Append(", IsRequired: ");
       IsRequired.ToString(tmp54);
       if((Operations != null))

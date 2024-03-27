@@ -114,7 +114,7 @@ public partial class ThriftPluginClient : IDisposable
         // Bootstrap.
         if (_transportFactory == null)
         {
-            throw new InvalidOperationException("Transport is not initialized.");
+            throw new InvalidOperationException(Resources.Errors.TransportNotInitialized);
         }
         _protocol = new TMultiplexedProtocol(
             new TBinaryProtocol(
@@ -141,7 +141,7 @@ public partial class ThriftPluginClient : IDisposable
     {
         if (args.Length == 0)
         {
-            throw new InvalidOperationException("The application is intended to be executed by QueryCat host application.");
+            throw new InvalidOperationException(Resources.Errors.MustBeRunByHost);
         }
 
         var appArgs = new ThriftPluginClientArguments();
@@ -150,7 +150,7 @@ public partial class ThriftPluginClient : IDisposable
             var separatorIndex = arg.IndexOf('=', StringComparison.Ordinal);
             if (separatorIndex == -1)
             {
-                throw new InvalidOperationException($"Invalid argument '{arg}'.");
+                throw new InvalidOperationException(string.Format(Resources.Errors.InvalidArgument, arg));
             }
             var name = arg.Substring(2, separatorIndex - 2);
             var value = arg.Substring(separatorIndex + 1);
@@ -230,7 +230,7 @@ public partial class ThriftPluginClient : IDisposable
         }
         catch (TimeoutException)
         {
-            throw new PluginException($"Cannot connect to plugin manager with URI '{_pluginServerUri}'.");
+            throw new PluginException(string.Format(Resources.Errors.CannotConnectPluginManager, _pluginServerUri));
         }
 
         StartServer();
@@ -314,10 +314,14 @@ public partial class ThriftPluginClient : IDisposable
             return;
         }
 
-        var modulePath = Process.GetCurrentProcess().MainModule?.FileName;
+        var modulePath = Assembly.GetEntryAssembly()?.Location;
         if (string.IsNullOrEmpty(modulePath))
         {
-            throw new InvalidOperationException("Cannot get executable path.");
+            modulePath = Process.GetCurrentProcess().MainModule?.FileName;
+        }
+        if (string.IsNullOrEmpty(modulePath))
+        {
+            throw new InvalidOperationException(Resources.Errors.CannotGetPath);
         }
 
         _qcatProcess = new Process

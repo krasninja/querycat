@@ -70,7 +70,7 @@
     <value>COALESCE function must have identical argument types. Found {0}.</value>
   </data>
   <data name="NotImplemented" xml:space="preserve">
-    <value>{0} is not implemented.</value>
+    <value>'{0}' is not implemented.</value>
   </data>
   <data name="NoColumns" xml:space="preserve">
     <value>Columns not set.</value>
@@ -92,5 +92,8 @@
   </data>
   <data name="InvalidField" xml:space="preserve">
     <value>Invalid field '{0}'.</value>
+  </data>
+  <data name="NotSupported" xml:space="preserve">
+    <value>'{0}' is not supported.</value>
   </data>
 </root>

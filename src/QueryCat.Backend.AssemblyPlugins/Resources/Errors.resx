@@ -18,7 +18,10 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="HandlerInternalError" xml:space="preserve">
-    <value>Handler error.</value>
+  <data name="CannotGetFileDirectory" xml:space="preserve">
+    <value>Cannot get plugin directory by file '{0}'.</value>
+  </data>
+  <data name="CannotFindPluginDll" xml:space="preserve">
+    <value>Cannot find plugin DLL in '{0}'.</value>
   </data>
 </root>

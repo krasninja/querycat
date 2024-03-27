@@ -28,7 +28,7 @@ internal sealed partial class SelectPlanner
         {
             return Context_Create(queryCombineNode, parentContext);
         }
-        throw new InvalidOperationException($"Node type {node.GetType()} is not supported.");
+        throw new InvalidOperationException(string.Format(Resources.Errors.NotSupported, node.GetType().Name));
     }
 
     public SelectCommandContext Context_Create(SelectQuerySpecificationNode node, SelectCommandContext? parentContext = null)
@@ -37,7 +37,7 @@ internal sealed partial class SelectPlanner
         var context = Context_CreateInitialContext(node, parentContext);
         Context_InitializeRowsInputs(context, node);
         ContextCte_PrepareInputList(context, node);
-        Context_PrepareInitialInput(context, node);
+        Context_PrepareInitialInputs(context, node);
         return context;
     }
 
@@ -80,7 +80,7 @@ internal sealed partial class SelectPlanner
 
         if (queryNode is SelectQuerySpecificationNode querySpecificationNode)
         {
-            Context_PrepareInitialInput(context, querySpecificationNode);
+            Context_PrepareInitialInputs(context, querySpecificationNode);
             return;
         }
         if (queryNode is SelectQueryCombineNode queryCombineNode)
@@ -91,7 +91,7 @@ internal sealed partial class SelectPlanner
         throw new InvalidOperationException($"{queryNode.GetType().Name} cannot be processed.");
     }
 
-    private void Context_PrepareInitialInput(
+    private void Context_PrepareInitialInputs(
         SelectCommandContext context,
         SelectQuerySpecificationNode querySpecificationNode)
     {
@@ -115,6 +115,7 @@ internal sealed partial class SelectPlanner
             var alias = tableExpression is ISelectAliasNode selectAlias ? selectAlias.Alias : string.Empty;
 
             Context_SetAlias(tableExpression, alias);
+            finalRowInput = Context_WrapKeysInput(finalRowInput, context.Conditions);
             finalRowsInputs.Add(finalRowInput);
         }
 
@@ -144,20 +145,33 @@ internal sealed partial class SelectPlanner
         SelectQueryCombineType.Except => CombineType.Except,
         SelectQueryCombineType.Intersect => CombineType.Intersect,
         SelectQueryCombineType.Union => CombineType.Union,
-        _ => throw new ArgumentException($"{combineType} is not implemented.", nameof(combineType)),
+        _ => throw new ArgumentOutOfRangeException(nameof(combineType), string.Format(Resources.Errors.NotImplemented, combineType)),
     };
 
-    private IRowsInput[] Context_CreateInputSourceFromCte(SelectCommandContext currentContext, IdentifierExpressionNode idNode)
+    private IRowsInput[] Context_CreateInputSourceFromCte(SelectCommandContext context, IdentifierExpressionNode idNode)
     {
-        var cteIndex = currentContext.CteList.FindIndex(c => c.Name == idNode.FullName);
+        var cteIndex = context.CteList.FindIndex(c => c.Name == idNode.FullName);
         if (cteIndex < 0)
         {
             return Array.Empty<IRowsInput>();
         }
-        return
-        [
-            new RowsIteratorInput(currentContext.CteList[cteIndex].RowsIterator)
-        ];
+        var inputs = new List<IRowsInput>
+        {
+            new RowsIteratorInput(context.CteList[cteIndex].RowsIterator),
+        };
+        if (idNode is ISelectAliasNode aliasNode)
+        {
+            Context_SetAlias(inputs[0], aliasNode.Alias);
+        }
+        if (idNode is SelectIdentifierExpressionNode selectIdentifierExpressionNode)
+        {
+            foreach (var joinedNode in selectIdentifierExpressionNode.JoinedNodes)
+            {
+                var joinRowsInput = Context_CreateInputSourceFromTableJoin(context, inputs[0], joinedNode);
+                inputs.Add(joinRowsInput);
+            }
+        }
+        return inputs.ToArray();
     }
 
     private IRowsInput[] Context_CreateInputSourceFromVariable(SelectCommandContext context, IdentifierExpressionNode idNode)
@@ -264,6 +278,8 @@ internal sealed partial class SelectPlanner
         var right = Context_GetRowsInputFromExpression(context, tableJoinedNode.RightTableNode).Last();
         var alias = tableJoinedNode.RightTableNode is ISelectAliasNode selectAlias ? selectAlias.Alias : string.Empty;
         Context_SetAlias(right, alias);
+        right = Context_WrapKeysInput(right, context.Conditions);
+        left = Context_WrapKeysInput(left, context.Conditions);
 
         // For right join we swap left and right. But we keep columns in the same order.
         var join = Context_ConvertAstJoinType(tableJoinedNode.JoinTypeNode.JoinedType);
@@ -292,8 +308,22 @@ internal sealed partial class SelectPlanner
                 .RunAndReturn(joinedUsingNode);
             return new SelectJoinRowsInput(left, right, join, searchFunc, reverseColumnsOrder);
         }
-        throw new ArgumentException("Unsupported join type.", nameof(tableJoinedNode));
+        throw new ArgumentException(string.Format(Resources.Errors.NotSupported, tableJoinedNode.GetType().Name),
+            nameof(tableJoinedNode));
     }
+
+    private IRowsInput Context_WrapKeysInput(IRowsInput rowsInput, SelectQueryConditions conditions)
+    {
+        if (rowsInput is IRowsInputKeys rowsInputKeys
+            && rowsInputKeys is not SetKeysRowsInput)
+        {
+            return new SetKeysRowsInput(rowsInputKeys, conditions);
+        }
+        return rowsInput;
+    }
+
+    private List<IRowsInput> Context_WrapKeysInput(IReadOnlyList<IRowsInput> rowsInputs, SelectQueryConditions conditions)
+        => rowsInputs.Select(ri => Context_WrapKeysInput(ri, conditions)).ToList();
 
     private IRowsInput Context_CreateInputSourceFromTable(SelectCommandContext context,
         SelectTableNode tableNode)
@@ -351,7 +381,7 @@ internal sealed partial class SelectPlanner
     {
         if (rowsInputs.Count == 0)
         {
-            throw new QueryCatException("No rows inputs.");
+            throw new QueryCatException(Resources.Errors.NoInputs);
         }
         if (rowsInputs.Count == 1)
         {
