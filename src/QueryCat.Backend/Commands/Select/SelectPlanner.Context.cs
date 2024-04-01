@@ -109,7 +109,7 @@ internal sealed partial class SelectPlanner
             var rowsInputs = Context_GetRowsInputFromExpression(context, tableExpression);
             if (rowsInputs.Length == 0)
             {
-                throw new QueryCatException($"Cannot resolve input source '{tableExpression}'.");
+                throw new QueryCatException(string.Format(Resources.Errors.CannotResolveInputSource, tableExpression));
             }
             var finalRowInput = rowsInputs.Last();
             var alias = tableExpression is ISelectAliasNode selectAlias ? selectAlias.Alias : string.Empty;

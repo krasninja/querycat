@@ -26,7 +26,7 @@ public class TextLineFormatter : IRowsFormatter
     /// <inheritdoc />
     public IRowsOutput OpenOutput(Stream output)
     {
-        throw new QueryCatException($"{nameof(TextLineFormatter)} does not support output.");
+        throw new QueryCatException(string.Format(Resources.Errors.FormatterNoOutput, nameof(TextLineFormatter)));
     }
 
     public static void RegisterFunctions(IFunctionsManager functionsManager)

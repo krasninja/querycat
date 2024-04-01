@@ -36,7 +36,7 @@ internal sealed class UpdateCommand : ICommand
         // Evaluate setters.
         if (context.RowsInputIterator?.RowsInput is not IRowsInputUpdate rowsInput)
         {
-            throw new QueryCatException("Rows input must be updatable.");
+            throw new QueryCatException(Resources.Errors.RowsInputNotUpdatable);
         }
         var setters = new List<UpdateSetter>();
         var createDelegateVisitor = new SelectCreateDelegateVisitor(executionThread, context);

@@ -296,7 +296,7 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
 
         if (rowsIterator.Columns.Length > 1)
         {
-            throw new QueryCatException($"Subquery returns {rowsIterator.Columns.Length} columns, expected 1.");
+            throw new QueryCatException(string.Format(Resources.Errors.InvalidSubqueryColumnsCount, rowsIterator.Columns.Length));
         }
         var operationDelegate = VariantValue.GetOperationDelegate(node.Operation);
 

@@ -200,5 +200,89 @@ namespace QueryCat.Backend.Resources {
                 return ResourceManager.GetString("NotSupported", resourceCulture);
             }
         }
+        
+        internal static string SchemasNotEqual {
+            get {
+                return ResourceManager.GetString("SchemasNotEqual", resourceCulture);
+            }
+        }
+        
+        internal static string InvalidRowsInput {
+            get {
+                return ResourceManager.GetString("InvalidRowsInput", resourceCulture);
+            }
+        }
+        
+        internal static string CannotResolveInputSource {
+            get {
+                return ResourceManager.GetString("CannotResolveInputSource", resourceCulture);
+            }
+        }
+        
+        internal static string CannotFindPartition {
+            get {
+                return ResourceManager.GetString("CannotFindPartition", resourceCulture);
+            }
+        }
+        
+        internal static string InvalidUri {
+            get {
+                return ResourceManager.GetString("InvalidUri", resourceCulture);
+            }
+        }
+        
+        internal static string InvalidSubqueryColumnsCount {
+            get {
+                return ResourceManager.GetString("InvalidSubqueryColumnsCount", resourceCulture);
+            }
+        }
+        
+        internal static string RowsInputNotUpdatable {
+            get {
+                return ResourceManager.GetString("RowsInputNotUpdatable", resourceCulture);
+            }
+        }
+        
+        internal static string CannotEnumerateFiles {
+            get {
+                return ResourceManager.GetString("CannotEnumerateFiles", resourceCulture);
+            }
+        }
+        
+        internal static string PathNoFiles {
+            get {
+                return ResourceManager.GetString("PathNoFiles", resourceCulture);
+            }
+        }
+        
+        internal static string CannotWriteToCollection {
+            get {
+                return ResourceManager.GetString("CannotWriteToCollection", resourceCulture);
+            }
+        }
+        
+        internal static string CannotWriteToProperty {
+            get {
+                return ResourceManager.GetString("CannotWriteToProperty", resourceCulture);
+            }
+        }
+        
+        internal static string FormatterNoOutput {
+            get {
+                return ResourceManager.GetString("FormatterNoOutput", resourceCulture);
+            }
+        }
+        
+        internal static string PathNotDefined {
+            get {
+                return ResourceManager.GetString("PathNotDefined", resourceCulture);
+            }
+        }
+        
+        internal static string DelimiterOneCharacter {
+            get {
+                return ResourceManager.GetString("DelimiterOneCharacter", resourceCulture);
+            }
+        }
     }
 }

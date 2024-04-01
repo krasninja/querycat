@@ -69,7 +69,7 @@ internal static class IOFunctions
         var files = File_GetFileInputsByPath(path, args.ExecutionThread, formatter, funcArgs).ToList();
         if (!files.Any())
         {
-            throw new QueryCatException($"No files match '{path}'.");
+            throw new QueryCatException(string.Format(Resources.Errors.PathNoFiles, path));
         }
         var input = files.Count == 1 ? files.First() : new CombineRowsInput(files);
         return VariantValue.CreateFromObject(input);
@@ -82,7 +82,7 @@ internal static class IOFunctions
         var pathArgument = args.GetAt(0);
         if (pathArgument.IsNull || string.IsNullOrEmpty(pathArgument.AsString))
         {
-            throw new QueryCatException("Path is not defined.");
+            throw new QueryCatException(Resources.Errors.PathNotDefined);
         }
         var (path, funcArgs) = Utils_ParseUri(pathArgument.AsString);
 
@@ -153,7 +153,7 @@ internal static class IOFunctions
         }
         catch (Exception e)
         {
-            throw new QueryCatException($"Cannot enumerate files: {e.Message}");
+            throw new QueryCatException(string.Format(Resources.Errors.CannotEnumerateFiles, e.Message));
         }
         foreach (var file in files.OrderBy(f => f))
         {
@@ -297,7 +297,7 @@ internal static class IOFunctions
 
         if (!Uri.TryCreate(uriArgument, UriKind.Absolute, out var uri))
         {
-            throw new QueryCatException("Invalid URI.");
+            throw new QueryCatException(Resources.Errors.InvalidUri);
         }
         var request = new HttpRequestMessage(HttpMethod.Get, uri);
         var response = HttpClient.Send(request);

@@ -82,7 +82,7 @@ public class CollectionInput<
     {
         if (_list is not ICollection<TClass> collection)
         {
-            throw new QueryCatException($"Cannot write to collection of type '{_list.GetType().Name}'.");
+            throw new QueryCatException(string.Format(Resources.Errors.CannotWriteToCollection, _list.GetType().Name));
         }
 
         var columns = QueryContext.QueryInfo.Columns.ToArray();
@@ -131,7 +131,7 @@ public class CollectionInput<
         var prop = _columnsProperties[columnIndex];
         if (!prop.CanWrite)
         {
-            throw new QueryCatException($"Cannot write property '{prop.Name}'.");
+            throw new QueryCatException(string.Format(Resources.Errors.CannotWriteToProperty, prop.Name));
         }
         prop.SetValue(obj, ChangeType(value.GetGenericObject(), prop.PropertyType));
         return ErrorCode.OK;

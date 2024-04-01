@@ -23,7 +23,7 @@ internal sealed class WriteRowsFrameIterator : IRowsIterator, IRowsIteratorParen
 
         if (!_rowsFrame.IsSchemaEqual(rowsIterator))
         {
-            throw new InvalidOperationException("Schemas must be equal.");
+            throw new InvalidOperationException(Resources.Errors.SchemasNotEqual);
         }
     }
 
