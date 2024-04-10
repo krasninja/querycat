@@ -27,9 +27,15 @@ internal class IdentifierExpressionNode : ExpressionNode
     /// <inheritdoc />
     public override string Code => "id";
 
+    public List<IdentifierSelectorNode> SelectorNodes { get; } = new();
+
     /// <inheritdoc />
-    public IdentifierExpressionNode(string name)
+    public IdentifierExpressionNode(string name, List<IdentifierSelectorNode>? selectorNodes = null)
     {
+        if (selectorNodes != null)
+        {
+            SelectorNodes.AddRange(selectorNodes);
+        }
         Name = StringUtils.GetUnwrappedText(name);
     }
 
@@ -41,6 +47,7 @@ internal class IdentifierExpressionNode : ExpressionNode
 
     public IdentifierExpressionNode(IdentifierExpressionNode node) : this(node.Name, node.SourceName)
     {
+        SelectorNodes = node.SelectorNodes.Select(s => (IdentifierSelectorNode)s.Clone()).ToList();
         node.CopyTo(this);
     }
 

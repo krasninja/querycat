@@ -11,7 +11,7 @@ internal static class MiscFunctions
 {
     [SafeFunction]
     [Description("The function returns a null value if value1 equals value2; otherwise it returns value1.")]
-    [FunctionSignature("[nullif](value1: any, value2: any): any")]
+    [FunctionSignature("\"nullif\"(value1: any, value2: any): any")]
     public static VariantValue NullIf(FunctionCallInfo args)
     {
         var value1 = args.GetAt(0);

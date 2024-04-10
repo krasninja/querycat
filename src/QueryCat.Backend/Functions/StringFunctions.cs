@@ -96,7 +96,7 @@ internal static class StringFunctions
 
     [SafeFunction]
     [Description("Returns first starting index of the specified substring within string, or zero if it's not present.")]
-    [FunctionSignature("[position](substring: string, target: string): integer")]
+    [FunctionSignature("\"position\"(substring: string, target: string): integer")]
     public static VariantValue Position(FunctionCallInfo args)
     {
         var substring = args.GetAt(0).AsString;

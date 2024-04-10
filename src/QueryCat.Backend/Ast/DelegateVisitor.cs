@@ -71,6 +71,18 @@ internal abstract class DelegateVisitor : AstVisitor
     }
 
     /// <inheritdoc />
+    public override void Visit(IdentifierIndexSelectorNode node)
+    {
+        OnVisit(node);
+    }
+
+    /// <inheritdoc />
+    public override void Visit(IdentifierPropertySelectorNode node)
+    {
+        OnVisit(node);
+    }
+
+    /// <inheritdoc />
     public override void Visit(InExpressionValuesNode node)
     {
         OnVisit(node);

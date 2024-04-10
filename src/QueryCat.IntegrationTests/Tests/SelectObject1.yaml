@@ -1,0 +1,6 @@
+expected: |
+  1
+query: |
+  select
+    user.name,
+    user.address.phones[1+1];

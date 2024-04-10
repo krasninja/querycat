@@ -31,16 +31,16 @@ statement
  * ===============
  */
 
-functionSignature: name=IDENTIFIER '(' (functionArg (COMMA functionArg)*)? ')' (COLON functionType)? EOF;
-functionType: type ('<' IDENTIFIER '>')?;
-functionArg: variadic=ELLIPSIS? IDENTIFIER optional=QUESTION? COLON functionType isArray=LEFT_RIGHT_BRACKET?
+functionSignature: name=identifierSimple '(' (functionArg (COMMA functionArg)*)? ')' (COLON functionType)? EOF;
+functionType: type ('<' identifierSimple '>')?;
+functionArg: variadic=ELLIPSIS? identifierSimple optional=QUESTION? COLON functionType isArray=LEFT_RIGHT_BRACKET?
     (('=' | ':=' | DEFAULT) default=literal)?;
 
 functionCall
-    : IDENTIFIER '(' ( functionCallArg (COMMA functionCallArg)* )? ')'
-    | IDENTIFIER '(' '*' ')' // Special case for COUNT(*).
+    : identifierSimple '(' ( functionCallArg (COMMA functionCallArg)* )? ')'
+    | identifierSimple '(' '*' ')' // Special case for COUNT(*).
     ;
-functionCallArg: (IDENTIFIER ASSOCIATION)? expression;
+functionCallArg: (identifierSimple ASSOCIATION)? expression;
 
 /*
  * ===============
@@ -48,8 +48,8 @@ functionCallArg: (IDENTIFIER ASSOCIATION)? expression;
  * ===============
  */
 
-declareVariable: DECLARE IDENTIFIER type (':=' statement)?;
-setVariable: SET IDENTIFIER ':=' statement;
+declareVariable: DECLARE identifierSimple type (':=' statement)?;
+setVariable: SET identifierSimple ':=' statement;
 
 /*
  * ===============
@@ -64,7 +64,7 @@ selectOrderByClause: ORDER BY selectSortSpecification (COMMA selectSortSpecifica
 selectSortSpecification: expression (ASC | DESC)? ((NULLS FIRST) | (NULLS LAST))?;
 
 // Select query.
-selectAlias: AS? (name=(IDENTIFIER | STRING_LITERAL));
+selectAlias: AS? (identifierSimple | STRING_LITERAL);
 selectQueryExpression
     : selectWithClause?
       SELECT
@@ -111,13 +111,13 @@ selectDistinctOnClause: DISTINCT ON '(' simpleExpression (COMMA simpleExpression
 
 // With.
 selectWithClause: WITH RECURSIVE? selectWithElement (COMMA selectWithElement)*;
-selectWithElement: name=IDENTIFIER ('(' selectWithColumnList ')')? AS '(' query=selectQueryExpression ')';
-selectWithColumnList: name=identifierChain (COMMA name=identifierChain)*;
+selectWithElement: name=identifierSimple ('(' selectWithColumnList ')')? AS '(' query=selectQueryExpression ')';
+selectWithColumnList: name=identifier (COMMA name=identifier)*;
 
 // Columns.
 selectSublist
     : STAR # SelectSublistAll
-    | functionCall OVER (windowName=IDENTIFIER | selectWindowSpecification) selectAlias? # SelectSublistWindow
+    | functionCall OVER (windowName=identifierSimple | selectWindowSpecification) selectAlias? # SelectSublistWindow
     | expression selectAlias? # SelectSublistExpression
     ;
 
@@ -140,12 +140,12 @@ selectTablePrimary
     | '-' (FORMAT format=functionCall)? selectAlias? # SelectTablePrimaryStdin
     | uri=STRING_LITERAL (FORMAT format=functionCall)? selectAlias? # SelectTablePrimaryWithFormat
     | '(' selectQueryExpression ')' selectAlias? # SelectTablePrimarySubquery
-    | name=IDENTIFIER (FORMAT format=functionCall)? selectAlias? # SelectTablePrimaryIdentifier
+    | name=identifierSimple (FORMAT format=functionCall)? selectAlias? # SelectTablePrimaryIdentifier
     | '(' selectTable ')' selectAlias? # SelectTablePrimaryTable
     ;
 selectTableJoined
     : selectJoinType? JOIN right=selectTablePrimary ON condition=expression # SelectTableJoinedOn
-    | selectJoinType? JOIN right=selectTablePrimary USING '(' IDENTIFIER (COMMA IDENTIFIER)* ')' # SelectTableJoinedUsing
+    | selectJoinType? JOIN right=selectTablePrimary USING '(' identifierSimple (COMMA identifierSimple)* ')' # SelectTableJoinedUsing
     ;
 selectJoinType: INNER | (LEFT | RIGHT | FULL) OUTER?;
 
@@ -157,12 +157,12 @@ selectHaving: HAVING expression;
 selectSearchCondition: WHERE expression;
 
 // Window.
-selectWindowSpecification: '(' existingWindowName=IDENTIFIER? selectWindowPartitionClause?
+selectWindowSpecification: '(' existingWindowName=identifierSimple? selectWindowPartitionClause?
     selectWindowOrderClause? ')';
 selectWindowPartitionClause: PARTITION BY expression (COMMA expression)*;
 selectWindowOrderClause: ORDER BY selectSortSpecification (COMMA selectSortSpecification)*;
 selectWindow: WINDOW selectWindowDefinitionList (COMMA selectWindowDefinitionList)*;
-selectWindowDefinitionList: name=IDENTIFIER AS selectWindowSpecification;
+selectWindowDefinitionList: name=identifier AS selectWindowSpecification;
 
 // Limit, offset.
 selectOffsetClause: OFFSET (offset=expression) (ROW | ROWS)?;
@@ -185,9 +185,9 @@ updateStatement:
 updateSource
     : functionCall selectAlias? # UpdateNoFormat
     | uri=STRING_LITERAL (FORMAT functionCall)? # UpdateWithFormat
-    | name=identifierChain # UpdateFromVariable
+    | name=identifier # UpdateFromVariable
     ;
-updateSetClause: source=identifierChain '=' target=expression;
+updateSetClause: source=identifier '=' target=expression;
 
 /*
  * ===============
@@ -203,9 +203,9 @@ insertStatement:
 insertToSource
     : functionCall # InsertNoFormat
     | uri=STRING_LITERAL (FORMAT functionCall)? # InsertWithFormat
-    | name=identifierChain # InsertFromVariable
+    | name=identifier # InsertFromVariable
     ;
-insertColumnsList: '(' name=identifierChain (',' name=identifierChain)* ')';
+insertColumnsList: '(' name=identifier (',' name=identifier)* ')';
 insertFromSource
     : selectQueryExpression # InsertSourceQuery
     | selectTable # InsertSourceTable
@@ -233,9 +233,18 @@ callStatement: CALL functionCall;
  * ========
  */
 
-identifierChain
-    : source=IDENTIFIER PERIOD name=IDENTIFIER? # identifierChainFull
-    | name=IDENTIFIER # identifierChainSimple
+identifierSimple
+    : NO_QUOTES_IDENTIFIER
+    | QUOTES_IDENTIFIER
+    ;
+identifier
+    : source=identifierSimple '.' name=identifierSimple # IdentifierWithSource
+    | name=identifierSimple identifierSelector* # IdentifierWithSelector
+    | name=identifierSimple # IdentifierWithoutSource
+    ;
+identifierSelector
+    : '.' name=NO_QUOTES_IDENTIFIER # IdentifierSelectorProperty
+    | '[' simpleExpression ']' # IdentifierSelectorIndex
     ;
 array: '(' expression (',' expression)* ')';
 intervalLiteral: INTERVAL interval=STRING_LITERAL;
@@ -296,7 +305,7 @@ expression
     | standardFunction # ExpressionStandardFunctionCall
     | functionCall # ExpressionFunctionCall
     | caseExpression # ExpressionCase
-    | identifierChain # ExpressionIdentifier
+    | identifier # ExpressionIdentifier
     | '(' expression ')' # ExpressionInParens
     | '(' selectQueryExpression ')' # ExpressionSelect
     | left=expression op=CONCAT right=expression # ExpressionBinary
@@ -329,7 +338,7 @@ simpleExpression
     | standardFunction # SimpleExpressionStandardFunctionCall
     | functionCall # SimpleExpressionFunctionCall
     | caseExpression # SimpleExpressionCase
-    | identifierChain # SimpleExpressionIdentifier
+    | identifier # SimpleExpressionIdentifier
     | '(' simpleExpression ')' # SimpleExpressionInParens
     | op=(PLUS | MINUS) right=expression # SimpleExpressionUnary
     | left=simpleExpression op=CONCAT right=simpleExpression # SimpleExpressionBinary

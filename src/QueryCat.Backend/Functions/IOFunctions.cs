@@ -41,7 +41,7 @@ internal static class IOFunctions
 
     [SafeFunction]
     [Description("Reads data from a string.")]
-    [FunctionSignature("read_text([text]: string, fmt: object<IRowsFormatter>): object<IRowsInput>")]
+    [FunctionSignature("read_text(\"text\": string, fmt: object<IRowsFormatter>): object<IRowsInput>")]
     public static VariantValue ReadString(FunctionCallInfo args)
     {
         var text = args.GetAt(0).AsString;

@@ -17,13 +17,13 @@ internal partial class ProgramParserVisitor
     public override IAstNode VisitFunctionType(QueryCatParser.FunctionTypeContext context)
     {
         return new FunctionTypeNode(
-            this.Visit<TypeNode>(context.type()).Type, GetUnwrappedText(context.IDENTIFIER()));
+            this.Visit<TypeNode>(context.type()).Type, GetUnwrappedText(context.identifierSimple()));
     }
 
     /// <inheritdoc />
     public override IAstNode VisitFunctionArg(QueryCatParser.FunctionArgContext context)
         => new FunctionSignatureArgumentNode(
-            name: context.IDENTIFIER().GetText(),
+            name: context.identifierSimple().GetText(),
             typeNode: this.Visit<FunctionTypeNode>(context.functionType()),
             defaultValue: this.Visit(context.@default, LiteralNode.NullValueNode).Value,
             isOptional: context.optional == null,

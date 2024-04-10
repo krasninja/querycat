@@ -22,5 +22,5 @@ INSERT INTO 'test.csv'
 SELECT * FROM 'Countries1.csv';
 
 -- Insert into variable.
-INSERT INTO self(array_variable) (id, [name]) VALUES (4, 'Abbie Cornish');
+INSERT INTO self(array_variable) (id, "name") VALUES (4, 'Abbie Cornish');
 ```
