@@ -556,13 +556,6 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitIdentifierSimple([NotNull] QueryCatParser.IdentifierSimpleContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>IdentifierWithSource</c>
-	/// labeled alternative in <see cref="QueryCatParser.identifier"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitIdentifierWithSource([NotNull] QueryCatParser.IdentifierWithSourceContext context);
-	/// <summary>
 	/// Visit a parse tree produced by the <c>IdentifierWithSelector</c>
 	/// labeled alternative in <see cref="QueryCatParser.identifier"/>.
 	/// </summary>

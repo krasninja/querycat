@@ -152,21 +152,49 @@ internal class CreateDelegateVisitor : AstVisitor
     public override void Visit(IdentifierExpressionNode node)
     {
         ResolveTypesVisitor.Visit(node);
+        var scope = ExecutionThread.TopScope;
 
-        if (string.IsNullOrEmpty(node.SourceName))
+        if (scope.TryGet(node.Name, out _))
         {
-            var scope = ExecutionThread.TopScope;
-            if (scope.TryGet(node.Name, out _))
+            VariantValue Func()
             {
-                VariantValue Func()
-                {
-                    return scope.Get(node.Name);
-                }
-                NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, node.GetDataType());
-                return;
+                var startObject = scope.Get(node.Name);
+                var finalObject = GetObjectBySelector(startObject, node);
+                return finalObject;
+            }
+            NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, node.GetDataType());
+            return;
+        }
+
+        throw new CannotFindIdentifierException(node.Name);
+    }
+
+    private VariantValue GetObjectBySelector(VariantValue value, IdentifierExpressionNode idNode)
+    {
+        if (idNode.SelectorNodes.Length == 0 || value.AsObjectUnsafe == null)
+        {
+            return value;
+        }
+
+        var context = new ObjectSelectorContext(value.AsObjectUnsafe);
+        for (var i = 0; i < idNode.SelectorNodes.Length; i++)
+        {
+            var selector = idNode.SelectorNodes[i];
+
+            if (selector is IdentifierPropertySelectorNode propertySelectorNode)
+            {
+                ExecutionThread.ObjectSelector.PushObjectByProperty(context, propertySelectorNode.PropertyName);
+            }
+            else if (selector is IdentifierIndexSelectorNode indexSelectorNode)
+            {
+                var indexObjects = indexSelectorNode.IndexExpressions
+                    .Select(e => NodeIdFuncMap[e.Id].Invoke())
+                    .ToArray();
+                ExecutionThread.ObjectSelector.PushObjectByIndex(context, indexObjects);
             }
         }
-        throw new CannotFindIdentifierException(node.Name);
+
+        return VariantValue.CreateFromObject(context.SelectStack.Peek().Object);
     }
 
     /// <inheritdoc />

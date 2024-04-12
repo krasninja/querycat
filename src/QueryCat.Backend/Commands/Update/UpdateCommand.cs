@@ -42,8 +42,8 @@ internal sealed class UpdateCommand : ICommand
         var createDelegateVisitor = new SelectCreateDelegateVisitor(executionThread, context);
         foreach (var setNode in insertNode.SetNodes)
         {
-            var columnIndex = rowsInput.GetColumnIndexByName(setNode.SetTargetNode.Name,
-                setNode.SetTargetNode.SourceName);
+            var columnIndex = rowsInput.GetColumnIndexByName(setNode.SetTargetNode.TableFieldName,
+                setNode.SetTargetNode.TableSourceName);
             if (columnIndex < 0)
             {
                 throw new QueryCatException(

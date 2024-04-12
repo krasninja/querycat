@@ -406,9 +406,9 @@ internal sealed partial class SelectPlanner
         }
 
         foreach (var inputColumn in node.GetAllChildren<IdentifierExpressionNode>()
-                     .Where(n => string.IsNullOrEmpty(n.SourceName)))
+                     .Where(n => string.IsNullOrEmpty(n.TableSourceName)))
         {
-            inputColumn.SourceName = alias;
+            inputColumn.TableSourceName = alias;
         }
 
         var iterator = node.GetAttribute<IRowsIterator>(AstAttributeKeys.ResultKey);
@@ -445,7 +445,7 @@ internal sealed partial class SelectPlanner
                 continue;
             }
 
-            var columnIndex = rowsInput.GetColumnIndexByName(idNode.Name, idNode.SourceName);
+            var columnIndex = rowsInput.GetColumnIndexByName(idNode.TableFieldName, idNode.TableSourceName);
             if (columnIndex > -1)
             {
                 rowsInput.Columns[columnIndex].DataType = castNode.TargetTypeNode.Type;

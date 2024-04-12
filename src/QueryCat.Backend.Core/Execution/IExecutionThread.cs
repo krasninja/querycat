@@ -31,6 +31,11 @@ public interface IExecutionThread : IDisposable
     IExecutionScope TopScope { get; }
 
     /// <summary>
+    /// Selector to resolve object expressions.
+    /// </summary>
+    IObjectSelector ObjectSelector { get; }
+
+    /// <summary>
     /// Execution statistic.
     /// </summary>
     ExecutionStatistic Statistic { get; }

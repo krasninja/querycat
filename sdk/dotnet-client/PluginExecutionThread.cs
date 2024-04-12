@@ -28,6 +28,9 @@ public sealed class PluginExecutionThread : IExecutionThread
     public IExecutionScope TopScope => NullExecutionScope.Instance;
 
     /// <inheritdoc />
+    public IObjectSelector ObjectSelector => NullObjectSelector.Instance;
+
+    /// <inheritdoc />
     public ExecutionStatistic Statistic => NullExecutionStatistic.Instance;
 
     /// <inheritdoc />

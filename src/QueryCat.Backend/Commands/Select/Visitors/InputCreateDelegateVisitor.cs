@@ -32,7 +32,7 @@ internal class InputCreateDelegateVisitor : CreateDelegateVisitor
     public override void Visit(IdentifierExpressionNode node)
     {
         ResolveTypesVisitor.Visit(node);
-        var func = GetValueDelegateForIdentifier(node.Name, node.SourceName);
+        var func = GetValueDelegateForIdentifier(node.TableFieldName, node.TableSourceName);
         if (func != null)
         {
             NodeIdFuncMap[node.Id] = func;

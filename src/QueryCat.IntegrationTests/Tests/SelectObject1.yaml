@@ -1,6 +1,6 @@
 expected: |
-  1
+  Pavel K.,+7 933 998 0000
 query: |
   select
-    user.name,
-    user.address.phones[1+1];
+    user1.Name,
+    user1.Address.Phones[0];

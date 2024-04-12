@@ -238,13 +238,12 @@ identifierSimple
     | QUOTES_IDENTIFIER
     ;
 identifier
-    : source=identifierSimple '.' name=identifierSimple # IdentifierWithSource
-    | name=identifierSimple identifierSelector* # IdentifierWithSelector
+    : name=identifierSimple identifierSelector* # IdentifierWithSelector
     | name=identifierSimple # IdentifierWithoutSource
     ;
 identifierSelector
-    : '.' name=NO_QUOTES_IDENTIFIER # IdentifierSelectorProperty
-    | '[' simpleExpression ']' # IdentifierSelectorIndex
+    : '.' name=identifierSimple # IdentifierSelectorProperty
+    | '[' simpleExpression (',' simpleExpression)* ']' # IdentifierSelectorIndex
     ;
 array: '(' expression (',' expression)* ')';
 intervalLiteral: INTERVAL interval=STRING_LITERAL;

@@ -45,6 +45,9 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
     /// <inheritdoc />
     public IExecutionScope TopScope => _topScope;
 
+    /// <inheritdoc />
+    public IObjectSelector ObjectSelector { get; } = new DefaultObjectSelector();
+
     /// <summary>
     /// Current executing statement.
     /// </summary>

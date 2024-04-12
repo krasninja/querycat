@@ -5,18 +5,27 @@ internal sealed class IdentifierIndexSelectorNode : IdentifierSelectorNode
     /// <inheritdoc />
     public override string Code => "id_index_selector";
 
-    public ExpressionNode IndexExpression { get; }
+    public ExpressionNode[] IndexExpressions { get; }
 
     /// <inheritdoc />
-    public IdentifierIndexSelectorNode(ExpressionNode indexExpression)
+    public IdentifierIndexSelectorNode(List<ExpressionNode> indexExpression)
     {
-        IndexExpression = indexExpression;
+        IndexExpressions = indexExpression.ToArray();
     }
 
     public IdentifierIndexSelectorNode(IdentifierIndexSelectorNode node)
-        : this((ExpressionNode)node.IndexExpression.Clone())
+        : this(node.IndexExpressions.Select(e => (ExpressionNode)e.Clone()).ToList())
     {
         node.CopyTo(this);
+    }
+
+    /// <inheritdoc />
+    public override IEnumerable<IAstNode> GetChildren()
+    {
+        foreach (var indexExpression in IndexExpressions)
+        {
+            yield return indexExpression;
+        }
     }
 
     /// <inheritdoc />
@@ -24,4 +33,7 @@ internal sealed class IdentifierIndexSelectorNode : IdentifierSelectorNode
 
     /// <inheritdoc />
     public override void Accept(AstVisitor visitor) => visitor.Visit(this);
+
+    /// <inheritdoc />
+    public override string ToString() => "[" + string.Join(", ", IndexExpressions.ToString()) + "]";
 }

@@ -22,8 +22,7 @@ internal class InputResolveTypesVisitor : ResolveTypesVisitor
     {
         foreach (var rowsInput in _rowsInputs)
         {
-            var columnIndex = rowsInput
-                .GetColumnIndexByName(node.Name, node.SourceName);
+            var columnIndex = rowsInput.GetColumnIndexByName(node.TableFieldName, node.TableSourceName);
             if (columnIndex > -1)
             {
                 node.SetAttribute(AstAttributeKeys.InputColumnKey, rowsInput.Columns[columnIndex]);

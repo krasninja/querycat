@@ -28,6 +28,9 @@ public sealed class NullExecutionThread : IExecutionThread
     public IExecutionScope TopScope { get; } = NullExecutionScope.Instance;
 
     /// <inheritdoc />
+    public IObjectSelector ObjectSelector { get; } = NullObjectSelector.Instance;
+
+    /// <inheritdoc />
     public ExecutionStatistic Statistic { get; } = NullExecutionStatistic.Instance;
 
     /// <inheritdoc />

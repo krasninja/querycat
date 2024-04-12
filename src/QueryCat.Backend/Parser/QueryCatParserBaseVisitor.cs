@@ -883,17 +883,6 @@ public partial class QueryCatParserBaseVisitor<Result> : AbstractParseTreeVisito
 	/// <return>The visitor result.</return>
 	public virtual Result VisitIdentifierSimple([NotNull] QueryCatParser.IdentifierSimpleContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by the <c>IdentifierWithSource</c>
-	/// labeled alternative in <see cref="QueryCatParser.identifier"/>.
-	/// <para>
-	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
-	/// on <paramref name="context"/>.
-	/// </para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	public virtual Result VisitIdentifierWithSource([NotNull] QueryCatParser.IdentifierWithSourceContext context) { return VisitChildren(context); }
-	/// <summary>
 	/// Visit a parse tree produced by the <c>IdentifierWithSelector</c>
 	/// labeled alternative in <see cref="QueryCatParser.identifier"/>.
 	/// <para>

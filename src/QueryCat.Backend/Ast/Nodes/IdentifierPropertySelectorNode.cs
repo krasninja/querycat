@@ -23,4 +23,7 @@ internal sealed class IdentifierPropertySelectorNode : IdentifierSelectorNode
 
     /// <inheritdoc />
     public override void Accept(AstVisitor visitor) => visitor.Visit(this);
+
+    /// <inheritdoc />
+    public override string ToString() => "." + PropertyName;
 }

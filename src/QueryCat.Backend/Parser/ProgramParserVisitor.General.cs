@@ -253,10 +253,6 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
         => new IdentifierExpressionNode(GetUnwrappedText(context.name));
 
     /// <inheritdoc />
-    public override IAstNode VisitIdentifierWithSource(QueryCatParser.IdentifierWithSourceContext context)
-        => new IdentifierExpressionNode(GetUnwrappedText(context.name), GetUnwrappedText(context.source));
-
-    /// <inheritdoc />
     public override IAstNode VisitIdentifierWithSelector(QueryCatParser.IdentifierWithSelectorContext context)
         => new IdentifierExpressionNode(
             name: GetUnwrappedText(context.name),
@@ -264,12 +260,12 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
 
     /// <inheritdoc />
     public override IAstNode VisitIdentifierSelectorProperty(QueryCatParser.IdentifierSelectorPropertyContext context)
-        => new IdentifierPropertySelectorNode(propertyName: GetUnwrappedText(context));
+        => new IdentifierPropertySelectorNode(propertyName: GetUnwrappedText(context.name));
 
     /// <inheritdoc />
     public override IAstNode VisitIdentifierSelectorIndex(QueryCatParser.IdentifierSelectorIndexContext context)
         => new IdentifierIndexSelectorNode(
-            indexExpression: this.Visit<ExpressionNode>(context.simpleExpression()));
+            indexExpression: context.simpleExpression().Select(this.Visit<ExpressionNode>).ToList());
 
     private static bool GetBooleanFromString(string text)
     {

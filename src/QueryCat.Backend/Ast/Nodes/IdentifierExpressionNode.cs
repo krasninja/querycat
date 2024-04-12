@@ -1,3 +1,4 @@
+using System.Text;
 using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend.Ast.Nodes;
@@ -13,42 +14,66 @@ internal class IdentifierExpressionNode : ExpressionNode
     public string Name { get; }
 
     /// <summary>
-    /// Optional source name. Should be empty for local variables.
+    /// The field name for data (SELECT, UPDATE, etc.) commands.
     /// </summary>
-    public string SourceName { get; internal set; } = string.Empty;
+    public string TableFieldName { get; }
 
     /// <summary>
-    /// Full name (source name + name).
+    /// The source/table name for data (SELECT, UPDATE, etc.) commands. Should be empty for local variables.
     /// </summary>
-    public string FullName => !string.IsNullOrEmpty(SourceName)
-        ? $"{SourceName}.{Name}"
-        : Name;
+    public string TableSourceName { get; internal set; } = string.Empty;
+
+    /// <summary>
+    /// Full name.
+    /// </summary>
+    public string FullName => Name + DumpNameWithSelector();
 
     /// <inheritdoc />
     public override string Code => "id";
 
-    public List<IdentifierSelectorNode> SelectorNodes { get; } = new();
+    /// <summary>
+    /// Selectors.
+    /// </summary>
+    public IdentifierSelectorNode[] SelectorNodes { get; } = [];
 
     /// <inheritdoc />
     public IdentifierExpressionNode(string name, List<IdentifierSelectorNode>? selectorNodes = null)
     {
+        Name = StringUtils.GetUnwrappedText(name);
+        TableFieldName = Name;
+
         if (selectorNodes != null)
         {
-            SelectorNodes.AddRange(selectorNodes);
+            SelectorNodes = selectorNodes.ToArray();
+            if (SelectorNodes.Length == 1 && SelectorNodes[0] is IdentifierPropertySelectorNode propertySelectorNode)
+            {
+                TableFieldName = propertySelectorNode.PropertyName;
+                TableSourceName = Name;
+            }
         }
-        Name = StringUtils.GetUnwrappedText(name);
     }
 
     /// <inheritdoc />
     public IdentifierExpressionNode(string name, string sourceName) : this(name)
     {
-        SourceName = StringUtils.GetUnwrappedText(sourceName);
+        TableSourceName = StringUtils.GetUnwrappedText(sourceName);
     }
 
-    public IdentifierExpressionNode(IdentifierExpressionNode node) : this(node.Name, node.SourceName)
+    public IdentifierExpressionNode(IdentifierExpressionNode node) : this(node.Name)
     {
-        SelectorNodes = node.SelectorNodes.Select(s => (IdentifierSelectorNode)s.Clone()).ToList();
+        SelectorNodes = node.SelectorNodes.Select(s => (IdentifierSelectorNode)s.Clone()).ToArray();
+        TableSourceName = node.TableSourceName;
+        TableFieldName = node.TableFieldName;
         node.CopyTo(this);
+    }
+
+    /// <inheritdoc />
+    public override IEnumerable<IAstNode> GetChildren()
+    {
+        foreach (var selectorNode in SelectorNodes)
+        {
+            yield return selectorNode;
+        }
     }
 
     /// <inheritdoc />
@@ -57,6 +82,16 @@ internal class IdentifierExpressionNode : ExpressionNode
     /// <inheritdoc />
     public override void Accept(AstVisitor visitor) => visitor.Visit(this);
 
+    public string DumpNameWithSelector()
+    {
+        var sb = new StringBuilder();
+        for (var i = 0; i < SelectorNodes.Length; i++)
+        {
+            sb.Append(SelectorNodes[i]);
+        }
+        return sb.ToString();
+    }
+
     /// <inheritdoc />
-    public override string ToString() => !string.IsNullOrEmpty(SourceName) ? $"id: {SourceName}.{Name}" : $"id: {Name}";
+    public override string ToString() => $"id: {FullName}";
 }

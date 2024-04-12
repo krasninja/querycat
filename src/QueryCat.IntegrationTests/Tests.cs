@@ -5,6 +5,7 @@ using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Addons.Formatters;
 using QueryCat.Backend.Core.Data;
+using QueryCat.IntegrationTests.DataClasses;
 using QueryCat.IntegrationTests.Inputs;
 using QueryCat.Tests.QueryRunner;
 using Xunit.Abstractions;
@@ -40,8 +41,12 @@ public sealed class Tests : IDisposable
         _testThread.FunctionsManager.RegisterFunction(VoidFunc);
         _testThread.FunctionsManager.RegisterFunction(ItStocksRowsInput.ItStocks);
 
+        _testThread.TopScope.Variables["user1"] = VariantValue.CreateFromObject(User.GetTestUser1());
+
         var data = TestThread.GetQueryData(fileName);
         var value = _testThread.Run(data.Query);
+
+        // Get query plan.
         if (value.GetInternalType() == DataType.Object
             && value.AsObject is IRowsIterator rowsIterator)
         {
