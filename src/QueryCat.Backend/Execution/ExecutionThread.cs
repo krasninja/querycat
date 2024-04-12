@@ -35,6 +35,7 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
     private readonly IExecutionScope _rootScope;
     private bool _bootstrapScriptExecuted;
     private bool _configLoaded;
+    private readonly Stopwatch _stopwatch = new();
 
     /// <summary>
     /// Root (base) thread scope.
@@ -142,8 +143,7 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
             // Set first executing statement and run.
             ExecutingStatement = programNode.Statements.FirstOrDefault();
 
-            var stopwatch = new Stopwatch();
-            stopwatch.Start();
+            _stopwatch.Restart();
             try
             {
                 if (parameters != null)
@@ -161,8 +161,8 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
                 {
                     PullScope();
                 }
-                stopwatch.Stop();
-                Statistic.ExecutionTime = stopwatch.Elapsed;
+                _stopwatch.Stop();
+                Statistic.ExecutionTime = _stopwatch.Elapsed;
             }
         }
     }
