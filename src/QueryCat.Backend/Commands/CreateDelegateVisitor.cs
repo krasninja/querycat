@@ -15,6 +15,8 @@ internal class CreateDelegateVisitor : AstVisitor
 {
     private readonly ResolveTypesVisitor _resolveTypesVisitor;
 
+    private readonly Dictionary<IdentifierIndexSelectorNode, object?[]> _objectIndexesPool = new();
+
     protected Dictionary<int, IFuncUnit> NodeIdFuncMap { get; } = new(capacity: 32);
 
     protected IExecutionThread<ExecutionOptions> ExecutionThread { get; }
@@ -193,10 +195,7 @@ internal class CreateDelegateVisitor : AstVisitor
             }
             else if (selector is IdentifierIndexSelectorNode indexSelectorNode)
             {
-                var indexObjects = indexSelectorNode.IndexExpressions
-                    .Select(e => NodeIdFuncMap[e.Id].Invoke())
-                    .Select(v => Converter.ConvertValue(v, typeof(object)))
-                    .ToArray();
+                var indexObjects = GetObjectIndexesSelector(indexSelectorNode);
                 info = ExecutionThread.ObjectSelector.SelectByIndex(context, indexObjects);
             }
 
@@ -209,6 +208,26 @@ internal class CreateDelegateVisitor : AstVisitor
 
         result = VariantValue.CreateFromObject(context.SelectStack.Peek().Object);
         return true;
+    }
+
+    protected object?[] GetObjectIndexesSelector(IdentifierIndexSelectorNode indexSelectorNode)
+    {
+        if (indexSelectorNode.IndexExpressions.Length == 0)
+        {
+            return [];
+        }
+        if (!_objectIndexesPool.TryGetValue(indexSelectorNode, out var indexes))
+        {
+            indexes = new object?[indexSelectorNode.IndexExpressions.Length];
+            _objectIndexesPool.Add(indexSelectorNode, indexes);
+        }
+
+        for (var i = 0; i < indexSelectorNode.IndexExpressions.Length; i++)
+        {
+            var indexExpression = indexSelectorNode.IndexExpressions[i];
+            indexes[i] = Converter.ConvertValue(NodeIdFuncMap[indexExpression.Id].Invoke(), typeof(object));
+        }
+        return indexes;
     }
 
     /// <inheritdoc />

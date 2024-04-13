@@ -80,6 +80,28 @@ public class DefaultObjectSelector : IObjectSelector
     /// <inheritdoc />
     public virtual void SetValue(object obj, object? newValue, PropertyInfo propertyInfo, object?[] indexes)
     {
-        propertyInfo.SetValue(obj, newValue, indexes);
+        if (indexes.Length == 0)
+        {
+            propertyInfo.SetValue(obj, newValue, indexes);
+        }
+        else
+        {
+            if (indexes.Length == 1 && indexes[0] is long longIndex)
+            {
+                var intIndex = (int)longIndex;
+                if (obj is IList list)
+                {
+                    list[intIndex] = newValue;
+                }
+                else if (obj is Array array)
+                {
+                    array.SetValue(array, intIndex);
+                }
+            }
+            else
+            {
+                propertyInfo.SetValue(obj, newValue, indexes);
+            }
+        }
     }
 }

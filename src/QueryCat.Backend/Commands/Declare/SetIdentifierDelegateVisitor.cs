@@ -39,25 +39,7 @@ internal sealed class SetIdentifierDelegateVisitor : CreateDelegateVisitor
             var context = new ObjectSelectorContext();
             VariantValue Func()
             {
-                var startObject = scope.Get(node.Name);
-                var newValue = _funcUnit.Invoke();
-                if (GetObjectBySelector(context, startObject, node, out _))
-                {
-                    var lastContext = context.SelectStack.Pop();
-                    if (lastContext.PropertyInfo != null)
-                    {
-                        ExecutionThread.ObjectSelector.SetValue(
-                            obj: context.SelectStack.Peek().Object,
-                            newValue: Converter.ConvertValue(newValue, typeof(object)),
-                            propertyInfo: lastContext.PropertyInfo,
-                            indexes: []);
-                    }
-                }
-                else if (!node.HasSelectors)
-                {
-                    scope.Variables[node.Name] = newValue;
-                }
-
+                var newValue = SetValue(node, scope, context);
                 return newValue;
             }
             NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, node.GetDataType());
@@ -65,5 +47,49 @@ internal sealed class SetIdentifierDelegateVisitor : CreateDelegateVisitor
         }
 
         throw new CannotFindIdentifierException(node.Name);
+    }
+
+    private VariantValue SetValue(IdentifierExpressionNode node, IExecutionScope scope, ObjectSelectorContext context)
+    {
+        var startObject = scope.Get(node.Name);
+        var newValue = _funcUnit.Invoke();
+
+        // This is expression object.
+        if (GetObjectBySelector(context, startObject, node, out _))
+        {
+            var lastContext = context.SelectStack.Pop();
+            var lastSelector = node.SelectorNodes.LastOrDefault();
+            // The expression object ends with property (obj.Address.City).
+            if (lastSelector is IdentifierPropertySelectorNode && lastContext.PropertyInfo != null)
+            {
+                ExecutionThread.ObjectSelector.SetValue(
+                    obj: context.SelectStack.Peek().Object,
+                    newValue: Converter.ConvertValue(newValue, typeof(object)),
+                    propertyInfo: lastContext.PropertyInfo,
+                    indexes: []);
+            }
+            // The expression object ends with index (obj.Phone[3]).
+            else if (lastSelector is IdentifierIndexSelectorNode indexSelectorNode)
+            {
+                var obj = context.SelectStack.Peek().Object;
+                var indexObjects = GetObjectIndexesSelector(indexSelectorNode);
+                lastContext = context.SelectStack.Pop();
+                if (lastContext.PropertyInfo != null)
+                {
+                    ExecutionThread.ObjectSelector.SetValue(
+                        obj: obj,
+                        newValue: Converter.ConvertValue(newValue, typeof(object)),
+                        propertyInfo: lastContext.PropertyInfo,
+                        indexes: indexObjects);
+                }
+            }
+        }
+        // Not an expression - variable.
+        else if (!node.HasSelectors)
+        {
+            scope.Variables[node.Name] = newValue;
+        }
+
+        return newValue;
     }
 }
