@@ -49,7 +49,7 @@ functionCallArg: (identifierSimple ASSOCIATION)? expression;
  */
 
 declareVariable: DECLARE identifierSimple type (':=' statement)?;
-setVariable: SET identifierSimple ':=' statement;
+setVariable: SET identifier ':=' statement;
 
 /*
  * ===============

@@ -1,4 +1,4 @@
-using QueryCat.Backend.Core.Types;
+using System.Reflection;
 
 namespace QueryCat.Backend.Core.Execution;
 
@@ -13,12 +13,13 @@ public sealed class NullObjectSelector : IObjectSelector
     public static NullObjectSelector Instance { get; } = new();
 
     /// <inheritdoc />
-    public void PushObjectByProperty(ObjectSelectorContext context, string propertyName)
-    {
-    }
+    public ObjectSelectorContext.SelectInfo? SelectByProperty(ObjectSelectorContext context, string propertyName) => null;
 
     /// <inheritdoc />
-    public void PushObjectByIndex(ObjectSelectorContext context, VariantValue[] indexes)
+    public ObjectSelectorContext.SelectInfo? SelectByIndex(ObjectSelectorContext context, object?[] indexes) => null;
+
+    /// <inheritdoc />
+    public void SetValue(object obj, object? newValue, PropertyInfo propertyInfo, object?[] indexes)
     {
     }
 }

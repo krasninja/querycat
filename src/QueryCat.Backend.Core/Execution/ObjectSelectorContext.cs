@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Reflection;
 
 namespace QueryCat.Backend.Core.Execution;
@@ -12,20 +13,34 @@ public class ObjectSelectorContext
     /// </summary>
     /// <param name="Object">Object instance.</param>
     /// <param name="PropertyInfo">Property information if the object is the property of another object.</param>
-    public readonly record struct ObjectInfo(object Object, PropertyInfo? PropertyInfo = null);
+    [DebuggerDisplay("{Object}, {PropertyInfo}")]
+    public readonly record struct SelectInfo(object Object, PropertyInfo? PropertyInfo = null);
 
     /// <summary>
     /// Selector traverse stack.
     /// </summary>
-    public Stack<ObjectInfo> SelectStack { get; } = new();
+    public Stack<SelectInfo> SelectStack { get; } = new();
 
     /// <summary>
     /// Optional user value.
     /// </summary>
     public object? Tag { get; set; }
 
+    public ObjectSelectorContext()
+    {
+    }
+
     public ObjectSelectorContext(object startObject)
     {
-        SelectStack.Push(new ObjectInfo(startObject));
+        SelectStack.Push(new SelectInfo(startObject));
+    }
+
+    /// <summary>
+    /// Reset state.
+    /// </summary>
+    public virtual void Clear()
+    {
+        SelectStack.Clear();
+        Tag = null;
     }
 }

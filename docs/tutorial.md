@@ -30,7 +30,7 @@ $ qcat "SELECT avg([1]) AS avg FROM './example.csv' FORMAT csv(has_header=>true)
 | 501.00 |
 ```
 
-In the query above, the `csv(has_header=>true)` is the function call with passing the one argument value. You should use `=>` operator if you want to specify argument name (like `has_header`). You can achieve the same effect with calling it like this: `csv(true)`. Also, since we have the header now, we can reference the only column with `[1]`. You can wrap a column name within `[]` block if it has special characters or starts with a digit.
+In the query above, the `csv(has_header=>true)` is the function call with passing the one argument value. You should use `=>` operator if you want to specify argument name (like `has_header`). You can achieve the same effect with calling it like this: `csv(true)`. Also, since we have the header now, we can reference the only column with `"1"`. You can wrap a column name within `""` block if it has special characters or starts with a digit.
 
 The `FORMAT` clause requires you to specify a function that returns any formatter for the file. It can be `csv`, `tsv`, `iisw3c` or others.
 

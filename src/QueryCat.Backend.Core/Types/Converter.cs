@@ -135,12 +135,12 @@ public static class Converter
             DataType.Interval => value.AsInterval,
             DataType.Null => null,
             DataType.Numeric => value.AsNumeric,
-            DataType.Object => value.AsObject,
+            DataType.Object => ConvertToObject(value),
             DataType.String => value.AsString,
             DataType.Timestamp => value.AsTimestamp,
-            DataType.Blob => value.AsBlob,
+            DataType.Blob => value.AsBlob.GetStream(),
             _ => throw new InvalidOperationException(
-                $"Cannot convert value from system type '{targetType}' to type '{relatedType}'."),
+                $"Cannot convert value from system type '{value.GetInternalType()}' to type '{targetType}'."),
         };
 
         if (result != null && result.GetType() != targetType && result is IConvertible convertible)
@@ -150,4 +150,20 @@ public static class Converter
 
         return result;
     }
+
+    private static object? ConvertToObject(VariantValue value)
+        => value.GetInternalType() switch
+        {
+            DataType.Boolean => value.AsBooleanUnsafe,
+            DataType.Float => value.AsFloatUnsafe,
+            DataType.Integer => value.AsInteger,
+            DataType.Interval => value.AsInterval,
+            DataType.Null => null,
+            DataType.Numeric => value.AsNumeric,
+            DataType.Object => value.AsObject,
+            DataType.String => value.AsString,
+            DataType.Timestamp => value.AsTimestamp,
+            DataType.Blob => value.AsBlobUnsafe.GetStream(),
+            _ => null,
+        };
 }

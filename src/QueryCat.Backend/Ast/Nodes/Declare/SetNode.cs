@@ -2,20 +2,21 @@ namespace QueryCat.Backend.Ast.Nodes.Declare;
 
 internal sealed class SetNode : AstNode
 {
-    public string Name { get; }
+    public IdentifierExpressionNode IdentifierNode { get; }
 
     public StatementNode ValueNode { get; }
 
     /// <inheritdoc />
     public override string Code => "set_var";
 
-    public SetNode(string name, StatementNode valueNode)
+    public SetNode(IdentifierExpressionNode identifierNode, StatementNode valueNode)
     {
-        Name = name;
+        IdentifierNode = identifierNode;
         ValueNode = valueNode;
     }
 
-    public SetNode(SetNode node) : this(node.Name, (StatementNode)node.ValueNode.Clone())
+    public SetNode(SetNode node) : this(
+        (IdentifierExpressionNode)node.IdentifierNode.Clone(), (StatementNode)node.ValueNode.Clone())
     {
         node.CopyTo(this);
     }
@@ -26,6 +27,7 @@ internal sealed class SetNode : AstNode
     /// <inheritdoc />
     public override IEnumerable<IAstNode> GetChildren()
     {
+        yield return IdentifierNode;
         yield return ValueNode;
     }
 

@@ -36,6 +36,8 @@ internal class IdentifierExpressionNode : ExpressionNode
     /// </summary>
     public IdentifierSelectorNode[] SelectorNodes { get; } = [];
 
+    public bool HasSelectors => SelectorNodes.Length > 0;
+
     /// <inheritdoc />
     public IdentifierExpressionNode(string name, List<IdentifierSelectorNode>? selectorNodes = null)
     {

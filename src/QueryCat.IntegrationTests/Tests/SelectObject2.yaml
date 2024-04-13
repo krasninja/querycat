@@ -1,0 +1,5 @@
+expected: |
+  Marina M
+query: |
+  set user1.Name := 'Marina M';
+  select user1.Name;

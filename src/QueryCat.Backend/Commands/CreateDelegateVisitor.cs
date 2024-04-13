@@ -156,11 +156,12 @@ internal class CreateDelegateVisitor : AstVisitor
 
         if (scope.TryGet(node.Name, out _))
         {
+            var context = new ObjectSelectorContext();
             VariantValue Func()
             {
                 var startObject = scope.Get(node.Name);
-                var finalObject = GetObjectBySelector(startObject, node);
-                return finalObject;
+                GetObjectBySelector(context, startObject, node, out var finalValue);
+                return finalValue;
             }
             NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, node.GetDataType());
             return;
@@ -169,32 +170,45 @@ internal class CreateDelegateVisitor : AstVisitor
         throw new CannotFindIdentifierException(node.Name);
     }
 
-    private VariantValue GetObjectBySelector(VariantValue value, IdentifierExpressionNode idNode)
+    protected bool GetObjectBySelector(ObjectSelectorContext context, VariantValue value, IdentifierExpressionNode idNode,
+        out VariantValue result)
     {
+        result = VariantValue.Null;
         if (idNode.SelectorNodes.Length == 0 || value.AsObjectUnsafe == null)
         {
-            return value;
+            result = value;
+            return false;
         }
 
-        var context = new ObjectSelectorContext(value.AsObjectUnsafe);
+        context.Clear();
+        context.SelectStack.Push(new ObjectSelectorContext.SelectInfo(value.AsObjectUnsafe));
         for (var i = 0; i < idNode.SelectorNodes.Length; i++)
         {
             var selector = idNode.SelectorNodes[i];
+            ObjectSelectorContext.SelectInfo? info = null;
 
             if (selector is IdentifierPropertySelectorNode propertySelectorNode)
             {
-                ExecutionThread.ObjectSelector.PushObjectByProperty(context, propertySelectorNode.PropertyName);
+                info = ExecutionThread.ObjectSelector.SelectByProperty(context, propertySelectorNode.PropertyName);
             }
             else if (selector is IdentifierIndexSelectorNode indexSelectorNode)
             {
                 var indexObjects = indexSelectorNode.IndexExpressions
                     .Select(e => NodeIdFuncMap[e.Id].Invoke())
+                    .Select(v => Converter.ConvertValue(v, typeof(object)))
                     .ToArray();
-                ExecutionThread.ObjectSelector.PushObjectByIndex(context, indexObjects);
+                info = ExecutionThread.ObjectSelector.SelectByIndex(context, indexObjects);
             }
+
+            if (!info.HasValue)
+            {
+                return false;
+            }
+            context.SelectStack.Push(info.Value);
         }
 
-        return VariantValue.CreateFromObject(context.SelectStack.Peek().Object);
+        result = VariantValue.CreateFromObject(context.SelectStack.Peek().Object);
+        return true;
     }
 
     /// <inheritdoc />

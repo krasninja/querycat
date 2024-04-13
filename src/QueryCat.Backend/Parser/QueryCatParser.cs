@@ -996,8 +996,8 @@ public partial class QueryCatParser : Parser {
 
 	public partial class SetVariableContext : ParserRuleContext {
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode SET() { return GetToken(QueryCatParser.SET, 0); }
-		[System.Diagnostics.DebuggerNonUserCode] public IdentifierSimpleContext identifierSimple() {
-			return GetRuleContext<IdentifierSimpleContext>(0);
+		[System.Diagnostics.DebuggerNonUserCode] public IdentifierContext identifier() {
+			return GetRuleContext<IdentifierContext>(0);
 		}
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode ASSIGN() { return GetToken(QueryCatParser.ASSIGN, 0); }
 		[System.Diagnostics.DebuggerNonUserCode] public StatementContext statement() {
@@ -1026,7 +1026,7 @@ public partial class QueryCatParser : Parser {
 			State = 248;
 			Match(SET);
 			State = 249;
-			identifierSimple();
+			identifier();
 			State = 250;
 			Match(ASSIGN);
 			State = 251;
@@ -7698,7 +7698,7 @@ public partial class QueryCatParser : Parser {
 		237,238,1,0,0,0,238,239,1,0,0,0,239,240,3,132,66,0,240,13,1,0,0,0,241,
 		242,5,145,0,0,242,243,3,108,54,0,243,246,3,130,65,0,244,245,5,3,0,0,245,
 		247,3,2,1,0,246,244,1,0,0,0,246,247,1,0,0,0,247,15,1,0,0,0,248,249,5,146,
-		0,0,249,250,3,108,54,0,250,251,5,3,0,0,251,252,3,2,1,0,252,17,1,0,0,0,
+		0,0,249,250,3,110,55,0,250,251,5,3,0,0,251,252,3,2,1,0,252,17,1,0,0,0,
 		253,254,3,26,13,0,254,19,1,0,0,0,255,256,5,125,0,0,256,257,5,49,0,0,257,
 		262,3,22,11,0,258,259,5,6,0,0,259,261,3,22,11,0,260,258,1,0,0,0,261,264,
 		1,0,0,0,262,260,1,0,0,0,262,263,1,0,0,0,263,21,1,0,0,0,264,262,1,0,0,0,

@@ -1,6 +1,6 @@
 using System.Collections;
+using System.Reflection;
 using QueryCat.Backend.Core.Execution;
-using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Execution;
 
@@ -10,31 +10,33 @@ namespace QueryCat.Backend.Execution;
 public class DefaultObjectSelector : IObjectSelector
 {
     /// <inheritdoc />
-    public virtual void PushObjectByProperty(ObjectSelectorContext context, string propertyName)
+    public virtual ObjectSelectorContext.SelectInfo? SelectByProperty(ObjectSelectorContext context, string propertyName)
     {
         var current = context.SelectStack.Peek();
         var propertyInfo = current.Object.GetType().GetProperty(propertyName);
         if (propertyInfo == null)
         {
-            return;
+            return null;
         }
         var resultObject = propertyInfo.GetValue(current.Object);
         if (resultObject != null)
         {
-            context.SelectStack.Push(new ObjectSelectorContext.ObjectInfo(resultObject, propertyInfo));
+            return new ObjectSelectorContext.SelectInfo(resultObject, propertyInfo);
         }
+
+        return null;
     }
 
     /// <inheritdoc />
-    public virtual void PushObjectByIndex(ObjectSelectorContext context, VariantValue[] indexes)
+    public virtual ObjectSelectorContext.SelectInfo? SelectByIndex(ObjectSelectorContext context, object?[] indexes)
     {
         var current = context.SelectStack.Peek();
         object? resultObject = null;
 
         // First try to use the most popular case when we have only one integer index.
-        if (indexes.Length == 1 && indexes[0].GetInternalType() == DataType.Integer)
+        if (indexes.Length == 1 && indexes[0] is long longIndex)
         {
-            var intIndex = (int)indexes[0].AsInteger;
+            var intIndex = (int)longIndex;
             if (current.Object is IList list)
             {
                 resultObject = list[intIndex];
@@ -64,12 +66,20 @@ public class DefaultObjectSelector : IObjectSelector
         // Then try to get value with GetValue call.
         if (resultObject == null && current.PropertyInfo != null)
         {
-            resultObject = current.PropertyInfo.GetValue(current.Object, indexes.Select(i => i.AsObject).ToArray());
+            resultObject = current.PropertyInfo.GetValue(current.Object, indexes);
         }
 
         if (resultObject != null)
         {
-            context.SelectStack.Push(new ObjectSelectorContext.ObjectInfo(resultObject));
+            return new ObjectSelectorContext.SelectInfo(resultObject);
         }
+
+        return null;
+    }
+
+    /// <inheritdoc />
+    public virtual void SetValue(object obj, object? newValue, PropertyInfo propertyInfo, object?[] indexes)
+    {
+        propertyInfo.SetValue(obj, newValue, indexes);
     }
 }
