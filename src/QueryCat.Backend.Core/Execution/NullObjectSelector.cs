@@ -1,5 +1,3 @@
-using System.Reflection;
-
 namespace QueryCat.Backend.Core.Execution;
 
 /// <summary>
@@ -19,7 +17,7 @@ public sealed class NullObjectSelector : IObjectSelector
     public ObjectSelectorContext.SelectInfo? SelectByIndex(ObjectSelectorContext context, object?[] indexes) => null;
 
     /// <inheritdoc />
-    public void SetValue(object obj, object? newValue, PropertyInfo propertyInfo, object?[] indexes)
+    public void SetValue(in ObjectSelectorContext.SelectInfo selectInfo, object? newValue, object?[] indexes)
     {
     }
 }

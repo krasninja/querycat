@@ -11,10 +11,16 @@ public class ObjectSelectorContext
     /// <summary>
     /// Object information.
     /// </summary>
-    /// <param name="Object">Object instance.</param>
-    /// <param name="PropertyInfo">Property information if the object is the property of another object.</param>
-    [DebuggerDisplay("{Object}, {PropertyInfo}")]
-    public readonly record struct SelectInfo(object Object, PropertyInfo? PropertyInfo = null);
+    /// <param name="ResultObject">Object instance.</param>
+    /// <param name="SelectProperty">Property information if the object is the property of another object.</param>
+    /// <param name="Tag">Custom user object.</param>
+    [DebuggerDisplay("{ResultObject}, {SelectProperty}")]
+    public readonly record struct SelectInfo(
+        object ResultObject,
+        SelectPropertyInfo? SelectProperty = null,
+        object? Tag = null);
+
+    public readonly record struct SelectPropertyInfo(object Owner, PropertyInfo PropertyInfo);
 
     /// <summary>
     /// Selector traverse stack.

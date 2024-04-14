@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Reflection;
 using QueryCat.Backend.Core.Execution;
 
 namespace QueryCat.Backend.Execution;
@@ -13,15 +12,16 @@ public class DefaultObjectSelector : IObjectSelector
     public virtual ObjectSelectorContext.SelectInfo? SelectByProperty(ObjectSelectorContext context, string propertyName)
     {
         var current = context.SelectStack.Peek();
-        var propertyInfo = current.Object.GetType().GetProperty(propertyName);
+        var propertyInfo = current.ResultObject.GetType().GetProperty(propertyName);
         if (propertyInfo == null)
         {
             return null;
         }
-        var resultObject = propertyInfo.GetValue(current.Object);
+        var resultObject = propertyInfo.GetValue(current.ResultObject);
         if (resultObject != null)
         {
-            return new ObjectSelectorContext.SelectInfo(resultObject, propertyInfo);
+            return new ObjectSelectorContext.SelectInfo(resultObject,
+                new ObjectSelectorContext.SelectPropertyInfo(current.ResultObject, propertyInfo));
         }
 
         return null;
@@ -37,19 +37,19 @@ public class DefaultObjectSelector : IObjectSelector
         if (indexes.Length == 1 && indexes[0] is long longIndex)
         {
             var intIndex = (int)longIndex;
-            if (current.Object is IList list)
+            if (current.ResultObject is IList list)
             {
                 resultObject = list[intIndex];
             }
-            else if (current.Object is Array array)
+            else if (current.ResultObject is Array array)
             {
                 resultObject = array.GetValue(intIndex);
             }
-            else if (current.Object is IEnumerable<object> objectsEnumerable)
+            else if (current.ResultObject is IEnumerable<object> objectsEnumerable)
             {
                 resultObject = objectsEnumerable.ElementAt(intIndex);
             }
-            else if (current.Object is IEnumerable enumerable)
+            else if (current.ResultObject is IEnumerable enumerable)
             {
                 var enumerator = enumerable.GetEnumerator();
                 for (var i = 0; enumerator.MoveNext(); i++)
@@ -64,43 +64,61 @@ public class DefaultObjectSelector : IObjectSelector
         }
 
         // Then try to get value with GetValue call.
-        if (resultObject == null && current.PropertyInfo != null)
+        if (resultObject == null && current.SelectProperty.HasValue)
         {
-            resultObject = current.PropertyInfo.GetValue(current.Object, indexes);
+            resultObject = current.SelectProperty.Value.PropertyInfo.GetValue(current.ResultObject, indexes);
         }
 
         if (resultObject != null)
         {
-            return new ObjectSelectorContext.SelectInfo(resultObject);
+            if (current.SelectProperty.HasValue)
+            {
+                return new ObjectSelectorContext.SelectInfo(resultObject,
+                    current.SelectProperty.Value with { Owner = current.ResultObject });
+            }
+            else
+            {
+                return new ObjectSelectorContext.SelectInfo(resultObject);
+            }
         }
 
         return null;
     }
 
     /// <inheritdoc />
-    public virtual void SetValue(object obj, object? newValue, PropertyInfo propertyInfo, object?[] indexes)
+    public virtual void SetValue(in ObjectSelectorContext.SelectInfo selectInfo, object? newValue, object?[] indexes)
     {
+        if (!selectInfo.SelectProperty.HasValue)
+        {
+            return;
+        }
+        var selectPropertyInfo = selectInfo.SelectProperty.Value;
+
+        // No indexes, expression like "User.Name = 'Vladimir'".
         if (indexes.Length == 0)
         {
-            propertyInfo.SetValue(obj, newValue, indexes);
+            selectPropertyInfo.PropertyInfo.SetValue(selectPropertyInfo.Owner, newValue, indexes);
         }
+        // Object expression with index.
         else
         {
+            // Case "User.Phones[1] = '888'".
             if (indexes.Length == 1 && indexes[0] is long longIndex)
             {
                 var intIndex = (int)longIndex;
-                if (obj is IList list)
+                if (selectPropertyInfo.Owner is IList list)
                 {
                     list[intIndex] = newValue;
                 }
-                else if (obj is Array array)
+                else if (selectPropertyInfo.Owner is Array array)
                 {
                     array.SetValue(array, intIndex);
                 }
             }
+            // General case.
             else
             {
-                propertyInfo.SetValue(obj, newValue, indexes);
+                selectPropertyInfo.PropertyInfo.SetValue(selectPropertyInfo.Owner, newValue, indexes);
             }
         }
     }

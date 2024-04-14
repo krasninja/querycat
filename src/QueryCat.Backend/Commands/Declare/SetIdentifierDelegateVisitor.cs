@@ -59,29 +59,23 @@ internal sealed class SetIdentifierDelegateVisitor : CreateDelegateVisitor
         {
             var lastContext = context.SelectStack.Pop();
             var lastSelector = node.SelectorNodes.LastOrDefault();
+
             // The expression object ends with property (obj.Address.City).
-            if (lastSelector is IdentifierPropertySelectorNode && lastContext.PropertyInfo != null)
+            if (lastSelector is IdentifierPropertySelectorNode)
             {
                 ExecutionThread.ObjectSelector.SetValue(
-                    obj: context.SelectStack.Peek().Object,
+                    selectInfo: lastContext,
                     newValue: Converter.ConvertValue(newValue, typeof(object)),
-                    propertyInfo: lastContext.PropertyInfo,
                     indexes: []);
             }
             // The expression object ends with index (obj.Phone[3]).
             else if (lastSelector is IdentifierIndexSelectorNode indexSelectorNode)
             {
-                var obj = context.SelectStack.Peek().Object;
                 var indexObjects = GetObjectIndexesSelector(indexSelectorNode);
-                lastContext = context.SelectStack.Pop();
-                if (lastContext.PropertyInfo != null)
-                {
-                    ExecutionThread.ObjectSelector.SetValue(
-                        obj: obj,
-                        newValue: Converter.ConvertValue(newValue, typeof(object)),
-                        propertyInfo: lastContext.PropertyInfo,
-                        indexes: indexObjects);
-                }
+                ExecutionThread.ObjectSelector.SetValue(
+                    selectInfo: lastContext,
+                    newValue: Converter.ConvertValue(newValue, typeof(object)),
+                    indexes: indexObjects);
             }
         }
         // Not an expression - variable.

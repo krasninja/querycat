@@ -206,7 +206,7 @@ internal class CreateDelegateVisitor : AstVisitor
             context.SelectStack.Push(info.Value);
         }
 
-        result = VariantValue.CreateFromObject(context.SelectStack.Peek().Object);
+        result = VariantValue.CreateFromObject(context.SelectStack.Peek().ResultObject);
         return true;
     }
 

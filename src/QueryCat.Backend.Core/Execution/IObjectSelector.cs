@@ -1,5 +1,3 @@
-using System.Reflection;
-
 namespace QueryCat.Backend.Core.Execution;
 
 /// <summary>
@@ -24,9 +22,8 @@ public interface IObjectSelector
     /// <summary>
     /// Set property value by property info.
     /// </summary>
-    /// <param name="obj">Object that owns the property.</param>
+    /// <param name="selectInfo">Select info with property info.</param>
     /// <param name="newValue">New value.</param>
-    /// <param name="propertyInfo">Property info.</param>
     /// <param name="indexes">Indexes values.</param>
-    void SetValue(object obj, object? newValue, PropertyInfo propertyInfo, object?[] indexes);
+    void SetValue(in ObjectSelectorContext.SelectInfo selectInfo, object? newValue, object?[] indexes);
 }
