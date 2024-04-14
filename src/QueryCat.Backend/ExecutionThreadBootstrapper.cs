@@ -28,9 +28,11 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
 
     private IFunctionsManager? _functionsManager = null;
 
+    private IObjectSelector? _objectSelector = null;
+
     private bool _registerStandardLibrary;
 
-    private List<Action<IFunctionsManager>> _registrations = new();
+    private readonly List<Action<IFunctionsManager>> _registrations = new();
 
     private Func<IExecutionThread, PluginsLoader> _pluginsLoaderFactory = _ => new NullPluginsLoader(Array.Empty<string>());
 
@@ -64,6 +66,17 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
     public ExecutionThreadBootstrapper WithStandardFunctions()
     {
         _registerStandardLibrary = true;
+        return this;
+    }
+
+    /// <summary>
+    /// Use custom objects selector to resolve object expressions (like "user.property[ind]").
+    /// </summary>
+    /// <param name="objectSelector">Custom object selector.</param>
+    /// <returns>The instance of <see cref="ExecutionThreadBootstrapper" />.</returns>
+    public ExecutionThreadBootstrapper WithObjectsSelector(IObjectSelector objectSelector)
+    {
+        _objectSelector = objectSelector;
         return this;
     }
 
@@ -140,10 +153,16 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
             _functionsManager = new DefaultFunctionsManager(new AstBuilder(), _uriResolvers);
         }
 
+        if (_objectSelector == null)
+        {
+            _objectSelector = new DefaultObjectSelector();
+        }
+
         // Create thread.
         var thread = new ExecutionThread(
             options: _executionOptions,
             functionsManager: _functionsManager,
+            objectSelector: _objectSelector,
             configStorage: _inputConfigStorage,
             astBuilder: new AstBuilder()
         );

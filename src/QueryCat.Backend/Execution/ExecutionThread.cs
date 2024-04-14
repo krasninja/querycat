@@ -46,7 +46,7 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
     public IExecutionScope TopScope => _topScope;
 
     /// <inheritdoc />
-    public IObjectSelector ObjectSelector { get; } = new DefaultObjectSelector();
+    public IObjectSelector ObjectSelector { get; }
 
     /// <summary>
     /// Current executing statement.
@@ -60,7 +60,7 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
     public ExecutionStatistic Statistic { get; } = new DefaultExecutionStatistic();
 
     /// <inheritdoc />
-    public object? Tag { get; internal set; } = null;
+    public object? Tag { get; internal set; }
 
     /// <inheritdoc />
     public IFunctionsManager FunctionsManager { get; }
@@ -96,11 +96,13 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
     internal ExecutionThread(
         ExecutionOptions options,
         IFunctionsManager functionsManager,
+        IObjectSelector objectSelector,
         IInputConfigStorage configStorage,
         IAstBuilder astBuilder)
     {
         Options = options;
         FunctionsManager = functionsManager;
+        ObjectSelector = objectSelector;
         ConfigStorage = configStorage;
         _astBuilder = astBuilder;
         _statementsVisitor = new StatementsVisitor(this);
@@ -116,6 +118,7 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
     public ExecutionThread(ExecutionThread executionThread) :
         this(executionThread.Options,
             executionThread.FunctionsManager,
+            executionThread.ObjectSelector,
             executionThread.ConfigStorage,
             executionThread._astBuilder)
     {
