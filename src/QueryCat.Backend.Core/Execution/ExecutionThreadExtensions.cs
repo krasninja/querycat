@@ -21,4 +21,24 @@ public static class ExecutionThreadExtensions
         var functionCallInfo = FunctionCallInfo.CreateWithArguments(executionThread, args);
         return functionDelegate.Invoke(functionCallInfo);
     }
+
+    /// <summary>
+    /// Run query with object properties as parameters.
+    /// </summary>
+    /// <param name="executionThread">Execution thread.</param>
+    /// <param name="query">Query.</param>
+    /// <param name="parameters">Object.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Return value.</returns>
+    public static VariantValue RunWithScope(
+        this IExecutionThread executionThread,
+        string query,
+        object parameters,
+        CancellationToken cancellationToken = default)
+    {
+        var executionParameters = parameters.GetType()
+            .GetProperties()
+            .ToDictionary(p => p.Name, p => VariantValue.CreateFromObject(p.GetValue(parameters)));
+        return executionThread.Run(query, executionParameters, cancellationToken);
+    }
 }
