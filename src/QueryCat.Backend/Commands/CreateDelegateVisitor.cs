@@ -15,7 +15,7 @@ internal class CreateDelegateVisitor : AstVisitor
 {
     private readonly ResolveTypesVisitor _resolveTypesVisitor;
 
-    private readonly Dictionary<IdentifierIndexSelectorNode, object?[]> _objectIndexesPool = new();
+    private readonly Dictionary<IdentifierIndexSelectorNode, object?[]> _objectIndexesCache = new();
 
     protected Dictionary<int, IFuncUnit> NodeIdFuncMap { get; } = new(capacity: 32);
 
@@ -233,10 +233,10 @@ internal class CreateDelegateVisitor : AstVisitor
         {
             return [];
         }
-        if (!_objectIndexesPool.TryGetValue(indexSelectorNode, out var indexes))
+        if (!_objectIndexesCache.TryGetValue(indexSelectorNode, out var indexes))
         {
             indexes = new object?[indexSelectorNode.IndexExpressions.Length];
-            _objectIndexesPool.Add(indexSelectorNode, indexes);
+            _objectIndexesCache.Add(indexSelectorNode, indexes);
         }
 
         for (var i = 0; i < indexSelectorNode.IndexExpressions.Length; i++)
