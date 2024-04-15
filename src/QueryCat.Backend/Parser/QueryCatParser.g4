@@ -140,12 +140,12 @@ selectTablePrimary
     | '-' (FORMAT format=functionCall)? selectAlias? # SelectTablePrimaryStdin
     | uri=STRING_LITERAL (FORMAT format=functionCall)? selectAlias? # SelectTablePrimaryWithFormat
     | '(' selectQueryExpression ')' selectAlias? # SelectTablePrimarySubquery
-    | name=identifierSimple (FORMAT format=functionCall)? selectAlias? # SelectTablePrimaryIdentifier
+    | name=identifier (FORMAT format=functionCall)? selectAlias? # SelectTablePrimaryIdentifier
     | '(' selectTable ')' selectAlias? # SelectTablePrimaryTable
     ;
 selectTableJoined
     : selectJoinType? JOIN right=selectTablePrimary ON condition=expression # SelectTableJoinedOn
-    | selectJoinType? JOIN right=selectTablePrimary USING '(' identifierSimple (COMMA identifierSimple)* ')' # SelectTableJoinedUsing
+    | selectJoinType? JOIN right=selectTablePrimary USING '(' identifier (COMMA identifier)* ')' # SelectTableJoinedUsing
     ;
 selectJoinType: INNER | (LEFT | RIGHT | FULL) OUTER?;
 

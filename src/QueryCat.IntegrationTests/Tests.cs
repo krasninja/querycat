@@ -1,4 +1,5 @@
 using Xunit;
+using Xunit.Abstractions;
 using QueryCat.Backend;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
@@ -8,7 +9,6 @@ using QueryCat.Backend.Core.Data;
 using QueryCat.IntegrationTests.DataClasses;
 using QueryCat.IntegrationTests.Inputs;
 using QueryCat.Tests.QueryRunner;
-using Xunit.Abstractions;
 
 namespace QueryCat.IntegrationTests;
 
@@ -42,6 +42,7 @@ public sealed class Tests : IDisposable
         _testThread.FunctionsManager.RegisterFunction(ItStocksRowsInput.ItStocks);
 
         _testThread.TopScope.Variables["user1"] = VariantValue.CreateFromObject(User.GetTestUser1());
+        _testThread.TopScope.Variables["user2"] = VariantValue.CreateFromObject(User.GetTestUser2());
 
         var data = TestThread.GetQueryData(fileName);
         var value = _testThread.Run(data.Query);

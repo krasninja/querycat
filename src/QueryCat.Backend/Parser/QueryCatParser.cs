@@ -3114,10 +3114,10 @@ public partial class QueryCatParser : Parser {
 		}
 	}
 	public partial class SelectTablePrimaryIdentifierContext : SelectTablePrimaryContext {
-		public IdentifierSimpleContext name;
+		public IdentifierContext name;
 		public FunctionCallContext format;
-		[System.Diagnostics.DebuggerNonUserCode] public IdentifierSimpleContext identifierSimple() {
-			return GetRuleContext<IdentifierSimpleContext>(0);
+		[System.Diagnostics.DebuggerNonUserCode] public IdentifierContext identifier() {
+			return GetRuleContext<IdentifierContext>(0);
 		}
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode FORMAT() { return GetToken(QueryCatParser.FORMAT, 0); }
 		[System.Diagnostics.DebuggerNonUserCode] public SelectAliasContext selectAlias() {
@@ -3260,7 +3260,7 @@ public partial class QueryCatParser : Parser {
 				EnterOuterAlt(_localctx, 5);
 				{
 				State = 544;
-				((SelectTablePrimaryIdentifierContext)_localctx).name = identifierSimple();
+				((SelectTablePrimaryIdentifierContext)_localctx).name = identifier();
 				State = 547;
 				ErrorHandler.Sync(this);
 				switch ( Interpreter.AdaptivePredict(TokenStream,76,Context) ) {
@@ -3337,11 +3337,11 @@ public partial class QueryCatParser : Parser {
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode JOIN() { return GetToken(QueryCatParser.JOIN, 0); }
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode USING() { return GetToken(QueryCatParser.USING, 0); }
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode LEFT_PAREN() { return GetToken(QueryCatParser.LEFT_PAREN, 0); }
-		[System.Diagnostics.DebuggerNonUserCode] public IdentifierSimpleContext[] identifierSimple() {
-			return GetRuleContexts<IdentifierSimpleContext>();
+		[System.Diagnostics.DebuggerNonUserCode] public IdentifierContext[] identifier() {
+			return GetRuleContexts<IdentifierContext>();
 		}
-		[System.Diagnostics.DebuggerNonUserCode] public IdentifierSimpleContext identifierSimple(int i) {
-			return GetRuleContext<IdentifierSimpleContext>(i);
+		[System.Diagnostics.DebuggerNonUserCode] public IdentifierContext identifier(int i) {
+			return GetRuleContext<IdentifierContext>(i);
 		}
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode RIGHT_PAREN() { return GetToken(QueryCatParser.RIGHT_PAREN, 0); }
 		[System.Diagnostics.DebuggerNonUserCode] public SelectTablePrimaryContext selectTablePrimary() {
@@ -3441,7 +3441,7 @@ public partial class QueryCatParser : Parser {
 				State = 574;
 				Match(LEFT_PAREN);
 				State = 575;
-				identifierSimple();
+				identifier();
 				State = 580;
 				ErrorHandler.Sync(this);
 				_la = TokenStream.LA(1);
@@ -3451,7 +3451,7 @@ public partial class QueryCatParser : Parser {
 					State = 576;
 					Match(COMMA);
 					State = 577;
-					identifierSimple();
+					identifier();
 					}
 					}
 					State = 582;
@@ -7781,7 +7781,7 @@ public partial class QueryCatParser : Parser {
 		532,534,3,10,5,0,533,531,1,0,0,0,533,534,1,0,0,0,534,536,1,0,0,0,535,537,
 		3,24,12,0,536,535,1,0,0,0,536,537,1,0,0,0,537,559,1,0,0,0,538,539,5,1,
 		0,0,539,540,3,26,13,0,540,542,5,2,0,0,541,543,3,24,12,0,542,541,1,0,0,
-		0,542,543,1,0,0,0,543,559,1,0,0,0,544,547,3,108,54,0,545,546,5,111,0,0,
+		0,542,543,1,0,0,0,543,559,1,0,0,0,544,547,3,110,55,0,545,546,5,111,0,0,
 		546,548,3,10,5,0,547,545,1,0,0,0,547,548,1,0,0,0,548,550,1,0,0,0,549,551,
 		3,24,12,0,550,549,1,0,0,0,550,551,1,0,0,0,551,559,1,0,0,0,552,553,5,1,
 		0,0,553,554,3,58,29,0,554,556,5,2,0,0,555,557,3,24,12,0,556,555,1,0,0,
@@ -7791,7 +7791,7 @@ public partial class QueryCatParser : Parser {
 		563,564,5,118,0,0,564,565,3,60,30,0,565,566,5,62,0,0,566,567,3,132,66,
 		0,567,586,1,0,0,0,568,570,3,64,32,0,569,568,1,0,0,0,569,570,1,0,0,0,570,
 		571,1,0,0,0,571,572,5,118,0,0,572,573,3,60,30,0,573,574,5,68,0,0,574,575,
-		5,1,0,0,575,580,3,108,54,0,576,577,5,6,0,0,577,579,3,108,54,0,578,576,
+		5,1,0,0,575,580,3,110,55,0,576,577,5,6,0,0,577,579,3,110,55,0,578,576,
 		1,0,0,0,579,582,1,0,0,0,580,578,1,0,0,0,580,581,1,0,0,0,581,583,1,0,0,
 		0,582,580,1,0,0,0,583,584,5,2,0,0,584,586,1,0,0,0,585,561,1,0,0,0,585,
 		569,1,0,0,0,586,63,1,0,0,0,587,593,5,115,0,0,588,590,7,4,0,0,589,591,5,

@@ -18,16 +18,17 @@ public static class ClassRowsFrameBuilderExtensions
         <[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] TClass>(
         this ClassRowsFrameBuilder<TClass> builder) where TClass : class
     {
-        AddPublicProperties(builder, out _);
+        AddPublicProperties(builder, null, out _);
         return builder;
     }
 
     internal static void AddPublicProperties
         <[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] TClass>(
         this ClassRowsFrameBuilder<TClass> builder,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] Type? type,
         out List<PropertyInfo> properties) where TClass : class
     {
-        var props = typeof(TClass).GetProperties().Where(p => p.CanRead);
+        var props = (type ?? typeof(TClass)).GetProperties().Where(p => p.CanRead);
         properties = new List<PropertyInfo>();
         foreach (var propertyInfo in props)
         {

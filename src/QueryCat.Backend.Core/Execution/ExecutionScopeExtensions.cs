@@ -31,6 +31,27 @@ public static class ExecutionScopeExtensions
     }
 
     /// <summary>
+    /// Check whether a variable with name exists in the scope.
+    /// </summary>
+    /// <param name="scope">Scope instance.</param>
+    /// <param name="name">Variable name.</param>
+    /// <returns>True if variable with the specified name is found, false otherwise.</returns>
+    public static bool Contains(this IExecutionScope scope, string name)
+    {
+        var currentScope = scope;
+        while (currentScope != null)
+        {
+            if (currentScope.Variables.ContainsKey(name))
+            {
+                return true;
+            }
+            currentScope = currentScope.Parent;
+        }
+
+        return false;
+    }
+
+    /// <summary>
     /// Get variable value from top scope to the root recursively.
     /// </summary>
     /// <param name="scope">Scope instance.</param>

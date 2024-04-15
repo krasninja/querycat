@@ -22,15 +22,10 @@ internal sealed class SelectIdentifierExpressionNode : IdentifierExpressionNode,
     public List<SelectTableJoinedNode> JoinedNodes { get; } = new();
 
     /// <inheritdoc />
-    public SelectIdentifierExpressionNode(string name, string alias) : base(name)
+    public SelectIdentifierExpressionNode(IdentifierExpressionNode identifierExpressionNode, string alias)
+        : base(identifierExpressionNode)
     {
-        Alias = !string.IsNullOrEmpty(alias) ? alias : name;
-    }
-
-    /// <inheritdoc />
-    public SelectIdentifierExpressionNode(string name, string sourceName, string alias) : base(name, sourceName)
-    {
-        Alias = !string.IsNullOrEmpty(alias) ? alias : name;
+        Alias = !string.IsNullOrEmpty(alias) ? alias : identifierExpressionNode.Name;
     }
 
     /// <inheritdoc />

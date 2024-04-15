@@ -34,7 +34,7 @@ internal sealed class SetIdentifierDelegateVisitor : CreateDelegateVisitor
         ResolveTypesVisitor.Visit(node);
         var scope = ExecutionThread.TopScope;
 
-        if (scope.TryGet(node.Name, out _))
+        if (scope.Contains(node.Name))
         {
             var context = new ObjectSelectorContext();
             VariantValue Func()

@@ -51,6 +51,16 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
         return funcUnit;
     }
 
+    public override void Visit(SelectIdentifierExpressionNode node)
+    {
+        if (VisitIdentifierNode(node, node.TableFieldName, node.TableSourceName))
+        {
+            return;
+        }
+
+        base.Visit((IdentifierExpressionNode)node);
+    }
+
     /// <inheritdoc />
     public override void Visit(IdentifierExpressionNode node)
     {
