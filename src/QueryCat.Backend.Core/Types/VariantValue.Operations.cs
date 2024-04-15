@@ -210,6 +210,12 @@ public readonly partial struct VariantValue
             return left;
         }
 
+        // The expression with dynamic type leads to dynamic.
+        if (left == DataType.Dynamic || right == DataType.Dynamic)
+        {
+            return DataType.Dynamic;
+        }
+
         if (AlgebraicOperations.Contains(operation))
         {
             if (left == right)
@@ -222,7 +228,10 @@ public readonly partial struct VariantValue
             {
                 canConvert = GetTargetType(right, left, out target);
             }
-            return target;
+            if (canConvert)
+            {
+                return target;
+            }
         }
 
         return DataType.Void;

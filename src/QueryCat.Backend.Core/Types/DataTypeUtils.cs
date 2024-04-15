@@ -9,13 +9,13 @@ namespace QueryCat.Backend.Core.Types;
 /// </summary>
 public static class DataTypeUtils
 {
-    private static readonly ILogger Logger = Application.LoggerFactory.CreateLogger(nameof(DataTypeUtils));
+    private static readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(DataTypeUtils));
 
     /// <summary>
     /// Contains the types that can be used for row column.
     /// </summary>
-    internal static DataType[] RowDataTypes => new[]
-    {
+    internal static DataType[] RowDataTypes =>
+    [
         DataType.Integer,
         DataType.String,
         DataType.Float,
@@ -24,10 +24,11 @@ public static class DataTypeUtils
         DataType.Interval,
         DataType.Boolean,
         DataType.Numeric,
-        DataType.Object,
         DataType.Blob,
         DataType.Void,
-    };
+        DataType.Object,
+        DataType.Dynamic
+    ];
 
     /// <summary>
     /// Is this is a simple type (not an object).
@@ -79,7 +80,7 @@ public static class DataTypeUtils
                 var targetType = DetermineTypeByValue(str);
                 return new VariantValue(str).Cast(targetType);
             }
-            Logger.LogWarning("Invalid deserialization source.");
+            _logger.LogWarning("Invalid deserialization source.");
             return VariantValue.Null;
         }
 

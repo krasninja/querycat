@@ -105,7 +105,15 @@ internal class ResolveTypesVisitor : AstVisitor
         var scope = ExecutionThread.TopScope;
         if (scope.TryGet(name, out var value))
         {
-            node.SetAttribute(AstAttributeKeys.TypeKey, value.GetInternalType());
+            var valueType = value.GetInternalType();
+            if (valueType == DataType.Object && node.HasSelectors)
+            {
+                node.SetAttribute(AstAttributeKeys.TypeKey, DataType.Dynamic);
+            }
+            else
+            {
+                node.SetAttribute(AstAttributeKeys.TypeKey, valueType);
+            }
             return true;
         }
         return false;

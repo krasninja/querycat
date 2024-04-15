@@ -60,7 +60,7 @@ internal sealed class DsvOutput : RowsOutput, IDisposable
             {
                 var type = columns[i].DataType;
                 // Try to get more precise type if it is object.
-                if (type == DataType.Object)
+                if (type == DataType.Dynamic)
                 {
                     type = values[i].GetInternalType();
                 }

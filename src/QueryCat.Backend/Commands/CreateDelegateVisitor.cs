@@ -82,17 +82,34 @@ internal class CreateDelegateVisitor : AstVisitor
 
         var leftAction = NodeIdFuncMap[node.LeftNode.Id];
         var rightAction = NodeIdFuncMap[node.RightNode.Id];
-        var action = VariantValue.GetOperationDelegate(node.Operation,
-            node.LeftNode.GetDataType(), node.RightNode.GetDataType());
+        var leftNodeType = node.LeftNode.GetDataType();
+        var rightNodeType = node.RightNode.GetDataType();
 
-        VariantValue Func()
+        // If one of the type is dynamic (has object selector), it means that we cannot evaluate the type
+        // statically. Use slow dynamic expression.
+        if (leftNodeType == DataType.Dynamic || rightNodeType == DataType.Dynamic)
         {
-            var leftValue = leftAction.Invoke();
-            var rightValue = rightAction.Invoke();
-            var result = action.Invoke(in leftValue, in rightValue);
-            return result;
+            VariantValue DynamicFunc()
+            {
+                var leftValue = leftAction.Invoke();
+                var rightValue = rightAction.Invoke();
+                return leftValue + rightValue;
+            }
+            NodeIdFuncMap[node.Id] = new FuncUnitDelegate(DynamicFunc, node.GetDataType());
         }
-        NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, node.GetDataType());
+        // Find the most optimal delegate by types and use it.
+        else
+        {
+            var action = VariantValue.GetOperationDelegate(node.Operation, leftNodeType, rightNodeType);
+            VariantValue FastFunc()
+            {
+                var leftValue = leftAction.Invoke();
+                var rightValue = rightAction.Invoke();
+                var result = action.Invoke(in leftValue, in rightValue);
+                return result;
+            }
+            NodeIdFuncMap[node.Id] = new FuncUnitDelegate(FastFunc, node.GetDataType());
+        }
     }
 
     /// <inheritdoc />
@@ -286,9 +303,21 @@ internal class CreateDelegateVisitor : AstVisitor
         ResolveTypesVisitor.Visit(node);
         var action = NodeIdFuncMap[node.RightNode.Id];
         var nodeType = node.GetDataType();
-        var notDelegate = node.Operation == VariantValue.Operation.Not
-            ? VariantValue.GetOperationDelegate(VariantValue.Operation.Not, nodeType)
-            : VariantValue.UnaryNullDelegate;
+
+        VariantValue.UnaryFunction notDelegate = VariantValue.UnaryNullDelegate;
+        if (node.Operation == VariantValue.Operation.Not)
+        {
+            if (nodeType == DataType.Dynamic)
+            {
+                // Dynamic mode.
+                notDelegate = (in VariantValue left) => new VariantValue(!left.AsBoolean);
+            }
+            else if (nodeType != DataType.Object)
+            {
+                // Static mode.
+                notDelegate = VariantValue.GetOperationDelegate(VariantValue.Operation.Not, nodeType);
+            }
+        }
 
         NodeIdFuncMap[node.Id] = node.Operation switch
         {

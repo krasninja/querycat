@@ -2,5 +2,5 @@ expected: |
   Marina M,112
 query: |
   set user1.Name := 'Marina M';
-  set user1.Address.Phones[1] := '112';
+  set user1.Address.Phones[1-0] := '112';
   select user1.Name, user1.Address.Phones[1];

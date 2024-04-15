@@ -1,0 +1,4 @@
+expected: |
+  10
+query: |
+  select user1.ScoreList[0] + user1.ScoreList[1] + 1;
