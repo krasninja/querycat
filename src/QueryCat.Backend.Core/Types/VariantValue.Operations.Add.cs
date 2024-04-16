@@ -156,6 +156,7 @@ public partial struct VariantValue
                     }
                     return new VariantValue(string.Concat(left.AsStringUnsafe, right.AsString));
                 },
+                _ => BinaryNullDelegate,
             },
             _ => BinaryNullDelegate,
         };
