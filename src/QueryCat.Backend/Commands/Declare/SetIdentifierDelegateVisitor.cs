@@ -57,7 +57,7 @@ internal sealed class SetIdentifierDelegateVisitor : CreateDelegateVisitor
         // This is expression object.
         if (GetObjectBySelector(context, startObject, node, out _))
         {
-            var lastContext = context.SelectStack.Pop();
+            var lastContext = context.Pop();
             var lastSelector = node.SelectorNodes.LastOrDefault();
 
             // The expression object ends with property (obj.Address.City).

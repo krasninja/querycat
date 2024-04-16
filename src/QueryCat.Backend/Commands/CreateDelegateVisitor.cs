@@ -200,7 +200,7 @@ internal class CreateDelegateVisitor : AstVisitor
         }
 
         context.Clear();
-        context.SelectStack.Push(new ObjectSelectorContext.SelectInfo(value.AsObjectUnsafe));
+        context.Push(new ObjectSelectorContext.SelectInfo(value.AsObjectUnsafe));
         for (var i = 0; i < idNode.SelectorNodes.Length; i++)
         {
             var selector = idNode.SelectorNodes[i];
@@ -220,10 +220,10 @@ internal class CreateDelegateVisitor : AstVisitor
             {
                 return false;
             }
-            context.SelectStack.Push(info.Value);
+            context.Push(info.Value);
         }
 
-        result = VariantValue.CreateFromObject(context.SelectStack.Peek().ResultObject);
+        result = VariantValue.CreateFromObject(context.Peek().ResultObject);
         return true;
     }
 

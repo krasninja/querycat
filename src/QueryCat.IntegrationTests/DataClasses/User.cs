@@ -10,6 +10,8 @@ public class User
 
     public List<double> ScoreList { get; init; } = new();
 
+    public Dictionary<string, string> Logins { get; init; } = new();
+
     public static User GetTestUser1() => new()
     {
         Id = 1,
@@ -27,5 +29,11 @@ public class User
         Name = "John Doe",
         ScoreList = { 1, 2, 3, 4, 5 },
         Address = new(),
+        Logins = new Dictionary<string, string>
+        {
+            ["Google"] = "john.doe@gmail.com",
+            ["Yahoo"] = "john.doe@yahoo.com",
+            ["Yandex"] = "john.doe@yandex.ru",
+        }
     };
 }

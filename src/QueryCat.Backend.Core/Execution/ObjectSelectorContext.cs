@@ -25,7 +25,7 @@ public class ObjectSelectorContext
     /// <summary>
     /// Selector traverse stack.
     /// </summary>
-    public Stack<SelectInfo> SelectStack { get; } = new();
+    public List<SelectInfo> SelectStack { get; } = new();
 
     /// <summary>
     /// Optional user value.
@@ -38,8 +38,34 @@ public class ObjectSelectorContext
 
     public ObjectSelectorContext(object startObject)
     {
-        SelectStack.Push(new SelectInfo(startObject));
+        Push(new SelectInfo(startObject));
     }
+
+    /// <summary>
+    /// Push select info into stack.
+    /// </summary>
+    /// <param name="selectInfo">Select info.</param>
+    public void Push(in SelectInfo selectInfo)
+    {
+        SelectStack.Add(selectInfo);
+    }
+
+    /// <summary>
+    /// Pop select info from stack.
+    /// </summary>
+    /// <returns>Select info.</returns>
+    public SelectInfo Pop()
+    {
+        var item = SelectStack[^1];
+        SelectStack.RemoveAt(SelectStack.Count - 1);
+        return item;
+    }
+
+    /// <summary>
+    /// Peek last info.
+    /// </summary>
+    /// <returns>Select info.</returns>
+    public SelectInfo Peek() => SelectStack[^1];
 
     /// <summary>
     /// Reset state.
