@@ -288,6 +288,10 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         {
             return new VariantValue(blobData);
         }
+        if (obj is Guid guid)
+        {
+            return new VariantValue(guid.ToString());
+        }
         return new VariantValue(obj);
     }
 
