@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using QueryCat.Backend.Core.Data;
@@ -27,6 +28,14 @@ public sealed class PluginExecutionThread : IExecutionThread
     /// <inheritdoc />
     public IExecutionScope TopScope => NullExecutionScope.Instance;
 
+#pragma warning disable CS0067
+    /// <inheritdoc />
+    public event EventHandler<ResolveVariableEventArgs>? VariableResolving;
+
+    /// <inheritdoc />
+    public event EventHandler<ResolveVariableEventArgs>? VariableResolved;
+#pragma warning disable CS0067
+
     /// <inheritdoc />
     public IObjectSelector ObjectSelector => NullObjectSelector.Instance;
 
@@ -48,6 +57,13 @@ public sealed class PluginExecutionThread : IExecutionThread
         CancellationToken cancellationToken = default)
     {
         throw new QueryCatPluginException(ErrorType.GENERIC, Resources.Errors.NotSupported_QueryRun);
+    }
+
+    /// <inheritdoc />
+    public bool TryGetVariable(string name, out VariantValue value, IExecutionScope? scope = null)
+    {
+        value = VariantValue.Null;
+        return false;
     }
 
     /// <inheritdoc />

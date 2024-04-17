@@ -103,7 +103,7 @@ internal class ResolveTypesVisitor : AstVisitor
     protected bool SetDataTypeFromVariable(IdentifierExpressionNode node, string name)
     {
         var scope = ExecutionThread.TopScope;
-        if (scope.TryGet(name, out var value))
+        if (ExecutionThread.TryGetVariable(name, out var value, scope))
         {
             var valueType = value.GetInternalType();
             if (valueType == DataType.Object && node.HasSelectors)

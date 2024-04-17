@@ -27,6 +27,14 @@ public sealed class NullExecutionThread : IExecutionThread
     /// <inheritdoc />
     public IExecutionScope TopScope { get; } = NullExecutionScope.Instance;
 
+#pragma warning disable CS0067
+    /// <inheritdoc />
+    public event EventHandler<ResolveVariableEventArgs>? VariableResolving;
+
+    /// <inheritdoc />
+    public event EventHandler<ResolveVariableEventArgs>? VariableResolved;
+#pragma warning disable CS0067
+
     /// <inheritdoc />
     public IObjectSelector ObjectSelector { get; } = NullObjectSelector.Instance;
 
@@ -39,6 +47,13 @@ public sealed class NullExecutionThread : IExecutionThread
     /// <inheritdoc />
     public VariantValue Run(string query, IDictionary<string, VariantValue>? parameters = null,
         CancellationToken cancellationToken = default) => VariantValue.Null;
+
+    /// <inheritdoc />
+    public bool TryGetVariable(string name, out VariantValue value, IExecutionScope? scope = null)
+    {
+        value = VariantValue.Null;
+        return false;
+    }
 
     /// <inheritdoc />
     public void Dispose()

@@ -11,13 +11,11 @@ public sealed class NullObjectSelector : IObjectSelector
     public static NullObjectSelector Instance { get; } = new();
 
     /// <inheritdoc />
-    public ObjectSelectorContext.SelectInfo? SelectByProperty(ObjectSelectorContext context, string propertyName) => null;
+    public ObjectSelectorContext.Token? SelectByProperty(ObjectSelectorContext context, string propertyName) => null;
 
     /// <inheritdoc />
-    public ObjectSelectorContext.SelectInfo? SelectByIndex(ObjectSelectorContext context, object?[] indexes) => null;
+    public ObjectSelectorContext.Token? SelectByIndex(ObjectSelectorContext context, object?[] indexes) => null;
 
     /// <inheritdoc />
-    public void SetValue(in ObjectSelectorContext.SelectInfo selectInfo, object? newValue, object?[] indexes)
-    {
-    }
+    public bool SetValue(in ObjectSelectorContext.Token token, object? newValue, object?[] indexes) => false;
 }

@@ -10,20 +10,21 @@ public interface IObjectSelector
     /// </summary>
     /// <param name="context">Selector context.</param>
     /// <param name="propertyName">Property name.</param>
-    ObjectSelectorContext.SelectInfo? SelectByProperty(ObjectSelectorContext context, string propertyName);
+    ObjectSelectorContext.Token? SelectByProperty(ObjectSelectorContext context, string propertyName);
 
     /// <summary>
     /// Get the next object by index property.
     /// </summary>
     /// <param name="context">Selector context.</param>
     /// <param name="indexes">Indexes values.</param>
-    ObjectSelectorContext.SelectInfo? SelectByIndex(ObjectSelectorContext context, object?[] indexes);
+    ObjectSelectorContext.Token? SelectByIndex(ObjectSelectorContext context, object?[] indexes);
 
     /// <summary>
     /// Set property value by property info.
     /// </summary>
-    /// <param name="selectInfo">Select info with property info.</param>
+    /// <param name="token">Select info with property info.</param>
     /// <param name="newValue">New value.</param>
     /// <param name="indexes">Indexes values.</param>
-    void SetValue(in ObjectSelectorContext.SelectInfo selectInfo, object? newValue, object?[] indexes);
+    /// <returns><c>True</c> if property was set, <c>false</c> otherwise.</returns>
+    bool SetValue(in ObjectSelectorContext.Token token, object? newValue, object?[] indexes);
 }

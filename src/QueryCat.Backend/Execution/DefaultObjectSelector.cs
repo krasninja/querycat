@@ -9,7 +9,7 @@ namespace QueryCat.Backend.Execution;
 public class DefaultObjectSelector : IObjectSelector
 {
     /// <inheritdoc />
-    public virtual ObjectSelectorContext.SelectInfo? SelectByProperty(ObjectSelectorContext context, string propertyName)
+    public virtual ObjectSelectorContext.Token? SelectByProperty(ObjectSelectorContext context, string propertyName)
     {
         var current = context.Peek();
         var propertyInfo = current.ResultObject.GetType().GetProperty(propertyName);
@@ -20,15 +20,15 @@ public class DefaultObjectSelector : IObjectSelector
         var resultObject = propertyInfo.GetValue(current.ResultObject);
         if (resultObject != null)
         {
-            return new ObjectSelectorContext.SelectInfo(resultObject,
-                new ObjectSelectorContext.SelectPropertyInfo(current.ResultObject, propertyInfo));
+            return new ObjectSelectorContext.Token(resultObject,
+                new ObjectSelectorContext.TokenPropertyInfo(current.ResultObject, propertyInfo));
         }
 
         return null;
     }
 
     /// <inheritdoc />
-    public virtual ObjectSelectorContext.SelectInfo? SelectByIndex(ObjectSelectorContext context, object?[] indexes)
+    public virtual ObjectSelectorContext.Token? SelectByIndex(ObjectSelectorContext context, object?[] indexes)
     {
         var current = context.Peek();
         object? resultObject = null;
@@ -72,10 +72,9 @@ public class DefaultObjectSelector : IObjectSelector
         if (resultObject == null && current.SelectProperty.HasValue)
         {
             // Dictionary.
-            var indexerProperty = current.SelectProperty.Value.PropertyInfo.PropertyType.GetProperty("Item");
-            if (indexerProperty != null)
+            if (indexes.Length == 1 && indexes[0] != null && current.ResultObject is IDictionary dictionary)
             {
-                resultObject = indexerProperty.GetValue(current.ResultObject, indexes);
+                resultObject = dictionary[indexes[0]!];
             }
             // Index property.
             else
@@ -88,12 +87,12 @@ public class DefaultObjectSelector : IObjectSelector
         {
             if (current.SelectProperty.HasValue)
             {
-                return new ObjectSelectorContext.SelectInfo(resultObject,
+                return new ObjectSelectorContext.Token(resultObject,
                     current.SelectProperty.Value with { Owner = current.ResultObject });
             }
             else
             {
-                return new ObjectSelectorContext.SelectInfo(resultObject);
+                return new ObjectSelectorContext.Token(resultObject);
             }
         }
 
@@ -101,52 +100,57 @@ public class DefaultObjectSelector : IObjectSelector
     }
 
     /// <inheritdoc />
-    public virtual void SetValue(in ObjectSelectorContext.SelectInfo selectInfo, object? newValue, object?[] indexes)
+    public virtual bool SetValue(in ObjectSelectorContext.Token token, object? newValue, object?[] indexes)
     {
-        if (!selectInfo.SelectProperty.HasValue)
+        if (!token.SelectProperty.HasValue)
         {
-            return;
+            return false;
         }
-        var selectPropertyInfo = selectInfo.SelectProperty.Value;
+        var selectPropertyInfo = token.SelectProperty.Value;
+        return SetValueInternal(selectPropertyInfo, newValue, indexes);
+    }
 
+    private bool SetValueInternal(in ObjectSelectorContext.TokenPropertyInfo selectPropertyInfo, object? newValue, object?[] indexes)
+    {
         // No indexes, expression like "User.Name = 'Vladimir'".
         if (indexes.Length == 0)
         {
             selectPropertyInfo.PropertyInfo.SetValue(selectPropertyInfo.Owner, newValue, indexes);
+            return true;
         }
-        // Object expression with index.
-        else
+
+        if (indexes.Length == 1)
         {
-            // Case "User.Phones[1] = '888'".
-            if (indexes.Length == 1 && indexes[0] is long longIndex)
+            if (indexes[0] is long longIndex)
             {
                 var intIndex = (int)longIndex;
                 // List.
                 if (selectPropertyInfo.Owner is IList list)
                 {
                     list[intIndex] = newValue;
+                    return true;
                 }
                 // Array.
                 else if (selectPropertyInfo.Owner is Array array)
                 {
                     array.SetValue(array, intIndex);
+                    return true;
                 }
             }
-            // General case.
-            else
+            // Dictionary.
+            if (indexes[0] != null && selectPropertyInfo.Owner is IDictionary dictionary)
             {
-                // Dictionary.
-                var indexerProperty = selectPropertyInfo.PropertyInfo.PropertyType.GetProperty("Item");
-                if (indexerProperty != null)
-                {
-                    indexerProperty.SetValue(selectPropertyInfo.Owner, newValue, indexes);
-                }
-                // Index property.
-                else
-                {
-                    selectPropertyInfo.PropertyInfo.SetValue(selectPropertyInfo.Owner, newValue, indexes);
-                }
+                dictionary[indexes[0]!] = newValue;
+                return true;
             }
         }
+        // Index property.
+        else
+        {
+            selectPropertyInfo.PropertyInfo.SetValue(selectPropertyInfo.Owner, newValue, indexes);
+            return true;
+        }
+
+        return false;
     }
 }

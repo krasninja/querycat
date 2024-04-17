@@ -177,7 +177,7 @@ internal sealed partial class SelectPlanner
 
     private IRowsInput[] Context_CreateInputSourceFromVariable(SelectCommandContext context, IdentifierExpressionNode idNode)
     {
-        if (!context.CapturedScope.Contains(idNode.Name))
+        if (!ExecutionThread.ContainsVariable(idNode.Name, context.CapturedScope))
         {
             return [];
         }

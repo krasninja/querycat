@@ -173,12 +173,12 @@ internal class CreateDelegateVisitor : AstVisitor
         ResolveTypesVisitor.Visit(node);
         var scope = ExecutionThread.TopScope;
 
-        if (scope.Contains(node.Name))
+        if (ExecutionThread.ContainsVariable(node.Name, scope))
         {
             var context = new ObjectSelectorContext();
             VariantValue Func()
             {
-                var startObject = scope.Get(node.Name);
+                var startObject = ExecutionThread.GetVariable(node.Name, scope);
                 GetObjectBySelector(context, startObject, node, out var finalValue);
                 return finalValue;
             }
@@ -199,12 +199,11 @@ internal class CreateDelegateVisitor : AstVisitor
             return false;
         }
 
-        context.Clear();
-        context.Push(new ObjectSelectorContext.SelectInfo(value.AsObjectUnsafe));
+        context.Push(new ObjectSelectorContext.Token(value.AsObjectUnsafe));
         for (var i = 0; i < idNode.SelectorNodes.Length; i++)
         {
             var selector = idNode.SelectorNodes[i];
-            ObjectSelectorContext.SelectInfo? info = null;
+            ObjectSelectorContext.Token? info = null;
 
             if (selector is IdentifierPropertySelectorNode propertySelectorNode)
             {

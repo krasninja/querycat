@@ -34,12 +34,13 @@ internal sealed class SetIdentifierDelegateVisitor : CreateDelegateVisitor
         ResolveTypesVisitor.Visit(node);
         var scope = ExecutionThread.TopScope;
 
-        if (scope.Contains(node.Name))
+        if (ExecutionThread.ContainsVariable(node.Name, scope))
         {
             var context = new ObjectSelectorContext();
             VariantValue Func()
             {
                 var newValue = SetValue(node, scope, context);
+                context.Clear();
                 return newValue;
             }
             NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, node.GetDataType());
@@ -51,7 +52,7 @@ internal sealed class SetIdentifierDelegateVisitor : CreateDelegateVisitor
 
     private VariantValue SetValue(IdentifierExpressionNode node, IExecutionScope scope, ObjectSelectorContext context)
     {
-        var startObject = scope.Get(node.Name);
+        var startObject = ExecutionThread.GetVariable(node.Name, scope);
         var newValue = _funcUnit.Invoke();
 
         // This is expression object.
@@ -64,7 +65,7 @@ internal sealed class SetIdentifierDelegateVisitor : CreateDelegateVisitor
             if (lastSelector is IdentifierPropertySelectorNode)
             {
                 ExecutionThread.ObjectSelector.SetValue(
-                    selectInfo: lastContext,
+                    token: lastContext,
                     newValue: Converter.ConvertValue(newValue, typeof(object)),
                     indexes: []);
             }
@@ -73,7 +74,7 @@ internal sealed class SetIdentifierDelegateVisitor : CreateDelegateVisitor
             {
                 var indexObjects = GetObjectIndexesSelector(indexSelectorNode);
                 ExecutionThread.ObjectSelector.SetValue(
-                    selectInfo: lastContext,
+                    token: lastContext,
                     newValue: Converter.ConvertValue(newValue, typeof(object)),
                     indexes: indexObjects);
             }

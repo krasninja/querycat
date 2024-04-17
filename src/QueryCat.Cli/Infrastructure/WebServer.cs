@@ -224,7 +224,7 @@ internal sealed partial class WebServer
         _logger.LogInformation($"[{request.RemoteEndPoint.Address}] Schema: {query}");
 
         var thread = (ExecutionThread)_executionThread;
-        void ThreadOnAfterStatementExecute(object? sender, ExecuteEventArgs e)
+        void ThreadOnStatementExecuted(object? sender, ExecuteEventArgs e)
         {
             var result = thread.LastResult;
             if (!result.IsNull && result.GetInternalType() == DataType.Object
@@ -238,12 +238,12 @@ internal sealed partial class WebServer
 
         try
         {
-            thread.AfterStatementExecute += ThreadOnAfterStatementExecute;
+            thread.StatementExecuted += ThreadOnStatementExecuted;
             _executionThread.Run(query.Query, query.ParametersAsDict);
         }
         finally
         {
-            thread.AfterStatementExecute -= ThreadOnAfterStatementExecute;
+            thread.StatementExecuted -= ThreadOnStatementExecuted;
         }
     }
 
