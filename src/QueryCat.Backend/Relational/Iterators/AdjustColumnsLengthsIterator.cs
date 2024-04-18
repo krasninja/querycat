@@ -12,19 +12,19 @@ public class AdjustColumnsLengthsIterator : IRowsIterator, IRowsIteratorParent
     private const int MaxRowsToAnalyze = 10;
 
     private readonly int _maxRowsToAnalyze;
-    private readonly CacheRowsIterator _rowsIterator;
+    private readonly CacheRowsIterator _cacheRowsIterator;
     private bool _isInitialized;
 
     /// <inheritdoc />
     public Column[] Columns { get; }
 
     /// <inheritdoc />
-    public Row Current => _rowsIterator.Current;
+    public Row Current => _cacheRowsIterator.Current;
 
     public AdjustColumnsLengthsIterator(IRowsIterator rowsIterator, int maxRowsToAnalyze = MaxRowsToAnalyze)
     {
         _maxRowsToAnalyze = maxRowsToAnalyze;
-        _rowsIterator = new CacheRowsIterator(rowsIterator);
+        _cacheRowsIterator = new CacheRowsIterator(rowsIterator);
         Columns = rowsIterator.Columns;
     }
 
@@ -36,20 +36,20 @@ public class AdjustColumnsLengthsIterator : IRowsIterator, IRowsIteratorParent
             Initialize();
         }
 
-        return _rowsIterator.MoveNext();
+        return _cacheRowsIterator.MoveNext();
     }
 
     /// <inheritdoc />
     public void Reset()
     {
-        ((IRowsIterator)_rowsIterator).Reset();
+        _cacheRowsIterator.Reset();
         _isInitialized = false;
     }
 
     /// <inheritdoc />
     public void Explain(IndentedStringBuilder stringBuilder)
     {
-        stringBuilder.AppendRowsIteratorsWithIndent("Adj Columns", _rowsIterator);
+        stringBuilder.AppendRowsIteratorsWithIndent("Adj Columns", _cacheRowsIterator);
     }
 
     private void Initialize()
@@ -62,16 +62,16 @@ public class AdjustColumnsLengthsIterator : IRowsIterator, IRowsIteratorParent
             }
         }
 
-        while (_rowsIterator.MoveNext() && _rowsIterator.Position < _maxRowsToAnalyze)
+        while (_cacheRowsIterator.MoveNext() && _cacheRowsIterator.Position < _maxRowsToAnalyze)
         {
             for (var i = 0; i < Columns.Length; i++)
             {
-                var internalType = _rowsIterator.Current[i].GetInternalType();
+                var internalType = _cacheRowsIterator.Current[i].GetInternalType();
                 if (internalType == DataType.Void || internalType == DataType.Object)
                 {
                     continue;
                 }
-                var value = _rowsIterator.Current[i].ToString();
+                var value = _cacheRowsIterator.Current[i].ToString();
                 if (value.Length > Columns[i].Length)
                 {
                     Columns[i].Length = value.Length;
@@ -79,12 +79,12 @@ public class AdjustColumnsLengthsIterator : IRowsIterator, IRowsIteratorParent
             }
         }
         _isInitialized = true;
-        _rowsIterator.Seek(-1, CursorSeekOrigin.Begin);
+        _cacheRowsIterator.Seek(-1, CursorSeekOrigin.Begin);
     }
 
     /// <inheritdoc />
     public IEnumerable<IRowsSchema> GetChildren()
     {
-        yield return _rowsIterator;
+        yield return _cacheRowsIterator;
     }
 }

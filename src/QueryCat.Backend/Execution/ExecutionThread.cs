@@ -376,6 +376,10 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
         {
             rowsIterator = new AdjustColumnsLengthsIterator(rowsIterator, Options.AnalyzeRowsCount);
         }
+        if (Options.TailCount > -1)
+        {
+            rowsIterator = new TailRowsIterator(rowsIterator, Options.TailCount);
+        }
 
         // Write the main data.
         var isOpened = false;

@@ -58,6 +58,11 @@ public class ExecutionOptions
     public TimeSpan FollowTimeout { get; set; }
 
     /// <summary>
+    /// Select specific number of source items from tail. -1 to disable.
+    /// </summary>
+    public int TailCount { get; set; } = -1;
+
+    /// <summary>
     /// Throw time out exception if query hasn't been executed within the time.
     /// </summary>
     public TimeSpan QueryTimeout { get; set; }
