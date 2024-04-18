@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial objects expressions support.
 - Allow to use Add operator with strings. Implicit conversion from integer, float and numeric types when concat with string.
+- Add "Enter" and "Q" keys processing in "follow" mode.
 
 ### Changed
 

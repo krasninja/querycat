@@ -60,6 +60,7 @@ public class PagingOutput : IRowsOutput
     {
         _rowsOutput.WriteValues(values);
         if (PagingRowsCount != NoLimit
+            && Environment.UserInteractive
             && ++_rowsCounter >= PagingRowsCount
             && !Console.IsInputRedirected
             && !Console.IsOutputRedirected)
@@ -69,10 +70,12 @@ public class PagingOutput : IRowsOutput
             var consoleKey = Console.ReadKey();
             Console.Write(ClearText);
 
+            // Show all next content.
             if (consoleKey.Key == ConsoleKey.A)
             {
                 PagingRowsCount = -1;
             }
+            // Quit.
             else if (consoleKey.Key == ConsoleKey.Q)
             {
                 _cts?.Cancel();

@@ -386,9 +386,11 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
         {
             while (true)
             {
+                var requestQuit = false;
                 Thread.Sleep(Options.FollowTimeout);
                 StartWriterLoop();
-                if (cancellationToken.IsCancellationRequested)
+                ProcessInput(ref requestQuit);
+                if (cancellationToken.IsCancellationRequested || requestQuit)
                 {
                     break;
                 }
@@ -415,6 +417,30 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
                     isOpened = true;
                 }
                 rowsOutput.WriteValues(rowsIterator.Current.Values);
+            }
+        }
+
+        void ProcessInput(ref bool requestQuit)
+        {
+            if (!Environment.UserInteractive)
+            {
+                return;
+            }
+            while (Console.KeyAvailable)
+            {
+                var key = Console.ReadKey(true);
+                if (key.Key == ConsoleKey.Enter)
+                {
+                    Console.WriteLine();
+                }
+                else if (key.Key == ConsoleKey.Q)
+                {
+                    requestQuit = true;
+                }
+                else if (key.Key == ConsoleKey.Subtract)
+                {
+                    Console.WriteLine(new string('-', 5));
+                }
             }
         }
     }
