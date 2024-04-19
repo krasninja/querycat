@@ -45,9 +45,9 @@ internal sealed class CacheEntryStorage : ICacheEntryStorage
             .Where(ce => ce.Value.RefCount == 0 && (ce.Value.IsExpired || !ce.Value.IsCompleted))
             .Select(ce => ce.Key)
             .ToList();
-        for (var i = 0; i < toRemove.Count; i++)
+        foreach (var removeItem in toRemove)
         {
-            _entries.Remove(toRemove[i]);
+            _entries.Remove(removeItem);
         }
     }
 }

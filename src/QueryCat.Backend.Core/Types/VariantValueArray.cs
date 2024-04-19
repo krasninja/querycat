@@ -58,9 +58,9 @@ public readonly struct VariantValueArray(params VariantValue[] values)
     public override int GetHashCode()
     {
         var hashCode = default(HashCode);
-        for (var i = 0; i < _values.Length; i++)
+        foreach (var value in _values)
         {
-            hashCode.Add(_values[i]);
+            hashCode.Add(value);
         }
         return hashCode.ToHashCode();
     }

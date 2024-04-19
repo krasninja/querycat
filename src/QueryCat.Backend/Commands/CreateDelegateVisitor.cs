@@ -200,9 +200,8 @@ internal class CreateDelegateVisitor : AstVisitor
         }
 
         context.Push(new ObjectSelectorContext.Token(value.AsObjectUnsafe));
-        for (var i = 0; i < idNode.SelectorNodes.Length; i++)
+        foreach (var selector in idNode.SelectorNodes)
         {
-            var selector = idNode.SelectorNodes[i];
             ObjectSelectorContext.Token? info = null;
 
             if (selector is IdentifierPropertySelectorNode propertySelectorNode)
@@ -262,9 +261,9 @@ internal class CreateDelegateVisitor : AstVisitor
         VariantValue Func()
         {
             var leftValue = valueAction.Invoke();
-            for (int i = 0; i < actions.Length; i++)
+            foreach (var action in actions)
             {
-                var rightValue = actions[i].Invoke();
+                var rightValue = action.Invoke();
                 var isEqual = equalDelegate.Invoke(in leftValue, in rightValue);
                 if (isEqual.IsNull)
                 {

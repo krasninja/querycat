@@ -87,9 +87,9 @@ internal class IdentifierExpressionNode : ExpressionNode
     public string DumpNameWithSelector()
     {
         var sb = new StringBuilder();
-        for (var i = 0; i < SelectorNodes.Length; i++)
+        foreach (var selectorNode in SelectorNodes)
         {
-            sb.Append(SelectorNodes[i]);
+            sb.Append(selectorNode);
         }
         return sb.ToString();
     }

@@ -54,11 +54,11 @@ public class AdjustColumnsLengthsIterator : IRowsIterator, IRowsIteratorParent
 
     private void Initialize()
     {
-        for (var i = 0; i < Columns.Length; i++)
+        foreach (var column in Columns)
         {
-            if (Columns[i].Length < Columns[i].FullName.Length)
+            if (column.Length < column.FullName.Length)
             {
-                Columns[i].Length = Columns[i].FullName.Length;
+                column.Length = column.FullName.Length;
             }
         }
 
