@@ -355,7 +355,7 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
         }
         else
         {
-            throw new InvalidOperationException($"Quantifier '{node.Operator}' cannot be proceed.");
+            throw new InvalidOperationException(string.Format(Resources.Errors.InvalidQuantifier, node.Operation));
         }
     }
 

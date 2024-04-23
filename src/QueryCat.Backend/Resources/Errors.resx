@@ -138,4 +138,16 @@
   <data name="DelimiterOneCharacter" xml:space="preserve">
     <value>Delimiter must be one character.</value>
   </data>
+  <data name="InvalidParserValue" xml:space="preserve">
+    <value>Parse tree value is not defined.</value>
+  </data>
+  <data name="NotSupportedNodeType" xml:space="preserve">
+    <value>Not supported node type '{0}'.</value>
+  </data>
+  <data name="CannotParseValue" xml:space="preserve">
+    <value>Cannot parse value '{0}'.</value>
+  </data>
+  <data name="InvalidQuantifier" xml:space="preserve">
+    <value>Quantifier '{0}' cannot be proceed.</value>
+  </data>
 </root>

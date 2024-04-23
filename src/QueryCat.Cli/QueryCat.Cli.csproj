@@ -33,6 +33,27 @@
     <ProjectReference Condition="$(DefineConstants.Contains('PLUGIN_ASSEMBLY'))" Include="..\QueryCat.Backend.AssemblyPlugins\QueryCat.Backend.AssemblyPlugins.csproj" />
     <EmbeddedResource Include="Infrastructure\WebServerIndex.html" />
     <EmbeddedResource Include="Infrastructure\WebServerPage.js" />
+    <EmbeddedResource Update="Resources\Messages.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Messages.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Resources\Errors.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Errors.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Resources\Messages.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Messages.resx</DependentUpon>
+    </Compile>
+    <Compile Update="Resources\Errors.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Errors.resx</DependentUpon>
+    </Compile>
   </ItemGroup>
 
 </Project>

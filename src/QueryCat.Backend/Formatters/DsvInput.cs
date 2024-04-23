@@ -34,7 +34,7 @@ internal class DsvInput : StreamRowsInput
             var columnNames = GetCurrentInputValues(iterator.Current);
             if (columnNames.Length < 1)
             {
-                throw new IOSourceException("There are no columns.");
+                throw new IOSourceException(Resources.Errors.NoColumns);
             }
             var columns = GetInputColumns();
             for (int i = 0; i < columns.Length; i++)

@@ -79,7 +79,7 @@ internal sealed partial class WebServer
             listener.AuthenticationSchemes = AuthenticationSchemes.Basic;
         }
         listener.Start();
-        Console.Out.WriteLine($"Listening on {Uri}. Use `POST /api/query` endpoint.");
+        Console.Out.WriteLine(Resources.Messages.WebServerListen, Uri);
 
         while (true)
         {
@@ -334,7 +334,7 @@ internal sealed partial class WebServer
             }
             return new WebServerQueryData(request.QueryString.Get("query") ?? string.Empty);
         }
-        throw new QueryCatException("Incorrect content type.");
+        throw new QueryCatException(Resources.Errors.InvalidContentType);
     }
 
     private static void WriteHtml(IRowsIterator iterator, StreamWriter streamWriter)

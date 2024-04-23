@@ -11,7 +11,7 @@ internal abstract class BaseQueryCommand : BaseCommand
         description: "SQL-like query or command argument.",
         getDefaultValue: () => string.Empty);
 
-    public Option<string[]> FilesOption { get; } = new(new[] { "-f", "--files" },
+    public Option<string[]> FilesOption { get; } = new(["-f", "--files"],
         description: "SQL files to execute.")
     {
         AllowMultipleArgumentsPerToken = true,
@@ -59,14 +59,14 @@ internal abstract class BaseQueryCommand : BaseCommand
             var arr = variable.Split('=', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
             if (arr.Length != 2)
             {
-                throw new QueryCatException($"Variable '{variable}' must have NAME=VALUE format.");
+                throw new QueryCatException(string.Format(Resources.Errors.InvalidVariableFormat, variable));
             }
             var name = arr[0];
             var stringValue = arr[1];
             var targetType = DataTypeUtils.DetermineTypeByValue(stringValue);
             if (!VariantValue.TryCreateFromString(stringValue, targetType, out var value))
             {
-                throw new QueryCatException($"Cannot define variable '{name}'.");
+                throw new QueryCatException(string.Format(Resources.Errors.CannotDefineVariable, name));
             }
             executionThread.TopScope.Variables[name] = value.Cast(targetType);
         }

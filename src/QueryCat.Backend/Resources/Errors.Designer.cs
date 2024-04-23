@@ -284,5 +284,29 @@ namespace QueryCat.Backend.Resources {
                 return ResourceManager.GetString("DelimiterOneCharacter", resourceCulture);
             }
         }
+        
+        internal static string InvalidParserValue {
+            get {
+                return ResourceManager.GetString("InvalidParserValue", resourceCulture);
+            }
+        }
+        
+        internal static string NotSupportedNodeType {
+            get {
+                return ResourceManager.GetString("NotSupportedNodeType", resourceCulture);
+            }
+        }
+        
+        internal static string CannotParseValue {
+            get {
+                return ResourceManager.GetString("CannotParseValue", resourceCulture);
+            }
+        }
+        
+        internal static string InvalidQuantifier {
+            get {
+                return ResourceManager.GetString("InvalidQuantifier", resourceCulture);
+            }
+        }
     }
 }

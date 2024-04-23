@@ -399,7 +399,7 @@ internal static class IOFunctions
         {
             return value;
         }
-        throw new InvalidOperationException($"Cannot parse value '{str}'.");
+        throw new InvalidOperationException(string.Format(Resources.Errors.CannotParseValue, str));
     }
 
     #endregion

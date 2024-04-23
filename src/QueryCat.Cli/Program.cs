@@ -15,9 +15,9 @@ namespace QueryCat.Cli;
 /// </summary>
 internal class Program
 {
-    private static readonly Lazy<ILogger> Logger = new(() => Application.LoggerFactory.CreateLogger(nameof(Program)));
+    private static readonly Lazy<ILogger> _logger = new(() => Application.LoggerFactory.CreateLogger(nameof(Program)));
 
-    private static readonly object ObjLock = new();
+    private static readonly object _objLock = new();
 
     /// <summary>
     /// Entry point.
@@ -86,14 +86,7 @@ internal class Program
                     var layouts = HelpBuilder.Default.GetLayout().ToList();
                     layouts.Insert(1, _ =>
                     {
-                        var sb = new StringBuilder()
-                            .AppendLine("Getting started:")
-                            .AppendLine()
-                            .AppendLine("  -- Simple select from CSV file")
-                            .AppendLine("  qcat \"select * from '/home/user/users.csv' where email like '%@gmail.com'\"")
-                            .AppendLine()
-                            .AppendLine("  Visit https://github.com/krasninja/querycat for more information.");
-                        context.Output.Write(sb);
+                        context.Output.Write(Resources.Messages.HelpText);
                     });
                     context.HelpBuilder.CustomizeLayout(_ => layouts);
                 }
@@ -120,8 +113,8 @@ internal class Program
 
     private static void ProcessException(Exception exception)
     {
-        var logger = Logger.Value;
-        lock (ObjLock)
+        var logger = _logger.Value;
+        lock (_objLock)
         {
             if (exception is AggregateException aggregateException)
             {

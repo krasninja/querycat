@@ -35,7 +35,7 @@ internal class PluginDebugCommand : BaseQueryCommand
             using var cts = new CancellationTokenSource();
 
             options.PluginDirectories.AddRange(applicationOptions.PluginDirectories);
-            options.DefaultRowsOutput = new PagingOutput(tableOutput, cts: cts);
+            options.DefaultRowsOutput = new PagingOutput(tableOutput, cancellationTokenSource: cts);
 
             using var thread = new ExecutionThreadBootstrapper(options)
                 .WithConfigStorage(new PersistentInputConfigStorage(
