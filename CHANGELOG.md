@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Change the way how quote columns. Now. instead of [] use "". Only '' can be used for string literals.
 
+### Fixed
+
+- Improve memory usage for web server partial ranges requests.
+
 ## [0.5.5] - 2024-03-27
 
 ### Added

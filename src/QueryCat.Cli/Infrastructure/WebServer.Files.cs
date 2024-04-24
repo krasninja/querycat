@@ -9,37 +9,28 @@ namespace QueryCat.Cli.Infrastructure;
 
 internal partial class WebServer
 {
+    private static readonly string _selectFilesQuery = @"select *, size_pretty(size) as 'size_pretty' from ls_dir(path);";
+    private static readonly ArrayPool<byte> _readBufferPool = ArrayPool<byte>.Create();
+
     [DebuggerDisplay("{Start}-{End}")]
-    private sealed class Range
+    private readonly struct Range
     {
-        private long _start;
+        public long Start { get; }
 
-        public long Start
-        {
-            get => _start;
-            set => _start = value > 0 && value <= _end ? value : 0;
-        }
-
-        private long _end;
-
-        public long End
-        {
-            get => _end;
-            set => _end = value > 0 && value > _start ? value : _start;
-        }
+        public long End { get; }
 
         public long Size => End - Start;
 
         public Range(long start, long end)
         {
-            End = end;
-            Start = start;
+            Start = start > 0 && start <= end ? start : 0;
+            End = end > 0 && end > start ? end : start;
         }
     }
 
     private void Files_HandleFilesApiAction(HttpListenerRequest request, HttpListenerResponse response)
     {
-        if (request.HttpMethod != GetMethod)
+        if (request.HttpMethod != HttpMethod.Get.Method)
         {
             response.StatusCode = (int)HttpStatusCode.MethodNotAllowed;
             return;
@@ -78,7 +69,7 @@ internal partial class WebServer
     private void Files_ServeDirectory(string path, HttpListenerRequest request, HttpListenerResponse response)
     {
         _executionThread.TopScope.Variables["path"] = new VariantValue(path);
-        var result = _executionThread.Run("select *, size_pretty(size) as 'size_pretty' from ls_dir(path);");
+        var result = _executionThread.Run(_selectFilesQuery);
         _logger.LogInformation($"[{request.RemoteEndPoint.Address}] Dir: {path}");
         WriteIterator(ExecutionThreadUtils.ConvertToIterator(result), request, response);
     }
@@ -87,9 +78,9 @@ internal partial class WebServer
     {
         using var fileInput = new FileStream(file, FileMode.Open, FileAccess.ReadWrite);
         var maxLength = fileInput.Length;
-        var range = Files_ParseRange(request.Headers["Range"], maxLength).FirstOrDefault();
-        var isRangeRequest = range != null;
-        range ??= new Range(0, maxLength);
+        Span<Range> ranges = stackalloc Range[1];
+        var isRangeRequest = Files_ParseRange(request.Headers["Range"], maxLength, ranges) > 0;
+        var range = isRangeRequest ? ranges[0] : new Range(0, maxLength);
         _logger.LogTrace("Start range {Start}-{End}", range.Start, range.End);
 
         response.AddHeader("Date", DateTime.Now.ToString("r"));
@@ -104,7 +95,7 @@ internal partial class WebServer
         }
         response.StatusCode = isRangeRequest ? (int)HttpStatusCode.PartialContent : (int)HttpStatusCode.OK;
 
-        var buffer = ArrayPool<byte>.Shared.Rent(1024 * 8);
+        var buffer = _readBufferPool.Rent(1024 * 8);
         int totalBytesRead = 0, totalBytesWrite = 0;
         _logger.LogInformation($"[{request.RemoteEndPoint.Address}] File: {file}");
         try
@@ -124,6 +115,10 @@ internal partial class WebServer
                 }
                 try
                 {
+                    if (!response.OutputStream.CanWrite)
+                    {
+                        break;
+                    }
                     response.OutputStream.Write(buffer, 0, bytesRead);
                     totalBytesWrite += bytesRead;
                 }
@@ -143,41 +138,78 @@ internal partial class WebServer
         _logger.LogTrace("End range {Start}-{End}, Total: {TotalWrite}", range.Start, range.End, totalBytesWrite);
     }
 
-    private static IEnumerable<Range> Files_ParseRange(string? rangeValue, long maxLength)
+    private static int Files_ParseRange(string? rangeValue, long maxLength, Span<Range> result)
     {
         if (string.IsNullOrEmpty(rangeValue))
         {
-            yield break;
+            return 0;
         }
 
-        rangeValue = rangeValue.Replace("bytes=", string.Empty, StringComparison.OrdinalIgnoreCase);
-        var ranges = rangeValue.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        const string bytesHeader = "bytes=";
+        var rangeValueSpan = rangeValue.StartsWith(bytesHeader, StringComparison.OrdinalIgnoreCase)
+            ? rangeValue.AsSpan(bytesHeader.Length)
+            : rangeValue.AsSpan();
+        Span<System.Range> ranges = stackalloc System.Range[7];
+        var rangeValueSpanCount = rangeValueSpan.Split(
+            ranges,
+            ',',
+            StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+
+        var i = 0;
         foreach (var range in ranges)
         {
+            if (i >= result.Length || i >= rangeValueSpanCount)
+            {
+                break;
+            }
+
             // Parse start and end.
-            var startEnd = range.Split('-', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
-            if (startEnd.Length < 1)
+            var rangeSpan = rangeValueSpan[range];
+            var dashIndex = rangeSpan.IndexOf('-');
+            if (dashIndex < 0)
             {
                 continue;
             }
-            long.TryParse(startEnd[0], out var start);
-            long end = maxLength - 1;
-            if (startEnd.Length > 1)
+
+            var startSpan = rangeSpan[..dashIndex].Trim();
+            var endSpan = rangeSpan[(dashIndex + 1)..].Trim();
+            long start = 0, end = maxLength;
+
+            // Range: <unit>=<range-start>-<range-end>.
+            if (startSpan.Length > 0 && endSpan.Length > 0)
             {
-                long.TryParse(startEnd[1], out end);
+                long.TryParse(startSpan, out start);
+                long.TryParse(endSpan, out end);
+            }
+            // Range: <unit>=-<suffix-length>.
+            else if (startSpan.Length < 1 && endSpan.Length > 0)
+            {
+                long.TryParse(endSpan, out start);
+                start = maxLength - start;
+            }
+            // Range: <unit>=<range-start>-.
+            else if (startSpan.Length > 0 && endSpan.Length < 1)
+            {
+                long.TryParse(startSpan, out start);
             }
 
             // Validation.
+            if (start > end)
+            {
+                start = end;
+            }
             var rangeResult = new Range(start, end);
             if (rangeResult.Size > maxLength)
             {
-                rangeResult.End = maxLength;
+                rangeResult = new Range(start, maxLength);
             }
             if (rangeResult.Size > maxLength - rangeResult.Start)
             {
-                rangeResult.End = maxLength - 1;
+                rangeResult = new Range(start, maxLength - rangeResult.Start);
             }
-            yield return rangeResult;
+            result[i++] = rangeResult;
         }
+
+        return i;
     }
 }

@@ -21,10 +21,6 @@ internal sealed partial class WebServer
 {
     private const string DefaultEndpointUri = "http://localhost:6789/";
 
-    private const string PostMethod = "POST";
-    private const string GetMethod = "GET";
-    private const string OptionsMethod = "OPTIONS";
-
     /// <summary>
     /// Endpoint URI.
     /// </summary>
@@ -108,7 +104,7 @@ internal sealed partial class WebServer
         if (!string.IsNullOrEmpty(AllowOrigin))
         {
             response.Headers.Add("Access-Control-Allow-Origin", "*");
-            if (context.Request.HttpMethod.Equals(OptionsMethod))
+            if (context.Request.HttpMethod.Equals(HttpMethod.Options.Method))
             {
                 response.Headers.Add("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
                 response.Headers.Add("Access-Control-Allow-Headers", "Content-Type");
@@ -199,7 +195,7 @@ internal sealed partial class WebServer
 
     private void HandleQueryApiAction(HttpListenerRequest request, HttpListenerResponse response)
     {
-        if (request.HttpMethod != PostMethod && request.HttpMethod != GetMethod)
+        if (request.HttpMethod != HttpMethod.Post.Method && request.HttpMethod != HttpMethod.Get.Method)
         {
             response.StatusCode = (int)HttpStatusCode.MethodNotAllowed;
             return;
@@ -214,7 +210,7 @@ internal sealed partial class WebServer
 
     private void HandleSchemaApiAction(HttpListenerRequest request, HttpListenerResponse response)
     {
-        if (request.HttpMethod != PostMethod && request.HttpMethod != GetMethod)
+        if (request.HttpMethod != HttpMethod.Post.Method && request.HttpMethod != HttpMethod.Get.Method)
         {
             response.StatusCode = (int)HttpStatusCode.MethodNotAllowed;
             return;
@@ -310,7 +306,7 @@ internal sealed partial class WebServer
 
     private static WebServerQueryData GetQueryDataFromRequest(HttpListenerRequest request)
     {
-        if (request.HttpMethod == PostMethod)
+        if (request.HttpMethod == HttpMethod.Post.Method)
         {
             using var sr = new StreamReader(request.InputStream);
             var text = sr.ReadToEnd();
@@ -325,7 +321,7 @@ internal sealed partial class WebServer
                     ?? new WebServerQueryData();
             }
         }
-        else if (request.HttpMethod == GetMethod)
+        else if (request.HttpMethod == HttpMethod.Get.Method)
         {
             var query = request.QueryString.Get("q");
             if (!string.IsNullOrEmpty(query))
