@@ -69,7 +69,7 @@ public class DefaultObjectSelector : IObjectSelector
         }
 
         // Then try to get value with GetValue call.
-        if (resultObject == null && current.SelectProperty.HasValue)
+        if (resultObject == null)
         {
             // Dictionary.
             if (indexes.Length == 1 && indexes[0] != null && current.ResultObject is IDictionary dictionary)
@@ -77,7 +77,7 @@ public class DefaultObjectSelector : IObjectSelector
                 resultObject = dictionary[indexes[0]!];
             }
             // Index property.
-            else
+            else if (current.SelectProperty.HasValue)
             {
                 resultObject = current.SelectProperty.Value.PropertyInfo.GetValue(current.ResultObject, indexes);
             }
