@@ -1,5 +1,5 @@
-using System.Diagnostics;
 using Microsoft.Extensions.Logging;
+using QueryCat.Backend.Ast;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
@@ -31,6 +31,8 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
     private IObjectSelector? _objectSelector = null;
 
     private bool _registerStandardLibrary;
+
+    private int _cacheSize = 0;
 
     private readonly List<Action<IFunctionsManager>> _registrations = new();
 
@@ -137,13 +139,24 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
     }
 
     /// <summary>
+    /// Use AST cache. Can be useful if the same query is executed several times. Experimental feature.
+    /// </summary>
+    /// <param name="cacheSize">Max cache size.</param>
+    /// <returns>Instance of <see cref="ExecutionThread" />.</returns>
+    public ExecutionThreadBootstrapper WithAstCache(int cacheSize = 21)
+    {
+        _cacheSize = cacheSize;
+        return this;
+    }
+
+    /// <summary>
     /// Create the instance of execution thread.
     /// </summary>
     /// <returns>Instance of <see cref="ExecutionThread" />.</returns>
     public ExecutionThread Create()
     {
 #if DEBUG
-        var timer = new Stopwatch();
+        var timer = new System.Diagnostics.Stopwatch();
         timer.Start();
 #endif
 
@@ -159,12 +172,15 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
         }
 
         // Create thread.
+        var astBuilder = _cacheSize > 0
+            ? new AstBuilder(new SimpleLruDictionary<string, IAstNode>(_cacheSize))
+            : new AstBuilder();
         var thread = new ExecutionThread(
             options: _executionOptions,
             functionsManager: _functionsManager,
             objectSelector: _objectSelector,
             configStorage: _inputConfigStorage,
-            astBuilder: new AstBuilder()
+            astBuilder: astBuilder
         );
         thread.Tag = _tag;
 

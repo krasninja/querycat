@@ -139,7 +139,7 @@ internal partial class ProgramParserVisitor
             name: GetUnwrappedText(context.name),
             queryNode: this.Visit<SelectQueryNode>(context.query));
         selectWithNode.ColumnNodes.AddRange(
-            this.Visit(context.selectWithColumnList(), SelectColumnsListNode.Empty).ColumnsNodes);
+            this.Visit(context.selectWithColumnList(), new SelectColumnsListNode()).ColumnsNodes);
         return selectWithNode;
     }
 

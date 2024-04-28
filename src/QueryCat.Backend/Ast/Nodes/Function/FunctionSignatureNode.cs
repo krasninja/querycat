@@ -36,14 +36,13 @@ internal sealed class FunctionSignatureNode : AstNode, IEquatable<FunctionSignat
     {
         Name = name;
         ReturnTypeNode = returnTypeNode;
-        ArgumentNodes = argumentNodes != null ? argumentNodes.ToArray()
-            : Array.Empty<FunctionSignatureArgumentNode>();
+        ArgumentNodes = argumentNodes != null ? argumentNodes.ToArray() : [];
     }
 
     public FunctionSignatureNode(FunctionSignatureNode node) :
         this(
             node.Name,
-            node.ReturnTypeNode,
+            (FunctionTypeNode)node.ReturnTypeNode.Clone(),
             node.ArgumentNodes.Select(an => (FunctionSignatureArgumentNode)an.Clone()))
     {
         node.CopyTo(this);

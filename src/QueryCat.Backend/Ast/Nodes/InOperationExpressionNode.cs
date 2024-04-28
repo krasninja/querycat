@@ -25,7 +25,7 @@ internal sealed class InOperationExpressionNode : ExpressionNode
     public InOperationExpressionNode(InOperationExpressionNode node)
         : this(
             (ExpressionNode)node.ExpressionNode.Clone(),
-            (InExpressionValuesNode)node.InExpressionValuesNodes.Clone(),
+            (ExpressionNode)node.InExpressionValuesNodes.Clone(),
             isNot: node.IsNot)
     {
         node.CopyTo(this);

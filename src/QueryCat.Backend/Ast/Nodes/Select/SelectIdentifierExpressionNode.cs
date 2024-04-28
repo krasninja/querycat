@@ -29,7 +29,7 @@ internal sealed class SelectIdentifierExpressionNode : IdentifierExpressionNode,
     }
 
     /// <inheritdoc />
-    public SelectIdentifierExpressionNode(SelectIdentifierExpressionNode node) : base((SelectIdentifierExpressionNode)node.Clone())
+    public SelectIdentifierExpressionNode(SelectIdentifierExpressionNode node) : base(node)
     {
         Alias = node.Alias;
         if (node.Format != null)
@@ -37,7 +37,6 @@ internal sealed class SelectIdentifierExpressionNode : IdentifierExpressionNode,
             Format = (FunctionCallNode)node.Format.Clone();
         }
         JoinedNodes = node.JoinedNodes.Select(jn => (SelectTableJoinedNode)jn.Clone()).ToList();
-        node.CopyTo(this);
     }
 
     /// <inheritdoc />

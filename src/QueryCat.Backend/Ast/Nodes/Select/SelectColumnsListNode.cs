@@ -7,8 +7,6 @@ internal sealed class SelectColumnsListNode : AstNode
 
     public List<SelectColumnsSublistNode> ColumnsNodes { get; } = new();
 
-    public static SelectColumnsListNode Empty { get; } = new(Array.Empty<SelectColumnsSublistNode>());
-
     public SelectColumnsListNode(IEnumerable<SelectColumnsSublistNode> columnsNodes)
     {
         ColumnsNodes.AddRange(columnsNodes);

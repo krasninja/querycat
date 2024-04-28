@@ -31,6 +31,7 @@ public class EvaluateExpressionBenchmark
 
     private readonly IExecutionThread _executionThread = new ExecutionThreadBootstrapper()
         .WithStandardFunctions()
+        .WithAstCache()
         .Create();
 
     [Benchmark]
@@ -43,7 +44,7 @@ public class EvaluateExpressionBenchmark
                 abs((data['KRAS'].Temperature +
                     data['NSK'].Temperature +
                     data['MSK'].Temperature +
-                    data['SPB'].Temperature)::float / total)
+                    data['SPB'].Temperature)::float / total) - 1 + 1
                 """,
                 new Dictionary<string, VariantValue>
                 {

@@ -34,8 +34,8 @@ internal sealed class SelectQueryCombineNode : SelectQueryNode
 
     public SelectQueryCombineNode(SelectQueryCombineNode node)
         : this(
-            (SelectQueryCombineNode)node.LeftQueryNode.Clone(),
-            (SelectQueryCombineNode)node.RightQueryNode.Clone(),
+            (SelectQueryNode)node.LeftQueryNode.Clone(),
+            (SelectQueryNode)node.RightQueryNode.Clone(),
             node.CombineType,
             node.IsDistinct,
             node.Alias)

@@ -5,16 +5,55 @@ using QueryCat.Backend.Ast.Nodes.Function;
 
 namespace QueryCat.Backend.Parser;
 
+/// <summary>
+/// Build AST from query string.
+/// </summary>
 internal sealed class AstBuilder : IAstBuilder
 {
+    private readonly IDictionary<string, IAstNode>? _astCache;
+
+    /// <summary>
+    /// Constructor.
+    /// </summary>
+    /// <param name="cache">Cache for AST.</param>
+    public AstBuilder(IDictionary<string, IAstNode>? cache = null)
+    {
+        _astCache = cache;
+    }
+
     /// <inheritdoc />
-    public ProgramNode BuildProgramFromString(string program) => Build<ProgramNode>(program, p => p.program());
+    public ProgramNode BuildProgramFromString(string program)
+        => Build<ProgramNode>(program, p => p.program());
 
     /// <inheritdoc />
     public FunctionSignatureNode BuildFunctionSignatureFromString(string function)
         => Build<FunctionSignatureNode>(function, p => p.functionSignature());
 
-    private static TNode Build<TNode>(string input, Func<QueryCatParser, ParserRuleContext> signatureFunc) where TNode : IAstNode
+    private TNode Build<TNode>(
+        string input,
+        Func<QueryCatParser, ParserRuleContext> signatureFunc) where TNode : IAstNode
+    {
+        // Cache only small queries.
+        if (input.Length > 150)
+        {
+            return BuildInternal<TNode>(input, signatureFunc);
+        }
+
+        if (_astCache != null && _astCache.TryGetValue(input, out var resultNode))
+        {
+            return (TNode)resultNode.Clone();
+        }
+
+        resultNode = BuildInternal<TNode>(input, signatureFunc);
+        if (_astCache != null)
+        {
+            _astCache[input] = (IAstNode)resultNode.Clone();
+        }
+        return (TNode)resultNode;
+    }
+
+    private static TNode BuildInternal<TNode>(string input, Func<QueryCatParser, ParserRuleContext> signatureFunc)
+        where TNode : IAstNode
     {
         var errorListener = new ProgramAntlrErrorListener();
 
@@ -30,6 +69,7 @@ internal sealed class AstBuilder : IAstBuilder
         {
             throw new SyntaxException(errorListener.Message, input, errorListener.Line, errorListener.CharPosition);
         }
+
         return (TNode)visitor.Visit(context);
     }
 }

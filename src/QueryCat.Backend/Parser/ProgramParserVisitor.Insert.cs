@@ -29,7 +29,7 @@ internal partial class ProgramParserVisitor
     /// <inheritdoc />
     public override IAstNode VisitInsertSourceTable(QueryCatParser.InsertSourceTableContext context)
     {
-        return new SelectQuerySpecificationNode(new SelectColumnsListNode(SelectColumnsSublistAll.Instance))
+        return new SelectQuerySpecificationNode(new SelectColumnsListNode(new SelectColumnsSublistAll()))
         {
             TableExpressionNode = new SelectTableExpressionNode(
                 new SelectTableReferenceListNode(this.Visit<SelectTableNode>(context.selectTable()))

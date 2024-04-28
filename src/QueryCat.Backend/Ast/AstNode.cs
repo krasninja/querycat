@@ -8,12 +8,14 @@ namespace QueryCat.Backend.Ast;
 /// </summary>
 internal abstract class AstNode : IAstNode
 {
-    private static int nextId = 1;
+    private const string ClonedKey = "__cloned";
+
+    private static int _nextId = 1;
 
     /// <summary>
     /// Node identifier. It is kept when node is cloned.
     /// </summary>
-    public int Id { get; private set; } = nextId++;
+    public int Id { get; private set; } = _nextId++;
 
     private readonly SortedList<string, object?> _attributes = new();
 
@@ -32,7 +34,7 @@ internal abstract class AstNode : IAstNode
             toNode._attributes.Add(dictionaryEntry.Key, dictionaryEntry.Value);
         }
 #if DEBUG
-        toNode._attributes.Add("__cloned", Id);
+        toNode._attributes[ClonedKey] = Id;
 #endif
     }
 

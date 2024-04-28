@@ -25,7 +25,7 @@ internal sealed class UpdateNode : AstNode, ISelectAliasNode
     }
 
     public UpdateNode(UpdateNode node) : this(
-        (FunctionCallNode)node.TargetExpressionNode.Clone(),
+        (ExpressionNode)node.TargetExpressionNode.Clone(),
         node.SetNodes.Select(n => (UpdateSetNode)n.Clone()))
     {
         if (node.SearchConditionNode != null)
