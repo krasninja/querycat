@@ -1,4 +1,3 @@
-using QueryCat.Backend.Ast.Nodes.Function;
 using QueryCat.Backend.Ast.Nodes.Select;
 
 namespace QueryCat.Backend.Ast.Nodes.Update;
@@ -26,7 +25,7 @@ internal sealed class UpdateNode : AstNode, ISelectAliasNode
 
     public UpdateNode(UpdateNode node) : this(
         (ExpressionNode)node.TargetExpressionNode.Clone(),
-        node.SetNodes.Select(n => (UpdateSetNode)n.Clone()))
+        node.SetNodes.Select(n => (UpdateSetNode)n.Clone()).ToList())
     {
         if (node.SearchConditionNode != null)
         {

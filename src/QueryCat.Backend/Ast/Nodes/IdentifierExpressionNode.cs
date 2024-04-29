@@ -66,6 +66,7 @@ internal class IdentifierExpressionNode : ExpressionNode
         SelectorNodes = node.SelectorNodes.Select(s => (IdentifierSelectorNode)s.Clone()).ToArray();
         TableSourceName = node.TableSourceName;
         TableFieldName = node.TableFieldName;
+        Name = node.Name;
         node.CopyTo(this);
     }
 

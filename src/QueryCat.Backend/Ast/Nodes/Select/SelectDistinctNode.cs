@@ -37,7 +37,7 @@ internal sealed class SelectDistinctNode : AstNode
     }
 
     public SelectDistinctNode(SelectDistinctNode node) :
-        this(node.OnNodes.Select(g => (ExpressionNode)g.Clone()).ToList())
+        this(node.OnNodes.Select(g => (ExpressionNode)g.Clone()).ToArray())
     {
         IsAll = node.IsAll;
         IsEmpty = node.IsEmpty;

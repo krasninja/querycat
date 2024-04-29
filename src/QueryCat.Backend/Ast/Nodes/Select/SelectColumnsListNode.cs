@@ -18,7 +18,7 @@ internal sealed class SelectColumnsListNode : AstNode
     }
 
     public SelectColumnsListNode(SelectColumnsListNode node) :
-        this(node.ColumnsNodes.Select(c => (SelectColumnsSublistNode)c.Clone()).ToList())
+        this(node.ColumnsNodes.Select(c => (SelectColumnsSublistNode)c.Clone()))
     {
         node.CopyTo(this);
     }

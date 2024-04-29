@@ -24,6 +24,7 @@ internal sealed class SelectColumnsSublistWindowNode : SelectColumnsSublistNode
             (FunctionCallNode)node.AggregateFunctionNode.Clone(),
             (SelectWindowSpecificationNode)node.WindowSpecificationNode.Clone())
     {
+        Alias = node.Alias;
         node.CopyTo(this);
     }
 

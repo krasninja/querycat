@@ -13,7 +13,7 @@ internal sealed class SelectWindowNode : AstNode
     }
 
     public SelectWindowNode(SelectWindowNode node)
-        : this(node.DefinitionListNodes.Select(n => (SelectWindowDefinitionListNode)n.Clone()))
+        : this(node.DefinitionListNodes.Select(n => (SelectWindowDefinitionListNode)n.Clone()).ToList())
     {
         node.CopyTo(this);
     }

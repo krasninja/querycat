@@ -5,9 +5,6 @@ namespace QueryCat.Backend.Ast.Nodes.Select;
 
 internal sealed class SelectQuerySpecificationNode : SelectQueryNode
 {
-    public static SelectQuerySpecificationNode Empty { get; } = new(
-        new SelectColumnsListNode());
-
     /// <summary>
     /// Distinct node.
     /// </summary>
@@ -39,13 +36,13 @@ internal sealed class SelectQuerySpecificationNode : SelectQueryNode
     public SelectQuerySpecificationNode(SelectQuerySpecificationNode node) :
         base(node)
     {
-        if (node.TargetNode != null)
-        {
-            TargetNode = (FunctionCallNode)node.TargetNode.Clone();
-        }
         if (node.DistinctNode != null)
         {
             DistinctNode = (SelectDistinctNode)node.DistinctNode.Clone();
+        }
+        if (node.TargetNode != null)
+        {
+            TargetNode = (FunctionCallNode)node.TargetNode.Clone();
         }
         if (node.TableExpressionNode != null)
         {

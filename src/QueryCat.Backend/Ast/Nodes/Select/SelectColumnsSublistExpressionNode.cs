@@ -16,6 +16,7 @@ internal sealed class SelectColumnsSublistExpressionNode : SelectColumnsSublistN
     public SelectColumnsSublistExpressionNode(SelectColumnsSublistExpressionNode node) :
         this((ExpressionNode)node.ExpressionNode.Clone())
     {
+        Alias = node.Alias;
         node.CopyTo(this);
     }
 

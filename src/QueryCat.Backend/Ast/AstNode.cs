@@ -15,7 +15,7 @@ internal abstract class AstNode : IAstNode
     /// <summary>
     /// Node identifier. It is kept when node is cloned.
     /// </summary>
-    public int Id { get; private set; } = _nextId++;
+    public int Id { get; } = _nextId++;
 
     private readonly SortedList<string, object?> _attributes = new();
 
@@ -28,9 +28,14 @@ internal abstract class AstNode : IAstNode
     /// <param name="toNode">Destination node.</param>
     protected void CopyTo(AstNode toNode)
     {
-        toNode.Id = Id;
         foreach (var dictionaryEntry in _attributes)
         {
+#if DEBUG
+            if (dictionaryEntry.Key == ClonedKey)
+            {
+                continue;
+            }
+#endif
             toNode._attributes.Add(dictionaryEntry.Key, dictionaryEntry.Value);
         }
 #if DEBUG

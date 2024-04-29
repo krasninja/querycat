@@ -16,7 +16,7 @@ internal sealed class SelectTableNode : ExpressionNode, ISelectAliasNode
     }
 
     public SelectTableNode(SelectTableNode node)
-        : this(node.RowsNodes.Select(n => (SelectTableRowNode)n.Clone()))
+        : this(node.RowsNodes.Select(n => (SelectTableRowNode)n.Clone()).ToList())
     {
         node.CopyTo(this);
     }

@@ -30,7 +30,7 @@ internal sealed class FunctionCallNode : ExpressionNode
     }
 
     public FunctionCallNode(FunctionCallNode node) :
-        this(node.FunctionName, node.Arguments.Select(a => (FunctionCallArgumentNode)a.Clone()).ToList())
+        this(node.FunctionName, node.Arguments.Select(a => (FunctionCallArgumentNode)a.Clone()).ToArray())
     {
         node.CopyTo(this);
     }

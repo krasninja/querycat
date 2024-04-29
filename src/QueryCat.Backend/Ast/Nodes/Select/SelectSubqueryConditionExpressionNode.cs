@@ -10,6 +10,9 @@ internal sealed class SelectSubqueryConditionExpressionNode : ExpressionNode
         All
     }
 
+    /// <inheritdoc />
+    public override string Code => "subquery_op";
+
     public ExpressionNode LeftNode { get; }
 
     public VariantValue.Operation Operation { get; }
@@ -40,9 +43,6 @@ internal sealed class SelectSubqueryConditionExpressionNode : ExpressionNode
     {
         node.CopyTo(this);
     }
-
-    /// <inheritdoc />
-    public override string Code => "subquery_op";
 
     /// <inheritdoc />
     public override object Clone() => new SelectSubqueryConditionExpressionNode(this);
