@@ -5,19 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.6.0] - 2024-04-30
 
 ### Added
 
 - Initial objects expressions support.
 - Allow to use Add operator with strings. Implicit conversion from integer, float and numeric types when concat with string.
-- Add "Enter" and "Q" keys processing in "follow" mode.
+- Add "Enter" and "Q" keys to processing in "follow" mode.
 - Add "tail" option.
 - Experimental AST cache.
 
 ### Changed
 
-- Change the way how quote columns. Now. instead of [] use "". Only '' can be used for string literals.
+- Change the way how quote columns. Now, instead of [] use "". Only '' can be used for string literals.
 
 ### Fixed
 

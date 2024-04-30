@@ -1,10 +1,11 @@
 # QueryCat
 
-QueryCat is the command line tool that provides the universal access to a text-based data like CSV, JSON, XML and log files. It also provides the way to query this data using SQL (Structured Query Language). The general idea is to bring well-known SQL expressive power and provide easy access to various kind of information.
+QueryCat is the command line tool that allows you to use SQL (Structured Query Language) to query data in CSV, JSON, XML and various log files. The general idea is to bring well-known SQL expressive power and provide easy access to various kinds of information. You won't need to upload your text data into Excel or any database table - just query it as is with QueryCat!
 
-- QueryCat is designed to use pipeline mode to be able to process large amount of data.
+- It is designed to use pipeline mode to be able to process large amount of data.
 - INTO clause allows to write transformed data to popular formats.
-- The single binary file doesn't require any dependencies to be installed and simplifies installation (download and use).
+- The single binary file doesn't require any dependencies to be installed and simplifies installation (just download and use).
+- You can use it as library in your .NET application.
 
 ## Features
 
@@ -16,6 +17,7 @@ QueryCat is the command line tool that provides the universal access to a text-b
 6. Simple files server (with partial request support).
 7. [Plugins](https://querycat.readthedocs.io/en/latest/plugins/) ecosystem.
 8. [Variables](https://querycat.readthedocs.io/en/latest/commands/declare/) support.
+9. Query .NET objects in your project (if used as library).
 
 ## In Action
 
@@ -43,7 +45,7 @@ $ find /tmp -ls 2>/dev/null | qcat "SELECT column4 as user, size_pretty(SUM(colu
 Select JSON logs exported from Google Cloud.
 
 ```
-$ qcat 'SELECT [timestamp], insertId, json_value(jsonPayload, "$.context.httpRequest.url") as url, SUBSTR(json_value(jsonPayload, "$.message"), 0, 50) AS msg FROM "downloaded-logs.json" WHERE length(jsonPayload) > 0 ORDER BY [timestamp]'
+$ qcat 'SELECT "timestamp", insertId, json_value(jsonPayload, \'$.context.httpRequest.url\') as url, SUBSTR(json_value(jsonPayload, \'$.message\'), 0, 50) AS msg FROM \'downloaded-logs.json\' WHERE length(jsonPayload) > 0 ORDER BY "timestamp"'
 | timestamp           | insertId          | url        | msg                                                |
 | ------------------- | ----------------- | ---------- | -------------------------------------------------- |
 | 03/30/2023 13:33:22 | gh53av89ifehmpo5e | NULL       | "An TLS 1.1 connection request was received from a |
