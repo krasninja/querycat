@@ -11,14 +11,15 @@ internal sealed class SetCommand : ICommand
     public IFuncUnit CreateHandler(IExecutionThread<ExecutionOptions> executionThread, StatementNode node)
     {
         var setNode = (SetNode)node.RootNode;
-        var scope = executionThread.TopScope;
 
-        var valueHandler = new StatementsVisitor(executionThread).RunAndReturn(setNode.ValueNode);
+        var valueHandler = new StatementsVisitor(executionThread)
+            .RunAndReturn(setNode.ValueNode);
+        var identifierHandler = new SetIdentifierDelegateVisitor(executionThread, valueHandler)
+            .RunAndReturn(setNode.IdentifierNode);
 
         return new FuncCommandHandler(() =>
         {
-            var value = valueHandler.Invoke();
-            scope.Variables[setNode.Name] = value;
+            identifierHandler.Invoke();
             return VariantValue.Null;
         });
     }

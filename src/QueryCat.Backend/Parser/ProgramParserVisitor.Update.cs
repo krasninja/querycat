@@ -22,7 +22,7 @@ internal partial class ProgramParserVisitor
     /// <inheritdoc />
     public override IAstNode VisitUpdateSetClause(QueryCatParser.UpdateSetClauseContext context)
         => new UpdateSetNode(
-            this.Visit<IdentifierExpressionNode>(context.identifierChain()),
+            this.Visit<IdentifierExpressionNode>(context.identifier()),
             this.Visit<ExpressionNode>(context.target));
 
     #region Source
@@ -48,7 +48,7 @@ internal partial class ProgramParserVisitor
 
     /// <inheritdoc />
     public override IAstNode VisitUpdateFromVariable(QueryCatParser.UpdateFromVariableContext context)
-        => this.Visit<IdentifierExpressionNode>(context.identifierChain());
+        => this.Visit<IdentifierExpressionNode>(context.identifier());
 
     #endregion
 }

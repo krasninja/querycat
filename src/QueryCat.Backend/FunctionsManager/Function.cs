@@ -85,9 +85,8 @@ public class Function : IFunction
         }
 
         // Place positional arguments.
-        for (int i = 0; i < functionCallArgumentsTypes.Positional.Length; i++)
+        foreach (var arg in functionCallArgumentsTypes.Positional)
         {
-            var arg = functionCallArgumentsTypes.Positional[i];
             if (arg.Key > typesArr.Length - 1)
             {
                 if (variadicArgument != null)
@@ -105,10 +104,10 @@ public class Function : IFunction
         }
 
         // Place named arguments.
-        for (int i = 0; i < functionCallArgumentsTypes.Named.Length; i++)
+        foreach (var namedArgType in functionCallArgumentsTypes.Named)
         {
-            var argumentPosition = GetArgumentPosition(functionCallArgumentsTypes.Named[i].Key);
-            typesArr[argumentPosition] = functionCallArgumentsTypes.Named[i].Value;
+            var argumentPosition = GetArgumentPosition(namedArgType.Key);
+            typesArr[argumentPosition] = namedArgType.Value;
         }
 
         // Make sure we resolved all arguments nodes.

@@ -212,33 +212,31 @@ TYPE: ANY | BLOB | BOOL | BOOLEAN | DECIMAL | FLOAT | INT | INT8 | INTEGER | NUM
 
 // https://github.com/antlr/antlr4/blob/master/doc/lexicon.md#identifiers
 
-fragment NameChar
-   : NameStartChar
-   | '0'..'9'
-   | '_'
-   | '\u00B7'
-   | '\u0300'..'\u036F'
-   | '\u203F'..'\u2040'
-   ;
-fragment NameStartChar
-   : 'A'..'Z'
-   | '_'
-   | '\u00C0'..'\u00D6'
-   | '\u00F8'..'\u02FF'
-   | '\u0370'..'\u037D'
-   | '\u037F'..'\u1FFF'
-   | '\u200C'..'\u200D'
-   | '\u2070'..'\u218F'
-   | '\u2C00'..'\u2FEF'
-   | '\u3001'..'\uD7FF'
-   | '\uF900'..'\uFDCF'
-   | '\uFDF0'..'\uFFFD'
-   ;
-
-IDENTIFIER
-    : NameStartChar NameChar*
-    | '[' (~']' | ']' ']')* ']'
+fragment NAME_CHAR
+    : NAME_START_CHAR
+    | '0'..'9'
+    | '_'
+    | '\u00B7'
+    | '\u0300'..'\u036F'
+    | '\u203F'..'\u2040'
     ;
+fragment NAME_START_CHAR
+    : 'A'..'Z'
+    | '_'
+    | '\u00C0'..'\u00D6'
+    | '\u00F8'..'\u02FF'
+    | '\u0370'..'\u037D'
+    | '\u037F'..'\u1FFF'
+    | '\u200C'..'\u200D'
+    | '\u2070'..'\u218F'
+    | '\u2C00'..'\u2FEF'
+    | '\u3001'..'\uD7FF'
+    | '\uF900'..'\uFDCF'
+    | '\uFDF0'..'\uFFFD'
+    ;
+
+NO_QUOTES_IDENTIFIER: NAME_START_CHAR NAME_CHAR*;
+QUOTES_IDENTIFIER: '"' ( ~'"' | '""')* '"';
 
 fragment HEX_DIGIT: [0-9A-F];
 fragment DIGIT: [0-9];
@@ -252,7 +250,6 @@ FLOAT_LITERAL
 NUMERIC_LITERAL: FLOAT_LITERAL'M';
 STRING_LITERAL
     : '\'' ( ~'\'' | '\'\'')* '\''
-    | '"' ( ~'"' | '""')* '"'
     | ('E\'' | 'e\'') ( ~'\'' | '\'\'')* '\''
     ;
 BOOLEAN_LITERAL: TRUE | FALSE;

@@ -87,7 +87,7 @@ internal sealed partial class SelectPlanner
             if (columnNode is SelectColumnsSublistExpressionNode expressionNode
                 && expressionNode.ExpressionNode is IdentifierExpressionNode identifierExpressionNode)
             {
-                return identifierExpressionNode.Name;
+                return identifierExpressionNode.TableFieldName;
             }
             return string.Empty;
         }
@@ -97,7 +97,7 @@ internal sealed partial class SelectPlanner
             if (columnNode is SelectColumnsSublistExpressionNode expressionNode
                 && expressionNode.ExpressionNode is IdentifierExpressionNode identifierExpressionNode)
             {
-                return identifierExpressionNode.SourceName;
+                return identifierExpressionNode.TableSourceName;
             }
             return string.Empty;
         }
@@ -399,8 +399,8 @@ internal sealed partial class SelectPlanner
         {
             if (column.ExpressionNode is IdentifierExpressionNode identifierExpressionNode)
             {
-                var sourceColumn = context.RowsInputIterator.GetColumnByName(
-                    identifierExpressionNode.Name, identifierExpressionNode.SourceName);
+                var sourceColumn = context.RowsInputIterator.GetColumnByName(identifierExpressionNode.TableFieldName,
+                    identifierExpressionNode.TableSourceName);
                 if (sourceColumn != null)
                 {
                     column.SetAttribute(SourceInputColumn, sourceColumn);

@@ -22,19 +22,14 @@ internal sealed class SelectIdentifierExpressionNode : IdentifierExpressionNode,
     public List<SelectTableJoinedNode> JoinedNodes { get; } = new();
 
     /// <inheritdoc />
-    public SelectIdentifierExpressionNode(string name, string alias) : base(name)
+    public SelectIdentifierExpressionNode(IdentifierExpressionNode identifierExpressionNode, string alias)
+        : base(identifierExpressionNode)
     {
-        Alias = !string.IsNullOrEmpty(alias) ? alias : name;
+        Alias = !string.IsNullOrEmpty(alias) ? alias : identifierExpressionNode.Name;
     }
 
     /// <inheritdoc />
-    public SelectIdentifierExpressionNode(string name, string sourceName, string alias) : base(name, sourceName)
-    {
-        Alias = !string.IsNullOrEmpty(alias) ? alias : name;
-    }
-
-    /// <inheritdoc />
-    public SelectIdentifierExpressionNode(SelectIdentifierExpressionNode node) : base((SelectIdentifierExpressionNode)node.Clone())
+    public SelectIdentifierExpressionNode(SelectIdentifierExpressionNode node) : base(node)
     {
         Alias = node.Alias;
         if (node.Format != null)
@@ -42,7 +37,6 @@ internal sealed class SelectIdentifierExpressionNode : IdentifierExpressionNode,
             Format = (FunctionCallNode)node.Format.Clone();
         }
         JoinedNodes = node.JoinedNodes.Select(jn => (SelectTableJoinedNode)jn.Clone()).ToList();
-        node.CopyTo(this);
     }
 
     /// <inheritdoc />

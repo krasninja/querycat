@@ -13,7 +13,7 @@ internal sealed class SelectWindowOrderClauseNode : AstNode
     }
 
     public SelectWindowOrderClauseNode(SelectWindowOrderClauseNode node)
-        : this(node.OrderBySpecificationNodes.Select(n => (SelectOrderBySpecificationNode)n.Clone()))
+        : this(node.OrderBySpecificationNodes.Select(n => (SelectOrderBySpecificationNode)n.Clone()).ToList())
     {
         node.CopyTo(this);
     }

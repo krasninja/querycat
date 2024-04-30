@@ -58,5 +58,11 @@ public enum DataType : sbyte
     /// <summary>
     /// Other object type.
     /// </summary>
-    Object = 40
+    Object = 40,
+
+    /// <summary>
+    /// The type may change during evaluation. Bypass static type optimizations
+    /// and check. The variant value cannot have this type.
+    /// </summary>
+    Dynamic = 41,
 }

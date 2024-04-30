@@ -31,6 +31,21 @@ public interface IExecutionThread : IDisposable
     IExecutionScope TopScope { get; }
 
     /// <summary>
+    /// The event is fired before variable resolving.
+    /// </summary>
+    event EventHandler<ResolveVariableEventArgs>? VariableResolving;
+
+    /// <summary>
+    /// The event is fired after variable resolve.
+    /// </summary>
+    event EventHandler<ResolveVariableEventArgs>? VariableResolved;
+
+    /// <summary>
+    /// Selector to resolve object expressions.
+    /// </summary>
+    IObjectSelector ObjectSelector { get; }
+
+    /// <summary>
     /// Execution statistic.
     /// </summary>
     ExecutionStatistic Statistic { get; }
@@ -44,12 +59,21 @@ public interface IExecutionThread : IDisposable
     /// Run text query.
     /// </summary>
     /// <param name="query">Query.</param>
-    /// <param name="parameters">Query parameters.</param>
+    /// <param name="parameters">Query parameters. They will be used in a separate scope.</param>
     /// <param name="cancellationToken">Cancellation token to cancel the request execution.</param>
     VariantValue Run(
         string query,
         IDictionary<string, VariantValue>? parameters = null,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Try get variable value from top scope to the root recursively.
+    /// </summary>
+    /// <param name="name">Variable name.</param>
+    /// <param name="value">Variable value.</param>
+    /// <param name="scope">Scope instance.</param>
+    /// <returns>True if variable with the specified name is found, false otherwise.</returns>
+    bool TryGetVariable(string name, out VariantValue value, IExecutionScope? scope = null);
 }
 
 /// <summary>

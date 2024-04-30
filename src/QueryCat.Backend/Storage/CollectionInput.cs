@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using QueryCat.Backend.Core;
@@ -10,24 +11,24 @@ namespace QueryCat.Backend.Storage;
 /// <summary>
 /// The class that allow to represent enumerable as rows input/output.
 /// </summary>
-/// <typeparam name="TClass">Enumerable item type.</typeparam>
-public class CollectionInput<
-    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] TClass>
-    : IRowsOutput, IDisposable, IRowsInputUpdate where TClass : class, new()
+public class CollectionInput : IRowsOutput, IDisposable, IRowsInputUpdate
 {
-    private readonly IEnumerable<TClass> _list;
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor | DynamicallyAccessedMemberTypes.PublicProperties)]
+    private readonly Type _type;
+    private readonly bool _isSimple;
+    private readonly IEnumerable _enumerable;
     private readonly List<PropertyInfo> _columnsProperties = new();
-    private readonly IEnumerator<TClass> _enumerator;
-    private Column[] _columns = new Column[0];
+    private readonly IEnumerator _enumerator;
+    private Column[] _columns = [];
     private PropertyInfo[]? _propertiesMapping;
 
-    public IEnumerable<TClass> TargetCollection => _list;
+    public virtual IEnumerable TargetCollection => _enumerable;
 
     /// <inheritdoc />
     public Column[] Columns => _columns;
 
     /// <inheritdoc />
-    public string[] UniqueKey { get; } = Array.Empty<string>();
+    public string[] UniqueKey { get; } = [];
 
     /// <inheritdoc />
     public QueryContext QueryContext { get; set; } = NullQueryContext.Instance;
@@ -35,21 +36,41 @@ public class CollectionInput<
     /// <inheritdoc />
     public RowsOutputOptions Options { get; } = new();
 
-    public CollectionInput(IEnumerable<TClass> list)
+    public CollectionInput(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor
+                                    | DynamicallyAccessedMemberTypes.PublicProperties)] Type type,
+        IEnumerable enumerable)
     {
-        _list = list;
-        _enumerator = _list.GetEnumerator();
+        _type = type;
+        _isSimple = IsSimpleType(_type);
+        _enumerable = enumerable;
+        // ReSharper disable once NotDisposedResource
+        _enumerator = _enumerable.GetEnumerator();
 
         FillColumns();
     }
 
     private void FillColumns()
     {
-        var builder = new ClassRowsFrameBuilder<TClass>();
-        builder.AddPublicProperties(out var properties);
-        _columnsProperties.AddRange(properties);
-        Array.Resize(ref _columns, builder.Columns.Count());
-        builder.Columns.ToArray().CopyTo(_columns, 0);
+        var builder = new ClassRowsFrameBuilder<object>();
+        if (!_isSimple)
+        {
+            builder.AddPublicProperties(_type, out var properties);
+            _columnsProperties.AddRange(properties);
+            Array.Resize(ref _columns, builder.Columns.Count);
+            builder.Columns.ToArray().CopyTo(_columns, 0);
+        }
+        else
+        {
+            _columns =
+            [
+                new Column(
+                    name: "value",
+                    sourceName: string.Empty,
+                    dataType: Converter.ConvertFromSystem(_type)
+                )
+            ];
+        }
     }
 
     /// <inheritdoc />
@@ -60,7 +81,7 @@ public class CollectionInput<
     /// <inheritdoc />
     public void Close()
     {
-        _enumerator.Dispose();
+        (_enumerator as IDisposable)?.Dispose();
     }
 
     /// <inheritdoc />
@@ -73,22 +94,29 @@ public class CollectionInput<
     public ErrorCode ReadValue(int columnIndex, out VariantValue value)
     {
         var obj = _enumerator.Current;
-        value = VariantValue.CreateFromObject(_columnsProperties[columnIndex].GetValue(obj));
+        if (!_isSimple)
+        {
+            value = VariantValue.CreateFromObject(_columnsProperties[columnIndex].GetValue(obj));
+        }
+        else
+        {
+            value = VariantValue.CreateFromObject(obj);
+        }
         return ErrorCode.OK;
     }
 
     /// <inheritdoc />
     public void WriteValues(in VariantValue[] values)
     {
-        if (_list is not ICollection<TClass> collection)
+        if (_enumerable is not IList list)
         {
-            throw new QueryCatException($"Cannot write to collection of type '{_list.GetType().Name}'.");
+            throw new QueryCatException(string.Format(Resources.Errors.CannotWriteToCollection, _enumerable.GetType().Name));
         }
 
         var columns = QueryContext.QueryInfo.Columns.ToArray();
         var mapping = GetPropertiesToColumnsMapping(columns);
 
-        var obj = new TClass();
+        var obj = Activator.CreateInstance(_type);
         for (var i = 0; i < mapping.Length; i++)
         {
             var prop = _columnsProperties[i];
@@ -98,7 +126,7 @@ public class CollectionInput<
             }
             prop.SetValue(obj, ChangeType(values[i].GetGenericObject(), prop.PropertyType));
         }
-        collection.Add(obj);
+        list.Add(obj);
     }
 
     private PropertyInfo[] GetPropertiesToColumnsMapping(Column[] columns)
@@ -131,7 +159,7 @@ public class CollectionInput<
         var prop = _columnsProperties[columnIndex];
         if (!prop.CanWrite)
         {
-            throw new QueryCatException($"Cannot write property '{prop.Name}'.");
+            throw new QueryCatException(string.Format(Resources.Errors.CannotWriteToProperty, prop.Name));
         }
         prop.SetValue(obj, ChangeType(value.GetGenericObject(), prop.PropertyType));
         return ErrorCode.OK;
@@ -140,7 +168,7 @@ public class CollectionInput<
     /// <inheritdoc />
     public void Explain(IndentedStringBuilder stringBuilder)
     {
-        stringBuilder.AppendLine($"Collection (type={typeof(TClass).Name})");
+        stringBuilder.AppendLine($"Collection (type={_type.Name})");
     }
 
     /// <summary>
@@ -161,6 +189,24 @@ public class CollectionInput<
             conversionType = Nullable.GetUnderlyingType(conversionType) ?? conversionType;
         }
         return Convert.ChangeType(value, conversionType);
+    }
+
+    private static readonly Type[] _simpleTypes =
+    {
+        typeof(DateTimeOffset),
+        typeof(TimeSpan),
+        typeof(Guid),
+    };
+
+    private static bool IsSimpleType(in Type type)
+    {
+        return type.IsPrimitive
+               || type == typeof(string)
+               || Array.IndexOf(_simpleTypes, type) > -1
+               || type.IsEnum
+               || (type.IsGenericType
+                   && type.GetGenericTypeDefinition() == typeof(Nullable<>)
+                   && IsSimpleType(type.GetGenericArguments()[0]));
     }
 
     protected virtual void Dispose(bool disposing)

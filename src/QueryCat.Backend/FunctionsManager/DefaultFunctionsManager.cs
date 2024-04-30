@@ -323,10 +323,8 @@ public sealed class DefaultFunctionsManager : IFunctionsManager
         var info = new FunctionCallInfo(executionThread, function.Name);
         int positionalIndex = 0;
 
-        for (var i = 0; i < function.Arguments.Length; i++)
+        foreach (var argument in function.Arguments)
         {
-            var argument = function.Arguments[i];
-
             if (callArguments.Positional.Count >= positionalIndex + 1)
             {
                 info.Push(callArguments.Positional[positionalIndex++]);

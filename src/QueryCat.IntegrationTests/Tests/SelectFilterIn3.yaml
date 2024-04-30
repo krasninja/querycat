@@ -3,4 +3,4 @@ expected: |
   USA
 query: |
   SELECT * FROM string_to_table('China Russia USA Belarus', ' ')
-  WHERE [value] not in (SELECT name FROM 'Countries2.csv');
+  WHERE "value" not in (SELECT name FROM 'Countries2.csv');

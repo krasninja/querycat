@@ -1,4 +1,4 @@
 expected: |
   10,53.43,12.2,simple string,True
 query: |
-  select [int], [float], [numeric], [string], [boolean] from read('TypesRow.csv');
+  select "int", "float", "numeric", "string", "boolean" from read('TypesRow.csv');

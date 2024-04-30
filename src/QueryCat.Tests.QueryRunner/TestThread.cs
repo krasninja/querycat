@@ -19,25 +19,32 @@ public static class TestThread
     {
         return new ExecutionThreadBootstrapper(new ExecutionOptions
             {
-                DefaultRowsOutput = new DsvOutput(new DsvOptions(new MemoryStream())
-                {
-                    HasHeader = false,
-                    InputOptions = new StreamRowsInputOptions
-                    {
-                        DelimiterStreamReaderOptions = new DelimiterStreamReader.ReaderOptions
-                        {
-                            QuoteChars = ['"'],
-                            Delimiters = [','],
-                            BufferSize = 13,
-                        },
-                        AddInputSourceColumn = false,
-                    }
-                }),
+                DefaultRowsOutput = CreateDsvOutput(),
                 UseConfig = false,
                 AddRowNumberColumn = false,
             })
+            .WithAstCache()
             .WithStandardFunctions()
             .WithStandardUriResolvers();
+    }
+
+    private static DsvOutput CreateDsvOutput()
+    {
+        return new DsvOutput(
+            new DsvOptions(new MemoryStream())
+            {
+                HasHeader = false,
+                InputOptions = new StreamRowsInputOptions
+                {
+                    DelimiterStreamReaderOptions = new DelimiterStreamReader.ReaderOptions
+                    {
+                        QuoteChars = ['"'],
+                        Delimiters = [','],
+                        BufferSize = 13,
+                    },
+                    AddInputSourceColumn = false,
+                }
+            });
     }
 
     /// <summary>
@@ -57,6 +64,7 @@ public static class TestThread
     /// <summary>
     /// Get last query execution result as string.
     /// </summary>
+    /// <param name="executionThread">Instance of execution thread.</param>
     /// <returns>Result.</returns>
     public static string GetQueryResult(IExecutionThread<ExecutionOptions> executionThread)
     {
@@ -65,6 +73,16 @@ public static class TestThread
         stream.Seek(0, SeekOrigin.Begin);
         using var sr = new StreamReader(stream);
         return sr.ReadToEnd().Replace("\r\n", "\n").Trim();
+    }
+
+    /// <summary>
+    /// Clear output result.
+    /// </summary>
+    /// <param name="executionThread">Instance of execution thread.</param>
+    public static void ClearQueryResult(IExecutionThread<ExecutionOptions> executionThread)
+    {
+        var options = executionThread.Options;
+        options.DefaultRowsOutput = CreateDsvOutput();
     }
 
     /// <summary>

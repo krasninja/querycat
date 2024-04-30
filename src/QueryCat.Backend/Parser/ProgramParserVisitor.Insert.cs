@@ -29,7 +29,7 @@ internal partial class ProgramParserVisitor
     /// <inheritdoc />
     public override IAstNode VisitInsertSourceTable(QueryCatParser.InsertSourceTableContext context)
     {
-        return new SelectQuerySpecificationNode(new SelectColumnsListNode(SelectColumnsSublistAll.Instance))
+        return new SelectQuerySpecificationNode(new SelectColumnsListNode(new SelectColumnsSublistAll()))
         {
             TableExpressionNode = new SelectTableExpressionNode(
                 new SelectTableReferenceListNode(this.Visit<SelectTableNode>(context.selectTable()))
@@ -44,7 +44,7 @@ internal partial class ProgramParserVisitor
     /// <inheritdoc />
     public override IAstNode VisitInsertColumnsList(QueryCatParser.InsertColumnsListContext context)
         => new InsertColumnsListNode(
-            this.Visit<IdentifierExpressionNode>(context.identifierChain()).Select(n => n.Name));
+            this.Visit<IdentifierExpressionNode>(context.identifier()).Select(n => n.Name));
 
     /// <inheritdoc />
     public override IAstNode VisitInsertNoFormat(QueryCatParser.InsertNoFormatContext context)
@@ -67,7 +67,7 @@ internal partial class ProgramParserVisitor
 
     /// <inheritdoc />
     public override IAstNode VisitInsertFromVariable(QueryCatParser.InsertFromVariableContext context)
-        => this.Visit<IdentifierExpressionNode>(context.identifierChain());
+        => this.Visit<IdentifierExpressionNode>(context.identifier());
 
     #endregion
 }

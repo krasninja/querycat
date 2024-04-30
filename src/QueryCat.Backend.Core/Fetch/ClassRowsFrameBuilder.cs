@@ -442,6 +442,20 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
         return this;
     }
 
+    internal ClassRowsFrameBuilder<TClass> AddProperty(
+        PropertyInfo propertyInfo)
+    {
+        var description = propertyInfo.GetCustomAttributes<DescriptionAttribute>()
+            .Select(a => a.Description).FirstOrDefault();
+        var dataType = Converter.ConvertFromSystem(propertyInfo.PropertyType);
+        AddProperty(
+            name: propertyInfo.Name,
+            dataType: dataType,
+            obj => VariantValue.CreateFromObject(propertyInfo.GetValue(obj)),
+            description: description);
+        return this;
+    }
+
     #endregion
 
     /// <summary>

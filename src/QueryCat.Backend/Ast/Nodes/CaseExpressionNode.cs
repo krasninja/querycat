@@ -39,7 +39,7 @@ internal sealed class CaseExpressionNode : ExpressionNode
     public CaseExpressionNode(CaseExpressionNode node)
         : this(
             (ExpressionNode?)node.ArgumentNode?.Clone(),
-            node.WhenNodes.Select(n => (CaseWhenThenNode)n.Clone()),
+            node.WhenNodes.Select(n => (CaseWhenThenNode)n.Clone()).ToList(),
             (ExpressionNode?)node.DefaultNode?.Clone())
     {
         node.CopyTo(this);

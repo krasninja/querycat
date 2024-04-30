@@ -77,7 +77,7 @@ public class Row : IRowsSchema, ICloneable
     public static void Copy(Row fromRow, int fromRowOffset, Row toRow, int toRowOffset)
     {
         var length = Math.Min(fromRow.Columns.Length, toRow.Columns.Length);
-        for (int i = fromRowOffset; i < length; i++)
+        for (var i = fromRowOffset; i < length; i++)
         {
             toRow[toRowOffset + i] = fromRow[i];
         }
@@ -177,9 +177,9 @@ public class Row : IRowsSchema, ICloneable
     public override int GetHashCode()
     {
         var hashCode = default(HashCode);
-        for (var i = 0; i < _values.Length; i++)
+        foreach (var value in _values)
         {
-            hashCode.Add(_values[i]);
+            hashCode.Add(value);
         }
         return hashCode.ToHashCode();
     }

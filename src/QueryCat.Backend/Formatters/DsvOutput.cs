@@ -58,7 +58,13 @@ internal sealed class DsvOutput : RowsOutput, IDisposable
         {
             if (!values[i].IsNull)
             {
-                switch (columns[i].DataType)
+                var type = columns[i].DataType;
+                // Try to get more precise type if it is object.
+                if (type == DataType.Dynamic)
+                {
+                    type = values[i].GetInternalType();
+                }
+                switch (type)
                 {
                     case DataType.Integer:
                         _streamWriter.Write(values[i].AsInteger);

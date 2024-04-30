@@ -128,5 +128,11 @@ namespace QueryCat.Plugins.Client.Resources {
                 return ResourceManager.GetString("Object_CannotRegister", resourceCulture);
             }
         }
+
+        internal static string Object_Invalid {
+            get {
+                return ResourceManager.GetString("Object_Invalid", resourceCulture);
+            }
+        }
     }
 }

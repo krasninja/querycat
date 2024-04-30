@@ -53,7 +53,7 @@ internal sealed partial class SelectPlanner
                     .Find(n => n.Name.Equals(existingWindowName, StringComparison.OrdinalIgnoreCase));
                 if (partitionNode == null)
                 {
-                    throw new QueryCatException($"Cannot find partition window with name '{existingWindowName}'.");
+                    throw new QueryCatException(string.Format(Resources.Errors.CannotFindPartition, existingWindowName));
                 }
                 existingWindowName = partitionNode.WindowSpecificationNode.ExistingWindowName;
                 windowSpecificationNode = partitionNode.WindowSpecificationNode;

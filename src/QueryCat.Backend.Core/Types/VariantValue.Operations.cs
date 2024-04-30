@@ -163,7 +163,7 @@ public readonly partial struct VariantValue
         }
 
         if (MiscOperations.Contains(operation)
-            && left == DataType.String && right == DataType.String)
+            && (left == DataType.String || right == DataType.String))
         {
             return DataType.String;
         }
@@ -210,6 +210,12 @@ public readonly partial struct VariantValue
             return left;
         }
 
+        // The expression with dynamic type leads to dynamic.
+        if (left == DataType.Dynamic || right == DataType.Dynamic)
+        {
+            return DataType.Dynamic;
+        }
+
         if (AlgebraicOperations.Contains(operation))
         {
             if (left == right)
@@ -222,7 +228,10 @@ public readonly partial struct VariantValue
             {
                 canConvert = GetTargetType(right, left, out target);
             }
-            return target;
+            if (canConvert)
+            {
+                return target;
+            }
         }
 
         return DataType.Void;
@@ -234,6 +243,12 @@ public readonly partial struct VariantValue
             && (right == DataType.Float || right == DataType.Numeric))
         {
             target = right;
+            return true;
+        }
+        if ((DataTypeUtils.IsNumeric(left) && right == DataType.String)
+            || (DataTypeUtils.IsNumeric(right) && left == DataType.String))
+        {
+            target = DataType.String;
             return true;
         }
         target = DataType.Void;
@@ -432,9 +447,24 @@ public readonly partial struct VariantValue
 
         var result = leftType switch
         {
+            DataType.Integer => rightType switch
+            {
+                DataType.String => new VariantValue(string.Concat(left.AsString, right.AsStringUnsafe)),
+            },
+            DataType.Float => rightType switch
+            {
+                DataType.String => new VariantValue(string.Concat(left.AsString, right.AsStringUnsafe)),
+            },
+            DataType.Numeric => rightType switch
+            {
+                DataType.String => new VariantValue(string.Concat(left.AsString, right.AsStringUnsafe)),
+            },
             DataType.String => rightType switch
             {
                 DataType.String => new VariantValue(string.Concat(left.AsStringUnsafe, right.AsStringUnsafe)),
+                DataType.Integer => new VariantValue(string.Concat(left.AsStringUnsafe, right.AsString)),
+                DataType.Float => new VariantValue(string.Concat(left.AsStringUnsafe, right.AsString)),
+                DataType.Numeric => new VariantValue(string.Concat(left.AsStringUnsafe, right.AsString)),
                 _ => Null,
             },
             DataType.Blob => rightType switch

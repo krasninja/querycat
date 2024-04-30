@@ -9,6 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Initial objects expressions support.
+- Allow to use Add operator with strings. Implicit conversion from integer, float and numeric types when concat with string.
+- Add "Enter" and "Q" keys processing in "follow" mode.
+- Add "tail" option.
+- Experimental AST cache.
+
+### Changed
+
+- Change the way how quote columns. Now. instead of [] use "". Only '' can be used for string literals.
+
+### Fixed
+
+- Improve memory usage for web server partial ranges requests.
+
+## [0.5.5] - 2024-03-27
+
+### Added
+
 - Add "Call" command to execute functions.
 - Add "timeout" option.
 - Unescape support for octet and hex numbers.

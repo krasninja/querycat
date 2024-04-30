@@ -1,0 +1,8 @@
+expected: |
+  Pavel K.,+7 933 998 0000,+7 908 214 0000,
+query: |
+  select
+    user1.Name,
+    user1.Address.Phones[0],
+    user1."Address".Phones[1+0],
+    user2.Address.City

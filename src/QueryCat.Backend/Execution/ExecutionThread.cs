@@ -35,6 +35,7 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
     private readonly IExecutionScope _rootScope;
     private bool _bootstrapScriptExecuted;
     private bool _configLoaded;
+    private readonly Stopwatch _stopwatch = new();
 
     /// <summary>
     /// Root (base) thread scope.
@@ -43,6 +44,15 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
 
     /// <inheritdoc />
     public IExecutionScope TopScope => _topScope;
+
+    /// <inheritdoc />
+    public event EventHandler<ResolveVariableEventArgs>? VariableResolving;
+
+    /// <inheritdoc />
+    public event EventHandler<ResolveVariableEventArgs>? VariableResolved;
+
+    /// <inheritdoc />
+    public IObjectSelector ObjectSelector { get; protected set; }
 
     /// <summary>
     /// Current executing statement.
@@ -56,13 +66,13 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
     public ExecutionStatistic Statistic { get; } = new DefaultExecutionStatistic();
 
     /// <inheritdoc />
-    public object? Tag { get; internal set; } = null;
+    public object? Tag { get; set; }
 
     /// <inheritdoc />
-    public IFunctionsManager FunctionsManager { get; }
+    public IFunctionsManager FunctionsManager { get; protected set; }
 
     /// <inheritdoc />
-    public IPluginsManager PluginsManager { get; set; } = NullPluginsManager.Instance;
+    public IPluginsManager PluginsManager { get; internal set; } = NullPluginsManager.Instance;
 
     /// <summary>
     /// Last execution statement return value.
@@ -72,12 +82,12 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
     /// <summary>
     /// The event to be called before any statement execution.
     /// </summary>
-    public event EventHandler<ExecuteEventArgs>? BeforeStatementExecute;
+    public event EventHandler<ExecuteEventArgs>? StatementExecuting;
 
     /// <summary>
     /// The event to be called after any statement execution.
     /// </summary>
-    public event EventHandler<ExecuteEventArgs>? AfterStatementExecute;
+    public event EventHandler<ExecuteEventArgs>? StatementExecuted;
 
     /// <summary>
     /// Get application directory to store local data.
@@ -92,13 +102,17 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
     internal ExecutionThread(
         ExecutionOptions options,
         IFunctionsManager functionsManager,
+        IObjectSelector objectSelector,
         IInputConfigStorage configStorage,
-        IAstBuilder astBuilder)
+        IAstBuilder astBuilder,
+        object? tag = null)
     {
         Options = options;
         FunctionsManager = functionsManager;
+        ObjectSelector = objectSelector;
         ConfigStorage = configStorage;
         _astBuilder = astBuilder;
+        Tag = tag;
         _statementsVisitor = new StatementsVisitor(this);
 
         _rootScope = new ExecutionScope(parent: null);
@@ -112,8 +126,10 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
     public ExecutionThread(ExecutionThread executionThread) :
         this(executionThread.Options,
             executionThread.FunctionsManager,
+            executionThread.ObjectSelector,
             executionThread.ConfigStorage,
-            executionThread._astBuilder)
+            executionThread._astBuilder,
+            executionThread.Tag)
     {
         _rootScope = new ExecutionScope(parent: null);
 #if ENABLE_PLUGINS
@@ -123,7 +139,9 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
     }
 
     /// <inheritdoc />
-    public VariantValue Run(string query, IDictionary<string, VariantValue>? parameters = null,
+    public virtual VariantValue Run(
+        string query,
+        IDictionary<string, VariantValue>? parameters = null,
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrEmpty(query))
@@ -142,8 +160,7 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
             // Set first executing statement and run.
             ExecutingStatement = programNode.Statements.FirstOrDefault();
 
-            var stopwatch = new Stopwatch();
-            stopwatch.Start();
+            _stopwatch.Restart();
             try
             {
                 if (parameters != null)
@@ -161,8 +178,8 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
                 {
                     PullScope();
                 }
-                stopwatch.Stop();
-                Statistic.ExecutionTime = stopwatch.Elapsed;
+                _stopwatch.Stop();
+                Statistic.ExecutionTime = _stopwatch.Elapsed;
             }
         }
     }
@@ -216,10 +233,10 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
             }
 
             // Fire "before" event.
-            if (BeforeStatementExecute != null && !_isInCallback)
+            if (StatementExecuting != null && !_isInCallback)
             {
                 _isInCallback = true;
-                BeforeStatementExecute.Invoke(this, executeEventArgs);
+                StatementExecuting.Invoke(this, executeEventArgs);
                 _isInCallback = false;
             }
             if (!executeEventArgs.ContinueExecution)
@@ -231,10 +248,10 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
             LastResult = commandContext.Invoke();
 
             // Fire "after" event.
-            if (AfterStatementExecute != null && !_isInCallback)
+            if (StatementExecuted != null && !_isInCallback)
             {
                 _isInCallback = true;
-                AfterStatementExecute.Invoke(this, executeEventArgs);
+                StatementExecuted.Invoke(this, executeEventArgs);
                 _isInCallback = false;
             }
             if (!executeEventArgs.ContinueExecution)
@@ -283,6 +300,55 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
         return sb.ToString();
     }
 
+    #region Variables
+
+    /// <inheritdoc />
+    public virtual bool TryGetVariable(string name, out VariantValue value, IExecutionScope? scope = null)
+    {
+        var eventArgs = new ResolveVariableEventArgs(name, this);
+
+        VariableResolving?.Invoke(this, eventArgs);
+        if (eventArgs.Handled)
+        {
+            value = eventArgs.Result;
+            return true;
+        }
+        name = eventArgs.VariableName;
+
+        var currentScope = scope ?? TopScope;
+        while (currentScope != null)
+        {
+            if (currentScope.Variables.TryGetValue(name, out value))
+            {
+                eventArgs.Handled = true;
+                eventArgs.Result = value;
+                VariableResolved?.Invoke(this, eventArgs);
+                if (eventArgs.Handled)
+                {
+                    value = eventArgs.Result;
+                    return true;
+                }
+
+                value = VariantValue.Null;
+                return false;
+            }
+            currentScope = currentScope.Parent;
+        }
+
+        eventArgs.Handled = false;
+        VariableResolved?.Invoke(this, eventArgs);
+        if (eventArgs.Handled)
+        {
+            value = eventArgs.Result;
+            return true;
+        }
+
+        value = VariantValue.Null;
+        return false;
+    }
+
+    #endregion
+
     private void Write(VariantValue result, CancellationToken cancellationToken)
     {
         if (result.IsNull)
@@ -310,6 +376,10 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
         {
             rowsIterator = new AdjustColumnsLengthsIterator(rowsIterator, Options.AnalyzeRowsCount);
         }
+        if (Options.TailCount > -1)
+        {
+            rowsIterator = new TailRowsIterator(rowsIterator, Options.TailCount);
+        }
 
         // Write the main data.
         var isOpened = false;
@@ -320,9 +390,11 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
         {
             while (true)
             {
+                var requestQuit = false;
                 Thread.Sleep(Options.FollowTimeout);
                 StartWriterLoop();
-                if (cancellationToken.IsCancellationRequested)
+                ProcessInput(ref requestQuit);
+                if (cancellationToken.IsCancellationRequested || requestQuit)
                 {
                     break;
                 }
@@ -349,6 +421,30 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
                     isOpened = true;
                 }
                 rowsOutput.WriteValues(rowsIterator.Current.Values);
+            }
+        }
+
+        void ProcessInput(ref bool requestQuit)
+        {
+            if (!Environment.UserInteractive)
+            {
+                return;
+            }
+            while (Console.KeyAvailable)
+            {
+                var key = Console.ReadKey(true);
+                if (key.Key == ConsoleKey.Enter)
+                {
+                    Console.WriteLine();
+                }
+                else if (key.Key == ConsoleKey.Q)
+                {
+                    requestQuit = true;
+                }
+                else if (key.Key == ConsoleKey.Subtract)
+                {
+                    Console.WriteLine(new string('-', 5));
+                }
             }
         }
     }

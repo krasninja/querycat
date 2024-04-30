@@ -219,7 +219,7 @@ public partial class ThriftPluginClient
                 return Task.FromResult(result);
             }
 
-            throw new QueryCatPluginException(ErrorType.INVALID_OBJECT, "Invalid object.");
+            throw new QueryCatPluginException(ErrorType.INVALID_OBJECT, Resources.Errors.Object_Invalid);
         }
 
         /// <inheritdoc />

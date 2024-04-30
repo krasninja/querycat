@@ -24,16 +24,16 @@ iisw3c(): object<IRowsFormatter>
 **Top 20 URLs exluding websocket connections**
 
 ```sql
-SELECT [cs-uri-stem], COUNT(*) AS hits
+SELECT "cs-uri-stem", COUNT(*) AS hits
 FROM 'u_ex*.log' FORMAT iisw3c()
-WHERE [cs-uri-stem] NOT LIKE '%/client/%'
-GROUP BY [cs-uri-stem]
+WHERE "cs-uri-stem" NOT LIKE '%/client/%'
+GROUP BY "cs-uri-stem"
 ORDER BY Hits DESC FETCH 20
 ```
 
 **Top 5 slow pages**
 
 ```sql
-SELECT DISTINCT [cs-method], [cs-uri-stem]
-FROM '*.log' FORMAT iisw3c() ORDER BY [time-taken] DESC FETCH 5
+SELECT DISTINCT "cs-method", "cs-uri-stem"
+FROM '*.log' FORMAT iisw3c() ORDER BY "time-taken" DESC FETCH 5
 ```

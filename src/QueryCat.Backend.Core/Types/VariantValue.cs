@@ -288,6 +288,10 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         {
             return new VariantValue(blobData);
         }
+        if (obj is Guid guid)
+        {
+            return new VariantValue(guid.ToString());
+        }
         return new VariantValue(obj);
     }
 
@@ -632,6 +636,12 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
             output = Null;
             return true;
         }
+        // Any type is dynamic.
+        if (targetType == DataType.Dynamic)
+        {
+            output = this;
+            return true;
+        }
 
         var sourceType = GetInternalType();
         if (sourceType == targetType)
@@ -861,8 +871,8 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         DataType.Numeric => AsNumeric.ToString(formatProvider),
         DataType.Timestamp => AsTimestampUnsafe.ToString(formatProvider),
         DataType.Interval => AsIntervalUnsafe.ToString(null, formatProvider),
-        DataType.Object => "object:" + AsObjectUnsafe,
         DataType.Blob => "X" + BlobToShortString(AsBlobUnsafe, 16),
+        DataType.Object => "object:" + AsObjectUnsafe,
         _ => "unknown"
     };
 

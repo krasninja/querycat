@@ -12,7 +12,7 @@ internal class AstCommand : BaseQueryCommand
         {
             applicationOptions.InitializeLogger();
             var root = applicationOptions.CreateApplicationRoot();
-            root.Thread.BeforeStatementExecute += (_, threadArgs) =>
+            root.Thread.StatementExecuting += (_, threadArgs) =>
             {
                 Console.WriteLine(root.Thread.DumpAst());
                 threadArgs.ContinueExecution = false;

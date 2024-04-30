@@ -34,10 +34,10 @@ internal sealed class UpdateCommandHandler : IFuncUnit
         while (_selectCommandContext.CurrentIterator.MoveNext())
         {
             updateCount++;
-            for (var i = 0; i < _setters.Length; i++)
+            foreach (var setter in _setters)
             {
-                var value = _setters[i].FuncUnit.Invoke();
-                _rowsInput.UpdateValue(_setters[i].ColumnIndex, value);
+                var value = setter.FuncUnit.Invoke();
+                _rowsInput.UpdateValue(setter.ColumnIndex, value);
             }
         }
 

@@ -550,19 +550,39 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitCallStatement([NotNull] QueryCatParser.CallStatementContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>identifierChainFull</c>
-	/// labeled alternative in <see cref="QueryCatParser.identifierChain"/>.
+	/// Visit a parse tree produced by <see cref="QueryCatParser.identifierSimple"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitIdentifierChainFull([NotNull] QueryCatParser.IdentifierChainFullContext context);
+	Result VisitIdentifierSimple([NotNull] QueryCatParser.IdentifierSimpleContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>identifierChainSimple</c>
-	/// labeled alternative in <see cref="QueryCatParser.identifierChain"/>.
+	/// Visit a parse tree produced by the <c>IdentifierWithSelector</c>
+	/// labeled alternative in <see cref="QueryCatParser.identifier"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitIdentifierChainSimple([NotNull] QueryCatParser.IdentifierChainSimpleContext context);
+	Result VisitIdentifierWithSelector([NotNull] QueryCatParser.IdentifierWithSelectorContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>IdentifierWithoutSource</c>
+	/// labeled alternative in <see cref="QueryCatParser.identifier"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitIdentifierWithoutSource([NotNull] QueryCatParser.IdentifierWithoutSourceContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>IdentifierSelectorProperty</c>
+	/// labeled alternative in <see cref="QueryCatParser.identifierSelector"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitIdentifierSelectorProperty([NotNull] QueryCatParser.IdentifierSelectorPropertyContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>IdentifierSelectorIndex</c>
+	/// labeled alternative in <see cref="QueryCatParser.identifierSelector"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitIdentifierSelectorIndex([NotNull] QueryCatParser.IdentifierSelectorIndexContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="QueryCatParser.array"/>.
 	/// </summary>

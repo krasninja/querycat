@@ -32,14 +32,12 @@ internal sealed class SelectQueryCombineNode : SelectQueryNode
         }
     }
 
-    public SelectQueryCombineNode(SelectQueryCombineNode node)
-        : this(
-            (SelectQueryCombineNode)node.LeftQueryNode.Clone(),
-            (SelectQueryCombineNode)node.RightQueryNode.Clone(),
-            node.CombineType,
-            node.IsDistinct,
-            node.Alias)
+    public SelectQueryCombineNode(SelectQueryCombineNode node) : base(node)
     {
+        LeftQueryNode = (SelectQueryNode)node.LeftQueryNode.Clone();
+        RightQueryNode = (SelectQueryNode)node.RightQueryNode.Clone();
+        CombineType = node.CombineType;
+        IsDistinct = node.IsDistinct;
         if (node.OffsetNode != null)
         {
             OffsetNode = (SelectOffsetNode)node.OffsetNode.Clone();
@@ -48,7 +46,6 @@ internal sealed class SelectQueryCombineNode : SelectQueryNode
         {
             FetchNode = (SelectFetchNode)node.FetchNode.Clone();
         }
-        node.CopyTo(this);
     }
 
     /// <inheritdoc />

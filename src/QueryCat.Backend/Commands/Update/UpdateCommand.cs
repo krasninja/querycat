@@ -36,14 +36,14 @@ internal sealed class UpdateCommand : ICommand
         // Evaluate setters.
         if (context.RowsInputIterator?.RowsInput is not IRowsInputUpdate rowsInput)
         {
-            throw new QueryCatException("Rows input must be updatable.");
+            throw new QueryCatException(Resources.Errors.RowsInputNotUpdatable);
         }
         var setters = new List<UpdateSetter>();
         var createDelegateVisitor = new SelectCreateDelegateVisitor(executionThread, context);
         foreach (var setNode in insertNode.SetNodes)
         {
-            var columnIndex = rowsInput.GetColumnIndexByName(setNode.SetTargetNode.Name,
-                setNode.SetTargetNode.SourceName);
+            var columnIndex = rowsInput.GetColumnIndexByName(setNode.SetTargetNode.TableFieldName,
+                setNode.SetTargetNode.TableSourceName);
             if (columnIndex < 0)
             {
                 throw new QueryCatException(

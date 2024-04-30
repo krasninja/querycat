@@ -21,15 +21,19 @@ public static class AsyncUtils
 
         private readonly AutoResetEvent _workItemsWaiting = new(initialState: false);
 
-        private readonly EventQueue _postbackItems = new();
+        private readonly EventQueue _postbackItems;
 
-        public Exception? InnerException { get; set; }
+        public Exception? InnerException { get; internal set; }
 
         public ExclusiveSynchronizationContext(SynchronizationContext? oldContext)
         {
             if (oldContext is ExclusiveSynchronizationContext exclusiveSynchronizationContext)
             {
                 this._postbackItems = exclusiveSynchronizationContext._postbackItems;
+            }
+            else
+            {
+                this._postbackItems = new EventQueue();
             }
         }
 
@@ -92,8 +96,8 @@ public static class AsyncUtils
     /// <summary>
     /// Executes an async Task method which has a void return value synchronously.
     /// </summary>
-    /// <param name="task">Task.</param>
-    public static void RunSync(Func<Task> task)
+    /// <param name="taskFunc">Task.</param>
+    public static void RunSync(Func<Task> taskFunc)
     {
         var current = SynchronizationContext.Current;
         var exclusiveSynchronizationContext = new ExclusiveSynchronizationContext(current);
@@ -103,12 +107,11 @@ public static class AsyncUtils
         {
             try
             {
-                await task();
+                await taskFunc();
             }
             catch (Exception ex)
             {
-                var exception = ex;
-                exclusiveSynchronizationContext.InnerException = exception;
+                exclusiveSynchronizationContext.InnerException = ex;
                 throw;
             }
             finally
@@ -123,9 +126,9 @@ public static class AsyncUtils
     /// <summary>
     /// Executes an async Task method which has a void return value synchronously.
     /// </summary>
-    /// <param name="task">Task.</param>
-    public static void RunSync(Func<CancellationToken, Task> task)
-        => RunSync(() => task.Invoke(CancellationToken.None));
+    /// <param name="taskFunc">Task.</param>
+    public static void RunSync(Func<CancellationToken, Task> taskFunc)
+        => RunSync(() => taskFunc.Invoke(CancellationToken.None));
 
     /// <summary>
     /// Executes an async Task method which has a void return value synchronously.
@@ -139,10 +142,10 @@ public static class AsyncUtils
     /// <summary>
     /// Executes an async Task method which has a T return value synchronously.
     /// </summary>
-    /// <param name="task">Task.</param>
+    /// <param name="taskFunc">Task.</param>
     /// <typeparam name="T">Task generic type.</typeparam>
     /// <returns>Task value.</returns>
-    public static T? RunSync<T>(Func<Task<T>> task)
+    public static T? RunSync<T>(Func<Task<T>> taskFunc)
     {
         var current = SynchronizationContext.Current;
         var exclusiveSynchronizationContext = new ExclusiveSynchronizationContext(current);
@@ -153,7 +156,7 @@ public static class AsyncUtils
         {
             try
             {
-                result = await task();
+                result = await taskFunc();
             }
             catch (Exception ex)
             {

@@ -7,7 +7,7 @@ namespace QueryCat.Cli.Commands.Options;
 
 internal class QueryOptionsBinder : BinderBase<QueryOptions>
 {
-    private static readonly TimeSpan FollowDefaultTimeout = TimeSpan.FromSeconds(2);
+    private static readonly TimeSpan _followDefaultTimeout = TimeSpan.FromSeconds(2);
 
     private readonly Option<int> _maxErrorsOption;
     private readonly Option<bool> _statisticOption;
@@ -21,6 +21,7 @@ internal class QueryOptionsBinder : BinderBase<QueryOptions>
     private readonly Option<bool> _noHeaderOption;
     private readonly Option<string> _floatNumberOption;
     private readonly Option<bool> _followOption;
+    private readonly Option<int> _tailOption;
     private readonly Option<int> _timeoutOption;
     private readonly Option<bool> _safeModeOption;
 
@@ -37,6 +38,7 @@ internal class QueryOptionsBinder : BinderBase<QueryOptions>
         Option<bool> noHeaderOption,
         Option<string> floatNumberOption,
         Option<bool> followOption,
+        Option<int> tailOption,
         Option<int> timeoutOption,
         Option<bool> safeModeOption)
     {
@@ -59,6 +61,7 @@ internal class QueryOptionsBinder : BinderBase<QueryOptions>
         _noHeaderOption = noHeaderOption;
         _floatNumberOption = floatNumberOption;
         _followOption = followOption;
+        _tailOption = tailOption;
         _timeoutOption = timeoutOption;
         _safeModeOption = safeModeOption;
     }
@@ -80,7 +83,8 @@ internal class QueryOptionsBinder : BinderBase<QueryOptions>
             NoHeader = bindingContext.ParseResult.GetValueForOption(_noHeaderOption),
             FloatNumberFormat = bindingContext.ParseResult.GetValueForOption(_floatNumberOption)
                 ?? VariantValue.FloatNumberFormat,
-            FollowTimeout = bindingContext.ParseResult.GetValueForOption(_followOption) ? FollowDefaultTimeout : TimeSpan.Zero,
+            FollowTimeout = bindingContext.ParseResult.GetValueForOption(_followOption) ? _followDefaultTimeout : TimeSpan.Zero,
+            TailCount = bindingContext.ParseResult.GetValueForOption(_tailOption),
             QueryTimeout = TimeSpan.FromMilliseconds(bindingContext.ParseResult.GetValueForOption(_timeoutOption)),
             SafeMode = bindingContext.ParseResult.GetValueForOption(_safeModeOption),
         };

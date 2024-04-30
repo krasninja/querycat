@@ -49,7 +49,7 @@ public static class InfoFunctions
         }
         else
         {
-            throw new QueryCatException("Invalid rows input type.");
+            throw new QueryCatException(Resources.Errors.InvalidRowsInput);
         }
 
         var inputResult = new EnumerableRowsInput<Column>(columns,

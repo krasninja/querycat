@@ -25,7 +25,12 @@ internal partial class ProgramParserVisitor
 
     /// <inheritdoc />
     public override IAstNode VisitSelectAlias(QueryCatParser.SelectAliasContext context)
-        => new SelectAliasNode(GetUnwrappedText(context.name));
+    {
+        var name = context.identifierSimple() != null && !context.identifierSimple().IsEmpty
+            ? GetUnwrappedText(context.identifierSimple())
+            : GetUnwrappedText(context.STRING_LITERAL());
+        return new SelectAliasNode(name);
+    }
 
     /// <inheritdoc />
     public override IAstNode VisitSelectQueryExpressionSimple(QueryCatParser.SelectQueryExpressionSimpleContext context)
@@ -134,14 +139,14 @@ internal partial class ProgramParserVisitor
             name: GetUnwrappedText(context.name),
             queryNode: this.Visit<SelectQueryNode>(context.query));
         selectWithNode.ColumnNodes.AddRange(
-            this.Visit(context.selectWithColumnList(), SelectColumnsListNode.Empty).ColumnsNodes);
+            this.Visit(context.selectWithColumnList(), new SelectColumnsListNode()).ColumnsNodes);
         return selectWithNode;
     }
 
     /// <inheritdoc />
     public override IAstNode VisitSelectWithColumnList(QueryCatParser.SelectWithColumnListContext context)
     {
-        var columnsNodes = this.Visit<IdentifierExpressionNode>(context.identifierChain())
+        var columnsNodes = this.Visit<IdentifierExpressionNode>(context.identifier())
             .Select(n => new SelectColumnsSublistExpressionNode(n));
         return new SelectColumnsListNode(columnsNodes);
     }
@@ -320,7 +325,7 @@ internal partial class ProgramParserVisitor
     public override IAstNode VisitSelectTablePrimaryIdentifier(QueryCatParser.SelectTablePrimaryIdentifierContext context)
     {
         var alias = this.Visit(context.selectAlias(), SelectAliasNode.Empty).AliasName;
-        return new SelectIdentifierExpressionNode(GetUnwrappedText(context.name), alias)
+        return new SelectIdentifierExpressionNode(this.Visit<IdentifierExpressionNode>(context.name), alias)
         {
             Format = context.format != null ? this.Visit<FunctionCallNode>(context.format) : null,
         };
@@ -365,7 +370,7 @@ internal partial class ProgramParserVisitor
     /// <inheritdoc />
     public override IAstNode VisitSelectTableJoinedUsing(QueryCatParser.SelectTableJoinedUsingContext context)
     {
-        if (context.IDENTIFIER().Length < 1)
+        if (context.identifier().Length < 1)
         {
             throw new SemanticException(Resources.Errors.NoUsingJoinColumns);
         }
@@ -373,7 +378,7 @@ internal partial class ProgramParserVisitor
         return new SelectTableJoinedUsingNode(
             this.Visit<ExpressionNode>(context.right),
             this.Visit<SelectTableJoinedTypeNode>(context.selectJoinType()),
-            context.IDENTIFIER().Select(GetUnwrappedText));
+            context.identifier().Select(GetUnwrappedText));
     }
 
     /// <inheritdoc />

@@ -1,0 +1,4 @@
+expected: |
+  +7 933 998 0000
+query: |
+  select top 1 * from user1.Address.Phones;

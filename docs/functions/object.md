@@ -4,7 +4,7 @@ The functions to process POCOs (Plain Old CLR Object).
 
 | Name and Description |
 | --- |
-| `object_query(obj: void, query: string): string`<br /><br /> Extracts a scalar value from a POCO .NET object. |
+| `object_query(obj: any, query: string): any`<br /><br /> Extracts a scalar value from a POCO .NET object. |
 
 Examples:
 

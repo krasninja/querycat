@@ -96,4 +96,58 @@
   <data name="NotSupported" xml:space="preserve">
     <value>'{0}' is not supported.</value>
   </data>
+  <data name="SchemasNotEqual" xml:space="preserve">
+    <value>Schemas must be equal.</value>
+  </data>
+  <data name="InvalidRowsInput" xml:space="preserve">
+    <value>Invalid rows input.</value>
+  </data>
+  <data name="CannotResolveInputSource" xml:space="preserve">
+    <value>Cannot resolve input source '{0}'.</value>
+  </data>
+  <data name="CannotFindPartition" xml:space="preserve">
+    <value>Cannot find partition window with name '{0}'.</value>
+  </data>
+  <data name="InvalidUri" xml:space="preserve">
+    <value>Invalid URI.</value>
+  </data>
+  <data name="InvalidSubqueryColumnsCount" xml:space="preserve">
+    <value>Subquery returns {0} columns, expected 1.</value>
+  </data>
+  <data name="RowsInputNotUpdatable" xml:space="preserve">
+    <value>Rows input must be updatable.</value>
+  </data>
+  <data name="CannotEnumerateFiles" xml:space="preserve">
+    <value>Cannot enumerate files: {0}</value>
+  </data>
+  <data name="PathNoFiles" xml:space="preserve">
+    <value>No files match '{0}'.</value>
+  </data>
+  <data name="CannotWriteToCollection" xml:space="preserve">
+    <value>Cannot write to collection of type '{0}'.</value>
+  </data>
+  <data name="CannotWriteToProperty" xml:space="preserve">
+    <value>Cannot write property '{0}'.</value>
+  </data>
+  <data name="FormatterNoOutput" xml:space="preserve">
+    <value>{0} does not support output.</value>
+  </data>
+  <data name="PathNotDefined" xml:space="preserve">
+    <value>Path is not defined.</value>
+  </data>
+  <data name="DelimiterOneCharacter" xml:space="preserve">
+    <value>Delimiter must be one character.</value>
+  </data>
+  <data name="InvalidParserValue" xml:space="preserve">
+    <value>Parse tree value is not defined.</value>
+  </data>
+  <data name="NotSupportedNodeType" xml:space="preserve">
+    <value>Not supported node type '{0}'.</value>
+  </data>
+  <data name="CannotParseValue" xml:space="preserve">
+    <value>Cannot parse value '{0}'.</value>
+  </data>
+  <data name="InvalidQuantifier" xml:space="preserve">
+    <value>Quantifier '{0}' cannot be proceed.</value>
+  </data>
 </root>

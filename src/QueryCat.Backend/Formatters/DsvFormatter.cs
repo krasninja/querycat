@@ -44,7 +44,7 @@ internal class DsvFormatter : IRowsFormatter
         var delimiterCanRepeat = args.GetAt(4).AsBoolean;
         if (delimiter.Length != 0 && delimiter.Length > 1)
         {
-            throw new QueryCatException("Delimiter must be one character.");
+            throw new QueryCatException(Resources.Errors.DelimiterOneCharacter);
         }
 
         var rowsSource = new DsvFormatter(

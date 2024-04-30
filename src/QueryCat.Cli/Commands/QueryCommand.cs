@@ -47,6 +47,9 @@ internal class QueryCommand : BaseQueryCommand
             getDefaultValue: () => "F");
         var followOption = new Option<bool>("--follow",
             description: "Output appended data as the input source grows.");
+        var tailOption = new Option<int>("--tail",
+            description: "Return the specific number of rows from tail.",
+            getDefaultValue: () => -1);
         var timeoutOption = new Option<int>("--timeout",
             description: "Query timeout in ms.");
         var safeModeOption = new Option<bool>("--safe-mode",
@@ -64,6 +67,7 @@ internal class QueryCommand : BaseQueryCommand
         this.AddOption(noHeaderOption);
         this.AddOption(floatNumberOption);
         this.AddOption(followOption);
+        this.AddOption(tailOption);
         this.AddOption(timeoutOption);
         this.AddOption(safeModeOption);
         this.SetHandler((applicationOptions, query, variables, files, queryOptions) =>
@@ -85,6 +89,7 @@ internal class QueryCommand : BaseQueryCommand
                 UseConfig = true,
                 RunBootstrapScript = true,
                 FollowTimeout = queryOptions.FollowTimeout,
+                TailCount = queryOptions.TailCount,
                 QueryTimeout = queryOptions.QueryTimeout,
                 SafeMode = queryOptions.SafeMode,
             };
@@ -93,7 +98,7 @@ internal class QueryCommand : BaseQueryCommand
                 options.AnalyzeRowsCount = int.MaxValue;
             }
             using var root = applicationOptions.CreateApplicationRoot(options);
-            options.DefaultRowsOutput = new PagingOutput(tableOutput, cts: root.CancellationTokenSource)
+            options.DefaultRowsOutput = new PagingOutput(tableOutput, cancellationTokenSource: root.CancellationTokenSource)
             {
                 PagingRowsCount = queryOptions.PageSize,
             };
@@ -123,6 +128,7 @@ internal class QueryCommand : BaseQueryCommand
                 noHeaderOption,
                 floatNumberOption,
                 followOption,
+                tailOption,
                 timeoutOption,
                 safeModeOption)
             );

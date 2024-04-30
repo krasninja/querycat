@@ -563,9 +563,9 @@ public class DelimiterStreamReader
     public static bool TryDetectDelimiter(ReadOnlySpan<char> line, out char delimiter)
     {
         var autoDetectDelimitersCount = new int[AutoDetectDelimiters.Length];
-        for (var i = 0; i < line.Length; i++)
+        foreach (var ch in line)
         {
-            var delimiterIndex = Array.IndexOf(AutoDetectDelimiters, line[i]);
+            var delimiterIndex = Array.IndexOf(AutoDetectDelimiters, ch);
             if (delimiterIndex > -1)
             {
                 autoDetectDelimitersCount[delimiterIndex]++;

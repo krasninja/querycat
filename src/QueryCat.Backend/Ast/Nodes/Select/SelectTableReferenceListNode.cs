@@ -18,7 +18,7 @@ internal sealed class SelectTableReferenceListNode : AstNode
     }
 
     public SelectTableReferenceListNode(SelectTableReferenceListNode node) :
-        this(node.TableFunctionsNodes.Select(tf => (ExpressionNode)tf.Clone()).ToList())
+        this(node.TableFunctionsNodes.Select(tf => (ExpressionNode)tf.Clone()).ToArray())
     {
         node.CopyTo(this);
     }

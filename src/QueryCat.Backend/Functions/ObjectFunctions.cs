@@ -11,7 +11,7 @@ internal static class ObjectFunctions
 {
     [SafeFunction]
     [Description("Extracts a scalar value from a POCO .NET object.")]
-    [FunctionSignature("object_query(obj: void, query: string): string")]
+    [FunctionSignature("object_query(obj: any, query: string): any")]
     public static VariantValue ObjectQuery(FunctionCallInfo args)
     {
         var obj = args.GetAt(0).AsObject;
@@ -28,13 +28,15 @@ internal static class ObjectFunctions
         End,
     }
 
-    private readonly struct Token(TokenType type, int startIndex = -1, int length = 0)
+    private readonly struct Token(TokenType type, int startIndex = -1, int valueLength = 0, int totalLength = 0)
     {
         public TokenType Type => type;
 
         public int StartIndex => startIndex;
 
-        public int Length => length;
+        public int ValueLength => valueLength;
+
+        public int TotalLength => totalLength;
     }
 
     /// <summary>
@@ -54,7 +56,7 @@ internal static class ObjectFunctions
         var currentObject = obj;
         while ((token = GetNextToken(query, token)).Type != TokenType.End)
         {
-            var value = query.Slice(token.StartIndex, token.Length);
+            var value = query.Slice(token.StartIndex, token.ValueLength);
 
             // PropertyGet.
             if (token.Type == TokenType.GetProperty)
@@ -71,6 +73,12 @@ internal static class ObjectFunctions
                 currentObject = propInfo.GetValue(currentObject);
             }
 
+            // Indexes.
+            else if (token.Type == TokenType.GetIndexed)
+            {
+                currentObject = ((IEnumerable<object>)currentObject).ElementAt(int.Parse(value));
+            }
+
             if (currentObject == null)
             {
                 break;
@@ -82,7 +90,7 @@ internal static class ObjectFunctions
 
     private static Token GetNextToken(ReadOnlySpan<char> query, in Token token)
     {
-        var start = token.StartIndex + token.Length;
+        var start = token.StartIndex + token.TotalLength;
         if (query.Length - start == 0)
         {
             return new Token(TokenType.End);
@@ -94,7 +102,13 @@ internal static class ObjectFunctions
             nextLength = slicedQuery.Length;
         }
         var type = TokenType.GetProperty;
-        return new Token(type, start + 1, nextLength);
+        var totalLength = nextLength;
+        if (start > -1 && query[start] == '[' && slicedQuery[nextLength] == ']')
+        {
+            type = TokenType.GetIndexed;
+            totalLength++;
+        }
+        return new Token(type, start + 1, nextLength, totalLength);
      }
 
     public static void RegisterFunctions(IFunctionsManager functionsManager)

@@ -59,7 +59,7 @@ public sealed class CollectionInputTests : IDisposable
             DefaultRowsOutput = new RowsFrameOutput(rowsFrame),
         }).Create();
         thread.TopScope.Variables["employees"] = VariantValue.CreateFromObject(_employeesList);
-        thread.Run("select * from [employees];");
+        thread.Run("select * from \"employees\";");
         Assert.Equal(DataType.Integer, rowsFrame.Columns[0].DataType);
         Assert.Equal(3, rowsFrame.TotalRows);
     }
@@ -72,7 +72,7 @@ public sealed class CollectionInputTests : IDisposable
             DefaultRowsOutput = NullRowsOutput.Instance,
         }).Create();
         thread.TopScope.Variables["employees"] = VariantValue.CreateFromObject(_employeesList);
-        thread.Run("update [employees] set id = id + 1, score = 10 where id > 1;");
+        thread.Run("update employees set id = id + 1, score = 10 where id > 1;");
         Assert.Equal(1, _employeesList.TargetCollection.ElementAt(0).Id);
         Assert.Equal(3, _employeesList.TargetCollection.ElementAt(1).Id);
         Assert.Equal(10, _employeesList.TargetCollection.ElementAt(2).Score);
@@ -86,7 +86,7 @@ public sealed class CollectionInputTests : IDisposable
             DefaultRowsOutput = NullRowsOutput.Instance,
         }).Create();
         thread.TopScope.Variables["employees"] = VariantValue.CreateFromObject(_employeesList);
-        thread.Run("insert into [employees] values (4, 'Abbie Cornish', '1982-08-07', 5);");
+        thread.Run("insert into \"employees\" values (4, 'Abbie Cornish', '1982-08-07', 5);");
         Assert.Equal(4, _employeesList.TargetCollection.Count());
         Assert.Equal(5, _employeesList.TargetCollection.ElementAt(3).Score);
     }

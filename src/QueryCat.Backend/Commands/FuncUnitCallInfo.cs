@@ -26,9 +26,9 @@ internal sealed class FuncUnitCallInfo : FunctionCallInfo
     internal void InvokePushArgs()
     {
         Arguments.Clear();
-        for (var i = 0; i < _pushArgs.Length; i++)
+        foreach (var pushArg in _pushArgs)
         {
-            Arguments.Add(_pushArgs[i].Invoke());
+            Arguments.Add(pushArg.Invoke());
         }
     }
 }

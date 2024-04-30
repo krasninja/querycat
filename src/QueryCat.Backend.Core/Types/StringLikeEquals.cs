@@ -26,9 +26,8 @@ internal static class StringLikeEquals
         var set = _listCharPool.Get();
         char p = '\0';
 
-        for (var i = 0; i < str.Length; i++)
+        foreach (var c in str)
         {
-            var c = str[i];
             endOfPattern = patternIndex >= pattern.Length;
             if (!endOfPattern)
             {
@@ -39,7 +38,7 @@ internal static class StringLikeEquals
                     lastWildCard = patternIndex;
                     isWildCardOn = true;
                     while (patternIndex < pattern.Length
-                        && pattern[patternIndex] == '%')
+                           && pattern[patternIndex] == '%')
                     {
                         patternIndex++;
                     }

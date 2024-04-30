@@ -14,7 +14,7 @@ internal class ExplainCommand : BaseQueryCommand
         {
             applicationOptions.InitializeLogger();
             var root = applicationOptions.CreateStdoutApplicationRoot();
-            root.Thread.AfterStatementExecute += (_, args) =>
+            root.Thread.StatementExecuted += (_, args) =>
             {
                 var result = root.Thread.LastResult;
                 if (result.GetInternalType() == DataType.Object

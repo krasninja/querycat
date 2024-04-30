@@ -23,7 +23,7 @@ internal static class ProgramParserVisitorExtensions
         {
             var invalidQueryText = tree.GetText();
             Logger.LogCritical("Invalid query: {Query}", invalidQueryText);
-            throw new InvalidOperationException("Parse tree value is not defined.");
+            throw new InvalidOperationException(Resources.Errors.InvalidParserValue);
         }
         return result;
     }

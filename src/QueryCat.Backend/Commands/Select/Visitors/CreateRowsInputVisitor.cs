@@ -79,7 +79,7 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
             return new SelectCommandInputContext(new RowsIteratorInput(rowsIterator));
         }
 
-        throw new QueryCatException("Invalid rows input.");
+        throw new QueryCatException(Resources.Errors.InvalidRowsInput);
     }
 
     private static void SetAlias(IRowsInput input, string alias)

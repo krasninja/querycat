@@ -35,7 +35,7 @@ internal abstract class SelectQueryNode : ExpressionNode, ISelectAliasNode
         ColumnsListNode = columnsListNode;
     }
 
-    public SelectQueryNode(SelectQueryNode node) : this(node.ColumnsListNode)
+    public SelectQueryNode(SelectQueryNode node) : this((SelectColumnsListNode)node.ColumnsListNode.Clone())
     {
         Alias = node.Alias;
         if (node.WithNode != null)

@@ -16,7 +16,7 @@ internal sealed class SelectWindowPartitionClauseNode : AstNode
     }
 
     public SelectWindowPartitionClauseNode(SelectWindowPartitionClauseNode node)
-        : this(node.ExpressionNodes.Select(n => (ExpressionNode)n.Clone()))
+        : this(node.ExpressionNodes.Select(n => (ExpressionNode)n.Clone()).ToList())
     {
         node.CopyTo(this);
     }

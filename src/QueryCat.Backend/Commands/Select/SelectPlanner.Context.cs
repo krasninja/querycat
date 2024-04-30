@@ -1,3 +1,4 @@
+using System.Collections;
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Function;
@@ -109,7 +110,7 @@ internal sealed partial class SelectPlanner
             var rowsInputs = Context_GetRowsInputFromExpression(context, tableExpression);
             if (rowsInputs.Length == 0)
             {
-                throw new QueryCatException($"Cannot resolve input source '{tableExpression}'.");
+                throw new QueryCatException(string.Format(Resources.Errors.CannotResolveInputSource, tableExpression));
             }
             var finalRowInput = rowsInputs.Last();
             var alias = tableExpression is ISelectAliasNode selectAlias ? selectAlias.Alias : string.Empty;
@@ -176,10 +177,12 @@ internal sealed partial class SelectPlanner
 
     private IRowsInput[] Context_CreateInputSourceFromVariable(SelectCommandContext context, IdentifierExpressionNode idNode)
     {
-        if (!context.CapturedScope.TryGet(idNode.FullName, out var value))
+        if (!ExecutionThread.ContainsVariable(idNode.Name, context.CapturedScope))
         {
-            return Array.Empty<IRowsInput>();
+            return [];
         }
+
+        var value = Misc_CreateDelegate(idNode, context).Invoke();
         var internalValueType = value.GetInternalType();
         var rowsInputs = Array.Empty<IRowsInput>();
 
@@ -232,9 +235,17 @@ internal sealed partial class SelectPlanner
             currentContext.AddInput(new SelectCommandInputContext(rowsInput));
             rowsInputResult = rowsInput;
         }
+        if (objVariable is IEnumerable enumerable && enumerable.GetType().IsGenericType)
+        {
+#pragma warning disable IL2072
+            rowsInput = new CollectionInput(GetUnderlyingType(enumerable.GetType()), enumerable);
+#pragma warning restore IL2072
+            currentContext.AddInput(new SelectCommandInputContext(rowsInput));
+            rowsInputResult = rowsInput;
+        }
         if (rowsInputResult == null)
         {
-            return Array.Empty<IRowsInput>();
+            return [];
         }
         return [rowsInputResult];
     }
@@ -406,9 +417,9 @@ internal sealed partial class SelectPlanner
         }
 
         foreach (var inputColumn in node.GetAllChildren<IdentifierExpressionNode>()
-                     .Where(n => string.IsNullOrEmpty(n.SourceName)))
+                     .Where(n => string.IsNullOrEmpty(n.TableSourceName)))
         {
-            inputColumn.SourceName = alias;
+            inputColumn.TableSourceName = alias;
         }
 
         var iterator = node.GetAttribute<IRowsIterator>(AstAttributeKeys.ResultKey);
@@ -445,7 +456,7 @@ internal sealed partial class SelectPlanner
                 continue;
             }
 
-            var columnIndex = rowsInput.GetColumnIndexByName(idNode.Name, idNode.SourceName);
+            var columnIndex = rowsInput.GetColumnIndexByName(idNode.TableFieldName, idNode.TableSourceName);
             if (columnIndex > -1)
             {
                 rowsInput.Columns[columnIndex].DataType = castNode.TargetTypeNode.Type;
@@ -500,4 +511,20 @@ internal sealed partial class SelectPlanner
             SelectTableJoinedType.Right => JoinType.Right,
             _ => throw new ArgumentOutOfRangeException(nameof(tableJoinedType), tableJoinedType, null)
         };
+
+    private static Type GetUnderlyingType(Type type)
+    {
+        if (type.IsGenericType)
+        {
+            if (typeof(IEnumerable).IsAssignableFrom(type))
+            {
+                return type.GetGenericArguments()[0];
+            }
+            if (typeof(IDictionary).IsAssignableFrom(type))
+            {
+                return type.GetGenericArguments()[1];
+            }
+        }
+        return type;
+    }
 }

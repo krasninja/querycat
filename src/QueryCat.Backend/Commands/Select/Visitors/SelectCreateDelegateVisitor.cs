@@ -51,10 +51,20 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
         return funcUnit;
     }
 
+    public override void Visit(SelectIdentifierExpressionNode node)
+    {
+        if (VisitIdentifierNode(node, node.TableFieldName, node.TableSourceName))
+        {
+            return;
+        }
+
+        base.Visit((IdentifierExpressionNode)node);
+    }
+
     /// <inheritdoc />
     public override void Visit(IdentifierExpressionNode node)
     {
-        if (VisitIdentifierNode(node, node.Name, node.SourceName))
+        if (VisitIdentifierNode(node, node.TableFieldName, node.TableSourceName))
         {
             return;
         }
@@ -296,7 +306,7 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
 
         if (rowsIterator.Columns.Length > 1)
         {
-            throw new QueryCatException($"Subquery returns {rowsIterator.Columns.Length} columns, expected 1.");
+            throw new QueryCatException(string.Format(Resources.Errors.InvalidSubqueryColumnsCount, rowsIterator.Columns.Length));
         }
         var operationDelegate = VariantValue.GetOperationDelegate(node.Operation);
 
@@ -345,7 +355,7 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
         }
         else
         {
-            throw new InvalidOperationException($"Quantifier '{node.Operator}' cannot be proceed.");
+            throw new InvalidOperationException(string.Format(Resources.Errors.InvalidQuantifier, node.Operation));
         }
     }
 

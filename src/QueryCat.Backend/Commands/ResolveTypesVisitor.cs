@@ -92,22 +92,28 @@ internal class ResolveTypesVisitor : AstVisitor
     /// <inheritdoc />
     public override void Visit(IdentifierExpressionNode node)
     {
-        if (string.IsNullOrEmpty(node.SourceName))
+        if (SetDataTypeFromVariable(node, node.Name))
         {
-            if (SetDataTypeFromVariable(node, node.Name))
-            {
-                return;
-            }
+            return;
         }
+
         throw new CannotFindIdentifierException(node.FullName);
     }
 
-    protected bool SetDataTypeFromVariable(IAstNode node, string name)
+    protected bool SetDataTypeFromVariable(IdentifierExpressionNode node, string name)
     {
         var scope = ExecutionThread.TopScope;
-        if (scope.TryGet(name, out var value))
+        if (ExecutionThread.TryGetVariable(name, out var value, scope))
         {
-            node.SetAttribute(AstAttributeKeys.TypeKey, value.GetInternalType());
+            var valueType = value.GetInternalType();
+            if (valueType == DataType.Object && node.HasSelectors)
+            {
+                node.SetAttribute(AstAttributeKeys.TypeKey, DataType.Dynamic);
+            }
+            else
+            {
+                node.SetAttribute(AstAttributeKeys.TypeKey, valueType);
+            }
             return true;
         }
         return false;

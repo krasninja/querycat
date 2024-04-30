@@ -15,6 +15,8 @@ internal class CreateDelegateVisitor : AstVisitor
 {
     private readonly ResolveTypesVisitor _resolveTypesVisitor;
 
+    private readonly Dictionary<IdentifierIndexSelectorNode, object?[]> _objectIndexesCache = new();
+
     protected Dictionary<int, IFuncUnit> NodeIdFuncMap { get; } = new(capacity: 32);
 
     protected IExecutionThread<ExecutionOptions> ExecutionThread { get; }
@@ -80,17 +82,34 @@ internal class CreateDelegateVisitor : AstVisitor
 
         var leftAction = NodeIdFuncMap[node.LeftNode.Id];
         var rightAction = NodeIdFuncMap[node.RightNode.Id];
-        var action = VariantValue.GetOperationDelegate(node.Operation,
-            node.LeftNode.GetDataType(), node.RightNode.GetDataType());
+        var leftNodeType = node.LeftNode.GetDataType();
+        var rightNodeType = node.RightNode.GetDataType();
 
-        VariantValue Func()
+        // If one of the type is dynamic (has object selector), it means that we cannot evaluate the type
+        // statically. Use slow dynamic expression.
+        if (leftNodeType == DataType.Dynamic || rightNodeType == DataType.Dynamic)
         {
-            var leftValue = leftAction.Invoke();
-            var rightValue = rightAction.Invoke();
-            var result = action.Invoke(in leftValue, in rightValue);
-            return result;
+            VariantValue DynamicFunc()
+            {
+                var leftValue = leftAction.Invoke();
+                var rightValue = rightAction.Invoke();
+                return leftValue + rightValue;
+            }
+            NodeIdFuncMap[node.Id] = new FuncUnitDelegate(DynamicFunc, node.GetDataType());
         }
-        NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, node.GetDataType());
+        // Find the most optimal delegate by types and use it.
+        else
+        {
+            var action = VariantValue.GetOperationDelegate(node.Operation, leftNodeType, rightNodeType);
+            VariantValue FastFunc()
+            {
+                var leftValue = leftAction.Invoke();
+                var rightValue = rightAction.Invoke();
+                var result = action.Invoke(in leftValue, in rightValue);
+                return result;
+            }
+            NodeIdFuncMap[node.Id] = new FuncUnitDelegate(FastFunc, node.GetDataType());
+        }
     }
 
     /// <inheritdoc />
@@ -152,21 +171,78 @@ internal class CreateDelegateVisitor : AstVisitor
     public override void Visit(IdentifierExpressionNode node)
     {
         ResolveTypesVisitor.Visit(node);
+        var scope = ExecutionThread.TopScope;
 
-        if (string.IsNullOrEmpty(node.SourceName))
+        if (ExecutionThread.ContainsVariable(node.Name, scope))
         {
-            var scope = ExecutionThread.TopScope;
-            if (scope.TryGet(node.Name, out _))
+            var context = new ObjectSelectorContext();
+            VariantValue Func()
             {
-                VariantValue Func()
-                {
-                    return scope.Get(node.Name);
-                }
-                NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, node.GetDataType());
-                return;
+                var startObject = ExecutionThread.GetVariable(node.Name, scope);
+                GetObjectBySelector(context, startObject, node, out var finalValue);
+                return finalValue;
             }
+            NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, node.GetDataType());
+            return;
         }
+
         throw new CannotFindIdentifierException(node.Name);
+    }
+
+    protected bool GetObjectBySelector(ObjectSelectorContext context, VariantValue value, IdentifierExpressionNode idNode,
+        out VariantValue result)
+    {
+        result = VariantValue.Null;
+        if (idNode.SelectorNodes.Length == 0 || value.AsObjectUnsafe == null)
+        {
+            result = value;
+            return false;
+        }
+
+        context.Push(new ObjectSelectorContext.Token(value.AsObjectUnsafe));
+        foreach (var selector in idNode.SelectorNodes)
+        {
+            ObjectSelectorContext.Token? info = null;
+
+            if (selector is IdentifierPropertySelectorNode propertySelectorNode)
+            {
+                info = ExecutionThread.ObjectSelector.SelectByProperty(context, propertySelectorNode.PropertyName);
+            }
+            else if (selector is IdentifierIndexSelectorNode indexSelectorNode)
+            {
+                var indexObjects = GetObjectIndexesSelector(indexSelectorNode);
+                info = ExecutionThread.ObjectSelector.SelectByIndex(context, indexObjects);
+            }
+
+            if (!info.HasValue)
+            {
+                return false;
+            }
+            context.Push(info.Value);
+        }
+
+        result = VariantValue.CreateFromObject(context.Peek().ResultObject);
+        return true;
+    }
+
+    protected object?[] GetObjectIndexesSelector(IdentifierIndexSelectorNode indexSelectorNode)
+    {
+        if (indexSelectorNode.IndexExpressions.Length == 0)
+        {
+            return [];
+        }
+        if (!_objectIndexesCache.TryGetValue(indexSelectorNode, out var indexes))
+        {
+            indexes = new object?[indexSelectorNode.IndexExpressions.Length];
+            _objectIndexesCache.Add(indexSelectorNode, indexes);
+        }
+
+        for (var i = 0; i < indexSelectorNode.IndexExpressions.Length; i++)
+        {
+            var indexExpression = indexSelectorNode.IndexExpressions[i];
+            indexes[i] = Converter.ConvertValue(NodeIdFuncMap[indexExpression.Id].Invoke(), typeof(object));
+        }
+        return indexes;
     }
 
     /// <inheritdoc />
@@ -185,9 +261,9 @@ internal class CreateDelegateVisitor : AstVisitor
         VariantValue Func()
         {
             var leftValue = valueAction.Invoke();
-            for (int i = 0; i < actions.Length; i++)
+            foreach (var action in actions)
             {
-                var rightValue = actions[i].Invoke();
+                var rightValue = action.Invoke();
                 var isEqual = equalDelegate.Invoke(in leftValue, in rightValue);
                 if (isEqual.IsNull)
                 {
@@ -225,9 +301,21 @@ internal class CreateDelegateVisitor : AstVisitor
         ResolveTypesVisitor.Visit(node);
         var action = NodeIdFuncMap[node.RightNode.Id];
         var nodeType = node.GetDataType();
-        var notDelegate = node.Operation == VariantValue.Operation.Not
-            ? VariantValue.GetOperationDelegate(VariantValue.Operation.Not, nodeType)
-            : VariantValue.UnaryNullDelegate;
+
+        VariantValue.UnaryFunction notDelegate = VariantValue.UnaryNullDelegate;
+        if (node.Operation == VariantValue.Operation.Not)
+        {
+            if (nodeType == DataType.Dynamic)
+            {
+                // Dynamic mode.
+                notDelegate = (in VariantValue left) => new VariantValue(!left.AsBoolean);
+            }
+            else if (nodeType != DataType.Object)
+            {
+                // Static mode.
+                notDelegate = VariantValue.GetOperationDelegate(VariantValue.Operation.Not, nodeType);
+            }
+        }
 
         NodeIdFuncMap[node.Id] = node.Operation switch
         {

@@ -249,12 +249,23 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
         => new InExpressionValuesNode(this.Visit<ExpressionNode>(context.expression()));
 
     /// <inheritdoc />
-    public override IAstNode VisitIdentifierChainFull(QueryCatParser.IdentifierChainFullContext context)
-        => new IdentifierExpressionNode(context.name.Text, GetUnwrappedText(context.source));
+    public override IAstNode VisitIdentifierWithoutSource(QueryCatParser.IdentifierWithoutSourceContext context)
+        => new IdentifierExpressionNode(GetUnwrappedText(context.name));
 
     /// <inheritdoc />
-    public override IAstNode VisitIdentifierChainSimple(QueryCatParser.IdentifierChainSimpleContext context)
-        => new IdentifierExpressionNode(GetUnwrappedText(context.name));
+    public override IAstNode VisitIdentifierWithSelector(QueryCatParser.IdentifierWithSelectorContext context)
+        => new IdentifierExpressionNode(
+            name: GetUnwrappedText(context.name),
+            selectorNodes: context.identifierSelector().Select(this.Visit<IdentifierSelectorNode>).ToList());
+
+    /// <inheritdoc />
+    public override IAstNode VisitIdentifierSelectorProperty(QueryCatParser.IdentifierSelectorPropertyContext context)
+        => new IdentifierPropertySelectorNode(propertyName: GetUnwrappedText(context.name));
+
+    /// <inheritdoc />
+    public override IAstNode VisitIdentifierSelectorIndex(QueryCatParser.IdentifierSelectorIndexContext context)
+        => new IdentifierIndexSelectorNode(
+            indexExpression: context.simpleExpression().Select(this.Visit<ExpressionNode>).ToList());
 
     private static bool GetBooleanFromString(string text)
     {
@@ -273,13 +284,13 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
 
     /// <inheritdoc />
     public override IAstNode VisitFunctionCall(QueryCatParser.FunctionCallContext context)
-        => new FunctionCallNode(GetUnwrappedText(context.IDENTIFIER()),
+        => new FunctionCallNode(GetUnwrappedText(context.identifierSimple()),
             this.Visit<FunctionCallArgumentNode>(context.functionCallArg()));
 
     /// <inheritdoc />
     public override IAstNode VisitFunctionCallArg(QueryCatParser.FunctionCallArgContext context)
         => new FunctionCallArgumentNode(
-            GetUnwrappedText(context.IDENTIFIER()), this.Visit<ExpressionNode>(context.expression()));
+            GetUnwrappedText(context.identifierSimple()), this.Visit<ExpressionNode>(context.expression()));
 
     #endregion
 

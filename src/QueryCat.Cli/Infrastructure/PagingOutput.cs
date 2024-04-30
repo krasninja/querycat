@@ -9,12 +9,11 @@ namespace QueryCat.Cli.Infrastructure;
 public class PagingOutput : IRowsOutput
 {
     public const int NoLimit = -1;
-    private const string ContinueWord = "--More--";
 
-    private static readonly string ClearText = new('\r', ContinueWord.Length);
+    private static readonly string _clearText = new('\r', Resources.Messages.MoreRows.Length);
 
     private readonly IRowsOutput _rowsOutput;
-    private readonly CancellationTokenSource? _cts;
+    private readonly CancellationTokenSource? _cancellationTokenSource;
     private int _rowsCounter;
 
     /// <summary>
@@ -35,10 +34,10 @@ public class PagingOutput : IRowsOutput
         RequiresColumnsLengthAdjust = true,
     };
 
-    public PagingOutput(IRowsOutput rowsOutput, int pagingRowsCount = 20, CancellationTokenSource? cts = null)
+    public PagingOutput(IRowsOutput rowsOutput, int pagingRowsCount = 20, CancellationTokenSource? cancellationTokenSource = null)
     {
         _rowsOutput = rowsOutput;
-        _cts = cts;
+        _cancellationTokenSource = cancellationTokenSource;
         PagingRowsCount = pagingRowsCount;
     }
 
@@ -60,22 +59,25 @@ public class PagingOutput : IRowsOutput
     {
         _rowsOutput.WriteValues(values);
         if (PagingRowsCount != NoLimit
+            && Environment.UserInteractive
             && ++_rowsCounter >= PagingRowsCount
             && !Console.IsInputRedirected
             && !Console.IsOutputRedirected)
         {
             _rowsCounter = 0;
-            Console.Write(ContinueWord);
+            Console.Write(Resources.Messages.MoreRows);
             var consoleKey = Console.ReadKey();
-            Console.Write(ClearText);
+            Console.Write(_clearText);
 
+            // Show all next content.
             if (consoleKey.Key == ConsoleKey.A)
             {
                 PagingRowsCount = -1;
             }
+            // Quit.
             else if (consoleKey.Key == ConsoleKey.Q)
             {
-                _cts?.Cancel();
+                _cancellationTokenSource?.Cancel();
             }
         }
     }

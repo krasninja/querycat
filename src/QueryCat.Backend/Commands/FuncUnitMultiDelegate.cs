@@ -13,9 +13,9 @@ internal sealed class FuncUnitMultiDelegate(DataType outputType, params IFuncUni
     public VariantValue Invoke()
     {
         var lastResult = VariantValue.Null;
-        for (var i = 0; i < funcUnits.Length; i++)
+        foreach (var funcUnit in funcUnits)
         {
-            lastResult = funcUnits[i].Invoke();
+            lastResult = funcUnit.Invoke();
         }
         return lastResult;
     }

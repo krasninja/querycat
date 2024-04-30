@@ -22,6 +22,10 @@ internal abstract class StatementNode : AstNode
 
     public StatementNode(StatementNode node) : this((IAstNode)node.RootNode.Clone())
     {
+        if (node.NextNode != null)
+        {
+            NextNode = (StatementNode)node.NextNode.Clone();
+        }
         node.CopyTo(this);
     }
 

@@ -31,7 +31,7 @@ internal sealed partial class SelectPlanner
         {
             return CreateIteratorInternal(queryCombineNode, parentContext);
         }
-        throw new InvalidOperationException($"Not supported node type {queryNode.GetType()}.");
+        throw new InvalidOperationException(string.Format(Resources.Errors.NotSupportedNodeType, queryNode.GetType()));
     }
 
     private IRowsIterator CreateIteratorInternal(SelectQuerySpecificationNode node, SelectCommandContext? parentContext = null)

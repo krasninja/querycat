@@ -29,6 +29,8 @@ internal class QueryOptions
 
     public TimeSpan FollowTimeout { get; init; }
 
+    public int TailCount { get; init; } = -1;
+
     public TimeSpan QueryTimeout { get; init; }
 
     public bool SafeMode { get; init; }

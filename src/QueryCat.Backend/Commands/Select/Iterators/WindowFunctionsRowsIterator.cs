@@ -121,14 +121,14 @@ internal sealed class WindowFunctionsRowsIterator : IRowsIterator
             // Format result rows frame. Format: agg_arg1, agg_arg2, order_col1, order_col2, rowId.
             var nextIndex = 0;
             // Aggregates.
-            for (var i = 0; i < WindowFunctionInfo.AggregateValues.Length; i++)
+            foreach (var aggregateValue in WindowFunctionInfo.AggregateValues)
             {
-                _row[nextIndex++] = WindowFunctionInfo.AggregateValues[i].Invoke();
+                _row[nextIndex++] = aggregateValue.Invoke();
             }
             // Order.
-            for (var i = 0; i < WindowFunctionInfo.OrderFunctions.Length; i++)
+            foreach (var orderFunction in WindowFunctionInfo.OrderFunctions)
             {
-                _row[nextIndex++] = WindowFunctionInfo.OrderFunctions[i].Invoke();
+                _row[nextIndex++] = orderFunction.Invoke();
             }
             var rowIndex = partitionData.RowsFrame.AddRow(_row);
             RowIdToPartition.Add(new RowIdData(partitionData, rowIndex));
@@ -200,10 +200,8 @@ internal sealed class WindowFunctionsRowsIterator : IRowsIterator
         // Prefetch all values.
         while (_rowsIterator.MoveNext())
         {
-            for (var partIndex = 0; partIndex < _partitions.Length; partIndex++)
+            foreach (var partition in _partitions)
             {
-                var partition = _partitions[partIndex];
-
                 // Find partition key. Add it into KeysRowsIds.
                 var key = partition.PartitionFormatter.Invoke();
                 partition.Add(key, indexes);
@@ -225,11 +223,9 @@ internal sealed class WindowFunctionsRowsIterator : IRowsIterator
         var iterator = _rowsFrame.GetIterator();
         while (iterator.MoveNext())
         {
-            for (var partIndex = 0; partIndex < _partitions.Length; partIndex++)
+            foreach (var partition in _partitions)
             {
-                var partition = _partitions[partIndex];
                 var aggregateValue = ProcessPartition(iterator, partition);
-
                 _rowsFrame.UpdateValue(iterator.Position, partition.OriginalColumnIndex, aggregateValue);
             }
         }

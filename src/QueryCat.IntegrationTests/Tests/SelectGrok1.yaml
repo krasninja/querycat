@@ -1,6 +1,6 @@
 expected: |
   10.1.1.1,test@example.com,2017-05-26 21:54:26,POST,/elasticsearch/_msearch,1.1,,200,263,"https://myserver.com/app/kibana","""Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36""",0.02,0.008
 query: |
-  select clientip, user, to_char([timestamp], 'yyyy-MM-dd HH:mm:ss'), verb, request, httpversion, rawrequest, response, bytes, referrer, agent, request_time, upstream_time from
+  select clientip, user, to_char("timestamp", 'yyyy-MM-dd HH:mm:ss'), verb, request, httpversion, rawrequest, response, bytes, referrer, agent, request_time, upstream_time from
     read_text('10.1.1.1 - - test@example.com [26/May/2017:21:54:26 +0000] "POST /elasticsearch/_msearch HTTP/1.1" 200 263 "https://myserver.com/app/kibana" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36" 0.020 0.008 .',
     fmt => grok('%{IPORHOST:clientip} - - %{EMAILADDRESS:user} \[%{HTTPDATE:timestamp}\] \"(?:%{WORD:verb} %{NOTSPACE:request}(?: HTTP/%{NUMBER:httpversion})?|%{DATA:rawrequest})\" %{NUMBER:response} (?:%{NUMBER:bytes}|-) %{QS:referrer} %{QS:agent} %{NUMBER:request_time} %{NUMBER:upstream_time}'));
