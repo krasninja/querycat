@@ -23,10 +23,10 @@ public class DelimiterStreamReader
      */
     private const int DefaultBufferSize = 0x4000;
 
-    private static readonly char[] AutoDetectDelimiters = { ',', '\t', ';', '|' };
-    private static readonly char[] EndOfLineCharacters = { '\n', '\r' };
+    private static readonly char[] _autoDetectDelimiters = { ',', '\t', ';', '|' };
+    private static readonly char[] _endOfLineCharacters = { '\n', '\r' };
 
-    public delegate void OnDelimiterDelegate(char ch, long pos, out bool countField, out bool endLine);
+    public delegate void OnDelimiterDelegate(char ch, long position, out bool countField, out bool endLine);
 
     public OnDelimiterDelegate? OnDelimiter { get; set; }
 
@@ -54,12 +54,12 @@ public class DelimiterStreamReader
         /// <summary>
         /// Quote character.
         /// </summary>
-        public char[] QuoteChars { get; set; } = Array.Empty<char>();
+        public char[] QuoteChars { get; set; } = [];
 
         /// <summary>
         /// Columns delimiters.
         /// </summary>
-        public char[] Delimiters { get; set; } = Array.Empty<char>();
+        public char[] Delimiters { get; set; } = [];
 
         /// <summary>
         /// Attempt to find delimiter if it is not specified. If not found the PreferredDelimiter
@@ -139,7 +139,9 @@ public class DelimiterStreamReader
     private readonly DynamicBuffer<char> _dynamicBuffer;
     private readonly StreamReader _streamReader;
     private readonly ReaderOptions _options;
-    private char[] _stopCharacters = Array.Empty<char>();
+    private char[] _stopCharacters = [];
+    private SearchValues<char> _delimiters;
+    private SearchValues<char> _quoteCharacters;
 
     // Stores positions of delimiters for columns.
     private FieldInfo[] _fieldInfos = new FieldInfo[32];
@@ -162,17 +164,20 @@ public class DelimiterStreamReader
         _streamReader = streamReader;
         _options = options ?? new ReaderOptions();
         _dynamicBuffer = new DynamicBuffer<char>(_options.BufferSize);
+
         InitStopCharacters();
     }
 
     private void InitStopCharacters()
     {
-        var endOfLineCharacters = _options.CompleteOnEndOfLine ? EndOfLineCharacters : Array.Empty<char>();
+        var endOfLineCharacters = _options.CompleteOnEndOfLine ? _endOfLineCharacters : [];
         _stopCharacters = _options.Delimiters
-            .Union(_options.QuoteChars)
             .Union(endOfLineCharacters)
+            .Union(_options.QuoteChars)
             .Distinct()
             .ToArray();
+        _delimiters = SearchValues.Create(_options.Delimiters);
+        _quoteCharacters = SearchValues.Create(_options.QuoteChars);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
@@ -245,6 +250,7 @@ public class DelimiterStreamReader
             fieldStart = true; // Indicates that we are at field start.
         SequenceReader<char> sequenceReader;
         _fieldInfoLastIndex = 0;
+        var stopCharactersLocal = (ReadOnlySpan<char>)_stopCharacters;
         ref var currentField = ref GetNextFieldInfo();
         do
         {
@@ -258,7 +264,7 @@ public class DelimiterStreamReader
                 {
                     while (EnsureHasAdvanceData(ref sequenceReader)
                            && GetNextCharacter(out var nextChar)
-                           && Array.IndexOf(_options.Delimiters, nextChar) > -1)
+                           && _delimiters.Contains(nextChar))
                     {
                         _currentDelimiterPosition++;
                         sequenceReader.Advance(1);
@@ -268,7 +274,7 @@ public class DelimiterStreamReader
 
                 // Advance to any stop character or quote (if in a quote mode).
                 var hasAdvanced = !isInQuotes
-                    ? sequenceReader.TryAdvanceToAny(_stopCharacters, advancePastDelimiter: false)
+                    ? sequenceReader.TryAdvanceToAny(stopCharactersLocal, advancePastDelimiter: false)
                     : sequenceReader.TryAdvanceTo(currentField.QuoteCharacter, advancePastDelimiter: false);
                 if (!hasAdvanced)
                 {
@@ -279,7 +285,7 @@ public class DelimiterStreamReader
                 sequenceReader.Advance(1);
 
                 // Quotes.
-                if (isInQuotes || Array.IndexOf(_options.QuoteChars, ch) > -1)
+                if (isInQuotes || _quoteCharacters.Contains(ch))
                 {
                     if (fieldStart)
                     {
@@ -313,7 +319,7 @@ public class DelimiterStreamReader
                     }
                 }
                 // Delimiters.
-                else if (!lineMode && Array.IndexOf(_options.Delimiters, ch) > -1)
+                else if (!lineMode && _delimiters.Contains(ch))
                 {
                     _currentDelimiterPosition = sequenceReader.Consumed;
                     if (!isInQuotes && (ulong)_currentDelimiterPosition > 0)
@@ -532,18 +538,18 @@ public class DelimiterStreamReader
             _currentSequence = _dynamicBuffer.GetSequence();
             sequenceReader = new SequenceReader<char>(_currentSequence);
         }
-        while (!sequenceReader.TryReadToAny(out line, EndOfLineCharacters)
+        while (!sequenceReader.TryReadToAny(out line, _endOfLineCharacters)
                && ReadNextBufferData() > 0);
 
         if (_options.DetectDelimiter)
         {
             if (TryDetectDelimiter(line, out var delimiter))
             {
-                _options.Delimiters = new[] { delimiter };
+                _options.Delimiters = [delimiter];
             }
             else if (_options.PreferredDelimiter.HasValue)
             {
-                _options.Delimiters = new[] { _options.PreferredDelimiter.Value };
+                _options.Delimiters = [_options.PreferredDelimiter.Value];
             }
             else
             {
@@ -559,13 +565,13 @@ public class DelimiterStreamReader
     /// </summary>
     /// <param name="line">Line to analyze.</param>
     /// <param name="delimiter">Delimiter or space if not found.</param>
-    /// <returns><c>True</c> if found best delimiter, <c>false</c> otherwise.</returns>
+    /// <returns><c>True</c> if found the best delimiter, <c>false</c> otherwise.</returns>
     public static bool TryDetectDelimiter(ReadOnlySpan<char> line, out char delimiter)
     {
-        var autoDetectDelimitersCount = new int[AutoDetectDelimiters.Length];
+        var autoDetectDelimitersCount = new int[_autoDetectDelimiters.Length];
         foreach (var ch in line)
         {
-            var delimiterIndex = Array.IndexOf(AutoDetectDelimiters, ch);
+            var delimiterIndex = Array.IndexOf(_autoDetectDelimiters, ch);
             if (delimiterIndex > -1)
             {
                 autoDetectDelimitersCount[delimiterIndex]++;
@@ -580,7 +586,7 @@ public class DelimiterStreamReader
             return false;
         }
 
-        delimiter = AutoDetectDelimiters[bestDelimiterIndex];
+        delimiter = _autoDetectDelimiters[bestDelimiterIndex];
         return true;
     }
 
@@ -631,7 +637,6 @@ public class DelimiterStreamReader
         while (sequenceReader.TryReadTo(out ReadOnlySpan<char> span, '\\'))
         {
             buffer.Append(span);
-
             AppendEscapeCharacter(ref sequenceReader, buffer);
         }
         var unreadSequence = sequenceReader.UnreadSequence;
@@ -639,14 +644,14 @@ public class DelimiterStreamReader
         return GetSpanFromStringBuilder(buffer);
     }
 
-    private static readonly char[] EscapeRepeatChars = { '"', '\'', '\\', '\n', '\r', '\t', '\v', '\0' };
+    private static readonly SearchValues<char> _escapeRepeatChars = SearchValues.Create("\"'\\\n\r\t\v\0");
 
     private static void AppendEscapeCharacter(ref SequenceReader<char> reader, StringBuilder buffer)
     {
         // https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/strings/#string-escape-sequences.
         if (reader.TryPeek(out var ch))
         {
-            if (Array.IndexOf(EscapeRepeatChars, ch) > -1)
+            if (_escapeRepeatChars.Contains(ch))
             {
                 buffer.Append(ch);
             }
