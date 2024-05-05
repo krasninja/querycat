@@ -140,8 +140,8 @@ public class DelimiterStreamReader
     private readonly StreamReader _streamReader;
     private readonly ReaderOptions _options;
     private char[] _stopCharacters = [];
-    private SearchValues<char> _delimiters;
-    private SearchValues<char> _quoteCharacters;
+    private SearchValues<char> _delimiters = SearchValues.Create(ReadOnlySpan<char>.Empty);
+    private SearchValues<char> _quoteCharacters = SearchValues.Create(ReadOnlySpan<char>.Empty);
 
     // Stores positions of delimiters for columns.
     private FieldInfo[] _fieldInfos = new FieldInfo[32];
