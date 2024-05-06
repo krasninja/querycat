@@ -16,6 +16,6 @@ internal class CustomInlineFunctionUsage : BaseUsage
             return new VariantValue(a + b.ToString());
         });
 
-        Console.WriteLine(executionThread.Run("secret('num:', 10.25::numeric)").ToString());
+        Console.WriteLine(executionThread.Run("secret('num:', 10.25::numeric)").ToString()); // num:10.25
     }
 }

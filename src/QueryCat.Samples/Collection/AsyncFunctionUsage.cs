@@ -29,6 +29,6 @@ internal class AsyncFunctionUsage : BaseUsage
         executionThread.FunctionsManager.RegisterFunction(AsyncDemo);
 
         var result = executionThread.Run("async_demo()");
-        Console.WriteLine(result.ToString());
+        Console.WriteLine(result.ToString()); // Hello World!
     }
 }

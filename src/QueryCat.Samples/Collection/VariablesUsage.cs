@@ -13,6 +13,6 @@ internal class VariablesUsage : BaseUsage
         executionThread.Run("declare x int := 10;");
         // Define variable in code.
         executionThread.TopScope.Variables["y"] = new VariantValue(5);
-        Console.WriteLine(executionThread.Run("x+y").ToString());
+        Console.WriteLine(executionThread.Run("x+y").AsString); // 15
     }
 }

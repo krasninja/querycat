@@ -17,6 +17,6 @@ internal class ParametersUsage : BaseUsage
             ["world"] = new("World!"),
         });
 
-        Console.WriteLine(executionThread.LastResult.AsString);
+        Console.WriteLine(executionThread.LastResult.AsString); // Hello World!
     }
 }

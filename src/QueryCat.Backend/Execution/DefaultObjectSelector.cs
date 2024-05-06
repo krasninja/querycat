@@ -34,7 +34,8 @@ public class DefaultObjectSelector : IObjectSelector
         object? resultObject = null;
 
         // First try to use the most popular case when we have only one integer index.
-        if (indexes.Length == 1 && indexes[0] is long longIndex)
+        if (resultObject == null && indexes.Length == 1 && indexes[0] is long longIndex
+            && current.ResultObject is not IDictionary)
         {
             var intIndex = (int)longIndex;
             // List.
@@ -74,10 +75,12 @@ public class DefaultObjectSelector : IObjectSelector
             // Dictionary.
             if (indexes.Length == 1 && indexes[0] != null && current.ResultObject is IDictionary dictionary)
             {
-                resultObject = dictionary[indexes[0]!];
+                var keyType = dictionary.GetType().GetGenericArguments()[0];
+                var key = Convert.ChangeType(indexes[0]!, keyType);
+                resultObject = dictionary[key];
             }
             // Index property.
-            else if (current.SelectProperty.HasValue)
+            if (resultObject == null && current.SelectProperty.HasValue)
             {
                 resultObject = current.SelectProperty.Value.PropertyInfo.GetValue(current.ResultObject, indexes);
             }
