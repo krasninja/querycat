@@ -186,6 +186,81 @@ const filesPage = {
         getFullDownloadPath: function(path) {
             return window.baseUrl + 'api/files?q=' + path;
         },
+        getFileExtension: function(filename) {
+            return filename.split('.').pop().toLowerCase();
+        },
+        getFileIcon: function(name) {
+            const extension = this.getFileExtension(name);
+            switch (extension) {
+                case 'txt':
+                case 'log':
+                case 'md':
+                    return 'text_snippet';
+                case 'pdf':
+                    return 'picture_as_pdf';
+                case 'avi':
+                case 'asf':
+                case 'asx':
+                case 'flv':
+                case 'mkv':
+                case 'mov':
+                case 'mp4':
+                case 'mp4v':
+                case 'mpeg':
+                case 'mpg':
+                case 'oga':
+                case 'ogg':
+                case 'ogv':
+                case 'ts':
+                case 'webm':
+                case 'wmv':
+                    return 'videocam';
+                case 'aac':
+                case 'm3u':
+                case 'm4a':
+                case 'mp3':
+                case 'wav':
+                    return 'audiotrack';
+                case '7z':
+                case 'bz':
+                case 'bz2':
+                case 'gz':
+                case 'zip':
+                case 'rar':
+                    return 'folder_zip';
+                case 'bpm':
+                case 'gif':
+                case 'ico':
+                case 'jfif':
+                case 'jpeg':
+                case 'jpg':
+                case 'png':
+                case 'svg':
+                case 'tif':
+                case 'tiff':
+                case 'wbmp':
+                case 'webp':
+                    return 'image';
+                case 'js':
+                case 'json':
+                    return 'javascript';
+                case 'css':
+                    return 'css';
+                case 'htm':
+                case 'html':
+                case 'shtml':
+                    return 'html';
+                case 'ical':
+                case 'icalendar':
+                    return 'event';
+                case 'rss':
+                    return 'rss_feed';
+                case 'eml':
+                    return 'email';
+                default:
+                    return 'description';
+            }
+        },
         runQuery: function() {
             const self = this;
             const path = self.$route.query.q;

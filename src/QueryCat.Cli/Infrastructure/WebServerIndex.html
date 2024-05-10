@@ -8,7 +8,7 @@
   <meta name="robots" content="noindex, nofollow" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <link href="https://fonts.googleapis.com/css?family=Material+Icons" rel="stylesheet" type="text/css">
-  <link href="https://cdn.jsdelivr.net/npm/quasar@2.14/dist/quasar.prod.css" rel="stylesheet" type="text/css">
+  <link href="https://cdn.jsdelivr.net/npm/quasar@2.15/dist/quasar.prod.css" rel="stylesheet" type="text/css">
 
   <style>
     .sticky-header-table {
@@ -159,8 +159,8 @@
         <template v-slot:body="props">
           <q-tr :props="props">
             <q-td key="name" :props="props">
-              <q-icon v-if="props.row.type === 'd'" name="folder"></q-icon>
-              <q-icon v-if="props.row.type === 'f'" name="description"></q-icon>
+              <q-icon v-if="props.row.type === 'd'" style="color: #f1d592;" name="folder"></q-icon>
+              <q-icon v-if="props.row.type === 'f'" :name="getFileIcon(props.row.name)"></q-icon>
               &nbsp;&nbsp;
               <router-link :to="{ path: 'files', query: { q: getFullPath(props.row.name) }}"
                            custom v-slot="{ href, navigate, isActive }">
@@ -185,10 +185,10 @@
   </template>
 
   <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/quasar@2.14/dist/quasar.umd.prod.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/quasar@2.15/dist/quasar.umd.prod.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/axios@1.6/dist/axios.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/vue-router@4/dist/vue-router.global.min.js"></script>
-  <script src="index.js?d=20240102"></script>
+  <script src="index.js?d=20240508"></script>
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {
