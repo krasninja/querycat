@@ -177,12 +177,18 @@ internal sealed partial class SelectPlanner
 
     private IRowsInput[] Context_CreateInputSourceFromVariable(SelectCommandContext context, IdentifierExpressionNode idNode)
     {
-        if (!ExecutionThread.ContainsVariable(idNode.Name, context.CapturedScope))
+        if (!ExecutionThread.TryGetVariable(idNode.FullName, out var value, context.CapturedScope))
         {
-            return [];
+            if (idNode.HasSelectors)
+            {
+                value = Misc_CreateDelegate(idNode, context).Invoke();
+            }
+            else
+            {
+                return [];
+            }
         }
 
-        var value = Misc_CreateDelegate(idNode, context).Invoke();
         var internalValueType = value.GetInternalType();
         var rowsInputs = Array.Empty<IRowsInput>();
 
