@@ -33,9 +33,26 @@ public class DefaultObjectSelector : IObjectSelector
         var current = context.Peek();
         object? resultObject = null;
 
+        // Try to get value with GetValue call (dictionary).
+        if (resultObject == null && current.ResultObject is IDictionary dictionary)
+        {
+            // Dictionary.
+            if (indexes.Length == 1 && indexes[0] != null)
+            {
+                var keyType = dictionary.GetType().GetGenericArguments()[0];
+                var key = Convert.ChangeType(indexes[0]!, keyType);
+                resultObject = dictionary[key];
+            }
+
+            // Index property.
+            if (resultObject == null && current.SelectProperty.HasValue)
+            {
+                resultObject = current.SelectProperty.Value.PropertyInfo.GetValue(current.ResultObject, indexes);
+            }
+        }
+
         // First try to use the most popular case when we have only one integer index.
-        if (resultObject == null && indexes.Length == 1 && indexes[0] is long longIndex
-            && current.ResultObject is not IDictionary)
+        if (resultObject == null && indexes.Length == 1 && indexes[0] is long longIndex)
         {
             var intIndex = (int)longIndex;
             // List.
@@ -66,23 +83,6 @@ public class DefaultObjectSelector : IObjectSelector
                     }
                 }
                 (enumerator as IDisposable)?.Dispose();
-            }
-        }
-
-        // Then try to get value with GetValue call.
-        if (resultObject == null)
-        {
-            // Dictionary.
-            if (indexes.Length == 1 && indexes[0] != null && current.ResultObject is IDictionary dictionary)
-            {
-                var keyType = dictionary.GetType().GetGenericArguments()[0];
-                var key = Convert.ChangeType(indexes[0]!, keyType);
-                resultObject = dictionary[key];
-            }
-            // Index property.
-            if (resultObject == null && current.SelectProperty.HasValue)
-            {
-                resultObject = current.SelectProperty.Value.PropertyInfo.GetValue(current.ResultObject, indexes);
             }
         }
 
