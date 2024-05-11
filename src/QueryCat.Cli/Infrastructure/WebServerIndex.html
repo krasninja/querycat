@@ -9,6 +9,10 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <link href="https://fonts.googleapis.com/css?family=Material+Icons" rel="stylesheet" type="text/css">
   <link href="https://cdn.jsdelivr.net/npm/quasar@2.15/dist/quasar.prod.css" rel="stylesheet" type="text/css">
+  <link
+    href="data:image/x-icon;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQEAYAAABPYyMiAAAABmJLR0T///////8JWPfcAAAACXBIWXMAAABIAAAASABGyWs+AAAAF0lEQVRIx2NgGAWjYBSMglEwCkbBSAcACBAAAeaR9cIAAAAASUVORK5CYII="
+    rel="icon"
+    type="image/x-icon" />
 
   <style>
     .sticky-header-table {
@@ -35,6 +39,9 @@
     }
     ul {
       padding-left: 1em;
+    }
+    .folder {
+      color: #f1d592;
     }
   </style>
 </head>
@@ -159,7 +166,7 @@
         <template v-slot:body="props">
           <q-tr :props="props">
             <q-td key="name" :props="props">
-              <q-icon v-if="props.row.type === 'd'" style="color: #f1d592;" name="folder"></q-icon>
+              <q-icon v-if="props.row.type === 'd'" class="folder" name="folder"></q-icon>
               <q-icon v-if="props.row.type === 'f'" :name="getFileIcon(props.row.name)"></q-icon>
               &nbsp;&nbsp;
               <router-link :to="{ path: 'files', query: { q: getFullPath(props.row.name) }}"
