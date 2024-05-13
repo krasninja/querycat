@@ -13,10 +13,11 @@ public class DefaultObjectSelector : IObjectSelector
     {
         var current = context.Peek();
         var propertyInfo = current.ResultObject.GetType().GetProperty(propertyName);
-        if (propertyInfo == null)
+        if (propertyInfo == null || !propertyInfo.CanRead)
         {
             return null;
         }
+
         var resultObject = propertyInfo.GetValue(current.ResultObject);
         if (resultObject != null)
         {
@@ -48,7 +49,8 @@ public class DefaultObjectSelector : IObjectSelector
             }
 
             // Index property.
-            if (resultObject == null && current.SelectProperty.HasValue)
+            if (resultObject == null && current.SelectProperty.HasValue
+                && current.SelectProperty.Value.PropertyInfo.CanRead)
             {
                 resultObject = current.SelectProperty.Value.PropertyInfo.GetValue(current.ResultObject, indexes);
             }
@@ -113,14 +115,14 @@ public class DefaultObjectSelector : IObjectSelector
             return false;
         }
         var selectPropertyInfo = token.SelectProperty.Value;
-        return SetValueInternal(selectPropertyInfo, newValue, indexes);
-    }
 
-    private bool SetValueInternal(in ObjectSelectorContext.TokenPropertyInfo selectPropertyInfo, object? newValue, object?[] indexes)
-    {
         // No indexes, expression like "User.Name = 'Vladimir'".
         if (indexes.Length == 0)
         {
+            if (!selectPropertyInfo.PropertyInfo.CanWrite)
+            {
+                return false;
+            }
             selectPropertyInfo.PropertyInfo.SetValue(
                 selectPropertyInfo.Owner,
                 ConvertValue(newValue, selectPropertyInfo.PropertyInfo.PropertyType),
@@ -133,12 +135,14 @@ public class DefaultObjectSelector : IObjectSelector
             if (indexes[0] is long longIndex)
             {
                 var intIndex = (int)longIndex;
+
                 // List.
                 if (selectPropertyInfo.Owner is IList list)
                 {
                     list[intIndex] = ConvertValue(newValue, TypeUtils.GetUnderlyingType(list));
                     return true;
                 }
+
                 // Array.
                 if (selectPropertyInfo.Owner is Array array)
                 {
@@ -148,6 +152,7 @@ public class DefaultObjectSelector : IObjectSelector
                     return true;
                 }
             }
+
             // Dictionary.
             if (indexes[0] != null && selectPropertyInfo.Owner is IDictionary dictionary)
             {
@@ -155,9 +160,14 @@ public class DefaultObjectSelector : IObjectSelector
                 return true;
             }
         }
+
         // Index property.
         else
         {
+            if (!selectPropertyInfo.PropertyInfo.CanWrite)
+            {
+                return false;
+            }
             selectPropertyInfo.PropertyInfo.SetValue(
                 selectPropertyInfo.Owner,
                 ConvertValue(newValue, selectPropertyInfo.PropertyInfo.PropertyType),
