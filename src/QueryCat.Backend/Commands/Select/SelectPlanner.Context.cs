@@ -244,7 +244,7 @@ internal sealed partial class SelectPlanner
         if (objVariable is IEnumerable enumerable && enumerable.GetType().IsGenericType)
         {
 #pragma warning disable IL2072
-            rowsInput = new CollectionInput(GetUnderlyingType(enumerable.GetType()), enumerable);
+            rowsInput = new CollectionInput(TypeUtils.GetUnderlyingType(enumerable), enumerable);
 #pragma warning restore IL2072
             currentContext.AddInput(new SelectCommandInputContext(rowsInput));
             rowsInputResult = rowsInput;
@@ -517,20 +517,4 @@ internal sealed partial class SelectPlanner
             SelectTableJoinedType.Right => JoinType.Right,
             _ => throw new ArgumentOutOfRangeException(nameof(tableJoinedType), tableJoinedType, null)
         };
-
-    private static Type GetUnderlyingType(Type type)
-    {
-        if (type.IsGenericType)
-        {
-            if (typeof(IEnumerable).IsAssignableFrom(type))
-            {
-                return type.GetGenericArguments()[0];
-            }
-            if (typeof(IDictionary).IsAssignableFrom(type))
-            {
-                return type.GetGenericArguments()[1];
-            }
-        }
-        return type;
-    }
 }

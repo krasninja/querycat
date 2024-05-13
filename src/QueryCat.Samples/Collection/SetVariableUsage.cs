@@ -25,12 +25,20 @@ internal class SetVariableUsage : BaseUsage
             [2] = new(25.53m),
         };
 
+        executionThread.TopScope.Variables["data"] = VariantValue.CreateFromObject(data);
         executionThread.Run("SET data[1].Price := newval;",
             new Dictionary<string, VariantValue>
             {
-                ["data"] = VariantValue.CreateFromObject(data),
                 ["newval"] = new(12.34m),
             });
         Console.WriteLine(data[1].Price); // 12.34
+
+        executionThread.Run(
+            "SET data[2].Price := newval;",
+            new Dictionary<string, VariantValue>
+            {
+                ["newval"] = new("43.21"),
+            });
+        Console.WriteLine(data[2].Price); // 43.21, implicit conversation.
     }
 }

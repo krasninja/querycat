@@ -40,8 +40,11 @@ public class DefaultObjectSelector : IObjectSelector
             if (indexes.Length == 1 && indexes[0] != null)
             {
                 var keyType = dictionary.GetType().GetGenericArguments()[0];
-                var key = Convert.ChangeType(indexes[0]!, keyType);
-                resultObject = dictionary[key];
+                var key = ConvertValue(indexes[0], keyType);
+                if (key != null)
+                {
+                    resultObject = dictionary[key];
+                }
             }
 
             // Index property.
@@ -118,7 +121,10 @@ public class DefaultObjectSelector : IObjectSelector
         // No indexes, expression like "User.Name = 'Vladimir'".
         if (indexes.Length == 0)
         {
-            selectPropertyInfo.PropertyInfo.SetValue(selectPropertyInfo.Owner, newValue, indexes);
+            selectPropertyInfo.PropertyInfo.SetValue(
+                selectPropertyInfo.Owner,
+                ConvertValue(newValue, selectPropertyInfo.PropertyInfo.PropertyType),
+                indexes);
             return true;
         }
 
@@ -130,30 +136,48 @@ public class DefaultObjectSelector : IObjectSelector
                 // List.
                 if (selectPropertyInfo.Owner is IList list)
                 {
-                    list[intIndex] = newValue;
+                    list[intIndex] = ConvertValue(newValue, TypeUtils.GetUnderlyingType(list));
                     return true;
                 }
                 // Array.
-                else if (selectPropertyInfo.Owner is Array array)
+                if (selectPropertyInfo.Owner is Array array)
                 {
-                    array.SetValue(array, intIndex);
+                    array.SetValue(
+                        ConvertValue(newValue, TypeUtils.GetUnderlyingType(array)),
+                        intIndex);
                     return true;
                 }
             }
             // Dictionary.
             if (indexes[0] != null && selectPropertyInfo.Owner is IDictionary dictionary)
             {
-                dictionary[indexes[0]!] = newValue;
+                dictionary[indexes[0]!] = ConvertValue(newValue, TypeUtils.GetUnderlyingType(dictionary));
                 return true;
             }
         }
         // Index property.
         else
         {
-            selectPropertyInfo.PropertyInfo.SetValue(selectPropertyInfo.Owner, newValue, indexes);
+            selectPropertyInfo.PropertyInfo.SetValue(
+                selectPropertyInfo.Owner,
+                ConvertValue(newValue, selectPropertyInfo.PropertyInfo.PropertyType),
+                indexes);
             return true;
         }
 
         return false;
+    }
+
+    private static object? ConvertValue(object? value, Type? targetType)
+    {
+        if (value == null)
+        {
+            return null;
+        }
+        if (targetType == null)
+        {
+            return value;
+        }
+        return Convert.ChangeType(value, targetType);
     }
 }
