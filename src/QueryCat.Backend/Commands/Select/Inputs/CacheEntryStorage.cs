@@ -21,21 +21,30 @@ internal sealed class CacheEntryStorage : ICacheEntryStorage
 
         if (_entries.TryGetValue(key, out entry!))
         {
-            _logger.LogDebug("Reuse existing cache entry with key {Key}.", key);
+            if (_logger.IsEnabled(LogLevel.Debug))
+            {
+                _logger.LogDebug("Reuse existing cache entry with key {Key}.", key);
+            }
             return false;
         }
         foreach (var cacheEntry in _entries.Values)
         {
             if (cacheEntry.Key.Match(key))
             {
-                _logger.LogDebug("Reuse existing cache entry with key {Key}.", key);
+                if (_logger.IsEnabled(LogLevel.Debug))
+                {
+                    _logger.LogDebug("Reuse existing cache entry with key {Key}.", key);
+                }
                 return false;
             }
         }
 
         entry = new CacheEntry(key, _expireTime);
         _entries.Add(key, entry);
-        _logger.LogDebug("Create new cache entry with key {Key}.", key);
+        if (_logger.IsEnabled(LogLevel.Debug))
+        {
+            _logger.LogDebug("Create new cache entry with key {Key}.", key);
+        }
         return true;
     }
 
