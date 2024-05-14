@@ -13,10 +13,11 @@ public class DefaultObjectSelector : IObjectSelector
     {
         var current = context.Peek();
         var propertyInfo = current.ResultObject.GetType().GetProperty(propertyName);
-        if (propertyInfo == null)
+        if (propertyInfo == null || !propertyInfo.CanRead)
         {
             return null;
         }
+
         var resultObject = propertyInfo.GetValue(current.ResultObject);
         if (resultObject != null)
         {
@@ -33,8 +34,30 @@ public class DefaultObjectSelector : IObjectSelector
         var current = context.Peek();
         object? resultObject = null;
 
+        // Try to get value with GetValue call (dictionary).
+        if (resultObject == null && current.ResultObject is IDictionary dictionary)
+        {
+            // Dictionary.
+            if (indexes.Length == 1 && indexes[0] != null)
+            {
+                var keyType = dictionary.GetType().GetGenericArguments()[0];
+                var key = ConvertValue(indexes[0], keyType);
+                if (key != null)
+                {
+                    resultObject = dictionary[key];
+                }
+            }
+
+            // Index property.
+            if (resultObject == null && current.SelectProperty.HasValue
+                && current.SelectProperty.Value.PropertyInfo.CanRead)
+            {
+                resultObject = current.SelectProperty.Value.PropertyInfo.GetValue(current.ResultObject, indexes);
+            }
+        }
+
         // First try to use the most popular case when we have only one integer index.
-        if (indexes.Length == 1 && indexes[0] is long longIndex)
+        if (resultObject == null && indexes.Length == 1 && indexes[0] is long longIndex)
         {
             var intIndex = (int)longIndex;
             // List.
@@ -68,21 +91,6 @@ public class DefaultObjectSelector : IObjectSelector
             }
         }
 
-        // Then try to get value with GetValue call.
-        if (resultObject == null)
-        {
-            // Dictionary.
-            if (indexes.Length == 1 && indexes[0] != null && current.ResultObject is IDictionary dictionary)
-            {
-                resultObject = dictionary[indexes[0]!];
-            }
-            // Index property.
-            else if (current.SelectProperty.HasValue)
-            {
-                resultObject = current.SelectProperty.Value.PropertyInfo.GetValue(current.ResultObject, indexes);
-            }
-        }
-
         if (resultObject != null)
         {
             if (current.SelectProperty.HasValue)
@@ -107,15 +115,18 @@ public class DefaultObjectSelector : IObjectSelector
             return false;
         }
         var selectPropertyInfo = token.SelectProperty.Value;
-        return SetValueInternal(selectPropertyInfo, newValue, indexes);
-    }
 
-    private bool SetValueInternal(in ObjectSelectorContext.TokenPropertyInfo selectPropertyInfo, object? newValue, object?[] indexes)
-    {
         // No indexes, expression like "User.Name = 'Vladimir'".
         if (indexes.Length == 0)
         {
-            selectPropertyInfo.PropertyInfo.SetValue(selectPropertyInfo.Owner, newValue, indexes);
+            if (!selectPropertyInfo.PropertyInfo.CanWrite)
+            {
+                return false;
+            }
+            selectPropertyInfo.PropertyInfo.SetValue(
+                selectPropertyInfo.Owner,
+                ConvertValue(newValue, selectPropertyInfo.PropertyInfo.PropertyType),
+                indexes);
             return true;
         }
 
@@ -124,33 +135,59 @@ public class DefaultObjectSelector : IObjectSelector
             if (indexes[0] is long longIndex)
             {
                 var intIndex = (int)longIndex;
+
                 // List.
                 if (selectPropertyInfo.Owner is IList list)
                 {
-                    list[intIndex] = newValue;
+                    list[intIndex] = ConvertValue(newValue, TypeUtils.GetUnderlyingType(list));
                     return true;
                 }
+
                 // Array.
-                else if (selectPropertyInfo.Owner is Array array)
+                if (selectPropertyInfo.Owner is Array array)
                 {
-                    array.SetValue(array, intIndex);
+                    array.SetValue(
+                        ConvertValue(newValue, TypeUtils.GetUnderlyingType(array)),
+                        intIndex);
                     return true;
                 }
             }
+
             // Dictionary.
             if (indexes[0] != null && selectPropertyInfo.Owner is IDictionary dictionary)
             {
-                dictionary[indexes[0]!] = newValue;
+                dictionary[indexes[0]!] = ConvertValue(newValue, TypeUtils.GetUnderlyingType(dictionary));
                 return true;
             }
         }
+
         // Index property.
         else
         {
-            selectPropertyInfo.PropertyInfo.SetValue(selectPropertyInfo.Owner, newValue, indexes);
+            if (!selectPropertyInfo.PropertyInfo.CanWrite)
+            {
+                return false;
+            }
+            selectPropertyInfo.PropertyInfo.SetValue(
+                selectPropertyInfo.Owner,
+                ConvertValue(newValue, selectPropertyInfo.PropertyInfo.PropertyType),
+                indexes);
             return true;
         }
 
         return false;
+    }
+
+    private static object? ConvertValue(object? value, Type? targetType)
+    {
+        if (value == null)
+        {
+            return null;
+        }
+        if (targetType == null)
+        {
+            return value;
+        }
+        return Convert.ChangeType(value, targetType);
     }
 }

@@ -21,6 +21,6 @@ internal class CustomFunctionUsage : BaseUsage
     {
         var executionThread = new ExecutionThreadBootstrapper().Create();
         executionThread.FunctionsManager.RegisterFunction(EnergyFunction);
-        Console.WriteLine(executionThread.Run("e(100::numeric)").ToString());
+        Console.WriteLine(executionThread.Run("e(100::numeric)").AsString); // 8987551787368176400
     }
 }

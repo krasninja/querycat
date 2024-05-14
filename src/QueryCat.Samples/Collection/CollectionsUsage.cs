@@ -67,5 +67,12 @@ internal class CollectionsUsage : BaseUsage
         var sb = new StringBuilder();
         new TextTableOutput(sb).Write(result.As<IRowsIterator>(), adjustColumnsLengths: true);
         Console.WriteLine(sb);
+        /*
+         | b.name                                                                 | c.city            |
+         | ---------------------------------------------------------------------- | ----------------- |
+         | Hotel Indigo San Diego-Gaslamp Quarter, an IHG Hotel                   | San Diego, CA     |
+         | San Diego Chinese Historical Museum Chuang Archive and Learning Center | San Diego, CA     |
+         ...
+         */
     }
 }

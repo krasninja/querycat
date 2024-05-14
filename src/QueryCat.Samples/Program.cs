@@ -13,6 +13,7 @@ internal class Program
         new CustomInlineFunctionUsage(),
         new ObjectExpressionsUsage(),
         new ParametersUsage(),
+        new SetVariableUsage(),
         new VariablesUsage(),
     };
 

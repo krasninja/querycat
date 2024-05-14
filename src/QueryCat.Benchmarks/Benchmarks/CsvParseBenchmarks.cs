@@ -2,12 +2,12 @@ using System.Globalization;
 using BenchmarkDotNet.Attributes;
 using CsvHelper;
 using CsvHelper.Configuration;
+using Sylvan.Data.Csv;
+using CsvDataReader = Sylvan.Data.Csv.CsvDataReader;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Formatters;
-using Sylvan.Data.Csv;
-using CsvDataReader = Sylvan.Data.Csv.CsvDataReader;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Storage;
 
@@ -37,8 +37,8 @@ public class CsvParseBenchmarks
         using var file = UsersCsvFile.OpenTestUsersFile();
         var csv = new DelimiterStreamReader(new StreamReader(file), new DelimiterStreamReader.ReaderOptions
         {
-            Delimiters = new[] { ',' },
-            QuoteChars = new[] { '"' },
+            Delimiters = [','],
+            QuoteChars = ['"'],
         });
 
         csv.Read();
