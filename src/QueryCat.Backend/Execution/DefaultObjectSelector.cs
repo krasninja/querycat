@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Reflection;
 using QueryCat.Backend.Core.Execution;
 
 namespace QueryCat.Backend.Execution;
@@ -8,11 +9,21 @@ namespace QueryCat.Backend.Execution;
 /// </summary>
 public class DefaultObjectSelector : IObjectSelector
 {
+    /// <summary>
+    /// Ignore string case on property resolve by name.
+    /// </summary>
+    public bool CaseInsensitivePropertyName { get; set; }
+
     /// <inheritdoc />
     public virtual ObjectSelectorContext.Token? SelectByProperty(ObjectSelectorContext context, string propertyName)
     {
         var current = context.Peek();
-        var propertyInfo = current.ResultObject.GetType().GetProperty(propertyName);
+        var propertyFindOptions = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public;
+        if (CaseInsensitivePropertyName)
+        {
+            propertyFindOptions |= BindingFlags.IgnoreCase;
+        }
+        var propertyInfo = current.ResultObject.GetType().GetProperty(propertyName, propertyFindOptions);
         if (propertyInfo == null || !propertyInfo.CanRead)
         {
             return null;
