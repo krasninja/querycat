@@ -20,7 +20,8 @@ public sealed class ObjectSelectorContext
     /// Select object information.
     /// </summary>
     /// <param name="ResultObject">Object instance.</param>
-    /// <param name="PropertyInfo">Property information if the result object is the property of another object.</param>
+    /// <param name="PropertyInfo">Property information if the result object is the property of another object.
+    /// Can only be defined for property selector.</param>
     /// <param name="Tag">Custom user object.</param>
     [DebuggerDisplay("{ResultObject}, {PropertyInfo}")]
     public readonly record struct Token(

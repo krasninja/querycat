@@ -75,11 +75,8 @@ public class DefaultObjectSelector : IObjectSelector
         }
 
         // First try to use the most popular case when we have only one integer index.
-        if (resultObject == null && indexes.Length == 1 && indexes[0] is long longIndex
-            && longIndex > -1 && longIndex <= int.MaxValue)
+        if (resultObject == null && indexes.Length == 1 && TryGetObjectIsIntegerIndex(indexes[0], out var intIndex))
         {
-            var intIndex = (int)longIndex;
-
             // List.
             if (current.ResultObject is IList list)
             {
@@ -104,14 +101,7 @@ public class DefaultObjectSelector : IObjectSelector
 
         if (resultObject != null)
         {
-            if (current.PropertyInfo != null)
-            {
-                return new ObjectSelectorContext.Token(resultObject, current.PropertyInfo);
-            }
-            else
-            {
-                return new ObjectSelectorContext.Token(resultObject);
-            }
+            return new ObjectSelectorContext.Token(resultObject);
         }
 
         return null;
@@ -120,13 +110,16 @@ public class DefaultObjectSelector : IObjectSelector
     private static object? GetEnumerableItemByIndex(IEnumerable enumerable, int index)
     {
         var enumerator = enumerable.GetEnumerator();
+        object? result = null;
         try
         {
-            for (var i = 0; enumerator.MoveNext(); i++)
+            var i = 0;
+            while (enumerator.MoveNext())
             {
-                if (i == index)
+                if (i++ == index)
                 {
-                    return enumerator.Current;
+                    result = enumerator.Current;
+                    break;
                 }
             }
         }
@@ -134,7 +127,7 @@ public class DefaultObjectSelector : IObjectSelector
         {
             (enumerator as IDisposable)?.Dispose();
         }
-        return null;
+        return result;
     }
 
     /// <inheritdoc />
@@ -154,12 +147,11 @@ public class DefaultObjectSelector : IObjectSelector
             return true;
         }
 
+        // Has one index - check list/array/dict case.
         if (indexes.Length == 1)
         {
-            if (indexes[0] is long longIndex && longIndex > -1 && longIndex <= int.MaxValue)
+            if (TryGetObjectIsIntegerIndex(indexes[0], out var intIndex))
             {
-                var intIndex = (int)longIndex;
-
                 // List.
                 if (owner is IList list)
                 {
@@ -215,5 +207,22 @@ public class DefaultObjectSelector : IObjectSelector
             return value;
         }
         return Convert.ChangeType(value, targetType);
+    }
+
+    private static bool TryGetObjectIsIntegerIndex(object? obj, out int value)
+    {
+        if (obj is int intValue)
+        {
+            value = intValue;
+            return true;
+        }
+        if (obj is long longValue && longValue > -1 && longValue <= int.MaxValue)
+        {
+            value = (int)longValue;
+            return true;
+        }
+
+        value = 0;
+        return false;
     }
 }
