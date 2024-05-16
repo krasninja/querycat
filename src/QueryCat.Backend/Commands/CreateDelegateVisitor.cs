@@ -175,7 +175,7 @@ internal class CreateDelegateVisitor : AstVisitor
 
         if (ExecutionThread.ContainsVariable(node.Name, scope))
         {
-            var context = new ObjectSelectorContext();
+            var context = new ObjectSelectorContext(ExecutionThread);
             VariantValue Func()
             {
                 var startObject = ExecutionThread.GetVariable(node.Name, scope);

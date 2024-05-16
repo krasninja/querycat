@@ -9,6 +9,13 @@ namespace QueryCat.Backend.Core.Execution;
 [DebuggerDisplay("Count = {Length}")]
 public class ObjectSelectorContext
 {
+    private readonly IExecutionThread _executionThread;
+
+    /// <summary>
+    /// Running execution thread.
+    /// </summary>
+    public IExecutionThread ExecutionThread => _executionThread;
+
     /// <summary>
     /// Select object information.
     /// </summary>
@@ -46,15 +53,18 @@ public class ObjectSelectorContext
     /// <summary>
     /// Constructor.
     /// </summary>
-    public ObjectSelectorContext()
+    /// <param name="executionThread">Execution thread.</param>
+    public ObjectSelectorContext(IExecutionThread executionThread)
     {
+        _executionThread = executionThread;
     }
 
     /// <summary>
     /// Constructor.
     /// </summary>
+    /// <param name="executionThread">Execution thread.</param>
     /// <param name="startObject">Optional root object of the expression.</param>
-    public ObjectSelectorContext(object startObject)
+    public ObjectSelectorContext(IExecutionThread executionThread, object startObject) : this(executionThread)
     {
         Push(new Token(startObject));
     }

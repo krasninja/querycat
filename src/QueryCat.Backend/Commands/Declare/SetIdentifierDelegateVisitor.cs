@@ -36,7 +36,7 @@ internal sealed class SetIdentifierDelegateVisitor : CreateDelegateVisitor
 
         if (ExecutionThread.ContainsVariable(node.Name, scope))
         {
-            var context = new ObjectSelectorContext();
+            var context = new ObjectSelectorContext(ExecutionThread);
             VariantValue Func()
             {
                 var newValue = SetValue(node, scope, context);
