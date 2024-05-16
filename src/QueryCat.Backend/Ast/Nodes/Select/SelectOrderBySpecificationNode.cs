@@ -2,7 +2,7 @@ namespace QueryCat.Backend.Ast.Nodes.Select;
 
 internal sealed class SelectOrderBySpecificationNode : AstNode
 {
-    public ExpressionNode ExpressionNode { get; }
+    public ExpressionNode ExpressionNode { get; set; }
 
     public SelectOrderSpecification Order { get; }
 

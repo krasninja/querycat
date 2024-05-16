@@ -1,0 +1,8 @@
+expected: |
+  3
+  2
+  1
+query: |
+  select num
+  from 'Table1.csv'
+  order by 1 desc;
