@@ -7,7 +7,7 @@ namespace QueryCat.Backend.Core.Execution;
 /// Object selector context.
 /// </summary>
 [DebuggerDisplay("Count = {Length}")]
-public class ObjectSelectorContext
+public sealed class ObjectSelectorContext
 {
     private readonly IExecutionThread _executionThread;
 
@@ -93,7 +93,7 @@ public class ObjectSelectorContext
     /// <summary>
     /// Reset state.
     /// </summary>
-    public virtual void Clear()
+    public void Clear()
     {
         _selectStack.Clear();
     }
