@@ -41,11 +41,6 @@ public class ObjectSelectorContext
     public int Length => SelectStack.Count;
 
     /// <summary>
-    /// Optional user value.
-    /// </summary>
-    public object? Tag { get; set; }
-
-    /// <summary>
     /// Previous result object.
     /// </summary>
     public object? PreviousResult => Length > 0 ? SelectStack[^1].ResultObject : null;
@@ -101,6 +96,5 @@ public class ObjectSelectorContext
     public virtual void Clear()
     {
         _selectStack.Clear();
-        Tag = null;
     }
 }
