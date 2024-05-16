@@ -140,13 +140,8 @@ public class DefaultObjectSelector : IObjectSelector
     /// <inheritdoc />
     public virtual bool SetValue(in ObjectSelectorContext.Token token, object owner, object? newValue, object?[] indexes)
     {
-        if (token.PropertyInfo == null)
-        {
-            return false;
-        }
-
         // No indexes, expression like "User.Name = 'Vladimir'".
-        if (indexes.Length == 0)
+        if (token.PropertyInfo != null && indexes.Length == 0)
         {
             if (!token.PropertyInfo.CanWrite)
             {
@@ -191,7 +186,7 @@ public class DefaultObjectSelector : IObjectSelector
         // Index property.
         else
         {
-            if (!token.PropertyInfo.CanWrite)
+            if (token.PropertyInfo == null || !token.PropertyInfo.CanWrite)
             {
                 return false;
             }
