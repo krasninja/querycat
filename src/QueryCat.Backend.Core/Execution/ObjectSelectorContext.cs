@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Linq.Expressions;
 using System.Reflection;
 
 namespace QueryCat.Backend.Core.Execution;
@@ -7,41 +6,32 @@ namespace QueryCat.Backend.Core.Execution;
 /// <summary>
 /// Object selector context.
 /// </summary>
+[DebuggerDisplay("Count = {Length}")]
 public class ObjectSelectorContext
 {
     /// <summary>
     /// Select object information.
     /// </summary>
     /// <param name="ResultObject">Object instance.</param>
-    /// <param name="SelectProperty">Property information if the object is the property of another object.</param>
+    /// <param name="PropertyInfo">Property information if the result object is the property of another object.</param>
     /// <param name="Tag">Custom user object.</param>
-    [DebuggerDisplay("{ResultObject}, {SelectProperty}")]
+    [DebuggerDisplay("{ResultObject}, {PropertyInfo}")]
     public readonly record struct Token(
         object ResultObject,
-        TokenPropertyInfo? SelectProperty = null,
+        PropertyInfo? PropertyInfo = null,
         object? Tag = null);
 
-    /// <summary>
-    /// Select property information (if it is not a root object).
-    /// </summary>
-    /// <param name="Owner">Object the owner of the property.</param>
-    /// <param name="PropertyInfo">Instance of <see cref="PropertyInfo" />.</param>
-    [DebuggerDisplay("{Owner}, {PropertyInfo}")]
-    public readonly record struct TokenPropertyInfo(
-        object Owner,
-        PropertyInfo PropertyInfo)
-    {
-        public static TokenPropertyInfo FromExpression<T>(T owner, Expression<Func<T, object>> expression)
-            where T : class
-        {
-            return new TokenPropertyInfo(owner, GetPropertyInfo(expression));
-        }
-    }
+    private readonly List<Token> _selectStack = new();
 
     /// <summary>
     /// Selector traverse stack.
     /// </summary>
-    public List<Token> SelectStack { get; } = new();
+    public IReadOnlyList<Token> SelectStack => _selectStack;
+
+    /// <summary>
+    /// Select stack length.
+    /// </summary>
+    public int Length => SelectStack.Count;
 
     /// <summary>
     /// Optional user value.
@@ -51,7 +41,7 @@ public class ObjectSelectorContext
     /// <summary>
     /// Previous result object.
     /// </summary>
-    public object? PreviousResult => SelectStack.Count > 0 ? SelectStack[^1].ResultObject : null;
+    public object? PreviousResult => Length > 0 ? SelectStack[^1].ResultObject : null;
 
     /// <summary>
     /// Constructor.
@@ -75,7 +65,7 @@ public class ObjectSelectorContext
     /// <param name="token">Select info.</param>
     public void Push(in Token token)
     {
-        SelectStack.Add(token);
+        _selectStack.Add(token);
     }
 
     /// <summary>
@@ -85,7 +75,7 @@ public class ObjectSelectorContext
     public Token Pop()
     {
         var item = SelectStack[^1];
-        SelectStack.RemoveAt(SelectStack.Count - 1);
+        _selectStack.RemoveAt(SelectStack.Count - 1);
         return item;
     }
 
@@ -100,17 +90,7 @@ public class ObjectSelectorContext
     /// </summary>
     public virtual void Clear()
     {
-        SelectStack.Clear();
+        _selectStack.Clear();
         Tag = null;
-    }
-
-    private static PropertyInfo GetPropertyInfo<T>(Expression<Func<T, object>> property)
-    {
-        LambdaExpression lambda = property;
-        var memberExpression = lambda.Body is UnaryExpression expression
-            ? (MemberExpression)expression.Operand
-            : (MemberExpression)lambda.Body;
-
-        return (PropertyInfo)memberExpression.Member;
     }
 }

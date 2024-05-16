@@ -28,6 +28,8 @@ internal class Program
             {
                 continue;
             }
+            Console.WriteLine();
+            Console.WriteLine();
             Console.WriteLine(name);
             Console.WriteLine(new string('=', 50));
             sample.Run();

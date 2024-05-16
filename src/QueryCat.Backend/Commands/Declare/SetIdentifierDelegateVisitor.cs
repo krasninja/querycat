@@ -58,14 +58,21 @@ internal sealed class SetIdentifierDelegateVisitor : CreateDelegateVisitor
         // This is expression object.
         if (GetObjectBySelector(context, startObject, node, out _))
         {
-            var lastContext = context.Pop();
+            var lastToken = context.Pop();
+            var owner = context.PreviousResult;
             var lastSelector = node.SelectorNodes.LastOrDefault();
+
+            if (owner == null)
+            {
+                throw new InvalidOperationException("Cannot set value to null object.");
+            }
 
             // The expression object ends with property (obj.Address.City).
             if (lastSelector is IdentifierPropertySelectorNode)
             {
                 ExecutionThread.ObjectSelector.SetValue(
-                    token: lastContext,
+                    token: lastToken,
+                    owner: owner,
                     newValue: Converter.ConvertValue(newValue, typeof(object)),
                     indexes: []);
             }
@@ -74,7 +81,8 @@ internal sealed class SetIdentifierDelegateVisitor : CreateDelegateVisitor
             {
                 var indexObjects = GetObjectIndexesSelector(indexSelectorNode);
                 ExecutionThread.ObjectSelector.SetValue(
-                    token: lastContext,
+                    token: lastToken,
+                    owner: owner,
                     newValue: Converter.ConvertValue(newValue, typeof(object)),
                     indexes: indexObjects);
             }
