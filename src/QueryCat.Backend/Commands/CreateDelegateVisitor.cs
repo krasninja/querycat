@@ -212,6 +212,11 @@ internal class CreateDelegateVisitor : AstVisitor
             {
                 var indexObjects = GetObjectIndexesSelector(indexSelectorNode);
                 info = ExecutionThread.ObjectSelector.SelectByIndex(context, indexObjects);
+                // Indexes must be initialized, fix it.
+                if (info is { Indexes: null })
+                {
+                    info = info.Value with { Indexes = indexObjects };
+                }
             }
 
             if (!info.HasValue)

@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Allow to order by column number.
 
+### Fixed
+
+- Improve object selector.
+
 ### Changed
 
 - Refactor and update objects selector logic.
