@@ -23,13 +23,13 @@ internal static class TypeUtils
 
         if (type.IsGenericType)
         {
-            if (typeof(IEnumerable).IsAssignableFrom(type))
-            {
-                return type.GetGenericArguments()[0];
-            }
             if (typeof(IDictionary).IsAssignableFrom(type))
             {
                 return type.GetGenericArguments()[1];
+            }
+            if (typeof(IEnumerable).IsAssignableFrom(type))
+            {
+                return type.GetGenericArguments()[0];
             }
         }
 

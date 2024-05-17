@@ -192,15 +192,17 @@ public class DefaultObjectSelector : IObjectSelector
         return false;
     }
 
-    private static object? ConvertValue(object? value, Type? targetType)
+    /// <summary>
+    /// Convert value to the target type.
+    /// </summary>
+    /// <param name="value">Value.</param>
+    /// <param name="targetType">Target type.</param>
+    /// <returns>Converted value or null if cannot convert.</returns>
+    protected virtual object? ConvertValue(object? value, Type targetType)
     {
         if (value == null)
         {
             return null;
-        }
-        if (targetType == null)
-        {
-            return value;
         }
         if (value.GetType() == targetType)
         {

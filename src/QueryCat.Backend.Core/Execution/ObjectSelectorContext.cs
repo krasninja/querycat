@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Linq.Expressions;
 using System.Reflection;
 
 namespace QueryCat.Backend.Core.Execution;
@@ -27,7 +28,27 @@ public sealed class ObjectSelectorContext
     public readonly record struct Token(
         object ResultObject,
         PropertyInfo? PropertyInfo = null,
-        object? Tag = null);
+        object? Tag = null)
+    {
+        /// <summary>
+        /// Create token from expression.
+        /// </summary>
+        /// <param name="owner">Owner object.</param>
+        /// <param name="expression">Expression.</param>
+        /// <typeparam name="T">Owner type.</typeparam>
+        /// <returns>Instance of <see cref="Token" />.</returns>
+        public static Token? From<T>(T owner, Expression<Func<T, object>> expression)
+            where T : class
+        {
+            var pi = GetPropertyInfo(expression);
+            var obj = pi.GetValue(owner);
+            if (obj == null)
+            {
+                return null;
+            }
+            return new Token(obj, pi);
+        }
+    }
 
     private readonly List<Token> _selectStack = new();
 
@@ -97,5 +118,15 @@ public sealed class ObjectSelectorContext
     public void Clear()
     {
         _selectStack.Clear();
+    }
+
+    private static PropertyInfo GetPropertyInfo<T>(Expression<Func<T, object>> property)
+    {
+        LambdaExpression lambda = property;
+        var memberExpression = lambda.Body is UnaryExpression expression
+            ? (MemberExpression)expression.Operand
+            : (MemberExpression)lambda.Body;
+
+        return (PropertyInfo)memberExpression.Member;
     }
 }
