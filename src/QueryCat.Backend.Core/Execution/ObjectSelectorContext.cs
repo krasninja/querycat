@@ -20,14 +20,16 @@ public sealed class ObjectSelectorContext
     /// <summary>
     /// Select object information.
     /// </summary>
-    /// <param name="ResultObject">Object instance.</param>
+    /// <param name="Value">Result object instance.</param>
     /// <param name="PropertyInfo">Property information if the result object is the property of another object.
     /// Can only be defined for property selector.</param>
+    /// <param name="Indexes">Indexes values if was selected by indexes.</param>
     /// <param name="Tag">Custom user object.</param>
-    [DebuggerDisplay("{ResultObject}, {PropertyInfo}")]
+    [DebuggerDisplay("{Value}, {PropertyInfo}")]
     public readonly record struct Token(
-        object ResultObject,
+        object Value,
         PropertyInfo? PropertyInfo = null,
+        object?[]? Indexes = null,
         object? Tag = null)
     {
         /// <summary>
@@ -65,7 +67,7 @@ public sealed class ObjectSelectorContext
     /// <summary>
     /// Previous result object.
     /// </summary>
-    public object? PreviousResult => Length > 0 ? SelectStack[^1].ResultObject : null;
+    public object? LastValue => Length > 0 ? SelectStack[^1].Value : null;
 
     /// <summary>
     /// Constructor.

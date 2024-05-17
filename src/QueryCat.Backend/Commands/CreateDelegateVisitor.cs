@@ -221,7 +221,7 @@ internal class CreateDelegateVisitor : AstVisitor
             context.Push(info.Value);
         }
 
-        result = VariantValue.CreateFromObject(context.Peek().ResultObject);
+        result = VariantValue.CreateFromObject(context.LastValue);
         return true;
     }
 

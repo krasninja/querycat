@@ -20,8 +20,8 @@ public class DefaultObjectSelector : IObjectSelector
     /// <inheritdoc />
     public virtual ObjectSelectorContext.Token? SelectByProperty(ObjectSelectorContext context, string propertyName)
     {
-        var previousObject = context.PreviousResult;
-        if (previousObject == null)
+        var lastObject = context.LastValue;
+        if (lastObject == null)
         {
             throw new InvalidOperationException("Invalid selector state.");
         }
@@ -31,13 +31,13 @@ public class DefaultObjectSelector : IObjectSelector
         {
             propertyFindOptions |= BindingFlags.IgnoreCase;
         }
-        var propertyInfo = previousObject.GetType().GetProperty(propertyName, propertyFindOptions);
+        var propertyInfo = lastObject.GetType().GetProperty(propertyName, propertyFindOptions);
         if (propertyInfo == null || !propertyInfo.CanRead)
         {
             return null;
         }
 
-        var resultObject = propertyInfo.GetValue(previousObject);
+        var resultObject = propertyInfo.GetValue(lastObject);
         if (resultObject != null)
         {
             return new ObjectSelectorContext.Token(resultObject, propertyInfo);
@@ -47,13 +47,13 @@ public class DefaultObjectSelector : IObjectSelector
     }
 
     /// <inheritdoc />
-    public virtual ObjectSelectorContext.Token? SelectByIndex(ObjectSelectorContext context, object?[] indexes)
+    public virtual ObjectSelectorContext.Token? SelectByIndex(ObjectSelectorContext context, params object?[] indexes)
     {
         var current = context.Peek();
         object? resultObject = null;
 
         // Try to get value with GetValue call (dictionary).
-        if (resultObject == null && current.ResultObject is IDictionary dictionary)
+        if (resultObject == null && current.Value is IDictionary dictionary)
         {
             // Dictionary.
             if (indexes.Length == 1 && indexes[0] != null)
@@ -70,30 +70,30 @@ public class DefaultObjectSelector : IObjectSelector
             if (resultObject == null && current.PropertyInfo != null
                 && current.PropertyInfo.CanRead)
             {
-                resultObject = current.PropertyInfo.GetValue(current.ResultObject, indexes);
+                resultObject = current.PropertyInfo.GetValue(current.Value, indexes);
             }
         }
 
         // First try to use the most popular case when we have only one integer index.
         if (resultObject == null && indexes.Length == 1 && TryGetObjectIsIntegerIndex(indexes[0], out var intIndex))
         {
-            // List.
-            if (current.ResultObject is IList list)
-            {
-                resultObject = list[intIndex];
-            }
             // Array.
-            else if (current.ResultObject is Array array)
+            if (current.Value is Array array)
             {
                 resultObject = array.GetValue(intIndex);
             }
+            // List.
+            else if (current.Value is IList list)
+            {
+                resultObject = list[intIndex];
+            }
             // Generic enumerable.
-            else if (current.ResultObject is IEnumerable<object> objectsEnumerable)
+            else if (current.Value is IEnumerable<object> objectsEnumerable)
             {
                 resultObject = objectsEnumerable.ElementAt(intIndex);
             }
             // Enumerable.
-            else if (current.ResultObject is IEnumerable enumerable)
+            else if (current.Value is IEnumerable enumerable)
             {
                 resultObject = GetEnumerableItemByIndex(enumerable, intIndex);
             }
@@ -101,7 +101,7 @@ public class DefaultObjectSelector : IObjectSelector
 
         if (resultObject != null)
         {
-            return new ObjectSelectorContext.Token(resultObject);
+            return new ObjectSelectorContext.Token(resultObject, Indexes: indexes);
         }
 
         return null;
@@ -131,18 +131,25 @@ public class DefaultObjectSelector : IObjectSelector
     }
 
     /// <inheritdoc />
-    public virtual bool SetValue(in ObjectSelectorContext.Token token, object owner, object? newValue, object?[] indexes)
+    public virtual bool SetValue(ObjectSelectorContext context, object? newValue)
     {
-        // No indexes, expression like "User.Name = 'Vladimir'".
-        if (token.PropertyInfo != null && indexes.Length == 0)
+        if (context.Length < 2)
         {
-            if (!token.PropertyInfo.CanWrite)
-            {
-                return false;
-            }
-            token.PropertyInfo.SetValue(
+            return false;
+        }
+
+        // In context by that time we should have something like that: [], [], ..., [owner], [owner prop value].
+        var token = context.Peek();
+        var owner = context.SelectStack[^2].Value;
+        var indexes = token.Indexes ?? [];
+        var propertyInfo = token.PropertyInfo;
+
+        // No indexes, expression like "User.Name = 'Vladimir'".
+        if (propertyInfo != null && propertyInfo.CanWrite)
+        {
+            propertyInfo.SetValue(
                 owner,
-                ConvertValue(newValue, token.PropertyInfo.PropertyType),
+                ConvertValue(newValue, propertyInfo.PropertyType),
                 indexes);
             return true;
         }
@@ -150,14 +157,14 @@ public class DefaultObjectSelector : IObjectSelector
         // Has one index - check list/array/dict case.
         if (indexes.Length == 1)
         {
+            // Dictionary.
+            if (indexes[0] != null && owner is IDictionary dictionary)
+            {
+                dictionary[indexes[0]!] = ConvertValue(newValue, TypeUtils.GetUnderlyingType(dictionary));
+                return true;
+            }
             if (TryGetObjectIsIntegerIndex(indexes[0], out var intIndex))
             {
-                // List.
-                if (owner is IList list)
-                {
-                    list[intIndex] = ConvertValue(newValue, TypeUtils.GetUnderlyingType(list));
-                    return true;
-                }
                 // Array.
                 if (owner is Array array)
                 {
@@ -166,25 +173,25 @@ public class DefaultObjectSelector : IObjectSelector
                         intIndex);
                     return true;
                 }
-            }
-            // Dictionary.
-            if (indexes[0] != null && owner is IDictionary dictionary)
-            {
-                dictionary[indexes[0]!] = ConvertValue(newValue, TypeUtils.GetUnderlyingType(dictionary));
-                return true;
+                // List.
+                if (owner is IList list)
+                {
+                    list[intIndex] = ConvertValue(newValue, TypeUtils.GetUnderlyingType(list));
+                    return true;
+                }
             }
         }
 
         // Index property.
         else
         {
-            if (token.PropertyInfo == null || !token.PropertyInfo.CanWrite)
+            if (propertyInfo == null || !propertyInfo.CanWrite)
             {
                 return false;
             }
-            token.PropertyInfo.SetValue(
+            propertyInfo.SetValue(
                 owner,
-                ConvertValue(newValue, token.PropertyInfo.PropertyType),
+                ConvertValue(newValue, propertyInfo.PropertyType),
                 indexes);
             return true;
         }

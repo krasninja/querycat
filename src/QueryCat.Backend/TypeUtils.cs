@@ -16,7 +16,7 @@ internal static class TypeUtils
     /// <returns>Underlying type or current if not generic.</returns>
     internal static Type GetUnderlyingType(Type type)
     {
-        if (type == typeof(Array))
+        if (type.IsArray)
         {
             return type.GetElementType()!;
         }

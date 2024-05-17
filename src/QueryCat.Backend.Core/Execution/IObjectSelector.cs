@@ -19,15 +19,13 @@ public interface IObjectSelector
     /// <param name="context">Selector context.</param>
     /// <param name="indexes">Indexes values.</param>
     /// <returns>Object found by index name.</returns>
-    ObjectSelectorContext.Token? SelectByIndex(ObjectSelectorContext context, object?[] indexes);
+    ObjectSelectorContext.Token? SelectByIndex(ObjectSelectorContext context, params object?[] indexes);
 
     /// <summary>
-    /// Set property value by property info.
+    /// Set property value by property info or index to the last token.
     /// </summary>
-    /// <param name="token">Select info with property info.</param>
-    /// <param name="owner">The owner of the token property info.</param>
+    /// <param name="context">Selector context.</param>
     /// <param name="newValue">New value.</param>
-    /// <param name="indexes">Indexes values.</param>
     /// <returns><c>True</c> if property was set, <c>false</c> otherwise.</returns>
-    bool SetValue(in ObjectSelectorContext.Token token, object owner, object? newValue, object?[] indexes);
+    bool SetValue(ObjectSelectorContext context, object? newValue);
 }
