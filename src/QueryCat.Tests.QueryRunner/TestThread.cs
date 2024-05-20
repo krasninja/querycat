@@ -92,9 +92,10 @@ public static class TestThread
     public static IEnumerable<object[]> GetTestFiles()
     {
         var rootDir = GetTestsDirectory();
-        foreach (var testFile in Directory.EnumerateFiles(rootDir, "*.yaml"))
+        foreach (var testFile in Directory.EnumerateFiles(rootDir, "*.yaml", SearchOption.AllDirectories))
         {
-            yield return [Path.GetFileNameWithoutExtension(testFile)];
+            var relativeFilePath = Path.GetRelativePath(rootDir, testFile);
+            yield return [ relativeFilePath];
         }
     }
 
