@@ -1,5 +1,3 @@
-using System.Globalization;
-
 namespace QueryCat.Backend.Core.Types;
 
 /// <summary>
@@ -145,7 +143,7 @@ public static class Converter
 
         if (result != null && result.GetType() != targetType && result is IConvertible convertible)
         {
-            return convertible.ToType(targetType, CultureInfo.InvariantCulture);
+            return convertible.ToType(targetType, Application.Culture);
         }
 
         return result;

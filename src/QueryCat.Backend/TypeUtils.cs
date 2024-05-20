@@ -16,20 +16,20 @@ internal static class TypeUtils
     /// <returns>Underlying type or current if not generic.</returns>
     internal static Type GetUnderlyingType(Type type)
     {
-        if (type == typeof(Array))
+        if (type.IsArray)
         {
             return type.GetElementType()!;
         }
 
         if (type.IsGenericType)
         {
-            if (typeof(IEnumerable).IsAssignableFrom(type))
-            {
-                return type.GetGenericArguments()[0];
-            }
             if (typeof(IDictionary).IsAssignableFrom(type))
             {
                 return type.GetGenericArguments()[1];
+            }
+            if (typeof(IEnumerable).IsAssignableFrom(type))
+            {
+                return type.GetGenericArguments()[0];
             }
         }
 

@@ -1,3 +1,4 @@
+using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Storage;
 
@@ -16,10 +17,11 @@ internal sealed class TextTableInput : DsvInput
             {
                 DelimiterStreamReaderOptions = new DelimiterStreamReader.ReaderOptions
                 {
-                    Delimiters = new[] { ' ' },
+                    Delimiters = [' '],
                     DelimitersCanRepeat = true,
-                    QuoteChars = Array.Empty<char>(),
+                    QuoteChars = [],
                     SkipEmptyLines = true,
+                    Culture = Application.Culture,
                 },
             }
         }, key)

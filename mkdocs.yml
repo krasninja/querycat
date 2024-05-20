@@ -12,6 +12,7 @@ nav:
     - 'CALL': commands/call.md
     - 'DECLARE': commands/declare.md
     - 'ECHO': commands/echo.md
+    - 'IF': commands/if.md
     - 'INSERT': commands/insert.md
     - 'SELECT': commands/select.md
     - 'SET': commands/set.md

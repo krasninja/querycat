@@ -7,64 +7,83 @@ namespace QueryCat.Backend.Core.Execution;
 /// <summary>
 /// Object selector context.
 /// </summary>
-public class ObjectSelectorContext
+[DebuggerDisplay("Count = {Length}")]
+public sealed class ObjectSelectorContext
 {
+    private readonly IExecutionThread _executionThread;
+
+    /// <summary>
+    /// Running execution thread.
+    /// </summary>
+    public IExecutionThread ExecutionThread => _executionThread;
+
     /// <summary>
     /// Select object information.
     /// </summary>
-    /// <param name="ResultObject">Object instance.</param>
-    /// <param name="SelectProperty">Property information if the object is the property of another object.</param>
+    /// <param name="Value">Result object instance.</param>
+    /// <param name="PropertyInfo">Property information if the result object is the property of another object.
+    /// Can only be defined for property selector.</param>
+    /// <param name="Indexes">Indexes values if was selected by indexes.</param>
     /// <param name="Tag">Custom user object.</param>
-    [DebuggerDisplay("{ResultObject}, {SelectProperty}")]
+    [DebuggerDisplay("{Value}, {PropertyInfo}")]
     public readonly record struct Token(
-        object ResultObject,
-        TokenPropertyInfo? SelectProperty = null,
-        object? Tag = null);
-
-    /// <summary>
-    /// Select property information (if it is not a root object).
-    /// </summary>
-    /// <param name="Owner">Object the owner of the property.</param>
-    /// <param name="PropertyInfo">Instance of <see cref="PropertyInfo" />.</param>
-    [DebuggerDisplay("{Owner}, {PropertyInfo}")]
-    public readonly record struct TokenPropertyInfo(
-        object Owner,
-        PropertyInfo PropertyInfo)
+        object Value,
+        PropertyInfo? PropertyInfo = null,
+        object?[]? Indexes = null,
+        object? Tag = null)
     {
-        public static TokenPropertyInfo FromExpression<T>(T owner, Expression<Func<T, object>> expression)
+        /// <summary>
+        /// Create token from expression.
+        /// </summary>
+        /// <param name="owner">Owner object.</param>
+        /// <param name="expression">Expression.</param>
+        /// <typeparam name="T">Owner type.</typeparam>
+        /// <returns>Instance of <see cref="Token" />.</returns>
+        public static Token? From<T>(T owner, Expression<Func<T, object>> expression)
             where T : class
         {
-            return new TokenPropertyInfo(owner, GetPropertyInfo(expression));
+            var pi = GetPropertyInfo(expression);
+            var obj = pi.GetValue(owner);
+            if (obj == null)
+            {
+                return null;
+            }
+            return new Token(obj, pi);
         }
     }
+
+    private readonly List<Token> _selectStack = new();
 
     /// <summary>
     /// Selector traverse stack.
     /// </summary>
-    public List<Token> SelectStack { get; } = new();
+    public IReadOnlyList<Token> SelectStack => _selectStack;
 
     /// <summary>
-    /// Optional user value.
+    /// Select stack length.
     /// </summary>
-    public object? Tag { get; set; }
+    public int Length => SelectStack.Count;
 
     /// <summary>
     /// Previous result object.
     /// </summary>
-    public object? PreviousResult => SelectStack.Count > 0 ? SelectStack[^1].ResultObject : null;
+    public object? LastValue => Length > 0 ? SelectStack[^1].Value : null;
 
     /// <summary>
     /// Constructor.
     /// </summary>
-    public ObjectSelectorContext()
+    /// <param name="executionThread">Execution thread.</param>
+    public ObjectSelectorContext(IExecutionThread executionThread)
     {
+        _executionThread = executionThread;
     }
 
     /// <summary>
     /// Constructor.
     /// </summary>
+    /// <param name="executionThread">Execution thread.</param>
     /// <param name="startObject">Optional root object of the expression.</param>
-    public ObjectSelectorContext(object startObject)
+    public ObjectSelectorContext(IExecutionThread executionThread, object startObject) : this(executionThread)
     {
         Push(new Token(startObject));
     }
@@ -75,7 +94,7 @@ public class ObjectSelectorContext
     /// <param name="token">Select info.</param>
     public void Push(in Token token)
     {
-        SelectStack.Add(token);
+        _selectStack.Add(token);
     }
 
     /// <summary>
@@ -85,7 +104,7 @@ public class ObjectSelectorContext
     public Token Pop()
     {
         var item = SelectStack[^1];
-        SelectStack.RemoveAt(SelectStack.Count - 1);
+        _selectStack.RemoveAt(SelectStack.Count - 1);
         return item;
     }
 
@@ -98,10 +117,9 @@ public class ObjectSelectorContext
     /// <summary>
     /// Reset state.
     /// </summary>
-    public virtual void Clear()
+    public void Clear()
     {
-        SelectStack.Clear();
-        Tag = null;
+        _selectStack.Clear();
     }
 
     private static PropertyInfo GetPropertyInfo<T>(Expression<Func<T, object>> property)

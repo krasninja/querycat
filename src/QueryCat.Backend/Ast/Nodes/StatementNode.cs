@@ -33,6 +33,10 @@ internal abstract class StatementNode : AstNode
     public override IEnumerable<IAstNode> GetChildren()
     {
         yield return RootNode;
+        if (NextNode != null)
+        {
+            yield return NextNode;
+        }
     }
 
     /// <inheritdoc />

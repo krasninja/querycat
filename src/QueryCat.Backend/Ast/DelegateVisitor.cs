@@ -2,6 +2,7 @@ using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Call;
 using QueryCat.Backend.Ast.Nodes.Declare;
 using QueryCat.Backend.Ast.Nodes.Function;
+using QueryCat.Backend.Ast.Nodes.If;
 using QueryCat.Backend.Ast.Nodes.Insert;
 using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Ast.Nodes.SpecialFunctions;
@@ -42,6 +43,12 @@ internal abstract class DelegateVisitor : AstVisitor
 
     /// <inheritdoc />
     public override void Visit(BinaryOperationExpressionNode node)
+    {
+        OnVisit(node);
+    }
+
+    /// <inheritdoc />
+    public override void Visit(BlockExpressionNode node)
     {
         OnVisit(node);
     }
@@ -188,6 +195,28 @@ internal abstract class DelegateVisitor : AstVisitor
 
     /// <inheritdoc />
     public override void Visit(FunctionTypeNode node)
+    {
+        OnVisit(node);
+    }
+
+    #endregion
+
+    #region If
+
+    /// <inheritdoc />
+    public override void Visit(IfConditionItemNode node)
+    {
+        OnVisit(node);
+    }
+
+    /// <inheritdoc />
+    public override void Visit(IfConditionNode node)
+    {
+        OnVisit(node);
+    }
+
+    /// <inheritdoc />
+    public override void Visit(IfConditionStatementNode node)
     {
         OnVisit(node);
     }

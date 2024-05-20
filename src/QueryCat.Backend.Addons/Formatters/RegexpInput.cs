@@ -27,6 +27,7 @@ internal sealed class RegexpInput : StreamRowsInput
         {
             DetectDelimiter = false,
             CompleteOnEndOfLine = true,
+            Culture = Application.Culture,
         },
     }, key ?? string.Empty)
     {

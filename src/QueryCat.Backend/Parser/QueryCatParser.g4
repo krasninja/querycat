@@ -15,13 +15,14 @@ program: SEMICOLON* statement (SEMICOLON statement)* SEMICOLON* EOF;
 
 statement
     : functionCall # StatementFunctionCall
+    | declareVariable # StatementDeclareVariable
+    | setVariable # StatementSetVariable
     | selectStatement # StatementSelectExpression
     | updateStatement # StatementUpdateExpression
     | insertStatement # StatementInsertExpression
     | echoStatement # StatementEcho
     | callStatement # StatementCall
-    | declareVariable # StatementDeclareVariable
-    | setVariable # StatementSetVariable
+    | ifStatement # StatementIf
     | expression # StatementExpression
     ;
 
@@ -228,9 +229,21 @@ echoStatement: ECHO expression;
 callStatement: CALL functionCall;
 
 /*
- * ========
+ * ===============
+ * IF command.
+ * ===============
+ */
+
+ifStatement:
+    IF mainIf=ifCondition
+    (ELSEIF elseIf=ifCondition)*
+    (ELSE elseBlock=blockExpression)?;
+ifCondition: condition=expression THEN block=blockExpression;
+
+/*
+ * ===============
  * General.
- * ========
+ * ===============
  */
 
 identifierSimple
@@ -247,6 +260,8 @@ identifierSelector
     ;
 array: '(' expression (',' expression)* ')';
 intervalLiteral: INTERVAL interval=STRING_LITERAL;
+
+blockExpression : BEGIN SEMICOLON* statement (SEMICOLON statement)* SEMICOLON* END;
 
 castOperand: CAST '(' value=simpleExpression AS type ')';
 atTimeZone: AT (LOCAL | TIME ZONE tz=simpleExpression);
@@ -325,6 +340,7 @@ expression
     | left=expression op=OR right=expression # ExpressionBinary
     | right=expression op=IS NOT? NULL # ExpressionUnary
     | op=NOT right=expression # ExpressionUnary
+    | blockExpression # ExpressionBlock
     ;
 
 // Simple expression is subset of "expressons" to be used in clauses like BETWEEN.

@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Text;
+using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Formatters;
 using QueryCat.Backend.Relational;
@@ -26,6 +27,7 @@ public class Program
         var testDirectory = args[1];
 
         Directory.SetCurrentDirectory(testDirectory);
+        Application.Culture = System.Globalization.CultureInfo.InvariantCulture;
 
         foreach (var file in TestThread.GetTestFilesList())
         {

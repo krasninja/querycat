@@ -175,7 +175,7 @@ internal class CreateDelegateVisitor : AstVisitor
 
         if (ExecutionThread.ContainsVariable(node.Name, scope))
         {
-            var context = new ObjectSelectorContext();
+            var context = new ObjectSelectorContext(ExecutionThread);
             VariantValue Func()
             {
                 var startObject = ExecutionThread.GetVariable(node.Name, scope);
@@ -212,6 +212,11 @@ internal class CreateDelegateVisitor : AstVisitor
             {
                 var indexObjects = GetObjectIndexesSelector(indexSelectorNode);
                 info = ExecutionThread.ObjectSelector.SelectByIndex(context, indexObjects);
+                // Indexes must be initialized, fix it.
+                if (info is { Indexes: null })
+                {
+                    info = info.Value with { Indexes = indexObjects };
+                }
             }
 
             if (!info.HasValue)
@@ -221,7 +226,7 @@ internal class CreateDelegateVisitor : AstVisitor
             context.Push(info.Value);
         }
 
-        result = VariantValue.CreateFromObject(context.Peek().ResultObject);
+        result = VariantValue.CreateFromObject(context.LastValue);
         return true;
     }
 

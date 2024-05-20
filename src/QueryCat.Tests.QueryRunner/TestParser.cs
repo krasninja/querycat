@@ -25,11 +25,15 @@ public class TestParser
     {
         var testsDirectory = FindTestsDirectory();
         var testData = Deserializer.Deserialize<TestData>(
-            File.OpenText(Path.Combine(testsDirectory, _fileName + ".yaml")));
+            File.OpenText(Path.Combine(testsDirectory, AddYamlExtension(_fileName)))
+        );
         testData.Expected = (testData.Expected ?? string.Empty).Trim();
         testData.Query = testData.Query.Replace("\r\n", "\n").Trim();
         return testData;
     }
+
+    private static string AddYamlExtension(string fileName)
+        => !fileName.EndsWith(".yaml") ? fileName + ".yaml" : fileName;
 
     public static string FindTestsDirectory()
     {

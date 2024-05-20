@@ -36,7 +36,7 @@ internal sealed class SetIdentifierDelegateVisitor : CreateDelegateVisitor
 
         if (ExecutionThread.ContainsVariable(node.Name, scope))
         {
-            var context = new ObjectSelectorContext();
+            var context = new ObjectSelectorContext(ExecutionThread);
             VariantValue Func()
             {
                 var newValue = SetValue(node, scope, context);
@@ -58,26 +58,7 @@ internal sealed class SetIdentifierDelegateVisitor : CreateDelegateVisitor
         // This is expression object.
         if (GetObjectBySelector(context, startObject, node, out _))
         {
-            var lastContext = context.Pop();
-            var lastSelector = node.SelectorNodes.LastOrDefault();
-
-            // The expression object ends with property (obj.Address.City).
-            if (lastSelector is IdentifierPropertySelectorNode)
-            {
-                ExecutionThread.ObjectSelector.SetValue(
-                    token: lastContext,
-                    newValue: Converter.ConvertValue(newValue, typeof(object)),
-                    indexes: []);
-            }
-            // The expression object ends with index (obj.Phone[3]).
-            else if (lastSelector is IdentifierIndexSelectorNode indexSelectorNode)
-            {
-                var indexObjects = GetObjectIndexesSelector(indexSelectorNode);
-                ExecutionThread.ObjectSelector.SetValue(
-                    token: lastContext,
-                    newValue: Converter.ConvertValue(newValue, typeof(object)),
-                    indexes: indexObjects);
-            }
+            ExecutionThread.ObjectSelector.SetValue(context, Converter.ConvertValue(newValue, typeof(object)));
         }
         // Not an expression - variable.
         else if (!node.HasSelectors)

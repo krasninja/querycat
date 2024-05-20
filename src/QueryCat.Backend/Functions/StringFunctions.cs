@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Text.RegularExpressions;
+using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Fetch;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
@@ -18,7 +19,7 @@ internal static class StringFunctions
     public static VariantValue Lower(FunctionCallInfo args)
     {
         var value = args.GetAt(0);
-        return new VariantValue(value.AsString.ToLower());
+        return new VariantValue(value.AsString.ToLower(Application.Culture));
     }
 
     [SafeFunction]
@@ -27,7 +28,7 @@ internal static class StringFunctions
     public static VariantValue Upper(FunctionCallInfo args)
     {
         var value = args.GetAt(0);
-        return new VariantValue(value.AsString.ToUpper());
+        return new VariantValue(value.AsString.ToUpper(Application.Culture));
     }
 
     [SafeFunction]
@@ -91,7 +92,7 @@ internal static class StringFunctions
         var format = args.GetAt(1);
         return !string.IsNullOrEmpty(format)
             ? new VariantValue(arg.ToString(format))
-            : new VariantValue(arg.ToString());
+            : new VariantValue(arg.ToString(Application.Culture));
     }
 
     [SafeFunction]
@@ -101,7 +102,7 @@ internal static class StringFunctions
     {
         var substring = args.GetAt(0).AsString;
         var target = args.GetAt(1).AsString;
-        return new VariantValue(target.IndexOf(substring, StringComparison.InvariantCulture) + 1);
+        return new VariantValue(target.IndexOf(substring, StringComparison.Ordinal) + 1);
     }
 
     [SafeFunction]
@@ -132,7 +133,7 @@ internal static class StringFunctions
     public static VariantValue Chr(FunctionCallInfo args)
     {
         var code = args.GetAt(0).AsInteger;
-        return new VariantValue(Convert.ToChar(code).ToString());
+        return new VariantValue(Convert.ToChar(code).ToString(Application.Culture));
     }
 
     [SafeFunction]
@@ -271,7 +272,7 @@ internal static class StringFunctions
     internal static RegexOptions FlagsToRegexOptions(string? flags)
     {
         var options = RegexOptions.None;
-        foreach (var flag in (flags ?? string.Empty).ToLowerInvariant())
+        foreach (var flag in (flags ?? string.Empty).ToLower(Application.Culture))
         {
             switch (flag)
             {

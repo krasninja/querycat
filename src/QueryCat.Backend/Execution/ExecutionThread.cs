@@ -25,6 +25,7 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
 
     private readonly AstVisitor _statementsVisitor;
     private readonly object _objLock = new();
+    private int _deepLevel;
     private readonly List<IDisposable> _disposablesList = new();
     private bool _isInCallback;
 
@@ -53,11 +54,6 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
 
     /// <inheritdoc />
     public IObjectSelector ObjectSelector { get; protected set; }
-
-    /// <summary>
-    /// Current executing statement.
-    /// </summary>
-    internal StatementNode? ExecutingStatement { get; set; }
 
     /// <inheritdoc />
     public ExecutionOptions Options { get; }
@@ -154,23 +150,37 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
         // Run with lock and timer.
         lock (_objLock)
         {
-            RunBootstrapScript();
-            LoadConfig();
+            // Bootstrap.
+            _deepLevel++;
+            if (_deepLevel == 1)
+            {
+                RunBootstrapScript();
+                LoadConfig();
+            }
 
             // Set first executing statement and run.
-            ExecutingStatement = programNode.Statements.FirstOrDefault();
+            var executingStatement = programNode.Statements.FirstOrDefault();
 
-            _stopwatch.Restart();
+            // Setup timer.
+            if (_deepLevel == 1)
+            {
+                _stopwatch.Restart();
+            }
+
             try
             {
+                if (executingStatement == null)
+                {
+                    return VariantValue.Null;
+                }
                 if (parameters != null)
                 {
                     var scope = PushScope();
                     SetScopeVariables(scope, parameters);
                 }
                 return Options.QueryTimeout != TimeSpan.Zero
-                    ? RunWithTimeout(RunInternal, cancellationToken)
-                    : RunInternal(cancellationToken);
+                    ? RunWithTimeout(ct => RunInternal(executingStatement, ct), cancellationToken)
+                    : RunInternal(executingStatement, cancellationToken);
             }
             finally
             {
@@ -178,8 +188,12 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
                 {
                     PullScope();
                 }
-                _stopwatch.Stop();
-                Statistic.ExecutionTime = _stopwatch.Elapsed;
+                if (_deepLevel == 1)
+                {
+                    _stopwatch.Stop();
+                    Statistic.ExecutionTime = _stopwatch.Elapsed;
+                }
+                _deepLevel--;
             }
         }
     }
@@ -220,13 +234,16 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
         return task.WaitAsync(Options.QueryTimeout, cancellationToken).GetAwaiter().GetResult();
     }
 
-    private VariantValue RunInternal(CancellationToken cancellationToken)
+    private VariantValue RunInternal(StatementNode executingStatement, CancellationToken cancellationToken)
     {
-        var executeEventArgs = new ExecuteEventArgs();
-        while (ExecutingStatement != null)
+        var executeEventArgs = new ExecuteEventArgs(executingStatement);
+        StatementNode? currentStatement = executingStatement;
+        while (currentStatement != null)
         {
+            executeEventArgs.ExecutingStatementNode = currentStatement;
+
             // Evaluate the command.
-            var commandContext = _statementsVisitor.RunAndReturn(ExecutingStatement);
+            var commandContext = _statementsVisitor.RunAndReturn(currentStatement);
             if (commandContext is IDisposable disposable)
             {
                 _disposablesList.Add(disposable);
@@ -271,14 +288,13 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
             }
 
             // Get the next statement to execute.
-            ExecutingStatement = ExecutingStatement.NextNode;
+            currentStatement = currentStatement.NextNode;
         }
 
         if (Options.UseConfig)
         {
             AsyncUtils.RunSync(ConfigStorage.SaveAsync);
         }
-        ExecutingStatement = null;
 
         return LastResult;
     }
@@ -287,16 +303,11 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
     /// Dumps current executing AST statement.
     /// </summary>
     /// <returns>AST string.</returns>
-    public string DumpAst()
+    public string DumpAst(ExecuteEventArgs args)
     {
-        if (ExecutingStatement == null)
-        {
-            return string.Empty;
-        }
-
         var sb = new StringBuilder();
         var visitor = new StringDumpAstVisitor(sb);
-        visitor.Run(ExecutingStatement);
+        visitor.Run(args.ExecutingStatementNode);
         return sb.ToString();
     }
 

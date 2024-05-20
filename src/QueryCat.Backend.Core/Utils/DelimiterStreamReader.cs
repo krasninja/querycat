@@ -162,7 +162,10 @@ public class DelimiterStreamReader
     public DelimiterStreamReader(StreamReader streamReader, ReaderOptions? options = null)
     {
         _streamReader = streamReader;
-        _options = options ?? new ReaderOptions();
+        _options = options ?? new ReaderOptions
+        {
+            Culture = Application.Culture,
+        };
         _dynamicBuffer = new DynamicBuffer<char>(_options.BufferSize);
 
         InitStopCharacters();

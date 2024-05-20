@@ -17,5 +17,5 @@ public sealed class NullObjectSelector : IObjectSelector
     public ObjectSelectorContext.Token? SelectByIndex(ObjectSelectorContext context, object?[] indexes) => null;
 
     /// <inheritdoc />
-    public bool SetValue(in ObjectSelectorContext.Token token, object? newValue, object?[] indexes) => false;
+    public bool SetValue(ObjectSelectorContext context, object? newValue) => false;
 }

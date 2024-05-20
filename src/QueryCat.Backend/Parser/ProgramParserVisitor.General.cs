@@ -44,6 +44,10 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
     public override IAstNode VisitStatementFunctionCall(QueryCatParser.StatementFunctionCallContext context)
         => new FunctionCallStatementNode(this.Visit<FunctionCallNode>(context.functionCall()));
 
+    /// <inheritdoc />
+    public override IAstNode VisitBlockExpression(QueryCatParser.BlockExpressionContext context)
+        => new BlockExpressionNode(context.statement().Select(this.Visit<StatementNode>).ToList());
+
     #region Expressions and literals
 
     /// <inheritdoc />

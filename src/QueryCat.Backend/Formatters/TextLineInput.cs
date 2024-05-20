@@ -1,3 +1,4 @@
+using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Core.Utils;
@@ -22,12 +23,13 @@ internal sealed class TextLineInput : StreamRowsInput
         DelimiterStreamReaderOptions = new DelimiterStreamReader.ReaderOptions
         {
             DetectDelimiter = false,
+            Culture = Application.Culture
         }
     }, key ?? string.Empty)
     {
         if (StreamReader.BaseStream is not FileStream)
         {
-            _customColumns = Array.Empty<Column>();
+            _customColumns = [];
         }
     }
 

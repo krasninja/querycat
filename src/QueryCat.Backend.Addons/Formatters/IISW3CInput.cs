@@ -57,7 +57,7 @@ public sealed class IISW3CInput : StreamRowsInput
     {
         DelimiterStreamReaderOptions = new DelimiterStreamReader.ReaderOptions
         {
-            Delimiters = new[] { ' ' },
+            Delimiters = [' '],
         }
     }, key ?? string.Empty)
     {

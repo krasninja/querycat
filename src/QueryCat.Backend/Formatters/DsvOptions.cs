@@ -1,3 +1,4 @@
+using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Storage;
 
@@ -22,7 +23,8 @@ internal sealed class DsvOptions
     {
         DelimiterStreamReaderOptions = new DelimiterStreamReader.ReaderOptions
         {
-            QuoteChars = new[] { QuoteChar },
+            QuoteChars = [QuoteChar],
+            Culture = Application.Culture,
         }
     };
 

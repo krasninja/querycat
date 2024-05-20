@@ -4,6 +4,7 @@ using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Commands.Select.Iterators;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
+using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Indexes;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Relational.Iterators;
@@ -216,6 +217,8 @@ internal sealed partial class SelectPlanner
             return;
         }
 
+        Pipeline_OrderConvertColumnNumbers(context.CurrentIterator, orderByNode.OrderBySpecificationNodes);
+
         // Create wrapper to initialize rows frame and create index.
         var orderFunctions = orderByNode.OrderBySpecificationNodes.Select(n =>
             new OrderByData(
@@ -225,6 +228,22 @@ internal sealed partial class SelectPlanner
             )
         );
         context.SetIterator(new OrderRowsIterator(context.CurrentIterator, orderFunctions.ToArray()));
+    }
+
+    private static void Pipeline_OrderConvertColumnNumbers(IRowsIterator currentIterator, List<SelectOrderBySpecificationNode> orderByNodes)
+    {
+        // Convert: SELECT id FROM x ORDER BY 1 -> SELECT id FROM x ORDER BY id.
+        foreach (var orderByNode in orderByNodes)
+        {
+            if (orderByNode.ExpressionNode is LiteralNode literalNode
+                && literalNode.Value.GetInternalType() == DataType.Integer
+                && literalNode.Value.AsIntegerUnsafe > 0
+                && literalNode.Value.AsIntegerUnsafe <= currentIterator.Columns.Length)
+            {
+                var column = currentIterator.Columns[literalNode.Value.AsIntegerUnsafe - 1];
+                orderByNode.ExpressionNode = new IdentifierExpressionNode(column.Name, column.SourceName);
+            }
+        }
     }
 
     private static OrderDirection Pipeline_ConvertDirection(SelectOrderSpecification order) => order switch
