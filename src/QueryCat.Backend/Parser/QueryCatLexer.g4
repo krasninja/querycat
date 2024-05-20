@@ -196,6 +196,7 @@ CALL:               'CALL';
 IF:                 'IF';
 THEN:               'THEN';
 ELSE:               'ELSE';
+ELSEIF:             'ELSEIF';
 
 // WHILE command.
 

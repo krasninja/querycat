@@ -2,6 +2,7 @@ using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Call;
 using QueryCat.Backend.Ast.Nodes.Declare;
 using QueryCat.Backend.Ast.Nodes.Function;
+using QueryCat.Backend.Ast.Nodes.If;
 using QueryCat.Backend.Ast.Nodes.Insert;
 using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Ast.Nodes.SpecialFunctions;
@@ -66,6 +67,10 @@ internal abstract class AstVisitor
     {
     }
 
+    public virtual void Visit(BlockExpressionNode node)
+    {
+    }
+
     public virtual void Visit(CaseExpressionNode node)
     {
     }
@@ -75,6 +80,10 @@ internal abstract class AstVisitor
     }
 
     public virtual void Visit(EmptyNode node)
+    {
+    }
+
+    public virtual void Visit(ExpressionStatementNode node)
     {
     }
 
@@ -115,14 +124,6 @@ internal abstract class AstVisitor
     }
 
     public virtual void Visit(UnaryOperationExpressionNode node)
-    {
-    }
-
-    #endregion
-
-    #region Echo
-
-    public virtual void Visit(ExpressionStatementNode node)
     {
     }
 
@@ -171,6 +172,22 @@ internal abstract class AstVisitor
     }
 
     public virtual void Visit(FunctionTypeNode node)
+    {
+    }
+
+    #endregion
+
+    #region If
+
+    public virtual void Visit(IfConditionItemNode node)
+    {
+    }
+
+    public virtual void Visit(IfConditionNode node)
+    {
+    }
+
+    public virtual void Visit(IfConditionStatementNode node)
     {
     }
 

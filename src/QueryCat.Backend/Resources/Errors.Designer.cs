@@ -308,5 +308,17 @@ namespace QueryCat.Backend.Resources {
                 return ResourceManager.GetString("InvalidQuantifier", resourceCulture);
             }
         }
+        
+        internal static string NoStatements {
+            get {
+                return ResourceManager.GetString("NoStatements", resourceCulture);
+            }
+        }
+        
+        internal static string NoConditions {
+            get {
+                return ResourceManager.GetString("NoConditions", resourceCulture);
+            }
+        }
     }
 }

@@ -150,4 +150,10 @@
   <data name="InvalidQuantifier" xml:space="preserve">
     <value>Quantifier '{0}' cannot be proceed.</value>
   </data>
+  <data name="NoStatements" xml:space="preserve">
+    <value>At least one statement must be provided.</value>
+  </data>
+  <data name="NoConditions" xml:space="preserve">
+    <value>There must be at least one condition.</value>
+  </data>
 </root>

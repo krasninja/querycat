@@ -1,0 +1,19 @@
+expected: |
+  2
+query: |
+  IF 1=2 THEN
+  BEGIN
+    SELECT 1;
+  END
+  ELSEIF 4=6 OR 2=2 THEN
+  BEGIN
+    SELECT 2;
+  END
+  ELSEIF 3=6 THEN
+  BEGIN
+    SELECT 3;
+  END
+  ELSE
+  BEGIN
+    SELECT 4;
+  END

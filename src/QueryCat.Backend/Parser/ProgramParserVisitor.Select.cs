@@ -195,17 +195,17 @@ internal partial class ProgramParserVisitor
         => new SelectColumnsSublistAll();
 
     /// <inheritdoc />
-    public override IAstNode VisitSelectSublistExpression(QueryCatParser.SelectSublistExpressionContext context)
-        => new SelectColumnsSublistExpressionNode((ExpressionNode)Visit(context.expression()))
+    public override IAstNode VisitSelectSublistWindow(QueryCatParser.SelectSublistWindowContext context)
+        => new SelectColumnsSublistWindowNode(
+            this.Visit<FunctionCallNode>(context.functionCall()),
+            this.Visit<SelectWindowSpecificationNode>(context.selectWindowSpecification()))
         {
             Alias = this.Visit(context.selectAlias(), SelectAliasNode.Empty).AliasName
         };
 
     /// <inheritdoc />
-    public override IAstNode VisitSelectSublistWindow(QueryCatParser.SelectSublistWindowContext context)
-        => new SelectColumnsSublistWindowNode(
-            this.Visit<FunctionCallNode>(context.functionCall()),
-            this.Visit<SelectWindowSpecificationNode>(context.selectWindowSpecification()))
+    public override IAstNode VisitSelectSublistExpression(QueryCatParser.SelectSublistExpressionContext context)
+        => new SelectColumnsSublistExpressionNode((ExpressionNode)Visit(context.expression()))
         {
             Alias = this.Visit(context.selectAlias(), SelectAliasNode.Empty).AliasName
         };

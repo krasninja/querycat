@@ -1,0 +1,11 @@
+expected: |
+  4
+query: |
+  IF 1=2 OR 3<>3 THEN
+  BEGIN
+    SELECT 1;
+  END
+  ELSE
+  BEGIN
+    SELECT 4;
+  END
