@@ -39,6 +39,7 @@ public class CsvParseBenchmarks
         {
             Delimiters = [','],
             QuoteChars = ['"'],
+            Culture = CultureInfo.InvariantCulture,
         });
 
         csv.Read();

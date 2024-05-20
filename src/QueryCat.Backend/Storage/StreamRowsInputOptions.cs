@@ -1,3 +1,4 @@
+using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend.Storage;
@@ -10,7 +11,10 @@ public class StreamRowsInputOptions
     /// <summary>
     /// Quote character.
     /// </summary>
-    public DelimiterStreamReader.ReaderOptions DelimiterStreamReaderOptions { get; set; } = new();
+    public DelimiterStreamReader.ReaderOptions DelimiterStreamReaderOptions { get; set; } = new()
+    {
+        Culture = Application.Culture,
+    };
 
     /// <summary>
     /// Add file name or any other source custom column.
@@ -20,5 +24,5 @@ public class StreamRowsInputOptions
     /// <summary>
     /// Unique cache key. If specified it will be used for persistent cache.
     /// </summary>
-    public string[] CacheKeys { get; set; } = Array.Empty<string>();
+    public string[] CacheKeys { get; set; } = [];
 }

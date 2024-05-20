@@ -1,4 +1,5 @@
 using System.Buffers;
+using System.Globalization;
 using Xunit;
 using System.Text;
 using QueryCat.Backend.Core.Utils;
@@ -75,8 +76,9 @@ public class DelimiterStreamReaderTests
         var streamRowsInput = new DelimiterStreamReader(StringToStream(sb.ToString()),
             new DelimiterStreamReader.ReaderOptions
             {
-                Delimiters = new[] { ',' },
-                QuoteChars = new[] { '"', '\'' },
+                Delimiters = [','],
+                QuoteChars = ['"', '\''],
+                Culture = CultureInfo.InvariantCulture,
             });
         streamRowsInput.Read();
 
@@ -99,9 +101,10 @@ public class DelimiterStreamReaderTests
         var streamRowsInput = new DelimiterStreamReader(StringToStream(sb.ToString()),
             new DelimiterStreamReader.ReaderOptions
             {
-                Delimiters = new[] { ' ' },
-                QuoteChars = new[] { '"' },
+                Delimiters = [' '],
+                QuoteChars = ['"'],
                 DelimitersCanRepeat = true,
+                Culture = CultureInfo.InvariantCulture,
             });
         streamRowsInput.Read();
         var id1 = streamRowsInput.GetField(0).ToString();
@@ -129,9 +132,10 @@ public class DelimiterStreamReaderTests
         var streamRowsInput = new DelimiterStreamReader(StringToStream(sb.ToString()),
             new DelimiterStreamReader.ReaderOptions
             {
-                Delimiters = new[] { ' ' },
-                QuoteChars = Array.Empty<char>(),
+                Delimiters = [' '],
+                QuoteChars = [],
                 DelimitersCanRepeat = true,
+                Culture = CultureInfo.InvariantCulture,
             });
         streamRowsInput.Read();
         var name1 = streamRowsInput.GetField(0).ToString();
@@ -156,7 +160,8 @@ public class DelimiterStreamReaderTests
         var streamRowsInput = new DelimiterStreamReader(StringToStream(sb.ToString()), new DelimiterStreamReader.ReaderOptions
         {
             SkipEmptyLines = true,
-            Delimiters = new[] { ',' },
+            Delimiters = [','],
+            Culture = CultureInfo.InvariantCulture,
         });
         streamRowsInput.Read();
         streamRowsInput.Read();

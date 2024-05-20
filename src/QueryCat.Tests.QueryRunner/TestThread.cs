@@ -1,5 +1,6 @@
 using System.Globalization;
 using QueryCat.Backend;
+using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Formatters;
@@ -41,6 +42,7 @@ public static class TestThread
                         QuoteChars = ['"'],
                         Delimiters = [','],
                         BufferSize = 13,
+                        Culture = Application.Culture,
                     },
                     AddInputSourceColumn = false,
                 }
@@ -57,6 +59,7 @@ public static class TestThread
         Directory.SetCurrentDirectory(GetDataDirectory());
         Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
         Thread.CurrentThread.CurrentUICulture = CultureInfo.InvariantCulture;
+        Application.Culture = CultureInfo.InvariantCulture;
         var testParser = new TestParser(fileName);
         return testParser.Parse();
     }

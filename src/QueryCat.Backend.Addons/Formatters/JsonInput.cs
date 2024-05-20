@@ -20,7 +20,7 @@ internal sealed class JsonInput : StreamRowsInput
     private int _bracketsCount;
 
     private JsonElement? _jsonElement;
-    private string[] _properties = Array.Empty<string>();
+    private string[] _properties = [];
 
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(JsonInput));
 
@@ -31,12 +31,13 @@ internal sealed class JsonInput : StreamRowsInput
         {
             DelimiterStreamReaderOptions = new DelimiterStreamReader.ReaderOptions
             {
-                Delimiters = new[] { '{', '}' },
-                QuoteChars = new[] { '"' },
+                Delimiters = ['{', '}'],
+                QuoteChars = ['"'],
                 SkipEmptyLines = true,
                 CompleteOnEndOfLine = false,
                 QuotesEscapeStyle = DelimiterStreamReader.QuotesMode.Backslash,
                 IncludeDelimiter = true,
+                Culture = Application.Culture,
             },
             AddInputSourceColumn = addFileNameColumn,
         }, key ?? string.Empty)

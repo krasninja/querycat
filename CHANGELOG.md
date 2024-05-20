@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial implementation of IF command.
 - Allow to order by column number.
+- Allow to set up application culture "Application.Culture".
 
 ### Fixed
 

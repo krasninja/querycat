@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using Microsoft.Extensions.Logging;
@@ -26,6 +27,11 @@ public static class Application
     public const string ArchitectureX64 = "x64";
     public const string ArchitectureWasm = "wasm";
     public const string ArchitectureUnknown = "unknown";
+
+    /// <summary>
+    /// The culture to use by QueryCat application. Current runtime culture by default.
+    /// </summary>
+    public static CultureInfo Culture { get; set; } = CultureInfo.CurrentCulture;
 
     /// <summary>
     /// Default application log factory.

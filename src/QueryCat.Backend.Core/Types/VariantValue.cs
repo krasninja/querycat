@@ -502,13 +502,13 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
 
     private static VariantValue StringToInteger(in ReadOnlySpan<char> value, out bool success)
     {
-        success = long.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out var @out);
+        success = long.TryParse(value, NumberStyles.Any, Application.Culture, out var @out);
         if (!success)
         {
             // Try HEX format.
             success = value.StartsWith("0x") &&
                 long.TryParse(value[2..], NumberStyles.HexNumber | NumberStyles.AllowHexSpecifier,
-                    CultureInfo.InvariantCulture, out @out);
+                    Application.Culture, out @out);
         }
         return success ? new VariantValue(@out) : Null;
     }
@@ -516,7 +516,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     private static VariantValue StringToTimestamp(string? value, out bool success)
         => StringToTimestamp((ReadOnlySpan<char>)value, out success);
 
-    private static readonly string[] DateTimeAdditionalFormats =
+    private static readonly string[] _dateTimeAdditionalFormats =
     {
         "yyMMdd",
         "yyyyMMdd"
@@ -524,10 +524,10 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
 
     private static VariantValue StringToTimestamp(in ReadOnlySpan<char> value, out bool success)
     {
-        success = DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.None, out var @out);
+        success = DateTime.TryParse(value, Application.Culture, DateTimeStyles.None, out var @out);
         if (!success)
         {
-            success = DateTime.TryParseExact(value, DateTimeAdditionalFormats, null,
+            success = DateTime.TryParseExact(value, _dateTimeAdditionalFormats, null,
                 DateTimeStyles.AllowWhiteSpaces, out @out);
         }
         return success ? new VariantValue(@out) : Null;
@@ -544,7 +544,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
 
     private static VariantValue StringToFloat(in ReadOnlySpan<char> value, out bool success)
     {
-        success = double.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out var @out);
+        success = double.TryParse(value, NumberStyles.Any, Application.Culture, out var @out);
         return success ? new VariantValue(@out) : Null;
     }
 
@@ -588,7 +588,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
 
     private static VariantValue StringToNumeric(in ReadOnlySpan<char> value, out bool success)
     {
-        success = decimal.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out var @out);
+        success = decimal.TryParse(value, NumberStyles.Any, Application.Culture, out var @out);
         return success ? new VariantValue(@out) : Null;
     }
 
@@ -675,13 +675,13 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
             DataType.Float => targetType switch
             {
                 DataType.Integer => new((int)_valueUnion.DoubleValue),
-                DataType.String => new(_valueUnion.DoubleValue.ToString(CultureInfo.InvariantCulture)),
+                DataType.String => new(_valueUnion.DoubleValue.ToString(Application.Culture)),
                 DataType.Numeric => new((decimal)_valueUnion.DoubleValue),
                 _ => Null
             },
             DataType.Timestamp => targetType switch
             {
-                DataType.String => new(_valueUnion.DateTimeValue.ToString(CultureInfo.InvariantCulture)),
+                DataType.String => new(_valueUnion.DateTimeValue.ToString(Application.Culture)),
                 _ => Null
             },
             DataType.Boolean => targetType switch
@@ -693,7 +693,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
             DataType.Numeric => targetType switch
             {
                 DataType.Integer => new(decimal.ToInt64((decimal)_object!)),
-                DataType.String => new(((decimal)_object!).ToString(CultureInfo.InvariantCulture)),
+                DataType.String => new(((decimal)_object!).ToString(Application.Culture)),
                 DataType.Float => new(decimal.ToDouble((decimal)_object!)),
                 _ => Null
             },
@@ -822,13 +822,13 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     {
         DataType.Null => NullValueString,
         DataType.Void => VoidValueString,
-        DataType.Integer => AsIntegerUnsafe.ToString(CultureInfo.InvariantCulture),
+        DataType.Integer => AsIntegerUnsafe.ToString(Application.Culture),
         DataType.String => AsStringUnsafe,
-        DataType.Boolean => AsBooleanUnsafe.ToString(CultureInfo.InvariantCulture),
-        DataType.Float => AsFloatUnsafe.ToString(FloatNumberFormat, CultureInfo.InvariantCulture),
-        DataType.Numeric => AsNumericUnsafe.ToString(FloatNumberFormat, CultureInfo.InvariantCulture),
-        DataType.Timestamp => AsTimestampUnsafe.ToString(CultureInfo.InvariantCulture),
-        DataType.Interval => AsIntervalUnsafe.ToString("c", CultureInfo.InvariantCulture),
+        DataType.Boolean => AsBooleanUnsafe.ToString(Application.Culture),
+        DataType.Float => AsFloatUnsafe.ToString(FloatNumberFormat, Application.Culture),
+        DataType.Numeric => AsNumericUnsafe.ToString(FloatNumberFormat, Application.Culture),
+        DataType.Timestamp => AsTimestampUnsafe.ToString(Application.Culture),
+        DataType.Interval => AsIntervalUnsafe.ToString("c", Application.Culture),
         DataType.Object => "object:" + AsObjectUnsafe,
         DataType.Blob => "X" + BlobToShortString(AsBlobUnsafe, 16),
         _ => "unknown"
@@ -843,13 +843,13 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     {
         DataType.Null => NullValueString,
         DataType.Void => VoidValueString,
-        DataType.Integer => AsIntegerUnsafe.ToString(format, CultureInfo.InvariantCulture),
+        DataType.Integer => AsIntegerUnsafe.ToString(format, Application.Culture),
         DataType.String => AsStringUnsafe,
         DataType.Boolean => AsBooleanUnsafe.ToString(),
-        DataType.Float => AsFloatUnsafe.ToString(format, CultureInfo.InvariantCulture),
-        DataType.Numeric => AsNumeric.ToString(format, CultureInfo.InvariantCulture),
-        DataType.Timestamp => AsTimestampUnsafe.ToString(format, CultureInfo.InvariantCulture),
-        DataType.Interval => AsIntervalUnsafe.ToString(format, CultureInfo.InvariantCulture),
+        DataType.Float => AsFloatUnsafe.ToString(format, Application.Culture),
+        DataType.Numeric => AsNumeric.ToString(format, Application.Culture),
+        DataType.Timestamp => AsTimestampUnsafe.ToString(format, Application.Culture),
+        DataType.Interval => AsIntervalUnsafe.ToString(format, Application.Culture),
         DataType.Object => "object:" + AsObjectUnsafe,
         DataType.Blob => "X" + BlobToShortString(AsBlobUnsafe, 16),
         _ => "unknown"

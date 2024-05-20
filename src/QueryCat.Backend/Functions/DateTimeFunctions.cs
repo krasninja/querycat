@@ -1,5 +1,4 @@
 using System.ComponentModel;
-using System.Globalization;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
@@ -18,7 +17,7 @@ internal static class DateTimeFunctions
     {
         var target = args.GetAt(0).AsString;
         var format = args.GetAt(1).AsString;
-        return new VariantValue(DateTime.ParseExact(target, format, CultureInfo.InvariantCulture));
+        return new VariantValue(DateTime.ParseExact(target, format, Application.Culture));
     }
 
     [SafeFunction]
@@ -42,7 +41,7 @@ internal static class DateTimeFunctions
     [FunctionSignature("date_part(field: string, source: timestamp): integer")]
     public static VariantValue Extract(FunctionCallInfo args)
     {
-        var field = args.GetAt(0).AsString.Trim().ToUpperInvariant();
+        var field = args.GetAt(0).AsString.Trim().ToUpper(Application.Culture);
         var source = args.GetAt(1);
         if (source.IsNull)
         {
@@ -84,7 +83,7 @@ internal static class DateTimeFunctions
     [FunctionSignature("date_trunc(field: string, source: interval): interval")]
     public static VariantValue Trunc(FunctionCallInfo args)
     {
-        var field = args.GetAt(0).AsString.Trim().ToUpperInvariant();
+        var field = args.GetAt(0).AsString.Trim().ToUpper(Application.Culture);
         var source = args.GetAt(1);
         if (source.IsNull)
         {

@@ -1,3 +1,4 @@
+using System.Globalization;
 using Xunit;
 using Xunit.Abstractions;
 using QueryCat.Backend;
@@ -5,6 +6,7 @@ using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Addons.Formatters;
+using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.IntegrationTests.DataClasses;
 using QueryCat.IntegrationTests.Inputs;
@@ -34,6 +36,7 @@ public sealed class Tests : IDisposable
     public void Select(string fileName)
     {
         // Arrange.
+        Application.Culture = CultureInfo.InvariantCulture;
         _testThread.FunctionsManager.RegisterFunction(SumIntegers);
         _testThread.FunctionsManager.RegisterFunction(FuncWithObject);
         _testThread.FunctionsManager.RegisterFunction(ReturnObjFunc);

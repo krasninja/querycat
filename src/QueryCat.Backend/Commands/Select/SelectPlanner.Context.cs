@@ -8,7 +8,6 @@ using QueryCat.Backend.Commands.Select.Inputs;
 using QueryCat.Backend.Commands.Select.Visitors;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
-using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Relational;
