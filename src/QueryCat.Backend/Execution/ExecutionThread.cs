@@ -151,7 +151,7 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
         lock (_objLock)
         {
             // Bootstrap.
-            Interlocked.Increment(ref _deepLevel);
+            _deepLevel++;
             if (_deepLevel == 1)
             {
                 RunBootstrapScript();
@@ -193,7 +193,7 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
                     _stopwatch.Stop();
                     Statistic.ExecutionTime = _stopwatch.Elapsed;
                 }
-                Interlocked.Decrement(ref _deepLevel);
+                _deepLevel--;
             }
         }
     }
