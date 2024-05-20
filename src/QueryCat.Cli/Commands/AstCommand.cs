@@ -14,7 +14,7 @@ internal class AstCommand : BaseQueryCommand
             var root = applicationOptions.CreateApplicationRoot();
             root.Thread.StatementExecuting += (_, threadArgs) =>
             {
-                Console.WriteLine(root.Thread.DumpAst());
+                Console.WriteLine(root.Thread.DumpAst(threadArgs));
                 threadArgs.ContinueExecution = false;
             };
             AddVariables(root.Thread, variables);
