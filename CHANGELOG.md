@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.6.4] - 2024-05-20
+
 ### Added
 
 - Initial implementation of IF command.
