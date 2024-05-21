@@ -355,10 +355,12 @@ internal class CreateDelegateVisitor : AstVisitor
     public override void Visit(AtTimeZoneNode node)
     {
         ResolveTypesVisitor.Visit(node);
+        var leftFunc = NodeIdFuncMap[node.LeftNode.Id];
+        var tzFunc = NodeIdFuncMap[node.TimeZoneNode.Id];
         VariantValue Func()
         {
-            var left = NodeIdFuncMap[node.LeftNode.Id].Invoke();
-            var tz = NodeIdFuncMap[node.TimeZoneNode.Id].Invoke();
+            var left = leftFunc.Invoke();
+            var tz = tzFunc.Invoke();
             try
             {
                 var destinationTimestamp = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(left, tz);
