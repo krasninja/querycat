@@ -98,19 +98,19 @@ internal partial class CreateDelegateVisitor : AstVisitor
             {
                 var leftValue = leftAction.Invoke();
                 var rightValue = rightAction.Invoke();
-                return operation.Invoke(leftValue, rightValue, out _);
+                return operation.Invoke(in leftValue, in rightValue, out _);
             }
             NodeIdFuncMap[node.Id] = new FuncUnitDelegate(DynamicFunc, node.GetDataType());
         }
         // Find the most optimal delegate by types and use it.
         else
         {
-            var action = VariantValue.GetOperationDelegate(node.Operation, leftNodeType, rightNodeType);
+            var operation = VariantValue.GetOperationDelegate(node.Operation, leftNodeType, rightNodeType);
             VariantValue FastFunc()
             {
                 var leftValue = leftAction.Invoke();
                 var rightValue = rightAction.Invoke();
-                var result = action.Invoke(in leftValue, in rightValue);
+                var result = operation.Invoke(in leftValue, in rightValue);
                 return result;
             }
             NodeIdFuncMap[node.Id] = new FuncUnitDelegate(FastFunc, node.GetDataType());
