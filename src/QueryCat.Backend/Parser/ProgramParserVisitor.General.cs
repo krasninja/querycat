@@ -271,6 +271,10 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
         => new IdentifierIndexSelectorNode(
             indexExpression: context.simpleExpression().Select(this.Visit<ExpressionNode>).ToList());
 
+    /// <inheritdoc />
+    public override IAstNode VisitIdentifierSelectorFilterExpression(QueryCatParser.IdentifierSelectorFilterExpressionContext context)
+        => new IdentifierFilterSelectorNode(this.Visit<BinaryOperationExpressionNode>(context.simpleExpression()));
+
     private static bool GetBooleanFromString(string text)
     {
         if (text.Equals(VariantValue.TrueValueString, StringComparison.OrdinalIgnoreCase))

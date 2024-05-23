@@ -249,6 +249,7 @@ ifCondition: condition=expression THEN block=blockExpression;
 identifierSimple
     : NO_QUOTES_IDENTIFIER
     | QUOTES_IDENTIFIER
+    | '@'
     ;
 identifier
     : name=identifierSimple identifierSelector* # IdentifierWithSelector
@@ -257,6 +258,7 @@ identifier
 identifierSelector
     : '.' name=identifierSimple # IdentifierSelectorProperty
     | '[' simpleExpression (',' simpleExpression)* ']' # IdentifierSelectorIndex
+    | '[' '?' simpleExpression ']' # IdentifierSelectorFilterExpression
     ;
 array: '(' expression (',' expression)* ')';
 intervalLiteral: INTERVAL interval=STRING_LITERAL;

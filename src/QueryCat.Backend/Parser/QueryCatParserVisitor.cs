@@ -603,6 +603,13 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitIdentifierSelectorIndex([NotNull] QueryCatParser.IdentifierSelectorIndexContext context);
 	/// <summary>
+	/// Visit a parse tree produced by the <c>IdentifierSelectorFilterExpression</c>
+	/// labeled alternative in <see cref="QueryCatParser.identifierSelector"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitIdentifierSelectorFilterExpression([NotNull] QueryCatParser.IdentifierSelectorFilterExpressionContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="QueryCatParser.array"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

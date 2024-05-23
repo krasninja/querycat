@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- Allow to evaluate filter on object expressions lists "users[? @.Name='John' ].Phone".
+
+### Fixed
+
+- Fix object expressions wrong operation apply.
+
 ## [0.6.4] - 2024-05-20
 
 ### Added

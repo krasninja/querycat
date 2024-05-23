@@ -91,6 +91,10 @@ internal abstract class AstVisitor
     {
     }
 
+    public virtual void Visit(IdentifierFilterSelectorNode node)
+    {
+    }
+
     public virtual void Visit(IdentifierIndexSelectorNode node)
     {
     }

@@ -116,6 +116,11 @@ internal class ResolveTypesVisitor : AstVisitor
             }
             return true;
         }
+        if (node.IsCurrentSpecialIdentifier)
+        {
+            node.SetAttribute(AstAttributeKeys.TypeKey, DataType.Dynamic);
+            return true;
+        }
         return false;
     }
 

@@ -21,6 +21,9 @@ LEFT_BRACKET:       '[';
 RIGHT_BRACKET:      ']';
 LEFT_RIGHT_BRACKET: '[]';
 PIPE:               '&>';
+AT_SIGN:            '@';
+EXCLAMATION_SIGN:   '!';
+DOLLAR_SIGN:        '$';
 
 // Math operations.
 

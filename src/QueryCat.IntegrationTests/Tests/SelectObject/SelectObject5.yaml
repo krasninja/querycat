@@ -1,0 +1,5 @@
+expected: |
+  12
+query: |
+  select
+    user1.Cats[? @.Name='Alisa' ][0].Age

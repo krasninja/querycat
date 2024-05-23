@@ -11,8 +11,12 @@ namespace QueryCat.Backend.Commands;
 /// <summary>
 /// Generate delegate for the specific node.
 /// </summary>
-internal class CreateDelegateVisitor : AstVisitor
+internal partial class CreateDelegateVisitor : AstVisitor
 {
+    private const string ObjectSelectorKey = "object_selector_key";
+
+    private const string ObjectSelectorContainerKey = "object_selector_container_key";
+
     private readonly ResolveTypesVisitor _resolveTypesVisitor;
 
     private readonly Dictionary<IdentifierIndexSelectorNode, object?[]> _objectIndexesCache = new();
@@ -89,11 +93,12 @@ internal class CreateDelegateVisitor : AstVisitor
         // statically. Use slow dynamic expression.
         if (leftNodeType == DataType.Dynamic || rightNodeType == DataType.Dynamic)
         {
+            var operation = VariantValue.GetOperationDelegate(node.Operation);
             VariantValue DynamicFunc()
             {
                 var leftValue = leftAction.Invoke();
                 var rightValue = rightAction.Invoke();
-                return leftValue + rightValue;
+                return operation.Invoke(leftValue, rightValue, out _);
             }
             NodeIdFuncMap[node.Id] = new FuncUnitDelegate(DynamicFunc, node.GetDataType());
         }
@@ -176,6 +181,7 @@ internal class CreateDelegateVisitor : AstVisitor
         if (ExecutionThread.ContainsVariable(node.Name, scope))
         {
             var context = new ObjectSelectorContext(ExecutionThread);
+            node.SetAttribute(ObjectSelectorKey, context);
             VariantValue Func()
             {
                 var startObject = ExecutionThread.GetVariable(node.Name, scope);
@@ -186,68 +192,30 @@ internal class CreateDelegateVisitor : AstVisitor
             return;
         }
 
-        throw new CannotFindIdentifierException(node.Name);
-    }
-
-    protected bool GetObjectBySelector(ObjectSelectorContext context, VariantValue value, IdentifierExpressionNode idNode,
-        out VariantValue result)
-    {
-        result = VariantValue.Null;
-        if (idNode.SelectorNodes.Length == 0 || value.AsObjectUnsafe == null)
+        if (node.IsCurrentSpecialIdentifier
+            && AstTraversal.GetFirstParent<IdentifierExpressionNode>() is { } parentObjectNode)
         {
-            result = value;
-            return false;
-        }
+            var container = new VariantValueContainer();
+            parentObjectNode.SetAttribute(ObjectSelectorContainerKey, container);
 
-        context.Push(new ObjectSelectorContext.Token(value.AsObjectUnsafe));
-        foreach (var selector in idNode.SelectorNodes)
-        {
-            ObjectSelectorContext.Token? info = null;
-
-            if (selector is IdentifierPropertySelectorNode propertySelectorNode)
+            var context = new ObjectSelectorContext(ExecutionThread);
+            VariantValue Func()
             {
-                info = ExecutionThread.ObjectSelector.SelectByProperty(context, propertySelectorNode.PropertyName);
-            }
-            else if (selector is IdentifierIndexSelectorNode indexSelectorNode)
-            {
-                var indexObjects = GetObjectIndexesSelector(indexSelectorNode);
-                info = ExecutionThread.ObjectSelector.SelectByIndex(context, indexObjects);
-                // Indexes must be initialized, fix it.
-                if (info is { Indexes: null })
+                if (GetObjectBySelector(
+                    context,
+                    VariantValue.CreateFromObject(container.Value),
+                    node,
+                    out var value))
                 {
-                    info = info.Value with { Indexes = indexObjects };
+                    return value;
                 }
+                return VariantValue.Null;
             }
-
-            if (!info.HasValue)
-            {
-                return false;
-            }
-            context.Push(info.Value);
+            NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, DataType.Dynamic);
+            return;
         }
 
-        result = VariantValue.CreateFromObject(context.LastValue);
-        return true;
-    }
-
-    protected object?[] GetObjectIndexesSelector(IdentifierIndexSelectorNode indexSelectorNode)
-    {
-        if (indexSelectorNode.IndexExpressions.Length == 0)
-        {
-            return [];
-        }
-        if (!_objectIndexesCache.TryGetValue(indexSelectorNode, out var indexes))
-        {
-            indexes = new object?[indexSelectorNode.IndexExpressions.Length];
-            _objectIndexesCache.Add(indexSelectorNode, indexes);
-        }
-
-        for (var i = 0; i < indexSelectorNode.IndexExpressions.Length; i++)
-        {
-            var indexExpression = indexSelectorNode.IndexExpressions[i];
-            indexes[i] = Converter.ConvertValue(NodeIdFuncMap[indexExpression.Id].Invoke(), typeof(object));
-        }
-        return indexes;
+        throw new CannotFindIdentifierException(node.Name);
     }
 
     /// <inheritdoc />

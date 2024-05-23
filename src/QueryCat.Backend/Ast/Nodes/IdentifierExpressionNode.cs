@@ -38,6 +38,14 @@ internal class IdentifierExpressionNode : ExpressionNode
 
     public bool HasSelectors => SelectorNodes.Length > 0;
 
+    /// <summary>
+    /// The special identifier that can be used in objects selector.
+    /// </summary>
+    /// <remarks>
+    /// RFC: https://www.rfc-editor.org/rfc/rfc9535.html#name-summary.
+    /// </remarks>
+    public bool IsCurrentSpecialIdentifier => Name == "@";
+
     /// <inheritdoc />
     public IdentifierExpressionNode(string name, List<IdentifierSelectorNode>? selectorNodes = null)
     {

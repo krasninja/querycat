@@ -12,6 +12,8 @@ public class User
 
     public Dictionary<string, string> Logins { get; init; } = new();
 
+    public List<Cat> Cats { get; init; } = new();
+
     public static User GetTestUser1() => new()
     {
         Id = 1,
@@ -20,6 +22,11 @@ public class User
         Address = new()
         {
             Phones = ["+7 933 998 0000", "+7 908 214 0000", "+7 999 445 0000"],
+        },
+        Cats = new()
+        {
+            new Cat("Alisa", 12),
+            new Cat("Archi", 10),
         }
     };
 
