@@ -1,18 +1,18 @@
 namespace QueryCat.Backend.Ast.Nodes.Select;
 
-internal sealed class SelectTableRowNode : AstNode
+internal sealed class SelectTableValuesRowNode : AstNode
 {
     public ExpressionNode[] ExpressionNodes { get; }
 
     /// <inheritdoc />
     public override string Code => "table_row";
 
-    public SelectTableRowNode(IEnumerable<ExpressionNode> expressionNodes)
+    public SelectTableValuesRowNode(IEnumerable<ExpressionNode> expressionNodes)
     {
         ExpressionNodes = expressionNodes.ToArray();
     }
 
-    public SelectTableRowNode(SelectTableRowNode node)
+    public SelectTableValuesRowNode(SelectTableValuesRowNode node)
         : this(node.ExpressionNodes.Select(n => (ExpressionNode)n.Clone()).ToList())
     {
         node.CopyTo(this);
@@ -25,7 +25,7 @@ internal sealed class SelectTableRowNode : AstNode
     }
 
     /// <inheritdoc />
-    public override object Clone() => new SelectTableRowNode(this);
+    public override object Clone() => new SelectTableValuesRowNode(this);
 
     /// <inheritdoc />
     public override void Accept(AstVisitor visitor) => visitor.Visit(this);

@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Fix object expressions wrong operation apply.
+- Allow to specify simple expressions in FROM block.
 
 ## [0.6.4] - 2024-05-20
 

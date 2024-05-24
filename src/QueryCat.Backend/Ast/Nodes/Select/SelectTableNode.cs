@@ -1,30 +1,64 @@
+using System.Text;
+
 namespace QueryCat.Backend.Ast.Nodes.Select;
 
-internal sealed class SelectTableNode : ExpressionNode, ISelectAliasNode
+internal sealed class SelectTableNode : AstNode
 {
-    public List<SelectTableRowNode> RowsNodes { get; } = new();
-
     /// <inheritdoc />
-    public string Alias { get; internal set; } = string.Empty;
+    public override string Code => "table";
 
-    /// <inheritdoc />
-    public override string Code => "table_value";
+    public SelectTableReferenceListNode TablesNode { get; }
 
-    public SelectTableNode(IEnumerable<SelectTableRowNode> rowsNodes)
+    public SelectSearchConditionNode? SearchConditionNode { get; set; }
+
+    public SelectGroupByNode? GroupByNode { get; set; }
+
+    public SelectHavingNode? HavingNode { get; set; }
+
+    public SelectTableNode(SelectTableReferenceListNode selectTableNodeReferenceListNode)
     {
-        RowsNodes.AddRange(rowsNodes);
+        TablesNode = selectTableNodeReferenceListNode;
+    }
+
+    public SelectTableNode(params ExpressionNode[] expressionNodes)
+    {
+        TablesNode = new SelectTableReferenceListNode(expressionNodes);
     }
 
     public SelectTableNode(SelectTableNode node)
-        : this(node.RowsNodes.Select(n => (SelectTableRowNode)n.Clone()).ToList())
     {
+        TablesNode = (SelectTableReferenceListNode)node.TablesNode.Clone();
+        if (node.SearchConditionNode != null)
+        {
+            SearchConditionNode = (SelectSearchConditionNode)node.SearchConditionNode.Clone();
+        }
+        if (node.GroupByNode != null)
+        {
+            GroupByNode = (SelectGroupByNode)node.GroupByNode.Clone();
+        }
+        if (node.HavingNode != null)
+        {
+            HavingNode = (SelectHavingNode)node.HavingNode.Clone();
+        }
         node.CopyTo(this);
     }
 
     /// <inheritdoc />
     public override IEnumerable<IAstNode> GetChildren()
     {
-        return RowsNodes;
+        yield return TablesNode;
+        if (SearchConditionNode != null)
+        {
+            yield return SearchConditionNode;
+        }
+        if (GroupByNode != null)
+        {
+            yield return GroupByNode;
+        }
+        if (HavingNode != null)
+        {
+            yield return HavingNode;
+        }
     }
 
     /// <inheritdoc />
@@ -32,4 +66,24 @@ internal sealed class SelectTableNode : ExpressionNode, ISelectAliasNode
 
     /// <inheritdoc />
     public override void Accept(AstVisitor visitor) => visitor.Visit(this);
+
+    /// <inheritdoc />
+    public override string ToString()
+    {
+        var sb = new StringBuilder();
+        sb.Append(string.Join(", ", TablesNode.ToString()));
+        if (SearchConditionNode != null)
+        {
+            sb.Append($" Where {SearchConditionNode}");
+        }
+        if (GroupByNode != null)
+        {
+            sb.Append($" Group By {GroupByNode}");
+        }
+        if (HavingNode != null)
+        {
+            sb.Append($" Having {HavingNode}");
+        }
+        return sb.ToString();
+    }
 }

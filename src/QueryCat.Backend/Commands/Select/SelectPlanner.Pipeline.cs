@@ -195,7 +195,7 @@ internal sealed partial class SelectPlanner
 
     #region WHERE
 
-    private void Pipeline_ApplyFilter(SelectCommandContext context, SelectTableExpressionNode? selectTableExpressionNode)
+    private void Pipeline_ApplyFilter(SelectCommandContext context, SelectTableNode? selectTableExpressionNode)
     {
         if (selectTableExpressionNode?.SearchConditionNode == null)
         {

@@ -196,23 +196,23 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectTableNode node)
+    public override void Visit(SelectTableValuesNode valuesNode)
     {
-        var firstRowTypes = node.RowsNodes.First().ExpressionNodes.Select(n => n.GetDataType());
+        var firstRowTypes = valuesNode.RowsNodes.First().ExpressionNodes.Select(n => n.GetDataType());
         var rowsFrame = new RowsFrame(
             firstRowTypes
-                .Select((rt, i) => new Column($"column{i + 1}", node.Alias, rt))
+                .Select((rt, i) => new Column($"column{i + 1}", valuesNode.Alias, rt))
                 .ToArray()
         );
 
-        node.SetDataType(DataType.Object);
-        NodeIdFuncMap[node.Id] = new FuncUnitDelegate(() =>
+        valuesNode.SetDataType(DataType.Object);
+        NodeIdFuncMap[valuesNode.Id] = new FuncUnitDelegate(() =>
         {
             if (rowsFrame.IsEmpty)
             {
                 // Initialize rows frame.
                 var row = new Row(rowsFrame);
-                foreach (var rowNode in node.RowsNodes)
+                foreach (var rowNode in valuesNode.RowsNodes)
                 {
                     for (var i = 0; i < rowsFrame.Columns.Length && i < rowNode.ExpressionNodes.Length; i++)
                     {

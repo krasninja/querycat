@@ -307,10 +307,6 @@ internal abstract class AstVisitor
     {
     }
 
-    public virtual void Visit(SelectTableExpressionNode node)
-    {
-    }
-
     public virtual void Visit(SelectTableFunctionNode node)
     {
     }
@@ -335,7 +331,11 @@ internal abstract class AstVisitor
     {
     }
 
-    public virtual void Visit(SelectTableRowNode node)
+    public virtual void Visit(SelectTableValuesNode valuesNode)
+    {
+    }
+
+    public virtual void Visit(SelectTableValuesRowNode node)
     {
     }
 

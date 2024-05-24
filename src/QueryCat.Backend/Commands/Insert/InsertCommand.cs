@@ -116,7 +116,7 @@ internal sealed class InsertCommand : ICommand
         var getColumnsByIndex =
             insertNode.QueryNode is SelectQuerySpecificationNode querySpecificationNode
             && (querySpecificationNode.TableExpressionNode == null
-                || querySpecificationNode.TableExpressionNode?.TablesNode.TableFunctionsNodes.First() is SelectTableNode);
+                || querySpecificationNode.TableExpressionNode?.TablesNode.TableFunctionsNodes.First() is SelectTableValuesNode);
         if (getColumnsByIndex)
         {
             for (var i = 0; i < targetColumns.Count && i < inputIterator.Columns.Length; i++)

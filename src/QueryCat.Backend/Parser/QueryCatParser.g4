@@ -134,15 +134,16 @@ selectFromClause:
 selectTableReferenceList:
     FROM selectTableReference (COMMA selectTableReference)*;
 selectTableReference: selectTablePrimary selectTableJoined*;
-selectTableRow: '(' simpleExpression (COMMA simpleExpression)* ')';
-selectTable: VALUES selectTableRow (COMMA selectTableRow)*;
+selectTableValuesRow: '(' simpleExpression (COMMA simpleExpression)* ')';
+selectTableValues: VALUES selectTableValuesRow (COMMA selectTableValuesRow)*;
 selectTablePrimary
     : func=functionCall (FORMAT format=functionCall)? selectAlias? # SelectTablePrimaryNoFormat
     | '-' (FORMAT format=functionCall)? selectAlias? # SelectTablePrimaryStdin
     | uri=STRING_LITERAL (FORMAT format=functionCall)? selectAlias? # SelectTablePrimaryWithFormat
     | '(' selectQueryExpression ')' selectAlias? # SelectTablePrimarySubquery
     | name=identifier (FORMAT format=functionCall)? selectAlias? # SelectTablePrimaryIdentifier
-    | '(' selectTable ')' selectAlias? # SelectTablePrimaryTable
+    | '(' selectTableValues ')' selectAlias? # SelectTablePrimaryTableValues
+    | simpleExpression selectAlias? # SelectTablePrimaryExpression
     ;
 selectTableJoined
     : selectJoinType? JOIN right=selectTablePrimary ON condition=expression # SelectTableJoinedOn
@@ -209,7 +210,7 @@ insertToSource
 insertColumnsList: '(' name=identifier (',' name=identifier)* ')';
 insertFromSource
     : selectQueryExpression # InsertSourceQuery
-    | selectTable # InsertSourceTable
+    | selectTableValues # InsertSourceTable
     ;
 
 /*

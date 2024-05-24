@@ -498,7 +498,7 @@ public partial class QueryCatParserBaseVisitor<Result> : AbstractParseTreeVisito
 	/// <return>The visitor result.</return>
 	public virtual Result VisitSelectTableReference([NotNull] QueryCatParser.SelectTableReferenceContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="QueryCatParser.selectTableRow"/>.
+	/// Visit a parse tree produced by <see cref="QueryCatParser.selectTableValuesRow"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -506,9 +506,9 @@ public partial class QueryCatParserBaseVisitor<Result> : AbstractParseTreeVisito
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitSelectTableRow([NotNull] QueryCatParser.SelectTableRowContext context) { return VisitChildren(context); }
+	public virtual Result VisitSelectTableValuesRow([NotNull] QueryCatParser.SelectTableValuesRowContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="QueryCatParser.selectTable"/>.
+	/// Visit a parse tree produced by <see cref="QueryCatParser.selectTableValues"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -516,7 +516,7 @@ public partial class QueryCatParserBaseVisitor<Result> : AbstractParseTreeVisito
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitSelectTable([NotNull] QueryCatParser.SelectTableContext context) { return VisitChildren(context); }
+	public virtual Result VisitSelectTableValues([NotNull] QueryCatParser.SelectTableValuesContext context) { return VisitChildren(context); }
 	/// <summary>
 	/// Visit a parse tree produced by the <c>SelectTablePrimaryNoFormat</c>
 	/// labeled alternative in <see cref="QueryCatParser.selectTablePrimary"/>.
@@ -573,7 +573,7 @@ public partial class QueryCatParserBaseVisitor<Result> : AbstractParseTreeVisito
 	/// <return>The visitor result.</return>
 	public virtual Result VisitSelectTablePrimaryIdentifier([NotNull] QueryCatParser.SelectTablePrimaryIdentifierContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by the <c>SelectTablePrimaryTable</c>
+	/// Visit a parse tree produced by the <c>SelectTablePrimaryTableValues</c>
 	/// labeled alternative in <see cref="QueryCatParser.selectTablePrimary"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
@@ -582,7 +582,18 @@ public partial class QueryCatParserBaseVisitor<Result> : AbstractParseTreeVisito
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitSelectTablePrimaryTable([NotNull] QueryCatParser.SelectTablePrimaryTableContext context) { return VisitChildren(context); }
+	public virtual Result VisitSelectTablePrimaryTableValues([NotNull] QueryCatParser.SelectTablePrimaryTableValuesContext context) { return VisitChildren(context); }
+	/// <summary>
+	/// Visit a parse tree produced by the <c>SelectTablePrimaryExpression</c>
+	/// labeled alternative in <see cref="QueryCatParser.selectTablePrimary"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitSelectTablePrimaryExpression([NotNull] QueryCatParser.SelectTablePrimaryExpressionContext context) { return VisitChildren(context); }
 	/// <summary>
 	/// Visit a parse tree produced by the <c>SelectTableJoinedOn</c>
 	/// labeled alternative in <see cref="QueryCatParser.selectTableJoined"/>.

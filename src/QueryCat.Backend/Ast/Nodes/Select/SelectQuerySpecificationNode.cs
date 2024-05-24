@@ -18,7 +18,7 @@ internal sealed class SelectQuerySpecificationNode : SelectQueryNode
     /// <summary>
     /// "From" SQL statement.
     /// </summary>
-    public SelectTableExpressionNode? TableExpressionNode { get; set; }
+    public SelectTableNode? TableExpressionNode { get; set; }
 
     /// <summary>
     /// Window node.
@@ -46,7 +46,7 @@ internal sealed class SelectQuerySpecificationNode : SelectQueryNode
         }
         if (node.TableExpressionNode != null)
         {
-            TableExpressionNode = (SelectTableExpressionNode)node.TableExpressionNode.Clone();
+            TableExpressionNode = (SelectTableNode)node.TableExpressionNode.Clone();
         }
         if (node.WindowNode != null)
         {

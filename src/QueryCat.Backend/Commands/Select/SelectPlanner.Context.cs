@@ -342,10 +342,10 @@ internal sealed partial class SelectPlanner
         => rowsInputs.Select(ri => Context_WrapKeysInput(ri, conditions)).ToList();
 
     private IRowsInput Context_CreateInputSourceFromTable(SelectCommandContext context,
-        SelectTableNode tableNode)
+        SelectTableValuesNode tableValuesNode)
     {
         var func = new SelectCreateDelegateVisitor(ExecutionThread, context)
-            .RunAndReturn(tableNode);
+            .RunAndReturn(tableValuesNode);
         var rowsFrame = func.Invoke().As<RowsFrame>();
         return new RowsIteratorInput(rowsFrame.GetIterator());
     }
@@ -372,7 +372,7 @@ internal sealed partial class SelectPlanner
             }
             return inputs;
         }
-        if (expressionNode is SelectTableNode tableNode)
+        if (expressionNode is SelectTableValuesNode tableNode)
         {
             return
             [
