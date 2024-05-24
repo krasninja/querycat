@@ -3,8 +3,8 @@ using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Commands.Select.Visitors;
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Fetch;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Storage;
 
 namespace QueryCat.Backend.Commands.Select;
 
@@ -190,7 +190,7 @@ internal sealed partial class SelectPlanner
             if (keyCondition.KeyColumn.IsRequired && keyCondition.Conditions.Length < 1)
             {
                 var column = keyCondition.RowsInput.Columns[keyCondition.KeyColumn.ColumnIndex];
-                throw new QueryContextMissedCondition(column.FullName, keyCondition.KeyColumn.GetOperations());
+                throw new QueryMissedCondition(column.FullName, keyCondition.KeyColumn.GetOperations());
             }
         }
     }

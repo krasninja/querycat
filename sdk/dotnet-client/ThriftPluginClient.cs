@@ -139,6 +139,11 @@ public partial class ThriftPluginClient : IDisposable
 
     public static ThriftPluginClientArguments ConvertCommandLineArguments(string[] args)
     {
+        // The special case for testing.
+        if (args.Length > 0 && args[0] == "bypass")
+        {
+            return new ThriftPluginClientArguments();
+        }
         if (args.Length == 0)
         {
             throw new InvalidOperationException(Resources.Errors.MustBeRunByHost);

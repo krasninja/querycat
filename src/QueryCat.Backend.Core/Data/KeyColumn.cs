@@ -7,8 +7,14 @@ namespace QueryCat.Backend.Core.Data;
 /// </summary>
 public sealed class KeyColumn
 {
+    /// <summary>
+    /// Target source column index.
+    /// </summary>
     public int ColumnIndex { get; }
 
+    /// <summary>
+    /// The column is required to process the query, the error ocurres otherwise.
+    /// </summary>
     public bool IsRequired { get; }
 
     /// <summary>

@@ -98,7 +98,7 @@ public static class TestThread
         foreach (var testFile in Directory.EnumerateFiles(rootDir, "*.yaml", SearchOption.AllDirectories))
         {
             var relativeFilePath = Path.GetRelativePath(rootDir, testFile);
-            yield return [ relativeFilePath];
+            yield return [relativeFilePath];
         }
     }
 

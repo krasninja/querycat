@@ -42,4 +42,7 @@
   <data name="CannotGetNotDelegate" xml:space="preserve">
     <value>Cannot get NOT delegate for type '{0}'.</value>
   </data>
+  <data name="QueryMissedRequiredCondition" xml:space="preserve">
+    <value>Cannot find required condition '{0}' with condition(-s) {1}.</value>
+  </data>
 </root>
