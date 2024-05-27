@@ -16,6 +16,11 @@ public class RowInputTester
     private readonly IRowsInput _rowsInput;
 
     /// <summary>
+    /// Rows input.
+    /// </summary>
+    public IRowsInput RowsInput => _rowsInput;
+
+    /// <summary>
     /// Test execution thread.
     /// </summary>
     public IExecutionThread ExecutionThread { get; }
@@ -31,7 +36,6 @@ public class RowInputTester
         _rowsInput.QueryContext = new PluginQueryContext(
             new QueryContextQueryInfo(_rowsInput.Columns),
             ExecutionThread.ConfigStorage);
-        _rowsInput.Open();
     }
 
     public FunctionCallInfo CreateFunctionCallInfo(params VariantValue[] args)
@@ -65,25 +69,46 @@ public class RowInputTester
     /// <summary>
     /// Run the query.
     /// </summary>
-    public void Run()
+    /// <param name="optionsAction">Options.</param>
+    public virtual void Run(Action<RowInputTesterOptions> optionsAction)
     {
+        var options = new RowInputTesterOptions(this);
+        _rowsInput.Open();
+        optionsAction.Invoke(options);
+
         try
         {
             var rowIndex = 0;
-            while (_rowsInput.ReadNext())
+            while (RowsInput.ReadNext() && (options.MaxRowsCount.HasValue && options.MaxRowsCount.Value > rowIndex))
             {
                 Console.WriteLine($"-[ ROW {rowIndex} ]------");
                 for (var columnIndex = 0; columnIndex < _rowsInput.Columns.Length; columnIndex++)
                 {
-                    _rowsInput.ReadValue(columnIndex, out var value);
-                    Console.WriteLine($"{_rowsInput.Columns[columnIndex].FullName}: " + value);
+                    RowsInput.ReadValue(columnIndex, out var value);
+                    Console.WriteLine($"{RowsInput.Columns[columnIndex].FullName}: " + value);
                 }
                 rowIndex++;
             }
         }
         finally
         {
-            _rowsInput.Close();
+            RowsInput.Close();
+            CleanKeysValues();
+        }
+    }
+
+    private void CleanKeysValues()
+    {
+        if (_rowsInput is IRowsInputKeys keys)
+        {
+            foreach (var keyColumn in keys.GetKeyColumns())
+            {
+                keys.SetKeyColumnValue(keyColumn.ColumnIndex, VariantValue.Null, keyColumn.Operation1);
+                if (keyColumn.Operation2 != null)
+                {
+                    keys.SetKeyColumnValue(keyColumn.ColumnIndex, VariantValue.Null, keyColumn.Operation2.Value);
+                }
+            }
         }
     }
 }
