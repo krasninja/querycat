@@ -14,7 +14,7 @@ internal sealed class CombineRowsInput : RowsInput, IDisposable
     private IRowsInput? _currentRowsInput;
 
     /// <inheritdoc />
-    public override Column[] Columns { get; protected set; } = Array.Empty<Column>();
+    public override Column[] Columns { get; protected set; } = [];
 
     public CombineRowsInput(IReadOnlyList<IRowsInput> rowsInputs)
     {
@@ -23,6 +23,20 @@ internal sealed class CombineRowsInput : RowsInput, IDisposable
             throw new ArgumentException(Resources.Errors.NoInputs, nameof(rowsInputs));
         }
         _rowsInputs = rowsInputs;
+
+        ValidateRowsInputsColumns();
+    }
+
+    private void ValidateRowsInputsColumns()
+    {
+        var firstRowsInput = _rowsInputs.First();
+        foreach (var rowsInput in _rowsInputs.Skip(1))
+        {
+            if (!rowsInput.IsSchemaEqual(firstRowsInput))
+            {
+                throw new QueryCatException(Resources.Errors.SchemasNotEqual);
+            }
+        }
     }
 
     /// <inheritdoc />
