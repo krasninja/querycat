@@ -471,10 +471,17 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
 
     private void RunBootstrapScript()
     {
-        var rcFile = Path.Combine(GetApplicationDirectory(), BootstrapFileName);
         if (!_bootstrapScriptExecuted && Options.RunBootstrapScript)
         {
             _bootstrapScriptExecuted = true;
+
+            var rcFile = Path.Combine(GetApplicationDirectory(), BootstrapFileName);
+            if (File.Exists(rcFile))
+            {
+                Run(File.ReadAllText(rcFile));
+            }
+
+            rcFile = Path.Combine(Directory.GetCurrentDirectory(), BootstrapFileName);
             if (File.Exists(rcFile))
             {
                 Run(File.ReadAllText(rcFile));

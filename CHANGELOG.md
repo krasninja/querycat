@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Allow to evaluate filter on object expressions lists "users[? @.Name='John' ].Phone".
+- Try to run "rc.sql" from the working directory.
 
 ### Fixed
 
