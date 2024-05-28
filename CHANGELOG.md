@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix object expressions wrong operation apply.
 - Allow to specify simple expressions in FROM block.
 - Fix incorrect schema detection bug with gzip files.
+- Improve Thrift plugins support
 
 ## [0.6.4] - 2024-05-20
 

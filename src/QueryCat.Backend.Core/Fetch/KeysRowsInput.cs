@@ -125,7 +125,7 @@ public abstract class KeysRowsInput : RowsInput, IRowsInputKeys, IDisposable
             throw new QueryMissedCondition(Columns[columnIndex].FullName, keyValue.KeyColumn.GetOperations());
         }
         value = keyValue.Value;
-        return true;
+        return !value.IsNull;
     }
 
     private KeyColumnValue? GetKeyColumn(

@@ -67,7 +67,14 @@ For debug, you can run your plugin with following arguments:
 
 ```
 --debug-server="/opt/qcat"
---debug-server-args="-f /home/ivan/github.sql"
+--debug-server-file="/home/ivan/github.sql"
+```
+
+or
+
+```
+--debug-server="/opt/qcat"
+--debug-server-query="select 'some SQL';"
 ```
 
 It will enforce QueryCat to run your plugin with the specific query.

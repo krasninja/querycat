@@ -27,10 +27,18 @@ public class TestExecutionThread : IExecutionThread
     public IExecutionScope TopScope => NullExecutionScope.Instance;
 
     /// <inheritdoc />
-    public event EventHandler<ResolveVariableEventArgs>? VariableResolving;
+    public event EventHandler<ResolveVariableEventArgs>? VariableResolving
+    {
+        add { }
+        remove {}
+    }
 
     /// <inheritdoc />
-    public event EventHandler<ResolveVariableEventArgs>? VariableResolved;
+    public event EventHandler<ResolveVariableEventArgs>? VariableResolved
+    {
+        add { }
+        remove { }
+    }
 
     /// <inheritdoc />
     public IObjectSelector ObjectSelector => NullObjectSelector.Instance;

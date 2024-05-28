@@ -12,6 +12,7 @@ using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Core.Utils;
 using QueryCat.Plugins.Client;
 using QueryCat.Plugins.Sdk;
+using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 using VariantValue = QueryCat.Plugins.Sdk.VariantValue;
 
 namespace QueryCat.Backend.ThriftPlugins;
@@ -25,6 +26,7 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
 
     private readonly IExecutionThread _thread;
     private readonly bool _debugMode;
+    private readonly LogLevel _minLogLevel;
     private readonly ThriftPluginsServer _server;
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(ThriftPluginsLoader));
     private readonly HashSet<string> _loadedPlugins = new();
@@ -60,10 +62,12 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         ThriftPluginsServer.TransportType transportType = ThriftPluginsServer.TransportType.NamedPipes,
         string? serverPipeName = null,
         string? functionsCacheDirectory = null,
-        bool debugMode = false) : base(pluginDirectories)
+        bool debugMode = false,
+        LogLevel minLogLevel = LogLevel.Information) : base(pluginDirectories)
     {
         _thread = thread;
         _debugMode = debugMode;
+        _minLogLevel = minLogLevel;
         if (!string.IsNullOrEmpty(serverPipeName))
         {
             ServerPipeName = serverPipeName;
@@ -300,6 +304,8 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
             process.StartInfo.ArgumentList.Add(FormatParameter(ThriftPluginClient.PluginTokenParameter, authToken));
             process.StartInfo.ArgumentList.Add(FormatParameter(ThriftPluginClient.PluginParentPidParameter,
                 Process.GetCurrentProcess().Id.ToString()));
+            process.StartInfo.ArgumentList.Add(FormatParameter(ThriftPluginClient.PluginLogLevelParameter,
+                _minLogLevel.ToString()));
             process.OutputDataReceived += (_, args) => _logger.LogTrace($"[{fileName}]: {args.Data}");
             process.ErrorDataReceived += (_, args) => _logger.LogError($"[{fileName}]: {args.Data}");
             process.Start();
@@ -494,9 +500,7 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         }
         if (result.Object.Type == ObjectType.ROWS_INPUT || result.Object.Type == ObjectType.ROWS_ITERATOR)
         {
-            var iterator = new ThriftRemoteRowsIterator(context.Client, result.Object.Handle);
-            iterator.Open();
-            return iterator;
+            return new ThriftRemoteRowsIterator(context.Client, result.Object.Handle);
         }
         if (result.Object.Type == ObjectType.JSON && !string.IsNullOrEmpty(result.Json))
         {
