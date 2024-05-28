@@ -354,6 +354,7 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
             {
                 ServerEndpoint = Marshal.StringToHGlobalAuto(GetPipeName()),
                 Token = Marshal.StringToHGlobalAuto(authToken),
+                LogLevel = Marshal.StringToHGlobalAuto(_minLogLevel.ToString()),
             };
             var pluginThread = new Thread(() =>
             {
@@ -537,7 +538,7 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
 
     private bool TryGetCachedFunctions(string fileName, out IEnumerable<PluginContextFunction> functions)
     {
-        functions = Enumerable.Empty<PluginContextFunction>();
+        functions = [];
 
         if (string.IsNullOrEmpty(_functionsCacheDirectory))
         {

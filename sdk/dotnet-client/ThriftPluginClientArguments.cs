@@ -8,7 +8,7 @@ public sealed class ThriftPluginClientArguments
 
     public string Token { get; set; } = string.Empty;
 
-    public int ParentPid { get; set; }
+    public int ParentPid { get; set; } = -1;
 
     public string DebugServerPath { get; set; } = string.Empty;
 
@@ -17,4 +17,6 @@ public sealed class ThriftPluginClientArguments
     public string DebugServerQueryFile { get; set; } = string.Empty;
 
     public LogLevel LogLevel { get; set; } = LogLevel.Debug;
+
+    public bool IsEmpty => string.IsNullOrEmpty(Token) && string.IsNullOrEmpty(ServerEndpoint) && ParentPid == -1;
 }
