@@ -19,6 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix incorrect schema detection bug with gzip files.
 - Improve Thrift plugins support
 
+### Removed
+
+- Remove "object_query" function.
+
 ## [0.6.4] - 2024-05-20
 
 ### Added
