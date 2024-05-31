@@ -51,6 +51,10 @@ internal sealed class AstBuilder : IAstBuilder
         {
             _astCache[input] = (IAstNode)resultNode.Clone();
         }
+#if DEBUG
+        // Return cloned node instead for debug only purposes.
+        return (TNode)resultNode.Clone();
+#endif
         return (TNode)resultNode;
     }
 
