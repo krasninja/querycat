@@ -244,6 +244,12 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitSelectList([NotNull] QueryCatParser.SelectListContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="QueryCatParser.selectExcept"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSelectExcept([NotNull] QueryCatParser.SelectExceptContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="QueryCatParser.selectDistinctClause"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
@@ -576,11 +582,26 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitIfCondition([NotNull] QueryCatParser.IfConditionContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="QueryCatParser.identifierSimple"/>.
+	/// Visit a parse tree produced by the <c>IdentifierSimpleNoQuotes</c>
+	/// labeled alternative in <see cref="QueryCatParser.identifierSimple"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitIdentifierSimple([NotNull] QueryCatParser.IdentifierSimpleContext context);
+	Result VisitIdentifierSimpleNoQuotes([NotNull] QueryCatParser.IdentifierSimpleNoQuotesContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>IdentifierSimpleQuotes</c>
+	/// labeled alternative in <see cref="QueryCatParser.identifierSimple"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitIdentifierSimpleQuotes([NotNull] QueryCatParser.IdentifierSimpleQuotesContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>IdentifierSimpleCurrent</c>
+	/// labeled alternative in <see cref="QueryCatParser.identifierSimple"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitIdentifierSimpleCurrent([NotNull] QueryCatParser.IdentifierSimpleCurrentContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>IdentifierWithSelector</c>
 	/// labeled alternative in <see cref="QueryCatParser.identifier"/>.

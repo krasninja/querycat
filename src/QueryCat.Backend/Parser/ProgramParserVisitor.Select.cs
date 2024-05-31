@@ -45,7 +45,8 @@ internal partial class ProgramParserVisitor
             OffsetNode = this.VisitMaybe<SelectOffsetNode>(context.selectOffsetClause()),
             FetchNode = this.VisitMaybe<SelectFetchNode>(context.selectTopClause())
                 ?? this.VisitMaybe<SelectFetchNode>(context.selectFetchFirstClause())
-                ?? this.VisitMaybe<SelectFetchNode>(context.selectLimitClause())
+                ?? this.VisitMaybe<SelectFetchNode>(context.selectLimitClause()),
+            ExceptIdentifiersNode = this.VisitMaybe<SelectColumnsExceptNode>(context.selectExcept()),
         };
 
     /// <inheritdoc />
@@ -96,6 +97,7 @@ internal partial class ProgramParserVisitor
             TableExpressionNode = this.VisitMaybe<SelectTableNode>(context.selectFromClause()),
             TargetNode = this.VisitMaybe<FunctionCallNode>(context.selectTarget()),
             FetchNode = this.VisitMaybe<SelectFetchNode>(context.selectTopClause()),
+            ExceptIdentifiersNode = this.VisitMaybe<SelectColumnsExceptNode>(context.selectExcept()),
         };
 
     /// <inheritdoc />
@@ -121,6 +123,10 @@ internal partial class ProgramParserVisitor
     /// <inheritdoc />
     public override IAstNode VisitSelectList(QueryCatParser.SelectListContext context)
         => new SelectColumnsListNode(this.Visit<SelectColumnsSublistNode>(context.selectSublist()));
+
+    /// <inheritdoc />
+    public override IAstNode VisitSelectExcept(QueryCatParser.SelectExceptContext context)
+        => new SelectColumnsExceptNode(this.Visit<IdentifierExpressionNode>(context.identifierSimple()));
 
     #endregion
 

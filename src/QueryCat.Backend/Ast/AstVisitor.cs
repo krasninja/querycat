@@ -215,6 +215,10 @@ internal abstract class AstVisitor
     {
     }
 
+    public virtual void Visit(SelectColumnsExceptNode node)
+    {
+    }
+
     public virtual void Visit(SelectColumnsListNode node)
     {
     }

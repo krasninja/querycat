@@ -253,6 +253,18 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
         => new InExpressionValuesNode(this.Visit<ExpressionNode>(context.expression()));
 
     /// <inheritdoc />
+    public override IAstNode VisitIdentifierSimpleNoQuotes(QueryCatParser.IdentifierSimpleNoQuotesContext context)
+        => new IdentifierExpressionNode(GetUnwrappedText(context.NO_QUOTES_IDENTIFIER()));
+
+    /// <inheritdoc />
+    public override IAstNode VisitIdentifierSimpleQuotes(QueryCatParser.IdentifierSimpleQuotesContext context)
+        => new IdentifierExpressionNode(GetUnwrappedText(context.QUOTES_IDENTIFIER()));
+
+    /// <inheritdoc />
+    public override IAstNode VisitIdentifierSimpleCurrent(QueryCatParser.IdentifierSimpleCurrentContext context)
+        => new IdentifierExpressionNode(IdentifierExpressionNode.CurrentSymbol);
+
+    /// <inheritdoc />
     public override IAstNode VisitIdentifierWithoutSource(QueryCatParser.IdentifierWithoutSourceContext context)
         => new IdentifierExpressionNode(GetUnwrappedText(context.name));
 

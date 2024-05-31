@@ -56,7 +56,7 @@ internal sealed partial class SelectPlanner
         // SELECT.
         Pipeline_ResolveSelectAllStatement(context, node.ColumnsListNode);
         Pipeline_ResolveSelectSourceColumns(context, node);
-        Pipeline_AddSelectRowsSet(context, node.ColumnsListNode);
+        Pipeline_AddSelectRowsSet(context, node.ColumnsListNode, node.ExceptIdentifiersNode);
 
         // WINDOW.
         PipelineWindow_ApplyWindowFunctions(context, node);

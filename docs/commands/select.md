@@ -8,6 +8,7 @@ Executes the SQL query against input. If not output is specified (with `INTO` cl
 [ WITH [ RECURSIVE ] with_query [, ...] ]
 SELECT [ ALL | DISTINCT [ ON ( expression [, ...] ) ] ] [ TOP number ]
     [ * | expression AS [ alias ] | column AS [ alias ] [, ...] ]
+[ EXCEPT column [, ...] ]
 [ INTO [ function : IRowsOutput ] ]
 [ FROM [ function : IRowsInput | uri ] FORMAT [ function : IRowsFormatter ] ]
 [ WHERE search_condition [, ...] ]

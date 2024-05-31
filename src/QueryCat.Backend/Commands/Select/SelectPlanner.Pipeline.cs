@@ -131,27 +131,39 @@ internal sealed partial class SelectPlanner
 
     private void Pipeline_AddSelectRowsSet(
         SelectCommandContext context,
-        SelectColumnsListNode columnsNode)
+        SelectColumnsListNode columnsNode,
+        SelectColumnsExceptNode? exceptNode)
     {
         var projectedIterator = new ProjectedRowsIterator(context.CurrentIterator);
 
+        var exceptNames = exceptNode != null
+            ? exceptNode.ExceptIdentifiers.Select(n => n.Name).ToHashSet()
+            : [];
+
+        // Format the initial iterator with all columns (except excluded) that
+        // user mentioned in SELECT block.
         var funcs = columnsNode.ColumnsNodes.Select(c => Misc_CreateDelegate(c, context)).ToList();
         var selectColumns = CreateSelectColumns(columnsNode).ToList();
         for (var i = 0; i < columnsNode.ColumnsNodes.Count; i++)
         {
+            if (exceptNames.Contains(selectColumns[i].Column.Name))
+            {
+                continue;
+            }
             var columnIndex = projectedIterator.AddFuncColumn(selectColumns[i].Column, funcs[i]);
             var info = context.ColumnsInfoContainer.GetByColumn(projectedIterator.Columns[columnIndex]);
             info.RelatedSelectSublistNode = columnsNode.ColumnsNodes[selectColumns[i].ColumnIndex];
         }
 
+        // Add missed columns (for example, virtual and exclude columns) so that are visible
+        // for filtering/processing.
         var iterator = context.CurrentIterator;
         for (var i = 0; i < iterator.Columns.Length; i++)
         {
             var column = iterator.Columns[i];
             if (projectedIterator.GetColumnIndexByName(column.Name, column.SourceName) == -1)
             {
-                projectedIterator.AddFuncColumn(
-                    column, new FuncUnitRowsIteratorColumn(iterator, i));
+                projectedIterator.AddFuncColumn(column, new FuncUnitRowsIteratorColumn(iterator, i));
             }
         }
 

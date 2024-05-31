@@ -72,6 +72,7 @@ selectQueryExpression
       selectTopClause?
       selectDistinctClause?
       selectList
+      selectExcept?
       selectTarget?
       selectFromClause
       selectWindow?
@@ -101,12 +102,14 @@ selectQuerySpecification
       selectTopClause?
       selectDistinctClause?
       selectList
+      selectExcept?
       selectTarget?
       selectFromClause
       selectWindow? # SelectQuerySpecificationFull
     | SELECT selectSublist (COMMA selectSublist)* selectTarget? # SelectQuerySpecificationSingle
     ;
 selectList: selectSublist (COMMA selectSublist)*;
+selectExcept: EXCEPT identifierSimple (COMMA identifierSimple)*;
 selectDistinctClause: ALL | DISTINCT | selectDistinctOnClause;
 selectDistinctOnClause: DISTINCT ON '(' simpleExpression (COMMA simpleExpression)* ')';
 
@@ -248,9 +251,9 @@ ifCondition: condition=expression THEN block=blockExpression;
  */
 
 identifierSimple
-    : NO_QUOTES_IDENTIFIER
-    | QUOTES_IDENTIFIER
-    | '@'
+    : NO_QUOTES_IDENTIFIER # IdentifierSimpleNoQuotes
+    | QUOTES_IDENTIFIER # IdentifierSimpleQuotes
+    | '@' # IdentifierSimpleCurrent
     ;
 identifier
     : name=identifierSimple identifierSelector* # IdentifierWithSelector

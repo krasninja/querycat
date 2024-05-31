@@ -16,6 +16,11 @@ internal abstract class SelectQueryNode : ExpressionNode, ISelectAliasNode
     public SelectColumnsListNode ColumnsListNode { get; }
 
     /// <summary>
+    /// Identifiers that should not be shown.
+    /// </summary>
+    public SelectColumnsExceptNode? ExceptIdentifiersNode { get; set; }
+
+    /// <summary>
     /// Sort node.
     /// </summary>
     public SelectOrderByNode? OrderByNode { get; set; }
@@ -38,6 +43,10 @@ internal abstract class SelectQueryNode : ExpressionNode, ISelectAliasNode
     public SelectQueryNode(SelectQueryNode node) : this((SelectColumnsListNode)node.ColumnsListNode.Clone())
     {
         Alias = node.Alias;
+        if (node.ExceptIdentifiersNode != null)
+        {
+            ExceptIdentifiersNode = (SelectColumnsExceptNode)node.ExceptIdentifiersNode.Clone();
+        }
         if (node.WithNode != null)
         {
             WithNode = (SelectWithListNode)node.WithNode.Clone();
@@ -61,6 +70,10 @@ internal abstract class SelectQueryNode : ExpressionNode, ISelectAliasNode
     public override IEnumerable<IAstNode> GetChildren()
     {
         yield return ColumnsListNode;
+        if (ExceptIdentifiersNode != null)
+        {
+            yield return ExceptIdentifiersNode;
+        }
         if (WithNode != null)
         {
             yield return WithNode;
