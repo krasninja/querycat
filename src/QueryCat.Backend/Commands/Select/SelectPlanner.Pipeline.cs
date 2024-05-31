@@ -136,17 +136,19 @@ internal sealed partial class SelectPlanner
     {
         var projectedIterator = new ProjectedRowsIterator(context.CurrentIterator);
 
-        var exceptNames = exceptNode != null
-            ? exceptNode.ExceptIdentifiers.Select(n => n.Name).ToHashSet()
-            : [];
-
         // Format the initial iterator with all columns (except excluded) that
         // user mentioned in SELECT block.
         var funcs = columnsNode.ColumnsNodes.Select(c => Misc_CreateDelegate(c, context)).ToList();
         var selectColumns = CreateSelectColumns(columnsNode).ToList();
         for (var i = 0; i < columnsNode.ColumnsNodes.Count; i++)
         {
-            if (exceptNames.Contains(selectColumns[i].Column.Name))
+            // Excluded columns filter.
+            var columnNode = columnsNode.ColumnsNodes[i] as SelectColumnsSublistExpressionNode;
+            if (exceptNode != null &&
+                columnNode?.ExpressionNode is IdentifierExpressionNode columnIdNode &&
+                exceptNode.ExceptIdentifiers.Any(
+                    node => node.TableFieldName.Equals(columnIdNode.TableFieldName, StringComparison.OrdinalIgnoreCase)
+                            && node.TableSourceName.Equals(columnIdNode.TableSourceName, StringComparison.OrdinalIgnoreCase)))
             {
                 continue;
             }
