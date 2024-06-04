@@ -81,7 +81,7 @@ internal sealed partial class SelectPlanner
 
     private AggregateTarget[] PipelineAggregate_CreateTargets(
         SelectCommandContext context,
-        SelectTableExpressionNode? tableExpressionNode,
+        SelectTableNode? tableExpressionNode,
         SelectColumnsListNode columnsNodes)
     {
         var havingNode = tableExpressionNode?.HavingNode;

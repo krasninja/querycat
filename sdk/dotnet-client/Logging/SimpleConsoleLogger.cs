@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using Microsoft.Extensions.Logging;
 
-namespace QueryCat.Plugins.Client;
+namespace QueryCat.Plugins.Client.Logging;
 
 internal sealed class SimpleConsoleLogger : ILogger, IDisposable
 {

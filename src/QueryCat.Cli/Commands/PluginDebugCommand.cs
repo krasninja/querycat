@@ -44,7 +44,8 @@ internal class PluginDebugCommand : BaseQueryCommand
                     th,
                     applicationOptions.PluginDirectories,
                     serverPipeName: ThriftPluginClient.TestPipeName,
-                    debugMode: true)
+                    debugMode: true,
+                    minLogLevel: LogLevel.Debug)
                 {
                     ForceAuthToken = ThriftPluginClient.TestAuthToken,
                     SkipPluginsExecution = true,

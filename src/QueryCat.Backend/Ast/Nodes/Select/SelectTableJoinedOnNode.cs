@@ -15,12 +15,12 @@ internal sealed class SelectTableJoinedOnNode : SelectTableJoinedNode
         SearchConditionNode = searchConditionNode;
     }
 
-    public SelectTableJoinedOnNode(SelectTableJoinedOnNode onNode) : this(
-        (ExpressionNode)onNode.RightTableNode.Clone(),
-        (SelectTableJoinedTypeNode)onNode.JoinTypeNode.Clone(),
-        (ExpressionNode)onNode.SearchConditionNode.Clone())
+    public SelectTableJoinedOnNode(SelectTableJoinedOnNode node) : this(
+        (ExpressionNode)node.RightTableNode.Clone(),
+        (SelectTableJoinedTypeNode)node.JoinTypeNode.Clone(),
+        (ExpressionNode)node.SearchConditionNode.Clone())
     {
-        onNode.CopyTo(this);
+        node.CopyTo(this);
     }
 
     /// <inheritdoc />

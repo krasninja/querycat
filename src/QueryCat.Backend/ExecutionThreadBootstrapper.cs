@@ -193,7 +193,6 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
             thread.FunctionsManager.RegisterFactory(InfoFunctions.RegisterFunctions);
             thread.FunctionsManager.RegisterFactory(MathFunctions.RegisterFunctions);
             thread.FunctionsManager.RegisterFactory(MiscFunctions.RegisterFunctions);
-            thread.FunctionsManager.RegisterFactory(ObjectFunctions.RegisterFunctions);
             thread.FunctionsManager.RegisterFactory(AggregatesRegistration.RegisterFunctions);
             thread.FunctionsManager.RegisterFactory(Inputs.Registration.RegisterFunctions);
             thread.FunctionsManager.RegisterFactory(IOFunctions.RegisterFunctions);

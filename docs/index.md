@@ -46,9 +46,8 @@ Just imagine that everything in the world is a table, and you can process it usi
     - 8.6) [JSON](functions/json.md)
     - 8.7) [Math](functions/math.md)
     - 8.8) [Misc](functions/misc.md)
-    - 8.9) [Object](functions/object.md)
-    - 8.10) [Output](functions/output.md)
-    - 8.11) [String](functions/string.md)
+    - 8.9) [Output](functions/output.md)
+    - 8.10) [String](functions/string.md)
 - 9) [FAQ](faq.md)
 - 10) Features
     - 10.1) [Web Server](features/web-server.md)

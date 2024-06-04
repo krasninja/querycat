@@ -92,5 +92,11 @@ namespace QueryCat.Backend.Core.Resources {
                 return ResourceManager.GetString("CannotGetNotDelegate", resourceCulture);
             }
         }
+        
+        internal static string QueryMissedRequiredCondition {
+            get {
+                return ResourceManager.GetString("QueryMissedRequiredCondition", resourceCulture);
+            }
+        }
     }
 }

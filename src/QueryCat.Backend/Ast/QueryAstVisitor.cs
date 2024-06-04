@@ -242,7 +242,7 @@ internal class QueryAstVisitor : AstVisitor
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectTableExpressionNode node)
+    public override void Visit(SelectTableNode node)
     {
         var sb = new StringBuilder();
         sb.Append(" FROM ");

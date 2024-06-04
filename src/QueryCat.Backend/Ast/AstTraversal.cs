@@ -65,7 +65,7 @@ internal sealed class AstTraversal
     /// </summary>
     /// <returns>Enumerable of parents.</returns>
     public IEnumerable<TNode> GetParents<TNode>() where TNode : IAstNode
-        => _treeStack.Select(s => s.Node).OfType<TNode>();
+        => _treeStack.Skip(1).Select(s => s.Node).OfType<TNode>();
 
     /// <summary>
     /// Pre-order traversal.

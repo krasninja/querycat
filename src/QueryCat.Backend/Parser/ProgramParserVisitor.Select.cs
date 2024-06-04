@@ -38,14 +38,15 @@ internal partial class ProgramParserVisitor
         {
             WithNode = this.VisitMaybe<SelectWithListNode>(context.selectWithClause()),
             DistinctNode = this.VisitMaybe<SelectDistinctNode>(context.selectDistinctClause()),
-            TableExpressionNode = this.VisitMaybe<SelectTableExpressionNode>(context.selectFromClause()),
+            TableExpressionNode = this.VisitMaybe<SelectTableNode>(context.selectFromClause()),
             TargetNode = this.VisitMaybe<FunctionCallNode>(context.selectTarget()),
             WindowNode = this.VisitMaybe<SelectWindowNode>(context.selectWindow()),
             OrderByNode = this.VisitMaybe<SelectOrderByNode>(context.selectOrderByClause()),
             OffsetNode = this.VisitMaybe<SelectOffsetNode>(context.selectOffsetClause()),
             FetchNode = this.VisitMaybe<SelectFetchNode>(context.selectTopClause())
                 ?? this.VisitMaybe<SelectFetchNode>(context.selectFetchFirstClause())
-                ?? this.VisitMaybe<SelectFetchNode>(context.selectLimitClause())
+                ?? this.VisitMaybe<SelectFetchNode>(context.selectLimitClause()),
+            ExceptIdentifiersNode = this.VisitMaybe<SelectColumnsExceptNode>(context.selectExcept()),
         };
 
     /// <inheritdoc />
@@ -93,19 +94,20 @@ internal partial class ProgramParserVisitor
         {
             WithNode = this.VisitMaybe<SelectWithListNode>(context.selectWithClause()),
             DistinctNode = this.VisitMaybe<SelectDistinctNode>(context.selectDistinctClause()),
-            TableExpressionNode = this.VisitMaybe<SelectTableExpressionNode>(context.selectFromClause()),
+            TableExpressionNode = this.VisitMaybe<SelectTableNode>(context.selectFromClause()),
             TargetNode = this.VisitMaybe<FunctionCallNode>(context.selectTarget()),
             FetchNode = this.VisitMaybe<SelectFetchNode>(context.selectTopClause()),
+            ExceptIdentifiersNode = this.VisitMaybe<SelectColumnsExceptNode>(context.selectExcept()),
         };
 
     /// <inheritdoc />
     public override IAstNode VisitSelectQuerySpecificationSingle(QueryCatParser.SelectQuerySpecificationSingleContext context)
     {
         var selectColumnsSublistNodes = this.Visit<SelectColumnsSublistNode>(context.selectSublist());
-        SelectTableExpressionNode? selectTableExpressionNode = null;
+        SelectTableNode? selectTableExpressionNode = null;
         if (Console.IsInputRedirected && !Console.IsErrorRedirected && !Console.IsOutputRedirected)
         {
-            selectTableExpressionNode = new SelectTableExpressionNode(new SelectTableReferenceListNode(
+            selectTableExpressionNode = new SelectTableNode(new SelectTableReferenceListNode(
                 new List<ExpressionNode>
                 {
                     new SelectTableFunctionNode(new FunctionCallNode("stdin")),
@@ -121,6 +123,10 @@ internal partial class ProgramParserVisitor
     /// <inheritdoc />
     public override IAstNode VisitSelectList(QueryCatParser.SelectListContext context)
         => new SelectColumnsListNode(this.Visit<SelectColumnsSublistNode>(context.selectSublist()));
+
+    /// <inheritdoc />
+    public override IAstNode VisitSelectExcept(QueryCatParser.SelectExceptContext context)
+        => new SelectColumnsExceptNode(this.Visit<IdentifierExpressionNode>(context.identifierSimple()));
 
     #endregion
 
@@ -265,7 +271,7 @@ internal partial class ProgramParserVisitor
 
     /// <inheritdoc />
     public override IAstNode VisitSelectFromClause(QueryCatParser.SelectFromClauseContext context)
-        => new SelectTableExpressionNode(this.Visit<SelectTableReferenceListNode>(context.selectTableReferenceList()))
+        => new SelectTableNode(this.Visit<SelectTableReferenceListNode>(context.selectTableReferenceList()))
         {
             SearchConditionNode = this.VisitMaybe<SelectSearchConditionNode>(context.selectSearchCondition()),
             GroupByNode = this.VisitMaybe<SelectGroupByNode>(context.selectGroupBy()),
@@ -309,16 +315,24 @@ internal partial class ProgramParserVisitor
     /// <inheritdoc />
     public override IAstNode VisitSelectTablePrimaryWithFormat(QueryCatParser.SelectTablePrimaryWithFormatContext context)
     {
-        var readFunction = new FunctionCallNode("read");
         var uri = GetUnwrappedText(context.uri);
-        readFunction.Arguments.Add(new FunctionCallArgumentNode("uri", new LiteralNode(new VariantValue(uri))));
-        if (context.format != null)
-        {
-            var formatterFunctionCallNode = this.Visit<FunctionCallNode>(context.format);
-            readFunction.Arguments.Add(new FunctionCallArgumentNode("fmt", formatterFunctionCallNode));
-        }
         var alias = this.Visit(context.selectAlias(), SelectAliasNode.Empty).AliasName;
-        return new SelectTableFunctionNode(readFunction, alias);
+        var readFunctionNode = CreateReadFunctionCallNode(
+            uriNode: new LiteralNode(new VariantValue(uri)),
+            formatContext: context.format);
+        return new SelectTableFunctionNode(readFunctionNode, alias);
+    }
+
+    private FunctionCallNode CreateReadFunctionCallNode(ExpressionNode uriNode, QueryCatParser.FunctionCallContext? formatContext = null)
+    {
+        var readFunctionNode = new FunctionCallNode("read");
+        readFunctionNode.Arguments.Add(new FunctionCallArgumentNode("uri", uriNode));
+        if (formatContext != null)
+        {
+            var formatterFunctionCallNode = this.Visit<FunctionCallNode>(formatContext);
+            readFunctionNode.Arguments.Add(new FunctionCallArgumentNode("fmt", formatterFunctionCallNode));
+        }
+        return readFunctionNode;
     }
 
     /// <inheritdoc />
@@ -401,19 +415,33 @@ internal partial class ProgramParserVisitor
     }
 
     /// <inheritdoc />
-    public override IAstNode VisitSelectTableRow(QueryCatParser.SelectTableRowContext context)
-        => new SelectTableRowNode(this.Visit<ExpressionNode>(context.simpleExpression()));
+    public override IAstNode VisitSelectTableValuesRow(QueryCatParser.SelectTableValuesRowContext context)
+        => new SelectTableValuesRowNode(this.Visit<ExpressionNode>(context.simpleExpression()));
 
     /// <inheritdoc />
-    public override IAstNode VisitSelectTable(QueryCatParser.SelectTableContext context)
-        => new SelectTableNode(this.Visit<SelectTableRowNode>(context.selectTableRow()));
+    public override IAstNode VisitSelectTableValues(QueryCatParser.SelectTableValuesContext context)
+        => new SelectTableValuesNode(this.Visit<SelectTableValuesRowNode>(context.selectTableValuesRow()));
 
     /// <inheritdoc />
-    public override IAstNode VisitSelectTablePrimaryTable(QueryCatParser.SelectTablePrimaryTableContext context)
+    public override IAstNode VisitSelectTablePrimaryTableValues(QueryCatParser.SelectTablePrimaryTableValuesContext context)
     {
-        var query = this.Visit<SelectTableNode>(context.selectTable());
+        var query = this.Visit<SelectTableValuesNode>(context.selectTableValues());
         query.Alias = this.Visit(context.selectAlias(), SelectAliasNode.Empty).AliasName;
         return query;
+    }
+
+    /// <inheritdoc />
+    public override IAstNode VisitSelectTablePrimaryExpression(QueryCatParser.SelectTablePrimaryExpressionContext context)
+    {
+        var alias = this.Visit(context.selectAlias(), SelectAliasNode.Empty).AliasName;
+        var readFunctionNode = CreateReadFunctionCallNode(
+            uriNode: this.Visit<ExpressionNode>(context.simpleExpression()),
+            formatContext: null);
+        return new SelectTableFunctionNode(readFunctionNode, alias);
+        /*return new SelectTableExpressionNode(this.Visit<ExpressionNode>(context.simpleExpression()))
+        {
+            Alias = this.Visit(context.selectAlias(), SelectAliasNode.Empty).AliasName,
+        };*/
     }
 
     #endregion

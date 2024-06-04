@@ -78,6 +78,12 @@ internal abstract class DelegateVisitor : AstVisitor
     }
 
     /// <inheritdoc />
+    public override void Visit(IdentifierFilterSelectorNode node)
+    {
+        OnVisit(node);
+    }
+
+    /// <inheritdoc />
     public override void Visit(IdentifierIndexSelectorNode node)
     {
         OnVisit(node);
@@ -248,6 +254,12 @@ internal abstract class DelegateVisitor : AstVisitor
     }
 
     /// <inheritdoc />
+    public override void Visit(SelectColumnsExceptNode node)
+    {
+        OnVisit(node);
+    }
+
+    /// <inheritdoc />
     public override void Visit(SelectColumnsListNode node)
     {
         OnVisit(node);
@@ -368,12 +380,6 @@ internal abstract class DelegateVisitor : AstVisitor
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectTableExpressionNode node)
-    {
-        OnVisit(node);
-    }
-
-    /// <inheritdoc />
     public override void Visit(SelectTableFunctionNode node)
     {
         OnVisit(node);
@@ -410,7 +416,13 @@ internal abstract class DelegateVisitor : AstVisitor
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectTableRowNode node)
+    public override void Visit(SelectTableValuesNode valuesNode)
+    {
+        OnVisit(valuesNode);
+    }
+
+    /// <inheritdoc />
+    public override void Visit(SelectTableValuesRowNode node)
     {
         OnVisit(node);
     }

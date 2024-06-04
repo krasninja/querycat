@@ -27,7 +27,7 @@ internal sealed class UpdateCommand : ICommand
             new SelectColumnsListNode(insertNode.SetNodes.Select(n => new SelectColumnsSublistExpressionNode(n.SetTargetNode))
         ));
         selectNode.TableExpressionNode =
-            new SelectTableExpressionNode(
+            new SelectTableNode(
                     new SelectTableReferenceListNode(insertNode.TargetExpressionNode));
         selectNode.TableExpressionNode.SearchConditionNode = insertNode.SearchConditionNode;
         new SelectPlanner(executionThread).CreateIterator(selectNode);

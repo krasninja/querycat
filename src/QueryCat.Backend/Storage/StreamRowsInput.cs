@@ -1,4 +1,5 @@
 using System.Buffers;
+using System.IO.Compression;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
@@ -59,7 +60,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     // Cache.
     private CacheRowsIterator? _cacheIterator;
 
-    private Column[] _columns = Array.Empty<Column>();
+    private Column[] _columns = [];
 
     /// <inheritdoc />
     public Column[] Columns => _columns;
@@ -361,9 +362,10 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     /// <returns>Virtual columns array.</returns>
     protected virtual Column[] GetVirtualColumns()
     {
-        return _options.AddInputSourceColumn && StreamReader.BaseStream is FileStream
+        return _options.AddInputSourceColumn
+               && (StreamReader.BaseStream is FileStream || StreamReader.BaseStream is GZipStream)
             ? _customColumns
-            : Array.Empty<Column>();
+            : [];
     }
 
     /// <summary>
@@ -377,6 +379,11 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
         if (columnIndex == 0 && StreamReader.BaseStream is FileStream fileStream)
         {
             return new VariantValue(fileStream.Name);
+        }
+        if (columnIndex == 0 && StreamReader.BaseStream is GZipStream zipStream
+            && zipStream.BaseStream is FileStream zipFileStream)
+        {
+            return new VariantValue(zipFileStream.Name);
         }
         return VariantValue.Null;
     }

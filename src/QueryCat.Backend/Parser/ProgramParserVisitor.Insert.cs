@@ -31,8 +31,8 @@ internal partial class ProgramParserVisitor
     {
         return new SelectQuerySpecificationNode(new SelectColumnsListNode(new SelectColumnsSublistAll()))
         {
-            TableExpressionNode = new SelectTableExpressionNode(
-                new SelectTableReferenceListNode(this.Visit<SelectTableNode>(context.selectTable()))
+            TableExpressionNode = new SelectTableNode(
+                new SelectTableReferenceListNode(this.Visit<SelectTableValuesNode>(context.selectTableValues()))
             )
         };
     }

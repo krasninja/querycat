@@ -188,6 +188,7 @@ public partial class ThriftPluginsServer
                 LogLevel.DEBUG => Microsoft.Extensions.Logging.LogLevel.Debug,
                 LogLevel.INFORMATION => Microsoft.Extensions.Logging.LogLevel.Information,
                 LogLevel.WARNING => Microsoft.Extensions.Logging.LogLevel.Warning,
+                LogLevel.ERROR => Microsoft.Extensions.Logging.LogLevel.Error,
                 LogLevel.CRITICAL => Microsoft.Extensions.Logging.LogLevel.Critical,
                 LogLevel.NONE => Microsoft.Extensions.Logging.LogLevel.None,
                 _ => throw new ArgumentOutOfRangeException(nameof(level), level, null),

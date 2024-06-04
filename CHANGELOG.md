@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Allow to evaluate filter on object expressions lists "users[? @.Name='John' ].Phone".
+- Try to run "rc.sql" from the working directory.
+- Add "except" keyword for "select" command.
+
+### Fixed
+
+- Fix object expressions wrong operation apply.
+- Allow to specify simple expressions in FROM block.
+- Fix incorrect schema detection bug with gzip files.
+- Improve Thrift plugins support
+
+### Removed
+
+- Remove "object_query" function.
+
+## [0.6.4] - 2024-05-20
+
+### Added
+
 - Initial implementation of IF command.
 - Allow to order by column number.
 - Allow to set up application culture "Application.Culture".

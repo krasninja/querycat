@@ -102,6 +102,11 @@ internal class ResolveTypesVisitor : AstVisitor
 
     protected bool SetDataTypeFromVariable(IdentifierExpressionNode node, string name)
     {
+        if (node.HasAttribute(AstAttributeKeys.TypeKey))
+        {
+            return true;
+        }
+
         var scope = ExecutionThread.TopScope;
         if (ExecutionThread.TryGetVariable(name, out var value, scope))
         {
@@ -114,6 +119,11 @@ internal class ResolveTypesVisitor : AstVisitor
             {
                 node.SetAttribute(AstAttributeKeys.TypeKey, valueType);
             }
+            return true;
+        }
+        if (node.IsCurrentSpecialIdentifier)
+        {
+            node.SetAttribute(AstAttributeKeys.TypeKey, DataType.Dynamic);
             return true;
         }
         return false;

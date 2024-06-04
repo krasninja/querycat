@@ -20,7 +20,7 @@ internal class ApplicationOptions
     public LogLevel LogLevel { get; init; }
 
 #if ENABLE_PLUGINS
-    public string[] PluginDirectories { get; init; } = Array.Empty<string>();
+    public string[] PluginDirectories { get; init; } = [];
 #endif
 
     public ApplicationRoot CreateApplicationRoot(AppExecutionOptions? executionOptions = null)
@@ -49,7 +49,8 @@ internal class ApplicationOptions
             thread,
             executionOptions.PluginDirectories,
             functionsCacheDirectory: Path.Combine(ExecutionThread.GetApplicationDirectory(),
-                ApplicationPluginsFunctionsCacheDirectory))
+                ApplicationPluginsFunctionsCacheDirectory),
+            minLogLevel: LogLevel)
         );
 #endif
 #if ENABLE_PLUGINS && PLUGIN_ASSEMBLY

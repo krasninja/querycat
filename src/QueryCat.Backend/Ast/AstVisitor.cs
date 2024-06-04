@@ -91,6 +91,10 @@ internal abstract class AstVisitor
     {
     }
 
+    public virtual void Visit(IdentifierFilterSelectorNode node)
+    {
+    }
+
     public virtual void Visit(IdentifierIndexSelectorNode node)
     {
     }
@@ -211,6 +215,10 @@ internal abstract class AstVisitor
     {
     }
 
+    public virtual void Visit(SelectColumnsExceptNode node)
+    {
+    }
+
     public virtual void Visit(SelectColumnsListNode node)
     {
     }
@@ -303,10 +311,6 @@ internal abstract class AstVisitor
     {
     }
 
-    public virtual void Visit(SelectTableExpressionNode node)
-    {
-    }
-
     public virtual void Visit(SelectTableFunctionNode node)
     {
     }
@@ -331,7 +335,11 @@ internal abstract class AstVisitor
     {
     }
 
-    public virtual void Visit(SelectTableRowNode node)
+    public virtual void Visit(SelectTableValuesNode valuesNode)
+    {
+    }
+
+    public virtual void Visit(SelectTableValuesRowNode node)
     {
     }
 

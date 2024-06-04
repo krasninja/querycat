@@ -60,37 +60,40 @@ public class DefaultObjectSelector : IObjectSelector
             {
                 var keyType = dictionary.GetType().GetGenericArguments()[0];
                 var key = ConvertValue(indexes[0], keyType);
-                if (key != null)
+                if (key != null && dictionary.Contains(key))
                 {
                     resultObject = dictionary[key];
                 }
             }
 
             // Index property.
-            if (resultObject == null && current.PropertyInfo != null
-                && current.PropertyInfo.CanRead)
+            if (resultObject == null
+                && current.PropertyInfo != null
+                && current.PropertyInfo.CanRead
+                && current.PropertyInfo.GetIndexParameters().Length == indexes.Length)
             {
                 resultObject = current.PropertyInfo.GetValue(current.Value, indexes);
             }
         }
 
         // First try to use the most popular case when we have only one integer index.
-        if (resultObject == null && indexes.Length == 1 && TryGetObjectIsIntegerIndex(indexes[0], out var intIndex))
+        if (resultObject == null && indexes.Length == 1 && TryGetObjectIsIntegerIndex(indexes[0], out var intIndex)
+            && intIndex > -1)
         {
             // Array.
-            if (current.Value is Array array)
+            if (current.Value is Array array && intIndex < array.Length)
             {
                 resultObject = array.GetValue(intIndex);
             }
             // List.
-            else if (current.Value is IList list)
+            else if (current.Value is IList list && intIndex < list.Count)
             {
                 resultObject = list[intIndex];
             }
             // Generic enumerable.
             else if (current.Value is IEnumerable<object> objectsEnumerable)
             {
-                resultObject = objectsEnumerable.ElementAt(intIndex);
+                resultObject = objectsEnumerable.ElementAtOrDefault(intIndex);
             }
             // Enumerable.
             else if (current.Value is IEnumerable enumerable)

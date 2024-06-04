@@ -1,6 +1,7 @@
 expected: |
-  10,john.doe@yahoo.com
+  10,john.doe@yahoo.com,1
 query: |
   select
     user1.ScoreList[0] + user1.ScoreList[1] + 1,
-    user2.Logins['Yahoo'];
+    user2.Logins['Yahoo'],
+    user1.ScoreList[0] - user1.ScoreList[1];

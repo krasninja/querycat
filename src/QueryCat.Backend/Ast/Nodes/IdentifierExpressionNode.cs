@@ -8,6 +8,8 @@ namespace QueryCat.Backend.Ast.Nodes;
 /// </summary>
 internal class IdentifierExpressionNode : ExpressionNode
 {
+    public const string CurrentSymbol = "@";
+
     /// <summary>
     /// Identifier name.
     /// </summary>
@@ -37,6 +39,14 @@ internal class IdentifierExpressionNode : ExpressionNode
     public IdentifierSelectorNode[] SelectorNodes { get; } = [];
 
     public bool HasSelectors => SelectorNodes.Length > 0;
+
+    /// <summary>
+    /// The special identifier that can be used in objects selector.
+    /// </summary>
+    /// <remarks>
+    /// RFC: https://www.rfc-editor.org/rfc/rfc9535.html#name-summary.
+    /// </remarks>
+    public bool IsCurrentSpecialIdentifier => Name == CurrentSymbol;
 
     /// <inheritdoc />
     public IdentifierExpressionNode(string name, List<IdentifierSelectorNode>? selectorNodes = null)

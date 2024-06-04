@@ -18,6 +18,7 @@ using PluginsManager = QueryCat.Plugins.Sdk.PluginsManager;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Plugins;
+using QueryCat.Plugins.Client.Logging;
 using QueryCat.Plugins.Sdk;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
@@ -33,8 +34,10 @@ public partial class ThriftPluginClient : IDisposable
     public const string PluginServerPipeParameter = "server-endpoint";
     public const string PluginTokenParameter = "token";
     public const string PluginParentPidParameter = "parent-pid";
+    public const string PluginLogLevelParameter = "log-level";
     public const string PluginDebugServerParameter = "debug-server";
-    public const string PluginDebugServerArgumentsParameter = "debug-server-args";
+    public const string PluginDebugServerQueryParameter = "debug-server-query";
+    public const string PluginDebugServerFileParameter = "debug-server-file";
 
     public const string PluginMainFunctionName = "QueryCatPlugin_Main";
 
@@ -44,7 +47,8 @@ public partial class ThriftPluginClient : IDisposable
     private readonly PluginFunctionsManager _functionsManager;
     private readonly ObjectsStorage _objectsStorage = new();
     private readonly string _debugServerPath = string.Empty;
-    private readonly string _debugServerPathArgs = string.Empty;
+    private readonly string _debugServerQueryText = string.Empty;
+    private readonly string _debugServerQueryFile = string.Empty;
     private readonly int _parentPid;
     private Process? _qcatProcess;
     private readonly SemaphoreSlim _exitSemaphore = new(0, 1);
@@ -72,6 +76,11 @@ public partial class ThriftPluginClient : IDisposable
     /// Do not use application logger for Thrift internal logs.
     /// </summary>
     internal bool IgnoreThriftLogs { get; set; }
+
+    /// <summary>
+    /// Is current client connected and registered.
+    /// </summary>
+    public bool IsActive { get; set; }
 
     public ThriftPluginClient(ThriftPluginClientArguments args)
     {
@@ -108,7 +117,8 @@ public partial class ThriftPluginClient : IDisposable
         if (!string.IsNullOrEmpty(args.DebugServerPath))
         {
             _debugServerPath = args.DebugServerPath;
-            _debugServerPathArgs = args.DebugServerPathArgs;
+            _debugServerQueryText = args.DebugServerQueryText;
+            _debugServerQueryFile = args.DebugServerQueryFile;
         }
 
         // Bootstrap.
@@ -139,6 +149,11 @@ public partial class ThriftPluginClient : IDisposable
 
     public static ThriftPluginClientArguments ConvertCommandLineArguments(string[] args)
     {
+        // The special case for testing.
+        if (args.Length > 0 && args[0] == "bypass")
+        {
+            return new ThriftPluginClientArguments();
+        }
         if (args.Length == 0)
         {
             throw new InvalidOperationException(Resources.Errors.MustBeRunByHost);
@@ -167,11 +182,17 @@ public partial class ThriftPluginClient : IDisposable
                 case PluginParentPidParameter:
                     appArgs.ParentPid = int.Parse(value);
                     break;
+                case PluginLogLevelParameter:
+                    appArgs.LogLevel = Enum.Parse<LogLevel>(value, ignoreCase: true);
+                    break;
                 case PluginDebugServerParameter:
                     appArgs.DebugServerPath = value;
                     break;
-                case PluginDebugServerArgumentsParameter:
-                    appArgs.DebugServerPathArgs = value;
+                case PluginDebugServerQueryParameter:
+                    appArgs.DebugServerQueryText = value;
+                    break;
+                case PluginDebugServerFileParameter:
+                    appArgs.DebugServerQueryFile = value;
                     break;
                 default:
                     continue;
@@ -251,6 +272,10 @@ public partial class ThriftPluginClient : IDisposable
                 Version = version?.ToString() ?? "0.0.0",
             },
             cancellationToken);
+        IsActive = true;
+
+        // Add the current logger.
+        QueryCat.Backend.Core.Application.LoggerFactory.AddProvider(new ThriftClientLoggerProvider(this));
     }
 
     private void StartServer()
@@ -293,6 +318,8 @@ public partial class ThriftPluginClient : IDisposable
         {
             return;
         }
+
+        IsActive = false;
 
         // Connection to plugin manager.
         _protocol.Dispose();
@@ -337,9 +364,13 @@ public partial class ThriftPluginClient : IDisposable
             }
         };
         _qcatProcess.StartInfo.Arguments = "plugin debug";
-        if (!string.IsNullOrEmpty(_debugServerPathArgs))
+        if (!string.IsNullOrEmpty(_debugServerQueryText))
         {
-            _qcatProcess.StartInfo.Arguments += " " + _debugServerPathArgs + " ";
+            _qcatProcess.StartInfo.Arguments += " \"" + _debugServerQueryText.Replace("\"", "\\\"") + "\" ";
+        }
+        else if (!string.IsNullOrEmpty(_debugServerQueryFile))
+        {
+            _qcatProcess.StartInfo.Arguments += " -f \"" + _debugServerQueryFile + "\" ";
         }
         _qcatProcess.StartInfo.Arguments += $"--log-level=trace --plugin-dirs=\"{modulePath}\"";
         _qcatProcess.OutputDataReceived += (_, args) => Console.Out.WriteLine($"> {args.Data}");
@@ -370,9 +401,23 @@ public partial class ThriftPluginClient : IDisposable
         await Task.WhenAny(waitingTasks);
     }
 
+    /// <summary>
+    /// Signal that plugin can be terminated.
+    /// </summary>
     public void SignalExit()
     {
         _exitSemaphore.Release();
+    }
+
+    /// <summary>
+    /// Log thru QueryCat host.
+    /// </summary>
+    /// <param name="level">Log level.</param>
+    /// <param name="message">Log message.</param>
+    /// <param name="args">Log arguments.</param>
+    public async Task LogAsync(global::QueryCat.Plugins.Sdk.LogLevel level, string message, params string[] args)
+    {
+        await _client.LogAsync(level, message, args.ToList());
     }
 
     protected virtual void Dispose(bool disposing)
