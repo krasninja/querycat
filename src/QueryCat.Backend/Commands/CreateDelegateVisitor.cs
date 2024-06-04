@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Function;
@@ -16,6 +17,8 @@ internal partial class CreateDelegateVisitor : AstVisitor
     private const string ObjectSelectorKey = "object_selector_key";
 
     private const string ObjectSelectorContainerKey = "object_selector_container_key";
+
+    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(CreateDelegateVisitor));
 
     private readonly ResolveTypesVisitor _resolveTypesVisitor;
 

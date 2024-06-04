@@ -67,8 +67,10 @@ public class DefaultObjectSelector : IObjectSelector
             }
 
             // Index property.
-            if (resultObject == null && current.PropertyInfo != null
-                && current.PropertyInfo.CanRead)
+            if (resultObject == null
+                && current.PropertyInfo != null
+                && current.PropertyInfo.CanRead
+                && current.PropertyInfo.GetIndexParameters().Length == indexes.Length)
             {
                 resultObject = current.PropertyInfo.GetValue(current.Value, indexes);
             }

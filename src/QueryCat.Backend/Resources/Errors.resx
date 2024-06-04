@@ -156,4 +156,7 @@
   <data name="NoConditions" xml:space="preserve">
     <value>There must be at least one condition.</value>
   </data>
+  <data name="CannotSelectObject" xml:space="preserve">
+    <value>Cannot select object.</value>
+  </data>
 </root>

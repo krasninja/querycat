@@ -1,4 +1,5 @@
 using System.Collections;
+using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Core.Execution;
@@ -14,6 +15,25 @@ internal partial class CreateDelegateVisitor
     }
 
     protected bool GetObjectBySelector(
+        ObjectSelectorContext context,
+        VariantValue value,
+        IdentifierExpressionNode idNode,
+        out VariantValue result)
+    {
+        try
+        {
+            return GetObjectBySelectorInternal(context, value, idNode, out result);
+        }
+        catch (Exception e)
+        {
+            _logger.LogDebug(e, Resources.Errors.CannotSelectObject);
+        }
+
+        result = VariantValue.Null;
+        return false;
+    }
+
+    private bool GetObjectBySelectorInternal(
         ObjectSelectorContext context,
         VariantValue value,
         IdentifierExpressionNode idNode,

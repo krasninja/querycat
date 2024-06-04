@@ -320,5 +320,11 @@ namespace QueryCat.Backend.Resources {
                 return ResourceManager.GetString("NoConditions", resourceCulture);
             }
         }
+        
+        internal static string CannotSelectObject {
+            get {
+                return ResourceManager.GetString("CannotSelectObject", resourceCulture);
+            }
+        }
     }
 }
