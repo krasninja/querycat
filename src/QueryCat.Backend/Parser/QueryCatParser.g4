@@ -126,7 +126,7 @@ selectSublist
     ;
 
 // Into.
-selectTarget: INTO (functionCall | uri=STRING_LITERAL);
+selectTarget: INTO (into=functionCall | uri=STRING_LITERAL) (FORMAT format=functionCall)?;
 
 // From.
 selectFromClause:
