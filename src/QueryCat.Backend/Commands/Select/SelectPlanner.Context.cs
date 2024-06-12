@@ -95,7 +95,7 @@ internal sealed partial class SelectPlanner
         SelectCommandContext context,
         SelectQuerySpecificationNode querySpecificationNode)
     {
-        // No FROM - assumed this is the query with SELECT only.
+        // No FROM - assume this is the query with SELECT only.
         if (querySpecificationNode.TableExpressionNode == null)
         {
             context.SetIterator(new SingleValueRowsInput().AsIterable());

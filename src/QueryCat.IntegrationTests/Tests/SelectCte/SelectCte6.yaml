@@ -1,0 +1,14 @@
+expected: |
+  3,6,2
+query: |
+  with cte as (
+    select 1 as 'col'
+    union
+    select 2
+    union
+    select 3
+  )
+  select
+    (select count(*) from cte) as 'count',
+    (select sum(col) from cte) as 'sum',
+    (select avg(col) from cte) as 'avg'

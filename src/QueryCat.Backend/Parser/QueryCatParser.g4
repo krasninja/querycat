@@ -74,7 +74,7 @@ selectQueryExpression
       selectList
       selectExcept?
       selectTarget?
-      selectFromClause
+      selectFromClause?
       selectWindow?
       selectOrderByClause?
       selectLimitClause?
