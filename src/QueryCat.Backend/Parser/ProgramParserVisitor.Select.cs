@@ -445,12 +445,8 @@ internal partial class ProgramParserVisitor
         var alias = this.Visit(context.selectAlias(), SelectAliasNode.Empty).AliasName;
         var readFunctionNode = CreateReadFunctionCallNode(
             uriNode: this.Visit<ExpressionNode>(context.simpleExpression()),
-            formatContext: null);
+            formatContext: context.format);
         return new SelectTableFunctionNode(readFunctionNode, alias);
-        /*return new SelectTableExpressionNode(this.Visit<ExpressionNode>(context.simpleExpression()))
-        {
-            Alias = this.Visit(context.selectAlias(), SelectAliasNode.Empty).AliasName,
-        };*/
     }
 
     #endregion

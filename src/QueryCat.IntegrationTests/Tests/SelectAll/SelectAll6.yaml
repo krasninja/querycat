@@ -1,4 +1,4 @@
 expected: |
   tt0120201
 query: |
-  select imdb_id, title except title from 'MoviesTitles.csv' where title = 'Starship Troopers';
+  select imdb_id, title except title from 'Movies' || 'Titles.csv' format csv() where title = 'Starship Troopers';

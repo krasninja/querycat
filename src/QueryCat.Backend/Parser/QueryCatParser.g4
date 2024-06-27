@@ -146,7 +146,7 @@ selectTablePrimary
     | '(' selectQueryExpression ')' selectAlias? # SelectTablePrimarySubquery
     | name=identifier (FORMAT format=functionCall)? selectAlias? # SelectTablePrimaryIdentifier
     | '(' selectTableValues ')' selectAlias? # SelectTablePrimaryTableValues
-    | simpleExpression selectAlias? # SelectTablePrimaryExpression
+    | simpleExpression (FORMAT format=functionCall)? selectAlias? # SelectTablePrimaryExpression
     ;
 selectTableJoined
     : selectJoinType? JOIN right=selectTablePrimary ON condition=expression # SelectTableJoinedOn
