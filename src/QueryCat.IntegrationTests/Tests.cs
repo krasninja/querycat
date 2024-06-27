@@ -46,6 +46,7 @@ public sealed class Tests : IDisposable
 
         _testThread.TopScope.Variables["user1"] = VariantValue.CreateFromObject(User.GetTestUser1());
         _testThread.TopScope.Variables["user2"] = VariantValue.CreateFromObject(User.GetTestUser2());
+        _testThread.TopScope.Variables["user3"] = VariantValue.CreateFromObject(User.GetTestUser3());
 
         var data = TestThread.GetQueryData(fileName);
         var value = _testThread.Run(data.Query);

@@ -4,7 +4,7 @@ public class User
 {
     public int Id { get; set; }
 
-    public string Name { get; init; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
 
     public Address? Address { get; init; }
 
@@ -23,11 +23,11 @@ public class User
         {
             Phones = ["+7 933 998 0000", "+7 908 214 0000", "+7 999 445 0000"],
         },
-        Cats = new()
-        {
+        Cats =
+        [
             new Cat("Alisa", 12),
             new Cat("Archi", 10),
-        }
+        ]
     };
 
     public static User GetTestUser2() => new()
@@ -42,5 +42,15 @@ public class User
             ["Yahoo"] = "john.doe@yahoo.com",
             ["Yandex"] = "john.doe@yandex.ru",
         }
+    };
+
+    public static User GetTestUser3() => new()
+    {
+        Id = 1,
+        Name = "Aleksandr Drozdov",
+        Cats =
+        [
+            new Cat("Lesya")
+        ]
     };
 }
