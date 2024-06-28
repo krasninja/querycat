@@ -28,11 +28,7 @@ public static class JsonFunctions
 
         // Evaluate.
         var pathResult = jsonPath.Evaluate(jsonNode);
-        if (pathResult.Error?.Length > 0)
-        {
-            throw new QueryCatException(pathResult.Error[0].ToString());
-        }
-        if (pathResult.Matches == null || pathResult.Matches.Count != 1)
+        if (pathResult.Matches.Count != 1)
         {
             return VariantValue.Null;
         }
@@ -63,11 +59,7 @@ public static class JsonFunctions
 
         // Evaluate.
         var pathResult = jsonPath.Evaluate(jsonNode);
-        if (pathResult.Error?.Length > 0)
-        {
-            throw new QueryCatException(pathResult.Error[0].ToString());
-        }
-        if (pathResult.Matches == null || pathResult.Matches.Count != 1)
+        if (pathResult.Matches.Count != 1)
         {
             return VariantValue.Null;
         }
@@ -144,11 +136,7 @@ public static class JsonFunctions
 
         // Evaluate.
         var pathResult = jsonPath.Evaluate(jsonNode);
-        if (pathResult.Error?.Length > 0)
-        {
-            throw new QueryCatException(pathResult.Error[0].ToString());
-        }
-        return new VariantValue(pathResult.Matches != null && pathResult.Matches.Count > 0);
+        return new VariantValue(pathResult.Matches.Count > 0);
     }
 
     [UnconditionalSuppressMessage("AOT", "IL3050:Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.", Justification = "<Pending>")]
