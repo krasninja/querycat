@@ -36,3 +36,19 @@ $ cat /tmp/test.json
 ```
 select *number* from 'person.json??$.phoneNumbers.*';
 ```
+
+**Get quick info from JSON log from Google Cloud export**
+
+```
+select
+  insertId as id,
+  url,
+  substr(msg, 0, 200) as 'message'
+from (
+  select "timestamp", insertId, jsonPayload, json_value(jsonPayload, '$.context.httpRequest.url') as url,
+    json_value(jsonPayload, '$.message') as msg from '/home/ivan/Downloads/downloaded-logs.json' where length(jsonPayload) > 0
+) where 1=1
+    and jsonPayload not like '%The remote host closed the connection.%'
+    and jsonPayload not like '%The client disconnected.%'
+    and jsonPayload not like '%System.Threading.ThreadAbortException%';
+```
