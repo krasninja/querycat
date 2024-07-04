@@ -8,10 +8,13 @@ namespace QueryCat.Backend.Commands.Select.Iterators;
 /// </summary>
 internal sealed class ProjectedRowsIterator : IRowsIterator, IRowsIteratorParent
 {
+    private static int _nextId = 100;
+    private readonly int _id = Interlocked.Increment(ref _nextId);
+
     private readonly IRowsIterator _rowsIterator;
     private Row _currentRow;
-    private Column[] _columns = Array.Empty<Column>();
-    private IFuncUnit[] _funcUnits = Array.Empty<IFuncUnit>();
+    private Column[] _columns = [];
+    private IFuncUnit[] _funcUnits = [];
 
     /// <inheritdoc />
     public Column[] Columns => _columns;
@@ -58,7 +61,7 @@ internal sealed class ProjectedRowsIterator : IRowsIterator, IRowsIteratorParent
     /// <inheritdoc />
     public void Explain(IndentedStringBuilder stringBuilder)
     {
-        stringBuilder.AppendRowsIteratorsWithIndent($"Projection (columns={_columns.Length})", _rowsIterator)
+        stringBuilder.AppendRowsIteratorsWithIndent($"Projection (columns={_columns.Length}, id={_id})", _rowsIterator)
             .AppendSubQueriesWithIndent(_funcUnits);
     }
 

@@ -81,12 +81,14 @@ internal sealed partial class SelectPlanner
                 return false;
             }
             // Left and Right must be id and expression.
-            if (!binaryOperationExpressionNode.MatchType(out IdentifierExpressionNode? identifierNode, out ExpressionNode? expressionNode))
+            if (!binaryOperationExpressionNode.MatchType(out IdentifierExpressionNode? identifierNode, out ExpressionNode? expressionNode)
+                || identifierNode == null)
             {
                 return false;
             }
             // Try to find correspond row input column.
-            var column = identifierNode!.GetAttribute<Column>(AstAttributeKeys.InputColumnKey);
+            makeDelegateVisitor.RunAndReturn(identifierNode); // This call sets InputColumnKey attribute.
+            var column = identifierNode.GetAttribute<Column>(AstAttributeKeys.InputColumnKey);
             if (column == null || rowsInputContext.RowsInput.GetColumnIndex(column) < 0)
             {
                 return false;
@@ -110,6 +112,7 @@ internal sealed partial class SelectPlanner
                 return false;
             }
             // Try to find correspond row input column.
+            makeDelegateVisitor.RunAndReturn(identifierNode); // This call sets InputColumnKey attribute.
             var column = identifierNode.GetAttribute<Column>(AstAttributeKeys.InputColumnKey);
             if (column == null || rowsInputContext.RowsInput.GetColumnIndex(column) < 0)
             {
@@ -135,6 +138,7 @@ internal sealed partial class SelectPlanner
                 return false;
             }
             // Try to find correspond row input column.
+            makeDelegateVisitor.RunAndReturn(identifierNode); // This call sets InputColumnKey attribute.
             var column = identifierNode.GetAttribute<Column>(AstAttributeKeys.InputColumnKey);
             if (column == null || rowsInputContext.RowsInput.GetColumnIndex(column) < 0)
             {

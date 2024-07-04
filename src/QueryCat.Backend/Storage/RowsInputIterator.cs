@@ -57,6 +57,9 @@ public class RowsInputIterator : IRowsIterator, IRowsIteratorParent, IDisposable
         public void Reset() => Array.Fill(_fetched, false);
     }
 
+    private static int _nextId = 200;
+    private readonly int _id = Interlocked.Increment(ref _nextId);
+
     private readonly IRowsInput _rowsInput;
     private readonly bool _autoOpen;
     private bool _isOpened;
@@ -157,7 +160,7 @@ public class RowsInputIterator : IRowsIterator, IRowsIteratorParent, IDisposable
     /// <inheritdoc />
     public void Explain(IndentedStringBuilder stringBuilder)
     {
-        stringBuilder.AppendLine($"Input {_rowsInput.GetType().Name} (autofetch={AutoFetch})");
+        stringBuilder.AppendLine($"Input {_rowsInput.GetType().Name} (autofetch={AutoFetch}, id={_id})");
         stringBuilder.IncreaseIndent();
         _rowsInput.Explain(stringBuilder);
         stringBuilder.DecreaseIndent();

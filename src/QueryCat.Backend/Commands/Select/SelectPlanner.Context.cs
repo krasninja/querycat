@@ -121,6 +121,7 @@ internal sealed partial class SelectPlanner
 
         var resultRowsIterator = Context_CreateMultipleIterator(finalRowsInputs);
         context.RowsInputIterator = resultRowsIterator as RowsInputIterator;
+        QueryContext_FillQueryContextConditions(context, querySpecificationNode);
         context.SetIterator(resultRowsIterator);
     }
 
@@ -337,9 +338,6 @@ internal sealed partial class SelectPlanner
         }
         return rowsInput;
     }
-
-    private List<IRowsInput> Context_WrapKeysInput(IReadOnlyList<IRowsInput> rowsInputs, SelectQueryConditions conditions)
-        => rowsInputs.Select(ri => Context_WrapKeysInput(ri, conditions)).ToList();
 
     private IRowsInput Context_CreateInputSourceFromTable(SelectCommandContext context,
         SelectTableValuesNode tableValuesNode)
