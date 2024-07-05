@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Support FORMAT block for SELECT * INTO construction.
+- Export to CSV and clipboard in web UI.
 
 ### Changed
 

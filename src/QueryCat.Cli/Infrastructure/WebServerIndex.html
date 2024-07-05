@@ -81,6 +81,9 @@
             <q-btn type="submit" label="Run" size="sm" color="primary" class="q-ma-xs" icon="send"></q-btn>
             <q-btn label="Schema" size="sm" color="secondary" class="q-ma-xs" icon="schema" @click.native="runSchema()"></q-btn>
             <q-btn label="Reset" size="sm" color="secondary" class="q-ma-xs" icon="clear_all" @click.native="reset()"></q-btn>
+            <q-btn label="CSV" size="sm" color="secondary" class="q-ma-xs" icon="archive" @click.native="downloadCsv()"></q-btn>
+            <q-btn label="Clipboard" size="sm" color="secondary" class="q-ma-xs" icon="content_copy"
+                   @click.native="copyTsv()"></q-btn>
           </div>
           <textarea
             v-model="query"
@@ -195,7 +198,7 @@
   <script src="https://cdn.jsdelivr.net/npm/quasar@2.16/dist/quasar.umd.prod.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/axios@1.6/dist/axios.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/vue-router@4/dist/vue-router.global.min.js"></script>
-  <script src="index.js?d=20240508"></script>
+  <script src="index.js?d=20240705"></script>
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {
