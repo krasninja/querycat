@@ -1,5 +1,5 @@
 expected: |
-  1,,,"Sport"
+  1,,,Sport
   ,,"{""town"":""Cheltenham"",""county"":""Gloucestershire"",""country"":""England""}","[""Sport"",""Water polo""]"
 query: |
   declare json string := '
@@ -7,8 +7,8 @@ query: |
     "info": {
       "type": 1,
       "address": {
-        "town": "Cheltenham",
-        "county": "Gloucestershire",
+        "town":    "Cheltenham",
+        "county":  "Gloucestershire",
         "country": "England"
       },
       "tags": ["Sport", "Water polo"]

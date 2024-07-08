@@ -245,44 +245,13 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         {
             return new VariantValue(obj.ToString());
         }
-        if (obj is JsonValue jsonValue)
+        if (obj is JsonValue jsonValue && TryGetValueFromJsonValue(jsonValue, out var jsonResult))
         {
-            var jsonType = jsonValue.GetValue<JsonElement>().ValueKind;
-            if (jsonType == JsonValueKind.Number)
-            {
-                if (jsonValue.TryGetValue(out long jsonLongValue))
-                {
-                    return new VariantValue(jsonLongValue);
-                }
-                if (jsonValue.TryGetValue(out decimal jsonDecimalValue))
-                {
-                    return new VariantValue(jsonDecimalValue);
-                }
-                if (jsonValue.TryGetValue(out double jsonDoubleValue))
-                {
-                    return new VariantValue(jsonDoubleValue);
-                }
-            }
-            if (jsonType == JsonValueKind.String && jsonValue.TryGetValue(out string? jsonStringValue))
-            {
-                return new VariantValue(jsonStringValue);
-            }
-            if (jsonType == JsonValueKind.True)
-            {
-                return TrueValue;
-            }
-            if (jsonType == JsonValueKind.False)
-            {
-                return FalseValue;
-            }
-            if (jsonType == JsonValueKind.Null || jsonType == JsonValueKind.Undefined)
-            {
-                return Null;
-            }
+            return jsonResult;
         }
         if (obj is JsonNode jsonNode)
         {
-            return new VariantValue(jsonNode.ToString());
+            return new VariantValue(jsonNode.ToJsonString());
         }
         if (obj is IBlobData blobData)
         {
@@ -293,6 +262,53 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
             return new VariantValue(guid.ToString());
         }
         return new VariantValue(obj);
+    }
+
+    internal static bool TryGetValueFromJsonValue(JsonValue jsonValue, out VariantValue value)
+    {
+        var jsonType = jsonValue.GetValue<JsonElement>().ValueKind;
+        if (jsonType == JsonValueKind.Number)
+        {
+            if (jsonValue.TryGetValue(out long jsonLongValue))
+            {
+                value = new VariantValue(jsonLongValue);
+                return true;
+            }
+            if (jsonValue.TryGetValue(out decimal jsonDecimalValue))
+            {
+                value = new VariantValue(jsonDecimalValue);
+                return true;
+            }
+            if (jsonValue.TryGetValue(out double jsonDoubleValue))
+            {
+                value = new VariantValue(jsonDoubleValue);
+                return true;
+            }
+        }
+
+        if (jsonType == JsonValueKind.String && jsonValue.TryGetValue(out string? jsonStringValue))
+        {
+            value = new VariantValue(jsonStringValue);
+            return true;
+        }
+        if (jsonType == JsonValueKind.True)
+        {
+            value = TrueValue;
+            return true;
+        }
+        if (jsonType == JsonValueKind.False)
+        {
+            value = FalseValue;
+            return true;
+        }
+        if (jsonType == JsonValueKind.Null || jsonType == JsonValueKind.Undefined)
+        {
+            value = Null;
+            return true;
+        }
+
+        value = Null;
+        return false;
     }
 
     /// <summary>

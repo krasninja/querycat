@@ -1,6 +1,5 @@
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
-using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Json.Path;
@@ -43,7 +42,8 @@ public static class JsonFunctions
         }
 
         // Prepare result.
-        return new VariantValue(GetJsonStringFromJsonNode(result.Value));
+        var jsonString = result.Value.ToJsonString(_jsonSerializerOptions);
+        return new VariantValue(jsonString);
     }
 
     [SafeFunction]
@@ -68,13 +68,13 @@ public static class JsonFunctions
         {
             return VariantValue.Null;
         }
-        if (!(result.Value is JsonValue))
+        if (!(result.Value is JsonValue jsonValue))
         {
             return VariantValue.Null;
         }
 
         // Prepare result.
-        return new VariantValue(GetJsonStringFromJsonNode(result.Value));
+        return VariantValue.TryGetValueFromJsonValue(jsonValue, out var value) ? value : VariantValue.Null;
     }
 
     [SafeFunction]
@@ -103,7 +103,9 @@ public static class JsonFunctions
         {
             return VariantValue.Null;
         }
-        return new VariantValue(GetJsonStringFromJsonNode(node));
+
+        var jsonString = node.ToJsonString(_jsonSerializerOptions);
+        return new VariantValue(jsonString);
     }
 
     [SafeFunction]
@@ -150,6 +152,11 @@ public static class JsonFunctions
         functionsManager.RegisterFunction(JsonExists);
     }
 
+    private static readonly JsonSerializerOptions _jsonSerializerOptions = new()
+    {
+        WriteIndented = false,
+    };
+
     private static JsonNode? GetJsonNodeFromString(string json)
     {
         try
@@ -169,14 +176,5 @@ public static class JsonFunctions
             throw new SemanticException("Incorrect JSON path input.");
         }
         return path;
-    }
-
-    private static string GetJsonStringFromJsonNode(JsonNode jsonNode)
-    {
-        using var ms = new MemoryStream();
-        using var jsonWriter = new Utf8JsonWriter(ms);
-        jsonNode.WriteTo(jsonWriter);
-        jsonWriter.Flush();
-        return new VariantValue(Encoding.UTF8.GetString(ms.ToArray()));
     }
 }
