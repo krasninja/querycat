@@ -12,6 +12,8 @@ namespace QueryCat.Backend.Functions.Aggregate;
 [AggregateFunctionSignature("max(value: integer): integer")]
 [AggregateFunctionSignature("max(value: float): float")]
 [AggregateFunctionSignature("max(value: numeric): numeric")]
+[AggregateFunctionSignature("max(value: timestamp): timestamp")]
+[AggregateFunctionSignature("max(value: interval): interval")]
 // ReSharper disable once ClassNeverInstantiated.Global
 internal sealed class MaxAggregateFunction : IAggregateFunction
 {
@@ -22,11 +24,12 @@ internal sealed class MaxAggregateFunction : IAggregateFunction
     public void Invoke(VariantValue[] state, FunctionCallInfo callInfo)
     {
         var value = callInfo.GetAt(0);
+        var comparer = VariantValue.GetGreaterDelegate(value.GetInternalType(), state[0].GetInternalType());
         if (state[0].IsNull)
         {
             state[0] = value;
         }
-        else if (value > state[0])
+        else if (comparer.Invoke(in value, in state[0]).AsBoolean)
         {
             state[0] = value;
         }

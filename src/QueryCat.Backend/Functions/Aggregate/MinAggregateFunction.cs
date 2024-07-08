@@ -12,6 +12,8 @@ namespace QueryCat.Backend.Functions.Aggregate;
 [AggregateFunctionSignature("min(value: integer): integer")]
 [AggregateFunctionSignature("min(value: float): float")]
 [AggregateFunctionSignature("min(value: numeric): numeric")]
+[AggregateFunctionSignature("min(value: timestamp): timestamp")]
+[AggregateFunctionSignature("min(value: interval): interval")]
 // ReSharper disable once ClassNeverInstantiated.Global
 internal sealed class MinAggregateFunction : IAggregateFunction
 {
@@ -22,11 +24,12 @@ internal sealed class MinAggregateFunction : IAggregateFunction
     public void Invoke(VariantValue[] state, FunctionCallInfo callInfo)
     {
         var value = callInfo.GetAt(0);
+        var comparer = VariantValue.GetLessDelegate(value.GetInternalType(), state[0].GetInternalType());
         if (state[0].IsNull)
         {
             state[0] = value;
         }
-        else if (value < state[0])
+        else if (comparer.Invoke(in value, in state[0]).AsBoolean)
         {
             state[0] = value;
         }
