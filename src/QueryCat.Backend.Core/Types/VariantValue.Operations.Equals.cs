@@ -156,7 +156,7 @@ public partial struct VariantValue
                     }
                     return new VariantValue(left.AsStringUnsafe == right.AsStringUnsafe);
                 },
-                DataType.Boolean or DataType.Integer or DataType.Integer
+                DataType.Boolean or DataType.Integer or DataType.Numeric
                     => (in VariantValue left, in VariantValue right) =>
                     {
                         if (left.IsNull || right.IsNull)

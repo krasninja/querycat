@@ -17,10 +17,10 @@ query: |
   }';
 
   select
-    json_value(json, '$.info.type'), -- 1 -- value
-    json_value(json, '$.info.none'), -- NULL (no property)
-    json_value(json, '$.info.address'), -- NULL (object, not a value)
-    json_value(json, '$.info.tags[0]') -- NULL (object, not a value)
+    json_value(json, '$.info.type')::text, -- 1 -- value
+    json_value(json, '$.info.none')::text, -- NULL (no property)
+    json_value(json, '$.info.address')::text, -- NULL (object, not a value)
+    json_value(json, '$.info.tags[0]')::text -- NULL (object, not a value)
   union all
   select
     json_query(json, '$.info.type'), -- NULL -- value (not an object)

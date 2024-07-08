@@ -48,7 +48,7 @@ public static class JsonFunctions
 
     [SafeFunction]
     [Description("Extracts a scalar value from a JSON string.")]
-    [FunctionSignature("json_value(json: string, query: string): string")]
+    [FunctionSignature("json_value(json: string, query: string): any")]
     public static VariantValue JsonValue(FunctionCallInfo args)
     {
         // Parse input.

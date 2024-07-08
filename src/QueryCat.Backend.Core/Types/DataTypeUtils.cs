@@ -55,6 +55,7 @@ public static class DataTypeUtils
         {
             DataType.Null => "null",
             DataType.Void => "void",
+            DataType.Dynamic => "dynamic",
             DataType.Integer => "i:" + value.AsIntegerUnsafe.ToString(CultureInfo.InvariantCulture),
             DataType.String => "s:" + StringUtils.Quote(value.AsStringUnsafe).ToString(),
             DataType.Boolean => "bl:" + value.AsBooleanUnsafe.ToString(CultureInfo.InvariantCulture),

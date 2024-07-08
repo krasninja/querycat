@@ -838,6 +838,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     {
         DataType.Null => NullValueString,
         DataType.Void => VoidValueString,
+        DataType.Dynamic => VoidValueString,
         DataType.Integer => AsIntegerUnsafe.ToString(Application.Culture),
         DataType.String => AsStringUnsafe,
         DataType.Boolean => AsBooleanUnsafe.ToString(Application.Culture),
@@ -859,6 +860,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     {
         DataType.Null => NullValueString,
         DataType.Void => VoidValueString,
+        DataType.Dynamic => VoidValueString,
         DataType.Integer => AsIntegerUnsafe.ToString(format, Application.Culture),
         DataType.String => AsStringUnsafe,
         DataType.Boolean => AsBooleanUnsafe.ToString(),

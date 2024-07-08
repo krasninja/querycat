@@ -325,8 +325,9 @@ internal class QueryAstVisitor : AstVisitor
 
     private static string GetTypeString(DataType type) => type switch
     {
-        DataType.Void => VariantValue.VoidValueString,
         DataType.Null => VariantValue.NullValueString,
+        DataType.Void => VariantValue.VoidValueString,
+        DataType.Dynamic => VariantValue.VoidValueString,
         DataType.Integer => "INTEGER",
         DataType.String => "STRING",
         DataType.Float => "FLOAT",

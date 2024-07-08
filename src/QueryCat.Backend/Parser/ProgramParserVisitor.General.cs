@@ -417,7 +417,7 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
             QueryCatParser.BOOL => DataType.Boolean,
             QueryCatParser.TIMESTAMP => DataType.Timestamp,
             QueryCatParser.INTERVAL => DataType.Interval,
-            QueryCatParser.ANY => DataType.Void,
+            QueryCatParser.ANY => DataType.Dynamic,
             QueryCatParser.VOID => DataType.Void,
             _ => DataType.Object,
         };
