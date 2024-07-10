@@ -167,6 +167,11 @@ internal sealed partial class WebServer
                 using var jsonWriter = new Utf8JsonWriter(response.OutputStream);
                 WriteJsonMessage(jsonWriter, e.Message);
             }
+            catch (UnauthorizedAccessException e)
+            {
+                _logger.LogError(e, "Unauthorized access.");
+                response.StatusCode = (int)HttpStatusCode.Unauthorized;
+            }
             catch (Exception e)
             {
                 _logger.LogError(e, "Error while processing request.");

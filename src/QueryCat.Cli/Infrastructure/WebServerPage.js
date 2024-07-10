@@ -100,7 +100,7 @@ const queryPage = {
                 return;
             }
             const hiddenElement = document.createElement('a');
-            hiddenElement.href = 'data:text/csv;charset=utf-8,' + encodeURI(csv);
+            hiddenElement.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
             hiddenElement.target = '_blank';
             hiddenElement.download = 'data.csv';
             hiddenElement.click();
@@ -224,7 +224,7 @@ const filesPage = {
     },
     methods: {
         getFullPath: function(name, index) {
-            var fullPath = '/';
+            let fullPath = '/';
             fullPath += name !== '../' ? this.pathElements.slice(1, index).join('/')
                 : this.pathElements.slice(1, -1).join('/') + '/';
             if (name.length > 0 && name !== '../') {
@@ -236,7 +236,7 @@ const filesPage = {
             return fullPath;
         },
         getFullDownloadPath: function(path) {
-            return window.baseUrl + 'api/files?q=' + path;
+            return window.baseUrl + 'api/files?q=' + encodeURIComponent(path);
         },
         getFileExtension: function(filename) {
             return filename.split('.').pop().toLowerCase();
