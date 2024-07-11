@@ -53,6 +53,7 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys
     {
         AsyncUtils.RunSync(ct => _client.RowsSet_ResetAsync(_objectHandle, ct));
         _hasRecords = true;
+        _cache.Clear();
     }
 
     /// <inheritdoc />
