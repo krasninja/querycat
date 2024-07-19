@@ -141,6 +141,21 @@ public static class JsonFunctions
         return new VariantValue(pathResult.Matches.Count > 0);
     }
 
+    [SafeFunction]
+    [Description("Returns the number of elements in the top-level JSON array.")]
+    [FunctionSignature("json_array_length(json: string): integer")]
+    public static VariantValue JsonArrayLength(FunctionCallInfo args)
+    {
+        var json = args.GetAt(0).AsString;
+        var jsonNode = GetJsonNodeFromString(json);
+
+        if (jsonNode is not JsonArray array)
+        {
+            return VariantValue.Null;
+        }
+        return new VariantValue(array.Count);
+    }
+
     [UnconditionalSuppressMessage("AOT", "IL3050:Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.", Justification = "<Pending>")]
     [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "<Pending>")]
     public static void RegisterFunctions(IFunctionsManager functionsManager)
@@ -150,6 +165,7 @@ public static class JsonFunctions
         functionsManager.RegisterFunction(ToJson);
         functionsManager.RegisterFunction(IsJson);
         functionsManager.RegisterFunction(JsonExists);
+        functionsManager.RegisterFunction(JsonArrayLength);
     }
 
     private static readonly JsonSerializerOptions _jsonSerializerOptions = new()

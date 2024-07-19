@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Support FORMAT block for SELECT * INTO construction.
 - Export to CSV and clipboard in web UI.
+- Add function "json_array_length".
 
 ### Changed
 

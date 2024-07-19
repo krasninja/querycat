@@ -1,5 +1,5 @@
 expected: |
-  True,False,{"value":"1"}
+  True,False,{"value":"1"},2
 query: |
   declare json string := '
   {
@@ -10,4 +10,7 @@ query: |
   select
     is_json(json),
     is_json(nojson),
-    to_json((select 1))
+    to_json((select 1)),
+    json_array_length(
+      json_query(json, '$.b')
+    )
