@@ -51,6 +51,7 @@ internal class PluginDebugCommand : BaseQueryCommand
                     SkipPluginsExecution = true,
                 })
                 .WithRegistrations(AdditionalRegistration.Register)
+                .WithRegistrations(Backend.Addons.Functions.JsonFunctions.RegisterFunctions)
                 .Create();
             AddVariables(thread, variables);
             RunQuery(thread, query, files, cts.Token);
