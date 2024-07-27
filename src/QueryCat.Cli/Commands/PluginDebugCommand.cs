@@ -21,7 +21,11 @@ internal class PluginDebugCommand : BaseQueryCommand
     /// <inheritdoc />
     public PluginDebugCommand() : base("debug", "Setup debug server.")
     {
-        this.SetHandler((applicationOptions, query, variables, files) =>
+        var followOption = new Option<bool>("--follow",
+            description: "Output appended data as the input source grows.");
+        this.AddOption(followOption);
+
+        this.SetHandler((applicationOptions, query, variables, files, follow) =>
         {
 #if ENABLE_PLUGINS && PLUGIN_THRIFT
             applicationOptions.InitializeLogger();
@@ -36,6 +40,7 @@ internal class PluginDebugCommand : BaseQueryCommand
 
             options.PluginDirectories.AddRange(applicationOptions.PluginDirectories);
             options.DefaultRowsOutput = new PagingOutput(tableOutput, cancellationTokenSource: cts);
+            options.FollowTimeout = follow ? QueryOptionsBinder.FollowDefaultTimeout : TimeSpan.Zero;
 
             using var thread = new ExecutionThreadBootstrapper(options)
                 .WithConfigStorage(new PersistentInputConfigStorage(
@@ -63,7 +68,8 @@ internal class PluginDebugCommand : BaseQueryCommand
             new ApplicationOptionsBinder(LogLevelOption, PluginDirectoriesOption),
             QueryArgument,
             VariablesOption,
-            FilesOption);
+            FilesOption,
+            followOption);
     }
 }
 #endif

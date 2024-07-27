@@ -38,6 +38,7 @@ public partial class ThriftPluginClient : IDisposable
     public const string PluginDebugServerParameter = "debug-server";
     public const string PluginDebugServerQueryParameter = "debug-server-query";
     public const string PluginDebugServerFileParameter = "debug-server-file";
+    public const string PluginDebugServerFollowParameter = "debug-server-follow";
 
     public const string PluginMainFunctionName = "QueryCatPlugin_Main";
 
@@ -49,6 +50,7 @@ public partial class ThriftPluginClient : IDisposable
     private readonly string _debugServerPath = string.Empty;
     private readonly string _debugServerQueryText = string.Empty;
     private readonly string _debugServerQueryFile = string.Empty;
+    private readonly bool _debugServerFollow;
     private readonly int _parentPid;
     private Process? _qcatProcess;
     private readonly SemaphoreSlim _exitSemaphore = new(0, 1);
@@ -119,6 +121,7 @@ public partial class ThriftPluginClient : IDisposable
             _debugServerPath = args.DebugServerPath;
             _debugServerQueryText = args.DebugServerQueryText;
             _debugServerQueryFile = args.DebugServerQueryFile;
+            _debugServerFollow = args.DebugServerFollow;
         }
 
         // Bootstrap.
@@ -193,6 +196,9 @@ public partial class ThriftPluginClient : IDisposable
                     break;
                 case PluginDebugServerFileParameter:
                     appArgs.DebugServerQueryFile = value;
+                    break;
+                case PluginDebugServerFollowParameter:
+                    appArgs.DebugServerFollow = bool.Parse(value);
                     break;
                 default:
                     continue;
@@ -372,7 +378,12 @@ public partial class ThriftPluginClient : IDisposable
         {
             _qcatProcess.StartInfo.Arguments += " -f \"" + _debugServerQueryFile + "\" ";
         }
+        if (_debugServerFollow)
+        {
+            _qcatProcess.StartInfo.Arguments += " --follow ";
+        }
         _qcatProcess.StartInfo.Arguments += $"--log-level=trace --plugin-dirs=\"{modulePath}\"";
+        _logger.LogDebug("qcat host arguments '{Arguments}'.", _qcatProcess.StartInfo.Arguments);
         _qcatProcess.OutputDataReceived += (_, args) => Console.Out.WriteLine($"> {args.Data}");
         _qcatProcess.ErrorDataReceived += (_, args) => Console.Error.WriteLine($"> {args.Data}");
         _qcatProcess.Start();

@@ -7,7 +7,7 @@ namespace QueryCat.Cli.Commands.Options;
 
 internal class QueryOptionsBinder : BinderBase<QueryOptions>
 {
-    private static readonly TimeSpan _followDefaultTimeout = TimeSpan.FromSeconds(2);
+    internal static readonly TimeSpan FollowDefaultTimeout = TimeSpan.FromSeconds(2);
 
     private readonly Option<int> _maxErrorsOption;
     private readonly Option<bool> _statisticOption;
@@ -83,7 +83,7 @@ internal class QueryOptionsBinder : BinderBase<QueryOptions>
             NoHeader = bindingContext.ParseResult.GetValueForOption(_noHeaderOption),
             FloatNumberFormat = bindingContext.ParseResult.GetValueForOption(_floatNumberOption)
                 ?? VariantValue.FloatNumberFormat,
-            FollowTimeout = bindingContext.ParseResult.GetValueForOption(_followOption) ? _followDefaultTimeout : TimeSpan.Zero,
+            FollowTimeout = bindingContext.ParseResult.GetValueForOption(_followOption) ? FollowDefaultTimeout : TimeSpan.Zero,
             TailCount = bindingContext.ParseResult.GetValueForOption(_tailOption),
             QueryTimeout = TimeSpan.FromMilliseconds(bindingContext.ParseResult.GetValueForOption(_timeoutOption)),
             SafeMode = bindingContext.ParseResult.GetValueForOption(_safeModeOption),
