@@ -67,11 +67,16 @@ internal sealed partial class SelectPlanner
         var makeDelegateVisitor = new SelectCreateDelegateVisitor(ExecutionThread, commandContext);
 
         // Process expression <id> <op> <expr> or <expr> <op> <id>.
-        bool HandleBinaryOperation(IAstNode node, AstTraversal traversal)
+        bool HandleBinaryOperation(IAstNode node, AstTraversal traversal, bool reverse)
         {
             // Get the binary comparision node.
             if (node is not BinaryOperationExpressionNode binaryOperationExpressionNode
                 || !VariantValue.ComparisionOperations.Contains(binaryOperationExpressionNode.Operation))
+            {
+                return false;
+            }
+            // Try reverse order.
+            if (reverse && !binaryOperationExpressionNode.TryReverse())
             {
                 return false;
             }
@@ -169,7 +174,11 @@ internal sealed partial class SelectPlanner
         callbackVisitor.AstTraversal.TypesToIgnore.Add(typeof(SelectQuerySpecificationNode));
         callbackVisitor.Callback = (node, traversal) =>
         {
-            if (HandleBinaryOperation(node, traversal))
+            if (HandleBinaryOperation(node, traversal, reverse: false))
+            {
+                return;
+            }
+            if (HandleBinaryOperation(node, traversal, reverse: true))
             {
                 return;
             }

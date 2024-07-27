@@ -1,0 +1,8 @@
+expected: |
+  191.06
+  42.64
+query: |
+  with
+    cte as (select 'INTC' as 'ticket')
+  select its.usd from it_stocks() its
+  inner join cte on its.id = cte.ticket;
