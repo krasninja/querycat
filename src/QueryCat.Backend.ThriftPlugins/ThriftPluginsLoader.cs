@@ -501,7 +501,7 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         }
         if (result.Object.Type == ObjectType.ROWS_INPUT || result.Object.Type == ObjectType.ROWS_ITERATOR)
         {
-            return new ThriftRemoteRowsIterator(context.Client, result.Object.Handle);
+            return new ThriftRemoteRowsIterator(context.Client, result.Object.Handle, result.Object.Name);
         }
         if (result.Object.Type == ObjectType.JSON && !string.IsNullOrEmpty(result.Json))
         {

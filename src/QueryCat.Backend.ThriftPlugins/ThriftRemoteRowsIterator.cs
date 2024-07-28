@@ -13,22 +13,23 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys
 
     private readonly Plugins.Sdk.Plugin.Client _client;
     private readonly int _objectHandle;
+    private readonly string _id;
     private readonly DynamicBuffer<VariantValue> _cache = new(chunkSize: 64);
-    private bool _hasRecords = true;
 
     /// <inheritdoc />
-    public string[] UniqueKey { get; private set; } = Array.Empty<string>();
+    public string[] UniqueKey { get; private set; } = [];
 
     /// <inheritdoc />
-    public Column[] Columns { get; private set; } = Array.Empty<Column>();
+    public Column[] Columns { get; private set; } = [];
 
     /// <inheritdoc />
     public QueryContext QueryContext { get; set; } = NullQueryContext.Instance;
 
-    public ThriftRemoteRowsIterator(Plugins.Sdk.Plugin.Client client, int objectHandle)
+    public ThriftRemoteRowsIterator(Plugins.Sdk.Plugin.Client client, int objectHandle, string? id = null)
     {
         _client = client;
         _objectHandle = objectHandle;
+        _id = id ?? string.Empty;
     }
 
     /// <inheritdoc />
@@ -52,7 +53,6 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys
     public void Reset()
     {
         AsyncUtils.RunSync(ct => _client.RowsSet_ResetAsync(_objectHandle, ct));
-        _hasRecords = true;
         _cache.Clear();
     }
 
@@ -81,21 +81,10 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys
             }
         }
 
-        if (!_hasRecords)
-        {
-            return false;
-        }
-
         var result = AsyncUtils.RunSync(ct => _client.RowsSet_GetRowsAsync(_objectHandle, LoadCount * Columns.Length, ct));
         if (result == null || result.Values == null || result.Values.Count == 0)
         {
-            _hasRecords = false;
             return false;
-        }
-
-        if (!result.HasMore)
-        {
-            _hasRecords = false;
         }
 
         var values = result.Values.Select(SdkConvert.Convert).ToArray();
@@ -129,6 +118,6 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys
     /// <inheritdoc />
     public void Explain(IndentedStringBuilder stringBuilder)
     {
-        stringBuilder.AppendLine("Remote");
+        stringBuilder.AppendLine($"Remote (handle={_objectHandle}, id={_id})");
     }
 }
