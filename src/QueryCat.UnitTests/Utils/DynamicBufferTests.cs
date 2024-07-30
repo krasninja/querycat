@@ -414,6 +414,26 @@ public class DynamicBufferTests
     }
 
     [Fact]
+    public void Write_LargeDataAfterAdvanceToEnd_ShouldWrite()
+    {
+        // Arrange.
+        var dynamicBuffer = new DynamicBuffer<byte>();
+        var data = new byte[1609];
+        Array.Fill<byte>(data, 80);
+
+        // Act.
+        dynamicBuffer.AdvanceToEnd();
+        dynamicBuffer.Write(data);
+        dynamicBuffer.AdvanceToEnd();
+        dynamicBuffer.Write(data);
+        dynamicBuffer.AdvanceToEnd();
+        dynamicBuffer.Write(data);
+
+        // Assert.
+        Assert.Equal(1609, dynamicBuffer.Size);
+    }
+
+    [Fact]
     public void Allocate_MultipleCopy_ShouldConcatenate()
     {
         // Arrange.
