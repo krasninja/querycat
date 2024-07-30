@@ -131,6 +131,12 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         _valueUnion = default;
     }
 
+    public VariantValue(char value)
+    {
+        _object = value.ToString();
+        _valueUnion = default;
+    }
+
     public VariantValue(ReadOnlySpan<char> value)
     {
         _object = value.ToString();
