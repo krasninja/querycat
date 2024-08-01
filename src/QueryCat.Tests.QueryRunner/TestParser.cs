@@ -6,13 +6,13 @@ namespace QueryCat.Tests.QueryRunner;
 /// <summary>
 /// Test parser.
 /// </summary>
-public class TestParser
+public sealed class TestParser
 {
     private const string TestsDirectory = "Tests";
 
     private readonly string _fileName;
 
-    private static readonly IDeserializer Deserializer = new DeserializerBuilder()
+    private static readonly IDeserializer _deserializer = new DeserializerBuilder()
         .WithNamingConvention(UnderscoredNamingConvention.Instance)
         .Build();
 
@@ -24,7 +24,7 @@ public class TestParser
     public TestData Parse()
     {
         var testsDirectory = FindTestsDirectory();
-        var testData = Deserializer.Deserialize<TestData>(
+        var testData = _deserializer.Deserialize<TestData>(
             File.OpenText(Path.Combine(testsDirectory, AddYamlExtension(_fileName)))
         );
         testData.Expected = (testData.Expected ?? string.Empty).Trim();

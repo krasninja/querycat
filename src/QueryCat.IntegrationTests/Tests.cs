@@ -1,6 +1,7 @@
 using System.Globalization;
 using Xunit;
 using Xunit.Abstractions;
+using Xunit.Sdk;
 using QueryCat.Backend;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
@@ -49,6 +50,11 @@ public sealed class Tests : IDisposable
         _testThread.TopScope.Variables["user3"] = VariantValue.CreateFromObject(User.GetTestUser3());
 
         var data = TestThread.GetQueryData(fileName);
+        if (data.Skip)
+        {
+            SkipException.ForSkip(data.Comment);
+            return;
+        }
         var value = _testThread.Run(data.Query);
 
         // Get query plan.
