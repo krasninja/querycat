@@ -648,7 +648,7 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
         // Fast path.
         if (_buffersList.Head != null && endIndex - startIndex >= bufferSize)
         {
-            var span = _buffersList.Head.Buffer.AsSpan(0, bufferSize);
+            var span = _buffersList.Head.Buffer.AsSpan(startIndex, bufferSize);
             span.CopyTo(buffer);
             totalRead = span.Length;
         }
@@ -699,7 +699,7 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
         // Fast path.
         if (_buffersList.Head != null && endIndex - startIndex >= count)
         {
-            buffer = _buffersList.Head.Buffer.AsSpan(0, count);
+            buffer = _buffersList.Head.Buffer.AsSpan(startIndex, count);
         }
         // Slow path.
         else

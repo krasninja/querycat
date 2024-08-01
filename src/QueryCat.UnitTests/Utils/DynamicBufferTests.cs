@@ -327,6 +327,23 @@ public class DynamicBufferTests
     }
 
     [Fact]
+    public void TryCopyExact_AfterAdvance_ShouldCopeAfter()
+    {
+        // Arrange.
+        var dynamicBuffer = new DynamicBuffer<char>(chunkSize: 25);
+        dynamicBuffer.Write("123456789");
+        dynamicBuffer.Advance(5);
+
+        // Act.
+        var outputBuffer = new char[3];
+        var success = dynamicBuffer.TryCopyExact(outputBuffer.AsSpan(), advance: false);
+
+        // Assert.
+        Assert.True(success);
+        Assert.Equal("678", new string(outputBuffer));
+    }
+
+    [Fact]
     public void TryReadExact_BufferWithData_ShouldRead()
     {
         // Arrange.
