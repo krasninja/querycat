@@ -30,7 +30,7 @@ public class Program
             client.FunctionsManager.RegisterFunction(TestSimpleNonStandard.TestSimpleNonStandardFunction);
             client.FunctionsManager.RegisterFunction(TestSimple.TestSimpleFunction);
             client.FunctionsManager.RegisterFunction(TestBlob.TestBlobFunction);
-            await client.StartAsync(ct);
+            await client.StartAsync(cancellationToken: ct);
             await client.WaitForServerExitAsync(ct);
         });
     }

@@ -20,6 +20,10 @@ public sealed class BuildWindowsTask : AsyncFrostingTask<BuildContext>
         {
             Runtime = DotNetConstants.RidWindowsX64,
         });
+        context.DotNetPublish(context.PluginsProxyProjectDirectory, new PublishGeneralSettings(context, publishAot: false)
+        {
+            Runtime = DotNetConstants.RidWindowsX64,
+        });
         context.DotNetPublish(context.TimeItAppProjectDirectory, new PublishGeneralSettings(context, publishAot)
         {
             Runtime = DotNetConstants.RidWindowsX64,

@@ -74,7 +74,7 @@ public abstract class PluginsLoader
 
         void AddOrReplace(Dictionary<string, PluginInfoWithPath> dict, PluginInfoWithPath plugin)
         {
-            // If there is duplicate we try to loading the latest version only.
+            // If there is duplicate we try to load the latest version only.
             if (dict.TryGetValue(plugin.PluginName, out var existing))
             {
                 if (plugin.PluginVersion > existing.PluginInfo.Version)
@@ -128,6 +128,7 @@ public abstract class PluginsLoader
         return fileName.StartsWith("QueryCat.Plugins.Client")
             || fileName.StartsWith("QueryCat.Plugins.Sdk")
             || fileName.StartsWith("QueryCat.Backend")
-            || fileName.StartsWith("QueryCat.Backend.AssemblyPlugins");
+            || fileName.StartsWith("QueryCat.Backend.AssemblyPlugins")
+            || fileName.StartsWith("qcat-plugins-proxy");
     }
 }

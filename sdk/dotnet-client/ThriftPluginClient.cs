@@ -75,6 +75,11 @@ public partial class ThriftPluginClient : IDisposable
     public IFunctionsManager FunctionsManager => _functionsManager;
 
     /// <summary>
+    /// Registration result. It is filled after connection to QueryCat host.
+    /// </summary>
+    public RegistrationResult? RegistrationResult { get; private set; }
+
+    /// <summary>
     /// Do not use application logger for Thrift internal logs.
     /// </summary>
     internal bool IgnoreThriftLogs { get; set; }
@@ -241,8 +246,9 @@ public partial class ThriftPluginClient : IDisposable
     /// <summary>
     /// Start client server and register the plugin.
     /// </summary>
+    /// <param name="pluginData">Plugin information. If null - the info will be retrieved from current assembly.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    public async Task StartAsync(CancellationToken cancellationToken = default)
+    public async Task StartAsync(PluginData? pluginData = null, CancellationToken cancellationToken = default)
     {
         if (!string.IsNullOrEmpty(_debugServerPath))
         {
@@ -263,20 +269,19 @@ public partial class ThriftPluginClient : IDisposable
         StartServer();
 
         var assemblyName = Assembly.GetEntryAssembly()?.GetName();
-        var version = assemblyName?.Version;
-        var pluginName = assemblyName?.Name ?? string.Empty;
-
         var functions = _functionsManager.GetPluginFunctions().Select(f =>
-            new Function(f.Signature, f.Description, false));
-        await _client.RegisterPluginAsync(
+            new Function(f.Signature, f.Description, false)).ToList();
+        pluginData ??= new PluginData
+        {
+            Name = assemblyName?.Name ?? string.Empty,
+            Version = assemblyName?.Version?.ToString() ?? "0.0.0",
+        };
+        pluginData.Functions = functions;
+
+        RegistrationResult = await _client.RegisterPluginAsync(
             _authToken,
             $"{PluginTransportNamedPipes}://localhost/{_clientServerNamedPipe}",
-            new PluginData
-            {
-                Functions = functions.ToList(),
-                Name = pluginName,
-                Version = version?.ToString() ?? "0.0.0",
-            },
+            pluginData,
             cancellationToken);
         IsActive = true;
 
