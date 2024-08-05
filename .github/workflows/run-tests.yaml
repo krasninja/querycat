@@ -1,0 +1,21 @@
+name: Run Tests
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8'
+      - name: Install GitVersion
+        run: dotnet tool install --global GitVersion.Tool --version 6.*
+      - name: Run build Cake script
+        run: ${PWD}/build.sh -t run-tests

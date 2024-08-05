@@ -5,7 +5,7 @@ using Cake.Frosting;
 namespace QueryCat.Build.Tasks;
 
 [TaskName("Clean")]
-public class CleanTask : AsyncFrostingTask<BuildContext>
+public sealed class CleanTask : AsyncFrostingTask<BuildContext>
 {
     /// <inheritdoc />
     public override Task RunAsync(BuildContext context)
@@ -39,6 +39,6 @@ public class CleanTask : AsyncFrostingTask<BuildContext>
         });
 
         // TODO:
-        return Task.CompletedTask;
+        return base.RunAsync(context);
     }
 }

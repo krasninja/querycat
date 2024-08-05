@@ -33,6 +33,6 @@ public sealed class BuildLinuxTask : AsyncFrostingTask<BuildContext>
             Runtime = DotNetConstants.RidLinuxX64,
         });
 
-        return Task.CompletedTask;
+        return base.RunAsync(context);
     }
 }

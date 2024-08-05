@@ -1,0 +1,26 @@
+name: Publish macOS x64 Version
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+jobs:
+  publish:
+    runs-on: macos-14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8'
+      - name: Install GitVersion
+        run: dotnet tool install --global GitVersion.Tool --version 6.*
+      - name: Run build Cake script
+        run: ./build.sh -t publish-all --verbosity Diagnostic -- --platform mac
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: qcat-macos-arm64
+          path: output/qcat-*.tar.gz

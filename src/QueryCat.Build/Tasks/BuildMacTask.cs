@@ -28,6 +28,7 @@ public sealed class BuildMacTask : AsyncFrostingTask<BuildContext>
         {
             Runtime = DotNetConstants.RidMacOSXArm64,
         });
-        return Task.CompletedTask;
+
+        return base.RunAsync(context);
     }
 }

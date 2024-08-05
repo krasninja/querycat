@@ -29,6 +29,6 @@ public sealed class BuildWindowsTask : AsyncFrostingTask<BuildContext>
             Runtime = DotNetConstants.RidWindowsX64,
         });
 
-        return Task.CompletedTask;
+        return base.RunAsync(context);
     }
 }

@@ -8,7 +8,7 @@ namespace QueryCat.Build.Tasks;
 
 [TaskName("Publish-All")]
 [TaskDescription("Publish application for all platforms")]
-public class PublishAll : AsyncFrostingTask<BuildContext>
+public sealed class PublishAll : AsyncFrostingTask<BuildContext>
 {
     private const int ZipLevel = 9;
     private const string LicenseFileName = "LICENSE.txt";
@@ -34,7 +34,7 @@ public class PublishAll : AsyncFrostingTask<BuildContext>
             PublishMacOs(context, root);
         }
 
-        return Task.CompletedTask;
+        return base.RunAsync(context);
     }
 
     private static void PublishLinux(BuildContext context, string root)
@@ -91,7 +91,7 @@ public class PublishAll : AsyncFrostingTask<BuildContext>
         });
         context.GZipCompress(
             root,
-            Path.Combine(context.OutputDirectory, $"qcat-plugins-proxy-{context.Version}-{DotNetConstants.RidLinuxX64}.tar.gz"),
+            Path.Combine(context.OutputDirectory, $"qcat-plugins-proxy-{context.Version}-{DotNetConstants.RidLinuxArm64}.tar.gz"),
             new[]
             {
                 Path.Combine(context.OutputDirectory, "qcat-plugins-proxy"),

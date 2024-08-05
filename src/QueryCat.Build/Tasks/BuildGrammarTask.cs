@@ -5,7 +5,7 @@ namespace QueryCat.Build.Tasks;
 
 [TaskName("Build-Grammar")]
 [TaskDescription("Generate C# files for ANTLR4 grammar")]
-public class BuildGrammarTask : AsyncFrostingTask<BuildContext>
+public sealed class BuildGrammarTask : AsyncFrostingTask<BuildContext>
 {
     /// <inheritdoc />
     public override Task RunAsync(BuildContext context)
@@ -20,6 +20,6 @@ public class BuildGrammarTask : AsyncFrostingTask<BuildContext>
             "../QueryCat.Backend/Parser/QueryCatParser.g4",
         };
         context.StartProcess("antlr4", string.Join(' ', args));
-        return Task.CompletedTask;
+        return base.RunAsync(context);
     }
 }

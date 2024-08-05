@@ -28,6 +28,6 @@ public sealed class BuildPackageTask : AsyncFrostingTask<BuildContext>
             },
         });
 
-        return Task.CompletedTask;
+        return base.RunAsync(context);
     }
 }

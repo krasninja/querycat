@@ -1,0 +1,39 @@
+name: Publish Linux x64 Version
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8'
+      - name: Install GitVersion
+        run: dotnet tool install --global GitVersion.Tool --version 6.*
+      - name: Install ARM64 Dependencies
+        # https://learn.microsoft.com/en-us/dotnet/core/deploying/native-aot/cross-compile#linux
+        run: |
+          sudo dpkg --add-architecture arm64
+          sudo bash -c 'cat > /etc/apt/sources.list.d/arm64.list <<EOF
+          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ jammy main restricted
+          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ jammy-updates main restricted
+          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ jammy-backports main restricted universe multiverse
+          EOF'
+          sudo sed -i -e 's/deb http/deb [arch=amd64] http/g' /etc/apt/sources.list
+          sudo sed -i -e 's/deb mirror/deb [arch=amd64] mirror/g' /etc/apt/sources.list
+          sudo apt update
+          sudo apt install -y clang llvm binutils-aarch64-linux-gnu gcc-aarch64-linux-gnu zlib1g-dev:arm64
+      - name: Run build Cake script
+        run: ${PWD}/build.sh -t publish-all -- --platform linux
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: qcat-linux-x64-arm64
+          path: output/qcat-*.tar.gz

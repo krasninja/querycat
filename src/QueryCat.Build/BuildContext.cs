@@ -23,12 +23,17 @@ public class BuildContext : FrostingContext
 
     public ConvertableDirectoryPath TestPluginAppProjectDirectory => this.Directory("../QueryCat.Plugins.Sample");
 
+    public ConvertableDirectoryPath IntegrationTestsProjectDirectory => this.Directory("../QueryCat.IntegrationTests");
+
+    public ConvertableDirectoryPath UnitTestsProjectDirectory => this.Directory("../QueryCat.UnitTests");
+
     public ConvertableDirectoryPath OutputDirectory => this.Directory("../../output");
 
     public string Version { get; }
 
     public BuildContext(ICakeContext context) : base(context)
     {
+        context.EnsureDirectoryExists(OutputDirectory);
         Delay = context.Arguments.HasArgument("delay");
         Version = context.Arguments.GetArgument("version") ?? GetGitVersion();
     }
