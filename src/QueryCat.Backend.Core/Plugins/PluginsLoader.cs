@@ -24,7 +24,7 @@ public abstract class PluginsLoader
     /// </summary>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Awaitable task.</returns>
-    public abstract Task LoadAsync(CancellationToken cancellationToken = default);
+    public abstract Task<string[]> LoadAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Determines if the file can be used for the specified plugin loader.

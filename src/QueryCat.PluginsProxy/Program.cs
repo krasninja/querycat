@@ -42,8 +42,8 @@ public class Program
         var assemblyName = assembly.GetName();
         return new PluginData
         {
-            Name = assemblyName?.Name ?? string.Empty,
-            Version = assemblyName?.Version?.ToString() ?? "0.0.0",
+            Name = assemblyName.Name ?? string.Empty,
+            Version = assemblyName.Version?.ToString() ?? "0.0.0",
         };
     }
 

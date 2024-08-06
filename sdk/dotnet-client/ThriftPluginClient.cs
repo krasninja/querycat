@@ -146,6 +146,7 @@ public partial class ThriftPluginClient : IDisposable
 
     private static TTransport CreateTransport(string endpoint)
     {
+        // Endpoint format example: net.pipe://localhost/qcat-123.
         var serverPipeUri = new Uri(endpoint);
         switch (serverPipeUri.Scheme.ToLower())
         {

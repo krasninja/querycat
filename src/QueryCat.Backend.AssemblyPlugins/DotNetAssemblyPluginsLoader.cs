@@ -22,7 +22,7 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader
 
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(DotNetAssemblyPluginsLoader));
 
-    public IEnumerable<Assembly> LoadedAssemblies => _loadedAssembliesCache.Values;
+    public IEnumerable<Assembly> LoadedAssemblies => _loadedAssemblies;
 
     public DotNetAssemblyPluginsLoader(IFunctionsManager functionsManager, IEnumerable<string> pluginDirectories) : base(pluginDirectories)
     {
@@ -52,7 +52,7 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader
     }
 
     /// <inheritdoc />
-    public override Task LoadAsync(CancellationToken cancellationToken = default)
+    public override Task<string[]> LoadAsync(CancellationToken cancellationToken = default)
     {
         foreach (var pluginFile in GetPluginFiles())
         {
@@ -77,7 +77,11 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader
 
         RegisterFunctions(_functionsManager);
 
-        return Task.CompletedTask;
+        var loadedPlugins = _loadedAssemblies
+            .Select(a => a.FullName ?? string.Empty)
+            .Where(a => !string.IsNullOrEmpty(a))
+            .ToArray();
+        return Task.FromResult(loadedPlugins);
     }
 
     /// <inheritdoc />

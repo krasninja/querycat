@@ -105,13 +105,18 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
     }
 
     /// <inheritdoc />
-    public override Task LoadAsync(CancellationToken cancellationToken = default)
+    public override Task<string[]> LoadAsync(CancellationToken cancellationToken = default)
     {
+        var loadedPlugins = new List<string>();
+
         foreach (var pluginFile in GetPluginFiles())
         {
             if (IsMatchPlatform(pluginFile))
             {
-                LoadPluginSafe(pluginFile, cancellationToken);
+                if (LoadPluginSafe(pluginFile, cancellationToken))
+                {
+                    loadedPlugins.Add(pluginFile);
+                }
             }
         }
 
@@ -122,7 +127,7 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
             _server.WaitForPluginRegistration(ForceAuthToken, cancellationToken);
         }
 
-        return Task.CompletedTask;
+        return Task.FromResult(loadedPlugins.ToArray());
     }
 
     /// <inheritdoc />
@@ -217,17 +222,18 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         return plugin.Name;
     }
 
-    private void LoadPluginSafe(string file, CancellationToken cancellationToken)
+    private bool LoadPluginSafe(string file, CancellationToken cancellationToken)
     {
         try
         {
             _logger.LogDebug("Load plugin file '{PluginFile}'.", file);
             LoadPluginLazy(file, cancellationToken);
+            return true;
         }
         catch (Exception e)
         {
             _logger.LogWarning(e, "Cannot load plugin file '{PluginFile}'.", file);
-            throw;
+            return false;
         }
     }
 
@@ -296,7 +302,8 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         string authToken,
         CancellationToken cancellationToken = default)
     {
-        if (!File.Exists(ProxyExecutable))
+        var proxyExecutable = PathUtils.ResolveExecutableFullPath(ProxyExecutable);
+        if (string.IsNullOrEmpty(proxyExecutable))
         {
             throw new PluginException($"Cannot load NuGet package plugin '{file}' without proxy.");
         }
@@ -364,12 +371,13 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         }
 
         // Plugin has been loaded.
-        var pluginName = GetPluginName(file);
+        pluginFile ??= file;
+        var pluginName = GetPluginName(pluginFile);
         _loadedPlugins.Add(pluginName);
 
         // If we load .exe or .so plugin, we don't need pluginFile arg.
         // It is needed only if we load plugin using the proxy.
-        return GetContext(pluginFile ?? file);
+        return GetContext(pluginFile);
     }
 
     private ThriftPluginsServer.PluginContext LoadPluginLibrary(
