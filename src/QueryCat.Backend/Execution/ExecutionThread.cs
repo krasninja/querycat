@@ -145,11 +145,11 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
             return VariantValue.Null;
         }
 
-        var programNode = _astBuilder.BuildProgramFromString(query);
-
         // Run with lock and timer.
         lock (_objLock)
         {
+            var programNode = _astBuilder.BuildProgramFromString(query);
+
             // Bootstrap.
             _deepLevel++;
             if (_deepLevel == 1)

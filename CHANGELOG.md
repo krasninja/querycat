@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Unquote return of JSON functions "json_query" and "json_value".
 - Fix GROUP BY reset bug.
+- Possible concurrency problem in Run method.
 
 ## [0.6.7] - 2024-06-04
 
