@@ -320,10 +320,12 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         string file,
         string authToken,
         string[] additionalArguments,
-        string? pluginFile = null,
+        string? realPluginFile = null,
         CancellationToken cancellationToken = default)
     {
         string FormatParameter(string key, string value) => $"--{key}={value}";
+
+        realPluginFile ??= file;
 
         // Start plugin process.
         Process? process = null;
@@ -352,8 +354,8 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
             {
                 process.StartInfo.ArgumentList.Add(arg);
             }
-            process.OutputDataReceived += (_, args) => _logger.LogTrace($"[{fileName}]: {args.Data}");
-            process.ErrorDataReceived += (_, args) => _logger.LogError($"[{fileName}]: {args.Data}");
+            process.OutputDataReceived += (_, args) => _logger.LogTrace($"[{realPluginFile}]: {args.Data}");
+            process.ErrorDataReceived += (_, args) => _logger.LogError($"[{realPluginFile}]: {args.Data}");
             process.Start();
             process.BeginOutputReadLine();
             process.BeginErrorReadLine();
@@ -371,13 +373,12 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         }
 
         // Plugin has been loaded.
-        pluginFile ??= file;
-        var pluginName = GetPluginName(pluginFile);
+        var pluginName = GetPluginName(realPluginFile);
         _loadedPlugins.Add(pluginName);
 
         // If we load .exe or .so plugin, we don't need pluginFile arg.
         // It is needed only if we load plugin using the proxy.
-        return GetContext(pluginFile);
+        return GetContext(realPluginFile);
     }
 
     private ThriftPluginsServer.PluginContext LoadPluginLibrary(
