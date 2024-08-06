@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.6.9] - 2024-08-06
+
 ### Added
 
 - Support FORMAT block for SELECT * INTO construction.
@@ -16,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Update JSON Path package.
-- Extend aggregate functions types support.
+- Extent aggregate functions type's support.
 
 ### Fixed
 
