@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Support FORMAT block for SELECT * INTO construction.
+- Export to CSV and clipboard in web UI.
+- Add function "json_array_length".
+
+### Changed
+
+- Update JSON Path package.
+- Extend aggregate functions types support.
+
+### Fixed
+
+- Unquote return of JSON functions "json_query" and "json_value".
+- Fix GROUP BY reset bug.
+- Possible concurrency problem in Run method.
+
+## [0.6.7] - 2024-06-04
+
+### Added
+
 - Allow to evaluate filter on object expressions lists "users[? @.Name='John' ].Phone".
 - Try to run "rc.sql" from the working directory.
 - Add "except" keyword for "select" command.

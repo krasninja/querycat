@@ -335,25 +335,30 @@ internal sealed partial class SelectPlanner
             queryContext);
 
         // If we have INTO clause defined we execute iterator and write rows into
-        // INTO function rows output. Otherwise we just return IRowsIterator as is and
+        // "INTO" function rows output. Otherwise, we just return IRowsIterator as is and
         // executor writes it into default output.
         if (outputIterator.HasOutputDefined)
         {
             context.HasOutput = true;
-            var resultIterator = !hasVaryingTarget && ExecutionThread.Options.AnalyzeRowsCount > 0
-                ? new AdjustColumnsLengthsIterator(outputIterator, ExecutionThread.Options.AnalyzeRowsCount)
-                : (IRowsIterator)outputIterator;
-            var actionIterator = new ActionRowsIterator(resultIterator, "write to output")
+            if (!hasVaryingTarget && ExecutionThread.Options.AnalyzeRowsCount > 0)
             {
-                BeforeMoveNext = _ =>
+                context.SetIterator(
+                    new AdjustColumnsLengthsIterator(outputIterator, ExecutionThread.Options.AnalyzeRowsCount));
+            }
+            else
+            {
+                var actionIterator = new ActionRowsIterator(outputIterator, "write to output")
                 {
-                    while (outputIterator.MoveNext())
+                    BeforeMoveNext = _ =>
                     {
-                        outputIterator.CurrentOutput.WriteValues(resultIterator.Current.Values);
-                    }
-                },
-            };
-            context.SetIterator(actionIterator);
+                        while (outputIterator.MoveNext())
+                        {
+                            outputIterator.CurrentOutput.WriteValues(outputIterator.Current.Values);
+                        }
+                    },
+                };
+                context.SetIterator(actionIterator);
+            }
         }
     }
 

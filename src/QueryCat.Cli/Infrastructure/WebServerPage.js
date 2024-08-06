@@ -59,6 +59,58 @@ const queryPage = {
             this.filter = '';
             this.columns = [];
             this.schema = [];
+        },
+        exportCsv: function(separator) {
+            const self = this;
+            separator = separator || ',';
+            function formatCsvValue(value) {
+                if (!value) {
+                    return '';
+                }
+                return '"' + value.toString().replace(/"/g, '""') + '"';
+            }
+            const csvLines = [];
+            const csvLine= [];
+
+            // https://quasar.dev/vue-components/table/#exporting-data.
+            // Header.
+            self.columns.forEach(function(col) {
+                return csvLine.push(formatCsvValue(col.label));
+            });
+            csvLines.push(csvLine.join(separator));
+            csvLine.length = 0;
+
+            // Lines.
+            self.rows.forEach(function(row) {
+                self.columns.forEach(function(col) {
+                    const value = typeof col.field === 'function'
+                        ? col.field(row)
+                        : row[col.field === void 0 ? col.name : col.field];
+                    return csvLine.push(formatCsvValue(value));
+                });
+                csvLines.push(csvLine.join(separator));
+                csvLine.length = 0;
+            });
+
+            return csvLines.join('\r\n');
+        },
+        downloadCsv: function() {
+            const csv = this.exportCsv();
+            if (!csv) {
+                return;
+            }
+            const hiddenElement = document.createElement('a');
+            hiddenElement.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+            hiddenElement.target = '_blank';
+            hiddenElement.download = 'data.csv';
+            hiddenElement.click();
+        },
+        copyTsv: function() {
+            const tsv = this.exportCsv('\t');
+            if (!tsv) {
+                return;
+            }
+            navigator.clipboard.writeText(tsv);
         }
     },
     setup: function() {
@@ -172,7 +224,7 @@ const filesPage = {
     },
     methods: {
         getFullPath: function(name, index) {
-            var fullPath = '/';
+            let fullPath = '/';
             fullPath += name !== '../' ? this.pathElements.slice(1, index).join('/')
                 : this.pathElements.slice(1, -1).join('/') + '/';
             if (name.length > 0 && name !== '../') {
@@ -184,7 +236,7 @@ const filesPage = {
             return fullPath;
         },
         getFullDownloadPath: function(path) {
-            return window.baseUrl + 'api/files?q=' + path;
+            return window.baseUrl + 'api/files?q=' + encodeURIComponent(path);
         },
         getFileExtension: function(filename) {
             return filename.split('.').pop().toLowerCase();
@@ -284,7 +336,7 @@ const filesPage = {
             to = to ?? '';
             const elements = ['/'].concat(to.split('/'));
             // Convert /home/user/temp/.. to /home/user/.
-            for (var i = 1; i < elements.length; i++) {
+            for (let i = 1; i < elements.length; i++) {
                 if (elements[i] === '..') {
                     elements[i] = '';
                     elements[i - 1] = '';

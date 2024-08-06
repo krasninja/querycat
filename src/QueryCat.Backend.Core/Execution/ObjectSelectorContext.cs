@@ -27,7 +27,7 @@ public sealed class ObjectSelectorContext
     /// <param name="Tag">Custom user object.</param>
     [DebuggerDisplay("{Value}, {PropertyInfo}")]
     public readonly record struct Token(
-        object Value,
+        object? Value,
         PropertyInfo? PropertyInfo = null,
         object?[]? Indexes = null,
         object? Tag = null)

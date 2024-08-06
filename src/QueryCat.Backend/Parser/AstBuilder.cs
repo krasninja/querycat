@@ -54,8 +54,9 @@ internal sealed class AstBuilder : IAstBuilder
 #if DEBUG
         // Return cloned node instead for debug only purposes.
         return (TNode)resultNode.Clone();
-#endif
+#else
         return (TNode)resultNode;
+#endif
     }
 
     private static TNode BuildInternal<TNode>(string input, Func<QueryCatParser, ParserRuleContext> signatureFunc)

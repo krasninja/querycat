@@ -1,6 +1,5 @@
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
-using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Json.Path;
@@ -28,11 +27,7 @@ public static class JsonFunctions
 
         // Evaluate.
         var pathResult = jsonPath.Evaluate(jsonNode);
-        if (pathResult.Error?.Length > 0)
-        {
-            throw new QueryCatException(pathResult.Error[0].ToString());
-        }
-        if (pathResult.Matches == null || pathResult.Matches.Count != 1)
+        if (pathResult.Matches.Count != 1)
         {
             return VariantValue.Null;
         }
@@ -47,12 +42,13 @@ public static class JsonFunctions
         }
 
         // Prepare result.
-        return new VariantValue(GetJsonStringFromJsonNode(result.Value));
+        var jsonString = result.Value.ToJsonString(_jsonSerializerOptions);
+        return new VariantValue(jsonString);
     }
 
     [SafeFunction]
     [Description("Extracts a scalar value from a JSON string.")]
-    [FunctionSignature("json_value(json: string, query: string): string")]
+    [FunctionSignature("json_value(json: string, query: string): any")]
     public static VariantValue JsonValue(FunctionCallInfo args)
     {
         // Parse input.
@@ -63,11 +59,7 @@ public static class JsonFunctions
 
         // Evaluate.
         var pathResult = jsonPath.Evaluate(jsonNode);
-        if (pathResult.Error?.Length > 0)
-        {
-            throw new QueryCatException(pathResult.Error[0].ToString());
-        }
-        if (pathResult.Matches == null || pathResult.Matches.Count != 1)
+        if (pathResult.Matches.Count != 1)
         {
             return VariantValue.Null;
         }
@@ -76,13 +68,13 @@ public static class JsonFunctions
         {
             return VariantValue.Null;
         }
-        if (!(result.Value is JsonValue))
+        if (!(result.Value is JsonValue jsonValue))
         {
             return VariantValue.Null;
         }
 
         // Prepare result.
-        return new VariantValue(GetJsonStringFromJsonNode(result.Value));
+        return VariantValue.TryGetValueFromJsonValue(jsonValue, out var value) ? value : VariantValue.Null;
     }
 
     [SafeFunction]
@@ -111,7 +103,9 @@ public static class JsonFunctions
         {
             return VariantValue.Null;
         }
-        return new VariantValue(GetJsonStringFromJsonNode(node));
+
+        var jsonString = node.ToJsonString(_jsonSerializerOptions);
+        return new VariantValue(jsonString);
     }
 
     [SafeFunction]
@@ -144,11 +138,22 @@ public static class JsonFunctions
 
         // Evaluate.
         var pathResult = jsonPath.Evaluate(jsonNode);
-        if (pathResult.Error?.Length > 0)
+        return new VariantValue(pathResult.Matches.Count > 0);
+    }
+
+    [SafeFunction]
+    [Description("Returns the number of elements in the top-level JSON array.")]
+    [FunctionSignature("json_array_length(json: string): integer")]
+    public static VariantValue JsonArrayLength(FunctionCallInfo args)
+    {
+        var json = args.GetAt(0).AsString;
+        var jsonNode = GetJsonNodeFromString(json);
+
+        if (jsonNode is not JsonArray array)
         {
-            throw new QueryCatException(pathResult.Error[0].ToString());
+            return VariantValue.Null;
         }
-        return new VariantValue(pathResult.Matches != null && pathResult.Matches.Count > 0);
+        return new VariantValue(array.Count);
     }
 
     [UnconditionalSuppressMessage("AOT", "IL3050:Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.", Justification = "<Pending>")]
@@ -160,7 +165,13 @@ public static class JsonFunctions
         functionsManager.RegisterFunction(ToJson);
         functionsManager.RegisterFunction(IsJson);
         functionsManager.RegisterFunction(JsonExists);
+        functionsManager.RegisterFunction(JsonArrayLength);
     }
+
+    private static readonly JsonSerializerOptions _jsonSerializerOptions = new()
+    {
+        WriteIndented = false,
+    };
 
     private static JsonNode? GetJsonNodeFromString(string json)
     {
@@ -181,14 +192,5 @@ public static class JsonFunctions
             throw new SemanticException("Incorrect JSON path input.");
         }
         return path;
-    }
-
-    private static string GetJsonStringFromJsonNode(JsonNode jsonNode)
-    {
-        using var ms = new MemoryStream();
-        using var jsonWriter = new Utf8JsonWriter(ms);
-        jsonNode.WriteTo(jsonWriter);
-        jsonWriter.Flush();
-        return new VariantValue(Encoding.UTF8.GetString(ms.ToArray()));
     }
 }

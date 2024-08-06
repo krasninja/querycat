@@ -1,5 +1,9 @@
 # QueryCat
 
+![GitHub License](https://img.shields.io/github/license/krasninja/querycat)
+![NuGet Version](https://img.shields.io/nuget/v/querycat)
+![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/krasninja/querycat/total)
+
 QueryCat is the command line tool that allows you to use SQL (Structured Query Language) to query data in CSV, JSON, XML and various log files. The general idea is to bring well-known SQL expressive power and provide easy access to various kinds of information. You won't need to upload your text data into Excel or any database table - just query it as is with QueryCat!
 
 - It is designed to use pipeline mode to be able to process large amount of data.
@@ -95,3 +99,7 @@ $ dotnet add package QueryCat
 
 - Not the whole SQL standard is implemented.
 - Only limited amount of rows sources supports INSERT and UPDATE commands.
+
+## License
+
+QueryCat is licensed under the MIT License - see the [LICENSE](LICENSE.txt) file for details

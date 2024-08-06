@@ -53,7 +53,7 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
 
 #if DEBUG
     // ReSharper disable once StaticMemberInGenericType
-    private static int segmentId;
+    private static int _segmentId;
 #endif
 
     /// <summary>
@@ -170,7 +170,7 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
     private sealed class BufferSegment : ReadOnlySequenceSegment<T>
     {
 #if DEBUG
-        private int SegmentId { get; } = segmentId++;
+        private int SegmentId { get; } = _segmentId++;
 #endif
 
         internal T[] Buffer { get; }
@@ -231,7 +231,7 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
             return;
         }
 
-        bool rebuildRunningIndexes = false;
+        var rebuildRunningIndexes = false;
         long advanced = 0;
         var currentSegment = _buffersList.Head;
         while (currentSegment != null && (ulong)advanced < (ulong)sizeToAdvance)
@@ -268,11 +268,17 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
             {
                 var segment = _buffersList.PopFirst();
                 rebuildRunningIndexes = true;
-                currentSegment = segment?.NextRef;
-                if (segment != null
-                    && (_maxFreeBuffers == -1 || (ulong)TotalBuffersCount < (ulong)_freeBuffersList.Count))
+                if (segment != null)
                 {
-                    _freeBuffersList.AddLast(segment);
+                    currentSegment = segment.NextRef;
+                    if (_maxFreeBuffers == -1 || (ulong)TotalBuffersCount < (ulong)_freeBuffersList.Count)
+                    {
+                        _freeBuffersList.AddLast(segment);
+                    }
+                }
+                else
+                {
+                    currentSegment = null;
                 }
             }
             else
@@ -284,15 +290,36 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
         // Update running indexes if _buffersList was updated.
         if (rebuildRunningIndexes)
         {
-            var current = _buffersList.Head;
-            var runningIndex = 0;
-            while (current != null)
-            {
-                current.SetIndex(runningIndex);
-                runningIndex += current.Memory.Length;
-                current = current.NextRef;
-            }
+            RebuildRunningIndexes();
         }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    private void RebuildRunningIndexes()
+    {
+        var current = _buffersList.Head;
+        var runningIndex = 0;
+        while (current != null)
+        {
+            current.SetIndex(runningIndex);
+            runningIndex += current.Memory.Length;
+            current = current.NextRef;
+        }
+    }
+
+    /// <summary>
+    /// Moves the cursor to the end of the sequence.
+    /// </summary>
+    public void AdvanceToEnd()
+    {
+        while (_buffersList.PopFirst() is { } segment)
+        {
+            _freeBuffersList.AddLast(segment);
+        }
+        _allocatedPosition = 0;
+        _startPosition = 0;
+        _endPosition = 0;
+        _allocatedFlag = false;
     }
 
     #region Read
@@ -621,7 +648,7 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
         // Fast path.
         if (_buffersList.Head != null && endIndex - startIndex >= bufferSize)
         {
-            var span = _buffersList.Head.Buffer.AsSpan(0, bufferSize);
+            var span = _buffersList.Head.Buffer.AsSpan(startIndex, bufferSize);
             span.CopyTo(buffer);
             totalRead = span.Length;
         }
@@ -672,7 +699,7 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
         // Fast path.
         if (_buffersList.Head != null && endIndex - startIndex >= count)
         {
-            buffer = _buffersList.Head.Buffer.AsSpan(0, count);
+            buffer = _buffersList.Head.Buffer.AsSpan(startIndex, count);
         }
         // Slow path.
         else

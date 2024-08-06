@@ -251,15 +251,24 @@ internal partial class ProgramParserVisitor
     /// <inheritdoc />
     public override IAstNode VisitSelectTarget(QueryCatParser.SelectTargetContext context)
     {
+        FunctionCallNode? functionCallNode;
         if (context.uri != null)
         {
-            var writeFunction = new FunctionCallNode("write");
+            functionCallNode = new FunctionCallNode("write");
             var uri = GetUnwrappedText(context.uri);
-            writeFunction.Arguments.Add(new FunctionCallArgumentNode("uri",
+            functionCallNode.Arguments.Add(new FunctionCallArgumentNode("uri",
                 new LiteralNode(new VariantValue(uri))));
-            return writeFunction;
         }
-        return this.Visit<FunctionCallNode>(context.functionCall());
+        else
+        {
+            functionCallNode = this.Visit<FunctionCallNode>(context.into);
+        }
+        if (context.format != null)
+        {
+            var formatterFunctionCallNode = this.Visit<FunctionCallNode>(context.format);
+            functionCallNode.Arguments.Add(new FunctionCallArgumentNode("fmt", formatterFunctionCallNode));
+        }
+        return functionCallNode;
     }
 
     #endregion
@@ -436,12 +445,8 @@ internal partial class ProgramParserVisitor
         var alias = this.Visit(context.selectAlias(), SelectAliasNode.Empty).AliasName;
         var readFunctionNode = CreateReadFunctionCallNode(
             uriNode: this.Visit<ExpressionNode>(context.simpleExpression()),
-            formatContext: null);
+            formatContext: context.format);
         return new SelectTableFunctionNode(readFunctionNode, alias);
-        /*return new SelectTableExpressionNode(this.Visit<ExpressionNode>(context.simpleExpression()))
-        {
-            Alias = this.Visit(context.selectAlias(), SelectAliasNode.Empty).AliasName,
-        };*/
     }
 
     #endregion

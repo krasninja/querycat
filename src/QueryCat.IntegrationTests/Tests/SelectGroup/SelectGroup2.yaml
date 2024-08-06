@@ -1,0 +1,11 @@
+expected: |
+  A,1
+query: |
+  with cte as (
+    select * from it_stocks() where id = 'AAPL'
+  )
+  select
+    substr(id, 1, 1) as 'first_letter',
+    count(*) as cnt
+  from cte
+  group by substr(id, 1, 1);

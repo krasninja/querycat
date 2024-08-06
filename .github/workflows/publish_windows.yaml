@@ -1,0 +1,31 @@
+name: Publish Windows x64 Version
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+jobs:
+  publish:
+    runs-on: windows-2022
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8'
+      - name: Install GitVersion
+        run: dotnet tool install --global GitVersion.Tool --version 6.*
+      - name: Setup Cpp
+        uses: aminya/setup-cpp@v1
+        with:
+          compiler: msvc
+      - name: Run build Cake script
+        shell: pwsh
+        run: .\build.ps1 -t publish-all --verbosity Diagnostic -- --platform windows
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: qcat-windows-x64
+          path: output/qcat-*.zip

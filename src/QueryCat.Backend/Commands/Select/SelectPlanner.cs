@@ -62,7 +62,6 @@ internal sealed partial class SelectPlanner
         PipelineWindow_ApplyWindowFunctions(context, node);
 
         // Fill query context.
-        QueryContext_FillQueryContextConditions(context, node);
         QueryContext_ValidateKeyColumnsValues(context);
 
         // ORDER BY.

@@ -23,6 +23,7 @@ namespace QueryCat.Backend.ThriftPlugins;
 public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
 {
     private const string FunctionsCacheFileExtension = ".fcache.json";
+    private const string ProxyExecutable = "qcat-plugins-proxy";
 
     private readonly IExecutionThread _thread;
     private readonly bool _debugMode;
@@ -134,7 +135,7 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         }
 
         // Executable or library.
-        if (IsLibrary(file) || IsExecutable(file))
+        if (IsLibrary(file) || IsExecutable(file) || IsNugetPackage(file))
         {
             return true;
         }
@@ -187,10 +188,20 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         return false;
     }
 
+    private static bool IsNugetPackage(string pluginFile)
+    {
+        var extension = Path.GetExtension(pluginFile);
+        return extension.Equals(".nupkg", StringComparison.OrdinalIgnoreCase);
+    }
+
     private static bool IsMatchPlatform(string pluginFile)
     {
         var plugin = PluginInfo.CreateFromUniversalName(pluginFile);
         // If we cannot detect platform and arch - let skip the check.
+        if (plugin.Platform == Application.PlatformMulti)
+        {
+            return true;
+        }
         if (plugin.Platform == Application.PlatformUnknown && plugin.Architecture == Application.ArchitectureUnknown)
         {
             return true;
@@ -273,12 +284,36 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         {
             return LoadPluginLibrary(file, authToken, cancellationToken);
         }
-        return LoadPluginExecutable(file, authToken, cancellationToken);
+        if (IsNugetPackage(file))
+        {
+            return LoadPluginNugetPackage(file, authToken, cancellationToken);
+        }
+        return LoadPluginExecutable(file, authToken, [], cancellationToken: cancellationToken);
+    }
+
+    private ThriftPluginsServer.PluginContext LoadPluginNugetPackage(
+        string file,
+        string authToken,
+        CancellationToken cancellationToken = default)
+    {
+        if (!File.Exists(ProxyExecutable))
+        {
+            throw new PluginException($"Cannot load NuGet package plugin '{file}' without proxy.");
+        }
+        _logger.LogDebug("Loading '{Assembly}' with proxy.", file);
+        return LoadPluginExecutable(
+            ProxyExecutable,
+            authToken,
+            ["--assembly=" + file],
+            file,
+            cancellationToken);
     }
 
     private ThriftPluginsServer.PluginContext LoadPluginExecutable(
         string file,
         string authToken,
+        string[] additionalArguments,
+        string? pluginFile = null,
         CancellationToken cancellationToken = default)
     {
         string FormatParameter(string key, string value) => $"--{key}={value}";
@@ -306,6 +341,10 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
                 Process.GetCurrentProcess().Id.ToString()));
             process.StartInfo.ArgumentList.Add(FormatParameter(ThriftPluginClient.PluginLogLevelParameter,
                 _minLogLevel.ToString()));
+            foreach (var arg in additionalArguments)
+            {
+                process.StartInfo.ArgumentList.Add(arg);
+            }
             process.OutputDataReceived += (_, args) => _logger.LogTrace($"[{fileName}]: {args.Data}");
             process.ErrorDataReceived += (_, args) => _logger.LogError($"[{fileName}]: {args.Data}");
             process.Start();
@@ -328,7 +367,9 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         var pluginName = GetPluginName(file);
         _loadedPlugins.Add(pluginName);
 
-        return GetContext(file);
+        // If we load .exe or .so plugin, we don't need pluginFile arg.
+        // It is needed only if we load plugin using the proxy.
+        return GetContext(pluginFile ?? file);
     }
 
     private ThriftPluginsServer.PluginContext LoadPluginLibrary(
@@ -501,7 +542,7 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         }
         if (result.Object.Type == ObjectType.ROWS_INPUT || result.Object.Type == ObjectType.ROWS_ITERATOR)
         {
-            return new ThriftRemoteRowsIterator(context.Client, result.Object.Handle);
+            return new ThriftRemoteRowsIterator(context.Client, result.Object.Handle, result.Object.Name);
         }
         if (result.Object.Type == ObjectType.JSON && !string.IsNullOrEmpty(result.Json))
         {

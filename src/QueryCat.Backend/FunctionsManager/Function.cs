@@ -43,7 +43,7 @@ public class Function : IFunction
     }
 
     /// <inheritdoc />
-    public bool IsSafe { get; internal set; } = false;
+    public bool IsSafe { get; internal set; }
 
     /// <summary>
     /// Full signature.
@@ -119,8 +119,8 @@ public class Function : IFunction
                 continue;
             }
 
-            // The VOID data type is used with ANY argument type.
-            if (argumentsNodes[i].Type != DataType.Void && typesArr[i] != argumentsNodes[i].Type)
+            // The Dynamic data type is used with ANY argument type.
+            if (argumentsNodes[i].Type != DataType.Dynamic && typesArr[i] != argumentsNodes[i].Type)
             {
                 return false;
             }

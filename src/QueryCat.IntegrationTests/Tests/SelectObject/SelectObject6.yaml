@@ -1,0 +1,6 @@
+expected: |
+  ,4
+query: |
+  set user1.Cats[0].Age := null;
+  set user3.Cats[0].Age := 4;
+  select user1.Cats[0].Age, user3.Cats[0].Age;

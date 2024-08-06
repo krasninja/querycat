@@ -20,7 +20,11 @@ public sealed class BuildLinuxTask : AsyncFrostingTask<BuildContext>
         {
             Runtime = DotNetConstants.RidLinuxX64,
         });
-        context.DotNetPublish(context.TimeItAppProjectDirectory, new PublishGeneralSettings(context, publishAot: true)
+        context.DotNetPublish(context.PluginsProxyProjectDirectory, new PublishGeneralSettings(context, publishAot: false)
+        {
+            Runtime = DotNetConstants.RidLinuxX64,
+        });
+        context.DotNetPublish(context.TimeItAppProjectDirectory, new PublishGeneralSettings(context, publishAot)
         {
             Runtime = DotNetConstants.RidLinuxX64,
         });
@@ -29,6 +33,6 @@ public sealed class BuildLinuxTask : AsyncFrostingTask<BuildContext>
             Runtime = DotNetConstants.RidLinuxX64,
         });
 
-        return Task.CompletedTask;
+        return base.RunAsync(context);
     }
 }

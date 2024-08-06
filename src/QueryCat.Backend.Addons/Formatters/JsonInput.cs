@@ -71,14 +71,6 @@ internal sealed class JsonInput : StreamRowsInput
             throw new SemanticException("Incorrect JSON path input.");
         }
         var pathResult = path.Evaluate(jsonNode);
-        if (pathResult.Error?.Length > 0)
-        {
-            throw new QueryCatException(pathResult.Error[0].ToString());
-        }
-        if (pathResult.Matches == null)
-        {
-            throw new QueryCatException("JSON path error.");
-        }
         var matches = pathResult.Matches.Where(m => m.Value != null).ToList();
 
         var ms = new MemoryStream();
@@ -182,7 +174,7 @@ internal sealed class JsonInput : StreamRowsInput
                     var json = reader.UnreadSequence.ToString();
                     try
                     {
-                        _jsonElement = JsonSerializer.Deserialize(json, Addons.SourceGenerationContext.Default.JsonElement);
+                        _jsonElement = JsonSerializer.Deserialize(json, SourceGenerationContext.Default.JsonElement);
                     }
                     catch (JsonException jsonException)
                     {
@@ -236,7 +228,7 @@ internal sealed class JsonInput : StreamRowsInput
         if (reader.TryAdvanceTo('{', advancePastDelimiter: false))
         {
             var json = reader.UnreadSequence.ToString();
-            return JsonSerializer.Deserialize(json, Addons.SourceGenerationContext.Default.JsonElement);
+            return JsonSerializer.Deserialize(json, SourceGenerationContext.Default.JsonElement);
         }
         return null;
     }

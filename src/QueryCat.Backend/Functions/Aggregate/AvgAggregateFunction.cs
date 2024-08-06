@@ -12,6 +12,8 @@ namespace QueryCat.Backend.Functions.Aggregate;
 [AggregateFunctionSignature("avg(value: integer): float")]
 [AggregateFunctionSignature("avg(value: float): float")]
 [AggregateFunctionSignature("avg(value: numeric): numeric")]
+[AggregateFunctionSignature("avg(value: timestamp): timestamp")]
+[AggregateFunctionSignature("avg(value: interval): interval")]
 // ReSharper disable once ClassNeverInstantiated.Global
 internal sealed class AvgAggregateFunction : IAggregateFunction
 {

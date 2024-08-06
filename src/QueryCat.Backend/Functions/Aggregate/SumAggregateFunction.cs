@@ -12,6 +12,7 @@ namespace QueryCat.Backend.Functions.Aggregate;
 [AggregateFunctionSignature("sum(value: integer): integer")]
 [AggregateFunctionSignature("sum(value: float): float")]
 [AggregateFunctionSignature("sum(value: numeric): numeric")]
+[AggregateFunctionSignature("sum(value: interval): interval")]
 // ReSharper disable once ClassNeverInstantiated.Global
 internal sealed class SumAggregateFunction : IAggregateFunction
 {

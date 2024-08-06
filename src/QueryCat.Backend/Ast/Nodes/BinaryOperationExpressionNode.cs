@@ -9,9 +9,9 @@ internal sealed class BinaryOperationExpressionNode : ExpressionNode
 {
     public VariantValue.Operation Operation { get; internal set; }
 
-    public ExpressionNode LeftNode { get; }
+    public ExpressionNode LeftNode { get; private set; }
 
-    public ExpressionNode RightNode { get; }
+    public ExpressionNode RightNode { get; private set; }
 
     /// <inheritdoc />
     public override string Code => "binop";
@@ -48,6 +48,34 @@ internal sealed class BinaryOperationExpressionNode : ExpressionNode
         value2 = default;
         return false;
     }
+
+    /// <summary>
+    /// Tries to swap left and right expressions.
+    /// </summary>
+    /// <returns><c>True</c> if can swap, <c>false</c> otherwise.</returns>
+    public bool TryReverse()
+    {
+        var reverseOperation = GetReverseOperation(Operation);
+        if (reverseOperation.HasValue)
+        {
+            (LeftNode, RightNode) = (RightNode, LeftNode);
+            Operation = reverseOperation.Value;
+            return true;
+        }
+
+        return false;
+    }
+
+    private static VariantValue.Operation? GetReverseOperation(VariantValue.Operation operation)
+        => operation switch
+        {
+            VariantValue.Operation.Equals => VariantValue.Operation.Equals,
+            VariantValue.Operation.Greater => VariantValue.Operation.Less,
+            VariantValue.Operation.GreaterOrEquals => VariantValue.Operation.LessOrEquals,
+            VariantValue.Operation.Less => VariantValue.Operation.Greater,
+            VariantValue.Operation.LessOrEquals => VariantValue.Operation.GreaterOrEquals,
+            _ => null,
+        };
 
     /// <inheritdoc />
     public override IEnumerable<IAstNode> GetChildren()

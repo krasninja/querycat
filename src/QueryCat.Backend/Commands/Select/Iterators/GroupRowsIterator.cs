@@ -6,6 +6,9 @@ namespace QueryCat.Backend.Commands.Select.Iterators;
 
 internal sealed class GroupRowsIterator : IRowsIterator, IRowsIteratorParent
 {
+    private static int _nextId = 300;
+    private readonly int _id = Interlocked.Increment(ref _nextId);
+
     private readonly IRowsIterator _rowsIterator;
     private bool _isInitialized;
     private readonly RowsFrame _rowsFrame;
@@ -94,12 +97,14 @@ internal sealed class GroupRowsIterator : IRowsIterator, IRowsIteratorParent
         _isInitialized = false;
         _rowsFrame.Clear();
         _rowsIterator.Reset();
+        _rowsFrameIterator.Reset();
     }
 
     /// <inheritdoc />
     public void Explain(IndentedStringBuilder stringBuilder)
     {
-        stringBuilder.AppendRowsIteratorsWithIndent("Group By", _rowsIterator)
+        stringBuilder.AppendRowsIteratorsWithIndent(
+                $"Group By (keys={_keys.Length}, targets={_targets.Length}, id={_id})", _rowsIterator)
             .AppendSubQueriesWithIndent(_keys);
     }
 

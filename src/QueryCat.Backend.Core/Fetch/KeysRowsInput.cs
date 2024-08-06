@@ -91,6 +91,11 @@ public abstract class KeysRowsInput : RowsInput, IRowsInputKeys, IDisposable
     public VariantValue GetKeyColumnValue(string columnName, VariantValue.Operation? operation = null)
     {
         var columnIndex = this.GetColumnIndexByName(columnName);
+        if (columnIndex < 0)
+        {
+            throw new QueryCatException(
+                string.Format(Resources.Errors.CannotFindColumn, columnName));
+        }
         var keyValue = GetKeyColumn(_setKeyColumns[columnIndex], operation);
         if (keyValue == null)
         {

@@ -38,6 +38,7 @@ public partial class ThriftPluginClient : IDisposable
     public const string PluginDebugServerParameter = "debug-server";
     public const string PluginDebugServerQueryParameter = "debug-server-query";
     public const string PluginDebugServerFileParameter = "debug-server-file";
+    public const string PluginDebugServerFollowParameter = "debug-server-follow";
 
     public const string PluginMainFunctionName = "QueryCatPlugin_Main";
 
@@ -49,6 +50,7 @@ public partial class ThriftPluginClient : IDisposable
     private readonly string _debugServerPath = string.Empty;
     private readonly string _debugServerQueryText = string.Empty;
     private readonly string _debugServerQueryFile = string.Empty;
+    private readonly bool _debugServerFollow;
     private readonly int _parentPid;
     private Process? _qcatProcess;
     private readonly SemaphoreSlim _exitSemaphore = new(0, 1);
@@ -71,6 +73,11 @@ public partial class ThriftPluginClient : IDisposable
     /// Functions manager.
     /// </summary>
     public IFunctionsManager FunctionsManager => _functionsManager;
+
+    /// <summary>
+    /// Registration result. It is filled after connection to QueryCat host.
+    /// </summary>
+    public RegistrationResult? RegistrationResult { get; private set; }
 
     /// <summary>
     /// Do not use application logger for Thrift internal logs.
@@ -119,6 +126,7 @@ public partial class ThriftPluginClient : IDisposable
             _debugServerPath = args.DebugServerPath;
             _debugServerQueryText = args.DebugServerQueryText;
             _debugServerQueryFile = args.DebugServerQueryFile;
+            _debugServerFollow = args.DebugServerFollow;
         }
 
         // Bootstrap.
@@ -194,6 +202,9 @@ public partial class ThriftPluginClient : IDisposable
                 case PluginDebugServerFileParameter:
                     appArgs.DebugServerQueryFile = value;
                     break;
+                case PluginDebugServerFollowParameter:
+                    appArgs.DebugServerFollow = bool.Parse(value);
+                    break;
                 default:
                     continue;
             }
@@ -235,8 +246,9 @@ public partial class ThriftPluginClient : IDisposable
     /// <summary>
     /// Start client server and register the plugin.
     /// </summary>
+    /// <param name="pluginData">Plugin information. If null - the info will be retrieved from current assembly.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    public async Task StartAsync(CancellationToken cancellationToken = default)
+    public async Task StartAsync(PluginData? pluginData = null, CancellationToken cancellationToken = default)
     {
         if (!string.IsNullOrEmpty(_debugServerPath))
         {
@@ -257,20 +269,19 @@ public partial class ThriftPluginClient : IDisposable
         StartServer();
 
         var assemblyName = Assembly.GetEntryAssembly()?.GetName();
-        var version = assemblyName?.Version;
-        var pluginName = assemblyName?.Name ?? string.Empty;
-
         var functions = _functionsManager.GetPluginFunctions().Select(f =>
-            new Function(f.Signature, f.Description, false));
-        await _client.RegisterPluginAsync(
+            new Function(f.Signature, f.Description, false)).ToList();
+        pluginData ??= new PluginData
+        {
+            Name = assemblyName?.Name ?? string.Empty,
+            Version = assemblyName?.Version?.ToString() ?? "0.0.0",
+        };
+        pluginData.Functions = functions;
+
+        RegistrationResult = await _client.RegisterPluginAsync(
             _authToken,
             $"{PluginTransportNamedPipes}://localhost/{_clientServerNamedPipe}",
-            new PluginData
-            {
-                Functions = functions.ToList(),
-                Name = pluginName,
-                Version = version?.ToString() ?? "0.0.0",
-            },
+            pluginData,
             cancellationToken);
         IsActive = true;
 
@@ -372,7 +383,12 @@ public partial class ThriftPluginClient : IDisposable
         {
             _qcatProcess.StartInfo.Arguments += " -f \"" + _debugServerQueryFile + "\" ";
         }
+        if (_debugServerFollow)
+        {
+            _qcatProcess.StartInfo.Arguments += " --follow ";
+        }
         _qcatProcess.StartInfo.Arguments += $"--log-level=trace --plugin-dirs=\"{modulePath}\"";
+        _logger.LogDebug("qcat host arguments '{Arguments}'.", _qcatProcess.StartInfo.Arguments);
         _qcatProcess.OutputDataReceived += (_, args) => Console.Out.WriteLine($"> {args.Data}");
         _qcatProcess.ErrorDataReceived += (_, args) => Console.Error.WriteLine($"> {args.Data}");
         _qcatProcess.Start();

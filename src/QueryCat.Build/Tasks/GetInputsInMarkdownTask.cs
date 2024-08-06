@@ -14,11 +14,11 @@ using QueryCat.Backend.ThriftPlugins;
 namespace QueryCat.Build.Tasks;
 
 [TaskName("Get-Inputs-Markdown")]
-public class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
+public sealed class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
 {
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(GetInputsInMarkdownTask));
 
-    private static readonly string[] ExcludeList =
+    private static readonly string[] _excludeList =
     {
         "read_file",
         "read_text",
@@ -43,7 +43,7 @@ public class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
                 && !f.IsAggregate
                 && f.ReturnObjectName == nameof(IRowsInput)
                 && f.Name.Contains("_") // Usually plugin name should have name like "pluginName_method".
-                && !ExcludeList.Contains(f.Name)
+                && !_excludeList.Contains(f.Name)
             )
             .OrderBy(f => f.Name)
             .ToList();
@@ -101,6 +101,6 @@ public class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
         File.WriteAllText(file, sb.ToString());
         context.Log.Information($"Wrote to {file}.");
 
-        return Task.CompletedTask;
+        return base.RunAsync(context);
     }
 }

@@ -20,10 +20,15 @@ public sealed class BuildMacTask : AsyncFrostingTask<BuildContext>
         {
             Runtime = DotNetConstants.RidMacOSXArm64,
         });
-        context.DotNetPublish(context.TimeItAppProjectDirectory, new PublishGeneralSettings(context, publishAot: true)
+        context.DotNetPublish(context.PluginsProxyProjectDirectory, new PublishGeneralSettings(context, publishAot: false)
         {
             Runtime = DotNetConstants.RidMacOSXArm64,
         });
-        return Task.CompletedTask;
+        context.DotNetPublish(context.TimeItAppProjectDirectory, new PublishGeneralSettings(context, publishAot)
+        {
+            Runtime = DotNetConstants.RidMacOSXArm64,
+        });
+
+        return base.RunAsync(context);
     }
 }

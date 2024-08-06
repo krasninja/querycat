@@ -1,0 +1,8 @@
+expected: |
+  b
+query: |
+  declare json string := '
+  {
+    "a": "b"
+  }';
+  select json_value(json, '$.a');

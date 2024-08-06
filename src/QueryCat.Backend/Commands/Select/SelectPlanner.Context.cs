@@ -95,7 +95,7 @@ internal sealed partial class SelectPlanner
         SelectCommandContext context,
         SelectQuerySpecificationNode querySpecificationNode)
     {
-        // No FROM - assumed this is the query with SELECT only.
+        // No FROM - assume this is the query with SELECT only.
         if (querySpecificationNode.TableExpressionNode == null)
         {
             context.SetIterator(new SingleValueRowsInput().AsIterable());
@@ -121,6 +121,7 @@ internal sealed partial class SelectPlanner
 
         var resultRowsIterator = Context_CreateMultipleIterator(finalRowsInputs);
         context.RowsInputIterator = resultRowsIterator as RowsInputIterator;
+        QueryContext_FillQueryContextConditions(context, querySpecificationNode);
         context.SetIterator(resultRowsIterator);
     }
 
@@ -337,9 +338,6 @@ internal sealed partial class SelectPlanner
         }
         return rowsInput;
     }
-
-    private List<IRowsInput> Context_WrapKeysInput(IReadOnlyList<IRowsInput> rowsInputs, SelectQueryConditions conditions)
-        => rowsInputs.Select(ri => Context_WrapKeysInput(ri, conditions)).ToList();
 
     private IRowsInput Context_CreateInputSourceFromTable(SelectCommandContext context,
         SelectTableValuesNode tableValuesNode)

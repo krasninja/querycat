@@ -10,7 +10,7 @@ using QueryCat.Backend.Core.Types;
 namespace QueryCat.Build.Tasks;
 
 [TaskName("Get-Functions-Markdown")]
-public class GetFunctionsInMarkdownTask : AsyncFrostingTask<BuildContext>
+public sealed class GetFunctionsInMarkdownTask : AsyncFrostingTask<BuildContext>
 {
     /// <inheritdoc />
     public override Task RunAsync(BuildContext context)
@@ -48,6 +48,7 @@ public class GetFunctionsInMarkdownTask : AsyncFrostingTask<BuildContext>
         File.WriteAllText(file, sb.ToString());
         context.Log.Information($"Wrote to {file}.");
         Console.WriteLine(File.ReadAllText(file));
+
         return base.RunAsync(context);
     }
 }

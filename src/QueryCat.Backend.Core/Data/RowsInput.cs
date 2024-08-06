@@ -49,6 +49,7 @@ public abstract class RowsInput : IRowsInput
     /// <inheritdoc />
     public virtual void Explain(IndentedStringBuilder stringBuilder)
     {
+        stringBuilder.AppendLine(GetType().Name);
     }
 
     /// <summary>

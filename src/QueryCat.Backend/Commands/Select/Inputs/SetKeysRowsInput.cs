@@ -9,7 +9,7 @@ internal sealed class SetKeysRowsInput : RowsInput, IRowsInputKeys
 {
     private record struct ConditionJoint(SelectQueryCondition Condition, int ColumnIndex);
 
-    private ConditionJoint[] _conditions = Array.Empty<ConditionJoint>();
+    private ConditionJoint[] _conditions = [];
     private readonly IRowsInputKeys _rowsInput;
     private readonly SelectQueryConditions _selectQueryConditions;
     private bool _keysFilled;

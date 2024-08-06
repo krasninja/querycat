@@ -38,12 +38,7 @@ public class DefaultObjectSelector : IObjectSelector
         }
 
         var resultObject = propertyInfo.GetValue(lastObject);
-        if (resultObject != null)
-        {
-            return new ObjectSelectorContext.Token(resultObject, propertyInfo);
-        }
-
-        return null;
+        return new ObjectSelectorContext.Token(resultObject, propertyInfo);
     }
 
     /// <inheritdoc />
@@ -218,7 +213,7 @@ public class DefaultObjectSelector : IObjectSelector
         {
             return value;
         }
-        return Convert.ChangeType(value, targetType);
+        return Convert.ChangeType(value, Nullable.GetUnderlyingType(targetType) ?? targetType);
     }
 
     private static bool TryGetObjectIsIntegerIndex(object? obj, out int value)

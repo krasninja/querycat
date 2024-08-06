@@ -74,7 +74,7 @@ selectQueryExpression
       selectList
       selectExcept?
       selectTarget?
-      selectFromClause
+      selectFromClause?
       selectWindow?
       selectOrderByClause?
       selectLimitClause?
@@ -126,7 +126,7 @@ selectSublist
     ;
 
 // Into.
-selectTarget: INTO (functionCall | uri=STRING_LITERAL);
+selectTarget: INTO (into=functionCall | uri=STRING_LITERAL) (FORMAT format=functionCall)?;
 
 // From.
 selectFromClause:
@@ -146,7 +146,7 @@ selectTablePrimary
     | '(' selectQueryExpression ')' selectAlias? # SelectTablePrimarySubquery
     | name=identifier (FORMAT format=functionCall)? selectAlias? # SelectTablePrimaryIdentifier
     | '(' selectTableValues ')' selectAlias? # SelectTablePrimaryTableValues
-    | simpleExpression selectAlias? # SelectTablePrimaryExpression
+    | simpleExpression (FORMAT format=functionCall)? selectAlias? # SelectTablePrimaryExpression
     ;
 selectTableJoined
     : selectJoinType? JOIN right=selectTablePrimary ON condition=expression # SelectTableJoinedOn
