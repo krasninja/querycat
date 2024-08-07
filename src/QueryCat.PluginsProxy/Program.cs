@@ -1,9 +1,7 @@
-﻿using System.Reflection;
-using QueryCat.Backend.AssemblyPlugins;
+﻿using QueryCat.Backend.AssemblyPlugins;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Utils;
 using QueryCat.Plugins.Client;
-using QueryCat.Plugins.Sdk;
 
 namespace QueryCat.PluginsProxy;
 
@@ -27,24 +25,10 @@ public class Program
                 throw new QueryCatException("No plugins loaded.");
             }
             await client.StartAsync(
-                GetPluginDataFromAssembly(assemblyLoader.LoadedAssemblies.FirstOrDefault()),
+                SdkConvert.Convert(assemblyLoader.LoadedAssemblies.FirstOrDefault()),
                 ct);
             await client.WaitForServerExitAsync(ct);
         });
-    }
-
-    private static PluginData? GetPluginDataFromAssembly(Assembly? assembly)
-    {
-        if (assembly == null)
-        {
-            return null;
-        }
-        var assemblyName = assembly.GetName();
-        return new PluginData
-        {
-            Name = assemblyName.Name ?? string.Empty,
-            Version = assemblyName.Version?.ToString() ?? "0.0.0",
-        };
     }
 
     public static void Main(string[] args) => QueryCatMain(
