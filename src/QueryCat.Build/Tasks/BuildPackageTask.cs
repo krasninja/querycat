@@ -27,6 +27,18 @@ public sealed class BuildPackageTask : AsyncFrostingTask<BuildContext>
                 return pag;
             },
         });
+        context.DotNetPack(context.PluginClientProjectDirectory, new DotNetPackSettings
+        {
+            NoLogo = true,
+            OutputDirectory = context.OutputDirectory,
+            Configuration = DotNetConstants.ConfigurationRelease,
+            ArgumentCustomization = pag =>
+            {
+                pag.Append(new TextArgument("-p:NuspecFile=QueryCat.Plugins.Client.nuspec"));
+                pag.Append(new TextArgument($"-p:NuspecProperties=\"CommitHash={currentSha}\""));
+                return pag;
+            },
+        });
 
         return base.RunAsync(context);
     }

@@ -19,6 +19,8 @@ public class BuildContext : FrostingContext
 
     public ConvertableDirectoryPath BackendProjectDirectory => this.Directory("../QueryCat.Backend");
 
+    public ConvertableDirectoryPath PluginClientProjectDirectory => this.Directory("../../sdk/dotnet-client");
+
     public ConvertableDirectoryPath TimeItAppProjectDirectory => this.Directory("../TimeIt");
 
     public ConvertableDirectoryPath TestPluginAppProjectDirectory => this.Directory("../QueryCat.Plugins.Sample");
