@@ -108,7 +108,7 @@ internal sealed class JsonInput : StreamRowsInput
         if (_jsonElement == null)
         {
             value = VariantValue.Null;
-            return ErrorCode.Error;
+            return ErrorCode.NoData;
         }
 
         if (!_jsonElement.Value.TryGetProperty(_properties[nonVirtualColumnIndex], out var property))
