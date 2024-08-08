@@ -92,7 +92,7 @@ public class DefaultObjectSelector : IObjectSelector
         }
 
         // Index property.
-        if (resultObject == null && current.Value != null && indexes.All(i => i != null))
+        if (resultObject == null && current.Value != null && indexes.Length > 0 && indexes.All(i => i != null))
         {
             var indexProperty = current.Value.GetType()
                 .GetProperties()
@@ -285,7 +285,7 @@ public class DefaultObjectSelector : IObjectSelector
             value = intValue;
             return true;
         }
-        if (obj is long longValue && longValue > -1 && longValue <= int.MaxValue)
+        if (obj is long longValue && longValue >= int.MinValue && longValue <= int.MaxValue)
         {
             value = (int)longValue;
             return true;
