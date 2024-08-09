@@ -307,7 +307,7 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         {
             throw new PluginException($"Cannot load NuGet package plugin '{file}' without proxy.");
         }
-        _logger.LogDebug("Loading '{Assembly}' with proxy.", file);
+        _logger.LogDebug("Loading '{Assembly}' with proxy. Location: '{Location}'.", file, proxyExecutable);
         return LoadPluginExecutable(
             ProxyExecutable,
             authToken,
@@ -331,7 +331,7 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         Process? process = null;
         if (!SkipPluginsExecution)
         {
-            var fileName = Path.GetFileNameWithoutExtension(file);
+            var fileName = Path.GetFileNameWithoutExtension(realPluginFile);
             process = new Process
             {
                 StartInfo =
@@ -354,8 +354,8 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
             {
                 process.StartInfo.ArgumentList.Add(arg);
             }
-            process.OutputDataReceived += (_, args) => _logger.LogTrace($"[{realPluginFile}]: {args.Data}");
-            process.ErrorDataReceived += (_, args) => _logger.LogError($"[{realPluginFile}]: {args.Data}");
+            process.OutputDataReceived += (_, args) => _logger.LogTrace($"[{fileName}]: {args.Data}");
+            process.ErrorDataReceived += (_, args) => _logger.LogError($"[{fileName}]: {args.Data}");
             process.Start();
             process.BeginOutputReadLine();
             process.BeginErrorReadLine();

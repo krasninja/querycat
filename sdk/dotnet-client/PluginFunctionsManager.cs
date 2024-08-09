@@ -51,7 +51,7 @@ public sealed class PluginFunctionsManager : IFunctionsManager
     /// <inheritdoc />
     public void RegisterFactory(Action<IFunctionsManager> registerFunction, bool postpone = true)
     {
-        throw ThrowNotImplementedException();
+        registerFunction.Invoke(this);
     }
 
     /// <inheritdoc />
@@ -62,7 +62,7 @@ public sealed class PluginFunctionsManager : IFunctionsManager
             functions = [functionInfo];
             return true;
         }
-        functions = Array.Empty<IFunction>();
+        functions = [];
         return false;
     }
 

@@ -16,6 +16,9 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader
     private const string DllExtension = ".dll";
     private const string NuGetExtensions = ".nupkg";
 
+    private const string RegistrationClassName = "Registration";
+    private const string RegistrationMethodName = "RegisterFunctions";
+
     private readonly Dictionary<string, byte[]> _rawAssembliesCache = new();
     private readonly Dictionary<string, Assembly> _loadedAssembliesCache = new();
     private readonly IFunctionsManager _functionsManager;
@@ -140,24 +143,27 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader
     public void RegisterFromAssembly(Assembly assembly)
     {
         // If there is class Registration with RegisterFunctions method - call it instead. Use reflection otherwise.
-        var registerType = assembly.GetType(assembly.GetName().Name + ".Registration");
+        // Fast path.
+        var registerType = assembly.GetType(assembly.GetName().Name + $".{RegistrationClassName}");
         if (registerType != null)
         {
-            var registerMethod = registerType.GetMethod("RegisterFunctions");
+            var registerMethod = registerType.GetMethod(RegistrationMethodName);
             if (registerMethod != null)
             {
+                _logger.LogDebug($"Register using '{RegistrationClassName}' class.");
                 _functionsManager.RegisterFactory(fm =>
                 {
                     registerMethod.Invoke(null, [fm]);
                 });
+                return;
             }
         }
-        else
+
+        // Get all types via reflection and try to register. Slow path.
+        _logger.LogDebug("Register using types search method.");
+        foreach (var type in assembly.GetTypes())
         {
-            foreach (var type in assembly.GetTypes())
-            {
-                _functionsManager.RegisterFromType(type);
-            }
+            _functionsManager.RegisterFromType(type);
         }
     }
 
