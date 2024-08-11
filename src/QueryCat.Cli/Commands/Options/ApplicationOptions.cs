@@ -30,9 +30,9 @@ internal class ApplicationOptions
             RunBootstrapScript = true,
             UseConfig = true,
         };
+#if ENABLE_PLUGINS
         executionOptions.PluginDirectories.AddRange(
             GetPluginDirectories(ExecutionThread.GetApplicationDirectory()));
-#if ENABLE_PLUGINS
         executionOptions.PluginDirectories.AddRange(PluginDirectories);
 #endif
 
