@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend.Core.Types;
 
@@ -839,6 +840,8 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
 
     public static implicit operator TimeSpan(VariantValue value) => value.AsInterval;
 
+    private static string Quote(string target) => StringUtils.Quote(target, quote: "\'").ToString();
+
     /// <inheritdoc />
     public override string ToString() => GetInternalType() switch
     {
@@ -846,12 +849,12 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         DataType.Void => VoidValueString,
         DataType.Dynamic => VoidValueString,
         DataType.Integer => AsIntegerUnsafe.ToString(Application.Culture),
-        DataType.String => AsStringUnsafe,
+        DataType.String => Quote(AsStringUnsafe),
         DataType.Boolean => AsBooleanUnsafe.ToString(Application.Culture),
         DataType.Float => AsFloatUnsafe.ToString(FloatNumberFormat, Application.Culture),
         DataType.Numeric => AsNumericUnsafe.ToString(FloatNumberFormat, Application.Culture),
-        DataType.Timestamp => AsTimestampUnsafe.ToString(Application.Culture),
-        DataType.Interval => AsIntervalUnsafe.ToString("c", Application.Culture),
+        DataType.Timestamp => Quote(AsTimestampUnsafe.ToString(Application.Culture)),
+        DataType.Interval => Quote(AsIntervalUnsafe.ToString("c", Application.Culture)),
         DataType.Object => "object:" + AsObjectUnsafe,
         DataType.Blob => "X" + BlobToShortString(AsBlobUnsafe, 16),
         _ => "unknown"
@@ -868,12 +871,12 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         DataType.Void => VoidValueString,
         DataType.Dynamic => VoidValueString,
         DataType.Integer => AsIntegerUnsafe.ToString(format, Application.Culture),
-        DataType.String => AsStringUnsafe,
+        DataType.String => Quote(AsStringUnsafe),
         DataType.Boolean => AsBooleanUnsafe.ToString(),
         DataType.Float => AsFloatUnsafe.ToString(format, Application.Culture),
         DataType.Numeric => AsNumeric.ToString(format, Application.Culture),
-        DataType.Timestamp => AsTimestampUnsafe.ToString(format, Application.Culture),
-        DataType.Interval => AsIntervalUnsafe.ToString(format, Application.Culture),
+        DataType.Timestamp => Quote(AsTimestampUnsafe.ToString(format, Application.Culture)),
+        DataType.Interval => Quote(AsIntervalUnsafe.ToString(format, Application.Culture)),
         DataType.Object => "object:" + AsObjectUnsafe,
         DataType.Blob => "X" + BlobToShortString(AsBlobUnsafe, 16),
         _ => "unknown"
@@ -889,12 +892,12 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         DataType.Null => NullValueString,
         DataType.Void => VoidValueString,
         DataType.Integer => AsIntegerUnsafe.ToString(formatProvider),
-        DataType.String => AsStringUnsafe,
+        DataType.String => Quote(AsStringUnsafe),
         DataType.Boolean => AsBooleanUnsafe.ToString(),
         DataType.Float => AsFloatUnsafe.ToString(formatProvider),
         DataType.Numeric => AsNumeric.ToString(formatProvider),
-        DataType.Timestamp => AsTimestampUnsafe.ToString(formatProvider),
-        DataType.Interval => AsIntervalUnsafe.ToString(null, formatProvider),
+        DataType.Timestamp => Quote(AsTimestampUnsafe.ToString(formatProvider)),
+        DataType.Interval => Quote(AsIntervalUnsafe.ToString(null, formatProvider)),
         DataType.Blob => "X" + BlobToShortString(AsBlobUnsafe, 16),
         DataType.Object => "object:" + AsObjectUnsafe,
         _ => "unknown"

@@ -89,7 +89,7 @@ internal sealed class FunctionSignatureArgumentNode : AstNode, IEquatable<Functi
         sb.Append(TypeNode);
         if (HasDefaultValue && !DefaultValue.IsNull)
         {
-            sb.Append($"={DefaultValue}");
+            sb.Append($" := {DefaultValue}");
         }
         return sb.ToString();
     }

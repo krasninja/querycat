@@ -4,11 +4,11 @@ using Cake.Core.Diagnostics;
 using Cake.Frosting;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend;
+using QueryCat.Backend.AssemblyPlugins;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Execution;
 using QueryCat.Backend.ThriftPlugins;
 
 namespace QueryCat.Build.Tasks;
@@ -33,10 +33,26 @@ public sealed class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
     /// <inheritdoc />
     public override Task RunAsync(BuildContext context)
     {
-        var assemblyFile = context.Arguments.GetArgument("Assembly");
-        using var thread = new ExecutionThreadBootstrapper()
-            .WithPluginsLoader(thread => new ThriftPluginsLoader(thread, new[] { assemblyFile }))
-            .Create();
+        var targetFile = context.Arguments.GetArgument("File");
+        var loader = context.Arguments.GetArgument("Loader");
+
+        // Create thread and load plugin.
+        var bootstrapper = new ExecutionThreadBootstrapper(new ExecutionOptions
+        {
+            RunBootstrapScript = false,
+            SafeMode = true,
+        });
+        if (!string.IsNullOrEmpty(loader) && loader.Contains("thrift", StringComparison.OrdinalIgnoreCase))
+        {
+            bootstrapper.WithPluginsLoader(thr => new ThriftPluginsLoader(thr, [targetFile]));
+        }
+        else
+        {
+            bootstrapper.WithPluginsLoader(thr => new DotNetAssemblyPluginsLoader(thr.FunctionsManager, [targetFile]));
+        }
+        using var thread = bootstrapper.Create();
+
+        // Prepare functions list.
         var pluginFunctions = thread.FunctionsManager.GetFunctions()
             .Where(f =>
                 f.ReturnType == DataType.Object
@@ -48,8 +64,9 @@ public sealed class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
             .OrderBy(f => f.Name)
             .ToList();
         var sb = new StringBuilder()
-            .AppendLine("## Sources");
+            .AppendLine("# Schema");
 
+        // Iterate and write.
         foreach (var inputFunction in pluginFunctions)
         {
             IRowsInputKeys rowsInput;
@@ -73,7 +90,7 @@ public sealed class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
             }
 
             sb
-                .AppendLine($"\n### **{inputFunction.Name}**")
+                .AppendLine($"\n## **{inputFunction.Name}**")
                 .AppendLine("\n```")
                 .AppendLine(inputFunction.ToString())
                 .AppendLine("```\n")
