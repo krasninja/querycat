@@ -2,9 +2,9 @@ using System.Buffers;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend.Core.Types;
 
@@ -18,6 +18,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     public const string FalseValueString = "FALSE";
     public const string NullValueString = "NULL";
     public const string VoidValueString = "VOID";
+    private const string UnknownString = "[unknown]";
 
     public const string FloatNumberFormat = "F";
 
@@ -840,8 +841,6 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
 
     public static implicit operator TimeSpan(VariantValue value) => value.AsInterval;
 
-    private static string Quote(string target) => StringUtils.Quote(target, quote: "\'").ToString();
-
     /// <inheritdoc />
     public override string ToString() => GetInternalType() switch
     {
@@ -849,15 +848,15 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         DataType.Void => VoidValueString,
         DataType.Dynamic => VoidValueString,
         DataType.Integer => AsIntegerUnsafe.ToString(Application.Culture),
-        DataType.String => Quote(AsStringUnsafe),
+        DataType.String => AsStringUnsafe,
         DataType.Boolean => AsBooleanUnsafe.ToString(Application.Culture),
         DataType.Float => AsFloatUnsafe.ToString(FloatNumberFormat, Application.Culture),
         DataType.Numeric => AsNumericUnsafe.ToString(FloatNumberFormat, Application.Culture),
-        DataType.Timestamp => Quote(AsTimestampUnsafe.ToString(Application.Culture)),
-        DataType.Interval => Quote(AsIntervalUnsafe.ToString("c", Application.Culture)),
-        DataType.Object => "object:" + AsObjectUnsafe,
-        DataType.Blob => "X" + BlobToShortString(AsBlobUnsafe, 16),
-        _ => "unknown"
+        DataType.Timestamp => AsTimestampUnsafe.ToString(Application.Culture),
+        DataType.Interval => AsIntervalUnsafe.ToString("c", Application.Culture),
+        DataType.Object => $"[object:{AsObjectUnsafe}]",
+        DataType.Blob => BlobToShortString(AsBlobUnsafe),
+        _ => UnknownString,
     };
 
     /// <summary>
@@ -871,15 +870,15 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         DataType.Void => VoidValueString,
         DataType.Dynamic => VoidValueString,
         DataType.Integer => AsIntegerUnsafe.ToString(format, Application.Culture),
-        DataType.String => Quote(AsStringUnsafe),
+        DataType.String => AsStringUnsafe,
         DataType.Boolean => AsBooleanUnsafe.ToString(),
         DataType.Float => AsFloatUnsafe.ToString(format, Application.Culture),
         DataType.Numeric => AsNumeric.ToString(format, Application.Culture),
-        DataType.Timestamp => Quote(AsTimestampUnsafe.ToString(format, Application.Culture)),
-        DataType.Interval => Quote(AsIntervalUnsafe.ToString(format, Application.Culture)),
-        DataType.Object => "object:" + AsObjectUnsafe,
-        DataType.Blob => "X" + BlobToShortString(AsBlobUnsafe, 16),
-        _ => "unknown"
+        DataType.Timestamp => AsTimestampUnsafe.ToString(format, Application.Culture),
+        DataType.Interval => AsIntervalUnsafe.ToString(format, Application.Culture),
+        DataType.Object => $"[object:{AsObjectUnsafe}]",
+        DataType.Blob => BlobToShortString(AsBlobUnsafe),
+        _ => UnknownString,
     };
 
     /// <summary>
@@ -892,25 +891,52 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         DataType.Null => NullValueString,
         DataType.Void => VoidValueString,
         DataType.Integer => AsIntegerUnsafe.ToString(formatProvider),
-        DataType.String => Quote(AsStringUnsafe),
+        DataType.String => AsStringUnsafe,
         DataType.Boolean => AsBooleanUnsafe.ToString(),
         DataType.Float => AsFloatUnsafe.ToString(formatProvider),
         DataType.Numeric => AsNumeric.ToString(formatProvider),
-        DataType.Timestamp => Quote(AsTimestampUnsafe.ToString(formatProvider)),
-        DataType.Interval => Quote(AsIntervalUnsafe.ToString(null, formatProvider)),
-        DataType.Blob => "X" + BlobToShortString(AsBlobUnsafe, 16),
-        DataType.Object => "object:" + AsObjectUnsafe,
-        _ => "unknown"
+        DataType.Timestamp => AsTimestampUnsafe.ToString(formatProvider),
+        DataType.Interval => AsIntervalUnsafe.ToString(null, formatProvider),
+        DataType.Object => $"[object:{AsObjectUnsafe}]",
+        DataType.Blob => BlobToShortString(AsBlobUnsafe),
+        _ => UnknownString,
     };
 
-    private static string BlobToShortString(IBlobData blobData, int numberOfBytes)
+    private static string BlobToShortString(IBlobData blobData)
     {
-        var arr = ArrayPool<byte>.Shared.Rent(numberOfBytes);
+        // Convert BLOB into string: ABC\5C.
+        var sb = new StringBuilder((int)blobData.Length * 3);
         using var stream = blobData.GetStream();
-        var readBytes = stream.Read(arr, 0, arr.Length);
-        var str = Convert.ToHexString(arr.AsSpan(0, readBytes));
-        ArrayPool<byte>.Shared.Return(arr);
-        return str;
+        var buffer = ArrayPool<byte>.Shared.Rent(1024);
+        try
+        {
+            int read;
+            var oneByteArr = new byte[1];
+            while ((read = stream.Read(buffer, 0, buffer.Length)) > 0)
+            {
+                foreach (var b in buffer.AsSpan(0, read))
+                {
+                    var ch = (char)b;
+                    if (char.IsAsciiLetterOrDigit(ch) || char.IsPunctuation(ch)
+                        || char.IsSeparator(ch))
+                    {
+                        sb.Append(ch);
+                    }
+                    else
+                    {
+                        oneByteArr[0] = b;
+                        sb.Append("\\x")
+                            .Append(Convert.ToHexString(oneByteArr));
+                    }
+                }
+            }
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(buffer);
+        }
+
+        return sb.ToString();
     }
 
     /// <inheritdoc />

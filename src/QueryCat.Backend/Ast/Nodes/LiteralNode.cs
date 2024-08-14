@@ -1,4 +1,6 @@
+using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend.Ast.Nodes;
 
@@ -38,6 +40,18 @@ internal sealed class LiteralNode : ExpressionNode
     /// <inheritdoc />
     public override object Clone() => new LiteralNode(this);
 
+    private static string Quote(string target) => StringUtils.Quote(target, quote: "\'").ToString();
+
+    internal static string ValueToString(VariantValue value) => value.GetInternalType() switch
+    {
+        DataType.String => Quote(value.AsStringUnsafe),
+        DataType.Timestamp => Quote(value.AsTimestampUnsafe.ToString(Application.Culture)) + "::timestamp",
+        DataType.Interval => Quote(value.AsIntervalUnsafe.ToString("c", Application.Culture)) + "::interval",
+        DataType.Object => Quote($"[object:{value.AsObjectUnsafe?.GetType().Name}]"),
+        DataType.Blob => "E" + Quote(value.ToString()),
+        _ => value.ToString(),
+    };
+
     /// <inheritdoc />
-    public override string ToString() => Value.ToString();
+    public override string ToString() => ValueToString(this.Value);
 }
