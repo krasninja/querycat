@@ -35,4 +35,13 @@
   <data name="WebServerListen" xml:space="preserve">
     <value>Listening on {0}. Use `POST /api/query` endpoint.</value>
   </data>
+  <data name="PluginProxyDownload" xml:space="preserve">
+    <value>Downloading plugins proxy at '{0}'.</value>
+  </data>
+  <data name="PluginProxyExtract" xml:space="preserve">
+    <value>Extracting plugins proxy.</value>
+  </data>
+  <data name="PluginProxySave" xml:space="preserve">
+    <value>Saving plugins proxy to '{0}'.</value>
+  </data>
 </root>

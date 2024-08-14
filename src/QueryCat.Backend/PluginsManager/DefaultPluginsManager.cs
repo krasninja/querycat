@@ -1,8 +1,8 @@
-using System.Runtime.InteropServices;
 using System.Xml;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Plugins;
+using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.PluginsManager;
 
@@ -93,31 +93,13 @@ public sealed class DefaultPluginsManager : IPluginsManager, IDisposable
 
         // Create X.downloading file, download and then remove.
         var mainPluginDirectory = GetMainPluginDirectory();
-        var stream = await _httpClient.GetStreamAsync(plugin.Uri, cancellationToken).ConfigureAwait(false);
         var fullFileName = Path.Combine(mainPluginDirectory, Path.GetFileName(plugin.Uri));
-        var fullFileNameDownloading = fullFileName + ".downloading";
-        await using var outputFileStream = new FileStream(fullFileNameDownloading, FileMode.OpenOrCreate);
-        await stream.CopyToAsync(outputFileStream, cancellationToken)
+        await FilesUtils.DownloadFileAsync(_httpClient, new Uri(plugin.Uri), fullFileName, cancellationToken)
             .ConfigureAwait(false);
-        stream.Close();
-        outputFileStream.Close();
+        FilesUtils.MakeUnixExecutable(fullFileName);
         var overwrite = File.Exists(fullFileName);
-        File.Move(fullFileNameDownloading, fullFileName, overwrite);
-        MakeUnixExecutable(fullFileName);
         _logger.LogInformation("Save plugin file {FullFileName}.", fullFileName);
         return overwrite ? 1 : 0;
-    }
-
-    private static void MakeUnixExecutable(string file)
-    {
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX)
-            || RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
-            || RuntimeInformation.IsOSPlatform(OSPlatform.FreeBSD))
-        {
-            var mode = File.GetUnixFileMode(file);
-            mode |= UnixFileMode.UserExecute | UnixFileMode.GroupExecute | UnixFileMode.OtherExecute;
-            File.SetUnixFileMode(file, mode);
-        }
     }
 
     /// <inheritdoc />

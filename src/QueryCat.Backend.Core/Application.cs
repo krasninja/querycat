@@ -43,6 +43,21 @@ public static class Application
     /// </summary>
     public const string ProductName = "QueryCat";
 
+    /// <summary>
+    /// Get short version without hash (0.7.0-alpha.16).
+    /// </summary>
+    /// <returns>Short version.</returns>
+    public static string GetShortVersion()
+    {
+        var version = GetVersion();
+        var hashSeparatorIndex = version.IndexOf('+', StringComparison.Ordinal);
+        return hashSeparatorIndex > -1 ? version.Substring(0, hashSeparatorIndex) : version;
+    }
+
+    /// <summary>
+    /// Get version with hash (0.7.0-alpha.16+1fa9a9d3976d7663a571658bfe720f3565f91a0f).
+    /// </summary>
+    /// <returns>Full version.</returns>
     public static string GetVersion()
         => typeof(Application).Assembly
             .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? string.Empty;

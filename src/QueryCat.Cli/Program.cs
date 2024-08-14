@@ -49,6 +49,7 @@ internal class Program
                 new PluginRemoveCommand(),
                 new PluginUpdateCommand(),
                 new PluginDebugCommand(),
+                new PluginProxyCommand(),
             },
 #endif
         };

@@ -62,5 +62,23 @@ namespace QueryCat.Cli.Resources {
                 return ResourceManager.GetString("WebServerListen", resourceCulture);
             }
         }
+        
+        internal static string PluginProxyDownload {
+            get {
+                return ResourceManager.GetString("PluginProxyDownload", resourceCulture);
+            }
+        }
+        
+        internal static string PluginProxyExtract {
+            get {
+                return ResourceManager.GetString("PluginProxyExtract", resourceCulture);
+            }
+        }
+        
+        internal static string PluginProxySave {
+            get {
+                return ResourceManager.GetString("PluginProxySave", resourceCulture);
+            }
+        }
     }
 }
