@@ -67,7 +67,7 @@ internal class PluginProxyCommand : BaseCommand
 
     private static async Task<MemoryStream> CopyToMemoryStreamAsync(Stream stream, CancellationToken cancellationToken)
     {
-        var ms = new MemoryStream((int)stream.Length);
+        var ms = new MemoryStream();
         await stream.CopyToAsync(ms, cancellationToken);
         await stream.FlushAsync(cancellationToken);
         ms.Seek(0, SeekOrigin.Begin);
@@ -96,7 +96,7 @@ internal class PluginProxyCommand : BaseCommand
             using var zip = ZipFile.OpenRead(archiveFile);
             foreach (var entry in zip.Entries)
             {
-                if (entry.Name == archiveFile)
+                if (entry.Name == targetFile)
                 {
                     await using var stream = entry.Open();
                     return await CopyToMemoryStreamAsync(stream, cancellationToken);
