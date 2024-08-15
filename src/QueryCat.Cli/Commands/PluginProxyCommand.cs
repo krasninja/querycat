@@ -6,6 +6,9 @@ using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Execution;
+#if ENABLE_PLUGINS
+using QueryCat.Backend.ThriftPlugins;
+#endif
 using QueryCat.Backend.Utils;
 using QueryCat.Cli.Commands.Options;
 
@@ -15,7 +18,6 @@ namespace QueryCat.Cli.Commands;
 internal class PluginProxyCommand : BaseCommand
 {
     private const string RepositoryUrl = @"https://github.com/krasninja/querycat/releases/download/";
-    private const string ProxyFileName = "qcat-plugins-proxy";
 
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(PluginProxyCommand));
 
@@ -30,7 +32,7 @@ internal class PluginProxyCommand : BaseCommand
 
             AsyncUtils.RunSync(async ct =>
             {
-                var applicationDirectory = ExecutionThread.GetApplicationDirectory();
+                var applicationDirectory = ExecutionThread.GetApplicationDirectory(ensureExists: true);
                 var pluginsProxyLocalFile = Path.Combine(applicationDirectory, GetFileName());
                 using var httpClient = new HttpClient();
 
@@ -63,7 +65,9 @@ internal class PluginProxyCommand : BaseCommand
     }
 
     private static string GetFileName()
-        => Application.GetPlatform() == Application.PlatformWindows ? ProxyFileName + ".exe" : ProxyFileName;
+        => Application.GetPlatform() == Application.PlatformWindows
+            ? ThriftPluginsLoader.ProxyExecutable + ".exe"
+            : ThriftPluginsLoader.ProxyExecutable;
 
     private static async Task<MemoryStream> CopyToMemoryStreamAsync(Stream stream, CancellationToken cancellationToken)
     {

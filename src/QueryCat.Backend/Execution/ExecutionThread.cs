@@ -88,11 +88,17 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
     /// <summary>
     /// Get application directory to store local data.
     /// </summary>
+    /// <param name="ensureExists">Create the directory if it doesn't exist.</param>
     /// <returns>Default application directory.</returns>
-    public static string GetApplicationDirectory()
+    public static string GetApplicationDirectory(bool ensureExists = false)
     {
-        return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        var directory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             ApplicationDirectory);
+        if (ensureExists)
+        {
+            Directory.CreateDirectory(directory);
+        }
+        return directory;
     }
 
     internal ExecutionThread(

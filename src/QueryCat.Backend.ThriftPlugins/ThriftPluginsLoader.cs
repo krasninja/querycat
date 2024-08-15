@@ -23,7 +23,7 @@ namespace QueryCat.Backend.ThriftPlugins;
 public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
 {
     private const string FunctionsCacheFileExtension = ".fcache.json";
-    private const string ProxyExecutable = "qcat-plugins-proxy";
+    public const string ProxyExecutable = "qcat-plugins-proxy";
 
     private readonly IExecutionThread _thread;
     private readonly bool _debugMode;
