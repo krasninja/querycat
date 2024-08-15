@@ -26,12 +26,6 @@ internal static class PathUtils
             throw new ArgumentNullException(nameof(fileName));
         }
 
-        var path = Environment.GetEnvironmentVariable("PATH");
-        if (string.IsNullOrEmpty(path))
-        {
-            throw new InvalidOperationException("Cannot find PATH environment variable.");
-        }
-
         // Append .exe for Windows.
         if (OperatingSystem.IsWindows()
             && !".exe".Equals(Path.GetExtension(fileName), StringComparison.OrdinalIgnoreCase))
@@ -54,6 +48,11 @@ internal static class PathUtils
         }
 
         // Try to find in PATH.
+        var path = Environment.GetEnvironmentVariable("PATH");
+        if (string.IsNullOrEmpty(path))
+        {
+            throw new InvalidOperationException("Cannot find PATH environment variable.");
+        }
         foreach (var pathItem in path.Split(Path.PathSeparator, StringSplitOptions.TrimEntries))
         {
             candidate = Path.Combine(pathItem, fileName);
