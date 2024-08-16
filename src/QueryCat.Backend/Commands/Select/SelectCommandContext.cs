@@ -61,6 +61,17 @@ internal sealed class SelectCommandContext(SelectQueryNode queryNode) : CommandC
                 result = new InputNameSearchResult(context.CurrentIterator, index, context);
                 return true;
             }
+
+            // Rows inputs.
+            foreach (var inputContext in context.InputQueryContextList)
+            {
+                index = inputContext.RowsInput.GetColumnIndexByName(name, source);
+                if (index > -1)
+                {
+                    result = new InputNameSearchResult(inputContext.RowsInput, index, context);
+                    return true;
+                }
+            }
         }
 
         // Local CTE.
@@ -70,17 +81,6 @@ internal sealed class SelectCommandContext(SelectQueryNode queryNode) : CommandC
             if (index > -1)
             {
                 result = new InputNameSearchResult(commonTableExpression.RowsIterator, index, this);
-                return true;
-            }
-        }
-
-        // Rows inputs.
-        foreach (var context in InputQueryContextList)
-        {
-            index = context.RowsInput.GetColumnIndexByName(name, source);
-            if (index > -1)
-            {
-                result = new InputNameSearchResult(context.RowsInput, index, this);
                 return true;
             }
         }
