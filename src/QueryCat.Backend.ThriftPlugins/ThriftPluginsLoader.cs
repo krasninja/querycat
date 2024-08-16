@@ -23,7 +23,7 @@ namespace QueryCat.Backend.ThriftPlugins;
 public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
 {
     private const string FunctionsCacheFileExtension = ".fcache.json";
-    public const string ProxyExecutable = "qcat-plugins-proxy";
+    private const string ProxyExecutable = "qcat-plugins-proxy";
 
     private readonly IExecutionThread _thread;
     private readonly bool _debugMode;
@@ -232,7 +232,7 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         }
         catch (Exception e)
         {
-            _logger.LogWarning(e, "Cannot load plugin file '{PluginFile}'.", file);
+            _logger.LogWarning(e, "Cannot load plugin file '{PluginFile}': {Error}", file, e.Message);
             return false;
         }
     }
@@ -302,14 +302,14 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         string authToken,
         CancellationToken cancellationToken = default)
     {
-        var proxyExecutable = PathUtils.ResolveExecutableFullPath(ProxyExecutable);
+        var proxyExecutable = PathUtils.ResolveExecutableFullPath(GetProxyFileName());
         if (string.IsNullOrEmpty(proxyExecutable))
         {
             throw new PluginException($"Cannot load NuGet package plugin '{file}' without proxy.");
         }
         _logger.LogDebug("Loading '{Assembly}' with proxy. Location: '{Location}'.", file, proxyExecutable);
         return LoadPluginExecutable(
-            ProxyExecutable,
+            proxyExecutable,
             authToken,
             ["--assembly=" + file],
             file,
@@ -380,6 +380,15 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         // It is needed only if we load plugin using the proxy.
         return GetContext(realPluginFile);
     }
+
+    /// <summary>
+    /// Get plugins proxy file name.
+    /// </summary>
+    /// <returns>Plugins proxy file name.</returns>
+    public static string GetProxyFileName()
+        => Application.GetPlatform() == Application.PlatformWindows
+            ? ProxyExecutable + ".exe"
+            : ProxyExecutable;
 
     private ThriftPluginsServer.PluginContext LoadPluginLibrary(
         string file,

@@ -33,7 +33,7 @@ internal class PluginProxyCommand : BaseCommand
             AsyncUtils.RunSync(async ct =>
             {
                 var applicationDirectory = ExecutionThread.GetApplicationDirectory(ensureExists: true);
-                var pluginsProxyLocalFile = Path.Combine(applicationDirectory, GetFileName());
+                var pluginsProxyLocalFile = Path.Combine(applicationDirectory, ThriftPluginsLoader.GetProxyFileName());
                 using var httpClient = new HttpClient();
 
                 // Download.
@@ -46,7 +46,7 @@ internal class PluginProxyCommand : BaseCommand
                 {
                     // Extract.
                     Console.WriteLine(Resources.Messages.PluginProxyExtract);
-                    var stream = await ExtractFileFromArchiveAsync(GetFileName(), archiveFile, ct);
+                    var stream = await ExtractFileFromArchiveAsync(ThriftPluginsLoader.GetProxyFileName(), archiveFile, ct);
 
                     // Save and make executable.
                     await using var writeStream = File.OpenWrite(pluginsProxyLocalFile);
@@ -63,11 +63,6 @@ internal class PluginProxyCommand : BaseCommand
             });
         }, new ApplicationOptionsBinder(LogLevelOption, PluginDirectoriesOption));
     }
-
-    private static string GetFileName()
-        => Application.GetPlatform() == Application.PlatformWindows
-            ? ThriftPluginsLoader.ProxyExecutable + ".exe"
-            : ThriftPluginsLoader.ProxyExecutable;
 
     private static async Task<MemoryStream> CopyToMemoryStreamAsync(Stream stream, CancellationToken cancellationToken)
     {
