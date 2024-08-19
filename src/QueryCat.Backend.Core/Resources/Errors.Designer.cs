@@ -104,5 +104,11 @@ namespace QueryCat.Backend.Core.Resources {
                 return ResourceManager.GetString("InvalidDeserializationType", resourceCulture);
             }
         }
+        
+        internal static string CannotConvertToType {
+            get {
+                return ResourceManager.GetString("CannotConvertToType", resourceCulture);
+            }
+        }
     }
 }

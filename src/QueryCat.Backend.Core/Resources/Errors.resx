@@ -48,4 +48,7 @@
   <data name="InvalidDeserializationType" xml:space="preserve">
     <value>Invalid deserialization type '{0}'.</value>
   </data>
+  <data name="CannotConvertToType" xml:space="preserve">
+    <value>Cannot convert value from system type '{0}' to type '{1}'.</value>
+  </data>
 </root>
