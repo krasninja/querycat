@@ -45,4 +45,7 @@
   <data name="QueryMissedRequiredCondition" xml:space="preserve">
     <value>Cannot find required condition '{0}' with condition(-s) {1}.</value>
   </data>
+  <data name="InvalidDeserializationType" xml:space="preserve">
+    <value>Invalid deserialization type '{0}'.</value>
+  </data>
 </root>

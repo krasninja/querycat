@@ -33,7 +33,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     public static VariantValue FalseValue = new(false);
 
     [StructLayout(LayoutKind.Explicit)]
-    private readonly struct TypeUnion
+    private readonly struct TypeUnion : IEquatable<TypeUnion>
     {
         [FieldOffset(0)]
         internal readonly long IntegerValue;
@@ -50,35 +50,45 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         [FieldOffset(0)]
         internal readonly TimeSpan TimeSpanValue;
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
         internal TypeUnion(long value) : this()
         {
             IntegerValue = value;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
         internal TypeUnion(double value) : this()
         {
             DoubleValue = value;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
         internal TypeUnion(DateTime value) : this()
         {
             DateTimeValue = value;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
         internal TypeUnion(bool value) : this()
         {
             BooleanValue = value;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
         internal TypeUnion(TimeSpan value) : this()
         {
             TimeSpanValue = value;
         }
+
+        /// <inheritdoc />
+        public override bool Equals([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] object? obj)
+            => obj is TypeUnion typeUnion && typeUnion.IntegerValue == this.IntegerValue;
+
+        /// <inheritdoc />
+        public override int GetHashCode() => IntegerValue.GetHashCode();
+
+        /// <inheritdoc />
+        public bool Equals(TypeUnion other) => IntegerValue == other.IntegerValue;
     }
 
     private readonly TypeUnion _valueUnion;
@@ -750,7 +760,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     }
 
     /// <summary>
-    /// Try create variant value from string.
+    /// Try to create variant value from string.
     /// </summary>
     /// <param name="value">String value.</param>
     /// <param name="targetType">Target type.</param>
