@@ -1,0 +1,8 @@
+expected: |
+  BABA
+query: |
+  with
+    cte as (select id, name from it_stocks())
+  select id from cte where cte.id = 'BABA';
+skip: true
+comment: For now we don't extract id condition from CTE if condition out of that block.
