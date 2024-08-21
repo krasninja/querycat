@@ -46,6 +46,11 @@ public interface IExecutionThread : IDisposable
     IObjectSelector ObjectSelector { get; }
 
     /// <summary>
+    /// Currently executing query.
+    /// </summary>
+    string CurrentQuery { get; }
+
+    /// <summary>
     /// Execution statistic.
     /// </summary>
     ExecutionStatistic Statistic { get; }
@@ -74,6 +79,14 @@ public interface IExecutionThread : IDisposable
     /// <param name="scope">Scope instance.</param>
     /// <returns>True if variable with the specified name is found, false otherwise.</returns>
     bool TryGetVariable(string name, out VariantValue value, IExecutionScope? scope = null);
+
+    /// <summary>
+    /// Get completions for the incomplete query.
+    /// </summary>
+    /// <param name="query">Query text.</param>
+    /// <param name="position">Cursor position within the query. By default, the end of the query.</param>
+    /// <returns>Completion items.</returns>
+    IEnumerable<CompletionItem> GetCompletions(string query, int position = -1);
 }
 
 /// <summary>

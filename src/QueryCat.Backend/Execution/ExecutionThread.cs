@@ -19,7 +19,6 @@ namespace QueryCat.Backend.Execution;
 /// </summary>
 public class ExecutionThread : IExecutionThread<ExecutionOptions>
 {
-    private readonly IAstBuilder _astBuilder;
     internal const string ApplicationDirectory = "qcat";
     internal const string BootstrapFileName = "rc.sql";
 
@@ -43,6 +42,11 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
     /// </summary>
     internal IExecutionScope RootScope => _rootScope;
 
+    /// <summary>
+    /// AST builder.
+    /// </summary>
+    internal IAstBuilder AstBuilder { get; }
+
     /// <inheritdoc />
     public IExecutionScope TopScope => _topScope;
 
@@ -54,6 +58,14 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
 
     /// <inheritdoc />
     public IObjectSelector ObjectSelector { get; protected set; }
+
+    /// <summary>
+    /// Completion source to help user complete his input.
+    /// </summary>
+    internal ICompletionSource CompletionSource { get; }
+
+    /// <inheritdoc />
+    public string CurrentQuery { get; private set; } = string.Empty;
 
     /// <inheritdoc />
     public ExecutionOptions Options { get; }
@@ -107,13 +119,15 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
         IObjectSelector objectSelector,
         IInputConfigStorage configStorage,
         IAstBuilder astBuilder,
+        ICompletionSource completionSource,
         object? tag = null)
     {
         Options = options;
         FunctionsManager = functionsManager;
         ObjectSelector = objectSelector;
         ConfigStorage = configStorage;
-        _astBuilder = astBuilder;
+        AstBuilder = astBuilder;
+        CompletionSource = completionSource;
         Tag = tag;
         _statementsVisitor = new StatementsVisitor(this);
 
@@ -130,7 +144,8 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
             executionThread.FunctionsManager,
             executionThread.ObjectSelector,
             executionThread.ConfigStorage,
-            executionThread._astBuilder,
+            executionThread.AstBuilder,
+            executionThread.CompletionSource,
             executionThread.Tag)
     {
         _rootScope = new ExecutionScope(parent: null);
@@ -154,7 +169,8 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
         // Run with lock and timer.
         lock (_objLock)
         {
-            var programNode = _astBuilder.BuildProgramFromString(query);
+            CurrentQuery = query;
+            var programNode = AstBuilder.BuildProgramFromString(query);
 
             // Bootstrap.
             _deepLevel++;
@@ -200,6 +216,8 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
                     Statistic.ExecutionTime = _stopwatch.Elapsed;
                 }
                 _deepLevel--;
+
+                CurrentQuery = string.Empty;
             }
         }
     }
@@ -365,6 +383,21 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
     }
 
     #endregion
+
+    /// <inheritdoc />
+    public IEnumerable<CompletionItem> GetCompletions(string query, int position = -1)
+    {
+        if (position == -1)
+        {
+            position = query.Length;
+        }
+        var tokens = AstBuilder
+            .GetTokens(query.Substring(0, position))
+            .Select(t => new ParserToken(t.Text, t.Type))
+            .ToList();
+        var context = new CompletionContext(this, query, position, tokens);
+        return CompletionSource.Get(context).OrderByDescending(c => c.Relevance);
+    }
 
     private void Write(VariantValue result, CancellationToken cancellationToken)
     {

@@ -2,6 +2,8 @@ using Antlr4.Runtime;
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Function;
+using QueryCat.Backend.Core.Execution;
+using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend.Parser;
 
@@ -30,6 +32,17 @@ internal sealed class AstBuilder : IAstBuilder
     /// <inheritdoc />
     public FunctionSignatureNode BuildFunctionSignatureFromString(string function)
         => Build<FunctionSignatureNode>(function, p => p.functionSignature());
+
+    /// <inheritdoc />
+    public IReadOnlyList<IAstBuilder.Token> GetTokens(string text)
+    {
+        var inputStream = new AntlrInputStream(text);
+        var lexer = new QueryCatLexer(inputStream);
+        var commonTokenStream = new CommonTokenStream(lexer);
+        commonTokenStream.Fill();
+
+        return TransformTokens(commonTokenStream.GetTokens()).ToList();
+    }
 
     private TNode Build<TNode>(
         string input,
@@ -78,5 +91,31 @@ internal sealed class AstBuilder : IAstBuilder
         }
 
         return (TNode)visitor.Visit(context);
+    }
+
+    private static IEnumerable<IAstBuilder.Token> TransformTokens(IEnumerable<IToken> tokens)
+    {
+        foreach (var token in tokens)
+        {
+            if (token.Type == QueryCatParser.Eof)
+            {
+                continue;
+            }
+
+            if (token.Type == QueryCatParser.QUOTES_IDENTIFIER)
+            {
+                yield return new IAstBuilder.Token(
+                    StringUtils.Unquote(token.Text).ToString(),
+                    ParserToken.TokenKindIdentifier);
+            }
+            else if (token.Type == QueryCatParser.NO_QUOTES_IDENTIFIER)
+            {
+                yield return new IAstBuilder.Token(token.Text, ParserToken.TokenKindIdentifier);
+            }
+            else
+            {
+                yield return new IAstBuilder.Token(token.Text, QueryCatParser.DefaultVocabulary.GetSymbolicName(token.Type));
+            }
+        }
     }
 }

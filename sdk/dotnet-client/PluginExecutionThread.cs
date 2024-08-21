@@ -40,6 +40,9 @@ public sealed class PluginExecutionThread : IExecutionThread
     public IObjectSelector ObjectSelector => NullObjectSelector.Instance;
 
     /// <inheritdoc />
+    public string CurrentQuery => string.Empty;
+
+    /// <inheritdoc />
     public ExecutionStatistic Statistic => NullExecutionStatistic.Instance;
 
     /// <inheritdoc />
@@ -64,6 +67,12 @@ public sealed class PluginExecutionThread : IExecutionThread
     {
         value = VariantValue.Null;
         return false;
+    }
+
+    /// <inheritdoc />
+    public IEnumerable<CompletionItem> GetCompletions(string query, int position = -1)
+    {
+        yield break;
     }
 
     /// <inheritdoc />

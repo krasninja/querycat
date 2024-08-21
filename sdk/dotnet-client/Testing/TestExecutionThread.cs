@@ -44,6 +44,9 @@ public class TestExecutionThread : IExecutionThread
     public IObjectSelector ObjectSelector => NullObjectSelector.Instance;
 
     /// <inheritdoc />
+    public string CurrentQuery => string.Empty;
+
+    /// <inheritdoc />
     public ExecutionStatistic Statistic => NullExecutionStatistic.Instance;
 
     /// <inheritdoc />
@@ -60,6 +63,12 @@ public class TestExecutionThread : IExecutionThread
     {
         value = default;
         return false;
+    }
+
+    /// <inheritdoc />
+    public IEnumerable<CompletionItem> GetCompletions(string query, int position = -1)
+    {
+        yield break;
     }
 
     protected virtual void Dispose(bool disposing)

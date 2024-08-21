@@ -26,13 +26,13 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
 
     private IInputConfigStorage _inputConfigStorage = NullInputConfigStorage.Instance;
 
-    private IFunctionsManager? _functionsManager = null;
+    private IFunctionsManager? _functionsManager;
 
-    private IObjectSelector? _objectSelector = null;
+    private IObjectSelector? _objectSelector;
 
     private bool _registerStandardLibrary;
 
-    private int _cacheSize = 0;
+    private int _cacheSize;
 
     private readonly List<Action<IFunctionsManager>> _registrations = new();
 
@@ -42,8 +42,17 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
 
     private readonly List<IUriResolver> _uriResolvers = new();
 
+    private readonly List<ICompletionSource> _completionSources = new();
+
+    private int _completionsCount = 20;
+
     private object? _tag;
 
+    /// <summary>
+    /// Use the custom config storage.
+    /// </summary>
+    /// <param name="configStorage">Instance of <see cref="IInputConfigStorage" />.</param>
+    /// <returns>The instance of <see cref="ExecutionThreadBootstrapper" />.</returns>
     public ExecutionThreadBootstrapper WithConfigStorage(IInputConfigStorage configStorage)
     {
         _inputConfigStorage = configStorage;
@@ -150,6 +159,38 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
     }
 
     /// <summary>
+    /// Use standard internal completion sources.
+    /// </summary>
+    /// <returns>Instance of <see cref="ExecutionThread" />.</returns>
+    public ExecutionThreadBootstrapper WithStandardCompletionSources()
+    {
+        _completionSources.Add(new VariablesCompletionSource());
+        return this;
+    }
+
+    /// <summary>
+    /// Use completion source.
+    /// </summary>
+    /// <param name="completionSource">Completion source instance.</param>
+    /// <returns>Instance of <see cref="ExecutionThread" />.</returns>
+    public ExecutionThreadBootstrapper WithCompletionSource(ICompletionSource completionSource)
+    {
+        _completionSources.Add(completionSource);
+        return this;
+    }
+
+    /// <summary>
+    /// Use completion source.
+    /// </summary>
+    /// <param name="completionsCount">Max completions to select.</param>
+    /// <returns>Instance of <see cref="ExecutionThread" />.</returns>
+    public ExecutionThreadBootstrapper WithCompletionsCount(int completionsCount)
+    {
+        _completionsCount = completionsCount;
+        return this;
+    }
+
+    /// <summary>
     /// Create the instance of execution thread.
     /// </summary>
     /// <returns>Instance of <see cref="ExecutionThread" />.</returns>
@@ -175,12 +216,14 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
         var astBuilder = _cacheSize > 0
             ? new AstBuilder(new SimpleLruDictionary<string, IAstNode>(_cacheSize))
             : new AstBuilder();
+        var completionSource = new CombineCompletionSource(_completionSources, _completionsCount);
         var thread = new ExecutionThread(
             options: _executionOptions,
             functionsManager: _functionsManager,
             objectSelector: _objectSelector,
             configStorage: _inputConfigStorage,
-            astBuilder: astBuilder
+            astBuilder: astBuilder,
+            completionSource: completionSource
         );
         thread.Tag = _tag;
 
