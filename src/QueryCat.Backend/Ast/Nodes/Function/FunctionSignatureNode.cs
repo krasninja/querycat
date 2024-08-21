@@ -1,4 +1,5 @@
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Ast.Nodes.Function;
 
