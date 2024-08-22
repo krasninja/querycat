@@ -3,6 +3,7 @@ using System.Text;
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Commands;
+using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
@@ -178,6 +179,11 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
             {
                 RunBootstrapScript();
                 LoadConfig();
+            }
+            if (_deepLevel > Options.MaxRecursionDepth)
+            {
+                throw new QueryCatException(
+                    string.Format(Resources.Errors.ExecutionMaxRecursionDepth, Options.MaxRecursionDepth));
             }
 
             // Set first executing statement and run.

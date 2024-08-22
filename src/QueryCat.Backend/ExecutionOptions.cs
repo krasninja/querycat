@@ -66,4 +66,9 @@ public class ExecutionOptions
     /// Throw time out exception if query hasn't been executed within the time.
     /// </summary>
     public TimeSpan QueryTimeout { get; set; }
+
+    /// <summary>
+    /// Maximum recursion depth.
+    /// </summary>
+    public int MaxRecursionDepth { get; set; } = 1024;
 }
