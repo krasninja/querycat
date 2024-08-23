@@ -34,6 +34,10 @@ internal sealed class CombineCompletionSource : ICompletionSource
     /// <inheritdoc />
     public IEnumerable<CompletionItem> Get(CompletionContext context)
     {
+        if (_completionSources.Length == 0)
+        {
+            return [];
+        }
         var perItem = _maxItems / _completionSources.Length;
         var items = new List<CompletionItem>(capacity: _maxItems);
 

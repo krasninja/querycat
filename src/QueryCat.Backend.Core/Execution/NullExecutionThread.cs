@@ -59,10 +59,16 @@ public sealed class NullExecutionThread : IExecutionThread
     }
 
     /// <inheritdoc />
-    public IEnumerable<CompletionItem> GetCompletions(string query, int position = -1)
+    public IEnumerable<CompletionItem> GetCompletions(string query, int position = -1, object? tag = null)
     {
         yield break;
     }
+
+    /// <inheritdoc />
+    public IExecutionScope PushScope() => NullExecutionScope.Instance;
+
+    /// <inheritdoc />
+    public IExecutionScope? PopScope() => null;
 
     /// <inheritdoc />
     public void Dispose()

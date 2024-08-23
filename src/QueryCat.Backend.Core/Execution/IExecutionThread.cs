@@ -76,7 +76,7 @@ public interface IExecutionThread : IDisposable
     /// </summary>
     /// <param name="name">Variable name.</param>
     /// <param name="value">Variable value.</param>
-    /// <param name="scope">Scope instance.</param>
+    /// <param name="scope">Scope instance. Top scope is used by default.</param>
     /// <returns>True if variable with the specified name is found, false otherwise.</returns>
     bool TryGetVariable(string name, out VariantValue value, IExecutionScope? scope = null);
 
@@ -85,8 +85,21 @@ public interface IExecutionThread : IDisposable
     /// </summary>
     /// <param name="query">Query text.</param>
     /// <param name="position">Cursor position within the query. By default, the end of the query.</param>
+    /// <param name="tag">User data.</param>
     /// <returns>Completion items.</returns>
-    IEnumerable<CompletionItem> GetCompletions(string query, int position = -1);
+    IEnumerable<CompletionItem> GetCompletions(string query, int position = -1, object? tag = null);
+
+    /// <summary>
+    /// Create the new variables scope based on top of the current.
+    /// </summary>
+    /// <returns>Instance of <see cref="IExecutionScope" />.</returns>
+    IExecutionScope PushScope();
+
+    /// <summary>
+    /// Pop the current execution scope for stack and return it.
+    /// </summary>
+    /// <returns>Instance of <see cref="IExecutionScope" />.</returns>
+    IExecutionScope? PopScope();
 }
 
 /// <summary>

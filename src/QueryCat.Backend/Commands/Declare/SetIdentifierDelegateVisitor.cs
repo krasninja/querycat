@@ -32,14 +32,13 @@ internal sealed class SetIdentifierDelegateVisitor : CreateDelegateVisitor
     public override void Visit(IdentifierExpressionNode node)
     {
         ResolveTypesVisitor.Visit(node);
-        var scope = ExecutionThread.TopScope;
 
-        if (ExecutionThread.ContainsVariable(node.Name, scope))
+        if (ExecutionThread.ContainsVariable(node.Name))
         {
             var context = new ObjectSelectorContext(ExecutionThread);
             VariantValue Func()
             {
-                var newValue = SetValue(node, scope, context);
+                var newValue = SetValue(node, context);
                 context.Clear();
                 return newValue;
             }
@@ -50,9 +49,9 @@ internal sealed class SetIdentifierDelegateVisitor : CreateDelegateVisitor
         throw new CannotFindIdentifierException(node.Name);
     }
 
-    private VariantValue SetValue(IdentifierExpressionNode node, IExecutionScope scope, ObjectSelectorContext context)
+    private VariantValue SetValue(IdentifierExpressionNode node, ObjectSelectorContext context)
     {
-        var startObject = ExecutionThread.GetVariable(node.Name, scope);
+        var startObject = ExecutionThread.GetVariable(node.Name);
         var newValue = _funcUnit.Invoke();
 
         // This is expression object.
@@ -63,7 +62,7 @@ internal sealed class SetIdentifierDelegateVisitor : CreateDelegateVisitor
         // Not an expression - variable.
         else if (!node.HasSelectors)
         {
-            scope.Variables[node.Name] = newValue;
+            ExecutionThread.TopScope.Variables[node.Name] = newValue;
         }
 
         return newValue;

@@ -5,12 +5,12 @@ namespace QueryCat.Backend.Core.Execution;
 /// <summary>
 /// Completion item.
 /// </summary>
-public readonly record struct CompletionItem
+public sealed class CompletionItem
 {
     /// <summary>
     /// Empty completion.
     /// </summary>
-    public static CompletionItem Empty { get; } = new("-", CompletionItemKind.Misc, relevance: 0.0f);
+    public static CompletionItem Empty { get; } = new("-", relevance: 0.0f);
 
     /// <summary>
     /// The text of the completion (variable name, function signature, etc).
@@ -31,9 +31,19 @@ public readonly record struct CompletionItem
     /// Relevance between 0 and 1. The most means better relevance.
     /// </summary>
     [Range(0.0f, 1.0f)]
-    public double Relevance { get; }
+    public float Relevance { get; }
 
-    public CompletionItem(string label, CompletionItemKind kind, string? documentation = null, double relevance = 0.5f)
+    /// <summary>
+    /// Custom user tag.
+    /// </summary>
+    public object? Tag { get; }
+
+    public CompletionItem(
+        string label,
+        CompletionItemKind kind = CompletionItemKind.Misc,
+        string? documentation = null,
+        float relevance = 0.5f,
+        object? tag = null)
     {
         if (relevance < 0.0f || relevance > 1.0f)
         {
@@ -44,5 +54,9 @@ public readonly record struct CompletionItem
         Documentation = documentation ?? string.Empty;
         Kind = kind;
         Relevance = relevance;
+        Tag = tag;
     }
+
+    /// <inheritdoc />
+    public override string ToString() => $"{Kind}: {Label}";
 }

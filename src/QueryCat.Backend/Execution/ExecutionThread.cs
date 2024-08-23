@@ -214,7 +214,7 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
             {
                 if (parameters != null)
                 {
-                    PullScope();
+                    PopScope();
                 }
                 if (_deepLevel == 1)
                 {
@@ -228,14 +228,16 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
         }
     }
 
-    private IExecutionScope PushScope()
+    /// <inheritdoc />
+    public IExecutionScope PushScope()
     {
         var scope = new ExecutionScope(TopScope);
         _topScope = scope;
         return scope;
     }
 
-    private IExecutionScope? PullScope()
+    /// <inheritdoc />
+    public IExecutionScope? PopScope()
     {
         if (_topScope.Parent == null)
         {
@@ -356,7 +358,7 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
         }
         name = eventArgs.VariableName;
 
-        var currentScope = scope ?? TopScope;
+        var currentScope = TopScope;
         while (currentScope != null)
         {
             if (currentScope.Variables.TryGetValue(name, out value))
@@ -391,17 +393,15 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
     #endregion
 
     /// <inheritdoc />
-    public IEnumerable<CompletionItem> GetCompletions(string query, int position = -1)
+    public IEnumerable<CompletionItem> GetCompletions(string query, int position = -1, object? tag = null)
     {
-        if (position == -1)
-        {
-            position = query.Length;
-        }
+        var subQuery = position > -1 ? query.Substring(0, position) : query;
         var tokens = AstBuilder
-            .GetTokens(query.Substring(0, position))
+            .GetTokens(subQuery)
             .Select(t => new ParserToken(t.Text, t.Type))
             .ToList();
         var context = new CompletionContext(this, query, position, tokens);
+        context.Tag = tag;
         return CompletionSource.Get(context).OrderByDescending(c => c.Relevance);
     }
 
