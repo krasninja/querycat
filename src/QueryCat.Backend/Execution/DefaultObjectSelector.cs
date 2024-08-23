@@ -61,6 +61,10 @@ public class DefaultObjectSelector : IObjectSelector
                     {
                         resultObject = dictionary[key];
                     }
+                    else
+                    {
+                        return null;
+                    }
                 }
             }
 
@@ -69,14 +73,28 @@ public class DefaultObjectSelector : IObjectSelector
                 && intIndex > -1)
             {
                 // Array.
-                if (current.Value is Array array && intIndex < array.Length)
+                if (current.Value is Array array)
                 {
-                    resultObject = array.GetValue(intIndex);
+                    if (intIndex < array.Length)
+                    {
+                        resultObject = array.GetValue(intIndex);
+                    }
+                    else
+                    {
+                        return null;
+                    }
                 }
                 // List.
-                else if (current.Value is IList list && intIndex < list.Count)
+                else if (current.Value is IList list)
                 {
-                    resultObject = list[intIndex];
+                    if (intIndex < list.Count)
+                    {
+                        resultObject = list[intIndex];
+                    }
+                    else
+                    {
+                        return null;
+                    }
                 }
                 // Generic enumerable.
                 else if (current.Value is IEnumerable<object> objectsEnumerable)
@@ -99,9 +117,16 @@ public class DefaultObjectSelector : IObjectSelector
                 .FirstOrDefault(p => p.CanRead && IsPropertyMatchesIndexes(p, indexes));
             if (indexProperty != null)
             {
-                resultObject = indexProperty.GetValue(
-                    current.Value,
-                    PrepareObjectMatchTypes(indexProperty.GetIndexParameters(), indexes));
+                try
+                {
+                    resultObject = indexProperty.GetValue(
+                        current.Value,
+                        PrepareObjectMatchTypes(indexProperty.GetIndexParameters(), indexes));
+                }
+                // Skip out of range exception.
+                catch (TargetInvocationException e) when (e.InnerException is ArgumentOutOfRangeException)
+                {
+                }
             }
         }
 
