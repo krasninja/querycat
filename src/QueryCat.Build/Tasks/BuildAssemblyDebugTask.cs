@@ -1,6 +1,5 @@
 using Cake.Common.IO;
 using Cake.Common.Tools.DotNet;
-using Cake.Core;
 using Cake.Core.IO.Arguments;
 using Cake.Frosting;
 

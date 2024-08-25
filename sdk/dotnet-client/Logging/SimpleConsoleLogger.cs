@@ -1,9 +1,14 @@
 using System;
 using System.IO;
+using System.Runtime.Versioning;
 using Microsoft.Extensions.Logging;
 
 namespace QueryCat.Plugins.Client.Logging;
 
+/// <summary>
+/// A logger that writes messages in the console.
+/// </summary>
+[UnsupportedOSPlatform("browser")]
 internal sealed class SimpleConsoleLogger : ILogger, IDisposable
 {
     private readonly string _name;

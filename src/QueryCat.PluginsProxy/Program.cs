@@ -1,4 +1,5 @@
-﻿using QueryCat.Backend.AssemblyPlugins;
+﻿using Microsoft.Extensions.Logging;
+using QueryCat.Backend.AssemblyPlugins;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Utils;
 using QueryCat.Plugins.Client;
@@ -12,9 +13,13 @@ public class Program
 {
     private const string AssemblyPrefix = "--assembly=";
 
+    private static readonly Lazy<ILogger> _logger = new(() => Application.LoggerFactory.CreateLogger(nameof(Program)));
+
     public static void QueryCatMain(ThriftPluginClientArguments args, string[] assemblyFiles)
     {
+        AppDomain.CurrentDomain.UnhandledException += CurrentDomainOnUnhandledException;
         ThriftPluginClient.SetupApplicationLogging(logLevel: args.LogLevel);
+
         AsyncUtils.RunSync(async ct =>
         {
             using var client = new ThriftPluginClient(args);
@@ -47,5 +52,14 @@ public class Program
             assemblies.Add(arg.Substring(AssemblyPrefix.Length));
         }
         return assemblies.ToArray();
+    }
+
+    private static void CurrentDomainOnUnhandledException(object? sender, UnhandledExceptionEventArgs e)
+    {
+        if (e.ExceptionObject is Exception exception)
+        {
+            _logger.Value.LogCritical(exception, "Unhandled exception.");
+        }
+        Environment.Exit(1);
     }
 }
