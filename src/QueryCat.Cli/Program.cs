@@ -49,7 +49,9 @@ internal class Program
                 new PluginRemoveCommand(),
                 new PluginUpdateCommand(),
                 new PluginDebugCommand(),
+#if PLUGIN_THRIFT
                 new PluginProxyCommand(),
+#endif
             },
 #endif
         };

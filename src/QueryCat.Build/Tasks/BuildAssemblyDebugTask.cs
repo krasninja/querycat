@@ -7,17 +7,17 @@ using Cake.Frosting;
 namespace QueryCat.Build.Tasks;
 
 [TaskName("Build-Assembly-Debug")]
-[TaskDescription("Build project to debug assemblies")]
+[TaskDescription("Build project to debug plugins assemblies")]
 public sealed class BuildAssemblyDebugTask : AsyncFrostingTask<BuildContext>
 {
     /// <inheritdoc />
     public override Task RunAsync(BuildContext context)
     {
-        var targetPlatform = context.Arguments.GetArgument("Platform");
-
         context.DotNetPublish(context.ConsoleAppProjectDirectory, new PublishGeneralSettings(context, publishAot: false)
         {
-            Runtime = targetPlatform,
+            SelfContained = false,
+            PublishSingleFile = true,
+            EnableCompressionInSingleFile = false,
             ArgumentCustomization = pag =>
             {
                 pag.Append(new TextArgument("-p:Plugin=Assembly"));

@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Execution;
-#if ENABLE_PLUGINS
+#if ENABLE_PLUGINS && PLUGIN_THRIFT
 using QueryCat.Backend.ThriftPlugins;
 #endif
 using QueryCat.Backend.Utils;
@@ -14,7 +14,7 @@ using QueryCat.Cli.Commands.Options;
 
 namespace QueryCat.Cli.Commands;
 
-#if ENABLE_PLUGINS
+#if ENABLE_PLUGINS && PLUGIN_THRIFT
 internal class PluginProxyCommand : BaseCommand
 {
     private const string RepositoryUrl = @"https://github.com/krasninja/querycat/releases/download/";
