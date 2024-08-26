@@ -64,9 +64,16 @@ public sealed class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
             .OrderBy(f => f.Name)
             .ToList();
         var sb = new StringBuilder()
-            .AppendLine("# Schema");
+            .AppendLine("# Schema")
+            .AppendLine();
 
-        // Iterate and write.
+        // Prepare TOC.
+        foreach (var inputFunction in pluginFunctions)
+        {
+            sb.AppendLine($"- [{inputFunction.Name}](#{inputFunction.Name})");
+        }
+
+        // Iterate and write whole schema.
         foreach (var inputFunction in pluginFunctions)
         {
             IRowsInputKeys rowsInput;

@@ -80,6 +80,8 @@ public sealed class GetFunctionsInMarkdownTask : AsyncFrostingTask<BuildContext>
         }
 
         var sb = new StringBuilder()
+            .AppendLine("# Functions")
+            .AppendLine()
             .AppendLine("| Name and Description |")
             .AppendLine("| --- |");
         foreach (var function in functionsManager.Functions.OrderBy(m => m.Signature))
