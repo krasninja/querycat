@@ -27,23 +27,33 @@ public class VariablesCompletionSource : ICompletionSource
         }
 
         // Try get from variables.
-        var searchTerm = context.LastTokens.Any() ? context.LastTokens[^1].Text : string.Empty;
+        var searchTerm = context.LastTokens.Any() ? context.LastTokens.Last().Text : string.Empty;
         var scope = context.ExecutionThread.TopScope;
+        var replaceStartIndex = context.Text.Length - searchTerm.Length;
         while (scope != null)
         {
             foreach (var variableName in scope.Variables.Keys)
             {
-                var index = variableName.IndexOf(searchTerm, StringComparison.OrdinalIgnoreCase);
-                if (index == 0)
-                {
-                    yield return new CompletionItem(variableName, CompletionItemKind.Variable, relevance: 0.7f);
-                }
-                else if (index > 0)
-                {
-                    yield return new CompletionItem(variableName, CompletionItemKind.Variable, relevance: 0.2f);
-                }
+                yield return GetCompletionItemByPartialTerm(searchTerm, variableName, replaceStartIndex);
             }
             scope = scope.Parent;
         }
+    }
+
+    internal static CompletionItem GetCompletionItemByPartialTerm(string term, string variableName, int replaceStartIndex = 0)
+    {
+        var index = variableName.IndexOf(term, StringComparison.OrdinalIgnoreCase);
+        if (index == 0)
+        {
+            return new CompletionItem(variableName, CompletionItemKind.Variable, relevance: 0.7f,
+                replaceStartIndex: replaceStartIndex);
+        }
+        if (index > 0)
+        {
+            return new CompletionItem(variableName, CompletionItemKind.Variable, relevance: 0.5f,
+                replaceStartIndex: replaceStartIndex);
+        }
+        return new CompletionItem(variableName, CompletionItemKind.Variable, relevance: 0.0f,
+            replaceStartIndex: replaceStartIndex);
     }
 }

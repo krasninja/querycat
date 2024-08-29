@@ -38,12 +38,20 @@ internal sealed class CombineCompletionSource : ICompletionSource
         {
             return [];
         }
-        var perItem = _maxItems / _completionSources.Length;
+        var remainItems = _maxItems;
         var items = new List<CompletionItem>(capacity: _maxItems);
 
+        var completionIndex = _completionSources.Length;
         foreach (var completionSource in _completionSources)
         {
-            items.AddRange(completionSource.Get(context).Take(perItem));
+            var perItem = remainItems / completionIndex--;
+            var completions = completionSource
+                .Get(context)
+                .OrderByDescending(c => c.Relevance)
+                .Take(perItem)
+                .ToArray();
+            items.AddRange(completions);
+            remainItems -= completions.Length;
         }
 
         return items.OrderByDescending(i => i.Relevance);
