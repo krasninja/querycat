@@ -10,6 +10,11 @@ namespace QueryCat.Backend.Core.Execution;
 [DebuggerDisplay("Count = {Count}")]
 public sealed class ParserTokensList : IReadOnlyList<ParserToken>
 {
+    /// <summary>
+    /// Empty instance.
+    /// </summary>
+    public static ParserTokensList Empty { get; } = new(new List<ParserToken>());
+
     private readonly List<ParserToken> _tokens;
 
     /// <inheritdoc />

@@ -16,11 +16,6 @@ public sealed class CompletionContext
     public string Text { get; }
 
     /// <summary>
-    /// Cursor position.
-    /// </summary>
-    public int Position { get; set; }
-
-    /// <summary>
     /// Last parsed tokens from the cursor position.
     /// </summary>
     public ParserTokensList LastTokens { get; }
@@ -33,12 +28,10 @@ public sealed class CompletionContext
     internal CompletionContext(
         IExecutionThread executionThread,
         string text,
-        int position,
         List<ParserToken> lastTokens)
     {
         ExecutionThread = executionThread;
         Text = text;
-        Position = position;
         LastTokens = new ParserTokensList(lastTokens);
     }
 }

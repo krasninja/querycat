@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
@@ -10,13 +11,6 @@ namespace QueryCat.Backend.Execution;
 /// </summary>
 public class ObjectPropertiesCompletionSource : ICompletionSource
 {
-    private static readonly string[] _objectTokens =
-    [
-        ParserToken.TokenKindPeriod,
-        ParserToken.TokenKindLeftBracket,
-        ParserToken.TokenKindRightBracket,
-    ];
-
     /// <inheritdoc />
     public IEnumerable<CompletionItem> Get(CompletionContext context)
     {
@@ -26,12 +20,15 @@ public class ObjectPropertiesCompletionSource : ICompletionSource
             return [];
         }
 
-        var separatorTokenIndex = context.LastTokens.FindLastIndex(
-            t => !_objectTokens.Contains(t.Type) && t.IsSeparator());
-        var termTokens = context.LastTokens.GetRange(separatorTokenIndex + 1);
+        var separatorTokenIndex = context.LastTokens.FindLastIndex(t => t.IsSeparator());
+        if (separatorTokenIndex == context.LastTokens.Count - 1)
+        {
+            return [];
+        }
 
         // Example for "Project.Diagrams[0].Na".
         // ObjectExpression = Project.Diagrams[0]", TermSearch = "Na".
+        var termTokens = context.LastTokens.GetRange(separatorTokenIndex + 1);
         var (objectSelectExpression, termSearch) = GetObjectExpressionAndTerm(termTokens);
         var obj = GetObjectByExpression(context.ExecutionThread, objectSelectExpression);
         if (obj == null)
@@ -44,17 +41,29 @@ public class ObjectPropertiesCompletionSource : ICompletionSource
         return GetCompletionItemsByType(obj.GetType(), termSearch, periodPosition);
     }
 
-    private static IEnumerable<CompletionItem> GetCompletionItemsByType(
+    /// <summary>
+    /// Whether the property matches for completion.
+    /// </summary>
+    /// <param name="propertyInfo">Property.</param>
+    /// <returns>Returns <c>true</c> if matches, <c>false</c> otherwise.</returns>
+    public virtual bool IsPropertyMatch(PropertyInfo propertyInfo) => true;
+
+    private IEnumerable<CompletionItem> GetCompletionItemsByType(
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] Type type,
         string term,
         int replaceStartIndex)
     {
         var properties = type
             .GetProperties()
-            .Where(p => p.CanRead);
+            .Where(p => p.CanRead)
+            .Where(IsPropertyMatch);
         foreach (var prop in properties)
         {
-            yield return VariablesCompletionSource.GetCompletionItemByPartialTerm(term, prop.Name, replaceStartIndex);
+            var completion = VariablesCompletionSource.GetCompletionItemByPartialTerm(term, prop.Name, replaceStartIndex);
+            if (completion != null)
+            {
+                yield return completion;
+            }
         }
     }
 
