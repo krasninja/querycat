@@ -1,4 +1,4 @@
-name: Publish macOS x64 Version
+name: Publish NuGet Version
 on:
   push:
     branches:
@@ -6,21 +6,22 @@ on:
   workflow_dispatch:
 jobs:
   publish:
-    runs-on: macos-14
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: actions/setup-dotnet@v4
+      - name: Set up dotnet
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8'
       - name: Install GitVersion
         run: dotnet tool install --global GitVersion.Tool --version 6.*
       - name: Run build Cake script
-        run: ./build.sh -t publish-all --verbosity Diagnostic -- --platform mac
-      - name: Upload Artifacts
+        run: ${PWD}/build.sh -t build-package
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: qcat-macos-arm64
-          path: output/qcat-*.tar.gz
+          name: qcat-nuget
+          path: output/QueryCat*.nupkg
