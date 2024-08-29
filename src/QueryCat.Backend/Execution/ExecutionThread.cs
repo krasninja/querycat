@@ -400,7 +400,7 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
             .GetTokens(subQuery)
             .Select(t => new ParserToken(t.Text, t.Type))
             .ToList();
-        var context = new CompletionContext(this, query, position, tokens);
+        var context = new CompletionContext(this, subQuery, tokens);
         context.Tag = tag;
         return CompletionSource.Get(context).OrderByDescending(c => c.Relevance);
     }

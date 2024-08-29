@@ -5,7 +5,7 @@ namespace QueryCat.Backend.Core.Execution;
 /// <summary>
 /// Completion item.
 /// </summary>
-public sealed class CompletionItem
+public sealed class CompletionItem : ICloneable
 {
     /// <summary>
     /// Empty completion.
@@ -34,6 +34,11 @@ public sealed class CompletionItem
     public float Relevance { get; }
 
     /// <summary>
+    /// The index in the query where the completion starts.
+    /// </summary>
+    public int ReplaceStartIndex { get; }
+
+    /// <summary>
     /// Custom user tag.
     /// </summary>
     public object? Tag { get; }
@@ -43,6 +48,7 @@ public sealed class CompletionItem
         CompletionItemKind kind = CompletionItemKind.Misc,
         string? documentation = null,
         float relevance = 0.5f,
+        int replaceStartIndex = 0,
         object? tag = null)
     {
         if (relevance < 0.0f || relevance > 1.0f)
@@ -55,7 +61,20 @@ public sealed class CompletionItem
         Kind = kind;
         Relevance = relevance;
         Tag = tag;
+        ReplaceStartIndex = replaceStartIndex;
     }
+
+    /// <summary>
+    /// Constructor.
+    /// </summary>
+    /// <param name="item">Clone from other completion item.</param>
+    public CompletionItem(CompletionItem item)
+        : this(item.Label, item.Kind, item.Documentation, item.Relevance, item.ReplaceStartIndex, item.Tag)
+    {
+    }
+
+    /// <inheritdoc />
+    public object Clone() => new CompletionItem(this);
 
     /// <inheritdoc />
     public override string ToString() => $"{Kind}: {Label}";
