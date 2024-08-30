@@ -27,9 +27,9 @@ public sealed class ParserTokensList : IReadOnlyList<ParserToken>
     /// Constructor.
     /// </summary>
     /// <param name="tokens">Tokens list.</param>
-    public ParserTokensList(List<ParserToken> tokens)
+    public ParserTokensList(IReadOnlyList<ParserToken> tokens)
     {
-        _tokens = tokens;
+        _tokens = tokens.ToList();
     }
 
     /// <summary>
@@ -108,21 +108,6 @@ public sealed class ParserTokensList : IReadOnlyList<ParserToken>
     /// <param name="tokenType">Token to search.</param>
     /// <returns>Index on the found token or -1 if not found.</returns>
     public int FindLastIndex(int startIndex, string tokenType) => _tokens.FindLastIndex(startIndex, t => t.Type == tokenType);
-
-    /// <summary>
-    /// Gets the index position of the token within the query text.
-    /// </summary>
-    /// <param name="tokenIndex">Token index.</param>
-    /// <returns>The index position of the token.</returns>
-    public int GetQueryPosition(int tokenIndex)
-    {
-        var count = 0;
-        for (var i = 0; i < tokenIndex; i++)
-        {
-            count += _tokens[i].Text.Length;
-        }
-        return count;
-    }
 
     /// <summary>
     /// Creates a shallow copy of a range of elements in the source.

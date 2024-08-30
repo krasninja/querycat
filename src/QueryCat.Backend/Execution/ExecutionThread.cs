@@ -393,16 +393,15 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
     #endregion
 
     /// <inheritdoc />
-    public IEnumerable<CompletionItem> GetCompletions(string query, int position = -1, object? tag = null)
+    public IEnumerable<CompletionResult> GetCompletions(string text, int position = -1, object? tag = null)
     {
-        var subQuery = position > -1 ? query.Substring(0, position) : query;
         var tokens = AstBuilder
-            .GetTokens(subQuery)
-            .Select(t => new ParserToken(t.Text, t.Type))
+            .GetTokens(text)
+            .Select(t => new ParserToken(t.Text, t.Type, t.StartIndex))
             .ToList();
-        var context = new CompletionContext(this, subQuery, tokens);
+        var context = new CompletionContext(this, text, tokens, position);
         context.Tag = tag;
-        return CompletionSource.Get(context).OrderByDescending(c => c.Relevance);
+        return CompletionSource.Get(context).OrderByDescending(c => c.Completion.Relevance);
     }
 
     private void Write(VariantValue result, CancellationToken cancellationToken)

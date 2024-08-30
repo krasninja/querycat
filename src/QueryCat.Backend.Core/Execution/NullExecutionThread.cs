@@ -59,7 +59,7 @@ public sealed class NullExecutionThread : IExecutionThread
     }
 
     /// <inheritdoc />
-    public IEnumerable<CompletionItem> GetCompletions(string query, int position = -1, object? tag = null)
+    public IEnumerable<CompletionResult> GetCompletions(string query, int position = -1, object? tag = null)
     {
         yield break;
     }

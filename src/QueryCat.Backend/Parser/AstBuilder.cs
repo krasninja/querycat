@@ -83,6 +83,7 @@ internal sealed class AstBuilder : IAstBuilder
         var parser = new QueryCatParser(commonTokenStream);
         parser.RemoveErrorListeners();
         parser.AddErrorListener(errorListener);
+        parser.Interpreter.PredictionMode = Antlr4.Runtime.Atn.PredictionMode.LL;
         var context = signatureFunc.Invoke(parser);
         var visitor = new ProgramParserVisitor();
         if (parser.NumberOfSyntaxErrors > 0)
@@ -106,15 +107,17 @@ internal sealed class AstBuilder : IAstBuilder
             {
                 yield return new IAstBuilder.Token(
                     StringUtils.Unquote(token.Text).ToString(),
-                    ParserToken.TokenKindIdentifier);
+                    ParserToken.TokenKindIdentifier,
+                    token.StartIndex);
             }
             else if (token.Type == QueryCatParser.NO_QUOTES_IDENTIFIER)
             {
-                yield return new IAstBuilder.Token(token.Text, ParserToken.TokenKindIdentifier);
+                yield return new IAstBuilder.Token(token.Text, ParserToken.TokenKindIdentifier, token.StartIndex);
             }
             else
             {
-                yield return new IAstBuilder.Token(token.Text, QueryCatParser.DefaultVocabulary.GetSymbolicName(token.Type));
+                yield return new IAstBuilder.Token(token.Text,
+                    QueryCatParser.DefaultVocabulary.GetSymbolicName(token.Type), token.StartIndex);
             }
         }
     }

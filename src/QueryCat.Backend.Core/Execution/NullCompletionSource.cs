@@ -11,7 +11,7 @@ public sealed class NullCompletionSource : ICompletionSource
     public static NullCompletionSource Instance { get; } = new();
 
     /// <inheritdoc />
-    public IEnumerable<CompletionItem> Get(CompletionContext context)
+    public IEnumerable<CompletionResult> Get(CompletionContext context)
     {
         yield break;
     }

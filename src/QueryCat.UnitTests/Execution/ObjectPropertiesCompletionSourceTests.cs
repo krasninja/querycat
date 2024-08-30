@@ -67,10 +67,28 @@ public sealed class ObjectPropertiesCompletionSourceTests : IDisposable
         _executionThread.TopScope.Variables["user"] = VariantValue.CreateFromObject(_user);
 
         // Act.
-        var firstCompletion = _executionThread.GetCompletions(query).FirstOrDefault(CompletionItem.Empty);
+        var firstCompletion = _executionThread.GetCompletions(query).FirstOrDefault(CompletionResult.Empty);
 
         // Assert.
-        Assert.Equal(expected, firstCompletion.Label);
+        Assert.Equal(expected, firstCompletion.Completion.Label);
+    }
+
+    [Theory]
+    [InlineData("user.", "user.Name")]
+    [InlineData("user.a", "user.Age")]
+    [InlineData("'street' || user.Addresses[0].", "'street' || user.Addresses[0].Street")]
+    [InlineData("user.Addresses[0].Cit", "user.Addresses[0].City")]
+    public void ApplyCompletion_PartVariableName_ReturnsExpectedCompletions(string query, string expected)
+    {
+        // Arrange.
+        _executionThread.TopScope.Variables["user"] = VariantValue.CreateFromObject(_user);
+
+        // Act.
+        var firstCompletion = _executionThread.GetCompletions(query).FirstOrDefault(CompletionResult.Empty);
+        var replacedText = firstCompletion.Apply(query);
+
+        // Assert.
+        Assert.Equal(expected, replacedText);
     }
 
     /// <inheritdoc />

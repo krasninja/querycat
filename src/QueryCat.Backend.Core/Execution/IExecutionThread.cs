@@ -83,11 +83,11 @@ public interface IExecutionThread : IDisposable
     /// <summary>
     /// Get completions for the incomplete query.
     /// </summary>
-    /// <param name="query">Query text.</param>
-    /// <param name="position">Cursor position within the query. By default, the end of the query.</param>
-    /// <param name="tag">User data.</param>
-    /// <returns>Completion items.</returns>
-    IEnumerable<CompletionItem> GetCompletions(string query, int position = -1, object? tag = null);
+    /// <param name="text">Query text.</param>
+    /// <param name="position">Caret position.</param>
+    /// <param name="tag">Custom User data.</param>
+    /// <returns>Completion result.</returns>
+    IEnumerable<CompletionResult> GetCompletions(string text, int position = -1, object? tag = null);
 
     /// <summary>
     /// Create the new variables scope based on top of the current.

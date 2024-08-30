@@ -5,12 +5,12 @@ namespace QueryCat.Backend.Core.Execution;
 /// <summary>
 /// Completion item.
 /// </summary>
-public sealed class CompletionItem : ICloneable
+public sealed class Completion : ICloneable
 {
     /// <summary>
     /// Empty completion.
     /// </summary>
-    public static CompletionItem Empty { get; } = new("-", relevance: 0.0f);
+    public static Completion Empty { get; } = new("-", relevance: 0.0f);
 
     /// <summary>
     /// The text of the completion (variable name, function signature, etc).
@@ -33,23 +33,11 @@ public sealed class CompletionItem : ICloneable
     [Range(0.0f, 1.0f)]
     public float Relevance { get; }
 
-    /// <summary>
-    /// The index in the query where the completion starts.
-    /// </summary>
-    public int ReplaceStartIndex { get; }
-
-    /// <summary>
-    /// Custom user tag.
-    /// </summary>
-    public object? Tag { get; }
-
-    public CompletionItem(
+    public Completion(
         string label,
         CompletionItemKind kind = CompletionItemKind.Misc,
         string? documentation = null,
-        float relevance = 0.5f,
-        int replaceStartIndex = 0,
-        object? tag = null)
+        float relevance = 0.5f)
     {
         if (relevance < 0.0f || relevance > 1.0f)
         {
@@ -60,21 +48,17 @@ public sealed class CompletionItem : ICloneable
         Documentation = documentation ?? string.Empty;
         Kind = kind;
         Relevance = relevance;
-        Tag = tag;
-        ReplaceStartIndex = replaceStartIndex;
     }
 
     /// <summary>
     /// Constructor.
     /// </summary>
     /// <param name="item">Clone from other completion item.</param>
-    public CompletionItem(CompletionItem item)
-        : this(item.Label, item.Kind, item.Documentation, item.Relevance, item.ReplaceStartIndex, item.Tag)
+    public Completion(Completion item) : this(item.Label, item.Kind, item.Documentation, item.Relevance)
     {
     }
-
     /// <inheritdoc />
-    public object Clone() => new CompletionItem(this);
+    public object Clone() => new Completion(this);
 
     /// <inheritdoc />
     public override string ToString() => $"{Kind}: {Label}";

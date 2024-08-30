@@ -32,14 +32,14 @@ internal sealed class CombineCompletionSource : ICompletionSource
     }
 
     /// <inheritdoc />
-    public IEnumerable<CompletionItem> Get(CompletionContext context)
+    public IEnumerable<CompletionResult> Get(CompletionContext context)
     {
         if (_completionSources.Length == 0)
         {
             return [];
         }
         var remainItems = _maxItems;
-        var items = new List<CompletionItem>(capacity: _maxItems);
+        var items = new List<CompletionResult>(capacity: _maxItems);
 
         var completionIndex = _completionSources.Length;
         foreach (var completionSource in _completionSources)
@@ -47,13 +47,13 @@ internal sealed class CombineCompletionSource : ICompletionSource
             var perItem = remainItems / completionIndex--;
             var completions = completionSource
                 .Get(context)
-                .OrderByDescending(c => c.Relevance)
+                .OrderByDescending(c => c.Completion.Relevance)
                 .Take(perItem)
                 .ToArray();
             items.AddRange(completions);
             remainItems -= completions.Length;
         }
 
-        return items.OrderByDescending(i => i.Relevance);
+        return items.OrderByDescending(i => i.Completion.Relevance);
     }
 }

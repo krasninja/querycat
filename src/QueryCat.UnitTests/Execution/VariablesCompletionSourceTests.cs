@@ -34,10 +34,28 @@ public sealed class VariablesCompletionSourceTests : IDisposable
         _executionThread.TopScope.Variables["name"] = VariantValue.Null;
 
         // Act.
-        var firstCompletion = _executionThread.GetCompletions(query).FirstOrDefault(CompletionItem.Empty);
+        var firstCompletion = _executionThread.GetCompletions(query).FirstOrDefault(CompletionResult.Empty);
 
         // Assert.
-        Assert.Equal(expected, firstCompletion.Label);
+        Assert.Equal(expected, firstCompletion.Completion.Label);
+    }
+
+    [Theory]
+    [InlineData("", "userName")]
+    [InlineData("name", "name")]
+    [InlineData("SELECT 123; SELECT 32 || na", "SELECT 123; SELECT 32 || name")]
+    public void ApplyCompletion_PartVariableName_ReturnsExpectedCompletions(string query, string expected)
+    {
+        // Arrange.
+        _executionThread.TopScope.Variables["userName"] = VariantValue.Null;
+        _executionThread.TopScope.Variables["name"] = VariantValue.Null;
+
+        // Act.
+        var firstCompletion = _executionThread.GetCompletions(query).FirstOrDefault(CompletionResult.Empty);
+        var replacedText = firstCompletion.Apply(query);
+
+        // Assert.
+        Assert.Equal(expected, replacedText);
     }
 
     /// <inheritdoc />

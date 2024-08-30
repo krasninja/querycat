@@ -12,23 +12,23 @@ namespace QueryCat.Backend.Execution;
 public class ObjectPropertiesCompletionSource : ICompletionSource
 {
     /// <inheritdoc />
-    public IEnumerable<CompletionItem> Get(CompletionContext context)
+    public IEnumerable<CompletionResult> Get(CompletionContext context)
     {
         // The base pattern is "id.". It means, at least we should have 2 tokens.
-        if (context.LastTokens.Count < 2)
+        if (context.TriggerTokens.Count < 2)
         {
             return [];
         }
 
-        var separatorTokenIndex = context.LastTokens.FindLastIndex(t => t.IsSeparator());
-        if (separatorTokenIndex == context.LastTokens.Count - 1)
+        var separatorTokenIndex = context.TriggerTokens.FindLastIndex(t => t.IsSeparator());
+        if (separatorTokenIndex == context.TriggerTokens.Count - 1)
         {
             return [];
         }
 
         // Example for "Project.Diagrams[0].Na".
         // ObjectExpression = Project.Diagrams[0]", TermSearch = "Na".
-        var termTokens = context.LastTokens.GetRange(separatorTokenIndex + 1);
+        var termTokens = context.TriggerTokens.GetRange(separatorTokenIndex + 1);
         var (objectSelectExpression, termSearch) = GetObjectExpressionAndTerm(termTokens);
         var obj = GetObjectByExpression(context.ExecutionThread, objectSelectExpression);
         if (obj == null)
@@ -36,9 +36,12 @@ public class ObjectPropertiesCompletionSource : ICompletionSource
             return [];
         }
 
-        var periodPosition = context.LastTokens.GetQueryPosition(
-            context.LastTokens.FindLastIndex(ParserToken.TokenKindPeriod)) + 1;
-        return GetCompletionItemsByType(obj.GetType(), termSearch, periodPosition);
+        var periodTokenIndex = context.TriggerTokens.FindLastIndex(ParserToken.TokenKindPeriod);
+        var periodPosition = periodTokenIndex > -1 ? context.TriggerTokens[periodTokenIndex].StartIndex + 1 : 0;
+        var completions = GetCompletionItemsByType(obj.GetType(), termSearch);
+        return completions.Select(c => new CompletionResult(
+            c,
+            [new CompletionTextEdit(periodPosition, periodPosition + termSearch.Length, c.Label)]));
     }
 
     /// <summary>
@@ -48,10 +51,9 @@ public class ObjectPropertiesCompletionSource : ICompletionSource
     /// <returns>Returns <c>true</c> if matches, <c>false</c> otherwise.</returns>
     public virtual bool IsPropertyMatch(PropertyInfo propertyInfo) => true;
 
-    private IEnumerable<CompletionItem> GetCompletionItemsByType(
+    private IEnumerable<Completion> GetCompletionItemsByType(
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] Type type,
-        string term,
-        int replaceStartIndex)
+        string term)
     {
         var properties = type
             .GetProperties()
@@ -59,7 +61,7 @@ public class ObjectPropertiesCompletionSource : ICompletionSource
             .Where(IsPropertyMatch);
         foreach (var prop in properties)
         {
-            var completion = VariablesCompletionSource.GetCompletionItemByPartialTerm(term, prop.Name, replaceStartIndex);
+            var completion = VariablesCompletionSource.GetCompletionItemByPartialTerm(term, prop.Name);
             if (completion != null)
             {
                 yield return completion;

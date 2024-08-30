@@ -8,11 +8,13 @@ namespace QueryCat.Backend.Ast;
 /// </summary>
 internal interface IAstBuilder
 {
-    internal readonly struct Token(string text, string type)
+    internal readonly struct Token(string text, string type, int startIndex)
     {
         public string Text { get; } = text;
 
         public string Type { get; } = type;
+
+        public int StartIndex { get; } = startIndex;
     }
 
     ProgramNode BuildProgramFromString(string program);

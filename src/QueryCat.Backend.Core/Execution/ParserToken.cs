@@ -1,3 +1,5 @@
+using System.Collections.Frozen;
+
 namespace QueryCat.Backend.Core.Execution;
 
 /// <summary>
@@ -5,7 +7,8 @@ namespace QueryCat.Backend.Core.Execution;
 /// </summary>
 /// <param name="Text">Token text.</param>
 /// <param name="Type">Token type.</param>
-public readonly record struct ParserToken(string Text, string Type)
+/// <param name="StartIndex">Token start index in the text.</param>
+public readonly record struct ParserToken(string Text, string Type, int StartIndex)
 {
     public const string TokenKindIdentifier = "IDENTIFIER";
     public const string TokenKindSpaces = "SPACES";
@@ -42,8 +45,8 @@ public readonly record struct ParserToken(string Text, string Type)
     public const string TokenKindLessLess = "LESS_LESS";
     public const string TokenKindGreaterGreater = "GREATER_GREATER";
 
-    private static readonly string[] _separatorTokens =
-    [
+    private static readonly ISet<string> _separatorTokens = new HashSet<string>
+    {
         TokenKindSpaces,
         TokenKindSemicolon,
 
@@ -74,7 +77,7 @@ public readonly record struct ParserToken(string Text, string Type)
         TokenKindConcat,
         TokenKindLessLess,
         TokenKindGreaterGreater,
-    ];
+    }.ToFrozenSet();
 
     /// <summary>
     /// Is the separator token (space, operator, etc) between variables.

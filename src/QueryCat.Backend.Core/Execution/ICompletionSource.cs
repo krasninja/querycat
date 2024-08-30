@@ -8,7 +8,7 @@ public interface ICompletionSource
     /// <summary>
     /// Get completion items based on current context.
     /// </summary>
-    /// <param name="context">Completion context that has reference to execution thread and position.</param>
-    /// <returns>Completion items.</returns>
-    IEnumerable<CompletionItem> Get(CompletionContext context);
+    /// <param name="context">Completion context.</param>
+    /// <returns>Completion result.</returns>
+    IEnumerable<CompletionResult> Get(CompletionContext context);
 }
