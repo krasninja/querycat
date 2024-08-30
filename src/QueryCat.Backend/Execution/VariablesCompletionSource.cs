@@ -2,6 +2,9 @@ using QueryCat.Backend.Core.Execution;
 
 namespace QueryCat.Backend.Execution;
 
+/// <summary>
+/// Completion source that uses thread variables for autocomplete.
+/// </summary>
 public class VariablesCompletionSource : ICompletionSource
 {
     /// <inheritdoc />
@@ -28,10 +31,12 @@ public class VariablesCompletionSource : ICompletionSource
         {
             foreach (var variableName in scope.Variables.Keys)
             {
-                var completion = GetCompletionItemByPartialTerm(searchTerm, variableName);
+                var completion = GetCompletionItemByPartialTerm(searchTerm, variableName, string.Empty);
                 if (completion != null)
                 {
-                    var textEdit = new CompletionTextEdit(context.TriggerTokenPosition, context.TriggerTokenPosition + searchTerm.Length,
+                    var textEdit = new CompletionTextEdit(
+                        context.TriggerTokenPosition,
+                        context.TriggerTokenPosition + searchTerm.Length,
                         variableName);
                     yield return new CompletionResult(completion, [textEdit]);
                 }
@@ -40,16 +45,16 @@ public class VariablesCompletionSource : ICompletionSource
         }
     }
 
-    internal static Completion? GetCompletionItemByPartialTerm(string term, string variableName)
+    internal static Completion? GetCompletionItemByPartialTerm(string term, string variableName, string documentation)
     {
         var index = variableName.IndexOf(term, StringComparison.OrdinalIgnoreCase);
         if (index == 0)
         {
-            return new Completion(variableName, CompletionItemKind.Variable, relevance: 0.7f);
+            return new Completion(variableName, CompletionItemKind.Variable, documentation, relevance: 0.7f);
         }
         if (index > 0)
         {
-            return new Completion(variableName, CompletionItemKind.Variable, relevance: 0.5f);
+            return new Completion(variableName, CompletionItemKind.Variable, documentation, relevance: 0.5f);
         }
         return null;
     }

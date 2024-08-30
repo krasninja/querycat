@@ -1,5 +1,8 @@
 namespace QueryCat.Backend.Core.Execution;
 
+/// <summary>
+/// The class describes the completion action to update the source text.
+/// </summary>
 public readonly struct CompletionTextEdit
 {
     /// <summary>
@@ -34,4 +37,7 @@ public readonly struct CompletionTextEdit
 
         NewText = newText;
     }
+
+    /// <inheritdoc />
+    public override string ToString() => $"{Start}..{End}: {NewText}";
 }

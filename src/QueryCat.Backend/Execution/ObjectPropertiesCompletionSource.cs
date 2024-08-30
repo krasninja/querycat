@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Execution;
@@ -37,7 +38,7 @@ public class ObjectPropertiesCompletionSource : ICompletionSource
         }
 
         var periodTokenIndex = context.TriggerTokens.FindLastIndex(ParserToken.TokenKindPeriod);
-        var periodPosition = periodTokenIndex > -1 ? context.TriggerTokens[periodTokenIndex].StartIndex + 1 : 0;
+        var periodPosition = periodTokenIndex > -1 ? context.TriggerTokens[periodTokenIndex].EndIndex : 0;
         var completions = GetCompletionItemsByType(obj.GetType(), termSearch);
         return completions.Select(c => new CompletionResult(
             c,
@@ -51,6 +52,17 @@ public class ObjectPropertiesCompletionSource : ICompletionSource
     /// <returns>Returns <c>true</c> if matches, <c>false</c> otherwise.</returns>
     public virtual bool IsPropertyMatch(PropertyInfo propertyInfo) => true;
 
+    /// <summary>
+    /// Get property info documentation text.
+    /// </summary>
+    /// <param name="propertyInfo">Property.</param>
+    /// <returns>Documentation text or empty.</returns>
+    public virtual string GetPropertyDescription(PropertyInfo propertyInfo)
+    {
+        var description = propertyInfo.GetCustomAttribute<DescriptionAttribute>();
+        return description != null ? description.Description : string.Empty;
+    }
+
     private IEnumerable<Completion> GetCompletionItemsByType(
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] Type type,
         string term)
@@ -61,7 +73,8 @@ public class ObjectPropertiesCompletionSource : ICompletionSource
             .Where(IsPropertyMatch);
         foreach (var prop in properties)
         {
-            var completion = VariablesCompletionSource.GetCompletionItemByPartialTerm(term, prop.Name);
+            var completion = VariablesCompletionSource.GetCompletionItemByPartialTerm(
+                term, prop.Name, GetPropertyDescription(prop));
             if (completion != null)
             {
                 yield return completion;
@@ -87,7 +100,7 @@ public class ObjectPropertiesCompletionSource : ICompletionSource
         {
         }
 
-        return VariantValue.Null;
+        return null;
     }
 
     private static (string ObjectExpression, string Term) GetObjectExpressionAndTerm(ParserTokensList termTokens)

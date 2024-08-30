@@ -45,6 +45,11 @@ public readonly record struct ParserToken(string Text, string Type, int StartInd
     public const string TokenKindLessLess = "LESS_LESS";
     public const string TokenKindGreaterGreater = "GREATER_GREATER";
 
+    /// <summary>
+    /// End index of the token.
+    /// </summary>
+    public int EndIndex => StartIndex + Text.Length;
+
     private static readonly ISet<string> _separatorTokens = new HashSet<string>
     {
         TokenKindSpaces,

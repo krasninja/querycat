@@ -52,4 +52,25 @@ public class CompletionResult
             sb.Insert(edit.Start, edit.NewText);
         }
     }
+
+    /// <summary>
+    /// Get calculated caret position after apply.
+    /// </summary>
+    /// <param name="position">Current caret position.</param>
+    /// <returns>New caret position.</returns>
+    public int GetCaretPositionAfterApply(int position)
+    {
+        foreach (var edit in Edits)
+        {
+            if (position >= edit.Start && position <= edit.End)
+            {
+                position = edit.Start + edit.NewText.Length;
+            }
+            else if (position > edit.End)
+            {
+                position = position - edit.ReplaceLength + edit.NewText.Length;
+            }
+        }
+        return position;
+    }
 }
