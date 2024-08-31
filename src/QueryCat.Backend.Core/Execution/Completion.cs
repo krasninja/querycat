@@ -57,6 +57,7 @@ public sealed class Completion : ICloneable
     public Completion(Completion item) : this(item.Label, item.Kind, item.Documentation, item.Relevance)
     {
     }
+
     /// <inheritdoc />
     public object Clone() => new Completion(this);
 

@@ -166,6 +166,7 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
     {
         _completionSources.Add(new VariablesCompletionSource());
         _completionSources.Add(new ObjectPropertiesCompletionSource());
+        _completionSources.Add(new KeywordsCompletionSource());
         return this;
     }
 
