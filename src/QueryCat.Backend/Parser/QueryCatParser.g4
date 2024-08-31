@@ -68,19 +68,6 @@ selectSortSpecification: expression (ASC | DESC)? ((NULLS FIRST) | (NULLS LAST))
 selectAlias: AS? (identifierSimple | STRING_LITERAL);
 selectQueryExpression
     : selectWithClause?
-      SELECT
-      selectTopClause?
-      selectDistinctClause?
-      selectList
-      selectExcept?
-      selectTarget?
-      selectFromClause?
-      selectWindow?
-      selectOrderByClause?
-      selectLimitClause?
-      selectOffsetClause?
-      selectFetchFirstClause? # SelectQueryExpressionSimple
-    | selectWithClause?
       selectQueryExpressionBody
       selectOrderByClause?
       selectLimitClause?
