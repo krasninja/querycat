@@ -2,4 +2,4 @@ expected: |
   tt8090284,Tri kota
 query: |
   select imdb_id, title from 'MoviesTitles.csv' as t where 'f' =
-    all(select a.gender from 'Movies' || 'Actors.csv' as a where a.imdb_id = t.imdb_id);
+    all(select a.gender from ('Movies' || 'Actors.csv') as a where a.imdb_id = t.imdb_id);

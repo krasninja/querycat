@@ -83,7 +83,7 @@ internal sealed class AstBuilder : IAstBuilder
         var parser = new QueryCatParser(commonTokenStream);
         parser.RemoveErrorListeners();
         parser.AddErrorListener(errorListener);
-        parser.Interpreter.PredictionMode = Antlr4.Runtime.Atn.PredictionMode.LL;
+        parser.Interpreter.PredictionMode = Antlr4.Runtime.Atn.PredictionMode.SLL;
         var context = signatureFunc.Invoke(parser);
         var visitor = new ProgramParserVisitor();
         if (parser.NumberOfSyntaxErrors > 0)

@@ -847,7 +847,7 @@ public partial class QueryCatParser : Parser {
 				State = 232;
 				ErrorHandler.Sync(this);
 				_la = TokenStream.LA(1);
-				if ((((_la) & ~0x3f) == 0 && ((1L << _la) & -8994814355764903934L) != 0) || ((((_la - 64)) & ~0x3f) == 0 && ((1L << (_la - 64)) & 531502260801L) != 0) || ((((_la - 160)) & ~0x3f) == 0 && ((1L << (_la - 160)) & 127L) != 0)) {
+				if ((((_la) & ~0x3f) == 0 && ((1L << _la) & -8995940255671746558L) != 0) || ((((_la - 64)) & ~0x3f) == 0 && ((1L << (_la - 64)) & 531502260801L) != 0) || ((((_la - 160)) & ~0x3f) == 0 && ((1L << (_la - 160)) & 127L) != 0)) {
 					{
 					State = 224;
 					functionCallArg();
@@ -6667,35 +6667,6 @@ public partial class QueryCatParser : Parser {
 			else return visitor.VisitChildren(this);
 		}
 	}
-	public partial class ExpressionSubqueryContext : ExpressionContext {
-		public SimpleExpressionContext left;
-		public IToken op;
-		public IToken condition;
-		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode LEFT_PAREN() { return GetToken(QueryCatParser.LEFT_PAREN, 0); }
-		[System.Diagnostics.DebuggerNonUserCode] public SelectQueryExpressionContext selectQueryExpression() {
-			return GetRuleContext<SelectQueryExpressionContext>(0);
-		}
-		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode RIGHT_PAREN() { return GetToken(QueryCatParser.RIGHT_PAREN, 0); }
-		[System.Diagnostics.DebuggerNonUserCode] public SimpleExpressionContext simpleExpression() {
-			return GetRuleContext<SimpleExpressionContext>(0);
-		}
-		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode EQUALS() { return GetToken(QueryCatParser.EQUALS, 0); }
-		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode NOT_EQUALS() { return GetToken(QueryCatParser.NOT_EQUALS, 0); }
-		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode GREATER() { return GetToken(QueryCatParser.GREATER, 0); }
-		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode GREATER_OR_EQUALS() { return GetToken(QueryCatParser.GREATER_OR_EQUALS, 0); }
-		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode LESS() { return GetToken(QueryCatParser.LESS, 0); }
-		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode LESS_OR_EQUALS() { return GetToken(QueryCatParser.LESS_OR_EQUALS, 0); }
-		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode ANY() { return GetToken(QueryCatParser.ANY, 0); }
-		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode SOME() { return GetToken(QueryCatParser.SOME, 0); }
-		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode ALL() { return GetToken(QueryCatParser.ALL, 0); }
-		public ExpressionSubqueryContext(ExpressionContext context) { CopyFrom(context); }
-		[System.Diagnostics.DebuggerNonUserCode]
-		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
-			IQueryCatParserVisitor<TResult> typedVisitor = visitor as IQueryCatParserVisitor<TResult>;
-			if (typedVisitor != null) return typedVisitor.VisitExpressionSubquery(this);
-			else return visitor.VisitChildren(this);
-		}
-	}
 	public partial class ExpressionBinaryInArrayContext : ExpressionContext {
 		public ExpressionContext left;
 		public IToken op;
@@ -6713,6 +6684,35 @@ public partial class QueryCatParser : Parser {
 		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
 			IQueryCatParserVisitor<TResult> typedVisitor = visitor as IQueryCatParserVisitor<TResult>;
 			if (typedVisitor != null) return typedVisitor.VisitExpressionBinaryInArray(this);
+			else return visitor.VisitChildren(this);
+		}
+	}
+	public partial class ExpressionSubqueryContext : ExpressionContext {
+		public ExpressionContext left;
+		public IToken op;
+		public IToken condition;
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode LEFT_PAREN() { return GetToken(QueryCatParser.LEFT_PAREN, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public SelectQueryExpressionContext selectQueryExpression() {
+			return GetRuleContext<SelectQueryExpressionContext>(0);
+		}
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode RIGHT_PAREN() { return GetToken(QueryCatParser.RIGHT_PAREN, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public ExpressionContext expression() {
+			return GetRuleContext<ExpressionContext>(0);
+		}
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode EQUALS() { return GetToken(QueryCatParser.EQUALS, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode NOT_EQUALS() { return GetToken(QueryCatParser.NOT_EQUALS, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode GREATER() { return GetToken(QueryCatParser.GREATER, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode GREATER_OR_EQUALS() { return GetToken(QueryCatParser.GREATER_OR_EQUALS, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode LESS() { return GetToken(QueryCatParser.LESS, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode LESS_OR_EQUALS() { return GetToken(QueryCatParser.LESS_OR_EQUALS, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode ANY() { return GetToken(QueryCatParser.ANY, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode SOME() { return GetToken(QueryCatParser.SOME, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode ALL() { return GetToken(QueryCatParser.ALL, 0); }
+		public ExpressionSubqueryContext(ExpressionContext context) { CopyFrom(context); }
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IQueryCatParserVisitor<TResult> typedVisitor = visitor as IQueryCatParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitExpressionSubquery(this);
 			else return visitor.VisitChildren(this);
 		}
 	}
@@ -6816,7 +6816,7 @@ public partial class QueryCatParser : Parser {
 			int _alt;
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 980;
+			State = 973;
 			ErrorHandler.Sync(this);
 			switch ( Interpreter.AdaptivePredict(TokenStream,122,Context) ) {
 			case 1:
@@ -6936,56 +6936,21 @@ public partial class QueryCatParser : Parser {
 				break;
 			case 11:
 				{
-				_localctx = new ExpressionSubqueryContext(_localctx);
+				_localctx = new ExpressionUnaryContext(_localctx);
 				Context = _localctx;
 				_prevctx = _localctx;
 				State = 970;
-				((ExpressionSubqueryContext)_localctx).left = simpleExpression(0);
+				((ExpressionUnaryContext)_localctx).op = Match(NOT);
 				State = 971;
-				((ExpressionSubqueryContext)_localctx).op = TokenStream.LT(1);
-				_la = TokenStream.LA(1);
-				if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & 528482304L) != 0)) ) {
-					((ExpressionSubqueryContext)_localctx).op = ErrorHandler.RecoverInline(this);
-				}
-				else {
-					ErrorHandler.ReportMatch(this);
-				    Consume();
-				}
-				State = 972;
-				((ExpressionSubqueryContext)_localctx).condition = TokenStream.LT(1);
-				_la = TokenStream.LA(1);
-				if ( !(_la==ANY || _la==SOME || _la==ALL) ) {
-					((ExpressionSubqueryContext)_localctx).condition = ErrorHandler.RecoverInline(this);
-				}
-				else {
-					ErrorHandler.ReportMatch(this);
-				    Consume();
-				}
-				State = 973;
-				Match(LEFT_PAREN);
-				State = 974;
-				selectQueryExpression();
-				State = 975;
-				Match(RIGHT_PAREN);
+				((ExpressionUnaryContext)_localctx).right = expression(2);
 				}
 				break;
 			case 12:
 				{
-				_localctx = new ExpressionUnaryContext(_localctx);
-				Context = _localctx;
-				_prevctx = _localctx;
-				State = 977;
-				((ExpressionUnaryContext)_localctx).op = Match(NOT);
-				State = 978;
-				((ExpressionUnaryContext)_localctx).right = expression(2);
-				}
-				break;
-			case 13:
-				{
 				_localctx = new ExpressionBlockContext(_localctx);
 				Context = _localctx;
 				_prevctx = _localctx;
-				State = 979;
+				State = 972;
 				blockExpression();
 				}
 				break;
@@ -7008,11 +6973,11 @@ public partial class QueryCatParser : Parser {
 						_localctx = new ExpressionBinaryContext(new ExpressionContext(_parentctx, _parentState));
 						((ExpressionBinaryContext)_localctx).left = _prevctx;
 						PushNewRecursionContext(_localctx, _startState, RULE_expression);
-						State = 982;
+						State = 975;
 						if (!(Precpred(Context, 18))) throw new FailedPredicateException(this, "Precpred(Context, 18)");
-						State = 983;
+						State = 976;
 						((ExpressionBinaryContext)_localctx).op = Match(CONCAT);
-						State = 984;
+						State = 977;
 						((ExpressionBinaryContext)_localctx).right = expression(19);
 						}
 						break;
@@ -7021,9 +6986,9 @@ public partial class QueryCatParser : Parser {
 						_localctx = new ExpressionBinaryContext(new ExpressionContext(_parentctx, _parentState));
 						((ExpressionBinaryContext)_localctx).left = _prevctx;
 						PushNewRecursionContext(_localctx, _startState, RULE_expression);
-						State = 985;
+						State = 978;
 						if (!(Precpred(Context, 16))) throw new FailedPredicateException(this, "Precpred(Context, 16)");
-						State = 986;
+						State = 979;
 						((ExpressionBinaryContext)_localctx).op = TokenStream.LT(1);
 						_la = TokenStream.LA(1);
 						if ( !(_la==LESS_LESS || _la==GREATER_GREATER) ) {
@@ -7033,7 +6998,7 @@ public partial class QueryCatParser : Parser {
 							ErrorHandler.ReportMatch(this);
 						    Consume();
 						}
-						State = 987;
+						State = 980;
 						((ExpressionBinaryContext)_localctx).right = expression(17);
 						}
 						break;
@@ -7042,9 +7007,9 @@ public partial class QueryCatParser : Parser {
 						_localctx = new ExpressionBinaryContext(new ExpressionContext(_parentctx, _parentState));
 						((ExpressionBinaryContext)_localctx).left = _prevctx;
 						PushNewRecursionContext(_localctx, _startState, RULE_expression);
-						State = 988;
+						State = 981;
 						if (!(Precpred(Context, 15))) throw new FailedPredicateException(this, "Precpred(Context, 15)");
-						State = 989;
+						State = 982;
 						((ExpressionBinaryContext)_localctx).op = TokenStream.LT(1);
 						_la = TokenStream.LA(1);
 						if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & 7340032L) != 0)) ) {
@@ -7054,7 +7019,7 @@ public partial class QueryCatParser : Parser {
 							ErrorHandler.ReportMatch(this);
 						    Consume();
 						}
-						State = 990;
+						State = 983;
 						((ExpressionBinaryContext)_localctx).right = expression(16);
 						}
 						break;
@@ -7063,9 +7028,9 @@ public partial class QueryCatParser : Parser {
 						_localctx = new ExpressionBinaryContext(new ExpressionContext(_parentctx, _parentState));
 						((ExpressionBinaryContext)_localctx).left = _prevctx;
 						PushNewRecursionContext(_localctx, _startState, RULE_expression);
-						State = 991;
+						State = 984;
 						if (!(Precpred(Context, 14))) throw new FailedPredicateException(this, "Precpred(Context, 14)");
-						State = 992;
+						State = 985;
 						((ExpressionBinaryContext)_localctx).op = TokenStream.LT(1);
 						_la = TokenStream.LA(1);
 						if ( !(_la==PLUS || _la==MINUS) ) {
@@ -7075,7 +7040,7 @@ public partial class QueryCatParser : Parser {
 							ErrorHandler.ReportMatch(this);
 						    Consume();
 						}
-						State = 993;
+						State = 986;
 						((ExpressionBinaryContext)_localctx).right = expression(15);
 						}
 						break;
@@ -7084,9 +7049,9 @@ public partial class QueryCatParser : Parser {
 						_localctx = new ExpressionBinaryContext(new ExpressionContext(_parentctx, _parentState));
 						((ExpressionBinaryContext)_localctx).left = _prevctx;
 						PushNewRecursionContext(_localctx, _startState, RULE_expression);
-						State = 994;
+						State = 987;
 						if (!(Precpred(Context, 13))) throw new FailedPredicateException(this, "Precpred(Context, 13)");
-						State = 995;
+						State = 988;
 						((ExpressionBinaryContext)_localctx).op = TokenStream.LT(1);
 						_la = TokenStream.LA(1);
 						if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & 528482304L) != 0)) ) {
@@ -7096,7 +7061,7 @@ public partial class QueryCatParser : Parser {
 							ErrorHandler.ReportMatch(this);
 						    Consume();
 						}
-						State = 996;
+						State = 989;
 						((ExpressionBinaryContext)_localctx).right = expression(14);
 						}
 						break;
@@ -7105,21 +7070,21 @@ public partial class QueryCatParser : Parser {
 						_localctx = new ExpressionBinaryContext(new ExpressionContext(_parentctx, _parentState));
 						((ExpressionBinaryContext)_localctx).left = _prevctx;
 						PushNewRecursionContext(_localctx, _startState, RULE_expression);
-						State = 997;
+						State = 990;
 						if (!(Precpred(Context, 12))) throw new FailedPredicateException(this, "Precpred(Context, 12)");
-						State = 999;
+						State = 992;
 						ErrorHandler.Sync(this);
 						_la = TokenStream.LA(1);
 						if (_la==NOT) {
 							{
-							State = 998;
+							State = 991;
 							Match(NOT);
 							}
 						}
 
-						State = 1001;
+						State = 994;
 						((ExpressionBinaryContext)_localctx).op = Match(LIKE);
-						State = 1002;
+						State = 995;
 						((ExpressionBinaryContext)_localctx).right = expression(13);
 						}
 						break;
@@ -7128,8 +7093,33 @@ public partial class QueryCatParser : Parser {
 						_localctx = new ExpressionBinaryContext(new ExpressionContext(_parentctx, _parentState));
 						((ExpressionBinaryContext)_localctx).left = _prevctx;
 						PushNewRecursionContext(_localctx, _startState, RULE_expression);
-						State = 1003;
+						State = 996;
 						if (!(Precpred(Context, 11))) throw new FailedPredicateException(this, "Precpred(Context, 11)");
+						State = 998;
+						ErrorHandler.Sync(this);
+						_la = TokenStream.LA(1);
+						if (_la==NOT) {
+							{
+							State = 997;
+							Match(NOT);
+							}
+						}
+
+						State = 1000;
+						((ExpressionBinaryContext)_localctx).op = Match(SIMILAR);
+						State = 1001;
+						Match(TO);
+						State = 1002;
+						((ExpressionBinaryContext)_localctx).right = expression(12);
+						}
+						break;
+					case 8:
+						{
+						_localctx = new ExpressionBetweenContext(new ExpressionContext(_parentctx, _parentState));
+						((ExpressionBetweenContext)_localctx).expr = _prevctx;
+						PushNewRecursionContext(_localctx, _startState, RULE_expression);
+						State = 1003;
+						if (!(Precpred(Context, 8))) throw new FailedPredicateException(this, "Precpred(Context, 8)");
 						State = 1005;
 						ErrorHandler.Sync(this);
 						_la = TokenStream.LA(1);
@@ -7141,37 +7131,12 @@ public partial class QueryCatParser : Parser {
 						}
 
 						State = 1007;
-						((ExpressionBinaryContext)_localctx).op = Match(SIMILAR);
-						State = 1008;
-						Match(TO);
-						State = 1009;
-						((ExpressionBinaryContext)_localctx).right = expression(12);
-						}
-						break;
-					case 8:
-						{
-						_localctx = new ExpressionBetweenContext(new ExpressionContext(_parentctx, _parentState));
-						((ExpressionBetweenContext)_localctx).expr = _prevctx;
-						PushNewRecursionContext(_localctx, _startState, RULE_expression);
-						State = 1010;
-						if (!(Precpred(Context, 8))) throw new FailedPredicateException(this, "Precpred(Context, 8)");
-						State = 1012;
-						ErrorHandler.Sync(this);
-						_la = TokenStream.LA(1);
-						if (_la==NOT) {
-							{
-							State = 1011;
-							Match(NOT);
-							}
-						}
-
-						State = 1014;
 						((ExpressionBetweenContext)_localctx).op = Match(BETWEEN);
-						State = 1015;
+						State = 1008;
 						((ExpressionBetweenContext)_localctx).left = simpleExpression(0);
-						State = 1016;
+						State = 1009;
 						Match(AND);
-						State = 1017;
+						State = 1010;
 						((ExpressionBetweenContext)_localctx).right = expression(9);
 						}
 						break;
@@ -7180,11 +7145,11 @@ public partial class QueryCatParser : Parser {
 						_localctx = new ExpressionBinaryContext(new ExpressionContext(_parentctx, _parentState));
 						((ExpressionBinaryContext)_localctx).left = _prevctx;
 						PushNewRecursionContext(_localctx, _startState, RULE_expression);
-						State = 1019;
+						State = 1012;
 						if (!(Precpred(Context, 5))) throw new FailedPredicateException(this, "Precpred(Context, 5)");
-						State = 1020;
+						State = 1013;
 						((ExpressionBinaryContext)_localctx).op = Match(AND);
-						State = 1021;
+						State = 1014;
 						((ExpressionBinaryContext)_localctx).right = expression(6);
 						}
 						break;
@@ -7193,11 +7158,11 @@ public partial class QueryCatParser : Parser {
 						_localctx = new ExpressionBinaryContext(new ExpressionContext(_parentctx, _parentState));
 						((ExpressionBinaryContext)_localctx).left = _prevctx;
 						PushNewRecursionContext(_localctx, _startState, RULE_expression);
-						State = 1022;
+						State = 1015;
 						if (!(Precpred(Context, 4))) throw new FailedPredicateException(this, "Precpred(Context, 4)");
-						State = 1023;
+						State = 1016;
 						((ExpressionBinaryContext)_localctx).op = Match(OR);
-						State = 1024;
+						State = 1017;
 						((ExpressionBinaryContext)_localctx).right = expression(5);
 						}
 						break;
@@ -7206,11 +7171,11 @@ public partial class QueryCatParser : Parser {
 						_localctx = new ExpressionBinaryCastContext(new ExpressionContext(_parentctx, _parentState));
 						((ExpressionBinaryCastContext)_localctx).right = _prevctx;
 						PushNewRecursionContext(_localctx, _startState, RULE_expression);
-						State = 1025;
+						State = 1018;
 						if (!(Precpred(Context, 26))) throw new FailedPredicateException(this, "Precpred(Context, 26)");
-						State = 1026;
+						State = 1019;
 						Match(TYPECAST);
-						State = 1027;
+						State = 1020;
 						type();
 						}
 						break;
@@ -7219,9 +7184,9 @@ public partial class QueryCatParser : Parser {
 						_localctx = new ExpressionAtTimeZoneContext(new ExpressionContext(_parentctx, _parentState));
 						((ExpressionAtTimeZoneContext)_localctx).left = _prevctx;
 						PushNewRecursionContext(_localctx, _startState, RULE_expression);
-						State = 1028;
+						State = 1021;
 						if (!(Precpred(Context, 25))) throw new FailedPredicateException(this, "Precpred(Context, 25)");
-						State = 1029;
+						State = 1022;
 						atTimeZone();
 						}
 						break;
@@ -7230,21 +7195,21 @@ public partial class QueryCatParser : Parser {
 						_localctx = new ExpressionBinaryInArrayContext(new ExpressionContext(_parentctx, _parentState));
 						((ExpressionBinaryInArrayContext)_localctx).left = _prevctx;
 						PushNewRecursionContext(_localctx, _startState, RULE_expression);
-						State = 1030;
+						State = 1023;
 						if (!(Precpred(Context, 10))) throw new FailedPredicateException(this, "Precpred(Context, 10)");
-						State = 1032;
+						State = 1025;
 						ErrorHandler.Sync(this);
 						_la = TokenStream.LA(1);
 						if (_la==NOT) {
 							{
-							State = 1031;
+							State = 1024;
 							Match(NOT);
 							}
 						}
 
-						State = 1034;
+						State = 1027;
 						((ExpressionBinaryInArrayContext)_localctx).op = Match(IN);
-						State = 1035;
+						State = 1028;
 						((ExpressionBinaryInArrayContext)_localctx).right = array();
 						}
 						break;
@@ -7253,25 +7218,60 @@ public partial class QueryCatParser : Parser {
 						_localctx = new ExpressionBinaryInSubqueryContext(new ExpressionContext(_parentctx, _parentState));
 						((ExpressionBinaryInSubqueryContext)_localctx).left = _prevctx;
 						PushNewRecursionContext(_localctx, _startState, RULE_expression);
-						State = 1036;
+						State = 1029;
 						if (!(Precpred(Context, 9))) throw new FailedPredicateException(this, "Precpred(Context, 9)");
-						State = 1038;
+						State = 1031;
 						ErrorHandler.Sync(this);
 						_la = TokenStream.LA(1);
 						if (_la==NOT) {
 							{
-							State = 1037;
+							State = 1030;
 							Match(NOT);
 							}
 						}
 
-						State = 1040;
+						State = 1033;
 						((ExpressionBinaryInSubqueryContext)_localctx).op = Match(IN);
-						State = 1041;
+						State = 1034;
 						((ExpressionBinaryInSubqueryContext)_localctx).right = selectQueryExpression();
 						}
 						break;
 					case 15:
+						{
+						_localctx = new ExpressionSubqueryContext(new ExpressionContext(_parentctx, _parentState));
+						((ExpressionSubqueryContext)_localctx).left = _prevctx;
+						PushNewRecursionContext(_localctx, _startState, RULE_expression);
+						State = 1035;
+						if (!(Precpred(Context, 6))) throw new FailedPredicateException(this, "Precpred(Context, 6)");
+						State = 1036;
+						((ExpressionSubqueryContext)_localctx).op = TokenStream.LT(1);
+						_la = TokenStream.LA(1);
+						if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & 528482304L) != 0)) ) {
+							((ExpressionSubqueryContext)_localctx).op = ErrorHandler.RecoverInline(this);
+						}
+						else {
+							ErrorHandler.ReportMatch(this);
+						    Consume();
+						}
+						State = 1037;
+						((ExpressionSubqueryContext)_localctx).condition = TokenStream.LT(1);
+						_la = TokenStream.LA(1);
+						if ( !(_la==ANY || _la==SOME || _la==ALL) ) {
+							((ExpressionSubqueryContext)_localctx).condition = ErrorHandler.RecoverInline(this);
+						}
+						else {
+							ErrorHandler.ReportMatch(this);
+						    Consume();
+						}
+						State = 1038;
+						Match(LEFT_PAREN);
+						State = 1039;
+						selectQueryExpression();
+						State = 1040;
+						Match(RIGHT_PAREN);
+						}
+						break;
+					case 16:
 						{
 						_localctx = new ExpressionUnaryContext(new ExpressionContext(_parentctx, _parentState));
 						((ExpressionUnaryContext)_localctx).right = _prevctx;
@@ -7895,17 +7895,18 @@ public partial class QueryCatParser : Parser {
 		case 13: return Precpred(Context, 25);
 		case 14: return Precpred(Context, 10);
 		case 15: return Precpred(Context, 9);
-		case 16: return Precpred(Context, 3);
+		case 16: return Precpred(Context, 6);
+		case 17: return Precpred(Context, 3);
 		}
 		return true;
 	}
 	private bool simpleExpression_sempred(SimpleExpressionContext _localctx, int predIndex) {
 		switch (predIndex) {
-		case 17: return Precpred(Context, 4);
-		case 18: return Precpred(Context, 3);
-		case 19: return Precpred(Context, 2);
-		case 20: return Precpred(Context, 1);
-		case 21: return Precpred(Context, 12);
+		case 18: return Precpred(Context, 4);
+		case 19: return Precpred(Context, 3);
+		case 20: return Precpred(Context, 2);
+		case 21: return Precpred(Context, 1);
+		case 22: return Precpred(Context, 12);
 		}
 		return true;
 	}
@@ -7987,13 +7988,13 @@ public partial class QueryCatParser : Parser {
 		1,67,1,67,1,67,1,67,1,67,1,67,1,67,1,67,1,67,1,67,1,67,1,67,1,67,1,67,
 		1,67,1,67,1,67,1,67,1,67,1,67,1,67,3,67,943,8,67,1,68,1,68,1,69,1,69,1,
 		70,1,70,1,70,1,70,1,70,1,70,1,70,1,70,1,70,1,70,1,70,1,70,1,70,1,70,1,
-		70,1,70,1,70,1,70,1,70,1,70,1,70,1,70,1,70,1,70,1,70,1,70,1,70,1,70,1,
-		70,1,70,1,70,1,70,3,70,981,8,70,1,70,1,70,1,70,1,70,1,70,1,70,1,70,1,70,
-		1,70,1,70,1,70,1,70,1,70,1,70,1,70,1,70,1,70,3,70,1000,8,70,1,70,1,70,
-		1,70,1,70,3,70,1006,8,70,1,70,1,70,1,70,1,70,1,70,3,70,1013,8,70,1,70,
+		70,1,70,1,70,1,70,1,70,1,70,1,70,1,70,1,70,1,70,1,70,3,70,974,8,70,1,70,
 		1,70,1,70,1,70,1,70,1,70,1,70,1,70,1,70,1,70,1,70,1,70,1,70,1,70,1,70,
-		1,70,1,70,1,70,3,70,1033,8,70,1,70,1,70,1,70,1,70,3,70,1039,8,70,1,70,
-		1,70,1,70,1,70,1,70,3,70,1046,8,70,1,70,5,70,1049,8,70,10,70,12,70,1052,
+		1,70,1,70,3,70,993,8,70,1,70,1,70,1,70,1,70,3,70,999,8,70,1,70,1,70,1,
+		70,1,70,1,70,3,70,1006,8,70,1,70,1,70,1,70,1,70,1,70,1,70,1,70,1,70,1,
+		70,1,70,1,70,1,70,1,70,1,70,1,70,1,70,1,70,1,70,3,70,1026,8,70,1,70,1,
+		70,1,70,1,70,3,70,1032,8,70,1,70,1,70,1,70,1,70,1,70,1,70,1,70,1,70,1,
+		70,1,70,1,70,1,70,3,70,1046,8,70,1,70,5,70,1049,8,70,10,70,12,70,1052,
 		9,70,1,71,1,71,1,71,1,71,1,71,1,71,1,71,1,71,1,71,1,71,1,71,1,71,1,71,
 		1,71,3,71,1068,8,71,1,71,1,71,1,71,1,71,1,71,1,71,1,71,1,71,1,71,1,71,
 		1,71,1,71,1,71,1,71,1,71,5,71,1085,8,71,10,71,12,71,1088,9,71,1,72,1,72,
@@ -8004,8 +8005,8 @@ public partial class QueryCatParser : Parser {
 		132,134,136,138,140,142,144,0,17,3,0,3,3,23,23,54,54,2,0,105,105,108,108,
 		2,0,104,104,109,109,2,0,110,110,141,141,3,0,115,115,123,123,134,134,1,
 		0,135,136,2,0,111,111,124,124,2,0,112,112,125,125,1,0,66,66,1,0,74,76,
-		1,0,80,90,3,0,33,47,72,72,79,79,1,0,18,19,1,0,23,28,3,0,33,33,68,68,104,
-		104,1,0,30,31,1,0,20,22,1231,0,149,1,0,0,0,2,178,1,0,0,0,4,180,1,0,0,0,
+		1,0,80,90,3,0,33,47,72,72,79,79,1,0,18,19,1,0,30,31,1,0,20,22,1,0,23,28,
+		3,0,33,33,68,68,104,104,1231,0,149,1,0,0,0,2,178,1,0,0,0,4,180,1,0,0,0,
 		6,199,1,0,0,0,8,207,1,0,0,0,10,241,1,0,0,0,12,246,1,0,0,0,14,250,1,0,0,
 		0,16,257,1,0,0,0,18,262,1,0,0,0,20,264,1,0,0,0,22,274,1,0,0,0,24,285,1,
 		0,0,0,26,292,1,0,0,0,28,307,1,0,0,0,30,332,1,0,0,0,32,367,1,0,0,0,34,369,
@@ -8020,7 +8021,7 @@ public partial class QueryCatParser : Parser {
 		0,110,746,1,0,0,0,112,759,1,0,0,0,114,766,1,0,0,0,116,776,1,0,0,0,118,
 		796,1,0,0,0,120,798,1,0,0,0,122,809,1,0,0,0,124,812,1,0,0,0,126,835,1,
 		0,0,0,128,842,1,0,0,0,130,849,1,0,0,0,132,865,1,0,0,0,134,942,1,0,0,0,
-		136,944,1,0,0,0,138,946,1,0,0,0,140,980,1,0,0,0,142,1067,1,0,0,0,144,1098,
+		136,944,1,0,0,0,138,946,1,0,0,0,140,973,1,0,0,0,142,1067,1,0,0,0,144,1098,
 		1,0,0,0,146,148,5,9,0,0,147,146,1,0,0,0,148,151,1,0,0,0,149,147,1,0,0,
 		0,149,150,1,0,0,0,150,152,1,0,0,0,151,149,1,0,0,0,152,157,3,2,1,0,153,
 		154,5,9,0,0,154,156,3,2,1,0,155,153,1,0,0,0,156,159,1,0,0,0,157,155,1,
@@ -8244,40 +8245,40 @@ public partial class QueryCatParser : Parser {
 		0,0,0,942,886,1,0,0,0,942,893,1,0,0,0,942,900,1,0,0,0,942,912,1,0,0,0,
 		942,919,1,0,0,0,942,926,1,0,0,0,942,933,1,0,0,0,943,135,1,0,0,0,944,945,
 		7,10,0,0,945,137,1,0,0,0,946,947,7,11,0,0,947,139,1,0,0,0,948,949,6,70,
-		-1,0,949,981,3,144,72,0,950,981,3,126,63,0,951,981,3,134,67,0,952,981,
-		3,10,5,0,953,981,3,130,65,0,954,981,3,116,58,0,955,956,5,1,0,0,956,957,
-		3,140,70,0,957,958,5,2,0,0,958,981,1,0,0,0,959,960,5,1,0,0,960,961,3,26,
-		13,0,961,962,5,2,0,0,962,981,1,0,0,0,963,964,7,12,0,0,964,981,3,140,70,
+		-1,0,949,974,3,144,72,0,950,974,3,126,63,0,951,974,3,134,67,0,952,974,
+		3,10,5,0,953,974,3,130,65,0,954,974,3,116,58,0,955,956,5,1,0,0,956,957,
+		3,140,70,0,957,958,5,2,0,0,958,974,1,0,0,0,959,960,5,1,0,0,960,961,3,26,
+		13,0,961,962,5,2,0,0,962,974,1,0,0,0,963,964,7,12,0,0,964,974,3,140,70,
 		17,965,966,5,56,0,0,966,967,5,1,0,0,967,968,3,26,13,0,968,969,5,2,0,0,
-		969,981,1,0,0,0,970,971,3,142,71,0,971,972,7,13,0,0,972,973,7,14,0,0,973,
-		974,5,1,0,0,974,975,3,26,13,0,975,976,5,2,0,0,976,981,1,0,0,0,977,978,
-		5,63,0,0,978,981,3,140,70,2,979,981,3,124,62,0,980,948,1,0,0,0,980,950,
-		1,0,0,0,980,951,1,0,0,0,980,952,1,0,0,0,980,953,1,0,0,0,980,954,1,0,0,
-		0,980,955,1,0,0,0,980,959,1,0,0,0,980,963,1,0,0,0,980,965,1,0,0,0,980,
-		970,1,0,0,0,980,977,1,0,0,0,980,979,1,0,0,0,981,1050,1,0,0,0,982,983,10,
-		18,0,0,983,984,5,29,0,0,984,1049,3,140,70,19,985,986,10,16,0,0,986,987,
-		7,15,0,0,987,1049,3,140,70,17,988,989,10,15,0,0,989,990,7,16,0,0,990,1049,
-		3,140,70,16,991,992,10,14,0,0,992,993,7,12,0,0,993,1049,3,140,70,15,994,
-		995,10,13,0,0,995,996,7,13,0,0,996,1049,3,140,70,14,997,999,10,12,0,0,
-		998,1000,5,63,0,0,999,998,1,0,0,0,999,1000,1,0,0,0,1000,1001,1,0,0,0,1001,
-		1002,5,61,0,0,1002,1049,3,140,70,13,1003,1005,10,11,0,0,1004,1006,5,63,
-		0,0,1005,1004,1,0,0,0,1005,1006,1,0,0,0,1006,1007,1,0,0,0,1007,1008,5,
-		138,0,0,1008,1009,5,69,0,0,1009,1049,3,140,70,12,1010,1012,10,8,0,0,1011,
-		1013,5,63,0,0,1012,1011,1,0,0,0,1012,1013,1,0,0,0,1013,1014,1,0,0,0,1014,
-		1015,5,106,0,0,1015,1016,3,142,71,0,1016,1017,5,48,0,0,1017,1018,3,140,
-		70,9,1018,1049,1,0,0,0,1019,1020,10,5,0,0,1020,1021,5,48,0,0,1021,1049,
-		3,140,70,6,1022,1023,10,4,0,0,1023,1024,5,67,0,0,1024,1049,3,140,70,5,
-		1025,1026,10,26,0,0,1026,1027,5,32,0,0,1027,1049,3,138,69,0,1028,1029,
-		10,25,0,0,1029,1049,3,128,64,0,1030,1032,10,10,0,0,1031,1033,5,63,0,0,
-		1032,1031,1,0,0,0,1032,1033,1,0,0,0,1033,1034,1,0,0,0,1034,1035,5,59,0,
-		0,1035,1049,3,120,60,0,1036,1038,10,9,0,0,1037,1039,5,63,0,0,1038,1037,
-		1,0,0,0,1038,1039,1,0,0,0,1039,1040,1,0,0,0,1040,1041,5,59,0,0,1041,1049,
-		3,26,13,0,1042,1043,10,3,0,0,1043,1045,5,60,0,0,1044,1046,5,63,0,0,1045,
-		1044,1,0,0,0,1045,1046,1,0,0,0,1046,1047,1,0,0,0,1047,1049,5,64,0,0,1048,
-		982,1,0,0,0,1048,985,1,0,0,0,1048,988,1,0,0,0,1048,991,1,0,0,0,1048,994,
-		1,0,0,0,1048,997,1,0,0,0,1048,1003,1,0,0,0,1048,1010,1,0,0,0,1048,1019,
-		1,0,0,0,1048,1022,1,0,0,0,1048,1025,1,0,0,0,1048,1028,1,0,0,0,1048,1030,
-		1,0,0,0,1048,1036,1,0,0,0,1048,1042,1,0,0,0,1049,1052,1,0,0,0,1050,1048,
+		969,974,1,0,0,0,970,971,5,63,0,0,971,974,3,140,70,2,972,974,3,124,62,0,
+		973,948,1,0,0,0,973,950,1,0,0,0,973,951,1,0,0,0,973,952,1,0,0,0,973,953,
+		1,0,0,0,973,954,1,0,0,0,973,955,1,0,0,0,973,959,1,0,0,0,973,963,1,0,0,
+		0,973,965,1,0,0,0,973,970,1,0,0,0,973,972,1,0,0,0,974,1050,1,0,0,0,975,
+		976,10,18,0,0,976,977,5,29,0,0,977,1049,3,140,70,19,978,979,10,16,0,0,
+		979,980,7,13,0,0,980,1049,3,140,70,17,981,982,10,15,0,0,982,983,7,14,0,
+		0,983,1049,3,140,70,16,984,985,10,14,0,0,985,986,7,12,0,0,986,1049,3,140,
+		70,15,987,988,10,13,0,0,988,989,7,15,0,0,989,1049,3,140,70,14,990,992,
+		10,12,0,0,991,993,5,63,0,0,992,991,1,0,0,0,992,993,1,0,0,0,993,994,1,0,
+		0,0,994,995,5,61,0,0,995,1049,3,140,70,13,996,998,10,11,0,0,997,999,5,
+		63,0,0,998,997,1,0,0,0,998,999,1,0,0,0,999,1000,1,0,0,0,1000,1001,5,138,
+		0,0,1001,1002,5,69,0,0,1002,1049,3,140,70,12,1003,1005,10,8,0,0,1004,1006,
+		5,63,0,0,1005,1004,1,0,0,0,1005,1006,1,0,0,0,1006,1007,1,0,0,0,1007,1008,
+		5,106,0,0,1008,1009,3,142,71,0,1009,1010,5,48,0,0,1010,1011,3,140,70,9,
+		1011,1049,1,0,0,0,1012,1013,10,5,0,0,1013,1014,5,48,0,0,1014,1049,3,140,
+		70,6,1015,1016,10,4,0,0,1016,1017,5,67,0,0,1017,1049,3,140,70,5,1018,1019,
+		10,26,0,0,1019,1020,5,32,0,0,1020,1049,3,138,69,0,1021,1022,10,25,0,0,
+		1022,1049,3,128,64,0,1023,1025,10,10,0,0,1024,1026,5,63,0,0,1025,1024,
+		1,0,0,0,1025,1026,1,0,0,0,1026,1027,1,0,0,0,1027,1028,5,59,0,0,1028,1049,
+		3,120,60,0,1029,1031,10,9,0,0,1030,1032,5,63,0,0,1031,1030,1,0,0,0,1031,
+		1032,1,0,0,0,1032,1033,1,0,0,0,1033,1034,5,59,0,0,1034,1049,3,26,13,0,
+		1035,1036,10,6,0,0,1036,1037,7,15,0,0,1037,1038,7,16,0,0,1038,1039,5,1,
+		0,0,1039,1040,3,26,13,0,1040,1041,5,2,0,0,1041,1049,1,0,0,0,1042,1043,
+		10,3,0,0,1043,1045,5,60,0,0,1044,1046,5,63,0,0,1045,1044,1,0,0,0,1045,
+		1046,1,0,0,0,1046,1047,1,0,0,0,1047,1049,5,64,0,0,1048,975,1,0,0,0,1048,
+		978,1,0,0,0,1048,981,1,0,0,0,1048,984,1,0,0,0,1048,987,1,0,0,0,1048,990,
+		1,0,0,0,1048,996,1,0,0,0,1048,1003,1,0,0,0,1048,1012,1,0,0,0,1048,1015,
+		1,0,0,0,1048,1018,1,0,0,0,1048,1021,1,0,0,0,1048,1023,1,0,0,0,1048,1029,
+		1,0,0,0,1048,1035,1,0,0,0,1048,1042,1,0,0,0,1049,1052,1,0,0,0,1050,1048,
 		1,0,0,0,1050,1051,1,0,0,0,1051,141,1,0,0,0,1052,1050,1,0,0,0,1053,1054,
 		6,71,-1,0,1054,1068,3,144,72,0,1055,1068,3,126,63,0,1056,1068,3,128,64,
 		0,1057,1068,3,134,67,0,1058,1068,3,10,5,0,1059,1068,3,130,65,0,1060,1068,
@@ -8286,9 +8287,9 @@ public partial class QueryCatParser : Parser {
 		1067,1055,1,0,0,0,1067,1056,1,0,0,0,1067,1057,1,0,0,0,1067,1058,1,0,0,
 		0,1067,1059,1,0,0,0,1067,1060,1,0,0,0,1067,1061,1,0,0,0,1067,1065,1,0,
 		0,0,1068,1086,1,0,0,0,1069,1070,10,4,0,0,1070,1071,5,29,0,0,1071,1085,
-		3,142,71,5,1072,1073,10,3,0,0,1073,1074,7,16,0,0,1074,1085,3,142,71,4,
+		3,142,71,5,1072,1073,10,3,0,0,1073,1074,7,14,0,0,1074,1085,3,142,71,4,
 		1075,1076,10,2,0,0,1076,1077,7,12,0,0,1077,1085,3,142,71,3,1078,1079,10,
-		1,0,0,1079,1080,7,13,0,0,1080,1085,3,142,71,2,1081,1082,10,12,0,0,1082,
+		1,0,0,1079,1080,7,15,0,0,1080,1085,3,142,71,2,1081,1082,10,12,0,0,1082,
 		1083,5,32,0,0,1083,1085,3,138,69,0,1084,1069,1,0,0,0,1084,1072,1,0,0,0,
 		1084,1075,1,0,0,0,1084,1078,1,0,0,0,1084,1081,1,0,0,0,1085,1088,1,0,0,
 		0,1086,1084,1,0,0,0,1086,1087,1,0,0,0,1087,143,1,0,0,0,1088,1086,1,0,0,
@@ -8303,8 +8304,8 @@ public partial class QueryCatParser : Parser {
 		450,455,459,463,466,469,477,484,493,504,510,513,518,521,526,529,535,540,
 		543,549,554,557,559,562,570,581,586,591,593,602,613,616,619,630,640,649,
 		659,663,667,670,686,690,694,699,702,712,720,723,731,738,752,757,766,772,
-		776,786,796,804,816,824,830,847,851,856,861,875,878,881,907,942,980,999,
-		1005,1012,1032,1038,1045,1048,1050,1067,1084,1086,1098
+		776,786,796,804,816,824,830,847,851,856,861,875,878,881,907,942,973,992,
+		998,1005,1025,1031,1045,1048,1050,1067,1084,1086,1098
 	};
 
 	public static readonly ATN _ATN =
