@@ -164,9 +164,9 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
     /// <returns>Instance of <see cref="ExecutionThread" />.</returns>
     public ExecutionThreadBootstrapper WithStandardCompletionSources()
     {
+        _completionSources.Add(new KeywordsCompletionSource());
         _completionSources.Add(new VariablesCompletionSource());
         _completionSources.Add(new ObjectPropertiesCompletionSource());
-        _completionSources.Add(new KeywordsCompletionSource());
         return this;
     }
 

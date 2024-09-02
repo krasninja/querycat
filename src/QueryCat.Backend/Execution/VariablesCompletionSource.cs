@@ -25,37 +25,24 @@ public class VariablesCompletionSource : ICompletionSource
         }
 
         // Try to get from variables.
-        var searchTerm = context.TriggerTokens.Any() ? context.TriggerTokens.Last().Text : string.Empty;
+        var searchTerm = context.LastTokenText;
         var scope = context.ExecutionThread.TopScope;
         while (scope != null)
         {
             foreach (var variableName in scope.Variables.Keys)
             {
-                var completion = GetCompletionItemByPartialTerm(searchTerm, variableName, string.Empty);
-                if (completion != null)
+                var relevance = Completion.GetRelevanceByTerm(searchTerm, variableName);
+                if (relevance > 0.0f)
                 {
                     var textEdit = new CompletionTextEdit(
                         context.TriggerTokenPosition,
                         context.TriggerTokenPosition + searchTerm.Length,
                         variableName);
-                    yield return new CompletionResult(completion, [textEdit]);
+                    yield return new CompletionResult(
+                        new Completion(variableName, CompletionItemKind.Variable, relevance: relevance), [textEdit]);
                 }
             }
             scope = scope.Parent;
         }
-    }
-
-    internal static Completion? GetCompletionItemByPartialTerm(string term, string variableName, string documentation)
-    {
-        var index = variableName.IndexOf(term, StringComparison.OrdinalIgnoreCase);
-        if (index == 0)
-        {
-            return new Completion(variableName, CompletionItemKind.Variable, documentation, relevance: 0.7f);
-        }
-        if (index > 0)
-        {
-            return new Completion(variableName, CompletionItemKind.Variable, documentation, relevance: 0.5f);
-        }
-        return null;
     }
 }

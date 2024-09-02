@@ -168,7 +168,7 @@ public sealed class KeywordsCompletionSource : ICompletionSource
             return [];
         }
 
-        var searchTerm = context.TriggerTokens.Any() ? context.TriggerTokens[^1].Text : string.Empty;
+        var searchTerm = context.LastTokenText;
 
         return _keywordsCompletions
             .Where(c => c.Label.StartsWith(searchTerm, StringComparison.OrdinalIgnoreCase))

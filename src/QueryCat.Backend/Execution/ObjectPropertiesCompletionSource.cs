@@ -41,8 +41,7 @@ public class ObjectPropertiesCompletionSource : ICompletionSource
         var periodPosition = periodTokenIndex > -1 ? context.TriggerTokens[periodTokenIndex].EndIndex : 0;
         var completions = GetCompletionItemsByType(obj.GetType(), termSearch);
         return completions.Select(c => new CompletionResult(
-            c,
-            [new CompletionTextEdit(periodPosition, periodPosition + termSearch.Length, c.Label)]));
+            c, [new CompletionTextEdit(periodPosition, periodPosition + termSearch.Length, c.Label)]));
     }
 
     /// <summary>
@@ -73,11 +72,11 @@ public class ObjectPropertiesCompletionSource : ICompletionSource
             .Where(IsPropertyMatch);
         foreach (var prop in properties)
         {
-            var completion = VariablesCompletionSource.GetCompletionItemByPartialTerm(
-                term, prop.Name, GetPropertyDescription(prop));
-            if (completion != null)
+            var relevance = Completion.GetRelevanceByTerm(term, prop.Name);
+            if (relevance > 0.0f)
             {
-                yield return completion;
+                yield return new Completion(prop.Name, CompletionItemKind.Variable, GetPropertyDescription(prop),
+                    relevance: relevance);
             }
         }
     }

@@ -36,6 +36,11 @@ public sealed class CompletionContext
     public ParserTokensList TriggerTokens { get; }
 
     /// <summary>
+    /// Last token or empty string.
+    /// </summary>
+    public string LastTokenText => TriggerTokens.Count > 0 ? TriggerTokens[^1].Text : string.Empty;
+
+    /// <summary>
     /// Custom user data.
     /// </summary>
     public object? Tag { get; internal set; }

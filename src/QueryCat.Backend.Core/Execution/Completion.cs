@@ -33,6 +33,11 @@ public sealed class Completion : ICloneable
     [Range(0.0f, 1.0f)]
     public float Relevance { get; }
 
+    /// <summary>
+    /// Does the current completion matches the search term.
+    /// </summary>
+    public bool IsMatch => this != Empty;
+
     public Completion(
         string label,
         CompletionItemKind kind = CompletionItemKind.Misc,
@@ -56,6 +61,32 @@ public sealed class Completion : ICloneable
     /// <param name="item">Clone from other completion item.</param>
     public Completion(Completion item) : this(item.Label, item.Kind, item.Documentation, item.Relevance)
     {
+    }
+
+    internal static float GetRelevanceByTerm(string term, string name)
+    {
+        // Variable starts with the search term. "user" -> "user_name".
+        var index = name.IndexOf(term, StringComparison.OrdinalIgnoreCase);
+        if (index == 0)
+        {
+            return 0.7f;
+        }
+
+        // Variable starts with the search term. "name" -> "user_name".
+        var indexWithUnderscore = name.IndexOf("_" + term, StringComparison.OrdinalIgnoreCase);
+        if (indexWithUnderscore > -1)
+        {
+            return 0.6f;
+        }
+
+        // Variable name contains the term. "me" -> "user_name".
+        if (index > 0)
+        {
+            return 0.4f;
+        }
+
+        // No matches.
+        return Empty.Relevance;
     }
 
     /// <inheritdoc />
