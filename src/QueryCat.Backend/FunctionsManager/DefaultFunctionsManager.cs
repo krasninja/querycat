@@ -344,11 +344,11 @@ public sealed class DefaultFunctionsManager : IFunctionsManager
         return function.Delegate.Invoke(info);
     }
 
-    private static string NormalizeName(string target) => target.ToUpper();
+    private static string NormalizeName(string target) => target.ToUpperInvariant();
 
     private static string GetFunctionName(string signature)
     {
-        var indexOfLeftParen = signature.IndexOf("(", StringComparison.Ordinal);
+        var indexOfLeftParen = signature.IndexOf('(', StringComparison.InvariantCulture);
         if (indexOfLeftParen < 0)
         {
             return NormalizeName(signature);

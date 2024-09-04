@@ -74,9 +74,10 @@ public class Function : IFunction
         // Fill function arguments types.
         for (int i = 0; i < argumentsNodes.Length; i++)
         {
-            if (argumentsNodes[i].HasDefaultValue || argumentsNodes[i].IsOptional)
+            var argumentNode = argumentsNodes[i];
+            if (argumentNode.HasDefaultValue || argumentNode.IsOptional)
             {
-                typesArr[i] = argumentsNodes[i].Type;
+                typesArr[i] = argumentNode.Type;
             }
         }
         if (functionCallArgumentsTypes.Positional.Length > typesArr.Length && variadicArgument == null)

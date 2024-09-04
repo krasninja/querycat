@@ -436,7 +436,7 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
             return string.Empty;
         }
         var text = node.GetText();
-        if (text.StartsWith("E\'", StringComparison.OrdinalIgnoreCase))
+        if (text.StartsWith("E\'", StringComparison.InvariantCultureIgnoreCase))
         {
             text = StringUtils.Unescape(text.Substring(2, text.Length - 3));
         }
