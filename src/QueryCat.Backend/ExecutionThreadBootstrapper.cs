@@ -44,9 +44,9 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
 
     private readonly List<ICompletionSource> _completionSources = new();
 
-    private int _completionsCount = 20;
-
     private object? _tag;
+
+    private bool _addStandardCompletions;
 
     /// <summary>
     /// Use the custom config storage.
@@ -60,7 +60,7 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
     }
 
     /// <summary>
-    /// Use the specific functions manager.
+    /// Use the specific functions' manager.
     /// </summary>
     /// <param name="functionsManager">Functions manager.</param>
     /// <returns>The instance of <see cref="ExecutionThreadBootstrapper" />.</returns>
@@ -164,9 +164,7 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
     /// <returns>Instance of <see cref="ExecutionThread" />.</returns>
     public ExecutionThreadBootstrapper WithStandardCompletionSources()
     {
-        _completionSources.Add(new KeywordsCompletionSource());
-        _completionSources.Add(new VariablesCompletionSource());
-        _completionSources.Add(new ObjectPropertiesCompletionSource());
+        _addStandardCompletions = true;
         return this;
     }
 
@@ -178,17 +176,6 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
     public ExecutionThreadBootstrapper WithCompletionSource(ICompletionSource completionSource)
     {
         _completionSources.Add(completionSource);
-        return this;
-    }
-
-    /// <summary>
-    /// Use completion source.
-    /// </summary>
-    /// <param name="completionsCount">Max completions to select.</param>
-    /// <returns>Instance of <see cref="ExecutionThread" />.</returns>
-    public ExecutionThreadBootstrapper WithCompletionsCount(int completionsCount)
-    {
-        _completionsCount = completionsCount;
         return this;
     }
 
@@ -209,6 +196,16 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
             _functionsManager = new DefaultFunctionsManager(new AstBuilder(), _uriResolvers);
         }
 
+        // Add completions.
+        if (_addStandardCompletions)
+        {
+            _completionSources.Add(new KeywordsCompletionSource());
+            _completionSources.Add(new VariablesCompletionSource());
+            _completionSources.Add(new ObjectPropertiesCompletionSource());
+            _completionSources.Add(new FunctionsCompletionSource(_functionsManager));
+        }
+
+        // Create objects selector.
         if (_objectSelector == null)
         {
             _objectSelector = new DefaultObjectSelector();
@@ -218,7 +215,7 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
         var astBuilder = _cacheSize > 0
             ? new AstBuilder(new SimpleLruDictionary<string, IAstNode>(_cacheSize))
             : new AstBuilder();
-        var completionSource = new CombineCompletionSource(_completionSources, _completionsCount);
+        var completionSource = new CombineCompletionSource(_completionSources, _executionOptions.CompletionsCount);
         var thread = new ExecutionThread(
             options: _executionOptions,
             functionsManager: _functionsManager,

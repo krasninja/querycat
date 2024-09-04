@@ -71,4 +71,9 @@ public class ExecutionOptions
     /// Maximum recursion depth.
     /// </summary>
     public int MaxRecursionDepth { get; set; } = 1024;
+
+    /// <summary>
+    /// Max number of completion to return.
+    /// </summary>
+    public int CompletionsCount { get; set; } = 20;
 }
