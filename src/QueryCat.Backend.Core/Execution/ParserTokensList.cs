@@ -24,6 +24,11 @@ public sealed class ParserTokensList : IReadOnlyList<ParserToken>
     public int Count => _tokens.Count;
 
     /// <summary>
+    /// Get last separator token index or -1 if not found.
+    /// </summary>
+    public int LastSeparatorTokenIndex => this.FindLastIndex(t => t.IsSeparator());
+
+    /// <summary>
     /// Constructor.
     /// </summary>
     /// <param name="tokens">Tokens list.</param>

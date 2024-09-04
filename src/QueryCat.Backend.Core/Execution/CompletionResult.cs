@@ -28,6 +28,17 @@ public class CompletionResult
         Edits = edits;
     }
 
+    public CompletionResult(
+        string label,
+        CompletionItemKind kind = CompletionItemKind.Misc,
+        string? documentation = null,
+        float relevance = 0.5f,
+        params CompletionTextEdit[] edits)
+    {
+        Completion = new Completion(label, kind, documentation, relevance);
+        Edits = edits;
+    }
+
     /// <summary>
     /// Apply text edits from the completion.
     /// </summary>
