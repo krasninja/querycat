@@ -215,7 +215,10 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
         var astBuilder = _cacheSize > 0
             ? new AstBuilder(new SimpleLruDictionary<string, IAstNode>(_cacheSize))
             : new AstBuilder();
-        var completionSource = new CombineCompletionSource(_completionSources, _executionOptions.CompletionsCount);
+        // Keep only one combined completion source.
+        var completionSource = _completionSources.Count == 1 && _completionSources[0] is CombineCompletionSource
+            ? _completionSources[0]
+            : new CombineCompletionSource(_completionSources, _executionOptions.CompletionsCount);
         var thread = new ExecutionThread(
             options: _executionOptions,
             functionsManager: _functionsManager,

@@ -66,7 +66,7 @@ public abstract class BaseObjectPropertiesCompletionSource : ICompletionSource
             var relevance = Completion.GetRelevanceByTerm(term, prop.Name);
             if (relevance > 0.0f)
             {
-                yield return new Completion(prop.Name, CompletionItemKind.Variable, GetPropertyDescription(prop),
+                yield return new Completion(prop.Name, CompletionItemKind.Property, GetPropertyDescription(prop),
                     relevance: relevance);
             }
         }

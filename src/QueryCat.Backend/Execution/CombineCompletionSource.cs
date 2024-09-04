@@ -5,17 +5,19 @@ namespace QueryCat.Backend.Execution;
 /// <summary>
 /// Completion source that can combine multiple other completion sources.
 /// </summary>
-internal sealed class CombineCompletionSource : ICompletionSource
+public sealed class CombineCompletionSource : ICompletionSource
 {
     private readonly ICompletionSource[] _completionSources;
     private readonly int _maxItems;
+    private readonly bool _preventDuplicates;
 
     /// <summary>
     /// Constructor.
     /// </summary>
     /// <param name="completionSources">Completion source.</param>
     /// <param name="maxItems">Max completion items to get per request.</param>
-    public CombineCompletionSource(IEnumerable<ICompletionSource> completionSources, int maxItems = 10)
+    public CombineCompletionSource(
+        IEnumerable<ICompletionSource> completionSources, int maxItems = 10)
         : this(completionSources.ToArray(), maxItems)
     {
     }
@@ -25,10 +27,15 @@ internal sealed class CombineCompletionSource : ICompletionSource
     /// </summary>
     /// <param name="completionSources">Completion source.</param>
     /// <param name="maxItems">Max completion items to get per request.</param>
-    public CombineCompletionSource(ICompletionSource[] completionSources, int maxItems = 10)
+    /// <param name="preventDuplicates">Prevent duplicate items.</param>
+    public CombineCompletionSource(
+        ICompletionSource[] completionSources,
+        int maxItems = 10,
+        bool preventDuplicates = false)
     {
         _completionSources = completionSources;
         _maxItems = maxItems;
+        _preventDuplicates = preventDuplicates;
     }
 
     /// <inheritdoc />
@@ -49,9 +56,14 @@ internal sealed class CombineCompletionSource : ICompletionSource
                 .Get(context)
                 .OrderByDescending(c => c.Completion.Relevance)
                 .Take(perItem)
-                .ToArray();
+                .ToList();
+            if (_preventDuplicates)
+            {
+                completions.RemoveAll(c => items.Any(
+                    i => c.Completion.Kind == i.Completion.Kind && c.Completion.Label.Equals(i.Completion.Label)));
+            }
             items.AddRange(completions);
-            remainItems -= completions.Length;
+            remainItems -= completions.Count;
         }
 
         return items.OrderByDescending(i => i.Completion.Relevance);

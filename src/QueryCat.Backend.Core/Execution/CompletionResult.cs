@@ -84,4 +84,7 @@ public class CompletionResult
         }
         return position;
     }
+
+    /// <inheritdoc />
+    public override string ToString() => Completion.ToString();
 }
