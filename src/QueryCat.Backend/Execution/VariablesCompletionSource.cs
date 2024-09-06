@@ -1,4 +1,5 @@
 using QueryCat.Backend.Core.Execution;
+using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Execution;
 
@@ -29,20 +30,37 @@ public class VariablesCompletionSource : ICompletionSource
         var scope = context.ExecutionThread.TopScope;
         while (scope != null)
         {
-            foreach (var variableName in scope.Variables.Keys)
+            foreach (var variable in scope.Variables)
             {
-                var relevance = Completion.GetRelevanceByTerm(searchTerm, variableName);
-                if (relevance > 0.0f)
+                if (!IsVariableMatch(variable.Key, variable.Value))
                 {
-                    var textEdit = new CompletionTextEdit(
-                        context.TriggerTokenPosition,
-                        context.TriggerTokenPosition + searchTerm.Length,
-                        variableName);
-                    yield return new CompletionResult(
-                        new Completion(variableName, CompletionItemKind.Variable, relevance: relevance), [textEdit]);
+                    continue;
                 }
+                var relevance = Completion.GetRelevanceByTerm(searchTerm, variable.Key);
+                if (relevance == 0.0f)
+                {
+                    continue;
+                }
+
+                var textEdit = new CompletionTextEdit(
+                    context.TriggerTokenPosition,
+                    context.TriggerTokenPosition + searchTerm.Length,
+                    variable.Key);
+                yield return new CompletionResult(
+                    new Completion(variable.Key, CompletionItemKind.Variable, relevance: relevance), [textEdit]);
             }
             scope = scope.Parent;
         }
+    }
+
+    /// <summary>
+    /// Helps to filter variables.
+    /// </summary>
+    /// <param name="name">Variable name.</param>
+    /// <param name="value">Variable value.</param>
+    /// <returns>Returns <c>true</c> if matches, <c>false</c> otherwise.</returns>
+    protected virtual bool IsVariableMatch(string name, in VariantValue value)
+    {
+        return !name.StartsWith('.');
     }
 }
