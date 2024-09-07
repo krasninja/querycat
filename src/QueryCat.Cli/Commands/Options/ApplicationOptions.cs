@@ -48,6 +48,7 @@ internal class ApplicationOptions
         bootstrapper.WithPluginsLoader(thread => new Backend.ThriftPlugins.ThriftPluginsLoader(
             thread,
             executionOptions.PluginDirectories,
+            ExecutionThread.GetApplicationDirectory(),
             functionsCacheDirectory: Path.Combine(ExecutionThread.GetApplicationDirectory(),
                 ApplicationPluginsFunctionsCacheDirectory),
             minLogLevel: LogLevel)

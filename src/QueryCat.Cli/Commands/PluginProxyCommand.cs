@@ -22,9 +22,10 @@ internal class PluginProxyCommand : BaseCommand
 
             AsyncUtils.RunSync(async ct =>
             {
-                var downloader = new PluginProxyDownloader();
+                var downloader = new PluginProxyDownloader(ThriftPluginsLoader.GetProxyFileName());
                 var applicationDirectory = ExecutionThread.GetApplicationDirectory(ensureExists: true);
-                var pluginsProxyLocalFile = Path.Combine(applicationDirectory, ThriftPluginsLoader.GetProxyFileName());
+                var pluginsProxyLocalFile = Path.Combine(applicationDirectory,
+                    ThriftPluginsLoader.GetProxyFileName(includeCurrentVersion: true));
                 await downloader.DownloadAsync(pluginsProxyLocalFile, ct);
             });
         }, new ApplicationOptionsBinder(LogLevelOption, PluginDirectoriesOption));

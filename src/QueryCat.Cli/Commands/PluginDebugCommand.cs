@@ -52,6 +52,7 @@ internal class PluginDebugCommand : BaseQueryCommand
                 .WithPluginsLoader(th => new ThriftPluginsLoader(
                     th,
                     applicationOptions.PluginDirectories,
+                    ExecutionThread.GetApplicationDirectory(),
                     serverPipeName: ThriftPluginClient.TestPipeName,
                     debugMode: true,
                     minLogLevel: LogLevel.Debug)

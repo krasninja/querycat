@@ -45,4 +45,7 @@
   <data name="TokenRegistrationTimeout" xml:space="preserve">
     <value>Token '{0}' registration timeout.</value>
   </data>
+  <data name="CannotFindPluginsProxy" xml:space="preserve">
+    <value>Cannot load NuGet package plugin '{0}' without proxy.</value>
+  </data>
 </root>

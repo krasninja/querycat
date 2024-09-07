@@ -98,5 +98,11 @@ namespace QueryCat.Backend.ThriftPlugins.Resources {
                 return ResourceManager.GetString("TokenRegistrationTimeout", resourceCulture);
             }
         }
+        
+        internal static string CannotFindPluginsProxy {
+            get {
+                return ResourceManager.GetString("CannotFindPluginsProxy", resourceCulture);
+            }
+        }
     }
 }

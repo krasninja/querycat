@@ -17,9 +17,10 @@ internal static class PathUtils
     /// Resolves the path to the file name according to PATH environment variable.
     /// </summary>
     /// <param name="fileName">The executable name.</param>
+    /// <param name="additionalPaths">Additional paths to check.</param>
     /// <returns>Resolved full path or empty if not found.</returns>
     /// <example>google-chrome-stable -> /usr/bin/google-chrome-stable.</example>
-    public static string ResolveExecutableFullPath(string fileName)
+    public static string ResolveExecutableFullPath(string fileName, params string[] additionalPaths)
     {
         if (string.IsNullOrEmpty(fileName))
         {
@@ -38,6 +39,20 @@ internal static class PathUtils
         if (File.Exists(candidate))
         {
             return candidate;
+        }
+
+        // Check additional paths.
+        foreach (var additionalPath in additionalPaths)
+        {
+            if (string.IsNullOrEmpty(additionalPath))
+            {
+                continue;
+            }
+            candidate = Path.Combine(additionalPath, fileName);
+            if (File.Exists(candidate))
+            {
+                return candidate;
+            }
         }
 
         // Try to resolve within working directory.

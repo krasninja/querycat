@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+= Initial implementation of completion system.
+
+### Changed
+
+- New plugins system. Now, the special plugin proxy should be used to load plugins.
+
+### Fixed
+
+- Minor performance optimizations and bugfixes.
+
+### Added
+
 - Add MaxRecursionDepth option.
 
 ### Fixed

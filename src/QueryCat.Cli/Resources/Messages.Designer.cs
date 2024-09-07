@@ -80,5 +80,11 @@ namespace QueryCat.Cli.Resources {
                 return ResourceManager.GetString("PluginProxySave", resourceCulture);
             }
         }
+        
+        internal static string PluginProxyWantToInstall {
+            get {
+                return ResourceManager.GetString("PluginProxyWantToInstall", resourceCulture);
+            }
+        }
     }
 }

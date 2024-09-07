@@ -9,6 +9,7 @@ using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Execution;
 using QueryCat.Backend.ThriftPlugins;
 
 namespace QueryCat.Build.Tasks;
@@ -44,7 +45,8 @@ public sealed class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
         });
         if (!string.IsNullOrEmpty(loader) && loader.Contains("thrift", StringComparison.OrdinalIgnoreCase))
         {
-            bootstrapper.WithPluginsLoader(thr => new ThriftPluginsLoader(thr, [targetFile]));
+            bootstrapper.WithPluginsLoader(thr => new ThriftPluginsLoader(thr, [targetFile],
+                ExecutionThread.GetApplicationDirectory()));
         }
         else
         {

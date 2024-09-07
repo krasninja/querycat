@@ -3,7 +3,6 @@ using System.IO.Compression;
 using System.Text;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
-using QueryCat.Backend.ThriftPlugins;
 using QueryCat.Backend.Utils;
 
 namespace QueryCat.Cli.Infrastructure;
@@ -12,8 +11,13 @@ namespace QueryCat.Cli.Infrastructure;
 internal sealed class PluginProxyDownloader
 {
     private const string RepositoryUrl = @"https://github.com/krasninja/querycat/releases/download/";
-
+    private readonly string _proxyFileName;
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(PluginProxyDownloader));
+
+    public PluginProxyDownloader(string proxyFileName)
+    {
+        this._proxyFileName = proxyFileName;
+    }
 
     public async Task DownloadAsync(string pluginsProxyLocalFile, CancellationToken cancellationToken)
     {
@@ -21,6 +25,7 @@ internal sealed class PluginProxyDownloader
 
         // Download.
         var pluginsProxyRemoteFile = GetLinkToPluginsProxyFile();
+        _logger.LogDebug("Download proxy with URI {Uri}.", pluginsProxyRemoteFile);
         var tempPath = Path.GetTempPath();
         var archiveFile = await FilesUtils.DownloadFileAsync(
             httpClient, new Uri(pluginsProxyRemoteFile), tempPath, cancellationToken);
@@ -30,7 +35,7 @@ internal sealed class PluginProxyDownloader
         {
             // Extract.
             Console.WriteLine(Resources.Messages.PluginProxyExtract);
-            var stream = await ExtractFileFromArchiveAsync(ThriftPluginsLoader.GetProxyFileName(), archiveFile, cancellationToken);
+            var stream = await ExtractFileFromArchiveAsync(_proxyFileName, archiveFile, cancellationToken);
 
             // Save and make executable.
             await using var writeStream = File.OpenWrite(pluginsProxyLocalFile);
