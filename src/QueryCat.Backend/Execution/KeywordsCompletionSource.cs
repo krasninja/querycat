@@ -5,7 +5,7 @@ namespace QueryCat.Backend.Execution;
 /// <summary>
 /// The completion that helps to fill most of the keywords.
 /// </summary>
-public sealed class KeywordsCompletionSource : ICompletionSource
+public sealed class KeywordsCompletionSource : BinarySearchCompletionSource
 {
     private static readonly string[] _keywords =
     [
@@ -149,17 +149,13 @@ public sealed class KeywordsCompletionSource : ICompletionSource
         "FOR",
     ];
 
-    private readonly IEnumerable<Completion> _keywordsCompletions;
-
     public KeywordsCompletionSource()
+        : base(_keywords.Select(k => new Completion(k, CompletionItemKind.Keyword, relevance: 0.6f)))
     {
-        _keywordsCompletions = _keywords
-            .Select(k => new Completion(k, CompletionItemKind.Keyword, relevance: 0.6f))
-            .ToList();
     }
 
     /// <inheritdoc />
-    public IEnumerable<CompletionResult> Get(CompletionContext context)
+    public override IEnumerable<CompletionResult> Get(CompletionContext context)
     {
         if (context.TriggerTokens.FindIndex(ParserToken.TokenKindPeriod) > -1
             || context.TriggerTokens.FindIndex(ParserToken.TokenKindLeftBracket) > -1
@@ -170,8 +166,7 @@ public sealed class KeywordsCompletionSource : ICompletionSource
 
         var searchTerm = context.LastTokenText;
 
-        return _keywordsCompletions
-            .Where(c => c.Label.StartsWith(searchTerm, StringComparison.OrdinalIgnoreCase))
+        return GetCompletionsStartsWith(searchTerm)
             .Select(c => new CompletionResult(c, [
                 new CompletionTextEdit(context.TriggerTokenPosition, context.TriggerTokenPosition + searchTerm.Length, c.Label)
             ]));
