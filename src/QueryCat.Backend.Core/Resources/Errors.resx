@@ -51,4 +51,7 @@
   <data name="CannotConvertToType" xml:space="preserve">
     <value>Cannot convert value from system type '{0}' to type '{1}'.</value>
   </data>
+  <data name="CannotGetType" xml:space="preserve">
+    <value>Cannot get type.</value>
+  </data>
 </root>

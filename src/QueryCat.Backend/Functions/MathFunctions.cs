@@ -56,12 +56,17 @@ internal static class MathFunctions
 
     [SafeFunction]
     [Description("Rounds to nearest integer.")]
-    [FunctionSignature("round(x: integer): float")]
     [FunctionSignature("round(x: float): float")]
+    [FunctionSignature("round(x: numeric): numeric")]
     public static VariantValue Round(FunctionCallInfo args)
     {
         var x = args.GetAt(0);
-        return new VariantValue(Math.Round(x.AsFloat));
+        return x.GetInternalType() switch
+        {
+            DataType.Float => new VariantValue(Math.Round(x.AsFloat)),
+            DataType.Numeric => new VariantValue(Math.Round(x.AsNumeric)),
+            _ => VariantValue.Null
+        };
     }
 
     [SafeFunction]
@@ -151,7 +156,7 @@ internal static class MathFunctions
         return a.GetInternalType() switch
         {
             DataType.Float => new VariantValue(Math.Pow(a.AsFloat, b.AsFloat)),
-            DataType.Integer => new VariantValue(Math.Pow(a.AsFloat, b.AsFloat)),
+            DataType.Integer => new VariantValue(Math.Pow(a.AsInteger, b.AsInteger)),
             _ => VariantValue.Null
         };
     }

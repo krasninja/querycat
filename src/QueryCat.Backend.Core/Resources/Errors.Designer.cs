@@ -110,5 +110,11 @@ namespace QueryCat.Backend.Core.Resources {
                 return ResourceManager.GetString("CannotConvertToType", resourceCulture);
             }
         }
+        
+        internal static string CannotGetType {
+            get {
+                return ResourceManager.GetString("CannotGetType", resourceCulture);
+            }
+        }
     }
 }

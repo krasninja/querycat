@@ -6,19 +6,26 @@ namespace QueryCat.Backend.Core.Types;
 internal sealed class DataTypeObject
 {
     /// <summary>
-    /// Type name.
+    /// Related type.
     /// </summary>
-    public string TypeName { get; }
+    public DataType DataType { get; }
+
+    /// <summary>
+    /// Type parameter.
+    /// </summary>
+    public string TypeParam { get; }
 
     /// <summary>
     /// Constructor.
     /// </summary>
-    /// <param name="typeName">Type name.</param>
-    public DataTypeObject(string typeName)
+    /// <param name="dataType">Data type.</param>
+    /// <param name="typeParam">Type parameter.</param>
+    public DataTypeObject(DataType dataType, string? typeParam = null)
     {
-        TypeName = typeName;
+        DataType = dataType;
+        TypeParam = typeParam ?? string.Empty;
     }
 
     /// <inheritdoc />
-    public override string ToString() => $"[{TypeName}]";
+    public override string ToString() => $"[{DataType}]";
 }

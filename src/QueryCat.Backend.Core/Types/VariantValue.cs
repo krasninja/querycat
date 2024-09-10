@@ -22,11 +22,11 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
 
     public const string FloatNumberFormat = "F";
 
-    private static readonly DataTypeObject IntegerObject = new("INT");
-    private static readonly DataTypeObject FloatObject = new("FLOAT");
-    private static readonly DataTypeObject TimestampObject = new("TIMESTAMP");
-    private static readonly DataTypeObject IntervalObject = new("INTERVAL");
-    private static readonly DataTypeObject BooleanObject = new("BOOL");
+    private static readonly DataTypeObject IntegerObject = new(DataType.Integer);
+    private static readonly DataTypeObject FloatObject = new(DataType.Float);
+    private static readonly DataTypeObject TimestampObject = new(DataType.Timestamp);
+    private static readonly DataTypeObject IntervalObject = new(DataType.Interval);
+    private static readonly DataTypeObject BooleanObject = new(DataType.Boolean);
 
     public static VariantValue OneIntegerValue = new(1);
     public static VariantValue TrueValue = new(true);
@@ -335,33 +335,17 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     /// <returns>Data type.</returns>
     public DataType GetInternalType()
     {
+        if (_object is DataTypeObject dataTypeObject)
+        {
+            return dataTypeObject.DataType;
+        }
         if (_object == null)
         {
             return DataType.Null;
         }
-        if (_object == IntegerObject)
-        {
-            return DataType.Integer;
-        }
         if (_object is string)
         {
             return DataType.String;
-        }
-        if (_object == FloatObject)
-        {
-            return DataType.Float;
-        }
-        if (_object == BooleanObject)
-        {
-            return DataType.Boolean;
-        }
-        if (_object == TimestampObject)
-        {
-            return DataType.Timestamp;
-        }
-        if (_object == IntervalObject)
-        {
-            return DataType.Interval;
         }
         if (_object is decimal)
         {
@@ -375,7 +359,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         {
             return DataType.Object;
         }
-        throw new InvalidOperationException("Cannot get type.");
+        throw new InvalidOperationException(Resources.Errors.CannotGetType);
     }
 
     private bool IsValueType() =>
