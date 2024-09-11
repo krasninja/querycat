@@ -1,4 +1,5 @@
 using System.CommandLine;
+using QueryCat.Backend.Core;
 using QueryCat.Cli.Commands.Options;
 
 namespace QueryCat.Cli.Commands;
@@ -19,7 +20,7 @@ internal class PluginListCommand : BaseCommand
             var query = "SELECT * FROM _plugins() WHERE 1=1";
             if (!listAll)
             {
-                query += " AND platform = _platform();";
+                query += $@" AND (platform = _platform() OR platform = '{Application.PlatformMulti}');";
             }
             var result = root.Thread.Run(query);
             root.Thread.TopScope.Variables["result"] = result;

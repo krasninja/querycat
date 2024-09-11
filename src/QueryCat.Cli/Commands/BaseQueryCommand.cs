@@ -2,10 +2,8 @@ using System.CommandLine;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Core.Utils;
-using QueryCat.Backend.Execution;
 using QueryCat.Backend.ThriftPlugins;
-using QueryCat.Cli.Infrastructure;
+using QueryCat.Cli.Commands.Options;
 
 namespace QueryCat.Cli.Commands;
 
@@ -59,18 +57,8 @@ internal abstract class BaseQueryCommand : BaseCommand
         }
         catch (ProxyNotFoundException)
         {
-            Console.WriteLine(Resources.Messages.PluginProxyWantToInstall);
-            var key = Console.ReadKey();
-            if (key.Key == ConsoleKey.Y)
+            if (ApplicationOptions.InstallPluginsProxy())
             {
-                var applicationDirectory = ExecutionThread.GetApplicationDirectory(ensureExists: true);
-                var pluginsProxyLocalFile = Path.Combine(applicationDirectory,
-                    ThriftPluginsLoader.GetProxyFileName(includeCurrentVersion: true));
-                AsyncUtils.RunSync(ct =>
-                {
-                    var downloader = new PluginProxyDownloader(ThriftPluginsLoader.GetProxyFileName());
-                    return downloader.DownloadAsync(pluginsProxyLocalFile, ct);
-                });
                 executionThread.Run(query, cancellationToken: cancellationToken);
             }
         }

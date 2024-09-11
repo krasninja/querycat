@@ -64,7 +64,7 @@ public sealed class DefaultPluginsManager : IPluginsManager, IDisposable
         return remote.Union(local).OrderBy(p => p.Name);
     }
 
-    private static readonly string[] _prefixes = { string.Empty, "qcat-plugins-", "qcat.plugins.", "plugins-", "plugins." };
+    private static readonly string[] _prefixes = [string.Empty, "QueryCat.Plugins.", "qcat-plugins-", "qcat.plugins.", "plugins-", "plugins."];
 
     private static PluginInfo? TryFindPlugin(string name, string? platform, IReadOnlyCollection<PluginInfo> allPlugins)
     {
@@ -72,7 +72,7 @@ public sealed class DefaultPluginsManager : IPluginsManager, IDisposable
         {
             var newName = prefix + name;
             var plugin = allPlugins.FirstOrDefault(p => newName.Equals(p.Name, StringComparison.OrdinalIgnoreCase)
-                && (p.Platform == platform || string.IsNullOrEmpty(platform)));
+                && (p.Platform == platform || p.Platform == Application.PlatformMulti || string.IsNullOrEmpty(platform)));
             if (plugin != null)
             {
                 return plugin;
