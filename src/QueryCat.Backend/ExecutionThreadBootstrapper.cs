@@ -33,6 +33,7 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
     private bool _registerStandardLibrary;
 
     private int _cacheSize;
+    private int _maxQueryLength;
 
     private readonly List<Action<IFunctionsManager>> _registrations = new();
 
@@ -151,10 +152,12 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
     /// Use AST cache. Can be useful if the same query is executed several times. Experimental feature.
     /// </summary>
     /// <param name="cacheSize">Max cache size.</param>
+    /// <param name="maxQueryLength">Max query length.</param>
     /// <returns>Instance of <see cref="ExecutionThread" />.</returns>
-    public ExecutionThreadBootstrapper WithAstCache(int cacheSize = 21)
+    public ExecutionThreadBootstrapper WithAstCache(int cacheSize = 21, int maxQueryLength = 150)
     {
         _cacheSize = cacheSize;
+        _maxQueryLength = maxQueryLength;
         return this;
     }
 
@@ -213,7 +216,9 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
 
         // Create thread.
         var astBuilder = _cacheSize > 0
-            ? new AstBuilder(new SimpleLruDictionary<string, IAstNode>(_cacheSize))
+            ? new AstBuilder(
+                new SimpleLruDictionary<string, IAstNode>(_cacheSize),
+                _maxQueryLength > 0 ? _maxQueryLength : 150)
             : new AstBuilder();
         // Keep only one combined completion source.
         var completionSource = _completionSources.Count == 1 && _completionSources[0] is CombineCompletionSource

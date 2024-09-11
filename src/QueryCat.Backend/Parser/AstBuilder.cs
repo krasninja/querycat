@@ -12,17 +12,20 @@ namespace QueryCat.Backend.Parser;
 /// </summary>
 internal sealed class AstBuilder : IAstBuilder
 {
-    private const int MaxQueryLengthForCache = 150;
+    private const int DefaultMaxQueryLengthForCache = 150;
 
     private readonly IDictionary<string, IAstNode>? _astCache;
+    private readonly int _maxQueryLength;
 
     /// <summary>
     /// Constructor.
     /// </summary>
     /// <param name="cache">Cache for AST.</param>
-    public AstBuilder(IDictionary<string, IAstNode>? cache = null)
+    /// <param name="maxQueryLength">Max query length for cache.</param>
+    public AstBuilder(IDictionary<string, IAstNode>? cache = null, int maxQueryLength = DefaultMaxQueryLengthForCache)
     {
         _astCache = cache;
+        _maxQueryLength = maxQueryLength;
     }
 
     /// <inheritdoc />
@@ -49,7 +52,7 @@ internal sealed class AstBuilder : IAstBuilder
         Func<QueryCatParser, ParserRuleContext> signatureFunc) where TNode : IAstNode
     {
         // Cache only small queries.
-        if (input.Length > MaxQueryLengthForCache)
+        if (_astCache == null || input.Length > _maxQueryLength)
         {
             return BuildInternal<TNode>(input, signatureFunc);
         }
