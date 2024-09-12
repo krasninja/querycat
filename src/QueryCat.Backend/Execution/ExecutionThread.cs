@@ -3,6 +3,7 @@ using System.Text;
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Commands;
+using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
@@ -19,7 +20,6 @@ namespace QueryCat.Backend.Execution;
 /// </summary>
 public class ExecutionThread : IExecutionThread<ExecutionOptions>
 {
-    private readonly IAstBuilder _astBuilder;
     internal const string ApplicationDirectory = "qcat";
     internal const string BootstrapFileName = "rc.sql";
 
@@ -43,6 +43,11 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
     /// </summary>
     internal IExecutionScope RootScope => _rootScope;
 
+    /// <summary>
+    /// AST builder.
+    /// </summary>
+    internal IAstBuilder AstBuilder { get; }
+
     /// <inheritdoc />
     public IExecutionScope TopScope => _topScope;
 
@@ -54,6 +59,14 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
 
     /// <inheritdoc />
     public IObjectSelector ObjectSelector { get; protected set; }
+
+    /// <summary>
+    /// Completion source to help user complete his input.
+    /// </summary>
+    internal ICompletionSource CompletionSource { get; }
+
+    /// <inheritdoc />
+    public string CurrentQuery { get; private set; } = string.Empty;
 
     /// <inheritdoc />
     public ExecutionOptions Options { get; }
@@ -88,11 +101,17 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
     /// <summary>
     /// Get application directory to store local data.
     /// </summary>
+    /// <param name="ensureExists">Create the directory if it doesn't exist.</param>
     /// <returns>Default application directory.</returns>
-    public static string GetApplicationDirectory()
+    public static string GetApplicationDirectory(bool ensureExists = false)
     {
-        return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        var directory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             ApplicationDirectory);
+        if (ensureExists)
+        {
+            Directory.CreateDirectory(directory);
+        }
+        return directory;
     }
 
     internal ExecutionThread(
@@ -101,13 +120,15 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
         IObjectSelector objectSelector,
         IInputConfigStorage configStorage,
         IAstBuilder astBuilder,
+        ICompletionSource completionSource,
         object? tag = null)
     {
         Options = options;
         FunctionsManager = functionsManager;
         ObjectSelector = objectSelector;
         ConfigStorage = configStorage;
-        _astBuilder = astBuilder;
+        AstBuilder = astBuilder;
+        CompletionSource = completionSource;
         Tag = tag;
         _statementsVisitor = new StatementsVisitor(this);
 
@@ -124,7 +145,8 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
             executionThread.FunctionsManager,
             executionThread.ObjectSelector,
             executionThread.ConfigStorage,
-            executionThread._astBuilder,
+            executionThread.AstBuilder,
+            executionThread.CompletionSource,
             executionThread.Tag)
     {
         _rootScope = new ExecutionScope(parent: null);
@@ -148,7 +170,8 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
         // Run with lock and timer.
         lock (_objLock)
         {
-            var programNode = _astBuilder.BuildProgramFromString(query);
+            CurrentQuery = query;
+            var programNode = AstBuilder.BuildProgramFromString(query);
 
             // Bootstrap.
             _deepLevel++;
@@ -156,6 +179,11 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
             {
                 RunBootstrapScript();
                 LoadConfig();
+            }
+            if (_deepLevel > Options.MaxRecursionDepth)
+            {
+                throw new QueryCatException(
+                    string.Format(Resources.Errors.ExecutionMaxRecursionDepth, Options.MaxRecursionDepth));
             }
 
             // Set first executing statement and run.
@@ -186,7 +214,7 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
             {
                 if (parameters != null)
                 {
-                    PullScope();
+                    PopScope();
                 }
                 if (_deepLevel == 1)
                 {
@@ -194,18 +222,22 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
                     Statistic.ExecutionTime = _stopwatch.Elapsed;
                 }
                 _deepLevel--;
+
+                CurrentQuery = string.Empty;
             }
         }
     }
 
-    private IExecutionScope PushScope()
+    /// <inheritdoc />
+    public IExecutionScope PushScope()
     {
         var scope = new ExecutionScope(TopScope);
         _topScope = scope;
         return scope;
     }
 
-    private IExecutionScope? PullScope()
+    /// <inheritdoc />
+    public IExecutionScope? PopScope()
     {
         if (_topScope.Parent == null)
         {
@@ -326,7 +358,7 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
         }
         name = eventArgs.VariableName;
 
-        var currentScope = scope ?? TopScope;
+        var currentScope = TopScope;
         while (currentScope != null)
         {
             if (currentScope.Variables.TryGetValue(name, out value))
@@ -359,6 +391,18 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
     }
 
     #endregion
+
+    /// <inheritdoc />
+    public IEnumerable<CompletionResult> GetCompletions(string text, int position = -1, object? tag = null)
+    {
+        var tokens = AstBuilder
+            .GetTokens(text)
+            .Select(t => new ParserToken(t.Text, t.Type, t.StartIndex))
+            .ToList();
+        var context = new CompletionContext(this, text, tokens, position);
+        context.Tag = tag;
+        return CompletionSource.Get(context).OrderByDescending(c => c.Completion.Relevance);
+    }
 
     private void Write(VariantValue result, CancellationToken cancellationToken)
     {

@@ -326,5 +326,11 @@ namespace QueryCat.Backend.Resources {
                 return ResourceManager.GetString("CannotSelectObject", resourceCulture);
             }
         }
+        
+        internal static string ExecutionMaxRecursionDepth {
+            get {
+                return ResourceManager.GetString("ExecutionMaxRecursionDepth", resourceCulture);
+            }
+        }
     }
 }

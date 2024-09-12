@@ -1,8 +1,8 @@
-using System.Runtime.InteropServices;
 using System.Xml;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Plugins;
+using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.PluginsManager;
 
@@ -64,7 +64,7 @@ public sealed class DefaultPluginsManager : IPluginsManager, IDisposable
         return remote.Union(local).OrderBy(p => p.Name);
     }
 
-    private static readonly string[] _prefixes = { string.Empty, "qcat-plugins-", "qcat.plugins.", "plugins-", "plugins." };
+    private static readonly string[] _prefixes = [string.Empty, "QueryCat.Plugins.", "qcat-plugins-", "qcat.plugins.", "plugins-", "plugins."];
 
     private static PluginInfo? TryFindPlugin(string name, string? platform, IReadOnlyCollection<PluginInfo> allPlugins)
     {
@@ -72,7 +72,7 @@ public sealed class DefaultPluginsManager : IPluginsManager, IDisposable
         {
             var newName = prefix + name;
             var plugin = allPlugins.FirstOrDefault(p => newName.Equals(p.Name, StringComparison.OrdinalIgnoreCase)
-                && (p.Platform == platform || string.IsNullOrEmpty(platform)));
+                && (p.Platform == platform || p.Platform == Application.PlatformMulti || string.IsNullOrEmpty(platform)));
             if (plugin != null)
             {
                 return plugin;
@@ -93,31 +93,13 @@ public sealed class DefaultPluginsManager : IPluginsManager, IDisposable
 
         // Create X.downloading file, download and then remove.
         var mainPluginDirectory = GetMainPluginDirectory();
-        var stream = await _httpClient.GetStreamAsync(plugin.Uri, cancellationToken).ConfigureAwait(false);
         var fullFileName = Path.Combine(mainPluginDirectory, Path.GetFileName(plugin.Uri));
-        var fullFileNameDownloading = fullFileName + ".downloading";
-        await using var outputFileStream = new FileStream(fullFileNameDownloading, FileMode.OpenOrCreate);
-        await stream.CopyToAsync(outputFileStream, cancellationToken)
+        await FilesUtils.DownloadFileAsync(_httpClient, new Uri(plugin.Uri), fullFileName, cancellationToken)
             .ConfigureAwait(false);
-        stream.Close();
-        outputFileStream.Close();
+        FilesUtils.MakeUnixExecutable(fullFileName);
         var overwrite = File.Exists(fullFileName);
-        File.Move(fullFileNameDownloading, fullFileName, overwrite);
-        MakeUnixExecutable(fullFileName);
         _logger.LogInformation("Save plugin file {FullFileName}.", fullFileName);
         return overwrite ? 1 : 0;
-    }
-
-    private static void MakeUnixExecutable(string file)
-    {
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX)
-            || RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
-            || RuntimeInformation.IsOSPlatform(OSPlatform.FreeBSD))
-        {
-            var mode = File.GetUnixFileMode(file);
-            mode |= UnixFileMode.UserExecute | UnixFileMode.GroupExecute | UnixFileMode.OtherExecute;
-            File.SetUnixFileMode(file, mode);
-        }
     }
 
     /// <inheritdoc />

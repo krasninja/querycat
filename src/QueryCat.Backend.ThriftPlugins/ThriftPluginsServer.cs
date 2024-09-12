@@ -193,6 +193,14 @@ public sealed partial class ThriftPluginsServer : IDisposable
         }
     }
 
+    public void RemoveAuthToken(string token)
+    {
+        if (_authTokens.TryRemove(token, out var data))
+        {
+            data.Semaphore.Dispose();
+        }
+    }
+
     public void WaitForPluginRegistration(string authToken, CancellationToken cancellationToken = default)
     {
         if (!_authTokens.TryGetValue(authToken, out var authTokenData))

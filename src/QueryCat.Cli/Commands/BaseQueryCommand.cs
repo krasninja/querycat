@@ -2,6 +2,8 @@ using System.CommandLine;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.ThriftPlugins;
+using QueryCat.Cli.Commands.Options;
 
 namespace QueryCat.Cli.Commands;
 
@@ -38,12 +40,27 @@ internal abstract class BaseQueryCommand : BaseCommand
         {
             foreach (var file in files)
             {
-                executionThread.Run(File.ReadAllText(file), cancellationToken: cancellationToken);
+                RunWithPluginsInstall(executionThread, File.ReadAllText(file), cancellationToken: cancellationToken);
             }
         }
         else
         {
+            RunWithPluginsInstall(executionThread, query, cancellationToken: cancellationToken);
+        }
+    }
+
+    private void RunWithPluginsInstall(IExecutionThread executionThread, string query, CancellationToken cancellationToken)
+    {
+        try
+        {
             executionThread.Run(query, cancellationToken: cancellationToken);
+        }
+        catch (ProxyNotFoundException)
+        {
+            if (ApplicationOptions.InstallPluginsProxy())
+            {
+                executionThread.Run(query, cancellationToken: cancellationToken);
+            }
         }
     }
 

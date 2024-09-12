@@ -1,4 +1,5 @@
 using System;
+using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using QueryCat.Backend.Core.Data;
@@ -237,6 +238,20 @@ public static class SdkConvert
         {
             Units = units,
             Nanos = nanos
+        };
+    }
+
+    public static PluginData Convert(Assembly? assembly)
+    {
+        if (assembly == null)
+        {
+            return new PluginData();
+        }
+        var assemblyName = assembly.GetName();
+        return new PluginData
+        {
+            Name = assemblyName.Name ?? string.Empty,
+            Version = assemblyName.Version?.ToString() ?? "0.0.0",
         };
     }
 }

@@ -1,5 +1,6 @@
 using System.IO.Compression;
 using System.Reflection;
+using System.Text;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Functions;
@@ -15,6 +16,9 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader
     private const string DllExtension = ".dll";
     private const string NuGetExtensions = ".nupkg";
 
+    private const string RegistrationClassName = "Registration";
+    private const string RegistrationMethodName = "RegisterFunctions";
+
     private readonly Dictionary<string, byte[]> _rawAssembliesCache = new();
     private readonly Dictionary<string, Assembly> _loadedAssembliesCache = new();
     private readonly IFunctionsManager _functionsManager;
@@ -22,7 +26,7 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader
 
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(DotNetAssemblyPluginsLoader));
 
-    public IEnumerable<Assembly> LoadedAssemblies => _loadedAssembliesCache.Values;
+    public IEnumerable<Assembly> LoadedAssemblies => _loadedAssemblies;
 
     public DotNetAssemblyPluginsLoader(IFunctionsManager functionsManager, IEnumerable<string> pluginDirectories) : base(pluginDirectories)
     {
@@ -32,6 +36,7 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader
 
     private Assembly? CurrentDomainOnAssemblyResolve(object? sender, ResolveEventArgs args)
     {
+        _logger.LogDebug("Try to resolve assembly '{Assembly}'.", args.Name);
         var assemblyName = new AssemblyName(args.Name);
         if (string.IsNullOrEmpty(assemblyName.Name))
         {
@@ -39,6 +44,7 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader
         }
         if (_loadedAssembliesCache.TryGetValue(assemblyName.Name, out var assembly))
         {
+            _logger.LogDebug("Resolved with loaded assemblies cache.");
             return assembly;
         }
         if (_rawAssembliesCache.TryGetValue(assemblyName.Name, out var bytes))
@@ -46,13 +52,34 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader
             assembly = Assembly.Load(bytes);
             _loadedAssembliesCache[assemblyName.Name] = assembly;
             _rawAssembliesCache.Remove(assemblyName.Name);
+            _logger.LogDebug("Resolved with raw assemblies cache.");
             return assembly;
+        }
+
+        if (_logger.IsEnabled(LogLevel.Debug))
+        {
+            _logger.LogDebug("Cannot find assembly '{Assembly}'!", args.Name);
+            _logger.LogDebug(DumpAssemblies());
         }
         return null;
     }
 
+    private string DumpAssemblies()
+    {
+        var sb = new StringBuilder();
+        foreach (var assembly in _loadedAssembliesCache)
+        {
+            sb.AppendLine($"Cache: {assembly.Key}");
+        }
+        foreach (var assembly in _rawAssembliesCache)
+        {
+            sb.AppendLine($"Raw: {assembly.Key}");
+        }
+        return sb.ToString();
+    }
+
     /// <inheritdoc />
-    public override Task LoadAsync(CancellationToken cancellationToken = default)
+    public override Task<string[]> LoadAsync(CancellationToken cancellationToken = default)
     {
         foreach (var pluginFile in GetPluginFiles())
         {
@@ -77,7 +104,11 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader
 
         RegisterFunctions(_functionsManager);
 
-        return Task.CompletedTask;
+        var loadedPlugins = _loadedAssemblies
+            .Select(a => a.FullName ?? string.Empty)
+            .Where(a => !string.IsNullOrEmpty(a))
+            .ToArray();
+        return Task.FromResult(loadedPlugins);
     }
 
     /// <inheritdoc />
@@ -112,24 +143,27 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader
     public void RegisterFromAssembly(Assembly assembly)
     {
         // If there is class Registration with RegisterFunctions method - call it instead. Use reflection otherwise.
-        var registerType = assembly.GetType(assembly.GetName().Name + ".Registration");
+        // Fast path.
+        var registerType = assembly.GetType(assembly.GetName().Name + $".{RegistrationClassName}");
         if (registerType != null)
         {
-            var registerMethod = registerType.GetMethod("RegisterFunctions");
+            var registerMethod = registerType.GetMethod(RegistrationMethodName);
             if (registerMethod != null)
             {
+                _logger.LogDebug($"Register using '{RegistrationClassName}' class.");
                 _functionsManager.RegisterFactory(fm =>
                 {
                     registerMethod.Invoke(null, [fm]);
                 });
+                return;
             }
         }
-        else
+
+        // Get all types via reflection and try to register. Slow path.
+        _logger.LogDebug("Register using types search method.");
+        foreach (var type in assembly.GetTypes())
         {
-            foreach (var type in assembly.GetTypes())
-            {
-                _functionsManager.RegisterFromType(type);
-            }
+            _functionsManager.RegisterFromType(type);
         }
     }
 
@@ -175,7 +209,7 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader
             var pluginDllFileName = Path.GetFileName(pluginDll.Name);
             foreach (var fileInfo in zip.Entries)
             {
-                if (Path.GetExtension(pluginDllFileName).Equals(DllExtension, StringComparison.OrdinalIgnoreCase)
+                if (Path.GetExtension(fileInfo.Name).Equals(DllExtension, StringComparison.OrdinalIgnoreCase)
                     && !fileInfo.Name.Equals(pluginDllFileName))
                 {
                     using var stream = fileInfo.Open();
@@ -200,6 +234,7 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader
         using var ms = new MemoryStream();
         stream.CopyTo(ms);
         fileName = Path.GetFileNameWithoutExtension(fileName);
+        _logger.LogTrace("Cached '{Assembly}'.", fileName);
         _rawAssembliesCache[fileName] = ms.GetBuffer();
     }
 

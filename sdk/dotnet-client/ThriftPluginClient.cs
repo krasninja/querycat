@@ -146,6 +146,7 @@ public partial class ThriftPluginClient : IDisposable
 
     private static TTransport CreateTransport(string endpoint)
     {
+        // Endpoint format example: net.pipe://localhost/qcat-123.
         var serverPipeUri = new Uri(endpoint);
         switch (serverPipeUri.Scheme.ToLower())
         {
@@ -268,14 +269,9 @@ public partial class ThriftPluginClient : IDisposable
 
         StartServer();
 
-        var assemblyName = Assembly.GetEntryAssembly()?.GetName();
         var functions = _functionsManager.GetPluginFunctions().Select(f =>
             new Function(f.Signature, f.Description, false)).ToList();
-        pluginData ??= new PluginData
-        {
-            Name = assemblyName?.Name ?? string.Empty,
-            Version = assemblyName?.Version?.ToString() ?? "0.0.0",
-        };
+        pluginData ??= SdkConvert.Convert(Assembly.GetEntryAssembly());
         pluginData.Functions = functions;
 
         RegistrationResult = await _client.RegisterPluginAsync(

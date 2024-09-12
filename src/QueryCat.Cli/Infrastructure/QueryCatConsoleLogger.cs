@@ -1,8 +1,13 @@
+using System.Runtime.Versioning;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend;
 
 namespace QueryCat.Cli.Infrastructure;
 
+/// <summary>
+/// A logger that writes messages in the console.
+/// </summary>
+[UnsupportedOSPlatform("browser")]
 internal sealed class QueryCatConsoleLogger : ILogger, IDisposable
 {
     private readonly string _name;

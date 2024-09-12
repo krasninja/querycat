@@ -24,8 +24,10 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
 {
     private const string FunctionsCacheFileExtension = ".fcache.json";
     private const string ProxyExecutable = "qcat-plugins-proxy";
+    private const string ProxyLatestVersion = "1";
 
     private readonly IExecutionThread _thread;
+    private readonly string? _applicationDirectory;
     private readonly bool _debugMode;
     private readonly LogLevel _minLogLevel;
     private readonly ThriftPluginsServer _server;
@@ -60,6 +62,7 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
     public ThriftPluginsLoader(
         IExecutionThread thread,
         IEnumerable<string> pluginDirectories,
+        string? applicationDirectory = null,
         ThriftPluginsServer.TransportType transportType = ThriftPluginsServer.TransportType.NamedPipes,
         string? serverPipeName = null,
         string? functionsCacheDirectory = null,
@@ -67,6 +70,7 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         LogLevel minLogLevel = LogLevel.Information) : base(pluginDirectories)
     {
         _thread = thread;
+        _applicationDirectory = applicationDirectory;
         _debugMode = debugMode;
         _minLogLevel = minLogLevel;
         if (!string.IsNullOrEmpty(serverPipeName))
@@ -105,13 +109,18 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
     }
 
     /// <inheritdoc />
-    public override Task LoadAsync(CancellationToken cancellationToken = default)
+    public override Task<string[]> LoadAsync(CancellationToken cancellationToken = default)
     {
+        var loadedPlugins = new List<string>();
+
         foreach (var pluginFile in GetPluginFiles())
         {
             if (IsMatchPlatform(pluginFile))
             {
-                LoadPluginSafe(pluginFile, cancellationToken);
+                if (LoadPluginSafe(pluginFile, cancellationToken))
+                {
+                    loadedPlugins.Add(pluginFile);
+                }
             }
         }
 
@@ -122,7 +131,7 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
             _server.WaitForPluginRegistration(ForceAuthToken, cancellationToken);
         }
 
-        return Task.CompletedTask;
+        return Task.FromResult(loadedPlugins.ToArray());
     }
 
     /// <inheritdoc />
@@ -217,17 +226,18 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         return plugin.Name;
     }
 
-    private void LoadPluginSafe(string file, CancellationToken cancellationToken)
+    private bool LoadPluginSafe(string file, CancellationToken cancellationToken)
     {
         try
         {
             _logger.LogDebug("Load plugin file '{PluginFile}'.", file);
             LoadPluginLazy(file, cancellationToken);
+            return true;
         }
         catch (Exception e)
         {
-            _logger.LogWarning(e, "Cannot load plugin file '{PluginFile}'.", file);
-            throw;
+            _logger.LogWarning(e, "Cannot load plugin file '{PluginFile}': {Error}", file, e.Message);
+            return false;
         }
     }
 
@@ -280,15 +290,23 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         // Create auth token and save it into temp memory.
         var authToken = CreateAuthTokenAndSave(file, pluginName);
 
-        if (IsLibrary(file))
+        try
         {
-            return LoadPluginLibrary(file, authToken, cancellationToken);
+            if (IsLibrary(file))
+            {
+                return LoadPluginLibrary(file, authToken, cancellationToken);
+            }
+            if (IsNugetPackage(file))
+            {
+                return LoadPluginNugetPackage(file, authToken, cancellationToken);
+            }
+            return LoadPluginExecutable(file, authToken, [], cancellationToken: cancellationToken);
         }
-        if (IsNugetPackage(file))
+        catch (Exception)
         {
-            return LoadPluginNugetPackage(file, authToken, cancellationToken);
+            RemoveAuthToken(authToken, file);
+            throw;
         }
-        return LoadPluginExecutable(file, authToken, [], cancellationToken: cancellationToken);
     }
 
     private ThriftPluginsServer.PluginContext LoadPluginNugetPackage(
@@ -296,13 +314,16 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         string authToken,
         CancellationToken cancellationToken = default)
     {
-        if (!File.Exists(ProxyExecutable))
+        var proxyExecutable = PathUtils.ResolveExecutableFullPath(
+            GetProxyFileName(includeCurrentVersion: true),
+            _applicationDirectory ?? string.Empty);
+        if (string.IsNullOrEmpty(proxyExecutable))
         {
-            throw new PluginException($"Cannot load NuGet package plugin '{file}' without proxy.");
+            throw new ProxyNotFoundException(file);
         }
-        _logger.LogDebug("Loading '{Assembly}' with proxy.", file);
+        _logger.LogDebug("Loading '{Assembly}' with proxy. Location: '{Location}'.", file, proxyExecutable);
         return LoadPluginExecutable(
-            ProxyExecutable,
+            proxyExecutable,
             authToken,
             ["--assembly=" + file],
             file,
@@ -313,16 +334,18 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         string file,
         string authToken,
         string[] additionalArguments,
-        string? pluginFile = null,
+        string? realPluginFile = null,
         CancellationToken cancellationToken = default)
     {
         string FormatParameter(string key, string value) => $"--{key}={value}";
+
+        realPluginFile ??= file;
 
         // Start plugin process.
         Process? process = null;
         if (!SkipPluginsExecution)
         {
-            var fileName = Path.GetFileNameWithoutExtension(file);
+            var fileName = Path.GetFileNameWithoutExtension(realPluginFile);
             process = new Process
             {
                 StartInfo =
@@ -364,12 +387,25 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         }
 
         // Plugin has been loaded.
-        var pluginName = GetPluginName(file);
+        var pluginName = GetPluginName(realPluginFile);
         _loadedPlugins.Add(pluginName);
 
         // If we load .exe or .so plugin, we don't need pluginFile arg.
         // It is needed only if we load plugin using the proxy.
-        return GetContext(pluginFile ?? file);
+        return GetContext(realPluginFile);
+    }
+
+    /// <summary>
+    /// Get plugins proxy file name.
+    /// </summary>
+    /// <param name="includeCurrentVersion">Append version postfix.</param>
+    /// <returns>Plugins proxy file name.</returns>
+    public static string GetProxyFileName(bool includeCurrentVersion = false)
+    {
+        var proxyExecutable = includeCurrentVersion ? ProxyExecutable + ProxyLatestVersion : ProxyExecutable;
+        return Application.GetPlatform() == Application.PlatformWindows
+            ? proxyExecutable + ".exe"
+            : proxyExecutable;
     }
 
     private ThriftPluginsServer.PluginContext LoadPluginLibrary(
@@ -436,6 +472,12 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         _server.RegisterAuthToken(authToken, pluginName);
         _fileTokenMap.Add(pluginFile, authToken);
         return authToken;
+    }
+
+    private void RemoveAuthToken(string authToken, string pluginFile)
+    {
+        _server.RemoveAuthToken(authToken);
+        _fileTokenMap.Remove(pluginFile);
     }
 
     private string GetPipeName() => $"{ThriftPluginClient.PluginTransportNamedPipes}://localhost/{_server.ServerEndpoint}";

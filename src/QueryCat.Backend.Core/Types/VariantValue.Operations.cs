@@ -237,6 +237,11 @@ public readonly partial struct VariantValue
         return DataType.Void;
     }
 
+    private static readonly DataType[] _stringCompatibleTypes =
+    [
+        DataType.Boolean, DataType.Timestamp, DataType.Dynamic, DataType.Object
+    ];
+
     private static bool GetTargetType(in DataType left, in DataType right, out DataType target)
     {
         if (left == DataType.Integer
@@ -247,6 +252,12 @@ public readonly partial struct VariantValue
         }
         if ((DataTypeUtils.IsNumeric(left) && right == DataType.String)
             || (DataTypeUtils.IsNumeric(right) && left == DataType.String))
+        {
+            target = DataType.String;
+            return true;
+        }
+        if ((_stringCompatibleTypes.Contains(left) && right == DataType.String)
+            || (_stringCompatibleTypes.Contains(right) && left == DataType.String))
         {
             target = DataType.String;
             return true;

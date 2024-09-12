@@ -1,3 +1,5 @@
+using System.Reflection;
+
 namespace QueryCat.Backend.Core.Utils;
 
 using EventTask = System.Tuple<System.Threading.SendOrPostCallback, object?>;
@@ -108,6 +110,14 @@ public static class AsyncUtils
             try
             {
                 await taskFunc();
+            }
+            catch (AggregateException ex)
+            {
+                exclusiveSynchronizationContext.InnerException = ex.InnerException;
+            }
+            catch (TargetInvocationException ex)
+            {
+                exclusiveSynchronizationContext.InnerException = ex.InnerException;
             }
             catch (Exception ex)
             {

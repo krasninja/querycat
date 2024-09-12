@@ -6,6 +6,9 @@ You can easily extend QueryCat functionality by installing plugins. Plugins allo
 - `plugin install <name>`. Install the plugin.
 - `plugin remove <name>`. Remove the plugin.
 - `plugin update <name>`. Update the plugin. If you provide `*` as name all plugins will be updated.
+- `plugin install-proxy`. Download plugin proxy executable from GitHub.
+
+**Note**: Before use, your should install the special plugin proxy using `plugin install-proxy` command. It is the special software needed to run plugin `.dll` files.
 
 Make sure you keep you plugins versions up to date.
 
@@ -19,3 +22,11 @@ The plugin files are DLLs or NuGet packages that must contain "Plugin" within na
 - With `--plugin-dirs` application argument.
 
 The official (and default) plugin storage can be found here: https://storage.yandexcloud.net/querycat/.
+
+## Proxy
+
+Proxy contains the full version of .NET platform. Here is the schema how plugins are loaded:
+
+```
+QueryCat <-> (Thrift protocol) <-> Proxy <-> (.NET Reflection) <-> Plugin Assembly
+```

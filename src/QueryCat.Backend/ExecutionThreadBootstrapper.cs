@@ -26,13 +26,14 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
 
     private IInputConfigStorage _inputConfigStorage = NullInputConfigStorage.Instance;
 
-    private IFunctionsManager? _functionsManager = null;
+    private IFunctionsManager? _functionsManager;
 
-    private IObjectSelector? _objectSelector = null;
+    private IObjectSelector? _objectSelector;
 
     private bool _registerStandardLibrary;
 
-    private int _cacheSize = 0;
+    private int _cacheSize;
+    private int _maxQueryLength;
 
     private readonly List<Action<IFunctionsManager>> _registrations = new();
 
@@ -42,8 +43,17 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
 
     private readonly List<IUriResolver> _uriResolvers = new();
 
+    private readonly List<ICompletionSource> _completionSources = new();
+
     private object? _tag;
 
+    private bool _addStandardCompletions;
+
+    /// <summary>
+    /// Use the custom config storage.
+    /// </summary>
+    /// <param name="configStorage">Instance of <see cref="IInputConfigStorage" />.</param>
+    /// <returns>The instance of <see cref="ExecutionThreadBootstrapper" />.</returns>
     public ExecutionThreadBootstrapper WithConfigStorage(IInputConfigStorage configStorage)
     {
         _inputConfigStorage = configStorage;
@@ -51,7 +61,7 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
     }
 
     /// <summary>
-    /// Use the specific functions manager.
+    /// Use the specific functions' manager.
     /// </summary>
     /// <param name="functionsManager">Functions manager.</param>
     /// <returns>The instance of <see cref="ExecutionThreadBootstrapper" />.</returns>
@@ -142,10 +152,33 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
     /// Use AST cache. Can be useful if the same query is executed several times. Experimental feature.
     /// </summary>
     /// <param name="cacheSize">Max cache size.</param>
+    /// <param name="maxQueryLength">Max query length.</param>
     /// <returns>Instance of <see cref="ExecutionThread" />.</returns>
-    public ExecutionThreadBootstrapper WithAstCache(int cacheSize = 21)
+    public ExecutionThreadBootstrapper WithAstCache(int cacheSize = 21, int maxQueryLength = 150)
     {
         _cacheSize = cacheSize;
+        _maxQueryLength = maxQueryLength;
+        return this;
+    }
+
+    /// <summary>
+    /// Use standard internal completion sources.
+    /// </summary>
+    /// <returns>Instance of <see cref="ExecutionThread" />.</returns>
+    public ExecutionThreadBootstrapper WithStandardCompletionSources()
+    {
+        _addStandardCompletions = true;
+        return this;
+    }
+
+    /// <summary>
+    /// Use completion source.
+    /// </summary>
+    /// <param name="completionSource">Completion source instance.</param>
+    /// <returns>Instance of <see cref="ExecutionThread" />.</returns>
+    public ExecutionThreadBootstrapper WithCompletionSource(ICompletionSource completionSource)
+    {
+        _completionSources.Add(completionSource);
         return this;
     }
 
@@ -166,6 +199,16 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
             _functionsManager = new DefaultFunctionsManager(new AstBuilder(), _uriResolvers);
         }
 
+        // Add completions.
+        if (_addStandardCompletions)
+        {
+            _completionSources.Add(new KeywordsCompletionSource());
+            _completionSources.Add(new VariablesCompletionSource());
+            _completionSources.Add(new ObjectPropertiesCompletionSource());
+            _completionSources.Add(new FunctionsCompletionSource(_functionsManager));
+        }
+
+        // Create objects selector.
         if (_objectSelector == null)
         {
             _objectSelector = new DefaultObjectSelector();
@@ -173,14 +216,21 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
 
         // Create thread.
         var astBuilder = _cacheSize > 0
-            ? new AstBuilder(new SimpleLruDictionary<string, IAstNode>(_cacheSize))
+            ? new AstBuilder(
+                new SimpleLruDictionary<string, IAstNode>(_cacheSize),
+                _maxQueryLength > 0 ? _maxQueryLength : 150)
             : new AstBuilder();
+        // Keep only one combined completion source.
+        var completionSource = _completionSources.Count == 1 && _completionSources[0] is CombineCompletionSource
+            ? _completionSources[0]
+            : new CombineCompletionSource(_completionSources, _executionOptions.CompletionsCount);
         var thread = new ExecutionThread(
             options: _executionOptions,
             functionsManager: _functionsManager,
             objectSelector: _objectSelector,
             configStorage: _inputConfigStorage,
-            astBuilder: astBuilder
+            astBuilder: astBuilder,
+            completionSource: completionSource
         );
         thread.Tag = _tag;
 

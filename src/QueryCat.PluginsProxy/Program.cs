@@ -1,9 +1,8 @@
-﻿using System.Reflection;
+﻿using Microsoft.Extensions.Logging;
 using QueryCat.Backend.AssemblyPlugins;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Utils;
 using QueryCat.Plugins.Client;
-using QueryCat.Plugins.Sdk;
 
 namespace QueryCat.PluginsProxy;
 
@@ -14,9 +13,13 @@ public class Program
 {
     private const string AssemblyPrefix = "--assembly=";
 
+    private static readonly Lazy<ILogger> _logger = new(() => Application.LoggerFactory.CreateLogger(nameof(Program)));
+
     public static void QueryCatMain(ThriftPluginClientArguments args, string[] assemblyFiles)
     {
+        AppDomain.CurrentDomain.UnhandledException += CurrentDomainOnUnhandledException;
         ThriftPluginClient.SetupApplicationLogging(logLevel: args.LogLevel);
+
         AsyncUtils.RunSync(async ct =>
         {
             using var client = new ThriftPluginClient(args);
@@ -27,24 +30,10 @@ public class Program
                 throw new QueryCatException("No plugins loaded.");
             }
             await client.StartAsync(
-                GetPluginDataFromAssembly(assemblyLoader.LoadedAssemblies.FirstOrDefault()),
+                SdkConvert.Convert(assemblyLoader.LoadedAssemblies.FirstOrDefault()),
                 ct);
             await client.WaitForServerExitAsync(ct);
         });
-    }
-
-    private static PluginData? GetPluginDataFromAssembly(Assembly? assembly)
-    {
-        if (assembly == null)
-        {
-            return null;
-        }
-        var assemblyName = assembly.GetName();
-        return new PluginData
-        {
-            Name = assemblyName?.Name ?? string.Empty,
-            Version = assemblyName?.Version?.ToString() ?? "0.0.0",
-        };
     }
 
     public static void Main(string[] args) => QueryCatMain(
@@ -63,5 +52,14 @@ public class Program
             assemblies.Add(arg.Substring(AssemblyPrefix.Length));
         }
         return assemblies.ToArray();
+    }
+
+    private static void CurrentDomainOnUnhandledException(object? sender, UnhandledExceptionEventArgs e)
+    {
+        if (e.ExceptionObject is Exception exception)
+        {
+            _logger.Value.LogCritical(exception, "Unhandled exception.");
+        }
+        Environment.Exit(1);
     }
 }

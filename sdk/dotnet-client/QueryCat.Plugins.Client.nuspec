@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+    <id>QueryCat.Plugins.Client</id>
+    <title>QueryCat Plugins Client</title>
+    <summary>The assembly that helps you build plugins for QueryCat</summary>
+    <version>0.1.1</version>
+    <description>The assembly that helps you build plugins for QueryCat. Contains references to Thrift proxy and QueryCat core.</description>  
+    <authors>Ivan Kozhin</authors>
+    <owners>Ivan Kozhin</owners>
+    <license type="file">LICENSE.txt</license>
+    <projectUrl>https://github.com/krasninja/querycat</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <copyright>(c) Ivan Kozhin, 2022-2024</copyright>
+    <tags>querycat thrift</tags>
+    <repository type="git" url="https://github.com/krasninja/querycat" commit="$CommitHash$" />
+    <dependencies>
+      <group targetFramework="net8.0">
+        <dependency id="ApacheThrift" version="[0.20.0, )" />
+        <dependency id="Microsoft.Extensions.Logging.Abstractions" version="[8.0.0, )" />
+        <dependency id="QueryCat" version="[0.6.9, )" />
+      </group>
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="bin\Release\net8.0\QueryCat.Plugins.Client.dll" target="lib\net8.0" />
+    <file src="bin\Release\net8.0\QueryCat.Plugins.Client.pdb" target="lib\net8.0" />
+    <file src="bin\Release\net8.0\QueryCat.Plugins.Sdk.dll" target="lib\net8.0" />
+    <file src="..\..\LICENSE.txt" target="LICENSE.txt" />
+  </files>
+</package>

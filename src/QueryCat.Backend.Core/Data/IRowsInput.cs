@@ -22,7 +22,7 @@ public interface IRowsInput : IRowsSource, IRowsSchema
     ErrorCode ReadValue(int columnIndex, out VariantValue value);
 
     /// <summary>
-    /// Read next row.
+    /// Read the next row.
     /// </summary>
     /// <returns>True if there are remain rows to read, false if no row was read.</returns>
     bool ReadNext();

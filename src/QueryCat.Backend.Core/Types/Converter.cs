@@ -18,11 +18,12 @@ public static class Converter
         DataType.String => typeof(string),
         DataType.Timestamp => typeof(DateTime),
         DataType.Interval => typeof(TimeSpan),
-        DataType.Null => typeof(void),
-        DataType.Void => typeof(void),
         DataType.Numeric => typeof(decimal),
         DataType.Blob => typeof(byte[]),
         DataType.Object => typeof(object),
+        DataType.Dynamic => typeof(object),
+        DataType.Null => typeof(void),
+        DataType.Void => typeof(void),
         _ => typeof(void)
     };
 
@@ -131,14 +132,16 @@ public static class Converter
             DataType.Float => value.AsFloat,
             DataType.Integer => value.AsInteger,
             DataType.Interval => value.AsInterval,
-            DataType.Null => null,
             DataType.Numeric => value.AsNumeric,
             DataType.Object => ConvertToObject(value),
+            DataType.Dynamic => ConvertToObject(value),
             DataType.String => value.AsString,
             DataType.Timestamp => value.AsTimestamp,
             DataType.Blob => value.AsBlob.GetStream(),
+            DataType.Null => null,
+            DataType.Void => null,
             _ => throw new InvalidOperationException(
-                $"Cannot convert value from system type '{value.GetInternalType()}' to type '{targetType}'."),
+                string.Format(Resources.Errors.CannotConvertToType, value.GetInternalType(), targetType)),
         };
 
         if (result != null && result.GetType() != targetType && result is IConvertible convertible)
@@ -154,14 +157,16 @@ public static class Converter
         {
             DataType.Boolean => value.AsBooleanUnsafe,
             DataType.Float => value.AsFloatUnsafe,
-            DataType.Integer => value.AsInteger,
-            DataType.Interval => value.AsInterval,
-            DataType.Null => null,
-            DataType.Numeric => value.AsNumeric,
-            DataType.Object => value.AsObject,
-            DataType.String => value.AsString,
-            DataType.Timestamp => value.AsTimestamp,
+            DataType.Integer => value.AsIntegerUnsafe,
+            DataType.Interval => value.AsIntervalUnsafe,
+            DataType.Numeric => value.AsNumericUnsafe,
+            DataType.Object => value.AsObjectUnsafe,
+            DataType.Dynamic => value.AsObjectUnsafe,
+            DataType.String => value.AsStringUnsafe,
+            DataType.Timestamp => value.AsTimestampUnsafe,
             DataType.Blob => value.AsBlobUnsafe.GetStream(),
+            DataType.Void => null,
+            DataType.Null => null,
             _ => null,
         };
 }

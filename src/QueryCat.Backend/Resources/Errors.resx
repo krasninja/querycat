@@ -159,4 +159,7 @@
   <data name="CannotSelectObject" xml:space="preserve">
     <value>Cannot select object.</value>
   </data>
+  <data name="ExecutionMaxRecursionDepth" xml:space="preserve">
+    <value>Max recursion depth of {0} reached.</value>
+  </data>
 </root>

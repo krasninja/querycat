@@ -2,6 +2,7 @@ using System.Buffers;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
@@ -17,21 +18,22 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     public const string FalseValueString = "FALSE";
     public const string NullValueString = "NULL";
     public const string VoidValueString = "VOID";
+    private const string UnknownString = "[unknown]";
 
     public const string FloatNumberFormat = "F";
 
-    private static readonly DataTypeObject IntegerObject = new("INT");
-    private static readonly DataTypeObject FloatObject = new("FLOAT");
-    private static readonly DataTypeObject TimestampObject = new("TIMESTAMP");
-    private static readonly DataTypeObject IntervalObject = new("INTERVAL");
-    private static readonly DataTypeObject BooleanObject = new("BOOL");
+    private static readonly DataTypeObject IntegerObject = new(DataType.Integer);
+    private static readonly DataTypeObject FloatObject = new(DataType.Float);
+    private static readonly DataTypeObject TimestampObject = new(DataType.Timestamp);
+    private static readonly DataTypeObject IntervalObject = new(DataType.Interval);
+    private static readonly DataTypeObject BooleanObject = new(DataType.Boolean);
 
     public static VariantValue OneIntegerValue = new(1);
     public static VariantValue TrueValue = new(true);
     public static VariantValue FalseValue = new(false);
 
     [StructLayout(LayoutKind.Explicit)]
-    private readonly struct TypeUnion
+    private readonly struct TypeUnion : IEquatable<TypeUnion>
     {
         [FieldOffset(0)]
         internal readonly long IntegerValue;
@@ -48,35 +50,45 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         [FieldOffset(0)]
         internal readonly TimeSpan TimeSpanValue;
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
         internal TypeUnion(long value) : this()
         {
             IntegerValue = value;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
         internal TypeUnion(double value) : this()
         {
             DoubleValue = value;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
         internal TypeUnion(DateTime value) : this()
         {
             DateTimeValue = value;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
         internal TypeUnion(bool value) : this()
         {
             BooleanValue = value;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
         internal TypeUnion(TimeSpan value) : this()
         {
             TimeSpanValue = value;
         }
+
+        /// <inheritdoc />
+        public override bool Equals([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] object? obj)
+            => obj is TypeUnion typeUnion && typeUnion.IntegerValue == this.IntegerValue;
+
+        /// <inheritdoc />
+        public override int GetHashCode() => IntegerValue.GetHashCode();
+
+        /// <inheritdoc />
+        public bool Equals(TypeUnion other) => IntegerValue == other.IntegerValue;
     }
 
     private readonly TypeUnion _valueUnion;
@@ -323,33 +335,17 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     /// <returns>Data type.</returns>
     public DataType GetInternalType()
     {
+        if (_object is DataTypeObject dataTypeObject)
+        {
+            return dataTypeObject.DataType;
+        }
         if (_object == null)
         {
             return DataType.Null;
         }
-        if (_object == IntegerObject)
-        {
-            return DataType.Integer;
-        }
         if (_object is string)
         {
             return DataType.String;
-        }
-        if (_object == FloatObject)
-        {
-            return DataType.Float;
-        }
-        if (_object == BooleanObject)
-        {
-            return DataType.Boolean;
-        }
-        if (_object == TimestampObject)
-        {
-            return DataType.Timestamp;
-        }
-        if (_object == IntervalObject)
-        {
-            return DataType.Interval;
         }
         if (_object is decimal)
         {
@@ -363,7 +359,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         {
             return DataType.Object;
         }
-        throw new InvalidOperationException("Cannot get type.");
+        throw new InvalidOperationException(Resources.Errors.CannotGetType);
     }
 
     private bool IsValueType() =>
@@ -748,7 +744,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     }
 
     /// <summary>
-    /// Try create variant value from string.
+    /// Try to create variant value from string.
     /// </summary>
     /// <param name="value">String value.</param>
     /// <param name="targetType">Target type.</param>
@@ -852,9 +848,9 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         DataType.Numeric => AsNumericUnsafe.ToString(FloatNumberFormat, Application.Culture),
         DataType.Timestamp => AsTimestampUnsafe.ToString(Application.Culture),
         DataType.Interval => AsIntervalUnsafe.ToString("c", Application.Culture),
-        DataType.Object => "object:" + AsObjectUnsafe,
-        DataType.Blob => "X" + BlobToShortString(AsBlobUnsafe, 16),
-        _ => "unknown"
+        DataType.Object => $"[object:{AsObjectUnsafe}]",
+        DataType.Blob => BlobToShortString(AsBlobUnsafe),
+        _ => UnknownString,
     };
 
     /// <summary>
@@ -874,9 +870,9 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         DataType.Numeric => AsNumeric.ToString(format, Application.Culture),
         DataType.Timestamp => AsTimestampUnsafe.ToString(format, Application.Culture),
         DataType.Interval => AsIntervalUnsafe.ToString(format, Application.Culture),
-        DataType.Object => "object:" + AsObjectUnsafe,
-        DataType.Blob => "X" + BlobToShortString(AsBlobUnsafe, 16),
-        _ => "unknown"
+        DataType.Object => $"[object:{AsObjectUnsafe}]",
+        DataType.Blob => BlobToShortString(AsBlobUnsafe),
+        _ => UnknownString,
     };
 
     /// <summary>
@@ -895,19 +891,46 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         DataType.Numeric => AsNumeric.ToString(formatProvider),
         DataType.Timestamp => AsTimestampUnsafe.ToString(formatProvider),
         DataType.Interval => AsIntervalUnsafe.ToString(null, formatProvider),
-        DataType.Blob => "X" + BlobToShortString(AsBlobUnsafe, 16),
-        DataType.Object => "object:" + AsObjectUnsafe,
-        _ => "unknown"
+        DataType.Object => $"[object:{AsObjectUnsafe}]",
+        DataType.Blob => BlobToShortString(AsBlobUnsafe),
+        _ => UnknownString,
     };
 
-    private static string BlobToShortString(IBlobData blobData, int numberOfBytes)
+    private static string BlobToShortString(IBlobData blobData)
     {
-        var arr = ArrayPool<byte>.Shared.Rent(numberOfBytes);
+        // Convert BLOB into string: ABC\5C.
+        var sb = new StringBuilder((int)blobData.Length * 3);
         using var stream = blobData.GetStream();
-        var readBytes = stream.Read(arr, 0, arr.Length);
-        var str = Convert.ToHexString(arr.AsSpan(0, readBytes));
-        ArrayPool<byte>.Shared.Return(arr);
-        return str;
+        var buffer = ArrayPool<byte>.Shared.Rent(1024);
+        try
+        {
+            int read;
+            var oneByteArr = new byte[1];
+            while ((read = stream.Read(buffer, 0, buffer.Length)) > 0)
+            {
+                foreach (var b in buffer.AsSpan(0, read))
+                {
+                    var ch = (char)b;
+                    if (char.IsAsciiLetterOrDigit(ch) || char.IsPunctuation(ch)
+                        || char.IsSeparator(ch))
+                    {
+                        sb.Append(ch);
+                    }
+                    else
+                    {
+                        oneByteArr[0] = b;
+                        sb.Append("\\x")
+                            .Append(Convert.ToHexString(oneByteArr));
+                    }
+                }
+            }
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(buffer);
+        }
+
+        return sb.ToString();
     }
 
     /// <inheritdoc />

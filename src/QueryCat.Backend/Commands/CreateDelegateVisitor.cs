@@ -179,15 +179,14 @@ internal partial class CreateDelegateVisitor : AstVisitor
     public override void Visit(IdentifierExpressionNode node)
     {
         ResolveTypesVisitor.Visit(node);
-        var scope = ExecutionThread.TopScope;
 
-        if (ExecutionThread.ContainsVariable(node.Name, scope))
+        if (ExecutionThread.ContainsVariable(node.Name))
         {
             var context = new ObjectSelectorContext(ExecutionThread);
             node.SetAttribute(ObjectSelectorKey, context);
             VariantValue Func()
             {
-                var startObject = ExecutionThread.GetVariable(node.Name, scope);
+                var startObject = ExecutionThread.GetVariable(node.Name);
                 GetObjectBySelector(context, startObject, node, out var finalValue);
                 return finalValue;
             }

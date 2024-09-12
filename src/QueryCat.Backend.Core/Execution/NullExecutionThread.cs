@@ -39,6 +39,9 @@ public sealed class NullExecutionThread : IExecutionThread
     public IObjectSelector ObjectSelector { get; } = NullObjectSelector.Instance;
 
     /// <inheritdoc />
+    public string CurrentQuery { get; } = string.Empty;
+
+    /// <inheritdoc />
     public ExecutionStatistic Statistic { get; } = NullExecutionStatistic.Instance;
 
     /// <inheritdoc />
@@ -54,6 +57,18 @@ public sealed class NullExecutionThread : IExecutionThread
         value = VariantValue.Null;
         return false;
     }
+
+    /// <inheritdoc />
+    public IEnumerable<CompletionResult> GetCompletions(string query, int position = -1, object? tag = null)
+    {
+        yield break;
+    }
+
+    /// <inheritdoc />
+    public IExecutionScope PushScope() => NullExecutionScope.Instance;
+
+    /// <inheritdoc />
+    public IExecutionScope? PopScope() => null;
 
     /// <inheritdoc />
     public void Dispose()

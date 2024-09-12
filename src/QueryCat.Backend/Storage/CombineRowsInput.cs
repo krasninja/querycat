@@ -63,7 +63,7 @@ internal sealed class CombineRowsInput : RowsInput, IDisposable
             return _currentRowsInput.ReadValue(columnIndex, out value);
         }
         value = VariantValue.Null;
-        return ErrorCode.Error;
+        return ErrorCode.NoData;
     }
 
     /// <inheritdoc />

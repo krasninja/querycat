@@ -14,6 +14,10 @@ public class User
 
     public List<Cat> Cats { get; init; } = new();
 
+    public Cat this[int i] => Cats[i];
+
+    public Cat? this[string name] => Cats.Find(c => c.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+
     public static User GetTestUser1() => new()
     {
         Id = 1,

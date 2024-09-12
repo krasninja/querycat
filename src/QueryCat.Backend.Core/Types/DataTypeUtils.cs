@@ -53,8 +53,8 @@ public static class DataTypeUtils
     internal static string SerializeVariantValue(VariantValue value)
         => value.GetInternalType() switch
         {
-            DataType.Null => "null",
-            DataType.Void => "void",
+            DataType.Null => VariantValue.NullValueString,
+            DataType.Void => VariantValue.VoidValueString,
             DataType.Dynamic => "dynamic",
             DataType.Integer => "i:" + value.AsIntegerUnsafe.ToString(CultureInfo.InvariantCulture),
             DataType.String => "s:" + StringUtils.Quote(value.AsStringUnsafe).ToString(),
@@ -68,7 +68,7 @@ public static class DataTypeUtils
 
     internal static VariantValue DeserializeVariantValue(ReadOnlySpan<char> source, bool strongDeserialization = true)
     {
-        if (source == "null" || source == "void")
+        if (source == VariantValue.NullValueString || source == VariantValue.VoidValueString)
         {
             return VariantValue.Null;
         }
@@ -119,7 +119,7 @@ public static class DataTypeUtils
             return new VariantValue(new TimeSpan(ticks));
         }
 
-        throw new InvalidOperationException($"Invalid deserialization type '{type}'.");
+        throw new InvalidOperationException(string.Format(Resources.Errors.InvalidDeserializationType, type));
     }
 
     #endregion
@@ -132,8 +132,7 @@ public static class DataTypeUtils
     /// </summary>
     /// <param name="value">Value.</param>
     /// <returns>Optimal type.</returns>
-    public static DataType DetermineTypeByValue(string value)
-        => DetermineTypeByValues(new[] { value });
+    public static DataType DetermineTypeByValue(string value) => DetermineTypeByValues([value]);
 
     internal static DataType DetermineTypeByValues(IEnumerable<string> values)
         => DetermineTypeByValues(values.Select(v => new VariantValue(v)));

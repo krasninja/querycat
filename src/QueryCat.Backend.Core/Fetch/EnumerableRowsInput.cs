@@ -40,7 +40,7 @@ public class EnumerableRowsInput<TClass> : KeysRowsInput where TClass : class
         if (Enumerator == null)
         {
             value = VariantValue.Null;
-            return ErrorCode.Error;
+            return ErrorCode.NoData;
         }
 
         value = _builder.GetValue(columnIndex, Enumerator.Current);

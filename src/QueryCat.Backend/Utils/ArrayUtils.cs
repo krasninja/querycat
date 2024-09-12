@@ -1,4 +1,4 @@
-namespace QueryCat.Backend;
+namespace QueryCat.Backend.Utils;
 
 /// <summary>
 /// Array utils.
@@ -16,7 +16,7 @@ internal static class ArrayUtils
     {
         if (item != null)
         {
-            return source.Concat(new[] { item }).ToArray();
+            return source.Concat([item]).ToArray();
         }
         return source;
     }
@@ -50,8 +50,8 @@ internal static class ArrayUtils
         {
             return true;
         }
-        source ??= Array.Empty<T>();
-        dest ??= Array.Empty<T>();
+        source ??= [];
+        dest ??= [];
         if (source.Length != dest.Length)
         {
             return false;

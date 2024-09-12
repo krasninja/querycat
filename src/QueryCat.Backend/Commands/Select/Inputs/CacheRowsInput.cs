@@ -93,7 +93,7 @@ internal sealed class CacheRowsInput : IRowsInputKeys
         if (_rowIndex < 0)
         {
             value = VariantValue.Null;
-            return ErrorCode.Error;
+            return ErrorCode.NoData;
         }
 
         value = ReadValueByPosition(_rowIndex, columnIndex);

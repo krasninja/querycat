@@ -6,9 +6,13 @@ using QueryCat.Backend.Core;
 using QueryCat.Backend.Execution;
 using QueryCat.Cli.Commands.Options;
 using QueryCat.Cli.Infrastructure;
-#if ENABLE_PLUGINS && PLUGIN_THRIFT
+#if ENABLE_PLUGINS
+#if PLUGIN_THRIFT
 using QueryCat.Backend.ThriftPlugins;
 using QueryCat.Plugins.Client;
+#elif PLUGIN_ASSEMBLY
+using QueryCat.Backend.AssemblyPlugins;
+#endif
 #endif
 
 namespace QueryCat.Cli.Commands;
@@ -27,7 +31,6 @@ internal class PluginDebugCommand : BaseQueryCommand
 
         this.SetHandler((applicationOptions, query, variables, files, follow) =>
         {
-#if ENABLE_PLUGINS && PLUGIN_THRIFT
             applicationOptions.InitializeLogger();
             var tableOutput = new Backend.Formatters.TextTableOutput(
                 stream: Stdio.GetConsoleOutput());
@@ -45,9 +48,11 @@ internal class PluginDebugCommand : BaseQueryCommand
             using var thread = new ExecutionThreadBootstrapper(options)
                 .WithConfigStorage(new PersistentInputConfigStorage(
                     Path.Combine(ExecutionThread.GetApplicationDirectory(), ApplicationOptions.ConfigFileName)))
+#if PLUGIN_THRIFT
                 .WithPluginsLoader(th => new ThriftPluginsLoader(
                     th,
                     applicationOptions.PluginDirectories,
+                    ExecutionThread.GetApplicationDirectory(),
                     serverPipeName: ThriftPluginClient.TestPipeName,
                     debugMode: true,
                     minLogLevel: LogLevel.Debug)
@@ -55,15 +60,16 @@ internal class PluginDebugCommand : BaseQueryCommand
                     ForceAuthToken = ThriftPluginClient.TestAuthToken,
                     SkipPluginsExecution = true,
                 })
+#elif PLUGIN_ASSEMBLY
+                .WithPluginsLoader(th => new DotNetAssemblyPluginsLoader(
+                    th.FunctionsManager,
+                    applicationOptions.PluginDirectories))
+#endif
                 .WithRegistrations(AdditionalRegistration.Register)
                 .WithRegistrations(Backend.Addons.Functions.JsonFunctions.RegisterFunctions)
                 .Create();
             AddVariables(thread, variables);
             RunQuery(thread, query, files, cts.Token);
-
-#else
-            _logger.LogCritical("Plugins debug is only available for Thrift plugins system.");
-#endif
         },
             new ApplicationOptionsBinder(LogLevelOption, PluginDirectoriesOption),
             QueryArgument,

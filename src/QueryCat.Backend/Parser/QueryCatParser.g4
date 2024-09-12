@@ -68,19 +68,6 @@ selectSortSpecification: expression (ASC | DESC)? ((NULLS FIRST) | (NULLS LAST))
 selectAlias: AS? (identifierSimple | STRING_LITERAL);
 selectQueryExpression
     : selectWithClause?
-      SELECT
-      selectTopClause?
-      selectDistinctClause?
-      selectList
-      selectExcept?
-      selectTarget?
-      selectFromClause?
-      selectWindow?
-      selectOrderByClause?
-      selectLimitClause?
-      selectOffsetClause?
-      selectFetchFirstClause? # SelectQueryExpressionSimple
-    | selectWithClause?
       selectQueryExpressionBody
       selectOrderByClause?
       selectLimitClause?
@@ -340,7 +327,7 @@ expression
     | left=expression NOT? op=IN right=selectQueryExpression # ExpressionBinaryInSubquery
     | expr=expression NOT? op=BETWEEN left=simpleExpression AND right=expression # ExpressionBetween
     | EXISTS '(' selectQueryExpression ')' # ExpressionExists
-    | left=simpleExpression op=(EQUALS | NOT_EQUALS | GREATER | GREATER_OR_EQUALS | LESS | LESS_OR_EQUALS)
+    | left=expression op=(EQUALS | NOT_EQUALS | GREATER | GREATER_OR_EQUALS | LESS | LESS_OR_EQUALS)
         condition=(ANY | SOME | ALL) '(' selectQueryExpression ')' # ExpressionSubquery
     | left=expression op=AND right=expression # ExpressionBinary
     | left=expression op=OR right=expression # ExpressionBinary

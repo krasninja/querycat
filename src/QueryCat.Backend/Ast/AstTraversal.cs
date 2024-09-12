@@ -152,10 +152,12 @@ internal sealed class AstTraversal
 
     private bool IsIgnoreType(Type type)
     {
-        var foundIndex = TypesToIgnore.FindIndex(t => t.IsAssignableFrom(type));
-        if (foundIndex > -1)
+        foreach (var ignoreType in TypesToIgnore)
         {
-            return true;
+            if (ignoreType.IsAssignableFrom(type))
+            {
+                return true;
+            }
         }
         return false;
     }

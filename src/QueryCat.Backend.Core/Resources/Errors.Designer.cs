@@ -98,5 +98,23 @@ namespace QueryCat.Backend.Core.Resources {
                 return ResourceManager.GetString("QueryMissedRequiredCondition", resourceCulture);
             }
         }
+        
+        internal static string InvalidDeserializationType {
+            get {
+                return ResourceManager.GetString("InvalidDeserializationType", resourceCulture);
+            }
+        }
+        
+        internal static string CannotConvertToType {
+            get {
+                return ResourceManager.GetString("CannotConvertToType", resourceCulture);
+            }
+        }
+        
+        internal static string CannotGetType {
+            get {
+                return ResourceManager.GetString("CannotGetType", resourceCulture);
+            }
+        }
     }
 }

@@ -9,6 +9,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Initial implementation of completion system.
+
+### Changed
+
+- New plugins system. Now, the special plugin proxy should be used to load plugins.
+
+### Fixed
+
+- Minor performance optimizations and bugfixes.
+- Improve strings concatenation with other types.
+
+### Added
+
+- Add MaxRecursionDepth option.
+
+### Fixed
+
+- Fix index property access in DefaultObjectSelector.
+
+## [0.6.9] - 2024-08-06
+
+### Added
+
 - Support FORMAT block for SELECT * INTO construction.
 - Export to CSV and clipboard in web UI.
 - Add function "json_array_length".
@@ -16,7 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Update JSON Path package.
-- Extend aggregate functions types support.
+- Extent aggregate functions type's support.
 
 ### Fixed
 

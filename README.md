@@ -22,6 +22,7 @@ QueryCat is the command line tool that allows you to use SQL (Structured Query L
 7. [Plugins](https://querycat.readthedocs.io/en/latest/plugins/) ecosystem.
 8. [Variables](https://querycat.readthedocs.io/en/latest/commands/declare/) support.
 9. Query .NET objects in your project (if used as library).
+10. [AOT](https://learn.microsoft.com/en-us/dotnet/core/deploying/native-aot) friendly.
 
 ## In Action
 

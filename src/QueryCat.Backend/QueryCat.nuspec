@@ -3,7 +3,7 @@
   <metadata>
     <id>QueryCat</id>
     <title>QueryCat</title>
-    <summary>Simple experssions evaluator and SQL engine</summary>
+    <summary>Simple expressions evaluator and SQL engine</summary>
     <version>0.0.0</version>
     <description>The QueryCat package provides functionality that allows you to evaluate SQL-like expressions and queries to your CLR objects.</description>
     <authors>Ivan Kozhin</authors>

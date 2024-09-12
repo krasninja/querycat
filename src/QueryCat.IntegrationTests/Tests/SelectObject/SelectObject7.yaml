@@ -1,0 +1,4 @@
+expected: |
+  Alisa,Archi,,
+query: |
+  select user1[0].Name, user1['archi'].Name, user1['none'].Name, user1[9].Name;

@@ -44,6 +44,9 @@ public class TestExecutionThread : IExecutionThread
     public IObjectSelector ObjectSelector => NullObjectSelector.Instance;
 
     /// <inheritdoc />
+    public string CurrentQuery => string.Empty;
+
+    /// <inheritdoc />
     public ExecutionStatistic Statistic => NullExecutionStatistic.Instance;
 
     /// <inheritdoc />
@@ -61,6 +64,18 @@ public class TestExecutionThread : IExecutionThread
         value = default;
         return false;
     }
+
+    /// <inheritdoc />
+    public IEnumerable<CompletionResult> GetCompletions(string query, int position = -1, object? tag = null)
+    {
+        yield break;
+    }
+
+    /// <inheritdoc />
+    public IExecutionScope PushScope() => NullExecutionScope.Instance;
+
+    /// <inheritdoc />
+    public IExecutionScope? PopScope() => null;
 
     protected virtual void Dispose(bool disposing)
     {

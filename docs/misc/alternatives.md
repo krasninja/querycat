@@ -18,6 +18,12 @@ There are alternative and similar tools:
 
 - [RBQL](https://rbql.org). RBQL is a technology that provides SQL-like language for data-transformation and data-analysis queries for structured data (e.g. CSV files, log files, Python lists, JS arrays). RBQL evaluates input query using one of the available general-purpose "backend" languages (currently Python or JavaScript).
 
+- [NCalc](https://github.com/ncalc/ncalc). NCalc is a mathematical expression evaluator in .NET. NCalc can parse any expression and evaluate the result, including static or dynamic parameters and custom functions.
+
+- [NFun](https://github.com/tmteam/NFun). This is an expression evaluator or a mini-script language for .NET . It supports working with mathematical expressions as well as with collections, strings, hi-order functions and structures. NFun is quite similar to NCalc but with a rich type system and linq support.
+
+- [MathEvaluator](https://github.com/AntonovAnton/math.evaluation). MathEvaluator is a .NET library that allows you to evaluate any mathematical expressions from a string dynamically.
+
 No active support:
 
 - [Log Parser](https://www.microsoft.com/en-us/download/details.aspx?id=24659). The is the command line tool to query various logs files (CSV, IIS logs, event logs, XML, etc). It can run aggregate and filter queries. Only for Windows. Not supported anymore. [Documentation](https://documentation.help/Log-Parser/index.htm).

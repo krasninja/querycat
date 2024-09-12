@@ -2,8 +2,10 @@ using Microsoft.Extensions.Logging;
 using QueryCat.Backend;
 using QueryCat.Backend.Addons.Formatters;
 using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.PluginsManager;
+using QueryCat.Backend.ThriftPlugins;
 using QueryCat.Cli.Infrastructure;
 
 namespace QueryCat.Cli.Commands.Options;
@@ -11,7 +13,7 @@ namespace QueryCat.Cli.Commands.Options;
 /// <summary>
 /// Main/shared command line options.
 /// </summary>
-internal class ApplicationOptions
+internal sealed class ApplicationOptions
 {
     internal const string ConfigFileName = "config.json";
     internal const string ApplicationPluginsDirectory = "plugins";
@@ -25,14 +27,46 @@ internal class ApplicationOptions
 
     public ApplicationRoot CreateApplicationRoot(AppExecutionOptions? executionOptions = null)
     {
+        try
+        {
+            return CreateApplicationRootInternal(executionOptions);
+        }
+        catch (ProxyNotFoundException)
+        {
+            InstallPluginsProxy();
+            return CreateApplicationRootInternal(executionOptions);
+        }
+    }
+
+    internal static bool InstallPluginsProxy()
+    {
+        Console.WriteLine(Resources.Messages.PluginProxyWantToInstall);
+        var key = Console.ReadKey();
+        if (key.Key == ConsoleKey.Y)
+        {
+            var applicationDirectory = ExecutionThread.GetApplicationDirectory(ensureExists: true);
+            var pluginsProxyLocalFile = Path.Combine(applicationDirectory,
+                ThriftPluginsLoader.GetProxyFileName(includeCurrentVersion: true));
+            AsyncUtils.RunSync(ct =>
+            {
+                var downloader = new PluginProxyDownloader(ThriftPluginsLoader.GetProxyFileName());
+                return downloader.DownloadAsync(pluginsProxyLocalFile, ct);
+            });
+            return true;
+        }
+        return false;
+    }
+
+    private ApplicationRoot CreateApplicationRootInternal(AppExecutionOptions? executionOptions = null)
+    {
         executionOptions ??= new AppExecutionOptions
         {
             RunBootstrapScript = true,
             UseConfig = true,
         };
+#if ENABLE_PLUGINS
         executionOptions.PluginDirectories.AddRange(
             GetPluginDirectories(ExecutionThread.GetApplicationDirectory()));
-#if ENABLE_PLUGINS
         executionOptions.PluginDirectories.AddRange(PluginDirectories);
 #endif
 
@@ -48,6 +82,7 @@ internal class ApplicationOptions
         bootstrapper.WithPluginsLoader(thread => new Backend.ThriftPlugins.ThriftPluginsLoader(
             thread,
             executionOptions.PluginDirectories,
+            ExecutionThread.GetApplicationDirectory(),
             functionsCacheDirectory: Path.Combine(ExecutionThread.GetApplicationDirectory(),
                 ApplicationPluginsFunctionsCacheDirectory),
             minLogLevel: LogLevel)

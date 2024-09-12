@@ -12,7 +12,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: actions/setup-dotnet@v4
+      - name: Set up dotnet
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8'
       - name: Install GitVersion
@@ -24,7 +25,7 @@ jobs:
       - name: Run build Cake script
         shell: pwsh
         run: .\build.ps1 -t publish-all --verbosity Diagnostic -- --platform windows
-      - name: Upload Artifacts
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: qcat-windows-x64
