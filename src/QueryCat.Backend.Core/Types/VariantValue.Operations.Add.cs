@@ -124,6 +124,14 @@ public partial struct VariantValue
                     }
                     return new VariantValue(left.AsTimestampUnsafe + right.AsIntervalUnsafe);
                 },
+                DataType.String => (in VariantValue left, in VariantValue right) =>
+                {
+                    if (left.IsNull || right.IsNull)
+                    {
+                        return Null;
+                    }
+                    return new VariantValue(left.AsTimestampUnsafe + right.AsStringUnsafe);
+                },
                 _ => BinaryNullDelegate,
             },
             DataType.Interval => rightType switch
@@ -136,6 +144,14 @@ public partial struct VariantValue
                     }
                     return new VariantValue(left.AsIntervalUnsafe + right.AsIntervalUnsafe);
                 },
+                DataType.String => (in VariantValue left, in VariantValue right) =>
+                {
+                    if (left.IsNull || right.IsNull)
+                    {
+                        return Null;
+                    }
+                    return new VariantValue(left.AsIntervalUnsafe + right.AsStringUnsafe);
+                },
                 _ => BinaryNullDelegate,
             },
             DataType.String => rightType switch
@@ -146,15 +162,47 @@ public partial struct VariantValue
                     {
                         return Null;
                     }
-                    return new VariantValue(string.Concat(left.AsStringUnsafe, right.AsString));
+                    return new VariantValue(string.Concat(left.AsStringUnsafe, right.AsStringUnsafe));
                 },
-                DataType.Integer or DataType.Float or DataType.Numeric => (in VariantValue left, in VariantValue right) =>
+                DataType.Integer or DataType.Float or DataType.Numeric or DataType.Boolean => (in VariantValue left, in VariantValue right) =>
                 {
                     if (left.IsNull || right.IsNull)
                     {
                         return Null;
                     }
                     return new VariantValue(string.Concat(left.AsStringUnsafe, right.AsString));
+                },
+                DataType.Dynamic or DataType.Object or DataType.Interval or DataType.Timestamp => (in VariantValue left, in VariantValue right) =>
+                {
+                    if (left.IsNull || right.IsNull)
+                    {
+                        return Null;
+                    }
+                    return new VariantValue(string.Concat(left.AsStringUnsafe, right.AsString));
+                },
+                _ => BinaryNullDelegate,
+            },
+            DataType.Boolean => rightType switch
+            {
+                DataType.String => (in VariantValue left, in VariantValue right) =>
+                {
+                    if (left.IsNull || right.IsNull)
+                    {
+                        return Null;
+                    }
+                    return new VariantValue(string.Concat(left.AsString, right.AsStringUnsafe));
+                },
+                _ => BinaryNullDelegate,
+            },
+            DataType.Dynamic or DataType.Object => rightType switch
+            {
+                DataType.String => (in VariantValue left, in VariantValue right) =>
+                {
+                    if (left.IsNull || right.IsNull)
+                    {
+                        return Null;
+                    }
+                    return new VariantValue(string.Concat(left.AsObjectUnsafe?.ToString(), right.AsStringUnsafe));
                 },
                 _ => BinaryNullDelegate,
             },
