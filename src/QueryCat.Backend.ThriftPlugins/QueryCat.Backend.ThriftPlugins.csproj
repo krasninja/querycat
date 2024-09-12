@@ -12,13 +12,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="StyleCop.Analyzers.Unstable" Version="1.2.0.556">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-  </ItemGroup>
-
-  <ItemGroup>
     <EmbeddedResource Update="Resources\Errors.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Errors.Designer.cs</LastGenOutput>
