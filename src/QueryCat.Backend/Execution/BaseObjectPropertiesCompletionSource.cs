@@ -18,8 +18,17 @@ public abstract class BaseObjectPropertiesCompletionSource : ICompletionSource
             return [];
         }
 
+        // Pre-calculation for text edit.
+        int periodPosition;
         var periodTokenIndex = context.TriggerTokens.FindLastIndex(ParserToken.TokenKindPeriod);
-        var periodPosition = periodTokenIndex > -1 ? context.TriggerTokens[periodTokenIndex].EndIndex : 0;
+        if (periodTokenIndex > -1)
+        {
+            periodPosition = context.TriggerTokens[periodTokenIndex].EndIndex;
+        }
+        else
+        {
+            periodPosition = context.TriggerTokens.Count > 0 ? context.TriggerTokens[0].StartIndex : 0;
+        }
 
         // Find completions.
         var (_, termSearch) = GetObjectExpressionAndTerm(context.TriggerTokens);
