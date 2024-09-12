@@ -43,3 +43,7 @@ The QueryCat is not a true database engine. It doesn't know anything about input
 ## Does it send any local or personal information?
 
 The QueryCat does not send any local or personal information to the author or any company.
+
+## Why do I need to install "proxy" to run plugins?
+
+The plugins are written in .NET and require the full version of .NET platform to run them. Since QueryCat is compiled with AOT it does not have it. That's why we need another "proxy" to load plugin assemblies.
