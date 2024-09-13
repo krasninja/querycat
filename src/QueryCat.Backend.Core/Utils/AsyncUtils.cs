@@ -168,6 +168,14 @@ public static class AsyncUtils
             {
                 result = await taskFunc();
             }
+            catch (AggregateException ex)
+            {
+                exclusiveSynchronizationContext.InnerException = ex.InnerException;
+            }
+            catch (TargetInvocationException ex)
+            {
+                exclusiveSynchronizationContext.InnerException = ex.InnerException;
+            }
             catch (Exception ex)
             {
                 var exception = ex;
