@@ -416,6 +416,24 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
     }
 
     /// <summary>
+    /// Try to get element by index.
+    /// </summary>
+    /// <param name="index">Element index.</param>
+    /// <param name="value">Value or default.</param>
+    /// <returns><c>True</c> if can get, <c>false</c> otherwise.</returns>
+    public bool TryGetAt(int index, out T? value)
+    {
+        var iterator = IteratorStart(index);
+        if (iterator.IsNotEmpty)
+        {
+            value = iterator.Segment.Buffer[iterator.StartIndex];
+            return true;
+        }
+        value = default;
+        return false;
+    }
+
+    /// <summary>
     /// Get data between start and end indexes.
     /// </summary>
     /// <param name="startIndex">Start index.</param>

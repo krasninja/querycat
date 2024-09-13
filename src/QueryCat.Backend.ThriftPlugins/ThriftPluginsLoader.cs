@@ -314,13 +314,12 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         string authToken,
         CancellationToken cancellationToken = default)
     {
-        var proxyExecutable = PathUtils.ResolveExecutableFullPath(
-            GetProxyFileName(includeCurrentVersion: true),
-            _applicationDirectory ?? string.Empty);
+        var proxyExecutable = ResolveProxyFileName();
         if (string.IsNullOrEmpty(proxyExecutable))
         {
             throw new ProxyNotFoundException(file);
         }
+
         _logger.LogDebug("Loading '{Assembly}' with proxy. Location: '{Location}'.", file, proxyExecutable);
         return LoadPluginExecutable(
             proxyExecutable,
@@ -328,6 +327,20 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
             ["--assembly=" + file],
             file,
             cancellationToken);
+    }
+
+    private string ResolveProxyFileName()
+    {
+        var proxyExecutable = PathUtils.ResolveExecutableFullPath(
+            GetProxyFileName(includeCurrentVersion: true),
+            _applicationDirectory);
+        if (string.IsNullOrEmpty(proxyExecutable))
+        {
+            proxyExecutable = PathUtils.ResolveExecutableFullPath(
+                GetProxyFileName(includeCurrentVersion: false),
+                _applicationDirectory);
+        }
+        return proxyExecutable;
     }
 
     private ThriftPluginsServer.PluginContext LoadPluginExecutable(
