@@ -10,6 +10,9 @@ namespace QueryCat.Backend.Storage;
 /// </summary>
 internal sealed class SingleValueRowsInput : IRowsInput
 {
+    private static int _nextId = 150;
+    private readonly int _id = Interlocked.Increment(ref _nextId);
+
     private bool _wasRead;
     private readonly VariantValue _value = VariantValue.Null;
 
@@ -17,7 +20,7 @@ internal sealed class SingleValueRowsInput : IRowsInput
     public Column[] Columns { get; }
 
     /// <inheritdoc />
-    public string[] UniqueKey { get; } = Array.Empty<string>();
+    public string[] UniqueKey { get; } = [];
 
     /// <inheritdoc />
     public QueryContext QueryContext { get; set; } = NullQueryContext.Instance;
@@ -32,10 +35,10 @@ internal sealed class SingleValueRowsInput : IRowsInput
 
     public SingleValueRowsInput(VariantValue value)
     {
-        Columns = new Column[]
-        {
+        Columns =
+        [
             new(SingleValueRowsIterator.ColumnTitle, value.GetInternalType())
-        };
+        ];
         _value = value;
     }
 
@@ -71,7 +74,7 @@ internal sealed class SingleValueRowsInput : IRowsInput
     /// <inheritdoc />
     public void Explain(IndentedStringBuilder stringBuilder)
     {
-        stringBuilder.AppendLine($"Single value input {_value}");
+        stringBuilder.AppendLine($"Single value input (value={_value}, id={_id})");
     }
 
     /// <inheritdoc />
@@ -80,5 +83,5 @@ internal sealed class SingleValueRowsInput : IRowsInput
     }
 
     /// <inheritdoc />
-    public override string ToString() => $"{GetType().Name} (value={_value})";
+    public override string ToString() => $"{GetType().Name} (value={_value}, id={_id})";
 }

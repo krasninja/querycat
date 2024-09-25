@@ -152,9 +152,14 @@ public class RowsInputIterator : IRowsIterator, IRowsIteratorParent, IDisposable
     /// <inheritdoc />
     public void Reset()
     {
-        _row.Clear();
         _rowsInput.Reset();
+        if (!_isInitialized)
+        {
+            return;
+        }
+        _row.Clear();
         _rowIndex = 0;
+        _isInitialized = false;
     }
 
     /// <inheritdoc />

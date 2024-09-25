@@ -13,6 +13,11 @@ internal class SelectCommandInputContext
 
     public string Alias { get; set; }
 
+    /// <summary>
+    /// Was the input created from variable.
+    /// </summary>
+    public bool IsVariableBound { get; set; }
+
     public SelectCommandInputContext(IRowsInput rowsInput, SelectInputQueryContext inputQueryContext,
         string? alias = null)
     {

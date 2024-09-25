@@ -154,11 +154,11 @@ internal sealed partial class SelectPlanner
         var cteIndex = context.CteList.FindIndex(c => c.Name == idNode.FullName);
         if (cteIndex < 0)
         {
-            return Array.Empty<IRowsInput>();
+            return [];
         }
         var inputs = new List<IRowsInput>
         {
-            new RowsIteratorInput(context.CteList[cteIndex].RowsIterator),
+            context.CteList[cteIndex].RowsInputProxy,
         };
         if (idNode is ISelectAliasNode aliasNode)
         {
@@ -231,14 +231,20 @@ internal sealed partial class SelectPlanner
         IRowsInput? rowsInputResult = null;
         if (objVariable is IRowsInput rowsInput)
         {
-            currentContext.AddInput(new SelectCommandInputContext(rowsInput));
+            currentContext.AddInput(new SelectCommandInputContext(rowsInput)
+            {
+                IsVariableBound = true,
+            });
             rowsInput.Open();
             rowsInputResult = rowsInput;
         }
         if (objVariable is IRowsIterator rowsIterator)
         {
             rowsInput = new RowsIteratorInput(rowsIterator);
-            currentContext.AddInput(new SelectCommandInputContext(rowsInput));
+            currentContext.AddInput(new SelectCommandInputContext(rowsInput)
+            {
+                IsVariableBound = true,
+            });
             rowsInputResult = rowsInput;
         }
         if (objVariable is IEnumerable enumerable && enumerable.GetType().IsGenericType)

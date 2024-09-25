@@ -24,21 +24,21 @@ public static class ExecutionThreadUtils
             return EmptyIterator.Instance;
         }
 
-        if (type == DataType.Object)
+        if (type == DataType.Object || type == DataType.Dynamic)
         {
-            var obj = variantValue.AsObject;
+            var obj = variantValue.AsObjectUnsafe;
             // IRowsIterator.
             if (obj is IRowsIterator rowsIterator)
             {
                 return rowsIterator;
             }
             // IRowsInput.
-            else if (obj is IRowsInput rowsInput)
+            if (obj is IRowsInput rowsInput)
             {
                 return new RowsInputIterator(rowsInput, autoOpen: true);
             }
             // IRowsOutput.
-            else if (obj is IRowsOutput)
+            if (obj is IRowsOutput)
             {
                 return new SingleValueRowsIterator();
             }

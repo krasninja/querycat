@@ -123,4 +123,7 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys
     {
         stringBuilder.AppendLine($"Remote (handle={_objectHandle}, id={_id})");
     }
+
+    /// <inheritdoc />
+    public override string ToString() => $"Id = {_id}";
 }

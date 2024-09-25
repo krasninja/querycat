@@ -593,6 +593,18 @@ public class DelimiterStreamReader
         return true;
     }
 
+    /// <summary>
+    /// Resets current state and start reading from the beginning.
+    /// </summary>
+    public void Reset()
+    {
+        _fieldInfoLastIndex = 0;
+        _currentDelimiterPosition = 0;
+        _currentSequence = ReadOnlySequence<char>.Empty;
+        _dynamicBuffer.Clear();
+        _streamReader.BaseStream.Seek(0, SeekOrigin.Begin);
+    }
+
     #region Escape
 
     internal ReadOnlySpan<char> Unquote(ReadOnlySequence<char> target, char quoteChar = '"')

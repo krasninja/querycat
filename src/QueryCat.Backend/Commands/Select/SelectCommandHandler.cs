@@ -17,7 +17,19 @@ internal sealed class SelectCommandHandler : IFuncUnit, IDisposable
     /// <inheritdoc />
     public VariantValue Invoke()
     {
+        ResetVariablesBoundRowsInputs();
         return VariantValue.CreateFromObject(SelectCommandContext.CurrentIterator);
+    }
+
+    private void ResetVariablesBoundRowsInputs()
+    {
+        foreach (var inputQueryContext in SelectCommandContext.Inputs)
+        {
+            if (inputQueryContext.IsVariableBound)
+            {
+                inputQueryContext.RowsInput.Reset();
+            }
+        }
     }
 
     /// <inheritdoc />

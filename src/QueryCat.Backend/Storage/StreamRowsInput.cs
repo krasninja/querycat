@@ -264,7 +264,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     public virtual void Reset()
     {
         _logger.LogTrace("Reset stream.");
-        // If we still read cache data - we just reset it. Otherwise there will be double read.
+        // If we still read cache data - we just reset it. Otherwise, there will be double read.
         if (_cacheIterator != null)
         {
             _cacheIterator.SeekToHead();
@@ -273,7 +273,9 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
         {
             StreamReader.DiscardBufferedData();
             StreamReader.BaseStream.Seek(0, SeekOrigin.Begin);
+            _delimiterStreamReader.Reset();
         }
+        _rowIndex = 0;
     }
 
     /// <inheritdoc />

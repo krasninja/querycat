@@ -20,7 +20,8 @@ internal sealed class DeclareCommand : ICommand
         {
             valueHandler = new StatementsVisitor(executionThread).RunAndReturn(declareNode.ValueNode);
             // There is a special case for SELECT command. We prefer assign first value instead of iterator object.
-            if (valueHandler is SelectCommandHandler selectCommandHandler)
+            if (valueHandler is SelectCommandHandler selectCommandHandler
+                && selectCommandHandler.SelectCommandContext.IsSingleValue)
             {
                 valueHandler = new FuncUnitRowsIteratorScalar(selectCommandHandler.SelectCommandContext.CurrentIterator);
             }

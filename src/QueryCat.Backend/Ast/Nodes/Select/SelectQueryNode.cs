@@ -1,3 +1,5 @@
+using QueryCat.Backend.Core.Types;
+
 namespace QueryCat.Backend.Ast.Nodes.Select;
 
 internal abstract class SelectQueryNode : ExpressionNode, ISelectAliasNode
@@ -64,6 +66,22 @@ internal abstract class SelectQueryNode : ExpressionNode, ISelectAliasNode
             FetchNode = (SelectFetchNode)node.FetchNode.Clone();
         }
         node.CopyTo(this);
+    }
+
+    /// <summary>
+    /// Does the query returns only single value.
+    /// </summary>
+    public virtual bool IsSingleValue()
+    {
+        if (ColumnsListNode.ColumnsNodes.Count == 1
+               && FetchNode?.CountNode is LiteralNode literalNode
+               && literalNode.Value.GetInternalType() == DataType.Integer
+               && literalNode.Value.AsInteger == 1)
+        {
+            return true;
+        }
+
+        return false;
     }
 
     /// <inheritdoc />
