@@ -416,9 +416,9 @@ internal abstract class DelegateVisitor : AstVisitor
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectTableValuesNode valuesNode)
+    public override void Visit(SelectTableValuesNode node)
     {
-        OnVisit(valuesNode);
+        OnVisit(node);
     }
 
     /// <inheritdoc />

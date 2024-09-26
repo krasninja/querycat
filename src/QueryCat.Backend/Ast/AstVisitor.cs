@@ -335,7 +335,7 @@ internal abstract class AstVisitor
     {
     }
 
-    public virtual void Visit(SelectTableValuesNode valuesNode)
+    public virtual void Visit(SelectTableValuesNode node)
     {
     }
 

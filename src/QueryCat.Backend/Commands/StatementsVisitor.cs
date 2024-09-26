@@ -39,7 +39,9 @@ internal sealed class StatementsVisitor : AstVisitor
             return funcUnit;
         }
         Run(node);
-        return _handlers[node.Id];
+        var handler = _handlers[node.Id];
+        _handlers.Clear();
+        return handler;
     }
 
     /// <inheritdoc />

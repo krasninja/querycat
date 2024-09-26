@@ -55,7 +55,8 @@ internal partial class CreateDelegateVisitor : AstVisitor
         }
         NodeIdFuncMap.Clear();
         Run(node);
-        return NodeIdFuncMap[node.Id];
+        var handler = NodeIdFuncMap[node.Id];
+        return handler;
     }
 
     #region General
