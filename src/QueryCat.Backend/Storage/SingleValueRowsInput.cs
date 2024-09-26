@@ -2,6 +2,7 @@ using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Relational.Iterators;
+using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Storage;
 
@@ -10,8 +11,7 @@ namespace QueryCat.Backend.Storage;
 /// </summary>
 internal sealed class SingleValueRowsInput : IRowsInput
 {
-    private static int _nextId = 150;
-    private readonly int _id = Interlocked.Increment(ref _nextId);
+    private readonly int _id = IdGenerator.GetNext();
 
     private bool _wasRead;
     private readonly VariantValue _value = VariantValue.Null;

@@ -1,13 +1,13 @@
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Relational;
+using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Commands.Select.Iterators;
 
 internal sealed class GroupRowsIterator : IRowsIterator, IRowsIteratorParent
 {
-    private static int _nextId = 300;
-    private readonly int _id = Interlocked.Increment(ref _nextId);
+    private readonly int _id = IdGenerator.GetNext();
 
     private readonly IRowsIterator _rowsIterator;
     private bool _isInitialized;

@@ -2,6 +2,7 @@ using System.Runtime.CompilerServices;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Storage;
 
@@ -57,8 +58,7 @@ public class RowsInputIterator : IRowsIterator, IRowsIteratorParent, IDisposable
         public void Reset() => Array.Fill(_fetched, false);
     }
 
-    private static int _nextId = 200;
-    private readonly int _id = Interlocked.Increment(ref _nextId);
+    private readonly int _id = IdGenerator.GetNext();
 
     private readonly IRowsInput _rowsInput;
     private readonly bool _autoOpen;

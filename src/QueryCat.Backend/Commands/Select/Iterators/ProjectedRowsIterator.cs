@@ -1,4 +1,5 @@
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Commands.Select.Iterators;
 
@@ -8,8 +9,7 @@ namespace QueryCat.Backend.Commands.Select.Iterators;
 /// </summary>
 internal sealed class ProjectedRowsIterator : IRowsIterator, IRowsIteratorParent
 {
-    private static int _nextId = 100;
-    private readonly int _id = Interlocked.Increment(ref _nextId);
+    private readonly int _id = IdGenerator.GetNext();
 
     private readonly IRowsIterator _rowsIterator;
     private Row _currentRow;
