@@ -14,24 +14,22 @@ namespace QueryCat.Backend.FunctionsManager;
 /// </summary>
 public sealed class DefaultFunctionsManager : IFunctionsManager
 {
-    private const int DefaultCapacity = 42;
-
     private readonly IAstBuilder _astBuilder;
     private readonly List<IUriResolver> _uriResolvers = new();
 
-    private record FunctionPreRegistration(
+    private record struct FunctionPreRegistration(
         FunctionDelegate Delegate,
         List<string> Signatures,
         string? Description = null);
 
-    private readonly Dictionary<string, List<Function>> _functions = new(capacity: DefaultCapacity);
-    private readonly Dictionary<string, IAggregateFunction> _aggregateFunctions = new(capacity: DefaultCapacity);
+    private readonly Dictionary<string, List<Function>> _functions = new();
+    private readonly Dictionary<string, IAggregateFunction> _aggregateFunctions = new();
 
-    private readonly Dictionary<string, FunctionPreRegistration> _functionsPreRegistration = new(capacity: DefaultCapacity);
-    private readonly List<Action<DefaultFunctionsManager>> _registerFunctions = new(capacity: DefaultCapacity);
+    private readonly Dictionary<string, FunctionPreRegistration> _functionsPreRegistration = new();
+    private readonly List<Action<DefaultFunctionsManager>> _registerFunctions = [];
     private int _registerFunctionsLastIndex;
 
-    private readonly List<Action<DefaultFunctionsManager>> _registerAggregateFunctions = new(capacity: DefaultCapacity);
+    private readonly List<Action<DefaultFunctionsManager>> _registerAggregateFunctions = [];
     private int _registerAggregateFunctionsLastIndex;
 
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(DefaultFunctionsManager));
@@ -159,10 +157,7 @@ public sealed class DefaultFunctionsManager : IFunctionsManager
     {
         var list = _functions!.AddOrUpdate(
             NormalizeName(function.Name),
-            addValueFactory: _ => new List<Function>
-            {
-                function
-            },
+            addValueFactory: _ => [function],
             updateValueFactory: (_, value) => value!.Add(function))!;
         _logger.LogDebug("Register function: {Function}.", function);
         return list;
@@ -215,10 +210,7 @@ public sealed class DefaultFunctionsManager : IFunctionsManager
             var functionName = NormalizeName(function.Name);
             _functions!.AddOrUpdate(
                 functionName,
-                addValueFactory: _ => new List<Function>
-                {
-                    function
-                },
+                addValueFactory: _ => [function],
                 updateValueFactory: (_, value) => value!.Add(function));
 
             _logger.LogDebug("Register aggregate: {Function}.", function);
@@ -235,7 +227,7 @@ public sealed class DefaultFunctionsManager : IFunctionsManager
         FunctionCallArgumentsTypes? functionArgumentsTypes,
         out IFunction[] functions)
     {
-        functions = Array.Empty<IFunction>();
+        functions = [];
         name = NormalizeName(name);
 
         if (!_functions.TryGetValue(name, out var outFunctions) && !TryGetPreRegistration(name, out outFunctions))
@@ -353,11 +345,6 @@ public sealed class DefaultFunctionsManager : IFunctionsManager
         {
             return NormalizeName(signature);
         }
-        var name = NormalizeName(signature[..indexOfLeftParen]);
-        if (name.StartsWith('['))
-        {
-            name = name.Substring(1, name.Length - 2);
-        }
-        return name;
+        return NormalizeName(signature[..indexOfLeftParen]);
     }
 }

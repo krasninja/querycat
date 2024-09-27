@@ -141,12 +141,7 @@ public static class FunctionsManagerExtensions
         {
             return signature;
         }
-        var name = signature[..indexOfLeftParen];
-        if (name.StartsWith('['))
-        {
-            name = name.Substring(1, name.Length - 2);
-        }
-        return name;
+        return signature[..indexOfLeftParen];
     }
 
     #endregion
