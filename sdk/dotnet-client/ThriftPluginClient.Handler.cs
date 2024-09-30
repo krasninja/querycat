@@ -45,7 +45,7 @@ public partial class ThriftPluginClient
                 callInfo.Push(SdkConvert.Convert(arg));
             }
             var result = func.Delegate.Invoke(callInfo);
-            var resultType = result.GetInternalType();
+            var resultType = result.Type;
             if (resultType == DataType.Object)
             {
                 if (result.AsObject is IRowsIterator rowsIterator)

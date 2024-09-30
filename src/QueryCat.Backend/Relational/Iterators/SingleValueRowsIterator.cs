@@ -29,10 +29,10 @@ public sealed class SingleValueRowsIterator : IRowsIterator
 
     public SingleValueRowsIterator(VariantValue value)
     {
-        Columns = new[]
-        {
-            new Column(ColumnTitle, value.GetInternalType())
-        };
+        Columns =
+        [
+            new Column(ColumnTitle, value.Type)
+        ];
         Current = new Row(this)
         {
             [0] = value

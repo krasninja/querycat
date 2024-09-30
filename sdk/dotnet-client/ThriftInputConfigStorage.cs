@@ -29,7 +29,7 @@ public sealed class ThriftInputConfigStorage : IInputConfigStorage
     public void Set(string key, VariantValue value)
     {
         _logger.LogDebug("Set {Key} with value {Value}.", key, value);
-        if (value.GetInternalType() == DataType.Object)
+        if (value.Type == DataType.Object)
         {
             _objectsStorage[key] = value;
         }

@@ -51,7 +51,7 @@ public static class DataTypeUtils
     #region Serialization
 
     internal static string SerializeVariantValue(VariantValue value)
-        => value.GetInternalType() switch
+        => value.Type switch
         {
             DataType.Null => VariantValue.NullValueString,
             DataType.Void => VariantValue.VoidValueString,

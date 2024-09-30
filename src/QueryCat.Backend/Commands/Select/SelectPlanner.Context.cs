@@ -189,7 +189,7 @@ internal sealed partial class SelectPlanner
             }
         }
 
-        var internalValueType = value.GetInternalType();
+        var internalValueType = value.Type;
         var rowsInputs = Array.Empty<IRowsInput>();
 
         if (internalValueType == DataType.Object && value.AsObjectUnsafe != null)

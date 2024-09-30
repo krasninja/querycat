@@ -6,7 +6,7 @@ namespace QueryCat.Backend.Commands;
 internal sealed class FuncUnitStatic(VariantValue value) : IFuncUnit
 {
     /// <inheritdoc />
-    public DataType OutputType => value.GetInternalType();
+    public DataType OutputType => value.Type;
 
     /// <inheritdoc />
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]

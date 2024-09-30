@@ -55,7 +55,7 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
 
     private SelectCommandInputContext CreateRowsInput(VariantValue source)
     {
-        if (DataTypeUtils.IsSimple(source.GetInternalType()))
+        if (DataTypeUtils.IsSimple(source.Type))
         {
             return new SelectCommandInputContext(new SingleValueRowsInput(source));
         }

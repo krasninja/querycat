@@ -42,7 +42,7 @@ internal sealed class LiteralNode : ExpressionNode
 
     private static string Quote(string target) => StringUtils.Quote(target, quote: "\'").ToString();
 
-    internal static string ValueToString(VariantValue value) => value.GetInternalType() switch
+    internal static string ValueToString(VariantValue value) => value.Type switch
     {
         DataType.String => Quote(value.AsStringUnsafe),
         DataType.Timestamp => Quote(value.AsTimestampUnsafe.ToString(Application.Culture)) + "::timestamp",

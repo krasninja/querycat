@@ -24,7 +24,7 @@ internal sealed class MinAggregateFunction : IAggregateFunction
     public void Invoke(VariantValue[] state, FunctionCallInfo callInfo)
     {
         var value = callInfo.GetAt(0);
-        var comparer = VariantValue.GetLessDelegate(value.GetInternalType(), state[0].GetInternalType());
+        var comparer = VariantValue.GetLessDelegate(value.Type, state[0].Type);
         if (state[0].IsNull)
         {
             state[0] = value;

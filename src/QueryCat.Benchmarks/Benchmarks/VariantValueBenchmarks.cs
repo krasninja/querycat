@@ -39,7 +39,7 @@ public class VariantValueBenchmarks
         }
 
         var value = new VariantValue(0);
-        var addAction = VariantValue.GetAddDelegate(value.GetInternalType(), value.GetInternalType());
+        var addAction = VariantValue.GetAddDelegate(value.Type, value.Type);
         for (int i = 0; i < TotalCount; i++)
         {
             var right = list[i];

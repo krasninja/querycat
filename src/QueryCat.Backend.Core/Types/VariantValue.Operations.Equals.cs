@@ -6,10 +6,7 @@ public partial struct VariantValue
 {
     internal static VariantValue Equals(in VariantValue left, in VariantValue right, out ErrorCode errorCode)
     {
-        var leftType = left.GetInternalType();
-        var rightType = right.GetInternalType();
-
-        var function = GetEqualsDelegate(leftType, rightType);
+        var function = GetEqualsDelegate(left.Type, right.Type);
         if (function == BinaryNullDelegate)
         {
             errorCode = ErrorCode.CannotApplyOperator;

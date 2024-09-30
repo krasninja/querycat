@@ -100,6 +100,13 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     /// </summary>
     public static VariantValue Null = default;
 
+    /// <summary>
+    /// Variant value type.
+    /// </summary>
+    public DataType Type => _object is DataTypeObject dataTypeObject
+        ? dataTypeObject.DataType
+        : (DataType)_valueUnion.IntegerValue;
+
     #region Constructors
 
     private VariantValue(in TypeUnion union, object? obj)
@@ -140,7 +147,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     public VariantValue(string? value)
     {
         _object = value;
-        _valueUnion = default;
+        _valueUnion = new TypeUnion((int)DataType.String);
     }
 
     public VariantValue(char value)
@@ -152,7 +159,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     public VariantValue(ReadOnlySpan<char> value)
     {
         _object = value.ToString();
-        _valueUnion = default;
+        _valueUnion = new TypeUnion((int)DataType.String);
     }
 
     public VariantValue(double value)
@@ -188,25 +195,25 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     public VariantValue(decimal value)
     {
         _object = value;
-        _valueUnion = default;
+        _valueUnion = new TypeUnion((int)DataType.Numeric);
     }
 
     private VariantValue(object obj)
     {
         _object = obj;
-        _valueUnion = default;
+        _valueUnion = new TypeUnion((int)DataType.Object);
     }
 
     private VariantValue(IBlobData blob)
     {
         _object = blob;
-        _valueUnion = default;
+        _valueUnion = new TypeUnion((int)DataType.Blob);
     }
 
     private VariantValue(byte[] bytes)
     {
         _object = new StreamBlobData(() => new MemoryStream(bytes, writable: false));
-        _valueUnion = default;
+        _valueUnion = new TypeUnion((int)DataType.Blob);
     }
 
     public static VariantValue CreateFromObject<T>(in T obj)
@@ -329,39 +336,6 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         return false;
     }
 
-    /// <summary>
-    /// Get internal variant value type.
-    /// </summary>
-    /// <returns>Data type.</returns>
-    public DataType GetInternalType()
-    {
-        if (_object is DataTypeObject dataTypeObject)
-        {
-            return dataTypeObject.DataType;
-        }
-        if (_object == null)
-        {
-            return DataType.Null;
-        }
-        if (_object is string)
-        {
-            return DataType.String;
-        }
-        if (_object is decimal)
-        {
-            return DataType.Numeric;
-        }
-        if (_object is IBlobData)
-        {
-            return DataType.Blob;
-        }
-        if (_object != null)
-        {
-            return DataType.Object;
-        }
-        throw new InvalidOperationException(Resources.Errors.CannotGetType);
-    }
-
     private bool IsValueType() =>
         _object == IntegerObject || _object == FloatObject ||
         _object == BooleanObject || _object == TimestampObject ||
@@ -482,7 +456,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     /// Get the internal value as .NET object.
     /// </summary>
     /// <returns>Value object.</returns>
-    public object? GetGenericObject() => GetInternalType() switch
+    public object? GetGenericObject() => Type switch
     {
         DataType.Null => null,
         DataType.Void => null,
@@ -500,8 +474,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private VariantValue CheckTypeAndTryToCast(DataType targetType)
     {
-        var currentType = GetInternalType();
-        if (targetType != currentType)
+        if (targetType != Type)
         {
             return Cast(targetType);
         }
@@ -661,7 +634,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
             return true;
         }
 
-        var sourceType = GetInternalType();
+        var sourceType = Type;
         if (sourceType == targetType)
         {
             output = this;
@@ -738,8 +711,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         }
         else
         {
-            var sourceType = GetInternalType();
-            throw new InvalidVariantTypeException(sourceType, targetType);
+            throw new InvalidVariantTypeException(Type, targetType);
         }
     }
 
@@ -836,7 +808,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     public static implicit operator TimeSpan(VariantValue value) => value.AsInterval;
 
     /// <inheritdoc />
-    public override string ToString() => GetInternalType() switch
+    public override string ToString() => Type switch
     {
         DataType.Null => NullValueString,
         DataType.Void => VoidValueString,
@@ -858,7 +830,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     /// </summary>
     /// <param name="format">Format string.</param>
     /// <returns>String representation.</returns>
-    public string ToString(string format) => GetInternalType() switch
+    public string ToString(string format) => Type switch
     {
         DataType.Null => NullValueString,
         DataType.Void => VoidValueString,
@@ -880,7 +852,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     /// </summary>
     /// <param name="formatProvider">Culture specific formatting information.</param>
     /// <returns>String representation.</returns>
-    public string ToString(IFormatProvider? formatProvider) => GetInternalType() switch
+    public string ToString(IFormatProvider? formatProvider) => Type switch
     {
         DataType.Null => NullValueString,
         DataType.Void => VoidValueString,

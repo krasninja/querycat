@@ -47,7 +47,7 @@ internal static class DateTimeFunctions
         {
             return VariantValue.Null;
         }
-        var result = source.GetInternalType() switch
+        var result = source.Type switch
         {
             DataType.Timestamp => field switch
             {
@@ -89,7 +89,7 @@ internal static class DateTimeFunctions
         {
             return VariantValue.Null;
         }
-        var type = source.GetInternalType();
+        var type = source.Type;
         if (type == DataType.Timestamp)
         {
             var target = source.AsTimestamp;

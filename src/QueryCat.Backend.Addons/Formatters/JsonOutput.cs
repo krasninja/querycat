@@ -64,7 +64,7 @@ internal sealed class JsonOutput : RowsOutput, IDisposable
             return;
         }
 
-        switch (value.GetInternalType())
+        switch (value.Type)
         {
             case DataType.Integer:
                 jsonWriter.WriteNumberValue(value.AsInteger);

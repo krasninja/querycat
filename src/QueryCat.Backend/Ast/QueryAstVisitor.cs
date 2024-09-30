@@ -71,9 +71,8 @@ internal class QueryAstVisitor : AstVisitor
     /// <inheritdoc />
     public override void Visit(LiteralNode node)
     {
-        var type = node.Value.GetInternalType();
         string value;
-        if (type == DataType.String)
+        if (node.Value.Type == DataType.String)
         {
             value = StringUtils.Quote(node.Value.AsStringUnsafe, quote: "'", force: true).ToString();
         }

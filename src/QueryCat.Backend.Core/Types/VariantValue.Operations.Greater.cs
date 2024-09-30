@@ -4,10 +4,7 @@ public partial struct VariantValue
 {
     internal static VariantValue Greater(in VariantValue left, in VariantValue right, out ErrorCode errorCode)
     {
-        var leftType = left.GetInternalType();
-        var rightType = right.GetInternalType();
-
-        var function = GetGreaterDelegate(leftType, rightType);
+        var function = GetGreaterDelegate(left.Type, right.Type);
         if (function == BinaryNullDelegate)
         {
             errorCode = ErrorCode.CannotApplyOperator;
@@ -152,10 +149,7 @@ public partial struct VariantValue
 
     internal static VariantValue GreaterOrEquals(in VariantValue left, in VariantValue right, out ErrorCode errorCode)
     {
-        var leftType = left.GetInternalType();
-        var rightType = right.GetInternalType();
-
-        var function = GetGreaterOrEqualsDelegate(leftType, rightType);
+        var function = GetGreaterOrEqualsDelegate(left.Type, right.Type);
         if (function == BinaryNullDelegate)
         {
             errorCode = ErrorCode.CannotApplyOperator;

@@ -58,7 +58,7 @@ public sealed class Tests : IDisposable
         var value = _testThread.Run(data.Query);
 
         // Get query plan.
-        if (value.GetInternalType() == DataType.Object
+        if (value.Type == DataType.Object
             && value.AsObject is IRowsIterator rowsIterator)
         {
             var sb = new IndentedStringBuilder();

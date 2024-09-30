@@ -24,7 +24,7 @@ internal sealed class MaxAggregateFunction : IAggregateFunction
     public void Invoke(VariantValue[] state, FunctionCallInfo callInfo)
     {
         var value = callInfo.GetAt(0);
-        var comparer = VariantValue.GetGreaterDelegate(value.GetInternalType(), state[0].GetInternalType());
+        var comparer = VariantValue.GetGreaterDelegate(value.Type, state[0].Type);
         if (state[0].IsNull)
         {
             state[0] = value;

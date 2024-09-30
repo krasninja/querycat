@@ -45,12 +45,12 @@ public class PersistentInputConfigStorage : MemoryInputConfigStorage
         var dict = new ConfigDictionary();
         foreach (var variantValueWithKey in Map)
         {
-            if (!DataTypeUtils.IsSimple(variantValueWithKey.Value.GetInternalType()))
+            if (!DataTypeUtils.IsSimple(variantValueWithKey.Value.Type))
             {
                 _logger.LogTrace("Skip saving config with key '{Key}'. Only simple types save is supported.",
                     variantValueWithKey.Key);
             }
-            var type = variantValueWithKey.Value.GetInternalType();
+            var type = variantValueWithKey.Value.Type;
             if (!DataTypeUtils.IsSimple(type))
             {
                 continue;

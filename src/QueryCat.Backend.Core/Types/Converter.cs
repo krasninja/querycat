@@ -103,7 +103,7 @@ public static class Converter
     /// <returns>Enum value.</returns>
     public static TEnum ConvertToEnum<TEnum>(in VariantValue value) where TEnum : struct
     {
-        var type = value.GetInternalType();
+        var type = value.Type;
         return type switch
         {
             DataType.Integer => (TEnum)Enum.ToObject(typeof(TEnum), value.AsInteger),
@@ -141,7 +141,7 @@ public static class Converter
             DataType.Null => null,
             DataType.Void => null,
             _ => throw new InvalidOperationException(
-                string.Format(Resources.Errors.CannotConvertToType, value.GetInternalType(), targetType)),
+                string.Format(Resources.Errors.CannotConvertToType, value.Type, targetType)),
         };
 
         if (result != null && result.GetType() != targetType && result is IConvertible convertible)
@@ -153,7 +153,7 @@ public static class Converter
     }
 
     private static object? ConvertToObject(VariantValue value)
-        => value.GetInternalType() switch
+        => value.Type switch
         {
             DataType.Boolean => value.AsBooleanUnsafe,
             DataType.Float => value.AsFloatUnsafe,

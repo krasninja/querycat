@@ -26,7 +26,7 @@ public class ObjectPropertiesCompletionSource : BaseObjectPropertiesCompletionSo
         try
         {
             var value = context.ExecutionThread.Run(objectSelectExpression);
-            if (!value.IsNull && value.GetInternalType() == DataType.Object)
+            if (!value.IsNull && value.Type == DataType.Object)
             {
                 return value.AsObjectUnsafe;
             }

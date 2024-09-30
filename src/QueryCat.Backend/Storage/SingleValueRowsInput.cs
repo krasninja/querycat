@@ -37,7 +37,7 @@ internal sealed class SingleValueRowsInput : IRowsInput
     {
         Columns =
         [
-            new(SingleValueRowsIterator.ColumnTitle, value.GetInternalType())
+            new(SingleValueRowsIterator.ColumnTitle, value.Type)
         ];
         _value = value;
     }

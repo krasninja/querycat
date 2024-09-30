@@ -228,7 +228,7 @@ internal sealed partial class WebServer
         void ThreadOnStatementExecuted(object? sender, ExecuteEventArgs e)
         {
             var result = thread.LastResult;
-            if (!result.IsNull && result.GetInternalType() == DataType.Object
+            if (!result.IsNull && result.Type == DataType.Object
                 && result.AsObject is IRowsSchema rowsSchema)
             {
                 var schema = thread.CallFunction(Backend.Functions.InfoFunctions.Schema, rowsSchema);
@@ -441,7 +441,7 @@ internal sealed partial class WebServer
             return;
         }
 
-        switch (value.GetInternalType())
+        switch (value.Type)
         {
             case DataType.Integer:
                 jsonWriter.WriteNumberValue(value.AsInteger);

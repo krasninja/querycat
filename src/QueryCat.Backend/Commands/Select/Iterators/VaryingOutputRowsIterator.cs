@@ -71,7 +71,7 @@ internal sealed class VaryingOutputRowsIterator : IRowsIterator, IRowsIteratorPa
 
         _functionCallInfo.InvokePushArgs();
         var argValues = _functionCallInfo
-            .Where(a => a.GetInternalType() != DataType.Object)
+            .Where(a => a.Type != DataType.Object)
             .ToArray();
         var args = new VariantValueArray(argValues);
         if (_outputs.TryGetValue(args, out IRowsOutput? output))

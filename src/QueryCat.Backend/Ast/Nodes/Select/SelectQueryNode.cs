@@ -75,7 +75,7 @@ internal abstract class SelectQueryNode : ExpressionNode, ISelectAliasNode
     {
         if (ColumnsListNode.ColumnsNodes.Count == 1
                && FetchNode?.CountNode is LiteralNode literalNode
-               && literalNode.Value.GetInternalType() == DataType.Integer
+               && literalNode.Value.Type == DataType.Integer
                && literalNode.Value.AsInteger == 1)
         {
             return true;

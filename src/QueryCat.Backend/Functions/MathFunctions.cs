@@ -17,7 +17,7 @@ internal static class MathFunctions
     public static VariantValue Abs(FunctionCallInfo args)
     {
         var x = args.GetAt(0);
-        return x.GetInternalType() switch
+        return x.Type switch
         {
             DataType.Float => new VariantValue(Math.Abs(x.AsFloat)),
             DataType.Integer => new VariantValue(Math.Abs(x.AsInteger)),
@@ -61,7 +61,7 @@ internal static class MathFunctions
     public static VariantValue Round(FunctionCallInfo args)
     {
         var x = args.GetAt(0);
-        return x.GetInternalType() switch
+        return x.Type switch
         {
             DataType.Float => new VariantValue(Math.Round(x.AsFloat)),
             DataType.Numeric => new VariantValue(Math.Round(x.AsNumeric)),
@@ -153,7 +153,7 @@ internal static class MathFunctions
     {
         var a = args.GetAt(0);
         var b = args.GetAt(1);
-        return a.GetInternalType() switch
+        return a.Type switch
         {
             DataType.Float => new VariantValue(Math.Pow(a.AsFloat, b.AsFloat)),
             DataType.Integer => new VariantValue(Math.Pow(a.AsInteger, b.AsInteger)),

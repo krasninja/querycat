@@ -18,7 +18,7 @@ public static class ExecutionThreadUtils
     /// <returns>Enumerable of rows.</returns>
     public static IRowsIterator ConvertToIterator(VariantValue variantValue)
     {
-        var type = variantValue.GetInternalType();
+        var type = variantValue.Type;
         if (type == DataType.Null)
         {
             return EmptyIterator.Instance;

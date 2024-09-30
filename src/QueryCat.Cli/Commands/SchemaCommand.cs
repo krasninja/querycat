@@ -20,7 +20,7 @@ internal class SchemaCommand : BaseQueryCommand
             thread.StatementExecuted += (_, threadArgs) =>
             {
                 var result = thread.LastResult;
-                if (!result.IsNull && result.GetInternalType() == DataType.Object
+                if (!result.IsNull && result.Type == DataType.Object
                     && result.AsObject is IRowsSchema rowsSchema)
                 {
                     threadArgs.ContinueExecution = false;

@@ -250,7 +250,7 @@ internal sealed partial class SelectPlanner
         foreach (var orderByNode in orderByNodes)
         {
             if (orderByNode.ExpressionNode is LiteralNode literalNode
-                && literalNode.Value.GetInternalType() == DataType.Integer
+                && literalNode.Value.Type == DataType.Integer
                 && literalNode.Value.AsIntegerUnsafe > 0
                 && literalNode.Value.AsIntegerUnsafe <= currentIterator.Columns.Length)
             {

@@ -52,10 +52,7 @@ public partial struct VariantValue
 
     internal static VariantValue Subtract(in VariantValue left, in VariantValue right, out ErrorCode errorCode)
     {
-        var leftType = left.GetInternalType();
-        var rightType = right.GetInternalType();
-
-        var function = GetSubtractDelegate(leftType, rightType);
+        var function = GetSubtractDelegate(left.Type, right.Type);
         if (function == BinaryNullDelegate)
         {
             errorCode = ErrorCode.CannotApplyOperator;

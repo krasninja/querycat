@@ -110,7 +110,7 @@ internal class ResolveTypesVisitor : AstVisitor
         var scope = ExecutionThread.TopScope;
         if (ExecutionThread.TryGetVariable(name, out var value, scope))
         {
-            var valueType = value.GetInternalType();
+            var valueType = value.Type;
             if (valueType == DataType.Object && node.HasSelectors)
             {
                 node.SetAttribute(AstAttributeKeys.TypeKey, DataType.Dynamic);
@@ -132,7 +132,7 @@ internal class ResolveTypesVisitor : AstVisitor
     /// <inheritdoc />
     public override void Visit(LiteralNode node)
     {
-        node.SetAttribute(AstAttributeKeys.TypeKey, node.Value.GetInternalType());
+        node.SetAttribute(AstAttributeKeys.TypeKey, node.Value.Type);
     }
 
     /// <inheritdoc />

@@ -85,9 +85,8 @@ public static class JsonFunctions
     public static VariantValue ToJson(FunctionCallInfo args)
     {
         var obj = args.GetAt(0);
-        var type = obj.GetInternalType();
         JsonNode? node;
-        if (DataTypeUtils.IsSimple(type))
+        if (DataTypeUtils.IsSimple(obj.Type))
         {
             var dict = new Dictionary<string, object>
             {

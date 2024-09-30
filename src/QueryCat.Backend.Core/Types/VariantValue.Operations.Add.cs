@@ -4,10 +4,7 @@ public partial struct VariantValue
 {
     internal static VariantValue Add(in VariantValue left, in VariantValue right, out ErrorCode errorCode)
     {
-        var leftType = left.GetInternalType();
-        var rightType = right.GetInternalType();
-
-        var function = GetAddDelegate(leftType, rightType);
+        var function = GetAddDelegate(left.Type, right.Type);
         if (function == BinaryNullDelegate)
         {
             errorCode = ErrorCode.CannotApplyOperator;

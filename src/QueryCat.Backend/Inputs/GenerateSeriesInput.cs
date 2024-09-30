@@ -46,11 +46,11 @@ internal sealed class GenerateSeriesInput : IRowsInput
         _end = end;
         _step = step;
 
-        _addFunction = VariantValue.GetAddDelegate(_current.GetInternalType(), _step.GetInternalType());
-        Columns = new[]
-        {
-            new Column("value", _current.GetInternalType(), "The series value."),
-        };
+        _addFunction = VariantValue.GetAddDelegate(_current.Type, _step.Type);
+        Columns =
+        [
+            new Column("value", _current.Type, "The series value.")
+        ];
     }
 
     /// <inheritdoc />

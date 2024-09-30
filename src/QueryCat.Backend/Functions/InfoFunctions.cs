@@ -96,7 +96,7 @@ public static class InfoFunctions
     internal static VariantValue TypeOf(FunctionCallInfo args)
     {
         var value = args.GetAt(0);
-        var type = value.GetInternalType();
+        var type = value.Type;
         if (type == DataType.Object && value.AsObject != null)
         {
             return new VariantValue($"object<{value.AsObject.GetType().Name}>");

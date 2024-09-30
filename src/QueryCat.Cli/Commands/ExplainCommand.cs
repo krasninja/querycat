@@ -17,7 +17,7 @@ internal class ExplainCommand : BaseQueryCommand
             root.Thread.StatementExecuted += (_, args) =>
             {
                 var result = root.Thread.LastResult;
-                if (result.GetInternalType() == DataType.Object
+                if (result.Type == DataType.Object
                     && result.AsObject is IRowsIterator rowsIterator)
                 {
                     var stringBuilder = new IndentedStringBuilder();

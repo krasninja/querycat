@@ -4,10 +4,7 @@ public readonly partial struct VariantValue
 {
     internal static VariantValue Mul(in VariantValue left, in VariantValue right, out ErrorCode errorCode)
     {
-        var leftType = left.GetInternalType();
-        var rightType = right.GetInternalType();
-
-        var function = GetMulDelegate(leftType, rightType);
+        var function = GetMulDelegate(left.Type, right.Type);
         if (function == BinaryNullDelegate)
         {
             errorCode = ErrorCode.CannotApplyOperator;
