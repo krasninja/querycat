@@ -22,10 +22,7 @@ internal static class PathUtils
     /// <example>google-chrome-stable -> /usr/bin/google-chrome-stable.</example>
     public static string ResolveExecutableFullPath(string fileName, params string?[] additionalPaths)
     {
-        if (string.IsNullOrEmpty(fileName))
-        {
-            throw new ArgumentNullException(nameof(fileName));
-        }
+        ArgumentException.ThrowIfNullOrEmpty(fileName, nameof(fileName));
 
         // Append .exe for Windows.
         if (OperatingSystem.IsWindows()

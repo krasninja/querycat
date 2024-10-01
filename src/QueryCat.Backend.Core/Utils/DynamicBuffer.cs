@@ -212,10 +212,7 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
     /// by default.</param>
     public DynamicBuffer(int chunkSize = 4096, int maxFreeBuffers = -1)
     {
-        if (chunkSize < 1)
-        {
-            throw new ArgumentOutOfRangeException(nameof(chunkSize));
-        }
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(chunkSize, nameof(chunkSize));
         _chunkSize = chunkSize;
         _maxFreeBuffers = maxFreeBuffers;
     }
@@ -380,10 +377,7 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
     public void Commit(int size)
     {
         _allocatedFlag = false;
-        if (size < 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(size));
-        }
+        ArgumentOutOfRangeException.ThrowIfNegative(size, nameof(size));
         if (size == 0)
         {
             return;

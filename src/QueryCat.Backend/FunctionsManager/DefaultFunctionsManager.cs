@@ -110,11 +110,7 @@ public sealed class DefaultFunctionsManager : IFunctionsManager
     public void RegisterFunction(string signature, FunctionDelegate @delegate,
         string? description = null)
     {
-        if (string.IsNullOrEmpty(signature))
-        {
-            throw new ArgumentNullException(nameof(signature));
-        }
-
+        ArgumentException.ThrowIfNullOrEmpty(signature, nameof(signature));
         PreRegisterFunction(signature, @delegate, description: description);
     }
 

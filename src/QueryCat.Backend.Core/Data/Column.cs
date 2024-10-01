@@ -64,10 +64,7 @@ public class Column : ICloneable
     /// <param name="description">Description.</param>
     public Column(string name, DataType dataType, string? description = null)
     {
-        if (string.IsNullOrEmpty(name))
-        {
-            throw new ArgumentNullException(nameof(name));
-        }
+        ArgumentException.ThrowIfNullOrEmpty(name, nameof(name));
         if (!DataTypeUtils.RowDataTypes.Contains(dataType))
         {
             throw new ArgumentOutOfRangeException(nameof(dataType));

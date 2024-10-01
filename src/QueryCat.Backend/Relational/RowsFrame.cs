@@ -41,11 +41,8 @@ public class RowsFrame : IRowsSchema, IEnumerable<Row>
     /// <param name="columns">Columns.</param>
     public RowsFrame(RowsFrameOptions options, params Column[] columns)
     {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(options.ChunkSize, nameof(options.ChunkSize));
         _chunkSize = options.ChunkSize;
-        if (_chunkSize < 1)
-        {
-            throw new ArgumentOutOfRangeException(nameof(options.ChunkSize));
-        }
         _columns = columns;
         if (_columns.Length < 1)
         {
