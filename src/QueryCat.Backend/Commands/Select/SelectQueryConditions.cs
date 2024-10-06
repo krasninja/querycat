@@ -44,11 +44,15 @@ internal sealed class SelectQueryConditions : IEnumerable<SelectQueryCondition>
     /// <param name="column">Condition column.</param>
     /// <param name="operation">Condition operation.</param>
     /// <param name="valueFunctions">Value functions.</param>
-    internal SelectQueryCondition AddCondition(
+    internal SelectQueryCondition? TryAddCondition(
         Column column,
         VariantValue.Operation operation,
         params IFuncUnit[] valueFunctions)
     {
+        if (_conditions.Any(c => c.Column == column && c.Operation == operation))
+        {
+            return null;
+        }
         var queryContextCondition = new SelectQueryCondition(column, operation, valueFunctions);
         _conditions.Add(queryContextCondition);
         return queryContextCondition;

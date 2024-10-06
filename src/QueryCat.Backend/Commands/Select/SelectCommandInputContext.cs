@@ -18,7 +18,9 @@ internal class SelectCommandInputContext
     /// </summary>
     public bool IsVariableBound { get; set; }
 
-    public SelectCommandInputContext(IRowsInput rowsInput, SelectInputQueryContext inputQueryContext,
+    public SelectCommandInputContext(
+        IRowsInput rowsInput,
+        SelectInputQueryContext inputQueryContext,
         string? alias = null)
     {
         RowsInput = rowsInput;
@@ -26,10 +28,11 @@ internal class SelectCommandInputContext
         Alias = alias ?? string.Empty;
     }
 
-    public SelectCommandInputContext(IRowsInput rowsInput) : this(rowsInput, new SelectInputQueryContext(rowsInput))
+    public SelectCommandInputContext(IRowsInput rowsInput)
+        : this(rowsInput, new SelectInputQueryContext(rowsInput))
     {
     }
 
     /// <inheritdoc />
-    public override string ToString() => $"alias={Alias}, input={RowsInput}";
+    public override string ToString() => $"Alias = {Alias}, Input = {RowsInput}";
 }

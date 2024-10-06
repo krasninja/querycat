@@ -109,7 +109,7 @@ internal sealed partial class SelectPlanner
                     return false;
                 }
                 var valueFunc = makeDelegateVisitor.RunAndReturn(localExpressionNode!);
-                commandContext.Conditions.AddCondition(column, binaryOperationExpressionNode.Operation, valueFunc);
+                commandContext.Conditions.TryAddCondition(column, binaryOperationExpressionNode.Operation, valueFunc);
                 return true;
             }
         }
@@ -136,8 +136,8 @@ internal sealed partial class SelectPlanner
             }
             var leftValueFunc = makeDelegateVisitor.RunAndReturn(betweenExpressionNode.Left);
             var rightValueFunc = makeDelegateVisitor.RunAndReturn(betweenExpressionNode.Right);
-            commandContext.Conditions.AddCondition(column, VariantValue.Operation.GreaterOrEquals, leftValueFunc);
-            commandContext.Conditions.AddCondition(column, VariantValue.Operation.LessOrEquals, rightValueFunc);
+            commandContext.Conditions.TryAddCondition(column, VariantValue.Operation.GreaterOrEquals, leftValueFunc);
+            commandContext.Conditions.TryAddCondition(column, VariantValue.Operation.LessOrEquals, rightValueFunc);
             return true;
         }
 
@@ -177,7 +177,7 @@ internal sealed partial class SelectPlanner
             {
                 return false;
             }
-            commandContext.Conditions.AddCondition(column, VariantValue.Operation.In, values.ToArray());
+            commandContext.Conditions.TryAddCondition(column, VariantValue.Operation.In, values.ToArray());
             return true;
         }
 

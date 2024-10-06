@@ -2,12 +2,15 @@ using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Commands.Select.Inputs;
 
 internal sealed class SetKeysRowsInput : RowsInput, IRowsInputKeys
 {
     private record struct ConditionJoint(SelectQueryCondition Condition, int ColumnIndex);
+
+    private readonly int _id = IdGenerator.GetNext();
 
     private ConditionJoint[] _conditions = [];
     private readonly IRowsInputKeys _rowsInput;
@@ -132,7 +135,7 @@ internal sealed class SetKeysRowsInput : RowsInput, IRowsInputKeys
     /// <inheritdoc />
     public override void Explain(IndentedStringBuilder stringBuilder)
     {
-        stringBuilder.AppendRowsInputsWithIndent("SetKeys", _rowsInput);
+        stringBuilder.AppendRowsInputsWithIndent($"SetKeys (id={_id})", _rowsInput);
     }
 
     /// <inheritdoc />
@@ -143,4 +146,7 @@ internal sealed class SetKeysRowsInput : RowsInput, IRowsInputKeys
     {
         // Do not passthru set key value calls.
     }
+
+    /// <inheritdoc />
+    public override string ToString() => $"Id = {_id}, RowsInput = {_rowsInput.GetType().Name}";
 }

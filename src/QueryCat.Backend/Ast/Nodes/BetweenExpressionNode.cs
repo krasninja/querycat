@@ -1,3 +1,4 @@
+using System.Text;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Types;
 
@@ -61,4 +62,16 @@ internal sealed class BetweenExpressionNode : ExpressionNode
 
     /// <inheritdoc />
     public override void Accept(AstVisitor visitor) => visitor.Visit(this);
+
+    /// <inheritdoc />
+    public override string ToString()
+    {
+        var sb = new StringBuilder();
+        if (IsNot)
+        {
+            sb.Append("Not ");
+        }
+        sb.Append($"Between {AndExpression}");
+        return sb.ToString();
+    }
 }
