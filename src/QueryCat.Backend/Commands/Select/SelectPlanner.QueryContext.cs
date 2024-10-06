@@ -67,16 +67,11 @@ internal sealed partial class SelectPlanner
         var makeDelegateVisitor = new SelectCreateDelegateVisitor(ExecutionThread, commandContext);
 
         // Process expression <id> <op> <expr> or <expr> <op> <id>.
-        bool HandleBinaryOperation(IAstNode node, AstTraversal traversal, bool reverse)
+        bool HandleBinaryOperation(IAstNode node, AstTraversal traversal)
         {
             // Get the binary comparision node.
             if (node is not BinaryOperationExpressionNode binaryOperationExpressionNode
                 || !VariantValue.ComparisionOperations.Contains(binaryOperationExpressionNode.Operation))
-            {
-                return false;
-            }
-            // Try reverse order.
-            if (reverse && !binaryOperationExpressionNode.TryReverse())
             {
                 return false;
             }
@@ -85,22 +80,38 @@ internal sealed partial class SelectPlanner
             {
                 return false;
             }
+
             // Left and Right must be id and expression.
-            if (!binaryOperationExpressionNode.MatchType(out IdentifierExpressionNode? identifierNode, out ExpressionNode? expressionNode)
-                || identifierNode == null)
+            if (binaryOperationExpressionNode.MatchType(out IdentifierExpressionNode? identifierNode, out ExpressionNode? expressionNode)
+                && TryFindAndAddIdCondition(identifierNode, expressionNode))
             {
-                return false;
+                return true;
             }
-            // Try to find correspond row input column.
-            makeDelegateVisitor.RunAndReturn(identifierNode); // This call sets InputColumnKey attribute.
-            var column = identifierNode.GetAttribute<Column>(AstAttributeKeys.InputColumnKey);
-            if (column == null || rowsInputContext.RowsInput.GetColumnIndex(column) < 0)
+            if (binaryOperationExpressionNode.MatchType(out expressionNode, out identifierNode)
+                && TryFindAndAddIdCondition(identifierNode, expressionNode))
             {
-                return false;
+                return true;
             }
-            var valueFunc = makeDelegateVisitor.RunAndReturn(expressionNode!);
-            commandContext.Conditions.AddCondition(column, binaryOperationExpressionNode.Operation, valueFunc);
-            return true;
+
+            return false;
+
+            bool TryFindAndAddIdCondition(IdentifierExpressionNode? localIdentifierNode, ExpressionNode? localExpressionNode)
+            {
+                if (localIdentifierNode == null)
+                {
+                    return false;
+                }
+                // Try to find correspond row input column.
+                makeDelegateVisitor.RunAndReturn(localIdentifierNode); // This call sets InputColumnKey attribute.
+                var column = localIdentifierNode.GetAttribute<Column>(AstAttributeKeys.InputColumnKey);
+                if (column == null || rowsInputContext.RowsInput.GetColumnIndex(column) < 0)
+                {
+                    return false;
+                }
+                var valueFunc = makeDelegateVisitor.RunAndReturn(localExpressionNode!);
+                commandContext.Conditions.AddCondition(column, binaryOperationExpressionNode.Operation, valueFunc);
+                return true;
+            }
         }
 
         // Process expression <id> BETWEEN <expr> AND <expr>.
@@ -174,11 +185,7 @@ internal sealed partial class SelectPlanner
         callbackVisitor.AstTraversal.TypesToIgnore.Add(typeof(SelectQuerySpecificationNode));
         callbackVisitor.Callback = (node, traversal) =>
         {
-            if (HandleBinaryOperation(node, traversal, reverse: false))
-            {
-                return;
-            }
-            if (HandleBinaryOperation(node, traversal, reverse: true))
+            if (HandleBinaryOperation(node, traversal))
             {
                 return;
             }
