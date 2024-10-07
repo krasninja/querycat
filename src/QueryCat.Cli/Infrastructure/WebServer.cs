@@ -127,13 +127,13 @@ internal sealed partial class WebServer
                     {
                         _allowedAddresses.Add(context.Request.RemoteEndPoint.Address);
                         _allowedAddressesSlots--;
-                        _logger.LogInformation($"[{context.Request.RemoteEndPoint.Address}]: added to authorized list.");
+                        _logger.LogInformation("[{Address}]: added to authorized list.", context.Request.RemoteEndPoint.Address);
                     }
                 }
             }
             else
             {
-                _logger.LogInformation($"[{context.Request.RemoteEndPoint.Address}]: unauthorized access.");
+                _logger.LogInformation("[{Address}]: unauthorized access.", context.Request.RemoteEndPoint.Address);
                 response.StatusCode = (int)HttpStatusCode.Unauthorized;
                 response.Close();
                 return;
@@ -207,7 +207,7 @@ internal sealed partial class WebServer
         }
 
         var queryData = GetQueryDataFromRequest(request);
-        _logger.LogInformation($"[{request.RemoteEndPoint.Address}] Query: {queryData}");
+        _logger.LogInformation("[{Address}] Query: {QueryData}", request.RemoteEndPoint.Address, queryData);
         var lastResult = _executionThread.Run(queryData.Query, queryData.ParametersAsDict);
 
         WriteIterator(ExecutionThreadUtils.ConvertToIterator(lastResult), request, response);
@@ -222,7 +222,7 @@ internal sealed partial class WebServer
         }
 
         var query = GetQueryDataFromRequest(request);
-        _logger.LogInformation($"[{request.RemoteEndPoint.Address}] Schema: {query}");
+        _logger.LogInformation("[{Address}] Schema: {Query}", request.RemoteEndPoint.Address, query);
 
         var thread = (ExecutionThread)_executionThread;
         void ThreadOnStatementExecuted(object? sender, ExecuteEventArgs e)

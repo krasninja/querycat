@@ -12,7 +12,7 @@ namespace QueryCat.Backend.FunctionsManager;
 /// <summary>
 /// Manages functions search and registration.
 /// </summary>
-public sealed class DefaultFunctionsManager : IFunctionsManager
+public sealed partial class DefaultFunctionsManager : IFunctionsManager
 {
     private readonly IAstBuilder _astBuilder;
     private readonly List<IUriResolver> _uriResolvers = new();
@@ -155,7 +155,8 @@ public sealed class DefaultFunctionsManager : IFunctionsManager
             NormalizeName(function.Name),
             addValueFactory: _ => [function],
             updateValueFactory: (_, value) => value!.Add(function))!;
-        _logger.LogDebug("Register function: {Function}.", function);
+        LogRegisterFunction(function);
+
         return list;
     }
 
@@ -209,7 +210,7 @@ public sealed class DefaultFunctionsManager : IFunctionsManager
                 addValueFactory: _ => [function],
                 updateValueFactory: (_, value) => value!.Add(function));
 
-            _logger.LogDebug("Register aggregate: {Function}.", function);
+            LogRegisterAggregate(function);
             var aggregateFunctionInstance = factory.Invoke();
             _aggregateFunctions.TryAdd(functionName, aggregateFunctionInstance);
         }
@@ -343,4 +344,10 @@ public sealed class DefaultFunctionsManager : IFunctionsManager
         }
         return NormalizeName(signature[..indexOfLeftParen]);
     }
+
+    [LoggerMessage(LogLevel.Debug, "Register function: {Function}.")]
+    private partial void LogRegisterFunction(Function function);
+
+    [LoggerMessage(LogLevel.Debug, "Register aggregate: {Function}.")]
+    private partial void LogRegisterAggregate(Function function);
 }

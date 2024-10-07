@@ -20,7 +20,7 @@ namespace QueryCat.Backend.ThriftPlugins;
 /// <summary>
 /// Load plugins using Thrift protocol.
 /// </summary>
-public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
+public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
 {
     private const string FunctionsCacheFileExtension = ".fcache.json";
     private const string ProxyExecutable = "qcat-plugins-proxy";
@@ -381,8 +381,8 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
             {
                 process.StartInfo.ArgumentList.Add(arg);
             }
-            process.OutputDataReceived += (_, args) => _logger.LogTrace($"[{fileName}]: {args.Data}");
-            process.ErrorDataReceived += (_, args) => _logger.LogError($"[{fileName}]: {args.Data}");
+            process.OutputDataReceived += (_, args) => LogPluginStdOut(fileName, args.Data);
+            process.ErrorDataReceived += (_, args) => LogPluginStdErr(file, args.Data);
             process.Start();
             process.BeginOutputReadLine();
             process.BeginErrorReadLine();
@@ -407,6 +407,12 @@ public sealed class ThriftPluginsLoader : PluginsLoader, IDisposable
         // It is needed only if we load plugin using the proxy.
         return GetContext(realPluginFile);
     }
+
+    [LoggerMessage(LogLevel.Trace, "[{PluginName}]: {Data}")]
+    private partial void LogPluginStdOut(string pluginName, string? data);
+
+    [LoggerMessage(LogLevel.Error, "[{PluginName}]: {Data}")]
+    private partial void LogPluginStdErr(string pluginName, string? data);
 
     /// <summary>
     /// Get plugins proxy file name.
