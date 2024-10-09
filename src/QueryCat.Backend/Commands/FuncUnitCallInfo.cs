@@ -12,7 +12,7 @@ internal sealed class FuncUnitCallInfo : FunctionCallInfo
     public FuncUnitCallInfo(FunctionCallInfo functionCallInfo)
         : base(functionCallInfo.ExecutionThread, functionCallInfo.FunctionName)
     {
-        _pushArgs = Array.Empty<IFuncUnit>();
+        _pushArgs = [];
         Arguments.AddRange(functionCallInfo);
     }
 

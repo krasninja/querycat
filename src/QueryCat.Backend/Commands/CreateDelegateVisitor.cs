@@ -5,6 +5,7 @@ using QueryCat.Backend.Ast.Nodes.Function;
 using QueryCat.Backend.Ast.Nodes.SpecialFunctions;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Execution;
+using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Commands;
@@ -83,6 +84,25 @@ internal partial class CreateDelegateVisitor : AstVisitor
         NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, node.GetDataType());
     }
 
+    private sealed class BinaryFuncUnit(
+        VariantValue.Operation operation,
+        IFuncUnit leftAction,
+        IFuncUnit rightAction,
+        DataType outputType) : IFuncUnit
+    {
+        /// <inheritdoc />
+        public DataType OutputType => outputType;
+
+        /// <inheritdoc />
+        public VariantValue Invoke()
+        {
+            var leftValue = leftAction.Invoke();
+            var rightValue = rightAction.Invoke();
+            var operationDelegate = VariantValue.GetOperationDelegate(operation, leftValue.Type, rightValue.Type);
+            return operationDelegate.Invoke(in leftValue, in rightValue);
+        }
+    }
+
     /// <inheritdoc />
     public override void Visit(BinaryOperationExpressionNode node)
     {
@@ -90,35 +110,7 @@ internal partial class CreateDelegateVisitor : AstVisitor
 
         var leftAction = NodeIdFuncMap[node.LeftNode.Id];
         var rightAction = NodeIdFuncMap[node.RightNode.Id];
-        var leftNodeType = node.LeftNode.GetDataType();
-        var rightNodeType = node.RightNode.GetDataType();
-
-        // If one of the type is dynamic (has object selector), it means that we cannot evaluate the type
-        // statically. Use slow dynamic expression.
-        if (leftNodeType == DataType.Dynamic || rightNodeType == DataType.Dynamic)
-        {
-            var operation = VariantValue.GetOperationDelegate(node.Operation);
-            VariantValue DynamicFunc()
-            {
-                var leftValue = leftAction.Invoke();
-                var rightValue = rightAction.Invoke();
-                return operation.Invoke(in leftValue, in rightValue, out _);
-            }
-            NodeIdFuncMap[node.Id] = new FuncUnitDelegate(DynamicFunc, node.GetDataType());
-        }
-        // Find the most optimal delegate by types and use it.
-        else
-        {
-            var operation = VariantValue.GetOperationDelegate(node.Operation, leftNodeType, rightNodeType);
-            VariantValue FastFunc()
-            {
-                var leftValue = leftAction.Invoke();
-                var rightValue = rightAction.Invoke();
-                var result = operation.Invoke(in leftValue, in rightValue);
-                return result;
-            }
-            NodeIdFuncMap[node.Id] = new FuncUnitDelegate(FastFunc, node.GetDataType());
-        }
+        NodeIdFuncMap[node.Id] = new BinaryFuncUnit(node.Operation, leftAction, rightAction, node.GetDataType());
     }
 
     /// <inheritdoc />
@@ -271,6 +263,68 @@ internal partial class CreateDelegateVisitor : AstVisitor
         NodeIdFuncMap[node.Id] = new FuncUnitMultiDelegate(DataType.Void, actions);
     }
 
+    private sealed class UnarySubtractFuncUnit(
+        IFuncUnit action,
+        DataType outputType) : IFuncUnit
+    {
+        /// <inheritdoc />
+        public DataType OutputType => outputType;
+
+        /// <inheritdoc />
+        public VariantValue Invoke()
+        {
+            var value = action.Invoke();
+            var result = VariantValue.Negation(in value, out ErrorCode _);
+            return result;
+        }
+    }
+
+    private sealed class UnaryNotFuncUnit(
+        IFuncUnit action,
+        DataType outputType) : IFuncUnit
+    {
+        /// <inheritdoc />
+        public DataType OutputType => outputType;
+
+        /// <inheritdoc />
+        public VariantValue Invoke()
+        {
+            var value = action.Invoke();
+            var notDelegate = VariantValue.GetOperationDelegate(VariantValue.Operation.Not, value.Type);
+            return notDelegate.Invoke(value);
+        }
+    }
+
+    private sealed class UnaryIsNullFuncUnit(
+        IFuncUnit action,
+        DataType outputType) : IFuncUnit
+    {
+        /// <inheritdoc />
+        public DataType OutputType => outputType;
+
+        /// <inheritdoc />
+        public VariantValue Invoke()
+        {
+            var value = action.Invoke();
+            return new VariantValue(value.IsNull);
+        }
+    }
+
+    private sealed class UnaryIsNotNullFuncUnit(
+        IFuncUnit action,
+        DataType outputType) : IFuncUnit
+    {
+        /// <inheritdoc />
+        public DataType OutputType => outputType;
+
+        /// <inheritdoc />
+        public VariantValue Invoke()
+        {
+            var value = action.Invoke();
+            return new VariantValue(!value.IsNull);
+        }
+    }
+
     /// <inheritdoc />
     public override void Visit(UnaryOperationExpressionNode node)
     {
@@ -278,46 +332,12 @@ internal partial class CreateDelegateVisitor : AstVisitor
         var action = NodeIdFuncMap[node.RightNode.Id];
         var nodeType = node.GetDataType();
 
-        VariantValue.UnaryFunction notDelegate = VariantValue.UnaryNullDelegate;
-        if (node.Operation == VariantValue.Operation.Not)
-        {
-            if (nodeType == DataType.Dynamic)
-            {
-                // Dynamic mode.
-                notDelegate = (in VariantValue left) => new VariantValue(!left.AsBoolean);
-            }
-            else if (nodeType != DataType.Object)
-            {
-                // Static mode.
-                notDelegate = VariantValue.GetOperationDelegate(VariantValue.Operation.Not, nodeType);
-            }
-        }
-
         NodeIdFuncMap[node.Id] = node.Operation switch
         {
-            VariantValue.Operation.Subtract => new FuncUnitDelegate(() =>
-            {
-                var value = action.Invoke();
-                var result = VariantValue.Negation(in value, out ErrorCode code);
-                ApplyStatistic(code);
-                return result;
-            }, nodeType),
-            VariantValue.Operation.Not => new FuncUnitDelegate(() =>
-            {
-                var value = action.Invoke();
-                var result = notDelegate.Invoke(in value);
-                return result;
-            }, nodeType),
-            VariantValue.Operation.IsNull => new FuncUnitDelegate(() =>
-            {
-                var value = action.Invoke();
-                return new VariantValue(value.IsNull);
-            }, nodeType),
-            VariantValue.Operation.IsNotNull => new FuncUnitDelegate(() =>
-            {
-                var value = action.Invoke();
-                return new VariantValue(!value.IsNull);
-            }, nodeType),
+            VariantValue.Operation.Subtract => new UnarySubtractFuncUnit(action, nodeType),
+            VariantValue.Operation.Not => new UnaryNotFuncUnit(action, nodeType),
+            VariantValue.Operation.IsNull => new UnaryIsNullFuncUnit(action, nodeType),
+            VariantValue.Operation.IsNotNull => new UnaryIsNotNullFuncUnit(action, nodeType),
             _ => throw new QueryCatException(Resources.Errors.InvalidOperation),
         };
     }
@@ -400,6 +420,22 @@ internal partial class CreateDelegateVisitor : AstVisitor
         NodeIdFuncMap[node.Id] = NodeIdFuncMap[node.ExpressionValueNode.Id];
     }
 
+    private sealed class FunctionCallFuncUnit(
+        IFunction function,
+        FuncUnitCallInfo callInfo,
+        DataType outputType) : IFuncUnit
+    {
+        /// <inheritdoc />
+        public DataType OutputType => outputType;
+
+        /// <inheritdoc />
+        public VariantValue Invoke()
+        {
+            callInfo.InvokePushArgs();
+            return function.Delegate(callInfo);
+        }
+    }
+
     /// <inheritdoc />
     public override void Visit(FunctionCallNode node)
     {
@@ -430,9 +466,9 @@ internal partial class CreateDelegateVisitor : AstVisitor
             }
 
             // Try optional.
-            if (function.Arguments[i].HasDefaultValue)
+            if (argument.HasDefaultValue)
             {
-                argsDelegatesList.Add(new FuncUnitStatic(function.Arguments[i].DefaultValue));
+                argsDelegatesList.Add(new FuncUnitStatic(argument.DefaultValue));
                 continue;
             }
 
@@ -452,11 +488,7 @@ internal partial class CreateDelegateVisitor : AstVisitor
         var argsDelegates = argsDelegatesList.ToArray();
         var callInfo = new FuncUnitCallInfo(ExecutionThread, function.Name, argsDelegates);
         node.SetAttribute(AstAttributeKeys.ArgumentsKey, callInfo);
-        NodeIdFuncMap[node.Id] = new FuncUnitDelegate(() =>
-        {
-            callInfo.InvokePushArgs();
-            return function.Delegate(callInfo);
-        }, node.GetDataType());
+        NodeIdFuncMap[node.Id] = new FunctionCallFuncUnit(function, callInfo, node.GetDataType());
     }
 
     #endregion
