@@ -40,6 +40,26 @@ internal sealed class SelectColumnsListNode : AstNode
         return true;
     }
 
+    internal IReadOnlyList<string> GetColumnsNames()
+    {
+        var list = new List<string>();
+        foreach (var column in ColumnsNodes)
+        {
+            if (!string.IsNullOrEmpty(column.Alias))
+            {
+                list.Add(column.Alias);
+                continue;
+            }
+            if (column is SelectColumnsSublistExpressionNode expressionNode
+                && expressionNode.ExpressionNode is IdentifierExpressionNode identifierExpressionNode)
+            {
+                list.Add(identifierExpressionNode.TableFullName);
+                continue;
+            }
+        }
+        return list;
+    }
+
     /// <inheritdoc />
     public override IEnumerable<IAstNode> GetChildren() => ColumnsNodes;
 

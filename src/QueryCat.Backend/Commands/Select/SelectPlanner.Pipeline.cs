@@ -2,6 +2,7 @@ using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Commands.Select.Iterators;
+using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
@@ -140,21 +141,33 @@ internal sealed partial class SelectPlanner
         // user mentioned in SELECT block.
         var funcs = columnsNode.ColumnsNodes.Select(c => Misc_CreateDelegate(c, context)).ToList();
         var selectColumns = CreateSelectColumns(columnsNode).ToList();
+        var exceptColumns = exceptNode?.ExceptIdentifiers.ToList() ?? new List<IdentifierExpressionNode>();
         for (var i = 0; i < columnsNode.ColumnsNodes.Count; i++)
         {
             // Excluded columns filter.
             var columnNode = columnsNode.ColumnsNodes[i] as SelectColumnsSublistExpressionNode;
-            if (exceptNode != null &&
-                columnNode?.ExpressionNode is IdentifierExpressionNode columnIdNode &&
-                exceptNode.ExceptIdentifiers.Any(
-                    node => node.TableFieldName.Equals(columnIdNode.TableFieldName, StringComparison.OrdinalIgnoreCase)
-                            && node.TableSourceName.Equals(columnIdNode.TableSourceName, StringComparison.OrdinalIgnoreCase)))
+            if (columnNode?.ExpressionNode is IdentifierExpressionNode columnIdNode)
             {
-                continue;
+                var columnToExcept = exceptColumns.Find(
+                    node => node.TableFieldName.Equals(columnIdNode.TableFieldName, StringComparison.InvariantCultureIgnoreCase)
+                            && node.TableSourceName.Equals(columnIdNode.TableSourceName, StringComparison.InvariantCultureIgnoreCase));
+                if (columnToExcept != null)
+                {
+                    exceptColumns.Remove(columnToExcept);
+                    continue;
+                }
             }
             var columnIndex = projectedIterator.AddFuncColumn(selectColumns[i].Column, funcs[i]);
             var info = context.ColumnsInfoContainer.GetByColumn(projectedIterator.Columns[columnIndex]);
             info.RelatedSelectSublistNode = columnsNode.ColumnsNodes[selectColumns[i].ColumnIndex];
+        }
+
+        // Check that all "exclude" identifiers are used.
+        if (exceptColumns.Count > 0)
+        {
+            var availableColumns = string.Join(", ", columnsNode.GetColumnsNames().Select(c => $"'{c}'"));
+            throw new SemanticException(
+                string.Format(Resources.Errors.InvalidExceptColumn, exceptColumns[0].TableFullName, availableColumns));
         }
 
         // Add missed columns (for example, virtual and exclude columns) so that are visible

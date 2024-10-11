@@ -96,7 +96,7 @@ selectQuerySpecification
     | SELECT selectSublist (COMMA selectSublist)* selectTarget? # SelectQuerySpecificationSingle
     ;
 selectList: selectSublist (COMMA selectSublist)*;
-selectExcept: EXCEPT identifierSimple (COMMA identifierSimple)*;
+selectExcept: EXCEPT identifier (COMMA identifier)*;
 selectDistinctClause: ALL | DISTINCT | selectDistinctOnClause;
 selectDistinctOnClause: DISTINCT ON '(' simpleExpression (COMMA simpleExpression)* ')';
 

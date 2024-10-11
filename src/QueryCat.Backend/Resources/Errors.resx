@@ -162,4 +162,7 @@
   <data name="ExecutionMaxRecursionDepth" xml:space="preserve">
     <value>Max recursion depth of {0} reached.</value>
   </data>
+  <data name="InvalidExceptColumn" xml:space="preserve">
+    <value>Invalid except column '{0}', available columns: {1}.</value>
+  </data>
 </root>

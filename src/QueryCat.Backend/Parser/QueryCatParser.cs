@@ -1991,11 +1991,11 @@ public partial class QueryCatParser : Parser {
 
 	public partial class SelectExceptContext : ParserRuleContext {
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode EXCEPT() { return GetToken(QueryCatParser.EXCEPT, 0); }
-		[System.Diagnostics.DebuggerNonUserCode] public IdentifierSimpleContext[] identifierSimple() {
-			return GetRuleContexts<IdentifierSimpleContext>();
+		[System.Diagnostics.DebuggerNonUserCode] public IdentifierContext[] identifier() {
+			return GetRuleContexts<IdentifierContext>();
 		}
-		[System.Diagnostics.DebuggerNonUserCode] public IdentifierSimpleContext identifierSimple(int i) {
-			return GetRuleContext<IdentifierSimpleContext>(i);
+		[System.Diagnostics.DebuggerNonUserCode] public IdentifierContext identifier(int i) {
+			return GetRuleContext<IdentifierContext>(i);
 		}
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode[] COMMA() { return GetTokens(QueryCatParser.COMMA); }
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode COMMA(int i) {
@@ -2025,7 +2025,7 @@ public partial class QueryCatParser : Parser {
 			State = 377;
 			Match(EXCEPT);
 			State = 378;
-			identifierSimple();
+			identifier();
 			State = 383;
 			ErrorHandler.Sync(this);
 			_la = TokenStream.LA(1);
@@ -2035,7 +2035,7 @@ public partial class QueryCatParser : Parser {
 				State = 379;
 				Match(COMMA);
 				State = 380;
-				identifierSimple();
+				identifier();
 				}
 				}
 				State = 385;
@@ -8087,8 +8087,8 @@ public partial class QueryCatParser : Parser {
 		3,50,25,0,365,364,1,0,0,0,365,366,1,0,0,0,366,368,1,0,0,0,367,335,1,0,
 		0,0,367,355,1,0,0,0,368,33,1,0,0,0,369,374,3,48,24,0,370,371,5,6,0,0,371,
 		373,3,48,24,0,372,370,1,0,0,0,373,376,1,0,0,0,374,372,1,0,0,0,374,375,
-		1,0,0,0,375,35,1,0,0,0,376,374,1,0,0,0,377,378,5,110,0,0,378,383,3,114,
-		57,0,379,380,5,6,0,0,380,382,3,114,57,0,381,379,1,0,0,0,382,385,1,0,0,
+		1,0,0,0,375,35,1,0,0,0,376,374,1,0,0,0,377,378,5,110,0,0,378,383,3,116,
+		58,0,379,380,5,6,0,0,380,382,3,116,58,0,381,379,1,0,0,0,382,385,1,0,0,
 		0,383,381,1,0,0,0,383,384,1,0,0,0,384,37,1,0,0,0,385,383,1,0,0,0,386,390,
 		5,104,0,0,387,390,5,109,0,0,388,390,3,40,20,0,389,386,1,0,0,0,389,387,
 		1,0,0,0,389,388,1,0,0,0,390,39,1,0,0,0,391,392,5,109,0,0,392,393,5,65,

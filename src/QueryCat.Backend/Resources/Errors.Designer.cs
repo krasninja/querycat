@@ -332,5 +332,11 @@ namespace QueryCat.Backend.Resources {
                 return ResourceManager.GetString("ExecutionMaxRecursionDepth", resourceCulture);
             }
         }
+        
+        internal static string InvalidExceptColumn {
+            get {
+                return ResourceManager.GetString("InvalidExceptColumn", resourceCulture);
+            }
+        }
     }
 }

@@ -30,6 +30,12 @@ internal class IdentifierExpressionNode : ExpressionNode
     /// </summary>
     public string FullName => Name + DumpNameWithSelector();
 
+    /// <summary>
+    /// Full name in the SELECT clause.
+    /// </summary>
+    public string TableFullName
+        => !string.IsNullOrEmpty(TableSourceName) ? $"{TableSourceName}.{TableFieldName}" : TableFieldName;
+
     /// <inheritdoc />
     public override string Code => "id";
 

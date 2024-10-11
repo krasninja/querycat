@@ -112,7 +112,7 @@ internal partial class ProgramParserVisitor
 
     /// <inheritdoc />
     public override IAstNode VisitSelectExcept(QueryCatParser.SelectExceptContext context)
-        => new SelectColumnsExceptNode(this.Visit<IdentifierExpressionNode>(context.identifierSimple()));
+        => new SelectColumnsExceptNode(this.Visit<IdentifierExpressionNode>(context.identifier()));
 
     #endregion
 
