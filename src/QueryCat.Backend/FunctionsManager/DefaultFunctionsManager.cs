@@ -17,7 +17,7 @@ public sealed partial class DefaultFunctionsManager : IFunctionsManager
     private readonly IAstBuilder _astBuilder;
     private readonly List<IUriResolver> _uriResolvers = new();
 
-    private record struct FunctionPreRegistration(
+    private readonly record struct FunctionPreRegistration(
         FunctionDelegate Delegate,
         List<string> Signatures,
         string? Description = null);
