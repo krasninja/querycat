@@ -224,13 +224,6 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitSelectQuerySpecificationFull([NotNull] QueryCatParser.SelectQuerySpecificationFullContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>SelectQuerySpecificationSingle</c>
-	/// labeled alternative in <see cref="QueryCatParser.selectQuerySpecification"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitSelectQuerySpecificationSingle([NotNull] QueryCatParser.SelectQuerySpecificationSingleContext context);
-	/// <summary>
 	/// Visit a parse tree produced by <see cref="QueryCatParser.selectList"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

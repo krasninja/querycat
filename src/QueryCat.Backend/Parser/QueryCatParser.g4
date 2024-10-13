@@ -91,9 +91,8 @@ selectQuerySpecification
       selectList
       selectExcept?
       selectTarget?
-      selectFromClause
+      selectFromClause?
       selectWindow? # SelectQuerySpecificationFull
-    | SELECT selectSublist (COMMA selectSublist)* selectTarget? # SelectQuerySpecificationSingle
     ;
 selectList: selectSublist (COMMA selectSublist)*;
 selectExcept: EXCEPT identifier (COMMA identifier)*;
