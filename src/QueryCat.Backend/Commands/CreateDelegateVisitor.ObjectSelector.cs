@@ -15,6 +15,7 @@ internal partial class CreateDelegateVisitor
     }
 
     protected bool GetObjectBySelector(
+        IExecutionThread thread,
         ObjectSelectorContext context,
         VariantValue value,
         IdentifierExpressionNode idNode,
@@ -22,7 +23,7 @@ internal partial class CreateDelegateVisitor
     {
         try
         {
-            return GetObjectBySelectorInternal(context, value, idNode, out result);
+            return GetObjectBySelectorInternal(thread, context, value, idNode, out result);
         }
         catch (Exception e)
         {
@@ -34,6 +35,7 @@ internal partial class CreateDelegateVisitor
     }
 
     private bool GetObjectBySelectorInternal(
+        IExecutionThread thread,
         ObjectSelectorContext context,
         VariantValue value,
         IdentifierExpressionNode idNode,
@@ -53,12 +55,12 @@ internal partial class CreateDelegateVisitor
 
             if (selector is IdentifierPropertySelectorNode propertySelectorNode)
             {
-                info = ExecutionThread.ObjectSelector.SelectByProperty(context, propertySelectorNode.PropertyName);
+                info = thread.ObjectSelector.SelectByProperty(context, propertySelectorNode.PropertyName);
             }
             else if (selector is IdentifierIndexSelectorNode indexSelectorNode)
             {
-                var indexObjects = GetObjectIndexesSelector(indexSelectorNode);
-                info = ExecutionThread.ObjectSelector.SelectByIndex(context, indexObjects);
+                var indexObjects = GetObjectIndexesSelector(thread, indexSelectorNode);
+                info = thread.ObjectSelector.SelectByIndex(context, indexObjects);
                 // Indexes must be initialized, fix it.
                 if (info is { Indexes: null })
                 {
@@ -71,6 +73,7 @@ internal partial class CreateDelegateVisitor
                 var idNodeContext = idNode.GetRequiredAttribute<ObjectSelectorContext>(ObjectSelectorKey);
 
                 var listResult = GetObjectBySelector_GetFiltered(
+                    thread,
                     nodeAction: NodeIdFuncMap[filterSelectorNode.FilterExpressionNode.Id],
                     container: container,
                     enumerable: idNodeContext.LastValue as IEnumerable);
@@ -89,7 +92,7 @@ internal partial class CreateDelegateVisitor
         return true;
     }
 
-    protected object?[] GetObjectIndexesSelector(IdentifierIndexSelectorNode indexSelectorNode)
+    protected object?[] GetObjectIndexesSelector(IExecutionThread thread, IdentifierIndexSelectorNode indexSelectorNode)
     {
         if (indexSelectorNode.IndexExpressions.Length == 0)
         {
@@ -104,12 +107,13 @@ internal partial class CreateDelegateVisitor
         for (var i = 0; i < indexSelectorNode.IndexExpressions.Length; i++)
         {
             var indexExpression = indexSelectorNode.IndexExpressions[i];
-            indexes[i] = Converter.ConvertValue(NodeIdFuncMap[indexExpression.Id].Invoke(), typeof(object));
+            indexes[i] = Converter.ConvertValue(NodeIdFuncMap[indexExpression.Id].Invoke(thread), typeof(object));
         }
         return indexes;
     }
 
-    private IList<object> GetObjectBySelector_GetFiltered(
+    private static IList<object> GetObjectBySelector_GetFiltered(
+        IExecutionThread thread,
         IFuncUnit nodeAction,
         VariantValueContainer container,
         IEnumerable? enumerable)
@@ -119,7 +123,7 @@ internal partial class CreateDelegateVisitor
             return [];
         }
 
-        var selectContext = new ObjectSelectorContext(ExecutionThread);
+        var selectContext = new ObjectSelectorContext();
         var enumerator = enumerable.GetEnumerator();
 
         var list = new List<object>();
@@ -134,7 +138,7 @@ internal partial class CreateDelegateVisitor
 
                 selectContext.Push(new ObjectSelectorContext.Token(enumerator.Current));
                 container.Value = VariantValue.CreateFromObject(enumerator.Current);
-                if (nodeAction.Invoke().AsBoolean)
+                if (nodeAction.Invoke(thread).AsBoolean)
                 {
                     list.Add(enumerator.Current);
                 }

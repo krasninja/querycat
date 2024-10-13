@@ -54,7 +54,7 @@ internal sealed partial class SelectPlanner
         }
 
         var funcUnits = Misc_CreateDelegate(querySpecificationNode.DistinctNode.OnNodes, context);
-        context.SetIterator(new DistinctRowsIteratorIterator(context.CurrentIterator, funcUnits));
+        context.SetIterator(new DistinctRowsIteratorIterator(ExecutionThread, context.CurrentIterator, funcUnits));
     }
 
     private void Pipeline_CreateDistinctAllRowsSet(
@@ -71,7 +71,7 @@ internal sealed partial class SelectPlanner
             .Select((_, i) => new FuncUnitRowsIteratorColumn(context.CurrentIterator, i))
             .Cast<IFuncUnit>()
             .ToArray();
-        context.SetIterator(new DistinctRowsIteratorIterator(context.CurrentIterator, funcUnits));
+        context.SetIterator(new DistinctRowsIteratorIterator(ExecutionThread, context.CurrentIterator, funcUnits));
     }
 
     private record struct ColumnWithIndex(
@@ -135,7 +135,7 @@ internal sealed partial class SelectPlanner
         SelectColumnsListNode columnsNode,
         SelectColumnsExceptNode? exceptNode)
     {
-        var projectedIterator = new ProjectedRowsIterator(context.CurrentIterator);
+        var projectedIterator = new ProjectedRowsIterator(ExecutionThread, context.CurrentIterator);
 
         // Format the initial iterator with all columns (except excluded) that
         // user mentioned in SELECT block.
@@ -185,11 +185,11 @@ internal sealed partial class SelectPlanner
         context.SetIterator(projectedIterator);
     }
 
-    private static void Pipeline_SetSelectRowsSet(
+    private void Pipeline_SetSelectRowsSet(
         SelectCommandContext context,
         SelectColumnsListNode columnsNode)
     {
-        var projectedIterator = new ProjectedRowsIterator(context.CurrentIterator);
+        var projectedIterator = new ProjectedRowsIterator(ExecutionThread, context.CurrentIterator);
         var iterator = context.CurrentIterator;
         foreach (var selectColumn in columnsNode.ColumnsNodes)
         {
@@ -230,7 +230,7 @@ internal sealed partial class SelectPlanner
         }
 
         var predicate = Misc_CreateDelegate(selectTableExpressionNode.SearchConditionNode, context);
-        context.SetIterator(new FilterRowsIterator(context.CurrentIterator, predicate));
+        context.SetIterator(new FilterRowsIterator(ExecutionThread, context.CurrentIterator, predicate));
     }
 
     #endregion
@@ -254,7 +254,7 @@ internal sealed partial class SelectPlanner
                 Pipeline_ConvertNullOrder(n.NullOrder)
             )
         );
-        context.SetIterator(new OrderRowsIterator(context.CurrentIterator, orderFunctions.ToArray()));
+        context.SetIterator(new OrderRowsIterator(ExecutionThread, context.CurrentIterator, orderFunctions.ToArray()));
     }
 
     private static void Pipeline_OrderConvertColumnNumbers(IRowsIterator currentIterator, List<SelectOrderBySpecificationNode> orderByNodes)
@@ -298,12 +298,12 @@ internal sealed partial class SelectPlanner
     {
         if (offsetNode != null)
         {
-            var count = Misc_CreateDelegate(offsetNode.CountNode, context).Invoke().AsInteger;
+            var count = Misc_CreateDelegate(offsetNode.CountNode, context).Invoke(ExecutionThread).AsInteger;
             context.SetIterator(new OffsetRowsIterator(context.CurrentIterator, count));
         }
         if (fetchNode != null)
         {
-            var count = Misc_CreateDelegate(fetchNode.CountNode, context).Invoke().AsInteger;
+            var count = Misc_CreateDelegate(fetchNode.CountNode, context).Invoke(ExecutionThread).AsInteger;
             context.SetIterator(new LimitRowsIterator(context.CurrentIterator, count));
         }
     }
@@ -341,6 +341,7 @@ internal sealed partial class SelectPlanner
             .GetRequiredAttribute<FuncUnitCallInfo>(AstAttributeKeys.ArgumentsKey);
         var hasVaryingTarget = querySpecificationNode.TargetNode.Arguments.Count > 0;
         var outputIterator = new VaryingOutputRowsIterator(
+            ExecutionThread,
             context.CurrentIterator,
             context.OutputArgumentsFunc,
             functionCallInfo,

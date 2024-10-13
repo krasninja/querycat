@@ -35,10 +35,10 @@ internal sealed class SetIdentifierDelegateVisitor : CreateDelegateVisitor
 
         if (ExecutionThread.ContainsVariable(node.Name))
         {
-            var context = new ObjectSelectorContext(ExecutionThread);
-            VariantValue Func()
+            var context = new ObjectSelectorContext();
+            VariantValue Func(IExecutionThread thread)
             {
-                var newValue = SetValue(node, context);
+                var newValue = SetValue(thread, node, context);
                 context.Clear();
                 return newValue;
             }
@@ -49,20 +49,20 @@ internal sealed class SetIdentifierDelegateVisitor : CreateDelegateVisitor
         throw new CannotFindIdentifierException(node.Name);
     }
 
-    private VariantValue SetValue(IdentifierExpressionNode node, ObjectSelectorContext context)
+    private VariantValue SetValue(IExecutionThread thread, IdentifierExpressionNode node, ObjectSelectorContext context)
     {
-        var startObject = ExecutionThread.GetVariable(node.Name);
-        var newValue = _funcUnit.Invoke();
+        var startObject = thread.GetVariable(node.Name);
+        var newValue = _funcUnit.Invoke(thread);
 
         // This is expression object.
-        if (GetObjectBySelector(context, startObject, node, out _))
+        if (GetObjectBySelector(thread, context, startObject, node, out _))
         {
-            ExecutionThread.ObjectSelector.SetValue(context, Converter.ConvertValue(newValue, typeof(object)));
+            thread.ObjectSelector.SetValue(context, Converter.ConvertValue(newValue, typeof(object)));
         }
         // Not an expression - variable.
         else if (!node.HasSelectors)
         {
-            ExecutionThread.TopScope.Variables[node.Name] = newValue;
+            thread.TopScope.Variables[node.Name] = newValue;
         }
 
         return newValue;

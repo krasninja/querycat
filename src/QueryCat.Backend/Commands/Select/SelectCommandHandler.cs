@@ -1,3 +1,4 @@
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Commands.Select;
@@ -15,7 +16,7 @@ internal sealed class SelectCommandHandler : IFuncUnit, IDisposable
     }
 
     /// <inheritdoc />
-    public VariantValue Invoke()
+    public VariantValue Invoke(IExecutionThread thread)
     {
         ResetVariablesBoundRowsInputs();
         return VariantValue.CreateFromObject(SelectCommandContext.CurrentIterator);

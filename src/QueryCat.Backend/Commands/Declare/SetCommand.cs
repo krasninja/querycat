@@ -17,9 +17,9 @@ internal sealed class SetCommand : ICommand
         var identifierHandler = new SetIdentifierDelegateVisitor(executionThread, valueHandler)
             .RunAndReturn(setNode.IdentifierNode);
 
-        return new FuncCommandHandler(() =>
+        return new FuncCommandHandler(thread =>
         {
-            identifierHandler.Invoke();
+            identifierHandler.Invoke(thread);
             return VariantValue.Null;
         });
     }

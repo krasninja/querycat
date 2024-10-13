@@ -6,6 +6,7 @@ using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Execution;
 using QueryCat.Backend.Storage;
 
 namespace QueryCat.Backend.Commands.Select.Visitors;
@@ -43,7 +44,8 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
         }
         typesVisitor.Run(node.TableFunctionNode);
 
-        var source = new CreateDelegateVisitor(_executionThread).RunAndReturn(node.TableFunctionNode).Invoke();
+        var source = new CreateDelegateVisitor(_executionThread).RunAndReturn(node.TableFunctionNode)
+            .Invoke(_executionThread);
         var inputContext = CreateRowsInput(source);
         inputContext.Alias = node.Alias;
         _context.AddInput(inputContext);
@@ -67,7 +69,7 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
             };
             if (_context.Parent != null && !_executionThread.Options.DisableCache)
             {
-                rowsInput = new CacheRowsInput(rowsInput, _context.Conditions);
+                rowsInput = new CacheRowsInput(_executionThread, rowsInput, _context.Conditions);
             }
             rowsInput.QueryContext = queryContext;
             rowsInput.Open();

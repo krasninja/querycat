@@ -93,7 +93,7 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
         var commandContext = node.SubQueryNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
         var rowsIterator = commandContext.CurrentIterator;
 
-        VariantValue Func()
+        VariantValue Func(IExecutionThread thread)
         {
             rowsIterator.Reset();
             if (rowsIterator.MoveNext())
@@ -216,7 +216,7 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
             }
         }
 
-        NodeIdFuncMap[node.Id] = new FuncUnitDelegate(() =>
+        NodeIdFuncMap[node.Id] = new FuncUnitDelegate(thread =>
         {
             if (rowsFrame.IsEmpty)
             {
@@ -226,7 +226,7 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
                 {
                     for (var i = 0; i < rowsFrame.Columns.Length && i < rowNode.ExpressionNodes.Length; i++)
                     {
-                        row[i] = handlers[rowNode.ExpressionNodes[i]].Invoke();
+                        row[i] = handlers[rowNode.ExpressionNodes[i]].Invoke(thread);
                     }
                     rowsFrame.AddRow(row);
                 }
@@ -244,9 +244,9 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
             var rowsIterator = new SelectPlanner(ExecutionThread).CreateIterator(queryNode, _context);
             var equalDelegate = VariantValue.GetEqualsDelegate(node.ExpressionNode.GetDataType());
 
-            VariantValue Func()
+            VariantValue Func(IExecutionThread thread)
             {
-                var leftValue = valueAction.Invoke();
+                var leftValue = valueAction.Invoke(thread);
                 rowsIterator.Reset();
                 while (rowsIterator.MoveNext())
                 {
@@ -290,7 +290,7 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
         var rowsIterator = new SelectPlanner(ExecutionThread).CreateIterator(node, _context);
         ResolveTypesVisitor.Visit(node);
 
-        VariantValue Func()
+        VariantValue Func(IExecutionThread thread)
         {
             rowsIterator.Reset();
             if (rowsIterator.MoveNext())
@@ -322,15 +322,15 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
         var operationDelegate = VariantValue.GetOperationDelegate(node.Operation);
         var leftValueFunc = NodeIdFuncMap[node.LeftNode.Id];
 
-        VariantValue AllFunc()
+        VariantValue AllFunc(IExecutionThread thread)
         {
             rowsIterator.Reset();
             while (rowsIterator.MoveNext())
             {
-                var leftValue = leftValueFunc.Invoke();
+                var leftValue = leftValueFunc.Invoke(thread);
                 var rightValue = rowsIterator.Current[0];
                 var result = operationDelegate(in leftValue, in rightValue, out ErrorCode code);
-                ApplyStatistic(code);
+                ApplyStatistic(thread, code);
                 if (!result.AsBoolean)
                 {
                     return VariantValue.FalseValue;
@@ -339,15 +339,15 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
             return VariantValue.TrueValue;
         }
 
-        VariantValue AnyFunc()
+        VariantValue AnyFunc(IExecutionThread thread)
         {
             rowsIterator.Reset();
             while (rowsIterator.MoveNext())
             {
-                var leftValue = leftValueFunc.Invoke();
+                var leftValue = leftValueFunc.Invoke(thread);
                 var rightValue = rowsIterator.Current[0];
                 var result = operationDelegate(in leftValue, in rightValue, out ErrorCode code);
-                ApplyStatistic(code);
+                ApplyStatistic(thread, code);
                 if (result.AsBoolean)
                 {
                     return VariantValue.TrueValue;

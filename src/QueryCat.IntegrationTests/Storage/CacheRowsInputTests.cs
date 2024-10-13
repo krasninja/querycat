@@ -2,6 +2,7 @@ using Xunit;
 using QueryCat.Backend.Commands.Select;
 using QueryCat.Backend.Commands.Select.Inputs;
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Storage;
@@ -20,7 +21,7 @@ public class CacheRowsInputTests
         var rowsFrame = new RowsFrame(new Column("Name", DataType.String));
         rowsFrame.AddRow("Sergey");
         rowsFrame.AddRow("Anna");
-        var cacheRowsInput = new CacheRowsInput(new RowsIteratorInput(rowsFrame.GetIterator()));
+        var cacheRowsInput = new CacheRowsInput(NullExecutionThread.Instance, new RowsIteratorInput(rowsFrame.GetIterator()));
         var iterator = cacheRowsInput.AsIterable(autoFetch: true);
 
         // Act.
@@ -43,7 +44,8 @@ public class CacheRowsInputTests
         rowsFrame.AddRow("Ivan");
         rowsFrame.AddRow("Marina");
         rowsFrame.AddRow("Pasha");
-        var cacheRowsInput = new CacheRowsInput(new RowsIteratorInput(rowsFrame.GetIterator()));
+        var cacheRowsInput = new CacheRowsInput(NullExecutionThread.Instance,
+            new RowsIteratorInput(rowsFrame.GetIterator()));
         var iterator = cacheRowsInput.AsIterable(autoFetch: true);
 
         // Act.
@@ -70,7 +72,7 @@ public class CacheRowsInputTests
         var input1 = new RowsIteratorInput(rowsFrame1.GetIterator(), "input1");
         var input2 = new RowsIteratorInput(rowsFrame2.GetIterator(), "input2");
         var proxyInput = new ProxyRowsInput(input1);
-        var cacheRowsInput = new CacheRowsInput(proxyInput);
+        var cacheRowsInput = new CacheRowsInput(NullExecutionThread.Instance, proxyInput);
         cacheRowsInput.QueryContext = new SelectInputQueryContext(cacheRowsInput);
         var iterator = cacheRowsInput.AsIterable(autoFetch: true);
 
@@ -107,7 +109,7 @@ public class CacheRowsInputTests
         var input1 = new RowsIteratorInput(rowsFrame1.GetIterator(), "input1");
         var input2 = new RowsIteratorInput(rowsFrame2.GetIterator(), "input2");
         var proxyInput = new ProxyRowsInput(input1);
-        var cacheRowsInput = new CacheRowsInput(proxyInput);
+        var cacheRowsInput = new CacheRowsInput(NullExecutionThread.Instance, proxyInput);
         cacheRowsInput.QueryContext = new SelectInputQueryContext(cacheRowsInput);
         var iterator = cacheRowsInput.AsIterable(autoFetch: true);
 

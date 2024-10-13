@@ -1,4 +1,5 @@
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Indexes;
 using QueryCat.Backend.Relational;
 
@@ -9,6 +10,7 @@ namespace QueryCat.Backend.Commands.Select.Iterators;
 /// </summary>
 internal sealed class OrderRowsIterator : IRowsIterator, IRowsIteratorParent
 {
+    private readonly IExecutionThread _thread;
     private readonly IRowsIterator _rowsIterator;
     private readonly OrderByData[] _orders;
     private readonly OrderColumnsIndex _orderIndex;
@@ -27,8 +29,9 @@ internal sealed class OrderRowsIterator : IRowsIterator, IRowsIteratorParent
 
     internal RowsFrame RowsFrame => _rowsFrame;
 
-    public OrderRowsIterator(IRowsIterator rowsIterator, OrderByData[] orders)
+    public OrderRowsIterator(IExecutionThread thread, IRowsIterator rowsIterator, OrderByData[] orders)
     {
+        _thread = thread;
         _rowsIterator = rowsIterator;
         _orders = orders;
         _rowsFrame = new RowsFrame(_rowsIterator.Columns);
@@ -38,12 +41,13 @@ internal sealed class OrderRowsIterator : IRowsIterator, IRowsIteratorParent
         _orderRowsFrame = new RowsFrame(orderColumns.ToArray());
 
         _orderIndex = new OrderColumnsIndex(
+            _thread,
             _orderRowsFrame.GetIterator(),
             orders.Select(
                 (o, index) => new OrderColumnData(index, o.Direction, o.NullOrder))
                 .ToArray()
         );
-        _orderIndexIterator = (ICursorRowsIterator)_orderIndex.GetOrderIterator();
+        _orderIndexIterator = _orderIndex.GetOrderIterator();
     }
 
     /// <inheritdoc />
@@ -77,7 +81,7 @@ internal sealed class OrderRowsIterator : IRowsIterator, IRowsIteratorParent
             _rowsFrame.AddRow(row);
             for (int i = 0; i < _orders.Length; i++)
             {
-                orderRow[i] = _orders[i].Func.Invoke();
+                orderRow[i] = _orders[i].Func.Invoke(_thread);
             }
             _orderRowsFrame.AddRow(orderRow);
         }

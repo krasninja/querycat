@@ -1,6 +1,7 @@
 using Xunit;
 using QueryCat.Backend.Commands.Select.Iterators;
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Relational;
 
@@ -24,7 +25,7 @@ public class DistinctRowsIteratorTests
         table.AddRow(30, "Marina M");
 
         // Act.
-        var resultRowsSet = new DistinctRowsIteratorIterator(table.GetIterator()).ToFrame();
+        var resultRowsSet = new DistinctRowsIteratorIterator(NullExecutionThread.Instance, table.GetIterator()).ToFrame();
 
         // Assert.
         Assert.Equal(3, resultRowsSet.TotalRows);

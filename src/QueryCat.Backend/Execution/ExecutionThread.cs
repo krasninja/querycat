@@ -294,7 +294,7 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
             }
 
             // Run the command.
-            LastResult = commandContext.Invoke();
+            LastResult = commandContext.Invoke(this);
 
             // Fire "after" event.
             if (StatementExecuted != null && !_isInCallback)

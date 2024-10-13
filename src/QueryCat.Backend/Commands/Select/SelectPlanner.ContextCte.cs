@@ -74,7 +74,7 @@ internal sealed partial class SelectPlanner
         var totalResult = new RowsFrame(initialQueryCommandContext.CurrentIterator.Columns);
         var totalResultProxy = new ProxyRowsIterator(totalResult);
         var writeRowsIterator = new WriteRowsFrameIterator(totalResult,
-            combineNode.IsDistinct ? new DistinctRowsIteratorIterator(totalResultProxy) : totalResultProxy);
+            combineNode.IsDistinct ? new DistinctRowsIteratorIterator(ExecutionThread, totalResultProxy) : totalResultProxy);
 
         // Merge current working frame and recalculate it based on new result.
         var workingFrame = initialQueryCommandContext.CurrentIterator.ToFrame();

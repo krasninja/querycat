@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Utils;
 
@@ -13,6 +14,7 @@ internal sealed class SetKeysRowsInput : RowsInput, IRowsInputKeys
     private readonly int _id = IdGenerator.GetNext();
 
     private ConditionJoint[] _conditions = [];
+    private readonly IExecutionThread _thread;
     private readonly IRowsInputKeys _rowsInput;
     private readonly SelectQueryConditions _selectQueryConditions;
     private bool _keysFilled;
@@ -33,9 +35,10 @@ internal sealed class SetKeysRowsInput : RowsInput, IRowsInputKeys
 
     public IRowsInputKeys InnerRowsInput => _rowsInput;
 
-    public SetKeysRowsInput(IRowsInputKeys rowsInput, SelectQueryConditions conditions)
+    public SetKeysRowsInput(IExecutionThread thread, IRowsInputKeys rowsInput, SelectQueryConditions conditions)
     {
         Columns = rowsInput.Columns;
+        _thread = thread;
         _rowsInput = rowsInput;
         _selectQueryConditions = conditions;
     }
@@ -95,14 +98,14 @@ internal sealed class SetKeysRowsInput : RowsInput, IRowsInputKeys
             {
                 return false;
             }
-            var value = valueFuncs[_currentFuncValueIndex].Invoke();
+            var value = valueFuncs[_currentFuncValueIndex].Invoke(_thread);
             _rowsInput.SetKeyColumnValue(_conditions[0].ColumnIndex, value, _conditions[0].Condition.Operation);
         }
         else
         {
             foreach (var conditionJoint in _conditions)
             {
-                var value = conditionJoint.Condition.ValueFunc.Invoke();
+                var value = conditionJoint.Condition.ValueFunc.Invoke(_thread);
                 _rowsInput.SetKeyColumnValue(conditionJoint.ColumnIndex, value, conditionJoint.Condition.Operation);
             }
         }

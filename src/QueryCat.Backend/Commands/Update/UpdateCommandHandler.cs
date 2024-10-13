@@ -1,5 +1,6 @@
 using QueryCat.Backend.Commands.Select;
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Commands.Update;
@@ -22,13 +23,13 @@ internal sealed class UpdateCommandHandler : IFuncUnit
 
         if (selectCommandContext.RowsInputIterator?.RowsInput is not IRowsInputUpdate rowsInputUpdate)
         {
-            throw new ArgumentException("Rows input must be updatable.", nameof(selectCommandContext));
+            throw new ArgumentException(Resources.Errors.RowsInputNotUpdatable, nameof(selectCommandContext));
         }
         _rowsInput = rowsInputUpdate;
     }
 
     /// <inheritdoc />
-    public VariantValue Invoke()
+    public VariantValue Invoke(IExecutionThread thread)
     {
         var updateCount = 0;
         while (_selectCommandContext.CurrentIterator.MoveNext())
@@ -36,7 +37,7 @@ internal sealed class UpdateCommandHandler : IFuncUnit
             updateCount++;
             foreach (var setter in _setters)
             {
-                var value = setter.FuncUnit.Invoke();
+                var value = setter.FuncUnit.Invoke(thread);
                 _rowsInput.UpdateValue(setter.ColumnIndex, value);
             }
         }

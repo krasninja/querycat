@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 
@@ -13,6 +14,7 @@ namespace QueryCat.Backend.Commands.Select.Iterators;
 /// </summary>
 internal sealed class VaryingOutputRowsIterator : IRowsIterator, IRowsIteratorParent, IDisposable
 {
+    private readonly IExecutionThread _thread;
     private readonly IRowsIterator _rowsIterator;
     private readonly QueryContext _queryContext;
     private readonly IFuncUnit _outputFactory;
@@ -32,12 +34,14 @@ internal sealed class VaryingOutputRowsIterator : IRowsIterator, IRowsIteratorPa
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(VaryingOutputRowsIterator));
 
     public VaryingOutputRowsIterator(
+        IExecutionThread thread,
         IRowsIterator rowsIterator,
         IFuncUnit func,
         FuncUnitCallInfo functionCallInfo,
         IRowsOutput defaultRowsOutput,
         QueryContext queryContext)
     {
+        _thread = thread;
         _rowsIterator = rowsIterator;
         _queryContext = queryContext;
 
@@ -48,11 +52,13 @@ internal sealed class VaryingOutputRowsIterator : IRowsIterator, IRowsIteratorPa
     }
 
     public VaryingOutputRowsIterator(
+        IExecutionThread thread,
         IRowsIterator rowsIterator,
         IRowsOutput defaultRowsOutput,
         QueryContext queryContext) : this(
+            thread: thread,
             rowsIterator: rowsIterator,
-            func: new FuncUnitDelegate(() => VariantValue.CreateFromObject(defaultRowsOutput), DataType.Object),
+            func: new FuncUnitDelegate(_ => VariantValue.CreateFromObject(defaultRowsOutput), DataType.Object),
             functionCallInfo: FuncUnitCallInfo.Empty,
             defaultRowsOutput,
             queryContext)
@@ -80,7 +86,7 @@ internal sealed class VaryingOutputRowsIterator : IRowsIterator, IRowsIteratorPa
         }
         else
         {
-            var outputResult = _outputFactory.Invoke().AsObject;
+            var outputResult = _outputFactory.Invoke(_thread).AsObject;
             if (outputResult is IRowsOutput rowsOutput)
             {
                 output = rowsOutput;

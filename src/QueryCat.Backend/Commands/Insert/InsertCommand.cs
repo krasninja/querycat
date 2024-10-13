@@ -24,7 +24,7 @@ internal sealed class InsertCommand : ICommand
         // Get output source.
         var rowsOutput = new CreateDelegateVisitor(executionThread)
             .RunAndReturn(insertNode.InsertTargetNode)
-            .Invoke()
+            .Invoke(executionThread)
             .As<IRowsOutput>();
 
         // Evaluate iterator for FROM block and get input source.

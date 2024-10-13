@@ -1,4 +1,5 @@
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Relational;
 
@@ -9,6 +10,7 @@ namespace QueryCat.Backend.Commands.Select.Iterators;
 /// </summary>
 internal class DistinctRowsIteratorIterator : IRowsIterator, IRowsIteratorParent
 {
+    private readonly IExecutionThread _thread;
     private readonly IRowsIterator _rowsIterator;
     private readonly IFuncUnit[] _columnsFunctions;
     private readonly HashSet<VariantValueArray> _values = new();
@@ -20,14 +22,18 @@ internal class DistinctRowsIteratorIterator : IRowsIterator, IRowsIteratorParent
     public Row Current => _rowsIterator.Current;
 
     public DistinctRowsIteratorIterator(
+        IExecutionThread thread,
         IRowsIterator rowsIterator,
-        IEnumerable<IFuncUnit> columnsIndexes) : this(rowsIterator, columnsIndexes.ToArray())
+        IEnumerable<IFuncUnit> columnsIndexes) : this(thread, rowsIterator, columnsIndexes.ToArray())
     {
     }
 
-    public DistinctRowsIteratorIterator(IRowsIterator rowsIterator,
+    public DistinctRowsIteratorIterator(
+        IExecutionThread thread,
+        IRowsIterator rowsIterator,
         params IFuncUnit[] columnsIndexes)
     {
+        _thread = thread;
         _rowsIterator = rowsIterator;
         if (columnsIndexes.Any())
         {
@@ -50,13 +56,12 @@ internal class DistinctRowsIteratorIterator : IRowsIterator, IRowsIteratorParent
             var values = new VariantValue[_columnsFunctions.Length];
             for (var i = 0; i < _columnsFunctions.Length; i++)
             {
-                values[i] = _columnsFunctions[i].Invoke();
+                values[i] = _columnsFunctions[i].Invoke(_thread);
             }
             var arr = new VariantValueArray(values);
 
-            if (!_values.Contains(arr))
+            if (_values.Add(arr))
             {
-                _values.Add(arr);
                 return true;
             }
         }

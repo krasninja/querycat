@@ -58,12 +58,12 @@ internal sealed class StatementsVisitor : AstVisitor
         }
         var blockHandlers = node.Statements.Select(s => _handlers[s.Id]).ToArray();
 
-        VariantValue Func()
+        VariantValue Func(IExecutionThread thread)
         {
             var result = VariantValue.Null;
             foreach (var func in blockHandlers)
             {
-                result = func.Invoke();
+                result = func.Invoke(thread);
             }
 
             return result;
