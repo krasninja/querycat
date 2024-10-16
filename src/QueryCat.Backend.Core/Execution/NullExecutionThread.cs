@@ -27,6 +27,9 @@ public sealed class NullExecutionThread : IExecutionThread
     /// <inheritdoc />
     public IExecutionScope TopScope { get; } = NullExecutionScope.Instance;
 
+    /// <inheritdoc />
+    public IExecutionStack Stack { get; } = NullExecutionStack.Instance;
+
 #pragma warning disable CS0067
     /// <inheritdoc />
     public event EventHandler<ResolveVariableEventArgs>? VariableResolving;

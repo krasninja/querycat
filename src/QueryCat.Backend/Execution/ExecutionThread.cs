@@ -52,6 +52,9 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
     public IExecutionScope TopScope => _topScope;
 
     /// <inheritdoc />
+    public IExecutionStack Stack { get; } = new DefaultFixedSizeExecutionStack();
+
+    /// <inheritdoc />
     public event EventHandler<ResolveVariableEventArgs>? VariableResolving;
 
     /// <inheritdoc />

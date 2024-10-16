@@ -40,7 +40,7 @@ public class RowInputTester
 
     public FunctionCallInfo CreateFunctionCallInfo(params VariantValue[] args)
     {
-        var functionCallInfo = new FunctionCallInfo(ExecutionThread, "TBD", args);
+        var functionCallInfo = new FunctionCallInfo(ExecutionThread, args);
         return functionCallInfo;
     }
 

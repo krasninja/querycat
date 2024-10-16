@@ -28,9 +28,11 @@ public sealed class DefaultFunctionsManagerTests
 
         var func = _functionsManager.FindByName("add",
             FunctionCallArgumentsTypes.FromPositionArguments(DataType.Integer, DataType.Integer));
+        Executor.Thread.Stack.CreateFrame();
         var functionCallInfo = FunctionCallInfo.CreateWithArguments(Executor.Thread,
             new VariantValue(5), new VariantValue(6));
         var ret = func.Delegate(functionCallInfo);
+        Executor.Thread.Stack.CloseFrame();
 
         Assert.Equal(11L, ret);
     }
@@ -50,9 +52,11 @@ public sealed class DefaultFunctionsManagerTests
         var func = _functionsManager.FindByName("add",
             FunctionCallArgumentsTypes.FromPositionArguments(
                 DataType.String, DataType.Integer, DataType.Integer));
+        Executor.Thread.Stack.CreateFrame();
         var functionCallInfo = FunctionCallInfo.CreateWithArguments(Executor.Thread,
             new VariantValue("sum"), new VariantValue(5), new VariantValue(5));
         var ret = func.Delegate(functionCallInfo);
+        Executor.Thread.Stack.CloseFrame();
 
         Assert.Equal("sum: 10", ret);
     }
@@ -65,8 +69,10 @@ public sealed class DefaultFunctionsManagerTests
 
         var func = _functionsManager.FindByName("add",
             FunctionCallArgumentsTypes.FromPositionArguments(DataType.String));
+        Executor.Thread.Stack.CreateFrame();
         var functionCallInfo = FunctionCallInfo.CreateWithArguments(Executor.Thread, new VariantValue("sum"));
         var ret = func.Delegate(functionCallInfo);
+        Executor.Thread.Stack.CloseFrame();
 
         Assert.Equal("sum: 0", ret);
     }
@@ -76,7 +82,7 @@ public sealed class DefaultFunctionsManagerTests
     {
         var str = callInfo.GetAt(0);
         long sum = 0;
-        for (int i = 1; i < callInfo.Count; i++)
+        for (int i = 1; i < callInfo.ExecutionThread.Stack.FrameLength; i++)
         {
             sum += callInfo.GetAt(i).AsInteger;
         }
@@ -101,9 +107,9 @@ public sealed class DefaultFunctionsManagerTests
         var value3 = Executor.Thread.CallFunction(func3.Delegate, 1, "2");
 
         // Assert.
-        Assert.Equal("1 2", value1.As<TestClass1>().Value);
-        Assert.Equal("1 2", value2.As<TestClass1>().Value);
-        Assert.Equal("1 2", value3.As<TestClass1>().Value);
+        Assert.Equal("1 2", value1.As<TestClass1>()!.Value);
+        Assert.Equal("1 2", value2.As<TestClass1>()!.Value);
+        Assert.Equal("1 2", value3.As<TestClass1>()!.Value);
     }
 
     [FunctionSignature]

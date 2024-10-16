@@ -30,12 +30,12 @@ public sealed class PluginFunctionsManager : IFunctionsManager
     }
 
     /// <inheritdoc />
-    public void RegisterFunction(string signature, FunctionDelegate @delegate, string? description = null)
+    public string RegisterFunction(string signature, FunctionDelegate @delegate, string? description = null)
     {
         var firstBracketIndex = signature.IndexOf('(');
         if (firstBracketIndex < 0)
         {
-            return;
+            return string.Empty;
         }
         var name = signature.Substring(0, firstBracketIndex).ToUpper();
         _functions[name] = new PluginFunction(
@@ -46,6 +46,7 @@ public sealed class PluginFunctionsManager : IFunctionsManager
             Description = description ?? string.Empty,
             IsSafe = @delegate.Method.GetCustomAttribute<SafeFunctionAttribute>() != null,
         };
+        return name;
     }
 
     /// <inheritdoc />

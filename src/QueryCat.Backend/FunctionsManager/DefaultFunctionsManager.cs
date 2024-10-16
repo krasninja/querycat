@@ -6,6 +6,7 @@ using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Execution;
 
 namespace QueryCat.Backend.FunctionsManager;
 
@@ -63,7 +64,7 @@ public sealed partial class DefaultFunctionsManager : IFunctionsManager
         }
     }
 
-    private void PreRegisterFunction(
+    private string PreRegisterFunction(
         string signature,
         FunctionDelegate functionDelegate,
         string? functionName = null,
@@ -81,6 +82,8 @@ public sealed partial class DefaultFunctionsManager : IFunctionsManager
             _functionsPreRegistration.Add(functionName,
                 new FunctionPreRegistration(functionDelegate, signatures, description));
         }
+
+        return functionName;
     }
 
     private bool TryGetPreRegistration(string name, out List<Function> functions)
@@ -107,11 +110,11 @@ public sealed partial class DefaultFunctionsManager : IFunctionsManager
     }
 
     /// <inheritdoc />
-    public void RegisterFunction(string signature, FunctionDelegate @delegate,
+    public string RegisterFunction(string signature, FunctionDelegate @delegate,
         string? description = null)
     {
         ArgumentException.ThrowIfNullOrEmpty(signature, nameof(signature));
-        PreRegisterFunction(signature, @delegate, description: description);
+        return PreRegisterFunction(signature, @delegate, description: description);
     }
 
     private List<Function> RegisterFunction(FunctionPreRegistration preRegistration)
@@ -309,9 +312,10 @@ public sealed partial class DefaultFunctionsManager : IFunctionsManager
     /// <inheritdoc />
     public VariantValue CallFunction(IFunction function, IExecutionThread executionThread, FunctionCallArguments callArguments)
     {
-        var info = new FunctionCallInfo(executionThread, function.Name);
+        var info = new FunctionCallInfo(executionThread);
         int positionalIndex = 0;
 
+        executionThread.Stack.CreateFrame();
         foreach (var argument in function.Arguments)
         {
             if (callArguments.Positional.Count >= positionalIndex + 1)
@@ -330,7 +334,9 @@ public sealed partial class DefaultFunctionsManager : IFunctionsManager
             }
         }
 
-        return function.Delegate.Invoke(info);
+        var result = function.Delegate.Invoke(info);
+        executionThread.Stack.CloseFrame();
+        return result;
     }
 
     private static string NormalizeName(string target) => target.ToUpperInvariant();

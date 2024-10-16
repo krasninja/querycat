@@ -9,7 +9,7 @@ namespace QueryCat.Backend.Functions.Aggregate;
 /// </summary>
 [SafeFunction]
 [Description("Returns the number of the current row within its partition, counting from 1.")]
-[AggregateFunctionSignature("row_number(): integer")]
+[AggregateFunctionSignature("row_number(\"window\"?: object<IWindowInfo>): integer")]
 // ReSharper disable once ClassNeverInstantiated.Global
 internal sealed class RowNumberAggregateFunction : IAggregateFunction
 {
@@ -26,9 +26,10 @@ internal sealed class RowNumberAggregateFunction : IAggregateFunction
     /// <inheritdoc />
     public void Invoke(VariantValue[] state, FunctionCallInfo callInfo)
     {
-        if (callInfo.WindowInfo != null)
+        var window = callInfo.ExecutionThread.Stack.Pop().As<IWindowInfo?>();
+        if (window != null)
         {
-            state[0] = new(callInfo.WindowInfo.GetCurrentRowPosition() + 1);
+            state[0] = new(window.GetCurrentRowPosition() + 1);
         }
         else
         {

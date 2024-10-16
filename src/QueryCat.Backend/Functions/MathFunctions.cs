@@ -192,7 +192,7 @@ internal static class MathFunctions
     [FunctionSignature("greatest(...args: any[]): any")]
     public static VariantValue Greatest(FunctionCallInfo args)
     {
-        var notNullArgs = args.Where(v => !v.IsNull).ToArray();
+        var notNullArgs = args.ExecutionThread.Stack.Where(v => !v.IsNull).ToArray();
         if (!notNullArgs.Any())
         {
             return VariantValue.Null;
@@ -213,7 +213,7 @@ internal static class MathFunctions
     [FunctionSignature("least(...args: any[]): any")]
     public static VariantValue Least(FunctionCallInfo args)
     {
-        var notNullArgs = args.Where(v => !v.IsNull).ToArray();
+        var notNullArgs = args.ExecutionThread.Stack.Where(v => !v.IsNull).ToArray();
         if (!notNullArgs.Any())
         {
             return VariantValue.Null;

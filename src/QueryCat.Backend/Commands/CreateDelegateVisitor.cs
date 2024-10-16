@@ -432,8 +432,11 @@ internal partial class CreateDelegateVisitor : AstVisitor
         /// <inheritdoc />
         public VariantValue Invoke(IExecutionThread thread)
         {
+            thread.Stack.CreateFrame();
             callInfo.InvokePushArgs();
-            return function.Delegate(callInfo);
+            var result = function.Delegate(callInfo);
+            thread.Stack.CloseFrame();
+            return result;
         }
     }
 
@@ -487,7 +490,7 @@ internal partial class CreateDelegateVisitor : AstVisitor
         }
 
         var argsDelegates = argsDelegatesList.ToArray();
-        var callInfo = new FuncUnitCallInfo(ExecutionThread, function.Name, argsDelegates);
+        var callInfo = new FuncUnitCallInfo(ExecutionThread, argsDelegates);
         node.SetAttribute(AstAttributeKeys.ArgumentsKey, callInfo);
         NodeIdFuncMap[node.Id] = new FunctionCallFuncUnit(function, callInfo, node.GetDataType());
     }

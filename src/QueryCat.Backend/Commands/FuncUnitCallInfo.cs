@@ -7,28 +7,20 @@ internal sealed class FuncUnitCallInfo : FunctionCallInfo
 {
     private readonly IFuncUnit[] _pushArgs;
 
-    public static new FuncUnitCallInfo Empty { get; } = new(NullExecutionThread.Instance, UndefinedFunctionName);
-
-    public FuncUnitCallInfo(FunctionCallInfo functionCallInfo)
-        : base(functionCallInfo.ExecutionThread, functionCallInfo.FunctionName)
-    {
-        _pushArgs = [];
-        Arguments.AddRange(functionCallInfo);
-    }
+    public static new FuncUnitCallInfo Empty { get; } = new(NullExecutionThread.Instance);
 
     /// <inheritdoc />
-    public FuncUnitCallInfo(IExecutionThread executionThread, string functionName, params IFuncUnit[] pushArgs)
-        : base(executionThread, functionName)
+    public FuncUnitCallInfo(IExecutionThread executionThread, params IFuncUnit[] pushArgs)
+        : base(executionThread)
     {
         _pushArgs = pushArgs;
     }
 
     internal void InvokePushArgs()
     {
-        Arguments.Clear();
         foreach (var pushArg in _pushArgs)
         {
-            Arguments.Add(pushArg.Invoke(ExecutionThread));
+            ExecutionThread.Stack.Push(pushArg.Invoke(ExecutionThread));
         }
     }
 }

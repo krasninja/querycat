@@ -28,6 +28,9 @@ public sealed class PluginExecutionThread : IExecutionThread
     /// <inheritdoc />
     public IExecutionScope TopScope => NullExecutionScope.Instance;
 
+    /// <inheritdoc />
+    public IExecutionStack Stack => NullExecutionStack.Instance;
+
 #pragma warning disable CS0067
     /// <inheritdoc />
     public event EventHandler<ResolveVariableEventArgs>? VariableResolving;

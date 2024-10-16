@@ -39,7 +39,7 @@ public partial class ThriftPluginClient
             args ??= new List<VariantValue>();
 
             var func = _thriftPluginClient.FunctionsManager.FindByName(function_name);
-            var callInfo = new FunctionCallInfo(_thriftPluginClient._executionThread, func.Name);
+            var callInfo = new FunctionCallInfo(_thriftPluginClient._executionThread);
             foreach (var arg in args)
             {
                 callInfo.Push(SdkConvert.Convert(arg));

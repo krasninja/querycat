@@ -63,7 +63,7 @@ internal static class IOFunctions
         var path = args.GetAt(0).AsString;
         (path, var funcArgs) = Utils_ParseUri(path);
 
-        var formatter = args.Count > 1
+        var formatter = args.ExecutionThread.Stack.FrameLength > 1
             ? args.GetAt(1).AsObject as IRowsFormatter
             : File_GetFormatter(path, args.ExecutionThread, funcArgs);
         var files = File_GetFileInputsByPath(path, args.ExecutionThread, formatter, funcArgs).ToList();

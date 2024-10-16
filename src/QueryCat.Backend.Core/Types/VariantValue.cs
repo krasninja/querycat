@@ -399,9 +399,13 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     /// </summary>
     /// <typeparam name="T">Type.</typeparam>
     /// <returns>Object.</returns>
-    public T As<T>()
+    public T? As<T>()
     {
         var retType = typeof(T);
+        if (IsNull)
+        {
+            return default;
+        }
 
         if (retType == typeof(Int64)
             || retType == typeof(Int32)

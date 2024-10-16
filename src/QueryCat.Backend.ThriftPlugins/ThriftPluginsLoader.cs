@@ -59,6 +59,71 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
         [property:JsonPropertyName("createdAt")] long CreatedAt,
         [property:JsonPropertyName("functions")] List<PluginContextFunction> Functions);
 
+    private class FunctionCallPluginBase
+    {
+        public string FunctionName { get; set; } = string.Empty;
+
+        internal static Core.Types.VariantValue FunctionDelegateCall(
+            FunctionCallInfo args,
+            string functionName,
+            ThriftPluginsServer.PluginContext context)
+        {
+            if (context.Client == null)
+            {
+                return Core.Types.VariantValue.Null;
+            }
+            ArgumentException.ThrowIfNullOrEmpty(functionName, nameof(functionName));
+
+            var arguments = args.Select(SdkConvert.Convert).ToList();
+            var result = AsyncUtils.RunSync(ct => context.Client.CallFunctionAsync(functionName, arguments, -1, ct));
+            if (result == null)
+            {
+                return Core.Types.VariantValue.Null;
+            }
+            if (result.__isset.@object && result.Object != null)
+            {
+                var obj = CreateObjectFromResult(result, context);
+                context.ObjectsStorage.Add(obj);
+                return Core.Types.VariantValue.CreateFromObject(obj);
+            }
+            return SdkConvert.Convert(result);
+        }
+    }
+
+    private sealed class FunctionCallPluginWrapper : FunctionCallPluginBase
+    {
+        private readonly ThriftPluginsServer.PluginContext _pluginContext;
+
+        public FunctionCallPluginWrapper(ThriftPluginsServer.PluginContext pluginContext)
+        {
+            _pluginContext = pluginContext;
+        }
+
+        internal Core.Types.VariantValue FunctionDelegateCall(FunctionCallInfo args)
+            => FunctionCallPluginBase.FunctionDelegateCall(args, FunctionName, _pluginContext);
+    }
+
+    /// <summary>
+    /// The wrapper that loads plugin only on function call.
+    /// </summary>
+    private sealed class FunctionCallPluginWrapperLazy : FunctionCallPluginBase
+    {
+        private readonly ThriftPluginsLoader _loader;
+        private readonly string _pluginFile;
+
+        public FunctionCallPluginWrapperLazy(ThriftPluginsLoader loader, string pluginFile)
+        {
+            _loader = loader;
+            _pluginFile = pluginFile;
+        }
+
+        internal Core.Types.VariantValue FunctionDelegateCall(FunctionCallInfo args)
+        {
+            var pluginContext = _loader.LoadPlugin(_pluginFile);
+            return FunctionCallPluginBase.FunctionDelegateCall(args, FunctionName, pluginContext);
+        }
+    }
+
     public ThriftPluginsLoader(
         IExecutionThread thread,
         IEnumerable<string> pluginDirectories,
@@ -506,15 +571,10 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
     {
         foreach (var function in functions)
         {
-            functionsManager.RegisterFunction(function.Signature, FunctionDelegate,
+            var wrapper = new FunctionCallPluginWrapperLazy(this, file);
+            var functionName = functionsManager.RegisterFunction(function.Signature, wrapper.FunctionDelegateCall,
                 function.Description);
-        }
-
-        // This wrapper delegate is used to call external functions.
-        Core.Types.VariantValue FunctionDelegate(FunctionCallInfo args)
-        {
-            var pluginContext = LoadPlugin(file, CancellationToken.None);
-            return FunctionDelegateCall(args, pluginContext);
+            wrapper.FunctionName = functionName;
         }
     }
 
@@ -561,34 +621,11 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
     {
         foreach (var function in pluginContext.Functions)
         {
-            functionsManager.RegisterFunction(function.Signature, FunctionDelegate,
+            var wrapper = new FunctionCallPluginWrapper(pluginContext);
+            var functionName = functionsManager.RegisterFunction(function.Signature, wrapper.FunctionDelegateCall,
                 function.Description);
+            wrapper.FunctionName = functionName;
         }
-
-        // This wrapper delegate is used to call external functions.
-        Core.Types.VariantValue FunctionDelegate(FunctionCallInfo args) => FunctionDelegateCall(args, pluginContext);
-    }
-
-    private static Core.Types.VariantValue FunctionDelegateCall(FunctionCallInfo args, ThriftPluginsServer.PluginContext pluginContext)
-    {
-        if (pluginContext.Client == null)
-        {
-            return Core.Types.VariantValue.Null;
-        }
-
-        var arguments = args.Select(SdkConvert.Convert).ToList();
-        var result = AsyncUtils.RunSync(ct => pluginContext.Client.CallFunctionAsync(args.FunctionName, arguments, -1, ct));
-        if (result == null)
-        {
-            return Core.Types.VariantValue.Null;
-        }
-        if (result.__isset.@object && result.Object != null)
-        {
-            var obj = CreateObjectFromResult(result, pluginContext);
-            pluginContext.ObjectsStorage.Add(obj);
-            return Core.Types.VariantValue.CreateFromObject(obj);
-        }
-        return SdkConvert.Convert(result);
     }
 
     private static object CreateObjectFromResult(VariantValue result, ThriftPluginsServer.PluginContext context)

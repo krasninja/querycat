@@ -82,12 +82,12 @@ public sealed class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
             var queryContext = new CollectQueryContext();
             try
             {
-                var functionCallInfo = new FunctionCallInfo(Executor.Thread, inputFunction.Name);
+                var functionCallInfo = new FunctionCallInfo(Executor.Thread);
                 for (var i = 0; i < inputFunction.Arguments.Length; i++)
                 {
                     functionCallInfo.Push(VariantValue.Null);
                 }
-                rowsInput = inputFunction.Delegate.Invoke(functionCallInfo).As<IRowsInputKeys>();
+                rowsInput = inputFunction.Delegate.Invoke(functionCallInfo).As<IRowsInputKeys?>()!;
                 rowsInput.QueryContext = queryContext;
                 rowsInput.Open();
             }

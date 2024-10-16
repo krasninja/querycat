@@ -27,6 +27,9 @@ public class TestExecutionThread : IExecutionThread
     public IExecutionScope TopScope => NullExecutionScope.Instance;
 
     /// <inheritdoc />
+    public IExecutionStack Stack => NullExecutionStack.Instance;
+
+    /// <inheritdoc />
     public event EventHandler<ResolveVariableEventArgs>? VariableResolving
     {
         add { }

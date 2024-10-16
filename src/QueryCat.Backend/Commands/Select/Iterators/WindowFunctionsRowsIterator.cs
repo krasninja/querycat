@@ -144,14 +144,13 @@ internal sealed class WindowFunctionsRowsIterator : IRowsIterator
 
         public void FillAggregateFunctionArguments(FunctionCallInfo functionCallInfo, RowIdData rowIdData)
         {
-            functionCallInfo.Reset();
             _windowInfo.RowsFrame = rowIdData.PartitionInstance.RowsFrame;
             _windowInfo.CurrentRowPosition = rowIdData.RowIdInPartition;
-            functionCallInfo.WindowInfo = _windowInfo;
             for (var aggregateIndex = 0; aggregateIndex < WindowFunctionInfo.AggregateValues.Length; aggregateIndex++)
             {
                 functionCallInfo.Push(rowIdData.PartitionInstance.RowsIterator.Current[aggregateIndex]);
             }
+            functionCallInfo.ExecutionThread.Stack.Push(VariantValue.CreateFromObject(_windowInfo));
         }
     }
 
@@ -257,8 +256,10 @@ internal sealed class WindowFunctionsRowsIterator : IRowsIterator
             // Upper boundary.
 
             // Full argument function arguments and invoke.
+            aggregateTarget.FunctionCallInfo.ExecutionThread.Stack.CreateFrame();
             partitionInfo.FillAggregateFunctionArguments(aggregateTarget.FunctionCallInfo, rowIdData);
             aggregateTarget.AggregateFunction.Invoke(aggregateState, aggregateTarget.FunctionCallInfo);
+            aggregateTarget.FunctionCallInfo.ExecutionThread.Stack.CloseFrame();
 
             // Lower boundary.
             if (partitionInfo.HasOrderData
