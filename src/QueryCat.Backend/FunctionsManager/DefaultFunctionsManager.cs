@@ -315,27 +315,27 @@ public sealed partial class DefaultFunctionsManager : IFunctionsManager
         var info = new FunctionCallInfo(executionThread);
         int positionalIndex = 0;
 
-        executionThread.Stack.CreateFrame();
+        var frame = executionThread.Stack.CreateFrame();
         foreach (var argument in function.Arguments)
         {
             if (callArguments.Positional.Count >= positionalIndex + 1)
             {
-                info.Push(callArguments.Positional[positionalIndex++]);
+                frame.Push(callArguments.Positional[positionalIndex++]);
                 continue;
             }
 
             if (callArguments.Named.TryGetValue(argument.Name, out var value))
             {
-                info.Push(value);
+                frame.Push(value);
             }
             else
             {
-                info.Push(argument.DefaultValue);
+                frame.Push(argument.DefaultValue);
             }
         }
 
         var result = function.Delegate.Invoke(info);
-        executionThread.Stack.CloseFrame();
+        frame.Dispose();
         return result;
     }
 

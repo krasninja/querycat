@@ -33,7 +33,7 @@ public interface IExecutionStack : IEnumerable<VariantValue>
     /// <summary>
     /// Create new frame.
     /// </summary>
-    void CreateFrame();
+    ExecutionStackFrame CreateFrame();
 
     /// <summary>
     /// Close current frame.
@@ -43,12 +43,12 @@ public interface IExecutionStack : IEnumerable<VariantValue>
     /// <summary>
     /// Push value to the current frame.
     /// </summary>
-    /// <param name="value"></param>
+    /// <param name="value">Value to push.</param>
     void Push(VariantValue value);
 
     /// <summary>
     /// Pop value from the current frame.
     /// </summary>
-    /// <returns></returns>
+    /// <returns>Returned value.</returns>
     VariantValue Pop();
 }

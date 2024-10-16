@@ -432,10 +432,9 @@ internal partial class CreateDelegateVisitor : AstVisitor
         /// <inheritdoc />
         public VariantValue Invoke(IExecutionThread thread)
         {
-            thread.Stack.CreateFrame();
+            using var frame = thread.Stack.CreateFrame();
             callInfo.InvokePushArgs();
             var result = function.Delegate(callInfo);
-            thread.Stack.CloseFrame();
             return result;
         }
     }

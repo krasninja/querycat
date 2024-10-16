@@ -44,10 +44,11 @@ public sealed class DefaultFixedSizeExecutionStack : IExecutionStack
     public int FrameLength => _position - _lastFramePosition;
 
     /// <inheritdoc />
-    public void CreateFrame()
+    public ExecutionStackFrame CreateFrame()
     {
         _frames.Push(_position);
         _lastFramePosition = _position;
+        return new ExecutionStackFrame(this);
     }
 
     /// <inheritdoc />

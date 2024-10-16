@@ -24,9 +24,7 @@ public sealed class NullExecutionStack : IExecutionStack
     public int FrameLength => 0;
 
     /// <inheritdoc />
-    public void CreateFrame()
-    {
-    }
+    public ExecutionStackFrame CreateFrame() => new(this);
 
     /// <inheritdoc />
     public void CloseFrame()

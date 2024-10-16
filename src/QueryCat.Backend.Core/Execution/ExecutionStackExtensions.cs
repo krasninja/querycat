@@ -19,4 +19,22 @@ public static class ExecutionStackExtensions
         int position,
         VariantValue @default = default)
         => executionStack.FrameLength > position && position > -1 ? executionStack[position] : @default;
+
+    /// <summary>
+    /// Create frame with arguments.
+    /// </summary>
+    /// <param name="executionStack">Instance of <see cref="IExecutionStack" />.</param>
+    /// <param name="arguments">Arguments.</param>
+    /// <returns>Stack frame.</returns>
+    public static ExecutionStackFrame CreateFrameWithArguments(
+        this IExecutionStack executionStack,
+        params VariantValue[] arguments)
+    {
+        var frame = executionStack.CreateFrame();
+        foreach (var arg in arguments)
+        {
+            executionStack.Push(VariantValue.CreateFromObject(arg));
+        }
+        return frame;
+    }
 }

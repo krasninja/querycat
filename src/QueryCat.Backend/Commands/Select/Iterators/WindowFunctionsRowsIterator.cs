@@ -256,10 +256,9 @@ internal sealed class WindowFunctionsRowsIterator : IRowsIterator
             // Upper boundary.
 
             // Full argument function arguments and invoke.
-            aggregateTarget.FunctionCallInfo.ExecutionThread.Stack.CreateFrame();
+            using var frame = aggregateTarget.FunctionCallInfo.ExecutionThread.Stack.CreateFrame();
             partitionInfo.FillAggregateFunctionArguments(aggregateTarget.FunctionCallInfo, rowIdData);
             aggregateTarget.AggregateFunction.Invoke(aggregateState, aggregateTarget.FunctionCallInfo);
-            aggregateTarget.FunctionCallInfo.ExecutionThread.Stack.CloseFrame();
 
             // Lower boundary.
             if (partitionInfo.HasOrderData

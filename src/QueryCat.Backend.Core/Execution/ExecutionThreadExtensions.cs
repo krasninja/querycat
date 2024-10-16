@@ -19,13 +19,12 @@ public static class ExecutionThreadExtensions
         this IExecutionThread executionThread, FunctionDelegate functionDelegate, params object[] args)
     {
         var functionCallInfo = new FunctionCallInfo(executionThread);
-        executionThread.Stack.CreateFrame();
+        using var frame = executionThread.Stack.CreateFrame();
         foreach (var arg in args)
         {
-            executionThread.Stack.Push(VariantValue.CreateFromObject(arg));
+            frame.Push(VariantValue.CreateFromObject(arg));
         }
         var result = functionDelegate.Invoke(functionCallInfo);
-        executionThread.Stack.CloseFrame();
         return result;
     }
 
