@@ -492,7 +492,10 @@ internal partial class CreateDelegateVisitor : AstVisitor
             }
         }
 
-        NodeIdFuncMap[node.Id] = new FunctionCallFuncUnit(function, argsDelegatesList.ToArray(), node.GetDataType());
+        var argsDelegates = argsDelegatesList.ToArray();
+        var callInfo = new FuncUnitCallInfo(argsDelegates);
+        node.SetAttribute(AstAttributeKeys.ArgumentsKey, callInfo);
+        NodeIdFuncMap[node.Id] = new FunctionCallFuncUnit(function, argsDelegates, node.GetDataType());
     }
 
     #endregion

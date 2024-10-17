@@ -23,6 +23,11 @@ internal static class AstAttributeKeys
     public const string RowsInputKey = "rows_input_key";
 
     /// <summary>
+    /// Function call info (of type <see cref="QueryCat.Backend.Commands.FuncUnitCallInfo" />).
+    /// </summary>
+    public const string ArgumentsKey = "args_key";
+
+    /// <summary>
     /// Target aggregate column.
     /// </summary>
     public const string InputAggregateIndexKey = "aggregate_index_key";

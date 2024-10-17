@@ -2,7 +2,6 @@ using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
-using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Commands.Select.Iterators;
@@ -75,8 +74,7 @@ internal sealed class VaryingOutputRowsIterator : IRowsIterator, IRowsIteratorPa
             return false;
         }
 
-        _functionCallInfo.InvokePushArgs(_thread);
-        var argValues = _thread.Stack
+        var argValues = _functionCallInfo.InvokePushArgs(_thread)
             .Where(a => a.Type != DataType.Object)
             .ToArray();
         var args = new VariantValueArray(argValues);

@@ -1,5 +1,4 @@
 using QueryCat.Backend.Ast.Nodes.Function;
-using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 

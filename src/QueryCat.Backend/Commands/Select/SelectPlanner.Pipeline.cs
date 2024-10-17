@@ -337,12 +337,14 @@ internal sealed partial class SelectPlanner
         }
 
         var queryContext = new RowsOutputQueryContext(context.CurrentIterator.Columns);
+        var functionCallInfo = querySpecificationNode.TargetNode
+            .GetRequiredAttribute<FuncUnitCallInfo>(AstAttributeKeys.ArgumentsKey);
         var hasVaryingTarget = querySpecificationNode.TargetNode.Arguments.Count > 0;
         var outputIterator = new VaryingOutputRowsIterator(
             ExecutionThread,
             context.CurrentIterator,
             context.OutputArgumentsFunc,
-            FuncUnitCallInfo.Empty,
+            functionCallInfo,
             ExecutionThread.Options.DefaultRowsOutput,
             queryContext);
 

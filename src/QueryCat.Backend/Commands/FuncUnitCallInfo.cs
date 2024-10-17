@@ -1,5 +1,5 @@
 using QueryCat.Backend.Core.Execution;
-using QueryCat.Backend.Core.Functions;
+using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Commands;
 
@@ -16,11 +16,13 @@ internal sealed class FuncUnitCallInfo
         _pushArgs = pushArgs;
     }
 
-    internal void InvokePushArgs(IExecutionThread thread)
+    internal VariantValue[] InvokePushArgs(IExecutionThread thread)
     {
-        foreach (var pushArg in _pushArgs)
+        var values = new VariantValue[_pushArgs.Length];
+        for (var i = 0; i < _pushArgs.Length; i++)
         {
-            thread.Stack.Push(pushArg.Invoke(thread));
+            values[i] = _pushArgs[i].Invoke(thread);
         }
+        return values;
     }
 }
