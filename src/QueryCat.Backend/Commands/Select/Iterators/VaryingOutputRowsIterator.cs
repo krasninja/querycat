@@ -29,7 +29,7 @@ internal sealed class VaryingOutputRowsIterator : IRowsIterator, IRowsIteratorPa
 
     public IRowsOutput CurrentOutput { get; private set; }
 
-    public bool HasOutputDefined => _functionCallInfo != FunctionCallInfo.Empty;
+    public bool HasOutputDefined => _functionCallInfo.IsEmpty;
 
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(VaryingOutputRowsIterator));
 
@@ -75,8 +75,8 @@ internal sealed class VaryingOutputRowsIterator : IRowsIterator, IRowsIteratorPa
             return false;
         }
 
-        _functionCallInfo.InvokePushArgs();
-        var argValues = _functionCallInfo
+        _functionCallInfo.InvokePushArgs(_thread);
+        var argValues = _thread.Stack
             .Where(a => a.Type != DataType.Object)
             .ToArray();
         var args = new VariantValueArray(argValues);

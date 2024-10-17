@@ -1,4 +1,5 @@
 using QueryCat.Backend.Ast.Nodes.Function;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 
@@ -9,7 +10,6 @@ namespace QueryCat.Backend.Commands.Select;
 /// </summary>
 /// <param name="ReturnType">Aggregate return type.</param>
 /// <param name="AggregateFunction">Instance of aggregate function.</param>
-/// <param name="FunctionCallInfo">Related call info. It is used to fill arguments stack.</param>
 /// <param name="ValueGenerator">Function delegate. It ia mainly used to run and fill arguments before
 /// aggregate function call.</param>
 /// <param name="Node">Related AST node.</param>
@@ -17,7 +17,6 @@ namespace QueryCat.Backend.Commands.Select;
 internal sealed record AggregateTarget(
     DataType ReturnType,
     IAggregateFunction AggregateFunction,
-    FunctionCallInfo FunctionCallInfo,
     IFuncUnit ValueGenerator,
     FunctionCallNode Node,
     string Name);

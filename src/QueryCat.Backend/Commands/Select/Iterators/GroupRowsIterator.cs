@@ -157,10 +157,10 @@ internal sealed class GroupRowsIterator : IRowsIterator, IRowsIteratorParent
             for (var i = 0; i < _targets.Length; i++)
             {
                 var target = _targets[i];
-                target.FunctionCallInfo.ExecutionThread.Stack.CreateFrame();
+                _thread.Stack.CreateFrame();
                 target.ValueGenerator.Invoke(_thread); // We need this call to fill FunctionCallInfo.
-                target.AggregateFunction.Invoke(groupKey.AggregateStates[i], target.FunctionCallInfo);
-                target.FunctionCallInfo.ExecutionThread.Stack.CloseFrame();
+                target.AggregateFunction.Invoke(groupKey.AggregateStates[i], _thread);
+                _thread.Stack.CloseFrame();
             }
         }
 

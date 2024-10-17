@@ -1,3 +1,4 @@
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Fetch;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
@@ -8,7 +9,7 @@ public sealed class ItStocksRowsInput : FetchRowsInput<Stock>
 {
     [SafeFunction]
     [FunctionSignature("it_stocks(): object<IRowsInput>")]
-    public static VariantValue ItStocks(FunctionCallInfo args)
+    public static VariantValue ItStocks(IExecutionThread thread)
     {
         return VariantValue.CreateFromObject(new ItStocksRowsInput());
     }

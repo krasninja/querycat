@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 
@@ -15,7 +16,7 @@ public sealed class IISW3CFormatter : IRowsFormatter
     [FunctionSignature("iisw3c(): object<IRowsFormatter>")]
     // ReSharper disable once IdentifierTypo
     // ReSharper disable once InconsistentNaming
-    public static VariantValue IISW3C(FunctionCallInfo args)
+    public static VariantValue IISW3C(IExecutionThread thread)
     {
         return VariantValue.CreateFromObject(new IISW3CFormatter());
     }

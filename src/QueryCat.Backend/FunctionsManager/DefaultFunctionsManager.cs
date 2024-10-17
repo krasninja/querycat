@@ -35,7 +35,7 @@ public sealed partial class DefaultFunctionsManager : IFunctionsManager
 
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(DefaultFunctionsManager));
 
-    private static VariantValue EmptyFunction(FunctionCallInfo args)
+    private static VariantValue EmptyFunction(IExecutionThread thread)
     {
         return VariantValue.Null;
     }
@@ -312,7 +312,6 @@ public sealed partial class DefaultFunctionsManager : IFunctionsManager
     /// <inheritdoc />
     public VariantValue CallFunction(IFunction function, IExecutionThread executionThread, FunctionCallArguments callArguments)
     {
-        var info = new FunctionCallInfo(executionThread);
         int positionalIndex = 0;
 
         var frame = executionThread.Stack.CreateFrame();
@@ -334,7 +333,7 @@ public sealed partial class DefaultFunctionsManager : IFunctionsManager
             }
         }
 
-        var result = function.Delegate.Invoke(info);
+        var result = function.Delegate.Invoke(executionThread);
         frame.Dispose();
         return result;
     }

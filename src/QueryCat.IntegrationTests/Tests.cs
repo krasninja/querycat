@@ -77,34 +77,34 @@ public sealed class Tests : IDisposable
 
     [SafeFunction]
     [FunctionSignature("objfunc(a: integer, b: object): object")]
-    internal static VariantValue FuncWithObject(FunctionCallInfo callInfo)
+    internal static VariantValue FuncWithObject(IExecutionThread thread)
         => VariantValue.CreateFromObject(new object());
 
     [SafeFunction]
     [FunctionSignature("objret(): object")]
-    internal static VariantValue ReturnObjFunc(FunctionCallInfo args)
+    internal static VariantValue ReturnObjFunc(IExecutionThread thread)
         => VariantValue.CreateFromObject(new object());
 
     [SafeFunction]
     [FunctionSignature("addopt(a: integer, b?: integer = 2): integer")]
-    internal static VariantValue SumIntegersOpt(FunctionCallInfo callInfo)
+    internal static VariantValue SumIntegersOpt(IExecutionThread thread)
     {
-        var a = callInfo.GetAt(0);
-        var b = callInfo.GetAt(1);
+        var a = thread.Stack[0];
+        var b = thread.Stack[1];
         return new VariantValue(a.AsInteger + b.AsInteger);
     }
 
     [SafeFunction]
     [FunctionSignature("add(a: integer, b: integer): integer")]
-    internal static VariantValue SumIntegers(FunctionCallInfo callInfo)
+    internal static VariantValue SumIntegers(IExecutionThread thread)
     {
-        return new VariantValue(callInfo.GetAt(0).AsInteger
-            + callInfo.GetAt(1).AsInteger);
+        return new VariantValue(thread.Stack[0].AsInteger
+            + thread.Stack[1].AsInteger);
     }
 
     [SafeFunction]
     [FunctionSignature("void_func(a: integer): void")]
-    internal static VariantValue VoidFunc(FunctionCallInfo callInfo) => VariantValue.Null;
+    internal static VariantValue VoidFunc(IExecutionThread thread) => VariantValue.Null;
 
     /// <inheritdoc />
     public void Dispose()

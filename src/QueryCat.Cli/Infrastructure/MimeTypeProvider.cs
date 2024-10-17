@@ -1,4 +1,5 @@
 using System.Collections.Frozen;
+using System.Collections.Immutable;
 
 namespace QueryCat.Cli.Infrastructure;
 
@@ -109,7 +110,7 @@ public sealed class MimeTypeProvider
 
     private readonly IReadOnlyDictionary<string, string> _additionalExtensionMimeMapping;
 
-    private static readonly IReadOnlyDictionary<string, string> _emptyDictionary = new Dictionary<string, string>();
+    private static readonly IReadOnlyDictionary<string, string> _emptyDictionary = ImmutableDictionary<string, string>.Empty;
 
     /// <summary>
     /// Constructor.

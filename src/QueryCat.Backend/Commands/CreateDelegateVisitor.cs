@@ -423,7 +423,7 @@ internal partial class CreateDelegateVisitor : AstVisitor
 
     private sealed class FunctionCallFuncUnit(
         IFunction function,
-        FuncUnitCallInfo callInfo,
+        IFuncUnit[] argsUnits,
         DataType outputType) : IFuncUnit
     {
         /// <inheritdoc />
@@ -432,9 +432,13 @@ internal partial class CreateDelegateVisitor : AstVisitor
         /// <inheritdoc />
         public VariantValue Invoke(IExecutionThread thread)
         {
-            using var frame = thread.Stack.CreateFrame();
-            callInfo.InvokePushArgs();
-            var result = function.Delegate(callInfo);
+            thread.Stack.CreateFrame();
+            foreach (var argsUnit in argsUnits)
+            {
+                thread.Stack.Push(argsUnit.Invoke(thread));
+            }
+            var result = function.Delegate(thread);
+            thread.Stack.CloseFrame();
             return result;
         }
     }
@@ -488,10 +492,7 @@ internal partial class CreateDelegateVisitor : AstVisitor
             }
         }
 
-        var argsDelegates = argsDelegatesList.ToArray();
-        var callInfo = new FuncUnitCallInfo(ExecutionThread, argsDelegates);
-        node.SetAttribute(AstAttributeKeys.ArgumentsKey, callInfo);
-        NodeIdFuncMap[node.Id] = new FunctionCallFuncUnit(function, callInfo, node.GetDataType());
+        NodeIdFuncMap[node.Id] = new FunctionCallFuncUnit(function, argsDelegatesList.ToArray(), node.GetDataType());
     }
 
     #endregion

@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 
@@ -13,7 +14,7 @@ internal sealed class NullFormatter : IRowsFormatter
     [SafeFunction]
     [Description("NULL formatter.")]
     [FunctionSignature("null_fmt(): object<IRowsFormatter>")]
-    public static VariantValue Null(FunctionCallInfo args)
+    public static VariantValue Null(IExecutionThread thread)
     {
         var rowsSource = new NullFormatter();
         return VariantValue.CreateFromObject(rowsSource);

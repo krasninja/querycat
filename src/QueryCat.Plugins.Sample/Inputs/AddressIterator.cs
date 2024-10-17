@@ -1,5 +1,6 @@
 using Bogus;
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Plugins.Samples.Models;
@@ -10,7 +11,7 @@ internal sealed class AddressIterator : IRowsIterator
 {
     [SafeFunction]
     [FunctionSignature("sample_get_addresses_2(): object<IRowsIterator>")]
-    public static VariantValue AddressIteratorFunction(FunctionCallInfo args)
+    public static VariantValue AddressIteratorFunction(IExecutionThread thread)
     {
         return VariantValue.CreateFromObject(new AddressIterator());
     }

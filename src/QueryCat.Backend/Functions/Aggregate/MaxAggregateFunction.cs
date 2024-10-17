@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 
@@ -21,9 +22,9 @@ internal sealed class MaxAggregateFunction : IAggregateFunction
     public VariantValue[] GetInitialState(DataType type) => [VariantValue.Null];
 
     /// <inheritdoc />
-    public void Invoke(VariantValue[] state, FunctionCallInfo callInfo)
+    public void Invoke(VariantValue[] state, IExecutionThread thread)
     {
-        var value = callInfo.GetAt(0);
+        var value = thread.Stack[0];
         var comparer = VariantValue.GetGreaterDelegate(value.Type, state[0].Type);
         if (state[0].IsNull)
         {

@@ -3,24 +3,24 @@ using QueryCat.Backend.Core.Functions;
 
 namespace QueryCat.Backend.Commands;
 
-internal sealed class FuncUnitCallInfo : FunctionCallInfo
+internal sealed class FuncUnitCallInfo
 {
     private readonly IFuncUnit[] _pushArgs;
 
-    public static new FuncUnitCallInfo Empty { get; } = new(NullExecutionThread.Instance);
+    public static FuncUnitCallInfo Empty { get; } = new();
 
-    /// <inheritdoc />
-    public FuncUnitCallInfo(IExecutionThread executionThread, params IFuncUnit[] pushArgs)
-        : base(executionThread)
+    public bool IsEmpty => _pushArgs.Length == 0;
+
+    public FuncUnitCallInfo(params IFuncUnit[] pushArgs)
     {
         _pushArgs = pushArgs;
     }
 
-    internal void InvokePushArgs()
+    internal void InvokePushArgs(IExecutionThread thread)
     {
         foreach (var pushArg in _pushArgs)
         {
-            ExecutionThread.Stack.Push(pushArg.Invoke(ExecutionThread));
+            thread.Stack.Push(pushArg.Invoke(thread));
         }
     }
 }

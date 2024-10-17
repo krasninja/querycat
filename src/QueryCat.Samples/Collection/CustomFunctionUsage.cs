@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using QueryCat.Backend;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 
@@ -9,10 +10,10 @@ internal class CustomFunctionUsage : BaseUsage
 {
     [Description("Energy calculator.")]
     [FunctionSignature("e(m: numeric): numeric")]
-    public static VariantValue EnergyFunction(FunctionCallInfo args)
+    public static VariantValue EnergyFunction(IExecutionThread thread)
     {
         var lightSpeedMetersPerSecond = 299_792_458;
-        var mass = args.GetAt(0).AsNumeric;
+        var mass = thread.Stack[0].AsNumeric;
         return new VariantValue(mass * lightSpeedMetersPerSecond * lightSpeedMetersPerSecond);
     }
 

@@ -92,12 +92,12 @@ public static class FunctionsManagerExtensions
             }
 
             var methodParameters = method.GetParameters();
-            // The standard case: VariantValue FunctionName(FunctionCallInfo args).
+            // The standard case: VariantValue FunctionName(IExecutionThread thread).
             if (methodParameters.Length == 1
-                && methodParameters[0].ParameterType == typeof(FunctionCallInfo)
+                && methodParameters[0].ParameterType == typeof(IExecutionThread)
                 && method.ReturnType == typeof(VariantValue))
             {
-                var args = Expression.Parameter(typeof(FunctionCallInfo), "input");
+                var args = Expression.Parameter(typeof(IExecutionThread), "input");
                 var func = Expression.Lambda<FunctionDelegate>(Expression.Call(method, args), args).Compile();
                 var description = method.GetCustomAttribute<DescriptionAttribute>()?.Description;
                 functionsManager.RegisterFunction(methodSignature.Signature, func, description);

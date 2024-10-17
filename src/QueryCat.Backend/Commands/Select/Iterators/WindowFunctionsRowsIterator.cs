@@ -142,18 +142,19 @@ internal sealed class WindowFunctionsRowsIterator : IRowsIterator
             return partitionData;
         }
 
-        public void FillAggregateFunctionArguments(FunctionCallInfo functionCallInfo, RowIdData rowIdData)
+        public void FillAggregateFunctionArguments(RowIdData rowIdData)
         {
             _windowInfo.RowsFrame = rowIdData.PartitionInstance.RowsFrame;
             _windowInfo.CurrentRowPosition = rowIdData.RowIdInPartition;
             for (var aggregateIndex = 0; aggregateIndex < WindowFunctionInfo.AggregateValues.Length; aggregateIndex++)
             {
-                functionCallInfo.Push(rowIdData.PartitionInstance.RowsIterator.Current[aggregateIndex]);
+                _thread.Stack.Push(rowIdData.PartitionInstance.RowsIterator.Current[aggregateIndex]);
             }
-            functionCallInfo.ExecutionThread.Stack.Push(VariantValue.CreateFromObject(_windowInfo));
+            _thread.Stack.Push(VariantValue.CreateFromObject(_windowInfo));
         }
     }
 
+    private readonly IExecutionThread _thread;
     private readonly IRowsIterator _rowsIterator;
     private readonly RowsFrame _rowsFrame;
     private readonly RowsFrameIterator _rowsFrameIterator;
@@ -171,6 +172,7 @@ internal sealed class WindowFunctionsRowsIterator : IRowsIterator
         IRowsIterator rowsIterator,
         IEnumerable<WindowFunctionInfo> windowFunctionInfos)
     {
+        _thread = thread;
         _rowsIterator = rowsIterator;
 
         _rowsFrame = new RowsFrame(_rowsIterator.Columns);
@@ -256,9 +258,9 @@ internal sealed class WindowFunctionsRowsIterator : IRowsIterator
             // Upper boundary.
 
             // Full argument function arguments and invoke.
-            using var frame = aggregateTarget.FunctionCallInfo.ExecutionThread.Stack.CreateFrame();
-            partitionInfo.FillAggregateFunctionArguments(aggregateTarget.FunctionCallInfo, rowIdData);
-            aggregateTarget.AggregateFunction.Invoke(aggregateState, aggregateTarget.FunctionCallInfo);
+            using var frame = _thread.Stack.CreateFrame();
+            partitionInfo.FillAggregateFunctionArguments(rowIdData);
+            aggregateTarget.AggregateFunction.Invoke(aggregateState, _thread);
 
             // Lower boundary.
             if (partitionInfo.HasOrderData

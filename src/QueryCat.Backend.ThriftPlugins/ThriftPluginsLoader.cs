@@ -64,7 +64,7 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
         public string FunctionName { get; set; } = string.Empty;
 
         internal static Core.Types.VariantValue FunctionDelegateCall(
-            FunctionCallInfo args,
+            IExecutionThread thread,
             string functionName,
             ThriftPluginsServer.PluginContext context)
         {
@@ -74,7 +74,7 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
             }
             ArgumentException.ThrowIfNullOrEmpty(functionName, nameof(functionName));
 
-            var arguments = args.Select(SdkConvert.Convert).ToList();
+            var arguments = thread.Stack.Select(SdkConvert.Convert).ToList();
             var result = AsyncUtils.RunSync(ct => context.Client.CallFunctionAsync(functionName, arguments, -1, ct));
             if (result == null)
             {
@@ -99,8 +99,8 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
             _pluginContext = pluginContext;
         }
 
-        internal Core.Types.VariantValue FunctionDelegateCall(FunctionCallInfo args)
-            => FunctionCallPluginBase.FunctionDelegateCall(args, FunctionName, _pluginContext);
+        internal Core.Types.VariantValue FunctionDelegateCall(IExecutionThread thread)
+            => FunctionCallPluginBase.FunctionDelegateCall(thread, FunctionName, _pluginContext);
     }
 
     /// <summary>
@@ -117,10 +117,10 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
             _pluginFile = pluginFile;
         }
 
-        internal Core.Types.VariantValue FunctionDelegateCall(FunctionCallInfo args)
+        internal Core.Types.VariantValue FunctionDelegateCall(IExecutionThread thread)
         {
             var pluginContext = _loader.LoadPlugin(_pluginFile);
-            return FunctionCallPluginBase.FunctionDelegateCall(args, FunctionName, pluginContext);
+            return FunctionCallPluginBase.FunctionDelegateCall(thread, FunctionName, pluginContext);
         }
     }
 

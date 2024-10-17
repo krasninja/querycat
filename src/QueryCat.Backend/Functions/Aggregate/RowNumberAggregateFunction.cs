@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 
@@ -24,9 +25,9 @@ internal sealed class RowNumberAggregateFunction : IAggregateFunction
     public VariantValue[] GetInitialState(DataType type) => [VariantValue.OneIntegerValue];
 
     /// <inheritdoc />
-    public void Invoke(VariantValue[] state, FunctionCallInfo callInfo)
+    public void Invoke(VariantValue[] state, IExecutionThread thread)
     {
-        var window = callInfo.ExecutionThread.Stack.Pop().As<IWindowInfo?>();
+        var window = thread.Stack.Pop().As<IWindowInfo?>();
         if (window != null)
         {
             state[0] = new(window.GetCurrentRowPosition() + 1);

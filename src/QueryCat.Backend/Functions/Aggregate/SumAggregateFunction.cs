@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 
@@ -20,9 +21,9 @@ internal sealed class SumAggregateFunction : IAggregateFunction
     public VariantValue[] GetInitialState(DataType type) => [VariantValue.Null];
 
     /// <inheritdoc />
-    public void Invoke(VariantValue[] state, FunctionCallInfo callInfo)
+    public void Invoke(VariantValue[] state, IExecutionThread thread)
     {
-        var value = callInfo.GetAt(0);
+        var value = thread.Stack[0];
         AggregateFunctionsUtils.ExecuteWithNullInitialState(ref state[0], in value, VariantValue.Add);
     }
 

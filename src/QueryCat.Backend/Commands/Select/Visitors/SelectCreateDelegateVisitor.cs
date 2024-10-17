@@ -152,8 +152,6 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
 
     private AggregateTarget CreateAggregateTarget(FunctionCallNode node, IFunction function)
     {
-        var functionCallInfo = node.GetRequiredAttribute<FunctionCallInfo>(AstAttributeKeys.ArgumentsKey);
-
         // Try to use alias for column name.
         var columnsSublistNode = AstTraversal.GetFirstParent<SelectColumnsSublistNode>();
         var name = columnsSublistNode != null ? columnsSublistNode.Alias : string.Empty;
@@ -162,7 +160,6 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
         return new AggregateTarget(
             ReturnType: function.ReturnType,
             AggregateFunction: ExecutionThread.FunctionsManager.FindAggregateByName(function.Name),
-            FunctionCallInfo: functionCallInfo,
             ValueGenerator: func,
             Node: node,
             Name: name

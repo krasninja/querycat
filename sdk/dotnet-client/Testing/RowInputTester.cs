@@ -38,12 +38,6 @@ public class RowInputTester
             ExecutionThread.ConfigStorage);
     }
 
-    public FunctionCallInfo CreateFunctionCallInfo(params VariantValue[] args)
-    {
-        var functionCallInfo = new FunctionCallInfo(ExecutionThread, args);
-        return functionCallInfo;
-    }
-
     /// <summary>
     /// Set column condition.
     /// </summary>

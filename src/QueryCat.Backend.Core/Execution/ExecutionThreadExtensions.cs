@@ -18,13 +18,12 @@ public static class ExecutionThreadExtensions
     public static VariantValue CallFunction(
         this IExecutionThread executionThread, FunctionDelegate functionDelegate, params object[] args)
     {
-        var functionCallInfo = new FunctionCallInfo(executionThread);
         using var frame = executionThread.Stack.CreateFrame();
         foreach (var arg in args)
         {
             frame.Push(VariantValue.CreateFromObject(arg));
         }
-        var result = functionDelegate.Invoke(functionCallInfo);
+        var result = functionDelegate.Invoke(executionThread);
         return result;
     }
 

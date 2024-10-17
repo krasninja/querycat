@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Text;
 using QueryCat.Backend;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 
@@ -10,7 +11,7 @@ internal class AsyncFunctionUsage : BaseUsage
 {
     [Description("Async demo function.")]
     [FunctionSignature("async_demo(): string")]
-    public static async Task<VariantValue> AsyncDemo(FunctionCallInfo args)
+    public static async Task<VariantValue> AsyncDemo(IExecutionThread thread)
     {
         const string target = "Hello World!";
         var ms = new MemoryStream();

@@ -1,3 +1,4 @@
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Core.Functions;
@@ -19,8 +20,8 @@ public interface IAggregateFunction
     /// Process the value. The function is called on every next row value.
     /// </summary>
     /// <param name="state">State.</param>
-    /// <param name="callInfo">Function call info. Arguments.</param>
-    void Invoke(VariantValue[] state, FunctionCallInfo callInfo);
+    /// <param name="thread">Execution thread.</param>
+    void Invoke(VariantValue[] state, IExecutionThread thread);
 
     /// <summary>
     /// Get the current aggregate result.

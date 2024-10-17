@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 
@@ -13,10 +14,10 @@ internal sealed class GenerateSeriesInput : IRowsInput
     [FunctionSignature("generate_series(start: float, stop: float, step: float = 1): object<IRowsInput>")]
     [FunctionSignature("generate_series(start: numeric, stop: numeric, step: numeric = 1): object<IRowsInput>")]
     [FunctionSignature("generate_series(start: timestamp, stop: timestamp, step: timestamp): object<IRowsInput>")]
-    public static VariantValue GenerateSeries(FunctionCallInfo args)
+    public static VariantValue GenerateSeries(IExecutionThread thread)
     {
         return VariantValue.CreateFromObject(
-            new GenerateSeriesInput(args.GetAt(0), args.GetAt(1), args.GetAt(2)));
+            new GenerateSeriesInput(thread.Stack[0], thread.Stack[1], thread.Stack[2]));
     }
 
     private VariantValue _current;
@@ -32,12 +33,12 @@ internal sealed class GenerateSeriesInput : IRowsInput
     public Column[] Columns { get; }
 
     /// <inheritdoc />
-    public string[] UniqueKey => new[]
-    {
+    public string[] UniqueKey =>
+    [
         _start.ToString(),
         _end.ToString(),
-        _step.ToString(),
-    };
+        _step.ToString()
+    ];
 
     public GenerateSeriesInput(VariantValue start, VariantValue end, VariantValue step)
     {

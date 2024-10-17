@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 
@@ -10,9 +11,9 @@ internal sealed class GrokFormatter : IRowsFormatter
     [SafeFunction]
     [Description("Grok expression formatter.")]
     [FunctionSignature("grok(pattern: string): object<IRowsFormatter>")]
-    public static VariantValue Grok(FunctionCallInfo args)
+    public static VariantValue Grok(IExecutionThread thread)
     {
-        var pattern = args.GetAt(0).AsString;
+        var pattern = thread.Stack.Pop();
         return VariantValue.CreateFromObject(new GrokFormatter(pattern));
     }
 

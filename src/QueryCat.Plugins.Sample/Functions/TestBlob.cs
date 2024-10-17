@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Text;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 
@@ -10,7 +11,7 @@ internal static class TestBlob
     [SafeFunction]
     [Description("Test blob function (simple).")]
     [FunctionSignature("sample_simple_3(): blob")]
-    public static VariantValue TestBlobFunction(FunctionCallInfo args)
+    public static VariantValue TestBlobFunction(IExecutionThread thread)
     {
         var sb = new StringBuilder();
         for (var i = 0; i < 1000; i++)
