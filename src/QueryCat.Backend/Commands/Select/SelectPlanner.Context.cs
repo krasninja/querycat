@@ -272,7 +272,7 @@ internal sealed partial class SelectPlanner
             var formatter = Misc_CreateDelegate(formatterNode, context).Invoke(ExecutionThread);
             args.Add("fmt", formatter);
         }
-        var rowsInput = ExecutionThread.FunctionsManager.CallFunction("read", ExecutionThread, args).As<IRowsInput>();
+        var rowsInput = ExecutionThread.FunctionsManager.CallFunction("read", ExecutionThread, args).AsRequired<IRowsInput>();
         rowsInput.QueryContext = new SelectInputQueryContext(rowsInput);
         rowsInput.Open();
         return [rowsInput];
@@ -350,7 +350,7 @@ internal sealed partial class SelectPlanner
     {
         var func = new SelectCreateDelegateVisitor(ExecutionThread, context)
             .RunAndReturn(tableValuesNode);
-        var rowsFrame = func.Invoke(ExecutionThread).As<RowsFrame>();
+        var rowsFrame = func.Invoke(ExecutionThread).AsRequired<RowsFrame>();
         return new RowsIteratorInput(rowsFrame.GetIterator());
     }
 

@@ -40,6 +40,6 @@ internal class ObjectExpressionsUsage : BaseUsage
             {
                 ["email"] = VariantValue.CreateFromObject(email),
             });
-        Console.WriteLine(result2.As<IRowsIterator>().ToFrame().GetFirstValue().ToString()); // 3
+        Console.WriteLine(result2.AsRequired<IRowsIterator>().ToFrame().GetFirstValue().ToString()); // 3
     }
 }

@@ -395,6 +395,21 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     #endregion
 
     /// <summary>
+    /// Get object of the specified type. The exception is thrown if it cannot be resolved or null.
+    /// </summary>
+    /// <typeparam name="T">Type.</typeparam>
+    /// <returns>Object.</returns>
+    public T AsRequired<T>()
+    {
+        var obj = As<T>();
+        if (obj == null)
+        {
+            throw new InvalidOperationException(string.Format(Resources.Errors.ObjectIsNull, typeof(T).Name));
+        }
+        return obj;
+    }
+
+    /// <summary>
     /// Get object of the specified type.
     /// </summary>
     /// <typeparam name="T">Type.</typeparam>
@@ -446,14 +461,14 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         var sourceObj = CheckTypeAndTryToCast(DataType.Object)._object;
         if (sourceObj == null)
         {
-            throw new InvalidOperationException($"Object is null. Target type is '{typeof(T).Name}'.");
+            return default;
         }
         if (sourceObj is T obj)
         {
             return obj;
         }
         throw new InvalidOperationException(
-            $"Cannot cast object of type '{sourceObj.GetType().Name}' to type '{typeof(T).Name}'.");
+            string.Format(Resources.Errors.ObjectInvalidType, sourceObj.GetType().Name, typeof(T).Name));
     }
 
     /// <summary>
