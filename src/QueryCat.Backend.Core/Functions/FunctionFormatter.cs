@@ -110,11 +110,7 @@ internal static class FunctionFormatter
             {
                 var parameter = parameters[i];
 
-                if (parameter.ParameterType == typeof(IExecutionThread))
-                {
-                    arr[i] = thread;
-                }
-                else if (parameter.ParameterType == typeof(ExecutionContext))
+                if (typeof(IExecutionThread).IsAssignableFrom(parameter.ParameterType))
                 {
                     arr[i] = thread;
                 }
