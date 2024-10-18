@@ -24,7 +24,7 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
 {
     private const string FunctionsCacheFileExtension = ".fcache.json";
     private const string ProxyExecutable = "qcat-plugins-proxy";
-    private const string ProxyLatestVersion = "1";
+    private const string ProxyLatestVersion = "2";
 
     private readonly IExecutionThread _thread;
     private readonly string? _applicationDirectory;
