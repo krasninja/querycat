@@ -30,7 +30,7 @@ internal sealed class StringAggAggregateFunction : IAggregateFunction
             return;
         }
 
-        var sb = state[0].As<StringBuilder>();
+        var sb = state[0].AsRequired<StringBuilder>();
         if (sb.Length > 0)
         {
             sb.Append(delimiter);
@@ -39,5 +39,5 @@ internal sealed class StringAggAggregateFunction : IAggregateFunction
     }
 
     /// <inheritdoc />
-    public VariantValue GetResult(VariantValue[] state) => new(state[0].As<StringBuilder>()!.ToString());
+    public VariantValue GetResult(VariantValue[] state) => new(state[0].AsRequired<StringBuilder>().ToString());
 }
