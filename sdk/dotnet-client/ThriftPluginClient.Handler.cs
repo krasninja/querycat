@@ -39,11 +39,13 @@ public partial class ThriftPluginClient
             args ??= new List<VariantValue>();
 
             var func = _thriftPluginClient.FunctionsManager.FindByName(function_name);
+            var frame = _thriftPluginClient._executionThread.Stack.CreateFrame();
             foreach (var arg in args)
             {
-                _thriftPluginClient._executionThread.Stack.Push(SdkConvert.Convert(arg));
+                frame.Push(SdkConvert.Convert(arg));
             }
             var result = func.Delegate.Invoke(_thriftPluginClient._executionThread);
+            frame.Dispose();
             var resultType = result.Type;
             if (resultType == DataType.Object)
             {

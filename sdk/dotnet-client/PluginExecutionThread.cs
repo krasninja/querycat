@@ -29,7 +29,7 @@ public sealed class PluginExecutionThread : IExecutionThread
     public IExecutionScope TopScope => NullExecutionScope.Instance;
 
     /// <inheritdoc />
-    public IExecutionStack Stack => NullExecutionStack.Instance;
+    public IExecutionStack Stack { get; }
 
 #pragma warning disable CS0067
     /// <inheritdoc />
@@ -56,6 +56,7 @@ public sealed class PluginExecutionThread : IExecutionThread
         PluginsManager = NullPluginsManager.Instance;
         FunctionsManager = new PluginFunctionsManager();
         ConfigStorage = new ThriftInputConfigStorage(client);
+        Stack = new ListExecutionStack();
     }
 
     /// <inheritdoc />

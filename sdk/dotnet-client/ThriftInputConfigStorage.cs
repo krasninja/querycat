@@ -28,7 +28,7 @@ public sealed class ThriftInputConfigStorage : IInputConfigStorage
     /// <inheritdoc />
     public void Set(string key, VariantValue value)
     {
-        _logger.LogDebug("Set {Key} with value {Value}.", key, value);
+        _logger.LogDebug("Set '{Key}' with value '{Value}'.", key, value);
         if (value.Type == DataType.Object)
         {
             _objectsStorage[key] = value;
@@ -49,7 +49,7 @@ public sealed class ThriftInputConfigStorage : IInputConfigStorage
     /// <inheritdoc />
     public VariantValue Get(string key)
     {
-        _logger.LogDebug("Get {Key}.", key);
+        _logger.LogDebug("Get '{Key}'.", key);
         if (_objectsStorage.TryGetValue(key, out var objectValue))
         {
             return objectValue;
