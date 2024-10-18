@@ -28,7 +28,7 @@ internal sealed class VaryingOutputRowsIterator : IRowsIterator, IRowsIteratorPa
 
     public IRowsOutput CurrentOutput { get; private set; }
 
-    public bool HasOutputDefined => _functionCallInfo.IsEmpty;
+    public bool HasOutputDefined => _functionCallInfo != FuncUnitCallInfo.Empty;
 
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(VaryingOutputRowsIterator));
 

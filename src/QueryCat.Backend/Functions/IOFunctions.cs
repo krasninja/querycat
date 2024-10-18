@@ -86,7 +86,7 @@ internal static class IOFunctions
         }
         var (path, funcArgs) = Utils_ParseUri(pathArgument.AsString);
 
-        var formatter = thread.Stack[0].AsObject as IRowsFormatter;
+        var formatter = thread.Stack[1].AsObject as IRowsFormatter;
         formatter ??= File_GetFormatter(path, thread, funcArgs);
         var fullDirectory = Path.GetDirectoryName(path);
         if (!string.IsNullOrEmpty(fullDirectory) && !Directory.Exists(fullDirectory))
