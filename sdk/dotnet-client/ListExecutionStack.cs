@@ -52,7 +52,6 @@ public sealed class ListExecutionStack : IExecutionStack
     /// <inheritdoc />
     public void Push(VariantValue value)
     {
-        _position++;
         if (_stack.Count > _position)
         {
             _stack[_position] = value;
@@ -61,6 +60,7 @@ public sealed class ListExecutionStack : IExecutionStack
         {
             _stack.Add(value);
         }
+        _position++;
     }
 
     /// <inheritdoc />
