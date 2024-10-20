@@ -200,7 +200,7 @@ public class CsvParseBenchmarks
             row[1] = new VariantValue(arr[1]); // Email.
             row[2] = new VariantValue(arr[2]); // FirstName.
             row[3] = new VariantValue(arr[3]); // LastName.
-            row[4] = new VariantValue(null); // EmailVerifiedAt.
+            row[4] = VariantValue.Null; // EmailVerifiedAt.
             row[5] = new VariantValue(arr[5]); // Address.
             row[6] = new VariantValue(arr[6]); // State.
             row[7] = new VariantValue(arr[7]); // Zip.
@@ -209,7 +209,7 @@ public class CsvParseBenchmarks
             row[10] = new VariantValue(DateTime.Parse(arr[10])); // DateOfBirth.
             row[11] = new VariantValue(decimal.Parse(arr[11])); // Balance.
             row[12] = new VariantValue(DateTime.Parse(arr[12])); // CreatedAt.
-            row[13] = new VariantValue(null); // RemovedAt.
+            row[13] = VariantValue.Null; // RemovedAt.
             row[14] = new VariantValue(arr[14]); // Phrase.
             rowsFrame.AddRow(row);
         }

@@ -22,11 +22,11 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
 
     public const string FloatNumberFormat = "F";
 
-    private static readonly DataTypeObject IntegerObject = new(DataType.Integer);
-    private static readonly DataTypeObject FloatObject = new(DataType.Float);
-    private static readonly DataTypeObject TimestampObject = new(DataType.Timestamp);
-    private static readonly DataTypeObject IntervalObject = new(DataType.Interval);
-    private static readonly DataTypeObject BooleanObject = new(DataType.Boolean);
+    private static readonly DataTypeObject _integerObject = IntegerDataTypeObject.Instance;
+    private static readonly DataTypeObject _floatObject = FloatDataTypeObject.Instance;
+    private static readonly DataTypeObject _timestampObject = TimestampDataTypeObject.Instance;
+    private static readonly DataTypeObject _intervalObject = IntervalDataTypeObject.Instance;
+    private static readonly DataTypeObject _booleanObject = BooleanDataTypeObject.Instance;
 
     public static VariantValue OneIntegerValue = new(1);
     public static VariantValue TrueValue = new(true);
@@ -119,12 +119,12 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     {
         _object = type switch
         {
-            DataType.Integer => IntegerObject,
+            DataType.Integer => _integerObject,
             DataType.String => string.Empty,
-            DataType.Boolean => BooleanObject,
-            DataType.Float => FloatObject,
-            DataType.Timestamp => TimestampObject,
-            DataType.Interval => IntervalObject,
+            DataType.Boolean => _booleanObject,
+            DataType.Float => _floatObject,
+            DataType.Timestamp => _timestampObject,
+            DataType.Interval => _intervalObject,
             DataType.Object => null,
             DataType.Blob => StreamBlobData.Empty,
             _ => throw new ArgumentOutOfRangeException(nameof(type)),
@@ -135,13 +135,13 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     public VariantValue(long value)
     {
         _valueUnion = new TypeUnion(value);
-        _object = IntegerObject;
+        _object = _integerObject;
     }
 
     public VariantValue(int value)
     {
         _valueUnion = new TypeUnion(value);
-        _object = IntegerObject;
+        _object = _integerObject;
     }
 
     public VariantValue(string? value)
@@ -165,31 +165,31 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     public VariantValue(double value)
     {
         _valueUnion = new TypeUnion(value);
-        _object = FloatObject;
+        _object = _floatObject;
     }
 
     public VariantValue(DateTime value)
     {
         _valueUnion = new TypeUnion(value);
-        _object = TimestampObject;
+        _object = _timestampObject;
     }
 
     public VariantValue(DateTimeOffset value)
     {
         _valueUnion = new TypeUnion(value.DateTime);
-        _object = TimestampObject;
+        _object = _timestampObject;
     }
 
     public VariantValue(TimeSpan value)
     {
         _valueUnion = new TypeUnion(value);
-        _object = IntervalObject;
+        _object = _intervalObject;
     }
 
     public VariantValue(bool value)
     {
         _valueUnion = new TypeUnion(value);
-        _object = BooleanObject;
+        _object = _booleanObject;
     }
 
     public VariantValue(decimal value)
@@ -204,7 +204,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         _valueUnion = new TypeUnion((int)DataType.Object);
     }
 
-    private VariantValue(IBlobData blob)
+    public VariantValue(IBlobData blob)
     {
         _object = blob;
         _valueUnion = new TypeUnion((int)DataType.Blob);
@@ -337,9 +337,9 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     }
 
     private bool IsValueType() =>
-        _object == IntegerObject || _object == FloatObject ||
-        _object == BooleanObject || _object == TimestampObject ||
-        _object == IntervalObject;
+        _object == _integerObject || _object == _floatObject ||
+        _object == _booleanObject || _object == _timestampObject ||
+        _object == _intervalObject;
 
     #endregion
 
@@ -360,19 +360,27 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
 
     internal string AsStringUnsafe => _object != null ? (string)_object : string.Empty;
 
-    public double AsFloat => CheckTypeAndTryToCast(DataType.Float)._valueUnion.DoubleValue;
+    public double AsFloat => _object is DataTypeObject dataTypeObject
+        ? dataTypeObject.AsFloat(this)
+        : CheckTypeAndTryToCast(DataType.Float)._valueUnion.DoubleValue;
 
     internal double AsFloatUnsafe => _valueUnion.DoubleValue;
 
-    public DateTime AsTimestamp => CheckTypeAndTryToCast(DataType.Timestamp)._valueUnion.DateTimeValue;
+    public DateTime AsTimestamp => _object is DataTypeObject dataTypeObject
+        ? dataTypeObject.AsTimestamp(this)
+        : CheckTypeAndTryToCast(DataType.Timestamp)._valueUnion.DateTimeValue;
 
     internal DateTime AsTimestampUnsafe => _valueUnion.DateTimeValue;
 
-    public TimeSpan AsInterval => CheckTypeAndTryToCast(DataType.Interval)._valueUnion.TimeSpanValue;
+    public TimeSpan AsInterval => _object is DataTypeObject dataTypeObject
+        ? dataTypeObject.AsInterval(this)
+        : CheckTypeAndTryToCast(DataType.Interval)._valueUnion.TimeSpanValue;
 
     internal TimeSpan AsIntervalUnsafe => _valueUnion.TimeSpanValue;
 
-    public bool AsBoolean => CheckTypeAndTryToCast(DataType.Boolean)._valueUnion.BooleanValue;
+    public bool AsBoolean => _object is DataTypeObject dataTypeObject
+        ? dataTypeObject.AsBoolean(this)
+        : CheckTypeAndTryToCast(DataType.Timestamp)._valueUnion.BooleanValue;
 
     internal bool AsBooleanUnsafe => _valueUnion.BooleanValue;
 
@@ -380,7 +388,9 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         ? CheckTypeAndTryToCast(DataType.Boolean)._valueUnion.BooleanValue
         : null;
 
-    public decimal AsNumeric => (decimal)CheckTypeAndTryToCast(DataType.Numeric)._object!;
+    public decimal AsNumeric => _object is DataTypeObject dataTypeObject
+        ? dataTypeObject.AsNumeric(this)
+        : (decimal)CheckTypeAndTryToCast(DataType.Numeric)._object!;
 
     internal decimal AsNumericUnsafe => (decimal)_object!;
 
@@ -646,12 +656,6 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
             output = Null;
             return true;
         }
-        // Any type is dynamic.
-        if (targetType == DataType.Dynamic)
-        {
-            output = this;
-            return true;
-        }
 
         var sourceType = Type;
         if (sourceType == targetType)
@@ -661,59 +665,41 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         }
 
         var success = true;
-        output = sourceType switch
+        if (_object is DataTypeObject dataTypeObject)
         {
-            DataType.Integer => targetType switch
+            success = dataTypeObject.TryConvert(in this, targetType, out output);
+        }
+        else
+        {
+            output = sourceType switch
             {
-                DataType.String => new(_valueUnion.IntegerValue.ToString()),
-                DataType.Float => new((double)_valueUnion.IntegerValue),
-                DataType.Boolean => new(_valueUnion.IntegerValue != 0),
-                DataType.Numeric => new((decimal)_valueUnion.IntegerValue),
+                DataType.String => targetType switch
+                {
+                    DataType.Integer => StringToInteger(_object as string, out success),
+                    DataType.Float => StringToFloat(_object as string, out success),
+                    DataType.Timestamp => StringToTimestamp(_object as string, out success),
+                    DataType.Boolean => StringToBoolean(_object as string, out success),
+                    DataType.Numeric => StringToNumeric(_object as string, out success),
+                    DataType.Interval => StringToInterval(_object as string, out success),
+                    DataType.Blob => StringToBlob(_object as string, out success),
+                    _ => Null
+                },
+                DataType.Blob => targetType switch
+                {
+                    DataType.String => BlobToString((IBlobData?)_object, out success),
+                    _ => Null
+                },
                 _ => Null
-            },
-            DataType.String => targetType switch
-            {
-                DataType.Integer => StringToInteger(_object as string, out success),
-                DataType.Float => StringToFloat(_object as string, out success),
-                DataType.Timestamp => StringToTimestamp(_object as string, out success),
-                DataType.Boolean => StringToBoolean(_object as string, out success),
-                DataType.Numeric => StringToNumeric(_object as string, out success),
-                DataType.Interval => StringToInterval(_object as string, out success),
-                DataType.Blob => StringToBlob(_object as string, out success),
-                _ => Null
-            },
-            DataType.Float => targetType switch
-            {
-                DataType.Integer => new((int)_valueUnion.DoubleValue),
-                DataType.String => new(_valueUnion.DoubleValue.ToString(Application.Culture)),
-                DataType.Numeric => new((decimal)_valueUnion.DoubleValue),
-                _ => Null
-            },
-            DataType.Timestamp => targetType switch
-            {
-                DataType.String => new(_valueUnion.DateTimeValue.ToString(Application.Culture)),
-                _ => Null
-            },
-            DataType.Boolean => targetType switch
-            {
-                DataType.Integer => new(_valueUnion.BooleanValue ? 1 : 0),
-                DataType.String => new(_valueUnion.BooleanValue ? TrueValueString : FalseValueString),
-                _ => Null
-            },
-            DataType.Numeric => targetType switch
-            {
-                DataType.Integer => new(decimal.ToInt64((decimal)_object!)),
-                DataType.String => new(((decimal)_object!).ToString(Application.Culture)),
-                DataType.Float => new(decimal.ToDouble((decimal)_object!)),
-                _ => Null
-            },
-            DataType.Blob => targetType switch
-            {
-                DataType.String => BlobToString((IBlobData?)_object, out success),
-                _ => Null
-            },
-            _ => Null
-        };
+            };
+        }
+
+        // Any type is dynamic.
+        if (targetType == DataType.Dynamic)
+        {
+            output = this;
+            return true;
+        }
+
         return !output.IsNull && success;
 }
 
