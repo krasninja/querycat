@@ -138,6 +138,19 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         _object = _integerObject;
     }
 
+    public VariantValue(long? value)
+    {
+        if (!value.HasValue)
+        {
+            _object = null;
+        }
+        else
+        {
+            _valueUnion = new TypeUnion(value.Value);
+            _object = _integerObject;
+        }
+    }
+
     public VariantValue(int value)
     {
         _valueUnion = new TypeUnion(value);
@@ -168,10 +181,36 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         _object = _floatObject;
     }
 
+    public VariantValue(double? value)
+    {
+        if (!value.HasValue)
+        {
+            _object = null;
+        }
+        else
+        {
+            _valueUnion = new TypeUnion(value.Value);
+            _object = _floatObject;
+        }
+    }
+
     public VariantValue(DateTime value)
     {
         _valueUnion = new TypeUnion(value);
         _object = _timestampObject;
+    }
+
+    public VariantValue(DateTime? value)
+    {
+        if (!value.HasValue)
+        {
+            _object = null;
+        }
+        else
+        {
+            _valueUnion = new TypeUnion(value.Value);
+            _object = _timestampObject;
+        }
     }
 
     public VariantValue(DateTimeOffset value)
@@ -186,10 +225,36 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         _object = _intervalObject;
     }
 
+    public VariantValue(TimeSpan? value)
+    {
+        if (!value.HasValue)
+        {
+            _object = null;
+        }
+        else
+        {
+            _valueUnion = new TypeUnion(value.Value);
+            _object = _intervalObject;
+        }
+    }
+
     public VariantValue(bool value)
     {
         _valueUnion = new TypeUnion(value);
         _object = _booleanObject;
+    }
+
+    public VariantValue(bool? value)
+    {
+        if (!value.HasValue)
+        {
+            _object = null;
+        }
+        else
+        {
+            _valueUnion = new TypeUnion(value.Value);
+            _object = _booleanObject;
+        }
     }
 
     public VariantValue(decimal value)
@@ -198,13 +263,26 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         _valueUnion = new TypeUnion((int)DataType.Numeric);
     }
 
+    public VariantValue(decimal? value)
+    {
+        if (!value.HasValue)
+        {
+            _object = null;
+        }
+        else
+        {
+            _object = value.Value;
+            _valueUnion = new TypeUnion((int)DataType.Numeric);
+        }
+    }
+
     private VariantValue(object obj)
     {
         _object = obj;
         _valueUnion = new TypeUnion((int)DataType.Object);
     }
 
-    public VariantValue(IBlobData blob)
+    public VariantValue(IBlobData? blob)
     {
         _object = blob;
         _valueUnion = new TypeUnion((int)DataType.Blob);
@@ -213,7 +291,6 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     private VariantValue(byte[] bytes)
     {
         _object = new StreamBlobData(() => new MemoryStream(bytes, writable: false));
-        _valueUnion = new TypeUnion((int)DataType.Blob);
     }
 
     public static VariantValue CreateFromObject<T>(in T obj)
@@ -842,7 +919,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         DataType.Dynamic => VoidValueString,
         DataType.Integer => AsIntegerUnsafe.ToString(format, Application.Culture),
         DataType.String => AsStringUnsafe,
-        DataType.Boolean => AsBooleanUnsafe.ToString(),
+        DataType.Boolean => AsBooleanUnsafe.ToString(Application.Culture),
         DataType.Float => AsFloatUnsafe.ToString(format, Application.Culture),
         DataType.Numeric => AsNumeric.ToString(format, Application.Culture),
         DataType.Timestamp => AsTimestampUnsafe.ToString(format, Application.Culture),
@@ -863,7 +940,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         DataType.Void => VoidValueString,
         DataType.Integer => AsIntegerUnsafe.ToString(formatProvider),
         DataType.String => AsStringUnsafe,
-        DataType.Boolean => AsBooleanUnsafe.ToString(),
+        DataType.Boolean => AsBooleanUnsafe.ToString(formatProvider),
         DataType.Float => AsFloatUnsafe.ToString(formatProvider),
         DataType.Numeric => AsNumeric.ToString(formatProvider),
         DataType.Timestamp => AsTimestampUnsafe.ToString(formatProvider),

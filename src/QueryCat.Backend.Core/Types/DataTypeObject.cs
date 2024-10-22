@@ -26,110 +26,199 @@ internal abstract class DataTypeObject
         TypeParam = typeParam ?? string.Empty;
     }
 
-    public abstract bool TryInteger(in VariantValue value, out long result);
+    #region Integer
 
-    public long AsInteger(in VariantValue value) => TryInteger(value, out var result)
-        ? result
-        : throw CreateInvalidVariantTypeException(DataType.Integer);
+    public virtual bool CanToInteger { get; } = false;
 
-    public abstract bool TryFloat(in VariantValue value, out double result);
+    public virtual long? ToInteger(in VariantValue value) => null;
 
-    public double AsFloat(in VariantValue value) => TryFloat(value, out var result)
-        ? result
-        : throw CreateInvalidVariantTypeException(DataType.Float);
+    public long AsInteger(in VariantValue value)
+    {
+        if (CanToInteger)
+        {
+            var result = ToInteger(in value);
+            if (result.HasValue)
+            {
+                return result.Value;
+            }
+        }
+        throw CreateInvalidVariantTypeException(DataType.Integer);
+    }
 
-    public abstract bool TryNumeric(in VariantValue value, out decimal result);
+    #endregion
 
-    public decimal AsNumeric(in VariantValue value) => TryNumeric(value, out var result)
-        ? result
-        : throw CreateInvalidVariantTypeException(DataType.Numeric);
+    #region Float
 
-    public abstract bool TryTimestamp(in VariantValue value, out DateTime result);
+    public virtual bool CanToFloat { get; } = false;
 
-    public DateTime AsTimestamp(in VariantValue value) => TryTimestamp(value, out var result)
-        ? result
-        : throw CreateInvalidVariantTypeException(DataType.Timestamp);
+    public virtual double? ToFloat(in VariantValue value) => null;
 
-    public abstract bool TryInterval(in VariantValue value, out TimeSpan result);
+    public double AsFloat(in VariantValue value)
+    {
+        if (CanToFloat)
+        {
+            var result = ToFloat(in value);
+            if (result.HasValue)
+            {
+                return result.Value;
+            }
+        }
+        throw CreateInvalidVariantTypeException(DataType.Float);
+    }
 
-    public TimeSpan AsInterval(in VariantValue value) => TryInterval(value, out var result)
-        ? result
-        : throw CreateInvalidVariantTypeException(DataType.Interval);
+    #endregion
 
-    public abstract bool TryBoolean(in VariantValue value, out bool result);
+    #region Numeric
 
-    public bool AsBoolean(in VariantValue value) => TryBoolean(value, out var result)
-        ? result
-        : throw CreateInvalidVariantTypeException(DataType.Boolean);
+    public virtual bool CanToNumeric { get; } = false;
 
-    public abstract bool TryString(in VariantValue value, out string result);
+    public virtual decimal? ToNumeric(in VariantValue value) => null;
 
-    public string AsString(in VariantValue value) => TryString(value, out var result)
-        ? result
+    public decimal AsNumeric(in VariantValue value)
+    {
+        if (CanToNumeric)
+        {
+            var result = ToNumeric(in value);
+            if (result.HasValue)
+            {
+                return result.Value;
+            }
+        }
+        throw CreateInvalidVariantTypeException(DataType.Numeric);
+    }
+
+    #endregion
+
+    #region Timestamp
+
+    public virtual bool CanToTimestamp { get; } = false;
+
+    public virtual DateTime? ToTimestamp(in VariantValue value) => null;
+
+    public DateTime AsTimestamp(in VariantValue value)
+    {
+        if (CanToTimestamp)
+        {
+            var result = ToTimestamp(in value);
+            if (result.HasValue)
+            {
+                return result.Value;
+            }
+        }
+        throw CreateInvalidVariantTypeException(DataType.Timestamp);
+    }
+
+    #endregion
+
+    #region Interval
+
+    public virtual bool CanToInterval { get; } = false;
+
+    public virtual TimeSpan? ToInterval(in VariantValue value) => null;
+
+    public TimeSpan AsInterval(in VariantValue value)
+    {
+        if (CanToInterval)
+        {
+            var result = ToInterval(in value);
+            if (result.HasValue)
+            {
+                return result.Value;
+            }
+        }
+        throw CreateInvalidVariantTypeException(DataType.Interval);
+    }
+
+    #endregion
+
+    #region Boolean
+
+    public virtual bool CanToBoolean { get; } = false;
+
+    public virtual bool? ToBoolean(in VariantValue value) => null;
+
+    public bool AsBoolean(in VariantValue value)
+    {
+        if (CanToBoolean)
+        {
+            var result = ToBoolean(in value);
+            if (result.HasValue)
+            {
+                return result.Value;
+            }
+        }
+        throw CreateInvalidVariantTypeException(DataType.Boolean);
+    }
+
+    #endregion
+
+    #region String
+
+    public virtual bool CanToString { get; } = true;
+
+    public virtual string ToString(in VariantValue value) => value.ToString(Application.Culture);
+
+    public string AsString(in VariantValue value) => CanToString
+        ? ToString(in value)
         : throw CreateInvalidVariantTypeException(DataType.String);
 
-    public abstract bool TryBlob(in VariantValue value, out IBlobData result);
+    #endregion
 
-    public IBlobData AsBlob(in VariantValue value) => TryBlob(value, out var result)
-        ? result
-        : throw CreateInvalidVariantTypeException(DataType.Blob);
+    #region Blob
+
+    public virtual bool CanToBlob { get; } = false;
+
+    public virtual IBlobData? ToBlob(in VariantValue value) => null;
+
+    #endregion
 
     protected InvalidVariantTypeException CreateInvalidVariantTypeException(DataType targetType) =>
         new(DataType, targetType);
 
     public bool TryConvert(in VariantValue value, DataType targetType, out VariantValue result)
     {
-        var success = false;
-        if (targetType == DataType.String)
+        if (targetType == DataType.String && CanToString)
         {
-            success = TryString(value, out var outResult);
-            result = new VariantValue(outResult);
-            return success;
+            result = new VariantValue(ToString(value));
+            return true;
         }
-        if (targetType == DataType.Integer)
+        if (targetType == DataType.Integer && CanToInteger)
         {
-            success = TryInteger(value, out var outResult);
-            result = new VariantValue(outResult);
-            return success;
+            result = new VariantValue(ToInteger(value));
+            return true;
         }
-        if (targetType == DataType.Float)
+        if (targetType == DataType.Float && CanToFloat)
         {
-            success = TryFloat(value, out var outResult);
-            result = new VariantValue(outResult);
-            return success;
+            result = new VariantValue(ToFloat(value));
+            return true;
         }
-        if (targetType == DataType.Numeric)
+        if (targetType == DataType.Numeric && CanToNumeric)
         {
-            success = TryNumeric(value, out var outResult);
-            result = new VariantValue(outResult);
-            return success;
+            result = new VariantValue(ToNumeric(value));
+            return true;
         }
-        if (targetType == DataType.Boolean)
+        if (targetType == DataType.Boolean && CanToBoolean)
         {
-            success = TryBoolean(value, out var outResult);
-            result = new VariantValue(outResult);
-            return success;
+            result = new VariantValue(ToBoolean(value));
+            return true;
         }
         if (targetType == DataType.Timestamp)
         {
-            success = TryTimestamp(value, out var outResult);
-            result = new VariantValue(outResult);
-            return success;
+            result = new VariantValue(ToTimestamp(value));
+            return true;
         }
         if (targetType == DataType.Interval)
         {
-            success = TryInterval(value, out var outResult);
-            result = new VariantValue(outResult);
-            return success;
+            result = new VariantValue(ToInterval(value));
+            return true;
         }
         if (targetType == DataType.Blob)
         {
-            success = TryBlob(value, out var outResult);
-            result = new VariantValue(outResult);
-            return success;
+            result = new VariantValue(ToBlob(value));
+            return true;
         }
         result = VariantValue.Null;
-        return success;
+        return false;
     }
 
     /// <inheritdoc />

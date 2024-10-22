@@ -14,60 +14,28 @@ public partial struct VariantValue
         }
 
         /// <inheritdoc />
-        public override bool TryInteger(in VariantValue value, out long result)
-        {
-            result = value._valueUnion.IntegerValue;
-            return true;
-        }
+        public override bool CanToInteger => true;
 
         /// <inheritdoc />
-        public override bool TryFloat(in VariantValue value, out double result)
-        {
-            result = value._valueUnion.IntegerValue;
-            return true;
-        }
+        public override long? ToInteger(in VariantValue value) => value._valueUnion.IntegerValue;
 
         /// <inheritdoc />
-        public override bool TryNumeric(in VariantValue value, out decimal result)
-        {
-            result = value._valueUnion.IntegerValue;
-            return true;
-        }
+        public override bool CanToFloat => true;
 
         /// <inheritdoc />
-        public override bool TryTimestamp(in VariantValue value, out DateTime result)
-        {
-            result = default;
-            return false;
-        }
+        public override double? ToFloat(in VariantValue value) => value._valueUnion.IntegerValue;
 
         /// <inheritdoc />
-        public override bool TryInterval(in VariantValue value, out TimeSpan result)
-        {
-            result = default;
-            return false;
-        }
+        public override bool CanToNumeric => true;
 
         /// <inheritdoc />
-        public override bool TryBoolean(in VariantValue value, out bool result)
-        {
-            result = value._valueUnion.IntegerValue != 0;
-            return true;
-        }
+        public override decimal? ToNumeric(in VariantValue value) => value._valueUnion.IntegerValue;
 
         /// <inheritdoc />
-        public override bool TryString(in VariantValue value, out string result)
-        {
-            result = value._valueUnion.IntegerValue.ToString(Application.Culture);
-            return true;
-        }
+        public override bool CanToBoolean => true;
 
         /// <inheritdoc />
-        public override bool TryBlob(in VariantValue value, out IBlobData result)
-        {
-            result = StreamBlobData.Empty;
-            return false;
-        }
+        public override bool? ToBoolean(in VariantValue value) => value._valueUnion.IntegerValue != 0;
     }
 
     #endregion
@@ -84,60 +52,22 @@ public partial struct VariantValue
         }
 
         /// <inheritdoc />
-        public override bool TryInteger(in VariantValue value, out long result)
-        {
-            result = (long)value._valueUnion.DoubleValue;
-            return true;
-        }
+        public override bool CanToInteger => true;
 
         /// <inheritdoc />
-        public override bool TryFloat(in VariantValue value, out double result)
-        {
-            result = value._valueUnion.DoubleValue;
-            return true;
-        }
+        public override long? ToInteger(in VariantValue value) => (long)value._valueUnion.DoubleValue;
 
         /// <inheritdoc />
-        public override bool TryNumeric(in VariantValue value, out decimal result)
-        {
-            result = (decimal)value._valueUnion.DoubleValue;
-            return true;
-        }
+        public override bool CanToFloat => true;
 
         /// <inheritdoc />
-        public override bool TryTimestamp(in VariantValue value, out DateTime result)
-        {
-            result = default;
-            return false;
-        }
+        public override double? ToFloat(in VariantValue value) => value._valueUnion.DoubleValue;
 
         /// <inheritdoc />
-        public override bool TryInterval(in VariantValue value, out TimeSpan result)
-        {
-            result = default;
-            return false;
-        }
+        public override bool CanToNumeric => true;
 
         /// <inheritdoc />
-        public override bool TryBoolean(in VariantValue value, out bool result)
-        {
-            result = false;
-            return false;
-        }
-
-        /// <inheritdoc />
-        public override bool TryString(in VariantValue value, out string result)
-        {
-            result = value._valueUnion.DoubleValue.ToString(Application.Culture);
-            return true;
-        }
-
-        /// <inheritdoc />
-        public override bool TryBlob(in VariantValue value, out IBlobData result)
-        {
-            result = StreamBlobData.Empty;
-            return false;
-        }
+        public override decimal? ToNumeric(in VariantValue value) => (decimal)value._valueUnion.DoubleValue;
     }
 
     #endregion
@@ -154,60 +84,10 @@ public partial struct VariantValue
         }
 
         /// <inheritdoc />
-        public override bool TryInteger(in VariantValue value, out long result)
-        {
-            result = 0;
-            return false;
-        }
+        public override bool CanToTimestamp => true;
 
         /// <inheritdoc />
-        public override bool TryFloat(in VariantValue value, out double result)
-        {
-            result = 0;
-            return false;
-        }
-
-        /// <inheritdoc />
-        public override bool TryNumeric(in VariantValue value, out decimal result)
-        {
-            result = 0;
-            return false;
-        }
-
-        /// <inheritdoc />
-        public override bool TryTimestamp(in VariantValue value, out DateTime result)
-        {
-            result = value._valueUnion.DateTimeValue;
-            return true;
-        }
-
-        /// <inheritdoc />
-        public override bool TryInterval(in VariantValue value, out TimeSpan result)
-        {
-            result = default;
-            return false;
-        }
-
-        /// <inheritdoc />
-        public override bool TryBoolean(in VariantValue value, out bool result)
-        {
-            result = false;
-            return false;
-        }
-
-        /// <inheritdoc />
-        public override bool TryString(in VariantValue value, out string result)
-        {
-            result = value._valueUnion.DateTimeValue.ToString(Application.Culture);
-            return true;
-        }
-
-        /// <inheritdoc />
-        public override bool TryBlob(in VariantValue value, out IBlobData result)
-        {
-            result = StreamBlobData.Empty;
-            return false;
-        }
+        public override DateTime? ToTimestamp(in VariantValue value) => value._valueUnion.DateTimeValue;
     }
 
     #endregion
@@ -224,60 +104,10 @@ public partial struct VariantValue
         }
 
         /// <inheritdoc />
-        public override bool TryInteger(in VariantValue value, out long result)
-        {
-            result = 0;
-            return false;
-        }
+        public override bool CanToInterval => true;
 
         /// <inheritdoc />
-        public override bool TryFloat(in VariantValue value, out double result)
-        {
-            result = 0;
-            return false;
-        }
-
-        /// <inheritdoc />
-        public override bool TryNumeric(in VariantValue value, out decimal result)
-        {
-            result = 0;
-            return false;
-        }
-
-        /// <inheritdoc />
-        public override bool TryTimestamp(in VariantValue value, out DateTime result)
-        {
-            result = default;
-            return false;
-        }
-
-        /// <inheritdoc />
-        public override bool TryInterval(in VariantValue value, out TimeSpan result)
-        {
-            result = value._valueUnion.TimeSpanValue;
-            return true;
-        }
-
-        /// <inheritdoc />
-        public override bool TryBoolean(in VariantValue value, out bool result)
-        {
-            result = false;
-            return false;
-        }
-
-        /// <inheritdoc />
-        public override bool TryString(in VariantValue value, out string result)
-        {
-            result = value._valueUnion.TimeSpanValue.ToString();
-            return true;
-        }
-
-        /// <inheritdoc />
-        public override bool TryBlob(in VariantValue value, out IBlobData result)
-        {
-            result = StreamBlobData.Empty;
-            return false;
-        }
+        public override TimeSpan? ToInterval(in VariantValue value) => value._valueUnion.TimeSpanValue;
     }
 
     #endregion
@@ -294,60 +124,16 @@ public partial struct VariantValue
         }
 
         /// <inheritdoc />
-        public override bool TryInteger(in VariantValue value, out long result)
-        {
-            result = value._valueUnion.BooleanValue ? 1 : 0;
-            return true;
-        }
+        public override bool CanToInteger => true;
 
         /// <inheritdoc />
-        public override bool TryFloat(in VariantValue value, out double result)
-        {
-            result = 0;
-            return false;
-        }
+        public override long? ToInteger(in VariantValue value) => value._valueUnion.BooleanValue ? 1 : 0;
 
         /// <inheritdoc />
-        public override bool TryNumeric(in VariantValue value, out decimal result)
-        {
-            result = 0;
-            return false;
-        }
+        public override bool CanToBoolean => true;
 
         /// <inheritdoc />
-        public override bool TryTimestamp(in VariantValue value, out DateTime result)
-        {
-            result = default;
-            return false;
-        }
-
-        /// <inheritdoc />
-        public override bool TryInterval(in VariantValue value, out TimeSpan result)
-        {
-            result = default;
-            return false;
-        }
-
-        /// <inheritdoc />
-        public override bool TryBoolean(in VariantValue value, out bool result)
-        {
-            result = value._valueUnion.BooleanValue;
-            return true;
-        }
-
-        /// <inheritdoc />
-        public override bool TryString(in VariantValue value, out string result)
-        {
-            result = value._valueUnion.BooleanValue.ToString(Application.Culture);
-            return true;
-        }
-
-        /// <inheritdoc />
-        public override bool TryBlob(in VariantValue value, out IBlobData result)
-        {
-            result = StreamBlobData.Empty;
-            return false;
-        }
+        public override bool? ToBoolean(in VariantValue value) => value._valueUnion.BooleanValue;
     }
 
     #endregion
