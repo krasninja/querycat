@@ -451,18 +451,4 @@ public partial struct VariantValue
     }
 
     #endregion
-
-    #region Dynamic
-
-    internal sealed class DynamicDataTypeObject : DataTypeObject
-    {
-        public static DynamicDataTypeObject Instance { get; } = new();
-
-        /// <inheritdoc />
-        private DynamicDataTypeObject() : base(DataType.Dynamic)
-        {
-        }
-    }
-
-    #endregion
 }
