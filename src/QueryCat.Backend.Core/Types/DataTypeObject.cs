@@ -32,19 +32,6 @@ internal abstract class DataTypeObject
 
     public virtual long? ToInteger(in VariantValue value) => null;
 
-    public long AsInteger(in VariantValue value)
-    {
-        if (CanToInteger)
-        {
-            var result = ToInteger(in value);
-            if (result.HasValue)
-            {
-                return result.Value;
-            }
-        }
-        throw CreateInvalidVariantTypeException(DataType.Integer);
-    }
-
     #endregion
 
     #region Float
@@ -52,19 +39,6 @@ internal abstract class DataTypeObject
     public virtual bool CanToFloat { get; } = false;
 
     public virtual double? ToFloat(in VariantValue value) => null;
-
-    public double AsFloat(in VariantValue value)
-    {
-        if (CanToFloat)
-        {
-            var result = ToFloat(in value);
-            if (result.HasValue)
-            {
-                return result.Value;
-            }
-        }
-        throw CreateInvalidVariantTypeException(DataType.Float);
-    }
 
     #endregion
 
@@ -74,19 +48,6 @@ internal abstract class DataTypeObject
 
     public virtual decimal? ToNumeric(in VariantValue value) => null;
 
-    public decimal AsNumeric(in VariantValue value)
-    {
-        if (CanToNumeric)
-        {
-            var result = ToNumeric(in value);
-            if (result.HasValue)
-            {
-                return result.Value;
-            }
-        }
-        throw CreateInvalidVariantTypeException(DataType.Numeric);
-    }
-
     #endregion
 
     #region Timestamp
@@ -94,19 +55,6 @@ internal abstract class DataTypeObject
     public virtual bool CanToTimestamp { get; } = false;
 
     public virtual DateTime? ToTimestamp(in VariantValue value) => null;
-
-    public DateTime AsTimestamp(in VariantValue value)
-    {
-        if (CanToTimestamp)
-        {
-            var result = ToTimestamp(in value);
-            if (result.HasValue)
-            {
-                return result.Value;
-            }
-        }
-        throw CreateInvalidVariantTypeException(DataType.Timestamp);
-    }
 
     #endregion
 
@@ -116,19 +64,6 @@ internal abstract class DataTypeObject
 
     public virtual TimeSpan? ToInterval(in VariantValue value) => null;
 
-    public TimeSpan AsInterval(in VariantValue value)
-    {
-        if (CanToInterval)
-        {
-            var result = ToInterval(in value);
-            if (result.HasValue)
-            {
-                return result.Value;
-            }
-        }
-        throw CreateInvalidVariantTypeException(DataType.Interval);
-    }
-
     #endregion
 
     #region Boolean
@@ -137,30 +72,13 @@ internal abstract class DataTypeObject
 
     public virtual bool? ToBoolean(in VariantValue value) => null;
 
-    public bool AsBoolean(in VariantValue value)
-    {
-        if (CanToBoolean)
-        {
-            var result = ToBoolean(in value);
-            if (result.HasValue)
-            {
-                return result.Value;
-            }
-        }
-        throw CreateInvalidVariantTypeException(DataType.Boolean);
-    }
-
     #endregion
 
     #region String
 
-    public virtual bool CanToString { get; } = true;
+    public virtual bool CanToString { get; } = false;
 
-    public virtual string ToString(in VariantValue value) => value.ToString(Application.Culture);
-
-    public string AsString(in VariantValue value) => CanToString
-        ? ToString(in value)
-        : throw CreateInvalidVariantTypeException(DataType.String);
+    public virtual string ToString(in VariantValue value) => string.Empty;
 
     #endregion
 
@@ -172,50 +90,47 @@ internal abstract class DataTypeObject
 
     #endregion
 
-    protected InvalidVariantTypeException CreateInvalidVariantTypeException(DataType targetType) =>
-        new(DataType, targetType);
-
     public bool TryConvert(in VariantValue value, DataType targetType, out VariantValue result)
     {
         if (targetType == DataType.String && CanToString)
         {
             result = new VariantValue(ToString(value));
-            return true;
+            return !result.IsNull;
         }
         if (targetType == DataType.Integer && CanToInteger)
         {
             result = new VariantValue(ToInteger(value));
-            return true;
+            return !result.IsNull;
         }
         if (targetType == DataType.Float && CanToFloat)
         {
             result = new VariantValue(ToFloat(value));
-            return true;
+            return !result.IsNull;
         }
         if (targetType == DataType.Numeric && CanToNumeric)
         {
             result = new VariantValue(ToNumeric(value));
-            return true;
+            return !result.IsNull;
         }
         if (targetType == DataType.Boolean && CanToBoolean)
         {
             result = new VariantValue(ToBoolean(value));
-            return true;
+            return !result.IsNull;
         }
         if (targetType == DataType.Timestamp)
         {
             result = new VariantValue(ToTimestamp(value));
-            return true;
+            return !result.IsNull;
         }
         if (targetType == DataType.Interval)
         {
             result = new VariantValue(ToInterval(value));
-            return true;
+            return !result.IsNull;
         }
         if (targetType == DataType.Blob)
         {
             result = new VariantValue(ToBlob(value));
-            return true;
+            return !result.IsNull;
         }
         result = VariantValue.Null;
         return false;

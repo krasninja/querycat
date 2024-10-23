@@ -351,11 +351,15 @@ internal partial class CreateDelegateVisitor : AstVisitor
         var tzFunc = NodeIdFuncMap[node.TimeZoneNode.Id];
         VariantValue Func(IExecutionThread thread)
         {
-            var left = leftFunc.Invoke(thread);
-            var tz = tzFunc.Invoke(thread);
+            var left = leftFunc.Invoke(thread).AsTimestamp;
+            var tz = tzFunc.Invoke(thread).AsString;
+            if (!left.HasValue)
+            {
+                return VariantValue.Null;
+            }
             try
             {
-                var destinationTimestamp = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(left, tz);
+                var destinationTimestamp = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(left.Value, tz);
                 return new VariantValue(destinationTimestamp);
             }
             catch (TimeZoneNotFoundException)

@@ -8,42 +8,22 @@ public partial struct VariantValue
         {
             DataType.Integer => (in VariantValue left) =>
             {
-                if (left.IsNull)
-                {
-                    return Null;
-                }
                 return new VariantValue(-left.AsIntegerUnsafe);
             },
             DataType.Float => (in VariantValue left) =>
             {
-                if (left.IsNull)
-                {
-                    return Null;
-                }
                 return new VariantValue(-left.AsFloatUnsafe);
             },
             DataType.Numeric => (in VariantValue left) =>
             {
-                if (left.IsNull)
-                {
-                    return Null;
-                }
                 return new VariantValue(-left.AsNumericUnsafe);
             },
             DataType.Boolean => (in VariantValue left) =>
             {
-                if (left.IsNull)
-                {
-                    return Null;
-                }
                 return new VariantValue(!left.AsBooleanUnsafe);
             },
             DataType.Interval => (in VariantValue left) =>
             {
-                if (left.IsNull)
-                {
-                    return Null;
-                }
                 return new VariantValue(-left.AsIntervalUnsafe);
             },
             _ => UnaryNullDelegate
@@ -71,10 +51,6 @@ public partial struct VariantValue
             {
                 DataType.Timestamp => (in VariantValue left, in VariantValue right) =>
                 {
-                    if (left.IsNull || right.IsNull)
-                    {
-                        return Null;
-                    }
                     return new VariantValue(left.AsTimestampUnsafe - right.AsTimestampUnsafe);
                 },
                 _ => BinaryNullDelegate,

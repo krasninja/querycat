@@ -20,7 +20,7 @@ public class SamplePluginRowsInput : IRowsInput
     public static VariantValue SamplePlugin(IExecutionThread thread)
     {
         var startValue = thread.Stack.Pop().AsInteger;
-        var rowsSource = new SamplePluginRowsInput(startValue);
+        var rowsSource = new SamplePluginRowsInput(startValue ?? 0);
         return VariantValue.CreateFromObject(rowsSource);
     }
 

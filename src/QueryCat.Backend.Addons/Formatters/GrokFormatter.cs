@@ -13,7 +13,7 @@ internal sealed class GrokFormatter : IRowsFormatter
     [FunctionSignature("grok(pattern: string): object<IRowsFormatter>")]
     public static VariantValue Grok(IExecutionThread thread)
     {
-        var pattern = thread.Stack.Pop();
+        var pattern = thread.Stack.Pop().AsString;
         return VariantValue.CreateFromObject(new GrokFormatter(pattern));
     }
 

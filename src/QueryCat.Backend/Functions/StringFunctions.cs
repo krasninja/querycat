@@ -156,6 +156,11 @@ internal static class StringFunctions
         var delimiter = thread.Stack[1].AsString;
         var n = thread.Stack[2].AsInteger;
 
+        if (!n.HasValue)
+        {
+            return VariantValue.Null;
+        }
+
         var split = target.Split(delimiter);
         if (n < 0)
         {
@@ -166,7 +171,7 @@ internal static class StringFunctions
         {
             return VariantValue.FalseValue;
         }
-        return new VariantValue(split[n]);
+        return new VariantValue(split[n.Value]);
     }
 
     [SafeFunction]

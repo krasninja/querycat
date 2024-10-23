@@ -22,7 +22,7 @@ public sealed class DefaultFixedSizeExecutionStackTests
 
         // Assert.
         Assert.Equal(3, _stack.FrameLength);
-        Assert.Equal(2, _stack[1]);
+        Assert.Equal(2, _stack[1].AsInteger!.Value);
     }
 
     [Fact]
@@ -42,7 +42,7 @@ public sealed class DefaultFixedSizeExecutionStackTests
 
         // Assert.
         Assert.Equal(2, _stack.FrameLength);
-        Assert.Equal(4, _stack[0]);
+        Assert.Equal(4, _stack[0].AsInteger!.Value);
     }
 
     [Fact]

@@ -20,9 +20,9 @@ internal static class MathFunctions
         var x = thread.Stack.Pop();
         return x.Type switch
         {
-            DataType.Float => new VariantValue(Math.Abs(x.AsFloat)),
-            DataType.Integer => new VariantValue(Math.Abs(x.AsInteger)),
-            DataType.Numeric => new VariantValue(Math.Abs(x.AsNumeric)),
+            DataType.Float => new VariantValue(Math.Abs(x.AsFloatUnsafe)),
+            DataType.Integer => new VariantValue(Math.Abs(x.AsIntegerUnsafe)),
+            DataType.Numeric => new VariantValue(Math.Abs(x.AsNumericUnsafe)),
             _ => VariantValue.Null
         };
     }
@@ -64,8 +64,8 @@ internal static class MathFunctions
         var x = thread.Stack.Pop();
         return x.Type switch
         {
-            DataType.Float => new VariantValue(Math.Round(x.AsFloat)),
-            DataType.Numeric => new VariantValue(Math.Round(x.AsNumeric)),
+            DataType.Float => new VariantValue(Math.Round(x.AsFloatUnsafe)),
+            DataType.Numeric => new VariantValue(Math.Round(x.AsNumericUnsafe)),
             _ => VariantValue.Null
         };
     }
@@ -76,8 +76,8 @@ internal static class MathFunctions
     [FunctionSignature("sqrt(x: float): float")]
     public static VariantValue Sqrt(IExecutionThread thread)
     {
-        var x = thread.Stack.Pop();
-        return new VariantValue(Math.Sqrt(x.AsFloat));
+        var x = thread.Stack.Pop().AsFloat;
+        return new VariantValue(x.HasValue ? Math.Sqrt(x.Value) : null);
     }
 
     #region Trigonometric Functions
@@ -88,8 +88,8 @@ internal static class MathFunctions
     [FunctionSignature("cos(x: float): float")]
     public static VariantValue Cos(IExecutionThread thread)
     {
-        var x = thread.Stack.Pop();
-        return new VariantValue(Math.Cos(x.AsFloat));
+        var x = thread.Stack.Pop().AsFloat;
+        return new VariantValue(x.HasValue ? Math.Cos(x.Value) : null);
     }
 
     [SafeFunction]
@@ -98,8 +98,8 @@ internal static class MathFunctions
     [FunctionSignature("acos(x: float): float")]
     public static VariantValue Acos(IExecutionThread thread)
     {
-        var x = thread.Stack.Pop();
-        return new VariantValue(Math.Acos(x.AsFloat));
+        var x = thread.Stack.Pop().AsFloat;
+        return new VariantValue(x.HasValue ? Math.Acos(x.Value) : null);
     }
 
     [SafeFunction]
@@ -108,8 +108,8 @@ internal static class MathFunctions
     [FunctionSignature("sin(x: float): float")]
     public static VariantValue Sin(IExecutionThread thread)
     {
-        var x = thread.Stack.Pop();
-        return new VariantValue(Math.Sin(x.AsFloat));
+        var x = thread.Stack.Pop().AsFloat;
+        return new VariantValue(x.HasValue ? Math.Sin(x.Value) : null);
     }
 
     [SafeFunction]
@@ -118,8 +118,8 @@ internal static class MathFunctions
     [FunctionSignature("asin(x: float): float")]
     public static VariantValue Asin(IExecutionThread thread)
     {
-        var x = thread.Stack.Pop();
-        return new VariantValue(Math.Asin(x.AsFloat));
+        var x = thread.Stack.Pop().AsFloat;
+        return new VariantValue(x.HasValue ? Math.Asin(x.Value) : null);
     }
 
     [SafeFunction]
@@ -128,8 +128,8 @@ internal static class MathFunctions
     [FunctionSignature("tan(x: float): float")]
     public static VariantValue Tan(IExecutionThread thread)
     {
-        var x = thread.Stack.Pop();
-        return new VariantValue(Math.Tan(x.AsFloat));
+        var x = thread.Stack.Pop().AsFloat;
+        return new VariantValue(x.HasValue ? Math.Tan(x.Value) : null);
     }
 
     [SafeFunction]
@@ -138,8 +138,8 @@ internal static class MathFunctions
     [FunctionSignature("atan(x: float): float")]
     public static VariantValue Atan(IExecutionThread thread)
     {
-        var x = thread.Stack.Pop();
-        return new VariantValue(Math.Atan(x.AsFloat));
+        var x = thread.Stack.Pop().AsFloat;
+        return new VariantValue(x.HasValue ? Math.Atan(x.Value) : null);
     }
 
     #endregion
@@ -156,8 +156,8 @@ internal static class MathFunctions
         var b = thread.Stack[1];
         return a.Type switch
         {
-            DataType.Float => new VariantValue(Math.Pow(a.AsFloat, b.AsFloat)),
-            DataType.Integer => new VariantValue(Math.Pow(a.AsInteger, b.AsInteger)),
+            DataType.Float => new VariantValue(Math.Pow(a.AsFloatUnsafe, b.AsFloatUnsafe)),
+            DataType.Integer => new VariantValue(Math.Pow(a.AsIntegerUnsafe, b.AsIntegerUnsafe)),
             _ => VariantValue.Null
         };
     }
@@ -176,7 +176,7 @@ internal static class MathFunctions
     public static VariantValue Floor(IExecutionThread thread)
     {
         var x = thread.Stack.Pop().AsFloat;
-        return new VariantValue(Math.Floor(x));
+        return new VariantValue(x.HasValue ? Math.Floor(x.Value) : null);
     }
 
     [SafeFunction]
@@ -185,7 +185,7 @@ internal static class MathFunctions
     public static VariantValue Ceiling(IExecutionThread thread)
     {
         var x = thread.Stack.Pop().AsFloat;
-        return new VariantValue(Math.Ceiling(x));
+        return new VariantValue(x.HasValue ? Math.Ceiling(x.Value) : null);
     }
 
     [SafeFunction]
@@ -201,7 +201,7 @@ internal static class MathFunctions
         var maxValue = notNullArgs.First();
         for (var i = 1; i < notNullArgs.Length; i++)
         {
-            if (VariantValue.Greater(in notNullArgs[i], in maxValue, out _))
+            if (VariantValue.Greater(in notNullArgs[i], in maxValue, out _).AsBoolean)
             {
                 maxValue = notNullArgs[i];
             }
@@ -222,7 +222,7 @@ internal static class MathFunctions
         var maxValue = notNullArgs.First();
         for (var i = 1; i < notNullArgs.Length; i++)
         {
-            if (VariantValue.Less(in notNullArgs[i], in maxValue, out _))
+            if (VariantValue.Less(in notNullArgs[i], in maxValue, out _).AsBoolean)
             {
                 maxValue = notNullArgs[i];
             }
@@ -237,7 +237,7 @@ internal static class MathFunctions
     public static VariantValue Ln(IExecutionThread thread)
     {
         var x = thread.Stack.Pop().AsFloat;
-        return new VariantValue(Math.Log(x));
+        return new VariantValue(x.HasValue ? Math.Log(x.Value) : null);
     }
 
     [SafeFunction]
@@ -247,7 +247,7 @@ internal static class MathFunctions
     public static VariantValue Log(IExecutionThread thread)
     {
         var x = thread.Stack.Pop().AsFloat;
-        return new VariantValue(Math.Log10(x));
+        return new VariantValue(x.HasValue ? Math.Log10(x.Value) : null);
     }
 
     public static void RegisterFunctions(IFunctionsManager functionsManager)

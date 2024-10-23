@@ -1,5 +1,4 @@
 using System.Buffers;
-using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -418,64 +417,62 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         _object == _booleanObject || _object == _timestampObject ||
         _object == _intervalObject;
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    private DataTypeObject GetDataTypeObject()
+    {
+        if (_object is DataTypeObject dataTypeObject)
+        {
+            return dataTypeObject;
+        }
+        return Type switch
+        {
+            DataType.String => StringDataTypeObject.Instance,
+            DataType.Null => NullDataTypeObject.Instance,
+            DataType.Numeric => NumericDataTypeObject.Instance,
+            DataType.Blob => BlobDataTypeObject.Instance,
+            _ => throw new ArgumentOutOfRangeException(nameof(Type)),
+        };
+    }
+
     #endregion
 
     #region Getters and Setters
 
-    public long AsInteger => CheckTypeAndTryToCast(DataType.Integer)._valueUnion.IntegerValue;
+    public long? AsInteger => GetDataTypeObject().ToInteger(in this);
 
     internal long AsIntegerUnsafe => _valueUnion.IntegerValue;
 
-    public string AsString
-    {
-        get
-        {
-            var obj = CheckTypeAndTryToCast(DataType.String)._object;
-            return obj != null ? (string)obj : string.Empty;
-        }
-    }
+    public string AsString => GetDataTypeObject().ToString(in this);
 
     internal string AsStringUnsafe => _object != null ? (string)_object : string.Empty;
 
-    public double AsFloat => _object is DataTypeObject dataTypeObject
-        ? dataTypeObject.AsFloat(this)
-        : CheckTypeAndTryToCast(DataType.Float)._valueUnion.DoubleValue;
+    public double? AsFloat => GetDataTypeObject().ToFloat(in this);
 
     internal double AsFloatUnsafe => _valueUnion.DoubleValue;
 
-    public DateTime AsTimestamp => _object is DataTypeObject dataTypeObject
-        ? dataTypeObject.AsTimestamp(this)
-        : CheckTypeAndTryToCast(DataType.Timestamp)._valueUnion.DateTimeValue;
+    public DateTime? AsTimestamp => GetDataTypeObject().ToTimestamp(in this);
 
     internal DateTime AsTimestampUnsafe => _valueUnion.DateTimeValue;
 
-    public TimeSpan AsInterval => _object is DataTypeObject dataTypeObject
-        ? dataTypeObject.AsInterval(this)
-        : CheckTypeAndTryToCast(DataType.Interval)._valueUnion.TimeSpanValue;
+    public TimeSpan? AsInterval => GetDataTypeObject().ToInterval(in this);
 
     internal TimeSpan AsIntervalUnsafe => _valueUnion.TimeSpanValue;
 
-    public bool AsBoolean => _object is DataTypeObject dataTypeObject
-        ? dataTypeObject.AsBoolean(this)
-        : CheckTypeAndTryToCast(DataType.Timestamp)._valueUnion.BooleanValue;
+    public bool AsBoolean => GetDataTypeObject().ToBoolean(in this) ?? false;
+
+    public bool? AsBooleanNullable => GetDataTypeObject().ToBoolean(in this);
 
     internal bool AsBooleanUnsafe => _valueUnion.BooleanValue;
 
-    public bool? AsBooleanNullable => !IsNull
-        ? CheckTypeAndTryToCast(DataType.Boolean)._valueUnion.BooleanValue
-        : null;
-
-    public decimal AsNumeric => _object is DataTypeObject dataTypeObject
-        ? dataTypeObject.AsNumeric(this)
-        : (decimal)CheckTypeAndTryToCast(DataType.Numeric)._object!;
+    public decimal? AsNumeric => GetDataTypeObject().ToNumeric(in this);
 
     internal decimal AsNumericUnsafe => (decimal)_object!;
 
-    public object? AsObject => CheckTypeAndTryToCast(DataType.Object)._object;
+    public object? AsObject => Type == DataType.Object ? _object : null;
 
     internal object? AsObjectUnsafe => _object;
 
-    public IBlobData AsBlob => (IBlobData)CheckTypeAndTryToCast(DataType.Blob)._object!;
+    public IBlobData? AsBlob => GetDataTypeObject().ToBlob(in this);
 
     internal IBlobData AsBlobUnsafe => (IBlobData)_object!;
 
@@ -545,7 +542,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
             return (T)Convert.ChangeType(AsInterval, typeof(T));
         }
 
-        var sourceObj = CheckTypeAndTryToCast(DataType.Object)._object;
+        var sourceObj = Cast(DataType.Object)._object;
         if (sourceObj == null)
         {
             return default;
@@ -577,147 +574,12 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         _ => null,
     };
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private VariantValue CheckTypeAndTryToCast(DataType targetType)
-    {
-        if (targetType != Type)
-        {
-            return Cast(targetType);
-        }
-        return this;
-    }
-
     /// <summary>
     /// Determines whether the value is null.
     /// </summary>
     public bool IsNull => _object == null;
 
     #region Casting
-
-    private static VariantValue StringToInteger(string? value, out bool success)
-        => StringToInteger((ReadOnlySpan<char>)value, out success);
-
-    private static VariantValue StringToInteger(in ReadOnlySpan<char> value, out bool success)
-    {
-        success = long.TryParse(value, NumberStyles.Any, Application.Culture, out var @out);
-        if (!success)
-        {
-            // Try HEX format.
-            success = value.StartsWith("0x") &&
-                long.TryParse(value[2..], NumberStyles.HexNumber | NumberStyles.AllowHexSpecifier,
-                    Application.Culture, out @out);
-        }
-        return success ? new VariantValue(@out) : Null;
-    }
-
-    private static VariantValue StringToTimestamp(string? value, out bool success)
-        => StringToTimestamp((ReadOnlySpan<char>)value, out success);
-
-    private static readonly string[] _dateTimeAdditionalFormats =
-    {
-        "yyMMdd",
-        "yyyyMMdd"
-    };
-
-    private static VariantValue StringToTimestamp(in ReadOnlySpan<char> value, out bool success)
-    {
-        success = DateTime.TryParse(value, Application.Culture, DateTimeStyles.None, out var @out);
-        if (!success)
-        {
-            success = DateTime.TryParseExact(value, _dateTimeAdditionalFormats, null,
-                DateTimeStyles.AllowWhiteSpaces, out @out);
-        }
-        return success ? new VariantValue(@out) : Null;
-    }
-
-    private static VariantValue StringToInterval(in ReadOnlySpan<char> value, out bool success)
-    {
-        success = IntervalParser.TryParseInterval(value.ToString(), out var @out);
-        return success ? new VariantValue(@out) : Null;
-    }
-
-    private static VariantValue StringToFloat(string? value, out bool success)
-        => StringToFloat((ReadOnlySpan<char>)value, out success);
-
-    private static VariantValue StringToFloat(in ReadOnlySpan<char> value, out bool success)
-    {
-        success = double.TryParse(value, NumberStyles.Any, Application.Culture, out var @out);
-        return success ? new VariantValue(@out) : Null;
-    }
-
-    private static VariantValue StringToBoolean(string? value, out bool success)
-        => StringToBoolean((ReadOnlySpan<char>)value, out success);
-
-    private static VariantValue StringToBoolean(in ReadOnlySpan<char> value, out bool success)
-    {
-        if (value.IsEmpty)
-        {
-            success = false;
-            return Null;
-        }
-
-        if (value.Equals(TrueValueString, StringComparison.OrdinalIgnoreCase)
-            || value.Equals("1", StringComparison.OrdinalIgnoreCase)
-            || value.Equals("YES", StringComparison.OrdinalIgnoreCase)
-            || value.Equals("ON", StringComparison.OrdinalIgnoreCase)
-            || value.Equals("T", StringComparison.OrdinalIgnoreCase))
-        {
-            success = true;
-            return new VariantValue(true);
-        }
-
-        if (value.Equals(FalseValueString, StringComparison.OrdinalIgnoreCase)
-            || value.Equals("0", StringComparison.OrdinalIgnoreCase)
-            || value.Equals("NO", StringComparison.OrdinalIgnoreCase)
-            || value.Equals("OFF", StringComparison.OrdinalIgnoreCase)
-            || value.Equals("F", StringComparison.OrdinalIgnoreCase))
-        {
-            success = true;
-            return new VariantValue(false);
-        }
-
-        success = false;
-        return Null;
-    }
-
-    private static VariantValue StringToNumeric(in string? value, out bool success)
-        => StringToNumeric((ReadOnlySpan<char>)value, out success);
-
-    private static VariantValue StringToNumeric(in ReadOnlySpan<char> value, out bool success)
-    {
-        success = decimal.TryParse(value, NumberStyles.Any, Application.Culture, out var @out);
-        return success ? new VariantValue(@out) : Null;
-    }
-
-    private static VariantValue StringToString(in string? value, out bool success)
-    {
-        success = true;
-        return new VariantValue(value);
-    }
-
-    private static VariantValue StringToString(in ReadOnlySpan<char> value, out bool success)
-    {
-        success = true;
-        return new VariantValue(value);
-    }
-
-    private static VariantValue StringToBlob(in string? value, out bool success)
-    {
-        success = true;
-
-        var bytes = System.Text.Encoding.UTF8.GetBytes(value ?? string.Empty);
-        var blobData = new StreamBlobData(bytes);
-        return new VariantValue(blobData);
-    }
-
-    private static VariantValue BlobToString(IBlobData? value, out bool success)
-    {
-        success = true;
-
-        value ??= StreamBlobData.Empty;
-        var sr = new StreamReader(value.GetStream());
-        return new VariantValue(sr.ReadToEnd());
-    }
 
     /// <summary>
     /// Attempt to convert type of the variant value to another one.
@@ -734,51 +596,15 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
             return true;
         }
 
-        var sourceType = Type;
-        if (sourceType == targetType)
-        {
-            output = this;
-            return true;
-        }
-
-        var success = true;
-        if (_object is DataTypeObject dataTypeObject)
-        {
-            success = dataTypeObject.TryConvert(in this, targetType, out output);
-        }
-        else
-        {
-            output = sourceType switch
-            {
-                DataType.String => targetType switch
-                {
-                    DataType.Integer => StringToInteger(_object as string, out success),
-                    DataType.Float => StringToFloat(_object as string, out success),
-                    DataType.Timestamp => StringToTimestamp(_object as string, out success),
-                    DataType.Boolean => StringToBoolean(_object as string, out success),
-                    DataType.Numeric => StringToNumeric(_object as string, out success),
-                    DataType.Interval => StringToInterval(_object as string, out success),
-                    DataType.Blob => StringToBlob(_object as string, out success),
-                    _ => Null
-                },
-                DataType.Blob => targetType switch
-                {
-                    DataType.String => BlobToString((IBlobData?)_object, out success),
-                    _ => Null
-                },
-                _ => Null
-            };
-        }
-
         // Any type is dynamic.
-        if (targetType == DataType.Dynamic)
+        if (Type == targetType || targetType == DataType.Dynamic)
         {
             output = this;
             return true;
         }
 
-        return !output.IsNull && success;
-}
+        return GetDataTypeObject().TryConvert(in this, targetType, out output);
+    }
 
     /// <summary>
     /// Convert to target type.
@@ -824,13 +650,13 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         var success = false;
         variantValue = targetType switch
         {
-            DataType.Integer => StringToInteger(value, out success),
-            DataType.Float => StringToFloat(value, out success),
-            DataType.Timestamp => StringToTimestamp(value, out success),
-            DataType.Boolean => StringToBoolean(value, out success),
-            DataType.Numeric => StringToNumeric(value, out success),
-            DataType.String => StringToString(value, out success),
-            DataType.Interval => StringToInterval(value, out success),
+            DataType.Integer => new VariantValue(StringDataTypeObject.StringToInteger(value, out success)),
+            DataType.Float => new VariantValue(StringDataTypeObject.StringToFloat(value, out success)),
+            DataType.Timestamp => new VariantValue(StringDataTypeObject.StringToTimestamp(value, out success)),
+            DataType.Boolean => new VariantValue(StringDataTypeObject.StringToBoolean(value, out success)),
+            DataType.Numeric => new VariantValue(StringDataTypeObject.StringToNumeric(value, out success)),
+            DataType.String => new VariantValue(StringDataTypeObject.StringToString(value, out success)),
+            DataType.Interval => new VariantValue(StringDataTypeObject.StringToInterval(value, out success)),
             _ => Null
         };
         return success;
@@ -873,21 +699,21 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     public static VariantValue operator /(VariantValue left, VariantValue right)
         => Div(in left, in right, out _);
 
-    public static implicit operator decimal(VariantValue value) => value.AsNumeric;
+    public static implicit operator decimal?(VariantValue value) => value.AsNumeric;
 
-    public static implicit operator int(VariantValue value) => (int)value.AsInteger;
+    public static implicit operator int?(VariantValue value) => (int?)value.AsInteger;
 
-    public static implicit operator long(VariantValue value) => value.AsInteger;
+    public static implicit operator long?(VariantValue value) => value.AsInteger;
 
-    public static implicit operator bool(VariantValue value) => value.AsBoolean;
+    public static implicit operator bool?(VariantValue value) => value.AsBooleanNullable;
 
-    public static implicit operator double(VariantValue value) => value.AsFloat;
+    public static implicit operator double?(VariantValue value) => value.AsFloat;
 
     public static implicit operator string(VariantValue value) => value.AsString;
 
-    public static implicit operator DateTime(VariantValue value) => value.AsTimestamp;
+    public static implicit operator DateTime?(VariantValue value) => value.AsTimestamp;
 
-    public static implicit operator TimeSpan(VariantValue value) => value.AsInterval;
+    public static implicit operator TimeSpan?(VariantValue value) => value.AsInterval;
 
     /// <inheritdoc />
     public override string ToString() => Type switch
@@ -921,7 +747,7 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         DataType.String => AsStringUnsafe,
         DataType.Boolean => AsBooleanUnsafe.ToString(Application.Culture),
         DataType.Float => AsFloatUnsafe.ToString(format, Application.Culture),
-        DataType.Numeric => AsNumeric.ToString(format, Application.Culture),
+        DataType.Numeric => AsNumericUnsafe.ToString(format, Application.Culture),
         DataType.Timestamp => AsTimestampUnsafe.ToString(format, Application.Culture),
         DataType.Interval => AsIntervalUnsafe.ToString(format, Application.Culture),
         DataType.Object => $"[object:{AsObjectUnsafe}]",
@@ -941,8 +767,8 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         DataType.Integer => AsIntegerUnsafe.ToString(formatProvider),
         DataType.String => AsStringUnsafe,
         DataType.Boolean => AsBooleanUnsafe.ToString(formatProvider),
-        DataType.Float => AsFloatUnsafe.ToString(formatProvider),
-        DataType.Numeric => AsNumeric.ToString(formatProvider),
+        DataType.Float => AsFloatUnsafe.ToString(FloatNumberFormat, formatProvider),
+        DataType.Numeric => AsNumericUnsafe.ToString(FloatNumberFormat, formatProvider),
         DataType.Timestamp => AsTimestampUnsafe.ToString(formatProvider),
         DataType.Interval => AsIntervalUnsafe.ToString(null, formatProvider),
         DataType.Object => $"[object:{AsObjectUnsafe}]",

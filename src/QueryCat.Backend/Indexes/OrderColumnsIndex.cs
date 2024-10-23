@@ -115,11 +115,11 @@ internal sealed class OrderColumnsIndex : IOrderIndex
 
             for (var i = 0; i < _values1.Length; i++)
             {
-                if (_greaterFunctions[i].Invoke(in _values1[i], in _values2[i]).AsBooleanUnsafe)
+                if (_greaterFunctions[i].Invoke(in _values1[i], in _values2[i]).AsBoolean)
                 {
                     return _greaterValues[i];
                 }
-                if (_lessFunctions[i].Invoke(in _values1[i], in _values2[i]))
+                if (_lessFunctions[i].Invoke(in _values1[i], in _values2[i]).AsBoolean)
                 {
                     return _lessValues[i];
                 }

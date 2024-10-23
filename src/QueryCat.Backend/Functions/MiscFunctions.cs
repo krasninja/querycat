@@ -17,7 +17,7 @@ internal static class MiscFunctions
     {
         var value1 = thread.Stack[0];
         var value2 = thread.Stack[1];
-        if (VariantValue.Equals(in value1, in value2, out _))
+        if (VariantValue.Equals(in value1, in value2, out _).AsBoolean)
         {
             return VariantValue.Null;
         }
@@ -52,6 +52,10 @@ internal static class MiscFunctions
 
         var byteCount = thread.Stack[0].AsInteger;
         var @base = thread.Stack[1].AsInteger;
+        if (!byteCount.HasValue || !@base.HasValue)
+        {
+            return VariantValue.Null;
+        }
 
         // For reference: https://stackoverflow.com/questions/281640/how-do-i-get-a-human-readable-file-size-in-bytes-abbreviation-using-net.
         string[] suffix = ["B", "K", "M", "G", "T", "P", "E"];
@@ -59,10 +63,10 @@ internal static class MiscFunctions
         {
             return new VariantValue("0 " + suffix[0]);
         }
-        var bytes = Math.Abs(byteCount);
-        var place = Convert.ToInt64(Math.Floor(Math.Log(bytes, @base)));
-        var num = Math.Round(bytes / Math.Pow(@base, place), 1);
-        var size = string.Concat(Math.Sign(byteCount) * num, ' ', suffix[place]);
+        var bytes = Math.Abs(byteCount.Value);
+        var place = Convert.ToInt64(Math.Floor(Math.Log(bytes, @base.Value)));
+        var num = Math.Round(bytes / Math.Pow(@base.Value, place), 1);
+        var size = string.Concat(Math.Sign(byteCount.Value) * num, ' ', suffix[place]);
 
         return new VariantValue(size);
     }

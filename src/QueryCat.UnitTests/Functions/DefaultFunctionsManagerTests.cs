@@ -31,7 +31,7 @@ public sealed class DefaultFunctionsManagerTests
         using var frame = Executor.Thread.Stack.CreateFrameWithArguments(new VariantValue(5), new VariantValue(6));
         var ret = func.Delegate(Executor.Thread);
 
-        Assert.Equal(11L, ret);
+        Assert.Equal(11L, ret.AsIntegerUnsafe);
     }
 
     [FunctionSignature("add(a: integer, b: integer, c: boolean = false): integer")]
@@ -74,7 +74,7 @@ public sealed class DefaultFunctionsManagerTests
     private static VariantValue SumIntegersVariadic(IExecutionThread thread)
     {
         var str = thread.Stack[0];
-        long sum = 0;
+        long? sum = 0;
         for (int i = 1; i < thread.Stack.FrameLength; i++)
         {
             sum += thread.Stack[i].AsInteger;

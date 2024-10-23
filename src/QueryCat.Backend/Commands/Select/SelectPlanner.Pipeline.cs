@@ -299,12 +299,18 @@ internal sealed partial class SelectPlanner
         if (offsetNode != null)
         {
             var count = Misc_CreateDelegate(offsetNode.CountNode, context).Invoke(ExecutionThread).AsInteger;
-            context.SetIterator(new OffsetRowsIterator(context.CurrentIterator, count));
+            if (count.HasValue)
+            {
+                context.SetIterator(new OffsetRowsIterator(context.CurrentIterator, count.Value));
+            }
         }
         if (fetchNode != null)
         {
             var count = Misc_CreateDelegate(fetchNode.CountNode, context).Invoke(ExecutionThread).AsInteger;
-            context.SetIterator(new LimitRowsIterator(context.CurrentIterator, count));
+            if (count.HasValue)
+            {
+                context.SetIterator(new LimitRowsIterator(context.CurrentIterator, count.Value));
+            }
         }
     }
 
