@@ -5,16 +5,19 @@ The tutorial explains how to create custom plugin based on `IRowsInput` interfac
 1. Add any new input source based on `IRowsInput` interface.
 
     ```csharp
+    /// <summary>
+    /// Example simple rows input plugin.
+    /// </summary>
     public class SamplePluginRowsInput : IRowsInput
     {
         private const long MaxValue = 9;
 
         [Description("Sample input.")]
         [FunctionSignature("plugin(start: integer = 0): object<IRowsInput>")]
-        public static VariantValue SamplePlugin(FunctionCallInfo args)
+        public static VariantValue SamplePlugin(IExecutionThread thread)
         {
-            var startValue = args.GetAt(0).AsInteger;
-            var rowsSource = new SamplePluginRowsInput(startValue);
+            var startValue = thread.Stack.Pop().AsInteger;
+            var rowsSource = new SamplePluginRowsInput(startValue ?? 0);
             return VariantValue.CreateFromObject(rowsSource);
         }
 
@@ -27,7 +30,7 @@ The tutorial explains how to create custom plugin based on `IRowsInput` interfac
         };
 
         /// <inheritdoc />
-        public string[] UniqueKey { get; } = Array.Empty<string>();
+        public string[] UniqueKey { get; } = [];
 
         /// <inheritdoc />
         public QueryContext QueryContext
@@ -99,10 +102,10 @@ The tutorial explains how to create custom plugin based on `IRowsInput` interfac
     ```csharp
     [Description("Sample input.")]
     [FunctionSignature("plugin(start: integer = 0): object<IRowsInput>")]
-    public static VariantValue SamplePlugin(FunctionCallInfo args)
+    public static VariantValue SamplePlugin(IExecutionThread thread)
     {
-        var startValue = args.GetAt(0).AsInteger;
-        var rowsSource = new SamplePluginRowsInput(startValue);
+        var startValue = thread.Stack.Pop().AsInteger;
+        var rowsSource = new SamplePluginRowsInput(startValue ?? 0);
         return VariantValue.CreateFromObject(rowsSource);
     }
     ```
