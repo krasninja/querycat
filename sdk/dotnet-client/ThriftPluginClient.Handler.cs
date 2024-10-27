@@ -78,7 +78,7 @@ public partial class ThriftPluginClient
             }
             if (resultType == DataType.Blob)
             {
-                var index = _thriftPluginClient._objectsStorage.Add(result.AsBlob);
+                var index = _thriftPluginClient._objectsStorage.Add(result.AsBlobUnsafe);
                 _thriftPluginClient._logger.LogDebug("Added new blob object with handle {Handle}.", index);
                 return Task.FromResult(new VariantValue
                 {

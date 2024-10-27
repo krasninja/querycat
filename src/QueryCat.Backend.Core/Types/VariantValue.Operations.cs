@@ -466,7 +466,7 @@ public readonly partial struct VariantValue
             },
             DataType.Blob => right.Type switch
             {
-                DataType.Blob => CreateCombinedBlob(left.AsBlob, right.AsBlob),
+                DataType.Blob => CreateCombinedBlob(left.AsBlobUnsafe, right.AsBlobUnsafe),
                 _ => Null,
             },
             _ => Null,

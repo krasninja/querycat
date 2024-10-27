@@ -67,9 +67,16 @@ internal static class StringFunctions
     [FunctionSignature("substr(target: string, start: integer, count?: integer): string")]
     public static VariantValue SubString(IExecutionThread thread)
     {
+        var startValue = thread.Stack[1].AsInteger;
+        var countValue = thread.Stack[2];
+        if (!startValue.HasValue)
+        {
+            return VariantValue.Null;
+        }
+
         var value = thread.Stack[0].AsString;
-        var start = (int)thread.Stack[1].AsInteger - 1;
-        var count = !thread.Stack[2].IsNull ? (int)thread.Stack[2].AsInteger : value.Length - start;
+        var start = (int)startValue.Value - 1;
+        var count = !countValue.IsNull && countValue.AsInteger.HasValue ? (int)countValue.AsInteger.Value : value.Length - start;
         return new VariantValue(StringUtils.SafeSubstring(value, start, count));
     }
 
@@ -226,11 +233,19 @@ internal static class StringFunctions
     [FunctionSignature("regexp_substr(target: string, pattern: string, start?: integer = 1, n?: integer = 1, subexpr?: integer = 1): string")]
     public static VariantValue RegexpSubstring(IExecutionThread thread)
     {
+        var startValue = thread.Stack[2].AsInteger;
+        var nValue = thread.Stack[3].AsInteger;
+        var subexprValue = thread.Stack[4].AsInteger;
+        if (!startValue.HasValue || !nValue.HasValue || !subexprValue.HasValue)
+        {
+            return VariantValue.Null;
+        }
+
         var target = thread.Stack[0].AsString;
         var pattern = thread.Stack[1].AsString;
-        var start = (int)thread.Stack[2].AsInteger - 1;
-        var n = (int)thread.Stack[3].AsInteger - 1;
-        var subexpr = (int)thread.Stack[4].AsInteger - 1;
+        var start = (int)startValue.Value - 1;
+        var n = (int)nValue.Value - 1;
+        var subexpr = (int)subexprValue.Value - 1;
 
         target = StringUtils.SafeSubstring(target, start);
         var matches = Regex.Matches(target, pattern, RegexOptions.Compiled);
@@ -251,9 +266,15 @@ internal static class StringFunctions
     [FunctionSignature("regexp_count(target: string, pattern: string, start?: integer = 1): string")]
     public static VariantValue RegexpCount(IExecutionThread thread)
     {
+        var startValue = thread.Stack[2].AsInteger;
+        if (!startValue.HasValue)
+        {
+            return VariantValue.Null;
+        }
+
         var target = thread.Stack[0].AsString;
         var pattern = thread.Stack[1].AsString;
-        var start = (int)thread.Stack[2].AsInteger - 1;
+        var start = (int)startValue.Value - 1;
 
         target = StringUtils.SafeSubstring(target, start);
         var matches = Regex.Matches(target, pattern, RegexOptions.Compiled);
@@ -265,10 +286,16 @@ internal static class StringFunctions
     [FunctionSignature("regexp_replace(target: string, pattern: string, replacement: string, start?: integer = 1): string")]
     public static VariantValue RegexpReplace(IExecutionThread thread)
     {
+        var startValue = thread.Stack[3].AsInteger;
+        if (!startValue.HasValue)
+        {
+            return VariantValue.Null;
+        }
+
         var target = thread.Stack[0].AsString;
         var pattern = thread.Stack[1].AsString;
         var replacement = thread.Stack[2].AsString;
-        var start = (int)thread.Stack[3].AsInteger - 1;
+        var start = (int)startValue.Value - 1;
 
         target = StringUtils.SafeSubstring(target, start);
         var result = Regex.Replace(target, pattern, replacement);

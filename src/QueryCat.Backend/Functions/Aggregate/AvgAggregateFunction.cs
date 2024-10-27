@@ -51,7 +51,7 @@ internal sealed class AvgAggregateFunction : IAggregateFunction
         var sum = state[0];
         var count = state[1];
 
-        if (count == 0)
+        if (count == 0 || !count.AsInteger.HasValue)
         {
             return VariantValue.Null;
         }

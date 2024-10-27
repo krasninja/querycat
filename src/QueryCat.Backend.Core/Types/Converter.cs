@@ -106,7 +106,7 @@ public static class Converter
         var type = value.Type;
         return type switch
         {
-            DataType.Integer => (TEnum)Enum.ToObject(typeof(TEnum), value.AsInteger),
+            DataType.Integer => (TEnum)Enum.ToObject(typeof(TEnum), value.AsIntegerUnsafe),
             DataType.String => Enum.Parse<TEnum>(value.AsString, ignoreCase: true),
             _ => throw new ArgumentException(Resources.Errors.InvalidValueType),
         };
@@ -137,7 +137,7 @@ public static class Converter
             DataType.Dynamic => ConvertToObject(value),
             DataType.String => value.AsString,
             DataType.Timestamp => value.AsTimestamp,
-            DataType.Blob => value.AsBlob.GetStream(),
+            DataType.Blob => value.AsBlobUnsafe.GetStream(),
             DataType.Null => null,
             DataType.Void => null,
             _ => throw new InvalidOperationException(

@@ -515,31 +515,31 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
             || retType == typeof(UInt16)
             || retType == typeof(SByte))
         {
-            return (T)Convert.ChangeType(AsInteger, typeof(T));
+            return (T?)Convert.ChangeType(AsInteger, typeof(T?));
         }
         if (retType == typeof(bool))
         {
-            return (T)Convert.ChangeType(AsBoolean, typeof(T));
+            return (T?)Convert.ChangeType(AsBoolean, typeof(T?));
         }
         if (retType == typeof(double) || retType == typeof(float))
         {
-            return (T)Convert.ChangeType(AsFloat, typeof(T));
+            return (T?)Convert.ChangeType(AsFloat, typeof(T?));
         }
         if (retType == typeof(decimal))
         {
-            return (T)Convert.ChangeType(AsNumeric, typeof(T));
+            return (T?)Convert.ChangeType(AsNumeric, typeof(T?));
         }
         if (retType == typeof(string) || retType == typeof(char))
         {
-            return (T)Convert.ChangeType(AsString, typeof(T));
+            return (T)Convert.ChangeType(AsString, typeof(T?));
         }
         if (retType == typeof(DateTime) || retType == typeof(DateTimeOffset))
         {
-            return (T)Convert.ChangeType(AsTimestamp, typeof(T));
+            return (T?)Convert.ChangeType(AsTimestamp, typeof(T?));
         }
         if (retType == typeof(TimeSpan))
         {
-            return (T)Convert.ChangeType(AsInterval, typeof(T));
+            return (T?)Convert.ChangeType(AsInterval, typeof(T?));
         }
 
         var sourceObj = Cast(DataType.Object)._object;

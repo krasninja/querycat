@@ -89,7 +89,7 @@ internal sealed class DsvOutput : RowsOutput, IDisposable
                         break;
                     case DataType.Blob:
                         {
-                            using var stream = values[i].AsBlob.GetStream();
+                            using var stream = values[i].AsBlobUnsafe.GetStream();
                             var arr = ArrayPool<byte>.Shared.Rent(4096);
                             int bytesRead;
                             while ((bytesRead = stream.Read(arr)) > 0)

@@ -62,22 +62,22 @@ internal sealed class XmlOutput : RowsOutput, IDisposable
             switch (columns[i].DataType)
             {
                 case DataType.Boolean:
-                    _xmlWriter.WriteValue(values[i].AsBoolean);
+                    _xmlWriter.WriteValue(values[i].AsBooleanUnsafe);
                     break;
                 case DataType.Float:
-                    _xmlWriter.WriteValue(values[i].AsFloat);
+                    _xmlWriter.WriteValue(values[i].AsFloatUnsafe);
                     break;
                 case DataType.Integer:
-                    _xmlWriter.WriteValue(values[i].AsInteger);
+                    _xmlWriter.WriteValue(values[i].AsIntegerUnsafe);
                     break;
                 case DataType.Numeric:
-                    _xmlWriter.WriteValue(values[i].AsNumeric);
+                    _xmlWriter.WriteValue(values[i].AsNumericUnsafe);
                     break;
                 case DataType.String:
-                    _xmlWriter.WriteValue(values[i].AsString);
+                    _xmlWriter.WriteValue(values[i].AsStringUnsafe);
                     break;
                 case DataType.Timestamp:
-                    _xmlWriter.WriteValue(values[i].AsTimestamp);
+                    _xmlWriter.WriteValue(values[i].AsTimestampUnsafe);
                     break;
                 default:
                     _xmlWriter.WriteValue(values[i].ToString());
