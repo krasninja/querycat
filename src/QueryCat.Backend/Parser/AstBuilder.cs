@@ -17,6 +17,11 @@ internal sealed class AstBuilder : IAstBuilder
     private readonly IDictionary<string, IAstNode>? _astCache;
     private readonly int _maxQueryLength;
 
+    private readonly QueryCatLexer _lexer = new(CharStreams.fromString(string.Empty));
+    private readonly QueryCatParser _parser;
+    private readonly ProgramAntlrErrorListener _errorListener = new();
+    private readonly ProgramParserVisitor _programParserVisitor = new();
+
     /// <summary>
     /// Constructor.
     /// </summary>
@@ -26,6 +31,11 @@ internal sealed class AstBuilder : IAstBuilder
     {
         _astCache = cache;
         _maxQueryLength = maxQueryLength;
+
+        _parser = new QueryCatParser(new CommonTokenStream(_lexer));
+        _parser.RemoveErrorListeners();
+        _parser.AddErrorListener(_errorListener);
+        _parser.Interpreter.PredictionMode = Antlr4.Runtime.Atn.PredictionMode.SLL;
     }
 
     /// <inheritdoc />
@@ -75,26 +85,18 @@ internal sealed class AstBuilder : IAstBuilder
 #endif
     }
 
-    private static TNode BuildInternal<TNode>(string input, Func<QueryCatParser, ParserRuleContext> signatureFunc)
+    private TNode BuildInternal<TNode>(string input, Func<QueryCatParser, ParserRuleContext> signatureFunc)
         where TNode : IAstNode
     {
-        var errorListener = new ProgramAntlrErrorListener();
-
-        var inputStream = new AntlrInputStream(input);
-        var lexer = new QueryCatLexer(inputStream);
-        var commonTokenStream = new CommonTokenStream(lexer);
-        var parser = new QueryCatParser(commonTokenStream);
-        parser.RemoveErrorListeners();
-        parser.AddErrorListener(errorListener);
-        parser.Interpreter.PredictionMode = Antlr4.Runtime.Atn.PredictionMode.SLL;
-        var context = signatureFunc.Invoke(parser);
-        var visitor = new ProgramParserVisitor();
-        if (parser.NumberOfSyntaxErrors > 0)
+        _lexer.SetInputStream(new AntlrInputStream(input));
+        _parser.TokenStream = new CommonTokenStream(_lexer);
+        var context = signatureFunc.Invoke(_parser);
+        if (_parser.NumberOfSyntaxErrors > 0)
         {
-            throw new SyntaxException(errorListener.Message, input, errorListener.Line, errorListener.CharPosition);
+            throw new SyntaxException(_errorListener.Message, input, _errorListener.Line, _errorListener.CharPosition);
         }
 
-        return (TNode)visitor.Visit(context);
+        return (TNode)_programParserVisitor.Visit(context);
     }
 
     private static IEnumerable<IAstBuilder.Token> TransformTokens(IEnumerable<IToken> tokens)
