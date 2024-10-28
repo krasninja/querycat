@@ -57,7 +57,9 @@ internal sealed class SetIdentifierDelegateVisitor : CreateDelegateVisitor
         // This is expression object.
         if (GetObjectBySelector(thread, context, startObject, node, out _))
         {
+            context.ExecutionThread = thread;
             thread.ObjectSelector.SetValue(context, Converter.ConvertValue(newValue, typeof(object)));
+            context.ExecutionThread = NullExecutionThread.Instance;
         }
         // Not an expression - variable.
         else if (!node.HasSelectors)

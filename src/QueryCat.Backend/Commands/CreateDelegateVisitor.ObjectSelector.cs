@@ -48,6 +48,7 @@ internal partial class CreateDelegateVisitor
             return false;
         }
 
+        context.ExecutionThread = thread;
         context.Push(new ObjectSelectorContext.Token(value.AsObjectUnsafe));
         foreach (var selector in idNode.SelectorNodes)
         {
@@ -88,6 +89,7 @@ internal partial class CreateDelegateVisitor
             context.Push(info.Value);
         }
 
+        context.ExecutionThread = NullExecutionThread.Instance;
         result = VariantValue.CreateFromObject(context.LastValue);
         return true;
     }
@@ -123,9 +125,7 @@ internal partial class CreateDelegateVisitor
             return [];
         }
 
-        var selectContext = new ObjectSelectorContext();
         var enumerator = enumerable.GetEnumerator();
-
         var list = new List<object>();
         try
         {
@@ -136,14 +136,11 @@ internal partial class CreateDelegateVisitor
                     continue;
                 }
 
-                selectContext.Push(new ObjectSelectorContext.Token(enumerator.Current));
                 container.Value = VariantValue.CreateFromObject(enumerator.Current);
                 if (nodeAction.Invoke(thread).AsBoolean)
                 {
                     list.Add(enumerator.Current);
                 }
-
-                selectContext.Clear();
             }
         }
         finally

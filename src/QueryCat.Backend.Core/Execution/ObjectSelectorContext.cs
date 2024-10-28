@@ -11,6 +11,11 @@ namespace QueryCat.Backend.Core.Execution;
 public sealed class ObjectSelectorContext
 {
     /// <summary>
+    /// Running execution thread.
+    /// </summary>
+    public IExecutionThread ExecutionThread { get; internal set; } = NullExecutionThread.Instance;
+
+    /// <summary>
     /// Select object information.
     /// </summary>
     /// <param name="Value">Result object instance.</param>
@@ -73,7 +78,7 @@ public sealed class ObjectSelectorContext
     /// Constructor.
     /// </summary>
     /// <param name="startObject">Optional root object of the expression.</param>
-    public ObjectSelectorContext(object startObject)
+    public ObjectSelectorContext(object startObject) : this()
     {
         Push(new Token(startObject));
     }
