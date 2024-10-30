@@ -29,23 +29,32 @@ internal class ResolveTypesVisitor : AstVisitor
         AstTraversal.PostOrder(node);
     }
 
+    /// <summary>
+    /// Separate names and positional arguments.
+    /// </summary>
+    /// <param name="callArguments">Call arguments.</param>
+    /// <returns>Instance of <see cref="FunctionCallArgumentsTypes" />.</returns>
     public static FunctionCallArgumentsTypes CreateFunctionArgumentsTypes(
         IList<FunctionCallArgumentNode> callArguments)
     {
-        var positionalArgumentsTypes = callArguments
-            .Where(arg => arg.IsPositional)
-            .Select(arg => new KeyValuePair<int, DataType>(
-                callArguments.IndexOf(arg),
-                arg.ExpressionValueNode.GetDataType()))
-            .ToArray();
-        var namedArgumentsTypes = callArguments
-            .Where(arg => !arg.IsPositional)
-            .Select(arg => new KeyValuePair<string, DataType>(
-                arg.Key!, arg.ExpressionValueNode.GetDataType()))
-            .ToArray();
+        var positionalArgs = new List<KeyValuePair<int, DataType>>(callArguments.Count);
+        var namedArgs = new List<KeyValuePair<string, DataType>>(callArguments.Count);
+        for (var i = 0; i < callArguments.Count; i++)
+        {
+            var arg = callArguments[i];
+            if (callArguments[i].IsPositional)
+            {
+                positionalArgs.Add(new KeyValuePair<int, DataType>(i, arg.ExpressionValueNode.GetDataType()));
+            }
+            else
+            {
+                namedArgs.Add(new KeyValuePair<string, DataType>(arg.Key!, arg.ExpressionValueNode.GetDataType()));
+            }
+        }
+
         return new FunctionCallArgumentsTypes(
-            positionalArgumentsTypes,
-            namedArgumentsTypes
+            positionalArgs.ToArray(),
+            namedArgs.ToArray()
         );
     }
 
