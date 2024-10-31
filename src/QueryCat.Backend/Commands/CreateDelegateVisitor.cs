@@ -54,9 +54,9 @@ internal partial class CreateDelegateVisitor : AstVisitor
         {
             return funcUnit;
         }
-        NodeIdFuncMap.Clear();
         Run(node);
         var handler = NodeIdFuncMap[node.Id];
+        NodeIdFuncMap.Clear();
         return handler;
     }
 
@@ -177,13 +177,8 @@ internal partial class CreateDelegateVisitor : AstVisitor
         {
             var context = new ObjectSelectorContext();
             node.SetAttribute(ObjectSelectorKey, context);
-            VariantValue Func(IExecutionThread thread)
-            {
-                var startObject = thread.GetVariable(node.Name);
-                GetObjectBySelector(thread, context, startObject, node, out var finalValue);
-                return finalValue;
-            }
-            NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, node.GetDataType());
+            var strategies = GetObjectSelectStrategies(node, NodeIdFuncMap);
+            NodeIdFuncMap[node.Id] = new ObjectSelectFuncUnit(node.Name, node.GetDataType(), strategies, context);
             return;
         }
 
@@ -192,22 +187,10 @@ internal partial class CreateDelegateVisitor : AstVisitor
         {
             var container = new VariantValueContainer();
             parentObjectNode.SetAttribute(ObjectSelectorContainerKey, container);
-
             var context = new ObjectSelectorContext();
-            VariantValue Func(IExecutionThread thread)
-            {
-                if (GetObjectBySelector(
-                    thread,
-                    context,
-                    VariantValue.CreateFromObject(container.Value),
-                    node,
-                    out var value))
-                {
-                    return value;
-                }
-                return VariantValue.Null;
-            }
-            NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, DataType.Dynamic);
+            node.SetAttribute(ObjectSelectorKey, context);
+            var strategies = GetObjectSelectStrategies(node, NodeIdFuncMap);
+            NodeIdFuncMap[node.Id] = new ObjectSelectSpecialFuncUnit(container, strategies, context);
             return;
         }
 

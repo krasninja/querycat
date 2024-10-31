@@ -36,9 +36,10 @@ internal sealed class SetIdentifierDelegateVisitor : CreateDelegateVisitor
         if (ExecutionThread.ContainsVariable(node.Name))
         {
             var context = new ObjectSelectorContext();
+            var strategies = GetObjectSelectStrategies(node, NodeIdFuncMap);
             VariantValue Func(IExecutionThread thread)
             {
-                var newValue = SetValue(thread, node, context);
+                var newValue = SetValue(thread, node, strategies, context);
                 context.Clear();
                 return newValue;
             }
@@ -49,13 +50,17 @@ internal sealed class SetIdentifierDelegateVisitor : CreateDelegateVisitor
         throw new CannotFindIdentifierException(node.Name);
     }
 
-    private VariantValue SetValue(IExecutionThread thread, IdentifierExpressionNode node, ObjectSelectorContext context)
+    private VariantValue SetValue(
+        IExecutionThread thread,
+        IdentifierExpressionNode node,
+        SelectStrategyContainer selectStrategyContainer,
+        ObjectSelectorContext context)
     {
         var startObject = thread.GetVariable(node.Name);
         var newValue = _funcUnit.Invoke(thread);
 
         // This is expression object.
-        if (GetObjectBySelector(thread, context, startObject, node, out _))
+        if (GetObjectBySelector(thread, context, startObject, selectStrategyContainer, out _))
         {
             context.ExecutionThread = thread;
             thread.ObjectSelector.SetValue(context, Converter.ConvertValue(newValue, typeof(object)));
