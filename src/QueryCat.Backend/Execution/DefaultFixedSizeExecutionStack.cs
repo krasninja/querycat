@@ -70,10 +70,7 @@ public sealed class DefaultFixedSizeExecutionStack : IExecutionStack
     public VariantValue Pop()
     {
         ValidateFrame();
-        if (FrameLength == 0)
-        {
-            ArgumentOutOfRangeException.ThrowIfZero(FrameLength);
-        }
+        ArgumentOutOfRangeException.ThrowIfZero(FrameLength);
         return _stack[--_position];
     }
 

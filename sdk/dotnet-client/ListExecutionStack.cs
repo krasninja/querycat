@@ -66,10 +66,7 @@ public sealed class ListExecutionStack : IExecutionStack
     /// <inheritdoc />
     public VariantValue Pop()
     {
-        if (FrameLength == 0)
-        {
-            ArgumentOutOfRangeException.ThrowIfZero(FrameLength);
-        }
+        ArgumentOutOfRangeException.ThrowIfZero(FrameLength);
         return _stack[--_position];
     }
 
