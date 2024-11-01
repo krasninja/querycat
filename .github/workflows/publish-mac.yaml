@@ -1,9 +1,17 @@
+#
+# Release the new version of QueryCat CLI for macOS on push to main.
+#
+
+
 name: Publish macOS x64 Version
+
 on:
   push:
     branches:
       - main
+
   workflow_dispatch:
+
 jobs:
   publish:
     runs-on: macos-14
@@ -12,14 +20,18 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
       - name: Set up dotnet
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8'
+
       - name: Install GitVersion
         run: dotnet tool install --global GitVersion.Tool --version 6.*
+
       - name: Run build Cake script
         run: ./build.sh -t publish-all --verbosity Diagnostic -- --platform mac
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
