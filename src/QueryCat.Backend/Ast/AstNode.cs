@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Ast;
 
@@ -17,7 +18,7 @@ internal abstract class AstNode : IAstNode
     /// </summary>
     public int Id { get; } = _nextId++;
 
-    private SortedList<string, object?>? _attributes;
+    private SmallDictionary<string, object?>? _attributes;
 
     /// <inheritdoc />
     public abstract object Clone();
