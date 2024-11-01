@@ -38,7 +38,11 @@ public class NCalcBenchmark
     [Benchmark]
     public double CalculatePiWithNCalc()
     {
-        var result = new Expression(_ncalcQuery).Evaluate();
+        var expression = new Expression(_ncalcQuery)
+        {
+            Options = ExpressionOptions.NoCache | ExpressionOptions.IgnoreCaseAtBuiltInFunctions,
+        };
+        var result = expression.Evaluate();
         return (double)result!;
     }
 
