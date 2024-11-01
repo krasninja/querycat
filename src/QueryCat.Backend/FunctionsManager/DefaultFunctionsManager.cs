@@ -129,7 +129,16 @@ public sealed partial class DefaultFunctionsManager : IFunctionsManager
             };
             if (_functions.TryGetValue(NormalizeName(function.Name), out var sameNameFunctionsList))
             {
-                var similarFunction = sameNameFunctionsList.Find(f => f.IsSignatureEquals(function));
+                Function? similarFunction = null;
+                foreach (var sameNameFunction in sameNameFunctionsList)
+                {
+                    if (sameNameFunction.IsSignatureEquals(function))
+                    {
+                        similarFunction = function;
+                        break;
+                    }
+                }
+
                 if (similarFunction != null)
                 {
                     _logger.LogWarning("Possibly similar signature function: {Function}.", function);
