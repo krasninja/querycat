@@ -9,11 +9,6 @@ internal sealed class SetIdentifierDelegateVisitor : CreateDelegateVisitor
 {
     private readonly IFuncUnit _funcUnit;
 
-    public SetIdentifierDelegateVisitor(IExecutionThread<ExecutionOptions> thread, IFuncUnit funcUnit) : base(thread)
-    {
-        _funcUnit = funcUnit;
-    }
-
     public SetIdentifierDelegateVisitor(IExecutionThread<ExecutionOptions> thread, ResolveTypesVisitor resolveTypesVisitor, IFuncUnit funcUnit)
         : base(thread, resolveTypesVisitor)
     {

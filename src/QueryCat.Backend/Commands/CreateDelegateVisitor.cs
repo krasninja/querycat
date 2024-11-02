@@ -19,11 +19,7 @@ internal partial class CreateDelegateVisitor : AstVisitor
 
     private const string ObjectSelectorContainerKey = "object_selector_container_key";
 
-    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(CreateDelegateVisitor));
-
     private readonly ResolveTypesVisitor _resolveTypesVisitor;
-
-    private readonly Dictionary<IdentifierIndexSelectorNode, object?[]> _objectIndexesCache = new();
 
     protected Dictionary<int, IFuncUnit> NodeIdFuncMap { get; } = new(capacity: 32);
 

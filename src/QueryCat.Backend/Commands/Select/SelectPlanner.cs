@@ -11,9 +11,17 @@ internal sealed partial class SelectPlanner
 {
     internal IExecutionThread<ExecutionOptions> ExecutionThread { get; }
 
-    public SelectPlanner(IExecutionThread<ExecutionOptions> executionThread)
+    private readonly ResolveTypesVisitor _resolveTypesVisitor;
+
+    public SelectPlanner(IExecutionThread<ExecutionOptions> executionThread, ResolveTypesVisitor resolveTypesVisitor)
     {
         ExecutionThread = executionThread;
+        _resolveTypesVisitor = resolveTypesVisitor;
+    }
+
+    public SelectPlanner(IExecutionThread<ExecutionOptions> executionThread)
+        : this(executionThread, new ResolveTypesVisitor(executionThread))
+    {
     }
 
     public IRowsIterator CreateIterator(SelectQueryNode queryNode, SelectCommandContext? parentContext = null)

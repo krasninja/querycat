@@ -7,14 +7,21 @@ namespace QueryCat.Backend.Commands.Declare;
 
 internal sealed class SetCommand : ICommand
 {
+    private readonly ResolveTypesVisitor _resolveTypesVisitor;
+
+    public SetCommand(ResolveTypesVisitor resolveTypesVisitor)
+    {
+        _resolveTypesVisitor = resolveTypesVisitor;
+    }
+
     /// <inheritdoc />
     public IFuncUnit CreateHandler(IExecutionThread<ExecutionOptions> executionThread, StatementNode node)
     {
         var setNode = (SetNode)node.RootNode;
 
-        var valueHandler = new StatementsVisitor(executionThread)
+        var valueHandler = new StatementsVisitor(executionThread, _resolveTypesVisitor)
             .RunAndReturn(setNode.ValueNode);
-        var identifierHandler = new SetIdentifierDelegateVisitor(executionThread, valueHandler)
+        var identifierHandler = new SetIdentifierDelegateVisitor(executionThread, _resolveTypesVisitor, valueHandler)
             .RunAndReturn(setNode.IdentifierNode);
 
         return new FuncCommandHandler(thread =>

@@ -257,14 +257,14 @@ internal class ResolveTypesVisitor : AstVisitor
     /// <inheritdoc />
     public override void Visit(SelectQuerySpecificationNode node)
     {
-        new SelectPlanner(ExecutionThread).CreateIterator(node);
+        new SelectPlanner(ExecutionThread, this).CreateIterator(node);
         node.ColumnsListNode.ColumnsNodes[0].CopyTo<DataType>(AstAttributeKeys.TypeKey, node);
     }
 
     /// <inheritdoc />
     public override void Visit(SelectQueryCombineNode node)
     {
-        new SelectPlanner(ExecutionThread).CreateIterator(node);
+        new SelectPlanner(ExecutionThread, this).CreateIterator(node);
         node.ColumnsListNode.ColumnsNodes[0].CopyTo<DataType>(AstAttributeKeys.TypeKey, node);
     }
 
