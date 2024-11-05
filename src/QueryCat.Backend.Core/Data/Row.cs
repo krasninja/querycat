@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Text;
 using QueryCat.Backend.Core.Types;
 
@@ -6,7 +7,7 @@ namespace QueryCat.Backend.Core.Data;
 /// <summary>
 /// Represents a single query record.
 /// </summary>
-public class Row : IRowsSchema, ICloneable
+public class Row : IRowsSchema, ICloneable, IEnumerable<VariantValue>
 {
     private readonly Column[] _columns;
 
@@ -197,6 +198,18 @@ public class Row : IRowsSchema, ICloneable
             }
         }
         return sb.ToString();
+    }
+
+    /// <inheritdoc />
+    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
+    /// <inheritdoc />
+    public IEnumerator<VariantValue> GetEnumerator()
+    {
+        foreach (var value in _values)
+        {
+            yield return value;
+        }
     }
 
     /// <inheritdoc />
