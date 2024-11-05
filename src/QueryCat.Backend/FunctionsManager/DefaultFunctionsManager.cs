@@ -34,6 +34,8 @@ public sealed partial class DefaultFunctionsManager : IFunctionsManager
 
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(DefaultFunctionsManager));
 
+    private static readonly List<Function> _emptyFunctionList = new();
+
     private static VariantValue EmptyFunction(IExecutionThread thread)
     {
         return VariantValue.Null;
@@ -85,6 +87,14 @@ public sealed partial class DefaultFunctionsManager : IFunctionsManager
         return functionName;
     }
 
+    /// <inheritdoc />
+    public string RegisterFunction(string signature, FunctionDelegate @delegate,
+        string? description = null)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(signature, nameof(signature));
+        return PreRegisterFunction(signature, @delegate, description: description);
+    }
+
     private bool TryGetPreRegistration(string name, out List<Function> functions)
     {
         if (_functionsPreRegistration.Remove(name, out var functionInfo))
@@ -108,12 +118,35 @@ public sealed partial class DefaultFunctionsManager : IFunctionsManager
         return false;
     }
 
-    /// <inheritdoc />
-    public string RegisterFunction(string signature, FunctionDelegate @delegate,
-        string? description = null)
+    private bool ProcessSimilarFunction(Function function, out List<Function>? functions)
     {
-        ArgumentException.ThrowIfNullOrEmpty(signature, nameof(signature));
-        return PreRegisterFunction(signature, @delegate, description: description);
+        if (_functions.TryGetValue(function.Name, out functions))
+        {
+            foreach (var sameNameFunction in functions)
+            {
+                if (sameNameFunction.IsSignatureEquals(function))
+                {
+                    _logger.LogWarning("Possibly similar signature function: {Function}.", function);
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private void FillFunctionInfoFromMethodInfo(Function function)
+    {
+        var memberInfo = function.Delegate.Method;
+        var descriptionAttribute = memberInfo.GetCustomAttribute<DescriptionAttribute>();
+        if (descriptionAttribute != null)
+        {
+            function.Description = descriptionAttribute.Description;
+        }
+        var safeAttribute = memberInfo.GetCustomAttribute<SafeFunctionAttribute>();
+        if (safeAttribute != null)
+        {
+            function.IsSafe = true;
+        }
     }
 
     private List<Function> RegisterFunction(FunctionPreRegistration preRegistration)
@@ -123,52 +156,24 @@ public sealed partial class DefaultFunctionsManager : IFunctionsManager
         {
             var signatureAst = _astBuilder.BuildFunctionSignatureFromString(signature);
 
-            var function = new Function(preRegistration.Delegate, signatureAst)
-            {
-                Description = preRegistration.Description ?? string.Empty,
-            };
-            if (_functions.TryGetValue(NormalizeName(function.Name), out var sameNameFunctionsList))
-            {
-                Function? similarFunction = null;
-                foreach (var sameNameFunction in sameNameFunctionsList)
-                {
-                    if (sameNameFunction.IsSignatureEquals(function))
-                    {
-                        similarFunction = function;
-                        break;
-                    }
-                }
+            var function = new Function(preRegistration.Delegate, signatureAst, description: preRegistration.Description);
+            ProcessSimilarFunction(function, out var functions);
+            FillFunctionInfoFromMethodInfo(function);
 
-                if (similarFunction != null)
-                {
-                    _logger.LogWarning("Possibly similar signature function: {Function}.", function);
-                }
-            }
-            var memberInfo = preRegistration.Delegate.Method;
-            var descriptionAttribute = memberInfo.GetCustomAttribute<DescriptionAttribute>();
-            if (descriptionAttribute != null)
+            // Add or update functions list.
+            if (functions != null)
             {
-                function.Description = descriptionAttribute.Description;
+                functions.Add(function);
             }
-            var safeAttribute = memberInfo.GetCustomAttribute<SafeFunctionAttribute>();
-            if (safeAttribute != null)
+            else
             {
-                function.IsSafe = true;
+                functions = [function];
+                _functions.Add(function.Name, functions);
+                LogRegisterFunction(function);
             }
-            functionsList = AddFunctionInternal(function);
+            functionsList = functions;
         }
-        return functionsList ?? new List<Function>();
-    }
-
-    private List<Function> AddFunctionInternal(Function function)
-    {
-        var list = _functions!.AddOrUpdate(
-            NormalizeName(function.Name),
-            addValueFactory: _ => [function],
-            updateValueFactory: (_, value) => value!.Add(function))!;
-        LogRegisterFunction(function);
-
-        return list;
+        return functionsList ?? _emptyFunctionList;
     }
 
     /// <inheritdoc />
