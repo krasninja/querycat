@@ -343,7 +343,7 @@ simpleExpression
     | functionCall # SimpleExpressionFunctionCall
     | identifier # SimpleExpressionIdentifier
     | '(' simpleExpression ')' # SimpleExpressionInParens
-    | op=(PLUS | MINUS | NOT) right=expression # SimpleExpressionUnary
+    | op=(PLUS | MINUS | NOT) right=simpleExpression # SimpleExpressionUnary
     | left=simpleExpression op=(STAR | DIV | MOD) right=simpleExpression # SimpleExpressionBinary
     | left=simpleExpression op=(CONCAT | PLUS | MINUS) right=simpleExpression # SimpleExpressionBinary
     | left=simpleExpression op=(EQUALS | NOT_EQUALS | GREATER | GREATER_OR_EQUALS | LESS | LESS_OR_EQUALS) right=simpleExpression # SimpleExpressionBinary

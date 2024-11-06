@@ -7308,9 +7308,9 @@ public partial class QueryCatParser : Parser {
 	}
 	public partial class SimpleExpressionUnaryContext : SimpleExpressionContext {
 		public IToken op;
-		public ExpressionContext right;
-		[System.Diagnostics.DebuggerNonUserCode] public ExpressionContext expression() {
-			return GetRuleContext<ExpressionContext>(0);
+		public SimpleExpressionContext right;
+		[System.Diagnostics.DebuggerNonUserCode] public SimpleExpressionContext simpleExpression() {
+			return GetRuleContext<SimpleExpressionContext>(0);
 		}
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode PLUS() { return GetToken(QueryCatParser.PLUS, 0); }
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode MINUS() { return GetToken(QueryCatParser.MINUS, 0); }
@@ -7504,7 +7504,7 @@ public partial class QueryCatParser : Parser {
 				    Consume();
 				}
 				State = 1047;
-				((SimpleExpressionUnaryContext)_localctx).right = expression(0);
+				((SimpleExpressionUnaryContext)_localctx).right = simpleExpression(6);
 				}
 				break;
 			case 8:
@@ -8173,7 +8173,7 @@ public partial class QueryCatParser : Parser {
 		6,71,-1,0,1037,1051,3,144,72,0,1038,1051,3,126,63,0,1039,1051,3,134,67,
 		0,1040,1051,3,10,5,0,1041,1051,3,116,58,0,1042,1043,5,1,0,0,1043,1044,
 		3,142,71,0,1044,1045,5,2,0,0,1045,1051,1,0,0,0,1046,1047,7,12,0,0,1047,
-		1051,3,140,70,0,1048,1051,3,130,65,0,1049,1051,3,128,64,0,1050,1036,1,
+		1051,3,142,71,6,1048,1051,3,130,65,0,1049,1051,3,128,64,0,1050,1036,1,
 		0,0,0,1050,1038,1,0,0,0,1050,1039,1,0,0,0,1050,1040,1,0,0,0,1050,1041,
 		1,0,0,0,1050,1042,1,0,0,0,1050,1046,1,0,0,0,1050,1048,1,0,0,0,1050,1049,
 		1,0,0,0,1051,1066,1,0,0,0,1052,1053,10,5,0,0,1053,1054,7,14,0,0,1054,1065,
