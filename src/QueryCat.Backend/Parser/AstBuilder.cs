@@ -1,4 +1,5 @@
 using Antlr4.Runtime;
+using Antlr4.Runtime.Atn;
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Function;
@@ -23,6 +24,11 @@ internal sealed class AstBuilder : IAstBuilder
     private readonly ProgramParserVisitor _programParserVisitor = new();
 
     /// <summary>
+    /// Collect profile information. Use DumpProfileInfo() method.
+    /// </summary>
+    public bool ProfileMode { get; set; }
+
+    /// <summary>
     /// Constructor.
     /// </summary>
     /// <param name="cache">Cache for AST.</param>
@@ -39,8 +45,7 @@ internal sealed class AstBuilder : IAstBuilder
     }
 
     /// <inheritdoc />
-    public ProgramNode BuildProgramFromString(string program)
-        => Build<ProgramNode>(program, p => p.program(), _astCache);
+    public ProgramNode BuildProgramFromString(string program) => Build<ProgramNode>(program, p => p.program(), _astCache);
 
     /// <inheritdoc />
     public FunctionSignatureNode BuildFunctionSignatureFromString(string function)
@@ -86,6 +91,7 @@ internal sealed class AstBuilder : IAstBuilder
     private TNode BuildInternal<TNode>(string input, Func<QueryCatParser, ParserRuleContext> signatureFunc)
         where TNode : IAstNode
     {
+        _parser.Profile = ProfileMode;
         _lexer.SetInputStream(new AntlrInputStream(input));
         _parser.TokenStream = new CommonTokenStream(_lexer);
         var context = signatureFunc.Invoke(_parser);
@@ -93,8 +99,32 @@ internal sealed class AstBuilder : IAstBuilder
         {
             throw new SyntaxException(_errorListener.Message, input, _errorListener.Line, _errorListener.CharPosition);
         }
+        if (ProfileMode)
+        {
+            DumpProfileInfo();
+        }
 
         return (TNode)_programParserVisitor.Visit(context);
+    }
+
+    private readonly record struct ProfileInfo(
+        DecisionInfo DecisionInfo,
+        string RuleName)
+    {
+        /// <inheritdoc />
+        public override string ToString()
+            => $"{RuleName}: time={DecisionInfo.timeInPrediction} errors={DecisionInfo.errors.Count} " +
+               $"ambiguities={DecisionInfo.ambiguities.Count}";
+    }
+
+    private void DumpProfileInfo()
+    {
+        var info = _parser.ParseInfo.getDecisionInfo()
+            .OrderByDescending(di => di.timeInPrediction)
+            .Select(di => new ProfileInfo(
+                di,
+                _parser.RuleNames[_parser.Atn.GetDecisionState(di.decision).ruleIndex]))
+            .ToList();
     }
 
     private static IEnumerable<IAstBuilder.Token> TransformTokens(IEnumerable<IToken> tokens)

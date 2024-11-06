@@ -307,31 +307,29 @@ expression
     : literal # ExpressionLiteral
     | castOperand # ExpressionCast
     | right=expression TYPECAST type # ExpressionBinaryCast
-    | left=expression atTimeZone # ExpressionAtTimeZone
     | standardFunction # ExpressionStandardFunctionCall
     | functionCall # ExpressionFunctionCall
-    | caseExpression # ExpressionCase
     | identifier # ExpressionIdentifier
     | '(' expression ')' # ExpressionInParens
-    | '(' selectQueryExpression ')' # ExpressionSelect
-    | left=expression op=CONCAT right=expression # ExpressionBinary
-    | op=(PLUS | MINUS) right=expression # ExpressionUnary
+    | op=(PLUS | MINUS | NOT) right=expression # ExpressionUnary
     | left=expression op=(LESS_LESS | GREATER_GREATER) right=expression # ExpressionBinary
     | left=expression op=(STAR | DIV | MOD) right=expression # ExpressionBinary
-    | left=expression op=(PLUS | MINUS) right=expression # ExpressionBinary
+    | left=expression op=(CONCAT | PLUS | MINUS) right=expression # ExpressionBinary
     | left=expression op=(EQUALS | NOT_EQUALS | GREATER | GREATER_OR_EQUALS | LESS | LESS_OR_EQUALS) right=expression # ExpressionBinary
     | left=expression NOT? op=LIKE right=expression # ExpressionBinary
     | left=expression NOT? op=SIMILAR TO right=expression # ExpressionBinary
     | left=expression NOT? op=IN right=array # ExpressionBinaryInArray
     | left=expression NOT? op=IN right=selectQueryExpression # ExpressionBinaryInSubquery
     | expr=expression NOT? op=BETWEEN left=simpleExpression AND right=expression # ExpressionBetween
-    | EXISTS '(' selectQueryExpression ')' # ExpressionExists
     | left=expression op=(EQUALS | NOT_EQUALS | GREATER | GREATER_OR_EQUALS | LESS | LESS_OR_EQUALS)
         condition=(ANY | SOME | ALL) '(' selectQueryExpression ')' # ExpressionSubquery
+    | EXISTS '(' selectQueryExpression ')' # ExpressionExists
+    | '(' selectQueryExpression ')' # ExpressionSelect
     | left=expression op=AND right=expression # ExpressionBinary
     | left=expression op=OR right=expression # ExpressionBinary
     | right=expression op=IS NOT? NULL # ExpressionUnary
-    | op=NOT right=expression # ExpressionUnary
+    | left=expression atTimeZone # ExpressionAtTimeZone
+    | caseExpression # ExpressionCase
     | blockExpression # ExpressionBlock
     ;
 
@@ -341,25 +339,23 @@ simpleExpression
     : literal # SimpleExpressionLiteral
     | castOperand # SimpleExpressionCast
     | right=simpleExpression TYPECAST type # SimpleExpressionBinaryCast
-    | atTimeZone # SimpleExpressionAtTimeZone
     | standardFunction # SimpleExpressionStandardFunctionCall
     | functionCall # SimpleExpressionFunctionCall
-    | caseExpression # SimpleExpressionCase
     | identifier # SimpleExpressionIdentifier
     | '(' simpleExpression ')' # SimpleExpressionInParens
-    | op=(PLUS | MINUS) right=expression # SimpleExpressionUnary
-    | left=simpleExpression op=CONCAT right=simpleExpression # SimpleExpressionBinary
+    | op=(PLUS | MINUS | NOT) right=expression # SimpleExpressionUnary
     | left=simpleExpression op=(STAR | DIV | MOD) right=simpleExpression # SimpleExpressionBinary
-    | left=simpleExpression op=(PLUS | MINUS) right=simpleExpression # SimpleExpressionBinary
+    | left=simpleExpression op=(CONCAT | PLUS | MINUS) right=simpleExpression # SimpleExpressionBinary
     | left=simpleExpression op=(EQUALS | NOT_EQUALS | GREATER | GREATER_OR_EQUALS | LESS | LESS_OR_EQUALS) right=simpleExpression # SimpleExpressionBinary
+    | caseExpression # SimpleExpressionCase
+    | atTimeZone # SimpleExpressionAtTimeZone
     ;
 
 literal
     : INTEGER_LITERAL # literalPlain
+    | STRING_LITERAL # literalPlain
     | FLOAT_LITERAL # literalPlain
     | NUMERIC_LITERAL # literalPlain
-    | BOOLEAN_LITERAL # literalPlain
-    | STRING_LITERAL # literalPlain
     | TRUE # literalPlain
     | FALSE # literalPlain
     | NULL # literalPlain
