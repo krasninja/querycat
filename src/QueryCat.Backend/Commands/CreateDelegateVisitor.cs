@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Function;
@@ -372,15 +371,23 @@ internal partial class CreateDelegateVisitor : AstVisitor
         NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, node.GetDataType());
     }
 
-    /// <inheritdoc />
-    public override void Visit(CoalesceFunctionNode node)
+    private sealed class CoalesceFuncUnit : IFuncUnit
     {
-        ResolveTypesVisitor.Visit(node);
-        var expressionActions = node.Expressions.Select(e => NodeIdFuncMap[e.Id]).ToArray();
+        private readonly IFuncUnit[] _actions;
 
-        VariantValue Func(IExecutionThread thread)
+        /// <inheritdoc />
+        public DataType OutputType { get; }
+
+        public CoalesceFuncUnit(IFuncUnit[] actions, DataType outputType)
         {
-            foreach (var expressionAction in expressionActions)
+            _actions = actions;
+            OutputType = outputType;
+        }
+
+        /// <inheritdoc />
+        public VariantValue Invoke(IExecutionThread thread)
+        {
+            foreach (var expressionAction in _actions)
             {
                 var value = expressionAction.Invoke(thread);
                 if (!value.IsNull)
@@ -390,7 +397,14 @@ internal partial class CreateDelegateVisitor : AstVisitor
             }
             return VariantValue.Null;
         }
-        NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, node.GetDataType());
+    }
+
+    /// <inheritdoc />
+    public override void Visit(CoalesceFunctionNode node)
+    {
+        ResolveTypesVisitor.Visit(node);
+        var expressionActions = node.Expressions.Select(e => NodeIdFuncMap[e.Id]).ToArray();
+        NodeIdFuncMap[node.Id] = new CoalesceFuncUnit(expressionActions, node.GetDataType());
     }
 
     #endregion
