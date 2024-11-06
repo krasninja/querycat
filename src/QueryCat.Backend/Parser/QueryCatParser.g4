@@ -262,16 +262,16 @@ caseWhen: WHEN condition=expression THEN result=expression;
 
 // SQL functions.
 standardFunction
-    : CURRENT_DATE # standardFunctionCurrentDate
-    | CURRENT_TIMESTAMP # standardFunctionCurrentTimestamp
-    | TRIM '(' spec=(LEADING | TRAILING | BOTH)? characters=STRING_LITERAL? FROM? target=simpleExpression ')' # standardFunctionTrim
-    | POSITION '(' substring=STRING_LITERAL IN string=simpleExpression ')' # standardFunctionPosition
-    | EXTRACT '(' extractField=dateTimeField FROM source=simpleExpression ')' # standardFunctionExtract
-    | COALESCE '(' expression (COMMA expression)* ')' # standardFunctionCoalesce
-    | OCCURRENCES_REGEX '(' pattern=STRING_LITERAL IN string=simpleExpression ')' # standardOccurrencesRegex
-    | SUBSTRING_REGEX '(' pattern=STRING_LITERAL IN string=simpleExpression ')' # standardSubstringRegex
-    | POSITION_REGEX '(' pattern=STRING_LITERAL IN string=simpleExpression ')' # standardPositionRegex
-    | TRANSLATE_REGEX '(' pattern=STRING_LITERAL IN string=simpleExpression WITH replacement=STRING_LITERAL ')' # standardTranslateRegex
+    : CURRENT_DATE # StandardFunctionCurrentDate
+    | CURRENT_TIMESTAMP # StandardFunctionCurrentTimestamp
+    | TRIM '(' spec=(LEADING | TRAILING | BOTH)? characters=STRING_LITERAL? FROM? target=simpleExpression ')' # StandardFunctionTrim
+    | POSITION '(' substring=STRING_LITERAL IN string=simpleExpression ')' # StandardFunctionPosition
+    | EXTRACT '(' extractField=dateTimeField FROM source=simpleExpression ')' # StandardFunctionExtract
+    | COALESCE '(' expression (COMMA expression)* ')' # StandardFunctionCoalesce
+    | OCCURRENCES_REGEX '(' pattern=STRING_LITERAL IN string=simpleExpression ')' # StandardOccurrencesRegex
+    | SUBSTRING_REGEX '(' pattern=STRING_LITERAL IN string=simpleExpression ')' # StandardSubstringRegex
+    | POSITION_REGEX '(' pattern=STRING_LITERAL IN string=simpleExpression ')' # StandardPositionRegex
+    | TRANSLATE_REGEX '(' pattern=STRING_LITERAL IN string=simpleExpression WITH replacement=STRING_LITERAL ')' # StandardTranslateRegex
     ;
 
 dateTimeField
@@ -352,12 +352,12 @@ simpleExpression
     ;
 
 literal
-    : INTEGER_LITERAL # literalPlain
-    | STRING_LITERAL # literalPlain
-    | FLOAT_LITERAL # literalPlain
-    | NUMERIC_LITERAL # literalPlain
-    | TRUE # literalPlain
-    | FALSE # literalPlain
-    | NULL # literalPlain
-    | intervalLiteral # literalInterval
+    : INTEGER_LITERAL # LiteralPlain
+    | STRING_LITERAL # LiteralPlain
+    | FLOAT_LITERAL # LiteralPlain
+    | NUMERIC_LITERAL # LiteralPlain
+    | TRUE # LiteralPlain
+    | FALSE # LiteralPlain
+    | NULL # LiteralPlain
+    | intervalLiteral # LiteralInterval
     ;

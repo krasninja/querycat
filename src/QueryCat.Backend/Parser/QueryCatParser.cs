@@ -5882,6 +5882,48 @@ public partial class QueryCatParser : Parser {
 			base.CopyFrom(context);
 		}
 	}
+	public partial class StandardFunctionTrimContext : StandardFunctionContext {
+		public IToken spec;
+		public IToken characters;
+		public SimpleExpressionContext target;
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode TRIM() { return GetToken(QueryCatParser.TRIM, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode LEFT_PAREN() { return GetToken(QueryCatParser.LEFT_PAREN, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode RIGHT_PAREN() { return GetToken(QueryCatParser.RIGHT_PAREN, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public SimpleExpressionContext simpleExpression() {
+			return GetRuleContext<SimpleExpressionContext>(0);
+		}
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode FROM() { return GetToken(QueryCatParser.FROM, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode STRING_LITERAL() { return GetToken(QueryCatParser.STRING_LITERAL, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode LEADING() { return GetToken(QueryCatParser.LEADING, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode TRAILING() { return GetToken(QueryCatParser.TRAILING, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode BOTH() { return GetToken(QueryCatParser.BOTH, 0); }
+		public StandardFunctionTrimContext(StandardFunctionContext context) { CopyFrom(context); }
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IQueryCatParserVisitor<TResult> typedVisitor = visitor as IQueryCatParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitStandardFunctionTrim(this);
+			else return visitor.VisitChildren(this);
+		}
+	}
+	public partial class StandardPositionRegexContext : StandardFunctionContext {
+		public IToken pattern;
+		public SimpleExpressionContext @string;
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode POSITION_REGEX() { return GetToken(QueryCatParser.POSITION_REGEX, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode LEFT_PAREN() { return GetToken(QueryCatParser.LEFT_PAREN, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode IN() { return GetToken(QueryCatParser.IN, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode RIGHT_PAREN() { return GetToken(QueryCatParser.RIGHT_PAREN, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode STRING_LITERAL() { return GetToken(QueryCatParser.STRING_LITERAL, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public SimpleExpressionContext simpleExpression() {
+			return GetRuleContext<SimpleExpressionContext>(0);
+		}
+		public StandardPositionRegexContext(StandardFunctionContext context) { CopyFrom(context); }
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IQueryCatParserVisitor<TResult> typedVisitor = visitor as IQueryCatParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitStandardPositionRegex(this);
+			else return visitor.VisitChildren(this);
+		}
+	}
 	public partial class StandardFunctionCurrentDateContext : StandardFunctionContext {
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode CURRENT_DATE() { return GetToken(QueryCatParser.CURRENT_DATE, 0); }
 		public StandardFunctionCurrentDateContext(StandardFunctionContext context) { CopyFrom(context); }
@@ -5913,6 +5955,66 @@ public partial class QueryCatParser : Parser {
 			else return visitor.VisitChildren(this);
 		}
 	}
+	public partial class StandardOccurrencesRegexContext : StandardFunctionContext {
+		public IToken pattern;
+		public SimpleExpressionContext @string;
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode OCCURRENCES_REGEX() { return GetToken(QueryCatParser.OCCURRENCES_REGEX, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode LEFT_PAREN() { return GetToken(QueryCatParser.LEFT_PAREN, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode IN() { return GetToken(QueryCatParser.IN, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode RIGHT_PAREN() { return GetToken(QueryCatParser.RIGHT_PAREN, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode STRING_LITERAL() { return GetToken(QueryCatParser.STRING_LITERAL, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public SimpleExpressionContext simpleExpression() {
+			return GetRuleContext<SimpleExpressionContext>(0);
+		}
+		public StandardOccurrencesRegexContext(StandardFunctionContext context) { CopyFrom(context); }
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IQueryCatParserVisitor<TResult> typedVisitor = visitor as IQueryCatParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitStandardOccurrencesRegex(this);
+			else return visitor.VisitChildren(this);
+		}
+	}
+	public partial class StandardFunctionCoalesceContext : StandardFunctionContext {
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode COALESCE() { return GetToken(QueryCatParser.COALESCE, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode LEFT_PAREN() { return GetToken(QueryCatParser.LEFT_PAREN, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public ExpressionContext[] expression() {
+			return GetRuleContexts<ExpressionContext>();
+		}
+		[System.Diagnostics.DebuggerNonUserCode] public ExpressionContext expression(int i) {
+			return GetRuleContext<ExpressionContext>(i);
+		}
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode RIGHT_PAREN() { return GetToken(QueryCatParser.RIGHT_PAREN, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode[] COMMA() { return GetTokens(QueryCatParser.COMMA); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode COMMA(int i) {
+			return GetToken(QueryCatParser.COMMA, i);
+		}
+		public StandardFunctionCoalesceContext(StandardFunctionContext context) { CopyFrom(context); }
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IQueryCatParserVisitor<TResult> typedVisitor = visitor as IQueryCatParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitStandardFunctionCoalesce(this);
+			else return visitor.VisitChildren(this);
+		}
+	}
+	public partial class StandardFunctionPositionContext : StandardFunctionContext {
+		public IToken substring;
+		public SimpleExpressionContext @string;
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode POSITION() { return GetToken(QueryCatParser.POSITION, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode LEFT_PAREN() { return GetToken(QueryCatParser.LEFT_PAREN, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode IN() { return GetToken(QueryCatParser.IN, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode RIGHT_PAREN() { return GetToken(QueryCatParser.RIGHT_PAREN, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode STRING_LITERAL() { return GetToken(QueryCatParser.STRING_LITERAL, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public SimpleExpressionContext simpleExpression() {
+			return GetRuleContext<SimpleExpressionContext>(0);
+		}
+		public StandardFunctionPositionContext(StandardFunctionContext context) { CopyFrom(context); }
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IQueryCatParserVisitor<TResult> typedVisitor = visitor as IQueryCatParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitStandardFunctionPosition(this);
+			else return visitor.VisitChildren(this);
+		}
+	}
 	public partial class StandardSubstringRegexContext : StandardFunctionContext {
 		public IToken pattern;
 		public SimpleExpressionContext @string;
@@ -5929,39 +6031,6 @@ public partial class QueryCatParser : Parser {
 		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
 			IQueryCatParserVisitor<TResult> typedVisitor = visitor as IQueryCatParserVisitor<TResult>;
 			if (typedVisitor != null) return typedVisitor.VisitStandardSubstringRegex(this);
-			else return visitor.VisitChildren(this);
-		}
-	}
-	public partial class StandardFunctionCurrentTimestampContext : StandardFunctionContext {
-		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode CURRENT_TIMESTAMP() { return GetToken(QueryCatParser.CURRENT_TIMESTAMP, 0); }
-		public StandardFunctionCurrentTimestampContext(StandardFunctionContext context) { CopyFrom(context); }
-		[System.Diagnostics.DebuggerNonUserCode]
-		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
-			IQueryCatParserVisitor<TResult> typedVisitor = visitor as IQueryCatParserVisitor<TResult>;
-			if (typedVisitor != null) return typedVisitor.VisitStandardFunctionCurrentTimestamp(this);
-			else return visitor.VisitChildren(this);
-		}
-	}
-	public partial class StandardFunctionTrimContext : StandardFunctionContext {
-		public IToken spec;
-		public IToken characters;
-		public SimpleExpressionContext target;
-		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode TRIM() { return GetToken(QueryCatParser.TRIM, 0); }
-		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode LEFT_PAREN() { return GetToken(QueryCatParser.LEFT_PAREN, 0); }
-		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode RIGHT_PAREN() { return GetToken(QueryCatParser.RIGHT_PAREN, 0); }
-		[System.Diagnostics.DebuggerNonUserCode] public SimpleExpressionContext simpleExpression() {
-			return GetRuleContext<SimpleExpressionContext>(0);
-		}
-		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode FROM() { return GetToken(QueryCatParser.FROM, 0); }
-		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode STRING_LITERAL() { return GetToken(QueryCatParser.STRING_LITERAL, 0); }
-		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode LEADING() { return GetToken(QueryCatParser.LEADING, 0); }
-		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode TRAILING() { return GetToken(QueryCatParser.TRAILING, 0); }
-		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode BOTH() { return GetToken(QueryCatParser.BOTH, 0); }
-		public StandardFunctionTrimContext(StandardFunctionContext context) { CopyFrom(context); }
-		[System.Diagnostics.DebuggerNonUserCode]
-		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
-			IQueryCatParserVisitor<TResult> typedVisitor = visitor as IQueryCatParserVisitor<TResult>;
-			if (typedVisitor != null) return typedVisitor.VisitStandardFunctionTrim(this);
 			else return visitor.VisitChildren(this);
 		}
 	}
@@ -5989,82 +6058,13 @@ public partial class QueryCatParser : Parser {
 			else return visitor.VisitChildren(this);
 		}
 	}
-	public partial class StandardFunctionPositionContext : StandardFunctionContext {
-		public IToken substring;
-		public SimpleExpressionContext @string;
-		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode POSITION() { return GetToken(QueryCatParser.POSITION, 0); }
-		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode LEFT_PAREN() { return GetToken(QueryCatParser.LEFT_PAREN, 0); }
-		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode IN() { return GetToken(QueryCatParser.IN, 0); }
-		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode RIGHT_PAREN() { return GetToken(QueryCatParser.RIGHT_PAREN, 0); }
-		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode STRING_LITERAL() { return GetToken(QueryCatParser.STRING_LITERAL, 0); }
-		[System.Diagnostics.DebuggerNonUserCode] public SimpleExpressionContext simpleExpression() {
-			return GetRuleContext<SimpleExpressionContext>(0);
-		}
-		public StandardFunctionPositionContext(StandardFunctionContext context) { CopyFrom(context); }
+	public partial class StandardFunctionCurrentTimestampContext : StandardFunctionContext {
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode CURRENT_TIMESTAMP() { return GetToken(QueryCatParser.CURRENT_TIMESTAMP, 0); }
+		public StandardFunctionCurrentTimestampContext(StandardFunctionContext context) { CopyFrom(context); }
 		[System.Diagnostics.DebuggerNonUserCode]
 		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
 			IQueryCatParserVisitor<TResult> typedVisitor = visitor as IQueryCatParserVisitor<TResult>;
-			if (typedVisitor != null) return typedVisitor.VisitStandardFunctionPosition(this);
-			else return visitor.VisitChildren(this);
-		}
-	}
-	public partial class StandardFunctionCoalesceContext : StandardFunctionContext {
-		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode COALESCE() { return GetToken(QueryCatParser.COALESCE, 0); }
-		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode LEFT_PAREN() { return GetToken(QueryCatParser.LEFT_PAREN, 0); }
-		[System.Diagnostics.DebuggerNonUserCode] public ExpressionContext[] expression() {
-			return GetRuleContexts<ExpressionContext>();
-		}
-		[System.Diagnostics.DebuggerNonUserCode] public ExpressionContext expression(int i) {
-			return GetRuleContext<ExpressionContext>(i);
-		}
-		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode RIGHT_PAREN() { return GetToken(QueryCatParser.RIGHT_PAREN, 0); }
-		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode[] COMMA() { return GetTokens(QueryCatParser.COMMA); }
-		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode COMMA(int i) {
-			return GetToken(QueryCatParser.COMMA, i);
-		}
-		public StandardFunctionCoalesceContext(StandardFunctionContext context) { CopyFrom(context); }
-		[System.Diagnostics.DebuggerNonUserCode]
-		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
-			IQueryCatParserVisitor<TResult> typedVisitor = visitor as IQueryCatParserVisitor<TResult>;
-			if (typedVisitor != null) return typedVisitor.VisitStandardFunctionCoalesce(this);
-			else return visitor.VisitChildren(this);
-		}
-	}
-	public partial class StandardPositionRegexContext : StandardFunctionContext {
-		public IToken pattern;
-		public SimpleExpressionContext @string;
-		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode POSITION_REGEX() { return GetToken(QueryCatParser.POSITION_REGEX, 0); }
-		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode LEFT_PAREN() { return GetToken(QueryCatParser.LEFT_PAREN, 0); }
-		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode IN() { return GetToken(QueryCatParser.IN, 0); }
-		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode RIGHT_PAREN() { return GetToken(QueryCatParser.RIGHT_PAREN, 0); }
-		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode STRING_LITERAL() { return GetToken(QueryCatParser.STRING_LITERAL, 0); }
-		[System.Diagnostics.DebuggerNonUserCode] public SimpleExpressionContext simpleExpression() {
-			return GetRuleContext<SimpleExpressionContext>(0);
-		}
-		public StandardPositionRegexContext(StandardFunctionContext context) { CopyFrom(context); }
-		[System.Diagnostics.DebuggerNonUserCode]
-		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
-			IQueryCatParserVisitor<TResult> typedVisitor = visitor as IQueryCatParserVisitor<TResult>;
-			if (typedVisitor != null) return typedVisitor.VisitStandardPositionRegex(this);
-			else return visitor.VisitChildren(this);
-		}
-	}
-	public partial class StandardOccurrencesRegexContext : StandardFunctionContext {
-		public IToken pattern;
-		public SimpleExpressionContext @string;
-		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode OCCURRENCES_REGEX() { return GetToken(QueryCatParser.OCCURRENCES_REGEX, 0); }
-		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode LEFT_PAREN() { return GetToken(QueryCatParser.LEFT_PAREN, 0); }
-		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode IN() { return GetToken(QueryCatParser.IN, 0); }
-		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode RIGHT_PAREN() { return GetToken(QueryCatParser.RIGHT_PAREN, 0); }
-		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode STRING_LITERAL() { return GetToken(QueryCatParser.STRING_LITERAL, 0); }
-		[System.Diagnostics.DebuggerNonUserCode] public SimpleExpressionContext simpleExpression() {
-			return GetRuleContext<SimpleExpressionContext>(0);
-		}
-		public StandardOccurrencesRegexContext(StandardFunctionContext context) { CopyFrom(context); }
-		[System.Diagnostics.DebuggerNonUserCode]
-		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
-			IQueryCatParserVisitor<TResult> typedVisitor = visitor as IQueryCatParserVisitor<TResult>;
-			if (typedVisitor != null) return typedVisitor.VisitStandardOccurrencesRegex(this);
+			if (typedVisitor != null) return typedVisitor.VisitStandardFunctionCurrentTimestamp(this);
 			else return visitor.VisitChildren(this);
 		}
 	}
@@ -7647,6 +7647,18 @@ public partial class QueryCatParser : Parser {
 			base.CopyFrom(context);
 		}
 	}
+	public partial class LiteralIntervalContext : LiteralContext {
+		[System.Diagnostics.DebuggerNonUserCode] public IntervalLiteralContext intervalLiteral() {
+			return GetRuleContext<IntervalLiteralContext>(0);
+		}
+		public LiteralIntervalContext(LiteralContext context) { CopyFrom(context); }
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IQueryCatParserVisitor<TResult> typedVisitor = visitor as IQueryCatParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitLiteralInterval(this);
+			else return visitor.VisitChildren(this);
+		}
+	}
 	public partial class LiteralPlainContext : LiteralContext {
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode INTEGER_LITERAL() { return GetToken(QueryCatParser.INTEGER_LITERAL, 0); }
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode STRING_LITERAL() { return GetToken(QueryCatParser.STRING_LITERAL, 0); }
@@ -7660,18 +7672,6 @@ public partial class QueryCatParser : Parser {
 		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
 			IQueryCatParserVisitor<TResult> typedVisitor = visitor as IQueryCatParserVisitor<TResult>;
 			if (typedVisitor != null) return typedVisitor.VisitLiteralPlain(this);
-			else return visitor.VisitChildren(this);
-		}
-	}
-	public partial class LiteralIntervalContext : LiteralContext {
-		[System.Diagnostics.DebuggerNonUserCode] public IntervalLiteralContext intervalLiteral() {
-			return GetRuleContext<IntervalLiteralContext>(0);
-		}
-		public LiteralIntervalContext(LiteralContext context) { CopyFrom(context); }
-		[System.Diagnostics.DebuggerNonUserCode]
-		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
-			IQueryCatParserVisitor<TResult> typedVisitor = visitor as IQueryCatParserVisitor<TResult>;
-			if (typedVisitor != null) return typedVisitor.VisitLiteralInterval(this);
 			else return visitor.VisitChildren(this);
 		}
 	}

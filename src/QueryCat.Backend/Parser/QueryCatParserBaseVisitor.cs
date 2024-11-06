@@ -1061,7 +1061,7 @@ public partial class QueryCatParserBaseVisitor<Result> : AbstractParseTreeVisito
 	/// <return>The visitor result.</return>
 	public virtual Result VisitCaseWhen([NotNull] QueryCatParser.CaseWhenContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by the <c>standardFunctionCurrentDate</c>
+	/// Visit a parse tree produced by the <c>StandardFunctionCurrentDate</c>
 	/// labeled alternative in <see cref="QueryCatParser.standardFunction"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
@@ -1072,7 +1072,7 @@ public partial class QueryCatParserBaseVisitor<Result> : AbstractParseTreeVisito
 	/// <return>The visitor result.</return>
 	public virtual Result VisitStandardFunctionCurrentDate([NotNull] QueryCatParser.StandardFunctionCurrentDateContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by the <c>standardFunctionCurrentTimestamp</c>
+	/// Visit a parse tree produced by the <c>StandardFunctionCurrentTimestamp</c>
 	/// labeled alternative in <see cref="QueryCatParser.standardFunction"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
@@ -1083,7 +1083,7 @@ public partial class QueryCatParserBaseVisitor<Result> : AbstractParseTreeVisito
 	/// <return>The visitor result.</return>
 	public virtual Result VisitStandardFunctionCurrentTimestamp([NotNull] QueryCatParser.StandardFunctionCurrentTimestampContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by the <c>standardFunctionTrim</c>
+	/// Visit a parse tree produced by the <c>StandardFunctionTrim</c>
 	/// labeled alternative in <see cref="QueryCatParser.standardFunction"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
@@ -1094,7 +1094,7 @@ public partial class QueryCatParserBaseVisitor<Result> : AbstractParseTreeVisito
 	/// <return>The visitor result.</return>
 	public virtual Result VisitStandardFunctionTrim([NotNull] QueryCatParser.StandardFunctionTrimContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by the <c>standardFunctionPosition</c>
+	/// Visit a parse tree produced by the <c>StandardFunctionPosition</c>
 	/// labeled alternative in <see cref="QueryCatParser.standardFunction"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
@@ -1105,7 +1105,7 @@ public partial class QueryCatParserBaseVisitor<Result> : AbstractParseTreeVisito
 	/// <return>The visitor result.</return>
 	public virtual Result VisitStandardFunctionPosition([NotNull] QueryCatParser.StandardFunctionPositionContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by the <c>standardFunctionExtract</c>
+	/// Visit a parse tree produced by the <c>StandardFunctionExtract</c>
 	/// labeled alternative in <see cref="QueryCatParser.standardFunction"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
@@ -1116,7 +1116,7 @@ public partial class QueryCatParserBaseVisitor<Result> : AbstractParseTreeVisito
 	/// <return>The visitor result.</return>
 	public virtual Result VisitStandardFunctionExtract([NotNull] QueryCatParser.StandardFunctionExtractContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by the <c>standardFunctionCoalesce</c>
+	/// Visit a parse tree produced by the <c>StandardFunctionCoalesce</c>
 	/// labeled alternative in <see cref="QueryCatParser.standardFunction"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
@@ -1127,7 +1127,7 @@ public partial class QueryCatParserBaseVisitor<Result> : AbstractParseTreeVisito
 	/// <return>The visitor result.</return>
 	public virtual Result VisitStandardFunctionCoalesce([NotNull] QueryCatParser.StandardFunctionCoalesceContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by the <c>standardOccurrencesRegex</c>
+	/// Visit a parse tree produced by the <c>StandardOccurrencesRegex</c>
 	/// labeled alternative in <see cref="QueryCatParser.standardFunction"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
@@ -1138,7 +1138,7 @@ public partial class QueryCatParserBaseVisitor<Result> : AbstractParseTreeVisito
 	/// <return>The visitor result.</return>
 	public virtual Result VisitStandardOccurrencesRegex([NotNull] QueryCatParser.StandardOccurrencesRegexContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by the <c>standardSubstringRegex</c>
+	/// Visit a parse tree produced by the <c>StandardSubstringRegex</c>
 	/// labeled alternative in <see cref="QueryCatParser.standardFunction"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
@@ -1149,7 +1149,7 @@ public partial class QueryCatParserBaseVisitor<Result> : AbstractParseTreeVisito
 	/// <return>The visitor result.</return>
 	public virtual Result VisitStandardSubstringRegex([NotNull] QueryCatParser.StandardSubstringRegexContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by the <c>standardPositionRegex</c>
+	/// Visit a parse tree produced by the <c>StandardPositionRegex</c>
 	/// labeled alternative in <see cref="QueryCatParser.standardFunction"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
@@ -1160,7 +1160,7 @@ public partial class QueryCatParserBaseVisitor<Result> : AbstractParseTreeVisito
 	/// <return>The visitor result.</return>
 	public virtual Result VisitStandardPositionRegex([NotNull] QueryCatParser.StandardPositionRegexContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by the <c>standardTranslateRegex</c>
+	/// Visit a parse tree produced by the <c>StandardTranslateRegex</c>
 	/// labeled alternative in <see cref="QueryCatParser.standardFunction"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
@@ -1510,7 +1510,7 @@ public partial class QueryCatParserBaseVisitor<Result> : AbstractParseTreeVisito
 	/// <return>The visitor result.</return>
 	public virtual Result VisitSimpleExpressionIdentifier([NotNull] QueryCatParser.SimpleExpressionIdentifierContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by the <c>literalPlain</c>
+	/// Visit a parse tree produced by the <c>LiteralPlain</c>
 	/// labeled alternative in <see cref="QueryCatParser.literal"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
@@ -1521,7 +1521,7 @@ public partial class QueryCatParserBaseVisitor<Result> : AbstractParseTreeVisito
 	/// <return>The visitor result.</return>
 	public virtual Result VisitLiteralPlain([NotNull] QueryCatParser.LiteralPlainContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by the <c>literalInterval</c>
+	/// Visit a parse tree produced by the <c>LiteralInterval</c>
 	/// labeled alternative in <see cref="QueryCatParser.literal"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
