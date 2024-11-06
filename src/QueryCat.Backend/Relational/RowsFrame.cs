@@ -56,23 +56,12 @@ public class RowsFrame : IRowsSchema, IEnumerable<Row>
         _storage = new ChunkList<VariantValue[]>(_chunkSize);
     }
 
+    /// <summary>
+    /// Constructor.
+    /// </summary>
+    /// <param name="columns">Frame columns.</param>
     public RowsFrame(params Column[] columns) : this(new RowsFrameOptions(), columns)
     {
-    }
-
-    /// <summary>
-    /// Create rows frame from iterator.
-    /// </summary>
-    /// <param name="rowsIterator">Rows iterator.</param>
-    /// <returns>Instance of <see cref="RowsFrame" />.</returns>
-    public static RowsFrame CreateFromIterator(IRowsIterator rowsIterator)
-    {
-        var rowsFrame = new RowsFrame(rowsIterator.Columns);
-        while (rowsIterator.MoveNext())
-        {
-            rowsFrame.AddRow(rowsIterator.Current);
-        }
-        return rowsFrame;
     }
 
     /// <summary>
