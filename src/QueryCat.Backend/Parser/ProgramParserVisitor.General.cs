@@ -77,12 +77,11 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
     public override IAstNode VisitExpressionBinary(QueryCatParser.ExpressionBinaryContext context)
     {
         var operation = ConvertOperationTokenToAst(context.op.Type);
-        var not = context.NOT();
-        if (operation == VariantValue.Operation.Like && not != null)
+        if (operation == VariantValue.Operation.Like && context.NOT() != null)
         {
             operation = VariantValue.Operation.NotLike;
         }
-        else if (operation == VariantValue.Operation.Similar && not != null)
+        else if (operation == VariantValue.Operation.Similar && context.NOT() != null)
         {
             operation = VariantValue.Operation.NotSimilar;
         }
