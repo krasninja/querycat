@@ -57,6 +57,23 @@ internal sealed class StatementsVisitor : AstVisitor
         node.Accept(this);
     }
 
+    private sealed class BlockExpressionFuncUnit(IFuncUnit[] blocks) : IFuncUnit
+    {
+        /// <inheritdoc />
+        public DataType OutputType => blocks[^1].OutputType;
+
+        /// <inheritdoc />
+        public VariantValue Invoke(IExecutionThread thread)
+        {
+            var result = VariantValue.Null;
+            foreach (var func in blocks)
+            {
+                result = func.Invoke(thread);
+            }
+            return result;
+        }
+    }
+
     public override void Visit(BlockExpressionNode node)
     {
         foreach (var statementNode in node.Statements)
@@ -65,18 +82,7 @@ internal sealed class StatementsVisitor : AstVisitor
         }
         var blockHandlers = node.Statements.Select(s => _handlers[s.Id]).ToArray();
 
-        VariantValue Func(IExecutionThread thread)
-        {
-            var result = VariantValue.Null;
-            foreach (var func in blockHandlers)
-            {
-                result = func.Invoke(thread);
-            }
-
-            return result;
-        }
-
-        _handlers[node.Id] = new FuncUnitDelegate(Func, node.Statements.Last().GetDataType());
+        _handlers[node.Id] = new BlockExpressionFuncUnit(blockHandlers);
     }
 
     /// <inheritdoc />
