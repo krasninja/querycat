@@ -226,7 +226,7 @@ public partial class ThriftPluginClient : IDisposable
         }
 
         Application.LoggerFactory = new LoggerFactory(
-            providers: new[] { new SimpleConsoleLoggerProvider() },
+            providers: [new SimpleConsoleLoggerProvider()],
             new LoggerFilterOptions
             {
                 MinLevel = minLogLevel,
@@ -348,11 +348,7 @@ public partial class ThriftPluginClient : IDisposable
             return;
         }
 
-        var modulePath = Assembly.GetEntryAssembly()?.Location;
-        if (string.IsNullOrEmpty(modulePath))
-        {
-            modulePath = Process.GetCurrentProcess().MainModule?.FileName;
-        }
+        var modulePath = Process.GetCurrentProcess().MainModule?.FileName;
         if (string.IsNullOrEmpty(modulePath))
         {
             throw new InvalidOperationException(Resources.Errors.CannotGetPath);
