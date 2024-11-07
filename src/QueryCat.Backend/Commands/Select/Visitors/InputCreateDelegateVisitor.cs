@@ -8,7 +8,7 @@ using QueryCat.Backend.Storage;
 
 namespace QueryCat.Backend.Commands.Select.Visitors;
 
-internal class InputCreateDelegateVisitor : CreateDelegateVisitor
+internal sealed class InputCreateDelegateVisitor : CreateDelegateVisitor
 {
     private readonly SelectCommandContext _context;
     private readonly IRowsInput _leftInput;
