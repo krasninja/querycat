@@ -37,7 +37,7 @@ public sealed class ObjectSelectorContext
         /// <param name="expression">Expression.</param>
         /// <typeparam name="T">Owner type.</typeparam>
         /// <returns>Instance of <see cref="Token" />.</returns>
-        public static Token? From<T>(T owner, Expression<Func<T, object>> expression)
+        public static Token? From<T>(T owner, Expression<Func<T, object?>> expression)
             where T : class
         {
             var pi = GetPropertyInfo(expression);
@@ -117,7 +117,7 @@ public sealed class ObjectSelectorContext
         _selectStack.Clear();
     }
 
-    private static PropertyInfo GetPropertyInfo<T>(Expression<Func<T, object>> property)
+    private static PropertyInfo GetPropertyInfo<T>(Expression<Func<T, object?>> property)
     {
         LambdaExpression lambda = property;
         var memberExpression = lambda.Body is UnaryExpression expression
