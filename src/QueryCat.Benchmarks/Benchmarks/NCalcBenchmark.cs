@@ -1,4 +1,5 @@
 using System.Data;
+using System.Text;
 using BenchmarkDotNet.Attributes;
 using NCalc;
 using QueryCat.Backend;
@@ -86,11 +87,18 @@ public class NCalcBenchmark
 
     private static string GenerateQuery(string powerFuncName, string sqrtFuncName)
     {
-        var items = new List<string>();
-        for (var i = 0; i < 20; i++)
+        const int count = 20;
+        var sb = new StringBuilder(capacity: count * 20);
+        sb.Append("(");
+        for (var i = 0; i < count; i++)
         {
-            items.Add($"{powerFuncName}(-1.0, {i})/(2*{i} + 1)");
+            sb.Append($"{powerFuncName}(-1.0, {i})/(2*{i} + 1)");
+            if (i != count - 1)
+            {
+                sb.Append(" + ");
+            }
         }
-        return "(" + string.Join(" + ", items) + ") * 4";
+        sb.Append(") * 4");
+        return sb.ToString();
     }
 }
