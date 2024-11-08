@@ -23,7 +23,7 @@ internal static class MathFunctions
             DataType.Float => new VariantValue(Math.Abs(x.AsFloatUnsafe)),
             DataType.Integer => new VariantValue(Math.Abs(x.AsIntegerUnsafe)),
             DataType.Numeric => new VariantValue(Math.Abs(x.AsNumericUnsafe)),
-            _ => VariantValue.Null
+            _ => VariantValue.Null,
         };
     }
 
@@ -66,7 +66,7 @@ internal static class MathFunctions
         {
             DataType.Float => new VariantValue(Math.Round(x.AsFloatUnsafe)),
             DataType.Numeric => new VariantValue(Math.Round(x.AsNumericUnsafe)),
-            _ => VariantValue.Null
+            _ => VariantValue.Null,
         };
     }
 
@@ -152,14 +152,13 @@ internal static class MathFunctions
     [FunctionSignature("power(a: float, b: integer): float")]
     public static VariantValue Power(IExecutionThread thread)
     {
-        var a = thread.Stack[0];
-        var b = thread.Stack[1];
-        return a.Type switch
+        var a = thread.Stack[0].AsFloat;
+        var b = thread.Stack[1].AsFloat;
+        if (!a.HasValue || !b.HasValue)
         {
-            DataType.Float => new VariantValue(Math.Pow(a.AsFloatUnsafe, b.AsFloatUnsafe)),
-            DataType.Integer => new VariantValue(Math.Pow(a.AsIntegerUnsafe, b.AsIntegerUnsafe)),
-            _ => VariantValue.Null
-        };
+            return VariantValue.Null;
+        }
+        return new VariantValue(Math.Pow(a.Value, b.Value));
     }
 
     [SafeFunction]
