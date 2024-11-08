@@ -40,13 +40,23 @@ public sealed class ObjectSelectorContext
         public static Token? From<T>(T owner, Expression<Func<T, object?>> expression)
             where T : class
         {
-            var pi = GetPropertyInfo(expression);
-            var obj = pi.GetValue(owner);
-            if (obj == null)
+            object? result;
+            PropertyInfo? propertyInfo = null;
+            if (expression.Body is UnaryExpression)
+            {
+                result = expression.Compile().Invoke(owner);
+            }
+            else
+            {
+                propertyInfo = GetPropertyInfo(expression);
+                result = propertyInfo.GetValue(owner);
+            }
+
+            if (result == null)
             {
                 return null;
             }
-            return new Token(obj, pi);
+            return new Token(result, propertyInfo);
         }
     }
 
