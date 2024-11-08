@@ -411,10 +411,17 @@ internal static class IOFunctions
     [FunctionSignature("stdout(fmt?: object<IRowsFormatter>): object<IRowsOutput>")]
     public static VariantValue Stdout(IExecutionThread thread)
     {
-        var formatter = thread.Stack.Pop().AsObject as IRowsFormatter;
+        IRowsFormatter? formatter = null;
+        if (thread.Stack.FrameLength > 0)
+        {
+            formatter = thread.Stack.Pop().AsObject as IRowsFormatter;
+        }
+        if (formatter == null)
+        {
+            formatter = new TextTableFormatter();
+        }
 
         var stream = Stdio.GetConsoleOutput();
-        formatter ??= new TextTableFormatter();
         var output = formatter.OpenOutput(stream);
 
         return VariantValue.CreateFromObject(output);
