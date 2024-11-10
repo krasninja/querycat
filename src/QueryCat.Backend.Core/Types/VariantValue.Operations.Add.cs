@@ -4,10 +4,7 @@ public partial struct VariantValue
 {
     internal static VariantValue Add(in VariantValue left, in VariantValue right, out ErrorCode errorCode)
     {
-        var leftType = left.GetInternalType();
-        var rightType = right.GetInternalType();
-
-        var function = GetAddDelegate(leftType, rightType);
+        var function = GetAddDelegate(left.Type, right.Type);
         if (function == BinaryNullDelegate)
         {
             errorCode = ErrorCode.CannotApplyOperator;
@@ -26,34 +23,18 @@ public partial struct VariantValue
             {
                 DataType.Integer => (in VariantValue left, in VariantValue right) =>
                 {
-                    if (left.IsNull || right.IsNull)
-                    {
-                        return Null;
-                    }
                     return new VariantValue(left.AsIntegerUnsafe + right.AsIntegerUnsafe);
                 },
                 DataType.Float => (in VariantValue left, in VariantValue right) =>
                 {
-                    if (left.IsNull || right.IsNull)
-                    {
-                        return Null;
-                    }
                     return new VariantValue(left.AsIntegerUnsafe + right.AsFloatUnsafe);
                 },
                 DataType.Numeric => (in VariantValue left, in VariantValue right) =>
                 {
-                    if (left.IsNull || right.IsNull)
-                    {
-                        return Null;
-                    }
                     return new VariantValue(left.AsIntegerUnsafe + right.AsNumericUnsafe);
                 },
                 DataType.String => (in VariantValue left, in VariantValue right) =>
                 {
-                    if (left.IsNull || right.IsNull)
-                    {
-                        return Null;
-                    }
                     return new VariantValue(string.Concat(left.AsString, right.AsStringUnsafe));
                 },
                 _ => BinaryNullDelegate,
@@ -62,26 +43,14 @@ public partial struct VariantValue
             {
                 DataType.Integer => (in VariantValue left, in VariantValue right) =>
                 {
-                    if (left.IsNull || right.IsNull)
-                    {
-                        return Null;
-                    }
                     return new VariantValue(left.AsFloatUnsafe + right.AsIntegerUnsafe);
                 },
                 DataType.Float => (in VariantValue left, in VariantValue right) =>
                 {
-                    if (left.IsNull || right.IsNull)
-                    {
-                        return Null;
-                    }
                     return new VariantValue(left.AsFloatUnsafe + right.AsFloatUnsafe);
                 },
                 DataType.String => (in VariantValue left, in VariantValue right) =>
                 {
-                    if (left.IsNull || right.IsNull)
-                    {
-                        return Null;
-                    }
                     return new VariantValue(string.Concat(left.AsString, right.AsStringUnsafe));
                 },
                 _ => BinaryNullDelegate,
@@ -90,26 +59,14 @@ public partial struct VariantValue
             {
                 DataType.Integer => (in VariantValue left, in VariantValue right) =>
                 {
-                    if (left.IsNull || right.IsNull)
-                    {
-                        return Null;
-                    }
                     return new VariantValue(left.AsNumericUnsafe + right.AsIntegerUnsafe);
                 },
                 DataType.Numeric => (in VariantValue left, in VariantValue right) =>
                 {
-                    if (left.IsNull || right.IsNull)
-                    {
-                        return Null;
-                    }
                     return new VariantValue(left.AsNumericUnsafe + right.AsNumericUnsafe);
                 },
                 DataType.String => (in VariantValue left, in VariantValue right) =>
                 {
-                    if (left.IsNull || right.IsNull)
-                    {
-                        return Null;
-                    }
                     return new VariantValue(string.Concat(left.AsString, right.AsStringUnsafe));
                 },
                 _ => BinaryNullDelegate,
@@ -118,18 +75,10 @@ public partial struct VariantValue
             {
                 DataType.Interval => (in VariantValue left, in VariantValue right) =>
                 {
-                    if (left.IsNull || right.IsNull)
-                    {
-                        return Null;
-                    }
                     return new VariantValue(left.AsTimestampUnsafe + right.AsIntervalUnsafe);
                 },
                 DataType.String => (in VariantValue left, in VariantValue right) =>
                 {
-                    if (left.IsNull || right.IsNull)
-                    {
-                        return Null;
-                    }
                     return new VariantValue(left.AsTimestampUnsafe + right.AsStringUnsafe);
                 },
                 _ => BinaryNullDelegate,
@@ -138,18 +87,10 @@ public partial struct VariantValue
             {
                 DataType.Interval => (in VariantValue left, in VariantValue right) =>
                 {
-                    if (left.IsNull || right.IsNull)
-                    {
-                        return Null;
-                    }
                     return new VariantValue(left.AsIntervalUnsafe + right.AsIntervalUnsafe);
                 },
                 DataType.String => (in VariantValue left, in VariantValue right) =>
                 {
-                    if (left.IsNull || right.IsNull)
-                    {
-                        return Null;
-                    }
                     return new VariantValue(left.AsIntervalUnsafe + right.AsStringUnsafe);
                 },
                 _ => BinaryNullDelegate,
@@ -158,18 +99,10 @@ public partial struct VariantValue
             {
                 DataType.String => (in VariantValue left, in VariantValue right) =>
                 {
-                    if (left.IsNull || right.IsNull)
-                    {
-                        return Null;
-                    }
                     return new VariantValue(string.Concat(left.AsStringUnsafe, right.AsStringUnsafe));
                 },
                 DataType.Integer or DataType.Float or DataType.Numeric or DataType.Boolean => (in VariantValue left, in VariantValue right) =>
                 {
-                    if (left.IsNull || right.IsNull)
-                    {
-                        return Null;
-                    }
                     return new VariantValue(string.Concat(left.AsStringUnsafe, right.AsString));
                 },
                 DataType.Dynamic or DataType.Object or DataType.Interval or DataType.Timestamp => (in VariantValue left, in VariantValue right) =>
@@ -186,10 +119,6 @@ public partial struct VariantValue
             {
                 DataType.String => (in VariantValue left, in VariantValue right) =>
                 {
-                    if (left.IsNull || right.IsNull)
-                    {
-                        return Null;
-                    }
                     return new VariantValue(string.Concat(left.AsString, right.AsStringUnsafe));
                 },
                 _ => BinaryNullDelegate,

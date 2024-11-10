@@ -9,10 +9,10 @@ internal class CustomInlineFunctionUsage : BaseUsage
     public override void Run()
     {
         var executionThread = new ExecutionThreadBootstrapper().Create();
-        executionThread.FunctionsManager.RegisterFunction("secret(a: string, b: numeric): string", args =>
+        executionThread.FunctionsManager.RegisterFunction("secret(a: string, b: numeric): string", thread =>
         {
-            var a = args.GetAt(0);
-            var b = args.GetAt(1);
+            var a = thread.Stack[0];
+            var b = thread.Stack[1];
             return new VariantValue(a + b.ToString());
         });
 

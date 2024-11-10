@@ -15,7 +15,7 @@ namespace QueryCat.Backend.Commands.Select.Visitors;
 /// <summary>
 /// Generate delegate for a node using SELECT statement specific processing.
 /// </summary>
-internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
+internal sealed class SelectCreateDelegateVisitor : CreateDelegateVisitor
 {
     private readonly SelectCommandContext _context;
 
@@ -42,8 +42,7 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
     public override IFuncUnit RunAndReturn(IAstNode node)
     {
         _subQueryIterators.Clear();
-        base.RunAndReturn(node);
-        var funcUnit = NodeIdFuncMap[node.Id];
+        var funcUnit = base.RunAndReturn(node);
         if (funcUnit is FuncUnitDelegate funcUnitDelegate)
         {
             funcUnitDelegate.SubQueryIterators = _subQueryIterators;
@@ -94,7 +93,7 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
         var commandContext = node.SubQueryNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
         var rowsIterator = commandContext.CurrentIterator;
 
-        VariantValue Func()
+        VariantValue Func(IExecutionThread thread)
         {
             rowsIterator.Reset();
             if (rowsIterator.MoveNext())
@@ -153,8 +152,6 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
 
     private AggregateTarget CreateAggregateTarget(FunctionCallNode node, IFunction function)
     {
-        var functionCallInfo = node.GetRequiredAttribute<FunctionCallInfo>(AstAttributeKeys.ArgumentsKey);
-
         // Try to use alias for column name.
         var columnsSublistNode = AstTraversal.GetFirstParent<SelectColumnsSublistNode>();
         var name = columnsSublistNode != null ? columnsSublistNode.Alias : string.Empty;
@@ -163,7 +160,6 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
         return new AggregateTarget(
             ReturnType: function.ReturnType,
             AggregateFunction: ExecutionThread.FunctionsManager.FindAggregateByName(function.Name),
-            FunctionCallInfo: functionCallInfo,
             ValueGenerator: func,
             Node: node,
             Name: name
@@ -196,27 +192,38 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectTableValuesNode valuesNode)
+    public override void Visit(SelectTableValuesNode node)
     {
-        var firstRowTypes = valuesNode.RowsNodes.First().ExpressionNodes.Select(n => n.GetDataType());
+        var firstRowTypes = node.RowsNodes.First().ExpressionNodes.Select(n => n.GetDataType());
         var rowsFrame = new RowsFrame(
             firstRowTypes
-                .Select((rt, i) => new Column($"column{i + 1}", valuesNode.Alias, rt))
+                .Select((rt, i) => new Column($"column{i + 1}", node.Alias, rt))
                 .ToArray()
         );
 
-        valuesNode.SetDataType(DataType.Object);
-        NodeIdFuncMap[valuesNode.Id] = new FuncUnitDelegate(() =>
+        node.SetDataType(DataType.Object);
+
+        // Persist rows nodes handlers.
+        var handlers = new Dictionary<ExpressionNode, IFuncUnit>(capacity: node.RowsNodes.Count * 4);
+        foreach (var rowNode in node.RowsNodes)
+        {
+            foreach (var expressionNode in rowNode.ExpressionNodes)
+            {
+                handlers[expressionNode] = NodeIdFuncMap[expressionNode.Id];
+            }
+        }
+
+        NodeIdFuncMap[node.Id] = new FuncUnitDelegate(thread =>
         {
             if (rowsFrame.IsEmpty)
             {
                 // Initialize rows frame.
                 var row = new Row(rowsFrame);
-                foreach (var rowNode in valuesNode.RowsNodes)
+                foreach (var rowNode in node.RowsNodes)
                 {
                     for (var i = 0; i < rowsFrame.Columns.Length && i < rowNode.ExpressionNodes.Length; i++)
                     {
-                        row[i] = NodeIdFuncMap[rowNode.ExpressionNodes[i].Id].Invoke();
+                        row[i] = handlers[rowNode.ExpressionNodes[i]].Invoke(thread);
                     }
                     rowsFrame.AddRow(row);
                 }
@@ -234,9 +241,9 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
             var rowsIterator = new SelectPlanner(ExecutionThread).CreateIterator(queryNode, _context);
             var equalDelegate = VariantValue.GetEqualsDelegate(node.ExpressionNode.GetDataType());
 
-            VariantValue Func()
+            VariantValue Func(IExecutionThread thread)
             {
-                var leftValue = valueAction.Invoke();
+                var leftValue = valueAction.Invoke(thread);
                 rowsIterator.Reset();
                 while (rowsIterator.MoveNext())
                 {
@@ -280,7 +287,7 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
         var rowsIterator = new SelectPlanner(ExecutionThread).CreateIterator(node, _context);
         ResolveTypesVisitor.Visit(node);
 
-        VariantValue Func()
+        VariantValue Func(IExecutionThread thread)
         {
             rowsIterator.Reset();
             if (rowsIterator.MoveNext())
@@ -310,16 +317,17 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
             throw new QueryCatException(string.Format(Resources.Errors.InvalidSubqueryColumnsCount, rowsIterator.Columns.Length));
         }
         var operationDelegate = VariantValue.GetOperationDelegate(node.Operation);
+        var leftValueFunc = NodeIdFuncMap[node.LeftNode.Id];
 
-        VariantValue AllFunc()
+        VariantValue AllFunc(IExecutionThread thread)
         {
-            var leftValue = NodeIdFuncMap[node.LeftNode.Id].Invoke();
             rowsIterator.Reset();
             while (rowsIterator.MoveNext())
             {
+                var leftValue = leftValueFunc.Invoke(thread);
                 var rightValue = rowsIterator.Current[0];
                 var result = operationDelegate(in leftValue, in rightValue, out ErrorCode code);
-                ApplyStatistic(code);
+                ApplyStatistic(thread, code);
                 if (!result.AsBoolean)
                 {
                     return VariantValue.FalseValue;
@@ -328,15 +336,15 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
             return VariantValue.TrueValue;
         }
 
-        VariantValue AnyFunc()
+        VariantValue AnyFunc(IExecutionThread thread)
         {
-            var leftValue = NodeIdFuncMap[node.LeftNode.Id].Invoke();
             rowsIterator.Reset();
             while (rowsIterator.MoveNext())
             {
+                var leftValue = leftValueFunc.Invoke(thread);
                 var rightValue = rowsIterator.Current[0];
                 var result = operationDelegate(in leftValue, in rightValue, out ErrorCode code);
-                ApplyStatistic(code);
+                ApplyStatistic(thread, code);
                 if (result.AsBoolean)
                 {
                     return VariantValue.TrueValue;

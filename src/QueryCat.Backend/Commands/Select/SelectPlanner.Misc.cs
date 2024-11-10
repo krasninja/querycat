@@ -14,7 +14,7 @@ internal sealed partial class SelectPlanner
         }
         else
         {
-            return new CreateDelegateVisitor(ExecutionThread).RunAndReturn(node);
+            return new CreateDelegateVisitor(ExecutionThread, _resolveTypesVisitor).RunAndReturn(node);
         }
     }
 
@@ -22,7 +22,7 @@ internal sealed partial class SelectPlanner
     {
         var visitor = context != null
             ? new SelectCreateDelegateVisitor(ExecutionThread, context)
-            : new CreateDelegateVisitor(ExecutionThread);
+            : new CreateDelegateVisitor(ExecutionThread, _resolveTypesVisitor);
         return nodes.Select(n => visitor.RunAndReturn(n));
     }
 

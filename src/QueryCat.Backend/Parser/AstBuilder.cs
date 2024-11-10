@@ -1,4 +1,5 @@
 using Antlr4.Runtime;
+using Antlr4.Runtime.Atn;
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Function;
@@ -17,6 +18,16 @@ internal sealed class AstBuilder : IAstBuilder
     private readonly IDictionary<string, IAstNode>? _astCache;
     private readonly int _maxQueryLength;
 
+    private readonly QueryCatLexer _lexer = new(new AntlrInputStream(string.Empty), TextWriter.Null, TextWriter.Null);
+    private readonly QueryCatParser _parser;
+    private readonly ProgramAntlrErrorListener _errorListener = new();
+    private readonly ProgramParserVisitor _programParserVisitor = new();
+
+    /// <summary>
+    /// Collect profile information. Use DumpProfileInfo() method.
+    /// </summary>
+    public bool ProfileMode { get; set; }
+
     /// <summary>
     /// Constructor.
     /// </summary>
@@ -26,15 +37,19 @@ internal sealed class AstBuilder : IAstBuilder
     {
         _astCache = cache;
         _maxQueryLength = maxQueryLength;
+
+        _parser = new QueryCatParser(new CommonTokenStream(_lexer));
+        _parser.RemoveErrorListeners();
+        _parser.AddErrorListener(_errorListener);
+        _parser.Interpreter.PredictionMode = Antlr4.Runtime.Atn.PredictionMode.SLL;
     }
 
     /// <inheritdoc />
-    public ProgramNode BuildProgramFromString(string program)
-        => Build<ProgramNode>(program, p => p.program());
+    public ProgramNode BuildProgramFromString(string program) => Build<ProgramNode>(program, p => p.program(), _astCache);
 
     /// <inheritdoc />
     public FunctionSignatureNode BuildFunctionSignatureFromString(string function)
-        => Build<FunctionSignatureNode>(function, p => p.functionSignature());
+        => Build<FunctionSignatureNode>(function, p => p.functionSignature(), astCache: null);
 
     /// <inheritdoc />
     public IReadOnlyList<IAstBuilder.Token> GetTokens(string text)
@@ -49,24 +64,22 @@ internal sealed class AstBuilder : IAstBuilder
 
     private TNode Build<TNode>(
         string input,
-        Func<QueryCatParser, ParserRuleContext> signatureFunc) where TNode : IAstNode
+        Func<QueryCatParser, ParserRuleContext> signatureFunc,
+        IDictionary<string, IAstNode>? astCache) where TNode : IAstNode
     {
         // Cache only small queries.
-        if (_astCache == null || input.Length > _maxQueryLength)
+        if (astCache == null || input.Length > _maxQueryLength)
         {
             return BuildInternal<TNode>(input, signatureFunc);
         }
 
-        if (_astCache != null && _astCache.TryGetValue(input, out var resultNode))
+        if (astCache.TryGetValue(input, out var resultNode))
         {
             return (TNode)resultNode.Clone();
         }
 
         resultNode = BuildInternal<TNode>(input, signatureFunc);
-        if (_astCache != null)
-        {
-            _astCache[input] = (IAstNode)resultNode.Clone();
-        }
+        astCache[input] = resultNode;
 #if DEBUG
         // Return cloned node instead for debug only purposes.
         return (TNode)resultNode.Clone();
@@ -75,26 +88,43 @@ internal sealed class AstBuilder : IAstBuilder
 #endif
     }
 
-    private static TNode BuildInternal<TNode>(string input, Func<QueryCatParser, ParserRuleContext> signatureFunc)
+    private TNode BuildInternal<TNode>(string input, Func<QueryCatParser, ParserRuleContext> signatureFunc)
         where TNode : IAstNode
     {
-        var errorListener = new ProgramAntlrErrorListener();
-
-        var inputStream = new AntlrInputStream(input);
-        var lexer = new QueryCatLexer(inputStream);
-        var commonTokenStream = new CommonTokenStream(lexer);
-        var parser = new QueryCatParser(commonTokenStream);
-        parser.RemoveErrorListeners();
-        parser.AddErrorListener(errorListener);
-        parser.Interpreter.PredictionMode = Antlr4.Runtime.Atn.PredictionMode.SLL;
-        var context = signatureFunc.Invoke(parser);
-        var visitor = new ProgramParserVisitor();
-        if (parser.NumberOfSyntaxErrors > 0)
+        _parser.Profile = ProfileMode;
+        _lexer.SetInputStream(new AntlrInputStream(input));
+        _parser.TokenStream = new CommonTokenStream(_lexer);
+        var context = signatureFunc.Invoke(_parser);
+        if (_parser.NumberOfSyntaxErrors > 0)
         {
-            throw new SyntaxException(errorListener.Message, input, errorListener.Line, errorListener.CharPosition);
+            throw new SyntaxException(_errorListener.Message, input, _errorListener.Line, _errorListener.CharPosition);
+        }
+        if (ProfileMode)
+        {
+            DumpProfileInfo();
         }
 
-        return (TNode)visitor.Visit(context);
+        return (TNode)_programParserVisitor.Visit(context);
+    }
+
+    private readonly record struct ProfileInfo(
+        DecisionInfo DecisionInfo,
+        string RuleName)
+    {
+        /// <inheritdoc />
+        public override string ToString()
+            => $"{RuleName}: time={DecisionInfo.timeInPrediction} errors={DecisionInfo.errors.Count} " +
+               $"ambiguities={DecisionInfo.ambiguities.Count}";
+    }
+
+    private void DumpProfileInfo()
+    {
+        var info = _parser.ParseInfo.getDecisionInfo()
+            .OrderByDescending(di => di.timeInPrediction)
+            .Select(di => new ProfileInfo(
+                di,
+                _parser.RuleNames[_parser.Atn.GetDecisionState(di.decision).ruleIndex]))
+            .ToList();
     }
 
     private static IEnumerable<IAstBuilder.Token> TransformTokens(IEnumerable<IToken> tokens)

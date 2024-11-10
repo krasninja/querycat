@@ -2,6 +2,7 @@ using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Commands.Select.Iterators;
+using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
@@ -53,7 +54,7 @@ internal sealed partial class SelectPlanner
         }
 
         var funcUnits = Misc_CreateDelegate(querySpecificationNode.DistinctNode.OnNodes, context);
-        context.SetIterator(new DistinctRowsIteratorIterator(context.CurrentIterator, funcUnits));
+        context.SetIterator(new DistinctRowsIteratorIterator(ExecutionThread, context.CurrentIterator, funcUnits));
     }
 
     private void Pipeline_CreateDistinctAllRowsSet(
@@ -70,7 +71,7 @@ internal sealed partial class SelectPlanner
             .Select((_, i) => new FuncUnitRowsIteratorColumn(context.CurrentIterator, i))
             .Cast<IFuncUnit>()
             .ToArray();
-        context.SetIterator(new DistinctRowsIteratorIterator(context.CurrentIterator, funcUnits));
+        context.SetIterator(new DistinctRowsIteratorIterator(ExecutionThread, context.CurrentIterator, funcUnits));
     }
 
     private record struct ColumnWithIndex(
@@ -134,27 +135,39 @@ internal sealed partial class SelectPlanner
         SelectColumnsListNode columnsNode,
         SelectColumnsExceptNode? exceptNode)
     {
-        var projectedIterator = new ProjectedRowsIterator(context.CurrentIterator);
+        var projectedIterator = new ProjectedRowsIterator(ExecutionThread, context.CurrentIterator);
 
         // Format the initial iterator with all columns (except excluded) that
         // user mentioned in SELECT block.
         var funcs = columnsNode.ColumnsNodes.Select(c => Misc_CreateDelegate(c, context)).ToList();
         var selectColumns = CreateSelectColumns(columnsNode).ToList();
+        var exceptColumns = exceptNode?.ExceptIdentifiers.ToList() ?? new List<IdentifierExpressionNode>();
         for (var i = 0; i < columnsNode.ColumnsNodes.Count; i++)
         {
             // Excluded columns filter.
             var columnNode = columnsNode.ColumnsNodes[i] as SelectColumnsSublistExpressionNode;
-            if (exceptNode != null &&
-                columnNode?.ExpressionNode is IdentifierExpressionNode columnIdNode &&
-                exceptNode.ExceptIdentifiers.Any(
-                    node => node.TableFieldName.Equals(columnIdNode.TableFieldName, StringComparison.OrdinalIgnoreCase)
-                            && node.TableSourceName.Equals(columnIdNode.TableSourceName, StringComparison.OrdinalIgnoreCase)))
+            if (columnNode?.ExpressionNode is IdentifierExpressionNode columnIdNode)
             {
-                continue;
+                var columnToExcept = exceptColumns.Find(
+                    node => node.TableFieldName.Equals(columnIdNode.TableFieldName, StringComparison.InvariantCultureIgnoreCase)
+                            && node.TableSourceName.Equals(columnIdNode.TableSourceName, StringComparison.InvariantCultureIgnoreCase));
+                if (columnToExcept != null)
+                {
+                    exceptColumns.Remove(columnToExcept);
+                    continue;
+                }
             }
             var columnIndex = projectedIterator.AddFuncColumn(selectColumns[i].Column, funcs[i]);
             var info = context.ColumnsInfoContainer.GetByColumn(projectedIterator.Columns[columnIndex]);
             info.RelatedSelectSublistNode = columnsNode.ColumnsNodes[selectColumns[i].ColumnIndex];
+        }
+
+        // Check that all "exclude" identifiers are used.
+        if (exceptColumns.Count > 0)
+        {
+            var availableColumns = string.Join(", ", columnsNode.GetColumnsNames().Select(c => $"'{c}'"));
+            throw new SemanticException(
+                string.Format(Resources.Errors.InvalidExceptColumn, exceptColumns[0].TableFullName, availableColumns));
         }
 
         // Add missed columns (for example, virtual and exclude columns) so that are visible
@@ -172,11 +185,11 @@ internal sealed partial class SelectPlanner
         context.SetIterator(projectedIterator);
     }
 
-    private static void Pipeline_SetSelectRowsSet(
+    private void Pipeline_SetSelectRowsSet(
         SelectCommandContext context,
         SelectColumnsListNode columnsNode)
     {
-        var projectedIterator = new ProjectedRowsIterator(context.CurrentIterator);
+        var projectedIterator = new ProjectedRowsIterator(ExecutionThread, context.CurrentIterator);
         var iterator = context.CurrentIterator;
         foreach (var selectColumn in columnsNode.ColumnsNodes)
         {
@@ -217,7 +230,7 @@ internal sealed partial class SelectPlanner
         }
 
         var predicate = Misc_CreateDelegate(selectTableExpressionNode.SearchConditionNode, context);
-        context.SetIterator(new FilterRowsIterator(context.CurrentIterator, predicate));
+        context.SetIterator(new FilterRowsIterator(ExecutionThread, context.CurrentIterator, predicate));
     }
 
     #endregion
@@ -241,7 +254,7 @@ internal sealed partial class SelectPlanner
                 Pipeline_ConvertNullOrder(n.NullOrder)
             )
         );
-        context.SetIterator(new OrderRowsIterator(context.CurrentIterator, orderFunctions.ToArray()));
+        context.SetIterator(new OrderRowsIterator(ExecutionThread, context.CurrentIterator, orderFunctions.ToArray()));
     }
 
     private static void Pipeline_OrderConvertColumnNumbers(IRowsIterator currentIterator, List<SelectOrderBySpecificationNode> orderByNodes)
@@ -250,7 +263,7 @@ internal sealed partial class SelectPlanner
         foreach (var orderByNode in orderByNodes)
         {
             if (orderByNode.ExpressionNode is LiteralNode literalNode
-                && literalNode.Value.GetInternalType() == DataType.Integer
+                && literalNode.Value.Type == DataType.Integer
                 && literalNode.Value.AsIntegerUnsafe > 0
                 && literalNode.Value.AsIntegerUnsafe <= currentIterator.Columns.Length)
             {
@@ -285,13 +298,19 @@ internal sealed partial class SelectPlanner
     {
         if (offsetNode != null)
         {
-            var count = Misc_CreateDelegate(offsetNode.CountNode, context).Invoke().AsInteger;
-            context.SetIterator(new OffsetRowsIterator(context.CurrentIterator, count));
+            var count = Misc_CreateDelegate(offsetNode.CountNode, context).Invoke(ExecutionThread).AsInteger;
+            if (count.HasValue)
+            {
+                context.SetIterator(new OffsetRowsIterator(context.CurrentIterator, count.Value));
+            }
         }
         if (fetchNode != null)
         {
-            var count = Misc_CreateDelegate(fetchNode.CountNode, context).Invoke().AsInteger;
-            context.SetIterator(new LimitRowsIterator(context.CurrentIterator, count));
+            var count = Misc_CreateDelegate(fetchNode.CountNode, context).Invoke(ExecutionThread).AsInteger;
+            if (count.HasValue)
+            {
+                context.SetIterator(new LimitRowsIterator(context.CurrentIterator, count.Value));
+            }
         }
     }
 
@@ -328,6 +347,7 @@ internal sealed partial class SelectPlanner
             .GetRequiredAttribute<FuncUnitCallInfo>(AstAttributeKeys.ArgumentsKey);
         var hasVaryingTarget = querySpecificationNode.TargetNode.Arguments.Count > 0;
         var outputIterator = new VaryingOutputRowsIterator(
+            ExecutionThread,
             context.CurrentIterator,
             context.OutputArgumentsFunc,
             functionCallInfo,

@@ -262,4 +262,4 @@ BOOLEAN_LITERAL: TRUE | FALSE;
 
 SINGLE_LINE_COMMENT: ('--' | '#!') ~[\r\n]* (('\r'? '\n') | EOF) -> channel(HIDDEN);
 MULTILINE_COMMENT: '/*' .*? '*/' -> channel(HIDDEN);
-SPACES: [ \u000B\t\r\n] -> channel(HIDDEN);
+SPACES: [ \t\r\n] -> channel(HIDDEN);

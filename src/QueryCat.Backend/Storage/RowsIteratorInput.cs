@@ -30,8 +30,8 @@ public sealed class RowsIteratorInput : IRowsInput, IRowsIteratorParent
     {
         _rowsIterator = rowsIterator;
         Columns = rowsIterator.Columns;
-        _id = id ?? string.Empty;
-        UniqueKey = new[] { _id };
+        _id = id ?? Guid.NewGuid().ToString("N");
+        UniqueKey = [_id];
     }
 
     /// <inheritdoc />
@@ -63,7 +63,7 @@ public sealed class RowsIteratorInput : IRowsInput, IRowsIteratorParent
     /// <inheritdoc />
     public void Explain(IndentedStringBuilder stringBuilder)
     {
-        stringBuilder.AppendRowsIteratorsWithIndent("Iterator input", _rowsIterator);
+        stringBuilder.AppendRowsIteratorsWithIndent($"Iterator input (id={_id})", _rowsIterator);
     }
 
     /// <inheritdoc />

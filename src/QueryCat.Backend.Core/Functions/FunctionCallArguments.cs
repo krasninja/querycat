@@ -83,8 +83,8 @@ public sealed class FunctionCallArguments
     public FunctionCallArgumentsTypes GetTypes()
     {
         return new FunctionCallArgumentsTypes(
-            _positional.Select((p, i) => new KeyValuePair<int, DataType>(i, p.GetInternalType())).ToArray(),
-            _named.Select(p => new KeyValuePair<string, DataType>(p.Key, p.Value.GetInternalType())).ToArray()
+            _positional.Select((p, i) => new KeyValuePair<int, DataType>(i, p.Type)).ToArray(),
+            _named.Select(p => new KeyValuePair<string, DataType>(p.Key, p.Value.Type)).ToArray()
         );
     }
 }

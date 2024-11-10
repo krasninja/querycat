@@ -3,7 +3,7 @@ namespace QueryCat.Backend.Core.Types;
 /// <summary>
 /// Base types system.
 /// </summary>
-public enum DataType : sbyte
+public enum DataType
 {
     /// <summary>
     /// No return type. For example, can be used for functions with no return value.

@@ -54,4 +54,13 @@
   <data name="CannotGetType" xml:space="preserve">
     <value>Cannot get type.</value>
   </data>
+  <data name="ObjectIsNull" xml:space="preserve">
+    <value>Object is null. The target type is '{0}'.</value>
+  </data>
+  <data name="ObjectInvalidType" xml:space="preserve">
+    <value>Cannot cast object of type '{0}' to type '{1}'.</value>
+  </data>
+  <data name="InvalidValueFormat" xml:space="preserve">
+    <value>Invalid value format '{0}'.</value>
+  </data>
 </root>

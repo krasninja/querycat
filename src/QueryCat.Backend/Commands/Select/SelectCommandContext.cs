@@ -18,6 +18,8 @@ internal sealed class SelectCommandContext(SelectQueryNode queryNode) : CommandC
 
     public IExecutionScope CapturedScope { get; set; } = NullExecutionScope.Instance;
 
+    public bool IsSingleValue => CurrentIterator.Columns.Length == 1 && queryNode.IsSingleValue();
+
     #region Iterator
 
     private IRowsIterator? _currentIterator;
@@ -114,7 +116,7 @@ internal sealed class SelectCommandContext(SelectQueryNode queryNode) : CommandC
 
     /// <summary>
     /// Context information for rows inputs. We bypass this to input to provide additional information
-    /// about a query. This would allow optimize execution.
+    /// about a query. This would allow to optimize execution.
     /// </summary>
     public IEnumerable<SelectInputQueryContext> InputQueryContextList => Inputs.Select(i => i.InputQueryContext);
 

@@ -472,7 +472,7 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
 
     private string ToStringWithFormat(in VariantValue value)
     {
-        var type = value.GetInternalType();
+        var type = value.Type;
         if (type == DataType.Float || type == DataType.Numeric)
         {
             return value.ToString(_floatNumberFormat);

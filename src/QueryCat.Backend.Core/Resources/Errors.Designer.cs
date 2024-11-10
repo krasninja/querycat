@@ -116,5 +116,23 @@ namespace QueryCat.Backend.Core.Resources {
                 return ResourceManager.GetString("CannotGetType", resourceCulture);
             }
         }
+        
+        internal static string ObjectIsNull {
+            get {
+                return ResourceManager.GetString("ObjectIsNull", resourceCulture);
+            }
+        }
+        
+        internal static string ObjectInvalidType {
+            get {
+                return ResourceManager.GetString("ObjectInvalidType", resourceCulture);
+            }
+        }
+        
+        internal static string InvalidValueFormat {
+            get {
+                return ResourceManager.GetString("InvalidValueFormat", resourceCulture);
+            }
+        }
     }
 }

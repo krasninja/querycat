@@ -36,7 +36,7 @@ internal sealed partial class SelectPlanner
             if (querySpecificationNode.FetchNode != null)
             {
                 var fetchCount = Misc_CreateDelegate(querySpecificationNode.FetchNode.CountNode)
-                    .Invoke().AsInteger;
+                    .Invoke(ExecutionThread).AsInteger;
                 foreach (var queryContext in context.InputQueryContextList)
                 {
                     queryContext.QueryInfo.Limit = (queryContext.QueryInfo.Limit ?? 0) + fetchCount;
@@ -45,7 +45,7 @@ internal sealed partial class SelectPlanner
             if (querySpecificationNode.OffsetNode != null)
             {
                 var offsetCount = Misc_CreateDelegate(querySpecificationNode.OffsetNode.CountNode)
-                    .Invoke().AsInteger;
+                    .Invoke(ExecutionThread).AsInteger;
                 foreach (var queryContext in context.InputQueryContextList)
                 {
                     queryContext.QueryInfo.Limit = (queryContext.QueryInfo.Limit ?? 0) + offsetCount;
@@ -67,16 +67,11 @@ internal sealed partial class SelectPlanner
         var makeDelegateVisitor = new SelectCreateDelegateVisitor(ExecutionThread, commandContext);
 
         // Process expression <id> <op> <expr> or <expr> <op> <id>.
-        bool HandleBinaryOperation(IAstNode node, AstTraversal traversal, bool reverse)
+        bool HandleBinaryOperation(IAstNode node, AstTraversal traversal)
         {
             // Get the binary comparision node.
             if (node is not BinaryOperationExpressionNode binaryOperationExpressionNode
                 || !VariantValue.ComparisionOperations.Contains(binaryOperationExpressionNode.Operation))
-            {
-                return false;
-            }
-            // Try reverse order.
-            if (reverse && !binaryOperationExpressionNode.TryReverse())
             {
                 return false;
             }
@@ -85,22 +80,38 @@ internal sealed partial class SelectPlanner
             {
                 return false;
             }
+
             // Left and Right must be id and expression.
-            if (!binaryOperationExpressionNode.MatchType(out IdentifierExpressionNode? identifierNode, out ExpressionNode? expressionNode)
-                || identifierNode == null)
+            if (binaryOperationExpressionNode.MatchType(out IdentifierExpressionNode? identifierNode, out ExpressionNode? expressionNode)
+                && TryFindAndAddIdCondition(identifierNode, expressionNode))
             {
-                return false;
+                return true;
             }
-            // Try to find correspond row input column.
-            makeDelegateVisitor.RunAndReturn(identifierNode); // This call sets InputColumnKey attribute.
-            var column = identifierNode.GetAttribute<Column>(AstAttributeKeys.InputColumnKey);
-            if (column == null || rowsInputContext.RowsInput.GetColumnIndex(column) < 0)
+            if (binaryOperationExpressionNode.MatchType(out expressionNode, out identifierNode)
+                && TryFindAndAddIdCondition(identifierNode, expressionNode))
             {
-                return false;
+                return true;
             }
-            var valueFunc = makeDelegateVisitor.RunAndReturn(expressionNode!);
-            commandContext.Conditions.AddCondition(column, binaryOperationExpressionNode.Operation, valueFunc);
-            return true;
+
+            return false;
+
+            bool TryFindAndAddIdCondition(IdentifierExpressionNode? localIdentifierNode, ExpressionNode? localExpressionNode)
+            {
+                if (localIdentifierNode == null)
+                {
+                    return false;
+                }
+                // Try to find correspond row input column.
+                makeDelegateVisitor.RunAndReturn(localIdentifierNode); // This call sets InputColumnKey attribute.
+                var column = localIdentifierNode.GetAttribute<Column>(AstAttributeKeys.InputColumnKey);
+                if (column == null || rowsInputContext.RowsInput.GetColumnIndex(column) < 0)
+                {
+                    return false;
+                }
+                var valueFunc = makeDelegateVisitor.RunAndReturn(localExpressionNode!);
+                commandContext.Conditions.TryAddCondition(column, binaryOperationExpressionNode.Operation, valueFunc);
+                return true;
+            }
         }
 
         // Process expression <id> BETWEEN <expr> AND <expr>.
@@ -125,8 +136,8 @@ internal sealed partial class SelectPlanner
             }
             var leftValueFunc = makeDelegateVisitor.RunAndReturn(betweenExpressionNode.Left);
             var rightValueFunc = makeDelegateVisitor.RunAndReturn(betweenExpressionNode.Right);
-            commandContext.Conditions.AddCondition(column, VariantValue.Operation.GreaterOrEquals, leftValueFunc);
-            commandContext.Conditions.AddCondition(column, VariantValue.Operation.LessOrEquals, rightValueFunc);
+            commandContext.Conditions.TryAddCondition(column, VariantValue.Operation.GreaterOrEquals, leftValueFunc);
+            commandContext.Conditions.TryAddCondition(column, VariantValue.Operation.LessOrEquals, rightValueFunc);
             return true;
         }
 
@@ -166,7 +177,7 @@ internal sealed partial class SelectPlanner
             {
                 return false;
             }
-            commandContext.Conditions.AddCondition(column, VariantValue.Operation.In, values.ToArray());
+            commandContext.Conditions.TryAddCondition(column, VariantValue.Operation.In, values.ToArray());
             return true;
         }
 
@@ -174,11 +185,7 @@ internal sealed partial class SelectPlanner
         callbackVisitor.AstTraversal.TypesToIgnore.Add(typeof(SelectQuerySpecificationNode));
         callbackVisitor.Callback = (node, traversal) =>
         {
-            if (HandleBinaryOperation(node, traversal, reverse: false))
-            {
-                return;
-            }
-            if (HandleBinaryOperation(node, traversal, reverse: true))
+            if (HandleBinaryOperation(node, traversal))
             {
                 return;
             }

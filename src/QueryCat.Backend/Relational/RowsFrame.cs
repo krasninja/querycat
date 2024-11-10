@@ -41,11 +41,8 @@ public class RowsFrame : IRowsSchema, IEnumerable<Row>
     /// <param name="columns">Columns.</param>
     public RowsFrame(RowsFrameOptions options, params Column[] columns)
     {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(options.ChunkSize, nameof(options.ChunkSize));
         _chunkSize = options.ChunkSize;
-        if (_chunkSize < 1)
-        {
-            throw new ArgumentOutOfRangeException(nameof(options.ChunkSize));
-        }
         _columns = columns;
         if (_columns.Length < 1)
         {
@@ -59,23 +56,12 @@ public class RowsFrame : IRowsSchema, IEnumerable<Row>
         _storage = new ChunkList<VariantValue[]>(_chunkSize);
     }
 
+    /// <summary>
+    /// Constructor.
+    /// </summary>
+    /// <param name="columns">Frame columns.</param>
     public RowsFrame(params Column[] columns) : this(new RowsFrameOptions(), columns)
     {
-    }
-
-    /// <summary>
-    /// Create rows frame from iterator.
-    /// </summary>
-    /// <param name="rowsIterator">Rows iterator.</param>
-    /// <returns>Instance of <see cref="RowsFrame" />.</returns>
-    public static RowsFrame CreateFromIterator(IRowsIterator rowsIterator)
-    {
-        var rowsFrame = new RowsFrame(rowsIterator.Columns);
-        while (rowsIterator.MoveNext())
-        {
-            rowsFrame.AddRow(rowsIterator.Current);
-        }
-        return rowsFrame;
     }
 
     /// <summary>

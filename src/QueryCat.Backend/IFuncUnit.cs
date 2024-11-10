@@ -1,3 +1,4 @@
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend;
@@ -16,6 +17,7 @@ internal interface IFuncUnit
     /// <summary>
     /// Invoke and get value.
     /// </summary>
+    /// <param name="thread">Current execution thread.</param>
     /// <returns>Value.</returns>
-    VariantValue Invoke();
+    VariantValue Invoke(IExecutionThread thread);
 }

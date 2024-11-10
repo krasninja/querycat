@@ -95,6 +95,7 @@ $ dotnet add package QueryCat
 - Home: [GitHub](https://github.com/krasninja/querycat)
 - Tutorial: [ReadTheDocs](https://querycat.readthedocs.io/en/latest/tutorial/)
 - Documentation: [ReadTheDocs](https://querycat.readthedocs.io/)
+- NuGet: [NuGet](https://www.nuget.org/packages/QueryCat/)
 
 ## Limitations
 

@@ -60,9 +60,9 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
             QueryCatParser.FLOAT_LITERAL => new LiteralNode(new VariantValue(double.Parse(text))),
             QueryCatParser.NUMERIC_LITERAL => new LiteralNode(new VariantValue(decimal.Parse(text))),
             QueryCatParser.STRING_LITERAL => new LiteralNode(new VariantValue(text)),
-            QueryCatParser.BOOLEAN_LITERAL => new LiteralNode(new VariantValue(true)),
-            QueryCatParser.TRUE => new LiteralNode(new VariantValue(true)),
-            QueryCatParser.FALSE => new LiteralNode(new VariantValue(false)),
+            QueryCatParser.BOOLEAN_LITERAL => new LiteralNode(VariantValue.TrueValue),
+            QueryCatParser.TRUE => new LiteralNode(VariantValue.TrueValue),
+            QueryCatParser.FALSE => new LiteralNode(VariantValue.FalseValue),
             QueryCatParser.NULL => new LiteralNode(VariantValue.Null),
             _ => throw new ArgumentOutOfRangeException()
         };

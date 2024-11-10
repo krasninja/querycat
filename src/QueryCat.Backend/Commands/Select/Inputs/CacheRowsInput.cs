@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Storage;
 
@@ -20,6 +21,7 @@ internal sealed class CacheRowsInput : IRowsInputKeys
     private readonly Guid _id = Guid.NewGuid();
 #endif
     private readonly ICacheEntryStorage _cacheEntries = new CacheEntryStorage();
+    private readonly IExecutionThread _thread;
     private readonly IRowsInput _rowsInput;
     private readonly SelectQueryConditions _conditions;
     private bool[] _cacheReadMap;
@@ -56,12 +58,13 @@ internal sealed class CacheRowsInput : IRowsInputKeys
         }
     }
 
-    public CacheRowsInput(IRowsInput rowsInput, SelectQueryConditions? conditions = null)
+    public CacheRowsInput(IExecutionThread thread, IRowsInput rowsInput, SelectQueryConditions? conditions = null)
     {
+        _thread = thread;
         _rowsInput = rowsInput;
         _innerRowsInputType = GetRowsInputId(_rowsInput);
         _conditions = conditions ?? new SelectQueryConditions();
-        _cacheReadMap = Array.Empty<bool>();
+        _cacheReadMap = [];
         _queryContext = rowsInput.QueryContext;
     }
 
@@ -183,7 +186,7 @@ internal sealed class CacheRowsInput : IRowsInputKeys
         if (_resetRequested || _currentCacheEntry == null)
         {
             _resetRequested = false;
-            var newCacheKey = CreateCacheKey(_innerRowsInputType, _rowsInput, _queryContext, _conditions);
+            var newCacheKey = CreateCacheKey(_thread, _innerRowsInputType, _rowsInput, _queryContext, _conditions);
             if (_currentCacheEntry != null)
             {
                 // If we reset but persist the same key - just go ahead using existing input.
@@ -207,20 +210,25 @@ internal sealed class CacheRowsInput : IRowsInputKeys
         }
 
 #if DEBUG
-        var keyForCheck = CreateCacheKey(_innerRowsInputType, _rowsInput, _queryContext, _conditions);
+        var keyForCheck = CreateCacheKey(_thread, _innerRowsInputType, _rowsInput, _queryContext, _conditions);
         Debug.Assert(keyForCheck == _currentCacheEntry.Key, "Cache key has been changed!");
 #endif
         return _currentCacheEntry;
     }
 
-    private static CacheKey CreateCacheKey(string from, IRowsInput rowsInput, QueryContext queryContext, SelectQueryConditions conditions)
+    private static CacheKey CreateCacheKey(
+        IExecutionThread thread,
+        string from,
+        IRowsInput rowsInput,
+        QueryContext queryContext,
+        SelectQueryConditions conditions)
     {
         return new CacheKey(
             from: from,
             inputArguments: rowsInput.UniqueKey,
             selectColumns: queryContext.QueryInfo.Columns.Select(c => c.Name).ToArray(),
             conditions: rowsInput is IRowsInputKeys rowsInputKeys
-                ? conditions.GetKeyConditions(rowsInputKeys).Select(c => c.ToCacheCondition()).ToArray()
+                ? conditions.GetKeyConditions(rowsInputKeys).Select(c => c.ToCacheCondition(thread)).ToArray()
                 : null,
             offset: queryContext.QueryInfo.Offset,
             limit: queryContext.QueryInfo.Limit);

@@ -1,3 +1,5 @@
+using System.Data;
+using System.Text;
 using BenchmarkDotNet.Attributes;
 using NCalc;
 using QueryCat.Backend;
@@ -15,7 +17,11 @@ namespace QueryCat.Benchmarks.Benchmarks;
 [MemoryDiagnoser]
 public class NCalcBenchmark
 {
+    private const string LogicalExpression =
+        "(1089 = (1000 + 89)) AND 13 IN (1,2,3,4,5,6,7,8,9,10,11,12,13,14,15) AND 'INSERT' = 'INSERT'";
+
     private readonly IExecutionThread _executionThread;
+    private readonly DataTable _dataTable;
     private readonly string _qcatQuery;
     private readonly string _ncalcQuery;
 
@@ -24,9 +30,12 @@ public class NCalcBenchmark
         _executionThread = new ExecutionThreadBootstrapper()
             .WithStandardFunctions()
             .Create();
+        _dataTable = new DataTable();
         _qcatQuery = GenerateQuery("power", "sqrt");
         _ncalcQuery = GenerateQuery("Pow", "Sqrt");
     }
+
+    #region Pi
 
     [Benchmark]
     public VariantValue CalculatePiWithQueryCat()
@@ -38,17 +47,58 @@ public class NCalcBenchmark
     [Benchmark]
     public double CalculatePiWithNCalc()
     {
-        var result = new Expression(_ncalcQuery).Evaluate();
+        var expression = new Expression(_ncalcQuery)
+        {
+            Options = ExpressionOptions.NoCache | ExpressionOptions.IgnoreCaseAtBuiltInFunctions,
+        };
+        var result = expression.Evaluate();
         return (double)result!;
     }
 
+    #endregion
+
+    #region Logical Expression
+
+    [Benchmark]
+    public VariantValue CalculateLogicalWithQueryCat()
+    {
+        var result = _executionThread.Run(LogicalExpression);
+        return result;
+    }
+
+    [Benchmark]
+    public object? CalculateLogicalWithNCalc()
+    {
+        var expression = new Expression(LogicalExpression)
+        {
+            Options = ExpressionOptions.NoCache | ExpressionOptions.IgnoreCaseAtBuiltInFunctions,
+        };
+        return expression.Evaluate();
+    }
+
+    [Benchmark]
+    public object CalculateLogicalWithDataTable()
+    {
+        var result = _dataTable.Compute(LogicalExpression, string.Empty);
+        return result;
+    }
+
+    #endregion
+
     private static string GenerateQuery(string powerFuncName, string sqrtFuncName)
     {
-        var items = new List<string>();
-        for (var i = 0; i < 20; i++)
+        const int count = 20;
+        var sb = new StringBuilder(capacity: count * 20);
+        sb.Append("(");
+        for (var i = 0; i < count; i++)
         {
-            items.Add($"{powerFuncName}(-1.0, {i})/(2*{i} + 1)");
+            sb.Append($"{powerFuncName}(-1.0, {i})/(2*{i} + 1)");
+            if (i != count - 1)
+            {
+                sb.Append(" + ");
+            }
         }
-        return "(" + string.Join(" + ", items) + ") * 4";
+        sb.Append(") * 4");
+        return sb.ToString();
     }
 }

@@ -3,7 +3,7 @@
 To extend the QueryCat functionality the functions is the essential thing. The QueryCat compliant functions must match the following delegate signature (`QueryCat.Backend.Core.Functions` namespace):
 
 ```csharp
-delegate VariantValue FunctionDelegate(FunctionCallInfo args);
+delegate VariantValue FunctionDelegate(IExecutionThread thread);
 ```
 
 Here is the sample function definition:
@@ -11,10 +11,10 @@ Here is the sample function definition:
 ```csharp
 [Description("The function sums two integers.")]
 [FunctionSignature("add(a: integer, b?: integer = 2): integer")]
-public static VariantValue SumIntegers(FunctionCallInfo callInfo)
+public static VariantValue SumIntegers(IExecutionThread thread)
 {
-    var a = callInfo.GetAt(0);
-    var b = callInfo.GetAt(1);
+    var a = thread.Stack[0];
+    var b = thread.Stack[1];
     return new VariantValue(a.AsInteger + b.AsInteger);
 }
 ```

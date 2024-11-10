@@ -1,0 +1,7 @@
+expected: |
+  Lenovo Group Limited
+query: |
+  select it2.name
+  from it_stocks() it1
+  inner join it_stocks() it2 on it1.id = it2.id
+  where it1.id = 'LNVGY'

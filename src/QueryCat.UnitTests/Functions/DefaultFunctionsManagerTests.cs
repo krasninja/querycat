@@ -28,17 +28,16 @@ public sealed class DefaultFunctionsManagerTests
 
         var func = _functionsManager.FindByName("add",
             FunctionCallArgumentsTypes.FromPositionArguments(DataType.Integer, DataType.Integer));
-        var functionCallInfo = FunctionCallInfo.CreateWithArguments(Executor.Thread,
-            new VariantValue(5), new VariantValue(6));
-        var ret = func.Delegate(functionCallInfo);
+        using var frame = Executor.Thread.Stack.CreateFrameWithArguments(new VariantValue(5), new VariantValue(6));
+        var ret = func.Delegate(Executor.Thread);
 
-        Assert.Equal(11L, ret);
+        Assert.Equal(11L, ret.AsIntegerUnsafe);
     }
 
     [FunctionSignature("add(a: integer, b: integer, c: boolean = false): integer")]
-    private static VariantValue SumIntegers(FunctionCallInfo callInfo)
+    private static VariantValue SumIntegers(IExecutionThread thread)
     {
-        return new VariantValue(callInfo.GetAt(0).AsInteger + callInfo.GetAt(1).AsInteger);
+        return new VariantValue(thread.Stack[0].AsInteger + thread.Stack[1].AsInteger);
     }
 
     [Fact]
@@ -50,9 +49,9 @@ public sealed class DefaultFunctionsManagerTests
         var func = _functionsManager.FindByName("add",
             FunctionCallArgumentsTypes.FromPositionArguments(
                 DataType.String, DataType.Integer, DataType.Integer));
-        var functionCallInfo = FunctionCallInfo.CreateWithArguments(Executor.Thread,
+        using var frame = Executor.Thread.Stack.CreateFrameWithArguments(
             new VariantValue("sum"), new VariantValue(5), new VariantValue(5));
-        var ret = func.Delegate(functionCallInfo);
+        var ret = func.Delegate(Executor.Thread);
 
         Assert.Equal("sum: 10", ret);
     }
@@ -65,20 +64,20 @@ public sealed class DefaultFunctionsManagerTests
 
         var func = _functionsManager.FindByName("add",
             FunctionCallArgumentsTypes.FromPositionArguments(DataType.String));
-        var functionCallInfo = FunctionCallInfo.CreateWithArguments(Executor.Thread, new VariantValue("sum"));
-        var ret = func.Delegate(functionCallInfo);
+        using var frame = Executor.Thread.Stack.CreateFrameWithArguments(new VariantValue("sum"));
+        var ret = func.Delegate(Executor.Thread);
 
         Assert.Equal("sum: 0", ret);
     }
 
     [FunctionSignature("add(str: string, ...nums: integer[]): integer")]
-    private static VariantValue SumIntegersVariadic(FunctionCallInfo callInfo)
+    private static VariantValue SumIntegersVariadic(IExecutionThread thread)
     {
-        var str = callInfo.GetAt(0);
-        long sum = 0;
-        for (int i = 1; i < callInfo.Count; i++)
+        var str = thread.Stack[0];
+        long? sum = 0;
+        for (int i = 1; i < thread.Stack.FrameLength; i++)
         {
-            sum += callInfo.GetAt(i).AsInteger;
+            sum += thread.Stack[i].AsInteger;
         }
         return new VariantValue($"{str}: {sum}");
     }
@@ -101,9 +100,9 @@ public sealed class DefaultFunctionsManagerTests
         var value3 = Executor.Thread.CallFunction(func3.Delegate, 1, "2");
 
         // Assert.
-        Assert.Equal("1 2", value1.As<TestClass1>().Value);
-        Assert.Equal("1 2", value2.As<TestClass1>().Value);
-        Assert.Equal("1 2", value3.As<TestClass1>().Value);
+        Assert.Equal("1 2", value1.As<TestClass1>()!.Value);
+        Assert.Equal("1 2", value2.As<TestClass1>()!.Value);
+        Assert.Equal("1 2", value3.As<TestClass1>()!.Value);
     }
 
     [FunctionSignature]

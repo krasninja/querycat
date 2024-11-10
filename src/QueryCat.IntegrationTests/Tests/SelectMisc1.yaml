@@ -1,4 +1,4 @@
 expected: |
-  abcdef,10a,a10,b10.1,3b
+  abcdef,10a,a10,b10.10,3b
 query: |
   SELECT 'abc' || 'de' || 'f', 10 + 'a', 'a' + 10, 'b' + 10.10, 3 || 'b';;

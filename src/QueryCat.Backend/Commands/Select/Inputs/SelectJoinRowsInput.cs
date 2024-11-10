@@ -1,11 +1,13 @@
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Commands.Select.Inputs;
 
 internal sealed class SelectJoinRowsInput : IRowsInputKeys, IRowsIteratorParent
 {
+    private readonly IExecutionThread _thread;
     private readonly IRowsInput _leftInput;
     private readonly IRowsInput _rightInput;
     private readonly JoinType _joinType;
@@ -35,9 +37,15 @@ internal sealed class SelectJoinRowsInput : IRowsInputKeys, IRowsIteratorParent
         }
     }
 
-    public SelectJoinRowsInput(IRowsInput leftInput, IRowsInput rightInput, JoinType joinType, IFuncUnit condition,
+    public SelectJoinRowsInput(
+        IExecutionThread thread,
+        IRowsInput leftInput,
+        IRowsInput rightInput,
+        JoinType joinType,
+        IFuncUnit condition,
         bool reverseColumnsOrder = false)
     {
+        _thread = thread;
         _leftInput = leftInput;
         _rightInput = rightInput;
         _joinType = joinType;
@@ -112,7 +120,7 @@ internal sealed class SelectJoinRowsInput : IRowsInputKeys, IRowsIteratorParent
             while (_rightInput.ReadNext())
             {
                 _rightRowIndex++;
-                var matches = _condition.Invoke().AsBoolean;
+                var matches = _condition.Invoke(_thread).AsBoolean;
                 if (matches)
                 {
                     _rightHasData = true;

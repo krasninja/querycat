@@ -117,25 +117,37 @@ public sealed class IISW3CInput : StreamRowsInput
     public override void Open()
     {
         _logger.LogDebug("Open {Input}.", this);
+
         // Try to find fields header.
-        var foundHeaders = false;
+        var foundHeaders = SeekToFieldsHeader();
+        if (!foundHeaders)
+        {
+            throw new QueryCatException("Cannot find IIS fields.");
+        }
+    }
+
+    private bool SeekToFieldsHeader()
+    {
         while (ReadNext())
         {
             var line = GetInputColumnValue(0);
             if (line.StartsWith(FieldsMarker))
             {
                 ParseHeaders(GetRowText().ToString());
-                foundHeaders = true;
                 _isInitialized = true;
                 _logger.LogDebug("Found headers.");
-                break;
+                return true;
             }
         }
+        return false;
+    }
 
-        if (!foundHeaders)
-        {
-            throw new QueryCatException("Cannot find IIS fields.");
-        }
+    /// <inheritdoc />
+    public override void Reset()
+    {
+        _isInitialized = false;
+        base.Reset();
+        SeekToFieldsHeader();
     }
 
     /// <inheritdoc />

@@ -23,8 +23,7 @@ public static class SdkConvert
 
     public static VariantValue Convert(Backend.Core.Types.VariantValue value)
     {
-        var type = value.GetInternalType();
-        return type switch
+        return value.Type switch
         {
             Backend.Core.Types.DataType.Void => new VariantValue
             {

@@ -1,4 +1,5 @@
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Relational;
@@ -12,7 +13,7 @@ internal sealed class FuncUnitRowsIteratorScalar(IRowsIterator rowsIterator, int
     public DataType OutputType => rowsIterator.Columns[columnIndex].DataType;
 
     /// <inheritdoc />
-    public VariantValue Invoke()
+    public VariantValue Invoke(IExecutionThread thread)
     {
         if (!_isExecuted)
         {

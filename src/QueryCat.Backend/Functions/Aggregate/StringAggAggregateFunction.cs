@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Text;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 
@@ -19,17 +20,17 @@ internal sealed class StringAggAggregateFunction : IAggregateFunction
         [VariantValue.CreateFromObject(new StringBuilder())];
 
     /// <inheritdoc />
-    public void Invoke(VariantValue[] state, FunctionCallInfo callInfo)
+    public void Invoke(VariantValue[] state, IExecutionThread thread)
     {
-        var target = callInfo.GetAt(0);
-        var delimiter = callInfo.GetAt(1).AsString;
+        var target = thread.Stack[0];
+        var delimiter = thread.Stack[1].AsString;
 
         if (target.IsNull)
         {
             return;
         }
 
-        var sb = state[0].As<StringBuilder>();
+        var sb = state[0].AsRequired<StringBuilder>();
         if (sb.Length > 0)
         {
             sb.Append(delimiter);
@@ -38,5 +39,5 @@ internal sealed class StringAggAggregateFunction : IAggregateFunction
     }
 
     /// <inheritdoc />
-    public VariantValue GetResult(VariantValue[] state) => new(state[0].As<StringBuilder>().ToString());
+    public VariantValue GetResult(VariantValue[] state) => new(state[0].AsRequired<StringBuilder>().ToString());
 }

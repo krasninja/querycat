@@ -70,7 +70,7 @@ internal readonly struct CacheKeyCondition : IEquatable<CacheKeyCondition>
 
     /// <inheritdoc />
     public bool Equals(CacheKeyCondition other)
-        => Column.Equals(other.Column) && Operation == other.Operation && ArrayUtils.EqualsAll(ValuesArray, other.ValuesArray);
+        => Operation == other.Operation && Column.Equals(other.Column) && ValuesArray.SequenceEqual(other.ValuesArray);
 
     /// <inheritdoc />
     public override bool Equals(object? obj)

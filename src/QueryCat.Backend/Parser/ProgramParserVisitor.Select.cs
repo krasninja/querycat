@@ -74,35 +74,26 @@ internal partial class ProgramParserVisitor
         => this.Visit<SelectQueryNode>(context.selectQueryExpression());
 
     /// <inheritdoc />
-    public override IAstNode VisitSelectQuerySpecificationFull(QueryCatParser.SelectQuerySpecificationFullContext context) =>
-        new SelectQuerySpecificationNode(this.Visit<SelectColumnsListNode>(context.selectList()))
-        {
-            WithNode = this.VisitMaybe<SelectWithListNode>(context.selectWithClause()),
-            DistinctNode = this.VisitMaybe<SelectDistinctNode>(context.selectDistinctClause()),
-            TableExpressionNode = this.VisitMaybe<SelectTableNode>(context.selectFromClause()),
-            TargetNode = this.VisitMaybe<FunctionCallNode>(context.selectTarget()),
-            FetchNode = this.VisitMaybe<SelectFetchNode>(context.selectTopClause()),
-            ExceptIdentifiersNode = this.VisitMaybe<SelectColumnsExceptNode>(context.selectExcept()),
-            WindowNode = this.VisitMaybe<SelectWindowNode>(context.selectWindow()),
-        };
-
-    /// <inheritdoc />
-    public override IAstNode VisitSelectQuerySpecificationSingle(QueryCatParser.SelectQuerySpecificationSingleContext context)
+    public override IAstNode VisitSelectQuerySpecificationFull(QueryCatParser.SelectQuerySpecificationFullContext context)
     {
-        var selectColumnsSublistNodes = this.Visit<SelectColumnsSublistNode>(context.selectSublist());
-        SelectTableNode? selectTableExpressionNode = null;
-        if (Console.IsInputRedirected && !Console.IsErrorRedirected && !Console.IsOutputRedirected)
+        var tableExpressionNode = this.VisitMaybe<SelectTableNode>(context.selectFromClause());
+        if (tableExpressionNode == null && Console.IsInputRedirected && !Console.IsErrorRedirected && !Console.IsOutputRedirected)
         {
-            selectTableExpressionNode = new SelectTableNode(new SelectTableReferenceListNode(
+            tableExpressionNode = new SelectTableNode(new SelectTableReferenceListNode(
                 new List<ExpressionNode>
                 {
                     new SelectTableFunctionNode(new FunctionCallNode("stdin")),
                 }));
         }
-        return new SelectQuerySpecificationNode(new SelectColumnsListNode(selectColumnsSublistNodes))
+        return new SelectQuerySpecificationNode(this.Visit<SelectColumnsListNode>(context.selectList()))
         {
+            WithNode = this.VisitMaybe<SelectWithListNode>(context.selectWithClause()),
+            DistinctNode = this.VisitMaybe<SelectDistinctNode>(context.selectDistinctClause()),
+            TableExpressionNode = tableExpressionNode,
             TargetNode = this.VisitMaybe<FunctionCallNode>(context.selectTarget()),
-            TableExpressionNode = selectTableExpressionNode
+            FetchNode = this.VisitMaybe<SelectFetchNode>(context.selectTopClause()),
+            ExceptIdentifiersNode = this.VisitMaybe<SelectColumnsExceptNode>(context.selectExcept()),
+            WindowNode = this.VisitMaybe<SelectWindowNode>(context.selectWindow()),
         };
     }
 
@@ -112,7 +103,7 @@ internal partial class ProgramParserVisitor
 
     /// <inheritdoc />
     public override IAstNode VisitSelectExcept(QueryCatParser.SelectExceptContext context)
-        => new SelectColumnsExceptNode(this.Visit<IdentifierExpressionNode>(context.identifierSimple()));
+        => new SelectColumnsExceptNode(this.Visit<IdentifierExpressionNode>(context.identifier()));
 
     #endregion
 

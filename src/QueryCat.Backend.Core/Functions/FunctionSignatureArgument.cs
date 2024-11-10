@@ -50,7 +50,7 @@ public sealed class FunctionSignatureArgument : ICloneable
         bool isArray = false,
         bool isVariadic = false)
     {
-        Name = name.ToUpper();
+        Name = name.ToUpperInvariant();
         Type = type;
         IsOptional = isOptional;
         HasDefaultValue = defaultValue != null;

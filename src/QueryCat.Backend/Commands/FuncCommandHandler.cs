@@ -1,14 +1,15 @@
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Commands;
 
 internal sealed class FuncCommandHandler : IFuncUnit
 {
-    private readonly Func<VariantValue> _func;
+    private readonly Func<IExecutionThread, VariantValue> _func;
 
-    public static FuncCommandHandler NullHandler { get; } = new(() => VariantValue.Null);
+    public static FuncCommandHandler NullHandler { get; } = new(thread => VariantValue.Null);
 
-    public FuncCommandHandler(Func<VariantValue> func)
+    public FuncCommandHandler(Func<IExecutionThread, VariantValue> func)
     {
         _func = func;
     }
@@ -17,5 +18,5 @@ internal sealed class FuncCommandHandler : IFuncUnit
     public DataType OutputType => DataType.Null;
 
     /// <inheritdoc />
-    public VariantValue Invoke() => _func.Invoke();
+    public VariantValue Invoke(IExecutionThread thread) => _func.Invoke(thread);
 }

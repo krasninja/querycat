@@ -9,11 +9,6 @@ internal sealed class SetIdentifierDelegateVisitor : CreateDelegateVisitor
 {
     private readonly IFuncUnit _funcUnit;
 
-    public SetIdentifierDelegateVisitor(IExecutionThread<ExecutionOptions> thread, IFuncUnit funcUnit) : base(thread)
-    {
-        _funcUnit = funcUnit;
-    }
-
     public SetIdentifierDelegateVisitor(IExecutionThread<ExecutionOptions> thread, ResolveTypesVisitor resolveTypesVisitor, IFuncUnit funcUnit)
         : base(thread, resolveTypesVisitor)
     {
@@ -35,10 +30,11 @@ internal sealed class SetIdentifierDelegateVisitor : CreateDelegateVisitor
 
         if (ExecutionThread.ContainsVariable(node.Name))
         {
-            var context = new ObjectSelectorContext(ExecutionThread);
-            VariantValue Func()
+            var context = new ObjectSelectorContext();
+            var strategies = GetObjectSelectStrategies(node, NodeIdFuncMap);
+            VariantValue Func(IExecutionThread thread)
             {
-                var newValue = SetValue(node, context);
+                var newValue = SetValue(thread, node, strategies, context);
                 context.Clear();
                 return newValue;
             }
@@ -49,20 +45,26 @@ internal sealed class SetIdentifierDelegateVisitor : CreateDelegateVisitor
         throw new CannotFindIdentifierException(node.Name);
     }
 
-    private VariantValue SetValue(IdentifierExpressionNode node, ObjectSelectorContext context)
+    private VariantValue SetValue(
+        IExecutionThread thread,
+        IdentifierExpressionNode node,
+        SelectStrategyContainer selectStrategyContainer,
+        ObjectSelectorContext context)
     {
-        var startObject = ExecutionThread.GetVariable(node.Name);
-        var newValue = _funcUnit.Invoke();
+        var startObject = thread.GetVariable(node.Name);
+        var newValue = _funcUnit.Invoke(thread);
 
         // This is expression object.
-        if (GetObjectBySelector(context, startObject, node, out _))
+        if (GetObjectBySelector(thread, context, startObject, selectStrategyContainer, out _))
         {
-            ExecutionThread.ObjectSelector.SetValue(context, Converter.ConvertValue(newValue, typeof(object)));
+            context.ExecutionThread = thread;
+            thread.ObjectSelector.SetValue(context, Converter.ConvertValue(newValue, typeof(object)));
+            context.ExecutionThread = NullExecutionThread.Instance;
         }
         // Not an expression - variable.
         else if (!node.HasSelectors)
         {
-            ExecutionThread.TopScope.Variables[node.Name] = newValue;
+            thread.TopScope.Variables[node.Name] = newValue;
         }
 
         return newValue;

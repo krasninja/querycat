@@ -51,7 +51,7 @@ public static class DataTypeUtils
     #region Serialization
 
     internal static string SerializeVariantValue(VariantValue value)
-        => value.GetInternalType() switch
+        => value.Type switch
         {
             DataType.Null => VariantValue.NullValueString,
             DataType.Void => VariantValue.VoidValueString,
@@ -62,7 +62,7 @@ public static class DataTypeUtils
             DataType.Float => "fl:" + value.AsFloatUnsafe.ToString("G17", CultureInfo.InvariantCulture),
             DataType.Numeric => "n:" + value.AsNumericUnsafe.ToString(CultureInfo.InvariantCulture),
             DataType.Timestamp => $"ts:{value.AsTimestampUnsafe.Ticks}:{(int)value.AsTimestampUnsafe.Kind}",
-            DataType.Interval => "in:" + value.AsInterval.Ticks.ToString(CultureInfo.InvariantCulture),
+            DataType.Interval => "in:" + value.AsIntervalUnsafe.Ticks.ToString(CultureInfo.InvariantCulture),
             _ => string.Empty
         };
 

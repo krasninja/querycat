@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using QueryCat.Backend;
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 
@@ -16,10 +17,10 @@ public class SamplePluginRowsIterator : IRowsIterator
 
     [Description("Sample iterator.")]
     [FunctionSignature("plugin(start: integer = 0): object<IRowsIterator>")]
-    public static VariantValue SamplePlugin(FunctionCallInfo args)
+    public static VariantValue SamplePlugin(IExecutionThread thread)
     {
-        var startValue = args.GetAt(0).AsInteger;
-        var rowsSource = new SamplePluginRowsIterator(startValue);
+        var startValue = thread.Stack.Pop().AsInteger;
+        var rowsSource = new SamplePluginRowsIterator(startValue ?? 0);
         return VariantValue.CreateFromObject(rowsSource);
     }
 

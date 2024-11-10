@@ -154,11 +154,11 @@ internal sealed partial class SelectPlanner
         var cteIndex = context.CteList.FindIndex(c => c.Name == idNode.FullName);
         if (cteIndex < 0)
         {
-            return Array.Empty<IRowsInput>();
+            return [];
         }
         var inputs = new List<IRowsInput>
         {
-            new RowsIteratorInput(context.CteList[cteIndex].RowsIterator),
+            context.CteList[cteIndex].RowsInputProxy,
         };
         if (idNode is ISelectAliasNode aliasNode)
         {
@@ -181,7 +181,7 @@ internal sealed partial class SelectPlanner
         {
             if (idNode.HasSelectors)
             {
-                value = Misc_CreateDelegate(idNode, context).Invoke();
+                value = Misc_CreateDelegate(idNode, context).Invoke(ExecutionThread);
             }
             else
             {
@@ -189,7 +189,7 @@ internal sealed partial class SelectPlanner
             }
         }
 
-        var internalValueType = value.GetInternalType();
+        var internalValueType = value.Type;
         var rowsInputs = Array.Empty<IRowsInput>();
 
         if (internalValueType == DataType.Object && value.AsObjectUnsafe != null)
@@ -231,14 +231,20 @@ internal sealed partial class SelectPlanner
         IRowsInput? rowsInputResult = null;
         if (objVariable is IRowsInput rowsInput)
         {
-            currentContext.AddInput(new SelectCommandInputContext(rowsInput));
+            currentContext.AddInput(new SelectCommandInputContext(rowsInput)
+            {
+                IsVariableBound = true,
+            });
             rowsInput.Open();
             rowsInputResult = rowsInput;
         }
         if (objVariable is IRowsIterator rowsIterator)
         {
             rowsInput = new RowsIteratorInput(rowsIterator);
-            currentContext.AddInput(new SelectCommandInputContext(rowsInput));
+            currentContext.AddInput(new SelectCommandInputContext(rowsInput)
+            {
+                IsVariableBound = true,
+            });
             rowsInputResult = rowsInput;
         }
         if (objVariable is IEnumerable enumerable && enumerable.GetType().IsGenericType)
@@ -263,10 +269,10 @@ internal sealed partial class SelectPlanner
             .Add("uri", new VariantValue(strVariable));
         if (formatterNode != null)
         {
-            var formatter = Misc_CreateDelegate(formatterNode, context).Invoke();
+            var formatter = Misc_CreateDelegate(formatterNode, context).Invoke(ExecutionThread);
             args.Add("fmt", formatter);
         }
-        var rowsInput = ExecutionThread.FunctionsManager.CallFunction("read", ExecutionThread, args).As<IRowsInput>();
+        var rowsInput = ExecutionThread.FunctionsManager.CallFunction("read", ExecutionThread, args).AsRequired<IRowsInput>();
         rowsInput.QueryContext = new SelectInputQueryContext(rowsInput);
         rowsInput.Open();
         return [rowsInput];
@@ -310,20 +316,20 @@ internal sealed partial class SelectPlanner
         // might be resource consuming operation.
         if (!ExecutionThread.Options.DisableCache && Context_CanUseInputCache(right))
         {
-            right = new CacheRowsInput(right, context.Conditions);
+            right = new CacheRowsInput(ExecutionThread, right, context.Conditions);
         }
 
         if (tableJoinedNode is SelectTableJoinedOnNode joinedOnNode)
         {
             var searchFunc = new InputCreateDelegateVisitor(ExecutionThread, context, left, right)
                 .RunAndReturn(joinedOnNode.SearchConditionNode);
-            return new SelectJoinRowsInput(left, right, join, searchFunc, reverseColumnsOrder);
+            return new SelectJoinRowsInput(ExecutionThread, left, right, join, searchFunc, reverseColumnsOrder);
         }
         if (tableJoinedNode is SelectTableJoinedUsingNode joinedUsingNode)
         {
             var searchFunc = new InputCreateDelegateVisitor(ExecutionThread, context, left, right)
                 .RunAndReturn(joinedUsingNode);
-            return new SelectJoinRowsInput(left, right, join, searchFunc, reverseColumnsOrder);
+            return new SelectJoinRowsInput(ExecutionThread, left, right, join, searchFunc, reverseColumnsOrder);
         }
         throw new ArgumentException(string.Format(Resources.Errors.NotSupported, tableJoinedNode.GetType().Name),
             nameof(tableJoinedNode));
@@ -334,7 +340,7 @@ internal sealed partial class SelectPlanner
         if (rowsInput is IRowsInputKeys rowsInputKeys
             && rowsInputKeys is not SetKeysRowsInput)
         {
-            return new SetKeysRowsInput(rowsInputKeys, conditions);
+            return new SetKeysRowsInput(ExecutionThread, rowsInputKeys, conditions);
         }
         return rowsInput;
     }
@@ -344,7 +350,7 @@ internal sealed partial class SelectPlanner
     {
         var func = new SelectCreateDelegateVisitor(ExecutionThread, context)
             .RunAndReturn(tableValuesNode);
-        var rowsFrame = func.Invoke().As<RowsFrame>();
+        var rowsFrame = func.Invoke(ExecutionThread).AsRequired<RowsFrame>();
         return new RowsIteratorInput(rowsFrame.GetIterator());
     }
 

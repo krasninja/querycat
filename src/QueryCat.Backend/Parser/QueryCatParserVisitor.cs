@@ -224,13 +224,6 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitSelectQuerySpecificationFull([NotNull] QueryCatParser.SelectQuerySpecificationFullContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>SelectQuerySpecificationSingle</c>
-	/// labeled alternative in <see cref="QueryCatParser.selectQuerySpecification"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitSelectQuerySpecificationSingle([NotNull] QueryCatParser.SelectQuerySpecificationSingleContext context);
-	/// <summary>
 	/// Visit a parse tree produced by <see cref="QueryCatParser.selectList"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
@@ -673,70 +666,70 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitCaseWhen([NotNull] QueryCatParser.CaseWhenContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>standardFunctionCurrentDate</c>
+	/// Visit a parse tree produced by the <c>StandardFunctionCurrentDate</c>
 	/// labeled alternative in <see cref="QueryCatParser.standardFunction"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitStandardFunctionCurrentDate([NotNull] QueryCatParser.StandardFunctionCurrentDateContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>standardFunctionCurrentTimestamp</c>
+	/// Visit a parse tree produced by the <c>StandardFunctionCurrentTimestamp</c>
 	/// labeled alternative in <see cref="QueryCatParser.standardFunction"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitStandardFunctionCurrentTimestamp([NotNull] QueryCatParser.StandardFunctionCurrentTimestampContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>standardFunctionTrim</c>
+	/// Visit a parse tree produced by the <c>StandardFunctionTrim</c>
 	/// labeled alternative in <see cref="QueryCatParser.standardFunction"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitStandardFunctionTrim([NotNull] QueryCatParser.StandardFunctionTrimContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>standardFunctionPosition</c>
+	/// Visit a parse tree produced by the <c>StandardFunctionPosition</c>
 	/// labeled alternative in <see cref="QueryCatParser.standardFunction"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitStandardFunctionPosition([NotNull] QueryCatParser.StandardFunctionPositionContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>standardFunctionExtract</c>
+	/// Visit a parse tree produced by the <c>StandardFunctionExtract</c>
 	/// labeled alternative in <see cref="QueryCatParser.standardFunction"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitStandardFunctionExtract([NotNull] QueryCatParser.StandardFunctionExtractContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>standardFunctionCoalesce</c>
+	/// Visit a parse tree produced by the <c>StandardFunctionCoalesce</c>
 	/// labeled alternative in <see cref="QueryCatParser.standardFunction"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitStandardFunctionCoalesce([NotNull] QueryCatParser.StandardFunctionCoalesceContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>standardOccurrencesRegex</c>
+	/// Visit a parse tree produced by the <c>StandardOccurrencesRegex</c>
 	/// labeled alternative in <see cref="QueryCatParser.standardFunction"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitStandardOccurrencesRegex([NotNull] QueryCatParser.StandardOccurrencesRegexContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>standardSubstringRegex</c>
+	/// Visit a parse tree produced by the <c>StandardSubstringRegex</c>
 	/// labeled alternative in <see cref="QueryCatParser.standardFunction"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitStandardSubstringRegex([NotNull] QueryCatParser.StandardSubstringRegexContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>standardPositionRegex</c>
+	/// Visit a parse tree produced by the <c>StandardPositionRegex</c>
 	/// labeled alternative in <see cref="QueryCatParser.standardFunction"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitStandardPositionRegex([NotNull] QueryCatParser.StandardPositionRegexContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>standardTranslateRegex</c>
+	/// Visit a parse tree produced by the <c>StandardTranslateRegex</c>
 	/// labeled alternative in <see cref="QueryCatParser.standardFunction"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
@@ -958,14 +951,14 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitSimpleExpressionIdentifier([NotNull] QueryCatParser.SimpleExpressionIdentifierContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>literalPlain</c>
+	/// Visit a parse tree produced by the <c>LiteralPlain</c>
 	/// labeled alternative in <see cref="QueryCatParser.literal"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitLiteralPlain([NotNull] QueryCatParser.LiteralPlainContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>literalInterval</c>
+	/// Visit a parse tree produced by the <c>LiteralInterval</c>
 	/// labeled alternative in <see cref="QueryCatParser.literal"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

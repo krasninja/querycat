@@ -1,4 +1,6 @@
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Execution;
+using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Commands.Select.Iterators;
 
@@ -8,9 +10,9 @@ namespace QueryCat.Backend.Commands.Select.Iterators;
 /// </summary>
 internal sealed class ProjectedRowsIterator : IRowsIterator, IRowsIteratorParent
 {
-    private static int _nextId = 100;
-    private readonly int _id = Interlocked.Increment(ref _nextId);
+    private readonly int _id = IdGenerator.GetNext();
 
+    private readonly IExecutionThread _thread;
     private readonly IRowsIterator _rowsIterator;
     private Row _currentRow;
     private Column[] _columns = [];
@@ -22,8 +24,9 @@ internal sealed class ProjectedRowsIterator : IRowsIterator, IRowsIteratorParent
     /// <inheritdoc />
     public Row Current => _currentRow;
 
-    public ProjectedRowsIterator(IRowsIterator rowsIterator)
+    public ProjectedRowsIterator(IExecutionThread thread, IRowsIterator rowsIterator)
     {
+        _thread = thread;
         _rowsIterator = rowsIterator;
         _currentRow = new Row(this);
     }
@@ -36,7 +39,7 @@ internal sealed class ProjectedRowsIterator : IRowsIterator, IRowsIteratorParent
         {
             for (int i = 0; i < _columns.Length; i++)
             {
-                _currentRow[i] = _funcUnits[i].Invoke();
+                _currentRow[i] = _funcUnits[i].Invoke(_thread);
             }
         }
         return moveResult;

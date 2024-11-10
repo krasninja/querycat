@@ -279,9 +279,7 @@ public readonly partial struct VariantValue
 
     public static VariantValue Negation(in VariantValue left, out ErrorCode errorCode)
     {
-        var leftType = left.GetInternalType();
-
-        var function = GetNegationDelegate(leftType);
+        var function = GetNegationDelegate(left.Type);
         if (function == UnaryNullDelegate)
         {
             errorCode = ErrorCode.CannotApplyOperator;
@@ -294,25 +292,22 @@ public readonly partial struct VariantValue
 
     public static VariantValue Modulo(in VariantValue left, in VariantValue right, out ErrorCode errorCode)
     {
-        var leftType = left.GetInternalType();
-        var rightType = right.GetInternalType();
-
-        var result = leftType switch
+        var result = left.Type switch
         {
-            DataType.Integer => rightType switch
+            DataType.Integer => right.Type switch
             {
                 DataType.Integer => new VariantValue(left.AsIntegerUnsafe % right.AsIntegerUnsafe),
                 DataType.Float => new VariantValue(left.AsIntegerUnsafe % right.AsFloatUnsafe),
                 DataType.Numeric => new VariantValue(left.AsIntegerUnsafe % right.AsNumericUnsafe),
                 _ => Null,
             },
-            DataType.Float => rightType switch
+            DataType.Float => right.Type switch
             {
                 DataType.Integer => new VariantValue(left.AsFloatUnsafe % right.AsIntegerUnsafe),
                 DataType.Float => new VariantValue(left.AsFloatUnsafe % right.AsFloatUnsafe),
                 _ => Null,
             },
-            DataType.Numeric => rightType switch
+            DataType.Numeric => right.Type switch
             {
                 DataType.Integer => new VariantValue(left.AsNumericUnsafe % right.AsIntegerUnsafe),
                 DataType.Numeric => new VariantValue(left.AsNumericUnsafe % right.AsNumericUnsafe),
@@ -327,12 +322,9 @@ public readonly partial struct VariantValue
 
     public static VariantValue LeftShift(in VariantValue left, in VariantValue right, out ErrorCode errorCode)
     {
-        var leftType = left.GetInternalType();
-        var rightType = right.GetInternalType();
-
-        var result = leftType switch
+        var result = left.Type switch
         {
-            DataType.Integer => rightType switch
+            DataType.Integer => right.Type switch
             {
                 DataType.Integer => new VariantValue((int)left.AsIntegerUnsafe << (int)right.AsIntegerUnsafe),
                 _ => Null,
@@ -346,12 +338,9 @@ public readonly partial struct VariantValue
 
     public static VariantValue RightShift(in VariantValue left, in VariantValue right, out ErrorCode errorCode)
     {
-        var leftType = left.GetInternalType();
-        var rightType = right.GetInternalType();
-
-        var result = leftType switch
+        var result = left.Type switch
         {
-            DataType.Integer => rightType switch
+            DataType.Integer => right.Type switch
             {
                 DataType.Integer => new VariantValue((int)left.AsIntegerUnsafe >> (int)right.AsIntegerUnsafe),
                 _ => Null,
@@ -446,9 +435,6 @@ public readonly partial struct VariantValue
 
     public static VariantValue Concat(in VariantValue left, in VariantValue right, out ErrorCode errorCode)
     {
-        var leftType = left.GetInternalType();
-        var rightType = right.GetInternalType();
-
         VariantValue CreateCombinedBlob(IBlobData leftBlob, IBlobData rightBlob)
         {
             return new VariantValue(new StreamBlobData(
@@ -456,21 +442,21 @@ public readonly partial struct VariantValue
             );
         }
 
-        var result = leftType switch
+        var result = left.Type switch
         {
-            DataType.Integer => rightType switch
+            DataType.Integer => right.Type switch
             {
                 DataType.String => new VariantValue(string.Concat(left.AsString, right.AsStringUnsafe)),
             },
-            DataType.Float => rightType switch
+            DataType.Float => right.Type switch
             {
                 DataType.String => new VariantValue(string.Concat(left.AsString, right.AsStringUnsafe)),
             },
-            DataType.Numeric => rightType switch
+            DataType.Numeric => right.Type switch
             {
                 DataType.String => new VariantValue(string.Concat(left.AsString, right.AsStringUnsafe)),
             },
-            DataType.String => rightType switch
+            DataType.String => right.Type switch
             {
                 DataType.String => new VariantValue(string.Concat(left.AsStringUnsafe, right.AsStringUnsafe)),
                 DataType.Integer => new VariantValue(string.Concat(left.AsStringUnsafe, right.AsString)),
@@ -478,9 +464,9 @@ public readonly partial struct VariantValue
                 DataType.Numeric => new VariantValue(string.Concat(left.AsStringUnsafe, right.AsString)),
                 _ => Null,
             },
-            DataType.Blob => rightType switch
+            DataType.Blob => right.Type switch
             {
-                DataType.Blob => CreateCombinedBlob(left.AsBlob, right.AsBlob),
+                DataType.Blob => CreateCombinedBlob(left.AsBlobUnsafe, right.AsBlobUnsafe),
                 _ => Null,
             },
             _ => Null,

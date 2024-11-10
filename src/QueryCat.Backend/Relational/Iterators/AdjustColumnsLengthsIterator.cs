@@ -66,7 +66,7 @@ public class AdjustColumnsLengthsIterator : IRowsIterator, IRowsIteratorParent
         {
             for (var i = 0; i < Columns.Length; i++)
             {
-                var internalType = _cacheRowsIterator.Current[i].GetInternalType();
+                var internalType = _cacheRowsIterator.Current[i].Type;
                 if (internalType == DataType.Void || internalType == DataType.Object)
                 {
                     continue;

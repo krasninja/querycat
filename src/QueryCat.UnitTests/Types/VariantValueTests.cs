@@ -46,4 +46,21 @@ public sealed class VariantValueTests
 
         Assert.True(Cast(VariantValue.Null, DataType.Integer).IsNull);
     }
+
+    [Fact]
+    public void ToInt32_ValidValue_ShouldReturnInt32()
+    {
+        // Arrange and act.
+        var result = new VariantValue("820").ToInt32();
+
+        // Assert
+        Assert.Equal(820, result);
+    }
+
+    [Fact]
+    public void ToInt32_NotValidValue_ShouldRiseException()
+    {
+        // Arrange, act and assert.
+        Assert.Throws<FormatException>(() => new VariantValue("820xx").ToInt32());
+    }
 }

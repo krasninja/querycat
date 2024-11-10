@@ -49,6 +49,9 @@ internal sealed class SelectQueryCombineNode : SelectQueryNode
     }
 
     /// <inheritdoc />
+    public override bool IsSingleValue() => false;
+
+    /// <inheritdoc />
     public override IEnumerable<IAstNode> GetChildren()
     {
         yield return LeftQueryNode;

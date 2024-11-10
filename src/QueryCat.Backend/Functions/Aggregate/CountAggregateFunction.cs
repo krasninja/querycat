@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 
@@ -21,12 +22,12 @@ internal sealed class CountAggregateFunction : IAggregateFunction
     }
 
     /// <inheritdoc />
-    public VariantValue[] GetInitialState(DataType type) => [new VariantValue(0)];
+    public VariantValue[] GetInitialState(DataType type) => [new(0)];
 
     /// <inheritdoc />
-    public void Invoke(VariantValue[] state, FunctionCallInfo callInfo)
+    public void Invoke(VariantValue[] state, IExecutionThread thread)
     {
-        if (!callInfo.GetAt(0).IsNull)
+        if (!thread.Stack[0].IsNull)
         {
             state[0] =
                 _addDelegate.Invoke(in state[0], in VariantValue.OneIntegerValue);

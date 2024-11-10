@@ -1,3 +1,4 @@
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Fetch;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
@@ -8,22 +9,22 @@ public sealed class ItStocksRowsInput : FetchRowsInput<Stock>
 {
     [SafeFunction]
     [FunctionSignature("it_stocks(): object<IRowsInput>")]
-    public static VariantValue ItStocks(FunctionCallInfo args)
+    public static VariantValue ItStocks(IExecutionThread thread)
     {
         return VariantValue.CreateFromObject(new ItStocksRowsInput());
     }
 
     private readonly List<Stock> _data =
     [
-        new Stock("MSFT", "Microsoft Corp", 416.42m),
-        new Stock("AAPL", "Apple Inc", 172.62m),
-        new Stock("AMZN", "Amazon.com", 174.42m),
-        new Stock("NVDA", "NVIDIA Corp", 878.36m),
-        new Stock("AMD", "Advanced Micro Devices, Inc.", 191.06m),
-        new Stock("INTC", "Intel Corp", 42.64m),
-        new Stock("TSLA", "Tesla Inc", 163.57m),
-        new Stock("BABA", "Alibaba Group Holdings Ltd ADR", 72.12m),
-        new Stock("LNVGY", "Lenovo Group Limited", 24.85m),
+        new("MSFT", "Microsoft Corp", 416.42m),
+        new("AAPL", "Apple Inc", 172.62m),
+        new("AMZN", "Amazon.com", 174.42m),
+        new("NVDA", "NVIDIA Corp", 878.36m),
+        new("AMD", "Advanced Micro Devices, Inc.", 191.06m),
+        new("INTC", "Intel Corp", 42.64m),
+        new("TSLA", "Tesla Inc", 163.57m),
+        new("BABA", "Alibaba Group Holdings Ltd ADR", 72.12m),
+        new("LNVGY", "Lenovo Group Limited", 24.85m),
     ];
 
     /// <inheritdoc />

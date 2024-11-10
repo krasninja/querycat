@@ -32,8 +32,8 @@ public sealed class FunctionCallArgumentsTypes
         KeyValuePair<int, DataType>[]? positional = null,
         KeyValuePair<string, DataType>[]? namedArguments = null)
     {
-        Positional = positional ?? Array.Empty<KeyValuePair<int, DataType>>();
-        Named = namedArguments ?? Array.Empty<KeyValuePair<string, DataType>>();
+        Positional = positional ?? [];
+        Named = namedArguments ?? [];
     }
 
     /// <summary>

@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 
@@ -14,7 +15,7 @@ internal sealed class SubRipFormatter : IRowsFormatter
     [SafeFunction]
     [Description("SubRip (SRT) formatter.")]
     [FunctionSignature("srt(path: string): object<IRowsFormatter>")]
-    public static VariantValue Srt(FunctionCallInfo args)
+    public static VariantValue Srt(IExecutionThread thread)
     {
         var rowsSource = new SubRipFormatter();
         return VariantValue.CreateFromObject(rowsSource);

@@ -16,7 +16,7 @@ public class DefaultObjectSelectorTests
     {
         // Arrange.
         var target = new[] { 1, 2, 3 };
-        var context = new ObjectSelectorContext(NullExecutionThread.Instance, target);
+        var context = new ObjectSelectorContext(target);
 
         // Act.
         var token = _selector.SelectByIndex(context, 1)!.Value;
@@ -29,7 +29,7 @@ public class DefaultObjectSelectorTests
     {
         // Arrange.
         var target = new[] { 1, 2, 3 };
-        var context = new ObjectSelectorContext(NullExecutionThread.Instance, target);
+        var context = new ObjectSelectorContext(target);
         context.Push(new ObjectSelectorContext.Token(target, Indexes: [1]));
 
         // Act.
@@ -47,7 +47,7 @@ public class DefaultObjectSelectorTests
             ["item1"] = 10,
             ["item2"] = 25,
         };
-        var context = new ObjectSelectorContext(NullExecutionThread.Instance, target);
+        var context = new ObjectSelectorContext(target);
 
         // Act.
         var token = _selector.SelectByIndex(context, "item2")!.Value;
@@ -64,7 +64,7 @@ public class DefaultObjectSelectorTests
             ["item1"] = 10,
             ["item2"] = 25,
         };
-        var context = new ObjectSelectorContext(NullExecutionThread.Instance, target);
+        var context = new ObjectSelectorContext(target);
         context.Push(new ObjectSelectorContext.Token(target, Indexes: ["item2"]));
 
         // Act.

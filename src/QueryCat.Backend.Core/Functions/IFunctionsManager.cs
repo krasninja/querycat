@@ -28,7 +28,8 @@ public interface IFunctionsManager
     /// <param name="signature">Function signature.</param>
     /// <param name="delegate">Function delegate.</param>
     /// <param name="description">Optional description.</param>
-    void RegisterFunction(string signature, FunctionDelegate @delegate, string? description = null);
+    /// <returns>Function name.</returns>
+    string RegisterFunction(string signature, FunctionDelegate @delegate, string? description = null);
 
     /// <summary>
     /// Register the delegate that describes more functions.

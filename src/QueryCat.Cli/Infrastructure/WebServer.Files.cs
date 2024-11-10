@@ -70,7 +70,7 @@ internal partial class WebServer
     {
         _executionThread.TopScope.Variables["path"] = new VariantValue(path);
         var result = _executionThread.Run(_selectFilesQuery);
-        _logger.LogInformation($"[{request.RemoteEndPoint.Address}] Dir: {path}");
+        _logger.LogInformation("[{Address}] Dir: {Path}", request.RemoteEndPoint.Address, path);
         WriteIterator(ExecutionThreadUtils.ConvertToIterator(result), request, response);
     }
 
@@ -97,7 +97,7 @@ internal partial class WebServer
 
         var buffer = _readBufferPool.Rent(1024 * 8);
         int totalBytesRead = 0, totalBytesWrite = 0;
-        _logger.LogInformation($"[{request.RemoteEndPoint.Address}] File: {file}");
+        _logger.LogInformation("[{Address}] File: {File}", request.RemoteEndPoint.Address, file);
         try
         {
             fileInput.Seek(range.Start, SeekOrigin.Begin);

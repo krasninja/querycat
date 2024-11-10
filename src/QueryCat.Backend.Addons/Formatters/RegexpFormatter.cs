@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 
@@ -13,10 +14,10 @@ internal sealed class RegexpFormatter : IRowsFormatter
     [SafeFunction]
     [Description("Regular expression formatter.")]
     [FunctionSignature("regex(pattern: string, flags?: string): object<IRowsFormatter>")]
-    public static VariantValue Regex(FunctionCallInfo args)
+    public static VariantValue Regex(IExecutionThread thread)
     {
-        var pattern = args.GetAt(0).AsString;
-        var flags = args.GetAt(1).AsString;
+        var pattern = thread.Stack[0].AsString;
+        var flags = thread.Stack[1].AsString;
         return VariantValue.CreateFromObject(new RegexpFormatter(pattern, flags));
     }
 

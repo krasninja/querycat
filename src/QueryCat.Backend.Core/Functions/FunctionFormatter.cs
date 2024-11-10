@@ -1,6 +1,7 @@
 using System.Reflection;
 using System.Text;
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Core.Utils;
 
@@ -101,7 +102,7 @@ internal static class FunctionFormatter
 
     internal static FunctionDelegate CreateDelegateFromMethod(MethodBase method)
     {
-        VariantValue FunctionDelegate(FunctionCallInfo args)
+        VariantValue FunctionDelegate(IExecutionThread thread)
         {
             var parameters = method.GetParameters();
             var arr = new object?[parameters.Length];
@@ -109,21 +110,17 @@ internal static class FunctionFormatter
             {
                 var parameter = parameters[i];
 
-                if (parameter.ParameterType == typeof(FunctionCallInfo))
+                if (typeof(IExecutionThread).IsAssignableFrom(parameter.ParameterType))
                 {
-                    arr[i] = args;
-                }
-                else if (parameter.ParameterType == typeof(ExecutionContext))
-                {
-                    arr[i] = args.ExecutionThread;
+                    arr[i] = thread;
                 }
                 else if (parameter.ParameterType == typeof(CancellationToken))
                 {
                     arr[i] = CancellationToken.None;
                 }
-                else if (args.Count > i)
+                else if (thread.Stack.FrameLength > i)
                 {
-                    arr[i] = Converter.ConvertValue(args.GetAt(i), parameter.ParameterType);
+                    arr[i] = Converter.ConvertValue(thread.Stack[i], parameter.ParameterType);
                 }
                 else if (parameter.HasDefaultValue)
                 {

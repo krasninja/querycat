@@ -10,13 +10,20 @@ namespace QueryCat.Backend.Commands.Select;
 /// </summary>
 internal sealed class SelectCommand : ICommand
 {
+    private readonly ResolveTypesVisitor _resolveTypesVisitor;
+
+    public SelectCommand(ResolveTypesVisitor resolveTypesVisitor)
+    {
+        _resolveTypesVisitor = resolveTypesVisitor;
+    }
+
     /// <inheritdoc />
     public IFuncUnit CreateHandler(IExecutionThread<ExecutionOptions> executionThread, StatementNode node)
     {
         var selectQueryNode = (SelectQueryNode)node.RootNode;
 
         // Iterate by select node in pre-order way and create correspond command context.
-        new SelectPlanner(executionThread).CreateIterator(selectQueryNode);
+        new SelectPlanner(executionThread, _resolveTypesVisitor).CreateIterator(selectQueryNode);
         var context = selectQueryNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
 
         return new SelectCommandHandler(context);

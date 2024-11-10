@@ -18,8 +18,17 @@ public abstract class BaseObjectPropertiesCompletionSource : ICompletionSource
             return [];
         }
 
+        // Pre-calculation for text edit.
+        int periodPosition;
         var periodTokenIndex = context.TriggerTokens.FindLastIndex(ParserToken.TokenKindPeriod);
-        var periodPosition = periodTokenIndex > -1 ? context.TriggerTokens[periodTokenIndex].EndIndex : 0;
+        if (periodTokenIndex > -1)
+        {
+            periodPosition = context.TriggerTokens[periodTokenIndex].EndIndex;
+        }
+        else
+        {
+            periodPosition = context.TriggerTokens.Count > 0 ? context.TriggerTokens[0].StartIndex : 0;
+        }
 
         // Find completions.
         var (_, termSearch) = GetObjectExpressionAndTerm(context.TriggerTokens);
@@ -72,6 +81,11 @@ public abstract class BaseObjectPropertiesCompletionSource : ICompletionSource
         }
     }
 
+    /// <summary>
+    /// Return object expression and search term. For example, "User.Addresses[0].Ci": (User.Addresses[0], Ci).
+    /// </summary>
+    /// <param name="triggerTokens">Tokens.</param>
+    /// <returns>Object expression and search term.</returns>
     internal static (string ObjectExpression, string Term) GetObjectExpressionAndTerm(ParserTokensList triggerTokens)
     {
         var termTokens = triggerTokens.GetRange(triggerTokens.LastSeparatorTokenIndex + 1);
@@ -79,11 +93,15 @@ public abstract class BaseObjectPropertiesCompletionSource : ICompletionSource
         var periodTokenIndex = termTokens.FindLastIndex(ParserToken.TokenKindPeriod);
         if (periodTokenIndex < 1)
         {
-            return (string.Empty, triggerTokens.Any() ? triggerTokens[0].Text : string.Empty);
+            return (
+                ObjectExpression: string.Empty,
+                Term: triggerTokens.Any() ? triggerTokens[0].Text.Trim() : string.Empty
+            );
         }
 
         return (
-            termTokens.Join(0, periodTokenIndex).Trim(),
-            termTokens.Join(periodTokenIndex + 1).Trim());
+            ObjectExpression: termTokens.Join(0, periodTokenIndex).Trim(),
+            Term: termTokens.Join(periodTokenIndex + 1).Trim()
+        );
     }
 }

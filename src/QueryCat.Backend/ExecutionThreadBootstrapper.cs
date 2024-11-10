@@ -238,15 +238,15 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
         if (_registerStandardLibrary)
         {
             thread.FunctionsManager.RegisterFactory(StringFunctions.RegisterFunctions);
-            thread.FunctionsManager.RegisterFactory(CryptoFunctions.RegisterFunctions);
-            thread.FunctionsManager.RegisterFactory(DateTimeFunctions.RegisterFunctions);
-            thread.FunctionsManager.RegisterFactory(InfoFunctions.RegisterFunctions);
             thread.FunctionsManager.RegisterFactory(MathFunctions.RegisterFunctions);
-            thread.FunctionsManager.RegisterFactory(MiscFunctions.RegisterFunctions);
-            thread.FunctionsManager.RegisterFactory(AggregatesRegistration.RegisterFunctions);
-            thread.FunctionsManager.RegisterFactory(Inputs.Registration.RegisterFunctions);
+            thread.FunctionsManager.RegisterFactory(DateTimeFunctions.RegisterFunctions);
             thread.FunctionsManager.RegisterFactory(IOFunctions.RegisterFunctions);
+            thread.FunctionsManager.RegisterFactory(AggregatesRegistration.RegisterFunctions);
             thread.FunctionsManager.RegisterFactory(Formatters.Registration.Register, postpone: false);
+            thread.FunctionsManager.RegisterFactory(Inputs.Registration.RegisterFunctions);
+            thread.FunctionsManager.RegisterFactory(CryptoFunctions.RegisterFunctions);
+            thread.FunctionsManager.RegisterFactory(MiscFunctions.RegisterFunctions);
+            thread.FunctionsManager.RegisterFactory(InfoFunctions.RegisterFunctions);
         }
         foreach (var registration in _registrations)
         {

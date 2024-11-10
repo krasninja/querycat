@@ -1,4 +1,5 @@
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Execution;
 
 namespace QueryCat.Backend.Commands.Select.Iterators;
 
@@ -7,6 +8,7 @@ namespace QueryCat.Backend.Commands.Select.Iterators;
 /// </summary>
 internal sealed class FilterRowsIterator : IRowsIterator, IRowsIteratorParent
 {
+    private readonly IExecutionThread _thread;
     private readonly IRowsIterator _rowsIterator;
     private readonly IFuncUnit _predicate;
 
@@ -17,9 +19,11 @@ internal sealed class FilterRowsIterator : IRowsIterator, IRowsIteratorParent
     public Row Current => _rowsIterator.Current;
 
     public FilterRowsIterator(
+        IExecutionThread thread,
         IRowsIterator rowsIterator,
         IFuncUnit predicate)
     {
+        _thread = thread;
         _rowsIterator = rowsIterator;
         _predicate = predicate;
     }
@@ -29,7 +33,7 @@ internal sealed class FilterRowsIterator : IRowsIterator, IRowsIteratorParent
     {
         while (_rowsIterator.MoveNext())
         {
-            if (_predicate.Invoke().AsBoolean)
+            if (_predicate.Invoke(_thread).AsBoolean)
             {
                 return true;
             }

@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 
@@ -13,17 +14,17 @@ internal static class DateTimeFunctions
     [SafeFunction]
     [Description("Converts string to date according to the given format.")]
     [FunctionSignature("to_date(target: string, fmt: string): timestamp")]
-    public static VariantValue ToDate(FunctionCallInfo args)
+    public static VariantValue ToDate(IExecutionThread thread)
     {
-        var target = args.GetAt(0).AsString;
-        var format = args.GetAt(1).AsString;
+        var target = thread.Stack[0].AsString;
+        var format = thread.Stack[1].AsString;
         return new VariantValue(DateTime.ParseExact(target, format, Application.Culture));
     }
 
     [SafeFunction]
     [Description("Current date and time")]
     [FunctionSignature("now(): timestamp")]
-    public static VariantValue Now(FunctionCallInfo args)
+    public static VariantValue Now(IExecutionThread thread)
     {
         return new VariantValue(DateTime.Now);
     }
@@ -31,45 +32,46 @@ internal static class DateTimeFunctions
     [SafeFunction]
     [Description("Takes the date part.")]
     [FunctionSignature("date(datetime: timestamp): timestamp")]
-    public static VariantValue Date(FunctionCallInfo args)
+    public static VariantValue Date(IExecutionThread thread)
     {
-        return new VariantValue(args.GetAt(0).AsTimestamp.Date);
+        var ts = thread.Stack.Pop().AsTimestamp;
+        return new VariantValue(ts?.Date);
     }
 
     [SafeFunction]
     [Description("The function retrieves subfields such as year or hour from date/time values.")]
     [FunctionSignature("date_part(field: string, source: timestamp): integer")]
-    public static VariantValue Extract(FunctionCallInfo args)
+    public static VariantValue Extract(IExecutionThread thread)
     {
-        var field = args.GetAt(0).AsString.Trim().ToUpper(Application.Culture);
-        var source = args.GetAt(1);
+        var field = thread.Stack[0].AsString.Trim().ToUpper(Application.Culture);
+        var source = thread.Stack[1];
         if (source.IsNull)
         {
             return VariantValue.Null;
         }
-        var result = source.GetInternalType() switch
+        var result = source.Type switch
         {
             DataType.Timestamp => field switch
             {
-                "YEAR" or "Y" => source.AsTimestamp.Year,
-                "DOY" => source.AsTimestamp.DayOfYear,
-                "DAYOFYEAR" => source.AsTimestamp.DayOfYear,
-                "MONTH" => source.AsTimestamp.Month,
-                "DOW" => (int)source.AsTimestamp.DayOfWeek,
-                "WEEKDAY" => (int)source.AsTimestamp.DayOfWeek,
-                "DAY" or "D" => source.AsTimestamp.Day,
-                "HOUR" or "H" => source.AsTimestamp.Hour,
-                "MINUTE" or "MIN" or "M" => source.AsTimestamp.Minute,
-                "SECOND" or "SEC" or "S" => source.AsTimestamp.Second,
+                "YEAR" or "Y" => source.AsTimestampUnsafe.Year,
+                "DOY" => source.AsTimestampUnsafe.DayOfYear,
+                "DAYOFYEAR" => source.AsTimestampUnsafe.DayOfYear,
+                "MONTH" => source.AsTimestampUnsafe.Month,
+                "DOW" => (int)source.AsTimestampUnsafe.DayOfWeek,
+                "WEEKDAY" => (int)source.AsTimestampUnsafe.DayOfWeek,
+                "DAY" or "D" => source.AsTimestampUnsafe.Day,
+                "HOUR" or "H" => source.AsTimestampUnsafe.Hour,
+                "MINUTE" or "MIN" or "M" => source.AsTimestampUnsafe.Minute,
+                "SECOND" or "SEC" or "S" => source.AsTimestampUnsafe.Second,
                 _ => throw new SemanticException(string.Format(Resources.Errors.InvalidField, field)),
             },
             DataType.Interval => field switch
             {
-                "DAY" or "D" => source.AsInterval.Days,
-                "HOUR" or "H" => source.AsInterval.Hours,
-                "MINUTE" or "MIN" or "M" => source.AsInterval.Minutes,
-                "SECOND" or "SEC" or "S" => source.AsInterval.Seconds,
-                "MILLISECOND" or "MS" => source.AsInterval.Milliseconds,
+                "DAY" or "D" => source.AsIntervalUnsafe.Days,
+                "HOUR" or "H" => source.AsIntervalUnsafe.Hours,
+                "MINUTE" or "MIN" or "M" => source.AsIntervalUnsafe.Minutes,
+                "SECOND" or "SEC" or "S" => source.AsIntervalUnsafe.Seconds,
+                "MILLISECOND" or "MS" => source.AsIntervalUnsafe.Milliseconds,
                 _ => throw new SemanticException(string.Format(Resources.Errors.InvalidField, field)),
             },
             _ => throw new SemanticException(Resources.Errors.InvalidArgumentType),
@@ -81,18 +83,18 @@ internal static class DateTimeFunctions
     [Description("The function rounds or truncates a timestamp or interval to the date part you need.")]
     [FunctionSignature("date_trunc(field: string, source: timestamp): timestamp")]
     [FunctionSignature("date_trunc(field: string, source: interval): interval")]
-    public static VariantValue Trunc(FunctionCallInfo args)
+    public static VariantValue Trunc(IExecutionThread thread)
     {
-        var field = args.GetAt(0).AsString.Trim().ToUpper(Application.Culture);
-        var source = args.GetAt(1);
+        var field = thread.Stack[0].AsString.Trim().ToUpper(Application.Culture);
+        var source = thread.Stack[1];
         if (source.IsNull)
         {
             return VariantValue.Null;
         }
-        var type = source.GetInternalType();
+        var type = source.Type;
         if (type == DataType.Timestamp)
         {
-            var target = source.AsTimestamp;
+            var target = source.AsTimestampUnsafe;
             var timestamp = field switch
             {
                 "YEAR" or "Y" => new DateTime(target.Year, 1, 1, 0, 0, 0, target.Kind),
@@ -108,7 +110,7 @@ internal static class DateTimeFunctions
         }
         else if (type == DataType.Interval)
         {
-            var target = source.AsInterval;
+            var target = source.AsIntervalUnsafe;
             var interval = field switch
             {
                 "DAY" or "D" => new TimeSpan(target.Days, 0, 0, 0),

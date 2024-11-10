@@ -22,10 +22,7 @@ public sealed class TailRowsIterator : IRowsIterator, IRowsIteratorParent
 
     public TailRowsIterator(IRowsIterator rowsIterator, int tailCount)
     {
-        if (tailCount < 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(tailCount));
-        }
+        ArgumentOutOfRangeException.ThrowIfNegative(tailCount, nameof(tailCount));
 
         _rowsIterator = rowsIterator;
         _tailCount = tailCount;

@@ -24,19 +24,19 @@ internal sealed class IfConditionCommand : ICommand
 
         var elseFunc = ifConditionNode.ElseNode != null ? statementVisitor.RunAndReturn(ifConditionNode.ElseNode) : null;
 
-        VariantValue Func()
+        VariantValue Func(IExecutionThread thread)
         {
             foreach (var conditionFunc in conditionsFuncs)
             {
-                if (conditionFunc.Condition.Invoke().AsBoolean)
+                if (conditionFunc.Condition.Invoke(thread).AsBoolean)
                 {
-                    return conditionFunc.Block.Invoke();
+                    return conditionFunc.Block.Invoke(thread);
                 }
             }
 
             if (elseFunc != null)
             {
-                return elseFunc.Invoke();
+                return elseFunc.Invoke(thread);
             }
 
             return VariantValue.Null;

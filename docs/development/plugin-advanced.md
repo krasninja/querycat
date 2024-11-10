@@ -16,10 +16,10 @@ public class SamplePluginRowsIterator : IRowsIterator
 
     [Description("Sample iterator.")]
     [FunctionSignature("plugin(start: integer = 0): object<IRowsIterator>")]
-    public static VariantValue SamplePlugin(FunctionCallInfo args)
+    public static VariantValue SamplePlugin(IExecutionThread thread)
     {
-        var startValue = args.GetAt(0).AsInteger;
-        var rowsSource = new SamplePluginRowsIterator(startValue);
+        var startValue = thread.Stack.Pop().AsInteger;
+        var rowsSource = new SamplePluginRowsIterator(startValue ?? 0);
         return VariantValue.CreateFromObject(rowsSource);
     }
 
@@ -83,7 +83,7 @@ public class SamplePluginInput : FetchRowsInput<TestClass>
 
     [Description("Sample input.")]
     [FunctionSignature("plugin(): object<IRowsInput>")]
-    public static VariantValue SamplePlugin(FunctionCallInfo args)
+    public static VariantValue SamplePlugin(IExecutionThread thread)
     {
         var rowsSource = new SamplePluginInput();
         return VariantValue.CreateFromObject(rowsSource);

@@ -73,9 +73,9 @@ internal sealed class FunctionSignatureNode : AstNode, IEquatable<FunctionSignat
         {
             return true;
         }
-        return Name == other.Name
-            && ReturnTypeNode == other.ReturnTypeNode
-            && ArrayUtils.EqualsAll(ArgumentNodes, other.ArgumentNodes);
+        return ReturnTypeNode == other.ReturnTypeNode
+               && Name == other.Name
+               && ArgumentNodes.SequenceEqual(other.ArgumentNodes);
     }
 
     /// <inheritdoc />

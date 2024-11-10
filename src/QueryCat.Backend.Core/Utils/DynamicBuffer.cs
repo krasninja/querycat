@@ -212,10 +212,7 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
     /// by default.</param>
     public DynamicBuffer(int chunkSize = 4096, int maxFreeBuffers = -1)
     {
-        if (chunkSize < 1)
-        {
-            throw new ArgumentOutOfRangeException(nameof(chunkSize));
-        }
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(chunkSize, nameof(chunkSize));
         _chunkSize = chunkSize;
         _maxFreeBuffers = maxFreeBuffers;
     }
@@ -380,10 +377,7 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
     public void Commit(int size)
     {
         _allocatedFlag = false;
-        if (size < 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(size));
-        }
+        ArgumentOutOfRangeException.ThrowIfNegative(size, nameof(size));
         if (size == 0)
         {
             return;
@@ -413,6 +407,24 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
             return iterator.Segment.Buffer[iterator.StartIndex];
         }
         throw new ArgumentOutOfRangeException(nameof(index));
+    }
+
+    /// <summary>
+    /// Try to get element by index.
+    /// </summary>
+    /// <param name="index">Element index.</param>
+    /// <param name="value">Value or default.</param>
+    /// <returns><c>True</c> if can get, <c>false</c> otherwise.</returns>
+    public bool TryGetAt(int index, out T? value)
+    {
+        var iterator = IteratorStart(index);
+        if (iterator.IsNotEmpty)
+        {
+            value = iterator.Segment.Buffer[iterator.StartIndex];
+            return true;
+        }
+        value = default;
+        return false;
     }
 
     /// <summary>

@@ -80,6 +80,18 @@ internal sealed class SelectQuerySpecificationNode : SelectQueryNode
     }
 
     /// <inheritdoc />
+    public override bool IsSingleValue()
+    {
+        if (ColumnsListNode.ColumnsNodes.Count == 1
+            && TableExpressionNode == null)
+        {
+            return true;
+        }
+
+        return base.IsSingleValue();
+    }
+
+    /// <inheritdoc />
     public override object Clone() => new SelectQuerySpecificationNode(this);
 
     /// <inheritdoc />

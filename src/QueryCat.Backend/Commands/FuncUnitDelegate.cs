@@ -1,10 +1,11 @@
 using System.Runtime.CompilerServices;
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Commands;
 
-internal sealed class FuncUnitDelegate(Func<VariantValue> func, DataType outputType) : IFuncUnit
+internal sealed class FuncUnitDelegate(Func<IExecutionThread, VariantValue> func, DataType outputType) : IFuncUnit
 {
     public IReadOnlyList<IRowsIterator>? SubQueryIterators { get; set; }
 
@@ -13,7 +14,7 @@ internal sealed class FuncUnitDelegate(Func<VariantValue> func, DataType outputT
 
     /// <inheritdoc />
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public VariantValue Invoke() => func.Invoke();
+    public VariantValue Invoke(IExecutionThread thread) => func.Invoke(thread);
 
     /// <inheritdoc />
     public override string ToString() => nameof(FuncUnitDelegate);

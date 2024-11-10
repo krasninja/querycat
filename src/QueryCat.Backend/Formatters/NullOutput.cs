@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Storage;
@@ -9,7 +10,7 @@ internal sealed class NullOutput : RowsOutput
 {
     [Description("NULL output.")]
     [FunctionSignature("write_null(): object<IRowsOutput>")]
-    public static VariantValue Null(FunctionCallInfo args)
+    public static VariantValue Null(IExecutionThread thread)
     {
         var rowsSource = new NullFormatter();
         return VariantValue.CreateFromObject(rowsSource);

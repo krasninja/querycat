@@ -32,7 +32,7 @@ internal sealed partial class SelectPlanner
         }
 
         // Create final context.
-        var windowIterator = new WindowFunctionsRowsIterator(context.CurrentIterator, windowDataList);
+        var windowIterator = new WindowFunctionsRowsIterator(ExecutionThread, context.CurrentIterator, windowDataList);
         context.SetIterator(windowIterator);
     }
 

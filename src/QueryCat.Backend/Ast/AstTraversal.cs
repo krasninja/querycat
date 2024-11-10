@@ -24,7 +24,8 @@ internal sealed class AstTraversal
 
     public AstTraversal(AstVisitor visitor)
     {
-        _visitor = visitor ?? throw new ArgumentNullException(nameof(visitor));
+        ArgumentNullException.ThrowIfNull(visitor, nameof(visitor));
+        _visitor = visitor;
     }
 
     /// <summary>

@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using Json.Path;
 using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 
@@ -17,11 +18,11 @@ public static class JsonFunctions
     [SafeFunction]
     [Description("Extracts an object or an array from a JSON string.")]
     [FunctionSignature("json_query(json: string, query: string): string")]
-    public static VariantValue JsonQuery(FunctionCallInfo args)
+    public static VariantValue JsonQuery(IExecutionThread thread)
     {
         // Parse input.
-        var json = args.GetAt(0).AsString;
-        var query = args.GetAt(1).AsString;
+        var json = thread.Stack[0].AsString;
+        var query = thread.Stack[1].AsString;
         var jsonPath = GetJsonPathFromString(query);
         var jsonNode = GetJsonNodeFromString(json);
 
@@ -49,11 +50,11 @@ public static class JsonFunctions
     [SafeFunction]
     [Description("Extracts a scalar value from a JSON string.")]
     [FunctionSignature("json_value(json: string, query: string): any")]
-    public static VariantValue JsonValue(FunctionCallInfo args)
+    public static VariantValue JsonValue(IExecutionThread thread)
     {
         // Parse input.
-        var json = args.GetAt(0).AsString;
-        var query = args.GetAt(1).AsString;
+        var json = thread.Stack[0].AsString;
+        var query = thread.Stack[1].AsString;
         var jsonPath = GetJsonPathFromString(query);
         var jsonNode = GetJsonNodeFromString(json);
 
@@ -82,12 +83,11 @@ public static class JsonFunctions
     [RequiresDynamicCode("Calls System.Text.Json.JsonSerializer.SerializeToNode<TValue>(TValue, JsonSerializerOptions)")]
     [Description("Constructs JSON text from object.")]
     [FunctionSignature("to_json(obj: any): string")]
-    public static VariantValue ToJson(FunctionCallInfo args)
+    public static VariantValue ToJson(IExecutionThread thread)
     {
-        var obj = args.GetAt(0);
-        var type = obj.GetInternalType();
+        var obj = thread.Stack.Pop();
         JsonNode? node;
-        if (DataTypeUtils.IsSimple(type))
+        if (DataTypeUtils.IsSimple(obj.Type))
         {
             var dict = new Dictionary<string, object>
             {
@@ -111,9 +111,9 @@ public static class JsonFunctions
     [SafeFunction]
     [Description("Tests whether a string contains valid JSON.")]
     [FunctionSignature("is_json(json: string): boolean")]
-    public static VariantValue IsJson(FunctionCallInfo args)
+    public static VariantValue IsJson(IExecutionThread thread)
     {
-        var json = args.GetAt(0).AsString;
+        var json = thread.Stack.Pop();
         try
         {
             JsonDocument.Parse(json);
@@ -128,11 +128,11 @@ public static class JsonFunctions
     [SafeFunction]
     [Description("Tests whether a JSON path expression returns any SQL/JSON items.")]
     [FunctionSignature("json_exists(json: string, query: string): boolean")]
-    public static VariantValue JsonExists(FunctionCallInfo args)
+    public static VariantValue JsonExists(IExecutionThread thread)
     {
         // Parse input.
-        var json = args.GetAt(0).AsString;
-        var query = args.GetAt(1).AsString;
+        var json = thread.Stack[0].AsString;
+        var query = thread.Stack[1].AsString;
         var jsonPath = GetJsonPathFromString(query);
         var jsonNode = GetJsonNodeFromString(json);
 
@@ -144,9 +144,9 @@ public static class JsonFunctions
     [SafeFunction]
     [Description("Returns the number of elements in the top-level JSON array.")]
     [FunctionSignature("json_array_length(json: string): integer")]
-    public static VariantValue JsonArrayLength(FunctionCallInfo args)
+    public static VariantValue JsonArrayLength(IExecutionThread thread)
     {
-        var json = args.GetAt(0).AsString;
+        var json = thread.Stack.Pop().AsString;
         var jsonNode = GetJsonNodeFromString(json);
 
         if (jsonNode is not JsonArray array)

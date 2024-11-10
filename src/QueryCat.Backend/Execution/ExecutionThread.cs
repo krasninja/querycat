@@ -52,6 +52,9 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
     public IExecutionScope TopScope => _topScope;
 
     /// <inheritdoc />
+    public IExecutionStack Stack { get; } = new DefaultFixedSizeExecutionStack();
+
+    /// <inheritdoc />
     public event EventHandler<ResolveVariableEventArgs>? VariableResolving;
 
     /// <inheritdoc />
@@ -294,7 +297,7 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
             }
 
             // Run the command.
-            LastResult = commandContext.Invoke();
+            LastResult = commandContext.Invoke(this);
 
             // Fire "after" event.
             if (StatementExecuted != null && !_isInCallback)
@@ -412,7 +415,7 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
         }
         var iterator = ExecutionThreadUtils.ConvertToIterator(result);
         var rowsOutput = Options.DefaultRowsOutput;
-        if (result.GetInternalType() == DataType.Object
+        if (result.Type == DataType.Object
             && result.AsObjectUnsafe is IRowsOutput alternateRowsOutput)
         {
             rowsOutput = alternateRowsOutput;

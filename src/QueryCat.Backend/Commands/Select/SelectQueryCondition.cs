@@ -1,4 +1,5 @@
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Storage;
 
@@ -51,8 +52,8 @@ internal sealed class SelectQueryCondition
     {
     }
 
-    public CacheKeyCondition ToCacheCondition()
-        => new(Column, Operation, ValueFuncs.Select(f => f.Invoke()).ToArray());
+    public CacheKeyCondition ToCacheCondition(IExecutionThread thread)
+        => new(Column, Operation, ValueFuncs.Select(f => f.Invoke(thread)).ToArray());
 
     /// <inheritdoc />
     public override string ToString() => $"Column = {Column}, Operation = {Operation}";

@@ -23,8 +23,9 @@ public sealed class NullFunctionsManager : IFunctionsManager
     }
 
     /// <inheritdoc />
-    public void RegisterFunction(string signature, FunctionDelegate @delegate, string? description = null)
+    public string RegisterFunction(string signature, FunctionDelegate @delegate, string? description = null)
     {
+        return string.Empty;
     }
 
     /// <inheritdoc />

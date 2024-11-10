@@ -1,14 +1,16 @@
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Relational;
+using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Commands.Select.Iterators;
 
 internal sealed class GroupRowsIterator : IRowsIterator, IRowsIteratorParent
 {
-    private static int _nextId = 300;
-    private readonly int _id = Interlocked.Increment(ref _nextId);
+    private readonly int _id = IdGenerator.GetNext();
 
+    private readonly IExecutionThread _thread;
     private readonly IRowsIterator _rowsIterator;
     private bool _isInitialized;
     private readonly RowsFrame _rowsFrame;
@@ -63,11 +65,13 @@ internal sealed class GroupRowsIterator : IRowsIterator, IRowsIteratorParent
     internal RowsFrame RowsFrame => _rowsFrame;
 
     public GroupRowsIterator(
+        IExecutionThread thread,
         IRowsIterator rowsIterator,
         IFuncUnit[] keys,
         SelectCommandContext context,
         AggregateTarget[] targets)
     {
+        _thread = thread;
         _rowsIterator = rowsIterator;
         _keys = keys;
         _context = context;
@@ -108,12 +112,12 @@ internal sealed class GroupRowsIterator : IRowsIterator, IRowsIteratorParent
             .AppendSubQueriesWithIndent(_keys);
     }
 
-    private static VariantValueArray KeysToArray(IFuncUnit[] keys)
+    private VariantValueArray KeysToArray(IFuncUnit[] keys)
     {
         var arr = new VariantValue[keys.Length];
         for (var i = 0; i < keys.Length; i++)
         {
-            arr[i] = keys[i].Invoke();
+            arr[i] = keys[i].Invoke(_thread);
         }
         return new VariantValueArray(arr);
     }
@@ -136,7 +140,7 @@ internal sealed class GroupRowsIterator : IRowsIterator, IRowsIteratorParent
         while (_rowsIterator.MoveNext())
         {
             // Format key and fill aggregate values.
-            _keys[0].Invoke();
+            _keys[0].Invoke(_thread);
             var key = KeysToArray(_keys);
             if (!keysRowIndexesMap.TryGetValue(key, out GroupKeyEntry groupKey))
             {
@@ -153,8 +157,10 @@ internal sealed class GroupRowsIterator : IRowsIterator, IRowsIteratorParent
             for (var i = 0; i < _targets.Length; i++)
             {
                 var target = _targets[i];
-                target.ValueGenerator.Invoke(); // We need this call to fill FunctionCallInfo.
-                target.AggregateFunction.Invoke(groupKey.AggregateStates[i], target.FunctionCallInfo);
+                _thread.Stack.CreateFrame();
+                target.ValueGenerator.Invoke(_thread); // We need this call to fill FunctionCallInfo.
+                target.AggregateFunction.Invoke(groupKey.AggregateStates[i], _thread);
+                _thread.Stack.CloseFrame();
             }
         }
 

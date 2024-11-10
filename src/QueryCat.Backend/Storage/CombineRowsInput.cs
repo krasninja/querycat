@@ -109,7 +109,9 @@ internal sealed class CombineRowsInput : RowsInput, IDisposable
         {
             rowsInput.Reset();
         }
+        _currentInputIndex = -1;
         base.Reset();
+        FetchNextInput();
     }
 
     /// <inheritdoc />

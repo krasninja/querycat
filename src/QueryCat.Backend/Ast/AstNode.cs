@@ -1,4 +1,5 @@
-using System.Collections.Frozen;
+using System.Collections.Immutable;
+using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Ast;
 
@@ -17,7 +18,7 @@ internal abstract class AstNode : IAstNode
     /// </summary>
     public int Id { get; } = _nextId++;
 
-    private readonly SortedList<string, object?> _attributes = new();
+    private SmallDictionary<string, object?>? _attributes;
 
     /// <inheritdoc />
     public abstract object Clone();
@@ -28,6 +29,12 @@ internal abstract class AstNode : IAstNode
     /// <param name="toNode">Destination node.</param>
     protected void CopyTo(AstNode toNode)
     {
+        if (_attributes == null)
+        {
+            return;
+        }
+
+        toNode._attributes ??= new();
         foreach (var dictionaryEntry in _attributes)
         {
 #if DEBUG
@@ -50,6 +57,7 @@ internal abstract class AstNode : IAstNode
     /// <inheritdoc />
     public T? GetAttribute<T>(string key)
     {
+        _attributes ??= new();
         if (_attributes.TryGetValue(key, out var obj))
         {
             if (obj is not T obj1)
@@ -62,17 +70,26 @@ internal abstract class AstNode : IAstNode
     }
 
     /// <inheritdoc />
-    public void SetAttribute(string key, object? value) => _attributes[key] = value;
+    public void SetAttribute(string key, object? value)
+    {
+        _attributes ??= new();
+        _attributes[key] = value;
+    }
 
     internal IReadOnlyDictionary<string, object?> GetAttributes()
     {
+        if (_attributes == null)
+        {
+            return ImmutableDictionary<string, object?>.Empty;
+        }
+
         var dict = new Dictionary<string, object?>();
         foreach (var dictionaryEntry in _attributes)
         {
             var key = dictionaryEntry.Key;
             dict[key] = dictionaryEntry.Value;
         }
-        return dict.ToFrozenDictionary();
+        return dict;
     }
 
     #endregion
@@ -81,7 +98,7 @@ internal abstract class AstNode : IAstNode
     public abstract string Code { get; }
 
     /// <inheritdoc />
-    public virtual IEnumerable<IAstNode> GetChildren() => Enumerable.Empty<IAstNode>();
+    public virtual IEnumerable<IAstNode> GetChildren() => [];
 
     /// <inheritdoc />
     public abstract void Accept(AstVisitor visitor);

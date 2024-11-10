@@ -25,10 +25,17 @@ internal sealed class StatementsVisitor : AstVisitor
 {
     private readonly IExecutionThread<ExecutionOptions> _executionThread;
     private readonly Dictionary<int, IFuncUnit> _handlers = new();
+    private readonly ResolveTypesVisitor _resolveTypesVisitor;
 
-    public StatementsVisitor(IExecutionThread<ExecutionOptions> executionThread)
+    public StatementsVisitor(IExecutionThread<ExecutionOptions> executionThread, ResolveTypesVisitor resolveTypesVisitor)
     {
         _executionThread = executionThread;
+        _resolveTypesVisitor = resolveTypesVisitor;
+    }
+
+    public StatementsVisitor(IExecutionThread<ExecutionOptions> executionThread)
+        : this(executionThread, new ResolveTypesVisitor(executionThread))
+    {
     }
 
     /// <inheritdoc />
@@ -39,13 +46,32 @@ internal sealed class StatementsVisitor : AstVisitor
             return funcUnit;
         }
         Run(node);
-        return _handlers[node.Id];
+        var handler = _handlers[node.Id];
+        _handlers.Clear();
+        return handler;
     }
 
     /// <inheritdoc />
     public override void Run(IAstNode node)
     {
         node.Accept(this);
+    }
+
+    private sealed class BlockExpressionFuncUnit(IFuncUnit[] blocks) : IFuncUnit
+    {
+        /// <inheritdoc />
+        public DataType OutputType => blocks[^1].OutputType;
+
+        /// <inheritdoc />
+        public VariantValue Invoke(IExecutionThread thread)
+        {
+            var result = VariantValue.Null;
+            foreach (var func in blocks)
+            {
+                result = func.Invoke(thread);
+            }
+            return result;
+        }
     }
 
     public override void Visit(BlockExpressionNode node)
@@ -56,25 +82,14 @@ internal sealed class StatementsVisitor : AstVisitor
         }
         var blockHandlers = node.Statements.Select(s => _handlers[s.Id]).ToArray();
 
-        VariantValue Func()
-        {
-            var result = VariantValue.Null;
-            foreach (var func in blockHandlers)
-            {
-                result = func.Invoke();
-            }
-
-            return result;
-        }
-
-        _handlers[node.Id] = new FuncUnitDelegate(Func, node.Statements.Last().GetDataType());
+        _handlers[node.Id] = new BlockExpressionFuncUnit(blockHandlers);
     }
 
     /// <inheritdoc />
     public override void Visit(ExpressionStatementNode node)
     {
-        new ResolveTypesVisitor(_executionThread).Run(node);
-        var handler = new CreateDelegateVisitor(_executionThread).RunAndReturn(node.ExpressionNode);
+        _resolveTypesVisitor.Run(node);
+        var handler = new CreateDelegateVisitor(_executionThread, _resolveTypesVisitor).RunAndReturn(node.ExpressionNode);
         _handlers.Add(node.Id, handler);
     }
 
@@ -95,15 +110,15 @@ internal sealed class StatementsVisitor : AstVisitor
     /// <inheritdoc />
     public override void Visit(SetStatementNode node)
     {
-        var handler = new SetCommand().CreateHandler(_executionThread, node);
+        var handler = new SetCommand(_resolveTypesVisitor).CreateHandler(_executionThread, node);
         _handlers.Add(node.Id, handler);
     }
 
     /// <inheritdoc />
     public override void Visit(FunctionCallStatementNode node)
     {
-        new ResolveTypesVisitor(_executionThread).Run(node);
-        var handler = new CreateDelegateVisitor(_executionThread).RunAndReturn(node.FunctionNode);
+        _resolveTypesVisitor.Run(node);
+        var handler = new CreateDelegateVisitor(_executionThread, _resolveTypesVisitor).RunAndReturn(node.FunctionNode);
         _handlers.Add(node.Id, handler);
     }
 
@@ -124,7 +139,7 @@ internal sealed class StatementsVisitor : AstVisitor
     /// <inheritdoc />
     public override void Visit(SelectStatementNode node)
     {
-        var handler = new SelectCommand().CreateHandler(_executionThread, node);
+        var handler = new SelectCommand(_resolveTypesVisitor).CreateHandler(_executionThread, node);
         _handlers.Add(node.Id, handler);
     }
 

@@ -39,13 +39,14 @@ public partial class ThriftPluginClient
             args ??= new List<VariantValue>();
 
             var func = _thriftPluginClient.FunctionsManager.FindByName(function_name);
-            var callInfo = new FunctionCallInfo(_thriftPluginClient._executionThread, func.Name);
+            var frame = _thriftPluginClient._executionThread.Stack.CreateFrame();
             foreach (var arg in args)
             {
-                callInfo.Push(SdkConvert.Convert(arg));
+                frame.Push(SdkConvert.Convert(arg));
             }
-            var result = func.Delegate.Invoke(callInfo);
-            var resultType = result.GetInternalType();
+            var result = func.Delegate.Invoke(_thriftPluginClient._executionThread);
+            frame.Dispose();
+            var resultType = result.Type;
             if (resultType == DataType.Object)
             {
                 if (result.AsObject is IRowsIterator rowsIterator)
@@ -77,7 +78,7 @@ public partial class ThriftPluginClient
             }
             if (resultType == DataType.Blob)
             {
-                var index = _thriftPluginClient._objectsStorage.Add(result.AsBlob);
+                var index = _thriftPluginClient._objectsStorage.Add(result.AsBlobUnsafe);
                 _thriftPluginClient._logger.LogDebug("Added new blob object with handle {Handle}.", index);
                 return Task.FromResult(new VariantValue
                 {

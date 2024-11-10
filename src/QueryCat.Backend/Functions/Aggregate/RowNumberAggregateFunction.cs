@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 
@@ -9,7 +10,7 @@ namespace QueryCat.Backend.Functions.Aggregate;
 /// </summary>
 [SafeFunction]
 [Description("Returns the number of the current row within its partition, counting from 1.")]
-[AggregateFunctionSignature("row_number(): integer")]
+[AggregateFunctionSignature("row_number(\"window\"?: object<IWindowInfo>): integer")]
 // ReSharper disable once ClassNeverInstantiated.Global
 internal sealed class RowNumberAggregateFunction : IAggregateFunction
 {
@@ -24,11 +25,12 @@ internal sealed class RowNumberAggregateFunction : IAggregateFunction
     public VariantValue[] GetInitialState(DataType type) => [VariantValue.OneIntegerValue];
 
     /// <inheritdoc />
-    public void Invoke(VariantValue[] state, FunctionCallInfo callInfo)
+    public void Invoke(VariantValue[] state, IExecutionThread thread)
     {
-        if (callInfo.WindowInfo != null)
+        var window = thread.Stack.Pop().As<IWindowInfo?>();
+        if (window != null)
         {
-            state[0] = new(callInfo.WindowInfo.GetCurrentRowPosition() + 1);
+            state[0] = new(window.GetCurrentRowPosition() + 1);
         }
         else
         {

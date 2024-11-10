@@ -1,34 +1,28 @@
 using QueryCat.Backend.Core.Execution;
-using QueryCat.Backend.Core.Functions;
+using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Commands;
 
-internal sealed class FuncUnitCallInfo : FunctionCallInfo
+internal sealed class FuncUnitCallInfo
 {
     private readonly IFuncUnit[] _pushArgs;
 
-    public static new FuncUnitCallInfo Empty { get; } = new(NullExecutionThread.Instance, UndefinedFunctionName);
+    public static FuncUnitCallInfo Empty { get; } = new();
 
-    public FuncUnitCallInfo(FunctionCallInfo functionCallInfo)
-        : base(functionCallInfo.ExecutionThread, functionCallInfo.FunctionName)
-    {
-        _pushArgs = Array.Empty<IFuncUnit>();
-        Arguments.AddRange(functionCallInfo);
-    }
+    public bool IsEmpty => _pushArgs.Length == 0;
 
-    /// <inheritdoc />
-    public FuncUnitCallInfo(IExecutionThread executionThread, string functionName, params IFuncUnit[] pushArgs)
-        : base(executionThread, functionName)
+    public FuncUnitCallInfo(params IFuncUnit[] pushArgs)
     {
         _pushArgs = pushArgs;
     }
 
-    internal void InvokePushArgs()
+    internal VariantValue[] InvokePushArgs(IExecutionThread thread)
     {
-        Arguments.Clear();
-        foreach (var pushArg in _pushArgs)
+        var values = new VariantValue[_pushArgs.Length];
+        for (var i = 0; i < _pushArgs.Length; i++)
         {
-            Arguments.Add(pushArg.Invoke());
+            values[i] = _pushArgs[i].Invoke(thread);
         }
+        return values;
     }
 }

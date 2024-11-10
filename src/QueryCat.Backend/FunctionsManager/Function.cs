@@ -18,7 +18,7 @@ public class Function : IFunction
     public string Name { get; }
 
     /// <inheritdoc />
-    public string Description { get; internal set; } = string.Empty;
+    public string Description { get; internal set; }
 
     /// <inheritdoc />
     public DataType ReturnType => _signatureNode.ReturnType;
@@ -53,13 +53,17 @@ public class Function : IFunction
     public static Function Empty => new(
         _ => VariantValue.Null, new FunctionSignatureNode("Empty", FunctionTypeNode.NullTypeInstance));
 
-    internal Function(FunctionDelegate @delegate, FunctionSignatureNode signatureNode,
-        bool aggregate = false)
+    internal Function(
+        FunctionDelegate @delegate,
+        FunctionSignatureNode signatureNode,
+        bool aggregate = false,
+        string? description = null)
     {
         Delegate = @delegate;
         _signatureNode = signatureNode;
-        Name = _signatureNode.Name;
+        Name = _signatureNode.Name.ToUpperInvariant();
         IsAggregate = aggregate;
+        Description = description ?? string.Empty;
     }
 
     internal bool MatchesToArguments(FunctionCallArgumentsTypes functionCallArgumentsTypes)

@@ -31,6 +31,11 @@ public interface IExecutionThread : IDisposable
     IExecutionScope TopScope { get; }
 
     /// <summary>
+    /// Function arguments stack.
+    /// </summary>
+    IExecutionStack Stack { get; }
+
+    /// <summary>
     /// The event is fired before variable resolving.
     /// </summary>
     event EventHandler<ResolveVariableEventArgs>? VariableResolving;

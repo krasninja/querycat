@@ -1,4 +1,5 @@
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Storage;
 
@@ -19,7 +20,7 @@ internal sealed class InsertCommandHandler : IFuncUnit
     }
 
     /// <inheritdoc />
-    public VariantValue Invoke()
+    public VariantValue Invoke(IExecutionThread thread)
     {
         var insertCount = 0;
         _rowsOutput.Open();

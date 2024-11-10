@@ -29,23 +29,32 @@ internal class ResolveTypesVisitor : AstVisitor
         AstTraversal.PostOrder(node);
     }
 
+    /// <summary>
+    /// Separate names and positional arguments.
+    /// </summary>
+    /// <param name="callArguments">Call arguments.</param>
+    /// <returns>Instance of <see cref="FunctionCallArgumentsTypes" />.</returns>
     public static FunctionCallArgumentsTypes CreateFunctionArgumentsTypes(
         IList<FunctionCallArgumentNode> callArguments)
     {
-        var positionalArgumentsTypes = callArguments
-            .Where(arg => arg.IsPositional)
-            .Select(arg => new KeyValuePair<int, DataType>(
-                callArguments.IndexOf(arg),
-                arg.ExpressionValueNode.GetDataType()))
-            .ToArray();
-        var namedArgumentsTypes = callArguments
-            .Where(arg => !arg.IsPositional)
-            .Select(arg => new KeyValuePair<string, DataType>(
-                arg.Key!, arg.ExpressionValueNode.GetDataType()))
-            .ToArray();
+        var positionalArgs = new List<KeyValuePair<int, DataType>>(callArguments.Count);
+        var namedArgs = new List<KeyValuePair<string, DataType>>(callArguments.Count);
+        for (var i = 0; i < callArguments.Count; i++)
+        {
+            var arg = callArguments[i];
+            if (callArguments[i].IsPositional)
+            {
+                positionalArgs.Add(new KeyValuePair<int, DataType>(i, arg.ExpressionValueNode.GetDataType()));
+            }
+            else
+            {
+                namedArgs.Add(new KeyValuePair<string, DataType>(arg.Key!, arg.ExpressionValueNode.GetDataType()));
+            }
+        }
+
         return new FunctionCallArgumentsTypes(
-            positionalArgumentsTypes,
-            namedArgumentsTypes
+            positionalArgs.ToArray(),
+            namedArgs.ToArray()
         );
     }
 
@@ -110,7 +119,7 @@ internal class ResolveTypesVisitor : AstVisitor
         var scope = ExecutionThread.TopScope;
         if (ExecutionThread.TryGetVariable(name, out var value, scope))
         {
-            var valueType = value.GetInternalType();
+            var valueType = value.Type;
             if (valueType == DataType.Object && node.HasSelectors)
             {
                 node.SetAttribute(AstAttributeKeys.TypeKey, DataType.Dynamic);
@@ -132,7 +141,7 @@ internal class ResolveTypesVisitor : AstVisitor
     /// <inheritdoc />
     public override void Visit(LiteralNode node)
     {
-        node.SetAttribute(AstAttributeKeys.TypeKey, node.Value.GetInternalType());
+        node.SetAttribute(AstAttributeKeys.TypeKey, node.Value.Type);
     }
 
     /// <inheritdoc />
@@ -248,14 +257,14 @@ internal class ResolveTypesVisitor : AstVisitor
     /// <inheritdoc />
     public override void Visit(SelectQuerySpecificationNode node)
     {
-        new SelectPlanner(ExecutionThread).CreateIterator(node);
+        new SelectPlanner(ExecutionThread, this).CreateIterator(node);
         node.ColumnsListNode.ColumnsNodes[0].CopyTo<DataType>(AstAttributeKeys.TypeKey, node);
     }
 
     /// <inheritdoc />
     public override void Visit(SelectQueryCombineNode node)
     {
-        new SelectPlanner(ExecutionThread).CreateIterator(node);
+        new SelectPlanner(ExecutionThread, this).CreateIterator(node);
         node.ColumnsListNode.ColumnsNodes[0].CopyTo<DataType>(AstAttributeKeys.TypeKey, node);
     }
 

@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Diagnostics;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Fetch;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
@@ -15,7 +16,7 @@ public class SamplePluginInput : FetchRowsInput<TestClass>
 
     [Description("Sample input.")]
     [FunctionSignature("plugin(): object<IRowsInput>")]
-    public static VariantValue SamplePlugin(FunctionCallInfo args)
+    public static VariantValue SamplePlugin(IExecutionThread thread)
     {
         var rowsSource = new SamplePluginInput();
         return VariantValue.CreateFromObject(rowsSource);

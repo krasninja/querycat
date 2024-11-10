@@ -41,7 +41,7 @@ internal sealed partial class SelectPlanner
         var aggregateColumnsOffset = context.CurrentIterator.Columns.Length;
 
         context.SetIterator(
-            new GroupRowsIterator(context.CurrentIterator, keysFactory, context, targets));
+            new GroupRowsIterator(ExecutionThread, context.CurrentIterator, keysFactory, context, targets));
 
         PipelineAggregate_ReplaceAggregateFunctionsByColumnReference(selectQueryNode, targets, aggregateColumnsOffset);
     }
@@ -115,7 +115,7 @@ internal sealed partial class SelectPlanner
         }
 
         var predicate = Misc_CreateDelegate(havingNode, context);
-        context.SetIterator(new FilterRowsIterator(context.CurrentIterator, predicate));
+        context.SetIterator(new FilterRowsIterator(ExecutionThread, context.CurrentIterator, predicate));
     }
 
     private IFuncUnit[] PipelineAggregate_CreateGroupKeyValuesFactory(SelectGroupByNode? groupByNode,

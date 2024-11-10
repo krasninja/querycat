@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using Bogus;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Fetch;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
@@ -12,7 +13,7 @@ internal sealed class AddressRowsInput : FetchRowsInput<Address>
     [SafeFunction]
     [Description("Test function.")]
     [FunctionSignature("sample_get_addresses_1(): object<IRowsInput>")]
-    public static VariantValue AddressRowsInputFunction(FunctionCallInfo args)
+    public static VariantValue AddressRowsInputFunction(IExecutionThread thread)
     {
         return VariantValue.CreateFromObject(new AddressIterator());
     }

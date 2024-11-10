@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 
@@ -16,10 +17,10 @@ public class SamplePluginRowsInput : IRowsInput
 
     [Description("Sample input.")]
     [FunctionSignature("plugin(start: integer = 0): object<IRowsInput>")]
-    public static VariantValue SamplePlugin(FunctionCallInfo args)
+    public static VariantValue SamplePlugin(IExecutionThread thread)
     {
-        var startValue = args.GetAt(0).AsInteger;
-        var rowsSource = new SamplePluginRowsInput(startValue);
+        var startValue = thread.Stack.Pop().AsInteger;
+        var rowsSource = new SamplePluginRowsInput(startValue ?? 0);
         return VariantValue.CreateFromObject(rowsSource);
     }
 
@@ -32,7 +33,7 @@ public class SamplePluginRowsInput : IRowsInput
     };
 
     /// <inheritdoc />
-    public string[] UniqueKey { get; } = Array.Empty<string>();
+    public string[] UniqueKey { get; } = [];
 
     /// <inheritdoc />
     public QueryContext QueryContext

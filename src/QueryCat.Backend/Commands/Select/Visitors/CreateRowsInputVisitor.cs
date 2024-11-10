@@ -43,7 +43,8 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
         }
         typesVisitor.Run(node.TableFunctionNode);
 
-        var source = new CreateDelegateVisitor(_executionThread).RunAndReturn(node.TableFunctionNode).Invoke();
+        var source = new CreateDelegateVisitor(_executionThread, typesVisitor).RunAndReturn(node.TableFunctionNode)
+            .Invoke(_executionThread);
         var inputContext = CreateRowsInput(source);
         inputContext.Alias = node.Alias;
         _context.AddInput(inputContext);
@@ -55,7 +56,7 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
 
     private SelectCommandInputContext CreateRowsInput(VariantValue source)
     {
-        if (DataTypeUtils.IsSimple(source.GetInternalType()))
+        if (DataTypeUtils.IsSimple(source.Type))
         {
             return new SelectCommandInputContext(new SingleValueRowsInput(source));
         }
@@ -67,7 +68,7 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
             };
             if (_context.Parent != null && !_executionThread.Options.DisableCache)
             {
-                rowsInput = new CacheRowsInput(rowsInput, _context.Conditions);
+                rowsInput = new CacheRowsInput(_executionThread, rowsInput, _context.Conditions);
             }
             rowsInput.QueryContext = queryContext;
             rowsInput.Open();

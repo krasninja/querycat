@@ -8,7 +8,7 @@ using QueryCat.Backend.Storage;
 
 namespace QueryCat.Backend.Commands.Select.Visitors;
 
-internal class InputCreateDelegateVisitor : CreateDelegateVisitor
+internal sealed class InputCreateDelegateVisitor : CreateDelegateVisitor
 {
     private readonly SelectCommandContext _context;
     private readonly IRowsInput _leftInput;
@@ -87,12 +87,12 @@ internal class InputCreateDelegateVisitor : CreateDelegateVisitor
             rightColumnSources[i] = new FuncUnitRowsInputColumn(_rightInput, rightColumnIndex);
         }
 
-        VariantValue Func()
+        VariantValue Func(IExecutionThread thread)
         {
             for (var i = 0; i < leftColumnSources.Length; i++)
             {
-                var leftValue = leftColumnSources[i].Invoke();
-                var rightValue = rightColumnSources[i].Invoke();
+                var leftValue = leftColumnSources[i].Invoke(thread);
+                var rightValue = rightColumnSources[i].Invoke(thread);
                 if (leftValue != rightValue)
                 {
                     return VariantValue.FalseValue;

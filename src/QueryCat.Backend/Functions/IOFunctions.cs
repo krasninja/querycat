@@ -19,33 +19,33 @@ internal static class IOFunctions
     [SafeFunction]
     [Description("Read data from a URI.")]
     [FunctionSignature("read(uri: string, fmt?: object<IRowsFormatter>): object<IRowsInput>")]
-    public static VariantValue Read(FunctionCallInfo args)
+    public static VariantValue Read(IExecutionThread thread)
     {
-        var uri = args.GetAt(0).AsString;
+        var uri = thread.Stack[0].AsString;
 
-        var function = args.ExecutionThread.FunctionsManager.ResolveUri(uri);
+        var function = thread.FunctionsManager.ResolveUri(uri);
         if (function != null)
         {
-            return function.Delegate.Invoke(args);
+            return function.Delegate.Invoke(thread);
         }
 
-        return ReadFile(args);
+        return ReadFile(thread);
     }
 
     [Description("Write data to a URI.")]
     [FunctionSignature("write(uri: string, fmt?: object<IRowsFormatter>): object<IRowsOutput>")]
-    public static VariantValue Write(FunctionCallInfo args)
+    public static VariantValue Write(IExecutionThread thread)
     {
-        return WriteFile(args);
+        return WriteFile(thread);
     }
 
     [SafeFunction]
     [Description("Reads data from a string.")]
     [FunctionSignature("read_text(\"text\": string, fmt: object<IRowsFormatter>): object<IRowsInput>")]
-    public static VariantValue ReadString(FunctionCallInfo args)
+    public static VariantValue ReadString(IExecutionThread thread)
     {
-        var text = args.GetAt(0).AsString;
-        var formatter = (IRowsFormatter)args.GetAt(1).AsObject!;
+        var text = thread.Stack[0].AsString;
+        var formatter = (IRowsFormatter)thread.Stack[1].AsObject!;
 
         var stringStream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(text));
         return VariantValue.CreateFromObject(formatter.OpenInput(stringStream));
@@ -58,15 +58,15 @@ internal static class IOFunctions
     [SafeFunction]
     [Description("Read data from a file.")]
     [FunctionSignature("read_file(path: string, fmt?: object<IRowsFormatter>): object<IRowsInput>")]
-    public static VariantValue ReadFile(FunctionCallInfo args)
+    public static VariantValue ReadFile(IExecutionThread thread)
     {
-        var path = args.GetAt(0).AsString;
+        var path = thread.Stack[0].AsString;
         (path, var funcArgs) = Utils_ParseUri(path);
 
-        var formatter = args.Count > 1
-            ? args.GetAt(1).AsObject as IRowsFormatter
-            : File_GetFormatter(path, args.ExecutionThread, funcArgs);
-        var files = File_GetFileInputsByPath(path, args.ExecutionThread, formatter, funcArgs).ToList();
+        var formatter = thread.Stack.FrameLength > 1
+            ? thread.Stack[1].AsObject as IRowsFormatter
+            : File_GetFormatter(path, thread, funcArgs);
+        var files = File_GetFileInputsByPath(path, thread, formatter, funcArgs).ToList();
         if (!files.Any())
         {
             throw new QueryCatException(string.Format(Resources.Errors.PathNoFiles, path));
@@ -77,17 +77,17 @@ internal static class IOFunctions
 
     [Description("Write data to a file.")]
     [FunctionSignature("write_file(path: string, fmt?: object<IRowsFormatter>): object<IRowsOutput>")]
-    public static VariantValue WriteFile(FunctionCallInfo args)
+    public static VariantValue WriteFile(IExecutionThread thread)
     {
-        var pathArgument = args.GetAt(0);
+        var pathArgument = thread.Stack[0];
         if (pathArgument.IsNull || string.IsNullOrEmpty(pathArgument.AsString))
         {
             throw new QueryCatException(Resources.Errors.PathNotDefined);
         }
         var (path, funcArgs) = Utils_ParseUri(pathArgument.AsString);
 
-        var formatter = args.GetAt(1).AsObject as IRowsFormatter;
-        formatter ??= File_GetFormatter(path, args.ExecutionThread, funcArgs);
+        var formatter = thread.Stack[1].AsObject as IRowsFormatter;
+        formatter ??= File_GetFormatter(path, thread, funcArgs);
         var fullDirectory = Path.GetDirectoryName(path);
         if (!string.IsNullOrEmpty(fullDirectory) && !Directory.Exists(fullDirectory))
         {
@@ -245,9 +245,9 @@ internal static class IOFunctions
     [SafeFunction]
     [Description("List directory content (files and sub-directories).")]
     [FunctionSignature("ls_dir(path: string): object<IRowsInput>")]
-    public static VariantValue ListDirectory(FunctionCallInfo args)
+    public static VariantValue ListDirectory(IExecutionThread thread)
     {
-        var path = args.GetAt(0).AsString;
+        var path = thread.Stack.Pop().AsString;
         path = ResolveHomeDirectory(path);
 
         var items = ListDirectoryInternal(path);
@@ -288,10 +288,10 @@ internal static class IOFunctions
     [SafeFunction]
     [Description("Read the HTTP resource.")]
     [FunctionSignature("curl(uri: string, fmt?: object<IRowsFormatter>): object<IRowsInput>")]
-    public static VariantValue Curl(FunctionCallInfo args)
+    public static VariantValue Curl(IExecutionThread thread)
     {
-        var uriArgument = args.GetAt(0).AsString;
-        var formatter = args.GetAt(1).AsObject as IRowsFormatter;
+        var uriArgument = thread.Stack[0].AsString;
+        var formatter = thread.Stack[1].AsObject as IRowsFormatter;
 
         (uriArgument, var funcArgs) = Utils_ParseUri(uriArgument);
 
@@ -308,7 +308,7 @@ internal static class IOFunctions
             if (response.Headers.TryGetValues(ContentTypeHeader, out var contentTypes))
             {
                 var contentType = contentTypes.Last();
-                formatter = FormattersInfo.CreateFormatter(contentType, args.ExecutionThread, funcArgs);
+                formatter = FormattersInfo.CreateFormatter(contentType, thread, funcArgs);
             }
         }
         // Try get formatter by extension from URI.
@@ -318,7 +318,7 @@ internal static class IOFunctions
             var extension = Path.GetExtension(absolutePath).ToLower();
             if (!string.IsNullOrEmpty(extension))
             {
-                formatter = FormattersInfo.CreateFormatter(extension, args.ExecutionThread, funcArgs);
+                formatter = FormattersInfo.CreateFormatter(extension, thread, funcArgs);
             }
         }
         formatter ??= new TextLineFormatter();
@@ -409,12 +409,19 @@ internal static class IOFunctions
     [SafeFunction]
     [Description("Write data to the system standard output.")]
     [FunctionSignature("stdout(fmt?: object<IRowsFormatter>): object<IRowsOutput>")]
-    public static VariantValue Stdout(FunctionCallInfo args)
+    public static VariantValue Stdout(IExecutionThread thread)
     {
-        var formatter = args.GetAt(0).AsObject as IRowsFormatter;
+        IRowsFormatter? formatter = null;
+        if (thread.Stack.FrameLength > 0)
+        {
+            formatter = thread.Stack.Pop().AsObject as IRowsFormatter;
+        }
+        if (formatter == null)
+        {
+            formatter = new TextTableFormatter();
+        }
 
         var stream = Stdio.GetConsoleOutput();
-        formatter ??= new TextTableFormatter();
         var output = formatter.OpenOutput(stream);
 
         return VariantValue.CreateFromObject(output);
@@ -423,10 +430,10 @@ internal static class IOFunctions
     [SafeFunction]
     [Description("Read data from the system standard input.")]
     [FunctionSignature("stdin(skip_lines: integer = 0, fmt?: object<IRowsFormatter>): object<IRowsInput>")]
-    public static VariantValue Stdin(FunctionCallInfo args)
+    public static VariantValue Stdin(IExecutionThread thread)
     {
-        var skipLines = args.GetAt(0).AsInteger;
-        var formatter = args.GetAt(1).AsObject as IRowsFormatter;
+        var skipLines = thread.Stack[0].AsInteger;
+        var formatter = thread.Stack[1].AsObject as IRowsFormatter;
         var stream = Stdio.GetConsoleInput();
 
         for (var i = 0; i < skipLines; i++)

@@ -93,7 +93,7 @@ internal sealed class SubRipInput : RowsInput
             }
             line = _streamReader.ReadLine();
         }
-        _counter = new VariantValue(long.Parse(line));
+        _counter = int.Parse(line);
 
         // Time.
         line = _streamReader.ReadLine();

@@ -21,14 +21,15 @@ public static class FunctionsManagerExtensions
     /// <param name="functionDelegate">Function delegate.</param>
     public static void RegisterFunction(this IFunctionsManager functionsManager, FunctionDelegate functionDelegate)
     {
-        var methodAttributes = functionDelegate.Method.GetCustomAttributes<FunctionSignatureAttribute>().ToArray();
-        if (!methodAttributes.Any())
+        var methodAttributes = Attribute.GetCustomAttributes(functionDelegate.Method, typeof(FunctionSignatureAttribute));
+        if (methodAttributes.Length < 1)
         {
-            throw new QueryCatException($"Delegate must have {nameof(FunctionSignatureAttribute)}.");
+            throw new QueryCatException($"Delegate must have '{nameof(FunctionSignatureAttribute)}'.");
         }
 
-        foreach (var methodAttribute in methodAttributes)
+        foreach (var attribute in methodAttributes)
         {
+            var methodAttribute = (FunctionSignatureAttribute)attribute;
             var descriptionAttribute = functionDelegate.Method.GetCustomAttribute<DescriptionAttribute>();
             functionsManager.RegisterFunction(
                 methodAttribute.Signature,
@@ -55,7 +56,7 @@ public static class FunctionsManagerExtensions
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicMethods)] Type type)
     {
         // Try to register class as function.
-        var classAttributes = type.GetCustomAttributes<FunctionSignatureAttribute>().ToArray();
+        var classAttributes = Attribute.GetCustomAttributes(type, typeof(FunctionSignatureAttribute));
         if (classAttributes.Any())
         {
             foreach (var classAttribute in classAttributes)
@@ -63,7 +64,7 @@ public static class FunctionsManagerExtensions
                 var firstConstructor = type.GetConstructors(BindingFlags.Public | BindingFlags.Instance).FirstOrDefault();
                 if (firstConstructor != null)
                 {
-                    var functionName = GetFunctionName(classAttribute.Signature, type);
+                    var functionName = GetFunctionName(((FunctionSignatureAttribute)classAttribute).Signature, type);
                     var signature = FunctionFormatter.FormatSignatureFromParameters(functionName, firstConstructor.GetParameters(), type);
                     var @delegate = FunctionFormatter.CreateDelegateFromMethod(firstConstructor);
                     var description = type.GetCustomAttribute<DescriptionAttribute>()?.Description ?? string.Empty;
@@ -91,12 +92,12 @@ public static class FunctionsManagerExtensions
             }
 
             var methodParameters = method.GetParameters();
-            // The standard case: VariantValue FunctionName(FunctionCallInfo args).
+            // The standard case: VariantValue FunctionName(IExecutionThread thread).
             if (methodParameters.Length == 1
-                && methodParameters[0].ParameterType == typeof(FunctionCallInfo)
+                && methodParameters[0].ParameterType == typeof(IExecutionThread)
                 && method.ReturnType == typeof(VariantValue))
             {
-                var args = Expression.Parameter(typeof(FunctionCallInfo), "input");
+                var args = Expression.Parameter(typeof(IExecutionThread), "input");
                 var func = Expression.Lambda<FunctionDelegate>(Expression.Call(method, args), args).Compile();
                 var description = method.GetCustomAttribute<DescriptionAttribute>()?.Description;
                 functionsManager.RegisterFunction(methodSignature.Signature, func, description);
@@ -141,12 +142,7 @@ public static class FunctionsManagerExtensions
         {
             return signature;
         }
-        var name = signature[..indexOfLeftParen];
-        if (name.StartsWith('['))
-        {
-            name = name.Substring(1, name.Length - 2);
-        }
-        return name;
+        return signature[..indexOfLeftParen];
     }
 
     #endregion
@@ -169,7 +165,7 @@ public static class FunctionsManagerExtensions
         {
             if (functions.Length > 1 && functionArgumentsTypes != null)
             {
-                throw new CannotFindFunctionException($"There is more than one signature for function '{name}'.");
+                throw new QueryCatException($"There is more than one signature for function '{name}'.");
             }
             return functions.First();
         }

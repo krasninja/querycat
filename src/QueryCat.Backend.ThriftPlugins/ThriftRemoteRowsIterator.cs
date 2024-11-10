@@ -65,8 +65,11 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys
             return ErrorCode.InvalidColumnIndex;
         }
 
-        value = _cache.GetAt(columnIndex);
-        return ErrorCode.OK;
+        if (_cache.TryGetAt(columnIndex, out value))
+        {
+            return ErrorCode.OK;
+        }
+        return ErrorCode.NoData;
     }
 
     /// <inheritdoc />
@@ -120,4 +123,7 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys
     {
         stringBuilder.AppendLine($"Remote (handle={_objectHandle}, id={_id})");
     }
+
+    /// <inheritdoc />
+    public override string ToString() => $"Id = {_id}";
 }

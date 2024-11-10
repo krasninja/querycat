@@ -55,14 +55,14 @@ public sealed class ParserTokensList : IReadOnlyList<ParserToken>
     }
 
     /// <summary>
-    /// Searches for an element that matches the conditions.
+    /// Searches for an index of element that matches the conditions.
     /// </summary>
     /// <param name="predicate">Condition delegate.</param>
     /// <returns>The zero-based index of the first occurrence, otherwise -1.</returns>
     public int FindIndex(Predicate<ParserToken> predicate) => _tokens.FindIndex(predicate);
 
     /// <summary>
-    /// Searches for an element that matches the conditions.
+    /// Searches for an index of element that matches the conditions.
     /// </summary>
     /// <param name="startIndex">The zero-based starting index of the search.</param>
     /// <param name="predicate">Condition delegate.</param>
@@ -70,14 +70,14 @@ public sealed class ParserTokensList : IReadOnlyList<ParserToken>
     public int FindIndex(int startIndex, Predicate<ParserToken> predicate) => _tokens.FindIndex(startIndex, predicate);
 
     /// <summary>
-    /// Searches for an element that matches the specified token type.
+    /// Searches for an index of element that matches the specified token type.
     /// </summary>
     /// <param name="tokenType">Token type to search.</param>
     /// <returns>The zero-based index of the first occurrence, otherwise -1.</returns>
     public int FindIndex(string tokenType) => _tokens.FindIndex(t => t.Type == tokenType);
 
     /// <summary>
-    /// Searches for an element that matches the specified token type.
+    /// Searches for an index of element that matches the specified token type.
     /// </summary>
     /// <param name="startIndex">The zero-based starting index of the search.</param>
     /// <param name="tokenType">Token type to search.</param>
@@ -85,14 +85,14 @@ public sealed class ParserTokensList : IReadOnlyList<ParserToken>
     public int FindIndex(int startIndex, string tokenType) => _tokens.FindIndex(startIndex, t => t.Type == tokenType);
 
     /// <summary>
-    /// Searches for an element that matches the conditions defined by the specified predicate, and returns the last occurrence.
+    /// Searches for an index of element that matches the conditions defined by the specified predicate, and returns the last occurrence.
     /// </summary>
     /// <param name="predicate">Predicate delegate.</param>
     /// <returns>Index on the found token or -1 if not found.</returns>
     public int FindLastIndex(Predicate<ParserToken> predicate) => _tokens.FindLastIndex(predicate);
 
     /// <summary>
-    /// Searches for an element that matches the conditions defined by the specified predicate, and returns the last occurrence.
+    /// Searches for an index of element that matches the conditions defined by the specified predicate, and returns the last occurrence.
     /// </summary>
     /// <param name="startIndex">The zero-based starting index of the search.</param>
     /// <param name="predicate">Predicate delegate.</param>
@@ -100,14 +100,14 @@ public sealed class ParserTokensList : IReadOnlyList<ParserToken>
     public int FindLastIndex(int startIndex, Predicate<ParserToken> predicate) => _tokens.FindLastIndex(startIndex, predicate);
 
     /// <summary>
-    /// Searches for an element that matches the token type, and returns the last occurrence.
+    /// Searches for an index of element that matches the token type, and returns the last occurrence.
     /// </summary>
     /// <param name="tokenType">Token to search.</param>
     /// <returns>Index on the found token or -1 if not found.</returns>
     public int FindLastIndex(string tokenType) => _tokens.FindLastIndex(t => t.Type == tokenType);
 
     /// <summary>
-    /// Searches for an element that matches the token type, and returns the last occurrence.
+    /// Searches for an index of element that matches the token type, and returns the last occurrence.
     /// </summary>
     /// <param name="startIndex">The zero-based starting index of the search.</param>
     /// <param name="tokenType">Token to search.</param>

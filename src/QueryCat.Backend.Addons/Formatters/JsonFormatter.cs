@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 
@@ -13,9 +14,9 @@ internal sealed class JsonFormatter : IRowsFormatter
     [SafeFunction]
     [Description("JSON formatter.")]
     [FunctionSignature("json(jsonpath?: string): object<IRowsFormatter>")]
-    public static VariantValue Json(FunctionCallInfo args)
+    public static VariantValue Json(IExecutionThread thread)
     {
-        var rowsSource = new JsonFormatter(args.GetAtOrDefault(0).AsString);
+        var rowsSource = new JsonFormatter(thread.Stack.GetAtOrDefault(0).AsString);
         return VariantValue.CreateFromObject(rowsSource);
     }
 

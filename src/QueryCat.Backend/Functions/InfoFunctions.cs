@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Fetch;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Plugins;
@@ -17,9 +18,9 @@ public static class InfoFunctions
     [SafeFunction]
     [Description("Return all registered functions.")]
     [FunctionSignature("_functions(): object<IRowsIterator>")]
-    internal static VariantValue Functions(FunctionCallInfo args)
+    internal static VariantValue Functions(IExecutionThread thread)
     {
-        var functions = args.ExecutionThread.FunctionsManager.GetFunctions().OrderBy(f => f.Name);
+        var functions = thread.FunctionsManager.GetFunctions().OrderBy(f => f.Name);
         var input = new EnumerableRowsInput<IFunction>(functions,
             builder => builder
                 .AddProperty("signature", p => p.ToString())
@@ -33,9 +34,9 @@ public static class InfoFunctions
     [SafeFunction]
     [Description("Return row input columns information.")]
     [FunctionSignature("_schema(input: object<IRowsInput>): object<IRowsIterator>")]
-    public static VariantValue Schema(FunctionCallInfo args)
+    public static VariantValue Schema(IExecutionThread thread)
     {
-        var obj = args.GetAt(0).AsObject;
+        var obj = thread.Stack[0].AsObject;
         Column[] columns;
 
         if (obj is IRowsIterator iterator)
@@ -71,11 +72,11 @@ public static class InfoFunctions
     [SafeFunction]
     [Description("Return available plugins from repository.")]
     [FunctionSignature("_plugins(): object<IRowsInput>")]
-    public static VariantValue Plugins(FunctionCallInfo args)
+    public static VariantValue Plugins(IExecutionThread thread)
     {
         var plugins = AsyncUtils.RunSync(async ct =>
         {
-            return await args.ExecutionThread.PluginsManager.ListAsync(cancellationToken: ct);
+            return await thread.PluginsManager.ListAsync(cancellationToken: ct);
         });
         var input = new EnumerableRowsInput<PluginInfo>(plugins!,
             builder => builder
@@ -93,10 +94,10 @@ public static class InfoFunctions
     [SafeFunction]
     [Description("Get expression type.")]
     [FunctionSignature("_typeof(arg: any): string")]
-    internal static VariantValue TypeOf(FunctionCallInfo args)
+    internal static VariantValue TypeOf(IExecutionThread thread)
     {
-        var value = args.GetAt(0);
-        var type = value.GetInternalType();
+        var value = thread.Stack.Pop();
+        var type = value.Type;
         if (type == DataType.Object && value.AsObject != null)
         {
             return new VariantValue($"object<{value.AsObject.GetType().Name}>");
@@ -107,7 +108,7 @@ public static class InfoFunctions
     [SafeFunction]
     [Description("Application version.")]
     [FunctionSignature("_version(): string")]
-    public static VariantValue Version(FunctionCallInfo args)
+    public static VariantValue Version(IExecutionThread thread)
     {
         return new VariantValue(Application.GetVersion());
     }
@@ -115,7 +116,7 @@ public static class InfoFunctions
     [SafeFunction]
     [Description("Provide a list of OS time zone names.")]
     [FunctionSignature("_timezone_names(): object<IRowsIterator>")]
-    internal static VariantValue TimeZoneNames(FunctionCallInfo args)
+    internal static VariantValue TimeZoneNames(IExecutionThread thread)
     {
         var input = new EnumerableRowsInput<TimeZoneInfo>(TimeZoneInfo.GetSystemTimeZones(),
             builder => builder
@@ -130,7 +131,7 @@ public static class InfoFunctions
     [SafeFunction]
     [Description("Get current running platform/OS.")]
     [FunctionSignature("_platform(): string")]
-    internal static VariantValue Platform(FunctionCallInfo args)
+    internal static VariantValue Platform(IExecutionThread thread)
     {
         return new VariantValue(Application.GetPlatform());
     }

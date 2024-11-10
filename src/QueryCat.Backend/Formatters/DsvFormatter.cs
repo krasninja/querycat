@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Storage;
@@ -35,13 +36,13 @@ internal class DsvFormatter : IRowsFormatter
             delimiter_can_repeat?: boolean := false)
                 : object<IRowsFormatter>
         """)]
-    public static VariantValue Csv(FunctionCallInfo args)
+    public static VariantValue Csv(IExecutionThread thread)
     {
-        var hasHeader = args.GetAt(0).AsBooleanNullable;
-        var delimiter = args.GetAt(1).AsString;
-        var quoteStrings = args.GetAt(2).AsBoolean;
-        var skipEmptyLines = args.GetAt(3).AsBoolean;
-        var delimiterCanRepeat = args.GetAt(4).AsBoolean;
+        var hasHeader = thread.Stack[0].AsBooleanNullable;
+        var delimiter = thread.Stack[1].AsString;
+        var quoteStrings = thread.Stack[2].AsBoolean;
+        var skipEmptyLines = thread.Stack[3].AsBoolean;
+        var delimiterCanRepeat = thread.Stack[4].AsBoolean;
         if (delimiter.Length != 0 && delimiter.Length > 1)
         {
             throw new QueryCatException(Resources.Errors.DelimiterOneCharacter);
@@ -58,10 +59,10 @@ internal class DsvFormatter : IRowsFormatter
 
     [Description("TSV formatter.")]
     [FunctionSignature("tsv(has_header?: boolean, quote_strings?: boolean = false): object")]
-    public static VariantValue Tsv(FunctionCallInfo args)
+    public static VariantValue Tsv(IExecutionThread thread)
     {
-        var hasHeader = args.GetAt(0).AsBooleanNullable;
-        var quoteStrings = args.GetAt(1).AsBoolean;
+        var hasHeader = thread.Stack[0].AsBooleanNullable;
+        var quoteStrings = thread.Stack[1].AsBoolean;
         var rowsSource = new DsvFormatter('\t', hasHeader, quoteStrings: quoteStrings);
         return VariantValue.CreateFromObject(rowsSource);
     }

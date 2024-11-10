@@ -1,4 +1,5 @@
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Indexes;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Relational;
@@ -10,7 +11,8 @@ namespace QueryCat.Backend.Indexes;
 /// </summary>
 internal sealed class OrderColumnsIndex : IOrderIndex
 {
-    private int[] _rowsOrder = Array.Empty<int>();
+    private readonly IExecutionThread _thread;
+    private int[] _rowsOrder = [];
     private readonly OrderDirection[] _directions;
     private readonly IFuncUnit[] _valueGetters;
     private readonly NullOrder[] _nullOrders;
@@ -101,7 +103,7 @@ internal sealed class OrderColumnsIndex : IOrderIndex
             _orderColumnsIndex.RowsFrameIterator.Seek(rowIndex, CursorSeekOrigin.Begin);
             for (var i = 0; i < values.Length; i++)
             {
-                values[i] = _orderColumnsIndex._valueGetters[i].Invoke();
+                values[i] = _orderColumnsIndex._valueGetters[i].Invoke(_orderColumnsIndex._thread);
             }
         }
 
@@ -113,11 +115,11 @@ internal sealed class OrderColumnsIndex : IOrderIndex
 
             for (var i = 0; i < _values1.Length; i++)
             {
-                if (_greaterFunctions[i].Invoke(in _values1[i], in _values2[i]).AsBooleanUnsafe)
+                if (_greaterFunctions[i].Invoke(in _values1[i], in _values2[i]).AsBoolean)
                 {
                     return _greaterValues[i];
                 }
-                if (_lessFunctions[i].Invoke(in _values1[i], in _values2[i]))
+                if (_lessFunctions[i].Invoke(in _values1[i], in _values2[i]).AsBoolean)
                 {
                     return _lessValues[i];
                 }
@@ -192,9 +194,11 @@ internal sealed class OrderColumnsIndex : IOrderIndex
     }
 
     public OrderColumnsIndex(
+        IExecutionThread thread,
         ICursorRowsIterator rowsFrameIterator,
         OrderColumnData[] orderColumnData)
     {
+        _thread = thread;
         RowsFrameIterator = rowsFrameIterator;
         _directions = orderColumnData.Select(d => d.Direction).ToArray();
         _nullOrders = orderColumnData.Select(d => d.NullOrder).ToArray();

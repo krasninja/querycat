@@ -43,10 +43,7 @@ internal sealed class SimpleLruDictionary<TKey, TValue> : IDictionary<TKey, TVal
     /// <param name="capacity">Max number of items.</param>
     public SimpleLruDictionary(int capacity)
     {
-        if (capacity < 1)
-        {
-            throw new ArgumentOutOfRangeException(nameof(capacity));
-        }
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(capacity, nameof(capacity));
         this._capacity = capacity;
         this._map = new Dictionary<TKey, TValue?>(capacity: capacity / 2);
     }

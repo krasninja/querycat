@@ -1,6 +1,7 @@
 using Xunit;
 using QueryCat.Backend.Commands.Select.Iterators;
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Relational;
 
@@ -23,7 +24,7 @@ public sealed class ProjectedRowsIteratorTests
 
         // Act.
         var tableIterator = table.GetIterator();
-        var projectedIterator = new ProjectedRowsIterator(tableIterator);
+        var projectedIterator = new ProjectedRowsIterator(NullExecutionThread.Instance, tableIterator);
         projectedIterator.AddFuncColumn(table.Columns[1],
             new FuncUnitRowsIteratorColumn(tableIterator, 1));
         var frame = projectedIterator.ToFrame();

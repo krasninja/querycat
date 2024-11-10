@@ -1,4 +1,5 @@
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Indexes;
 using QueryCat.Backend.Core.Types;
@@ -32,6 +33,8 @@ internal sealed class WindowFunctionsRowsIterator : IRowsIterator
 
     private sealed class PartitionInfo
     {
+        private readonly IExecutionThread _thread;
+
         public int OriginalColumnIndex { get; }
 
         public Func<VariantValueArray> PartitionFormatter { get; }
@@ -67,10 +70,12 @@ internal sealed class WindowFunctionsRowsIterator : IRowsIterator
         public bool HasOrderData => WindowFunctionInfo.Orders.Length > 0;
 
         public PartitionInfo(
+            IExecutionThread thread,
             int originalColumnIndex,
             Func<VariantValueArray> partitionFormatter,
             WindowFunctionInfo windowFunctionInfo)
         {
+            _thread = thread;
             WindowFunctionInfo = windowFunctionInfo;
             OriginalColumnIndex = originalColumnIndex;
             PartitionFormatter = partitionFormatter;
@@ -102,6 +107,7 @@ internal sealed class WindowFunctionsRowsIterator : IRowsIterator
                 if (WindowFunctionInfo.Orders.Length > 0)
                 {
                     var index = new OrderColumnsIndex(
+                        _thread,
                         subRowsFrame.GetIterator(),
                         WindowFunctionInfo.Orders
                             .Select(o => new OrderColumnData(o.Index + offset, o.Direction, o.NullOrder))
@@ -123,12 +129,12 @@ internal sealed class WindowFunctionsRowsIterator : IRowsIterator
             // Aggregates.
             foreach (var aggregateValue in WindowFunctionInfo.AggregateValues)
             {
-                _row[nextIndex++] = aggregateValue.Invoke();
+                _row[nextIndex++] = aggregateValue.Invoke(_thread);
             }
             // Order.
             foreach (var orderFunction in WindowFunctionInfo.OrderFunctions)
             {
-                _row[nextIndex++] = orderFunction.Invoke();
+                _row[nextIndex++] = orderFunction.Invoke(_thread);
             }
             var rowIndex = partitionData.RowsFrame.AddRow(_row);
             RowIdToPartition.Add(new RowIdData(partitionData, rowIndex));
@@ -136,19 +142,19 @@ internal sealed class WindowFunctionsRowsIterator : IRowsIterator
             return partitionData;
         }
 
-        public void FillAggregateFunctionArguments(FunctionCallInfo functionCallInfo, RowIdData rowIdData)
+        public void FillAggregateFunctionArguments(RowIdData rowIdData)
         {
-            functionCallInfo.Reset();
             _windowInfo.RowsFrame = rowIdData.PartitionInstance.RowsFrame;
             _windowInfo.CurrentRowPosition = rowIdData.RowIdInPartition;
-            functionCallInfo.WindowInfo = _windowInfo;
             for (var aggregateIndex = 0; aggregateIndex < WindowFunctionInfo.AggregateValues.Length; aggregateIndex++)
             {
-                functionCallInfo.Push(rowIdData.PartitionInstance.RowsIterator.Current[aggregateIndex]);
+                _thread.Stack.Push(rowIdData.PartitionInstance.RowsIterator.Current[aggregateIndex]);
             }
+            _thread.Stack.Push(VariantValue.CreateFromObject(_windowInfo));
         }
     }
 
+    private readonly IExecutionThread _thread;
     private readonly IRowsIterator _rowsIterator;
     private readonly RowsFrame _rowsFrame;
     private readonly RowsFrameIterator _rowsFrameIterator;
@@ -162,9 +168,11 @@ internal sealed class WindowFunctionsRowsIterator : IRowsIterator
     public Row Current => _rowsFrameIterator.Current;
 
     public WindowFunctionsRowsIterator(
+        IExecutionThread thread,
         IRowsIterator rowsIterator,
         IEnumerable<WindowFunctionInfo> windowFunctionInfos)
     {
+        _thread = thread;
         _rowsIterator = rowsIterator;
 
         _rowsFrame = new RowsFrame(_rowsIterator.Columns);
@@ -173,8 +181,9 @@ internal sealed class WindowFunctionsRowsIterator : IRowsIterator
         // Prepare initial data for window partitions.
         _partitions = windowFunctionInfos
             .Select(info => new PartitionInfo(
+                thread,
                 originalColumnIndex: info.ColumnIndex,
-                partitionFormatter: () => new VariantValueArray(info.PartitionFormatters.Select(f => f.Invoke())),
+                partitionFormatter: () => new VariantValueArray(info.PartitionFormatters.Select(f => f.Invoke(thread))),
                 windowFunctionInfo: info
             ))
             .ToArray();
@@ -249,8 +258,9 @@ internal sealed class WindowFunctionsRowsIterator : IRowsIterator
             // Upper boundary.
 
             // Full argument function arguments and invoke.
-            partitionInfo.FillAggregateFunctionArguments(aggregateTarget.FunctionCallInfo, rowIdData);
-            aggregateTarget.AggregateFunction.Invoke(aggregateState, aggregateTarget.FunctionCallInfo);
+            using var frame = _thread.Stack.CreateFrame();
+            partitionInfo.FillAggregateFunctionArguments(rowIdData);
+            aggregateTarget.AggregateFunction.Invoke(aggregateState, _thread);
 
             // Lower boundary.
             if (partitionInfo.HasOrderData
