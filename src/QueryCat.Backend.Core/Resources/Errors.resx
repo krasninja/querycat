@@ -60,4 +60,7 @@
   <data name="ObjectInvalidType" xml:space="preserve">
     <value>Cannot cast object of type '{0}' to type '{1}'.</value>
   </data>
+  <data name="InvalidValueFormat" xml:space="preserve">
+    <value>Invalid value format '{0}'.</value>
+  </data>
 </root>

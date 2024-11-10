@@ -128,5 +128,11 @@ namespace QueryCat.Backend.Core.Resources {
                 return ResourceManager.GetString("ObjectInvalidType", resourceCulture);
             }
         }
+        
+        internal static string InvalidValueFormat {
+            get {
+                return ResourceManager.GetString("InvalidValueFormat", resourceCulture);
+            }
+        }
     }
 }

@@ -103,8 +103,7 @@ public static class Converter
     /// <returns>Enum value.</returns>
     public static TEnum ConvertToEnum<TEnum>(in VariantValue value) where TEnum : struct
     {
-        var type = value.Type;
-        return type switch
+        return value.Type switch
         {
             DataType.Integer => (TEnum)Enum.ToObject(typeof(TEnum), value.AsIntegerUnsafe),
             DataType.String => Enum.Parse<TEnum>(value.AsString, ignoreCase: true),

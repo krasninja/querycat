@@ -9,9 +9,12 @@ namespace QueryCat.Backend.Core.Types;
 
 /// <summary>
 /// The union-like class. It holds only one value of the specified data type.
-/// In fact it has two 64-bit fields.
+/// In fact, it has two 64-bit fields.
 /// </summary>
-public readonly partial struct VariantValue : IEquatable<VariantValue>
+public readonly partial struct VariantValue :
+    IEquatable<VariantValue>,
+    IConvertible,
+    ICloneable
 {
     public const string TrueValueString = "TRUE";
     public const string FalseValueString = "FALSE";
@@ -290,6 +293,16 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
     private VariantValue(byte[] bytes)
     {
         _object = new StreamBlobData(() => new MemoryStream(bytes, writable: false));
+    }
+
+    /// <summary>
+    /// Copy constructor.
+    /// </summary>
+    /// <param name="value">Value.</param>
+    public VariantValue(VariantValue value)
+    {
+        _object = value._object;
+        _valueUnion = value._valueUnion;
     }
 
     public static VariantValue CreateFromObject<T>(in T obj)
@@ -732,6 +745,9 @@ public readonly partial struct VariantValue : IEquatable<VariantValue>
         DataType.Blob => BlobToShortString(AsBlobUnsafe),
         _ => UnknownString,
     };
+
+    /// <inheritdoc />
+    public object Clone() => new VariantValue(this);
 
     /// <summary>
     /// Convert to string according to the format.
