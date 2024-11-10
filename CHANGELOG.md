@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Show error if there is invalid column in "EXCEPT" clause of "SELECT" command.
+- Replace "FunctionCallInfo" by "IExecutionThread" in function signature.
 - Minor improvements and optimizations.
 
 ## [0.7.0] - 2024-09-12
