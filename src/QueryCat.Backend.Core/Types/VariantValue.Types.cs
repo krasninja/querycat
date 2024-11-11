@@ -438,6 +438,26 @@ public partial struct VariantValue
 
     #endregion
 
+    #region Object
+
+    internal sealed class ObjectDataTypeObject : DataTypeObject
+    {
+        public static ObjectDataTypeObject Instance { get; } = new();
+
+        /// <inheritdoc />
+        private ObjectDataTypeObject() : base(DataType.Object)
+        {
+        }
+
+        /// <inheritdoc />
+        public override bool CanToString => true;
+
+        /// <inheritdoc />
+        public override string ToString(in VariantValue value) => value.AsObjectUnsafe?.ToString() ?? string.Empty;
+    }
+
+    #endregion
+
     #region Null
 
     internal sealed class NullDataTypeObject : DataTypeObject

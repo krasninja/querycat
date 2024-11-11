@@ -440,10 +440,11 @@ public readonly partial struct VariantValue :
         return Type switch
         {
             DataType.String => StringDataTypeObject.Instance,
-            DataType.Null => NullDataTypeObject.Instance,
             DataType.Numeric => NumericDataTypeObject.Instance,
             DataType.Blob => BlobDataTypeObject.Instance,
-            _ => throw new ArgumentOutOfRangeException(nameof(Type)),
+            DataType.Object => ObjectDataTypeObject.Instance,
+            DataType.Dynamic => ObjectDataTypeObject.Instance,
+            _ => NullDataTypeObject.Instance,
         };
     }
 
