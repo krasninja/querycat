@@ -175,7 +175,10 @@ internal partial class ProgramParserVisitor
 
     /// <inheritdoc />
     public override IAstNode VisitSelectSublistAll(QueryCatParser.SelectSublistAllContext context)
-        => new SelectColumnsSublistAll();
+        => new SelectColumnsSublistAll
+        {
+            PrefixIdentifier = this.VisitMaybe<IdentifierExpressionNode>(context.identifierSimple())
+        };
 
     /// <inheritdoc />
     public override IAstNode VisitSelectSublistWindow(QueryCatParser.SelectSublistWindowContext context)

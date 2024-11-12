@@ -106,7 +106,7 @@ selectWithColumnList: name=identifier (COMMA name=identifier)*;
 
 // Columns.
 selectSublist
-    : STAR # SelectSublistAll
+    : (identifierSimple '.')? STAR # SelectSublistAll
     | functionCall OVER (windowName=identifierSimple | selectWindowSpecification) selectAlias? # SelectSublistWindow
     | expression selectAlias? # SelectSublistExpression
     ;

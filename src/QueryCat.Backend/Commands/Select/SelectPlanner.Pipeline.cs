@@ -22,9 +22,9 @@ internal sealed partial class SelectPlanner
     private static void Pipeline_ResolveSelectAllStatement(SelectCommandContext context, SelectColumnsListNode columnsNode)
     {
         context.HasExactColumnsSelect = true;
-        for (int i = 0; i < columnsNode.ColumnsNodes.Count; i++)
+        for (var i = 0; i < columnsNode.ColumnsNodes.Count; i++)
         {
-            if (columnsNode.ColumnsNodes[i] is not SelectColumnsSublistAll)
+            if (columnsNode.ColumnsNodes[i] is not SelectColumnsSublistAll selectColumnsSublistAll)
             {
                 continue;
             }
@@ -35,6 +35,11 @@ internal sealed partial class SelectPlanner
             for (var columnIndex = 0; columnIndex < iterator.Columns.Length; columnIndex++)
             {
                 var column = iterator.Columns[columnIndex];
+                if (selectColumnsSublistAll.PrefixIdentifier != null &&
+                    column.SourceName != selectColumnsSublistAll.PrefixIdentifier.TableFullName)
+                {
+                    continue;
+                }
 
                 var astColumn = new SelectColumnsSublistExpressionNode(
                     new IdentifierExpressionNode(column.Name, column.SourceName));
