@@ -32,9 +32,8 @@ internal sealed partial class SelectPlanner
             context.HasExactColumnsSelect = false;
             var iterator = context.CurrentIterator;
             columnsNode.ColumnsNodes.Remove(columnsNode.ColumnsNodes[i]);
-            for (var columnIndex = 0; columnIndex < iterator.Columns.Length; columnIndex++)
+            foreach (var column in iterator.Columns)
             {
-                var column = iterator.Columns[columnIndex];
                 if (selectColumnsSublistAll.PrefixIdentifier != null &&
                     column.SourceName != selectColumnsSublistAll.PrefixIdentifier.TableFullName)
                 {
@@ -43,7 +42,7 @@ internal sealed partial class SelectPlanner
 
                 var astColumn = new SelectColumnsSublistExpressionNode(
                     new IdentifierExpressionNode(column.Name, column.SourceName));
-                columnsNode.ColumnsNodes.Insert(i + columnIndex, astColumn);
+                columnsNode.ColumnsNodes.Add(astColumn);
             }
         }
     }
