@@ -74,7 +74,6 @@ public sealed class MimeTypeProvider
             [".ppsx"] = "application/vnd.openxmlformats-officedocument.presentationml.slideshow",
             [".ppt"] = "application/vnd.ms-powerpoint",
             [".pptx"] = "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-            [".psd"] = "application/octet-stream",
             [".rar"] = "application/x-rar-compressed",
             [".rss"] = "text/xml",
             [".rtf"] = "application/rtf",
