@@ -33,14 +33,21 @@ public class Program
         var queryArgument = new Argument<string>("query",
             description: "SQL-like query or command argument.",
             getDefaultValue: () => string.Empty);
+        var filesOption = new Option<string[]>(["-f", "--files"],
+            description: "SQL files to execute.")
+            {
+                AllowMultipleArgumentsPerToken = true,
+            };
 
         rootCommand.AddOption(pluginFilesOption);
+        rootCommand.AddOption(filesOption);
         rootCommand.AddArgument(queryArgument);
 
         rootCommand.SetHandler(
             Run,
             queryArgument,
-            pluginFilesOption);
+            pluginFilesOption,
+            filesOption);
 
         var parser = new CommandLineBuilder(rootCommand)
             .UseVersionOption("-v", "--version")
@@ -50,7 +57,7 @@ public class Program
         return returnCode;
     }
 
-    public static void Run(string query, string[] pluginDirectories)
+    public static void Run(string query, string[] pluginDirectories, string[] files)
     {
         var workingDirectoryPlugins = Directory.GetFiles(Environment.CurrentDirectory, "*.dll");
         var outputStringBuilder = new StringBuilder();
@@ -70,7 +77,18 @@ public class Program
                 thread.FunctionsManager))
             .Create();
 
-        executionThread.Run(query);
+        if (files.Any())
+        {
+            foreach (var file in files)
+            {
+                var fileContent = File.ReadAllText(file);
+                executionThread.Run(fileContent);
+            }
+        }
+        else
+        {
+            executionThread.Run(query);
+        }
         Console.Out.WriteLine(outputStringBuilder);
     }
 }
