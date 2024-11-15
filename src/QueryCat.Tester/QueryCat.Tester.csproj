@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Description>The standalone console app to load plugins for debug and testing.</Description>
+    <Nullable>enable</Nullable>
+    <AssemblyName>qcattester</AssemblyName>
+    <Product>QueryCat Tester</Product>
+    <Copyright>Copyright (c) 2022-24</Copyright>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="QueryCat" Version="0.8.1" />
+    <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
+  </ItemGroup>
+
+</Project>
