@@ -56,7 +56,7 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
         var text = GetUnwrappedText(context);
         return context.Start.Type switch
         {
-            QueryCatParser.INTEGER_LITERAL => new LiteralNode(new VariantValue(int.Parse(text))),
+            QueryCatParser.INTEGER_LITERAL => new LiteralNode(new VariantValue(long.Parse(text))),
             QueryCatParser.FLOAT_LITERAL => new LiteralNode(new VariantValue(double.Parse(text))),
             QueryCatParser.NUMERIC_LITERAL => new LiteralNode(new VariantValue(decimal.Parse(text))),
             QueryCatParser.STRING_LITERAL => new LiteralNode(new VariantValue(text)),
