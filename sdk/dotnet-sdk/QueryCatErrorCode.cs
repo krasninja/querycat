@@ -18,18 +18,16 @@ using System;
 
 namespace QueryCat.Plugins.Sdk
 {
-  public enum DataType
+  public enum QueryCatErrorCode
   {
-    @NULL = 0,
-    INTEGER = 1,
-    @STRING = 2,
-    @FLOAT = 3,
-    TIMESTAMP = 4,
-    BOOLEAN = 5,
-    NUMERIC = 6,
-    INTERVAL = 7,
-    BLOB = 8,
-    @OBJECT = 40,
-    @DYNAMIC = 41,
+    OK = 0,
+    ERROR = 1,
+    DELETED = 2,
+    NO_DATA = 3,
+    NOT_SUPPORTED = 4,
+    CANNOT_CAST = 100,
+    CANNOT_APPLY_OPERATOR = 101,
+    INVALID_COLUMN_INDEX = 102,
+    INVALID_INPUT_STATE = 103,
   }
 }

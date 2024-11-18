@@ -77,7 +77,7 @@ public interface IExecutionThread : IDisposable
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Try get variable value from top scope to the root recursively.
+    /// Try to get variable value from top scope to the root recursively.
     /// </summary>
     /// <param name="name">Variable name.</param>
     /// <param name="value">Variable value.</param>

@@ -7,9 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- New GetVariable and SetVariable Thrift methods.
+
 ### Fixed
 
 - Support "Select alias.* from x" pattern.
+- Integer parse overflow.
 
 ## [0.8.0] - 2024-11-10
 

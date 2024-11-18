@@ -180,6 +180,27 @@ public partial class ThriftPluginsServer
         }
 
         /// <inheritdoc />
+        public Task<VariantValue> GetVariableAsync(string name, CancellationToken cancellationToken = default)
+        {
+            if (_thriftPluginsServer._executionThread.TryGetVariable(name, out var value))
+            {
+                return Task.FromResult(SdkConvert.Convert(value));
+            }
+            return Task.FromResult(SdkConvert.Convert(Core.Types.VariantValue.Null));
+        }
+
+        /// <inheritdoc />
+        public Task<VariantValue> SetVariableAsync(string name, VariantValue? value, CancellationToken cancellationToken = default)
+        {
+            if (value == null)
+            {
+                return Task.FromResult(SdkConvert.Convert(Core.Types.VariantValue.Null));
+            }
+            _thriftPluginsServer._executionThread.TopScope.Variables[name] = SdkConvert.Convert(value);
+            return Task.FromResult(value);
+        }
+
+        /// <inheritdoc />
         public Task LogAsync(LogLevel level, string message, List<string>? arguments, CancellationToken cancellationToken = default)
         {
             var logLevel = level switch
@@ -280,6 +301,34 @@ public partial class ThriftPluginsServer
             try
             {
                 return _handler.GetConfigValueAsync(key, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, Resources.Errors.HandlerInternalError);
+                throw QueryCatPluginExceptionUtils.Create(ex);
+            }
+        }
+
+        /// <inheritdoc />
+        public Task<VariantValue> GetVariableAsync(string name, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return _handler.GetVariableAsync(name, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, Resources.Errors.HandlerInternalError);
+                throw QueryCatPluginExceptionUtils.Create(ex);
+            }
+        }
+
+        /// <inheritdoc />
+        public Task<VariantValue> SetVariableAsync(string name, VariantValue? value, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return _handler.SetVariableAsync(name, value, cancellationToken);
             }
             catch (Exception ex)
             {
