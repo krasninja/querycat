@@ -123,8 +123,12 @@ public static class SdkConvert
         };
     }
 
-    public static Backend.Core.Types.VariantValue Convert(VariantValue value)
+    public static Backend.Core.Types.VariantValue Convert(VariantValue? value)
     {
+        if (value == null)
+        {
+            return Backend.Core.Types.VariantValue.Null;
+        }
         if (value.__isset.isNull)
         {
             return Backend.Core.Types.VariantValue.Null;

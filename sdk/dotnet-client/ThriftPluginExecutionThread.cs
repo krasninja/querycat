@@ -1,11 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Plugins;
-using QueryCat.Plugins.Sdk;
+using QueryCat.Backend.Core.Utils;
 using PluginsManager = QueryCat.Plugins.Sdk.PluginsManager;
 using VariantValue = QueryCat.Backend.Core.Types.VariantValue;
 
@@ -14,8 +15,20 @@ namespace QueryCat.Plugins.Client;
 /// <summary>
 /// The implementation of execution thread that uses remote input config storage.
 /// </summary>
-public sealed class PluginExecutionThread : IExecutionThread
+/// <remarks>
+/// The implementation has the following limitations:
+/// - The separate execution stack. When plugin function is called - we copy input args.
+/// - No object selector.
+/// - No execution scopes.
+/// - No variables resolve events.
+/// - Local stack only.
+/// - No completions.
+/// - No current statistic.
+/// </remarks>
+public sealed class ThriftPluginExecutionThread : IExecutionThread
 {
+    private readonly PluginsManager.Client _client;
+
     /// <inheritdoc />
     public IFunctionsManager FunctionsManager { get; }
 
@@ -43,7 +56,7 @@ public sealed class PluginExecutionThread : IExecutionThread
     public IObjectSelector ObjectSelector => NullObjectSelector.Instance;
 
     /// <inheritdoc />
-    public string CurrentQuery => string.Empty;
+    public string CurrentQuery { get; private set; } = string.Empty;
 
     /// <inheritdoc />
     public ExecutionStatistic Statistic => NullExecutionStatistic.Instance;
@@ -51,11 +64,12 @@ public sealed class PluginExecutionThread : IExecutionThread
     /// <inheritdoc />
     public object? Tag => null;
 
-    public PluginExecutionThread(PluginsManager.Client client)
+    public ThriftPluginExecutionThread(PluginsManager.Client client)
     {
+        _client = client;
         PluginsManager = NullPluginsManager.Instance;
         FunctionsManager = new PluginFunctionsManager();
-        ConfigStorage = new ThriftInputConfigStorage(client);
+        ConfigStorage = new ThriftInputConfigStorage(_client);
         Stack = new ListExecutionStack();
     }
 
@@ -63,14 +77,30 @@ public sealed class PluginExecutionThread : IExecutionThread
     public VariantValue Run(string query, IDictionary<string, VariantValue>? parameters = null,
         CancellationToken cancellationToken = default)
     {
-        throw new QueryCatPluginException(ErrorType.GENERIC, Resources.Errors.NotSupported_QueryRun);
+        try
+        {
+            CurrentQuery = query;
+            var result2 = _client.RunQueryAsync(
+                query,
+                parameters?.ToDictionary(k => k.Key, v => SdkConvert.Convert(v.Value))).GetAwaiter().GetResult();
+            var result = AsyncUtils.RunSync(ct => _client.RunQueryAsync(
+                query,
+                parameters?.ToDictionary(k => k.Key, v => SdkConvert.Convert(v.Value)),
+                ct));
+            return SdkConvert.Convert(result);
+        }
+        finally
+        {
+            CurrentQuery = string.Empty;
+        }
     }
 
     /// <inheritdoc />
     public bool TryGetVariable(string name, out VariantValue value, IExecutionScope? scope = null)
     {
-        value = VariantValue.Null;
-        return false;
+        var result = AsyncUtils.RunSync(ct => _client.GetVariableAsync(name, ct));
+        value = SdkConvert.Convert(result);
+        return !value.IsNull;
     }
 
     /// <inheritdoc />

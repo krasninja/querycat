@@ -44,7 +44,7 @@ public partial class ThriftPluginClient : IDisposable
 
     public const string PluginTransportNamedPipes = "net.pipe";
 
-    private readonly PluginExecutionThread _executionThread;
+    private readonly ThriftPluginExecutionThread _executionThread;
     private readonly PluginFunctionsManager _functionsManager;
     private readonly ObjectsStorage _objectsStorage = new();
     private readonly string _debugServerPath = string.Empty;
@@ -140,7 +140,7 @@ public partial class ThriftPluginClient : IDisposable
             PluginsManagerServiceName);
         _client = new PluginsManager.Client(_protocol);
 
-        _executionThread = new PluginExecutionThread(_client);
+        _executionThread = new ThriftPluginExecutionThread(_client);
         _functionsManager = new PluginFunctionsManager();
     }
 

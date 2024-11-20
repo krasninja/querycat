@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text;
+using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Commands;
@@ -37,6 +38,7 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
     private bool _bootstrapScriptExecuted;
     private bool _configLoaded;
     private readonly Stopwatch _stopwatch = new();
+    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(ExecutionThread));
 
     /// <summary>
     /// Root (base) thread scope.
