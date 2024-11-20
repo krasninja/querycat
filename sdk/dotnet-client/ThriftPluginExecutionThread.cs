@@ -80,9 +80,6 @@ public sealed class ThriftPluginExecutionThread : IExecutionThread
         try
         {
             CurrentQuery = query;
-            var result2 = _client.RunQueryAsync(
-                query,
-                parameters?.ToDictionary(k => k.Key, v => SdkConvert.Convert(v.Value))).GetAwaiter().GetResult();
             var result = AsyncUtils.RunSync(ct => _client.RunQueryAsync(
                 query,
                 parameters?.ToDictionary(k => k.Key, v => SdkConvert.Convert(v.Value)),

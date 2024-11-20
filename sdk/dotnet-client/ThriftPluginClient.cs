@@ -87,7 +87,9 @@ public partial class ThriftPluginClient : IDisposable
     /// <summary>
     /// Is current client connected and registered.
     /// </summary>
-    public bool IsActive { get; set; }
+    public bool IsActive { get; private set; }
+
+    public EventHandler<ThriftPluginClientOnInitializeEventArgs>? OnInitialize;
 
     public ThriftPluginClient(ThriftPluginClientArguments args)
     {
@@ -317,6 +319,11 @@ public partial class ThriftPluginClient : IDisposable
             _clientServerCts.Token,
             TaskCreationOptions.LongRunning,
             TaskScheduler.Current);
+    }
+
+    internal void FireOnInitialize()
+    {
+        OnInitialize?.Invoke(this, new ThriftPluginClientOnInitializeEventArgs(_executionThread));
     }
 
     private void StopServer()

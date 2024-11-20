@@ -108,6 +108,12 @@ public partial class ThriftPluginsServer
             _thriftPluginsServer.ConfirmAuthToken(auth_token);
             _thriftPluginsServer._logger.LogDebug("Registered plugin '{PluginName}'.", context.Name);
 
+            // Call init.
+            if (context.Client != null)
+            {
+                AsyncUtils.RunSync(ct => context.Client.InitializeAsync(ct));
+            }
+
             return CreateEmptyRegistrationResult();
         }
 

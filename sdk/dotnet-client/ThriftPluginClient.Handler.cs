@@ -90,7 +90,11 @@ public partial class ThriftPluginClient
         }
 
         /// <inheritdoc />
-        public Task InitializeAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+        public Task InitializeAsync(CancellationToken cancellationToken = default)
+        {
+            _thriftPluginClient.FireOnInitialize();
+            return Task.CompletedTask;
+        }
 
         /// <inheritdoc />
         public Task ShutdownAsync(CancellationToken cancellationToken = default)

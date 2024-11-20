@@ -355,23 +355,29 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
         // Create auth token and save it into temp memory.
         var authToken = CreateAuthTokenAndSave(file, pluginName);
 
+        ThriftPluginsServer.PluginContext pluginContext;
         try
         {
             if (IsLibrary(file))
             {
-                return LoadPluginLibrary(file, authToken, cancellationToken);
+                pluginContext = LoadPluginLibrary(file, authToken, cancellationToken);
             }
-            if (IsNugetPackage(file))
+            else if (IsNugetPackage(file))
             {
-                return LoadPluginNugetPackage(file, authToken, cancellationToken);
+                pluginContext = LoadPluginNugetPackage(file, authToken, cancellationToken);
             }
-            return LoadPluginExecutable(file, authToken, [], cancellationToken: cancellationToken);
+            else
+            {
+                pluginContext = LoadPluginExecutable(file, authToken, [], cancellationToken: cancellationToken);
+            }
         }
         catch (Exception)
         {
             RemoveAuthToken(authToken, file);
             throw;
         }
+
+        return pluginContext;
     }
 
     private ThriftPluginsServer.PluginContext LoadPluginNugetPackage(
@@ -547,6 +553,7 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
 
         var context = GetContext(file);
         context.LibraryHandle = handle;
+
         return context;
     }
 
