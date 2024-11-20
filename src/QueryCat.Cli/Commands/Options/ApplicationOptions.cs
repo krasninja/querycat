@@ -2,10 +2,8 @@ using Microsoft.Extensions.Logging;
 using QueryCat.Backend;
 using QueryCat.Backend.Addons.Formatters;
 using QueryCat.Backend.Core;
-using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.PluginsManager;
-using QueryCat.Backend.ThriftPlugins;
 using QueryCat.Cli.Infrastructure;
 
 namespace QueryCat.Cli.Commands.Options;
@@ -27,17 +25,22 @@ internal sealed class ApplicationOptions
 
     public ApplicationRoot CreateApplicationRoot(AppExecutionOptions? executionOptions = null)
     {
+#if ENABLE_PLUGINS && PLUGIN_THRIFT
         try
         {
             return CreateApplicationRootInternal(executionOptions);
         }
-        catch (ProxyNotFoundException)
+        catch (Backend.ThriftPlugins.ProxyNotFoundException)
         {
             InstallPluginsProxy();
             return CreateApplicationRootInternal(executionOptions);
         }
+#else
+        return CreateApplicationRootInternal(executionOptions);
+#endif
     }
 
+#if ENABLE_PLUGINS && PLUGIN_THRIFT
     internal static bool InstallPluginsProxy()
     {
         Console.WriteLine(Resources.Messages.PluginProxyWantToInstall);
@@ -46,16 +49,17 @@ internal sealed class ApplicationOptions
         {
             var applicationDirectory = ExecutionThread.GetApplicationDirectory(ensureExists: true);
             var pluginsProxyLocalFile = Path.Combine(applicationDirectory,
-                ThriftPluginsLoader.GetProxyFileName(includeCurrentVersion: true));
-            AsyncUtils.RunSync(ct =>
+                Backend.ThriftPlugins.ThriftPluginsLoader.GetProxyFileName(includeCurrentVersion: true));
+            Backend.Core.Utils.AsyncUtils.RunSync(ct =>
             {
-                var downloader = new PluginProxyDownloader(ThriftPluginsLoader.GetProxyFileName());
+                var downloader = new PluginProxyDownloader(Backend.ThriftPlugins.ThriftPluginsLoader.GetProxyFileName());
                 return downloader.DownloadAsync(pluginsProxyLocalFile, ct);
             });
             return true;
         }
         return false;
     }
+#endif
 
     private ApplicationRoot CreateApplicationRootInternal(AppExecutionOptions? executionOptions = null)
     {
@@ -113,12 +117,12 @@ internal sealed class ApplicationOptions
     private static IReadOnlyList<string> GetPluginDirectories(string appDirectory)
     {
         var exeDirectory = AppContext.BaseDirectory;
-        return new[]
-        {
+        return
+        [
             Path.Combine(appDirectory, ApplicationPluginsDirectory),
             exeDirectory,
             Path.Combine(exeDirectory, ApplicationPluginsDirectory)
-        };
+        ];
     }
 
     public ApplicationRoot CreateStdoutApplicationRoot(
@@ -142,7 +146,7 @@ internal sealed class ApplicationOptions
     public void InitializeLogger()
     {
         Application.LoggerFactory = new LoggerFactory(
-            providers: new[] { new QueryCatConsoleLoggerProvider() },
+            providers: [new QueryCatConsoleLoggerProvider()],
             new LoggerFilterOptions
             {
                 MinLevel = LogLevel,
