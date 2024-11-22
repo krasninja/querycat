@@ -95,7 +95,7 @@ internal class Program
             })
             .UseExceptionHandler((exception, ic) =>
             {
-                ProcessException(exception);
+                ic.ExitCode = ProcessException(exception);
             }, errorExitCode: 1)
             .Build();
 
@@ -113,7 +113,7 @@ internal class Program
         Environment.Exit(1);
     }
 
-    private static void ProcessException(Exception exception)
+    private static int ProcessException(Exception exception)
     {
         var logger = _logger.Value;
         lock (_objLock)
@@ -129,19 +129,25 @@ internal class Program
                 logger.LogError(new string(' ', syntaxException.Position) + '^');
                 logger.LogError("{Line}:{Position}: {Message}", syntaxException.Line, syntaxException.Position,
                     syntaxException.Message);
+                return 4;
             }
             else if (exception is QueryCatException domainException)
             {
                 logger.LogError(domainException.Message);
+                return 2;
             }
             else if (exception is FormatException formatException)
             {
                 logger.LogError(formatException.Message);
+                return 3;
             }
             else
             {
                 logger.LogCritical(exception, exception.Message);
+                return 1;
             }
         }
+
+        return 1;
     }
 }

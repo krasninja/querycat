@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Support "Select alias.* from x" pattern.
 - Integer parse overflow.
+- Return non-zero exit code on error.
 
 ## [0.8.0] - 2024-11-10
 
