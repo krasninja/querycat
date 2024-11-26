@@ -31,6 +31,11 @@ public enum ErrorCode
     /// </summary>
     NotSupported = 4,
 
+    /// <summary>
+    /// Not initialized or not opened (closed).
+    /// </summary>
+    NotInitialized = 5,
+
     // More specific errors.
 
     /// <summary>

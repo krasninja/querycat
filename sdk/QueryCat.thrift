@@ -94,6 +94,7 @@ enum QueryCatErrorCode {
   DELETED = 2,
   NO_DATA = 3,
   NOT_SUPPORTED = 4,
+  NOT_INITIALIZED = 5,
 
   CANNOT_CAST = 100,
   CANNOT_APPLY_OPERATOR = 101,
