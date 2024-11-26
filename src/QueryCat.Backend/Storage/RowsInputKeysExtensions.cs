@@ -22,10 +22,28 @@ public static class RowsInputKeysExtensions
         VariantValue.Operation operation,
         VariantValue.Operation? orOperation = null)
     {
-        return rowsInputKeys.GetKeyColumns()
-            .FirstOrDefault(k =>
-                rowsInputKeys.Columns[k.ColumnIndex] == column
-                && k.ContainsOperation(operation)
-                && (!orOperation.HasValue || k.ContainsOperation(orOperation.Value)));
+        foreach (var keyColumn in rowsInputKeys.GetKeyColumns())
+        {
+            if (rowsInputKeys.Columns[keyColumn.ColumnIndex] != column)
+            {
+                continue;
+            }
+
+            if (keyColumn.ContainsOperation(operation)
+                && (!orOperation.HasValue || keyColumn.ContainsOperation(orOperation.Value)))
+            {
+                return keyColumn;
+            }
+
+            // Special condition for IN clause.
+            if (operation == VariantValue.Operation.In
+                && orOperation == null
+                && keyColumn.Operation1 == VariantValue.Operation.Equals)
+            {
+                return keyColumn;
+            }
+        }
+
+        return null;
     }
 }

@@ -61,6 +61,7 @@ public abstract class KeysRowsInput : RowsInput, IRowsInputKeys, IDisposable
     public override void Reset()
     {
         _setKeyColumns = [];
+        InitializeKeyColumns();
         Close();
         base.Reset();
     }
@@ -105,7 +106,7 @@ public abstract class KeysRowsInput : RowsInput, IRowsInputKeys, IDisposable
     }
 
     /// <summary>
-    /// Try get key column value by column name.
+    /// Try to get key column value by column name.
     /// </summary>
     /// <param name="columnName">Column name.</param>
     /// <param name="operation">Operation.</param>

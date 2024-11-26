@@ -20,7 +20,7 @@ internal sealed class SetKeysRowsInput : RowsInput, IRowsInputKeys
     private bool _keysFilled;
     private int _currentFuncValueIndex = -1;
     // Special mode for "WHERE id IN (x, y, z)" condition.
-    private bool _multipleRowsMode;
+    private ConditionJoint? _multipleConditionJoint;
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(SetKeysRowsInput));
 
     /// <inheritdoc />
@@ -74,7 +74,7 @@ internal sealed class SetKeysRowsInput : RowsInput, IRowsInputKeys
         var hasData = _rowsInput.ReadNext();
 
         // We need to repeat "ReadNext" call in case of multiple func values.
-        if (_multipleRowsMode && !hasData)
+        if (_multipleConditionJoint.HasValue && !hasData)
         {
             _rowsInput.Reset();
             hasData = FillKeys();
@@ -90,24 +90,27 @@ internal sealed class SetKeysRowsInput : RowsInput, IRowsInputKeys
 
     private bool FillKeys()
     {
-        if (_multipleRowsMode)
+        if (_multipleConditionJoint.HasValue)
         {
+            var condition = _multipleConditionJoint.Value;
             _currentFuncValueIndex++;
-            var valueFuncs = _conditions[0].Condition.ValueFuncs;
+            var valueFuncs = condition.Condition.ValueFuncs;
             if (_currentFuncValueIndex >= valueFuncs.Count)
             {
                 return false;
             }
             var value = valueFuncs[_currentFuncValueIndex].Invoke(_thread);
-            _rowsInput.SetKeyColumnValue(_conditions[0].ColumnIndex, value, _conditions[0].Condition.Operation);
+            _rowsInput.SetKeyColumnValue(condition.ColumnIndex, value, condition.Condition.Operation);
         }
-        else
+
+        foreach (var conditionJoint in _conditions)
         {
-            foreach (var conditionJoint in _conditions)
+            if (conditionJoint == _multipleConditionJoint)
             {
-                var value = conditionJoint.Condition.ValueFunc.Invoke(_thread);
-                _rowsInput.SetKeyColumnValue(conditionJoint.ColumnIndex, value, conditionJoint.Condition.Operation);
+                continue;
             }
+            var value = conditionJoint.Condition.ValueFunc.Invoke(_thread);
+            _rowsInput.SetKeyColumnValue(conditionJoint.ColumnIndex, value, conditionJoint.Condition.Operation);
         }
 
         return true;
@@ -128,9 +131,10 @@ internal sealed class SetKeysRowsInput : RowsInput, IRowsInputKeys
         _conditions = list.ToArray();
 
         // Special mode for "WHERE id IN (x, y, z)" condition.
-        _multipleRowsMode = _conditions.Length == 1
-            && _conditions[0].Condition.Operation == VariantValue.Operation.Equals
-            && _conditions[0].Condition.ValueFuncs.Count > 1;
+        var multipleConditions = _conditions
+            .Where(c => c.Condition.Operation == VariantValue.Operation.Equals && c.Condition.ValueFuncs.Count > 0)
+            .ToArray();
+        _multipleConditionJoint = multipleConditions.Length == 1 ? multipleConditions[0] : null;
 
         base.Load();
     }
