@@ -1,3 +1,5 @@
+using System.Text;
+
 namespace QueryCat.Backend.Core.Types;
 
 /// <summary>
@@ -44,11 +46,9 @@ public static class Converter
         {
             return DataType.String;
         }
-        if (typeof(DateTime).IsAssignableFrom(type))
-        {
-            return DataType.Timestamp;
-        }
-        if (typeof(DateTimeOffset).IsAssignableFrom(type))
+        if (typeof(DateTime).IsAssignableFrom(type)
+            || typeof(DateTimeOffset).IsAssignableFrom(type)
+            || typeof(DateOnly).IsAssignableFrom(type))
         {
             return DataType.Timestamp;
         }
@@ -56,7 +56,9 @@ public static class Converter
         {
             return DataType.Interval;
         }
-        if (type == typeof(string))
+        if (type == typeof(string)
+            || type == typeof(StringBuilder)
+            || type == typeof(ReadOnlySpan<char>))
         {
             return DataType.String;
         }
