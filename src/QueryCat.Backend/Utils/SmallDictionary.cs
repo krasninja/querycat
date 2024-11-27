@@ -114,7 +114,10 @@ internal sealed class SmallDictionary<TKey, TValue> : IDictionary<TKey, TValue> 
     /// <inheritdoc />
     public void CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
     {
-        Array.Copy(_keys, 0, array, arrayIndex, _keys.Length);
+        for (var i = arrayIndex; i < _size; i++)
+        {
+            array[i] = new KeyValuePair<TKey, TValue>(_keys[i], _values[i]);
+        }
     }
 
     /// <inheritdoc />
