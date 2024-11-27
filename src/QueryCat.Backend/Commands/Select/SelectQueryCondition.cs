@@ -34,7 +34,7 @@ internal sealed class SelectQueryCondition
     }
 
     public CacheKeyCondition ToCacheCondition(IExecutionThread thread)
-        => new(Column, Operation, Generator.GetValues(thread));
+        => new(Column, Operation, Generator.Get(thread));
 
     /// <inheritdoc />
     public override string ToString() => $"Column = {Column}, Operation = {Operation}";
