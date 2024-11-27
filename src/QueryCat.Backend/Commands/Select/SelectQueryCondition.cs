@@ -1,3 +1,4 @@
+using QueryCat.Backend.Commands.Select.KeyConditionValue;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
@@ -14,46 +15,26 @@ internal sealed class SelectQueryCondition
 
     public VariantValue.Operation Operation { get; }
 
-    public IReadOnlyList<IFuncUnit> ValueFuncs { get; }
-
-    public IFuncUnit ValueFunc => ValueFuncs[0];
+    public IKeyConditionSingleValueGenerator Generator { get; }
 
     /// <summary>
     /// Constructor.
     /// </summary>
     /// <param name="column">Filter column.</param>
     /// <param name="operation">Filter operation.</param>
-    /// <param name="valueFuncs">Filter values.</param>
+    /// <param name="generator">Values generator strategy.</param>
     public SelectQueryCondition(
         Column column,
         VariantValue.Operation operation,
-        IReadOnlyList<IFuncUnit> valueFuncs)
+        IKeyConditionSingleValueGenerator generator)
     {
-        if (valueFuncs.Count < 1)
-        {
-            throw new ArgumentException(Resources.Errors.NoValues, nameof(valueFuncs));
-        }
-
         this.Column = column;
         this.Operation = operation;
-        this.ValueFuncs = valueFuncs;
-    }
-
-    /// <summary>
-    /// Constructor.
-    /// </summary>
-    /// <param name="column">Filter column.</param>
-    /// <param name="operation">Filter operation.</param>
-    /// <param name="value">Filter value.</param>
-    public SelectQueryCondition(
-        Column column,
-        VariantValue.Operation operation,
-        IFuncUnit value) : this(column, operation, new[] { value })
-    {
+        this.Generator = generator;
     }
 
     public CacheKeyCondition ToCacheCondition(IExecutionThread thread)
-        => new(Column, Operation, ValueFuncs.Select(f => f.Invoke(thread)).ToArray());
+        => new(Column, Operation, Generator.GetValues(thread));
 
     /// <inheritdoc />
     public override string ToString() => $"Column = {Column}, Operation = {Operation}";

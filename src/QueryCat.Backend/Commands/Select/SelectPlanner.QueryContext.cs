@@ -1,6 +1,7 @@
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Select;
+using QueryCat.Backend.Commands.Select.KeyConditionValue;
 using QueryCat.Backend.Commands.Select.Visitors;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Fetch;
@@ -109,7 +110,8 @@ internal sealed partial class SelectPlanner
                     return false;
                 }
                 var valueFunc = makeDelegateVisitor.RunAndReturn(localExpressionNode!);
-                commandContext.Conditions.TryAddCondition(column, binaryOperationExpressionNode.Operation, valueFunc);
+                commandContext.Conditions.TryAddCondition(column, binaryOperationExpressionNode.Operation,
+                    new KeyConditionSingleValueGeneratorFunc(valueFunc));
                 return true;
             }
         }
@@ -136,8 +138,10 @@ internal sealed partial class SelectPlanner
             }
             var leftValueFunc = makeDelegateVisitor.RunAndReturn(betweenExpressionNode.Left);
             var rightValueFunc = makeDelegateVisitor.RunAndReturn(betweenExpressionNode.Right);
-            commandContext.Conditions.TryAddCondition(column, VariantValue.Operation.GreaterOrEquals, leftValueFunc);
-            commandContext.Conditions.TryAddCondition(column, VariantValue.Operation.LessOrEquals, rightValueFunc);
+            commandContext.Conditions.TryAddCondition(column, VariantValue.Operation.GreaterOrEquals,
+                new KeyConditionSingleValueGeneratorFunc(leftValueFunc));
+            commandContext.Conditions.TryAddCondition(column, VariantValue.Operation.LessOrEquals,
+                new KeyConditionSingleValueGeneratorFunc(rightValueFunc));
             return true;
         }
 
@@ -160,25 +164,31 @@ internal sealed partial class SelectPlanner
             {
                 return false;
             }
-            var values = new List<IFuncUnit>();
-            if (inOperationExpressionNode.InExpressionValuesNodes is not InExpressionValuesNode inExpressionValuesNode)
+            if (inOperationExpressionNode.InExpressionValuesNodes is InExpressionValuesNode inExpressionValuesNode)
             {
-                return false;
-            }
-            foreach (var inExpressionValue in inExpressionValuesNode.ValuesNodes)
-            {
-                if (inExpressionValue is SelectQueryNode)
+                var values = inExpressionValuesNode.ValuesNodes.Select(n => makeDelegateVisitor.RunAndReturn(n)).ToArray();
+                if (values.Length == 1)
                 {
-                    continue;
+                    commandContext.Conditions.TryAddCondition(column, VariantValue.Operation.In,
+                        new KeyConditionSingleValueGeneratorFunc(values[0]));
+                    return true;
                 }
-                values.Add(makeDelegateVisitor.RunAndReturn(inExpressionValue));
+                else if (values.Length > 1)
+                {
+                    commandContext.Conditions.TryAddCondition(column, VariantValue.Operation.In,
+                        new KeyConditionValueGeneratorArray(values));
+                    return true;
+                }
             }
-            if (!values.Any())
+            if (inOperationExpressionNode.InExpressionValuesNodes is SelectQueryCombineNode selectQueryCombineNode)
             {
-                return false;
+                makeDelegateVisitor.RunAndReturn(selectQueryCombineNode);
+                var iterator = selectQueryCombineNode.GetRequiredAttribute<IRowsIterator>(AstAttributeKeys.ResultKey);
+                commandContext.Conditions.TryAddCondition(column, VariantValue.Operation.In,
+                    new KeyConditionValueGeneratorIterator(iterator));
+                return true;
             }
-            commandContext.Conditions.TryAddCondition(column, VariantValue.Operation.In, values.ToArray());
-            return true;
+            return false;
         }
 
         var callbackVisitor = new CallbackDelegateVisitor();

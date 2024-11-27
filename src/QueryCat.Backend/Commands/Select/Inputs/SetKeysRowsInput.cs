@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using QueryCat.Backend.Commands.Select.KeyConditionValue;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
@@ -9,7 +10,9 @@ namespace QueryCat.Backend.Commands.Select.Inputs;
 
 internal sealed class SetKeysRowsInput : RowsInput, IRowsInputKeys
 {
-    private record struct ConditionJoint(SelectQueryCondition Condition, int ColumnIndex);
+    private sealed record ConditionJoint(
+        SelectQueryCondition Condition,
+        int ColumnIndex);
 
     private readonly int _id = IdGenerator.GetNext();
 
@@ -18,9 +21,9 @@ internal sealed class SetKeysRowsInput : RowsInput, IRowsInputKeys
     private readonly IRowsInputKeys _rowsInput;
     private readonly SelectQueryConditions _selectQueryConditions;
     private bool _keysFilled;
-    private int _currentFuncValueIndex = -1;
     // Special mode for "WHERE id IN (x, y, z)" condition.
-    private ConditionJoint? _multipleConditionJoint;
+    private bool _hasMultipleConditions;
+    private bool _hasNoMoreData;
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(SetKeysRowsInput));
 
     /// <inheritdoc />
@@ -52,8 +55,15 @@ internal sealed class SetKeysRowsInput : RowsInput, IRowsInputKeys
     /// <inheritdoc />
     public override void Reset()
     {
-        _currentFuncValueIndex = -1;
+        foreach (var condition in _conditions)
+        {
+            if (condition.Condition.Generator is IKeyConditionMultipleValuesGenerator multipleValuesGenerator)
+            {
+                multipleValuesGenerator.Reset();
+            }
+        }
         _keysFilled = false;
+        _hasNoMoreData = false;
         _rowsInput.Reset();
     }
 
@@ -63,6 +73,10 @@ internal sealed class SetKeysRowsInput : RowsInput, IRowsInputKeys
     /// <inheritdoc />
     public override bool ReadNext()
     {
+        if (_hasNoMoreData)
+        {
+            return false;
+        }
         base.ReadNext();
 
         if (!_keysFilled)
@@ -74,12 +88,13 @@ internal sealed class SetKeysRowsInput : RowsInput, IRowsInputKeys
         var hasData = _rowsInput.ReadNext();
 
         // We need to repeat "ReadNext" call in case of multiple func values.
-        if (_multipleConditionJoint.HasValue && !hasData)
+        if (_hasMultipleConditions && !hasData)
         {
             _rowsInput.Reset();
             hasData = FillKeys();
             if (!hasData)
             {
+                _hasNoMoreData = true;
                 return false;
             }
             hasData = _rowsInput.ReadNext();
@@ -90,30 +105,19 @@ internal sealed class SetKeysRowsInput : RowsInput, IRowsInputKeys
 
     private bool FillKeys()
     {
-        if (_multipleConditionJoint.HasValue)
-        {
-            var condition = _multipleConditionJoint.Value;
-            _currentFuncValueIndex++;
-            var valueFuncs = condition.Condition.ValueFuncs;
-            if (_currentFuncValueIndex >= valueFuncs.Count)
-            {
-                return false;
-            }
-            var value = valueFuncs[_currentFuncValueIndex].Invoke(_thread);
-            _rowsInput.SetKeyColumnValue(condition.ColumnIndex, value, condition.Condition.Operation);
-        }
-
+        var hasMoreMultipleValues = false;
         foreach (var conditionJoint in _conditions)
         {
-            if (conditionJoint == _multipleConditionJoint)
+            if (!hasMoreMultipleValues
+                && conditionJoint.Condition.Generator is IKeyConditionMultipleValuesGenerator multipleValuesGenerator)
             {
-                continue;
+                hasMoreMultipleValues = multipleValuesGenerator.MoveNext();
             }
-            var value = conditionJoint.Condition.ValueFunc.Invoke(_thread);
+            var value = conditionJoint.Condition.Generator.Get(_thread);
             _rowsInput.SetKeyColumnValue(conditionJoint.ColumnIndex, value, conditionJoint.Condition.Operation);
         }
 
-        return true;
+        return hasMoreMultipleValues;
     }
 
     /// <inheritdoc />
@@ -125,16 +129,17 @@ internal sealed class SetKeysRowsInput : RowsInput, IRowsInputKeys
         {
             foreach (var inputKeyCondition in condition.Conditions)
             {
-                list.Add(new ConditionJoint(inputKeyCondition, condition.KeyColumn.ColumnIndex));
+                list.Add(new ConditionJoint(
+                    inputKeyCondition,
+                    condition.KeyColumn.ColumnIndex));
             }
         }
         _conditions = list.ToArray();
 
         // Special mode for "WHERE id IN (x, y, z)" condition.
-        var multipleConditions = _conditions
-            .Where(c => c.Condition.Operation == VariantValue.Operation.Equals && c.Condition.ValueFuncs.Count > 0)
-            .ToArray();
-        _multipleConditionJoint = multipleConditions.Length == 1 ? multipleConditions[0] : null;
+        _hasMultipleConditions = _conditions
+            .Any(c => c.Condition.Operation == VariantValue.Operation.Equals
+                        && c.Condition.Generator is IKeyConditionMultipleValuesGenerator);
 
         base.Load();
     }

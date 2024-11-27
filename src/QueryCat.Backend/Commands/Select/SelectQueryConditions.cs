@@ -1,4 +1,5 @@
 using System.Collections;
+using QueryCat.Backend.Commands.Select.KeyConditionValue;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Storage;
@@ -43,17 +44,17 @@ internal sealed class SelectQueryConditions : IEnumerable<SelectQueryCondition>
     /// </summary>
     /// <param name="column">Condition column.</param>
     /// <param name="operation">Condition operation.</param>
-    /// <param name="valueFunctions">Value functions.</param>
+    /// <param name="generator">Values generator strategy.</param>
     internal SelectQueryCondition? TryAddCondition(
         Column column,
         VariantValue.Operation operation,
-        params IFuncUnit[] valueFunctions)
+        IKeyConditionSingleValueGenerator generator)
     {
         if (_conditions.Any(c => c.Column == column && c.Operation == operation))
         {
             return null;
         }
-        var queryContextCondition = new SelectQueryCondition(column, operation, valueFunctions);
+        var queryContextCondition = new SelectQueryCondition(column, operation, generator);
         _conditions.Add(queryContextCondition);
         return queryContextCondition;
     }
@@ -87,14 +88,14 @@ internal sealed class SelectQueryConditions : IEnumerable<SelectQueryCondition>
                 {
                     matchConditions =
                     [
-                        new(column, VariantValue.Operation.GreaterOrEquals, equalsCondition.ValueFuncs),
-                        new(column, VariantValue.Operation.LessOrEquals, equalsCondition.ValueFuncs),
+                        new(column, VariantValue.Operation.GreaterOrEquals, equalsCondition.Generator),
+                        new(column, VariantValue.Operation.LessOrEquals, equalsCondition.Generator),
                     ];
                 }
             }
 
             // The special condition for equals check. For example, input contains key column "id" with equals condition.
-            // But the query is called like "id in (1, 2, 3)'. Instead, we should "rewrite" the query to call it 3 times with
+            // But the query is called like "id in (1, 2, 3)". Instead, we should "rewrite" the query to call it 3 times with
             // keys 1, 2 and 3.
             if (matchConditions.Length == 0)
             {
@@ -103,7 +104,7 @@ internal sealed class SelectQueryConditions : IEnumerable<SelectQueryCondition>
                 {
                     matchConditions =
                     [
-                        new(column, VariantValue.Operation.Equals, inCondition.ValueFuncs),
+                        new(column, VariantValue.Operation.Equals, inCondition.Generator),
                     ];
                 }
             }
