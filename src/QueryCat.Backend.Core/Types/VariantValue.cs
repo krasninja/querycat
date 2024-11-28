@@ -305,7 +305,7 @@ public readonly partial struct VariantValue :
         _valueUnion = value._valueUnion;
     }
 
-    public static VariantValue CreateFromObject<T>(in T obj)
+    public static VariantValue CreateFromObject<T>(in T? obj)
     {
         if (obj == null)
         {
@@ -374,6 +374,10 @@ public readonly partial struct VariantValue :
         if (obj is Guid guid)
         {
             return new VariantValue(guid.ToString());
+        }
+        if (obj is DBNull)
+        {
+            return Null;
         }
         return new VariantValue(obj);
     }
