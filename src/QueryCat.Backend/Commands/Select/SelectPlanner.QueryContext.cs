@@ -180,10 +180,9 @@ internal sealed partial class SelectPlanner
                     return true;
                 }
             }
-            if (inOperationExpressionNode.InExpressionValuesNodes is SelectQueryCombineNode selectQueryCombineNode)
+            if (inOperationExpressionNode.InExpressionValuesNodes is SelectQueryNode selectQueryNode)
             {
-                makeDelegateVisitor.RunAndReturn(selectQueryCombineNode);
-                var iterator = selectQueryCombineNode.GetRequiredAttribute<IRowsIterator>(AstAttributeKeys.ResultKey);
+                var iterator = new SelectPlanner(ExecutionThread).CreateIterator(selectQueryNode, commandContext);
                 commandContext.Conditions.TryAddCondition(column, VariantValue.Operation.In,
                     new KeyConditionValueGeneratorIterator(iterator));
                 return true;
