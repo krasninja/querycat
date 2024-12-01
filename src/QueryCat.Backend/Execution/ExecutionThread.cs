@@ -25,7 +25,7 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
     internal const string BootstrapFileName = "rc.sql";
 
     private readonly AstVisitor _statementsVisitor;
-    private readonly object _objLock = new();
+    private readonly SemaphoreSlim _semaphore;
     private int _deepLevel;
     private readonly List<IDisposable> _disposablesList = new();
     private bool _isInCallback;
@@ -139,6 +139,7 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
 
         _rootScope = new ExecutionScope(parent: null);
         _topScope = _rootScope;
+        _semaphore = new SemaphoreSlim(Options.ConcurrencyLevel, Options.ConcurrencyLevel);
     }
 
     /// <summary>
@@ -173,7 +174,8 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
         }
 
         // Run with lock and timer.
-        lock (_objLock)
+        _semaphore.Wait(cancellationToken);
+        try
         {
             CurrentQuery = query;
             var programNode = AstBuilder.BuildProgramFromString(query);
@@ -200,36 +202,34 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
                 _stopwatch.Restart();
             }
 
-            try
+            if (executingStatement == null)
             {
-                if (executingStatement == null)
-                {
-                    return VariantValue.Null;
-                }
-                if (parameters != null)
-                {
-                    var scope = PushScope();
-                    SetScopeVariables(scope, parameters);
-                }
-                return Options.QueryTimeout != TimeSpan.Zero
-                    ? RunWithTimeout(ct => RunInternal(executingStatement, ct), cancellationToken)
-                    : RunInternal(executingStatement, cancellationToken);
+                return VariantValue.Null;
             }
-            finally
+            if (parameters != null)
             {
-                if (parameters != null)
-                {
-                    PopScope();
-                }
-                if (_deepLevel == 1)
-                {
-                    _stopwatch.Stop();
-                    Statistic.ExecutionTime = _stopwatch.Elapsed;
-                }
-                _deepLevel--;
+                var scope = PushScope();
+                SetScopeVariables(scope, parameters);
+            }
+            return Options.QueryTimeout != TimeSpan.Zero
+                ? RunWithTimeout(ct => RunInternal(executingStatement, ct), cancellationToken)
+                : RunInternal(executingStatement, cancellationToken);
+        }
+        finally
+        {
+            if (parameters != null)
+            {
+                PopScope();
+            }
+            if (_deepLevel == 1)
+            {
+                _stopwatch.Stop();
+                Statistic.ExecutionTime = _stopwatch.Elapsed;
+            }
+            _deepLevel--;
+            CurrentQuery = string.Empty;
 
-                CurrentQuery = string.Empty;
-            }
+            _semaphore.Release();
         }
     }
 
@@ -542,6 +542,7 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
     {
         if (disposing)
         {
+            _semaphore.Dispose();
             foreach (var disposable in _disposablesList)
             {
                 disposable.Dispose();
