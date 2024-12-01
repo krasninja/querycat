@@ -36,7 +36,7 @@ internal abstract class BaseQueryCommand : BaseCommand
     {
         if (files.Any())
         {
-            foreach (var file in files)
+            foreach (var file in files.SelectMany(f => f.Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)))
             {
                 RunWithPluginsInstall(executionThread, File.ReadAllText(file), cancellationToken: cancellationToken);
             }

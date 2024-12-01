@@ -12,7 +12,7 @@ namespace QueryCat.Cli;
 /// <summary>
 /// Program entry point.
 /// </summary>
-internal class Program
+internal sealed class Program
 {
     private static readonly Lazy<ILogger> _logger = new(() => Application.LoggerFactory.CreateLogger(nameof(Program)));
 
@@ -29,7 +29,7 @@ internal class Program
 
         if (args.Length < 1)
         {
-            args = new[] { "-h" };
+            args = ["-h"];
         }
 
         // Root.
@@ -147,7 +147,5 @@ internal class Program
                 return 1;
             }
         }
-
-        return 1;
     }
 }
