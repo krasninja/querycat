@@ -18,7 +18,7 @@
       <group targetFramework="net8.0">
         <dependency id="ApacheThrift" version="[0.20.0, )" />
         <dependency id="Microsoft.Extensions.Logging.Abstractions" version="[8.0.0, )" />
-        <dependency id="QueryCat" version="[0.6.9, )" />
+        <dependency id="QueryCat" version="[0.8.1, )" />
       </group>
     </dependencies>
   </metadata>

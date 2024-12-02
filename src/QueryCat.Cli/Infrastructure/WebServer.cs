@@ -1,4 +1,5 @@
 using System.Collections.Frozen;
+using System.Globalization;
 using System.Net;
 using System.Reflection;
 using System.Text.Json;
@@ -36,7 +37,7 @@ internal sealed partial class WebServer
     private readonly HashSet<IPAddress> _allowedAddresses;
     private readonly MimeTypeProvider _mimeTypeProvider = new();
     private int? _allowedAddressesSlots;
-    private readonly object _lockObj = new();
+    private readonly Lock _lockObj = new();
 
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(WebServer));
 
@@ -459,7 +460,7 @@ internal sealed partial class WebServer
                 jsonWriter.WriteBooleanValue(value.AsBoolean);
                 break;
             default:
-                jsonWriter.WriteStringValue(value.ToString());
+                jsonWriter.WriteStringValue(value.ToString(CultureInfo.InvariantCulture));
                 break;
         }
     }

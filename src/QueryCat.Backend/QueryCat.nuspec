@@ -19,6 +19,10 @@
         <dependency id="Antlr4.Runtime.Standard" version="[4.13.1, )" />
         <dependency id="Microsoft.Extensions.Logging.Abstractions" version="[8.0.0, )" />
       </group>
+      <group targetFramework="net9.0">
+        <dependency id="Antlr4.Runtime.Standard" version="[4.13.1, )" />
+        <dependency id="Microsoft.Extensions.Logging.Abstractions" version="[9.0.0, )" />
+      </group>
     </dependencies>
     <readme>README.md</readme>
     <releaseNotes>You can find changelog at https://github.com/krasninja/querycat/blob/develop/CHANGELOG.md</releaseNotes>
@@ -30,6 +34,12 @@
     <file src="bin\Release\net8.0\QueryCat.Backend.Core.dll" target="lib\net8.0" />
     <file src="bin\Release\net8.0\QueryCat.Backend.Core.pdb" target="lib\net8.0" />
     <file src="bin\Release\net8.0\QueryCat.Backend.Core.xml" target="lib\net8.0" />
+    <file src="bin\Release\net9.0\QueryCat.Backend.dll" target="lib\net9.0" />
+    <file src="bin\Release\net9.0\QueryCat.Backend.pdb" target="lib\net9.0" />
+    <file src="bin\Release\net9.0\QueryCat.Backend.xml" target="lib\net9.0" />
+    <file src="bin\Release\net9.0\QueryCat.Backend.Core.dll" target="lib\net9.0" />
+    <file src="bin\Release\net9.0\QueryCat.Backend.Core.pdb" target="lib\net9.0" />
+    <file src="bin\Release\net9.0\QueryCat.Backend.Core.xml" target="lib\net9.0" />
     <file src="..\..\README.md" target="README.md" />
     <file src="..\..\LICENSE.txt" target="LICENSE.txt" />
   </files>

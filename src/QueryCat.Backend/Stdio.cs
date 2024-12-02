@@ -5,9 +5,13 @@ namespace QueryCat.Backend;
 /// </summary>
 public static class Stdio
 {
-    private static Stream? outputStream;
-    private static Stream? inputStream;
-    private static readonly object ObjLock = new();
+    private static Stream? _outputStream;
+    private static Stream? _inputStream;
+#if NET9_0_OR_GREATER
+    private static readonly Lock _objLock = new();
+#else
+    private static readonly object _objLock = new();
+#endif
 
     /// <summary>
     /// Get the cached standard output stream.
@@ -15,14 +19,14 @@ public static class Stdio
     /// <returns>Standard output stream.</returns>
     public static Stream GetConsoleOutput()
     {
-        if (outputStream != null)
+        if (_outputStream != null)
         {
-            return outputStream;
+            return _outputStream;
         }
 
-        lock (ObjLock)
+        lock (_objLock)
         {
-            return outputStream = Console.OpenStandardOutput();
+            return _outputStream = Console.OpenStandardOutput();
         }
     }
 
@@ -32,14 +36,14 @@ public static class Stdio
     /// <returns>Standard input stream.</returns>
     internal static Stream GetConsoleInput()
     {
-        if (inputStream != null)
+        if (_inputStream != null)
         {
-            return inputStream;
+            return _inputStream;
         }
 
-        lock (ObjLock)
+        lock (_objLock)
         {
-            return inputStream = Console.OpenStandardInput();
+            return _inputStream = Console.OpenStandardInput();
         }
     }
 }

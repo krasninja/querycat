@@ -16,7 +16,7 @@ internal sealed class Program
 {
     private static readonly Lazy<ILogger> _logger = new(() => Application.LoggerFactory.CreateLogger(nameof(Program)));
 
-    private static readonly object _objLock = new();
+    private static readonly Lock _objLock = new();
 
     /// <summary>
     /// Entry point.
