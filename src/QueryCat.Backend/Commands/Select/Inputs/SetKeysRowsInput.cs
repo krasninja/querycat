@@ -111,7 +111,7 @@ internal sealed class SetKeysRowsInput : RowsInput, IRowsInputKeys
             if (!hasMoreMultipleValues
                 && conditionJoint.Condition.Generator is IKeyConditionMultipleValuesGenerator multipleValuesGenerator)
             {
-                hasMoreMultipleValues = multipleValuesGenerator.MoveNext();
+                hasMoreMultipleValues = multipleValuesGenerator.MoveNext(_thread);
             }
             var value = conditionJoint.Condition.Generator.Get(_thread);
             _rowsInput.SetKeyColumnValue(conditionJoint.ColumnIndex, value, conditionJoint.Condition.Operation);

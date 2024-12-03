@@ -211,7 +211,7 @@ internal sealed partial class WebServer
         _logger.LogInformation("[{Address}] Query: {QueryData}", request.RemoteEndPoint.Address, queryData);
         var lastResult = _executionThread.Run(queryData.Query, queryData.ParametersAsDict);
 
-        WriteIterator(ExecutionThreadUtils.ConvertToIterator(lastResult), request, response);
+        WriteIterator(RowsIteratorConverter.Convert(lastResult), request, response);
     }
 
     private void HandleSchemaApiAction(HttpListenerRequest request, HttpListenerResponse response)
@@ -233,7 +233,7 @@ internal sealed partial class WebServer
                 && result.AsObject is IRowsSchema rowsSchema)
             {
                 var schema = thread.CallFunction(Backend.Functions.InfoFunctions.Schema, rowsSchema);
-                WriteIterator(ExecutionThreadUtils.ConvertToIterator(schema), request, response);
+                WriteIterator(RowsIteratorConverter.Convert(schema), request, response);
                 e.ContinueExecution = false;
             }
         }

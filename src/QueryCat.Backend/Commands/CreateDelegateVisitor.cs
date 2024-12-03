@@ -6,6 +6,7 @@ using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Storage;
 
 namespace QueryCat.Backend.Commands;
 
@@ -197,34 +198,73 @@ internal partial class CreateDelegateVisitor : AstVisitor
     {
         ResolveTypesVisitor.Visit(node);
 
-        var actions = Array.Empty<IFuncUnit>();
+        var valueAction = NodeIdFuncMap[node.ExpressionNode.Id];
         if (node.InExpressionValuesNodes is InExpressionValuesNode inExpressionValuesNode)
         {
-            actions = inExpressionValuesNode.ValuesNodes.Select(v => NodeIdFuncMap[v.Id]).ToArray();
+            var actions = inExpressionValuesNode.ValuesNodes.Select(v => NodeIdFuncMap[v.Id]).ToArray();
+            NodeIdFuncMap[node.Id] = new InArrayFuncUnit(valueAction, actions, node.IsNot, node.GetDataType());
+            return;
         }
-        var valueAction = NodeIdFuncMap[node.ExpressionNode.Id];
-        var equalDelegate = VariantValue.GetEqualsDelegate(node.ExpressionNode.GetDataType());
-
-        VariantValue Func(IExecutionThread thread)
+        if (node.InExpressionValuesNodes is IdentifierExpressionNode identifierExpressionNode)
         {
-            var leftValue = valueAction.Invoke(thread);
-            foreach (var action in actions)
+            var action = NodeIdFuncMap[identifierExpressionNode.Id];
+            NodeIdFuncMap[node.Id] = new InArrayFuncUnit(valueAction, [action], node.IsNot, node.GetDataType());
+            return;
+        }
+
+        throw new QueryCatException("Cannot resolve expression values node.");
+    }
+
+    private sealed class InArrayFuncUnit(
+        IFuncUnit leftAction,
+        IFuncUnit[] funcUnits,
+        bool isNot,
+        DataType outputType) : IFuncUnit
+    {
+        /// <inheritdoc />
+        public DataType OutputType => outputType;
+
+        /// <inheritdoc />
+        public VariantValue Invoke(IExecutionThread thread)
+        {
+            var leftValue = leftAction.Invoke(thread);
+            foreach (var funcUnit in funcUnits)
             {
-                var rightValue = action.Invoke(thread);
-                var isEqual = equalDelegate.Invoke(in leftValue, in rightValue);
-                if (isEqual.IsNull)
+                var rightValue = funcUnit.Invoke(thread);
+
+                VariantValue isEqual;
+                if (rightValue.Type == DataType.Object)
                 {
-                    continue;
+                    var iterator = RowsIteratorConverter.Convert(rightValue);
+                    while (iterator.MoveNext())
+                    {
+                        var iteratorValue = iterator.Current[0];
+                        isEqual = VariantValue.Equals(in leftValue, in iteratorValue, out _);
+                        if (isEqual.IsNull)
+                        {
+                            continue;
+                        }
+                        if (isEqual.AsBoolean)
+                        {
+                            return new VariantValue(!isNot);
+                        }
+                    }
                 }
-                if (isEqual.AsBoolean)
+                else
                 {
-                    return new VariantValue(!node.IsNot);
+                    isEqual = VariantValue.Equals(in leftValue, in rightValue, out _);
+                    if (isEqual.IsNull)
+                    {
+                        continue;
+                    }
+                    if (isEqual.AsBoolean)
+                    {
+                        return new VariantValue(!isNot);
+                    }
                 }
             }
-            return new VariantValue(node.IsNot);
+            return new VariantValue(isNot);
         }
-
-        NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, node.GetDataType());
     }
 
     /// <inheritdoc />

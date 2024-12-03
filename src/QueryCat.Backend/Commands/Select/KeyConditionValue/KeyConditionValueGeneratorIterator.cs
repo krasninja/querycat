@@ -18,7 +18,7 @@ internal sealed class KeyConditionValueGeneratorIterator : IKeyConditionMultiple
     }
 
     /// <inheritdoc />
-    public bool MoveNext()
+    public bool MoveNext(IExecutionThread thread)
     {
         var hasData = _rowsIterator.MoveNext();
         if (hasData)

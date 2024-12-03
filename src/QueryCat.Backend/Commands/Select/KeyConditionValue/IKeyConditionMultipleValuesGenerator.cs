@@ -1,3 +1,5 @@
+using QueryCat.Backend.Core.Execution;
+
 namespace QueryCat.Backend.Commands.Select.KeyConditionValue;
 
 /// <summary>
@@ -8,18 +10,19 @@ namespace QueryCat.Backend.Commands.Select.KeyConditionValue;
 internal interface IKeyConditionMultipleValuesGenerator : IKeyConditionSingleValueGenerator
 {
     /// <summary>
+    /// Current cursor position. -1 is the initial.
+    /// </summary>
+    int Position { get; }
+
+    /// <summary>
     /// Move to the next value.
     /// </summary>
+    /// <param name="thread">Execution thread.</param>
     /// <returns>Returns <c>True</c> if the value is available. Otherwise, <c>false</c>.</returns>
-    bool MoveNext();
+    bool MoveNext(IExecutionThread thread);
 
     /// <summary>
     /// Reset the position to the initial element.
     /// </summary>
     void Reset();
-
-    /// <summary>
-    /// Current cursor position. -1 is the initial.
-    /// </summary>
-    int Position { get; }
 }

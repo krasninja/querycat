@@ -16,12 +16,17 @@ internal sealed class KeyConditionValueGeneratorArray : IKeyConditionMultipleVal
         _values = values;
     }
 
+    public KeyConditionValueGeneratorArray(IEnumerable<VariantValue> values)
+    {
+        _values = values.Select(v => new FuncUnitStatic(v)).Cast<IFuncUnit>().ToArray();
+    }
+
     /// <inheritdoc />
     public VariantValue Get(IExecutionThread thread)
         => _currentIndex < _values.Length ? _values[_currentIndex].Invoke(thread) : VariantValue.Null;
 
     /// <inheritdoc />
-    public bool MoveNext()
+    public bool MoveNext(IExecutionThread thread)
     {
         var canMove = _currentIndex < _values.Length;
         if (canMove)

@@ -25,7 +25,7 @@ internal class PluginProxyCommand : BaseCommand
                 var downloader = new PluginProxyDownloader(ThriftPluginsLoader.GetProxyFileName());
                 var applicationDirectory = ExecutionThread.GetApplicationDirectory(ensureExists: true);
                 var pluginsProxyLocalFile = Path.Combine(applicationDirectory,
-                    ThriftPluginsLoader.GetProxyFileName(includeCurrentVersion: true));
+                    ThriftPluginsLoader.GetProxyFileName(includeVersion: true));
                 await downloader.DownloadAsync(pluginsProxyLocalFile, ct);
             });
         }, new ApplicationOptionsBinder(LogLevelOption, PluginDirectoriesOption));

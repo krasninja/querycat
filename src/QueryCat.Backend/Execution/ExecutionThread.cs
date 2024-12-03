@@ -415,7 +415,7 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
         {
             return;
         }
-        var iterator = ExecutionThreadUtils.ConvertToIterator(result);
+        var iterator = RowsIteratorConverter.Convert(result);
         var rowsOutput = Options.DefaultRowsOutput;
         if (result.Type == DataType.Object
             && result.AsObjectUnsafe is IRowsOutput alternateRowsOutput)

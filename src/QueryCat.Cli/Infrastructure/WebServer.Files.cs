@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.Net;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Execution;
+using QueryCat.Backend.Storage;
 
 namespace QueryCat.Cli.Infrastructure;
 
@@ -71,7 +71,7 @@ internal partial class WebServer
         _executionThread.TopScope.Variables["path"] = new VariantValue(path);
         var result = _executionThread.Run(_selectFilesQuery);
         _logger.LogInformation("[{Address}] Dir: {Path}", request.RemoteEndPoint.Address, path);
-        WriteIterator(ExecutionThreadUtils.ConvertToIterator(result), request, response);
+        WriteIterator(RowsIteratorConverter.Convert(result), request, response);
     }
 
     private void Files_ServeFile(string file, HttpListenerRequest request, HttpListenerResponse response)

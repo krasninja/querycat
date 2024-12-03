@@ -804,6 +804,13 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitExpressionCast([NotNull] QueryCatParser.ExpressionCastContext context);
 	/// <summary>
+	/// Visit a parse tree produced by the <c>ExpressionBinaryInIdentifier</c>
+	/// labeled alternative in <see cref="QueryCatParser.expression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitExpressionBinaryInIdentifier([NotNull] QueryCatParser.ExpressionBinaryInIdentifierContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>ExpressionBetween</c>
 	/// labeled alternative in <see cref="QueryCatParser.expression"/>.
 	/// </summary>

@@ -9,6 +9,7 @@ namespace QueryCat.Backend.Core.Fetch;
 /// <typeparam name="TClass">Base enumerable class.</typeparam>
 public class EnumerableRowsInput<TClass> : KeysRowsInput where TClass : class
 {
+    private readonly IEnumerable<TClass> _enumerable;
     private readonly ClassRowsFrameBuilder<TClass> _builder = new();
 
     protected ClassRowsFrameBuilder<TClass> Builder => _builder;
@@ -17,6 +18,7 @@ public class EnumerableRowsInput<TClass> : KeysRowsInput where TClass : class
 
     public EnumerableRowsInput(IEnumerable<TClass> enumerable, Action<ClassRowsFrameBuilder<TClass>>? setup = null)
     {
+        _enumerable = enumerable;
         if (setup != null)
         {
             setup.Invoke(_builder);
@@ -24,14 +26,6 @@ public class EnumerableRowsInput<TClass> : KeysRowsInput where TClass : class
             Columns = _builder.Columns.ToArray();
             AddKeyColumns(_builder.KeyColumns);
         }
-
-        Enumerator = enumerable.GetEnumerator();
-    }
-
-    /// <inheritdoc />
-    public override void Close()
-    {
-        Enumerator?.Dispose();
     }
 
     /// <inheritdoc />
@@ -48,6 +42,13 @@ public class EnumerableRowsInput<TClass> : KeysRowsInput where TClass : class
     }
 
     /// <inheritdoc />
+    public override void Open()
+    {
+        Enumerator = _enumerable.GetEnumerator();
+        base.Open();
+    }
+
+    /// <inheritdoc />
     public override bool ReadNext()
     {
         InitializeKeyColumns();
@@ -57,6 +58,20 @@ public class EnumerableRowsInput<TClass> : KeysRowsInput where TClass : class
             return false;
         }
         return Enumerator.MoveNext();
+    }
+
+    /// <inheritdoc />
+    public override void Reset()
+    {
+        Close();
+        Open();
+        base.Reset();
+    }
+
+    /// <inheritdoc />
+    public override void Close()
+    {
+        Enumerator?.Dispose();
     }
 
     #region Dispose

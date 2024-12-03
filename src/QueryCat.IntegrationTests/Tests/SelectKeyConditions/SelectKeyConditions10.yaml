@@ -1,0 +1,6 @@
+expected: |
+  NVDA
+  BABA
+query: |
+  declare q object := (select 'NVDA' union select 'BABA');
+  select id from it_stocks() where id in q;

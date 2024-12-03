@@ -187,6 +187,13 @@ internal sealed partial class SelectPlanner
                     new KeyConditionValueGeneratorIterator(iterator));
                 return true;
             }
+            if (inOperationExpressionNode.InExpressionValuesNodes is IdentifierExpressionNode identifierInNode)
+            {
+                var identifierNodeAction = makeDelegateVisitor.RunAndReturn(identifierInNode);
+                commandContext.Conditions.TryAddCondition(column, VariantValue.Operation.In,
+                    new KeyConditionValueGeneratorVariable(identifierNodeAction));
+                return true;
+            }
             return false;
         }
 

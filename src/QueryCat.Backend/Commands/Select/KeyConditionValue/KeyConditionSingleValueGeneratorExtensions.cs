@@ -25,7 +25,7 @@ internal static class KeyConditionSingleValueGeneratorExtensions
             {
                 multipleValuesGenerator.Reset();
             }
-            while (multipleValuesGenerator.MoveNext())
+            while (multipleValuesGenerator.MoveNext(thread))
             {
                 values.Add(multipleValuesGenerator.Get(thread));
             }
@@ -34,7 +34,7 @@ internal static class KeyConditionSingleValueGeneratorExtensions
             // Restore the original position.
             for (var position = 0; position < oldPosition + 1; position++)
             {
-                multipleValuesGenerator.MoveNext();
+                multipleValuesGenerator.MoveNext(thread);
             }
 
             return values.ToArray();
