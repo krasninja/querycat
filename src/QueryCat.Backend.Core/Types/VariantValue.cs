@@ -373,7 +373,7 @@ public readonly partial struct VariantValue :
         }
         if (obj is Guid guid)
         {
-            return new VariantValue(guid.ToString());
+            return new VariantValue(guid.ToString("D"));
         }
         if (obj is DBNull)
         {
