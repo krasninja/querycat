@@ -218,7 +218,7 @@ struct KeyColumn {
 
 // Contains the information about the executing query. Can be used for optimization.
 struct ContextQueryInfo {
-  1: required list<string> columns,
+  1: required list<Column> columns,
   2: required i64 offset,
   3: optional i64 limit
 }
@@ -307,7 +307,7 @@ service Plugin {
 
   // Write new row (values) to rows set.
   // Supported objects: ROWS_OUTPUT.
-  void RowsSet_WriteValue(
+  void RowsSet_WriteValues(
     1: required Handle object_handle,
     2: required list<VariantValue> values // Should match columns count.
   ) throws (1: QueryCatPluginException e),

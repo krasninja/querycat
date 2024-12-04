@@ -41,7 +41,7 @@ namespace QueryCat.Plugins.Sdk
   {
     private long _limit;
 
-    public List<string>? Columns { get; set; }
+    public List<global::QueryCat.Plugins.Sdk.Column>? Columns { get; set; }
 
     public long Offset { get; set; } = 0;
 
@@ -69,7 +69,7 @@ namespace QueryCat.Plugins.Sdk
     {
     }
 
-    public ContextQueryInfo(List<string>? @columns, long @offset) : this()
+    public ContextQueryInfo(List<global::QueryCat.Plugins.Sdk.Column>? @columns, long @offset) : this()
     {
       this.Columns = @columns;
       this.Offset = @offset;
@@ -99,11 +99,12 @@ namespace QueryCat.Plugins.Sdk
               {
                 {
                   var _list56 = await iprot.ReadListBeginAsync(cancellationToken);
-                  Columns = new List<string>(_list56.Count);
+                  Columns = new List<global::QueryCat.Plugins.Sdk.Column>(_list56.Count);
                   for(int _i57 = 0; _i57 < _list56.Count; ++_i57)
                   {
-                    string _elem58;
-                    _elem58 = await iprot.ReadStringAsync(cancellationToken);
+                    global::QueryCat.Plugins.Sdk.Column _elem58;
+                    _elem58 = new global::QueryCat.Plugins.Sdk.Column();
+                    await _elem58.ReadAsync(iprot, cancellationToken);
                     Columns.Add(_elem58);
                   }
                   await iprot.ReadListEndAsync(cancellationToken);
@@ -175,10 +176,10 @@ namespace QueryCat.Plugins.Sdk
           tmp60.Type = TType.List;
           tmp60.ID = 1;
           await oprot.WriteFieldBeginAsync(tmp60, cancellationToken);
-          await oprot.WriteListBeginAsync(new TList(TType.String, Columns.Count), cancellationToken);
-          foreach (string _iter61 in Columns)
+          await oprot.WriteListBeginAsync(new TList(TType.Struct, Columns.Count), cancellationToken);
+          foreach (global::QueryCat.Plugins.Sdk.Column _iter61 in Columns)
           {
-            await oprot.WriteStringAsync(_iter61, cancellationToken);
+            await _iter61.WriteAsync(oprot, cancellationToken);
           }
           await oprot.WriteListEndAsync(cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);

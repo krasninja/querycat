@@ -72,6 +72,19 @@ public partial class ThriftPluginClient
                         Object = new ObjectValue(ObjectType.ROWS_INPUT, index, rowsInput.ToString() ?? string.Empty),
                     });
                 }
+                else if (result.AsObject is IRowsOutput rowsOutput)
+                {
+                    rowsOutput.QueryContext = new PluginQueryContext(
+                        new QueryContextQueryInfo(new List<Backend.Core.Data.Column>()),
+                        _thriftPluginClient._executionThread.ConfigStorage);
+                    var index =_thriftPluginClient._objectsStorage.Add(rowsOutput);
+                    _thriftPluginClient._logger.LogDebug("Added new output object '{Object}' with handle {Handle}.",
+                        rowsOutput.ToString(), index);
+                    return Task.FromResult(new VariantValue
+                    {
+                        Object = new ObjectValue(ObjectType.ROWS_OUTPUT, index, rowsOutput.ToString() ?? string.Empty),
+                    });
+                }
                 throw new QueryCatPluginException(
                     ErrorType.INVALID_OBJECT,
                     string.Format(Resources.Errors.Object_CannotRegister, result.AsObject));
@@ -115,10 +128,10 @@ public partial class ThriftPluginClient
         /// <inheritdoc />
         public Task RowsSet_OpenAsync(int object_handle, CancellationToken cancellationToken = default)
         {
-            if (_thriftPluginClient._objectsStorage.TryGet<IRowsInput>(object_handle, out var rowsInput)
-                && rowsInput != null)
+            if (_thriftPluginClient._objectsStorage.TryGet<IRowsSource>(object_handle, out var rowsSource)
+                && rowsSource != null)
             {
-                rowsInput.Open();
+                rowsSource.Open();
             }
             return Task.CompletedTask;
         }
@@ -126,10 +139,10 @@ public partial class ThriftPluginClient
         /// <inheritdoc />
         public Task RowsSet_CloseAsync(int object_handle, CancellationToken cancellationToken = default)
         {
-            if (_thriftPluginClient._objectsStorage.TryGet<IRowsInput>(object_handle, out var rowsInput)
-                && rowsInput != null)
+            if (_thriftPluginClient._objectsStorage.TryGet<IRowsSource>(object_handle, out var rowsSource)
+                && rowsSource != null)
             {
-                rowsInput.Close();
+                rowsSource.Close();
             }
             return Task.CompletedTask;
         }
@@ -137,10 +150,10 @@ public partial class ThriftPluginClient
         /// <inheritdoc />
         public Task RowsSet_ResetAsync(int object_handle, CancellationToken cancellationToken = default)
         {
-            if (_thriftPluginClient._objectsStorage.TryGet<IRowsInput>(object_handle, out var rowsInput)
-                && rowsInput != null)
+            if (_thriftPluginClient._objectsStorage.TryGet<IRowsSource>(object_handle, out var rowsSource)
+                && rowsSource != null)
             {
-                rowsInput.Reset();
+                rowsSource.Reset();
             }
             else if (_thriftPluginClient._objectsStorage.TryGet<IRowsIterator>(object_handle, out var rowsIterator)
                 && rowsIterator != null)
@@ -154,22 +167,26 @@ public partial class ThriftPluginClient
         public Task RowsSet_SetContextAsync(int object_handle, ContextQueryInfo? context_query_info,
             CancellationToken cancellationToken = default)
         {
-            if (_thriftPluginClient._objectsStorage.TryGet<IRowsInput>(object_handle, out var rowsInput)
-                && rowsInput != null)
+            if (_thriftPluginClient._objectsStorage.TryGet<IRowsSource>(object_handle, out var rowsSource)
+                && rowsSource != null)
             {
                 if (context_query_info == null)
                 {
-                    rowsInput.QueryContext = new PluginQueryContext(
+                    rowsSource.QueryContext = new PluginQueryContext(
                         new QueryContextQueryInfo(Array.Empty<Backend.Core.Data.Column>()),
                         _thriftPluginClient._executionThread.ConfigStorage
                     );
                 }
                 else
                 {
-                    rowsInput.QueryContext = new PluginQueryContext(
+                    var columns = context_query_info.Columns ?? new List<QueryCat.Plugins.Sdk.Column>();
+                    rowsSource.QueryContext = new PluginQueryContext(
                         new QueryContextQueryInfo(
-                            new List<Backend.Core.Data.Column>(),
-                            context_query_info.Limit),
+                            columns.Select(SdkConvert.Convert).ToList(),
+                            context_query_info.Limit)
+                        {
+                            Offset = context_query_info.Offset,
+                        },
                         _thriftPluginClient._executionThread.ConfigStorage
                     );
                 }
@@ -289,7 +306,7 @@ public partial class ThriftPluginClient
         }
 
         /// <inheritdoc />
-        public Task RowsSet_WriteValueAsync(int object_handle, List<VariantValue>? values,
+        public Task RowsSet_WriteValuesAsync(int object_handle, List<VariantValue>? values,
             CancellationToken cancellationToken = default)
         {
             if (values != null
@@ -528,11 +545,11 @@ public partial class ThriftPluginClient
         }
 
         /// <inheritdoc />
-        public Task RowsSet_WriteValueAsync(int object_handle, List<VariantValue>? values, CancellationToken cancellationToken = default)
+        public Task RowsSet_WriteValuesAsync(int object_handle, List<VariantValue>? values, CancellationToken cancellationToken = default)
         {
             try
             {
-                return _handler.RowsSet_WriteValueAsync(object_handle, values, cancellationToken);
+                return _handler.RowsSet_WriteValuesAsync(object_handle, values, cancellationToken);
             }
             catch (Exception ex)
             {

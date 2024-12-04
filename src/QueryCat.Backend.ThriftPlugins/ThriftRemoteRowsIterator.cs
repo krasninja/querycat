@@ -1,9 +1,11 @@
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
-using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Core.Utils;
 using QueryCat.Plugins.Client;
+using QueryCat.Plugins.Sdk;
 using Column = QueryCat.Backend.Core.Data.Column;
+using KeyColumn = QueryCat.Backend.Core.Data.KeyColumn;
+using VariantValue = QueryCat.Backend.Core.Types.VariantValue;
 
 namespace QueryCat.Backend.ThriftPlugins;
 
@@ -22,14 +24,34 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys
     /// <inheritdoc />
     public Column[] Columns { get; private set; } = [];
 
+    private QueryContext _queryContext = NullQueryContext.Instance;
+
     /// <inheritdoc />
-    public QueryContext QueryContext { get; set; } = NullQueryContext.Instance;
+    public QueryContext QueryContext
+    {
+        get => _queryContext;
+        set
+        {
+            _queryContext = value;
+            SendContextToPlugin();
+        }
+    }
 
     public ThriftRemoteRowsIterator(Plugins.Sdk.Plugin.Client client, int objectHandle, string? id = null)
     {
         _client = client;
         _objectHandle = objectHandle;
         _id = id ?? string.Empty;
+    }
+
+    private void SendContextToPlugin()
+    {
+        AsyncUtils.RunSync(async ct => await _client.RowsSet_SetContextAsync(_objectHandle, new ContextQueryInfo
+        {
+            Columns = QueryContext.QueryInfo.Columns.Select(SdkConvert.Convert).ToList(),
+            Limit = QueryContext.QueryInfo.Limit ?? -1,
+            Offset = QueryContext.QueryInfo.Offset,
+        }, ct));
     }
 
     /// <inheritdoc />

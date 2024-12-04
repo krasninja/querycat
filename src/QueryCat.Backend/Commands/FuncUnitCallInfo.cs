@@ -25,4 +25,7 @@ internal sealed class FuncUnitCallInfo
         }
         return values;
     }
+
+    /// <inheritdoc />
+    public override string ToString() => string.Join(';', _pushArgs.Select(a => a.ToString()));
 }

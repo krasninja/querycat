@@ -93,8 +93,8 @@ internal sealed class VaryingOutputRowsIterator : IRowsIterator, IRowsIteratorPa
             {
                 output = NullRowsOutput.Instance;
             }
-            output.Open();
             output.QueryContext = _queryContext;
+            output.Open();
             _logger.LogDebug("Open for args {Arguments}.", _functionCallInfo);
             _outputs.Add(args, output);
             CurrentOutput = output;

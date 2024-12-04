@@ -620,6 +620,10 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
         {
             return new ThriftRemoteRowsIterator(context.Client, result.Object.Handle, result.Object.Name);
         }
+        if (result.Object.Type == ObjectType.ROWS_OUTPUT)
+        {
+            return new ThriftRemoteRowsOutput(context.Client, result.Object.Handle, result.Object.Name);
+        }
         if (result.Object.Type == ObjectType.JSON && !string.IsNullOrEmpty(result.Json))
         {
             var node = JsonNode.Parse(result.Json);

@@ -66,7 +66,7 @@ namespace QueryCat.Plugins.Sdk
 
       global::System.Threading.Tasks.Task<bool> RowsSet_UpdateValueAsync(int object_handle, int column_index, global::QueryCat.Plugins.Sdk.VariantValue? @value, CancellationToken cancellationToken = default);
 
-      global::System.Threading.Tasks.Task RowsSet_WriteValueAsync(int object_handle, List<global::QueryCat.Plugins.Sdk.VariantValue>? @values, CancellationToken cancellationToken = default);
+      global::System.Threading.Tasks.Task RowsSet_WriteValuesAsync(int object_handle, List<global::QueryCat.Plugins.Sdk.VariantValue>? @values, CancellationToken cancellationToken = default);
 
       global::System.Threading.Tasks.Task<byte[]> Blob_ReadAsync(int object_handle, int @offset, int @count, CancellationToken cancellationToken = default);
 
@@ -621,17 +621,17 @@ namespace QueryCat.Plugins.Sdk
         throw new TApplicationException(TApplicationException.ExceptionType.MissingResult, "RowsSet_UpdateValueAsync failed: unknown result");
       }
 
-      public async global::System.Threading.Tasks.Task RowsSet_WriteValueAsync(int object_handle, List<global::QueryCat.Plugins.Sdk.VariantValue>? @values, CancellationToken cancellationToken = default)
+      public async global::System.Threading.Tasks.Task RowsSet_WriteValuesAsync(int object_handle, List<global::QueryCat.Plugins.Sdk.VariantValue>? @values, CancellationToken cancellationToken = default)
       {
-        await send_RowsSet_WriteValueAsync(object_handle, @values, cancellationToken);
-        await recv_RowsSet_WriteValueAsync(cancellationToken);
+        await send_RowsSet_WriteValuesAsync(object_handle, @values, cancellationToken);
+        await recv_RowsSet_WriteValuesAsync(cancellationToken);
       }
 
-      public async global::System.Threading.Tasks.Task send_RowsSet_WriteValueAsync(int object_handle, List<global::QueryCat.Plugins.Sdk.VariantValue>? @values, CancellationToken cancellationToken = default)
+      public async global::System.Threading.Tasks.Task send_RowsSet_WriteValuesAsync(int object_handle, List<global::QueryCat.Plugins.Sdk.VariantValue>? @values, CancellationToken cancellationToken = default)
       {
-        await OutputProtocol.WriteMessageBeginAsync(new TMessage("RowsSet_WriteValue", TMessageType.Call, SeqId), cancellationToken);
+        await OutputProtocol.WriteMessageBeginAsync(new TMessage("RowsSet_WriteValues", TMessageType.Call, SeqId), cancellationToken);
         
-        var tmp273 = new InternalStructs.RowsSet_WriteValue_args() {
+        var tmp273 = new InternalStructs.RowsSet_WriteValues_args() {
           ObjectHandle = object_handle,
           Values = @values,
         };
@@ -641,7 +641,7 @@ namespace QueryCat.Plugins.Sdk
         await OutputProtocol.Transport.FlushAsync(cancellationToken);
       }
 
-      public async global::System.Threading.Tasks.Task recv_RowsSet_WriteValueAsync(CancellationToken cancellationToken = default)
+      public async global::System.Threading.Tasks.Task recv_RowsSet_WriteValuesAsync(CancellationToken cancellationToken = default)
       {
         
         var tmp274 = await InputProtocol.ReadMessageBeginAsync(cancellationToken);
@@ -652,7 +652,7 @@ namespace QueryCat.Plugins.Sdk
           throw tmp275;
         }
 
-        var tmp276 = new InternalStructs.RowsSet_WriteValue_result();
+        var tmp276 = new InternalStructs.RowsSet_WriteValues_result();
         await tmp276.ReadAsync(InputProtocol, cancellationToken);
         await InputProtocol.ReadMessageEndAsync(cancellationToken);
         if (tmp276.__isset.@e)
@@ -775,7 +775,7 @@ namespace QueryCat.Plugins.Sdk
         processMap_["RowsSet_GetKeyColumns"] = RowsSet_GetKeyColumns_ProcessAsync;
         processMap_["RowsSet_SetKeyColumnValue"] = RowsSet_SetKeyColumnValue_ProcessAsync;
         processMap_["RowsSet_UpdateValue"] = RowsSet_UpdateValue_ProcessAsync;
-        processMap_["RowsSet_WriteValue"] = RowsSet_WriteValue_ProcessAsync;
+        processMap_["RowsSet_WriteValues"] = RowsSet_WriteValues_ProcessAsync;
         processMap_["Blob_Read"] = Blob_Read_ProcessAsync;
         processMap_["Blob_GetLength"] = Blob_GetLength_ProcessAsync;
       }
@@ -1299,23 +1299,23 @@ namespace QueryCat.Plugins.Sdk
         await oprot.Transport.FlushAsync(cancellationToken);
       }
 
-      public async global::System.Threading.Tasks.Task RowsSet_WriteValue_ProcessAsync(int seqid, TProtocol iprot, TProtocol oprot, CancellationToken cancellationToken)
+      public async global::System.Threading.Tasks.Task RowsSet_WriteValues_ProcessAsync(int seqid, TProtocol iprot, TProtocol oprot, CancellationToken cancellationToken)
       {
-        var tmp361 = new InternalStructs.RowsSet_WriteValue_args();
+        var tmp361 = new InternalStructs.RowsSet_WriteValues_args();
         await tmp361.ReadAsync(iprot, cancellationToken);
         await iprot.ReadMessageEndAsync(cancellationToken);
-        var tmp362 = new InternalStructs.RowsSet_WriteValue_result();
+        var tmp362 = new InternalStructs.RowsSet_WriteValues_result();
         try
         {
           try
           {
-            await _iAsync.RowsSet_WriteValueAsync(tmp361.ObjectHandle, tmp361.Values, cancellationToken);
+            await _iAsync.RowsSet_WriteValuesAsync(tmp361.ObjectHandle, tmp361.Values, cancellationToken);
           }
           catch (global::QueryCat.Plugins.Sdk.QueryCatPluginException tmp363)
           {
             tmp362.E = tmp363;
           }
-          await oprot.WriteMessageBeginAsync(new TMessage("RowsSet_WriteValue", TMessageType.Reply, seqid), cancellationToken); 
+          await oprot.WriteMessageBeginAsync(new TMessage("RowsSet_WriteValues", TMessageType.Reply, seqid), cancellationToken); 
           await tmp362.WriteAsync(oprot, cancellationToken);
         }
         catch (TTransportException)
@@ -1330,7 +1330,7 @@ namespace QueryCat.Plugins.Sdk
           else
             Console.Error.WriteLine(tmp365);
           var tmp366 = new TApplicationException(TApplicationException.ExceptionType.InternalError," Internal error.");
-          await oprot.WriteMessageBeginAsync(new TMessage("RowsSet_WriteValue", TMessageType.Exception, seqid), cancellationToken);
+          await oprot.WriteMessageBeginAsync(new TMessage("RowsSet_WriteValues", TMessageType.Exception, seqid), cancellationToken);
           await tmp366.WriteAsync(oprot, cancellationToken);
         }
         await oprot.WriteMessageEndAsync(cancellationToken);
@@ -5245,18 +5245,18 @@ namespace QueryCat.Plugins.Sdk
       }
 
 
-      public partial class RowsSet_WriteValue_args : TBase
+      public partial class RowsSet_WriteValues_args : TBase
       {
 
         public int ObjectHandle { get; set; } = 0;
 
         public List<global::QueryCat.Plugins.Sdk.VariantValue>? Values { get; set; }
 
-        public RowsSet_WriteValue_args()
+        public RowsSet_WriteValues_args()
         {
         }
 
-        public RowsSet_WriteValue_args(int object_handle, List<global::QueryCat.Plugins.Sdk.VariantValue>? @values) : this()
+        public RowsSet_WriteValues_args(int object_handle, List<global::QueryCat.Plugins.Sdk.VariantValue>? @values) : this()
         {
           this.ObjectHandle = object_handle;
           this.Values = @values;
@@ -5343,7 +5343,7 @@ namespace QueryCat.Plugins.Sdk
           oprot.IncrementRecursionDepth();
           try
           {
-            var tmp499 = new TStruct("RowsSet_WriteValue_args");
+            var tmp499 = new TStruct("RowsSet_WriteValues_args");
             await oprot.WriteStructBeginAsync(tmp499, cancellationToken);
             #pragma warning disable IDE0017  // simplified init
             var tmp500 = new TField();
@@ -5379,7 +5379,7 @@ namespace QueryCat.Plugins.Sdk
 
         public override bool Equals(object? that)
         {
-          if (that is not RowsSet_WriteValue_args other) return false;
+          if (that is not RowsSet_WriteValues_args other) return false;
           if (ReferenceEquals(this, other)) return true;
           return global::System.Object.Equals(ObjectHandle, other.ObjectHandle)
             && TCollections.Equals(Values, other.Values);
@@ -5399,7 +5399,7 @@ namespace QueryCat.Plugins.Sdk
 
         public override string ToString()
         {
-          var tmp502 = new StringBuilder("RowsSet_WriteValue_args(");
+          var tmp502 = new StringBuilder("RowsSet_WriteValues_args(");
           tmp502.Append(", ObjectHandle: ");
           ObjectHandle.ToString(tmp502);
           if((Values != null))
@@ -5413,7 +5413,7 @@ namespace QueryCat.Plugins.Sdk
       }
 
 
-      public partial class RowsSet_WriteValue_result : TBase
+      public partial class RowsSet_WriteValues_result : TBase
       {
         private global::QueryCat.Plugins.Sdk.QueryCatPluginException? _e;
 
@@ -5437,7 +5437,7 @@ namespace QueryCat.Plugins.Sdk
           public bool @e;
         }
 
-        public RowsSet_WriteValue_result()
+        public RowsSet_WriteValues_result()
         {
         }
 
@@ -5490,7 +5490,7 @@ namespace QueryCat.Plugins.Sdk
           oprot.IncrementRecursionDepth();
           try
           {
-            var tmp504 = new TStruct("RowsSet_WriteValue_result");
+            var tmp504 = new TStruct("RowsSet_WriteValues_result");
             await oprot.WriteStructBeginAsync(tmp504, cancellationToken);
             #pragma warning disable IDE0017  // simplified init
             var tmp505 = new TField();
@@ -5519,7 +5519,7 @@ namespace QueryCat.Plugins.Sdk
 
         public override bool Equals(object? that)
         {
-          if (that is not RowsSet_WriteValue_result other) return false;
+          if (that is not RowsSet_WriteValues_result other) return false;
           if (ReferenceEquals(this, other)) return true;
           return ((__isset.@e == other.__isset.@e) && ((!__isset.@e) || (global::System.Object.Equals(E, other.E))));
         }
@@ -5537,7 +5537,7 @@ namespace QueryCat.Plugins.Sdk
 
         public override string ToString()
         {
-          var tmp506 = new StringBuilder("RowsSet_WriteValue_result(");
+          var tmp506 = new StringBuilder("RowsSet_WriteValues_result(");
           int tmp507 = 0;
           if((E != null) && __isset.@e)
           {
