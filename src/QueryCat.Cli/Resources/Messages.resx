@@ -45,6 +45,6 @@
     <value>Saving plugins proxy to '{0}'.</value>
   </data>
   <data name="PluginProxyWantToInstall" xml:space="preserve">
-    <value>Plugin proxy is not found. Do you want to download it now? (y/n)</value>
+    <value>Plugin proxy is not found. Do you want to download it now? (y/N)</value>
   </data>
 </root>

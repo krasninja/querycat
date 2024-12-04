@@ -100,7 +100,7 @@ internal sealed class PluginProxyDownloader
 
     public static string GetLinkToPluginsProxyFile()
     {
-        // Example: https://github.com/krasninja/querycat/releases/download/v0.6.9/qcat-0.6.9-win-x64.zip.
+        // Example: https://github.com/krasninja/querycat/releases/download/v0.8.0/qcat-plugins-proxy-0.8.0-linux-x64.tar.gz.
         var sb = new StringBuilder(120);
         sb.Append(@$"{RepositoryUrl}");
         sb.Append($"v{Application.GetShortVersion()}/");

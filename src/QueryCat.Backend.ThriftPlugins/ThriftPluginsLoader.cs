@@ -23,8 +23,6 @@ namespace QueryCat.Backend.ThriftPlugins;
 public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
 {
     private const string FunctionsCacheFileExtension = ".fcache.json";
-    private const string ProxyExecutable = "qcat-plugins-proxy";
-    private const string ProxyLatestVersion = "2";
 
     private readonly IExecutionThread _thread;
     private readonly string? _applicationDirectory;
@@ -385,7 +383,7 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
         string authToken,
         CancellationToken cancellationToken = default)
     {
-        var proxyExecutable = ResolveProxyFileName();
+        var proxyExecutable = ProxyFile.ResolveProxyFileName(_applicationDirectory);
         if (string.IsNullOrEmpty(proxyExecutable))
         {
             throw new ProxyNotFoundException(file);
@@ -398,20 +396,6 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
             ["--assembly=" + file],
             file,
             cancellationToken);
-    }
-
-    private string ResolveProxyFileName()
-    {
-        var proxyExecutable = PathUtils.ResolveExecutableFullPath(
-            GetProxyFileName(includeCurrentVersion: true),
-            _applicationDirectory);
-        if (string.IsNullOrEmpty(proxyExecutable))
-        {
-            proxyExecutable = PathUtils.ResolveExecutableFullPath(
-                GetProxyFileName(includeCurrentVersion: false),
-                _applicationDirectory);
-        }
-        return proxyExecutable;
     }
 
     private ThriftPluginsServer.PluginContext LoadPluginExecutable(
@@ -484,19 +468,6 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
 
     [LoggerMessage(LogLevel.Error, "[{PluginName}]: {Data}")]
     private partial void LogPluginStdErr(string pluginName, string? data);
-
-    /// <summary>
-    /// Get plugins proxy file name.
-    /// </summary>
-    /// <param name="includeCurrentVersion">Append version postfix.</param>
-    /// <returns>Plugins proxy file name.</returns>
-    public static string GetProxyFileName(bool includeCurrentVersion = false)
-    {
-        var proxyExecutable = includeCurrentVersion ? ProxyExecutable + ProxyLatestVersion : ProxyExecutable;
-        return Application.GetPlatform() == Application.PlatformWindows
-            ? proxyExecutable + ".exe"
-            : proxyExecutable;
-    }
 
     private ThriftPluginsServer.PluginContext LoadPluginLibrary(
         string file,

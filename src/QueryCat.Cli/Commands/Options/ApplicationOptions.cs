@@ -49,12 +49,13 @@ internal sealed class ApplicationOptions
         {
             var applicationDirectory = ExecutionThread.GetApplicationDirectory(ensureExists: true);
             var pluginsProxyLocalFile = Path.Combine(applicationDirectory,
-                Backend.ThriftPlugins.ThriftPluginsLoader.GetProxyFileName(includeCurrentVersion: true));
+                Backend.ThriftPlugins.ProxyFile.GetProxyFileName(includeVersion: true));
             Backend.Core.Utils.AsyncUtils.RunSync(ct =>
             {
-                var downloader = new PluginProxyDownloader(Backend.ThriftPlugins.ThriftPluginsLoader.GetProxyFileName());
+                var downloader = new PluginProxyDownloader(Backend.ThriftPlugins.ProxyFile.GetProxyFileName());
                 return downloader.DownloadAsync(pluginsProxyLocalFile, ct);
             });
+            Backend.ThriftPlugins.ProxyFile.CleanUpPreviousVersions(applicationDirectory);
             return true;
         }
         return false;
