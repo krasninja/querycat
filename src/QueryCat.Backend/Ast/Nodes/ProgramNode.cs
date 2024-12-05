@@ -11,13 +11,9 @@ internal sealed class ProgramNode : AstNode
     /// <inheritdoc />
     public override string Code => "program";
 
-    public ProgramNode(IList<StatementNode> statements)
+    public ProgramNode(params IList<StatementNode> statements)
     {
         Statements.AddRange(statements);
-    }
-
-    public ProgramNode(params StatementNode[] statements) : this(statements.ToList())
-    {
     }
 
     public ProgramNode(ProgramNode node) : this(

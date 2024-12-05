@@ -124,7 +124,7 @@ internal readonly struct CacheKey
         return sb.ToString();
     }
 
-    internal static CacheKey Deserialize(string str, params Column[] columns)
+    internal static CacheKey Deserialize(string str, params IReadOnlyList<Column> columns)
     {
         Column? FindColumnByName(string columnName) => columns.FirstOrDefault(c => c.Name.Equals(columnName));
 

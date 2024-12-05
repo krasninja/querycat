@@ -10,7 +10,7 @@ internal static class IndentedStringBuilderExtensions
     public static IndentedStringBuilder AppendRowsIteratorsWithIndent(
         this IndentedStringBuilder stringBuilder,
         string text,
-        params IRowsIterator[] rowsIterators)
+        params ReadOnlySpan<IRowsIterator> rowsIterators)
     {
         stringBuilder.AppendLine(text);
         stringBuilder.IncreaseIndent();
@@ -25,7 +25,7 @@ internal static class IndentedStringBuilderExtensions
     public static IndentedStringBuilder AppendRowsInputsWithIndent(
         this IndentedStringBuilder stringBuilder,
         string text,
-        params IRowsInput[] rowsInputs)
+        params ReadOnlySpan<IRowsInput> rowsInputs)
     {
         stringBuilder.AppendLine(text);
         stringBuilder.IncreaseIndent();

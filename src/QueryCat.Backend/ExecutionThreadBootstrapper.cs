@@ -109,7 +109,7 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
     /// </summary>
     /// <param name="registrations">Registration delegates.</param>
     /// <returns>The instance of <see cref="ExecutionThreadBootstrapper" />.</returns>
-    public ExecutionThreadBootstrapper WithRegistrations(params Action<IFunctionsManager>[] registrations)
+    public ExecutionThreadBootstrapper WithRegistrations(params IEnumerable<Action<IFunctionsManager>> registrations)
     {
         _registrations.AddRange(registrations);
         return this;

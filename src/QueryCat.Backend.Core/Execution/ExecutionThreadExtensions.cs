@@ -16,7 +16,7 @@ public static class ExecutionThreadExtensions
     /// <param name="args">Arguments.</param>
     /// <returns>Return value.</returns>
     public static VariantValue CallFunction(
-        this IExecutionThread executionThread, FunctionDelegate functionDelegate, params object[] args)
+        this IExecutionThread executionThread, FunctionDelegate functionDelegate, params ReadOnlySpan<object> args)
     {
         using var frame = executionThread.Stack.CreateFrame();
         foreach (var arg in args)

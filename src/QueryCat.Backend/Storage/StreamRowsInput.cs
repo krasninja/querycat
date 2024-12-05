@@ -85,7 +85,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     protected StreamRowsInput(
         StreamReader streamReader,
         StreamRowsInputOptions? options = null,
-        params string[] keys)
+        params IEnumerable<string> keys)
     {
         _options = options ?? new();
         _delimiterStreamReader = new DelimiterStreamReader(streamReader, _options.DelimiterStreamReaderOptions);
