@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using QueryCat.Backend;
 using QueryCat.Backend.Addons.Formatters;
 using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.PluginsManager;
 using QueryCat.Cli.Infrastructure;
@@ -32,7 +33,7 @@ internal sealed class ApplicationOptions
         }
         catch (Backend.ThriftPlugins.ProxyNotFoundException)
         {
-            InstallPluginsProxy();
+            AsyncUtils.RunSync(async ct => await InstallPluginsProxyAsync(cancellationToken: ct));
             return CreateApplicationRootInternal(executionOptions);
         }
 #else
@@ -40,27 +41,30 @@ internal sealed class ApplicationOptions
 #endif
     }
 
-#if ENABLE_PLUGINS && PLUGIN_THRIFT
-    internal static bool InstallPluginsProxy()
+    internal static async Task<bool> InstallPluginsProxyAsync(bool askUser = true, CancellationToken cancellationToken = default)
     {
-        Console.WriteLine(Resources.Messages.PluginProxyWantToInstall);
-        var key = Console.ReadKey();
-        if (key.Key == ConsoleKey.Y)
+#if ENABLE_PLUGINS && PLUGIN_THRIFT
+        var key = ConsoleKey.Y;
+        if (askUser)
+        {
+            Console.WriteLine(Resources.Messages.PluginProxyWantToInstall);
+            key = Console.ReadKey().Key;
+        }
+        if (key == ConsoleKey.Y)
         {
             var applicationDirectory = ExecutionThread.GetApplicationDirectory(ensureExists: true);
             var pluginsProxyLocalFile = Path.Combine(applicationDirectory,
                 Backend.ThriftPlugins.ProxyFile.GetProxyFileName(includeVersion: true));
-            Backend.Core.Utils.AsyncUtils.RunSync(ct =>
-            {
-                var downloader = new PluginProxyDownloader(Backend.ThriftPlugins.ProxyFile.GetProxyFileName());
-                return downloader.DownloadAsync(pluginsProxyLocalFile, ct);
-            });
+            var downloader = new PluginProxyDownloader(Backend.ThriftPlugins.ProxyFile.GetProxyFileName());
+            await downloader.DownloadAsync(pluginsProxyLocalFile, cancellationToken);
             Backend.ThriftPlugins.ProxyFile.CleanUpPreviousVersions(applicationDirectory);
             return true;
         }
         return false;
-    }
+#else
+        return false;
 #endif
+    }
 
     private ApplicationRoot CreateApplicationRootInternal(AppExecutionOptions? executionOptions = null)
     {

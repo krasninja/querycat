@@ -2,6 +2,7 @@ using System.CommandLine;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Cli.Commands;
 
@@ -54,9 +55,11 @@ internal abstract class BaseQueryCommand : BaseCommand
         {
             executionThread.Run(query, cancellationToken: cancellationToken);
         }
-        catch (QueryCat.Backend.ThriftPlugins.ProxyNotFoundException)
+        catch (Backend.ThriftPlugins.ProxyNotFoundException)
         {
-            if (QueryCat.Cli.Commands.Options.ApplicationOptions.InstallPluginsProxy())
+            var installed = AsyncUtils.RunSync(async ct =>
+                await QueryCat.Cli.Commands.Options.ApplicationOptions.InstallPluginsProxyAsync(cancellationToken: ct));
+            if (installed)
             {
                 executionThread.Run(query, cancellationToken: cancellationToken);
             }

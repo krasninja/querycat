@@ -20,6 +20,7 @@ internal class PluginInstallCommand : BaseCommand
             {
                 using var root = applicationOptions.CreateApplicationRoot();
                 await root.PluginsManager.InstallAsync(plugin, ct);
+                await ApplicationOptions.InstallPluginsProxyAsync(askUser: false, ct);
             });
         }, new ApplicationOptionsBinder(LogLevelOption, PluginDirectoriesOption), pluginArgument);
     }
