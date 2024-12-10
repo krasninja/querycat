@@ -43,7 +43,7 @@ internal readonly struct CacheKeyCondition : IEquatable<CacheKeyCondition>
     internal static bool Deserialize(Func<string, Column?> columnFinder, string str, out CacheKeyCondition condition)
     {
         var arr = StringUtils.GetFieldsFromLine(str);
-        if (arr.Length < 3)
+        if (arr.Count < 3)
         {
             condition = default;
             return false;
