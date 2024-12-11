@@ -2,6 +2,7 @@ using System;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Plugins.Sdk;
@@ -257,4 +258,44 @@ public static class SdkConvert
             Version = assemblyName.Version?.ToString() ?? "0.0.0",
         };
     }
+
+    public static QueryCatErrorCode Convert(ErrorCode errorCode)
+        => errorCode switch
+        {
+            ErrorCode.OK => QueryCatErrorCode.OK,
+            ErrorCode.Error => QueryCatErrorCode.ERROR,
+            ErrorCode.Deleted => QueryCatErrorCode.DELETED,
+            ErrorCode.NoData => QueryCatErrorCode.NO_DATA,
+            ErrorCode.NotSupported => QueryCatErrorCode.NOT_SUPPORTED,
+            ErrorCode.NotInitialized => QueryCatErrorCode.NOT_INITIALIZED,
+            ErrorCode.AccessDenied => QueryCatErrorCode.ACCESS_DENIED,
+            ErrorCode.InvalidArguments => QueryCatErrorCode.INVALID_ARGUMENTS,
+            ErrorCode.Aborted => QueryCatErrorCode.ABORTED,
+            ErrorCode.Closed => QueryCatErrorCode.CLOSED,
+            ErrorCode.CannotCast => QueryCatErrorCode.CANNOT_CAST,
+            ErrorCode.CannotApplyOperator => QueryCatErrorCode.CANNOT_APPLY_OPERATOR,
+            ErrorCode.InvalidColumnIndex => QueryCatErrorCode.INVALID_COLUMN_INDEX,
+            ErrorCode.InvalidInputState => QueryCatErrorCode.INVALID_INPUT_STATE,
+            _ => throw new ArgumentOutOfRangeException(nameof(errorCode), errorCode, Resources.Errors.InvalidErrorCode),
+        };
+
+    public static ErrorCode Convert(QueryCatErrorCode errorCode)
+        => errorCode switch
+        {
+            QueryCatErrorCode.OK => ErrorCode.OK,
+            QueryCatErrorCode.ERROR => ErrorCode.Error,
+            QueryCatErrorCode.DELETED => ErrorCode.Deleted,
+            QueryCatErrorCode.NO_DATA => ErrorCode.NoData,
+            QueryCatErrorCode.NOT_SUPPORTED => ErrorCode.NotSupported,
+            QueryCatErrorCode.NOT_INITIALIZED => ErrorCode.NotInitialized,
+            QueryCatErrorCode.ACCESS_DENIED => ErrorCode.AccessDenied,
+            QueryCatErrorCode.INVALID_ARGUMENTS => ErrorCode.InvalidArguments,
+            QueryCatErrorCode.ABORTED => ErrorCode.Aborted,
+            QueryCatErrorCode.CLOSED => ErrorCode.Closed,
+            QueryCatErrorCode.CANNOT_CAST => ErrorCode.CannotCast,
+            QueryCatErrorCode.CANNOT_APPLY_OPERATOR => ErrorCode.CannotApplyOperator,
+            QueryCatErrorCode.INVALID_COLUMN_INDEX => ErrorCode.InvalidColumnIndex,
+            QueryCatErrorCode.INVALID_INPUT_STATE => ErrorCode.InvalidInputState,
+            _ => throw new ArgumentOutOfRangeException(nameof(errorCode), errorCode, Resources.Errors.InvalidErrorCode),
+        };
 }

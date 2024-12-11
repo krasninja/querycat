@@ -36,6 +36,26 @@ public enum ErrorCode
     /// </summary>
     NotInitialized = 5,
 
+    /// <summary>
+    /// Requires more permissions for the action.
+    /// </summary>
+    AccessDenied = 6,
+
+    /// <summary>
+    /// Invalid number of arguments or incorrect call.
+    /// </summary>
+    InvalidArguments = 7,
+
+    /// <summary>
+    /// Operation aborted.
+    /// </summary>
+    Aborted = 8,
+
+    /// <summary>
+    /// The object is closed.
+    /// </summary>
+    Closed = 9,
+
     // More specific errors.
 
     /// <summary>

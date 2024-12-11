@@ -9,21 +9,21 @@
 
 namespace QueryCat.Plugins.Client.Resources {
     using System;
-    
-    
+
+
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
     [System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Errors {
-        
+
         private static System.Resources.ResourceManager resourceMan;
-        
+
         private static System.Globalization.CultureInfo resourceCulture;
-        
+
         [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
         internal Errors() {
         }
-        
+
         [System.ComponentModel.EditorBrowsableAttribute(System.ComponentModel.EditorBrowsableState.Advanced)]
         internal static System.Resources.ResourceManager ResourceManager {
             get {
@@ -34,7 +34,7 @@ namespace QueryCat.Plugins.Client.Resources {
                 return resourceMan;
             }
         }
-        
+
         [System.ComponentModel.EditorBrowsableAttribute(System.ComponentModel.EditorBrowsableState.Advanced)]
         internal static System.Globalization.CultureInfo Culture {
             get {
@@ -44,85 +44,91 @@ namespace QueryCat.Plugins.Client.Resources {
                 resourceCulture = value;
             }
         }
-        
+
         internal static string HandlerInternalError {
             get {
                 return ResourceManager.GetString("HandlerInternalError", resourceCulture);
             }
         }
-        
+
         internal static string Object_InvalidHandle {
             get {
                 return ResourceManager.GetString("Object_InvalidHandle", resourceCulture);
             }
         }
-        
+
         internal static string NotSupported_QueryRun {
             get {
                 return ResourceManager.GetString("NotSupported_QueryRun", resourceCulture);
             }
         }
-        
+
         internal static string Object_Released {
             get {
                 return ResourceManager.GetString("Object_Released", resourceCulture);
             }
         }
-        
+
         internal static string Object_InvalidTypeSource {
             get {
                 return ResourceManager.GetString("Object_InvalidTypeSource", resourceCulture);
             }
         }
-        
+
         internal static string NotSupported_FunctionsManager {
             get {
                 return ResourceManager.GetString("NotSupported_FunctionsManager", resourceCulture);
             }
         }
-        
+
         internal static string Object_IsNotBlob {
             get {
                 return ResourceManager.GetString("Object_IsNotBlob", resourceCulture);
             }
         }
-        
+
         internal static string TransportNotInitialized {
             get {
                 return ResourceManager.GetString("TransportNotInitialized", resourceCulture);
             }
         }
-        
+
         internal static string InvalidArgument {
             get {
                 return ResourceManager.GetString("InvalidArgument", resourceCulture);
             }
         }
-        
+
+        internal static string InvalidErrorCode {
+            get {
+                return ResourceManager.GetString("InvalidErrorCode", resourceCulture);
+            }
+        }
+
         internal static string CannotGetPath {
             get {
                 return ResourceManager.GetString("CannotGetPath", resourceCulture);
             }
         }
-        
+
         internal static string CannotConnectPluginManager {
             get {
                 return ResourceManager.GetString("CannotConnectPluginManager", resourceCulture);
             }
         }
-        
+
         internal static string MustBeRunByHost {
             get {
                 return ResourceManager.GetString("MustBeRunByHost", resourceCulture);
             }
         }
-        
+
         internal static string Object_InvalidType {
             get {
                 return ResourceManager.GetString("Object_InvalidType", resourceCulture);
             }
         }
-        
+
         internal static string Object_CannotRegister {
             get {
                 return ResourceManager.GetString("Object_CannotRegister", resourceCulture);

@@ -106,7 +106,7 @@ public class CollectionInput : IRowsOutput, IDisposable, IRowsInputUpdate
     }
 
     /// <inheritdoc />
-    public void WriteValues(in VariantValue[] values)
+    public ErrorCode WriteValues(VariantValue[] values)
     {
         if (_enumerable is not IList list)
         {
@@ -127,6 +127,8 @@ public class CollectionInput : IRowsOutput, IDisposable, IRowsInputUpdate
             prop.SetValue(obj, ChangeType(values[i].GetGenericObject(), prop.PropertyType));
         }
         list.Add(obj);
+
+        return ErrorCode.OK;
     }
 
     private PropertyInfo[] GetPropertiesToColumnsMapping(Column[] columns)

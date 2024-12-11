@@ -1,3 +1,4 @@
+using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
 
@@ -31,7 +32,7 @@ public abstract class RowsOutput : IRowsOutput
     public RowsOutputOptions Options { get; protected set; } = new();
 
     /// <inheritdoc />
-    public void WriteValues(in VariantValue[] values)
+    public ErrorCode WriteValues(VariantValue[] values)
     {
         if (_isFirstCall)
         {
@@ -39,6 +40,7 @@ public abstract class RowsOutput : IRowsOutput
             _isFirstCall = false;
         }
         OnWrite(values);
+        return ErrorCode.OK;
     }
 
     /// <summary>

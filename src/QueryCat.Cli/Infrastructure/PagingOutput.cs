@@ -1,3 +1,4 @@
+using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
 
@@ -55,7 +56,7 @@ public class PagingOutput : IRowsOutput
     }
 
     /// <inheritdoc />
-    public void WriteValues(in VariantValue[] values)
+    public ErrorCode WriteValues(VariantValue[] values)
     {
         _rowsOutput.WriteValues(values);
         if (PagingRowsCount != NoLimit
@@ -80,5 +81,7 @@ public class PagingOutput : IRowsOutput
                 _cancellationTokenSource?.Cancel();
             }
         }
+
+        return ErrorCode.OK;
     }
 }

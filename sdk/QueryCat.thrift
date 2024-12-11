@@ -95,6 +95,10 @@ enum QueryCatErrorCode {
   NO_DATA = 3,
   NOT_SUPPORTED = 4,
   NOT_INITIALIZED = 5,
+  ACCESS_DENIED = 6,
+  INVALID_ARGUMENTS = 7,
+  ABORTED = 8,
+  CLOSED = 9,
 
   CANNOT_CAST = 100,
   CANNOT_APPLY_OPERATOR = 101,
@@ -299,7 +303,7 @@ service Plugin {
 
   // Update the rows set value.
   // Supported objects: ROWS_INPUT with rows update support.
-  bool RowsSet_UpdateValue(
+  QueryCatErrorCode RowsSet_UpdateValue(
     1: required Handle object_handle,
     2: required i32 column_index,
     3: required VariantValue value
@@ -307,9 +311,14 @@ service Plugin {
 
   // Write new row (values) to rows set.
   // Supported objects: ROWS_OUTPUT.
-  void RowsSet_WriteValues(
+  QueryCatErrorCode RowsSet_WriteValues(
     1: required Handle object_handle,
     2: required list<VariantValue> values // Should match columns count.
+  ) throws (1: QueryCatPluginException e),
+
+  // Delete the current row.
+  QueryCatErrorCode RowsSet_DeleteRow(
+    1: required Handle object_handle
   ) throws (1: QueryCatPluginException e),
 
   // Read binary data.

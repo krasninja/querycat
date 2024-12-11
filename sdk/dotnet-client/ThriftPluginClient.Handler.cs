@@ -290,7 +290,7 @@ public partial class ThriftPluginClient
         }
 
         /// <inheritdoc />
-        public Task<bool> RowsSet_UpdateValueAsync(int object_handle, int column_index, VariantValue? value,
+        public Task<QueryCatErrorCode> RowsSet_UpdateValueAsync(int object_handle, int column_index, VariantValue? value,
             CancellationToken cancellationToken = default)
         {
             if (value != null
@@ -298,7 +298,7 @@ public partial class ThriftPluginClient
                 && rowsInputUpdate != null)
             {
                 var result = rowsInputUpdate.UpdateValue(column_index, SdkConvert.Convert(value));
-                return Task.FromResult(result == ErrorCode.OK);
+                return Task.FromResult(SdkConvert.Convert(result));
             }
             throw new QueryCatPluginException(
                 ErrorType.INVALID_OBJECT,
@@ -306,19 +306,33 @@ public partial class ThriftPluginClient
         }
 
         /// <inheritdoc />
-        public Task RowsSet_WriteValuesAsync(int object_handle, List<VariantValue>? values,
+        public Task<QueryCatErrorCode> RowsSet_WriteValuesAsync(int object_handle, List<VariantValue>? values,
             CancellationToken cancellationToken = default)
         {
             if (values != null
                 && _thriftPluginClient._objectsStorage.TryGet<IRowsOutput>(object_handle, out var rowsOutput)
                 && rowsOutput != null)
             {
-                rowsOutput.WriteValues(values.Select(SdkConvert.Convert).ToArray());
-                return Task.CompletedTask;
+                var result = rowsOutput.WriteValues(values.Select(SdkConvert.Convert).ToArray());
+                return Task.FromResult(SdkConvert.Convert(result));
             }
             throw new QueryCatPluginException(
                 ErrorType.INVALID_OBJECT,
                 string.Format(Resources.Errors.Object_InvalidType, typeof(IRowsOutput)));
+        }
+
+        /// <inheritdoc />
+        public Task<QueryCatErrorCode> RowsSet_DeleteRowAsync(int object_handle, CancellationToken cancellationToken = default)
+        {
+            if (_thriftPluginClient._objectsStorage.TryGet<IRowsInputDelete>(object_handle, out var rowsInputDelete)
+                && rowsInputDelete != null)
+            {
+                var result = rowsInputDelete.DeleteCurrent();
+                return Task.FromResult(SdkConvert.Convert(result));
+            }
+            throw new QueryCatPluginException(
+                ErrorType.INVALID_OBJECT,
+                string.Format(Resources.Errors.Object_InvalidType, typeof(IRowsInputDelete)));
         }
 
         /// <inheritdoc />
@@ -530,7 +544,7 @@ public partial class ThriftPluginClient
         }
 
         /// <inheritdoc />
-        public Task<bool> RowsSet_UpdateValueAsync(int object_handle, int column_index, VariantValue? value,
+        public Task<QueryCatErrorCode> RowsSet_UpdateValueAsync(int object_handle, int column_index, VariantValue? value,
             CancellationToken cancellationToken = default)
         {
             try
@@ -545,11 +559,25 @@ public partial class ThriftPluginClient
         }
 
         /// <inheritdoc />
-        public Task RowsSet_WriteValuesAsync(int object_handle, List<VariantValue>? values, CancellationToken cancellationToken = default)
+        public Task<QueryCatErrorCode> RowsSet_WriteValuesAsync(int object_handle, List<VariantValue>? values, CancellationToken cancellationToken = default)
         {
             try
             {
                 return _handler.RowsSet_WriteValuesAsync(object_handle, values, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, Resources.Errors.HandlerInternalError);
+                throw QueryCatPluginExceptionUtils.Create(ex, objectHandle: object_handle);
+            }
+        }
+
+        /// <inheritdoc />
+        public Task<QueryCatErrorCode> RowsSet_DeleteRowAsync(int object_handle, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return _handler.RowsSet_DeleteRowAsync(object_handle, cancellationToken);
             }
             catch (Exception ex)
             {

@@ -35,7 +35,5 @@ public sealed class NullRowsOutput : IRowsOutput
     }
 
     /// <inheritdoc />
-    public void WriteValues(in VariantValue[] values)
-    {
-    }
+    public ErrorCode WriteValues(VariantValue[] values) => ErrorCode.OK;
 }

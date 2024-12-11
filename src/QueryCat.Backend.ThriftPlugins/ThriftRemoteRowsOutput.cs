@@ -1,3 +1,4 @@
+using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Utils;
 using QueryCat.Plugins.Client;
@@ -64,12 +65,13 @@ internal sealed class ThriftRemoteRowsOutput : IRowsOutput
     }
 
     /// <inheritdoc />
-    public void WriteValues(in VariantValue[] values)
+    public ErrorCode WriteValues(VariantValue[] values)
     {
         var valuesArray = values.ToArray();
-        AsyncUtils.RunSync(ct => _client.RowsSet_WriteValuesAsync(
+        var result = AsyncUtils.RunSync(ct => _client.RowsSet_WriteValuesAsync(
             _objectHandle,
             valuesArray.Select(SdkConvert.Convert).ToList(),
             ct));
+        return SdkConvert.Convert(result);
     }
 }
