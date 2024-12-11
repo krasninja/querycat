@@ -27,7 +27,7 @@ public sealed class IISW3CInput : StreamRowsInput
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(IISW3CInput));
 
     // https://procodeguide.com/programming/iis-logs/.
-    private static readonly IDictionary<string, Column> AvailableFields = new Dictionary<string, Column>
+    private static readonly FrozenDictionary<string, Column> _availableFields = new Dictionary<string, Column>
     {
         ["date"] = new("date", DataType.Timestamp, "Date of request."),
         ["time"] = new("time", DataType.String, "Time of request in UTC."),
@@ -52,6 +52,10 @@ public sealed class IISW3CInput : StreamRowsInput
         ["cs(Cookie)"] = new("cs(Cookie)", DataType.String, "The content of the cookie sent or received."),
         ["cs(Referer)"] = new("cs(Referer)", DataType.String, "The site that the user last visited."),
     }.ToFrozenDictionary();
+
+    private static readonly FrozenDictionary<string, Column>
+        .AlternateLookup<ReadOnlySpan<char>> _availableFieldsLookup =
+            _availableFields.GetAlternateLookup<ReadOnlySpan<char>>();
 
     public IISW3CInput(Stream stream, string? key = null) : base(new StreamReader(stream), new StreamRowsInputOptions
     {
@@ -157,13 +161,18 @@ public sealed class IISW3CInput : StreamRowsInput
 
     private void ParseHeaders(ReadOnlySpan<char> header)
     {
-        var fields = header.ToString()[FieldsMarker.Length..]
-            .Split(' ', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        var subheader = header[FieldsMarker.Length..];
+        var fieldsRanges = subheader.Split(' ');
         var columns = new List<Column>();
-        for (var i = 0; i < fields.Length; i++)
+        var i = 0;
+        foreach (var fieldRange in fieldsRanges)
         {
-            var field = fields[i];
-            if (AvailableFields.TryGetValue(field, out var column))
+            ReadOnlySpan<char> field = subheader[fieldRange];
+            if (field.Length < 1)
+            {
+                continue;
+            }
+            if (_availableFieldsLookup.TryGetValue(field, out var column))
             {
                 if (Column.NameEquals(column, "time"))
                 {
@@ -180,6 +189,7 @@ public sealed class IISW3CInput : StreamRowsInput
             {
                 columns.Add(new Column(i, DataType.String));
             }
+            i++;
         }
 
         SetColumns(columns);
