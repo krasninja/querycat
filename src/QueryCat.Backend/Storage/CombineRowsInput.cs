@@ -12,9 +12,24 @@ internal sealed class CombineRowsInput : RowsInput, IDisposable
     private readonly IReadOnlyList<IRowsInput> _rowsInputs;
     private int _currentInputIndex = -1;
     private IRowsInput? _currentRowsInput;
+    private QueryContext _queryContext = NullQueryContext.Instance;
 
     /// <inheritdoc />
     public override Column[] Columns { get; protected set; } = [];
+
+    /// <inheritdoc />
+    public override QueryContext QueryContext
+    {
+        get => _queryContext;
+        set
+        {
+            _queryContext = value;
+            foreach (var rowsInput in _rowsInputs)
+            {
+                rowsInput.QueryContext = _queryContext;
+            }
+        }
+    }
 
     public CombineRowsInput(IReadOnlyList<IRowsInput> rowsInputs)
     {

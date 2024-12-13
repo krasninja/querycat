@@ -23,10 +23,10 @@ internal sealed class InsertCommandHandler : IFuncUnit
     public VariantValue Invoke(IExecutionThread thread)
     {
         var insertCount = 0;
+        _rowsOutput.QueryContext = new RowsOutputQueryContext(_rowsInput.Columns);
         _rowsOutput.Open();
         try
         {
-            _rowsOutput.QueryContext = new RowsOutputQueryContext(_rowsInput.Columns);
             while (_rowsInput.MoveNext())
             {
                 _rowsOutput.WriteValues(_rowsInput.Current.Values);

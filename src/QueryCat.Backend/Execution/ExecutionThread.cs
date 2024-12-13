@@ -476,8 +476,8 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
                 }
                 if (!isOpened)
                 {
-                    rowsOutput.Open();
                     rowsOutput.QueryContext = new RowsOutputQueryContext(rowsIterator.Columns);
+                    rowsOutput.Open();
                     isOpened = true;
                 }
                 rowsOutput.WriteValues(rowsIterator.Current.Values);

@@ -1,7 +1,10 @@
 using System.Diagnostics;
+using QueryCat.Backend.Ast;
+using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
+using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Storage;
@@ -220,7 +223,7 @@ internal sealed class SelectCommandContext(SelectQueryNode queryNode) : CommandC
     public bool HasFinalRowsIterator { get; set; }
 
     /// <summary>
-    /// Set to <c>true</c> if there are not "SELECT *" matches.
+    /// Set to <c>true</c> if there are no "SELECT *" matches.
     /// </summary>
     public bool HasExactColumnsSelect { get; set; }
 
@@ -233,6 +236,27 @@ internal sealed class SelectCommandContext(SelectQueryNode queryNode) : CommandC
     /// Common table expressions of the query.
     /// </summary>
     internal List<CommonTableExpression> CteList { get; } = new();
+
+    /// <summary>
+    /// Returns the list of identifiers - direct references to input columns.
+    /// </summary>
+    /// <returns>List of identifiers.</returns>
+    internal Column[] GetSelectIdentifierColumns(string sourceName)
+    {
+        var ids = new List<Column>();
+        foreach (var columnsNode in queryNode.ColumnsListNode.ColumnsNodes)
+        {
+            foreach (var identifierNode in columnsNode.GetAllChildren<IdentifierExpressionNode>())
+            {
+                if (!identifierNode.IsCurrentSpecialIdentifier
+                    && (string.IsNullOrEmpty(identifierNode.TableSourceName) || identifierNode.TableSourceName == sourceName))
+                {
+                    ids.Add(new Column(identifierNode.TableFieldName, sourceName, DataType.Void));
+                }
+            }
+        }
+        return ids.ToArray();
+    }
 
     public void Dump(IndentedStringBuilder stringBuilder)
     {

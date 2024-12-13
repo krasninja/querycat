@@ -202,7 +202,7 @@ internal sealed class GroupRowsIterator : IRowsIterator, IRowsIteratorParent
             var columnName = !string.IsNullOrEmpty(target.Name) ? target.Name : $"__a-{target.Node.Id}";
             var column = new Column(columnName, target.ReturnType);
             columns.Add(column);
-            var info = _context.ColumnsInfoContainer.GetByColumn(column);
+            var info = _context.ColumnsInfoContainer.GetByColumnOrAdd(column);
             info.IsAggregateKey = true;
         }
         return columns.ToArray();

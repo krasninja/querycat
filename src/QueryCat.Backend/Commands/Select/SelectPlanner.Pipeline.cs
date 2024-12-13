@@ -162,7 +162,7 @@ internal sealed partial class SelectPlanner
                 }
             }
             var columnIndex = projectedIterator.AddFuncColumn(selectColumns[i].Column, funcs[i]);
-            var info = context.ColumnsInfoContainer.GetByColumn(projectedIterator.Columns[columnIndex]);
+            var info = context.ColumnsInfoContainer.GetByColumnOrAdd(projectedIterator.Columns[columnIndex]);
             info.RelatedSelectSublistNode = columnsNode.ColumnsNodes[selectColumns[i].ColumnIndex];
         }
 
@@ -403,7 +403,7 @@ internal sealed partial class SelectPlanner
 
             if (!context.HasExactColumnsSelect)
             {
-                var columnInfo = context.ColumnsInfoContainer.GetByColumn(rowIdIterator.RowNumberColumn);
+                var columnInfo = context.ColumnsInfoContainer.GetByColumnOrAdd(rowIdIterator.RowNumberColumn);
                 var rowNumberExpressionNode = new SelectColumnsSublistExpressionNode(
                     new IdentifierExpressionNode(rowIdIterator.RowNumberColumn.Name));
                 columnInfo.RelatedSelectSublistNode = rowNumberExpressionNode;

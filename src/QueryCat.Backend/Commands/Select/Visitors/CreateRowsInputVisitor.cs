@@ -45,7 +45,7 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
 
         var source = new CreateDelegateVisitor(_executionThread, typesVisitor).RunAndReturn(node.TableFunctionNode)
             .Invoke(_executionThread);
-        var inputContext = CreateRowsInput(source);
+        var inputContext = CreateRowsInput(source, node.Alias);
         inputContext.Alias = node.Alias;
         _context.AddInput(inputContext);
 
@@ -54,7 +54,7 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
         node.SetAttribute(AstAttributeKeys.RowsInputKey, inputContext.RowsInput);
     }
 
-    private SelectCommandInputContext CreateRowsInput(VariantValue source)
+    private SelectCommandInputContext CreateRowsInput(VariantValue source, string alias)
     {
         if (DataTypeUtils.IsSimple(source.Type))
         {
@@ -62,7 +62,8 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
         }
         if (source.AsObject is IRowsInput rowsInput)
         {
-            var queryContext = new SelectInputQueryContext(rowsInput)
+            var targetColumns = _context.GetSelectIdentifierColumns(alias);
+            var queryContext = new SelectInputQueryContext(rowsInput, targetColumns)
             {
                 InputConfigStorage = _executionThread.ConfigStorage,
             };
