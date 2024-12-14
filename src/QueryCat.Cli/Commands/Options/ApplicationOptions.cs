@@ -107,7 +107,8 @@ internal sealed class ApplicationOptions
             executionOptions.PluginDirectories,
             pluginsLoader,
             platform: Application.GetPlatform(),
-            bucketUri: executionOptions.PluginsRepositoryUri));
+            pluginsStorage: new S3PluginsStorage(executionOptions.PluginsRepositoryUri))
+        );
 #endif
         var thread = bootstrapper.Create();
 

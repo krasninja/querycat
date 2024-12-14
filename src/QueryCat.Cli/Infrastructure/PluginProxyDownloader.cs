@@ -3,7 +3,7 @@ using System.IO.Compression;
 using System.Text;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
-using QueryCat.Backend.Utils;
+using QueryCat.Backend.PluginsManager;
 
 namespace QueryCat.Cli.Infrastructure;
 
@@ -28,7 +28,9 @@ internal sealed class PluginProxyDownloader
         _logger.LogDebug("Download proxy with URI {Uri}.", pluginsProxyRemoteFile);
         var tempPath = Path.GetTempPath();
         var archiveFile = await FilesUtils.DownloadFileAsync(
-            httpClient, new Uri(pluginsProxyRemoteFile), tempPath, cancellationToken);
+            ct => new HttpClient().GetStreamAsync(pluginsProxyRemoteFile, ct),
+            Path.Combine(tempPath, Path.GetFileName(pluginsProxyRemoteFile.LocalPath)),
+            cancellationToken);
         _logger.LogDebug("Temporary archive file {File}.", archiveFile);
 
         try
@@ -98,14 +100,14 @@ internal sealed class PluginProxyDownloader
         return Application.GetPlatform() == Application.PlatformWindows ? ".zip" : ".tar.gz";
     }
 
-    public static string GetLinkToPluginsProxyFile()
+    public static Uri GetLinkToPluginsProxyFile()
     {
         // Example: https://github.com/krasninja/querycat/releases/download/v0.8.0/qcat-plugins-proxy-0.8.0-linux-x64.tar.gz.
         var sb = new StringBuilder(120);
         sb.Append(@$"{RepositoryUrl}");
         sb.Append($"v{Application.GetShortVersion()}/");
         sb.Append($"qcat-plugins-proxy-{Application.GetShortVersion()}-{Application.GetPlatform()}-{Application.GetArchitecture()}{GetPlatformExtension()}");
-        return sb.ToString();
+        return new Uri(sb.ToString());
     }
 }
 #endif
