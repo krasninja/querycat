@@ -165,10 +165,7 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader
             if (registerMethod != null)
             {
                 _logger.LogDebug("Register using '{ClassName}' class.", RegistrationClassName);
-                _functionsManager.RegisterFactory(fm =>
-                {
-                    registerMethod.Invoke(null, [fm]);
-                });
+                registerMethod.Invoke(null, [_functionsManager]);
                 return;
             }
         }

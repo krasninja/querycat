@@ -33,15 +33,18 @@ public sealed class PluginFunction : IFunction
     public bool IsAggregate => false;
 
     /// <inheritdoc />
-    public FunctionSignatureArgument[] Arguments { get; set; } = Array.Empty<FunctionSignatureArgument>();
+    public FunctionSignatureArgument[] Arguments { get; set; } = [];
 
     /// <inheritdoc />
-    public bool IsSafe { get; internal set; } = false;
+    public bool IsSafe { get; internal set; }
 
-    public PluginFunction(string name, string signature, FunctionDelegate @delegate)
+    public string[] FormatterIdentifiers { get; }
+
+    public PluginFunction(string name, string signature, FunctionDelegate @delegate, string[]? formatterIdentifiers = null)
     {
         Name = name;
         Signature = signature;
         Delegate = @delegate;
+        FormatterIdentifiers = formatterIdentifiers ?? [];
     }
 }

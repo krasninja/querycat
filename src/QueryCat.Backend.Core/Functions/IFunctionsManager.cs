@@ -28,18 +28,17 @@ public interface IFunctionsManager
     /// <param name="signature">Function signature.</param>
     /// <param name="delegate">Function delegate.</param>
     /// <param name="description">Optional description.</param>
+    /// <param name="formatterIds">The extensions or MIME types that can be used for input.
+    /// Can be applied to formatters.</param>
     /// <returns>Function name.</returns>
-    string RegisterFunction(string signature, FunctionDelegate @delegate, string? description = null);
+    string RegisterFunction(
+        string signature,
+        FunctionDelegate @delegate,
+        string? description = null,
+        string[]? formatterIds = null);
 
     /// <summary>
-    /// Register the delegate that describes more functions.
-    /// </summary>
-    /// <param name="registerFunction">Register function delegate.</param>
-    /// <param name="postpone">Postpone actual registration and add to pending list instead.</param>
-    void RegisterFactory(Action<IFunctionsManager> registerFunction, bool postpone = true);
-
-    /// <summary>
-    /// Tries to find the function by name and it arguments types.
+    /// Tries to find the function by name and its arguments types.
     /// </summary>
     /// <param name="name">Function name.</param>
     /// <param name="functionArgumentsTypes">Function arguments types.</param>

@@ -31,16 +31,14 @@ public sealed class GetFunctionsInMarkdownTask : AsyncFrostingTask<BuildContext>
         }
 
         /// <inheritdoc />
-        public string RegisterFunction(string signature, FunctionDelegate @delegate, string? description = null)
+        public string RegisterFunction(
+            string signature,
+            FunctionDelegate @delegate,
+            string? description = null,
+            string[]? formatterIds = null)
         {
             _functions.Add(new FunctionInfo(signature, description ?? string.Empty));
             return string.Empty;
-        }
-
-        /// <inheritdoc />
-        public void RegisterFactory(Action<IFunctionsManager> registerFunction, bool postpone = true)
-        {
-            registerFunction.Invoke(this);
         }
 
         /// <inheritdoc />

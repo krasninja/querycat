@@ -272,7 +272,11 @@ public partial class ThriftPluginClient : IDisposable
         StartServer();
 
         var functions = _functionsManager.GetPluginFunctions().Select(f =>
-            new Function(f.Signature, f.Description, false)).ToList();
+            new Function(f.Signature, f.Description, false)
+            {
+                IsSafe = f.IsSafe,
+                FormatterIds = f.FormatterIdentifiers.ToList(),
+            }).ToList();
         pluginData ??= SdkConvert.Convert(Assembly.GetEntryAssembly());
         pluginData.Functions = functions;
 

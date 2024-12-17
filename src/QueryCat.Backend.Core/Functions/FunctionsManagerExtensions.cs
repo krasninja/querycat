@@ -31,10 +31,12 @@ public static class FunctionsManagerExtensions
         {
             var methodAttribute = (FunctionSignatureAttribute)attribute;
             var descriptionAttribute = functionDelegate.Method.GetCustomAttribute<DescriptionAttribute>();
+            var formatterAttribute = functionDelegate.Method.GetCustomAttribute<FunctionFormattersAttribute>();
             functionsManager.RegisterFunction(
                 methodAttribute.Signature,
                 functionDelegate,
-                descriptionAttribute != null ? descriptionAttribute.Description : string.Empty);
+                description: descriptionAttribute != null ? descriptionAttribute.Description : string.Empty,
+                formatterIds: formatterAttribute?.FormatterIds);
         }
     }
 
@@ -65,6 +67,10 @@ public static class FunctionsManagerExtensions
                 if (firstConstructor != null)
                 {
                     var functionName = GetFunctionName(((FunctionSignatureAttribute)classAttribute).Signature, type);
+                    if (string.IsNullOrEmpty(functionName))
+                    {
+                        continue;
+                    }
                     var signature = FunctionFormatter.FormatSignatureFromParameters(functionName, firstConstructor.GetParameters(), type);
                     var @delegate = FunctionFormatter.CreateDelegateFromMethod(firstConstructor);
                     var description = type.GetCustomAttribute<DescriptionAttribute>()?.Description ?? string.Empty;
@@ -128,21 +134,21 @@ public static class FunctionsManagerExtensions
     private static string GetFunctionName(string signature, MemberInfo memberInfo)
     {
         var functionName = GetFunctionName(signature);
-        if (string.IsNullOrEmpty(functionName))
+        if (functionName.Length < 1)
         {
             functionName = FunctionFormatter.ToSnakeCase(memberInfo.Name);
         }
-        return functionName;
+        return functionName.ToString();
     }
 
-    private static string GetFunctionName(string signature)
+    private static ReadOnlySpan<char> GetFunctionName(string signature)
     {
-        var indexOfLeftParen = signature.IndexOf("(", StringComparison.Ordinal);
+        var indexOfLeftParen = signature.IndexOf('(', StringComparison.Ordinal);
         if (indexOfLeftParen < 0)
         {
             return signature;
         }
-        return signature[..indexOfLeftParen];
+        return signature.AsSpan()[..indexOfLeftParen];
     }
 
     #endregion

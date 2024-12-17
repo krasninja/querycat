@@ -121,10 +121,15 @@ exception QueryCatPluginException {
  */
 
 struct Function {
+  // Function call signature.
   1: required string signature,
   2: required string description,
+  // Is it for aggregate queries?
   3: required bool is_aggregate,
-  4: bool is_safe
+  // The function is safe if it only reads data.
+  4: optional bool is_safe,
+  // Register formatter for a specific file extensions or MIME types.
+  5: optional list<string> formatter_ids
 }
 
 struct PluginData {

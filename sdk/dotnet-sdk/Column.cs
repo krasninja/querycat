@@ -184,40 +184,40 @@ namespace QueryCat.Plugins.Sdk
       oprot.IncrementRecursionDepth();
       try
       {
-        var tmp36 = new TStruct("Column");
-        await oprot.WriteStructBeginAsync(tmp36, cancellationToken);
+        var tmp40 = new TStruct("Column");
+        await oprot.WriteStructBeginAsync(tmp40, cancellationToken);
         #pragma warning disable IDE0017  // simplified init
-        var tmp37 = new TField();
+        var tmp41 = new TField();
         if(__isset.@id)
         {
-          tmp37.Name = "id";
-          tmp37.Type = TType.I32;
-          tmp37.ID = 1;
-          await oprot.WriteFieldBeginAsync(tmp37, cancellationToken);
+          tmp41.Name = "id";
+          tmp41.Type = TType.I32;
+          tmp41.ID = 1;
+          await oprot.WriteFieldBeginAsync(tmp41, cancellationToken);
           await oprot.WriteI32Async(Id, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         if((Name != null))
         {
-          tmp37.Name = "name";
-          tmp37.Type = TType.String;
-          tmp37.ID = 2;
-          await oprot.WriteFieldBeginAsync(tmp37, cancellationToken);
+          tmp41.Name = "name";
+          tmp41.Type = TType.String;
+          tmp41.ID = 2;
+          await oprot.WriteFieldBeginAsync(tmp41, cancellationToken);
           await oprot.WriteStringAsync(Name, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
-        tmp37.Name = "type";
-        tmp37.Type = TType.I32;
-        tmp37.ID = 3;
-        await oprot.WriteFieldBeginAsync(tmp37, cancellationToken);
+        tmp41.Name = "type";
+        tmp41.Type = TType.I32;
+        tmp41.ID = 3;
+        await oprot.WriteFieldBeginAsync(tmp41, cancellationToken);
         await oprot.WriteI32Async((int)Type, cancellationToken);
         await oprot.WriteFieldEndAsync(cancellationToken);
         if((Description != null) && __isset.@description)
         {
-          tmp37.Name = "description";
-          tmp37.Type = TType.String;
-          tmp37.ID = 4;
-          await oprot.WriteFieldBeginAsync(tmp37, cancellationToken);
+          tmp41.Name = "description";
+          tmp41.Type = TType.String;
+          tmp41.ID = 4;
+          await oprot.WriteFieldBeginAsync(tmp41, cancellationToken);
           await oprot.WriteStringAsync(Description, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
@@ -263,29 +263,29 @@ namespace QueryCat.Plugins.Sdk
 
     public override string ToString()
     {
-      var tmp38 = new StringBuilder("Column(");
-      int tmp39 = 0;
+      var tmp42 = new StringBuilder("Column(");
+      int tmp43 = 0;
       if(__isset.@id)
       {
-        if(0 < tmp39++) { tmp38.Append(", "); }
-        tmp38.Append("Id: ");
-        Id.ToString(tmp38);
+        if(0 < tmp43++) { tmp42.Append(", "); }
+        tmp42.Append("Id: ");
+        Id.ToString(tmp42);
       }
       if((Name != null))
       {
-        if(0 < tmp39) { tmp38.Append(", "); }
-        tmp38.Append("Name: ");
-        Name.ToString(tmp38);
+        if(0 < tmp43) { tmp42.Append(", "); }
+        tmp42.Append("Name: ");
+        Name.ToString(tmp42);
       }
-      tmp38.Append(", Type: ");
-      Type.ToString(tmp38);
+      tmp42.Append(", Type: ");
+      Type.ToString(tmp42);
       if((Description != null) && __isset.@description)
       {
-        tmp38.Append(", Description: ");
-        Description.ToString(tmp38);
+        tmp42.Append(", Description: ");
+        Description.ToString(tmp42);
       }
-      tmp38.Append(')');
-      return tmp38.ToString();
+      tmp42.Append(')');
+      return tmp42.ToString();
     }
   }
 

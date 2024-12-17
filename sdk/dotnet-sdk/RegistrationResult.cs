@@ -88,13 +88,13 @@ namespace QueryCat.Plugins.Sdk
               if (field.Type == TType.List)
               {
                 {
-                  var _list28 = await iprot.ReadListBeginAsync(cancellationToken);
-                  FunctionsIds = new List<int>(_list28.Count);
-                  for(int _i29 = 0; _i29 < _list28.Count; ++_i29)
+                  var _list32 = await iprot.ReadListBeginAsync(cancellationToken);
+                  FunctionsIds = new List<int>(_list32.Count);
+                  for(int _i33 = 0; _i33 < _list32.Count; ++_i33)
                   {
-                    int _elem30;
-                    _elem30 = await iprot.ReadI32Async(cancellationToken);
-                    FunctionsIds.Add(_elem30);
+                    int _elem34;
+                    _elem34 = await iprot.ReadI32Async(cancellationToken);
+                    FunctionsIds.Add(_elem34);
                   }
                   await iprot.ReadListEndAsync(cancellationToken);
                 }
@@ -134,29 +134,29 @@ namespace QueryCat.Plugins.Sdk
       oprot.IncrementRecursionDepth();
       try
       {
-        var tmp31 = new TStruct("RegistrationResult");
-        await oprot.WriteStructBeginAsync(tmp31, cancellationToken);
+        var tmp35 = new TStruct("RegistrationResult");
+        await oprot.WriteStructBeginAsync(tmp35, cancellationToken);
         #pragma warning disable IDE0017  // simplified init
-        var tmp32 = new TField();
+        var tmp36 = new TField();
         if((Version != null))
         {
-          tmp32.Name = "version";
-          tmp32.Type = TType.String;
-          tmp32.ID = 1;
-          await oprot.WriteFieldBeginAsync(tmp32, cancellationToken);
+          tmp36.Name = "version";
+          tmp36.Type = TType.String;
+          tmp36.ID = 1;
+          await oprot.WriteFieldBeginAsync(tmp36, cancellationToken);
           await oprot.WriteStringAsync(Version, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         if((FunctionsIds != null))
         {
-          tmp32.Name = "functions_ids";
-          tmp32.Type = TType.List;
-          tmp32.ID = 2;
-          await oprot.WriteFieldBeginAsync(tmp32, cancellationToken);
+          tmp36.Name = "functions_ids";
+          tmp36.Type = TType.List;
+          tmp36.ID = 2;
+          await oprot.WriteFieldBeginAsync(tmp36, cancellationToken);
           await oprot.WriteListBeginAsync(new TList(TType.I32, FunctionsIds.Count), cancellationToken);
-          foreach (int _iter33 in FunctionsIds)
+          foreach (int _iter37 in FunctionsIds)
           {
-            await oprot.WriteI32Async(_iter33, cancellationToken);
+            await oprot.WriteI32Async(_iter37, cancellationToken);
           }
           await oprot.WriteListEndAsync(cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
@@ -196,19 +196,19 @@ namespace QueryCat.Plugins.Sdk
 
     public override string ToString()
     {
-      var tmp34 = new StringBuilder("RegistrationResult(");
+      var tmp38 = new StringBuilder("RegistrationResult(");
       if((Version != null))
       {
-        tmp34.Append(", Version: ");
-        Version.ToString(tmp34);
+        tmp38.Append(", Version: ");
+        Version.ToString(tmp38);
       }
       if((FunctionsIds != null))
       {
-        tmp34.Append(", FunctionsIds: ");
-        FunctionsIds.ToString(tmp34);
+        tmp38.Append(", FunctionsIds: ");
+        FunctionsIds.ToString(tmp38);
       }
-      tmp34.Append(')');
-      return tmp34.ToString();
+      tmp38.Append(')');
+      return tmp38.ToString();
     }
   }
 
