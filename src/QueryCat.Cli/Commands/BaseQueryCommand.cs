@@ -78,8 +78,8 @@ internal abstract class BaseQueryCommand : BaseCommand
 
         foreach (var variable in variables)
         {
-            var arr = variable.Split('=', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
-            if (arr.Length != 2)
+            var arr = StringUtils.GetFieldsFromLine(variable, '=');
+            if (arr.Count != 2)
             {
                 throw new QueryCatException(string.Format(Resources.Errors.InvalidVariableFormat, variable));
             }
