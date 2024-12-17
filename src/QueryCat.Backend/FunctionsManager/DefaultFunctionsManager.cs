@@ -67,15 +67,15 @@ public sealed partial class DefaultFunctionsManager : IFunctionsManager
             var signatures = new List<string> { signature };
             _functionsPreRegistration.Add(functionName,
                 new FunctionPreRegistration(functionDelegate, signatures, description));
+        }
 
-            // Register as formatter.
-            if (formatterIds != null)
+        // Register as formatter.
+        if (formatterIds != null)
+        {
+            foreach (var formatterId in formatterIds)
             {
-                foreach (var formatterId in formatterIds)
-                {
-                    Formatters.FormattersInfo.RegisterFormatter(formatterId,
-                        (fm, et, args) => fm.CallFunction(functionName, et, args).AsRequired<IRowsFormatter>());
-                }
+                Formatters.FormattersInfo.RegisterFormatter(formatterId,
+                    (fm, et, args) => fm.CallFunction(functionName, et, args).AsRequired<IRowsFormatter>());
             }
         }
 
