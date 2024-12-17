@@ -73,7 +73,7 @@ public class Program
             .WithStandardUriResolvers()
             .WithConfigStorage(new MemoryInputConfigStorage())
             .WithPluginsLoader(thread => new SimplePluginsAssemblyLoader(
-                pluginDirectories.Union(workingDirectoryPlugins),
+                workingDirectoryPlugins.Union(pluginDirectories),
                 thread.FunctionsManager))
             .Create();
 

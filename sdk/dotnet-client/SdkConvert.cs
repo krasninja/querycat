@@ -179,6 +179,7 @@ public static class SdkConvert
         return type switch
         {
             DataType.NULL => Backend.Core.Types.DataType.Null,
+            DataType.VOID => Backend.Core.Types.DataType.Void,
             DataType.INTEGER => Backend.Core.Types.DataType.Integer,
             DataType.STRING => Backend.Core.Types.DataType.String,
             DataType.FLOAT => Backend.Core.Types.DataType.Float,
@@ -186,9 +187,10 @@ public static class SdkConvert
             DataType.BOOLEAN => Backend.Core.Types.DataType.Boolean,
             DataType.NUMERIC => Backend.Core.Types.DataType.Numeric,
             DataType.INTERVAL => Backend.Core.Types.DataType.Interval,
-            DataType.OBJECT => Backend.Core.Types.DataType.Object,
             DataType.BLOB => Backend.Core.Types.DataType.Blob,
-            _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
+            DataType.OBJECT => Backend.Core.Types.DataType.Object,
+            DataType.DYNAMIC => Backend.Core.Types.DataType.Dynamic,
+            _ => throw new ArgumentOutOfRangeException(nameof(type), type, null),
         };
     }
 
@@ -206,7 +208,7 @@ public static class SdkConvert
             Backend.Core.Types.DataType.Interval => DataType.INTERVAL,
             Backend.Core.Types.DataType.Object => DataType.OBJECT,
             Backend.Core.Types.DataType.Blob => DataType.BLOB,
-            Backend.Core.Types.DataType.Void => DataType.NULL,
+            Backend.Core.Types.DataType.Void => DataType.VOID,
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
         };
     }

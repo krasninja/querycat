@@ -20,6 +20,7 @@ namespace QueryCat.Plugins.Sdk
 {
   public enum DataType
   {
+    @VOID = -1,
     @NULL = 0,
     INTEGER = 1,
     @STRING = 2,

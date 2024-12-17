@@ -19,7 +19,6 @@ public static class DataTypeUtils
         DataType.Integer,
         DataType.String,
         DataType.Float,
-        DataType.Integer,
         DataType.Timestamp,
         DataType.Interval,
         DataType.Boolean,

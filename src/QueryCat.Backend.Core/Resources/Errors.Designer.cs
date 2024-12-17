@@ -134,5 +134,11 @@ namespace QueryCat.Backend.Core.Resources {
                 return ResourceManager.GetString("InvalidValueFormat", resourceCulture);
             }
         }
+        
+        internal static string InvalidColumnType {
+            get {
+                return ResourceManager.GetString("InvalidColumnType", resourceCulture);
+            }
+        }
     }
 }
