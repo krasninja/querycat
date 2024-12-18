@@ -244,17 +244,17 @@ internal sealed class SelectCommandContext(SelectQueryNode queryNode) : CommandC
     internal Column[] GetSelectIdentifierColumns(string sourceName)
     {
         var ids = new List<Column>();
-        foreach (var columnsNode in queryNode.ColumnsListNode.ColumnsNodes)
+
+        // Get ids from all blocks (SELECT, GROUP, FROM, etc).
+        foreach (var identifierNode in queryNode.GetAllChildren<IdentifierExpressionNode>())
         {
-            foreach (var identifierNode in columnsNode.GetAllChildren<IdentifierExpressionNode>())
+            if (!identifierNode.IsCurrentSpecialIdentifier
+                && (string.IsNullOrEmpty(identifierNode.TableSourceName) || identifierNode.TableSourceName == sourceName))
             {
-                if (!identifierNode.IsCurrentSpecialIdentifier
-                    && (string.IsNullOrEmpty(identifierNode.TableSourceName) || identifierNode.TableSourceName == sourceName))
-                {
-                    ids.Add(new Column(identifierNode.TableFieldName, sourceName, DataType.Void));
-                }
+                ids.Add(new Column(identifierNode.TableFieldName, sourceName, DataType.Void));
             }
         }
+
         return ids.ToArray();
     }
 
