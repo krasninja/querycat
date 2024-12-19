@@ -14,7 +14,7 @@ internal sealed class WindowFunctionsRowsIterator : IRowsIterator
         RowsFrame RowsFrame,
         ICursorRowsIterator RowsIterator);
 
-    private record struct RowIdData(
+    private readonly record struct RowIdData(
         PartitionInstance PartitionInstance,
         long RowIdInPartition);
 

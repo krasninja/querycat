@@ -18,7 +18,7 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
 {
     private const string DataColumn = "__data";
 
-    private record struct ColumnGetter(Data.Column Column, Func<TClass, VariantValue> ValueGetter);
+    private readonly record struct ColumnGetter(Column Column, Func<TClass, VariantValue> ValueGetter);
 
     private readonly List<ColumnGetter> _columns = new();
     private readonly List<KeyColumn> _keyColumns = new();

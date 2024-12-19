@@ -118,11 +118,11 @@ public class DelimiterStreamReader
 
         public char QuoteCharacter { get; set; }
 
-        public bool HasQuotes => QuotesCount > 0;
+        public readonly bool HasQuotes => QuotesCount > 0;
 
-        public bool HasInnerQuotes => QuotesCount > 2;
+        public readonly bool HasInnerQuotes => QuotesCount > 2;
 
-        public bool IsEmpty => EndIndex - StartIndex < 2;
+        public readonly bool IsEmpty => EndIndex - StartIndex < 2;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Reset()
@@ -133,7 +133,7 @@ public class DelimiterStreamReader
         }
 
         /// <inheritdoc />
-        public override string ToString() => $"Position = {StartIndex}-{EndIndex}, Quotes = {HasQuotes}";
+        public override readonly string ToString() => $"Position = {StartIndex}-{EndIndex}, Quotes = {HasQuotes}";
     }
 
     private readonly DynamicBuffer<char> _dynamicBuffer;

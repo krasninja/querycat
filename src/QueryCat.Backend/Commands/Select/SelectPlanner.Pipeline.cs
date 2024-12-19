@@ -78,7 +78,7 @@ internal sealed partial class SelectPlanner
         context.SetIterator(new DistinctRowsIteratorIterator(ExecutionThread, context.CurrentIterator, funcUnits));
     }
 
-    private record struct ColumnWithIndex(
+    private readonly record struct ColumnWithIndex(
         Column Column,
         int ColumnIndex);
 
