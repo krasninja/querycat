@@ -254,7 +254,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     /// <summary>
     /// Actual next data reading.
     /// </summary>
-    /// <returns><c>True</c> if has data, <c>false</c> otherwise.</returns>
+    /// <returns><c>True</c> if it has data, <c>false</c> otherwise.</returns>
     protected virtual bool ReadNextInternal()
     {
         return _delimiterStreamReader.Read();

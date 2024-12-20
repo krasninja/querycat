@@ -1,10 +1,8 @@
 using System.Diagnostics;
-using QueryCat.Backend.Ast;
-using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Select;
+using QueryCat.Backend.Commands.Select.Visitors;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
-using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Storage;
@@ -243,19 +241,9 @@ internal sealed class SelectCommandContext(SelectQueryNode queryNode) : CommandC
     /// <returns>List of identifiers.</returns>
     internal Column[] GetSelectIdentifierColumns(string sourceName)
     {
-        var ids = new List<Column>();
-
-        // Get ids from all blocks (SELECT, GROUP, FROM, etc).
-        foreach (var identifierNode in queryNode.GetAllChildren<IdentifierExpressionNode>())
-        {
-            if (!identifierNode.IsCurrentSpecialIdentifier
-                && (string.IsNullOrEmpty(identifierNode.TableSourceName) || identifierNode.TableSourceName == sourceName))
-            {
-                ids.Add(new Column(identifierNode.TableFieldName, sourceName, DataType.Void));
-            }
-        }
-
-        return ids.ToArray();
+        var identifierAstVisitor = new IdentifierAstVisitor(sourceName);
+        identifierAstVisitor.Run(queryNode);
+        return identifierAstVisitor.Columns.ToArray();
     }
 
     public void Dump(IndentedStringBuilder stringBuilder)
