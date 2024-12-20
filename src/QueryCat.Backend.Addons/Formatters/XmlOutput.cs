@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Xml;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
@@ -52,7 +53,7 @@ internal sealed class XmlOutput : RowsOutput, IDisposable
     {
         _xmlWriter.WriteStartElement(RowTagName);
         var columns = QueryContext.QueryInfo.Columns;
-        for (var i = 0; i < columns.Count; i++)
+        for (var i = 0; i < columns.Length; i++)
         {
             if (columns[i].IsHidden)
             {
@@ -80,7 +81,7 @@ internal sealed class XmlOutput : RowsOutput, IDisposable
                     _xmlWriter.WriteValue(values[i].AsTimestampUnsafe);
                     break;
                 default:
-                    _xmlWriter.WriteValue(values[i].ToString());
+                    _xmlWriter.WriteValue(values[i].ToString(CultureInfo.InvariantCulture));
                     break;
             }
             _xmlWriter.WriteEndElement();

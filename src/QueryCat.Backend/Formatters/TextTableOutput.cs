@@ -180,8 +180,8 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
     protected override void Initialize()
     {
         var columns = QueryContext.QueryInfo.Columns;
-        _isSingleValue = columns.Count == 1 && columns[0].Name == SingleValueRowsIterator.ColumnTitle;
-        _columnsLengths = new int[columns.Count];
+        _isSingleValue = columns.Length == 1 && columns[0].Name == SingleValueRowsIterator.ColumnTitle;
+        _columnsLengths = new int[columns.Length];
 
         _onInit.Invoke();
         _streamWriter.Flush();
@@ -192,12 +192,12 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
     private void OnTable1Init()
     {
         var columns = QueryContext.QueryInfo.Columns;
-        _totalMaxLineLength = new int[columns.Count];
+        _totalMaxLineLength = new int[columns.Length];
         int currentMaxLength = 0;
 
         if (!_hasHeader || _isSingleValue)
         {
-            for (int i = 0; i < columns.Count; i++)
+            for (var i = 0; i < columns.Length; i++)
             {
                 currentMaxLength += _separatorWithSpace.Length + columns[i].Length + 1;
                 _totalMaxLineLength[i] = currentMaxLength;
@@ -206,7 +206,7 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
         }
 
         // Header.
-        for (int i = 0; i < columns.Count; i++)
+        for (var i = 0; i < columns.Length; i++)
         {
             if (columns[i].IsHidden)
             {
@@ -229,7 +229,7 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
         _streamWriter.Flush();
 
         // Append header separator.
-        for (int i = 0; i < columns.Count; i++)
+        for (var i = 0; i < columns.Length; i++)
         {
             if (columns[i].IsHidden)
             {
@@ -257,7 +257,7 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
     {
         int writeCount = 0;
         var columns = QueryContext.QueryInfo.Columns;
-        for (int i = 0; i < columns.Count; i++)
+        for (var i = 0; i < columns.Length; i++)
         {
             if (columns[i].IsHidden)
             {
@@ -295,12 +295,12 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
     private void OnTable2Init()
     {
         var columns = QueryContext.QueryInfo.Columns;
-        _totalMaxLineLength = new int[columns.Count];
+        _totalMaxLineLength = new int[columns.Length];
         int currentMaxLength = 0;
 
         if (!_hasHeader || _isSingleValue)
         {
-            for (int i = 0; i < columns.Count; i++)
+            for (var i = 0; i < columns.Length; i++)
             {
                 var separatorLength = 0;
                 if (i > 0)
@@ -315,7 +315,7 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
         }
 
         // Header.
-        for (int i = 0; i < columns.Count; i++)
+        for (var i = 0; i < columns.Length; i++)
         {
             if (columns[i].IsHidden)
             {
@@ -338,7 +338,7 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
         _streamWriter.Flush();
 
         // Append header separator.
-        for (int i = 0; i < columns.Count; i++)
+        for (var i = 0; i < columns.Length; i++)
         {
             if (columns[i].IsHidden)
             {
@@ -364,7 +364,7 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
     {
         int writeCount = 0;
         var columns = QueryContext.QueryInfo.Columns;
-        for (int i = 0; i < columns.Count; i++)
+        for (var i = 0; i < columns.Length; i++)
         {
             if (columns[i].IsHidden)
             {
@@ -404,7 +404,7 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
         }
 
         // Header.
-        for (int i = 0; i < columns.Count; i++)
+        for (var i = 0; i < columns.Length; i++)
         {
             if (columns[i].IsHidden)
             {
@@ -423,7 +423,7 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
     private void OnNoSpaceTableWrite(VariantValue[] values)
     {
         var columns = QueryContext.QueryInfo.Columns;
-        for (int i = 0; i < columns.Count; i++)
+        for (var i = 0; i < columns.Length; i++)
         {
             if (columns[i].IsHidden)
             {
@@ -455,7 +455,7 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
     private void OnCardWrite(VariantValue[] values)
     {
         var columns = QueryContext.QueryInfo.Columns;
-        for (int i = 0; i < columns.Count; i++)
+        for (var i = 0; i < columns.Length; i++)
         {
             if (columns[i].IsHidden)
             {

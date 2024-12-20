@@ -53,8 +53,7 @@ internal sealed class DsvOutput : RowsOutput, IDisposable
     protected override void OnWrite(in VariantValue[] values)
     {
         var columns = QueryContext.QueryInfo.Columns;
-        var length = columns.Count;
-        for (int i = 0; i < length; i++)
+        for (var i = 0; i < columns.Length; i++)
         {
             if (!values[i].IsNull)
             {
@@ -101,7 +100,7 @@ internal sealed class DsvOutput : RowsOutput, IDisposable
                         break;
                 }
             }
-            if (i < length - 1)
+            if (i < columns.Length - 1)
             {
                 _streamWriter.Write(_delimiter);
             }
@@ -122,11 +121,10 @@ internal sealed class DsvOutput : RowsOutput, IDisposable
 
         if (_hasHeader && !_wroteHeader)
         {
-            var length = columns.Count;
-            for (var i = 0; i < length; i++)
+            for (var i = 0; i < columns.Length; i++)
             {
                 WriteString(columns[i].Name);
-                if (i < length - 1)
+                if (i < columns.Length - 1)
                 {
                     _streamWriter.Write(_delimiter);
                 }

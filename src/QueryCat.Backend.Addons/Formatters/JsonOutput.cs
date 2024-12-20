@@ -37,7 +37,7 @@ internal sealed class JsonOutput : RowsOutput, IDisposable
     {
         _streamWriter.WriteStartObject();
         var columns = QueryContext.QueryInfo.Columns;
-        for (var i = 0; i < columns.Count; i++)
+        for (var i = 0; i < columns.Length; i++)
         {
             if (columns[i].IsHidden)
             {
