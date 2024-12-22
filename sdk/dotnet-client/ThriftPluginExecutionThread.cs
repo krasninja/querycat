@@ -39,7 +39,7 @@ public sealed class ThriftPluginExecutionThread : IExecutionThread
     public IInputConfigStorage ConfigStorage { get; }
 
     /// <inheritdoc />
-    public IExecutionScope TopScope => NullExecutionScope.Instance;
+    public IExecutionScope TopScope { get; }
 
     /// <inheritdoc />
     public IExecutionStack Stack { get; }
@@ -69,6 +69,7 @@ public sealed class ThriftPluginExecutionThread : IExecutionThread
         _client = client;
         PluginsManager = NullPluginsManager.Instance;
         FunctionsManager = new PluginFunctionsManager();
+        TopScope = new ThriftPluginExecutionScope(_client);
         ConfigStorage = new ThriftInputConfigStorage(_client);
         Stack = new ListExecutionStack();
     }
@@ -95,8 +96,7 @@ public sealed class ThriftPluginExecutionThread : IExecutionThread
     /// <inheritdoc />
     public bool TryGetVariable(string name, out VariantValue value, IExecutionScope? scope = null)
     {
-        var result = AsyncUtils.RunSync(ct => _client.GetVariableAsync(name, ct));
-        value = SdkConvert.Convert(result);
+        value = TopScope.Variables[name];
         return !value.IsNull;
     }
 
