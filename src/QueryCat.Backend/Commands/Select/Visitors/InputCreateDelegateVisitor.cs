@@ -87,12 +87,12 @@ internal sealed class InputCreateDelegateVisitor : CreateDelegateVisitor
             rightColumnSources[i] = new FuncUnitRowsInputColumn(_rightInput, rightColumnIndex);
         }
 
-        VariantValue Func(IExecutionThread thread)
+        async ValueTask<VariantValue> Func(IExecutionThread thread, CancellationToken cancellationToken)
         {
             for (var i = 0; i < leftColumnSources.Length; i++)
             {
-                var leftValue = leftColumnSources[i].Invoke(thread);
-                var rightValue = rightColumnSources[i].Invoke(thread);
+                var leftValue = await leftColumnSources[i].InvokeAsync(thread, cancellationToken);
+                var rightValue = await rightColumnSources[i].InvokeAsync(thread, cancellationToken);
                 if (leftValue != rightValue)
                 {
                     return VariantValue.FalseValue;

@@ -163,7 +163,7 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
     }
 
     /// <inheritdoc />
-    public virtual VariantValue Run(
+    public virtual async Task<VariantValue> RunAsync(
         string query,
         IDictionary<string, VariantValue>? parameters = null,
         CancellationToken cancellationToken = default)
@@ -174,7 +174,7 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
         }
 
         // Run with lock and timer.
-        _semaphore.Wait(cancellationToken);
+        await _semaphore.WaitAsync(cancellationToken);
         try
         {
             CurrentQuery = query;
@@ -184,7 +184,7 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
             _deepLevel++;
             if (_deepLevel == 1)
             {
-                RunBootstrapScript();
+                await RunBootstrapScriptAsync(cancellationToken);
                 LoadConfig();
             }
             if (_deepLevel > Options.MaxRecursionDepth)
@@ -212,8 +212,8 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
                 SetScopeVariables(scope, parameters);
             }
             return Options.QueryTimeout != TimeSpan.Zero
-                ? RunWithTimeout(ct => RunInternal(executingStatement, ct), cancellationToken)
-                : RunInternal(executingStatement, cancellationToken);
+                ? await RunWithTimeoutAsync(ct => RunInternalAsync(executingStatement, ct), cancellationToken)
+                : await RunInternalAsync(executingStatement, cancellationToken);
         }
         finally
         {
@@ -261,17 +261,17 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
         }
     }
 
-    private T RunWithTimeout<T>(Func<CancellationToken, T> func, CancellationToken cancellationToken)
+    private async Task<T> RunWithTimeoutAsync<T>(Func<CancellationToken, Task<T>> func, CancellationToken cancellationToken)
     {
-        var task = Task.Run(() => func(cancellationToken), cancellationToken);
+        var task = func(cancellationToken);
         if (task.IsCompleted)
         {
             return task.Result;
         }
-        return task.WaitAsync(Options.QueryTimeout, cancellationToken).GetAwaiter().GetResult();
+        return await task.WaitAsync(Options.QueryTimeout, cancellationToken);
     }
 
-    private VariantValue RunInternal(StatementNode executingStatement, CancellationToken cancellationToken)
+    private async Task<VariantValue> RunInternalAsync(StatementNode executingStatement, CancellationToken cancellationToken)
     {
         var executeEventArgs = new ExecuteEventArgs(executingStatement);
         StatementNode? currentStatement = executingStatement;
@@ -299,7 +299,7 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
             }
 
             // Run the command.
-            LastResult = commandContext.Invoke(this);
+            LastResult = await commandContext.InvokeAsync(this, cancellationToken);
 
             // Fire "after" event.
             if (StatementExecuted != null && !_isInCallback)
@@ -518,7 +518,7 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
         }
     }
 
-    private void RunBootstrapScript()
+    private async Task RunBootstrapScriptAsync(CancellationToken cancellationToken)
     {
         if (!_bootstrapScriptExecuted && Options.RunBootstrapScript)
         {
@@ -527,13 +527,17 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
             var rcFile = Path.Combine(GetApplicationDirectory(), BootstrapFileName);
             if (File.Exists(rcFile))
             {
-                Run(File.ReadAllText(rcFile));
+                await RunAsync(
+                    await File.ReadAllTextAsync(rcFile, cancellationToken),
+                    cancellationToken: cancellationToken);
             }
 
             rcFile = Path.Combine(Directory.GetCurrentDirectory(), BootstrapFileName);
             if (File.Exists(rcFile))
             {
-                Run(File.ReadAllText(rcFile));
+                await RunAsync(
+                    await File.ReadAllTextAsync(rcFile, cancellationToken),
+                    cancellationToken: cancellationToken);
             }
         }
     }

@@ -35,11 +35,11 @@ public class EvaluateExpressionBenchmark
         .Create();
 
     [Benchmark]
-    public void RunExpressionSeveralTimes()
+    public async Task RunExpressionSeveralTimes()
     {
         for (var i = 0; i < 1000; i++)
         {
-            var result = _executionThread.Run(
+            var result = await _executionThread.RunAsync(
                 """
                 abs((data['KRAS'].Temperature +
                     data['NSK'].Temperature +

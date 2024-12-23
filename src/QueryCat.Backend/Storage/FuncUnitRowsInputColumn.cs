@@ -10,9 +10,9 @@ internal sealed class FuncUnitRowsInputColumn(IRowsInput rowsInput, int columnIn
     public DataType OutputType => rowsInput.Columns[columnIndex].DataType;
 
     /// <inheritdoc />
-    public VariantValue Invoke(IExecutionThread thread)
+    public ValueTask<VariantValue> InvokeAsync(IExecutionThread thread, CancellationToken cancellationToken = default)
     {
         rowsInput.ReadValue(columnIndex, out VariantValue value);
-        return value;
+        return ValueTask.FromResult(value);
     }
 }

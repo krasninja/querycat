@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Net;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Storage;
 
 namespace QueryCat.Cli.Infrastructure;
@@ -54,7 +55,7 @@ internal partial class WebServer
 
         if (Directory.Exists(path))
         {
-            Files_ServeDirectory(path, request, response);
+            AsyncUtils.RunSync(ct => Files_ServeDirectory(path, request, response));
         }
         else if (File.Exists(path))
         {
@@ -66,10 +67,10 @@ internal partial class WebServer
         }
     }
 
-    private void Files_ServeDirectory(string path, HttpListenerRequest request, HttpListenerResponse response)
+    private async Task Files_ServeDirectory(string path, HttpListenerRequest request, HttpListenerResponse response)
     {
         _executionThread.TopScope.Variables["path"] = new VariantValue(path);
-        var result = _executionThread.Run(_selectFilesQuery);
+        var result = await _executionThread.RunAsync(_selectFilesQuery);
         _logger.LogInformation("[{Address}] Dir: {Path}", request.RemoteEndPoint.Address, path);
         WriteIterator(RowsIteratorConverter.Convert(result), request, response);
     }

@@ -51,8 +51,8 @@ public sealed class NullExecutionThread : IExecutionThread
     public object? Tag { get; } = null;
 
     /// <inheritdoc />
-    public VariantValue Run(string query, IDictionary<string, VariantValue>? parameters = null,
-        CancellationToken cancellationToken = default) => VariantValue.Null;
+    public Task<VariantValue> RunAsync(string query, IDictionary<string, VariantValue>? parameters = null,
+        CancellationToken cancellationToken = default) => Task.FromResult(VariantValue.Null);
 
     /// <inheritdoc />
     public bool TryGetVariable(string name, out VariantValue value, IExecutionScope? scope = null)

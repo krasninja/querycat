@@ -16,7 +16,7 @@ internal class SetVariableUsage : BaseUsage
     }
 
     /// <inheritdoc />
-    public override void Run()
+    public override async Task RunAsync()
     {
         using var executionThread = new ExecutionThreadBootstrapper().Create();
         var data = new Dictionary<int, Product>
@@ -26,14 +26,14 @@ internal class SetVariableUsage : BaseUsage
         };
 
         executionThread.TopScope.Variables["data"] = VariantValue.CreateFromObject(data);
-        executionThread.Run("SET data[1].Price := newval;",
+        await executionThread.RunAsync("SET data[1].Price := newval;",
             new Dictionary<string, VariantValue>
             {
                 ["newval"] = new(12.34m),
             });
         Console.WriteLine(data[1].Price); // 12.34
 
-        executionThread.Run(
+        await executionThread.RunAsync(
             "SET data[2].Price := newval;",
             new Dictionary<string, VariantValue>
             {

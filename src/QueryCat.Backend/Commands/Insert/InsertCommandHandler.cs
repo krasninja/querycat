@@ -20,14 +20,14 @@ internal sealed class InsertCommandHandler : IFuncUnit
     }
 
     /// <inheritdoc />
-    public VariantValue Invoke(IExecutionThread thread)
+    public async ValueTask<VariantValue> InvokeAsync(IExecutionThread thread, CancellationToken cancellationToken = default)
     {
         var insertCount = 0;
         _rowsOutput.QueryContext = new RowsOutputQueryContext(_rowsInput.Columns);
         _rowsOutput.Open();
         try
         {
-            while (_rowsInput.MoveNext())
+            while (await _rowsInput.MoveNextAsync(cancellationToken))
             {
                 _rowsOutput.WriteValues(_rowsInput.Current.Values);
                 insertCount++;

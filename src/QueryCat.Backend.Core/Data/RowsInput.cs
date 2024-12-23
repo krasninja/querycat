@@ -40,6 +40,16 @@ public abstract class RowsInput : IRowsInput
         return true;
     }
 
+    public virtual async ValueTask<bool> ReadNextAsync(CancellationToken cancellationToken = default)
+    {
+        if (_isFirstCall)
+        {
+            await ReadNextAsync(cancellationToken);
+            _isFirstCall = false;
+        }
+        return true;
+    }
+
     /// <inheritdoc />
     public virtual void Reset()
     {
@@ -58,4 +68,9 @@ public abstract class RowsInput : IRowsInput
     protected virtual void Load()
     {
     }
+
+    /// <summary>
+    /// The method is called before first ReadNext to initialize input.
+    /// </summary>
+    protected virtual ValueTask LoadAsync(CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
 }

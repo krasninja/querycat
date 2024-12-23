@@ -13,7 +13,7 @@ internal class PluginListCommand : BaseCommand
         var listAllArgument = new Option<bool>("--all", "List all plugins.");
 
         this.AddOption(listAllArgument);
-        this.SetHandler((applicationOptions, listAll) =>
+        this.SetHandler(async (applicationOptions, listAll) =>
         {
             applicationOptions.InitializeLogger();
             using var root = applicationOptions.CreateStdoutApplicationRoot();
@@ -22,9 +22,9 @@ internal class PluginListCommand : BaseCommand
             {
                 query += $@" AND (platform = _platform() OR platform = '{Application.PlatformMulti}');";
             }
-            var result = root.Thread.Run(query);
+            var result = await root.Thread.RunAsync(query);
             root.Thread.TopScope.Variables["result"] = result;
-            root.Thread.Run("result");
+            await root.Thread.RunAsync("result");
         }, new ApplicationOptionsBinder(LogLevelOption, PluginDirectoriesOption), listAllArgument);
     }
 }

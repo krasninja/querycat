@@ -108,7 +108,7 @@ public class DelimiterStreamReader
         public bool IncludeDelimiter { get; set; }
     }
 
-    private struct FieldInfo
+    private sealed class FieldInfo
     {
         public long StartIndex { get; set; }
 
@@ -118,11 +118,11 @@ public class DelimiterStreamReader
 
         public char QuoteCharacter { get; set; }
 
-        public readonly bool HasQuotes => QuotesCount > 0;
+        public bool HasQuotes => QuotesCount > 0;
 
-        public readonly bool HasInnerQuotes => QuotesCount > 2;
+        public bool HasInnerQuotes => QuotesCount > 2;
 
-        public readonly bool IsEmpty => EndIndex - StartIndex < 2;
+        public bool IsEmpty => EndIndex - StartIndex < 2;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Reset()
@@ -133,7 +133,7 @@ public class DelimiterStreamReader
         }
 
         /// <inheritdoc />
-        public override readonly string ToString() => $"Position = {StartIndex}-{EndIndex}, Quotes = {HasQuotes}";
+        public override string ToString() => $"Position = {StartIndex}-{EndIndex}, Quotes = {HasQuotes}";
     }
 
     private readonly DynamicBuffer<char> _dynamicBuffer;
@@ -144,7 +144,7 @@ public class DelimiterStreamReader
     private SearchValues<char> _quoteCharacters = SearchValues.Create(ReadOnlySpan<char>.Empty);
 
     // Stores positions of delimiters for columns.
-    private FieldInfo[] _fieldInfos = new FieldInfo[32];
+    private FieldInfo[] _fieldInfos;
     private int _fieldInfoLastIndex;
 
     // Little optimization to prevent unnecessary DynamicBuffer.GetSequence() calls.
@@ -168,6 +168,11 @@ public class DelimiterStreamReader
         };
         _dynamicBuffer = new DynamicBuffer<char>(_options.BufferSize);
 
+        _fieldInfos = new FieldInfo[32];
+        for (var i = 0; i < _fieldInfos.Length; i++)
+        {
+            _fieldInfos[i] = new FieldInfo();
+        }
         InitStopCharacters();
     }
 
@@ -254,7 +259,7 @@ public class DelimiterStreamReader
         SequenceReader<char> sequenceReader;
         _fieldInfoLastIndex = 0;
         var stopCharactersLocal = (ReadOnlySpan<char>)_stopCharacters;
-        ref var currentField = ref GetNextFieldInfo();
+        var currentField = GetNextFieldInfo();
         do
         {
             _currentSequence = _dynamicBuffer.GetSequence();
@@ -332,7 +337,7 @@ public class DelimiterStreamReader
                         if (addField)
                         {
                             currentField.EndIndex = _options.IncludeDelimiter ? _currentDelimiterPosition + 1 : _currentDelimiterPosition;
-                            currentField = ref GetNextFieldInfo();
+                            currentField = GetNextFieldInfo();
                             fieldStart = true;
                             currentField.StartIndex = _options.IncludeDelimiter ? _currentDelimiterPosition - 1 : _currentDelimiterPosition;
                             currentField.QuotesCount = 0;
@@ -352,7 +357,7 @@ public class DelimiterStreamReader
                     {
                         _currentDelimiterPosition = sequenceReader.Consumed;
                         currentField.EndIndex = _currentDelimiterPosition;
-                        currentField = ref GetNextFieldInfo();
+                        GetNextFieldInfo();
                         fieldStart = true;
 
                         // Process /r/n Windows line end case.
@@ -367,7 +372,7 @@ public class DelimiterStreamReader
                         if (_options.SkipEmptyLines && IsEmpty())
                         {
                             _fieldInfoLastIndex = 0;
-                            currentField = ref GetNextFieldInfo();
+                            currentField = GetNextFieldInfo();
                             currentField.StartIndex = _currentDelimiterPosition;
                             if (!sequenceReader.End)
                             {
@@ -392,7 +397,7 @@ public class DelimiterStreamReader
         _currentDelimiterPosition += sequenceReader.Remaining;
         currentField.EndIndex = _currentDelimiterPosition + 1;
         // Move next field index next to correct calculate total columns count.
-        currentField = ref GetNextFieldInfo();
+        GetNextFieldInfo();
         return !IsEmpty();
     }
 
@@ -404,21 +409,22 @@ public class DelimiterStreamReader
     private int ReadNextBufferData()
     {
         var buffer = _dynamicBuffer.Allocate();
-        var readBytes = _streamReader.Read(buffer);
+        var readBytes = _streamReader.Read(buffer.Span);
         _dynamicBuffer.Commit(readBytes);
         return readBytes;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    private ref FieldInfo GetNextFieldInfo()
+    private FieldInfo GetNextFieldInfo()
     {
         if ((ulong)_fieldInfoLastIndex >= (ulong)_fieldInfos.Length)
         {
             Array.Resize(ref _fieldInfos, _fieldInfoLastIndex + 1);
+            _fieldInfos[^1] = new FieldInfo();
         }
 
         _fieldInfos[_fieldInfoLastIndex].Reset();
-        return ref _fieldInfos[_fieldInfoLastIndex++];
+        return _fieldInfos[_fieldInfoLastIndex++];
     }
 
     /// <summary>

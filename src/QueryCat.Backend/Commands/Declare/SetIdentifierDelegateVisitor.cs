@@ -32,11 +32,11 @@ internal sealed class SetIdentifierDelegateVisitor : CreateDelegateVisitor
         {
             var context = new ObjectSelectorContext();
             var strategies = GetObjectSelectStrategies(node, NodeIdFuncMap);
-            VariantValue Func(IExecutionThread thread)
+            ValueTask<VariantValue> Func(IExecutionThread thread, CancellationToken cancellationToken)
             {
                 var newValue = SetValue(thread, node, strategies, context);
                 context.Clear();
-                return newValue;
+                return ValueTask.FromResult(newValue);
             }
             NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, node.GetDataType());
             return;

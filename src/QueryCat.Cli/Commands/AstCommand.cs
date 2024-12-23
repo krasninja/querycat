@@ -8,7 +8,7 @@ internal class AstCommand : BaseQueryCommand
     /// <inheritdoc />
     public AstCommand() : base("ast", "Show query AST for debugging.")
     {
-        this.SetHandler((applicationOptions, query, variables, files) =>
+        this.SetHandler(async (applicationOptions, query, variables, files) =>
         {
             applicationOptions.InitializeLogger();
             var root = applicationOptions.CreateApplicationRoot();
@@ -18,7 +18,7 @@ internal class AstCommand : BaseQueryCommand
                 threadArgs.ContinueExecution = false;
             };
             AddVariables(root.Thread, variables);
-            RunQuery(root.Thread, query, files);
+            await RunQueryAsync(root.Thread, query, files);
         },
             new ApplicationOptionsBinder(LogLevelOption, PluginDirectoriesOption),
             QueryArgument,

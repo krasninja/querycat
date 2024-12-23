@@ -9,6 +9,7 @@ using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Formatters;
 using QueryCat.Backend.Storage;
@@ -209,7 +210,8 @@ internal sealed partial class WebServer
 
         var queryData = GetQueryDataFromRequest(request);
         _logger.LogInformation("[{Address}] Query: {QueryData}", request.RemoteEndPoint.Address, queryData);
-        var lastResult = _executionThread.Run(queryData.Query, queryData.ParametersAsDict);
+        var lastResult = AsyncUtils.RunSync(async ct =>
+            await _executionThread.RunAsync(queryData.Query, queryData.ParametersAsDict, ct));
 
         WriteIterator(RowsIteratorConverter.Convert(lastResult), request, response);
     }
@@ -241,7 +243,7 @@ internal sealed partial class WebServer
         try
         {
             thread.StatementExecuted += ThreadOnStatementExecuted;
-            _executionThread.Run(query.Query, query.ParametersAsDict);
+            AsyncUtils.RunSync(ct => _executionThread.RunAsync(query.Query, query.ParametersAsDict, ct));
         }
         finally
         {

@@ -25,7 +25,7 @@ internal class CollectionsUsage : BaseUsage
     }
 
     /// <inheritdoc />
-    public override void Run()
+    public override async Task RunAsync()
     {
         // Arrange.
         var executionThread = new ExecutionThreadBootstrapper().Create();
@@ -60,7 +60,7 @@ internal class CollectionsUsage : BaseUsage
         // Act.
         executionThread.TopScope.Variables["buildings"] = VariantValue.CreateFromObject(buildingsInput);
         executionThread.TopScope.Variables["cities"] = VariantValue.CreateFromObject(citiesInput);
-        var result = executionThread.Run(
+        var result = await executionThread.RunAsync(
             "SELECT b.name, c.city FROM buildings b LEFT JOIN cities c ON b.zip = c.zip;");
 
         // Out.

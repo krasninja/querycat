@@ -18,5 +18,6 @@ internal sealed class FuncCommandHandler : IFuncUnit
     public DataType OutputType => DataType.Null;
 
     /// <inheritdoc />
-    public VariantValue Invoke(IExecutionThread thread) => _func.Invoke(thread);
+    public ValueTask<VariantValue> InvokeAsync(IExecutionThread thread, CancellationToken cancellationToken = default)
+        => ValueTask.FromResult(_func.Invoke(thread));
 }

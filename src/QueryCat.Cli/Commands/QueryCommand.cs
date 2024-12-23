@@ -70,7 +70,7 @@ internal class QueryCommand : BaseQueryCommand
         this.AddOption(tailOption);
         this.AddOption(timeoutOption);
         this.AddOption(safeModeOption);
-        this.SetHandler((applicationOptions, query, variables, files, queryOptions) =>
+        this.SetHandler(async (applicationOptions, query, variables, files, queryOptions) =>
         {
             applicationOptions.InitializeLogger();
             var tableOutput = new TextTableOutput(
@@ -103,7 +103,7 @@ internal class QueryCommand : BaseQueryCommand
                 PagingRowsCount = queryOptions.PageSize,
             };
             AddVariables(root.Thread, variables);
-            RunQuery(root.Thread, query, files, root.CancellationTokenSource.Token);
+            await RunQueryAsync(root.Thread, query, files, root.CancellationTokenSource.Token);
 
             if (queryOptions.Statistic || queryOptions.DetailedStatistic)
             {

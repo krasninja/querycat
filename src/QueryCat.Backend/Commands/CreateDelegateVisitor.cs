@@ -67,11 +67,11 @@ internal partial class CreateDelegateVisitor : AstVisitor
         var leftAction = NodeIdFuncMap[node.Left.Id];
         var rightAction = NodeIdFuncMap[node.Right.Id];
 
-        VariantValue Func(IExecutionThread thread)
+        async ValueTask<VariantValue> Func(IExecutionThread thread, CancellationToken cancellationToken)
         {
-            var value = valueAction.Invoke(thread);
-            var leftValue = leftAction.Invoke(thread);
-            var rightValue = rightAction.Invoke(thread);
+            var value = await valueAction.InvokeAsync(thread, cancellationToken);
+            var leftValue = await leftAction.InvokeAsync(thread, cancellationToken);
+            var rightValue = await rightAction.InvokeAsync(thread, cancellationToken);
             var result = VariantValue.Between(in value, in leftValue, in rightValue, out ErrorCode code);
             ApplyStatistic(thread, code);
             var boolResult = result.AsBoolean;
@@ -90,10 +90,10 @@ internal partial class CreateDelegateVisitor : AstVisitor
         public DataType OutputType => outputType;
 
         /// <inheritdoc />
-        public VariantValue Invoke(IExecutionThread thread)
+        public async ValueTask<VariantValue> InvokeAsync(IExecutionThread thread, CancellationToken cancellationToken = default)
         {
-            var leftValue = leftAction.Invoke(thread);
-            var rightValue = rightAction.Invoke(thread);
+            var leftValue = await leftAction.InvokeAsync(thread, cancellationToken);
+            var rightValue = await rightAction.InvokeAsync(thread, cancellationToken);
             var operationDelegate = VariantValue.GetOperationDelegate(operation, leftValue.Type, rightValue.Type);
             return operationDelegate.Invoke(in leftValue, in rightValue);
         }
@@ -125,36 +125,36 @@ internal partial class CreateDelegateVisitor : AstVisitor
             var arg = NodeIdFuncMap[node.ArgumentNode!.Id];
             var equalsDelegate = VariantValue.GetEqualsDelegate(node.ArgumentNode.GetDataType());
 
-            VariantValue Func(IExecutionThread thread)
+            async ValueTask<VariantValue> Func(IExecutionThread thread, CancellationToken cancellationToken)
             {
-                var argValue = arg.Invoke(thread);
+                var argValue = await arg.InvokeAsync(thread, cancellationToken);
                 for (var i = 0; i < whenConditions.Length; i++)
                 {
-                    var conditionValue = whenConditions[i].Invoke(thread);
+                    var conditionValue = await whenConditions[i].InvokeAsync(thread, cancellationToken);
                     if (equalsDelegate.Invoke(in argValue, in conditionValue).AsBoolean)
                     {
-                        var resultValue = whenResults[i].Invoke(thread);
+                        var resultValue = await whenResults[i].InvokeAsync(thread, cancellationToken);
                         return resultValue;
                     }
                 }
-                return whenDefault.Invoke(thread);
+                return await whenDefault.InvokeAsync(thread, cancellationToken);
             }
             NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, node.GetDataType());
         }
         else if (node.IsSearchCase)
         {
-            VariantValue Func(IExecutionThread thread)
+            async ValueTask<VariantValue> Func(IExecutionThread thread, CancellationToken cancellationToken)
             {
                 for (var i = 0; i < whenConditions.Length; i++)
                 {
-                    var conditionValue = whenConditions[i].Invoke(thread);
+                    var conditionValue = await whenConditions[i].InvokeAsync(thread, cancellationToken);
                     if (conditionValue.AsBoolean)
                     {
-                        var resultValue = whenResults[i].Invoke(thread);
+                        var resultValue = await whenResults[i].InvokeAsync(thread, cancellationToken);
                         return resultValue;
                     }
                 }
-                return whenDefault.Invoke(thread);
+                return await whenDefault.InvokeAsync(thread, cancellationToken);
             }
             NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, node.GetDataType());
         }
@@ -225,18 +225,18 @@ internal partial class CreateDelegateVisitor : AstVisitor
         public DataType OutputType => outputType;
 
         /// <inheritdoc />
-        public VariantValue Invoke(IExecutionThread thread)
+        public async ValueTask<VariantValue> InvokeAsync(IExecutionThread thread, CancellationToken cancellationToken = default)
         {
-            var leftValue = leftAction.Invoke(thread);
+            var leftValue = await leftAction.InvokeAsync(thread, cancellationToken);
             foreach (var funcUnit in funcUnits)
             {
-                var rightValue = funcUnit.Invoke(thread);
+                var rightValue = await funcUnit.InvokeAsync(thread, cancellationToken);
 
                 VariantValue isEqual;
                 if (rightValue.Type == DataType.Object)
                 {
                     var iterator = RowsIteratorConverter.Convert(rightValue);
-                    while (iterator.MoveNext())
+                    while (await iterator.MoveNextAsync(cancellationToken))
                     {
                         var iteratorValue = iterator.Current[0];
                         isEqual = VariantValue.Equals(in leftValue, in iteratorValue, out _);
@@ -290,9 +290,9 @@ internal partial class CreateDelegateVisitor : AstVisitor
         public DataType OutputType => outputType;
 
         /// <inheritdoc />
-        public VariantValue Invoke(IExecutionThread thread)
+        public async ValueTask<VariantValue> InvokeAsync(IExecutionThread thread, CancellationToken cancellationToken = default)
         {
-            var value = action.Invoke(thread);
+            var value = await action.InvokeAsync(thread, cancellationToken);
             var result = VariantValue.Negation(in value, out ErrorCode _);
             return result;
         }
@@ -306,9 +306,9 @@ internal partial class CreateDelegateVisitor : AstVisitor
         public DataType OutputType => outputType;
 
         /// <inheritdoc />
-        public VariantValue Invoke(IExecutionThread thread)
+        public async ValueTask<VariantValue> InvokeAsync(IExecutionThread thread, CancellationToken cancellationToken = default)
         {
-            var value = action.Invoke(thread);
+            var value = await action.InvokeAsync(thread, cancellationToken);
             var notDelegate = VariantValue.GetOperationDelegate(VariantValue.Operation.Not, value.Type);
             return notDelegate.Invoke(value);
         }
@@ -322,9 +322,9 @@ internal partial class CreateDelegateVisitor : AstVisitor
         public DataType OutputType => outputType;
 
         /// <inheritdoc />
-        public VariantValue Invoke(IExecutionThread thread)
+        public async ValueTask<VariantValue> InvokeAsync(IExecutionThread thread, CancellationToken cancellationToken = default)
         {
-            var value = action.Invoke(thread);
+            var value = await action.InvokeAsync(thread, cancellationToken);
             return new VariantValue(value.IsNull);
         }
     }
@@ -337,9 +337,9 @@ internal partial class CreateDelegateVisitor : AstVisitor
         public DataType OutputType => outputType;
 
         /// <inheritdoc />
-        public VariantValue Invoke(IExecutionThread thread)
+        public async ValueTask<VariantValue> InvokeAsync(IExecutionThread thread, CancellationToken cancellationToken = default)
         {
-            var value = action.Invoke(thread);
+            var value = await action.InvokeAsync(thread, cancellationToken);
             return new VariantValue(!value.IsNull);
         }
     }
@@ -367,10 +367,10 @@ internal partial class CreateDelegateVisitor : AstVisitor
         ResolveTypesVisitor.Visit(node);
         var leftFunc = NodeIdFuncMap[node.LeftNode.Id];
         var tzFunc = NodeIdFuncMap[node.TimeZoneNode.Id];
-        VariantValue Func(IExecutionThread thread)
+        async ValueTask<VariantValue> Func(IExecutionThread thread, CancellationToken cancellationToken)
         {
-            var left = leftFunc.Invoke(thread).AsTimestamp;
-            var tz = tzFunc.Invoke(thread).AsString;
+            var left = (await leftFunc.InvokeAsync(thread, cancellationToken)).AsTimestamp;
+            var tz = (await tzFunc.InvokeAsync(thread, cancellationToken)).AsString;
             if (!left.HasValue)
             {
                 return VariantValue.Null;
@@ -398,9 +398,9 @@ internal partial class CreateDelegateVisitor : AstVisitor
         ResolveTypesVisitor.Visit(node);
         var expressionAction = NodeIdFuncMap[node.ExpressionNode.Id];
 
-        VariantValue Func(IExecutionThread thread)
+        async ValueTask<VariantValue> Func(IExecutionThread thread, CancellationToken cancellationToken)
         {
-            var expressionValue = expressionAction.Invoke(thread);
+            var expressionValue = await expressionAction.InvokeAsync(thread, cancellationToken);
             if (expressionValue.TryCast(node.TargetTypeNode.Type, out VariantValue result))
             {
                 return result;
@@ -425,11 +425,11 @@ internal partial class CreateDelegateVisitor : AstVisitor
         }
 
         /// <inheritdoc />
-        public VariantValue Invoke(IExecutionThread thread)
+        public async ValueTask<VariantValue> InvokeAsync(IExecutionThread thread, CancellationToken cancellationToken = default)
         {
             foreach (var expressionAction in _actions)
             {
-                var value = expressionAction.Invoke(thread);
+                var value = await expressionAction.InvokeAsync(thread, cancellationToken);
                 if (!value.IsNull)
                 {
                     return value;
@@ -467,12 +467,12 @@ internal partial class CreateDelegateVisitor : AstVisitor
         public DataType OutputType => outputType;
 
         /// <inheritdoc />
-        public VariantValue Invoke(IExecutionThread thread)
+        public async ValueTask<VariantValue> InvokeAsync(IExecutionThread thread, CancellationToken cancellationToken = default)
         {
             thread.Stack.CreateFrame();
             foreach (var argsUnit in argsUnits)
             {
-                thread.Stack.Push(argsUnit.Invoke(thread));
+                thread.Stack.Push(await argsUnit.InvokeAsync(thread, cancellationToken));
             }
             var result = function.Delegate(thread);
             thread.Stack.CloseFrame();

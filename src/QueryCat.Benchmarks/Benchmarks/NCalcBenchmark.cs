@@ -38,9 +38,9 @@ public class NCalcBenchmark : IDisposable
     #region Pi
 
     [Benchmark]
-    public VariantValue CalculatePiWithQueryCat()
+    public async Task<VariantValue> CalculatePiWithQueryCat()
     {
-        var result = _executionThread.Run(_qcatQuery);
+        var result = await _executionThread.RunAsync(_qcatQuery);
         return result;
     }
 
@@ -60,9 +60,9 @@ public class NCalcBenchmark : IDisposable
     #region Logical Expression
 
     [Benchmark]
-    public VariantValue CalculateLogicalWithQueryCat()
+    public async Task<VariantValue> CalculateLogicalWithQueryCat()
     {
-        var result = _executionThread.Run(LogicalExpression);
+        var result = await _executionThread.RunAsync(LogicalExpression);
         return result;
     }
 

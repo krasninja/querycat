@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
@@ -75,16 +76,18 @@ public sealed class ThriftPluginExecutionThread : IExecutionThread
     }
 
     /// <inheritdoc />
-    public VariantValue Run(string query, IDictionary<string, VariantValue>? parameters = null,
+    public async Task<VariantValue> RunAsync(
+        string query,
+        IDictionary<string, VariantValue>? parameters = null,
         CancellationToken cancellationToken = default)
     {
         try
         {
             CurrentQuery = query;
-            var result = AsyncUtils.RunSync(ct => _client.RunQueryAsync(
+            var result = await _client.RunQueryAsync(
                 query,
                 parameters?.ToDictionary(k => k.Key, v => SdkConvert.Convert(v.Value)),
-                ct));
+                cancellationToken);
             return SdkConvert.Convert(result);
         }
         finally

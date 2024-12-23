@@ -193,11 +193,11 @@ internal partial class CreateDelegateVisitor
         }
 
         /// <inheritdoc />
-        public VariantValue Invoke(IExecutionThread thread)
+        public ValueTask<VariantValue> InvokeAsync(IExecutionThread thread, CancellationToken cancellationToken = default)
         {
             var startObject = thread.GetVariable(_variableName);
             GetObjectBySelector(thread, _context, startObject, _strategies, out var finalValue);
-            return finalValue;
+            return ValueTask.FromResult(finalValue);
         }
     }
 
@@ -221,7 +221,7 @@ internal partial class CreateDelegateVisitor
         }
 
         /// <inheritdoc />
-        public VariantValue Invoke(IExecutionThread thread)
+        public ValueTask<VariantValue> InvokeAsync(IExecutionThread thread, CancellationToken cancellationToken = default)
         {
             if (GetObjectBySelector(
                     thread,
@@ -230,15 +230,15 @@ internal partial class CreateDelegateVisitor
                     _strategies,
                     out var value))
             {
-                return value;
+                return ValueTask.FromResult(value);
             }
-            return VariantValue.Null;
+            return ValueTask.FromResult(VariantValue.Null);
         }
     }
 
     #endregion
 
-    private sealed class VariantValueContainer(object? value = default)
+    private sealed class VariantValueContainer(object? value = null)
     {
         public object? Value { get; set; } = value;
     }

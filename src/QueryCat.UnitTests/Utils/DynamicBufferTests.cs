@@ -16,7 +16,7 @@ public class DynamicBufferTests
 
         // Act.
         var buffer = dynamicBuffer.Allocate();
-        dynamicBuffer.Commit(buffer);
+        dynamicBuffer.Commit(buffer.Span);
 
         // Assert.
         Assert.Equal(dynamicBuffer.ChunkSize, dynamicBuffer.Size);
@@ -34,7 +34,7 @@ public class DynamicBufferTests
         for (var i = 0; i < 3; i++)
         {
             var buffer = dynamicBuffer.Allocate();
-            dynamicBuffer.Commit(buffer);
+            dynamicBuffer.Commit(buffer.Span);
         }
 
         // Act.
@@ -54,7 +54,7 @@ public class DynamicBufferTests
         // Arrange.
         var dynamicBuffer = new DynamicBuffer<byte>(chunkSize: 10);
         var buffer = dynamicBuffer.Allocate();
-        dynamicBuffer.Commit(buffer);
+        dynamicBuffer.Commit(buffer.Span);
 
         // Act.
         dynamicBuffer.Advance(1000);
@@ -71,12 +71,12 @@ public class DynamicBufferTests
 
         // Act.
         var buffer = dynamicBuffer.Allocate();
-        buffer[0] = 1;
-        buffer[1] = 2;
+        buffer.Span[0] = 1;
+        buffer.Span[1] = 2;
         dynamicBuffer.Commit(2);
         buffer = dynamicBuffer.Allocate();
-        buffer[0] = 3;
-        buffer[1] = 4;
+        buffer.Span[0] = 3;
+        buffer.Span[1] = 4;
         dynamicBuffer.Commit(2);
 
         // Assert.
@@ -95,7 +95,7 @@ public class DynamicBufferTests
 
         // Act.
         var buffer = dynamicBuffer.Allocate();
-        buffer[4] = 10;
+        buffer.Span[4] = 10;
         dynamicBuffer.Commit(40);
         dynamicBuffer.Advance(4);
 
@@ -111,10 +111,10 @@ public class DynamicBufferTests
         // Arrange.
         var dynamicBuffer = new DynamicBuffer<byte>(chunkSize: 10);
         var buffer = dynamicBuffer.Allocate();
-        buffer.Fill(1);
+        buffer.Span.Fill(1);
         dynamicBuffer.Commit(buffer);
         buffer = dynamicBuffer.Allocate();
-        buffer.Fill(2);
+        buffer.Span.Fill(2);
         dynamicBuffer.Commit(5);
         dynamicBuffer.Advance(5);
 
@@ -158,7 +158,7 @@ public class DynamicBufferTests
         for (byte i = 0; i < 3; i++)
         {
             var buffer = dynamicBuffer.Allocate();
-            buffer.Fill(i);
+            buffer.Span.Fill(i);
             dynamicBuffer.Commit(buffer);
         }
 
@@ -167,7 +167,7 @@ public class DynamicBufferTests
         for (byte i = 0; i < 2; i++)
         {
             var buffer = dynamicBuffer.Allocate();
-            buffer.Fill(42);
+            buffer.Span.Fill(42);
             dynamicBuffer.Commit(buffer);
         }
 
@@ -458,8 +458,8 @@ public class DynamicBufferTests
 
         // Act.
         var buf1 = dynamicBuffer.Allocate();
-        "12".CopyTo(buf1);
-        "34".CopyTo(buf1.Slice(2, 2));
+        "12".CopyTo(buf1.Span);
+        "34".CopyTo(buf1.Span.Slice(2, 2));
         dynamicBuffer.Commit(2);
         dynamicBuffer.Commit(2);
 

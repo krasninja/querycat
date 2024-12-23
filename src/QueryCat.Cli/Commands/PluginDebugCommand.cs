@@ -29,7 +29,7 @@ internal class PluginDebugCommand : BaseQueryCommand
             description: "Output appended data as the input source grows.");
         this.AddOption(followOption);
 
-        this.SetHandler((applicationOptions, query, variables, files, follow) =>
+        this.SetHandler(async (applicationOptions, query, variables, files, follow) =>
         {
             applicationOptions.InitializeLogger();
             var tableOutput = new Backend.Formatters.TextTableOutput(
@@ -69,7 +69,7 @@ internal class PluginDebugCommand : BaseQueryCommand
                 .WithRegistrations(Backend.Addons.Functions.JsonFunctions.RegisterFunctions)
                 .Create();
             AddVariables(thread, variables);
-            RunQuery(thread, query, files, cts.Token);
+            await RunQueryAsync(thread, query, files, cts.Token);
         },
             new ApplicationOptionsBinder(LogLevelOption, PluginDirectoriesOption),
             QueryArgument,

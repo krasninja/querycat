@@ -29,7 +29,7 @@ internal abstract class BaseQueryCommand : BaseCommand
         Add(VariablesOption);
     }
 
-    public void RunQuery(
+    public async Task RunQueryAsync(
         IExecutionThread executionThread,
         string query,
         string[] files,
@@ -39,21 +39,22 @@ internal abstract class BaseQueryCommand : BaseCommand
         {
             foreach (var file in files.SelectMany(f => f.Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)))
             {
-                RunWithPluginsInstall(executionThread, File.ReadAllText(file), cancellationToken: cancellationToken);
+                var text = await File.ReadAllTextAsync(file, cancellationToken);
+                await RunWithPluginsInstall(executionThread, text, cancellationToken: cancellationToken);
             }
         }
         else
         {
-            RunWithPluginsInstall(executionThread, query, cancellationToken: cancellationToken);
+            await RunWithPluginsInstall(executionThread, query, cancellationToken: cancellationToken);
         }
     }
 
-    private void RunWithPluginsInstall(IExecutionThread executionThread, string query, CancellationToken cancellationToken)
+    private async Task RunWithPluginsInstall(IExecutionThread executionThread, string query, CancellationToken cancellationToken)
     {
 #if ENABLE_PLUGINS && PLUGIN_THRIFT
         try
         {
-            executionThread.Run(query, cancellationToken: cancellationToken);
+            await executionThread.RunAsync(query, cancellationToken: cancellationToken);
         }
         catch (Backend.ThriftPlugins.ProxyNotFoundException)
         {
@@ -61,7 +62,7 @@ internal abstract class BaseQueryCommand : BaseCommand
                 await QueryCat.Cli.Commands.Options.ApplicationOptions.InstallPluginsProxyAsync(cancellationToken: ct));
             if (installed)
             {
-                executionThread.Run(query, cancellationToken: cancellationToken);
+                await executionThread.RunAsync(query, cancellationToken: cancellationToken);
             }
         }
 #else

@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Globalization;
 using System.Text;
 using QueryCat.Backend;
 using QueryCat.Backend.Core.Execution;
@@ -24,12 +25,12 @@ internal class AsyncFunctionUsage : BaseUsage
     }
 
     /// <inheritdoc />
-    public override void Run()
+    public override async Task RunAsync()
     {
         var executionThread = new ExecutionThreadBootstrapper().Create();
         executionThread.FunctionsManager.RegisterFunction(AsyncDemo);
 
-        var result = executionThread.Run("async_demo()");
-        Console.WriteLine(result.ToString()); // Hello World!
+        var result = await executionThread.RunAsync("async_demo()");
+        Console.WriteLine(result.ToString(CultureInfo.InvariantCulture)); // Hello World!
     }
 }

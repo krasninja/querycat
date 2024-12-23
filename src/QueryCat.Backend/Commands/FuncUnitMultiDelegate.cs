@@ -11,12 +11,12 @@ internal sealed class FuncUnitMultiDelegate(DataType outputType, params IFuncUni
 
     /// <inheritdoc />
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public VariantValue Invoke(IExecutionThread thread)
+    public async ValueTask<VariantValue> InvokeAsync(IExecutionThread thread, CancellationToken cancellationToken = default)
     {
         var lastResult = VariantValue.Null;
         foreach (var funcUnit in funcUnits)
         {
-            lastResult = funcUnit.Invoke(thread);
+            lastResult = await funcUnit.InvokeAsync(thread, cancellationToken);
         }
         return lastResult;
     }

@@ -63,12 +63,12 @@ internal sealed class StatementsVisitor : AstVisitor
         public DataType OutputType => blocks[^1].OutputType;
 
         /// <inheritdoc />
-        public VariantValue Invoke(IExecutionThread thread)
+        public async ValueTask<VariantValue> InvokeAsync(IExecutionThread thread, CancellationToken cancellationToken = default)
         {
             var result = VariantValue.Null;
             foreach (var func in blocks)
             {
-                result = func.Invoke(thread);
+                result = await func.InvokeAsync(thread, cancellationToken);
             }
             return result;
         }

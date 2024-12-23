@@ -7,7 +7,7 @@ namespace QueryCat.Backend.Formatters;
 internal sealed class NullInput : RowsInput
 {
     /// <inheritdoc />
-    public override Column[] Columns { get; protected set; } = Array.Empty<Column>();
+    public override Column[] Columns { get; protected set; } = [];
 
     /// <inheritdoc />
     public override void Open()

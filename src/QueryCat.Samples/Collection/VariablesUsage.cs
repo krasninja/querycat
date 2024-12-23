@@ -6,13 +6,13 @@ namespace QueryCat.Samples.Collection;
 internal class VariablesUsage : BaseUsage
 {
     /// <inheritdoc />
-    public override void Run()
+    public override async Task RunAsync()
     {
         var executionThread = new ExecutionThreadBootstrapper().Create();
         // Define variable in script.
-        executionThread.Run("declare x int := 10;");
+        await executionThread.RunAsync("declare x int := 10;");
         // Define variable in code.
         executionThread.TopScope.Variables["y"] = new VariantValue(5);
-        Console.WriteLine(executionThread.Run("x+y").AsString); // 15
+        Console.WriteLine((await executionThread.RunAsync("x+y")).AsString); // 15
     }
 }

@@ -20,13 +20,13 @@ public sealed class PluginsTests : IDisposable
     }
 
     [Fact]
-    public void SamplePluginRowsInput_CreateAndRun_ReturnsResult()
+    public async Task SamplePluginRowsInput_CreateAndRun_ReturnsResult()
     {
         // Arrange.
         _testThread.FunctionsManager.RegisterFunction(SamplePluginRowsInput.SamplePlugin);
 
         // Act.
-        _testThread.Run(@"SELECT * FROM plugin();");
+        await _testThread.RunAsync(@"SELECT * FROM plugin();");
         var result = PrepareResult(TestThread.GetQueryResult(_testThread));
 
         // Assert.
@@ -34,13 +34,13 @@ public sealed class PluginsTests : IDisposable
     }
 
     [Fact]
-    public void SamplePluginRowsIterator_CreateAndRun_ReturnsResult()
+    public async Task SamplePluginRowsIterator_CreateAndRun_ReturnsResult()
     {
         // Arrange.
         _testThread.FunctionsManager.RegisterFunction(SamplePluginRowsIterator.SamplePlugin);
 
         // Act.
-        _testThread.Run(@"SELECT * FROM plugin();");
+        await _testThread.RunAsync(@"SELECT * FROM plugin();");
         var result = PrepareResult(TestThread.GetQueryResult(_testThread));
 
         // Assert.
@@ -48,13 +48,13 @@ public sealed class PluginsTests : IDisposable
     }
 
     [Fact]
-    public void SamplePluginEnumerableInput_CreateAndRun_ReturnsResult()
+    public async Task SamplePluginEnumerableInput_CreateAndRun_ReturnsResult()
     {
         // Arrange.
         _testThread.FunctionsManager.RegisterFunction(SamplePluginInput.SamplePlugin);
 
         // Act.
-        _testThread.Run(@"SELECT * FROM plugin();");
+        await _testThread.RunAsync(@"SELECT * FROM plugin();");
         var result = PrepareResult(TestThread.GetQueryResult(_testThread));
 
         // Assert.

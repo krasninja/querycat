@@ -326,7 +326,7 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
     /// of elements.
     /// </summary>
     /// <returns>Buffer.</returns>
-    public Span<T> Allocate()
+    public Memory<T> Allocate()
     {
         if (_allocatedFlag)
         {
@@ -336,7 +336,7 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
         return AllocateInternal();
     }
 
-    private Span<T> AllocateInternal()
+    private Memory<T> AllocateInternal()
     {
         // Check if we have spare space at current chunk.
         if (_buffersList.IsAny && _endPosition % _chunkSize > 0)
@@ -344,7 +344,7 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
             var tailStartIndex = (int)_endPosition % _chunkSize;
             var bufferSize = _chunkSize - tailStartIndex;
             _allocatedPosition += bufferSize;
-            return _buffersList.Tail!.Buffer.AsSpan(tailStartIndex, bufferSize);
+            return _buffersList.Tail!.Buffer.AsMemory(tailStartIndex, bufferSize);
         }
 
         // Before allocate check if we have available free segment.
@@ -369,6 +369,12 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
     /// </summary>
     /// <param name="buffer">Buffer to commit.</param>
     public void Commit(Span<T> buffer) => Commit(buffer.Length);
+
+    /// <summary>
+    /// Commit the buffer.
+    /// </summary>
+    /// <param name="buffer">Buffer to commit.</param>
+    public void Commit(Memory<T> buffer) => Commit(buffer.Length);
 
     /// <summary>
     /// Commit the specific number of elements.
@@ -629,7 +635,7 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public ReadOnlySequence<T> GetSequence()
     {
-        if (_buffersList.Head == null)
+        if (_buffersList.Head == null || IsEmpty)
         {
             return ReadOnlySequence<T>.Empty;
         }
@@ -768,7 +774,7 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
 
             var position = (int)_endPosition % _chunkSize;
             var upperIndex = remainBuffer > data.Length - writeIndex ? data.Length : remainBuffer + writeIndex;
-            data[writeIndex..upperIndex].CopyTo(buffer[position..]);
+            data[writeIndex..upperIndex].CopyTo(buffer.Span[position..]);
             var append = upperIndex - writeIndex;
             _endPosition += append;
             writeIndex += append;

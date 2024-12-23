@@ -71,7 +71,7 @@ public interface IExecutionThread : IDisposable
     /// <param name="query">Query.</param>
     /// <param name="parameters">Query parameters. They will be used in a separate scope.</param>
     /// <param name="cancellationToken">Cancellation token to cancel the request execution.</param>
-    VariantValue Run(
+    Task<VariantValue> RunAsync(
         string query,
         IDictionary<string, VariantValue>? parameters = null,
         CancellationToken cancellationToken = default);

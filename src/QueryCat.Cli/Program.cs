@@ -23,7 +23,7 @@ internal sealed class Program
     /// </summary>
     /// <param name="args">Application execution arguments.</param>
     /// <returns>Error code.</returns>
-    public static int Main(string[] args)
+    public static async Task<int> Main(string[] args)
     {
         AppDomain.CurrentDomain.UnhandledException += CurrentDomainOnUnhandledException;
 
@@ -99,7 +99,7 @@ internal sealed class Program
             }, errorExitCode: 1)
             .Build();
 
-        var returnCode = parser.Parse(args).Invoke();
+        var returnCode = await parser.Parse(args).InvokeAsync();
         Application.LoggerFactory.Dispose();
         return returnCode;
     }

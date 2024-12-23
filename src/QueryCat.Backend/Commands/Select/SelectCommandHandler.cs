@@ -16,10 +16,10 @@ internal sealed class SelectCommandHandler : IFuncUnit, IDisposable
     }
 
     /// <inheritdoc />
-    public VariantValue Invoke(IExecutionThread thread)
+    public ValueTask<VariantValue> InvokeAsync(IExecutionThread thread, CancellationToken cancellationToken = default)
     {
         ResetVariablesBoundRowsInputs();
-        return VariantValue.CreateFromObject(SelectCommandContext.CurrentIterator);
+        return ValueTask.FromResult(VariantValue.CreateFromObject(SelectCommandContext.CurrentIterator));
     }
 
     private void ResetVariablesBoundRowsInputs()

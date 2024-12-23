@@ -11,5 +11,6 @@ internal sealed class EmptyFuncUnit : IFuncUnit
     public DataType OutputType => DataType.Null;
 
     /// <inheritdoc />
-    public VariantValue Invoke(IExecutionThread thread) => VariantValue.Null;
+    public ValueTask<VariantValue> InvokeAsync(IExecutionThread thread, CancellationToken cancellationToken = default)
+        => ValueTask.FromResult(VariantValue.Null);
 }
