@@ -389,12 +389,6 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
             return;
         }
 
-        var iterator = IteratorStart();
-        while (iterator.IsNotEmpty)
-        {
-            iterator = IteratorNext(in iterator);
-        }
-
         _endPosition += size;
         Debug.Assert(_endPosition <= _allocatedPosition,
             "Allocated position cannot be before committed!");
