@@ -31,7 +31,7 @@ internal class ServeCommand : BaseCommand
         AddOption(safeModeOption);
         AddOption(allowedIPsOption);
         AddOption(allowedIPsSlotsOption);
-        this.SetHandler((applicationOptions, urls, allowOrigin, password, safeMode, rootDirectory, allowedIPs, allowedIPsSlots) =>
+        this.SetHandler(async (applicationOptions, urls, allowOrigin, password, safeMode, rootDirectory, allowedIPs, allowedIPsSlots) =>
         {
             applicationOptions.InitializeLogger();
             using var root = applicationOptions.CreateApplicationRoot();
@@ -49,7 +49,7 @@ internal class ServeCommand : BaseCommand
             {
                 webServer.AllowOrigin = allowOrigin;
             }
-            webServer.Run();
+            await webServer.RunAsync();
         },
             new ApplicationOptionsBinder(LogLevelOption, PluginDirectoriesOption),
             urlsOption,

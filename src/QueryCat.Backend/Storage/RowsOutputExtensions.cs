@@ -14,7 +14,9 @@ public static class RowsOutputExtensions
     /// <param name="output">Rows output.</param>
     /// <param name="iterator">Rows iterator.</param>
     /// <param name="adjustColumnsLengths">Should update columns widths.</param>
-    public static void Write(this IRowsOutput output, IRowsIterator iterator, bool adjustColumnsLengths = false)
+    /// <param name="cancellationToken">Cancellation token.</param>
+    public static ValueTask WriteAsync(this IRowsOutput output, IRowsIterator iterator, bool adjustColumnsLengths = false,
+        CancellationToken cancellationToken = default)
     {
         output.QueryContext = new RowsOutputQueryContext(iterator.Columns);
         output.Open();
@@ -33,6 +35,8 @@ public static class RowsOutputExtensions
         {
             output.Close();
         }
+
+        return ValueTask.CompletedTask;
     }
 
     /// <summary>
@@ -41,8 +45,10 @@ public static class RowsOutputExtensions
     /// <param name="output">Rows output.</param>
     /// <param name="input">Rows input.</param>
     /// <param name="adjustColumnsLengths">Should update columns widths.</param>
-    public static void Write(this IRowsOutput output, IRowsInput input, bool adjustColumnsLengths = false)
+    /// <param name="cancellationToken">Cancellation token.</param>
+    public static ValueTask WriteAsync(this IRowsOutput output, IRowsInput input, bool adjustColumnsLengths = false,
+        CancellationToken cancellationToken = default)
     {
-        Write(output, new RowsInputIterator(input), adjustColumnsLengths);
+        return WriteAsync(output, new RowsInputIterator(input), adjustColumnsLengths, cancellationToken: cancellationToken);
     }
 }

@@ -3,7 +3,6 @@ using System.Diagnostics;
 using System.Net;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Storage;
 
 namespace QueryCat.Cli.Infrastructure;
@@ -29,7 +28,7 @@ internal partial class WebServer
         }
     }
 
-    private void Files_HandleFilesApiAction(HttpListenerRequest request, HttpListenerResponse response)
+    private async Task Files_HandleFilesApiActionAsync(HttpListenerRequest request, HttpListenerResponse response, CancellationToken cancellationToken)
     {
         if (request.HttpMethod != HttpMethod.Get.Method)
         {
@@ -55,11 +54,11 @@ internal partial class WebServer
 
         if (Directory.Exists(path))
         {
-            AsyncUtils.RunSync(ct => Files_ServeDirectory(path, request, response));
+            await Files_ServeDirectory(path, request, response, cancellationToken);
         }
         else if (File.Exists(path))
         {
-            Files_ServeFile(path, request, response);
+            await Files_ServeFile(path, request, response, cancellationToken);
         }
         else
         {
@@ -67,17 +66,18 @@ internal partial class WebServer
         }
     }
 
-    private async Task Files_ServeDirectory(string path, HttpListenerRequest request, HttpListenerResponse response)
+    private async Task Files_ServeDirectory(string path, HttpListenerRequest request, HttpListenerResponse response,
+        CancellationToken cancellationToken)
     {
         _executionThread.TopScope.Variables["path"] = new VariantValue(path);
-        var result = await _executionThread.RunAsync(_selectFilesQuery);
+        var result = await _executionThread.RunAsync(_selectFilesQuery, cancellationToken: cancellationToken);
         _logger.LogInformation("[{Address}] Dir: {Path}", request.RemoteEndPoint.Address, path);
-        WriteIterator(RowsIteratorConverter.Convert(result), request, response);
+        await WriteIteratorAsync(RowsIteratorConverter.Convert(result), request, response, cancellationToken);
     }
 
-    private void Files_ServeFile(string file, HttpListenerRequest request, HttpListenerResponse response)
+    private async Task Files_ServeFile(string file, HttpListenerRequest request, HttpListenerResponse response, CancellationToken cancellationToken)
     {
-        using var fileInput = new FileStream(file, FileMode.Open, FileAccess.ReadWrite);
+        await using var fileInput = new FileStream(file, FileMode.Open, FileAccess.ReadWrite);
         var maxLength = fileInput.Length;
         Span<Range> ranges = stackalloc Range[1];
         var isRangeRequest = Files_ParseRange(request.Headers["Range"], maxLength, ranges) > 0;
@@ -104,7 +104,7 @@ internal partial class WebServer
             fileInput.Seek(range.Start, SeekOrigin.Begin);
             var finish = false;
             int bytesRead;
-            while (!finish && (bytesRead = fileInput.Read(buffer, 0, buffer.Length)) > 0)
+            while (!finish && (bytesRead = await fileInput.ReadAsync(buffer, 0, buffer.Length, cancellationToken)) > 0)
             {
                 totalBytesRead += bytesRead;
 
@@ -120,7 +120,7 @@ internal partial class WebServer
                     {
                         break;
                     }
-                    response.OutputStream.Write(buffer, 0, bytesRead);
+                    await response.OutputStream.WriteAsync(buffer, 0, bytesRead, cancellationToken);
                     totalBytesWrite += bytesRead;
                 }
                 catch (HttpListenerException e)
@@ -133,7 +133,7 @@ internal partial class WebServer
         finally
         {
             fileInput.Close();
-            response.OutputStream.Flush();
+            await response.OutputStream.FlushAsync(cancellationToken);
             ArrayPool<byte>.Shared.Return(buffer);
         }
         _logger.LogTrace("End range {Start}-{End}, Total: {TotalWrite}", range.Start, range.End, totalBytesWrite);

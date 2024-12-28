@@ -15,19 +15,16 @@ internal class PluginProxyCommand : BaseCommand
     /// <inheritdoc />
     public PluginProxyCommand() : base("install-proxy", "Install the plugins proxy.")
     {
-        this.SetHandler(applicationOptions =>
+        this.SetHandler(async (applicationOptions) =>
         {
             applicationOptions.InitializeLogger();
             Console.WriteLine(Resources.Messages.PluginProxyDownload, PluginProxyDownloader.GetLinkToPluginsProxyFile());
 
-            AsyncUtils.RunSync(async ct =>
-            {
-                var downloader = new PluginProxyDownloader(ProxyFile.GetProxyFileName());
-                var applicationDirectory = ExecutionThread.GetApplicationDirectory(ensureExists: true);
-                var pluginsProxyLocalFile = Path.Combine(applicationDirectory,
-                    ProxyFile.GetProxyFileName(includeVersion: true));
-                await downloader.DownloadAsync(pluginsProxyLocalFile, ct);
-            });
+            var downloader = new PluginProxyDownloader(ProxyFile.GetProxyFileName());
+            var applicationDirectory = ExecutionThread.GetApplicationDirectory(ensureExists: true);
+            var pluginsProxyLocalFile = Path.Combine(applicationDirectory,
+                ProxyFile.GetProxyFileName(includeVersion: true));
+            await downloader.DownloadAsync(pluginsProxyLocalFile);
         }, new ApplicationOptionsBinder(LogLevelOption, PluginDirectoriesOption));
     }
 }

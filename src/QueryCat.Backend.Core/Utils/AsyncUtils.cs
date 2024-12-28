@@ -193,12 +193,21 @@ public static class AsyncUtils
         => RunSync(() => task.Invoke(CancellationToken.None));
 
     /// <summary>
-    /// Executes an async Task method which has a T return value synchronously.
+    /// Executes an async ValueTask method which has a T return value synchronously.
     /// </summary>
     /// <param name="task">Task.</param>
     public static T? RunSync<T>(Func<ValueTask<T>> task)
     {
         return task.Invoke().GetAwaiter().GetResult();
+    }
+
+    /// <summary>
+    /// Executes an async ValueTask method.
+    /// </summary>
+    /// <param name="task">Task.</param>
+    public static void RunSync(Func<ValueTask> task)
+    {
+        task.Invoke().GetAwaiter().GetResult();
     }
 
     /// <summary>

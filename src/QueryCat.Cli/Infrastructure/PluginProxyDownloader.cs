@@ -19,7 +19,7 @@ internal sealed class PluginProxyDownloader
         this._proxyFileName = proxyFileName;
     }
 
-    public async Task DownloadAsync(string pluginsProxyLocalFile, CancellationToken cancellationToken)
+    public async Task DownloadAsync(string pluginsProxyLocalFile, CancellationToken cancellationToken = default)
     {
         using var httpClient = new HttpClient();
 

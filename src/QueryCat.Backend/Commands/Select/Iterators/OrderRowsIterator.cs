@@ -50,20 +50,20 @@ internal sealed class OrderRowsIterator : IRowsIterator, IRowsIteratorParent
         _orderIndexIterator = _orderIndex.GetOrderIterator();
     }
 
-    private void CopyRowIteratorToFrame()
+    private async ValueTask CopyRowIteratorToFrameAsync(CancellationToken cancellationToken)
     {
         var row = new Row(_rowsFrame);
         var orderRow = new Row(_orderRowsFrame);
-        while (_rowsIterator.MoveNext())
+        while (await _rowsIterator.MoveNextAsync(cancellationToken))
         {
-            for (int i = 0; i < _rowsIterator.Columns.Length; i++)
+            for (var i = 0; i < _rowsIterator.Columns.Length; i++)
             {
                 row[i] = _rowsIterator.Current[i];
             }
             _rowsFrame.AddRow(row);
-            for (int i = 0; i < _orders.Length; i++)
+            for (var i = 0; i < _orders.Length; i++)
             {
-                orderRow[i] = _orders[i].Func.Invoke(_thread);
+                orderRow[i] = await _orders[i].Func.InvokeAsync(_thread, cancellationToken);
             }
             _orderRowsFrame.AddRow(orderRow);
         }
@@ -74,7 +74,7 @@ internal sealed class OrderRowsIterator : IRowsIterator, IRowsIteratorParent
     {
         if (!_isInitialized)
         {
-            CopyRowIteratorToFrame();
+            await CopyRowIteratorToFrameAsync(cancellationToken);
             _orderIndex.Rebuild();
             _isInitialized = true;
         }

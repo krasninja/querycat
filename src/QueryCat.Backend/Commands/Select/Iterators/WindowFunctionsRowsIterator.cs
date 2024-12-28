@@ -221,13 +221,14 @@ internal sealed class WindowFunctionsRowsIterator : IRowsIterator
         {
             foreach (var partition in _partitions)
             {
-                var aggregateValue = ProcessPartition(iterator, partition);
+                var aggregateValue = await ProcessPartitionAsync(iterator, partition, cancellationToken);
                 _rowsFrame.UpdateValue(iterator.Position, partition.OriginalColumnIndex, aggregateValue);
             }
         }
     }
 
-    private VariantValue ProcessPartition(ICursorRowsIterator iterator, PartitionInfo partitionInfo)
+    private async ValueTask<VariantValue> ProcessPartitionAsync(ICursorRowsIterator iterator, PartitionInfo partitionInfo,
+        CancellationToken cancellationToken)
     {
         var rowIdData = partitionInfo.RowIdToPartition[iterator.Position];
 
@@ -240,7 +241,7 @@ internal sealed class WindowFunctionsRowsIterator : IRowsIterator
         // Calculate aggregate values by certain window boundaries.
         var rowsIterator = rowIdData.PartitionInstance.RowsIterator;
         rowsIterator.Reset();
-        while (rowsIterator.MoveNext())
+        while (await rowsIterator.MoveNextAsync(cancellationToken))
         {
             // Upper boundary.
 

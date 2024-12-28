@@ -88,7 +88,7 @@ internal sealed class GroupRowsIterator : IRowsIterator, IRowsIteratorParent
     {
         if (!_isInitialized)
         {
-            FillRows();
+            await FillRowsAsync(cancellationToken);
             _isInitialized = true;
         }
 
@@ -132,15 +132,15 @@ internal sealed class GroupRowsIterator : IRowsIterator, IRowsIteratorParent
         return arr;
     }
 
-    private void FillRows()
+    private async ValueTask FillRowsAsync(CancellationToken cancellationToken)
     {
         var keysRowIndexesMap = new Dictionary<VariantValueArray, GroupKeyEntry>(capacity: 1024);
 
         // Fill keysRowIndexesMap.
-        while (_rowsIterator.MoveNext())
+        while (await _rowsIterator.MoveNextAsync(cancellationToken))
         {
             // Format key and fill aggregate values.
-            _keys[0].Invoke(_thread);
+            await _keys[0].InvokeAsync(_thread, cancellationToken);
             var key = KeysToArray(_keys);
             if (!keysRowIndexesMap.TryGetValue(key, out GroupKeyEntry groupKey))
             {
@@ -158,7 +158,7 @@ internal sealed class GroupRowsIterator : IRowsIterator, IRowsIteratorParent
             {
                 var target = _targets[i];
                 _thread.Stack.CreateFrame();
-                target.ValueGenerator.Invoke(_thread); // We need this call to fill FunctionCallInfo.
+                await target.ValueGenerator.InvokeAsync(_thread, cancellationToken); // We need this call to fill FunctionCallInfo.
                 target.AggregateFunction.Invoke(groupKey.AggregateStates[i], _thread);
                 _thread.Stack.CloseFrame();
             }

@@ -30,7 +30,7 @@ internal sealed partial class WebServer
 
     public string AllowOrigin { get; set; } = string.Empty;
 
-    private readonly IDictionary<string, Action<HttpListenerRequest, HttpListenerResponse>> _actions;
+    private readonly IDictionary<string, Func<HttpListenerRequest, HttpListenerResponse, CancellationToken, Task>> _actions;
 
     private readonly IExecutionThread _executionThread;
     private readonly string? _password;
@@ -46,15 +46,15 @@ internal sealed partial class WebServer
 
     public WebServer(ExecutionThread executionThread, WebServerOptions options)
     {
-        _actions = new Dictionary<string, Action<HttpListenerRequest, HttpListenerResponse>>
+        _actions = new Dictionary<string, Func<HttpListenerRequest, HttpListenerResponse, CancellationToken, Task>>
         {
-            ["/"] = HandleIndexAction,
-            ["/index.html"] = HandleIndexAction,
-            ["/index.js"] = HandleIndexJsAction,
-            ["/api/info"] = HandleInfoApiAction,
+            ["/"] = HandleIndexActionAsync,
+            ["/index.html"] = HandleIndexActionAsync,
+            ["/index.js"] = HandleIndexJsActionAsync,
+            ["/api/info"] = HandleInfoApiActionAsync,
             ["/api/query"] = HandleQueryApiAction,
-            ["/api/schema"] = HandleSchemaApiAction,
-            ["/api/files"] = Files_HandleFilesApiAction,
+            ["/api/schema"] = HandleSchemaApiActionAsync,
+            ["/api/files"] = Files_HandleFilesApiActionAsync,
         }.ToFrozenDictionary();
 
         _executionThread = executionThread;
@@ -68,7 +68,9 @@ internal sealed partial class WebServer
     /// <summary>
     /// Run web server.
     /// </summary>
-    public void Run()
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Awaitable task.</returns>
+    public async Task RunAsync(CancellationToken cancellationToken = default)
     {
         using var listener = new HttpListener();
         listener.Prefixes.Add(Uri);
@@ -81,21 +83,13 @@ internal sealed partial class WebServer
 
         while (true)
         {
-            SemaphoreSlim semaphore = new(0, 1);
-            listener.GetContextAsync()
-                .ContinueWith(t =>
-                {
-                    semaphore.Release();
-                    semaphore.Dispose();
-                    HandleRequest(t.Result);
-                })
-                .ConfigureAwait(false);
-            semaphore.Wait();
+            var context = await listener.GetContextAsync();
+            await HandleRequestAsync(context, cancellationToken);
         }
         // ReSharper disable once FunctionNeverReturns
     }
 
-    private void HandleRequest(HttpListenerContext context)
+    private async Task HandleRequestAsync(HttpListenerContext context, CancellationToken cancellationToken)
     {
         var response = context.Response;
         response.Headers["User-Agent"] = Application.GetProductFullName();
@@ -160,13 +154,13 @@ internal sealed partial class WebServer
         {
             try
             {
-                action.Invoke(context.Request, response);
+                await action.Invoke(context.Request, response, cancellationToken);
             }
             catch (QueryCatException e)
             {
                 response.ContentType = MimeTypeProvider.ContentTypeJson;
                 response.StatusCode = (int)HttpStatusCode.BadRequest;
-                using var jsonWriter = new Utf8JsonWriter(response.OutputStream);
+                await using var jsonWriter = new Utf8JsonWriter(response.OutputStream);
                 WriteJsonMessage(jsonWriter, e.Message);
             }
             catch (UnauthorizedAccessException e)
@@ -190,17 +184,17 @@ internal sealed partial class WebServer
 
     #region Handles
 
-    private void HandleIndexAction(HttpListenerRequest request, HttpListenerResponse response)
+    private Task HandleIndexActionAsync(HttpListenerRequest request, HttpListenerResponse response, CancellationToken cancellationToken)
     {
-        WriteResourceToStream(@"QueryCat.Cli.Infrastructure.WebServerIndex.html", response);
+        return WriteResourceToStream(@"QueryCat.Cli.Infrastructure.WebServerIndex.html", response, cancellationToken);
     }
 
-    private void HandleIndexJsAction(HttpListenerRequest request, HttpListenerResponse response)
+    private Task HandleIndexJsActionAsync(HttpListenerRequest request, HttpListenerResponse response, CancellationToken cancellationToken)
     {
-        WriteResourceToStream(@"QueryCat.Cli.Infrastructure.WebServerPage.js", response);
+        return WriteResourceToStream(@"QueryCat.Cli.Infrastructure.WebServerPage.js", response, cancellationToken);
     }
 
-    private void HandleQueryApiAction(HttpListenerRequest request, HttpListenerResponse response)
+    private async Task HandleQueryApiAction(HttpListenerRequest request, HttpListenerResponse response, CancellationToken cancellationToken)
     {
         if (request.HttpMethod != HttpMethod.Post.Method && request.HttpMethod != HttpMethod.Get.Method)
         {
@@ -210,18 +204,17 @@ internal sealed partial class WebServer
 
         var queryData = GetQueryDataFromRequest(request);
         _logger.LogInformation("[{Address}] Query: {QueryData}", request.RemoteEndPoint.Address, queryData);
-        var lastResult = AsyncUtils.RunSync(async ct =>
-            await _executionThread.RunAsync(queryData.Query, queryData.ParametersAsDict, ct));
+        var lastResult = await _executionThread.RunAsync(queryData.Query, queryData.ParametersAsDict, cancellationToken);
 
-        WriteIterator(RowsIteratorConverter.Convert(lastResult), request, response);
+        await WriteIteratorAsync(RowsIteratorConverter.Convert(lastResult), request, response, cancellationToken);
     }
 
-    private void HandleSchemaApiAction(HttpListenerRequest request, HttpListenerResponse response)
+    private Task HandleSchemaApiActionAsync(HttpListenerRequest request, HttpListenerResponse response, CancellationToken cancellationToken)
     {
         if (request.HttpMethod != HttpMethod.Post.Method && request.HttpMethod != HttpMethod.Get.Method)
         {
             response.StatusCode = (int)HttpStatusCode.MethodNotAllowed;
-            return;
+            return Task.CompletedTask;
         }
 
         var query = GetQueryDataFromRequest(request);
@@ -235,7 +228,8 @@ internal sealed partial class WebServer
                 && result.AsObject is IRowsSchema rowsSchema)
             {
                 var schema = thread.CallFunction(Backend.Functions.InfoFunctions.Schema, rowsSchema);
-                WriteIterator(RowsIteratorConverter.Convert(schema), request, response);
+                AsyncUtils.RunSync(() =>
+                    WriteIteratorAsync(RowsIteratorConverter.Convert(schema), request, response, cancellationToken));
                 e.ContinueExecution = false;
             }
         }
@@ -249,14 +243,17 @@ internal sealed partial class WebServer
         {
             thread.StatementExecuted -= ThreadOnStatementExecuted;
         }
+
+        return Task.CompletedTask;
     }
 
     #endregion
 
-    private void WriteIterator(
+    private async Task WriteIteratorAsync(
         IRowsIterator iterator,
         HttpListenerRequest request,
-        HttpListenerResponse response)
+        HttpListenerResponse response,
+        CancellationToken cancellationToken)
     {
         var acceptedType = request.AcceptTypes?.FirstOrDefault();
         if (string.IsNullOrEmpty(acceptedType) || acceptedType == "*/*")
@@ -267,19 +264,19 @@ internal sealed partial class WebServer
         if (acceptedType == MimeTypeProvider.ContentTypeHtml)
         {
             response.ContentType = MimeTypeProvider.ContentTypeHtml;
-            using var streamWriter = new StreamWriter(response.OutputStream);
-            WriteHtml(iterator, streamWriter);
+            await using var streamWriter = new StreamWriter(response.OutputStream);
+            await WriteHtmlAsync(iterator, streamWriter, cancellationToken);
         }
         else if (acceptedType == MimeTypeProvider.ContentTypeJson)
         {
             response.ContentType = MimeTypeProvider.ContentTypeJson;
-            using var jsonWriter = new Utf8JsonWriter(response.OutputStream);
-            WriteJson(iterator, jsonWriter);
+            await using var jsonWriter = new Utf8JsonWriter(response.OutputStream);
+            await WriteJsonAsync(iterator, jsonWriter, cancellationToken);
         }
         else
         {
             response.ContentType = MimeTypeProvider.ContentTypeTextPlain;
-            WriteText(iterator, response.OutputStream);
+            await WriteTextAsync(iterator, response.OutputStream, cancellationToken);
         }
     }
 
@@ -341,55 +338,57 @@ internal sealed partial class WebServer
         throw new QueryCatException(Resources.Errors.InvalidContentType);
     }
 
-    private static void WriteHtml(IRowsIterator iterator, StreamWriter streamWriter)
+    private static async Task WriteHtmlAsync(IRowsIterator iterator, StreamWriter streamWriter, CancellationToken cancellationToken)
     {
-        streamWriter.WriteLine("<!DOCTYPE html><HTML>");
-        streamWriter.WriteLine("<HEAD>");
-        streamWriter.WriteLine("<META CHARSET=\"utf-8\">");
-        streamWriter.WriteLine("<link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css\">");
-        streamWriter.WriteLine("</HEAD>");
-        streamWriter.WriteLine("<BODY><TABLE class=\"table qcat-table\">");
+        await streamWriter.WriteLineAsync("""
+                                          <!DOCTYPE html><HTML>
+                                          <HEAD>
+                                          <META CHARSET="utf-8">
+                                          <LINK REL="stylesheet" HREF="https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css">
+                                          </HEAD>
+                                          <BODY><TABLE CLASS="table qcat-table">
+                                          """);
 
-        streamWriter.WriteLine("<TR>");
+        await streamWriter.WriteLineAsync("<TR>");
         foreach (var column in iterator.Columns)
         {
             if (column.IsHidden)
             {
                 continue;
             }
-            streamWriter.WriteLine($"<TH>{column.Name}</TH>");
+            await streamWriter.WriteLineAsync($"<TH>{column.Name}</TH>");
         }
-        streamWriter.WriteLine("</TR>");
+        await streamWriter.WriteLineAsync("</TR>");
 
-        while (iterator.MoveNext())
+        while (await iterator.MoveNextAsync(cancellationToken))
         {
-            streamWriter.WriteLine("<TR>");
+            await streamWriter.WriteLineAsync("<TR>");
             for (var i = 0; i < iterator.Columns.Length; i++)
             {
                 if (iterator.Columns[i].IsHidden)
                 {
                     continue;
                 }
-                streamWriter.WriteLine($"<TD>{iterator.Current[i]}</TD>");
+                await streamWriter.WriteLineAsync($"<TD>{iterator.Current[i]}</TD>");
             }
-            streamWriter.WriteLine("</TR>");
+            await streamWriter.WriteLineAsync("</TR>");
         }
 
-        streamWriter.WriteLine("</TABLE></BODY></HTML>");
+        await streamWriter.WriteLineAsync("</TABLE></BODY></HTML>");
     }
 
-    private void WriteText(IRowsIterator iterator, Stream stream)
+    private async Task WriteTextAsync(IRowsIterator iterator, Stream stream, CancellationToken cancellationToken)
     {
         var formatter = new TextTableFormatter();
         var output = formatter.OpenOutput(stream);
-        output.Write(iterator, adjustColumnsLengths: true);
+        await output.WriteAsync(iterator, adjustColumnsLengths: true, cancellationToken: cancellationToken);
     }
 
-    private static void WriteJson(IRowsIterator iterator, Utf8JsonWriter jsonWriter)
+    private static async Task WriteJsonAsync(IRowsIterator iterator, Utf8JsonWriter jsonWriter, CancellationToken cancellationToken)
     {
         jsonWriter.WriteStartObject();
         WriteJsonSchema(iterator.Columns, jsonWriter);
-        WriteJsonData(iterator, jsonWriter);
+        await WriteJsonDataAsync(iterator, jsonWriter, cancellationToken);
         jsonWriter.WriteEndObject();
     }
 
@@ -415,11 +414,11 @@ internal sealed partial class WebServer
         jsonWriter.WriteEndArray();
     }
 
-    private static void WriteJsonData(IRowsIterator iterator, Utf8JsonWriter jsonWriter)
+    private static async Task WriteJsonDataAsync(IRowsIterator iterator, Utf8JsonWriter jsonWriter, CancellationToken cancellationToken)
     {
         jsonWriter.WritePropertyName("data");
         jsonWriter.WriteStartArray();
-        while (iterator.MoveNext())
+        while (await iterator.MoveNextAsync(cancellationToken))
         {
             jsonWriter.WriteStartObject();
             for (var i = 0; i < iterator.Columns.Length; i++)
@@ -475,7 +474,7 @@ internal sealed partial class WebServer
         jsonWriter.WriteEndObject();
     }
 
-    private void WriteResourceToStream(string uri, HttpListenerResponse response)
+    private async Task WriteResourceToStream(string uri, HttpListenerResponse response, CancellationToken cancellationToken)
     {
         // Determine path.
         var assembly = Assembly.GetExecutingAssembly();
@@ -485,7 +484,7 @@ internal sealed partial class WebServer
         response.ContentType = _mimeTypeProvider.GetContentType(extension);
 
         // Format: "{Namespace}.{Folder}.{filename}.{Extension}"
-        using Stream? stream = assembly.GetManifestResourceStream(uri);
-        stream?.CopyTo(response.OutputStream);
+        await using Stream? stream = assembly.GetManifestResourceStream(uri);
+        await stream?.CopyToAsync(response.OutputStream, cancellationToken)!;
     }
 }

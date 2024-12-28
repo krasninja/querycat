@@ -33,26 +33,6 @@ public sealed class StatisticRowsIterator : IRowsIterator, IRowsIteratorParent
     }
 
     /// <inheritdoc />
-    public bool MoveNext()
-    {
-        if (MaxErrorsCount > -1 && _statistic.ErrorsCount >= MaxErrorsCount)
-        {
-            _logger.LogCritical(
-                "Maximum number of errors reached! Maximum {MaxErrorsCount}, current {ErrorsCount}.",
-                MaxErrorsCount,
-                _statistic.ErrorsCount);
-            return false;
-        }
-
-        var result = _rowsIterator.MoveNext();
-        if (result)
-        {
-            _statistic.ProcessedCount++;
-        }
-        return result;
-    }
-
-    /// <inheritdoc />
     public async ValueTask<bool> MoveNextAsync(CancellationToken cancellationToken = default)
     {
         if (MaxErrorsCount > -1 && _statistic.ErrorsCount >= MaxErrorsCount)

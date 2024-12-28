@@ -65,7 +65,7 @@ internal class CollectionsUsage : BaseUsage
 
         // Out.
         var sb = new StringBuilder();
-        new TextTableOutput(sb).Write(result.AsRequired<IRowsIterator>(), adjustColumnsLengths: true);
+        await new TextTableOutput(sb).WriteAsync(result.AsRequired<IRowsIterator>(), adjustColumnsLengths: true);
         Console.WriteLine(sb);
         /*
          | b.name                                                                 | c.city            |
