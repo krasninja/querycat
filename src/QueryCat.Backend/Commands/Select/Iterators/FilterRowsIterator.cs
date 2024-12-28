@@ -29,11 +29,11 @@ internal sealed class FilterRowsIterator : IRowsIterator, IRowsIteratorParent
     }
 
     /// <inheritdoc />
-    public bool MoveNext()
+    public async ValueTask<bool> MoveNextAsync(CancellationToken cancellationToken = default)
     {
-        while (_rowsIterator.MoveNext())
+        while (await _rowsIterator.MoveNextAsync(cancellationToken))
         {
-            if (_predicate.Invoke(_thread).AsBoolean)
+            if ((await _predicate.InvokeAsync(_thread, cancellationToken)).AsBoolean)
             {
                 return true;
             }

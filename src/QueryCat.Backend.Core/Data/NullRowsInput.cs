@@ -10,10 +10,10 @@ public sealed class NullRowsInput : IRowsInput
     public static NullRowsInput Instance { get; } = new();
 
     /// <inheritdoc />
-    public Column[] Columns => Array.Empty<Column>();
+    public Column[] Columns => [];
 
     /// <inheritdoc />
-    public string[] UniqueKey { get; } = Array.Empty<string>();
+    public string[] UniqueKey { get; } = [];
 
     /// <inheritdoc />
     public QueryContext QueryContext { get; set; } = NullQueryContext.Instance;
@@ -36,10 +36,7 @@ public sealed class NullRowsInput : IRowsInput
     }
 
     /// <inheritdoc />
-    public bool ReadNext()
-    {
-        return false;
-    }
+    public ValueTask<bool> ReadNextAsync(CancellationToken cancellationToken = default) => default;
 
     /// <inheritdoc />
     public void Reset()

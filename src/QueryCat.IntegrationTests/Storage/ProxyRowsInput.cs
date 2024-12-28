@@ -42,7 +42,8 @@ public class ProxyRowsInput : IRowsInput, IRowsIteratorParent
     public ErrorCode ReadValue(int columnIndex, out VariantValue value) => _rowsInput.ReadValue(columnIndex, out value);
 
     /// <inheritdoc />
-    public bool ReadNext() => _rowsInput.ReadNext();
+    public ValueTask<bool> ReadNextAsync(CancellationToken cancellationToken = default)
+        => _rowsInput.ReadNextAsync(cancellationToken);
 
     /// <inheritdoc />
     public void Reset() => _rowsInput.Reset();

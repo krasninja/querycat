@@ -159,12 +159,12 @@ internal sealed class JsonInput : StreamRowsInput
     }
 
     /// <inheritdoc />
-    protected override bool ReadNextInternal()
+    protected override async ValueTask<bool> ReadNextInternalAsync(CancellationToken cancellationToken)
     {
         // Read until success.
         while (true)
         {
-            var hasData = base.ReadNextInternal();
+            var hasData = await base.ReadNextInternalAsync(cancellationToken);
             if (hasData)
             {
                 var text = GetRowText();
@@ -211,14 +211,14 @@ internal sealed class JsonInput : StreamRowsInput
     }
 
     /// <inheritdoc />
-    protected override void Analyze(CacheRowsIterator iterator)
+    protected override Task AnalyzeAsync(CacheRowsIterator iterator, CancellationToken cancellationToken = default)
     {
         var columns = GetInputColumns();
         for (var i = 0; i < _properties.Length; i++)
         {
             columns[i].Name = _properties[i];
         }
-        RowsIteratorUtils.ResolveColumnsTypes(iterator);
+        return RowsIteratorUtils.ResolveColumnsTypesAsync(iterator, cancellationToken: cancellationToken);
     }
 
     private JsonElement? GetParsedJsonDocument()

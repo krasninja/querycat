@@ -113,14 +113,14 @@ internal sealed class SelectJoinRowsInput : IRowsInputKeys, IRowsIteratorParent
     }
 
     /// <inheritdoc />
-    public bool ReadNext()
+    public async ValueTask<bool> ReadNextAsync(CancellationToken cancellationToken = default)
     {
-        while (_rightHasData || _leftInput.ReadNext())
+        while (_rightHasData || await _leftInput.ReadNextAsync(cancellationToken))
         {
-            while (_rightInput.ReadNext())
+            while (await _rightInput.ReadNextAsync(cancellationToken))
             {
                 _rightRowIndex++;
-                var matches = _condition.Invoke(_thread).AsBoolean;
+                var matches = (await _condition.InvokeAsync(_thread, cancellationToken)).AsBoolean;
                 if (matches)
                 {
                     _rightHasData = true;
@@ -134,7 +134,7 @@ internal sealed class SelectJoinRowsInput : IRowsInputKeys, IRowsIteratorParent
 
             // For reference: https://postgrespro.ru/docs/postgrespro/15/queries-table-expressions?lang=en#QUERIES-FROM.
             if (!_rightHasData && (_joinType == JoinType.Left || _joinType == JoinType.Right
-                || _joinType == JoinType.Full))
+                                                              || _joinType == JoinType.Full))
             {
                 _rightIsNull = true;
                 _rightHasData = true;
@@ -152,7 +152,7 @@ internal sealed class SelectJoinRowsInput : IRowsInputKeys, IRowsIteratorParent
             _rightHasData = false;
             _rightIsNull = false;
             _leftIsNull = true;
-            while (_rightInput.ReadNext())
+            while (await _rightInput.ReadNextAsync(cancellationToken))
             {
                 _rightRowIndex++;
                 if (!_fullJoinRightIncludes.Contains(_rightRowIndex))

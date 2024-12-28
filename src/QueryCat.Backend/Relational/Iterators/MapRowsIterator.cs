@@ -49,9 +49,9 @@ internal sealed class MapRowsIterator : IRowsIterator, IRowsIteratorParent
     }
 
     /// <inheritdoc />
-    public bool MoveNext()
+    public async ValueTask<bool> MoveNextAsync(CancellationToken cancellationToken = default)
     {
-        var hasData = _rowsIterator.MoveNext();
+        var hasData = await _rowsIterator.MoveNextAsync(cancellationToken);
         for (var i = 0; i < _mapping.Length; i++)
         {
             if (_rowsIterator.Columns[i].DataType != _mappingTypesCast[i])

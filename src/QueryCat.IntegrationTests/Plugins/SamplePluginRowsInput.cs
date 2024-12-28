@@ -74,15 +74,15 @@ public class SamplePluginRowsInput : IRowsInput
     }
 
     /// <inheritdoc />
-    public bool ReadNext()
+    public ValueTask<bool> ReadNextAsync(CancellationToken cancellationToken = default)
     {
-        Trace.WriteLine(nameof(ReadNext));
+        Trace.WriteLine(nameof(ReadNextAsync));
         if (_currentState >= MaxValue)
         {
-            return false;
+            return ValueTask.FromResult(false);
         }
         _currentState++;
-        return true;
+        return ValueTask.FromResult(true);
     }
 
     /// <inheritdoc />

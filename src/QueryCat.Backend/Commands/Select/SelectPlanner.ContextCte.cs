@@ -4,6 +4,7 @@ using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Commands.Select.Iterators;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Relational.Iterators;
 
@@ -82,7 +83,7 @@ internal sealed partial class SelectPlanner
         {
             // Append working iterator to the total result.
             totalResultProxy.Set(workingFrame.GetIterator());
-            writeRowsIterator.WriteAll();
+            AsyncUtils.RunSync(() => writeRowsIterator.WriteAllAsync());
 
             // Run the recursive query based on new working rows set.
             proxyRowsIterator.Set(workingFrame.GetIterator());

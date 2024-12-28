@@ -42,9 +42,9 @@ internal sealed class RowIdRowsIterator : IRowsIterator, IRowsIteratorParent
     }
 
     /// <inheritdoc />
-    public bool MoveNext()
+    public async ValueTask<bool> MoveNextAsync(CancellationToken cancellationToken = default)
     {
-        var hasData = _rowsIterator.MoveNext();
+        var hasData = await _rowsIterator.MoveNextAsync(cancellationToken);
         if (hasData)
         {
             _rowId++;

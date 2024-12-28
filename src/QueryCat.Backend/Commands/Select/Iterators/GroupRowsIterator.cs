@@ -84,7 +84,7 @@ internal sealed class GroupRowsIterator : IRowsIterator, IRowsIteratorParent
     }
 
     /// <inheritdoc />
-    public bool MoveNext()
+    public async ValueTask<bool> MoveNextAsync(CancellationToken cancellationToken = default)
     {
         if (!_isInitialized)
         {
@@ -92,7 +92,7 @@ internal sealed class GroupRowsIterator : IRowsIterator, IRowsIteratorParent
             _isInitialized = true;
         }
 
-        return _rowsFrameIterator.MoveNext();
+        return await _rowsFrameIterator.MoveNextAsync(cancellationToken);
     }
 
     /// <inheritdoc />

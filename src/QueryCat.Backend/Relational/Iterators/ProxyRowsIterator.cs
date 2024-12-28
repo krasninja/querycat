@@ -37,10 +37,8 @@ internal sealed class ProxyRowsIterator : IRowsIterator, IRowsIteratorParent
     }
 
     /// <inheritdoc />
-    public bool MoveNext()
-    {
-        return _currentIterator.MoveNext();
-    }
+    public ValueTask<bool> MoveNextAsync(CancellationToken cancellationToken = default)
+        => _currentIterator.MoveNextAsync(cancellationToken);
 
     /// <inheritdoc />
     public void Reset()

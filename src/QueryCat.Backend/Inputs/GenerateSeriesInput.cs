@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Globalization;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
@@ -35,9 +36,9 @@ internal sealed class GenerateSeriesInput : IRowsInput
     /// <inheritdoc />
     public string[] UniqueKey =>
     [
-        _start.ToString(),
-        _end.ToString(),
-        _step.ToString()
+        _start.ToString(CultureInfo.InvariantCulture),
+        _end.ToString(CultureInfo.InvariantCulture),
+        _step.ToString(CultureInfo.InvariantCulture)
     ];
 
     public GenerateSeriesInput(VariantValue start, VariantValue end, VariantValue step)
@@ -84,15 +85,15 @@ internal sealed class GenerateSeriesInput : IRowsInput
     }
 
     /// <inheritdoc />
-    public bool ReadNext()
+    public ValueTask<bool> ReadNextAsync(CancellationToken cancellationToken = default)
     {
         var next = _addFunction.Invoke(_current, _step);
         if (next <= _end)
         {
             _current = next;
-            return true;
+            return ValueTask.FromResult(true);
         }
-        return false;
+        return ValueTask.FromResult(false);
     }
 
     /// <inheritdoc />

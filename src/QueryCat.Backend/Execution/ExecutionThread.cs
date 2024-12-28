@@ -316,7 +316,7 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
             // Write result.
             if (Options.DefaultRowsOutput != NullRowsOutput.Instance)
             {
-                Write(LastResult, cancellationToken);
+                await Write(LastResult, cancellationToken);
             }
 
             if (cancellationToken.IsCancellationRequested)
@@ -409,11 +409,11 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
         return CompletionSource.Get(context).OrderByDescending(c => c.Completion.Relevance);
     }
 
-    private void Write(VariantValue result, CancellationToken cancellationToken)
+    private Task Write(VariantValue result, CancellationToken cancellationToken)
     {
         if (result.IsNull)
         {
-            return;
+            return Task.CompletedTask;
         }
         var iterator = RowsIteratorConverter.Convert(result);
         var rowsOutput = Options.DefaultRowsOutput;
@@ -423,10 +423,10 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
             rowsOutput = alternateRowsOutput;
         }
         rowsOutput.Reset();
-        Write(rowsOutput, iterator, cancellationToken);
+        return WriteAsync(rowsOutput, iterator, cancellationToken);
     }
 
-    private void Write(
+    private async Task WriteAsync(
         IRowsOutput rowsOutput,
         IRowsIterator rowsIterator,
         CancellationToken cancellationToken)
@@ -443,7 +443,7 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
 
         // Write the main data.
         var isOpened = false;
-        StartWriterLoop();
+        await StartWriterLoop(cancellationToken);
 
         // Append grow data.
         if (Options.FollowTimeout != TimeSpan.Zero)
@@ -452,7 +452,7 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
             {
                 var requestQuit = false;
                 Thread.Sleep(Options.FollowTimeout);
-                StartWriterLoop();
+                await StartWriterLoop(cancellationToken);
                 ProcessInput(ref requestQuit);
                 if (cancellationToken.IsCancellationRequested || requestQuit)
                 {
@@ -466,9 +466,9 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
             rowsOutput.Close();
         }
 
-        void StartWriterLoop()
+        async Task StartWriterLoop(CancellationToken ct)
         {
-            while (rowsIterator.MoveNext())
+            while (await rowsIterator.MoveNextAsync(ct))
             {
                 if (cancellationToken.IsCancellationRequested)
                 {

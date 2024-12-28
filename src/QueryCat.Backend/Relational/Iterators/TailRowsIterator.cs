@@ -32,6 +32,24 @@ public sealed class TailRowsIterator : IRowsIterator, IRowsIteratorParent
     }
 
     /// <inheritdoc />
+    public async ValueTask<bool> MoveNextAsync(CancellationToken cancellationToken = default)
+    {
+        if (!_isInitialized)
+        {
+            Initialize();
+        }
+
+        var hasData = await _currentRowsIterator.MoveNextAsync(cancellationToken);
+        if (!hasData && _currentRowsIterator == _cacheRowsIterator)
+        {
+            _currentRowsIterator = _rowsIterator;
+            hasData = await _rowsIterator.MoveNextAsync(cancellationToken);
+        }
+
+        return hasData;
+    }
+
+    /// <inheritdoc />
     public void Reset()
     {
         _cacheRowsIterator.Reset();
@@ -42,24 +60,6 @@ public sealed class TailRowsIterator : IRowsIterator, IRowsIteratorParent
     public void Explain(IndentedStringBuilder stringBuilder)
     {
         stringBuilder.AppendRowsIteratorsWithIndent("Tail", _cacheRowsIterator);
-    }
-
-    /// <inheritdoc />
-    public bool MoveNext()
-    {
-        if (!_isInitialized)
-        {
-            Initialize();
-        }
-
-        var hasData = _currentRowsIterator.MoveNext();
-        if (!hasData && _currentRowsIterator == _cacheRowsIterator)
-        {
-            _currentRowsIterator = _rowsIterator;
-            hasData = _rowsIterator.MoveNext();
-        }
-
-        return hasData;
     }
 
     private void Initialize()

@@ -32,14 +32,14 @@ internal sealed class ProjectedRowsIterator : IRowsIterator, IRowsIteratorParent
     }
 
     /// <inheritdoc />
-    public bool MoveNext()
+    public async ValueTask<bool> MoveNextAsync(CancellationToken cancellationToken = default)
     {
-        var moveResult = _rowsIterator.MoveNext();
+        var moveResult = await _rowsIterator.MoveNextAsync(cancellationToken);
         if (moveResult)
         {
-            for (int i = 0; i < _columns.Length; i++)
+            for (var i = 0; i < _funcUnits.Length; i++)
             {
-                _currentRow[i] = _funcUnits[i].Invoke(_thread);
+                _currentRow[i] = await _funcUnits[i].InvokeAsync(_thread, cancellationToken);
             }
         }
         return moveResult;

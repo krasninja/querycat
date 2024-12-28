@@ -103,27 +103,8 @@ internal sealed class CacheRowsInput : IRowsInputKeys
         return ErrorCode.OK;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private VariantValue ReadValueByPosition(int rowIndex, int columnIndex)
-    {
-        var cacheEntry = GetOrCreateCacheEntry();
-        var offset = (Columns.Length * rowIndex) + columnIndex;
-        CacheReads++;
-        return cacheEntry.Cache[offset];
-    }
-
-    private void IncreaseCache(CacheEntry cacheEntry)
-    {
-        for (var i = 0; i < Columns.Length; i++)
-        {
-            cacheEntry.Cache.Add(VariantValue.Null);
-        }
-        cacheEntry.CacheLength++;
-        Array.Fill(_cacheReadMap, false);
-    }
-
     /// <inheritdoc />
-    public bool ReadNext()
+    public async ValueTask<bool> ReadNextAsync(CancellationToken cancellationToken = default)
     {
         _rowIndex++;
         _cacheReadMap = _cacheReadMap.Length > 0 ? _cacheReadMap : new bool[_rowsInput.Columns.Length];
@@ -142,7 +123,7 @@ internal sealed class CacheRowsInput : IRowsInputKeys
             return false;
         }
 
-        var hasData = _rowsInput.ReadNext();
+        var hasData = await _rowsInput.ReadNextAsync(cancellationToken);
         if (hasData)
         {
             // Otherwise increase cache and read data.
@@ -165,6 +146,25 @@ internal sealed class CacheRowsInput : IRowsInputKeys
         }
 
         return hasData;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private VariantValue ReadValueByPosition(int rowIndex, int columnIndex)
+    {
+        var cacheEntry = GetOrCreateCacheEntry();
+        var offset = (Columns.Length * rowIndex) + columnIndex;
+        CacheReads++;
+        return cacheEntry.Cache[offset];
+    }
+
+    private void IncreaseCache(CacheEntry cacheEntry)
+    {
+        for (var i = 0; i < Columns.Length; i++)
+        {
+            cacheEntry.Cache.Add(VariantValue.Null);
+        }
+        cacheEntry.CacheLength++;
+        Array.Fill(_cacheReadMap, false);
     }
 
     private void ReadAllItemsToCache()

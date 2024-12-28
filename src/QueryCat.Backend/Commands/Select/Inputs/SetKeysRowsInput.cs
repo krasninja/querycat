@@ -71,13 +71,13 @@ internal sealed class SetKeysRowsInput : RowsInput, IRowsInputKeys
     public override ErrorCode ReadValue(int columnIndex, out VariantValue value) => _rowsInput.ReadValue(columnIndex, out value);
 
     /// <inheritdoc />
-    public override bool ReadNext()
+    public override async ValueTask<bool> ReadNextAsync(CancellationToken cancellationToken = default)
     {
         if (_hasNoMoreData)
         {
             return false;
         }
-        base.ReadNext();
+        await base.ReadNextAsync(cancellationToken);
 
         if (!_keysFilled)
         {
@@ -85,7 +85,7 @@ internal sealed class SetKeysRowsInput : RowsInput, IRowsInputKeys
             _keysFilled = true;
         }
 
-        var hasData = _rowsInput.ReadNext();
+        var hasData = await _rowsInput.ReadNextAsync(cancellationToken);
 
         // We need to repeat "ReadNext" call in case of multiple func values.
         if (_hasMultipleConditions && !hasData)
@@ -97,7 +97,7 @@ internal sealed class SetKeysRowsInput : RowsInput, IRowsInputKeys
                 _hasNoMoreData = true;
                 return false;
             }
-            hasData = _rowsInput.ReadNext();
+            hasData = await _rowsInput.ReadNextAsync(cancellationToken);
         }
 
         return hasData;

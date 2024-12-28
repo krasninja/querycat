@@ -15,7 +15,7 @@ namespace QueryCat.IntegrationTests.Storage;
 public class CacheRowsInputTests
 {
     [Fact]
-    public void RepeatRead_Data_ShouldReuseCache()
+    public async Task RepeatRead_Data_ShouldReuseCache()
     {
         // Arrange.
         var rowsFrame = new RowsFrame(new Column("Name", DataType.String));
@@ -25,11 +25,11 @@ public class CacheRowsInputTests
         var iterator = cacheRowsInput.AsIterable(autoFetch: true);
 
         // Act.
-        iterator.MoveNext(); // 2 total and 1 cache read.
-        iterator.MoveNext(); // 2 total and 1 cache read.
+        await iterator.MoveNextAsync(); // 2 total and 1 cache read.
+        await iterator.MoveNextAsync(); // 2 total and 1 cache read.
         iterator.Reset();
-        iterator.MoveNext(); // 1 total and 1 cache read.
-        iterator.MoveNext(); // 1 total and 1 cache read.
+        await iterator.MoveNextAsync(); // 1 total and 1 cache read.
+        await iterator.MoveNextAsync(); // 1 total and 1 cache read.
 
         // Assert.
         Assert.Equal(2, cacheRowsInput.InputReads);
@@ -37,7 +37,7 @@ public class CacheRowsInputTests
     }
 
     [Fact]
-    public void RepeatRead_Data_ShouldContinueUseCache()
+    public async Task RepeatRead_Data_ShouldContinueUseCache()
     {
         // Arrange.
         var rowsFrame = new RowsFrame(new Column("Name", DataType.String));
@@ -49,12 +49,12 @@ public class CacheRowsInputTests
         var iterator = cacheRowsInput.AsIterable(autoFetch: true);
 
         // Act.
-        iterator.MoveNext(); // 2 total and 1 cache read.
-        iterator.MoveNext(); // 2 total and 1 cache read.
+        await iterator.MoveNextAsync(); // 2 total and 1 cache read.
+        await iterator.MoveNextAsync(); // 2 total and 1 cache read.
         iterator.Reset();
-        iterator.MoveNext(); // 2 total and 1 cache read.
-        iterator.MoveNext(); // 1 total and 1 cache read.
-        iterator.MoveNext(); // 1 total and 1 cache read.
+        await iterator.MoveNextAsync(); // 2 total and 1 cache read.
+        await iterator.MoveNextAsync(); // 1 total and 1 cache read.
+        await iterator.MoveNextAsync(); // 1 total and 1 cache read.
 
         // Assert.
         Assert.Equal(3, cacheRowsInput.InputReads);
@@ -62,7 +62,7 @@ public class CacheRowsInputTests
     }
 
     [Fact]
-    public void RepeatRead_TwoDataSet_ShouldUseSeparateCache()
+    public async Task RepeatRead_TwoDataSet_ShouldUseSeparateCache()
     {
         // Arrange.
         var rowsFrame1 = new RowsFrame(new Column("Name", DataType.String));
@@ -79,17 +79,17 @@ public class CacheRowsInputTests
         // Act.
         proxyInput.SetInput(input1);
         cacheRowsInput.Reset();
-        iterator.MoveNext(); // Read.
-        iterator.MoveNext(); // Read EOF.
+        await iterator.MoveNextAsync(); // Read.
+        await iterator.MoveNextAsync(); // Read EOF.
 
         proxyInput.SetInput(input2);
         cacheRowsInput.Reset();
-        iterator.MoveNext(); // Read.
-        iterator.MoveNext(); // Read EOF.
+        await iterator.MoveNextAsync(); // Read.
+        await iterator.MoveNextAsync(); // Read EOF.
 
         proxyInput.SetInput(input1);
         cacheRowsInput.Reset();
-        iterator.MoveNext(); // Read cache.
+        await iterator.MoveNextAsync(); // Read cache.
 
         // Assert.
         Assert.Equal(2, cacheRowsInput.InputReads);
@@ -98,7 +98,7 @@ public class CacheRowsInputTests
     }
 
     [Fact]
-    public void RepeatRead_IncompleteReadCache_ShouldDiscardIncompleteCache()
+    public async Task RepeatRead_IncompleteReadCache_ShouldDiscardIncompleteCache()
     {
         // Arrange.
         var rowsFrame1 = new RowsFrame(new Column("Name", DataType.String));
@@ -116,20 +116,20 @@ public class CacheRowsInputTests
         // Act.
         proxyInput.SetInput(input1);
         cacheRowsInput.Reset();
-        iterator.MoveNext(); // Read.
+        await iterator.MoveNextAsync(); // Read.
 
         proxyInput.SetInput(input2);
         cacheRowsInput.Reset();
-        iterator.MoveNext(); // Read.
-        iterator.MoveNext(); // Read EOF.
+        await iterator.MoveNextAsync(); // Read.
+        await iterator.MoveNextAsync(); // Read EOF.
 
         proxyInput.SetInput(input1);
         cacheRowsInput.Reset();
-        iterator.MoveNext(); // Read.
+        await iterator.MoveNextAsync(); // Read.
 
         proxyInput.SetInput(input2);
         cacheRowsInput.Reset();
-        iterator.MoveNext(); // Read cache.
+        await iterator.MoveNextAsync(); // Read cache.
 
         // Assert.
         Assert.Equal(3, cacheRowsInput.InputReads);

@@ -49,14 +49,14 @@ internal class DistinctRowsIteratorIterator : IRowsIterator, IRowsIteratorParent
     }
 
     /// <inheritdoc />
-    public bool MoveNext()
+    public async ValueTask<bool> MoveNextAsync(CancellationToken cancellationToken = default)
     {
-        while (_rowsIterator.MoveNext())
+        while (await _rowsIterator.MoveNextAsync(cancellationToken))
         {
             var values = new VariantValue[_columnsFunctions.Length];
             for (var i = 0; i < _columnsFunctions.Length; i++)
             {
-                values[i] = _columnsFunctions[i].Invoke(_thread);
+                values[i] = await _columnsFunctions[i].InvokeAsync(_thread, cancellationToken);
             }
             var arr = new VariantValueArray(values);
 

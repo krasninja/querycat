@@ -82,13 +82,13 @@ internal sealed class CombineRowsInput : RowsInput, IDisposable
     }
 
     /// <inheritdoc />
-    public override bool ReadNext()
+    public override async ValueTask<bool> ReadNextAsync(CancellationToken cancellationToken = default)
     {
-        base.ReadNext();
+        await base.ReadNextAsync(cancellationToken);
 
         if (_currentRowsInput != null)
         {
-            if (_currentRowsInput.ReadNext())
+            if (await _currentRowsInput.ReadNextAsync(cancellationToken))
             {
                 return true;
             }
@@ -98,7 +98,7 @@ internal sealed class CombineRowsInput : RowsInput, IDisposable
         if (FetchNextInput())
         {
             _currentRowsInput!.Open();
-            return ReadNext();
+            return await ReadNextAsync(cancellationToken);
         }
 
         return false;

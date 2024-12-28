@@ -53,6 +53,26 @@ public sealed class StatisticRowsIterator : IRowsIterator, IRowsIteratorParent
     }
 
     /// <inheritdoc />
+    public async ValueTask<bool> MoveNextAsync(CancellationToken cancellationToken = default)
+    {
+        if (MaxErrorsCount > -1 && _statistic.ErrorsCount >= MaxErrorsCount)
+        {
+            _logger.LogCritical(
+                "Maximum number of errors reached! Maximum {MaxErrorsCount}, current {ErrorsCount}.",
+                MaxErrorsCount,
+                _statistic.ErrorsCount);
+            return false;
+        }
+
+        var result = await _rowsIterator.MoveNextAsync(cancellationToken);
+        if (result)
+        {
+            _statistic.ProcessedCount++;
+        }
+        return result;
+    }
+
+    /// <inheritdoc />
     public void Reset()
     {
         _rowsIterator.Reset();

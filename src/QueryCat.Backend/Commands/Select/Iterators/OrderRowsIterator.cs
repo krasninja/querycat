@@ -50,24 +50,6 @@ internal sealed class OrderRowsIterator : IRowsIterator, IRowsIteratorParent
         _orderIndexIterator = _orderIndex.GetOrderIterator();
     }
 
-    /// <inheritdoc />
-    public bool MoveNext()
-    {
-        if (!_isInitialized)
-        {
-            CopyRowIteratorToFrame();
-            _orderIndex.Rebuild();
-            _isInitialized = true;
-        }
-
-        var hasData = _orderIndexIterator.MoveNext();
-        if (hasData)
-        {
-            _rowsFrameIterator.Seek(_orderIndexIterator.Position, CursorSeekOrigin.Begin);
-        }
-        return hasData;
-    }
-
     private void CopyRowIteratorToFrame()
     {
         var row = new Row(_rowsFrame);
@@ -85,6 +67,24 @@ internal sealed class OrderRowsIterator : IRowsIterator, IRowsIteratorParent
             }
             _orderRowsFrame.AddRow(orderRow);
         }
+    }
+
+    /// <inheritdoc />
+    public async ValueTask<bool> MoveNextAsync(CancellationToken cancellationToken = default)
+    {
+        if (!_isInitialized)
+        {
+            CopyRowIteratorToFrame();
+            _orderIndex.Rebuild();
+            _isInitialized = true;
+        }
+
+        var hasData = await _orderIndexIterator.MoveNextAsync(cancellationToken);
+        if (hasData)
+        {
+            _rowsFrameIterator.Seek(_orderIndexIterator.Position, CursorSeekOrigin.Begin);
+        }
+        return hasData;
     }
 
     /// <inheritdoc />

@@ -55,14 +55,14 @@ internal sealed class SingleValueRowsInput : IRowsInput
     }
 
     /// <inheritdoc />
-    public bool ReadNext()
+    public ValueTask<bool> ReadNextAsync(CancellationToken cancellationToken = default)
     {
         if (_wasRead)
         {
-            return false;
+            return ValueTask.FromResult(false);
         }
         _wasRead = true;
-        return true;
+        return ValueTask.FromResult(true);
     }
 
     /// <inheritdoc />

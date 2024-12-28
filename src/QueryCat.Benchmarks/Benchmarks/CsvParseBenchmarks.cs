@@ -17,9 +17,9 @@ namespace QueryCat.Benchmarks.Benchmarks;
 public class CsvParseBenchmarks
 {
     [Benchmark]
-    public int ReadAllUsersWithDsvFormatter()
+    public async Task<int> ReadAllUsersWithDsvFormatter()
     {
-        using var file = UsersCsvFile.OpenTestUsersFile();
+        await using var file = UsersCsvFile.OpenTestUsersFile();
         var input = new DsvFormatter(',', addFileNameColumn: false).OpenInput(file);
         input.Open();
         var rowsFrame = new RowsFrame(input.Columns);
@@ -29,12 +29,12 @@ public class CsvParseBenchmarks
     }
 
     [Benchmark]
-    public int ReadAllUsersWithDelimiterStreamReader()
+    public async Task<int> ReadAllUsersWithDelimiterStreamReader()
     {
         var rowsFrame = User.ClassBuilder.BuildRowsFrame();
         var row = new Row(rowsFrame);
 
-        using var file = UsersCsvFile.OpenTestUsersFile();
+        await using var file = UsersCsvFile.OpenTestUsersFile();
         var csv = new DelimiterStreamReader(new StreamReader(file), new DelimiterStreamReader.ReaderOptions
         {
             Delimiters = [','],
@@ -42,8 +42,8 @@ public class CsvParseBenchmarks
             Culture = CultureInfo.InvariantCulture,
         });
 
-        csv.Read();
-        while (csv.Read())
+        await csv.ReadAsync();
+        while (await csv.ReadAsync())
         {
             row[0] = new VariantValue(csv.GetInt32(0)); // Id.
             row[1] = new VariantValue(csv.GetField(1)); // Email.

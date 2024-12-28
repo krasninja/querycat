@@ -43,11 +43,11 @@ internal sealed class AddressIterator : IRowsIterator
     }
 
     /// <inheritdoc />
-    public bool MoveNext()
+    public ValueTask<bool> MoveNextAsync(CancellationToken cancellationToken = default)
     {
         if (_currentIndex >= Count)
         {
-            return false;
+            return ValueTask.FromResult(false);
         }
 
         var address = Address.Faker.Generate();
@@ -61,7 +61,7 @@ internal sealed class AddressIterator : IRowsIterator
         Current["latitude"] = new VariantValue(address.Latitude);
 
         _currentIndex++;
-        return true;
+        return ValueTask.FromResult(true);
     }
 
     /// <inheritdoc />

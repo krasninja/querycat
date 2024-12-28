@@ -106,6 +106,10 @@ public class CollectionInput : IRowsOutput, IDisposable, IRowsInputUpdate
     }
 
     /// <inheritdoc />
+    public ValueTask<bool> ReadNextAsync(CancellationToken cancellationToken = default)
+        => ValueTask.FromResult(_enumerator.MoveNext());
+
+    /// <inheritdoc />
     public ErrorCode WriteValues(VariantValue[] values)
     {
         if (_enumerable is not IList list)
@@ -150,9 +154,6 @@ public class CollectionInput : IRowsOutput, IDisposable, IRowsInputUpdate
         _propertiesMapping = mapList.ToArray();
         return _propertiesMapping;
     }
-
-    /// <inheritdoc />
-    public bool ReadNext() => _enumerator.MoveNext();
 
     /// <inheritdoc />
     public ErrorCode UpdateValue(int columnIndex, in VariantValue value)

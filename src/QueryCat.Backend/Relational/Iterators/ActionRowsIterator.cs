@@ -28,10 +28,10 @@ internal sealed class ActionRowsIterator : IRowsIterator, IRowsIteratorParent
     }
 
     /// <inheritdoc />
-    public bool MoveNext()
+    public async ValueTask<bool> MoveNextAsync(CancellationToken cancellationToken = default)
     {
         BeforeMoveNext?.Invoke(_rowsIterator);
-        var result = _rowsIterator.MoveNext();
+        var result = await _rowsIterator.MoveNextAsync(cancellationToken);
         if (result)
         {
             AfterMoveNext?.Invoke(_rowsIterator);

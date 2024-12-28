@@ -44,7 +44,7 @@ internal sealed class MultiplyRowsIterator : IRowsIterator, IRowsIteratorParent
     }
 
     /// <inheritdoc />
-    public bool MoveNext()
+    public async ValueTask<bool> MoveNextAsync(CancellationToken cancellationToken = default)
     {
         if (_currentRightRow == null)
         {
@@ -54,7 +54,7 @@ internal sealed class MultiplyRowsIterator : IRowsIterator, IRowsIteratorParent
             }
         }
 
-        var leftHasNext = _currentLeftIterator.MoveNext();
+        var leftHasNext = await _currentLeftIterator.MoveNextAsync(cancellationToken);
 
         // Left rows set has no rows.
         if (!leftHasNext && _leftRowsFrame.IsEmpty)
@@ -75,7 +75,7 @@ internal sealed class MultiplyRowsIterator : IRowsIterator, IRowsIteratorParent
                 return false;
             }
             _leftRowsFrameIterator.Reset();
-            _leftRowsFrameIterator.MoveNext();
+            await _leftRowsFrameIterator.MoveNextAsync(cancellationToken);
         }
         Row.Copy(_currentLeftIterator.Current, _currentRow);
         Row.Copy(_currentRightRow!, 0, _currentRow, _currentLeftIterator.Columns.Length);

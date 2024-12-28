@@ -26,7 +26,7 @@ internal sealed partial class GrokInput : IRowsInput
 
     private readonly Dictionary<string, DataType> _userTypesMap = new();
     private readonly Dictionary<string, string> _semanticPatternNameMap = new();
-    private Func<VariantValue, VariantValue>?[] _converters = Array.Empty<Func<VariantValue, VariantValue>>();
+    private Func<VariantValue, VariantValue>?[] _converters = [];
 
     /// <inheritdoc />
     public Column[] Columns { get; }
@@ -331,7 +331,8 @@ internal sealed partial class GrokInput : IRowsInput
     }
 
     /// <inheritdoc />
-    public bool ReadNext() => _grokImpl.ReadNext();
+    public ValueTask<bool> ReadNextAsync(CancellationToken cancellationToken = default)
+        => _grokImpl.ReadNextAsync(cancellationToken);
 
     /// <inheritdoc />
     public void Explain(IndentedStringBuilder stringBuilder)

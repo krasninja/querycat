@@ -23,12 +23,12 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     /*
      * The main workflow is:
      * - Open()
-     *   - ReadNext() - get first row
+     *   - ReadNextAsync() - get first row
      *     - ReadNextInternal()
      *     - SetDefaultColumns() - on this stage we know the real columns count, pre-initialize
-     *   - Analyze() - init columns, add custom columns, resolve columns types
+     *   - AnalyzeAsync() - init columns, add custom columns, resolve columns types
      * - SetContext()
-     * - ReadNext() - real data reading, cache first, stream next
+     * - ReadNextAsync() - real data reading, cache first, stream next
      * - Close()
      */
 
@@ -209,7 +209,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     }
 
     /// <inheritdoc />
-    public virtual bool ReadNext()
+    public virtual async ValueTask<bool> ReadNextAsync(CancellationToken cancellationToken = default)
     {
         bool hasData;
         do
@@ -219,7 +219,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
             // If we have cached data - return it first.
             if (_cacheIterator != null)
             {
-                if (_cacheIterator.MoveNext())
+                if (await _cacheIterator.MoveNextAsync(cancellationToken))
                 {
                     hasData = true;
                 }
@@ -234,7 +234,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
                 {
                     return false;
                 }
-                hasData = ReadNextInternal();
+                hasData = await ReadNextInternalAsync(cancellationToken);
             }
             if (hasData)
             {
@@ -254,10 +254,11 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     /// <summary>
     /// Actual next data reading.
     /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns><c>True</c> if it has data, <c>false</c> otherwise.</returns>
-    protected virtual bool ReadNextInternal()
+    protected virtual ValueTask<bool> ReadNextInternalAsync(CancellationToken cancellationToken)
     {
-        return _delimiterStreamReader.Read();
+        return _delimiterStreamReader.ReadAsync(cancellationToken);
     }
 
     /// <inheritdoc />
@@ -330,7 +331,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
         if (DetectColumnsTypes)
         {
             // Move iterator, after that we are able to fill initial columns set.
-            var hasData = inputIterator.MoveNext();
+            var hasData = AsyncUtils.RunSync(() => inputIterator.MoveNextAsync());
             if (!hasData)
             {
                 return;
@@ -342,7 +343,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
             cacheIterator.AddRow(inputIterator.Current);
             cacheIterator.SeekToHead();
 
-            Analyze(cacheIterator);
+            AsyncUtils.RunSync(() => AnalyzeAsync(cacheIterator));
             cacheIterator.SeekToHead();
             cacheIterator.Freeze();
             _cacheIterator = cacheIterator;
@@ -356,7 +357,9 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     /// The data that was read by iterator will be cached.
     /// </summary>
     /// <param name="iterator">Rows iterator.</param>
-    protected abstract void Analyze(CacheRowsIterator iterator);
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Awaitable task.</returns>
+    protected abstract Task AnalyzeAsync(CacheRowsIterator iterator, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// The method should return custom (virtual) columns array.

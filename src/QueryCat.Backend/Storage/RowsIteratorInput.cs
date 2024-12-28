@@ -52,7 +52,8 @@ public sealed class RowsIteratorInput : IRowsInput, IRowsIteratorParent
     }
 
     /// <inheritdoc />
-    public bool ReadNext() => _rowsIterator.MoveNext();
+    public ValueTask<bool> ReadNextAsync(CancellationToken cancellationToken = default)
+        => _rowsIterator.MoveNextAsync(cancellationToken);
 
     /// <inheritdoc />
     public void Reset()

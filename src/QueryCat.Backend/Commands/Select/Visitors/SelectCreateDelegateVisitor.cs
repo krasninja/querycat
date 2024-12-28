@@ -287,14 +287,14 @@ internal sealed class SelectCreateDelegateVisitor : CreateDelegateVisitor
         var rowsIterator = new SelectPlanner(ExecutionThread).CreateIterator(node, _context);
         ResolveTypesVisitor.Visit(node);
 
-        ValueTask<VariantValue> Func(IExecutionThread thread, CancellationToken cancellationToken)
+        async ValueTask<VariantValue> Func(IExecutionThread thread, CancellationToken cancellationToken)
         {
             rowsIterator.Reset();
-            if (rowsIterator.MoveNext())
+            if (await rowsIterator.MoveNextAsync(cancellationToken))
             {
-                return ValueTask.FromResult(rowsIterator.Current[0]);
+                return rowsIterator.Current[0];
             }
-            return ValueTask.FromResult(VariantValue.Null);
+            return VariantValue.Null;
         }
 
         _subQueryIterators.Add(rowsIterator);
@@ -319,21 +319,21 @@ internal sealed class SelectCreateDelegateVisitor : CreateDelegateVisitor
         var operationDelegate = VariantValue.GetOperationDelegate(node.Operation);
         var leftValueFunc = NodeIdFuncMap[node.LeftNode.Id];
 
-        ValueTask<VariantValue> AllFunc(IExecutionThread thread, CancellationToken cancellationToken)
+        async ValueTask<VariantValue> AllFunc(IExecutionThread thread, CancellationToken cancellationToken)
         {
             rowsIterator.Reset();
-            while (rowsIterator.MoveNext())
+            while (await rowsIterator.MoveNextAsync(cancellationToken))
             {
-                var leftValue = leftValueFunc.Invoke(thread);
+                var leftValue = await leftValueFunc.InvokeAsync(thread, cancellationToken);
                 var rightValue = rowsIterator.Current[0];
                 var result = operationDelegate(in leftValue, in rightValue, out ErrorCode code);
                 ApplyStatistic(thread, code);
                 if (!result.AsBoolean)
                 {
-                    return ValueTask.FromResult(VariantValue.FalseValue);
+                    return VariantValue.FalseValue;
                 }
             }
-            return ValueTask.FromResult(VariantValue.TrueValue);
+            return VariantValue.TrueValue;
         }
 
         async ValueTask<VariantValue> AnyFunc(IExecutionThread thread, CancellationToken cancellationToken)

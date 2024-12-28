@@ -49,10 +49,10 @@ public class EnumerableRowsInput<TClass> : KeysRowsInput where TClass : class
     }
 
     /// <inheritdoc />
-    public override bool ReadNext()
+    public override async ValueTask<bool> ReadNextAsync(CancellationToken cancellationToken = default)
     {
         InitializeKeyColumns();
-        base.ReadNext();
+        await base.ReadNextAsync(cancellationToken);
         if (Enumerator == null)
         {
             return false;

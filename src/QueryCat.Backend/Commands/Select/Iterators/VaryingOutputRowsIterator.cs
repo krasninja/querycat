@@ -65,9 +65,9 @@ internal sealed class VaryingOutputRowsIterator : IRowsIterator, IRowsIteratorPa
     }
 
     /// <inheritdoc />
-    public bool MoveNext()
+    public async ValueTask<bool> MoveNextAsync(CancellationToken cancellationToken = default)
     {
-        var result = _rowsIterator.MoveNext();
+        var result = await _rowsIterator.MoveNextAsync(cancellationToken);
         if (!result)
         {
             Close();
@@ -84,7 +84,7 @@ internal sealed class VaryingOutputRowsIterator : IRowsIterator, IRowsIteratorPa
         }
         else
         {
-            var outputResult = _outputFactory.Invoke(_thread).AsObject;
+            var outputResult = (await _outputFactory.InvokeAsync(_thread, cancellationToken)).AsObject;
             if (outputResult is IRowsOutput rowsOutput)
             {
                 output = rowsOutput;

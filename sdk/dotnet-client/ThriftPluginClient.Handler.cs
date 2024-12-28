@@ -195,7 +195,7 @@ public partial class ThriftPluginClient
         }
 
         /// <inheritdoc />
-        public Task<RowsList> RowsSet_GetRowsAsync(int object_handle, int count, CancellationToken cancellationToken = default)
+        public async Task<RowsList> RowsSet_GetRowsAsync(int object_handle, int count, CancellationToken cancellationToken = default)
         {
             // Handle IRowsInput.
             if (_thriftPluginClient._objectsStorage.TryGet<IRowsInput>(object_handle, out var rowsInput)
@@ -203,7 +203,7 @@ public partial class ThriftPluginClient
             {
                 var values = new List<VariantValue>();
                 var hasMore = true;
-                for (var i = 0; i < count && (hasMore = rowsInput.ReadNext()); i++)
+                for (var i = 0; i < count && (hasMore = await rowsInput.ReadNextAsync(cancellationToken)); i++)
                 {
                     for (var colIndex = 0; colIndex < rowsInput.Columns.Length; colIndex++)
                     {
@@ -218,7 +218,7 @@ public partial class ThriftPluginClient
                 {
                     HasMore = hasMore,
                 };
-                return Task.FromResult(result);
+                return result;
             }
 
             // Handle IRowsIterator.
@@ -227,7 +227,7 @@ public partial class ThriftPluginClient
             {
                 var values = new List<VariantValue>();
                 var hasMore = true;
-                for (var i = 0; i < count && (hasMore = rowsIterator.MoveNext()); i++)
+                for (var i = 0; i < count && (hasMore = await rowsIterator.MoveNextAsync(cancellationToken)); i++)
                 {
                     foreach (var value in rowsIterator.Current.AsArray())
                     {
@@ -238,7 +238,7 @@ public partial class ThriftPluginClient
                 {
                     HasMore = hasMore,
                 };
-                return Task.FromResult(result);
+                return result;
             }
 
             throw new QueryCatPluginException(ErrorType.INVALID_OBJECT, Resources.Errors.Object_Invalid);

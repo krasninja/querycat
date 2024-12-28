@@ -24,16 +24,9 @@ public interface IRowsInput : IRowsSource, IRowsSchema
     /// <summary>
     /// Read the next row.
     /// </summary>
-    /// <returns>True if there are remain rows to read, false if no row was read.</returns>
-    bool ReadNext();
-
-    /// <summary>
-    /// Read the next row.
-    /// </summary>
     /// <param name="cancellationToken">A cancellation token to observe.</param>
     /// <returns>True if there are remain rows to read, false if no row was read.</returns>
-    ValueTask<bool> ReadNextAsync(CancellationToken cancellationToken = default)
-        => ValueTask.FromResult(ReadNext());
+    ValueTask<bool> ReadNextAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Write explain information about the current input.

@@ -95,7 +95,7 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys
     }
 
     /// <inheritdoc />
-    public bool ReadNext()
+    public async ValueTask<bool> ReadNextAsync(CancellationToken cancellationToken = default)
     {
         if (!_cache.IsEmpty)
         {
@@ -106,8 +106,8 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys
             }
         }
 
-        var result = AsyncUtils.RunSync(ct => _client.RowsSet_GetRowsAsync(_objectHandle, LoadCount * Columns.Length, ct));
-        if (result == null || result.Values == null || result.Values.Count == 0)
+        var result = await _client.RowsSet_GetRowsAsync(_objectHandle, LoadCount * Columns.Length, cancellationToken);
+        if (result.Values == null || result.Values.Count == 0)
         {
             return false;
         }

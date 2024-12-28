@@ -45,38 +45,6 @@ public sealed class CacheRowsIterator : ICursorRowsIterator, IRowsIteratorParent
         _cache = new List<Row>(_cacheSize > 0 ? _cacheSize : 32);
     }
 
-    /// <inheritdoc />
-    public bool MoveNext()
-    {
-        // If our position within the cache - return cached data.
-        if (_cursor + 1 <= _cache.Count - 1)
-        {
-            _cursor++;
-            _currentRow = _cache[_cursor];
-            return true;
-        }
-
-        if (_isFrozen)
-        {
-            return false;
-        }
-
-        var hasData = _rowsIterator.MoveNext();
-        if (!hasData)
-        {
-            return false;
-        }
-
-        // Move next and add to cache.
-        _currentRow = _rowsIterator.Current;
-        if (_cursor < _cacheSize || _cacheSize == -1)
-        {
-            _cache.Add(new Row(_currentRow));
-        }
-        _cursor++;
-        return true;
-    }
-
     /// <summary>
     /// Add row manually to the cache. It ignores the max cache limit.
     /// </summary>
@@ -99,6 +67,38 @@ public sealed class CacheRowsIterator : ICursorRowsIterator, IRowsIteratorParent
     public void RemoveRowAt(int rowIndex)
     {
         _cache.RemoveAt(rowIndex);
+    }
+
+    /// <inheritdoc />
+    public async ValueTask<bool> MoveNextAsync(CancellationToken cancellationToken = default)
+    {
+        // If our position within the cache - return cached data.
+        if (_cursor + 1 <= _cache.Count - 1)
+        {
+            _cursor++;
+            _currentRow = _cache[_cursor];
+            return true;
+        }
+
+        if (_isFrozen)
+        {
+            return false;
+        }
+
+        var hasData = await _rowsIterator.MoveNextAsync(cancellationToken);
+        if (!hasData)
+        {
+            return false;
+        }
+
+        // Move next and add to cache.
+        _currentRow = _rowsIterator.Current;
+        if (_cursor < _cacheSize || _cacheSize == -1)
+        {
+            _cache.Add(new Row(_currentRow));
+        }
+        _cursor++;
+        return true;
     }
 
     /// <inheritdoc />

@@ -123,16 +123,16 @@ public sealed class IISW3CInput : StreamRowsInput
         _logger.LogDebug("Open {Input}.", this);
 
         // Try to find fields header.
-        var foundHeaders = SeekToFieldsHeader();
+        var foundHeaders = SeekToFieldsHeaderAsync().GetAwaiter().GetResult();
         if (!foundHeaders)
         {
             throw new QueryCatException("Cannot find IIS fields.");
         }
     }
 
-    private bool SeekToFieldsHeader()
+    private async ValueTask<bool> SeekToFieldsHeaderAsync(CancellationToken cancellationToken = default)
     {
-        while (ReadNext())
+        while (await ReadNextAsync(cancellationToken))
         {
             var line = GetInputColumnValue(0);
             if (line.StartsWith(FieldsMarker))
@@ -151,12 +151,13 @@ public sealed class IISW3CInput : StreamRowsInput
     {
         _isInitialized = false;
         base.Reset();
-        SeekToFieldsHeader();
+        AsyncUtils.RunSync(() => SeekToFieldsHeaderAsync());
     }
 
     /// <inheritdoc />
-    protected override void Analyze(CacheRowsIterator iterator)
+    protected override Task AnalyzeAsync(CacheRowsIterator iterator, CancellationToken cancellationToken = default)
     {
+        return Task.CompletedTask;
     }
 
     private void ParseHeaders(ReadOnlySpan<char> header)

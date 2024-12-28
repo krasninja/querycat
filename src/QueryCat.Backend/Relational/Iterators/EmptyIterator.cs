@@ -15,7 +15,7 @@ internal sealed class EmptyIterator : IRowsIterator
 
     public EmptyIterator()
     {
-        Columns = new[] { new Column("empty", DataType.Integer) };
+        Columns = [new Column("empty", DataType.Integer)];
         var frame = new RowsFrame(Columns);
         Current = new Row(frame);
         frame.AddRow(Current);
@@ -28,7 +28,8 @@ internal sealed class EmptyIterator : IRowsIterator
     }
 
     /// <inheritdoc />
-    public bool MoveNext() => false;
+    public ValueTask<bool> MoveNextAsync(CancellationToken cancellationToken = default)
+        => ValueTask.FromResult(false);
 
     /// <inheritdoc />
     public void Reset()

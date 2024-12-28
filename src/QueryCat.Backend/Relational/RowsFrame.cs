@@ -2,6 +2,7 @@ using System.Collections;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend.Relational;
 
@@ -217,7 +218,7 @@ public class RowsFrame : IRowsSchema, IEnumerable<Row>
     public IEnumerator<Row> GetEnumerator()
     {
         var iterator = new RowsFrameIterator(this);
-        while (iterator.MoveNext())
+        while (AsyncUtils.RunSync(() => iterator.MoveNextAsync()))
         {
             yield return new Row(iterator.Current);
         }

@@ -189,25 +189,12 @@ internal sealed class WindowFunctionsRowsIterator : IRowsIterator
             .ToArray();
     }
 
-    /// <inheritdoc />
-    public bool MoveNext()
-    {
-        if (!_isInitialized)
-        {
-            FillRowsAndPrepareWindowData();
-            FillWindowColumns();
-            _isInitialized = true;
-        }
-
-        return _rowsFrameIterator.MoveNext();
-    }
-
-    private void FillRowsAndPrepareWindowData()
+    private async ValueTask FillRowsAndPrepareWindowData(CancellationToken cancellationToken)
     {
         var indexes = new List<IIndex>();
 
         // Prefetch all values.
-        while (_rowsIterator.MoveNext())
+        while (await _rowsIterator.MoveNextAsync(cancellationToken))
         {
             foreach (var partition in _partitions)
             {
@@ -227,10 +214,10 @@ internal sealed class WindowFunctionsRowsIterator : IRowsIterator
         }
     }
 
-    private void FillWindowColumns()
+    private async ValueTask FillWindowColumnsAsync(CancellationToken cancellationToken)
     {
         var iterator = _rowsFrame.GetIterator();
-        while (iterator.MoveNext())
+        while (await iterator.MoveNextAsync(cancellationToken))
         {
             foreach (var partition in _partitions)
             {
@@ -283,6 +270,19 @@ internal sealed class WindowFunctionsRowsIterator : IRowsIterator
             }
         }
         return true;
+    }
+
+    /// <inheritdoc />
+    public async ValueTask<bool> MoveNextAsync(CancellationToken cancellationToken = default)
+    {
+        if (!_isInitialized)
+        {
+            await FillRowsAndPrepareWindowData(cancellationToken);
+            await FillWindowColumnsAsync(cancellationToken);
+            _isInitialized = true;
+        }
+
+        return await _rowsFrameIterator.MoveNextAsync(cancellationToken);
     }
 
     /// <inheritdoc />

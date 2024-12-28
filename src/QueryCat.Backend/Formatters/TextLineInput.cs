@@ -34,9 +34,9 @@ internal sealed class TextLineInput : StreamRowsInput
     }
 
     /// <inheritdoc />
-    protected override void Analyze(CacheRowsIterator iterator)
+    protected override async Task AnalyzeAsync(CacheRowsIterator iterator, CancellationToken cancellationToken = default)
     {
-        RowsIteratorUtils.ResolveColumnsTypes(iterator);
+        await RowsIteratorUtils.ResolveColumnsTypesAsync(iterator, cancellationToken: cancellationToken);
         Columns[^1].Name = "text";
     }
 

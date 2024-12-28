@@ -3,6 +3,7 @@ using System.Xml.XPath;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Utils;
 
@@ -23,7 +24,7 @@ internal sealed class XmlInput : IRowsInput, IDisposable
     private int _cacheSize;
     private readonly SortedList<int, VariantValue> _currentRow = new(); // Values for current row.
     // ReSharper disable once UseArrayEmptyMethod
-    private Column[] _columns = new Column[0];
+    private Column[] _columns = [];
     private bool _initMode; // In open mode we should fill cache.
     private bool _skipNextRead; // On next row read we do not need to read XML since it was done before.
     private readonly Stack<int> _attributesColumns = new(); // The stack is used to reset attribute values on tag close.
@@ -52,6 +53,7 @@ internal sealed class XmlInput : IRowsInput, IDisposable
             IgnoreComments = true,
             DtdProcessing = DtdProcessing.Ignore,
             ConformanceLevel = ConformanceLevel.Fragment,
+            Async = true,
         });
     }
 
@@ -110,7 +112,7 @@ internal sealed class XmlInput : IRowsInput, IDisposable
 
         // Read first rows.
         var count = 0;
-        while (ReadNext() && count++ < RowsToAnalyze)
+        while (ReadNextAsync().GetAwaiter().GetResult() && count++ < RowsToAnalyze)
         {
         }
 
@@ -125,7 +127,7 @@ internal sealed class XmlInput : IRowsInput, IDisposable
             }
             frame.AddRow(row);
         }
-        RowsIteratorUtils.ResolveColumnsTypes(frame.GetIterator(), RowsToAnalyze);
+        AsyncUtils.RunSync(() => RowsIteratorUtils.ResolveColumnsTypesAsync(frame.GetIterator(), RowsToAnalyze));
 
         _initMode = false;
     }
@@ -180,7 +182,7 @@ internal sealed class XmlInput : IRowsInput, IDisposable
      */
 
     /// <inheritdoc />
-    public bool ReadNext()
+    public async ValueTask<bool> ReadNextAsync(CancellationToken cancellationToken = default)
     {
         var currentColumnName = string.Empty;
         var anyRead = false;
@@ -193,7 +195,7 @@ internal sealed class XmlInput : IRowsInput, IDisposable
 
         ResetValuesOnElementEnd();
 
-        while (_skipNextRead || _xmlReader.Read())
+        while (_skipNextRead || await _xmlReader.ReadAsync())
         {
             _skipNextRead = false;
 
@@ -224,7 +226,7 @@ internal sealed class XmlInput : IRowsInput, IDisposable
             else if (_xmlReader.NodeType == XmlNodeType.EndElement && anyRead)
             {
                 _skipNextRead = true; // No need to call Read() next time since it is done below.
-                while (_xmlReader.Read()
+                while (await _xmlReader.ReadAsync()
                     && _xmlReader.NodeType != XmlNodeType.EndElement
                     && _xmlReader.NodeType != XmlNodeType.Element)
                 {
