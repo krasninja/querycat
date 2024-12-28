@@ -54,12 +54,5 @@ public abstract class RowsInput : IRowsInput
     /// <summary>
     /// The method is called before first ReadNext to initialize input.
     /// </summary>
-    protected virtual void Load()
-    {
-    }
-
-    /// <summary>
-    /// The method is called before first ReadNext to initialize input.
-    /// </summary>
     protected virtual ValueTask LoadAsync(CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
 }

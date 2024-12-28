@@ -28,9 +28,9 @@ public abstract class FetchRowsInput<TClass> : EnumerableRowsInput<TClass> where
     }
 
     /// <inheritdoc />
-    protected override void Load()
+    protected override async ValueTask LoadAsync(CancellationToken cancellationToken = default)
     {
-        base.Load();
+        await base.LoadAsync(cancellationToken);
 
         var fetch = new Fetcher<TClass>();
         var queryLimit = QueryContext.QueryInfo.Limit + QueryContext.QueryInfo.Offset;

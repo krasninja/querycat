@@ -121,7 +121,7 @@ internal sealed class SetKeysRowsInput : RowsInput, IRowsInputKeys
     }
 
     /// <inheritdoc />
-    protected override void Load()
+    protected override ValueTask LoadAsync(CancellationToken cancellationToken = default)
     {
         // Find all related conditions.
         var list = new List<ConditionJoint>();
@@ -141,7 +141,7 @@ internal sealed class SetKeysRowsInput : RowsInput, IRowsInputKeys
             .Any(c => c.Condition.Operation == VariantValue.Operation.Equals
                         && c.Condition.Generator is IKeyConditionMultipleValuesGenerator);
 
-        base.Load();
+        return base.LoadAsync(cancellationToken);
     }
 
     /// <inheritdoc />
