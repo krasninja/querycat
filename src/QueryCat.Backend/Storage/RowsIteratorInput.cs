@@ -35,13 +35,15 @@ public sealed class RowsIteratorInput : IRowsInput, IRowsIteratorParent
     }
 
     /// <inheritdoc />
-    public void Open()
+    public Task OpenAsync(CancellationToken cancellationToken = default)
     {
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />
-    public void Close()
+    public Task CloseAsync(CancellationToken cancellationToken = default)
     {
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />
@@ -56,9 +58,10 @@ public sealed class RowsIteratorInput : IRowsInput, IRowsIteratorParent
         => _rowsIterator.MoveNextAsync(cancellationToken);
 
     /// <inheritdoc />
-    public void Reset()
+    public Task ResetAsync(CancellationToken cancellationToken = default)
     {
         _rowsIterator.Reset();
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />

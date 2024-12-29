@@ -19,13 +19,15 @@ public sealed class NullRowsInput : IRowsInput
     public QueryContext QueryContext { get; set; } = NullQueryContext.Instance;
 
     /// <inheritdoc />
-    public void Open()
+    public Task OpenAsync(CancellationToken cancellationToken = default)
     {
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />
-    public void Close()
+    public Task CloseAsync(CancellationToken cancellationToken = default)
     {
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />
@@ -39,8 +41,9 @@ public sealed class NullRowsInput : IRowsInput
     public ValueTask<bool> ReadNextAsync(CancellationToken cancellationToken = default) => default;
 
     /// <inheritdoc />
-    public void Reset()
+    public Task ResetAsync(CancellationToken cancellationToken = default)
     {
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />

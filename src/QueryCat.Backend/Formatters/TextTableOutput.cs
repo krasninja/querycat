@@ -1,8 +1,10 @@
+using System.Globalization;
 using System.Text;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Storage;
 
@@ -26,7 +28,7 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
     }
 
     private readonly Stream _stream;
-    private int[] _totalMaxLineLength = Array.Empty<int>();
+    private int[] _totalMaxLineLength = [];
     private StreamWriter _streamWriter = StreamWriter.Null;
     private bool _isSingleValue;
     private int _maxColumnNameWidth = 10;
@@ -39,7 +41,7 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
     private readonly Action _onInit;
     private readonly Action<VariantValue[]> _onWrite;
 
-    private int[] _columnsLengths = Array.Empty<int>();
+    private int[] _columnsLengths = [];
 
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(TextTableOutput));
 
@@ -153,20 +155,22 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
     }
 
     /// <inheritdoc />
-    public override void Open()
+    public override Task OpenAsync(CancellationToken cancellationToken = default)
     {
         if (_streamWriter == StreamWriter.Null)
         {
             _streamWriter = new StreamWriter(_stream, encoding: null, bufferSize: -1, leaveOpen: true);
         }
         _logger.LogTrace("Text table opened.");
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />
-    public override void Close()
+    public override Task CloseAsync(CancellationToken cancellationToken = default)
     {
         _streamWriter.Close();
         _logger.LogTrace("Text table closed.");
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />
@@ -477,13 +481,13 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
         {
             return value.ToString(_floatNumberFormat);
         }
-        return value.ToString();
+        return value.ToString(CultureInfo.InvariantCulture);
     }
 
     /// <inheritdoc />
     public void Dispose()
     {
-        Close();
+        AsyncUtils.RunSync(() => CloseAsync());
         _stream.Dispose();
     }
 }

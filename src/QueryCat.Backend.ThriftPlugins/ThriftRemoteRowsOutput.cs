@@ -47,21 +47,21 @@ internal sealed class ThriftRemoteRowsOutput : IRowsOutput
     }
 
     /// <inheritdoc />
-    public void Open()
+    public Task OpenAsync(CancellationToken cancellationToken = default)
     {
-        AsyncUtils.RunSync(async ct => await _client.RowsSet_OpenAsync(_objectHandle, ct));
+        return _client.RowsSet_OpenAsync(_objectHandle, cancellationToken);
     }
 
     /// <inheritdoc />
-    public void Close()
+    public Task CloseAsync(CancellationToken cancellationToken = default)
     {
-        AsyncUtils.RunSync(ct => _client.RowsSet_CloseAsync(_objectHandle, ct));
+        return _client.RowsSet_CloseAsync(_objectHandle, cancellationToken);
     }
 
     /// <inheritdoc />
-    public void Reset()
+    public Task ResetAsync(CancellationToken cancellationToken = default)
     {
-        AsyncUtils.RunSync(ct => _client.RowsSet_ResetAsync(_objectHandle, ct));
+        return _client.RowsSet_ResetAsync(_objectHandle, cancellationToken);
     }
 
     /// <inheritdoc />

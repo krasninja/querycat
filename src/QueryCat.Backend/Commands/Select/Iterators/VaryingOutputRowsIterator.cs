@@ -3,6 +3,7 @@ using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend.Commands.Select.Iterators;
 
@@ -94,7 +95,7 @@ internal sealed class VaryingOutputRowsIterator : IRowsIterator, IRowsIteratorPa
                 output = NullRowsOutput.Instance;
             }
             output.QueryContext = _queryContext;
-            output.Open();
+            await output.OpenAsync(cancellationToken);
             _logger.LogDebug("Open for args {Arguments}.", _functionCallInfo);
             _outputs.Add(args, output);
             CurrentOutput = output;
@@ -120,7 +121,7 @@ internal sealed class VaryingOutputRowsIterator : IRowsIterator, IRowsIteratorPa
         foreach (var outputKeyValue in _outputs)
         {
             _logger.LogDebug("Close for args {Key}.", outputKeyValue.Key);
-            outputKeyValue.Value.Close();
+            AsyncUtils.RunSync(() => outputKeyValue.Value.CloseAsync());
             if (dispose)
             {
                 (outputKeyValue.Value as IDisposable)?.Dispose();

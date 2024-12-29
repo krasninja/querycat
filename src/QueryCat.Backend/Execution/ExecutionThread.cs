@@ -422,7 +422,7 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
         {
             rowsOutput = alternateRowsOutput;
         }
-        rowsOutput.Reset();
+        rowsOutput.ResetAsync();
         return WriteAsync(rowsOutput, iterator, cancellationToken);
     }
 
@@ -463,7 +463,7 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
 
         if (isOpened)
         {
-            rowsOutput.Close();
+            await rowsOutput.CloseAsync(cancellationToken);
         }
 
         async Task StartWriterLoop(CancellationToken ct)
@@ -477,7 +477,7 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
                 if (!isOpened)
                 {
                     rowsOutput.QueryContext = new RowsOutputQueryContext(rowsIterator.Columns);
-                    rowsOutput.Open();
+                    await rowsOutput.OpenAsync(cancellationToken);
                     isOpened = true;
                 }
                 rowsOutput.WriteValues(rowsIterator.Current.Values);

@@ -47,13 +47,13 @@ internal sealed class SetKeysRowsInput : RowsInput, IRowsInputKeys
     }
 
     /// <inheritdoc />
-    public override void Open() => _rowsInput.Open();
+    public override Task OpenAsync(CancellationToken cancellationToken = default) => _rowsInput.OpenAsync(cancellationToken);
 
     /// <inheritdoc />
-    public override void Close() => _rowsInput.Close();
+    public override Task CloseAsync(CancellationToken cancellationToken = default) => _rowsInput.CloseAsync(cancellationToken);
 
     /// <inheritdoc />
-    public override void Reset()
+    public override Task ResetAsync(CancellationToken cancellationToken = default)
     {
         foreach (var condition in _conditions)
         {
@@ -64,7 +64,7 @@ internal sealed class SetKeysRowsInput : RowsInput, IRowsInputKeys
         }
         _keysFilled = false;
         _hasNoMoreData = false;
-        _rowsInput.Reset();
+        return _rowsInput.ResetAsync(cancellationToken);
     }
 
     /// <inheritdoc />
@@ -90,7 +90,7 @@ internal sealed class SetKeysRowsInput : RowsInput, IRowsInputKeys
         // We need to repeat "ReadNext" call in case of multiple func values.
         if (_hasMultipleConditions && !hasData)
         {
-            _rowsInput.Reset();
+            await _rowsInput.ResetAsync(cancellationToken);
             hasData = await FillKeysAsync(cancellationToken);
             if (!hasData)
             {

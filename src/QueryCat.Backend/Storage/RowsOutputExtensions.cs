@@ -19,7 +19,7 @@ public static class RowsOutputExtensions
         CancellationToken cancellationToken = default)
     {
         output.QueryContext = new RowsOutputQueryContext(iterator.Columns);
-        output.Open();
+        await output.OpenAsync(cancellationToken);
         try
         {
             if (adjustColumnsLengths)
@@ -33,7 +33,7 @@ public static class RowsOutputExtensions
         }
         finally
         {
-            output.Close();
+            await output.CloseAsync(cancellationToken);
         }
     }
 

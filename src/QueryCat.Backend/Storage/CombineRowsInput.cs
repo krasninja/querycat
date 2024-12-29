@@ -1,6 +1,7 @@
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend.Storage;
 
@@ -55,19 +56,23 @@ internal sealed class CombineRowsInput : RowsInput, IDisposable
     }
 
     /// <inheritdoc />
-    public override void Open()
+    public override async Task OpenAsync(CancellationToken cancellationToken = default)
     {
         if (FetchNextInput())
         {
-            _currentRowsInput!.Open();
+            await _currentRowsInput!.OpenAsync(cancellationToken);
             Columns = _currentRowsInput.Columns;
         }
     }
 
     /// <inheritdoc />
-    public override void Close()
+    public override async Task CloseAsync(CancellationToken cancellationToken = default)
     {
-        _currentRowsInput?.Close();
+        if (_currentRowsInput == null)
+        {
+            return;
+        }
+        await _currentRowsInput.CloseAsync(cancellationToken);
     }
 
     /// <inheritdoc />
@@ -92,12 +97,12 @@ internal sealed class CombineRowsInput : RowsInput, IDisposable
             {
                 return true;
             }
-            _currentRowsInput.Close();
+            await _currentRowsInput.CloseAsync(cancellationToken);
         }
 
         if (FetchNextInput())
         {
-            _currentRowsInput!.Open();
+            await _currentRowsInput!.OpenAsync(cancellationToken);
             return await ReadNextAsync(cancellationToken);
         }
 
@@ -117,22 +122,22 @@ internal sealed class CombineRowsInput : RowsInput, IDisposable
     }
 
     /// <inheritdoc />
-    public override void Reset()
+    public override async Task ResetAsync(CancellationToken cancellationToken = default)
     {
         _currentRowsInput = null;
         foreach (var rowsInput in _rowsInputs)
         {
-            rowsInput.Reset();
+            await rowsInput.ResetAsync(cancellationToken);
         }
         _currentInputIndex = -1;
-        base.Reset();
+        await base.ResetAsync(cancellationToken);
         FetchNextInput();
     }
 
     /// <inheritdoc />
     public void Dispose()
     {
-        Close();
+        AsyncUtils.RunSync(() => CloseAsync());
     }
 
     /// <inheritdoc />

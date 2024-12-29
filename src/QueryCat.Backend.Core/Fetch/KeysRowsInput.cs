@@ -48,22 +48,24 @@ public abstract class KeysRowsInput : RowsInput, IRowsInputKeys, IDisposable
     }
 
     /// <inheritdoc />
-    public override void Open()
+    public override Task OpenAsync(CancellationToken cancellationToken = default)
     {
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />
-    public override void Close()
+    public override Task CloseAsync(CancellationToken cancellationToken = default)
     {
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />
-    public override void Reset()
+    public override async Task ResetAsync(CancellationToken cancellationToken = default)
     {
         _setKeyColumns = [];
         InitializeKeyColumns();
-        Close();
-        base.Reset();
+        await CloseAsync(cancellationToken);
+        await base.ResetAsync(cancellationToken);
     }
 
     #region IRowsInputKeys

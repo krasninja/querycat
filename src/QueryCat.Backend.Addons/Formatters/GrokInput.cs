@@ -282,11 +282,11 @@ internal sealed partial class GrokInput : IRowsInput
     }
 
     /// <inheritdoc />
-    public void Open()
+    public async Task OpenAsync(CancellationToken cancellationToken = default)
     {
         _converters = CreateCustomConverters();
 
-        _grokImpl.Open();
+        await _grokImpl.OpenAsync(cancellationToken);
 
         // Here is the hack. After original rows input open it tries to determine column types.
         // However, we do not want to do that for columns with converters. So we force them
@@ -308,10 +308,10 @@ internal sealed partial class GrokInput : IRowsInput
     }
 
     /// <inheritdoc />
-    public void Close() => _grokImpl.Close();
+    public Task CloseAsync(CancellationToken cancellationToken = default) => _grokImpl.CloseAsync(cancellationToken);
 
     /// <inheritdoc />
-    public void Reset() => _grokImpl.Reset();
+    public Task ResetAsync(CancellationToken cancellationToken = default) => _grokImpl.ResetAsync(cancellationToken);
 
     /// <inheritdoc />
     public ErrorCode ReadValue(int columnIndex, out VariantValue value)

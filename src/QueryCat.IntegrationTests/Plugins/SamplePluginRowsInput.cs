@@ -48,15 +48,17 @@ public class SamplePluginRowsInput : IRowsInput
     }
 
     /// <inheritdoc />
-    public void Open()
+    public Task OpenAsync(CancellationToken cancellationToken = default)
     {
-        Trace.WriteLine(nameof(Open));
+        Trace.WriteLine(nameof(OpenAsync));
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />
-    public void Close()
+    public Task CloseAsync(CancellationToken cancellationToken = default)
     {
-        Trace.WriteLine(nameof(Close));
+        Trace.WriteLine(nameof(CloseAsync));
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />
@@ -86,10 +88,11 @@ public class SamplePluginRowsInput : IRowsInput
     }
 
     /// <inheritdoc />
-    public void Reset()
+    public Task ResetAsync(CancellationToken cancellationToken = default)
     {
-        Trace.WriteLine(nameof(Reset));
+        Trace.WriteLine(nameof(ResetAsync));
         _currentState = 0;
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />

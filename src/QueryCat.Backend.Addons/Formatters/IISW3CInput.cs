@@ -118,12 +118,12 @@ public sealed class IISW3CInput : StreamRowsInput
     }
 
     /// <inheritdoc />
-    public override void Open()
+    public override async Task OpenAsync(CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("Open {Input}.", this);
 
         // Try to find fields header.
-        var foundHeaders = SeekToFieldsHeaderAsync().GetAwaiter().GetResult();
+        var foundHeaders = await SeekToFieldsHeaderAsync(cancellationToken);
         if (!foundHeaders)
         {
             throw new QueryCatException("Cannot find IIS fields.");
@@ -147,11 +147,11 @@ public sealed class IISW3CInput : StreamRowsInput
     }
 
     /// <inheritdoc />
-    public override void Reset()
+    public override async Task ResetAsync(CancellationToken cancellationToken = default)
     {
         _isInitialized = false;
-        base.Reset();
-        AsyncUtils.RunSync(() => SeekToFieldsHeaderAsync());
+        await base.ResetAsync(cancellationToken);
+        await SeekToFieldsHeaderAsync(cancellationToken);
     }
 
     /// <inheritdoc />

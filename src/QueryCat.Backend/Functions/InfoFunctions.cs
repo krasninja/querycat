@@ -45,7 +45,7 @@ public static class InfoFunctions
         }
         else if (obj is IRowsInput input)
         {
-            input.Open();
+            AsyncUtils.RunSync(() => input.OpenAsync());
             columns = input.Columns;
         }
         else

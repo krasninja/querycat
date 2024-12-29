@@ -43,16 +43,16 @@ public class PagingOutput : IRowsOutput
     }
 
     /// <inheritdoc />
-    public void Open() => _rowsOutput.Open();
+    public Task OpenAsync(CancellationToken cancellationToken = default) => _rowsOutput.OpenAsync(cancellationToken);
 
     /// <inheritdoc />
-    public void Close() => _rowsOutput.Close();
+    public Task CloseAsync(CancellationToken cancellationToken = default) => _rowsOutput.CloseAsync(cancellationToken);
 
     /// <inheritdoc />
-    public void Reset()
+    public Task ResetAsync(CancellationToken cancellationToken = default)
     {
         _rowsCounter = 0;
-        _rowsOutput.Reset();
+        return _rowsOutput.ResetAsync(cancellationToken);
     }
 
     /// <inheritdoc />

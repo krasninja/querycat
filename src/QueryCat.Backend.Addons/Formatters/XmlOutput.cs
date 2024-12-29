@@ -3,6 +3,7 @@ using System.Xml;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Storage;
 
 namespace QueryCat.Backend.Addons.Formatters;
@@ -33,17 +34,18 @@ internal sealed class XmlOutput : RowsOutput, IDisposable
     }
 
     /// <inheritdoc />
-    public override void Open()
+    public override Task OpenAsync(CancellationToken cancellationToken = default)
     {
         _logger.LogTrace("XML opened.");
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />
-    public override void Close()
+    public override async Task CloseAsync(CancellationToken cancellationToken = default)
     {
-        _xmlWriter.WriteEndElement(); // RootTagName.
-        _xmlWriter.WriteEndDocument();
-        _xmlWriter.Flush();
+        await _xmlWriter.WriteEndElementAsync(); // RootTagName.
+        await _xmlWriter.WriteEndDocumentAsync();
+        await _xmlWriter.FlushAsync();
         _xmlWriter.Close();
         _logger.LogTrace("XML closed.");
     }
@@ -92,7 +94,7 @@ internal sealed class XmlOutput : RowsOutput, IDisposable
     /// <inheritdoc />
     public void Dispose()
     {
-        Close();
+        AsyncUtils.RunSync(() => CloseAsync());
         _xmlWriter.Dispose();
     }
 }

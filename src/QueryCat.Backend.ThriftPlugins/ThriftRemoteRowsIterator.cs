@@ -55,26 +55,23 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys
     }
 
     /// <inheritdoc />
-    public void Open()
+    public async Task OpenAsync(CancellationToken cancellationToken = default)
     {
-        AsyncUtils.RunSync(async ct =>
-        {
-            await _client.RowsSet_OpenAsync(_objectHandle, ct);
-            Columns = (await _client.RowsSet_GetColumnsAsync(_objectHandle, ct)).Select(SdkConvert.Convert).ToArray();
-            UniqueKey = (await _client.RowsSet_GetUniqueKeyAsync(_objectHandle, ct)).ToArray();
-        });
+        await _client.RowsSet_OpenAsync(_objectHandle, cancellationToken);
+        Columns = (await _client.RowsSet_GetColumnsAsync(_objectHandle, cancellationToken)).Select(SdkConvert.Convert).ToArray();
+        UniqueKey = (await _client.RowsSet_GetUniqueKeyAsync(_objectHandle, cancellationToken)).ToArray();
     }
 
     /// <inheritdoc />
-    public void Close()
+    public Task CloseAsync(CancellationToken cancellationToken = default)
     {
-        AsyncUtils.RunSync(ct => _client.RowsSet_CloseAsync(_objectHandle, ct));
+        return _client.RowsSet_CloseAsync(_objectHandle, cancellationToken);
     }
 
     /// <inheritdoc />
-    public void Reset()
+    public async Task ResetAsync(CancellationToken cancellationToken = default)
     {
-        AsyncUtils.RunSync(ct => _client.RowsSet_ResetAsync(_objectHandle, ct));
+        await _client.RowsSet_ResetAsync(_objectHandle, cancellationToken);
         _cache.Clear();
     }
 

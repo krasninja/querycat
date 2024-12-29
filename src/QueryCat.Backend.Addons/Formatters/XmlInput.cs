@@ -106,13 +106,13 @@ internal sealed class XmlInput : IRowsInput, IDisposable
     }
 
     /// <inheritdoc />
-    public void Open()
+    public async Task OpenAsync(CancellationToken cancellationToken = default)
     {
         _initMode = true;
 
         // Read first rows.
         var count = 0;
-        while (ReadNextAsync().GetAwaiter().GetResult() && count++ < RowsToAnalyze)
+        while (await ReadNextAsync(cancellationToken) && count++ < RowsToAnalyze)
         {
         }
 
@@ -127,19 +127,21 @@ internal sealed class XmlInput : IRowsInput, IDisposable
             }
             frame.AddRow(row);
         }
-        AsyncUtils.RunSync(() => RowsIteratorUtils.ResolveColumnsTypesAsync(frame.GetIterator(), RowsToAnalyze));
+        await RowsIteratorUtils.ResolveColumnsTypesAsync(frame.GetIterator(), RowsToAnalyze,
+            cancellationToken: cancellationToken);
 
         _initMode = false;
     }
 
     /// <inheritdoc />
-    public void Close()
+    public Task CloseAsync(CancellationToken cancellationToken = default)
     {
         _xmlReader.Close();
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />
-    public void Reset()
+    public Task ResetAsync(CancellationToken cancellationToken = default)
     {
         if (_xmlReader is not XmlTextReader xmlTextReader)
         {
@@ -151,6 +153,7 @@ internal sealed class XmlInput : IRowsInput, IDisposable
         _cacheSize = 0;
         _currentRow.Clear();
         _skipNextRead = true;
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />
@@ -304,7 +307,7 @@ internal sealed class XmlInput : IRowsInput, IDisposable
     /// <inheritdoc />
     public void Dispose()
     {
-        Close();
+        AsyncUtils.RunSync(() => CloseAsync());
         _xmlReader.Dispose();
     }
 }

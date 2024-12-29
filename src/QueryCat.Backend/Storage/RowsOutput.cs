@@ -17,15 +17,16 @@ public abstract class RowsOutput : IRowsOutput
     public QueryContext QueryContext { get; set; } = NullQueryContext.Instance;
 
     /// <inheritdoc />
-    public abstract void Open();
+    public abstract Task OpenAsync(CancellationToken cancellationToken = default);
 
     /// <inheritdoc />
-    public abstract void Close();
+    public abstract Task CloseAsync(CancellationToken cancellationToken = default);
 
     /// <inheritdoc />
-    public void Reset()
+    public Task ResetAsync(CancellationToken cancellationToken = default)
     {
         _isFirstCall = true;
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />

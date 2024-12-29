@@ -78,17 +78,17 @@ public class CacheRowsInputTests
 
         // Act.
         proxyInput.SetInput(input1);
-        cacheRowsInput.Reset();
+        await cacheRowsInput.ResetAsync();
         await iterator.MoveNextAsync(); // Read.
         await iterator.MoveNextAsync(); // Read EOF.
 
         proxyInput.SetInput(input2);
-        cacheRowsInput.Reset();
+        await cacheRowsInput.ResetAsync();
         await iterator.MoveNextAsync(); // Read.
         await iterator.MoveNextAsync(); // Read EOF.
 
         proxyInput.SetInput(input1);
-        cacheRowsInput.Reset();
+        await cacheRowsInput.ResetAsync();
         await iterator.MoveNextAsync(); // Read cache.
 
         // Assert.
@@ -115,20 +115,20 @@ public class CacheRowsInputTests
 
         // Act.
         proxyInput.SetInput(input1);
-        cacheRowsInput.Reset();
+        await cacheRowsInput.ResetAsync();
         await iterator.MoveNextAsync(); // Read.
 
         proxyInput.SetInput(input2);
-        cacheRowsInput.Reset();
+        await cacheRowsInput.ResetAsync();
         await iterator.MoveNextAsync(); // Read.
         await iterator.MoveNextAsync(); // Read EOF.
 
         proxyInput.SetInput(input1);
-        cacheRowsInput.Reset();
+        await cacheRowsInput.ResetAsync();
         await iterator.MoveNextAsync(); // Read.
 
         proxyInput.SetInput(input2);
-        cacheRowsInput.Reset();
+        await cacheRowsInput.ResetAsync();
         await iterator.MoveNextAsync(); // Read cache.
 
         // Assert.

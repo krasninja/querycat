@@ -24,7 +24,7 @@ internal sealed class InsertCommandHandler : IFuncUnit
     {
         var insertCount = 0;
         _rowsOutput.QueryContext = new RowsOutputQueryContext(_rowsInput.Columns);
-        _rowsOutput.Open();
+        await _rowsOutput.OpenAsync(cancellationToken);
         try
         {
             while (await _rowsInput.MoveNextAsync(cancellationToken))
@@ -35,7 +35,7 @@ internal sealed class InsertCommandHandler : IFuncUnit
         }
         finally
         {
-            _rowsOutput.Close();
+            await _rowsOutput.CloseAsync(cancellationToken);
         }
 
         return new VariantValue(insertCount);

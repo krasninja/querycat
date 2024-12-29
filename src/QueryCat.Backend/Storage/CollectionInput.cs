@@ -5,6 +5,7 @@ using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Fetch;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend.Storage;
 
@@ -74,20 +75,23 @@ public class CollectionInput : IRowsOutput, IDisposable, IRowsInputUpdate
     }
 
     /// <inheritdoc />
-    public void Open()
+    public Task OpenAsync(CancellationToken cancellationToken = default)
     {
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />
-    public void Close()
+    public Task CloseAsync(CancellationToken cancellationToken = default)
     {
         (_enumerator as IDisposable)?.Dispose();
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />
-    public void Reset()
+    public Task ResetAsync(CancellationToken cancellationToken = default)
     {
         _enumerator.Reset();
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />
@@ -216,7 +220,7 @@ public class CollectionInput : IRowsOutput, IDisposable, IRowsInputUpdate
     {
         if (disposing)
         {
-            Close();
+            AsyncUtils.RunSync(() => CloseAsync());
         }
     }
 

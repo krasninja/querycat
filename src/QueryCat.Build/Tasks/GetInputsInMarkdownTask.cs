@@ -29,7 +29,7 @@ public sealed class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
     }
 
     /// <inheritdoc />
-    public override Task RunAsync(BuildContext context)
+    public override async Task RunAsync(BuildContext context)
     {
         var targetFile = context.Arguments.GetArgument("File");
         var loader = context.Arguments.GetArgument("Loader");
@@ -92,7 +92,7 @@ public sealed class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
                 }
                 rowsInput = inputFunction.Delegate.Invoke(Executor.Thread).As<IRowsInputKeys?>()!;
                 rowsInput.QueryContext = queryContext;
-                rowsInput.Open();
+                await rowsInput.OpenAsync();
             }
             catch (Exception ex)
             {
@@ -127,9 +127,9 @@ public sealed class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
         }
 
         var file = Path.Combine(context.OutputDirectory, "plugin.md");
-        File.WriteAllText(file, sb.ToString());
+        await File.WriteAllTextAsync(file, sb.ToString());
         context.Log.Information($"Wrote to {file}.");
 
-        return base.RunAsync(context);
+        await base.RunAsync(context);
     }
 }

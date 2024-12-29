@@ -64,17 +64,17 @@ internal sealed class SelectJoinRowsInput : IRowsInputKeys, IRowsIteratorParent
     }
 
     /// <inheritdoc />
-    public void Open()
+    public async Task OpenAsync(CancellationToken cancellationToken = default)
     {
-        _leftInput.Open();
-        _rightInput.Open();
+        await _leftInput.OpenAsync(cancellationToken);
+        await _rightInput.OpenAsync(cancellationToken);
     }
 
     /// <inheritdoc />
-    public void Close()
+    public async Task CloseAsync(CancellationToken cancellationToken = default)
     {
-        _leftInput.Close();
-        _rightInput.Close();
+        await _leftInput.CloseAsync(cancellationToken);
+        await _rightInput.CloseAsync(cancellationToken);
     }
 
     /// <inheritdoc />
@@ -143,7 +143,7 @@ internal sealed class SelectJoinRowsInput : IRowsInputKeys, IRowsIteratorParent
 
             _rightIsNull = false;
             _rightHasData = false;
-            _rightInput.Reset();
+            await _rightInput.ResetAsync(cancellationToken);
             _rightRowIndex = -1;
         }
 
@@ -166,10 +166,10 @@ internal sealed class SelectJoinRowsInput : IRowsInputKeys, IRowsIteratorParent
     }
 
     /// <inheritdoc />
-    public void Reset()
+    public async Task ResetAsync(CancellationToken cancellationToken = default)
     {
-        _leftInput.Reset();
-        _rightInput.Reset();
+        await _leftInput.ResetAsync(cancellationToken);
+        await _rightInput.ResetAsync(cancellationToken);
     }
 
     /// <inheritdoc />

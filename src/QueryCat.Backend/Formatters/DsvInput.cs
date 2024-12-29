@@ -53,14 +53,14 @@ internal class DsvInput : StreamRowsInput
     }
 
     /// <inheritdoc />
-    public override void Reset()
+    public override async Task ResetAsync(CancellationToken cancellationToken = default)
     {
-        base.Reset();
+        await base.ResetAsync(cancellationToken);
         // If we have header row the first values row would have non-zero
         // position.
         if (_hasHeader == true && StreamReader.BaseStream.Position == 0)
         {
-            AsyncUtils.RunSync(() => ReadNextAsync());
+            await ReadNextAsync(cancellationToken);
         }
     }
 }

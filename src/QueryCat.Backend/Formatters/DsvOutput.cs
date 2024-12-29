@@ -37,16 +37,18 @@ internal sealed class DsvOutput : RowsOutput, IDisposable
     }
 
     /// <inheritdoc />
-    public override void Open()
+    public override Task OpenAsync(CancellationToken cancellationToken = default)
     {
         _logger.LogTrace("DSV opened.");
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />
-    public override void Close()
+    public override Task CloseAsync(CancellationToken cancellationToken = default)
     {
         _streamWriter.Close();
         _logger.LogTrace("DSV closed.");
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />

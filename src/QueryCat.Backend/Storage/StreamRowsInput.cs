@@ -35,9 +35,9 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     private readonly StreamRowsInputOptions _options;
 
     private readonly Column[] _customColumns =
-    {
-        new("filename", DataType.String, "File path."), // Index 0.
-    };
+    [
+        new("filename", DataType.String, "File path.") // Index 0.
+    ];
 
     private int _rowIndex;
 
@@ -103,10 +103,11 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     }
 
     /// <inheritdoc />
-    public void Close()
+    public Task CloseAsync(CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("Close {Stream}.", this);
         Dispose(true);
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />
@@ -262,7 +263,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     }
 
     /// <inheritdoc />
-    public virtual void Reset()
+    public virtual Task ResetAsync(CancellationToken cancellationToken = default)
     {
         _logger.LogTrace("Reset stream.");
         // If we still read cache data - we just reset it. Otherwise, there will be double read.
@@ -277,6 +278,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
             _delimiterStreamReader.Reset();
         }
         _rowIndex = 0;
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />
@@ -322,7 +324,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
         => GetColumnValue(columnIndex + _virtualColumnsCount);
 
     /// <inheritdoc />
-    public virtual void Open()
+    public virtual async Task OpenAsync(CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("Start stream open.");
         _virtualColumnsCount = GetVirtualColumns().Length;
@@ -331,7 +333,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
         if (DetectColumnsTypes)
         {
             // Move iterator, after that we are able to fill initial columns set.
-            var hasData = AsyncUtils.RunSync(() => inputIterator.MoveNextAsync());
+            var hasData = await inputIterator.MoveNextAsync(cancellationToken);
             if (!hasData)
             {
                 return;
@@ -343,7 +345,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
             cacheIterator.AddRow(inputIterator.Current);
             cacheIterator.SeekToHead();
 
-            AsyncUtils.RunSync(() => AnalyzeAsync(cacheIterator));
+            await AnalyzeAsync(cacheIterator, cancellationToken);
             cacheIterator.SeekToHead();
             cacheIterator.Freeze();
             _cacheIterator = cacheIterator;

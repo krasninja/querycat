@@ -69,24 +69,24 @@ internal sealed class CacheRowsInput : IRowsInputKeys
     }
 
     /// <inheritdoc />
-    public void Open()
+    public async Task OpenAsync(CancellationToken cancellationToken = default)
     {
         if (_isOpened)
         {
             return;
         }
-        _rowsInput.Open();
+        await _rowsInput.OpenAsync(cancellationToken);
         _isOpened = true;
     }
 
     /// <inheritdoc />
-    public void Close()
+    public async Task CloseAsync(CancellationToken cancellationToken = default)
     {
         if (!_isOpened)
         {
             return;
         }
-        _rowsInput.Close();
+        await _rowsInput.CloseAsync(cancellationToken);
         _isOpened = false;
     }
 
@@ -244,11 +244,11 @@ internal sealed class CacheRowsInput : IRowsInputKeys
     }
 
     /// <inheritdoc />
-    public void Reset()
+    public Task ResetAsync(CancellationToken cancellationToken = default)
     {
         _rowIndex = -1;
         _resetRequested = true;
-        _rowsInput.Reset();
+        return _rowsInput.ResetAsync(cancellationToken);
     }
 
     /// <inheritdoc />

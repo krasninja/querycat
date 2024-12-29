@@ -1,5 +1,6 @@
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend.Commands.Select;
 
@@ -28,7 +29,7 @@ internal sealed class SelectCommandHandler : IFuncUnit, IDisposable
         {
             if (inputQueryContext.IsVariableBound)
             {
-                inputQueryContext.RowsInput.Reset();
+                AsyncUtils.RunSync(() => inputQueryContext.RowsInput.ResetAsync());
             }
         }
     }

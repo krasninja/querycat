@@ -115,7 +115,7 @@ public class RowsInputIterator : IRowsIterator, IRowsIteratorParent, IDisposable
         // Open rows input.
         if (_autoOpen && !_isOpened)
         {
-            _rowsInput.Open();
+            await _rowsInput.OpenAsync(cancellationToken);
             _isOpened = true;
         }
 
@@ -153,7 +153,7 @@ public class RowsInputIterator : IRowsIterator, IRowsIteratorParent, IDisposable
     /// <inheritdoc />
     public void Reset()
     {
-        _rowsInput.Reset();
+        AsyncUtils.RunSync(() => _rowsInput.ResetAsync());
         if (!_isInitialized)
         {
             return;
@@ -182,7 +182,7 @@ public class RowsInputIterator : IRowsIterator, IRowsIteratorParent, IDisposable
     {
         if (disposing)
         {
-            _rowsInput.Close();
+            AsyncUtils.RunSync(() => _rowsInput.CloseAsync());
         }
     }
 

@@ -131,36 +131,34 @@ public partial class ThriftPluginClient
             if (_thriftPluginClient._objectsStorage.TryGet<IRowsSource>(object_handle, out var rowsSource)
                 && rowsSource != null)
             {
-                rowsSource.Open();
+                rowsSource.OpenAsync();
             }
             return Task.CompletedTask;
         }
 
         /// <inheritdoc />
-        public Task RowsSet_CloseAsync(int object_handle, CancellationToken cancellationToken = default)
+        public async Task RowsSet_CloseAsync(int object_handle, CancellationToken cancellationToken = default)
         {
             if (_thriftPluginClient._objectsStorage.TryGet<IRowsSource>(object_handle, out var rowsSource)
                 && rowsSource != null)
             {
-                rowsSource.Close();
+                await rowsSource.CloseAsync(cancellationToken);
             }
-            return Task.CompletedTask;
         }
 
         /// <inheritdoc />
-        public Task RowsSet_ResetAsync(int object_handle, CancellationToken cancellationToken = default)
+        public async Task RowsSet_ResetAsync(int object_handle, CancellationToken cancellationToken = default)
         {
             if (_thriftPluginClient._objectsStorage.TryGet<IRowsSource>(object_handle, out var rowsSource)
                 && rowsSource != null)
             {
-                rowsSource.Reset();
+                await rowsSource.ResetAsync(cancellationToken);
             }
             else if (_thriftPluginClient._objectsStorage.TryGet<IRowsIterator>(object_handle, out var rowsIterator)
                 && rowsIterator != null)
             {
                 rowsIterator.Reset();
             }
-            return Task.CompletedTask;
         }
 
         /// <inheritdoc />

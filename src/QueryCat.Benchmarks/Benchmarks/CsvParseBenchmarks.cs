@@ -21,7 +21,7 @@ public class CsvParseBenchmarks
     {
         await using var file = UsersCsvFile.OpenTestUsersFile();
         var input = new DsvFormatter(',', addFileNameColumn: false).OpenInput(file);
-        input.Open();
+        await input.OpenAsync();
         var rowsFrame = new RowsFrame(input.Columns);
         var rowsIterator = input.AsIterable(autoFetch: true);
         await rowsIterator.ToFrameAsync(rowsFrame);

@@ -42,10 +42,10 @@ public class EnumerableRowsInput<TClass> : KeysRowsInput where TClass : class
     }
 
     /// <inheritdoc />
-    public override void Open()
+    public override Task OpenAsync(CancellationToken cancellationToken = default)
     {
         Enumerator = _enumerable.GetEnumerator();
-        base.Open();
+        return base.OpenAsync(cancellationToken);
     }
 
     /// <inheritdoc />
@@ -61,17 +61,18 @@ public class EnumerableRowsInput<TClass> : KeysRowsInput where TClass : class
     }
 
     /// <inheritdoc />
-    public override void Reset()
+    public override async Task ResetAsync(CancellationToken cancellationToken = default)
     {
-        Close();
-        Open();
-        base.Reset();
+        await CloseAsync(cancellationToken);
+        await OpenAsync(cancellationToken);
+        await base.ResetAsync(cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Close()
+    public override Task CloseAsync(CancellationToken cancellationToken = default)
     {
         Enumerator?.Dispose();
+        return Task.CompletedTask;
     }
 
     #region Dispose

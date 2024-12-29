@@ -20,11 +20,12 @@ public abstract class FetchRowsInput<TClass> : EnumerableRowsInput<TClass> where
     protected abstract void Initialize(ClassRowsFrameBuilder<TClass> builder);
 
     /// <inheritdoc />
-    public override void Open()
+    public override Task OpenAsync(CancellationToken cancellationToken = default)
     {
         Initialize(Builder);
         Columns = Builder.Columns.ToArray();
         AddKeyColumns(Builder.KeyColumns);
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />

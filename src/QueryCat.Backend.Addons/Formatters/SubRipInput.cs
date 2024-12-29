@@ -37,15 +37,17 @@ internal sealed class SubRipInput : RowsInput
     }
 
     /// <inheritdoc />
-    public override void Open()
+    public override Task OpenAsync(CancellationToken cancellationToken = default)
     {
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />
-    public override void Close()
+    public override Task CloseAsync(CancellationToken cancellationToken = default)
     {
         _streamReader.Close();
         _streamReader.Dispose();
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />
