@@ -374,11 +374,11 @@ internal sealed partial class SelectPlanner
             {
                 var actionIterator = new ActionRowsIterator(outputIterator, "write to output")
                 {
-                    BeforeMoveNext = _ =>
+                    BeforeMoveNext = async (rowsIterator, ct) =>
                     {
-                        while (AsyncUtils.RunSync(() => outputIterator.MoveNextAsync()))
+                        while (await outputIterator.MoveNextAsync(ct))
                         {
-                            outputIterator.CurrentOutput.WriteValuesAsync(outputIterator.Current.Values);
+                            await outputIterator.CurrentOutput.WriteValuesAsync(outputIterator.Current.Values, ct);
                         }
                     },
                 };

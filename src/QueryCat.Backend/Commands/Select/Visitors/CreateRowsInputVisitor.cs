@@ -74,7 +74,7 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
                 rowsInput = new CacheRowsInput(_executionThread, rowsInput, _context.Conditions);
             }
             rowsInput.QueryContext = queryContext;
-            AsyncUtils.RunSync(() => rowsInput.OpenAsync());
+            AsyncUtils.RunSync(rowsInput.OpenAsync);
             _logger.LogDebug("Open rows input {RowsInput}.", rowsInput);
             return new SelectCommandInputContext(rowsInput, queryContext);
         }

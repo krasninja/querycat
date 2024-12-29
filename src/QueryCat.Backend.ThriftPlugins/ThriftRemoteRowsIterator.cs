@@ -46,7 +46,7 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys
 
     private void SendContextToPlugin()
     {
-        AsyncUtils.RunSync(async ct => await _client.RowsSet_SetContextAsync(_objectHandle, new ContextQueryInfo
+        AsyncUtils.RunSync(ct => _client.RowsSet_SetContextAsync(_objectHandle, new ContextQueryInfo
         {
             Columns = QueryContext.QueryInfo.Columns.Select(SdkConvert.Convert).ToList(),
             Limit = QueryContext.QueryInfo.Limit ?? -1,

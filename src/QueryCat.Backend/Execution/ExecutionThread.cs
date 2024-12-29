@@ -185,7 +185,7 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
             if (_deepLevel == 1)
             {
                 await RunBootstrapScriptAsync(cancellationToken);
-                LoadConfig();
+                await LoadConfigAsync(cancellationToken);
             }
             if (_deepLevel > Options.MaxRecursionDepth)
             {
@@ -330,7 +330,7 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
 
         if (Options.UseConfig)
         {
-            AsyncUtils.RunSync(ConfigStorage.SaveAsync);
+            await ConfigStorage.SaveAsync(cancellationToken);
         }
 
         return LastResult;
@@ -509,11 +509,11 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
         }
     }
 
-    private void LoadConfig()
+    private async Task LoadConfigAsync(CancellationToken cancellationToken)
     {
         if (!_configLoaded && Options.UseConfig)
         {
-            AsyncUtils.RunSync(ConfigStorage.LoadAsync);
+            await ConfigStorage.LoadAsync(cancellationToken);
             _configLoaded = true;
         }
     }

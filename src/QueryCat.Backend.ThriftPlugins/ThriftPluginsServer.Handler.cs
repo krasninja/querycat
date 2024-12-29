@@ -111,7 +111,7 @@ public partial class ThriftPluginsServer
             // Call init only in debug mode for now.
             if (context.Client != null && _thriftPluginsServer.SkipTokenVerification)
             {
-                AsyncUtils.RunSync(ct => context.Client.InitializeAsync(ct));
+                await context.Client.InitializeAsync(cancellationToken);
             }
 
             return CreateEmptyRegistrationResult();

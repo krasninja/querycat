@@ -121,7 +121,7 @@ internal sealed class VaryingOutputRowsIterator : IRowsIterator, IRowsIteratorPa
         foreach (var outputKeyValue in _outputs)
         {
             _logger.LogDebug("Close for args {Key}.", outputKeyValue.Key);
-            AsyncUtils.RunSync(() => outputKeyValue.Value.CloseAsync());
+            AsyncUtils.RunSync(outputKeyValue.Value.CloseAsync);
             if (dispose)
             {
                 (outputKeyValue.Value as IDisposable)?.Dispose();

@@ -153,7 +153,7 @@ public class RowsInputIterator : IRowsIterator, IRowsIteratorParent, IDisposable
     /// <inheritdoc />
     public void Reset()
     {
-        AsyncUtils.RunSync(() => _rowsInput.ResetAsync());
+        AsyncUtils.RunSync(_rowsInput.ResetAsync);
         if (!_isInitialized)
         {
             return;
@@ -182,7 +182,7 @@ public class RowsInputIterator : IRowsIterator, IRowsIteratorParent, IDisposable
     {
         if (disposing)
         {
-            AsyncUtils.RunSync(() => _rowsInput.CloseAsync());
+            AsyncUtils.RunSync(_rowsInput.CloseAsync);
         }
     }
 

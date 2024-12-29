@@ -209,12 +209,12 @@ internal sealed partial class WebServer
         await WriteIteratorAsync(RowsIteratorConverter.Convert(lastResult), request, response, cancellationToken);
     }
 
-    private Task HandleSchemaApiActionAsync(HttpListenerRequest request, HttpListenerResponse response, CancellationToken cancellationToken)
+    private async Task HandleSchemaApiActionAsync(HttpListenerRequest request, HttpListenerResponse response, CancellationToken cancellationToken)
     {
         if (request.HttpMethod != HttpMethod.Post.Method && request.HttpMethod != HttpMethod.Get.Method)
         {
             response.StatusCode = (int)HttpStatusCode.MethodNotAllowed;
-            return Task.CompletedTask;
+            return;
         }
 
         var query = GetQueryDataFromRequest(request);
@@ -237,14 +237,12 @@ internal sealed partial class WebServer
         try
         {
             thread.StatementExecuted += ThreadOnStatementExecuted;
-            AsyncUtils.RunSync(ct => _executionThread.RunAsync(query.Query, query.ParametersAsDict, ct));
+            await _executionThread.RunAsync(query.Query, query.ParametersAsDict, cancellationToken);
         }
         finally
         {
             thread.StatementExecuted -= ThreadOnStatementExecuted;
         }
-
-        return Task.CompletedTask;
     }
 
     #endregion

@@ -307,7 +307,7 @@ internal sealed class XmlInput : IRowsInput, IDisposable
     /// <inheritdoc />
     public void Dispose()
     {
-        AsyncUtils.RunSync(() => CloseAsync());
+        AsyncUtils.RunSync(CloseAsync);
         _xmlReader.Dispose();
     }
 }

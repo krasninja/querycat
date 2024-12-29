@@ -17,19 +17,19 @@ internal sealed class SelectCommandHandler : IFuncUnit, IDisposable
     }
 
     /// <inheritdoc />
-    public ValueTask<VariantValue> InvokeAsync(IExecutionThread thread, CancellationToken cancellationToken = default)
+    public async ValueTask<VariantValue> InvokeAsync(IExecutionThread thread, CancellationToken cancellationToken = default)
     {
-        ResetVariablesBoundRowsInputs();
-        return ValueTask.FromResult(VariantValue.CreateFromObject(SelectCommandContext.CurrentIterator));
+        await ResetVariablesBoundRowsInputsAsync(cancellationToken);
+        return VariantValue.CreateFromObject(SelectCommandContext.CurrentIterator);
     }
 
-    private void ResetVariablesBoundRowsInputs()
+    private async ValueTask ResetVariablesBoundRowsInputsAsync(CancellationToken cancellationToken)
     {
         foreach (var inputQueryContext in SelectCommandContext.Inputs)
         {
             if (inputQueryContext.IsVariableBound)
             {
-                AsyncUtils.RunSync(() => inputQueryContext.RowsInput.ResetAsync());
+                await inputQueryContext.RowsInput.ResetAsync(cancellationToken);
             }
         }
     }

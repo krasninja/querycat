@@ -236,7 +236,7 @@ internal sealed partial class SelectPlanner
             {
                 IsVariableBound = true,
             });
-            AsyncUtils.RunSync(() => rowsInput.OpenAsync());
+            AsyncUtils.RunSync(rowsInput.OpenAsync);
             rowsInputResult = rowsInput;
         }
         if (objVariable is IRowsIterator rowsIterator)
@@ -275,7 +275,7 @@ internal sealed partial class SelectPlanner
         }
         var rowsInput = ExecutionThread.FunctionsManager.CallFunction("read", ExecutionThread, args).AsRequired<IRowsInput>();
         rowsInput.QueryContext = new SelectInputQueryContext(rowsInput);
-        AsyncUtils.RunSync(() => rowsInput.OpenAsync());
+        AsyncUtils.RunSync(rowsInput.OpenAsync);
         return [rowsInput];
     }
 

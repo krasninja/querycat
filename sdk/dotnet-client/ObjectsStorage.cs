@@ -77,7 +77,7 @@ public sealed class ObjectsStorage
         {
             if (_objects[index] is IRowsSource rowsSource)
             {
-                AsyncUtils.RunSync(() => rowsSource.CloseAsync());
+                AsyncUtils.RunSync(rowsSource.CloseAsync);
             }
             if (_objects[index] is IDisposable disposable)
             {

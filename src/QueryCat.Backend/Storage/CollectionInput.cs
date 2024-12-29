@@ -220,7 +220,7 @@ public class CollectionInput : IRowsOutput, IDisposable, IRowsInputUpdate
     {
         if (disposing)
         {
-            AsyncUtils.RunSync(() => CloseAsync());
+            AsyncUtils.RunSync(CloseAsync);
         }
     }
 

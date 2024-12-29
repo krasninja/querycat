@@ -58,8 +58,7 @@ internal abstract class BaseQueryCommand : BaseCommand
         }
         catch (Backend.ThriftPlugins.ProxyNotFoundException)
         {
-            var installed = AsyncUtils.RunSync(async ct =>
-                await QueryCat.Cli.Commands.Options.ApplicationOptions.InstallPluginsProxyAsync(cancellationToken: ct));
+            var installed = await QueryCat.Cli.Commands.Options.ApplicationOptions.InstallPluginsProxyAsync(cancellationToken: cancellationToken);
             if (installed)
             {
                 await executionThread.RunAsync(query, cancellationToken: cancellationToken);

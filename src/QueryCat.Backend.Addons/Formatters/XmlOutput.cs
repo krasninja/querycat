@@ -94,7 +94,7 @@ internal sealed class XmlOutput : RowsOutput, IDisposable
     /// <inheritdoc />
     public void Dispose()
     {
-        AsyncUtils.RunSync(() => CloseAsync());
+        AsyncUtils.RunSync(CloseAsync);
         _xmlWriter.Dispose();
     }
 }

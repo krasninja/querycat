@@ -487,7 +487,7 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
     /// <inheritdoc />
     public void Dispose()
     {
-        AsyncUtils.RunSync(() => CloseAsync());
+        AsyncUtils.RunSync(CloseAsync);
         _stream.Dispose();
     }
 }

@@ -15,28 +15,24 @@ public class Program
 
     private static readonly Lazy<ILogger> _logger = new(() => Application.LoggerFactory.CreateLogger(nameof(Program)));
 
-    public static void QueryCatMain(ThriftPluginClientArguments args, string[] assemblyFiles)
+    public static async Task QueryCatMainAsync(ThriftPluginClientArguments args, string[] assemblyFiles)
     {
         AppDomain.CurrentDomain.UnhandledException += CurrentDomainOnUnhandledException;
         ThriftPluginClient.SetupApplicationLogging(logLevel: args.LogLevel);
 
-        AsyncUtils.RunSync(async ct =>
+        using var client = new ThriftPluginClient(args);
+        var assemblyLoader = new DotNetAssemblyPluginsLoader(client.FunctionsManager, assemblyFiles);
+        await assemblyLoader.LoadAsync();
+        if (!assemblyLoader.LoadedAssemblies.Any())
         {
-            using var client = new ThriftPluginClient(args);
-            var assemblyLoader = new DotNetAssemblyPluginsLoader(client.FunctionsManager, assemblyFiles);
-            await assemblyLoader.LoadAsync(ct);
-            if (!assemblyLoader.LoadedAssemblies.Any())
-            {
-                throw new QueryCatException("No plugins loaded.");
-            }
-            await client.StartAsync(
-                SdkConvert.Convert(assemblyLoader.LoadedAssemblies.FirstOrDefault()),
-                ct);
-            await client.WaitForServerExitAsync(ct);
-        });
+            throw new QueryCatException("No plugins loaded.");
+        }
+        await client.StartAsync(
+            SdkConvert.Convert(assemblyLoader.LoadedAssemblies.FirstOrDefault()));
+        await client.WaitForServerExitAsync();
     }
 
-    public static void Main(string[] args) => QueryCatMain(
+    public static Task Main(string[] args) => QueryCatMainAsync(
         ThriftPluginClient.ConvertCommandLineArguments(args),
         ParseAssemblyFiles(args));
 

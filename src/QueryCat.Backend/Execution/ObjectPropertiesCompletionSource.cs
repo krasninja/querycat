@@ -26,8 +26,8 @@ public class ObjectPropertiesCompletionSource : BaseObjectPropertiesCompletionSo
 
         try
         {
-            var value = AsyncUtils.RunSync(async ct =>
-                await context.ExecutionThread.RunAsync(objectSelectExpression, cancellationToken: ct));
+            var value = AsyncUtils.RunSync(ct =>
+                context.ExecutionThread.RunAsync(objectSelectExpression, cancellationToken: ct));
             if (!value.IsNull && value.Type == DataType.Object)
             {
                 return value.AsObjectUnsafe;

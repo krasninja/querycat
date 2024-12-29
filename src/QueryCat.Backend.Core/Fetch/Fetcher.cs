@@ -58,7 +58,7 @@ public class Fetcher<TClass> where TClass : class
         FetchSingleDelegate action,
         CancellationToken cancellationToken = default)
     {
-        var item = AsyncUtils.RunSync(() => action.Invoke(cancellationToken));
+        var item = AsyncUtils.RunSync(action.Invoke);
         yield return item!;
     }
 
@@ -72,7 +72,7 @@ public class Fetcher<TClass> where TClass : class
         FetchAllDelegate action,
         CancellationToken cancellationToken = default)
     {
-        return AsyncUtils.RunSync(() => action.Invoke(cancellationToken))!;
+        return AsyncUtils.RunSync(action.Invoke)!;
     }
 
     /// <summary>

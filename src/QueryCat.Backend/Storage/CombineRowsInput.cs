@@ -137,7 +137,7 @@ internal sealed class CombineRowsInput : RowsInput, IDisposable
     /// <inheritdoc />
     public void Dispose()
     {
-        AsyncUtils.RunSync(() => CloseAsync());
+        AsyncUtils.RunSync(CloseAsync);
     }
 
     /// <inheritdoc />

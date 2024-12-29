@@ -45,7 +45,7 @@ public static class InfoFunctions
         }
         else if (obj is IRowsInput input)
         {
-            AsyncUtils.RunSync(() => input.OpenAsync());
+            AsyncUtils.RunSync(input.OpenAsync);
             columns = input.Columns;
         }
         else
@@ -74,10 +74,7 @@ public static class InfoFunctions
     [FunctionSignature("_plugins(): object<IRowsInput>")]
     public static VariantValue Plugins(IExecutionThread thread)
     {
-        var plugins = AsyncUtils.RunSync(async ct =>
-        {
-            return await thread.PluginsManager.ListAsync(cancellationToken: ct);
-        });
+        var plugins = AsyncUtils.RunSync(ct => thread.PluginsManager.ListAsync(cancellationToken: ct));
         var input = new EnumerableRowsInput<PluginInfo>(plugins!,
             builder => builder
                 .AddProperty("name", p => p.Name)

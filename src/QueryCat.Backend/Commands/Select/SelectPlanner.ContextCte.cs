@@ -78,7 +78,7 @@ internal sealed partial class SelectPlanner
             combineNode.IsDistinct ? new DistinctRowsIteratorIterator(ExecutionThread, totalResultProxy) : totalResultProxy);
 
         // Merge current working frame and recalculate it based on new result.
-        var workingFrame = AsyncUtils.RunSync(() => initialQueryCommandContext.CurrentIterator.ToFrameAsync());
+        var workingFrame = AsyncUtils.RunSync(initialQueryCommandContext.CurrentIterator.ToFrameAsync);
         if (workingFrame == null)
         {
             return false;
@@ -91,7 +91,7 @@ internal sealed partial class SelectPlanner
 
             // Run the recursive query based on new working rows set.
             proxyRowsIterator.Set(workingFrame.GetIterator());
-            var newFrame = AsyncUtils.RunSync(() => rightIterator.ToFrameAsync());
+            var newFrame = AsyncUtils.RunSync(rightIterator.ToFrameAsync);
             if (newFrame == null)
             {
                 break;
