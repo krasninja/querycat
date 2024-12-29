@@ -33,9 +33,9 @@ internal sealed class MultiplyRowsIterator : IRowsIterator, IRowsIteratorParent
         _currentRow = new Row(this);
     }
 
-    private bool SetNextRightRow()
+    private async ValueTask<bool> SetNextRightRowAsync(CancellationToken cancellationToken)
     {
-        if (!_rightRowsIterator.MoveNext())
+        if (!await _rightRowsIterator.MoveNextAsync(cancellationToken))
         {
             return false;
         }
@@ -48,7 +48,7 @@ internal sealed class MultiplyRowsIterator : IRowsIterator, IRowsIteratorParent
     {
         if (_currentRightRow == null)
         {
-            if (!SetNextRightRow())
+            if (!await SetNextRightRowAsync(cancellationToken))
             {
                 return false;
             }
@@ -70,7 +70,7 @@ internal sealed class MultiplyRowsIterator : IRowsIterator, IRowsIteratorParent
         if (!leftHasNext)
         {
             _currentLeftIterator = _leftRowsFrameIterator;
-            if (!SetNextRightRow())
+            if (!await SetNextRightRowAsync(cancellationToken))
             {
                 return false;
             }

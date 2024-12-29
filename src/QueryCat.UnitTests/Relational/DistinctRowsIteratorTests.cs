@@ -13,7 +13,7 @@ namespace QueryCat.UnitTests.Relational;
 public class DistinctRowsIteratorTests
 {
     [Fact]
-    public void Distinct_RowsSetWithDuplicates_ShouldReturnUnique()
+    public async Task Distinct_RowsSetWithDuplicates_ShouldReturnUnique()
     {
         // Arrange.
         var table = new RowsFrame(
@@ -25,7 +25,8 @@ public class DistinctRowsIteratorTests
         table.AddRow(30, "Marina M");
 
         // Act.
-        var resultRowsSet = new DistinctRowsIteratorIterator(NullExecutionThread.Instance, table.GetIterator()).ToFrame();
+        var resultRowsSet = await new DistinctRowsIteratorIterator(NullExecutionThread.Instance, table.GetIterator())
+            .ToFrameAsync();
 
         // Assert.
         Assert.Equal(3, resultRowsSet.TotalRows);

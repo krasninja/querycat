@@ -20,12 +20,6 @@ public interface IRowsIterator : IRowsSchema
     ValueTask<bool> MoveNextAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Move cursor to the next row.
-    /// </summary>
-    /// <returns><c>True</c> if cursor was moved and data is available, <c>false</c> if there is no row anymore.</returns>
-    public bool MoveNext() => MoveNextAsync().GetAwaiter().GetResult();
-
-    /// <summary>
     /// Sets the iterator to its initial position.
     /// </summary>
     void Reset();

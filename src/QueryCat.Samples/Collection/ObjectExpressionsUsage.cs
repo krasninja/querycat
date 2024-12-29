@@ -41,6 +41,8 @@ internal class ObjectExpressionsUsage : BaseUsage
             {
                 ["email"] = VariantValue.CreateFromObject(email),
             });
-        Console.WriteLine(result2.AsRequired<IRowsIterator>().ToFrame().GetFirstValue().ToString(CultureInfo.InvariantCulture)); // 3
+        var result2Frame = (await result2.AsRequired<IRowsIterator>().ToFrameAsync())
+            .GetFirstValue();
+        Console.WriteLine(result2Frame.ToString(CultureInfo.InvariantCulture)); // 3
     }
 }

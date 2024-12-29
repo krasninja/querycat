@@ -18,8 +18,9 @@ internal interface IKeyConditionMultipleValuesGenerator : IKeyConditionSingleVal
     /// Move to the next value.
     /// </summary>
     /// <param name="thread">Execution thread.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Returns <c>True</c> if the value is available. Otherwise, <c>false</c>.</returns>
-    bool MoveNext(IExecutionThread thread);
+    ValueTask<bool> MoveNextAsync(IExecutionThread thread, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Reset the position to the initial element.

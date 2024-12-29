@@ -81,7 +81,7 @@ internal sealed class SetKeysRowsInput : RowsInput, IRowsInputKeys
 
         if (!_keysFilled)
         {
-            FillKeys();
+            await FillKeysAsync(cancellationToken);
             _keysFilled = true;
         }
 
@@ -91,7 +91,7 @@ internal sealed class SetKeysRowsInput : RowsInput, IRowsInputKeys
         if (_hasMultipleConditions && !hasData)
         {
             _rowsInput.Reset();
-            hasData = FillKeys();
+            hasData = await FillKeysAsync(cancellationToken);
             if (!hasData)
             {
                 _hasNoMoreData = true;
@@ -103,7 +103,7 @@ internal sealed class SetKeysRowsInput : RowsInput, IRowsInputKeys
         return hasData;
     }
 
-    private bool FillKeys()
+    private async ValueTask<bool> FillKeysAsync(CancellationToken cancellationToken)
     {
         var hasMoreMultipleValues = false;
         foreach (var conditionJoint in _conditions)
@@ -111,7 +111,7 @@ internal sealed class SetKeysRowsInput : RowsInput, IRowsInputKeys
             if (!hasMoreMultipleValues
                 && conditionJoint.Condition.Generator is IKeyConditionMultipleValuesGenerator multipleValuesGenerator)
             {
-                hasMoreMultipleValues = multipleValuesGenerator.MoveNext(_thread);
+                hasMoreMultipleValues = await multipleValuesGenerator.MoveNextAsync(_thread, cancellationToken);
             }
             var value = conditionJoint.Condition.Generator.Get(_thread);
             _rowsInput.SetKeyColumnValue(conditionJoint.ColumnIndex, value, conditionJoint.Condition.Operation);

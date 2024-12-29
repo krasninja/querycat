@@ -18,9 +18,9 @@ internal sealed class KeyConditionValueGeneratorIterator : IKeyConditionMultiple
     }
 
     /// <inheritdoc />
-    public bool MoveNext(IExecutionThread thread)
+    public async ValueTask<bool> MoveNextAsync(IExecutionThread thread, CancellationToken cancellationToken = default)
     {
-        var hasData = _rowsIterator.MoveNext();
+        var hasData = await _rowsIterator.MoveNextAsync(cancellationToken);
         if (hasData)
         {
             _position++;

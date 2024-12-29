@@ -36,7 +36,7 @@ public sealed class TailRowsIterator : IRowsIterator, IRowsIteratorParent
     {
         if (!_isInitialized)
         {
-            Initialize();
+            await InitializeAsync(cancellationToken);
         }
 
         var hasData = await _currentRowsIterator.MoveNextAsync(cancellationToken);
@@ -62,7 +62,7 @@ public sealed class TailRowsIterator : IRowsIterator, IRowsIteratorParent
         stringBuilder.AppendRowsIteratorsWithIndent("Tail", _cacheRowsIterator);
     }
 
-    private void Initialize()
+    private async Task InitializeAsync(CancellationToken cancellationToken)
     {
         if (_rowsIterator is ICursorRowsIterator cursorRowsIterator)
         {
@@ -71,7 +71,7 @@ public sealed class TailRowsIterator : IRowsIterator, IRowsIteratorParent
         }
         else
         {
-            while (_rowsIterator.MoveNext())
+            while (await _rowsIterator.MoveNextAsync(cancellationToken))
             {
                 _cacheRowsIterator.AddRow(_rowsIterator.Current);
                 if (_cacheRowsIterator.TotalRows > _tailCount && _cacheRowsIterator.TotalRows > 0)

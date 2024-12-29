@@ -67,7 +67,7 @@ internal sealed class CombineRowsIterator : IRowsIterator, IRowsIteratorParent
 
     private async ValueTask<bool> IntersectDelegate(CancellationToken cancellationToken)
     {
-        InitializedRight();
+        await InitializedRightAsync(cancellationToken);
 
         while (await _currentIterator.MoveNextAsync(cancellationToken))
         {
@@ -83,7 +83,7 @@ internal sealed class CombineRowsIterator : IRowsIterator, IRowsIteratorParent
 
     private async ValueTask<bool> ExceptDelegate(CancellationToken cancellationToken)
     {
-        InitializedRight();
+        await InitializedRightAsync(cancellationToken);
 
         while (await _currentIterator.MoveNextAsync(cancellationToken))
         {
@@ -138,14 +138,14 @@ internal sealed class CombineRowsIterator : IRowsIterator, IRowsIteratorParent
             $"Combine (type={_combineType}, distinct={_isDistinct})", _leftIterator, _rightIterator);
     }
 
-    private void InitializedRight()
+    private async ValueTask InitializedRightAsync(CancellationToken cancellationToken)
     {
         if (_isRightInitialized)
         {
             return;
         }
 
-        while (_rightIterator.MoveNext())
+        while (await _rightIterator.MoveNextAsync(cancellationToken))
         {
             var arr = new VariantValueArray(_rightIterator.Current.AsArray(copy: true));
             _rightRows.Add(arr);

@@ -12,7 +12,7 @@ namespace QueryCat.UnitTests.Relational;
 public class MultiplyRowsIteratorTests
 {
     [Fact]
-    public void Multiply_SourceRowsSet_ShouldProduceRelationalAlgebraMultiply()
+    public async Task Multiply_SourceRowsSet_ShouldProduceRelationalAlgebraMultiply()
     {
         // Arrange.
         var table1 = new RowsFrame(
@@ -29,7 +29,7 @@ public class MultiplyRowsIteratorTests
         // Act.
         var multiplyRowsIterator = new MultiplyRowsIterator(table1.GetIterator(), table2.GetIterator());
         var resultRowsFrame = new RowsFrame(multiplyRowsIterator.Columns);
-        multiplyRowsIterator.ToFrame(resultRowsFrame);
+        await multiplyRowsIterator.ToFrameAsync(resultRowsFrame);
 
         // Assert.
         Assert.Equal(6, resultRowsFrame.TotalRows);

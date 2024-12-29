@@ -18,15 +18,19 @@ internal sealed class KeyConditionValueGeneratorVariable : IKeyConditionMultiple
     }
 
     /// <inheritdoc />
-    public bool MoveNext(IExecutionThread thread) => GetGenerator(thread).MoveNext(thread);
+    public async ValueTask<bool> MoveNextAsync(IExecutionThread thread, CancellationToken cancellationToken = default)
+    {
+        var generator = await GetGeneratorAsync(thread, cancellationToken);
+        return await generator.MoveNextAsync(thread, cancellationToken);
+    }
 
-    private IKeyConditionMultipleValuesGenerator GetGenerator(IExecutionThread thread)
+    private async ValueTask<IKeyConditionMultipleValuesGenerator> GetGeneratorAsync(IExecutionThread thread, CancellationToken cancellationToken)
     {
         if (_generator != null)
         {
             return _generator;
         }
-        var value = _identifierUnit.Invoke(thread);
+        var value = await _identifierUnit.InvokeAsync(thread, cancellationToken);
         var rowsIterator = RowsIteratorConverter.Convert(value);
         if (rowsIterator.Columns.Length < 1)
         {
@@ -35,7 +39,7 @@ internal sealed class KeyConditionValueGeneratorVariable : IKeyConditionMultiple
         }
 
         var values = new List<VariantValue>();
-        while (rowsIterator.MoveNext())
+        while (await rowsIterator.MoveNextAsync(cancellationToken))
         {
             values.Add(rowsIterator.Current[0]);
         }

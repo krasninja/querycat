@@ -80,14 +80,14 @@ public class Program
         var expectedInput = new DsvFormatter(',', hasHeader: false, addFileNameColumn: false).OpenInput(
             GetStreamFromString(expected));
         expectedInput.Open();
-        var expectedRowsFrame = expectedInput.AsIterable(autoFetch: true).ToFrame();
+        var expectedRowsFrame = await expectedInput.AsIterable(autoFetch: true).ToFrameAsync();
         expectedInput.Close();
 
         output = output.Replace(VariantValue.NullValueString, string.Empty);
         var outputInput = new DsvFormatter('|', hasHeader: false, addFileNameColumn: false).OpenInput(
             GetStreamFromString(TrimFirstAndLastDelimiters(output, '|')));
         outputInput.Open();
-        var outputRowsFrame = outputInput.AsIterable(autoFetch: true).ToFrame();
+        var outputRowsFrame = await outputInput.AsIterable(autoFetch: true).ToFrameAsync();
         outputInput.Close();
 
         if (expectedRowsFrame.TotalRows != outputRowsFrame.TotalRows)

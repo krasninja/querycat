@@ -13,8 +13,12 @@ internal static class KeyConditionSingleValueGeneratorExtensions
     /// </summary>
     /// <param name="generator">Values generator.</param>
     /// <param name="thread">Execution thread.</param>
+    /// <param name="cancellationToken"></param>
     /// <returns>Available values.</returns>
-    public static VariantValue[] GetValues(this IKeyConditionSingleValueGenerator generator, IExecutionThread thread)
+    public static async ValueTask<VariantValue[]> GetValues(
+        this IKeyConditionSingleValueGenerator generator,
+        IExecutionThread thread,
+        CancellationToken cancellationToken = default)
     {
         if (generator is IKeyConditionMultipleValuesGenerator multipleValuesGenerator)
         {
@@ -25,7 +29,7 @@ internal static class KeyConditionSingleValueGeneratorExtensions
             {
                 multipleValuesGenerator.Reset();
             }
-            while (multipleValuesGenerator.MoveNext(thread))
+            while (await multipleValuesGenerator.MoveNextAsync(thread, cancellationToken))
             {
                 values.Add(multipleValuesGenerator.Get(thread));
             }
@@ -34,7 +38,7 @@ internal static class KeyConditionSingleValueGeneratorExtensions
             // Restore the original position.
             for (var position = 0; position < oldPosition + 1; position++)
             {
-                multipleValuesGenerator.MoveNext(thread);
+                await multipleValuesGenerator.MoveNextAsync(thread, cancellationToken);
             }
 
             return values.ToArray();

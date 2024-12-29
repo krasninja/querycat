@@ -26,7 +26,7 @@ internal sealed class KeyConditionValueGeneratorArray : IKeyConditionMultipleVal
         => _currentIndex < _values.Length ? _values[_currentIndex].Invoke(thread) : VariantValue.Null;
 
     /// <inheritdoc />
-    public bool MoveNext(IExecutionThread thread)
+    public ValueTask<bool> MoveNextAsync(IExecutionThread thread, CancellationToken cancellationToken = default)
     {
         var canMove = _currentIndex < _values.Length;
         if (canMove)
@@ -34,7 +34,7 @@ internal sealed class KeyConditionValueGeneratorArray : IKeyConditionMultipleVal
             _currentIndex++;
         }
         canMove = _currentIndex < _values.Length;
-        return canMove;
+        return ValueTask.FromResult(canMove);
     }
 
     /// <inheritdoc />

@@ -24,7 +24,7 @@ public class CsvParseBenchmarks
         input.Open();
         var rowsFrame = new RowsFrame(input.Columns);
         var rowsIterator = input.AsIterable(autoFetch: true);
-        rowsIterator.ToFrame(rowsFrame);
+        await rowsIterator.ToFrameAsync(rowsFrame);
         return rowsFrame.TotalRows;
     }
 
