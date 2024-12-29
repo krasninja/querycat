@@ -112,12 +112,12 @@ internal sealed class DsvOutput : RowsOutput, IDisposable
     }
 
     /// <inheritdoc />
-    protected override void Initialize()
+    protected override Task InitializeAsync(CancellationToken cancellationToken = default)
     {
-        WriteHeader(QueryContext);
+        return WriteHeaderAsync(QueryContext, cancellationToken);
     }
 
-    private void WriteHeader(QueryContext queryContext)
+    private async Task WriteHeaderAsync(QueryContext queryContext, CancellationToken cancellationToken)
     {
         var columns = queryContext.QueryInfo.Columns;
 
@@ -128,11 +128,11 @@ internal sealed class DsvOutput : RowsOutput, IDisposable
                 WriteString(columns[i].Name);
                 if (i < columns.Length - 1)
                 {
-                    _streamWriter.Write(_delimiter);
+                    await _streamWriter.WriteAsync(_delimiter);
                 }
             }
-            _streamWriter.WriteLine();
-            _streamWriter.Flush();
+            await _streamWriter.WriteLineAsync();
+            await _streamWriter.FlushAsync(cancellationToken);
             _wroteHeader = true;
         }
     }

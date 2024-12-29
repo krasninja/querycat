@@ -28,7 +28,7 @@ public static class RowsOutputExtensions
             }
             while (await iterator.MoveNextAsync(cancellationToken))
             {
-                output.WriteValues(iterator.Current.Values);
+                await output.WriteValuesAsync(iterator.Current.Values, cancellationToken);
             }
         }
         finally

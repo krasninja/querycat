@@ -181,14 +181,14 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
     }
 
     /// <inheritdoc />
-    protected override void Initialize()
+    protected override async Task InitializeAsync(CancellationToken cancellationToken = default)
     {
         var columns = QueryContext.QueryInfo.Columns;
         _isSingleValue = columns.Length == 1 && columns[0].Name == SingleValueRowsIterator.ColumnTitle;
         _columnsLengths = new int[columns.Length];
 
         _onInit.Invoke();
-        _streamWriter.Flush();
+        await _streamWriter.FlushAsync(cancellationToken);
     }
 
     #region Table1

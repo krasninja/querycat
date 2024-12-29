@@ -56,9 +56,9 @@ public class PagingOutput : IRowsOutput
     }
 
     /// <inheritdoc />
-    public ErrorCode WriteValues(VariantValue[] values)
+    public async ValueTask<ErrorCode> WriteValuesAsync(VariantValue[] values, CancellationToken cancellationToken = default)
     {
-        _rowsOutput.WriteValues(values);
+        await _rowsOutput.WriteValuesAsync(values, cancellationToken);
         if (PagingRowsCount != NoLimit
             && Environment.UserInteractive
             && ++_rowsCounter >= PagingRowsCount
@@ -76,9 +76,9 @@ public class PagingOutput : IRowsOutput
                 PagingRowsCount = -1;
             }
             // Quit.
-            else if (consoleKey.Key == ConsoleKey.Q)
+            else if (consoleKey.Key == ConsoleKey.Q && _cancellationTokenSource != null)
             {
-                _cancellationTokenSource?.Cancel();
+                await _cancellationTokenSource.CancelAsync();
             }
         }
 

@@ -29,7 +29,7 @@ internal sealed class InsertCommandHandler : IFuncUnit
         {
             while (await _rowsInput.MoveNextAsync(cancellationToken))
             {
-                _rowsOutput.WriteValues(_rowsInput.Current.Values);
+                await _rowsOutput.WriteValuesAsync(_rowsInput.Current.Values, cancellationToken);
                 insertCount++;
             }
         }

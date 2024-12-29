@@ -53,9 +53,10 @@ internal sealed class JsonOutput : RowsOutput, IDisposable
     }
 
     /// <inheritdoc />
-    protected override void Initialize()
+    protected override Task InitializeAsync(CancellationToken cancellationToken = default)
     {
         _streamWriter.WriteStartArray();
+        return Task.CompletedTask;
     }
 
     private static void WriteJsonVariantValue(Utf8JsonWriter jsonWriter, in VariantValue value)

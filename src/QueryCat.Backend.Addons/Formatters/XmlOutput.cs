@@ -27,9 +27,9 @@ internal sealed class XmlOutput : RowsOutput, IDisposable
     }
 
     /// <inheritdoc />
-    protected override void Initialize()
+    protected override async Task InitializeAsync(CancellationToken cancellationToken = default)
     {
-        _xmlWriter.WriteStartDocument();
+        await _xmlWriter.WriteStartDocumentAsync();
         _xmlWriter.WriteStartElement(RootTagName);
     }
 

@@ -378,7 +378,7 @@ internal sealed partial class SelectPlanner
                     {
                         while (AsyncUtils.RunSync(() => outputIterator.MoveNextAsync()))
                         {
-                            outputIterator.CurrentOutput.WriteValues(outputIterator.Current.Values);
+                            outputIterator.CurrentOutput.WriteValuesAsync(outputIterator.Current.Values);
                         }
                     },
                 };

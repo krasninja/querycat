@@ -304,15 +304,15 @@ public partial class ThriftPluginClient
         }
 
         /// <inheritdoc />
-        public Task<QueryCatErrorCode> RowsSet_WriteValuesAsync(int object_handle, List<VariantValue>? values,
+        public async Task<QueryCatErrorCode> RowsSet_WriteValuesAsync(int object_handle, List<VariantValue>? values,
             CancellationToken cancellationToken = default)
         {
             if (values != null
                 && _thriftPluginClient._objectsStorage.TryGet<IRowsOutput>(object_handle, out var rowsOutput)
                 && rowsOutput != null)
             {
-                var result = rowsOutput.WriteValues(values.Select(SdkConvert.Convert).ToArray());
-                return Task.FromResult(SdkConvert.Convert(result));
+                var result = await rowsOutput.WriteValuesAsync(values.Select(SdkConvert.Convert).ToArray(), cancellationToken);
+                return SdkConvert.Convert(result);
             }
             throw new QueryCatPluginException(
                 ErrorType.INVALID_OBJECT,

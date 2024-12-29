@@ -33,11 +33,11 @@ public abstract class RowsOutput : IRowsOutput
     public RowsOutputOptions Options { get; protected set; } = new();
 
     /// <inheritdoc />
-    public ErrorCode WriteValues(VariantValue[] values)
+    public async ValueTask<ErrorCode> WriteValuesAsync(VariantValue[] values, CancellationToken cancellationToken = default)
     {
         if (_isFirstCall)
         {
-            Initialize();
+            await InitializeAsync(cancellationToken);
             _isFirstCall = false;
         }
         OnWrite(values);
@@ -53,7 +53,8 @@ public abstract class RowsOutput : IRowsOutput
     /// <summary>
     /// The method is called before first Write to initialize input.
     /// </summary>
-    protected virtual void Initialize()
+    protected virtual Task InitializeAsync(CancellationToken cancellationToken = default)
     {
+        return Task.CompletedTask;
     }
 }

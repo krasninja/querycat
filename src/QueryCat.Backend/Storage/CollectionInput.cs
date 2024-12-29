@@ -114,7 +114,7 @@ public class CollectionInput : IRowsOutput, IDisposable, IRowsInputUpdate
         => ValueTask.FromResult(_enumerator.MoveNext());
 
     /// <inheritdoc />
-    public ErrorCode WriteValues(VariantValue[] values)
+    public ValueTask<ErrorCode> WriteValuesAsync(VariantValue[] values, CancellationToken cancellationToken = default)
     {
         if (_enumerable is not IList list)
         {
@@ -136,7 +136,7 @@ public class CollectionInput : IRowsOutput, IDisposable, IRowsInputUpdate
         }
         list.Add(obj);
 
-        return ErrorCode.OK;
+        return ValueTask.FromResult(ErrorCode.OK);
     }
 
     private PropertyInfo[] GetPropertiesToColumnsMapping(Column[] columns)

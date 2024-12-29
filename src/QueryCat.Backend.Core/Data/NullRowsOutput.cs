@@ -38,5 +38,6 @@ public sealed class NullRowsOutput : IRowsOutput
     }
 
     /// <inheritdoc />
-    public ErrorCode WriteValues(VariantValue[] values) => ErrorCode.OK;
+    public ValueTask<ErrorCode> WriteValuesAsync(VariantValue[] values, CancellationToken cancellationToken = default)
+        => ValueTask.FromResult(ErrorCode.OK);
 }

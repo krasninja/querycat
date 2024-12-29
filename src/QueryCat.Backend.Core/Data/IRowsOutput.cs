@@ -16,5 +16,6 @@ public interface IRowsOutput : IRowsSource
     /// Write row.
     /// </summary>
     /// <param name="values">Values to write.</param>
-    ErrorCode WriteValues(VariantValue[] values);
+    /// <param name="cancellationToken">Cancellation token.</param>
+    ValueTask<ErrorCode> WriteValuesAsync(VariantValue[] values, CancellationToken cancellationToken = default);
 }

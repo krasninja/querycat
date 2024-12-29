@@ -65,13 +65,13 @@ internal sealed class ThriftRemoteRowsOutput : IRowsOutput
     }
 
     /// <inheritdoc />
-    public ErrorCode WriteValues(VariantValue[] values)
+    public async ValueTask<ErrorCode> WriteValuesAsync(VariantValue[] values, CancellationToken cancellationToken = default)
     {
         var valuesArray = values.ToArray();
-        var result = AsyncUtils.RunSync(ct => _client.RowsSet_WriteValuesAsync(
+        var result = await _client.RowsSet_WriteValuesAsync(
             _objectHandle,
             valuesArray.Select(SdkConvert.Convert).ToList(),
-            ct));
+            cancellationToken);
         return SdkConvert.Convert(result);
     }
 }

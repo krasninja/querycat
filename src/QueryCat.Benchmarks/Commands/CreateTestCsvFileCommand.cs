@@ -23,7 +23,7 @@ internal class CreateTestCsvFileCommand : Command
 
     public CreateTestCsvFileCommand() : base("create-test-csv")
     {
-        this.SetHandler(() =>
+        this.SetHandler(async () =>
         {
             Randomizer.Seed = new Random(Seed);
 
@@ -46,7 +46,7 @@ internal class CreateTestCsvFileCommand : Command
                 }
                 foreach (var row in rowsFrame)
                 {
-                    output.WriteValues(row.Values);
+                    await output.WriteValuesAsync(row.Values);
                 }
             }
             finally

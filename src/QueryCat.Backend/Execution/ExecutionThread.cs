@@ -480,7 +480,7 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
                     await rowsOutput.OpenAsync(cancellationToken);
                     isOpened = true;
                 }
-                rowsOutput.WriteValues(rowsIterator.Current.Values);
+                await rowsOutput.WriteValuesAsync(rowsIterator.Current.Values, cancellationToken);
             }
         }
 
