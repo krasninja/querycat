@@ -9,6 +9,7 @@ public interface IRowsInputDelete : IRowsInput
     /// Delete the current row. The ReadNext should be called after that to fetch new row.
     /// The ReadValue can return Deleted error code.
     /// </summary>
+    /// <param name="cancellationToken">A cancellation token to observe.</param>
     /// <returns>Error code.</returns>
-    ErrorCode DeleteCurrent();
+    ValueTask<ErrorCode> DeleteAsync(CancellationToken cancellationToken = default);
 }

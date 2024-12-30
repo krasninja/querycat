@@ -38,7 +38,7 @@ internal sealed class UpdateCommandHandler : IFuncUnit
             foreach (var setter in _setters)
             {
                 var value = await setter.FuncUnit.InvokeAsync(thread, cancellationToken);
-                _rowsInput.UpdateValue(setter.ColumnIndex, value);
+                await _rowsInput.UpdateValueAsync(setter.ColumnIndex, value, cancellationToken);
             }
         }
 

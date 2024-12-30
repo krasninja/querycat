@@ -288,15 +288,15 @@ public partial class ThriftPluginClient
         }
 
         /// <inheritdoc />
-        public Task<QueryCatErrorCode> RowsSet_UpdateValueAsync(int object_handle, int column_index, VariantValue? value,
+        public async Task<QueryCatErrorCode> RowsSet_UpdateValueAsync(int object_handle, int column_index, VariantValue? value,
             CancellationToken cancellationToken = default)
         {
             if (value != null
                 && _thriftPluginClient._objectsStorage.TryGet<IRowsInputUpdate>(object_handle, out var rowsInputUpdate)
                 && rowsInputUpdate != null)
             {
-                var result = rowsInputUpdate.UpdateValue(column_index, SdkConvert.Convert(value));
-                return Task.FromResult(SdkConvert.Convert(result));
+                var result = await rowsInputUpdate.UpdateValueAsync(column_index, SdkConvert.Convert(value), cancellationToken);
+                return SdkConvert.Convert(result);
             }
             throw new QueryCatPluginException(
                 ErrorType.INVALID_OBJECT,
@@ -320,13 +320,13 @@ public partial class ThriftPluginClient
         }
 
         /// <inheritdoc />
-        public Task<QueryCatErrorCode> RowsSet_DeleteRowAsync(int object_handle, CancellationToken cancellationToken = default)
+        public async Task<QueryCatErrorCode> RowsSet_DeleteRowAsync(int object_handle, CancellationToken cancellationToken = default)
         {
             if (_thriftPluginClient._objectsStorage.TryGet<IRowsInputDelete>(object_handle, out var rowsInputDelete)
                 && rowsInputDelete != null)
             {
-                var result = rowsInputDelete.DeleteCurrent();
-                return Task.FromResult(SdkConvert.Convert(result));
+                var result = await rowsInputDelete.DeleteAsync(cancellationToken);
+                return SdkConvert.Convert(result);
             }
             throw new QueryCatPluginException(
                 ErrorType.INVALID_OBJECT,

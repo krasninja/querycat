@@ -4,13 +4,24 @@ namespace QueryCat.Backend.Core.Fetch;
 /// Allows to create rows input from .NET objects using remote source.
 /// </summary>
 /// <typeparam name="TClass">Object class.</typeparam>
-public abstract class FetchRowsInput<TClass> : EnumerableRowsInput<TClass> where TClass : class
+public abstract class FetchRowsInput<TClass> : KeysRowsInput where TClass : class
 {
+    private readonly ClassRowsFrameBuilder<TClass> _builder = new();
+
+    private IAsyncEnumerator<TClass>? Enumerator { get; set; }
+
     /// <summary>
     /// Constructor.
     /// </summary>
-    public FetchRowsInput() : base(Array.Empty<TClass>())
+    public FetchRowsInput(Action<ClassRowsFrameBuilder<TClass>>? setup = null)
     {
+        if (setup != null)
+        {
+            setup.Invoke(_builder);
+            // ReSharper disable once VirtualMemberCallInConstructor
+            Columns = _builder.Columns.ToArray();
+            AddKeyColumns(_builder.KeyColumns);
+        }
     }
 
     /// <summary>
@@ -22,10 +33,31 @@ public abstract class FetchRowsInput<TClass> : EnumerableRowsInput<TClass> where
     /// <inheritdoc />
     public override Task OpenAsync(CancellationToken cancellationToken = default)
     {
-        Initialize(Builder);
-        Columns = Builder.Columns.ToArray();
-        AddKeyColumns(Builder.KeyColumns);
+        Initialize(_builder);
+        Columns = _builder.Columns.ToArray();
+        AddKeyColumns(_builder.KeyColumns);
         return Task.CompletedTask;
+    }
+
+    /// <inheritdoc />
+    public override async ValueTask<bool> ReadNextAsync(CancellationToken cancellationToken = default)
+    {
+        InitializeKeyColumns();
+        await base.ReadNextAsync(cancellationToken);
+        if (Enumerator == null)
+        {
+            return false;
+        }
+        return await Enumerator.MoveNextAsync();
+    }
+
+    /// <inheritdoc />
+    public override async Task CloseAsync(CancellationToken cancellationToken = default)
+    {
+        if (Enumerator != null)
+        {
+            await Enumerator.DisposeAsync();
+        }
     }
 
     /// <inheritdoc />
@@ -39,13 +71,16 @@ public abstract class FetchRowsInput<TClass> : EnumerableRowsInput<TClass> where
         {
             fetch.Limit = Math.Min((int)queryLimit.Value, fetch.Limit);
         }
-        Enumerator = GetData(fetch).GetEnumerator();
+        Enumerator = GetDataAsync(fetch, cancellationToken).GetAsyncEnumerator(cancellationToken);
     }
 
     /// <summary>
     /// Get data.
     /// </summary>
     /// <param name="fetcher">Remote data fetcher.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Objects.</returns>
-    protected abstract IEnumerable<TClass> GetData(Fetcher<TClass> fetcher);
+    protected abstract IAsyncEnumerable<TClass> GetDataAsync(
+        Fetcher<TClass> fetcher,
+        CancellationToken cancellationToken = default);
 }

@@ -9,16 +9,17 @@ namespace QueryCat.Backend.Core.Fetch;
 /// <typeparam name="TClass">Base enumerable class.</typeparam>
 public class EnumerableRowsInput<TClass> : KeysRowsInput where TClass : class
 {
-    private readonly IEnumerable<TClass> _enumerable;
     private readonly ClassRowsFrameBuilder<TClass> _builder = new();
 
-    protected ClassRowsFrameBuilder<TClass> Builder => _builder;
+    private readonly IEnumerable<TClass>? _enumerable;
+    private IEnumerator<TClass>? _enumerator;
 
-    protected IEnumerator<TClass>? Enumerator { get; set; }
-
-    public EnumerableRowsInput(IEnumerable<TClass> enumerable, Action<ClassRowsFrameBuilder<TClass>>? setup = null)
+    /// <summary>
+    /// Constructor. Use GetData() method to iteration.
+    /// </summary>
+    /// <param name="setup">Setup action.</param>
+    public EnumerableRowsInput(Action<ClassRowsFrameBuilder<TClass>>? setup = null)
     {
-        _enumerable = enumerable;
         if (setup != null)
         {
             setup.Invoke(_builder);
@@ -28,23 +29,41 @@ public class EnumerableRowsInput<TClass> : KeysRowsInput where TClass : class
         }
     }
 
+    /// <summary>
+    /// Constructor. Use the instance of <see cref="IEnumerable{TClass}" /> for iteration.
+    /// </summary>
+    /// <param name="enumerable">Enumerable to iterate over.</param>
+    /// <param name="setup">Setup action.</param>
+    public EnumerableRowsInput(IEnumerable<TClass> enumerable, Action<ClassRowsFrameBuilder<TClass>>? setup = null)
+        : this(setup)
+    {
+        _enumerable = enumerable;
+    }
+
     /// <inheritdoc />
     public override ErrorCode ReadValue(int columnIndex, out VariantValue value)
     {
-        if (Enumerator == null)
+        if (_enumerator == null)
         {
             value = VariantValue.Null;
             return ErrorCode.NoData;
         }
 
-        value = _builder.GetValue(columnIndex, Enumerator.Current);
+        value = _builder.GetValue(columnIndex, _enumerator.Current);
         return ErrorCode.OK;
     }
 
     /// <inheritdoc />
     public override Task OpenAsync(CancellationToken cancellationToken = default)
     {
-        Enumerator = _enumerable.GetEnumerator();
+        if (_enumerable != null)
+        {
+            _enumerator = _enumerable.GetEnumerator();
+        }
+        else
+        {
+            _enumerator = GetData().GetEnumerator();
+        }
         return base.OpenAsync(cancellationToken);
     }
 
@@ -53,11 +72,11 @@ public class EnumerableRowsInput<TClass> : KeysRowsInput where TClass : class
     {
         InitializeKeyColumns();
         await base.ReadNextAsync(cancellationToken);
-        if (Enumerator == null)
+        if (_enumerator == null)
         {
             return false;
         }
-        return Enumerator.MoveNext();
+        return _enumerator.MoveNext();
     }
 
     /// <inheritdoc />
@@ -71,9 +90,11 @@ public class EnumerableRowsInput<TClass> : KeysRowsInput where TClass : class
     /// <inheritdoc />
     public override Task CloseAsync(CancellationToken cancellationToken = default)
     {
-        Enumerator?.Dispose();
+        _enumerator?.Dispose();
         return Task.CompletedTask;
     }
+
+    protected virtual IEnumerable<TClass> GetData() => [];
 
     #region Dispose
 
@@ -82,7 +103,7 @@ public class EnumerableRowsInput<TClass> : KeysRowsInput where TClass : class
     {
         if (disposing)
         {
-            Enumerator?.Dispose();
+            _enumerator?.Dispose();
         }
         base.Dispose(disposing);
     }

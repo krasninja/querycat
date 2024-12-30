@@ -12,6 +12,7 @@ public interface IRowsInputUpdate : IRowsInput
     /// </summary>
     /// <param name="columnIndex">Column index.</param>
     /// <param name="value">New value.</param>
+    /// <param name="cancellationToken">A cancellation token to observe.</param>
     /// <returns>Error code.</returns>
-    ErrorCode UpdateValue(int columnIndex, in VariantValue value);
+    ValueTask<ErrorCode> UpdateValueAsync(int columnIndex, VariantValue value, CancellationToken cancellationToken = default);
 }

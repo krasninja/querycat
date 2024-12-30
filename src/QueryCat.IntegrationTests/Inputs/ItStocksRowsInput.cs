@@ -5,13 +5,17 @@ using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.IntegrationTests.Inputs;
 
-public sealed class ItStocksRowsInput : FetchRowsInput<Stock>
+public sealed class ItStocksRowsInput : EnumerableRowsInput<Stock>
 {
     [SafeFunction]
     [FunctionSignature("it_stocks(): object<IRowsInput>")]
     public static VariantValue ItStocks(IExecutionThread thread)
     {
         return VariantValue.CreateFromObject(new ItStocksRowsInput());
+    }
+
+    public ItStocksRowsInput() : base(Initialize)
+    {
     }
 
     private readonly List<Stock> _data =
@@ -27,8 +31,7 @@ public sealed class ItStocksRowsInput : FetchRowsInput<Stock>
         new("LNVGY", "Lenovo Group Limited", 24.85m),
     ];
 
-    /// <inheritdoc />
-    protected override void Initialize(ClassRowsFrameBuilder<Stock> builder)
+    private static void Initialize(ClassRowsFrameBuilder<Stock> builder)
     {
         builder
             .AddProperty("id", p => p.Id)
@@ -38,7 +41,7 @@ public sealed class ItStocksRowsInput : FetchRowsInput<Stock>
     }
 
     /// <inheritdoc />
-    protected override IEnumerable<Stock> GetData(Fetcher<Stock> fetcher)
+    protected override IEnumerable<Stock> GetData()
     {
         var id = GetKeyColumnValue("id");
         var item = _data.First(s => s.Id == id.AsString);

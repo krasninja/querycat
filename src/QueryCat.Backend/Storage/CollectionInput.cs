@@ -160,7 +160,7 @@ public class CollectionInput : IRowsOutput, IDisposable, IRowsInputUpdate
     }
 
     /// <inheritdoc />
-    public ErrorCode UpdateValue(int columnIndex, in VariantValue value)
+    public ValueTask<ErrorCode> UpdateValueAsync(int columnIndex, VariantValue value, CancellationToken cancellationToken = default)
     {
         var obj = _enumerator.Current;
         var prop = _columnsProperties[columnIndex];
@@ -169,7 +169,7 @@ public class CollectionInput : IRowsOutput, IDisposable, IRowsInputUpdate
             throw new QueryCatException(string.Format(Resources.Errors.CannotWriteToProperty, prop.Name));
         }
         prop.SetValue(obj, ChangeType(value.GetGenericObject(), prop.PropertyType));
-        return ErrorCode.OK;
+        return ValueTask.FromResult(ErrorCode.OK);
     }
 
     /// <inheritdoc />
