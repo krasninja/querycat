@@ -20,11 +20,8 @@ internal sealed class AddressRowsInput : EnumerableRowsInput<Address>
 
     private const int Count = 100;
 
-    public AddressRowsInput() : base(Initialize)
-    {
-    }
-
-    private static void Initialize(ClassRowsFrameBuilder<Address> builder)
+    /// <inheritdoc />
+    protected override void Initialize(ClassRowsFrameBuilder<Address> builder)
     {
         builder
             .AddProperty(p => p.Address1)
@@ -38,7 +35,7 @@ internal sealed class AddressRowsInput : EnumerableRowsInput<Address>
     }
 
     /// <inheritdoc />
-    protected override IEnumerable<Address> GetData()
+    protected override IEnumerable<Address> GetData(Fetcher<Address> fetcher)
     {
         Randomizer.Seed = new Random(Address.Seed);
         for (var i = 0; i < Count; i++)

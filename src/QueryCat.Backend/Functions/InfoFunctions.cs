@@ -21,7 +21,7 @@ public static class InfoFunctions
     internal static VariantValue Functions(IExecutionThread thread)
     {
         var functions = thread.FunctionsManager.GetFunctions().OrderBy(f => f.Name);
-        var input = new EnumerableRowsInput<IFunction>(functions,
+        var input = EnumerableRowsInput<IFunction>.FromSource(functions,
             builder => builder
                 .AddProperty("signature", p => p.ToString())
                 .AddProperty("is_aggregate", p => p.IsAggregate)
@@ -53,7 +53,7 @@ public static class InfoFunctions
             throw new QueryCatException(Resources.Errors.InvalidRowsInput);
         }
 
-        var inputResult = new EnumerableRowsInput<Column>(columns,
+        var inputResult = EnumerableRowsInput<Column>.FromSource(columns,
             builder => builder
 #if DEBUG
                 .AddProperty("id", f => f.Id)
@@ -75,7 +75,7 @@ public static class InfoFunctions
     public static VariantValue Plugins(IExecutionThread thread)
     {
         var plugins = AsyncUtils.RunSync(ct => thread.PluginsManager.ListAsync(cancellationToken: ct));
-        var input = new EnumerableRowsInput<PluginInfo>(plugins!,
+        var input = EnumerableRowsInput<PluginInfo>.FromSource(plugins!,
             builder => builder
                 .AddProperty("name", p => p.Name)
                 .AddProperty("version", p => p.Version.ToString())
@@ -115,7 +115,7 @@ public static class InfoFunctions
     [FunctionSignature("_timezone_names(): object<IRowsIterator>")]
     internal static VariantValue TimeZoneNames(IExecutionThread thread)
     {
-        var input = new EnumerableRowsInput<TimeZoneInfo>(TimeZoneInfo.GetSystemTimeZones(),
+        var input = EnumerableRowsInput<TimeZoneInfo>.FromSource(TimeZoneInfo.GetSystemTimeZones(),
             builder => builder
                 .AddProperty("id", p => p.Id, "Time zone code.")
                 .AddProperty("name", p => p.StandardName, "Time zone name.")

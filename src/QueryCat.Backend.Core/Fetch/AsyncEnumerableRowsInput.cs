@@ -1,28 +1,27 @@
 using System.Diagnostics.CodeAnalysis;
-using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Core.Fetch;
 
 /// <summary>
-/// Implements <see cref="IRowsInput" /> from enumerable.
+/// Allows to create rows input from .NET objects using remote source.
 /// </summary>
-/// <typeparam name="TClass">Base enumerable class.</typeparam>
-public abstract class EnumerableRowsInput<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] TClass>
-    : KeysRowsInput where TClass : class
+/// <typeparam name="TClass">Object class.</typeparam>
+public abstract class AsyncEnumerableRowsInput<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] TClass>
+    : KeysRowsInput, IAsyncDisposable where TClass : class
 {
     private readonly ClassRowsFrameBuilder<TClass> _builder = new();
 
-    private IEnumerator<TClass>? _enumerator;
+    private IAsyncEnumerator<TClass>? _enumerator;
 
-    private sealed class SourceEnumerableRowsInput<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] T>
-        : EnumerableRowsInput<T>
+    private sealed class SourceAsyncEnumerableRowsInput<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] T>
+        : AsyncEnumerableRowsInput<T>
         where T : class
     {
-        private readonly IEnumerable<T> _enumerable;
+        private readonly IAsyncEnumerable<T> _enumerable;
         private readonly Action<ClassRowsFrameBuilder<T>>? _setup;
 
-        public SourceEnumerableRowsInput(IEnumerable<T> enumerable, Action<ClassRowsFrameBuilder<T>>? setup = null)
+        public SourceAsyncEnumerableRowsInput(IAsyncEnumerable<T> enumerable, Action<ClassRowsFrameBuilder<T>>? setup = null)
         {
             _enumerable = enumerable;
             _setup = setup;
@@ -39,18 +38,19 @@ public abstract class EnumerableRowsInput<[DynamicallyAccessedMembers(Dynamicall
         }
 
         /// <inheritdoc />
-        protected override IEnumerable<T> GetData(Fetcher<T> fetcher) => _enumerable;
+        protected override IAsyncEnumerable<T> GetDataAsync(Fetcher<T> fetcher, CancellationToken cancellationToken = default)
+            => _enumerable;
     }
 
     /// <summary>
-    /// Create input from enumerable.
+    /// Create input from async enumerable.
     /// </summary>
     /// <param name="source">Source enumerable.</param>
     /// <param name="setup">Setup action.</param>
     /// <returns>Input.</returns>
-    public static EnumerableRowsInput<TClass> FromSource(IEnumerable<TClass> source, Action<ClassRowsFrameBuilder<TClass>>? setup = null)
+    public static AsyncEnumerableRowsInput<TClass> FromSource(IAsyncEnumerable<TClass> source, Action<ClassRowsFrameBuilder<TClass>>? setup = null)
     {
-        return new SourceEnumerableRowsInput<TClass>(source, setup);
+        return new SourceAsyncEnumerableRowsInput<TClass>(source, setup);
     }
 
     /// <summary>
@@ -70,8 +70,8 @@ public abstract class EnumerableRowsInput<[DynamicallyAccessedMembers(Dynamicall
     {
         if (_enumerator == null)
         {
-            value = VariantValue.Null;
-            return ErrorCode.NoData;
+            value = default;
+            return ErrorCode.NotInitialized;
         }
 
         value = _builder.GetValue(columnIndex, _enumerator.Current);
@@ -87,7 +87,7 @@ public abstract class EnumerableRowsInput<[DynamicallyAccessedMembers(Dynamicall
         {
             return false;
         }
-        return _enumerator.MoveNext();
+        return await _enumerator.MoveNextAsync();
     }
 
     /// <inheritdoc />
@@ -100,12 +100,12 @@ public abstract class EnumerableRowsInput<[DynamicallyAccessedMembers(Dynamicall
     }
 
     /// <inheritdoc />
-    protected override ValueTask LoadAsync(CancellationToken cancellationToken = default)
+    protected override async ValueTask LoadAsync(CancellationToken cancellationToken = default)
     {
+        await base.LoadAsync(cancellationToken);
+
         var fetcher = CreateFetcher<TClass>();
-        _enumerator = GetData(fetcher).GetEnumerator();
-        base.LoadAsync(cancellationToken);
-        return ValueTask.CompletedTask;
+        _enumerator = GetDataAsync(fetcher, cancellationToken).GetAsyncEnumerator(cancellationToken);
     }
 
     /// <inheritdoc />
@@ -117,18 +117,20 @@ public abstract class EnumerableRowsInput<[DynamicallyAccessedMembers(Dynamicall
     }
 
     /// <inheritdoc />
-    public override Task CloseAsync(CancellationToken cancellationToken = default)
+    public override async Task CloseAsync(CancellationToken cancellationToken = default)
     {
-        Dispose(true);
-        return Task.CompletedTask;
+        await DisposeAsync();
     }
 
     /// <summary>
-    /// Return the data as enumerable.
+    /// Return the data as async enumerable.
     /// </summary>
-    /// <param name="fetcher">Fetcher.</param>
+    /// <param name="fetcher">Remote data fetcher.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Objects.</returns>
-    protected abstract IEnumerable<TClass> GetData(Fetcher<TClass> fetcher);
+    protected abstract IAsyncEnumerable<TClass> GetDataAsync(
+        Fetcher<TClass> fetcher,
+        CancellationToken cancellationToken = default);
 
     #region Dispose
 
@@ -137,10 +139,29 @@ public abstract class EnumerableRowsInput<[DynamicallyAccessedMembers(Dynamicall
     {
         if (disposing)
         {
-            _enumerator?.Dispose();
-            _enumerator = null;
+            if (_enumerator != null && _enumerator is IDisposable disposable)
+            {
+                disposable.Dispose();
+                _enumerator = null;
+            }
         }
         base.Dispose(disposing);
+    }
+
+    protected virtual async ValueTask DisposeAsyncCore()
+    {
+        if (_enumerator != null)
+        {
+            await _enumerator.DisposeAsync();
+            _enumerator = null;
+        }
+    }
+
+    /// <inheritdoc />
+    public async ValueTask DisposeAsync()
+    {
+        await DisposeAsyncCore();
+        GC.SuppressFinalize(this);
     }
 
     #endregion

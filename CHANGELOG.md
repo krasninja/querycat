@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Upgrade to .NET 9.0.
 - Install plugins proxy on any plugin install.
+- Introduce async interfaces instead of Sync. Use AsyncEnumerableRowsInput instead of FetchRowsInput.
 
 ### Added
 

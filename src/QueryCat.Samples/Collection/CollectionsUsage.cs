@@ -48,11 +48,11 @@ internal class CollectionsUsage : BaseUsage
             new("20411", "Newport Beach, CA"),
         };
 
-        var buildingsInput = new EnumerableRowsInput<Building>(buildings,
+        var buildingsInput = EnumerableRowsInput<Building>.FromSource(buildings,
             builder => builder
                 .AddProperty("name", f => f.Name)
                 .AddProperty("zip", f => f.PostalCode));
-        var citiesInput = new EnumerableRowsInput<City>(cities,
+        var citiesInput = EnumerableRowsInput<City>.FromSource(cities,
             builder => builder
                 .AddProperty("zip", f => f.PostalCode)
                 .AddProperty("city", f => f.CityName));

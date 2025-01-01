@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -14,6 +15,7 @@ namespace QueryCat.Backend.Core.Fetch;
 /// Builder simplify the process of objects mapping to rows frame.
 /// </summary>
 /// <typeparam name="TClass">Class type.</typeparam>
+[DebuggerDisplay("Columns = {Columns.Count}")]
 public class ClassRowsFrameBuilder<TClass> where TClass : class
 {
     private const string DataColumn = "__data";

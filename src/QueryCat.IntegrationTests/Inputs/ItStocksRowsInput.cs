@@ -14,10 +14,6 @@ public sealed class ItStocksRowsInput : EnumerableRowsInput<Stock>
         return VariantValue.CreateFromObject(new ItStocksRowsInput());
     }
 
-    public ItStocksRowsInput() : base(Initialize)
-    {
-    }
-
     private readonly List<Stock> _data =
     [
         new("MSFT", "Microsoft Corp", 416.42m),
@@ -31,7 +27,8 @@ public sealed class ItStocksRowsInput : EnumerableRowsInput<Stock>
         new("LNVGY", "Lenovo Group Limited", 24.85m),
     ];
 
-    private static void Initialize(ClassRowsFrameBuilder<Stock> builder)
+    /// <inheritdoc />
+    protected override void Initialize(ClassRowsFrameBuilder<Stock> builder)
     {
         builder
             .AddProperty("id", p => p.Id)
@@ -41,7 +38,7 @@ public sealed class ItStocksRowsInput : EnumerableRowsInput<Stock>
     }
 
     /// <inheritdoc />
-    protected override IEnumerable<Stock> GetData()
+    protected override IEnumerable<Stock> GetData(Fetcher<Stock> fetcher)
     {
         var id = GetKeyColumnValue("id");
         var item = _data.First(s => s.Id == id.AsString);

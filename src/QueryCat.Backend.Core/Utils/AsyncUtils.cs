@@ -227,4 +227,21 @@ public static class AsyncUtils
         }
         return results;
     }
+
+    /// <summary>
+    /// Convert <see cref="IEnumerable{T}" /> to <see cref="IAsyncEnumerable{T}" />.
+    /// </summary>
+    /// <param name="source"></param>
+    /// <typeparam name="TSource"></typeparam>
+    /// <returns></returns>
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
+    public static async IAsyncEnumerable<TSource> ToAsyncEnumerable<TSource>(this IEnumerable<TSource> source)
+#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
+    {
+        using var enumerator = source.GetEnumerator();
+        while (enumerator.MoveNext())
+        {
+            yield return enumerator.Current;
+        }
+    }
 }

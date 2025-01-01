@@ -47,6 +47,17 @@ public abstract class KeysRowsInput : RowsInput, IRowsInputKeys, IDisposable
         }
     }
 
+    protected Fetcher<TClass> CreateFetcher<TClass>() where TClass : class
+    {
+        var fetcher = new Fetcher<TClass>();
+        var queryLimit = QueryContext.QueryInfo.Limit + QueryContext.QueryInfo.Offset;
+        if (queryLimit.HasValue)
+        {
+            fetcher.Limit = Math.Min((int)queryLimit.Value, fetcher.Limit);
+        }
+        return fetcher;
+    }
+
     /// <inheritdoc />
     public override Task OpenAsync(CancellationToken cancellationToken = default)
     {

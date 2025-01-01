@@ -8,7 +8,7 @@ using QueryCat.Backend.Core.Types;
 namespace QueryCat.IntegrationTests.Plugins;
 
 /// <summary>
-/// Example simple rows input plugin based on <see cref="FetchRowsInput{TClass}" />.
+/// Example simple rows input plugin based on <see cref="AsyncEnumerableRowsInput{TClass}" />.
 /// </summary>
 public class SamplePluginInput : EnumerableRowsInput<TestClass>
 {
@@ -24,11 +24,8 @@ public class SamplePluginInput : EnumerableRowsInput<TestClass>
 
     private long _currentState;
 
-    public SamplePluginInput() : base(Initialize)
-    {
-    }
-
-    private static void Initialize(ClassRowsFrameBuilder<TestClass> builder)
+    /// <inheritdoc />
+    protected override void Initialize(ClassRowsFrameBuilder<TestClass> builder)
     {
         Trace.WriteLine(nameof(Initialize));
         builder
@@ -39,7 +36,7 @@ public class SamplePluginInput : EnumerableRowsInput<TestClass>
     }
 
     /// <inheritdoc />
-    protected override IEnumerable<TestClass> GetData()
+    protected override IEnumerable<TestClass> GetData(Fetcher<TestClass> fetcher)
     {
         Trace.WriteLine(nameof(GetData));
         var key = GetKeyColumnValue("key");

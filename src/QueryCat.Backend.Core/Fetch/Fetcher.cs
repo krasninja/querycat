@@ -1,5 +1,5 @@
+using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Logging;
-using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend.Core.Fetch;
 
@@ -54,12 +54,12 @@ public class Fetcher<TClass> where TClass : class
     /// <param name="action">Action to get the data.</param>
     /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
     /// <returns>Single item.</returns>
-    public IEnumerable<TClass> FetchOne(
+    public async IAsyncEnumerable<TClass> FetchOneAsync(
         FetchSingleDelegate action,
-        CancellationToken cancellationToken = default)
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var item = AsyncUtils.RunSync(action.Invoke);
-        yield return item!;
+        var item = await action.Invoke(cancellationToken);
+        yield return item;
     }
 
     /// <summary>
@@ -68,11 +68,16 @@ public class Fetcher<TClass> where TClass : class
     /// <param name="action">Action to get the data.</param>
     /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
     /// <returns>Multiple items.</returns>
-    public IEnumerable<TClass> FetchAll(
+    public async IAsyncEnumerable<TClass> FetchAllAsync(
         FetchAllDelegate action,
-        CancellationToken cancellationToken = default)
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        return AsyncUtils.RunSync(action.Invoke)!;
+        var result = await action.Invoke(cancellationToken)
+            .ConfigureAwait(false);
+        foreach (var item in result)
+        {
+            yield return item;
+        }
     }
 
     /// <summary>
@@ -82,9 +87,9 @@ public class Fetcher<TClass> where TClass : class
     /// <param name="action">Action to get new data. It is called using new offset and limit values.</param>
     /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
     /// <returns>Async enumerable of objects.</returns>
-    public IEnumerable<TClass> FetchLimitOffset(
+    public async IAsyncEnumerable<TClass> FetchLimitOffsetAsync(
         FetchLimitOffsetFlagDelegate action,
-        CancellationToken cancellationToken = default)
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var offset = 0;
         int fetchedCount;
@@ -93,7 +98,7 @@ public class Fetcher<TClass> where TClass : class
         {
             _logger.LogDebug("Run with offset {Offset} and limit {Limit}.", offset, Limit);
             var localOffset = offset;
-            var data = AsyncUtils.RunSync(() => action(Limit, localOffset, cancellationToken));
+            var data = await action(Limit, localOffset, cancellationToken);
             fetchedCount = 0;
             foreach (var item in data.Items)
             {
@@ -112,15 +117,15 @@ public class Fetcher<TClass> where TClass : class
     /// <param name="action">Action to get new data. It is called using new offset and limit values.</param>
     /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
     /// <returns>Async enumerable of objects.</returns>
-    public IEnumerable<TClass> FetchLimitOffset(
+    public IAsyncEnumerable<TClass> FetchLimitOffsetAsync(
         FetchLimitOffsetDelegate action,
         CancellationToken cancellationToken = default)
     {
-        return FetchLimitOffset(async (limit, offset, ct) =>
+        return FetchLimitOffsetAsync(async (limit, offset, ct) =>
         {
             var data = await action.Invoke(limit, offset, ct);
             return (data, true);
-        });
+        }, cancellationToken);
     }
 
     /// <summary>
@@ -130,8 +135,9 @@ public class Fetcher<TClass> where TClass : class
     /// <param name="action">Action to get new data. It is called using new page values.</param>
     /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
     /// <returns>Async enumerable of objects.</returns>
-    public IEnumerable<TClass> FetchPaged(FetchPagedFlagDelegate action,
-        CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<TClass> FetchPagedAsync(
+        FetchPagedFlagDelegate action,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var page = PageStart;
         int fetchedCount;
@@ -140,7 +146,7 @@ public class Fetcher<TClass> where TClass : class
         {
             _logger.LogDebug("Run with page {Page} and limit {Limit}.", page, Limit);
             var localPage = page;
-            var data = AsyncUtils.RunSync(() => action(localPage, Limit, cancellationToken));
+            var data = await action(localPage, Limit, cancellationToken);
             fetchedCount = 0;
             foreach (var item in data.Items)
             {
@@ -160,10 +166,11 @@ public class Fetcher<TClass> where TClass : class
     /// <param name="action">Action to get new data. It is called using new page values.</param>
     /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
     /// <returns>Async enumerable of objects.</returns>
-    public IEnumerable<TClass> FetchPaged(FetchPagedDelegate action,
+    public IAsyncEnumerable<TClass> FetchPagedAsync(
+        FetchPagedDelegate action,
         CancellationToken cancellationToken = default)
     {
-        return FetchPaged(async (page, limit, ct) =>
+        return FetchPagedAsync(async (page, limit, ct) =>
         {
             var data = await action.Invoke(page, limit, ct);
             var enumerable = data as ICollection<TClass> ?? data.ToList();
@@ -179,14 +186,15 @@ public class Fetcher<TClass> where TClass : class
     /// <param name="action">Action to fetch data.</param>
     /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
     /// <returns>Async enumerable of objects or null.</returns>
-    public IEnumerable<TClass> FetchUntilHasMore(FetchUntilFlagDelegate action,
-        CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<TClass> FetchUntilHasMoreAsync(
+        FetchUntilFlagDelegate action,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         int fetchedCount;
         bool hasMore;
         do
         {
-            var data = AsyncUtils.RunSync(() => action(cancellationToken));
+            var data = await action(cancellationToken);
             fetchedCount = 0;
             foreach (var item in data.Items)
             {

@@ -251,7 +251,7 @@ internal static class IOFunctions
         path = ResolveHomeDirectory(path);
 
         var items = ListDirectoryInternal(path);
-        var input = new EnumerableRowsInput<ListDirectoryEntry>(items,
+        var input = EnumerableRowsInput<ListDirectoryEntry>.FromSource(items,
             builder => builder
                 .AddProperty("type", f => f.Type)
                 .AddProperty("name", f => f.Name)
