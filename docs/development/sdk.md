@@ -39,6 +39,9 @@ Result is the `VariantValue` returned by the last statement in the script.
 - `DisableCache: bool`. Do not use cache for subqueries. False by default.
 - `FollowTimeout: TimeSpan`. Write appended data as source grows. Specifies check timeout. 0 means do not follow.
 - `QueryTimeout: TimeSpan`. Throw time out exception if query hasn't been executed within the time.
+- `MaxRecursionDepth: int`. Max recursion level of `RunAsync` execution thread call.
+- `CompletionsCount: int`. Max number of completion to return.
+- `ConcurrencyLevel: int`. Max number of threads that can access the thread.
 
 ## More Examples
 

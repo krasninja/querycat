@@ -28,9 +28,9 @@ public class SamplePluginRowsIterator : IRowsIterator
 
     /// <inheritdoc />
     public Column[] Columns { get; } =
-    {
+    [
         new("id", DataType.Integer, "Key.")
-    };
+    ];
 
     /// <inheritdoc />
     public Row Current { get; }

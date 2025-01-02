@@ -27,9 +27,9 @@ public class SamplePluginRowsIterator : IRowsIterator
 
     /// <inheritdoc />
     public Column[] Columns { get; } =
-    {
+    [
         new("id", DataType.Integer, "Key.")
-    };
+    ];
 
     /// <inheritdoc />
     public Row Current { get; }
@@ -41,16 +41,16 @@ public class SamplePluginRowsIterator : IRowsIterator
     }
 
     /// <inheritdoc />
-    public bool MoveNext()
+    public ValueTask<bool> MoveNextAsync(CancellationToken cancellationToken = default)
     {
-        Trace.WriteLine(nameof(MoveNext));
+        Trace.WriteLine(nameof(MoveNextAsync));
         if (_currentState >= MaxValue)
         {
-            return false;
+            return ValueTask.FromResult(false);
         }
         _currentState++;
         Current["id"] = new VariantValue(_currentState);
-        return true;
+        return ValueTask.FromResult(true);
     }
 
     /// <inheritdoc />
@@ -77,7 +77,7 @@ Another way to define plugin. It is high-level wrapper for rows input. The main 
 /// <summary>
 /// Example simple rows input plugin based on <see cref="FetchRowsInput{TClass}" />.
 /// </summary>
-public class SamplePluginInput : FetchRowsInput<TestClass>
+public class SamplePluginInput : EnumerableRowsInput<TestClass>
 {
     private const long MaxValue = 9;
 

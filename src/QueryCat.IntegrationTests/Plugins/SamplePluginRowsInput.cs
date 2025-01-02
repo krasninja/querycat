@@ -28,9 +28,9 @@ public class SamplePluginRowsInput : IRowsInput
 
     /// <inheritdoc />
     public Column[] Columns { get; } =
-    {
+    [
         new("id", DataType.Integer, "Key.")
-    };
+    ];
 
     /// <inheritdoc />
     public string[] UniqueKey { get; } = [];

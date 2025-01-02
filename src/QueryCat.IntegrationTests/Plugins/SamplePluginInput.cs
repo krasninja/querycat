@@ -8,7 +8,7 @@ using QueryCat.Backend.Core.Types;
 namespace QueryCat.IntegrationTests.Plugins;
 
 /// <summary>
-/// Example simple rows input plugin based on <see cref="AsyncEnumerableRowsInput{TClass}" />.
+/// Example simple rows input plugin based on <see cref="EnumerableRowsInput{TClass}" />.
 /// </summary>
 public class SamplePluginInput : EnumerableRowsInput<TestClass>
 {
