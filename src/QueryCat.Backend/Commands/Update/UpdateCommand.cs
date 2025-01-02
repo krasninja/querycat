@@ -13,7 +13,8 @@ namespace QueryCat.Backend.Commands.Update;
 internal sealed class UpdateCommand : ICommand
 {
     /// <inheritdoc />
-    public IFuncUnit CreateHandler(IExecutionThread<ExecutionOptions> executionThread, StatementNode node)
+    public Task<IFuncUnit> CreateHandlerAsync(IExecutionThread<ExecutionOptions> executionThread, StatementNode node,
+        CancellationToken cancellationToken = default)
     {
         if (executionThread.Options.SafeMode)
         {
@@ -28,7 +29,7 @@ internal sealed class UpdateCommand : ICommand
         ));
         selectNode.TableExpressionNode =
             new SelectTableNode(
-                    new SelectTableReferenceListNode(insertNode.TargetExpressionNode));
+                new SelectTableReferenceListNode(insertNode.TargetExpressionNode));
         selectNode.TableExpressionNode.SearchConditionNode = insertNode.SearchConditionNode;
         new SelectPlanner(executionThread).CreateIterator(selectNode);
         var context = selectNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
@@ -53,6 +54,7 @@ internal sealed class UpdateCommand : ICommand
             setters.Add(new UpdateSetter(columnIndex, func));
         }
 
-        return new UpdateCommandHandler(context, setters.ToArray());
+        IFuncUnit handler = new UpdateCommandHandler(context, setters.ToArray());
+        return Task.FromResult(handler);
     }
 }

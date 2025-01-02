@@ -10,7 +10,7 @@ namespace QueryCat.Backend.Commands.Declare;
 internal sealed class DeclareCommand : ICommand
 {
     /// <inheritdoc />
-    public IFuncUnit CreateHandler(IExecutionThread<ExecutionOptions> executionThread, StatementNode node)
+    public Task<IFuncUnit> CreateHandlerAsync(IExecutionThread<ExecutionOptions> executionThread, StatementNode node, CancellationToken cancellationToken = default)
     {
         var declareNode = (DeclareNode)node.RootNode;
         var scope = executionThread.TopScope;
@@ -27,12 +27,13 @@ internal sealed class DeclareCommand : ICommand
             }
         }
 
-        return new FuncCommandHandler(thread =>
+        IFuncUnit handler = new FuncCommandHandler(async (thread, ct) =>
         {
-            var value = valueHandler.Invoke(thread);
+            var value = await valueHandler.InvokeAsync(thread, ct);
             value = value.Cast(declareNode.Type);
             scope.Variables[declareNode.Name] = value;
             return VariantValue.Null;
         });
+        return Task.FromResult(handler);
     }
 }

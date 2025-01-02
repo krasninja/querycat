@@ -15,7 +15,8 @@ internal sealed class SetCommand : ICommand
     }
 
     /// <inheritdoc />
-    public IFuncUnit CreateHandler(IExecutionThread<ExecutionOptions> executionThread, StatementNode node)
+    public Task<IFuncUnit> CreateHandlerAsync(IExecutionThread<ExecutionOptions> executionThread, StatementNode node,
+        CancellationToken cancellationToken = default)
     {
         var setNode = (SetNode)node.RootNode;
 
@@ -24,10 +25,11 @@ internal sealed class SetCommand : ICommand
         var identifierHandler = new SetIdentifierDelegateVisitor(executionThread, _resolveTypesVisitor, valueHandler)
             .RunAndReturn(setNode.IdentifierNode);
 
-        return new FuncCommandHandler(thread =>
+        IFuncUnit handler = new FuncCommandHandler(async (thread, ct) =>
         {
-            identifierHandler.Invoke(thread);
+            await identifierHandler.InvokeAsync(thread, ct);
             return VariantValue.Null;
         });
+        return Task.FromResult(handler);
     }
 }

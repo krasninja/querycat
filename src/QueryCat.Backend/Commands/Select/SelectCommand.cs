@@ -18,7 +18,8 @@ internal sealed class SelectCommand : ICommand
     }
 
     /// <inheritdoc />
-    public IFuncUnit CreateHandler(IExecutionThread<ExecutionOptions> executionThread, StatementNode node)
+    public async Task<IFuncUnit> CreateHandlerAsync(IExecutionThread<ExecutionOptions> executionThread, StatementNode node,
+        CancellationToken cancellationToken = default)
     {
         var selectQueryNode = (SelectQueryNode)node.RootNode;
 
@@ -26,6 +27,7 @@ internal sealed class SelectCommand : ICommand
         new SelectPlanner(executionThread, _resolveTypesVisitor).CreateIterator(selectQueryNode);
         var context = selectQueryNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
 
-        return new SelectCommandHandler(context);
+        IFuncUnit handler = new SelectCommandHandler(context);
+        return handler;
     }
 }

@@ -32,11 +32,11 @@ internal sealed class SetIdentifierDelegateVisitor : CreateDelegateVisitor
         {
             var context = new ObjectSelectorContext();
             var strategies = GetObjectSelectStrategies(node, NodeIdFuncMap);
-            ValueTask<VariantValue> Func(IExecutionThread thread, CancellationToken cancellationToken)
+            async ValueTask<VariantValue> Func(IExecutionThread thread, CancellationToken cancellationToken)
             {
-                var newValue = SetValue(thread, node, strategies, context);
+                var newValue = await SetValueAsync(thread, node, strategies, context, cancellationToken);
                 context.Clear();
-                return ValueTask.FromResult(newValue);
+                return newValue;
             }
             NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, node.GetDataType());
             return;
@@ -45,14 +45,15 @@ internal sealed class SetIdentifierDelegateVisitor : CreateDelegateVisitor
         throw new CannotFindIdentifierException(node.Name);
     }
 
-    private VariantValue SetValue(
+    private async ValueTask<VariantValue> SetValueAsync(
         IExecutionThread thread,
         IdentifierExpressionNode node,
         SelectStrategyContainer selectStrategyContainer,
-        ObjectSelectorContext context)
+        ObjectSelectorContext context,
+        CancellationToken cancellationToken)
     {
         var startObject = thread.GetVariable(node.Name);
-        var newValue = _funcUnit.Invoke(thread);
+        var newValue = await _funcUnit.InvokeAsync(thread, cancellationToken);
 
         // This is expression object.
         if (GetObjectBySelector(thread, context, startObject, selectStrategyContainer, out _))

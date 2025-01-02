@@ -8,7 +8,8 @@ namespace QueryCat.Backend.Commands.If;
 internal sealed class IfConditionCommand : ICommand
 {
     /// <inheritdoc />
-    public IFuncUnit CreateHandler(IExecutionThread<ExecutionOptions> executionThread, StatementNode node)
+    public Task<IFuncUnit> CreateHandlerAsync(IExecutionThread<ExecutionOptions> executionThread, StatementNode node,
+        CancellationToken cancellationToken = default)
     {
         var ifConditionNode = (IfConditionNode)node.RootNode;
         var statementVisitor = new StatementsVisitor(executionThread);
@@ -24,25 +25,25 @@ internal sealed class IfConditionCommand : ICommand
 
         var elseFunc = ifConditionNode.ElseNode != null ? statementVisitor.RunAndReturn(ifConditionNode.ElseNode) : null;
 
-        async ValueTask<VariantValue> Func(IExecutionThread thread, CancellationToken cancellationToken)
+        async ValueTask<VariantValue> Func(IExecutionThread thread, CancellationToken ct)
         {
             foreach (var conditionFunc in conditionsFuncs)
             {
-                if ((await conditionFunc.Condition.InvokeAsync(thread, cancellationToken)).AsBoolean)
+                if ((await conditionFunc.Condition.InvokeAsync(thread, ct)).AsBoolean)
                 {
-                    return await conditionFunc.Block.InvokeAsync(thread, cancellationToken);
+                    return await conditionFunc.Block.InvokeAsync(thread, ct);
                 }
             }
 
             if (elseFunc != null)
             {
-                return await elseFunc.InvokeAsync(thread, cancellationToken);
+                return await elseFunc.InvokeAsync(thread, ct);
             }
 
             return VariantValue.Null;
         }
 
-        var handler = new FuncUnitDelegate(Func, conditionsFuncs[0].Block.OutputType);
-        return handler;
+        IFuncUnit handler = new FuncUnitDelegate(Func, conditionsFuncs[0].Block.OutputType);
+        return Task.FromResult(handler);
     }
 }
