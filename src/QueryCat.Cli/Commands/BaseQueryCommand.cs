@@ -65,7 +65,7 @@ internal abstract class BaseQueryCommand : BaseCommand
             }
         }
 #else
-        executionThread.Run(query, cancellationToken: cancellationToken);
+        await executionThread.RunAsync(query, cancellationToken: cancellationToken);
 #endif
     }
 

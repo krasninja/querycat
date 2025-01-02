@@ -199,6 +199,9 @@ internal partial class CreateDelegateVisitor
             GetObjectBySelector(thread, _context, startObject, _strategies, out var finalValue);
             return ValueTask.FromResult(finalValue);
         }
+
+        /// <inheritdoc />
+        public override string ToString() => $"{nameof(ObjectSelectFuncUnit)}: {_variableName}";
     }
 
     private sealed class ObjectSelectSpecialFuncUnit : IFuncUnit

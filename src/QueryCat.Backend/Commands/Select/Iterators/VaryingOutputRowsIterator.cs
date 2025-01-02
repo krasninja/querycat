@@ -71,7 +71,7 @@ internal sealed class VaryingOutputRowsIterator : IRowsIterator, IRowsIteratorPa
         var result = await _rowsIterator.MoveNextAsync(cancellationToken);
         if (!result)
         {
-            Close();
+            await CloseAsync(cancellationToken);
             return false;
         }
 
@@ -111,17 +111,15 @@ internal sealed class VaryingOutputRowsIterator : IRowsIterator, IRowsIteratorPa
         _outputs.Clear();
     }
 
-    public void Close()
-    {
-        Close(dispose: false);
-    }
+    public Task CloseAsync(CancellationToken cancellationToken = default)
+        => CloseAsync(dispose: false, cancellationToken);
 
-    private void Close(bool dispose)
+    private async Task CloseAsync(bool dispose, CancellationToken cancellationToken = default)
     {
         foreach (var outputKeyValue in _outputs)
         {
             _logger.LogDebug("Close for args {Key}.", outputKeyValue.Key);
-            AsyncUtils.RunSync(outputKeyValue.Value.CloseAsync);
+            await outputKeyValue.Value.CloseAsync(cancellationToken);
             if (dispose)
             {
                 (outputKeyValue.Value as IDisposable)?.Dispose();
@@ -133,7 +131,7 @@ internal sealed class VaryingOutputRowsIterator : IRowsIterator, IRowsIteratorPa
     /// <inheritdoc />
     public void Dispose()
     {
-        Close(dispose: true);
+        AsyncUtils.RunSync(() => CloseAsync(dispose: true));
     }
 
     /// <inheritdoc />

@@ -527,17 +527,15 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
             var rcFile = Path.Combine(GetApplicationDirectory(), BootstrapFileName);
             if (File.Exists(rcFile))
             {
-                await RunAsync(
-                    await File.ReadAllTextAsync(rcFile, cancellationToken),
-                    cancellationToken: cancellationToken);
+                var query = await File.ReadAllTextAsync(rcFile, cancellationToken);
+                await RunAsync(query, cancellationToken: cancellationToken);
             }
 
             rcFile = Path.Combine(Directory.GetCurrentDirectory(), BootstrapFileName);
             if (File.Exists(rcFile))
             {
-                await RunAsync(
-                    await File.ReadAllTextAsync(rcFile, cancellationToken),
-                    cancellationToken: cancellationToken);
+                var query = await File.ReadAllTextAsync(rcFile, cancellationToken);
+                await RunAsync(query, cancellationToken: cancellationToken);
             }
         }
     }
