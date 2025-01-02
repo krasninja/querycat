@@ -29,8 +29,15 @@ internal class PluginDebugCommand : BaseQueryCommand
             description: "Output appended data as the input source grows.");
         this.AddOption(followOption);
 
-        this.SetHandler(async (applicationOptions, query, variables, files, follow) =>
+        this.SetHandler(async (context) =>
         {
+            var applicationOptions = OptionsUtils.GetValueForOption(
+                new ApplicationOptionsBinder(LogLevelOption, PluginDirectoriesOption), context);
+            var query = OptionsUtils.GetValueForOption(QueryArgument, context);
+            var variables = OptionsUtils.GetValueForOption(VariablesOption, context);
+            var files = OptionsUtils.GetValueForOption(FilesOption, context);
+            var follow = OptionsUtils.GetValueForOption(followOption, context);
+
             applicationOptions.InitializeLogger();
             var tableOutput = new Backend.Formatters.TextTableOutput(
                 stream: Stdio.GetConsoleOutput());
@@ -70,12 +77,7 @@ internal class PluginDebugCommand : BaseQueryCommand
                 .Create();
             AddVariables(thread, variables);
             await RunQueryAsync(thread, query, files, cts.Token);
-        },
-            new ApplicationOptionsBinder(LogLevelOption, PluginDirectoriesOption),
-            QueryArgument,
-            VariablesOption,
-            FilesOption,
-            followOption);
+        });
     }
 }
 #endif

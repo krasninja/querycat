@@ -13,13 +13,17 @@ internal class PluginInstallCommand : BaseCommand
         var pluginArgument = new Argument<string>("plugin", "Plugin name.");
 
         this.AddArgument(pluginArgument);
-        this.SetHandler(async (applicationOptions, plugin) =>
+        this.SetHandler(async (context) =>
         {
+            var applicationOptions = OptionsUtils.GetValueForOption(
+                new ApplicationOptionsBinder(LogLevelOption, PluginDirectoriesOption), context);
+            var plugin = OptionsUtils.GetValueForOption(pluginArgument, context);
+
             applicationOptions.InitializeLogger();
             using var root = applicationOptions.CreateApplicationRoot();
-            await root.PluginsManager.InstallAsync(plugin);
-            await ApplicationOptions.InstallPluginsProxyAsync(askUser: false);
-        }, new ApplicationOptionsBinder(LogLevelOption, PluginDirectoriesOption), pluginArgument);
+            await root.PluginsManager.InstallAsync(plugin, cancellationToken: context.GetCancellationToken());
+            await ApplicationOptions.InstallPluginsProxyAsync(askUser: false, cancellationToken: context.GetCancellationToken());
+        });
     }
 }
 #endif

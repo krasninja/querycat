@@ -70,8 +70,30 @@ internal class QueryCommand : BaseQueryCommand
         this.AddOption(tailOption);
         this.AddOption(timeoutOption);
         this.AddOption(safeModeOption);
-        this.SetHandler(async (applicationOptions, query, variables, files, queryOptions) =>
+        this.SetHandler(async (context) =>
         {
+            var applicationOptions = OptionsUtils.GetValueForOption(
+                new ApplicationOptionsBinder(LogLevelOption, PluginDirectoriesOption), context);
+            var query = OptionsUtils.GetValueForOption(QueryArgument, context);
+            var variables = OptionsUtils.GetValueForOption(VariablesOption, context);
+            var files = OptionsUtils.GetValueForOption(FilesOption, context);
+            var queryOptions = OptionsUtils.GetValueForOption(new QueryOptionsBinder(
+                maxErrorsOption,
+                statisticOption,
+                detailedStatisticOption,
+                rowNumberOption,
+                pageSizeOption,
+                outputStyleOption,
+                analyzeRowsOption,
+                columnsSeparatorOption,
+                disableCacheOption,
+                noHeaderOption,
+                floatNumberOption,
+                followOption,
+                tailOption,
+                timeoutOption,
+                safeModeOption), context);
+
             applicationOptions.InitializeLogger();
             var tableOutput = new TextTableOutput(
                 stream: Stdio.GetConsoleOutput(),
@@ -110,27 +132,6 @@ internal class QueryCommand : BaseQueryCommand
                 Console.WriteLine(new string('-', 5));
                 Console.WriteLine(root.Thread.Statistic.Dump());
             }
-        },
-            new ApplicationOptionsBinder(LogLevelOption, PluginDirectoriesOption),
-            QueryArgument,
-            VariablesOption,
-            FilesOption,
-            new QueryOptionsBinder(
-                maxErrorsOption,
-                statisticOption,
-                detailedStatisticOption,
-                rowNumberOption,
-                pageSizeOption,
-                outputStyleOption,
-                analyzeRowsOption,
-                columnsSeparatorOption,
-                disableCacheOption,
-                noHeaderOption,
-                floatNumberOption,
-                followOption,
-                tailOption,
-                timeoutOption,
-                safeModeOption)
-            );
+        });
     }
 }

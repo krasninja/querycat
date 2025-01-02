@@ -31,8 +31,18 @@ internal class ServeCommand : BaseCommand
         AddOption(safeModeOption);
         AddOption(allowedIPsOption);
         AddOption(allowedIPsSlotsOption);
-        this.SetHandler(async (applicationOptions, urls, allowOrigin, password, safeMode, rootDirectory, allowedIPs, allowedIPsSlots) =>
+        this.SetHandler(async (context) =>
         {
+            var applicationOptions = OptionsUtils.GetValueForOption(
+                new ApplicationOptionsBinder(LogLevelOption, PluginDirectoriesOption), context);
+            var urls = OptionsUtils.GetValueForOption(urlsOption, context);
+            var allowOrigin = OptionsUtils.GetValueForOption(allowOriginOption, context);
+            var password = OptionsUtils.GetValueForOption(passwordOption, context);
+            var safeMode = OptionsUtils.GetValueForOption(safeModeOption, context);
+            var rootDirectory = OptionsUtils.GetValueForOption(rootDirectoryOption, context);
+            var allowedIPs = OptionsUtils.GetValueForOption(allowedIPsOption, context);
+            var allowedIPsSlots = OptionsUtils.GetValueForOption(allowedIPsSlotsOption, context);
+
             applicationOptions.InitializeLogger();
             using var root = applicationOptions.CreateApplicationRoot();
             root.Thread.Options.AddRowNumberColumn = true;
@@ -49,15 +59,7 @@ internal class ServeCommand : BaseCommand
             {
                 webServer.AllowOrigin = allowOrigin;
             }
-            await webServer.RunAsync();
-        },
-            new ApplicationOptionsBinder(LogLevelOption, PluginDirectoriesOption),
-            urlsOption,
-            allowOriginOption,
-            passwordOption,
-            safeModeOption,
-            rootDirectoryOption,
-            allowedIPsOption,
-            allowedIPsSlotsOption);
+            await webServer.RunAsync(cancellationToken: context.GetCancellationToken());
+        });
     }
 }

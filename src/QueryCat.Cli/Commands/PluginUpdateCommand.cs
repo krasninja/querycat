@@ -1,5 +1,4 @@
 using System.CommandLine;
-using QueryCat.Backend.Core.Utils;
 using QueryCat.Cli.Commands.Options;
 
 namespace QueryCat.Cli.Commands;
@@ -13,12 +12,16 @@ internal class PluginUpdateCommand : BaseCommand
         var pluginArgument = new Argument<string>("plugin", "Plugin name.");
 
         this.AddArgument(pluginArgument);
-        this.SetHandler(async (applicationOptions, plugin) =>
+        this.SetHandler(async (context) =>
         {
+            var applicationOptions = OptionsUtils.GetValueForOption(
+                new ApplicationOptionsBinder(LogLevelOption, PluginDirectoriesOption), context);
+            var plugin = OptionsUtils.GetValueForOption(pluginArgument, context);
+
             applicationOptions.InitializeLogger();
             using var root = applicationOptions.CreateApplicationRoot();
-            await root.PluginsManager.UpdateAsync(plugin);
-        }, new ApplicationOptionsBinder(LogLevelOption, PluginDirectoriesOption), pluginArgument);
+            await root.PluginsManager.UpdateAsync(plugin, context.GetCancellationToken());
+        });
     }
 }
 #endif

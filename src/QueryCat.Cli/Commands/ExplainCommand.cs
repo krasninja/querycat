@@ -10,8 +10,14 @@ internal class ExplainCommand : BaseQueryCommand
     /// <inheritdoc />
     public ExplainCommand() : base("explain", "Show query plan for debugging.")
     {
-        this.SetHandler(async (applicationOptions, query, variables, files) =>
+        this.SetHandler(async (context) =>
         {
+            var applicationOptions = OptionsUtils.GetValueForOption(
+                new ApplicationOptionsBinder(LogLevelOption, PluginDirectoriesOption), context);
+            var query = OptionsUtils.GetValueForOption(QueryArgument, context);
+            var variables = OptionsUtils.GetValueForOption(VariablesOption, context);
+            var files = OptionsUtils.GetValueForOption(FilesOption, context);
+
             applicationOptions.InitializeLogger();
             var root = applicationOptions.CreateStdoutApplicationRoot();
             root.Thread.StatementExecuted += (_, args) =>
@@ -29,10 +35,6 @@ internal class ExplainCommand : BaseQueryCommand
             };
             AddVariables(root.Thread, variables);
             await RunQueryAsync(root.Thread, query, files, root.CancellationTokenSource.Token);
-        },
-            new ApplicationOptionsBinder(LogLevelOption, PluginDirectoriesOption),
-            QueryArgument,
-            VariablesOption,
-            FilesOption);
+        });
     }
 }
