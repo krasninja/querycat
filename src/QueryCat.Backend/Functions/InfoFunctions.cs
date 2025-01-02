@@ -58,7 +58,7 @@ public static class InfoFunctions
 #if DEBUG
                 .AddProperty("id", f => f.Id)
 #endif
-                .AddProperty("name", f => f.Name, defaultLength: 25)
+                .AddProperty("name", f => f.FullName, defaultLength: 45)
                 .AddProperty("type", f => f.DataType)
 #if DEBUG
                 .AddProperty("length", f => f.Length)

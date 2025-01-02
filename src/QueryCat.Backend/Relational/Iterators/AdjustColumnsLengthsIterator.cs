@@ -12,21 +12,22 @@ public class AdjustColumnsLengthsIterator : IRowsIterator, IRowsIteratorParent
 {
     private const int MaxRowsToAnalyze = 10;
 
+    private readonly IRowsIterator _rowsIterator;
     private readonly int _maxRowsToAnalyze;
     private readonly CacheRowsIterator _cacheRowsIterator;
     private bool _isInitialized;
 
     /// <inheritdoc />
-    public Column[] Columns { get; }
+    public Column[] Columns => _rowsIterator.Columns;
 
     /// <inheritdoc />
     public Row Current => _cacheRowsIterator.Current;
 
     public AdjustColumnsLengthsIterator(IRowsIterator rowsIterator, int maxRowsToAnalyze = MaxRowsToAnalyze)
     {
+        _rowsIterator = rowsIterator;
         _maxRowsToAnalyze = maxRowsToAnalyze;
         _cacheRowsIterator = new CacheRowsIterator(rowsIterator);
-        Columns = rowsIterator.Columns;
     }
 
     /// <inheritdoc />

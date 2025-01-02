@@ -27,17 +27,14 @@ internal class SchemaCommand : BaseQueryCommand
             thread.StatementExecuted += (_, threadArgs) =>
             {
                 var result = thread.LastResult;
-                if (!result.IsNull && result.Type == DataType.Object
+                if (!result.IsNull
+                    && result.Type == DataType.Object
                     && result.AsObject is IRowsSchema rowsSchema)
                 {
                     threadArgs.ContinueExecution = false;
                     var schema = thread.CallFunction(InfoFunctions.Schema, rowsSchema);
                     thread.TopScope.Variables["result"] = schema;
-                    AsyncUtils.RunSync(async ct => await thread.RunAsync("result", cancellationToken: ct));
-                }
-                else
-                {
-                    Console.Error.WriteLine("Incorrect SQL expression.");
+                    AsyncUtils.RunSync(ct => thread.RunAsync("result", cancellationToken: ct));
                 }
             };
             AddVariables(thread, variables);
