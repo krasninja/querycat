@@ -16,12 +16,13 @@ internal sealed class FuncUnitCallInfo
         _pushArgs = pushArgs;
     }
 
-    internal VariantValue[] InvokePushArgs(IExecutionThread thread)
+    internal async ValueTask<VariantValue[]> InvokePushArgsAsync(IExecutionThread thread,
+        CancellationToken cancellationToken)
     {
         var values = new VariantValue[_pushArgs.Length];
         for (var i = 0; i < _pushArgs.Length; i++)
         {
-            values[i] = _pushArgs[i].Invoke(thread);
+            values[i] = await _pushArgs[i].InvokeAsync(thread, cancellationToken);
         }
         return values;
     }

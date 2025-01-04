@@ -112,12 +112,12 @@ internal sealed class GroupRowsIterator : IRowsIterator, IRowsIteratorParent
             .AppendSubQueriesWithIndent(_keys);
     }
 
-    private VariantValueArray KeysToArray(IFuncUnit[] keys)
+    private async ValueTask<VariantValueArray> KeysToArrayAsync(IFuncUnit[] keys, CancellationToken cancellationToken)
     {
         var arr = new VariantValue[keys.Length];
         for (var i = 0; i < keys.Length; i++)
         {
-            arr[i] = keys[i].Invoke(_thread);
+            arr[i] = await keys[i].InvokeAsync(_thread, cancellationToken);
         }
         return new VariantValueArray(arr);
     }
@@ -141,7 +141,7 @@ internal sealed class GroupRowsIterator : IRowsIterator, IRowsIteratorParent
         {
             // Format key and fill aggregate values.
             await _keys[0].InvokeAsync(_thread, cancellationToken);
-            var key = KeysToArray(_keys);
+            var key = await KeysToArrayAsync(_keys, cancellationToken);
             if (!keysRowIndexesMap.TryGetValue(key, out GroupKeyEntry groupKey))
             {
                 var row = new Row(_rowsFrame);

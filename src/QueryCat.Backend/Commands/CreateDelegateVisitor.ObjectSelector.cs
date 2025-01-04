@@ -16,11 +16,12 @@ internal partial class CreateDelegateVisitor
     {
         public bool Empty => strategies.Length == 0;
 
-        public bool PushToContext(ObjectSelectorContext context)
+        public async ValueTask<bool> PushToContextAsync(ObjectSelectorContext context,
+            CancellationToken cancellationToken)
         {
             foreach (var strategy in strategies)
             {
-                var info = strategy.GetToken(context);
+                var info = await strategy.GetTokenAsync(context, cancellationToken);
                 if (!info.HasValue)
                 {
                     return false;
@@ -33,15 +34,18 @@ internal partial class CreateDelegateVisitor
 
     internal abstract class SelectStrategy
     {
-        public abstract ObjectSelectorContext.Token? GetToken(ObjectSelectorContext context);
+        public abstract ValueTask<ObjectSelectorContext.Token?> GetTokenAsync(ObjectSelectorContext context,
+            CancellationToken cancellationToken = default);
     }
 
     internal sealed class IdentifierPropertySelectStrategy(string propertyName) : SelectStrategy
     {
         /// <inheritdoc />
-        public override ObjectSelectorContext.Token? GetToken(ObjectSelectorContext context)
+        public override ValueTask<ObjectSelectorContext.Token?> GetTokenAsync(ObjectSelectorContext context,
+            CancellationToken cancellationToken = default)
         {
-            return context.ExecutionThread.ObjectSelector.SelectByProperty(context, propertyName);
+            var value = context.ExecutionThread.ObjectSelector.SelectByProperty(context, propertyName);
+            return ValueTask.FromResult(value);
         }
     }
 
@@ -59,12 +63,14 @@ internal partial class CreateDelegateVisitor
         }
 
         /// <inheritdoc />
-        public override ObjectSelectorContext.Token? GetToken(ObjectSelectorContext context)
+        public override async ValueTask<ObjectSelectorContext.Token?> GetTokenAsync(ObjectSelectorContext context,
+            CancellationToken cancellationToken = default)
         {
             var thread = context.ExecutionThread;
             for (var i = 0; i < _actions.Length; i++)
             {
-                _objectIndexesCache[i] = Converter.ConvertValue(_actions[i].Invoke(thread), typeof(object));
+                var value = await _actions[i].InvokeAsync(thread, cancellationToken);
+                _objectIndexesCache[i] = Converter.ConvertValue(value, typeof(object));
             }
             var info = thread.ObjectSelector.SelectByIndex(context, _objectIndexesCache);
             // Indexes must be initialized, fix it.
@@ -94,22 +100,25 @@ internal partial class CreateDelegateVisitor
         }
 
         /// <inheritdoc />
-        public override ObjectSelectorContext.Token? GetToken(ObjectSelectorContext context)
+        public override async ValueTask<ObjectSelectorContext.Token?> GetTokenAsync(ObjectSelectorContext context,
+            CancellationToken cancellationToken = default)
         {
-            var listResult = GetObjectBySelector_GetFiltered(
+            var listResult = await GetObjectBySelector_GetFilteredAsync(
                 context.ExecutionThread,
                 nodeAction: _action,
                 container: _container,
-                enumerable: _idNodeContext.LastValue as IEnumerable);
+                enumerable: _idNodeContext.LastValue as IEnumerable,
+                cancellationToken: cancellationToken);
 
             return new ObjectSelectorContext.Token(listResult);
         }
 
-        private static IList<object> GetObjectBySelector_GetFiltered(
+        private static async ValueTask<IList<object>> GetObjectBySelector_GetFilteredAsync(
             IExecutionThread thread,
             IFuncUnit nodeAction,
             VariantValueContainer container,
-            IEnumerable? enumerable)
+            IEnumerable? enumerable,
+            CancellationToken cancellationToken = default)
         {
             if (enumerable == null)
             {
@@ -128,7 +137,7 @@ internal partial class CreateDelegateVisitor
                     }
 
                     container.Value = VariantValue.CreateFromObject(enumerator.Current);
-                    if (nodeAction.Invoke(thread).AsBoolean)
+                    if ((await nodeAction.InvokeAsync(thread, cancellationToken)).AsBoolean)
                     {
                         list.Add(enumerator.Current);
                     }
@@ -193,11 +202,11 @@ internal partial class CreateDelegateVisitor
         }
 
         /// <inheritdoc />
-        public ValueTask<VariantValue> InvokeAsync(IExecutionThread thread, CancellationToken cancellationToken = default)
+        public async ValueTask<VariantValue> InvokeAsync(IExecutionThread thread, CancellationToken cancellationToken = default)
         {
             var startObject = thread.GetVariable(_variableName);
-            GetObjectBySelector(thread, _context, startObject, _strategies, out var finalValue);
-            return ValueTask.FromResult(finalValue);
+            var result = await GetObjectBySelectorAsync(thread, _context, startObject, _strategies, cancellationToken);
+            return result;
         }
 
         /// <inheritdoc />
@@ -226,16 +235,12 @@ internal partial class CreateDelegateVisitor
         /// <inheritdoc />
         public ValueTask<VariantValue> InvokeAsync(IExecutionThread thread, CancellationToken cancellationToken = default)
         {
-            if (GetObjectBySelector(
+            return GetObjectBySelectorAsync(
                     thread,
                     _context,
                     VariantValue.CreateFromObject(_container.Value),
                     _strategies,
-                    out var value))
-            {
-                return ValueTask.FromResult(value);
-            }
-            return ValueTask.FromResult(VariantValue.Null);
+                    cancellationToken);
         }
     }
 
@@ -246,51 +251,48 @@ internal partial class CreateDelegateVisitor
         public object? Value { get; set; } = value;
     }
 
-    protected static bool GetObjectBySelector(
+    protected static async ValueTask<VariantValue> GetObjectBySelectorAsync(
         IExecutionThread thread,
         ObjectSelectorContext context,
         VariantValue value,
         SelectStrategyContainer selectStrategyContainer,
-        out VariantValue result)
+        CancellationToken cancellationToken = default)
     {
         try
         {
             context.ExecutionThread = thread;
-            var success = GetObjectBySelectorInternal(context, value, selectStrategyContainer, out result);
+            var result = await GetObjectBySelectorInternalAsync(context, value, selectStrategyContainer,
+                cancellationToken);
             context.ExecutionThread = NullExecutionThread.Instance;
-            return success;
+            return result;
         }
         catch (Exception e)
         {
-            var logger = Application.LoggerFactory.CreateLogger(nameof(GetObjectBySelector));
+            var logger = Application.LoggerFactory.CreateLogger(nameof(GetObjectBySelectorAsync));
             logger.LogDebug(e, Resources.Errors.CannotSelectObject);
         }
 
-        result = VariantValue.Null;
-        return false;
+        return VariantValue.Null;
     }
 
-    private static bool GetObjectBySelectorInternal(
+    private static async ValueTask<VariantValue> GetObjectBySelectorInternalAsync(
         ObjectSelectorContext context,
         VariantValue value,
         SelectStrategyContainer selectStrategyContainer,
-        out VariantValue result)
+        CancellationToken cancellationToken = default)
     {
-        result = VariantValue.Null;
         if (selectStrategyContainer.Empty || value.AsObjectUnsafe == null)
         {
-            result = value;
-            return false;
+            return value;
         }
 
         context.Push(new ObjectSelectorContext.Token(value.AsObjectUnsafe));
-        var hasCompleted = selectStrategyContainer.PushToContext(context);
+        var hasCompleted = await selectStrategyContainer.PushToContextAsync(context, cancellationToken);
         if (!hasCompleted)
         {
-            return false;
+            return VariantValue.Null;
         }
 
-        result = VariantValue.CreateFromObject(context.LastValue);
-        return true;
+        return VariantValue.CreateFromObject(context.LastValue);
     }
 }

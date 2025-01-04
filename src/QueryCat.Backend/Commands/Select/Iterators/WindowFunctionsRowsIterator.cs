@@ -97,7 +97,8 @@ internal sealed class WindowFunctionsRowsIterator : IRowsIterator
             _row = new Row(Columns);
         }
 
-        public PartitionInstance Add(VariantValueArray partitionKey, IList<IIndex> indexes)
+        public async ValueTask<PartitionInstance> AddAsync(VariantValueArray partitionKey, IList<IIndex> indexes,
+            CancellationToken cancellationToken = default)
         {
             if (!PartitionRowsIds.TryGetValue(partitionKey, out var partitionData))
             {
@@ -129,12 +130,12 @@ internal sealed class WindowFunctionsRowsIterator : IRowsIterator
             // Aggregates.
             foreach (var aggregateValue in WindowFunctionInfo.AggregateValues)
             {
-                _row[nextIndex++] = aggregateValue.Invoke(_thread);
+                _row[nextIndex++] = await aggregateValue.InvokeAsync(_thread, cancellationToken);
             }
             // Order.
             foreach (var orderFunction in WindowFunctionInfo.OrderFunctions)
             {
-                _row[nextIndex++] = orderFunction.Invoke(_thread);
+                _row[nextIndex++] = await orderFunction.InvokeAsync(_thread, cancellationToken);
             }
             var rowIndex = partitionData.RowsFrame.AddRow(_row);
             RowIdToPartition.Add(new RowIdData(partitionData, rowIndex));
@@ -200,7 +201,7 @@ internal sealed class WindowFunctionsRowsIterator : IRowsIterator
             {
                 // Find partition key. Add it into KeysRowsIds.
                 var key = partition.PartitionFormatter.Invoke();
-                partition.Add(key, indexes);
+                await partition.AddAsync(key, indexes, cancellationToken);
             }
 
             // Add the row into rows frame.

@@ -75,7 +75,8 @@ internal sealed class VaryingOutputRowsIterator : IRowsIterator, IRowsIteratorPa
             return false;
         }
 
-        var argValues = _functionCallInfo.InvokePushArgs(_thread)
+        var allArgValues = await _functionCallInfo.InvokePushArgsAsync(_thread, cancellationToken);
+        var argValues = allArgValues
             .Where(a => a.Type != DataType.Object)
             .ToArray();
         var args = new VariantValueArray(argValues);
