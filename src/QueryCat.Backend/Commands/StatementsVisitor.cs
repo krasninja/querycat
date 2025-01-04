@@ -96,24 +96,21 @@ internal sealed class StatementsVisitor : AstVisitor
     /// <inheritdoc />
     public override void Visit(CallFunctionStatementNode node)
     {
-        var handler = new CallCommand().CreateHandlerAsync(_executionThread, node)
-            .GetAwaiter().GetResult();
+        var handler = new CallCommand().CreateHandler(_executionThread, node);
         _handlers.Add(node.Id, handler);
     }
 
     /// <inheritdoc />
     public override void Visit(DeclareStatementNode node)
     {
-        var handler = new DeclareCommand().CreateHandlerAsync(_executionThread, node)
-            .GetAwaiter().GetResult();
+        var handler = new DeclareCommand().CreateHandler(_executionThread, node);
         _handlers.Add(node.Id, handler);
     }
 
     /// <inheritdoc />
     public override void Visit(SetStatementNode node)
     {
-        var handler = new SetCommand(_resolveTypesVisitor).CreateHandlerAsync(_executionThread, node)
-            .GetAwaiter().GetResult();
+        var handler = new SetCommand(_resolveTypesVisitor).CreateHandler(_executionThread, node);
         _handlers.Add(node.Id, handler);
     }
 
@@ -128,32 +125,28 @@ internal sealed class StatementsVisitor : AstVisitor
     /// <inheritdoc />
     public override void Visit(IfConditionStatementNode node)
     {
-        var handler = new IfConditionCommand().CreateHandlerAsync(_executionThread, node)
-            .GetAwaiter().GetResult();
+        var handler = new IfConditionCommand().CreateHandler(_executionThread, node);
         _handlers.Add(node.Id, handler);
     }
 
     /// <inheritdoc />
     public override void Visit(InsertStatementNode node)
     {
-        var handler = new InsertCommand().CreateHandlerAsync(_executionThread, node)
-            .GetAwaiter().GetResult();
+        var handler = new InsertCommand().CreateHandler(_executionThread, node);
         _handlers.Add(node.Id, handler);
     }
 
     /// <inheritdoc />
     public override void Visit(SelectStatementNode node)
     {
-        var handler = new SelectCommand(_resolveTypesVisitor).CreateHandlerAsync(_executionThread, node)
-            .GetAwaiter().GetResult();
+        var handler = new SelectCommand(_resolveTypesVisitor).CreateHandler(_executionThread, node);
         _handlers.Add(node.Id, handler);
     }
 
     /// <inheritdoc />
     public override void Visit(UpdateStatementNode node)
     {
-        var handler = new UpdateCommand().CreateHandlerAsync(_executionThread, node)
-            .GetAwaiter().GetResult();
+        var handler = new UpdateCommand().CreateHandler(_executionThread, node);
         _handlers.Add(node.Id, handler);
     }
 }

@@ -8,8 +8,7 @@ namespace QueryCat.Backend.Commands.If;
 internal sealed class IfConditionCommand : ICommand
 {
     /// <inheritdoc />
-    public Task<IFuncUnit> CreateHandlerAsync(IExecutionThread<ExecutionOptions> executionThread, StatementNode node,
-        CancellationToken cancellationToken = default)
+    public IFuncUnit CreateHandler(IExecutionThread<ExecutionOptions> executionThread, StatementNode node)
     {
         var ifConditionNode = (IfConditionNode)node.RootNode;
         var statementVisitor = new StatementsVisitor(executionThread);
@@ -44,6 +43,6 @@ internal sealed class IfConditionCommand : ICommand
         }
 
         IFuncUnit handler = new FuncUnitDelegate(Func, conditionsFuncs[0].Block.OutputType);
-        return Task.FromResult(handler);
+        return handler;
     }
 }

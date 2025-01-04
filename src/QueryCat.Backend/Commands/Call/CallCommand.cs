@@ -7,10 +7,10 @@ namespace QueryCat.Backend.Commands.Call;
 internal sealed class CallCommand : ICommand
 {
     /// <inheritdoc />
-    public Task<IFuncUnit> CreateHandlerAsync(IExecutionThread<ExecutionOptions> executionThread, StatementNode node, CancellationToken cancellationToken = default)
+    public IFuncUnit CreateHandler(IExecutionThread<ExecutionOptions> executionThread, StatementNode node)
     {
         var declareNode = (CallFunctionNode)node.RootNode;
-        var valueHandler = new CreateDelegateVisitor(executionThread).RunAndReturn(declareNode.FunctionCallNode);
-        return Task.FromResult(valueHandler);
+        var handler = new CreateDelegateVisitor(executionThread).RunAndReturn(declareNode.FunctionCallNode);
+        return handler;
     }
 }

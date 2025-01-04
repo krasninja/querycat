@@ -18,8 +18,7 @@ internal sealed class SelectCommand : ICommand
     }
 
     /// <inheritdoc />
-    public async Task<IFuncUnit> CreateHandlerAsync(IExecutionThread<ExecutionOptions> executionThread, StatementNode node,
-        CancellationToken cancellationToken = default)
+    public IFuncUnit CreateHandler(IExecutionThread<ExecutionOptions> executionThread, StatementNode node)
     {
         var selectQueryNode = (SelectQueryNode)node.RootNode;
 

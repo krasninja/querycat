@@ -12,8 +12,7 @@ namespace QueryCat.Backend.Commands.Insert;
 internal sealed class InsertCommand : ICommand
 {
     /// <inheritdoc />
-    public async Task<IFuncUnit> CreateHandlerAsync(IExecutionThread<ExecutionOptions> executionThread, StatementNode node,
-        CancellationToken cancellationToken = default)
+    public IFuncUnit CreateHandler(IExecutionThread<ExecutionOptions> executionThread, StatementNode node)
     {
         if (executionThread.Options.SafeMode)
         {
@@ -25,7 +24,7 @@ internal sealed class InsertCommand : ICommand
         // Get output source.
         var rowsOutputFunc = new CreateDelegateVisitor(executionThread)
             .RunAndReturn(insertNode.InsertTargetNode);
-        var rowsOutput = (await rowsOutputFunc.InvokeAsync(executionThread, cancellationToken)).AsRequired<IRowsOutput>();
+        var rowsOutput = rowsOutputFunc.Invoke(executionThread).AsRequired<IRowsOutput>();
 
         // Evaluate iterator for FROM block and get input source.
         var outputDefinedColumns = insertNode.HasDefinedColumns();

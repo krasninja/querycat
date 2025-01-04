@@ -13,8 +13,7 @@ namespace QueryCat.Backend.Commands.Update;
 internal sealed class UpdateCommand : ICommand
 {
     /// <inheritdoc />
-    public Task<IFuncUnit> CreateHandlerAsync(IExecutionThread<ExecutionOptions> executionThread, StatementNode node,
-        CancellationToken cancellationToken = default)
+    public IFuncUnit CreateHandler(IExecutionThread<ExecutionOptions> executionThread, StatementNode node)
     {
         if (executionThread.Options.SafeMode)
         {
@@ -55,6 +54,6 @@ internal sealed class UpdateCommand : ICommand
         }
 
         IFuncUnit handler = new UpdateCommandHandler(context, setters.ToArray());
-        return Task.FromResult(handler);
+        return handler;
     }
 }

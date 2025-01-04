@@ -13,10 +13,8 @@ internal interface ICommand
     /// </summary>
     /// <param name="executionThread">Current execution thread.</param>
     /// <param name="node">Statement node.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Instance of <see cref="IFuncUnit" />.</returns>
-    Task<IFuncUnit> CreateHandlerAsync(
+    IFuncUnit CreateHandler(
         IExecutionThread<ExecutionOptions> executionThread,
-        StatementNode node,
-        CancellationToken cancellationToken = default);
+        StatementNode node);
 }
