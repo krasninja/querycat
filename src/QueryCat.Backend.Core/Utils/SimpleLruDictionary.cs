@@ -11,7 +11,7 @@ namespace QueryCat.Backend.Core.Utils;
 internal sealed class SimpleLruDictionary<TKey, TValue> : IDictionary<TKey, TValue> where TKey : notnull
 {
     private readonly int _capacity;
-    private readonly IDictionary<TKey, TValue?> _map;
+    private readonly IDictionary<TKey, TValue> _map;
     private readonly LinkedList<TKey> _lruList = new();
 
     /// <inheritdoc />
@@ -46,7 +46,7 @@ internal sealed class SimpleLruDictionary<TKey, TValue> : IDictionary<TKey, TVal
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(capacity, nameof(capacity));
         this._capacity = capacity;
-        this._map = new ConcurrentDictionary<TKey, TValue?>();
+        this._map = new ConcurrentDictionary<TKey, TValue>();
     }
 
     /// <inheritdoc />
