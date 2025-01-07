@@ -17,7 +17,22 @@ public class Program
 {
     private static readonly Lazy<ILogger> _logger = new(() => Application.LoggerFactory.CreateLogger(nameof(Program)));
 
-    public static int Main(string[] args)
+    private static readonly Option<string[]> _pluginFilesOption = new("--plugin-files",
+        description: "Plugin files.")
+        {
+            AllowMultipleArgumentsPerToken = true,
+        };
+
+    private static readonly Argument<string> _queryArgument = new("query",
+        description: "SQL-like query or command argument.");
+
+    private static readonly Option<string[]> _filesOption = new(["-f", "--files"],
+        description: "SQL files to execute.")
+        {
+            AllowMultipleArgumentsPerToken = true,
+        };
+
+    public static async Task<int> Main(string[] args)
     {
         if (args.Length < 1)
         {
@@ -25,39 +40,26 @@ public class Program
         }
 
         var rootCommand = new RootCommand("QueryCat Tester");
-        var pluginFilesOption = new Option<string[]>("--plugin-files",
-            description: "Plugin files.")
-        {
-            AllowMultipleArgumentsPerToken = true,
-        };
-        var queryArgument = new Argument<string>("query",
-            description: "SQL-like query or command argument.",
-            getDefaultValue: () => string.Empty);
-        var filesOption = new Option<string[]>(["-f", "--files"],
-            description: "SQL files to execute.")
-            {
-                AllowMultipleArgumentsPerToken = true,
-            };
 
-        rootCommand.AddOption(pluginFilesOption);
-        rootCommand.AddOption(filesOption);
-        rootCommand.AddArgument(queryArgument);
+        rootCommand.AddOption(_pluginFilesOption);
+        rootCommand.AddOption(_filesOption);
+        rootCommand.AddArgument(_queryArgument);
 
         rootCommand.SetHandler(
             Run,
-            queryArgument,
-            pluginFilesOption,
-            filesOption);
+            _queryArgument,
+            _pluginFilesOption,
+            _filesOption);
 
         var parser = new CommandLineBuilder(rootCommand)
             .UseVersionOption("-v", "--version")
             .UseDefaults()
             .Build();
-        var returnCode = parser.Parse(args).Invoke();
+        var returnCode = await parser.Parse(args).InvokeAsync();
         return returnCode;
     }
 
-    public static void Run(string query, string[] pluginDirectories, string[] files)
+    private static async Task Run(string query, string[] pluginDirectories, string[] files)
     {
         var workingDirectoryPlugins = Directory.GetFiles(Environment.CurrentDirectory, "*.dll");
         var outputStringBuilder = new StringBuilder();
@@ -81,14 +83,14 @@ public class Program
         {
             foreach (var file in files)
             {
-                var fileContent = File.ReadAllText(file);
-                executionThread.Run(fileContent);
+                var fileContent = await File.ReadAllTextAsync(file);
+                await executionThread.RunAsync(fileContent);
             }
         }
         else
         {
-            executionThread.Run(query);
+            await executionThread.RunAsync(query);
         }
-        Console.Out.WriteLine(outputStringBuilder);
+        await Console.Out.WriteLineAsync(outputStringBuilder);
     }
 }
