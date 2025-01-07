@@ -1,16 +1,14 @@
 using System.Net;
 using System.Text.Json;
 using QueryCat.Backend.Core;
-using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Cli.Infrastructure;
 
 internal partial class WebServer
 {
-    private void HandleInfoApiAction(HttpListenerRequest request, HttpListenerResponse response)
+    private async Task HandleInfoApiActionAsync(HttpListenerRequest request, HttpListenerResponse response, CancellationToken cancellationToken)
     {
-        var localPlugins = AsyncUtils.RunSync(async ct
-            => await _executionThread.PluginsManager.ListAsync(localOnly: true, ct))!.ToList();
+        var localPlugins = (await _executionThread.PluginsManager.ListAsync(localOnly: true, cancellationToken)).ToList();
         var dict = new WebServerReply
         {
             ["installedPlugins"] = localPlugins,
@@ -19,6 +17,7 @@ internal partial class WebServer
             ["platform"] = Environment.Version,
             ["date"] = DateTimeOffset.Now,
         };
-        JsonSerializer.Serialize(response.OutputStream, dict, SourceGenerationContext.Default.WebServerReply);
+        await JsonSerializer.SerializeAsync(response.OutputStream, dict,
+            SourceGenerationContext.Default.WebServerReply, cancellationToken);
     }
 }

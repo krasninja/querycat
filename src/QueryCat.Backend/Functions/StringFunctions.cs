@@ -223,7 +223,7 @@ internal static class StringFunctions
         var nullString = thread.Stack[2].AsString;
 
         var result = GetSplitItems(target, delimiter, nullString).ToList();
-        var input = new EnumerableRowsInput<string>(result,
+        var input = EnumerableRowsInput<string>.FromSource(result,
             builder => builder.AddProperty("value", p => p, "String part."));
         return VariantValue.CreateFromObject(input);
     }

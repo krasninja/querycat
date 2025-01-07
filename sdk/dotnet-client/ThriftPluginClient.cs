@@ -44,7 +44,7 @@ public partial class ThriftPluginClient : IDisposable
 
     public const string PluginTransportNamedPipes = "net.pipe";
 
-    private readonly PluginExecutionThread _executionThread;
+    private readonly ThriftPluginExecutionThread _executionThread;
     private readonly PluginFunctionsManager _functionsManager;
     private readonly ObjectsStorage _objectsStorage = new();
     private readonly string _debugServerPath = string.Empty;
@@ -87,7 +87,9 @@ public partial class ThriftPluginClient : IDisposable
     /// <summary>
     /// Is current client connected and registered.
     /// </summary>
-    public bool IsActive { get; set; }
+    public bool IsActive { get; private set; }
+
+    public EventHandler<ThriftPluginClientOnInitializeEventArgs>? OnInitialize;
 
     public ThriftPluginClient(ThriftPluginClientArguments args)
     {
@@ -140,7 +142,7 @@ public partial class ThriftPluginClient : IDisposable
             PluginsManagerServiceName);
         _client = new PluginsManager.Client(_protocol);
 
-        _executionThread = new PluginExecutionThread(_client);
+        _executionThread = new ThriftPluginExecutionThread(_client);
         _functionsManager = new PluginFunctionsManager();
     }
 
@@ -270,7 +272,11 @@ public partial class ThriftPluginClient : IDisposable
         StartServer();
 
         var functions = _functionsManager.GetPluginFunctions().Select(f =>
-            new Function(f.Signature, f.Description, false)).ToList();
+            new Function(f.Signature, f.Description, false)
+            {
+                IsSafe = f.IsSafe,
+                FormatterIds = f.FormatterIdentifiers.ToList(),
+            }).ToList();
         pluginData ??= SdkConvert.Convert(Assembly.GetEntryAssembly());
         pluginData.Functions = functions;
 
@@ -317,6 +323,11 @@ public partial class ThriftPluginClient : IDisposable
             _clientServerCts.Token,
             TaskCreationOptions.LongRunning,
             TaskScheduler.Current);
+    }
+
+    internal void FireOnInitialize()
+    {
+        OnInitialize?.Invoke(this, new ThriftPluginClientOnInitializeEventArgs(_executionThread));
     }
 
     private void StopServer()

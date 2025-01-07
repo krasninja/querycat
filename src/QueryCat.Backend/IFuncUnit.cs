@@ -18,6 +18,14 @@ internal interface IFuncUnit
     /// Invoke and get value.
     /// </summary>
     /// <param name="thread">Current execution thread.</param>
+    /// <param name="cancellationToken">A cancellation token to observe.</param>
     /// <returns>Value.</returns>
-    VariantValue Invoke(IExecutionThread thread);
+    ValueTask<VariantValue> InvokeAsync(IExecutionThread thread, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Invoke and get value.
+    /// </summary>
+    /// <param name="thread">Current execution thread.</param>
+    /// <returns>Value.</returns>
+    VariantValue Invoke(IExecutionThread thread) => InvokeAsync(thread).GetAwaiter().GetResult();
 }

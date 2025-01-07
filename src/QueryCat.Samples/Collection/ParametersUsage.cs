@@ -6,12 +6,12 @@ namespace QueryCat.Samples.Collection;
 internal class ParametersUsage : BaseUsage
 {
     /// <inheritdoc />
-    public override void Run()
+    public override async Task RunAsync()
     {
         using var executionThread = new ExecutionThreadBootstrapper()
             .Create();
 
-        executionThread.Run("hello || ' ' || world", new Dictionary<string, VariantValue>
+        await executionThread.RunAsync("hello || ' ' || world", new Dictionary<string, VariantValue>
         {
             ["hello"] = new("Hello"),
             ["world"] = new("World!"),

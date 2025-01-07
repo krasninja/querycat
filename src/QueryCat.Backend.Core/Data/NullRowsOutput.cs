@@ -20,22 +20,24 @@ public sealed class NullRowsOutput : IRowsOutput
     }
 
     /// <inheritdoc />
-    public void Open()
+    public Task OpenAsync(CancellationToken cancellationToken = default)
     {
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />
-    public void Close()
+    public Task CloseAsync(CancellationToken cancellationToken = default)
     {
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />
-    public void Reset()
+    public Task ResetAsync(CancellationToken cancellationToken = default)
     {
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />
-    public void WriteValues(in VariantValue[] values)
-    {
-    }
+    public ValueTask<ErrorCode> WriteValuesAsync(VariantValue[] values, CancellationToken cancellationToken = default)
+        => ValueTask.FromResult(ErrorCode.OK);
 }

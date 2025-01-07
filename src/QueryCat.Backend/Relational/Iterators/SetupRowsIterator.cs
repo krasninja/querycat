@@ -34,7 +34,7 @@ internal class SetupRowsIterator : IRowsIterator, IRowsIteratorParent
     }
 
     /// <inheritdoc />
-    public bool MoveNext()
+    public async ValueTask<bool> MoveNextAsync(CancellationToken cancellationToken = default)
     {
         if (!_isInitialized)
         {
@@ -44,7 +44,7 @@ internal class SetupRowsIterator : IRowsIterator, IRowsIteratorParent
             AfterInitialize(_rowsIterator);
         }
 
-        return _rowsIterator.MoveNext();
+        return await _rowsIterator.MoveNextAsync(cancellationToken);
     }
 
     /// <inheritdoc />

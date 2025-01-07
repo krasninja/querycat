@@ -11,11 +11,12 @@ public static class RowsIteratorExtensions
     /// Create rows frame from iterator.
     /// </summary>
     /// <param name="iterator">Iterator.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Instance of <see cref="RowsFrame" />.</returns>
-    public static RowsFrame ToFrame(this IRowsIterator iterator)
+    public static Task<RowsFrame> ToFrameAsync(this IRowsIterator iterator, CancellationToken cancellationToken = default)
     {
         var frame = new RowsFrame(iterator.Columns);
-        return ToFrame(iterator, frame);
+        return ToFrameAsync(iterator, frame, cancellationToken);
     }
 
     /// <summary>
@@ -23,11 +24,12 @@ public static class RowsIteratorExtensions
     /// </summary>
     /// <param name="iterator">Iterator.</param>
     /// <param name="count">Max number of rows to read.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Instance of <see cref="RowsFrame" />.</returns>
-    public static RowsFrame ToFrame(this IRowsIterator iterator, int count)
+    public static Task<RowsFrame> ToFrameAsync(this IRowsIterator iterator, int count, CancellationToken cancellationToken = default)
     {
         var frame = new RowsFrame(iterator.Columns);
-        return ToFrame(iterator, frame, count);
+        return ToFrameAsync(iterator, frame, count, cancellationToken);
     }
 
     /// <summary>
@@ -35,10 +37,12 @@ public static class RowsIteratorExtensions
     /// </summary>
     /// <param name="iterator">Iterator.</param>
     /// <param name="frame">Rows frame to fill.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Instance of <see cref="RowsFrame" />.</returns>
-    public static RowsFrame ToFrame(this IRowsIterator iterator, RowsFrame frame)
+    public static async Task<RowsFrame> ToFrameAsync(this IRowsIterator iterator, RowsFrame frame,
+        CancellationToken cancellationToken = default)
     {
-        while (iterator.MoveNext())
+        while (await iterator.MoveNextAsync(cancellationToken))
         {
             frame.AddRow(iterator.Current);
         }
@@ -51,10 +55,15 @@ public static class RowsIteratorExtensions
     /// <param name="iterator">Iterator.</param>
     /// <param name="frame">Rows frame to fill.</param>
     /// <param name="count">Max number of rows to read.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Instance of <see cref="RowsFrame" />.</returns>
-    public static RowsFrame ToFrame(this IRowsIterator iterator, RowsFrame frame, int count)
+    public static async Task<RowsFrame> ToFrameAsync(
+        this IRowsIterator iterator,
+        RowsFrame frame,
+        int count,
+        CancellationToken cancellationToken = default)
     {
-        while (frame.TotalRows < count && iterator.MoveNext())
+        while (frame.TotalRows < count && await iterator.MoveNextAsync(cancellationToken))
         {
             frame.AddRow(iterator.Current);
         }

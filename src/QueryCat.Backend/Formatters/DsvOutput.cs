@@ -37,24 +37,25 @@ internal sealed class DsvOutput : RowsOutput, IDisposable
     }
 
     /// <inheritdoc />
-    public override void Open()
+    public override Task OpenAsync(CancellationToken cancellationToken = default)
     {
         _logger.LogTrace("DSV opened.");
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />
-    public override void Close()
+    public override Task CloseAsync(CancellationToken cancellationToken = default)
     {
         _streamWriter.Close();
         _logger.LogTrace("DSV closed.");
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />
     protected override void OnWrite(in VariantValue[] values)
     {
         var columns = QueryContext.QueryInfo.Columns;
-        var length = columns.Count;
-        for (int i = 0; i < length; i++)
+        for (var i = 0; i < columns.Length; i++)
         {
             if (!values[i].IsNull)
             {
@@ -101,7 +102,7 @@ internal sealed class DsvOutput : RowsOutput, IDisposable
                         break;
                 }
             }
-            if (i < length - 1)
+            if (i < columns.Length - 1)
             {
                 _streamWriter.Write(_delimiter);
             }
@@ -111,28 +112,27 @@ internal sealed class DsvOutput : RowsOutput, IDisposable
     }
 
     /// <inheritdoc />
-    protected override void Initialize()
+    protected override Task InitializeAsync(CancellationToken cancellationToken = default)
     {
-        WriteHeader(QueryContext);
+        return WriteHeaderAsync(QueryContext, cancellationToken);
     }
 
-    private void WriteHeader(QueryContext queryContext)
+    private async Task WriteHeaderAsync(QueryContext queryContext, CancellationToken cancellationToken)
     {
         var columns = queryContext.QueryInfo.Columns;
 
         if (_hasHeader && !_wroteHeader)
         {
-            var length = columns.Count;
-            for (var i = 0; i < length; i++)
+            for (var i = 0; i < columns.Length; i++)
             {
                 WriteString(columns[i].Name);
-                if (i < length - 1)
+                if (i < columns.Length - 1)
                 {
-                    _streamWriter.Write(_delimiter);
+                    await _streamWriter.WriteAsync(_delimiter);
                 }
             }
-            _streamWriter.WriteLine();
-            _streamWriter.Flush();
+            await _streamWriter.WriteLineAsync();
+            await _streamWriter.FlushAsync(cancellationToken);
             _wroteHeader = true;
         }
     }

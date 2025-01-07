@@ -16,9 +16,14 @@ internal class SelectInputQueryContext : QueryContext
     public override QueryContextQueryInfo QueryInfo { get; }
 
     /// <inheritdoc />
-    public SelectInputQueryContext(IRowsInput rowsInput)
+    public SelectInputQueryContext(IRowsInput rowsInput, Column[] columns)
     {
         RowsInput = rowsInput;
-        QueryInfo = new QueryContextQueryInfo(rowsInput.Columns);
+        QueryInfo = new QueryContextQueryInfo(columns);
+    }
+
+    /// <inheritdoc />
+    public SelectInputQueryContext(IRowsInput rowsInput) : this(rowsInput, rowsInput.Columns)
+    {
     }
 }

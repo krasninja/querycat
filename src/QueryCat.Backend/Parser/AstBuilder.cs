@@ -1,5 +1,4 @@
 using Antlr4.Runtime;
-using Antlr4.Runtime.Atn;
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Function;
@@ -108,7 +107,7 @@ internal sealed class AstBuilder : IAstBuilder
     }
 
     private readonly record struct ProfileInfo(
-        DecisionInfo DecisionInfo,
+        Antlr4.Runtime.Atn.DecisionInfo DecisionInfo,
         string RuleName)
     {
         /// <inheritdoc />

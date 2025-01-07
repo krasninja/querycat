@@ -37,15 +37,17 @@ internal sealed class SubRipInput : RowsInput
     }
 
     /// <inheritdoc />
-    public override void Open()
+    public override Task OpenAsync(CancellationToken cancellationToken = default)
     {
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />
-    public override void Close()
+    public override Task CloseAsync(CancellationToken cancellationToken = default)
     {
         _streamReader.Close();
         _streamReader.Dispose();
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />
@@ -76,7 +78,7 @@ internal sealed class SubRipInput : RowsInput
     }
 
     /// <inheritdoc />
-    public override bool ReadNext()
+    public override async ValueTask<bool> ReadNextAsync(CancellationToken cancellationToken = default)
     {
         _counter = 0;
         _start = TimeSpan.Zero;
@@ -91,12 +93,12 @@ internal sealed class SubRipInput : RowsInput
             {
                 return false;
             }
-            line = _streamReader.ReadLine();
+            line = await _streamReader.ReadLineAsync(cancellationToken);
         }
         _counter = int.Parse(line);
 
         // Time.
-        line = _streamReader.ReadLine();
+        line = await _streamReader.ReadLineAsync(cancellationToken);
         if (line == null)
         {
             return false;
@@ -110,7 +112,7 @@ internal sealed class SubRipInput : RowsInput
 
         // Text.
         var sb = new StringBuilder(0);
-        while (!string.IsNullOrEmpty(line = _streamReader.ReadLine()))
+        while (!string.IsNullOrEmpty(line = await _streamReader.ReadLineAsync(cancellationToken)))
         {
             sb.AppendLine(line);
         }

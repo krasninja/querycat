@@ -22,10 +22,9 @@ internal sealed class InsertCommand : ICommand
         var insertNode = (InsertNode)node.RootNode;
 
         // Get output source.
-        var rowsOutput = new CreateDelegateVisitor(executionThread)
-            .RunAndReturn(insertNode.InsertTargetNode)
-            .Invoke(executionThread)
-            .AsRequired<IRowsOutput>();
+        var rowsOutputFunc = new CreateDelegateVisitor(executionThread)
+            .RunAndReturn(insertNode.InsertTargetNode);
+        var rowsOutput = rowsOutputFunc.Invoke(executionThread).AsRequired<IRowsOutput>();
 
         // Evaluate iterator for FROM block and get input source.
         var outputDefinedColumns = insertNode.HasDefinedColumns();

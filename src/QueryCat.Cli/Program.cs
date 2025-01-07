@@ -2,7 +2,6 @@
 using System.CommandLine.Builder;
 using System.CommandLine.Help;
 using System.CommandLine.Parsing;
-using System.Text;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Parser;
@@ -13,24 +12,24 @@ namespace QueryCat.Cli;
 /// <summary>
 /// Program entry point.
 /// </summary>
-internal class Program
+internal sealed class Program
 {
     private static readonly Lazy<ILogger> _logger = new(() => Application.LoggerFactory.CreateLogger(nameof(Program)));
 
-    private static readonly object _objLock = new();
+    private static readonly Lock _objLock = new();
 
     /// <summary>
     /// Entry point.
     /// </summary>
     /// <param name="args">Application execution arguments.</param>
     /// <returns>Error code.</returns>
-    public static int Main(string[] args)
+    public static async Task<int> Main(string[] args)
     {
         AppDomain.CurrentDomain.UnhandledException += CurrentDomainOnUnhandledException;
 
         if (args.Length < 1)
         {
-            args = new[] { "-h" };
+            args = ["-h"];
         }
 
         // Root.
@@ -96,11 +95,11 @@ internal class Program
             })
             .UseExceptionHandler((exception, ic) =>
             {
-                ProcessException(exception);
+                ic.ExitCode = ProcessException(exception);
             }, errorExitCode: 1)
             .Build();
 
-        var returnCode = parser.Parse(args).Invoke();
+        var returnCode = await parser.Parse(args).InvokeAsync();
         Application.LoggerFactory.Dispose();
         return returnCode;
     }
@@ -114,7 +113,7 @@ internal class Program
         Environment.Exit(1);
     }
 
-    private static void ProcessException(Exception exception)
+    private static int ProcessException(Exception exception)
     {
         var logger = _logger.Value;
         lock (_objLock)
@@ -130,18 +129,22 @@ internal class Program
                 logger.LogError(new string(' ', syntaxException.Position) + '^');
                 logger.LogError("{Line}:{Position}: {Message}", syntaxException.Line, syntaxException.Position,
                     syntaxException.Message);
+                return 4;
             }
             else if (exception is QueryCatException domainException)
             {
                 logger.LogError(domainException.Message);
+                return 2;
             }
             else if (exception is FormatException formatException)
             {
                 logger.LogError(formatException.Message);
+                return 3;
             }
             else
             {
                 logger.LogCritical(exception, exception.Message);
+                return 1;
             }
         }
     }

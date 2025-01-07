@@ -26,6 +26,20 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader
 
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(DotNetAssemblyPluginsLoader));
 
+    private static readonly string[] _monikerDirectories =
+    [
+#if NET9_0_OR_GREATER
+        "net9.0",
+#endif
+#if NET8_0_OR_GREATER
+        "net8.0",
+#endif
+#if NET6_0_OR_GREATER
+        "net6.0",
+#endif
+        "netstandard2.1",
+    ];
+
     public IEnumerable<Assembly> LoadedAssemblies => _loadedAssemblies;
 
     public DotNetAssemblyPluginsLoader(IFunctionsManager functionsManager, IEnumerable<string> pluginDirectories) : base(pluginDirectories)
@@ -64,7 +78,7 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader
         return null;
     }
 
-    private string DumpAssemblies()
+    public string DumpAssemblies()
     {
         var sb = new StringBuilder();
         foreach (var assembly in _loadedAssembliesCache)
@@ -102,7 +116,7 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader
             _loadedAssemblies.Add(assembly);
         }
 
-        RegisterFunctions(_functionsManager);
+        RegisterFunctions();
 
         var loadedPlugins = _loadedAssemblies
             .Select(a => a.FullName ?? string.Empty)
@@ -132,7 +146,7 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader
         return true;
     }
 
-    private void RegisterFunctions(IFunctionsManager functionsManager)
+    private void RegisterFunctions()
     {
         foreach (var pluginAssembly in _loadedAssemblies)
         {
@@ -140,7 +154,7 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader
         }
     }
 
-    public void RegisterFromAssembly(Assembly assembly)
+    private void RegisterFromAssembly(Assembly assembly)
     {
         // If there is class Registration with RegisterFunctions method - call it instead. Use reflection otherwise.
         // Fast path.
@@ -150,11 +164,8 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader
             var registerMethod = registerType.GetMethod(RegistrationMethodName);
             if (registerMethod != null)
             {
-                _logger.LogDebug($"Register using '{RegistrationClassName}' class.");
-                _functionsManager.RegisterFactory(fm =>
-                {
-                    registerMethod.Invoke(null, [fm]);
-                });
+                _logger.LogDebug("Register using '{ClassName}' class.", RegistrationClassName);
+                registerMethod.Invoke(null, [_functionsManager]);
                 return;
             }
         }
@@ -196,10 +207,21 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader
 
         try
         {
+            // Find target framework directory.
+            var monikerDirectory = FindTargetFrameworkDirectory(zip);
+            if (string.IsNullOrEmpty(monikerDirectory))
+            {
+                throw new InvalidOperationException(string.Format(Resources.Errors.CannotFindPluginDll, file));
+            }
+
+            // Get moniker files.
+            var entries = zip.Entries
+                .Where(e => e.FullName.StartsWith(monikerDirectory)
+                            && Path.GetExtension(e.Name).Equals(DllExtension))
+                .ToArray();
+
             // Find plugin library.
-            var pluginDll = zip.Entries.FirstOrDefault(
-                f => Path.GetExtension(f.FullName).Equals(DllExtension, StringComparison.OrdinalIgnoreCase)
-                    && f.FullName.Contains("Plugin"));
+            var pluginDll = Array.Find(entries, f => f.Name.Contains("Plugin"));
             if (pluginDll == null)
             {
                 throw new InvalidOperationException(string.Format(Resources.Errors.CannotFindPluginDll, file));
@@ -207,14 +229,14 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader
 
             // Preload dependent libraries.
             var pluginDllFileName = Path.GetFileName(pluginDll.Name);
-            foreach (var fileInfo in zip.Entries)
+            foreach (var entry in entries)
             {
-                if (Path.GetExtension(fileInfo.Name).Equals(DllExtension, StringComparison.OrdinalIgnoreCase)
-                    && !fileInfo.Name.Equals(pluginDllFileName))
+                if (entry.Name.Equals(pluginDllFileName))
                 {
-                    using var stream = fileInfo.Open();
-                    CacheAssemblyFromStream(fileInfo.Name, stream);
+                    continue;
                 }
+                using var stream = entry.Open();
+                CacheAssemblyFromStream(entry.Name, stream);
             }
 
             // Load plugin library.
@@ -227,6 +249,19 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader
         {
             zip.Dispose();
         }
+    }
+
+    private static string FindTargetFrameworkDirectory(ZipArchive zip)
+    {
+        foreach (var moniker in _monikerDirectories)
+        {
+            var monikerDirectory = "lib/" + moniker + "/";
+            if (zip.Entries.Any(e => e.FullName.StartsWith(monikerDirectory)))
+            {
+                return monikerDirectory;
+            }
+        }
+        return string.Empty;
     }
 
     private void CacheAssemblyFromStream(string fileName, Stream stream)

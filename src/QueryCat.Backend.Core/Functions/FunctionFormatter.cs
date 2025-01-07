@@ -138,7 +138,7 @@ internal static class FunctionFormatter
             // If result is awaitable - try to wait.
             if (result is Task task)
             {
-                AsyncUtils.RunSync(async () => await task);
+                AsyncUtils.RunSync(() => task);
                 if (method is MethodInfo methodInfo
                     && methodInfo.ReturnType.IsGenericType)
                 {

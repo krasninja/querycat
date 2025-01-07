@@ -28,7 +28,8 @@ internal sealed partial class SelectPlanner
     {
         if (queryNode.HasAttribute(AstAttributeKeys.ContextKey))
         {
-            return queryNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey).CurrentIterator;
+            var iterator = queryNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey).CurrentIterator;
+            return iterator;
         }
 
         if (queryNode is SelectQuerySpecificationNode querySpecificationNode)
@@ -114,7 +115,7 @@ internal sealed partial class SelectPlanner
         }
 
         // Set result. If INTO clause is specified we do not return IRowsIterator outside. Just
-        // iterating it we will save rows into target. Otherwise we return it as is.
+        // iterating it we will save rows into target. Otherwise, we return it as is.
         node.SetAttribute(AstAttributeKeys.ResultKey, resultIterator);
 
         return context.CurrentIterator;

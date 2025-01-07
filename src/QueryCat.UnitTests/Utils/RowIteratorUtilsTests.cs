@@ -11,7 +11,7 @@ namespace QueryCat.UnitTests.Utils;
 public class RowIteratorUtilsTests
 {
     [Fact]
-    public void DetermineIfHasHeader_RowsFrameWithHeader_ShouldReturnTrue()
+    public async Task DetermineIfHasHeader_RowsFrameWithHeader_ShouldReturnTrue()
     {
         // Arrange.
         var rowsFrame = new RowsFrame(
@@ -22,14 +22,14 @@ public class RowIteratorUtilsTests
         rowsFrame.AddRow("Elena", 45000);
 
         // Act.
-        var hasHeader = RowsIteratorUtils.DetermineIfHasHeader(rowsFrame.GetIterator());
+        var hasHeader = await RowsIteratorUtils.DetermineIfHasHeaderAsync(rowsFrame.GetIterator());
 
         // Assert.
         Assert.True(hasHeader);
     }
 
     [Fact]
-    public void DetermineIfHasHeader_RowsFrameWithoutHeader_ShouldReturnTrue()
+    public async Task DetermineIfHasHeader_RowsFrameWithoutHeader_ShouldReturnTrue()
     {
         // Arrange.
         var rowsFrame = new RowsFrame(
@@ -39,7 +39,7 @@ public class RowIteratorUtilsTests
         rowsFrame.AddRow(3);
 
         // Act.
-        var hasHeader = RowsIteratorUtils.DetermineIfHasHeader(rowsFrame.GetIterator());
+        var hasHeader = await RowsIteratorUtils.DetermineIfHasHeaderAsync(rowsFrame.GetIterator());
 
         // Assert.
         Assert.False(hasHeader);

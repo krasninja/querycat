@@ -1,3 +1,4 @@
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Storage;
@@ -21,16 +22,16 @@ internal class DsvInput : StreamRowsInput
     }
 
     /// <inheritdoc />
-    protected override void Analyze(CacheRowsIterator iterator)
+    protected override async Task AnalyzeAsync(CacheRowsIterator iterator, CancellationToken cancellationToken = default)
     {
-        var hasHeader = _hasHeader ?? RowsIteratorUtils.DetermineIfHasHeader(iterator);
+        var hasHeader = _hasHeader ?? await RowsIteratorUtils.DetermineIfHasHeaderAsync(iterator, cancellationToken: cancellationToken);
         _hasHeader = hasHeader;
         iterator.SeekToHead();
 
         if (hasHeader)
         {
             // Parse head columns names.
-            iterator.MoveNext();
+            await iterator.MoveNextAsync(cancellationToken);
             var columnNames = GetCurrentInputValues(iterator.Current);
             if (columnNames.Length < 1)
             {
@@ -43,7 +44,7 @@ internal class DsvInput : StreamRowsInput
             }
         }
 
-        RowsIteratorUtils.ResolveColumnsTypes(iterator);
+        await RowsIteratorUtils.ResolveColumnsTypesAsync(iterator, cancellationToken: cancellationToken);
         // Remove header row since it is not a data row.
         if (hasHeader)
         {
@@ -52,14 +53,14 @@ internal class DsvInput : StreamRowsInput
     }
 
     /// <inheritdoc />
-    public override void Reset()
+    public override async Task ResetAsync(CancellationToken cancellationToken = default)
     {
-        base.Reset();
+        await base.ResetAsync(cancellationToken);
         // If we have header row the first values row would have non-zero
         // position.
         if (_hasHeader == true && StreamReader.BaseStream.Position == 0)
         {
-            ReadNext();
+            await ReadNextAsync(cancellationToken);
         }
     }
 }

@@ -14,25 +14,26 @@ public static class RowsOutputExtensions
     /// <param name="output">Rows output.</param>
     /// <param name="iterator">Rows iterator.</param>
     /// <param name="adjustColumnsLengths">Should update columns widths.</param>
-    public static void Write(this IRowsOutput output, IRowsIterator iterator, bool adjustColumnsLengths = false)
+    /// <param name="cancellationToken">Cancellation token.</param>
+    public static async ValueTask WriteAsync(this IRowsOutput output, IRowsIterator iterator, bool adjustColumnsLengths = false,
+        CancellationToken cancellationToken = default)
     {
-        output.Open();
+        output.QueryContext = new RowsOutputQueryContext(iterator.Columns);
+        await output.OpenAsync(cancellationToken);
         try
         {
-            output.QueryContext = new RowsOutputQueryContext(iterator.Columns);
-
             if (adjustColumnsLengths)
             {
                 iterator = new AdjustColumnsLengthsIterator(iterator);
             }
-            while (iterator.MoveNext())
+            while (await iterator.MoveNextAsync(cancellationToken))
             {
-                output.WriteValues(iterator.Current.Values);
+                await output.WriteValuesAsync(iterator.Current.Values, cancellationToken);
             }
         }
         finally
         {
-            output.Close();
+            await output.CloseAsync(cancellationToken);
         }
     }
 
@@ -42,8 +43,10 @@ public static class RowsOutputExtensions
     /// <param name="output">Rows output.</param>
     /// <param name="input">Rows input.</param>
     /// <param name="adjustColumnsLengths">Should update columns widths.</param>
-    public static void Write(this IRowsOutput output, IRowsInput input, bool adjustColumnsLengths = false)
+    /// <param name="cancellationToken">Cancellation token.</param>
+    public static ValueTask WriteAsync(this IRowsOutput output, IRowsInput input, bool adjustColumnsLengths = false,
+        CancellationToken cancellationToken = default)
     {
-        Write(output, new RowsInputIterator(input), adjustColumnsLengths);
+        return WriteAsync(output, new RowsInputIterator(input), adjustColumnsLengths, cancellationToken: cancellationToken);
     }
 }

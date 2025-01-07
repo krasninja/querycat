@@ -64,17 +64,17 @@ internal sealed class SelectJoinRowsInput : IRowsInputKeys, IRowsIteratorParent
     }
 
     /// <inheritdoc />
-    public void Open()
+    public async Task OpenAsync(CancellationToken cancellationToken = default)
     {
-        _leftInput.Open();
-        _rightInput.Open();
+        await _leftInput.OpenAsync(cancellationToken);
+        await _rightInput.OpenAsync(cancellationToken);
     }
 
     /// <inheritdoc />
-    public void Close()
+    public async Task CloseAsync(CancellationToken cancellationToken = default)
     {
-        _leftInput.Close();
-        _rightInput.Close();
+        await _leftInput.CloseAsync(cancellationToken);
+        await _rightInput.CloseAsync(cancellationToken);
     }
 
     /// <inheritdoc />
@@ -113,14 +113,14 @@ internal sealed class SelectJoinRowsInput : IRowsInputKeys, IRowsIteratorParent
     }
 
     /// <inheritdoc />
-    public bool ReadNext()
+    public async ValueTask<bool> ReadNextAsync(CancellationToken cancellationToken = default)
     {
-        while (_rightHasData || _leftInput.ReadNext())
+        while (_rightHasData || await _leftInput.ReadNextAsync(cancellationToken))
         {
-            while (_rightInput.ReadNext())
+            while (await _rightInput.ReadNextAsync(cancellationToken))
             {
                 _rightRowIndex++;
-                var matches = _condition.Invoke(_thread).AsBoolean;
+                var matches = (await _condition.InvokeAsync(_thread, cancellationToken)).AsBoolean;
                 if (matches)
                 {
                     _rightHasData = true;
@@ -134,7 +134,7 @@ internal sealed class SelectJoinRowsInput : IRowsInputKeys, IRowsIteratorParent
 
             // For reference: https://postgrespro.ru/docs/postgrespro/15/queries-table-expressions?lang=en#QUERIES-FROM.
             if (!_rightHasData && (_joinType == JoinType.Left || _joinType == JoinType.Right
-                || _joinType == JoinType.Full))
+                                                              || _joinType == JoinType.Full))
             {
                 _rightIsNull = true;
                 _rightHasData = true;
@@ -143,7 +143,7 @@ internal sealed class SelectJoinRowsInput : IRowsInputKeys, IRowsIteratorParent
 
             _rightIsNull = false;
             _rightHasData = false;
-            _rightInput.Reset();
+            await _rightInput.ResetAsync(cancellationToken);
             _rightRowIndex = -1;
         }
 
@@ -152,7 +152,7 @@ internal sealed class SelectJoinRowsInput : IRowsInputKeys, IRowsIteratorParent
             _rightHasData = false;
             _rightIsNull = false;
             _leftIsNull = true;
-            while (_rightInput.ReadNext())
+            while (await _rightInput.ReadNextAsync(cancellationToken))
             {
                 _rightRowIndex++;
                 if (!_fullJoinRightIncludes.Contains(_rightRowIndex))
@@ -166,10 +166,10 @@ internal sealed class SelectJoinRowsInput : IRowsInputKeys, IRowsIteratorParent
     }
 
     /// <inheritdoc />
-    public void Reset()
+    public async Task ResetAsync(CancellationToken cancellationToken = default)
     {
-        _leftInput.Reset();
-        _rightInput.Reset();
+        await _leftInput.ResetAsync(cancellationToken);
+        await _rightInput.ResetAsync(cancellationToken);
     }
 
     /// <inheritdoc />

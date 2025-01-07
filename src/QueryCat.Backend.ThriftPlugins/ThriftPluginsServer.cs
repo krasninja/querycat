@@ -98,8 +98,8 @@ public sealed partial class ThriftPluginsServer : IDisposable
             binaryProtocolFactory,
             default,
             IgnoreThriftLogs
-                ? NullLoggerFactory.Instance.CreateLogger(nameof(TSimpleAsyncServer))
-                : Application.LoggerFactory.CreateLogger(nameof(TSimpleAsyncServer)));
+                ? NullLoggerFactory.Instance.CreateLogger(nameof(TThreadPoolAsyncServer))
+                : Application.LoggerFactory.CreateLogger(nameof(TThreadPoolAsyncServer)));
     }
 
     private static TServerTransport CreateTransport(TransportType transportType, string endpoint)

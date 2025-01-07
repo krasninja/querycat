@@ -33,7 +33,9 @@ internal class ApplicationOptionsBinder : BinderBase<ApplicationOptions>
         {
             LogLevel = bindingContext.ParseResult.GetValueForOption(_logLevelOption),
 #if ENABLE_PLUGINS
-            PluginDirectories = bindingContext.ParseResult.GetValueForOption(_pluginDirectoriesOption) ?? Array.Empty<string>(),
+            PluginDirectories = (bindingContext.ParseResult.GetValueForOption(_pluginDirectoriesOption) ?? [])
+                .SelectMany(d => d.Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries))
+                .ToArray(),
 #endif
         };
     }

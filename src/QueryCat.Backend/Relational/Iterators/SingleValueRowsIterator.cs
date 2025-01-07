@@ -40,14 +40,14 @@ public sealed class SingleValueRowsIterator : IRowsIterator
     }
 
     /// <inheritdoc />
-    public bool MoveNext()
+    public ValueTask<bool> MoveNextAsync(CancellationToken cancellationToken = default)
     {
         if (_isIterated)
         {
-            return false;
+            return ValueTask.FromResult(false);
         }
         _isIterated = true;
-        return true;
+        return ValueTask.FromResult(true);
     }
 
     /// <inheritdoc />

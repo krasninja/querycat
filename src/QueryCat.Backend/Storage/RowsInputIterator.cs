@@ -2,6 +2,7 @@ using System.Runtime.CompilerServices;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Storage;
@@ -94,18 +95,32 @@ public class RowsInputIterator : IRowsIterator, IRowsIteratorParent, IDisposable
         _row = new Row(this);
     }
 
+    private void FetchAll()
+    {
+        for (var i = 0; i < Columns.Length; i++)
+        {
+            var errorCode = _rowsInput.ReadValue(i, out var value);
+            if (errorCode != ErrorCode.OK)
+            {
+                OnError?.Invoke(this,
+                    new RowsInputErrorEventArgs(_rowIndex, i + 1, errorCode));
+            }
+            _row[i] = value;
+        }
+    }
+
     /// <inheritdoc />
-    public bool MoveNext()
+    public async ValueTask<bool> MoveNextAsync(CancellationToken cancellationToken = default)
     {
         // Open rows input.
         if (_autoOpen && !_isOpened)
         {
-            _rowsInput.Open();
+            await _rowsInput.OpenAsync(cancellationToken);
             _isOpened = true;
         }
 
         // Read.
-        _hasInput = _rowsInput.ReadNext();
+        _hasInput = await _rowsInput.ReadNextAsync(cancellationToken);
 
         // Postpone columns and row initialization because some row inputs
         // has columns initialized only after first MoveNext() call.
@@ -135,24 +150,10 @@ public class RowsInputIterator : IRowsIterator, IRowsIteratorParent, IDisposable
         return _hasInput;
     }
 
-    private void FetchAll()
-    {
-        for (var i = 0; i < Columns.Length; i++)
-        {
-            var errorCode = _rowsInput.ReadValue(i, out var value);
-            if (errorCode != ErrorCode.OK)
-            {
-                OnError?.Invoke(this,
-                    new RowsInputErrorEventArgs(_rowIndex, i + 1, errorCode));
-            }
-            _row[i] = value;
-        }
-    }
-
     /// <inheritdoc />
     public void Reset()
     {
-        _rowsInput.Reset();
+        AsyncUtils.RunSync(_rowsInput.ResetAsync);
         if (!_isInitialized)
         {
             return;
@@ -181,7 +182,7 @@ public class RowsInputIterator : IRowsIterator, IRowsIteratorParent, IDisposable
     {
         if (disposing)
         {
-            _rowsInput.Close();
+            AsyncUtils.RunSync(_rowsInput.CloseAsync);
         }
     }
 

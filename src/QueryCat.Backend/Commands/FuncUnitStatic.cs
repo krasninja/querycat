@@ -1,4 +1,3 @@
-using System.Runtime.CompilerServices;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
 
@@ -10,8 +9,8 @@ internal sealed class FuncUnitStatic(VariantValue value) : IFuncUnit
     public DataType OutputType => value.Type;
 
     /// <inheritdoc />
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public VariantValue Invoke(IExecutionThread thread) => value;
+    public ValueTask<VariantValue> InvokeAsync(IExecutionThread thread, CancellationToken cancellationToken = default)
+        => ValueTask.FromResult(value);
 
     /// <inheritdoc />
     public override string ToString() => $"{nameof(FuncUnitStatic)}: {value}";

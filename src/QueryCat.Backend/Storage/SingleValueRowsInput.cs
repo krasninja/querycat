@@ -27,10 +27,10 @@ internal sealed class SingleValueRowsInput : IRowsInput
 
     public SingleValueRowsInput()
     {
-        Columns = new Column[]
-        {
+        Columns =
+        [
             new(SingleValueRowsIterator.ColumnTitle, DataType.Integer)
-        };
+        ];
     }
 
     public SingleValueRowsInput(VariantValue value)
@@ -43,8 +43,9 @@ internal sealed class SingleValueRowsInput : IRowsInput
     }
 
     /// <inheritdoc />
-    public void Open()
+    public Task OpenAsync(CancellationToken cancellationToken = default)
     {
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />
@@ -55,20 +56,21 @@ internal sealed class SingleValueRowsInput : IRowsInput
     }
 
     /// <inheritdoc />
-    public bool ReadNext()
+    public ValueTask<bool> ReadNextAsync(CancellationToken cancellationToken = default)
     {
         if (_wasRead)
         {
-            return false;
+            return ValueTask.FromResult(false);
         }
         _wasRead = true;
-        return true;
+        return ValueTask.FromResult(true);
     }
 
     /// <inheritdoc />
-    public void Reset()
+    public Task ResetAsync(CancellationToken cancellationToken = default)
     {
         _wasRead = false;
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />
@@ -78,8 +80,9 @@ internal sealed class SingleValueRowsInput : IRowsInput
     }
 
     /// <inheritdoc />
-    public void Close()
+    public Task CloseAsync(CancellationToken cancellationToken = default)
     {
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />

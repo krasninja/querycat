@@ -109,7 +109,7 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
     /// </summary>
     /// <param name="registrations">Registration delegates.</param>
     /// <returns>The instance of <see cref="ExecutionThreadBootstrapper" />.</returns>
-    public ExecutionThreadBootstrapper WithRegistrations(params Action<IFunctionsManager>[] registrations)
+    public ExecutionThreadBootstrapper WithRegistrations(params IEnumerable<Action<IFunctionsManager>> registrations)
     {
         _registrations.AddRange(registrations);
         return this;
@@ -237,20 +237,20 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
         // Register functions.
         if (_registerStandardLibrary)
         {
-            thread.FunctionsManager.RegisterFactory(StringFunctions.RegisterFunctions);
-            thread.FunctionsManager.RegisterFactory(MathFunctions.RegisterFunctions);
-            thread.FunctionsManager.RegisterFactory(DateTimeFunctions.RegisterFunctions);
-            thread.FunctionsManager.RegisterFactory(IOFunctions.RegisterFunctions);
-            thread.FunctionsManager.RegisterFactory(AggregatesRegistration.RegisterFunctions);
-            thread.FunctionsManager.RegisterFactory(Formatters.Registration.Register, postpone: false);
-            thread.FunctionsManager.RegisterFactory(Inputs.Registration.RegisterFunctions);
-            thread.FunctionsManager.RegisterFactory(CryptoFunctions.RegisterFunctions);
-            thread.FunctionsManager.RegisterFactory(MiscFunctions.RegisterFunctions);
-            thread.FunctionsManager.RegisterFactory(InfoFunctions.RegisterFunctions);
+            StringFunctions.RegisterFunctions(_functionsManager);
+            MathFunctions.RegisterFunctions(_functionsManager);
+            DateTimeFunctions.RegisterFunctions(_functionsManager);
+            IOFunctions.RegisterFunctions(_functionsManager);
+            AggregatesRegistration.RegisterFunctions(_functionsManager);
+            Formatters.Registration.Register(_functionsManager);
+            Inputs.Registration.RegisterFunctions(_functionsManager);
+            CryptoFunctions.RegisterFunctions(_functionsManager);
+            MiscFunctions.RegisterFunctions(_functionsManager);
+            InfoFunctions.RegisterFunctions(_functionsManager);
         }
         foreach (var registration in _registrations)
         {
-            thread.FunctionsManager.RegisterFactory(registration, postpone: false);
+            registration.Invoke(_functionsManager);
         }
 
         // Load plugins.

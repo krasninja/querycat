@@ -21,13 +21,15 @@ public class RowsFrameOutput : RowsOutput
     }
 
     /// <inheritdoc />
-    public override void Open()
+    public override Task OpenAsync(CancellationToken cancellationToken = default)
     {
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />
-    public override void Close()
+    public override Task CloseAsync(CancellationToken cancellationToken = default)
     {
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />

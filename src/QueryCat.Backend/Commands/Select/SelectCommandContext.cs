@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using QueryCat.Backend.Ast.Nodes.Select;
+using QueryCat.Backend.Commands.Select.Visitors;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Utils;
@@ -220,7 +221,7 @@ internal sealed class SelectCommandContext(SelectQueryNode queryNode) : CommandC
     public bool HasFinalRowsIterator { get; set; }
 
     /// <summary>
-    /// Set to <c>true</c> if there are not "SELECT *" matches.
+    /// Set to <c>true</c> if there are no "SELECT *" matches.
     /// </summary>
     public bool HasExactColumnsSelect { get; set; }
 
@@ -233,6 +234,17 @@ internal sealed class SelectCommandContext(SelectQueryNode queryNode) : CommandC
     /// Common table expressions of the query.
     /// </summary>
     internal List<CommonTableExpression> CteList { get; } = new();
+
+    /// <summary>
+    /// Returns the list of identifiers - direct references to input columns.
+    /// </summary>
+    /// <returns>List of identifiers.</returns>
+    internal Column[] GetSelectIdentifierColumns(string sourceName)
+    {
+        var identifierAstVisitor = new IdentifierAstVisitor(sourceName);
+        identifierAstVisitor.Run(queryNode);
+        return identifierAstVisitor.Columns.ToArray();
+    }
 
     public void Dump(IndentedStringBuilder stringBuilder)
     {

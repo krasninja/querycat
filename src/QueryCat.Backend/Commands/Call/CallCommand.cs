@@ -10,7 +10,7 @@ internal sealed class CallCommand : ICommand
     public IFuncUnit CreateHandler(IExecutionThread<ExecutionOptions> executionThread, StatementNode node)
     {
         var declareNode = (CallFunctionNode)node.RootNode;
-        var valueHandler = new CreateDelegateVisitor(executionThread).RunAndReturn(declareNode.FunctionCallNode);
-        return valueHandler;
+        var handler = new CreateDelegateVisitor(executionThread).RunAndReturn(declareNode.FunctionCallNode);
+        return handler;
     }
 }

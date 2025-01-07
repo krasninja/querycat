@@ -2,6 +2,7 @@ using System.CommandLine;
 using System.Diagnostics;
 using Bogus;
 using Bogus.DataSets;
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Formatters;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Storage;
@@ -22,7 +23,7 @@ internal class CreateTestCsvFileCommand : Command
 
     public CreateTestCsvFileCommand() : base("create-test-csv")
     {
-        this.SetHandler(() =>
+        this.SetHandler(async () =>
         {
             Randomizer.Seed = new Random(Seed);
 
@@ -36,22 +37,22 @@ internal class CreateTestCsvFileCommand : Command
                 var filePath = Path.Combine("../../..", UsersFileName); // Create at the project root.
                 var file = File.Create(filePath);
                 var output = new DsvFormatter(',').OpenOutput(file);
-                output.Open();
+                AsyncUtils.RunSync(output.OpenAsync);
                 output.QueryContext = new RowsOutputQueryContext(rowsFrame.Columns);
-                for (int count = 0; count < NumberOfItems; count += ChunkSize)
+                for (var count = 0; count < NumberOfItems; count += ChunkSize)
                 {
                     var usersToInsert = UsersFaker.GenerateForever().Take(ChunkSize);
                     rowsFrame.AddRows(usersToInsert);
                 }
                 foreach (var row in rowsFrame)
                 {
-                    output.WriteValues(row.Values);
+                    await output.WriteValuesAsync(row.Values);
                 }
             }
             finally
             {
                 stopwatch.Stop();
-                Console.WriteLine($"Created {UsersFileName}. Overall time spent: {stopwatch.Elapsed:c}.");
+                Console.WriteLine($@"Created {UsersFileName}. Overall time spent: {stopwatch.Elapsed:c}.");
             }
         });
     }

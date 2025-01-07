@@ -45,6 +45,9 @@
     <data name="InvalidArgument" xml:space="preserve">
         <value>Invalid argument '{0}'.</value>
     </data>
+    <data name="InvalidErrorCode" xml:space="preserve">
+        <value>Invalid error code.</value>
+    </data>
     <data name="CannotGetPath" xml:space="preserve">
         <value>Cannot get executable path.</value>
     </data>

@@ -33,7 +33,7 @@ public sealed class StatisticRowsIterator : IRowsIterator, IRowsIteratorParent
     }
 
     /// <inheritdoc />
-    public bool MoveNext()
+    public async ValueTask<bool> MoveNextAsync(CancellationToken cancellationToken = default)
     {
         if (MaxErrorsCount > -1 && _statistic.ErrorsCount >= MaxErrorsCount)
         {
@@ -44,7 +44,7 @@ public sealed class StatisticRowsIterator : IRowsIterator, IRowsIteratorParent
             return false;
         }
 
-        var result = _rowsIterator.MoveNext();
+        var result = await _rowsIterator.MoveNextAsync(cancellationToken);
         if (result)
         {
             _statistic.ProcessedCount++;

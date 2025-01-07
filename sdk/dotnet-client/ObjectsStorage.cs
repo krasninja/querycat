@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Plugins.Sdk;
 
 namespace QueryCat.Plugins.Client;
@@ -76,7 +77,7 @@ public sealed class ObjectsStorage
         {
             if (_objects[index] is IRowsSource rowsSource)
             {
-                rowsSource.Close();
+                AsyncUtils.RunSync(rowsSource.CloseAsync);
             }
             if (_objects[index] is IDisposable disposable)
             {

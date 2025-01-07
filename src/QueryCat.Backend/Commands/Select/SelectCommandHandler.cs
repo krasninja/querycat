@@ -1,5 +1,6 @@
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend.Commands.Select;
 
@@ -16,19 +17,19 @@ internal sealed class SelectCommandHandler : IFuncUnit, IDisposable
     }
 
     /// <inheritdoc />
-    public VariantValue Invoke(IExecutionThread thread)
+    public async ValueTask<VariantValue> InvokeAsync(IExecutionThread thread, CancellationToken cancellationToken = default)
     {
-        ResetVariablesBoundRowsInputs();
+        await ResetVariablesBoundRowsInputsAsync(cancellationToken);
         return VariantValue.CreateFromObject(SelectCommandContext.CurrentIterator);
     }
 
-    private void ResetVariablesBoundRowsInputs()
+    private async ValueTask ResetVariablesBoundRowsInputsAsync(CancellationToken cancellationToken)
     {
         foreach (var inputQueryContext in SelectCommandContext.Inputs)
         {
             if (inputQueryContext.IsVariableBound)
             {
-                inputQueryContext.RowsInput.Reset();
+                await inputQueryContext.RowsInput.ResetAsync(cancellationToken);
             }
         }
     }

@@ -6,7 +6,7 @@ namespace QueryCat.Backend.Core.Utils;
 /// <summary>
 /// String utils.
 /// </summary>
-internal static class StringUtils
+public static class StringUtils
 {
     private const string QuoteChar = "\"";
     private static readonly SimpleObjectPool<StringBuilder> _stringBuilderPool = new(
@@ -65,10 +65,14 @@ internal static class StringUtils
     /// <summary>
     /// Get fields array from string using the specified delimiter.
     /// </summary>
+    /// <param name="line">Target line to split.</param>
+    /// <param name="delimiter">Delimiter.</param>
+    /// <param name="quoteChar">Quote char.</param>
+    /// <returns>Fields.</returns>
     /// <remarks>
     /// Source: https://www.codeproject.com/Tips/823670/Csharp-Light-and-Fast-CSV-Parser.
     /// </remarks>
-    public static string[] GetFieldsFromLine(string line, char delimiter = ',')
+    public static List<string> GetFieldsFromLine(string line, char delimiter = ',', char quoteChar = '"')
     {
         var inQuote = false;
         var record = new List<string>();
@@ -106,7 +110,7 @@ internal static class StringUtils
             }
             else if (sb.Length == 0 && !inQuote)
             {
-                if (readChar == '"')
+                if (readChar == quoteChar)
                 {
                     inQuote = true;
                 }
@@ -136,14 +140,14 @@ internal static class StringUtils
                     sb.Clear();
                 }
             }
-            else if (readChar == '"')
+            else if (readChar == quoteChar)
             {
                 if (inQuote)
                 {
-                    if ((char)reader.Peek() == '"')
+                    if ((char)reader.Peek() == quoteChar)
                     {
                         reader.Read();
-                        sb.Append('"');
+                        sb.Append(quoteChar);
                     }
                     else
                     {
@@ -167,7 +171,7 @@ internal static class StringUtils
         }
 
         _stringBuilderPool.Return(sb);
-        return record.ToArray();
+        return record;
     }
 
     /// <summary>
@@ -179,7 +183,7 @@ internal static class StringUtils
     /// <param name="startIndex">The zero-based starting character position of a substring in this instance.</param>
     /// <param name="length">The number of characters in the substring.</param>
     /// <returns>Substring.</returns>
-    public static string SafeSubstring(string? target, int startIndex, int length = 0)
+    internal static string SafeSubstring(string? target, int startIndex, int length = 0)
     {
         if (target == null)
         {
@@ -210,7 +214,7 @@ internal static class StringUtils
     /// </summary>
     /// <param name="text">Text to unwrap.</param>
     /// <returns>Unwrapped text.</returns>
-    public static string GetUnwrappedText(string text)
+    internal static string GetUnwrappedText(string text)
     {
         if (text.StartsWith('\'') && text.EndsWith('\''))
         {
@@ -228,7 +232,7 @@ internal static class StringUtils
     /// </summary>
     /// <param name="str">String pattern.</param>
     /// <returns>Converted string.</returns>
-    public static string Unescape(string str)
+    internal static string Unescape(string str)
     {
         if (str.IndexOf('\\') < 0)
         {

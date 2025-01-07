@@ -24,13 +24,13 @@ internal sealed class OffsetRowsIterator : IRowsIterator, IRowsIteratorParent
     }
 
     /// <inheritdoc />
-    public bool MoveNext()
+    public async ValueTask<bool> MoveNextAsync(CancellationToken cancellationToken = default)
     {
-        while (_offset > _count && _rowsIterator.MoveNext())
+        while (_offset > _count && await _rowsIterator.MoveNextAsync(cancellationToken))
         {
             _count++;
         }
-        return _rowsIterator.MoveNext();
+        return await _rowsIterator.MoveNextAsync(cancellationToken);
     }
 
     /// <inheritdoc />

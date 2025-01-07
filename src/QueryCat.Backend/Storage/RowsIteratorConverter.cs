@@ -1,14 +1,13 @@
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Relational.Iterators;
-using QueryCat.Backend.Storage;
 
-namespace QueryCat.Backend.Execution;
+namespace QueryCat.Backend.Storage;
 
 /// <summary>
-/// Utilities for <see cref="ExecutionThread" />.
+/// Utilities for <see cref="IRowsIterator" />.
 /// </summary>
-public static class ExecutionThreadUtils
+public static class RowsIteratorConverter
 {
     /// <summary>
     /// Convert variant value to enumerable of rows. It analyzes the internal
@@ -16,7 +15,7 @@ public static class ExecutionThreadUtils
     /// </summary>
     /// <param name="variantValue">Variant value.</param>
     /// <returns>Enumerable of rows.</returns>
-    public static IRowsIterator ConvertToIterator(VariantValue variantValue)
+    public static IRowsIterator Convert(VariantValue variantValue)
     {
         var type = variantValue.Type;
         if (type == DataType.Null)

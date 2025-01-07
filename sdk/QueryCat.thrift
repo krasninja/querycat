@@ -2,6 +2,7 @@ namespace netstd QueryCat.Plugins.Sdk
 namespace cpp querycat.plugins.sdk
 namespace py querycat.plugins.sdk
 namespace rb querycat.plugins.sdk
+namespace js QueryCat.Plugins.Sdk
 
 /*
  * Common Types
@@ -26,7 +27,7 @@ enum ObjectType {
   ROWS_ITERATOR = 11, // Interfaces: IRowsIterator.
   ROWS_OUTPUT = 12, // Interfaces: IRowsOutput, IRowsSource.
   BLOB = 13, // Binary data.
-  JSON = 14
+  JSON = 14 // JSON.
 }
 
 // To refer to objects we use special identifiers: handles.
@@ -50,6 +51,7 @@ union VariantValue {
 }
 
 enum DataType {
+  VOID = -1,
   NULL = 0,
   INTEGER = 1,
   STRING = 2,
@@ -59,7 +61,8 @@ enum DataType {
   NUMERIC = 6,
   INTERVAL = 7,
   BLOB = 8,
-  OBJECT = 40 // See ObjectType.
+  OBJECT = 40, // See ObjectType.
+  DYNAMIC = 41
 }
 
 enum LogLevel {
@@ -72,6 +75,7 @@ enum LogLevel {
   NONE = 6
 }
 
+// Exception error types.
 enum ErrorType {
   SUCCESS = 0,
   GENERIC = 1,
@@ -82,6 +86,25 @@ enum ErrorType {
 
   INVALID_AUTH_TOKEN = 10,
   INVALID_FUNCTION = 11
+}
+
+// The error code that is returned by several QueryCat methods.
+enum QueryCatErrorCode {
+  OK = 0,
+  ERROR = 1,
+  DELETED = 2,
+  NO_DATA = 3,
+  NOT_SUPPORTED = 4,
+  NOT_INITIALIZED = 5,
+  ACCESS_DENIED = 6,
+  INVALID_ARGUMENTS = 7,
+  ABORTED = 8,
+  CLOSED = 9,
+
+  CANNOT_CAST = 100,
+  CANNOT_APPLY_OPERATOR = 101,
+  INVALID_COLUMN_INDEX = 102,
+  INVALID_INPUT_STATE = 103
 }
 
 exception QueryCatPluginException {
@@ -99,10 +122,15 @@ exception QueryCatPluginException {
  */
 
 struct Function {
+  // Function call signature.
   1: required string signature,
   2: required string description,
+  // Is it for aggregate queries?
   3: required bool is_aggregate,
-  4: bool is_safe
+  // The function is safe if it only reads data.
+  4: optional bool is_safe,
+  // Register formatter for a specific file extensions or MIME types.
+  5: optional list<string> formatter_ids
 }
 
 struct PluginData {
@@ -115,8 +143,8 @@ struct PluginData {
 }
 
 struct RegistrationResult {
-  1: required string version,
-  2: required list<i32> functions_ids
+  1: required string version, // QueryCat version.
+  2: required list<i32> functions_ids // Registered functions identifiers.
 }
 
 service PluginsManager {
@@ -144,7 +172,7 @@ service PluginsManager {
     2: map<string, VariantValue> parameters
   ) throws (1: QueryCatPluginException e),
 
-  // Set configuration value.
+  // Set the configuration value.
   void SetConfigValue(
     1: required string key,
     2: required VariantValue value
@@ -153,6 +181,18 @@ service PluginsManager {
   // Get configuration value.
   VariantValue GetConfigValue(
     1: required string key
+  ) throws (1: QueryCatPluginException e),
+
+  // Get variable value. If variable doesn't exist - the NULL will be returned.
+  VariantValue GetVariable(
+    1: required string name
+  ) throws (1: QueryCatPluginException e),
+
+  // Set the variable value. The new variable will be created or the existing value will
+  // be overriden.
+  VariantValue SetVariable(
+    1: required string name,
+    2: required VariantValue value
   ) throws (1: QueryCatPluginException e),
 
   // Logging.
@@ -181,14 +221,14 @@ struct RowsList {
 }
 
 struct KeyColumn {
-  1: required i32 column_index,
-  2: required bool is_required,
-  3: required list<string> operations
+  1: required i32 column_index, // Column index in rows iterator or table.
+  2: required bool is_required, // If required - user must specify the column in WHERE block.
+  3: required list<string> operations // Supported operations.
 }
 
 // Contains the information about the executing query. Can be used for optimization.
 struct ContextQueryInfo {
-  1: required list<string> columns,
+  1: required list<Column> columns,
   2: required i64 offset,
   3: optional i64 limit
 }
@@ -269,7 +309,7 @@ service Plugin {
 
   // Update the rows set value.
   // Supported objects: ROWS_INPUT with rows update support.
-  bool RowsSet_UpdateValue(
+  QueryCatErrorCode RowsSet_UpdateValue(
     1: required Handle object_handle,
     2: required i32 column_index,
     3: required VariantValue value
@@ -277,9 +317,14 @@ service Plugin {
 
   // Write new row (values) to rows set.
   // Supported objects: ROWS_OUTPUT.
-  void RowsSet_WriteValue(
+  QueryCatErrorCode RowsSet_WriteValues(
     1: required Handle object_handle,
     2: required list<VariantValue> values // Should match columns count.
+  ) throws (1: QueryCatPluginException e),
+
+  // Delete the current row.
+  QueryCatErrorCode RowsSet_DeleteRow(
+    1: required Handle object_handle
   ) throws (1: QueryCatPluginException e),
 
   // Read binary data.

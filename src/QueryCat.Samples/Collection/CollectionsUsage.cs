@@ -25,7 +25,7 @@ internal class CollectionsUsage : BaseUsage
     }
 
     /// <inheritdoc />
-    public override void Run()
+    public override async Task RunAsync()
     {
         // Arrange.
         var executionThread = new ExecutionThreadBootstrapper().Create();
@@ -48,11 +48,11 @@ internal class CollectionsUsage : BaseUsage
             new("20411", "Newport Beach, CA"),
         };
 
-        var buildingsInput = new EnumerableRowsInput<Building>(buildings,
+        var buildingsInput = EnumerableRowsInput<Building>.FromSource(buildings,
             builder => builder
                 .AddProperty("name", f => f.Name)
                 .AddProperty("zip", f => f.PostalCode));
-        var citiesInput = new EnumerableRowsInput<City>(cities,
+        var citiesInput = EnumerableRowsInput<City>.FromSource(cities,
             builder => builder
                 .AddProperty("zip", f => f.PostalCode)
                 .AddProperty("city", f => f.CityName));
@@ -60,12 +60,12 @@ internal class CollectionsUsage : BaseUsage
         // Act.
         executionThread.TopScope.Variables["buildings"] = VariantValue.CreateFromObject(buildingsInput);
         executionThread.TopScope.Variables["cities"] = VariantValue.CreateFromObject(citiesInput);
-        var result = executionThread.Run(
+        var result = await executionThread.RunAsync(
             "SELECT b.name, c.city FROM buildings b LEFT JOIN cities c ON b.zip = c.zip;");
 
         // Out.
         var sb = new StringBuilder();
-        new TextTableOutput(sb).Write(result.AsRequired<IRowsIterator>(), adjustColumnsLengths: true);
+        await new TextTableOutput(sb).WriteAsync(result.AsRequired<IRowsIterator>(), adjustColumnsLengths: true);
         Console.WriteLine(sb);
         /*
          | b.name                                                                 | c.city            |

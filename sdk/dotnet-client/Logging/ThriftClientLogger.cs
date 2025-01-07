@@ -48,7 +48,7 @@ internal sealed class ThriftClientLogger : ILogger
         }
 
         var message = string.Concat(_name, ": ",  formatter.Invoke(state, exception));
-        AsyncUtils.RunSync(() => _client.LogAsync(
+        AsyncUtils.RunSync(ct => _client.LogAsync(
             level: GetLogLevelString(logLevel),
             message: message)
         );

@@ -71,13 +71,13 @@ public interface IExecutionThread : IDisposable
     /// <param name="query">Query.</param>
     /// <param name="parameters">Query parameters. They will be used in a separate scope.</param>
     /// <param name="cancellationToken">Cancellation token to cancel the request execution.</param>
-    VariantValue Run(
+    Task<VariantValue> RunAsync(
         string query,
         IDictionary<string, VariantValue>? parameters = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Try get variable value from top scope to the root recursively.
+    /// Try to get variable value from top scope to the root recursively.
     /// </summary>
     /// <param name="name">Variable name.</param>
     /// <param name="value">Variable value.</param>

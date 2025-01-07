@@ -141,15 +141,6 @@ public static class AsyncUtils
         => RunSync(() => taskFunc.Invoke(CancellationToken.None));
 
     /// <summary>
-    /// Executes an async Task method which has a void return value synchronously.
-    /// </summary>
-    /// <param name="task">Task.</param>
-    public static void RunSyncValueTask(Func<ValueTask> task)
-    {
-        RunSync(() => task.Invoke().AsTask());
-    }
-
-    /// <summary>
     /// Executes an async Task method which has a T return value synchronously.
     /// </summary>
     /// <param name="taskFunc">Task.</param>
@@ -202,12 +193,21 @@ public static class AsyncUtils
         => RunSync(() => task.Invoke(CancellationToken.None));
 
     /// <summary>
-    /// Executes an async Task method which has a T return value synchronously.
+    /// Executes an async ValueTask method which has a T return value synchronously.
     /// </summary>
     /// <param name="task">Task.</param>
-    public static T? RunSyncValueTask<T>(Func<ValueTask<T>> task)
+    public static T? RunSync<T>(Func<ValueTask<T>> task)
     {
-        return RunSync(() => task.Invoke().AsTask());
+        return task.Invoke().GetAwaiter().GetResult();
+    }
+
+    /// <summary>
+    /// Executes an async ValueTask method.
+    /// </summary>
+    /// <param name="task">Task.</param>
+    public static void RunSync(Func<ValueTask> task)
+    {
+        task.Invoke().GetAwaiter().GetResult();
     }
 
     /// <summary>
@@ -226,5 +226,22 @@ public static class AsyncUtils
             results.Add(item);
         }
         return results;
+    }
+
+    /// <summary>
+    /// Convert <see cref="IEnumerable{T}" /> to <see cref="IAsyncEnumerable{T}" />.
+    /// </summary>
+    /// <param name="source"></param>
+    /// <typeparam name="TSource"></typeparam>
+    /// <returns></returns>
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
+    public static async IAsyncEnumerable<TSource> ToAsyncEnumerable<TSource>(this IEnumerable<TSource> source)
+#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
+    {
+        using var enumerator = source.GetEnumerator();
+        while (enumerator.MoveNext())
+        {
+            yield return enumerator.Current;
+        }
     }
 }

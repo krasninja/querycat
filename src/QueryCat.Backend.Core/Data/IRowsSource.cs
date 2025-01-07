@@ -16,15 +16,21 @@ public interface IRowsSource
     /// it should prepare all necessary data (handles, connections) to be able
     /// to write rows. As for reading, it should initialize Columns.
     /// </summary>
-    void Open();
+    /// <param name="cancellationToken">A cancellation token to observe.</param>
+    /// <returns>Awaitable task.</returns>
+    Task OpenAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Close source.
     /// </summary>
-    void Close();
+    /// <param name="cancellationToken">A cancellation token to observe.</param>
+    /// <returns>Awaitable task.</returns>
+    Task CloseAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Sets the input or output to its initial position.
     /// </summary>
-    void Reset();
+    /// <param name="cancellationToken">A cancellation token to observe.</param>
+    /// <returns>Awaitable task.</returns>
+    Task ResetAsync(CancellationToken cancellationToken = default);
 }

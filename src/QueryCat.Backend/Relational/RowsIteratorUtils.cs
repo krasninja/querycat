@@ -11,7 +11,7 @@ public static class RowsIteratorUtils
     private sealed class EmptyRowsIterator : IRowsIterator
     {
         /// <inheritdoc />
-        public Column[] Columns => Array.Empty<Column>();
+        public Column[] Columns => [];
 
         /// <inheritdoc />
         public Row Current { get; }
@@ -22,7 +22,8 @@ public static class RowsIteratorUtils
         }
 
         /// <inheritdoc />
-        public bool MoveNext() => false;
+        public ValueTask<bool> MoveNextAsync(CancellationToken cancellationToken = default)
+            => ValueTask.FromResult(false);
 
         /// <inheritdoc />
         public void Reset()
@@ -48,14 +49,16 @@ public static class RowsIteratorUtils
     /// <param name="rowsIterator">Rows iterator to read.</param>
     /// <param name="numberOfRowsToAnalyze">Number of rows to analyze, default is 10.</param>
     /// <param name="skipColumnsIndexes">Skip certain columns by indexes.</param>
-    public static void ResolveColumnsTypes(IRowsIterator rowsIterator, int numberOfRowsToAnalyze = 10,
-        int[]? skipColumnsIndexes = null)
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Awaitable task.</returns>
+    public static async Task ResolveColumnsTypesAsync(IRowsIterator rowsIterator, int numberOfRowsToAnalyze = 10,
+        int[]? skipColumnsIndexes = null, CancellationToken cancellationToken = default)
     {
-        skipColumnsIndexes ??= Array.Empty<int>();
+        skipColumnsIndexes ??= [];
 
         // Read.
         RowsFrame? rowsFrame = null;
-        for (var rowIndex = 0; rowIndex < numberOfRowsToAnalyze && rowsIterator.MoveNext(); rowIndex++)
+        for (var rowIndex = 0; rowIndex < numberOfRowsToAnalyze && await rowsIterator.MoveNextAsync(cancellationToken); rowIndex++)
         {
             // In some rows iterators the Columns property is initialized during first MoveNext() call,
             // so we postpone rows frame initialization.
@@ -88,15 +91,17 @@ public static class RowsIteratorUtils
     /// </summary>
     /// <param name="rowsIterator">Rows iterator.</param>
     /// <param name="numberOfRowsToAnalyze">First number of rows to analyze.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns><c>True</c> if it possibly contains a header, <c>false</c> otherwise.</returns>
-    public static bool DetermineIfHasHeader(IRowsIterator rowsIterator, int numberOfRowsToAnalyze = 10)
+    public static async Task<bool> DetermineIfHasHeaderAsync(IRowsIterator rowsIterator, int numberOfRowsToAnalyze = 10,
+        CancellationToken cancellationToken = default)
     {
         // Probably it should be something like this:
         // https://github.com/python/cpython/blob/main/Lib/csv.py#L390.
 
         var rowsFrame = new RowsFrame(rowsIterator.Columns);
         var countDown = numberOfRowsToAnalyze;
-        while (rowsIterator.MoveNext() && countDown > 0)
+        while (await rowsIterator.MoveNextAsync(cancellationToken) && countDown > 0)
         {
             rowsFrame.AddRow(rowsIterator.Current);
             countDown--;
@@ -107,12 +112,12 @@ public static class RowsIteratorUtils
             return false;
         }
 
-        int hasHeader = 0;
+        var hasHeader = 0;
 
         for (var columnIndex = 0; columnIndex < rowsFrame.Columns.Length; columnIndex++)
         {
             var values = rowsFrame.GetColumnValues(columnIndex);
-            var headerType = DataTypeUtils.DetermineTypeByValues(new[] { values.First() });
+            var headerType = DataTypeUtils.DetermineTypeByValues([values.First()]);
             var rowsType = DataTypeUtils.DetermineTypeByValues(values.Skip(1));
 
             // If there are more than 70% empty values - probably it is a bad header column. Skip if first value
@@ -143,7 +148,7 @@ public static class RowsIteratorUtils
             }
         }
 
-        // By default consider this as header.
+        // By default, consider this as header.
         return hasHeader >= 0;
     }
 }

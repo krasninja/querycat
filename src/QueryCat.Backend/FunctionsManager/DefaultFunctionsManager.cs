@@ -3,6 +3,7 @@ using System.Reflection;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
@@ -26,15 +27,11 @@ public sealed partial class DefaultFunctionsManager : IFunctionsManager
     private readonly Dictionary<string, IAggregateFunction> _aggregateFunctions = new();
 
     private readonly Dictionary<string, FunctionPreRegistration> _functionsPreRegistration = new();
-    private readonly List<Action<DefaultFunctionsManager>> _registerFunctions = [];
-    private int _registerFunctionsLastIndex;
 
     private readonly List<Action<DefaultFunctionsManager>> _registerAggregateFunctions = [];
     private int _registerAggregateFunctionsLastIndex;
 
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(DefaultFunctionsManager));
-
-    private static readonly List<Function> _emptyFunctionList = new();
 
     private static VariantValue EmptyFunction(IExecutionThread thread)
     {
@@ -52,24 +49,12 @@ public sealed partial class DefaultFunctionsManager : IFunctionsManager
 
     #region Registration
 
-    /// <inheritdoc />
-    public void RegisterFactory(Action<IFunctionsManager> registerFunction, bool postpone = true)
-    {
-        if (postpone)
-        {
-            _registerFunctions.Add(registerFunction);
-        }
-        else
-        {
-            registerFunction.Invoke(this);
-        }
-    }
-
     private string PreRegisterFunction(
         string signature,
         FunctionDelegate functionDelegate,
         string? functionName = null,
-        string? description = null)
+        string? description = null,
+        string[]? formatterIds = null)
     {
         functionName ??= GetFunctionName(signature);
 
@@ -84,15 +69,32 @@ public sealed partial class DefaultFunctionsManager : IFunctionsManager
                 new FunctionPreRegistration(functionDelegate, signatures, description));
         }
 
+        // Register as formatter.
+        if (formatterIds != null)
+        {
+            foreach (var formatterId in formatterIds)
+            {
+                Formatters.FormattersInfo.RegisterFormatter(formatterId,
+                    (fm, et, args) => fm.CallFunction(functionName, et, args).AsRequired<IRowsFormatter>());
+            }
+        }
+
         return functionName;
     }
 
     /// <inheritdoc />
-    public string RegisterFunction(string signature, FunctionDelegate @delegate,
-        string? description = null)
+    public string RegisterFunction(
+        string signature,
+        FunctionDelegate @delegate,
+        string? description = null,
+        string[]? formatterIds = null)
     {
         ArgumentException.ThrowIfNullOrEmpty(signature, nameof(signature));
-        return PreRegisterFunction(signature, @delegate, description: description);
+        return PreRegisterFunction(
+            signature,
+            @delegate,
+            description: description,
+            formatterIds: formatterIds);
     }
 
     private bool TryGetPreRegistration(string name, out List<Function> functions)
@@ -101,17 +103,6 @@ public sealed partial class DefaultFunctionsManager : IFunctionsManager
         {
             functions = RegisterFunction(functionInfo);
             return true;
-        }
-
-        // Execute function actions and try to find it again.
-        while (_registerFunctionsLastIndex < _registerFunctions.Count)
-        {
-            _registerFunctions[_registerFunctionsLastIndex++].Invoke(this);
-            if (_functionsPreRegistration.Remove(name, out functionInfo))
-            {
-                functions = RegisterFunction(functionInfo);
-                return true;
-            }
         }
 
         functions = new List<Function>();
@@ -151,7 +142,13 @@ public sealed partial class DefaultFunctionsManager : IFunctionsManager
 
     private List<Function> RegisterFunction(FunctionPreRegistration preRegistration)
     {
-        List<Function>? functionsList = null;
+        List<Function> functionsList = new();
+
+        if (preRegistration.Signatures.Count < 1)
+        {
+            return functionsList;
+        }
+
         foreach (var signature in preRegistration.Signatures)
         {
             var signatureAst = _astBuilder.BuildFunctionSignatureFromString(signature);
@@ -173,7 +170,8 @@ public sealed partial class DefaultFunctionsManager : IFunctionsManager
             }
             functionsList = functions;
         }
-        return functionsList ?? _emptyFunctionList;
+
+        return functionsList;
     }
 
     /// <inheritdoc />
@@ -300,11 +298,6 @@ public sealed partial class DefaultFunctionsManager : IFunctionsManager
     /// <returns>Functions enumerable.</returns>
     public IEnumerable<IFunction> GetFunctions()
     {
-        while (_registerFunctionsLastIndex < _registerFunctions.Count)
-        {
-            _registerFunctions[_registerFunctionsLastIndex++].Invoke(this);
-        }
-
         foreach (var function in _functions.Values.SelectMany(f => f))
         {
             yield return function;

@@ -23,20 +23,19 @@ public sealed class NullFunctionsManager : IFunctionsManager
     }
 
     /// <inheritdoc />
-    public string RegisterFunction(string signature, FunctionDelegate @delegate, string? description = null)
+    public string RegisterFunction(
+        string signature,
+        FunctionDelegate @delegate,
+        string? description = null,
+        string[]? formatterIds = null)
     {
         return string.Empty;
     }
 
     /// <inheritdoc />
-    public void RegisterFactory(Action<IFunctionsManager> registerFunction, bool postpone = true)
-    {
-    }
-
-    /// <inheritdoc />
     public bool TryFindByName(string name, FunctionCallArgumentsTypes? functionArgumentsTypes, out IFunction[] functions)
     {
-        functions = Array.Empty<IFunction>();
+        functions = [];
         return false;
     }
 

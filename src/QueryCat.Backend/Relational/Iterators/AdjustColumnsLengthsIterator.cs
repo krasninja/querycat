@@ -1,3 +1,4 @@
+using System.Globalization;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
 
@@ -11,32 +12,33 @@ public class AdjustColumnsLengthsIterator : IRowsIterator, IRowsIteratorParent
 {
     private const int MaxRowsToAnalyze = 10;
 
+    private readonly IRowsIterator _rowsIterator;
     private readonly int _maxRowsToAnalyze;
     private readonly CacheRowsIterator _cacheRowsIterator;
     private bool _isInitialized;
 
     /// <inheritdoc />
-    public Column[] Columns { get; }
+    public Column[] Columns => _rowsIterator.Columns;
 
     /// <inheritdoc />
     public Row Current => _cacheRowsIterator.Current;
 
     public AdjustColumnsLengthsIterator(IRowsIterator rowsIterator, int maxRowsToAnalyze = MaxRowsToAnalyze)
     {
+        _rowsIterator = rowsIterator;
         _maxRowsToAnalyze = maxRowsToAnalyze;
         _cacheRowsIterator = new CacheRowsIterator(rowsIterator);
-        Columns = rowsIterator.Columns;
     }
 
     /// <inheritdoc />
-    public bool MoveNext()
+    public async ValueTask<bool> MoveNextAsync(CancellationToken cancellationToken = default)
     {
         if (!_isInitialized)
         {
-            Initialize();
+            await InitializeAsync(cancellationToken);
         }
 
-        return _cacheRowsIterator.MoveNext();
+        return await _cacheRowsIterator.MoveNextAsync(cancellationToken);
     }
 
     /// <inheritdoc />
@@ -52,7 +54,7 @@ public class AdjustColumnsLengthsIterator : IRowsIterator, IRowsIteratorParent
         stringBuilder.AppendRowsIteratorsWithIndent("Adj Columns", _cacheRowsIterator);
     }
 
-    private void Initialize()
+    private async ValueTask InitializeAsync(CancellationToken cancellationToken)
     {
         foreach (var column in Columns)
         {
@@ -62,7 +64,7 @@ public class AdjustColumnsLengthsIterator : IRowsIterator, IRowsIteratorParent
             }
         }
 
-        while (_cacheRowsIterator.MoveNext() && _cacheRowsIterator.Position < _maxRowsToAnalyze)
+        while (await _cacheRowsIterator.MoveNextAsync(cancellationToken) && _cacheRowsIterator.Position < _maxRowsToAnalyze)
         {
             for (var i = 0; i < Columns.Length; i++)
             {
@@ -71,7 +73,7 @@ public class AdjustColumnsLengthsIterator : IRowsIterator, IRowsIteratorParent
                 {
                     continue;
                 }
-                var value = _cacheRowsIterator.Current[i].ToString();
+                var value = _cacheRowsIterator.Current[i].ToString(CultureInfo.InvariantCulture);
                 if (value.Length > Columns[i].Length)
                 {
                     Columns[i].Length = value.Length;

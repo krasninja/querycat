@@ -36,6 +36,7 @@ internal class DsvFormatter : IRowsFormatter
             delimiter_can_repeat?: boolean := false)
                 : object<IRowsFormatter>
         """)]
+    [FunctionFormatters(".csv", "text/csv", "text/csv", "text/x-csv", "application/csv", "application/x-csv")]
     public static VariantValue Csv(IExecutionThread thread)
     {
         var hasHeader = thread.Stack[0].AsBooleanNullable;

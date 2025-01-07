@@ -1,0 +1,8 @@
+expected: |
+  1
+  2
+  3
+query: |
+  select a.* from
+    read_text(e'1\n2\n3', Fmt=>csv(has_header=>false)) as a,
+    read_text(e'7\n', Fmt=>csv(has_header=>false)) as b;

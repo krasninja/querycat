@@ -16,7 +16,7 @@ public static class ExecutionThreadExtensions
     /// <param name="args">Arguments.</param>
     /// <returns>Return value.</returns>
     public static VariantValue CallFunction(
-        this IExecutionThread executionThread, FunctionDelegate functionDelegate, params object[] args)
+        this IExecutionThread executionThread, FunctionDelegate functionDelegate, params ReadOnlySpan<object> args)
     {
         using var frame = executionThread.Stack.CreateFrame();
         foreach (var arg in args)
@@ -35,7 +35,7 @@ public static class ExecutionThreadExtensions
     /// <param name="parameters">Object.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Return value.</returns>
-    public static VariantValue RunWithScope(
+    public static Task<VariantValue> RunWithScopeAsync(
         this IExecutionThread executionThread,
         string query,
         object?[] parameters,
@@ -57,7 +57,7 @@ public static class ExecutionThreadExtensions
             }
         }
 
-        return executionThread.Run(query, parametersDict, cancellationToken);
+        return executionThread.RunAsync(query, parametersDict, cancellationToken);
     }
 
     #region Variables

@@ -28,9 +28,9 @@ public class SamplePluginRowsInput : IRowsInput
 
     /// <inheritdoc />
     public Column[] Columns { get; } =
-    {
+    [
         new("id", DataType.Integer, "Key.")
-    };
+    ];
 
     /// <inheritdoc />
     public string[] UniqueKey { get; } = [];
@@ -48,15 +48,17 @@ public class SamplePluginRowsInput : IRowsInput
     }
 
     /// <inheritdoc />
-    public void Open()
+    public Task OpenAsync(CancellationToken cancellationToken = default)
     {
-        Trace.WriteLine(nameof(Open));
+        Trace.WriteLine(nameof(OpenAsync));
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />
-    public void Close()
+    public Task CloseAsync(CancellationToken cancellationToken = default)
     {
-        Trace.WriteLine(nameof(Close));
+        Trace.WriteLine(nameof(CloseAsync));
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />
@@ -74,22 +76,23 @@ public class SamplePluginRowsInput : IRowsInput
     }
 
     /// <inheritdoc />
-    public bool ReadNext()
+    public ValueTask<bool> ReadNextAsync(CancellationToken cancellationToken = default)
     {
-        Trace.WriteLine(nameof(ReadNext));
+        Trace.WriteLine(nameof(ReadNextAsync));
         if (_currentState >= MaxValue)
         {
-            return false;
+            return ValueTask.FromResult(false);
         }
         _currentState++;
-        return true;
+        return ValueTask.FromResult(true);
     }
 
     /// <inheritdoc />
-    public void Reset()
+    public Task ResetAsync(CancellationToken cancellationToken = default)
     {
-        Trace.WriteLine(nameof(Reset));
+        Trace.WriteLine(nameof(ResetAsync));
         _currentState = 0;
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />

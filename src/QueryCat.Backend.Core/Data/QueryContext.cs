@@ -13,5 +13,5 @@ public abstract class QueryContext
     /// <summary>
     /// Input config storage.
     /// </summary>
-    public IInputConfigStorage InputConfigStorage { get; set; } = new NullInputConfigStorage();
+    public IInputConfigStorage InputConfigStorage { get; set; } = NullInputConfigStorage.Instance;
 }

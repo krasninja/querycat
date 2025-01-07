@@ -70,7 +70,7 @@ internal class ColumnsInfoContainer
     /// </summary>
     /// <param name="column">The <see cref="Column" /> instance.</param>
     /// <returns>Column information.</returns>
-    public ColumnInfo GetByColumn(Column column)
+    public ColumnInfo GetByColumnOrAdd(Column column)
     {
         var info = _columns.Find(c => c.Column.Id == column.Id);
         if (info == null)

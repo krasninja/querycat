@@ -8,7 +8,7 @@ public sealed class QueryContextQueryInfo
     /// <summary>
     /// Get columns for select.
     /// </summary>
-    public IReadOnlyList<Column> Columns { get; }
+    public Column[] Columns { get; }
 
     /// <summary>
     /// Rows offset.
@@ -27,7 +27,7 @@ public sealed class QueryContextQueryInfo
     /// <param name="limit">Select limit.</param>
     public QueryContextQueryInfo(IReadOnlyList<Column> columns, long? limit = null)
     {
-        Columns = columns;
+        Columns = columns.ToArray();
         Limit = limit;
     }
 }

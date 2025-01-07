@@ -29,16 +29,16 @@ internal sealed class UpdateCommandHandler : IFuncUnit
     }
 
     /// <inheritdoc />
-    public VariantValue Invoke(IExecutionThread thread)
+    public async ValueTask<VariantValue> InvokeAsync(IExecutionThread thread, CancellationToken cancellationToken = default)
     {
         var updateCount = 0;
-        while (_selectCommandContext.CurrentIterator.MoveNext())
+        while (await _selectCommandContext.CurrentIterator.MoveNextAsync(cancellationToken))
         {
             updateCount++;
             foreach (var setter in _setters)
             {
-                var value = setter.FuncUnit.Invoke(thread);
-                _rowsInput.UpdateValue(setter.ColumnIndex, value);
+                var value = await setter.FuncUnit.InvokeAsync(thread, cancellationToken);
+                await _rowsInput.UpdateValueAsync(setter.ColumnIndex, value, cancellationToken);
             }
         }
 

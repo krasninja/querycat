@@ -76,4 +76,9 @@ public class ExecutionOptions
     /// Max number of completion to return.
     /// </summary>
     public int CompletionsCount { get; set; } = 20;
+
+    /// <summary>
+    /// Max number of threads that can access the thread.
+    /// </summary>
+    public int ConcurrencyLevel { get; set; } = 32;
 }

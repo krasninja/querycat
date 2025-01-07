@@ -106,7 +106,7 @@ selectWithColumnList: name=identifier (COMMA name=identifier)*;
 
 // Columns.
 selectSublist
-    : STAR # SelectSublistAll
+    : (identifierSimple '.')? STAR # SelectSublistAll
     | functionCall OVER (windowName=identifierSimple | selectWindowSpecification) selectAlias? # SelectSublistWindow
     | expression selectAlias? # SelectSublistExpression
     ;
@@ -319,6 +319,7 @@ expression
     | left=expression NOT? op=LIKE right=expression # ExpressionBinary
     | left=expression NOT? op=SIMILAR TO right=expression # ExpressionBinary
     | left=expression NOT? op=IN right=array # ExpressionBinaryInArray
+    | left=expression NOT? op=IN right=identifierSimple # ExpressionBinaryInIdentifier
     | left=expression NOT? op=IN right=selectQueryExpression # ExpressionBinaryInSubquery
     | expr=expression NOT? op=BETWEEN left=simpleExpression AND right=expression # ExpressionBetween
     | left=expression op=(EQUALS | NOT_EQUALS | GREATER | GREATER_OR_EQUALS | LESS | LESS_OR_EQUALS)

@@ -15,7 +15,7 @@ namespace QueryCat.Benchmarks.Benchmarks;
 /// https://en.wikipedia.org/wiki/Leibniz_formula_for_%CF%80.
 /// </remarks>
 [MemoryDiagnoser]
-public class NCalcBenchmark
+public class NCalcBenchmark : IDisposable
 {
     private const string LogicalExpression =
         "(1089 = (1000 + 89)) AND 13 IN (1,2,3,4,5,6,7,8,9,10,11,12,13,14,15) AND 'INSERT' = 'INSERT'";
@@ -38,9 +38,9 @@ public class NCalcBenchmark
     #region Pi
 
     [Benchmark]
-    public VariantValue CalculatePiWithQueryCat()
+    public async Task<VariantValue> CalculatePiWithQueryCat()
     {
-        var result = _executionThread.Run(_qcatQuery);
+        var result = await _executionThread.RunAsync(_qcatQuery);
         return result;
     }
 
@@ -60,9 +60,9 @@ public class NCalcBenchmark
     #region Logical Expression
 
     [Benchmark]
-    public VariantValue CalculateLogicalWithQueryCat()
+    public async Task<VariantValue> CalculateLogicalWithQueryCat()
     {
-        var result = _executionThread.Run(LogicalExpression);
+        var result = await _executionThread.RunAsync(LogicalExpression);
         return result;
     }
 
@@ -100,5 +100,21 @@ public class NCalcBenchmark
         }
         sb.Append(") * 4");
         return sb.ToString();
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _executionThread.Dispose();
+            _dataTable.Dispose();
+        }
+    }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
     }
 }

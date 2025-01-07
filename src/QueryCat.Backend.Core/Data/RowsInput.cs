@@ -18,32 +18,32 @@ public abstract class RowsInput : IRowsInput
     public abstract Column[] Columns { get; protected set; }
 
     /// <inheritdoc />
-    public virtual string[] UniqueKey { get; protected set; } = Array.Empty<string>();
+    public virtual string[] UniqueKey { get; protected set; } = [];
 
     /// <inheritdoc />
-    public abstract void Open();
+    public abstract Task OpenAsync(CancellationToken cancellationToken = default);
 
     /// <inheritdoc />
-    public abstract void Close();
+    public abstract Task CloseAsync(CancellationToken cancellationToken = default);
 
     /// <inheritdoc />
     public abstract ErrorCode ReadValue(int columnIndex, out VariantValue value);
 
-    /// <inheritdoc />
-    public virtual bool ReadNext()
+    public virtual async ValueTask<bool> ReadNextAsync(CancellationToken cancellationToken = default)
     {
         if (_isFirstCall)
         {
-            Load();
+            await LoadAsync(cancellationToken);
             _isFirstCall = false;
         }
         return true;
     }
 
     /// <inheritdoc />
-    public virtual void Reset()
+    public virtual Task ResetAsync(CancellationToken cancellationToken = default)
     {
         _isFirstCall = true;
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />
@@ -55,7 +55,5 @@ public abstract class RowsInput : IRowsInput
     /// <summary>
     /// The method is called before first ReadNext to initialize input.
     /// </summary>
-    protected virtual void Load()
-    {
-    }
+    protected virtual ValueTask LoadAsync(CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
 }

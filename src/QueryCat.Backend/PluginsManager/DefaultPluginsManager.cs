@@ -15,10 +15,10 @@ public sealed class DefaultPluginsManager : IPluginsManager, IDisposable
 
     private readonly IEnumerable<string> _pluginDirectories;
     private readonly PluginsLoader _pluginsLoader;
+    private readonly IPluginsStorage _pluginsStorage;
     private readonly string? _platform;
-    private readonly string _bucketUri;
     private readonly HttpClient _httpClient = new();
-    private List<PluginInfo>? _remotePluginsCache;
+    private IReadOnlyList<PluginInfo>? _remotePluginsCache;
 
     public IEnumerable<string> PluginDirectories => _pluginDirectories;
 
@@ -27,13 +27,13 @@ public sealed class DefaultPluginsManager : IPluginsManager, IDisposable
     public DefaultPluginsManager(
         IEnumerable<string> pluginDirectories,
         PluginsLoader pluginsLoader,
-        string? platform = null,
-        string? bucketUri = null)
+        IPluginsStorage pluginsStorage,
+        string? platform = null)
     {
         _pluginDirectories = pluginDirectories;
         _pluginsLoader = pluginsLoader;
+        _pluginsStorage = pluginsStorage;
         _platform = platform;
-        _bucketUri = !string.IsNullOrEmpty(bucketUri) ? bucketUri : PluginsStorageUri;
     }
 
     /// <summary>
@@ -94,7 +94,10 @@ public sealed class DefaultPluginsManager : IPluginsManager, IDisposable
         // Create X.downloading file, download and then remove.
         var mainPluginDirectory = GetMainPluginDirectory();
         var fullFileName = Path.Combine(mainPluginDirectory, Path.GetFileName(plugin.Uri));
-        await FilesUtils.DownloadFileAsync(_httpClient, new Uri(plugin.Uri), fullFileName, cancellationToken)
+        await FilesUtils.DownloadFileAsync(
+                ct => _pluginsStorage.DownloadAsync(plugin.Uri, ct),
+                fullFileName,
+                cancellationToken)
             .ConfigureAwait(false);
         FilesUtils.MakeUnixExecutable(fullFileName);
         var overwrite = File.Exists(fullFileName);
@@ -152,20 +155,7 @@ public sealed class DefaultPluginsManager : IPluginsManager, IDisposable
         {
             return _remotePluginsCache;
         }
-        await using var stream = await _httpClient.GetStreamAsync(_bucketUri, cancellationToken)
-            .ConfigureAwait(false);
-        using var xmlReader = new XmlTextReader(stream);
-        var xmlKeys = new List<string>();
-        while (xmlReader.ReadToFollowing("Key"))
-        {
-            xmlKeys.Add(xmlReader.ReadString());
-        }
-        // Select only latest version.
-        _remotePluginsCache = xmlKeys
-            .Select(k => CreatePluginInfoFromKey(k, _bucketUri))
-            .GroupBy(k => Tuple.Create(k.Name, k.Platform, k.Architecture), v => v)
-            .Select(v => v.MaxBy(q => q.Version))
-            .ToList()!;
+        _remotePluginsCache = await _pluginsStorage.ListAsync(cancellationToken);
         return _remotePluginsCache;
     }
 

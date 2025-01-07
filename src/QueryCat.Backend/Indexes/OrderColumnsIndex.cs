@@ -151,16 +151,16 @@ internal sealed class OrderColumnsIndex : IOrderIndex
         }
 
         /// <inheritdoc />
-        public bool MoveNext()
+        public ValueTask<bool> MoveNextAsync(CancellationToken cancellationToken = default)
         {
             if (_currentRowIndex < _orderColumnsIndex._rowsOrder.Length - 1)
             {
                 _currentRowIndex++;
                 _orderColumnsIndex.RowsFrameIterator.Seek(
                     _orderColumnsIndex._rowsOrder[_currentRowIndex], CursorSeekOrigin.Begin);
-                return true;
+                return ValueTask.FromResult(true);
             }
-            return false;
+            return ValueTask.FromResult(false);
         }
 
         /// <inheritdoc />

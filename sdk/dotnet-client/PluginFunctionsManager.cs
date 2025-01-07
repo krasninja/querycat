@@ -17,7 +17,7 @@ public sealed class PluginFunctionsManager : IFunctionsManager
     private readonly Dictionary<string, PluginFunction> _functions = new();
 
     /// <inheritdoc />
-    public IFunction? ResolveUri(string uri)
+    public IFunction ResolveUri(string uri)
     {
         throw new NotImplementedException();
     }
@@ -30,7 +30,11 @@ public sealed class PluginFunctionsManager : IFunctionsManager
     }
 
     /// <inheritdoc />
-    public string RegisterFunction(string signature, FunctionDelegate @delegate, string? description = null)
+    public string RegisterFunction(
+        string signature,
+        FunctionDelegate @delegate,
+        string? description = null,
+        string[]? formatterIds = null)
     {
         var firstBracketIndex = signature.IndexOf('(');
         if (firstBracketIndex < 0)
@@ -41,18 +45,13 @@ public sealed class PluginFunctionsManager : IFunctionsManager
         _functions[name] = new PluginFunction(
             name,
             signature,
-            @delegate)
+            @delegate,
+            formatterIds)
         {
             Description = description ?? string.Empty,
             IsSafe = @delegate.Method.GetCustomAttribute<SafeFunctionAttribute>() != null,
         };
         return name;
-    }
-
-    /// <inheritdoc />
-    public void RegisterFactory(Action<IFunctionsManager> registerFunction, bool postpone = true)
-    {
-        registerFunction.Invoke(this);
     }
 
     /// <inheritdoc />

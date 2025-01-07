@@ -47,22 +47,36 @@ public abstract class KeysRowsInput : RowsInput, IRowsInputKeys, IDisposable
         }
     }
 
-    /// <inheritdoc />
-    public override void Open()
+    protected Fetcher<TClass> CreateFetcher<TClass>() where TClass : class
     {
+        var fetcher = new Fetcher<TClass>();
+        var queryLimit = QueryContext.QueryInfo.Limit + QueryContext.QueryInfo.Offset;
+        if (queryLimit.HasValue)
+        {
+            fetcher.Limit = Math.Min((int)queryLimit.Value, fetcher.Limit);
+        }
+        return fetcher;
     }
 
     /// <inheritdoc />
-    public override void Close()
+    public override Task OpenAsync(CancellationToken cancellationToken = default)
     {
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />
-    public override void Reset()
+    public override Task CloseAsync(CancellationToken cancellationToken = default)
+    {
+        return Task.CompletedTask;
+    }
+
+    /// <inheritdoc />
+    public override async Task ResetAsync(CancellationToken cancellationToken = default)
     {
         _setKeyColumns = [];
-        Close();
-        base.Reset();
+        InitializeKeyColumns();
+        await CloseAsync(cancellationToken);
+        await base.ResetAsync(cancellationToken);
     }
 
     #region IRowsInputKeys
@@ -105,7 +119,7 @@ public abstract class KeysRowsInput : RowsInput, IRowsInputKeys, IDisposable
     }
 
     /// <summary>
-    /// Try get key column value by column name.
+    /// Try to get key column value by column name.
     /// </summary>
     /// <param name="columnName">Column name.</param>
     /// <param name="operation">Operation.</param>

@@ -26,6 +26,7 @@ internal sealed class SelectCommand : ICommand
         new SelectPlanner(executionThread, _resolveTypesVisitor).CreateIterator(selectQueryNode);
         var context = selectQueryNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
 
-        return new SelectCommandHandler(context);
+        IFuncUnit handler = new SelectCommandHandler(context);
+        return handler;
     }
 }

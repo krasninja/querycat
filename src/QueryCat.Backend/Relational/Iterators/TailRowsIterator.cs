@@ -32,6 +32,24 @@ public sealed class TailRowsIterator : IRowsIterator, IRowsIteratorParent
     }
 
     /// <inheritdoc />
+    public async ValueTask<bool> MoveNextAsync(CancellationToken cancellationToken = default)
+    {
+        if (!_isInitialized)
+        {
+            await InitializeAsync(cancellationToken);
+        }
+
+        var hasData = await _currentRowsIterator.MoveNextAsync(cancellationToken);
+        if (!hasData && _currentRowsIterator == _cacheRowsIterator)
+        {
+            _currentRowsIterator = _rowsIterator;
+            hasData = await _rowsIterator.MoveNextAsync(cancellationToken);
+        }
+
+        return hasData;
+    }
+
+    /// <inheritdoc />
     public void Reset()
     {
         _cacheRowsIterator.Reset();
@@ -44,25 +62,7 @@ public sealed class TailRowsIterator : IRowsIterator, IRowsIteratorParent
         stringBuilder.AppendRowsIteratorsWithIndent("Tail", _cacheRowsIterator);
     }
 
-    /// <inheritdoc />
-    public bool MoveNext()
-    {
-        if (!_isInitialized)
-        {
-            Initialize();
-        }
-
-        var hasData = _currentRowsIterator.MoveNext();
-        if (!hasData && _currentRowsIterator == _cacheRowsIterator)
-        {
-            _currentRowsIterator = _rowsIterator;
-            hasData = _rowsIterator.MoveNext();
-        }
-
-        return hasData;
-    }
-
-    private void Initialize()
+    private async Task InitializeAsync(CancellationToken cancellationToken)
     {
         if (_rowsIterator is ICursorRowsIterator cursorRowsIterator)
         {
@@ -71,7 +71,7 @@ public sealed class TailRowsIterator : IRowsIterator, IRowsIteratorParent
         }
         else
         {
-            while (_rowsIterator.MoveNext())
+            while (await _rowsIterator.MoveNextAsync(cancellationToken))
             {
                 _cacheRowsIterator.AddRow(_rowsIterator.Current);
                 if (_cacheRowsIterator.TotalRows > _tailCount && _cacheRowsIterator.TotalRows > 0)

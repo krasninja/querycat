@@ -24,10 +24,11 @@ internal sealed class SetCommand : ICommand
         var identifierHandler = new SetIdentifierDelegateVisitor(executionThread, _resolveTypesVisitor, valueHandler)
             .RunAndReturn(setNode.IdentifierNode);
 
-        return new FuncCommandHandler(thread =>
+        IFuncUnit handler = new FuncCommandHandler(async (thread, ct) =>
         {
-            identifierHandler.Invoke(thread);
+            await identifierHandler.InvokeAsync(thread, ct);
             return VariantValue.Null;
         });
+        return handler;
     }
 }

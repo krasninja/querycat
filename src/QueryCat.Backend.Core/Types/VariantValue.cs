@@ -82,6 +82,10 @@ public readonly partial struct VariantValue :
             TimeSpanValue = value;
         }
 
+        internal TypeUnion(DataType type) : this((long)type)
+        {
+        }
+
         /// <inheritdoc />
         public override bool Equals([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] object? obj)
             => obj is TypeUnion typeUnion && typeUnion.IntegerValue == this.IntegerValue;
@@ -162,19 +166,19 @@ public readonly partial struct VariantValue :
     public VariantValue(string? value)
     {
         _object = value;
-        _valueUnion = new TypeUnion((int)DataType.String);
+        _valueUnion = new TypeUnion(DataType.String);
     }
 
     public VariantValue(char value)
     {
         _object = value.ToString();
-        _valueUnion = default;
+        _valueUnion = new TypeUnion(DataType.String);
     }
 
     public VariantValue(ReadOnlySpan<char> value)
     {
         _object = value.ToString();
-        _valueUnion = new TypeUnion((int)DataType.String);
+        _valueUnion = new TypeUnion(DataType.String);
     }
 
     public VariantValue(double value)
@@ -262,7 +266,7 @@ public readonly partial struct VariantValue :
     public VariantValue(decimal value)
     {
         _object = value;
-        _valueUnion = new TypeUnion((int)DataType.Numeric);
+        _valueUnion = new TypeUnion(DataType.Numeric);
     }
 
     public VariantValue(decimal? value)
@@ -274,20 +278,20 @@ public readonly partial struct VariantValue :
         else
         {
             _object = value.Value;
-            _valueUnion = new TypeUnion((int)DataType.Numeric);
+            _valueUnion = new TypeUnion(DataType.Numeric);
         }
     }
 
     private VariantValue(object obj)
     {
         _object = obj;
-        _valueUnion = new TypeUnion((int)DataType.Object);
+        _valueUnion = new TypeUnion(DataType.Object);
     }
 
     public VariantValue(IBlobData? blob)
     {
         _object = blob;
-        _valueUnion = new TypeUnion((int)DataType.Blob);
+        _valueUnion = new TypeUnion(DataType.Blob);
     }
 
     private VariantValue(byte[] bytes)
@@ -305,7 +309,7 @@ public readonly partial struct VariantValue :
         _valueUnion = value._valueUnion;
     }
 
-    public static VariantValue CreateFromObject<T>(in T obj)
+    public static VariantValue CreateFromObject<T>(in T? obj)
     {
         if (obj == null)
         {
@@ -373,7 +377,11 @@ public readonly partial struct VariantValue :
         }
         if (obj is Guid guid)
         {
-            return new VariantValue(guid.ToString());
+            return new VariantValue(guid.ToString("D"));
+        }
+        if (obj is DBNull)
+        {
+            return Null;
         }
         return new VariantValue(obj);
     }

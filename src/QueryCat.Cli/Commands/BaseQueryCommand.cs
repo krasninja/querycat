@@ -2,8 +2,7 @@ using System.CommandLine;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.ThriftPlugins;
-using QueryCat.Cli.Commands.Options;
+using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Cli.Commands;
 
@@ -30,7 +29,7 @@ internal abstract class BaseQueryCommand : BaseCommand
         Add(VariablesOption);
     }
 
-    public void RunQuery(
+    public async Task RunQueryAsync(
         IExecutionThread executionThread,
         string query,
         string[] files,
@@ -38,30 +37,36 @@ internal abstract class BaseQueryCommand : BaseCommand
     {
         if (files.Any())
         {
-            foreach (var file in files)
+            foreach (var file in files.SelectMany(f => f.Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)))
             {
-                RunWithPluginsInstall(executionThread, File.ReadAllText(file), cancellationToken: cancellationToken);
+                var text = await File.ReadAllTextAsync(file, cancellationToken);
+                await RunWithPluginsInstall(executionThread, text, cancellationToken: cancellationToken);
             }
         }
         else
         {
-            RunWithPluginsInstall(executionThread, query, cancellationToken: cancellationToken);
+            await RunWithPluginsInstall(executionThread, query, cancellationToken: cancellationToken);
         }
     }
 
-    private void RunWithPluginsInstall(IExecutionThread executionThread, string query, CancellationToken cancellationToken)
+    private async Task RunWithPluginsInstall(IExecutionThread executionThread, string query, CancellationToken cancellationToken)
     {
+#if ENABLE_PLUGINS && PLUGIN_THRIFT
         try
         {
-            executionThread.Run(query, cancellationToken: cancellationToken);
+            await executionThread.RunAsync(query, cancellationToken: cancellationToken);
         }
-        catch (ProxyNotFoundException)
+        catch (Backend.ThriftPlugins.ProxyNotFoundException)
         {
-            if (ApplicationOptions.InstallPluginsProxy())
+            var installed = await QueryCat.Cli.Commands.Options.ApplicationOptions.InstallPluginsProxyAsync(cancellationToken: cancellationToken);
+            if (installed)
             {
-                executionThread.Run(query, cancellationToken: cancellationToken);
+                await executionThread.RunAsync(query, cancellationToken: cancellationToken);
             }
         }
+#else
+        await executionThread.RunAsync(query, cancellationToken: cancellationToken);
+#endif
     }
 
     public void AddVariables(IExecutionThread executionThread, string[]? variables = null)
@@ -73,8 +78,8 @@ internal abstract class BaseQueryCommand : BaseCommand
 
         foreach (var variable in variables)
         {
-            var arr = variable.Split('=', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
-            if (arr.Length != 2)
+            var arr = StringUtils.GetFieldsFromLine(variable, '=');
+            if (arr.Count != 2)
             {
                 throw new QueryCatException(string.Format(Resources.Errors.InvalidVariableFormat, variable));
             }

@@ -34,7 +34,7 @@ public sealed class Tests : IDisposable
 
     [Theory]
     [MemberData(nameof(GetData))]
-    public void Select(string fileName)
+    public async Task Select(string fileName)
     {
         // Arrange.
         Application.Culture = CultureInfo.InvariantCulture;
@@ -55,7 +55,7 @@ public sealed class Tests : IDisposable
             SkipException.ForSkip(data.Comment);
             return;
         }
-        var value = _testThread.Run(data.Query);
+        var value = await _testThread.RunAsync(data.Query);
 
         // Get query plan.
         if (value.Type == DataType.Object

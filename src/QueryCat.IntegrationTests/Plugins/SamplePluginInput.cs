@@ -8,9 +8,9 @@ using QueryCat.Backend.Core.Types;
 namespace QueryCat.IntegrationTests.Plugins;
 
 /// <summary>
-/// Example simple rows input plugin based on <see cref="FetchRowsInput{TClass}" />.
+/// Example simple rows input plugin based on <see cref="EnumerableRowsInput{TClass}" />.
 /// </summary>
-public class SamplePluginInput : FetchRowsInput<TestClass>
+public class SamplePluginInput : EnumerableRowsInput<TestClass>
 {
     private const long MaxValue = 9;
 

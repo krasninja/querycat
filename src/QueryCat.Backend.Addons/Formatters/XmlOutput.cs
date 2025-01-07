@@ -1,7 +1,9 @@
+using System.Globalization;
 using System.Xml;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Storage;
 
 namespace QueryCat.Backend.Addons.Formatters;
@@ -25,24 +27,25 @@ internal sealed class XmlOutput : RowsOutput, IDisposable
     }
 
     /// <inheritdoc />
-    protected override void Initialize()
+    protected override async Task InitializeAsync(CancellationToken cancellationToken = default)
     {
-        _xmlWriter.WriteStartDocument();
+        await _xmlWriter.WriteStartDocumentAsync();
         _xmlWriter.WriteStartElement(RootTagName);
     }
 
     /// <inheritdoc />
-    public override void Open()
+    public override Task OpenAsync(CancellationToken cancellationToken = default)
     {
         _logger.LogTrace("XML opened.");
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />
-    public override void Close()
+    public override async Task CloseAsync(CancellationToken cancellationToken = default)
     {
-        _xmlWriter.WriteEndElement(); // RootTagName.
-        _xmlWriter.WriteEndDocument();
-        _xmlWriter.Flush();
+        await _xmlWriter.WriteEndElementAsync(); // RootTagName.
+        await _xmlWriter.WriteEndDocumentAsync();
+        await _xmlWriter.FlushAsync();
         _xmlWriter.Close();
         _logger.LogTrace("XML closed.");
     }
@@ -52,7 +55,7 @@ internal sealed class XmlOutput : RowsOutput, IDisposable
     {
         _xmlWriter.WriteStartElement(RowTagName);
         var columns = QueryContext.QueryInfo.Columns;
-        for (var i = 0; i < columns.Count; i++)
+        for (var i = 0; i < columns.Length; i++)
         {
             if (columns[i].IsHidden)
             {
@@ -80,7 +83,7 @@ internal sealed class XmlOutput : RowsOutput, IDisposable
                     _xmlWriter.WriteValue(values[i].AsTimestampUnsafe);
                     break;
                 default:
-                    _xmlWriter.WriteValue(values[i].ToString());
+                    _xmlWriter.WriteValue(values[i].ToString(CultureInfo.InvariantCulture));
                     break;
             }
             _xmlWriter.WriteEndElement();
@@ -91,7 +94,7 @@ internal sealed class XmlOutput : RowsOutput, IDisposable
     /// <inheritdoc />
     public void Dispose()
     {
-        Close();
+        AsyncUtils.RunSync(CloseAsync);
         _xmlWriter.Dispose();
     }
 }

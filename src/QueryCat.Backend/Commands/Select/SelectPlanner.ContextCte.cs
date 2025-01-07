@@ -4,6 +4,7 @@ using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Commands.Select.Iterators;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Relational.Iterators;
 
@@ -77,16 +78,25 @@ internal sealed partial class SelectPlanner
             combineNode.IsDistinct ? new DistinctRowsIteratorIterator(ExecutionThread, totalResultProxy) : totalResultProxy);
 
         // Merge current working frame and recalculate it based on new result.
-        var workingFrame = initialQueryCommandContext.CurrentIterator.ToFrame();
+        var workingFrame = AsyncUtils.RunSync(initialQueryCommandContext.CurrentIterator.ToFrameAsync);
+        if (workingFrame == null)
+        {
+            return false;
+        }
         while (!workingFrame.IsEmpty)
         {
             // Append working iterator to the total result.
             totalResultProxy.Set(workingFrame.GetIterator());
-            writeRowsIterator.WriteAll();
+            AsyncUtils.RunSync(() => writeRowsIterator.WriteAllAsync());
 
             // Run the recursive query based on new working rows set.
             proxyRowsIterator.Set(workingFrame.GetIterator());
-            workingFrame = rightIterator.ToFrame();
+            var newFrame = AsyncUtils.RunSync(rightIterator.ToFrameAsync);
+            if (newFrame == null)
+            {
+                break;
+            }
+            workingFrame = newFrame;
             rightIterator.Reset();
         }
 

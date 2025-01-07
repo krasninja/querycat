@@ -1,20 +1,27 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <OutputType>Exe</OutputType>
     <RunWorkingDirectory>$(MSBuildProjectDirectory)</RunWorkingDirectory>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <DefineConstants Condition=" '$(Plugin)' == 'Thrift' ">PLUGIN_THRIFT</DefineConstants>
+    <DefineConstants Condition=" '$(Plugin)' == 'Assembly' Or '$(Plugin)' == '' ">PLUGIN_ASSEMBLY</DefineConstants>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Cake.Compression" Version="0.3.0" />
-    <PackageReference Include="Cake.Frosting" Version="4.2.0" />
-    <PackageReference Include="Cake.Git" Version="4.0.0" />
+    <PackageReference Include="Cake.Frosting" Version="5.0.0" />
+    <PackageReference Include="Cake.Git" Version="5.0.1" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\QueryCat.Backend.AssemblyPlugins\QueryCat.Backend.AssemblyPlugins.csproj" />
-    <ProjectReference Include="..\QueryCat.Backend.ThriftPlugins\QueryCat.Backend.ThriftPlugins.csproj" />
+    <ProjectReference Condition=" '$(Plugin)' == 'Assembly' Or '$(Plugin)' == '' "
+                      Include="..\QueryCat.Backend.AssemblyPlugins\QueryCat.Backend.AssemblyPlugins.csproj" />
+    <ProjectReference Condition=" '$(Plugin)' == 'Thrift' "
+                      Include="..\QueryCat.Backend.ThriftPlugins\QueryCat.Backend.ThriftPlugins.csproj" />
     <ProjectReference Include="..\QueryCat.Backend\QueryCat.Backend.csproj" />
   </ItemGroup>
 

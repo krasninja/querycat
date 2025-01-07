@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text;
+using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Commands;
@@ -24,7 +25,7 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
     internal const string BootstrapFileName = "rc.sql";
 
     private readonly AstVisitor _statementsVisitor;
-    private readonly object _objLock = new();
+    private readonly SemaphoreSlim _semaphore;
     private int _deepLevel;
     private readonly List<IDisposable> _disposablesList = new();
     private bool _isInCallback;
@@ -37,6 +38,7 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
     private bool _bootstrapScriptExecuted;
     private bool _configLoaded;
     private readonly Stopwatch _stopwatch = new();
+    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(ExecutionThread));
 
     /// <summary>
     /// Root (base) thread scope.
@@ -137,6 +139,7 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
 
         _rootScope = new ExecutionScope(parent: null);
         _topScope = _rootScope;
+        _semaphore = new SemaphoreSlim(Options.ConcurrencyLevel, Options.ConcurrencyLevel);
     }
 
     /// <summary>
@@ -160,7 +163,7 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
     }
 
     /// <inheritdoc />
-    public virtual VariantValue Run(
+    public virtual async Task<VariantValue> RunAsync(
         string query,
         IDictionary<string, VariantValue>? parameters = null,
         CancellationToken cancellationToken = default)
@@ -171,7 +174,8 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
         }
 
         // Run with lock and timer.
-        lock (_objLock)
+        await _semaphore.WaitAsync(cancellationToken);
+        try
         {
             CurrentQuery = query;
             var programNode = AstBuilder.BuildProgramFromString(query);
@@ -180,8 +184,8 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
             _deepLevel++;
             if (_deepLevel == 1)
             {
-                RunBootstrapScript();
-                LoadConfig();
+                await RunBootstrapScriptAsync(cancellationToken);
+                await LoadConfigAsync(cancellationToken);
             }
             if (_deepLevel > Options.MaxRecursionDepth)
             {
@@ -198,36 +202,34 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
                 _stopwatch.Restart();
             }
 
-            try
+            if (executingStatement == null)
             {
-                if (executingStatement == null)
-                {
-                    return VariantValue.Null;
-                }
-                if (parameters != null)
-                {
-                    var scope = PushScope();
-                    SetScopeVariables(scope, parameters);
-                }
-                return Options.QueryTimeout != TimeSpan.Zero
-                    ? RunWithTimeout(ct => RunInternal(executingStatement, ct), cancellationToken)
-                    : RunInternal(executingStatement, cancellationToken);
+                return VariantValue.Null;
             }
-            finally
+            if (parameters != null)
             {
-                if (parameters != null)
-                {
-                    PopScope();
-                }
-                if (_deepLevel == 1)
-                {
-                    _stopwatch.Stop();
-                    Statistic.ExecutionTime = _stopwatch.Elapsed;
-                }
-                _deepLevel--;
+                var scope = PushScope();
+                SetScopeVariables(scope, parameters);
+            }
+            return Options.QueryTimeout != TimeSpan.Zero
+                ? await RunWithTimeoutAsync(ct => RunInternalAsync(executingStatement, ct), cancellationToken)
+                : await RunInternalAsync(executingStatement, cancellationToken);
+        }
+        finally
+        {
+            if (parameters != null)
+            {
+                PopScope();
+            }
+            if (_deepLevel == 1)
+            {
+                _stopwatch.Stop();
+                Statistic.ExecutionTime = _stopwatch.Elapsed;
+            }
+            _deepLevel--;
+            CurrentQuery = string.Empty;
 
-                CurrentQuery = string.Empty;
-            }
+            _semaphore.Release();
         }
     }
 
@@ -259,17 +261,17 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
         }
     }
 
-    private T RunWithTimeout<T>(Func<CancellationToken, T> func, CancellationToken cancellationToken)
+    private async Task<T> RunWithTimeoutAsync<T>(Func<CancellationToken, Task<T>> func, CancellationToken cancellationToken)
     {
-        var task = Task.Run(() => func(cancellationToken), cancellationToken);
+        var task = func(cancellationToken);
         if (task.IsCompleted)
         {
             return task.Result;
         }
-        return task.WaitAsync(Options.QueryTimeout, cancellationToken).GetAwaiter().GetResult();
+        return await task.WaitAsync(Options.QueryTimeout, cancellationToken);
     }
 
-    private VariantValue RunInternal(StatementNode executingStatement, CancellationToken cancellationToken)
+    private async Task<VariantValue> RunInternalAsync(StatementNode executingStatement, CancellationToken cancellationToken)
     {
         var executeEventArgs = new ExecuteEventArgs(executingStatement);
         StatementNode? currentStatement = executingStatement;
@@ -297,7 +299,7 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
             }
 
             // Run the command.
-            LastResult = commandContext.Invoke(this);
+            LastResult = await commandContext.InvokeAsync(this, cancellationToken);
 
             // Fire "after" event.
             if (StatementExecuted != null && !_isInCallback)
@@ -314,7 +316,7 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
             // Write result.
             if (Options.DefaultRowsOutput != NullRowsOutput.Instance)
             {
-                Write(LastResult, cancellationToken);
+                await Write(LastResult, cancellationToken);
             }
 
             if (cancellationToken.IsCancellationRequested)
@@ -328,7 +330,7 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
 
         if (Options.UseConfig)
         {
-            AsyncUtils.RunSync(ConfigStorage.SaveAsync);
+            await ConfigStorage.SaveAsync(cancellationToken);
         }
 
         return LastResult;
@@ -407,24 +409,24 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
         return CompletionSource.Get(context).OrderByDescending(c => c.Completion.Relevance);
     }
 
-    private void Write(VariantValue result, CancellationToken cancellationToken)
+    private Task Write(VariantValue result, CancellationToken cancellationToken)
     {
         if (result.IsNull)
         {
-            return;
+            return Task.CompletedTask;
         }
-        var iterator = ExecutionThreadUtils.ConvertToIterator(result);
+        var iterator = RowsIteratorConverter.Convert(result);
         var rowsOutput = Options.DefaultRowsOutput;
         if (result.Type == DataType.Object
             && result.AsObjectUnsafe is IRowsOutput alternateRowsOutput)
         {
             rowsOutput = alternateRowsOutput;
         }
-        rowsOutput.Reset();
-        Write(rowsOutput, iterator, cancellationToken);
+        rowsOutput.ResetAsync();
+        return WriteAsync(rowsOutput, iterator, cancellationToken);
     }
 
-    private void Write(
+    private async Task WriteAsync(
         IRowsOutput rowsOutput,
         IRowsIterator rowsIterator,
         CancellationToken cancellationToken)
@@ -441,7 +443,7 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
 
         // Write the main data.
         var isOpened = false;
-        StartWriterLoop();
+        await StartWriterLoop(cancellationToken);
 
         // Append grow data.
         if (Options.FollowTimeout != TimeSpan.Zero)
@@ -450,7 +452,7 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
             {
                 var requestQuit = false;
                 Thread.Sleep(Options.FollowTimeout);
-                StartWriterLoop();
+                await StartWriterLoop(cancellationToken);
                 ProcessInput(ref requestQuit);
                 if (cancellationToken.IsCancellationRequested || requestQuit)
                 {
@@ -461,12 +463,12 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
 
         if (isOpened)
         {
-            rowsOutput.Close();
+            await rowsOutput.CloseAsync(cancellationToken);
         }
 
-        void StartWriterLoop()
+        async Task StartWriterLoop(CancellationToken ct)
         {
-            while (rowsIterator.MoveNext())
+            while (await rowsIterator.MoveNextAsync(ct))
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
@@ -474,11 +476,11 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
                 }
                 if (!isOpened)
                 {
-                    rowsOutput.Open();
                     rowsOutput.QueryContext = new RowsOutputQueryContext(rowsIterator.Columns);
+                    await rowsOutput.OpenAsync(cancellationToken);
                     isOpened = true;
                 }
-                rowsOutput.WriteValues(rowsIterator.Current.Values);
+                await rowsOutput.WriteValuesAsync(rowsIterator.Current.Values, cancellationToken);
             }
         }
 
@@ -507,16 +509,16 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
         }
     }
 
-    private void LoadConfig()
+    private async Task LoadConfigAsync(CancellationToken cancellationToken)
     {
         if (!_configLoaded && Options.UseConfig)
         {
-            AsyncUtils.RunSync(ConfigStorage.LoadAsync);
+            await ConfigStorage.LoadAsync(cancellationToken);
             _configLoaded = true;
         }
     }
 
-    private void RunBootstrapScript()
+    private async Task RunBootstrapScriptAsync(CancellationToken cancellationToken)
     {
         if (!_bootstrapScriptExecuted && Options.RunBootstrapScript)
         {
@@ -525,13 +527,15 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
             var rcFile = Path.Combine(GetApplicationDirectory(), BootstrapFileName);
             if (File.Exists(rcFile))
             {
-                Run(File.ReadAllText(rcFile));
+                var query = await File.ReadAllTextAsync(rcFile, cancellationToken);
+                await RunAsync(query, cancellationToken: cancellationToken);
             }
 
             rcFile = Path.Combine(Directory.GetCurrentDirectory(), BootstrapFileName);
             if (File.Exists(rcFile))
             {
-                Run(File.ReadAllText(rcFile));
+                var query = await File.ReadAllTextAsync(rcFile, cancellationToken);
+                await RunAsync(query, cancellationToken: cancellationToken);
             }
         }
     }
@@ -540,6 +544,7 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
     {
         if (disposing)
         {
+            _semaphore.Dispose();
             foreach (var disposable in _disposablesList)
             {
                 disposable.Dispose();

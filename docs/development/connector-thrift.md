@@ -46,12 +46,12 @@ The guide below describes how to write a plugin.
     ```csharp
     public class Program
     {
-        public static async Task Main(string[] args)
+        internal static async Task Main(string[] args)
         {
             ThriftPluginClient.SetupApplicationLogging();
-            using var client = new ThriftPluginClient(args);
+            using var client = new ThriftPluginClient(ThriftPluginClient.ConvertCommandLineArguments(args));
             client.FunctionsManager.RegisterFunction(TestFunctions.TestCombineFunction);
-            await client.Start();
+            await client.StartAsync();
             await client.WaitForServerExitAsync();
         }
     }

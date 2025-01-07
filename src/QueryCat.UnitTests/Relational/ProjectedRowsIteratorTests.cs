@@ -13,7 +13,7 @@ namespace QueryCat.UnitTests.Relational;
 public sealed class ProjectedRowsIteratorTests
 {
     [Fact]
-    public void Projection_SourceRowsSet_CorrectTargetRowsSetWithColumns()
+    public async Task Projection_SourceRowsSet_CorrectTargetRowsSetWithColumns()
     {
         // Arrange.
         var table = new RowsFrame(
@@ -27,7 +27,7 @@ public sealed class ProjectedRowsIteratorTests
         var projectedIterator = new ProjectedRowsIterator(NullExecutionThread.Instance, tableIterator);
         projectedIterator.AddFuncColumn(table.Columns[1],
             new FuncUnitRowsIteratorColumn(tableIterator, 1));
-        var frame = projectedIterator.ToFrame();
+        var frame = await projectedIterator.ToFrameAsync();
         var firstRow = frame.First();
 
         // Assert.

@@ -33,19 +33,20 @@ public class ProxyRowsInput : IRowsInput, IRowsIteratorParent
     }
 
     /// <inheritdoc />
-    public void Open() => _rowsInput.Open();
+    public Task OpenAsync(CancellationToken cancellationToken = default) => _rowsInput.OpenAsync(cancellationToken);
 
     /// <inheritdoc />
-    public void Close() => _rowsInput.Close();
+    public Task CloseAsync(CancellationToken cancellationToken = default) => _rowsInput.CloseAsync(cancellationToken);
 
     /// <inheritdoc />
     public ErrorCode ReadValue(int columnIndex, out VariantValue value) => _rowsInput.ReadValue(columnIndex, out value);
 
     /// <inheritdoc />
-    public bool ReadNext() => _rowsInput.ReadNext();
+    public ValueTask<bool> ReadNextAsync(CancellationToken cancellationToken = default)
+        => _rowsInput.ReadNextAsync(cancellationToken);
 
     /// <inheritdoc />
-    public void Reset() => _rowsInput.Reset();
+    public Task ResetAsync(CancellationToken cancellationToken = default) => _rowsInput.ResetAsync(cancellationToken);
 
     /// <inheritdoc />
     public void Explain(IndentedStringBuilder stringBuilder)

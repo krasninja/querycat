@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
@@ -18,17 +19,18 @@ internal sealed class JsonOutput : RowsOutput, IDisposable
     }
 
     /// <inheritdoc />
-    public override void Open()
+    public override Task OpenAsync(CancellationToken cancellationToken = default)
     {
         _logger.LogTrace("JSON opened.");
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />
-    public override void Close()
+    public override async Task CloseAsync(CancellationToken cancellationToken = default)
     {
         _streamWriter.WriteEndArray();
-        _streamWriter.Flush();
-        _streamWriter.Dispose();
+        await _streamWriter.FlushAsync(cancellationToken);
+        await _streamWriter.DisposeAsync();
         _logger.LogTrace("JSON closed.");
     }
 
@@ -37,7 +39,7 @@ internal sealed class JsonOutput : RowsOutput, IDisposable
     {
         _streamWriter.WriteStartObject();
         var columns = QueryContext.QueryInfo.Columns;
-        for (var i = 0; i < columns.Count; i++)
+        for (var i = 0; i < columns.Length; i++)
         {
             if (columns[i].IsHidden)
             {
@@ -51,9 +53,10 @@ internal sealed class JsonOutput : RowsOutput, IDisposable
     }
 
     /// <inheritdoc />
-    protected override void Initialize()
+    protected override Task InitializeAsync(CancellationToken cancellationToken = default)
     {
         _streamWriter.WriteStartArray();
+        return Task.CompletedTask;
     }
 
     private static void WriteJsonVariantValue(Utf8JsonWriter jsonWriter, in VariantValue value)
@@ -82,7 +85,7 @@ internal sealed class JsonOutput : RowsOutput, IDisposable
                 jsonWriter.WriteBooleanValue(value.AsBoolean);
                 break;
             default:
-                jsonWriter.WriteStringValue(value.ToString());
+                jsonWriter.WriteStringValue(value.ToString(CultureInfo.InvariantCulture));
                 break;
         }
     }

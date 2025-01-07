@@ -1,5 +1,6 @@
 using System.Collections;
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend.Relational.Iterators;
 
@@ -33,7 +34,7 @@ public sealed class EnumerableRowsIterator : IEnumerable<Row>, IRowsSchema
     /// <inheritdoc />
     public IEnumerator<Row> GetEnumerator()
     {
-        while (_rowsIterator.MoveNext())
+        while (AsyncUtils.RunSync(() => _rowsIterator.MoveNextAsync()))
         {
             if (_copyRow)
             {

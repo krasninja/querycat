@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Upgrade to .NET 9.0.
+- Install plugins proxy on any plugin install.
+- Introduce async interfaces instead of Sync. Use AsyncEnumerableRowsInput instead of FetchRowsInput.
+
+### Added
+
+- New GetVariable and SetVariable Thrift methods.
+- Allow to specify several plugin directories with separator (f.e. "--plugin-dirs=~/dir1:~/dir2").
+
+### Fixed
+
+- Support "Select alias.* from x" pattern.
+- Integer parse overflow.
+- Return non-zero exit code on error.
+- Support keys set construction for "x in (select 1 union select 2)" case.
+
 ## [0.8.0] - 2024-11-10
 
 ### Changed

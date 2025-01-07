@@ -6,6 +6,7 @@ using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Storage;
 
 namespace QueryCat.Backend.Commands.Select.Visitors;
@@ -43,9 +44,10 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
         }
         typesVisitor.Run(node.TableFunctionNode);
 
-        var source = new CreateDelegateVisitor(_executionThread, typesVisitor).RunAndReturn(node.TableFunctionNode)
-            .Invoke(_executionThread);
-        var inputContext = CreateRowsInput(source);
+        var @delegate = new CreateDelegateVisitor(_executionThread, typesVisitor)
+            .RunAndReturn(node.TableFunctionNode);
+        var source = AsyncUtils.RunSync(() => @delegate.InvokeAsync(_executionThread));
+        var inputContext = CreateRowsInput(source, node.Alias);
         inputContext.Alias = node.Alias;
         _context.AddInput(inputContext);
 
@@ -54,7 +56,7 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
         node.SetAttribute(AstAttributeKeys.RowsInputKey, inputContext.RowsInput);
     }
 
-    private SelectCommandInputContext CreateRowsInput(VariantValue source)
+    private SelectCommandInputContext CreateRowsInput(VariantValue source, string alias)
     {
         if (DataTypeUtils.IsSimple(source.Type))
         {
@@ -62,7 +64,8 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
         }
         if (source.AsObject is IRowsInput rowsInput)
         {
-            var queryContext = new SelectInputQueryContext(rowsInput)
+            var targetColumns = _context.GetSelectIdentifierColumns(alias);
+            var queryContext = new SelectInputQueryContext(rowsInput, targetColumns)
             {
                 InputConfigStorage = _executionThread.ConfigStorage,
             };
@@ -71,7 +74,7 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
                 rowsInput = new CacheRowsInput(_executionThread, rowsInput, _context.Conditions);
             }
             rowsInput.QueryContext = queryContext;
-            rowsInput.Open();
+            AsyncUtils.RunSync(rowsInput.OpenAsync);
             _logger.LogDebug("Open rows input {RowsInput}.", rowsInput);
             return new SelectCommandInputContext(rowsInput, queryContext);
         }

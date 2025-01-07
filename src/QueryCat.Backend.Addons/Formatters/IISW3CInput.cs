@@ -27,7 +27,7 @@ public sealed class IISW3CInput : StreamRowsInput
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(IISW3CInput));
 
     // https://procodeguide.com/programming/iis-logs/.
-    private static readonly IDictionary<string, Column> AvailableFields = new Dictionary<string, Column>
+    private static readonly FrozenDictionary<string, Column> _availableFields = new Dictionary<string, Column>
     {
         ["date"] = new("date", DataType.Timestamp, "Date of request."),
         ["time"] = new("time", DataType.String, "Time of request in UTC."),
@@ -52,6 +52,10 @@ public sealed class IISW3CInput : StreamRowsInput
         ["cs(Cookie)"] = new("cs(Cookie)", DataType.String, "The content of the cookie sent or received."),
         ["cs(Referer)"] = new("cs(Referer)", DataType.String, "The site that the user last visited."),
     }.ToFrozenDictionary();
+
+    private static readonly FrozenDictionary<string, Column>
+        .AlternateLookup<ReadOnlySpan<char>> _availableFieldsLookup =
+            _availableFields.GetAlternateLookup<ReadOnlySpan<char>>();
 
     public IISW3CInput(Stream stream, string? key = null) : base(new StreamReader(stream), new StreamRowsInputOptions
     {
@@ -114,21 +118,21 @@ public sealed class IISW3CInput : StreamRowsInput
     }
 
     /// <inheritdoc />
-    public override void Open()
+    public override async Task OpenAsync(CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("Open {Input}.", this);
 
         // Try to find fields header.
-        var foundHeaders = SeekToFieldsHeader();
+        var foundHeaders = await SeekToFieldsHeaderAsync(cancellationToken);
         if (!foundHeaders)
         {
             throw new QueryCatException("Cannot find IIS fields.");
         }
     }
 
-    private bool SeekToFieldsHeader()
+    private async ValueTask<bool> SeekToFieldsHeaderAsync(CancellationToken cancellationToken = default)
     {
-        while (ReadNext())
+        while (await ReadNextAsync(cancellationToken))
         {
             var line = GetInputColumnValue(0);
             if (line.StartsWith(FieldsMarker))
@@ -143,27 +147,33 @@ public sealed class IISW3CInput : StreamRowsInput
     }
 
     /// <inheritdoc />
-    public override void Reset()
+    public override async Task ResetAsync(CancellationToken cancellationToken = default)
     {
         _isInitialized = false;
-        base.Reset();
-        SeekToFieldsHeader();
+        await base.ResetAsync(cancellationToken);
+        await SeekToFieldsHeaderAsync(cancellationToken);
     }
 
     /// <inheritdoc />
-    protected override void Analyze(CacheRowsIterator iterator)
+    protected override Task AnalyzeAsync(CacheRowsIterator iterator, CancellationToken cancellationToken = default)
     {
+        return Task.CompletedTask;
     }
 
     private void ParseHeaders(ReadOnlySpan<char> header)
     {
-        var fields = header.ToString()[FieldsMarker.Length..]
-            .Split(' ', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        var subheader = header[FieldsMarker.Length..];
+        var fieldsRanges = subheader.Split(' ');
         var columns = new List<Column>();
-        for (var i = 0; i < fields.Length; i++)
+        var i = 0;
+        foreach (var fieldRange in fieldsRanges)
         {
-            var field = fields[i];
-            if (AvailableFields.TryGetValue(field, out var column))
+            ReadOnlySpan<char> field = subheader[fieldRange];
+            if (field.Length < 1)
+            {
+                continue;
+            }
+            if (_availableFieldsLookup.TryGetValue(field, out var column))
             {
                 if (Column.NameEquals(column, "time"))
                 {
@@ -180,6 +190,7 @@ public sealed class IISW3CInput : StreamRowsInput
             {
                 columns.Add(new Column(i, DataType.String));
             }
+            i++;
         }
 
         SetColumns(columns);

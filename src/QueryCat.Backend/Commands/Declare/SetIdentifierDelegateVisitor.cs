@@ -32,9 +32,9 @@ internal sealed class SetIdentifierDelegateVisitor : CreateDelegateVisitor
         {
             var context = new ObjectSelectorContext();
             var strategies = GetObjectSelectStrategies(node, NodeIdFuncMap);
-            VariantValue Func(IExecutionThread thread)
+            async ValueTask<VariantValue> Func(IExecutionThread thread, CancellationToken cancellationToken)
             {
-                var newValue = SetValue(thread, node, strategies, context);
+                var newValue = await SetValueAsync(thread, node, strategies, context, cancellationToken);
                 context.Clear();
                 return newValue;
             }
@@ -45,24 +45,28 @@ internal sealed class SetIdentifierDelegateVisitor : CreateDelegateVisitor
         throw new CannotFindIdentifierException(node.Name);
     }
 
-    private VariantValue SetValue(
+    private async ValueTask<VariantValue> SetValueAsync(
         IExecutionThread thread,
         IdentifierExpressionNode node,
         SelectStrategyContainer selectStrategyContainer,
-        ObjectSelectorContext context)
+        ObjectSelectorContext context,
+        CancellationToken cancellationToken)
     {
         var startObject = thread.GetVariable(node.Name);
-        var newValue = _funcUnit.Invoke(thread);
+        var newValue = await _funcUnit.InvokeAsync(thread, cancellationToken);
 
         // This is expression object.
-        if (GetObjectBySelector(thread, context, startObject, selectStrategyContainer, out _))
+        context.ExecutionThread = thread;
+        // Fills the context.
+        await GetObjectBySelectorAsync(thread, context, startObject, selectStrategyContainer, cancellationToken);
+        var set = thread.ObjectSelector.SetValue(context, Converter.ConvertValue(newValue, typeof(object)));
+        context.ExecutionThread = NullExecutionThread.Instance;
+        if (!set)
         {
-            context.ExecutionThread = thread;
             thread.ObjectSelector.SetValue(context, Converter.ConvertValue(newValue, typeof(object)));
-            context.ExecutionThread = NullExecutionThread.Instance;
         }
         // Not an expression - variable.
-        else if (!node.HasSelectors)
+        if (!set && !node.HasSelectors)
         {
             thread.TopScope.Variables[node.Name] = newValue;
         }

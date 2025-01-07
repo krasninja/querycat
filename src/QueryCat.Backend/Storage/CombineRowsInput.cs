@@ -1,6 +1,7 @@
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend.Storage;
 
@@ -12,9 +13,24 @@ internal sealed class CombineRowsInput : RowsInput, IDisposable
     private readonly IReadOnlyList<IRowsInput> _rowsInputs;
     private int _currentInputIndex = -1;
     private IRowsInput? _currentRowsInput;
+    private QueryContext _queryContext = NullQueryContext.Instance;
 
     /// <inheritdoc />
     public override Column[] Columns { get; protected set; } = [];
+
+    /// <inheritdoc />
+    public override QueryContext QueryContext
+    {
+        get => _queryContext;
+        set
+        {
+            _queryContext = value;
+            foreach (var rowsInput in _rowsInputs)
+            {
+                rowsInput.QueryContext = _queryContext;
+            }
+        }
+    }
 
     public CombineRowsInput(IReadOnlyList<IRowsInput> rowsInputs)
     {
@@ -40,19 +56,23 @@ internal sealed class CombineRowsInput : RowsInput, IDisposable
     }
 
     /// <inheritdoc />
-    public override void Open()
+    public override async Task OpenAsync(CancellationToken cancellationToken = default)
     {
         if (FetchNextInput())
         {
-            _currentRowsInput!.Open();
+            await _currentRowsInput!.OpenAsync(cancellationToken);
             Columns = _currentRowsInput.Columns;
         }
     }
 
     /// <inheritdoc />
-    public override void Close()
+    public override async Task CloseAsync(CancellationToken cancellationToken = default)
     {
-        _currentRowsInput?.Close();
+        if (_currentRowsInput == null)
+        {
+            return;
+        }
+        await _currentRowsInput.CloseAsync(cancellationToken);
     }
 
     /// <inheritdoc />
@@ -67,23 +87,23 @@ internal sealed class CombineRowsInput : RowsInput, IDisposable
     }
 
     /// <inheritdoc />
-    public override bool ReadNext()
+    public override async ValueTask<bool> ReadNextAsync(CancellationToken cancellationToken = default)
     {
-        base.ReadNext();
+        await base.ReadNextAsync(cancellationToken);
 
         if (_currentRowsInput != null)
         {
-            if (_currentRowsInput.ReadNext())
+            if (await _currentRowsInput.ReadNextAsync(cancellationToken))
             {
                 return true;
             }
-            _currentRowsInput.Close();
+            await _currentRowsInput.CloseAsync(cancellationToken);
         }
 
         if (FetchNextInput())
         {
-            _currentRowsInput!.Open();
-            return ReadNext();
+            await _currentRowsInput!.OpenAsync(cancellationToken);
+            return await ReadNextAsync(cancellationToken);
         }
 
         return false;
@@ -102,22 +122,22 @@ internal sealed class CombineRowsInput : RowsInput, IDisposable
     }
 
     /// <inheritdoc />
-    public override void Reset()
+    public override async Task ResetAsync(CancellationToken cancellationToken = default)
     {
         _currentRowsInput = null;
         foreach (var rowsInput in _rowsInputs)
         {
-            rowsInput.Reset();
+            await rowsInput.ResetAsync(cancellationToken);
         }
         _currentInputIndex = -1;
-        base.Reset();
+        await base.ResetAsync(cancellationToken);
         FetchNextInput();
     }
 
     /// <inheritdoc />
     public void Dispose()
     {
-        Close();
+        AsyncUtils.RunSync(CloseAsync);
     }
 
     /// <inheritdoc />

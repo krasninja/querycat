@@ -17,7 +17,7 @@ internal class Program
         new VariablesUsage(),
     };
 
-    internal static void Main(string[] args)
+    internal static async Task Main(string[] args)
     {
         var pattern = args.Length > 0 ? args[0] : string.Empty;
 
@@ -32,7 +32,7 @@ internal class Program
             Console.WriteLine();
             Console.WriteLine(name);
             Console.WriteLine(new string('=', 50));
-            sample.Run();
+            await sample.RunAsync();
         }
     }
 }

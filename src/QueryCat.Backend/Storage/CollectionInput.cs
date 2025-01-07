@@ -5,6 +5,7 @@ using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Fetch;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend.Storage;
 
@@ -74,20 +75,23 @@ public class CollectionInput : IRowsOutput, IDisposable, IRowsInputUpdate
     }
 
     /// <inheritdoc />
-    public void Open()
+    public Task OpenAsync(CancellationToken cancellationToken = default)
     {
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />
-    public void Close()
+    public Task CloseAsync(CancellationToken cancellationToken = default)
     {
         (_enumerator as IDisposable)?.Dispose();
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />
-    public void Reset()
+    public Task ResetAsync(CancellationToken cancellationToken = default)
     {
         _enumerator.Reset();
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />
@@ -106,7 +110,11 @@ public class CollectionInput : IRowsOutput, IDisposable, IRowsInputUpdate
     }
 
     /// <inheritdoc />
-    public void WriteValues(in VariantValue[] values)
+    public ValueTask<bool> ReadNextAsync(CancellationToken cancellationToken = default)
+        => ValueTask.FromResult(_enumerator.MoveNext());
+
+    /// <inheritdoc />
+    public ValueTask<ErrorCode> WriteValuesAsync(VariantValue[] values, CancellationToken cancellationToken = default)
     {
         if (_enumerable is not IList list)
         {
@@ -127,6 +135,8 @@ public class CollectionInput : IRowsOutput, IDisposable, IRowsInputUpdate
             prop.SetValue(obj, ChangeType(values[i].GetGenericObject(), prop.PropertyType));
         }
         list.Add(obj);
+
+        return ValueTask.FromResult(ErrorCode.OK);
     }
 
     private PropertyInfo[] GetPropertiesToColumnsMapping(Column[] columns)
@@ -150,10 +160,7 @@ public class CollectionInput : IRowsOutput, IDisposable, IRowsInputUpdate
     }
 
     /// <inheritdoc />
-    public bool ReadNext() => _enumerator.MoveNext();
-
-    /// <inheritdoc />
-    public ErrorCode UpdateValue(int columnIndex, in VariantValue value)
+    public ValueTask<ErrorCode> UpdateValueAsync(int columnIndex, VariantValue value, CancellationToken cancellationToken = default)
     {
         var obj = _enumerator.Current;
         var prop = _columnsProperties[columnIndex];
@@ -162,7 +169,7 @@ public class CollectionInput : IRowsOutput, IDisposable, IRowsInputUpdate
             throw new QueryCatException(string.Format(Resources.Errors.CannotWriteToProperty, prop.Name));
         }
         prop.SetValue(obj, ChangeType(value.GetGenericObject(), prop.PropertyType));
-        return ErrorCode.OK;
+        return ValueTask.FromResult(ErrorCode.OK);
     }
 
     /// <inheritdoc />
@@ -213,7 +220,7 @@ public class CollectionInput : IRowsOutput, IDisposable, IRowsInputUpdate
     {
         if (disposing)
         {
-            Close();
+            AsyncUtils.RunSync(CloseAsync);
         }
     }
 

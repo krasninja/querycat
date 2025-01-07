@@ -10,6 +10,7 @@ using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Storage;
@@ -235,7 +236,7 @@ internal sealed partial class SelectPlanner
             {
                 IsVariableBound = true,
             });
-            rowsInput.Open();
+            AsyncUtils.RunSync(rowsInput.OpenAsync);
             rowsInputResult = rowsInput;
         }
         if (objVariable is IRowsIterator rowsIterator)
@@ -274,7 +275,7 @@ internal sealed partial class SelectPlanner
         }
         var rowsInput = ExecutionThread.FunctionsManager.CallFunction("read", ExecutionThread, args).AsRequired<IRowsInput>();
         rowsInput.QueryContext = new SelectInputQueryContext(rowsInput);
-        rowsInput.Open();
+        AsyncUtils.RunSync(rowsInput.OpenAsync);
         return [rowsInput];
     }
 

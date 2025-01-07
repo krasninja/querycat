@@ -8,5 +8,6 @@ internal abstract class BaseUsage
     /// <summary>
     /// Run the example.
     /// </summary>
-    public abstract void Run();
+    /// <returns>Awaitable task.</returns>
+    public abstract Task RunAsync();
 }

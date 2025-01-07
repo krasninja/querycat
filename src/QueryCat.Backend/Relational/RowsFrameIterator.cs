@@ -59,8 +59,19 @@ public sealed class RowsFrameIterator : ICursorRowsIterator
         }
     }
 
+    /// <inheritdoc />
+    public ValueTask<bool> MoveNextAsync(CancellationToken cancellationToken = default)
+    {
+        if (!HasData)
+        {
+            return ValueTask.FromResult(false);
+        }
+        _cursor++;
+        return ValueTask.FromResult(HasData);
+    }
+
     /// <summary>
-    /// Reset cursor position, move to the begin of rows set.
+    /// Reset cursor position, move to the beginning of rows set.
     /// </summary>
     public void Reset()
     {
@@ -71,17 +82,6 @@ public sealed class RowsFrameIterator : ICursorRowsIterator
     /// Whether iterator has data.
     /// </summary>
     public bool HasData => _rowsFrame.TotalRows >= _cursor + 1 && _rowsFrame.TotalRows > 0;
-
-    /// <inheritdoc />
-    public bool MoveNext()
-    {
-        if (!HasData)
-        {
-            return false;
-        }
-        _cursor++;
-        return HasData;
-    }
 
     /// <inheritdoc />
     public void Explain(IndentedStringBuilder stringBuilder)

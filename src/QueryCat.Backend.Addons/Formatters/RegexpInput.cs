@@ -61,9 +61,9 @@ internal sealed class RegexpInput : StreamRowsInput
     }
 
     /// <inheritdoc />
-    protected override void Analyze(CacheRowsIterator iterator)
+    protected override async Task AnalyzeAsync(CacheRowsIterator iterator, CancellationToken cancellationToken = default)
     {
-        RowsIteratorUtils.ResolveColumnsTypes(iterator);
+        await RowsIteratorUtils.ResolveColumnsTypesAsync(iterator, cancellationToken: cancellationToken);
         iterator.SeekToHead();
     }
 
@@ -75,9 +75,9 @@ internal sealed class RegexpInput : StreamRowsInput
     }
 
     /// <inheritdoc />
-    protected override bool ReadNextInternal()
+    protected override async ValueTask<bool> ReadNextInternalAsync(CancellationToken cancellationToken)
     {
-        var hasData = base.ReadNextInternal();
+        var hasData = await base.ReadNextInternalAsync(cancellationToken);
         if (!hasData)
         {
             return false;

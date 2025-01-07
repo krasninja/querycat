@@ -84,15 +84,15 @@ internal sealed class GroupRowsIterator : IRowsIterator, IRowsIteratorParent
     }
 
     /// <inheritdoc />
-    public bool MoveNext()
+    public async ValueTask<bool> MoveNextAsync(CancellationToken cancellationToken = default)
     {
         if (!_isInitialized)
         {
-            FillRows();
+            await FillRowsAsync(cancellationToken);
             _isInitialized = true;
         }
 
-        return _rowsFrameIterator.MoveNext();
+        return await _rowsFrameIterator.MoveNextAsync(cancellationToken);
     }
 
     /// <inheritdoc />
@@ -112,12 +112,12 @@ internal sealed class GroupRowsIterator : IRowsIterator, IRowsIteratorParent
             .AppendSubQueriesWithIndent(_keys);
     }
 
-    private VariantValueArray KeysToArray(IFuncUnit[] keys)
+    private async ValueTask<VariantValueArray> KeysToArrayAsync(IFuncUnit[] keys, CancellationToken cancellationToken)
     {
         var arr = new VariantValue[keys.Length];
         for (var i = 0; i < keys.Length; i++)
         {
-            arr[i] = keys[i].Invoke(_thread);
+            arr[i] = await keys[i].InvokeAsync(_thread, cancellationToken);
         }
         return new VariantValueArray(arr);
     }
@@ -132,16 +132,16 @@ internal sealed class GroupRowsIterator : IRowsIterator, IRowsIteratorParent
         return arr;
     }
 
-    private void FillRows()
+    private async ValueTask FillRowsAsync(CancellationToken cancellationToken)
     {
         var keysRowIndexesMap = new Dictionary<VariantValueArray, GroupKeyEntry>(capacity: 1024);
 
         // Fill keysRowIndexesMap.
-        while (_rowsIterator.MoveNext())
+        while (await _rowsIterator.MoveNextAsync(cancellationToken))
         {
             // Format key and fill aggregate values.
-            _keys[0].Invoke(_thread);
-            var key = KeysToArray(_keys);
+            await _keys[0].InvokeAsync(_thread, cancellationToken);
+            var key = await KeysToArrayAsync(_keys, cancellationToken);
             if (!keysRowIndexesMap.TryGetValue(key, out GroupKeyEntry groupKey))
             {
                 var row = new Row(_rowsFrame);
@@ -158,7 +158,7 @@ internal sealed class GroupRowsIterator : IRowsIterator, IRowsIteratorParent
             {
                 var target = _targets[i];
                 _thread.Stack.CreateFrame();
-                target.ValueGenerator.Invoke(_thread); // We need this call to fill FunctionCallInfo.
+                await target.ValueGenerator.InvokeAsync(_thread, cancellationToken); // We need this call to fill FunctionCallInfo.
                 target.AggregateFunction.Invoke(groupKey.AggregateStates[i], _thread);
                 _thread.Stack.CloseFrame();
             }
@@ -202,7 +202,7 @@ internal sealed class GroupRowsIterator : IRowsIterator, IRowsIteratorParent
             var columnName = !string.IsNullOrEmpty(target.Name) ? target.Name : $"__a-{target.Node.Id}";
             var column = new Column(columnName, target.ReturnType);
             columns.Add(column);
-            var info = _context.ColumnsInfoContainer.GetByColumn(column);
+            var info = _context.ColumnsInfoContainer.GetByColumnOrAdd(column);
             info.IsAggregateKey = true;
         }
         return columns.ToArray();

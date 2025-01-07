@@ -6,6 +6,7 @@ using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Indexes;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Relational.Iterators;
@@ -22,9 +23,9 @@ internal sealed partial class SelectPlanner
     private static void Pipeline_ResolveSelectAllStatement(SelectCommandContext context, SelectColumnsListNode columnsNode)
     {
         context.HasExactColumnsSelect = true;
-        for (int i = 0; i < columnsNode.ColumnsNodes.Count; i++)
+        for (var i = 0; i < columnsNode.ColumnsNodes.Count; i++)
         {
-            if (columnsNode.ColumnsNodes[i] is not SelectColumnsSublistAll)
+            if (columnsNode.ColumnsNodes[i] is not SelectColumnsSublistAll selectColumnsSublistAll)
             {
                 continue;
             }
@@ -32,13 +33,17 @@ internal sealed partial class SelectPlanner
             context.HasExactColumnsSelect = false;
             var iterator = context.CurrentIterator;
             columnsNode.ColumnsNodes.Remove(columnsNode.ColumnsNodes[i]);
-            for (var columnIndex = 0; columnIndex < iterator.Columns.Length; columnIndex++)
+            foreach (var column in iterator.Columns)
             {
-                var column = iterator.Columns[columnIndex];
+                if (selectColumnsSublistAll.PrefixIdentifier != null &&
+                    column.SourceName != selectColumnsSublistAll.PrefixIdentifier.TableFullName)
+                {
+                    continue;
+                }
 
                 var astColumn = new SelectColumnsSublistExpressionNode(
                     new IdentifierExpressionNode(column.Name, column.SourceName));
-                columnsNode.ColumnsNodes.Insert(i + columnIndex, astColumn);
+                columnsNode.ColumnsNodes.Add(astColumn);
             }
         }
     }
@@ -74,7 +79,7 @@ internal sealed partial class SelectPlanner
         context.SetIterator(new DistinctRowsIteratorIterator(ExecutionThread, context.CurrentIterator, funcUnits));
     }
 
-    private record struct ColumnWithIndex(
+    private readonly record struct ColumnWithIndex(
         Column Column,
         int ColumnIndex);
 
@@ -158,7 +163,7 @@ internal sealed partial class SelectPlanner
                 }
             }
             var columnIndex = projectedIterator.AddFuncColumn(selectColumns[i].Column, funcs[i]);
-            var info = context.ColumnsInfoContainer.GetByColumn(projectedIterator.Columns[columnIndex]);
+            var info = context.ColumnsInfoContainer.GetByColumnOrAdd(projectedIterator.Columns[columnIndex]);
             info.RelatedSelectSublistNode = columnsNode.ColumnsNodes[selectColumns[i].ColumnIndex];
         }
 
@@ -369,11 +374,11 @@ internal sealed partial class SelectPlanner
             {
                 var actionIterator = new ActionRowsIterator(outputIterator, "write to output")
                 {
-                    BeforeMoveNext = _ =>
+                    BeforeMoveNext = async (rowsIterator, ct) =>
                     {
-                        while (outputIterator.MoveNext())
+                        while (await outputIterator.MoveNextAsync(ct))
                         {
-                            outputIterator.CurrentOutput.WriteValues(outputIterator.Current.Values);
+                            await outputIterator.CurrentOutput.WriteValuesAsync(outputIterator.Current.Values, ct);
                         }
                     },
                 };
@@ -399,7 +404,7 @@ internal sealed partial class SelectPlanner
 
             if (!context.HasExactColumnsSelect)
             {
-                var columnInfo = context.ColumnsInfoContainer.GetByColumn(rowIdIterator.RowNumberColumn);
+                var columnInfo = context.ColumnsInfoContainer.GetByColumnOrAdd(rowIdIterator.RowNumberColumn);
                 var rowNumberExpressionNode = new SelectColumnsSublistExpressionNode(
                     new IdentifierExpressionNode(rowIdIterator.RowNumberColumn.Name));
                 columnInfo.RelatedSelectSublistNode = rowNumberExpressionNode;

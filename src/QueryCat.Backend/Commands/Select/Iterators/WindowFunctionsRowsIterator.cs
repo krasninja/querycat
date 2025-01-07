@@ -14,7 +14,7 @@ internal sealed class WindowFunctionsRowsIterator : IRowsIterator
         RowsFrame RowsFrame,
         ICursorRowsIterator RowsIterator);
 
-    private record struct RowIdData(
+    private readonly record struct RowIdData(
         PartitionInstance PartitionInstance,
         long RowIdInPartition);
 
@@ -97,7 +97,8 @@ internal sealed class WindowFunctionsRowsIterator : IRowsIterator
             _row = new Row(Columns);
         }
 
-        public PartitionInstance Add(VariantValueArray partitionKey, IList<IIndex> indexes)
+        public async ValueTask<PartitionInstance> AddAsync(VariantValueArray partitionKey, IList<IIndex> indexes,
+            CancellationToken cancellationToken = default)
         {
             if (!PartitionRowsIds.TryGetValue(partitionKey, out var partitionData))
             {
@@ -129,12 +130,12 @@ internal sealed class WindowFunctionsRowsIterator : IRowsIterator
             // Aggregates.
             foreach (var aggregateValue in WindowFunctionInfo.AggregateValues)
             {
-                _row[nextIndex++] = aggregateValue.Invoke(_thread);
+                _row[nextIndex++] = await aggregateValue.InvokeAsync(_thread, cancellationToken);
             }
             // Order.
             foreach (var orderFunction in WindowFunctionInfo.OrderFunctions)
             {
-                _row[nextIndex++] = orderFunction.Invoke(_thread);
+                _row[nextIndex++] = await orderFunction.InvokeAsync(_thread, cancellationToken);
             }
             var rowIndex = partitionData.RowsFrame.AddRow(_row);
             RowIdToPartition.Add(new RowIdData(partitionData, rowIndex));
@@ -189,31 +190,18 @@ internal sealed class WindowFunctionsRowsIterator : IRowsIterator
             .ToArray();
     }
 
-    /// <inheritdoc />
-    public bool MoveNext()
-    {
-        if (!_isInitialized)
-        {
-            FillRowsAndPrepareWindowData();
-            FillWindowColumns();
-            _isInitialized = true;
-        }
-
-        return _rowsFrameIterator.MoveNext();
-    }
-
-    private void FillRowsAndPrepareWindowData()
+    private async ValueTask FillRowsAndPrepareWindowData(CancellationToken cancellationToken)
     {
         var indexes = new List<IIndex>();
 
         // Prefetch all values.
-        while (_rowsIterator.MoveNext())
+        while (await _rowsIterator.MoveNextAsync(cancellationToken))
         {
             foreach (var partition in _partitions)
             {
                 // Find partition key. Add it into KeysRowsIds.
                 var key = partition.PartitionFormatter.Invoke();
-                partition.Add(key, indexes);
+                await partition.AddAsync(key, indexes, cancellationToken);
             }
 
             // Add the row into rows frame.
@@ -227,20 +215,21 @@ internal sealed class WindowFunctionsRowsIterator : IRowsIterator
         }
     }
 
-    private void FillWindowColumns()
+    private async ValueTask FillWindowColumnsAsync(CancellationToken cancellationToken)
     {
         var iterator = _rowsFrame.GetIterator();
-        while (iterator.MoveNext())
+        while (await iterator.MoveNextAsync(cancellationToken))
         {
             foreach (var partition in _partitions)
             {
-                var aggregateValue = ProcessPartition(iterator, partition);
+                var aggregateValue = await ProcessPartitionAsync(iterator, partition, cancellationToken);
                 _rowsFrame.UpdateValue(iterator.Position, partition.OriginalColumnIndex, aggregateValue);
             }
         }
     }
 
-    private VariantValue ProcessPartition(ICursorRowsIterator iterator, PartitionInfo partitionInfo)
+    private async ValueTask<VariantValue> ProcessPartitionAsync(ICursorRowsIterator iterator, PartitionInfo partitionInfo,
+        CancellationToken cancellationToken)
     {
         var rowIdData = partitionInfo.RowIdToPartition[iterator.Position];
 
@@ -253,7 +242,7 @@ internal sealed class WindowFunctionsRowsIterator : IRowsIterator
         // Calculate aggregate values by certain window boundaries.
         var rowsIterator = rowIdData.PartitionInstance.RowsIterator;
         rowsIterator.Reset();
-        while (rowsIterator.MoveNext())
+        while (await rowsIterator.MoveNextAsync(cancellationToken))
         {
             // Upper boundary.
 
@@ -283,6 +272,19 @@ internal sealed class WindowFunctionsRowsIterator : IRowsIterator
             }
         }
         return true;
+    }
+
+    /// <inheritdoc />
+    public async ValueTask<bool> MoveNextAsync(CancellationToken cancellationToken = default)
+    {
+        if (!_isInitialized)
+        {
+            await FillRowsAndPrepareWindowData(cancellationToken);
+            await FillWindowColumnsAsync(cancellationToken);
+            _isInitialized = true;
+        }
+
+        return await _rowsFrameIterator.MoveNextAsync(cancellationToken);
     }
 
     /// <inheritdoc />

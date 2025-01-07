@@ -23,21 +23,21 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     /*
      * The main workflow is:
      * - Open()
-     *   - ReadNext() - get first row
+     *   - ReadNextAsync() - get first row
      *     - ReadNextInternal()
      *     - SetDefaultColumns() - on this stage we know the real columns count, pre-initialize
-     *   - Analyze() - init columns, add custom columns, resolve columns types
+     *   - AnalyzeAsync() - init columns, add custom columns, resolve columns types
      * - SetContext()
-     * - ReadNext() - real data reading, cache first, stream next
+     * - ReadNextAsync() - real data reading, cache first, stream next
      * - Close()
      */
 
     private readonly StreamRowsInputOptions _options;
 
     private readonly Column[] _customColumns =
-    {
-        new("filename", DataType.String, "File path."), // Index 0.
-    };
+    [
+        new("filename", DataType.String, "File path.") // Index 0.
+    ];
 
     private int _rowIndex;
 
@@ -85,7 +85,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     protected StreamRowsInput(
         StreamReader streamReader,
         StreamRowsInputOptions? options = null,
-        params string[] keys)
+        params IEnumerable<string> keys)
     {
         _options = options ?? new();
         _delimiterStreamReader = new DelimiterStreamReader(streamReader, _options.DelimiterStreamReaderOptions);
@@ -103,10 +103,11 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     }
 
     /// <inheritdoc />
-    public void Close()
+    public Task CloseAsync(CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("Close {Stream}.", this);
         Dispose(true);
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />
@@ -209,7 +210,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     }
 
     /// <inheritdoc />
-    public virtual bool ReadNext()
+    public virtual async ValueTask<bool> ReadNextAsync(CancellationToken cancellationToken = default)
     {
         bool hasData;
         do
@@ -219,7 +220,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
             // If we have cached data - return it first.
             if (_cacheIterator != null)
             {
-                if (_cacheIterator.MoveNext())
+                if (await _cacheIterator.MoveNextAsync(cancellationToken))
                 {
                     hasData = true;
                 }
@@ -234,7 +235,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
                 {
                     return false;
                 }
-                hasData = ReadNextInternal();
+                hasData = await ReadNextInternalAsync(cancellationToken);
             }
             if (hasData)
             {
@@ -254,14 +255,15 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     /// <summary>
     /// Actual next data reading.
     /// </summary>
-    /// <returns><c>True</c> if has data, <c>false</c> otherwise.</returns>
-    protected virtual bool ReadNextInternal()
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns><c>True</c> if it has data, <c>false</c> otherwise.</returns>
+    protected virtual ValueTask<bool> ReadNextInternalAsync(CancellationToken cancellationToken)
     {
-        return _delimiterStreamReader.Read();
+        return _delimiterStreamReader.ReadAsync(cancellationToken);
     }
 
     /// <inheritdoc />
-    public virtual void Reset()
+    public virtual Task ResetAsync(CancellationToken cancellationToken = default)
     {
         _logger.LogTrace("Reset stream.");
         // If we still read cache data - we just reset it. Otherwise, there will be double read.
@@ -276,6 +278,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
             _delimiterStreamReader.Reset();
         }
         _rowIndex = 0;
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />
@@ -321,7 +324,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
         => GetColumnValue(columnIndex + _virtualColumnsCount);
 
     /// <inheritdoc />
-    public virtual void Open()
+    public virtual async Task OpenAsync(CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("Start stream open.");
         _virtualColumnsCount = GetVirtualColumns().Length;
@@ -330,7 +333,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
         if (DetectColumnsTypes)
         {
             // Move iterator, after that we are able to fill initial columns set.
-            var hasData = inputIterator.MoveNext();
+            var hasData = await inputIterator.MoveNextAsync(cancellationToken);
             if (!hasData)
             {
                 return;
@@ -342,7 +345,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
             cacheIterator.AddRow(inputIterator.Current);
             cacheIterator.SeekToHead();
 
-            Analyze(cacheIterator);
+            await AnalyzeAsync(cacheIterator, cancellationToken);
             cacheIterator.SeekToHead();
             cacheIterator.Freeze();
             _cacheIterator = cacheIterator;
@@ -356,7 +359,9 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     /// The data that was read by iterator will be cached.
     /// </summary>
     /// <param name="iterator">Rows iterator.</param>
-    protected abstract void Analyze(CacheRowsIterator iterator);
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Awaitable task.</returns>
+    protected abstract Task AnalyzeAsync(CacheRowsIterator iterator, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// The method should return custom (virtual) columns array.

@@ -10,12 +10,12 @@ namespace QueryCat.Backend.Core.Data;
 [Serializable]
 public class Column : ICloneable
 {
-    private static int nextId = 1;
+    private static int _nextId = 1;
 
     /// <summary>
     /// Column unique identifier.
     /// </summary>
-    public int Id { get; private set; } = nextId++;
+    public int Id { get; private set; } = _nextId++;
 
     /// <summary>
     /// Column name.
@@ -67,7 +67,8 @@ public class Column : ICloneable
         ArgumentException.ThrowIfNullOrEmpty(name, nameof(name));
         if (!DataTypeUtils.RowDataTypes.Contains(dataType))
         {
-            throw new ArgumentOutOfRangeException(nameof(dataType));
+            throw new ArgumentOutOfRangeException(nameof(dataType),
+                string.Format(Resources.Errors.InvalidColumnType, dataType, name));
         }
 
         Name = name;

@@ -50,41 +50,41 @@ internal sealed class OrderRowsIterator : IRowsIterator, IRowsIteratorParent
         _orderIndexIterator = _orderIndex.GetOrderIterator();
     }
 
+    private async ValueTask CopyRowIteratorToFrameAsync(CancellationToken cancellationToken)
+    {
+        var row = new Row(_rowsFrame);
+        var orderRow = new Row(_orderRowsFrame);
+        while (await _rowsIterator.MoveNextAsync(cancellationToken))
+        {
+            for (var i = 0; i < _rowsIterator.Columns.Length; i++)
+            {
+                row[i] = _rowsIterator.Current[i];
+            }
+            _rowsFrame.AddRow(row);
+            for (var i = 0; i < _orders.Length; i++)
+            {
+                orderRow[i] = await _orders[i].Func.InvokeAsync(_thread, cancellationToken);
+            }
+            _orderRowsFrame.AddRow(orderRow);
+        }
+    }
+
     /// <inheritdoc />
-    public bool MoveNext()
+    public async ValueTask<bool> MoveNextAsync(CancellationToken cancellationToken = default)
     {
         if (!_isInitialized)
         {
-            CopyRowIteratorToFrame();
+            await CopyRowIteratorToFrameAsync(cancellationToken);
             _orderIndex.Rebuild();
             _isInitialized = true;
         }
 
-        var hasData = _orderIndexIterator.MoveNext();
+        var hasData = await _orderIndexIterator.MoveNextAsync(cancellationToken);
         if (hasData)
         {
             _rowsFrameIterator.Seek(_orderIndexIterator.Position, CursorSeekOrigin.Begin);
         }
         return hasData;
-    }
-
-    private void CopyRowIteratorToFrame()
-    {
-        var row = new Row(_rowsFrame);
-        var orderRow = new Row(_orderRowsFrame);
-        while (_rowsIterator.MoveNext())
-        {
-            for (int i = 0; i < _rowsIterator.Columns.Length; i++)
-            {
-                row[i] = _rowsIterator.Current[i];
-            }
-            _rowsFrame.AddRow(row);
-            for (int i = 0; i < _orders.Length; i++)
-            {
-                orderRow[i] = _orders[i].Func.Invoke(_thread);
-            }
-            _orderRowsFrame.AddRow(orderRow);
-        }
     }
 
     /// <inheritdoc />

@@ -15,6 +15,7 @@ internal sealed class SubRipFormatter : IRowsFormatter
     [SafeFunction]
     [Description("SubRip (SRT) formatter.")]
     [FunctionSignature("srt(path: string): object<IRowsFormatter>")]
+    [FunctionFormatters(".srt", "application/x-subrip")]
     public static VariantValue Srt(IExecutionThread thread)
     {
         var rowsSource = new SubRipFormatter();

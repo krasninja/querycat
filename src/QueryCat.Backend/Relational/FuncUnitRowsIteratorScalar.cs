@@ -13,11 +13,11 @@ internal sealed class FuncUnitRowsIteratorScalar(IRowsIterator rowsIterator, int
     public DataType OutputType => rowsIterator.Columns[columnIndex].DataType;
 
     /// <inheritdoc />
-    public VariantValue Invoke(IExecutionThread thread)
+    public async ValueTask<VariantValue> InvokeAsync(IExecutionThread thread, CancellationToken cancellationToken = default)
     {
         if (!_isExecuted)
         {
-            var hasData = rowsIterator.MoveNext();
+            var hasData = await rowsIterator.MoveNextAsync(cancellationToken);
             if (hasData)
             {
                 _value = rowsIterator.Current[columnIndex];

@@ -33,9 +33,9 @@ internal sealed class MultiplyRowsIterator : IRowsIterator, IRowsIteratorParent
         _currentRow = new Row(this);
     }
 
-    private bool SetNextRightRow()
+    private async ValueTask<bool> SetNextRightRowAsync(CancellationToken cancellationToken)
     {
-        if (!_rightRowsIterator.MoveNext())
+        if (!await _rightRowsIterator.MoveNextAsync(cancellationToken))
         {
             return false;
         }
@@ -44,17 +44,17 @@ internal sealed class MultiplyRowsIterator : IRowsIterator, IRowsIteratorParent
     }
 
     /// <inheritdoc />
-    public bool MoveNext()
+    public async ValueTask<bool> MoveNextAsync(CancellationToken cancellationToken = default)
     {
         if (_currentRightRow == null)
         {
-            if (!SetNextRightRow())
+            if (!await SetNextRightRowAsync(cancellationToken))
             {
                 return false;
             }
         }
 
-        var leftHasNext = _currentLeftIterator.MoveNext();
+        var leftHasNext = await _currentLeftIterator.MoveNextAsync(cancellationToken);
 
         // Left rows set has no rows.
         if (!leftHasNext && _leftRowsFrame.IsEmpty)
@@ -70,12 +70,12 @@ internal sealed class MultiplyRowsIterator : IRowsIterator, IRowsIteratorParent
         if (!leftHasNext)
         {
             _currentLeftIterator = _leftRowsFrameIterator;
-            if (!SetNextRightRow())
+            if (!await SetNextRightRowAsync(cancellationToken))
             {
                 return false;
             }
             _leftRowsFrameIterator.Reset();
-            _leftRowsFrameIterator.MoveNext();
+            await _leftRowsFrameIterator.MoveNextAsync(cancellationToken);
         }
         Row.Copy(_currentLeftIterator.Current, _currentRow);
         Row.Copy(_currentRightRow!, 0, _currentRow, _currentLeftIterator.Columns.Length);

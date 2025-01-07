@@ -7,22 +7,17 @@ internal static class Registration
 {
     public static void Register(IFunctionsManager functionsManager)
     {
-        functionsManager.RegisterFactory(DsvFormatter.RegisterFunctions);
-        functionsManager.RegisterFactory(NullFormatter.RegisterFunctions);
-        functionsManager.RegisterFactory(TextLineFormatter.RegisterFunctions);
+        DsvFormatter.RegisterFunctions(functionsManager);
+        NullFormatter.RegisterFunctions(functionsManager);
+        TextLineFormatter.RegisterFunctions(functionsManager);
 
         // File extensions.
-        FormattersInfo.RegisterFormatter(".csv", (fm, et, args) => fm.CallFunction("csv", et, args).AsRequired<IRowsFormatter>());
-        FormattersInfo.RegisterFormatter(".tsv", (fm, et, args) => fm.CallFunction("csv", et, args.Add("delimiter", '\t')).AsRequired<IRowsFormatter>());
-        FormattersInfo.RegisterFormatter(".tab", (fm, et, args) => fm.CallFunction("csv", et, args.Add("delimiter", '\t')).AsRequired<IRowsFormatter>());
+        FormattersInfo.RegisterFormatter(".tsv", (fm, et, args) =>
+            fm.CallFunction("csv", et, args.Add("delimiter", '\t')).AsRequired<IRowsFormatter>());
+        FormattersInfo.RegisterFormatter(".tab", (fm, et, args) =>
+            fm.CallFunction("csv", et, args.Add("delimiter", '\t')).AsRequired<IRowsFormatter>());
         FormattersInfo.RegisterFormatter(".log", (fm, et, args) =>
             fm.CallFunction("csv", et, args.Add("delimiter", ' ').Add("delimiter_can_repeat", true)).AsRequired<IRowsFormatter>());
-
-        // Content types.
-        FormattersInfo.RegisterFormatter("text/csv", (fm, et, args) => fm.CallFunction("csv", et, args).AsRequired<IRowsFormatter>());
-        FormattersInfo.RegisterFormatter("text/x-csv", (fm, et, args) => fm.CallFunction("csv", et, args).AsRequired<IRowsFormatter>());
-        FormattersInfo.RegisterFormatter("application/csv", (fm, et, args) => fm.CallFunction("csv", et, args).AsRequired<IRowsFormatter>());
-        FormattersInfo.RegisterFormatter("application/x-csv", (fm, et, args) => fm.CallFunction("csv", et, args).AsRequired<IRowsFormatter>());
         FormattersInfo.RegisterFormatter("text/tab-separated-values",
             (fm, et, args) => fm.CallFunction("csv", et, args.Add("delimiter", '\t')).AsRequired<IRowsFormatter>());
     }

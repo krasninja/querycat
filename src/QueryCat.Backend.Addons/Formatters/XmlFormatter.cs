@@ -11,6 +11,7 @@ internal class XmlFormatter : IRowsFormatter
     [SafeFunction]
     [Description("XML formatter.")]
     [FunctionSignature("xml(xpath?: string): object<IRowsFormatter>")]
+    [FunctionFormatters(".xml", ".xsd", "application/xml", "application/xhtml+xml", "application/soap+xml")]
     public static VariantValue Xml(IExecutionThread thread)
     {
         var rowsSource = new XmlFormatter(thread.Stack.GetAtOrDefault(0).AsString);

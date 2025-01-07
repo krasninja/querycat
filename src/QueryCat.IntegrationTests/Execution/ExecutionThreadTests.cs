@@ -21,7 +21,7 @@ public class ExecutionThreadTests
     }
 
     [Fact]
-    public void Run_WithParameters_ShouldProcess()
+    public async Task Run_WithParameters_ShouldProcess()
     {
         // Arrange.
         _testThread.TopScope.Variables["param1"] = new(11);
@@ -32,7 +32,7 @@ public class ExecutionThreadTests
         };
 
         // Act.
-        var result = _testThread.Run("param1 + param2 + param3;", @params);
+        var result = await _testThread.RunAsync("param1 + param2 + param3;", @params);
 
         // Assert.
         Assert.Equal(77, result.AsInteger);
@@ -40,7 +40,7 @@ public class ExecutionThreadTests
     }
 
     [Fact]
-    public void Run_WithParameterNestedScope_TopScopeShouldOverride()
+    public async Task Run_WithParameterNestedScope_TopScopeShouldOverride()
     {
         // Arrange.
         _testThread.TopScope.Variables["param1"] = new(2023);
@@ -50,7 +50,7 @@ public class ExecutionThreadTests
         };
 
         // Act.
-        var result = _testThread.Run("param1;", @params);
+        var result = await _testThread.RunAsync("param1;", @params);
 
         // Assert.
         Assert.Equal(2024, result.AsInteger);

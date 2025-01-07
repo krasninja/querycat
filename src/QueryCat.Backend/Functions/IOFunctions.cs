@@ -251,7 +251,7 @@ internal static class IOFunctions
         path = ResolveHomeDirectory(path);
 
         var items = ListDirectoryInternal(path);
-        var input = new EnumerableRowsInput<ListDirectoryEntry>(items,
+        var input = EnumerableRowsInput<ListDirectoryEntry>.FromSource(items,
             builder => builder
                 .AddProperty("type", f => f.Type)
                 .AddProperty("name", f => f.Name)
@@ -365,7 +365,7 @@ internal static class IOFunctions
     {
         var args = StringUtils.GetFieldsFromLine(query, delimiter: '&');
         var fa = new FunctionCallArguments();
-        if (args.Length == 1 && args[0].IndexOf('=') == -1)
+        if (args.Count == 1 && args[0].IndexOf('=') == -1)
         {
             fa.Add(CreateValueFromString(args[0]));
         }

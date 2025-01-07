@@ -5,7 +5,7 @@ using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.IntegrationTests.Inputs;
 
-public sealed class ItStocksRowsInput : FetchRowsInput<Stock>
+public sealed class ItStocksRowsInput : EnumerableRowsInput<Stock>
 {
     [SafeFunction]
     [FunctionSignature("it_stocks(): object<IRowsInput>")]

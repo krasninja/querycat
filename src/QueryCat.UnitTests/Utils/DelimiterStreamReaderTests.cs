@@ -21,8 +21,8 @@ public class DelimiterStreamReaderTests
 
         // Act.
         var streamRowsInput = new DelimiterStreamReader(StringToStream(sb.ToString()));
-        streamRowsInput.Read();
-        streamRowsInput.Read();
+        streamRowsInput.ReadAsync();
+        streamRowsInput.ReadAsync();
 
         // Assert.
         Assert.Equal("10", streamRowsInput.GetField(0).ToString());
@@ -39,8 +39,8 @@ public class DelimiterStreamReaderTests
 
         // Act.
         var streamRowsInput = new DelimiterStreamReader(StringToStream(sb.ToString()));
-        streamRowsInput.Read();
-        streamRowsInput.Read();
+        streamRowsInput.ReadAsync();
+        streamRowsInput.ReadAsync();
 
         // Assert.
         Assert.Equal("10", streamRowsInput.GetField(0).ToString());
@@ -58,8 +58,8 @@ public class DelimiterStreamReaderTests
 
         // Act.
         var streamRowsInput = new DelimiterStreamReader(StringToStream(sb.ToString()));
-        streamRowsInput.Read();
-        streamRowsInput.ReadLine();
+        streamRowsInput.ReadAsync();
+        streamRowsInput.ReadLineAsync();
 
         // Assert.
         Assert.Equal("//comment", streamRowsInput.GetField(0).ToString());
@@ -80,7 +80,7 @@ public class DelimiterStreamReaderTests
                 QuoteChars = ['"', '\''],
                 Culture = CultureInfo.InvariantCulture,
             });
-        streamRowsInput.Read();
+        streamRowsInput.ReadAsync();
 
         // Assert.
         Assert.Equal("no quotes", streamRowsInput.GetField(0).ToString());
@@ -106,10 +106,10 @@ public class DelimiterStreamReaderTests
                 DelimitersCanRepeat = true,
                 Culture = CultureInfo.InvariantCulture,
             });
-        streamRowsInput.Read();
+        streamRowsInput.ReadAsync();
         var id1 = streamRowsInput.GetField(0).ToString();
         var name1 = streamRowsInput.GetField(1).ToString();
-        streamRowsInput.Read();
+        streamRowsInput.ReadAsync();
         var id2 = streamRowsInput.GetField(0).ToString();
         var name2 = streamRowsInput.GetField(1).ToString();
 
@@ -137,9 +137,9 @@ public class DelimiterStreamReaderTests
                 DelimitersCanRepeat = true,
                 Culture = CultureInfo.InvariantCulture,
             });
-        streamRowsInput.Read();
+        streamRowsInput.ReadAsync();
         var name1 = streamRowsInput.GetField(0).ToString();
-        streamRowsInput.Read();
+        streamRowsInput.ReadAsync();
         var name2 = streamRowsInput.GetField(0).ToString();
 
         // Assert.
@@ -163,8 +163,8 @@ public class DelimiterStreamReaderTests
             Delimiters = [','],
             Culture = CultureInfo.InvariantCulture,
         });
-        streamRowsInput.Read();
-        streamRowsInput.Read();
+        streamRowsInput.ReadAsync();
+        streamRowsInput.ReadAsync();
 
         // Assert.
         Assert.Equal("10", streamRowsInput.GetField(0).ToString());

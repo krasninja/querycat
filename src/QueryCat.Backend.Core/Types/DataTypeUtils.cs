@@ -19,7 +19,6 @@ public static class DataTypeUtils
         DataType.Integer,
         DataType.String,
         DataType.Float,
-        DataType.Integer,
         DataType.Timestamp,
         DataType.Interval,
         DataType.Boolean,
@@ -89,7 +88,7 @@ public static class DataTypeUtils
         var value = source[(colonIndex + 1)..];
         if (type == "i")
         {
-            return new VariantValue(int.Parse(value, CultureInfo.InvariantCulture));
+            return new VariantValue(long.Parse(value, CultureInfo.InvariantCulture));
         }
         if (type == "s")
         {
@@ -101,7 +100,7 @@ public static class DataTypeUtils
         }
         if (type == "fl")
         {
-            return new VariantValue(float.Parse(value, CultureInfo.InvariantCulture));
+            return new VariantValue(double.Parse(value, CultureInfo.InvariantCulture));
         }
         if (type == "n")
         {

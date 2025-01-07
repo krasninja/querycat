@@ -1,3 +1,4 @@
+using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
 
@@ -42,22 +43,22 @@ public class PagingOutput : IRowsOutput
     }
 
     /// <inheritdoc />
-    public void Open() => _rowsOutput.Open();
+    public Task OpenAsync(CancellationToken cancellationToken = default) => _rowsOutput.OpenAsync(cancellationToken);
 
     /// <inheritdoc />
-    public void Close() => _rowsOutput.Close();
+    public Task CloseAsync(CancellationToken cancellationToken = default) => _rowsOutput.CloseAsync(cancellationToken);
 
     /// <inheritdoc />
-    public void Reset()
+    public Task ResetAsync(CancellationToken cancellationToken = default)
     {
         _rowsCounter = 0;
-        _rowsOutput.Reset();
+        return _rowsOutput.ResetAsync(cancellationToken);
     }
 
     /// <inheritdoc />
-    public void WriteValues(in VariantValue[] values)
+    public async ValueTask<ErrorCode> WriteValuesAsync(VariantValue[] values, CancellationToken cancellationToken = default)
     {
-        _rowsOutput.WriteValues(values);
+        await _rowsOutput.WriteValuesAsync(values, cancellationToken);
         if (PagingRowsCount != NoLimit
             && Environment.UserInteractive
             && ++_rowsCounter >= PagingRowsCount
@@ -75,10 +76,12 @@ public class PagingOutput : IRowsOutput
                 PagingRowsCount = -1;
             }
             // Quit.
-            else if (consoleKey.Key == ConsoleKey.Q)
+            else if (consoleKey.Key == ConsoleKey.Q && _cancellationTokenSource != null)
             {
-                _cancellationTokenSource?.Cancel();
+                await _cancellationTokenSource.CancelAsync();
             }
         }
+
+        return ErrorCode.OK;
     }
 }

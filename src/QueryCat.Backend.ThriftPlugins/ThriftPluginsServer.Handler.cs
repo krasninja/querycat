@@ -108,6 +108,12 @@ public partial class ThriftPluginsServer
             _thriftPluginsServer.ConfirmAuthToken(auth_token);
             _thriftPluginsServer._logger.LogDebug("Registered plugin '{PluginName}'.", context.Name);
 
+            // Call init only in debug mode for now.
+            if (context.Client != null && _thriftPluginsServer.SkipTokenVerification)
+            {
+                await context.Client.InitializeAsync(cancellationToken);
+            }
+
             return CreateEmptyRegistrationResult();
         }
 
@@ -155,13 +161,13 @@ public partial class ThriftPluginsServer
         }
 
         /// <inheritdoc />
-        public Task<VariantValue> RunQueryAsync(string query, Dictionary<string, VariantValue>? parameters,
+        public async Task<VariantValue> RunQueryAsync(string query, Dictionary<string, VariantValue>? parameters,
             CancellationToken cancellationToken = default)
         {
             var @params = (parameters ?? new Dictionary<string, VariantValue>())
                 .ToDictionary(k => k.Key, v => SdkConvert.Convert(v.Value));
-            var result = _thriftPluginsServer._executionThread.Run(query, @params, cancellationToken);
-            return Task.FromResult(SdkConvert.Convert(result));
+            var result = await _thriftPluginsServer._executionThread.RunAsync(query, @params, cancellationToken);
+            return SdkConvert.Convert(result);
         }
 
         /// <inheritdoc />
@@ -177,6 +183,27 @@ public partial class ThriftPluginsServer
         {
             var value = _thriftPluginsServer._inputConfigStorage.Get(key);
             return Task.FromResult(SdkConvert.Convert(value));
+        }
+
+        /// <inheritdoc />
+        public Task<VariantValue> GetVariableAsync(string name, CancellationToken cancellationToken = default)
+        {
+            if (_thriftPluginsServer._executionThread.TryGetVariable(name, out var value))
+            {
+                return Task.FromResult(SdkConvert.Convert(value));
+            }
+            return Task.FromResult(SdkConvert.Convert(Core.Types.VariantValue.Null));
+        }
+
+        /// <inheritdoc />
+        public Task<VariantValue> SetVariableAsync(string name, VariantValue? value, CancellationToken cancellationToken = default)
+        {
+            if (value == null)
+            {
+                return Task.FromResult(SdkConvert.Convert(Core.Types.VariantValue.Null));
+            }
+            _thriftPluginsServer._executionThread.TopScope.Variables[name] = SdkConvert.Convert(value);
+            return Task.FromResult(value);
         }
 
         /// <inheritdoc />
@@ -280,6 +307,34 @@ public partial class ThriftPluginsServer
             try
             {
                 return _handler.GetConfigValueAsync(key, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, Resources.Errors.HandlerInternalError);
+                throw QueryCatPluginExceptionUtils.Create(ex);
+            }
+        }
+
+        /// <inheritdoc />
+        public Task<VariantValue> GetVariableAsync(string name, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return _handler.GetVariableAsync(name, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, Resources.Errors.HandlerInternalError);
+                throw QueryCatPluginExceptionUtils.Create(ex);
+            }
+        }
+
+        /// <inheritdoc />
+        public Task<VariantValue> SetVariableAsync(string name, VariantValue? value, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return _handler.SetVariableAsync(name, value, cancellationToken);
             }
             catch (Exception ex)
             {

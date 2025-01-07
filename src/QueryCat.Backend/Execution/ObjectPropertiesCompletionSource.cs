@@ -1,6 +1,7 @@
 ﻿using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend.Execution;
 
@@ -25,7 +26,8 @@ public class ObjectPropertiesCompletionSource : BaseObjectPropertiesCompletionSo
 
         try
         {
-            var value = context.ExecutionThread.Run(objectSelectExpression);
+            var value = AsyncUtils.RunSync(ct =>
+                context.ExecutionThread.RunAsync(objectSelectExpression, cancellationToken: ct));
             if (!value.IsNull && value.Type == DataType.Object)
             {
                 return value.AsObjectUnsafe;

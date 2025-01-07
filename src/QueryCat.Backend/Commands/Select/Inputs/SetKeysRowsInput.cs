@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using QueryCat.Backend.Commands.Select.KeyConditionValue;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
@@ -9,7 +10,9 @@ namespace QueryCat.Backend.Commands.Select.Inputs;
 
 internal sealed class SetKeysRowsInput : RowsInput, IRowsInputKeys
 {
-    private record struct ConditionJoint(SelectQueryCondition Condition, int ColumnIndex);
+    private sealed record ConditionJoint(
+        SelectQueryCondition Condition,
+        int ColumnIndex);
 
     private readonly int _id = IdGenerator.GetNext();
 
@@ -18,9 +21,9 @@ internal sealed class SetKeysRowsInput : RowsInput, IRowsInputKeys
     private readonly IRowsInputKeys _rowsInput;
     private readonly SelectQueryConditions _selectQueryConditions;
     private bool _keysFilled;
-    private int _currentFuncValueIndex = -1;
     // Special mode for "WHERE id IN (x, y, z)" condition.
-    private bool _multipleRowsMode;
+    private bool _hasMultipleConditions;
+    private bool _hasNoMoreData;
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(SetKeysRowsInput));
 
     /// <inheritdoc />
@@ -44,77 +47,81 @@ internal sealed class SetKeysRowsInput : RowsInput, IRowsInputKeys
     }
 
     /// <inheritdoc />
-    public override void Open() => _rowsInput.Open();
+    public override Task OpenAsync(CancellationToken cancellationToken = default) => _rowsInput.OpenAsync(cancellationToken);
 
     /// <inheritdoc />
-    public override void Close() => _rowsInput.Close();
+    public override Task CloseAsync(CancellationToken cancellationToken = default) => _rowsInput.CloseAsync(cancellationToken);
 
     /// <inheritdoc />
-    public override void Reset()
+    public override Task ResetAsync(CancellationToken cancellationToken = default)
     {
-        _currentFuncValueIndex = -1;
+        foreach (var condition in _conditions)
+        {
+            if (condition.Condition.Generator is IKeyConditionMultipleValuesGenerator multipleValuesGenerator)
+            {
+                multipleValuesGenerator.Reset();
+            }
+        }
         _keysFilled = false;
-        _rowsInput.Reset();
+        _hasNoMoreData = false;
+        return _rowsInput.ResetAsync(cancellationToken);
     }
 
     /// <inheritdoc />
     public override ErrorCode ReadValue(int columnIndex, out VariantValue value) => _rowsInput.ReadValue(columnIndex, out value);
 
     /// <inheritdoc />
-    public override bool ReadNext()
+    public override async ValueTask<bool> ReadNextAsync(CancellationToken cancellationToken = default)
     {
-        base.ReadNext();
+        if (_hasNoMoreData)
+        {
+            return false;
+        }
+        await base.ReadNextAsync(cancellationToken);
 
         if (!_keysFilled)
         {
-            FillKeys();
+            await FillKeysAsync(cancellationToken);
             _keysFilled = true;
         }
 
-        var hasData = _rowsInput.ReadNext();
+        var hasData = await _rowsInput.ReadNextAsync(cancellationToken);
 
         // We need to repeat "ReadNext" call in case of multiple func values.
-        if (_multipleRowsMode && !hasData)
+        if (_hasMultipleConditions && !hasData)
         {
-            _rowsInput.Reset();
-            hasData = FillKeys();
+            await _rowsInput.ResetAsync(cancellationToken);
+            hasData = await FillKeysAsync(cancellationToken);
             if (!hasData)
             {
+                _hasNoMoreData = true;
                 return false;
             }
-            hasData = _rowsInput.ReadNext();
+            hasData = await _rowsInput.ReadNextAsync(cancellationToken);
         }
 
         return hasData;
     }
 
-    private bool FillKeys()
+    private async ValueTask<bool> FillKeysAsync(CancellationToken cancellationToken)
     {
-        if (_multipleRowsMode)
+        var hasMoreMultipleValues = false;
+        foreach (var conditionJoint in _conditions)
         {
-            _currentFuncValueIndex++;
-            var valueFuncs = _conditions[0].Condition.ValueFuncs;
-            if (_currentFuncValueIndex >= valueFuncs.Count)
+            if (!hasMoreMultipleValues
+                && conditionJoint.Condition.Generator is IKeyConditionMultipleValuesGenerator multipleValuesGenerator)
             {
-                return false;
+                hasMoreMultipleValues = await multipleValuesGenerator.MoveNextAsync(_thread, cancellationToken);
             }
-            var value = valueFuncs[_currentFuncValueIndex].Invoke(_thread);
-            _rowsInput.SetKeyColumnValue(_conditions[0].ColumnIndex, value, _conditions[0].Condition.Operation);
-        }
-        else
-        {
-            foreach (var conditionJoint in _conditions)
-            {
-                var value = conditionJoint.Condition.ValueFunc.Invoke(_thread);
-                _rowsInput.SetKeyColumnValue(conditionJoint.ColumnIndex, value, conditionJoint.Condition.Operation);
-            }
+            var value = conditionJoint.Condition.Generator.Get(_thread);
+            _rowsInput.SetKeyColumnValue(conditionJoint.ColumnIndex, value, conditionJoint.Condition.Operation);
         }
 
-        return true;
+        return hasMoreMultipleValues;
     }
 
     /// <inheritdoc />
-    protected override void Load()
+    protected override ValueTask LoadAsync(CancellationToken cancellationToken = default)
     {
         // Find all related conditions.
         var list = new List<ConditionJoint>();
@@ -122,17 +129,19 @@ internal sealed class SetKeysRowsInput : RowsInput, IRowsInputKeys
         {
             foreach (var inputKeyCondition in condition.Conditions)
             {
-                list.Add(new ConditionJoint(inputKeyCondition, condition.KeyColumn.ColumnIndex));
+                list.Add(new ConditionJoint(
+                    inputKeyCondition,
+                    condition.KeyColumn.ColumnIndex));
             }
         }
         _conditions = list.ToArray();
 
         // Special mode for "WHERE id IN (x, y, z)" condition.
-        _multipleRowsMode = _conditions.Length == 1
-            && _conditions[0].Condition.Operation == VariantValue.Operation.Equals
-            && _conditions[0].Condition.ValueFuncs.Count > 1;
+        _hasMultipleConditions = _conditions
+            .Any(c => c.Condition.Operation == VariantValue.Operation.Equals
+                        && c.Condition.Generator is IKeyConditionMultipleValuesGenerator);
 
-        base.Load();
+        return base.LoadAsync(cancellationToken);
     }
 
     /// <inheritdoc />

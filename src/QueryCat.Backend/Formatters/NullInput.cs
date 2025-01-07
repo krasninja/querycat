@@ -7,16 +7,18 @@ namespace QueryCat.Backend.Formatters;
 internal sealed class NullInput : RowsInput
 {
     /// <inheritdoc />
-    public override Column[] Columns { get; protected set; } = Array.Empty<Column>();
+    public override Column[] Columns { get; protected set; } = [];
 
     /// <inheritdoc />
-    public override void Open()
+    public override Task OpenAsync(CancellationToken cancellationToken = default)
     {
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />
-    public override void Close()
+    public override Task CloseAsync(CancellationToken cancellationToken = default)
     {
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />

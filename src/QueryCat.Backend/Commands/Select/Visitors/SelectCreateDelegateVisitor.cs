@@ -93,10 +93,10 @@ internal sealed class SelectCreateDelegateVisitor : CreateDelegateVisitor
         var commandContext = node.SubQueryNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
         var rowsIterator = commandContext.CurrentIterator;
 
-        VariantValue Func(IExecutionThread thread)
+        async ValueTask<VariantValue> Func(IExecutionThread thread, CancellationToken cancellationToken)
         {
             rowsIterator.Reset();
-            if (rowsIterator.MoveNext())
+            if (await rowsIterator.MoveNextAsync(cancellationToken))
             {
                 return VariantValue.TrueValue;
             }
@@ -213,7 +213,7 @@ internal sealed class SelectCreateDelegateVisitor : CreateDelegateVisitor
             }
         }
 
-        NodeIdFuncMap[node.Id] = new FuncUnitDelegate(thread =>
+        NodeIdFuncMap[node.Id] = new FuncUnitDelegate(async (thread, ct) =>
         {
             if (rowsFrame.IsEmpty)
             {
@@ -223,7 +223,7 @@ internal sealed class SelectCreateDelegateVisitor : CreateDelegateVisitor
                 {
                     for (var i = 0; i < rowsFrame.Columns.Length && i < rowNode.ExpressionNodes.Length; i++)
                     {
-                        row[i] = handlers[rowNode.ExpressionNodes[i]].Invoke(thread);
+                        row[i] = await handlers[rowNode.ExpressionNodes[i]].InvokeAsync(thread, ct);
                     }
                     rowsFrame.AddRow(row);
                 }
@@ -241,11 +241,11 @@ internal sealed class SelectCreateDelegateVisitor : CreateDelegateVisitor
             var rowsIterator = new SelectPlanner(ExecutionThread).CreateIterator(queryNode, _context);
             var equalDelegate = VariantValue.GetEqualsDelegate(node.ExpressionNode.GetDataType());
 
-            VariantValue Func(IExecutionThread thread)
+            async ValueTask<VariantValue> Func(IExecutionThread thread, CancellationToken cancellationToken)
             {
-                var leftValue = valueAction.Invoke(thread);
+                var leftValue = await valueAction.InvokeAsync(thread, cancellationToken);
                 rowsIterator.Reset();
-                while (rowsIterator.MoveNext())
+                while (await rowsIterator.MoveNextAsync(cancellationToken))
                 {
                     var rightValue = rowsIterator.Current[0];
                     var isEqual = equalDelegate.Invoke(in leftValue, in rightValue);
@@ -287,10 +287,10 @@ internal sealed class SelectCreateDelegateVisitor : CreateDelegateVisitor
         var rowsIterator = new SelectPlanner(ExecutionThread).CreateIterator(node, _context);
         ResolveTypesVisitor.Visit(node);
 
-        VariantValue Func(IExecutionThread thread)
+        async ValueTask<VariantValue> Func(IExecutionThread thread, CancellationToken cancellationToken)
         {
             rowsIterator.Reset();
-            if (rowsIterator.MoveNext())
+            if (await rowsIterator.MoveNextAsync(cancellationToken))
             {
                 return rowsIterator.Current[0];
             }
@@ -319,12 +319,12 @@ internal sealed class SelectCreateDelegateVisitor : CreateDelegateVisitor
         var operationDelegate = VariantValue.GetOperationDelegate(node.Operation);
         var leftValueFunc = NodeIdFuncMap[node.LeftNode.Id];
 
-        VariantValue AllFunc(IExecutionThread thread)
+        async ValueTask<VariantValue> AllFunc(IExecutionThread thread, CancellationToken cancellationToken)
         {
             rowsIterator.Reset();
-            while (rowsIterator.MoveNext())
+            while (await rowsIterator.MoveNextAsync(cancellationToken))
             {
-                var leftValue = leftValueFunc.Invoke(thread);
+                var leftValue = await leftValueFunc.InvokeAsync(thread, cancellationToken);
                 var rightValue = rowsIterator.Current[0];
                 var result = operationDelegate(in leftValue, in rightValue, out ErrorCode code);
                 ApplyStatistic(thread, code);
@@ -336,12 +336,12 @@ internal sealed class SelectCreateDelegateVisitor : CreateDelegateVisitor
             return VariantValue.TrueValue;
         }
 
-        VariantValue AnyFunc(IExecutionThread thread)
+        async ValueTask<VariantValue> AnyFunc(IExecutionThread thread, CancellationToken cancellationToken)
         {
             rowsIterator.Reset();
-            while (rowsIterator.MoveNext())
+            while (await rowsIterator.MoveNextAsync(cancellationToken))
             {
-                var leftValue = leftValueFunc.Invoke(thread);
+                var leftValue = await leftValueFunc.InvokeAsync(thread, cancellationToken);
                 var rightValue = rowsIterator.Current[0];
                 var result = operationDelegate(in leftValue, in rightValue, out ErrorCode code);
                 ApplyStatistic(thread, code);

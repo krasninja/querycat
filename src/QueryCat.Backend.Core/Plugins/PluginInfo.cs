@@ -8,13 +8,13 @@ namespace QueryCat.Backend.Core.Plugins;
 /// - QCat.Plugins.Yandex-0.1.0-win-x64.exe.
 /// - QCat.Plugins.Yandex.0.1.0.nupkg.
 /// </summary>
-public class PluginInfo
+public sealed class PluginInfo
 {
-    private static readonly Regex KeyRegex = new(
+    private static readonly Regex _keyRegex = new(
         @"^(?<name>[a-zA-Z\.]+)\.(?<version>\d+\.\d+\.\d+)\.(so|dll|nupkg)$",
         RegexOptions.Compiled);
 
-    private static readonly Regex NewKeyRegex =
+    private static readonly Regex _newKeyRegex =
         new(@"^(?<name>.+)-(?<version>\d+\.\d+\.\d+)-?(?<platform>[a-z0-9]+)?-?(?<arch>[a-z0-9]+)?(\.so|\.dll|\.exe)?$",
         RegexOptions.Compiled);
 
@@ -24,7 +24,7 @@ public class PluginInfo
     public string Name { get; }
 
     /// <summary>
-    /// Full URI to plugin file.
+    /// Full URI to plugin file. It should be used to download a plugin.
     /// </summary>
     public string Uri { get; set; } = string.Empty;
 
@@ -63,7 +63,7 @@ public class PluginInfo
         var fileName = Path.GetFileName(name);
         var uri = File.Exists(name) ? name : string.Empty;
 
-        var match = NewKeyRegex.Match(fileName);
+        var match = _newKeyRegex.Match(fileName);
         if (match.Success)
         {
             var architecture = match.Groups["arch"].Value;
@@ -86,7 +86,7 @@ public class PluginInfo
                 Uri = uri,
             };
         }
-        match = KeyRegex.Match(fileName);
+        match = _keyRegex.Match(fileName);
         if (match.Success)
         {
             return new PluginInfo(match.Groups["name"].Value)

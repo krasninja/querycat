@@ -8,7 +8,7 @@ using QueryCat.Plugins.Samples.Models;
 
 namespace QueryCat.Plugins.Samples.Inputs;
 
-internal sealed class AddressRowsInput : FetchRowsInput<Address>
+internal sealed class AddressRowsInput : EnumerableRowsInput<Address>
 {
     [SafeFunction]
     [Description("Test function.")]

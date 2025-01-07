@@ -12,14 +12,14 @@ public struct QueryCatPluginArguments
     public IntPtr Token;
     public IntPtr LogLevel;
 
-    public string GetServerEndpoint() => Marshal.PtrToStringAuto(ServerEndpoint) ?? string.Empty;
+    public readonly string GetServerEndpoint() => Marshal.PtrToStringAuto(ServerEndpoint) ?? string.Empty;
 
-    public string GetToken() => Marshal.PtrToStringAuto(Token) ?? string.Empty;
+    public readonly string GetToken() => Marshal.PtrToStringAuto(Token) ?? string.Empty;
 
-    public Microsoft.Extensions.Logging.LogLevel GetLogLevel() => Enum.Parse<Microsoft.Extensions.Logging.LogLevel>(
+    public readonly Microsoft.Extensions.Logging.LogLevel GetLogLevel() => Enum.Parse<Microsoft.Extensions.Logging.LogLevel>(
         Marshal.PtrToStringAuto(LogLevel) ?? Sdk.LogLevel.INFORMATION.ToString());
 
-    public ThriftPluginClientArguments ConvertToPluginClientArguments()
+    public readonly ThriftPluginClientArguments ConvertToPluginClientArguments()
         => new()
         {
             ServerEndpoint = GetServerEndpoint(),

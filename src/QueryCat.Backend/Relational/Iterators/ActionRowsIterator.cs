@@ -11,9 +11,9 @@ internal sealed class ActionRowsIterator : IRowsIterator, IRowsIteratorParent
 
     private readonly IRowsIterator _rowsIterator;
 
-    public Action<IRowsIterator>? BeforeMoveNext { get; set; }
+    public Func<IRowsIterator, CancellationToken, ValueTask>? BeforeMoveNext { get; set; }
 
-    public Action<IRowsIterator>? AfterMoveNext { get; set; }
+    public Func<IRowsIterator, CancellationToken, ValueTask>? AfterMoveNext { get; set; }
 
     /// <inheritdoc />
     public Column[] Columns => _rowsIterator.Columns;
@@ -28,13 +28,19 @@ internal sealed class ActionRowsIterator : IRowsIterator, IRowsIteratorParent
     }
 
     /// <inheritdoc />
-    public bool MoveNext()
+    public async ValueTask<bool> MoveNextAsync(CancellationToken cancellationToken = default)
     {
-        BeforeMoveNext?.Invoke(_rowsIterator);
-        var result = _rowsIterator.MoveNext();
+        if (BeforeMoveNext != null)
+        {
+            await BeforeMoveNext.Invoke(_rowsIterator, cancellationToken);
+        }
+        var result = await _rowsIterator.MoveNextAsync(cancellationToken);
         if (result)
         {
-            AfterMoveNext?.Invoke(_rowsIterator);
+            if (AfterMoveNext != null)
+            {
+                await AfterMoveNext.Invoke(_rowsIterator, cancellationToken);
+            }
         }
         return result;
     }

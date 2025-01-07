@@ -3,6 +3,7 @@ using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend.Commands.Select.Iterators;
 
@@ -57,7 +58,7 @@ internal sealed class VaryingOutputRowsIterator : IRowsIterator, IRowsIteratorPa
         QueryContext queryContext) : this(
             thread: thread,
             rowsIterator: rowsIterator,
-            func: new FuncUnitDelegate(_ => VariantValue.CreateFromObject(defaultRowsOutput), DataType.Object),
+            func: new FuncUnitDelegate((_, _) => ValueTask.FromResult(VariantValue.CreateFromObject(defaultRowsOutput)), DataType.Object),
             functionCallInfo: FuncUnitCallInfo.Empty,
             defaultRowsOutput,
             queryContext)
@@ -65,16 +66,17 @@ internal sealed class VaryingOutputRowsIterator : IRowsIterator, IRowsIteratorPa
     }
 
     /// <inheritdoc />
-    public bool MoveNext()
+    public async ValueTask<bool> MoveNextAsync(CancellationToken cancellationToken = default)
     {
-        var result = _rowsIterator.MoveNext();
+        var result = await _rowsIterator.MoveNextAsync(cancellationToken);
         if (!result)
         {
-            Close();
+            await CloseAsync(cancellationToken);
             return false;
         }
 
-        var argValues = _functionCallInfo.InvokePushArgs(_thread)
+        var allArgValues = await _functionCallInfo.InvokePushArgsAsync(_thread, cancellationToken);
+        var argValues = allArgValues
             .Where(a => a.Type != DataType.Object)
             .ToArray();
         var args = new VariantValueArray(argValues);
@@ -84,7 +86,7 @@ internal sealed class VaryingOutputRowsIterator : IRowsIterator, IRowsIteratorPa
         }
         else
         {
-            var outputResult = _outputFactory.Invoke(_thread).AsObject;
+            var outputResult = (await _outputFactory.InvokeAsync(_thread, cancellationToken)).AsObject;
             if (outputResult is IRowsOutput rowsOutput)
             {
                 output = rowsOutput;
@@ -93,8 +95,8 @@ internal sealed class VaryingOutputRowsIterator : IRowsIterator, IRowsIteratorPa
             {
                 output = NullRowsOutput.Instance;
             }
-            output.Open();
             output.QueryContext = _queryContext;
+            await output.OpenAsync(cancellationToken);
             _logger.LogDebug("Open for args {Arguments}.", _functionCallInfo);
             _outputs.Add(args, output);
             CurrentOutput = output;
@@ -110,17 +112,15 @@ internal sealed class VaryingOutputRowsIterator : IRowsIterator, IRowsIteratorPa
         _outputs.Clear();
     }
 
-    public void Close()
-    {
-        Close(dispose: false);
-    }
+    public Task CloseAsync(CancellationToken cancellationToken = default)
+        => CloseAsync(dispose: false, cancellationToken);
 
-    private void Close(bool dispose)
+    private async Task CloseAsync(bool dispose, CancellationToken cancellationToken = default)
     {
         foreach (var outputKeyValue in _outputs)
         {
             _logger.LogDebug("Close for args {Key}.", outputKeyValue.Key);
-            outputKeyValue.Value.Close();
+            await outputKeyValue.Value.CloseAsync(cancellationToken);
             if (dispose)
             {
                 (outputKeyValue.Value as IDisposable)?.Dispose();
@@ -132,7 +132,7 @@ internal sealed class VaryingOutputRowsIterator : IRowsIterator, IRowsIteratorPa
     /// <inheritdoc />
     public void Dispose()
     {
-        Close(dispose: true);
+        AsyncUtils.RunSync(() => CloseAsync(dispose: true));
     }
 
     /// <inheritdoc />

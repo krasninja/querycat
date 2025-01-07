@@ -28,7 +28,7 @@ internal sealed class UpdateCommand : ICommand
         ));
         selectNode.TableExpressionNode =
             new SelectTableNode(
-                    new SelectTableReferenceListNode(insertNode.TargetExpressionNode));
+                new SelectTableReferenceListNode(insertNode.TargetExpressionNode));
         selectNode.TableExpressionNode.SearchConditionNode = insertNode.SearchConditionNode;
         new SelectPlanner(executionThread).CreateIterator(selectNode);
         var context = selectNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
@@ -53,6 +53,7 @@ internal sealed class UpdateCommand : ICommand
             setters.Add(new UpdateSetter(columnIndex, func));
         }
 
-        return new UpdateCommandHandler(context, setters.ToArray());
+        IFuncUnit handler = new UpdateCommandHandler(context, setters.ToArray());
+        return handler;
     }
 }
