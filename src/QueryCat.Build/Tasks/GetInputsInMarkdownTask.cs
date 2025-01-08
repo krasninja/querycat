@@ -7,6 +7,7 @@ using QueryCat.Backend;
 using QueryCat.Backend.AssemblyPlugins;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Build.Tasks;
@@ -17,10 +18,10 @@ public sealed class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(GetInputsInMarkdownTask));
 
     private static readonly string[] _excludeList =
-    {
+    [
         "read_file",
-        "read_text",
-    };
+        "read_text"
+    ];
 
     private sealed class CollectQueryContext : QueryContext
     {
@@ -90,7 +91,8 @@ public sealed class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
                 {
                     frame.Push(VariantValue.Null);
                 }
-                rowsInput = inputFunction.Delegate.Invoke(Executor.Thread).As<IRowsInputKeys?>()!;
+                rowsInput = (await FunctionCaller.CallAsync(inputFunction.Delegate, Executor.Thread))
+                    .As<IRowsInputKeys?>()!;
                 rowsInput.QueryContext = queryContext;
                 await rowsInput.OpenAsync();
             }

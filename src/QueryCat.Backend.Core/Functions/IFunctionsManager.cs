@@ -31,9 +31,15 @@ public interface IFunctionsManager
     /// <param name="formatterIds">The extensions or MIME types that can be used for input.
     /// Can be applied to formatters.</param>
     /// <returns>Function name.</returns>
+    /// <remarks>
+    /// There are two function delegate types accepted:
+    /// - VariantValue FunctionName(IExecutionThread thread);
+    /// - ValueTask VariantValue FunctionName(IExecutionThread thread, CancellationToken cancellationToken);
+    /// Use any of two.
+    /// </remarks>
     string RegisterFunction(
         string signature,
-        FunctionDelegate @delegate,
+        Delegate @delegate,
         string? description = null,
         string[]? formatterIds = null);
 
@@ -69,6 +75,11 @@ public interface IFunctionsManager
     /// <param name="function">Function.</param>
     /// <param name="executionThread">Execution thread.</param>
     /// <param name="callArguments">Arguments to pass.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Result.</returns>
-    VariantValue CallFunction(IFunction function, IExecutionThread executionThread, FunctionCallArguments callArguments);
+    ValueTask<VariantValue> CallFunctionAsync(
+        IFunction function,
+        IExecutionThread executionThread,
+        FunctionCallArguments callArguments,
+        CancellationToken cancellationToken = default);
 }

@@ -241,7 +241,7 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
 
     private async Task<T> RunWithTimeoutAsync<T>(Func<CancellationToken, Task<T>> func, CancellationToken cancellationToken)
     {
-        var task = func(cancellationToken);
+        var task = func.Invoke(cancellationToken);
         if (task.IsCompleted)
         {
             return task.Result;

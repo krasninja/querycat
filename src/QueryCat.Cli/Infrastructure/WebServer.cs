@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
+using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Execution;
@@ -227,9 +228,13 @@ internal sealed partial class WebServer
             if (!result.IsNull && result.Type == DataType.Object
                 && result.AsObject is IRowsSchema rowsSchema)
             {
-                var schema = thread.CallFunction(Backend.Functions.InfoFunctions.Schema, rowsSchema);
-                AsyncUtils.RunSync(() =>
-                    WriteIteratorAsync(RowsIteratorConverter.Convert(schema), request, response, cancellationToken));
+                AsyncUtils.RunSync(async (ct) =>
+                {
+                    var schema = await FunctionCaller.CallWithArgumentsAsync(Backend.Functions.InfoFunctions.Schema, thread,
+                        [rowsSchema], cancellationToken: ct);
+                    await WriteIteratorAsync(RowsIteratorConverter.Convert(schema), request, response,
+                        ct);
+                });
                 e.ContinueExecution = false;
             }
         }

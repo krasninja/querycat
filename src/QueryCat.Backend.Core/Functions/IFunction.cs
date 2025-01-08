@@ -10,7 +10,7 @@ public interface IFunction
     /// <summary>
     /// Invocation delegate.
     /// </summary>
-    FunctionDelegate Delegate { get; }
+    Delegate Delegate { get; }
 
     /// <summary>
     /// Function name.

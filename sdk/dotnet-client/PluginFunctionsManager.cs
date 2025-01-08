@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Plugins.Sdk;
@@ -32,7 +34,7 @@ public sealed class PluginFunctionsManager : IFunctionsManager
     /// <inheritdoc />
     public string RegisterFunction(
         string signature,
-        FunctionDelegate @delegate,
+        Delegate @delegate,
         string? description = null,
         string[]? formatterIds = null)
     {
@@ -82,7 +84,11 @@ public sealed class PluginFunctionsManager : IFunctionsManager
     public IEnumerable<PluginFunction> GetPluginFunctions() => _functions.Values;
 
     /// <inheritdoc />
-    public VariantValue CallFunction(IFunction function, IExecutionThread executionThread, FunctionCallArguments callArguments)
+    public ValueTask<VariantValue> CallFunctionAsync(
+        IFunction function,
+        IExecutionThread executionThread,
+        FunctionCallArguments callArguments,
+        CancellationToken cancellationToken = default)
     {
         throw ThrowNotImplementedException();
     }

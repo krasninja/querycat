@@ -33,7 +33,7 @@ public sealed class GetFunctionsInMarkdownTask : AsyncFrostingTask<BuildContext>
         /// <inheritdoc />
         public string RegisterFunction(
             string signature,
-            FunctionDelegate @delegate,
+            Delegate @delegate,
             string? description = null,
             string[]? formatterIds = null)
         {
@@ -62,7 +62,11 @@ public sealed class GetFunctionsInMarkdownTask : AsyncFrostingTask<BuildContext>
         }
 
         /// <inheritdoc />
-        public VariantValue CallFunction(IFunction function, IExecutionThread executionThread, FunctionCallArguments callArguments) => default;
+        public ValueTask<VariantValue> CallFunctionAsync(
+            IFunction function,
+            IExecutionThread executionThread,
+            FunctionCallArguments callArguments,
+            CancellationToken cancellationToken = default) => ValueTask.FromResult(VariantValue.Null);
     }
 
     /// <inheritdoc />

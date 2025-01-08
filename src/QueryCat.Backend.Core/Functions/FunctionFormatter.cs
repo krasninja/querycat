@@ -100,9 +100,23 @@ internal static class FunctionFormatter
         return sb.ToString();
     }
 
-    internal static FunctionDelegate CreateDelegateFromMethod(MethodBase method)
+    private static object? GetResultFromTask(MethodBase method, object task)
     {
-        VariantValue FunctionDelegate(IExecutionThread thread)
+        if (method is MethodInfo methodInfo
+            && methodInfo.ReturnType.IsGenericType)
+        {
+            var resultProperty = task.GetType().GetProperty("Result");
+            if (resultProperty != null)
+            {
+                return resultProperty.GetValue(task);
+            }
+        }
+        return VariantValue.Null;
+    }
+
+    internal static Delegate CreateDelegateFromMethod(MethodBase method)
+    {
+        async ValueTask<VariantValue> FunctionDelegate(IExecutionThread thread, CancellationToken cancellationToken)
         {
             var parameters = method.GetParameters();
             var arr = new object?[parameters.Length];
@@ -138,20 +152,14 @@ internal static class FunctionFormatter
             // If result is awaitable - try to wait.
             if (result is Task task)
             {
-                AsyncUtils.RunSync(() => task);
-                if (method is MethodInfo methodInfo
-                    && methodInfo.ReturnType.IsGenericType)
-                {
-                    var resultProperty = task.GetType().GetProperty("Result");
-                    if (resultProperty != null)
-                    {
-                        result = resultProperty.GetValue(task);
-                    }
-                }
-                else
-                {
-                    result = VariantValue.Null;
-                }
+                await task;
+                result = GetResultFromTask(method, task);
+            }
+            else if (result is ValueTask valueTask)
+            {
+                var valueTaskResolved = valueTask.AsTask();
+                await valueTaskResolved;
+                result = GetResultFromTask(method, valueTaskResolved);
             }
             return VariantValue.CreateFromObject(result);
         }

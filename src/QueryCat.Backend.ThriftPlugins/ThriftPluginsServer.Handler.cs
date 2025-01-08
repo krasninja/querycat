@@ -141,7 +141,7 @@ public partial class ThriftPluginsServer
         }
 
         /// <inheritdoc />
-        public Task<VariantValue> CallFunctionAsync(
+        public async Task<VariantValue> CallFunctionAsync(
             string function_name,
             List<VariantValue>? args,
             int object_handle,
@@ -155,9 +155,9 @@ public partial class ThriftPluginsServer
             }
             var function = _thriftPluginsServer._executionThread
                 .FunctionsManager.FindByName(function_name, argsForFunction.GetTypes());
-            var result = _thriftPluginsServer._executionThread.FunctionsManager.CallFunction(
-                function, _thriftPluginsServer._executionThread, argsForFunction);
-            return Task.FromResult(SdkConvert.Convert(result));
+            var result = await _thriftPluginsServer._executionThread.FunctionsManager.CallFunctionAsync(
+                function, _thriftPluginsServer._executionThread, argsForFunction, cancellationToken);
+            return SdkConvert.Convert(result);
         }
 
         /// <inheritdoc />

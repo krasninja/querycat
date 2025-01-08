@@ -25,7 +25,7 @@ public sealed class NullFunctionsManager : IFunctionsManager
     /// <inheritdoc />
     public string RegisterFunction(
         string signature,
-        FunctionDelegate @delegate,
+        Delegate @delegate,
         string? description = null,
         string[]? formatterIds = null)
     {
@@ -50,6 +50,9 @@ public sealed class NullFunctionsManager : IFunctionsManager
     public IEnumerable<IFunction> GetFunctions() => Array.Empty<IFunction>();
 
     /// <inheritdoc />
-    public VariantValue CallFunction(IFunction function, IExecutionThread executionThread,
-        FunctionCallArguments callArguments) => VariantValue.Null;
+    public ValueTask<VariantValue> CallFunctionAsync(
+        IFunction function,
+        IExecutionThread executionThread,
+        FunctionCallArguments callArguments,
+        CancellationToken cancellationToken = default) => ValueTask.FromResult(VariantValue.Null);
 }

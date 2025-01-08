@@ -273,9 +273,14 @@ internal sealed partial class SelectPlanner
             var formatter = Misc_CreateDelegate(formatterNode, context).Invoke(ExecutionThread);
             args.Add("fmt", formatter);
         }
-        var rowsInput = ExecutionThread.FunctionsManager.CallFunction("read", ExecutionThread, args).AsRequired<IRowsInput>();
-        rowsInput.QueryContext = new SelectInputQueryContext(rowsInput);
-        AsyncUtils.RunSync(rowsInput.OpenAsync);
+        var rowsInput = AsyncUtils.RunSync(async ct =>
+        {
+            var ri = (await ExecutionThread.FunctionsManager.CallFunctionAsync("read", ExecutionThread, args, cancellationToken: ct))
+                .AsRequired<IRowsInput>();
+            ri.QueryContext = new SelectInputQueryContext(ri);
+            await ri.OpenAsync(ct);
+            return ri;
+        })!;
         return [rowsInput];
     }
 

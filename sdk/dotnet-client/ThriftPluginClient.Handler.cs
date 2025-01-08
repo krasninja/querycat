@@ -30,7 +30,7 @@ public partial class ThriftPluginClient
         }
 
         /// <inheritdoc />
-        public Task<VariantValue> CallFunctionAsync(
+        public async Task<VariantValue> CallFunctionAsync(
             string function_name,
             List<VariantValue>? args,
             int object_handle,
@@ -44,7 +44,10 @@ public partial class ThriftPluginClient
             {
                 frame.Push(SdkConvert.Convert(arg));
             }
-            var result = func.Delegate.Invoke(_thriftPluginClient._executionThread);
+            var result = await FunctionCaller.CallAsync(
+                func.Delegate,
+                _thriftPluginClient._executionThread,
+                cancellationToken);
             frame.Dispose();
             var resultType = result.Type;
             if (resultType == DataType.Object)
@@ -54,10 +57,10 @@ public partial class ThriftPluginClient
                     var index = _thriftPluginClient._objectsStorage.Add(rowsIterator);
                     _thriftPluginClient._logger.LogDebug("Added new iterator object '{Object}' with handle {Handle}.",
                         rowsIterator.ToString(), index);
-                    return Task.FromResult(new VariantValue
+                    return new VariantValue
                     {
                         Object = new ObjectValue(ObjectType.ROWS_ITERATOR, index, rowsIterator.ToString() ?? string.Empty),
-                    });
+                    };
                 }
                 else if (result.AsObject is IRowsInput rowsInput)
                 {
@@ -67,10 +70,10 @@ public partial class ThriftPluginClient
                     var index =_thriftPluginClient._objectsStorage.Add(rowsInput);
                     _thriftPluginClient._logger.LogDebug("Added new input object '{Object}' with handle {Handle}.",
                         rowsInput.ToString(), index);
-                    return Task.FromResult(new VariantValue
+                    return new VariantValue
                     {
                         Object = new ObjectValue(ObjectType.ROWS_INPUT, index, rowsInput.ToString() ?? string.Empty),
-                    });
+                    };
                 }
                 else if (result.AsObject is IRowsOutput rowsOutput)
                 {
@@ -80,10 +83,10 @@ public partial class ThriftPluginClient
                     var index =_thriftPluginClient._objectsStorage.Add(rowsOutput);
                     _thriftPluginClient._logger.LogDebug("Added new output object '{Object}' with handle {Handle}.",
                         rowsOutput.ToString(), index);
-                    return Task.FromResult(new VariantValue
+                    return new VariantValue
                     {
                         Object = new ObjectValue(ObjectType.ROWS_OUTPUT, index, rowsOutput.ToString() ?? string.Empty),
-                    });
+                    };
                 }
                 throw new QueryCatPluginException(
                     ErrorType.INVALID_OBJECT,
@@ -93,13 +96,13 @@ public partial class ThriftPluginClient
             {
                 var index = _thriftPluginClient._objectsStorage.Add(result.AsBlobUnsafe);
                 _thriftPluginClient._logger.LogDebug("Added new blob object with handle {Handle}.", index);
-                return Task.FromResult(new VariantValue
+                return new VariantValue
                 {
                     Object = new ObjectValue(ObjectType.BLOB, index, "BLOB"),
-                });
+                };
             }
 
-            return Task.FromResult(SdkConvert.Convert(result));
+            return SdkConvert.Convert(result);
         }
 
         /// <inheritdoc />

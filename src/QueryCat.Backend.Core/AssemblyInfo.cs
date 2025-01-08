@@ -8,4 +8,5 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("QueryCat.IntegrationTests")]
 [assembly: InternalsVisibleTo("QueryCat.Tests.QueryRunner")]
 [assembly: InternalsVisibleTo("QueryCat.Benchmarks")]
+[assembly: InternalsVisibleTo("QueryCat.Build")]
 [assembly: InternalsVisibleTo("qcat")]

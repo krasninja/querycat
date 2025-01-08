@@ -10,7 +10,7 @@ namespace QueryCat.Plugins.Client;
 public sealed class PluginFunction : IFunction
 {
     /// <inheritdoc />
-    public FunctionDelegate Delegate { get; }
+    public Delegate Delegate { get; }
 
     /// <inheritdoc />
     public string Name { get; }
@@ -40,7 +40,7 @@ public sealed class PluginFunction : IFunction
 
     public string[] FormatterIdentifiers { get; }
 
-    public PluginFunction(string name, string signature, FunctionDelegate @delegate, string[]? formatterIdentifiers = null)
+    public PluginFunction(string name, string signature, Delegate @delegate, string[]? formatterIdentifiers = null)
     {
         Name = name;
         Signature = signature;

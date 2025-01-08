@@ -1,4 +1,5 @@
 using QueryCat.Backend.Ast.Nodes.Function;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 
@@ -10,7 +11,7 @@ namespace QueryCat.Backend.FunctionsManager;
 public class Function : IFunction
 {
     /// <inheritdoc />
-    public FunctionDelegate Delegate { get; }
+    public Delegate Delegate { get; }
 
     private readonly FunctionSignatureNode _signatureNode;
 
@@ -50,11 +51,16 @@ public class Function : IFunction
     /// </summary>
     public string Signature => _signatureNode.ToString();
 
+    /// <summary>
+    /// Function instance that returns null.
+    /// </summary>
     public static Function Empty => new(
-        _ => VariantValue.Null, new FunctionSignatureNode("Empty", FunctionTypeNode.NullTypeInstance));
+        (IExecutionThread _) => VariantValue.Null,
+        new FunctionSignatureNode("Empty", FunctionTypeNode.NullTypeInstance)
+    );
 
     internal Function(
-        FunctionDelegate @delegate,
+        Delegate @delegate,
         FunctionSignatureNode signatureNode,
         bool aggregate = false,
         string? description = null)

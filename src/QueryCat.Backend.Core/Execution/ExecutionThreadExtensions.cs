@@ -1,4 +1,3 @@
-using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Core.Execution;
@@ -8,25 +7,6 @@ namespace QueryCat.Backend.Core.Execution;
 /// </summary>
 public static class ExecutionThreadExtensions
 {
-    /// <summary>
-    /// Call function within execution thread.
-    /// </summary>
-    /// <param name="executionThread">Execution thread.</param>
-    /// <param name="functionDelegate">Function delegate instance.</param>
-    /// <param name="args">Arguments.</param>
-    /// <returns>Return value.</returns>
-    public static VariantValue CallFunction(
-        this IExecutionThread executionThread, FunctionDelegate functionDelegate, params ReadOnlySpan<object> args)
-    {
-        using var frame = executionThread.Stack.CreateFrame();
-        foreach (var arg in args)
-        {
-            frame.Push(VariantValue.CreateFromObject(arg));
-        }
-        var result = functionDelegate.Invoke(executionThread);
-        return result;
-    }
-
     /// <summary>
     /// Run query with object properties as parameters.
     /// </summary>

@@ -3,7 +3,6 @@ using System.Reflection;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Core;
-using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
@@ -19,7 +18,7 @@ public sealed partial class DefaultFunctionsManager : IFunctionsManager
     private readonly List<IUriResolver> _uriResolvers = new();
 
     private readonly record struct FunctionPreRegistration(
-        FunctionDelegate Delegate,
+        Delegate Delegate,
         List<string> Signatures,
         string? Description = null);
 
@@ -51,7 +50,7 @@ public sealed partial class DefaultFunctionsManager : IFunctionsManager
 
     private string PreRegisterFunction(
         string signature,
-        FunctionDelegate functionDelegate,
+        Delegate functionDelegate,
         string? functionName = null,
         string? description = null,
         string[]? formatterIds = null)
@@ -75,7 +74,7 @@ public sealed partial class DefaultFunctionsManager : IFunctionsManager
             foreach (var formatterId in formatterIds)
             {
                 Formatters.FormattersInfo.RegisterFormatter(formatterId,
-                    (fm, et, args) => fm.CallFunction(functionName, et, args).AsRequired<IRowsFormatter>());
+                    (fm, et, args) => fm.CallFunctionAsync(functionName, et, args));
             }
         }
 
@@ -85,7 +84,7 @@ public sealed partial class DefaultFunctionsManager : IFunctionsManager
     /// <inheritdoc />
     public string RegisterFunction(
         string signature,
-        FunctionDelegate @delegate,
+        Delegate @delegate,
         string? description = null,
         string[]? formatterIds = null)
     {
@@ -316,7 +315,11 @@ public sealed partial class DefaultFunctionsManager : IFunctionsManager
     }
 
     /// <inheritdoc />
-    public VariantValue CallFunction(IFunction function, IExecutionThread executionThread, FunctionCallArguments callArguments)
+    public async ValueTask<VariantValue> CallFunctionAsync(
+        IFunction function,
+        IExecutionThread executionThread,
+        FunctionCallArguments callArguments,
+        CancellationToken cancellationToken = default)
     {
         int positionalIndex = 0;
 
@@ -339,7 +342,7 @@ public sealed partial class DefaultFunctionsManager : IFunctionsManager
             }
         }
 
-        var result = function.Delegate.Invoke(executionThread);
+        var result = await FunctionCaller.CallAsync(function.Delegate, executionThread, cancellationToken);
         frame.Dispose();
         return result;
     }

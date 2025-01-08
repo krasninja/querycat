@@ -474,7 +474,7 @@ internal partial class CreateDelegateVisitor : AstVisitor
             {
                 thread.Stack.Push(await argsUnit.InvokeAsync(thread, cancellationToken));
             }
-            var result = function.Delegate(thread);
+            var result = await FunctionCaller.CallAsync(function.Delegate, thread, cancellationToken);
             thread.Stack.CloseFrame();
             return result;
         }

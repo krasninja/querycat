@@ -19,7 +19,7 @@ public static class FunctionsManagerExtensions
     /// </summary>
     /// <param name="functionsManager">Instance of <see cref="IFunctionsManager" />.</param>
     /// <param name="functionDelegate">Function delegate.</param>
-    public static void RegisterFunction(this IFunctionsManager functionsManager, FunctionDelegate functionDelegate)
+    public static void RegisterFunction(this IFunctionsManager functionsManager, Delegate functionDelegate)
     {
         var methodAttributes = Attribute.GetCustomAttributes(functionDelegate.Method, typeof(FunctionSignatureAttribute));
         if (methodAttributes.Length < 1)
@@ -27,26 +27,25 @@ public static class FunctionsManagerExtensions
             throw new QueryCatException($"Delegate must have '{nameof(FunctionSignatureAttribute)}'.");
         }
 
-        foreach (var attribute in methodAttributes)
+        if (FunctionCaller.IsValidFunctionDelegate(functionDelegate))
         {
-            var methodAttribute = (FunctionSignatureAttribute)attribute;
-            var descriptionAttribute = functionDelegate.Method.GetCustomAttribute<DescriptionAttribute>();
-            var formatterAttribute = functionDelegate.Method.GetCustomAttribute<FunctionFormattersAttribute>();
-            functionsManager.RegisterFunction(
-                methodAttribute.Signature,
-                functionDelegate,
-                description: descriptionAttribute != null ? descriptionAttribute.Description : string.Empty,
-                formatterIds: formatterAttribute?.FormatterIds);
+            foreach (var attribute in methodAttributes)
+            {
+                var methodAttribute = (FunctionSignatureAttribute)attribute;
+                var descriptionAttribute = functionDelegate.Method.GetCustomAttribute<DescriptionAttribute>();
+                var formatterAttribute = functionDelegate.Method.GetCustomAttribute<FunctionFormattersAttribute>();
+                functionsManager.RegisterFunction(
+                    methodAttribute.Signature,
+                    functionDelegate,
+                    description: descriptionAttribute != null ? descriptionAttribute.Description : string.Empty,
+                    formatterIds: formatterAttribute?.FormatterIds);
+            }
+        }
+        else
+        {
+            RegisterFunctionFromMethodInfo(functionsManager, functionDelegate.Method);
         }
     }
-
-    /// <summary>
-    /// Register function.
-    /// </summary>
-    /// <param name="functionsManager">Instance of <see cref="IFunctionsManager" />.</param>
-    /// <param name="functionDelegate">Function delegate.</param>
-    public static void RegisterFunction(this IFunctionsManager functionsManager, Delegate functionDelegate)
-        => RegisterFunctionFromMethodInfo(functionsManager, functionDelegate.Method);
 
     /// <summary>
     /// Register type methods as functions.
@@ -104,7 +103,21 @@ public static class FunctionsManagerExtensions
                 && method.ReturnType == typeof(VariantValue))
             {
                 var args = Expression.Parameter(typeof(IExecutionThread), "input");
-                var func = Expression.Lambda<FunctionDelegate>(Expression.Call(method, args), args).Compile();
+                var func = Expression.Lambda<Func<IExecutionThread, VariantValue>>(Expression.Call(method, args), args)
+                    .Compile();
+                var description = method.GetCustomAttribute<DescriptionAttribute>()?.Description;
+                functionsManager.RegisterFunction(methodSignature.Signature, func, description);
+            }
+            // The async standard case: ValueTask<VariantValue> FunctionName(IExecutionThread thread, CancellationToken token).
+            else if (methodParameters.Length == 2
+                && methodParameters[0].ParameterType == typeof(IExecutionThread)
+                && methodParameters[1].ParameterType == typeof(CancellationToken)
+                && method.ReturnType == typeof(ValueTask<VariantValue>))
+            {
+                var args = Expression.Parameter(typeof(IExecutionThread), "input");
+                var func = Expression.Lambda<Func<IExecutionThread, CancellationToken, ValueTask<VariantValue>>>(
+                        Expression.Call(method, args), args)
+                    .Compile();
                 var description = method.GetCustomAttribute<DescriptionAttribute>()?.Description;
                 functionsManager.RegisterFunction(methodSignature.Signature, func, description);
             }
@@ -207,15 +220,17 @@ public static class FunctionsManagerExtensions
     /// <param name="functionName">Function name.</param>
     /// <param name="executionThread">Execution thread.</param>
     /// <param name="arguments">Arguments to pass.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Result.</returns>
-    public static VariantValue CallFunction(
+    public static ValueTask<VariantValue> CallFunctionAsync(
         this IFunctionsManager functionsManager,
         string functionName,
         IExecutionThread executionThread,
-        FunctionCallArguments? arguments = null)
+        FunctionCallArguments? arguments = null,
+        CancellationToken cancellationToken = default)
     {
         arguments ??= FunctionCallArguments.Empty;
         var function = functionsManager.FindByName(functionName, arguments.GetTypes());
-        return functionsManager.CallFunction(function, executionThread, arguments);
+        return functionsManager.CallFunctionAsync(function, executionThread, arguments, cancellationToken);
     }
 }

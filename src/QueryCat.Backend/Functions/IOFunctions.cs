@@ -19,24 +19,24 @@ internal static class IOFunctions
     [SafeFunction]
     [Description("Read data from a URI.")]
     [FunctionSignature("read(uri: string, fmt?: object<IRowsFormatter>): object<IRowsInput>")]
-    public static VariantValue Read(IExecutionThread thread)
+    public static async ValueTask<VariantValue> ReadAsync(IExecutionThread thread, CancellationToken cancellationToken)
     {
         var uri = thread.Stack[0].AsString;
 
         var function = thread.FunctionsManager.ResolveUri(uri);
         if (function != null)
         {
-            return function.Delegate.Invoke(thread);
+            return await FunctionCaller.CallAsync(function.Delegate, thread, cancellationToken);
         }
 
-        return ReadFile(thread);
+        return await ReadFileAsync(thread, cancellationToken);
     }
 
     [Description("Write data to a URI.")]
     [FunctionSignature("write(uri: string, fmt?: object<IRowsFormatter>): object<IRowsOutput>")]
-    public static VariantValue Write(IExecutionThread thread)
+    public static ValueTask<VariantValue> WriteAsync(IExecutionThread thread, CancellationToken cancellationToken)
     {
-        return WriteFile(thread);
+        return WriteFileAsync(thread, cancellationToken);
     }
 
     [SafeFunction]
@@ -53,19 +53,19 @@ internal static class IOFunctions
 
     #region File
 
-    private static readonly string[] CompressFilesExtensions = { ".gz" };
+    private static readonly string[] _compressFilesExtensions = [".gz"];
 
     [SafeFunction]
     [Description("Read data from a file.")]
     [FunctionSignature("read_file(path: string, fmt?: object<IRowsFormatter>): object<IRowsInput>")]
-    public static VariantValue ReadFile(IExecutionThread thread)
+    public static async ValueTask<VariantValue> ReadFileAsync(IExecutionThread thread, CancellationToken cancellationToken)
     {
         var path = thread.Stack[0].AsString;
         (path, var funcArgs) = Utils_ParseUri(path);
 
         var formatter = thread.Stack.FrameLength > 1
             ? thread.Stack[1].AsObject as IRowsFormatter
-            : File_GetFormatter(path, thread, funcArgs);
+            : await File_GetFormatterAsync(path, thread, funcArgs, cancellationToken);
         var files = File_GetFileInputsByPath(path, thread, formatter, funcArgs).ToList();
         if (!files.Any())
         {
@@ -77,7 +77,7 @@ internal static class IOFunctions
 
     [Description("Write data to a file.")]
     [FunctionSignature("write_file(path: string, fmt?: object<IRowsFormatter>): object<IRowsOutput>")]
-    public static VariantValue WriteFile(IExecutionThread thread)
+    public static async ValueTask<VariantValue> WriteFileAsync(IExecutionThread thread, CancellationToken cancellationToken)
     {
         var pathArgument = thread.Stack[0];
         if (pathArgument.IsNull || string.IsNullOrEmpty(pathArgument.AsString))
@@ -87,14 +87,14 @@ internal static class IOFunctions
         var (path, funcArgs) = Utils_ParseUri(pathArgument.AsString);
 
         var formatter = thread.Stack[1].AsObject as IRowsFormatter;
-        formatter ??= File_GetFormatter(path, thread, funcArgs);
+        formatter ??= await File_GetFormatterAsync(path, thread, funcArgs, cancellationToken);
         var fullDirectory = Path.GetDirectoryName(path);
         if (!string.IsNullOrEmpty(fullDirectory) && !Directory.Exists(fullDirectory))
         {
             Directory.CreateDirectory(fullDirectory);
         }
         Stream file = File.Open(path, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
-        if (CompressFilesExtensions.Contains(Path.GetExtension(path).ToLower()))
+        if (_compressFilesExtensions.Contains(Path.GetExtension(path).ToLower()))
         {
             file = new GZipStream(file, CompressionMode.Compress, leaveOpen: false);
         }
@@ -109,9 +109,9 @@ internal static class IOFunctions
     {
         foreach (var file in File_GetFilesByPath(path))
         {
-            var fileFormatter = formatter ?? File_GetFormatter(file, thread, funcArgs);
+            var fileFormatter = formatter ?? AsyncUtils.RunSync(() => File_GetFormatterAsync(file, thread, funcArgs))!;
             Stream fileStream = File.Open(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-            if (CompressFilesExtensions.Contains(Path.GetExtension(file).ToLower()))
+            if (_compressFilesExtensions.Contains(Path.GetExtension(file).ToLower()))
             {
                 fileStream = new GZipStream(fileStream, CompressionMode.Decompress);
             }
@@ -161,15 +161,18 @@ internal static class IOFunctions
         }
     }
 
-    private static IRowsFormatter File_GetFormatter(string path, IExecutionThread thread,
-        FunctionCallArguments? funcArgs = null)
+    private static async ValueTask<IRowsFormatter> File_GetFormatterAsync(
+        string path,
+        IExecutionThread thread,
+        FunctionCallArguments? funcArgs = null,
+        CancellationToken cancellationToken = default)
     {
         var extension = Path.GetExtension(path).ToLower();
-        if (CompressFilesExtensions.Contains(extension))
+        if (_compressFilesExtensions.Contains(extension))
         {
             extension = Path.GetExtension(path.Substring(0, path.Length - extension.Length)).ToLower();
         }
-        var formatter = FormattersInfo.CreateFormatter(extension, thread, funcArgs);
+        var formatter = await FormattersInfo.CreateFormatterAsync(extension, thread, funcArgs, cancellationToken);
         return formatter ?? new TextLineFormatter();
     }
 
@@ -283,12 +286,12 @@ internal static class IOFunctions
 
     #region Curl
 
-    private static readonly HttpClient HttpClient = new();
+    private static readonly HttpClient _httpClient = new();
 
     [SafeFunction]
     [Description("Read the HTTP resource.")]
     [FunctionSignature("curl(uri: string, fmt?: object<IRowsFormatter>): object<IRowsInput>")]
-    public static VariantValue Curl(IExecutionThread thread)
+    public static async ValueTask<VariantValue> CurlAsync(IExecutionThread thread, CancellationToken cancellationToken)
     {
         var uriArgument = thread.Stack[0].AsString;
         var formatter = thread.Stack[1].AsObject as IRowsFormatter;
@@ -300,7 +303,7 @@ internal static class IOFunctions
             throw new QueryCatException(Resources.Errors.InvalidUri);
         }
         var request = new HttpRequestMessage(HttpMethod.Get, uri);
-        var response = HttpClient.Send(request);
+        var response = await _httpClient.SendAsync(request, cancellationToken);
 
         // Try get formatter by HTTP response content type.
         if (formatter == null)
@@ -308,7 +311,7 @@ internal static class IOFunctions
             if (response.Headers.TryGetValues(ContentTypeHeader, out var contentTypes))
             {
                 var contentType = contentTypes.Last();
-                formatter = FormattersInfo.CreateFormatter(contentType, thread, funcArgs);
+                formatter = await FormattersInfo.CreateFormatterAsync(contentType, thread, funcArgs, cancellationToken);
             }
         }
         // Try get formatter by extension from URI.
@@ -318,12 +321,12 @@ internal static class IOFunctions
             var extension = Path.GetExtension(absolutePath).ToLower();
             if (!string.IsNullOrEmpty(extension))
             {
-                formatter = FormattersInfo.CreateFormatter(extension, thread, funcArgs);
+                formatter = await FormattersInfo.CreateFormatterAsync(extension, thread, funcArgs, cancellationToken);
             }
         }
         formatter ??= new TextLineFormatter();
 
-        var stream = response.Content.ReadAsStream();
+        var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
         return VariantValue.CreateFromObject(formatter.OpenInput(stream));
     }
 
@@ -478,15 +481,15 @@ internal static class IOFunctions
         functionsManager.RegisterFunction(Stdout);
         functionsManager.RegisterFunction(Stdin);
 
-        functionsManager.RegisterFunction(Read);
-        functionsManager.RegisterFunction(Write);
+        functionsManager.RegisterFunction(ReadAsync);
+        functionsManager.RegisterFunction(WriteAsync);
         functionsManager.RegisterFunction(ListDirectory);
 
-        functionsManager.RegisterFunction(ReadFile);
-        functionsManager.RegisterFunction(WriteFile);
+        functionsManager.RegisterFunction(ReadFileAsync);
+        functionsManager.RegisterFunction(WriteFileAsync);
 
         functionsManager.RegisterFunction(ReadString);
 
-        functionsManager.RegisterFunction(Curl);
+        functionsManager.RegisterFunction(CurlAsync);
     }
 }
