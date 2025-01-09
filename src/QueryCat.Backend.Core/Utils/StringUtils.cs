@@ -28,7 +28,8 @@ public static class StringUtils
         char separator = ' ',
         bool force = false)
     {
-        if (target.IndexOf(separator) == -1 && !force)
+        // If already quoted - return the target string.
+        if (target.IndexOf(separator) == 0 && target.LastIndexOf(separator) == target.Length - 1 && !force)
         {
             return target;
         }

@@ -1,3 +1,4 @@
+using System.Globalization;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Core.Utils;
@@ -48,8 +49,8 @@ internal sealed class LiteralNode : ExpressionNode
         DataType.Timestamp => Quote(value.AsTimestampUnsafe.ToString(Application.Culture)) + "::timestamp",
         DataType.Interval => Quote(value.AsIntervalUnsafe.ToString("c", Application.Culture)) + "::interval",
         DataType.Object => Quote($"[object:{value.AsObjectUnsafe?.GetType().Name}]"),
-        DataType.Blob => "E" + Quote(value.ToString()),
-        _ => value.ToString(),
+        DataType.Blob => "E" + Quote(value.ToString(CultureInfo.InvariantCulture)),
+        _ => value.ToString(CultureInfo.InvariantCulture),
     };
 
     /// <inheritdoc />
