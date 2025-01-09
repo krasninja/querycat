@@ -256,19 +256,6 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
     {
         var programNode = AstBuilder.BuildProgramFromString(query);
 
-        // Bootstrap.
-        _deepLevel++;
-        if (_deepLevel == 1)
-        {
-            await RunBootstrapScriptAsync(cancellationToken);
-            await LoadConfigAsync(cancellationToken);
-        }
-        if (_deepLevel > Options.MaxRecursionDepth)
-        {
-            throw new QueryCatException(
-                string.Format(Resources.Errors.ExecutionMaxRecursionDepth, Options.MaxRecursionDepth));
-        }
-
         // Set first executing statement and run.
         var executingStatement = programNode.Statements.FirstOrDefault();
 
