@@ -129,14 +129,13 @@ public partial class ThriftPluginClient
         }
 
         /// <inheritdoc />
-        public Task RowsSet_OpenAsync(int object_handle, CancellationToken cancellationToken = default)
+        public async Task RowsSet_OpenAsync(int object_handle, CancellationToken cancellationToken = default)
         {
             if (_thriftPluginClient._objectsStorage.TryGet<IRowsSource>(object_handle, out var rowsSource)
                 && rowsSource != null)
             {
-                rowsSource.OpenAsync();
+                await rowsSource.OpenAsync(cancellationToken);
             }
-            return Task.CompletedTask;
         }
 
         /// <inheritdoc />

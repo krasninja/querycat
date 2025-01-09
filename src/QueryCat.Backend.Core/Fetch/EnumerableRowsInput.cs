@@ -100,12 +100,11 @@ public abstract class EnumerableRowsInput<[DynamicallyAccessedMembers(Dynamicall
     }
 
     /// <inheritdoc />
-    protected override ValueTask LoadAsync(CancellationToken cancellationToken = default)
+    protected override async ValueTask LoadAsync(CancellationToken cancellationToken = default)
     {
         var fetcher = CreateFetcher<TClass>();
         _enumerator = GetData(fetcher).GetEnumerator();
-        base.LoadAsync(cancellationToken);
-        return ValueTask.CompletedTask;
+        await base.LoadAsync(cancellationToken);
     }
 
     /// <inheritdoc />
