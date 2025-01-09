@@ -70,12 +70,11 @@ public sealed class RowsFrameIterator : ICursorRowsIterator
         return ValueTask.FromResult(HasData);
     }
 
-    /// <summary>
-    /// Reset cursor position, move to the beginning of rows set.
-    /// </summary>
-    public void Reset()
+    /// <inheritdoc />
+    public Task ResetAsync(CancellationToken cancellationToken = default)
     {
         _cursor = InitialCursorPosition;
+        return Task.CompletedTask;
     }
 
     /// <summary>

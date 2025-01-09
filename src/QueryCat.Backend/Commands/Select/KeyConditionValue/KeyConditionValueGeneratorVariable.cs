@@ -43,7 +43,7 @@ internal sealed class KeyConditionValueGeneratorVariable : IKeyConditionMultiple
         {
             values.Add(rowsIterator.Current[0]);
         }
-        rowsIterator.Reset();
+        await rowsIterator.ResetAsync(cancellationToken);
 
         _generator = new KeyConditionValueGeneratorArray(values);
         return _generator;

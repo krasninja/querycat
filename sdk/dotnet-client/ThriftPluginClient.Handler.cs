@@ -159,7 +159,7 @@ public partial class ThriftPluginClient
             else if (_thriftPluginClient._objectsStorage.TryGet<IRowsIterator>(object_handle, out var rowsIterator)
                 && rowsIterator != null)
             {
-                rowsIterator.Reset();
+                await rowsIterator.ResetAsync(cancellationToken);
             }
         }
 

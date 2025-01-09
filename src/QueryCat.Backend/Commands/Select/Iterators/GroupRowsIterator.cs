@@ -96,12 +96,12 @@ internal sealed class GroupRowsIterator : IRowsIterator, IRowsIteratorParent
     }
 
     /// <inheritdoc />
-    public void Reset()
+    public async Task ResetAsync(CancellationToken cancellationToken = default)
     {
         _isInitialized = false;
         _rowsFrame.Clear();
-        _rowsIterator.Reset();
-        _rowsFrameIterator.Reset();
+        await _rowsIterator.ResetAsync(cancellationToken);
+        await _rowsFrameIterator.ResetAsync(cancellationToken);
     }
 
     /// <inheritdoc />

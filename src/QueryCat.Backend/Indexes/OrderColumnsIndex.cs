@@ -164,9 +164,10 @@ internal sealed class OrderColumnsIndex : IOrderIndex
         }
 
         /// <inheritdoc />
-        public void Reset()
+        public Task ResetAsync(CancellationToken cancellationToken = default)
         {
             _currentRowIndex = -1;
+            return Task.CompletedTask;
         }
 
         /// <inheritdoc />

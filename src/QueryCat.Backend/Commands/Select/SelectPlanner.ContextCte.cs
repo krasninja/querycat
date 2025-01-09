@@ -97,7 +97,7 @@ internal sealed partial class SelectPlanner
                 break;
             }
             workingFrame = newFrame;
-            rightIterator.Reset();
+            AsyncUtils.RunSync(rightIterator.ResetAsync);
         }
 
         proxyRowsIterator.Set(totalResult.GetIterator());

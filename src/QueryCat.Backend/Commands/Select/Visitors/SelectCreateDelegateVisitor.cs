@@ -95,7 +95,7 @@ internal sealed class SelectCreateDelegateVisitor : CreateDelegateVisitor
 
         async ValueTask<VariantValue> Func(IExecutionThread thread, CancellationToken cancellationToken)
         {
-            rowsIterator.Reset();
+            await rowsIterator.ResetAsync(cancellationToken);
             if (await rowsIterator.MoveNextAsync(cancellationToken))
             {
                 return VariantValue.TrueValue;
@@ -244,7 +244,7 @@ internal sealed class SelectCreateDelegateVisitor : CreateDelegateVisitor
             async ValueTask<VariantValue> Func(IExecutionThread thread, CancellationToken cancellationToken)
             {
                 var leftValue = await valueAction.InvokeAsync(thread, cancellationToken);
-                rowsIterator.Reset();
+                await rowsIterator.ResetAsync(cancellationToken);
                 while (await rowsIterator.MoveNextAsync(cancellationToken))
                 {
                     var rightValue = rowsIterator.Current[0];
@@ -289,7 +289,7 @@ internal sealed class SelectCreateDelegateVisitor : CreateDelegateVisitor
 
         async ValueTask<VariantValue> Func(IExecutionThread thread, CancellationToken cancellationToken)
         {
-            rowsIterator.Reset();
+            await rowsIterator.ResetAsync(cancellationToken);
             if (await rowsIterator.MoveNextAsync(cancellationToken))
             {
                 return rowsIterator.Current[0];
@@ -321,7 +321,7 @@ internal sealed class SelectCreateDelegateVisitor : CreateDelegateVisitor
 
         async ValueTask<VariantValue> AllFunc(IExecutionThread thread, CancellationToken cancellationToken)
         {
-            rowsIterator.Reset();
+            await rowsIterator.ResetAsync(cancellationToken);
             while (await rowsIterator.MoveNextAsync(cancellationToken))
             {
                 var leftValue = await leftValueFunc.InvokeAsync(thread, cancellationToken);
@@ -338,7 +338,7 @@ internal sealed class SelectCreateDelegateVisitor : CreateDelegateVisitor
 
         async ValueTask<VariantValue> AnyFunc(IExecutionThread thread, CancellationToken cancellationToken)
         {
-            rowsIterator.Reset();
+            await rowsIterator.ResetAsync(cancellationToken);
             while (await rowsIterator.MoveNextAsync(cancellationToken))
             {
                 var leftValue = await leftValueFunc.InvokeAsync(thread, cancellationToken);

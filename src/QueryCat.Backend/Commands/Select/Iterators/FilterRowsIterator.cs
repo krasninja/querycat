@@ -42,9 +42,9 @@ internal sealed class FilterRowsIterator : IRowsIterator, IRowsIteratorParent
     }
 
     /// <inheritdoc />
-    public void Reset()
+    public Task ResetAsync(CancellationToken cancellationToken = default)
     {
-        _rowsIterator.Reset();
+        return _rowsIterator.ResetAsync(cancellationToken);
     }
 
     /// <inheritdoc />

@@ -241,7 +241,7 @@ internal sealed class WindowFunctionsRowsIterator : IRowsIterator
 
         // Calculate aggregate values by certain window boundaries.
         var rowsIterator = rowIdData.PartitionInstance.RowsIterator;
-        rowsIterator.Reset();
+        await rowsIterator.ResetAsync(cancellationToken);
         while (await rowsIterator.MoveNextAsync(cancellationToken))
         {
             // Upper boundary.
@@ -288,11 +288,11 @@ internal sealed class WindowFunctionsRowsIterator : IRowsIterator
     }
 
     /// <inheritdoc />
-    public void Reset()
+    public async Task ResetAsync(CancellationToken cancellationToken = default)
     {
         _isInitialized = false;
         _rowsFrame.Clear();
-        _rowsFrameIterator.Reset();
+        await _rowsFrameIterator.ResetAsync(cancellationToken);
     }
 
     /// <inheritdoc />

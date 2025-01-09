@@ -88,9 +88,9 @@ internal sealed class OrderRowsIterator : IRowsIterator, IRowsIteratorParent
     }
 
     /// <inheritdoc />
-    public void Reset()
+    public async Task ResetAsync(CancellationToken cancellationToken = default)
     {
-        _rowsFrameIterator.Reset();
+        await _rowsFrameIterator.ResetAsync(cancellationToken);
         _rowsFrame.Clear();
     }
 
