@@ -13,7 +13,7 @@ public sealed class KeyColumn
     public int ColumnIndex { get; }
 
     /// <summary>
-    /// The column is required to process the query, the error ocurres otherwise.
+    /// The column is required to process the query, the error occurs otherwise.
     /// </summary>
     public bool IsRequired { get; }
 
