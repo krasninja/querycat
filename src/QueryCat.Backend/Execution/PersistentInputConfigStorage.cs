@@ -60,7 +60,7 @@ public class PersistentInputConfigStorage : MemoryInputConfigStorage
         }
 
         var json = JsonSerializer.Serialize(dict, SourceGenerationContext.Default.ConfigDictionary);
-        await File.WriteAllTextAsync(_configFile, json, cancellationToken);
+        await File.WriteAllTextAsync(_configFile, json, CancellationToken.None);
 
         _writesCount = 0;
     }
