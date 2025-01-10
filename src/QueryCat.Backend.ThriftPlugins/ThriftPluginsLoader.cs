@@ -61,23 +61,21 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
     {
         public string FunctionName { get; set; } = string.Empty;
 
-        internal static Core.Types.VariantValue FunctionDelegateCall(
+        internal static async ValueTask<Core.Types.VariantValue> FunctionDelegateCallAsync(
             IExecutionThread thread,
             string functionName,
-            ThriftPluginsServer.PluginContext context)
+            ThriftPluginsServer.PluginContext context,
+            CancellationToken cancellationToken)
         {
+            ArgumentException.ThrowIfNullOrEmpty(functionName, nameof(functionName));
+
             if (context.Client == null)
             {
                 return Core.Types.VariantValue.Null;
             }
-            ArgumentException.ThrowIfNullOrEmpty(functionName, nameof(functionName));
 
             var arguments = thread.Stack.Select(SdkConvert.Convert).ToList();
-            var result = AsyncUtils.RunSync(ct => context.Client.CallFunctionAsync(functionName, arguments, -1, ct));
-            if (result == null)
-            {
-                return Core.Types.VariantValue.Null;
-            }
+            var result = await context.Client.CallFunctionAsync(functionName, arguments, -1, cancellationToken);
             if (result.__isset.@object && result.Object != null)
             {
                 var obj = CreateObjectFromResult(result, context);
@@ -97,8 +95,8 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
             _pluginContext = pluginContext;
         }
 
-        internal Core.Types.VariantValue FunctionDelegateCall(IExecutionThread thread)
-            => FunctionCallPluginBase.FunctionDelegateCall(thread, FunctionName, _pluginContext);
+        internal ValueTask<Core.Types.VariantValue> FunctionDelegateCallAsync(IExecutionThread thread, CancellationToken cancellationToken)
+            => FunctionCallPluginBase.FunctionDelegateCallAsync(thread, FunctionName, _pluginContext, cancellationToken);
     }
 
     /// <summary>
@@ -115,10 +113,10 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
             _pluginFile = pluginFile;
         }
 
-        internal Core.Types.VariantValue FunctionDelegateCall(IExecutionThread thread)
+        internal ValueTask<Core.Types.VariantValue> FunctionDelegateCallAsync(IExecutionThread thread, CancellationToken cancellationToken)
         {
             var pluginContext = _loader.LoadPlugin(_pluginFile);
-            return FunctionCallPluginBase.FunctionDelegateCall(thread, FunctionName, pluginContext);
+            return FunctionCallPluginBase.FunctionDelegateCallAsync(thread, FunctionName, pluginContext, cancellationToken);
         }
     }
 
@@ -550,7 +548,7 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
         foreach (var function in functions)
         {
             var wrapper = new FunctionCallPluginWrapperLazy(this, file);
-            var functionName = functionsManager.RegisterFunction(function.Signature, wrapper.FunctionDelegateCall,
+            var functionName = functionsManager.RegisterFunction(function.Signature, wrapper.FunctionDelegateCallAsync,
                 function.Description);
             wrapper.FunctionName = functionName;
         }
@@ -600,7 +598,7 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
         foreach (var function in pluginContext.Functions)
         {
             var wrapper = new FunctionCallPluginWrapper(pluginContext);
-            var functionName = functionsManager.RegisterFunction(function.Signature, wrapper.FunctionDelegateCall,
+            var functionName = functionsManager.RegisterFunction(function.Signature, wrapper.FunctionDelegateCallAsync,
                 function.Description);
             wrapper.FunctionName = functionName;
         }
