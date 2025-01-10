@@ -5,6 +5,9 @@ using System.Text;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend;
 using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Execution;
+using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Formatters;
 using QueryCat.Backend.Storage;
 
@@ -32,6 +35,9 @@ public class Program
             AllowMultipleArgumentsPerToken = true,
         };
 
+    private static readonly Option<string[]> _variablesOption = new("--var",
+        description: "Pass variables.");
+
     public static async Task<int> Main(string[] args)
     {
         if (args.Length < 1)
@@ -44,12 +50,14 @@ public class Program
         rootCommand.AddOption(_pluginFilesOption);
         rootCommand.AddOption(_filesOption);
         rootCommand.AddArgument(_queryArgument);
+        rootCommand.AddOption(_variablesOption);
 
         rootCommand.SetHandler(
             Run,
             _queryArgument,
             _pluginFilesOption,
-            _filesOption);
+            _filesOption,
+            _variablesOption);
 
         var parser = new CommandLineBuilder(rootCommand)
             .UseVersionOption("-v", "--version")
@@ -59,7 +67,7 @@ public class Program
         return returnCode;
     }
 
-    private static async Task Run(string query, string[] pluginDirectories, string[] files)
+    private static async Task Run(string query, string[] pluginDirectories, string[] files, string[] variables)
     {
         var workingDirectoryPlugins = Directory.GetFiles(Environment.CurrentDirectory, "*.dll");
         var outputStringBuilder = new StringBuilder();
@@ -79,6 +87,8 @@ public class Program
                 thread.FunctionsManager))
             .Create();
 
+        AddVariables(executionThread, variables);
+
         if (files.Any())
         {
             foreach (var file in files)
@@ -92,5 +102,30 @@ public class Program
             await executionThread.RunAsync(query);
         }
         await Console.Out.WriteLineAsync(outputStringBuilder);
+    }
+
+    public static void AddVariables(IExecutionThread executionThread, string[]? variables = null)
+    {
+        if (variables == null || !variables.Any())
+        {
+            return;
+        }
+
+        foreach (var variable in variables)
+        {
+            var arr = StringUtils.GetFieldsFromLine(variable, '=');
+            if (arr.Count != 2)
+            {
+                continue;
+            }
+            var name = arr[0];
+            var stringValue = arr[1];
+            var targetType = DataTypeUtils.DetermineTypeByValue(stringValue);
+            if (!VariantValue.TryCreateFromString(stringValue, targetType, out var value))
+            {
+                continue;
+            }
+            executionThread.TopScope.Variables[name] = value.Cast(targetType);
+        }
     }
 }
