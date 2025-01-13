@@ -208,5 +208,18 @@ internal sealed class SelectJoinRowsInput : IRowsInputKeys, IRowsIteratorParent
     }
 
     /// <inheritdoc />
+    public void UnsetKeyColumnValue(int columnIndex, VariantValue.Operation operation)
+    {
+        if (_leftInput is IRowsInputKeys leftInputKeys)
+        {
+            leftInputKeys.UnsetKeyColumnValue(columnIndex, operation);
+        }
+        if (_rightInput is IRowsInputKeys rightInputKeys)
+        {
+            rightInputKeys.UnsetKeyColumnValue(columnIndex, operation);
+        }
+    }
+
+    /// <inheritdoc />
     public override string ToString() => $"left: {_leftInput}, type: {_joinType}, right: {_rightInput}";
 }

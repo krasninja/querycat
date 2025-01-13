@@ -11,6 +11,7 @@ using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Plugins.Sdk;
 using Column = QueryCat.Plugins.Sdk.Column;
+using CursorSeekOrigin = QueryCat.Plugins.Sdk.CursorSeekOrigin;
 using DataType = QueryCat.Backend.Core.Types.DataType;
 using KeyColumn = QueryCat.Plugins.Sdk.KeyColumn;
 using VariantValue = QueryCat.Plugins.Sdk.VariantValue;
@@ -164,6 +165,41 @@ public partial class ThriftPluginClient
         }
 
         /// <inheritdoc />
+        public Task<int> RowsSet_PositionAsync(int object_handle, CancellationToken cancellationToken = default)
+        {
+            if (_thriftPluginClient._objectsStorage.TryGet<ICursorRowsIterator>(object_handle, out var rowsSource)
+                && rowsSource != null)
+            {
+                return Task.FromResult(rowsSource.Position);
+            }
+            return Task.FromResult(-1);
+        }
+
+        /// <inheritdoc />
+        public Task<int> RowsSet_TotalRowsAsync(int object_handle, CancellationToken cancellationToken = default)
+        {
+            if (_thriftPluginClient._objectsStorage.TryGet<ICursorRowsIterator>(object_handle, out var rowsSource)
+                && rowsSource != null)
+            {
+                return Task.FromResult(rowsSource.TotalRows);
+            }
+            return Task.FromResult(-1);
+        }
+
+        /// <inheritdoc />
+        public Task RowsSet_SeekAsync(int object_handle, int offset, CursorSeekOrigin origin,
+            CancellationToken cancellationToken = default)
+        {
+            if (_thriftPluginClient._objectsStorage.TryGet<ICursorRowsIterator>(object_handle, out var rowsSource)
+                && rowsSource != null)
+            {
+                rowsSource.Seek(offset, SdkConvert.Convert(origin));
+                return Task.FromResult(rowsSource.Position);
+            }
+            return Task.CompletedTask;
+        }
+
+        /// <inheritdoc />
         public Task RowsSet_SetContextAsync(int object_handle, ContextQueryInfo? context_query_info,
             CancellationToken cancellationToken = default)
         {
@@ -285,6 +321,19 @@ public partial class ThriftPluginClient
             {
                 rowsInputKeys.SetKeyColumnValue(column_index, SdkConvert.Convert(value),
                     Enum.Parse<Backend.Core.Types.VariantValue.Operation>(operation));
+            }
+            return Task.CompletedTask;
+        }
+
+        /// <inheritdoc />
+        public Task RowsSet_UnsetKeyColumnValueAsync(int object_handle, int column_index, string operation,
+            CancellationToken cancellationToken = default)
+        {
+            if (_thriftPluginClient._objectsStorage.TryGet<IRowsInput>(object_handle, out var rowsInput)
+                && rowsInput != null
+                && rowsInput is IRowsInputKeys rowsInputKeys)
+            {
+                rowsInputKeys.UnsetKeyColumnValue(column_index, Enum.Parse<Backend.Core.Types.VariantValue.Operation>(operation));
             }
             return Task.CompletedTask;
         }
@@ -472,6 +521,49 @@ public partial class ThriftPluginClient
         }
 
         /// <inheritdoc />
+        public Task<int> RowsSet_PositionAsync(int object_handle, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return _handler.RowsSet_PositionAsync(object_handle, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, Resources.Errors.HandlerInternalError);
+                throw QueryCatPluginExceptionUtils.Create(ex, objectHandle: object_handle);
+            }
+        }
+
+        /// <inheritdoc />
+        public Task<int> RowsSet_TotalRowsAsync(int object_handle, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return _handler.RowsSet_TotalRowsAsync(object_handle, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, Resources.Errors.HandlerInternalError);
+                throw QueryCatPluginExceptionUtils.Create(ex, objectHandle: object_handle);
+            }
+        }
+
+        /// <inheritdoc />
+        public Task RowsSet_SeekAsync(int object_handle, int offset, CursorSeekOrigin origin,
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return _handler.RowsSet_SeekAsync(object_handle, offset, origin, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, Resources.Errors.HandlerInternalError);
+                throw QueryCatPluginExceptionUtils.Create(ex, objectHandle: object_handle);
+            }
+        }
+
+        /// <inheritdoc />
         public Task RowsSet_SetContextAsync(int object_handle, ContextQueryInfo? context_query_info,
             CancellationToken cancellationToken = default)
         {
@@ -535,6 +627,21 @@ public partial class ThriftPluginClient
             try
             {
                 return _handler.RowsSet_SetKeyColumnValueAsync(object_handle, column_index, operation, value, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, Resources.Errors.HandlerInternalError);
+                throw QueryCatPluginExceptionUtils.Create(ex, objectHandle: object_handle);
+            }
+        }
+
+        /// <inheritdoc />
+        public Task RowsSet_UnsetKeyColumnValueAsync(int object_handle, int column_index, string operation,
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return _handler.RowsSet_UnsetKeyColumnValueAsync(object_handle, column_index, operation, cancellationToken);
             }
             catch (Exception ex)
             {

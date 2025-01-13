@@ -20,7 +20,7 @@ public static class SdkConvert
     /// <summary>
     /// Unix epoch.
     /// </summary>
-    private static readonly DateTime UnixEpoch = new(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+    private static readonly DateTime _unixEpoch = new(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
     public static VariantValue Convert(Backend.Core.Types.VariantValue value)
     {
@@ -48,7 +48,7 @@ public static class SdkConvert
             },
             Backend.Core.Types.DataType.Timestamp => new VariantValue
             {
-                Timestamp = (long)(value.AsTimestampUnsafe - UnixEpoch).TotalSeconds,
+                Timestamp = (long)(value.AsTimestampUnsafe - _unixEpoch).TotalSeconds,
             },
             Backend.Core.Types.DataType.Boolean => new VariantValue
             {
@@ -67,7 +67,7 @@ public static class SdkConvert
         };
     }
 
-    private static readonly JsonSerializerOptions JsonSerializerOptions = new()
+    private static readonly JsonSerializerOptions _jsonSerializerOptions = new()
     {
         WriteIndented = false,
     };
@@ -92,7 +92,7 @@ public static class SdkConvert
         {
             return new VariantValue
             {
-                Json = jsonNode.ToJsonString(JsonSerializerOptions),
+                Json = jsonNode.ToJsonString(_jsonSerializerOptions),
             };
         }
 
@@ -148,7 +148,7 @@ public static class SdkConvert
         }
         if (value.__isset.timestamp)
         {
-            return new Backend.Core.Types.VariantValue(UnixEpoch.AddSeconds(value.Timestamp));
+            return new Backend.Core.Types.VariantValue(_unixEpoch.AddSeconds(value.Timestamp));
         }
         if (value.__isset.boolean)
         {
@@ -299,5 +299,23 @@ public static class SdkConvert
             QueryCatErrorCode.INVALID_COLUMN_INDEX => ErrorCode.InvalidColumnIndex,
             QueryCatErrorCode.INVALID_INPUT_STATE => ErrorCode.InvalidInputState,
             _ => throw new ArgumentOutOfRangeException(nameof(errorCode), errorCode, Resources.Errors.InvalidErrorCode),
+        };
+
+    public static Sdk.CursorSeekOrigin Convert(Backend.Core.Data.CursorSeekOrigin origin)
+        => origin switch
+        {
+            Backend.Core.Data.CursorSeekOrigin.Begin => Sdk.CursorSeekOrigin.BEGIN,
+            Backend.Core.Data.CursorSeekOrigin.Current => Sdk.CursorSeekOrigin.CURRENT,
+            Backend.Core.Data.CursorSeekOrigin.End => Sdk.CursorSeekOrigin.END,
+            _ => throw new ArgumentOutOfRangeException(nameof(origin)),
+        };
+
+    public static Backend.Core.Data.CursorSeekOrigin Convert(Sdk.CursorSeekOrigin origin)
+        => origin switch
+        {
+            Sdk.CursorSeekOrigin.BEGIN => Backend.Core.Data.CursorSeekOrigin.Begin,
+            Sdk.CursorSeekOrigin.CURRENT => Backend.Core.Data.CursorSeekOrigin.Current,
+            Sdk.CursorSeekOrigin.END => Backend.Core.Data.CursorSeekOrigin.End,
+            _ => throw new ArgumentOutOfRangeException(nameof(origin)),
         };
 }

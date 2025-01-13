@@ -37,6 +37,14 @@ internal sealed class KeyConditionValueGeneratorIterator : IKeyConditionMultiple
     }
 
     /// <inheritdoc />
-    public VariantValue Get(IExecutionThread thread)
-        => _rowsIterator.Columns.Length > 0 ? _rowsIterator.Current[0] : VariantValue.Null;
+    public bool TryGet(IExecutionThread thread, out VariantValue value)
+    {
+        if (_rowsIterator.Columns.Length > 0)
+        {
+            value = _rowsIterator.Current[0];
+            return true;
+        }
+        value = VariantValue.Null;
+        return false;
+    }
 }

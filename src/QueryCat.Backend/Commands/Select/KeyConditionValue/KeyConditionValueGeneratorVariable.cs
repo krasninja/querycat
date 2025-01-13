@@ -56,12 +56,13 @@ internal sealed class KeyConditionValueGeneratorVariable : IKeyConditionMultiple
     }
 
     /// <inheritdoc />
-    public VariantValue Get(IExecutionThread thread)
+    public bool TryGet(IExecutionThread thread, out VariantValue value)
     {
         if (_generator == null)
         {
-            return VariantValue.Null;
+            value = VariantValue.Null;
+            return false;
         }
-        return _generator.Get(thread);
+        return _generator.TryGet(thread, out value);
     }
 }
