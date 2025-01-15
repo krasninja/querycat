@@ -390,7 +390,7 @@ internal sealed partial class SelectPlanner
             ];
         }
 
-        throw new InvalidOperationException($"Cannot process node '{expressionNode}' as input.");
+        throw new InvalidOperationException(string.Format(Resources.Errors.CannotProcessNodeAsInput, expressionNode));
     }
 
     private IRowsInput Context_CreateInputSourceFromSubQuery(SelectCommandContext context, SelectQueryNode queryNode)

@@ -48,4 +48,7 @@
   <data name="CannotFindPluginsProxy" xml:space="preserve">
     <value>Cannot load NuGet package plugin '{0}' without proxy. To install, run "plugin install-proxy" command.</value>
   </data>
+  <data name="CannotFindPathVariable" xml:space="preserve">
+    <value>Cannot find PATH environment variable.</value>
+  </data>
 </root>

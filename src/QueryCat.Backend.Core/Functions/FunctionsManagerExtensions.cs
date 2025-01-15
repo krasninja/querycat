@@ -184,9 +184,10 @@ public static class FunctionsManagerExtensions
         {
             if (functions.Length > 1 && functionArgumentsTypes != null)
             {
-                throw new QueryCatException($"There is more than one signature for function '{name}'.");
+                throw new QueryCatException(
+                    string.Format(Resources.Errors.FunctionWithMoreThanOneSignature, name));
             }
-            return functions.First();
+            return functions[0];
         }
         if (functionArgumentsTypes != null)
         {

@@ -23,7 +23,7 @@ public class DefaultObjectSelector : IObjectSelector
         var lastObject = context.LastValue;
         if (lastObject == null)
         {
-            throw new InvalidOperationException("Invalid selector state.");
+            throw new InvalidOperationException(Resources.Errors.InvalidSelectorState);
         }
 
         var propertyFindOptions = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public;

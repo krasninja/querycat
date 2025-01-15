@@ -42,6 +42,15 @@ public sealed class FunctionSignatureArgument : ICloneable
     /// </summary>
     public bool IsVariadic { get; }
 
+    /// <summary>
+    /// Constructor.
+    /// </summary>
+    /// <param name="name">Argument name.</param>
+    /// <param name="type">Argument type.</param>
+    /// <param name="defaultValue">Default value.</param>
+    /// <param name="isOptional">Is optional argument.</param>
+    /// <param name="isArray">Is array argument.</param>
+    /// <param name="isVariadic">Is variadic. Allows a function to accept any number of extra arguments.</param>
     public FunctionSignatureArgument(
         string name,
         DataType type,
@@ -59,7 +68,7 @@ public sealed class FunctionSignatureArgument : ICloneable
         IsVariadic = isVariadic;
         if (IsVariadic && !IsArray)
         {
-            throw new ArgumentException("Variadic type must be array.", nameof(isVariadic));
+            throw new ArgumentException(Resources.Errors.VariadicMustBeArray, nameof(isVariadic));
         }
         if (IsOptional && !HasDefaultValue)
         {
@@ -68,6 +77,10 @@ public sealed class FunctionSignatureArgument : ICloneable
         }
     }
 
+    /// <summary>
+    /// Copy constructor.
+    /// </summary>
+    /// <param name="argument">Instance of <see cref="FunctionSignatureArgument" />.</param>
     public FunctionSignatureArgument(FunctionSignatureArgument argument)
         : this(
             argument.Name,

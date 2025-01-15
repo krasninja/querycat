@@ -92,7 +92,7 @@ internal sealed class PluginProxyDownloader
             }
         }
 
-        throw new NotSupportedException($"Cannot extract from archive '{archiveFile}'.");
+        throw new NotSupportedException(string.Format(Resources.Errors.CannotExtractFromArchvie, archiveFile));
     }
 
     private static string GetPlatformExtension()

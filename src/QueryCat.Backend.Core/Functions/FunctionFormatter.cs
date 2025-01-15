@@ -142,7 +142,8 @@ internal static class FunctionFormatter
                 }
                 else
                 {
-                    throw new InvalidOperationException($"Cannot set parameter index {i} for method '{method}'.");
+                    throw new InvalidOperationException(
+                        string.Format(Resources.Errors.CannotSetParameterIndexFromMethod, i, method));
                 }
             }
             var result = method is ConstructorInfo constructorInfo

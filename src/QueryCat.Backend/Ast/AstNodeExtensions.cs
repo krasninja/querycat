@@ -86,7 +86,8 @@ internal static class AstNodeExtensions
         var value = node.GetAttribute<T>(key);
         if (value == null)
         {
-            throw new InvalidOperationException($"Cannot get attribute of type {typeof(T).Name} key '{key}' for node '{node}'.");
+            throw new InvalidOperationException(
+                string.Format(Resources.Errors.CannotGetAttributeOfType, typeof(T).Name, key, node));
         }
         return value;
     }

@@ -179,7 +179,7 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
         var propertyInfo = GetProperty(valueGetterExpression);
         if (propertyInfo == null)
         {
-            throw new InvalidOperationException("Cannot get column name from property.");
+            throw new InvalidOperationException(Resources.Errors.CannotGetColumnFromExpression);
         }
         var propertyName = ConvertName(propertyInfo.Name);
         if (string.IsNullOrEmpty(description))

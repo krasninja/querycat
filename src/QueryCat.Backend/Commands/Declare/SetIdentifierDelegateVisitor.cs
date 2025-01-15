@@ -19,7 +19,7 @@ internal sealed class SetIdentifierDelegateVisitor : CreateDelegateVisitor
     {
         if (node is not IdentifierExpressionNode)
         {
-            throw new InvalidOperationException($"Node's type must be {nameof(IdentifierExpressionNode)}.");
+            throw new InvalidOperationException($"Node's type must be '{nameof(IdentifierExpressionNode)}'.");
         }
         return base.RunAndReturn(node);
     }

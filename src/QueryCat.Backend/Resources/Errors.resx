@@ -165,4 +165,25 @@
   <data name="InvalidExceptColumn" xml:space="preserve">
     <value>Invalid except column '{0}', available columns: {1}.</value>
   </data>
+  <data name="CannotResolveExpressionValueNodes" xml:space="preserve">
+    <value>Cannot resolve expression values node.</value>
+  </data>
+  <data name="InvalidSelectorState" xml:space="preserve">
+    <value>Invalid selector state.</value>
+  </data>
+  <data name="CannotProcessNodeAsInput" xml:space="preserve">
+    <value>Cannot process node '{0}' as input.</value>
+  </data>
+  <data name="CannotCreateCaseDelegate" xml:space="preserve">
+    <value>Cannot create CASE delegate.</value>
+  </data>
+  <data name="CannotGetAttributeOfType" xml:space="preserve">
+    <value>Cannot get attribute of type {0} key '{1}' for node '{2}'.</value>
+  </data>
+  <data name="AttributeIsNotOfType" xml:space="preserve">
+    <value>Attribute is not of type '{0}'.</value>
+  </data>
+  <data name="FileNoExists" xml:space="preserve">
+    <value>File '{0}' not exists.</value>
+  </data>
 </root>

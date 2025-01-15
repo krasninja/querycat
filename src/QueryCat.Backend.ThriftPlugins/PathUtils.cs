@@ -60,10 +60,11 @@ internal static class PathUtils
         }
 
         // Try to find in PATH.
+        // For reference: https://github.com/dotnet/runtime/blob/main/src/mono/wasm/host/FileUtils.cs#L18.
         var path = Environment.GetEnvironmentVariable("PATH");
         if (string.IsNullOrEmpty(path))
         {
-            throw new InvalidOperationException("Cannot find PATH environment variable.");
+            throw new InvalidOperationException(Resources.Errors.CannotFindPathVariable);
         }
         foreach (var pathItem in path.Split(Path.PathSeparator, StringSplitOptions.TrimEntries))
         {

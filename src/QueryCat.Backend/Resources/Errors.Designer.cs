@@ -338,5 +338,47 @@ namespace QueryCat.Backend.Resources {
                 return ResourceManager.GetString("InvalidExceptColumn", resourceCulture);
             }
         }
+        
+        internal static string CannotResolveExpressionValueNodes {
+            get {
+                return ResourceManager.GetString("CannotResolveExpressionValueNodes", resourceCulture);
+            }
+        }
+        
+        internal static string InvalidSelectorState {
+            get {
+                return ResourceManager.GetString("InvalidSelectorState", resourceCulture);
+            }
+        }
+        
+        internal static string CannotProcessNodeAsInput {
+            get {
+                return ResourceManager.GetString("CannotProcessNodeAsInput", resourceCulture);
+            }
+        }
+        
+        internal static string CannotCreateCaseDelegate {
+            get {
+                return ResourceManager.GetString("CannotCreateCaseDelegate", resourceCulture);
+            }
+        }
+        
+        internal static string CannotGetAttributeOfType {
+            get {
+                return ResourceManager.GetString("CannotGetAttributeOfType", resourceCulture);
+            }
+        }
+        
+        internal static string AttributeIsNotOfType {
+            get {
+                return ResourceManager.GetString("AttributeIsNotOfType", resourceCulture);
+            }
+        }
+        
+        internal static string FileNoExists {
+            get {
+                return ResourceManager.GetString("FileNoExists", resourceCulture);
+            }
+        }
     }
 }

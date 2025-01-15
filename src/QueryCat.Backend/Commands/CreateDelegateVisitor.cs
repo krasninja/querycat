@@ -160,7 +160,7 @@ internal partial class CreateDelegateVisitor : AstVisitor
         }
         else
         {
-            throw new InvalidOperationException("Cannot create CASE delegate.");
+            throw new InvalidOperationException(Resources.Errors.CannotCreateCaseDelegate);
         }
     }
 
@@ -212,7 +212,7 @@ internal partial class CreateDelegateVisitor : AstVisitor
             return;
         }
 
-        throw new QueryCatException("Cannot resolve expression values node.");
+        throw new QueryCatException(Resources.Errors.CannotResolveExpressionValueNodes);
     }
 
     private sealed class InArrayFuncUnit(
