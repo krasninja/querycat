@@ -1,4 +1,5 @@
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend.Core.Execution;
 
@@ -38,6 +39,23 @@ public static class ExecutionThreadExtensions
         }
 
         return executionThread.RunAsync(query, parametersDict, cancellationToken);
+    }
+
+    /// <summary>
+    /// Run query synchronously.
+    /// </summary>
+    /// <param name="executionThread">Instance of <see cref="IExecutionThread" />.</param>
+    /// <param name="query">Query.</param>
+    /// <param name="parameters">Query scope parameters.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Variant value result.</returns>
+    public static VariantValue Run(
+        this IExecutionThread executionThread,
+        string query,
+        IDictionary<string, VariantValue>? parameters = null,
+        CancellationToken cancellationToken = default)
+    {
+        return AsyncUtils.RunSync(() => executionThread.RunAsync(query, parameters, cancellationToken));
     }
 
     #region Variables
