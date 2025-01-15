@@ -1,3 +1,4 @@
+using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Storage;
@@ -30,8 +31,20 @@ internal sealed class KeyConditionValueGeneratorVariable : IKeyConditionMultiple
         {
             return _generator;
         }
+
         var value = await _identifierUnit.InvokeAsync(thread, cancellationToken);
-        var rowsIterator = RowsIteratorConverter.Convert(value);
+        IRowsIterator rowsIterator;
+        if (value.Type == DataType.Object
+            && value.AsObjectUnsafe is IRowsInput rowsInput)
+        {
+            await rowsInput.OpenAsync(cancellationToken);
+            rowsIterator = new RowsInputIterator(rowsInput);
+        }
+        else
+        {
+            rowsIterator = RowsIteratorConverter.Convert(value);
+        }
+
         if (rowsIterator.Columns.Length < 1)
         {
             _generator = KeyConditionValueGeneratorEmpty.Instance;
