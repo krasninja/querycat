@@ -7,7 +7,7 @@ namespace QueryCat.Backend.ThriftPlugins;
 /// </summary>
 public static class ProxyFile
 {
-    public const int ProxyLatestVersion = 3;
+    public const int ProxyLatestVersion = 4;
     private const string ProxyExecutable = "qcat-plugins-proxy";
 
     /// <summary>
