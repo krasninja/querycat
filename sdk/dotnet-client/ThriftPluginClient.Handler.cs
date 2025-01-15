@@ -247,6 +247,10 @@ public partial class ThriftPluginClient
                         {
                             values.Add(SdkConvert.Convert(value));
                         }
+                        else
+                        {
+                            values.Add(SdkConvert.Convert(QueryCat.Backend.Core.Types.VariantValue.Null));
+                        }
                     }
                 }
 
