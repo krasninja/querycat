@@ -236,6 +236,7 @@ internal partial class CreateDelegateVisitor : AstVisitor
                 if (rightValue.Type == DataType.Object)
                 {
                     var iterator = RowsIteratorConverter.Convert(rightValue);
+                    await iterator.ResetAsync(cancellationToken);
                     while (await iterator.MoveNextAsync(cancellationToken))
                     {
                         var iteratorValue = iterator.Current[0];
