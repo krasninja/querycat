@@ -69,6 +69,8 @@ public class Program
 
     private static async Task Run(string query, string[] pluginDirectories, string[] files, string[] variables)
     {
+        InitializeLogger();
+
         var workingDirectoryPlugins = Directory.GetFiles(Environment.CurrentDirectory, "*.dll");
         var outputStringBuilder = new StringBuilder();
         var options = new ExecutionOptions
@@ -127,5 +129,18 @@ public class Program
             }
             executionThread.TopScope.Variables[name] = value.Cast(targetType);
         }
+    }
+
+    /// <summary>
+    /// Pre initialization step for logger.
+    /// </summary>
+    private static void InitializeLogger()
+    {
+        Application.LoggerFactory = new LoggerFactory(
+            providers: [new SimpleConsoleLoggerProvider()],
+            new LoggerFilterOptions
+            {
+                MinLevel = LogLevel.Trace,
+            });
     }
 }
