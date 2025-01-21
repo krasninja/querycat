@@ -195,7 +195,7 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
         }
         finally
         {
-            if (parameters != null)
+            if (parameters != null && parameters.Keys.Count > 0)
             {
                 PopScope();
             }
@@ -269,7 +269,7 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
         {
             return VariantValue.Null;
         }
-        if (parameters != null)
+        if (parameters != null && parameters.Keys.Count > 0)
         {
             var scope = PushScope();
             SetScopeVariables(scope, parameters);
