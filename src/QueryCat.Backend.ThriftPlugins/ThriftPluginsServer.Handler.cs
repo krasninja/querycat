@@ -108,12 +108,6 @@ public partial class ThriftPluginsServer
             _thriftPluginsServer.ConfirmAuthToken(auth_token);
             _thriftPluginsServer._logger.LogDebug("Registered plugin '{PluginName}'.", context.Name);
 
-            // Call init only in debug mode for now.
-            if (context.Client != null && _thriftPluginsServer.SkipTokenVerification)
-            {
-                await context.Client.InitializeAsync(cancellationToken);
-            }
-
             return CreateEmptyRegistrationResult();
         }
 
@@ -188,8 +182,10 @@ public partial class ThriftPluginsServer
         /// <inheritdoc />
         public Task<VariantValue> GetVariableAsync(string name, CancellationToken cancellationToken = default)
         {
+            _thriftPluginsServer._logger.LogTrace("we " + name);
             if (_thriftPluginsServer._executionThread.TryGetVariable(name, out var value))
             {
+                _thriftPluginsServer._logger.LogTrace("we2 " + value);
                 return Task.FromResult(SdkConvert.Convert(value));
             }
             return Task.FromResult(SdkConvert.Convert(Core.Types.VariantValue.Null));

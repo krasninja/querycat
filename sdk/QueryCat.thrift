@@ -247,9 +247,6 @@ service Plugin {
     3: Handle object_handle // Optional. It is used to call function of a specific object.
   ) throws (1: QueryCatPluginException e),
 
-  // Initialize plugin.
-  void Initialize() throws (1: QueryCatPluginException e),
-
   // Shutdown plugin. This should release all objects.
   void Shutdown() throws (1: QueryCatPluginException e),
 

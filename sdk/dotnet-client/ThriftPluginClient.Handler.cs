@@ -441,20 +441,6 @@ public partial class ThriftPluginClient
         }
 
         /// <inheritdoc />
-        public Task InitializeAsync(CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                return _handler.InitializeAsync(cancellationToken);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, Resources.Errors.HandlerInternalError);
-                throw QueryCatPluginExceptionUtils.Create(ex);
-            }
-        }
-
-        /// <inheritdoc />
         public Task ShutdownAsync(CancellationToken cancellationToken = default)
         {
             try
