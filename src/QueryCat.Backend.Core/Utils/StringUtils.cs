@@ -19,17 +19,15 @@ public static class StringUtils
     /// </summary>
     /// <param name="target">Target string.</param>
     /// <param name="quote">Quote character.</param>
-    /// <param name="separator">The separator condition. If not exists - the string will not be quoted.</param>
     /// <param name="force">Force quote.</param>
     /// <returns>Quoted string.</returns>
     public static ReadOnlySpan<char> Quote(
         ReadOnlySpan<char> target,
         string quote = QuoteChar,
-        char separator = ' ',
         bool force = false)
     {
         // If already quoted - return the target string.
-        if (target.IndexOf(separator) == 0 && target.LastIndexOf(separator) == target.Length - 1 && !force)
+        if (target.IndexOf(quote) == 0 && target.LastIndexOf(quote) == target.Length - 1 && !force)
         {
             return target;
         }
