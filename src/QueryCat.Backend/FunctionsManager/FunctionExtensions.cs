@@ -13,8 +13,8 @@ public static class FunctionExtensions
     /// </summary>
     /// <param name="function">Source function.</param>
     /// <param name="other">Other function.</param>
-    /// <returns></returns>
-    public static bool IsSignatureEqual(this IFunction function, IFunction other)
+    /// <returns><c>True</c> if signatures are equal, <c>false</c> otherwise.</returns>
+    internal static bool IsSignatureEqual(this IFunction function, IFunction other)
     {
         return function.Arguments.SequenceEqual(other.Arguments);
     }

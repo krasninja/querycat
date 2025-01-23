@@ -220,17 +220,15 @@ public sealed class DefaultFunctionsFactory : FunctionsFactory
         }
     }
 
-    private static string NormalizeName(string target) => target.ToUpperInvariant();
-
     private static string GetFunctionName(string signature)
     {
         // Fast path to get function name.
         var indexOfLeftParen = signature.IndexOf('(', StringComparison.InvariantCulture);
         if (indexOfLeftParen < 0)
         {
-            return NormalizeName(signature);
+            return FunctionFormatter.NormalizeName(signature);
         }
-        return NormalizeName(signature[..indexOfLeftParen]);
+        return FunctionFormatter.NormalizeName(signature[..indexOfLeftParen]);
     }
 
     private static FunctionSignatureArgument[] GetSignatureArguments(FunctionSignatureArgumentNode[] argNodes)

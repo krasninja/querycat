@@ -15,7 +15,7 @@ internal static class FunctionUtils
     /// </summary>
     /// <param name="function">Instance of <see cref="IFunction" />.</param>
     /// <returns>Function signature.</returns>
-    public static string GetSignature(IFunction function)
+    internal static string GetSignature(IFunction function)
     {
         var sb = new StringBuilder();
         sb.Append(function.Name)

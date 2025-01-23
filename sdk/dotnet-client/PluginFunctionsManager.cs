@@ -46,12 +46,6 @@ public sealed class PluginFunctionsManager : IFunctionsManager
     }
 
     /// <inheritdoc />
-    public bool TryFindAggregateByName(string name, out IAggregateFunction? aggregateFunction)
-    {
-        throw ThrowNotImplementedException();
-    }
-
-    /// <inheritdoc />
     public IEnumerable<IFunction> GetFunctions() => _functions.Values;
 
     /// <summary>

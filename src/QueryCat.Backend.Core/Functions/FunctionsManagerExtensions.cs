@@ -73,9 +73,18 @@ public static class FunctionsManagerExtensions
     /// <returns>Found aggregate function.</returns>
     public static IAggregateFunction FindAggregateByName(this IFunctionsManager functionsManager, string name)
     {
-        if (functionsManager.TryFindAggregateByName(name, out var aggregateFunction) && aggregateFunction != null)
+        name = FunctionFormatter.NormalizeName(name);
+        if (functionsManager.TryFindByName(name, null, out var functions))
         {
-            return aggregateFunction;
+            foreach (var function in functions)
+            {
+                if (!function.IsAggregate)
+                {
+                    continue;
+                }
+                var value = (VariantValue)functions[0].Delegate.DynamicInvoke(NullExecutionThread.Instance)!;
+                return value.AsRequired<IAggregateFunction>();
+            }
         }
 
         throw new CannotFindFunctionException(name);

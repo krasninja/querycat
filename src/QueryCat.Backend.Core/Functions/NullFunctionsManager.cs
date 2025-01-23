@@ -32,13 +32,6 @@ public sealed class NullFunctionsManager : IFunctionsManager
     }
 
     /// <inheritdoc />
-    public bool TryFindAggregateByName(string name, out IAggregateFunction? aggregateFunction)
-    {
-        aggregateFunction = null;
-        return false;
-    }
-
-    /// <inheritdoc />
     public IEnumerable<IFunction> GetFunctions() => Array.Empty<IFunction>();
 
     /// <inheritdoc />

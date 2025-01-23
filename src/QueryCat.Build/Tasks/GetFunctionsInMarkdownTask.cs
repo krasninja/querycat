@@ -43,13 +43,6 @@ public sealed class GetFunctionsInMarkdownTask : AsyncFrostingTask<BuildContext>
         }
 
         /// <inheritdoc />
-        public bool TryFindAggregateByName(string name, out IAggregateFunction? aggregateFunction)
-        {
-            aggregateFunction = null;
-            return false;
-        }
-
-        /// <inheritdoc />
         public IEnumerable<IFunction> GetFunctions()
         {
             yield break;

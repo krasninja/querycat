@@ -167,4 +167,11 @@ internal static class FunctionFormatter
 
         return FunctionDelegate;
     }
+
+    /// <summary>
+    /// Normalize function name. Make it uppercase.
+    /// </summary>
+    /// <param name="target">Target function name.</param>
+    /// <returns>Normalized name.</returns>
+    internal static string NormalizeName(string target) => target.ToUpperInvariant();
 }
