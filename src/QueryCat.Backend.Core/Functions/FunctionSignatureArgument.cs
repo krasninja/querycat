@@ -94,4 +94,7 @@ public sealed class FunctionSignatureArgument : ICloneable
 
     /// <inheritdoc />
     public object Clone() => new FunctionSignatureArgument(this);
+
+    /// <inheritdoc />
+    public override string ToString() => $"{Name}: {Type}";
 }

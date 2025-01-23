@@ -86,7 +86,8 @@ public sealed class DefaultFunctionsManagerTests
     public async Task RegisterFunction_RegisterFromClass_ShouldEvalCorrectly()
     {
         // Arrange.
-        _functionsManager.RegisterFromType(typeof(TestClass1));
+        var functions = _functionsManager.Factory.CreateFromType(typeof(TestClass1));
+        _functionsManager.RegisterFunctions(functions);
 
         // Act.
         var func1 = _functionsManager.FindByName("test_class1",
@@ -122,7 +123,8 @@ public sealed class DefaultFunctionsManagerTests
     public async Task RegisterFunction_RegisterFromType_ShouldEvalCorrectly()
     {
         // Arrange.
-        _functionsManager.RegisterFromType(typeof(TestClass2));
+        var functions = _functionsManager.Factory.CreateFromType(typeof(TestClass2));
+        _functionsManager.RegisterFunctions(functions);
 
         // Act.
         var func1 = _functionsManager.FindByName("function1");

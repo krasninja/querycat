@@ -174,7 +174,8 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader
         _logger.LogDebug("Register using types search method.");
         foreach (var type in assembly.GetTypes())
         {
-            _functionsManager.RegisterFromType(type);
+            var functions = _functionsManager.Factory.CreateFromType(type);
+            _functionsManager.RegisterFunctions(functions);
         }
     }
 

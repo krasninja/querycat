@@ -23,22 +23,16 @@ public sealed class GetFunctionsInMarkdownTask : AsyncFrostingTask<BuildContext>
         public IReadOnlyList<FunctionInfo> Functions => _functions;
 
         /// <inheritdoc />
+        public FunctionsFactory Factory => NullFunctionsFactory.Instance;
+
+        /// <inheritdoc />
         public IFunction? ResolveUri(string uri) => null;
 
         /// <inheritdoc />
-        public void RegisterAggregate<TAggregate>(Func<TAggregate> factory) where TAggregate : IAggregateFunction
+        public void RegisterFunction(IFunction function)
         {
-        }
-
-        /// <inheritdoc />
-        public string RegisterFunction(
-            string signature,
-            Delegate @delegate,
-            string? description = null,
-            string[]? formatterIds = null)
-        {
-            _functions.Add(new FunctionInfo(signature, description ?? string.Empty));
-            return string.Empty;
+            var signature = FunctionUtils.GetSignature(function);
+            _functions.Add(new FunctionInfo(signature, function.Description));
         }
 
         /// <inheritdoc />

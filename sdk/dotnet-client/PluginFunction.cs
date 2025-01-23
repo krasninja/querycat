@@ -38,13 +38,14 @@ public sealed class PluginFunction : IFunction
     /// <inheritdoc />
     public bool IsSafe { get; internal set; }
 
-    public string[] FormatterIdentifiers { get; }
+    /// <inheritdoc />
+    public string[] Formatters { get; }
 
     public PluginFunction(string name, string signature, Delegate @delegate, string[]? formatterIdentifiers = null)
     {
         Name = name;
         Signature = signature;
         Delegate = @delegate;
-        FormatterIdentifiers = formatterIdentifiers ?? [];
+        Formatters = formatterIdentifiers ?? [];
     }
 }

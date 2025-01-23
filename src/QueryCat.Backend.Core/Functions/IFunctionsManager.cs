@@ -9,6 +9,11 @@ namespace QueryCat.Backend.Core.Functions;
 public interface IFunctionsManager
 {
     /// <summary>
+    /// Factory to create instances of <see cref="IFunction" />.
+    /// </summary>
+    FunctionsFactory Factory { get; }
+
+    /// <summary>
     /// Resolve URI into the specific function call.
     /// </summary>
     /// <param name="uri">URI.</param>
@@ -16,32 +21,10 @@ public interface IFunctionsManager
     IFunction? ResolveUri(string uri);
 
     /// <summary>
-    /// Register aggregate function.
-    /// </summary>
-    /// <param name="factory">Factory method that creates aggregate instance.</param>
-    void RegisterAggregate<TAggregate>(Func<TAggregate> factory)
-        where TAggregate : IAggregateFunction;
-
-    /// <summary>
     /// Register function.
     /// </summary>
-    /// <param name="signature">Function signature.</param>
-    /// <param name="delegate">Function delegate.</param>
-    /// <param name="description">Optional description.</param>
-    /// <param name="formatterIds">The extensions or MIME types that can be used for input.
-    /// Can be applied to formatters.</param>
-    /// <returns>Function name.</returns>
-    /// <remarks>
-    /// There are two function delegate types accepted:
-    /// - VariantValue FunctionName(IExecutionThread thread);
-    /// - ValueTask VariantValue FunctionName(IExecutionThread thread, CancellationToken cancellationToken);
-    /// Use any of two.
-    /// </remarks>
-    string RegisterFunction(
-        string signature,
-        Delegate @delegate,
-        string? description = null,
-        string[]? formatterIds = null);
+    /// <param name="function">Function to register.</param>
+    void RegisterFunction(IFunction function);
 
     /// <summary>
     /// Tries to find the function by name and its arguments types.

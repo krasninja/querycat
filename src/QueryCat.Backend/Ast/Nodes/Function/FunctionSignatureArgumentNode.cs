@@ -85,11 +85,15 @@ internal sealed class FunctionSignatureArgumentNode : AstNode, IEquatable<Functi
             sb.Append("...");
         }
         sb.Append(Name);
+        if (IsOptional)
+        {
+            sb.Append('?');
+        }
         sb.Append(": ");
         sb.Append(TypeNode);
         if (HasDefaultValue && !DefaultValue.IsNull)
         {
-            sb.Append($" := {LiteralNode.ValueToString(DefaultValue)}");
+            sb.Append($" := {FunctionUtils.ValueToString(DefaultValue)}");
         }
         return sb.ToString();
     }

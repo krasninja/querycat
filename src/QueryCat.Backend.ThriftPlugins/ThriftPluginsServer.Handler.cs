@@ -99,7 +99,7 @@ public partial class ThriftPluginsServer
                 foreach (var function in plugin_data.Functions)
                 {
                     context.Functions.Add(
-                        new PluginContextFunction(function.Signature, function.Description));
+                        new PluginContextFunction(function.Signature, function.Description, function.IsSafe, function.IsAggregate));
                 }
             }
             _thriftPluginsServer.RegisterPluginContext(context, auth_token);

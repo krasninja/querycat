@@ -548,9 +548,13 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
         foreach (var function in functions)
         {
             var wrapper = new FunctionCallPluginWrapperLazy(this, file);
-            var functionName = functionsManager.RegisterFunction(function.Signature, wrapper.FunctionDelegateCallAsync,
-                function.Description);
-            wrapper.FunctionName = functionName;
+            var internalFunction = functionsManager.Factory.CreateFromSignature(
+                function.Signature,
+                wrapper.FunctionDelegateCallAsync,
+                function.Description,
+                function.IsSafe);
+            functionsManager.RegisterFunction(internalFunction);
+            wrapper.FunctionName = internalFunction.Name;
         }
     }
 
@@ -598,9 +602,13 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
         foreach (var function in pluginContext.Functions)
         {
             var wrapper = new FunctionCallPluginWrapper(pluginContext);
-            var functionName = functionsManager.RegisterFunction(function.Signature, wrapper.FunctionDelegateCallAsync,
-                function.Description);
-            wrapper.FunctionName = functionName;
+            var internalFunction = functionsManager.Factory.CreateFromSignature(
+                function.Signature,
+                wrapper.FunctionDelegateCallAsync,
+                function.Description,
+                function.IsSafe);
+            functionsManager.RegisterFunction(internalFunction);
+            wrapper.FunctionName = internalFunction.Name;
         }
     }
 
