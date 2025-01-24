@@ -7,13 +7,13 @@ using QueryCat.Tests.QueryRunner;
 namespace QueryCat.IntegrationTests.Execution;
 
 /// <summary>
-/// Tests for <see cref="ExecutionThread" />.
+/// Tests for <see cref="DefaultExecutionThread" />.
 /// </summary>
-public class ExecutionThreadTests
+public class DefaultExecutionThreadTests
 {
-    private readonly ExecutionThread _testThread;
+    private readonly DefaultExecutionThread _testThread;
 
-    public ExecutionThreadTests()
+    public DefaultExecutionThreadTests()
     {
         _testThread = TestThread.CreateBootstrapper()
             .WithRegistrations(AdditionalRegistration.Register)

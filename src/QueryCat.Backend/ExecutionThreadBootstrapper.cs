@@ -141,7 +141,7 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
     /// With tag (custom user information).
     /// </summary>
     /// <param name="tag">Custom user information object.</param>
-    /// <returns>Instance of <see cref="ExecutionThread" />.</returns>
+    /// <returns>Instance of <see cref="ExecutionThreadBootstrapper" />.</returns>
     public ExecutionThreadBootstrapper WithTag(object? tag)
     {
         _tag = tag;
@@ -153,7 +153,7 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
     /// </summary>
     /// <param name="cacheSize">Max cache size.</param>
     /// <param name="maxQueryLength">Max query length.</param>
-    /// <returns>Instance of <see cref="ExecutionThread" />.</returns>
+    /// <returns>Instance of <see cref="ExecutionThreadBootstrapper" />.</returns>
     public ExecutionThreadBootstrapper WithAstCache(int cacheSize = 21, int maxQueryLength = 150)
     {
         _cacheSize = cacheSize;
@@ -164,7 +164,7 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
     /// <summary>
     /// Use standard internal completion sources.
     /// </summary>
-    /// <returns>Instance of <see cref="ExecutionThread" />.</returns>
+    /// <returns>Instance of <see cref="ExecutionThreadBootstrapper" />.</returns>
     public ExecutionThreadBootstrapper WithStandardCompletionSources()
     {
         _addStandardCompletions = true;
@@ -175,7 +175,7 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
     /// Use completion source.
     /// </summary>
     /// <param name="completionSource">Completion source instance.</param>
-    /// <returns>Instance of <see cref="ExecutionThread" />.</returns>
+    /// <returns>Instance of <see cref="ExecutionThreadBootstrapper" />.</returns>
     public ExecutionThreadBootstrapper WithCompletionSource(ICompletionSource completionSource)
     {
         _completionSources.Add(completionSource);
@@ -185,8 +185,8 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
     /// <summary>
     /// Create the instance of execution thread.
     /// </summary>
-    /// <returns>Instance of <see cref="ExecutionThread" />.</returns>
-    public ExecutionThread Create()
+    /// <returns>Instance of <see cref="ExecutionThreadBootstrapper" />.</returns>
+    public DefaultExecutionThread Create()
     {
 #if DEBUG
         var timer = new System.Diagnostics.Stopwatch();
@@ -224,7 +224,7 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
         var completionSource = _completionSources.Count == 1 && _completionSources[0] is CombineCompletionSource
             ? _completionSources[0]
             : new CombineCompletionSource(_completionSources, _executionOptions.CompletionsCount);
-        var thread = new ExecutionThread(
+        var thread = new DefaultExecutionThread(
             options: _executionOptions,
             functionsManager: _functionsManager,
             objectSelector: _objectSelector,

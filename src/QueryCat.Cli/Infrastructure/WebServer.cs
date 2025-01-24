@@ -45,7 +45,7 @@ internal sealed partial class WebServer
 
     internal sealed class WebServerReply : Dictionary<string, object>;
 
-    public WebServer(ExecutionThread executionThread, WebServerOptions options)
+    public WebServer(DefaultExecutionThread executionThread, WebServerOptions options)
     {
         _actions = new Dictionary<string, Func<HttpListenerRequest, HttpListenerResponse, CancellationToken, Task>>
         {
@@ -221,7 +221,7 @@ internal sealed partial class WebServer
         var query = GetQueryDataFromRequest(request);
         _logger.LogInformation("[{Address}] Schema: {Query}", request.RemoteEndPoint.Address, query);
 
-        var thread = (ExecutionThread)_executionThread;
+        var thread = (DefaultExecutionThread)_executionThread;
         void ThreadOnStatementExecuted(object? sender, ExecuteEventArgs e)
         {
             var result = thread.LastResult;

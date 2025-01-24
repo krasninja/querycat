@@ -54,12 +54,12 @@ internal class PluginDebugCommand : BaseQueryCommand
 
             using var thread = new ExecutionThreadBootstrapper(options)
                 .WithConfigStorage(new PersistentInputConfigStorage(
-                    Path.Combine(ExecutionThread.GetApplicationDirectory(), ApplicationOptions.ConfigFileName)))
+                    Path.Combine(DefaultExecutionThread.GetApplicationDirectory(), ApplicationOptions.ConfigFileName)))
 #if PLUGIN_THRIFT
                 .WithPluginsLoader(th => new ThriftPluginsLoader(
                     th,
                     applicationOptions.PluginDirectories,
-                    ExecutionThread.GetApplicationDirectory(),
+                    DefaultExecutionThread.GetApplicationDirectory(),
                     serverPipeName: ThriftPluginClient.TestPipeName,
                     debugMode: true,
                     minLogLevel: LogLevel.Debug)

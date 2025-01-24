@@ -3,7 +3,7 @@ using QueryCat.Backend.Ast.Nodes;
 namespace QueryCat.Backend.Execution;
 
 /// <summary>
-/// Event arguments for <see cref="ExecutionThread" />.
+/// Event arguments for <see cref="DefaultExecutionThread" />.
 /// </summary>
 public sealed class ExecuteEventArgs : EventArgs
 {

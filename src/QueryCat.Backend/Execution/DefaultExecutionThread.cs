@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.Text;
-using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Commands;
@@ -18,7 +17,7 @@ namespace QueryCat.Backend.Execution;
 /// <summary>
 /// Execution thread that includes statements to be executed, local variables, options and statistic.
 /// </summary>
-public class ExecutionThread : IExecutionThread<ExecutionOptions>
+public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>
 {
     internal const string ApplicationDirectory = "qcat";
     internal const string BootstrapFileName = "rc.sql";
@@ -37,7 +36,6 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
     private bool _bootstrapScriptExecuted;
     private bool _configLoaded;
     private readonly Stopwatch _stopwatch = new();
-    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(ExecutionThread));
 
     /// <summary>
     /// Root (base) thread scope.
@@ -118,7 +116,7 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
         return directory;
     }
 
-    internal ExecutionThread(
+    internal DefaultExecutionThread(
         ExecutionOptions options,
         IFunctionsManager functionsManager,
         IObjectSelector objectSelector,
@@ -145,7 +143,7 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
     /// Copy constructor.
     /// </summary>
     /// <param name="executionThread">Execution thread to copy from.</param>
-    public ExecutionThread(ExecutionThread executionThread) :
+    public DefaultExecutionThread(DefaultExecutionThread executionThread) :
         this(executionThread.Options,
             executionThread.FunctionsManager,
             executionThread.ObjectSelector,

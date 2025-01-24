@@ -52,7 +52,7 @@ internal sealed class ApplicationOptions
         }
         if (key == ConsoleKey.Y)
         {
-            var applicationDirectory = ExecutionThread.GetApplicationDirectory(ensureExists: true);
+            var applicationDirectory = DefaultExecutionThread.GetApplicationDirectory(ensureExists: true);
             var pluginsProxyLocalFile = Path.Combine(applicationDirectory,
                 Backend.ThriftPlugins.ProxyFile.GetProxyFileName(includeVersion: true));
             var downloader = new PluginProxyDownloader(Backend.ThriftPlugins.ProxyFile.GetProxyFileName());
@@ -75,13 +75,13 @@ internal sealed class ApplicationOptions
         };
 #if ENABLE_PLUGINS
         executionOptions.PluginDirectories.AddRange(
-            GetPluginDirectories(ExecutionThread.GetApplicationDirectory()));
+            GetPluginDirectories(DefaultExecutionThread.GetApplicationDirectory()));
         executionOptions.PluginDirectories.AddRange(PluginDirectories);
 #endif
 
         var bootstrapper = new ExecutionThreadBootstrapper(executionOptions)
             .WithConfigStorage(new PersistentInputConfigStorage(
-                Path.Combine(ExecutionThread.GetApplicationDirectory(), ConfigFileName))
+                Path.Combine(DefaultExecutionThread.GetApplicationDirectory(), ConfigFileName))
             )
             .WithStandardFunctions()
             .WithRegistrations(Backend.Addons.Functions.JsonFunctions.RegisterFunctions)
@@ -91,8 +91,8 @@ internal sealed class ApplicationOptions
         bootstrapper.WithPluginsLoader(thread => new Backend.ThriftPlugins.ThriftPluginsLoader(
             thread,
             executionOptions.PluginDirectories,
-            ExecutionThread.GetApplicationDirectory(),
-            functionsCacheDirectory: Path.Combine(ExecutionThread.GetApplicationDirectory(),
+            DefaultExecutionThread.GetApplicationDirectory(),
+            functionsCacheDirectory: Path.Combine(DefaultExecutionThread.GetApplicationDirectory(),
                 ApplicationPluginsFunctionsCacheDirectory),
             minLogLevel: LogLevel)
         );

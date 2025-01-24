@@ -23,7 +23,7 @@ internal class PluginProxyCommand : BaseCommand
             Console.WriteLine(Resources.Messages.PluginProxyDownload, PluginProxyDownloader.GetLinkToPluginsProxyFile());
 
             var downloader = new PluginProxyDownloader(ProxyFile.GetProxyFileName());
-            var applicationDirectory = ExecutionThread.GetApplicationDirectory(ensureExists: true);
+            var applicationDirectory = DefaultExecutionThread.GetApplicationDirectory(ensureExists: true);
             var pluginsProxyLocalFile = Path.Combine(applicationDirectory,
                 ProxyFile.GetProxyFileName(includeVersion: true));
             await downloader.DownloadAsync(pluginsProxyLocalFile, cancellationToken: context.GetCancellationToken());
