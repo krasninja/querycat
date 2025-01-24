@@ -12,10 +12,9 @@ namespace QueryCat.Backend.FunctionsManager;
 /// </summary>
 public sealed partial class DefaultFunctionsManager : IFunctionsManager
 {
-    private readonly List<IUriResolver> _uriResolvers = new();
+    private readonly List<IUriResolver> _uriResolvers = new(capacity: 8);
 
-
-    private readonly Dictionary<string, List<IFunction>> _functions = new();
+    private readonly Dictionary<string, List<IFunction>> _functions = new(capacity: 128);
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(DefaultFunctionsManager));
 
     /// <inheritdoc />
@@ -38,7 +37,6 @@ public sealed partial class DefaultFunctionsManager : IFunctionsManager
         var name = FunctionFormatter.NormalizeName(function.Name);
         if (_functions.TryGetValue(name, out var functions))
         {
-            WarnAboutSimilarFunctions(function, functions);
             functions.Add(function);
         }
         else
