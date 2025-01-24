@@ -36,7 +36,8 @@ public sealed class PluginFunctionsManager : IFunctionsManager
     /// <inheritdoc />
     public bool TryFindByName(string name, FunctionCallArgumentsTypes? functionArgumentsTypes, out IFunction[] functions)
     {
-        if (_functions.TryGetValue(name.ToUpper(), out var functionInfo))
+        name = FunctionFormatter.NormalizeName(name);
+        if (_functions.TryGetValue(name, out var functionInfo))
         {
             functions = [functionInfo];
             return true;

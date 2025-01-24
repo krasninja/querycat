@@ -101,12 +101,12 @@ public static class FunctionExtensions
     /// <returns>Position.</returns>
     private static int GetArgumentPosition(IFunction function, string argumentName)
     {
-        argumentName = argumentName.ToUpper();
+        argumentName = FunctionFormatter.NormalizeName(argumentName);
 
         var argumentPosition = -1;
         for (var i = 0; i < function.Arguments.Length; i++)
         {
-            if (function.Arguments[i].Name.Equals(argumentName, StringComparison.OrdinalIgnoreCase))
+            if (function.Arguments[i].Name.Equals(argumentName))
             {
                 argumentPosition = i;
                 break;

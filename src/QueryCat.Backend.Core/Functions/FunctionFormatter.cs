@@ -3,13 +3,15 @@ using System.Text;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend.Core.Functions;
 
+/// <summary>
+/// Various format methods for functions maintenance (common naming, arguments formatting, etc).
+/// </summary>
 internal static class FunctionFormatter
 {
-    public static string FormatSignatureFromParameters(string name, ParameterInfo[] parameterInfos, Type outputType)
+    internal static string FormatSignatureFromParameters(string name, ParameterInfo[] parameterInfos, Type outputType)
     {
         var sb = new StringBuilder();
         sb.Append(name);
@@ -79,7 +81,7 @@ internal static class FunctionFormatter
         return dataType.ToString();
     }
 
-    public static string ToSnakeCase(string target)
+    internal static string ToSnakeCase(string target)
     {
         // Based on https://stackoverflow.com/questions/63055621/how-to-convert-camel-case-to-snake-case-with-two-capitals-next-to-each-other.
         var sb = new StringBuilder(capacity: target.Length)

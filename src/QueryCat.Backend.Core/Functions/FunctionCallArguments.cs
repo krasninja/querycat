@@ -31,7 +31,7 @@ public sealed class FunctionCallArguments
     /// <returns>Instance of <see cref="FunctionCallArguments" />.</returns>
     public FunctionCallArguments Add(string name, VariantValue value, bool overwrite = false)
     {
-        name = name.ToUpper();
+        name = FunctionFormatter.NormalizeName(name);
         if (overwrite || !_named.ContainsKey(name))
         {
             _named[name] = value;
@@ -49,7 +49,7 @@ public sealed class FunctionCallArguments
     /// <returns>Instance of <see cref="FunctionCallArguments" />.</returns>
     public FunctionCallArguments Add<T>(string name, T value, bool overwrite = false)
     {
-        name = name.ToUpper();
+        name = FunctionFormatter.NormalizeName(name);
         if (overwrite || !_named.ContainsKey(name))
         {
             _named[name] = VariantValue.CreateFromObject(value);
