@@ -34,16 +34,16 @@ public sealed class PluginFunctionsManager : IFunctionsManager
     }
 
     /// <inheritdoc />
-    public bool TryFindByName(string name, FunctionCallArgumentsTypes? functionArgumentsTypes, out IFunction[] functions)
+    public IFunction[] FindByName(
+        string name,
+        FunctionCallArgumentsTypes? functionArgumentsTypes = null)
     {
         name = FunctionFormatter.NormalizeName(name);
         if (_functions.TryGetValue(name, out var functionInfo))
         {
-            functions = [functionInfo];
-            return true;
+            return [functionInfo];
         }
-        functions = [];
-        return false;
+        return [];
     }
 
     /// <inheritdoc />

@@ -36,10 +36,11 @@ public sealed class GetFunctionsInMarkdownTask : AsyncFrostingTask<BuildContext>
         }
 
         /// <inheritdoc />
-        public bool TryFindByName(string name, FunctionCallArgumentsTypes? functionArgumentsTypes, out IFunction[] functions)
+        public IFunction[] FindByName(
+            string name,
+            FunctionCallArgumentsTypes? functionArgumentsTypes = null)
         {
-            functions = [];
-            return false;
+            return [];
         }
 
         /// <inheritdoc />

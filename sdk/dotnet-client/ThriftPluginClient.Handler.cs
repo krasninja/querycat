@@ -39,7 +39,7 @@ public partial class ThriftPluginClient
         {
             args ??= new List<VariantValue>();
 
-            var func = _thriftPluginClient.FunctionsManager.FindByName(function_name);
+            var func = _thriftPluginClient.FunctionsManager.FindByNameFirst(function_name);
             var frame = _thriftPluginClient._executionThread.Stack.CreateFrame();
             foreach (var arg in args)
             {

@@ -44,12 +44,13 @@ public static class FunctionsManagerExtensions
     /// <param name="name">Function name.</param>
     /// <param name="functionArgumentsTypes">Argument types to find. Can be used to find the specific overload.</param>
     /// <returns>Instance of <see cref="IFunction" />.</returns>
-    public static IFunction FindByName(
+    public static IFunction FindByNameFirst(
         this IFunctionsManager functionsManager,
         string name,
         FunctionCallArgumentsTypes? functionArgumentsTypes = null)
     {
-        if (functionsManager.TryFindByName(name, functionArgumentsTypes, out var functions))
+        var functions = functionsManager.FindByName(name, functionArgumentsTypes);
+        if (functions.Length > 0)
         {
             if (functions.Length > 1 && functionArgumentsTypes != null)
             {
@@ -74,7 +75,8 @@ public static class FunctionsManagerExtensions
     public static IAggregateFunction FindAggregateByName(this IFunctionsManager functionsManager, string name)
     {
         name = FunctionFormatter.NormalizeName(name);
-        if (functionsManager.TryFindByName(name, null, out var functions))
+        var functions = functionsManager.FindByName(name);
+        if (functions.Length > 0)
         {
             foreach (var function in functions)
             {
@@ -109,7 +111,7 @@ public static class FunctionsManagerExtensions
         CancellationToken cancellationToken = default)
     {
         arguments ??= FunctionCallArguments.Empty;
-        var function = functionsManager.FindByName(functionName, arguments.GetTypes());
+        var function = functionsManager.FindByNameFirst(functionName, arguments.GetTypes());
         return functionsManager.CallFunctionAsync(function, executionThread, arguments, cancellationToken);
     }
 }

@@ -74,7 +74,8 @@ public sealed partial class DefaultFunctionsManager : IFunctionsManager
             if (uriResolver.TryResolve(uri, out var functionName)
                 && !string.IsNullOrEmpty(functionName))
             {
-                return this.FindByName(functionName);
+                var functions = FindByName(functionName);
+                return functions.Length > 0 ? functions[0] : null;
             }
         }
 
@@ -90,38 +91,31 @@ public sealed partial class DefaultFunctionsManager : IFunctionsManager
     #endregion
 
     /// <inheritdoc />
-    public bool TryFindByName(
+    public IFunction[] FindByName(
         string name,
-        FunctionCallArgumentsTypes? functionArgumentsTypes,
-        out IFunction[] functions)
+        FunctionCallArgumentsTypes? functionArgumentsTypes = null)
     {
-        functions = [];
         name = FunctionFormatter.NormalizeName(name);
 
         if (!_functions.TryGetValue(name, out var outFunctions))
         {
-            if (!_functions.TryGetValue(name, out outFunctions))
-            {
-                return false;
-            }
+            return [];
         }
 
         if (functionArgumentsTypes == null)
         {
-            functions = outFunctions.ToArray();
-            return true;
+            return outFunctions.ToArray();
         }
 
         foreach (var func in outFunctions)
         {
             if (func.MatchesToArguments(functionArgumentsTypes))
             {
-                functions = [func];
-                return true;
+                return [func];
             }
         }
 
-        return false;
+        return [];
     }
 
     /// <summary>

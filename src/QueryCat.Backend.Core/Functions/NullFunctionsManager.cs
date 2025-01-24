@@ -25,10 +25,11 @@ public sealed class NullFunctionsManager : IFunctionsManager
     }
 
     /// <inheritdoc />
-    public bool TryFindByName(string name, FunctionCallArgumentsTypes? functionArgumentsTypes, out IFunction[] functions)
+    public IFunction[] FindByName(
+        string name,
+        FunctionCallArgumentsTypes? functionArgumentsTypes = null)
     {
-        functions = [];
-        return false;
+        return [];
     }
 
     /// <inheritdoc />

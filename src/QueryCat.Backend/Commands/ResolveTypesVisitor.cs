@@ -219,7 +219,7 @@ internal class ResolveTypesVisitor : AstVisitor
     public IFunction VisitFunctionCallNode(FunctionCallNode node)
     {
         var functionArgumentsTypes = CreateFunctionArgumentsTypes(node.Arguments);
-        var function = ExecutionThread.FunctionsManager.FindByName(
+        var function = ExecutionThread.FunctionsManager.FindByNameFirst(
             node.FunctionName, functionArgumentsTypes);
         var returnType = function.ReturnType;
 

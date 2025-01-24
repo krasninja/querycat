@@ -31,12 +31,10 @@ public interface IFunctionsManager
     /// </summary>
     /// <param name="name">Function name.</param>
     /// <param name="functionArgumentsTypes">Function arguments types.</param>
-    /// <param name="functions">Found functions.</param>
-    /// <returns>Returns <c>true</c> if functions were found, <c>false</c> otherwise.</returns>
-    bool TryFindByName(
+    /// <returns>Found functions.</returns>
+    IFunction[] FindByName(
         string name,
-        FunctionCallArgumentsTypes? functionArgumentsTypes,
-        out IFunction[] functions);
+        FunctionCallArgumentsTypes? functionArgumentsTypes = null);
 
     /// <summary>
     /// Get all registered functions.
