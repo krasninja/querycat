@@ -44,7 +44,7 @@ public sealed partial class DefaultFunctionsManager : IFunctionsManager
             _functions.Add(name, [function]);
         }
 
-        LogRegisterFunction(function);
+        LogRegisterFunction(function.Name);
 
         foreach (var formatterId in function.Formatters)
         {
@@ -161,9 +161,6 @@ public sealed partial class DefaultFunctionsManager : IFunctionsManager
         return result;
     }
 
-    [LoggerMessage(LogLevel.Debug, "Register function: {Function}.")]
-    private partial void LogRegisterFunction(IFunction function);
-
-    [LoggerMessage(LogLevel.Debug, "Register aggregate: {Function}.")]
-    private partial void LogRegisterAggregate(IFunction function);
+    [LoggerMessage(LogLevel.Debug, "Register function: {FunctionName}.")]
+    private partial void LogRegisterFunction(string functionName);
 }
