@@ -23,7 +23,7 @@ public static class InfoFunctions
         var functions = thread.FunctionsManager.GetFunctions().OrderBy(f => f.Name);
         var input = EnumerableRowsInput<IFunction>.FromSource(functions,
             builder => builder
-                .AddProperty("signature", p => p.ToString())
+                .AddProperty("signature", FunctionUtils.GetSignature)
                 .AddProperty("is_aggregate", p => p.IsAggregate)
                 .AddProperty("description", p => p.Description)
                 .AddProperty("is_safe", p => p.IsSafe)

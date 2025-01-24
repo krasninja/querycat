@@ -20,6 +20,7 @@ internal static class FunctionUtils
         var sb = new StringBuilder();
         sb.Append(function.Name)
             .Append('(');
+        var i = 0;
         foreach (var argument in function.Arguments)
         {
             if (argument.IsVariadic)
@@ -36,6 +37,12 @@ internal static class FunctionUtils
             if (argument.HasDefaultValue && !argument.DefaultValue.IsNull)
             {
                 sb.Append($" := {ValueToString(argument.DefaultValue)}");
+            }
+
+            i++;
+            if (i < function.Arguments.Length)
+            {
+                sb.Append(", ");
             }
         }
         sb.Append(')');
