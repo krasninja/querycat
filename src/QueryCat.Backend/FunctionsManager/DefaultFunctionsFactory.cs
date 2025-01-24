@@ -109,8 +109,8 @@ public sealed class DefaultFunctionsFactory : FunctionsFactory
     private sealed class LazySignatureFunction : IFunction
     {
         private string _signature;
-        private readonly IAstBuilder _astBuilder;
         private FunctionSignatureNode? _functionSignature;
+        private readonly IAstBuilder _astBuilder;
 
         /// <inheritdoc />
         public Delegate Delegate { get; }
@@ -180,43 +180,90 @@ public sealed class DefaultFunctionsFactory : FunctionsFactory
         }
     }
 
-    private sealed class AggregateFunction : IFunction
+    private sealed class LazyAggregateFunction : IFunction
     {
-        /// <inheritdoc />
-        public Delegate Delegate { get; set; }
+        private string _signature;
+        private FunctionSignatureNode? _functionSignature;
+        private readonly Type _aggregateType;
+        private readonly IAstBuilder _astBuilder;
 
         /// <inheritdoc />
-        public string Name { get; set; }
+        public Delegate Delegate => DelegateMethod;
 
         /// <inheritdoc />
-        public string Description { get; set; } = string.Empty;
+        public string Name
+        {
+            get
+            {
+                if (_functionSignature != null)
+                {
+                    return _functionSignature.Name;
+                }
+                return GetFunctionName(_signature);
+            }
+        }
 
         /// <inheritdoc />
-        public DataType ReturnType { get; }
+        public string Description
+        {
+            get
+            {
+                var descriptionAttribute = Delegate.Method.GetCustomAttribute<DescriptionAttribute>();
+                return descriptionAttribute != null ? descriptionAttribute.Description : string.Empty;
+            }
+        }
 
         /// <inheritdoc />
-        public string ReturnObjectName { get; }
+        public DataType ReturnType => GetSignature().ReturnType;
+
+        /// <inheritdoc />
+        public string ReturnObjectName => GetSignature().ReturnTypeNode.TypeName;
 
         /// <inheritdoc />
         public bool IsAggregate => true;
 
-        /// <inheritdoc />
-        public FunctionSignatureArgument[] Arguments { get; }
+        private FunctionSignatureArgument[]? _arguments;
 
         /// <inheritdoc />
-        public bool IsSafe { get; init; }
+        public FunctionSignatureArgument[] Arguments => GetArguments();
+
+        /// <inheritdoc />
+        public bool IsSafe => true;
 
         /// <inheritdoc />
         public string[] Formatters => [];
 
-        public AggregateFunction(FunctionSignatureNode signatureNode, Type aggregateType)
+        private VariantValue DelegateMethod(IExecutionThread executionThread)
         {
-            Name = signatureNode.Name;
-            Delegate = (IExecutionThread thread)
-                => VariantValue.CreateFromObject((IAggregateFunction)Activator.CreateInstance(aggregateType)!);
-            ReturnType = signatureNode.ReturnType;
-            ReturnObjectName = signatureNode.ReturnTypeNode.TypeName;
-            Arguments = GetSignatureArguments(signatureNode.ArgumentNodes);
+            return VariantValue.CreateFromObject((IAggregateFunction)Activator.CreateInstance(_aggregateType)!);
+        }
+
+        public LazyAggregateFunction(Type aggregateType, string signature, IAstBuilder astBuilder)
+        {
+            _aggregateType = aggregateType;
+            _signature = signature;
+            _astBuilder = astBuilder;
+        }
+
+        private FunctionSignatureNode GetSignature()
+        {
+            if (_functionSignature != null)
+            {
+                return _functionSignature;
+            }
+            _functionSignature = _astBuilder.BuildFunctionSignatureFromString(_signature);
+            _signature = string.Empty;
+            return _functionSignature;
+        }
+
+        private FunctionSignatureArgument[] GetArguments()
+        {
+            if (_arguments != null)
+            {
+                return _arguments;
+            }
+            _arguments = GetSignatureArguments(GetSignature().ArgumentNodes);
+            return _arguments;
         }
     }
 
@@ -257,16 +304,9 @@ public sealed class DefaultFunctionsFactory : FunctionsFactory
     {
         var signatureAttributes = aggregateType.GetCustomAttributes<AggregateFunctionSignatureAttribute>();
         var functions = new List<IFunction>();
-        var descriptionAttribute = aggregateType.GetCustomAttribute<DescriptionAttribute>();
-        var safeAttribute = aggregateType.GetCustomAttribute<SafeFunctionAttribute>();
         foreach (var signatureAttribute in signatureAttributes)
         {
-            var signatureAst = _astBuilder.BuildFunctionSignatureFromString(signatureAttribute.Signature);
-            var function = new AggregateFunction(signatureAst, aggregateType)
-            {
-                Description = descriptionAttribute != null ? descriptionAttribute.Description : string.Empty,
-                IsSafe = safeAttribute != null,
-            };
+            var function = new LazyAggregateFunction(aggregateType, signatureAttribute.Signature, _astBuilder);
             functions.Add(function);
         }
         return functions.ToArray();
