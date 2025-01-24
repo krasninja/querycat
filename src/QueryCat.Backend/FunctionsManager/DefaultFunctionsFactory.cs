@@ -2,7 +2,6 @@ using System.ComponentModel;
 using System.Reflection;
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes.Function;
-using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
@@ -208,7 +207,7 @@ public sealed class DefaultFunctionsFactory : FunctionsFactory
         {
             get
             {
-                var descriptionAttribute = Delegate.Method.GetCustomAttribute<DescriptionAttribute>();
+                var descriptionAttribute = _aggregateType.GetCustomAttribute<DescriptionAttribute>();
                 return descriptionAttribute != null ? descriptionAttribute.Description : string.Empty;
             }
         }
@@ -300,48 +299,37 @@ public sealed class DefaultFunctionsFactory : FunctionsFactory
     }
 
     /// <inheritdoc />
-    public override IFunction[] CreateAggregateFromType(Type aggregateType)
+    public override IEnumerable<IFunction> CreateAggregateFromType(Type aggregateType)
     {
         var signatureAttributes = aggregateType.GetCustomAttributes<AggregateFunctionSignatureAttribute>();
-        var functions = new List<IFunction>();
         foreach (var signatureAttribute in signatureAttributes)
         {
             var function = new LazyAggregateFunction(aggregateType, signatureAttribute.Signature, _astBuilder);
-            functions.Add(function);
+            yield return function;
         }
-        return functions.ToArray();
     }
 
     /// <inheritdoc />
-    public override IFunction[] CreateFromDelegate(Delegate functionDelegate)
+    public override IEnumerable<IFunction> CreateFromDelegate(Delegate functionDelegate)
     {
         if (FunctionCaller.IsValidFunctionDelegate(functionDelegate))
         {
-            var methodAttributes = Attribute.GetCustomAttributes(functionDelegate.Method, typeof(FunctionSignatureAttribute));
-            if (methodAttributes.Length < 1)
-            {
-                throw new QueryCatException($"Delegate must have '{nameof(FunctionSignatureAttribute)}'.");
-            }
+            var methodAttributes = functionDelegate.Method.GetCustomAttributes<FunctionSignatureAttribute>();
 
-            var functions = new IFunction[methodAttributes.Length];
-            for (var i = 0; i < functions.Length; i++)
+            foreach (var methodAttribute in methodAttributes)
             {
-                var methodAttribute = (FunctionSignatureAttribute)methodAttributes[i];
                 var function = new LazyAttributesFunction(methodAttribute.Signature, functionDelegate, _astBuilder);
-                functions[i] = function;
+                yield return function;
             }
-            return functions;
         }
         else
         {
             var function = CreateFunctionFromMethodInfo(functionDelegate.Method);
             if (function != null)
             {
-                return [function];
+                yield return function;
             }
         }
-
-        throw new InvalidOperationException("Cannot create function by delegate.");
     }
 
     /// <inheritdoc />

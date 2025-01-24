@@ -15,7 +15,7 @@ public static class FunctionsManagerExtensions
     /// </summary>
     /// <param name="functionsManager">Instance of <see cref="IFunctionsManager" />.</param>
     /// <param name="functions">Functions to register.</param>
-    public static void RegisterFunctions(this IFunctionsManager functionsManager, ReadOnlySpan<IFunction> functions)
+    public static void RegisterFunctions(this IFunctionsManager functionsManager, IEnumerable<IFunction> functions)
     {
         foreach (var function in functions)
         {

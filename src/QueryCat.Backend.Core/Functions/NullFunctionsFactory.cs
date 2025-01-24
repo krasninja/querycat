@@ -11,7 +11,7 @@ public class NullFunctionsFactory : FunctionsFactory
     public static FunctionsFactory Instance { get; } = new NullFunctionsFactory();
 
     /// <inheritdoc />
-    public override IFunction[] CreateFromDelegate(Delegate functionDelegate) => [];
+    public override IEnumerable<IFunction> CreateFromDelegate(Delegate functionDelegate) => [];
 
     /// <inheritdoc />
     public override IFunction CreateFromSignature(
@@ -22,5 +22,5 @@ public class NullFunctionsFactory : FunctionsFactory
         string[]? formatters = null) => NullFunction.Instance;
 
     /// <inheritdoc />
-    public override IFunction[] CreateAggregateFromType(Type aggregateType) => [];
+    public override IEnumerable<IFunction> CreateAggregateFromType(Type aggregateType) => [];
 }

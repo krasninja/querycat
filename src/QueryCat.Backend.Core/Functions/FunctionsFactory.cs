@@ -17,7 +17,7 @@ public abstract class FunctionsFactory
     /// </summary>
     /// <param name="functionDelegate">Delegate.</param>
     /// <returns>Created functions.</returns>
-    public abstract IFunction[] CreateFromDelegate(Delegate functionDelegate);
+    public abstract IEnumerable<IFunction> CreateFromDelegate(Delegate functionDelegate);
 
     /// <summary>
     /// Create function from signature and delegate.
@@ -40,14 +40,14 @@ public abstract class FunctionsFactory
     /// </summary>
     /// <param name="aggregateType">Aggregate type.</param>
     /// <returns>Functions.</returns>
-    public abstract IFunction[] CreateAggregateFromType(Type aggregateType);
+    public abstract IEnumerable<IFunction> CreateAggregateFromType(Type aggregateType);
 
     /// <summary>
     /// Create aggregate function from type.
     /// </summary>
     /// <typeparam name="TAggregate">Aggregate type.</typeparam>
     /// <returns>Functions.</returns>
-    public IFunction[] CreateAggregateFromType<TAggregate>() where TAggregate : IAggregateFunction
+    public IEnumerable<IFunction> CreateAggregateFromType<TAggregate>() where TAggregate : IAggregateFunction
         => CreateAggregateFromType(typeof(TAggregate));
 
     /// <summary>
