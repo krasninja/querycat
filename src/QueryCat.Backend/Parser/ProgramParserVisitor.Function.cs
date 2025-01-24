@@ -26,7 +26,7 @@ internal partial class ProgramParserVisitor
             name: context.identifierSimple().GetText(),
             typeNode: this.Visit<FunctionTypeNode>(context.functionType()),
             defaultValue: this.Visit(context.@default, LiteralNode.NullValueNode).Value,
-            isOptional: context.optional == null,
+            isOptional: context.optional != null,
             isArray: context.isArray != null,
             isVariadic: context.variadic != null);
 }
