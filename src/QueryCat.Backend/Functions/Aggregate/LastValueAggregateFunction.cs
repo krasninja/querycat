@@ -21,6 +21,9 @@ namespace QueryCat.Backend.Functions.Aggregate;
 internal sealed class LastValueAggregateFunction : IAggregateFunction
 {
     /// <inheritdoc />
+    public static IAggregateFunction CreateInstance() => new LastValueAggregateFunction();
+
+    /// <inheritdoc />
     public VariantValue[] GetInitialState(DataType type) => [VariantValue.Null];
 
     /// <inheritdoc />

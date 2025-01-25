@@ -58,8 +58,5 @@ public sealed class PluginFunctionsFactory : FunctionsFactory
     }
 
     /// <inheritdoc />
-    public override IEnumerable<IFunction> CreateAggregateFromType(Type aggregateType)
-    {
-        yield break;
-    }
+    public override IEnumerable<IFunction> CreateAggregateFromType<TAggregate>() => [];
 }

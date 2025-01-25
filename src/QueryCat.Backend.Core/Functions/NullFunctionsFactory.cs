@@ -22,5 +22,5 @@ public class NullFunctionsFactory : FunctionsFactory
         string[]? formatters = null) => NullFunction.Instance;
 
     /// <inheritdoc />
-    public override IEnumerable<IFunction> CreateAggregateFromType(Type aggregateType) => [];
+    public override IEnumerable<IFunction> CreateAggregateFromType<TAggregate>() => [];
 }

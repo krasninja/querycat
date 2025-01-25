@@ -19,6 +19,9 @@ namespace QueryCat.Backend.Functions.Aggregate;
 internal sealed class MaxAggregateFunction : IAggregateFunction
 {
     /// <inheritdoc />
+    public static IAggregateFunction CreateInstance() => new MaxAggregateFunction();
+
+    /// <inheritdoc />
     public VariantValue[] GetInitialState(DataType type) => [VariantValue.Null];
 
     /// <inheritdoc />

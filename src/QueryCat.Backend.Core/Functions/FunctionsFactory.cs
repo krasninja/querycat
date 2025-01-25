@@ -38,17 +38,10 @@ public abstract class FunctionsFactory
     /// <summary>
     /// Create aggregate function from type.
     /// </summary>
-    /// <param name="aggregateType">Aggregate type.</param>
-    /// <returns>Functions.</returns>
-    public abstract IEnumerable<IFunction> CreateAggregateFromType(Type aggregateType);
-
-    /// <summary>
-    /// Create aggregate function from type.
-    /// </summary>
     /// <typeparam name="TAggregate">Aggregate type.</typeparam>
     /// <returns>Functions.</returns>
-    public IEnumerable<IFunction> CreateAggregateFromType<TAggregate>() where TAggregate : IAggregateFunction
-        => CreateAggregateFromType(typeof(TAggregate));
+    public abstract IEnumerable<IFunction> CreateAggregateFromType<TAggregate>()
+        where TAggregate : IAggregateFunction;
 
     /// <summary>
     /// Register type methods as functions.
@@ -80,13 +73,6 @@ public abstract class FunctionsFactory
                     list.Add(CreateFromSignature(signature, @delegate, description));
                 }
             }
-            return list.ToArray();
-        }
-
-        // Try to register aggregates from type.
-        if (typeof(IAggregateFunction).IsAssignableFrom(type))
-        {
-            list.AddRange(CreateAggregateFromType(type));
             return list.ToArray();
         }
 

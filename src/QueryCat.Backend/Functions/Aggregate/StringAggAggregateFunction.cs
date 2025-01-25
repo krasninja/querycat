@@ -16,6 +16,9 @@ namespace QueryCat.Backend.Functions.Aggregate;
 internal sealed class StringAggAggregateFunction : IAggregateFunction
 {
     /// <inheritdoc />
+    public static IAggregateFunction CreateInstance() => new StringAggAggregateFunction();
+
+    /// <inheritdoc />
     public VariantValue[] GetInitialState(DataType type) =>
         [VariantValue.CreateFromObject(new StringBuilder())];
 

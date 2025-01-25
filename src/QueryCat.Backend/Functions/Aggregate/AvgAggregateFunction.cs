@@ -26,11 +26,14 @@ internal sealed class AvgAggregateFunction : IAggregateFunction
     }
 
     /// <inheritdoc />
+    public static IAggregateFunction CreateInstance() => new AvgAggregateFunction();
+
+    /// <inheritdoc />
     public VariantValue[] GetInitialState(DataType type)
         =>
         [
             VariantValue.Null, // 0: sum
-            new VariantValue(DataType.Integer) // 1: count
+            new(DataType.Integer) // 1: count
         ];
 
     /// <inheritdoc />

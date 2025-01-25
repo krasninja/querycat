@@ -18,6 +18,9 @@ namespace QueryCat.Backend.Functions.Aggregate;
 internal sealed class SumAggregateFunction : IAggregateFunction
 {
     /// <inheritdoc />
+    public static IAggregateFunction CreateInstance() => new SumAggregateFunction();
+
+    /// <inheritdoc />
     public VariantValue[] GetInitialState(DataType type) => [VariantValue.Null];
 
     /// <inheritdoc />

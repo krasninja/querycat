@@ -179,11 +179,10 @@ public sealed class DefaultFunctionsFactory : FunctionsFactory
         }
     }
 
-    private sealed class LazyAggregateFunction : IFunction
+    private sealed class LazyAggregateFunction<TAggregate> : IFunction where TAggregate : IAggregateFunction
     {
         private string _signature;
         private FunctionSignatureNode? _functionSignature;
-        private readonly Type _aggregateType;
         private readonly IAstBuilder _astBuilder;
 
         /// <inheritdoc />
@@ -207,7 +206,7 @@ public sealed class DefaultFunctionsFactory : FunctionsFactory
         {
             get
             {
-                var descriptionAttribute = _aggregateType.GetCustomAttribute<DescriptionAttribute>();
+                var descriptionAttribute = typeof(TAggregate).GetCustomAttribute<DescriptionAttribute>();
                 return descriptionAttribute != null ? descriptionAttribute.Description : string.Empty;
             }
         }
@@ -234,12 +233,11 @@ public sealed class DefaultFunctionsFactory : FunctionsFactory
 
         private VariantValue DelegateMethod(IExecutionThread executionThread)
         {
-            return VariantValue.CreateFromObject((IAggregateFunction)Activator.CreateInstance(_aggregateType)!);
+            return VariantValue.CreateFromObject(TAggregate.CreateInstance());
         }
 
-        public LazyAggregateFunction(Type aggregateType, string signature, IAstBuilder astBuilder)
+        public LazyAggregateFunction(string signature, IAstBuilder astBuilder)
         {
-            _aggregateType = aggregateType;
             _signature = signature;
             _astBuilder = astBuilder;
         }
@@ -299,12 +297,12 @@ public sealed class DefaultFunctionsFactory : FunctionsFactory
     }
 
     /// <inheritdoc />
-    public override IEnumerable<IFunction> CreateAggregateFromType(Type aggregateType)
+    public override IEnumerable<IFunction> CreateAggregateFromType<TAggregate>()
     {
-        var signatureAttributes = aggregateType.GetCustomAttributes<AggregateFunctionSignatureAttribute>();
+        var signatureAttributes = typeof(TAggregate).GetCustomAttributes<AggregateFunctionSignatureAttribute>();
         foreach (var signatureAttribute in signatureAttributes)
         {
-            var function = new LazyAggregateFunction(aggregateType, signatureAttribute.Signature, _astBuilder);
+            var function = new LazyAggregateFunction<TAggregate>(signatureAttribute.Signature, _astBuilder);
             yield return function;
         }
     }
