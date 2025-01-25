@@ -84,8 +84,16 @@ internal sealed partial class WebServer
 
         while (true)
         {
-            var context = await listener.GetContextAsync();
-            await HandleRequestAsync(context, cancellationToken);
+            try
+            {
+                var context = await listener.GetContextAsync().WaitAsync(cancellationToken)
+                    .ConfigureAwait(false);
+                await HandleRequestAsync(context, cancellationToken);
+            }
+            catch (TaskCanceledException)
+            {
+                break;
+            }
         }
         // ReSharper disable once FunctionNeverReturns
     }
