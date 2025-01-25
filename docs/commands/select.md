@@ -48,10 +48,10 @@ The FROM clause specified the input format source(-s). The next expression must 
 SELECT * FROM curl('https://tinyurl.com/24buj7mb')
 ```
 
-If column contains parenthesis or other special symbols, you can wrap it within square brackets `[]`:
+If column contains parenthesis or other special symbols, you can wrap it within double quotes `""`:
 
 ```sql
-SELECT [cs(User-Agent)] FROM read_file('u_ex220826.log', fmt=>iisw3c());
+SELECT "cs(User-Agent)" FROM read_file('u_ex220826.log', fmt=>iisw3c());
 ```
 
 Also, you can use `FROM` syntax like this:
@@ -70,7 +70,7 @@ The URI can be:
 The GROUP BY clause specifies the groups into which output rows are to be placed and, if aggregate functions are included in the SELECT or HAVING clauses, calculates the aggregate functions values for each group. For example, next command aggregates data by states and calculates average, minimum and maximum population values for period 1950-2020:
 
 ```sql
-SELECT state, avg(population) as 'avg', max(population) as 'max', min(population) as [min] FROM 'https://tinyurl.com/24buj7mb' GROUP BY state
+SELECT state, avg(population) as 'avg', max(population) as 'max', min(population) as "min" FROM 'https://tinyurl.com/24buj7mb' GROUP BY state
 ```
 
 ## HAVING
@@ -98,7 +98,7 @@ In all three cases, duplicate rows are eliminated unless ALL is specified. The n
 The WHERE clause is used to specify a boolean condition that must be satisfied by an input record for that record to be output. Input records that do not satisfy the condition are discarded.
 
 ```sql
-SELECT * FROM curl('https://tinyurl.com/24buj7mb') WHERE [year] = 2019
+SELECT * FROM curl('https://tinyurl.com/24buj7mb') WHERE "year" = 2019
 ```
 
 *Note: The `LIKE` and `SIMILAR` statements are also supported. However, `SIMILAR` is not SQL-compliant. It doesn't support "SQL regular expression". Instead, it supports .NET compliant regular expressions.*
@@ -108,7 +108,7 @@ SELECT * FROM curl('https://tinyurl.com/24buj7mb') WHERE [year] = 2019
 The ORDER BY clause specifies which SELECT clause field-expressions the query output records should be sorted by. If NULLS LAST is specified, null values sort after all non-null values; if NULLS FIRST is specified, null values sort before all non-null values.
 
 ```sql
-SELECT * FROM 'https://tinyurl.com/24buj7mb' ORDER BY [year], population DESC
+SELECT * FROM 'https://tinyurl.com/24buj7mb' ORDER BY "year", population DESC
 ```
 
 ## LIMIT AND OFFSET
