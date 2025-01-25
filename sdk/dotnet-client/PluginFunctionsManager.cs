@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using QueryCat.Backend.Core.Execution;
@@ -19,7 +18,7 @@ public sealed class PluginFunctionsManager : IFunctionsManager
     private readonly Dictionary<string, IFunction> _functions = new();
 
     /// <inheritdoc />
-    public FunctionsFactory Factory => NullFunctionsFactory.Instance;
+    public FunctionsFactory Factory { get; } = new PluginFunctionsFactory();
 
     /// <inheritdoc />
     public IFunction ResolveUri(string uri)

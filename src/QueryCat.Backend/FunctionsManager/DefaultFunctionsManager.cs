@@ -161,6 +161,6 @@ public sealed partial class DefaultFunctionsManager : IFunctionsManager
         return result;
     }
 
-    [LoggerMessage(LogLevel.Debug, "Register function: {FunctionName}.")]
+    [LoggerMessage(LogLevel.Trace, "Register function: {FunctionName}.")]
     private partial void LogRegisterFunction(string functionName);
 }
