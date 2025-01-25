@@ -112,7 +112,7 @@ public partial class ThriftPluginsServer
         }
 
         private static RegistrationResult CreateEmptyRegistrationResult()
-            => new(Application.GetVersion(), new List<int>());
+            => new(Application.GetVersion());
 
         private async Task<PluginContext> CreateClientConnection(
             string callbackUri,

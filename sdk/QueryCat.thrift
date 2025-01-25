@@ -149,8 +149,7 @@ struct PluginData {
 }
 
 struct RegistrationResult {
-  1: required string version, // QueryCat version.
-  2: required list<i32> functions_ids // Registered functions identifiers.
+  1: required string version // QueryCat version.
 }
 
 service PluginsManager {
