@@ -37,7 +37,7 @@ internal sealed class WindowFunctionsRowsIterator : IRowsIterator
 
         public int OriginalColumnIndex { get; }
 
-        public Func<VariantValueArray> PartitionFormatter { get; }
+        public Func<ValueTask<VariantValueArray>> PartitionFormatter { get; }
 
         public WindowFunctionInfo WindowFunctionInfo { get; }
 
@@ -72,7 +72,7 @@ internal sealed class WindowFunctionsRowsIterator : IRowsIterator
         public PartitionInfo(
             IExecutionThread thread,
             int originalColumnIndex,
-            Func<VariantValueArray> partitionFormatter,
+            Func<ValueTask<VariantValueArray>> partitionFormatter,
             WindowFunctionInfo windowFunctionInfo)
         {
             _thread = thread;
@@ -157,9 +157,10 @@ internal sealed class WindowFunctionsRowsIterator : IRowsIterator
 
     private readonly IExecutionThread _thread;
     private readonly IRowsIterator _rowsIterator;
+    private readonly IEnumerable<WindowFunctionInfo> _windowFunctionInfos;
     private readonly RowsFrame _rowsFrame;
     private readonly RowsFrameIterator _rowsFrameIterator;
-    private readonly PartitionInfo[] _partitions;
+    private PartitionInfo[] _partitions = [];
     private bool _isInitialized;
 
     /// <inheritdoc />
@@ -175,23 +176,32 @@ internal sealed class WindowFunctionsRowsIterator : IRowsIterator
     {
         _thread = thread;
         _rowsIterator = rowsIterator;
+        _windowFunctionInfos = windowFunctionInfos;
 
         _rowsFrame = new RowsFrame(_rowsIterator.Columns);
         _rowsFrameIterator = _rowsFrame.GetIterator();
-
-        // Prepare initial data for window partitions.
-        _partitions = windowFunctionInfos
-            .Select(info => new PartitionInfo(
-                thread,
-                originalColumnIndex: info.ColumnIndex,
-                partitionFormatter: () => new VariantValueArray(info.PartitionFormatters.Select(f => f.Invoke(thread))),
-                windowFunctionInfo: info
-            ))
-            .ToArray();
     }
 
     private async ValueTask FillRowsAndPrepareWindowData(CancellationToken cancellationToken)
     {
+        // Prepare initial data for window partitions.
+        _partitions = _windowFunctionInfos
+            .Select(info => new PartitionInfo(
+                _thread,
+                originalColumnIndex: info.ColumnIndex,
+                partitionFormatter: async () =>
+                {
+                    var formatters = new VariantValue[info.PartitionFormatters.Length];
+                    for (var i = 0; i < info.PartitionFormatters.Length; i++)
+                    {
+                        formatters[i] = await info.PartitionFormatters[i].InvokeAsync(_thread, cancellationToken);
+                    }
+                    return new VariantValueArray(formatters);
+                },
+                windowFunctionInfo: info
+            ))
+            .ToArray();
+
         var indexes = new List<IIndex>();
 
         // Prefetch all values.
@@ -200,7 +210,7 @@ internal sealed class WindowFunctionsRowsIterator : IRowsIterator
             foreach (var partition in _partitions)
             {
                 // Find partition key. Add it into KeysRowsIds.
-                var key = partition.PartitionFormatter.Invoke();
+                var key = await partition.PartitionFormatter.Invoke();
                 await partition.AddAsync(key, indexes, cancellationToken);
             }
 
