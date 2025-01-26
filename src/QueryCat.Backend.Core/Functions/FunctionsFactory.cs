@@ -181,7 +181,7 @@ public abstract class FunctionsFactory
                 }
                 else if (parameter.ParameterType == typeof(CancellationToken))
                 {
-                    arr[i] = CancellationToken.None;
+                    arr[i] = cancellationToken;
                 }
                 else if (thread.Stack.FrameLength > i)
                 {

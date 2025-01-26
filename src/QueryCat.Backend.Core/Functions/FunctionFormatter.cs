@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Reflection;
 using System.Text;
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Core.Utils;
 
@@ -17,16 +18,20 @@ internal static class FunctionFormatter
         var sb = new StringBuilder();
         sb.Append(name);
         sb.Append('(');
-        for (var i = 0; i < parameterInfos.Length; i++)
+
+        var parametersList = new List<string>(capacity: parameterInfos.Length);
+        foreach (var parameterInfo in parameterInfos)
         {
-            sb.Append(ToSnakeCase(parameterInfos[i].Name ?? string.Empty))
-                .Append(": ")
-                .Append(GetTypeName(parameterInfos[i].ParameterType));
-            if (i < parameterInfos.Length - 1)
+            if (typeof(IExecutionThread).IsAssignableFrom(parameterInfo.ParameterType)
+                || parameterInfo.ParameterType == typeof(CancellationToken))
             {
-                sb.Append(", ");
+                continue;
             }
+
+            var paramName = $"{ToSnakeCase(parameterInfo.Name)}: {GetTypeName(parameterInfo.ParameterType)}";
+            parametersList.Add(paramName);
         }
+        sb.Append(string.Join(", ", parametersList));
         sb.Append("): ");
         sb.Append(GetTypeName(outputType));
 
@@ -82,8 +87,13 @@ internal static class FunctionFormatter
         return dataType.ToString();
     }
 
-    internal static string ToSnakeCase(string target)
+    internal static string ToSnakeCase(string? target = null)
     {
+        if (string.IsNullOrEmpty(target))
+        {
+            return string.Empty;
+        }
+
         // Based on https://stackoverflow.com/questions/63055621/how-to-convert-camel-case-to-snake-case-with-two-capitals-next-to-each-other.
         var sb = new StringBuilder(capacity: target.Length)
             .Append(char.ToLower(target[0]));

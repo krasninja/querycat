@@ -73,8 +73,11 @@ public sealed class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
             .OrderBy(f => f.Name)
             .ToList();
         var sb = new StringBuilder()
-            .AppendLine("# Schema")
-            .AppendLine();
+            .AppendLine("# Schema");
+        if (pluginFunctions.Any())
+        {
+            sb.AppendLine();
+        }
 
         // Prepare TOC.
         foreach (var inputFunction in pluginFunctions)
@@ -109,11 +112,11 @@ public sealed class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
             sb
                 .AppendLine($"\n## **{inputFunction.Name}**")
                 .AppendLine("\n```")
-                .AppendLine(inputFunction.ToString())
+                .AppendLine(FunctionFormatter.GetSignature(inputFunction))
                 .AppendLine("```\n")
                 .AppendLine(inputFunction.Description)
-                .AppendLine("\n| Name | Type | Required | Description |")
-                .AppendLine("| --- | --- | --- | --- |");
+                .AppendLine("\n| Name | Type | Key | Required | Description |")
+                .AppendLine("| --- | --- | --- | --- | --- |");
             for (var i = 0; i < rowsInput.Columns.Length; i++)
             {
                 var column = rowsInput.Columns[i];
@@ -123,11 +126,17 @@ public sealed class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
                 }
                 var inputColumn =
                     rowsInput.GetKeyColumns().FirstOrDefault(c => rowsInput.Columns[c.ColumnIndex] == column);
+                var isKey = inputColumn != null;
                 if (inputColumn == null)
                 {
                     inputColumn = new KeyColumn(i);
                 }
-                sb.AppendLine($"| `{column.Name}` | `{column.DataType}` | {(inputColumn.IsRequired ? "yes" : string.Empty)} | {column.Description} |");
+                sb.Append($"| `{column.Name}`" )
+                    .Append($"| `{column.DataType}` ")
+                    .Append($"| {(isKey ? "yes" : string.Empty)} ")
+                    .Append($"| {(inputColumn.IsRequired ? "yes" : string.Empty)} ")
+                    .Append($"| {column.Description}");
+                sb.AppendLine(" |");
             }
         }
 
