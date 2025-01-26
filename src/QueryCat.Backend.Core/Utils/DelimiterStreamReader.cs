@@ -31,6 +31,11 @@ public class DelimiterStreamReader
     public OnDelimiterDelegate? OnDelimiter { get; set; }
 
     /// <summary>
+    /// Use async read.
+    /// </summary>
+    public bool AsyncRead { get; set; }
+
+    /// <summary>
     /// Quotes escape mode.
     /// </summary>
     public enum QuotesMode
@@ -400,13 +405,15 @@ public class DelimiterStreamReader
         => _fieldInfoLastIndex <= 2 && _fieldInfos[0].EndIndex == 1;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    private ValueTask<int> ReadNextBufferDataAsync(CancellationToken cancellationToken = default)
+    private async ValueTask<int> ReadNextBufferDataAsync(CancellationToken cancellationToken = default)
     {
         var buffer = _dynamicBuffer.Allocate();
         // The Read method has about 20% better performance than ReadAsync.
-        var readBytes = _streamReader.Read(buffer.Span);
+        var readBytes = AsyncRead
+            ? await _streamReader.ReadAsync(buffer, cancellationToken)
+            : _streamReader.Read(buffer.Span);
         _dynamicBuffer.Commit(readBytes);
-        return ValueTask.FromResult(readBytes);
+        return readBytes;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
