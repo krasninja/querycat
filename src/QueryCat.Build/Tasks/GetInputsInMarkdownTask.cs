@@ -33,6 +33,9 @@ public sealed class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
     public override async Task RunAsync(BuildContext context)
     {
         var targetFile = context.Arguments.GetArgument("File");
+        var outDirectory = context.Arguments.HasArgument("Out")
+            ? context.Arguments.GetArgument("Out")
+            : context.OutputDirectory;
         var loader = context.Arguments.GetArgument("Loader");
 
         // Create thread and load plugin.
@@ -128,7 +131,7 @@ public sealed class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
             }
         }
 
-        var file = Path.Combine(context.OutputDirectory, "plugin.md");
+        var file = Path.Combine(outDirectory, "Schema.md");
         await File.WriteAllTextAsync(file, sb.ToString());
         context.Log.Information($"Wrote to {file}.");
 

@@ -5,6 +5,9 @@ using Cake.Frosting;
 using QueryCat.Backend.AssemblyPlugins;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
+using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.FunctionsManager;
+using QueryCat.Backend.Parser;
 using VariantValue = QueryCat.Backend.Core.Types.VariantValue;
 
 namespace QueryCat.Build.Tasks;
@@ -12,18 +15,57 @@ namespace QueryCat.Build.Tasks;
 [TaskName("Get-Functions-Markdown")]
 public sealed class GetFunctionsInMarkdownTask : AsyncFrostingTask<BuildContext>
 {
-    private sealed class MarkdownFunctionsManager : IFunctionsManager
+    private sealed class LowercaseFunctionWrapper : IFunction
     {
-        public sealed record FunctionInfo(
-            string Signature,
-            string Description);
-
-        private readonly List<FunctionInfo> _functions = new();
-
-        public IReadOnlyList<FunctionInfo> Functions => _functions;
+        private readonly IFunction _function;
 
         /// <inheritdoc />
-        public FunctionsFactory Factory => NullFunctionsFactory.Instance;
+        public Delegate Delegate => _function.Delegate;
+
+        /// <inheritdoc />
+        public string Name => _function.Name.ToLowerInvariant();
+
+        /// <inheritdoc />
+        public string Description => _function.Description;
+
+        /// <inheritdoc />
+        public DataType ReturnType => _function.ReturnType;
+
+        /// <inheritdoc />
+        public string ReturnObjectName => _function.ReturnObjectName;
+
+        /// <inheritdoc />
+        public bool IsAggregate => _function.IsAggregate;
+
+        /// <inheritdoc />
+        public FunctionSignatureArgument[] Arguments => _function.Arguments
+            .Select(a => new FunctionSignatureArgument(
+                a.Name.ToLowerInvariant(),
+                a.Type,
+                a.DefaultValue,
+                a.IsOptional,
+                a.IsArray,
+                a.IsVariadic))
+            .ToArray();
+
+        /// <inheritdoc />
+        public bool IsSafe => _function.IsSafe;
+
+        /// <inheritdoc />
+        public string[] Formatters => _function.Formatters;
+
+        public LowercaseFunctionWrapper(IFunction function)
+        {
+            _function = function;
+        }
+    }
+
+    private sealed class MarkdownFunctionsManager : IFunctionsManager
+    {
+        private readonly List<IFunction> _functions = new();
+
+        /// <inheritdoc />
+        public FunctionsFactory Factory { get; } = new DefaultFunctionsFactory(new AstBuilder());
 
         /// <inheritdoc />
         public IFunction? ResolveUri(string uri) => null;
@@ -31,8 +73,7 @@ public sealed class GetFunctionsInMarkdownTask : AsyncFrostingTask<BuildContext>
         /// <inheritdoc />
         public void RegisterFunction(IFunction function)
         {
-            var signature = FunctionUtils.GetSignature(function);
-            _functions.Add(new FunctionInfo(signature, function.Description));
+            _functions.Add(new LowercaseFunctionWrapper(function));
         }
 
         /// <inheritdoc />
@@ -44,10 +85,7 @@ public sealed class GetFunctionsInMarkdownTask : AsyncFrostingTask<BuildContext>
         }
 
         /// <inheritdoc />
-        public IEnumerable<IFunction> GetFunctions()
-        {
-            yield break;
-        }
+        public IEnumerable<IFunction> GetFunctions() => _functions;
 
         /// <inheritdoc />
         public ValueTask<VariantValue> CallFunctionAsync(
@@ -61,30 +99,30 @@ public sealed class GetFunctionsInMarkdownTask : AsyncFrostingTask<BuildContext>
     public override async Task RunAsync(BuildContext context)
     {
         var targetFile = context.Arguments.GetArgument("File");
+        var outDirectory = context.Arguments.HasArgument("Out")
+            ? context.Arguments.GetArgument("Out")
+            : context.OutputDirectory;
+
         var functionsManager = new MarkdownFunctionsManager();
         var loader = new DotNetAssemblyPluginsLoader(functionsManager, [targetFile]);
         await loader.LoadAsync();
-        if (!functionsManager.Functions.Any())
-        {
-            context.Log.Error("No functions.");
-            return;
-        }
 
         var sb = new StringBuilder()
             .AppendLine("# Functions")
             .AppendLine()
             .AppendLine("| Name and Description |")
             .AppendLine("| --- |");
-        foreach (var function in functionsManager.Functions.OrderBy(m => m.Signature))
+        foreach (var function in functionsManager.GetFunctions().OrderBy(m => m.Name))
         {
-            sb.Append($"| `{function.Signature}`");
+            var signature = FunctionFormatter.GetSignature(function);
+            sb.Append($"| `{signature}`");
             if (!string.IsNullOrEmpty(function.Description))
             {
                 sb.Append($"<br /><br /> {function.Description}");
             }
             sb.AppendLine(" |");
         }
-        var file = Path.Combine(context.OutputDirectory, "functions.md");
+        var file = Path.Combine(outDirectory, "Functions.md");
         await File.WriteAllTextAsync(file, sb.ToString());
         context.Log.Information($"Wrote to {file}.");
         Console.WriteLine(await File.ReadAllTextAsync(file));

@@ -40,5 +40,5 @@ internal sealed class LiteralNode : ExpressionNode
     public override object Clone() => new LiteralNode(this);
 
     /// <inheritdoc />
-    public override string ToString() => FunctionUtils.ValueToString(this.Value);
+    public override string ToString() => FunctionFormatter.ValueToString(this.Value);
 }

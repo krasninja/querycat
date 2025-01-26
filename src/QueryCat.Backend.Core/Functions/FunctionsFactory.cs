@@ -67,8 +67,8 @@ public abstract class FunctionsFactory
                     {
                         continue;
                     }
-                    var signature = FunctionFormatter.FormatSignatureFromParameters(functionName, firstConstructor.GetParameters(), type);
-                    var @delegate = FunctionFormatter.CreateDelegateFromMethod(firstConstructor);
+                    var signature = FunctionFormatter.GetSignatureFromParameters(functionName, firstConstructor.GetParameters(), type);
+                    var @delegate = CreateDelegateFromMethod(firstConstructor);
                     var description = type.GetCustomAttribute<DescriptionAttribute>()?.Description ?? string.Empty;
                     list.Add(CreateFromSignature(signature, @delegate, description));
                 }
@@ -140,8 +140,8 @@ public abstract class FunctionsFactory
 
         var description = method.GetCustomAttribute<DescriptionAttribute>()?.Description ?? string.Empty;
         var functionName = GetFunctionName(methodSignature.Signature, method);
-        var signature = FunctionFormatter.FormatSignatureFromParameters(functionName, method.GetParameters(), method.ReturnType);
-        var @delegate = FunctionFormatter.CreateDelegateFromMethod(method);
+        var signature = FunctionFormatter.GetSignatureFromParameters(functionName, method.GetParameters(), method.ReturnType);
+        var @delegate = CreateDelegateFromMethod(method);
         return CreateFromSignature(signature, @delegate, description);
     }
 
@@ -163,5 +163,73 @@ public abstract class FunctionsFactory
             return signature;
         }
         return signature.AsSpan()[..indexOfLeftParen];
+    }
+
+    private static Delegate CreateDelegateFromMethod(MethodBase method)
+    {
+        async ValueTask<VariantValue> FunctionDelegate(IExecutionThread thread, CancellationToken cancellationToken)
+        {
+            var parameters = method.GetParameters();
+            var arr = new object?[parameters.Length];
+            for (var i = 0; i < parameters.Length; i++)
+            {
+                var parameter = parameters[i];
+
+                if (typeof(IExecutionThread).IsAssignableFrom(parameter.ParameterType))
+                {
+                    arr[i] = thread;
+                }
+                else if (parameter.ParameterType == typeof(CancellationToken))
+                {
+                    arr[i] = CancellationToken.None;
+                }
+                else if (thread.Stack.FrameLength > i)
+                {
+                    arr[i] = Converter.ConvertValue(thread.Stack[i], parameter.ParameterType);
+                }
+                else if (parameter.HasDefaultValue)
+                {
+                    arr[i] = parameter.DefaultValue;
+                }
+                else
+                {
+                    throw new InvalidOperationException(
+                        string.Format(Resources.Errors.CannotSetParameterIndexFromMethod, i, method));
+                }
+            }
+            var result = method is ConstructorInfo constructorInfo
+                ? constructorInfo.Invoke(arr)
+                : method.Invoke(null, arr);
+
+            // If result is awaitable - try to wait.
+            if (result is Task task)
+            {
+                await task;
+                result = GetResultFromTask(method, task);
+            }
+            else if (result is ValueTask valueTask)
+            {
+                var valueTaskResolved = valueTask.AsTask();
+                await valueTaskResolved;
+                result = GetResultFromTask(method, valueTaskResolved);
+            }
+            return VariantValue.CreateFromObject(result);
+        }
+
+        return FunctionDelegate;
+    }
+
+    private static object? GetResultFromTask(MethodBase method, object task)
+    {
+        if (method is MethodInfo methodInfo
+            && methodInfo.ReturnType.IsGenericType)
+        {
+            var resultProperty = task.GetType().GetProperty("Result");
+            if (resultProperty != null)
+            {
+                return resultProperty.GetValue(task);
+            }
+        }
+        return VariantValue.Null;
     }
 }

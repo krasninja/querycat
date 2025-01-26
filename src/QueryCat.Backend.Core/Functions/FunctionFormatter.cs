@@ -1,8 +1,9 @@
+using System.Globalization;
 using System.Reflection;
 using System.Text;
 using QueryCat.Backend.Core.Data;
-using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend.Core.Functions;
 
@@ -11,7 +12,7 @@ namespace QueryCat.Backend.Core.Functions;
 /// </summary>
 internal static class FunctionFormatter
 {
-    internal static string FormatSignatureFromParameters(string name, ParameterInfo[] parameterInfos, Type outputType)
+    internal static string GetSignatureFromParameters(string name, ParameterInfo[] parameterInfos, Type outputType)
     {
         var sb = new StringBuilder();
         sb.Append(name);
@@ -102,73 +103,65 @@ internal static class FunctionFormatter
         return sb.ToString();
     }
 
-    private static object? GetResultFromTask(MethodBase method, object task)
+    /// <summary>
+    /// Format signature from functions instance.
+    /// </summary>
+    /// <param name="function">Instance of <see cref="IFunction" />.</param>
+    /// <returns>Function signature.</returns>
+    internal static string GetSignature(IFunction function)
     {
-        if (method is MethodInfo methodInfo
-            && methodInfo.ReturnType.IsGenericType)
+        var sb = new StringBuilder();
+        sb.Append(function.Name)
+            .Append('(');
+        var i = 0;
+        foreach (var argument in function.Arguments)
         {
-            var resultProperty = task.GetType().GetProperty("Result");
-            if (resultProperty != null)
+            if (argument.IsVariadic)
             {
-                return resultProperty.GetValue(task);
+                sb.Append("...");
+            }
+            sb.Append(argument.Name);
+            if (argument.IsOptional)
+            {
+                sb.Append('?');
+            }
+            sb.Append(": ");
+            sb.Append(argument.Type);
+            if (argument.HasDefaultValue && !argument.DefaultValue.IsNull)
+            {
+                sb.Append($" := {ValueToString(argument.DefaultValue)}");
+            }
+
+            i++;
+            if (i < function.Arguments.Length)
+            {
+                sb.Append(", ");
             }
         }
-        return VariantValue.Null;
-    }
+        sb.Append(')');
 
-    internal static Delegate CreateDelegateFromMethod(MethodBase method)
-    {
-        async ValueTask<VariantValue> FunctionDelegate(IExecutionThread thread, CancellationToken cancellationToken)
+        sb.Append(": ");
+        sb.Append(function.ReturnType);
+        if (!string.IsNullOrEmpty(function.ReturnObjectName))
         {
-            var parameters = method.GetParameters();
-            var arr = new object?[parameters.Length];
-            for (var i = 0; i < parameters.Length; i++)
-            {
-                var parameter = parameters[i];
-
-                if (typeof(IExecutionThread).IsAssignableFrom(parameter.ParameterType))
-                {
-                    arr[i] = thread;
-                }
-                else if (parameter.ParameterType == typeof(CancellationToken))
-                {
-                    arr[i] = CancellationToken.None;
-                }
-                else if (thread.Stack.FrameLength > i)
-                {
-                    arr[i] = Converter.ConvertValue(thread.Stack[i], parameter.ParameterType);
-                }
-                else if (parameter.HasDefaultValue)
-                {
-                    arr[i] = parameter.DefaultValue;
-                }
-                else
-                {
-                    throw new InvalidOperationException(
-                        string.Format(Resources.Errors.CannotSetParameterIndexFromMethod, i, method));
-                }
-            }
-            var result = method is ConstructorInfo constructorInfo
-                ? constructorInfo.Invoke(arr)
-                : method.Invoke(null, arr);
-
-            // If result is awaitable - try to wait.
-            if (result is Task task)
-            {
-                await task;
-                result = GetResultFromTask(method, task);
-            }
-            else if (result is ValueTask valueTask)
-            {
-                var valueTaskResolved = valueTask.AsTask();
-                await valueTaskResolved;
-                result = GetResultFromTask(method, valueTaskResolved);
-            }
-            return VariantValue.CreateFromObject(result);
+            sb.Append('<');
+            sb.Append(function.ReturnObjectName);
+            sb.Append('>');
         }
-
-        return FunctionDelegate;
+        return sb.ToString();
     }
+
+    internal static string ValueToString(VariantValue value) => value.Type switch
+    {
+        DataType.String => Quote(value.AsStringUnsafe),
+        DataType.Timestamp => Quote(value.AsTimestampUnsafe.ToString(Application.Culture)) + "::timestamp",
+        DataType.Interval => Quote(value.AsIntervalUnsafe.ToString("c", Application.Culture)) + "::interval",
+        DataType.Object => Quote($"[object:{value.AsObjectUnsafe?.GetType().Name}]"),
+        DataType.Blob => "E" + Quote(value.ToString(CultureInfo.InvariantCulture)),
+        _ => value.ToString(CultureInfo.InvariantCulture),
+    };
+
+    private static string Quote(string target) => StringUtils.Quote(target, quote: "\'").ToString();
 
     /// <summary>
     /// Normalize function name. Make it uppercase.
