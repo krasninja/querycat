@@ -55,7 +55,7 @@ public static class ExecutionThreadExtensions
         IDictionary<string, VariantValue>? parameters = null,
         CancellationToken cancellationToken = default)
     {
-        return AsyncUtils.RunSync(() => executionThread.RunAsync(query, parameters, cancellationToken));
+        return executionThread.RunAsync(query, parameters, cancellationToken).GetAwaiter().GetResult();
     }
 
     #region Variables
