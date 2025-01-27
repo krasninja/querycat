@@ -10,7 +10,7 @@ public sealed class FunctionMetadata
 {
     public string Description { get; set; } = string.Empty;
 
-    public bool IsSafe { get; set; }
+    public bool IsSafe { get; set; } = true;
 
     public bool IsAggregate { get; set; }
 

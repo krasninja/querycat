@@ -111,7 +111,7 @@ public sealed class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
             }
 
             sb
-                .AppendLine($"\n## **{inputFunction.Name}**")
+                .AppendLine($"\n## **{inputFunction.Name.ToLowerInvariant()}**")
                 .AppendLine("\n```")
                 .AppendLine(FunctionFormatter.GetSignature(inputFunction, forceLowerCase: true))
                 .AppendLine("```\n")

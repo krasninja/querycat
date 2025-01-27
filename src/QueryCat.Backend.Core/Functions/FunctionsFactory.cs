@@ -91,7 +91,7 @@ public abstract class FunctionsFactory
                 var args = Expression.Parameter(typeof(IExecutionThread), "input");
                 var func = Expression.Lambda<Func<IExecutionThread, VariantValue>>(Expression.Call(method, args), args)
                     .Compile();
-                var metadata = FunctionMetadata.CreateFromAttributes(type);
+                var metadata = FunctionMetadata.CreateFromAttributes(method);
                 return [CreateFromSignature(methodSignature.Signature, func, metadata)];
             }
             // The async standard case: ValueTask<VariantValue> FunctionName(IExecutionThread thread, CancellationToken token).
@@ -104,7 +104,7 @@ public abstract class FunctionsFactory
                 var func = Expression.Lambda<Func<IExecutionThread, CancellationToken, ValueTask<VariantValue>>>(
                         Expression.Call(method, args), args)
                     .Compile();
-                var metadata = FunctionMetadata.CreateFromAttributes(type);
+                var metadata = FunctionMetadata.CreateFromAttributes(method);
                 return [CreateFromSignature(methodSignature.Signature, func, metadata)];
             }
             // Non-standard case. Construct signature from function definition.
