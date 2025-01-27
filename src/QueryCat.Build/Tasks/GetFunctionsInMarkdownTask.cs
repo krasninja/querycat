@@ -114,7 +114,7 @@ public sealed class GetFunctionsInMarkdownTask : AsyncFrostingTask<BuildContext>
             .AppendLine("| --- |");
         foreach (var function in functionsManager.GetFunctions().OrderBy(m => m.Name))
         {
-            var signature = FunctionFormatter.GetSignature(function);
+            var signature = FunctionFormatter.GetSignature(function, forceLowerCase: true);
             sb.Append($"| `{signature}`");
             if (!string.IsNullOrEmpty(function.Description))
             {

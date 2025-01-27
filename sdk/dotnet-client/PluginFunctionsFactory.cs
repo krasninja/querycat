@@ -24,20 +24,12 @@ public sealed class PluginFunctionsFactory : FunctionsFactory
 
     private IEnumerable<IFunction> CreateFunctionFromMethodAttributes(Delegate functionDelegate)
     {
-        var methodAttributes = Attribute.GetCustomAttributes(functionDelegate.Method, typeof(FunctionSignatureAttribute));
-        var descriptionAttribute = functionDelegate.Method.GetCustomAttribute<DescriptionAttribute>();
-        var formatterAttribute = functionDelegate.Method.GetCustomAttribute<FunctionFormattersAttribute>();
-        var isSafeAttribute = functionDelegate.Method.GetCustomAttribute<SafeFunctionAttribute>();
-        foreach (var attribute in methodAttributes)
+        var methodSignatureAttributes = Attribute.GetCustomAttributes(functionDelegate.Method, typeof(FunctionSignatureAttribute));
+        var metadata = FunctionMetadata.CreateFromAttributes(functionDelegate.Method);
+        foreach (var attribute in methodSignatureAttributes)
         {
             var methodAttribute = (FunctionSignatureAttribute)attribute;
-
-            yield return new PluginFunction(functionDelegate, methodAttribute.Signature)
-            {
-                Description = descriptionAttribute != null ? descriptionAttribute.Description : string.Empty,
-                IsSafe = isSafeAttribute != null,
-                Formatters = formatterAttribute != null ? formatterAttribute.FormatterIds : [],
-            };
+            yield return new PluginFunction(functionDelegate, methodAttribute.Signature, metadata);
         }
     }
 
@@ -45,16 +37,9 @@ public sealed class PluginFunctionsFactory : FunctionsFactory
     public override IFunction CreateFromSignature(
         string signature,
         Delegate functionDelegate,
-        string? description = null,
-        bool isSafe = false,
-        string[]? formatters = null)
+        FunctionMetadata? metadata = null)
     {
-        return new PluginFunction(functionDelegate, signature)
-        {
-            Description = description ?? string.Empty,
-            IsSafe = isSafe,
-            Formatters = formatters ?? [],
-        };
+        return new PluginFunction(functionDelegate, signature, metadata);
     }
 
     /// <inheritdoc />

@@ -24,16 +24,12 @@ public abstract class FunctionsFactory
     /// </summary>
     /// <param name="signature">Function signature.</param>
     /// <param name="functionDelegate">Delegate to call.</param>
-    /// <param name="description">Function description.</param>
-    /// <param name="isSafe">Is it safe function.</param>
-    /// <param name="formatters">Formatters.</param>
+    /// <param name="functionMetadata">Additional function information.</param>
     /// <returns>Instance of <see cref="IFunction" />.</returns>
     public abstract IFunction CreateFromSignature(
         string signature,
         Delegate functionDelegate,
-        string? description = null,
-        bool isSafe = false,
-        string[]? formatters = null);
+        FunctionMetadata? functionMetadata = null);
 
     /// <summary>
     /// Create aggregate function from type.
@@ -69,8 +65,8 @@ public abstract class FunctionsFactory
                     }
                     var signature = FunctionFormatter.GetSignatureFromParameters(functionName, firstConstructor.GetParameters(), type);
                     var @delegate = CreateDelegateFromMethod(firstConstructor);
-                    var description = type.GetCustomAttribute<DescriptionAttribute>()?.Description ?? string.Empty;
-                    list.Add(CreateFromSignature(signature, @delegate, description));
+                    var metadata = FunctionMetadata.CreateFromAttributes(type);
+                    list.Add(CreateFromSignature(signature, @delegate, metadata));
                 }
             }
             return list.ToArray();
@@ -95,8 +91,8 @@ public abstract class FunctionsFactory
                 var args = Expression.Parameter(typeof(IExecutionThread), "input");
                 var func = Expression.Lambda<Func<IExecutionThread, VariantValue>>(Expression.Call(method, args), args)
                     .Compile();
-                var description = method.GetCustomAttribute<DescriptionAttribute>()?.Description;
-                return [CreateFromSignature(methodSignature.Signature, func, description)];
+                var metadata = FunctionMetadata.CreateFromAttributes(type);
+                return [CreateFromSignature(methodSignature.Signature, func, metadata)];
             }
             // The async standard case: ValueTask<VariantValue> FunctionName(IExecutionThread thread, CancellationToken token).
             else if (methodParameters.Length == 2
@@ -108,8 +104,8 @@ public abstract class FunctionsFactory
                 var func = Expression.Lambda<Func<IExecutionThread, CancellationToken, ValueTask<VariantValue>>>(
                         Expression.Call(method, args), args)
                     .Compile();
-                var description = method.GetCustomAttribute<DescriptionAttribute>()?.Description;
-                return [CreateFromSignature(methodSignature.Signature, func, description)];
+                var metadata = FunctionMetadata.CreateFromAttributes(type);
+                return [CreateFromSignature(methodSignature.Signature, func, metadata)];
             }
             // Non-standard case. Construct signature from function definition.
             else
@@ -138,11 +134,11 @@ public abstract class FunctionsFactory
             return null;
         }
 
-        var description = method.GetCustomAttribute<DescriptionAttribute>()?.Description ?? string.Empty;
         var functionName = GetFunctionName(methodSignature.Signature, method);
         var signature = FunctionFormatter.GetSignatureFromParameters(functionName, method.GetParameters(), method.ReturnType);
         var @delegate = CreateDelegateFromMethod(method);
-        return CreateFromSignature(signature, @delegate, description);
+        var metadata = FunctionMetadata.CreateFromAttributes(method);
+        return CreateFromSignature(signature, @delegate, metadata);
     }
 
     private static string GetFunctionName(string signature, MemberInfo memberInfo)

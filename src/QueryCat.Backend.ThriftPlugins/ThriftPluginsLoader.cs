@@ -9,7 +9,6 @@ using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Plugins;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Core.Utils;
 using QueryCat.Plugins.Client;
 using QueryCat.Plugins.Sdk;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
@@ -551,8 +550,12 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
             var internalFunction = functionsManager.Factory.CreateFromSignature(
                 function.Signature,
                 wrapper.FunctionDelegateCallAsync,
-                function.Description,
-                function.IsSafe);
+                new FunctionMetadata
+                {
+                    Description = function.Description,
+                    IsSafe = function.IsSafe,
+                    IsAggregate = function.IsAggregate,
+                });
             functionsManager.RegisterFunction(internalFunction);
             wrapper.FunctionName = internalFunction.Name;
         }
@@ -605,8 +608,12 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
             var internalFunction = functionsManager.Factory.CreateFromSignature(
                 function.Signature,
                 wrapper.FunctionDelegateCallAsync,
-                function.Description,
-                function.IsSafe);
+                new FunctionMetadata
+                {
+                    Description = function.Description,
+                    IsSafe = function.IsSafe,
+                    IsAggregate = function.IsAggregate,
+                });
             functionsManager.RegisterFunction(internalFunction);
             wrapper.FunctionName = internalFunction.Name;
         }

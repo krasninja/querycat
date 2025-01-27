@@ -118,10 +118,18 @@ internal static class FunctionFormatter
     /// </summary>
     /// <param name="function">Instance of <see cref="IFunction" />.</param>
     /// <returns>Function signature.</returns>
-    internal static string GetSignature(IFunction function)
+    internal static string GetSignature(IFunction function) => GetSignature(function, forceLowerCase: false);
+
+    /// <summary>
+    /// Format signature from functions instance.
+    /// </summary>
+    /// <param name="function">Instance of <see cref="IFunction" />.</param>
+    /// <param name="forceLowerCase">Force lower case mode for function name and arguments.</param>
+    /// <returns>Function signature.</returns>
+    internal static string GetSignature(IFunction function, bool forceLowerCase)
     {
         var sb = new StringBuilder();
-        sb.Append(function.Name)
+        sb.Append(forceLowerCase ? function.Name.ToLowerInvariant() : function.Name)
             .Append('(');
         var i = 0;
         foreach (var argument in function.Arguments)
@@ -130,7 +138,7 @@ internal static class FunctionFormatter
             {
                 sb.Append("...");
             }
-            sb.Append(argument.Name);
+            sb.Append(forceLowerCase ? argument.Name.ToLowerInvariant() : argument.Name);
             if (argument.IsOptional)
             {
                 sb.Append('?');

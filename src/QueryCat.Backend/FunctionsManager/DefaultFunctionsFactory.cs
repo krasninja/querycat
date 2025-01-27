@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Reflection;
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes.Function;
@@ -17,6 +18,7 @@ public sealed class DefaultFunctionsFactory : FunctionsFactory
 
     #region Functions
 
+    [DebuggerDisplay("Name = {Name}, ReturnType = {ReturnType}")]
     private sealed class LazyAttributesFunction : IFunction
     {
         private string _signature;
@@ -105,6 +107,7 @@ public sealed class DefaultFunctionsFactory : FunctionsFactory
         }
     }
 
+    [DebuggerDisplay("Name = {Name}, ReturnType = {ReturnType}")]
     private sealed class LazySignatureFunction : IFunction
     {
         private string _signature;
@@ -179,6 +182,7 @@ public sealed class DefaultFunctionsFactory : FunctionsFactory
         }
     }
 
+    [DebuggerDisplay("Name = {Name}, ReturnType = {ReturnType}")]
     private sealed class LazyAggregateFunction<TAggregate> : IFunction where TAggregate : IAggregateFunction
     {
         private string _signature;
@@ -334,16 +338,14 @@ public sealed class DefaultFunctionsFactory : FunctionsFactory
     public override IFunction CreateFromSignature(
         string signature,
         Delegate functionDelegate,
-        string? description = null,
-        bool isSafe = false,
-        string[]? formatters = null)
+        FunctionMetadata? functionMetadata = null)
     {
         var function = new LazySignatureFunction(signature, functionDelegate, _astBuilder);
-        function.Description = description ?? string.Empty;
-        function.IsSafe = isSafe;
-        if (formatters != null)
+        if (functionMetadata != null)
         {
-            function.Formatters = formatters;
+            function.Description = functionMetadata.Description;
+            function.IsSafe = functionMetadata.IsSafe;
+            function.Formatters = functionMetadata.Formatters;
         }
         return function;
     }

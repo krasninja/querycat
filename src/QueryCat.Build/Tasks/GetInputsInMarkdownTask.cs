@@ -82,7 +82,8 @@ public sealed class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
         // Prepare TOC.
         foreach (var inputFunction in pluginFunctions)
         {
-            sb.AppendLine($"- [{inputFunction.Name}](#{inputFunction.Name})");
+            var name = inputFunction.Name.ToLowerInvariant();
+            sb.AppendLine($"- [{name}](#{name})");
         }
 
         // Iterate and write whole schema.
@@ -112,7 +113,7 @@ public sealed class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
             sb
                 .AppendLine($"\n## **{inputFunction.Name}**")
                 .AppendLine("\n```")
-                .AppendLine(FunctionFormatter.GetSignature(inputFunction))
+                .AppendLine(FunctionFormatter.GetSignature(inputFunction, forceLowerCase: true))
                 .AppendLine("```\n")
                 .AppendLine(inputFunction.Description)
                 .AppendLine("\n| Name | Type | Key | Required | Description |")

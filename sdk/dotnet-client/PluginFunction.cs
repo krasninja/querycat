@@ -41,10 +41,17 @@ internal sealed class PluginFunction : IFunction
     /// </summary>
     public string Signature { get; set; }
 
-    public PluginFunction(Delegate @delegate, string signature)
+    public PluginFunction(Delegate @delegate, string signature, FunctionMetadata? metadata = null)
     {
         Delegate = @delegate;
         Signature = signature;
+        if (metadata != null)
+        {
+            Description = metadata.Description;
+            IsSafe = metadata.IsSafe;
+            IsAggregate = metadata.IsAggregate;
+            Formatters = metadata.Formatters;
+        }
         var firstBracketIndex = signature.IndexOf('(');
         Name = firstBracketIndex > -1 ? signature.Substring(0, firstBracketIndex).ToUpperInvariant() : "Unknown";
     }
