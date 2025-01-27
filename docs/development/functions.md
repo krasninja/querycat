@@ -39,3 +39,7 @@ public static async ValueTask<VariantValue> CallServiceAsync(IExecutionThread th
     return new VariantValue(result);
 }
 ```
+
+## Safe Functions
+
+You can assign `SafeFunction` attribute to your function delegate. This way you tell QueryCat that function only selects data and doesn't do any updates or removes. If QueryCat is running in safe mode it can only use safe functions.
