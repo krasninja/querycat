@@ -20,6 +20,22 @@ public abstract class FunctionsFactory
     public abstract IEnumerable<IFunction> CreateFromDelegate(Delegate functionDelegate);
 
     /// <summary>
+    /// Create function from delegate.
+    /// </summary>
+    /// <param name="functionDelegate">Delegate.</param>
+    /// <returns>Created functions.</returns>
+    public IEnumerable<IFunction> CreateFromDelegate(
+        Func<IExecutionThread, VariantValue> functionDelegate) => CreateFromDelegate((Delegate)functionDelegate);
+
+    /// <summary>
+    /// Create function from delegate.
+    /// </summary>
+    /// <param name="functionDelegate">Delegate.</param>
+    /// <returns>Created functions.</returns>
+    public IEnumerable<IFunction> CreateFromDelegate(
+        Func<IExecutionThread, CancellationToken, ValueTask<VariantValue>> functionDelegate) => CreateFromDelegate((Delegate)functionDelegate);
+
+    /// <summary>
     /// Create function from signature and delegate.
     /// </summary>
     /// <param name="signature">Function signature.</param>
@@ -92,7 +108,7 @@ public abstract class FunctionsFactory
                 var func = Expression.Lambda<Func<IExecutionThread, VariantValue>>(Expression.Call(method, args), args)
                     .Compile();
                 var metadata = FunctionMetadata.CreateFromAttributes(method);
-                return [CreateFromSignature(methodSignature.Signature, func, metadata)];
+                list.Add(CreateFromSignature(methodSignature.Signature, func, metadata));
             }
             // The async standard case: ValueTask<VariantValue> FunctionName(IExecutionThread thread, CancellationToken token).
             else if (methodParameters.Length == 2
@@ -105,7 +121,7 @@ public abstract class FunctionsFactory
                         Expression.Call(method, args), args)
                     .Compile();
                 var metadata = FunctionMetadata.CreateFromAttributes(method);
-                return [CreateFromSignature(methodSignature.Signature, func, metadata)];
+                list.Add(CreateFromSignature(methodSignature.Signature, func, metadata));
             }
             // Non-standard case. Construct signature from function definition.
             else

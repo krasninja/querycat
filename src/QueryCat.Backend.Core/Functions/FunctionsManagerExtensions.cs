@@ -33,6 +33,30 @@ public static class FunctionsManagerExtensions
         functionsManager.RegisterFunctions(functionsManager.Factory.CreateFromDelegate(functionDelegate));
     }
 
+    /// <summary>
+    /// Register function from delegate.
+    /// </summary>
+    /// <param name="functionsManager">Instance of <see cref="IFunctionsManager" />.</param>
+    /// <param name="functionDelegate">Delegate.</param>
+    public static void RegisterFunction(
+        this IFunctionsManager functionsManager,
+        Func<IExecutionThread, VariantValue> functionDelegate)
+    {
+        functionsManager.RegisterFunctions(functionsManager.Factory.CreateFromDelegate(functionDelegate));
+    }
+
+    /// <summary>
+    /// Register function from delegate.
+    /// </summary>
+    /// <param name="functionsManager">Instance of <see cref="IFunctionsManager" />.</param>
+    /// <param name="functionDelegate">Delegate.</param>
+    public static void RegisterFunction(
+        this IFunctionsManager functionsManager,
+        Func<IExecutionThread, CancellationToken, ValueTask<VariantValue>> functionDelegate)
+    {
+        functionsManager.RegisterFunctions(functionsManager.Factory.CreateFromDelegate(functionDelegate));
+    }
+
     #endregion
 
     #region Find
