@@ -18,6 +18,8 @@ public abstract class KeysRowsInput : RowsInput, IRowsInputKeys, IDisposable
         public KeyColumn KeyColumn { get; } = keyColumn;
 
         public VariantValue Value { get; set; } = value;
+
+        public bool IsSet { get; set; } = true;
     }
 
     private KeyColumnValue[][] _setKeyColumns = [];
@@ -90,6 +92,16 @@ public abstract class KeysRowsInput : RowsInput, IRowsInputKeys, IDisposable
         InitializeKeyColumns();
         var kcv = _setKeyColumns[columnIndex].First(kc => kc.KeyColumn.ContainsOperation(operation));
         kcv.Value = value;
+        kcv.IsSet = true;
+    }
+
+    /// <inheritdoc />
+    public void UnsetKeyColumnValue(int columnIndex, VariantValue.Operation operation)
+    {
+        InitializeKeyColumns();
+        var kcv = _setKeyColumns[columnIndex].First(kc => kc.KeyColumn.ContainsOperation(operation));
+        kcv.Value = VariantValue.Null;
+        kcv.IsSet = false;
     }
 
     #endregion
@@ -111,7 +123,7 @@ public abstract class KeysRowsInput : RowsInput, IRowsInputKeys, IDisposable
                 string.Format(Resources.Errors.CannotFindColumn, columnName));
         }
         var keyValue = GetKeyColumn(_setKeyColumns[columnIndex], operation);
-        if (keyValue == null)
+        if (keyValue == null || !keyValue.IsSet)
         {
             return VariantValue.Null;
         }
@@ -134,7 +146,7 @@ public abstract class KeysRowsInput : RowsInput, IRowsInputKeys, IDisposable
             return false;
         }
         var keyValue = GetKeyColumn(_setKeyColumns[columnIndex], operation);
-        if (keyValue == null)
+        if (keyValue == null || !keyValue.IsSet)
         {
             value = VariantValue.Null;
             return false;
@@ -155,7 +167,7 @@ public abstract class KeysRowsInput : RowsInput, IRowsInputKeys, IDisposable
         var keyColumnValueResult = keyColumnValues.FirstOrDefault(c =>
             (operation == null || c.KeyColumn.ContainsOperation(operation.Value))
             && (orOperation == null || c.KeyColumn.ContainsOperation(orOperation.Value)));
-        if (keyColumnValueResult == null)
+        if (keyColumnValueResult == null || !keyColumnValueResult.IsSet)
         {
             return null;
         }

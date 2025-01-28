@@ -102,9 +102,9 @@ public sealed class CacheRowsIterator : ICursorRowsIterator, IRowsIteratorParent
     }
 
     /// <inheritdoc />
-    public void Reset()
+    public async Task ResetAsync(CancellationToken cancellationToken = default)
     {
-        _rowsIterator.Reset();
+        await _rowsIterator.ResetAsync(cancellationToken);
         _cache.Clear();
         _cursor = -1;
     }

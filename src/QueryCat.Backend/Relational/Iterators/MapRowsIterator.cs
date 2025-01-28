@@ -10,11 +10,11 @@ internal sealed class MapRowsIterator : IRowsIterator, IRowsIteratorParent
 {
     private readonly IRowsIterator _rowsIterator;
     // ReSharper disable once UseArrayEmptyMethod
-    private int[] _mapping = new int[0];
+    private int[] _mapping = [];
     // ReSharper disable once UseArrayEmptyMethod
-    private DataType[] _mappingTypesCast = new DataType[0];
+    private DataType[] _mappingTypesCast = [];
     // ReSharper disable once UseArrayEmptyMethod
-    private Column[] _columns = new Column[0];
+    private Column[] _columns = [];
     private Row _row;
 
     /// <inheritdoc />
@@ -75,9 +75,9 @@ internal sealed class MapRowsIterator : IRowsIterator, IRowsIteratorParent
     }
 
     /// <inheritdoc />
-    public void Reset()
+    public Task ResetAsync(CancellationToken cancellationToken = default)
     {
-        _rowsIterator.Reset();
+        return _rowsIterator.ResetAsync(cancellationToken);
     }
 
     /// <inheritdoc />

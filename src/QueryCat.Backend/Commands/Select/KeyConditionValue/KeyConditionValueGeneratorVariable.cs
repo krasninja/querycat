@@ -1,3 +1,4 @@
+using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Storage;
@@ -30,8 +31,20 @@ internal sealed class KeyConditionValueGeneratorVariable : IKeyConditionMultiple
         {
             return _generator;
         }
+
         var value = await _identifierUnit.InvokeAsync(thread, cancellationToken);
-        var rowsIterator = RowsIteratorConverter.Convert(value);
+        IRowsIterator rowsIterator;
+        if (value.Type == DataType.Object
+            && value.AsObjectUnsafe is IRowsInput rowsInput)
+        {
+            await rowsInput.OpenAsync(cancellationToken);
+            rowsIterator = new RowsInputIterator(rowsInput);
+        }
+        else
+        {
+            rowsIterator = RowsIteratorConverter.Convert(value);
+        }
+
         if (rowsIterator.Columns.Length < 1)
         {
             _generator = KeyConditionValueGeneratorEmpty.Instance;
@@ -43,7 +56,7 @@ internal sealed class KeyConditionValueGeneratorVariable : IKeyConditionMultiple
         {
             values.Add(rowsIterator.Current[0]);
         }
-        rowsIterator.Reset();
+        await rowsIterator.ResetAsync(cancellationToken);
 
         _generator = new KeyConditionValueGeneratorArray(values);
         return _generator;
@@ -56,12 +69,13 @@ internal sealed class KeyConditionValueGeneratorVariable : IKeyConditionMultiple
     }
 
     /// <inheritdoc />
-    public VariantValue Get(IExecutionThread thread)
+    public bool TryGet(IExecutionThread thread, out VariantValue value)
     {
         if (_generator == null)
         {
-            return VariantValue.Null;
+            value = VariantValue.Null;
+            return false;
         }
-        return _generator.Get(thread);
+        return _generator.TryGet(thread, out value);
     }
 }

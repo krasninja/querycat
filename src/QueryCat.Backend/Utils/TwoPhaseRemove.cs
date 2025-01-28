@@ -23,7 +23,8 @@ internal sealed class TwoPhaseRemove : IDisposable
     {
         if (!File.Exists(file))
         {
-            throw new InvalidOperationException($"File '{file}' not exists");
+            throw new InvalidOperationException(
+                string.Format(Resources.Errors.FileNoExists, file));
         }
 
         if (RenameBeforeRemove)

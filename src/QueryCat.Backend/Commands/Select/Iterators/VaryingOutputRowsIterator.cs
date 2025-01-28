@@ -106,9 +106,9 @@ internal sealed class VaryingOutputRowsIterator : IRowsIterator, IRowsIteratorPa
     }
 
     /// <inheritdoc />
-    public void Reset()
+    public async Task ResetAsync(CancellationToken cancellationToken = default)
     {
-        _rowsIterator.Reset();
+        await _rowsIterator.ResetAsync(cancellationToken);
         _outputs.Clear();
     }
 

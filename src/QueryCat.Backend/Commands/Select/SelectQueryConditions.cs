@@ -1,5 +1,7 @@
 using System.Collections;
+using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Commands.Select.KeyConditionValue;
+using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Storage;
@@ -9,6 +11,7 @@ namespace QueryCat.Backend.Commands.Select;
 internal sealed class SelectQueryConditions : IEnumerable<SelectQueryCondition>
 {
     private readonly List<SelectQueryCondition> _conditions = new();
+    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(SelectQueryConditions));
 
     /// <summary>
     /// Get query conditions.

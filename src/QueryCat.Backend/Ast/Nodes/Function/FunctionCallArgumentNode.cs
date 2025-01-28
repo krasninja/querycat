@@ -1,3 +1,5 @@
+using QueryCat.Backend.Core.Functions;
+
 namespace QueryCat.Backend.Ast.Nodes.Function;
 
 /// <summary>
@@ -18,7 +20,7 @@ internal sealed class FunctionCallArgumentNode : AstNode
     {
         if (!string.IsNullOrEmpty(key))
         {
-            Key = key.ToUpper();
+            Key = FunctionFormatter.NormalizeName(key);
         }
         ExpressionValueNode = expressionValueNode;
     }

@@ -7,25 +7,27 @@ namespace QueryCat.Backend.Core.Data;
 /// </summary>
 public sealed class KeyColumn
 {
+    private readonly VariantValue.Operation[] _operations;
+
     /// <summary>
     /// Target source column index.
     /// </summary>
     public int ColumnIndex { get; }
 
     /// <summary>
-    /// The column is required to process the query, the error ocurres otherwise.
+    /// The column is required to process the query, the error occurs otherwise.
     /// </summary>
     public bool IsRequired { get; }
 
     /// <summary>
     /// The first operation under which the key can be applied.
     /// </summary>
-    public VariantValue.Operation Operation1 { get; }
+    public VariantValue.Operation Operation1 => _operations[0];
 
     /// <summary>
     /// The second alternative operation under which the key can be applied.
     /// </summary>
-    public VariantValue.Operation? Operation2 { get; }
+    public VariantValue.Operation? Operation2 => _operations.Length > 1 ? _operations[1] : null;
 
     public KeyColumn(
         int columnIndex,
@@ -35,33 +37,31 @@ public sealed class KeyColumn
     {
         ColumnIndex = columnIndex;
         IsRequired = isRequired;
-        Operation1 = operation1;
-        Operation2 = operation2;
+        _operations = operation2.HasValue ? [operation1, operation2.Value] : [operation1];
     }
 
     public KeyColumn(
         int columnIndex,
         bool isRequired,
-        VariantValue.Operation[] operations) : this(
-            columnIndex,
-            isRequired,
-            operations.Length > 0 ? operations[0] : VariantValue.Operation.Equals,
-            operations.Length > 1 ? operations[1] : null)
+        VariantValue.Operation[] operations) : this(columnIndex, isRequired)
     {
+        _operations = operations;
     }
 
-    public IEnumerable<VariantValue.Operation> GetOperations()
-    {
-        yield return Operation1;
-        if (Operation2 != null)
-        {
-            yield return Operation2.Value;
-        }
-    }
+    /// <summary>
+    /// Get all available operations.
+    /// </summary>
+    /// <returns>Operations.</returns>
+    public IEnumerable<VariantValue.Operation> GetOperations() => _operations;
 
-    public bool ContainsOperation(VariantValue.Operation operation)
-        => Operation1 == operation || (Operation2.HasValue && Operation2.Value == operation);
+    /// <summary>
+    /// Returns <c>true</c> if key column contains the operation.
+    /// </summary>
+    /// <param name="operation">Operation to check.</param>
+    /// <returns><c>True</c> if contains, <c>false</c> otherwise.</returns>
+    public bool ContainsOperation(VariantValue.Operation operation) => _operations.Contains(operation);
 
     /// <inheritdoc />
-    public override string ToString() => $"{(IsRequired ? "* " : "")} {ColumnIndex} ({Operation1}, {Operation2})";
+    public override string ToString()
+        => $"{(IsRequired ? "* " : "")} {ColumnIndex} ({string.Join(", ", _operations)})";
 }

@@ -5,6 +5,9 @@ namespace QueryCat.Backend.Core.Data;
 /// </summary>
 public class NullQueryContext : QueryContext
 {
+    /// <summary>
+    /// Empty instance of query context.
+    /// </summary>
     public static NullQueryContext Instance { get; } = new();
 
     /// <inheritdoc />

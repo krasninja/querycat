@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Function;
@@ -102,7 +103,7 @@ internal sealed class StringDumpAstVisitor : DelegateVisitor
     /// <inheritdoc />
     public override void Visit(LiteralNode node)
     {
-        PrettyPrintNode(node, ("value", node.Value.ToString()));
+        PrettyPrintNode(node, ("value", node.Value.ToString(CultureInfo.InvariantCulture)));
     }
 
     #endregion

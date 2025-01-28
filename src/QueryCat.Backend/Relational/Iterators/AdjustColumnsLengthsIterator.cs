@@ -42,9 +42,9 @@ public class AdjustColumnsLengthsIterator : IRowsIterator, IRowsIteratorParent
     }
 
     /// <inheritdoc />
-    public void Reset()
+    public async Task ResetAsync(CancellationToken cancellationToken = default)
     {
-        _cacheRowsIterator.Reset();
+        await _cacheRowsIterator.ResetAsync(cancellationToken);
         _isInitialized = false;
     }
 

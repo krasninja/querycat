@@ -8,7 +8,7 @@ namespace QueryCat.Backend.Core.Data;
 public interface IRowsInputUpdate : IRowsInput
 {
     /// <summary>
-    /// Update the column value at the current position.
+    /// Update the column value at the current position. The actual update may occur after ReadNext call.
     /// </summary>
     /// <param name="columnIndex">Column index.</param>
     /// <param name="value">New value.</param>

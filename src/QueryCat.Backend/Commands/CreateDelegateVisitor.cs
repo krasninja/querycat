@@ -160,7 +160,7 @@ internal partial class CreateDelegateVisitor : AstVisitor
         }
         else
         {
-            throw new InvalidOperationException("Cannot create CASE delegate.");
+            throw new InvalidOperationException(Resources.Errors.CannotCreateCaseDelegate);
         }
     }
 
@@ -212,7 +212,7 @@ internal partial class CreateDelegateVisitor : AstVisitor
             return;
         }
 
-        throw new QueryCatException("Cannot resolve expression values node.");
+        throw new QueryCatException(Resources.Errors.CannotResolveExpressionValueNodes);
     }
 
     private sealed class InArrayFuncUnit(
@@ -236,6 +236,7 @@ internal partial class CreateDelegateVisitor : AstVisitor
                 if (rightValue.Type == DataType.Object)
                 {
                     var iterator = RowsIteratorConverter.Convert(rightValue);
+                    await iterator.ResetAsync(cancellationToken);
                     while (await iterator.MoveNextAsync(cancellationToken))
                     {
                         var iteratorValue = iterator.Current[0];
@@ -474,7 +475,7 @@ internal partial class CreateDelegateVisitor : AstVisitor
             {
                 thread.Stack.Push(await argsUnit.InvokeAsync(thread, cancellationToken));
             }
-            var result = function.Delegate(thread);
+            var result = await FunctionCaller.CallAsync(function.Delegate, thread, cancellationToken);
             thread.Stack.CloseFrame();
             return result;
         }

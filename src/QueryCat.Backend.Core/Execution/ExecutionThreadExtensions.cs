@@ -1,5 +1,5 @@
-using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend.Core.Execution;
 
@@ -8,25 +8,6 @@ namespace QueryCat.Backend.Core.Execution;
 /// </summary>
 public static class ExecutionThreadExtensions
 {
-    /// <summary>
-    /// Call function within execution thread.
-    /// </summary>
-    /// <param name="executionThread">Execution thread.</param>
-    /// <param name="functionDelegate">Function delegate instance.</param>
-    /// <param name="args">Arguments.</param>
-    /// <returns>Return value.</returns>
-    public static VariantValue CallFunction(
-        this IExecutionThread executionThread, FunctionDelegate functionDelegate, params ReadOnlySpan<object> args)
-    {
-        using var frame = executionThread.Stack.CreateFrame();
-        foreach (var arg in args)
-        {
-            frame.Push(VariantValue.CreateFromObject(arg));
-        }
-        var result = functionDelegate.Invoke(executionThread);
-        return result;
-    }
-
     /// <summary>
     /// Run query with object properties as parameters.
     /// </summary>
@@ -58,6 +39,23 @@ public static class ExecutionThreadExtensions
         }
 
         return executionThread.RunAsync(query, parametersDict, cancellationToken);
+    }
+
+    /// <summary>
+    /// Run query synchronously.
+    /// </summary>
+    /// <param name="executionThread">Instance of <see cref="IExecutionThread" />.</param>
+    /// <param name="query">Query.</param>
+    /// <param name="parameters">Query scope parameters.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Variant value result.</returns>
+    public static VariantValue Run(
+        this IExecutionThread executionThread,
+        string query,
+        IDictionary<string, VariantValue>? parameters = null,
+        CancellationToken cancellationToken = default)
+    {
+        return executionThread.RunAsync(query, parameters, cancellationToken).GetAwaiter().GetResult();
     }
 
     #region Variables

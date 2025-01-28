@@ -66,4 +66,25 @@
   <data name="InvalidColumnType" xml:space="preserve">
     <value>The data type {0} is not supported for column '{1}'.</value>
   </data>
+  <data name="CannotGetColumnFromExpression" xml:space="preserve">
+    <value>Cannot get column name from property.</value>
+  </data>
+  <data name="CannotSetParameterIndexFromMethod" xml:space="preserve">
+    <value>Cannot set parameter index {0} for method '{1}'.</value>
+  </data>
+  <data name="VariadicMustBeArray" xml:space="preserve">
+    <value>Variadic type must be array.</value>
+  </data>
+  <data name="FunctionWithMoreThanOneSignature" xml:space="preserve">
+    <value>There is more than one signature for function '{0}'.</value>
+  </data>
+  <data name="CannotParseInterval" xml:space="preserve">
+    <value>Cannot parse interval.</value>
+  </data>
+  <data name="AndShouldNotBeWithinBetweenOperation" xml:space="preserve">
+    <value>AND operation should not be evaluated within BETWEEN expression!</value>
+  </data>
+  <data name="InvalidNumberOfItems" xml:space="preserve">
+    <value>Incorrect number of items for interval.</value>
+  </data>
 </root>

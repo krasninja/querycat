@@ -8,13 +8,13 @@ namespace QueryCat.Cli.Commands.Options;
 /// </summary>
 internal sealed class ApplicationRoot : IDisposable
 {
-    public ExecutionThread Thread { get; }
+    public DefaultExecutionThread Thread { get; }
 
     public IPluginsManager PluginsManager { get; }
 
     public CancellationTokenSource CancellationTokenSource { get; } = new();
 
-    public ApplicationRoot(ExecutionThread thread, IPluginsManager pluginsManager)
+    public ApplicationRoot(DefaultExecutionThread thread, IPluginsManager pluginsManager)
     {
         Thread = thread;
         PluginsManager = pluginsManager;

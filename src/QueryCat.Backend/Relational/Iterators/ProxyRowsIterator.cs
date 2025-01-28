@@ -41,9 +41,9 @@ internal sealed class ProxyRowsIterator : IRowsIterator, IRowsIteratorParent
         => _currentIterator.MoveNextAsync(cancellationToken);
 
     /// <inheritdoc />
-    public void Reset()
+    public Task ResetAsync(CancellationToken cancellationToken = default)
     {
-        _currentIterator.Reset();
+        return _currentIterator.ResetAsync(cancellationToken);
     }
 
     /// <inheritdoc />

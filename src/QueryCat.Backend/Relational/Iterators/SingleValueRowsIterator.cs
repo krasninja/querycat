@@ -51,9 +51,10 @@ public sealed class SingleValueRowsIterator : IRowsIterator
     }
 
     /// <inheritdoc />
-    public void Reset()
+    public Task ResetAsync(CancellationToken cancellationToken = default)
     {
         _isIterated = false;
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />

@@ -62,7 +62,8 @@ internal abstract class AstNode : IAstNode
         {
             if (obj is not T obj1)
             {
-                throw new InvalidOperationException($"Attribute is not of type {typeof(T).Name}.");
+                throw new InvalidOperationException(
+                    string.Format(Resources.Errors.AttributeIsNotOfType, typeof(T).Name));
             }
             return obj1;
         }

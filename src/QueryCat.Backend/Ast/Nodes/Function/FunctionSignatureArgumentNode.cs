@@ -61,6 +61,7 @@ internal sealed class FunctionSignatureArgumentNode : AstNode, IEquatable<Functi
         bool isVariadic = false)
     {
         TypeNode = typeNode;
+        name = FunctionFormatter.NormalizeName(name);
         SignatureArgument = new FunctionSignatureArgument(name, typeNode.Type, defaultValue, isOptional, isArray, isVariadic);
     }
 
@@ -85,11 +86,15 @@ internal sealed class FunctionSignatureArgumentNode : AstNode, IEquatable<Functi
             sb.Append("...");
         }
         sb.Append(Name);
+        if (IsOptional)
+        {
+            sb.Append('?');
+        }
         sb.Append(": ");
         sb.Append(TypeNode);
         if (HasDefaultValue && !DefaultValue.IsNull)
         {
-            sb.Append($" := {LiteralNode.ValueToString(DefaultValue)}");
+            sb.Append($" := {FunctionFormatter.ValueToString(DefaultValue)}");
         }
         return sb.ToString();
     }

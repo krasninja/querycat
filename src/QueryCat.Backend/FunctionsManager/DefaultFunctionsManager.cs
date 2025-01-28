@@ -1,9 +1,6 @@
-using System.ComponentModel;
-using System.Reflection;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Core;
-using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
@@ -15,32 +12,17 @@ namespace QueryCat.Backend.FunctionsManager;
 /// </summary>
 public sealed partial class DefaultFunctionsManager : IFunctionsManager
 {
-    private readonly IAstBuilder _astBuilder;
-    private readonly List<IUriResolver> _uriResolvers = new();
+    private readonly List<IUriResolver> _uriResolvers = new(capacity: 8);
 
-    private readonly record struct FunctionPreRegistration(
-        FunctionDelegate Delegate,
-        List<string> Signatures,
-        string? Description = null);
-
-    private readonly Dictionary<string, List<Function>> _functions = new();
-    private readonly Dictionary<string, IAggregateFunction> _aggregateFunctions = new();
-
-    private readonly Dictionary<string, FunctionPreRegistration> _functionsPreRegistration = new();
-
-    private readonly List<Action<DefaultFunctionsManager>> _registerAggregateFunctions = [];
-    private int _registerAggregateFunctionsLastIndex;
-
+    private readonly Dictionary<string, List<IFunction>> _functions = new(capacity: 128);
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(DefaultFunctionsManager));
 
-    private static VariantValue EmptyFunction(IExecutionThread thread)
-    {
-        return VariantValue.Null;
-    }
+    /// <inheritdoc />
+    public FunctionsFactory Factory { get; }
 
     internal DefaultFunctionsManager(IAstBuilder astBuilder, IEnumerable<IUriResolver>? uriResolvers = null)
     {
-        _astBuilder = astBuilder;
+        Factory = new DefaultFunctionsFactory(astBuilder);
         if (uriResolvers != null)
         {
             _uriResolvers.AddRange(uriResolvers);
@@ -49,129 +31,37 @@ public sealed partial class DefaultFunctionsManager : IFunctionsManager
 
     #region Registration
 
-    private string PreRegisterFunction(
-        string signature,
-        FunctionDelegate functionDelegate,
-        string? functionName = null,
-        string? description = null,
-        string[]? formatterIds = null)
+    /// <inheritdoc />
+    public void RegisterFunction(IFunction function)
     {
-        functionName ??= GetFunctionName(signature);
-
-        if (_functionsPreRegistration.TryGetValue(functionName, out var preRegistration))
+        var name = FunctionFormatter.NormalizeName(function.Name);
+        if (_functions.TryGetValue(name, out var functions))
         {
-            preRegistration.Signatures.Add(signature);
+            functions.Add(function);
         }
         else
         {
-            var signatures = new List<string> { signature };
-            _functionsPreRegistration.Add(functionName,
-                new FunctionPreRegistration(functionDelegate, signatures, description));
+            _functions.Add(name, [function]);
         }
 
-        // Register as formatter.
-        if (formatterIds != null)
+        LogRegisterFunction(function.Name);
+
+        foreach (var formatterId in function.Formatters)
         {
-            foreach (var formatterId in formatterIds)
+            Formatters.FormattersInfo.RegisterFormatter(formatterId,
+                (fm, et, args) => fm.CallFunctionAsync(name, et, args));
+        }
+    }
+
+    private void WarnAboutSimilarFunctions(IFunction function, IEnumerable<IFunction> functions)
+    {
+        foreach (var sameNameFunction in functions)
+        {
+            if (sameNameFunction.IsSignatureEqual(function))
             {
-                Formatters.FormattersInfo.RegisterFormatter(formatterId,
-                    (fm, et, args) => fm.CallFunction(functionName, et, args).AsRequired<IRowsFormatter>());
+                _logger.LogWarning("Possibly similar signature function: {Function}.", function);
             }
         }
-
-        return functionName;
-    }
-
-    /// <inheritdoc />
-    public string RegisterFunction(
-        string signature,
-        FunctionDelegate @delegate,
-        string? description = null,
-        string[]? formatterIds = null)
-    {
-        ArgumentException.ThrowIfNullOrEmpty(signature, nameof(signature));
-        return PreRegisterFunction(
-            signature,
-            @delegate,
-            description: description,
-            formatterIds: formatterIds);
-    }
-
-    private bool TryGetPreRegistration(string name, out List<Function> functions)
-    {
-        if (_functionsPreRegistration.Remove(name, out var functionInfo))
-        {
-            functions = RegisterFunction(functionInfo);
-            return true;
-        }
-
-        functions = new List<Function>();
-        return false;
-    }
-
-    private bool ProcessSimilarFunction(Function function, out List<Function>? functions)
-    {
-        if (_functions.TryGetValue(function.Name, out functions))
-        {
-            foreach (var sameNameFunction in functions)
-            {
-                if (sameNameFunction.IsSignatureEquals(function))
-                {
-                    _logger.LogWarning("Possibly similar signature function: {Function}.", function);
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    private void FillFunctionInfoFromMethodInfo(Function function)
-    {
-        var memberInfo = function.Delegate.Method;
-        var descriptionAttribute = memberInfo.GetCustomAttribute<DescriptionAttribute>();
-        if (descriptionAttribute != null)
-        {
-            function.Description = descriptionAttribute.Description;
-        }
-        var safeAttribute = memberInfo.GetCustomAttribute<SafeFunctionAttribute>();
-        if (safeAttribute != null)
-        {
-            function.IsSafe = true;
-        }
-    }
-
-    private List<Function> RegisterFunction(FunctionPreRegistration preRegistration)
-    {
-        List<Function> functionsList = new();
-
-        if (preRegistration.Signatures.Count < 1)
-        {
-            return functionsList;
-        }
-
-        foreach (var signature in preRegistration.Signatures)
-        {
-            var signatureAst = _astBuilder.BuildFunctionSignatureFromString(signature);
-
-            var function = new Function(preRegistration.Delegate, signatureAst, description: preRegistration.Description);
-            ProcessSimilarFunction(function, out var functions);
-            FillFunctionInfoFromMethodInfo(function);
-
-            // Add or update functions list.
-            if (functions != null)
-            {
-                functions.Add(function);
-            }
-            else
-            {
-                functions = [function];
-                _functions.Add(function.Name, functions);
-                LogRegisterFunction(function);
-            }
-            functionsList = functions;
-        }
-
-        return functionsList;
     }
 
     /// <inheritdoc />
@@ -182,114 +72,48 @@ public sealed partial class DefaultFunctionsManager : IFunctionsManager
             if (uriResolver.TryResolve(uri, out var functionName)
                 && !string.IsNullOrEmpty(functionName))
             {
-                return this.FindByName(functionName);
+                var functions = FindByName(functionName);
+                return functions.Length > 0 ? functions[0] : null;
             }
         }
 
         return null;
     }
 
+    /// <summary>
+    /// Add new URI resolver.
+    /// </summary>
+    /// <param name="uriResolver">Instance of <see cref="IUriResolver" />.</param>
     internal void AddUriResolver(IUriResolver uriResolver) => _uriResolvers.Add(uriResolver);
-
-    /// <inheritdoc />
-    public void RegisterAggregate<TAggregate>(Func<TAggregate> factory)
-        where TAggregate : IAggregateFunction
-    {
-        _registerAggregateFunctions.Add(_ => RegisterAggregateInternal(factory));
-    }
-
-    private void RegisterAggregateInternal<TAggregate>(
-        Func<TAggregate> factory)
-        where TAggregate : IAggregateFunction
-    {
-        var aggregateType = typeof(TAggregate);
-        var signatureAttributes = aggregateType.GetCustomAttributes<AggregateFunctionSignatureAttribute>();
-        foreach (var signatureAttribute in signatureAttributes)
-        {
-            var signatureAst = _astBuilder.BuildFunctionSignatureFromString(signatureAttribute.Signature);
-            var function = new Function(EmptyFunction, signatureAst, aggregate: true);
-            var descriptionAttribute = aggregateType.GetCustomAttribute<DescriptionAttribute>();
-            if (descriptionAttribute != null)
-            {
-                function.Description = descriptionAttribute.Description;
-            }
-            var safeAttribute = aggregateType.GetCustomAttribute<SafeFunctionAttribute>();
-            if (safeAttribute != null)
-            {
-                function.IsSafe = true;
-            }
-            var functionName = NormalizeName(function.Name);
-            _functions!.AddOrUpdate(
-                functionName,
-                addValueFactory: _ => [function],
-                updateValueFactory: (_, value) => value!.Add(function));
-
-            LogRegisterAggregate(function);
-            var aggregateFunctionInstance = factory.Invoke();
-            _aggregateFunctions.TryAdd(functionName, aggregateFunctionInstance);
-        }
-    }
 
     #endregion
 
     /// <inheritdoc />
-    public bool TryFindByName(
+    public IFunction[] FindByName(
         string name,
-        FunctionCallArgumentsTypes? functionArgumentsTypes,
-        out IFunction[] functions)
+        FunctionCallArgumentsTypes? functionArgumentsTypes = null)
     {
-        functions = [];
-        name = NormalizeName(name);
+        name = FunctionFormatter.NormalizeName(name);
 
-        if (!_functions.TryGetValue(name, out var outFunctions) && !TryGetPreRegistration(name, out outFunctions))
+        if (!_functions.TryGetValue(name, out var outFunctions))
         {
-            if (!TryFindAggregateByName(name, out _))
-            {
-                return false;
-            }
-            if (!_functions.TryGetValue(name, out outFunctions))
-            {
-                return false;
-            }
+            return [];
         }
 
         if (functionArgumentsTypes == null)
         {
-            functions = outFunctions.ToArray();
-            return true;
+            return outFunctions.ToArray();
         }
 
         foreach (var func in outFunctions)
         {
             if (func.MatchesToArguments(functionArgumentsTypes))
             {
-                functions = [func];
-                return true;
+                return [func];
             }
         }
 
-        return false;
-    }
-
-    /// <inheritdoc />
-    public bool TryFindAggregateByName(string name, out IAggregateFunction aggregateFunction)
-    {
-        name = NormalizeName(name);
-        if (_aggregateFunctions.TryGetValue(name, out aggregateFunction!))
-        {
-            return true;
-        }
-
-        while (_registerAggregateFunctionsLastIndex < _registerAggregateFunctions.Count)
-        {
-            _registerAggregateFunctions[_registerAggregateFunctionsLastIndex++].Invoke(this);
-            if (_aggregateFunctions.TryGetValue(name, out aggregateFunction!))
-            {
-                return true;
-            }
-        }
-
-        return false;
+        return [];
     }
 
     /// <summary>
@@ -302,23 +126,16 @@ public sealed partial class DefaultFunctionsManager : IFunctionsManager
         {
             yield return function;
         }
-
-        foreach (var functionItem in _functionsPreRegistration)
-        {
-            if (TryFindByName(functionItem.Key, null, out var functions))
-            {
-                foreach (var function in functions)
-                {
-                    yield return function;
-                }
-            }
-        }
     }
 
     /// <inheritdoc />
-    public VariantValue CallFunction(IFunction function, IExecutionThread executionThread, FunctionCallArguments callArguments)
+    public async ValueTask<VariantValue> CallFunctionAsync(
+        IFunction function,
+        IExecutionThread executionThread,
+        FunctionCallArguments callArguments,
+        CancellationToken cancellationToken = default)
     {
-        int positionalIndex = 0;
+        var positionalIndex = 0;
 
         var frame = executionThread.Stack.CreateFrame();
         foreach (var argument in function.Arguments)
@@ -339,26 +156,11 @@ public sealed partial class DefaultFunctionsManager : IFunctionsManager
             }
         }
 
-        var result = function.Delegate.Invoke(executionThread);
+        var result = await FunctionCaller.CallAsync(function.Delegate, executionThread, cancellationToken);
         frame.Dispose();
         return result;
     }
 
-    private static string NormalizeName(string target) => target.ToUpperInvariant();
-
-    private static string GetFunctionName(string signature)
-    {
-        var indexOfLeftParen = signature.IndexOf('(', StringComparison.InvariantCulture);
-        if (indexOfLeftParen < 0)
-        {
-            return NormalizeName(signature);
-        }
-        return NormalizeName(signature[..indexOfLeftParen]);
-    }
-
-    [LoggerMessage(LogLevel.Debug, "Register function: {Function}.")]
-    private partial void LogRegisterFunction(Function function);
-
-    [LoggerMessage(LogLevel.Debug, "Register aggregate: {Function}.")]
-    private partial void LogRegisterAggregate(Function function);
+    [LoggerMessage(LogLevel.Trace, "Register function: {FunctionName}.")]
+    private partial void LogRegisterFunction(string functionName);
 }

@@ -31,7 +31,10 @@ internal static class KeyConditionSingleValueGeneratorExtensions
             }
             while (await multipleValuesGenerator.MoveNextAsync(thread, cancellationToken))
             {
-                values.Add(multipleValuesGenerator.Get(thread));
+                if (multipleValuesGenerator.TryGet(thread, out var value))
+                {
+                    values.Add(value);
+                }
             }
             multipleValuesGenerator.Reset();
 
@@ -44,6 +47,6 @@ internal static class KeyConditionSingleValueGeneratorExtensions
             return values.ToArray();
         }
 
-        return [generator.Get(thread)];
+        return generator.TryGet(thread, out var variantValue) ? [variantValue] : [];
     }
 }

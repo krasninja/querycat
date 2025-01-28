@@ -60,8 +60,7 @@ public sealed class RowsIteratorInput : IRowsInput, IRowsIteratorParent
     /// <inheritdoc />
     public Task ResetAsync(CancellationToken cancellationToken = default)
     {
-        _rowsIterator.Reset();
-        return Task.CompletedTask;
+        return _rowsIterator.ResetAsync(cancellationToken);
     }
 
     /// <inheritdoc />

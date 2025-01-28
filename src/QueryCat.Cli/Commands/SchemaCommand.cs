@@ -1,6 +1,7 @@
 using System.CommandLine;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
+using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Functions;
@@ -32,9 +33,12 @@ internal class SchemaCommand : BaseQueryCommand
                     && result.AsObject is IRowsSchema rowsSchema)
                 {
                     threadArgs.ContinueExecution = false;
-                    var schema = thread.CallFunction(InfoFunctions.Schema, rowsSchema);
-                    thread.TopScope.Variables["result"] = schema;
-                    AsyncUtils.RunSync(ct => thread.RunAsync("result", cancellationToken: ct));
+                    AsyncUtils.RunSync(async (ct) =>
+                    {
+                        var schema = await FunctionCaller.CallWithArgumentsAsync(InfoFunctions.Schema, thread, [rowsSchema]);
+                        thread.TopScope.Variables["result"] = schema;
+                        await thread.RunAsync("result", cancellationToken: ct);
+                    });
                 }
             };
             AddVariables(thread, variables);

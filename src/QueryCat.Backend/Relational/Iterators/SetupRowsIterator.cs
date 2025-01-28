@@ -48,9 +48,10 @@ internal class SetupRowsIterator : IRowsIterator, IRowsIteratorParent
     }
 
     /// <inheritdoc />
-    public void Reset()
+    public Task ResetAsync(CancellationToken cancellationToken = default)
     {
         _isInitialized = false;
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />

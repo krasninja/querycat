@@ -62,5 +62,11 @@ namespace QueryCat.Cli.Resources {
                 return ResourceManager.GetString("CannotDefineVariable", resourceCulture);
             }
         }
+        
+        internal static string CannotExtractFromArchvie {
+            get {
+                return ResourceManager.GetString("CannotExtractFromArchvie", resourceCulture);
+            }
+        }
     }
 }

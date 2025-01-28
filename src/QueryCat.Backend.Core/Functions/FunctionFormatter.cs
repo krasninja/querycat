@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Reflection;
 using System.Text;
 using QueryCat.Backend.Core.Data;
@@ -7,23 +8,30 @@ using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend.Core.Functions;
 
+/// <summary>
+/// Various format methods for functions maintenance (common naming, arguments formatting, etc).
+/// </summary>
 internal static class FunctionFormatter
 {
-    public static string FormatSignatureFromParameters(string name, ParameterInfo[] parameterInfos, Type outputType)
+    internal static string GetSignatureFromParameters(string name, ParameterInfo[] parameterInfos, Type outputType)
     {
         var sb = new StringBuilder();
         sb.Append(name);
         sb.Append('(');
-        for (var i = 0; i < parameterInfos.Length; i++)
+
+        var parametersList = new List<string>(capacity: parameterInfos.Length);
+        foreach (var parameterInfo in parameterInfos)
         {
-            sb.Append(ToSnakeCase(parameterInfos[i].Name ?? string.Empty))
-                .Append(": ")
-                .Append(GetTypeName(parameterInfos[i].ParameterType));
-            if (i < parameterInfos.Length - 1)
+            if (typeof(IExecutionThread).IsAssignableFrom(parameterInfo.ParameterType)
+                || parameterInfo.ParameterType == typeof(CancellationToken))
             {
-                sb.Append(", ");
+                continue;
             }
+
+            var paramName = $"{ToSnakeCase(parameterInfo.Name)}: {GetTypeName(parameterInfo.ParameterType)}";
+            parametersList.Add(paramName);
         }
+        sb.Append(string.Join(", ", parametersList));
         sb.Append("): ");
         sb.Append(GetTypeName(outputType));
 
@@ -79,8 +87,13 @@ internal static class FunctionFormatter
         return dataType.ToString();
     }
 
-    public static string ToSnakeCase(string target)
+    internal static string ToSnakeCase(string? target = null)
     {
+        if (string.IsNullOrEmpty(target))
+        {
+            return string.Empty;
+        }
+
         // Based on https://stackoverflow.com/questions/63055621/how-to-convert-camel-case-to-snake-case-with-two-capitals-next-to-each-other.
         var sb = new StringBuilder(capacity: target.Length)
             .Append(char.ToLower(target[0]));
@@ -100,62 +113,78 @@ internal static class FunctionFormatter
         return sb.ToString();
     }
 
-    internal static FunctionDelegate CreateDelegateFromMethod(MethodBase method)
+    /// <summary>
+    /// Format signature from functions instance.
+    /// </summary>
+    /// <param name="function">Instance of <see cref="IFunction" />.</param>
+    /// <returns>Function signature.</returns>
+    internal static string GetSignature(IFunction function) => GetSignature(function, forceLowerCase: false);
+
+    /// <summary>
+    /// Format signature from functions instance.
+    /// </summary>
+    /// <param name="function">Instance of <see cref="IFunction" />.</param>
+    /// <param name="forceLowerCase">Force lower case mode for function name and arguments.</param>
+    /// <returns>Function signature.</returns>
+    internal static string GetSignature(IFunction function, bool forceLowerCase)
     {
-        VariantValue FunctionDelegate(IExecutionThread thread)
+        var sb = new StringBuilder();
+        sb.Append(forceLowerCase ? function.Name.ToLowerInvariant() : function.Name)
+            .Append('(');
+        var i = 0;
+        foreach (var argument in function.Arguments)
         {
-            var parameters = method.GetParameters();
-            var arr = new object?[parameters.Length];
-            for (var i = 0; i < parameters.Length; i++)
+            if (argument.IsVariadic)
             {
-                var parameter = parameters[i];
-
-                if (typeof(IExecutionThread).IsAssignableFrom(parameter.ParameterType))
-                {
-                    arr[i] = thread;
-                }
-                else if (parameter.ParameterType == typeof(CancellationToken))
-                {
-                    arr[i] = CancellationToken.None;
-                }
-                else if (thread.Stack.FrameLength > i)
-                {
-                    arr[i] = Converter.ConvertValue(thread.Stack[i], parameter.ParameterType);
-                }
-                else if (parameter.HasDefaultValue)
-                {
-                    arr[i] = parameter.DefaultValue;
-                }
-                else
-                {
-                    throw new InvalidOperationException($"Cannot set parameter index {i} for method '{method}'.");
-                }
+                sb.Append("...");
             }
-            var result = method is ConstructorInfo constructorInfo
-                ? constructorInfo.Invoke(arr)
-                : method.Invoke(null, arr);
-
-            // If result is awaitable - try to wait.
-            if (result is Task task)
+            sb.Append(forceLowerCase ? argument.Name.ToLowerInvariant() : argument.Name);
+            if (argument.IsOptional)
             {
-                AsyncUtils.RunSync(() => task);
-                if (method is MethodInfo methodInfo
-                    && methodInfo.ReturnType.IsGenericType)
-                {
-                    var resultProperty = task.GetType().GetProperty("Result");
-                    if (resultProperty != null)
-                    {
-                        result = resultProperty.GetValue(task);
-                    }
-                }
-                else
-                {
-                    result = VariantValue.Null;
-                }
+                sb.Append('?');
             }
-            return VariantValue.CreateFromObject(result);
+            sb.Append(": ");
+            sb.Append(argument.Type);
+            if (argument.HasDefaultValue && !argument.DefaultValue.IsNull)
+            {
+                sb.Append($" := {ValueToString(argument.DefaultValue)}");
+            }
+
+            i++;
+            if (i < function.Arguments.Length)
+            {
+                sb.Append(", ");
+            }
         }
+        sb.Append(')');
 
-        return FunctionDelegate;
+        sb.Append(": ");
+        sb.Append(function.ReturnType);
+        if (!string.IsNullOrEmpty(function.ReturnObjectName))
+        {
+            sb.Append('<');
+            sb.Append(function.ReturnObjectName);
+            sb.Append('>');
+        }
+        return sb.ToString();
     }
+
+    internal static string ValueToString(VariantValue value) => value.Type switch
+    {
+        DataType.String => Quote(value.AsStringUnsafe),
+        DataType.Timestamp => Quote(value.AsTimestampUnsafe.ToString(Application.Culture)) + "::timestamp",
+        DataType.Interval => Quote(value.AsIntervalUnsafe.ToString("c", Application.Culture)) + "::interval",
+        DataType.Object => Quote($"[object:{value.AsObjectUnsafe?.GetType().Name}]"),
+        DataType.Blob => "E" + Quote(value.ToString(CultureInfo.InvariantCulture)),
+        _ => value.ToString(CultureInfo.InvariantCulture),
+    };
+
+    private static string Quote(string target) => StringUtils.Quote(target, quote: "\'").ToString();
+
+    /// <summary>
+    /// Normalize function name. Make it uppercase.
+    /// </summary>
+    /// <param name="target">Target function name.</param>
+    /// <returns>Normalized name.</returns>
+    internal static string NormalizeName(string target) => target.ToUpperInvariant();
 }

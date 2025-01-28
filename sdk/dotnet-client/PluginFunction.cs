@@ -7,18 +7,13 @@ namespace QueryCat.Plugins.Client;
 /// <summary>
 /// Simplified function representation for plugin manager.
 /// </summary>
-public sealed class PluginFunction : IFunction
+internal sealed class PluginFunction : IFunction
 {
     /// <inheritdoc />
-    public FunctionDelegate Delegate { get; }
+    public Delegate Delegate { get; }
 
     /// <inheritdoc />
     public string Name { get; }
-
-    /// <summary>
-    /// Function signature.
-    /// </summary>
-    public string Signature { get; }
 
     /// <inheritdoc />
     public string Description { get; set; } = string.Empty;
@@ -27,24 +22,37 @@ public sealed class PluginFunction : IFunction
     public DataType ReturnType { get; set; } = DataType.Void;
 
     /// <inheritdoc />
-    public string ReturnObjectName => string.Empty;
+    public string ReturnObjectName { get; set; } = string.Empty;
 
     /// <inheritdoc />
-    public bool IsAggregate => false;
+    public bool IsAggregate { get; set; }
 
     /// <inheritdoc />
     public FunctionSignatureArgument[] Arguments { get; set; } = [];
 
     /// <inheritdoc />
-    public bool IsSafe { get; internal set; }
+    public bool IsSafe { get; set; }
 
-    public string[] FormatterIdentifiers { get; }
+    /// <inheritdoc />
+    public string[] Formatters { get; set; } = [];
 
-    public PluginFunction(string name, string signature, FunctionDelegate @delegate, string[]? formatterIdentifiers = null)
+    /// <summary>
+    /// Function full signature.
+    /// </summary>
+    public string Signature { get; set; }
+
+    public PluginFunction(Delegate @delegate, string signature, FunctionMetadata? metadata = null)
     {
-        Name = name;
-        Signature = signature;
         Delegate = @delegate;
-        FormatterIdentifiers = formatterIdentifiers ?? [];
+        Signature = signature;
+        if (metadata != null)
+        {
+            Description = metadata.Description;
+            IsSafe = metadata.IsSafe;
+            IsAggregate = metadata.IsAggregate;
+            Formatters = metadata.Formatters;
+        }
+        var firstBracketIndex = signature.IndexOf('(');
+        Name = firstBracketIndex > -1 ? signature.Substring(0, firstBracketIndex).ToUpperInvariant() : "Unknown";
     }
 }

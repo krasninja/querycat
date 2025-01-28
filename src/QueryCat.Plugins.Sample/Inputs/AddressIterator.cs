@@ -65,9 +65,10 @@ internal sealed class AddressIterator : IRowsIterator
     }
 
     /// <inheritdoc />
-    public void Reset()
+    public Task ResetAsync(CancellationToken cancellationToken = default)
     {
         _currentIndex = 0;
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />

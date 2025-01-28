@@ -20,4 +20,11 @@ public interface IRowsInputKeys : IRowsInput
     /// <param name="value">The value.</param>
     /// <param name="operation">Key operation.</param>
     void SetKeyColumnValue(int columnIndex, VariantValue value, VariantValue.Operation operation);
+
+    /// <summary>
+    /// Unset the key for a specific column index and operation.
+    /// </summary>
+    /// <param name="columnIndex">Column index.</param>
+    /// <param name="operation">Operation.</param>
+    void UnsetKeyColumnValue(int columnIndex, VariantValue.Operation operation);
 }

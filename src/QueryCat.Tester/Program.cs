@@ -5,6 +5,9 @@ using System.Text;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend;
 using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Execution;
+using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Formatters;
 using QueryCat.Backend.Storage;
 
@@ -17,7 +20,25 @@ public class Program
 {
     private static readonly Lazy<ILogger> _logger = new(() => Application.LoggerFactory.CreateLogger(nameof(Program)));
 
-    public static int Main(string[] args)
+    private static readonly Option<string[]> _pluginFilesOption = new("--plugin-files",
+        description: "Plugin files.")
+        {
+            AllowMultipleArgumentsPerToken = true,
+        };
+
+    private static readonly Argument<string> _queryArgument = new("query",
+        description: "SQL-like query or command argument.");
+
+    private static readonly Option<string[]> _filesOption = new(["-f", "--files"],
+        description: "SQL files to execute.")
+        {
+            AllowMultipleArgumentsPerToken = true,
+        };
+
+    private static readonly Option<string[]> _variablesOption = new("--var",
+        description: "Pass variables.");
+
+    public static async Task<int> Main(string[] args)
     {
         if (args.Length < 1)
         {
@@ -25,40 +46,31 @@ public class Program
         }
 
         var rootCommand = new RootCommand("QueryCat Tester");
-        var pluginFilesOption = new Option<string[]>("--plugin-files",
-            description: "Plugin files.")
-        {
-            AllowMultipleArgumentsPerToken = true,
-        };
-        var queryArgument = new Argument<string>("query",
-            description: "SQL-like query or command argument.",
-            getDefaultValue: () => string.Empty);
-        var filesOption = new Option<string[]>(["-f", "--files"],
-            description: "SQL files to execute.")
-            {
-                AllowMultipleArgumentsPerToken = true,
-            };
 
-        rootCommand.AddOption(pluginFilesOption);
-        rootCommand.AddOption(filesOption);
-        rootCommand.AddArgument(queryArgument);
+        rootCommand.AddOption(_pluginFilesOption);
+        rootCommand.AddOption(_filesOption);
+        rootCommand.AddArgument(_queryArgument);
+        rootCommand.AddOption(_variablesOption);
 
         rootCommand.SetHandler(
             Run,
-            queryArgument,
-            pluginFilesOption,
-            filesOption);
+            _queryArgument,
+            _pluginFilesOption,
+            _filesOption,
+            _variablesOption);
 
         var parser = new CommandLineBuilder(rootCommand)
             .UseVersionOption("-v", "--version")
             .UseDefaults()
             .Build();
-        var returnCode = parser.Parse(args).Invoke();
+        var returnCode = await parser.Parse(args).InvokeAsync();
         return returnCode;
     }
 
-    public static void Run(string query, string[] pluginDirectories, string[] files)
+    private static async Task Run(string query, string[] pluginDirectories, string[] files, string[] variables)
     {
+        InitializeLogger();
+
         var workingDirectoryPlugins = Directory.GetFiles(Environment.CurrentDirectory, "*.dll");
         var outputStringBuilder = new StringBuilder();
         var options = new ExecutionOptions
@@ -77,18 +89,58 @@ public class Program
                 thread.FunctionsManager))
             .Create();
 
+        AddVariables(executionThread, variables);
+
         if (files.Any())
         {
             foreach (var file in files)
             {
-                var fileContent = File.ReadAllText(file);
-                executionThread.Run(fileContent);
+                var fileContent = await File.ReadAllTextAsync(file);
+                await executionThread.RunAsync(fileContent);
             }
         }
         else
         {
-            executionThread.Run(query);
+            await executionThread.RunAsync(query);
         }
-        Console.Out.WriteLine(outputStringBuilder);
+        await Console.Out.WriteLineAsync(outputStringBuilder);
+    }
+
+    public static void AddVariables(IExecutionThread executionThread, string[]? variables = null)
+    {
+        if (variables == null || !variables.Any())
+        {
+            return;
+        }
+
+        foreach (var variable in variables)
+        {
+            var arr = StringUtils.GetFieldsFromLine(variable, '=');
+            if (arr.Count != 2)
+            {
+                continue;
+            }
+            var name = arr[0];
+            var stringValue = arr[1];
+            var targetType = DataTypeUtils.DetermineTypeByValue(stringValue);
+            if (!VariantValue.TryCreateFromString(stringValue, targetType, out var value))
+            {
+                continue;
+            }
+            executionThread.TopScope.Variables[name] = value.Cast(targetType);
+        }
+    }
+
+    /// <summary>
+    /// Pre initialization step for logger.
+    /// </summary>
+    private static void InitializeLogger()
+    {
+        Application.LoggerFactory = new LoggerFactory(
+            providers: [new SimpleConsoleLoggerProvider()],
+            new LoggerFilterOptions
+            {
+                MinLevel = LogLevel.Trace,
+            });
     }
 }

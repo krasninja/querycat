@@ -22,8 +22,16 @@ internal sealed class KeyConditionValueGeneratorArray : IKeyConditionMultipleVal
     }
 
     /// <inheritdoc />
-    public VariantValue Get(IExecutionThread thread)
-        => _currentIndex < _values.Length ? _values[_currentIndex].Invoke(thread) : VariantValue.Null;
+    public bool TryGet(IExecutionThread thread, out VariantValue value)
+    {
+        if (_currentIndex < _values.Length)
+        {
+            value = _values[_currentIndex].Invoke(thread);
+            return true;
+        }
+        value = VariantValue.Null;
+        return false;
+    }
 
     /// <inheritdoc />
     public ValueTask<bool> MoveNextAsync(IExecutionThread thread, CancellationToken cancellationToken = default)

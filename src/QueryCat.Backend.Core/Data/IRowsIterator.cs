@@ -22,7 +22,9 @@ public interface IRowsIterator : IRowsSchema
     /// <summary>
     /// Sets the iterator to its initial position.
     /// </summary>
-    void Reset();
+    /// <param name="cancellationToken">A cancellation token to observe.</param>
+    /// <returns>Awaitable task.</returns>
+    Task ResetAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Write explain information about the current iterator.

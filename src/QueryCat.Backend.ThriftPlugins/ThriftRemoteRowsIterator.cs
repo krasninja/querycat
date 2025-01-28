@@ -138,6 +138,13 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys
     }
 
     /// <inheritdoc />
+    public void UnsetKeyColumnValue(int columnIndex, VariantValue.Operation operation)
+    {
+        AsyncUtils.RunSync(ct =>
+            _client.RowsSet_UnsetKeyColumnValueAsync(_objectHandle, columnIndex, operation.ToString(), ct));
+    }
+
+    /// <inheritdoc />
     public void Explain(IndentedStringBuilder stringBuilder)
     {
         stringBuilder.AppendLine($"Remote (handle={_objectHandle}, id={_id})");

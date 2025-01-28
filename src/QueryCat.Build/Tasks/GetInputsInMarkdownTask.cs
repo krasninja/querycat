@@ -7,6 +7,7 @@ using QueryCat.Backend;
 using QueryCat.Backend.AssemblyPlugins;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Build.Tasks;
@@ -17,10 +18,10 @@ public sealed class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(GetInputsInMarkdownTask));
 
     private static readonly string[] _excludeList =
-    {
+    [
         "read_file",
-        "read_text",
-    };
+        "read_text"
+    ];
 
     private sealed class CollectQueryContext : QueryContext
     {
@@ -32,6 +33,9 @@ public sealed class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
     public override async Task RunAsync(BuildContext context)
     {
         var targetFile = context.Arguments.GetArgument("File");
+        var outDirectory = context.Arguments.HasArgument("Out")
+            ? context.Arguments.GetArgument("Out")
+            : context.OutputDirectory;
         var loader = context.Arguments.GetArgument("Loader");
 
         // Create thread and load plugin.
@@ -69,13 +73,17 @@ public sealed class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
             .OrderBy(f => f.Name)
             .ToList();
         var sb = new StringBuilder()
-            .AppendLine("# Schema")
-            .AppendLine();
+            .AppendLine("# Schema");
+        if (pluginFunctions.Any())
+        {
+            sb.AppendLine();
+        }
 
         // Prepare TOC.
         foreach (var inputFunction in pluginFunctions)
         {
-            sb.AppendLine($"- [{inputFunction.Name}](#{inputFunction.Name})");
+            var name = inputFunction.Name.ToLowerInvariant();
+            sb.AppendLine($"- [{name}](#{name})");
         }
 
         // Iterate and write whole schema.
@@ -90,7 +98,8 @@ public sealed class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
                 {
                     frame.Push(VariantValue.Null);
                 }
-                rowsInput = inputFunction.Delegate.Invoke(Executor.Thread).As<IRowsInputKeys?>()!;
+                rowsInput = (await FunctionCaller.CallAsync(inputFunction.Delegate, Executor.Thread))
+                    .As<IRowsInputKeys?>()!;
                 rowsInput.QueryContext = queryContext;
                 await rowsInput.OpenAsync();
             }
@@ -102,13 +111,13 @@ public sealed class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
             }
 
             sb
-                .AppendLine($"\n## **{inputFunction.Name}**")
+                .AppendLine($"\n## **{inputFunction.Name.ToLowerInvariant()}**")
                 .AppendLine("\n```")
-                .AppendLine(inputFunction.ToString())
+                .AppendLine(FunctionFormatter.GetSignature(inputFunction, forceLowerCase: true))
                 .AppendLine("```\n")
                 .AppendLine(inputFunction.Description)
-                .AppendLine("\n| Name | Type | Required | Description |")
-                .AppendLine("| --- | --- | --- | --- |");
+                .AppendLine("\n| Name | Type | Key | Required | Description |")
+                .AppendLine("| --- | --- | --- | --- | --- |");
             for (var i = 0; i < rowsInput.Columns.Length; i++)
             {
                 var column = rowsInput.Columns[i];
@@ -118,15 +127,21 @@ public sealed class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
                 }
                 var inputColumn =
                     rowsInput.GetKeyColumns().FirstOrDefault(c => rowsInput.Columns[c.ColumnIndex] == column);
+                var isKey = inputColumn != null;
                 if (inputColumn == null)
                 {
                     inputColumn = new KeyColumn(i);
                 }
-                sb.AppendLine($"| `{column.Name}` | `{column.DataType}` | {(inputColumn.IsRequired ? "yes" : string.Empty)} | {column.Description} |");
+                sb.Append($"| `{column.Name}`" )
+                    .Append($"| `{column.DataType}` ")
+                    .Append($"| {(isKey ? "yes" : string.Empty)} ")
+                    .Append($"| {(inputColumn.IsRequired ? "yes" : string.Empty)} ")
+                    .Append($"| {column.Description}");
+                sb.AppendLine(" |");
             }
         }
 
-        var file = Path.Combine(context.OutputDirectory, "plugin.md");
+        var file = Path.Combine(outDirectory, "Schema.md");
         await File.WriteAllTextAsync(file, sb.ToString());
         context.Log.Information($"Wrote to {file}.");
 

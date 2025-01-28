@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Declare;
@@ -78,7 +79,7 @@ internal class QueryAstVisitor : AstVisitor
         }
         else
         {
-            value = node.Value.ToString();
+            value = node.Value.ToString(CultureInfo.InvariantCulture);
         }
         Set(node, value);
     }

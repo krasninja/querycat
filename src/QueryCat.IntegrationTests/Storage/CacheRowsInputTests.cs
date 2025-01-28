@@ -27,7 +27,7 @@ public class CacheRowsInputTests
         // Act.
         await iterator.MoveNextAsync(); // 2 total and 1 cache read.
         await iterator.MoveNextAsync(); // 2 total and 1 cache read.
-        iterator.Reset();
+        await iterator.ResetAsync();
         await iterator.MoveNextAsync(); // 1 total and 1 cache read.
         await iterator.MoveNextAsync(); // 1 total and 1 cache read.
 
@@ -51,7 +51,7 @@ public class CacheRowsInputTests
         // Act.
         await iterator.MoveNextAsync(); // 2 total and 1 cache read.
         await iterator.MoveNextAsync(); // 2 total and 1 cache read.
-        iterator.Reset();
+        await iterator.ResetAsync();
         await iterator.MoveNextAsync(); // 2 total and 1 cache read.
         await iterator.MoveNextAsync(); // 1 total and 1 cache read.
         await iterator.MoveNextAsync(); // 1 total and 1 cache read.

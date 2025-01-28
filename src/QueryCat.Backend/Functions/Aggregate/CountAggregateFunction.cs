@@ -22,6 +22,9 @@ internal sealed class CountAggregateFunction : IAggregateFunction
     }
 
     /// <inheritdoc />
+    public static IAggregateFunction CreateInstance() => new CountAggregateFunction();
+
+    /// <inheritdoc />
     public VariantValue[] GetInitialState(DataType type) => [new(0)];
 
     /// <inheritdoc />

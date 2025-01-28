@@ -113,8 +113,14 @@ internal sealed class SetKeysRowsInput : RowsInput, IRowsInputKeys
             {
                 hasMoreMultipleValues = await multipleValuesGenerator.MoveNextAsync(_thread, cancellationToken);
             }
-            var value = conditionJoint.Condition.Generator.Get(_thread);
-            _rowsInput.SetKeyColumnValue(conditionJoint.ColumnIndex, value, conditionJoint.Condition.Operation);
+            if (conditionJoint.Condition.Generator.TryGet(_thread, out var value))
+            {
+                _rowsInput.SetKeyColumnValue(conditionJoint.ColumnIndex, value, conditionJoint.Condition.Operation);
+            }
+            else
+            {
+                _rowsInput.UnsetKeyColumnValue(conditionJoint.ColumnIndex, conditionJoint.Condition.Operation);
+            }
         }
 
         return hasMoreMultipleValues;
@@ -157,6 +163,12 @@ internal sealed class SetKeysRowsInput : RowsInput, IRowsInputKeys
     public void SetKeyColumnValue(int columnIndex, VariantValue value, VariantValue.Operation operation)
     {
         // Do not passthru set key value calls.
+    }
+
+    /// <inheritdoc />
+    public void UnsetKeyColumnValue(int columnIndex, VariantValue.Operation operation)
+    {
+        // Do not passthru key value calls.
     }
 
     /// <inheritdoc />

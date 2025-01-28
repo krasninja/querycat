@@ -1,6 +1,7 @@
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
+using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Formatters;
 
@@ -9,7 +10,7 @@ namespace QueryCat.Backend.Formatters;
 /// </summary>
 public static class FormattersInfo
 {
-    private static readonly Dictionary<string, Func<IFunctionsManager, IExecutionThread, FunctionCallArguments, IRowsFormatter>> Formatters
+    private static readonly Dictionary<string, Func<IFunctionsManager, IExecutionThread, FunctionCallArguments, ValueTask<VariantValue>>> Formatters
         = new(capacity: 64);
 
     /// <summary>
@@ -18,12 +19,18 @@ public static class FormattersInfo
     /// <param name="id">File extension or content type.</param>
     /// <param name="thread">Execution thread.</param>
     /// <param name="args">Arguments.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Instance of <see cref="IRowsFormatter" /> or null.</returns>
-    public static IRowsFormatter? CreateFormatter(string id, IExecutionThread thread, FunctionCallArguments? args = null)
+    public static async ValueTask<IRowsFormatter?> CreateFormatterAsync(
+        string id,
+        IExecutionThread thread,
+        FunctionCallArguments? args = null,
+        CancellationToken cancellationToken = default)
     {
         if (Formatters.TryGetValue(id.ToLower(), out var factory))
         {
-            return factory.Invoke(thread.FunctionsManager, thread, args ?? new FunctionCallArguments());
+            var value = await factory.Invoke(thread.FunctionsManager, thread, args ?? new FunctionCallArguments());
+            return value.AsRequired<IRowsFormatter>();
         }
         return null;
     }
@@ -32,9 +39,9 @@ public static class FormattersInfo
     /// Register formatter.
     /// </summary>
     /// <param name="id">Identifier (file extension or content type).</param>
-    /// <param name="formatterFunc">Delegate to create formatter.</param>
+    /// <param name="formatterFunc">Delegate to create formatter. It must return the object of type <see cref="IRowsFormatter" />.</param>
     public static void RegisterFormatter(string id,
-        Func<IFunctionsManager, IExecutionThread, FunctionCallArguments, IRowsFormatter> formatterFunc)
+        Func<IFunctionsManager, IExecutionThread, FunctionCallArguments, ValueTask<VariantValue>> formatterFunc)
     {
         Formatters[id] = formatterFunc;
     }

@@ -275,4 +275,13 @@ internal sealed class CacheRowsInput : IRowsInputKeys
             rowsInputKeys.SetKeyColumnValue(columnIndex, value, operation);
         }
     }
+
+    /// <inheritdoc />
+    public void UnsetKeyColumnValue(int columnIndex, VariantValue.Operation operation)
+    {
+        if (_rowsInput is IRowsInputKeys rowsInputKeys)
+        {
+            rowsInputKeys.UnsetKeyColumnValue(columnIndex, operation);
+        }
+    }
 }

@@ -140,5 +140,47 @@ namespace QueryCat.Backend.Core.Resources {
                 return ResourceManager.GetString("InvalidColumnType", resourceCulture);
             }
         }
+        
+        internal static string CannotGetColumnFromExpression {
+            get {
+                return ResourceManager.GetString("CannotGetColumnFromExpression", resourceCulture);
+            }
+        }
+        
+        internal static string CannotSetParameterIndexFromMethod {
+            get {
+                return ResourceManager.GetString("CannotSetParameterIndexFromMethod", resourceCulture);
+            }
+        }
+        
+        internal static string VariadicMustBeArray {
+            get {
+                return ResourceManager.GetString("VariadicMustBeArray", resourceCulture);
+            }
+        }
+        
+        internal static string FunctionWithMoreThanOneSignature {
+            get {
+                return ResourceManager.GetString("FunctionWithMoreThanOneSignature", resourceCulture);
+            }
+        }
+        
+        internal static string CannotParseInterval {
+            get {
+                return ResourceManager.GetString("CannotParseInterval", resourceCulture);
+            }
+        }
+        
+        internal static string AndShouldNotBeWithinBetweenOperation {
+            get {
+                return ResourceManager.GetString("AndShouldNotBeWithinBetweenOperation", resourceCulture);
+            }
+        }
+        
+        internal static string InvalidNumberOfItems {
+            get {
+                return ResourceManager.GetString("InvalidNumberOfItems", resourceCulture);
+            }
+        }
     }
 }

@@ -121,10 +121,10 @@ internal sealed class CombineRowsIterator : IRowsIterator, IRowsIteratorParent
     }
 
     /// <inheritdoc />
-    public void Reset()
+    public async Task ResetAsync(CancellationToken cancellationToken = default)
     {
-        _leftIterator.Reset();
-        _rightIterator.Reset();
+        await _leftIterator.ResetAsync(cancellationToken);
+        await _rightIterator.ResetAsync(cancellationToken);
         _distinctValues.Clear();
         _rightRows.Clear();
         _isRightInitialized = false;

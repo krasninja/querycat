@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.Text;
-using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Commands;
@@ -10,7 +9,6 @@ using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Plugins;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Storage;
 
@@ -19,7 +17,7 @@ namespace QueryCat.Backend.Execution;
 /// <summary>
 /// Execution thread that includes statements to be executed, local variables, options and statistic.
 /// </summary>
-public class ExecutionThread : IExecutionThread<ExecutionOptions>
+public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>
 {
     internal const string ApplicationDirectory = "qcat";
     internal const string BootstrapFileName = "rc.sql";
@@ -38,7 +36,6 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
     private bool _bootstrapScriptExecuted;
     private bool _configLoaded;
     private readonly Stopwatch _stopwatch = new();
-    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(ExecutionThread));
 
     /// <summary>
     /// Root (base) thread scope.
@@ -119,7 +116,7 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
         return directory;
     }
 
-    internal ExecutionThread(
+    internal DefaultExecutionThread(
         ExecutionOptions options,
         IFunctionsManager functionsManager,
         IObjectSelector objectSelector,
@@ -146,7 +143,7 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
     /// Copy constructor.
     /// </summary>
     /// <param name="executionThread">Execution thread to copy from.</param>
-    public ExecutionThread(ExecutionThread executionThread) :
+    public DefaultExecutionThread(DefaultExecutionThread executionThread) :
         this(executionThread.Options,
             executionThread.FunctionsManager,
             executionThread.ObjectSelector,
@@ -178,7 +175,6 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
         try
         {
             CurrentQuery = query;
-            var programNode = AstBuilder.BuildProgramFromString(query);
 
             // Bootstrap.
             _deepLevel++;
@@ -193,31 +189,11 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
                     string.Format(Resources.Errors.ExecutionMaxRecursionDepth, Options.MaxRecursionDepth));
             }
 
-            // Set first executing statement and run.
-            var executingStatement = programNode.Statements.FirstOrDefault();
-
-            // Setup timer.
-            if (_deepLevel == 1)
-            {
-                _stopwatch.Restart();
-            }
-
-            if (executingStatement == null)
-            {
-                return VariantValue.Null;
-            }
-            if (parameters != null)
-            {
-                var scope = PushScope();
-                SetScopeVariables(scope, parameters);
-            }
-            return Options.QueryTimeout != TimeSpan.Zero
-                ? await RunWithTimeoutAsync(ct => RunInternalAsync(executingStatement, ct), cancellationToken)
-                : await RunInternalAsync(executingStatement, cancellationToken);
+            return await RunInternalAsync(query, parameters, cancellationToken);
         }
         finally
         {
-            if (parameters != null)
+            if (parameters != null && parameters.Keys.Count > 0)
             {
                 PopScope();
             }
@@ -263,7 +239,7 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
 
     private async Task<T> RunWithTimeoutAsync<T>(Func<CancellationToken, Task<T>> func, CancellationToken cancellationToken)
     {
-        var task = func(cancellationToken);
+        var task = func.Invoke(cancellationToken);
         if (task.IsCompleted)
         {
             return task.Result;
@@ -271,7 +247,37 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
         return await task.WaitAsync(Options.QueryTimeout, cancellationToken);
     }
 
-    private async Task<VariantValue> RunInternalAsync(StatementNode executingStatement, CancellationToken cancellationToken)
+    private async Task<VariantValue> RunInternalAsync(
+        string query,
+        IDictionary<string, VariantValue>? parameters = null,
+        CancellationToken cancellationToken = default)
+    {
+        var programNode = AstBuilder.BuildProgramFromString(query);
+
+        // Set first executing statement and run.
+        var executingStatement = programNode.Statements.FirstOrDefault();
+
+        // Setup timer.
+        if (_deepLevel == 1)
+        {
+            _stopwatch.Restart();
+        }
+
+        if (executingStatement == null)
+        {
+            return VariantValue.Null;
+        }
+        if (parameters != null && parameters.Keys.Count > 0)
+        {
+            var scope = PushScope();
+            SetScopeVariables(scope, parameters);
+        }
+        return Options.QueryTimeout != TimeSpan.Zero
+            ? await RunWithTimeoutAsync(ct => ExecuteStatementAsync(executingStatement, ct), cancellationToken)
+            : await ExecuteStatementAsync(executingStatement, cancellationToken);
+    }
+
+    private async Task<VariantValue> ExecuteStatementAsync(StatementNode executingStatement, CancellationToken cancellationToken)
     {
         var executeEventArgs = new ExecuteEventArgs(executingStatement);
         StatementNode? currentStatement = executingStatement;
@@ -409,11 +415,11 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
         return CompletionSource.Get(context).OrderByDescending(c => c.Completion.Relevance);
     }
 
-    private Task Write(VariantValue result, CancellationToken cancellationToken)
+    private async Task Write(VariantValue result, CancellationToken cancellationToken)
     {
         if (result.IsNull)
         {
-            return Task.CompletedTask;
+            return;
         }
         var iterator = RowsIteratorConverter.Convert(result);
         var rowsOutput = Options.DefaultRowsOutput;
@@ -422,8 +428,8 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
         {
             rowsOutput = alternateRowsOutput;
         }
-        rowsOutput.ResetAsync();
-        return WriteAsync(rowsOutput, iterator, cancellationToken);
+        await rowsOutput.ResetAsync(cancellationToken);
+        await WriteAsync(rowsOutput, iterator, cancellationToken);
     }
 
     private async Task WriteAsync(
@@ -528,14 +534,14 @@ public class ExecutionThread : IExecutionThread<ExecutionOptions>
             if (File.Exists(rcFile))
             {
                 var query = await File.ReadAllTextAsync(rcFile, cancellationToken);
-                await RunAsync(query, cancellationToken: cancellationToken);
+                await RunInternalAsync(query, cancellationToken: cancellationToken);
             }
 
             rcFile = Path.Combine(Directory.GetCurrentDirectory(), BootstrapFileName);
             if (File.Exists(rcFile))
             {
                 var query = await File.ReadAllTextAsync(rcFile, cancellationToken);
-                await RunAsync(query, cancellationToken: cancellationToken);
+                await RunInternalAsync(query, cancellationToken: cancellationToken);
             }
         }
     }

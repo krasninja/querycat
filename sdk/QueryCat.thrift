@@ -107,6 +107,12 @@ enum QueryCatErrorCode {
   INVALID_INPUT_STATE = 103
 }
 
+enum CursorSeekOrigin {
+  BEGIN = 0,
+  CURRENT = 1,
+  END = 2
+}
+
 exception QueryCatPluginException {
   1: required ErrorType type,
   2: required string error_message,
@@ -143,8 +149,7 @@ struct PluginData {
 }
 
 struct RegistrationResult {
-  1: required string version, // QueryCat version.
-  2: required list<i32> functions_ids // Registered functions identifiers.
+  1: required string version // QueryCat version.
 }
 
 service PluginsManager {
@@ -241,9 +246,6 @@ service Plugin {
     3: Handle object_handle // Optional. It is used to call function of a specific object.
   ) throws (1: QueryCatPluginException e),
 
-  // Initialize plugin.
-  void Initialize() throws (1: QueryCatPluginException e),
-
   // Shutdown plugin. This should release all objects.
   void Shutdown() throws (1: QueryCatPluginException e),
 
@@ -269,6 +271,26 @@ service Plugin {
   // Supported objects: ROWS_INPUT, ROWS_ITERATOR, ROWS_OUTPUT.
   void RowsSet_Reset(
     1: required Handle object_handle
+  ) throws (1: QueryCatPluginException e),
+
+  // Current cursor position.
+  // Supported objects: ROWS_ITERATOR with cursor support (ICursorRowsIterator).
+  i32 RowsSet_Position(
+    1: required Handle object_handle
+  ) throws (1: QueryCatPluginException e),
+
+  // Total rows.
+  // Supported objects: ROWS_ITERATOR with cursor support (ICursorRowsIterator).
+  i32 RowsSet_TotalRows(
+    1: required Handle object_handle
+  ) throws (1: QueryCatPluginException e),
+
+  // Move cursor to the specific position. -1 is the special initial position.
+  // Supported objects: ROWS_ITERATOR with cursor support (ICursorRowsIterator).
+  void RowsSet_Seek(
+    1: required Handle object_handle,
+    2: required i32 offset,
+    3: required CursorSeekOrigin origin
   ) throws (1: QueryCatPluginException e),
 
   // Set context for rows set.
@@ -305,6 +327,14 @@ service Plugin {
     2: required i32 column_index,
     3: required string operation,
     4: required VariantValue value
+  ),
+
+  // Unset value for a key column.
+  // Supported objects: ROWS_INPUT with keys columns support (IRowsInputKeys).
+  void RowsSet_UnsetKeyColumnValue(
+    1: required Handle object_handle,
+    2: required i32 column_index,
+    3: required string operation
   ),
 
   // Update the rows set value.

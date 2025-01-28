@@ -151,9 +151,9 @@ public class RowsInputIterator : IRowsIterator, IRowsIteratorParent, IDisposable
     }
 
     /// <inheritdoc />
-    public void Reset()
+    public async Task ResetAsync(CancellationToken cancellationToken = default)
     {
-        AsyncUtils.RunSync(_rowsInput.ResetAsync);
+        await _rowsInput.ResetAsync(cancellationToken);
         if (!_isInitialized)
         {
             return;

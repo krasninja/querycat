@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Plugins.Sdk;
@@ -14,7 +15,10 @@ namespace QueryCat.Plugins.Client;
 /// </summary>
 public sealed class PluginFunctionsManager : IFunctionsManager
 {
-    private readonly Dictionary<string, PluginFunction> _functions = new();
+    private readonly Dictionary<string, IFunction> _functions = new();
+
+    /// <inheritdoc />
+    public FunctionsFactory Factory { get; } = new PluginFunctionsFactory();
 
     /// <inheritdoc />
     public IFunction ResolveUri(string uri)
@@ -23,53 +27,22 @@ public sealed class PluginFunctionsManager : IFunctionsManager
     }
 
     /// <inheritdoc />
-    public void RegisterAggregate<TAggregate>(Func<TAggregate> factory)
-        where TAggregate : IAggregateFunction
+    public void RegisterFunction(IFunction function)
     {
-        throw ThrowNotImplementedException();
+        _functions[function.Name] = function;
     }
 
     /// <inheritdoc />
-    public string RegisterFunction(
-        string signature,
-        FunctionDelegate @delegate,
-        string? description = null,
-        string[]? formatterIds = null)
+    public IFunction[] FindByName(
+        string name,
+        FunctionCallArgumentsTypes? functionArgumentsTypes = null)
     {
-        var firstBracketIndex = signature.IndexOf('(');
-        if (firstBracketIndex < 0)
+        name = FunctionFormatter.NormalizeName(name);
+        if (_functions.TryGetValue(name, out var functionInfo))
         {
-            return string.Empty;
+            return [functionInfo];
         }
-        var name = signature.Substring(0, firstBracketIndex).ToUpper();
-        _functions[name] = new PluginFunction(
-            name,
-            signature,
-            @delegate,
-            formatterIds)
-        {
-            Description = description ?? string.Empty,
-            IsSafe = @delegate.Method.GetCustomAttribute<SafeFunctionAttribute>() != null,
-        };
-        return name;
-    }
-
-    /// <inheritdoc />
-    public bool TryFindByName(string name, FunctionCallArgumentsTypes? functionArgumentsTypes, out IFunction[] functions)
-    {
-        if (_functions.TryGetValue(name.ToUpper(), out var functionInfo))
-        {
-            functions = [functionInfo];
-            return true;
-        }
-        functions = [];
-        return false;
-    }
-
-    /// <inheritdoc />
-    public bool TryFindAggregateByName(string name, out IAggregateFunction? aggregateFunction)
-    {
-        throw ThrowNotImplementedException();
+        return [];
     }
 
     /// <inheritdoc />
@@ -79,10 +52,14 @@ public sealed class PluginFunctionsManager : IFunctionsManager
     /// Get all functions signatures.
     /// </summary>
     /// <returns>Signatures strings.</returns>
-    public IEnumerable<PluginFunction> GetPluginFunctions() => _functions.Values;
+    public IEnumerable<IFunction> GetPluginFunctions() => _functions.Values;
 
     /// <inheritdoc />
-    public VariantValue CallFunction(IFunction function, IExecutionThread executionThread, FunctionCallArguments callArguments)
+    public ValueTask<VariantValue> CallFunctionAsync(
+        IFunction function,
+        IExecutionThread executionThread,
+        FunctionCallArguments callArguments,
+        CancellationToken cancellationToken = default)
     {
         throw ThrowNotImplementedException();
     }

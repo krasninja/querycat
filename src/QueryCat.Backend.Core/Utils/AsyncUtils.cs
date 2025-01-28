@@ -202,15 +202,6 @@ public static class AsyncUtils
     }
 
     /// <summary>
-    /// Executes an async ValueTask method.
-    /// </summary>
-    /// <param name="task">Task.</param>
-    public static void RunSync(Func<ValueTask> task)
-    {
-        task.Invoke().GetAwaiter().GetResult();
-    }
-
-    /// <summary>
     /// Converts async enumerable into list.
     /// </summary>
     /// <param name="items">Async enumerable.</param>

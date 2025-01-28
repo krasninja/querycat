@@ -10,11 +10,11 @@ namespace QueryCat.Benchmarks;
 /// </summary>
 public class Program
 {
-    public static int Main(string[] args)
+    public static async Task<int> Main(string[] args)
     {
         if (args.Length < 1)
         {
-            args = new[] { "-h" };
+            args = ["-h"];
         }
 
         // Root.
@@ -29,6 +29,6 @@ public class Program
             .UseVersionOption("-v", "--version")
             .UseDefaults()
             .Build();
-        return parser.Parse(args).Invoke();
+        return await parser.Parse(args).InvokeAsync();
     }
 }

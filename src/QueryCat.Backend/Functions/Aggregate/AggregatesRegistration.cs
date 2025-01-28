@@ -9,14 +9,14 @@ internal static class AggregatesRegistration
 {
     public static void RegisterFunctions(IFunctionsManager functionsManager)
     {
-        functionsManager.RegisterAggregate(() => new AvgAggregateFunction());
-        functionsManager.RegisterAggregate(() => new CountAggregateFunction());
-        functionsManager.RegisterAggregate(() => new FirstValueAggregateFunction());
-        functionsManager.RegisterAggregate(() => new LastValueAggregateFunction());
-        functionsManager.RegisterAggregate(() => new MaxAggregateFunction());
-        functionsManager.RegisterAggregate(() => new MinAggregateFunction());
-        functionsManager.RegisterAggregate(() => new SumAggregateFunction());
-        functionsManager.RegisterAggregate(() => new StringAggAggregateFunction());
-        functionsManager.RegisterAggregate(() => new RowNumberAggregateFunction());
+        functionsManager.RegisterFunctions(functionsManager.Factory.CreateAggregateFromType<AvgAggregateFunction>());
+        functionsManager.RegisterFunctions(functionsManager.Factory.CreateAggregateFromType<CountAggregateFunction>());
+        functionsManager.RegisterFunctions(functionsManager.Factory.CreateAggregateFromType<FirstValueAggregateFunction>());
+        functionsManager.RegisterFunctions(functionsManager.Factory.CreateAggregateFromType<LastValueAggregateFunction>());
+        functionsManager.RegisterFunctions(functionsManager.Factory.CreateAggregateFromType<MaxAggregateFunction>());
+        functionsManager.RegisterFunctions(functionsManager.Factory.CreateAggregateFromType<MinAggregateFunction>());
+        functionsManager.RegisterFunctions(functionsManager.Factory.CreateAggregateFromType<SumAggregateFunction>());
+        functionsManager.RegisterFunctions(functionsManager.Factory.CreateAggregateFromType<StringAggAggregateFunction>());
+        functionsManager.RegisterFunctions(functionsManager.Factory.CreateAggregateFromType<RowNumberAggregateFunction>());
     }
 }

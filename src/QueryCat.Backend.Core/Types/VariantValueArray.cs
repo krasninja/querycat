@@ -1,11 +1,9 @@
-using System.Text;
-
 namespace QueryCat.Backend.Core.Types;
 
 /// <summary>
 /// Array of <see cref="VariantValue" /> with Equals, GetHashCode implementation.
 /// </summary>
-public readonly struct VariantValueArray(params VariantValue[] values)
+public readonly struct VariantValueArray(params VariantValue[] values) : IEquatable<VariantValueArray>
 {
     public static VariantValueArray Empty { get; } = new(0);
 
@@ -17,7 +15,7 @@ public readonly struct VariantValueArray(params VariantValue[] values)
     {
     }
 
-    internal VariantValueArray(int size) : this(new VariantValue[size])
+    private VariantValueArray(int size) : this(new VariantValue[size])
     {
     }
 
@@ -35,24 +33,25 @@ public readonly struct VariantValueArray(params VariantValue[] values)
     }
 
     /// <inheritdoc />
-    public override bool Equals(object? obj) => obj is VariantValueArray other && Equals(other);
-
-    public bool Equals(in VariantValueArray obj)
+    public bool Equals(VariantValueArray other)
     {
-        if (obj._values.Length != _values.Length)
+        if (other._values.Length != _values.Length)
         {
             return false;
         }
 
         for (var i = 0; i < _values.Length; i++)
         {
-            if (!obj._values[i].Equals(_values[i]))
+            if (!other._values[i].Equals(_values[i]))
             {
                 return false;
             }
         }
         return true;
     }
+
+    /// <inheritdoc />
+    public override bool Equals(object? obj) => obj is VariantValueArray other && Equals(other);
 
     /// <inheritdoc />
     public override int GetHashCode()
@@ -66,19 +65,7 @@ public readonly struct VariantValueArray(params VariantValue[] values)
     }
 
     /// <inheritdoc />
-    public override string ToString()
-    {
-        var sb = new StringBuilder();
-        for (int i = 0; i < _values.Length; i++)
-        {
-            sb.Append(_values[i].ToString());
-            if (i < _values.Length - 1)
-            {
-                sb.Append("; ");
-            }
-        }
-        return sb.ToString();
-    }
+    public override string ToString() => string.Join("; ", _values);
 
     public static bool operator ==(VariantValueArray left, VariantValueArray right)
         => left.Equals(right);

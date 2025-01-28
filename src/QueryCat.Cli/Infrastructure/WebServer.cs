@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
+using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Execution;
@@ -44,7 +45,7 @@ internal sealed partial class WebServer
 
     internal sealed class WebServerReply : Dictionary<string, object>;
 
-    public WebServer(ExecutionThread executionThread, WebServerOptions options)
+    public WebServer(DefaultExecutionThread executionThread, WebServerOptions options)
     {
         _actions = new Dictionary<string, Func<HttpListenerRequest, HttpListenerResponse, CancellationToken, Task>>
         {
@@ -83,8 +84,16 @@ internal sealed partial class WebServer
 
         while (true)
         {
-            var context = await listener.GetContextAsync();
-            await HandleRequestAsync(context, cancellationToken);
+            try
+            {
+                var context = await listener.GetContextAsync().WaitAsync(cancellationToken)
+                    .ConfigureAwait(false);
+                await HandleRequestAsync(context, cancellationToken);
+            }
+            catch (TaskCanceledException)
+            {
+                break;
+            }
         }
         // ReSharper disable once FunctionNeverReturns
     }
@@ -220,16 +229,20 @@ internal sealed partial class WebServer
         var query = GetQueryDataFromRequest(request);
         _logger.LogInformation("[{Address}] Schema: {Query}", request.RemoteEndPoint.Address, query);
 
-        var thread = (ExecutionThread)_executionThread;
+        var thread = (DefaultExecutionThread)_executionThread;
         void ThreadOnStatementExecuted(object? sender, ExecuteEventArgs e)
         {
             var result = thread.LastResult;
             if (!result.IsNull && result.Type == DataType.Object
                 && result.AsObject is IRowsSchema rowsSchema)
             {
-                var schema = thread.CallFunction(Backend.Functions.InfoFunctions.Schema, rowsSchema);
-                AsyncUtils.RunSync(() =>
-                    WriteIteratorAsync(RowsIteratorConverter.Convert(schema), request, response, cancellationToken));
+                AsyncUtils.RunSync(async (ct) =>
+                {
+                    var schema = await FunctionCaller.CallWithArgumentsAsync(Backend.Functions.InfoFunctions.Schema, thread,
+                        [rowsSchema], cancellationToken: ct);
+                    await WriteIteratorAsync(RowsIteratorConverter.Convert(schema), request, response,
+                        ct);
+                });
                 e.ContinueExecution = false;
             }
         }

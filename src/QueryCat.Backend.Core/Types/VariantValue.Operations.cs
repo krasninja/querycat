@@ -385,7 +385,7 @@ public readonly partial struct VariantValue
 
     public static VariantValue BetweenAnd(in VariantValue left, in VariantValue right, out ErrorCode errorCode)
     {
-        throw new InvalidOperationException("AND operation should not be evaluated within BETWEEN expression!");
+        throw new InvalidOperationException(Resources.Errors.AndShouldNotBeWithinBetweenOperation);
     }
 
     public static VariantValue Like(in VariantValue left, in VariantValue right, out ErrorCode errorCode)

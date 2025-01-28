@@ -1,7 +1,3 @@
-using System.ComponentModel;
-using System.Diagnostics.CodeAnalysis;
-using System.Linq.Expressions;
-using System.Reflection;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
 
@@ -15,140 +11,50 @@ public static class FunctionsManagerExtensions
     #region Registration
 
     /// <summary>
-    /// Register function.
+    /// Register multiple functions.
     /// </summary>
     /// <param name="functionsManager">Instance of <see cref="IFunctionsManager" />.</param>
-    /// <param name="functionDelegate">Function delegate.</param>
-    public static void RegisterFunction(this IFunctionsManager functionsManager, FunctionDelegate functionDelegate)
+    /// <param name="functions">Functions to register.</param>
+    public static void RegisterFunctions(this IFunctionsManager functionsManager, IEnumerable<IFunction> functions)
     {
-        var methodAttributes = Attribute.GetCustomAttributes(functionDelegate.Method, typeof(FunctionSignatureAttribute));
-        if (methodAttributes.Length < 1)
+        foreach (var function in functions)
         {
-            throw new QueryCatException($"Delegate must have '{nameof(FunctionSignatureAttribute)}'.");
-        }
-
-        foreach (var attribute in methodAttributes)
-        {
-            var methodAttribute = (FunctionSignatureAttribute)attribute;
-            var descriptionAttribute = functionDelegate.Method.GetCustomAttribute<DescriptionAttribute>();
-            var formatterAttribute = functionDelegate.Method.GetCustomAttribute<FunctionFormattersAttribute>();
-            functionsManager.RegisterFunction(
-                methodAttribute.Signature,
-                functionDelegate,
-                description: descriptionAttribute != null ? descriptionAttribute.Description : string.Empty,
-                formatterIds: formatterAttribute?.FormatterIds);
+            functionsManager.RegisterFunction(function);
         }
     }
 
     /// <summary>
-    /// Register function.
+    /// Register function from delegate.
     /// </summary>
     /// <param name="functionsManager">Instance of <see cref="IFunctionsManager" />.</param>
-    /// <param name="functionDelegate">Function delegate.</param>
+    /// <param name="functionDelegate">Delegate.</param>
     public static void RegisterFunction(this IFunctionsManager functionsManager, Delegate functionDelegate)
-        => RegisterFunctionFromMethodInfo(functionsManager, functionDelegate.Method);
+    {
+        functionsManager.RegisterFunctions(functionsManager.Factory.CreateFromDelegate(functionDelegate));
+    }
 
     /// <summary>
-    /// Register type methods as functions.
+    /// Register function from delegate.
     /// </summary>
     /// <param name="functionsManager">Instance of <see cref="IFunctionsManager" />.</param>
-    /// <param name="type">Target type.</param>
-    public static void RegisterFromType(
+    /// <param name="functionDelegate">Delegate.</param>
+    public static void RegisterFunction(
         this IFunctionsManager functionsManager,
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicMethods)] Type type)
+        Func<IExecutionThread, VariantValue> functionDelegate)
     {
-        // Try to register class as function.
-        var classAttributes = Attribute.GetCustomAttributes(type, typeof(FunctionSignatureAttribute));
-        if (classAttributes.Any())
-        {
-            foreach (var classAttribute in classAttributes)
-            {
-                var firstConstructor = type.GetConstructors(BindingFlags.Public | BindingFlags.Instance).FirstOrDefault();
-                if (firstConstructor != null)
-                {
-                    var functionName = GetFunctionName(((FunctionSignatureAttribute)classAttribute).Signature, type);
-                    if (string.IsNullOrEmpty(functionName))
-                    {
-                        continue;
-                    }
-                    var signature = FunctionFormatter.FormatSignatureFromParameters(functionName, firstConstructor.GetParameters(), type);
-                    var @delegate = FunctionFormatter.CreateDelegateFromMethod(firstConstructor);
-                    var description = type.GetCustomAttribute<DescriptionAttribute>()?.Description ?? string.Empty;
-                    functionsManager.RegisterFunction(signature, @delegate, description);
-                }
-            }
-            return;
-        }
-
-        // Try to register aggregates from type.
-        if (typeof(IAggregateFunction).IsAssignableFrom(type))
-        {
-            functionsManager.RegisterAggregate(() => (IAggregateFunction)Activator.CreateInstance(type)!);
-            return;
-        }
-
-        // Try to register methods from type.
-        var methods = type.GetMethods(BindingFlags.Static | BindingFlags.Public);
-        foreach (var method in methods)
-        {
-            var methodSignature = method.GetCustomAttributes<FunctionSignatureAttribute>().FirstOrDefault();
-            if (methodSignature == null)
-            {
-                continue;
-            }
-
-            var methodParameters = method.GetParameters();
-            // The standard case: VariantValue FunctionName(IExecutionThread thread).
-            if (methodParameters.Length == 1
-                && methodParameters[0].ParameterType == typeof(IExecutionThread)
-                && method.ReturnType == typeof(VariantValue))
-            {
-                var args = Expression.Parameter(typeof(IExecutionThread), "input");
-                var func = Expression.Lambda<FunctionDelegate>(Expression.Call(method, args), args).Compile();
-                var description = method.GetCustomAttribute<DescriptionAttribute>()?.Description;
-                functionsManager.RegisterFunction(methodSignature.Signature, func, description);
-            }
-            // Non-standard case. Construct signature from function definition.
-            else
-            {
-                RegisterFunctionFromMethodInfo(functionsManager, method);
-            }
-        }
+        functionsManager.RegisterFunctions(functionsManager.Factory.CreateFromDelegate(functionDelegate));
     }
 
-    private static void RegisterFunctionFromMethodInfo(this IFunctionsManager functionsManager, MethodInfo method)
+    /// <summary>
+    /// Register function from delegate.
+    /// </summary>
+    /// <param name="functionsManager">Instance of <see cref="IFunctionsManager" />.</param>
+    /// <param name="functionDelegate">Delegate.</param>
+    public static void RegisterFunction(
+        this IFunctionsManager functionsManager,
+        Func<IExecutionThread, CancellationToken, ValueTask<VariantValue>> functionDelegate)
     {
-        var methodSignature = method.GetCustomAttributes<FunctionSignatureAttribute>().FirstOrDefault();
-        if (methodSignature == null)
-        {
-            return;
-        }
-
-        var description = method.GetCustomAttribute<DescriptionAttribute>()?.Description ?? string.Empty;
-        var functionName = GetFunctionName(methodSignature.Signature, method);
-        var signature = FunctionFormatter.FormatSignatureFromParameters(functionName, method.GetParameters(), method.ReturnType);
-        var @delegate = FunctionFormatter.CreateDelegateFromMethod(method);
-        functionsManager.RegisterFunction(signature, @delegate, description);
-    }
-
-    private static string GetFunctionName(string signature, MemberInfo memberInfo)
-    {
-        var functionName = GetFunctionName(signature);
-        if (functionName.Length < 1)
-        {
-            functionName = FunctionFormatter.ToSnakeCase(memberInfo.Name);
-        }
-        return functionName.ToString();
-    }
-
-    private static ReadOnlySpan<char> GetFunctionName(string signature)
-    {
-        var indexOfLeftParen = signature.IndexOf('(', StringComparison.Ordinal);
-        if (indexOfLeftParen < 0)
-        {
-            return signature;
-        }
-        return signature.AsSpan()[..indexOfLeftParen];
+        functionsManager.RegisterFunctions(functionsManager.Factory.CreateFromDelegate(functionDelegate));
     }
 
     #endregion
@@ -162,18 +68,20 @@ public static class FunctionsManagerExtensions
     /// <param name="name">Function name.</param>
     /// <param name="functionArgumentsTypes">Argument types to find. Can be used to find the specific overload.</param>
     /// <returns>Instance of <see cref="IFunction" />.</returns>
-    public static IFunction FindByName(
+    public static IFunction FindByNameFirst(
         this IFunctionsManager functionsManager,
         string name,
         FunctionCallArgumentsTypes? functionArgumentsTypes = null)
     {
-        if (functionsManager.TryFindByName(name, functionArgumentsTypes, out var functions))
+        var functions = functionsManager.FindByName(name, functionArgumentsTypes);
+        if (functions.Length > 0)
         {
             if (functions.Length > 1 && functionArgumentsTypes != null)
             {
-                throw new QueryCatException($"There is more than one signature for function '{name}'.");
+                throw new QueryCatException(
+                    string.Format(Resources.Errors.FunctionWithMoreThanOneSignature, name));
             }
-            return functions.First();
+            return functions[0];
         }
         if (functionArgumentsTypes != null)
         {
@@ -190,9 +98,19 @@ public static class FunctionsManagerExtensions
     /// <returns>Found aggregate function.</returns>
     public static IAggregateFunction FindAggregateByName(this IFunctionsManager functionsManager, string name)
     {
-        if (functionsManager.TryFindAggregateByName(name, out var aggregateFunction) && aggregateFunction != null)
+        name = FunctionFormatter.NormalizeName(name);
+        var functions = functionsManager.FindByName(name);
+        if (functions.Length > 0)
         {
-            return aggregateFunction;
+            foreach (var function in functions)
+            {
+                if (!function.IsAggregate)
+                {
+                    continue;
+                }
+                var value = (VariantValue)functions[0].Delegate.DynamicInvoke(NullExecutionThread.Instance)!;
+                return value.AsRequired<IAggregateFunction>();
+            }
         }
 
         throw new CannotFindFunctionException(name);
@@ -207,15 +125,17 @@ public static class FunctionsManagerExtensions
     /// <param name="functionName">Function name.</param>
     /// <param name="executionThread">Execution thread.</param>
     /// <param name="arguments">Arguments to pass.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Result.</returns>
-    public static VariantValue CallFunction(
+    public static ValueTask<VariantValue> CallFunctionAsync(
         this IFunctionsManager functionsManager,
         string functionName,
         IExecutionThread executionThread,
-        FunctionCallArguments? arguments = null)
+        FunctionCallArguments? arguments = null,
+        CancellationToken cancellationToken = default)
     {
         arguments ??= FunctionCallArguments.Empty;
-        var function = functionsManager.FindByName(functionName, arguments.GetTypes());
-        return functionsManager.CallFunction(function, executionThread, arguments);
+        var function = functionsManager.FindByNameFirst(functionName, arguments.GetTypes());
+        return functionsManager.CallFunctionAsync(function, executionThread, arguments, cancellationToken);
     }
 }

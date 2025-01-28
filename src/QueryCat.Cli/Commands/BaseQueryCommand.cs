@@ -29,7 +29,7 @@ internal abstract class BaseQueryCommand : BaseCommand
         Add(VariablesOption);
     }
 
-    public async Task RunQueryAsync(
+    internal static async Task RunQueryAsync(
         IExecutionThread executionThread,
         string query,
         string[] files,
@@ -49,7 +49,7 @@ internal abstract class BaseQueryCommand : BaseCommand
         }
     }
 
-    private async Task RunWithPluginsInstall(IExecutionThread executionThread, string query, CancellationToken cancellationToken)
+    private static async Task RunWithPluginsInstall(IExecutionThread executionThread, string query, CancellationToken cancellationToken)
     {
 #if ENABLE_PLUGINS && PLUGIN_THRIFT
         try
@@ -69,7 +69,7 @@ internal abstract class BaseQueryCommand : BaseCommand
 #endif
     }
 
-    public void AddVariables(IExecutionThread executionThread, string[]? variables = null)
+    internal static void AddVariables(IExecutionThread executionThread, string[]? variables = null)
     {
         if (variables == null || !variables.Any())
         {

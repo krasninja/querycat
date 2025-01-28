@@ -74,7 +74,7 @@ internal sealed class MultiplyRowsIterator : IRowsIterator, IRowsIteratorParent
             {
                 return false;
             }
-            _leftRowsFrameIterator.Reset();
+            await _leftRowsFrameIterator.ResetAsync(cancellationToken);
             await _leftRowsFrameIterator.MoveNextAsync(cancellationToken);
         }
         Row.Copy(_currentLeftIterator.Current, _currentRow);
@@ -84,10 +84,10 @@ internal sealed class MultiplyRowsIterator : IRowsIterator, IRowsIteratorParent
     }
 
     /// <inheritdoc />
-    public void Reset()
+    public async Task ResetAsync(CancellationToken cancellationToken = default)
     {
-        _rightRowsIterator.Reset();
-        _leftRowsIterator.Reset();
+        await _rightRowsIterator.ResetAsync(cancellationToken);
+        await _leftRowsIterator.ResetAsync(cancellationToken);
     }
 
     /// <inheritdoc />

@@ -54,9 +54,9 @@ internal sealed class WriteRowsFrameIterator : IRowsIterator, IRowsIteratorParen
     }
 
     /// <inheritdoc />
-    public void Reset()
+    public Task ResetAsync(CancellationToken cancellationToken = default)
     {
-        _rowsIterator.Reset();
+        return _rowsIterator.ResetAsync(cancellationToken);
     }
 
     /// <inheritdoc />

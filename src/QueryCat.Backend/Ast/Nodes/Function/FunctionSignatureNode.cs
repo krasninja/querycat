@@ -1,3 +1,4 @@
+using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Ast.Nodes.Function;
@@ -34,7 +35,7 @@ internal sealed class FunctionSignatureNode : AstNode, IEquatable<FunctionSignat
         FunctionTypeNode returnTypeNode,
         IEnumerable<FunctionSignatureArgumentNode>? argumentNodes = null)
     {
-        Name = name;
+        Name = FunctionFormatter.NormalizeName(name);
         ReturnTypeNode = returnTypeNode;
         ArgumentNodes = argumentNodes != null ? argumentNodes.ToArray() : [];
     }

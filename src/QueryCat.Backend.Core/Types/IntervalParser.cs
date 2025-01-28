@@ -62,7 +62,7 @@ internal static class IntervalParser
             {
                 if (throwExceptions)
                 {
-                    throw new FormatException("Incorrect number of items for interval.");
+                    throw new FormatException(Resources.Errors.InvalidNumberOfItems);
                 }
                 return null;
             }
@@ -72,7 +72,7 @@ internal static class IntervalParser
             {
                 if (throwExceptions)
                 {
-                    throw new FormatException("Cannot parse interval as double.");
+                    throw new FormatException(Resources.Errors.CannotParseInterval);
                 }
                 return null;
             }
@@ -129,7 +129,7 @@ internal static class IntervalParser
         }
         if (throwExceptions)
         {
-            throw new FormatException("Cannot parse interval.");
+            throw new FormatException(Resources.Errors.CannotParseInterval);
         }
         return null;
     }

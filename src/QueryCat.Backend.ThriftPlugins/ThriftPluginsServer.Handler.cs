@@ -99,7 +99,7 @@ public partial class ThriftPluginsServer
                 foreach (var function in plugin_data.Functions)
                 {
                     context.Functions.Add(
-                        new PluginContextFunction(function.Signature, function.Description));
+                        new PluginContextFunction(function.Signature, function.Description, function.IsSafe, function.IsAggregate));
                 }
             }
             _thriftPluginsServer.RegisterPluginContext(context, auth_token);
@@ -108,17 +108,11 @@ public partial class ThriftPluginsServer
             _thriftPluginsServer.ConfirmAuthToken(auth_token);
             _thriftPluginsServer._logger.LogDebug("Registered plugin '{PluginName}'.", context.Name);
 
-            // Call init only in debug mode for now.
-            if (context.Client != null && _thriftPluginsServer.SkipTokenVerification)
-            {
-                await context.Client.InitializeAsync(cancellationToken);
-            }
-
             return CreateEmptyRegistrationResult();
         }
 
         private static RegistrationResult CreateEmptyRegistrationResult()
-            => new(Application.GetVersion(), new List<int>());
+            => new(Application.GetVersion());
 
         private async Task<PluginContext> CreateClientConnection(
             string callbackUri,
@@ -141,7 +135,7 @@ public partial class ThriftPluginsServer
         }
 
         /// <inheritdoc />
-        public Task<VariantValue> CallFunctionAsync(
+        public async Task<VariantValue> CallFunctionAsync(
             string function_name,
             List<VariantValue>? args,
             int object_handle,
@@ -154,10 +148,10 @@ public partial class ThriftPluginsServer
                 argsForFunction.Add(SdkConvert.Convert(arg));
             }
             var function = _thriftPluginsServer._executionThread
-                .FunctionsManager.FindByName(function_name, argsForFunction.GetTypes());
-            var result = _thriftPluginsServer._executionThread.FunctionsManager.CallFunction(
-                function, _thriftPluginsServer._executionThread, argsForFunction);
-            return Task.FromResult(SdkConvert.Convert(result));
+                .FunctionsManager.FindByNameFirst(function_name, argsForFunction.GetTypes());
+            var result = await _thriftPluginsServer._executionThread.FunctionsManager.CallFunctionAsync(
+                function, _thriftPluginsServer._executionThread, argsForFunction, cancellationToken);
+            return SdkConvert.Convert(result);
         }
 
         /// <inheritdoc />

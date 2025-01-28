@@ -55,10 +55,11 @@ public class SamplePluginRowsIterator : IRowsIterator
     }
 
     /// <inheritdoc />
-    public void Reset()
+    public Task ResetAsync(CancellationToken cancellationToken = default)
     {
-        Trace.WriteLine(nameof(Reset));
+        Trace.WriteLine(nameof(ResetAsync));
         _currentState = 0;
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />

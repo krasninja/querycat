@@ -32,8 +32,9 @@ internal sealed class EmptyIterator : IRowsIterator
         => ValueTask.FromResult(false);
 
     /// <inheritdoc />
-    public void Reset()
+    public Task ResetAsync(CancellationToken cancellationToken = default)
     {
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />

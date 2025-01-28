@@ -14,42 +14,31 @@ public sealed class NullFunctionsManager : IFunctionsManager
     public static NullFunctionsManager Instance { get; } = new();
 
     /// <inheritdoc />
+    public FunctionsFactory Factory => NullFunctionsFactory.Instance;
+
+    /// <inheritdoc />
     public IFunction? ResolveUri(string uri) => null;
 
     /// <inheritdoc />
-    public void RegisterAggregate<TAggregate>(Func<TAggregate> factory)
-        where TAggregate : IAggregateFunction
+    public void RegisterFunction(IFunction function)
     {
     }
 
     /// <inheritdoc />
-    public string RegisterFunction(
-        string signature,
-        FunctionDelegate @delegate,
-        string? description = null,
-        string[]? formatterIds = null)
+    public IFunction[] FindByName(
+        string name,
+        FunctionCallArgumentsTypes? functionArgumentsTypes = null)
     {
-        return string.Empty;
-    }
-
-    /// <inheritdoc />
-    public bool TryFindByName(string name, FunctionCallArgumentsTypes? functionArgumentsTypes, out IFunction[] functions)
-    {
-        functions = [];
-        return false;
-    }
-
-    /// <inheritdoc />
-    public bool TryFindAggregateByName(string name, out IAggregateFunction? aggregateFunction)
-    {
-        aggregateFunction = null;
-        return false;
+        return [];
     }
 
     /// <inheritdoc />
     public IEnumerable<IFunction> GetFunctions() => Array.Empty<IFunction>();
 
     /// <inheritdoc />
-    public VariantValue CallFunction(IFunction function, IExecutionThread executionThread,
-        FunctionCallArguments callArguments) => VariantValue.Null;
+    public ValueTask<VariantValue> CallFunctionAsync(
+        IFunction function,
+        IExecutionThread executionThread,
+        FunctionCallArguments callArguments,
+        CancellationToken cancellationToken = default) => ValueTask.FromResult(VariantValue.Null);
 }

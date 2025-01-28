@@ -10,7 +10,7 @@ public interface IFunction
     /// <summary>
     /// Invocation delegate.
     /// </summary>
-    FunctionDelegate Delegate { get; }
+    Delegate Delegate { get; }
 
     /// <summary>
     /// Function name.
@@ -46,4 +46,10 @@ public interface IFunction
     /// Does function has side effects (can write anything to the system).
     /// </summary>
     bool IsSafe { get; }
+
+    /// <summary>
+    /// File extensions and MIME types that can be processed by function.
+    /// It is applied only for rows sources.
+    /// </summary>
+    string[] Formatters { get; }
 }
