@@ -7,10 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Refactor functions manager interface.
+
 ### Added
 
 - Initial async functions support.
 - Add new Unset method for rows input keys.
+
+### Fixed
+
+- Various bugfixes.
 
 ## [0.9.0] - 2025-01-07
 
