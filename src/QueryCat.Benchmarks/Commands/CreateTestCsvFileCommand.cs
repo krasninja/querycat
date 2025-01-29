@@ -2,7 +2,6 @@ using System.CommandLine;
 using System.Diagnostics;
 using Bogus;
 using Bogus.DataSets;
-using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Formatters;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Storage;
