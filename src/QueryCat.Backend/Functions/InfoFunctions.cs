@@ -34,7 +34,7 @@ public static class InfoFunctions
     [SafeFunction]
     [Description("Return row input columns information.")]
     [FunctionSignature("_schema(input: object<IRowsInput>): object<IRowsIterator>")]
-    public static VariantValue Schema(IExecutionThread thread)
+    public static async ValueTask<VariantValue> Schema(IExecutionThread thread, CancellationToken cancellationToken)
     {
         var obj = thread.Stack[0].AsObject;
         Column[] columns;
@@ -45,7 +45,7 @@ public static class InfoFunctions
         }
         else if (obj is IRowsInput input)
         {
-            AsyncUtils.RunSync(input.OpenAsync);
+            await input.OpenAsync(cancellationToken);
             columns = input.Columns;
         }
         else
@@ -72,10 +72,10 @@ public static class InfoFunctions
     [SafeFunction]
     [Description("Return available plugins from repository.")]
     [FunctionSignature("_plugins(): object<IRowsInput>")]
-    public static VariantValue Plugins(IExecutionThread thread)
+    public static async ValueTask<VariantValue> Plugins(IExecutionThread thread, CancellationToken cancellationToken)
     {
-        var plugins = AsyncUtils.RunSync(ct => thread.PluginsManager.ListAsync(cancellationToken: ct));
-        var input = EnumerableRowsInput<PluginInfo>.FromSource(plugins!,
+        var plugins = await thread.PluginsManager.ListAsync(localOnly: false, cancellationToken);
+        var input = EnumerableRowsInput<PluginInfo>.FromSource(plugins,
             builder => builder
                 .AddProperty("name", p => p.Name)
                 .AddProperty("version", p => p.Version.ToString())

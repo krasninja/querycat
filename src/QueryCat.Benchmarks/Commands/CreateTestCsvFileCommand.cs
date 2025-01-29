@@ -37,7 +37,7 @@ internal class CreateTestCsvFileCommand : Command
                 var filePath = Path.Combine("../../..", UsersFileName); // Create at the project root.
                 var file = File.Create(filePath);
                 var output = new DsvFormatter(',').OpenOutput(file);
-                AsyncUtils.RunSync(output.OpenAsync);
+                await output.OpenAsync();
                 output.QueryContext = new RowsOutputQueryContext(rowsFrame.Columns);
                 for (var count = 0; count < NumberOfItems; count += ChunkSize)
                 {
