@@ -177,10 +177,8 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
         {
             if (IsMatchPlatform(pluginFile))
             {
-                if (LoadPluginSafe(pluginFile, cancellationToken))
-                {
-                    loadedPlugins.Add(pluginFile);
-                }
+                LoadPluginLazy(pluginFile, cancellationToken);
+                loadedPlugins.Add(pluginFile);
             }
         }
 

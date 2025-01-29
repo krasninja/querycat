@@ -35,7 +35,8 @@ public sealed class ObjectPropertiesCompletionSourceTests : IDisposable
     {
         _executionThread = new ExecutionThreadBootstrapper()
             .WithCompletionSource(new ObjectPropertiesCompletionSource())
-            .Create();
+            .CreateAsync()
+            .GetAwaiter().GetResult();
     }
 
     private class User

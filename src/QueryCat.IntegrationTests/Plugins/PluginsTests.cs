@@ -16,7 +16,8 @@ public sealed class PluginsTests : IDisposable
     public PluginsTests()
     {
         _testThread = TestThread.CreateBootstrapper()
-            .Create();
+            .CreateAsync()
+            .GetAwaiter().GetResult();
     }
 
     [Fact]

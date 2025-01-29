@@ -15,7 +15,8 @@ public sealed class MiscFunctionsTests : IDisposable
     public MiscFunctionsTests()
     {
         _testThread = TestThread.CreateBootstrapper()
-            .Create();
+            .CreateAsync()
+            .GetAwaiter().GetResult();
     }
 
     [Fact]

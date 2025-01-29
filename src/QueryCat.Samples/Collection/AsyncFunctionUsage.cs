@@ -27,7 +27,7 @@ internal class AsyncFunctionUsage : BaseUsage
     /// <inheritdoc />
     public override async Task RunAsync()
     {
-        var executionThread = new ExecutionThreadBootstrapper().Create();
+        using var executionThread = await new ExecutionThreadBootstrapper().CreateAsync();
         executionThread.FunctionsManager.RegisterFunction(AsyncDemo);
 
         var result = await executionThread.RunAsync("async_demo()");

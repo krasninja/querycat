@@ -17,7 +17,7 @@ internal class AstCommand : BaseQueryCommand
             var files = OptionsUtils.GetValueForOption(FilesOption, context);
 
             applicationOptions.InitializeLogger();
-            var root = applicationOptions.CreateApplicationRoot();
+            var root = await applicationOptions.CreateApplicationRootAsync();
             root.Thread.StatementExecuting += (_, threadArgs) =>
             {
                 Console.WriteLine(root.Thread.DumpAst(threadArgs));

@@ -17,7 +17,9 @@ public sealed class VariablesCompletionSourceTests : IDisposable
     {
         _executionThread = new ExecutionThreadBootstrapper()
             .WithCompletionSource(new VariablesCompletionSource())
-            .Create();
+            .CreateAsync()
+            .GetAwaiter()
+            .GetResult();
     }
 
     [Theory]

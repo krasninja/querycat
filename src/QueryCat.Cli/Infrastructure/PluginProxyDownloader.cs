@@ -79,7 +79,7 @@ internal sealed class PluginProxyDownloader
                 }
             }
         }
-        else if (Path.GetExtension(archiveFile).Equals(".zip"))
+        else if (archiveFile.EndsWith(".zip"))
         {
             using var zip = ZipFile.OpenRead(archiveFile);
             foreach (var entry in zip.Entries)

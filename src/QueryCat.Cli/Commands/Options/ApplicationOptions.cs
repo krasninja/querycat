@@ -2,7 +2,6 @@ using Microsoft.Extensions.Logging;
 using QueryCat.Backend;
 using QueryCat.Backend.Addons.Formatters;
 using QueryCat.Backend.Core;
-using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.PluginsManager;
 using QueryCat.Cli.Infrastructure;
@@ -24,20 +23,22 @@ internal sealed class ApplicationOptions
     public string[] PluginDirectories { get; init; } = [];
 #endif
 
-    public ApplicationRoot CreateApplicationRoot(AppExecutionOptions? executionOptions = null)
+    public async Task<ApplicationRoot> CreateApplicationRootAsync(
+        AppExecutionOptions? executionOptions = null,
+        CancellationToken cancellationToken = default)
     {
 #if ENABLE_PLUGINS && PLUGIN_THRIFT
         try
         {
-            return CreateApplicationRootInternal(executionOptions);
+            return await CreateApplicationRootInternalAsync(executionOptions, cancellationToken);
         }
         catch (Backend.ThriftPlugins.ProxyNotFoundException)
         {
-            AsyncUtils.RunSync(async ct => await InstallPluginsProxyAsync(cancellationToken: ct));
-            return CreateApplicationRootInternal(executionOptions);
+            await InstallPluginsProxyAsync(askUser: true, cancellationToken);
+            return await CreateApplicationRootInternalAsync(executionOptions, cancellationToken);
         }
 #else
-        return CreateApplicationRootInternal(executionOptions);
+        return await CreateApplicationRootInternalAsync(executionOptions, cancellationToken);
 #endif
     }
 
@@ -66,7 +67,9 @@ internal sealed class ApplicationOptions
 #endif
     }
 
-    private ApplicationRoot CreateApplicationRootInternal(AppExecutionOptions? executionOptions = null)
+    private async Task<ApplicationRoot> CreateApplicationRootInternalAsync(
+        AppExecutionOptions? executionOptions = null,
+        CancellationToken cancellationToken = default)
     {
         executionOptions ??= new AppExecutionOptions
         {
@@ -110,7 +113,7 @@ internal sealed class ApplicationOptions
             pluginsStorage: new S3PluginsStorage(executionOptions.PluginsRepositoryUri))
         );
 #endif
-        var thread = bootstrapper.Create();
+        var thread = await bootstrapper.CreateAsync(cancellationToken);
 
         return new ApplicationRoot(thread, thread.PluginsManager);
     }
@@ -131,12 +134,13 @@ internal sealed class ApplicationOptions
         ];
     }
 
-    public ApplicationRoot CreateStdoutApplicationRoot(
+    public async Task<ApplicationRoot> CreateStdoutApplicationRootAsync(
         AppExecutionOptions? executionOptions = null,
         string? columnsSeparator = null,
-        Backend.Formatters.TextTableOutput.Style outputStyle = Backend.Formatters.TextTableOutput.Style.Table1)
+        Backend.Formatters.TextTableOutput.Style outputStyle = Backend.Formatters.TextTableOutput.Style.Table1,
+        CancellationToken cancellationToken = default)
     {
-        var root = CreateApplicationRoot(executionOptions);
+        var root = await CreateApplicationRootAsync(executionOptions, cancellationToken);
         var tableOutput = new Backend.Formatters.TextTableOutput(
             stream: Stdio.GetConsoleOutput(),
             separator: columnsSeparator,

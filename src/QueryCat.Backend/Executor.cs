@@ -1,4 +1,5 @@
 using QueryCat.Backend.Core.Execution;
+using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend;
 
@@ -7,18 +8,33 @@ namespace QueryCat.Backend;
 /// </summary>
 public static class Executor
 {
-    private static readonly Lazy<IExecutionThread> _executionThreadLazy = new(Factory);
+    private static IExecutionThread? _executionThread;
+    private static readonly object _executionThreadLock = new();
 
     /// <summary>
     /// Execution thread.
     /// </summary>
-    public static IExecutionThread Thread => _executionThreadLazy.Value;
-
-    private static IExecutionThread Factory()
+    public static IExecutionThread Thread
     {
-        return new ExecutionThreadBootstrapper()
+        get
+        {
+            if (_executionThread != null)
+            {
+                return _executionThread;
+            }
+            lock (_executionThreadLock)
+            {
+                _executionThread = AsyncUtils.RunSync(() => FactoryAsync())!;
+            }
+            return _executionThread;
+        }
+    }
+
+    private static async Task<IExecutionThread> FactoryAsync(CancellationToken cancellationToken = default)
+    {
+        return await new ExecutionThreadBootstrapper()
             .WithStandardFunctions()
             .WithStandardUriResolvers()
-            .Create();
+            .CreateAsync(cancellationToken);
     }
 }

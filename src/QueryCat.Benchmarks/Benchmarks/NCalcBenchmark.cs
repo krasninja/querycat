@@ -29,7 +29,8 @@ public class NCalcBenchmark : IDisposable
     {
         _executionThread = new ExecutionThreadBootstrapper()
             .WithStandardFunctions()
-            .Create();
+            .CreateAsync()
+            .GetAwaiter().GetResult();
         _dataTable = new DataTable();
         _qcatQuery = GenerateQuery("power", "sqrt");
         _ncalcQuery = GenerateQuery("Pow", "Sqrt");

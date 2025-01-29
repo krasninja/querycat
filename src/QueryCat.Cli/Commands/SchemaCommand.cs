@@ -23,7 +23,7 @@ internal class SchemaCommand : BaseQueryCommand
             var files = OptionsUtils.GetValueForOption(FilesOption, context);
 
             applicationOptions.InitializeLogger();
-            var root = applicationOptions.CreateStdoutApplicationRoot();
+            var root = await applicationOptions.CreateStdoutApplicationRootAsync();
             var thread = root.Thread;
             thread.StatementExecuted += (_, threadArgs) =>
             {

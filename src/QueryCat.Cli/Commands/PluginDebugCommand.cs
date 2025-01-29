@@ -52,7 +52,7 @@ internal class PluginDebugCommand : BaseQueryCommand
             options.DefaultRowsOutput = new PagingOutput(tableOutput, cancellationTokenSource: cts);
             options.FollowTimeout = follow ? QueryOptionsBinder.FollowDefaultTimeout : TimeSpan.Zero;
 
-            using var thread = new ExecutionThreadBootstrapper(options)
+            using var thread = await new ExecutionThreadBootstrapper(options)
                 .WithConfigStorage(new PersistentInputConfigStorage(
                     Path.Combine(DefaultExecutionThread.GetApplicationDirectory(), ApplicationOptions.ConfigFileName)))
 #if PLUGIN_THRIFT
@@ -74,7 +74,7 @@ internal class PluginDebugCommand : BaseQueryCommand
 #endif
                 .WithRegistrations(AdditionalRegistration.Register)
                 .WithRegistrations(Backend.Addons.Functions.JsonFunctions.RegisterFunctions)
-                .Create();
+                .CreateAsync();
             AddVariables(thread, variables);
             await RunQueryAsync(thread, query, files, cts.Token);
         });

@@ -44,7 +44,7 @@ internal class ServeCommand : BaseCommand
             var allowedIPsSlots = OptionsUtils.GetValueForOption(allowedIPsSlotsOption, context);
 
             applicationOptions.InitializeLogger();
-            using var root = applicationOptions.CreateApplicationRoot();
+            using var root = await applicationOptions.CreateApplicationRootAsync();
             root.Thread.Options.AddRowNumberColumn = true;
             root.Thread.Options.SafeMode = safeMode;
             var webServer = new WebServer(root.Thread, new WebServerOptions

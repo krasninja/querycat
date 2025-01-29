@@ -28,7 +28,7 @@ internal class CollectionsUsage : BaseUsage
     public override async Task RunAsync()
     {
         // Arrange.
-        var executionThread = new ExecutionThreadBootstrapper().Create();
+        using var executionThread = await new ExecutionThreadBootstrapper().CreateAsync();
         var buildings = new List<Building>
         {
             new("Hotel Indigo San Diego-Gaslamp Quarter, an IHG Hotel", "92101"),

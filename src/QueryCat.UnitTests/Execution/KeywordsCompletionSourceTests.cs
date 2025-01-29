@@ -10,13 +10,13 @@ namespace QueryCat.UnitTests.Execution;
 public sealed class KeywordsCompletionSourceTests
 {
     [Fact]
-    public void GetCompletions_InTerm_CorrectKeywords()
+    public async Task GetCompletions_InTerm_CorrectKeywords()
     {
         // Arrange.
         var combineCompletionSource = new CombineCompletionSource([new KeywordsCompletionSource()]);
-        using var executionThread = new ExecutionThreadBootstrapper()
+        using var executionThread = await new ExecutionThreadBootstrapper()
             .WithCompletionSource(combineCompletionSource)
-            .Create();
+            .CreateAsync();
 
         // Act.
         var completions = executionThread.GetCompletions("in")

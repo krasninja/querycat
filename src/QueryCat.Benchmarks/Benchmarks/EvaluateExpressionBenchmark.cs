@@ -32,7 +32,8 @@ public class EvaluateExpressionBenchmark
     private readonly IExecutionThread _executionThread = new ExecutionThreadBootstrapper()
         .WithStandardFunctions()
         .WithAstCache()
-        .Create();
+        .CreateAsync()
+        .GetAwaiter().GetResult();
 
     [Benchmark]
     public async Task RunExpressionSeveralTimes()

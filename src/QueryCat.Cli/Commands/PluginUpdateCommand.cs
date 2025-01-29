@@ -19,7 +19,7 @@ internal class PluginUpdateCommand : BaseCommand
             var plugin = OptionsUtils.GetValueForOption(pluginArgument, context);
 
             applicationOptions.InitializeLogger();
-            using var root = applicationOptions.CreateApplicationRoot();
+            using var root = await applicationOptions.CreateApplicationRootAsync();
             await root.PluginsManager.UpdateAsync(plugin, context.GetCancellationToken());
         });
     }

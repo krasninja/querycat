@@ -17,7 +17,8 @@ public class DefaultExecutionThreadTests
     {
         _testThread = TestThread.CreateBootstrapper()
             .WithRegistrations(AdditionalRegistration.Register)
-            .Create();
+            .CreateAsync()
+            .GetAwaiter().GetResult();
     }
 
     [Fact]

@@ -20,7 +20,7 @@ internal class PluginListCommand : BaseCommand
             var listAll = OptionsUtils.GetValueForOption(listAllArgument, context);
 
             applicationOptions.InitializeLogger();
-            using var root = applicationOptions.CreateStdoutApplicationRoot();
+            using var root = await applicationOptions.CreateStdoutApplicationRootAsync();
             var query = "SELECT * FROM _plugins() WHERE 1=1";
             if (!listAll)
             {

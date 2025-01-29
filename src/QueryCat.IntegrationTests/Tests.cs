@@ -29,7 +29,8 @@ public sealed class Tests : IDisposable
         _testThread = TestThread.CreateBootstrapper()
             .WithRegistrations(AdditionalRegistration.Register)
             .WithRegistrations(Backend.Addons.Functions.JsonFunctions.RegisterFunctions)
-            .Create();
+            .CreateAsync()
+            .GetAwaiter().GetResult();
     }
 
     [Theory]
