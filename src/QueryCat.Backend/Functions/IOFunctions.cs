@@ -94,7 +94,7 @@ internal static class IOFunctions
             Directory.CreateDirectory(fullDirectory);
         }
         Stream file = File.Open(path, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
-        if (_compressFilesExtensions.Contains(Path.GetExtension(path).ToLower()))
+        if (_compressFilesExtensions.Contains(Path.GetExtension(path).ToLowerInvariant()))
         {
             file = new GZipStream(file, CompressionMode.Compress, leaveOpen: false);
         }
