@@ -1,7 +1,7 @@
 expected: |
   35,35,35,35,35,12,
 query: |
-  void_func();
+  void_func(1);
   select
     add(10, b => 25),
     add(a => 10, 25),
@@ -9,4 +9,4 @@ query: |
     add(10, 25),
     add(10, add(a => 10, add(10, 5))),
     addopt(10),
-    void_func();
+    void_func(1);
