@@ -6,13 +6,12 @@ using QueryCat.Backend.Core;
 using QueryCat.Backend.Execution;
 using QueryCat.Cli.Commands.Options;
 using QueryCat.Cli.Infrastructure;
-#if ENABLE_PLUGINS
-#if PLUGIN_THRIFT
+#if ENABLE_PLUGINS && PLUGIN_THRIFT
 using QueryCat.Backend.ThriftPlugins;
 using QueryCat.Plugins.Client;
-#elif PLUGIN_ASSEMBLY
-using QueryCat.Backend.AssemblyPlugins;
 #endif
+#if ENABLE_PLUGINS && PLUGIN_ASSEMBLY
+using QueryCat.Backend.AssemblyPlugins;
 #endif
 
 namespace QueryCat.Cli.Commands;
@@ -54,12 +53,12 @@ internal class PluginDebugCommand : BaseQueryCommand
 
             using var thread = await new ExecutionThreadBootstrapper(options)
                 .WithConfigStorage(new PersistentInputConfigStorage(
-                    Path.Combine(DefaultExecutionThread.GetApplicationDirectory(), ApplicationOptions.ConfigFileName)))
+                    Path.Combine(Application.GetApplicationDirectory(), ApplicationOptions.ConfigFileName)))
 #if PLUGIN_THRIFT
                 .WithPluginsLoader(th => new ThriftPluginsLoader(
                     th,
                     applicationOptions.PluginDirectories,
-                    DefaultExecutionThread.GetApplicationDirectory(),
+                    Application.GetApplicationDirectory(),
                     serverPipeName: ThriftPluginClient.TestPipeName,
                     debugMode: true,
                     minLogLevel: LogLevel.Debug)

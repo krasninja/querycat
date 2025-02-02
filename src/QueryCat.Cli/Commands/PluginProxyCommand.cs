@@ -1,6 +1,7 @@
 using System.CommandLine;
 using QueryCat.Backend.Execution;
 #if ENABLE_PLUGINS && PLUGIN_THRIFT
+using QueryCat.Backend.Core;
 using QueryCat.Backend.ThriftPlugins;
 #endif
 using QueryCat.Cli.Commands.Options;
@@ -23,7 +24,7 @@ internal class PluginProxyCommand : BaseCommand
             Console.WriteLine(Resources.Messages.PluginProxyDownload, PluginProxyDownloader.GetLinkToPluginsProxyFile());
 
             var downloader = new PluginProxyDownloader(ProxyFile.GetProxyFileName());
-            var applicationDirectory = DefaultExecutionThread.GetApplicationDirectory(ensureExists: true);
+            var applicationDirectory = Application.GetApplicationDirectory(ensureExists: true);
             var pluginsProxyLocalFile = Path.Combine(applicationDirectory,
                 ProxyFile.GetProxyFileName(includeVersion: true));
             await downloader.DownloadAsync(pluginsProxyLocalFile, cancellationToken: context.GetCancellationToken());

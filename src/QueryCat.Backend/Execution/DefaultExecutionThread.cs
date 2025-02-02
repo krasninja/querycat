@@ -19,7 +19,6 @@ namespace QueryCat.Backend.Execution;
 /// </summary>
 public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>
 {
-    internal const string ApplicationDirectory = "qcat";
     internal const string BootstrapFileName = "rc.sql";
 
     private readonly AstVisitor _statementsVisitor;
@@ -99,22 +98,6 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>
     /// The event to be called after any statement execution.
     /// </summary>
     public event EventHandler<ExecuteEventArgs>? StatementExecuted;
-
-    /// <summary>
-    /// Get application directory to store local data.
-    /// </summary>
-    /// <param name="ensureExists">Create the directory if it doesn't exist.</param>
-    /// <returns>Default application directory.</returns>
-    public static string GetApplicationDirectory(bool ensureExists = false)
-    {
-        var directory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            ApplicationDirectory);
-        if (ensureExists)
-        {
-            Directory.CreateDirectory(directory);
-        }
-        return directory;
-    }
 
     internal DefaultExecutionThread(
         ExecutionOptions options,
@@ -530,7 +513,7 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>
         {
             _bootstrapScriptExecuted = true;
 
-            var rcFile = Path.Combine(GetApplicationDirectory(), BootstrapFileName);
+            var rcFile = Path.Combine(Application.GetApplicationDirectory(), BootstrapFileName);
             if (File.Exists(rcFile))
             {
                 var query = await File.ReadAllTextAsync(rcFile, cancellationToken);

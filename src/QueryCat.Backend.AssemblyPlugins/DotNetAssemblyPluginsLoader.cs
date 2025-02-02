@@ -1,4 +1,3 @@
-using System.IO.Compression;
 using System.Reflection;
 using System.Text;
 using Microsoft.Extensions.Logging;
@@ -11,7 +10,7 @@ namespace QueryCat.Backend.AssemblyPlugins;
 /// <summary>
 /// Plugins loader.
 /// </summary>
-public sealed class DotNetAssemblyPluginsLoader : PluginsLoader
+public sealed class DotNetAssemblyPluginsLoader : PluginsLoader, IDisposable
 {
     private const string DllExtension = ".dll";
     private const string NuGetExtensions = ".nupkg";
@@ -19,10 +18,23 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader
     private const string RegistrationClassName = "Registration";
     private const string RegistrationMethodName = "RegisterFunctions";
 
-    private readonly Dictionary<string, byte[]> _rawAssembliesCache = new();
-    private readonly Dictionary<string, Assembly> _loadedAssembliesCache = new();
+    private sealed record AssemblyContext(
+        Stream Stream,
+        IPluginLoadStrategy PluginLoadStrategy,
+        string PluginName) : IDisposable
+    {
+        /// <inheritdoc />
+        public void Dispose()
+        {
+            Stream.Dispose();
+        }
+    }
+
+    private readonly Dictionary<string, AssemblyContext> _rawAssembliesCache = new(); // Not loaded yet assemblies.
+    private readonly Dictionary<string, Assembly> _loadedFromCacheAssemblies = new(); // Assemblies loaded from cache.
     private readonly IFunctionsManager _functionsManager;
-    private readonly HashSet<Assembly> _loadedAssemblies = new();
+    private readonly HashSet<Assembly> _loadedAssemblies = new(); // All loaded plugin DLLs.
+    private readonly HashSet<string> _domainLoadedAssemblies;
 
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(DotNetAssemblyPluginsLoader));
 
@@ -34,18 +46,32 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader
 #if NET8_0_OR_GREATER
         "net8.0",
 #endif
+#if NET7_0_OR_GREATER
+        "net7.0",
+#endif
 #if NET6_0_OR_GREATER
         "net6.0",
 #endif
         "netstandard2.1",
     ];
 
+    /// <summary>
+    /// Loaded plugins assemblies.
+    /// </summary>
     public IEnumerable<Assembly> LoadedAssemblies => _loadedAssemblies;
 
-    public DotNetAssemblyPluginsLoader(IFunctionsManager functionsManager, IEnumerable<string> pluginDirectories) : base(pluginDirectories)
+    public DotNetAssemblyPluginsLoader(
+        IFunctionsManager functionsManager,
+        IEnumerable<string> pluginDirectories) : base(pluginDirectories)
     {
         _functionsManager = functionsManager;
         AppDomain.CurrentDomain.AssemblyResolve += CurrentDomainOnAssemblyResolve;
+
+        _domainLoadedAssemblies =
+            AppDomain.CurrentDomain.GetAssemblies()
+                .Select(a => Path.GetFileName(a.GetName().Name ?? string.Empty))
+                .Where(n => !string.IsNullOrEmpty(n))
+                .ToHashSet();
     }
 
     private Assembly? CurrentDomainOnAssemblyResolve(object? sender, ResolveEventArgs args)
@@ -56,23 +82,25 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader
         {
             return null;
         }
-        if (_loadedAssembliesCache.TryGetValue(assemblyName.Name, out var assembly))
+        if (_loadedFromCacheAssemblies.TryGetValue(assemblyName.Name, out var assembly))
         {
             _logger.LogDebug("Resolved with loaded assemblies cache.");
             return assembly;
         }
-        if (_rawAssembliesCache.TryGetValue(assemblyName.Name, out var bytes))
+        if (_rawAssembliesCache.TryGetValue(assemblyName.Name, out var context))
         {
-            assembly = Assembly.Load(bytes);
-            _loadedAssembliesCache[assemblyName.Name] = assembly;
+            assembly = new PluginAssemblyLoadContext(context.PluginLoadStrategy, context.PluginName)
+                .LoadFromStream(context.Stream);
             _rawAssembliesCache.Remove(assemblyName.Name);
+            context.Dispose();
+            _loadedFromCacheAssemblies[assemblyName.Name] = assembly;
             _logger.LogDebug("Resolved with raw assemblies cache.");
             return assembly;
         }
 
         if (_logger.IsEnabled(LogLevel.Debug))
         {
-            _logger.LogDebug("Cannot find assembly '{Assembly}'!", args.Name);
+            _logger.LogDebug("Cannot find assembly '{Assembly}', skipped.", args.Name);
             _logger.LogDebug(DumpAssemblies());
         }
         return null;
@@ -81,7 +109,7 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader
     public string DumpAssemblies()
     {
         var sb = new StringBuilder();
-        foreach (var assembly in _loadedAssembliesCache)
+        foreach (var assembly in _loadedFromCacheAssemblies)
         {
             sb.AppendLine($"Cache: {assembly.Key}");
         }
@@ -93,27 +121,22 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader
     }
 
     /// <inheritdoc />
-    public override Task<string[]> LoadAsync(CancellationToken cancellationToken = default)
+    public override async Task<string[]> LoadAsync(CancellationToken cancellationToken = default)
     {
         foreach (var pluginFile in GetPluginFiles())
         {
-            _logger.LogDebug("Load plugin assembly '{PluginFile}'.", pluginFile);
-            var extension = Path.GetExtension(pluginFile);
-            Assembly? assembly = null;
-            if (extension.Equals(DllExtension, StringComparison.OrdinalIgnoreCase))
+            _logger.LogDebug("Load plugin file '{PluginFile}'.", pluginFile);
+            var strategies = GetLoadStrategies(pluginFile);
+            foreach (var strategy in strategies)
             {
-                assembly = LoadDll(pluginFile);
+                var assembly = await LoadWithStrategyAsync(strategy, cancellationToken);
+                if (assembly != null)
+                {
+                    _loadedAssemblies.Add(assembly);
+                    _logger.LogDebug("Loaded plugin target '{PluginFile}' with strategy {Strategy}.", pluginFile, strategy);
+                    break;
+                }
             }
-            else if (extension.Equals(NuGetExtensions, StringComparison.OrdinalIgnoreCase))
-            {
-                assembly = LoadNuget(pluginFile);
-            }
-            if (assembly == null)
-            {
-                _logger.LogWarning("Cannot load from '{PluginFile}'.", pluginFile);
-                continue;
-            }
-            _loadedAssemblies.Add(assembly);
         }
 
         RegisterFunctions();
@@ -122,8 +145,63 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader
             .Select(a => a.FullName ?? string.Empty)
             .Where(a => !string.IsNullOrEmpty(a))
             .ToArray();
-        return Task.FromResult(loadedPlugins);
+        return loadedPlugins;
     }
+
+    private async Task<Assembly?> LoadWithStrategyAsync(IPluginLoadStrategy strategy, CancellationToken cancellationToken)
+    {
+        // Find target framework directory.
+        var monikerRoot = FindTargetFrameworkDirectory(strategy);
+
+        // Get DLL files.
+        var dllFiles = strategy.GetAllFiles()
+            .Where(f => f.StartsWith(monikerRoot)
+                        && Path.GetExtension(f).Equals(DllExtension, StringComparison.InvariantCultureIgnoreCase))
+            .ToArray();
+
+        // Find plugin library.
+        var pluginDll = Array.Find(dllFiles, f => Path.GetFileNameWithoutExtension(f).Contains("Plugin"));
+        if (pluginDll == null)
+        {
+            return null;
+        }
+
+        // Preload dependent libraries.
+        var pluginDllFileName = Path.GetFileNameWithoutExtension(pluginDll);
+        var pluginDllFileDirectory = Path.GetDirectoryName(pluginDll);
+        foreach (var file in dllFiles)
+        {
+            var fileName = Path.GetFileNameWithoutExtension(file);
+            if (Path.GetFileNameWithoutExtension(file).Equals(pluginDllFileName)
+                || Path.GetDirectoryName(file) != pluginDllFileDirectory
+                || _domainLoadedAssemblies.Contains(fileName))
+            {
+                continue;
+            }
+
+            var stream = await CloneStreamAsync(strategy.GetFile(file), cancellationToken);
+            if (stream.Length == 0)
+            {
+                continue;
+            }
+            _logger.LogTrace("Cached '{Assembly}'.", fileName);
+            _rawAssembliesCache[fileName] = new AssemblyContext(stream, strategy, pluginDllFileName);
+        }
+
+        // Load plugin library.
+        var pluginStream = await CloneStreamAsync(strategy.GetFile(pluginDll), cancellationToken);
+        if (pluginStream.Length == 0)
+        {
+            return null;
+        }
+        return new PluginAssemblyLoadContext(strategy, pluginDllFileName).LoadFromStream(pluginStream);
+    }
+
+    private static IPluginLoadStrategy[] GetLoadStrategies(string target) =>
+    [
+        new NuGetPluginLoadStrategy(target),
+        new FilePluginLoadStrategy(target),
+    ];
 
     /// <inheritdoc />
     public override bool IsCorrectPluginFile(string file)
@@ -179,85 +257,13 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader
         }
     }
 
-    private Assembly LoadDll(string file)
+    private static string FindTargetFrameworkDirectory(IPluginLoadStrategy pluginLoadStrategy)
     {
-        var directory = Path.GetDirectoryName(file);
-        if (directory == null)
-        {
-            throw new PluginException(string.Format(Resources.Errors.CannotGetFileDirectory, file));
-        }
-
-        var directoryInfo = new DirectoryInfo(directory);
-        foreach (var fileInfo in directoryInfo.GetFiles())
-        {
-            var pluginDllFileName = fileInfo.Name;
-            if (Path.GetExtension(pluginDllFileName).Equals(DllExtension, StringComparison.OrdinalIgnoreCase)
-                && !fileInfo.Name.Equals(pluginDllFileName))
-            {
-                using var stream = File.OpenRead(fileInfo.FullName);
-                CacheAssemblyFromStream(fileInfo.Name, stream);
-            }
-        }
-
-        return Assembly.LoadFrom(file);
-    }
-
-    private Assembly LoadNuget(string file)
-    {
-        var zip = ZipFile.OpenRead(file);
-
-        try
-        {
-            // Find target framework directory.
-            var monikerDirectory = FindTargetFrameworkDirectory(zip);
-            if (string.IsNullOrEmpty(monikerDirectory))
-            {
-                throw new InvalidOperationException(string.Format(Resources.Errors.CannotFindPluginDll, file));
-            }
-
-            // Get moniker files.
-            var entries = zip.Entries
-                .Where(e => e.FullName.StartsWith(monikerDirectory)
-                            && Path.GetExtension(e.Name).Equals(DllExtension))
-                .ToArray();
-
-            // Find plugin library.
-            var pluginDll = Array.Find(entries, f => f.Name.Contains("Plugin"));
-            if (pluginDll == null)
-            {
-                throw new InvalidOperationException(string.Format(Resources.Errors.CannotFindPluginDll, file));
-            }
-
-            // Preload dependent libraries.
-            var pluginDllFileName = Path.GetFileName(pluginDll.Name);
-            foreach (var entry in entries)
-            {
-                if (entry.Name.Equals(pluginDllFileName))
-                {
-                    continue;
-                }
-                using var stream = entry.Open();
-                CacheAssemblyFromStream(entry.Name, stream);
-            }
-
-            // Load plugin library.
-            using var pluginStream = pluginDll.Open();
-            var assembly = LoadFromStream(pluginStream);
-
-            return assembly;
-        }
-        finally
-        {
-            zip.Dispose();
-        }
-    }
-
-    private static string FindTargetFrameworkDirectory(ZipArchive zip)
-    {
+        var files = pluginLoadStrategy.GetAllFiles().ToArray();
         foreach (var moniker in _monikerDirectories)
         {
             var monikerDirectory = "lib/" + moniker + "/";
-            if (zip.Entries.Any(e => e.FullName.StartsWith(monikerDirectory)))
+            if (files.Any(e => e.StartsWith(monikerDirectory)))
             {
                 return monikerDirectory;
             }
@@ -265,19 +271,20 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader
         return string.Empty;
     }
 
-    private void CacheAssemblyFromStream(string fileName, Stream stream)
-    {
-        using var ms = new MemoryStream();
-        stream.CopyTo(ms);
-        fileName = Path.GetFileNameWithoutExtension(fileName);
-        _logger.LogTrace("Cached '{Assembly}'.", fileName);
-        _rawAssembliesCache[fileName] = ms.GetBuffer();
-    }
-
-    private static Assembly LoadFromStream(Stream stream)
+    private static async Task<MemoryStream> CloneStreamAsync(Stream stream, CancellationToken cancellationToken)
     {
         var ms = new MemoryStream();
-        stream.CopyTo(ms);
-        return Assembly.Load(ms.GetBuffer());
+        await stream.CopyToAsync(ms, cancellationToken);
+        ms.Seek(0, SeekOrigin.Begin);
+        return ms;
+    }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        foreach (var value in _rawAssembliesCache.Values)
+        {
+            value.Dispose();
+        }
     }
 }

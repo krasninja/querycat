@@ -53,7 +53,7 @@ internal sealed class ApplicationOptions
         }
         if (key == ConsoleKey.Y)
         {
-            var applicationDirectory = DefaultExecutionThread.GetApplicationDirectory(ensureExists: true);
+            var applicationDirectory = Application.GetApplicationDirectory(ensureExists: true);
             var pluginsProxyLocalFile = Path.Combine(applicationDirectory,
                 Backend.ThriftPlugins.ProxyFile.GetProxyFileName(includeVersion: true));
             var downloader = new PluginProxyDownloader(Backend.ThriftPlugins.ProxyFile.GetProxyFileName());
@@ -78,13 +78,13 @@ internal sealed class ApplicationOptions
         };
 #if ENABLE_PLUGINS
         executionOptions.PluginDirectories.AddRange(
-            GetPluginDirectories(DefaultExecutionThread.GetApplicationDirectory()));
+            GetPluginDirectories(Application.GetApplicationDirectory()));
         executionOptions.PluginDirectories.AddRange(PluginDirectories);
 #endif
 
         var bootstrapper = new ExecutionThreadBootstrapper(executionOptions)
             .WithConfigStorage(new PersistentInputConfigStorage(
-                Path.Combine(DefaultExecutionThread.GetApplicationDirectory(), ConfigFileName))
+                Path.Combine(Application.GetApplicationDirectory(), ConfigFileName))
             )
             .WithStandardFunctions()
             .WithRegistrations(Backend.Addons.Functions.JsonFunctions.RegisterFunctions)
@@ -94,16 +94,17 @@ internal sealed class ApplicationOptions
         bootstrapper.WithPluginsLoader(thread => new Backend.ThriftPlugins.ThriftPluginsLoader(
             thread,
             executionOptions.PluginDirectories,
-            DefaultExecutionThread.GetApplicationDirectory(),
-            functionsCacheDirectory: Path.Combine(DefaultExecutionThread.GetApplicationDirectory(),
+            Application.GetApplicationDirectory(),
+            functionsCacheDirectory: Path.Combine(Application.GetApplicationDirectory(),
                 ApplicationPluginsFunctionsCacheDirectory),
             minLogLevel: LogLevel)
         );
 #endif
 #if ENABLE_PLUGINS && PLUGIN_ASSEMBLY
         bootstrapper.WithPluginsLoader(thread =>
-            new QueryCat.Backend.AssemblyPlugins.DotNetAssemblyPluginsLoader(thread.FunctionsManager,
-            executionOptions.PluginDirectories));
+            new QueryCat.Backend.AssemblyPlugins.DotNetAssemblyPluginsLoader(
+                thread.FunctionsManager,
+                executionOptions.PluginDirectories));
 #endif
 #if ENABLE_PLUGINS
         bootstrapper.WithPluginsManager(pluginsLoader => new DefaultPluginsManager(

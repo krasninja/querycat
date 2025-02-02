@@ -17,6 +17,7 @@ public static class Application
     public const string PlatformWindows = "win";
     public const string PlatformAndroid = "android";
     public const string PlatformMacOS = "macos";
+    public const string PlatformIOS = "ios";
     public const string PlatformBrowser = "browser";
     public const string PlatformUnknown = "unknown";
 
@@ -27,6 +28,8 @@ public static class Application
     public const string ArchitectureX64 = "x64";
     public const string ArchitectureWasm = "wasm";
     public const string ArchitectureUnknown = "unknown";
+
+    internal const string ApplicationDirectory = "qcat";
 
     /// <summary>
     /// The culture to use by QueryCat application. Current runtime culture by default.
@@ -44,7 +47,7 @@ public static class Application
     public const string ProductName = "QueryCat";
 
     /// <summary>
-    /// Get short version without hash (0.7.0-alpha.16).
+    /// Get short version without hash (for example, 0.7.0-alpha.16).
     /// </summary>
     /// <returns>Short version.</returns>
     public static string GetShortVersion()
@@ -98,6 +101,10 @@ public static class Application
         {
             return PlatformBrowser;
         }
+        if (OperatingSystem.IsIOS())
+        {
+            return PlatformIOS;
+        }
         return PlatformUnknown;
     }
 
@@ -116,5 +123,35 @@ public static class Application
             Architecture.Wasm => ArchitectureWasm,
             _ => ArchitectureUnknown,
         };
+    }
+
+    /// <summary>
+    /// Get RID.
+    /// </summary>
+    /// <returns>Returns RID.</returns>
+    public static string GetRuntimeIdentifier()
+    {
+        var platform = GetPlatform();
+        if (platform == PlatformFreeBSD)
+        {
+            platform = PlatformLinux;
+        }
+        return $"{platform}-{GetArchitecture()}";
+    }
+
+    /// <summary>
+    /// Get application directory to store local data.
+    /// </summary>
+    /// <param name="ensureExists">Create the directory if it doesn't exist.</param>
+    /// <returns>Default application directory.</returns>
+    public static string GetApplicationDirectory(bool ensureExists = false)
+    {
+        var directory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            ApplicationDirectory);
+        if (ensureExists)
+        {
+            Directory.CreateDirectory(directory);
+        }
+        return directory;
     }
 }

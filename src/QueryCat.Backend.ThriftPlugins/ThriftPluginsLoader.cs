@@ -238,16 +238,23 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
         var extension = Path.GetExtension(pluginFile);
 
         // UNIX library.
-        if ((RuntimeInformation.IsOSPlatform(OSPlatform.OSX)
-                || RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
-                || RuntimeInformation.IsOSPlatform(OSPlatform.FreeBSD)) && extension.Equals(".so", StringComparison.OrdinalIgnoreCase))
+        if ((RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
+            || RuntimeInformation.IsOSPlatform(OSPlatform.FreeBSD))
+                && extension.Equals(".so", StringComparison.InvariantCultureIgnoreCase))
+        {
+            return true;
+        }
+
+        // OSX.
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX)
+            && extension.Equals(".dylib", StringComparison.InvariantCultureIgnoreCase))
         {
             return true;
         }
 
         // Windows library.
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
-            && extension.Equals(".dll", StringComparison.OrdinalIgnoreCase))
+            && extension.Equals(".dll", StringComparison.InvariantCultureIgnoreCase))
         {
             return true;
         }
@@ -258,7 +265,7 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
     private static bool IsNugetPackage(string pluginFile)
     {
         var extension = Path.GetExtension(pluginFile);
-        return extension.Equals(".nupkg", StringComparison.OrdinalIgnoreCase);
+        return extension.Equals(".nupkg", StringComparison.InvariantCultureIgnoreCase);
     }
 
     private static bool IsMatchPlatform(string pluginFile)
