@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using System.Runtime.Loader;
+using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 
 namespace QueryCat.Backend.AssemblyPlugins;
@@ -8,6 +9,8 @@ internal sealed class PluginAssemblyLoadContext : AssemblyLoadContext
 {
     private readonly IPluginLoadStrategy _pluginLoadStrategy;
     private readonly string _pluginName;
+    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(PluginAssemblyLoadContext));
+
     private static readonly Dictionary<string, IntPtr> _loaded = new();
 
     public PluginAssemblyLoadContext(
@@ -21,6 +24,7 @@ internal sealed class PluginAssemblyLoadContext : AssemblyLoadContext
     /// <inheritdoc />
     protected override IntPtr LoadUnmanagedDll(string unmanagedDllName)
     {
+        // Try to use standard approach first.
         var address = base.LoadUnmanagedDll(unmanagedDllName);
         if (address != IntPtr.Zero)
         {
@@ -33,10 +37,11 @@ internal sealed class PluginAssemblyLoadContext : AssemblyLoadContext
             return ptr;
         }
 
+        // Format native library name.
         var targetDllName = GetTargetDllName(unmanagedDllName);
         var files = _pluginLoadStrategy.GetAllFiles().ToArray();
 
-        // Try to load from runtime path.
+        // Try to load from runtime path. Example: runtimes/linux-arm64/native/libduckdb.so .
         var runtimePath = Path.Combine("runtimes", Application.GetRuntimeIdentifier(), "native", targetDllName);
         var libraryPath = files.FirstOrDefault(f => f.EndsWith(runtimePath));
         var libraryHandle = LoadLibrary(libraryPath);
@@ -55,6 +60,7 @@ internal sealed class PluginAssemblyLoadContext : AssemblyLoadContext
             return libraryHandle;
         }
 
+        _logger.LogWarning("Failed to load library '{LibraryPath}'.", libraryPath);
         return IntPtr.Zero;
     }
 
@@ -69,30 +75,41 @@ internal sealed class PluginAssemblyLoadContext : AssemblyLoadContext
         // We should get it from the strategy and save into QueryCat local folder.
         if (!File.Exists(libraryPath))
         {
-            var libraryName = Path.GetFileName(libraryPath);
-            var cacheTargetDirectory = Path.Combine(Application.GetApplicationDirectory(), "native-cache", _pluginName);
-            Directory.CreateDirectory(cacheTargetDirectory);
-            using var file = _pluginLoadStrategy.GetFile(libraryPath);
-            if (file.Length == 0)
-            {
-                return IntPtr.Zero;
-            }
-            libraryPath = Path.Combine(cacheTargetDirectory, libraryName);
-            file.Seek(0, SeekOrigin.Begin);
-            if (!File.Exists(libraryPath) ||
-                new FileInfo(libraryPath).Length != file.Length)
-            {
-                using var newFile = File.Create(libraryPath);
-                file.CopyTo(newFile);
-                newFile.Close();
-            }
+            libraryPath = CopyFileToNativeCache(libraryPath);
         }
 
-        if (NativeLibrary.TryLoad(libraryPath, out var library))
+        // Load native library.
+        if (!string.IsNullOrEmpty(libraryPath)
+            && NativeLibrary.TryLoad(libraryPath, out var library))
         {
+            _logger.LogDebug("Loaded native library '{LibraryPath}'.", libraryPath);
             return library;
         }
+
         return IntPtr.Zero;
+    }
+
+    private string CopyFileToNativeCache(string libraryPath)
+    {
+        var libraryName = Path.GetFileName(libraryPath);
+        var cacheTargetDirectory = Path.Combine(Application.GetApplicationDirectory(), "native-cache", _pluginName);
+        Directory.CreateDirectory(cacheTargetDirectory);
+        using var file = _pluginLoadStrategy.GetFile(libraryPath);
+        if (file == Stream.Null)
+        {
+            return string.Empty;
+        }
+        libraryPath = Path.Combine(cacheTargetDirectory, libraryName);
+        file.Seek(0, SeekOrigin.Begin);
+        if (!File.Exists(libraryPath) ||
+            new FileInfo(libraryPath).Length != file.Length)
+        {
+            using var newFile = File.Create(libraryPath);
+            file.CopyTo(newFile);
+            newFile.Close();
+            _logger.LogDebug("Cached native library '{FilePath}'.", libraryPath);
+        }
+        return libraryPath;
     }
 
     private static string GetTargetDllName(string unmanagedDllName)

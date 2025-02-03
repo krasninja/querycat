@@ -180,7 +180,7 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader, IDisposable
             }
 
             var stream = await CloneStreamAsync(strategy.GetFile(file), cancellationToken);
-            if (stream.Length == 0)
+            if (stream == Stream.Null)
             {
                 continue;
             }
@@ -190,7 +190,7 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader, IDisposable
 
         // Load plugin library.
         var pluginStream = await CloneStreamAsync(strategy.GetFile(pluginDll), cancellationToken);
-        if (pluginStream.Length == 0)
+        if (pluginStream == Stream.Null)
         {
             return null;
         }
