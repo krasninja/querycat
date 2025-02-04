@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace QueryCat.Backend.Ast;
 
@@ -10,7 +11,29 @@ internal sealed class AstTraversal
     // Theory: https://www.geeksforgeeks.org/tree-traversals-inorder-preorder-and-postorder/
 
     private readonly AstVisitor _visitor;
-    private readonly Stack<(IAstNode Node, IEnumerator<IAstNode> Enumerator)> _treeStack = new(32);
+
+    private readonly struct TraversalItem : IDisposable
+    {
+        public IAstNode Node { get; }
+
+        public IEnumerator<IAstNode> ChildrenEnumerator { get; }
+
+        public IAstNode CurrentChild => ChildrenEnumerator.Current;
+
+        public TraversalItem(IAstNode node)
+        {
+            Node = node;
+            ChildrenEnumerator = node.GetChildren().GetEnumerator();
+        }
+
+        /// <inheritdoc />
+        public void Dispose()
+        {
+            ChildrenEnumerator.Dispose();
+        }
+    }
+
+    private readonly Stack<TraversalItem> _traversalStack = new(32);
 
     /// <summary>
     /// The list of types the traversal will not visit.
@@ -31,13 +54,13 @@ internal sealed class AstTraversal
     /// <summary>
     /// Get current top parent.
     /// </summary>
-    public IAstNode? CurrentParent => _treeStack.Count > 0 ? _treeStack.Peek().Node : null;
+    public IAstNode? CurrentParent => _traversalStack.Count > 0 ? _traversalStack.Peek().Node : null;
 
     /// <summary>
     /// Get current traversal stack values.
     /// </summary>
     /// <returns>Traversal stack values.</returns>
-    public IEnumerable<IAstNode> GetCurrentStack() => _treeStack.Select(s => s.Node);
+    public IEnumerable<IAstNode> GetCurrentStack() => _traversalStack.Select(s => s.Node);
 
     /// <summary>
     /// Get first parent of type <see ref="TNode" />.
@@ -59,14 +82,14 @@ internal sealed class AstTraversal
     /// Returns enumerable of all current node parents.
     /// </summary>
     /// <returns>Enumerable of parents.</returns>
-    public IEnumerable<IAstNode> GetParents() => _treeStack.Select(s => s.Node);
+    public IEnumerable<IAstNode> GetParents() => _traversalStack.Select(s => s.Node);
 
     /// <summary>
     /// Returns enumerable of all current node parents.
     /// </summary>
     /// <returns>Enumerable of parents.</returns>
     public IEnumerable<TNode> GetParents<TNode>() where TNode : IAstNode
-        => _treeStack.Skip(1).Select(s => s.Node).OfType<TNode>();
+        => _traversalStack.Skip(1).Select(s => s.Node).OfType<TNode>();
 
     /// <summary>
     /// Pre-order traversal.
@@ -79,22 +102,19 @@ internal sealed class AstTraversal
         {
             return;
         }
+        var ignoreTypes = TypesToIgnore.ToArray();
 
-        _treeStack.Push((node, node.GetChildren().GetEnumerator()));
+        _traversalStack.Push(new TraversalItem(node));
         node.Accept(_visitor);
-        while (_treeStack.Count > 0)
+        while (_traversalStack.Count > 0)
         {
-            var current = _treeStack.Peek();
-            if (current.Enumerator.MoveNext())
+            var current = _traversalStack.Peek();
+            if (current.ChildrenEnumerator.MoveNext())
             {
-                var next = current.Enumerator.Current;
-                if (next == null!)
+                var next = current.CurrentChild;
+                if (!IsIgnoreType(next.GetType(), ignoreTypes))
                 {
-                    continue;
-                }
-                if (!IsIgnoreType(next.GetType()))
-                {
-                    _treeStack.Push((next, next.GetChildren().GetEnumerator()));
+                    _traversalStack.Push(new TraversalItem(next));
                     next.Accept(_visitor);
                 }
                 else if (AcceptBeforeIgnore)
@@ -104,8 +124,7 @@ internal sealed class AstTraversal
             }
             else
             {
-                current.Enumerator.Dispose();
-                _treeStack.Pop();
+                _traversalStack.Pop();
             }
         }
     }
@@ -121,21 +140,18 @@ internal sealed class AstTraversal
         {
             return;
         }
+        var ignoreTypes = TypesToIgnore.ToArray();
 
-        _treeStack.Push((node, node.GetChildren().GetEnumerator()));
-        while (_treeStack.Count > 0)
+        _traversalStack.Push(new TraversalItem(node));
+        while (_traversalStack.Count > 0)
         {
-            var current = _treeStack.Peek();
-            if (current.Enumerator.MoveNext())
+            var current = _traversalStack.Peek();
+            if (current.ChildrenEnumerator.MoveNext())
             {
-                var next = current.Enumerator.Current;
-                if (next == null!)
+                var next = current.CurrentChild;
+                if (!IsIgnoreType(current.CurrentChild.GetType(), ignoreTypes))
                 {
-                    continue;
-                }
-                if (!IsIgnoreType(current.Enumerator.Current.GetType()))
-                {
-                    _treeStack.Push((next, next.GetChildren().GetEnumerator()));
+                    _traversalStack.Push(new TraversalItem(next));
                 }
                 else if (AcceptBeforeIgnore)
                 {
@@ -144,16 +160,16 @@ internal sealed class AstTraversal
             }
             else
             {
-                current.Enumerator.Dispose();
                 current.Node.Accept(_visitor);
-                _treeStack.Pop();
+                _traversalStack.Pop();
             }
         }
     }
 
-    private bool IsIgnoreType(Type type)
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    private static bool IsIgnoreType(Type type, Type[] ignoreTypes)
     {
-        foreach (var ignoreType in TypesToIgnore)
+        foreach (var ignoreType in ignoreTypes)
         {
             if (ignoreType.IsAssignableFrom(type))
             {
