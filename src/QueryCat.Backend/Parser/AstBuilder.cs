@@ -51,14 +51,14 @@ internal sealed class AstBuilder : IAstBuilder
         => Build<FunctionSignatureNode>(function, p => p.functionSignature(), astCache: null);
 
     /// <inheritdoc />
-    public IReadOnlyList<IAstBuilder.Token> GetTokens(string text)
+    public IAstBuilder.Token[] GetTokens(string text)
     {
         var inputStream = new AntlrInputStream(text);
         var lexer = new QueryCatLexer(inputStream);
         var commonTokenStream = new CommonTokenStream(lexer);
         commonTokenStream.Fill();
 
-        return TransformTokens(commonTokenStream.GetTokens()).ToList();
+        return TransformTokens(commonTokenStream.GetTokens()).ToArray();
     }
 
     private TNode Build<TNode>(

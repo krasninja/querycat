@@ -368,7 +368,7 @@ internal static class IOFunctions
     {
         var args = StringUtils.GetFieldsFromLine(query, delimiter: '&');
         var fa = new FunctionCallArguments();
-        if (args.Count == 1 && args[0].IndexOf('=') == -1)
+        if (args.Length == 1 && args[0].IndexOf('=') == -1)
         {
             fa.Add(CreateValueFromString(args[0]));
         }
