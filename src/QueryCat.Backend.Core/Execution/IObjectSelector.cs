@@ -10,22 +10,34 @@ public interface IObjectSelector
     /// </summary>
     /// <param name="context">Selector context.</param>
     /// <param name="propertyName">Property name.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Object found by property name.</returns>
-    ObjectSelectorContext.Token? SelectByProperty(ObjectSelectorContext context, string propertyName);
+    ValueTask<ObjectSelectorContext.Token?> SelectByPropertyAsync(
+        ObjectSelectorContext context,
+        string propertyName,
+        CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Get the next object by index property.
     /// </summary>
     /// <param name="context">Selector context.</param>
     /// <param name="indexes">Indexes values.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Object found by index name.</returns>
-    ObjectSelectorContext.Token? SelectByIndex(ObjectSelectorContext context, params object?[] indexes);
+    ValueTask<ObjectSelectorContext.Token?> SelectByIndexAsync(
+        ObjectSelectorContext context,
+        object?[] indexes,
+        CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Set property value by property info or index to the last token.
     /// </summary>
     /// <param name="context">Selector context.</param>
     /// <param name="newValue">New value.</param>
+    /// <param name="cancellationToken"></param>
     /// <returns><c>True</c> if property was set, <c>false</c> otherwise.</returns>
-    bool SetValue(ObjectSelectorContext context, object? newValue);
+    ValueTask<bool> SetValueAsync(
+        ObjectSelectorContext context,
+        object? newValue,
+        CancellationToken cancellationToken = default);
 }

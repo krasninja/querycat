@@ -18,7 +18,10 @@ public class DefaultObjectSelector : IObjectSelector
     public bool CaseInsensitivePropertyName { get; set; }
 
     /// <inheritdoc />
-    public virtual ObjectSelectorContext.Token? SelectByProperty(ObjectSelectorContext context, string propertyName)
+    public virtual ValueTask<ObjectSelectorContext.Token?> SelectByPropertyAsync(
+        ObjectSelectorContext context,
+        string propertyName,
+        CancellationToken cancellationToken = default)
     {
         var lastObject = context.LastValue;
         if (lastObject == null)
@@ -34,15 +37,19 @@ public class DefaultObjectSelector : IObjectSelector
         var propertyInfo = lastObject.GetType().GetProperty(propertyName, propertyFindOptions);
         if (propertyInfo == null || !propertyInfo.CanRead)
         {
-            return null;
+            return ValueTask.FromResult((ObjectSelectorContext.Token?)null);
         }
 
         var resultObject = propertyInfo.GetValue(lastObject);
-        return new ObjectSelectorContext.Token(resultObject, propertyInfo);
+        var result = new ObjectSelectorContext.Token(resultObject, propertyInfo);
+        return ValueTask.FromResult(new ObjectSelectorContext.Token?(result));
     }
 
     /// <inheritdoc />
-    public virtual ObjectSelectorContext.Token? SelectByIndex(ObjectSelectorContext context, params object?[] indexes)
+    public virtual ValueTask<ObjectSelectorContext.Token?> SelectByIndexAsync(
+        ObjectSelectorContext context,
+        object?[] indexes,
+        CancellationToken cancellationToken = default)
     {
         var current = context.Peek();
         object? resultObject = null;
@@ -63,7 +70,7 @@ public class DefaultObjectSelector : IObjectSelector
                     }
                     else
                     {
-                        return null;
+                        return ValueTask.FromResult((ObjectSelectorContext.Token?)null);
                     }
                 }
             }
@@ -81,7 +88,7 @@ public class DefaultObjectSelector : IObjectSelector
                     }
                     else
                     {
-                        return null;
+                        return ValueTask.FromResult((ObjectSelectorContext.Token?)null);
                     }
                 }
                 // List.
@@ -93,7 +100,7 @@ public class DefaultObjectSelector : IObjectSelector
                     }
                     else
                     {
-                        return null;
+                        return ValueTask.FromResult((ObjectSelectorContext.Token?)null);
                     }
                 }
                 // Generic enumerable.
@@ -132,9 +139,10 @@ public class DefaultObjectSelector : IObjectSelector
 
         if (resultObject != null)
         {
-            return new ObjectSelectorContext.Token(resultObject, Indexes: indexes);
+            var result = new ObjectSelectorContext.Token(resultObject, Indexes: indexes);
+            return ValueTask.FromResult(new ObjectSelectorContext.Token?(result));
         }
-        return null;
+        return ValueTask.FromResult((ObjectSelectorContext.Token?)null);
     }
 
     #region For index properties
@@ -216,11 +224,14 @@ public class DefaultObjectSelector : IObjectSelector
     }
 
     /// <inheritdoc />
-    public virtual bool SetValue(ObjectSelectorContext context, object? newValue)
+    public virtual ValueTask<bool> SetValueAsync(
+        ObjectSelectorContext context,
+        object? newValue,
+        CancellationToken cancellationToken = default)
     {
         if (context.Length < 2)
         {
-            return false;
+            return ValueTask.FromResult(false);
         }
 
         // In context by that time we should have something like that: [], [], ..., [owner], [owner prop value].
@@ -236,7 +247,7 @@ public class DefaultObjectSelector : IObjectSelector
                 owner,
                 ConvertValue(newValue, propertyInfo.PropertyType),
                 indexes);
-            return true;
+            return ValueTask.FromResult(true);
         }
 
         // Has one index - check list/array/dict case.
@@ -246,7 +257,7 @@ public class DefaultObjectSelector : IObjectSelector
             if (indexes[0] != null && owner is IDictionary dictionary)
             {
                 dictionary[indexes[0]!] = ConvertValue(newValue, TypeUtils.GetUnderlyingType(dictionary));
-                return true;
+                return ValueTask.FromResult(true);
             }
             if (TryGetObjectIsIntegerIndex(indexes[0], out var intIndex))
             {
@@ -256,13 +267,13 @@ public class DefaultObjectSelector : IObjectSelector
                     array.SetValue(
                         ConvertValue(newValue, TypeUtils.GetUnderlyingType(array)),
                         intIndex);
-                    return true;
+                    return ValueTask.FromResult(true);
                 }
                 // List.
                 if (owner is IList list)
                 {
                     list[intIndex] = ConvertValue(newValue, TypeUtils.GetUnderlyingType(list));
-                    return true;
+                    return ValueTask.FromResult(true);
                 }
             }
         }
@@ -272,16 +283,16 @@ public class DefaultObjectSelector : IObjectSelector
         {
             if (propertyInfo == null || !propertyInfo.CanWrite)
             {
-                return false;
+                return ValueTask.FromResult(false);
             }
             propertyInfo.SetValue(
                 owner,
                 ConvertValue(newValue, propertyInfo.PropertyType),
                 indexes);
-            return true;
+            return ValueTask.FromResult(true);
         }
 
-        return false;
+        return ValueTask.FromResult(false);
     }
 
     /// <summary>
