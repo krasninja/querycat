@@ -41,20 +41,20 @@ internal sealed partial class SelectPlanner
     {
         await Misc_TransformAsync(node, cancellationToken);
         var context = Context_CreateInitialContext(node, parentContext);
-        Context_InitializeRowsInputs(context, node);
+        await Context_InitializeRowsInputsAsync(context, node, cancellationToken);
         await ContextCte_PrepareInputListAsync(context, node, cancellationToken);
         await Context_PrepareInitialInputsAsync(context, node, cancellationToken);
         return context;
     }
 
-    public Task<SelectCommandContext> Context_CreateAsync(
+    public async Task<SelectCommandContext> Context_CreateAsync(
         SelectQueryCombineNode node,
         SelectCommandContext? parentContext = null,
         CancellationToken cancellationToken = default)
     {
         var context = Context_CreateInitialContext(node, parentContext);
-        Context_InitializeRowsInputs(context, node);
-        return Task.FromResult(context);
+        await Context_InitializeRowsInputsAsync(context, node, cancellationToken);
+        return context;
     }
 
     private SelectCommandContext Context_CreateInitialContext(SelectQueryNode node, SelectCommandContext? parentContext = null)
@@ -66,9 +66,9 @@ internal sealed partial class SelectPlanner
         return context;
     }
 
-    private void Context_InitializeRowsInputs(SelectCommandContext context, SelectQueryNode node)
+    private async Task Context_InitializeRowsInputsAsync(SelectCommandContext context, SelectQueryNode node, CancellationToken cancellationToken)
     {
-        new CreateRowsInputVisitor(ExecutionThread, context).Run(node.GetChildren());
+        await new CreateRowsInputVisitor(ExecutionThread, context).RunAsync(node.GetChildren(), cancellationToken);
         if (node is SelectQuerySpecificationNode querySpecificationNode)
         {
             foreach (var input in context.Inputs)
@@ -131,7 +131,7 @@ internal sealed partial class SelectPlanner
 
         var resultRowsIterator = Context_CreateMultipleIterator(finalRowsInputs);
         context.RowsInputIterator = resultRowsIterator as RowsInputIterator;
-        QueryContext_FillQueryContextConditions(context, querySpecificationNode);
+        await QueryContext_FillQueryContextConditionsAsync(context, querySpecificationNode, cancellationToken);
         context.SetIterator(resultRowsIterator);
     }
 

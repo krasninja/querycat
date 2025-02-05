@@ -11,33 +11,36 @@ namespace QueryCat.Backend.Commands.Select;
 
 internal sealed partial class SelectPlanner
 {
-    private void QueryContext_FillQueryContextConditions(
+    private async Task QueryContext_FillQueryContextConditionsAsync(
         SelectCommandContext context,
-        SelectQuerySpecificationNode querySpecificationNode)
+        SelectQuerySpecificationNode querySpecificationNode,
+        CancellationToken cancellationToken)
     {
         // Fill conditions.
         foreach (var inputContext in context.InputQueryContextList)
         {
-            QueryContext_FillQueryContextConditions(
+            await QueryContext_FillQueryContextConditionsAsync(
                 querySpecificationNode.TableExpressionNode?.SearchConditionNode?.ExpressionNode,
                 inputContext,
-                context);
+                context,
+                cancellationToken);
             foreach (var joinedOnNode in querySpecificationNode.GetAllChildren<SelectTableJoinedOnNode>())
             {
-                QueryContext_FillQueryContextConditions(
+                await QueryContext_FillQueryContextConditionsAsync(
                     joinedOnNode.SearchConditionNode,
                     inputContext,
-                    context);
+                    context,
+                    cancellationToken);
             }
         }
 
-        // Fill "limit". For now we limit only if order is not defined.
+        // Fill "limit". For now, we limit only if order is not defined.
         if (querySpecificationNode.OrderByNode == null)
         {
             if (querySpecificationNode.FetchNode != null)
             {
-                var fetchCount = Misc_CreateDelegate(querySpecificationNode.FetchNode.CountNode)
-                    .Invoke(ExecutionThread).AsInteger;
+                var fetchCount = (await Misc_CreateDelegate(querySpecificationNode.FetchNode.CountNode)
+                    .InvokeAsync(ExecutionThread, cancellationToken)).AsInteger;
                 foreach (var queryContext in context.InputQueryContextList)
                 {
                     queryContext.QueryInfo.Limit = (queryContext.QueryInfo.Limit ?? 0) + fetchCount;
@@ -45,8 +48,8 @@ internal sealed partial class SelectPlanner
             }
             if (querySpecificationNode.OffsetNode != null)
             {
-                var offsetCount = Misc_CreateDelegate(querySpecificationNode.OffsetNode.CountNode)
-                    .Invoke(ExecutionThread).AsInteger;
+                var offsetCount = (await Misc_CreateDelegate(querySpecificationNode.OffsetNode.CountNode)
+                    .InvokeAsync(ExecutionThread, cancellationToken)).AsInteger;
                 foreach (var queryContext in context.InputQueryContextList)
                 {
                     queryContext.QueryInfo.Limit = (queryContext.QueryInfo.Limit ?? 0) + offsetCount;
@@ -55,10 +58,11 @@ internal sealed partial class SelectPlanner
         }
     }
 
-    private void QueryContext_FillQueryContextConditions(
+    private async Task QueryContext_FillQueryContextConditionsAsync(
         ExpressionNode? predicateNode,
         SelectInputQueryContext rowsInputContext,
-        SelectCommandContext commandContext)
+        SelectCommandContext commandContext,
+        CancellationToken cancellationToken)
     {
         if (predicateNode == null)
         {

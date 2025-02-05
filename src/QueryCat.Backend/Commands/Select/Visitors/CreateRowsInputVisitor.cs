@@ -6,7 +6,6 @@ using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Storage;
 
 namespace QueryCat.Backend.Commands.Select.Visitors;
@@ -34,7 +33,7 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectTableFunctionNode node)
+    public override async ValueTask VisitAsync(SelectTableFunctionNode node, CancellationToken cancellationToken)
     {
         // Determine types for the node.
         var typesVisitor = _resolveTypesVisitor;
@@ -42,12 +41,12 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
         {
             typesVisitor = new SelectResolveTypesVisitor(_executionThread, _context.Parent);
         }
-        typesVisitor.Run(node.TableFunctionNode);
+        await typesVisitor.RunAsync(node.TableFunctionNode, cancellationToken);
 
-        var @delegate = new CreateDelegateVisitor(_executionThread, typesVisitor)
-            .RunAndReturn(node.TableFunctionNode);
-        var source = AsyncUtils.RunSync(() => @delegate.InvokeAsync(_executionThread));
-        var inputContext = CreateRowsInput(source, node.Alias);
+        var @delegate = await new CreateDelegateVisitor(_executionThread, typesVisitor)
+            .RunAndReturnAsync(node.TableFunctionNode, cancellationToken);
+        var source = await @delegate.InvokeAsync(_executionThread, cancellationToken);
+        var inputContext = await CreateRowsInputAsync(source, node.Alias, cancellationToken);
         inputContext.Alias = node.Alias;
         _context.AddInput(inputContext);
 
@@ -56,7 +55,7 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
         node.SetAttribute(AstAttributeKeys.RowsInputKey, inputContext.RowsInput);
     }
 
-    private SelectCommandInputContext CreateRowsInput(VariantValue source, string alias)
+    private async Task<SelectCommandInputContext> CreateRowsInputAsync(VariantValue source, string alias, CancellationToken cancellationToken)
     {
         if (DataTypeUtils.IsSimple(source.Type))
         {
@@ -74,7 +73,7 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
                 rowsInput = new CacheRowsInput(_executionThread, rowsInput, _context.Conditions);
             }
             rowsInput.QueryContext = queryContext;
-            AsyncUtils.RunSync(rowsInput.OpenAsync);
+            await rowsInput.OpenAsync(cancellationToken);
             _logger.LogDebug("Open rows input {RowsInput}.", rowsInput);
             return new SelectCommandInputContext(rowsInput, queryContext);
         }
