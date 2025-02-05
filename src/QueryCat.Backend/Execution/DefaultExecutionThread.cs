@@ -22,7 +22,6 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>
     internal const string BootstrapFileName = "rc.sql";
 
     private readonly AstVisitor _statementsVisitor;
-    private readonly SemaphoreSlim _semaphore;
     private int _deepLevel;
     private readonly List<IDisposable> _disposablesList = new();
     private bool _isInCallback;
@@ -119,7 +118,6 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>
 
         _rootScope = new ExecutionScope(parent: null);
         _topScope = _rootScope;
-        _semaphore = new SemaphoreSlim(Options.ConcurrencyLevel, Options.ConcurrencyLevel);
     }
 
     /// <summary>
@@ -154,7 +152,6 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>
         }
 
         // Run with lock and timer.
-        await _semaphore.WaitAsync(cancellationToken);
         try
         {
             CurrentQuery = query;
@@ -187,8 +184,6 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>
             }
             _deepLevel--;
             CurrentQuery = string.Empty;
-
-            _semaphore.Release();
         }
     }
 
@@ -533,7 +528,6 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>
     {
         if (disposing)
         {
-            _semaphore.Dispose();
             foreach (var disposable in _disposablesList)
             {
                 disposable.Dispose();
