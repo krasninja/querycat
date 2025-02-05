@@ -59,7 +59,7 @@ public sealed class ObjectPropertiesCompletionSourceTests
     public async Task GetCompletions_PartVariableName_ReturnsExpectedCompletions(string query, string expected)
     {
         // Arrange.
-        using var thread = await _executionThreadBootstrapper.CreateAsync();
+        await using var thread = await _executionThreadBootstrapper.CreateAsync();
         thread.TopScope.Variables["user"] = VariantValue.CreateFromObject(_user);
 
         // Act.
@@ -77,7 +77,7 @@ public sealed class ObjectPropertiesCompletionSourceTests
     public async Task ApplyCompletion_PartVariableName_ReturnsExpectedCompletions(string query, string expected)
     {
         // Arrange.
-        using var thread = await _executionThreadBootstrapper.CreateAsync();
+        await using var thread = await _executionThreadBootstrapper.CreateAsync();
         thread.TopScope.Variables["user"] = VariantValue.CreateFromObject(_user);
 
         // Act.

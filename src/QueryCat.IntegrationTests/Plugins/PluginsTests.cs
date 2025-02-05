@@ -16,7 +16,7 @@ public sealed class PluginsTests
     public async Task SamplePluginRowsInput_CreateAndRun_ReturnsResult()
     {
         // Arrange.
-        using var thread = await _executionThreadBootstrapper.CreateAsync();
+        await using var thread = await _executionThreadBootstrapper.CreateAsync();
         thread.FunctionsManager.RegisterFunction(SamplePluginRowsInput.SamplePlugin);
 
         // Act.
@@ -31,7 +31,7 @@ public sealed class PluginsTests
     public async Task SamplePluginRowsIterator_CreateAndRun_ReturnsResult()
     {
         // Arrange.
-        using var thread = await _executionThreadBootstrapper.CreateAsync();
+        await using var thread = await _executionThreadBootstrapper.CreateAsync();
         thread.FunctionsManager.RegisterFunction(SamplePluginRowsIterator.SamplePlugin);
 
         // Act.
@@ -46,7 +46,7 @@ public sealed class PluginsTests
     public async Task SamplePluginEnumerableInput_CreateAndRun_ReturnsResult()
     {
         // Arrange.
-        using var thread = await _executionThreadBootstrapper.CreateAsync();
+        await using var thread = await _executionThreadBootstrapper.CreateAsync();
         thread.FunctionsManager.RegisterFunction(SamplePluginInput.SamplePlugin);
 
         // Act.

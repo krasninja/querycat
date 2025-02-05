@@ -19,7 +19,7 @@ public class DefaultExecutionThreadTests
     public async Task Run_WithParameters_ShouldProcess()
     {
         // Arrange.
-        using var thread = await _executionThreadBootstrapper.CreateAsync();
+        await using var thread = await _executionThreadBootstrapper.CreateAsync();
         thread.TopScope.Variables["param1"] = new(11);
         var @params = new Dictionary<string, VariantValue>
         {
@@ -39,7 +39,7 @@ public class DefaultExecutionThreadTests
     public async Task Run_WithParameterNestedScope_TopScopeShouldOverride()
     {
         // Arrange.
-        using var thread = await _executionThreadBootstrapper.CreateAsync();
+        await using var thread = await _executionThreadBootstrapper.CreateAsync();
         thread.TopScope.Variables["param1"] = new(2023);
         var @params = new Dictionary<string, VariantValue>
         {

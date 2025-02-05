@@ -16,7 +16,7 @@ public sealed class MiscFunctionsTests
     public async Task Coalesce_SeveralArgs_ShouldReturnFirstNotNull()
     {
         // Act.
-        using var thread = await _executionThreadBootstrapper.CreateAsync();
+        await using var thread = await _executionThreadBootstrapper.CreateAsync();
         var result1 = await thread.RunAsync(@"ECHO COALESCE(NULL, 10);");
         var result2 = await thread.RunAsync(@"ECHO COALESCE(NULL, 10, 20);");
         var result3 = await thread.RunAsync(@"ECHO COALESCE(NULL, 10 + NULL, NULL);");

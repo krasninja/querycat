@@ -35,7 +35,7 @@ public sealed class Tests
     public async Task Select(string fileName)
     {
         // Arrange.
-        using var thread = await _executionThreadBootstrapper.CreateAsync();
+        await using var thread = await _executionThreadBootstrapper.CreateAsync();
         Application.Culture = CultureInfo.InvariantCulture;
         thread.FunctionsManager.RegisterFunction(SumIntegers);
         thread.FunctionsManager.RegisterFunction(FuncWithObject);
