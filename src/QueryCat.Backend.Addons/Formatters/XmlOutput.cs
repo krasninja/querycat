@@ -3,12 +3,11 @@ using System.Xml;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Storage;
 
 namespace QueryCat.Backend.Addons.Formatters;
 
-internal sealed class XmlOutput : RowsOutput, IDisposable
+internal sealed class XmlOutput : RowsOutput, IDisposable, IAsyncDisposable
 {
     private const string RootTagName = "FRAME";
     private const string RowTagName = "ROW";
@@ -43,10 +42,7 @@ internal sealed class XmlOutput : RowsOutput, IDisposable
     /// <inheritdoc />
     public override async Task CloseAsync(CancellationToken cancellationToken = default)
     {
-        await _xmlWriter.WriteEndElementAsync(); // RootTagName.
-        await _xmlWriter.WriteEndDocumentAsync();
-        await _xmlWriter.FlushAsync();
-        _xmlWriter.Close();
+        await DisposeAsync();
         _logger.LogTrace("XML closed.");
     }
 
@@ -94,7 +90,20 @@ internal sealed class XmlOutput : RowsOutput, IDisposable
     /// <inheritdoc />
     public void Dispose()
     {
-        AsyncUtils.RunSync(CloseAsync);
+        _xmlWriter.WriteEndElement(); // RootTagName.
+        _xmlWriter.WriteEndDocument();
+        _xmlWriter.Flush();
+        _xmlWriter.Close();
         _xmlWriter.Dispose();
+    }
+
+    /// <inheritdoc />
+    public async ValueTask DisposeAsync()
+    {
+        await _xmlWriter.WriteEndElementAsync(); // RootTagName.
+        await _xmlWriter.WriteEndDocumentAsync();
+        await _xmlWriter.FlushAsync();
+        _xmlWriter.Close();
+        await _xmlWriter.DisposeAsync();
     }
 }

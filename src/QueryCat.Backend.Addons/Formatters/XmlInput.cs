@@ -12,7 +12,7 @@ namespace QueryCat.Backend.Addons.Formatters;
 /// <summary>
 /// XML input.
 /// </summary>
-internal sealed class XmlInput : IRowsInput, IDisposable
+internal sealed class XmlInput : IRowsInput, IDisposable, IAsyncDisposable
 {
     private const int NoColumnIndex = -1;
     private const int RowsToAnalyze = 10;
@@ -134,10 +134,9 @@ internal sealed class XmlInput : IRowsInput, IDisposable
     }
 
     /// <inheritdoc />
-    public Task CloseAsync(CancellationToken cancellationToken = default)
+    public async Task CloseAsync(CancellationToken cancellationToken = default)
     {
-        _xmlReader.Close();
-        return Task.CompletedTask;
+        await DisposeAsync();
     }
 
     /// <inheritdoc />
@@ -307,7 +306,13 @@ internal sealed class XmlInput : IRowsInput, IDisposable
     /// <inheritdoc />
     public void Dispose()
     {
-        AsyncUtils.RunSync(CloseAsync);
         _xmlReader.Dispose();
+    }
+
+    /// <inheritdoc />
+    public ValueTask DisposeAsync()
+    {
+        _xmlReader.Dispose();
+        return ValueTask.CompletedTask;
     }
 }

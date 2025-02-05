@@ -59,7 +59,8 @@ public sealed class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
         {
             bootstrapper.WithPluginsLoader(thr => new DotNetAssemblyPluginsLoader(thr.FunctionsManager, [targetFile]));
         }
-        using var thread = await bootstrapper.CreateAsync();
+
+        await using var thread = await bootstrapper.CreateAsync();
 
         // Prepare functions list.
         var pluginFunctions = thread.FunctionsManager.GetFunctions()
@@ -93,12 +94,12 @@ public sealed class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
             var queryContext = new CollectQueryContext();
             try
             {
-                using var frame = Executor.Thread.Stack.CreateFrame();
+                using var frame = thread.Stack.CreateFrame();
                 for (var i = 0; i < inputFunction.Arguments.Length; i++)
                 {
                     frame.Push(VariantValue.Null);
                 }
-                rowsInput = (await FunctionCaller.CallAsync(inputFunction.Delegate, Executor.Thread))
+                rowsInput = (await FunctionCaller.CallAsync(inputFunction.Delegate, thread))
                     .As<IRowsInputKeys?>()!;
                 rowsInput.QueryContext = queryContext;
                 await rowsInput.OpenAsync();

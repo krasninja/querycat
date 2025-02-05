@@ -17,7 +17,7 @@ namespace QueryCat.Backend.Execution;
 /// <summary>
 /// Execution thread that includes statements to be executed, local variables, options and statistic.
 /// </summary>
-public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>
+public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IAsyncDisposable
 {
     internal const string BootstrapFileName = "rc.sql";
 
@@ -524,6 +524,8 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>
         }
     }
 
+    #region Dispose
+
     protected virtual void Dispose(bool disposing)
     {
         if (disposing)
@@ -542,4 +544,29 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>
         Dispose(true);
         GC.SuppressFinalize(this);
     }
+
+    protected virtual async ValueTask DisposeAsyncCore()
+    {
+        foreach (var disposable in _disposablesList)
+        {
+            if (disposable is IAsyncDisposable asyncDisposable)
+            {
+                await asyncDisposable.DisposeAsync();
+            }
+            else
+            {
+                disposable.Dispose();
+            }
+        }
+        _disposablesList.Clear();
+    }
+
+    /// <inheritdoc />
+    public async ValueTask DisposeAsync()
+    {
+        await DisposeAsyncCore();
+        GC.SuppressFinalize(this);
+    }
+
+    #endregion
 }
