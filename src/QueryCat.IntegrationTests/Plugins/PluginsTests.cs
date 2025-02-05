@@ -1,6 +1,5 @@
 using Xunit;
 using QueryCat.Backend;
-using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Tests.QueryRunner;
 
@@ -9,26 +8,20 @@ namespace QueryCat.IntegrationTests.Plugins;
 /// <summary>
 /// Tests for plugins.
 /// </summary>
-public sealed class PluginsTests : IDisposable
+public sealed class PluginsTests
 {
-    private readonly IExecutionThread<ExecutionOptions> _testThread;
-
-    public PluginsTests()
-    {
-        _testThread = TestThread.CreateBootstrapper()
-            .CreateAsync()
-            .GetAwaiter().GetResult();
-    }
+    private readonly ExecutionThreadBootstrapper _executionThreadBootstrapper = TestThread.CreateBootstrapper();
 
     [Fact]
     public async Task SamplePluginRowsInput_CreateAndRun_ReturnsResult()
     {
         // Arrange.
-        _testThread.FunctionsManager.RegisterFunction(SamplePluginRowsInput.SamplePlugin);
+        using var thread = await _executionThreadBootstrapper.CreateAsync();
+        thread.FunctionsManager.RegisterFunction(SamplePluginRowsInput.SamplePlugin);
 
         // Act.
-        await _testThread.RunAsync(@"SELECT * FROM plugin();");
-        var result = PrepareResult(TestThread.GetQueryResult(_testThread));
+        await thread.RunAsync(@"SELECT * FROM plugin();");
+        var result = PrepareResult(TestThread.GetQueryResult(thread));
 
         // Assert.
         Assert.Equal("123456789", result);
@@ -38,11 +31,12 @@ public sealed class PluginsTests : IDisposable
     public async Task SamplePluginRowsIterator_CreateAndRun_ReturnsResult()
     {
         // Arrange.
-        _testThread.FunctionsManager.RegisterFunction(SamplePluginRowsIterator.SamplePlugin);
+        using var thread = await _executionThreadBootstrapper.CreateAsync();
+        thread.FunctionsManager.RegisterFunction(SamplePluginRowsIterator.SamplePlugin);
 
         // Act.
-        await _testThread.RunAsync(@"SELECT * FROM plugin();");
-        var result = PrepareResult(TestThread.GetQueryResult(_testThread));
+        await thread.RunAsync(@"SELECT * FROM plugin();");
+        var result = PrepareResult(TestThread.GetQueryResult(thread));
 
         // Assert.
         Assert.Equal("123456789", result);
@@ -52,11 +46,12 @@ public sealed class PluginsTests : IDisposable
     public async Task SamplePluginEnumerableInput_CreateAndRun_ReturnsResult()
     {
         // Arrange.
-        _testThread.FunctionsManager.RegisterFunction(SamplePluginInput.SamplePlugin);
+        using var thread = await _executionThreadBootstrapper.CreateAsync();
+        thread.FunctionsManager.RegisterFunction(SamplePluginInput.SamplePlugin);
 
         // Act.
-        await _testThread.RunAsync(@"SELECT * FROM plugin();");
-        var result = PrepareResult(TestThread.GetQueryResult(_testThread));
+        await thread.RunAsync(@"SELECT * FROM plugin();");
+        var result = PrepareResult(TestThread.GetQueryResult(thread));
 
         // Assert.
         Assert.Equal("123456789", result);
@@ -65,11 +60,5 @@ public sealed class PluginsTests : IDisposable
     private static string PrepareResult(string result)
     {
         return result.Replace("\n", string.Empty);
-    }
-
-    /// <inheritdoc />
-    public void Dispose()
-    {
-        _testThread.Dispose();
     }
 }

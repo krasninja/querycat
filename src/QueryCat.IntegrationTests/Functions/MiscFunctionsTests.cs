@@ -1,5 +1,5 @@
 using Xunit;
-using QueryCat.Backend.Core.Execution;
+using QueryCat.Backend;
 using QueryCat.Backend.Functions;
 using QueryCat.Tests.QueryRunner;
 
@@ -8,34 +8,22 @@ namespace QueryCat.IntegrationTests.Functions;
 /// <summary>
 /// Tests for <see cref="MiscFunctions" />.
 /// </summary>
-public sealed class MiscFunctionsTests : IDisposable
+public sealed class MiscFunctionsTests
 {
-    private readonly IExecutionThread _testThread;
-
-    public MiscFunctionsTests()
-    {
-        _testThread = TestThread.CreateBootstrapper()
-            .CreateAsync()
-            .GetAwaiter().GetResult();
-    }
+    private readonly ExecutionThreadBootstrapper _executionThreadBootstrapper = TestThread.CreateBootstrapper();
 
     [Fact]
     public async Task Coalesce_SeveralArgs_ShouldReturnFirstNotNull()
     {
         // Act.
-        var result1 = await _testThread.RunAsync(@"ECHO COALESCE(NULL, 10);");
-        var result2 = await _testThread.RunAsync(@"ECHO COALESCE(NULL, 10, 20);");
-        var result3 = await _testThread.RunAsync(@"ECHO COALESCE(NULL, 10 + NULL, NULL);");
+        using var thread = await _executionThreadBootstrapper.CreateAsync();
+        var result1 = await thread.RunAsync(@"ECHO COALESCE(NULL, 10);");
+        var result2 = await thread.RunAsync(@"ECHO COALESCE(NULL, 10, 20);");
+        var result3 = await thread.RunAsync(@"ECHO COALESCE(NULL, 10 + NULL, NULL);");
 
         // Assert.
         Assert.Equal(10, result1.AsInteger);
         Assert.Equal(10, result2.AsInteger);
         Assert.True(result3.IsNull);
-    }
-
-    /// <inheritdoc />
-    public void Dispose()
-    {
-        _testThread.Dispose();
     }
 }
