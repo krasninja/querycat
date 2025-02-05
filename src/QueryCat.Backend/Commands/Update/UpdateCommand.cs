@@ -52,7 +52,7 @@ internal sealed class UpdateCommand : ICommand
                 throw new QueryCatException(
                     string.Format(Resources.Errors.CannotFindColumn, setNode.SetTargetNode.FullName));
             }
-            var func = createDelegateVisitor.RunAndReturn(setNode.SetSourceNode);
+            var func = await createDelegateVisitor.RunAndReturnAsync(setNode.SetSourceNode, cancellationToken);
             setters.Add(new UpdateSetter(columnIndex, func));
         }
 

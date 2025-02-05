@@ -264,7 +264,7 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IAsync
             executeEventArgs.ExecutingStatementNode = currentStatement;
 
             // Evaluate the command.
-            var commandContext = _statementsVisitor.RunAndReturn(currentStatement);
+            var commandContext = await _statementsVisitor.RunAndReturnAsync(currentStatement, cancellationToken);
             if (commandContext is IDisposable disposable)
             {
                 _disposablesList.Add(disposable);

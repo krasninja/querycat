@@ -27,6 +27,10 @@ internal sealed class FunctionTypeNode : TypeNode, IEquatable<FunctionTypeNode>
     public override void Accept(AstVisitor visitor) => visitor.Visit(this);
 
     /// <inheritdoc />
+    public override ValueTask AcceptAsync(AstVisitor visitor, CancellationToken cancellationToken)
+        => visitor.VisitAsync(this, cancellationToken);
+
+    /// <inheritdoc />
     public override string ToString() => string.IsNullOrEmpty(TypeName)
         ? Type.ToString()
         : $"{Type}<{TypeName}>";

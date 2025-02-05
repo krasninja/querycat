@@ -52,6 +52,10 @@ internal sealed class SelectTableFunctionNode : ExpressionNode, ISelectAliasNode
     public override void Accept(AstVisitor visitor) => visitor.Visit(this);
 
     /// <inheritdoc />
+    public override ValueTask AcceptAsync(AstVisitor visitor, CancellationToken cancellationToken)
+        => visitor.VisitAsync(this, cancellationToken);
+
+    /// <inheritdoc />
     public override string ToString()
     {
         var sb = new StringBuilder()

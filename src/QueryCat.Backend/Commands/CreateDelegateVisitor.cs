@@ -44,6 +44,12 @@ internal partial class CreateDelegateVisitor : AstVisitor
     }
 
     /// <inheritdoc />
+    public override ValueTask RunAsync(IAstNode node, CancellationToken cancellationToken)
+    {
+        return AstTraversal.PostOrderAsync(node, cancellationToken);
+    }
+
+    /// <inheritdoc />
     public override IFuncUnit RunAndReturn(IAstNode node)
     {
         if (NodeIdFuncMap.TryGetValue(node.Id, out var funcUnit))
@@ -51,6 +57,19 @@ internal partial class CreateDelegateVisitor : AstVisitor
             return funcUnit;
         }
         Run(node);
+        var handler = NodeIdFuncMap[node.Id];
+        NodeIdFuncMap.Clear();
+        return handler;
+    }
+
+    /// <inheritdoc />
+    public override async ValueTask<IFuncUnit> RunAndReturnAsync(IAstNode node, CancellationToken cancellationToken)
+    {
+        if (NodeIdFuncMap.TryGetValue(node.Id, out var funcUnit))
+        {
+            return funcUnit;
+        }
+        await RunAsync(node, cancellationToken);
         var handler = NodeIdFuncMap[node.Id];
         NodeIdFuncMap.Clear();
         return handler;

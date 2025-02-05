@@ -130,6 +130,45 @@ internal sealed class AstTraversal
     }
 
     /// <summary>
+    /// Pre-order traversal, async version.
+    /// </summary>
+    /// <param name="node">Node to start the traversal.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    [DebuggerStepThrough]
+    public async ValueTask PreOrderAsync(IAstNode? node, CancellationToken cancellationToken)
+    {
+        if (node == null)
+        {
+            return;
+        }
+        var ignoreTypes = TypesToIgnore.ToArray();
+
+        _traversalStack.Push(new TraversalItem(node));
+        await node.AcceptAsync(_visitor, cancellationToken);
+        while (_traversalStack.Count > 0)
+        {
+            var current = _traversalStack.Peek();
+            if (current.ChildrenEnumerator.MoveNext())
+            {
+                var next = current.CurrentChild;
+                if (!IsIgnoreType(next.GetType(), ignoreTypes))
+                {
+                    _traversalStack.Push(new TraversalItem(next));
+                    await next.AcceptAsync(_visitor, cancellationToken);
+                }
+                else if (AcceptBeforeIgnore)
+                {
+                    await next.AcceptAsync(_visitor, cancellationToken);
+                }
+            }
+            else
+            {
+                _traversalStack.Pop();
+            }
+        }
+    }
+
+    /// <summary>
     /// Post-order traversal.
     /// </summary>
     /// <param name="node">Node to start the traversal.</param>
@@ -161,6 +200,44 @@ internal sealed class AstTraversal
             else
             {
                 current.Node.Accept(_visitor);
+                _traversalStack.Pop();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Post-order traversal, async version.
+    /// </summary>
+    /// <param name="node">Node to start the traversal.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    [DebuggerStepThrough]
+    public async ValueTask PostOrderAsync(IAstNode? node, CancellationToken cancellationToken)
+    {
+        if (node == null)
+        {
+            return;
+        }
+        var ignoreTypes = TypesToIgnore.ToArray();
+
+        _traversalStack.Push(new TraversalItem(node));
+        while (_traversalStack.Count > 0)
+        {
+            var current = _traversalStack.Peek();
+            if (current.ChildrenEnumerator.MoveNext())
+            {
+                var next = current.CurrentChild;
+                if (!IsIgnoreType(current.CurrentChild.GetType(), ignoreTypes))
+                {
+                    _traversalStack.Push(new TraversalItem(next));
+                }
+                else if (AcceptBeforeIgnore)
+                {
+                    await next.AcceptAsync(_visitor, cancellationToken);
+                }
+            }
+            else
+            {
+                await current.Node.AcceptAsync(_visitor, cancellationToken);
                 _traversalStack.Pop();
             }
         }

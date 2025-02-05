@@ -10,7 +10,7 @@ namespace QueryCat.Backend.Commands.Declare;
 internal sealed class DeclareCommand : ICommand
 {
     /// <inheritdoc />
-    public Task<IFuncUnit> CreateHandlerAsync(
+    public async Task<IFuncUnit> CreateHandlerAsync(
         IExecutionThread<ExecutionOptions> executionThread,
         StatementNode node,
         CancellationToken cancellationToken = default)
@@ -21,7 +21,7 @@ internal sealed class DeclareCommand : ICommand
         IFuncUnit valueHandler = FuncCommandHandler.NullHandler;
         if (declareNode.ValueNode != null)
         {
-            valueHandler = new StatementsVisitor(executionThread).RunAndReturn(declareNode.ValueNode);
+            valueHandler = await new StatementsVisitor(executionThread).RunAndReturnAsync(declareNode.ValueNode, cancellationToken);
             // There is a special case for SELECT command. We prefer assign first value instead of iterator object.
             if (valueHandler is SelectCommandHandler selectCommandHandler
                 && selectCommandHandler.SelectCommandContext.IsSingleValue)
@@ -37,6 +37,6 @@ internal sealed class DeclareCommand : ICommand
             scope.Variables[declareNode.Name] = value;
             return VariantValue.Null;
         });
-        return Task.FromResult(handler);
+        return handler;
     }
 }

@@ -37,5 +37,9 @@ internal sealed class SelectWithListNode : AstNode
     public override void Accept(AstVisitor visitor) => visitor.Visit(this);
 
     /// <inheritdoc />
+    public override ValueTask AcceptAsync(AstVisitor visitor, CancellationToken cancellationToken)
+        => visitor.VisitAsync(this, cancellationToken);
+
+    /// <inheritdoc />
     public override string ToString() => string.Join(", ", WithNodes.Select(n => n.ToString()));
 }

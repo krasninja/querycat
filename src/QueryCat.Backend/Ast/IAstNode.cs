@@ -11,7 +11,7 @@ internal interface IAstNode : ICloneable
     int Id { get; }
 
     /// <summary>
-    /// Short self descriptive code.
+    /// Short self-descriptive code.
     /// </summary>
     string Code { get; }
 
@@ -25,6 +25,13 @@ internal interface IAstNode : ICloneable
     /// </summary>
     /// <param name="visitor">The visitor.</param>
     void Accept(AstVisitor visitor);
+
+    /// <summary>
+    /// The async version of accept method for visitor pattern implementation.
+    /// </summary>
+    /// <param name="visitor">The visitor.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    ValueTask AcceptAsync(AstVisitor visitor, CancellationToken cancellationToken);
 
     /// <summary>
     /// Get attribute assigned to the node.

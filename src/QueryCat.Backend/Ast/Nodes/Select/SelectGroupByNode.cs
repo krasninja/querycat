@@ -22,6 +22,10 @@ internal sealed class SelectGroupByNode : AstNode
     public override void Accept(AstVisitor visitor) => visitor.Visit(this);
 
     /// <inheritdoc />
+    public override ValueTask AcceptAsync(AstVisitor visitor, CancellationToken cancellationToken)
+        => visitor.VisitAsync(this, cancellationToken);
+
+    /// <inheritdoc />
     public override IEnumerable<IAstNode> GetChildren() => GroupByNodes;
 
     /// <inheritdoc />

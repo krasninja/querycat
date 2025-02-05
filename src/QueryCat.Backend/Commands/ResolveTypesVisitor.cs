@@ -29,6 +29,12 @@ internal class ResolveTypesVisitor : AstVisitor
         AstTraversal.PostOrder(node);
     }
 
+    /// <inheritdoc />
+    public override ValueTask RunAsync(IAstNode node, CancellationToken cancellationToken)
+    {
+        return AstTraversal.PostOrderAsync(node, cancellationToken);
+    }
+
     /// <summary>
     /// Separate names and positional arguments.
     /// </summary>
@@ -262,9 +268,23 @@ internal class ResolveTypesVisitor : AstVisitor
     }
 
     /// <inheritdoc />
+    public override async ValueTask VisitAsync(SelectQuerySpecificationNode node, CancellationToken cancellationToken)
+    {
+        await new SelectPlanner(ExecutionThread, this).CreateIteratorAsync(node, cancellationToken: cancellationToken);
+        node.ColumnsListNode.ColumnsNodes[0].CopyTo<DataType>(AstAttributeKeys.TypeKey, node);
+    }
+
+    /// <inheritdoc />
     public override void Visit(SelectQueryCombineNode node)
     {
         new SelectPlanner(ExecutionThread, this).CreateIterator(node);
+        node.ColumnsListNode.ColumnsNodes[0].CopyTo<DataType>(AstAttributeKeys.TypeKey, node);
+    }
+
+    /// <inheritdoc />
+    public override async ValueTask VisitAsync(SelectQueryCombineNode node, CancellationToken cancellationToken)
+    {
+        await new SelectPlanner(ExecutionThread, this).CreateIteratorAsync(node, cancellationToken: cancellationToken);
         node.ColumnsListNode.ColumnsNodes[0].CopyTo<DataType>(AstAttributeKeys.TypeKey, node);
     }
 

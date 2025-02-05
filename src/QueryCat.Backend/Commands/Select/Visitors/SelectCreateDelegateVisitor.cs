@@ -7,6 +7,7 @@ using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Storage;
 
@@ -43,6 +44,18 @@ internal sealed class SelectCreateDelegateVisitor : CreateDelegateVisitor
     {
         _subQueryIterators.Clear();
         var funcUnit = base.RunAndReturn(node);
+        if (funcUnit is FuncUnitDelegate funcUnitDelegate)
+        {
+            funcUnitDelegate.SubQueryIterators = _subQueryIterators;
+        }
+        return funcUnit;
+    }
+
+    /// <inheritdoc />
+    public override async ValueTask<IFuncUnit> RunAndReturnAsync(IAstNode node, CancellationToken cancellationToken)
+    {
+        _subQueryIterators.Clear();
+        var funcUnit = await base.RunAndReturnAsync(node, cancellationToken);
         if (funcUnit is FuncUnitDelegate funcUnitDelegate)
         {
             funcUnitDelegate.SubQueryIterators = _subQueryIterators;
@@ -269,28 +282,79 @@ internal sealed class SelectCreateDelegateVisitor : CreateDelegateVisitor
         base.Visit(node);
     }
 
+    /// <inheritdoc />
+    public override async ValueTask VisitAsync(InOperationExpressionNode node, CancellationToken cancellationToken)
+    {
+        if (node.InExpressionValuesNodes is SelectQueryNode queryNode)
+        {
+            var valueAction = NodeIdFuncMap[node.ExpressionNode.Id];
+            var rowsIterator = await new SelectPlanner(ExecutionThread).CreateIteratorAsync(queryNode, _context, cancellationToken);
+            var equalDelegate = VariantValue.GetEqualsDelegate(node.ExpressionNode.GetDataType());
+
+            async ValueTask<VariantValue> Func(IExecutionThread thread, CancellationToken ct)
+            {
+                var leftValue = await valueAction.InvokeAsync(thread, ct);
+                await rowsIterator.ResetAsync(ct);
+                while (await rowsIterator.MoveNextAsync(ct))
+                {
+                    var rightValue = rowsIterator.Current[0];
+                    var isEqual = equalDelegate.Invoke(in leftValue, in rightValue);
+                    if (isEqual.IsNull)
+                    {
+                        continue;
+                    }
+                    if (isEqual.AsBoolean)
+                    {
+                        return new VariantValue(!node.IsNot);
+                    }
+                }
+                return new VariantValue(node.IsNot);
+            }
+
+            NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, node.GetDataType());
+
+            return;
+        }
+
+        base.Visit(node);
+    }
+
     #region Subqueries
 
     /// <inheritdoc />
-    public override void Visit(SelectQuerySpecificationNode node) => VisitSelectQueryNode(node);
+    public override void Visit(SelectQuerySpecificationNode node)
+        => AsyncUtils.RunSync(ct => VisitSelectQueryNodeAsync(node, ct).AsTask());
 
     /// <inheritdoc />
-    public override void Visit(SelectQueryCombineNode node) => VisitSelectQueryNode(node);
+    public override ValueTask VisitAsync(SelectQuerySpecificationNode node, CancellationToken cancellationToken)
+    {
+        return VisitSelectQueryNodeAsync(node, cancellationToken);
+    }
 
-    private void VisitSelectQueryNode(SelectQueryNode node)
+    /// <inheritdoc />
+    public override void Visit(SelectQueryCombineNode node)
+        => AsyncUtils.RunSync(ct => VisitSelectQueryNodeAsync(node, ct).AsTask());
+
+    /// <inheritdoc />
+    public override ValueTask VisitAsync(SelectQueryCombineNode node, CancellationToken cancellationToken)
+    {
+        return VisitSelectQueryNodeAsync(node, cancellationToken);
+    }
+
+    private async ValueTask VisitSelectQueryNodeAsync(SelectQueryNode node, CancellationToken cancellationToken)
     {
         if (NodeIdFuncMap.ContainsKey(node.Id))
         {
             return;
         }
 
-        var rowsIterator = new SelectPlanner(ExecutionThread).CreateIterator(node, _context);
-        ResolveTypesVisitor.Visit(node);
+        var rowsIterator = await new SelectPlanner(ExecutionThread).CreateIteratorAsync(node, _context, cancellationToken);
+        await ResolveTypesVisitor.VisitAsync(node, cancellationToken);
 
-        async ValueTask<VariantValue> Func(IExecutionThread thread, CancellationToken cancellationToken)
+        async ValueTask<VariantValue> Func(IExecutionThread thread, CancellationToken ct)
         {
-            await rowsIterator.ResetAsync(cancellationToken);
-            if (await rowsIterator.MoveNextAsync(cancellationToken))
+            await rowsIterator.ResetAsync(ct);
+            if (await rowsIterator.MoveNextAsync(ct))
             {
                 return rowsIterator.Current[0];
             }

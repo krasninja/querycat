@@ -25,8 +25,8 @@ internal sealed class InsertCommand : ICommand
         var insertNode = (InsertNode)node.RootNode;
 
         // Get output source.
-        var rowsOutputFunc = new CreateDelegateVisitor(executionThread)
-            .RunAndReturn(insertNode.InsertTargetNode);
+        var rowsOutputFunc = await new CreateDelegateVisitor(executionThread)
+            .RunAndReturnAsync(insertNode.InsertTargetNode, cancellationToken);
         var rowsOutput = (await rowsOutputFunc.InvokeAsync(executionThread, cancellationToken))
             .AsRequired<IRowsOutput>();
 
