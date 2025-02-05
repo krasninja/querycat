@@ -23,12 +23,14 @@ internal sealed partial class SelectPlanner
      * aggregateColumnsOffset = 4
      */
 
-    private void PipelineAggregate_ApplyGrouping(
+    private async Task PipelineAggregate_ApplyGroupingAsync(
         SelectCommandContext context,
-        SelectQuerySpecificationNode selectQueryNode)
+        SelectQuerySpecificationNode selectQueryNode,
+        CancellationToken cancellationToken)
     {
         var groupByNode = selectQueryNode.TableExpressionNode?.GroupByNode;
-        var targets = PipelineAggregate_CreateTargets(context, selectQueryNode.TableExpressionNode, selectQueryNode.ColumnsListNode);
+        var targets = await PipelineAggregate_CreateTargetsAsync(context,
+            selectQueryNode.TableExpressionNode, selectQueryNode.ColumnsListNode, cancellationToken);
 
         // If there is no group by and no aggregate functions used - skip aggregates
         // processing.
@@ -79,25 +81,26 @@ internal sealed partial class SelectPlanner
         aggregateReplaceDelegateVisitor.Run(selectQueryNode.ColumnsListNode);
     }
 
-    private AggregateTarget[] PipelineAggregate_CreateTargets(
+    private async Task<AggregateTarget[]> PipelineAggregate_CreateTargetsAsync(
         SelectCommandContext context,
         SelectTableNode? tableExpressionNode,
-        SelectColumnsListNode columnsNodes)
+        SelectColumnsListNode columnsNodes,
+        CancellationToken cancellationToken)
     {
         var havingNode = tableExpressionNode?.HavingNode;
 
         var columnsWithFunctions = columnsNodes.ColumnsNodes
             .OfType<SelectColumnsSublistExpressionNode>()
-            .SelectMany(n => n.GetAllChildren<FunctionCallNode>(new[] { typeof(SelectQueryNode) }))
+            .SelectMany(n => n.GetAllChildren<FunctionCallNode>([typeof(SelectQueryNode)]))
             .ToList();
 
         var selectAggregateTargetsVisitor = new SelectCreateDelegateVisitor(ExecutionThread, context);
-        selectAggregateTargetsVisitor.Run(columnsWithFunctions);
+        await selectAggregateTargetsVisitor.RunAsync(columnsWithFunctions, cancellationToken);
         var aggregateTargets = columnsWithFunctions
             .Select(n => n.GetAttribute<AggregateTarget>(AstAttributeKeys.AggregateFunctionKey));
         if (havingNode != null)
         {
-            selectAggregateTargetsVisitor.Run(havingNode);
+            await selectAggregateTargetsVisitor.RunAsync(havingNode, cancellationToken);
             aggregateTargets = aggregateTargets.Union(
                 havingNode.GetAllChildren<FunctionCallNode>()
                     .Select(n => n.GetAttribute<AggregateTarget>(AstAttributeKeys.AggregateFunctionKey)));

@@ -295,14 +295,16 @@ internal sealed partial class SelectPlanner
 
     #region OFFSET, FETCH
 
-    private void Pipeline_ApplyOffsetFetch(
+    private async Task Pipeline_ApplyOffsetFetchAsync(
         SelectCommandContext context,
         SelectOffsetNode? offsetNode,
-        SelectFetchNode? fetchNode)
+        SelectFetchNode? fetchNode,
+        CancellationToken cancellationToken)
     {
         if (offsetNode != null)
         {
-            var count = Misc_CreateDelegate(offsetNode.CountNode, context).Invoke(ExecutionThread).AsInteger;
+            var count = (await Misc_CreateDelegate(offsetNode.CountNode, context)
+                .InvokeAsync(ExecutionThread, cancellationToken)).AsInteger;
             if (count.HasValue)
             {
                 context.SetIterator(new OffsetRowsIterator(context.CurrentIterator, count.Value));
@@ -310,7 +312,8 @@ internal sealed partial class SelectPlanner
         }
         if (fetchNode != null)
         {
-            var count = Misc_CreateDelegate(fetchNode.CountNode, context).Invoke(ExecutionThread).AsInteger;
+            var count = (await Misc_CreateDelegate(fetchNode.CountNode, context)
+                .InvokeAsync(ExecutionThread, cancellationToken)).AsInteger;
             if (count.HasValue)
             {
                 context.SetIterator(new LimitRowsIterator(context.CurrentIterator, count.Value));

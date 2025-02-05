@@ -39,7 +39,7 @@ internal sealed partial class SelectPlanner
         SelectCommandContext? parentContext = null,
         CancellationToken cancellationToken = default)
     {
-        Misc_Transform(node);
+        await Misc_TransformAsync(node, cancellationToken);
         var context = Context_CreateInitialContext(node, parentContext);
         Context_InitializeRowsInputs(context, node);
         await ContextCte_PrepareInputListAsync(context, node, cancellationToken);
@@ -352,14 +352,14 @@ internal sealed partial class SelectPlanner
 
         if (tableJoinedNode is SelectTableJoinedOnNode joinedOnNode)
         {
-            var searchFunc = new InputCreateDelegateVisitor(ExecutionThread, context, left, right)
-                .RunAndReturn(joinedOnNode.SearchConditionNode);
+            var searchFunc = await new InputCreateDelegateVisitor(ExecutionThread, context, left, right)
+                .RunAndReturnAsync(joinedOnNode.SearchConditionNode, cancellationToken);
             return new SelectJoinRowsInput(ExecutionThread, left, right, join, searchFunc, reverseColumnsOrder);
         }
         if (tableJoinedNode is SelectTableJoinedUsingNode joinedUsingNode)
         {
-            var searchFunc = new InputCreateDelegateVisitor(ExecutionThread, context, left, right)
-                .RunAndReturn(joinedUsingNode);
+            var searchFunc = await new InputCreateDelegateVisitor(ExecutionThread, context, left, right)
+                .RunAndReturnAsync(joinedUsingNode, cancellationToken);
             return new SelectJoinRowsInput(ExecutionThread, left, right, join, searchFunc, reverseColumnsOrder);
         }
         throw new ArgumentException(string.Format(Resources.Errors.NotSupported, tableJoinedNode.GetType().Name),
@@ -376,12 +376,12 @@ internal sealed partial class SelectPlanner
         return rowsInput;
     }
 
-    private IRowsInput Context_CreateInputSourceFromTable(SelectCommandContext context,
-        SelectTableValuesNode tableValuesNode)
+    private async Task<IRowsInput> Context_CreateInputSourceFromTableAsync(SelectCommandContext context,
+        SelectTableValuesNode tableValuesNode, CancellationToken cancellationToken)
     {
-        var func = new SelectCreateDelegateVisitor(ExecutionThread, context)
-            .RunAndReturn(tableValuesNode);
-        var rowsFrame = func.Invoke(ExecutionThread).AsRequired<RowsFrame>();
+        var func = await new SelectCreateDelegateVisitor(ExecutionThread, context)
+            .RunAndReturnAsync(tableValuesNode, cancellationToken);
+        var rowsFrame = (await func.InvokeAsync(ExecutionThread, cancellationToken)).AsRequired<RowsFrame>();
         return new RowsIteratorInput(rowsFrame.GetIterator());
     }
 
@@ -414,7 +414,7 @@ internal sealed partial class SelectPlanner
         {
             return
             [
-                Context_CreateInputSourceFromTable(context, tableNode)
+                await Context_CreateInputSourceFromTableAsync(context, tableNode, cancellationToken)
             ];
         }
 

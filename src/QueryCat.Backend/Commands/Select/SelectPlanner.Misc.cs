@@ -26,8 +26,8 @@ internal sealed partial class SelectPlanner
         return nodes.Select(n => visitor.RunAndReturn(n));
     }
 
-    private void Misc_Transform(SelectQueryNode node)
+    private async Task Misc_TransformAsync(SelectQueryNode node, CancellationToken cancellationToken)
     {
-        new TransformQueryAstVisitor().Run(node);
+        await new TransformQueryAstVisitor().RunAsync(node, cancellationToken);
     }
 }

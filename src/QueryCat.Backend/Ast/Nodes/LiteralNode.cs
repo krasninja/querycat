@@ -37,6 +37,10 @@ internal sealed class LiteralNode : ExpressionNode
     public override void Accept(AstVisitor visitor) => visitor.Visit(this);
 
     /// <inheritdoc />
+    public override ValueTask AcceptAsync(AstVisitor visitor, CancellationToken cancellationToken)
+        => visitor.VisitAsync(this, cancellationToken);
+
+    /// <inheritdoc />
     public override object Clone() => new LiteralNode(this);
 
     /// <inheritdoc />

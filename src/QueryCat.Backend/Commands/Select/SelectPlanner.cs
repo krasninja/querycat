@@ -70,7 +70,7 @@ internal sealed partial class SelectPlanner
         Pipeline_ApplyFilter(context, node.TableExpressionNode);
 
         // GROUP BY/HAVING.
-        PipelineAggregate_ApplyGrouping(context, node);
+        await PipelineAggregate_ApplyGroupingAsync(context, node, cancellationToken);
         PipelineAggregate_ApplyHaving(context, node.TableExpressionNode?.HavingNode);
 
         // DISTINCT ON.
@@ -99,7 +99,7 @@ internal sealed partial class SelectPlanner
         Pipeline_CreateDistinctAllRowsSet(context, node);
 
         // OFFSET, FETCH.
-        Pipeline_ApplyOffsetFetch(context, node.OffsetNode, node.FetchNode);
+        await Pipeline_ApplyOffsetFetchAsync(context, node.OffsetNode, node.FetchNode, cancellationToken);
 
         // INTO.
         Pipeline_CreateOutput(context, node);
@@ -124,7 +124,7 @@ internal sealed partial class SelectPlanner
 
         // Process.
         Pipeline_ApplyOrderBy(context, node.OrderByNode);
-        Pipeline_ApplyOffsetFetch(context, node.OffsetNode, node.FetchNode);
+        await Pipeline_ApplyOffsetFetchAsync(context, node.OffsetNode, node.FetchNode, cancellationToken);
         var resultIterator = context.CurrentIterator;
         if (context.HasOutput)
         {

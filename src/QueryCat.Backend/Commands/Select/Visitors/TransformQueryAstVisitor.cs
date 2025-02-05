@@ -25,6 +25,17 @@ internal class TransformQueryAstVisitor : AstVisitor
     }
 
     /// <inheritdoc />
+    public override async ValueTask RunAsync(IAstNode node, CancellationToken cancellationToken)
+    {
+        await base.RunAsync(node, cancellationToken);
+
+        foreach (var transformation in _transformations)
+        {
+            transformation.Invoke();
+        }
+    }
+
+    /// <inheritdoc />
     public override void Visit(FunctionCallNode node)
     {
         // Replace COUNT() by COUNT(1).

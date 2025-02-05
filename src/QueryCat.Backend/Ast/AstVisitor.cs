@@ -94,12 +94,30 @@ internal abstract class AstVisitor
     {
     }
 
+    public virtual ValueTask VisitAsync(AtTimeZoneNode node, CancellationToken cancellationToken)
+    {
+        Visit(node);
+        return ValueTask.CompletedTask;
+    }
+
     public virtual void Visit(BetweenExpressionNode node)
     {
     }
 
+    public virtual ValueTask VisitAsync(BetweenExpressionNode node, CancellationToken cancellationToken)
+    {
+        Visit(node);
+        return ValueTask.CompletedTask;
+    }
+
     public virtual void Visit(BinaryOperationExpressionNode node)
     {
+    }
+
+    public virtual ValueTask VisitAsync(BinaryOperationExpressionNode node, CancellationToken cancellationToken)
+    {
+        Visit(node);
+        return ValueTask.CompletedTask;
     }
 
     public virtual void Visit(BlockExpressionNode node)
@@ -116,12 +134,30 @@ internal abstract class AstVisitor
     {
     }
 
+    public virtual ValueTask VisitAsync(CaseExpressionNode node, CancellationToken cancellationToken)
+    {
+        Visit(node);
+        return ValueTask.CompletedTask;
+    }
+
     public virtual void Visit(CaseWhenThenNode node)
     {
     }
 
+    public virtual ValueTask VisitAsync(CaseWhenThenNode node, CancellationToken cancellationToken)
+    {
+        Visit(node);
+        return ValueTask.CompletedTask;
+    }
+
     public virtual void Visit(EmptyNode node)
     {
+    }
+
+    public virtual ValueTask VisitAsync(EmptyNode node, CancellationToken cancellationToken)
+    {
+        Visit(node);
+        return ValueTask.CompletedTask;
     }
 
     public virtual void Visit(ExpressionStatementNode node)
@@ -138,16 +174,40 @@ internal abstract class AstVisitor
     {
     }
 
+    public virtual ValueTask VisitAsync(IdentifierExpressionNode node, CancellationToken cancellationToken)
+    {
+        Visit(node);
+        return ValueTask.CompletedTask;
+    }
+
     public virtual void Visit(IdentifierFilterSelectorNode node)
     {
+    }
+
+    public virtual ValueTask VisitAsync(IdentifierFilterSelectorNode node, CancellationToken cancellationToken)
+    {
+        Visit(node);
+        return ValueTask.CompletedTask;
     }
 
     public virtual void Visit(IdentifierIndexSelectorNode node)
     {
     }
 
+    public virtual ValueTask VisitAsync(IdentifierIndexSelectorNode node, CancellationToken cancellationToken)
+    {
+        Visit(node);
+        return ValueTask.CompletedTask;
+    }
+
     public virtual void Visit(IdentifierPropertySelectorNode node)
     {
+    }
+
+    public virtual ValueTask VisitAsync(IdentifierPropertySelectorNode node, CancellationToken cancellationToken)
+    {
+        Visit(node);
+        return ValueTask.CompletedTask;
     }
 
     public virtual void Visit(InOperationExpressionNode node)
@@ -174,20 +234,50 @@ internal abstract class AstVisitor
     {
     }
 
+    public virtual ValueTask VisitAsync(LiteralNode node, CancellationToken cancellationToken)
+    {
+        Visit(node);
+        return ValueTask.CompletedTask;
+    }
+
     public virtual void Visit(ProgramNode node)
     {
+    }
+
+    public virtual ValueTask VisitAsync(ProgramNode node, CancellationToken cancellationToken)
+    {
+        Visit(node);
+        return ValueTask.CompletedTask;
     }
 
     public virtual void Visit(TernaryOperationExpressionNode node)
     {
     }
 
+    public virtual ValueTask VisitAsync(TernaryOperationExpressionNode node, CancellationToken cancellationToken)
+    {
+        Visit(node);
+        return ValueTask.CompletedTask;
+    }
+
     public virtual void Visit(TypeNode node)
     {
     }
 
+    public virtual ValueTask VisitAsync(TypeNode node, CancellationToken cancellationToken)
+    {
+        Visit(node);
+        return ValueTask.CompletedTask;
+    }
+
     public virtual void Visit(UnaryOperationExpressionNode node)
     {
+    }
+
+    public virtual ValueTask VisitAsync(UnaryOperationExpressionNode node, CancellationToken cancellationToken)
+    {
+        Visit(node);
+        return ValueTask.CompletedTask;
     }
 
     #endregion
@@ -340,8 +430,20 @@ internal abstract class AstVisitor
     {
     }
 
+    public virtual ValueTask VisitAsync(CastFunctionNode node, CancellationToken cancellationToken)
+    {
+        Visit(node);
+        return ValueTask.CompletedTask;
+    }
+
     public virtual void Visit(CoalesceFunctionNode node)
     {
+    }
+
+    public virtual ValueTask VisitAsync(CoalesceFunctionNode node, CancellationToken cancellationToken)
+    {
+        Visit(node);
+        return ValueTask.CompletedTask;
     }
 
     #endregion
