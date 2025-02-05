@@ -34,7 +34,5 @@ internal sealed class SelectColumnsExceptNode : AstNode
     public override object Clone() => new SelectColumnsExceptNode(this);
 
     /// <inheritdoc />
-    public override void Accept(AstVisitor visitor)
-    {
-    }
+    public override void Accept(AstVisitor visitor) => visitor.Visit(this);
 }
