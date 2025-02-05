@@ -15,7 +15,10 @@ internal sealed class SetCommand : ICommand
     }
 
     /// <inheritdoc />
-    public IFuncUnit CreateHandler(IExecutionThread<ExecutionOptions> executionThread, StatementNode node)
+    public Task<IFuncUnit> CreateHandlerAsync(
+        IExecutionThread<ExecutionOptions> executionThread,
+        StatementNode node,
+        CancellationToken cancellationToken = default)
     {
         var setNode = (SetNode)node.RootNode;
 
@@ -29,6 +32,6 @@ internal sealed class SetCommand : ICommand
             await identifierHandler.InvokeAsync(thread, ct);
             return VariantValue.Null;
         });
-        return handler;
+        return Task.FromResult(handler);
     }
 }

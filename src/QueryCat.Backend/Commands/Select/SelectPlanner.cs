@@ -3,6 +3,7 @@ using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Commands.Select.Iterators;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Relational.Iterators;
 
 namespace QueryCat.Backend.Commands.Select;
@@ -24,7 +25,17 @@ internal sealed partial class SelectPlanner
     {
     }
 
-    public IRowsIterator CreateIterator(SelectQueryNode queryNode, SelectCommandContext? parentContext = null)
+    public IRowsIterator CreateIterator(
+        SelectQueryNode queryNode,
+        SelectCommandContext? parentContext = null)
+    {
+        return AsyncUtils.RunSync(ct => CreateIteratorAsync(queryNode, parentContext, ct))!;
+    }
+
+    public async Task<IRowsIterator> CreateIteratorAsync(
+        SelectQueryNode queryNode,
+        SelectCommandContext? parentContext = null,
+        CancellationToken cancellationToken = default)
     {
         if (queryNode.HasAttribute(AstAttributeKeys.ContextKey))
         {
@@ -34,19 +45,22 @@ internal sealed partial class SelectPlanner
 
         if (queryNode is SelectQuerySpecificationNode querySpecificationNode)
         {
-            return CreateIteratorInternal(querySpecificationNode, parentContext);
+            return await CreateIteratorInternalAsync(querySpecificationNode, parentContext, cancellationToken);
         }
         if (queryNode is SelectQueryCombineNode queryCombineNode)
         {
-            return CreateIteratorInternal(queryCombineNode, parentContext);
+            return await CreateIteratorInternalAsync(queryCombineNode, parentContext, cancellationToken);
         }
         throw new InvalidOperationException(string.Format(Resources.Errors.NotSupportedNodeType, queryNode.GetType()));
     }
 
-    private IRowsIterator CreateIteratorInternal(SelectQuerySpecificationNode node, SelectCommandContext? parentContext = null)
+    private async Task<IRowsIterator> CreateIteratorInternalAsync(
+        SelectQuerySpecificationNode node,
+        SelectCommandContext? parentContext = null,
+        CancellationToken cancellationToken = default)
     {
         // FROM.
-        var context = Context_Create(node, parentContext);
+        var context = await Context_CreateAsync(node, parentContext, cancellationToken);
 
         // Misc.
         Pipeline_ApplyStatistic(context);
@@ -93,11 +107,14 @@ internal sealed partial class SelectPlanner
         return context.CurrentIterator;
     }
 
-    private IRowsIterator CreateIteratorInternal(SelectQueryCombineNode node, SelectCommandContext? parentContext = null)
+    private async Task<IRowsIterator> CreateIteratorInternalAsync(
+        SelectQueryCombineNode node,
+        SelectCommandContext? parentContext = null,
+        CancellationToken cancellationToken = default)
     {
-        var context = Context_Create(node, parentContext);
-        var leftIterator = CreateIterator(node.LeftQueryNode, parentContext);
-        var rightIterator = CreateIterator(node.RightQueryNode, parentContext);
+        var context = await Context_CreateAsync(node, parentContext, cancellationToken);
+        var leftIterator = await CreateIteratorAsync(node.LeftQueryNode, parentContext, cancellationToken);
+        var rightIterator = await CreateIteratorAsync(node.RightQueryNode, parentContext, cancellationToken);
         var combineRowsIterator = new CombineRowsIterator(
             leftIterator,
             rightIterator,

@@ -18,12 +18,16 @@ internal sealed class SelectCommand : ICommand
     }
 
     /// <inheritdoc />
-    public IFuncUnit CreateHandler(IExecutionThread<ExecutionOptions> executionThread, StatementNode node)
+    public async Task<IFuncUnit> CreateHandlerAsync(
+        IExecutionThread<ExecutionOptions> executionThread,
+        StatementNode node,
+        CancellationToken cancellationToken = default)
     {
         var selectQueryNode = (SelectQueryNode)node.RootNode;
 
         // Iterate by select node in pre-order way and create correspond command context.
-        new SelectPlanner(executionThread, _resolveTypesVisitor).CreateIterator(selectQueryNode);
+        await new SelectPlanner(executionThread, _resolveTypesVisitor)
+            .CreateIteratorAsync(selectQueryNode, cancellationToken: cancellationToken);
         var context = selectQueryNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
 
         IFuncUnit handler = new SelectCommandHandler(context);

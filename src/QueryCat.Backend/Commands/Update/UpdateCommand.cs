@@ -13,7 +13,10 @@ namespace QueryCat.Backend.Commands.Update;
 internal sealed class UpdateCommand : ICommand
 {
     /// <inheritdoc />
-    public IFuncUnit CreateHandler(IExecutionThread<ExecutionOptions> executionThread, StatementNode node)
+    public async Task<IFuncUnit> CreateHandlerAsync(
+        IExecutionThread<ExecutionOptions> executionThread,
+        StatementNode node,
+        CancellationToken cancellationToken = default)
     {
         if (executionThread.Options.SafeMode)
         {
@@ -30,7 +33,7 @@ internal sealed class UpdateCommand : ICommand
             new SelectTableNode(
                 new SelectTableReferenceListNode(insertNode.TargetExpressionNode));
         selectNode.TableExpressionNode.SearchConditionNode = insertNode.SearchConditionNode;
-        new SelectPlanner(executionThread).CreateIterator(selectNode);
+        await new SelectPlanner(executionThread).CreateIteratorAsync(selectNode, cancellationToken: cancellationToken);
         var context = selectNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
 
         // Evaluate setters.

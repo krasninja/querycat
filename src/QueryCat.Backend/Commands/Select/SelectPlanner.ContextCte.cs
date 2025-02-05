@@ -12,7 +12,8 @@ namespace QueryCat.Backend.Commands.Select;
 
 internal sealed partial class SelectPlanner
 {
-    private void ContextCte_PrepareInputList(SelectCommandContext context, SelectQuerySpecificationNode node)
+    private async Task ContextCte_PrepareInputListAsync(SelectCommandContext context, SelectQuerySpecificationNode node,
+        CancellationToken cancellationToken)
     {
         context.CteList.AddRange(ContextCte_GetParentList(context));
         if (node.WithNode == null)
@@ -25,26 +26,27 @@ internal sealed partial class SelectPlanner
             var processedAsRecursive = false;
             if (node.WithNode.IsRecursive)
             {
-                processedAsRecursive = ContextCte_PrepareInputRecursiveList(context, withNode);
+                processedAsRecursive = await ContextCte_PrepareInputRecursiveListAsync(context, withNode, cancellationToken);
             }
 
             if (!processedAsRecursive)
             {
-                ContextCte_PrepareInputNonRecursiveList(context, withNode);
+                await ContextCte_PrepareInputNonRecursiveListAsync(context, withNode, cancellationToken);
             }
         }
     }
 
-    private void ContextCte_PrepareInputNonRecursiveList(SelectCommandContext context, SelectWithNode withNode)
+    private async Task ContextCte_PrepareInputNonRecursiveListAsync(SelectCommandContext context, SelectWithNode withNode,
+        CancellationToken cancellationToken)
     {
-        var rowsIterator = CreateIterator(withNode.QueryNode, context);
+        var rowsIterator = await CreateIteratorAsync(withNode.QueryNode, context, cancellationToken);
         var cte = new CommonTableExpression(
             withNode.Name,
             rowsIterator);
         context.CteList.Add(cte);
     }
 
-    private bool ContextCte_PrepareInputRecursiveList(SelectCommandContext context, SelectWithNode withNode)
+    private async Task<bool> ContextCte_PrepareInputRecursiveListAsync(SelectCommandContext context, SelectWithNode withNode, CancellationToken cancellationToken)
     {
         if (withNode.QueryNode is not SelectQueryCombineNode combineNode)
         {
@@ -56,7 +58,7 @@ internal sealed partial class SelectPlanner
         }
 
         // Prepare and evaluate initial query.
-        var leftIterator = CreateIterator(combineNode.LeftQueryNode, context);
+        var leftIterator = await CreateIteratorAsync(combineNode.LeftQueryNode, context, cancellationToken);
         var initialQueryCommandContext = combineNode.LeftQueryNode
             .GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
         ContextCte_FixColumnsNames(
@@ -69,7 +71,7 @@ internal sealed partial class SelectPlanner
         context.CteList.Add(new CommonTableExpression(withNode.Name, proxyRowsIterator));
 
         // Then prepare iterator for recursive part.
-        var rightIterator = CreateIterator(combineNode.RightQueryNode, context);
+        var rightIterator = await CreateIteratorAsync(combineNode.RightQueryNode, context, cancellationToken);
 
         // Final result.
         var totalResult = new RowsFrame(initialQueryCommandContext.CurrentIterator.Columns);
