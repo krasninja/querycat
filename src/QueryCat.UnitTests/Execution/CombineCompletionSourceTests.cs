@@ -21,7 +21,7 @@ public sealed class CombineCompletionSourceTests
             ],
             maxItems: -1,
             preventDuplicates: true);
-        using var executionThread = await new ExecutionThreadBootstrapper()
+        await using var executionThread = await new ExecutionThreadBootstrapper()
             .WithCompletionSource(combineCompletionSource)
             .CreateAsync();
 

@@ -9,7 +9,7 @@ public class QueryBenchmark
     [Benchmark]
     public async Task QueryUsersCsvFile()
     {
-        using var executionThread = await new ExecutionThreadBootstrapper().CreateAsync();
+        await using var executionThread = await new ExecutionThreadBootstrapper().CreateAsync();
         var usersFile = UsersCsvFile.GetTestUsersFilePath();
         await executionThread.RunAsync(
             @$"select substr(email, position('@' in email)) as domain, avg(balance) into write_null() from '{usersFile}'" +

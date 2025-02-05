@@ -18,7 +18,7 @@ internal class SetVariableUsage : BaseUsage
     /// <inheritdoc />
     public override async Task RunAsync()
     {
-        using var executionThread = await new ExecutionThreadBootstrapper().CreateAsync();
+        await using var executionThread = await new ExecutionThreadBootstrapper().CreateAsync();
         var data = new Dictionary<int, Product>
         {
             [1] = new(10m),

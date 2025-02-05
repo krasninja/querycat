@@ -51,7 +51,7 @@ internal class PluginDebugCommand : BaseQueryCommand
             options.DefaultRowsOutput = new PagingOutput(tableOutput, cancellationTokenSource: cts);
             options.FollowTimeout = follow ? QueryOptionsBinder.FollowDefaultTimeout : TimeSpan.Zero;
 
-            using var thread = await new ExecutionThreadBootstrapper(options)
+            await using var thread = await new ExecutionThreadBootstrapper(options)
                 .WithConfigStorage(new PersistentInputConfigStorage(
                     Path.Combine(Application.GetApplicationDirectory(), ApplicationOptions.ConfigFileName)))
 #if PLUGIN_THRIFT

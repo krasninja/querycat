@@ -94,7 +94,7 @@ public sealed class CollectionInputTests : IDisposable
     [Fact]
     public async Task Insert_ListOfEmployeesWithPartialInsert_InsertItem()
     {
-        using var thread = await new ExecutionThreadBootstrapper(new ExecutionOptions
+        await using var thread = await new ExecutionThreadBootstrapper(new ExecutionOptions
             {
                 DefaultRowsOutput = NullRowsOutput.Instance,
             })
