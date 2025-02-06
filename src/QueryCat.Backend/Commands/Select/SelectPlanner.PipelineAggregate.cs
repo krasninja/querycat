@@ -45,40 +45,43 @@ internal sealed partial class SelectPlanner
         context.SetIterator(
             new GroupRowsIterator(ExecutionThread, context.CurrentIterator, keysFactory, context, targets));
 
-        PipelineAggregate_ReplaceAggregateFunctionsByColumnReference(selectQueryNode, targets, aggregateColumnsOffset);
+        await PipelineAggregate_ReplaceAggregateFunctionsByColumnReferenceAsync(selectQueryNode,
+            targets, aggregateColumnsOffset, cancellationToken);
     }
 
-    private static void PipelineAggregate_ReplaceAggregateFunctionsByColumnReference(
+    private static async Task PipelineAggregate_ReplaceAggregateFunctionsByColumnReferenceAsync(
         SelectQuerySpecificationNode selectQueryNode,
         AggregateTarget[] targets,
-        int aggregateColumnsOffset)
+        int aggregateColumnsOffset,
+        CancellationToken cancellationToken)
     {
         var aggregateReplaceDelegateVisitor = new CallbackDelegateVisitor
         {
-            Callback = (node, _) =>
+            Callback = (node, _, _) =>
             {
                 if (node is not FunctionCallNode functionCallNode)
                 {
-                    return;
+                    return ValueTask.CompletedTask;
                 }
 
                 var index = Array.FindIndex(targets, t => t.Node.Id == node.Id);
                 if (index < 0)
                 {
-                    return;
+                    return ValueTask.CompletedTask;
                 }
 
                 var targetIndex = index + aggregateColumnsOffset;
                 functionCallNode.SetAttribute(AstAttributeKeys.InputAggregateIndexKey, targetIndex);
+                return ValueTask.CompletedTask;
             }
         };
 
         var havingNode = selectQueryNode.TableExpressionNode?.HavingNode;
         if (havingNode != null)
         {
-            aggregateReplaceDelegateVisitor.Run(havingNode);
+            await aggregateReplaceDelegateVisitor.RunAsync(havingNode, cancellationToken);
         }
-        aggregateReplaceDelegateVisitor.Run(selectQueryNode.ColumnsListNode);
+        await aggregateReplaceDelegateVisitor.RunAsync(selectQueryNode.ColumnsListNode, cancellationToken);
     }
 
     private async Task<AggregateTarget[]> PipelineAggregate_CreateTargetsAsync(

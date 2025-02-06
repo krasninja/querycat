@@ -23,13 +23,6 @@ internal sealed class IdentifierAstVisitor : AstVisitor
     }
 
     /// <inheritdoc />
-    public override void Run(IAstNode node)
-    {
-        _columns.Clear();
-        base.Run(node);
-    }
-
-    /// <inheritdoc />
     public override async ValueTask RunAsync(IAstNode node, CancellationToken cancellationToken)
     {
         _columns.Clear();

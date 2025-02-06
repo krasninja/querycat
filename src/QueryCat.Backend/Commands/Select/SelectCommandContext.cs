@@ -238,11 +238,13 @@ internal sealed class SelectCommandContext(SelectQueryNode queryNode) : CommandC
     /// <summary>
     /// Returns the list of identifiers - direct references to input columns.
     /// </summary>
+    /// <param name="sourceName">Source.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of identifiers.</returns>
-    internal Column[] GetSelectIdentifierColumns(string sourceName)
+    internal async ValueTask<Column[]> GetSelectIdentifierColumnsAsync(string sourceName, CancellationToken cancellationToken)
     {
         var identifierAstVisitor = new IdentifierAstVisitor(sourceName);
-        identifierAstVisitor.Run(queryNode);
+        await identifierAstVisitor.RunAsync(queryNode, cancellationToken);
         return identifierAstVisitor.Columns.ToArray();
     }
 

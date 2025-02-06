@@ -39,19 +39,6 @@ internal sealed class StatementsVisitor : AstVisitor
     }
 
     /// <inheritdoc />
-    public override IFuncUnit RunAndReturn(IAstNode node)
-    {
-        if (_handlers.TryGetValue(node.Id, out var funcUnit))
-        {
-            return funcUnit;
-        }
-        Run(node);
-        var handler = _handlers[node.Id];
-        _handlers.Clear();
-        return handler;
-    }
-
-    /// <inheritdoc />
     public override async ValueTask<IFuncUnit> RunAndReturnAsync(IAstNode node, CancellationToken cancellationToken)
     {
         if (_handlers.TryGetValue(node.Id, out var funcUnit))

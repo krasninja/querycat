@@ -23,15 +23,10 @@ internal sealed class StringDumpAstVisitor : DelegateVisitor
     }
 
     /// <inheritdoc />
-    public override void OnVisit(IAstNode node)
+    public override ValueTask OnVisitAsync(IAstNode node, CancellationToken cancellationToken)
     {
         PrettyPrintNode(node);
-    }
-
-    /// <inheritdoc />
-    public override void Run(IAstNode node)
-    {
-        _astTraversal.PreOrder(node);
+        return ValueTask.CompletedTask;
     }
 
     private void PrettyPrintNode(IAstNode node,

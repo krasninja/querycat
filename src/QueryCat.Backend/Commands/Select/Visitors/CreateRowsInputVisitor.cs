@@ -63,7 +63,7 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
         }
         if (source.AsObject is IRowsInput rowsInput)
         {
-            var targetColumns = _context.GetSelectIdentifierColumns(alias);
+            var targetColumns = await _context.GetSelectIdentifierColumnsAsync(alias, cancellationToken);
             var queryContext = new SelectInputQueryContext(rowsInput, targetColumns)
             {
                 InputConfigStorage = _executionThread.ConfigStorage,

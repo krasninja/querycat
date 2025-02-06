@@ -8,8 +8,10 @@ internal sealed class CallbackDelegateVisitor : DelegateVisitor
     /// <summary>
     /// The delegate to be called on every node visit.
     /// </summary>
-    public Action<IAstNode, AstTraversal> Callback { get; set; } = (_, _) => { };
+    public Func<IAstNode, AstTraversal, CancellationToken, ValueTask> Callback { get; set; }
+        = (node, astTraversal, ct) => ValueTask.CompletedTask;
 
     /// <inheritdoc />
-    public override void OnVisit(IAstNode node) => Callback.Invoke(node, AstTraversal);
+    public override ValueTask OnVisitAsync(IAstNode node, CancellationToken cancellationToken)
+        => Callback.Invoke(node, AstTraversal, cancellationToken);
 }

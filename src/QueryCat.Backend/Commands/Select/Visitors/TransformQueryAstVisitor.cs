@@ -14,17 +14,6 @@ internal class TransformQueryAstVisitor : AstVisitor
     private readonly List<Action> _transformations = new();
 
     /// <inheritdoc />
-    public override void Run(IAstNode node)
-    {
-        base.Run(node);
-
-        foreach (var transformation in _transformations)
-        {
-            transformation.Invoke();
-        }
-    }
-
-    /// <inheritdoc />
     public override async ValueTask RunAsync(IAstNode node, CancellationToken cancellationToken)
     {
         await base.RunAsync(node, cancellationToken);

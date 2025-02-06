@@ -9,19 +9,23 @@ internal sealed class SetIdentifierDelegateVisitor : CreateDelegateVisitor
 {
     private readonly IFuncUnit _funcUnit;
 
-    public SetIdentifierDelegateVisitor(IExecutionThread<ExecutionOptions> thread, ResolveTypesVisitor resolveTypesVisitor, IFuncUnit funcUnit)
+    public SetIdentifierDelegateVisitor(
+        IExecutionThread<ExecutionOptions> thread,
+        ResolveTypesVisitor resolveTypesVisitor,
+        IFuncUnit funcUnit)
         : base(thread, resolveTypesVisitor)
     {
         _funcUnit = funcUnit;
     }
 
-    public override IFuncUnit RunAndReturn(IAstNode node)
+    /// <inheritdoc />
+    public override ValueTask<IFuncUnit> RunAndReturnAsync(IAstNode node, CancellationToken cancellationToken)
     {
         if (node is not IdentifierExpressionNode)
         {
             throw new InvalidOperationException($"Node's type must be '{nameof(IdentifierExpressionNode)}'.");
         }
-        return base.RunAndReturn(node);
+        return base.RunAndReturnAsync(node, cancellationToken);
     }
 
     public override void Visit(IdentifierExpressionNode node)
