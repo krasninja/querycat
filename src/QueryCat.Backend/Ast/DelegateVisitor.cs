@@ -23,12 +23,6 @@ internal abstract class DelegateVisitor : AstVisitor
     public abstract ValueTask OnVisitAsync(IAstNode node, CancellationToken cancellationToken);
 
     /// <inheritdoc />
-    public override void Run(IAstNode node)
-    {
-        AstTraversal.PreOrder(node);
-    }
-
-    /// <inheritdoc />
     public override ValueTask RunAsync(IAstNode node, CancellationToken cancellationToken)
     {
         return AstTraversal.PreOrderAsync(node, cancellationToken);

@@ -28,8 +28,7 @@ internal sealed class SelectResolveTypesVisitor : ResolveTypesVisitor
         {
             return ValueTask.CompletedTask;
         }
-        base.Visit(node);
-        return ValueTask.CompletedTask;
+        return base.VisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
@@ -93,8 +92,9 @@ internal sealed class SelectResolveTypesVisitor : ResolveTypesVisitor
     }
 
     /// <inheritdoc />
-    public override async ValueTask VisitAsync(SelectSubqueryConditionExpressionNode node, CancellationToken cancellationToken)
+    public override ValueTask VisitAsync(SelectSubqueryConditionExpressionNode node, CancellationToken cancellationToken)
     {
         node.SetDataType(DataType.Boolean);
+        return ValueTask.CompletedTask;
     }
 }

@@ -28,17 +28,17 @@ internal sealed class SetIdentifierDelegateVisitor : CreateDelegateVisitor
         return base.RunAndReturnAsync(node, cancellationToken);
     }
 
-    public override void Visit(IdentifierExpressionNode node)
+    public override async ValueTask VisitAsync(IdentifierExpressionNode node, CancellationToken cancellationToken)
     {
-        ResolveTypesVisitor.Visit(node);
+        await ResolveTypesVisitor.VisitAsync(node, cancellationToken);
 
         if (ExecutionThread.ContainsVariable(node.Name))
         {
             var context = new ObjectSelectorContext();
             var strategies = GetObjectSelectStrategies(node, NodeIdFuncMap);
-            async ValueTask<VariantValue> Func(IExecutionThread thread, CancellationToken cancellationToken)
+            async ValueTask<VariantValue> Func(IExecutionThread thread, CancellationToken ct)
             {
-                var newValue = await SetValueAsync(thread, node, strategies, context, cancellationToken);
+                var newValue = await SetValueAsync(thread, node, strategies, context, ct);
                 context.Clear();
                 return newValue;
             }

@@ -24,12 +24,6 @@ internal class ResolveTypesVisitor : AstVisitor
     }
 
     /// <inheritdoc />
-    public override void Run(IAstNode node)
-    {
-        AstTraversal.PostOrder(node);
-    }
-
-    /// <inheritdoc />
     public override ValueTask RunAsync(IAstNode node, CancellationToken cancellationToken)
     {
         return AstTraversal.PostOrderAsync(node, cancellationToken);
@@ -67,7 +61,7 @@ internal class ResolveTypesVisitor : AstVisitor
     #region General
 
     /// <inheritdoc />
-    public override void Visit(BetweenExpressionNode node)
+    public override ValueTask VisitAsync(BetweenExpressionNode node, CancellationToken cancellationToken)
     {
         var leftType = node.Left.GetDataType();
         var rightType = node.Right.GetDataType();
@@ -78,10 +72,11 @@ internal class ResolveTypesVisitor : AstVisitor
                 string.Format(Resources.Errors.CannotApplyOperationForTypes, VariantValue.Operation.Between, leftType, rightType));
         }
         node.SetDataType(targetType);
+        return ValueTask.CompletedTask;
     }
 
     /// <inheritdoc />
-    public override void Visit(BinaryOperationExpressionNode node)
+    public override ValueTask VisitAsync(BinaryOperationExpressionNode node, CancellationToken cancellationToken)
     {
         var leftType = node.LeftNode.GetDataType();
         var rightType = node.RightNode.GetDataType();
@@ -92,24 +87,26 @@ internal class ResolveTypesVisitor : AstVisitor
                 string.Format(Resources.Errors.CannotApplyOperationForTypes, node.Operation, leftType, rightType));
         }
         node.SetDataType(targetType);
+        return ValueTask.CompletedTask;
     }
 
     /// <inheritdoc />
-    public override void Visit(CaseExpressionNode node)
+    public override ValueTask VisitAsync(CaseExpressionNode node, CancellationToken cancellationToken)
     {
         var lastWhenNode = node.WhenNodes.LastOrDefault();
         if (lastWhenNode != null)
         {
             node.SetDataType(lastWhenNode.ResultNode.GetDataType());
         }
+        return ValueTask.CompletedTask;
     }
 
     /// <inheritdoc />
-    public override void Visit(IdentifierExpressionNode node)
+    public override ValueTask VisitAsync(IdentifierExpressionNode node, CancellationToken cancellationToken)
     {
         if (SetDataTypeFromVariable(node, node.Name))
         {
-            return;
+            return ValueTask.CompletedTask;
         }
 
         throw new CannotFindIdentifierException(node.FullName);
@@ -145,13 +142,14 @@ internal class ResolveTypesVisitor : AstVisitor
     }
 
     /// <inheritdoc />
-    public override void Visit(LiteralNode node)
+    public override ValueTask VisitAsync(LiteralNode node, CancellationToken cancellationToken)
     {
         node.SetAttribute(AstAttributeKeys.TypeKey, node.Value.Type);
+        return ValueTask.CompletedTask;
     }
 
     /// <inheritdoc />
-    public override void Visit(UnaryOperationExpressionNode node)
+    public override ValueTask VisitAsync(UnaryOperationExpressionNode node, CancellationToken cancellationToken)
     {
         if (node.Operation == VariantValue.Operation.IsNull
             || node.Operation == VariantValue.Operation.IsNotNull
@@ -163,18 +161,21 @@ internal class ResolveTypesVisitor : AstVisitor
         {
             node.RightNode.CopyTo<DataType>(AstAttributeKeys.TypeKey, node);
         }
+        return ValueTask.CompletedTask;
     }
 
     /// <inheritdoc />
-    public override void Visit(InOperationExpressionNode node)
+    public override ValueTask VisitAsync(InOperationExpressionNode node, CancellationToken cancellationToken)
     {
         node.SetDataType(DataType.Boolean);
+        return ValueTask.CompletedTask;
     }
 
     /// <inheritdoc />
-    public override void Visit(AtTimeZoneNode node)
+    public override ValueTask VisitAsync(AtTimeZoneNode node, CancellationToken cancellationToken)
     {
         node.SetDataType(DataType.Timestamp);
+        return ValueTask.CompletedTask;
     }
 
     #endregion
@@ -182,13 +183,14 @@ internal class ResolveTypesVisitor : AstVisitor
     #region Special functions
 
     /// <inheritdoc />
-    public override void Visit(CastFunctionNode node)
+    public override ValueTask VisitAsync(CastFunctionNode node, CancellationToken cancellationToken)
     {
         node.SetDataType(node.TargetTypeNode.Type);
+        return ValueTask.CompletedTask;
     }
 
     /// <inheritdoc />
-    public override void Visit(CoalesceFunctionNode node)
+    public override ValueTask VisitAsync(CoalesceFunctionNode node, CancellationToken cancellationToken)
     {
         var types = node.Expressions.Select(e => e.GetDataType());
         var generalType = types.Where(DataTypeUtils.IsSimple).Distinct().ToList();
@@ -198,6 +200,7 @@ internal class ResolveTypesVisitor : AstVisitor
             throw new SemanticException(string.Format(Resources.Errors.CoalesceMustHaveSameArguments, foundTypes));
         }
         node.SetDataType(generalType.First());
+        return ValueTask.CompletedTask;
     }
 
     #endregion
@@ -205,21 +208,24 @@ internal class ResolveTypesVisitor : AstVisitor
     #region Function
 
     /// <inheritdoc />
-    public override void Visit(FunctionCallArgumentNode node)
+    public override ValueTask VisitAsync(FunctionCallArgumentNode node, CancellationToken cancellationToken)
     {
         node.ExpressionValueNode.CopyTo<DataType>(AstAttributeKeys.TypeKey, node);
+        return ValueTask.CompletedTask;
     }
 
     /// <inheritdoc />
-    public override void Visit(FunctionCallExpressionNode node)
+    public override ValueTask VisitAsync(FunctionCallExpressionNode node, CancellationToken cancellationToken)
     {
         node.CopyTo<DataType>(AstAttributeKeys.TypeKey, node.FunctionNode);
+        return ValueTask.CompletedTask;
     }
 
     /// <inheritdoc />
-    public override void Visit(FunctionCallNode node)
+    public override ValueTask VisitAsync(FunctionCallNode node, CancellationToken cancellationToken)
     {
         VisitFunctionCallNode(node);
+        return ValueTask.CompletedTask;
     }
 
     public IFunction VisitFunctionCallNode(FunctionCallNode node)
@@ -251,9 +257,10 @@ internal class ResolveTypesVisitor : AstVisitor
     }
 
     /// <inheritdoc />
-    public override void Visit(FunctionCallStatementNode node)
+    public override ValueTask VisitAsync(FunctionCallStatementNode node, CancellationToken cancellationToken)
     {
         node.CopyTo<DataType>(AstAttributeKeys.TypeKey, node.FunctionNode);
+        return ValueTask.CompletedTask;
     }
 
     #endregion
@@ -261,23 +268,9 @@ internal class ResolveTypesVisitor : AstVisitor
     #region Select Command
 
     /// <inheritdoc />
-    public override void Visit(SelectQuerySpecificationNode node)
-    {
-        new SelectPlanner(ExecutionThread, this).CreateIterator(node);
-        node.ColumnsListNode.ColumnsNodes[0].CopyTo<DataType>(AstAttributeKeys.TypeKey, node);
-    }
-
-    /// <inheritdoc />
     public override async ValueTask VisitAsync(SelectQuerySpecificationNode node, CancellationToken cancellationToken)
     {
         await new SelectPlanner(ExecutionThread, this).CreateIteratorAsync(node, cancellationToken: cancellationToken);
-        node.ColumnsListNode.ColumnsNodes[0].CopyTo<DataType>(AstAttributeKeys.TypeKey, node);
-    }
-
-    /// <inheritdoc />
-    public override void Visit(SelectQueryCombineNode node)
-    {
-        new SelectPlanner(ExecutionThread, this).CreateIterator(node);
         node.ColumnsListNode.ColumnsNodes[0].CopyTo<DataType>(AstAttributeKeys.TypeKey, node);
     }
 

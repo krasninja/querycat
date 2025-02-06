@@ -25,14 +25,16 @@ public class AstTraversalTests
         public StringBuilder Calls { get; } = new();
 
         /// <inheritdoc />
-        public override void Run(IAstNode node)
+        public override ValueTask RunAsync(IAstNode node, CancellationToken cancellationToken)
         {
+            return ValueTask.CompletedTask;
         }
 
         /// <inheritdoc />
-        public override void Visit(EmptyNode node)
+        public override ValueTask VisitAsync(EmptyNode node, CancellationToken cancellationToken)
         {
             Calls.Append(node.Value);
+            return ValueTask.CompletedTask;
         }
     }
 
@@ -46,20 +48,20 @@ public class AstTraversalTests
     }
 
     [Fact]
-    public void PreOrder_Traverse_ShouldTraverseCorrectly()
+    public async Task PreOrder_Traverse_ShouldTraverseCorrectly()
     {
         // Act.
-        _astTraversal.PreOrder(_root);
+        await _astTraversal.PreOrderAsync(_root, CancellationToken.None);
 
         // Assert.
         Assert.Equal("12453", _emptyNodesVisitor.Calls.ToString());
     }
 
     [Fact]
-    public void PostOrder_Traverse_ShouldTraverseCorrectly()
+    public async Task PostOrder_Traverse_ShouldTraverseCorrectly()
     {
         // Act.
-        _astTraversal.PostOrder(_root);
+        await _astTraversal.PostOrderAsync(_root, CancellationToken.None);
 
         // Assert.
         Assert.Equal("45231", _emptyNodesVisitor.Calls.ToString());

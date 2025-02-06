@@ -19,16 +19,16 @@ internal class QueryAstVisitor : AstVisitor
     private readonly Dictionary<int, string> _nodeIdStringMap = new(capacity: 32);
 
     /// <inheritdoc />
-    public override void Run(IAstNode node)
+    public override async ValueTask RunAsync(IAstNode node, CancellationToken cancellationToken)
     {
         var traversal = new AstTraversal(this);
-        traversal.PostOrder(node);
+        await traversal.PostOrderAsync(node, cancellationToken);
     }
 
     #region General
 
     /// <inheritdoc />
-    public override void Visit(BetweenExpressionNode node)
+    public override ValueTask VisitAsync(BetweenExpressionNode node, CancellationToken cancellationToken)
     {
         Set(node, string.Join(Space,
             GetStringWithParens(node.Expression),
@@ -36,41 +36,47 @@ internal class QueryAstVisitor : AstVisitor
             GetStringWithParens(node.Left),
             GetOperationString(VariantValue.Operation.And),
             GetStringWithParens(node.Right)));
+        return ValueTask.CompletedTask;
     }
 
     /// <inheritdoc />
-    public override void Visit(BinaryOperationExpressionNode node)
+    public override ValueTask VisitAsync(BinaryOperationExpressionNode node, CancellationToken cancellationToken)
     {
         Set(node, string.Join(Space,
             GetStringWithParens(node.LeftNode),
             GetOperationString(node.Operation),
             GetStringWithParens(node.RightNode)));
+        return ValueTask.CompletedTask;
     }
 
     /// <inheritdoc />
-    public override void Visit(ExpressionStatementNode node)
+    public override ValueTask VisitAsync(ExpressionStatementNode node, CancellationToken cancellationToken)
     {
         Copy(node, node.ExpressionNode);
+        return ValueTask.CompletedTask;
     }
 
     /// <inheritdoc />
-    public override void Visit(IdentifierExpressionNode node)
+    public override ValueTask VisitAsync(IdentifierExpressionNode node, CancellationToken cancellationToken)
     {
         Set(node, node.Name);
+        return ValueTask.CompletedTask;
     }
 
     /// <inheritdoc />
-    public override void Visit(InOperationExpressionNode node)
+    public override ValueTask VisitAsync(InOperationExpressionNode node, CancellationToken cancellationToken)
     {
+        return ValueTask.CompletedTask;
     }
 
     /// <inheritdoc />
-    public override void Visit(InExpressionValuesNode node)
+    public override ValueTask VisitAsync(InExpressionValuesNode node, CancellationToken cancellationToken)
     {
+        return ValueTask.CompletedTask;
     }
 
     /// <inheritdoc />
-    public override void Visit(LiteralNode node)
+    public override ValueTask VisitAsync(LiteralNode node, CancellationToken cancellationToken)
     {
         string value;
         if (node.Value.Type == DataType.String)
@@ -82,10 +88,11 @@ internal class QueryAstVisitor : AstVisitor
             value = node.Value.ToString(CultureInfo.InvariantCulture);
         }
         Set(node, value);
+        return ValueTask.CompletedTask;
     }
 
     /// <inheritdoc />
-    public override void Visit(ProgramNode node)
+    public override ValueTask VisitAsync(ProgramNode node, CancellationToken cancellationToken)
     {
         var sb = new StringBuilder();
         foreach (var statementNode in node.Statements)
@@ -95,24 +102,28 @@ internal class QueryAstVisitor : AstVisitor
             sb.Append('\n');
         }
         Set(node, sb.ToString());
+        return ValueTask.CompletedTask;
     }
 
     /// <inheritdoc />
-    public override void Visit(TernaryOperationExpressionNode node)
+    public override ValueTask VisitAsync(TernaryOperationExpressionNode node, CancellationToken cancellationToken)
     {
+        return ValueTask.CompletedTask;
     }
 
     /// <inheritdoc />
-    public override void Visit(TypeNode node)
+    public override ValueTask VisitAsync(TypeNode node, CancellationToken cancellationToken)
     {
+        return ValueTask.CompletedTask;
     }
 
     /// <inheritdoc />
-    public override void Visit(UnaryOperationExpressionNode node)
+    public override ValueTask VisitAsync(UnaryOperationExpressionNode node, CancellationToken cancellationToken)
     {
         Set(node, string.Join(Space,
             GetOperationString(node.Operation),
             Get(node.RightNode)));
+        return ValueTask.CompletedTask;
     }
 
     #endregion
@@ -120,7 +131,7 @@ internal class QueryAstVisitor : AstVisitor
     #region Declare
 
     /// <inheritdoc />
-    public override void Visit(DeclareNode node)
+    public override ValueTask VisitAsync(DeclareNode node, CancellationToken cancellationToken)
     {
         var str = $"DECLARE {node.Name} {GetTypeString(node.Type)}";
         if (node.ValueNode != null)
@@ -128,12 +139,14 @@ internal class QueryAstVisitor : AstVisitor
             str += " := " + Get(node.ValueNode);
         }
         Set(node, str);
+        return ValueTask.CompletedTask;
     }
 
     /// <inheritdoc />
-    public override void Visit(DeclareStatementNode node)
+    public override ValueTask VisitAsync(DeclareStatementNode node, CancellationToken cancellationToken)
     {
         Copy(node, node.RootNode);
+        return ValueTask.CompletedTask;
     }
 
     #endregion
@@ -141,28 +154,32 @@ internal class QueryAstVisitor : AstVisitor
     #region Function
 
     /// <inheritdoc />
-    public override void Visit(FunctionCallArgumentNode node)
+    public override ValueTask VisitAsync(FunctionCallArgumentNode node, CancellationToken cancellationToken)
     {
         Set(node, Get(node.ExpressionValueNode));
+        return ValueTask.CompletedTask;
     }
 
     /// <inheritdoc />
-    public override void Visit(FunctionCallExpressionNode node)
+    public override ValueTask VisitAsync(FunctionCallExpressionNode node, CancellationToken cancellationToken)
     {
         Set(node, Get(node.FunctionNode));
+        return ValueTask.CompletedTask;
     }
 
     /// <inheritdoc />
-    public override void Visit(FunctionCallNode node)
+    public override ValueTask VisitAsync(FunctionCallNode node, CancellationToken cancellationToken)
     {
         var args = string.Join(", ", node.Arguments.Select(Get));
         Set(node, $"{node.FunctionName}({args})");
+        return ValueTask.CompletedTask;
     }
 
     /// <inheritdoc />
-    public override void Visit(FunctionCallStatementNode node)
+    public override ValueTask VisitAsync(FunctionCallStatementNode node, CancellationToken cancellationToken)
     {
         Set(node, Get(node.FunctionNode));
+        return ValueTask.CompletedTask;
     }
 
     #endregion
@@ -170,55 +187,64 @@ internal class QueryAstVisitor : AstVisitor
     #region Select
 
     /// <inheritdoc />
-    public override void Visit(SelectColumnsListNode node)
+    public override ValueTask VisitAsync(SelectColumnsListNode node, CancellationToken cancellationToken)
     {
         Set(node, string.Join(", ", node.ColumnsNodes.Select(Get)));
+        return ValueTask.CompletedTask;
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectColumnsSublistAll node)
+    public override ValueTask VisitAsync(SelectColumnsSublistAll node, CancellationToken cancellationToken)
     {
         Set(node, "*");
+        return ValueTask.CompletedTask;
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectColumnsSublistExpressionNode node)
+    public override ValueTask VisitAsync(SelectColumnsSublistExpressionNode node, CancellationToken cancellationToken)
     {
         Copy(node, node.ExpressionNode);
+        return ValueTask.CompletedTask;
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectFetchNode node)
+    public override ValueTask VisitAsync(SelectFetchNode node, CancellationToken cancellationToken)
     {
+        return ValueTask.CompletedTask;
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectGroupByNode node)
+    public override ValueTask VisitAsync(SelectGroupByNode node, CancellationToken cancellationToken)
     {
+        return ValueTask.CompletedTask;
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectHavingNode node)
+    public override ValueTask VisitAsync(SelectHavingNode node, CancellationToken cancellationToken)
     {
+        return ValueTask.CompletedTask;
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectOffsetNode node)
+    public override ValueTask VisitAsync(SelectOffsetNode node, CancellationToken cancellationToken)
     {
+        return ValueTask.CompletedTask;
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectOrderByNode node)
+    public override ValueTask VisitAsync(SelectOrderByNode node, CancellationToken cancellationToken)
     {
+        return ValueTask.CompletedTask;
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectOrderBySpecificationNode node)
+    public override ValueTask VisitAsync(SelectOrderBySpecificationNode node, CancellationToken cancellationToken)
     {
+        return ValueTask.CompletedTask;
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectQuerySpecificationNode node)
+    public override ValueTask VisitAsync(SelectQuerySpecificationNode node, CancellationToken cancellationToken)
     {
         var sb = new StringBuilder();
         sb.Append($"SELECT {Get(node.ColumnsListNode)}");
@@ -227,22 +253,25 @@ internal class QueryAstVisitor : AstVisitor
             sb.Append(Get(node.TableExpressionNode));
         }
         Set(node, sb.ToString());
+        return ValueTask.CompletedTask;
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectSearchConditionNode node)
+    public override ValueTask VisitAsync(SelectSearchConditionNode node, CancellationToken cancellationToken)
     {
         Set(node, $" WHERE {Get(node.ExpressionNode)}");
+        return ValueTask.CompletedTask;
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectStatementNode node)
+    public override ValueTask VisitAsync(SelectStatementNode node, CancellationToken cancellationToken)
     {
         Set(node, Get(node.QueryNode));
+        return ValueTask.CompletedTask;
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectTableNode node)
+    public override ValueTask VisitAsync(SelectTableNode node, CancellationToken cancellationToken)
     {
         var sb = new StringBuilder();
         sb.Append(" FROM ");
@@ -260,10 +289,11 @@ internal class QueryAstVisitor : AstVisitor
             sb.Append(Get(node.SearchConditionNode));
         }
         Set(node, sb.ToString());
+        return ValueTask.CompletedTask;
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectTableFunctionNode node)
+    public override ValueTask VisitAsync(SelectTableFunctionNode node, CancellationToken cancellationToken)
     {
         var value = Get(node.TableFunctionNode);
         if (!string.IsNullOrEmpty(node.Alias))
@@ -271,12 +301,14 @@ internal class QueryAstVisitor : AstVisitor
             value += " AS " + node.Alias;
         }
         Set(node, value);
+        return ValueTask.CompletedTask;
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectTableReferenceListNode node)
+    public override ValueTask VisitAsync(SelectTableReferenceListNode node, CancellationToken cancellationToken)
     {
         Set(node, string.Join(", ", node.TableFunctionsNodes.Select(Get)));
+        return ValueTask.CompletedTask;
     }
 
     #endregion
@@ -344,10 +376,11 @@ internal class QueryAstVisitor : AstVisitor
     /// Dump as a string.
     /// </summary>
     /// <param name="node">Node.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Query expression.</returns>
-    public string Dump(IAstNode node)
+    public async Task<string> DumpAsync(IAstNode node, CancellationToken cancellationToken = default)
     {
-        this.Run(node);
+        await this.RunAsync(node, cancellationToken);
         return Get(node);
     }
 }

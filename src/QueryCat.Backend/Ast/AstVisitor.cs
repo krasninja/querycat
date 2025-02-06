@@ -26,34 +26,10 @@ internal abstract class AstVisitor
     /// Run visitor for the node.
     /// </summary>
     /// <param name="node">Start node.</param>
-    public virtual void Run(IAstNode node)
-    {
-        AstTraversal.PreOrder(node);
-    }
-
-    /// <summary>
-    /// Run visitor for the node.
-    /// </summary>
-    /// <param name="node">Start node.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     public virtual ValueTask RunAsync(IAstNode node, CancellationToken cancellationToken)
     {
         return AstTraversal.PreOrderAsync(node, cancellationToken);
-    }
-
-    /// <summary>
-    /// Run the visitor.
-    /// </summary>
-    /// <param name="nodes">Nodes to process.</param>
-    public void Run(IEnumerable<IAstNode?> nodes)
-    {
-        foreach (var node in nodes)
-        {
-            if (node != null)
-            {
-                Run(node);
-            }
-        }
     }
 
     /// <summary>
@@ -71,13 +47,6 @@ internal abstract class AstVisitor
             }
         }
     }
-
-    /// <summary>
-    /// Run the visitor and return the result as <see cref="IFuncUnit" />.
-    /// </summary>
-    /// <param name="node">Start node.</param>
-    /// <returns>Instance of <see cref="IFuncUnit" />.</returns>
-    public virtual IFuncUnit RunAndReturn(IAstNode node) => EmptyFuncUnit.Instance;
 
     /// <summary>
     /// Run the visitor and return the result as <see cref="IFuncUnit" />.

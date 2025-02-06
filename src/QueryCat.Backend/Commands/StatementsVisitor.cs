@@ -52,12 +52,6 @@ internal sealed class StatementsVisitor : AstVisitor
     }
 
     /// <inheritdoc />
-    public override void Run(IAstNode node)
-    {
-        node.Accept(this);
-    }
-
-    /// <inheritdoc />
     public override ValueTask RunAsync(IAstNode node, CancellationToken cancellationToken)
     {
         return node.AcceptAsync(this, cancellationToken);
