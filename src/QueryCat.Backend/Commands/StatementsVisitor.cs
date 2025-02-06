@@ -135,11 +135,11 @@ internal sealed class StatementsVisitor : AstVisitor
         _handlers.Add(node.Id, handler);
     }
 
-    /// <inheritdoc />
-    public override void Visit(FunctionCallStatementNode node)
+    public override async ValueTask VisitAsync(FunctionCallStatementNode node, CancellationToken cancellationToken)
     {
-        _resolveTypesVisitor.Run(node);
-        var handler = new CreateDelegateVisitor(_executionThread, _resolveTypesVisitor).RunAndReturn(node.FunctionNode);
+        await _resolveTypesVisitor.RunAsync(node, cancellationToken);
+        var handler = await new CreateDelegateVisitor(_executionThread, _resolveTypesVisitor)
+            .RunAndReturnAsync(node.FunctionNode, cancellationToken);
         _handlers.Add(node.Id, handler);
     }
 

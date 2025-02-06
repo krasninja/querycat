@@ -47,9 +47,10 @@ internal sealed partial class SelectPlanner
         }
     }
 
-    private void Pipeline_CreateDistinctOnRowsSet(
+    private async Task Pipeline_CreateDistinctOnRowsSetAsync(
         SelectCommandContext context,
-        SelectQuerySpecificationNode querySpecificationNode)
+        SelectQuerySpecificationNode querySpecificationNode,
+        CancellationToken cancellationToken)
     {
         if (querySpecificationNode.DistinctNode == null || querySpecificationNode.DistinctNode.IsEmpty
             || !querySpecificationNode.DistinctNode.OnNodes.Any())
@@ -57,7 +58,7 @@ internal sealed partial class SelectPlanner
             return;
         }
 
-        var funcUnits = Misc_CreateDelegate(querySpecificationNode.DistinctNode.OnNodes, context);
+        var funcUnits = await Misc_CreateDelegateAsync(querySpecificationNode.DistinctNode.OnNodes, context, cancellationToken);
         context.SetIterator(new DistinctRowsIteratorIterator(ExecutionThread, context.CurrentIterator, funcUnits));
     }
 
@@ -134,16 +135,21 @@ internal sealed partial class SelectPlanner
         }
     }
 
-    private void Pipeline_AddSelectRowsSet(
+    private async Task Pipeline_AddSelectRowsSetAsync(
         SelectCommandContext context,
         SelectColumnsListNode columnsNode,
-        SelectColumnsExceptNode? exceptNode)
+        SelectColumnsExceptNode? exceptNode,
+        CancellationToken cancellationToken)
     {
         var projectedIterator = new ProjectedRowsIterator(ExecutionThread, context.CurrentIterator);
 
         // Format the initial iterator with all columns (except excluded) that
         // user mentioned in SELECT block.
-        var funcs = columnsNode.ColumnsNodes.Select(c => Misc_CreateDelegate(c, context)).ToList();
+        var funcs = new List<IFuncUnit>();
+        foreach (var node in columnsNode.ColumnsNodes)
+        {
+            funcs.Add(await Misc_CreateDelegateAsync(node, context, cancellationToken));
+        }
         var selectColumns = CreateSelectColumns(columnsNode).ToList();
         var exceptColumns = exceptNode?.ExceptIdentifiers.ToList() ?? new List<IdentifierExpressionNode>();
         for (var i = 0; i < columnsNode.ColumnsNodes.Count; i++)
@@ -226,14 +232,15 @@ internal sealed partial class SelectPlanner
 
     #region WHERE
 
-    private void Pipeline_ApplyFilter(SelectCommandContext context, SelectTableNode? selectTableExpressionNode)
+    private async Task Pipeline_ApplyFilterAsync(SelectCommandContext context, SelectTableNode? selectTableExpressionNode,
+        CancellationToken cancellationToken)
     {
         if (selectTableExpressionNode?.SearchConditionNode == null)
         {
             return;
         }
 
-        var predicate = Misc_CreateDelegate(selectTableExpressionNode.SearchConditionNode, context);
+        var predicate = await Misc_CreateDelegateAsync(selectTableExpressionNode.SearchConditionNode, context, cancellationToken);
         context.SetIterator(new FilterRowsIterator(ExecutionThread, context.CurrentIterator, predicate));
     }
 
@@ -241,7 +248,8 @@ internal sealed partial class SelectPlanner
 
     #region ORDER BY
 
-    private void Pipeline_ApplyOrderBy(SelectCommandContext context, SelectOrderByNode? orderByNode)
+    private async Task Pipeline_ApplyOrderByAsync(SelectCommandContext context, SelectOrderByNode? orderByNode,
+        CancellationToken cancellationToken)
     {
         if (orderByNode == null)
         {
@@ -251,13 +259,15 @@ internal sealed partial class SelectPlanner
         Pipeline_OrderConvertColumnNumbers(context.CurrentIterator, orderByNode.OrderBySpecificationNodes);
 
         // Create wrapper to initialize rows frame and create index.
-        var orderFunctions = orderByNode.OrderBySpecificationNodes.Select(n =>
-            new OrderByData(
-                Misc_CreateDelegate(n.ExpressionNode, context),
-                Pipeline_ConvertDirection(n.Order),
-                Pipeline_ConvertNullOrder(n.NullOrder)
-            )
-        );
+        var orderFunctions = new List<OrderByData>();
+        foreach (var node in orderByNode.OrderBySpecificationNodes)
+        {
+            orderFunctions.Add(new OrderByData(
+                await Misc_CreateDelegateAsync(node.ExpressionNode, context, cancellationToken),
+                Pipeline_ConvertDirection(node.Order),
+                Pipeline_ConvertNullOrder(node.NullOrder)
+            ));
+        }
         context.SetIterator(new OrderRowsIterator(ExecutionThread, context.CurrentIterator, orderFunctions.ToArray()));
     }
 
@@ -303,8 +313,8 @@ internal sealed partial class SelectPlanner
     {
         if (offsetNode != null)
         {
-            var count = (await Misc_CreateDelegate(offsetNode.CountNode, context)
-                .InvokeAsync(ExecutionThread, cancellationToken)).AsInteger;
+            var @delegate = await Misc_CreateDelegateAsync(offsetNode.CountNode, context, cancellationToken);
+            var count = (await @delegate.InvokeAsync(ExecutionThread, cancellationToken)).AsInteger;
             if (count.HasValue)
             {
                 context.SetIterator(new OffsetRowsIterator(context.CurrentIterator, count.Value));
@@ -312,8 +322,8 @@ internal sealed partial class SelectPlanner
         }
         if (fetchNode != null)
         {
-            var count = (await Misc_CreateDelegate(fetchNode.CountNode, context)
-                .InvokeAsync(ExecutionThread, cancellationToken)).AsInteger;
+            var @delegate = await Misc_CreateDelegateAsync(fetchNode.CountNode, context, cancellationToken);
+            var count = (await @delegate.InvokeAsync(ExecutionThread, cancellationToken)).AsInteger;
             if (count.HasValue)
             {
                 context.SetIterator(new LimitRowsIterator(context.CurrentIterator, count.Value));
@@ -325,16 +335,17 @@ internal sealed partial class SelectPlanner
 
     #region INTO
 
-    private void Pipeline_SetOutputFunction(
+    private async Task Pipeline_SetOutputFunctionAsync(
         SelectCommandContext context,
-        SelectQuerySpecificationNode querySpecificationNode)
+        SelectQuerySpecificationNode querySpecificationNode,
+        CancellationToken cancellationToken)
     {
         if (querySpecificationNode.TargetNode == null)
         {
             return;
         }
 
-        var func = Misc_CreateDelegate(querySpecificationNode.TargetNode, context);
+        var func = await Misc_CreateDelegateAsync(querySpecificationNode.TargetNode, context, cancellationToken);
         context.OutputArgumentsFunc = func;
     }
 

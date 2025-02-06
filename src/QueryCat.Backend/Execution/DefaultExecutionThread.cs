@@ -323,12 +323,14 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IAsync
     /// <summary>
     /// Dumps current executing AST statement.
     /// </summary>
+    /// <param name="args">Arguments.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>AST string.</returns>
-    public string DumpAst(ExecuteEventArgs args)
+    public async Task<string> DumpAstAsync(ExecuteEventArgs args, CancellationToken cancellationToken = default)
     {
         var sb = new StringBuilder();
         var visitor = new StringDumpAstVisitor(sb);
-        visitor.Run(args.ExecutingStatementNode);
+        await visitor.RunAsync(args.ExecutingStatementNode, cancellationToken);
         return sb.ToString();
     }
 

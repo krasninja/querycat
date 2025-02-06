@@ -39,8 +39,9 @@ internal sealed partial class SelectPlanner
         {
             if (querySpecificationNode.FetchNode != null)
             {
-                var fetchCount = (await Misc_CreateDelegate(querySpecificationNode.FetchNode.CountNode)
-                    .InvokeAsync(ExecutionThread, cancellationToken)).AsInteger;
+                var @delegate = await Misc_CreateDelegateAsync(querySpecificationNode.FetchNode.CountNode,
+                    cancellationToken: cancellationToken);
+                var fetchCount = (await @delegate.InvokeAsync(ExecutionThread, cancellationToken)).AsInteger;
                 foreach (var queryContext in context.InputQueryContextList)
                 {
                     queryContext.QueryInfo.Limit = (queryContext.QueryInfo.Limit ?? 0) + fetchCount;
@@ -48,8 +49,9 @@ internal sealed partial class SelectPlanner
             }
             if (querySpecificationNode.OffsetNode != null)
             {
-                var offsetCount = (await Misc_CreateDelegate(querySpecificationNode.OffsetNode.CountNode)
-                    .InvokeAsync(ExecutionThread, cancellationToken)).AsInteger;
+                var @delegate = await Misc_CreateDelegateAsync(querySpecificationNode.OffsetNode.CountNode,
+                    cancellationToken: cancellationToken);
+                var offsetCount = (await @delegate.InvokeAsync(ExecutionThread, cancellationToken)).AsInteger;
                 foreach (var queryContext in context.InputQueryContextList)
                 {
                     queryContext.QueryInfo.Limit = (queryContext.QueryInfo.Limit ?? 0) + offsetCount;

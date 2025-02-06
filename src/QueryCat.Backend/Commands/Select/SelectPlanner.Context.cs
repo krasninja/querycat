@@ -199,7 +199,8 @@ internal sealed partial class SelectPlanner
         {
             if (idNode.HasSelectors)
             {
-                value = await Misc_CreateDelegate(idNode, context).InvokeAsync(ExecutionThread, cancellationToken);
+                var @delegate = await Misc_CreateDelegateAsync(idNode, context, cancellationToken);
+                value = await @delegate.InvokeAsync(ExecutionThread, cancellationToken);
             }
             else
             {
@@ -294,7 +295,8 @@ internal sealed partial class SelectPlanner
             .Add("uri", new VariantValue(strVariable));
         if (formatterNode != null)
         {
-            var formatter = await Misc_CreateDelegate(formatterNode, context).InvokeAsync(ExecutionThread, cancellationToken);
+            var @delegate = await Misc_CreateDelegateAsync(formatterNode, context, cancellationToken);
+            var formatter = await @delegate.InvokeAsync(ExecutionThread, cancellationToken);
             args.Add("fmt", formatter);
         }
         var rowsInput = (await ExecutionThread.FunctionsManager.CallFunctionAsync("read", ExecutionThread, args, cancellationToken))

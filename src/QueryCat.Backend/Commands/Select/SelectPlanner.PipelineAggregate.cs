@@ -39,7 +39,7 @@ internal sealed partial class SelectPlanner
             return;
         }
 
-        var keysFactory = PipelineAggregate_CreateGroupKeyValuesFactory(groupByNode, context);
+        var keysFactory = await PipelineAggregate_CreateGroupKeyValuesFactoryAsync(groupByNode, context, cancellationToken);
         var aggregateColumnsOffset = context.CurrentIterator.Columns.Length;
 
         context.SetIterator(
@@ -108,21 +108,22 @@ internal sealed partial class SelectPlanner
         return aggregateTargets.OfType<AggregateTarget>().ToArray();
     }
 
-    private void PipelineAggregate_ApplyHaving(
+    private async Task PipelineAggregate_ApplyHavingAsync(
         SelectCommandContext context,
-        SelectHavingNode? havingNode)
+        SelectHavingNode? havingNode,
+        CancellationToken cancellationToken)
     {
         if (havingNode == null)
         {
             return;
         }
 
-        var predicate = Misc_CreateDelegate(havingNode, context);
+        var predicate = await Misc_CreateDelegateAsync(havingNode, context, cancellationToken);
         context.SetIterator(new FilterRowsIterator(ExecutionThread, context.CurrentIterator, predicate));
     }
 
-    private IFuncUnit[] PipelineAggregate_CreateGroupKeyValuesFactory(SelectGroupByNode? groupByNode,
-        SelectCommandContext context)
+    private async Task<IFuncUnit[]> PipelineAggregate_CreateGroupKeyValuesFactoryAsync(SelectGroupByNode? groupByNode,
+        SelectCommandContext context, CancellationToken cancellationToken)
     {
         // If there is no GROUP BY statement but there are aggregates functions in SELECT -
         // just generate "fake" special key.
@@ -130,6 +131,7 @@ internal sealed partial class SelectPlanner
         {
             return GroupRowsIterator.NoGroupsKeyFactory;
         }
-        return Misc_CreateDelegate(groupByNode.GroupByNodes, context).ToArray();
+        return (await Misc_CreateDelegateAsync(groupByNode.GroupByNodes, context, cancellationToken))
+            .ToArray();
     }
 }

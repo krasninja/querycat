@@ -18,9 +18,9 @@ internal class AstCommand : BaseQueryCommand
 
             applicationOptions.InitializeLogger();
             var root = await applicationOptions.CreateApplicationRootAsync();
-            root.Thread.StatementExecuting += (_, threadArgs) =>
+            root.Thread.StatementExecuting += async (_, threadArgs) =>
             {
-                Console.WriteLine(root.Thread.DumpAst(threadArgs));
+                Console.WriteLine(await root.Thread.DumpAstAsync(threadArgs));
                 threadArgs.ContinueExecution = false;
             };
             AddVariables(root.Thread, variables);
