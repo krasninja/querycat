@@ -39,11 +39,13 @@ internal sealed class RemoteStream : Stream
     /// <inheritdoc />
     public override int Read(byte[] buffer, int offset, int count)
     {
-        var bytes = AsyncUtils.RunSync(ct => _client.Blob_ReadAsync(_objectHandle, (int)Position, count, ct));
-        if (bytes == null)
-        {
-            return 0;
-        }
+        return AsyncUtils.RunSync(ct => ReadAsync(buffer, offset, count, ct));
+    }
+
+    /// <inheritdoc />
+    public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+    {
+        var bytes = await _client.Blob_ReadAsync(_objectHandle, (int)Position, count, cancellationToken);
         Position += bytes.Length;
 
         var realCount = count;

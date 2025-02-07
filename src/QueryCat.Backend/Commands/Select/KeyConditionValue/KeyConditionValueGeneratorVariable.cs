@@ -63,13 +63,17 @@ internal sealed class KeyConditionValueGeneratorVariable : IKeyConditionMultiple
     }
 
     /// <inheritdoc />
-    public void Reset()
+    public ValueTask ResetAsync(CancellationToken cancellationToken)
     {
-        _generator?.Reset();
+        if (_generator == null)
+        {
+            return ValueTask.CompletedTask;
+        }
+        return _generator.ResetAsync(cancellationToken);
     }
 
     /// <inheritdoc />
-    public ValueTask<VariantValue?> GetAsync(IExecutionThread thread, CancellationToken cancellationToken)
+    public ValueTask<VariantValue?> GetAsync(IExecutionThread thread, CancellationToken cancellationToken = default)
     {
         if (_generator == null)
         {

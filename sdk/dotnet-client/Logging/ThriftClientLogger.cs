@@ -47,9 +47,10 @@ internal sealed class ThriftClientLogger : ILogger
             return;
         }
 
-        var message = string.Concat(_name, ": ",  formatter.Invoke(state, exception));
+        var message = string.Concat(_name, ": ", formatter.Invoke(state, exception));
         AsyncUtils.RunSync(ct => _client.LogAsync(
             level: GetLogLevelString(logLevel),
+            cancellationToken: ct,
             message: message)
         );
     }

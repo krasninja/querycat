@@ -22,7 +22,7 @@ internal sealed class KeyConditionValueGeneratorArray : IKeyConditionMultipleVal
     }
 
     /// <inheritdoc />
-    public async ValueTask<VariantValue?> GetAsync(IExecutionThread thread, CancellationToken cancellationToken)
+    public async ValueTask<VariantValue?> GetAsync(IExecutionThread thread, CancellationToken cancellationToken = default)
     {
         if (_currentIndex < _values.Length)
         {
@@ -44,8 +44,9 @@ internal sealed class KeyConditionValueGeneratorArray : IKeyConditionMultipleVal
     }
 
     /// <inheritdoc />
-    public void Reset()
+    public ValueTask ResetAsync(CancellationToken cancellationToken)
     {
         _currentIndex = -1;
+        return ValueTask.CompletedTask;
     }
 }

@@ -59,15 +59,20 @@ public sealed class RowsFrameIterator : ICursorRowsIterator
         }
     }
 
-    /// <inheritdoc />
-    public ValueTask<bool> MoveNextAsync(CancellationToken cancellationToken = default)
+    internal bool MoveNext()
     {
         if (!HasData)
         {
-            return ValueTask.FromResult(false);
+            return false;
         }
         _cursor++;
-        return ValueTask.FromResult(HasData);
+        return HasData;
+    }
+
+    /// <inheritdoc />
+    public ValueTask<bool> MoveNextAsync(CancellationToken cancellationToken = default)
+    {
+        return ValueTask.FromResult(MoveNext());
     }
 
     /// <inheritdoc />

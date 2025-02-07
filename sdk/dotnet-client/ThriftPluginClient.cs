@@ -435,10 +435,11 @@ public partial class ThriftPluginClient : IDisposable
     /// </summary>
     /// <param name="level">Log level.</param>
     /// <param name="message">Log message.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <param name="args">Log arguments.</param>
-    public async Task LogAsync(global::QueryCat.Plugins.Sdk.LogLevel level, string message, params string[] args)
+    public async Task LogAsync(global::QueryCat.Plugins.Sdk.LogLevel level, string message, CancellationToken cancellationToken, params string[] args)
     {
-        await _client.LogAsync(level, message, args.ToList());
+        await _client.LogAsync(level, message, args.ToList(), cancellationToken);
     }
 
     protected virtual void Dispose(bool disposing)

@@ -27,7 +27,7 @@ internal static class KeyConditionSingleValueGeneratorExtensions
             var values = new List<VariantValue>();
             if (oldPosition > -1)
             {
-                multipleValuesGenerator.Reset();
+                await multipleValuesGenerator.ResetAsync(cancellationToken);
             }
             while (await multipleValuesGenerator.MoveNextAsync(thread, cancellationToken))
             {
@@ -37,7 +37,7 @@ internal static class KeyConditionSingleValueGeneratorExtensions
                     values.Add(nullableValue.Value);
                 }
             }
-            multipleValuesGenerator.Reset();
+            await multipleValuesGenerator.ResetAsync(cancellationToken);
 
             // Restore the original position.
             for (var position = 0; position < oldPosition + 1; position++)

@@ -14,7 +14,7 @@ internal sealed class KeyConditionSingleValueGeneratorFunc : IKeyConditionSingle
     }
 
     /// <inheritdoc />
-    public async ValueTask<VariantValue?> GetAsync(IExecutionThread thread, CancellationToken cancellationToken)
+    public async ValueTask<VariantValue?> GetAsync(IExecutionThread thread, CancellationToken cancellationToken = default)
     {
         if (_func is FuncUnitRowsInputColumn rowsInputColumn)
         {

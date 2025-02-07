@@ -212,13 +212,10 @@ public class RowsFrame : IRowsSchema, IEnumerable<Row>
     }
 
     /// <inheritdoc />
-    public override string ToString() => $"Table (rows: {TotalRows})";
-
-    /// <inheritdoc />
     public IEnumerator<Row> GetEnumerator()
     {
         var iterator = new RowsFrameIterator(this);
-        while (AsyncUtils.RunSync(() => iterator.MoveNextAsync()))
+        while (iterator.MoveNext())
         {
             yield return new Row(iterator.Current);
         }
@@ -233,4 +230,7 @@ public class RowsFrame : IRowsSchema, IEnumerable<Row>
     /// <param name="childIterator">Child iterator.</param>
     /// <returns>Instance of <see cref="IRowsIterator" />.</returns>
     public RowsFrameIterator GetIterator(IRowsIterator? childIterator = null) => new(this);
+
+    /// <inheritdoc />
+    public override string ToString() => $"Table (rows: {TotalRows})";
 }

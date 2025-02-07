@@ -25,5 +25,7 @@ internal interface IKeyConditionMultipleValuesGenerator : IKeyConditionSingleVal
     /// <summary>
     /// Reset the position to the initial element.
     /// </summary>
-    void Reset();
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Awaitable task.</returns>
+    ValueTask ResetAsync(CancellationToken cancellationToken = default);
 }

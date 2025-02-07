@@ -11,7 +11,7 @@ internal sealed class KeyConditionValueGeneratorEmpty : IKeyConditionMultipleVal
     public int Position => 0;
 
     /// <inheritdoc />
-    public ValueTask<VariantValue?> GetAsync(IExecutionThread thread, CancellationToken cancellationToken)
+    public ValueTask<VariantValue?> GetAsync(IExecutionThread thread, CancellationToken cancellationToken = default)
     {
         return ValueTask.FromResult(new VariantValue?(VariantValue.Null));
     }
@@ -21,7 +21,8 @@ internal sealed class KeyConditionValueGeneratorEmpty : IKeyConditionMultipleVal
         => ValueTask.FromResult(true);
 
     /// <inheritdoc />
-    public void Reset()
+    public ValueTask ResetAsync(CancellationToken cancellationToken)
     {
+        return ValueTask.CompletedTask;
     }
 }

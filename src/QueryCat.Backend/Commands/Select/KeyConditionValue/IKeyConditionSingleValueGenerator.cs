@@ -15,5 +15,5 @@ internal interface IKeyConditionSingleValueGenerator
     /// <param name="thread">Execution thread.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Current value or null if no value.</returns>
-    ValueTask<VariantValue?> GetAsync(IExecutionThread thread, CancellationToken cancellationToken);
+    ValueTask<VariantValue?> GetAsync(IExecutionThread thread, CancellationToken cancellationToken = default);
 }

@@ -30,14 +30,14 @@ internal sealed class KeyConditionValueGeneratorIterator : IKeyConditionMultiple
     }
 
     /// <inheritdoc />
-    public void Reset()
+    public async ValueTask ResetAsync(CancellationToken cancellationToken = default)
     {
         _position = -1;
-        AsyncUtils.RunSync(_rowsIterator.ResetAsync);
+        await _rowsIterator.ResetAsync(cancellationToken);
     }
 
     /// <inheritdoc />
-    public ValueTask<VariantValue?> GetAsync(IExecutionThread thread, CancellationToken cancellationToken)
+    public ValueTask<VariantValue?> GetAsync(IExecutionThread thread, CancellationToken cancellationToken = default)
     {
         if (_rowsIterator.Columns.Length > 0)
         {
