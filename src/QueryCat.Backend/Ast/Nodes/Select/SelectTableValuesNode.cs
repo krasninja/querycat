@@ -31,9 +31,6 @@ internal sealed class SelectTableValuesNode : ExpressionNode, ISelectAliasNode
     public override object Clone() => new SelectTableValuesNode(this);
 
     /// <inheritdoc />
-    public override void Accept(AstVisitor visitor) => visitor.Visit(this);
-
-    /// <inheritdoc />
     public override ValueTask AcceptAsync(AstVisitor visitor, CancellationToken cancellationToken)
         => visitor.VisitAsync(this, cancellationToken);
 }

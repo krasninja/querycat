@@ -42,9 +42,6 @@ internal sealed class FunctionCallNode : ExpressionNode
     public override object Clone() => new FunctionCallNode(this);
 
     /// <inheritdoc />
-    public override void Accept(AstVisitor visitor) => visitor.Visit(this);
-
-    /// <inheritdoc />
     public override ValueTask AcceptAsync(AstVisitor visitor, CancellationToken cancellationToken)
         => visitor.VisitAsync(this, cancellationToken);
 

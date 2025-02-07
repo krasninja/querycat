@@ -27,7 +27,4 @@ internal sealed class CoalesceFunctionNode : ExpressionNode
     /// <inheritdoc />
     public override ValueTask AcceptAsync(AstVisitor visitor, CancellationToken cancellationToken)
         => visitor.VisitAsync(this, cancellationToken);
-
-    /// <inheritdoc />
-    public override void Accept(AstVisitor visitor) => visitor.Visit(this);
 }

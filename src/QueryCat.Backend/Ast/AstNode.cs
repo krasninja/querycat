@@ -102,12 +102,5 @@ internal abstract class AstNode : IAstNode
     public virtual IEnumerable<IAstNode> GetChildren() => [];
 
     /// <inheritdoc />
-    public abstract void Accept(AstVisitor visitor);
-
-    /// <inheritdoc />
-    public virtual ValueTask AcceptAsync(AstVisitor visitor, CancellationToken cancellationToken)
-    {
-        Accept(visitor);
-        return ValueTask.CompletedTask;
-    }
+    public abstract ValueTask AcceptAsync(AstVisitor visitor, CancellationToken cancellationToken);
 }

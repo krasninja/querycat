@@ -92,44 +92,6 @@ internal sealed class AstTraversal
         => _traversalStack.Skip(1).Select(s => s.Node).OfType<TNode>();
 
     /// <summary>
-    /// Pre-order traversal.
-    /// </summary>
-    /// <param name="node">Node to start the traversal.</param>
-    [DebuggerStepThrough]
-    public void PreOrder(IAstNode? node)
-    {
-        if (node == null)
-        {
-            return;
-        }
-        var ignoreTypes = TypesToIgnore.ToArray();
-
-        _traversalStack.Push(new TraversalItem(node));
-        node.Accept(_visitor);
-        while (_traversalStack.Count > 0)
-        {
-            var current = _traversalStack.Peek();
-            if (current.ChildrenEnumerator.MoveNext())
-            {
-                var next = current.CurrentChild;
-                if (!IsIgnoreType(next.GetType(), ignoreTypes))
-                {
-                    _traversalStack.Push(new TraversalItem(next));
-                    next.Accept(_visitor);
-                }
-                else if (AcceptBeforeIgnore)
-                {
-                    next.Accept(_visitor);
-                }
-            }
-            else
-            {
-                _traversalStack.Pop();
-            }
-        }
-    }
-
-    /// <summary>
     /// Pre-order traversal, async version.
     /// </summary>
     /// <param name="node">Node to start the traversal.</param>
@@ -163,43 +125,6 @@ internal sealed class AstTraversal
             }
             else
             {
-                _traversalStack.Pop();
-            }
-        }
-    }
-
-    /// <summary>
-    /// Post-order traversal.
-    /// </summary>
-    /// <param name="node">Node to start the traversal.</param>
-    [DebuggerStepThrough]
-    public void PostOrder(IAstNode? node)
-    {
-        if (node == null)
-        {
-            return;
-        }
-        var ignoreTypes = TypesToIgnore.ToArray();
-
-        _traversalStack.Push(new TraversalItem(node));
-        while (_traversalStack.Count > 0)
-        {
-            var current = _traversalStack.Peek();
-            if (current.ChildrenEnumerator.MoveNext())
-            {
-                var next = current.CurrentChild;
-                if (!IsIgnoreType(current.CurrentChild.GetType(), ignoreTypes))
-                {
-                    _traversalStack.Push(new TraversalItem(next));
-                }
-                else if (AcceptBeforeIgnore)
-                {
-                    next.Accept(_visitor);
-                }
-            }
-            else
-            {
-                current.Node.Accept(_visitor);
                 _traversalStack.Pop();
             }
         }

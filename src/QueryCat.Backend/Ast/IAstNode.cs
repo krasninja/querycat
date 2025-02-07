@@ -21,12 +21,6 @@ internal interface IAstNode : ICloneable
     IEnumerable<IAstNode> GetChildren();
 
     /// <summary>
-    /// The accept method for visitor pattern implementation.
-    /// </summary>
-    /// <param name="visitor">The visitor.</param>
-    void Accept(AstVisitor visitor);
-
-    /// <summary>
     /// The async version of accept method for visitor pattern implementation.
     /// </summary>
     /// <param name="visitor">The visitor.</param>

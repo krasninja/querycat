@@ -27,9 +27,6 @@ internal sealed class SelectTableJoinedUsingNode : SelectTableJoinedNode
     public override object Clone() => new SelectTableJoinedUsingNode(this);
 
     /// <inheritdoc />
-    public override void Accept(AstVisitor visitor) => visitor.Visit(this);
-
-    /// <inheritdoc />
     public override ValueTask AcceptAsync(AstVisitor visitor, CancellationToken cancellationToken)
         => visitor.VisitAsync(this, cancellationToken);
 }

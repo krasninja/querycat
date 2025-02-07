@@ -25,7 +25,7 @@ internal class TransformQueryAstVisitor : AstVisitor
     }
 
     /// <inheritdoc />
-    public override void Visit(FunctionCallNode node)
+    public override ValueTask VisitAsync(FunctionCallNode node, CancellationToken cancellationToken)
     {
         // Replace COUNT() by COUNT(1).
         if (node.Arguments.Count == 0
@@ -36,16 +36,17 @@ internal class TransformQueryAstVisitor : AstVisitor
                 node.Arguments.Add(new FunctionCallArgumentNode(new LiteralNode(VariantValue.OneIntegerValue)));
             });
         }
+        return base.VisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectExistsExpressionNode node)
+    public override ValueTask VisitAsync(SelectExistsExpressionNode node, CancellationToken cancellationToken)
     {
         node.SubQueryNode.ColumnsListNode.ColumnsNodes.Clear();
         node.SubQueryNode.ColumnsListNode.ColumnsNodes.Add(
             new SelectColumnsSublistExpressionNode(new LiteralNode(VariantValue.OneIntegerValue))
         );
         node.SubQueryNode.FetchNode = new SelectFetchNode(new LiteralNode(VariantValue.OneIntegerValue));
-        base.Visit(node);
+        return base.VisitAsync(node, cancellationToken);
     }
 }
