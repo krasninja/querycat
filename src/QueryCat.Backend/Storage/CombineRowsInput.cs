@@ -1,7 +1,6 @@
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend.Storage;
 
@@ -137,7 +136,8 @@ internal sealed class CombineRowsInput : RowsInput, IDisposable
     /// <inheritdoc />
     public void Dispose()
     {
-        AsyncUtils.RunSync(CloseAsync);
+        (_currentRowsInput as IDisposable)?.Dispose();
+        _currentRowsInput = null;
     }
 
     /// <inheritdoc />

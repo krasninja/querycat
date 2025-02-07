@@ -3,7 +3,6 @@ using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend.Commands.Select.Iterators;
 
@@ -112,27 +111,24 @@ internal sealed class VaryingOutputRowsIterator : IRowsIterator, IRowsIteratorPa
         _outputs.Clear();
     }
 
-    public Task CloseAsync(CancellationToken cancellationToken = default)
-        => CloseAsync(dispose: false, cancellationToken);
-
-    private async Task CloseAsync(bool dispose, CancellationToken cancellationToken = default)
+    public async Task CloseAsync(CancellationToken cancellationToken = default)
     {
         foreach (var outputKeyValue in _outputs)
         {
             _logger.LogDebug("Close for args {Key}.", outputKeyValue.Key);
             await outputKeyValue.Value.CloseAsync(cancellationToken);
-            if (dispose)
-            {
-                (outputKeyValue.Value as IDisposable)?.Dispose();
-            }
         }
-        _outputs.Clear();
+        Dispose();
     }
 
     /// <inheritdoc />
     public void Dispose()
     {
-        AsyncUtils.RunSync(() => CloseAsync(dispose: true));
+        foreach (var outputKeyValue in _outputs)
+        {
+            (outputKeyValue.Value as IDisposable)?.Dispose();
+        }
+        _outputs.Clear();
     }
 
     /// <inheritdoc />

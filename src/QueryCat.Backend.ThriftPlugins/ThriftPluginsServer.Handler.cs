@@ -29,12 +29,12 @@ public partial class ThriftPluginsServer
 
         public IntPtr? LibraryHandle { get; set; }
 
-        public void Shutdown()
+        public async Task ShutdownAsync(CancellationToken cancellationToken)
         {
             ObjectsStorage.Clean();
             if (Client != null)
             {
-                AsyncUtils.RunSync(Client.ShutdownAsync);
+                await Client.ShutdownAsync(cancellationToken);
             }
             if (LibraryHandle.HasValue && LibraryHandle.Value != IntPtr.Zero)
             {

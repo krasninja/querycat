@@ -12,6 +12,7 @@ using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Plugins;
+using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend.ThriftPlugins;
 
@@ -223,7 +224,7 @@ public sealed partial class ThriftPluginsServer : IDisposable
         _serverCts.Dispose();
         foreach (var pluginContext in _plugins)
         {
-            pluginContext.Shutdown();
+            AsyncUtils.RunSync(ct => pluginContext.ShutdownAsync(ct));
         }
     }
 }
