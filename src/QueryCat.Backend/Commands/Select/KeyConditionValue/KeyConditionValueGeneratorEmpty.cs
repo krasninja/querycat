@@ -11,10 +11,9 @@ internal sealed class KeyConditionValueGeneratorEmpty : IKeyConditionMultipleVal
     public int Position => 0;
 
     /// <inheritdoc />
-    public bool TryGet(IExecutionThread thread, out VariantValue value)
+    public ValueTask<VariantValue?> GetAsync(IExecutionThread thread, CancellationToken cancellationToken)
     {
-        value = VariantValue.Null;
-        return true;
+        return ValueTask.FromResult(new VariantValue?(VariantValue.Null));
     }
 
     /// <inheritdoc />

@@ -230,19 +230,16 @@ internal sealed partial class WebServer
         _logger.LogInformation("[{Address}] Schema: {Query}", request.RemoteEndPoint.Address, query);
 
         var thread = (DefaultExecutionThread)_executionThread;
-        void ThreadOnStatementExecuted(object? sender, ExecuteEventArgs e)
+        async void ThreadOnStatementExecuted(object? sender, ExecuteEventArgs e)
         {
             var result = thread.LastResult;
             if (!result.IsNull && result.Type == DataType.Object
                 && result.AsObject is IRowsSchema rowsSchema)
             {
-                AsyncUtils.RunSync(async (ct) =>
-                {
-                    var schema = await FunctionCaller.CallWithArgumentsAsync(Backend.Functions.InfoFunctions.Schema, thread,
-                        [rowsSchema], cancellationToken: ct);
-                    await WriteIteratorAsync(RowsIteratorConverter.Convert(schema), request, response,
-                        ct);
-                });
+                var schema = await FunctionCaller.CallWithArgumentsAsync(Backend.Functions.InfoFunctions.Schema, thread,
+                    [rowsSchema], cancellationToken);
+                await WriteIteratorAsync(RowsIteratorConverter.Convert(schema), request, response,
+                    cancellationToken);
                 e.ContinueExecution = false;
             }
         }

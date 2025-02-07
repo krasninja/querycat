@@ -33,9 +33,9 @@ internal sealed class SelectQueryCondition
         this.Generator = generator;
     }
 
-    public CacheKeyCondition ToCacheCondition(IExecutionThread thread)
+    public async ValueTask<CacheKeyCondition> ToCacheCondition(IExecutionThread thread, CancellationToken cancellationToken)
     {
-        Generator.TryGet(thread, out var value);
+        var value = await Generator.GetAsync(thread, cancellationToken) ?? VariantValue.Null;
         return new(Column, Operation, value);
     }
 

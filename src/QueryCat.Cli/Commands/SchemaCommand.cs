@@ -25,7 +25,7 @@ internal class SchemaCommand : BaseQueryCommand
             applicationOptions.InitializeLogger();
             var root = await applicationOptions.CreateStdoutApplicationRootAsync();
             var thread = root.Thread;
-            thread.StatementExecuted += (_, threadArgs) =>
+            thread.StatementExecuted += async (_, threadArgs) =>
             {
                 var result = thread.LastResult;
                 if (!result.IsNull
@@ -33,12 +33,9 @@ internal class SchemaCommand : BaseQueryCommand
                     && result.AsObject is IRowsSchema rowsSchema)
                 {
                     threadArgs.ContinueExecution = false;
-                    AsyncUtils.RunSync(async (ct) =>
-                    {
-                        var schema = await FunctionCaller.CallWithArgumentsAsync(InfoFunctions.Schema, thread, [rowsSchema]);
-                        thread.TopScope.Variables["result"] = schema;
-                        await thread.RunAsync("result", cancellationToken: ct);
-                    });
+                    var schema = await FunctionCaller.CallWithArgumentsAsync(InfoFunctions.Schema, thread, [rowsSchema]);
+                    thread.TopScope.Variables["result"] = schema;
+                    await thread.RunAsync("result", cancellationToken: context.GetCancellationToken());
                 }
             };
             AddVariables(thread, variables);

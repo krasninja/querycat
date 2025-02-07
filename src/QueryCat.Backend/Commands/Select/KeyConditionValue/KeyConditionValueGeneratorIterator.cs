@@ -37,14 +37,12 @@ internal sealed class KeyConditionValueGeneratorIterator : IKeyConditionMultiple
     }
 
     /// <inheritdoc />
-    public bool TryGet(IExecutionThread thread, out VariantValue value)
+    public ValueTask<VariantValue?> GetAsync(IExecutionThread thread, CancellationToken cancellationToken)
     {
         if (_rowsIterator.Columns.Length > 0)
         {
-            value = _rowsIterator.Current[0];
-            return true;
+            return ValueTask.FromResult(new VariantValue?(_rowsIterator.Current[0]));
         }
-        value = VariantValue.Null;
-        return false;
+        return ValueTask.FromResult((VariantValue?)null);
     }
 }

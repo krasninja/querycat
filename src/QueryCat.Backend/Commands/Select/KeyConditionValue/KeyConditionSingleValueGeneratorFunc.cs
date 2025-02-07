@@ -15,16 +15,13 @@ internal sealed class KeyConditionSingleValueGeneratorFunc : IKeyConditionSingle
     }
 
     /// <inheritdoc />
-    public bool TryGet(IExecutionThread thread, out VariantValue value)
+    public async ValueTask<VariantValue?> GetAsync(IExecutionThread thread, CancellationToken cancellationToken)
     {
         if (_func is FuncUnitRowsInputColumn rowsInputColumn)
         {
-            var localValue = VariantValue.Null;
-            var result = AsyncUtils.RunSync(() => rowsInputColumn.TryInvokeAsync(thread, out localValue, CancellationToken.None));
-            value = localValue;
-            return result;
+            var result = await rowsInputColumn.TryInvokeAsync(thread, out var localValue, cancellationToken);
+            return result ? localValue : null;
         }
-        value = _func.Invoke(thread);
-        return true;
+        return await _func.InvokeAsync(thread, cancellationToken);
     }
 }

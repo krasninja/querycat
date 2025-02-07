@@ -25,13 +25,6 @@ internal sealed partial class SelectPlanner
     {
     }
 
-    public IRowsIterator CreateIterator(
-        SelectQueryNode queryNode,
-        SelectCommandContext? parentContext = null)
-    {
-        return AsyncUtils.RunSync(ct => CreateIteratorAsync(queryNode, parentContext, ct))!;
-    }
-
     public async Task<IRowsIterator> CreateIteratorAsync(
         SelectQueryNode queryNode,
         SelectCommandContext? parentContext = null,

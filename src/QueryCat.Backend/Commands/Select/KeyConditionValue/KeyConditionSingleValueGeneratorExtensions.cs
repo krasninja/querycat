@@ -31,9 +31,10 @@ internal static class KeyConditionSingleValueGeneratorExtensions
             }
             while (await multipleValuesGenerator.MoveNextAsync(thread, cancellationToken))
             {
-                if (multipleValuesGenerator.TryGet(thread, out var value))
+                var nullableValue = await multipleValuesGenerator.GetAsync(thread, cancellationToken);
+                if (nullableValue.HasValue)
                 {
-                    values.Add(value);
+                    values.Add(nullableValue.Value);
                 }
             }
             multipleValuesGenerator.Reset();
@@ -47,6 +48,7 @@ internal static class KeyConditionSingleValueGeneratorExtensions
             return values.ToArray();
         }
 
-        return generator.TryGet(thread, out var variantValue) ? [variantValue] : [];
+        var generatorNullableValue = await generator.GetAsync(thread, cancellationToken);
+        return generatorNullableValue.HasValue ? [generatorNullableValue.Value] : [];
     }
 }

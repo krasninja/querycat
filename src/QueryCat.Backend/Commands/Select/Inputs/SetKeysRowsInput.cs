@@ -113,9 +113,10 @@ internal sealed class SetKeysRowsInput : RowsInput, IRowsInputKeys
             {
                 hasMoreMultipleValues = await multipleValuesGenerator.MoveNextAsync(_thread, cancellationToken);
             }
-            if (conditionJoint.Condition.Generator.TryGet(_thread, out var value))
+            var nullableValue = await conditionJoint.Condition.Generator.GetAsync(_thread, cancellationToken);
+            if (nullableValue.HasValue)
             {
-                _rowsInput.SetKeyColumnValue(conditionJoint.ColumnIndex, value, conditionJoint.Condition.Operation);
+                _rowsInput.SetKeyColumnValue(conditionJoint.ColumnIndex, nullableValue.Value, conditionJoint.Condition.Operation);
             }
             else
             {
