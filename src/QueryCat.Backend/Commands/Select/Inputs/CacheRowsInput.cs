@@ -5,7 +5,6 @@ using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Storage;
 
 namespace QueryCat.Backend.Commands.Select.Inputs;
@@ -100,7 +99,7 @@ internal sealed class CacheRowsInput : IRowsInputKeys
             return ErrorCode.NoData;
         }
 
-        value = AsyncUtils.RunSync(ct => ReadValueByPositionAsync(_rowIndex, columnIndex, ct).AsTask());
+        value = ReadValueByPosition(_rowIndex, columnIndex);
         return ErrorCode.OK;
     }
 
@@ -147,6 +146,18 @@ internal sealed class CacheRowsInput : IRowsInputKeys
         }
 
         return hasData;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private VariantValue ReadValueByPosition(int rowIndex, int columnIndex)
+    {
+        if (_currentCacheEntry == null)
+        {
+            return VariantValue.Null;
+        }
+        var offset = (Columns.Length * rowIndex) + columnIndex;
+        CacheReads++;
+        return _currentCacheEntry.Cache[offset];
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
