@@ -223,7 +223,8 @@ internal sealed class CacheRowsInput : IRowsInputKeys
         }
 
 #if DEBUG
-        var keyForCheck = CreateCacheKey(_thread, _innerRowsInputType, _rowsInput, _queryContext, _conditions);
+        var keyForCheck = await CreateCacheKeyAsync(_thread, _innerRowsInputType, _rowsInput, _queryContext,
+            _conditions, cancellationToken);
         Debug.Assert(keyForCheck == _currentCacheEntry.Key, "Cache key has been changed!");
 #endif
         return _currentCacheEntry;
