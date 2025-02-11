@@ -23,6 +23,7 @@ internal sealed class OrderColumnsIndex : IOrderIndex
     private class RowsComparer : IComparer<int>
     {
         private readonly OrderColumnsIndex _orderColumnsIndex;
+        private readonly List<VariantValue> _values;
 
         private readonly VariantValue[] _values1;
         private readonly VariantValue[] _values2;
@@ -37,6 +38,7 @@ internal sealed class OrderColumnsIndex : IOrderIndex
         {
             _orderColumnsIndex = orderColumnsIndex;
 
+            _values = new List<VariantValue>();
             _values1 = new VariantValue[_orderColumnsIndex._valueGetters.Length];
             _values2 = new VariantValue[_orderColumnsIndex._valueGetters.Length];
 
@@ -98,12 +100,25 @@ internal sealed class OrderColumnsIndex : IOrderIndex
             };
         }
 
+        internal async ValueTask LoadAsync(CancellationToken cancellationToken = default)
+        {
+            _values.Clear();
+            _values.EnsureCapacity(_orderColumnsIndex.RowsFrameIterator.TotalRows * _orderColumnsIndex._valueGetters.Length);
+            while (await _orderColumnsIndex.RowsFrameIterator.MoveNextAsync(cancellationToken))
+            {
+                foreach (var valueGetter in _orderColumnsIndex._valueGetters)
+                {
+                    var value = await valueGetter.InvokeAsync(_orderColumnsIndex._thread, cancellationToken);
+                    _values.Add(value);
+                }
+            }
+        }
+
         private void FillValues(VariantValue[] values, int rowIndex)
         {
-            _orderColumnsIndex.RowsFrameIterator.Seek(rowIndex, CursorSeekOrigin.Begin);
             for (var i = 0; i < values.Length; i++)
             {
-                values[i] = _orderColumnsIndex._valueGetters[i].Invoke(_orderColumnsIndex._thread);
+                values[i] = _values[rowIndex * _orderColumnsIndex._columnIndexes.Length + i];
             }
         }
 
@@ -212,7 +227,7 @@ internal sealed class OrderColumnsIndex : IOrderIndex
     public ICursorRowsIterator GetOrderIterator() => new OrderColumnsIterator(this);
 
     /// <inheritdoc />
-    public void Rebuild()
+    public async Task RebuildAsync(CancellationToken cancellationToken = default)
     {
         _rowsOrder = new int[RowsFrameIterator.TotalRows];
         for (var i = 0; i < RowsFrameIterator.TotalRows; i++)
@@ -221,6 +236,7 @@ internal sealed class OrderColumnsIndex : IOrderIndex
         }
 
         var comparer = new RowsComparer(this);
+        await comparer.LoadAsync(cancellationToken);
         Array.Sort(_rowsOrder, comparer);
     }
 }

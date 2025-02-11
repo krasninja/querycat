@@ -75,7 +75,7 @@ internal sealed class OrderRowsIterator : IRowsIterator, IRowsIteratorParent
         if (!_isInitialized)
         {
             await CopyRowIteratorToFrameAsync(cancellationToken);
-            _orderIndex.Rebuild();
+            await _orderIndex.RebuildAsync(cancellationToken);
             _isInitialized = true;
         }
 

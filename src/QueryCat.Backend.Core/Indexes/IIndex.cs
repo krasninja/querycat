@@ -8,5 +8,7 @@ public interface IIndex
     /// <summary>
     /// Recreate the index values.
     /// </summary>
-    void Rebuild();
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Awaitable task.</returns>
+    Task RebuildAsync(CancellationToken cancellationToken = default);
 }

@@ -193,15 +193,6 @@ public static class AsyncUtils
         => RunSync(() => task.Invoke(CancellationToken.None));
 
     /// <summary>
-    /// Executes an async ValueTask method which has a T return value synchronously.
-    /// </summary>
-    /// <param name="task">Task.</param>
-    public static T? RunSync<T>(Func<ValueTask<T>> task)
-    {
-        return task.Invoke().GetAwaiter().GetResult();
-    }
-
-    /// <summary>
     /// Converts async enumerable into list.
     /// </summary>
     /// <param name="items">Async enumerable.</param>
