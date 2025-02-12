@@ -1,5 +1,5 @@
-using System.Runtime.CompilerServices;
 using QueryCat.Backend.Core.Execution;
+using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend.Execution;
 
@@ -156,14 +156,14 @@ public sealed class KeywordsCompletionSource : BinarySearchCompletionSource
     }
 
     /// <inheritdoc />
-    public override async IAsyncEnumerable<CompletionResult> GetAsync(CompletionContext context,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    public override IAsyncEnumerable<CompletionResult> GetAsync(CompletionContext context,
+        CancellationToken cancellationToken = default)
     {
         if (context.TriggerTokens.FindIndex(ParserToken.TokenKindPeriod) > -1
             || context.TriggerTokens.FindIndex(ParserToken.TokenKindLeftBracket) > -1
             || context.TriggerTokens.FindIndex(ParserToken.TokenKindRightBracket) > -1)
         {
-            yield break;
+            return AsyncUtils.Empty<CompletionResult>();
         }
 
         var searchTerm = context.LastTokenText;
@@ -172,9 +172,6 @@ public sealed class KeywordsCompletionSource : BinarySearchCompletionSource
             .Select(c => new CompletionResult(c, [
                 new CompletionTextEdit(context.TriggerTokenPosition, context.TriggerTokenPosition + searchTerm.Length, c.Label)
             ]));
-        foreach (var item in items)
-        {
-            yield return item;
-        }
+        return AsyncUtils.ToAsyncEnumerable(items);
     }
 }

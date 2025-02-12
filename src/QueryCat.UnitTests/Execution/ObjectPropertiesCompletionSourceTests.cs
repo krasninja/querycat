@@ -64,7 +64,7 @@ public sealed class ObjectPropertiesCompletionSourceTests
         thread.TopScope.Variables["user"] = VariantValue.CreateFromObject(_user);
 
         // Act.
-        var firstCompletion = (await thread.GetCompletionsAsync(query).ToListAsync()).FirstOrDefault(CompletionResult.Empty);
+        var firstCompletion = await thread.GetCompletionsAsync(query).FirstOrDefaultAsync(CompletionResult.Empty);
 
         // Assert.
         Assert.Equal(expected, firstCompletion.Completion.Label);
@@ -82,7 +82,7 @@ public sealed class ObjectPropertiesCompletionSourceTests
         thread.TopScope.Variables["user"] = VariantValue.CreateFromObject(_user);
 
         // Act.
-        var firstCompletion = (await thread.GetCompletionsAsync(query).ToListAsync()).FirstOrDefault(CompletionResult.Empty);
+        var firstCompletion = await thread.GetCompletionsAsync(query).FirstOrDefaultAsync(CompletionResult.Empty);
         var replacedText = firstCompletion.Apply(query);
 
         // Assert.

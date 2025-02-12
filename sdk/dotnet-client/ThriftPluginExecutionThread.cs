@@ -105,10 +105,10 @@ public sealed class ThriftPluginExecutionThread : IExecutionThread
     }
 
     /// <inheritdoc />
-    public async IAsyncEnumerable<CompletionResult> GetCompletionsAsync(string query, int position = -1, object? tag = null,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<CompletionResult> GetCompletionsAsync(string query, int position = -1, object? tag = null,
+        CancellationToken cancellationToken = default)
     {
-        yield break;
+        return AsyncUtils.Empty<CompletionResult>();
     }
 
     /// <inheritdoc />
