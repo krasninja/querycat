@@ -13,7 +13,7 @@ namespace QueryCat.Backend.Commands.Select;
 /// Contains all necessary information to handle the query on all stages.
 /// </summary>
 [DebuggerDisplay("Id = {Id}, Iterator = {CurrentIterator}")]
-internal sealed class SelectCommandContext(SelectQueryNode queryNode) : CommandContext, IDisposable
+internal sealed class SelectCommandContext(SelectQueryNode queryNode) : CommandContext, IDisposable, IAsyncDisposable
 {
     public SelectQueryConditions Conditions { get; } = new();
 
@@ -274,10 +274,28 @@ internal sealed class SelectCommandContext(SelectQueryNode queryNode) : CommandC
     /// <inheritdoc />
     public void Dispose()
     {
-        RowsInputIterator?.Dispose();
+        if (RowsInputIterator != null)
+        {
+            RowsInputIterator.CloseAsync()
+                .ConfigureAwait(false)
+                .GetAwaiter().GetResult();
+        }
         foreach (var childContext in ChildContexts)
         {
             childContext.Dispose();
+        }
+    }
+
+    /// <inheritdoc />
+    public async ValueTask DisposeAsync()
+    {
+        if (RowsInputIterator != null)
+        {
+            await RowsInputIterator.CloseAsync();
+        }
+        foreach (var childContext in ChildContexts)
+        {
+            await childContext.DisposeAsync();
         }
     }
 }
