@@ -1,3 +1,5 @@
+using System.Runtime.CompilerServices;
+
 namespace QueryCat.Backend.Core.Execution;
 
 /// <summary>
@@ -11,7 +13,8 @@ public sealed class NullCompletionSource : ICompletionSource
     public static NullCompletionSource Instance { get; } = new();
 
     /// <inheritdoc />
-    public IEnumerable<CompletionResult> Get(CompletionContext context)
+    public async IAsyncEnumerable<CompletionResult> GetAsync(CompletionContext context,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         yield break;
     }

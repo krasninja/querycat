@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Text;
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
@@ -9,6 +10,7 @@ using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Plugins;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Storage;
 
@@ -384,7 +386,8 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IAsync
     #endregion
 
     /// <inheritdoc />
-    public IEnumerable<CompletionResult> GetCompletions(string text, int position = -1, object? tag = null)
+    public async IAsyncEnumerable<CompletionResult> GetCompletionsAsync(string text, int position = -1, object? tag = null,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var tokens = AstBuilder
             .GetTokens(text)
@@ -392,7 +395,12 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IAsync
             .ToList();
         var context = new CompletionContext(this, text, tokens, position);
         context.Tag = tag;
-        return CompletionSource.Get(context).OrderByDescending(c => c.Completion.Relevance);
+        var items = await CompletionSource.GetAsync(context, cancellationToken)
+            .ToListAsync(cancellationToken: cancellationToken);
+        foreach (var item in items.OrderByDescending(c => c.Completion.Relevance))
+        {
+            yield return item;
+        }
     }
 
     private async Task Write(VariantValue result, CancellationToken cancellationToken)

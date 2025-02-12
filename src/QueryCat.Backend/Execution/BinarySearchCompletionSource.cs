@@ -13,7 +13,8 @@ public abstract class BinarySearchCompletionSource : ICompletionSource
     }
 
     /// <inheritdoc />
-    public abstract IEnumerable<CompletionResult> Get(CompletionContext context);
+    public abstract IAsyncEnumerable<CompletionResult> GetAsync(CompletionContext context,
+        CancellationToken cancellationToken = default);
 
     protected IEnumerable<Completion> GetCompletionsStartsWith(string term)
         => GetCompletionsStartsWith(_completions, term);

@@ -2,6 +2,7 @@ using Xunit;
 using QueryCat.Backend;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Execution;
 
 namespace QueryCat.UnitTests.Execution;
@@ -13,7 +14,6 @@ public sealed class VariablesCompletionSourceTests
 {
     private readonly ExecutionThreadBootstrapper _executionThreadBootstrapper = new ExecutionThreadBootstrapper()
         .WithCompletionSource(new VariablesCompletionSource());
-
 
     [Theory]
     [InlineData("", "userName")]
@@ -30,7 +30,7 @@ public sealed class VariablesCompletionSourceTests
         thread.TopScope.Variables["name"] = VariantValue.Null;
 
         // Act.
-        var firstCompletion = thread.GetCompletions(query).FirstOrDefault(CompletionResult.Empty);
+        var firstCompletion = (await thread.GetCompletionsAsync(query).ToListAsync()).FirstOrDefault(CompletionResult.Empty);
 
         // Assert.
         Assert.Equal(expected, firstCompletion.Completion.Label);
@@ -48,7 +48,7 @@ public sealed class VariablesCompletionSourceTests
         thread.TopScope.Variables["name"] = VariantValue.Null;
 
         // Act.
-        var firstCompletion = thread.GetCompletions(query).FirstOrDefault(CompletionResult.Empty);
+        var firstCompletion = (await thread.GetCompletionsAsync(query).ToListAsync()).FirstOrDefault(CompletionResult.Empty);
         var replacedText = firstCompletion.Apply(query);
 
         // Assert.

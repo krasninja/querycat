@@ -1,5 +1,6 @@
 ﻿using Xunit;
 using QueryCat.Backend;
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Execution;
 
 namespace QueryCat.UnitTests.Execution;
@@ -19,7 +20,7 @@ public sealed class KeywordsCompletionSourceTests
             .CreateAsync();
 
         // Act.
-        var completions = executionThread.GetCompletions("in")
+        var completions = (await executionThread.GetCompletionsAsync("in").ToListAsync())
             .Select(c => c.Completion.Label).OrderBy(c => c).ToArray();
 
         // Assert.

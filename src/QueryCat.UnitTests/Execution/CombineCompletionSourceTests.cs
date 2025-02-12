@@ -1,4 +1,5 @@
 ﻿using QueryCat.Backend;
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Execution;
 using Xunit;
 
@@ -26,7 +27,7 @@ public sealed class CombineCompletionSourceTests
             .CreateAsync();
 
         // Act.
-        var completionsCount = executionThread.GetCompletions("SELEC").Count();
+        var completionsCount = (await executionThread.GetCompletionsAsync("SELEC").ToListAsync()).Count;
 
         // Assert.
         Assert.Equal(1, completionsCount);

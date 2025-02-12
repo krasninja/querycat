@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using QueryCat.Backend.Core.Data;
@@ -104,7 +105,8 @@ public sealed class ThriftPluginExecutionThread : IExecutionThread
     }
 
     /// <inheritdoc />
-    public IEnumerable<CompletionResult> GetCompletions(string query, int position = -1, object? tag = null)
+    public async IAsyncEnumerable<CompletionResult> GetCompletionsAsync(string query, int position = -1, object? tag = null,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         yield break;
     }

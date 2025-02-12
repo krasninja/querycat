@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Plugins;
@@ -62,7 +63,8 @@ public sealed class NullExecutionThread : IExecutionThread
     }
 
     /// <inheritdoc />
-    public IEnumerable<CompletionResult> GetCompletions(string query, int position = -1, object? tag = null)
+    public async IAsyncEnumerable<CompletionResult> GetCompletionsAsync(string query, int position = -1, object? tag = null,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         yield break;
     }

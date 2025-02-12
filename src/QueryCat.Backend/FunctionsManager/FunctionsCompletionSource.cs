@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 
@@ -15,7 +16,8 @@ public sealed class FunctionsCompletionSource : ICompletionSource
     }
 
     /// <inheritdoc />
-    public IEnumerable<CompletionResult> Get(CompletionContext context)
+    public async IAsyncEnumerable<CompletionResult> GetAsync(CompletionContext context,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         // If we have a period - this is already an object, not a variable.
         if (context.TriggerTokens.FindIndex(ParserToken.TokenKindPeriod) > -1)

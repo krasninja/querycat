@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
 
@@ -9,12 +10,16 @@ namespace QueryCat.Backend.Execution;
 public class VariablesCompletionSource : ICompletionSource
 {
     /// <inheritdoc />
-    public IEnumerable<CompletionResult> Get(CompletionContext context)
+    public async IAsyncEnumerable<CompletionResult> GetAsync(CompletionContext context,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var items = new List<CompletionResult>();
         items.AddRange(FillWithScopesVariables(context));
 
-        return items;
+        foreach (var item in items)
+        {
+            yield return item;
+        }
     }
 
     private IEnumerable<CompletionResult> FillWithScopesVariables(CompletionContext context)

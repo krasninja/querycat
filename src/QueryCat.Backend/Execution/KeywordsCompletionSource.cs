@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using QueryCat.Backend.Core.Execution;
 
 namespace QueryCat.Backend.Execution;
@@ -155,20 +156,25 @@ public sealed class KeywordsCompletionSource : BinarySearchCompletionSource
     }
 
     /// <inheritdoc />
-    public override IEnumerable<CompletionResult> Get(CompletionContext context)
+    public override async IAsyncEnumerable<CompletionResult> GetAsync(CompletionContext context,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         if (context.TriggerTokens.FindIndex(ParserToken.TokenKindPeriod) > -1
             || context.TriggerTokens.FindIndex(ParserToken.TokenKindLeftBracket) > -1
             || context.TriggerTokens.FindIndex(ParserToken.TokenKindRightBracket) > -1)
         {
-            return [];
+            yield break;
         }
 
         var searchTerm = context.LastTokenText;
 
-        return GetCompletionsStartsWith(searchTerm)
+        var items = GetCompletionsStartsWith(searchTerm)
             .Select(c => new CompletionResult(c, [
                 new CompletionTextEdit(context.TriggerTokenPosition, context.TriggerTokenPosition + searchTerm.Length, c.Label)
             ]));
+        foreach (var item in items)
+        {
+            yield return item;
+        }
     }
 }

@@ -2,6 +2,7 @@
 using QueryCat.Backend;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Execution;
 
 namespace QueryCat.UnitTests.Execution;
@@ -63,7 +64,7 @@ public sealed class ObjectPropertiesCompletionSourceTests
         thread.TopScope.Variables["user"] = VariantValue.CreateFromObject(_user);
 
         // Act.
-        var firstCompletion = thread.GetCompletions(query).FirstOrDefault(CompletionResult.Empty);
+        var firstCompletion = (await thread.GetCompletionsAsync(query).ToListAsync()).FirstOrDefault(CompletionResult.Empty);
 
         // Assert.
         Assert.Equal(expected, firstCompletion.Completion.Label);
@@ -81,7 +82,7 @@ public sealed class ObjectPropertiesCompletionSourceTests
         thread.TopScope.Variables["user"] = VariantValue.CreateFromObject(_user);
 
         // Act.
-        var firstCompletion = thread.GetCompletions(query).FirstOrDefault(CompletionResult.Empty);
+        var firstCompletion = (await thread.GetCompletionsAsync(query).ToListAsync()).FirstOrDefault(CompletionResult.Empty);
         var replacedText = firstCompletion.Apply(query);
 
         // Assert.

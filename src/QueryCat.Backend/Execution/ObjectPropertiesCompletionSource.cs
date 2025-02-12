@@ -1,7 +1,6 @@
 ﻿using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend.Execution;
 
@@ -11,7 +10,7 @@ namespace QueryCat.Backend.Execution;
 public class ObjectPropertiesCompletionSource : BaseObjectPropertiesCompletionSource
 {
     /// <inheritdoc />
-    protected override object? GetSourceObject(CompletionContext context)
+    protected override async ValueTask<object?> GetSourceObjectAsync(CompletionContext context, CancellationToken cancellationToken)
     {
         // The base pattern is "id.". It means, at least we should have 2 tokens.
         var separatorTokenIndex = context.TriggerTokens.LastSeparatorTokenIndex;
@@ -26,8 +25,7 @@ public class ObjectPropertiesCompletionSource : BaseObjectPropertiesCompletionSo
 
         try
         {
-            var value = AsyncUtils.RunSync(ct =>
-                context.ExecutionThread.RunAsync(objectSelectExpression, cancellationToken: ct));
+            var value = await context.ExecutionThread.RunAsync(objectSelectExpression, cancellationToken: cancellationToken);
             if (!value.IsNull && value.Type == DataType.Object)
             {
                 return value.AsObjectUnsafe;
