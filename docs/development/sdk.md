@@ -41,6 +41,7 @@ Result is the `VariantValue` returned by the last statement in the script.
 - `QueryTimeout: TimeSpan`. Throw time out exception if query hasn't been executed within the time.
 - `MaxRecursionDepth: int`. Max recursion level of `RunAsync` execution thread call.
 - `CompletionsCount: int`. Max number of completion to return.
+- `PreventConcurrentRun: bool`. Lock execution thread while it is being used by another caller.
 
 ## More Examples
 

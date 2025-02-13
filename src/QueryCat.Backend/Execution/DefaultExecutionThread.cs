@@ -13,6 +13,7 @@ using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Storage;
+using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Execution;
 
@@ -36,6 +37,7 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IAsync
     private bool _bootstrapScriptExecuted;
     private bool _configLoaded;
     private readonly Stopwatch _stopwatch = new();
+    private readonly AsyncLock _asyncLock = new();
 
     /// <summary>
     /// Root (base) thread scope.
@@ -154,8 +156,13 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IAsync
         }
 
         // Run with lock and timer.
+        IAsyncDisposable? @lock = null;
         try
         {
+            if (Options.PreventConcurrentRun)
+            {
+                @lock = await _asyncLock.LockAsync(cancellationToken);
+            }
             CurrentQuery = query;
 
             // Bootstrap.
@@ -186,6 +193,10 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IAsync
             }
             _deepLevel--;
             CurrentQuery = string.Empty;
+            if (@lock != null)
+            {
+                await @lock.DisposeAsync();
+            }
         }
     }
 
@@ -540,6 +551,7 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IAsync
     {
         if (disposing)
         {
+            _asyncLock.Dispose();
             foreach (var disposable in _disposablesList)
             {
                 disposable.Dispose();
@@ -557,6 +569,7 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IAsync
 
     protected virtual async ValueTask DisposeAsyncCore()
     {
+        await _asyncLock.DisposeAsync();
         foreach (var disposable in _disposablesList)
         {
             if (disposable is IAsyncDisposable asyncDisposable)

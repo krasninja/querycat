@@ -76,4 +76,9 @@ public class ExecutionOptions
     /// Max number of completion to return.
     /// </summary>
     public int CompletionsCount { get; set; } = 20;
+
+    /// <summary>
+    /// Lock execution thread while it is being used by another caller.
+    /// </summary>
+    public bool PreventConcurrentRun { get; set; } = true;
 }
