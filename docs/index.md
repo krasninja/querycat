@@ -27,10 +27,9 @@ Just imagine that everything in the world is a table, and you can process it usi
     - 6.4) [JSON](input/json.md)
     - 6.5) [RegEx](input/regex.md)
     - 6.6) [STDIN](input/stdin.md)
-    - 6.7) [SUBRIP](input/subrip.md)
-    - 6.8) [Text](input/text-line.md)
-    - 6.9) [TSV](input/tsv.md)
-    - 6.10) [XML](input/xml.md)
+    - 6.7) [Text](input/text-line.md)
+    - 6.8) [TSV](input/tsv.md)
+    - 6.9) [XML](input/xml.md)
 - 7) Output
     - 7.1) [CSV](output/csv.md)
     - 7.2) [JSON](output/json.md)

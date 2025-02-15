@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Removed
 
 - Remove ConcurrencyLevel option.
+- Remove SubRip formatter.
 
 ## [0.10.0] - 2025-01-28
 
