@@ -63,7 +63,7 @@ internal class PluginDebugCommand : BaseQueryCommand
                     debugMode: true,
                     minLogLevel: LogLevel.Debug)
                 {
-                    ForceAuthToken = ThriftPluginClient.TestAuthToken,
+                    ForceRegistrationToken = ThriftPluginClient.TestRegistrationToken,
                     SkipPluginsExecution = true,
                 })
 #elif PLUGIN_ASSEMBLY

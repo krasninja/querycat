@@ -28,7 +28,7 @@ public partial class ThriftPluginClient : IDisposable
 {
     public const string PluginsManagerServiceName = "plugins-manager";
     public const string PluginServerName = "plugin";
-    public const string TestAuthToken = "test";
+    public const string TestRegistrationToken = "test";
     public const string TestPipeName = "qcat-test";
 
     public const string PluginServerPipeParameter = "server-endpoint";
@@ -59,10 +59,10 @@ public partial class ThriftPluginClient : IDisposable
     // Connection to plugin manager.
     private readonly Func<TTransport> _transportFactory;
     private readonly string _pluginServerUri = string.Empty;
-    private readonly string _authToken;
+    private readonly string _registrationToken;
     private readonly string _clientServerNamedPipe = $"qcat-{Guid.NewGuid():N}";
     private readonly TProtocol _protocol;
-    private readonly PluginsManager.Client _client;
+    private readonly PluginsManager.Client _thriftClient;
 
     // Plugin server.
     private TServer? _clientServer;
@@ -89,6 +89,16 @@ public partial class ThriftPluginClient : IDisposable
     /// </summary>
     public bool IsActive { get; private set; }
 
+    /// <summary>
+    /// Plugin token.
+    /// </summary>
+    public long Token => RegistrationResult != null ? RegistrationResult.Token : -1;
+
+    internal PluginsManager.Client ThriftClient => _thriftClient;
+
+    /// <summary>
+    /// The event occurs on plugin registration.
+    /// </summary>
     public EventHandler<ThriftPluginClientOnInitializeEventArgs>? OnInitialize;
 
     public ThriftPluginClient(ThriftPluginClientArguments args)
@@ -112,11 +122,11 @@ public partial class ThriftPluginClient : IDisposable
         // Auth token.
         if (string.IsNullOrEmpty(args.DebugServerPath))
         {
-            _authToken = args.Token;
+            _registrationToken = args.RegistrationToken;
         }
         else
         {
-            _authToken = TestAuthToken;
+            _registrationToken = TestRegistrationToken;
         }
 
         // Parent PID.
@@ -140,9 +150,9 @@ public partial class ThriftPluginClient : IDisposable
             new TBinaryProtocol(
                 new TFramedTransport(_transportFactory.Invoke())),
             PluginsManagerServiceName);
-        _client = new PluginsManager.Client(_protocol);
+        _thriftClient = new PluginsManager.Client(_protocol);
 
-        _executionThread = new ThriftPluginExecutionThread(_client);
+        _executionThread = new ThriftPluginExecutionThread(this);
         _functionsManager = new PluginFunctionsManager();
     }
 
@@ -188,7 +198,7 @@ public partial class ThriftPluginClient : IDisposable
                     appArgs.ServerEndpoint = value;
                     break;
                 case PluginTokenParameter:
-                    appArgs.Token = value;
+                    appArgs.RegistrationToken = value;
                     break;
                 case PluginParentPidParameter:
                     appArgs.ParentPid = int.Parse(value);
@@ -228,7 +238,9 @@ public partial class ThriftPluginClient : IDisposable
         }
 
         Application.LoggerFactory = new LoggerFactory(
-            providers: [new SimpleConsoleLoggerProvider()],
+            providers: [
+                new SimpleConsoleLoggerProvider(LogLevel.Error),
+            ],
             new LoggerFilterOptions
             {
                 MinLevel = minLogLevel,
@@ -259,7 +271,7 @@ public partial class ThriftPluginClient : IDisposable
             Thread.Sleep(100);
         }
 
-        var task = _client.OpenTransportAsync(cancellationToken);
+        var task = _thriftClient.OpenTransportAsync(cancellationToken);
         try
         {
             await task.WaitAsync(TimeSpan.FromSeconds(5), cancellationToken);
@@ -282,8 +294,8 @@ public partial class ThriftPluginClient : IDisposable
         pluginData ??= SdkConvert.Convert(Assembly.GetEntryAssembly());
         pluginData.Functions = functions;
 
-        RegistrationResult = await _client.RegisterPluginAsync(
-            _authToken,
+        RegistrationResult = await _thriftClient.RegisterPluginAsync(
+            _registrationToken,
             $"{PluginTransportNamedPipes}://localhost/{_clientServerNamedPipe}",
             pluginData,
             cancellationToken);
@@ -343,7 +355,7 @@ public partial class ThriftPluginClient : IDisposable
 
         // Connection to plugin manager.
         _protocol.Dispose();
-        _client.Dispose();
+        _thriftClient.Dispose();
 
         // Server.
         _clientServerCts.Dispose();
@@ -439,7 +451,7 @@ public partial class ThriftPluginClient : IDisposable
     /// <param name="args">Log arguments.</param>
     public async Task LogAsync(global::QueryCat.Plugins.Sdk.LogLevel level, string message, CancellationToken cancellationToken, params string[] args)
     {
-        await _client.LogAsync(level, message, args.ToList(), cancellationToken);
+        await _thriftClient.LogAsync(Token, level, message, args.ToList(), cancellationToken);
     }
 
     protected virtual void Dispose(bool disposing)

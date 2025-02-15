@@ -8,7 +8,6 @@ using QueryCat.Plugins.Client;
 using QueryCat.Plugins.Sdk;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Functions;
-using QueryCat.Backend.Core.Utils;
 using LogLevel = QueryCat.Plugins.Sdk.LogLevel;
 
 namespace QueryCat.Backend.ThriftPlugins;
@@ -58,14 +57,18 @@ public partial class ThriftPluginsServer
 
         /// <inheritdoc />
         public async Task<RegistrationResult> RegisterPluginAsync(
-            string auth_token,
+            string registration_token,
             string callback_uri,
             PluginData? plugin_data,
             CancellationToken cancellationToken = default)
         {
             if (plugin_data == null)
             {
-                return CreateEmptyRegistrationResult();
+                return new RegistrationResult
+                {
+                    Version = Application.GetVersion(),
+                    Token = -1
+                };
             }
 
             // Validate authentication token.
@@ -73,15 +76,15 @@ public partial class ThriftPluginsServer
                 "Pre-register plugin '{PluginName}' ({PluginVersion}) with token '{Token}' and callback URI '{CallbackUri}'.",
                 plugin_data.Name,
                 plugin_data.Version,
-                auth_token,
+                registration_token,
                 callback_uri);
-            if (!_thriftPluginsServer.SkipTokenVerification && !_thriftPluginsServer.VerifyAuthToken(auth_token))
+            if (!_thriftPluginsServer.SkipTokenVerification && !_thriftPluginsServer.VerifyRegistrationToken(registration_token))
             {
                 if (_thriftPluginsServer._logger.IsEnabled(Microsoft.Extensions.Logging.LogLevel.Debug))
                 {
-                    _thriftPluginsServer._logger.LogDebug("Available tokens:\n" + _thriftPluginsServer.DumpAuthTokens());
+                    _thriftPluginsServer._logger.LogDebug("Available tokens:\n" + _thriftPluginsServer.DumpRegistrationTokens());
                 }
-                throw new QueryCatPluginException(ErrorType.INVALID_AUTH_TOKEN, Resources.Errors.InvalidToken);
+                throw new QueryCatPluginException(ErrorType.INVALID_REGISTRATION_TOKEN, Resources.Errors.InvalidToken);
             }
 
             // Create plugin context, init and add it to a list.
@@ -92,7 +95,7 @@ public partial class ThriftPluginsServer
             }
             if (string.IsNullOrEmpty(context.Name))
             {
-                context.Name = _thriftPluginsServer.GetPluginNameByAuthToken(auth_token);
+                context.Name = _thriftPluginsServer.GetPluginNameByRegistrationToken(registration_token);
             }
             if (plugin_data.Functions != null)
             {
@@ -102,17 +105,17 @@ public partial class ThriftPluginsServer
                         new PluginContextFunction(function.Signature, function.Description, function.IsSafe, function.IsAggregate));
                 }
             }
-            _thriftPluginsServer.RegisterPluginContext(context, auth_token);
+            var token = _thriftPluginsServer.GenerateToken();
+            _thriftPluginsServer.RegisterPluginContext(context, registration_token, token);
 
             // Since we registered plugin we can release semaphore and notify loader.
-            _thriftPluginsServer.ConfirmAuthToken(auth_token);
+            _thriftPluginsServer.ConfirmRegistrationToken(registration_token);
             _thriftPluginsServer._logger.LogDebug("Registered plugin '{PluginName}'.", context.Name);
 
-            return CreateEmptyRegistrationResult();
+            return new RegistrationResult(
+                token,
+                Application.GetVersion());
         }
-
-        private static RegistrationResult CreateEmptyRegistrationResult()
-            => new(Application.GetVersion());
 
         private async Task<PluginContext> CreateClientConnection(
             string callbackUri,
@@ -136,11 +139,13 @@ public partial class ThriftPluginsServer
 
         /// <inheritdoc />
         public async Task<VariantValue> CallFunctionAsync(
+            long token,
             string function_name,
             List<VariantValue>? args,
             int object_handle,
             CancellationToken cancellationToken = default)
         {
+            _thriftPluginsServer.VerifyToken(token);
             args ??= new List<VariantValue>();
             var argsForFunction = new FunctionCallArguments();
             foreach (var arg in args)
@@ -155,9 +160,12 @@ public partial class ThriftPluginsServer
         }
 
         /// <inheritdoc />
-        public async Task<VariantValue> RunQueryAsync(string query, Dictionary<string, VariantValue>? parameters,
+        public async Task<VariantValue> RunQueryAsync(long token,
+            string query,
+            Dictionary<string, VariantValue>? parameters,
             CancellationToken cancellationToken = default)
         {
+            _thriftPluginsServer.VerifyToken(token);
             var @params = (parameters ?? new Dictionary<string, VariantValue>())
                 .ToDictionary(k => k.Key, v => SdkConvert.Convert(v.Value));
             var result = await _thriftPluginsServer._executionThread.RunAsync(query, @params, cancellationToken);
@@ -165,23 +173,26 @@ public partial class ThriftPluginsServer
         }
 
         /// <inheritdoc />
-        public Task SetConfigValueAsync(string key, VariantValue? value, CancellationToken cancellationToken = default)
+        public Task SetConfigValueAsync(long token, string key, VariantValue? value, CancellationToken cancellationToken = default)
         {
+            _thriftPluginsServer.VerifyToken(token);
             var internalValue = value != null ? SdkConvert.Convert(value) : Core.Types.VariantValue.Null;
             _thriftPluginsServer._inputConfigStorage.Set(key, internalValue);
             return Task.CompletedTask;
         }
 
         /// <inheritdoc />
-        public Task<VariantValue> GetConfigValueAsync(string key, CancellationToken cancellationToken = default)
+        public Task<VariantValue> GetConfigValueAsync(long token, string key, CancellationToken cancellationToken = default)
         {
+            _thriftPluginsServer.VerifyToken(token);
             var value = _thriftPluginsServer._inputConfigStorage.Get(key);
             return Task.FromResult(SdkConvert.Convert(value));
         }
 
         /// <inheritdoc />
-        public Task<VariantValue> GetVariableAsync(string name, CancellationToken cancellationToken = default)
+        public Task<VariantValue> GetVariableAsync(long token, string name, CancellationToken cancellationToken = default)
         {
+            _thriftPluginsServer.VerifyToken(token);
             if (_thriftPluginsServer._executionThread.TryGetVariable(name, out var value))
             {
                 return Task.FromResult(SdkConvert.Convert(value));
@@ -190,8 +201,9 @@ public partial class ThriftPluginsServer
         }
 
         /// <inheritdoc />
-        public Task<VariantValue> SetVariableAsync(string name, VariantValue? value, CancellationToken cancellationToken = default)
+        public Task<VariantValue> SetVariableAsync(long token, string name, VariantValue? value, CancellationToken cancellationToken = default)
         {
+            _thriftPluginsServer.VerifyToken(token);
             if (value == null)
             {
                 return Task.FromResult(SdkConvert.Convert(Core.Types.VariantValue.Null));
@@ -201,8 +213,10 @@ public partial class ThriftPluginsServer
         }
 
         /// <inheritdoc />
-        public Task LogAsync(LogLevel level, string message, List<string>? arguments, CancellationToken cancellationToken = default)
+        public Task LogAsync(long token, LogLevel level, string message, List<string>? arguments,
+            CancellationToken cancellationToken = default)
         {
+            var context = _thriftPluginsServer.GetPluginContextByToken(token);
             var logLevel = level switch
             {
                 LogLevel.TRACE => Microsoft.Extensions.Logging.LogLevel.Trace,
@@ -214,6 +228,8 @@ public partial class ThriftPluginsServer
                 LogLevel.NONE => Microsoft.Extensions.Logging.LogLevel.None,
                 _ => throw new ArgumentOutOfRangeException(nameof(level), level, null),
             };
+
+            message = $"[{context.Name}] {message}";
             if (arguments != null && arguments.Count > 0)
             {
                 _thriftPluginsServer._logger.Log(logLevel, message, args: arguments.Cast<object>().ToArray());
@@ -229,7 +245,7 @@ public partial class ThriftPluginsServer
     private sealed class HandlerWithExceptionIntercept : PluginsManager.IAsync
     {
         private readonly PluginsManager.IAsync _handler;
-        private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(Handler));
+        private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(HandlerWithExceptionIntercept));
 
         public HandlerWithExceptionIntercept(PluginsManager.IAsync handler)
         {
@@ -237,12 +253,12 @@ public partial class ThriftPluginsServer
         }
 
         /// <inheritdoc />
-        public Task<RegistrationResult> RegisterPluginAsync(string auth_token, string callback_uri, PluginData? plugin_data,
+        public Task<RegistrationResult> RegisterPluginAsync(string registration_token, string callback_uri, PluginData? plugin_data,
             CancellationToken cancellationToken = default)
         {
             try
             {
-                return _handler.RegisterPluginAsync(auth_token, callback_uri, plugin_data, cancellationToken);
+                return _handler.RegisterPluginAsync(registration_token, callback_uri, plugin_data, cancellationToken);
             }
             catch (Exception ex)
             {
@@ -252,12 +268,12 @@ public partial class ThriftPluginsServer
         }
 
         /// <inheritdoc />
-        public Task<VariantValue> CallFunctionAsync(string function_name, List<VariantValue>? args, int object_handle,
+        public Task<VariantValue> CallFunctionAsync(long token, string function_name, List<VariantValue>? args, int object_handle,
             CancellationToken cancellationToken = default)
         {
             try
             {
-                return _handler.CallFunctionAsync(function_name, args, object_handle, cancellationToken);
+                return _handler.CallFunctionAsync(token, function_name, args, object_handle, cancellationToken);
             }
             catch (Exception ex)
             {
@@ -267,12 +283,12 @@ public partial class ThriftPluginsServer
         }
 
         /// <inheritdoc />
-        public Task<VariantValue> RunQueryAsync(string query, Dictionary<string, VariantValue>? parameters,
+        public Task<VariantValue> RunQueryAsync(long token, string query, Dictionary<string, VariantValue>? parameters,
             CancellationToken cancellationToken = default)
         {
             try
             {
-                return _handler.RunQueryAsync(query, parameters, cancellationToken);
+                return _handler.RunQueryAsync(token, query, parameters, cancellationToken);
             }
             catch (Exception ex)
             {
@@ -282,11 +298,11 @@ public partial class ThriftPluginsServer
         }
 
         /// <inheritdoc />
-        public Task SetConfigValueAsync(string key, VariantValue? value, CancellationToken cancellationToken = default)
+        public Task SetConfigValueAsync(long token, string key, VariantValue? value, CancellationToken cancellationToken = default)
         {
             try
             {
-                return _handler.SetConfigValueAsync(key, value, cancellationToken);
+                return _handler.SetConfigValueAsync(token, key, value, cancellationToken);
             }
             catch (Exception ex)
             {
@@ -296,11 +312,11 @@ public partial class ThriftPluginsServer
         }
 
         /// <inheritdoc />
-        public Task<VariantValue> GetConfigValueAsync(string key, CancellationToken cancellationToken = default)
+        public Task<VariantValue> GetConfigValueAsync(long token, string key, CancellationToken cancellationToken = default)
         {
             try
             {
-                return _handler.GetConfigValueAsync(key, cancellationToken);
+                return _handler.GetConfigValueAsync(token, key, cancellationToken);
             }
             catch (Exception ex)
             {
@@ -310,11 +326,11 @@ public partial class ThriftPluginsServer
         }
 
         /// <inheritdoc />
-        public Task<VariantValue> GetVariableAsync(string name, CancellationToken cancellationToken = default)
+        public Task<VariantValue> GetVariableAsync(long token, string name, CancellationToken cancellationToken = default)
         {
             try
             {
-                return _handler.GetVariableAsync(name, cancellationToken);
+                return _handler.GetVariableAsync(token, name, cancellationToken);
             }
             catch (Exception ex)
             {
@@ -324,11 +340,11 @@ public partial class ThriftPluginsServer
         }
 
         /// <inheritdoc />
-        public Task<VariantValue> SetVariableAsync(string name, VariantValue? value, CancellationToken cancellationToken = default)
+        public Task<VariantValue> SetVariableAsync(long token, string name, VariantValue? value, CancellationToken cancellationToken = default)
         {
             try
             {
-                return _handler.SetVariableAsync(name, value, cancellationToken);
+                return _handler.SetVariableAsync(token, name, value, cancellationToken);
             }
             catch (Exception ex)
             {
@@ -338,11 +354,11 @@ public partial class ThriftPluginsServer
         }
 
         /// <inheritdoc />
-        public Task LogAsync(LogLevel level, string message, List<string>? arguments, CancellationToken cancellationToken = default)
+        public Task LogAsync(long token, LogLevel level, string message, List<string>? arguments, CancellationToken cancellationToken = default)
         {
             try
             {
-                return _handler.LogAsync(level, message, arguments, cancellationToken);
+                return _handler.LogAsync(token, level, message, arguments, cancellationToken);
             }
             catch (Exception ex)
             {

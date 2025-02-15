@@ -6,7 +6,13 @@ namespace QueryCat.Plugins.Client.Logging;
 
 internal sealed class SimpleConsoleLoggerProvider : ILoggerProvider
 {
+    private readonly LogLevel _minLevel;
     private readonly List<IDisposable> _disposables = new(capacity: 32);
+
+    public SimpleConsoleLoggerProvider(LogLevel minLevel = LogLevel.Trace)
+    {
+        _minLevel = minLevel;
+    }
 
     /// <inheritdoc />
     public ILogger CreateLogger(string categoryName)
@@ -16,7 +22,7 @@ internal sealed class SimpleConsoleLoggerProvider : ILoggerProvider
         {
             categoryName = categoryName.Substring(dotIndex + 1);
         }
-        var logger = new SimpleConsoleLogger(categoryName);
+        var logger = new SimpleConsoleLogger(categoryName, _minLevel);
         _disposables.Add(logger);
         return logger;
     }

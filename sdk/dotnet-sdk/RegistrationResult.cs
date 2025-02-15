@@ -35,14 +35,17 @@ namespace QueryCat.Plugins.Sdk
   public partial class RegistrationResult : TBase
   {
 
+    public long Token { get; set; } = 0;
+
     public string Version { get; set; } = string.Empty;
 
     public RegistrationResult()
     {
     }
 
-    public RegistrationResult(string @version) : this()
+    public RegistrationResult(long @token, string @version) : this()
     {
+      this.Token = @token;
       this.Version = @version;
     }
 
@@ -51,6 +54,7 @@ namespace QueryCat.Plugins.Sdk
       iprot.IncrementRecursionDepth();
       try
       {
+        bool isset_token = false;
         bool isset_version = false;
         TField field;
         await iprot.ReadStructBeginAsync(cancellationToken);
@@ -65,6 +69,17 @@ namespace QueryCat.Plugins.Sdk
           switch (field.ID)
           {
             case 1:
+              if (field.Type == TType.I64)
+              {
+                Token = await iprot.ReadI64Async(cancellationToken);
+                isset_token = true;
+              }
+              else
+              {
+                await TProtocolUtil.SkipAsync(iprot, field.Type, cancellationToken);
+              }
+              break;
+            case 2:
               if (field.Type == TType.String)
               {
                 Version = await iprot.ReadStringAsync(cancellationToken);
@@ -84,6 +99,10 @@ namespace QueryCat.Plugins.Sdk
         }
 
         await iprot.ReadStructEndAsync(cancellationToken);
+        if (!isset_token)
+        {
+          throw new TProtocolException(TProtocolException.INVALID_DATA);
+        }
         if (!isset_version)
         {
           throw new TProtocolException(TProtocolException.INVALID_DATA);
@@ -104,11 +123,17 @@ namespace QueryCat.Plugins.Sdk
         await oprot.WriteStructBeginAsync(tmp32, cancellationToken);
         #pragma warning disable IDE0017  // simplified init
         var tmp33 = new TField();
+        tmp33.Name = "token";
+        tmp33.Type = TType.I64;
+        tmp33.ID = 1;
+        await oprot.WriteFieldBeginAsync(tmp33, cancellationToken);
+        await oprot.WriteI64Async(Token, cancellationToken);
+        await oprot.WriteFieldEndAsync(cancellationToken);
         if((Version != null))
         {
           tmp33.Name = "version";
           tmp33.Type = TType.String;
-          tmp33.ID = 1;
+          tmp33.ID = 2;
           await oprot.WriteFieldBeginAsync(tmp33, cancellationToken);
           await oprot.WriteStringAsync(Version, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
@@ -127,12 +152,14 @@ namespace QueryCat.Plugins.Sdk
     {
       if (that is not RegistrationResult other) return false;
       if (ReferenceEquals(this, other)) return true;
-      return global::System.Object.Equals(Version, other.Version);
+      return global::System.Object.Equals(Token, other.Token)
+        && global::System.Object.Equals(Version, other.Version);
     }
 
     public override int GetHashCode() {
       int hashcode = 157;
       unchecked {
+        hashcode = (hashcode * 397) + Token.GetHashCode();
         if((Version != null))
         {
           hashcode = (hashcode * 397) + Version.GetHashCode();
@@ -144,6 +171,8 @@ namespace QueryCat.Plugins.Sdk
     public override string ToString()
     {
       var tmp34 = new StringBuilder("RegistrationResult(");
+      tmp34.Append(", Token: ");
+      Token.ToString(tmp34);
       if((Version != null))
       {
         tmp34.Append(", Version: ");

@@ -66,4 +66,7 @@
     <data name="Object_Invalid" xml:space="preserve">
         <value>Invalid object.</value>
     </data>
+    <data name="AuthorizationError" xml:space="preserve">
+        <value>Not authorized.</value>
+    </data>
 </root>

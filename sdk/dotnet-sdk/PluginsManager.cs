@@ -35,21 +35,21 @@ namespace QueryCat.Plugins.Sdk
   {
     public interface IAsync
     {
-      global::System.Threading.Tasks.Task<global::QueryCat.Plugins.Sdk.RegistrationResult> RegisterPluginAsync(string auth_token, string callback_uri, global::QueryCat.Plugins.Sdk.PluginData? plugin_data, CancellationToken cancellationToken = default);
+      global::System.Threading.Tasks.Task<global::QueryCat.Plugins.Sdk.RegistrationResult> RegisterPluginAsync(string registration_token, string callback_uri, global::QueryCat.Plugins.Sdk.PluginData? plugin_data, CancellationToken cancellationToken = default);
 
-      global::System.Threading.Tasks.Task<global::QueryCat.Plugins.Sdk.VariantValue> CallFunctionAsync(string function_name, List<global::QueryCat.Plugins.Sdk.VariantValue>? @args, int object_handle, CancellationToken cancellationToken = default);
+      global::System.Threading.Tasks.Task<global::QueryCat.Plugins.Sdk.VariantValue> CallFunctionAsync(long @token, string function_name, List<global::QueryCat.Plugins.Sdk.VariantValue>? @args, int object_handle, CancellationToken cancellationToken = default);
 
-      global::System.Threading.Tasks.Task<global::QueryCat.Plugins.Sdk.VariantValue> RunQueryAsync(string @query, Dictionary<string, global::QueryCat.Plugins.Sdk.VariantValue>? @parameters, CancellationToken cancellationToken = default);
+      global::System.Threading.Tasks.Task<global::QueryCat.Plugins.Sdk.VariantValue> RunQueryAsync(long @token, string @query, Dictionary<string, global::QueryCat.Plugins.Sdk.VariantValue>? @parameters, CancellationToken cancellationToken = default);
 
-      global::System.Threading.Tasks.Task SetConfigValueAsync(string @key, global::QueryCat.Plugins.Sdk.VariantValue? @value, CancellationToken cancellationToken = default);
+      global::System.Threading.Tasks.Task SetConfigValueAsync(long @token, string @key, global::QueryCat.Plugins.Sdk.VariantValue? @value, CancellationToken cancellationToken = default);
 
-      global::System.Threading.Tasks.Task<global::QueryCat.Plugins.Sdk.VariantValue> GetConfigValueAsync(string @key, CancellationToken cancellationToken = default);
+      global::System.Threading.Tasks.Task<global::QueryCat.Plugins.Sdk.VariantValue> GetConfigValueAsync(long @token, string @key, CancellationToken cancellationToken = default);
 
-      global::System.Threading.Tasks.Task<global::QueryCat.Plugins.Sdk.VariantValue> GetVariableAsync(string @name, CancellationToken cancellationToken = default);
+      global::System.Threading.Tasks.Task<global::QueryCat.Plugins.Sdk.VariantValue> GetVariableAsync(long @token, string @name, CancellationToken cancellationToken = default);
 
-      global::System.Threading.Tasks.Task<global::QueryCat.Plugins.Sdk.VariantValue> SetVariableAsync(string @name, global::QueryCat.Plugins.Sdk.VariantValue? @value, CancellationToken cancellationToken = default);
+      global::System.Threading.Tasks.Task<global::QueryCat.Plugins.Sdk.VariantValue> SetVariableAsync(long @token, string @name, global::QueryCat.Plugins.Sdk.VariantValue? @value, CancellationToken cancellationToken = default);
 
-      global::System.Threading.Tasks.Task LogAsync(global::QueryCat.Plugins.Sdk.LogLevel @level, string @message, List<string>? @arguments, CancellationToken cancellationToken = default);
+      global::System.Threading.Tasks.Task LogAsync(long @token, global::QueryCat.Plugins.Sdk.LogLevel @level, string @message, List<string>? @arguments, CancellationToken cancellationToken = default);
 
     }
 
@@ -64,18 +64,18 @@ namespace QueryCat.Plugins.Sdk
       {
       }
 
-      public async global::System.Threading.Tasks.Task<global::QueryCat.Plugins.Sdk.RegistrationResult> RegisterPluginAsync(string auth_token, string callback_uri, global::QueryCat.Plugins.Sdk.PluginData? plugin_data, CancellationToken cancellationToken = default)
+      public async global::System.Threading.Tasks.Task<global::QueryCat.Plugins.Sdk.RegistrationResult> RegisterPluginAsync(string registration_token, string callback_uri, global::QueryCat.Plugins.Sdk.PluginData? plugin_data, CancellationToken cancellationToken = default)
       {
-        await send_RegisterPluginAsync(auth_token, callback_uri, plugin_data, cancellationToken);
+        await send_RegisterPluginAsync(registration_token, callback_uri, plugin_data, cancellationToken);
         return await recv_RegisterPluginAsync(cancellationToken);
       }
 
-      public async global::System.Threading.Tasks.Task send_RegisterPluginAsync(string auth_token, string callback_uri, global::QueryCat.Plugins.Sdk.PluginData? plugin_data, CancellationToken cancellationToken = default)
+      public async global::System.Threading.Tasks.Task send_RegisterPluginAsync(string registration_token, string callback_uri, global::QueryCat.Plugins.Sdk.PluginData? plugin_data, CancellationToken cancellationToken = default)
       {
         await OutputProtocol.WriteMessageBeginAsync(new TMessage("RegisterPlugin", TMessageType.Call, SeqId), cancellationToken);
         
         var tmp64 = new InternalStructs.RegisterPlugin_args() {
-          AuthToken = auth_token,
+          RegistrationToken = registration_token,
           CallbackUri = callback_uri,
           PluginData = plugin_data,
         };
@@ -110,17 +110,18 @@ namespace QueryCat.Plugins.Sdk
         throw new TApplicationException(TApplicationException.ExceptionType.MissingResult, "RegisterPluginAsync failed: unknown result");
       }
 
-      public async global::System.Threading.Tasks.Task<global::QueryCat.Plugins.Sdk.VariantValue> CallFunctionAsync(string function_name, List<global::QueryCat.Plugins.Sdk.VariantValue>? @args, int object_handle, CancellationToken cancellationToken = default)
+      public async global::System.Threading.Tasks.Task<global::QueryCat.Plugins.Sdk.VariantValue> CallFunctionAsync(long @token, string function_name, List<global::QueryCat.Plugins.Sdk.VariantValue>? @args, int object_handle, CancellationToken cancellationToken = default)
       {
-        await send_CallFunctionAsync(function_name, @args, object_handle, cancellationToken);
+        await send_CallFunctionAsync(@token, function_name, @args, object_handle, cancellationToken);
         return await recv_CallFunctionAsync(cancellationToken);
       }
 
-      public async global::System.Threading.Tasks.Task send_CallFunctionAsync(string function_name, List<global::QueryCat.Plugins.Sdk.VariantValue>? @args, int object_handle, CancellationToken cancellationToken = default)
+      public async global::System.Threading.Tasks.Task send_CallFunctionAsync(long @token, string function_name, List<global::QueryCat.Plugins.Sdk.VariantValue>? @args, int object_handle, CancellationToken cancellationToken = default)
       {
         await OutputProtocol.WriteMessageBeginAsync(new TMessage("CallFunction", TMessageType.Call, SeqId), cancellationToken);
         
         var tmp68 = new InternalStructs.CallFunction_args() {
+          Token = @token,
           FunctionName = function_name,
           Args = @args,
           ObjectHandle = object_handle,
@@ -156,17 +157,18 @@ namespace QueryCat.Plugins.Sdk
         throw new TApplicationException(TApplicationException.ExceptionType.MissingResult, "CallFunctionAsync failed: unknown result");
       }
 
-      public async global::System.Threading.Tasks.Task<global::QueryCat.Plugins.Sdk.VariantValue> RunQueryAsync(string @query, Dictionary<string, global::QueryCat.Plugins.Sdk.VariantValue>? @parameters, CancellationToken cancellationToken = default)
+      public async global::System.Threading.Tasks.Task<global::QueryCat.Plugins.Sdk.VariantValue> RunQueryAsync(long @token, string @query, Dictionary<string, global::QueryCat.Plugins.Sdk.VariantValue>? @parameters, CancellationToken cancellationToken = default)
       {
-        await send_RunQueryAsync(@query, @parameters, cancellationToken);
+        await send_RunQueryAsync(@token, @query, @parameters, cancellationToken);
         return await recv_RunQueryAsync(cancellationToken);
       }
 
-      public async global::System.Threading.Tasks.Task send_RunQueryAsync(string @query, Dictionary<string, global::QueryCat.Plugins.Sdk.VariantValue>? @parameters, CancellationToken cancellationToken = default)
+      public async global::System.Threading.Tasks.Task send_RunQueryAsync(long @token, string @query, Dictionary<string, global::QueryCat.Plugins.Sdk.VariantValue>? @parameters, CancellationToken cancellationToken = default)
       {
         await OutputProtocol.WriteMessageBeginAsync(new TMessage("RunQuery", TMessageType.Call, SeqId), cancellationToken);
         
         var tmp72 = new InternalStructs.RunQuery_args() {
+          Token = @token,
           Query = @query,
           Parameters = @parameters,
         };
@@ -201,17 +203,18 @@ namespace QueryCat.Plugins.Sdk
         throw new TApplicationException(TApplicationException.ExceptionType.MissingResult, "RunQueryAsync failed: unknown result");
       }
 
-      public async global::System.Threading.Tasks.Task SetConfigValueAsync(string @key, global::QueryCat.Plugins.Sdk.VariantValue? @value, CancellationToken cancellationToken = default)
+      public async global::System.Threading.Tasks.Task SetConfigValueAsync(long @token, string @key, global::QueryCat.Plugins.Sdk.VariantValue? @value, CancellationToken cancellationToken = default)
       {
-        await send_SetConfigValueAsync(@key, @value, cancellationToken);
+        await send_SetConfigValueAsync(@token, @key, @value, cancellationToken);
         await recv_SetConfigValueAsync(cancellationToken);
       }
 
-      public async global::System.Threading.Tasks.Task send_SetConfigValueAsync(string @key, global::QueryCat.Plugins.Sdk.VariantValue? @value, CancellationToken cancellationToken = default)
+      public async global::System.Threading.Tasks.Task send_SetConfigValueAsync(long @token, string @key, global::QueryCat.Plugins.Sdk.VariantValue? @value, CancellationToken cancellationToken = default)
       {
         await OutputProtocol.WriteMessageBeginAsync(new TMessage("SetConfigValue", TMessageType.Call, SeqId), cancellationToken);
         
         var tmp76 = new InternalStructs.SetConfigValue_args() {
+          Token = @token,
           Key = @key,
           Value = @value,
         };
@@ -241,17 +244,18 @@ namespace QueryCat.Plugins.Sdk
         }
       }
 
-      public async global::System.Threading.Tasks.Task<global::QueryCat.Plugins.Sdk.VariantValue> GetConfigValueAsync(string @key, CancellationToken cancellationToken = default)
+      public async global::System.Threading.Tasks.Task<global::QueryCat.Plugins.Sdk.VariantValue> GetConfigValueAsync(long @token, string @key, CancellationToken cancellationToken = default)
       {
-        await send_GetConfigValueAsync(@key, cancellationToken);
+        await send_GetConfigValueAsync(@token, @key, cancellationToken);
         return await recv_GetConfigValueAsync(cancellationToken);
       }
 
-      public async global::System.Threading.Tasks.Task send_GetConfigValueAsync(string @key, CancellationToken cancellationToken = default)
+      public async global::System.Threading.Tasks.Task send_GetConfigValueAsync(long @token, string @key, CancellationToken cancellationToken = default)
       {
         await OutputProtocol.WriteMessageBeginAsync(new TMessage("GetConfigValue", TMessageType.Call, SeqId), cancellationToken);
         
         var tmp80 = new InternalStructs.GetConfigValue_args() {
+          Token = @token,
           Key = @key,
         };
         
@@ -285,17 +289,18 @@ namespace QueryCat.Plugins.Sdk
         throw new TApplicationException(TApplicationException.ExceptionType.MissingResult, "GetConfigValueAsync failed: unknown result");
       }
 
-      public async global::System.Threading.Tasks.Task<global::QueryCat.Plugins.Sdk.VariantValue> GetVariableAsync(string @name, CancellationToken cancellationToken = default)
+      public async global::System.Threading.Tasks.Task<global::QueryCat.Plugins.Sdk.VariantValue> GetVariableAsync(long @token, string @name, CancellationToken cancellationToken = default)
       {
-        await send_GetVariableAsync(@name, cancellationToken);
+        await send_GetVariableAsync(@token, @name, cancellationToken);
         return await recv_GetVariableAsync(cancellationToken);
       }
 
-      public async global::System.Threading.Tasks.Task send_GetVariableAsync(string @name, CancellationToken cancellationToken = default)
+      public async global::System.Threading.Tasks.Task send_GetVariableAsync(long @token, string @name, CancellationToken cancellationToken = default)
       {
         await OutputProtocol.WriteMessageBeginAsync(new TMessage("GetVariable", TMessageType.Call, SeqId), cancellationToken);
         
         var tmp84 = new InternalStructs.GetVariable_args() {
+          Token = @token,
           Name = @name,
         };
         
@@ -329,17 +334,18 @@ namespace QueryCat.Plugins.Sdk
         throw new TApplicationException(TApplicationException.ExceptionType.MissingResult, "GetVariableAsync failed: unknown result");
       }
 
-      public async global::System.Threading.Tasks.Task<global::QueryCat.Plugins.Sdk.VariantValue> SetVariableAsync(string @name, global::QueryCat.Plugins.Sdk.VariantValue? @value, CancellationToken cancellationToken = default)
+      public async global::System.Threading.Tasks.Task<global::QueryCat.Plugins.Sdk.VariantValue> SetVariableAsync(long @token, string @name, global::QueryCat.Plugins.Sdk.VariantValue? @value, CancellationToken cancellationToken = default)
       {
-        await send_SetVariableAsync(@name, @value, cancellationToken);
+        await send_SetVariableAsync(@token, @name, @value, cancellationToken);
         return await recv_SetVariableAsync(cancellationToken);
       }
 
-      public async global::System.Threading.Tasks.Task send_SetVariableAsync(string @name, global::QueryCat.Plugins.Sdk.VariantValue? @value, CancellationToken cancellationToken = default)
+      public async global::System.Threading.Tasks.Task send_SetVariableAsync(long @token, string @name, global::QueryCat.Plugins.Sdk.VariantValue? @value, CancellationToken cancellationToken = default)
       {
         await OutputProtocol.WriteMessageBeginAsync(new TMessage("SetVariable", TMessageType.Call, SeqId), cancellationToken);
         
         var tmp88 = new InternalStructs.SetVariable_args() {
+          Token = @token,
           Name = @name,
           Value = @value,
         };
@@ -374,17 +380,18 @@ namespace QueryCat.Plugins.Sdk
         throw new TApplicationException(TApplicationException.ExceptionType.MissingResult, "SetVariableAsync failed: unknown result");
       }
 
-      public async global::System.Threading.Tasks.Task LogAsync(global::QueryCat.Plugins.Sdk.LogLevel @level, string @message, List<string>? @arguments, CancellationToken cancellationToken = default)
+      public async global::System.Threading.Tasks.Task LogAsync(long @token, global::QueryCat.Plugins.Sdk.LogLevel @level, string @message, List<string>? @arguments, CancellationToken cancellationToken = default)
       {
-        await send_LogAsync(@level, @message, @arguments, cancellationToken);
+        await send_LogAsync(@token, @level, @message, @arguments, cancellationToken);
         await recv_LogAsync(cancellationToken);
       }
 
-      public async global::System.Threading.Tasks.Task send_LogAsync(global::QueryCat.Plugins.Sdk.LogLevel @level, string @message, List<string>? @arguments, CancellationToken cancellationToken = default)
+      public async global::System.Threading.Tasks.Task send_LogAsync(long @token, global::QueryCat.Plugins.Sdk.LogLevel @level, string @message, List<string>? @arguments, CancellationToken cancellationToken = default)
       {
         await OutputProtocol.WriteMessageBeginAsync(new TMessage("Log", TMessageType.Call, SeqId), cancellationToken);
         
         var tmp92 = new InternalStructs.Log_args() {
+          Token = @token,
           Level = @level,
           Message = @message,
           Arguments = @arguments,
@@ -485,7 +492,7 @@ namespace QueryCat.Plugins.Sdk
         {
           try
           {
-            tmp97.Success = await _iAsync.RegisterPluginAsync(tmp96.AuthToken, tmp96.CallbackUri, tmp96.PluginData, cancellationToken);
+            tmp97.Success = await _iAsync.RegisterPluginAsync(tmp96.RegistrationToken, tmp96.CallbackUri, tmp96.PluginData, cancellationToken);
           }
           catch (global::QueryCat.Plugins.Sdk.QueryCatPluginException tmp98)
           {
@@ -523,7 +530,7 @@ namespace QueryCat.Plugins.Sdk
         {
           try
           {
-            tmp103.Success = await _iAsync.CallFunctionAsync(tmp102.FunctionName, tmp102.Args, tmp102.ObjectHandle, cancellationToken);
+            tmp103.Success = await _iAsync.CallFunctionAsync(tmp102.Token, tmp102.FunctionName, tmp102.Args, tmp102.ObjectHandle, cancellationToken);
           }
           catch (global::QueryCat.Plugins.Sdk.QueryCatPluginException tmp104)
           {
@@ -561,7 +568,7 @@ namespace QueryCat.Plugins.Sdk
         {
           try
           {
-            tmp109.Success = await _iAsync.RunQueryAsync(tmp108.Query, tmp108.Parameters, cancellationToken);
+            tmp109.Success = await _iAsync.RunQueryAsync(tmp108.Token, tmp108.Query, tmp108.Parameters, cancellationToken);
           }
           catch (global::QueryCat.Plugins.Sdk.QueryCatPluginException tmp110)
           {
@@ -599,7 +606,7 @@ namespace QueryCat.Plugins.Sdk
         {
           try
           {
-            await _iAsync.SetConfigValueAsync(tmp114.Key, tmp114.Value, cancellationToken);
+            await _iAsync.SetConfigValueAsync(tmp114.Token, tmp114.Key, tmp114.Value, cancellationToken);
           }
           catch (global::QueryCat.Plugins.Sdk.QueryCatPluginException tmp116)
           {
@@ -637,7 +644,7 @@ namespace QueryCat.Plugins.Sdk
         {
           try
           {
-            tmp121.Success = await _iAsync.GetConfigValueAsync(tmp120.Key, cancellationToken);
+            tmp121.Success = await _iAsync.GetConfigValueAsync(tmp120.Token, tmp120.Key, cancellationToken);
           }
           catch (global::QueryCat.Plugins.Sdk.QueryCatPluginException tmp122)
           {
@@ -675,7 +682,7 @@ namespace QueryCat.Plugins.Sdk
         {
           try
           {
-            tmp127.Success = await _iAsync.GetVariableAsync(tmp126.Name, cancellationToken);
+            tmp127.Success = await _iAsync.GetVariableAsync(tmp126.Token, tmp126.Name, cancellationToken);
           }
           catch (global::QueryCat.Plugins.Sdk.QueryCatPluginException tmp128)
           {
@@ -713,7 +720,7 @@ namespace QueryCat.Plugins.Sdk
         {
           try
           {
-            tmp133.Success = await _iAsync.SetVariableAsync(tmp132.Name, tmp132.Value, cancellationToken);
+            tmp133.Success = await _iAsync.SetVariableAsync(tmp132.Token, tmp132.Name, tmp132.Value, cancellationToken);
           }
           catch (global::QueryCat.Plugins.Sdk.QueryCatPluginException tmp134)
           {
@@ -751,7 +758,7 @@ namespace QueryCat.Plugins.Sdk
         {
           try
           {
-            await _iAsync.LogAsync(tmp138.Level, tmp138.Message, tmp138.Arguments, cancellationToken);
+            await _iAsync.LogAsync(tmp138.Token, tmp138.Level, tmp138.Message, tmp138.Arguments, cancellationToken);
           }
           catch (global::QueryCat.Plugins.Sdk.QueryCatPluginException tmp140)
           {
@@ -787,7 +794,7 @@ namespace QueryCat.Plugins.Sdk
       public partial class RegisterPlugin_args : TBase
       {
 
-        public string AuthToken { get; set; } = string.Empty;
+        public string RegistrationToken { get; set; } = string.Empty;
 
         public string CallbackUri { get; set; } = string.Empty;
 
@@ -797,9 +804,9 @@ namespace QueryCat.Plugins.Sdk
         {
         }
 
-        public RegisterPlugin_args(string auth_token, string callback_uri, global::QueryCat.Plugins.Sdk.PluginData? plugin_data) : this()
+        public RegisterPlugin_args(string registration_token, string callback_uri, global::QueryCat.Plugins.Sdk.PluginData? plugin_data) : this()
         {
-          this.AuthToken = auth_token;
+          this.RegistrationToken = registration_token;
           this.CallbackUri = callback_uri;
           this.PluginData = plugin_data;
         }
@@ -809,7 +816,7 @@ namespace QueryCat.Plugins.Sdk
           iprot.IncrementRecursionDepth();
           try
           {
-            bool isset_auth_token = false;
+            bool isset_registration_token = false;
             bool isset_callback_uri = false;
             bool isset_plugin_data = false;
             TField field;
@@ -827,8 +834,8 @@ namespace QueryCat.Plugins.Sdk
                 case 1:
                   if (field.Type == TType.String)
                   {
-                    AuthToken = await iprot.ReadStringAsync(cancellationToken);
-                    isset_auth_token = true;
+                    RegistrationToken = await iprot.ReadStringAsync(cancellationToken);
+                    isset_registration_token = true;
                   }
                   else
                   {
@@ -867,7 +874,7 @@ namespace QueryCat.Plugins.Sdk
             }
 
             await iprot.ReadStructEndAsync(cancellationToken);
-            if (!isset_auth_token)
+            if (!isset_registration_token)
             {
               throw new TProtocolException(TProtocolException.INVALID_DATA);
             }
@@ -895,13 +902,13 @@ namespace QueryCat.Plugins.Sdk
             await oprot.WriteStructBeginAsync(tmp144, cancellationToken);
             #pragma warning disable IDE0017  // simplified init
             var tmp145 = new TField();
-            if((AuthToken != null))
+            if((RegistrationToken != null))
             {
-              tmp145.Name = "auth_token";
+              tmp145.Name = "registration_token";
               tmp145.Type = TType.String;
               tmp145.ID = 1;
               await oprot.WriteFieldBeginAsync(tmp145, cancellationToken);
-              await oprot.WriteStringAsync(AuthToken, cancellationToken);
+              await oprot.WriteStringAsync(RegistrationToken, cancellationToken);
               await oprot.WriteFieldEndAsync(cancellationToken);
             }
             if((CallbackUri != null))
@@ -936,7 +943,7 @@ namespace QueryCat.Plugins.Sdk
         {
           if (that is not RegisterPlugin_args other) return false;
           if (ReferenceEquals(this, other)) return true;
-          return global::System.Object.Equals(AuthToken, other.AuthToken)
+          return global::System.Object.Equals(RegistrationToken, other.RegistrationToken)
             && global::System.Object.Equals(CallbackUri, other.CallbackUri)
             && global::System.Object.Equals(PluginData, other.PluginData);
         }
@@ -944,9 +951,9 @@ namespace QueryCat.Plugins.Sdk
         public override int GetHashCode() {
           int hashcode = 157;
           unchecked {
-            if((AuthToken != null))
+            if((RegistrationToken != null))
             {
-              hashcode = (hashcode * 397) + AuthToken.GetHashCode();
+              hashcode = (hashcode * 397) + RegistrationToken.GetHashCode();
             }
             if((CallbackUri != null))
             {
@@ -963,10 +970,10 @@ namespace QueryCat.Plugins.Sdk
         public override string ToString()
         {
           var tmp146 = new StringBuilder("RegisterPlugin_args(");
-          if((AuthToken != null))
+          if((RegistrationToken != null))
           {
-            tmp146.Append(", AuthToken: ");
-            AuthToken.ToString(tmp146);
+            tmp146.Append(", RegistrationToken: ");
+            RegistrationToken.ToString(tmp146);
           }
           if((CallbackUri != null))
           {
@@ -1175,6 +1182,8 @@ namespace QueryCat.Plugins.Sdk
       {
         private int _object_handle;
 
+        public long Token { get; set; } = 0;
+
         public string FunctionName { get; set; } = string.Empty;
 
         public List<global::QueryCat.Plugins.Sdk.VariantValue>? Args { get; set; }
@@ -1203,8 +1212,9 @@ namespace QueryCat.Plugins.Sdk
         {
         }
 
-        public CallFunction_args(string function_name, List<global::QueryCat.Plugins.Sdk.VariantValue>? @args) : this()
+        public CallFunction_args(long @token, string function_name, List<global::QueryCat.Plugins.Sdk.VariantValue>? @args) : this()
         {
+          this.Token = @token;
           this.FunctionName = function_name;
           this.Args = @args;
         }
@@ -1214,6 +1224,7 @@ namespace QueryCat.Plugins.Sdk
           iprot.IncrementRecursionDepth();
           try
           {
+            bool isset_token = false;
             bool isset_function_name = false;
             bool isset_args = false;
             TField field;
@@ -1229,6 +1240,17 @@ namespace QueryCat.Plugins.Sdk
               switch (field.ID)
               {
                 case 1:
+                  if (field.Type == TType.I64)
+                  {
+                    Token = await iprot.ReadI64Async(cancellationToken);
+                    isset_token = true;
+                  }
+                  else
+                  {
+                    await TProtocolUtil.SkipAsync(iprot, field.Type, cancellationToken);
+                  }
+                  break;
+                case 2:
                   if (field.Type == TType.String)
                   {
                     FunctionName = await iprot.ReadStringAsync(cancellationToken);
@@ -1239,7 +1261,7 @@ namespace QueryCat.Plugins.Sdk
                     await TProtocolUtil.SkipAsync(iprot, field.Type, cancellationToken);
                   }
                   break;
-                case 2:
+                case 3:
                   if (field.Type == TType.List)
                   {
                     {
@@ -1261,7 +1283,7 @@ namespace QueryCat.Plugins.Sdk
                     await TProtocolUtil.SkipAsync(iprot, field.Type, cancellationToken);
                   }
                   break;
-                case 3:
+                case 4:
                   if (field.Type == TType.I32)
                   {
                     ObjectHandle = await iprot.ReadI32Async(cancellationToken);
@@ -1280,6 +1302,10 @@ namespace QueryCat.Plugins.Sdk
             }
 
             await iprot.ReadStructEndAsync(cancellationToken);
+            if (!isset_token)
+            {
+              throw new TProtocolException(TProtocolException.INVALID_DATA);
+            }
             if (!isset_function_name)
             {
               throw new TProtocolException(TProtocolException.INVALID_DATA);
@@ -1304,11 +1330,17 @@ namespace QueryCat.Plugins.Sdk
             await oprot.WriteStructBeginAsync(tmp155, cancellationToken);
             #pragma warning disable IDE0017  // simplified init
             var tmp156 = new TField();
+            tmp156.Name = "token";
+            tmp156.Type = TType.I64;
+            tmp156.ID = 1;
+            await oprot.WriteFieldBeginAsync(tmp156, cancellationToken);
+            await oprot.WriteI64Async(Token, cancellationToken);
+            await oprot.WriteFieldEndAsync(cancellationToken);
             if((FunctionName != null))
             {
               tmp156.Name = "function_name";
               tmp156.Type = TType.String;
-              tmp156.ID = 1;
+              tmp156.ID = 2;
               await oprot.WriteFieldBeginAsync(tmp156, cancellationToken);
               await oprot.WriteStringAsync(FunctionName, cancellationToken);
               await oprot.WriteFieldEndAsync(cancellationToken);
@@ -1317,7 +1349,7 @@ namespace QueryCat.Plugins.Sdk
             {
               tmp156.Name = "args";
               tmp156.Type = TType.List;
-              tmp156.ID = 2;
+              tmp156.ID = 3;
               await oprot.WriteFieldBeginAsync(tmp156, cancellationToken);
               await oprot.WriteListBeginAsync(new TList(TType.Struct, Args.Count), cancellationToken);
               foreach (global::QueryCat.Plugins.Sdk.VariantValue _iter157 in Args)
@@ -1331,7 +1363,7 @@ namespace QueryCat.Plugins.Sdk
             {
               tmp156.Name = "object_handle";
               tmp156.Type = TType.I32;
-              tmp156.ID = 3;
+              tmp156.ID = 4;
               await oprot.WriteFieldBeginAsync(tmp156, cancellationToken);
               await oprot.WriteI32Async(ObjectHandle, cancellationToken);
               await oprot.WriteFieldEndAsync(cancellationToken);
@@ -1350,7 +1382,8 @@ namespace QueryCat.Plugins.Sdk
         {
           if (that is not CallFunction_args other) return false;
           if (ReferenceEquals(this, other)) return true;
-          return global::System.Object.Equals(FunctionName, other.FunctionName)
+          return global::System.Object.Equals(Token, other.Token)
+            && global::System.Object.Equals(FunctionName, other.FunctionName)
             && TCollections.Equals(Args, other.Args)
             && ((__isset.object_handle == other.__isset.object_handle) && ((!__isset.object_handle) || (global::System.Object.Equals(ObjectHandle, other.ObjectHandle))));
         }
@@ -1358,6 +1391,7 @@ namespace QueryCat.Plugins.Sdk
         public override int GetHashCode() {
           int hashcode = 157;
           unchecked {
+            hashcode = (hashcode * 397) + Token.GetHashCode();
             if((FunctionName != null))
             {
               hashcode = (hashcode * 397) + FunctionName.GetHashCode();
@@ -1377,6 +1411,8 @@ namespace QueryCat.Plugins.Sdk
         public override string ToString()
         {
           var tmp158 = new StringBuilder("CallFunction_args(");
+          tmp158.Append(", Token: ");
+          Token.ToString(tmp158);
           if((FunctionName != null))
           {
             tmp158.Append(", FunctionName: ");
@@ -1589,6 +1625,8 @@ namespace QueryCat.Plugins.Sdk
       {
         private Dictionary<string, global::QueryCat.Plugins.Sdk.VariantValue>? _parameters;
 
+        public long Token { get; set; } = 0;
+
         public string Query { get; set; } = string.Empty;
 
         public Dictionary<string, global::QueryCat.Plugins.Sdk.VariantValue>? Parameters
@@ -1615,8 +1653,9 @@ namespace QueryCat.Plugins.Sdk
         {
         }
 
-        public RunQuery_args(string @query) : this()
+        public RunQuery_args(long @token, string @query) : this()
         {
+          this.Token = @token;
           this.Query = @query;
         }
 
@@ -1625,6 +1664,7 @@ namespace QueryCat.Plugins.Sdk
           iprot.IncrementRecursionDepth();
           try
           {
+            bool isset_token = false;
             bool isset_query = false;
             TField field;
             await iprot.ReadStructBeginAsync(cancellationToken);
@@ -1639,6 +1679,17 @@ namespace QueryCat.Plugins.Sdk
               switch (field.ID)
               {
                 case 1:
+                  if (field.Type == TType.I64)
+                  {
+                    Token = await iprot.ReadI64Async(cancellationToken);
+                    isset_token = true;
+                  }
+                  else
+                  {
+                    await TProtocolUtil.SkipAsync(iprot, field.Type, cancellationToken);
+                  }
+                  break;
+                case 2:
                   if (field.Type == TType.String)
                   {
                     Query = await iprot.ReadStringAsync(cancellationToken);
@@ -1649,7 +1700,7 @@ namespace QueryCat.Plugins.Sdk
                     await TProtocolUtil.SkipAsync(iprot, field.Type, cancellationToken);
                   }
                   break;
-                case 2:
+                case 3:
                   if (field.Type == TType.Map)
                   {
                     {
@@ -1681,6 +1732,10 @@ namespace QueryCat.Plugins.Sdk
             }
 
             await iprot.ReadStructEndAsync(cancellationToken);
+            if (!isset_token)
+            {
+              throw new TProtocolException(TProtocolException.INVALID_DATA);
+            }
             if (!isset_query)
             {
               throw new TProtocolException(TProtocolException.INVALID_DATA);
@@ -1701,11 +1756,17 @@ namespace QueryCat.Plugins.Sdk
             await oprot.WriteStructBeginAsync(tmp168, cancellationToken);
             #pragma warning disable IDE0017  // simplified init
             var tmp169 = new TField();
+            tmp169.Name = "token";
+            tmp169.Type = TType.I64;
+            tmp169.ID = 1;
+            await oprot.WriteFieldBeginAsync(tmp169, cancellationToken);
+            await oprot.WriteI64Async(Token, cancellationToken);
+            await oprot.WriteFieldEndAsync(cancellationToken);
             if((Query != null))
             {
               tmp169.Name = "query";
               tmp169.Type = TType.String;
-              tmp169.ID = 1;
+              tmp169.ID = 2;
               await oprot.WriteFieldBeginAsync(tmp169, cancellationToken);
               await oprot.WriteStringAsync(Query, cancellationToken);
               await oprot.WriteFieldEndAsync(cancellationToken);
@@ -1714,7 +1775,7 @@ namespace QueryCat.Plugins.Sdk
             {
               tmp169.Name = "parameters";
               tmp169.Type = TType.Map;
-              tmp169.ID = 2;
+              tmp169.ID = 3;
               await oprot.WriteFieldBeginAsync(tmp169, cancellationToken);
               await oprot.WriteMapBeginAsync(new TMap(TType.String, TType.Struct, Parameters.Count), cancellationToken);
               foreach (string _iter170 in Parameters.Keys)
@@ -1739,13 +1800,15 @@ namespace QueryCat.Plugins.Sdk
         {
           if (that is not RunQuery_args other) return false;
           if (ReferenceEquals(this, other)) return true;
-          return global::System.Object.Equals(Query, other.Query)
+          return global::System.Object.Equals(Token, other.Token)
+            && global::System.Object.Equals(Query, other.Query)
             && ((__isset.@parameters == other.__isset.@parameters) && ((!__isset.@parameters) || (TCollections.Equals(Parameters, other.Parameters))));
         }
 
         public override int GetHashCode() {
           int hashcode = 157;
           unchecked {
+            hashcode = (hashcode * 397) + Token.GetHashCode();
             if((Query != null))
             {
               hashcode = (hashcode * 397) + Query.GetHashCode();
@@ -1761,6 +1824,8 @@ namespace QueryCat.Plugins.Sdk
         public override string ToString()
         {
           var tmp171 = new StringBuilder("RunQuery_args(");
+          tmp171.Append(", Token: ");
+          Token.ToString(tmp171);
           if((Query != null))
           {
             tmp171.Append(", Query: ");
@@ -1967,6 +2032,8 @@ namespace QueryCat.Plugins.Sdk
       public partial class SetConfigValue_args : TBase
       {
 
+        public long Token { get; set; } = 0;
+
         public string Key { get; set; } = string.Empty;
 
         public global::QueryCat.Plugins.Sdk.VariantValue? Value { get; set; }
@@ -1975,8 +2042,9 @@ namespace QueryCat.Plugins.Sdk
         {
         }
 
-        public SetConfigValue_args(string @key, global::QueryCat.Plugins.Sdk.VariantValue? @value) : this()
+        public SetConfigValue_args(long @token, string @key, global::QueryCat.Plugins.Sdk.VariantValue? @value) : this()
         {
+          this.Token = @token;
           this.Key = @key;
           this.Value = @value;
         }
@@ -1986,6 +2054,7 @@ namespace QueryCat.Plugins.Sdk
           iprot.IncrementRecursionDepth();
           try
           {
+            bool isset_token = false;
             bool isset_key = false;
             bool isset_value = false;
             TField field;
@@ -2001,6 +2070,17 @@ namespace QueryCat.Plugins.Sdk
               switch (field.ID)
               {
                 case 1:
+                  if (field.Type == TType.I64)
+                  {
+                    Token = await iprot.ReadI64Async(cancellationToken);
+                    isset_token = true;
+                  }
+                  else
+                  {
+                    await TProtocolUtil.SkipAsync(iprot, field.Type, cancellationToken);
+                  }
+                  break;
+                case 2:
                   if (field.Type == TType.String)
                   {
                     Key = await iprot.ReadStringAsync(cancellationToken);
@@ -2011,7 +2091,7 @@ namespace QueryCat.Plugins.Sdk
                     await TProtocolUtil.SkipAsync(iprot, field.Type, cancellationToken);
                   }
                   break;
-                case 2:
+                case 3:
                   if (field.Type == TType.Struct)
                   {
                     Value = new global::QueryCat.Plugins.Sdk.VariantValue();
@@ -2032,6 +2112,10 @@ namespace QueryCat.Plugins.Sdk
             }
 
             await iprot.ReadStructEndAsync(cancellationToken);
+            if (!isset_token)
+            {
+              throw new TProtocolException(TProtocolException.INVALID_DATA);
+            }
             if (!isset_key)
             {
               throw new TProtocolException(TProtocolException.INVALID_DATA);
@@ -2056,11 +2140,17 @@ namespace QueryCat.Plugins.Sdk
             await oprot.WriteStructBeginAsync(tmp177, cancellationToken);
             #pragma warning disable IDE0017  // simplified init
             var tmp178 = new TField();
+            tmp178.Name = "token";
+            tmp178.Type = TType.I64;
+            tmp178.ID = 1;
+            await oprot.WriteFieldBeginAsync(tmp178, cancellationToken);
+            await oprot.WriteI64Async(Token, cancellationToken);
+            await oprot.WriteFieldEndAsync(cancellationToken);
             if((Key != null))
             {
               tmp178.Name = "key";
               tmp178.Type = TType.String;
-              tmp178.ID = 1;
+              tmp178.ID = 2;
               await oprot.WriteFieldBeginAsync(tmp178, cancellationToken);
               await oprot.WriteStringAsync(Key, cancellationToken);
               await oprot.WriteFieldEndAsync(cancellationToken);
@@ -2069,7 +2159,7 @@ namespace QueryCat.Plugins.Sdk
             {
               tmp178.Name = "value";
               tmp178.Type = TType.Struct;
-              tmp178.ID = 2;
+              tmp178.ID = 3;
               await oprot.WriteFieldBeginAsync(tmp178, cancellationToken);
               await Value.WriteAsync(oprot, cancellationToken);
               await oprot.WriteFieldEndAsync(cancellationToken);
@@ -2088,13 +2178,15 @@ namespace QueryCat.Plugins.Sdk
         {
           if (that is not SetConfigValue_args other) return false;
           if (ReferenceEquals(this, other)) return true;
-          return global::System.Object.Equals(Key, other.Key)
+          return global::System.Object.Equals(Token, other.Token)
+            && global::System.Object.Equals(Key, other.Key)
             && global::System.Object.Equals(Value, other.Value);
         }
 
         public override int GetHashCode() {
           int hashcode = 157;
           unchecked {
+            hashcode = (hashcode * 397) + Token.GetHashCode();
             if((Key != null))
             {
               hashcode = (hashcode * 397) + Key.GetHashCode();
@@ -2110,6 +2202,8 @@ namespace QueryCat.Plugins.Sdk
         public override string ToString()
         {
           var tmp179 = new StringBuilder("SetConfigValue_args(");
+          tmp179.Append(", Token: ");
+          Token.ToString(tmp179);
           if((Key != null))
           {
             tmp179.Append(", Key: ");
@@ -2267,14 +2361,17 @@ namespace QueryCat.Plugins.Sdk
       public partial class GetConfigValue_args : TBase
       {
 
+        public long Token { get; set; } = 0;
+
         public string Key { get; set; } = string.Empty;
 
         public GetConfigValue_args()
         {
         }
 
-        public GetConfigValue_args(string @key) : this()
+        public GetConfigValue_args(long @token, string @key) : this()
         {
+          this.Token = @token;
           this.Key = @key;
         }
 
@@ -2283,6 +2380,7 @@ namespace QueryCat.Plugins.Sdk
           iprot.IncrementRecursionDepth();
           try
           {
+            bool isset_token = false;
             bool isset_key = false;
             TField field;
             await iprot.ReadStructBeginAsync(cancellationToken);
@@ -2297,6 +2395,17 @@ namespace QueryCat.Plugins.Sdk
               switch (field.ID)
               {
                 case 1:
+                  if (field.Type == TType.I64)
+                  {
+                    Token = await iprot.ReadI64Async(cancellationToken);
+                    isset_token = true;
+                  }
+                  else
+                  {
+                    await TProtocolUtil.SkipAsync(iprot, field.Type, cancellationToken);
+                  }
+                  break;
+                case 2:
                   if (field.Type == TType.String)
                   {
                     Key = await iprot.ReadStringAsync(cancellationToken);
@@ -2316,6 +2425,10 @@ namespace QueryCat.Plugins.Sdk
             }
 
             await iprot.ReadStructEndAsync(cancellationToken);
+            if (!isset_token)
+            {
+              throw new TProtocolException(TProtocolException.INVALID_DATA);
+            }
             if (!isset_key)
             {
               throw new TProtocolException(TProtocolException.INVALID_DATA);
@@ -2336,11 +2449,17 @@ namespace QueryCat.Plugins.Sdk
             await oprot.WriteStructBeginAsync(tmp185, cancellationToken);
             #pragma warning disable IDE0017  // simplified init
             var tmp186 = new TField();
+            tmp186.Name = "token";
+            tmp186.Type = TType.I64;
+            tmp186.ID = 1;
+            await oprot.WriteFieldBeginAsync(tmp186, cancellationToken);
+            await oprot.WriteI64Async(Token, cancellationToken);
+            await oprot.WriteFieldEndAsync(cancellationToken);
             if((Key != null))
             {
               tmp186.Name = "key";
               tmp186.Type = TType.String;
-              tmp186.ID = 1;
+              tmp186.ID = 2;
               await oprot.WriteFieldBeginAsync(tmp186, cancellationToken);
               await oprot.WriteStringAsync(Key, cancellationToken);
               await oprot.WriteFieldEndAsync(cancellationToken);
@@ -2359,12 +2478,14 @@ namespace QueryCat.Plugins.Sdk
         {
           if (that is not GetConfigValue_args other) return false;
           if (ReferenceEquals(this, other)) return true;
-          return global::System.Object.Equals(Key, other.Key);
+          return global::System.Object.Equals(Token, other.Token)
+            && global::System.Object.Equals(Key, other.Key);
         }
 
         public override int GetHashCode() {
           int hashcode = 157;
           unchecked {
+            hashcode = (hashcode * 397) + Token.GetHashCode();
             if((Key != null))
             {
               hashcode = (hashcode * 397) + Key.GetHashCode();
@@ -2376,6 +2497,8 @@ namespace QueryCat.Plugins.Sdk
         public override string ToString()
         {
           var tmp187 = new StringBuilder("GetConfigValue_args(");
+          tmp187.Append(", Token: ");
+          Token.ToString(tmp187);
           if((Key != null))
           {
             tmp187.Append(", Key: ");
@@ -2577,14 +2700,17 @@ namespace QueryCat.Plugins.Sdk
       public partial class GetVariable_args : TBase
       {
 
+        public long Token { get; set; } = 0;
+
         public string Name { get; set; } = string.Empty;
 
         public GetVariable_args()
         {
         }
 
-        public GetVariable_args(string @name) : this()
+        public GetVariable_args(long @token, string @name) : this()
         {
+          this.Token = @token;
           this.Name = @name;
         }
 
@@ -2593,6 +2719,7 @@ namespace QueryCat.Plugins.Sdk
           iprot.IncrementRecursionDepth();
           try
           {
+            bool isset_token = false;
             bool isset_name = false;
             TField field;
             await iprot.ReadStructBeginAsync(cancellationToken);
@@ -2607,6 +2734,17 @@ namespace QueryCat.Plugins.Sdk
               switch (field.ID)
               {
                 case 1:
+                  if (field.Type == TType.I64)
+                  {
+                    Token = await iprot.ReadI64Async(cancellationToken);
+                    isset_token = true;
+                  }
+                  else
+                  {
+                    await TProtocolUtil.SkipAsync(iprot, field.Type, cancellationToken);
+                  }
+                  break;
+                case 2:
                   if (field.Type == TType.String)
                   {
                     Name = await iprot.ReadStringAsync(cancellationToken);
@@ -2626,6 +2764,10 @@ namespace QueryCat.Plugins.Sdk
             }
 
             await iprot.ReadStructEndAsync(cancellationToken);
+            if (!isset_token)
+            {
+              throw new TProtocolException(TProtocolException.INVALID_DATA);
+            }
             if (!isset_name)
             {
               throw new TProtocolException(TProtocolException.INVALID_DATA);
@@ -2646,11 +2788,17 @@ namespace QueryCat.Plugins.Sdk
             await oprot.WriteStructBeginAsync(tmp193, cancellationToken);
             #pragma warning disable IDE0017  // simplified init
             var tmp194 = new TField();
+            tmp194.Name = "token";
+            tmp194.Type = TType.I64;
+            tmp194.ID = 1;
+            await oprot.WriteFieldBeginAsync(tmp194, cancellationToken);
+            await oprot.WriteI64Async(Token, cancellationToken);
+            await oprot.WriteFieldEndAsync(cancellationToken);
             if((Name != null))
             {
               tmp194.Name = "name";
               tmp194.Type = TType.String;
-              tmp194.ID = 1;
+              tmp194.ID = 2;
               await oprot.WriteFieldBeginAsync(tmp194, cancellationToken);
               await oprot.WriteStringAsync(Name, cancellationToken);
               await oprot.WriteFieldEndAsync(cancellationToken);
@@ -2669,12 +2817,14 @@ namespace QueryCat.Plugins.Sdk
         {
           if (that is not GetVariable_args other) return false;
           if (ReferenceEquals(this, other)) return true;
-          return global::System.Object.Equals(Name, other.Name);
+          return global::System.Object.Equals(Token, other.Token)
+            && global::System.Object.Equals(Name, other.Name);
         }
 
         public override int GetHashCode() {
           int hashcode = 157;
           unchecked {
+            hashcode = (hashcode * 397) + Token.GetHashCode();
             if((Name != null))
             {
               hashcode = (hashcode * 397) + Name.GetHashCode();
@@ -2686,6 +2836,8 @@ namespace QueryCat.Plugins.Sdk
         public override string ToString()
         {
           var tmp195 = new StringBuilder("GetVariable_args(");
+          tmp195.Append(", Token: ");
+          Token.ToString(tmp195);
           if((Name != null))
           {
             tmp195.Append(", Name: ");
@@ -2887,6 +3039,8 @@ namespace QueryCat.Plugins.Sdk
       public partial class SetVariable_args : TBase
       {
 
+        public long Token { get; set; } = 0;
+
         public string Name { get; set; } = string.Empty;
 
         public global::QueryCat.Plugins.Sdk.VariantValue? Value { get; set; }
@@ -2895,8 +3049,9 @@ namespace QueryCat.Plugins.Sdk
         {
         }
 
-        public SetVariable_args(string @name, global::QueryCat.Plugins.Sdk.VariantValue? @value) : this()
+        public SetVariable_args(long @token, string @name, global::QueryCat.Plugins.Sdk.VariantValue? @value) : this()
         {
+          this.Token = @token;
           this.Name = @name;
           this.Value = @value;
         }
@@ -2906,6 +3061,7 @@ namespace QueryCat.Plugins.Sdk
           iprot.IncrementRecursionDepth();
           try
           {
+            bool isset_token = false;
             bool isset_name = false;
             bool isset_value = false;
             TField field;
@@ -2921,6 +3077,17 @@ namespace QueryCat.Plugins.Sdk
               switch (field.ID)
               {
                 case 1:
+                  if (field.Type == TType.I64)
+                  {
+                    Token = await iprot.ReadI64Async(cancellationToken);
+                    isset_token = true;
+                  }
+                  else
+                  {
+                    await TProtocolUtil.SkipAsync(iprot, field.Type, cancellationToken);
+                  }
+                  break;
+                case 2:
                   if (field.Type == TType.String)
                   {
                     Name = await iprot.ReadStringAsync(cancellationToken);
@@ -2931,7 +3098,7 @@ namespace QueryCat.Plugins.Sdk
                     await TProtocolUtil.SkipAsync(iprot, field.Type, cancellationToken);
                   }
                   break;
-                case 2:
+                case 3:
                   if (field.Type == TType.Struct)
                   {
                     Value = new global::QueryCat.Plugins.Sdk.VariantValue();
@@ -2952,6 +3119,10 @@ namespace QueryCat.Plugins.Sdk
             }
 
             await iprot.ReadStructEndAsync(cancellationToken);
+            if (!isset_token)
+            {
+              throw new TProtocolException(TProtocolException.INVALID_DATA);
+            }
             if (!isset_name)
             {
               throw new TProtocolException(TProtocolException.INVALID_DATA);
@@ -2976,11 +3147,17 @@ namespace QueryCat.Plugins.Sdk
             await oprot.WriteStructBeginAsync(tmp201, cancellationToken);
             #pragma warning disable IDE0017  // simplified init
             var tmp202 = new TField();
+            tmp202.Name = "token";
+            tmp202.Type = TType.I64;
+            tmp202.ID = 1;
+            await oprot.WriteFieldBeginAsync(tmp202, cancellationToken);
+            await oprot.WriteI64Async(Token, cancellationToken);
+            await oprot.WriteFieldEndAsync(cancellationToken);
             if((Name != null))
             {
               tmp202.Name = "name";
               tmp202.Type = TType.String;
-              tmp202.ID = 1;
+              tmp202.ID = 2;
               await oprot.WriteFieldBeginAsync(tmp202, cancellationToken);
               await oprot.WriteStringAsync(Name, cancellationToken);
               await oprot.WriteFieldEndAsync(cancellationToken);
@@ -2989,7 +3166,7 @@ namespace QueryCat.Plugins.Sdk
             {
               tmp202.Name = "value";
               tmp202.Type = TType.Struct;
-              tmp202.ID = 2;
+              tmp202.ID = 3;
               await oprot.WriteFieldBeginAsync(tmp202, cancellationToken);
               await Value.WriteAsync(oprot, cancellationToken);
               await oprot.WriteFieldEndAsync(cancellationToken);
@@ -3008,13 +3185,15 @@ namespace QueryCat.Plugins.Sdk
         {
           if (that is not SetVariable_args other) return false;
           if (ReferenceEquals(this, other)) return true;
-          return global::System.Object.Equals(Name, other.Name)
+          return global::System.Object.Equals(Token, other.Token)
+            && global::System.Object.Equals(Name, other.Name)
             && global::System.Object.Equals(Value, other.Value);
         }
 
         public override int GetHashCode() {
           int hashcode = 157;
           unchecked {
+            hashcode = (hashcode * 397) + Token.GetHashCode();
             if((Name != null))
             {
               hashcode = (hashcode * 397) + Name.GetHashCode();
@@ -3030,6 +3209,8 @@ namespace QueryCat.Plugins.Sdk
         public override string ToString()
         {
           var tmp203 = new StringBuilder("SetVariable_args(");
+          tmp203.Append(", Token: ");
+          Token.ToString(tmp203);
           if((Name != null))
           {
             tmp203.Append(", Name: ");
@@ -3237,6 +3418,8 @@ namespace QueryCat.Plugins.Sdk
       {
         private List<string>? _arguments;
 
+        public long Token { get; set; } = 0;
+
         /// <summary>
         /// 
         /// <seealso cref="global::QueryCat.Plugins.Sdk.LogLevel"/>
@@ -3269,8 +3452,9 @@ namespace QueryCat.Plugins.Sdk
         {
         }
 
-        public Log_args(global::QueryCat.Plugins.Sdk.LogLevel @level, string @message) : this()
+        public Log_args(long @token, global::QueryCat.Plugins.Sdk.LogLevel @level, string @message) : this()
         {
+          this.Token = @token;
           this.Level = @level;
           this.Message = @message;
         }
@@ -3280,6 +3464,7 @@ namespace QueryCat.Plugins.Sdk
           iprot.IncrementRecursionDepth();
           try
           {
+            bool isset_token = false;
             bool isset_level = false;
             bool isset_message = false;
             TField field;
@@ -3295,6 +3480,17 @@ namespace QueryCat.Plugins.Sdk
               switch (field.ID)
               {
                 case 1:
+                  if (field.Type == TType.I64)
+                  {
+                    Token = await iprot.ReadI64Async(cancellationToken);
+                    isset_token = true;
+                  }
+                  else
+                  {
+                    await TProtocolUtil.SkipAsync(iprot, field.Type, cancellationToken);
+                  }
+                  break;
+                case 2:
                   if (field.Type == TType.I32)
                   {
                     Level = (global::QueryCat.Plugins.Sdk.LogLevel)await iprot.ReadI32Async(cancellationToken);
@@ -3305,7 +3501,7 @@ namespace QueryCat.Plugins.Sdk
                     await TProtocolUtil.SkipAsync(iprot, field.Type, cancellationToken);
                   }
                   break;
-                case 2:
+                case 3:
                   if (field.Type == TType.String)
                   {
                     Message = await iprot.ReadStringAsync(cancellationToken);
@@ -3316,7 +3512,7 @@ namespace QueryCat.Plugins.Sdk
                     await TProtocolUtil.SkipAsync(iprot, field.Type, cancellationToken);
                   }
                   break;
-                case 3:
+                case 4:
                   if (field.Type == TType.List)
                   {
                     {
@@ -3345,6 +3541,10 @@ namespace QueryCat.Plugins.Sdk
             }
 
             await iprot.ReadStructEndAsync(cancellationToken);
+            if (!isset_token)
+            {
+              throw new TProtocolException(TProtocolException.INVALID_DATA);
+            }
             if (!isset_level)
             {
               throw new TProtocolException(TProtocolException.INVALID_DATA);
@@ -3369,9 +3569,15 @@ namespace QueryCat.Plugins.Sdk
             await oprot.WriteStructBeginAsync(tmp212, cancellationToken);
             #pragma warning disable IDE0017  // simplified init
             var tmp213 = new TField();
+            tmp213.Name = "token";
+            tmp213.Type = TType.I64;
+            tmp213.ID = 1;
+            await oprot.WriteFieldBeginAsync(tmp213, cancellationToken);
+            await oprot.WriteI64Async(Token, cancellationToken);
+            await oprot.WriteFieldEndAsync(cancellationToken);
             tmp213.Name = "level";
             tmp213.Type = TType.I32;
-            tmp213.ID = 1;
+            tmp213.ID = 2;
             await oprot.WriteFieldBeginAsync(tmp213, cancellationToken);
             await oprot.WriteI32Async((int)Level, cancellationToken);
             await oprot.WriteFieldEndAsync(cancellationToken);
@@ -3379,7 +3585,7 @@ namespace QueryCat.Plugins.Sdk
             {
               tmp213.Name = "message";
               tmp213.Type = TType.String;
-              tmp213.ID = 2;
+              tmp213.ID = 3;
               await oprot.WriteFieldBeginAsync(tmp213, cancellationToken);
               await oprot.WriteStringAsync(Message, cancellationToken);
               await oprot.WriteFieldEndAsync(cancellationToken);
@@ -3388,7 +3594,7 @@ namespace QueryCat.Plugins.Sdk
             {
               tmp213.Name = "arguments";
               tmp213.Type = TType.List;
-              tmp213.ID = 3;
+              tmp213.ID = 4;
               await oprot.WriteFieldBeginAsync(tmp213, cancellationToken);
               await oprot.WriteListBeginAsync(new TList(TType.String, Arguments.Count), cancellationToken);
               foreach (string _iter214 in Arguments)
@@ -3412,7 +3618,8 @@ namespace QueryCat.Plugins.Sdk
         {
           if (that is not Log_args other) return false;
           if (ReferenceEquals(this, other)) return true;
-          return global::System.Object.Equals(Level, other.Level)
+          return global::System.Object.Equals(Token, other.Token)
+            && global::System.Object.Equals(Level, other.Level)
             && global::System.Object.Equals(Message, other.Message)
             && ((__isset.@arguments == other.__isset.@arguments) && ((!__isset.@arguments) || (TCollections.Equals(Arguments, other.Arguments))));
         }
@@ -3420,6 +3627,7 @@ namespace QueryCat.Plugins.Sdk
         public override int GetHashCode() {
           int hashcode = 157;
           unchecked {
+            hashcode = (hashcode * 397) + Token.GetHashCode();
             hashcode = (hashcode * 397) + Level.GetHashCode();
             if((Message != null))
             {
@@ -3436,6 +3644,8 @@ namespace QueryCat.Plugins.Sdk
         public override string ToString()
         {
           var tmp215 = new StringBuilder("Log_args(");
+          tmp215.Append(", Token: ");
+          Token.ToString(tmp215);
           tmp215.Append(", Level: ");
           Level.ToString(tmp215);
           if((Message != null))

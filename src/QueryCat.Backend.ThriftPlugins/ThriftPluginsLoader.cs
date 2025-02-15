@@ -45,7 +45,7 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
     /// <summary>
     /// Force use the specific authentication token.
     /// </summary>
-    public string ForceAuthToken { get; set; } = string.Empty;
+    public string ForceRegistrationToken { get; set; } = string.Empty;
 
     /// <summary>
     /// The using server pipe name.
@@ -149,7 +149,7 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
 
     private void OnPluginRegistration(object? sender, ThriftPluginsServer.PluginRegistrationEventArgs e)
     {
-        _tokenContextMap.Add(e.AuthToken, e.PluginContext);
+        _tokenContextMap.Add(e.RegistrationToken, e.PluginContext);
 
         var file = GetFileByContext(e.PluginContext);
         if (!_filesWithLoadedFunctions.Contains(file))
@@ -182,11 +182,11 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
             }
         }
 
-        if (_debugMode && !string.IsNullOrEmpty(ForceAuthToken) && !_loadedPlugins.Any())
+        if (_debugMode && !string.IsNullOrEmpty(ForceRegistrationToken) && !_loadedPlugins.Any())
         {
             _logger.LogDebug("Waiting for any plugin registration.");
-            _server.RegisterAuthToken(ForceAuthToken, ".plugin");
-            _server.WaitForPluginRegistration(ForceAuthToken, cancellationToken);
+            _server.SetRegistrationToken(ForceRegistrationToken, ".plugin");
+            _server.WaitForPluginRegistration(ForceRegistrationToken, cancellationToken);
         }
 
         return Task.FromResult(loadedPlugins.ToArray());
@@ -353,27 +353,27 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
         _server.Start();
 
         // Create auth token and save it into temp memory.
-        var authToken = CreateAuthTokenAndSave(file, pluginName);
+        var registrationToken = CreateRegistrationTokenAndSave(file, pluginName);
 
         ThriftPluginsServer.PluginContext pluginContext;
         try
         {
             if (IsLibrary(file))
             {
-                pluginContext = LoadPluginLibrary(file, authToken, cancellationToken);
+                pluginContext = LoadPluginLibrary(file, registrationToken, cancellationToken);
             }
             else if (IsNugetPackage(file))
             {
-                pluginContext = LoadPluginNugetPackage(file, authToken, cancellationToken);
+                pluginContext = LoadPluginNugetPackage(file, registrationToken, cancellationToken);
             }
             else
             {
-                pluginContext = LoadPluginExecutable(file, authToken, [], cancellationToken: cancellationToken);
+                pluginContext = LoadPluginExecutable(file, registrationToken, [], cancellationToken: cancellationToken);
             }
         }
         catch (Exception)
         {
-            RemoveAuthToken(authToken, file);
+            RemoveRegistrationToken(registrationToken, file);
             throw;
         }
 
@@ -382,7 +382,7 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
 
     private ThriftPluginsServer.PluginContext LoadPluginNugetPackage(
         string file,
-        string authToken,
+        string registrationToken,
         CancellationToken cancellationToken = default)
     {
         var proxyExecutable = ProxyFile.ResolveProxyFileName(_applicationDirectory);
@@ -394,7 +394,7 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
         _logger.LogDebug("Loading '{Assembly}' with proxy. Location: '{Location}'.", file, proxyExecutable);
         return LoadPluginExecutable(
             proxyExecutable,
-            authToken,
+            registrationToken,
             ["--assembly=" + file],
             file,
             cancellationToken);
@@ -402,7 +402,7 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
 
     private ThriftPluginsServer.PluginContext LoadPluginExecutable(
         string file,
-        string authToken,
+        string registrationToken,
         string[] additionalArguments,
         string? realPluginFile = null,
         CancellationToken cancellationToken = default)
@@ -429,7 +429,7 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
                 }
             };
             process.StartInfo.ArgumentList.Add(FormatParameter(ThriftPluginClient.PluginServerPipeParameter, GetPipeName()));
-            process.StartInfo.ArgumentList.Add(FormatParameter(ThriftPluginClient.PluginTokenParameter, authToken));
+            process.StartInfo.ArgumentList.Add(FormatParameter(ThriftPluginClient.PluginTokenParameter, registrationToken));
             process.StartInfo.ArgumentList.Add(FormatParameter(ThriftPluginClient.PluginParentPidParameter,
                 Process.GetCurrentProcess().Id.ToString()));
             process.StartInfo.ArgumentList.Add(FormatParameter(ThriftPluginClient.PluginLogLevelParameter,
@@ -448,7 +448,7 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
         // Wait when plugin is loaded and it calls RegisterPlugin method.
         try
         {
-            _server.WaitForPluginRegistration(authToken, cancellationToken);
+            _server.WaitForPluginRegistration(registrationToken, cancellationToken);
         }
         catch (Exception)
         {
@@ -473,7 +473,7 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
 
     private ThriftPluginsServer.PluginContext LoadPluginLibrary(
         string file,
-        string authToken,
+        string registrationToken,
         CancellationToken cancellationToken = default)
     {
         var pluginName = GetPluginName(file);
@@ -493,7 +493,7 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
             var args = new QueryCatPluginArguments
             {
                 ServerEndpoint = Marshal.StringToHGlobalAuto(GetPipeName()),
-                Token = Marshal.StringToHGlobalAuto(authToken),
+                Token = Marshal.StringToHGlobalAuto(registrationToken),
                 LogLevel = Marshal.StringToHGlobalAuto(_minLogLevel.ToString()),
             };
             var pluginThread = new Thread(() =>
@@ -510,7 +510,7 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
         // Wait when plugin is loaded and it calls RegisterPlugin method.
         try
         {
-            _server.WaitForPluginRegistration(authToken, cancellationToken);
+            _server.WaitForPluginRegistration(registrationToken, cancellationToken);
         }
         catch (Exception)
         {
@@ -530,17 +530,19 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
         return context;
     }
 
-    private string CreateAuthTokenAndSave(string pluginFile, string pluginName)
+    private string CreateRegistrationTokenAndSave(string pluginFile, string pluginName)
     {
-        var authToken = !string.IsNullOrEmpty(ForceAuthToken) ? ForceAuthToken : Guid.NewGuid().ToString("N");
-        _server.RegisterAuthToken(authToken, pluginName);
-        _fileTokenMap.Add(pluginFile, authToken);
-        return authToken;
+        var registrationToken = !string.IsNullOrEmpty(ForceRegistrationToken)
+            ? ForceRegistrationToken
+            : Guid.NewGuid().ToString("N");
+        _server.SetRegistrationToken(registrationToken, pluginName);
+        _fileTokenMap.Add(pluginFile, registrationToken);
+        return registrationToken;
     }
 
-    private void RemoveAuthToken(string authToken, string pluginFile)
+    private void RemoveRegistrationToken(string registrationToken, string pluginFile)
     {
-        _server.RemoveAuthToken(authToken);
+        _server.RemoveRegistrationToken(registrationToken);
         _fileTokenMap.Remove(pluginFile);
     }
 

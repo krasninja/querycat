@@ -29,7 +29,7 @@ namespace QueryCat.Plugins.Client;
 /// </remarks>
 public sealed class ThriftPluginExecutionThread : IExecutionThread
 {
-    private readonly PluginsManager.Client _client;
+    private readonly ThriftPluginClient _client;
 
     /// <inheritdoc />
     public IFunctionsManager FunctionsManager { get; }
@@ -66,7 +66,7 @@ public sealed class ThriftPluginExecutionThread : IExecutionThread
     /// <inheritdoc />
     public object? Tag => null;
 
-    public ThriftPluginExecutionThread(PluginsManager.Client client)
+    public ThriftPluginExecutionThread(ThriftPluginClient client)
     {
         _client = client;
         PluginsManager = NullPluginsManager.Instance;
@@ -85,7 +85,8 @@ public sealed class ThriftPluginExecutionThread : IExecutionThread
         try
         {
             CurrentQuery = query;
-            var result = await _client.RunQueryAsync(
+            var result = await _client.ThriftClient.RunQueryAsync(
+                _client.Token,
                 query,
                 parameters?.ToDictionary(k => k.Key, v => SdkConvert.Convert(v.Value)),
                 cancellationToken);

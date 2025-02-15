@@ -84,8 +84,10 @@ enum ErrorType {
   INTERNAL = 4,
   ARGUMENT = 5,
 
-  INVALID_AUTH_TOKEN = 10,
-  INVALID_FUNCTION = 11
+  INVALID_REGISTRATION_TOKEN = 10,
+  INVALID_AUTH_TOKEN = 11
+
+  INVALID_FUNCTION = 20,
 }
 
 // The error code that is returned by several QueryCat methods.
@@ -149,14 +151,15 @@ struct PluginData {
 }
 
 struct RegistrationResult {
-  1: required string version // QueryCat version.
+  1: required i64 token, // Authorization token.
+  2: required string version // QueryCat version.
 }
 
 service PluginsManager {
   // Register plugin with all its data.
   RegistrationResult RegisterPlugin(
     // Token for initialization. It is provided thru command line arguments.
-    1: required string auth_token,
+    1: required string registration_token,
     // Callback plugin server endpoint.
     // The endpoint is used to call plugin functions by qcat host.
     2: required string callback_uri,
@@ -166,45 +169,52 @@ service PluginsManager {
 
   // Call function.
   VariantValue CallFunction(
-    1: required string function_name,
-    2: required list<VariantValue> args,
-    3: Handle object_handle // Optional. It is used to call function of a specific object.
+    1: required i64 token, // Authorization token.
+    2: required string function_name,
+    3: required list<VariantValue> args,
+    4: Handle object_handle // Optional. It is used to call function of a specific object.
   ) throws (1: QueryCatPluginException e),
 
   // Run the query and return the last result.
   VariantValue RunQuery(
-    1: required string query,
-    2: map<string, VariantValue> parameters
+    1: required i64 token, // Authorization token.
+    2: required string query,
+    3: map<string, VariantValue> parameters
   ) throws (1: QueryCatPluginException e),
 
   // Set the configuration value.
   void SetConfigValue(
-    1: required string key,
-    2: required VariantValue value
+    1: required i64 token, // Authorization token.
+    2: required string key,
+    3: required VariantValue value
   ) throws (1: QueryCatPluginException e),
 
   // Get configuration value.
   VariantValue GetConfigValue(
-    1: required string key
+    1: required i64 token, // Authorization token.
+    2: required string key
   ) throws (1: QueryCatPluginException e),
 
   // Get variable value. If variable doesn't exist - the NULL will be returned.
   VariantValue GetVariable(
-    1: required string name
+    1: required i64 token, // Authorization token.
+    2: required string name
   ) throws (1: QueryCatPluginException e),
 
   // Set the variable value. The new variable will be created or the existing value will
   // be overriden.
   VariantValue SetVariable(
-    1: required string name,
-    2: required VariantValue value
+    1: required i64 token, // Authorization token.
+    2: required string name,
+    3: required VariantValue value
   ) throws (1: QueryCatPluginException e),
 
   // Logging.
   void Log(
-    1: required LogLevel level,
-    2: required string message,
-    3: list<string> arguments
+    1: required i64 token, // Authorization token.
+    2: required LogLevel level,
+    3: required string message,
+    4: list<string> arguments
   ) throws (1: QueryCatPluginException e)
 }
 
