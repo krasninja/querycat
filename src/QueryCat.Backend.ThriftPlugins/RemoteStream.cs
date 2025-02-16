@@ -1,5 +1,4 @@
 using QueryCat.Backend.Core.Utils;
-using QueryCat.Plugins.Sdk;
 
 namespace QueryCat.Backend.ThriftPlugins;
 
@@ -8,7 +7,7 @@ internal sealed class RemoteStream : Stream
     private const int BufferSize = 4096 * 2;
 
     private readonly int _objectHandle;
-    private readonly Plugin.Client _client;
+    private readonly ThriftPluginContext _context;
 
     /// <inheritdoc />
     public override bool CanRead => true;
@@ -20,15 +19,22 @@ internal sealed class RemoteStream : Stream
     public override bool CanWrite => false;
 
     /// <inheritdoc />
-    public override long Length => AsyncUtils.RunSync(ct => _client.Blob_GetLengthAsync(_objectHandle, ct));
+    public override long Length
+    {
+        get
+        {
+            var client = _context.GetClient();
+            return AsyncUtils.RunSync(ct => client.Value.Blob_GetLengthAsync(_objectHandle, ct));
+        }
+    }
 
     /// <inheritdoc />
     public override long Position { get; set; }
 
-    public RemoteStream(int objectHandle, Plugin.Client client)
+    public RemoteStream(int objectHandle, ThriftPluginContext context)
     {
         _objectHandle = objectHandle;
-        _client = client;
+        _context = context;
     }
 
     /// <inheritdoc />
@@ -45,7 +51,8 @@ internal sealed class RemoteStream : Stream
     /// <inheritdoc />
     public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
     {
-        var bytes = await _client.Blob_ReadAsync(_objectHandle, (int)Position, count, cancellationToken);
+        var client = _context.GetClient();
+        var bytes = await client.Value.Blob_ReadAsync(_objectHandle, (int)Position, count, cancellationToken);
         Position += bytes.Length;
 
         var realCount = count;

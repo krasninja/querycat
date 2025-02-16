@@ -9,7 +9,7 @@ namespace QueryCat.Backend.ThriftPlugins;
 
 internal sealed class ThriftRemoteRowsOutput : IRowsOutput
 {
-    private readonly Plugins.Sdk.Plugin.Client _client;
+    private readonly ThriftPluginContext _context;
     private readonly int _objectHandle;
     private readonly string _id;
 
@@ -29,46 +29,54 @@ internal sealed class ThriftRemoteRowsOutput : IRowsOutput
     /// <inheritdoc />
     public RowsOutputOptions Options { get; } = new();
 
-    public ThriftRemoteRowsOutput(Plugins.Sdk.Plugin.Client client, int objectHandle, string? id = null)
+    public ThriftRemoteRowsOutput(ThriftPluginContext context, int objectHandle, string? id = null)
     {
-        _client = client;
+        _context = context;
         _objectHandle = objectHandle;
         _id = id ?? string.Empty;
     }
 
     private void SendContextToPlugin()
     {
-        AsyncUtils.RunSync(async ct => await _client.RowsSet_SetContextAsync(_objectHandle, new ContextQueryInfo
+        AsyncUtils.RunSync(async ct =>
         {
-            Columns = QueryContext.QueryInfo.Columns.Select(SdkConvert.Convert).ToList(),
-            Limit = QueryContext.QueryInfo.Limit ?? -1,
-            Offset = QueryContext.QueryInfo.Offset,
-        }, ct));
+            using var client = _context.GetClient();
+            await client.Value.RowsSet_SetContextAsync(_objectHandle, new ContextQueryInfo
+            {
+                Columns = QueryContext.QueryInfo.Columns.Select(SdkConvert.Convert).ToList(),
+                Limit = QueryContext.QueryInfo.Limit ?? -1,
+                Offset = QueryContext.QueryInfo.Offset,
+            }, ct);
+        });
     }
 
     /// <inheritdoc />
     public Task OpenAsync(CancellationToken cancellationToken = default)
     {
-        return _client.RowsSet_OpenAsync(_objectHandle, cancellationToken);
+        using var client = _context.GetClient();
+        return client.Value.RowsSet_OpenAsync(_objectHandle, cancellationToken);
     }
 
     /// <inheritdoc />
     public Task CloseAsync(CancellationToken cancellationToken = default)
     {
-        return _client.RowsSet_CloseAsync(_objectHandle, cancellationToken);
+        using var client = _context.GetClient();
+        return client.Value.RowsSet_CloseAsync(_objectHandle, cancellationToken);
     }
 
     /// <inheritdoc />
     public Task ResetAsync(CancellationToken cancellationToken = default)
     {
-        return _client.RowsSet_ResetAsync(_objectHandle, cancellationToken);
+        using var client = _context.GetClient();
+        return client.Value.RowsSet_ResetAsync(_objectHandle, cancellationToken);
     }
 
     /// <inheritdoc />
     public async ValueTask<ErrorCode> WriteValuesAsync(VariantValue[] values, CancellationToken cancellationToken = default)
     {
         var valuesArray = values.ToArray();
-        var result = await _client.RowsSet_WriteValuesAsync(
+        using var client = _context.GetClient();
+        var result = await client.Value.RowsSet_WriteValuesAsync(
             _objectHandle,
             valuesArray.Select(SdkConvert.Convert).ToList(),
             cancellationToken);

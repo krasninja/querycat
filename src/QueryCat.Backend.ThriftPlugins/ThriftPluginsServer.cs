@@ -36,8 +36,8 @@ public sealed partial class ThriftPluginsServer : IDisposable
     private Task? _serverListenThread;
     private readonly CancellationTokenSource _serverCts = new();
     private readonly ConcurrentDictionary<string, RegistrationTokenData> _registrationTokens = new();
-    private readonly List<PluginContext> _plugins = new();
-    private readonly Dictionary<long, PluginContext> _tokenPluginContextMap = new();
+    private readonly List<ThriftPluginContext> _plugins = new();
+    private readonly Dictionary<long, ThriftPluginContext> _tokenPluginContextMap = new();
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(ThriftPluginsServer));
 
     public string ServerEndpoint { get; } = "qcat-" + Guid.NewGuid().ToString("N");
@@ -47,7 +47,7 @@ public sealed partial class ThriftPluginsServer : IDisposable
     /// </summary>
     public bool SkipTokenVerification { get; set; }
 
-    internal IReadOnlyCollection<PluginContext> Plugins => _plugins;
+    internal IReadOnlyCollection<ThriftPluginContext> Plugins => _plugins;
 
     /// <summary>
     /// Do not use application logger for Thrift internal logs.
@@ -56,14 +56,14 @@ public sealed partial class ThriftPluginsServer : IDisposable
 
     internal sealed class PluginRegistrationEventArgs : EventArgs
     {
-        public PluginContext PluginContext { get; }
+        public ThriftPluginContext PluginContext { get; }
 
         public string RegistrationToken { get; }
 
         public long Token { get; }
 
         /// <inheritdoc />
-        public PluginRegistrationEventArgs(PluginContext pluginContext, string registrationToken, long token)
+        public PluginRegistrationEventArgs(ThriftPluginContext pluginContext, string registrationToken, long token)
         {
             PluginContext = pluginContext;
             RegistrationToken = registrationToken;
@@ -159,14 +159,14 @@ public sealed partial class ThriftPluginsServer : IDisposable
         _serverListenThread = null;
     }
 
-    private void RegisterPluginContext(PluginContext context, string registrationToken, long token)
+    private void RegisterPluginContext(ThriftPluginContext context, string registrationToken, long token)
     {
         _plugins.Add(context);
         _tokenPluginContextMap[token] = context;
         OnPluginRegistration?.Invoke(this, new PluginRegistrationEventArgs(context, registrationToken, token));
     }
 
-    internal PluginContext GetPluginContextByToken(long token)
+    internal ThriftPluginContext GetPluginContextByToken(long token)
     {
         if (!_tokenPluginContextMap.TryGetValue(token, out var context))
         {

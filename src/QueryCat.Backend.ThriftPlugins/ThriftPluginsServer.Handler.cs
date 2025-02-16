@@ -1,4 +1,3 @@
-using System.Runtime.InteropServices;
 using Microsoft.Extensions.Logging;
 using Thrift;
 using Thrift.Protocol;
@@ -14,38 +13,6 @@ namespace QueryCat.Backend.ThriftPlugins;
 
 public partial class ThriftPluginsServer
 {
-    internal sealed class PluginContext
-    {
-        public string Name { get; set; } = string.Empty;
-
-        public TProtocol? Protocol { get; set; }
-
-        public Plugin.Client? Client { get; set; }
-
-        public List<PluginContextFunction> Functions { get; } = new();
-
-        public ObjectsStorage ObjectsStorage { get; } = new();
-
-        public IntPtr? LibraryHandle { get; set; }
-
-        public async Task ShutdownAsync(CancellationToken cancellationToken)
-        {
-            ObjectsStorage.Clean();
-            if (Client != null)
-            {
-                await Client.ShutdownAsync(cancellationToken);
-            }
-            if (LibraryHandle.HasValue && LibraryHandle.Value != IntPtr.Zero)
-            {
-                // For some reason it causes SIGSEGV (Address boundary error) on Linux.
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                {
-                    NativeLibrary.Free(LibraryHandle.Value);
-                }
-            }
-        }
-    }
-
     private sealed class Handler : PluginsManager.IAsync
     {
         private readonly ThriftPluginsServer _thriftPluginsServer;
@@ -117,12 +84,12 @@ public partial class ThriftPluginsServer
                 Application.GetVersion());
         }
 
-        private async Task<PluginContext> CreateClientConnection(
+        private async Task<ThriftPluginContext> CreateClientConnection(
             string callbackUri,
             CancellationToken cancellationToken = default)
         {
             var uri = new Uri(callbackUri);
-            var context = new PluginContext
+            var context = new ThriftPluginContext
             {
                 Protocol = new TMultiplexedProtocol(
                     new TBinaryProtocol(
