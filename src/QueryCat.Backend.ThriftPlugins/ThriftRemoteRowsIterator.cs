@@ -46,9 +46,9 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys
 
     private void SendContextToPlugin()
     {
-        AsyncUtils.RunSync(ct =>
+        AsyncUtils.RunSync(async ct =>
         {
-            using var client = _context.GetClient();
+            using var client = await _context.GetClientAsync(ct);
             return client.Value.RowsSet_SetContextAsync(_objectHandle, new ContextQueryInfo
             {
                 Columns = QueryContext.QueryInfo.Columns.Select(SdkConvert.Convert).ToList(),
@@ -61,23 +61,24 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys
     /// <inheritdoc />
     public async Task OpenAsync(CancellationToken cancellationToken = default)
     {
-        using var client = _context.GetClient();
+        using var client = await _context.GetClientAsync(cancellationToken);
         await client.Value.RowsSet_OpenAsync(_objectHandle, cancellationToken);
-        Columns = (await client.Value.RowsSet_GetColumnsAsync(_objectHandle, cancellationToken)).Select(SdkConvert.Convert).ToArray();
+        Columns = (await client.Value.RowsSet_GetColumnsAsync(_objectHandle, cancellationToken))
+            .Select(SdkConvert.Convert).ToArray();
         UniqueKey = (await client.Value.RowsSet_GetUniqueKeyAsync(_objectHandle, cancellationToken)).ToArray();
     }
 
     /// <inheritdoc />
-    public Task CloseAsync(CancellationToken cancellationToken = default)
+    public async Task CloseAsync(CancellationToken cancellationToken = default)
     {
-        using var client = _context.GetClient();
-        return client.Value.RowsSet_CloseAsync(_objectHandle, cancellationToken);
+        using var client = await _context.GetClientAsync(cancellationToken);
+        await client.Value.RowsSet_CloseAsync(_objectHandle, cancellationToken);
     }
 
     /// <inheritdoc />
     public async Task ResetAsync(CancellationToken cancellationToken = default)
     {
-        using var client = _context.GetClient();
+        using var client = await _context.GetClientAsync(cancellationToken);
         await client.Value.RowsSet_ResetAsync(_objectHandle, cancellationToken);
         _cache.Clear();
     }
@@ -110,7 +111,7 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys
             }
         }
 
-        using var client = _context.GetClient();
+        using var client = await _context.GetClientAsync(cancellationToken);
         var result = await client.Value.RowsSet_GetRowsAsync(_objectHandle, LoadCount * Columns.Length, cancellationToken);
         if (result.Values == null || result.Values.Count == 0)
         {
@@ -127,7 +128,7 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys
     {
         var result = AsyncUtils.RunSync(async ct =>
             {
-                using var client = _context.GetClient();
+                using var client = await _context.GetClientAsync(ct);
                 return (await client.Value.RowsSet_GetKeyColumnsAsync(_objectHandle, ct))
                     .Select(c => new KeyColumn(
                         c.ColumnIndex,
@@ -142,9 +143,9 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys
     /// <inheritdoc />
     public void SetKeyColumnValue(int columnIndex, VariantValue value, VariantValue.Operation operation)
     {
-        AsyncUtils.RunSync(ct =>
+        AsyncUtils.RunSync(async ct =>
         {
-            using var client = _context.GetClient();
+            using var client = await _context.GetClientAsync(ct);
             return client.Value.RowsSet_SetKeyColumnValueAsync(_objectHandle, columnIndex, operation.ToString(),
                 SdkConvert.Convert(value), ct);
         });
@@ -153,9 +154,9 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys
     /// <inheritdoc />
     public void UnsetKeyColumnValue(int columnIndex, VariantValue.Operation operation)
     {
-        AsyncUtils.RunSync(ct =>
+        AsyncUtils.RunSync(async ct =>
         {
-            using var client = _context.GetClient();
+            using var client = await _context.GetClientAsync(ct);
             return client.Value.RowsSet_UnsetKeyColumnValueAsync(_objectHandle, columnIndex, operation.ToString(), ct);
         });
     }

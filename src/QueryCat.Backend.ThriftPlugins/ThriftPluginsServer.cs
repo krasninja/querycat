@@ -247,7 +247,7 @@ public sealed partial class ThriftPluginsServer : IDisposable
         _serverCts.Dispose();
         foreach (var pluginContext in _plugins)
         {
-            AsyncUtils.RunSync(ct => pluginContext.ShutdownAsync(ct));
+            pluginContext.Dispose();
         }
     }
 }

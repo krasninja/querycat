@@ -2,7 +2,7 @@ using QueryCat.Backend.Core.Data;
 
 namespace QueryCat.Backend.Inputs;
 
-internal class ParallelRowsSource : IRowsSource
+internal class ParallelRowsSource : IRowsSource, IDisposable, IAsyncDisposable
 {
     private readonly IRowsSource _source;
 
@@ -29,4 +29,33 @@ internal class ParallelRowsSource : IRowsSource
 
     /// <inheritdoc />
     public Task ResetAsync(CancellationToken cancellationToken = default) => _source.ResetAsync(cancellationToken);
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            Semaphore.Wait(TimeSpan.FromSeconds(5));
+            Semaphore.Dispose();
+        }
+    }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual async ValueTask DisposeAsyncCore()
+    {
+        await Semaphore.WaitAsync(TimeSpan.FromSeconds(5));
+        Semaphore.Dispose();
+    }
+
+    /// <inheritdoc />
+    public async ValueTask DisposeAsync()
+    {
+        await DisposeAsyncCore();
+        GC.SuppressFinalize(this);
+    }
 }

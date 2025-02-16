@@ -55,14 +55,14 @@ public partial class ThriftPluginsServer
             }
 
             // Create plugin context, init and add it to a list.
-            var context = await CreateClientConnection(callback_uri, cancellationToken);
+            var context = CreateClientConnection(callback_uri);
             if (!string.IsNullOrEmpty(plugin_data.Name))
             {
-                context.Name = plugin_data.Name;
+                context.PluginName = plugin_data.Name;
             }
-            if (string.IsNullOrEmpty(context.Name))
+            if (string.IsNullOrEmpty(context.PluginName))
             {
-                context.Name = _thriftPluginsServer.GetPluginNameByRegistrationToken(registration_token);
+                context.PluginName = _thriftPluginsServer.GetPluginNameByRegistrationToken(registration_token);
             }
             if (plugin_data.Functions != null)
             {
@@ -77,30 +77,26 @@ public partial class ThriftPluginsServer
 
             // Since we registered plugin we can release semaphore and notify loader.
             _thriftPluginsServer.ConfirmRegistrationToken(registration_token);
-            _thriftPluginsServer._logger.LogDebug("Registered plugin '{PluginName}'.", context.Name);
+            _thriftPluginsServer._logger.LogDebug("Registered plugin '{PluginName}'.", context.PluginName);
 
             return new RegistrationResult(
                 token,
                 Application.GetVersion());
         }
 
-        private async Task<ThriftPluginContext> CreateClientConnection(
-            string callbackUri,
-            CancellationToken cancellationToken = default)
+        private ThriftPluginContext CreateClientConnection(string callbackUri)
         {
             var uri = new Uri(callbackUri);
-            var context = new ThriftPluginContext
+            var context = new ThriftPluginContext(() =>
             {
-                Protocol = new TMultiplexedProtocol(
+                return new TMultiplexedProtocol(
                     new TBinaryProtocol(
                         new TFramedTransport(
                             new TNamedPipeTransport(uri.Segments[1], new TConfiguration()))
                         ),
-                    ThriftPluginClient.PluginServerName),
-            };
-            context.Client = new Plugins.Sdk.Plugin.Client(context.Protocol);
-            await context.Client.OpenTransportAsync(cancellationToken);
-            _thriftPluginsServer._logger.LogTrace("Connected to plugin callback URI '{CallbackUri}'.", callbackUri);
+                    ThriftPluginClient.PluginServerName);
+            });
+            _thriftPluginsServer._logger.LogTrace("Create plugin context, URI '{CallbackUri}'.", callbackUri);
             return context;
         }
 
@@ -196,7 +192,7 @@ public partial class ThriftPluginsServer
                 _ => throw new ArgumentOutOfRangeException(nameof(level), level, null),
             };
 
-            message = $"[{context.Name}] {message}";
+            message = $"[{context.PluginName}] {message}";
             if (arguments != null && arguments.Count > 0)
             {
                 _thriftPluginsServer._logger.Log(logLevel, message, args: arguments.Cast<object>().ToArray());

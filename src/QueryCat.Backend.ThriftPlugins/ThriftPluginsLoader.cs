@@ -68,7 +68,7 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
         {
             ArgumentException.ThrowIfNullOrEmpty(functionName, nameof(functionName));
 
-            var client = context.GetClient();
+            using var client = await context.GetClientAsync(cancellationToken);
             var arguments = thread.Stack.Select(SdkConvert.Convert).ToList();
             var result = await client.Value.CallFunctionAsync(functionName, arguments, -1, cancellationToken);
             if (result.__isset.@object && result.Object != null)
@@ -627,10 +627,6 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
         if (result.Object == null)
         {
             throw new InvalidOperationException(Resources.Errors.NoObject);
-        }
-        if (context.Client == null)
-        {
-            throw new InvalidOperationException(Resources.Errors.NoConnection);
         }
         if (result.Object.Type == ObjectType.ROWS_INPUT || result.Object.Type == ObjectType.ROWS_ITERATOR)
         {
