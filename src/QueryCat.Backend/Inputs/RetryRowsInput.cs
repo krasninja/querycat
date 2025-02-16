@@ -50,5 +50,6 @@ internal sealed class RetryRowsInput : RetryRowsSource, IRowsInput
     /// <inheritdoc />
     public void Explain(IndentedStringBuilder stringBuilder)
     {
+        stringBuilder.AppendRowsInputsWithIndent("Retry", _rowsInput);
     }
 }
