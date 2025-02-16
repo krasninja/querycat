@@ -11,6 +11,8 @@ internal sealed class FuncUnitCallInfo
 
     public bool IsEmpty => _pushArgs.Length == 0;
 
+    internal IFuncUnit[] Arguments => _pushArgs;
+
     public FuncUnitCallInfo(params IFuncUnit[] pushArgs)
     {
         _pushArgs = pushArgs;
