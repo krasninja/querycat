@@ -84,6 +84,13 @@ public partial class ThriftPluginsServer
                 Application.GetVersion());
         }
 
+        /// <inheritdoc />
+        public Task<string> RequestConnectionAsync(long token, CancellationToken cancellationToken = default)
+        {
+            // TODO:
+            return Task.FromResult(string.Empty);
+        }
+
         private ThriftPluginContext CreateClientConnection(string callbackUri)
         {
             var uri = new Uri(callbackUri);
@@ -222,6 +229,20 @@ public partial class ThriftPluginsServer
             try
             {
                 return _handler.RegisterPluginAsync(registration_token, callback_uri, plugin_data, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, Resources.Errors.HandlerInternalError);
+                throw QueryCatPluginExceptionUtils.Create(ex);
+            }
+        }
+
+        /// <inheritdoc />
+        public Task<string> RequestConnectionAsync(long token, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return _handler.RequestConnectionAsync(token, cancellationToken);
             }
             catch (Exception ex)
             {

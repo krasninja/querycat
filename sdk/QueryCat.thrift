@@ -167,6 +167,11 @@ service PluginsManager {
     3: required PluginData plugin_data
   ) throws (1: QueryCatPluginException e),
 
+  // Request for additional connection.
+  string RequestConnection(
+    1: required i64 token, // Authorization token.
+  ) throws (1: QueryCatPluginException e),
+
   // Call function.
   VariantValue CallFunction(
     1: required i64 token, // Authorization token.

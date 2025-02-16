@@ -12,7 +12,6 @@ using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Plugins;
-using QueryCat.Backend.Core.Utils;
 using QueryCat.Plugins.Client;
 
 namespace QueryCat.Backend.ThriftPlugins;
@@ -87,7 +86,11 @@ public sealed partial class ThriftPluginsServer : IDisposable
         {
             ServerEndpoint = serverEndpoint;
         }
+        _server = CreateServer(transportType);
+    }
 
+    private TThreadPoolAsyncServer CreateServer(TransportType transportType)
+    {
         var transport = CreateTransport(transportType, ServerEndpoint);
         var transportFactory = new TFramedTransport.Factory();
         var binaryProtocolFactory = new TBinaryProtocol.Factory();
@@ -95,7 +98,7 @@ public sealed partial class ThriftPluginsServer : IDisposable
         var handler = new HandlerWithExceptionIntercept(new Handler(this));
         var asyncProcessor = new Plugins.Sdk.PluginsManager.AsyncProcessor(handler);
         processor.RegisterProcessor(QueryCat.Plugins.Client.ThriftPluginClient.PluginsManagerServiceName, asyncProcessor);
-        _server = new TThreadPoolAsyncServer(
+        return new TThreadPoolAsyncServer(
             new TSingletonProcessorFactory(processor),
             transport,
             transportFactory,
