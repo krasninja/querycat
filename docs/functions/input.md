@@ -10,4 +10,6 @@ The input functions returns object of type `IRowsInput`.
 | `read(uri: string, fmt?: object<IRowsFormatter>): object<IRowsInput>`<br /><br /> Read data from a URI. |
 | `read_file(path: string, fmt?: object<IRowsFormatter>): object<IRowsInput>`<br /><br /> Reads data from a file. If `fmt` is ommited the formatter will be resolved by file extension. |
 | `read_text(text: string, fmt: object<IRowsFormatter>): object<IRowsInput>`<br /><br /> Reads data from a string. The `format` should be presented. |
+| `retry_input(input: object<IRowsInput>, max_attempts: integer := 3, retry_interval_secs: float := 5.0): object<IRowsInput>`<br /><br /> Implements retry resilience strategy with constant delay interval for rows input. |
+| `retry_output(output: object<IRowsOutput>, max_attempts: integer := 3, retry_interval_secs: float := 5.0): object<IRowsOutput>`<br /><br /> Implements retry resilience strategy with constant delay interval for rows output. |
 | `stdin(skip_lines: integer = 0, fmt?: object<IRowsFormatter>): object<IRowsInput>`<br /><br /> Read data from the system standard input. |

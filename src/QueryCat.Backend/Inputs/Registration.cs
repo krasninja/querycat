@@ -7,5 +7,7 @@ internal static class Registration
     public static void RegisterFunctions(IFunctionsManager functionsManager)
     {
         functionsManager.RegisterFunction(GenerateSeriesInput.GenerateSeries);
+        functionsManager.RegisterFunction(RetryRowsInput.RetryInput);
+        functionsManager.RegisterFunction(RetryRowsOutput.RetryOutput);
     }
 }

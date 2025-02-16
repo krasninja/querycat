@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial implementation of plugins native libraries loading.
 - Add new option PreventConcurrentRun.
+- Add functions "retry_input" and "retry_output".
 
 ## Changed
 
