@@ -12,11 +12,13 @@ namespace QueryCat.Plugins.Client.Logging;
 internal sealed class SimpleConsoleLogger : ILogger, IDisposable
 {
     private readonly string _name;
+    private readonly LogLevel _minLevel;
     private readonly TextWriter _streamWriter;
 
-    public SimpleConsoleLogger(string name)
+    public SimpleConsoleLogger(string name, LogLevel minLevel = LogLevel.Trace)
     {
         _name = name;
+        _minLevel = minLevel;
         _streamWriter = Console.Out;
     }
 
@@ -30,6 +32,7 @@ internal sealed class SimpleConsoleLogger : ILogger, IDisposable
             LogLevel.Warning => "WRN",
             LogLevel.Error => "ERR",
             LogLevel.Critical => "FAL",
+            LogLevel.None => "NON",
             _ => throw new ArgumentOutOfRangeException(nameof(logLevel))
         };
     }
@@ -65,7 +68,7 @@ internal sealed class SimpleConsoleLogger : ILogger, IDisposable
     }
 
     /// <inheritdoc />
-    public bool IsEnabled(LogLevel logLevel) => logLevel != LogLevel.None;
+    public bool IsEnabled(LogLevel logLevel) => logLevel >= _minLevel;
 
     /// <inheritdoc />
     public IDisposable? BeginScope<TState>(TState state) where TState : notnull

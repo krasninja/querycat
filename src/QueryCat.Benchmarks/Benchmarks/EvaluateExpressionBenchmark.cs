@@ -29,10 +29,22 @@ public class EvaluateExpressionBenchmark
         ["SPB"] = new DataItem(+5, new DateOnly(2024, 4, 25)),
     };
 
-    private readonly IExecutionThread _executionThread = new ExecutionThreadBootstrapper()
-        .WithStandardFunctions()
-        .WithAstCache()
-        .Create();
+    private IExecutionThread _executionThread = NullExecutionThread.Instance;
+
+    [GlobalSetup]
+    public async Task GlobalSetupAsync()
+    {
+        _executionThread = await new ExecutionThreadBootstrapper()
+            .WithStandardFunctions()
+            .WithAstCache()
+            .CreateAsync();
+    }
+
+    [GlobalCleanup]
+    public void GlobalCleanup()
+    {
+        _executionThread.Dispose();
+    }
 
     [Benchmark]
     public async Task RunExpressionSeveralTimes()

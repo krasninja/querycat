@@ -1,5 +1,6 @@
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend.Execution;
 
@@ -9,12 +10,12 @@ namespace QueryCat.Backend.Execution;
 public class VariablesCompletionSource : ICompletionSource
 {
     /// <inheritdoc />
-    public IEnumerable<CompletionResult> Get(CompletionContext context)
+    public IAsyncEnumerable<CompletionResult> GetAsync(CompletionContext context,
+        CancellationToken cancellationToken = default)
     {
         var items = new List<CompletionResult>();
         items.AddRange(FillWithScopesVariables(context));
-
-        return items;
+        return AsyncUtils.ToAsyncEnumerable(items);
     }
 
     private IEnumerable<CompletionResult> FillWithScopesVariables(CompletionContext context)

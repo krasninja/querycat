@@ -25,7 +25,7 @@ internal partial class ProgramParserVisitor
         => new FunctionSignatureArgumentNode(
             name: context.identifierSimple().GetText(),
             typeNode: this.Visit<FunctionTypeNode>(context.functionType()),
-            defaultValue: this.Visit(context.@default, LiteralNode.NullValueNode).Value,
+            defaultValue: context.@default != null ? this.Visit<LiteralNode>(context.@default).Value : null,
             isOptional: context.optional != null,
             isArray: context.isArray != null,
             isVariadic: context.variadic != null);

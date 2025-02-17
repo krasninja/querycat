@@ -22,31 +22,34 @@ internal sealed class SelectResolveTypesVisitor : ResolveTypesVisitor
     }
 
     /// <inheritdoc />
-    public override void Visit(IdentifierExpressionNode node)
+    public override ValueTask VisitAsync(IdentifierExpressionNode node, CancellationToken cancellationToken)
     {
         if (VisitIdentifierNode(node, node.TableFieldName, node.TableSourceName))
         {
-            return;
+            return ValueTask.CompletedTask;
         }
-        base.Visit(node);
+        return base.VisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectExistsExpressionNode node)
+    public override ValueTask VisitAsync(SelectExistsExpressionNode node, CancellationToken cancellationToken)
     {
         node.SetDataType(DataType.Boolean);
+        return ValueTask.CompletedTask;
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectColumnsSublistExpressionNode node)
+    public override ValueTask VisitAsync(SelectColumnsSublistExpressionNode node, CancellationToken cancellationToken)
     {
         node.ExpressionNode.CopyTo<DataType>(AstAttributeKeys.TypeKey, node);
+        return ValueTask.CompletedTask;
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectColumnsSublistWindowNode node)
+    public override ValueTask VisitAsync(SelectColumnsSublistWindowNode node, CancellationToken cancellationToken)
     {
         node.AggregateFunctionNode.CopyTo<DataType>(AstAttributeKeys.TypeKey, node);
+        return ValueTask.CompletedTask;
     }
 
     private bool VisitIdentifierNode(IAstNode node, string name, string source)
@@ -63,16 +66,25 @@ internal sealed class SelectResolveTypesVisitor : ResolveTypesVisitor
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectOrderBySpecificationNode node)
+    public override ValueTask VisitAsync(SelectOrderBySpecificationNode node, CancellationToken cancellationToken)
     {
         node.SetDataType(node.ExpressionNode.GetDataType());
+        return ValueTask.CompletedTask;
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectQueryCombineNode node) => VisitSelectQueryNode(node);
+    public override ValueTask VisitAsync(SelectQueryCombineNode node, CancellationToken cancellationToken)
+    {
+        VisitSelectQueryNode(node);
+        return ValueTask.CompletedTask;
+    }
 
     /// <inheritdoc />
-    public override void Visit(SelectQuerySpecificationNode node) => VisitSelectQueryNode(node);
+    public override ValueTask VisitAsync(SelectQuerySpecificationNode node, CancellationToken cancellationToken)
+    {
+        VisitSelectQueryNode(node);
+        return ValueTask.CompletedTask;
+    }
 
     private void VisitSelectQueryNode(SelectQueryNode node)
     {
@@ -80,8 +92,9 @@ internal sealed class SelectResolveTypesVisitor : ResolveTypesVisitor
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectSubqueryConditionExpressionNode node)
+    public override ValueTask VisitAsync(SelectSubqueryConditionExpressionNode node, CancellationToken cancellationToken)
     {
         node.SetDataType(DataType.Boolean);
+        return ValueTask.CompletedTask;
     }
 }

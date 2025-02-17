@@ -14,6 +14,9 @@ namespace QueryCat.UnitTests.Functions;
 public sealed class DefaultFunctionsManagerTests
 {
     private readonly DefaultFunctionsManager _functionsManager;
+    private readonly ExecutionThreadBootstrapper _executionThreadBootstrapper = new ExecutionThreadBootstrapper()
+        .WithStandardFunctions()
+        .WithStandardUriResolvers();
 
     public DefaultFunctionsManagerTests()
     {
@@ -24,12 +27,13 @@ public sealed class DefaultFunctionsManagerTests
     public async Task RegisterFunction_SimpleFunction_ShouldEvalCorrectly()
     {
         // Act.
+        await using var thread = await _executionThreadBootstrapper.CreateAsync();
         _functionsManager.RegisterFunction(SumIntegers);
 
         var func = _functionsManager.FindByNameFirst("add",
             FunctionCallArgumentsTypes.FromPositionArguments(DataType.Integer, DataType.Integer));
-        using var frame = Executor.Thread.Stack.CreateFrameWithArguments(new VariantValue(5), new VariantValue(6));
-        var ret = await FunctionCaller.CallAsync(func.Delegate, Executor.Thread);
+        using var frame = thread.Stack.CreateFrameWithArguments(new VariantValue(5), new VariantValue(6));
+        var ret = await FunctionCaller.CallAsync(func.Delegate, thread);
 
         Assert.Equal(11L, ret.AsIntegerUnsafe);
     }
@@ -44,14 +48,15 @@ public sealed class DefaultFunctionsManagerTests
     public async Task RegisterFunction_VariadicArgumentMethod_ShouldEvalCorrectly()
     {
         // Act.
+        await using var thread = await _executionThreadBootstrapper.CreateAsync();
         _functionsManager.RegisterFunction(SumIntegersVariadic);
 
         var func = _functionsManager.FindByNameFirst("add",
             FunctionCallArgumentsTypes.FromPositionArguments(
                 DataType.String, DataType.Integer, DataType.Integer));
-        using var frame = Executor.Thread.Stack.CreateFrameWithArguments(
+        using var frame = thread.Stack.CreateFrameWithArguments(
             new VariantValue("sum"), new VariantValue(5), new VariantValue(5));
-        var ret = await FunctionCaller.CallAsync(func.Delegate, Executor.Thread);
+        var ret = await FunctionCaller.CallAsync(func.Delegate, thread);
 
         Assert.Equal("sum: 10", ret);
     }
@@ -60,12 +65,13 @@ public sealed class DefaultFunctionsManagerTests
     public async Task RegisterFunction_VariadicArgumentMethodEmpty_ShouldEvalCorrectly()
     {
         // Act.
+        await using var thread = await _executionThreadBootstrapper.CreateAsync();
         _functionsManager.RegisterFunction(SumIntegersVariadic);
 
         var func = _functionsManager.FindByNameFirst("add",
             FunctionCallArgumentsTypes.FromPositionArguments(DataType.String));
-        using var frame = Executor.Thread.Stack.CreateFrameWithArguments(new VariantValue("sum"));
-        var ret = await FunctionCaller.CallAsync(func.Delegate, Executor.Thread);
+        using var frame = thread.Stack.CreateFrameWithArguments(new VariantValue("sum"));
+        var ret = await FunctionCaller.CallAsync(func.Delegate, thread);
 
         Assert.Equal("sum: 0", ret);
     }
@@ -86,19 +92,20 @@ public sealed class DefaultFunctionsManagerTests
     public async Task RegisterFunction_RegisterFromClass_ShouldEvalCorrectly()
     {
         // Arrange.
+        await using var thread = await _executionThreadBootstrapper.CreateAsync();
         var functions = _functionsManager.Factory.CreateFromType(typeof(TestClass1));
         _functionsManager.RegisterFunctions(functions);
 
         // Act.
         var func1 = _functionsManager.FindByNameFirst("test_class1",
             FunctionCallArgumentsTypes.FromPositionArguments(DataType.Integer, DataType.String));
-        var value1 = await FunctionCaller.CallWithArgumentsAsync(func1.Delegate, Executor.Thread, [1, "2"]);
+        var value1 = await FunctionCaller.CallWithArgumentsAsync(func1.Delegate, thread, [1, "2"]);
         var func2 = _functionsManager.FindByNameFirst("test_class2",
             FunctionCallArgumentsTypes.FromPositionArguments(DataType.Integer, DataType.String));
-        var value2 = await FunctionCaller.CallWithArgumentsAsync(func2.Delegate, Executor.Thread, [1, "2"]);
+        var value2 = await FunctionCaller.CallWithArgumentsAsync(func2.Delegate, thread, [1, "2"]);
         var func3 = _functionsManager.FindByNameFirst("test_class3",
             FunctionCallArgumentsTypes.FromPositionArguments(DataType.Integer, DataType.String));
-        var value3 = await FunctionCaller.CallWithArgumentsAsync(func3.Delegate, Executor.Thread, [1, "2"]);
+        var value3 = await FunctionCaller.CallWithArgumentsAsync(func3.Delegate, thread, [1, "2"]);
 
         // Assert.
         Assert.Equal("1 2", value1.As<TestClass1>()!.Value);
@@ -123,15 +130,16 @@ public sealed class DefaultFunctionsManagerTests
     public async Task RegisterFunction_RegisterFromType_ShouldEvalCorrectly()
     {
         // Arrange.
+        await using var thread = await _executionThreadBootstrapper.CreateAsync();
         var functions = _functionsManager.Factory.CreateFromType(typeof(TestClass2));
         _functionsManager.RegisterFunctions(functions);
 
         // Act.
         var func1 = _functionsManager.FindByNameFirst("function1");
-        await FunctionCaller.CallWithArgumentsAsync(func1.Delegate, Executor.Thread);
+        await FunctionCaller.CallWithArgumentsAsync(func1.Delegate, thread);
         var func2 = _functionsManager.FindByNameFirst("testfunc",
             FunctionCallArgumentsTypes.FromPositionArguments(DataType.String));
-        var value2 = await FunctionCaller.CallWithArgumentsAsync(func2.Delegate, Executor.Thread, ["2"]);
+        var value2 = await FunctionCaller.CallWithArgumentsAsync(func2.Delegate, thread, ["2"]);
 
         // Assert.
         Assert.Equal(2, value2.AsInteger);

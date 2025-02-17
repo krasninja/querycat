@@ -9,32 +9,36 @@ internal sealed class SetIdentifierDelegateVisitor : CreateDelegateVisitor
 {
     private readonly IFuncUnit _funcUnit;
 
-    public SetIdentifierDelegateVisitor(IExecutionThread<ExecutionOptions> thread, ResolveTypesVisitor resolveTypesVisitor, IFuncUnit funcUnit)
+    public SetIdentifierDelegateVisitor(
+        IExecutionThread<ExecutionOptions> thread,
+        ResolveTypesVisitor resolveTypesVisitor,
+        IFuncUnit funcUnit)
         : base(thread, resolveTypesVisitor)
     {
         _funcUnit = funcUnit;
     }
 
-    public override IFuncUnit RunAndReturn(IAstNode node)
+    /// <inheritdoc />
+    public override ValueTask<IFuncUnit> RunAndReturnAsync(IAstNode node, CancellationToken cancellationToken)
     {
         if (node is not IdentifierExpressionNode)
         {
             throw new InvalidOperationException($"Node's type must be '{nameof(IdentifierExpressionNode)}'.");
         }
-        return base.RunAndReturn(node);
+        return base.RunAndReturnAsync(node, cancellationToken);
     }
 
-    public override void Visit(IdentifierExpressionNode node)
+    public override async ValueTask VisitAsync(IdentifierExpressionNode node, CancellationToken cancellationToken)
     {
-        ResolveTypesVisitor.Visit(node);
+        await ResolveTypesVisitor.VisitAsync(node, cancellationToken);
 
         if (ExecutionThread.ContainsVariable(node.Name))
         {
             var context = new ObjectSelectorContext();
             var strategies = GetObjectSelectStrategies(node, NodeIdFuncMap);
-            async ValueTask<VariantValue> Func(IExecutionThread thread, CancellationToken cancellationToken)
+            async ValueTask<VariantValue> Func(IExecutionThread thread, CancellationToken ct)
             {
-                var newValue = await SetValueAsync(thread, node, strategies, context, cancellationToken);
+                var newValue = await SetValueAsync(thread, node, strategies, context, ct);
                 context.Clear();
                 return newValue;
             }
@@ -59,11 +63,11 @@ internal sealed class SetIdentifierDelegateVisitor : CreateDelegateVisitor
         context.ExecutionThread = thread;
         // Fills the context.
         await GetObjectBySelectorAsync(thread, context, startObject, selectStrategyContainer, cancellationToken);
-        var set = thread.ObjectSelector.SetValue(context, Converter.ConvertValue(newValue, typeof(object)));
+        var set = await thread.ObjectSelector.SetValueAsync(context, Converter.ConvertValue(newValue, typeof(object)), cancellationToken);
         context.ExecutionThread = NullExecutionThread.Instance;
         if (!set)
         {
-            thread.ObjectSelector.SetValue(context, Converter.ConvertValue(newValue, typeof(object)));
+            await thread.ObjectSelector.SetValueAsync(context, Converter.ConvertValue(newValue, typeof(object)), cancellationToken);
         }
         // Not an expression - variable.
         if (!set && !node.HasSelectors)

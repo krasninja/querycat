@@ -6,28 +6,41 @@ namespace QueryCat.Backend.Commands.Select;
 
 internal sealed partial class SelectPlanner
 {
-    private IFuncUnit Misc_CreateDelegate(IAstNode node, SelectCommandContext? context = null)
+    private async Task<IFuncUnit> Misc_CreateDelegateAsync(
+        IAstNode node,
+        SelectCommandContext? context = null,
+        CancellationToken cancellationToken = default)
     {
         if (context != null)
         {
-            return new SelectCreateDelegateVisitor(ExecutionThread, context).RunAndReturn(node);
+            return await new SelectCreateDelegateVisitor(ExecutionThread, context)
+                .RunAndReturnAsync(node, cancellationToken);
         }
         else
         {
-            return new CreateDelegateVisitor(ExecutionThread, _resolveTypesVisitor).RunAndReturn(node);
+            return await new CreateDelegateVisitor(ExecutionThread, _resolveTypesVisitor)
+                .RunAndReturnAsync(node, cancellationToken);
         }
     }
 
-    private IEnumerable<IFuncUnit> Misc_CreateDelegate(IEnumerable<IAstNode> nodes, SelectCommandContext? context = null)
+    private async Task<IFuncUnit[]> Misc_CreateDelegateAsync(
+        IEnumerable<IAstNode> nodes,
+        SelectCommandContext? context = null,
+        CancellationToken cancellationToken = default)
     {
         var visitor = context != null
             ? new SelectCreateDelegateVisitor(ExecutionThread, context)
             : new CreateDelegateVisitor(ExecutionThread, _resolveTypesVisitor);
-        return nodes.Select(n => visitor.RunAndReturn(n));
+        var list = new List<IFuncUnit>();
+        foreach (var node in nodes)
+        {
+            list.Add(await visitor.RunAndReturnAsync(node, cancellationToken));
+        }
+        return list.ToArray();
     }
 
-    private void Misc_Transform(SelectQueryNode node)
+    private async Task Misc_TransformAsync(SelectQueryNode node, CancellationToken cancellationToken)
     {
-        new TransformQueryAstVisitor().Run(node);
+        await new TransformQueryAstVisitor().RunAsync(node, cancellationToken);
     }
 }

@@ -29,9 +29,9 @@ internal sealed class InputCreateDelegateVisitor : CreateDelegateVisitor
     }
 
     /// <inheritdoc />
-    public override void Visit(IdentifierExpressionNode node)
+    public override async ValueTask VisitAsync(IdentifierExpressionNode node, CancellationToken cancellationToken)
     {
-        ResolveTypesVisitor.Visit(node);
+        await ResolveTypesVisitor.VisitAsync(node, cancellationToken);
         var func = GetValueDelegateForIdentifier(node.TableFieldName, node.TableSourceName);
         if (func != null)
         {
@@ -40,7 +40,7 @@ internal sealed class InputCreateDelegateVisitor : CreateDelegateVisitor
         }
 
         // Base logic (if any).
-        base.Visit(node);
+        await base.VisitAsync(node, cancellationToken);
     }
 
     private IFuncUnit? GetValueDelegateForIdentifier(string name, string source)
@@ -69,7 +69,7 @@ internal sealed class InputCreateDelegateVisitor : CreateDelegateVisitor
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectTableJoinedUsingNode node)
+    public override ValueTask VisitAsync(SelectTableJoinedUsingNode node, CancellationToken cancellationToken)
     {
         var leftColumnSources = new IFuncUnit[node.ColumnList.Count];
         var rightColumnSources = new IFuncUnit[node.ColumnList.Count];
@@ -87,12 +87,12 @@ internal sealed class InputCreateDelegateVisitor : CreateDelegateVisitor
             rightColumnSources[i] = new FuncUnitRowsInputColumn(_rightInput, rightColumnIndex);
         }
 
-        async ValueTask<VariantValue> Func(IExecutionThread thread, CancellationToken cancellationToken)
+        async ValueTask<VariantValue> Func(IExecutionThread thread, CancellationToken ct)
         {
             for (var i = 0; i < leftColumnSources.Length; i++)
             {
-                var leftValue = await leftColumnSources[i].InvokeAsync(thread, cancellationToken);
-                var rightValue = await rightColumnSources[i].InvokeAsync(thread, cancellationToken);
+                var leftValue = await leftColumnSources[i].InvokeAsync(thread, ct);
+                var rightValue = await rightColumnSources[i].InvokeAsync(thread, ct);
                 if (leftValue != rightValue)
                 {
                     return VariantValue.FalseValue;
@@ -101,5 +101,7 @@ internal sealed class InputCreateDelegateVisitor : CreateDelegateVisitor
             return VariantValue.TrueValue;
         }
         NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, DataType.Boolean);
+
+        return ValueTask.CompletedTask;
     }
 }

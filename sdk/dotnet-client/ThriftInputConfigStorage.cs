@@ -16,11 +16,11 @@ namespace QueryCat.Plugins.Client;
 /// </summary>
 public sealed class ThriftInputConfigStorage : IInputConfigStorage
 {
-    private readonly PluginsManager.Client _client;
+    private readonly ThriftPluginClient _client;
     private readonly Dictionary<string, VariantValue> _objectsStorage = new();
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(ThriftInputConfigStorage));
 
-    public ThriftInputConfigStorage(PluginsManager.Client client)
+    public ThriftInputConfigStorage(ThriftPluginClient client)
     {
         _client = client;
     }
@@ -39,7 +39,7 @@ public sealed class ThriftInputConfigStorage : IInputConfigStorage
             {
                 _objectsStorage.Remove(key);
             }
-            AsyncUtils.RunSync(ct => _client.SetConfigValueAsync(key, SdkConvert.Convert(value), ct));
+            AsyncUtils.RunSync(ct => _client.ThriftClient.SetConfigValueAsync(_client.Token, key, SdkConvert.Convert(value), ct));
         }
     }
 
@@ -55,7 +55,7 @@ public sealed class ThriftInputConfigStorage : IInputConfigStorage
             return objectValue;
         }
 
-        var value = AsyncUtils.RunSync(ct => _client.GetConfigValueAsync(key, ct));
+        var value = AsyncUtils.RunSync(ct => _client.ThriftClient.GetConfigValueAsync(_client.Token, key, ct));
         if (value == null)
         {
             return VariantValue.Null;

@@ -221,7 +221,7 @@ internal sealed class WindowFunctionsRowsIterator : IRowsIterator
         // Rebuild indexes.
         foreach (var index in indexes)
         {
-            index.Rebuild();
+            await index.RebuildAsync(cancellationToken);
         }
     }
 

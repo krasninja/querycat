@@ -108,7 +108,7 @@ internal sealed class CacheRowsInput : IRowsInputKeys
     {
         _rowIndex++;
         _cacheReadMap = _cacheReadMap.Length > 0 ? _cacheReadMap : new bool[_rowsInput.Columns.Length];
-        var cacheEntry = GetOrCreateCacheEntry();
+        var cacheEntry = await GetOrCreateCacheEntryAsync(cancellationToken);
         _hadReadNextCalls = true;
 
         // Read cache data if possible.
@@ -136,7 +136,7 @@ internal sealed class CacheRowsInput : IRowsInputKeys
 
         if (hasData && _rowIndex > -1)
         {
-            ReadAllItemsToCache();
+            await ReadAllItemsToCacheAsync(cancellationToken);
         }
 
         // If we don't have data - this means we can complete the cache line.
@@ -151,7 +151,19 @@ internal sealed class CacheRowsInput : IRowsInputKeys
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private VariantValue ReadValueByPosition(int rowIndex, int columnIndex)
     {
-        var cacheEntry = GetOrCreateCacheEntry();
+        if (_currentCacheEntry == null)
+        {
+            return VariantValue.Null;
+        }
+        var offset = (Columns.Length * rowIndex) + columnIndex;
+        CacheReads++;
+        return _currentCacheEntry.Cache[offset];
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private async ValueTask<VariantValue> ReadValueByPositionAsync(int rowIndex, int columnIndex, CancellationToken cancellationToken)
+    {
+        var cacheEntry = await GetOrCreateCacheEntryAsync(cancellationToken);
         var offset = (Columns.Length * rowIndex) + columnIndex;
         CacheReads++;
         return cacheEntry.Cache[offset];
@@ -167,9 +179,9 @@ internal sealed class CacheRowsInput : IRowsInputKeys
         Array.Fill(_cacheReadMap, false);
     }
 
-    private void ReadAllItemsToCache()
+    private async ValueTask ReadAllItemsToCacheAsync(CancellationToken cancellationToken)
     {
-        var cacheEntry = GetOrCreateCacheEntry();
+        var cacheEntry = await GetOrCreateCacheEntryAsync(cancellationToken);
         var baseOffset = Columns.Length * _rowIndex;
         for (var columnIndex = 0; columnIndex < _cacheReadMap.Length; columnIndex++)
         {
@@ -181,12 +193,13 @@ internal sealed class CacheRowsInput : IRowsInputKeys
         Array.Fill(_cacheReadMap, true);
     }
 
-    private CacheEntry GetOrCreateCacheEntry()
+    private async ValueTask<CacheEntry> GetOrCreateCacheEntryAsync(CancellationToken cancellationToken)
     {
         if (_resetRequested || _currentCacheEntry == null)
         {
             _resetRequested = false;
-            var newCacheKey = CreateCacheKey(_thread, _innerRowsInputType, _rowsInput, _queryContext, _conditions);
+            var newCacheKey = await CreateCacheKeyAsync(_thread, _innerRowsInputType, _rowsInput,
+                _queryContext, _conditions, cancellationToken);
             if (_currentCacheEntry != null)
             {
                 // If we reset but persist the same key - just go ahead using existing input.
@@ -210,26 +223,37 @@ internal sealed class CacheRowsInput : IRowsInputKeys
         }
 
 #if DEBUG
-        var keyForCheck = CreateCacheKey(_thread, _innerRowsInputType, _rowsInput, _queryContext, _conditions);
+        var keyForCheck = await CreateCacheKeyAsync(_thread, _innerRowsInputType, _rowsInput, _queryContext,
+            _conditions, cancellationToken);
         Debug.Assert(keyForCheck == _currentCacheEntry.Key, "Cache key has been changed!");
 #endif
         return _currentCacheEntry;
     }
 
-    private static CacheKey CreateCacheKey(
+    private static async ValueTask<CacheKey> CreateCacheKeyAsync(
         IExecutionThread thread,
         string from,
         IRowsInput rowsInput,
         QueryContext queryContext,
-        SelectQueryConditions conditions)
+        SelectQueryConditions conditions,
+        CancellationToken cancellationToken)
     {
+        CacheKeyCondition[]? cacheConditions = null;
+        if (rowsInput is IRowsInputKeys rowsInputKeys)
+        {
+            var keyConditions = conditions.GetKeyConditions(rowsInputKeys).ToArray();
+            cacheConditions = new CacheKeyCondition[keyConditions.Length];
+            for (var i = 0; i < keyConditions.Length; i++)
+            {
+                cacheConditions[i] = await keyConditions[i].ToCacheCondition(thread, cancellationToken);
+            }
+        }
+
         return new CacheKey(
             from: from,
             inputArguments: rowsInput.UniqueKey,
             selectColumns: queryContext.QueryInfo.Columns.Select(c => c.Name).ToArray(),
-            conditions: rowsInput is IRowsInputKeys rowsInputKeys
-                ? conditions.GetKeyConditions(rowsInputKeys).Select(c => c.ToCacheCondition(thread)).ToArray()
-                : null,
+            conditions: cacheConditions,
             offset: queryContext.QueryInfo.Offset,
             limit: queryContext.QueryInfo.Limit);
     }

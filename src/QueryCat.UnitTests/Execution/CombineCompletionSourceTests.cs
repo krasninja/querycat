@@ -1,4 +1,5 @@
 ﻿using QueryCat.Backend;
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Execution;
 using Xunit;
 
@@ -10,7 +11,7 @@ namespace QueryCat.UnitTests.Execution;
 public sealed class CombineCompletionSourceTests
 {
     [Fact]
-    public void GetCompletions_DuplicatedSource_ShouldPreventDuplicates()
+    public async Task GetCompletions_DuplicatedSource_ShouldPreventDuplicates()
     {
         // Arrange.
         var combineCompletionSource = new CombineCompletionSource(
@@ -21,12 +22,12 @@ public sealed class CombineCompletionSourceTests
             ],
             maxItems: -1,
             preventDuplicates: true);
-        using var executionThread = new ExecutionThreadBootstrapper()
+        await using var executionThread = await new ExecutionThreadBootstrapper()
             .WithCompletionSource(combineCompletionSource)
-            .Create();
+            .CreateAsync();
 
         // Act.
-        var completionsCount = executionThread.GetCompletions("SELEC").Count();
+        var completionsCount = (await executionThread.GetCompletionsAsync("SELEC").ToListAsync()).Count;
 
         // Assert.
         Assert.Equal(1, completionsCount);

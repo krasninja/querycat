@@ -19,122 +19,123 @@ internal abstract class DelegateVisitor : AstVisitor
     /// Callback method.
     /// </summary>
     /// <param name="node">Accepted node.</param>
-    public abstract void OnVisit(IAstNode node);
+    /// <param name="cancellationToken">Cancellation token.</param>
+    public abstract ValueTask OnVisitAsync(IAstNode node, CancellationToken cancellationToken);
 
     /// <inheritdoc />
-    public override void Run(IAstNode node)
+    public override ValueTask RunAsync(IAstNode node, CancellationToken cancellationToken)
     {
-        AstTraversal.PreOrder(node);
+        return AstTraversal.PreOrderAsync(node, cancellationToken);
     }
 
     #region General
 
     /// <inheritdoc />
-    public override void Visit(AtTimeZoneNode node)
+    public override ValueTask VisitAsync(AtTimeZoneNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(BetweenExpressionNode node)
+    public override ValueTask VisitAsync(BetweenExpressionNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(BinaryOperationExpressionNode node)
+    public override ValueTask VisitAsync(BinaryOperationExpressionNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(BlockExpressionNode node)
+    public override ValueTask VisitAsync(BlockExpressionNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(CaseExpressionNode node)
+    public override ValueTask VisitAsync(CaseExpressionNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(CaseWhenThenNode node)
+    public override ValueTask VisitAsync(CaseWhenThenNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(EmptyNode node)
+    public override ValueTask VisitAsync(EmptyNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(IdentifierExpressionNode node)
+    public override ValueTask VisitAsync(IdentifierExpressionNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(IdentifierFilterSelectorNode node)
+    public override ValueTask VisitAsync(IdentifierFilterSelectorNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(IdentifierIndexSelectorNode node)
+    public override ValueTask VisitAsync(IdentifierIndexSelectorNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(IdentifierPropertySelectorNode node)
+    public override ValueTask VisitAsync(IdentifierPropertySelectorNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(InExpressionValuesNode node)
+    public override ValueTask VisitAsync(InExpressionValuesNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(InOperationExpressionNode node)
+    public override ValueTask VisitAsync(InOperationExpressionNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(LiteralNode node)
+    public override ValueTask VisitAsync(LiteralNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(ProgramNode node)
+    public override ValueTask VisitAsync(ProgramNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(TernaryOperationExpressionNode node)
+    public override ValueTask VisitAsync(TernaryOperationExpressionNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(TypeNode node)
+    public override ValueTask VisitAsync(TypeNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(UnaryOperationExpressionNode node)
+    public override ValueTask VisitAsync(UnaryOperationExpressionNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     #endregion
@@ -142,15 +143,15 @@ internal abstract class DelegateVisitor : AstVisitor
     #region Call
 
     /// <inheritdoc />
-    public override void Visit(CallFunctionNode node)
+    public override ValueTask VisitAsync(CallFunctionNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(CallFunctionStatementNode node)
+    public override ValueTask VisitAsync(CallFunctionStatementNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     #endregion
@@ -158,51 +159,51 @@ internal abstract class DelegateVisitor : AstVisitor
     #region Function
 
     /// <inheritdoc />
-    public override void Visit(FunctionCallArgumentNode node)
+    public override ValueTask VisitAsync(FunctionCallArgumentNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(FunctionCallExpressionNode node)
+    public override ValueTask VisitAsync(FunctionCallExpressionNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(FunctionCallNode node)
+    public override ValueTask VisitAsync(FunctionCallNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(FunctionCallStatementNode node)
+    public override ValueTask VisitAsync(FunctionCallStatementNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(FunctionSignatureArgumentNode node)
+    public override ValueTask VisitAsync(FunctionSignatureArgumentNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(FunctionSignatureNode node)
+    public override ValueTask VisitAsync(FunctionSignatureNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(FunctionSignatureStatementNode node)
+    public override ValueTask VisitAsync(FunctionSignatureStatementNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(FunctionTypeNode node)
+    public override ValueTask VisitAsync(FunctionTypeNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     #endregion
@@ -210,21 +211,21 @@ internal abstract class DelegateVisitor : AstVisitor
     #region If
 
     /// <inheritdoc />
-    public override void Visit(IfConditionItemNode node)
+    public override ValueTask VisitAsync(IfConditionItemNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(IfConditionNode node)
+    public override ValueTask VisitAsync(IfConditionNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(IfConditionStatementNode node)
+    public override ValueTask VisitAsync(IfConditionStatementNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     #endregion
@@ -232,15 +233,15 @@ internal abstract class DelegateVisitor : AstVisitor
     #region Special functions
 
     /// <inheritdoc />
-    public override void Visit(CastFunctionNode node)
+    public override ValueTask VisitAsync(CastFunctionNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(CoalesceFunctionNode node)
+    public override ValueTask VisitAsync(CoalesceFunctionNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     #endregion
@@ -248,225 +249,225 @@ internal abstract class DelegateVisitor : AstVisitor
     #region Select
 
     /// <inheritdoc />
-    public override void Visit(SelectAliasNode node)
+    public override ValueTask VisitAsync(SelectAliasNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectColumnsExceptNode node)
+    public override ValueTask VisitAsync(SelectColumnsExceptNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectColumnsListNode node)
+    public override ValueTask VisitAsync(SelectColumnsListNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectColumnsSublistAll node)
+    public override ValueTask VisitAsync(SelectColumnsSublistAll node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectColumnsSublistExpressionNode node)
+    public override ValueTask VisitAsync(SelectColumnsSublistExpressionNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectColumnsSublistNode node)
+    public override ValueTask VisitAsync(SelectColumnsSublistNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectColumnsSublistWindowNode node)
+    public override ValueTask VisitAsync(SelectColumnsSublistWindowNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectIdentifierExpressionNode node)
+    public override ValueTask VisitAsync(SelectIdentifierExpressionNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectDistinctNode node)
+    public override ValueTask VisitAsync(SelectDistinctNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectExistsExpressionNode node)
+    public override ValueTask VisitAsync(SelectExistsExpressionNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectFetchNode node)
+    public override ValueTask VisitAsync(SelectFetchNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectGroupByNode node)
+    public override ValueTask VisitAsync(SelectGroupByNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectHavingNode node)
+    public override ValueTask VisitAsync(SelectHavingNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectOffsetNode node)
+    public override ValueTask VisitAsync(SelectOffsetNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectOrderByNode node)
+    public override ValueTask VisitAsync(SelectOrderByNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectOrderBySpecificationNode node)
+    public override ValueTask VisitAsync(SelectOrderBySpecificationNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectQueryCombineNode node)
+    public override ValueTask VisitAsync(SelectQueryCombineNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectQuerySpecificationNode node)
+    public override ValueTask VisitAsync(SelectQuerySpecificationNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectSearchConditionNode node)
+    public override ValueTask VisitAsync(SelectSearchConditionNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectStatementNode node)
+    public override ValueTask VisitAsync(SelectStatementNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectSubqueryConditionExpressionNode node)
+    public override ValueTask VisitAsync(SelectSubqueryConditionExpressionNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectSubqueryExpressionNode node)
+    public override ValueTask VisitAsync(SelectSubqueryExpressionNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectTableFunctionNode node)
+    public override ValueTask VisitAsync(SelectTableFunctionNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectTableJoinedOnNode node)
+    public override ValueTask VisitAsync(SelectTableJoinedOnNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectTableJoinedTypeNode node)
+    public override ValueTask VisitAsync(SelectTableJoinedTypeNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectTableJoinedUsingNode node)
+    public override ValueTask VisitAsync(SelectTableJoinedUsingNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectTableNode node)
+    public override ValueTask VisitAsync(SelectTableNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectTableReferenceListNode node)
+    public override ValueTask VisitAsync(SelectTableReferenceListNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectTableValuesNode node)
+    public override ValueTask VisitAsync(SelectTableValuesNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectTableValuesRowNode node)
+    public override ValueTask VisitAsync(SelectTableValuesRowNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectWindowDefinitionListNode node)
+    public override ValueTask VisitAsync(SelectWindowDefinitionListNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectWindowNode node)
+    public override ValueTask VisitAsync(SelectWindowNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectWindowOrderClauseNode node)
+    public override ValueTask VisitAsync(SelectWindowOrderClauseNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectWindowPartitionClauseNode node)
+    public override ValueTask VisitAsync(SelectWindowPartitionClauseNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectWindowSpecificationNode node)
+    public override ValueTask VisitAsync(SelectWindowSpecificationNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectWithListNode node)
+    public override ValueTask VisitAsync(SelectWithListNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectWithNode node)
+    public override ValueTask VisitAsync(SelectWithNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     #endregion
@@ -474,27 +475,27 @@ internal abstract class DelegateVisitor : AstVisitor
     #region Declare
 
     /// <inheritdoc />
-    public override void Visit(DeclareNode node)
+    public override ValueTask VisitAsync(DeclareNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(DeclareStatementNode node)
+    public override ValueTask VisitAsync(DeclareStatementNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(SetNode node)
+    public override ValueTask VisitAsync(SetNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(SetStatementNode node)
+    public override ValueTask VisitAsync(SetStatementNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     #endregion
@@ -502,21 +503,21 @@ internal abstract class DelegateVisitor : AstVisitor
     #region Insert
 
     /// <inheritdoc />
-    public override void Visit(InsertColumnsListNode node)
+    public override ValueTask VisitAsync(InsertColumnsListNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(InsertNode node)
+    public override ValueTask VisitAsync(InsertNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(InsertStatementNode node)
+    public override ValueTask VisitAsync(InsertStatementNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     #endregion
@@ -524,21 +525,21 @@ internal abstract class DelegateVisitor : AstVisitor
     #region Update
 
     /// <inheritdoc />
-    public override void Visit(UpdateNode node)
+    public override ValueTask VisitAsync(UpdateNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(UpdateSetNode node)
+    public override ValueTask VisitAsync(UpdateSetNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(UpdateStatementNode node)
+    public override ValueTask VisitAsync(UpdateStatementNode node, CancellationToken cancellationToken)
     {
-        OnVisit(node);
+        return OnVisitAsync(node, cancellationToken);
     }
 
     #endregion

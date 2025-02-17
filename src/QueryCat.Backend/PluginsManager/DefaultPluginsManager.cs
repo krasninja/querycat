@@ -1,4 +1,3 @@
-using System.Xml;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Plugins;

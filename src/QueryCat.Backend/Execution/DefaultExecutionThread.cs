@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Text;
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
@@ -9,21 +10,21 @@ using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Plugins;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Storage;
+using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Execution;
 
 /// <summary>
 /// Execution thread that includes statements to be executed, local variables, options and statistic.
 /// </summary>
-public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>
+public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IAsyncDisposable
 {
-    internal const string ApplicationDirectory = "qcat";
     internal const string BootstrapFileName = "rc.sql";
 
     private readonly AstVisitor _statementsVisitor;
-    private readonly SemaphoreSlim _semaphore;
     private int _deepLevel;
     private readonly List<IDisposable> _disposablesList = new();
     private bool _isInCallback;
@@ -36,6 +37,7 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>
     private bool _bootstrapScriptExecuted;
     private bool _configLoaded;
     private readonly Stopwatch _stopwatch = new();
+    private readonly AsyncLock _asyncLock = new();
 
     /// <summary>
     /// Root (base) thread scope.
@@ -100,22 +102,6 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>
     /// </summary>
     public event EventHandler<ExecuteEventArgs>? StatementExecuted;
 
-    /// <summary>
-    /// Get application directory to store local data.
-    /// </summary>
-    /// <param name="ensureExists">Create the directory if it doesn't exist.</param>
-    /// <returns>Default application directory.</returns>
-    public static string GetApplicationDirectory(bool ensureExists = false)
-    {
-        var directory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            ApplicationDirectory);
-        if (ensureExists)
-        {
-            Directory.CreateDirectory(directory);
-        }
-        return directory;
-    }
-
     internal DefaultExecutionThread(
         ExecutionOptions options,
         IFunctionsManager functionsManager,
@@ -136,7 +122,6 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>
 
         _rootScope = new ExecutionScope(parent: null);
         _topScope = _rootScope;
-        _semaphore = new SemaphoreSlim(Options.ConcurrencyLevel, Options.ConcurrencyLevel);
     }
 
     /// <summary>
@@ -171,9 +156,13 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>
         }
 
         // Run with lock and timer.
-        await _semaphore.WaitAsync(cancellationToken);
+        IAsyncDisposable? @lock = null;
         try
         {
+            if (Options.PreventConcurrentRun)
+            {
+                @lock = await _asyncLock.LockAsync(cancellationToken);
+            }
             CurrentQuery = query;
 
             // Bootstrap.
@@ -204,8 +193,10 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>
             }
             _deepLevel--;
             CurrentQuery = string.Empty;
-
-            _semaphore.Release();
+            if (@lock != null)
+            {
+                await @lock.DisposeAsync();
+            }
         }
     }
 
@@ -286,7 +277,7 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>
             executeEventArgs.ExecutingStatementNode = currentStatement;
 
             // Evaluate the command.
-            var commandContext = _statementsVisitor.RunAndReturn(currentStatement);
+            var commandContext = await _statementsVisitor.RunAndReturnAsync(currentStatement, cancellationToken);
             if (commandContext is IDisposable disposable)
             {
                 _disposablesList.Add(disposable);
@@ -345,12 +336,14 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>
     /// <summary>
     /// Dumps current executing AST statement.
     /// </summary>
+    /// <param name="args">Arguments.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>AST string.</returns>
-    public string DumpAst(ExecuteEventArgs args)
+    public async Task<string> DumpAstAsync(ExecuteEventArgs args, CancellationToken cancellationToken = default)
     {
         var sb = new StringBuilder();
         var visitor = new StringDumpAstVisitor(sb);
-        visitor.Run(args.ExecutingStatementNode);
+        await visitor.RunAsync(args.ExecutingStatementNode, cancellationToken);
         return sb.ToString();
     }
 
@@ -404,7 +397,8 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>
     #endregion
 
     /// <inheritdoc />
-    public IEnumerable<CompletionResult> GetCompletions(string text, int position = -1, object? tag = null)
+    public async IAsyncEnumerable<CompletionResult> GetCompletionsAsync(string text, int position = -1, object? tag = null,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var tokens = AstBuilder
             .GetTokens(text)
@@ -412,7 +406,12 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>
             .ToList();
         var context = new CompletionContext(this, text, tokens, position);
         context.Tag = tag;
-        return CompletionSource.Get(context).OrderByDescending(c => c.Completion.Relevance);
+        var items = await CompletionSource.GetAsync(context, cancellationToken)
+            .ToListAsync(cancellationToken: cancellationToken);
+        foreach (var item in items.OrderByDescending(c => c.Completion.Relevance))
+        {
+            yield return item;
+        }
     }
 
     private async Task Write(VariantValue result, CancellationToken cancellationToken)
@@ -530,7 +529,7 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>
         {
             _bootstrapScriptExecuted = true;
 
-            var rcFile = Path.Combine(GetApplicationDirectory(), BootstrapFileName);
+            var rcFile = Path.Combine(Application.GetApplicationDirectory(), BootstrapFileName);
             if (File.Exists(rcFile))
             {
                 var query = await File.ReadAllTextAsync(rcFile, cancellationToken);
@@ -546,11 +545,13 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>
         }
     }
 
+    #region Dispose
+
     protected virtual void Dispose(bool disposing)
     {
         if (disposing)
         {
-            _semaphore.Dispose();
+            _asyncLock.Dispose();
             foreach (var disposable in _disposablesList)
             {
                 disposable.Dispose();
@@ -565,4 +566,30 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>
         Dispose(true);
         GC.SuppressFinalize(this);
     }
+
+    protected virtual async ValueTask DisposeAsyncCore()
+    {
+        await _asyncLock.DisposeAsync();
+        foreach (var disposable in _disposablesList)
+        {
+            if (disposable is IAsyncDisposable asyncDisposable)
+            {
+                await asyncDisposable.DisposeAsync();
+            }
+            else
+            {
+                disposable.Dispose();
+            }
+        }
+        _disposablesList.Clear();
+    }
+
+    /// <inheritdoc />
+    public async ValueTask DisposeAsync()
+    {
+        await DisposeAsyncCore();
+        GC.SuppressFinalize(this);
+    }
+
+    #endregion
 }

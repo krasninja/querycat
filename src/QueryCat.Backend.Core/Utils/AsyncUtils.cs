@@ -193,15 +193,6 @@ public static class AsyncUtils
         => RunSync(() => task.Invoke(CancellationToken.None));
 
     /// <summary>
-    /// Executes an async ValueTask method which has a T return value synchronously.
-    /// </summary>
-    /// <param name="task">Task.</param>
-    public static T? RunSync<T>(Func<ValueTask<T>> task)
-    {
-        return task.Invoke().GetAwaiter().GetResult();
-    }
-
-    /// <summary>
     /// Converts async enumerable into list.
     /// </summary>
     /// <param name="items">Async enumerable.</param>
@@ -220,13 +211,49 @@ public static class AsyncUtils
     }
 
     /// <summary>
+    /// Returns the first element of a sequence, or a default value if no element is found.
+    /// </summary>
+    /// <param name="items">Async enumerable to return an element.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <typeparam name="T">Enumerable type.</typeparam>
+    /// <returns>The first element or null.</returns>
+    public static async Task<T?> FirstOrDefaultAsync<T>(this IAsyncEnumerable<T> items,
+        CancellationToken cancellationToken = default)
+    {
+        await foreach (var item in items.WithCancellation(cancellationToken).ConfigureAwait(false))
+        {
+            return item;
+        }
+        return default;
+    }
+
+    /// <summary>
+    /// Returns the first element of a sequence, or a default value if no element is found.
+    /// </summary>
+    /// <param name="items">Async enumerable to return an element.</param>
+    /// <param name="defaultValue">Default value.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <typeparam name="T">Enumerable type.</typeparam>
+    /// <returns>The first element or default.</returns>
+    public static async Task<T> FirstOrDefaultAsync<T>(this IAsyncEnumerable<T> items,
+        T defaultValue,
+        CancellationToken cancellationToken = default)
+    {
+        await foreach (var item in items.WithCancellation(cancellationToken).ConfigureAwait(false))
+        {
+            return item;
+        }
+        return defaultValue;
+    }
+
+    /// <summary>
     /// Convert <see cref="IEnumerable{T}" /> to <see cref="IAsyncEnumerable{T}" />.
     /// </summary>
-    /// <param name="source"></param>
-    /// <typeparam name="TSource"></typeparam>
-    /// <returns></returns>
+    /// <param name="source">Source enumerable.</param>
+    /// <typeparam name="TSource">Source type.</typeparam>
+    /// <returns>Instance of <see cref="IAsyncEnumerable{TSource}" />.</returns>
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
-    public static async IAsyncEnumerable<TSource> ToAsyncEnumerable<TSource>(this IEnumerable<TSource> source)
+    public static async IAsyncEnumerable<TSource> ToAsyncEnumerable<TSource>(IEnumerable<TSource> source)
 #pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
     {
         using var enumerator = source.GetEnumerator();
@@ -235,4 +262,33 @@ public static class AsyncUtils
             yield return enumerator.Current;
         }
     }
+
+    private sealed class EmptyAsyncEnumerator<T> : IAsyncEnumerator<T>
+    {
+        /// <inheritdoc />
+        public T Current => throw new InvalidOperationException();
+
+        /// <inheritdoc />
+        public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+
+        /// <inheritdoc />
+        public ValueTask<bool> MoveNextAsync() => ValueTask.FromResult(false);
+    }
+
+    private sealed class EmptyAsyncEnumerable<T> : IAsyncEnumerable<T>
+    {
+        public static EmptyAsyncEnumerable<T> Instance { get; } = new();
+
+        private static readonly EmptyAsyncEnumerator<T> _enumerator = new();
+
+        /// <inheritdoc />
+        public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellationToken = default) => _enumerator;
+    }
+
+    /// <summary>
+    /// Convert <see cref="IEnumerable{T}" /> to <see cref="IAsyncEnumerable{T}" />.
+    /// </summary>
+    /// <typeparam name="TSource">Source type.</typeparam>
+    /// <returns>Instance of <see cref="IAsyncEnumerable{TSource}" />.</returns>
+    public static IAsyncEnumerable<TSource> Empty<TSource>() => EmptyAsyncEnumerable<TSource>.Instance;
 }

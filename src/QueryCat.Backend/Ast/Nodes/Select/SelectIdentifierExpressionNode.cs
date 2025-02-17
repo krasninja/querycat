@@ -57,7 +57,8 @@ internal sealed class SelectIdentifierExpressionNode : IdentifierExpressionNode,
     }
 
     /// <inheritdoc />
-    public override void Accept(AstVisitor visitor) => visitor.Visit(this);
+    public override ValueTask AcceptAsync(AstVisitor visitor, CancellationToken cancellationToken)
+        => visitor.VisitAsync(this, cancellationToken);
 
     /// <inheritdoc />
     public override object Clone() => new SelectIdentifierExpressionNode(this);

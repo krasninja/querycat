@@ -71,7 +71,7 @@ public static class StringUtils
     /// <remarks>
     /// Source: https://www.codeproject.com/Tips/823670/Csharp-Light-and-Fast-CSV-Parser.
     /// </remarks>
-    public static List<string> GetFieldsFromLine(string line, char delimiter = ',', char quoteChar = '"')
+    public static string[] GetFieldsFromLine(string line, char delimiter = ',', char quoteChar = '"')
     {
         var inQuote = false;
         var record = new List<string>();
@@ -170,7 +170,7 @@ public static class StringUtils
         }
 
         _stringBuilderPool.Return(sb);
-        return record;
+        return record.ToArray();
     }
 
     /// <summary>

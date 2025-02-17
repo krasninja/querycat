@@ -50,7 +50,7 @@ internal readonly struct CacheKey
         From = from;
         InputArguments = inputArguments.Where(a => !string.IsNullOrEmpty(a)).ToHashSet();
         SelectColumns = selectColumns.ToHashSet();
-        Conditions = (conditions ?? Array.Empty<CacheKeyCondition>()).ToHashSet();
+        Conditions = (conditions ?? []).ToHashSet();
         Offset = offset;
         Limit = limit ?? -1;
     }

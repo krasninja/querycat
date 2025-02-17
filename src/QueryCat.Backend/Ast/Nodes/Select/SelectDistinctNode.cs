@@ -51,5 +51,6 @@ internal sealed class SelectDistinctNode : AstNode
     public override IEnumerable<IAstNode> GetChildren() => OnNodes;
 
     /// <inheritdoc />
-    public override void Accept(AstVisitor visitor) => visitor.Visit(this);
+    public override ValueTask AcceptAsync(AstVisitor visitor, CancellationToken cancellationToken)
+        => visitor.VisitAsync(this, cancellationToken);
 }

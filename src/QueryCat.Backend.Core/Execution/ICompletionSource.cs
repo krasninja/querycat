@@ -9,6 +9,8 @@ public interface ICompletionSource
     /// Get completion items based on current context.
     /// </summary>
     /// <param name="context">Completion context.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Completion result.</returns>
-    IEnumerable<CompletionResult> Get(CompletionContext context);
+    IAsyncEnumerable<CompletionResult> GetAsync(CompletionContext context,
+        CancellationToken cancellationToken = default);
 }

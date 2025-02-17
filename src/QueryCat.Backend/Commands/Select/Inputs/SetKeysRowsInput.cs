@@ -53,18 +53,18 @@ internal sealed class SetKeysRowsInput : RowsInput, IRowsInputKeys
     public override Task CloseAsync(CancellationToken cancellationToken = default) => _rowsInput.CloseAsync(cancellationToken);
 
     /// <inheritdoc />
-    public override Task ResetAsync(CancellationToken cancellationToken = default)
+    public override async Task ResetAsync(CancellationToken cancellationToken = default)
     {
         foreach (var condition in _conditions)
         {
             if (condition.Condition.Generator is IKeyConditionMultipleValuesGenerator multipleValuesGenerator)
             {
-                multipleValuesGenerator.Reset();
+                await multipleValuesGenerator.ResetAsync(cancellationToken);
             }
         }
         _keysFilled = false;
         _hasNoMoreData = false;
-        return _rowsInput.ResetAsync(cancellationToken);
+        await _rowsInput.ResetAsync(cancellationToken);
     }
 
     /// <inheritdoc />
@@ -113,9 +113,10 @@ internal sealed class SetKeysRowsInput : RowsInput, IRowsInputKeys
             {
                 hasMoreMultipleValues = await multipleValuesGenerator.MoveNextAsync(_thread, cancellationToken);
             }
-            if (conditionJoint.Condition.Generator.TryGet(_thread, out var value))
+            var nullableValue = await conditionJoint.Condition.Generator.GetAsync(_thread, cancellationToken);
+            if (nullableValue.HasValue)
             {
-                _rowsInput.SetKeyColumnValue(conditionJoint.ColumnIndex, value, conditionJoint.Condition.Operation);
+                _rowsInput.SetKeyColumnValue(conditionJoint.ColumnIndex, nullableValue.Value, conditionJoint.Condition.Operation);
             }
             else
             {

@@ -18,18 +18,16 @@ namespace QueryCat.IntegrationTests;
 /// <summary>
 /// Various SELECT query tests.
 /// </summary>
-public sealed class Tests : IDisposable
+public sealed class Tests
 {
     private readonly ITestOutputHelper _output;
-    private readonly IExecutionThread<ExecutionOptions> _testThread;
+    private readonly ExecutionThreadBootstrapper _executionThreadBootstrapper = TestThread.CreateBootstrapper()
+        .WithRegistrations(AdditionalRegistration.Register)
+        .WithRegistrations(Backend.Addons.Functions.JsonFunctions.RegisterFunctions);
 
     public Tests(ITestOutputHelper output)
     {
         _output = output;
-        _testThread = TestThread.CreateBootstrapper()
-            .WithRegistrations(AdditionalRegistration.Register)
-            .WithRegistrations(Backend.Addons.Functions.JsonFunctions.RegisterFunctions)
-            .Create();
     }
 
     [Theory]
@@ -37,17 +35,19 @@ public sealed class Tests : IDisposable
     public async Task Select(string fileName)
     {
         // Arrange.
+        await using var thread = await _executionThreadBootstrapper.CreateAsync();
         Application.Culture = CultureInfo.InvariantCulture;
-        _testThread.FunctionsManager.RegisterFunction(SumIntegers);
-        _testThread.FunctionsManager.RegisterFunction(FuncWithObject);
-        _testThread.FunctionsManager.RegisterFunction(ReturnObjFunc);
-        _testThread.FunctionsManager.RegisterFunction(SumIntegersOpt);
-        _testThread.FunctionsManager.RegisterFunction(VoidFunc);
-        _testThread.FunctionsManager.RegisterFunction(ItStocksRowsInput.ItStocks);
+        thread.FunctionsManager.RegisterFunction(SumIntegers);
+        thread.FunctionsManager.RegisterFunction(FuncWithObject);
+        thread.FunctionsManager.RegisterFunction(ReturnObjFunc);
+        thread.FunctionsManager.RegisterFunction(SumIntegersOpt);
+        thread.FunctionsManager.RegisterFunction(VoidFunc);
+        thread.FunctionsManager.RegisterFunction(NoArgsFunc);
+        thread.FunctionsManager.RegisterFunction(ItStocksRowsInput.ItStocks);
 
-        _testThread.TopScope.Variables["user1"] = VariantValue.CreateFromObject(User.GetTestUser1());
-        _testThread.TopScope.Variables["user2"] = VariantValue.CreateFromObject(User.GetTestUser2());
-        _testThread.TopScope.Variables["user3"] = VariantValue.CreateFromObject(User.GetTestUser3());
+        thread.TopScope.Variables["user1"] = VariantValue.CreateFromObject(User.GetTestUser1());
+        thread.TopScope.Variables["user2"] = VariantValue.CreateFromObject(User.GetTestUser2());
+        thread.TopScope.Variables["user3"] = VariantValue.CreateFromObject(User.GetTestUser3());
 
         var data = TestThread.GetQueryData(fileName);
         if (data.Skip)
@@ -55,7 +55,7 @@ public sealed class Tests : IDisposable
             SkipException.ForSkip(data.Comment);
             return;
         }
-        var value = await _testThread.RunAsync(data.Query);
+        var value = await thread.RunAsync(data.Query);
 
         // Get query plan.
         if (value.Type == DataType.Object
@@ -67,7 +67,7 @@ public sealed class Tests : IDisposable
         }
 
         // Act.
-        var result = TestThread.GetQueryResult(_testThread);
+        var result = TestThread.GetQueryResult(thread);
 
         // Assert.
         Assert.Equal(data.Expected, result);
@@ -106,9 +106,8 @@ public sealed class Tests : IDisposable
     [FunctionSignature("void_func(a: integer): void")]
     internal static VariantValue VoidFunc(IExecutionThread thread) => VariantValue.Null;
 
-    /// <inheritdoc />
-    public void Dispose()
-    {
-        _testThread.Dispose();
-    }
+    [SafeFunction]
+    [FunctionSignature("noargs_func(): int")]
+    internal static ValueTask<VariantValue> NoArgsFunc(IExecutionThread thread, CancellationToken cancellationToken)
+        => ValueTask.FromResult(new VariantValue(3));
 }

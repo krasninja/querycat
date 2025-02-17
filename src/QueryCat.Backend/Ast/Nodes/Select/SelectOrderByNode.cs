@@ -25,5 +25,6 @@ internal sealed class SelectOrderByNode : AstNode
     public override object Clone() => new SelectOrderByNode(this);
 
     /// <inheritdoc />
-    public override void Accept(AstVisitor visitor) => visitor.Visit(this);
+    public override ValueTask AcceptAsync(AstVisitor visitor, CancellationToken cancellationToken)
+        => visitor.VisitAsync(this, cancellationToken);
 }

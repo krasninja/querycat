@@ -27,16 +27,17 @@ internal static class KeyConditionSingleValueGeneratorExtensions
             var values = new List<VariantValue>();
             if (oldPosition > -1)
             {
-                multipleValuesGenerator.Reset();
+                await multipleValuesGenerator.ResetAsync(cancellationToken);
             }
             while (await multipleValuesGenerator.MoveNextAsync(thread, cancellationToken))
             {
-                if (multipleValuesGenerator.TryGet(thread, out var value))
+                var nullableValue = await multipleValuesGenerator.GetAsync(thread, cancellationToken);
+                if (nullableValue.HasValue)
                 {
-                    values.Add(value);
+                    values.Add(nullableValue.Value);
                 }
             }
-            multipleValuesGenerator.Reset();
+            await multipleValuesGenerator.ResetAsync(cancellationToken);
 
             // Restore the original position.
             for (var position = 0; position < oldPosition + 1; position++)
@@ -47,6 +48,7 @@ internal static class KeyConditionSingleValueGeneratorExtensions
             return values.ToArray();
         }
 
-        return generator.TryGet(thread, out var variantValue) ? [variantValue] : [];
+        var generatorNullableValue = await generator.GetAsync(thread, cancellationToken);
+        return generatorNullableValue.HasValue ? [generatorNullableValue.Value] : [];
     }
 }

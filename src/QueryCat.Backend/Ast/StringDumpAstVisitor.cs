@@ -23,15 +23,10 @@ internal sealed class StringDumpAstVisitor : DelegateVisitor
     }
 
     /// <inheritdoc />
-    public override void OnVisit(IAstNode node)
+    public override ValueTask OnVisitAsync(IAstNode node, CancellationToken cancellationToken)
     {
         PrettyPrintNode(node);
-    }
-
-    /// <inheritdoc />
-    public override void Run(IAstNode node)
-    {
-        _astTraversal.PreOrder(node);
+        return ValueTask.CompletedTask;
     }
 
     private void PrettyPrintNode(IAstNode node,
@@ -89,21 +84,24 @@ internal sealed class StringDumpAstVisitor : DelegateVisitor
     #region General
 
     /// <inheritdoc />
-    public override void Visit(BinaryOperationExpressionNode node)
+    public override ValueTask VisitAsync(BinaryOperationExpressionNode node, CancellationToken cancellationToken)
     {
         PrettyPrintNode(node, ("op", node.Operation));
+        return ValueTask.CompletedTask;
     }
 
     /// <inheritdoc />
-    public override void Visit(IdentifierExpressionNode node)
+    public override ValueTask VisitAsync(IdentifierExpressionNode node, CancellationToken cancellationToken)
     {
         PrettyPrintNode(node, ("name", node.Name));
+        return ValueTask.CompletedTask;
     }
 
     /// <inheritdoc />
-    public override void Visit(LiteralNode node)
+    public override ValueTask VisitAsync(LiteralNode node, CancellationToken cancellationToken)
     {
         PrettyPrintNode(node, ("value", node.Value.ToString(CultureInfo.InvariantCulture)));
+        return ValueTask.CompletedTask;
     }
 
     #endregion
@@ -111,9 +109,10 @@ internal sealed class StringDumpAstVisitor : DelegateVisitor
     #region Function
 
     /// <inheritdoc />
-    public override void Visit(FunctionCallNode node)
+    public override ValueTask VisitAsync(FunctionCallNode node, CancellationToken cancellationToken)
     {
         PrettyPrintNode(node, ("name", node.FunctionName));
+        return ValueTask.CompletedTask;
     }
 
     #endregion
@@ -121,21 +120,24 @@ internal sealed class StringDumpAstVisitor : DelegateVisitor
     #region Select
 
     /// <inheritdoc />
-    public override void Visit(SelectColumnsSublistAll node)
+    public override ValueTask VisitAsync(SelectColumnsSublistAll node, CancellationToken cancellationToken)
     {
         PrettyPrintNode(node, ("alias", "*"));
+        return ValueTask.CompletedTask;
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectColumnsSublistExpressionNode node)
+    public override ValueTask VisitAsync(SelectColumnsSublistExpressionNode node, CancellationToken cancellationToken)
     {
         PrettyPrintNode(node, ("alias", node.Alias));
+        return ValueTask.CompletedTask;
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectColumnsSublistNode node)
+    public override ValueTask VisitAsync(SelectColumnsSublistNode node, CancellationToken cancellationToken)
     {
         PrettyPrintNode(node, ("alias", node.Alias));
+        return ValueTask.CompletedTask;
     }
 
     #endregion
@@ -145,20 +147,20 @@ internal sealed class StringDumpAstVisitor : DelegateVisitor
      * https://stackoverflow.com/questions/61944125/traversing-a-graph-of-unknown-object-types-and-mutating-some-object-properties
      */
 
-    private static readonly Type[] SimpleTypes =
-    {
+    private static readonly Type[] _simpleTypes =
+    [
         typeof(string),
         typeof(decimal),
         typeof(DateTime),
         typeof(DateTimeOffset),
         typeof(TimeSpan),
         typeof(Guid)
-    };
+    ];
 
     private static bool IsSimpleType(Type type)
     {
         return type.IsPrimitive
-            || Array.IndexOf(SimpleTypes, type) > -1
+            || Array.IndexOf(_simpleTypes, type) > -1
             || type.IsEnum
             || Convert.GetTypeCode(type) != TypeCode.Object
             || (type.IsGenericType

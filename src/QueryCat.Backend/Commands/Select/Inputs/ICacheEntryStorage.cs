@@ -17,6 +17,6 @@ internal interface ICacheEntryStorage
     /// </summary>
     /// <param name="key">Cache key.</param>
     /// <param name="entry">Cache entry.</param>
-    /// <returns><c>True</c> if this is the new entry..</returns>
+    /// <returns><c>True</c> if this is the new entry.</returns>
     bool GetOrCreateEntry(CacheKey key, out CacheEntry entry);
 }

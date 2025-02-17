@@ -140,5 +140,11 @@ namespace QueryCat.Plugins.Client.Resources {
                 return ResourceManager.GetString("Object_Invalid", resourceCulture);
             }
         }
+
+        internal static string AuthorizationError {
+            get {
+                return ResourceManager.GetString("AuthorizationError", resourceCulture);
+            }
+        }
     }
 }

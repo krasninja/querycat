@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using QueryCat.Backend.Core.Execution;
 
 namespace QueryCat.Backend.Execution;
@@ -8,14 +9,15 @@ namespace QueryCat.Backend.Execution;
 public abstract class BaseObjectPropertiesCompletionSource : ICompletionSource
 {
     /// <inheritdoc />
-    public virtual IEnumerable<CompletionResult> Get(CompletionContext context)
+    public virtual async IAsyncEnumerable<CompletionResult> GetAsync(CompletionContext context,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         // Example for "Project.Diagrams[0].Na".
         // ObjectExpression = Project.Diagrams[0]", TermSearch = "Na".
-        var obj = GetSourceObject(context);
+        var obj = await GetSourceObjectAsync(context, cancellationToken);
         if (obj == null)
         {
-            return [];
+            yield break;
         }
 
         // Pre-calculation for text edit.
@@ -33,8 +35,12 @@ public abstract class BaseObjectPropertiesCompletionSource : ICompletionSource
         // Find completions.
         var (_, termSearch) = GetObjectExpressionAndTerm(context.TriggerTokens);
         var completions = GetCompletionItemsByType(obj.GetType(), termSearch);
-        return completions.Select(c => new CompletionResult(
+        var items = completions.Select(c => new CompletionResult(
             c, [new CompletionTextEdit(periodPosition, periodPosition + termSearch.Length, c.Label)]));
+        foreach (var item in items)
+        {
+            yield return item;
+        }
     }
 
     /// <summary>
@@ -59,8 +65,9 @@ public abstract class BaseObjectPropertiesCompletionSource : ICompletionSource
     /// Get the source object for the completion.
     /// </summary>
     /// <param name="context">Completion context.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The source object or null of not found.</returns>
-    protected abstract object? GetSourceObject(CompletionContext context);
+    protected abstract ValueTask<object?> GetSourceObjectAsync(CompletionContext context, CancellationToken cancellationToken);
 
     private IEnumerable<Completion> GetCompletionItemsByType(
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] Type type,

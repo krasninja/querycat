@@ -127,6 +127,7 @@ public sealed class MimeTypeProvider
     /// <returns>Specified content type or default binary type.</returns>
     public string GetContentType(string extension)
     {
+        extension = extension.ToLowerInvariant();
         return _additionalExtensionMimeMapping.TryGetValue(extension, out var mime)
             || _extensionMimeMapping.TryGetValue(extension, out mime)
             ? mime
@@ -134,7 +135,7 @@ public sealed class MimeTypeProvider
     }
 
     /// <summary>
-    /// Try get content type by extension.
+    /// Try to get content type by extension.
     /// </summary>
     /// <param name="extension">File extension.</param>
     /// <param name="mime">Specified content type.</param>

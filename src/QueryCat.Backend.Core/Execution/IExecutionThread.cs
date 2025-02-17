@@ -91,8 +91,10 @@ public interface IExecutionThread : IDisposable
     /// <param name="text">Query text.</param>
     /// <param name="position">Caret position.</param>
     /// <param name="tag">Custom User data.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Completion result.</returns>
-    IEnumerable<CompletionResult> GetCompletions(string text, int position = -1, object? tag = null);
+    IAsyncEnumerable<CompletionResult> GetCompletionsAsync(string text, int position = -1, object? tag = null,
+        CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Create the new variables scope based on top of the current.

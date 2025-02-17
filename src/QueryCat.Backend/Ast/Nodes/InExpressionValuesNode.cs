@@ -35,5 +35,6 @@ internal sealed class InExpressionValuesNode : ExpressionNode
     public override object Clone() => new InExpressionValuesNode(this);
 
     /// <inheritdoc />
-    public override void Accept(AstVisitor visitor) => visitor.Visit(this);
+    public override ValueTask AcceptAsync(AstVisitor visitor, CancellationToken cancellationToken)
+        => visitor.VisitAsync(this, cancellationToken);
 }

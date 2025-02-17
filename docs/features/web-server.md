@@ -75,3 +75,11 @@ $ curl http://localhost:6789/api/query -H "Accept: text/html" -d "select 2+2 as 
 ```bash
 $ curl --get "http://localhost:6789/api/query" --data-urlencode "q=2+2"
 ```
+
+## Listen On All Network Interfaces
+
+Specify the `*` URL to run on all public and private network interfaces:
+
+```
+qcat serve --url 'http://*:6789/'
+```

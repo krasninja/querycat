@@ -78,7 +78,7 @@ public class ExecutionOptions
     public int CompletionsCount { get; set; } = 20;
 
     /// <summary>
-    /// Max number of threads that can access the thread.
+    /// Lock execution thread while it is being used by another caller.
     /// </summary>
-    public int ConcurrencyLevel { get; set; } = 32;
+    public bool PreventConcurrentRun { get; set; } = true;
 }

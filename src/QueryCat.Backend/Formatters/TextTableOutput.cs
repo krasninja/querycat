@@ -4,7 +4,6 @@ using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Storage;
 
@@ -14,7 +13,7 @@ namespace QueryCat.Backend.Formatters;
 /// Output rows into text writer. The result will be formatted
 /// using spaces.
 /// </summary>
-public sealed class TextTableOutput : RowsOutput, IDisposable
+public sealed class TextTableOutput : RowsOutput, IDisposable, IAsyncDisposable
 {
     /// <summary>
     /// Table style.
@@ -487,8 +486,15 @@ public sealed class TextTableOutput : RowsOutput, IDisposable
     /// <inheritdoc />
     public void Dispose()
     {
-        AsyncUtils.RunSync(CloseAsync);
         _streamWriter.Dispose();
         _stream.Dispose();
+    }
+
+    /// <inheritdoc />
+    public async ValueTask DisposeAsync()
+    {
+        await CloseAsync();
+        await _streamWriter.DisposeAsync();
+        await _stream.DisposeAsync();
     }
 }

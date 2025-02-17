@@ -12,7 +12,7 @@
     <projectUrl>https://github.com/krasninja/querycat</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <copyright>(c) Ivan Kozhin, 2022-2025</copyright>
-    <tags>sql csv tsv iisw3c json regexp xml subrip grok logs</tags>
+    <tags>sql csv tsv iisw3c json regexp xml grok logs</tags>
     <repository type="git" url="https://github.com/krasninja/querycat" commit="$CommitHash$" />
     <dependencies>
       <group targetFramework="net8.0">

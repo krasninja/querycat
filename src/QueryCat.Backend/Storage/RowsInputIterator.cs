@@ -2,7 +2,6 @@ using System.Runtime.CompilerServices;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Storage;
@@ -10,7 +9,7 @@ namespace QueryCat.Backend.Storage;
 /// <summary>
 /// Iterator for <see cref="IRowsInput" />.
 /// </summary>
-public class RowsInputIterator : IRowsIterator, IRowsIteratorParent, IDisposable
+public class RowsInputIterator : IRowsIterator, IRowsIteratorParent
 {
     private sealed class CacheInputRow : Row
     {
@@ -178,18 +177,13 @@ public class RowsInputIterator : IRowsIterator, IRowsIteratorParent, IDisposable
         yield return _rowsInput;
     }
 
-    protected virtual void Dispose(bool disposing)
+    /// <summary>
+    /// Close the inner rows input.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Awaitable task.</returns>
+    public Task CloseAsync(CancellationToken cancellationToken = default)
     {
-        if (disposing)
-        {
-            AsyncUtils.RunSync(_rowsInput.CloseAsync);
-        }
-    }
-
-    /// <inheritdoc />
-    public void Dispose()
-    {
-        Dispose(true);
-        GC.SuppressFinalize(this);
+        return _rowsInput.CloseAsync(cancellationToken);
     }
 }

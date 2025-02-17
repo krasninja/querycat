@@ -39,7 +39,8 @@ internal sealed class CastFunctionNode : ExpressionNode
     public override object Clone() => new CastFunctionNode(this);
 
     /// <inheritdoc />
-    public override void Accept(AstVisitor visitor) => visitor.Visit(this);
+    public override ValueTask AcceptAsync(AstVisitor visitor, CancellationToken cancellationToken)
+        => visitor.VisitAsync(this, cancellationToken);
 
     /// <inheritdoc />
     public override string ToString() => $"Cast {ExpressionNode} As {TargetTypeNode}";

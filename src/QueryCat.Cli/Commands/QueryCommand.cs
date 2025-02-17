@@ -119,7 +119,7 @@ internal class QueryCommand : BaseQueryCommand
             {
                 options.AnalyzeRowsCount = int.MaxValue;
             }
-            using var root = applicationOptions.CreateApplicationRoot(options);
+            using var root = await applicationOptions.CreateApplicationRootAsync(options);
             options.DefaultRowsOutput = new PagingOutput(tableOutput, cancellationTokenSource: root.CancellationTokenSource)
             {
                 PagingRowsCount = queryOptions.PageSize,

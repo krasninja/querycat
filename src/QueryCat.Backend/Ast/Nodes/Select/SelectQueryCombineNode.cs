@@ -66,7 +66,8 @@ internal sealed class SelectQueryCombineNode : SelectQueryNode
     public override object Clone() => new SelectQueryCombineNode(this);
 
     /// <inheritdoc />
-    public override void Accept(AstVisitor visitor) => visitor.Visit(this);
+    public override ValueTask AcceptAsync(AstVisitor visitor, CancellationToken cancellationToken)
+        => visitor.VisitAsync(this, cancellationToken);
 
     /// <inheritdoc />
     public override string ToString()

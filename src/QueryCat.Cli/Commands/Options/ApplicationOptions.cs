@@ -2,7 +2,6 @@ using Microsoft.Extensions.Logging;
 using QueryCat.Backend;
 using QueryCat.Backend.Addons.Formatters;
 using QueryCat.Backend.Core;
-using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.PluginsManager;
 using QueryCat.Cli.Infrastructure;
@@ -24,20 +23,22 @@ internal sealed class ApplicationOptions
     public string[] PluginDirectories { get; init; } = [];
 #endif
 
-    public ApplicationRoot CreateApplicationRoot(AppExecutionOptions? executionOptions = null)
+    public async Task<ApplicationRoot> CreateApplicationRootAsync(
+        AppExecutionOptions? executionOptions = null,
+        CancellationToken cancellationToken = default)
     {
 #if ENABLE_PLUGINS && PLUGIN_THRIFT
         try
         {
-            return CreateApplicationRootInternal(executionOptions);
+            return await CreateApplicationRootInternalAsync(executionOptions, cancellationToken);
         }
         catch (Backend.ThriftPlugins.ProxyNotFoundException)
         {
-            AsyncUtils.RunSync(async ct => await InstallPluginsProxyAsync(cancellationToken: ct));
-            return CreateApplicationRootInternal(executionOptions);
+            await InstallPluginsProxyAsync(askUser: true, cancellationToken);
+            return await CreateApplicationRootInternalAsync(executionOptions, cancellationToken);
         }
 #else
-        return CreateApplicationRootInternal(executionOptions);
+        return await CreateApplicationRootInternalAsync(executionOptions, cancellationToken);
 #endif
     }
 
@@ -52,7 +53,7 @@ internal sealed class ApplicationOptions
         }
         if (key == ConsoleKey.Y)
         {
-            var applicationDirectory = DefaultExecutionThread.GetApplicationDirectory(ensureExists: true);
+            var applicationDirectory = Application.GetApplicationDirectory(ensureExists: true);
             var pluginsProxyLocalFile = Path.Combine(applicationDirectory,
                 Backend.ThriftPlugins.ProxyFile.GetProxyFileName(includeVersion: true));
             var downloader = new PluginProxyDownloader(Backend.ThriftPlugins.ProxyFile.GetProxyFileName());
@@ -66,7 +67,9 @@ internal sealed class ApplicationOptions
 #endif
     }
 
-    private ApplicationRoot CreateApplicationRootInternal(AppExecutionOptions? executionOptions = null)
+    private async Task<ApplicationRoot> CreateApplicationRootInternalAsync(
+        AppExecutionOptions? executionOptions = null,
+        CancellationToken cancellationToken = default)
     {
         executionOptions ??= new AppExecutionOptions
         {
@@ -75,13 +78,13 @@ internal sealed class ApplicationOptions
         };
 #if ENABLE_PLUGINS
         executionOptions.PluginDirectories.AddRange(
-            GetPluginDirectories(DefaultExecutionThread.GetApplicationDirectory()));
+            GetPluginDirectories(Application.GetApplicationDirectory()));
         executionOptions.PluginDirectories.AddRange(PluginDirectories);
 #endif
 
         var bootstrapper = new ExecutionThreadBootstrapper(executionOptions)
             .WithConfigStorage(new PersistentInputConfigStorage(
-                Path.Combine(DefaultExecutionThread.GetApplicationDirectory(), ConfigFileName))
+                Path.Combine(Application.GetApplicationDirectory(), ConfigFileName))
             )
             .WithStandardFunctions()
             .WithRegistrations(Backend.Addons.Functions.JsonFunctions.RegisterFunctions)
@@ -91,16 +94,17 @@ internal sealed class ApplicationOptions
         bootstrapper.WithPluginsLoader(thread => new Backend.ThriftPlugins.ThriftPluginsLoader(
             thread,
             executionOptions.PluginDirectories,
-            DefaultExecutionThread.GetApplicationDirectory(),
-            functionsCacheDirectory: Path.Combine(DefaultExecutionThread.GetApplicationDirectory(),
+            Application.GetApplicationDirectory(),
+            functionsCacheDirectory: Path.Combine(Application.GetApplicationDirectory(),
                 ApplicationPluginsFunctionsCacheDirectory),
             minLogLevel: LogLevel)
         );
 #endif
 #if ENABLE_PLUGINS && PLUGIN_ASSEMBLY
         bootstrapper.WithPluginsLoader(thread =>
-            new QueryCat.Backend.AssemblyPlugins.DotNetAssemblyPluginsLoader(thread.FunctionsManager,
-            executionOptions.PluginDirectories));
+            new QueryCat.Backend.AssemblyPlugins.DotNetAssemblyPluginsLoader(
+                thread.FunctionsManager,
+                executionOptions.PluginDirectories));
 #endif
 #if ENABLE_PLUGINS
         bootstrapper.WithPluginsManager(pluginsLoader => new DefaultPluginsManager(
@@ -110,7 +114,7 @@ internal sealed class ApplicationOptions
             pluginsStorage: new S3PluginsStorage(executionOptions.PluginsRepositoryUri))
         );
 #endif
-        var thread = bootstrapper.Create();
+        var thread = await bootstrapper.CreateAsync(cancellationToken);
 
         return new ApplicationRoot(thread, thread.PluginsManager);
     }
@@ -131,12 +135,13 @@ internal sealed class ApplicationOptions
         ];
     }
 
-    public ApplicationRoot CreateStdoutApplicationRoot(
+    public async Task<ApplicationRoot> CreateStdoutApplicationRootAsync(
         AppExecutionOptions? executionOptions = null,
         string? columnsSeparator = null,
-        Backend.Formatters.TextTableOutput.Style outputStyle = Backend.Formatters.TextTableOutput.Style.Table1)
+        Backend.Formatters.TextTableOutput.Style outputStyle = Backend.Formatters.TextTableOutput.Style.Table1,
+        CancellationToken cancellationToken = default)
     {
-        var root = CreateApplicationRoot(executionOptions);
+        var root = await CreateApplicationRootAsync(executionOptions, cancellationToken);
         var tableOutput = new Backend.Formatters.TextTableOutput(
             stream: Stdio.GetConsoleOutput(),
             separator: columnsSeparator,

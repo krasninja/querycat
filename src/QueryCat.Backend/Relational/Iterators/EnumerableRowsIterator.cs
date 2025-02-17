@@ -1,13 +1,11 @@
-using System.Collections;
 using QueryCat.Backend.Core.Data;
-using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend.Relational.Iterators;
 
 /// <summary>
 /// Represents as <see cref="IRowsIterator" /> as <see cref="IEnumerable{T}" />.
 /// </summary>
-public sealed class EnumerableRowsIterator : IEnumerable<Row>, IRowsSchema
+public sealed class EnumerableRowsIterator : IAsyncEnumerable<Row>, IRowsSchema
 {
     private readonly IRowsIterator _rowsIterator;
     private readonly bool _copyRow;
@@ -32,9 +30,9 @@ public sealed class EnumerableRowsIterator : IEnumerable<Row>, IRowsSchema
     }
 
     /// <inheritdoc />
-    public IEnumerator<Row> GetEnumerator()
+    public async IAsyncEnumerator<Row> GetAsyncEnumerator(CancellationToken cancellationToken = default)
     {
-        while (AsyncUtils.RunSync(() => _rowsIterator.MoveNextAsync()))
+        while (await _rowsIterator.MoveNextAsync(cancellationToken))
         {
             if (_copyRow)
             {
@@ -46,7 +44,4 @@ public sealed class EnumerableRowsIterator : IEnumerable<Row>, IRowsSchema
             }
         }
     }
-
-    /// <inheritdoc />
-    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 }

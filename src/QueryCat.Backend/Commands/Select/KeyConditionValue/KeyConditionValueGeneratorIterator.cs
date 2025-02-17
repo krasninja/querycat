@@ -1,7 +1,6 @@
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend.Commands.Select.KeyConditionValue;
 
@@ -30,21 +29,19 @@ internal sealed class KeyConditionValueGeneratorIterator : IKeyConditionMultiple
     }
 
     /// <inheritdoc />
-    public void Reset()
+    public async ValueTask ResetAsync(CancellationToken cancellationToken = default)
     {
         _position = -1;
-        AsyncUtils.RunSync(_rowsIterator.ResetAsync);
+        await _rowsIterator.ResetAsync(cancellationToken);
     }
 
     /// <inheritdoc />
-    public bool TryGet(IExecutionThread thread, out VariantValue value)
+    public ValueTask<VariantValue?> GetAsync(IExecutionThread thread, CancellationToken cancellationToken = default)
     {
         if (_rowsIterator.Columns.Length > 0)
         {
-            value = _rowsIterator.Current[0];
-            return true;
+            return ValueTask.FromResult(new VariantValue?(_rowsIterator.Current[0]));
         }
-        value = VariantValue.Null;
-        return false;
+        return ValueTask.FromResult((VariantValue?)null);
     }
 }

@@ -1,5 +1,6 @@
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
+using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend.FunctionsManager;
 
@@ -15,12 +16,13 @@ public sealed class FunctionsCompletionSource : ICompletionSource
     }
 
     /// <inheritdoc />
-    public IEnumerable<CompletionResult> Get(CompletionContext context)
+    public IAsyncEnumerable<CompletionResult> GetAsync(CompletionContext context,
+        CancellationToken cancellationToken = default)
     {
         // If we have a period - this is already an object, not a variable.
         if (context.TriggerTokens.FindIndex(ParserToken.TokenKindPeriod) > -1)
         {
-            yield break;
+            return AsyncUtils.Empty<CompletionResult>();
         }
 
         if (!_isInitialized)
@@ -29,19 +31,24 @@ public sealed class FunctionsCompletionSource : ICompletionSource
             _isInitialized = true;
         }
 
-        var searchTerm = context.LastTokenText;
-        foreach (var completion in _completions)
+        IEnumerable<CompletionResult> Filter(IEnumerable<Completion> completions)
         {
-            var relevance = Completion.GetRelevanceByTerm(searchTerm, completion.Label);
-            if (relevance > 0.0f)
+            var searchTerm = context.LastTokenText;
+            foreach (var completion in completions)
             {
-                var textEdit = new CompletionTextEdit(
-                    context.TriggerTokenPosition,
-                    context.TriggerTokenPosition + searchTerm.Length,
-                    completion.Label);
-                yield return new CompletionResult(completion, [textEdit]);
+                var relevance = Completion.GetRelevanceByTerm(searchTerm, completion.Label);
+                if (relevance > 0.0f)
+                {
+                    var textEdit = new CompletionTextEdit(
+                        context.TriggerTokenPosition,
+                        context.TriggerTokenPosition + searchTerm.Length,
+                        completion.Label);
+                    yield return new CompletionResult(completion, [textEdit]);
+                }
             }
         }
+
+        return AsyncUtils.ToAsyncEnumerable(Filter(_completions));
     }
 
     private void Initialize()

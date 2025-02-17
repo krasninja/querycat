@@ -12,6 +12,7 @@ using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Plugins;
+using QueryCat.Plugins.Client;
 
 namespace QueryCat.Backend.ThriftPlugins;
 
@@ -22,7 +23,7 @@ public sealed partial class ThriftPluginsServer : IDisposable
         NamedPipes,
     }
 
-    private readonly record struct AuthTokenData(
+    private readonly record struct RegistrationTokenData(
         SemaphoreSlim Semaphore,
         string PluginName);
 
@@ -33,8 +34,9 @@ public sealed partial class ThriftPluginsServer : IDisposable
     private readonly TServer _server;
     private Task? _serverListenThread;
     private readonly CancellationTokenSource _serverCts = new();
-    private readonly ConcurrentDictionary<string, AuthTokenData> _authTokens = new();
-    private readonly List<PluginContext> _plugins = new();
+    private readonly ConcurrentDictionary<string, RegistrationTokenData> _registrationTokens = new();
+    private readonly List<ThriftPluginContext> _plugins = new();
+    private readonly Dictionary<long, ThriftPluginContext> _tokenPluginContextMap = new();
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(ThriftPluginsServer));
 
     public string ServerEndpoint { get; } = "qcat-" + Guid.NewGuid().ToString("N");
@@ -44,7 +46,7 @@ public sealed partial class ThriftPluginsServer : IDisposable
     /// </summary>
     public bool SkipTokenVerification { get; set; }
 
-    internal IReadOnlyCollection<PluginContext> Plugins => _plugins;
+    internal IReadOnlyCollection<ThriftPluginContext> Plugins => _plugins;
 
     /// <summary>
     /// Do not use application logger for Thrift internal logs.
@@ -53,15 +55,18 @@ public sealed partial class ThriftPluginsServer : IDisposable
 
     internal sealed class PluginRegistrationEventArgs : EventArgs
     {
-        public PluginContext PluginContext { get; }
+        public ThriftPluginContext PluginContext { get; }
 
-        public string AuthToken { get; }
+        public string RegistrationToken { get; }
+
+        public long Token { get; }
 
         /// <inheritdoc />
-        public PluginRegistrationEventArgs(PluginContext pluginContext, string authToken)
+        public PluginRegistrationEventArgs(ThriftPluginContext pluginContext, string registrationToken, long token)
         {
             PluginContext = pluginContext;
-            AuthToken = authToken;
+            RegistrationToken = registrationToken;
+            Token = token;
         }
     }
 
@@ -81,7 +86,11 @@ public sealed partial class ThriftPluginsServer : IDisposable
         {
             ServerEndpoint = serverEndpoint;
         }
+        _server = CreateServer(transportType);
+    }
 
+    private TThreadPoolAsyncServer CreateServer(TransportType transportType)
+    {
         var transport = CreateTransport(transportType, ServerEndpoint);
         var transportFactory = new TFramedTransport.Factory();
         var binaryProtocolFactory = new TBinaryProtocol.Factory();
@@ -89,7 +98,7 @@ public sealed partial class ThriftPluginsServer : IDisposable
         var handler = new HandlerWithExceptionIntercept(new Handler(this));
         var asyncProcessor = new Plugins.Sdk.PluginsManager.AsyncProcessor(handler);
         processor.RegisterProcessor(QueryCat.Plugins.Client.ThriftPluginClient.PluginsManagerServiceName, asyncProcessor);
-        _server = new TThreadPoolAsyncServer(
+        return new TThreadPoolAsyncServer(
             new TSingletonProcessorFactory(processor),
             transport,
             transportFactory,
@@ -153,67 +162,85 @@ public sealed partial class ThriftPluginsServer : IDisposable
         _serverListenThread = null;
     }
 
-    private void RegisterPluginContext(PluginContext context, string authToken)
+    private void RegisterPluginContext(ThriftPluginContext context, string registrationToken, long token)
     {
         _plugins.Add(context);
-        OnPluginRegistration?.Invoke(this, new PluginRegistrationEventArgs(context, authToken));
+        _tokenPluginContextMap[token] = context;
+        OnPluginRegistration?.Invoke(this, new PluginRegistrationEventArgs(context, registrationToken, token));
     }
 
-    public void RegisterAuthToken(string token, string pluginName)
+    internal ThriftPluginContext GetPluginContextByToken(long token)
     {
-        _authTokens[token] = new AuthTokenData(new SemaphoreSlim(0, 1), pluginName);
+        if (!_tokenPluginContextMap.TryGetValue(token, out var context))
+        {
+            throw new AuthorizationException();
+        }
+        return context;
     }
 
-    public bool VerifyAuthToken(string token) => _authTokens.ContainsKey(token);
+    internal bool VerifyToken(long token) => token != -1 && _tokenPluginContextMap.ContainsKey(token);
 
-    internal string DumpAuthTokens()
+    public void SetRegistrationToken(string token, string pluginName)
+    {
+        _registrationTokens[token] = new RegistrationTokenData(new SemaphoreSlim(0, 1), pluginName);
+    }
+
+    public bool VerifyRegistrationToken(string token) => _registrationTokens.ContainsKey(token);
+
+    internal string DumpRegistrationTokens()
     {
         var sb = new StringBuilder();
-        foreach (var authToken in _authTokens)
+        foreach (var registrationToken in _registrationTokens)
         {
-            sb.AppendFormat($"{authToken.Key}: {authToken.Value}");
+            sb.AppendFormat($"{registrationToken.Key}: {registrationToken.Value}");
         }
         return sb.ToString();
     }
 
-    public string GetPluginNameByAuthToken(string token)
+    public string GetPluginNameByRegistrationToken(string token)
     {
-        if (_authTokens.TryGetValue(token, out var data))
+        if (_registrationTokens.TryGetValue(token, out var data))
         {
             return data.PluginName;
         }
         return string.Empty;
     }
 
-    public void ConfirmAuthToken(string token)
+    public void ConfirmRegistrationToken(string token)
     {
-        if (_authTokens.TryGetValue(token, out var data))
+        if (_registrationTokens.TryGetValue(token, out var data))
         {
             data.Semaphore.Release();
         }
     }
 
-    public void RemoveAuthToken(string token)
+    public void RemoveRegistrationToken(string token)
     {
-        if (_authTokens.TryRemove(token, out var data))
+        if (_registrationTokens.TryRemove(token, out var data))
         {
             data.Semaphore.Dispose();
         }
     }
 
-    public void WaitForPluginRegistration(string authToken, CancellationToken cancellationToken = default)
+    /// <summary>
+    /// Generate new authorization token.
+    /// </summary>
+    /// <returns>New token.</returns>
+    public long GenerateToken() => Random.Shared.NextInt64();
+
+    public void WaitForPluginRegistration(string registrationToken, CancellationToken cancellationToken = default)
     {
-        if (!_authTokens.TryGetValue(authToken, out var authTokenData))
+        if (!_registrationTokens.TryGetValue(registrationToken, out var registrationTokenData))
         {
-            throw new InvalidOperationException(string.Format(Resources.Errors.TokenNotRegistered, authToken));
+            throw new InvalidOperationException(string.Format(Resources.Errors.TokenNotRegistered, registrationToken));
         }
-        _logger.LogTrace("Waiting for token activation '{Token}'.", authToken);
-        if (!authTokenData.Semaphore.Wait(TimeSpan.FromSeconds(PluginRegistrationTimeoutSeconds), cancellationToken))
+        _logger.LogTrace("Waiting for token activation '{Token}'.", registrationToken);
+        if (!registrationTokenData.Semaphore.Wait(TimeSpan.FromSeconds(PluginRegistrationTimeoutSeconds), cancellationToken))
         {
-            throw new PluginException(string.Format(Resources.Errors.TokenRegistrationTimeout, authToken));
+            throw new PluginException(string.Format(Resources.Errors.TokenRegistrationTimeout, registrationToken));
         }
-        _authTokens.Remove(authToken, out _);
-        authTokenData.Semaphore.Dispose();
+        _registrationTokens.Remove(registrationToken, out _);
+        registrationTokenData.Semaphore.Dispose();
     }
 
     /// <inheritdoc />
@@ -223,7 +250,7 @@ public sealed partial class ThriftPluginsServer : IDisposable
         _serverCts.Dispose();
         foreach (var pluginContext in _plugins)
         {
-            pluginContext.Shutdown();
+            pluginContext.Dispose();
         }
     }
 }

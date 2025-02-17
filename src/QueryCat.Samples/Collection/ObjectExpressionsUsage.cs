@@ -18,9 +18,9 @@ internal class ObjectExpressionsUsage : BaseUsage
     /// <inheritdoc />
     public override async Task RunAsync()
     {
-        var executionThread = new ExecutionThreadBootstrapper()
+        var executionThread = await new ExecutionThreadBootstrapper()
             .WithStandardFunctions()
-            .Create();
+            .CreateAsync();
         var email = new Email
         {
             Body = "TEST",

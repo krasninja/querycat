@@ -1,4 +1,6 @@
+using System.Runtime.CompilerServices;
 using QueryCat.Backend.Core.Execution;
+using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend.Execution;
 
@@ -39,11 +41,12 @@ public sealed class CombineCompletionSource : ICompletionSource
     }
 
     /// <inheritdoc />
-    public IEnumerable<CompletionResult> Get(CompletionContext context)
+    public async IAsyncEnumerable<CompletionResult> GetAsync(CompletionContext context,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         if (_completionSources.Length == 0)
         {
-            return [];
+            yield break;
         }
         var items = new List<CompletionResult>(capacity: _maxItems > -1 ? _maxItems : 120);
 
@@ -53,17 +56,22 @@ public sealed class CombineCompletionSource : ICompletionSource
             var perItem = _maxItems > -1
                 ? (_maxItems - items.Count) / completionIndex--
                 : int.MaxValue;
-            var completions = completionSource
-                .Get(context)
+            var completions = await completionSource
+                .GetAsync(context, cancellationToken)
+                .ToListAsync(cancellationToken: cancellationToken);
+            var filteredCompletions = completions
                 .Where(c => !_preventDuplicates || !HasDuplicates(c, items))
                 .Where(IsNotEmpty)
                 .OrderByDescending(c => c.Completion.Relevance)
                 .Take(perItem);
 
-            items.AddRange(completions);
+            items.AddRange(filteredCompletions);
         }
 
-        return items.OrderByDescending(i => i.Completion.Relevance);
+        foreach (var item in items.OrderByDescending(i => i.Completion.Relevance))
+        {
+            yield return item;
+        }
     }
 
     private bool IsNotEmpty(CompletionResult completionResult) => !string.IsNullOrEmpty(completionResult.Completion.Label);

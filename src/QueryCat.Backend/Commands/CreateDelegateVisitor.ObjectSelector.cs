@@ -44,8 +44,7 @@ internal partial class CreateDelegateVisitor
         public override ValueTask<ObjectSelectorContext.Token?> GetTokenAsync(ObjectSelectorContext context,
             CancellationToken cancellationToken = default)
         {
-            var value = context.ExecutionThread.ObjectSelector.SelectByProperty(context, propertyName);
-            return ValueTask.FromResult(value);
+            return context.ExecutionThread.ObjectSelector.SelectByPropertyAsync(context, propertyName, cancellationToken);
         }
     }
 
@@ -72,7 +71,7 @@ internal partial class CreateDelegateVisitor
                 var value = await _actions[i].InvokeAsync(thread, cancellationToken);
                 _objectIndexesCache[i] = Converter.ConvertValue(value, typeof(object));
             }
-            var info = thread.ObjectSelector.SelectByIndex(context, _objectIndexesCache);
+            var info = await thread.ObjectSelector.SelectByIndexAsync(context, _objectIndexesCache, cancellationToken);
             // Indexes must be initialized, fix it.
             if (info is { Indexes: null })
             {

@@ -31,13 +31,17 @@ public sealed class ThriftPluginExecutionScope : IExecutionScope
         {
             get
             {
-                var result = AsyncUtils.RunSync(ct => _thriftPluginExecutionScope._client.GetVariableAsync(key, ct));
+                var result = AsyncUtils.RunSync(ct =>
+                    _thriftPluginExecutionScope._client.ThriftClient.GetVariableAsync(
+                        _thriftPluginExecutionScope._client.Token, key, ct));
                 return SdkConvert.Convert(result);
             }
             set
             {
                 var convertedValue = SdkConvert.Convert(value);
-                AsyncUtils.RunSync(ct => _thriftPluginExecutionScope._client.SetVariableAsync(key, convertedValue, ct));
+                AsyncUtils.RunSync(ct
+                    => _thriftPluginExecutionScope._client.ThriftClient.SetVariableAsync(
+                        _thriftPluginExecutionScope._client.Token, key, convertedValue, ct));
             }
         }
 
@@ -109,7 +113,7 @@ public sealed class ThriftPluginExecutionScope : IExecutionScope
         }
     }
 
-    private readonly PluginsManager.Client _client;
+    private readonly ThriftPluginClient _client;
 
     /// <inheritdoc />
     public IDictionary<string, VariantValue> Variables { get; }
@@ -117,7 +121,7 @@ public sealed class ThriftPluginExecutionScope : IExecutionScope
     /// <inheritdoc />
     public IExecutionScope? Parent => null;
 
-    public ThriftPluginExecutionScope(PluginsManager.Client client)
+    public ThriftPluginExecutionScope(ThriftPluginClient client)
     {
         _client = client;
         Variables = new RemoteDictionary(this);

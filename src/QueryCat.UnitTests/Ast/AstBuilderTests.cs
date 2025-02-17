@@ -10,7 +10,7 @@ namespace QueryCat.UnitTests.Ast;
 public class AstBuilderTests
 {
     [Fact]
-    public void BuildFromString_QueryWithBetweenClause_ShouldAddBrackets()
+    public async Task BuildFromString_QueryWithBetweenClause_ShouldAddBrackets()
     {
         // Arrange.
         var queryAstVisitor = new QueryAstVisitor();
@@ -21,7 +21,7 @@ public class AstBuilderTests
             "SELECT * FROM read_file('') WHERE id BETWEEN 10 + 20 AND 30 AND id BETWEEN 40 AND 50;");
 
         // Assert.
-        queryAstVisitor.Run(node);
+        await queryAstVisitor.RunAsync(node, CancellationToken.None);
         var newQuery = queryAstVisitor.Get(node);
         Assert.Equal("SELECT * FROM read_file('') WHERE ((id) BETWEEN ((10) + (20)) AND (30)) AND ((id) BETWEEN (40) AND (50));",
             newQuery.Trim());

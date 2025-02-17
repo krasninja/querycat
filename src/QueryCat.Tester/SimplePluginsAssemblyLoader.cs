@@ -35,7 +35,7 @@ public sealed class SimplePluginsAssemblyLoader : PluginsLoader
     {
         foreach (var type in assembly.GetTypes())
         {
-            _functionsManager.RegisterFromType(type);
+            _functionsManager.RegisterFunctions(_functionsManager.Factory.CreateFromType(type));
         }
     }
 }

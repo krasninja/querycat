@@ -39,10 +39,10 @@ internal sealed class SelectCreateDelegateVisitor : CreateDelegateVisitor
     }
 
     /// <inheritdoc />
-    public override IFuncUnit RunAndReturn(IAstNode node)
+    public override async ValueTask<IFuncUnit> RunAndReturnAsync(IAstNode node, CancellationToken cancellationToken)
     {
         _subQueryIterators.Clear();
-        var funcUnit = base.RunAndReturn(node);
+        var funcUnit = await base.RunAndReturnAsync(node, cancellationToken);
         if (funcUnit is FuncUnitDelegate funcUnitDelegate)
         {
             funcUnitDelegate.SubQueryIterators = _subQueryIterators;
@@ -51,52 +51,52 @@ internal sealed class SelectCreateDelegateVisitor : CreateDelegateVisitor
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectIdentifierExpressionNode node)
+    public override ValueTask VisitAsync(SelectIdentifierExpressionNode node, CancellationToken cancellationToken)
     {
         if (VisitIdentifierNode(node, node.TableFieldName, node.TableSourceName))
         {
-            return;
+            return ValueTask.CompletedTask;
         }
 
-        base.Visit((IdentifierExpressionNode)node);
+        return base.VisitAsync((IdentifierExpressionNode)node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(IdentifierExpressionNode node)
+    public override ValueTask VisitAsync(IdentifierExpressionNode node, CancellationToken cancellationToken)
     {
         if (VisitIdentifierNode(node, node.TableFieldName, node.TableSourceName))
         {
-            return;
+            return ValueTask.CompletedTask;
         }
 
-        base.Visit(node);
+        return base.VisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectColumnsSublistExpressionNode node)
+    public override async ValueTask VisitAsync(SelectColumnsSublistExpressionNode node, CancellationToken cancellationToken)
     {
-        ResolveTypesVisitor.Visit(node);
+        await ResolveTypesVisitor.VisitAsync(node, cancellationToken);
         NodeIdFuncMap[node.Id] = NodeIdFuncMap[node.ExpressionNode.Id];
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectColumnsSublistWindowNode node)
+    public override async ValueTask VisitAsync(SelectColumnsSublistWindowNode node, CancellationToken cancellationToken)
     {
-        ResolveTypesVisitor.Visit(node);
+        await ResolveTypesVisitor.VisitAsync(node, cancellationToken);
         NodeIdFuncMap[node.Id] = NodeIdFuncMap[node.AggregateFunctionNode.Id];
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectExistsExpressionNode node)
+    public override async ValueTask VisitAsync(SelectExistsExpressionNode node, CancellationToken cancellationToken)
     {
-        ResolveTypesVisitor.Visit(node);
+        await ResolveTypesVisitor.VisitAsync(node, cancellationToken);
         var commandContext = node.SubQueryNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
         var rowsIterator = commandContext.CurrentIterator;
 
-        async ValueTask<VariantValue> Func(IExecutionThread thread, CancellationToken cancellationToken)
+        async ValueTask<VariantValue> Func(IExecutionThread thread, CancellationToken ct)
         {
-            await rowsIterator.ResetAsync(cancellationToken);
-            if (await rowsIterator.MoveNextAsync(cancellationToken))
+            await rowsIterator.ResetAsync(ct);
+            if (await rowsIterator.MoveNextAsync(ct))
             {
                 return VariantValue.TrueValue;
             }
@@ -107,30 +107,30 @@ internal sealed class SelectCreateDelegateVisitor : CreateDelegateVisitor
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectHavingNode node)
+    public override async ValueTask VisitAsync(SelectHavingNode node, CancellationToken cancellationToken)
     {
-        ResolveTypesVisitor.Visit(node);
+        await ResolveTypesVisitor.VisitAsync(node, cancellationToken);
         NodeIdFuncMap[node.Id] = NodeIdFuncMap[node.ExpressionNode.Id];
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectSearchConditionNode node)
+    public override async ValueTask VisitAsync(SelectSearchConditionNode node, CancellationToken cancellationToken)
     {
-        ResolveTypesVisitor.Visit(node);
+        await ResolveTypesVisitor.VisitAsync(node, cancellationToken);
         NodeIdFuncMap[node.Id] = NodeIdFuncMap[node.ExpressionNode.Id];
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectTableFunctionNode node)
+    public override async ValueTask VisitAsync(SelectTableFunctionNode node, CancellationToken cancellationToken)
     {
-        ResolveTypesVisitor.Visit(node);
+        await ResolveTypesVisitor.VisitAsync(node, cancellationToken);
         NodeIdFuncMap[node.Id] = NodeIdFuncMap[node.TableFunctionNode.Id];
     }
 
     /// <inheritdoc />
-    public override void Visit(FunctionCallNode node)
+    public override async ValueTask VisitAsync(FunctionCallNode node, CancellationToken cancellationToken)
     {
-        ResolveTypesVisitor.Visit(node);
+        await ResolveTypesVisitor.VisitAsync(node, cancellationToken);
         if (node.HasAttribute(AstAttributeKeys.InputAggregateIndexKey))
         {
             var index = node.GetAttribute<int>(AstAttributeKeys.InputAggregateIndexKey);
@@ -138,7 +138,7 @@ internal sealed class SelectCreateDelegateVisitor : CreateDelegateVisitor
             return;
         }
 
-        base.Visit(node);
+        await base.VisitAsync(node, cancellationToken);
 
         var function = node.GetAttribute<IFunction>(AstAttributeKeys.FunctionKey);
         if (function is not { IsAggregate: true })
@@ -192,7 +192,7 @@ internal sealed class SelectCreateDelegateVisitor : CreateDelegateVisitor
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectTableValuesNode node)
+    public override ValueTask VisitAsync(SelectTableValuesNode node, CancellationToken cancellationToken)
     {
         var firstRowTypes = node.RowsNodes.First().ExpressionNodes.Select(n => n.GetDataType());
         var rowsFrame = new RowsFrame(
@@ -230,22 +230,24 @@ internal sealed class SelectCreateDelegateVisitor : CreateDelegateVisitor
             }
             return VariantValue.CreateFromObject(rowsFrame);
         }, DataType.Object);
+
+        return ValueTask.CompletedTask;
     }
 
     /// <inheritdoc />
-    public override void Visit(InOperationExpressionNode node)
+    public override async ValueTask VisitAsync(InOperationExpressionNode node, CancellationToken cancellationToken)
     {
         if (node.InExpressionValuesNodes is SelectQueryNode queryNode)
         {
             var valueAction = NodeIdFuncMap[node.ExpressionNode.Id];
-            var rowsIterator = new SelectPlanner(ExecutionThread).CreateIterator(queryNode, _context);
+            var rowsIterator = await new SelectPlanner(ExecutionThread).CreateIteratorAsync(queryNode, _context, cancellationToken);
             var equalDelegate = VariantValue.GetEqualsDelegate(node.ExpressionNode.GetDataType());
 
-            async ValueTask<VariantValue> Func(IExecutionThread thread, CancellationToken cancellationToken)
+            async ValueTask<VariantValue> Func(IExecutionThread thread, CancellationToken ct)
             {
-                var leftValue = await valueAction.InvokeAsync(thread, cancellationToken);
-                await rowsIterator.ResetAsync(cancellationToken);
-                while (await rowsIterator.MoveNextAsync(cancellationToken))
+                var leftValue = await valueAction.InvokeAsync(thread, ct);
+                await rowsIterator.ResetAsync(ct);
+                while (await rowsIterator.MoveNextAsync(ct))
                 {
                     var rightValue = rowsIterator.Current[0];
                     var isEqual = equalDelegate.Invoke(in leftValue, in rightValue);
@@ -266,31 +268,37 @@ internal sealed class SelectCreateDelegateVisitor : CreateDelegateVisitor
             return;
         }
 
-        base.Visit(node);
+        await base.VisitAsync(node, cancellationToken);
     }
 
     #region Subqueries
 
     /// <inheritdoc />
-    public override void Visit(SelectQuerySpecificationNode node) => VisitSelectQueryNode(node);
+    public override ValueTask VisitAsync(SelectQuerySpecificationNode node, CancellationToken cancellationToken)
+    {
+        return VisitSelectQueryNodeAsync(node, cancellationToken);
+    }
 
     /// <inheritdoc />
-    public override void Visit(SelectQueryCombineNode node) => VisitSelectQueryNode(node);
+    public override ValueTask VisitAsync(SelectQueryCombineNode node, CancellationToken cancellationToken)
+    {
+        return VisitSelectQueryNodeAsync(node, cancellationToken);
+    }
 
-    private void VisitSelectQueryNode(SelectQueryNode node)
+    private async ValueTask VisitSelectQueryNodeAsync(SelectQueryNode node, CancellationToken cancellationToken)
     {
         if (NodeIdFuncMap.ContainsKey(node.Id))
         {
             return;
         }
 
-        var rowsIterator = new SelectPlanner(ExecutionThread).CreateIterator(node, _context);
-        ResolveTypesVisitor.Visit(node);
+        var rowsIterator = await new SelectPlanner(ExecutionThread).CreateIteratorAsync(node, _context, cancellationToken);
+        await ResolveTypesVisitor.VisitAsync(node, cancellationToken);
 
-        async ValueTask<VariantValue> Func(IExecutionThread thread, CancellationToken cancellationToken)
+        async ValueTask<VariantValue> Func(IExecutionThread thread, CancellationToken ct)
         {
-            await rowsIterator.ResetAsync(cancellationToken);
-            if (await rowsIterator.MoveNextAsync(cancellationToken))
+            await rowsIterator.ResetAsync(ct);
+            if (await rowsIterator.MoveNextAsync(ct))
             {
                 return rowsIterator.Current[0];
             }
@@ -302,15 +310,16 @@ internal sealed class SelectCreateDelegateVisitor : CreateDelegateVisitor
     }
 
     /// <inheritdoc />
-    public override void Visit(SelectSubqueryConditionExpressionNode node)
+    public override async ValueTask VisitAsync(SelectSubqueryConditionExpressionNode node, CancellationToken cancellationToken)
     {
         if (NodeIdFuncMap.ContainsKey(node.Id))
         {
             return;
         }
 
-        var rowsIterator = new SelectPlanner(ExecutionThread).CreateIterator(node.SubQueryNode, _context);
-        ResolveTypesVisitor.Visit(node);
+        var rowsIterator = await new SelectPlanner(ExecutionThread)
+            .CreateIteratorAsync(node.SubQueryNode, _context, cancellationToken);
+        await ResolveTypesVisitor.VisitAsync(node, cancellationToken);
 
         if (rowsIterator.Columns.Length > 1)
         {
@@ -319,12 +328,12 @@ internal sealed class SelectCreateDelegateVisitor : CreateDelegateVisitor
         var operationDelegate = VariantValue.GetOperationDelegate(node.Operation);
         var leftValueFunc = NodeIdFuncMap[node.LeftNode.Id];
 
-        async ValueTask<VariantValue> AllFunc(IExecutionThread thread, CancellationToken cancellationToken)
+        async ValueTask<VariantValue> AllFunc(IExecutionThread thread, CancellationToken ct)
         {
-            await rowsIterator.ResetAsync(cancellationToken);
-            while (await rowsIterator.MoveNextAsync(cancellationToken))
+            await rowsIterator.ResetAsync(ct);
+            while (await rowsIterator.MoveNextAsync(ct))
             {
-                var leftValue = await leftValueFunc.InvokeAsync(thread, cancellationToken);
+                var leftValue = await leftValueFunc.InvokeAsync(thread, ct);
                 var rightValue = rowsIterator.Current[0];
                 var result = operationDelegate(in leftValue, in rightValue, out ErrorCode code);
                 ApplyStatistic(thread, code);
@@ -336,12 +345,12 @@ internal sealed class SelectCreateDelegateVisitor : CreateDelegateVisitor
             return VariantValue.TrueValue;
         }
 
-        async ValueTask<VariantValue> AnyFunc(IExecutionThread thread, CancellationToken cancellationToken)
+        async ValueTask<VariantValue> AnyFunc(IExecutionThread thread, CancellationToken ct)
         {
-            await rowsIterator.ResetAsync(cancellationToken);
-            while (await rowsIterator.MoveNextAsync(cancellationToken))
+            await rowsIterator.ResetAsync(ct);
+            while (await rowsIterator.MoveNextAsync(ct))
             {
-                var leftValue = await leftValueFunc.InvokeAsync(thread, cancellationToken);
+                var leftValue = await leftValueFunc.InvokeAsync(thread, ct);
                 var rightValue = rowsIterator.Current[0];
                 var result = operationDelegate(in leftValue, in rightValue, out ErrorCode code);
                 ApplyStatistic(thread, code);

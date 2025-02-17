@@ -19,7 +19,7 @@ internal class PluginRemoveCommand : BaseCommand
             var plugin = OptionsUtils.GetValueForOption(pluginArgument, context);
 
             applicationOptions.InitializeLogger();
-            using var root = applicationOptions.CreateApplicationRoot();
+            using var root = await applicationOptions.CreateApplicationRootAsync();
             await root.PluginsManager.RemoveAsync(plugin, context.GetCancellationToken());
         });
     }

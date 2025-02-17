@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using QueryCat.Backend.Core.Data;
@@ -28,7 +29,7 @@ namespace QueryCat.Plugins.Client;
 /// </remarks>
 public sealed class ThriftPluginExecutionThread : IExecutionThread
 {
-    private readonly PluginsManager.Client _client;
+    private readonly ThriftPluginClient _client;
 
     /// <inheritdoc />
     public IFunctionsManager FunctionsManager { get; }
@@ -65,7 +66,7 @@ public sealed class ThriftPluginExecutionThread : IExecutionThread
     /// <inheritdoc />
     public object? Tag => null;
 
-    public ThriftPluginExecutionThread(PluginsManager.Client client)
+    public ThriftPluginExecutionThread(ThriftPluginClient client)
     {
         _client = client;
         PluginsManager = NullPluginsManager.Instance;
@@ -84,7 +85,8 @@ public sealed class ThriftPluginExecutionThread : IExecutionThread
         try
         {
             CurrentQuery = query;
-            var result = await _client.RunQueryAsync(
+            var result = await _client.ThriftClient.RunQueryAsync(
+                _client.Token,
                 query,
                 parameters?.ToDictionary(k => k.Key, v => SdkConvert.Convert(v.Value)),
                 cancellationToken);
@@ -104,9 +106,10 @@ public sealed class ThriftPluginExecutionThread : IExecutionThread
     }
 
     /// <inheritdoc />
-    public IEnumerable<CompletionResult> GetCompletions(string query, int position = -1, object? tag = null)
+    public IAsyncEnumerable<CompletionResult> GetCompletionsAsync(string query, int position = -1, object? tag = null,
+        CancellationToken cancellationToken = default)
     {
-        yield break;
+        return AsyncUtils.Empty<CompletionResult>();
     }
 
     /// <inheritdoc />

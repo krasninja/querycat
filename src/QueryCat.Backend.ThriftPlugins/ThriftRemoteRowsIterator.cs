@@ -13,7 +13,7 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys
 {
     private const int LoadCount = 10;
 
-    private readonly Plugins.Sdk.Plugin.Client _client;
+    private readonly ThriftPluginContext _context;
     private readonly int _objectHandle;
     private readonly string _id;
     private readonly DynamicBuffer<VariantValue> _cache = new(chunkSize: 64);
@@ -37,41 +37,49 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys
         }
     }
 
-    public ThriftRemoteRowsIterator(Plugins.Sdk.Plugin.Client client, int objectHandle, string? id = null)
+    public ThriftRemoteRowsIterator(ThriftPluginContext context, int objectHandle, string? id = null)
     {
-        _client = client;
+        _context = context;
         _objectHandle = objectHandle;
         _id = id ?? string.Empty;
     }
 
     private void SendContextToPlugin()
     {
-        AsyncUtils.RunSync(ct => _client.RowsSet_SetContextAsync(_objectHandle, new ContextQueryInfo
+        AsyncUtils.RunSync(async ct =>
         {
-            Columns = QueryContext.QueryInfo.Columns.Select(SdkConvert.Convert).ToList(),
-            Limit = QueryContext.QueryInfo.Limit ?? -1,
-            Offset = QueryContext.QueryInfo.Offset,
-        }, ct));
+            using var client = await _context.GetClientAsync(ct);
+            return client.Value.RowsSet_SetContextAsync(_objectHandle, new ContextQueryInfo
+            {
+                Columns = QueryContext.QueryInfo.Columns.Select(SdkConvert.Convert).ToList(),
+                Limit = QueryContext.QueryInfo.Limit ?? -1,
+                Offset = QueryContext.QueryInfo.Offset,
+            }, ct);
+        });
     }
 
     /// <inheritdoc />
     public async Task OpenAsync(CancellationToken cancellationToken = default)
     {
-        await _client.RowsSet_OpenAsync(_objectHandle, cancellationToken);
-        Columns = (await _client.RowsSet_GetColumnsAsync(_objectHandle, cancellationToken)).Select(SdkConvert.Convert).ToArray();
-        UniqueKey = (await _client.RowsSet_GetUniqueKeyAsync(_objectHandle, cancellationToken)).ToArray();
+        using var client = await _context.GetClientAsync(cancellationToken);
+        await client.Value.RowsSet_OpenAsync(_objectHandle, cancellationToken);
+        Columns = (await client.Value.RowsSet_GetColumnsAsync(_objectHandle, cancellationToken))
+            .Select(SdkConvert.Convert).ToArray();
+        UniqueKey = (await client.Value.RowsSet_GetUniqueKeyAsync(_objectHandle, cancellationToken)).ToArray();
     }
 
     /// <inheritdoc />
-    public Task CloseAsync(CancellationToken cancellationToken = default)
+    public async Task CloseAsync(CancellationToken cancellationToken = default)
     {
-        return _client.RowsSet_CloseAsync(_objectHandle, cancellationToken);
+        using var client = await _context.GetClientAsync(cancellationToken);
+        await client.Value.RowsSet_CloseAsync(_objectHandle, cancellationToken);
     }
 
     /// <inheritdoc />
     public async Task ResetAsync(CancellationToken cancellationToken = default)
     {
-        await _client.RowsSet_ResetAsync(_objectHandle, cancellationToken);
+        using var client = await _context.GetClientAsync(cancellationToken);
+        await client.Value.RowsSet_ResetAsync(_objectHandle, cancellationToken);
         _cache.Clear();
     }
 
@@ -103,7 +111,8 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys
             }
         }
 
-        var result = await _client.RowsSet_GetRowsAsync(_objectHandle, LoadCount * Columns.Length, cancellationToken);
+        using var client = await _context.GetClientAsync(cancellationToken);
+        var result = await client.Value.RowsSet_GetRowsAsync(_objectHandle, LoadCount * Columns.Length, cancellationToken);
         if (result.Values == null || result.Values.Count == 0)
         {
             return false;
@@ -119,7 +128,8 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys
     {
         var result = AsyncUtils.RunSync(async ct =>
             {
-                return (await _client.RowsSet_GetKeyColumnsAsync(_objectHandle, ct))
+                using var client = await _context.GetClientAsync(ct);
+                return (await client.Value.RowsSet_GetKeyColumnsAsync(_objectHandle, ct))
                     .Select(c => new KeyColumn(
                         c.ColumnIndex,
                         c.IsRequired,
@@ -133,15 +143,22 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys
     /// <inheritdoc />
     public void SetKeyColumnValue(int columnIndex, VariantValue value, VariantValue.Operation operation)
     {
-        AsyncUtils.RunSync(ct =>
-            _client.RowsSet_SetKeyColumnValueAsync(_objectHandle, columnIndex, operation.ToString(), SdkConvert.Convert(value), ct));
+        AsyncUtils.RunSync(async ct =>
+        {
+            using var client = await _context.GetClientAsync(ct);
+            return client.Value.RowsSet_SetKeyColumnValueAsync(_objectHandle, columnIndex, operation.ToString(),
+                SdkConvert.Convert(value), ct);
+        });
     }
 
     /// <inheritdoc />
     public void UnsetKeyColumnValue(int columnIndex, VariantValue.Operation operation)
     {
-        AsyncUtils.RunSync(ct =>
-            _client.RowsSet_UnsetKeyColumnValueAsync(_objectHandle, columnIndex, operation.ToString(), ct));
+        AsyncUtils.RunSync(async ct =>
+        {
+            using var client = await _context.GetClientAsync(ct);
+            return client.Value.RowsSet_UnsetKeyColumnValueAsync(_objectHandle, columnIndex, operation.ToString(), ct);
+        });
     }
 
     /// <inheritdoc />

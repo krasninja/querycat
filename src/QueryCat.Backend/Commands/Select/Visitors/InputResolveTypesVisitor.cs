@@ -18,7 +18,7 @@ internal class InputResolveTypesVisitor : ResolveTypesVisitor
     }
 
     /// <inheritdoc />
-    public override void Visit(IdentifierExpressionNode node)
+    public override ValueTask VisitAsync(IdentifierExpressionNode node, CancellationToken cancellationToken)
     {
         foreach (var rowsInput in _rowsInputs)
         {
@@ -28,10 +28,10 @@ internal class InputResolveTypesVisitor : ResolveTypesVisitor
                 node.SetAttribute(AstAttributeKeys.InputColumnKey, rowsInput.Columns[columnIndex]);
                 node.SetAttribute(AstAttributeKeys.RowsInputKey, rowsInput);
                 node.SetDataType(rowsInput.Columns[columnIndex].DataType);
-                return;
+                return ValueTask.CompletedTask;
             }
         }
 
-        base.Visit(node);
+        return base.VisitAsync(node, cancellationToken);
     }
 }

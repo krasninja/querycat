@@ -13,7 +13,7 @@ internal interface IKeyConditionSingleValueGenerator
     /// Get the current value.
     /// </summary>
     /// <param name="thread">Execution thread.</param>
-    /// <param name="value">Result value.</param>
-    /// <returns><c>True</c> if able to return, <c>false</c> otherwise.</returns>
-    bool TryGet(IExecutionThread thread, out VariantValue value);
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Current value or null if no value.</returns>
+    ValueTask<VariantValue?> GetAsync(IExecutionThread thread, CancellationToken cancellationToken = default);
 }

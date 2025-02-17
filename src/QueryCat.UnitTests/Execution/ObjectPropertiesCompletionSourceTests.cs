@@ -2,6 +2,7 @@
 using QueryCat.Backend;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Execution;
 
 namespace QueryCat.UnitTests.Execution;
@@ -9,9 +10,11 @@ namespace QueryCat.UnitTests.Execution;
 /// <summary>
 /// Tests for <see cref="ObjectPropertiesCompletionSource" />.
 /// </summary>
-public sealed class ObjectPropertiesCompletionSourceTests : IDisposable
+public sealed class ObjectPropertiesCompletionSourceTests
 {
-    private readonly IExecutionThread _executionThread;
+    private readonly ExecutionThreadBootstrapper _executionThreadBootstrapper = new ExecutionThreadBootstrapper()
+        .WithCompletionSource(new ObjectPropertiesCompletionSource());
+
     private readonly User _user = new()
     {
         Name = "Goblin",
@@ -30,13 +33,6 @@ public sealed class ObjectPropertiesCompletionSourceTests : IDisposable
             }
         ]
     };
-
-    public ObjectPropertiesCompletionSourceTests()
-    {
-        _executionThread = new ExecutionThreadBootstrapper()
-            .WithCompletionSource(new ObjectPropertiesCompletionSource())
-            .Create();
-    }
 
     private class User
     {
@@ -61,13 +57,14 @@ public sealed class ObjectPropertiesCompletionSourceTests : IDisposable
     [InlineData("user.Addresses[0].Cit", "City")]
     [InlineData("user.Addresses[2].Cit", "-")]
     [InlineData("user.Addresses[0].Q", "-")]
-    public void GetCompletions_PartVariableName_ReturnsExpectedCompletions(string query, string expected)
+    public async Task GetCompletions_PartVariableName_ReturnsExpectedCompletions(string query, string expected)
     {
         // Arrange.
-        _executionThread.TopScope.Variables["user"] = VariantValue.CreateFromObject(_user);
+        await using var thread = await _executionThreadBootstrapper.CreateAsync();
+        thread.TopScope.Variables["user"] = VariantValue.CreateFromObject(_user);
 
         // Act.
-        var firstCompletion = _executionThread.GetCompletions(query).FirstOrDefault(CompletionResult.Empty);
+        var firstCompletion = await thread.GetCompletionsAsync(query).FirstOrDefaultAsync(CompletionResult.Empty);
 
         // Assert.
         Assert.Equal(expected, firstCompletion.Completion.Label);
@@ -78,22 +75,17 @@ public sealed class ObjectPropertiesCompletionSourceTests : IDisposable
     [InlineData("user.a", "user.Age")]
     [InlineData("'street' || user.Addresses[0].", "'street' || user.Addresses[0].Street")]
     [InlineData("user.Addresses[0].Cit", "user.Addresses[0].City")]
-    public void ApplyCompletion_PartVariableName_ReturnsExpectedCompletions(string query, string expected)
+    public async Task ApplyCompletion_PartVariableName_ReturnsExpectedCompletions(string query, string expected)
     {
         // Arrange.
-        _executionThread.TopScope.Variables["user"] = VariantValue.CreateFromObject(_user);
+        await using var thread = await _executionThreadBootstrapper.CreateAsync();
+        thread.TopScope.Variables["user"] = VariantValue.CreateFromObject(_user);
 
         // Act.
-        var firstCompletion = _executionThread.GetCompletions(query).FirstOrDefault(CompletionResult.Empty);
+        var firstCompletion = await thread.GetCompletionsAsync(query).FirstOrDefaultAsync(CompletionResult.Empty);
         var replacedText = firstCompletion.Apply(query);
 
         // Assert.
         Assert.Equal(expected, replacedText);
-    }
-
-    /// <inheritdoc />
-    public void Dispose()
-    {
-        _executionThread.Dispose();
     }
 }

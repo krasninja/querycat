@@ -15,7 +15,7 @@ public readonly struct VariantValueArray(params VariantValue[] values) : IEquata
     {
     }
 
-    private VariantValueArray(int size) : this(new VariantValue[size])
+    internal VariantValueArray(int size) : this(new VariantValue[size])
     {
     }
 

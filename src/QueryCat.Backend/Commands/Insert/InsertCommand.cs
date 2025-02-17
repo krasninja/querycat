@@ -12,7 +12,10 @@ namespace QueryCat.Backend.Commands.Insert;
 internal sealed class InsertCommand : ICommand
 {
     /// <inheritdoc />
-    public IFuncUnit CreateHandler(IExecutionThread<ExecutionOptions> executionThread, StatementNode node)
+    public async Task<IFuncUnit> CreateHandlerAsync(
+        IExecutionThread<ExecutionOptions> executionThread,
+        StatementNode node,
+        CancellationToken cancellationToken = default)
     {
         if (executionThread.Options.SafeMode)
         {
@@ -22,9 +25,10 @@ internal sealed class InsertCommand : ICommand
         var insertNode = (InsertNode)node.RootNode;
 
         // Get output source.
-        var rowsOutputFunc = new CreateDelegateVisitor(executionThread)
-            .RunAndReturn(insertNode.InsertTargetNode);
-        var rowsOutput = rowsOutputFunc.Invoke(executionThread).AsRequired<IRowsOutput>();
+        var rowsOutputFunc = await new CreateDelegateVisitor(executionThread)
+            .RunAndReturnAsync(insertNode.InsertTargetNode, cancellationToken);
+        var rowsOutput = (await rowsOutputFunc.InvokeAsync(executionThread, cancellationToken))
+            .AsRequired<IRowsOutput>();
 
         // Evaluate iterator for FROM block and get input source.
         var outputDefinedColumns = insertNode.HasDefinedColumns();
@@ -33,7 +37,8 @@ internal sealed class InsertCommand : ICommand
         {
             CopyInputColumnsToOutput(insertNode.QueryNode.ColumnsListNode, insertNode);
         }
-        var inputIterator = new SelectPlanner(executionThread).CreateIterator(insertNode.QueryNode);
+        var inputIterator = await new SelectPlanner(executionThread)
+            .CreateIteratorAsync(insertNode.QueryNode, cancellationToken: cancellationToken);
 
         // If input list is not defined but for output we have columns - use them as target.
         if (rowsOutput is IRowsSchema rowsOutputSchema && !inputDefinedColumns)

@@ -11,33 +11,37 @@ namespace QueryCat.Backend.Commands.Select;
 
 internal sealed partial class SelectPlanner
 {
-    private void QueryContext_FillQueryContextConditions(
+    private async Task QueryContext_FillQueryContextConditionsAsync(
         SelectCommandContext context,
-        SelectQuerySpecificationNode querySpecificationNode)
+        SelectQuerySpecificationNode querySpecificationNode,
+        CancellationToken cancellationToken)
     {
         // Fill conditions.
         foreach (var inputContext in context.InputQueryContextList)
         {
-            QueryContext_FillQueryContextConditions(
+            await QueryContext_FillQueryContextConditionsAsync(
                 querySpecificationNode.TableExpressionNode?.SearchConditionNode?.ExpressionNode,
                 inputContext,
-                context);
+                context,
+                cancellationToken);
             foreach (var joinedOnNode in querySpecificationNode.GetAllChildren<SelectTableJoinedOnNode>())
             {
-                QueryContext_FillQueryContextConditions(
+                await QueryContext_FillQueryContextConditionsAsync(
                     joinedOnNode.SearchConditionNode,
                     inputContext,
-                    context);
+                    context,
+                    cancellationToken);
             }
         }
 
-        // Fill "limit". For now we limit only if order is not defined.
+        // Fill "limit". For now, we limit only if order is not defined.
         if (querySpecificationNode.OrderByNode == null)
         {
             if (querySpecificationNode.FetchNode != null)
             {
-                var fetchCount = Misc_CreateDelegate(querySpecificationNode.FetchNode.CountNode)
-                    .Invoke(ExecutionThread).AsInteger;
+                var @delegate = await Misc_CreateDelegateAsync(querySpecificationNode.FetchNode.CountNode,
+                    cancellationToken: cancellationToken);
+                var fetchCount = (await @delegate.InvokeAsync(ExecutionThread, cancellationToken)).AsInteger;
                 foreach (var queryContext in context.InputQueryContextList)
                 {
                     queryContext.QueryInfo.Limit = (queryContext.QueryInfo.Limit ?? 0) + fetchCount;
@@ -45,8 +49,9 @@ internal sealed partial class SelectPlanner
             }
             if (querySpecificationNode.OffsetNode != null)
             {
-                var offsetCount = Misc_CreateDelegate(querySpecificationNode.OffsetNode.CountNode)
-                    .Invoke(ExecutionThread).AsInteger;
+                var @delegate = await Misc_CreateDelegateAsync(querySpecificationNode.OffsetNode.CountNode,
+                    cancellationToken: cancellationToken);
+                var offsetCount = (await @delegate.InvokeAsync(ExecutionThread, cancellationToken)).AsInteger;
                 foreach (var queryContext in context.InputQueryContextList)
                 {
                     queryContext.QueryInfo.Limit = (queryContext.QueryInfo.Limit ?? 0) + offsetCount;
@@ -55,10 +60,11 @@ internal sealed partial class SelectPlanner
         }
     }
 
-    private void QueryContext_FillQueryContextConditions(
+    private async Task QueryContext_FillQueryContextConditionsAsync(
         ExpressionNode? predicateNode,
         SelectInputQueryContext rowsInputContext,
-        SelectCommandContext commandContext)
+        SelectCommandContext commandContext,
+        CancellationToken cancellationToken)
     {
         if (predicateNode == null)
         {
@@ -68,7 +74,7 @@ internal sealed partial class SelectPlanner
         var makeDelegateVisitor = new SelectCreateDelegateVisitor(ExecutionThread, commandContext);
 
         // Process expression <id> <op> <expr> or <expr> <op> <id>.
-        bool HandleBinaryOperation(IAstNode node, AstTraversal traversal)
+        async ValueTask<bool> HandleBinaryOperationAsync(IAstNode node, AstTraversal traversal, CancellationToken ct)
         {
             // Get the binary comparision node.
             if (node is not BinaryOperationExpressionNode binaryOperationExpressionNode
@@ -84,32 +90,33 @@ internal sealed partial class SelectPlanner
 
             // Left and Right must be id and expression.
             if (binaryOperationExpressionNode.MatchType(out IdentifierExpressionNode? identifierNode, out ExpressionNode? expressionNode)
-                && TryFindAndAddIdCondition(identifierNode, expressionNode))
+                && await TryFindAndAddIdConditionAsync(identifierNode, expressionNode, ct))
             {
                 return true;
             }
             if (binaryOperationExpressionNode.MatchType(out expressionNode, out identifierNode)
-                && TryFindAndAddIdCondition(identifierNode, expressionNode))
+                && await TryFindAndAddIdConditionAsync(identifierNode, expressionNode, ct))
             {
                 return true;
             }
 
             return false;
 
-            bool TryFindAndAddIdCondition(IdentifierExpressionNode? localIdentifierNode, ExpressionNode? localExpressionNode)
+            async ValueTask<bool> TryFindAndAddIdConditionAsync(IdentifierExpressionNode? localIdentifierNode,
+                ExpressionNode? localExpressionNode, CancellationToken localCancellationToekn)
             {
                 if (localIdentifierNode == null)
                 {
                     return false;
                 }
                 // Try to find correspond row input column.
-                makeDelegateVisitor.RunAndReturn(localIdentifierNode); // This call sets InputColumnKey attribute.
+                await makeDelegateVisitor.RunAndReturnAsync(localIdentifierNode, localCancellationToekn); // This call sets InputColumnKey attribute.
                 var column = localIdentifierNode.GetAttribute<Column>(AstAttributeKeys.InputColumnKey);
                 if (column == null || rowsInputContext.RowsInput.GetColumnIndex(column) < 0)
                 {
                     return false;
                 }
-                var valueFunc = makeDelegateVisitor.RunAndReturn(localExpressionNode!);
+                var valueFunc = await makeDelegateVisitor.RunAndReturnAsync(localExpressionNode!, localCancellationToekn);
                 commandContext.Conditions.TryAddCondition(column, binaryOperationExpressionNode.Operation,
                     new KeyConditionSingleValueGeneratorFunc(valueFunc));
                 return true;
@@ -117,7 +124,7 @@ internal sealed partial class SelectPlanner
         }
 
         // Process expression <id> BETWEEN <expr> AND <expr>.
-        bool HandleBetweenOperation(IAstNode node, AstTraversal traversal)
+        async ValueTask<bool> HandleBetweenOperationAsync(IAstNode node, AstTraversal traversal, CancellationToken ct)
         {
             // Get the between comparision node.
             if (node is not BetweenExpressionNode betweenExpressionNode)
@@ -130,14 +137,14 @@ internal sealed partial class SelectPlanner
                 return false;
             }
             // Try to find correspond row input column.
-            makeDelegateVisitor.RunAndReturn(identifierNode); // This call sets InputColumnKey attribute.
+            await makeDelegateVisitor.RunAndReturnAsync(identifierNode, ct); // This call sets InputColumnKey attribute.
             var column = identifierNode.GetAttribute<Column>(AstAttributeKeys.InputColumnKey);
             if (column == null || rowsInputContext.RowsInput.GetColumnIndex(column) < 0)
             {
                 return false;
             }
-            var leftValueFunc = makeDelegateVisitor.RunAndReturn(betweenExpressionNode.Left);
-            var rightValueFunc = makeDelegateVisitor.RunAndReturn(betweenExpressionNode.Right);
+            var leftValueFunc = await makeDelegateVisitor.RunAndReturnAsync(betweenExpressionNode.Left, ct);
+            var rightValueFunc = await makeDelegateVisitor.RunAndReturnAsync(betweenExpressionNode.Right, ct);
             commandContext.Conditions.TryAddCondition(column, VariantValue.Operation.GreaterOrEquals,
                 new KeyConditionSingleValueGeneratorFunc(leftValueFunc));
             commandContext.Conditions.TryAddCondition(column, VariantValue.Operation.LessOrEquals,
@@ -145,7 +152,7 @@ internal sealed partial class SelectPlanner
             return true;
         }
 
-        bool HandleInOperation(IAstNode node, AstTraversal traversal)
+        async ValueTask<bool> HandleInOperationAsync(IAstNode node, AstTraversal traversal, CancellationToken ct)
         {
             // Get the IN comparision node.
             if (node is not InOperationExpressionNode inOperationExpressionNode)
@@ -158,7 +165,7 @@ internal sealed partial class SelectPlanner
                 return false;
             }
             // Try to find correspond row input column.
-            makeDelegateVisitor.RunAndReturn(identifierNode); // This call sets InputColumnKey attribute.
+            await makeDelegateVisitor.RunAndReturnAsync(identifierNode, cancellationToken); // This call sets InputColumnKey attribute.
             var column = identifierNode.GetAttribute<Column>(AstAttributeKeys.InputColumnKey);
             if (column == null || rowsInputContext.RowsInput.GetColumnIndex(column) < 0)
             {
@@ -166,7 +173,7 @@ internal sealed partial class SelectPlanner
             }
             if (inOperationExpressionNode.InExpressionValuesNodes is InExpressionValuesNode inExpressionValuesNode)
             {
-                var values = inExpressionValuesNode.ValuesNodes.Select(n => makeDelegateVisitor.RunAndReturn(n)).ToArray();
+                var values = await Misc_CreateDelegateAsync(inExpressionValuesNode.ValuesNodes, commandContext, cancellationToken);
                 if (values.Length == 1)
                 {
                     commandContext.Conditions.TryAddCondition(column, VariantValue.Operation.In,
@@ -182,14 +189,15 @@ internal sealed partial class SelectPlanner
             }
             if (inOperationExpressionNode.InExpressionValuesNodes is SelectQueryNode selectQueryNode)
             {
-                var iterator = new SelectPlanner(ExecutionThread).CreateIterator(selectQueryNode, commandContext);
+                var iterator = await new SelectPlanner(ExecutionThread)
+                    .CreateIteratorAsync(selectQueryNode, commandContext, cancellationToken);
                 commandContext.Conditions.TryAddCondition(column, VariantValue.Operation.In,
                     new KeyConditionValueGeneratorIterator(iterator));
                 return true;
             }
             if (inOperationExpressionNode.InExpressionValuesNodes is IdentifierExpressionNode identifierInNode)
             {
-                var identifierNodeAction = makeDelegateVisitor.RunAndReturn(identifierInNode);
+                var identifierNodeAction = await makeDelegateVisitor.RunAndReturnAsync(identifierInNode, cancellationToken);
                 commandContext.Conditions.TryAddCondition(column, VariantValue.Operation.In,
                     new KeyConditionValueGeneratorVariable(identifierNodeAction));
                 return true;
@@ -199,21 +207,21 @@ internal sealed partial class SelectPlanner
 
         var callbackVisitor = new CallbackDelegateVisitor();
         callbackVisitor.AstTraversal.TypesToIgnore.Add(typeof(SelectQuerySpecificationNode));
-        callbackVisitor.Callback = (node, traversal) =>
+        callbackVisitor.Callback = async (node, traversal, ct) =>
         {
-            if (HandleBinaryOperation(node, traversal))
+            if (await HandleBinaryOperationAsync(node, traversal, ct))
             {
                 return;
             }
-            if (HandleBetweenOperation(node, traversal))
+            if (await HandleBetweenOperationAsync(node, traversal, ct))
             {
                 return;
             }
-            if (HandleInOperation(node, traversal))
+            if (await HandleInOperationAsync(node, traversal, ct))
             {
             }
         };
-        callbackVisitor.Run(predicateNode);
+        await callbackVisitor.RunAsync(predicateNode, cancellationToken);
     }
 
     /// <summary>

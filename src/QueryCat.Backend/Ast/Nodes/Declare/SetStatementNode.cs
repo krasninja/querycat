@@ -17,5 +17,6 @@ internal sealed class SetStatementNode : StatementNode
     public override object Clone() => new SetStatementNode(this);
 
     /// <inheritdoc />
-    public override void Accept(AstVisitor visitor) => visitor.Visit(this);
+    public override ValueTask AcceptAsync(AstVisitor visitor, CancellationToken cancellationToken)
+        => visitor.VisitAsync(this, cancellationToken);
 }

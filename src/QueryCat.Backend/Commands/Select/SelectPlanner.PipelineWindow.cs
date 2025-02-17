@@ -8,9 +8,10 @@ namespace QueryCat.Backend.Commands.Select;
 
 internal sealed partial class SelectPlanner
 {
-    private void PipelineWindow_ApplyWindowFunctions(
+    private async Task PipelineWindow_ApplyWindowFunctionsAsync(
         SelectCommandContext context,
-        SelectQuerySpecificationNode querySpecificationNode)
+        SelectQuerySpecificationNode querySpecificationNode,
+        CancellationToken cancellationToken)
     {
         var windowDataList = new List<WindowFunctionInfo>();
         for (var columnIndex = 0; columnIndex < querySpecificationNode.ColumnsListNode.ColumnsNodes.Count; columnIndex++)
@@ -23,7 +24,8 @@ internal sealed partial class SelectPlanner
             windowTarget.WindowSpecificationNode =
                 PipelineWindow_GetPartitionNode(windowTarget, querySpecificationNode.WindowNode);
 
-            var windowFunctionInfo = PipelineWindow_PrepareWindowFunctionInfo(columnIndex, windowTarget, context);
+            var windowFunctionInfo = await PipelineWindow_PrepareWindowFunctionInfoAsync(columnIndex, windowTarget,
+                context, cancellationToken);
             windowDataList.Add(windowFunctionInfo);
         }
         if (windowDataList.Count < 1)
@@ -62,26 +64,27 @@ internal sealed partial class SelectPlanner
         return windowSpecificationNode;
     }
 
-    private WindowFunctionInfo PipelineWindow_PrepareWindowFunctionInfo(
+    private async Task<WindowFunctionInfo> PipelineWindow_PrepareWindowFunctionInfoAsync(
         int columnIndex,
         SelectColumnsSublistWindowNode windowTarget,
-        SelectCommandContext context)
+        SelectCommandContext context,
+        CancellationToken cancellationToken)
     {
         var partitionFormatters = Array.Empty<IFuncUnit>();
         if (windowTarget.WindowSpecificationNode.PartitionNode != null)
         {
-            partitionFormatters = windowTarget.WindowSpecificationNode.PartitionNode.ExpressionNodes
-                .Select(exp => Misc_CreateDelegate(exp, context))
-                .ToArray();
+            partitionFormatters = await Misc_CreateDelegateAsync(
+                windowTarget.WindowSpecificationNode.PartitionNode.ExpressionNodes, context, cancellationToken);
         }
 
         var orderFunctions = Array.Empty<IFuncUnit>();
         var orderData = Array.Empty<OrderColumnData>();
         if (windowTarget.WindowSpecificationNode.OrderNode != null)
         {
-            orderFunctions = windowTarget.WindowSpecificationNode.OrderNode.OrderBySpecificationNodes
-                .Select(exp => Misc_CreateDelegate(exp.ExpressionNode, context))
-                .ToArray();
+            orderFunctions = await Misc_CreateDelegateAsync(
+                windowTarget.WindowSpecificationNode.OrderNode.OrderBySpecificationNodes.Select(n => n.ExpressionNode),
+                context,
+                cancellationToken);
             orderData = windowTarget.WindowSpecificationNode.OrderNode.OrderBySpecificationNodes
                 .Select((n, i) => new OrderColumnData(
                     i,
@@ -91,9 +94,8 @@ internal sealed partial class SelectPlanner
                 .ToArray();
         }
 
-        var aggregateFunctionArguments = windowTarget.AggregateFunctionNode.Arguments
-            .Select(a => Misc_CreateDelegate(a.ExpressionValueNode, context))
-            .ToArray();
+        var aggregateFunctionArguments = await Misc_CreateDelegateAsync(
+            windowTarget.AggregateFunctionNode.Arguments, context, cancellationToken);
         var aggregateTarget = windowTarget.AggregateFunctionNode
             .GetRequiredAttribute<AggregateTarget>(AstAttributeKeys.AggregateFunctionKey);
 

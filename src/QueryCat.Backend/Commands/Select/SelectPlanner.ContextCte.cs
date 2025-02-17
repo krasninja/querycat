@@ -4,7 +4,6 @@ using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Commands.Select.Iterators;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
-using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Relational.Iterators;
 
@@ -12,7 +11,8 @@ namespace QueryCat.Backend.Commands.Select;
 
 internal sealed partial class SelectPlanner
 {
-    private void ContextCte_PrepareInputList(SelectCommandContext context, SelectQuerySpecificationNode node)
+    private async Task ContextCte_PrepareInputListAsync(SelectCommandContext context, SelectQuerySpecificationNode node,
+        CancellationToken cancellationToken)
     {
         context.CteList.AddRange(ContextCte_GetParentList(context));
         if (node.WithNode == null)
@@ -25,26 +25,27 @@ internal sealed partial class SelectPlanner
             var processedAsRecursive = false;
             if (node.WithNode.IsRecursive)
             {
-                processedAsRecursive = ContextCte_PrepareInputRecursiveList(context, withNode);
+                processedAsRecursive = await ContextCte_PrepareInputRecursiveListAsync(context, withNode, cancellationToken);
             }
 
             if (!processedAsRecursive)
             {
-                ContextCte_PrepareInputNonRecursiveList(context, withNode);
+                await ContextCte_PrepareInputNonRecursiveListAsync(context, withNode, cancellationToken);
             }
         }
     }
 
-    private void ContextCte_PrepareInputNonRecursiveList(SelectCommandContext context, SelectWithNode withNode)
+    private async Task ContextCte_PrepareInputNonRecursiveListAsync(SelectCommandContext context, SelectWithNode withNode,
+        CancellationToken cancellationToken)
     {
-        var rowsIterator = CreateIterator(withNode.QueryNode, context);
+        var rowsIterator = await CreateIteratorAsync(withNode.QueryNode, context, cancellationToken);
         var cte = new CommonTableExpression(
             withNode.Name,
             rowsIterator);
         context.CteList.Add(cte);
     }
 
-    private bool ContextCte_PrepareInputRecursiveList(SelectCommandContext context, SelectWithNode withNode)
+    private async Task<bool> ContextCte_PrepareInputRecursiveListAsync(SelectCommandContext context, SelectWithNode withNode, CancellationToken cancellationToken)
     {
         if (withNode.QueryNode is not SelectQueryCombineNode combineNode)
         {
@@ -56,7 +57,7 @@ internal sealed partial class SelectPlanner
         }
 
         // Prepare and evaluate initial query.
-        var leftIterator = CreateIterator(combineNode.LeftQueryNode, context);
+        var leftIterator = await CreateIteratorAsync(combineNode.LeftQueryNode, context, cancellationToken);
         var initialQueryCommandContext = combineNode.LeftQueryNode
             .GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
         ContextCte_FixColumnsNames(
@@ -69,7 +70,7 @@ internal sealed partial class SelectPlanner
         context.CteList.Add(new CommonTableExpression(withNode.Name, proxyRowsIterator));
 
         // Then prepare iterator for recursive part.
-        var rightIterator = CreateIterator(combineNode.RightQueryNode, context);
+        var rightIterator = await CreateIteratorAsync(combineNode.RightQueryNode, context, cancellationToken);
 
         // Final result.
         var totalResult = new RowsFrame(initialQueryCommandContext.CurrentIterator.Columns);
@@ -78,26 +79,18 @@ internal sealed partial class SelectPlanner
             combineNode.IsDistinct ? new DistinctRowsIteratorIterator(ExecutionThread, totalResultProxy) : totalResultProxy);
 
         // Merge current working frame and recalculate it based on new result.
-        var workingFrame = AsyncUtils.RunSync(initialQueryCommandContext.CurrentIterator.ToFrameAsync);
-        if (workingFrame == null)
-        {
-            return false;
-        }
+        var workingFrame = await initialQueryCommandContext.CurrentIterator.ToFrameAsync(cancellationToken);
         while (!workingFrame.IsEmpty)
         {
             // Append working iterator to the total result.
             totalResultProxy.Set(workingFrame.GetIterator());
-            AsyncUtils.RunSync(() => writeRowsIterator.WriteAllAsync());
+            await writeRowsIterator.WriteAllAsync(cancellationToken);
 
             // Run the recursive query based on new working rows set.
             proxyRowsIterator.Set(workingFrame.GetIterator());
-            var newFrame = AsyncUtils.RunSync(rightIterator.ToFrameAsync);
-            if (newFrame == null)
-            {
-                break;
-            }
+            var newFrame = await rightIterator.ToFrameAsync(cancellationToken);
             workingFrame = newFrame;
-            AsyncUtils.RunSync(rightIterator.ResetAsync);
+            await rightIterator.ResetAsync(cancellationToken);
         }
 
         proxyRowsIterator.Set(totalResult.GetIterator());

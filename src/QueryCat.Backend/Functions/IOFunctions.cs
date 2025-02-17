@@ -66,7 +66,7 @@ internal static class IOFunctions
         var formatter = thread.Stack.FrameLength > 1
             ? thread.Stack[1].AsObject as IRowsFormatter
             : await File_GetFormatterAsync(path, thread, funcArgs, cancellationToken);
-        var files = File_GetFileInputsByPath(path, thread, formatter, funcArgs).ToList();
+        var files = await File_GetFileInputsByPath(path, thread, formatter, funcArgs).ToListAsync(cancellationToken);
         if (!files.Any())
         {
             throw new QueryCatException(string.Format(Resources.Errors.PathNoFiles, path));
@@ -94,14 +94,14 @@ internal static class IOFunctions
             Directory.CreateDirectory(fullDirectory);
         }
         Stream file = File.Open(path, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
-        if (_compressFilesExtensions.Contains(Path.GetExtension(path).ToLower()))
+        if (_compressFilesExtensions.Contains(Path.GetExtension(path).ToLowerInvariant()))
         {
             file = new GZipStream(file, CompressionMode.Compress, leaveOpen: false);
         }
         return VariantValue.CreateFromObject(formatter.OpenOutput(file));
     }
 
-    private static IEnumerable<IRowsInput> File_GetFileInputsByPath(
+    private static async IAsyncEnumerable<IRowsInput> File_GetFileInputsByPath(
         string path,
         IExecutionThread thread,
         IRowsFormatter? formatter = null,
@@ -109,7 +109,7 @@ internal static class IOFunctions
     {
         foreach (var file in File_GetFilesByPath(path))
         {
-            var fileFormatter = formatter ?? AsyncUtils.RunSync(() => File_GetFormatterAsync(file, thread, funcArgs))!;
+            var fileFormatter = formatter ?? await File_GetFormatterAsync(file, thread, funcArgs);
             Stream fileStream = File.Open(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             if (_compressFilesExtensions.Contains(Path.GetExtension(file).ToLower()))
             {
@@ -179,25 +179,25 @@ internal static class IOFunctions
     private sealed class ListDirectoryEntry
     {
         [Description("File or directory.")]
-        public string Type { get; set; } = string.Empty;
+        public string Type { get; init; } = string.Empty;
 
         [Description("Name of the file or directory.")]
         public required string Name { get; init; }
 
         [Description("Full path of the file or directory.")]
-        public string Path { get; set; } = string.Empty;
+        public string Path { get; init; } = string.Empty;
 
         [Description("Size of the file, in bytes.")]
-        public long? Size { get; set; }
+        public long? Size { get; init; }
 
         [Description("Date and time at (UTC) which the file or directory has been created ")]
-        public DateTime CreatedAt { get; set; }
+        public DateTime CreatedAt { get; init; }
 
         [Description("Date and time (UTC) at which the file or directory has been last accessed.")]
-        public DateTime LastAccessedAt { get; set; }
+        public DateTime LastAccessedAt { get; init; }
 
         [Description("Date and time (UTC) at which the file or directory has been last modified.")]
-        public DateTime LastWriteTime { get; set; }
+        public DateTime LastWriteTime { get; init; }
     }
 
     private static IEnumerable<ListDirectoryEntry> ListDirectoryInternal(string path)
@@ -368,7 +368,7 @@ internal static class IOFunctions
     {
         var args = StringUtils.GetFieldsFromLine(query, delimiter: '&');
         var fa = new FunctionCallArguments();
-        if (args.Count == 1 && args[0].IndexOf('=') == -1)
+        if (args.Length == 1 && args[0].IndexOf('=') == -1)
         {
             fa.Add(CreateValueFromString(args[0]));
         }

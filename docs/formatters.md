@@ -9,7 +9,6 @@
 | `grok(pattern: string): object<IRowsFormatter>`<br /><br /> Grok expression formatter. |
 | `json(): object<IRowsFormatter>`<br /><br /> JSON formatter. |
 | `regex(pattern: string, flags?: string): object<IRowsFormatter>`<br /><br /> Regular expression formatter. |
-| `srt(path: string): object<IRowsFormatter>`<br /><br /> SubRip (SRT) formatter. |
 | `text_line(): object<IRowsFormatter>`<br /><br /> Text line formatter. |
 | `tsv(has_header?: boolean): object<IRowsFormatter>`<br /><br /> Tab separated values (TSV) format. |
 | `xml(): object<IRowsFormatter>`<br /><br /> XML formatter. |

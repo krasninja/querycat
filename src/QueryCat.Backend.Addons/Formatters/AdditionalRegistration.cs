@@ -9,7 +9,6 @@ public static class AdditionalRegistration
         JsonFormatter.RegisterFunctions(functionsManager);
         RegexpFormatter.RegisterFunctions(functionsManager);
         GrokFormatter.RegisterFunctions(functionsManager);
-        SubRipFormatter.RegisterFunctions(functionsManager);
         XmlFormatter.RegisterFunctions(functionsManager);
         functionsManager.RegisterFunction(IISW3CFormatter.IISW3C);
     }

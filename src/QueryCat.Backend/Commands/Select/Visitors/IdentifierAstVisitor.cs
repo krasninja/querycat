@@ -23,30 +23,31 @@ internal sealed class IdentifierAstVisitor : AstVisitor
     }
 
     /// <inheritdoc />
-    public override void Run(IAstNode node)
+    public override async ValueTask RunAsync(IAstNode node, CancellationToken cancellationToken)
     {
         _columns.Clear();
-        base.Run(node);
+        await base.RunAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
-    public override void Visit(IdentifierExpressionNode node)
+    public override ValueTask VisitAsync(IdentifierExpressionNode node, CancellationToken cancellationToken)
     {
         if (node.IsCurrentSpecialIdentifier)
         {
-            return;
+            return ValueTask.CompletedTask;
         }
         if (!string.IsNullOrEmpty(node.TableSourceName)
             && node.TableSourceName != _sourceName)
         {
-            return;
+            return ValueTask.CompletedTask;
         }
         // Prevent duplication.
         if (_columns.Any(c => c.Name.Equals(node.TableFieldName)))
         {
-            return;
+            return ValueTask.CompletedTask;
         }
 
         _columns.Add(new Column(node.TableFieldName, _sourceName, DataType.Void));
+        return ValueTask.CompletedTask;
     }
 }

@@ -5,14 +5,13 @@ using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Fetch;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend.Storage;
 
 /// <summary>
 /// The class that allow to represent enumerable as rows input/output.
 /// </summary>
-public class CollectionInput : IRowsOutput, IDisposable, IRowsInputUpdate
+public class CollectionInput : IRowsOutput, IDisposable, IAsyncDisposable, IRowsInputUpdate
 {
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor | DynamicallyAccessedMemberTypes.PublicProperties)]
     private readonly Type _type;
@@ -81,10 +80,9 @@ public class CollectionInput : IRowsOutput, IDisposable, IRowsInputUpdate
     }
 
     /// <inheritdoc />
-    public Task CloseAsync(CancellationToken cancellationToken = default)
+    public async Task CloseAsync(CancellationToken cancellationToken = default)
     {
-        (_enumerator as IDisposable)?.Dispose();
-        return Task.CompletedTask;
+        await DisposeAsync();
     }
 
     /// <inheritdoc />
@@ -220,7 +218,7 @@ public class CollectionInput : IRowsOutput, IDisposable, IRowsInputUpdate
     {
         if (disposing)
         {
-            AsyncUtils.RunSync(CloseAsync);
+            (_enumerator as IDisposable)?.Dispose();
         }
     }
 
@@ -228,6 +226,25 @@ public class CollectionInput : IRowsOutput, IDisposable, IRowsInputUpdate
     public void Dispose()
     {
         Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual async ValueTask DisposeAsyncCore()
+    {
+        if (_enumerable is IAsyncDisposable asyncDisposable)
+        {
+            await asyncDisposable.DisposeAsync();
+        }
+        else
+        {
+            (_enumerator as IDisposable)?.Dispose();
+        }
+    }
+
+    /// <inheritdoc />
+    public async ValueTask DisposeAsync()
+    {
+        await DisposeAsyncCore();
         GC.SuppressFinalize(this);
     }
 }

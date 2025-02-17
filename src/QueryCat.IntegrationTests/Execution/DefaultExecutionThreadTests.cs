@@ -1,3 +1,4 @@
+using QueryCat.Backend;
 using Xunit;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Execution;
@@ -11,20 +12,15 @@ namespace QueryCat.IntegrationTests.Execution;
 /// </summary>
 public class DefaultExecutionThreadTests
 {
-    private readonly DefaultExecutionThread _testThread;
-
-    public DefaultExecutionThreadTests()
-    {
-        _testThread = TestThread.CreateBootstrapper()
-            .WithRegistrations(AdditionalRegistration.Register)
-            .Create();
-    }
+    private readonly ExecutionThreadBootstrapper _executionThreadBootstrapper = TestThread.CreateBootstrapper()
+        .WithRegistrations(AdditionalRegistration.Register);
 
     [Fact]
     public async Task Run_WithParameters_ShouldProcess()
     {
         // Arrange.
-        _testThread.TopScope.Variables["param1"] = new(11);
+        await using var thread = await _executionThreadBootstrapper.CreateAsync();
+        thread.TopScope.Variables["param1"] = new(11);
         var @params = new Dictionary<string, VariantValue>
         {
             ["param2"] = new(24),
@@ -32,25 +28,26 @@ public class DefaultExecutionThreadTests
         };
 
         // Act.
-        var result = await _testThread.RunAsync("param1 + param2 + param3;", @params);
+        var result = await thread.RunAsync("param1 + param2 + param3;", @params);
 
         // Assert.
         Assert.Equal(77, result.AsInteger);
-        Assert.False(_testThread.TopScope.Variables.ContainsKey("param2"));
+        Assert.False(thread.TopScope.Variables.ContainsKey("param2"));
     }
 
     [Fact]
     public async Task Run_WithParameterNestedScope_TopScopeShouldOverride()
     {
         // Arrange.
-        _testThread.TopScope.Variables["param1"] = new(2023);
+        await using var thread = await _executionThreadBootstrapper.CreateAsync();
+        thread.TopScope.Variables["param1"] = new(2023);
         var @params = new Dictionary<string, VariantValue>
         {
             ["param1"] = new(2024),
         };
 
         // Act.
-        var result = await _testThread.RunAsync("param1;", @params);
+        var result = await thread.RunAsync("param1;", @params);
 
         // Assert.
         Assert.Equal(2024, result.AsInteger);

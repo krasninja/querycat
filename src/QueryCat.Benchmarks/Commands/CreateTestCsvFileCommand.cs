@@ -2,7 +2,6 @@ using System.CommandLine;
 using System.Diagnostics;
 using Bogus;
 using Bogus.DataSets;
-using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Formatters;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Storage;
@@ -37,7 +36,7 @@ internal class CreateTestCsvFileCommand : Command
                 var filePath = Path.Combine("../../..", UsersFileName); // Create at the project root.
                 var file = File.Create(filePath);
                 var output = new DsvFormatter(',').OpenOutput(file);
-                AsyncUtils.RunSync(output.OpenAsync);
+                await output.OpenAsync();
                 output.QueryContext = new RowsOutputQueryContext(rowsFrame.Columns);
                 for (var count = 0; count < NumberOfItems; count += ChunkSize)
                 {

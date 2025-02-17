@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## Added
+
+- Initial implementation of plugins native libraries loading.
+- Add new option PreventConcurrentRun.
+- Add functions "retry_input", "retry_output" and "parallel_output".
+
+## Changed
+
+- Make IObjectSelector async.
+
+## Removed
+
+- Remove ConcurrencyLevel option.
+- Remove SubRip formatter.
+
+## [0.10.0] - 2025-01-28
+
 ### Changed
 
 - Refactor functions manager interface.

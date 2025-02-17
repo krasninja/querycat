@@ -23,7 +23,7 @@ public struct QueryCatPluginArguments
         => new()
         {
             ServerEndpoint = GetServerEndpoint(),
-            Token = GetToken(),
+            RegistrationToken = GetToken(),
             LogLevel = GetLogLevel(),
         };
 }

@@ -13,7 +13,7 @@ namespace QueryCat.Backend.Commands.Select;
 /// Contains all necessary information to handle the query on all stages.
 /// </summary>
 [DebuggerDisplay("Id = {Id}, Iterator = {CurrentIterator}")]
-internal sealed class SelectCommandContext(SelectQueryNode queryNode) : CommandContext, IDisposable
+internal sealed class SelectCommandContext(SelectQueryNode queryNode) : CommandContext, IDisposable, IAsyncDisposable
 {
     public SelectQueryConditions Conditions { get; } = new();
 
@@ -238,11 +238,13 @@ internal sealed class SelectCommandContext(SelectQueryNode queryNode) : CommandC
     /// <summary>
     /// Returns the list of identifiers - direct references to input columns.
     /// </summary>
+    /// <param name="sourceName">Source.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of identifiers.</returns>
-    internal Column[] GetSelectIdentifierColumns(string sourceName)
+    internal async ValueTask<Column[]> GetSelectIdentifierColumnsAsync(string sourceName, CancellationToken cancellationToken)
     {
         var identifierAstVisitor = new IdentifierAstVisitor(sourceName);
-        identifierAstVisitor.Run(queryNode);
+        await identifierAstVisitor.RunAsync(queryNode, cancellationToken);
         return identifierAstVisitor.Columns.ToArray();
     }
 
@@ -272,10 +274,28 @@ internal sealed class SelectCommandContext(SelectQueryNode queryNode) : CommandC
     /// <inheritdoc />
     public void Dispose()
     {
-        RowsInputIterator?.Dispose();
+        if (RowsInputIterator != null)
+        {
+            RowsInputIterator.CloseAsync()
+                .ConfigureAwait(false)
+                .GetAwaiter().GetResult();
+        }
         foreach (var childContext in ChildContexts)
         {
             childContext.Dispose();
+        }
+    }
+
+    /// <inheritdoc />
+    public async ValueTask DisposeAsync()
+    {
+        if (RowsInputIterator != null)
+        {
+            await RowsInputIterator.CloseAsync();
+        }
+        foreach (var childContext in ChildContexts)
+        {
+            await childContext.DisposeAsync();
         }
     }
 }

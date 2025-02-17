@@ -17,10 +17,10 @@ internal class AstCommand : BaseQueryCommand
             var files = OptionsUtils.GetValueForOption(FilesOption, context);
 
             applicationOptions.InitializeLogger();
-            var root = applicationOptions.CreateApplicationRoot();
-            root.Thread.StatementExecuting += (_, threadArgs) =>
+            var root = await applicationOptions.CreateApplicationRootAsync();
+            root.Thread.StatementExecuting += async (_, threadArgs) =>
             {
-                Console.WriteLine(root.Thread.DumpAst(threadArgs));
+                Console.WriteLine(await root.Thread.DumpAstAsync(threadArgs));
                 threadArgs.ContinueExecution = false;
             };
             AddVariables(root.Thread, variables);

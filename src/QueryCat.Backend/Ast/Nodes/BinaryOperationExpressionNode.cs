@@ -88,7 +88,8 @@ internal sealed class BinaryOperationExpressionNode : ExpressionNode
     public override object Clone() => new BinaryOperationExpressionNode(this);
 
     /// <inheritdoc />
-    public override void Accept(AstVisitor visitor) => visitor.Visit(this);
+    public override ValueTask AcceptAsync(AstVisitor visitor, CancellationToken cancellationToken)
+        => visitor.VisitAsync(this, cancellationToken);
 
     /// <inheritdoc />
     public override string ToString() => $"{LeftNode} {Operation} {RightNode}";

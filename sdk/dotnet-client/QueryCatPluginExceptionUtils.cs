@@ -24,7 +24,11 @@ public static class QueryCatPluginExceptionUtils
         var errorTypeLocal = ErrorType.INTERNAL;
         if (!errorType.HasValue)
         {
-            if (exception is QueryCatException)
+            if (exception is AuthorizationException)
+            {
+                errorTypeLocal = ErrorType.INVALID_AUTH_TOKEN;
+            }
+            else if (exception is QueryCatException)
             {
                 errorTypeLocal = ErrorType.GENERIC;
             }

@@ -19,7 +19,7 @@ internal class ExplainCommand : BaseQueryCommand
             var files = OptionsUtils.GetValueForOption(FilesOption, context);
 
             applicationOptions.InitializeLogger();
-            var root = applicationOptions.CreateStdoutApplicationRoot();
+            var root = await applicationOptions.CreateStdoutApplicationRootAsync();
             root.Thread.StatementExecuted += (_, args) =>
             {
                 var result = root.Thread.LastResult;

@@ -10,7 +10,6 @@ using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Storage;
@@ -19,33 +18,42 @@ namespace QueryCat.Backend.Commands.Select;
 
 internal sealed partial class SelectPlanner
 {
-    public SelectCommandContext Context_Create(SelectQueryNode node, SelectCommandContext? parentContext = null)
+    public async Task<SelectCommandContext> Context_CreateAsync(
+        SelectQueryNode node,
+        SelectCommandContext? parentContext = null,
+        CancellationToken cancellationToken = default)
     {
         if (node is SelectQuerySpecificationNode querySpecificationNode)
         {
-            return Context_Create(querySpecificationNode, parentContext);
+            return await Context_CreateAsync(querySpecificationNode, parentContext, cancellationToken);
         }
         if (node is SelectQueryCombineNode queryCombineNode)
         {
-            return Context_Create(queryCombineNode, parentContext);
+            return await Context_CreateAsync(queryCombineNode, parentContext, cancellationToken);
         }
         throw new InvalidOperationException(string.Format(Resources.Errors.NotSupported, node.GetType().Name));
     }
 
-    public SelectCommandContext Context_Create(SelectQuerySpecificationNode node, SelectCommandContext? parentContext = null)
+    public async Task<SelectCommandContext> Context_CreateAsync(
+        SelectQuerySpecificationNode node,
+        SelectCommandContext? parentContext = null,
+        CancellationToken cancellationToken = default)
     {
-        Misc_Transform(node);
+        await Misc_TransformAsync(node, cancellationToken);
         var context = Context_CreateInitialContext(node, parentContext);
-        Context_InitializeRowsInputs(context, node);
-        ContextCte_PrepareInputList(context, node);
-        Context_PrepareInitialInputs(context, node);
+        await Context_InitializeRowsInputsAsync(context, node, cancellationToken);
+        await ContextCte_PrepareInputListAsync(context, node, cancellationToken);
+        await Context_PrepareInitialInputsAsync(context, node, cancellationToken);
         return context;
     }
 
-    public SelectCommandContext Context_Create(SelectQueryCombineNode node, SelectCommandContext? parentContext = null)
+    public async Task<SelectCommandContext> Context_CreateAsync(
+        SelectQueryCombineNode node,
+        SelectCommandContext? parentContext = null,
+        CancellationToken cancellationToken = default)
     {
         var context = Context_CreateInitialContext(node, parentContext);
-        Context_InitializeRowsInputs(context, node);
+        await Context_InitializeRowsInputsAsync(context, node, cancellationToken);
         return context;
     }
 
@@ -58,9 +66,9 @@ internal sealed partial class SelectPlanner
         return context;
     }
 
-    private void Context_InitializeRowsInputs(SelectCommandContext context, SelectQueryNode node)
+    private async Task Context_InitializeRowsInputsAsync(SelectCommandContext context, SelectQueryNode node, CancellationToken cancellationToken)
     {
-        new CreateRowsInputVisitor(ExecutionThread, context).Run(node.GetChildren());
+        await new CreateRowsInputVisitor(ExecutionThread, context).RunAsync(node.GetChildren(), cancellationToken);
         if (node is SelectQuerySpecificationNode querySpecificationNode)
         {
             foreach (var input in context.Inputs)
@@ -70,7 +78,7 @@ internal sealed partial class SelectPlanner
         }
     }
 
-    private void Context_PrepareInitialInput(SelectQueryNode queryNode)
+    private async Task Context_PrepareInitialInputAsync(SelectQueryNode queryNode, CancellationToken cancellationToken)
     {
         var context = queryNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
         if (context.RowsInputIterator != null)
@@ -81,20 +89,21 @@ internal sealed partial class SelectPlanner
 
         if (queryNode is SelectQuerySpecificationNode querySpecificationNode)
         {
-            Context_PrepareInitialInputs(context, querySpecificationNode);
+            await Context_PrepareInitialInputsAsync(context, querySpecificationNode, cancellationToken);
             return;
         }
         if (queryNode is SelectQueryCombineNode queryCombineNode)
         {
-            Context_PrepareInitialInput(context, queryCombineNode);
+            await Context_PrepareInitialInputAsync(context, queryCombineNode, cancellationToken);
             return;
         }
         throw new InvalidOperationException($"{queryNode.GetType().Name} cannot be processed.");
     }
 
-    private void Context_PrepareInitialInputs(
+    private async Task Context_PrepareInitialInputsAsync(
         SelectCommandContext context,
-        SelectQuerySpecificationNode querySpecificationNode)
+        SelectQuerySpecificationNode querySpecificationNode,
+        CancellationToken cancellationToken)
     {
         // No FROM - assume this is the query with SELECT only.
         if (querySpecificationNode.TableExpressionNode == null)
@@ -107,7 +116,7 @@ internal sealed partial class SelectPlanner
         var finalRowsInputs = new List<IRowsInput>();
         foreach (var tableExpression in querySpecificationNode.TableExpressionNode.TablesNode.TableFunctionsNodes)
         {
-            var rowsInputs = Context_GetRowsInputFromExpression(context, tableExpression);
+            var rowsInputs = await Context_GetRowsInputFromExpressionAsync(context, tableExpression, cancellationToken);
             if (rowsInputs.Length == 0)
             {
                 throw new QueryCatException(string.Format(Resources.Errors.CannotResolveInputSource, tableExpression));
@@ -122,17 +131,18 @@ internal sealed partial class SelectPlanner
 
         var resultRowsIterator = Context_CreateMultipleIterator(finalRowsInputs);
         context.RowsInputIterator = resultRowsIterator as RowsInputIterator;
-        QueryContext_FillQueryContextConditions(context, querySpecificationNode);
+        await QueryContext_FillQueryContextConditionsAsync(context, querySpecificationNode, cancellationToken);
         context.SetIterator(resultRowsIterator);
     }
 
-    private void Context_PrepareInitialInput(
+    private async Task Context_PrepareInitialInputAsync(
         SelectCommandContext context,
-        SelectQueryCombineNode queryCombineNode)
+        SelectQueryCombineNode queryCombineNode,
+        CancellationToken cancellationToken)
     {
-        Context_PrepareInitialInput(queryCombineNode.LeftQueryNode);
+        await Context_PrepareInitialInputAsync(queryCombineNode.LeftQueryNode, cancellationToken);
         var leftContext = queryCombineNode.LeftQueryNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
-        Context_PrepareInitialInput(queryCombineNode.RightQueryNode);
+        await Context_PrepareInitialInputAsync(queryCombineNode.RightQueryNode, cancellationToken);
         var rightContext = queryCombineNode.RightQueryNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
         var combineRowsIterator = new CombineRowsIterator(
             leftContext.CurrentIterator,
@@ -150,7 +160,10 @@ internal sealed partial class SelectPlanner
         _ => throw new ArgumentOutOfRangeException(nameof(combineType), string.Format(Resources.Errors.NotImplemented, combineType)),
     };
 
-    private IRowsInput[] Context_CreateInputSourceFromCte(SelectCommandContext context, IdentifierExpressionNode idNode)
+    private async Task<IRowsInput[]> Context_CreateInputSourceFromCteAsync(
+        SelectCommandContext context,
+        IdentifierExpressionNode idNode,
+        CancellationToken cancellationToken)
     {
         var cteIndex = context.CteList.FindIndex(c => c.Name == idNode.FullName);
         if (cteIndex < 0)
@@ -169,20 +182,25 @@ internal sealed partial class SelectPlanner
         {
             foreach (var joinedNode in selectIdentifierExpressionNode.JoinedNodes)
             {
-                var joinRowsInput = Context_CreateInputSourceFromTableJoin(context, inputs[0], joinedNode);
+                var joinRowsInput = await Context_CreateInputSourceFromTableJoinAsync(
+                    context, inputs[0], joinedNode, cancellationToken);
                 inputs.Add(joinRowsInput);
             }
         }
         return inputs.ToArray();
     }
 
-    private IRowsInput[] Context_CreateInputSourceFromVariable(SelectCommandContext context, IdentifierExpressionNode idNode)
+    private async Task<IRowsInput[]> Context_CreateInputSourceFromVariableAsync(
+        SelectCommandContext context,
+        IdentifierExpressionNode idNode,
+        CancellationToken cancellationToken)
     {
         if (!ExecutionThread.TryGetVariable(idNode.FullName, out var value, context.CapturedScope))
         {
             if (idNode.HasSelectors)
             {
-                value = Misc_CreateDelegate(idNode, context).Invoke(ExecutionThread);
+                var @delegate = await Misc_CreateDelegateAsync(idNode, context, cancellationToken);
+                value = await @delegate.InvokeAsync(ExecutionThread, cancellationToken);
             }
             else
             {
@@ -195,12 +213,12 @@ internal sealed partial class SelectPlanner
 
         if (internalValueType == DataType.Object && value.AsObjectUnsafe != null)
         {
-            rowsInputs = Context_CreateInputSourceFromObjectVariable(context, value.AsObjectUnsafe);
+            rowsInputs = await Context_CreateInputSourceFromObjectVariableAsync(context, value.AsObjectUnsafe, cancellationToken);
         }
         else if (internalValueType == DataType.String && !string.IsNullOrEmpty(value.AsStringUnsafe))
         {
-            rowsInputs = Context_CreateInputSourceFromStringVariable(context, value.AsStringUnsafe,
-                (idNode as SelectIdentifierExpressionNode)?.Format);
+            rowsInputs = await Context_CreateInputSourceFromStringVariableAsync(context, value.AsStringUnsafe,
+                (idNode as SelectIdentifierExpressionNode)?.Format, cancellationToken);
         }
 
         // Alias.
@@ -218,7 +236,8 @@ internal sealed partial class SelectPlanner
             var joinedInputs = new List<IRowsInput>(rowsInputs);
             foreach (var joinedNode in selectIdentifierExpressionNode.JoinedNodes)
             {
-                var joinRowsInput = Context_CreateInputSourceFromTableJoin(context, rowsInputs[0], joinedNode);
+                var joinRowsInput = await Context_CreateInputSourceFromTableJoinAsync(
+                    context, rowsInputs[0], joinedNode, cancellationToken);
                 joinedInputs.Add(joinRowsInput);
             }
             rowsInputs = joinedInputs.ToArray();
@@ -227,7 +246,10 @@ internal sealed partial class SelectPlanner
         return rowsInputs;
     }
 
-    private IRowsInput[] Context_CreateInputSourceFromObjectVariable(SelectCommandContext currentContext, object objVariable)
+    private async Task<IRowsInput[]> Context_CreateInputSourceFromObjectVariableAsync(
+        SelectCommandContext currentContext,
+        object objVariable,
+        CancellationToken cancellationToken)
     {
         IRowsInput? rowsInputResult = null;
         if (objVariable is IRowsInput rowsInput)
@@ -236,7 +258,7 @@ internal sealed partial class SelectPlanner
             {
                 IsVariableBound = true,
             });
-            AsyncUtils.RunSync(rowsInput.OpenAsync);
+            await rowsInput.OpenAsync(cancellationToken);
             rowsInputResult = rowsInput;
         }
         if (objVariable is IRowsIterator rowsIterator)
@@ -263,31 +285,32 @@ internal sealed partial class SelectPlanner
         return [rowsInputResult];
     }
 
-    private IRowsInput[] Context_CreateInputSourceFromStringVariable(SelectCommandContext context,
-        string strVariable, FunctionCallNode? formatterNode)
+    private async Task<IRowsInput[]> Context_CreateInputSourceFromStringVariableAsync(
+        SelectCommandContext context,
+        string strVariable,
+        FunctionCallNode? formatterNode,
+        CancellationToken cancellationToken)
     {
         var args = new FunctionCallArguments()
             .Add("uri", new VariantValue(strVariable));
         if (formatterNode != null)
         {
-            var formatter = Misc_CreateDelegate(formatterNode, context).Invoke(ExecutionThread);
+            var @delegate = await Misc_CreateDelegateAsync(formatterNode, context, cancellationToken);
+            var formatter = await @delegate.InvokeAsync(ExecutionThread, cancellationToken);
             args.Add("fmt", formatter);
         }
-        var rowsInput = AsyncUtils.RunSync(async ct =>
-        {
-            var ri = (await ExecutionThread.FunctionsManager.CallFunctionAsync("read", ExecutionThread, args, cancellationToken: ct))
-                .AsRequired<IRowsInput>();
-            ri.QueryContext = new SelectInputQueryContext(ri);
-            await ri.OpenAsync(ct);
-            return ri;
-        })!;
+        var rowsInput = (await ExecutionThread.FunctionsManager.CallFunctionAsync("read", ExecutionThread, args, cancellationToken))
+            .AsRequired<IRowsInput>();
+        rowsInput.QueryContext = new SelectInputQueryContext(rowsInput);
+        await rowsInput.OpenAsync(cancellationToken);
         return [rowsInput];
     }
 
     // Last input is combine input.
-    private IRowsInput[] Context_CreateInputSourceFromTableFunction(
+    private async Task<IRowsInput[]> Context_CreateInputSourceFromTableFunctionAsync(
         SelectCommandContext context,
-        SelectTableFunctionNode tableFunctionNode)
+        SelectTableFunctionNode tableFunctionNode,
+        CancellationToken cancellationToken)
     {
         var inputs = new List<IRowsInput>();
         var rowsInput = tableFunctionNode.GetRequiredAttribute<IRowsInput>(AstAttributeKeys.RowsInputKey);
@@ -295,16 +318,20 @@ internal sealed partial class SelectPlanner
         Context_SetAlias(rowsInput, tableFunctionNode.Alias);
         foreach (var joinedNode in tableFunctionNode.JoinedNodes)
         {
-            rowsInput = Context_CreateInputSourceFromTableJoin(context, rowsInput, joinedNode);
+            rowsInput = await Context_CreateInputSourceFromTableJoinAsync(context, rowsInput, joinedNode, cancellationToken);
             inputs.Add(rowsInput);
         }
         return inputs.ToArray();
     }
 
-    private IRowsInput Context_CreateInputSourceFromTableJoin(SelectCommandContext context, IRowsInput left,
-        SelectTableJoinedNode tableJoinedNode)
+    private async Task<IRowsInput> Context_CreateInputSourceFromTableJoinAsync(
+        SelectCommandContext context,
+        IRowsInput left,
+        SelectTableJoinedNode tableJoinedNode,
+        CancellationToken cancellationToken)
     {
-        var right = Context_GetRowsInputFromExpression(context, tableJoinedNode.RightTableNode).Last();
+        var right = (await Context_GetRowsInputFromExpressionAsync(context, tableJoinedNode.RightTableNode, cancellationToken))
+            .Last();
         var alias = tableJoinedNode.RightTableNode is ISelectAliasNode selectAlias ? selectAlias.Alias : string.Empty;
         Context_SetAlias(right, alias);
         right = Context_WrapKeysInput(right, context.Conditions);
@@ -327,14 +354,14 @@ internal sealed partial class SelectPlanner
 
         if (tableJoinedNode is SelectTableJoinedOnNode joinedOnNode)
         {
-            var searchFunc = new InputCreateDelegateVisitor(ExecutionThread, context, left, right)
-                .RunAndReturn(joinedOnNode.SearchConditionNode);
+            var searchFunc = await new InputCreateDelegateVisitor(ExecutionThread, context, left, right)
+                .RunAndReturnAsync(joinedOnNode.SearchConditionNode, cancellationToken);
             return new SelectJoinRowsInput(ExecutionThread, left, right, join, searchFunc, reverseColumnsOrder);
         }
         if (tableJoinedNode is SelectTableJoinedUsingNode joinedUsingNode)
         {
-            var searchFunc = new InputCreateDelegateVisitor(ExecutionThread, context, left, right)
-                .RunAndReturn(joinedUsingNode);
+            var searchFunc = await new InputCreateDelegateVisitor(ExecutionThread, context, left, right)
+                .RunAndReturnAsync(joinedUsingNode, cancellationToken);
             return new SelectJoinRowsInput(ExecutionThread, left, right, join, searchFunc, reverseColumnsOrder);
         }
         throw new ArgumentException(string.Format(Resources.Errors.NotSupported, tableJoinedNode.GetType().Name),
@@ -351,34 +378,37 @@ internal sealed partial class SelectPlanner
         return rowsInput;
     }
 
-    private IRowsInput Context_CreateInputSourceFromTable(SelectCommandContext context,
-        SelectTableValuesNode tableValuesNode)
+    private async Task<IRowsInput> Context_CreateInputSourceFromTableAsync(SelectCommandContext context,
+        SelectTableValuesNode tableValuesNode, CancellationToken cancellationToken)
     {
-        var func = new SelectCreateDelegateVisitor(ExecutionThread, context)
-            .RunAndReturn(tableValuesNode);
-        var rowsFrame = func.Invoke(ExecutionThread).AsRequired<RowsFrame>();
+        var func = await new SelectCreateDelegateVisitor(ExecutionThread, context)
+            .RunAndReturnAsync(tableValuesNode, cancellationToken);
+        var rowsFrame = (await func.InvokeAsync(ExecutionThread, cancellationToken)).AsRequired<RowsFrame>();
         return new RowsIteratorInput(rowsFrame.GetIterator());
     }
 
-    private IRowsInput[] Context_GetRowsInputFromExpression(SelectCommandContext context, ExpressionNode expressionNode)
+    private async Task<IRowsInput[]> Context_GetRowsInputFromExpressionAsync(
+        SelectCommandContext context,
+        ExpressionNode expressionNode,
+        CancellationToken cancellationToken)
     {
         if (expressionNode is SelectQueryNode queryNode)
         {
             return
             [
-                Context_CreateInputSourceFromSubQuery(context, queryNode)
+                await Context_CreateInputSourceFromSubQueryAsync(context, queryNode, cancellationToken)
             ];
         }
         if (expressionNode is SelectTableFunctionNode tableFunctionNode)
         {
-            return Context_CreateInputSourceFromTableFunction(context, tableFunctionNode);
+            return await Context_CreateInputSourceFromTableFunctionAsync(context, tableFunctionNode, cancellationToken);
         }
         if (expressionNode is IdentifierExpressionNode idNode)
         {
-            var inputs = Context_CreateInputSourceFromCte(context, idNode);
+            var inputs = await Context_CreateInputSourceFromCteAsync(context, idNode, cancellationToken);
             if (inputs.Length == 0)
             {
-                inputs = Context_CreateInputSourceFromVariable(context, idNode);
+                inputs = await Context_CreateInputSourceFromVariableAsync(context, idNode, cancellationToken);
             }
             return inputs;
         }
@@ -386,16 +416,17 @@ internal sealed partial class SelectPlanner
         {
             return
             [
-                Context_CreateInputSourceFromTable(context, tableNode)
+                await Context_CreateInputSourceFromTableAsync(context, tableNode, cancellationToken)
             ];
         }
 
         throw new InvalidOperationException(string.Format(Resources.Errors.CannotProcessNodeAsInput, expressionNode));
     }
 
-    private IRowsInput Context_CreateInputSourceFromSubQuery(SelectCommandContext context, SelectQueryNode queryNode)
+    private async Task<IRowsInput> Context_CreateInputSourceFromSubQueryAsync(SelectCommandContext context, SelectQueryNode queryNode,
+        CancellationToken cancellationToken)
     {
-        var rowsIterator = CreateIterator(queryNode, parentContext: context);
+        var rowsIterator = await CreateIteratorAsync(queryNode, parentContext: context, cancellationToken);
 
         var rowsInput = new RowsIteratorInput(rowsIterator);
         context.AddInput(new SelectCommandInputContext(rowsInput));

@@ -3,7 +3,6 @@ using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend.Commands.Select.Iterators;
 
@@ -19,6 +18,9 @@ internal sealed class VaryingOutputRowsIterator : IRowsIterator, IRowsIteratorPa
     private readonly QueryContext _queryContext;
     private readonly IFuncUnit _outputFactory;
     private readonly FuncUnitCallInfo _functionCallInfo;
+    private readonly VariantValue[] _functionCallInfoResults;
+    private readonly VariantValue[] _functionCallInfoResultsForCompare;
+    private bool _firstCall = true;
     private readonly Dictionary<VariantValueArray, IRowsOutput> _outputs = new();
 
     /// <inheritdoc />
@@ -47,6 +49,8 @@ internal sealed class VaryingOutputRowsIterator : IRowsIterator, IRowsIteratorPa
 
         _outputFactory = func;
         _functionCallInfo = functionCallInfo;
+        _functionCallInfoResults = new VariantValueArray(size: functionCallInfo.Arguments.Length);
+        _functionCallInfoResultsForCompare = new VariantValueArray(size: functionCallInfo.Arguments.Length);
 
         CurrentOutput = defaultRowsOutput;
     }
@@ -75,11 +79,8 @@ internal sealed class VaryingOutputRowsIterator : IRowsIterator, IRowsIteratorPa
             return false;
         }
 
-        var allArgValues = await _functionCallInfo.InvokePushArgsAsync(_thread, cancellationToken);
-        var argValues = allArgValues
-            .Where(a => a.Type != DataType.Object)
-            .ToArray();
-        var args = new VariantValueArray(argValues);
+        var values = await InvokeArgumentsDelegatesAsync(cancellationToken);
+        var args = new VariantValueArray(values);
         if (_outputs.TryGetValue(args, out IRowsOutput? output))
         {
             CurrentOutput = output;
@@ -105,6 +106,27 @@ internal sealed class VaryingOutputRowsIterator : IRowsIterator, IRowsIteratorPa
         return true;
     }
 
+    private async ValueTask<VariantValue[]> InvokeArgumentsDelegatesAsync(CancellationToken cancellationToken)
+    {
+        var args = _functionCallInfo.Arguments;
+        for (var i = 0; i < _functionCallInfoResults.Length; i++)
+        {
+            if (!_firstCall
+                && (_functionCallInfoResults[i].Type == DataType.Object || _functionCallInfoResults[i].Type == DataType.Dynamic))
+            {
+                continue;
+            }
+            _functionCallInfoResults[i] = await args[i].InvokeAsync(_thread, cancellationToken);
+            if (_functionCallInfoResults[i].Type != DataType.Object
+                || _functionCallInfoResults[i].Type != DataType.Dynamic)
+            {
+                _functionCallInfoResultsForCompare[i] = _functionCallInfoResults[i];
+            }
+        }
+        _firstCall = false;
+        return _functionCallInfoResultsForCompare;
+    }
+
     /// <inheritdoc />
     public async Task ResetAsync(CancellationToken cancellationToken = default)
     {
@@ -112,27 +134,24 @@ internal sealed class VaryingOutputRowsIterator : IRowsIterator, IRowsIteratorPa
         _outputs.Clear();
     }
 
-    public Task CloseAsync(CancellationToken cancellationToken = default)
-        => CloseAsync(dispose: false, cancellationToken);
-
-    private async Task CloseAsync(bool dispose, CancellationToken cancellationToken = default)
+    public async Task CloseAsync(CancellationToken cancellationToken = default)
     {
         foreach (var outputKeyValue in _outputs)
         {
             _logger.LogDebug("Close for args {Key}.", outputKeyValue.Key);
             await outputKeyValue.Value.CloseAsync(cancellationToken);
-            if (dispose)
-            {
-                (outputKeyValue.Value as IDisposable)?.Dispose();
-            }
         }
-        _outputs.Clear();
+        Dispose();
     }
 
     /// <inheritdoc />
     public void Dispose()
     {
-        AsyncUtils.RunSync(() => CloseAsync(dispose: true));
+        foreach (var outputKeyValue in _outputs)
+        {
+            (outputKeyValue.Value as IDisposable)?.Dispose();
+        }
+        _outputs.Clear();
     }
 
     /// <inheritdoc />

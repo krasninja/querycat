@@ -92,8 +92,8 @@ public class TraverseAstBenchmark
     }
 
     [Benchmark]
-    public void TraverseComplexSqlQuery()
+    public async Task TraverseComplexSqlQuery()
     {
-        _astTraversal.PreOrder(_node);
+        await _astTraversal.PreOrderAsync(_node, CancellationToken.None);
     }
 }

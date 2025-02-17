@@ -8,7 +8,7 @@ internal class VariablesUsage : BaseUsage
     /// <inheritdoc />
     public override async Task RunAsync()
     {
-        var executionThread = new ExecutionThreadBootstrapper().Create();
+        await using var executionThread = await new ExecutionThreadBootstrapper().CreateAsync();
         // Define variable in script.
         await executionThread.RunAsync("declare x int := 10;");
         // Define variable in code.

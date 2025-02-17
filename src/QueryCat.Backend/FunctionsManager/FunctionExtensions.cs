@@ -84,7 +84,8 @@ public static class FunctionExtensions
             }
 
             // The Dynamic data type is used with ANY argument type.
-            if (argumentsNodes[i].Type != DataType.Dynamic && typesArr[i] != argumentsNodes[i].Type)
+            if (argumentsNodes[i].Type != DataType.Dynamic
+                && typesArr[i] != argumentsNodes[i].Type)
             {
                 return false;
             }

@@ -24,7 +24,10 @@ internal sealed partial class SelectPlanner
     {
     }
 
-    public IRowsIterator CreateIterator(SelectQueryNode queryNode, SelectCommandContext? parentContext = null)
+    public async Task<IRowsIterator> CreateIteratorAsync(
+        SelectQueryNode queryNode,
+        SelectCommandContext? parentContext = null,
+        CancellationToken cancellationToken = default)
     {
         if (queryNode.HasAttribute(AstAttributeKeys.ContextKey))
         {
@@ -34,58 +37,61 @@ internal sealed partial class SelectPlanner
 
         if (queryNode is SelectQuerySpecificationNode querySpecificationNode)
         {
-            return CreateIteratorInternal(querySpecificationNode, parentContext);
+            return await CreateIteratorInternalAsync(querySpecificationNode, parentContext, cancellationToken);
         }
         if (queryNode is SelectQueryCombineNode queryCombineNode)
         {
-            return CreateIteratorInternal(queryCombineNode, parentContext);
+            return await CreateIteratorInternalAsync(queryCombineNode, parentContext, cancellationToken);
         }
         throw new InvalidOperationException(string.Format(Resources.Errors.NotSupportedNodeType, queryNode.GetType()));
     }
 
-    private IRowsIterator CreateIteratorInternal(SelectQuerySpecificationNode node, SelectCommandContext? parentContext = null)
+    private async Task<IRowsIterator> CreateIteratorInternalAsync(
+        SelectQuerySpecificationNode node,
+        SelectCommandContext? parentContext = null,
+        CancellationToken cancellationToken = default)
     {
         // FROM.
-        var context = Context_Create(node, parentContext);
+        var context = await Context_CreateAsync(node, parentContext, cancellationToken);
 
         // Misc.
         Pipeline_ApplyStatistic(context);
         Pipeline_SubscribeOnErrorsFromInputSources(context);
 
         // WHERE.
-        Pipeline_ApplyFilter(context, node.TableExpressionNode);
+        await Pipeline_ApplyFilterAsync(context, node.TableExpressionNode, cancellationToken);
 
         // GROUP BY/HAVING.
-        PipelineAggregate_ApplyGrouping(context, node);
-        PipelineAggregate_ApplyHaving(context, node.TableExpressionNode?.HavingNode);
+        await PipelineAggregate_ApplyGroupingAsync(context, node, cancellationToken);
+        await PipelineAggregate_ApplyHavingAsync(context, node.TableExpressionNode?.HavingNode, cancellationToken);
 
         // DISTINCT ON.
-        Pipeline_CreateDistinctOnRowsSet(context, node);
+        await Pipeline_CreateDistinctOnRowsSetAsync(context, node, cancellationToken);
 
         // SELECT.
         Pipeline_ResolveSelectAllStatement(context, node.ColumnsListNode);
         Pipeline_ResolveSelectSourceColumns(context, node);
-        Pipeline_AddSelectRowsSet(context, node.ColumnsListNode, node.ExceptIdentifiersNode);
+        await Pipeline_AddSelectRowsSetAsync(context, node.ColumnsListNode, node.ExceptIdentifiersNode, cancellationToken);
 
         // WINDOW.
-        PipelineWindow_ApplyWindowFunctions(context, node);
+        await PipelineWindow_ApplyWindowFunctionsAsync(context, node, cancellationToken);
 
         // Fill query context.
         QueryContext_ValidateKeyColumnsValues(context);
 
         // ORDER BY.
         Pipeline_AddRowIdColumn(context, node.ColumnsListNode);
-        Pipeline_ApplyOrderBy(context, node.OrderByNode);
+        await Pipeline_ApplyOrderByAsync(context, node.OrderByNode, cancellationToken);
 
         // INTO and SELECT.
-        Pipeline_SetOutputFunction(context, node);
+        await Pipeline_SetOutputFunctionAsync(context, node, cancellationToken);
         Pipeline_SetSelectRowsSet(context, node.ColumnsListNode);
 
         // DISTINCT ALL.
         Pipeline_CreateDistinctAllRowsSet(context, node);
 
         // OFFSET, FETCH.
-        Pipeline_ApplyOffsetFetch(context, node.OffsetNode, node.FetchNode);
+        await Pipeline_ApplyOffsetFetchAsync(context, node.OffsetNode, node.FetchNode, cancellationToken);
 
         // INTO.
         Pipeline_CreateOutput(context, node);
@@ -93,11 +99,14 @@ internal sealed partial class SelectPlanner
         return context.CurrentIterator;
     }
 
-    private IRowsIterator CreateIteratorInternal(SelectQueryCombineNode node, SelectCommandContext? parentContext = null)
+    private async Task<IRowsIterator> CreateIteratorInternalAsync(
+        SelectQueryCombineNode node,
+        SelectCommandContext? parentContext = null,
+        CancellationToken cancellationToken = default)
     {
-        var context = Context_Create(node, parentContext);
-        var leftIterator = CreateIterator(node.LeftQueryNode, parentContext);
-        var rightIterator = CreateIterator(node.RightQueryNode, parentContext);
+        var context = await Context_CreateAsync(node, parentContext, cancellationToken);
+        var leftIterator = await CreateIteratorAsync(node.LeftQueryNode, parentContext, cancellationToken);
+        var rightIterator = await CreateIteratorAsync(node.RightQueryNode, parentContext, cancellationToken);
         var combineRowsIterator = new CombineRowsIterator(
             leftIterator,
             rightIterator,
@@ -106,8 +115,8 @@ internal sealed partial class SelectPlanner
         context.SetIterator(combineRowsIterator);
 
         // Process.
-        Pipeline_ApplyOrderBy(context, node.OrderByNode);
-        Pipeline_ApplyOffsetFetch(context, node.OffsetNode, node.FetchNode);
+        await Pipeline_ApplyOrderByAsync(context, node.OrderByNode, cancellationToken);
+        await Pipeline_ApplyOffsetFetchAsync(context, node.OffsetNode, node.FetchNode, cancellationToken);
         var resultIterator = context.CurrentIterator;
         if (context.HasOutput)
         {

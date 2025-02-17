@@ -7,26 +7,34 @@ namespace QueryCat.Backend.Commands.If;
 
 internal sealed class IfConditionCommand : ICommand
 {
+    private sealed record ConditionItem(IFuncUnit Condition, IFuncUnit Block);
+
     /// <inheritdoc />
-    public IFuncUnit CreateHandler(IExecutionThread<ExecutionOptions> executionThread, StatementNode node)
+    public async Task<IFuncUnit> CreateHandlerAsync(
+        IExecutionThread<ExecutionOptions> executionThread,
+        StatementNode node,
+        CancellationToken cancellationToken = default)
     {
         var ifConditionNode = (IfConditionNode)node.RootNode;
         var statementVisitor = new StatementsVisitor(executionThread);
         var delegateVisitor = new CreateDelegateVisitor(executionThread);
 
-        var conditionsFuncs = ifConditionNode.ConditionsList.Select(cl =>
-            new
-            {
-                Condition = delegateVisitor.RunAndReturn(cl.ConditionNode),
-                Block = statementVisitor.RunAndReturn(cl.BlockExpressionNode),
-            })
-            .ToArray();
+        var conditionsFuncsArray = new ConditionItem[ifConditionNode.ConditionsList.Count];
+        for (var i = 0; i < ifConditionNode.ConditionsList.Count; i++)
+        {
+            var condition = ifConditionNode.ConditionsList[i];
+            var conditionFunc = await delegateVisitor.RunAndReturnAsync(condition.ConditionNode, cancellationToken);
+            var blockFunc = await statementVisitor.RunAndReturnAsync(condition.BlockExpressionNode, cancellationToken);
+            conditionsFuncsArray[i] = new ConditionItem(conditionFunc, blockFunc);
+        }
 
-        var elseFunc = ifConditionNode.ElseNode != null ? statementVisitor.RunAndReturn(ifConditionNode.ElseNode) : null;
+        var elseFunc = ifConditionNode.ElseNode != null
+            ? await statementVisitor.RunAndReturnAsync(ifConditionNode.ElseNode, cancellationToken)
+            : null;
 
         async ValueTask<VariantValue> Func(IExecutionThread thread, CancellationToken ct)
         {
-            foreach (var conditionFunc in conditionsFuncs)
+            foreach (var conditionFunc in conditionsFuncsArray)
             {
                 if ((await conditionFunc.Condition.InvokeAsync(thread, ct)).AsBoolean)
                 {
@@ -42,7 +50,7 @@ internal sealed class IfConditionCommand : ICommand
             return VariantValue.Null;
         }
 
-        IFuncUnit handler = new FuncUnitDelegate(Func, conditionsFuncs[0].Block.OutputType);
+        IFuncUnit handler = new FuncUnitDelegate(Func, conditionsFuncsArray[0].Block.OutputType);
         return handler;
     }
 }
