@@ -470,13 +470,12 @@ internal partial class CreateDelegateVisitor : AstVisitor
         /// <inheritdoc />
         public async ValueTask<VariantValue> InvokeAsync(IExecutionThread thread, CancellationToken cancellationToken = default)
         {
-            thread.Stack.CreateFrame();
+            using var frame = thread.Stack.CreateFrame();
             foreach (var argsUnit in argsUnits)
             {
                 thread.Stack.Push(await argsUnit.InvokeAsync(thread, cancellationToken));
             }
             var result = await FunctionCaller.CallAsync(function.Delegate, thread, cancellationToken);
-            thread.Stack.CloseFrame();
             return result;
         }
     }

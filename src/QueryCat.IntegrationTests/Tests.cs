@@ -42,6 +42,7 @@ public sealed class Tests
         thread.FunctionsManager.RegisterFunction(ReturnObjFunc);
         thread.FunctionsManager.RegisterFunction(SumIntegersOpt);
         thread.FunctionsManager.RegisterFunction(VoidFunc);
+        thread.FunctionsManager.RegisterFunction(NoArgsFunc);
         thread.FunctionsManager.RegisterFunction(ItStocksRowsInput.ItStocks);
 
         thread.TopScope.Variables["user1"] = VariantValue.CreateFromObject(User.GetTestUser1());
@@ -104,4 +105,9 @@ public sealed class Tests
     [SafeFunction]
     [FunctionSignature("void_func(a: integer): void")]
     internal static VariantValue VoidFunc(IExecutionThread thread) => VariantValue.Null;
+
+    [SafeFunction]
+    [FunctionSignature("noargs_func(): int")]
+    internal static ValueTask<VariantValue> NoArgsFunc(IExecutionThread thread, CancellationToken cancellationToken)
+        => ValueTask.FromResult(new VariantValue(3));
 }
