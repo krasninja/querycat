@@ -100,9 +100,18 @@ internal sealed class PluginAssemblyLoadContext : AssemblyLoadContext
             return string.Empty;
         }
         libraryPath = Path.Combine(cacheTargetDirectory, libraryName);
-        file.Seek(0, SeekOrigin.Begin);
+        long fileSize = 0;
+        if (file.CanSeek)
+        {
+            file.Seek(0, SeekOrigin.Begin);
+            fileSize = file.Length;
+        }
+        else
+        {
+            fileSize = _pluginLoadStrategy.GetFileSize(libraryPath);
+        }
         if (!File.Exists(libraryPath) ||
-            new FileInfo(libraryPath).Length != file.Length)
+            new FileInfo(libraryPath).Length != fileSize)
         {
             using var newFile = File.Create(libraryPath);
             file.CopyTo(newFile);
