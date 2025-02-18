@@ -49,7 +49,7 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys
         AsyncUtils.RunSync(async ct =>
         {
             using var client = await _context.GetClientAsync(ct);
-            return client.Value.RowsSet_SetContextAsync(_objectHandle, new ContextQueryInfo
+            await client.Value.RowsSet_SetContextAsync(_objectHandle, new ContextQueryInfo
             {
                 Columns = QueryContext.QueryInfo.Columns.Select(SdkConvert.Convert).ToList(),
                 Limit = QueryContext.QueryInfo.Limit ?? -1,
@@ -146,7 +146,7 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys
         AsyncUtils.RunSync(async ct =>
         {
             using var client = await _context.GetClientAsync(ct);
-            return client.Value.RowsSet_SetKeyColumnValueAsync(_objectHandle, columnIndex, operation.ToString(),
+            await client.Value.RowsSet_SetKeyColumnValueAsync(_objectHandle, columnIndex, operation.ToString(),
                 SdkConvert.Convert(value), ct);
         });
     }
@@ -157,7 +157,7 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys
         AsyncUtils.RunSync(async ct =>
         {
             using var client = await _context.GetClientAsync(ct);
-            return client.Value.RowsSet_UnsetKeyColumnValueAsync(_objectHandle, columnIndex, operation.ToString(), ct);
+            await client.Value.RowsSet_UnsetKeyColumnValueAsync(_objectHandle, columnIndex, operation.ToString(), ct);
         });
     }
 

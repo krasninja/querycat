@@ -5,7 +5,6 @@ using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Utils;
-using QueryCat.Plugins.Sdk;
 using DataType = QueryCat.Backend.Core.Types.DataType;
 using VariantValue = QueryCat.Backend.Core.Types.VariantValue;
 

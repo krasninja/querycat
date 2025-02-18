@@ -167,11 +167,6 @@ service PluginsManager {
     3: required PluginData plugin_data
   ) throws (1: QueryCatPluginException e),
 
-  // Request for additional connection.
-  string RequestConnection(
-    1: required i64 token, // Authorization token.
-  ) throws (1: QueryCatPluginException e),
-
   // Call function.
   VariantValue CallFunction(
     1: required i64 token, // Authorization token.
@@ -382,5 +377,10 @@ service Plugin {
   // Get total binary length.
   i64 Blob_GetLength(
     1: required Handle object_handle
-  ) throws (1: QueryCatPluginException e)
+  ) throws (1: QueryCatPluginException e),
+
+  // The method is called to ask client to make the additional connection to the server.
+  bool OfferConnection(
+    1: required string uri, // Connection endpoint.
+  ) throws (1: QueryCatPluginException e),
 }

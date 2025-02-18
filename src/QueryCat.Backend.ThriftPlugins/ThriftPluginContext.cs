@@ -1,10 +1,10 @@
 using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
 using Microsoft.Extensions.Logging;
+using Thrift.Protocol;
 using QueryCat.Backend.Core;
 using QueryCat.Plugins.Client;
 using QueryCat.Plugins.Sdk;
-using Thrift.Protocol;
 
 namespace QueryCat.Backend.ThriftPlugins;
 
@@ -13,10 +13,12 @@ internal sealed class ThriftPluginContext : IDisposable, IAsyncDisposable
     private const int MaxConnections = 1;
 
     private readonly Func<TProtocol> _protocolFactory;
-    private readonly ConcurrentQueue<Plugin.Client> _clients = new();
+    private readonly ThriftPluginsServer _server;
+    private readonly ConcurrentQueue<Plugin.IAsync> _clients = new();
     private readonly SemaphoreSlim _semaphore = new(MaxConnections);
     private bool _isDisposed;
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(ThriftPluginContext));
+    private readonly bool _logClientRemoteCalls;
 
     public string PluginName { get; set; } = "N/A";
 
@@ -28,9 +30,10 @@ internal sealed class ThriftPluginContext : IDisposable, IAsyncDisposable
 
     public bool HasConnections => _clients.Count > 0;
 
-    public ThriftPluginContext(Func<TProtocol> protocolFactory)
+    public ThriftPluginContext(Func<TProtocol> protocolFactory, ThriftPluginsServer server)
     {
         _protocolFactory = protocolFactory;
+        _server = server;
     }
 
     internal async ValueTask<ClientSession> GetClientAsync(CancellationToken cancellationToken = default)
@@ -50,13 +53,28 @@ internal sealed class ThriftPluginContext : IDisposable, IAsyncDisposable
         return new ClientSession(this, client);
     }
 
-    private async Task<Plugin.Client> CreateClientAsync(CancellationToken cancellationToken = default)
+    private async Task<Plugin.IAsync> CreateClientAsync(CancellationToken cancellationToken = default)
     {
         var protocol = _protocolFactory.Invoke();
-        var client = new Plugin.Client(protocol);
-        await client.OpenTransportAsync(cancellationToken);
+        Plugin.IAsync client;
 
-        _logger.LogTrace("Created new client, current count {ConnectionsCount}.", _clients.Count);
+        // Prepare client.
+        if (!_logClientRemoteCalls)
+        {
+            var pluginClient = new Plugin.Client(protocol);
+            await pluginClient.OpenTransportAsync(cancellationToken);
+            client = pluginClient;
+        }
+        else
+        {
+            var logClient = new PluginClientLogDecorator(new Plugin.Client(protocol),
+                Application.LoggerFactory.CreateLogger(nameof(PluginClientLogDecorator)));
+            await logClient.OpenTransportAsync(cancellationToken);
+            client = logClient;
+        }
+
+        // The new client will be returned to the queue after session release.
+        _logger.LogTrace("Created new client, current count {ConnectionsCount}.", _clients.Count + 1);
         return client;
     }
 
@@ -69,7 +87,7 @@ internal sealed class ThriftPluginContext : IDisposable, IAsyncDisposable
         foreach (var client in _clients)
         {
             await client.ShutdownAsync();
-            client.Dispose();
+            (client as IDisposable)?.Dispose();
         }
         _clients.Clear();
         Dispose();
@@ -81,7 +99,7 @@ internal sealed class ThriftPluginContext : IDisposable, IAsyncDisposable
         _semaphore.Dispose();
         foreach (var client in _clients)
         {
-            client.Dispose();
+            (client as IDisposable)?.Dispose();
         }
         if (LibraryHandle.HasValue && LibraryHandle.Value != IntPtr.Zero)
         {
@@ -94,9 +112,9 @@ internal sealed class ThriftPluginContext : IDisposable, IAsyncDisposable
         _isDisposed = true;
     }
 
-    internal readonly struct ClientSession(ThriftPluginContext context, Plugin.Client value) : IDisposable
+    internal readonly struct ClientSession(ThriftPluginContext context, Plugin.IAsync value) : IDisposable
     {
-        public Plugin.Client Value { get; } = value;
+        public Plugin.IAsync Value { get; } = value;
 
         /// <inheritdoc />
         public void Dispose()

@@ -14,6 +14,7 @@ using Column = QueryCat.Plugins.Sdk.Column;
 using CursorSeekOrigin = QueryCat.Plugins.Sdk.CursorSeekOrigin;
 using DataType = QueryCat.Backend.Core.Types.DataType;
 using KeyColumn = QueryCat.Plugins.Sdk.KeyColumn;
+using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 using VariantValue = QueryCat.Plugins.Sdk.VariantValue;
 
 namespace QueryCat.Plugins.Client;
@@ -104,13 +105,6 @@ public partial class ThriftPluginClient
             }
 
             return SdkConvert.Convert(result);
-        }
-
-        /// <inheritdoc />
-        public Task InitializeAsync(CancellationToken cancellationToken = default)
-        {
-            _thriftPluginClient.FireOnInitialize();
-            return Task.CompletedTask;
         }
 
         /// <inheritdoc />
@@ -413,15 +407,26 @@ public partial class ThriftPluginClient
             }
             throw new QueryCatPluginException(ErrorType.INVALID_OBJECT, Resources.Errors.Object_IsNotBlob);
         }
+
+        /// <inheritdoc />
+        public Task<bool> OfferConnectionAsync(string uri, CancellationToken cancellationToken = default)
+        {
+            // TODO:
+            return Task.FromResult(false);
+        }
     }
 
-    private sealed class HandlerWithExceptionIntercept : Plugin.IAsync
+    private sealed partial class HandlerWithExceptionIntercept : Plugin.IAsync
     {
         private readonly Plugin.IAsync _handler;
         private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(Handler));
+        private readonly bool _traceCalls;
 
         public HandlerWithExceptionIntercept(Plugin.IAsync handler)
         {
+#if DEBUG
+            _traceCalls = true;
+#endif
             _handler = handler;
         }
 
@@ -429,6 +434,7 @@ public partial class ThriftPluginClient
         public Task<VariantValue> CallFunctionAsync(string function_name, List<VariantValue>? args, int object_handle,
             CancellationToken cancellationToken = default)
         {
+            LogCallMethod(nameof(CallFunctionAsync));
             try
             {
                 return _handler.CallFunctionAsync(function_name, args, object_handle, cancellationToken);
@@ -443,6 +449,7 @@ public partial class ThriftPluginClient
         /// <inheritdoc />
         public Task ShutdownAsync(CancellationToken cancellationToken = default)
         {
+            LogCallMethod(nameof(ShutdownAsync));
             try
             {
                 return _handler.ShutdownAsync(cancellationToken);
@@ -457,6 +464,7 @@ public partial class ThriftPluginClient
         /// <inheritdoc />
         public Task<List<Column>> RowsSet_GetColumnsAsync(int object_handle, CancellationToken cancellationToken = default)
         {
+            LogCallMethod(nameof(RowsSet_GetColumnsAsync));
             try
             {
                 return _handler.RowsSet_GetColumnsAsync(object_handle, cancellationToken);
@@ -471,6 +479,7 @@ public partial class ThriftPluginClient
         /// <inheritdoc />
         public Task RowsSet_OpenAsync(int object_handle, CancellationToken cancellationToken = default)
         {
+            LogCallMethod(nameof(RowsSet_OpenAsync));
             try
             {
                 return _handler.RowsSet_OpenAsync(object_handle, cancellationToken);
@@ -485,6 +494,7 @@ public partial class ThriftPluginClient
         /// <inheritdoc />
         public Task RowsSet_CloseAsync(int object_handle, CancellationToken cancellationToken = default)
         {
+            LogCallMethod(nameof(RowsSet_CloseAsync));
             try
             {
                 return _handler.RowsSet_CloseAsync(object_handle, cancellationToken);
@@ -499,6 +509,7 @@ public partial class ThriftPluginClient
         /// <inheritdoc />
         public Task RowsSet_ResetAsync(int object_handle, CancellationToken cancellationToken = default)
         {
+            LogCallMethod(nameof(RowsSet_ResetAsync));
             try
             {
                 return _handler.RowsSet_ResetAsync(object_handle, cancellationToken);
@@ -513,6 +524,7 @@ public partial class ThriftPluginClient
         /// <inheritdoc />
         public Task<int> RowsSet_PositionAsync(int object_handle, CancellationToken cancellationToken = default)
         {
+            LogCallMethod(nameof(RowsSet_PositionAsync));
             try
             {
                 return _handler.RowsSet_PositionAsync(object_handle, cancellationToken);
@@ -527,6 +539,7 @@ public partial class ThriftPluginClient
         /// <inheritdoc />
         public Task<int> RowsSet_TotalRowsAsync(int object_handle, CancellationToken cancellationToken = default)
         {
+            LogCallMethod(nameof(RowsSet_TotalRowsAsync));
             try
             {
                 return _handler.RowsSet_TotalRowsAsync(object_handle, cancellationToken);
@@ -542,6 +555,7 @@ public partial class ThriftPluginClient
         public Task RowsSet_SeekAsync(int object_handle, int offset, CursorSeekOrigin origin,
             CancellationToken cancellationToken = default)
         {
+            LogCallMethod(nameof(RowsSet_SeekAsync));
             try
             {
                 return _handler.RowsSet_SeekAsync(object_handle, offset, origin, cancellationToken);
@@ -557,6 +571,7 @@ public partial class ThriftPluginClient
         public Task RowsSet_SetContextAsync(int object_handle, ContextQueryInfo? context_query_info,
             CancellationToken cancellationToken = default)
         {
+            LogCallMethod(nameof(RowsSet_SetContextAsync));
             try
             {
                 return _handler.RowsSet_SetContextAsync(object_handle, context_query_info, cancellationToken);
@@ -571,6 +586,7 @@ public partial class ThriftPluginClient
         /// <inheritdoc />
         public Task<RowsList> RowsSet_GetRowsAsync(int object_handle, int count, CancellationToken cancellationToken = default)
         {
+            LogCallMethod(nameof(RowsSet_GetRowsAsync));
             try
             {
                 return _handler.RowsSet_GetRowsAsync(object_handle, count, cancellationToken);
@@ -585,6 +601,7 @@ public partial class ThriftPluginClient
         /// <inheritdoc />
         public Task<List<string>> RowsSet_GetUniqueKeyAsync(int object_handle, CancellationToken cancellationToken = default)
         {
+            LogCallMethod(nameof(RowsSet_GetUniqueKeyAsync));
             try
             {
                 return _handler.RowsSet_GetUniqueKeyAsync(object_handle, cancellationToken);
@@ -599,6 +616,7 @@ public partial class ThriftPluginClient
         /// <inheritdoc />
         public Task<List<KeyColumn>> RowsSet_GetKeyColumnsAsync(int object_handle, CancellationToken cancellationToken = default)
         {
+            LogCallMethod(nameof(RowsSet_GetKeyColumnsAsync));
             try
             {
                 return _handler.RowsSet_GetKeyColumnsAsync(object_handle, cancellationToken);
@@ -614,6 +632,7 @@ public partial class ThriftPluginClient
         public Task RowsSet_SetKeyColumnValueAsync(int object_handle, int column_index, string operation, VariantValue? value,
             CancellationToken cancellationToken = default)
         {
+            LogCallMethod(nameof(RowsSet_SetKeyColumnValueAsync));
             try
             {
                 return _handler.RowsSet_SetKeyColumnValueAsync(object_handle, column_index, operation, value, cancellationToken);
@@ -629,6 +648,7 @@ public partial class ThriftPluginClient
         public Task RowsSet_UnsetKeyColumnValueAsync(int object_handle, int column_index, string operation,
             CancellationToken cancellationToken = default)
         {
+            LogCallMethod(nameof(RowsSet_UnsetKeyColumnValueAsync));
             try
             {
                 return _handler.RowsSet_UnsetKeyColumnValueAsync(object_handle, column_index, operation, cancellationToken);
@@ -644,6 +664,7 @@ public partial class ThriftPluginClient
         public Task<QueryCatErrorCode> RowsSet_UpdateValueAsync(int object_handle, int column_index, VariantValue? value,
             CancellationToken cancellationToken = default)
         {
+            LogCallMethod(nameof(RowsSet_UpdateValueAsync));
             try
             {
                 return _handler.RowsSet_UpdateValueAsync(object_handle, column_index, value, cancellationToken);
@@ -658,6 +679,7 @@ public partial class ThriftPluginClient
         /// <inheritdoc />
         public Task<QueryCatErrorCode> RowsSet_WriteValuesAsync(int object_handle, List<VariantValue>? values, CancellationToken cancellationToken = default)
         {
+            LogCallMethod(nameof(RowsSet_WriteValuesAsync));
             try
             {
                 return _handler.RowsSet_WriteValuesAsync(object_handle, values, cancellationToken);
@@ -672,6 +694,7 @@ public partial class ThriftPluginClient
         /// <inheritdoc />
         public Task<QueryCatErrorCode> RowsSet_DeleteRowAsync(int object_handle, CancellationToken cancellationToken = default)
         {
+            LogCallMethod(nameof(RowsSet_DeleteRowAsync));
             try
             {
                 return _handler.RowsSet_DeleteRowAsync(object_handle, cancellationToken);
@@ -686,6 +709,7 @@ public partial class ThriftPluginClient
         /// <inheritdoc />
         public Task<byte[]> Blob_ReadAsync(int object_handle, int offset, int count, CancellationToken cancellationToken = default)
         {
+            LogCallMethod(nameof(Blob_ReadAsync));
             try
             {
                 return _handler.Blob_ReadAsync(object_handle, offset, count, cancellationToken);
@@ -700,6 +724,7 @@ public partial class ThriftPluginClient
         /// <inheritdoc />
         public Task<long> Blob_GetLengthAsync(int object_handle, CancellationToken cancellationToken = default)
         {
+            LogCallMethod(nameof(Blob_GetLengthAsync));
             try
             {
                 return _handler.Blob_GetLengthAsync(object_handle, cancellationToken);
@@ -710,5 +735,31 @@ public partial class ThriftPluginClient
                 throw QueryCatPluginExceptionUtils.Create(ex, objectHandle: object_handle);
             }
         }
+
+        /// <inheritdoc />
+        public Task<bool> OfferConnectionAsync(string uri, CancellationToken cancellationToken = default)
+        {
+            LogCallMethod(nameof(OfferConnectionAsync));
+            try
+            {
+                return _handler.OfferConnectionAsync(uri, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, Resources.Errors.HandlerInternalError);
+                throw QueryCatPluginExceptionUtils.Create(ex);
+            }
+        }
+
+        private void LogCallMethod(string methodName)
+        {
+            if (_traceCalls && _logger.IsEnabled(LogLevel.Trace))
+            {
+                LogCallMethodInternal(methodName);
+            }
+        }
+
+        [LoggerMessage(LogLevel.Trace, "Call remote method {MethodName}.")]
+        private partial void LogCallMethodInternal(string methodName);
     }
 }
