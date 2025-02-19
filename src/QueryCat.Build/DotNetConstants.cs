@@ -32,6 +32,7 @@ public static class DotNetConstants
     #region Arguments
 
     public const string PublishAotArgument = "PublishAot";
+    public const string PropertiesArgument = "Properties";
 
     #endregion
 }

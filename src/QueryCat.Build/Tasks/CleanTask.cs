@@ -5,6 +5,7 @@ using Cake.Frosting;
 namespace QueryCat.Build.Tasks;
 
 [TaskName("Clean")]
+[TaskDescription("Clean up output, bin and obj directories")]
 public sealed class CleanTask : AsyncFrostingTask<BuildContext>
 {
     /// <inheritdoc />
