@@ -81,6 +81,12 @@ namespace QueryCat.Plugins.Client.Resources {
             }
         }
 
+        internal static string NotSupported_Scheme {
+            get {
+                return ResourceManager.GetString("NotSupported_Scheme", resourceCulture);
+            }
+        }
+
         internal static string Object_IsNotBlob {
             get {
                 return ResourceManager.GetString("Object_IsNotBlob", resourceCulture);

@@ -1,8 +1,4 @@
 using Microsoft.Extensions.Logging;
-using Thrift;
-using Thrift.Protocol;
-using Thrift.Transport;
-using Thrift.Transport.Client;
 using QueryCat.Plugins.Client;
 using QueryCat.Plugins.Sdk;
 using QueryCat.Backend.Core;
@@ -54,7 +50,8 @@ public partial class ThriftPluginsServer
                 throw new QueryCatPluginException(ErrorType.INVALID_REGISTRATION_TOKEN, Resources.Errors.InvalidToken);
             }
 
-            // Create plugin context, init and add it to a list.
+            // Create plugin context, init and add it to a list. "callback_uri" is the URI
+            // provided by the client to connect to it.
             var context = CreateClientConnection(callback_uri);
             if (!string.IsNullOrEmpty(plugin_data.Name))
             {
@@ -86,16 +83,7 @@ public partial class ThriftPluginsServer
 
         private ThriftPluginContext CreateClientConnection(string callbackUri)
         {
-            var uri = new Uri(callbackUri);
-            var context = new ThriftPluginContext(() =>
-            {
-                return new TMultiplexedProtocol(
-                    new TBinaryProtocol(
-                        new TFramedTransport(
-                            new TNamedPipeTransport(uri.Segments[1], new TConfiguration()))
-                        ),
-                    ThriftPluginClient.PluginServerName);
-            }, _thriftPluginsServer);
+            var context = new ThriftPluginContext(callbackUri);
             _thriftPluginsServer._logger.LogTrace("Create plugin context, URI '{CallbackUri}'.", callbackUri);
             return context;
         }

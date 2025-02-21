@@ -2,12 +2,10 @@ using System.Collections.Concurrent;
 using System.Text;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Thrift;
 using Thrift.Processor;
 using Thrift.Protocol;
 using Thrift.Server;
 using Thrift.Transport;
-using Thrift.Transport.Server;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
@@ -18,18 +16,13 @@ namespace QueryCat.Backend.ThriftPlugins;
 
 public sealed partial class ThriftPluginsServer : IDisposable
 {
-    public enum TransportType
-    {
-        NamedPipes,
-    }
-
     private readonly record struct RegistrationTokenData(
         SemaphoreSlim Semaphore,
         string PluginName);
 
     private const int PluginRegistrationTimeoutSeconds = 10;
 
-    public string ServerEndpoint => _mainClientConnection.Endpoint;
+    public Uri ServerEndpointUri => _mainServerThread.Endpoint;
 
     private readonly IInputConfigStorage _inputConfigStorage;
     private readonly IExecutionThread _executionThread;
@@ -37,9 +30,7 @@ public sealed partial class ThriftPluginsServer : IDisposable
     private readonly ConcurrentDictionary<string, RegistrationTokenData> _registrationTokens = new();
     private readonly List<ThriftPluginContext> _plugins = new();
     private readonly Dictionary<long, ThriftPluginContext> _tokenPluginContextMap = new();
-    private readonly List<ThriftClientConnection> _clientConnections = new();
-    private readonly ThriftClientConnection _mainClientConnection;
-    private readonly TransportType _transportType;
+    private readonly ServerThread _mainServerThread;
 
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(ThriftPluginsServer));
 
@@ -76,26 +67,22 @@ public sealed partial class ThriftPluginsServer : IDisposable
 
     public ThriftPluginsServer(
         IExecutionThread executionThread,
-        TransportType transportType = TransportType.NamedPipes,
-        string? serverEndpoint = null)
+        string serverEndpointPath,
+        ThriftTransportType thriftTransportType = ThriftTransportType.NamedPipes)
     {
 #if !DEBUG
         IgnoreThriftLogs = true;
 #endif
         _executionThread = executionThread;
-        _transportType = transportType;
         _inputConfigStorage = executionThread.ConfigStorage;
-        if (string.IsNullOrEmpty(serverEndpoint))
-        {
-            serverEndpoint = GenerateEndpointAddress(_transportType);
-        }
-        var server = CreateServer(transportType, serverEndpoint);
-        _mainClientConnection = new ThriftClientConnection(serverEndpoint, server);
+        var uri = ThriftTransportUtils.FormatTransportUri(thriftTransportType, serverEndpointPath);
+        var server = CreateServer(uri);
+        _mainServerThread = new ServerThread(uri, server);
     }
 
-    private TThreadPoolAsyncServer CreateServer(TransportType transportType, string endpoint)
+    private TThreadPoolAsyncServer CreateServer(Uri uri)
     {
-        var transport = CreateTransport(transportType, endpoint);
+        var transport = ThriftTransportUtils.CreateServerTransport(uri);
         var transportFactory = new TFramedTransport.Factory();
         var binaryProtocolFactory = new TBinaryProtocol.Factory();
         var processor = new TMultiplexedProcessor();
@@ -115,26 +102,15 @@ public sealed partial class ThriftPluginsServer : IDisposable
                 : Application.LoggerFactory.CreateLogger(nameof(TThreadPoolAsyncServer)));
     }
 
-    private static TServerTransport CreateTransport(TransportType transportType, string endpoint)
-    {
-        switch (transportType)
-        {
-            case TransportType.NamedPipes:
-                return new TNamedPipeServerTransport(endpoint, new TConfiguration(),
-                    NamedPipeServerFlags.OnlyLocalClients, 1);
-        }
-        throw new ArgumentOutOfRangeException(nameof(transportType));
-    }
-
     /// <summary>
     /// Start local host server.
     /// </summary>
-    public void Start() => _mainClientConnection.Start(_serverCts);
+    public void Start() => _mainServerThread.Start(_serverCts);
 
     /// <summary>
     /// Stop server.
     /// </summary>
-    public void Stop() => _mainClientConnection.Stop();
+    public void Stop() => _mainServerThread.Stop();
 
     private void RegisterPluginContext(ThriftPluginContext context, string registrationToken, long token)
     {
@@ -225,22 +201,6 @@ public sealed partial class ThriftPluginsServer : IDisposable
 
     #endregion
 
-    private static string GenerateEndpointAddress(TransportType transportType) => transportType switch
-    {
-        TransportType.NamedPipes => "qcat-" + Guid.NewGuid().ToString("N"),
-        _ => throw new ArgumentOutOfRangeException(nameof(transportType)),
-    };
-
-    internal ThriftClientConnection CreateClientConnection(ThriftPluginContext pluginContext)
-    {
-        var endpoint = GenerateEndpointAddress(_transportType);
-        var server = CreateServer(_transportType, endpoint);
-        var connection = new ThriftClientConnection(endpoint, server);
-        connection.PluginContext = pluginContext;
-        _clientConnections.Add(connection);
-        return connection;
-    }
-
     /// <inheritdoc />
     public void Dispose()
     {
@@ -250,20 +210,15 @@ public sealed partial class ThriftPluginsServer : IDisposable
         {
             pluginContext.Dispose();
         }
-        foreach (var clientConnection in _clientConnections)
-        {
-            clientConnection.Stop();
-        }
-        _clientConnections.Clear();
     }
 
     #region ThriftClientConnection
 
-    internal sealed class ThriftClientConnection
+    internal sealed class ServerThread
     {
-        private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(ThriftClientConnection));
+        private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(ServerThread));
 
-        public string Endpoint { get; }
+        public Uri Endpoint { get; }
 
         public TServer Server { get; }
 
@@ -271,7 +226,7 @@ public sealed partial class ThriftPluginsServer : IDisposable
 
         public ThriftPluginContext? PluginContext { get; set; }
 
-        public ThriftClientConnection(string endpoint, TServer server)
+        public ServerThread(Uri endpoint, TServer server)
         {
             Endpoint = endpoint;
             Server = server;
@@ -292,7 +247,7 @@ public sealed partial class ThriftPluginsServer : IDisposable
                 cts.Token,
                 TaskCreationOptions.LongRunning,
                 TaskScheduler.Current);
-            _logger.LogDebug("Started named pipe server on '{Uri}'.", Endpoint);
+            _logger.LogDebug("Started server on '{Uri}'.", Endpoint);
         }
 
         /// <summary>

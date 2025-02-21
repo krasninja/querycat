@@ -168,10 +168,10 @@ public sealed class PluginClientLogDecorator : Plugin.IAsync
     }
 
     /// <inheritdoc />
-    public Task<bool> OfferConnectionAsync(string uri, CancellationToken cancellationToken = default)
+    public Task<string> ServeAsync(CancellationToken cancellationToken = default)
     {
-        LogStartMethodCall(nameof(OfferConnectionAsync));
-        return _client.OfferConnectionAsync(uri, cancellationToken);
+        LogStartMethodCall(nameof(ServeAsync));
+        return _client.ServeAsync(cancellationToken);
     }
 
     private void LogStartMethodCall(string methodName) => _logger.LogTrace("Call remote method '{MethodName}'.", methodName);

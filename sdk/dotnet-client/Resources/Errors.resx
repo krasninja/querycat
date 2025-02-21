@@ -36,6 +36,9 @@
     <data name="NotSupported_FunctionsManager" xml:space="preserve">
         <value>Plugins execution context does not support functions manager.</value>
     </data>
+    <data name="NotSupported_Scheme" xml:space="preserve">
+        <value>Unsupported scheme.</value>
+    </data>
     <data name="Object_IsNotBlob" xml:space="preserve">
         <value>Object is not a BLOB.</value>
     </data>

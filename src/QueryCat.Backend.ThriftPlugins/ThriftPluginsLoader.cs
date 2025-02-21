@@ -50,7 +50,7 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
     /// <summary>
     /// The using server pipe name.
     /// </summary>
-    public string ServerPipeName { get; } = "qcat-" + Guid.NewGuid().ToString("N");
+    public string ServerPipeName { get; } = "qcat-host-" + Guid.NewGuid().ToString("N");
 
     internal sealed record FunctionsCache(
         [property:JsonPropertyName("createdAt")] long CreatedAt,
@@ -68,9 +68,9 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
         {
             ArgumentException.ThrowIfNullOrEmpty(functionName, nameof(functionName));
 
-            using var client = await context.GetClientAsync(cancellationToken);
             var arguments = thread.Stack.Select(SdkConvert.Convert).ToList();
-            var result = await client.Value.CallFunctionAsync(functionName, arguments, -1, cancellationToken);
+            using var session = await context.GetSessionAsync(cancellationToken);
+            var result = await session.ClientProxy.CallFunctionAsync(functionName, arguments, -1, cancellationToken);
             if (result.__isset.@object && result.Object != null)
             {
                 var obj = CreateObjectFromResult(result, context);
@@ -119,7 +119,7 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
         IExecutionThread thread,
         IEnumerable<string> pluginDirectories,
         string? applicationDirectory = null,
-        ThriftPluginsServer.TransportType transportType = ThriftPluginsServer.TransportType.NamedPipes,
+        ThriftTransportType transportType = ThriftTransportType.NamedPipes,
         string? serverPipeName = null,
         string? functionsCacheDirectory = null,
         bool debugMode = false,
@@ -133,7 +133,7 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
         {
             ServerPipeName = serverPipeName;
         }
-        _server = new ThriftPluginsServer(thread, transportType, ServerPipeName);
+        _server = new ThriftPluginsServer(thread, ServerPipeName, transportType);
         if (_debugMode)
         {
             _server.SkipTokenVerification = true;
@@ -424,7 +424,8 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
                     FileName = file,
                 }
             };
-            process.StartInfo.ArgumentList.Add(FormatParameter(ThriftPluginClient.PluginServerPipeParameter, GetPipeName()));
+            process.StartInfo.ArgumentList.Add(FormatParameter(ThriftPluginClient.PluginServerPipeParameter,
+                _server.ServerEndpointUri.ToString()));
             process.StartInfo.ArgumentList.Add(FormatParameter(ThriftPluginClient.PluginTokenParameter, registrationToken));
             process.StartInfo.ArgumentList.Add(FormatParameter(ThriftPluginClient.PluginParentPidParameter,
                 Process.GetCurrentProcess().Id.ToString()));
@@ -488,7 +489,7 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
             var mainFunction = Marshal.GetDelegateForFunctionPointer<QueryCatPluginMainDelegate>(mainAddress);
             var args = new QueryCatPluginArguments
             {
-                ServerEndpoint = Marshal.StringToHGlobalAuto(GetPipeName()),
+                ServerEndpoint = Marshal.StringToHGlobalAuto(_server.ServerEndpointUri.ToString()),
                 Token = Marshal.StringToHGlobalAuto(registrationToken),
                 LogLevel = Marshal.StringToHGlobalAuto(_minLogLevel.ToString()),
             };
@@ -541,8 +542,6 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
         _server.RemoveRegistrationToken(registrationToken);
         _fileTokenMap.Remove(pluginFile);
     }
-
-    private string GetPipeName() => $"{ThriftPluginClient.PluginTransportNamedPipes}://localhost/{_server.ServerEndpoint}";
 
     private void RegisterFunctions(IFunctionsManager functionsManager, string file,
         IEnumerable<PluginContextFunction> functions)

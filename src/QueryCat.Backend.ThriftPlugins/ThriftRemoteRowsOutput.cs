@@ -40,8 +40,8 @@ internal sealed class ThriftRemoteRowsOutput : IRowsOutput
     {
         AsyncUtils.RunSync(async ct =>
         {
-            using var client = await _context.GetClientAsync(ct);
-            await client.Value.RowsSet_SetContextAsync(_objectHandle, new ContextQueryInfo
+            using var session = await _context.GetSessionAsync(ct);
+            await session.ClientProxy.RowsSet_SetContextAsync(_objectHandle, new ContextQueryInfo
             {
                 Columns = QueryContext.QueryInfo.Columns.Select(SdkConvert.Convert).ToList(),
                 Limit = QueryContext.QueryInfo.Limit ?? -1,
@@ -53,30 +53,30 @@ internal sealed class ThriftRemoteRowsOutput : IRowsOutput
     /// <inheritdoc />
     public async Task OpenAsync(CancellationToken cancellationToken = default)
     {
-        using var client = await _context.GetClientAsync(cancellationToken);
-        await client.Value.RowsSet_OpenAsync(_objectHandle, cancellationToken);
+        using var session = await _context.GetSessionAsync(cancellationToken);
+        await session.ClientProxy.RowsSet_OpenAsync(_objectHandle, cancellationToken);
     }
 
     /// <inheritdoc />
     public async Task CloseAsync(CancellationToken cancellationToken = default)
     {
-        using var client = await _context.GetClientAsync(cancellationToken);
-        await client.Value.RowsSet_CloseAsync(_objectHandle, cancellationToken);
+        using var session = await _context.GetSessionAsync(cancellationToken);
+        await session.ClientProxy.RowsSet_CloseAsync(_objectHandle, cancellationToken);
     }
 
     /// <inheritdoc />
     public async Task ResetAsync(CancellationToken cancellationToken = default)
     {
-        using var client = await _context.GetClientAsync(cancellationToken);
-        await client.Value.RowsSet_ResetAsync(_objectHandle, cancellationToken);
+        using var session = await _context.GetSessionAsync(cancellationToken);
+        await session.ClientProxy.RowsSet_ResetAsync(_objectHandle, cancellationToken);
     }
 
     /// <inheritdoc />
     public async ValueTask<ErrorCode> WriteValuesAsync(VariantValue[] values, CancellationToken cancellationToken = default)
     {
         var valuesArray = values.ToArray();
-        using var client = await _context.GetClientAsync(cancellationToken);
-        var result = await client.Value.RowsSet_WriteValuesAsync(
+        using var session = await _context.GetSessionAsync(cancellationToken);
+        var result = await session.ClientProxy.RowsSet_WriteValuesAsync(
             _objectHandle,
             valuesArray.Select(SdkConvert.Convert).ToList(),
             cancellationToken);

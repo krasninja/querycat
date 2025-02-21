@@ -25,8 +25,8 @@ internal sealed class RemoteStream : Stream
         {
             return AsyncUtils.RunSync(async ct =>
             {
-                using var client = await _context.GetClientAsync(ct);
-                return await client.Value.Blob_GetLengthAsync(_objectHandle, ct);
+                using var session = await _context.GetSessionAsync(ct);
+                return await session.ClientProxy.Blob_GetLengthAsync(_objectHandle, ct);
             });
         }
     }
@@ -54,8 +54,8 @@ internal sealed class RemoteStream : Stream
     /// <inheritdoc />
     public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
     {
-        using var client = await _context.GetClientAsync(cancellationToken);
-        var bytes = await client.Value.Blob_ReadAsync(_objectHandle, (int)Position, count, cancellationToken);
+        using var session = await _context.GetSessionAsync(cancellationToken);
+        var bytes = await session.ClientProxy.Blob_ReadAsync(_objectHandle, (int)Position, count, cancellationToken);
         Position += bytes.Length;
 
         var realCount = count;

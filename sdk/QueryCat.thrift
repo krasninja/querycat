@@ -379,8 +379,7 @@ service Plugin {
     1: required Handle object_handle
   ) throws (1: QueryCatPluginException e),
 
-  // The method is called to ask client to make the additional connection to the server.
-  bool OfferConnection(
-    1: required string uri, // Connection endpoint.
+  // The method is called to ask client to start server so QueryCat host can make additional connection.
+  string Serve(
   ) throws (1: QueryCatPluginException e),
 }

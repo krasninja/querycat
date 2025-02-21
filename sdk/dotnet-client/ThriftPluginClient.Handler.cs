@@ -409,10 +409,10 @@ public partial class ThriftPluginClient
         }
 
         /// <inheritdoc />
-        public Task<bool> OfferConnectionAsync(string uri, CancellationToken cancellationToken = default)
+        public Task<string> ServeAsync(CancellationToken cancellationToken = default)
         {
-            // TODO:
-            return Task.FromResult(false);
+            var uri = _thriftPluginClient.StartNewServer();
+            return Task.FromResult(uri.ToString());
         }
     }
 
@@ -737,12 +737,12 @@ public partial class ThriftPluginClient
         }
 
         /// <inheritdoc />
-        public Task<bool> OfferConnectionAsync(string uri, CancellationToken cancellationToken = default)
+        public Task<string> ServeAsync(CancellationToken cancellationToken = default)
         {
-            LogCallMethod(nameof(OfferConnectionAsync));
+            LogCallMethod(nameof(ServeAsync));
             try
             {
-                return _handler.OfferConnectionAsync(uri, cancellationToken);
+                return _handler.ServeAsync(cancellationToken);
             }
             catch (Exception ex)
             {
