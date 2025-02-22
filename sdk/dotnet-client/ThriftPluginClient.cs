@@ -282,7 +282,8 @@ public partial class ThriftPluginClient : IDisposable
 
     internal Uri StartNewServer(ThriftTransportType transportType = ThriftTransportType.NamedPipes)
     {
-        var uri = ThriftTransportUtils.FormatTransportUri(transportType, $"qcat-plugin-{Guid.NewGuid():N}");
+        var id = ThriftTransportUtils.GenerateIdentifier();
+        var uri = ThriftTransportUtils.FormatTransportUri(transportType, $"qcatp-{id}");
 
         var transport = ThriftTransportUtils.CreateServerTransport(uri);
         var transportFactory = new TFramedTransport.Factory();

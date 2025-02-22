@@ -50,7 +50,7 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
     /// <summary>
     /// The using server pipe name.
     /// </summary>
-    public string ServerPipeName { get; } = "qcat-host-" + Guid.NewGuid().ToString("N");
+    public string ServerPipeName { get; } = "qcath-" + ThriftTransportUtils.GenerateIdentifier();
 
     internal sealed record FunctionsCache(
         [property:JsonPropertyName("createdAt")] long CreatedAt,

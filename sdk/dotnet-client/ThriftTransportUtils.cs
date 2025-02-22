@@ -74,4 +74,18 @@ public static class ThriftTransportUtils
         }
         throw new ArgumentOutOfRangeException(uri.Scheme, uri, Resources.Errors.NotSupported_Scheme);
     }
+
+    private static readonly char[] _identifierCharacters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I',
+        'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '0', '1', '2',
+        '3', '4', '5', '6', '7', '8', '9'];
+
+    /// <summary>
+    /// Generate random letters string.
+    /// </summary>
+    /// <param name="length">String length.</param>
+    /// <returns>Random length string.</returns>
+    public static string GenerateIdentifier(int length = 12)
+    {
+        return string.Join(string.Empty, Random.Shared.GetItems(_identifierCharacters, length));
+    }
 }
