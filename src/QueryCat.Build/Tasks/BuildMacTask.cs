@@ -15,15 +15,15 @@ public sealed class BuildMacTask : BaseBuildTask
 
         context.DotNetPublish(context.ConsoleAppProjectDirectory, new PublishGeneralSettings(context, publishAot, properties)
         {
-            Runtime = DotNetConstants.RidMacOSXArm64,
+            Runtime = DotNetConstants.RidMacOSArm64,
         });
         context.DotNetPublish(context.PluginsProxyProjectDirectory, new PublishGeneralSettings(context, publishAot: false, properties)
         {
-            Runtime = DotNetConstants.RidMacOSXArm64,
+            Runtime = DotNetConstants.RidMacOSArm64,
         });
         context.DotNetPublish(context.TimeItAppProjectDirectory, new PublishGeneralSettings(context, publishAot, properties)
         {
-            Runtime = DotNetConstants.RidMacOSXArm64,
+            Runtime = DotNetConstants.RidMacOSArm64,
         });
 
         return base.RunAsync(context);

@@ -48,11 +48,10 @@ public sealed class PublishAll : AsyncFrostingTask<BuildContext>
         context.GZipCompress(
             root,
             Path.Combine(context.OutputDirectory, $"qcat-{context.Version}-{DotNetConstants.RidLinuxX64}.tar.gz"),
-            new[]
-            {
+            [
                 Path.Combine(context.OutputDirectory, "qcat"),
-                Path.Combine(context.OutputDirectory, LicenseFileName),
-            },
+                Path.Combine(context.OutputDirectory, LicenseFileName)
+            ],
             level: ZipLevel);
         context.DotNetPublish(context.PluginsProxyProjectDirectory, new PublishGeneralSettings(context, publishAot: false)
         {
@@ -62,11 +61,10 @@ public sealed class PublishAll : AsyncFrostingTask<BuildContext>
         context.GZipCompress(
             root,
             Path.Combine(context.OutputDirectory, $"qcat-plugins-proxy-{context.Version}-{DotNetConstants.RidLinuxX64}.tar.gz"),
-            new[]
-            {
+            [
                 Path.Combine(context.OutputDirectory, "qcat-plugins-proxy"),
-                Path.Combine(context.OutputDirectory, LicenseFileName),
-            },
+                Path.Combine(context.OutputDirectory, LicenseFileName)
+            ],
             level: ZipLevel);
 
         // ARM64.
@@ -78,11 +76,10 @@ public sealed class PublishAll : AsyncFrostingTask<BuildContext>
         context.GZipCompress(
             root,
             Path.Combine(context.OutputDirectory, $"qcat-{context.Version}-{DotNetConstants.RidLinuxArm64}.tar.gz"),
-            new[]
-            {
+            [
                 Path.Combine(context.OutputDirectory, "qcat"),
-                Path.Combine(context.OutputDirectory, LicenseFileName),
-            },
+                Path.Combine(context.OutputDirectory, LicenseFileName)
+            ],
             level: ZipLevel);
         context.DotNetPublish(context.PluginsProxyProjectDirectory, new PublishGeneralSettings(context, publishAot: false)
         {
@@ -92,11 +89,10 @@ public sealed class PublishAll : AsyncFrostingTask<BuildContext>
         context.GZipCompress(
             root,
             Path.Combine(context.OutputDirectory, $"qcat-plugins-proxy-{context.Version}-{DotNetConstants.RidLinuxArm64}.tar.gz"),
-            new[]
-            {
+            [
                 Path.Combine(context.OutputDirectory, "qcat-plugins-proxy"),
-                Path.Combine(context.OutputDirectory, LicenseFileName),
-            },
+                Path.Combine(context.OutputDirectory, LicenseFileName)
+            ],
             level: ZipLevel);
     }
 
@@ -110,11 +106,10 @@ public sealed class PublishAll : AsyncFrostingTask<BuildContext>
         context.ZipCompress(
             root,
             Path.Combine(context.OutputDirectory, $"qcat-{context.Version}-{DotNetConstants.RidWindowsX64}.zip"),
-            new[]
-            {
+            [
                 Path.Combine(context.OutputDirectory, "qcat.exe"),
-                Path.Combine(context.OutputDirectory, LicenseFileName),
-            },
+                Path.Combine(context.OutputDirectory, LicenseFileName)
+            ],
             level: ZipLevel);
 
         // Plugins proxy.
@@ -126,11 +121,10 @@ public sealed class PublishAll : AsyncFrostingTask<BuildContext>
         context.ZipCompress(
             root,
             Path.Combine(context.OutputDirectory, $"qcat-plugins-proxy-{context.Version}-{DotNetConstants.RidWindowsX64}.zip"),
-            new[]
-            {
+            [
                 Path.Combine(context.OutputDirectory, "qcat-plugins-proxy.exe"),
-                Path.Combine(context.OutputDirectory, LicenseFileName),
-            },
+                Path.Combine(context.OutputDirectory, LicenseFileName)
+            ],
             level: ZipLevel);
     }
 
@@ -145,11 +139,10 @@ public sealed class PublishAll : AsyncFrostingTask<BuildContext>
         context.GZipCompress(
             root,
             Path.Combine(context.OutputDirectory, $"qcat-{context.Version}-{DotNetConstants.RidMacOSX64}.tar.gz"),
-            new[]
-            {
+            [
                 Path.Combine(context.OutputDirectory, "qcat"),
-                Path.Combine(context.OutputDirectory, LicenseFileName),
-            },
+                Path.Combine(context.OutputDirectory, LicenseFileName)
+            ],
             level: ZipLevel);
         context.DotNetPublish(context.PluginsProxyProjectDirectory, new PublishGeneralSettings(context, publishAot: false)
         {
@@ -159,41 +152,38 @@ public sealed class PublishAll : AsyncFrostingTask<BuildContext>
         context.GZipCompress(
             root,
             Path.Combine(context.OutputDirectory, $"qcat-plugins-proxy-{context.Version}-{DotNetConstants.RidMacOSX64}.tar.gz"),
-            new[]
-            {
+            [
                 Path.Combine(context.OutputDirectory, "qcat-plugins-proxy"),
-                Path.Combine(context.OutputDirectory, LicenseFileName),
-            },
+                Path.Combine(context.OutputDirectory, LicenseFileName)
+            ],
             level: ZipLevel);
 
         // ARM64.
         context.DotNetPublish(context.ConsoleAppProjectDirectory, new PublishGeneralSettings(context)
         {
             OutputDirectory = context.OutputDirectory,
-            Runtime = DotNetConstants.RidMacOSXArm64,
+            Runtime = DotNetConstants.RidMacOSArm64,
         });
         context.GZipCompress(
             root,
-            Path.Combine(context.OutputDirectory, $"qcat-{context.Version}-{DotNetConstants.RidMacOSXArm64}.tar.gz"),
-            new[]
-            {
+            Path.Combine(context.OutputDirectory, $"qcat-{context.Version}-{DotNetConstants.RidMacOSArm64}.tar.gz"),
+            [
                 Path.Combine(context.OutputDirectory, "qcat"),
-                Path.Combine(context.OutputDirectory, LicenseFileName),
-            },
+                Path.Combine(context.OutputDirectory, LicenseFileName)
+            ],
             level: ZipLevel);
         context.DotNetPublish(context.PluginsProxyProjectDirectory, new PublishGeneralSettings(context, publishAot: false)
         {
             OutputDirectory = context.OutputDirectory,
-            Runtime = DotNetConstants.RidMacOSXArm64,
+            Runtime = DotNetConstants.RidMacOSArm64,
         });
         context.GZipCompress(
             root,
-            Path.Combine(context.OutputDirectory, $"qcat-plugins-proxy-{context.Version}-{DotNetConstants.RidMacOSXArm64}.tar.gz"),
-            new[]
-            {
+            Path.Combine(context.OutputDirectory, $"qcat-plugins-proxy-{context.Version}-{DotNetConstants.RidMacOSArm64}.tar.gz"),
+            [
                 Path.Combine(context.OutputDirectory, "qcat-plugins-proxy"),
-                Path.Combine(context.OutputDirectory, LicenseFileName),
-            },
+                Path.Combine(context.OutputDirectory, LicenseFileName)
+            ],
             level: ZipLevel);
     }
 }

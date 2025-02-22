@@ -24,8 +24,8 @@ public static class DotNetConstants
     public const string RidLinuxArm64 = $"{Application.PlatformLinux}-{Application.ArchitectureArm64}";
     public const string RidLinuxMuslX64 = $"{Application.PlatformLinux}-musl-{Application.ArchitectureX64}";
     public const string RidWindowsX64 = $"{Application.PlatformWindows}-{Application.ArchitectureX64}";
-    public const string RidMacOSX64 = $"osx-{Application.ArchitectureX64}";
-    public const string RidMacOSXArm64 = $"osx-{Application.ArchitectureArm64}";
+    public const string RidMacOSX64 = $"{Application.PlatformMacOS}-{Application.ArchitectureX64}";
+    public const string RidMacOSArm64 = $"{Application.PlatformMacOS}-{Application.ArchitectureArm64}";
 
     #endregion
 
