@@ -12,22 +12,23 @@ public sealed class BuildLinuxTask : BaseBuildTask
     {
         var publishAot = GetPublishAot(context);
         var properties = GetProperties(context);
+        var platform = GetPlatform(context, DotNetConstants.RidLinuxX64);
 
         context.DotNetPublish(context.ConsoleAppProjectDirectory, new PublishGeneralSettings(context, publishAot, properties)
         {
-            Runtime = DotNetConstants.RidLinuxX64,
+            Runtime = platform,
         });
         context.DotNetPublish(context.PluginsProxyProjectDirectory, new PublishGeneralSettings(context, publishAot: false, properties)
         {
-            Runtime = DotNetConstants.RidLinuxX64,
+            Runtime = platform,
         });
         context.DotNetPublish(context.TimeItAppProjectDirectory, new PublishGeneralSettings(context, publishAot, properties)
         {
-            Runtime = DotNetConstants.RidLinuxX64,
+            Runtime = platform,
         });
         context.DotNetPublish(context.TestPluginAppProjectDirectory, new PublishGeneralSettings(context, publishAot, properties)
         {
-            Runtime = DotNetConstants.RidLinuxX64,
+            Runtime = platform,
         });
 
         return base.RunAsync(context);

@@ -18,4 +18,10 @@ public class BaseBuildTask : AsyncFrostingTask<BuildContext>
     }
 
     protected string GetProperties(BuildContext context) => context.Arguments.GetArgument(DotNetConstants.PropertiesArgument);
+
+    protected string GetPlatform(BuildContext context, string @default)
+    {
+        var platform = context.Arguments.GetArgument(DotNetConstants.PlatformArgument);
+        return !string.IsNullOrEmpty(platform) ? platform : @default;
+    }
 }

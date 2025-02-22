@@ -12,18 +12,19 @@ public sealed class BuildMacTask : BaseBuildTask
     {
         var publishAot = GetPublishAot(context);
         var properties = GetProperties(context);
+        var platform = GetPlatform(context, DotNetConstants.RidMacOSArm64);
 
         context.DotNetPublish(context.ConsoleAppProjectDirectory, new PublishGeneralSettings(context, publishAot, properties)
         {
-            Runtime = DotNetConstants.RidMacOSX64,
+            Runtime = platform,
         });
         context.DotNetPublish(context.PluginsProxyProjectDirectory, new PublishGeneralSettings(context, publishAot: false, properties)
         {
-            Runtime = DotNetConstants.RidMacOSArm64,
+            Runtime = platform,
         });
         context.DotNetPublish(context.TimeItAppProjectDirectory, new PublishGeneralSettings(context, publishAot, properties)
         {
-            Runtime = DotNetConstants.RidMacOSArm64,
+            Runtime = platform,
         });
 
         return base.RunAsync(context);

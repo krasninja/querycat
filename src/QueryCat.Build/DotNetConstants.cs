@@ -33,6 +33,7 @@ public static class DotNetConstants
 
     public const string PublishAotArgument = "PublishAot";
     public const string PropertiesArgument = "Properties";
+    public const string PlatformArgument = "Platform";
 
     #endregion
 }
