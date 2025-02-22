@@ -15,7 +15,7 @@ public sealed class BuildMacTask : BaseBuildTask
 
         context.DotNetPublish(context.ConsoleAppProjectDirectory, new PublishGeneralSettings(context, publishAot, properties)
         {
-            Runtime = DotNetConstants.RidMacOSArm64,
+            Runtime = DotNetConstants.RidMacOSX64,
         });
         context.DotNetPublish(context.PluginsProxyProjectDirectory, new PublishGeneralSettings(context, publishAot: false, properties)
         {
