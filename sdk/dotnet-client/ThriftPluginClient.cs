@@ -56,6 +56,7 @@ public partial class ThriftPluginClient : IDisposable
     private readonly string _registrationToken;
     private readonly TProtocol _protocol;
     private readonly PluginsManager.Client _thriftClient;
+    private readonly ThreadSafePluginsManagerClient _thriftClientSafe;
 
     // Plugin server.
     private readonly List<ThriftServerConnection> _serverConnections = new();
@@ -87,7 +88,7 @@ public partial class ThriftPluginClient : IDisposable
     /// </summary>
     public long Token => RegistrationResult != null ? RegistrationResult.Token : -1;
 
-    internal PluginsManager.Client ThriftClient => _thriftClient;
+    internal PluginsManager.IAsync ThriftClient => _thriftClientSafe;
 
     /// <summary>
     /// The event occurs on plugin registration.
@@ -138,6 +139,7 @@ public partial class ThriftPluginClient : IDisposable
                 ),
             PluginsManagerServiceName);
         _thriftClient = new PluginsManager.Client(_protocol);
+        _thriftClientSafe = new ThreadSafePluginsManagerClient(_thriftClient);
 
         _executionThread = new ThriftPluginExecutionThread(this);
         _functionsManager = new PluginFunctionsManager();
@@ -421,7 +423,7 @@ public partial class ThriftPluginClient : IDisposable
     /// <param name="args">Log arguments.</param>
     public async Task LogAsync(global::QueryCat.Plugins.Sdk.LogLevel level, string message, CancellationToken cancellationToken, params string[] args)
     {
-        await _thriftClient.LogAsync(Token, level, message, args.ToList(), cancellationToken);
+        await ThriftClient.LogAsync(Token, level, message, args.ToList(), cancellationToken);
     }
 
     protected virtual void Dispose(bool disposing)

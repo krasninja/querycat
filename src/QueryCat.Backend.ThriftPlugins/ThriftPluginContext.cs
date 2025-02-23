@@ -249,11 +249,14 @@ internal sealed class ThriftPluginContext : IDisposable, IAsyncDisposable
         }
     }
 
+    [DebuggerDisplay("ClientId = {Id}")]
     internal readonly struct ClientSession(ThriftPluginContext context, ClientWrapper value) : IDisposable
     {
         public ClientWrapper Wrapper { get; } = value;
 
         public Plugin.IAsync ClientProxy => Wrapper.Client;
+
+        public int Id => Wrapper.Id;
 
         /// <inheritdoc />
         public void Dispose()
