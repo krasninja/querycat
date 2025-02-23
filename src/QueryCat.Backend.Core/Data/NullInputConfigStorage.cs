@@ -10,15 +10,13 @@ public class NullInputConfigStorage : IInputConfigStorage
     public static NullInputConfigStorage Instance { get; } = new();
 
     /// <inheritdoc />
-    public void Set(string key, VariantValue value)
-    {
-    }
+    public ValueTask SetAsync(string key, VariantValue value, CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
 
     /// <inheritdoc />
-    public bool Has(string key) => false;
+    public ValueTask<bool> HasAsync(string key, CancellationToken cancellationToken = default) => ValueTask.FromResult(false);
 
     /// <inheritdoc />
-    public VariantValue Get(string key) => VariantValue.Null;
+    public ValueTask<VariantValue> GetAsync(string key, CancellationToken cancellationToken = default) => ValueTask.FromResult(VariantValue.Null);
 
     /// <inheritdoc />
     public Task SaveAsync(CancellationToken cancellationToken) => Task.CompletedTask;

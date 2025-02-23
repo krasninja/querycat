@@ -13,16 +13,21 @@ public static class InputConfigStorageExtensions
     /// <param name="configStorage">Instance of <see cref="IInputConfigStorage" />.</param>
     /// <param name="key">Key.</param>
     /// <param name="func">Delegate to create value.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Existing or new value.</returns>
-    public static VariantValue GetOrSet(this IInputConfigStorage configStorage, string key, Func<string, VariantValue> func)
+    public static async ValueTask<VariantValue> GetOrSetAsync(
+        this IInputConfigStorage configStorage,
+        string key,
+        Func<string, VariantValue> func,
+        CancellationToken cancellationToken = default)
     {
-        if (!configStorage.Has(key))
+        if (!await configStorage.HasAsync(key, cancellationToken))
         {
             var value = func(key);
-            configStorage.Set(key, value);
+            await configStorage.SetAsync(key, value, cancellationToken);
             return value;
         }
-        return configStorage.Get(key);
+        return await configStorage.GetAsync(key, cancellationToken);
     }
 
     /// <summary>
@@ -31,14 +36,18 @@ public static class InputConfigStorageExtensions
     /// <param name="configStorage">Instance of <see cref="IInputConfigStorage" />.</param>
     /// <param name="key">Key.</param>
     /// <param name="default">Default value.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The value.</returns>
-    public static VariantValue GetOrDefault(this IInputConfigStorage configStorage, string key,
-        VariantValue @default = default)
+    public static async ValueTask<VariantValue> GetOrDefaultAsync(
+        this IInputConfigStorage configStorage,
+        string key,
+        VariantValue @default = default,
+        CancellationToken cancellationToken = default)
     {
-        if (!configStorage.Has(key))
+        if (!await configStorage.HasAsync(key, cancellationToken))
         {
             return @default;
         }
-        return configStorage.Get(key);
+        return await configStorage.GetAsync(key, cancellationToken);
     }
 }

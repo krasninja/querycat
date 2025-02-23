@@ -11,7 +11,7 @@ public class MemoryInputConfigStorage : IInputConfigStorage
     protected Dictionary<string, VariantValue> Map { get; } = new();
 
     /// <inheritdoc />
-    public virtual void Set(string key, VariantValue value)
+    public virtual ValueTask SetAsync(string key, VariantValue value, CancellationToken cancellationToken = default)
     {
         if (value.IsNull)
         {
@@ -21,19 +21,23 @@ public class MemoryInputConfigStorage : IInputConfigStorage
         {
             Map[key] = value;
         }
+        return ValueTask.CompletedTask;
     }
 
     /// <inheritdoc />
-    public virtual bool Has(string key) => Map.ContainsKey(key);
+    public virtual ValueTask<bool> HasAsync(string key, CancellationToken cancellationToken = default)
+    {
+        return ValueTask.FromResult(Map.ContainsKey(key));
+    }
 
     /// <inheritdoc />
-    public virtual VariantValue Get(string key)
+    public virtual ValueTask<VariantValue> GetAsync(string key, CancellationToken cancellationToken = default)
     {
         if (Map.TryGetValue(key, out var value))
         {
-            return value;
+            return ValueTask.FromResult(value);
         }
-        return VariantValue.Null;
+        return ValueTask.FromResult(VariantValue.Null);
     }
 
     /// <inheritdoc />
