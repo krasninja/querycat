@@ -123,7 +123,8 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
         string? serverPipeName = null,
         string? functionsCacheDirectory = null,
         bool debugMode = false,
-        LogLevel minLogLevel = LogLevel.Information) : base(pluginDirectories)
+        LogLevel minLogLevel = LogLevel.Information,
+        int maxConnectionsToPlugin = 1) : base(pluginDirectories)
     {
         _thread = thread;
         _applicationDirectory = applicationDirectory;
@@ -133,7 +134,7 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
         {
             ServerPipeName = serverPipeName;
         }
-        _server = new ThriftPluginsServer(thread, ServerPipeName, transportType);
+        _server = new ThriftPluginsServer(thread, ServerPipeName, transportType, maxConnectionsToClient: maxConnectionsToPlugin);
         if (_debugMode)
         {
             _server.SkipTokenVerification = true;

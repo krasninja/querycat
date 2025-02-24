@@ -83,7 +83,7 @@ public partial class ThriftPluginsServer
 
         private ThriftPluginContext CreateClientConnection(string callbackUri)
         {
-            var context = new ThriftPluginContext(callbackUri);
+            var context = new ThriftPluginContext(callbackUri, maxConnections: _thriftPluginsServer._maxConnectionsToClient);
             _thriftPluginsServer._logger.LogTrace("Create plugin context, URI '{CallbackUri}'.", callbackUri);
             return context;
         }

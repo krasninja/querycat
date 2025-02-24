@@ -31,6 +31,7 @@ public sealed partial class ThriftPluginsServer : IDisposable
     private readonly List<ThriftPluginContext> _plugins = new();
     private readonly Dictionary<long, ThriftPluginContext> _tokenPluginContextMap = new();
     private readonly ServerThread _mainServerThread;
+    private readonly int _maxConnectionsToClient;
 
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(ThriftPluginsServer));
 
@@ -68,7 +69,8 @@ public sealed partial class ThriftPluginsServer : IDisposable
     public ThriftPluginsServer(
         IExecutionThread executionThread,
         string serverEndpointPath,
-        ThriftTransportType thriftTransportType = ThriftTransportType.NamedPipes)
+        ThriftTransportType thriftTransportType = ThriftTransportType.NamedPipes,
+        int maxConnectionsToClient = 1)
     {
 #if !DEBUG
         IgnoreThriftLogs = true;
@@ -78,6 +80,7 @@ public sealed partial class ThriftPluginsServer : IDisposable
         var uri = ThriftTransportUtils.FormatTransportUri(thriftTransportType, serverEndpointPath);
         var server = CreateServer(uri);
         _mainServerThread = new ServerThread(uri, server);
+        _maxConnectionsToClient = maxConnectionsToClient;
     }
 
     private TThreadPoolAsyncServer CreateServer(Uri uri)

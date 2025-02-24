@@ -97,7 +97,8 @@ internal sealed class ApplicationOptions
             Application.GetApplicationDirectory(),
             functionsCacheDirectory: Path.Combine(Application.GetApplicationDirectory(),
                 ApplicationPluginsFunctionsCacheDirectory),
-            minLogLevel: LogLevel)
+            minLogLevel: LogLevel,
+            maxConnectionsToPlugin: executionOptions.MaxConnectionsToPluginClient)
         );
 #endif
 #if ENABLE_PLUGINS && PLUGIN_ASSEMBLY

@@ -1,4 +1,6 @@
 using System.Collections.Concurrent;
+using Microsoft.Extensions.Logging;
+using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 
 namespace QueryCat.Backend.Inputs;
@@ -11,6 +13,8 @@ internal class ParallelRowsSource : IRowsSource, IDisposable, IAsyncDisposable
     protected SemaphoreSlim Semaphore { get; }
 
     protected ConcurrentDictionary<int, Task> Tasks { get; } = new();
+
+    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(ParallelRowsSource));
 
     /// <inheritdoc />
     public QueryContext QueryContext
@@ -25,10 +29,11 @@ internal class ParallelRowsSource : IRowsSource, IDisposable, IAsyncDisposable
         Semaphore = new SemaphoreSlim(maxDegreeOfParallelism ?? Environment.ProcessorCount);
     }
 
-    protected async ValueTask AddTask(Func<ValueTask> func, CancellationToken cancellationToken = default)
+    protected async ValueTask AddTask(Func<Task> func, CancellationToken cancellationToken = default)
     {
         await Semaphore.WaitAsync(cancellationToken);
-        var task = new Task(() => func(), cancellationToken);
+        var task = func.Invoke();
+        Tasks.TryAdd(task.Id, task);
 #pragma warning disable CS4014
         task.ContinueWith(t =>
 #pragma warning restore CS4014
@@ -36,8 +41,6 @@ internal class ParallelRowsSource : IRowsSource, IDisposable, IAsyncDisposable
             Semaphore.Release();
             Tasks.TryRemove(task.Id, out _);
         }, cancellationToken);
-        Tasks.TryAdd(task.Id, task);
-        task.Start();
     }
 
     /// <inheritdoc />
@@ -77,9 +80,10 @@ internal class ParallelRowsSource : IRowsSource, IDisposable, IAsyncDisposable
 
     protected virtual async ValueTask DisposeAsyncCore()
     {
+        _logger.LogDebug("Closing parallel source, pending tasks {PendingTasksCount}.", Tasks.Count);
         foreach (var task in Tasks.Values)
         {
-            await task.ConfigureAwait(false);
+            await task;
         }
         Tasks.Clear();
 
