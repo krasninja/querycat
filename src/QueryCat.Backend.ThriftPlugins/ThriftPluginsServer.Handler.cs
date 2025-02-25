@@ -66,7 +66,14 @@ public partial class ThriftPluginsServer
                 foreach (var function in plugin_data.Functions)
                 {
                     context.Functions.Add(
-                        new PluginContextFunction(function.Signature, function.Description, function.IsSafe, function.IsAggregate));
+                        new PluginContextFunction(
+                            function.Signature,
+                            function.Description,
+                            function.IsSafe,
+                            function.IsAggregate,
+                            (function.FormatterIds ?? []).ToArray()
+                        )
+                    );
                 }
             }
             var token = _thriftPluginsServer.GenerateToken();

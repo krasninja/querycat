@@ -90,6 +90,16 @@ public partial class ThriftPluginClient
                         Object = new ObjectValue(ObjectType.ROWS_OUTPUT, index, rowsOutput.ToString() ?? string.Empty),
                     };
                 }
+                else if (result.AsObject is IRowsFormatter rowsFormatter)
+                {
+                    var index =_thriftPluginClient._objectsStorage.Add(rowsFormatter);
+                    _thriftPluginClient._logger.LogDebug("Added new formatter object '{Object}' with handle {Handle}.",
+                        rowsFormatter.ToString(), index);
+                    return new VariantValue
+                    {
+                        Object = new ObjectValue(ObjectType.ROWS_FORMATTER, index, rowsFormatter.ToString() ?? string.Empty),
+                    };
+                }
                 throw new QueryCatPluginException(
                     ErrorType.INVALID_OBJECT,
                     string.Format(Resources.Errors.Object_CannotRegister, result.AsObject));
@@ -116,17 +126,17 @@ public partial class ThriftPluginClient
         }
 
         /// <inheritdoc />
-        public Task<List<Sdk.Column>> RowsSet_GetColumnsAsync(int object_handle, CancellationToken cancellationToken = default)
+        public Task<List<Sdk.Column>> RowsSet_GetColumnsAsync(int object_rows_set_handle, CancellationToken cancellationToken = default)
         {
-            var rowsSchema = _thriftPluginClient._objectsStorage.Get<IRowsSchema>(object_handle);
+            var rowsSchema = _thriftPluginClient._objectsStorage.Get<IRowsSchema>(object_rows_set_handle);
             var columns = rowsSchema.Columns.Select(SdkConvert.Convert).ToList();
             return Task.FromResult(columns);
         }
 
         /// <inheritdoc />
-        public async Task RowsSet_OpenAsync(int object_handle, CancellationToken cancellationToken = default)
+        public async Task RowsSet_OpenAsync(int object_rows_set_handle, CancellationToken cancellationToken = default)
         {
-            if (_thriftPluginClient._objectsStorage.TryGet<IRowsSource>(object_handle, out var rowsSource)
+            if (_thriftPluginClient._objectsStorage.TryGet<IRowsSource>(object_rows_set_handle, out var rowsSource)
                 && rowsSource != null)
             {
                 await rowsSource.OpenAsync(cancellationToken);
@@ -144,14 +154,14 @@ public partial class ThriftPluginClient
         }
 
         /// <inheritdoc />
-        public async Task RowsSet_ResetAsync(int object_handle, CancellationToken cancellationToken = default)
+        public async Task RowsSet_ResetAsync(int object_rows_set_handle, CancellationToken cancellationToken = default)
         {
-            if (_thriftPluginClient._objectsStorage.TryGet<IRowsSource>(object_handle, out var rowsSource)
+            if (_thriftPluginClient._objectsStorage.TryGet<IRowsSource>(object_rows_set_handle, out var rowsSource)
                 && rowsSource != null)
             {
                 await rowsSource.ResetAsync(cancellationToken);
             }
-            else if (_thriftPluginClient._objectsStorage.TryGet<IRowsIterator>(object_handle, out var rowsIterator)
+            else if (_thriftPluginClient._objectsStorage.TryGet<IRowsIterator>(object_rows_set_handle, out var rowsIterator)
                 && rowsIterator != null)
             {
                 await rowsIterator.ResetAsync(cancellationToken);
@@ -159,9 +169,9 @@ public partial class ThriftPluginClient
         }
 
         /// <inheritdoc />
-        public Task<int> RowsSet_PositionAsync(int object_handle, CancellationToken cancellationToken = default)
+        public Task<int> RowsSet_PositionAsync(int object_rows_set_handle, CancellationToken cancellationToken = default)
         {
-            if (_thriftPluginClient._objectsStorage.TryGet<ICursorRowsIterator>(object_handle, out var rowsSource)
+            if (_thriftPluginClient._objectsStorage.TryGet<ICursorRowsIterator>(object_rows_set_handle, out var rowsSource)
                 && rowsSource != null)
             {
                 return Task.FromResult(rowsSource.Position);
@@ -170,9 +180,9 @@ public partial class ThriftPluginClient
         }
 
         /// <inheritdoc />
-        public Task<int> RowsSet_TotalRowsAsync(int object_handle, CancellationToken cancellationToken = default)
+        public Task<int> RowsSet_TotalRowsAsync(int object_rows_set_handle, CancellationToken cancellationToken = default)
         {
-            if (_thriftPluginClient._objectsStorage.TryGet<ICursorRowsIterator>(object_handle, out var rowsSource)
+            if (_thriftPluginClient._objectsStorage.TryGet<ICursorRowsIterator>(object_rows_set_handle, out var rowsSource)
                 && rowsSource != null)
             {
                 return Task.FromResult(rowsSource.TotalRows);
@@ -181,10 +191,10 @@ public partial class ThriftPluginClient
         }
 
         /// <inheritdoc />
-        public Task RowsSet_SeekAsync(int object_handle, int offset, CursorSeekOrigin origin,
+        public Task RowsSet_SeekAsync(int object_rows_set_handle, int offset, CursorSeekOrigin origin,
             CancellationToken cancellationToken = default)
         {
-            if (_thriftPluginClient._objectsStorage.TryGet<ICursorRowsIterator>(object_handle, out var rowsSource)
+            if (_thriftPluginClient._objectsStorage.TryGet<ICursorRowsIterator>(object_rows_set_handle, out var rowsSource)
                 && rowsSource != null)
             {
                 rowsSource.Seek(offset, SdkConvert.Convert(origin));
@@ -194,10 +204,10 @@ public partial class ThriftPluginClient
         }
 
         /// <inheritdoc />
-        public Task RowsSet_SetContextAsync(int object_handle, ContextQueryInfo? context_query_info,
+        public Task RowsSet_SetContextAsync(int object_rows_set_handle, ContextQueryInfo? context_query_info,
             CancellationToken cancellationToken = default)
         {
-            if (_thriftPluginClient._objectsStorage.TryGet<IRowsSource>(object_handle, out var rowsSource)
+            if (_thriftPluginClient._objectsStorage.TryGet<IRowsSource>(object_rows_set_handle, out var rowsSource)
                 && rowsSource != null)
             {
                 if (context_query_info == null)
@@ -225,10 +235,10 @@ public partial class ThriftPluginClient
         }
 
         /// <inheritdoc />
-        public async Task<RowsList> RowsSet_GetRowsAsync(int object_handle, int count, CancellationToken cancellationToken = default)
+        public async Task<RowsList> RowsSet_GetRowsAsync(int object_rows_set_handle, int count, CancellationToken cancellationToken = default)
         {
             // Handle IRowsInput.
-            if (_thriftPluginClient._objectsStorage.TryGet<IRowsInput>(object_handle, out var rowsInput)
+            if (_thriftPluginClient._objectsStorage.TryGet<IRowsInput>(object_rows_set_handle, out var rowsInput)
                 && rowsInput != null)
             {
                 var values = new List<VariantValue>();
@@ -256,7 +266,7 @@ public partial class ThriftPluginClient
             }
 
             // Handle IRowsIterator.
-            if (_thriftPluginClient._objectsStorage.TryGet<IRowsIterator>(object_handle, out var rowsIterator)
+            if (_thriftPluginClient._objectsStorage.TryGet<IRowsIterator>(object_rows_set_handle, out var rowsIterator)
                 && rowsIterator != null)
             {
                 var values = new List<VariantValue>();
@@ -279,9 +289,9 @@ public partial class ThriftPluginClient
         }
 
         /// <inheritdoc />
-        public Task<List<string>> RowsSet_GetUniqueKeyAsync(int object_handle, CancellationToken cancellationToken = default)
+        public Task<List<string>> RowsSet_GetUniqueKeyAsync(int object_rows_set_handle, CancellationToken cancellationToken = default)
         {
-            if (_thriftPluginClient._objectsStorage.TryGet<IRowsInput>(object_handle, out var rowsInput)
+            if (_thriftPluginClient._objectsStorage.TryGet<IRowsInput>(object_rows_set_handle, out var rowsInput)
                 && rowsInput != null)
             {
                 var keys = rowsInput.UniqueKey.ToList();
@@ -291,9 +301,9 @@ public partial class ThriftPluginClient
         }
 
         /// <inheritdoc />
-        public Task<List<KeyColumn>> RowsSet_GetKeyColumnsAsync(int object_handle, CancellationToken cancellationToken = default)
+        public Task<List<KeyColumn>> RowsSet_GetKeyColumnsAsync(int object_rows_set_handle, CancellationToken cancellationToken = default)
         {
-            if (_thriftPluginClient._objectsStorage.TryGet<IRowsInput>(object_handle, out var rowsInput)
+            if (_thriftPluginClient._objectsStorage.TryGet<IRowsInput>(object_rows_set_handle, out var rowsInput)
                 && rowsInput != null
                 && rowsInput is IRowsInputKeys rowsInputKeys)
             {
@@ -309,11 +319,11 @@ public partial class ThriftPluginClient
         }
 
         /// <inheritdoc />
-        public Task RowsSet_SetKeyColumnValueAsync(int object_handle, int column_index, string operation, VariantValue? value,
+        public Task RowsSet_SetKeyColumnValueAsync(int object_rows_set_handle, int column_index, string operation, VariantValue? value,
             CancellationToken cancellationToken = default)
         {
             if (value != null
-                && _thriftPluginClient._objectsStorage.TryGet<IRowsInput>(object_handle, out var rowsInput)
+                && _thriftPluginClient._objectsStorage.TryGet<IRowsInput>(object_rows_set_handle, out var rowsInput)
                 && rowsInput != null
                 && rowsInput is IRowsInputKeys rowsInputKeys)
             {
@@ -324,10 +334,10 @@ public partial class ThriftPluginClient
         }
 
         /// <inheritdoc />
-        public Task RowsSet_UnsetKeyColumnValueAsync(int object_handle, int column_index, string operation,
+        public Task RowsSet_UnsetKeyColumnValueAsync(int object_rows_set_handle, int column_index, string operation,
             CancellationToken cancellationToken = default)
         {
-            if (_thriftPluginClient._objectsStorage.TryGet<IRowsInput>(object_handle, out var rowsInput)
+            if (_thriftPluginClient._objectsStorage.TryGet<IRowsInput>(object_rows_set_handle, out var rowsInput)
                 && rowsInput != null
                 && rowsInput is IRowsInputKeys rowsInputKeys)
             {
@@ -337,11 +347,11 @@ public partial class ThriftPluginClient
         }
 
         /// <inheritdoc />
-        public async Task<QueryCatErrorCode> RowsSet_UpdateValueAsync(int object_handle, int column_index, VariantValue? value,
+        public async Task<QueryCatErrorCode> RowsSet_UpdateValueAsync(int object_rows_set_handle, int column_index, VariantValue? value,
             CancellationToken cancellationToken = default)
         {
             if (value != null
-                && _thriftPluginClient._objectsStorage.TryGet<IRowsInputUpdate>(object_handle, out var rowsInputUpdate)
+                && _thriftPluginClient._objectsStorage.TryGet<IRowsInputUpdate>(object_rows_set_handle, out var rowsInputUpdate)
                 && rowsInputUpdate != null)
             {
                 var result = await rowsInputUpdate.UpdateValueAsync(column_index, SdkConvert.Convert(value), cancellationToken);
@@ -353,11 +363,11 @@ public partial class ThriftPluginClient
         }
 
         /// <inheritdoc />
-        public async Task<QueryCatErrorCode> RowsSet_WriteValuesAsync(int object_handle, List<VariantValue>? values,
+        public async Task<QueryCatErrorCode> RowsSet_WriteValuesAsync(int object_rows_set_handle, List<VariantValue>? values,
             CancellationToken cancellationToken = default)
         {
             if (values != null
-                && _thriftPluginClient._objectsStorage.TryGet<IRowsOutput>(object_handle, out var rowsOutput)
+                && _thriftPluginClient._objectsStorage.TryGet<IRowsOutput>(object_rows_set_handle, out var rowsOutput)
                 && rowsOutput != null)
             {
                 var result = await rowsOutput.WriteValuesAsync(values.Select(SdkConvert.Convert).ToArray(), cancellationToken);
@@ -369,9 +379,9 @@ public partial class ThriftPluginClient
         }
 
         /// <inheritdoc />
-        public async Task<QueryCatErrorCode> RowsSet_DeleteRowAsync(int object_handle, CancellationToken cancellationToken = default)
+        public async Task<QueryCatErrorCode> RowsSet_DeleteRowAsync(int object_rows_set_handle, CancellationToken cancellationToken = default)
         {
-            if (_thriftPluginClient._objectsStorage.TryGet<IRowsInputDelete>(object_handle, out var rowsInputDelete)
+            if (_thriftPluginClient._objectsStorage.TryGet<IRowsInputDelete>(object_rows_set_handle, out var rowsInputDelete)
                 && rowsInputDelete != null)
             {
                 var result = await rowsInputDelete.DeleteAsync(cancellationToken);
@@ -380,6 +390,44 @@ public partial class ThriftPluginClient
             throw new QueryCatPluginException(
                 ErrorType.INVALID_OBJECT,
                 string.Format(Resources.Errors.Object_InvalidType, typeof(IRowsInputDelete)));
+        }
+
+        /// <inheritdoc />
+        public Task<int> RowsFormatter_OpenInputAsync(int object_rows_formatter_handle, int object_blob_handle, string? key, CancellationToken cancellationToken = default)
+        {
+            if (_thriftPluginClient._objectsStorage.TryGet<IRowsFormatter>(object_rows_formatter_handle, out var rowsFormatter)
+                && rowsFormatter != null
+                && _thriftPluginClient._objectsStorage.TryGet<IBlobData>(object_rows_formatter_handle, out var blobData)
+                && blobData != null)
+            {
+                var rowsInput = rowsFormatter.OpenInput(blobData.GetStream(), key);
+                var index =_thriftPluginClient._objectsStorage.Add(rowsInput);
+                _thriftPluginClient._logger.LogDebug("Added new input object '{Object}' with handle {Handle}.",
+                    rowsInput.ToString(), index);
+                return Task.FromResult(index);
+            }
+            throw new QueryCatPluginException(
+                ErrorType.INVALID_OBJECT,
+                string.Format(Resources.Errors.Object_InvalidType, typeof(IRowsFormatter)));
+        }
+
+        /// <inheritdoc />
+        public Task<int> RowsFormatter_OpenOutputAsync(int object_rows_formatter_handle, int object_blob_handle, CancellationToken cancellationToken = default)
+        {
+            if (_thriftPluginClient._objectsStorage.TryGet<IRowsFormatter>(object_rows_formatter_handle, out var rowsFormatter)
+                && rowsFormatter != null
+                && _thriftPluginClient._objectsStorage.TryGet<IBlobData>(object_rows_formatter_handle, out var blobData)
+                && blobData != null)
+            {
+                var rowsOutput = rowsFormatter.OpenOutput(blobData.GetStream());
+                var index =_thriftPluginClient._objectsStorage.Add(rowsOutput);
+                _thriftPluginClient._logger.LogDebug("Added new input object '{Object}' with handle {Handle}.",
+                    rowsOutput.ToString(), index);
+                return Task.FromResult(index);
+            }
+            throw new QueryCatPluginException(
+                ErrorType.INVALID_OBJECT,
+                string.Format(Resources.Errors.Object_InvalidType, typeof(IRowsFormatter)));
         }
 
         /// <inheritdoc />
@@ -462,277 +510,309 @@ public partial class ThriftPluginClient
         }
 
         /// <inheritdoc />
-        public Task<List<Column>> RowsSet_GetColumnsAsync(int object_handle, CancellationToken cancellationToken = default)
+        public Task<List<Column>> RowsSet_GetColumnsAsync(int object_rows_set_handle, CancellationToken cancellationToken = default)
         {
             LogCallMethod(nameof(RowsSet_GetColumnsAsync));
             try
             {
-                return _handler.RowsSet_GetColumnsAsync(object_handle, cancellationToken);
+                return _handler.RowsSet_GetColumnsAsync(object_rows_set_handle, cancellationToken);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, Resources.Errors.HandlerInternalError);
-                throw QueryCatPluginExceptionUtils.Create(ex, objectHandle: object_handle);
+                throw QueryCatPluginExceptionUtils.Create(ex, objectHandle: object_rows_set_handle);
             }
         }
 
         /// <inheritdoc />
-        public Task RowsSet_OpenAsync(int object_handle, CancellationToken cancellationToken = default)
+        public Task RowsSet_OpenAsync(int object_rows_set_handle, CancellationToken cancellationToken = default)
         {
             LogCallMethod(nameof(RowsSet_OpenAsync));
             try
             {
-                return _handler.RowsSet_OpenAsync(object_handle, cancellationToken);
+                return _handler.RowsSet_OpenAsync(object_rows_set_handle, cancellationToken);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, Resources.Errors.HandlerInternalError);
-                throw QueryCatPluginExceptionUtils.Create(ex, objectHandle: object_handle);
+                throw QueryCatPluginExceptionUtils.Create(ex, objectHandle: object_rows_set_handle);
             }
         }
 
         /// <inheritdoc />
-        public Task RowsSet_CloseAsync(int object_handle, CancellationToken cancellationToken = default)
+        public Task RowsSet_CloseAsync(int object_rows_set_handle, CancellationToken cancellationToken = default)
         {
             LogCallMethod(nameof(RowsSet_CloseAsync));
             try
             {
-                return _handler.RowsSet_CloseAsync(object_handle, cancellationToken);
+                return _handler.RowsSet_CloseAsync(object_rows_set_handle, cancellationToken);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, Resources.Errors.HandlerInternalError);
-                throw QueryCatPluginExceptionUtils.Create(ex, objectHandle: object_handle);
+                throw QueryCatPluginExceptionUtils.Create(ex, objectHandle: object_rows_set_handle);
             }
         }
 
         /// <inheritdoc />
-        public Task RowsSet_ResetAsync(int object_handle, CancellationToken cancellationToken = default)
+        public Task RowsSet_ResetAsync(int object_rows_set_handle, CancellationToken cancellationToken = default)
         {
             LogCallMethod(nameof(RowsSet_ResetAsync));
             try
             {
-                return _handler.RowsSet_ResetAsync(object_handle, cancellationToken);
+                return _handler.RowsSet_ResetAsync(object_rows_set_handle, cancellationToken);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, Resources.Errors.HandlerInternalError);
-                throw QueryCatPluginExceptionUtils.Create(ex, objectHandle: object_handle);
+                throw QueryCatPluginExceptionUtils.Create(ex, objectHandle: object_rows_set_handle);
             }
         }
 
         /// <inheritdoc />
-        public Task<int> RowsSet_PositionAsync(int object_handle, CancellationToken cancellationToken = default)
+        public Task<int> RowsSet_PositionAsync(int object_rows_set_handle, CancellationToken cancellationToken = default)
         {
             LogCallMethod(nameof(RowsSet_PositionAsync));
             try
             {
-                return _handler.RowsSet_PositionAsync(object_handle, cancellationToken);
+                return _handler.RowsSet_PositionAsync(object_rows_set_handle, cancellationToken);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, Resources.Errors.HandlerInternalError);
-                throw QueryCatPluginExceptionUtils.Create(ex, objectHandle: object_handle);
+                throw QueryCatPluginExceptionUtils.Create(ex, objectHandle: object_rows_set_handle);
             }
         }
 
         /// <inheritdoc />
-        public Task<int> RowsSet_TotalRowsAsync(int object_handle, CancellationToken cancellationToken = default)
+        public Task<int> RowsSet_TotalRowsAsync(int object_rows_set_handle, CancellationToken cancellationToken = default)
         {
             LogCallMethod(nameof(RowsSet_TotalRowsAsync));
             try
             {
-                return _handler.RowsSet_TotalRowsAsync(object_handle, cancellationToken);
+                return _handler.RowsSet_TotalRowsAsync(object_rows_set_handle, cancellationToken);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, Resources.Errors.HandlerInternalError);
-                throw QueryCatPluginExceptionUtils.Create(ex, objectHandle: object_handle);
+                throw QueryCatPluginExceptionUtils.Create(ex, objectHandle: object_rows_set_handle);
             }
         }
 
         /// <inheritdoc />
-        public Task RowsSet_SeekAsync(int object_handle, int offset, CursorSeekOrigin origin,
+        public Task RowsSet_SeekAsync(int object_rows_set_handle, int offset, CursorSeekOrigin origin,
             CancellationToken cancellationToken = default)
         {
             LogCallMethod(nameof(RowsSet_SeekAsync));
             try
             {
-                return _handler.RowsSet_SeekAsync(object_handle, offset, origin, cancellationToken);
+                return _handler.RowsSet_SeekAsync(object_rows_set_handle, offset, origin, cancellationToken);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, Resources.Errors.HandlerInternalError);
-                throw QueryCatPluginExceptionUtils.Create(ex, objectHandle: object_handle);
+                throw QueryCatPluginExceptionUtils.Create(ex, objectHandle: object_rows_set_handle);
             }
         }
 
         /// <inheritdoc />
-        public Task RowsSet_SetContextAsync(int object_handle, ContextQueryInfo? context_query_info,
+        public Task RowsSet_SetContextAsync(int object_rows_set_handle, ContextQueryInfo? context_query_info,
             CancellationToken cancellationToken = default)
         {
             LogCallMethod(nameof(RowsSet_SetContextAsync));
             try
             {
-                return _handler.RowsSet_SetContextAsync(object_handle, context_query_info, cancellationToken);
+                return _handler.RowsSet_SetContextAsync(object_rows_set_handle, context_query_info, cancellationToken);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, Resources.Errors.HandlerInternalError);
-                throw QueryCatPluginExceptionUtils.Create(ex, objectHandle: object_handle);
+                throw QueryCatPluginExceptionUtils.Create(ex, objectHandle: object_rows_set_handle);
             }
         }
 
         /// <inheritdoc />
-        public Task<RowsList> RowsSet_GetRowsAsync(int object_handle, int count, CancellationToken cancellationToken = default)
+        public Task<RowsList> RowsSet_GetRowsAsync(int object_rows_set_handle, int count, CancellationToken cancellationToken = default)
         {
             LogCallMethod(nameof(RowsSet_GetRowsAsync));
             try
             {
-                return _handler.RowsSet_GetRowsAsync(object_handle, count, cancellationToken);
+                return _handler.RowsSet_GetRowsAsync(object_rows_set_handle, count, cancellationToken);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, Resources.Errors.HandlerInternalError);
-                throw QueryCatPluginExceptionUtils.Create(ex, objectHandle: object_handle);
+                throw QueryCatPluginExceptionUtils.Create(ex, objectHandle: object_rows_set_handle);
             }
         }
 
         /// <inheritdoc />
-        public Task<List<string>> RowsSet_GetUniqueKeyAsync(int object_handle, CancellationToken cancellationToken = default)
+        public Task<List<string>> RowsSet_GetUniqueKeyAsync(int object_rows_set_handle, CancellationToken cancellationToken = default)
         {
             LogCallMethod(nameof(RowsSet_GetUniqueKeyAsync));
             try
             {
-                return _handler.RowsSet_GetUniqueKeyAsync(object_handle, cancellationToken);
+                return _handler.RowsSet_GetUniqueKeyAsync(object_rows_set_handle, cancellationToken);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, Resources.Errors.HandlerInternalError);
-                throw QueryCatPluginExceptionUtils.Create(ex,objectHandle: object_handle);
+                throw QueryCatPluginExceptionUtils.Create(ex,objectHandle: object_rows_set_handle);
             }
         }
 
         /// <inheritdoc />
-        public Task<List<KeyColumn>> RowsSet_GetKeyColumnsAsync(int object_handle, CancellationToken cancellationToken = default)
+        public Task<List<KeyColumn>> RowsSet_GetKeyColumnsAsync(int object_rows_set_handle, CancellationToken cancellationToken = default)
         {
             LogCallMethod(nameof(RowsSet_GetKeyColumnsAsync));
             try
             {
-                return _handler.RowsSet_GetKeyColumnsAsync(object_handle, cancellationToken);
+                return _handler.RowsSet_GetKeyColumnsAsync(object_rows_set_handle, cancellationToken);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, Resources.Errors.HandlerInternalError);
-                throw QueryCatPluginExceptionUtils.Create(ex, objectHandle: object_handle);
+                throw QueryCatPluginExceptionUtils.Create(ex, objectHandle: object_rows_set_handle);
             }
         }
 
         /// <inheritdoc />
-        public Task RowsSet_SetKeyColumnValueAsync(int object_handle, int column_index, string operation, VariantValue? value,
+        public Task RowsSet_SetKeyColumnValueAsync(int object_rows_set_handle, int column_index, string operation, VariantValue? value,
             CancellationToken cancellationToken = default)
         {
             LogCallMethod(nameof(RowsSet_SetKeyColumnValueAsync));
             try
             {
-                return _handler.RowsSet_SetKeyColumnValueAsync(object_handle, column_index, operation, value, cancellationToken);
+                return _handler.RowsSet_SetKeyColumnValueAsync(object_rows_set_handle, column_index, operation, value, cancellationToken);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, Resources.Errors.HandlerInternalError);
-                throw QueryCatPluginExceptionUtils.Create(ex, objectHandle: object_handle);
+                throw QueryCatPluginExceptionUtils.Create(ex, objectHandle: object_rows_set_handle);
             }
         }
 
         /// <inheritdoc />
-        public Task RowsSet_UnsetKeyColumnValueAsync(int object_handle, int column_index, string operation,
+        public Task RowsSet_UnsetKeyColumnValueAsync(int object_rows_set_handle, int column_index, string operation,
             CancellationToken cancellationToken = default)
         {
             LogCallMethod(nameof(RowsSet_UnsetKeyColumnValueAsync));
             try
             {
-                return _handler.RowsSet_UnsetKeyColumnValueAsync(object_handle, column_index, operation, cancellationToken);
+                return _handler.RowsSet_UnsetKeyColumnValueAsync(object_rows_set_handle, column_index, operation, cancellationToken);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, Resources.Errors.HandlerInternalError);
-                throw QueryCatPluginExceptionUtils.Create(ex, objectHandle: object_handle);
+                throw QueryCatPluginExceptionUtils.Create(ex, objectHandle: object_rows_set_handle);
             }
         }
 
         /// <inheritdoc />
-        public Task<QueryCatErrorCode> RowsSet_UpdateValueAsync(int object_handle, int column_index, VariantValue? value,
+        public Task<QueryCatErrorCode> RowsSet_UpdateValueAsync(int object_rows_set_handle, int column_index, VariantValue? value,
             CancellationToken cancellationToken = default)
         {
             LogCallMethod(nameof(RowsSet_UpdateValueAsync));
             try
             {
-                return _handler.RowsSet_UpdateValueAsync(object_handle, column_index, value, cancellationToken);
+                return _handler.RowsSet_UpdateValueAsync(object_rows_set_handle, column_index, value, cancellationToken);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, Resources.Errors.HandlerInternalError);
-                throw QueryCatPluginExceptionUtils.Create(ex, objectHandle: object_handle);
+                throw QueryCatPluginExceptionUtils.Create(ex, objectHandle: object_rows_set_handle);
             }
         }
 
         /// <inheritdoc />
-        public Task<QueryCatErrorCode> RowsSet_WriteValuesAsync(int object_handle, List<VariantValue>? values, CancellationToken cancellationToken = default)
+        public Task<QueryCatErrorCode> RowsSet_WriteValuesAsync(int object_rows_set_handle, List<VariantValue>? values, CancellationToken cancellationToken = default)
         {
             LogCallMethod(nameof(RowsSet_WriteValuesAsync));
             try
             {
-                return _handler.RowsSet_WriteValuesAsync(object_handle, values, cancellationToken);
+                return _handler.RowsSet_WriteValuesAsync(object_rows_set_handle, values, cancellationToken);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, Resources.Errors.HandlerInternalError);
-                throw QueryCatPluginExceptionUtils.Create(ex, objectHandle: object_handle);
+                throw QueryCatPluginExceptionUtils.Create(ex, objectHandle: object_rows_set_handle);
             }
         }
 
         /// <inheritdoc />
-        public Task<QueryCatErrorCode> RowsSet_DeleteRowAsync(int object_handle, CancellationToken cancellationToken = default)
+        public Task<QueryCatErrorCode> RowsSet_DeleteRowAsync(int object_rows_set_handle, CancellationToken cancellationToken = default)
         {
             LogCallMethod(nameof(RowsSet_DeleteRowAsync));
             try
             {
-                return _handler.RowsSet_DeleteRowAsync(object_handle, cancellationToken);
+                return _handler.RowsSet_DeleteRowAsync(object_rows_set_handle, cancellationToken);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, Resources.Errors.HandlerInternalError);
-                throw QueryCatPluginExceptionUtils.Create(ex, objectHandle: object_handle);
+                throw QueryCatPluginExceptionUtils.Create(ex, objectHandle: object_rows_set_handle);
             }
         }
 
         /// <inheritdoc />
-        public Task<byte[]> Blob_ReadAsync(int object_handle, int offset, int count, CancellationToken cancellationToken = default)
+        public Task<int> RowsFormatter_OpenInputAsync(int object_rows_formatter_handle, int object_blob_handle, string? key,
+            CancellationToken cancellationToken = default)
+        {
+            LogCallMethod(nameof(RowsFormatter_OpenInputAsync));
+            try
+            {
+                return _handler.RowsFormatter_OpenInputAsync(object_rows_formatter_handle, object_blob_handle, key, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, Resources.Errors.HandlerInternalError);
+                throw QueryCatPluginExceptionUtils.Create(ex, objectHandle: object_rows_formatter_handle);
+            }
+        }
+
+        /// <inheritdoc />
+        public Task<int> RowsFormatter_OpenOutputAsync(int object_rows_formatter_handle, int object_blob_handle,
+            CancellationToken cancellationToken = default)
+        {
+            LogCallMethod(nameof(RowsFormatter_OpenOutputAsync));
+            try
+            {
+                return _handler.RowsFormatter_OpenOutputAsync(object_rows_formatter_handle, object_blob_handle, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, Resources.Errors.HandlerInternalError);
+                throw QueryCatPluginExceptionUtils.Create(ex, objectHandle: object_rows_formatter_handle);
+            }
+        }
+
+        /// <inheritdoc />
+        public Task<byte[]> Blob_ReadAsync(int object_blob_handle, int offset, int count, CancellationToken cancellationToken = default)
         {
             LogCallMethod(nameof(Blob_ReadAsync));
             try
             {
-                return _handler.Blob_ReadAsync(object_handle, offset, count, cancellationToken);
+                return _handler.Blob_ReadAsync(object_blob_handle, offset, count, cancellationToken);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, Resources.Errors.HandlerInternalError);
-                throw QueryCatPluginExceptionUtils.Create(ex, objectHandle: object_handle);
+                throw QueryCatPluginExceptionUtils.Create(ex, objectHandle: object_blob_handle);
             }
         }
 
         /// <inheritdoc />
-        public Task<long> Blob_GetLengthAsync(int object_handle, CancellationToken cancellationToken = default)
+        public Task<long> Blob_GetLengthAsync(int object_blob_handle, CancellationToken cancellationToken = default)
         {
             LogCallMethod(nameof(Blob_GetLengthAsync));
             try
             {
-                return _handler.Blob_GetLengthAsync(object_handle, cancellationToken);
+                return _handler.Blob_GetLengthAsync(object_blob_handle, cancellationToken);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, Resources.Errors.HandlerInternalError);
-                throw QueryCatPluginExceptionUtils.Create(ex, objectHandle: object_handle);
+                throw QueryCatPluginExceptionUtils.Create(ex, objectHandle: object_blob_handle);
             }
         }
 

@@ -13,6 +13,6 @@ public interface IBlobData
     /// <summary>
     /// Return stream representation of BLOB data.
     /// </summary>
-    /// <returns></returns>
+    /// <returns>Stream.</returns>
     Stream GetStream();
 }

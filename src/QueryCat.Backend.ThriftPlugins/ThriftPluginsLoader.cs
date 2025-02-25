@@ -558,6 +558,7 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
                     Description = function.Description,
                     IsSafe = function.IsSafe,
                     IsAggregate = function.IsAggregate,
+                    Formatters = function.Formatters ?? [],
                 });
             functionsManager.RegisterFunction(internalFunction);
             wrapper.FunctionName = internalFunction.Name;
@@ -647,6 +648,10 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
         if (result.Object.Type == ObjectType.BLOB)
         {
             return new StreamBlobData(() => new RemoteStream(result.Object.Handle, context));
+        }
+        if (result.Object.Type == ObjectType.ROWS_FORMATTER)
+        {
+            return new ThriftRemoteRowsFormatter(context, result.Object.Handle);
         }
         throw new PluginException(string.Format(Resources.Errors.CannotCreateObject, result.Object.Type));
     }

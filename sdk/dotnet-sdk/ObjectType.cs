@@ -20,5 +20,6 @@ namespace QueryCat.Plugins.Sdk
     ROWS_OUTPUT = 12,
     BLOB = 13,
     JSON = 14,
+    ROWS_FORMATTER = 15,
   }
 }
