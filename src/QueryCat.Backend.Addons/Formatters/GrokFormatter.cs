@@ -25,13 +25,13 @@ internal sealed class GrokFormatter : IRowsFormatter
     }
 
     /// <inheritdoc />
-    public IRowsInput OpenInput(Stream input, string? key = null)
+    public IRowsInput OpenInput(IBlobData blob, string? key = null)
     {
-        return new GrokInput(input, _pattern, key);
+        return new GrokInput(blob.GetStream(), _pattern, key);
     }
 
     /// <inheritdoc />
-    public IRowsOutput OpenOutput(Stream output) => throw new NotImplementedException();
+    public IRowsOutput OpenOutput(IBlobData blob) => throw new NotImplementedException();
 
     public static void RegisterFunctions(IFunctionsManager functionsManager)
     {

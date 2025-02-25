@@ -31,13 +31,13 @@ internal sealed class RegexpFormatter : IRowsFormatter
     }
 
     /// <inheritdoc />
-    public IRowsInput OpenInput(Stream input, string? key = null)
+    public IRowsInput OpenInput(IBlobData blob, string? key = null)
     {
-        return new RegexpInput(input, _pattern, _flags, key);
+        return new RegexpInput(blob.GetStream(), _pattern, _flags, key);
     }
 
     /// <inheritdoc />
-    public IRowsOutput OpenOutput(Stream output) => throw new NotImplementedException();
+    public IRowsOutput OpenOutput(IBlobData blob) => throw new NotImplementedException();
 
     public static void RegisterFunctions(IFunctionsManager functionsManager)
     {

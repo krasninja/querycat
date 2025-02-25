@@ -32,7 +32,6 @@ public sealed partial class ThriftPluginsServer : IDisposable
     private readonly Dictionary<long, ThriftPluginContext> _tokenPluginContextMap = new();
     private readonly ServerThread _mainServerThread;
     private readonly int _maxConnectionsToClient;
-    private readonly ObjectsStorage _serverObjectsStorage = new();
 
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(ThriftPluginsServer));
 

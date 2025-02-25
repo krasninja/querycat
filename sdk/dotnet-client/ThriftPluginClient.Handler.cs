@@ -400,7 +400,7 @@ public partial class ThriftPluginClient
                 && _thriftPluginClient._objectsStorage.TryGet<IBlobData>(object_rows_formatter_handle, out var blobData)
                 && blobData != null)
             {
-                var rowsInput = rowsFormatter.OpenInput(blobData.GetStream(), key);
+                var rowsInput = rowsFormatter.OpenInput(blobData, key);
                 var index =_thriftPluginClient._objectsStorage.Add(rowsInput);
                 _thriftPluginClient._logger.LogDebug("Added new input object '{Object}' with handle {Handle}.",
                     rowsInput.ToString(), index);
@@ -419,7 +419,7 @@ public partial class ThriftPluginClient
                 && _thriftPluginClient._objectsStorage.TryGet<IBlobData>(object_rows_formatter_handle, out var blobData)
                 && blobData != null)
             {
-                var rowsOutput = rowsFormatter.OpenOutput(blobData.GetStream());
+                var rowsOutput = rowsFormatter.OpenOutput(blobData);
                 var index =_thriftPluginClient._objectsStorage.Add(rowsOutput);
                 _thriftPluginClient._logger.LogDebug("Added new input object '{Object}' with handle {Handle}.",
                     rowsOutput.ToString(), index);

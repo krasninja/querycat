@@ -7,7 +7,7 @@ internal static class Registration
     public static void Register(IFunctionsManager functionsManager)
     {
         DsvFormatter.RegisterFunctions(functionsManager);
-        NullFormatter.RegisterFunctions(functionsManager);
+        NullRowsFormatter.RegisterFunctions(functionsManager);
         TextLineFormatter.RegisterFunctions(functionsManager);
 
         // File extensions.

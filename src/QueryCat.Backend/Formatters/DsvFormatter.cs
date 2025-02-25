@@ -90,12 +90,18 @@ internal class DsvFormatter : IRowsFormatter
     }
 
     /// <inheritdoc />
-    public IRowsInput OpenInput(Stream input, string? key = null)
-        => new DsvInput(GetOptions(input), key);
+    public IRowsInput OpenInput(IBlobData blob, string? key = null)
+    {
+        var stream = blob.GetStream();
+        return new DsvInput(GetOptions(stream), key);
+    }
 
     /// <inheritdoc />
-    public IRowsOutput OpenOutput(Stream output)
-        => new DsvOutput(GetOptions(output));
+    public IRowsOutput OpenOutput(IBlobData blob)
+    {
+        var stream = blob.GetStream();
+        return new DsvOutput(GetOptions(stream));
+    }
 
     private DsvOptions GetOptions(Stream stream)
     {

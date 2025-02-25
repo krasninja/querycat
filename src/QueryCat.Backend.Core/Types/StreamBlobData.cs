@@ -1,23 +1,23 @@
 namespace QueryCat.Backend.Core.Types;
 
-public class StreamBlobData(Func<Stream> streamFactory) : IBlobData
+public sealed class StreamBlobData : IBlobData
 {
-    public static IBlobData Empty { get; } = new StreamBlobData(() => Stream.Null);
+    public static IBlobData Empty { get; } = new StreamBlobData(Stream.Null);
+
+    private readonly Stream _stream;
 
     /// <inheritdoc />
-    public long Length
+    public long Length => _stream.Length;
+
+    public StreamBlobData(Stream stream)
     {
-        get
-        {
-            using var stream = streamFactory.Invoke();
-            return stream.Length;
-        }
+        _stream = stream;
     }
 
-    public StreamBlobData(byte[] bytes) : this(() => new MemoryStream(bytes))
+    public StreamBlobData(byte[] bytes) : this(new MemoryStream(bytes))
     {
     }
 
     /// <inheritdoc />
-    public Stream GetStream() => streamFactory.Invoke();
+    public Stream GetStream() => _stream;
 }

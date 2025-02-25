@@ -6,13 +6,15 @@ using QueryCat.Backend.Storage;
 
 namespace QueryCat.Backend.Formatters;
 
-internal sealed class NullOutput : RowsOutput
+internal sealed class NullRowsOutput : RowsOutput
 {
+    public static NullRowsOutput Instance { get; } = new();
+
     [Description("NULL output.")]
     [FunctionSignature("write_null(): object<IRowsOutput>")]
     public static VariantValue Null(IExecutionThread thread)
     {
-        var rowsSource = new NullFormatter();
+        var rowsSource = new NullRowsFormatter();
         return VariantValue.CreateFromObject(rowsSource);
     }
 

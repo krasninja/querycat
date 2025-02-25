@@ -20,7 +20,8 @@ public class CsvParseBenchmarks
     public async Task<int> ReadAllUsersWithDsvFormatter()
     {
         await using var file = UsersCsvFile.OpenTestUsersFile();
-        var input = new DsvFormatter(',', addFileNameColumn: false).OpenInput(file);
+        var fileBlobData = new StreamBlobData(file);
+        var input = new DsvFormatter(',', addFileNameColumn: false).OpenInput(fileBlobData);
         await input.OpenAsync();
         var rowsFrame = new RowsFrame(input.Columns);
         var rowsIterator = input.AsIterable(autoFetch: true);

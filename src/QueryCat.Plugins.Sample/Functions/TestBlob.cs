@@ -19,6 +19,6 @@ internal static class TestBlob
             sb.Append("THIS IS THE TEST TEXT ");
         }
         var bytes = Encoding.UTF8.GetBytes(sb.ToString());
-        return VariantValue.CreateFromObject(new StreamBlobData(() => new MemoryStream(bytes)));
+        return VariantValue.CreateFromObject(new StreamBlobData(bytes));
     }
 }

@@ -22,10 +22,10 @@ public class TextLineFormatter : IRowsFormatter
     }
 
     /// <inheritdoc />
-    public IRowsInput OpenInput(Stream input, string? key = null) => new TextLineInput(input, key);
+    public IRowsInput OpenInput(IBlobData blob, string? key = null) => new TextLineInput(blob.GetStream(), key);
 
     /// <inheritdoc />
-    public IRowsOutput OpenOutput(Stream output)
+    public IRowsOutput OpenOutput(IBlobData blob)
     {
         throw new QueryCatException(string.Format(Resources.Errors.FormatterNoOutput, nameof(TextLineFormatter)));
     }
