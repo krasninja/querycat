@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using QueryCat.Backend.Core.Data;
-using QueryCat.Backend.Core.Utils;
 using QueryCat.Plugins.Sdk;
 
 namespace QueryCat.Plugins.Client;
@@ -12,13 +10,13 @@ namespace QueryCat.Plugins.Client;
 public sealed class ObjectsStorage
 {
     private readonly object _objLock = new();
-    private readonly List<object?> _objects = new();
+    private readonly List<WeakReference?> _objects = new();
 
     public int Add(object obj)
     {
         lock (_objLock)
         {
-            _objects.Add(obj);
+            _objects.Add(new WeakReference(obj));
             return _objects.Count - 1;
         }
     }
@@ -32,11 +30,11 @@ public sealed class ObjectsStorage
                 throw new QueryCatPluginException(ErrorType.INVALID_OBJECT, Resources.Errors.Object_InvalidHandle);
             }
             var rawObject = _objects[index];
-            if (rawObject == null)
+            if (rawObject == null || !rawObject.IsAlive)
             {
                 throw new QueryCatPluginException(ErrorType.INVALID_OBJECT, Resources.Errors.Object_Released);
             }
-            var obj = rawObject as T;
+            var obj = rawObject.Target as T;
             if (obj == null)
             {
                 throw new QueryCatPluginException(
@@ -57,12 +55,12 @@ public sealed class ObjectsStorage
                 return false;
             }
             var rawObject = _objects[index];
-            if (rawObject == null)
+            if (rawObject == null || !rawObject.IsAlive)
             {
                 obj = null;
                 return false;
             }
-            obj = rawObject as T;
+            obj = rawObject.Target as T;
             if (obj == null)
             {
                 return false;
@@ -71,11 +69,44 @@ public sealed class ObjectsStorage
         }
     }
 
+    public int GetOrAdd(object obj)
+    {
+        lock (_objLock)
+        {
+            var index = Find(obj);
+            if (index < 0)
+            {
+                index = Add(obj);
+            }
+            return index;
+        }
+    }
+
+    public int Find(object obj)
+    {
+        lock (_objLock)
+        {
+            for (var i = 0; i < _objects.Count; i++)
+            {
+                var weakRef = _objects[i];
+                if (weakRef != null
+                    && weakRef.IsAlive
+                    && weakRef.Target != null
+                    && object.ReferenceEquals(obj, weakRef.Target))
+                {
+                    return i;
+                }
+            }
+            return -1;
+        }
+    }
+
     public void Remove(int index)
     {
         lock (_objLock)
         {
-            if (_objects[index] is IDisposable disposable)
+            var weakRef = _objects[index];
+            if (weakRef != null && weakRef.IsAlive && weakRef.Target is IDisposable disposable)
             {
                 disposable.Dispose();
             }
@@ -85,14 +116,13 @@ public sealed class ObjectsStorage
 
     public void Clean()
     {
-        var totalObjects = 0;
         lock (_objLock)
         {
-            totalObjects = _objects.Count;
-        }
-        for (var i = 0; i < totalObjects; i++)
-        {
-            Remove(i);
+            var totalObjects = _objects.Count;
+            for (var i = 0; i < totalObjects; i++)
+            {
+                Remove(i);
+            }
         }
     }
 }

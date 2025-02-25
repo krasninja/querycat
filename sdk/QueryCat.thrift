@@ -210,6 +210,27 @@ service PluginsManager {
     3: required VariantValue value
   ) throws (1: QueryCatPluginException e),
 
+  // Read binary data.
+  binary Blob_Read(
+    1: required i64 token, // Authorization token.
+    2: required Handle object_blob_handle,
+    3: required i32 offset,
+    4: required i32 count
+  ) throws (1: QueryCatPluginException e),
+
+  // Write binary data.
+  i64 Blob_Write(
+    1: required i64 token, // Authorization token.
+    2: required Handle object_blob_handle,
+    3: required binary bytes
+  ) throws (1: QueryCatPluginException e),
+
+  // Get total binary length.
+  i64 Blob_GetLength(
+    1: required i64 token, // Authorization token.
+    2: required Handle object_blob_handle
+  ) throws (1: QueryCatPluginException e),
+
   // Logging.
   void Log(
     1: required i64 token, // Authorization token.
@@ -386,6 +407,12 @@ service Plugin {
     1: required Handle object_blob_handle,
     2: required i32 offset,
     3: required i32 count
+  ) throws (1: QueryCatPluginException e),
+
+  // Write binary data.
+  i64 Blob_Write(
+    1: required Handle object_blob_handle,
+    2: required binary bytes
   ) throws (1: QueryCatPluginException e),
 
   // Get total binary length.

@@ -177,6 +177,13 @@ public sealed class PluginClientLogDecorator : Plugin.IAsync
     }
 
     /// <inheritdoc />
+    public Task<long> Blob_WriteAsync(int object_blob_handle, byte[] bytes, CancellationToken cancellationToken = default)
+    {
+        LogStartMethodCall(nameof(Blob_WriteAsync));
+        return _client.Blob_WriteAsync(object_blob_handle, bytes, cancellationToken);
+    }
+
+    /// <inheritdoc />
     public Task<long> Blob_GetLengthAsync(int object_handle, CancellationToken cancellationToken = default)
     {
         LogStartMethodCall(nameof(Blob_GetLengthAsync));

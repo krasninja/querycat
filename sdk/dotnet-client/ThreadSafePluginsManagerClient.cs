@@ -1,10 +1,12 @@
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
 using QueryCat.Plugins.Sdk;
 
 namespace QueryCat.Plugins.Client;
 
+[SuppressMessage("ReSharper", "InconsistentNaming")]
 internal sealed class ThreadSafePluginsManagerClient : PluginsManager.IAsync
 {
     private readonly SemaphoreSlim _semaphore = new(1);
@@ -108,6 +110,50 @@ internal sealed class ThreadSafePluginsManagerClient : PluginsManager.IAsync
         try
         {
             return await _client.SetVariableAsync(token, name, value, cancellationToken);
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<byte[]> Blob_ReadAsync(long token, int object_blob_handle, int offset, int count,
+        CancellationToken cancellationToken = default)
+    {
+        await _semaphore.WaitAsync(cancellationToken);
+        try
+        {
+            return await _client.Blob_ReadAsync(token, object_blob_handle, offset, count, cancellationToken);
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<long> Blob_WriteAsync(long token, int object_blob_handle, byte[] bytes,
+        CancellationToken cancellationToken = default)
+    {
+        await _semaphore.WaitAsync(cancellationToken);
+        try
+        {
+            return await _client.Blob_WriteAsync(token, object_blob_handle, bytes, cancellationToken);
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<long> Blob_GetLengthAsync(long token, int object_blob_handle, CancellationToken cancellationToken = default)
+    {
+        await _semaphore.WaitAsync(cancellationToken);
+        try
+        {
+            return await _client.Blob_GetLengthAsync(token, object_blob_handle, cancellationToken);
         }
         finally
         {

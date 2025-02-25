@@ -431,15 +431,28 @@ public partial class ThriftPluginClient
         }
 
         /// <inheritdoc />
-        public Task<byte[]> Blob_ReadAsync(int object_handle, int offset, int count, CancellationToken cancellationToken = default)
+        public Task<byte[]> Blob_ReadAsync(int object_blob_handle, int offset, int count, CancellationToken cancellationToken = default)
         {
-            if (_thriftPluginClient._objectsStorage.TryGet<IBlobData>(object_handle, out var blobData)
+            if (_thriftPluginClient._objectsStorage.TryGet<IBlobData>(object_blob_handle, out var blobData)
                 && blobData != null)
             {
                 using var stream = blobData.GetStream();
                 var arr = new byte[stream.Length];
                 _ = stream.Read(arr, 0, arr.Length);
                 return Task.FromResult(arr);
+            }
+            throw new QueryCatPluginException(ErrorType.INVALID_OBJECT, Resources.Errors.Object_IsNotBlob);
+        }
+
+        /// <inheritdoc />
+        public Task<long> Blob_WriteAsync(int object_blob_handle, byte[] bytes, CancellationToken cancellationToken = default)
+        {
+            if (_thriftPluginClient._objectsStorage.TryGet<IBlobData>(object_blob_handle, out var blobData)
+                && blobData != null)
+            {
+                using var stream = blobData.GetStream();
+                stream.Write(bytes, 0, bytes.Length);
+                return Task.FromResult((long)bytes.Length);
             }
             throw new QueryCatPluginException(ErrorType.INVALID_OBJECT, Resources.Errors.Object_IsNotBlob);
         }
@@ -464,6 +477,7 @@ public partial class ThriftPluginClient
         }
     }
 
+    [SuppressMessage("ReSharper", "InconsistentNaming")]
     private sealed partial class HandlerWithExceptionIntercept : Plugin.IAsync
     {
         private readonly Plugin.IAsync _handler;
@@ -793,6 +807,21 @@ public partial class ThriftPluginClient
             try
             {
                 return _handler.Blob_ReadAsync(object_blob_handle, offset, count, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, Resources.Errors.HandlerInternalError);
+                throw QueryCatPluginExceptionUtils.Create(ex, objectHandle: object_blob_handle);
+            }
+        }
+
+        /// <inheritdoc />
+        public Task<long> Blob_WriteAsync(int object_blob_handle, byte[] bytes, CancellationToken cancellationToken = default)
+        {
+            LogCallMethod(nameof(Blob_WriteAsync));
+            try
+            {
+                return _handler.Blob_WriteAsync(object_blob_handle, bytes, cancellationToken);
             }
             catch (Exception ex)
             {

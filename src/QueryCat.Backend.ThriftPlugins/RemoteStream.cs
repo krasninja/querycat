@@ -75,4 +75,16 @@ internal sealed class RemoteStream : Stream
 
     /// <inheritdoc />
     public override void Write(byte[] buffer, int offset, int count) => throw new NotImplementedException();
+
+    /// <inheritdoc />
+    public override async Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+    {
+        using var session = await _context.GetSessionAsync(cancellationToken);
+        if (offset > 0 || buffer.Length > count)
+        {
+            buffer = buffer.AsSpan(offset, count).ToArray();
+        }
+
+        await session.ClientProxy.Blob_WriteAsync(_objectHandle, buffer, cancellationToken);
+    }
 }
