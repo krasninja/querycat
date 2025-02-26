@@ -352,7 +352,7 @@ internal sealed partial class WebServer
                                           <!DOCTYPE html><HTML>
                                           <HEAD>
                                           <META CHARSET="utf-8">
-                                          <LINK REL="stylesheet" HREF="https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css">
+                                          <LINK REL="stylesheet" HREF="https://cdn.jsdelivr.net/npm/bulma@1.0.3/css/bulma.min.css">
                                           </HEAD>
                                           <BODY><TABLE CLASS="table qcat-table">
                                           """);
