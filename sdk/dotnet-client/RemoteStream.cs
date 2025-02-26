@@ -1,13 +1,18 @@
+using System;
+using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 using QueryCat.Backend.Core.Utils;
+using QueryCat.Plugins.Client.BlobProxy;
 
-namespace QueryCat.Backend.ThriftPlugins;
+namespace QueryCat.Plugins.Client;
 
-internal sealed class RemoteStream : Stream
+public sealed class RemoteStream : Stream
 {
     private const int BufferSize = 4096 * 2;
 
     private readonly int _objectHandle;
-    private readonly ThriftPluginContext _context;
+    private readonly IBlobProxyService _proxy;
 
     /// <inheritdoc />
     public override bool CanRead => true;
@@ -25,8 +30,7 @@ internal sealed class RemoteStream : Stream
         {
             return AsyncUtils.RunSync(async ct =>
             {
-                using var session = await _context.GetSessionAsync(ct);
-                return await session.ClientProxy.Blob_GetLengthAsync(_objectHandle, ct);
+                return await _proxy.Blob_GetLengthAsync(_objectHandle, ct);
             });
         }
     }
@@ -34,10 +38,10 @@ internal sealed class RemoteStream : Stream
     /// <inheritdoc />
     public override long Position { get; set; }
 
-    public RemoteStream(int objectHandle, ThriftPluginContext context)
+    public RemoteStream(int objectHandle, IBlobProxyService proxy)
     {
         _objectHandle = objectHandle;
-        _context = context;
+        _proxy = proxy;
     }
 
     /// <inheritdoc />
@@ -54,8 +58,7 @@ internal sealed class RemoteStream : Stream
     /// <inheritdoc />
     public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
     {
-        using var session = await _context.GetSessionAsync(cancellationToken);
-        var bytes = await session.ClientProxy.Blob_ReadAsync(_objectHandle, (int)Position, count, cancellationToken);
+        var bytes = await _proxy.Blob_ReadAsync(_objectHandle, (int)Position, count, cancellationToken);
         Position += bytes.Length;
 
         var realCount = count;
@@ -79,12 +82,11 @@ internal sealed class RemoteStream : Stream
     /// <inheritdoc />
     public override async Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
     {
-        using var session = await _context.GetSessionAsync(cancellationToken);
         if (offset > 0 || buffer.Length > count)
         {
             buffer = buffer.AsSpan(offset, count).ToArray();
         }
 
-        await session.ClientProxy.Blob_WriteAsync(_objectHandle, buffer, cancellationToken);
+        await _proxy.Blob_WriteAsync(_objectHandle, buffer, cancellationToken);
     }
 }

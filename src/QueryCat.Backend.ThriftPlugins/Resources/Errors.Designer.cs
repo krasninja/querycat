@@ -110,5 +110,11 @@ namespace QueryCat.Backend.ThriftPlugins.Resources {
                 return ResourceManager.GetString("CannotFindPathVariable", resourceCulture);
             }
         }
+        
+        internal static string InvalidBlobHandle {
+            get {
+                return ResourceManager.GetString("InvalidBlobHandle", resourceCulture);
+            }
+        }
     }
 }

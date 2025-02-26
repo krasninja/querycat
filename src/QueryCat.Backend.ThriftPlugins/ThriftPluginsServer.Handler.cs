@@ -4,7 +4,9 @@ using QueryCat.Plugins.Client;
 using QueryCat.Plugins.Sdk;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Functions;
+using QueryCat.Backend.Core.Types;
 using LogLevel = QueryCat.Plugins.Sdk.LogLevel;
+using VariantValue = QueryCat.Plugins.Sdk.VariantValue;
 
 namespace QueryCat.Backend.ThriftPlugins;
 
@@ -175,23 +177,53 @@ public partial class ThriftPluginsServer
         public async Task<byte[]> Blob_ReadAsync(long token, int object_blob_handle, int offset, int count,
             CancellationToken cancellationToken = default)
         {
-            _thriftPluginsServer.VerifyToken(token);
-            return [];
+            var pluginContext = _thriftPluginsServer.GetPluginContextByToken(token);
+            if (pluginContext.ObjectsStorage.TryGet<IBlobData>(object_blob_handle, out var blobData)
+                && blobData != null)
+            {
+                await using var stream = blobData.GetStream();
+                var buffer = new byte[count];
+                if (offset >= stream.Length)
+                {
+                    return [];
+                }
+                var readBytes = await stream.ReadAsync(buffer, offset, count, cancellationToken);
+                if (readBytes != buffer.Length)
+                {
+                    var newBuffer = new byte[readBytes];
+                    buffer.AsSpan(0, readBytes).CopyTo(newBuffer);
+                    buffer = newBuffer;
+                }
+                return buffer;
+            }
+            throw new QueryCatException(Resources.Errors.InvalidBlobHandle);
         }
 
         /// <inheritdoc />
         public async Task<long> Blob_WriteAsync(long token, int object_blob_handle, byte[] bytes,
             CancellationToken cancellationToken = default)
         {
-            _thriftPluginsServer.VerifyToken(token);
-            return 0;
+            var pluginContext = _thriftPluginsServer.GetPluginContextByToken(token);
+            if (pluginContext.ObjectsStorage.TryGet<IBlobData>(object_blob_handle, out var blobData)
+                && blobData != null)
+            {
+                await using var stream = blobData.GetStream();
+                await stream.WriteAsync(bytes, 0, bytes.Length, cancellationToken);
+            }
+            throw new QueryCatException(Resources.Errors.InvalidBlobHandle);
         }
 
         /// <inheritdoc />
         public async Task<long> Blob_GetLengthAsync(long token, int object_blob_handle, CancellationToken cancellationToken = default)
         {
-            _thriftPluginsServer.VerifyToken(token);
-            return 0;
+            var pluginContext = _thriftPluginsServer.GetPluginContextByToken(token);
+            if (pluginContext.ObjectsStorage.TryGet<IBlobData>(object_blob_handle, out var blobData)
+                && blobData != null)
+            {
+                await using var stream = blobData.GetStream();
+                return stream.Length;
+            }
+            throw new QueryCatException(Resources.Errors.InvalidBlobHandle);
         }
 
         /// <inheritdoc />

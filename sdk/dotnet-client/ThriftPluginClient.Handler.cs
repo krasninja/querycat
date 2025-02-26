@@ -396,11 +396,10 @@ public partial class ThriftPluginClient
         public Task<int> RowsFormatter_OpenInputAsync(int object_rows_formatter_handle, int object_blob_handle, string? key, CancellationToken cancellationToken = default)
         {
             if (_thriftPluginClient._objectsStorage.TryGet<IRowsFormatter>(object_rows_formatter_handle, out var rowsFormatter)
-                && rowsFormatter != null
-                && _thriftPluginClient._objectsStorage.TryGet<IBlobData>(object_rows_formatter_handle, out var blobData)
-                && blobData != null)
+                && rowsFormatter != null)
             {
-                var rowsInput = rowsFormatter.OpenInput(blobData, key);
+                var remoteBlob = new RemoteBlobProxy(_thriftPluginClient.ThriftClient, object_blob_handle, _thriftPluginClient.Token);
+                var rowsInput = rowsFormatter.OpenInput(remoteBlob, key);
                 var index =_thriftPluginClient._objectsStorage.Add(rowsInput);
                 _thriftPluginClient._logger.LogDebug("Added new input object '{Object}' with handle {Handle}.",
                     rowsInput.ToString(), index);
@@ -415,13 +414,12 @@ public partial class ThriftPluginClient
         public Task<int> RowsFormatter_OpenOutputAsync(int object_rows_formatter_handle, int object_blob_handle, CancellationToken cancellationToken = default)
         {
             if (_thriftPluginClient._objectsStorage.TryGet<IRowsFormatter>(object_rows_formatter_handle, out var rowsFormatter)
-                && rowsFormatter != null
-                && _thriftPluginClient._objectsStorage.TryGet<IBlobData>(object_rows_formatter_handle, out var blobData)
-                && blobData != null)
+                && rowsFormatter != null)
             {
-                var rowsOutput = rowsFormatter.OpenOutput(blobData);
+                var remoteBlob = new RemoteBlobProxy(_thriftPluginClient.ThriftClient, object_blob_handle, _thriftPluginClient.Token);
+                var rowsOutput = rowsFormatter.OpenOutput(remoteBlob);
                 var index =_thriftPluginClient._objectsStorage.Add(rowsOutput);
-                _thriftPluginClient._logger.LogDebug("Added new input object '{Object}' with handle {Handle}.",
+                _thriftPluginClient._logger.LogDebug("Added new output object '{Object}' with handle {Handle}.",
                     rowsOutput.ToString(), index);
                 return Task.FromResult(index);
             }
@@ -431,28 +429,28 @@ public partial class ThriftPluginClient
         }
 
         /// <inheritdoc />
-        public Task<byte[]> Blob_ReadAsync(int object_blob_handle, int offset, int count, CancellationToken cancellationToken = default)
+        public async Task<byte[]> Blob_ReadAsync(int object_blob_handle, int offset, int count, CancellationToken cancellationToken = default)
         {
             if (_thriftPluginClient._objectsStorage.TryGet<IBlobData>(object_blob_handle, out var blobData)
                 && blobData != null)
             {
-                using var stream = blobData.GetStream();
+                await using var stream = blobData.GetStream();
                 var arr = new byte[stream.Length];
-                _ = stream.Read(arr, 0, arr.Length);
-                return Task.FromResult(arr);
+                _ = await stream.ReadAsync(arr, 0, arr.Length, cancellationToken);
+                return arr;
             }
             throw new QueryCatPluginException(ErrorType.INVALID_OBJECT, Resources.Errors.Object_IsNotBlob);
         }
 
         /// <inheritdoc />
-        public Task<long> Blob_WriteAsync(int object_blob_handle, byte[] bytes, CancellationToken cancellationToken = default)
+        public async Task<long> Blob_WriteAsync(int object_blob_handle, byte[] bytes, CancellationToken cancellationToken = default)
         {
             if (_thriftPluginClient._objectsStorage.TryGet<IBlobData>(object_blob_handle, out var blobData)
                 && blobData != null)
             {
-                using var stream = blobData.GetStream();
-                stream.Write(bytes, 0, bytes.Length);
-                return Task.FromResult((long)bytes.Length);
+                await using var stream = blobData.GetStream();
+                await stream.WriteAsync(bytes, 0, bytes.Length, cancellationToken);
+                return bytes.Length;
             }
             throw new QueryCatPluginException(ErrorType.INVALID_OBJECT, Resources.Errors.Object_IsNotBlob);
         }
