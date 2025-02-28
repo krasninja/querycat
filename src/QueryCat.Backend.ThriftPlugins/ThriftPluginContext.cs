@@ -69,9 +69,10 @@ internal sealed class ThriftPluginContext : IDisposable, IAsyncDisposable
         // Has available client - use it.
         if (_availableClientWrappers.TryDequeue(out var clientWrapper))
         {
-            _logger.LogTrace("Take connection {ConnectionId}, in use {ConnectionsInUseCount}.",
+            _logger.LogTrace("Take connection {ConnectionId}, in use {ConnectionsInUseCount}, total {ConnectionsCount}.",
                 clientWrapper.Id,
-                InUseConnectionsCount
+                InUseConnectionsCount,
+                TotalConnectionsCount
                 );
             return new ClientSession(this, clientWrapper);
         }
@@ -94,9 +95,10 @@ internal sealed class ThriftPluginContext : IDisposable, IAsyncDisposable
             awaiter.Session = null;
             _waitingConsumerPool.Return(awaiter);
         }
-        _logger.LogTrace("Take connection {ConnectionId}, in use {ConnectionsInUseCount}.",
+        _logger.LogTrace("Take connection {ConnectionId}, in use {ConnectionsInUseCount}, total {ConnectionsCount}.",
             clientSession.Wrapper.Id,
-            InUseConnectionsCount
+            InUseConnectionsCount,
+            TotalConnectionsCount
         );
 
         // First try to create the additional client.
