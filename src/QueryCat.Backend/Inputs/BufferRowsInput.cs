@@ -43,7 +43,7 @@ internal sealed class BufferRowsInput : BufferRowsSource, IRowsInput
     protected override async ValueTask<bool> CallbackAsync(CancellationToken cancellationToken)
     {
         // Seems we don't need to use write/read sync if we have enough data.
-        var shouldUseWriteSemaphore = RowsQueue.Count > 3;
+        var shouldUseWriteSemaphore = RowsQueue.Count < 3;
         try
         {
             await QueueCountSemaphore.WaitAsync(cancellationToken);
