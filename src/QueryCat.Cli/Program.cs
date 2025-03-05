@@ -62,7 +62,7 @@ internal sealed class Program
             IsHidden = true,
         };
         rootCommand.AddArgument(queryArgument);
-        rootCommand.SetHandler(_ =>
+        rootCommand.SetHandler(async (context) =>
         {
             // Allow to use with shebang.
             if (args.Length == 1
@@ -70,13 +70,13 @@ internal sealed class Program
                 && !args[0].Contains(Environment.NewLine)
                 && File.Exists(args[0]))
             {
-                new QueryCommand().Parse("-f", args[0]).Invoke();
+                await new QueryCommand().Parse("-f", args[0]).InvokeAsync();
             }
             else
             {
-                new QueryCommand().Parse(args).Invoke();
+                await new QueryCommand().Parse(args).InvokeAsync();
             }
-        }, queryArgument);
+        });
 
         var parser = new CommandLineBuilder(rootCommand)
             .UseVersionOption("-v", "--version")
