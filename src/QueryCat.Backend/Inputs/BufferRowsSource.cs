@@ -103,7 +103,7 @@ internal abstract class BufferRowsSource : IRowsSource, IDisposable
 
     protected async Task WaitForQueueEmptyAsync(CancellationToken cancellationToken)
     {
-        while (RowsQueue.Count > 0)
+        while (!RowsQueue.IsEmpty)
         {
             await Task.Delay(DelayMs, cancellationToken);
         }

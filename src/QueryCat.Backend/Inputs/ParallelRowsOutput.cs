@@ -37,7 +37,9 @@ internal sealed class ParallelRowsOutput : ParallelRowsSource, IRowsOutput
     /// <inheritdoc />
     public async ValueTask<ErrorCode> WriteValuesAsync(VariantValue[] values, CancellationToken cancellationToken = default)
     {
-        await AddTask(ct => _output.WriteValuesAsync(values, ct).AsTask(), cancellationToken);
+        var localValues = new VariantValue[values.Length];
+        Array.Copy(values, localValues, values.Length);
+        await AddTask(ct => _output.WriteValuesAsync(localValues, ct).AsTask(), cancellationToken);
         return ErrorCode.OK;
     }
 }
