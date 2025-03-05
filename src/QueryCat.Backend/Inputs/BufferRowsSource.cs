@@ -5,8 +5,11 @@ namespace QueryCat.Backend.Inputs;
 
 internal abstract class BufferRowsSource : IRowsSource, IDisposable
 {
-    private readonly IRowsSource _source;
+    protected const int DelayMs = 20;
+
+    private readonly IRowsSource _rowsSource;
     private Thread? _thread;
+    private bool _isThreadFinished;
     private readonly CancellationTokenSource _cancellationTokenSource = new();
 
     private sealed record ThreadState(BufferRowsSource BufferRowsSource);
@@ -22,11 +25,6 @@ internal abstract class BufferRowsSource : IRowsSource, IDisposable
     protected SemaphoreSlim QueueCountSemaphore { get; }
 
     /// <summary>
-    /// The semaphore is used to sync queue read and write in case of empty queue.
-    /// </summary>
-    protected SemaphoreSlim WriteSemaphore { get; } = new(1);
-
-    /// <summary>
     /// Buffer size.
     /// </summary>
     public int BufferSize { get; }
@@ -36,23 +34,15 @@ internal abstract class BufferRowsSource : IRowsSource, IDisposable
     /// <inheritdoc />
     public QueryContext QueryContext
     {
-        get => _source.QueryContext;
-        set => _source.QueryContext = value;
+        get => _rowsSource.QueryContext;
+        set => _rowsSource.QueryContext = value;
     }
 
-    public BufferRowsSource(IRowsSource source, int bufferSize)
+    public BufferRowsSource(IRowsSource rowsSource, int bufferSize)
     {
-        _source = source;
+        _rowsSource = rowsSource;
         BufferSize = bufferSize;
         QueueCountSemaphore = new SemaphoreSlim(bufferSize);
-    }
-
-    /// <inheritdoc />
-    public async Task OpenAsync(CancellationToken cancellationToken = default)
-    {
-        _thread = new Thread(QueueLoop);
-        await _source.OpenAsync(cancellationToken);
-        _thread.Start(new ThreadState(this));
     }
 
     private static async void QueueLoop(object? state)
@@ -68,60 +58,78 @@ internal abstract class BufferRowsSource : IRowsSource, IDisposable
         // Loop while we have data or cancellation requested.
         while (!cancellationToken.IsCancellationRequested)
         {
-            // Seems we don't need to use write/read sync if we have enough data.
-            var shouldUseWriteSemaphore = parent.RowsQueue.Count > 3;
-            try
+            var hasDataToProcess = await parent.CallbackAsync(cancellationToken);
+            if (!hasDataToProcess)
             {
-                await parent.QueueCountSemaphore.WaitAsync(cancellationToken);
-                if (shouldUseWriteSemaphore)
-                {
-                    await parent.WriteSemaphore.WaitAsync(cancellationToken);
-                }
-                var row = await parent.CallbackAsync(cancellationToken);
-                if (row != null)
-                {
-                    // If we have data - enqueue.
-                    parent.RowsQueue.Enqueue(row);
-                }
-                else
-                {
-                    // If we have no data - exit.
-                    await parent._cancellationTokenSource.CancelAsync();
-                }
-            }
-            finally
-            {
-                if (shouldUseWriteSemaphore)
-                {
-                    parent.WriteSemaphore.Release();
-                }
+                // If we have no data - exit.
+                await parent._cancellationTokenSource.CancelAsync();
             }
         }
+
+        parent._isThreadFinished = true;
     }
 
-    protected abstract ValueTask<Row?> CallbackAsync(CancellationToken cancellationToken);
+    /// <summary>
+    /// Callback to be called within a separate thread.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns><c>True</c> if we have more data to process, <c>false</c> otherwise to end processing.</returns>
+    protected abstract ValueTask<bool> CallbackAsync(CancellationToken cancellationToken);
 
     /// <inheritdoc />
-    public async Task CloseAsync(CancellationToken cancellationToken = default)
+    public virtual async Task OpenAsync(CancellationToken cancellationToken = default)
     {
-        await _source.CloseAsync(cancellationToken);
+        _thread = new Thread(QueueLoop);
+        await _rowsSource.OpenAsync(cancellationToken);
+        _thread.Start(new ThreadState(this));
+    }
+
+    /// <inheritdoc />
+    public virtual async Task CloseAsync(CancellationToken cancellationToken = default)
+    {
+        await _rowsSource.CloseAsync(cancellationToken);
+        await WaitForThreadFinishAsync(cancellationToken);
+        await _cancellationTokenSource.CancelAsync();
         Dispose();
     }
 
-    /// <inheritdoc />
-    public async Task ResetAsync(CancellationToken cancellationToken = default)
+    protected async Task WaitForThreadFinishAsync(CancellationToken cancellationToken)
     {
-        await _source.ResetAsync(cancellationToken);
+        while (!_isThreadFinished)
+        {
+            await Task.Delay(DelayMs, cancellationToken);
+        }
+    }
+
+    protected async Task WaitForQueueEmptyAsync(CancellationToken cancellationToken)
+    {
+        while (RowsQueue.Count > 0)
+        {
+            await Task.Delay(DelayMs, cancellationToken);
+        }
+    }
+
+    /// <inheritdoc />
+    public virtual async Task ResetAsync(CancellationToken cancellationToken = default)
+    {
+        await _rowsSource.ResetAsync(cancellationToken);
         RowsQueue.Clear();
-        WriteSemaphore.Release(WriteSemaphore.CurrentCount);
         QueueCountSemaphore.Release(QueueCountSemaphore.CurrentCount);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _cancellationTokenSource.Dispose();
+            QueueCountSemaphore.Dispose();
+        }
     }
 
     /// <inheritdoc />
     public void Dispose()
     {
-        _cancellationTokenSource.Dispose();
-        QueueCountSemaphore.Dispose();
-        WriteSemaphore.Dispose();
+        Dispose(true);
+        GC.SuppressFinalize(this);
     }
 }

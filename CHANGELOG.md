@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Add function "buffer_input".
+- Add functions "buffer_input", "buffer_output".
 - Support "IRowsFormatter" for Thrift plugins system.
 
 ### Fixed

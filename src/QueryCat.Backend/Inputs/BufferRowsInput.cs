@@ -15,12 +15,17 @@ internal sealed class BufferRowsInput : BufferRowsSource, IRowsInput
     public static VariantValue BufferInput(IExecutionThread thread)
     {
         var input = thread.Stack[0].AsRequired<IRowsInput>();
-        var bufferSize = (int)(thread.Stack[1].AsInteger ?? 24);
+        var bufferSize = (int)(thread.Stack[1].AsInteger ?? 1024);
         return VariantValue.CreateFromObject(new BufferRowsInput(input, bufferSize));
     }
 
     private readonly IRowsInput _rowsInput;
     private Row? _currentRow;
+
+    /// <summary>
+    /// The semaphore is used to sync queue read and write in case of empty queue.
+    /// </summary>
+    private readonly SemaphoreSlim _writeSemaphore = new(1);
 
     /// <inheritdoc />
     public Column[] Columns => _rowsInput.Columns;
@@ -35,12 +40,34 @@ internal sealed class BufferRowsInput : BufferRowsSource, IRowsInput
     }
 
     /// <inheritdoc />
-    protected override async ValueTask<Row?> CallbackAsync(CancellationToken cancellationToken)
+    protected override async ValueTask<bool> CallbackAsync(CancellationToken cancellationToken)
+    {
+        // Seems we don't need to use write/read sync if we have enough data.
+        var shouldUseWriteSemaphore = RowsQueue.Count > 3;
+        try
+        {
+            await QueueCountSemaphore.WaitAsync(cancellationToken);
+            if (shouldUseWriteSemaphore)
+            {
+                await _writeSemaphore.WaitAsync(cancellationToken);
+            }
+            return await ReadInternalAsync(cancellationToken);
+        }
+        finally
+        {
+            if (shouldUseWriteSemaphore)
+            {
+                _writeSemaphore.Release();
+            }
+        }
+    }
+
+    private async ValueTask<bool> ReadInternalAsync(CancellationToken cancellationToken = default)
     {
         var result = await _rowsInput.ReadNextAsync(cancellationToken);
         if (!result)
         {
-            return null;
+            return false;
         }
         var row = new Row(_rowsInput.Columns);
         for (var i = 0; i < _rowsInput.Columns.Length; i++)
@@ -48,7 +75,9 @@ internal sealed class BufferRowsInput : BufferRowsSource, IRowsInput
             var errorCode = _rowsInput.ReadValue(i, out var value);
             row[i] = errorCode == ErrorCode.OK ? value : VariantValue.Null;
         }
-        return row;
+
+        RowsQueue.Enqueue(row);
+        return true;
     }
 
     /// <inheritdoc />
@@ -80,7 +109,7 @@ internal sealed class BufferRowsInput : BufferRowsSource, IRowsInput
             try
             {
                 // Otherwise wait for complete write and try to dequeue again.
-                await WriteSemaphore.WaitAsync(cancellationToken);
+                await _writeSemaphore.WaitAsync(cancellationToken);
                 if (RowsQueue.TryDequeue(out _currentRow)
                     && _currentRow is not null)
                 {
@@ -90,7 +119,7 @@ internal sealed class BufferRowsInput : BufferRowsSource, IRowsInput
             }
             finally
             {
-                WriteSemaphore.Release();
+                _writeSemaphore.Release();
             }
         }
 
@@ -98,8 +127,22 @@ internal sealed class BufferRowsInput : BufferRowsSource, IRowsInput
     }
 
     /// <inheritdoc />
+    public override async Task ResetAsync(CancellationToken cancellationToken = default)
+    {
+        await base.ResetAsync(cancellationToken);
+        await _writeSemaphore.WaitAsync(cancellationToken);
+    }
+
+    /// <inheritdoc />
     public void Explain(IndentedStringBuilder stringBuilder)
     {
         stringBuilder.AppendRowsInputsWithIndent("Buffer", _rowsInput);
+    }
+
+    /// <inheritdoc />
+    protected override void Dispose(bool disposing)
+    {
+        _writeSemaphore.Dispose();
+        base.Dispose(disposing);
     }
 }
