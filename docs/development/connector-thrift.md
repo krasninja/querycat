@@ -119,8 +119,21 @@ QueryCat Host <---> QueryCat Proxy <---> Plugin Executable
         [FunctionSignature("random_number(): int")]
         public static VariantValue RandomNumberFunction(IExecutionThread thread)
         {
-            return new VariantValue(DateTime.Now);
+            return new VariantValue(Random.Shared.Next());
         }
+    }
+    ```
+
+    Note: You can also use async implementation for function:
+
+    ```csharp
+    [SafeFunction]
+    [Description("Get a random number.")]
+    [FunctionSignature("random_number(): int")]
+    public static ValueTask<VariantValue> RandomNumberFunctionAsync(IExecutionThread thread, CancellationToken cancellationToken)
+    {
+        var value = new VariantValue(Random.Shared.Next());
+        return ValueTask.FromResult(value);
     }
     ```
 
