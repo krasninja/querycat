@@ -10,7 +10,7 @@ internal class CustomInlineFunctionUsage : BaseUsage
     /// <inheritdoc />
     public override async Task RunAsync()
     {
-        await using var executionThread = await new ExecutionThreadBootstrapper().CreateAsync();
+        await using var executionThread = new ExecutionThreadBootstrapper().Create();
         var function = executionThread.FunctionsManager.Factory.CreateFromSignature("secret(a: string, b: numeric): string", (IExecutionThread thread) =>
         {
             var a = thread.Stack[0];

@@ -25,7 +25,7 @@ public sealed class VariablesCompletionSourceTests
     public async Task GetCompletions_PartVariableName_ReturnsExpectedCompletions(string query, string expected)
     {
         // Arrange.
-        await using var thread = await _executionThreadBootstrapper.CreateAsync();
+        await using var thread = _executionThreadBootstrapper.Create();
         thread.TopScope.Variables["userName"] = VariantValue.Null;
         thread.TopScope.Variables["name"] = VariantValue.Null;
 
@@ -43,7 +43,7 @@ public sealed class VariablesCompletionSourceTests
     public async Task ApplyCompletion_PartVariableName_ReturnsExpectedCompletions(string query, string expected)
     {
         // Arrange.
-        await using var thread = await _executionThreadBootstrapper.CreateAsync();
+        await using var thread = _executionThreadBootstrapper.Create();
         thread.TopScope.Variables["userName"] = VariantValue.Null;
         thread.TopScope.Variables["name"] = VariantValue.Null;
 

@@ -166,7 +166,7 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
     }
 
     /// <inheritdoc />
-    public override Task<string[]> LoadAsync(CancellationToken cancellationToken = default)
+    public override Task<int> LoadAsync(CancellationToken cancellationToken = default)
     {
         var loadedPlugins = new List<string>();
 
@@ -186,7 +186,7 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
             _server.WaitForPluginRegistration(ForceRegistrationToken, cancellationToken);
         }
 
-        return Task.FromResult(loadedPlugins.ToArray());
+        return Task.FromResult(loadedPlugins.Count);
     }
 
     /// <inheritdoc />

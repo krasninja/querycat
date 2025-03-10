@@ -16,8 +16,7 @@ public class NullPluginsLoader : PluginsLoader
     }
 
     /// <inheritdoc />
-    public override Task<string[]> LoadAsync(CancellationToken cancellationToken = default)
-        => Task.FromResult(Array.Empty<string>());
+    public override Task<int> LoadAsync(CancellationToken cancellationToken = default) => Task.FromResult(0);
 
     /// <inheritdoc />
     public override bool IsCorrectPluginFile(string file) => false;

@@ -6,6 +6,11 @@ namespace QueryCat.Backend.Core.Plugins;
 public interface IPluginsManager
 {
     /// <summary>
+    /// Implementation of plugins loading.
+    /// </summary>
+    IPluginsLoader PluginsLoader { get; }
+
+    /// <summary>
     /// List all local and remote plugins.
     /// </summary>
     /// <param name="localOnly">List local plugins only.</param>

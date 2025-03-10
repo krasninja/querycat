@@ -11,6 +11,9 @@ public sealed class NullPluginsManager : IPluginsManager
     public static IPluginsManager Instance { get; } = new NullPluginsManager();
 
     /// <inheritdoc />
+    public IPluginsLoader PluginsLoader { get; } = NullPluginsLoader.Instance;
+
+    /// <inheritdoc />
     public Task<IEnumerable<PluginInfo>> ListAsync(bool localOnly = false, CancellationToken cancellationToken = default)
     {
         return Task.FromResult(Array.Empty<PluginInfo>().AsEnumerable());

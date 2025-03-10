@@ -54,10 +54,10 @@ public sealed class CollectionInputTests : IDisposable
     public async Task Select_ListOfEmployees_CopyToRowsFrame()
     {
         var rowsFrame = new RowsFrame(_employeesList.Columns);
-        var thread = await new ExecutionThreadBootstrapper(new ExecutionOptions
+        var thread = new ExecutionThreadBootstrapper(new ExecutionOptions
         {
             DefaultRowsOutput = new RowsFrameOutput(rowsFrame),
-        }).CreateAsync();
+        }).Create();
         thread.TopScope.Variables["employees"] = VariantValue.CreateFromObject(_employeesList);
         await thread.RunAsync("select * from \"employees\";");
         Assert.Equal(DataType.Integer, rowsFrame.Columns[0].DataType);
@@ -67,10 +67,10 @@ public sealed class CollectionInputTests : IDisposable
     [Fact]
     public async Task Update_ListOfEmployees_UpdateItems()
     {
-        var thread = await new ExecutionThreadBootstrapper(new ExecutionOptions
+        var thread = new ExecutionThreadBootstrapper(new ExecutionOptions
         {
             DefaultRowsOutput = NullRowsOutput.Instance,
-        }).CreateAsync();
+        }).Create();
         thread.TopScope.Variables["employees"] = VariantValue.CreateFromObject(_employeesList);
         await thread.RunAsync("update employees set id = id + 1, score = 10 where id > 1;");
         Assert.Equal(1, _employeesList.TargetCollection.ElementAt(0).Id);
@@ -81,10 +81,10 @@ public sealed class CollectionInputTests : IDisposable
     [Fact]
     public async Task Insert_ListOfEmployees_InsertItem()
     {
-        var thread = await new ExecutionThreadBootstrapper(new ExecutionOptions
+        var thread = new ExecutionThreadBootstrapper(new ExecutionOptions
         {
             DefaultRowsOutput = NullRowsOutput.Instance,
-        }).CreateAsync();
+        }).Create();
         thread.TopScope.Variables["employees"] = VariantValue.CreateFromObject(_employeesList);
         await thread.RunAsync("insert into \"employees\" values (4, 'Abbie Cornish', '1982-08-07', 5);");
         Assert.Equal(4, _employeesList.TargetCollection.Count());
@@ -94,14 +94,14 @@ public sealed class CollectionInputTests : IDisposable
     [Fact]
     public async Task Insert_ListOfEmployeesWithPartialInsert_InsertItem()
     {
-        await using var thread = await new ExecutionThreadBootstrapper(new ExecutionOptions
+        await using var thread = new ExecutionThreadBootstrapper(new ExecutionOptions
             {
                 DefaultRowsOutput = NullRowsOutput.Instance,
             })
             .WithStandardUriResolvers()
             .WithStandardFunctions()
             .WithRegistrations(AdditionalRegistration.Register)
-            .CreateAsync();
+            .Create();
         thread.TopScope.Variables["employees"] = VariantValue.CreateFromObject(_employeesList);
         await thread.RunAsync("insert into self(employees) (id, name) values (4, 'Abbie Cornish');");
         Assert.Equal(4, _employeesList.TargetCollection.Count());

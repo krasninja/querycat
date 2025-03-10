@@ -22,9 +22,9 @@ public sealed class CombineCompletionSourceTests
             ],
             maxItems: -1,
             preventDuplicates: true);
-        await using var executionThread = await new ExecutionThreadBootstrapper()
+        await using var executionThread = new ExecutionThreadBootstrapper()
             .WithCompletionSource(combineCompletionSource)
-            .CreateAsync();
+            .Create();
 
         // Act.
         var completionsCount = (await executionThread.GetCompletionsAsync("SELEC").ToListAsync()).Count;

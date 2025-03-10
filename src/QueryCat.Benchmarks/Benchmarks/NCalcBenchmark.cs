@@ -20,7 +20,10 @@ public class NCalcBenchmark : IDisposable
     private const string LogicalExpression =
         "(1089 = (1000 + 89)) AND 13 IN (1,2,3,4,5,6,7,8,9,10,11,12,13,14,15) AND 'INSERT' = 'INSERT'";
 
-    private IExecutionThread _executionThread = NullExecutionThread.Instance;
+    private readonly IExecutionThread _executionThread = new ExecutionThreadBootstrapper()
+        .WithStandardFunctions()
+        .Create();
+
     private readonly DataTable _dataTable;
     private readonly string _qcatQuery;
     private readonly string _ncalcQuery;
@@ -30,14 +33,6 @@ public class NCalcBenchmark : IDisposable
         _dataTable = new DataTable();
         _qcatQuery = GenerateQuery("power", "sqrt");
         _ncalcQuery = GenerateQuery("Pow", "Sqrt");
-    }
-
-    [GlobalSetup]
-    public async Task GlobalSetupAsync()
-    {
-        _executionThread = await new ExecutionThreadBootstrapper()
-            .WithStandardFunctions()
-            .CreateAsync();
     }
 
     [GlobalCleanup]

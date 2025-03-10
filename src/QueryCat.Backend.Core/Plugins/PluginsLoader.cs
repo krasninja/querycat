@@ -3,7 +3,7 @@ namespace QueryCat.Backend.Core.Plugins;
 /// <summary>
 /// Plugins loading subsystem.
 /// </summary>
-public abstract class PluginsLoader
+public abstract class PluginsLoader : IPluginsLoader
 {
     /// <summary>
     /// The directories to search for plugin files.
@@ -24,7 +24,7 @@ public abstract class PluginsLoader
     /// </summary>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Awaitable task.</returns>
-    public abstract Task<string[]> LoadAsync(CancellationToken cancellationToken = default);
+    public abstract Task<int> LoadAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Determines if the file can be used for the specified plugin loader.

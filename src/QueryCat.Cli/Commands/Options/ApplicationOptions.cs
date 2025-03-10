@@ -115,7 +115,8 @@ internal sealed class ApplicationOptions
             pluginsStorage: new S3PluginsStorage(executionOptions.PluginsRepositoryUri))
         );
 #endif
-        var thread = await bootstrapper.CreateAsync(cancellationToken);
+        var thread = bootstrapper.Create();
+        await thread.PluginsManager.PluginsLoader.LoadAsync(cancellationToken);
 
         return new ApplicationRoot(thread, thread.PluginsManager);
     }

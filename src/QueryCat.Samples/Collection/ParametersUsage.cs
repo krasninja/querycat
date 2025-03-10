@@ -8,7 +8,7 @@ internal class ParametersUsage : BaseUsage
     /// <inheritdoc />
     public override async Task RunAsync()
     {
-        await using var executionThread = await new ExecutionThreadBootstrapper().CreateAsync();
+        await using var executionThread = new ExecutionThreadBootstrapper().Create();
 
         await executionThread.RunAsync("hello || ' ' || world", new Dictionary<string, VariantValue>
         {
