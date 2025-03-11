@@ -5,6 +5,7 @@ using Cake.Frosting;
 using QueryCat.Backend.AssemblyPlugins;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
+using QueryCat.Backend.Core.Plugins;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.FunctionsManager;
 using QueryCat.Backend.Parser;
@@ -105,7 +106,7 @@ public sealed class GetFunctionsInMarkdownTask : AsyncFrostingTask<BuildContext>
 
         var functionsManager = new MarkdownFunctionsManager();
         var loader = new DotNetAssemblyPluginsLoader(functionsManager, [targetFile]);
-        await loader.LoadAsync();
+        await loader.LoadAsync(new PluginsLoadingOptions());
 
         var sb = new StringBuilder()
             .AppendLine("# Functions")

@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using QueryCat.Backend.AssemblyPlugins;
 using QueryCat.Backend.Core;
-using QueryCat.Backend.Core.Utils;
+using QueryCat.Backend.Core.Plugins;
 using QueryCat.Plugins.Client;
 
 namespace QueryCat.PluginsProxy;
@@ -22,7 +22,7 @@ public class Program
 
         using var client = new ThriftPluginClient(args);
         var assemblyLoader = new DotNetAssemblyPluginsLoader(client.FunctionsManager, assemblyFiles);
-        await assemblyLoader.LoadAsync();
+        await assemblyLoader.LoadAsync(new PluginsLoadingOptions());
         if (!assemblyLoader.LoadedAssemblies.Any())
         {
             throw new QueryCatException("No plugins loaded.");

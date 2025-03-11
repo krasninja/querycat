@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using QueryCat.Backend;
 using QueryCat.Backend.Addons.Formatters;
 using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Plugins;
 using QueryCat.Backend.Execution;
 using QueryCat.Cli.Commands.Options;
 using QueryCat.Cli.Infrastructure;
@@ -74,7 +75,7 @@ internal class PluginDebugCommand : BaseQueryCommand
                 .WithRegistrations(AdditionalRegistration.Register)
                 .WithRegistrations(Backend.Addons.Functions.JsonFunctions.RegisterFunctions)
                 .Create();
-            await thread.PluginsManager.PluginsLoader.LoadAsync();
+            await thread.PluginsManager.PluginsLoader.LoadAsync(new PluginsLoadingOptions());
             AddVariables(thread, variables);
             await RunQueryAsync(thread, query, files, cts.Token);
         });

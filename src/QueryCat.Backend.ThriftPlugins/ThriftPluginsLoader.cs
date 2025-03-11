@@ -166,7 +166,7 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
     }
 
     /// <inheritdoc />
-    public override Task<int> LoadAsync(CancellationToken cancellationToken = default)
+    public override Task<int> LoadAsync(PluginsLoadingOptions options, CancellationToken cancellationToken = default)
     {
         var loadedPlugins = new List<string>();
 

@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using QueryCat.Backend;
 using QueryCat.Backend.Addons.Formatters;
 using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Plugins;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.PluginsManager;
 using QueryCat.Cli.Infrastructure;
@@ -116,7 +117,7 @@ internal sealed class ApplicationOptions
         );
 #endif
         var thread = bootstrapper.Create();
-        await thread.PluginsManager.PluginsLoader.LoadAsync(cancellationToken);
+        await thread.PluginsManager.PluginsLoader.LoadAsync(new PluginsLoadingOptions(), cancellationToken);
 
         return new ApplicationRoot(thread, thread.PluginsManager);
     }

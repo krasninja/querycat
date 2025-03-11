@@ -121,7 +121,7 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader, IDisposable
     }
 
     /// <inheritdoc />
-    public override async Task<int> LoadAsync(CancellationToken cancellationToken = default)
+    public override async Task<int> LoadAsync(PluginsLoadingOptions options, CancellationToken cancellationToken = default)
     {
         var loadedCount = 0;
 
