@@ -42,28 +42,8 @@ internal sealed class BufferRowsInput : BufferRowsSource, IRowsInput
     /// <inheritdoc />
     protected override async ValueTask<bool> CallbackAsync(CancellationToken cancellationToken)
     {
-        // Seems we don't need to use write/read sync if we have enough data.
-        var shouldUseWriteSemaphore = RowsQueue.Count < 3;
-        try
-        {
-            await QueueCountSemaphore.WaitAsync(cancellationToken);
-            if (shouldUseWriteSemaphore)
-            {
-                await _writeSemaphore.WaitAsync(cancellationToken);
-            }
-            return await ReadInternalAsync(cancellationToken);
-        }
-        finally
-        {
-            if (shouldUseWriteSemaphore)
-            {
-                _writeSemaphore.Release();
-            }
-        }
-    }
+        await QueueCountSemaphore.WaitAsync(cancellationToken);
 
-    private async ValueTask<bool> ReadInternalAsync(CancellationToken cancellationToken = default)
-    {
         var result = await _rowsInput.ReadNextAsync(cancellationToken);
         if (!result)
         {
@@ -96,32 +76,18 @@ internal sealed class BufferRowsInput : BufferRowsSource, IRowsInput
     /// <inheritdoc />
     public async ValueTask<bool> ReadNextAsync(CancellationToken cancellationToken = default)
     {
-        // Try to get new row - fast path.
-        if (RowsQueue.TryDequeue(out _currentRow)
-            && _currentRow is not null)
+        do
         {
-            QueueCountSemaphore.Release();
-            return true;
-        }
-
-        while (!EndOfData)
-        {
-            try
+            // Otherwise wait for complete write and try to dequeue again.
+            if (RowsQueue.TryDequeue(out _currentRow)
+                && _currentRow is not null)
             {
-                // Otherwise wait for complete write and try to dequeue again.
-                await _writeSemaphore.WaitAsync(cancellationToken);
-                if (RowsQueue.TryDequeue(out _currentRow)
-                    && _currentRow is not null)
-                {
-                    QueueCountSemaphore.Release();
-                    return true;
-                }
+                QueueCountSemaphore.Release();
+                return true;
             }
-            finally
-            {
-                _writeSemaphore.Release();
-            }
+            await Task.Yield();
         }
+        while (!(EndOfData && RowsQueue.IsEmpty));
 
         return false;
     }

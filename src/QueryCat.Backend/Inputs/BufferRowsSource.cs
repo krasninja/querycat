@@ -5,7 +5,7 @@ namespace QueryCat.Backend.Inputs;
 
 internal abstract class BufferRowsSource : IRowsSource, IDisposable
 {
-    protected const int DelayMs = 20;
+    protected const int DelayMs = 12;
 
     private readonly IRowsSource _rowsSource;
     private Thread? _thread;
@@ -63,6 +63,7 @@ internal abstract class BufferRowsSource : IRowsSource, IDisposable
             {
                 // If we have no data - exit.
                 await parent._cancellationTokenSource.CancelAsync();
+                break;
             }
         }
 
