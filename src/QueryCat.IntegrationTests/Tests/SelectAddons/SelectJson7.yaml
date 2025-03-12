@@ -1,0 +1,12 @@
+expected: |
+  Marina A
+  Sergey D
+  Lena D
+  Artem T
+  Svetlana A
+  Kristina T
+  Ivan K
+  Polina D
+  Sergey D
+query: |
+  json_array_elements((select a.Players from 'Laski.json' a));

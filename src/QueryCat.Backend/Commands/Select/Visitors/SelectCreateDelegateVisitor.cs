@@ -34,8 +34,6 @@ internal sealed class SelectCreateDelegateVisitor : CreateDelegateVisitor
         ResolveTypesVisitor resolveTypesVisitor) : base(thread, resolveTypesVisitor)
     {
         _context = context;
-        AstTraversal.TypesToIgnore.Add(typeof(SelectQueryNode));
-        AstTraversal.AcceptBeforeIgnore = true;
     }
 
     /// <inheritdoc />

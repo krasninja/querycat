@@ -21,34 +21,19 @@ namespace QueryCat.Backend.Commands;
 /// <summary>
 /// Visit only program top-level building blocks (statements) and generate execution delegate.
 /// </summary>
-internal sealed class StatementsVisitor : AstVisitor
+internal sealed class StatementsVisitor : CreateDelegateVisitor
 {
     private readonly IExecutionThread<ExecutionOptions> _executionThread;
-    private readonly Dictionary<int, IFuncUnit> _handlers = new();
-    private readonly ResolveTypesVisitor _resolveTypesVisitor;
 
     public StatementsVisitor(IExecutionThread<ExecutionOptions> executionThread, ResolveTypesVisitor resolveTypesVisitor)
+        : base(executionThread, resolveTypesVisitor)
     {
         _executionThread = executionThread;
-        _resolveTypesVisitor = resolveTypesVisitor;
     }
 
     public StatementsVisitor(IExecutionThread<ExecutionOptions> executionThread)
         : this(executionThread, new ResolveTypesVisitor(executionThread))
     {
-    }
-
-    /// <inheritdoc />
-    public override async ValueTask<IFuncUnit> RunAndReturnAsync(IAstNode node, CancellationToken cancellationToken)
-    {
-        if (_handlers.TryGetValue(node.Id, out var funcUnit))
-        {
-            return funcUnit;
-        }
-        await RunAsync(node, cancellationToken);
-        var handler = _handlers[node.Id];
-        _handlers.Clear();
-        return handler;
     }
 
     /// <inheritdoc />
@@ -81,74 +66,73 @@ internal sealed class StatementsVisitor : AstVisitor
         {
             await statementNode.AcceptAsync(this, cancellationToken);
         }
-        var blockHandlers = node.Statements.Select(s => _handlers[s.Id]).ToArray();
+        var blockHandlers = node.Statements.Select(s => NodeIdFuncMap[s.Id]).ToArray();
 
-        _handlers[node.Id] = new BlockExpressionFuncUnit(blockHandlers);
+        NodeIdFuncMap[node.Id] = new BlockExpressionFuncUnit(blockHandlers);
     }
 
     /// <inheritdoc />
     public override async ValueTask VisitAsync(ExpressionStatementNode node, CancellationToken cancellationToken)
     {
-        await _resolveTypesVisitor.RunAsync(node, cancellationToken);
-        var handler = await new CreateDelegateVisitor(_executionThread, _resolveTypesVisitor)
+        await ResolveTypesVisitor.RunAsync(node, cancellationToken);
+        var handler = await new CreateDelegateVisitor(_executionThread, ResolveTypesVisitor)
             .RunAndReturnAsync(node.ExpressionNode, cancellationToken);
-        _handlers.Add(node.Id, handler);
+        NodeIdFuncMap.Add(node.Id, handler);
     }
 
     /// <inheritdoc />
     public override async ValueTask VisitAsync(CallFunctionStatementNode node, CancellationToken cancellationToken)
     {
         var handler = await new CallCommand().CreateHandlerAsync(_executionThread, node, cancellationToken);
-        _handlers.Add(node.Id, handler);
+        NodeIdFuncMap.Add(node.Id, handler);
     }
 
     /// <inheritdoc />
     public override async ValueTask VisitAsync(DeclareStatementNode node, CancellationToken cancellationToken)
     {
         var handler = await new DeclareCommand().CreateHandlerAsync(_executionThread, node, cancellationToken);
-        _handlers.Add(node.Id, handler);
+        NodeIdFuncMap.Add(node.Id, handler);
     }
 
     /// <inheritdoc />
     public override async ValueTask VisitAsync(SetStatementNode node, CancellationToken cancellationToken)
     {
-        var handler = await new SetCommand(_resolveTypesVisitor).CreateHandlerAsync(_executionThread, node, cancellationToken);
-        _handlers.Add(node.Id, handler);
+        var handler = await new SetCommand(ResolveTypesVisitor).CreateHandlerAsync(_executionThread, node, cancellationToken);
+        NodeIdFuncMap.Add(node.Id, handler);
     }
 
     public override async ValueTask VisitAsync(FunctionCallStatementNode node, CancellationToken cancellationToken)
     {
-        await _resolveTypesVisitor.RunAsync(node, cancellationToken);
-        var handler = await new CreateDelegateVisitor(_executionThread, _resolveTypesVisitor)
+        var handler = await new CreateDelegateVisitor(_executionThread, ResolveTypesVisitor)
             .RunAndReturnAsync(node.FunctionNode, cancellationToken);
-        _handlers.Add(node.Id, handler);
+        NodeIdFuncMap.Add(node.Id, handler);
     }
 
     /// <inheritdoc />
     public override async ValueTask VisitAsync(IfConditionStatementNode node, CancellationToken cancellationToken)
     {
         var handler = await new IfConditionCommand().CreateHandlerAsync(_executionThread, node, cancellationToken);
-        _handlers.Add(node.Id, handler);
+        NodeIdFuncMap.Add(node.Id, handler);
     }
 
     /// <inheritdoc />
     public override async ValueTask VisitAsync(InsertStatementNode node, CancellationToken cancellationToken)
     {
         var handler = await new InsertCommand().CreateHandlerAsync(_executionThread, node, cancellationToken);
-        _handlers.Add(node.Id, handler);
+        NodeIdFuncMap.Add(node.Id, handler);
     }
 
     /// <inheritdoc />
     public override async ValueTask VisitAsync(SelectStatementNode node, CancellationToken cancellationToken)
     {
-        var handler = await new SelectCommand(_resolveTypesVisitor).CreateHandlerAsync(_executionThread, node, cancellationToken);
-        _handlers.Add(node.Id, handler);
+        var handler = await new SelectCommand(ResolveTypesVisitor).CreateHandlerAsync(_executionThread, node, cancellationToken);
+        NodeIdFuncMap.Add(node.Id, handler);
     }
 
     /// <inheritdoc />
     public override async ValueTask VisitAsync(UpdateStatementNode node, CancellationToken cancellationToken)
     {
         var handler = await new UpdateCommand().CreateHandlerAsync(_executionThread, node, cancellationToken);
-        _handlers.Add(node.Id, handler);
+        NodeIdFuncMap.Add(node.Id, handler);
     }
 }

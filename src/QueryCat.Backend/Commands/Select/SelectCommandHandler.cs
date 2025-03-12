@@ -8,7 +8,7 @@ internal sealed class SelectCommandHandler : IFuncUnit, IDisposable, IAsyncDispo
     public SelectCommandContext SelectCommandContext { get; }
 
     /// <inheritdoc />
-    public DataType OutputType => DataType.Null;
+    public DataType OutputType { get; private set; } = DataType.Null;
 
     public SelectCommandHandler(SelectCommandContext selectCommandContext)
     {
@@ -19,6 +19,10 @@ internal sealed class SelectCommandHandler : IFuncUnit, IDisposable, IAsyncDispo
     public async ValueTask<VariantValue> InvokeAsync(IExecutionThread thread, CancellationToken cancellationToken = default)
     {
         await ResetVariablesBoundRowsInputsAsync(cancellationToken);
+        if (SelectCommandContext.CurrentIterator.Columns.Length == 1)
+        {
+            OutputType = SelectCommandContext.CurrentIterator.Columns[0].DataType;
+        }
         return VariantValue.CreateFromObject(SelectCommandContext.CurrentIterator);
     }
 

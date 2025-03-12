@@ -28,7 +28,8 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
         _executionThread = executionThread;
         _context = context;
         _resolveTypesVisitor = new ResolveTypesVisitor(executionThread);
-        AstTraversal.TypesToIgnore.Add(typeof(SelectQueryNode));
+        AstTraversal.TypesToIgnore.Add(typeof(SelectQuerySpecificationNode));
+        AstTraversal.TypesToIgnore.Add(typeof(SelectQueryCombineNode));
         AstTraversal.AcceptBeforeIgnore = true;
     }
 

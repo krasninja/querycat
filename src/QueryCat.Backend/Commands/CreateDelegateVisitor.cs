@@ -3,9 +3,11 @@ using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Function;
 using QueryCat.Backend.Ast.Nodes.SpecialFunctions;
 using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Relational;
 using QueryCat.Backend.Storage;
 
 namespace QueryCat.Backend.Commands;
@@ -35,6 +37,11 @@ internal partial class CreateDelegateVisitor : AstVisitor
     {
         ExecutionThread = thread;
         _resolveTypesVisitor = resolveTypesVisitor;
+
+        AstTraversal.TypesToIgnore.Add(typeof(Ast.Nodes.Select.SelectQuerySpecificationNode));
+        AstTraversal.TypesToIgnore.Add(typeof(Ast.Nodes.Select.SelectQueryCombineNode));
+        AstTraversal.TypesToIgnore.Add(typeof(Ast.Nodes.Declare.DeclareNode));
+        AstTraversal.AcceptBeforeIgnore = true;
     }
 
     /// <inheritdoc />
@@ -535,6 +542,46 @@ internal partial class CreateDelegateVisitor : AstVisitor
         NodeIdFuncMap[node.Id] = new FunctionCallFuncUnit(function, argsDelegates, node.GetDataType());
 
         return ValueTask.CompletedTask;
+    }
+
+    #endregion
+
+    #region Statements
+
+    private async ValueTask VisitSelectQueryNodeAsync(Ast.Nodes.Select.SelectQueryNode node, CancellationToken cancellationToken)
+    {
+        var handler = await VisitWithStatementVisitor(new Ast.Nodes.Select.SelectStatementNode(node), cancellationToken);
+        var iterator = (await handler.InvokeAsync(ExecutionThread, cancellationToken)).AsRequired<IRowsIterator>();
+        node.SetDataType(handler.OutputType);
+        NodeIdFuncMap[node.Id] = new FuncUnitRowsIteratorScalar(iterator);
+    }
+
+    /// <inheritdoc />
+    public override async ValueTask VisitAsync(Ast.Nodes.Select.SelectQuerySpecificationNode node, CancellationToken cancellationToken)
+    {
+        await VisitSelectQueryNodeAsync(node, cancellationToken);
+        await base.VisitAsync(node, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public override async ValueTask VisitAsync(Ast.Nodes.Select.SelectQueryCombineNode node, CancellationToken cancellationToken)
+    {
+        await VisitSelectQueryNodeAsync(node, cancellationToken);
+        await base.VisitAsync(node, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public override async ValueTask VisitAsync(Ast.Nodes.Declare.DeclareNode node, CancellationToken cancellationToken)
+    {
+        await VisitWithStatementVisitor(node, cancellationToken);
+        await base.VisitAsync(node, cancellationToken);
+    }
+
+    private async ValueTask<IFuncUnit> VisitWithStatementVisitor(IAstNode node, CancellationToken cancellationToken)
+    {
+        var handler = await new StatementsVisitor(ExecutionThread).RunAndReturnAsync(node, cancellationToken);
+        NodeIdFuncMap[node.Id] = handler;
+        return handler;
     }
 
     #endregion
