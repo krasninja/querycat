@@ -41,6 +41,8 @@ internal partial class CreateDelegateVisitor : AstVisitor
         AstTraversal.TypesToIgnore.Add(typeof(Ast.Nodes.Select.SelectQuerySpecificationNode));
         AstTraversal.TypesToIgnore.Add(typeof(Ast.Nodes.Select.SelectQueryCombineNode));
         AstTraversal.TypesToIgnore.Add(typeof(Ast.Nodes.Declare.DeclareNode));
+        AstTraversal.TypesToIgnore.Add(typeof(Ast.Nodes.Insert.InsertNode));
+        AstTraversal.TypesToIgnore.Add(typeof(Ast.Nodes.Update.UpdateNode));
         AstTraversal.AcceptBeforeIgnore = true;
     }
 
@@ -572,6 +574,20 @@ internal partial class CreateDelegateVisitor : AstVisitor
 
     /// <inheritdoc />
     public override async ValueTask VisitAsync(Ast.Nodes.Declare.DeclareNode node, CancellationToken cancellationToken)
+    {
+        await VisitWithStatementVisitor(node, cancellationToken);
+        await base.VisitAsync(node, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public override async ValueTask VisitAsync(Ast.Nodes.Insert.InsertNode node, CancellationToken cancellationToken)
+    {
+        await VisitWithStatementVisitor(node, cancellationToken);
+        await base.VisitAsync(node, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public override async ValueTask VisitAsync(Ast.Nodes.Update.UpdateNode node, CancellationToken cancellationToken)
     {
         await VisitWithStatementVisitor(node, cancellationToken);
         await base.VisitAsync(node, cancellationToken);
