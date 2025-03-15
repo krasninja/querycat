@@ -22,15 +22,17 @@ internal sealed class SelectQueryConditions : IEnumerable<SelectQueryCondition>
     /// Get key conditions.
     /// </summary>
     /// <returns>Key condition.</returns>
-    internal IEnumerable<SelectQueryCondition> GetKeyConditions(IRowsInputKeys rowsInputKeys)
+    internal IReadOnlyList<SelectQueryCondition> GetKeyConditions(IRowsInputKeys rowsInputKeys)
     {
+        var listConditions = new List<SelectQueryCondition>(capacity: Conditions.Count);
         foreach (var condition in Conditions)
         {
             if (rowsInputKeys.FindKeyColumn(condition.Column, condition.Operation) != null)
             {
-                yield return condition;
+                listConditions.Add(condition);
             }
         }
+        return listConditions;
     }
 
     /// <summary>

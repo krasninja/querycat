@@ -241,9 +241,9 @@ internal sealed class CacheRowsInput : IRowsInputKeys
         CacheKeyCondition[]? cacheConditions = null;
         if (rowsInput is IRowsInputKeys rowsInputKeys)
         {
-            var keyConditions = conditions.GetKeyConditions(rowsInputKeys).ToArray();
-            cacheConditions = new CacheKeyCondition[keyConditions.Length];
-            for (var i = 0; i < keyConditions.Length; i++)
+            var keyConditions = conditions.GetKeyConditions(rowsInputKeys);
+            cacheConditions = new CacheKeyCondition[keyConditions.Count];
+            for (var i = 0; i < keyConditions.Count; i++)
             {
                 cacheConditions[i] = await keyConditions[i].ToCacheCondition(thread, cancellationToken);
             }

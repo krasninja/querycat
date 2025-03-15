@@ -22,9 +22,10 @@ namespace QueryCat.Plugins.Client;
 public partial class ThriftPluginClient
 {
     [SuppressMessage("ReSharper", "InconsistentNaming")]
-    private sealed class Handler : Plugin.IAsync
+    private sealed partial class Handler : Plugin.IAsync
     {
         private readonly ThriftPluginClient _thriftPluginClient;
+        private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(Handler));
 
         public Handler(ThriftPluginClient thriftPluginClient)
         {
@@ -141,6 +142,10 @@ public partial class ThriftPluginClient
             {
                 await rowsSource.OpenAsync(cancellationToken);
             }
+            else
+            {
+                LogCannotFindObject(object_rows_set_handle);
+            }
         }
 
         /// <inheritdoc />
@@ -150,6 +155,10 @@ public partial class ThriftPluginClient
                 && rowsSource != null)
             {
                 await rowsSource.CloseAsync(cancellationToken);
+            }
+            else
+            {
+                LogCannotFindObject(object_handle);
             }
         }
 
@@ -166,6 +175,10 @@ public partial class ThriftPluginClient
             {
                 await rowsIterator.ResetAsync(cancellationToken);
             }
+            else
+            {
+                LogCannotFindObject(object_rows_set_handle);
+            }
         }
 
         /// <inheritdoc />
@@ -175,6 +188,10 @@ public partial class ThriftPluginClient
                 && rowsSource != null)
             {
                 return Task.FromResult(rowsSource.Position);
+            }
+            else
+            {
+                LogCannotFindObject(object_rows_set_handle);
             }
             return Task.FromResult(-1);
         }
@@ -186,6 +203,10 @@ public partial class ThriftPluginClient
                 && rowsSource != null)
             {
                 return Task.FromResult(rowsSource.TotalRows);
+            }
+            else
+            {
+                LogCannotFindObject(object_rows_set_handle);
             }
             return Task.FromResult(-1);
         }
@@ -199,6 +220,10 @@ public partial class ThriftPluginClient
             {
                 rowsSource.Seek(offset, SdkConvert.Convert(origin));
                 return Task.FromResult(rowsSource.Position);
+            }
+            else
+            {
+                LogCannotFindObject(object_rows_set_handle);
             }
             return Task.CompletedTask;
         }
@@ -230,6 +255,10 @@ public partial class ThriftPluginClient
                         _thriftPluginClient._executionThread.ConfigStorage
                     );
                 }
+            }
+            else
+            {
+                LogCannotFindObject(object_rows_set_handle);
             }
             return Task.CompletedTask;
         }
@@ -297,6 +326,10 @@ public partial class ThriftPluginClient
                 var keys = rowsInput.UniqueKey.ToList();
                 return Task.FromResult(keys);
             }
+            else
+            {
+                LogCannotFindObject(object_rows_set_handle);
+            }
             return Task.FromResult(new List<string>());
         }
 
@@ -315,6 +348,10 @@ public partial class ThriftPluginClient
                     );
                 return Task.FromResult(result.ToList());
             }
+            else
+            {
+                LogCannotFindObject(object_rows_set_handle);
+            }
             return Task.FromResult(new List<KeyColumn>());
         }
 
@@ -330,6 +367,10 @@ public partial class ThriftPluginClient
                 rowsInputKeys.SetKeyColumnValue(column_index, SdkConvert.Convert(value),
                     Enum.Parse<Backend.Core.Types.VariantValue.Operation>(operation));
             }
+            else
+            {
+                LogCannotFindObject(object_rows_set_handle);
+            }
             return Task.CompletedTask;
         }
 
@@ -342,6 +383,10 @@ public partial class ThriftPluginClient
                 && rowsInput is IRowsInputKeys rowsInputKeys)
             {
                 rowsInputKeys.UnsetKeyColumnValue(column_index, Enum.Parse<Backend.Core.Types.VariantValue.Operation>(operation));
+            }
+            else
+            {
+                LogCannotFindObject(object_rows_set_handle);
             }
             return Task.CompletedTask;
         }
@@ -473,6 +518,9 @@ public partial class ThriftPluginClient
             var uri = _thriftPluginClient.StartNewServer();
             return Task.FromResult(uri.ToString());
         }
+
+        [LoggerMessage(LogLevel.Warning, "Cannot find object with handle {ObjectHandle}.")]
+        private partial void LogCannotFindObject(int objectHandle);
     }
 
     [SuppressMessage("ReSharper", "InconsistentNaming")]

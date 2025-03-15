@@ -10,13 +10,24 @@ namespace QueryCat.Plugins.Client;
 public sealed class ObjectsStorage
 {
     private readonly object _objLock = new();
-    private readonly List<WeakReference?> _objects = new();
+    private readonly List<object?> _objects = new();
+
+    public int Count
+    {
+        get
+        {
+            lock (_objLock)
+            {
+                return _objects.Count;
+            }
+        }
+    }
 
     public int Add(object obj)
     {
         lock (_objLock)
         {
-            _objects.Add(new WeakReference(obj));
+            _objects.Add(obj);
             return _objects.Count - 1;
         }
     }
@@ -29,17 +40,17 @@ public sealed class ObjectsStorage
             {
                 throw new QueryCatPluginException(ErrorType.INVALID_OBJECT, Resources.Errors.Object_InvalidHandle);
             }
-            var rawObject = _objects[index];
-            if (rawObject == null || !rawObject.IsAlive)
+            var plainObject = _objects[index];
+            if (plainObject == null)
             {
                 throw new QueryCatPluginException(ErrorType.INVALID_OBJECT, Resources.Errors.Object_Released);
             }
-            var obj = rawObject.Target as T;
+            var obj = plainObject as T;
             if (obj == null)
             {
                 throw new QueryCatPluginException(
                     ErrorType.INVALID_OBJECT,
-                    string.Format(Resources.Errors.Object_InvalidTypeSource, rawObject.GetType().Name, typeof(T).Name));
+                    string.Format(Resources.Errors.Object_InvalidTypeSource, plainObject.GetType().Name, typeof(T).Name));
             }
             return obj;
         }
@@ -55,12 +66,12 @@ public sealed class ObjectsStorage
                 return false;
             }
             var rawObject = _objects[index];
-            if (rawObject == null || !rawObject.IsAlive)
+            if (rawObject == null)
             {
                 obj = null;
                 return false;
             }
-            obj = rawObject.Target as T;
+            obj = rawObject as T;
             if (obj == null)
             {
                 return false;
@@ -88,11 +99,9 @@ public sealed class ObjectsStorage
         {
             for (var i = 0; i < _objects.Count; i++)
             {
-                var weakRef = _objects[i];
-                if (weakRef != null
-                    && weakRef.IsAlive
-                    && weakRef.Target != null
-                    && object.ReferenceEquals(obj, weakRef.Target))
+                var targetObj = _objects[i];
+                if (targetObj != null
+                    && object.ReferenceEquals(obj, targetObj))
                 {
                     return i;
                 }
@@ -105,8 +114,8 @@ public sealed class ObjectsStorage
     {
         lock (_objLock)
         {
-            var weakRef = _objects[index];
-            if (weakRef != null && weakRef.IsAlive && weakRef.Target is IDisposable disposable)
+            var obj = _objects[index];
+            if (obj != null && obj is IDisposable disposable)
             {
                 disposable.Dispose();
             }
