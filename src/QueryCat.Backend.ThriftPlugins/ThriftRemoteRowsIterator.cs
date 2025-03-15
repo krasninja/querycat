@@ -18,6 +18,8 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys
     private readonly string _id;
     private readonly DynamicBuffer<VariantValue> _cache = new(chunkSize: 64);
 
+    private IReadOnlyList<KeyColumn>? _cachedKeyColumns;
+
     /// <inheritdoc />
     public string[] UniqueKey { get; private set; } = [];
 
@@ -46,6 +48,7 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys
 
     private void SendContextToPlugin()
     {
+        _cachedKeyColumns = null;
         AsyncUtils.RunSync(async ct =>
         {
             using var session = await _context.GetSessionAsync(ct);
@@ -71,6 +74,7 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys
     /// <inheritdoc />
     public async Task CloseAsync(CancellationToken cancellationToken = default)
     {
+        _cachedKeyColumns = null;
         using var session = await _context.GetSessionAsync(cancellationToken);
         await session.ClientProxy.RowsSet_CloseAsync(_objectHandle, cancellationToken);
     }
@@ -78,6 +82,7 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys
     /// <inheritdoc />
     public async Task ResetAsync(CancellationToken cancellationToken = default)
     {
+        _cachedKeyColumns = null;
         using var session = await _context.GetSessionAsync(cancellationToken);
         await session.ClientProxy.RowsSet_ResetAsync(_objectHandle, cancellationToken);
         _cache.Clear();
@@ -126,18 +131,22 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys
     /// <inheritdoc />
     public IReadOnlyList<KeyColumn> GetKeyColumns()
     {
-        var result = AsyncUtils.RunSync(async ct =>
-            {
-                using var session = await _context.GetSessionAsync(ct);
-                return (await session.ClientProxy.RowsSet_GetKeyColumnsAsync(_objectHandle, ct))
-                    .Select(c => new KeyColumn(
-                        c.ColumnIndex,
-                        c.IsRequired,
-                        (c.Operations ?? new List<string>()).Select(Enum.Parse<VariantValue.Operation>).ToArray()
-                    ));
-            }
-        );
-        return (result ?? Array.Empty<KeyColumn>()).ToList();
+        if (_cachedKeyColumns == null)
+        {
+            var result = AsyncUtils.RunSync(async ct =>
+                {
+                    using var session = await _context.GetSessionAsync(ct);
+                    return (await session.ClientProxy.RowsSet_GetKeyColumnsAsync(_objectHandle, ct))
+                        .Select(c => new KeyColumn(
+                            c.ColumnIndex,
+                            c.IsRequired,
+                            (c.Operations ?? new List<string>()).Select(Enum.Parse<VariantValue.Operation>).ToArray()
+                        ));
+                }
+            );
+            _cachedKeyColumns = (result ?? Array.Empty<KeyColumn>()).ToList();
+        }
+        return _cachedKeyColumns;
     }
 
     /// <inheritdoc />
