@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add functions "buffer_input", "buffer_output", "json_array_elements".
 - Support "IRowsFormatter" for Thrift plugins system.
+- Add option "overwrite" to "plugin install" command.
 
 ### Fixed
 

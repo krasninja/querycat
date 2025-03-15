@@ -20,7 +20,7 @@ public sealed class NullPluginsManager : IPluginsManager
     }
 
     /// <inheritdoc />
-    public Task<int> InstallAsync(string name, CancellationToken cancellationToken = default)
+    public Task<int> InstallAsync(string name, bool overwrite = true, CancellationToken cancellationToken = default)
     {
         return Task.FromResult(0);
     }

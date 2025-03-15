@@ -24,9 +24,10 @@ public interface IPluginsManager
     /// Install the plugin from remote repository.
     /// </summary>
     /// <param name="name">Plugin name.</param>
+    /// <param name="overwrite">Force install if plugin already exist.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Number of created files.</returns>
-    Task<int> InstallAsync(string name, CancellationToken cancellationToken = default);
+    Task<int> InstallAsync(string name, bool overwrite = true, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Update the plugin. Remove all current versions and install the new one.
