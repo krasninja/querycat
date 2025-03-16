@@ -64,6 +64,7 @@ public class RetryRowsInputTests
         /// <inheritdoc />
         public void Explain(IndentedStringBuilder stringBuilder)
         {
+            stringBuilder.AppendLine("InputWithException");
         }
     }
 

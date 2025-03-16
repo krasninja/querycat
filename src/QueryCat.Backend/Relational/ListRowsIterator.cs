@@ -33,7 +33,6 @@ internal sealed class ListRowsIterator : IRowsIterator
             }
         }
 
-
         // Determine type.
         Columns =
         [
@@ -62,5 +61,6 @@ internal sealed class ListRowsIterator : IRowsIterator
     /// <inheritdoc />
     public void Explain(IndentedStringBuilder stringBuilder)
     {
+        stringBuilder.AppendLine($"List (length={_values.Count})");
     }
 }
