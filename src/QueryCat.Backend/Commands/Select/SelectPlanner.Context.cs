@@ -324,6 +324,14 @@ internal sealed partial class SelectPlanner
         return inputs.ToArray();
     }
 
+    private IRowsInput[] Context_CreateInputSourceFromFunctionAsync(
+        SelectCommandContext context,
+        FunctionCallNode functionNode)
+    {
+        var rowsInput = functionNode.GetRequiredAttribute<IRowsInput>(AstAttributeKeys.RowsInputKey);
+        return [rowsInput];
+    }
+
     private async Task<IRowsInput> Context_CreateInputSourceFromTableJoinAsync(
         SelectCommandContext context,
         IRowsInput left,
@@ -418,6 +426,10 @@ internal sealed partial class SelectPlanner
             [
                 await Context_CreateInputSourceFromTableAsync(context, tableNode, cancellationToken)
             ];
+        }
+        if (expressionNode is FunctionCallNode functionCallNode)
+        {
+            return Context_CreateInputSourceFromFunctionAsync(context, functionCallNode);
         }
 
         throw new InvalidOperationException(string.Format(Resources.Errors.CannotProcessNodeAsInput, expressionNode));

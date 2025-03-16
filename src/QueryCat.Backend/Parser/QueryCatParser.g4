@@ -175,8 +175,8 @@ updateStatement:
     selectSearchCondition?;
 updateSource
     : functionCall selectAlias? # UpdateNoFormat
-    | uri=STRING_LITERAL (FORMAT functionCall)? # UpdateWithFormat
-    | name=identifier # UpdateFromVariable
+    | uri=STRING_LITERAL (FORMAT functionCall)? selectAlias? # UpdateWithFormat
+    | name=identifier selectAlias? # UpdateFromVariable
     ;
 updateSetClause: source=identifier '=' target=expression;
 

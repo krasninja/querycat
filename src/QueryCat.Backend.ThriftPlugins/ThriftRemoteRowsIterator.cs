@@ -9,7 +9,7 @@ using VariantValue = QueryCat.Backend.Core.Types.VariantValue;
 
 namespace QueryCat.Backend.ThriftPlugins;
 
-internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys
+internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys, IRowsInputUpdate, IRowsInputDelete
 {
     private const int LoadCount = 10;
 
@@ -168,6 +168,23 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys
             using var session = await _context.GetSessionAsync(ct);
             await session.ClientProxy.RowsSet_UnsetKeyColumnValueAsync(_objectHandle, columnIndex, operation.ToString(), ct);
         });
+    }
+
+    /// <inheritdoc />
+    public async ValueTask<ErrorCode> UpdateValueAsync(int columnIndex, VariantValue value, CancellationToken cancellationToken = default)
+    {
+        using var session = await _context.GetSessionAsync(cancellationToken);
+        var result = await session.ClientProxy.RowsSet_UpdateValueAsync(_objectHandle, columnIndex, SdkConvert.Convert(value),
+            cancellationToken);
+        return SdkConvert.Convert(result);
+    }
+
+    /// <inheritdoc />
+    public async ValueTask<ErrorCode> DeleteAsync(CancellationToken cancellationToken = default)
+    {
+        using var session = await _context.GetSessionAsync(cancellationToken);
+        var result = await session.ClientProxy.RowsSet_DeleteRowAsync(_objectHandle, cancellationToken);
+        return SdkConvert.Convert(result);
     }
 
     /// <inheritdoc />
