@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using QueryCat.Backend;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Execution;
+using QueryCat.Backend.Core.Plugins;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Formatters;
@@ -80,14 +81,15 @@ public class Program
             RunBootstrapScript = true,
         };
 
-        var executionThread = await new ExecutionThreadBootstrapper(options)
+        var executionThread = new ExecutionThreadBootstrapper(options)
             .WithStandardFunctions()
             .WithStandardUriResolvers()
             .WithConfigStorage(new MemoryInputConfigStorage())
             .WithPluginsLoader(thread => new SimplePluginsAssemblyLoader(
                 workingDirectoryPlugins.Union(pluginDirectories),
                 thread.FunctionsManager))
-            .CreateAsync();
+            .Create();
+        await executionThread.PluginsManager.PluginsLoader.LoadAsync(new PluginsLoadingOptions(), CancellationToken.None);
 
         AddVariables(executionThread, variables);
 
