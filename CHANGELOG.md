@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.12.0] - 2025-03-16
+## [0.12.1] - 2025-03-16
 
 ### Added
 
@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Improve and bugfix Thrift plugins support.
+- Do not load plugin proxy if it already exists.
 
 ## [0.11.0] - 2025-02-17
 
