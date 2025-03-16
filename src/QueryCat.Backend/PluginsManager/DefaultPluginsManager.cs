@@ -21,6 +21,9 @@ public sealed class DefaultPluginsManager : IPluginsManager, IDisposable
 
     public IEnumerable<string> PluginDirectories => _pluginDirectories;
 
+    /// <inheritdoc />
+    public IPluginsLoader PluginsLoader => _pluginsLoader;
+
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(DefaultPluginsManager));
 
     public DefaultPluginsManager(
@@ -81,13 +84,23 @@ public sealed class DefaultPluginsManager : IPluginsManager, IDisposable
     }
 
     /// <inheritdoc />
-    public async Task<int> InstallAsync(string name, CancellationToken cancellationToken = default)
+    public async Task<int> InstallAsync(string name, bool overwrite = true, CancellationToken cancellationToken = default)
     {
         var plugins = await GetRemotePluginsAsync(cancellationToken).ConfigureAwait(false);
         var plugin = TryFindPlugin(name, Application.GetPlatform(), plugins.ToList());
         if (plugin == null)
         {
             throw new PluginException(string.Format(Resources.Errors.Plugins_CannotFind, name));
+        }
+
+        if (!overwrite)
+        {
+            var localPlugin = TryFindPlugin(name, Application.GetPlatform(), GetLocalPlugins().ToList());
+            if (localPlugin != null && localPlugin.Version >= plugin.Version)
+            {
+                _logger.LogInformation("Skip install because plugin '{Plugin}' already exists.", localPlugin);
+                return 0;
+            }
         }
 
         // Create X.downloading file, download and then remove.
@@ -99,9 +112,9 @@ public sealed class DefaultPluginsManager : IPluginsManager, IDisposable
                 cancellationToken)
             .ConfigureAwait(false);
         FilesUtils.MakeUnixExecutable(fullFileName);
-        var overwrite = File.Exists(fullFileName);
+        var exists = File.Exists(fullFileName);
         _logger.LogInformation("Save plugin file {FullFileName}.", fullFileName);
-        return overwrite ? 1 : 0;
+        return exists ? 1 : 0;
     }
 
     /// <inheritdoc />
@@ -126,7 +139,7 @@ public sealed class DefaultPluginsManager : IPluginsManager, IDisposable
         using var twoPhaseRemove = new TwoPhaseRemove(renameBeforeRemove: true);
         var pluginsToRemove = GetLocalPlugins(name);
         twoPhaseRemove.AddRange(pluginsToRemove.Select(p => p.Uri));
-        await InstallAsync(name, cancellationToken).ConfigureAwait(false);
+        await InstallAsync(name, cancellationToken: cancellationToken).ConfigureAwait(false);
         twoPhaseRemove.Remove();
     }
 

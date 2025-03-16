@@ -51,4 +51,7 @@
   <data name="CannotFindPathVariable" xml:space="preserve">
     <value>Cannot find PATH environment variable.</value>
   </data>
+  <data name="InvalidBlobHandle" xml:space="preserve">
+    <value>Blob handle is invalid.</value>
+  </data>
 </root>

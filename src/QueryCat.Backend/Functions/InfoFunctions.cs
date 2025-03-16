@@ -16,7 +16,7 @@ public static class InfoFunctions
 {
     [SafeFunction]
     [Description("Return all registered functions.")]
-    [FunctionSignature("_functions(): object<IRowsIterator>")]
+    [FunctionSignature("_functions(): object<IRowsInput>")]
     internal static VariantValue Functions(IExecutionThread thread)
     {
         var functions = thread.FunctionsManager.GetFunctions().OrderBy(f => f.Name);
@@ -32,7 +32,7 @@ public static class InfoFunctions
 
     [SafeFunction]
     [Description("Return row input columns information.")]
-    [FunctionSignature("_schema(input: object<IRowsInput>): object<IRowsIterator>")]
+    [FunctionSignature("_schema(input: object<IRowsInput>): object<IRowsInput>")]
     public static async ValueTask<VariantValue> Schema(IExecutionThread thread, CancellationToken cancellationToken)
     {
         var obj = thread.Stack[0].AsObject;
@@ -111,7 +111,7 @@ public static class InfoFunctions
 
     [SafeFunction]
     [Description("Provide a list of OS time zone names.")]
-    [FunctionSignature("_timezone_names(): object<IRowsIterator>")]
+    [FunctionSignature("_timezone_names(): object<IRowsInput>")]
     internal static VariantValue TimeZoneNames(IExecutionThread thread)
     {
         var input = EnumerableRowsInput<TimeZoneInfo>.FromSource(TimeZoneInfo.GetSystemTimeZones(),

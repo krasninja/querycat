@@ -78,14 +78,14 @@ public class Program
     private static async Task<bool> ProcessOutput(string expected, string output)
     {
         var expectedInput = new DsvFormatter(',', hasHeader: false, addFileNameColumn: false).OpenInput(
-            GetStreamFromString(expected));
+            GetBlobFromString(expected));
         await expectedInput.OpenAsync();
         var expectedRowsFrame = await expectedInput.AsIterable(autoFetch: true).ToFrameAsync();
         await expectedInput.CloseAsync();
 
         output = output.Replace(VariantValue.NullValueString, string.Empty);
         var outputInput = new DsvFormatter('|', hasHeader: false, addFileNameColumn: false).OpenInput(
-            GetStreamFromString(TrimFirstAndLastDelimiters(output, '|')));
+            GetBlobFromString(TrimFirstAndLastDelimiters(output, '|')));
         await outputInput.OpenAsync();
         var outputRowsFrame = await outputInput.AsIterable(autoFetch: true).ToFrameAsync();
         await outputInput.CloseAsync();
@@ -116,6 +116,11 @@ public class Program
     private static MemoryStream GetStreamFromString(string target)
     {
         return new MemoryStream(Encoding.UTF8.GetBytes(target));
+    }
+
+    private static IBlobData GetBlobFromString(string target)
+    {
+        return new StreamBlobData(Encoding.UTF8.GetBytes(target));
     }
 
     private static string TrimFirstAndLastDelimiters(string target, char delimiter)

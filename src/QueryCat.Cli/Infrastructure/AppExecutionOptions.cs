@@ -14,5 +14,10 @@ public class AppExecutionOptions : ExecutionOptions
     /// Plugins repository. If empty - default will be used.
     /// </summary>
     public string? PluginsRepositoryUri { get; init; }
+
+    /// <summary>
+    /// Maximum parallel connections to the plugin. It used for parallel output writing.
+    /// </summary>
+    public int MaxConnectionsToPluginClient { get; init; } = 4;
 #endif
 }

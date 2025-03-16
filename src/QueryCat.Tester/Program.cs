@@ -80,14 +80,14 @@ public class Program
             RunBootstrapScript = true,
         };
 
-        var executionThread = new ExecutionThreadBootstrapper(options)
+        var executionThread = await new ExecutionThreadBootstrapper(options)
             .WithStandardFunctions()
             .WithStandardUriResolvers()
             .WithConfigStorage(new MemoryInputConfigStorage())
             .WithPluginsLoader(thread => new SimplePluginsAssemblyLoader(
                 workingDirectoryPlugins.Union(pluginDirectories),
                 thread.FunctionsManager))
-            .Create();
+            .CreateAsync();
 
         AddVariables(executionThread, variables);
 
@@ -116,7 +116,7 @@ public class Program
         foreach (var variable in variables)
         {
             var arr = StringUtils.GetFieldsFromLine(variable, '=');
-            if (arr.Count != 2)
+            if (arr.Length != 2)
             {
                 continue;
             }

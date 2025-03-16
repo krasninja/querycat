@@ -22,10 +22,10 @@ public class PersistentInputConfigStorage : MemoryInputConfigStorage
     }
 
     /// <inheritdoc />
-    public override void Set(string key, VariantValue value)
+    public override ValueTask SetAsync(string key, VariantValue value, CancellationToken cancellationToken = default)
     {
         _writesCount++;
-        base.Set(key, value);
+        return base.SetAsync(key, value, cancellationToken);
     }
 
     /// <inheritdoc />

@@ -9,9 +9,37 @@ namespace QueryCat.Backend.Core.Data;
 /// </summary>
 public class Row : IRowsSchema, ICloneable, IEnumerable<VariantValue>
 {
+    /// <summary>
+    /// Empty instance with no columns.
+    /// </summary>
+    internal static Row Empty { get; } = new();
+
     private readonly Column[] _columns;
 
     private readonly VariantValue[] _values;
+
+    public VariantValue this[string columnName]
+    {
+        get
+        {
+            var columnIndex = this.GetColumnIndexByName(columnName);
+            if (columnIndex < 0)
+            {
+                throw new ArgumentException(string.Format(Resources.Errors.CannotFindColumn, columnName), nameof(columnIndex));
+            }
+            return _values[columnIndex];
+        }
+
+        set
+        {
+            var columnIndex = this.GetColumnIndexByName(columnName);
+            if (columnIndex < 0)
+            {
+                throw new ArgumentException(string.Format(Resources.Errors.CannotFindColumn, columnName), nameof(columnIndex));
+            }
+            _values[columnIndex] = value;
+        }
+    }
 
     /// <summary>
     /// Row values array.
@@ -69,6 +97,20 @@ public class Row : IRowsSchema, ICloneable, IEnumerable<VariantValue>
     }
 
     /// <summary>
+    /// Copy row values into another row.
+    /// </summary>
+    /// <param name="values">Values.</param>
+    /// <param name="toRow">Destination row.</param>
+    public static void Copy(VariantValue[] values, Row toRow)
+    {
+        var length = Math.Min(values.Length, toRow.Columns.Length);
+        for (int i = 0; i < length; i++)
+        {
+            toRow[i] = values[i];
+        }
+    }
+
+    /// <summary>
     /// Copy row values into another row starting from index.
     /// </summary>
     /// <param name="fromRow">Source row.</param>
@@ -119,29 +161,6 @@ public class Row : IRowsSchema, ICloneable, IEnumerable<VariantValue>
     {
         get => _values[columnIndex];
         set => _values[columnIndex] = value;
-    }
-
-    public VariantValue this[string columnName]
-    {
-        get
-        {
-            var columnIndex = this.GetColumnIndexByName(columnName);
-            if (columnIndex < 0)
-            {
-                throw new ArgumentException(string.Format(Resources.Errors.CannotFindColumn, columnName), nameof(columnIndex));
-            }
-            return _values[columnIndex];
-        }
-
-        set
-        {
-            var columnIndex = this.GetColumnIndexByName(columnName);
-            if (columnIndex < 0)
-            {
-                throw new ArgumentException(string.Format(Resources.Errors.CannotFindColumn, columnName), nameof(columnIndex));
-            }
-            _values[columnIndex] = value;
-        }
     }
 
     /// <inheritdoc />

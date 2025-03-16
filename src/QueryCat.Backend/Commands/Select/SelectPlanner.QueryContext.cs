@@ -207,6 +207,7 @@ internal sealed partial class SelectPlanner
 
         var callbackVisitor = new CallbackDelegateVisitor();
         callbackVisitor.AstTraversal.TypesToIgnore.Add(typeof(SelectQuerySpecificationNode));
+        callbackVisitor.AstTraversal.TypesToIgnore.Add(typeof(SelectQueryCombineNode));
         callbackVisitor.Callback = async (node, traversal, ct) =>
         {
             if (await HandleBinaryOperationAsync(node, traversal, ct))

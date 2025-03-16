@@ -173,7 +173,7 @@ internal sealed class AstTraversal
     {
         foreach (var ignoreType in ignoreTypes)
         {
-            if (ignoreType.IsAssignableFrom(type))
+            if (ignoreType == type)
             {
                 return true;
             }

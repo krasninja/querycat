@@ -20,7 +20,7 @@ internal class CustomFunctionUsage : BaseUsage
     /// <inheritdoc />
     public override async Task RunAsync()
     {
-        await using var executionThread = await new ExecutionThreadBootstrapper().CreateAsync();
+        await using var executionThread = new ExecutionThreadBootstrapper().Create();
         executionThread.FunctionsManager.RegisterFunction(EnergyFunction);
         Console.WriteLine((await executionThread.RunAsync("e(100::numeric)")).AsString); // 8987551787368176400
     }

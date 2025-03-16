@@ -11,10 +11,10 @@ internal class BasicUsage : BaseUsage
     {
         // Use "ExecutionThreadBootstrapper" class to create execution thread. It allows
         // run queries.
-        await using var executionThread = await new ExecutionThreadBootstrapper()
+        await using var executionThread = new ExecutionThreadBootstrapper()
             .WithStandardFunctions() // Add standard functions (math, string, JSON and others).
             .WithStandardUriResolvers()
-            .CreateAsync();
+            .Create();
         var result = VariantValue.Null;
 
         result = await executionThread.RunAsync("1+1");

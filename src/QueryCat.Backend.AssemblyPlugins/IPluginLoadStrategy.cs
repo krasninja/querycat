@@ -18,4 +18,11 @@ internal interface IPluginLoadStrategy
     /// <param name="file">File path.</param>
     /// <returns>Stream.</returns>
     Stream GetFile(string file);
+
+    /// <summary>
+    /// Get file size.
+    /// </summary>
+    /// <param name="file">File path.</param>
+    /// <returns>File size in bytes.</returns>
+    long GetFileSize(string file);
 }

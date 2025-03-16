@@ -16,7 +16,7 @@ public static class Application
     public const string PlatformFreeBSD = "freebsd";
     public const string PlatformWindows = "win";
     public const string PlatformAndroid = "android";
-    public const string PlatformMacOS = "macos";
+    public const string PlatformMacOS = "osx";
     public const string PlatformIOS = "ios";
     public const string PlatformBrowser = "browser";
     public const string PlatformUnknown = "unknown";

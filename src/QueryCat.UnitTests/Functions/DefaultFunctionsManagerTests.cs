@@ -27,7 +27,7 @@ public sealed class DefaultFunctionsManagerTests
     public async Task RegisterFunction_SimpleFunction_ShouldEvalCorrectly()
     {
         // Act.
-        await using var thread = await _executionThreadBootstrapper.CreateAsync();
+        await using var thread = _executionThreadBootstrapper.Create();
         _functionsManager.RegisterFunction(SumIntegers);
 
         var func = _functionsManager.FindByNameFirst("add",
@@ -48,7 +48,7 @@ public sealed class DefaultFunctionsManagerTests
     public async Task RegisterFunction_VariadicArgumentMethod_ShouldEvalCorrectly()
     {
         // Act.
-        await using var thread = await _executionThreadBootstrapper.CreateAsync();
+        await using var thread = _executionThreadBootstrapper.Create();
         _functionsManager.RegisterFunction(SumIntegersVariadic);
 
         var func = _functionsManager.FindByNameFirst("add",
@@ -65,7 +65,7 @@ public sealed class DefaultFunctionsManagerTests
     public async Task RegisterFunction_VariadicArgumentMethodEmpty_ShouldEvalCorrectly()
     {
         // Act.
-        await using var thread = await _executionThreadBootstrapper.CreateAsync();
+        await using var thread = _executionThreadBootstrapper.Create();
         _functionsManager.RegisterFunction(SumIntegersVariadic);
 
         var func = _functionsManager.FindByNameFirst("add",
@@ -92,7 +92,7 @@ public sealed class DefaultFunctionsManagerTests
     public async Task RegisterFunction_RegisterFromClass_ShouldEvalCorrectly()
     {
         // Arrange.
-        await using var thread = await _executionThreadBootstrapper.CreateAsync();
+        await using var thread = _executionThreadBootstrapper.Create();
         var functions = _functionsManager.Factory.CreateFromType(typeof(TestClass1));
         _functionsManager.RegisterFunctions(functions);
 
@@ -130,7 +130,7 @@ public sealed class DefaultFunctionsManagerTests
     public async Task RegisterFunction_RegisterFromType_ShouldEvalCorrectly()
     {
         // Arrange.
-        await using var thread = await _executionThreadBootstrapper.CreateAsync();
+        await using var thread = _executionThreadBootstrapper.Create();
         var functions = _functionsManager.Factory.CreateFromType(typeof(TestClass2));
         _functionsManager.RegisterFunctions(functions);
 

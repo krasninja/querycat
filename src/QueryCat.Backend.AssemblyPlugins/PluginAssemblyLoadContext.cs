@@ -39,11 +39,12 @@ internal sealed class PluginAssemblyLoadContext : AssemblyLoadContext
 
         // Format native library name.
         var targetDllName = GetTargetDllName(unmanagedDllName);
-        var files = _pluginLoadStrategy.GetAllFiles().ToArray();
+        var files = _pluginLoadStrategy.GetAllFiles()
+            .ToArray();
 
         // Try to load from runtime path. Example: runtimes/linux-arm64/native/libduckdb.so .
         var runtimePath = Path.Combine("runtimes", Application.GetRuntimeIdentifier(), "native", targetDllName);
-        var libraryPath = files.FirstOrDefault(f => f.EndsWith(runtimePath));
+        var libraryPath = FindTargetIgnorePathSeparator(runtimePath, files);
         var libraryHandle = LoadLibrary(libraryPath);
         if (libraryHandle != IntPtr.Zero)
         {
@@ -52,7 +53,7 @@ internal sealed class PluginAssemblyLoadContext : AssemblyLoadContext
         }
 
         // Try to load from the root path.
-        libraryPath = files.FirstOrDefault(f => f.EndsWith(targetDllName));
+        libraryPath = FindTargetIgnorePathSeparator(targetDllName, files);
         libraryHandle = LoadLibrary(libraryPath);
         if (libraryHandle != IntPtr.Zero)
         {
@@ -62,6 +63,29 @@ internal sealed class PluginAssemblyLoadContext : AssemblyLoadContext
 
         _logger.LogWarning("Failed to load library '{LibraryPath}'.", libraryPath);
         return IntPtr.Zero;
+    }
+
+    private static string FindTargetIgnorePathSeparator(string target, string[] files)
+    {
+        foreach (var file in files)
+        {
+            if (file.EndsWith(target))
+            {
+                return file;
+            }
+            // Attempt to find using alternative separator.
+            if (file.IndexOf(Path.DirectorySeparatorChar) < 0)
+            {
+                if (file
+                    .Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar)
+                    .EndsWith(target))
+                {
+                    return file;
+                }
+            }
+        }
+
+        return target.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
     }
 
     private IntPtr LoadLibrary(string? libraryPath)
@@ -100,9 +124,18 @@ internal sealed class PluginAssemblyLoadContext : AssemblyLoadContext
             return string.Empty;
         }
         libraryPath = Path.Combine(cacheTargetDirectory, libraryName);
-        file.Seek(0, SeekOrigin.Begin);
+        long fileSize = 0;
+        if (file.CanSeek)
+        {
+            file.Seek(0, SeekOrigin.Begin);
+            fileSize = file.Length;
+        }
+        else
+        {
+            fileSize = _pluginLoadStrategy.GetFileSize(libraryPath);
+        }
         if (!File.Exists(libraryPath) ||
-            new FileInfo(libraryPath).Length != file.Length)
+            new FileInfo(libraryPath).Length != fileSize)
         {
             using var newFile = File.Create(libraryPath);
             file.CopyTo(newFile);

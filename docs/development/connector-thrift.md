@@ -21,7 +21,13 @@ The QueryCat host starts your plugin with the following command line arguments:
 
 The guide below describes how to write a plugin.
 
-### .NET Approach
+### .NET Approach With Executable
+
+Using this approach you will prepare the separate executable that interacts directly with QueryCat host:
+
+```
+QueryCat Host <---> Plugin Executable
+```
 
 1. Create a new empty console application project.
 
@@ -31,11 +37,11 @@ The guide below describes how to write a plugin.
 
     **NOTE:** The plugin must contain "Plugin" (case insensitive) word in its name.
 
-2. Reference `QueryCat.Plugins.Client` project. Right now it is not available in NuGet, you can clone the repository somewhere and reference it. For example:
+2. Reference `QueryCat.Plugins.Client` project: [NuGet](https://www.nuget.org/packages/QueryCat.Plugins.Client). For example:
 
     ```
     <ItemGroup>
-        <ProjectReference Include="..\querycat\src\QueryCat.Plugins.Client\QueryCat.Plugins.Client.csproj" />
+        <PackageReference Include="QueryCat.Plugins.Client" Version="0.11.0" />
     </ItemGroup>
     ```
 
@@ -78,6 +84,82 @@ or
 ```
 
 It will enforce QueryCat to run your plugin with the specific query.
+
+### .NET Approach With NuGet
+
+Using this approach you will prepare the NuGet package (or .NET dll) that will interact with QueryCat host with proxy special proxy.
+
+```
+QueryCat Host <---> QueryCat Proxy <---> Plugin Executable
+```
+
+1. Create a new empty library application project.
+
+    ```shell
+    dotnet new classlib --name SimplePlugin
+    ```
+
+    **NOTE:** The plugin must contain "Plugin" (case-insensitive) word in its name.
+
+2. Reference QueryCat library: [NuGet](https://www.nuget.org/packages/QueryCat).
+
+    ```
+    <ItemGroup>
+        <PackageReference Include="QueryCat" Version="0.11.0" />
+    </ItemGroup>
+    ```
+
+3. Create the new class `SampleFunction.cs` for a function. For example:
+
+    ```csharp
+    public class SampleFunction
+    {
+        [SafeFunction]
+        [Description("Get a random number.")]
+        [FunctionSignature("random_number(): int")]
+        public static VariantValue RandomNumberFunction(IExecutionThread thread)
+        {
+            return new VariantValue(Random.Shared.Next());
+        }
+    }
+    ```
+
+    Note: You can also use async implementation for function:
+
+    ```csharp
+    [SafeFunction]
+    [Description("Get a random number.")]
+    [FunctionSignature("random_number(): int")]
+    public static ValueTask<VariantValue> RandomNumberFunctionAsync(IExecutionThread thread, CancellationToken cancellationToken)
+    {
+        var value = new VariantValue(Random.Shared.Next());
+        return ValueTask.FromResult(value);
+    }
+    ```
+
+4. Create the new static class in the library namespace root:
+
+    ```csharp
+    public static class Registration
+    {
+        public static void RegisterFunctions(IFunctionsManager functionsManager)
+        {
+            functionsManager.RegisterFunction(SampleFunction.RandomNumberFunction);
+        }
+    }
+    ```
+
+5. Publish as NuGet package.
+
+   ```shell
+   dotnet pack
+   ```
+
+6. Test.
+
+    ```shell
+    qcat query "random_number()" --plugin-dirs=/home/user/sample-plugin/SamplePlugin/bin/Release/
+    ```
 
 ### Other Languages Approach
 

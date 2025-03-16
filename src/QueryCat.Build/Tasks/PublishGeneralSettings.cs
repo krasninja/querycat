@@ -1,12 +1,15 @@
 using Cake.Common.Tools.DotNet.Publish;
 using Cake.Core.IO.Arguments;
+using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Build.Tasks;
 
 public class PublishGeneralSettings : DotNetPublishSettings
 {
-    public PublishGeneralSettings(BuildContext context, bool publishAot = true)
+    public PublishGeneralSettings(BuildContext context, bool publishAot = true, string? properties = null)
     {
+        properties ??= string.Empty;
+
         OutputDirectory = context.OutputDirectory;
         Configuration = DotNetConstants.ConfigurationRelease;
         PublishTrimmed = publishAot;
@@ -36,7 +39,25 @@ public class PublishGeneralSettings : DotNetPublishSettings
             pag.Append(new TextArgument("-p:UseSystemResourceKeys=true"));
             // For reference: https://andrewlock.net/version-vs-versionsuffix-vs-packageversion-what-do-they-all-mean/.
             pag.Append(new TextArgument($"-p:InformationalVersion={context.Version}"));
+
+            foreach (var keyValue in GetKeyValuesFromString(properties))
+            {
+                pag.Append(new TextArgument($"-p:{keyValue.Key}={keyValue.Value}"));
+            }
+
             return pag;
         };
+    }
+
+    private static IEnumerable<KeyValuePair<string, string>> GetKeyValuesFromString(string target, char delimiter = '=')
+    {
+        foreach (var property in StringUtils.GetFieldsFromLine(target))
+        {
+            var index = property.IndexOf(delimiter);
+            if (index > -1)
+            {
+                yield return new KeyValuePair<string, string>(property.Substring(0, index), property.Substring(index + 1));
+            }
+        }
     }
 }

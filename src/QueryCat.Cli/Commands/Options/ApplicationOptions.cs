@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using QueryCat.Backend;
 using QueryCat.Backend.Addons.Formatters;
 using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Plugins;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.PluginsManager;
 using QueryCat.Cli.Infrastructure;
@@ -97,7 +98,8 @@ internal sealed class ApplicationOptions
             Application.GetApplicationDirectory(),
             functionsCacheDirectory: Path.Combine(Application.GetApplicationDirectory(),
                 ApplicationPluginsFunctionsCacheDirectory),
-            minLogLevel: LogLevel)
+            minLogLevel: LogLevel,
+            maxConnectionsToPlugin: executionOptions.MaxConnectionsToPluginClient)
         );
 #endif
 #if ENABLE_PLUGINS && PLUGIN_ASSEMBLY
@@ -114,7 +116,8 @@ internal sealed class ApplicationOptions
             pluginsStorage: new S3PluginsStorage(executionOptions.PluginsRepositoryUri))
         );
 #endif
-        var thread = await bootstrapper.CreateAsync(cancellationToken);
+        var thread = bootstrapper.Create();
+        await thread.PluginsManager.PluginsLoader.LoadAsync(new PluginsLoadingOptions(), cancellationToken);
 
         return new ApplicationRoot(thread, thread.PluginsManager);
     }

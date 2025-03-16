@@ -18,6 +18,8 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys
     private readonly string _id;
     private readonly DynamicBuffer<VariantValue> _cache = new(chunkSize: 64);
 
+    private IReadOnlyList<KeyColumn>? _cachedKeyColumns;
+
     /// <inheritdoc />
     public string[] UniqueKey { get; private set; } = [];
 
@@ -46,10 +48,11 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys
 
     private void SendContextToPlugin()
     {
+        _cachedKeyColumns = null;
         AsyncUtils.RunSync(async ct =>
         {
-            using var client = await _context.GetClientAsync(ct);
-            return client.Value.RowsSet_SetContextAsync(_objectHandle, new ContextQueryInfo
+            using var session = await _context.GetSessionAsync(ct);
+            await session.ClientProxy.RowsSet_SetContextAsync(_objectHandle, new ContextQueryInfo
             {
                 Columns = QueryContext.QueryInfo.Columns.Select(SdkConvert.Convert).ToList(),
                 Limit = QueryContext.QueryInfo.Limit ?? -1,
@@ -61,25 +64,27 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys
     /// <inheritdoc />
     public async Task OpenAsync(CancellationToken cancellationToken = default)
     {
-        using var client = await _context.GetClientAsync(cancellationToken);
-        await client.Value.RowsSet_OpenAsync(_objectHandle, cancellationToken);
-        Columns = (await client.Value.RowsSet_GetColumnsAsync(_objectHandle, cancellationToken))
+        using var session = await _context.GetSessionAsync(cancellationToken);
+        await session.ClientProxy.RowsSet_OpenAsync(_objectHandle, cancellationToken);
+        Columns = (await session.ClientProxy.RowsSet_GetColumnsAsync(_objectHandle, cancellationToken))
             .Select(SdkConvert.Convert).ToArray();
-        UniqueKey = (await client.Value.RowsSet_GetUniqueKeyAsync(_objectHandle, cancellationToken)).ToArray();
+        UniqueKey = (await session.ClientProxy.RowsSet_GetUniqueKeyAsync(_objectHandle, cancellationToken)).ToArray();
     }
 
     /// <inheritdoc />
     public async Task CloseAsync(CancellationToken cancellationToken = default)
     {
-        using var client = await _context.GetClientAsync(cancellationToken);
-        await client.Value.RowsSet_CloseAsync(_objectHandle, cancellationToken);
+        _cachedKeyColumns = null;
+        using var session = await _context.GetSessionAsync(cancellationToken);
+        await session.ClientProxy.RowsSet_CloseAsync(_objectHandle, cancellationToken);
     }
 
     /// <inheritdoc />
     public async Task ResetAsync(CancellationToken cancellationToken = default)
     {
-        using var client = await _context.GetClientAsync(cancellationToken);
-        await client.Value.RowsSet_ResetAsync(_objectHandle, cancellationToken);
+        _cachedKeyColumns = null;
+        using var session = await _context.GetSessionAsync(cancellationToken);
+        await session.ClientProxy.RowsSet_ResetAsync(_objectHandle, cancellationToken);
         _cache.Clear();
     }
 
@@ -111,8 +116,8 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys
             }
         }
 
-        using var client = await _context.GetClientAsync(cancellationToken);
-        var result = await client.Value.RowsSet_GetRowsAsync(_objectHandle, LoadCount * Columns.Length, cancellationToken);
+        using var session = await _context.GetSessionAsync(cancellationToken);
+        var result = await session.ClientProxy.RowsSet_GetRowsAsync(_objectHandle, LoadCount * Columns.Length, cancellationToken);
         if (result.Values == null || result.Values.Count == 0)
         {
             return false;
@@ -126,18 +131,22 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys
     /// <inheritdoc />
     public IReadOnlyList<KeyColumn> GetKeyColumns()
     {
-        var result = AsyncUtils.RunSync(async ct =>
-            {
-                using var client = await _context.GetClientAsync(ct);
-                return (await client.Value.RowsSet_GetKeyColumnsAsync(_objectHandle, ct))
-                    .Select(c => new KeyColumn(
-                        c.ColumnIndex,
-                        c.IsRequired,
-                        (c.Operations ?? new List<string>()).Select(Enum.Parse<VariantValue.Operation>).ToArray()
-                    ));
-            }
-        );
-        return (result ?? Array.Empty<KeyColumn>()).ToList();
+        if (_cachedKeyColumns == null)
+        {
+            var result = AsyncUtils.RunSync(async ct =>
+                {
+                    using var session = await _context.GetSessionAsync(ct);
+                    return (await session.ClientProxy.RowsSet_GetKeyColumnsAsync(_objectHandle, ct))
+                        .Select(c => new KeyColumn(
+                            c.ColumnIndex,
+                            c.IsRequired,
+                            (c.Operations ?? new List<string>()).Select(Enum.Parse<VariantValue.Operation>).ToArray()
+                        ));
+                }
+            );
+            _cachedKeyColumns = (result ?? Array.Empty<KeyColumn>()).ToList();
+        }
+        return _cachedKeyColumns;
     }
 
     /// <inheritdoc />
@@ -145,8 +154,8 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys
     {
         AsyncUtils.RunSync(async ct =>
         {
-            using var client = await _context.GetClientAsync(ct);
-            return client.Value.RowsSet_SetKeyColumnValueAsync(_objectHandle, columnIndex, operation.ToString(),
+            using var session = await _context.GetSessionAsync(ct);
+            await session.ClientProxy.RowsSet_SetKeyColumnValueAsync(_objectHandle, columnIndex, operation.ToString(),
                 SdkConvert.Convert(value), ct);
         });
     }
@@ -156,8 +165,8 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys
     {
         AsyncUtils.RunSync(async ct =>
         {
-            using var client = await _context.GetClientAsync(ct);
-            return client.Value.RowsSet_UnsetKeyColumnValueAsync(_objectHandle, columnIndex, operation.ToString(), ct);
+            using var session = await _context.GetSessionAsync(ct);
+            await session.ClientProxy.RowsSet_UnsetKeyColumnValueAsync(_objectHandle, columnIndex, operation.ToString(), ct);
         });
     }
 

@@ -12,21 +12,25 @@ public interface IInputConfigStorage
     /// </summary>
     /// <param name="key">Key.</param>
     /// <param name="value">Value.</param>
-    void Set(string key, VariantValue value);
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Awaitable task.</returns>
+    ValueTask SetAsync(string key, VariantValue value, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Returns <c>true</c> if storage has such key, <c>false</c> otherwise.
     /// </summary>
     /// <param name="key">Key to check.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns><c>True</c> if key exists, <c>false</c> otherwise.</returns>
-    bool Has(string key);
+    ValueTask<bool> HasAsync(string key, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Get value by key.
     /// </summary>
     /// <param name="key">Key.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Value.</returns>
-    VariantValue Get(string key);
+    ValueTask<VariantValue> GetAsync(string key, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Save state.

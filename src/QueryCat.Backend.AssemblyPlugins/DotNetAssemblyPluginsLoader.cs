@@ -121,8 +121,10 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader, IDisposable
     }
 
     /// <inheritdoc />
-    public override async Task<string[]> LoadAsync(CancellationToken cancellationToken = default)
+    public override async Task<int> LoadAsync(PluginsLoadingOptions options, CancellationToken cancellationToken = default)
     {
+        var loadedCount = 0;
+
         foreach (var pluginFile in GetPluginFiles())
         {
             _logger.LogDebug("Load plugin file '{PluginFile}'.", pluginFile);
@@ -134,18 +136,14 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader, IDisposable
                 {
                     _loadedAssemblies.Add(assembly);
                     _logger.LogDebug("Loaded plugin target '{PluginFile}' with strategy {Strategy}.", pluginFile, strategy);
+                    loadedCount++;
                     break;
                 }
             }
         }
 
         RegisterFunctions();
-
-        var loadedPlugins = _loadedAssemblies
-            .Select(a => a.FullName ?? string.Empty)
-            .Where(a => !string.IsNullOrEmpty(a))
-            .ToArray();
-        return loadedPlugins;
+        return loadedCount;
     }
 
     private async Task<Assembly?> LoadWithStrategyAsync(IPluginLoadStrategy strategy, CancellationToken cancellationToken)

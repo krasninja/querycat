@@ -7,17 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## Added
+### Added
+
+- Add functions "buffer_input", "buffer_output", "json_array_elements".
+- Support "IRowsFormatter" for Thrift plugins system.
+- Add option "overwrite" to "plugin install" command.
+
+### Fixed
+
+- Improve and bugfix Thrift plugins support.
+
+## [0.11.0] - 2025-02-17
+
+### Added
 
 - Initial implementation of plugins native libraries loading.
 - Add new option PreventConcurrentRun.
 - Add functions "retry_input", "retry_output" and "parallel_output".
 
-## Changed
+### Changed
 
 - Make IObjectSelector async.
 
-## Removed
+### Removed
 
 - Remove ConcurrencyLevel option.
 - Remove SubRip formatter.

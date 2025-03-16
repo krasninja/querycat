@@ -47,8 +47,8 @@ internal static class IOFunctions
         var text = thread.Stack[0].AsString;
         var formatter = (IRowsFormatter)thread.Stack[1].AsObject!;
 
-        var stringStream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(text));
-        return VariantValue.CreateFromObject(formatter.OpenInput(stringStream));
+        var blobStream = new StreamBlobData(() => new MemoryStream(System.Text.Encoding.UTF8.GetBytes(text)));
+        return VariantValue.CreateFromObject(formatter.OpenInput(blobStream));
     }
 
     #region File
@@ -93,12 +93,16 @@ internal static class IOFunctions
         {
             Directory.CreateDirectory(fullDirectory);
         }
-        Stream file = File.Open(path, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
-        if (_compressFilesExtensions.Contains(Path.GetExtension(path).ToLowerInvariant()))
+        var blobFile = new StreamBlobData(() =>
         {
-            file = new GZipStream(file, CompressionMode.Compress, leaveOpen: false);
-        }
-        return VariantValue.CreateFromObject(formatter.OpenOutput(file));
+            Stream file = File.Open(path, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
+            if (_compressFilesExtensions.Contains(Path.GetExtension(path).ToLowerInvariant()))
+            {
+                file = new GZipStream(file, CompressionMode.Compress, leaveOpen: false);
+            }
+            return file;
+        });
+        return VariantValue.CreateFromObject(formatter.OpenOutput(blobFile));
     }
 
     private static async IAsyncEnumerable<IRowsInput> File_GetFileInputsByPath(
@@ -110,12 +114,16 @@ internal static class IOFunctions
         foreach (var file in File_GetFilesByPath(path))
         {
             var fileFormatter = formatter ?? await File_GetFormatterAsync(file, thread, funcArgs);
-            Stream fileStream = File.Open(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-            if (_compressFilesExtensions.Contains(Path.GetExtension(file).ToLower()))
+            var blobFileStream = new StreamBlobData(() =>
             {
-                fileStream = new GZipStream(fileStream, CompressionMode.Decompress);
-            }
-            yield return fileFormatter.OpenInput(fileStream, path);
+                Stream fileStream = File.Open(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                if (_compressFilesExtensions.Contains(Path.GetExtension(file).ToLower()))
+                {
+                    fileStream = new GZipStream(fileStream, CompressionMode.Decompress);
+                }
+                return fileStream;
+            });
+            yield return fileFormatter.OpenInput(blobFileStream, path);
         }
     }
 
@@ -326,8 +334,8 @@ internal static class IOFunctions
         }
         formatter ??= new TextLineFormatter();
 
-        var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
-        return VariantValue.CreateFromObject(formatter.OpenInput(stream));
+        var blobStream = new StreamBlobData(() => response.Content.ReadAsStream(cancellationToken));
+        return VariantValue.CreateFromObject(formatter.OpenInput(blobStream));
     }
 
     #endregion
@@ -424,8 +432,8 @@ internal static class IOFunctions
             formatter = new TextTableFormatter();
         }
 
-        var stream = Stdio.GetConsoleOutput();
-        var output = formatter.OpenOutput(stream);
+        var blobFile = new StreamBlobData(Stdio.GetConsoleOutput);
+        var output = formatter.OpenOutput(blobFile);
 
         return VariantValue.CreateFromObject(output);
     }
@@ -437,15 +445,18 @@ internal static class IOFunctions
     {
         var skipLines = thread.Stack[0].AsInteger;
         var formatter = thread.Stack[1].AsObject as IRowsFormatter;
-        var stream = Stdio.GetConsoleInput();
-
-        for (var i = 0; i < skipLines; i++)
-        {
-            ReadToEndOfLine(stream);
-        }
 
         formatter ??= new TextTableFormatter();
-        var input = formatter.OpenInput(stream);
+        var blobStream = new StreamBlobData(() =>
+        {
+            var stream = Stdio.GetConsoleInput();
+            for (var i = 0; i < skipLines; i++)
+            {
+                ReadToEndOfLine(stream);
+            }
+            return stream;
+        });
+        var input = formatter.OpenInput(blobStream);
         return VariantValue.CreateFromObject(input);
     }
 

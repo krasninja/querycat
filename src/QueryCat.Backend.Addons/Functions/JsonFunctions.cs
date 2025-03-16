@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Json.Path;
@@ -7,6 +8,7 @@ using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Relational;
 
 namespace QueryCat.Backend.Addons.Functions;
 
@@ -91,7 +93,7 @@ public static class JsonFunctions
         {
             var dict = new Dictionary<string, object>
             {
-                ["value"] = obj.ToString(),
+                ["value"] = obj.ToString(CultureInfo.InvariantCulture),
             };
             node = JsonSerializer.SerializeToNode(dict, SourceGenerationContext.Default.DictionaryStringObject);
         }
@@ -142,6 +144,24 @@ public static class JsonFunctions
     }
 
     [SafeFunction]
+    [Description("Expands the top-level JSON array into a set of values.")]
+    [FunctionSignature("json_array_elements(json: string): object<IRowsIterator>")]
+    public static VariantValue JsonArrayElements(IExecutionThread thread)
+    {
+        var json = thread.Stack.Pop().AsString;
+        var jsonNode = GetJsonNodeFromString(json);
+
+        if (jsonNode is not JsonArray array)
+        {
+            return VariantValue.Null;
+        }
+
+        var values = array.Select(item => VariantValue.CreateFromObject(item)).ToList();
+        var iterator = new ListRowsIterator(values);
+        return VariantValue.CreateFromObject(iterator);
+    }
+
+    [SafeFunction]
     [Description("Returns the number of elements in the top-level JSON array.")]
     [FunctionSignature("json_array_length(json: string): integer")]
     public static VariantValue JsonArrayLength(IExecutionThread thread)
@@ -165,6 +185,7 @@ public static class JsonFunctions
         functionsManager.RegisterFunction(ToJson);
         functionsManager.RegisterFunction(IsJson);
         functionsManager.RegisterFunction(JsonExists);
+        functionsManager.RegisterFunction(JsonArrayElements);
         functionsManager.RegisterFunction(JsonArrayLength);
     }
 

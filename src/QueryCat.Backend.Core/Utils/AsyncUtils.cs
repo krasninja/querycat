@@ -19,11 +19,14 @@ public static class AsyncUtils
     /// </summary>
     private sealed class ExclusiveSynchronizationContext : SynchronizationContext, IDisposable
     {
+#if DEBUG
+        private static int _idGenerator;
+        private readonly int _id = Interlocked.Increment(ref _idGenerator);
+#endif
         private bool _done;
-
         private readonly AutoResetEvent _workItemsWaiting = new(initialState: false);
-
         private readonly EventQueue _postbackItems;
+        private bool _isDisposed;
 
         public Exception? InnerException { get; internal set; }
 
@@ -48,6 +51,11 @@ public static class AsyncUtils
         /// <inheritdoc />
         public override void Post(SendOrPostCallback d, object? state)
         {
+            if (_isDisposed)
+            {
+                throw new ObjectDisposedException(nameof(AsyncUtils));
+            }
+
             _postbackItems.Enqueue(new EventTask(d, state));
             _workItemsWaiting.Set();
         }
@@ -89,9 +97,15 @@ public static class AsyncUtils
         /// <inheritdoc />
         public void Dispose()
         {
+            if (_isDisposed)
+            {
+                return;
+            }
+
             _done = true;
             _postbackItems.Clear();
             _workItemsWaiting.Dispose();
+            _isDisposed = true;
         }
     }
 

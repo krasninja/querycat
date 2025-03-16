@@ -295,7 +295,7 @@ internal partial class ProgramParserVisitor
             var formatterFunctionCallNode = this.Visit<FunctionCallNode>(context.format);
             functionCallNode.Arguments.Add(new FunctionCallArgumentNode("fmt", formatterFunctionCallNode));
         }
-        return new SelectTableFunctionNode(new FunctionCallNode("stdin"))
+        return new SelectTableFunctionNode(functionCallNode)
         {
             Alias = this.Visit(context.selectAlias(), SelectAliasNode.Empty).AliasName,
         };

@@ -27,7 +27,8 @@ enum ObjectType {
   ROWS_ITERATOR = 11, // Interfaces: IRowsIterator.
   ROWS_OUTPUT = 12, // Interfaces: IRowsOutput, IRowsSource.
   BLOB = 13, // Binary data.
-  JSON = 14 // JSON.
+  JSON = 14, // JSON.
+  ROWS_FORMATTER = 15 // Interfaces: IRowsFormatter.
 }
 
 // To refer to objects we use special identifiers: handles.
@@ -167,11 +168,6 @@ service PluginsManager {
     3: required PluginData plugin_data
   ) throws (1: QueryCatPluginException e),
 
-  // Request for additional connection.
-  string RequestConnection(
-    1: required i64 token, // Authorization token.
-  ) throws (1: QueryCatPluginException e),
-
   // Call function.
   VariantValue CallFunction(
     1: required i64 token, // Authorization token.
@@ -212,6 +208,27 @@ service PluginsManager {
     1: required i64 token, // Authorization token.
     2: required string name,
     3: required VariantValue value
+  ) throws (1: QueryCatPluginException e),
+
+  // Read binary data.
+  binary Blob_Read(
+    1: required i64 token, // Authorization token.
+    2: required Handle object_blob_handle,
+    3: required i32 offset,
+    4: required i32 count
+  ) throws (1: QueryCatPluginException e),
+
+  // Write binary data.
+  i64 Blob_Write(
+    1: required i64 token, // Authorization token.
+    2: required Handle object_blob_handle,
+    3: required binary bytes
+  ) throws (1: QueryCatPluginException e),
+
+  // Get total binary length.
+  i64 Blob_GetLength(
+    1: required i64 token, // Authorization token.
+    2: required Handle object_blob_handle
   ) throws (1: QueryCatPluginException e),
 
   // Logging.
@@ -267,43 +284,43 @@ service Plugin {
   // Get columns of a rows set.
   // Supported objects: ROWS_INPUT, ROWS_ITERATOR, ROWS_OUTPUT.
   list<Column> RowsSet_GetColumns(
-    1: required Handle object_handle
+    1: required Handle object_rows_set_handle
   ) throws (1: QueryCatPluginException e),
 
   // Open rows set.
   // Supported objects: ROWS_INPUT, ROWS_OUTPUT.
   void RowsSet_Open(
-    1: required Handle object_handle
+    1: required Handle object_rows_set_handle
   ) throws (1: QueryCatPluginException e),
 
   // Close rows set.
   // Supported objects: ROWS_INPUT, ROWS_OUTPUT.
   void RowsSet_Close(
-    1: required Handle object_handle
+    1: required Handle object_rows_set_handle
   ) throws (1: QueryCatPluginException e),
 
   // Reset rows set.
   // Supported objects: ROWS_INPUT, ROWS_ITERATOR, ROWS_OUTPUT.
   void RowsSet_Reset(
-    1: required Handle object_handle
+    1: required Handle object_rows_set_handle
   ) throws (1: QueryCatPluginException e),
 
   // Current cursor position.
   // Supported objects: ROWS_ITERATOR with cursor support (ICursorRowsIterator).
   i32 RowsSet_Position(
-    1: required Handle object_handle
+    1: required Handle object_rows_set_handle
   ) throws (1: QueryCatPluginException e),
 
   // Total rows.
   // Supported objects: ROWS_ITERATOR with cursor support (ICursorRowsIterator).
   i32 RowsSet_TotalRows(
-    1: required Handle object_handle
+    1: required Handle object_rows_set_handle
   ) throws (1: QueryCatPluginException e),
 
   // Move cursor to the specific position. -1 is the special initial position.
   // Supported objects: ROWS_ITERATOR with cursor support (ICursorRowsIterator).
   void RowsSet_Seek(
-    1: required Handle object_handle,
+    1: required Handle object_rows_set_handle,
     2: required i32 offset,
     3: required CursorSeekOrigin origin
   ) throws (1: QueryCatPluginException e),
@@ -311,14 +328,14 @@ service Plugin {
   // Set context for rows set.
   // Supported objects: ROWS_INPUT, ROWS_OUTPUT.
   void RowsSet_SetContext(
-    1: required Handle object_handle,
+    1: required Handle object_rows_set_handle,
     2: required ContextQueryInfo context_query_info
   ) throws (1: QueryCatPluginException e),
 
   // Get rows.
   // Supported objects: ROWS_INPUT, ROWS_ITERATOR.
   RowsList RowsSet_GetRows(
-    1: required Handle object_handle,
+    1: required Handle object_rows_set_handle,
     2: i32 count
   ) throws (1: QueryCatPluginException e),
 
@@ -326,19 +343,19 @@ service Plugin {
   // can be used to format cache key.
   // Supported objects: ROWS_INPUT.
   list<string> RowsSet_GetUniqueKey(
-    1: required Handle object_handle
+    1: required Handle object_rows_set_handle
   ) throws (1: QueryCatPluginException e),
 
   // Get key columns.
   // Supported objects: ROWS_INPUT with keys columns support (IRowsInputKeys).
   list<KeyColumn> RowsSet_GetKeyColumns(
-    1: Handle object_handle
+    1: Handle object_rows_set_handle
   ),
 
   // Set value for a key column.
   // Supported objects: ROWS_INPUT with keys columns support (IRowsInputKeys).
   void RowsSet_SetKeyColumnValue(
-    1: required Handle object_handle,
+    1: required Handle object_rows_set_handle,
     2: required i32 column_index,
     3: required string operation,
     4: required VariantValue value
@@ -347,7 +364,7 @@ service Plugin {
   // Unset value for a key column.
   // Supported objects: ROWS_INPUT with keys columns support (IRowsInputKeys).
   void RowsSet_UnsetKeyColumnValue(
-    1: required Handle object_handle,
+    1: required Handle object_rows_set_handle,
     2: required i32 column_index,
     3: required string operation
   ),
@@ -355,7 +372,7 @@ service Plugin {
   // Update the rows set value.
   // Supported objects: ROWS_INPUT with rows update support.
   QueryCatErrorCode RowsSet_UpdateValue(
-    1: required Handle object_handle,
+    1: required Handle object_rows_set_handle,
     2: required i32 column_index,
     3: required VariantValue value
   ) throws (1: QueryCatPluginException e),
@@ -363,24 +380,47 @@ service Plugin {
   // Write new row (values) to rows set.
   // Supported objects: ROWS_OUTPUT.
   QueryCatErrorCode RowsSet_WriteValues(
-    1: required Handle object_handle,
+    1: required Handle object_rows_set_handle,
     2: required list<VariantValue> values // Should match columns count.
   ) throws (1: QueryCatPluginException e),
 
   // Delete the current row.
   QueryCatErrorCode RowsSet_DeleteRow(
-    1: required Handle object_handle
+    1: required Handle object_rows_set_handle
+  ) throws (1: QueryCatPluginException e),
+
+  // Create input from BLOB.
+  Handle RowsFormatter_OpenInput(
+    1: required Handle object_rows_formatter_handle, // Rows formatter object handle.
+    2: required Handle object_blob_handle, // BLOB object handle.
+    3: string key // Unique key.
+  ) throws (1: QueryCatPluginException e),
+
+  // Create output with BLOB.
+  Handle RowsFormatter_OpenOutput(
+    1: required Handle object_rows_formatter_handle, // Rows formatter object handle.
+    2: required Handle object_blob_handle // BLOB object handle.
   ) throws (1: QueryCatPluginException e),
 
   // Read binary data.
   binary Blob_Read(
-    1: required Handle object_handle,
+    1: required Handle object_blob_handle,
     2: required i32 offset,
     3: required i32 count
   ) throws (1: QueryCatPluginException e),
 
+  // Write binary data.
+  i64 Blob_Write(
+    1: required Handle object_blob_handle,
+    2: required binary bytes
+  ) throws (1: QueryCatPluginException e),
+
   // Get total binary length.
   i64 Blob_GetLength(
-    1: required Handle object_handle
-  ) throws (1: QueryCatPluginException e)
+    1: required Handle object_blob_handle
+  ) throws (1: QueryCatPluginException e),
+
+  // The method is called to ask client to start server so QueryCat host can make additional connection.
+  string Serve(
+  ) throws (1: QueryCatPluginException e),
 }

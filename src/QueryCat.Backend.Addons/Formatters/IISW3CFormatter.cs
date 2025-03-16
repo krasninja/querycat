@@ -22,11 +22,8 @@ public sealed class IISW3CFormatter : IRowsFormatter
     }
 
     /// <inheritdoc />
-    public IRowsInput OpenInput(Stream input, string? key = null) => new IISW3CInput(input, key);
+    public IRowsInput OpenInput(IBlobData blob, string? key = null) => new IISW3CInput(blob.GetStream(), key);
 
     /// <inheritdoc />
-    public IRowsOutput OpenOutput(Stream output)
-    {
-        throw new QueryCatException($"{nameof(IISW3CFormatter)} does not support output.");
-    }
+    public IRowsOutput OpenOutput(IBlobData blob) => throw new NotImplementedException();
 }

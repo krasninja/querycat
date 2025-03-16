@@ -115,9 +115,12 @@ public abstract class FunctionsFactory
                 && methodParameters[1].ParameterType == typeof(CancellationToken)
                 && method.ReturnType == typeof(ValueTask<VariantValue>))
             {
-                var args = Expression.Parameter(typeof(IExecutionThread), "input");
+                var executionThreadParameter = Expression.Parameter(typeof(IExecutionThread), "thread");
+                var cancellationTokenParameter = Expression.Parameter(typeof(CancellationToken), "cancellationToken");
                 var func = Expression.Lambda<Func<IExecutionThread, CancellationToken, ValueTask<VariantValue>>>(
-                        Expression.Call(method, args), args)
+                        Expression.Call(method, executionThreadParameter, cancellationTokenParameter),
+                        executionThreadParameter,
+                        cancellationTokenParameter)
                     .Compile();
                 var metadata = FunctionMetadata.CreateFromAttributes(method);
                 list.Add(CreateFromSignature(methodSignature.Signature, func, metadata));

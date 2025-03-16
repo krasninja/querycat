@@ -50,7 +50,7 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
     /// <summary>
     /// The using server pipe name.
     /// </summary>
-    public string ServerPipeName { get; } = "qcat-" + Guid.NewGuid().ToString("N");
+    public string ServerPipeName { get; } = "qcath-" + ThriftTransportUtils.GenerateIdentifier();
 
     internal sealed record FunctionsCache(
         [property:JsonPropertyName("createdAt")] long CreatedAt,
@@ -68,9 +68,9 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
         {
             ArgumentException.ThrowIfNullOrEmpty(functionName, nameof(functionName));
 
-            using var client = await context.GetClientAsync(cancellationToken);
             var arguments = thread.Stack.Select(SdkConvert.Convert).ToList();
-            var result = await client.Value.CallFunctionAsync(functionName, arguments, -1, cancellationToken);
+            using var session = await context.GetSessionAsync(cancellationToken);
+            var result = await session.ClientProxy.CallFunctionAsync(functionName, arguments, -1, cancellationToken);
             if (result.__isset.@object && result.Object != null)
             {
                 var obj = CreateObjectFromResult(result, context);
@@ -119,11 +119,12 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
         IExecutionThread thread,
         IEnumerable<string> pluginDirectories,
         string? applicationDirectory = null,
-        ThriftPluginsServer.TransportType transportType = ThriftPluginsServer.TransportType.NamedPipes,
+        ThriftTransportType transportType = ThriftTransportType.NamedPipes,
         string? serverPipeName = null,
         string? functionsCacheDirectory = null,
         bool debugMode = false,
-        LogLevel minLogLevel = LogLevel.Information) : base(pluginDirectories)
+        LogLevel minLogLevel = LogLevel.Information,
+        int maxConnectionsToPlugin = 1) : base(pluginDirectories)
     {
         _thread = thread;
         _applicationDirectory = applicationDirectory;
@@ -133,7 +134,7 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
         {
             ServerPipeName = serverPipeName;
         }
-        _server = new ThriftPluginsServer(thread, transportType, ServerPipeName);
+        _server = new ThriftPluginsServer(thread, ServerPipeName, transportType, maxConnectionsToClient: maxConnectionsToPlugin);
         if (_debugMode)
         {
             _server.SkipTokenVerification = true;
@@ -165,7 +166,7 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
     }
 
     /// <inheritdoc />
-    public override Task<string[]> LoadAsync(CancellationToken cancellationToken = default)
+    public override Task<int> LoadAsync(PluginsLoadingOptions options, CancellationToken cancellationToken = default)
     {
         var loadedPlugins = new List<string>();
 
@@ -185,7 +186,7 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
             _server.WaitForPluginRegistration(ForceRegistrationToken, cancellationToken);
         }
 
-        return Task.FromResult(loadedPlugins.ToArray());
+        return Task.FromResult(loadedPlugins.Count);
     }
 
     /// <inheritdoc />
@@ -424,7 +425,8 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
                     FileName = file,
                 }
             };
-            process.StartInfo.ArgumentList.Add(FormatParameter(ThriftPluginClient.PluginServerPipeParameter, GetPipeName()));
+            process.StartInfo.ArgumentList.Add(FormatParameter(ThriftPluginClient.PluginServerPipeParameter,
+                _server.ServerEndpointUri.ToString()));
             process.StartInfo.ArgumentList.Add(FormatParameter(ThriftPluginClient.PluginTokenParameter, registrationToken));
             process.StartInfo.ArgumentList.Add(FormatParameter(ThriftPluginClient.PluginParentPidParameter,
                 Process.GetCurrentProcess().Id.ToString()));
@@ -488,7 +490,7 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
             var mainFunction = Marshal.GetDelegateForFunctionPointer<QueryCatPluginMainDelegate>(mainAddress);
             var args = new QueryCatPluginArguments
             {
-                ServerEndpoint = Marshal.StringToHGlobalAuto(GetPipeName()),
+                ServerEndpoint = Marshal.StringToHGlobalAuto(_server.ServerEndpointUri.ToString()),
                 Token = Marshal.StringToHGlobalAuto(registrationToken),
                 LogLevel = Marshal.StringToHGlobalAuto(_minLogLevel.ToString()),
             };
@@ -542,8 +544,6 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
         _fileTokenMap.Remove(pluginFile);
     }
 
-    private string GetPipeName() => $"{ThriftPluginClient.PluginTransportNamedPipes}://localhost/{_server.ServerEndpoint}";
-
     private void RegisterFunctions(IFunctionsManager functionsManager, string file,
         IEnumerable<PluginContextFunction> functions)
     {
@@ -558,6 +558,7 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
                     Description = function.Description,
                     IsSafe = function.IsSafe,
                     IsAggregate = function.IsAggregate,
+                    Formatters = function.Formatters ?? [],
                 });
             functionsManager.RegisterFunction(internalFunction);
             wrapper.FunctionName = internalFunction.Name;
@@ -646,7 +647,12 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
         }
         if (result.Object.Type == ObjectType.BLOB)
         {
-            return new StreamBlobData(() => new RemoteStream(result.Object.Handle, context));
+            var blobProxy = new PluginBlobProxyService(context);
+            return new StreamBlobData(() => new RemoteStream(result.Object.Handle, blobProxy));
+        }
+        if (result.Object.Type == ObjectType.ROWS_FORMATTER)
+        {
+            return new ThriftRemoteRowsFormatter(context, result.Object.Handle);
         }
         throw new PluginException(string.Format(Resources.Errors.CannotCreateObject, result.Object.Type));
     }

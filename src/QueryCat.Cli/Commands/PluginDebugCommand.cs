@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using QueryCat.Backend;
 using QueryCat.Backend.Addons.Formatters;
 using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Plugins;
 using QueryCat.Backend.Execution;
 using QueryCat.Cli.Commands.Options;
 using QueryCat.Cli.Infrastructure;
@@ -51,7 +52,7 @@ internal class PluginDebugCommand : BaseQueryCommand
             options.DefaultRowsOutput = new PagingOutput(tableOutput, cancellationTokenSource: cts);
             options.FollowTimeout = follow ? QueryOptionsBinder.FollowDefaultTimeout : TimeSpan.Zero;
 
-            await using var thread = await new ExecutionThreadBootstrapper(options)
+            await using var thread = new ExecutionThreadBootstrapper(options)
                 .WithConfigStorage(new PersistentInputConfigStorage(
                     Path.Combine(Application.GetApplicationDirectory(), ApplicationOptions.ConfigFileName)))
 #if PLUGIN_THRIFT
@@ -73,7 +74,8 @@ internal class PluginDebugCommand : BaseQueryCommand
 #endif
                 .WithRegistrations(AdditionalRegistration.Register)
                 .WithRegistrations(Backend.Addons.Functions.JsonFunctions.RegisterFunctions)
-                .CreateAsync();
+                .Create();
+            await thread.PluginsManager.PluginsLoader.LoadAsync(new PluginsLoadingOptions());
             AddVariables(thread, variables);
             await RunQueryAsync(thread, query, files, cts.Token);
         });

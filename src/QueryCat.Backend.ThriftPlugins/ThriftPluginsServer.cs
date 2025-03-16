@@ -2,12 +2,10 @@ using System.Collections.Concurrent;
 using System.Text;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Thrift;
 using Thrift.Processor;
 using Thrift.Protocol;
 using Thrift.Server;
 using Thrift.Transport;
-using Thrift.Transport.Server;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
@@ -18,28 +16,24 @@ namespace QueryCat.Backend.ThriftPlugins;
 
 public sealed partial class ThriftPluginsServer : IDisposable
 {
-    public enum TransportType
-    {
-        NamedPipes,
-    }
-
     private readonly record struct RegistrationTokenData(
         SemaphoreSlim Semaphore,
         string PluginName);
 
     private const int PluginRegistrationTimeoutSeconds = 10;
 
+    public Uri ServerEndpointUri => _mainServerThread.Endpoint;
+
     private readonly IInputConfigStorage _inputConfigStorage;
     private readonly IExecutionThread _executionThread;
-    private readonly TServer _server;
-    private Task? _serverListenThread;
     private readonly CancellationTokenSource _serverCts = new();
     private readonly ConcurrentDictionary<string, RegistrationTokenData> _registrationTokens = new();
     private readonly List<ThriftPluginContext> _plugins = new();
     private readonly Dictionary<long, ThriftPluginContext> _tokenPluginContextMap = new();
-    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(ThriftPluginsServer));
+    private readonly ServerThread _mainServerThread;
+    private readonly int _maxConnectionsToClient;
 
-    public string ServerEndpoint { get; } = "qcat-" + Guid.NewGuid().ToString("N");
+    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(ThriftPluginsServer));
 
     /// <summary>
     /// Do not verify token for debug purpose.
@@ -74,24 +68,24 @@ public sealed partial class ThriftPluginsServer : IDisposable
 
     public ThriftPluginsServer(
         IExecutionThread executionThread,
-        TransportType transportType = TransportType.NamedPipes,
-        string? serverEndpoint = null)
+        string serverEndpointPath,
+        ThriftTransportType thriftTransportType = ThriftTransportType.NamedPipes,
+        int maxConnectionsToClient = 1)
     {
 #if !DEBUG
         IgnoreThriftLogs = true;
 #endif
         _executionThread = executionThread;
         _inputConfigStorage = executionThread.ConfigStorage;
-        if (!string.IsNullOrEmpty(serverEndpoint))
-        {
-            ServerEndpoint = serverEndpoint;
-        }
-        _server = CreateServer(transportType);
+        var uri = ThriftTransportUtils.FormatTransportUri(thriftTransportType, serverEndpointPath);
+        var server = CreateServer(uri);
+        _mainServerThread = new ServerThread(uri, server);
+        _maxConnectionsToClient = maxConnectionsToClient;
     }
 
-    private TThreadPoolAsyncServer CreateServer(TransportType transportType)
+    private TThreadPoolAsyncServer CreateServer(Uri uri)
     {
-        var transport = CreateTransport(transportType, ServerEndpoint);
+        var transport = ThriftTransportUtils.CreateServerTransport(uri);
         var transportFactory = new TFramedTransport.Factory();
         var binaryProtocolFactory = new TBinaryProtocol.Factory();
         var processor = new TMultiplexedProcessor();
@@ -111,56 +105,15 @@ public sealed partial class ThriftPluginsServer : IDisposable
                 : Application.LoggerFactory.CreateLogger(nameof(TThreadPoolAsyncServer)));
     }
 
-    private static TServerTransport CreateTransport(TransportType transportType, string endpoint)
-    {
-        switch (transportType)
-        {
-            case TransportType.NamedPipes:
-                return new TNamedPipeServerTransport(endpoint, new TConfiguration(),
-                    NamedPipeServerFlags.OnlyLocalClients, 1);
-        }
-        throw new ArgumentOutOfRangeException(nameof(transportType));
-    }
-
     /// <summary>
     /// Start local host server.
     /// </summary>
-    public void Start()
-    {
-        if (_serverListenThread != null)
-        {
-            return;
-        }
-
-        _server.Start();
-        _serverListenThread = Task.Factory.StartNew(() => _server.ServeAsync(_serverCts.Token),
-            _serverCts.Token,
-            TaskCreationOptions.LongRunning,
-            TaskScheduler.Current);
-        _logger.LogDebug("Started named pipe server on '{Uri}'.", ServerEndpoint);
-    }
+    public void Start() => _mainServerThread.Start(_serverCts);
 
     /// <summary>
     /// Stop server.
     /// </summary>
-    public void Stop()
-    {
-        if (_serverListenThread == null)
-        {
-            return;
-        }
-
-        try
-        {
-            _server.Stop();
-        }
-        catch (ArgumentOutOfRangeException)
-        {
-            // Sometimes we get this exception if server is not fully initialized yet, not sure how to handle this.
-        }
-        _logger.LogTrace("Plugin server stopped.");
-        _serverListenThread = null;
-    }
+    public void Stop() => _mainServerThread.Stop();
 
     private void RegisterPluginContext(ThriftPluginContext context, string registrationToken, long token)
     {
@@ -168,6 +121,8 @@ public sealed partial class ThriftPluginsServer : IDisposable
         _tokenPluginContextMap[token] = context;
         OnPluginRegistration?.Invoke(this, new PluginRegistrationEventArgs(context, registrationToken, token));
     }
+
+    #region Token/Authorization
 
     internal ThriftPluginContext GetPluginContextByToken(long token)
     {
@@ -179,6 +134,16 @@ public sealed partial class ThriftPluginsServer : IDisposable
     }
 
     internal bool VerifyToken(long token) => token != -1 && _tokenPluginContextMap.ContainsKey(token);
+
+    /// <summary>
+    /// Generate new authorization token.
+    /// </summary>
+    /// <returns>New token.</returns>
+    public long GenerateToken() => Random.Shared.NextInt64();
+
+    #endregion
+
+    #region Registration/Authentication
 
     public void SetRegistrationToken(string token, string pluginName)
     {
@@ -222,12 +187,6 @@ public sealed partial class ThriftPluginsServer : IDisposable
         }
     }
 
-    /// <summary>
-    /// Generate new authorization token.
-    /// </summary>
-    /// <returns>New token.</returns>
-    public long GenerateToken() => Random.Shared.NextInt64();
-
     public void WaitForPluginRegistration(string registrationToken, CancellationToken cancellationToken = default)
     {
         if (!_registrationTokens.TryGetValue(registrationToken, out var registrationTokenData))
@@ -243,6 +202,8 @@ public sealed partial class ThriftPluginsServer : IDisposable
         registrationTokenData.Semaphore.Dispose();
     }
 
+    #endregion
+
     /// <inheritdoc />
     public void Dispose()
     {
@@ -253,4 +214,67 @@ public sealed partial class ThriftPluginsServer : IDisposable
             pluginContext.Dispose();
         }
     }
+
+    #region ThriftClientConnection
+
+    internal sealed class ServerThread
+    {
+        private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(ServerThread));
+
+        public Uri Endpoint { get; }
+
+        public TServer Server { get; }
+
+        public Task? ServerListenThread { get; private set; }
+
+        public ThriftPluginContext? PluginContext { get; set; }
+
+        public ServerThread(Uri endpoint, TServer server)
+        {
+            Endpoint = endpoint;
+            Server = server;
+        }
+
+        /// <summary>
+        /// Start local host server.
+        /// </summary>
+        public void Start(CancellationTokenSource cts)
+        {
+            if (ServerListenThread != null)
+            {
+                return;
+            }
+
+            Server.Start();
+            ServerListenThread = Task.Factory.StartNew(() => Server.ServeAsync(cts.Token),
+                cts.Token,
+                TaskCreationOptions.LongRunning,
+                TaskScheduler.Current);
+            _logger.LogDebug("Started server on '{Uri}'.", Endpoint);
+        }
+
+        /// <summary>
+        /// Stop server.
+        /// </summary>
+        public void Stop()
+        {
+            if (ServerListenThread == null)
+            {
+                return;
+            }
+
+            try
+            {
+                Server.Stop();
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+                // Sometimes we get this exception if server is not fully initialized yet, not sure how to handle this.
+            }
+            _logger.LogTrace("Plugin server stopped.");
+            ServerListenThread = null;
+        }
+    }
+
+    #endregion
 }

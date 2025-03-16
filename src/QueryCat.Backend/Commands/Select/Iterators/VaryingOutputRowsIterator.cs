@@ -141,17 +141,8 @@ internal sealed class VaryingOutputRowsIterator : IRowsIterator, IRowsIteratorPa
             _logger.LogDebug("Close for args {Key}.", outputKeyValue.Key);
             await outputKeyValue.Value.CloseAsync(cancellationToken);
         }
-        Dispose();
-    }
-
-    /// <inheritdoc />
-    public void Dispose()
-    {
-        foreach (var outputKeyValue in _outputs)
-        {
-            (outputKeyValue.Value as IDisposable)?.Dispose();
-        }
         _outputs.Clear();
+        Dispose();
     }
 
     /// <inheritdoc />
@@ -165,5 +156,15 @@ internal sealed class VaryingOutputRowsIterator : IRowsIterator, IRowsIteratorPa
     public IEnumerable<IRowsSchema> GetChildren()
     {
         yield return _rowsIterator;
+    }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        foreach (var outputKeyValue in _outputs)
+        {
+            (outputKeyValue.Value as IDisposable)?.Dispose();
+        }
+        _outputs.Clear();
     }
 }

@@ -23,4 +23,10 @@ internal sealed class FilePluginLoadStrategy : IPluginLoadStrategy
 
     /// <inheritdoc />
     public Stream GetFile(string file) => File.OpenRead(file);
+
+    /// <inheritdoc />
+    public long GetFileSize(string file)
+    {
+        return new FileInfo(file).Length;
+    }
 }

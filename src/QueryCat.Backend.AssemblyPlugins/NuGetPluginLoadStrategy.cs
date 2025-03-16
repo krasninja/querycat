@@ -45,4 +45,16 @@ internal sealed class NuGetPluginLoadStrategy : IPluginLoadStrategy
         var entry = zip.GetEntry(file);
         return entry == null ? Stream.Null : entry.Open();
     }
+
+    /// <inheritdoc />
+    public long GetFileSize(string file)
+    {
+        var zip = _zip ?? ZipFile.OpenRead(_file);
+        var entry = zip.GetEntry(file);
+        if (entry == null)
+        {
+            return 0;
+        }
+        return entry.Length;
+    }
 }

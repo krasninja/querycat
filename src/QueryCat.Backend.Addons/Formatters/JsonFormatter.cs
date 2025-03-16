@@ -29,14 +29,18 @@ internal sealed class JsonFormatter : IRowsFormatter
     }
 
     /// <inheritdoc />
-    public IRowsInput OpenInput(Stream input, string? key = null)
+    public IRowsInput OpenInput(IBlobData blob, string? key = null)
     {
-        return new JsonInput(new StreamReader(input), jsonPath: _jsonPath, key: key);
+        var stream = blob.GetStream();
+        return new JsonInput(new StreamReader(stream), jsonPath: _jsonPath, key: key);
     }
 
     /// <inheritdoc />
-    public IRowsOutput OpenOutput(Stream output)
-        => new JsonOutput(output);
+    public IRowsOutput OpenOutput(IBlobData blob)
+    {
+        var stream = blob.GetStream();
+        return new JsonOutput(stream);
+    }
 
     public static void RegisterFunctions(IFunctionsManager functionsManager)
     {

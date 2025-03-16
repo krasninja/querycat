@@ -185,9 +185,8 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
     /// <summary>
     /// Create the instance of execution thread.
     /// </summary>
-    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Instance of <see cref="ExecutionThreadBootstrapper" />.</returns>
-    public async Task<DefaultExecutionThread> CreateAsync(CancellationToken cancellationToken = default)
+    public DefaultExecutionThread Create()
     {
 #if DEBUG
         var timer = new System.Diagnostics.Stopwatch();
@@ -256,7 +255,6 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
 
         // Load plugins.
         var pluginLoader = _pluginsLoaderFactory.Invoke(thread);
-        await pluginLoader.LoadAsync(cancellationToken);
         thread.PluginsManager = _pluginsManagerFactory.Invoke(pluginLoader);
 
 #if DEBUG

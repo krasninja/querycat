@@ -84,8 +84,10 @@ internal abstract class BaseQueryCommand : BaseCommand
                 throw new QueryCatException(string.Format(Resources.Errors.InvalidVariableFormat, variable));
             }
             var name = arr[0];
-            var stringValue = arr[1];
-            var targetType = DataTypeUtils.DetermineTypeByValue(stringValue);
+            var stringValue = StringUtils.Unquote(arr[1], quoteChar: "\'").ToString();
+            var targetType = arr[1].Length == stringValue.Length
+                ? DataTypeUtils.DetermineTypeByValue(stringValue)
+                : DataType.String;
             if (!VariantValue.TryCreateFromString(stringValue, targetType, out var value))
             {
                 throw new QueryCatException(string.Format(Resources.Errors.CannotDefineVariable, name));

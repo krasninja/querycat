@@ -296,7 +296,7 @@ public readonly partial struct VariantValue :
 
     private VariantValue(byte[] bytes)
     {
-        _object = new StreamBlobData(() => new MemoryStream(bytes, writable: false));
+        _object = new StreamBlobData(bytes);
     }
 
     /// <summary>

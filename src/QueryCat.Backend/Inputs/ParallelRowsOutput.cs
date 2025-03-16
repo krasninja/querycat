@@ -37,14 +37,9 @@ internal sealed class ParallelRowsOutput : ParallelRowsSource, IRowsOutput
     /// <inheritdoc />
     public async ValueTask<ErrorCode> WriteValuesAsync(VariantValue[] values, CancellationToken cancellationToken = default)
     {
-        await Semaphore.WaitAsync(cancellationToken);
-        _logger.LogDebug("Remain tasks {RemainTasks}.", Semaphore.CurrentCount);
-        _ = Task.Run(() => _output.WriteValuesAsync(values, cancellationToken), cancellationToken)
-            .ContinueWith(_ =>
-            {
-                Semaphore.Release();
-            }, cancellationToken);
-
+        var localValues = new VariantValue[values.Length];
+        Array.Copy(values, localValues, values.Length);
+        await AddTask(ct => _output.WriteValuesAsync(localValues, ct).AsTask(), cancellationToken);
         return ErrorCode.OK;
     }
 }

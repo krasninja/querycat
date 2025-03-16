@@ -15,9 +15,9 @@ public sealed class KeywordsCompletionSourceTests
     {
         // Arrange.
         var combineCompletionSource = new CombineCompletionSource([new KeywordsCompletionSource()]);
-        await using var executionThread = await new ExecutionThreadBootstrapper()
+        await using var executionThread = new ExecutionThreadBootstrapper()
             .WithCompletionSource(combineCompletionSource)
-            .CreateAsync();
+            .Create();
 
         // Act.
         var completions = (await executionThread.GetCompletionsAsync("in").ToListAsync())
