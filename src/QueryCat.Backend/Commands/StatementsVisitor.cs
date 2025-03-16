@@ -101,11 +101,19 @@ internal sealed class StatementsVisitor : CreateDelegateVisitor
         NodeIdFuncMap.Add(node.Id, handler);
     }
 
+    /// <inheritdoc />
     public override async ValueTask VisitAsync(FunctionCallStatementNode node, CancellationToken cancellationToken)
     {
         var handler = await new CreateDelegateVisitor(_executionThread, ResolveTypesVisitor)
             .RunAndReturnAsync(node.FunctionNode, cancellationToken);
         NodeIdFuncMap.Add(node.Id, handler);
+    }
+
+    /// <inheritdoc />
+    public override async ValueTask VisitAsync(FunctionCallNode node, CancellationToken cancellationToken)
+    {
+        await ResolveTypesVisitor.RunAsync(node, cancellationToken);
+        await base.VisitAsync(node, cancellationToken);
     }
 
     /// <inheritdoc />
