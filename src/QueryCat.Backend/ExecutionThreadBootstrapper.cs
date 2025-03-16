@@ -39,7 +39,7 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
 
     private Func<IExecutionThread, PluginsLoader> _pluginsLoaderFactory = _ => new NullPluginsLoader(Array.Empty<string>());
 
-    private Func<PluginsLoader, IPluginsManager> _pluginsManagerFactory = _ => new NullPluginsManager();
+    private Func<PluginsLoader, IPluginsManager> _pluginsManagerFactory = pluginLoader => new NullPluginsManager(pluginLoader);
 
     private readonly List<IUriResolver> _uriResolvers = new();
 
