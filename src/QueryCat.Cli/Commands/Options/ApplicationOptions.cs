@@ -35,7 +35,7 @@ internal sealed class ApplicationOptions
         }
         catch (Backend.ThriftPlugins.ProxyNotFoundException)
         {
-            await InstallPluginsProxyAsync(askUser: true, cancellationToken);
+            await InstallPluginsProxyAsync(askUser: true, cancellationToken: cancellationToken);
             return await CreateApplicationRootInternalAsync(executionOptions, cancellationToken);
         }
 #else
@@ -43,9 +43,20 @@ internal sealed class ApplicationOptions
 #endif
     }
 
-    internal static async Task<bool> InstallPluginsProxyAsync(bool askUser = true, CancellationToken cancellationToken = default)
+    internal static async Task<bool> InstallPluginsProxyAsync(
+        bool askUser = true,
+        bool skipIfExists = true,
+        CancellationToken cancellationToken = default)
     {
 #if ENABLE_PLUGINS && PLUGIN_THRIFT
+        var applicationDirectory = Application.GetApplicationDirectory(ensureExists: true);
+        var pluginsProxyLocalFile = Path.Combine(applicationDirectory,
+            Backend.ThriftPlugins.ProxyFile.GetProxyFileName(includeVersion: true));
+        if (skipIfExists && File.Exists(pluginsProxyLocalFile))
+        {
+            return true;
+        }
+
         var key = ConsoleKey.Y;
         if (askUser)
         {
@@ -54,9 +65,6 @@ internal sealed class ApplicationOptions
         }
         if (key == ConsoleKey.Y)
         {
-            var applicationDirectory = Application.GetApplicationDirectory(ensureExists: true);
-            var pluginsProxyLocalFile = Path.Combine(applicationDirectory,
-                Backend.ThriftPlugins.ProxyFile.GetProxyFileName(includeVersion: true));
             var downloader = new PluginProxyDownloader(Backend.ThriftPlugins.ProxyFile.GetProxyFileName());
             await downloader.DownloadAsync(pluginsProxyLocalFile, cancellationToken);
             Backend.ThriftPlugins.ProxyFile.CleanUpPreviousVersions(applicationDirectory);

@@ -27,7 +27,10 @@ internal class PluginInstallCommand : BaseCommand
             applicationOptions.InitializeLogger();
             using var root = await applicationOptions.CreateApplicationRootAsync();
             await root.PluginsManager.InstallAsync(plugin, overwrite, context.GetCancellationToken());
-            await ApplicationOptions.InstallPluginsProxyAsync(askUser: false, cancellationToken: context.GetCancellationToken());
+            await ApplicationOptions.InstallPluginsProxyAsync(
+                askUser: false,
+                skipIfExists: true,
+                cancellationToken: context.GetCancellationToken());
         });
     }
 }
