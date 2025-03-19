@@ -12,7 +12,7 @@ internal sealed class SimpleLruDictionary<TKey, TValue> : IDictionary<TKey, TVal
 {
     private readonly int _capacity;
     private readonly IDictionary<TKey, TValue> _map;
-    private readonly LinkedList<TKey> _lruList = new();
+    private readonly LinkedList<TKey> _lruList = [];
 
     /// <inheritdoc />
     public int Count => _map.Count;
@@ -45,15 +45,15 @@ internal sealed class SimpleLruDictionary<TKey, TValue> : IDictionary<TKey, TVal
     public SimpleLruDictionary(int capacity)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(capacity, nameof(capacity));
-        this._capacity = capacity;
-        this._map = new ConcurrentDictionary<TKey, TValue>();
+        _capacity = capacity;
+        _map = new ConcurrentDictionary<TKey, TValue>();
     }
 
     /// <inheritdoc />
     public ICollection<TKey> Keys => _map.Keys;
 
     /// <inheritdoc />
-    public ICollection<TValue> Values => _map.Values!;
+    public ICollection<TValue> Values => _map.Values;
 
     /// <inheritdoc />
     public void Add(KeyValuePair<TKey, TValue> item)

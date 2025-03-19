@@ -7,7 +7,7 @@ namespace QueryCat.Backend.Storage;
 /// <summary>
 /// The cache key for the specific instance of <see cref="IRowsInput" />.
 /// </summary>
-internal readonly struct CacheKey
+internal readonly struct CacheKey : IEquatable<CacheKey>
 {
     /// <summary>
     /// Input function class/name.
@@ -170,15 +170,19 @@ internal readonly struct CacheKey
         return new CacheKey(from, inputKeys.ToArray(), selectColumns.ToArray(), conditions.ToArray(), offset, limit);
     }
 
+    #endregion
+
     /// <inheritdoc />
     public override bool Equals(object? obj) => obj is CacheKey other && Equals(other);
 
-    public bool Equals(in CacheKey other) => From == other.From
+    /// <inheritdoc />
+    public bool Equals(CacheKey other) =>
+        From == other.From
+        && Offset == other.Offset
+        && Limit == other.Limit
         && InputArguments.SetEquals(other.InputArguments)
         && SelectColumns.SetEquals(other.SelectColumns)
-        && Conditions.SetEquals(other.Conditions)
-        && Offset == other.Offset
-        && Limit == other.Limit;
+        && Conditions.SetEquals(other.Conditions);
 
     private static int GetSetHashCode<T>(IReadOnlySet<T> set)
     {
@@ -197,8 +201,6 @@ internal readonly struct CacheKey
     public static bool operator ==(CacheKey left, CacheKey right) => left.Equals(right);
 
     public static bool operator !=(CacheKey left, CacheKey right) => !left.Equals(right);
-
-    #endregion
 
     /// <inheritdoc />
     public override string ToString() => Serialize();
