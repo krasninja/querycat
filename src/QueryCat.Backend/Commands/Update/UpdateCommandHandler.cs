@@ -12,7 +12,7 @@ internal sealed class UpdateCommandHandler : IFuncUnit
     private readonly IRowsInputUpdate _rowsInput;
 
     /// <inheritdoc />
-    public DataType OutputType => DataType.Null;
+    public DataType OutputType => DataType.Integer;
 
     public UpdateCommandHandler(
         SelectCommandContext selectCommandContext,

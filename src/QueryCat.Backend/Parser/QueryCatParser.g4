@@ -20,6 +20,7 @@ statement
     | selectStatement # StatementSelectExpression
     | updateStatement # StatementUpdateExpression
     | insertStatement # StatementInsertExpression
+    | deleteStatement # StatementDeleteExpression
     | echoStatement # StatementEcho
     | callStatement # StatementCall
     | ifStatement # StatementIf
@@ -192,14 +193,30 @@ insertStatement:
     insertColumnsList?
     insertFromSource;
 insertToSource
-    : functionCall # InsertNoFormat
-    | uri=STRING_LITERAL (FORMAT functionCall)? # InsertWithFormat
-    | name=identifier # InsertFromVariable
+    : functionCall selectAlias? # InsertNoFormat
+    | uri=STRING_LITERAL (FORMAT functionCall)? selectAlias? # InsertWithFormat
+    | name=identifier selectAlias? # InsertFromVariable
     ;
 insertColumnsList: '(' name=identifier (',' name=identifier)* ')';
 insertFromSource
     : selectQueryExpression # InsertSourceQuery
     | selectTableValues # InsertSourceTable
+    ;
+
+/*
+ * ===============
+ * DELETE command.
+ * ===============
+ */
+
+deleteStatement:
+    DELETE FROM
+    deleteFromSource
+    selectSearchCondition?;
+deleteFromSource
+    : functionCall selectAlias? # DeleteNoFormat
+    | uri=STRING_LITERAL (FORMAT functionCall)? selectAlias? # DeleteWithFormat
+    | name=identifier selectAlias? # DeleteFromVariable
     ;
 
 /*

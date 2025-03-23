@@ -2,6 +2,7 @@ using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Call;
 using QueryCat.Backend.Ast.Nodes.Declare;
+using QueryCat.Backend.Ast.Nodes.Delete;
 using QueryCat.Backend.Ast.Nodes.Function;
 using QueryCat.Backend.Ast.Nodes.If;
 using QueryCat.Backend.Ast.Nodes.Insert;
@@ -9,6 +10,7 @@ using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Ast.Nodes.Update;
 using QueryCat.Backend.Commands.Call;
 using QueryCat.Backend.Commands.Declare;
+using QueryCat.Backend.Commands.Delete;
 using QueryCat.Backend.Commands.If;
 using QueryCat.Backend.Commands.Insert;
 using QueryCat.Backend.Commands.Select;
@@ -91,6 +93,13 @@ internal sealed class StatementsVisitor : CreateDelegateVisitor
     public override async ValueTask VisitAsync(DeclareStatementNode node, CancellationToken cancellationToken)
     {
         var handler = await new DeclareCommand().CreateHandlerAsync(_executionThread, node, cancellationToken);
+        NodeIdFuncMap.Add(node.Id, handler);
+    }
+
+    /// <inheritdoc />
+    public override async ValueTask VisitAsync(DeleteStatementNode node, CancellationToken cancellationToken)
+    {
+        var handler = await new DeleteCommand().CreateHandlerAsync(_executionThread, node, cancellationToken);
         NodeIdFuncMap.Add(node.Id, handler);
     }
 

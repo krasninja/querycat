@@ -3,7 +3,7 @@ using QueryCat.Backend.Core.Data;
 namespace QueryCat.Backend.Relational;
 
 /// <summary>
-/// Iterator for <see cref="RowsFrame" />.
+/// Iterator for <see cref="RowsFrame" />. The iterator skips removed rows.
 /// </summary>
 public sealed class RowsFrameIterator : ICursorRowsIterator
 {
@@ -12,7 +12,8 @@ public sealed class RowsFrameIterator : ICursorRowsIterator
     private readonly RowsFrame _rowsFrame;
     private readonly IRowsIterator? _childIterator;
     private readonly Row _currentRow;
-    private int _cursor = InitialCursorPosition;
+    private int _absoluteCursor = InitialCursorPosition;
+    private int _relativeCursor = -1;
 
     /// <inheritdoc />
     public Column[] Columns => _rowsFrame.Columns;
@@ -20,17 +21,17 @@ public sealed class RowsFrameIterator : ICursorRowsIterator
     public RowsFrame RowsFrame => _rowsFrame;
 
     /// <inheritdoc />
-    public int Position => _cursor;
+    public int Position => _absoluteCursor;
 
     /// <inheritdoc />
-    public int TotalRows => _rowsFrame.TotalRows;
+    public int TotalRows => _rowsFrame.TotalActiveRows;
 
     /// <inheritdoc />
     public Row Current
     {
         get
         {
-            _rowsFrame.ReadRowAt(_currentRow, _cursor);
+            _rowsFrame.ReadRowAt(_currentRow, _absoluteCursor);
             return _currentRow;
         }
     }
@@ -45,27 +46,55 @@ public sealed class RowsFrameIterator : ICursorRowsIterator
     /// <inheritdoc />
     public void Seek(int offset, CursorSeekOrigin origin)
     {
-        if (origin == CursorSeekOrigin.Begin)
+        ArgumentOutOfRangeException.ThrowIfNegative(offset, nameof(offset));
+
+        if (origin == CursorSeekOrigin.End)
         {
-            _cursor = offset;
+            offset = _rowsFrame.TotalActiveRows - offset - 1;
         }
-        else if (origin == CursorSeekOrigin.Current)
+
+        if (_rowsFrame.TotalRows == _rowsFrame.TotalActiveRows)
         {
-            _cursor += offset;
+            if (origin == CursorSeekOrigin.Begin)
+            {
+                _absoluteCursor = offset;
+            }
+            else if (origin == CursorSeekOrigin.Current)
+            {
+                _absoluteCursor += offset;
+            }
+            _relativeCursor = _absoluteCursor;
         }
-        else if (origin == CursorSeekOrigin.End)
+        else
         {
-            _cursor = TotalRows - offset;
+            if (origin == CursorSeekOrigin.Begin || origin == CursorSeekOrigin.End)
+            {
+                _relativeCursor = -1;
+                _absoluteCursor = -1;
+            }
+            while (_relativeCursor < offset && _absoluteCursor < _rowsFrame.TotalRows)
+            {
+                _absoluteCursor++;
+                if (!_rowsFrame.IsRemoved(_absoluteCursor))
+                {
+                    _relativeCursor++;
+                }
+            }
         }
     }
 
     internal bool MoveNext()
     {
-        if (!HasData)
+        do
         {
-            return false;
+            if (!HasData)
+            {
+                break;
+            }
+            _absoluteCursor++;
         }
-        _cursor++;
+        while (_rowsFrame.IsRemoved(_absoluteCursor));
+
         return HasData;
     }
 
@@ -78,14 +107,14 @@ public sealed class RowsFrameIterator : ICursorRowsIterator
     /// <inheritdoc />
     public Task ResetAsync(CancellationToken cancellationToken = default)
     {
-        _cursor = InitialCursorPosition;
+        _absoluteCursor = InitialCursorPosition;
         return Task.CompletedTask;
     }
 
     /// <summary>
     /// Whether iterator has data.
     /// </summary>
-    public bool HasData => _rowsFrame.TotalRows >= _cursor + 1 && _rowsFrame.TotalRows > 0;
+    public bool HasData => _rowsFrame.TotalRows >= _absoluteCursor + 1 && _rowsFrame.TotalRows > 0;
 
     /// <inheritdoc />
     public void Explain(IndentedStringBuilder stringBuilder)

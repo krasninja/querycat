@@ -11,7 +11,7 @@ internal sealed class InsertCommandHandler : IFuncUnit
     private readonly IRowsOutput _rowsOutput;
 
     /// <inheritdoc />
-    public DataType OutputType => DataType.Null;
+    public DataType OutputType => DataType.Integer;
 
     public InsertCommandHandler(IRowsIterator rowsInput, IRowsOutput rowsOutput)
     {

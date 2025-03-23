@@ -43,6 +43,7 @@ internal partial class CreateDelegateVisitor : AstVisitor
         AstTraversal.TypesToIgnore.Add(typeof(Ast.Nodes.Declare.DeclareNode));
         AstTraversal.TypesToIgnore.Add(typeof(Ast.Nodes.Insert.InsertNode));
         AstTraversal.TypesToIgnore.Add(typeof(Ast.Nodes.Update.UpdateNode));
+        AstTraversal.TypesToIgnore.Add(typeof(Ast.Nodes.Delete.DeleteNode));
         AstTraversal.AcceptBeforeIgnore = true;
     }
 
@@ -200,6 +201,12 @@ internal partial class CreateDelegateVisitor : AstVisitor
         }
 
         throw new CannotFindIdentifierException(node.Name);
+    }
+
+    /// <inheritdoc />
+    public override async ValueTask VisitAsync(QueryCat.Backend.Ast.Nodes.Select.SelectIdentifierExpressionNode node, CancellationToken cancellationToken)
+    {
+        await VisitAsync((IdentifierExpressionNode)node, cancellationToken);
     }
 
     /// <inheritdoc />
@@ -546,6 +553,13 @@ internal partial class CreateDelegateVisitor : AstVisitor
         return ValueTask.CompletedTask;
     }
 
+    /// <inheritdoc />
+    public override ValueTask VisitAsync(QueryCat.Backend.Ast.Nodes.Select.SelectTableFunctionNode node, CancellationToken cancellationToken)
+    {
+        NodeIdFuncMap[node.Id] = NodeIdFuncMap[node.TableFunctionNode.Id];
+        return ValueTask.CompletedTask;
+    }
+
     #endregion
 
     #region Statements
@@ -588,6 +602,13 @@ internal partial class CreateDelegateVisitor : AstVisitor
 
     /// <inheritdoc />
     public override async ValueTask VisitAsync(Ast.Nodes.Update.UpdateNode node, CancellationToken cancellationToken)
+    {
+        await VisitWithStatementVisitor(node, cancellationToken);
+        await base.VisitAsync(node, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public override async ValueTask VisitAsync(Ast.Nodes.Delete.DeleteNode node, CancellationToken cancellationToken)
     {
         await VisitWithStatementVisitor(node, cancellationToken);
         await base.VisitAsync(node, cancellationToken);

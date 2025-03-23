@@ -81,6 +81,13 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitStatementInsertExpression([NotNull] QueryCatParser.StatementInsertExpressionContext context);
 	/// <summary>
+	/// Visit a parse tree produced by the <c>StatementDeleteExpression</c>
+	/// labeled alternative in <see cref="QueryCatParser.statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitStatementDeleteExpression([NotNull] QueryCatParser.StatementDeleteExpressionContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>StatementEcho</c>
 	/// labeled alternative in <see cref="QueryCatParser.statement"/>.
 	/// </summary>
@@ -543,6 +550,33 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitInsertSourceTable([NotNull] QueryCatParser.InsertSourceTableContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="QueryCatParser.deleteStatement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitDeleteStatement([NotNull] QueryCatParser.DeleteStatementContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>DeleteNoFormat</c>
+	/// labeled alternative in <see cref="QueryCatParser.deleteFromSource"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitDeleteNoFormat([NotNull] QueryCatParser.DeleteNoFormatContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>DeleteWithFormat</c>
+	/// labeled alternative in <see cref="QueryCatParser.deleteFromSource"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitDeleteWithFormat([NotNull] QueryCatParser.DeleteWithFormatContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>DeleteFromVariable</c>
+	/// labeled alternative in <see cref="QueryCatParser.deleteFromSource"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitDeleteFromVariable([NotNull] QueryCatParser.DeleteFromVariableContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="QueryCatParser.echoStatement"/>.
 	/// </summary>

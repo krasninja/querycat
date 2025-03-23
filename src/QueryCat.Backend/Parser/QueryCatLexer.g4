@@ -185,6 +185,10 @@ UPDATE:             'UPDATE';
 
 INSERT:             'INSERT';
 
+// DELETE command.
+
+DELETE:             'DELETE';
+
 // DECLARE/SET command.
 
 DECLARE:            'DECLARE';

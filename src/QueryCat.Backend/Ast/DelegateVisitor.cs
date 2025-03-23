@@ -1,6 +1,7 @@
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Call;
 using QueryCat.Backend.Ast.Nodes.Declare;
+using QueryCat.Backend.Ast.Nodes.Delete;
 using QueryCat.Backend.Ast.Nodes.Function;
 using QueryCat.Backend.Ast.Nodes.If;
 using QueryCat.Backend.Ast.Nodes.Insert;
@@ -516,6 +517,20 @@ internal abstract class DelegateVisitor : AstVisitor
 
     /// <inheritdoc />
     public override ValueTask VisitAsync(InsertStatementNode node, CancellationToken cancellationToken)
+    {
+        return OnVisitAsync(node, cancellationToken);
+    }
+
+    #endregion
+
+    #region Delete
+
+    public override ValueTask VisitAsync(DeleteNode node, CancellationToken cancellationToken)
+    {
+        return OnVisitAsync(node, cancellationToken);
+    }
+
+    public override ValueTask VisitAsync(DeleteStatementNode node, CancellationToken cancellationToken)
     {
         return OnVisitAsync(node, cancellationToken);
     }

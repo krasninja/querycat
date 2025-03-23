@@ -134,6 +134,8 @@ public sealed class KeywordsCompletionSource : BinarySearchCompletionSource
 
         "INSERT",
 
+        "DELETE",
+
         "DECLARE",
         "SET",
 

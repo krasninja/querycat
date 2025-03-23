@@ -39,4 +39,19 @@ public sealed class RowsFrameTests
         // Assert.
         Assert.False(iterator.MoveNext());
     }
+
+    [Fact]
+    public void Total_RemoveRows_ShouldReturnZero()
+    {
+        // Arrange.
+        _rowsFrame.AddRow(11, "Stalker");
+        _rowsFrame.AddRow(123, "Golem");
+
+        // Act.
+        _rowsFrame.RemoveRow(0);
+
+        // Assert.
+        Assert.Equal(2, _rowsFrame.TotalRows);
+        Assert.Equal(1, _rowsFrame.TotalActiveRows);
+    }
 }
