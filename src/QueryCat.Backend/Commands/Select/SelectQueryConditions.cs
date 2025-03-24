@@ -64,7 +64,7 @@ internal sealed class SelectQueryConditions : IEnumerable<SelectQueryCondition>
         return queryContextCondition;
     }
 
-    internal IEnumerable<SelectInputKeysConditions> GetConditionsColumns(IRowsInput input, string? alias = null)
+    internal IEnumerable<SelectInputKeysConditions> GetConditionsColumns(IRowsSource input, string? alias = null)
     {
         if (input is not IRowsInputKeys inputKey)
         {

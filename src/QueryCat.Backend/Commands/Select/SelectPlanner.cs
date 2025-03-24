@@ -13,14 +13,43 @@ internal sealed partial class SelectPlanner
 
     private readonly ResolveTypesVisitor _resolveTypesVisitor;
 
-    public SelectPlanner(IExecutionThread<ExecutionOptions> executionThread, ResolveTypesVisitor resolveTypesVisitor)
+    public enum OperationIntentionType
+    {
+        Create,
+        Read,
+        Update,
+        Delete,
+    }
+
+    private readonly OperationIntentionType _operationIntentionType;
+
+    /// <summary>
+    /// Constructor.
+    /// </summary>
+    /// <param name="executionThread">Execution thread.</param>
+    /// <param name="resolveTypesVisitor">Instance of <see cref="ResolveTypesVisitor" />.</param>
+    /// <param name="operationIntentionType">Intended operation type the select is used for. Because it can be used
+    /// for modification.</param>
+    public SelectPlanner(
+        IExecutionThread<ExecutionOptions> executionThread,
+        ResolveTypesVisitor resolveTypesVisitor,
+        OperationIntentionType operationIntentionType = OperationIntentionType.Read)
     {
         ExecutionThread = executionThread;
         _resolveTypesVisitor = resolveTypesVisitor;
+        _operationIntentionType = operationIntentionType;
     }
 
-    public SelectPlanner(IExecutionThread<ExecutionOptions> executionThread)
-        : this(executionThread, new ResolveTypesVisitor(executionThread))
+    /// <summary>
+    /// Constructor.
+    /// </summary>
+    /// <param name="executionThread">Execution thread.</param>
+    /// <param name="operationIntentionType">Intended operation type the select is used for. Because it can be used
+    /// for modification.</param>
+    public SelectPlanner(
+        IExecutionThread<ExecutionOptions> executionThread,
+        OperationIntentionType operationIntentionType = OperationIntentionType.Read)
+        : this(executionThread, new ResolveTypesVisitor(executionThread), operationIntentionType)
     {
     }
 

@@ -68,12 +68,15 @@ internal sealed partial class SelectPlanner
 
     private async Task Context_InitializeRowsInputsAsync(SelectCommandContext context, SelectQueryNode node, CancellationToken cancellationToken)
     {
-        await new CreateRowsInputVisitor(ExecutionThread, context).RunAsync(node.GetChildren(), cancellationToken);
+        await new CreateRowsInputVisitor(ExecutionThread, context).RunAsync(node, cancellationToken);
         if (node is SelectQuerySpecificationNode querySpecificationNode)
         {
             foreach (var input in context.Inputs)
             {
-                FixInputColumnTypes(querySpecificationNode, input.RowsInput);
+                if (input.RowsInput is IRowsSchema rowsSchema)
+                {
+                    FixInputColumnTypes(querySpecificationNode, rowsSchema);
+                }
             }
         }
     }
@@ -505,7 +508,7 @@ internal sealed partial class SelectPlanner
     /// <summary>
     /// Find the expressions in SELECT output area like CAST(id AS string).
     /// </summary>
-    private void FixInputColumnTypes(SelectQuerySpecificationNode querySpecificationNode, IRowsInput rowsInput)
+    private void FixInputColumnTypes(SelectQuerySpecificationNode querySpecificationNode, IRowsSchema rowsSchema)
     {
         foreach (var castNode in querySpecificationNode.ColumnsListNode.GetAllChildren<CastFunctionNode>())
         {
@@ -514,10 +517,10 @@ internal sealed partial class SelectPlanner
                 continue;
             }
 
-            var columnIndex = rowsInput.GetColumnIndexByName(idNode.TableFieldName, idNode.TableSourceName);
+            var columnIndex = rowsSchema.GetColumnIndexByName(idNode.TableFieldName, idNode.TableSourceName);
             if (columnIndex > -1)
             {
-                rowsInput.Columns[columnIndex].DataType = castNode.TargetTypeNode.Type;
+                rowsSchema.Columns[columnIndex].DataType = castNode.TargetTypeNode.Type;
             }
         }
     }

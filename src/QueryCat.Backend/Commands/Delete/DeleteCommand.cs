@@ -27,7 +27,8 @@ internal sealed class DeleteCommand : ICommand
             new SelectTableNode(
                 new SelectTableReferenceListNode(deleteNode.DeleteTargetNode));
         selectNode.TableExpressionNode.SearchConditionNode = deleteNode.SearchConditionNode;
-        await new SelectPlanner(executionThread).CreateIteratorAsync(selectNode, cancellationToken: cancellationToken);
+        await new SelectPlanner(executionThread, operationIntentionType: SelectPlanner.OperationIntentionType.Delete)
+            .CreateIteratorAsync(selectNode, cancellationToken: cancellationToken);
         var context = selectNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
 
         // Get output source.

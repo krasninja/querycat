@@ -11,10 +11,11 @@ namespace QueryCat.Backend.ThriftPlugins;
 
 internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys, IRowsInputUpdate, IRowsInputDelete
 {
-    private const int LoadCount = 10;
+    private const int DefaultLoadCount = 1;
 
     private readonly ThriftPluginContext _context;
     private readonly int _objectHandle;
+    private readonly int _loadCount;
     private readonly string _id;
     private readonly DynamicBuffer<VariantValue> _cache = new(chunkSize: 64);
 
@@ -39,10 +40,11 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys, IRowsInputUpdat
         }
     }
 
-    public ThriftRemoteRowsIterator(ThriftPluginContext context, int objectHandle, string? id = null)
+    public ThriftRemoteRowsIterator(ThriftPluginContext context, int objectHandle, string? id = null, int loadCount = DefaultLoadCount)
     {
         _context = context;
         _objectHandle = objectHandle;
+        _loadCount = loadCount;
         _id = id ?? string.Empty;
     }
 
@@ -117,7 +119,7 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys, IRowsInputUpdat
         }
 
         using var session = await _context.GetSessionAsync(cancellationToken);
-        var result = await session.ClientProxy.RowsSet_GetRowsAsync(_objectHandle, LoadCount * Columns.Length, cancellationToken);
+        var result = await session.ClientProxy.RowsSet_GetRowsAsync(_objectHandle, _loadCount, cancellationToken);
         if (result.Values == null || result.Values.Count == 0)
         {
             return false;

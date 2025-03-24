@@ -33,7 +33,8 @@ internal sealed class UpdateCommand : ICommand
             new SelectTableNode(
                 new SelectTableReferenceListNode(insertNode.TargetExpressionNode));
         selectNode.TableExpressionNode.SearchConditionNode = insertNode.SearchConditionNode;
-        await new SelectPlanner(executionThread).CreateIteratorAsync(selectNode, cancellationToken: cancellationToken);
+        await new SelectPlanner(executionThread, operationIntentionType: SelectPlanner.OperationIntentionType.Update)
+            .CreateIteratorAsync(selectNode, cancellationToken: cancellationToken);
         var context = selectNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
 
         // Evaluate setters.
