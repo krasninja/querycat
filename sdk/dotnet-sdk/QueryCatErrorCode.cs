@@ -24,6 +24,7 @@ namespace QueryCat.Plugins.Sdk
     INVALID_ARGUMENTS = 7,
     ABORTED = 8,
     CLOSED = 9,
+    NO_ACTION = 10,
     CANNOT_CAST = 100,
     CANNOT_APPLY_OPERATOR = 101,
     INVALID_COLUMN_INDEX = 102,
