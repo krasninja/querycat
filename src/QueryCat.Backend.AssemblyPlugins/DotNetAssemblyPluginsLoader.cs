@@ -169,15 +169,24 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader, IDisposable
         var pluginDllFileDirectory = Path.GetDirectoryName(pluginDll);
         foreach (var file in dllFiles)
         {
-            var fileName = Path.GetFileNameWithoutExtension(file);
-            if (Path.GetFileNameWithoutExtension(file).Equals(pluginDllFileName)
-                || Path.GetDirectoryName(file) != pluginDllFileDirectory
-                || _domainLoadedAssemblies.Contains(fileName))
+            var libraryFile = file;
+
+            var fileName = Path.GetFileNameWithoutExtension(libraryFile);
+            if (_domainLoadedAssemblies.Contains(fileName)
+                || _rawAssembliesCache.ContainsKey(fileName)
+                || Path.GetFileNameWithoutExtension(libraryFile).Equals(pluginDllFileName)
+                || Path.GetDirectoryName(libraryFile) != pluginDllFileDirectory)
             {
                 continue;
             }
 
-            var stream = await CloneStreamAsync(strategy.GetFile(file), cancellationToken);
+            var runtimeSpecificLibraryFile = GetTfmRuntimeSpecificPackageFile(libraryFile, strategy);
+            if (!string.IsNullOrEmpty(runtimeSpecificLibraryFile))
+            {
+                libraryFile = runtimeSpecificLibraryFile;
+            }
+
+            var stream = await CloneStreamAsync(strategy.GetFile(libraryFile), cancellationToken);
             if (stream == Stream.Null)
             {
                 continue;
@@ -193,6 +202,44 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader, IDisposable
             return null;
         }
         return new PluginAssemblyLoadContext(strategy, pluginDllFileName).LoadFromStream(pluginStream);
+    }
+
+    /// <summary>
+    /// Some packages (for example, System.Diagnostics.EventLog) provide
+    /// framework specific versions. If we load them in standard way - we get platform
+    /// not supported exception. This method tries to resolve them from "runtimes" directory.
+    /// </summary>
+    /// <param name="libraryFile">Library file name.</param>
+    /// <param name="pluginLoadStrategy">Plugin load strategy.</param>
+    /// <returns>Target framework runtime specific file.</returns>
+    private static string GetTfmRuntimeSpecificPackageFile(string libraryFile, IPluginLoadStrategy pluginLoadStrategy)
+    {
+        var libraryDirectory = Path.GetDirectoryName(libraryFile);
+        var libraryFileName = Path.GetFileName(libraryFile);
+        var platform = Application.GetPlatform();
+
+        if (string.IsNullOrEmpty(libraryDirectory))
+        {
+            return string.Empty;
+        }
+
+        foreach (var monikerDirectory in _monikerDirectories)
+        {
+            // Example: ./runtimes/win/lib/net9.0 .
+            var runtimePath = Path.Combine(
+                libraryDirectory,
+                "runtimes",
+                platform,
+                "lib",
+                monikerDirectory,
+                libraryFileName);
+            if (pluginLoadStrategy.GetFileSize(runtimePath) > 0)
+            {
+                return runtimePath;
+            }
+        }
+
+        return string.Empty;
     }
 
     private static IPluginLoadStrategy[] GetLoadStrategies(string target) =>

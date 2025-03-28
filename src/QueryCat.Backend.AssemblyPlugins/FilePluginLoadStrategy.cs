@@ -22,11 +22,19 @@ internal sealed class FilePluginLoadStrategy : IPluginLoadStrategy
     }
 
     /// <inheritdoc />
-    public Stream GetFile(string file) => File.OpenRead(file);
+    public Stream GetFile(string file)
+    {
+        if (!File.Exists(file))
+        {
+            return Stream.Null;
+        }
+        return File.OpenRead(file);
+    }
 
     /// <inheritdoc />
     public long GetFileSize(string file)
     {
-        return new FileInfo(file).Length;
+        var fileInfo = new FileInfo(file);
+        return fileInfo.Exists ? file.Length : 0;
     }
 }
