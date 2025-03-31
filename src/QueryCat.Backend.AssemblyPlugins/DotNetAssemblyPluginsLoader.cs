@@ -40,6 +40,9 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader, IDisposable
 
     private static readonly string[] _monikerDirectories =
     [
+#if NET10_0_OR_GREATER
+        "net10.0",
+#endif
 #if NET9_0_OR_GREATER
         "net9.0",
 #endif
