@@ -141,6 +141,10 @@ internal sealed class Program
                 logger.LogError(formatException.Message);
                 return 3;
             }
+            else if (exception is OperationCanceledException)
+            {
+                return 0;
+            }
             else
             {
                 logger.LogCritical(exception, exception.Message);
