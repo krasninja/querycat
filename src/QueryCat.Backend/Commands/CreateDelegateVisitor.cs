@@ -409,23 +409,33 @@ internal partial class CreateDelegateVisitor : AstVisitor
 
     #region Special functions
 
+    private sealed class CastFuncUnit(
+        IFuncUnit action,
+        DataType outputType) : IFuncUnit
+    {
+        /// <inheritdoc />
+        public DataType OutputType => outputType;
+
+        /// <inheritdoc />
+        public async ValueTask<VariantValue> InvokeAsync(IExecutionThread thread, CancellationToken cancellationToken = default)
+        {
+            var expressionValue = await action.InvokeAsync(thread, cancellationToken);
+            if (!expressionValue.TryCast(outputType, out VariantValue result))
+            {
+                ApplyStatistic(thread, ErrorCode.CannotCast);
+                return VariantValue.Null;
+            }
+            return result;
+        }
+    }
+
     /// <inheritdoc />
     public override async ValueTask VisitAsync(CastFunctionNode node, CancellationToken cancellationToken)
     {
         await ResolveTypesVisitor.VisitAsync(node, cancellationToken);
         var expressionAction = NodeIdFuncMap[node.ExpressionNode.Id];
 
-        async ValueTask<VariantValue> Func(IExecutionThread thread, CancellationToken ct)
-        {
-            var expressionValue = await expressionAction.InvokeAsync(thread, ct);
-            if (expressionValue.TryCast(node.TargetTypeNode.Type, out VariantValue result))
-            {
-                return result;
-            }
-            ApplyStatistic(thread, ErrorCode.CannotCast);
-            return VariantValue.Null;
-        }
-        NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, node.GetDataType());
+        NodeIdFuncMap[node.Id] = new CastFuncUnit(expressionAction, node.GetDataType());
     }
 
     private sealed class CoalesceFuncUnit : IFuncUnit
