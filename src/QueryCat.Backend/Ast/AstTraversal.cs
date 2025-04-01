@@ -105,28 +105,35 @@ internal sealed class AstTraversal
         }
         var ignoreTypes = TypesToIgnore.ToArray();
 
-        _traversalStack.Push(new TraversalItem(node));
-        await node.AcceptAsync(_visitor, cancellationToken);
-        while (_traversalStack.Count > 0)
+        try
         {
-            var current = _traversalStack.Peek();
-            if (current.ChildrenEnumerator.MoveNext())
+            _traversalStack.Push(new TraversalItem(node));
+            await node.AcceptAsync(_visitor, cancellationToken);
+            while (_traversalStack.Count > 0)
             {
-                var next = current.CurrentChild;
-                if (!IsIgnoreType(next.GetType(), ignoreTypes))
+                var current = _traversalStack.Peek();
+                if (current.ChildrenEnumerator.MoveNext())
                 {
-                    _traversalStack.Push(new TraversalItem(next));
-                    await next.AcceptAsync(_visitor, cancellationToken);
+                    var next = current.CurrentChild;
+                    if (!IsIgnoreType(next.GetType(), ignoreTypes))
+                    {
+                        _traversalStack.Push(new TraversalItem(next));
+                        await next.AcceptAsync(_visitor, cancellationToken);
+                    }
+                    else if (AcceptBeforeIgnore)
+                    {
+                        await next.AcceptAsync(_visitor, cancellationToken);
+                    }
                 }
-                else if (AcceptBeforeIgnore)
+                else
                 {
-                    await next.AcceptAsync(_visitor, cancellationToken);
+                    _traversalStack.Pop();
                 }
             }
-            else
-            {
-                _traversalStack.Pop();
-            }
+        }
+        finally
+        {
+            _traversalStack.Clear();
         }
     }
 
@@ -144,27 +151,34 @@ internal sealed class AstTraversal
         }
         var ignoreTypes = TypesToIgnore.ToArray();
 
-        _traversalStack.Push(new TraversalItem(node));
-        while (_traversalStack.Count > 0)
+        try
         {
-            var current = _traversalStack.Peek();
-            if (current.ChildrenEnumerator.MoveNext())
+            _traversalStack.Push(new TraversalItem(node));
+            while (_traversalStack.Count > 0)
             {
-                var next = current.CurrentChild;
-                if (!IsIgnoreType(current.CurrentChild.GetType(), ignoreTypes))
+                var current = _traversalStack.Peek();
+                if (current.ChildrenEnumerator.MoveNext())
                 {
-                    _traversalStack.Push(new TraversalItem(next));
+                    var next = current.CurrentChild;
+                    if (!IsIgnoreType(current.CurrentChild.GetType(), ignoreTypes))
+                    {
+                        _traversalStack.Push(new TraversalItem(next));
+                    }
+                    else if (AcceptBeforeIgnore)
+                    {
+                        await next.AcceptAsync(_visitor, cancellationToken);
+                    }
                 }
-                else if (AcceptBeforeIgnore)
+                else
                 {
-                    await next.AcceptAsync(_visitor, cancellationToken);
+                    await current.Node.AcceptAsync(_visitor, cancellationToken);
+                    _traversalStack.Pop();
                 }
             }
-            else
-            {
-                await current.Node.AcceptAsync(_visitor, cancellationToken);
-                _traversalStack.Pop();
-            }
+        }
+        finally
+        {
+            _traversalStack.Clear();
         }
     }
 
