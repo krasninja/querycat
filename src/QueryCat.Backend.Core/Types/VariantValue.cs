@@ -22,8 +22,6 @@ public readonly partial struct VariantValue :
     public const string VoidValueString = "VOID";
     private const string UnknownString = "[unknown]";
 
-    public const string FloatNumberFormat = "F";
-
     private static readonly DataTypeObject _integerObject = IntegerDataTypeObject.Instance;
     private static readonly DataTypeObject _floatObject = FloatDataTypeObject.Instance;
     private static readonly DataTypeObject _timestampObject = TimestampDataTypeObject.Instance;
@@ -33,6 +31,11 @@ public readonly partial struct VariantValue :
     public static VariantValue OneIntegerValue = new(1);
     public static VariantValue TrueValue = new(true);
     public static VariantValue FalseValue = new(false);
+
+    /// <summary>
+    /// Float number formatter that is used for variant value string representation.
+    /// </summary>
+    public static string FloatNumberFormat { get; set; } = "F";
 
     [StructLayout(LayoutKind.Explicit)]
     private readonly struct TypeUnion : IEquatable<TypeUnion>
@@ -755,9 +758,6 @@ public readonly partial struct VariantValue :
         _ => UnknownString,
     };
 
-    /// <inheritdoc />
-    public object Clone() => new VariantValue(this);
-
     /// <summary>
     /// Convert to string according to the format.
     /// </summary>
@@ -837,6 +837,9 @@ public readonly partial struct VariantValue :
 
         return sb.ToString();
     }
+
+    /// <inheritdoc />
+    public object Clone() => new VariantValue(this);
 
     /// <inheritdoc />
     public bool Equals(VariantValue other) => Equals(this, in other);
