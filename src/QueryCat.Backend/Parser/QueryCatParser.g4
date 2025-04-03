@@ -113,7 +113,7 @@ selectSublist
     ;
 
 // Into.
-selectTarget: INTO (into=functionCall | uri=STRING_LITERAL) (FORMAT format=functionCall)?;
+selectTarget: INTO (into=functionCall | uri=STRING_LITERAL | dash='-') (FORMAT format=functionCall)?;
 
 // From.
 selectFromClause:
@@ -195,6 +195,7 @@ insertStatement:
 insertToSource
     : functionCall selectAlias? # InsertNoFormat
     | uri=STRING_LITERAL (FORMAT functionCall)? selectAlias? # InsertWithFormat
+    | '-' (FORMAT format=functionCall)? selectAlias? # InsertStdout
     | name=identifier selectAlias? # InsertFromVariable
     ;
 insertColumnsList: '(' name=identifier (',' name=identifier)* ')';

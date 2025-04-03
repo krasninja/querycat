@@ -831,6 +831,17 @@ public partial class QueryCatParserBaseVisitor<Result> : AbstractParseTreeVisito
 	/// <return>The visitor result.</return>
 	public virtual Result VisitInsertWithFormat([NotNull] QueryCatParser.InsertWithFormatContext context) { return VisitChildren(context); }
 	/// <summary>
+	/// Visit a parse tree produced by the <c>InsertStdout</c>
+	/// labeled alternative in <see cref="QueryCatParser.insertToSource"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitInsertStdout([NotNull] QueryCatParser.InsertStdoutContext context) { return VisitChildren(context); }
+	/// <summary>
 	/// Visit a parse tree produced by the <c>InsertFromVariable</c>
 	/// labeled alternative in <see cref="QueryCatParser.insertToSource"/>.
 	/// <para>

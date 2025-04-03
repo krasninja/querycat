@@ -72,6 +72,12 @@ internal partial class ProgramParserVisitor
     }
 
     /// <inheritdoc />
+    public override IAstNode VisitInsertStdout(QueryCatParser.InsertStdoutContext context)
+    {
+        return new SelectTableFunctionNode(new FunctionCallNode(StdoutFunctionName));
+    }
+
+    /// <inheritdoc />
     public override IAstNode VisitInsertFromVariable(QueryCatParser.InsertFromVariableContext context)
     {
         var alias = this.Visit(context.selectAlias(), SelectAliasNode.Empty).AliasName;

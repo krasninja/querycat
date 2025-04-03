@@ -41,8 +41,8 @@ AST
 
 1. Into node 1 we put a special `VariantValueContainer` ("object_selector_container_key" key). The node's delegate should return the current value of the expression.
 2. Into node 3 we put the delegate to get container of the parent node 1 and fetch its value. We call `GetObjectBySelector` by using container value as start object.
-2. Into node 1 we put its object selector context `ObjectSelectorContext` ("object_selector_key" key).
-3. In delegate of node 2 we do the following steps:
-    - Get container of node 1 (ref step 1).
-    - Get curret list of node 1 (ref step 3).
-    - Iteratate thru the list and set new container value on each step. That way, after calling the `BinaryOperationExpressionNode` delegate we can get the current iterator value and evaluate the filter.
+3. Into node 1 we put its object selector context `ObjectSelectorContext` ("object_selector_key" key).
+4. In delegate of node 2 we do the following steps:
+    - Get the container of node 1 (ref step 1).
+    - Get the current list of node 1 (ref step 3).
+    - Iterate thru the list and set new container value on each step. That way, after calling the `BinaryOperationExpressionNode` delegate we can get the current iterator value and evaluate the filter.

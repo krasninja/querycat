@@ -524,6 +524,13 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitInsertWithFormat([NotNull] QueryCatParser.InsertWithFormatContext context);
 	/// <summary>
+	/// Visit a parse tree produced by the <c>InsertStdout</c>
+	/// labeled alternative in <see cref="QueryCatParser.insertToSource"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitInsertStdout([NotNull] QueryCatParser.InsertStdoutContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>InsertFromVariable</c>
 	/// labeled alternative in <see cref="QueryCatParser.insertToSource"/>.
 	/// </summary>
