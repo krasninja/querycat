@@ -11,17 +11,8 @@ namespace QueryCat.Backend.Ast;
 /// The visitor allows to dump AST into a string for debug
 /// and better graphical representation.
 /// </summary>
-internal sealed class StringDumpAstVisitor : DelegateVisitor
+internal sealed class StringDumpAstVisitor(StringBuilder output) : DelegateVisitor
 {
-    private readonly StringBuilder _output;
-    private readonly AstTraversal _astTraversal;
-
-    public StringDumpAstVisitor(StringBuilder output)
-    {
-        _output = output;
-        _astTraversal = new AstTraversal(this);
-    }
-
     /// <inheritdoc />
     public override ValueTask OnVisitAsync(IAstNode node, CancellationToken cancellationToken)
     {
@@ -32,9 +23,9 @@ internal sealed class StringDumpAstVisitor : DelegateVisitor
     private void PrettyPrintNode(IAstNode node,
         params (string Key, object? Value)[] @params)
     {
-        var ident = (_astTraversal.GetCurrentStack().Count() - 1) * 3;
-        _output.Append(new string(' ', ident));
-        _output.Append($"- <{node.Code}>:");
+        var ident = (AstTraversal.GetCurrentStack().Count() - 1) * 3;
+        output.Append(new string(' ', ident));
+        output.Append($"- <{node.Code}>:");
 
         var paramsString = string.Join(", ",
             @params
@@ -44,9 +35,9 @@ internal sealed class StringDumpAstVisitor : DelegateVisitor
                 .Select(p => $"{p.Key}: {p.Value}"));
         if (!string.IsNullOrEmpty(paramsString))
         {
-            _output.Append($" ({paramsString})");
+            output.Append($" ({paramsString})");
         }
-        _output.AppendLine();
+        output.AppendLine();
 
         PrettyPrintAttributes(ident, node);
     }
@@ -61,8 +52,8 @@ internal sealed class StringDumpAstVisitor : DelegateVisitor
                 foreach (var attribute in attributes)
                 {
                     var value = FormatValue(attribute.Value);
-                    _output.Append(new string(' ', ident));
-                    _output.AppendLine($"  {attribute.Key}: {value}");
+                    output.Append(new string(' ', ident));
+                    output.AppendLine($"  {attribute.Key}: {value}");
                 }
             }
         }
