@@ -23,7 +23,7 @@ public partial class ThriftPluginsServer
         }
 
         /// <inheritdoc />
-        public async Task<RegistrationResult> RegisterPluginAsync(
+        public Task<RegistrationResult> RegisterPluginAsync(
             string registration_token,
             string callback_uri,
             PluginData? plugin_data,
@@ -31,11 +31,11 @@ public partial class ThriftPluginsServer
         {
             if (plugin_data == null)
             {
-                return new RegistrationResult
+                return Task.FromResult(new RegistrationResult
                 {
                     Version = Application.GetVersion(),
                     Token = -1
-                };
+                });
             }
 
             // Validate authentication token.
@@ -87,9 +87,10 @@ public partial class ThriftPluginsServer
             _thriftPluginsServer.ConfirmRegistrationToken(registration_token);
             _thriftPluginsServer._logger.LogDebug("Registered plugin '{PluginName}'.", context.PluginName);
 
-            return new RegistrationResult(
+            return Task.FromResult(new RegistrationResult(
                 token,
-                Application.GetVersion());
+                Application.GetVersion()
+            ));
         }
 
         private ThriftPluginContext CreateClientConnection(string callbackUri)
