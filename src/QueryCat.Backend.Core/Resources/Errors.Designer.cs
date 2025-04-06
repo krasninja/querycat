@@ -182,5 +182,11 @@ namespace QueryCat.Backend.Core.Resources {
                 return ResourceManager.GetString("InvalidNumberOfItems", resourceCulture);
             }
         }
+        
+        internal static string InvalidNumberOfValues {
+            get {
+                return ResourceManager.GetString("InvalidNumberOfValues", resourceCulture);
+            }
+        }
     }
 }

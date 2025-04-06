@@ -87,4 +87,7 @@
   <data name="InvalidNumberOfItems" xml:space="preserve">
     <value>Incorrect number of items for interval.</value>
   </data>
+  <data name="InvalidNumberOfValues" xml:space="preserve">
+    <value>The number of values does not match the number of columns.</value>
+  </data>
 </root>
