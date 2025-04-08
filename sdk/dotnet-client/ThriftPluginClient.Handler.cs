@@ -501,13 +501,24 @@ public partial class ThriftPluginClient
         }
 
         /// <inheritdoc />
-        public Task<long> Blob_GetLengthAsync(int object_handle, CancellationToken cancellationToken = default)
+        public Task<long> Blob_GetLengthAsync(int object_blob_handle, CancellationToken cancellationToken = default)
         {
-            if (_thriftPluginClient._objectsStorage.TryGet<IBlobData>(object_handle, out var blobData)
+            if (_thriftPluginClient._objectsStorage.TryGet<IBlobData>(object_blob_handle, out var blobData)
                 && blobData != null)
             {
                 var length = blobData.Length;
                 return Task.FromResult(length);
+            }
+            throw new QueryCatPluginException(ErrorType.INVALID_OBJECT, Resources.Errors.Object_IsNotBlob);
+        }
+
+        /// <inheritdoc />
+        public Task<string> Blob_GetContentTypeAsync(int object_blob_handle, CancellationToken cancellationToken = default)
+        {
+            if (_thriftPluginClient._objectsStorage.TryGet<IBlobData>(object_blob_handle, out var blobData)
+                && blobData != null)
+            {
+                return Task.FromResult(blobData.ContentType);
             }
             throw new QueryCatPluginException(ErrorType.INVALID_OBJECT, Resources.Errors.Object_IsNotBlob);
         }
@@ -883,6 +894,21 @@ public partial class ThriftPluginClient
             try
             {
                 return _handler.Blob_GetLengthAsync(object_blob_handle, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, Resources.Errors.HandlerInternalError);
+                throw QueryCatPluginExceptionUtils.Create(ex, objectHandle: object_blob_handle);
+            }
+        }
+
+        /// <inheritdoc />
+        public Task<string> Blob_GetContentTypeAsync(int object_blob_handle, CancellationToken cancellationToken = default)
+        {
+            LogCallMethod(nameof(Blob_GetContentTypeAsync));
+            try
+            {
+                return _handler.Blob_GetContentTypeAsync(object_blob_handle, cancellationToken);
             }
             catch (Exception ex)
             {

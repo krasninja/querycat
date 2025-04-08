@@ -38,6 +38,20 @@ public sealed class RemoteStream : Stream
     /// <inheritdoc />
     public override long Position { get; set; }
 
+    /// <summary>
+    /// MIME content type. Optional.
+    /// </summary>
+    public string ContentType
+    {
+        get
+        {
+            return AsyncUtils.RunSync(async ct =>
+            {
+                return await _proxy.Blob_GetContentTypeAsync(_objectHandle, ct);
+            }) ?? string.Empty;
+        }
+    }
+
     public RemoteStream(int objectHandle, IBlobProxyService proxy)
     {
         _objectHandle = objectHandle;

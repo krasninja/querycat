@@ -9,9 +9,13 @@ public sealed class StreamBlobData : IBlobData
     /// <inheritdoc />
     public long Length => _streamFactory.Invoke().Length;
 
-    public StreamBlobData(Func<Stream> streamFactory)
+    /// <inheritdoc />
+    public string ContentType { get; }
+
+    public StreamBlobData(Func<Stream> streamFactory, string? contentType = null)
     {
         _streamFactory = streamFactory;
+        ContentType = contentType ?? "application/octet-stream";
     }
 
     public StreamBlobData(byte[] bytes) : this(() => new MemoryStream(bytes))

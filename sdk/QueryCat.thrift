@@ -232,6 +232,12 @@ service PluginsManager {
     2: required Handle object_blob_handle
   ) throws (1: QueryCatPluginException e),
 
+  // Get binary MIME content type.
+  string Blob_GetContentType(
+    1: required i64 token, // Authorization token.
+    2: required Handle object_blob_handle
+  ) throws (1: QueryCatPluginException e),
+
   // Logging.
   void Log(
     1: required i64 token, // Authorization token.
@@ -421,7 +427,12 @@ service Plugin {
     1: required Handle object_blob_handle
   ) throws (1: QueryCatPluginException e),
 
-  // The method is called to ask client to start server so QueryCat host can make additional connection.
+  // Get binary MIME content type.
+  string Blob_GetContentType(
+    1: required Handle object_blob_handle
+  ) throws (1: QueryCatPluginException e),
+
+  // The method is called to ask client to start new server so QueryCat host can make additional connection.
   string Serve(
   ) throws (1: QueryCatPluginException e),
 }

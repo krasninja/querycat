@@ -10,7 +10,7 @@ namespace QueryCat.Plugins.Sdk;
 /// Decorator for <see cref="Plugin.Client" /> with methods call logging.
 /// </summary>
 [SuppressMessage("ReSharper", "InconsistentNaming")]
-public sealed class PluginClientLogDecorator : Plugin.IAsync
+public sealed partial class PluginClientLogDecorator : Plugin.IAsync
 {
     private readonly Plugin.Client _client;
     private readonly ILogger _logger;
@@ -170,10 +170,10 @@ public sealed class PluginClientLogDecorator : Plugin.IAsync
     }
 
     /// <inheritdoc />
-    public Task<byte[]> Blob_ReadAsync(int object_handle, int offset, int count, CancellationToken cancellationToken = default)
+    public Task<byte[]> Blob_ReadAsync(int object_blob_handle, int offset, int count, CancellationToken cancellationToken = default)
     {
         LogStartMethodCall(nameof(Blob_ReadAsync));
-        return _client.Blob_ReadAsync(object_handle, offset, count, cancellationToken);
+        return _client.Blob_ReadAsync(object_blob_handle, offset, count, cancellationToken);
     }
 
     /// <inheritdoc />
@@ -184,10 +184,17 @@ public sealed class PluginClientLogDecorator : Plugin.IAsync
     }
 
     /// <inheritdoc />
-    public Task<long> Blob_GetLengthAsync(int object_handle, CancellationToken cancellationToken = default)
+    public Task<long> Blob_GetLengthAsync(int object_blob_handle, CancellationToken cancellationToken = default)
     {
         LogStartMethodCall(nameof(Blob_GetLengthAsync));
-        return _client.Blob_GetLengthAsync(object_handle, cancellationToken);
+        return _client.Blob_GetLengthAsync(object_blob_handle, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public Task<string> Blob_GetContentTypeAsync(int object_blob_handle, CancellationToken cancellationToken = default)
+    {
+        LogStartMethodCall(nameof(Blob_GetContentTypeAsync));
+        return _client.Blob_GetContentTypeAsync(object_blob_handle, cancellationToken);
     }
 
     /// <inheritdoc />
@@ -197,7 +204,9 @@ public sealed class PluginClientLogDecorator : Plugin.IAsync
         return _client.ServeAsync(cancellationToken);
     }
 
-    private void LogStartMethodCall(string methodName) => _logger.LogTrace("Call remote method '{MethodName}'.", methodName);
+    [LoggerMessage(Microsoft.Extensions.Logging.LogLevel.Trace, "Start call remote method '{MethodName}'.")]
+    private partial void LogStartMethodCall(string methodName);
 
-    private void LogEndMethodCall(string methodName) => _logger.LogTrace("Call end remote method '{MethodName}'.", methodName);
+    [LoggerMessage(Microsoft.Extensions.Logging.LogLevel.Trace, "Finish call remote method '{MethodName}'.")]
+    private partial void LogEndMethodCall(string methodName);
 }
