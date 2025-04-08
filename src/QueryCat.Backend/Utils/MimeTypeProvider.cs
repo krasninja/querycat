@@ -1,12 +1,12 @@
 using System.Collections.Frozen;
 using System.Collections.Immutable;
 
-namespace QueryCat.Cli.Infrastructure;
+namespace QueryCat.Backend.Utils;
 
 /// <summary>
 /// Provides a mapping between file extensions and MIME types.
 /// </summary>
-public sealed class MimeTypeProvider
+internal sealed class MimeTypesProvider
 {
     public const string ContentTypeJson = "application/json";
     public const string ContentTypeTextPlain = "text/plain";
@@ -115,7 +115,7 @@ public sealed class MimeTypeProvider
     /// Constructor.
     /// </summary>
     /// <param name="mapping">Additional mappings.</param>
-    public MimeTypeProvider(IReadOnlyDictionary<string, string>? mapping = null)
+    public MimeTypesProvider(IReadOnlyDictionary<string, string>? mapping = null)
     {
         _additionalExtensionMimeMapping = (mapping ?? _emptyDictionary).ToFrozenDictionary();
     }
@@ -125,7 +125,7 @@ public sealed class MimeTypeProvider
     /// </summary>
     /// <param name="extension">File extension.</param>
     /// <returns>Specified content type or default binary type.</returns>
-    public string GetContentType(string extension)
+    public string GetContentTypeByExtension(string extension)
     {
         extension = extension.ToLowerInvariant();
         return _additionalExtensionMimeMapping.TryGetValue(extension, out var mime)
@@ -140,7 +140,7 @@ public sealed class MimeTypeProvider
     /// <param name="extension">File extension.</param>
     /// <param name="mime">Specified content type.</param>
     /// <returns><c>True</c> if content type was found, <c>false</c> otherwise.</returns>
-    public bool TryGetContentType(string extension, out string mime)
+    public bool TryGetContentTypeByExtension(string extension, out string mime)
     {
         if (_additionalExtensionMimeMapping.TryGetValue(extension, out var outMime)
             || _extensionMimeMapping.TryGetValue(extension, out outMime))

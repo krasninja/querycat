@@ -10,10 +10,10 @@ using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Formatters;
 using QueryCat.Backend.Storage;
+using QueryCat.Backend.Utils;
 
 namespace QueryCat.Cli.Infrastructure;
 
@@ -37,7 +37,7 @@ internal sealed partial class WebServer
     private readonly string? _password;
     private readonly string? _filesRoot;
     private readonly HashSet<IPAddress> _allowedAddresses;
-    private readonly MimeTypeProvider _mimeTypeProvider = new();
+    private readonly MimeTypesProvider _mimeTypesProvider = new();
     private int? _allowedAddressesSlots;
     private readonly Lock _lockObj = new();
 
@@ -167,7 +167,7 @@ internal sealed partial class WebServer
             }
             catch (QueryCatException e)
             {
-                response.ContentType = MimeTypeProvider.ContentTypeJson;
+                response.ContentType = MimeTypesProvider.ContentTypeJson;
                 response.StatusCode = (int)HttpStatusCode.BadRequest;
                 await using var jsonWriter = new Utf8JsonWriter(response.OutputStream);
                 WriteJsonMessage(jsonWriter, e.Message);
@@ -269,21 +269,21 @@ internal sealed partial class WebServer
             acceptedType = request.ContentType;
         }
 
-        if (acceptedType == MimeTypeProvider.ContentTypeHtml)
+        if (acceptedType == MimeTypesProvider.ContentTypeHtml)
         {
-            response.ContentType = MimeTypeProvider.ContentTypeHtml;
+            response.ContentType = MimeTypesProvider.ContentTypeHtml;
             await using var streamWriter = new StreamWriter(response.OutputStream);
             await WriteHtmlAsync(iterator, streamWriter, cancellationToken);
         }
-        else if (acceptedType == MimeTypeProvider.ContentTypeJson)
+        else if (acceptedType == MimeTypesProvider.ContentTypeJson)
         {
-            response.ContentType = MimeTypeProvider.ContentTypeJson;
+            response.ContentType = MimeTypesProvider.ContentTypeJson;
             await using var jsonWriter = new Utf8JsonWriter(response.OutputStream);
             await WriteJsonAsync(iterator, jsonWriter, cancellationToken);
         }
         else
         {
-            response.ContentType = MimeTypeProvider.ContentTypeTextPlain;
+            response.ContentType = MimeTypesProvider.ContentTypeTextPlain;
             await WriteTextAsync(iterator, response.OutputStream, cancellationToken);
         }
     }
@@ -323,12 +323,12 @@ internal sealed partial class WebServer
         {
             using var sr = new StreamReader(request.InputStream);
             var text = sr.ReadToEnd();
-            if (request.ContentType == MimeTypeProvider.ContentTypeTextPlain
-                || request.ContentType == MimeTypeProvider.ContentTypeForm)
+            if (request.ContentType == MimeTypesProvider.ContentTypeTextPlain
+                || request.ContentType == MimeTypesProvider.ContentTypeForm)
             {
                 return new WebServerQueryData(text);
             }
-            else if (request.ContentType == MimeTypeProvider.ContentTypeJson)
+            else if (request.ContentType == MimeTypesProvider.ContentTypeJson)
             {
                 return JsonSerializer.Deserialize(text, SourceGenerationContext.Default.WebServerQueryData)
                     ?? new WebServerQueryData();
@@ -490,7 +490,7 @@ internal sealed partial class WebServer
 
         // Set content type.
         var extension = Path.GetExtension(uri);
-        response.ContentType = _mimeTypeProvider.GetContentType(extension);
+        response.ContentType = _mimeTypesProvider.GetContentTypeByExtension(extension);
 
         // Format: "{Namespace}.{Folder}.{filename}.{Extension}"
         await using Stream? stream = assembly.GetManifestResourceStream(uri);

@@ -648,7 +648,7 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
         if (result.Object.Type == ObjectType.BLOB)
         {
             var blobProxy = new PluginBlobProxyService(context);
-            return new StreamBlobData(() => new RemoteStream(result.Object.Handle, blobProxy));
+            return new RemoteBlobProxy(new RemoteStream(result.Object.Handle, blobProxy));
         }
         if (result.Object.Type == ObjectType.ROWS_FORMATTER)
         {

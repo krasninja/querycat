@@ -20,6 +20,11 @@ public sealed class RemoteBlobProxy : IBlobData
         _remoteStream = new RemoteStream(handle, new PluginManagerBlobProxyService(client, token));
     }
 
+    public RemoteBlobProxy(RemoteStream remoteStream)
+    {
+        _remoteStream = remoteStream;
+    }
+
     /// <inheritdoc />
     public Stream GetStream() => _remoteStream;
 }
