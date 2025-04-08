@@ -4,18 +4,14 @@ using QueryCat.Backend.Storage;
 
 namespace QueryCat.Backend.Commands.Select.Inputs;
 
-[DebuggerDisplay("Key = {Key}, IsExpired = {IsExpired}")]
+[DebuggerDisplay("Key = {Key}")]
 internal sealed class CacheEntry
 {
     private const int ChunkSize = 4096;
 
     public CacheKey Key { get; }
 
-    public DateTime ExpireAt { get; }
-
     public ChunkList<VariantValue> Cache { get; } = new(ChunkSize);
-
-    public bool IsExpired => DateTime.UtcNow >= ExpireAt;
 
     public bool IsCompleted { get; private set; }
 
@@ -23,12 +19,11 @@ internal sealed class CacheEntry
 
     public bool HasCacheEntries => Cache.Count > 0;
 
-    public int RefCount { get; set; } = 0;
+    public int RefCount { get; set; }
 
-    public CacheEntry(CacheKey key, TimeSpan expireAt)
+    public CacheEntry(CacheKey key)
     {
         Key = key;
-        ExpireAt = DateTime.UtcNow + expireAt;
     }
 
     public void Complete()

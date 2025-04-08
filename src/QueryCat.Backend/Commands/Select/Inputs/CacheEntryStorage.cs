@@ -6,8 +6,6 @@ namespace QueryCat.Backend.Commands.Select.Inputs;
 
 internal sealed class CacheEntryStorage : ICacheEntryStorage
 {
-    private static readonly TimeSpan _expireTime = TimeSpan.FromMinutes(1);
-
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(CacheEntryStorage));
     private readonly Dictionary<CacheKey, CacheEntry> _entries = new();
 
@@ -39,7 +37,7 @@ internal sealed class CacheEntryStorage : ICacheEntryStorage
             }
         }
 
-        entry = new CacheEntry(key, _expireTime);
+        entry = new CacheEntry(key);
         _entries.Add(key, entry);
         if (_logger.IsEnabled(LogLevel.Debug))
         {
@@ -51,7 +49,7 @@ internal sealed class CacheEntryStorage : ICacheEntryStorage
     private void RemoveExpiredAndIncompleteKeys()
     {
         var toRemove = _entries
-            .Where(ce => ce.Value.RefCount == 0 && (ce.Value.IsExpired || !ce.Value.IsCompleted))
+            .Where(ce => ce.Value.RefCount == 0 && !ce.Value.IsCompleted)
             .Select(ce => ce.Key)
             .ToList();
         foreach (var removeItem in toRemove)
