@@ -4,6 +4,7 @@ using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Functions;
 
 namespace QueryCat.Backend.FunctionsManager;
 
@@ -45,11 +46,31 @@ public sealed partial class DefaultFunctionsManager : IFunctionsManager
         }
 
         LogRegisterFunction(function.Name);
+        RegisterFormatters(name, function.Formatters);
+    }
 
-        foreach (var formatterId in function.Formatters)
+    private static void RegisterFormatters(string callFunctionName, string[] formatters)
+    {
+        var extension = string.Empty;
+        var mimeType = string.Empty;
+        foreach (var formatterId in formatters)
         {
             Formatters.FormattersInfo.RegisterFormatter(formatterId,
-                (fm, et, args) => fm.CallFunctionAsync(name, et, args));
+                (fm, et, args) => fm.CallFunctionAsync(callFunctionName, et, args));
+
+            if (formatterId.StartsWith('.') && formatterId.Length < 10)
+            {
+                extension = formatterId;
+            }
+            else if (!formatterId.StartsWith('.') && formatterId.Contains('/'))
+            {
+                mimeType = formatterId;
+            }
+
+            if (!string.IsNullOrEmpty(extension) && !string.IsNullOrEmpty(mimeType))
+            {
+                IOFunctions.MimeTypesProvider.SetMimeAndExtension(extension, mimeType);
+            }
         }
     }
 

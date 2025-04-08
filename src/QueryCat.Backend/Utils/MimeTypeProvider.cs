@@ -107,7 +107,7 @@ internal sealed class MimeTypesProvider
             [".zip"] = "application/zip",
         }.ToFrozenDictionary();
 
-    private readonly IReadOnlyDictionary<string, string> _additionalExtensionMimeMapping;
+    private readonly IDictionary<string, string> _additionalExtensionMimeMapping;
 
     private static readonly IReadOnlyDictionary<string, string> _emptyDictionary = ImmutableDictionary<string, string>.Empty;
 
@@ -117,7 +117,7 @@ internal sealed class MimeTypesProvider
     /// <param name="mapping">Additional mappings.</param>
     public MimeTypesProvider(IReadOnlyDictionary<string, string>? mapping = null)
     {
-        _additionalExtensionMimeMapping = (mapping ?? _emptyDictionary).ToFrozenDictionary();
+        _additionalExtensionMimeMapping = (mapping ?? _emptyDictionary).ToDictionary();
     }
 
     /// <summary>
@@ -150,5 +150,15 @@ internal sealed class MimeTypesProvider
         }
         mime = string.Empty;
         return false;
+    }
+
+    /// <summary>
+    /// Add or set the new mapping of extension to MIME type.
+    /// </summary>
+    /// <param name="extension">File extension (like .avi).</param>
+    /// <param name="mime">MIME type.</param>
+    public void SetMimeAndExtension(string extension, string mime)
+    {
+        _additionalExtensionMimeMapping[extension.ToLowerInvariant()] = mime;
     }
 }

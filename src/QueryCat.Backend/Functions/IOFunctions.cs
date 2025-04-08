@@ -19,6 +19,8 @@ internal static class IOFunctions
 
     private static readonly MimeTypesProvider _mimeTypesProvider = new();
 
+    public static MimeTypesProvider MimeTypesProvider => _mimeTypesProvider;
+
     [SafeFunction]
     [Description("Read data from a URI.")]
     [FunctionSignature("read(uri: string, fmt?: object<IRowsFormatter>): object<IRowsInput>")]
