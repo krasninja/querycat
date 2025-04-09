@@ -72,7 +72,7 @@ internal partial class WebServer
         _executionThread.TopScope.Variables["path"] = new VariantValue(path);
         var result = await _executionThread.RunAsync(_selectFilesQuery, cancellationToken: cancellationToken);
         _logger.LogInformation("[{Address}] Dir: {Path}", request.RemoteEndPoint.Address, path);
-        await WriteIteratorAsync(RowsIteratorConverter.Convert(result), request, response, cancellationToken);
+        await WriteValueAsync(result, request, response, cancellationToken);
     }
 
     private async Task Files_ServeFile(string file, HttpListenerRequest request, HttpListenerResponse response, CancellationToken cancellationToken)

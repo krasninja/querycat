@@ -18,7 +18,7 @@ public sealed class StreamBlobData : IBlobData
         ContentType = contentType ?? "application/octet-stream";
     }
 
-    public StreamBlobData(byte[] bytes) : this(() => new MemoryStream(bytes))
+    public StreamBlobData(byte[] bytes, string? contentType = null) : this(() => new MemoryStream(bytes), contentType)
     {
     }
 

@@ -358,7 +358,7 @@ public partial struct VariantValue
         {
             success = true;
             var bytes = System.Text.Encoding.UTF8.GetBytes(value ?? string.Empty);
-            return new StreamBlobData(bytes);
+            return new StreamBlobData(bytes, "text/plain");
         }
 
         #endregion

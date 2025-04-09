@@ -215,7 +215,7 @@ internal sealed partial class WebServer
         _logger.LogInformation("[{Address}] Query: {QueryData}", request.RemoteEndPoint.Address, queryData);
         var lastResult = await _executionThread.RunAsync(queryData.Query, queryData.ParametersAsDict, cancellationToken);
 
-        await WriteIteratorAsync(RowsIteratorConverter.Convert(lastResult), request, response, cancellationToken);
+        await WriteValueAsync(lastResult, request, response, cancellationToken);
     }
 
     private async Task HandleSchemaApiActionAsync(HttpListenerRequest request, HttpListenerResponse response, CancellationToken cancellationToken)
@@ -238,8 +238,7 @@ internal sealed partial class WebServer
             {
                 var schema = await FunctionCaller.CallWithArgumentsAsync(Backend.Functions.InfoFunctions.Schema, thread,
                     [rowsSchema], cancellationToken);
-                await WriteIteratorAsync(RowsIteratorConverter.Convert(schema), request, response,
-                    cancellationToken);
+                await WriteValueAsync(schema, request, response, cancellationToken);
                 e.ContinueExecution = false;
             }
         }
@@ -257,34 +256,45 @@ internal sealed partial class WebServer
 
     #endregion
 
-    private async Task WriteIteratorAsync(
-        IRowsIterator iterator,
+    private async Task WriteValueAsync(
+        VariantValue value,
         HttpListenerRequest request,
         HttpListenerResponse response,
         CancellationToken cancellationToken)
     {
-        var acceptedType = request.AcceptTypes?.FirstOrDefault();
-        if (string.IsNullOrEmpty(acceptedType) || acceptedType == "*/*")
+        if (value.Type == DataType.Blob && value.AsObjectUnsafe is IBlobData blobData)
         {
-            acceptedType = request.ContentType;
-        }
-
-        if (acceptedType == MimeTypesProvider.ContentTypeHtml)
-        {
-            response.ContentType = MimeTypesProvider.ContentTypeHtml;
-            await using var streamWriter = new StreamWriter(response.OutputStream);
-            await WriteHtmlAsync(iterator, streamWriter, cancellationToken);
-        }
-        else if (acceptedType == MimeTypesProvider.ContentTypeJson)
-        {
-            response.ContentType = MimeTypesProvider.ContentTypeJson;
-            await using var jsonWriter = new Utf8JsonWriter(response.OutputStream);
-            await WriteJsonAsync(iterator, jsonWriter, cancellationToken);
+            response.ContentType = blobData.ContentType;
+            await using var blobStream = blobData.GetStream();
+            await blobStream.CopyToAsync(response.OutputStream, cancellationToken);
+            await blobStream.FlushAsync(cancellationToken);
         }
         else
         {
-            response.ContentType = MimeTypesProvider.ContentTypeTextPlain;
-            await WriteTextAsync(iterator, response.OutputStream, cancellationToken);
+            var acceptedType = request.AcceptTypes?.FirstOrDefault();
+            if (string.IsNullOrEmpty(acceptedType) || acceptedType == "*/*")
+            {
+                acceptedType = request.ContentType;
+            }
+
+            var iterator = RowsIteratorConverter.Convert(value);
+            if (acceptedType == MimeTypesProvider.ContentTypeHtml)
+            {
+                response.ContentType = MimeTypesProvider.ContentTypeHtml;
+                await using var streamWriter = new StreamWriter(response.OutputStream);
+                await WriteHtmlAsync(iterator, streamWriter, cancellationToken);
+            }
+            else if (acceptedType == MimeTypesProvider.ContentTypeJson)
+            {
+                response.ContentType = MimeTypesProvider.ContentTypeJson;
+                await using var jsonWriter = new Utf8JsonWriter(response.OutputStream);
+                await WriteJsonAsync(iterator, jsonWriter, cancellationToken);
+            }
+            else
+            {
+                response.ContentType = MimeTypesProvider.ContentTypeTextPlain;
+                await WriteTextAsync(iterator, response.OutputStream, cancellationToken);
+            }
         }
     }
 
