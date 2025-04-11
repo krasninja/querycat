@@ -269,7 +269,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
         // If we still read cache data - we just reset it. Otherwise, there will be double read.
         if (_cacheIterator != null)
         {
-            _cacheIterator.SeekToHead();
+            _cacheIterator.SeekCacheCursorToHead();
         }
         else
         {
@@ -333,7 +333,8 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
         if (DetectColumnsTypes)
         {
             // Move iterator, after that we are able to fill initial columns set.
-            var hasData = await inputIterator.MoveNextAsync(cancellationToken);
+            var cacheIterator = new CacheRowsIterator(inputIterator);
+            var hasData = await cacheIterator.MoveNextAsync(cancellationToken);
             if (!hasData)
             {
                 return;
@@ -341,12 +342,9 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
 
             // Prepare cache iterator. Analyze might read data which we cache and
             // then provide from memory instead from input source.
-            var cacheIterator = new CacheRowsIterator(inputIterator);
-            cacheIterator.AddRow(inputIterator.Current);
-            cacheIterator.SeekToHead();
-
+            cacheIterator.SeekCacheCursorToHead();
             await AnalyzeAsync(cacheIterator, cancellationToken);
-            cacheIterator.SeekToHead();
+            cacheIterator.SeekCacheCursorToHead();
             cacheIterator.Freeze();
             _cacheIterator = cacheIterator;
         }

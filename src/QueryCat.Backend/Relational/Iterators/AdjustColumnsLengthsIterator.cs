@@ -81,7 +81,7 @@ public class AdjustColumnsLengthsIterator : IRowsIterator, IRowsIteratorParent
             }
         }
         _isInitialized = true;
-        _cacheRowsIterator.Seek(-1, CursorSeekOrigin.Begin);
+        _cacheRowsIterator.SeekCacheCursorToHead();
     }
 
     /// <inheritdoc />

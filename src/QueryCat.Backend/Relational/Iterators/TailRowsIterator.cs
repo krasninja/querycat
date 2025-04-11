@@ -73,13 +73,13 @@ public sealed class TailRowsIterator : IRowsIterator, IRowsIteratorParent
         {
             while (await _rowsIterator.MoveNextAsync(cancellationToken))
             {
-                _cacheRowsIterator.AddRow(_rowsIterator.Current);
+                _cacheRowsIterator.AddLast(_rowsIterator.Current);
                 if (_cacheRowsIterator.TotalRows > _tailCount && _cacheRowsIterator.TotalRows > 0)
                 {
-                    _cacheRowsIterator.RemoveRowAt(0);
+                    _cacheRowsIterator.RemoveFirst();
                 }
             }
-            _cacheRowsIterator.SeekToHead();
+            _cacheRowsIterator.SeekCacheCursorToHead();
         }
 
         _isInitialized = true;
