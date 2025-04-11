@@ -102,11 +102,9 @@ public partial class ThriftPluginClient : IDisposable
 #endif
 
         // Server pipe.
-        var serverEndpoint = new Uri(args.ServerEndpoint);
-        if (!string.IsNullOrEmpty(args.DebugServerPath))
-        {
-            serverEndpoint = ThriftTransportUtils.FormatTransportUri(ThriftTransportType.NamedPipes, TestPipeName);
-        }
+        var serverEndpoint = !string.IsNullOrEmpty(args.DebugServerPath)
+            ? ThriftTransportUtils.FormatTransportUri(ThriftTransportType.NamedPipes, TestPipeName)
+            : new Uri(args.ServerEndpoint);
         _pluginServerUri = serverEndpoint;
 
         // Auth token.
