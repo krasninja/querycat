@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Initial implementation of Delete command.
+- Add function "cache_input".
 
 ### Fixed
 

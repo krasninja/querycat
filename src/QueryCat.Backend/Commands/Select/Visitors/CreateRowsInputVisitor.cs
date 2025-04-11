@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Ast;
+using QueryCat.Backend.Ast.Nodes.Function;
 using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Commands.Select.Inputs;
 using QueryCat.Backend.Core;
@@ -20,6 +21,7 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
     private readonly IExecutionThread<ExecutionOptions> _executionThread;
     private readonly SelectCommandContext _context;
     private readonly ResolveTypesVisitor _resolveTypesVisitor;
+    private readonly CreateDelegateVisitor _createDelegateVisitor;
 
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(CreateRowsInputVisitor));
 
@@ -27,36 +29,65 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
     {
         _executionThread = executionThread;
         _context = context;
-        _resolveTypesVisitor = new ResolveTypesVisitor(executionThread);
         AstTraversal.TypesToIgnore.Add(typeof(SelectQuerySpecificationNode));
         AstTraversal.TypesToIgnore.Add(typeof(SelectQueryCombineNode));
         AstTraversal.AcceptBeforeIgnore = true;
+
+        _resolveTypesVisitor = new ResolveTypesVisitor(executionThread);
+        if (_context.Parent != null)
+        {
+            _resolveTypesVisitor = new SelectResolveTypesVisitor(_executionThread, _context.Parent);
+        }
+        _createDelegateVisitor = new CreateDelegateVisitorWithValueStore(executionThread, _resolveTypesVisitor);
     }
 
     /// <inheritdoc />
     public override async ValueTask VisitAsync(SelectTableFunctionNode node, CancellationToken cancellationToken)
     {
-        // Determine types for the node.
-        var typesVisitor = _resolveTypesVisitor;
-        if (_context.Parent != null)
-        {
-            typesVisitor = new SelectResolveTypesVisitor(_executionThread, _context.Parent);
-        }
-        await typesVisitor.RunAsync(node.TableFunctionNode, cancellationToken);
-
-        var @delegate = await new CreateDelegateVisitor(_executionThread, typesVisitor)
-            .RunAndReturnAsync(node.TableFunctionNode, cancellationToken);
-        var source = await @delegate.InvokeAsync(_executionThread, cancellationToken);
-        var inputContext = await CreateRowsInputAsync(source, node.Alias, cancellationToken);
-        inputContext.Alias = node.Alias;
-        _context.AddInput(inputContext);
-
-        SetAlias(inputContext.RowsInput, node.Alias);
-
-        node.SetAttribute(AstAttributeKeys.RowsInputKey, inputContext.RowsInput);
+        var rowsInput = await VisitFunctionNodeInternalAsync(node.TableFunctionNode, node.Alias, cancellationToken);
+        node.SetAttribute(AstAttributeKeys.RowsInputKey, rowsInput);
+        node.TableFunctionNode.SetAttribute(AstAttributeKeys.RowsInputKey, rowsInput);
     }
 
-    private async Task<SelectCommandInputContext> CreateRowsInputAsync(VariantValue source, string alias, CancellationToken cancellationToken)
+    /// <inheritdoc />
+    public override async ValueTask VisitAsync(FunctionCallNode node, CancellationToken cancellationToken)
+    {
+        var selectTableFunc = AstTraversal.GetFirstParent<SelectTableFunctionNode>();
+        if (selectTableFunc != null)
+        {
+            var rowsInput = await VisitFunctionNodeInternalAsync(node, string.Empty, cancellationToken);
+            node.SetAttribute(AstAttributeKeys.RowsInputKey, rowsInput);
+        }
+    }
+
+    private async ValueTask<IRowsInput?> VisitFunctionNodeInternalAsync(FunctionCallNode node, string alias,
+        CancellationToken cancellationToken)
+    {
+        // If we already have rows input assign - do not create a new one.
+        var rowsInput = node.GetAttribute<IRowsInput>(AstAttributeKeys.RowsInputKey);
+        if (rowsInput != null)
+        {
+            return node.GetRequiredAttribute<IRowsInput>(AstAttributeKeys.RowsInputKey);
+        }
+
+        // Determine types for the node.
+        await _resolveTypesVisitor.RunAsync(node, cancellationToken);
+
+        var @delegate = await _createDelegateVisitor.RunAndReturnAsync(node, cancellationToken);
+        var source = await @delegate.InvokeAsync(_executionThread, cancellationToken);
+        var inputContext = await CreateRowsInputAsync(source, alias, cancellationToken);
+        if (inputContext == null)
+        {
+            return null;
+        }
+        inputContext.Alias = alias;
+        SetAlias(inputContext.RowsInput, alias);
+        _context.AddInput(inputContext);
+
+        return inputContext.RowsInput;
+    }
+
+    private async ValueTask<SelectCommandInputContext?> CreateRowsInputAsync(VariantValue source, string alias, CancellationToken cancellationToken)
     {
         if (DataTypeUtils.IsSimple(source.Type))
         {
@@ -83,7 +114,7 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
             return new SelectCommandInputContext(new RowsIteratorInput(rowsIterator));
         }
 
-        throw new QueryCatException(Resources.Errors.InvalidRowsInput);
+        return null;
     }
 
     private static void SetAlias(IRowsInput input, string alias)
@@ -95,6 +126,68 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
         foreach (var column in input.Columns)
         {
             column.SourceName = alias;
+        }
+    }
+
+    /// <summary>
+    /// Create delegate and cache created object. When we traverse the tree like below:
+    ///
+    /// SELECT * FROM cache_input(read_file('1.csv') FORMAT csv();
+    /// SelectTableFunctionNode (n1)
+    ///                     \
+    ///                     |--------------------------------------
+    ///                     |                                     \
+    ///                     FunctionCallNode (cache_input(), n2)   FunctionCallNode (arg csv(), n3)
+    ///                                  \
+    ///                                  FunctionCallNode (arg read_file(), n4)
+    ///
+    /// When we reach n1 we run CreateDelegateVisitor and call all other functions. Then we reach n2 (n4) and call them
+    /// again so we create new rows input. To prevent duplicate objects creation, we override FunctionCallNode
+    /// and return the existing object instead of creation of a new one.
+    /// </summary>
+    private sealed class CreateDelegateVisitorWithValueStore : CreateDelegateVisitor
+    {
+        /// <summary>
+        /// NodeId -> Object map.
+        /// </summary>
+        private readonly Dictionary<int, VariantValue> _nodeIdFuncMap = new();
+
+        private sealed class FunctionCallFuncUnitFacade(
+            IFuncUnit func,
+            int nodeId,
+            IDictionary<int, VariantValue> cacheMap) : IFuncUnit
+        {
+            /// <inheritdoc />
+            public DataType OutputType => func.OutputType;
+
+            /// <inheritdoc />
+            public async ValueTask<VariantValue> InvokeAsync(IExecutionThread thread, CancellationToken cancellationToken = default)
+            {
+                if (cacheMap.TryGetValue(nodeId, out var value))
+                {
+                    return value;
+                }
+                value = await func.InvokeAsync(thread, cancellationToken);
+                if (value.Type == DataType.Object)
+                {
+                    cacheMap[nodeId] = value;
+                }
+                return value;
+            }
+        }
+
+        /// <inheritdoc />
+        public CreateDelegateVisitorWithValueStore(IExecutionThread<ExecutionOptions> thread, ResolveTypesVisitor resolveTypesVisitor)
+            : base(thread, resolveTypesVisitor)
+        {
+        }
+
+        /// <inheritdoc />
+        public override async ValueTask VisitAsync(FunctionCallNode node, CancellationToken cancellationToken)
+        {
+            await base.VisitAsync(node, cancellationToken);
+            var func = NodeIdFuncMap[node.Id];
+            NodeIdFuncMap[node.Id] = new FunctionCallFuncUnitFacade(func, node.Id, _nodeIdFuncMap);
         }
     }
 }
