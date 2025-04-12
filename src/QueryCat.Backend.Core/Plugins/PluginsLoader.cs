@@ -62,9 +62,8 @@ public abstract class PluginsLoader : IPluginsLoader
     /// Get correct plugins files.
     /// </summary>
     /// <param name="options">Loading options.</param>
-    /// <param name="skipDuplicates">Skip duplicate files to avoid double loading.</param>
     /// <returns>Plugins files.</returns>
-    protected internal IEnumerable<string> GetPluginFiles(PluginsLoadingOptions options, bool skipDuplicates = true)
+    protected internal IEnumerable<string> GetPluginFiles(PluginsLoadingOptions options)
     {
         var plugins = new Dictionary<string, PluginInfoWithPath>();
         var files = new List<string>();
@@ -114,7 +113,7 @@ public abstract class PluginsLoader : IPluginsLoader
             }
         }
 
-        return skipDuplicates ? plugins.Values.Select(v => v.Path) : files;
+        return options.SkipDuplicates ? plugins.Values.Select(v => v.Path) : files;
     }
 
     /// <summary>
