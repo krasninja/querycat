@@ -44,7 +44,7 @@ public sealed class DefaultPluginsManager : IPluginsManager, IDisposable
     /// <returns>Files.</returns>
     public IEnumerable<string> GetPluginFiles()
     {
-        foreach (var file in _pluginsLoader.GetPluginFiles(skipDuplicates: false))
+        foreach (var file in _pluginsLoader.GetPluginFiles(new PluginsLoadingOptions(), skipDuplicates: false))
         {
             if (_pluginsLoader.IsCorrectPluginFile(file))
             {

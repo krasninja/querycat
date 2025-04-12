@@ -128,7 +128,7 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader, IDisposable
     {
         var loadedCount = 0;
 
-        foreach (var pluginFile in GetPluginFiles())
+        foreach (var pluginFile in GetPluginFiles(options))
         {
             _logger.LogDebug("Load plugin file '{PluginFile}'.", pluginFile);
             var strategies = GetLoadStrategies(pluginFile);
