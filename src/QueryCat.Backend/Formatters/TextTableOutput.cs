@@ -239,12 +239,7 @@ public sealed class TextTableOutput : RowsOutput, IDisposable, IAsyncDisposable
                 continue;
             }
 
-            var lengths = new[]
-            {
-                columns[i].Length
-            };
-            _columnsLengths[i] = lengths.Max();
-
+            _columnsLengths[i] = columns[i].Length;
             _streamWriter.Write(_separatorWithSpace);
             _streamWriter.Write(new string('-', _columnsLengths[i]));
             _streamWriter.Write(' ');
@@ -311,7 +306,7 @@ public sealed class TextTableOutput : RowsOutput, IDisposable, IAsyncDisposable
                     _streamWriter.Write(_separatorWithSpace);
                     separatorLength = _separatorWithSpace.Length;
                 }
-                currentMaxLength += separatorLength + columns[i].Length;
+                currentMaxLength += separatorLength + columns[i].Length + 1;
                 _totalMaxLineLength[i] = currentMaxLength;
             }
             return;
@@ -334,7 +329,8 @@ public sealed class TextTableOutput : RowsOutput, IDisposable, IAsyncDisposable
                 separatorLength = _separatorWithSpace.Length;
             }
             _streamWriter.Write(columns[i].FullName.PadRight(_columnsLengths[i]));
-            currentMaxLength += separatorLength + columns[i].Length;
+            _streamWriter.Write(' ');
+            currentMaxLength += separatorLength + columns[i].Length + 1;
             _totalMaxLineLength[i] = currentMaxLength;
         }
         _streamWriter.WriteLine();
@@ -348,17 +344,13 @@ public sealed class TextTableOutput : RowsOutput, IDisposable, IAsyncDisposable
                 continue;
             }
 
-            var lengths = new[]
-            {
-                columns[i].Length
-            };
-            _columnsLengths[i] = lengths.Max();
+            _columnsLengths[i] = columns[i].Length;
 
             if (i > 0)
             {
                 _streamWriter.Write("+-");
             }
-            _streamWriter.Write(new string('-', _columnsLengths[i]));
+            _streamWriter.Write(new string('-', _columnsLengths[i] + 1));
         }
         _streamWriter.WriteLine();
     }
