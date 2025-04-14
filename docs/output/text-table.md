@@ -42,18 +42,18 @@ $ qcat query --output-style Table1 --var movies=./Data/MoviesTitles.csv "select 
 ```
 $ qcat query --output-style Table2 --var movies=./Data/MoviesTitles.csv "select top 10 * except m.filename from movies m"
 
-m.imdb_id | m.rating_id| m.title          | m.year| m.director       | m.runtime| m.imdb_rating
-----------+------------+------------------+-------+------------------+----------+--------------
-tt0468569 | 4          | The Dark Knight  | 2008  | Christopher Nolan | 152     | 9.00         
-tt0944947 | 105        | Game of Thrones  | 2011  | N/A              | 57       | 9.20         
-tt9174582 | 105        | Brassic          | 2019  | N/A              | 50       | 8.40         
-tt2442560 | 105        | Peaky Blinders   | 2013  | N/A              | 60       | 8.80         
-tt8090284 | 1          | Tri kota         | 2015  | N/A              | 5        | 7.10         
-tt6966692 | 4          | Green Book       | 2018  | Peter Farrelly   | 130      | 8.20         
-tt0099785 | 3          | Home Alone       | 1990  | Chris Columbus   | 103      | 7.70         
-tt0095016 | 5          | Die Hard         | 1988  | John McTiernan   | 132      | 8.20         
-tt0120201 | 5          | Starship Troopers | 1997 | Paul Verhoeven   | 129      | 7.30         
-tt0112573 | 5          | Braveheart       | 1995  | Mel Gibson       | 178      | 8.40
+m.imdb_id  | m.rating_id | m.title           | m.year | m.director        | m.runtime | m.imdb_rating 
+-----------+-------------+-------------------+--------+-------------------+-----------+---------------
+tt0468569  | 4           | The Dark Knight   | 2008   | Christopher Nolan | 152       | 9.00          
+tt0944947  | 105         | Game of Thrones   | 2011   | N/A               | 57        | 9.20          
+tt9174582  | 105         | Brassic           | 2019   | N/A               | 50        | 8.40          
+tt2442560  | 105         | Peaky Blinders    | 2013   | N/A               | 60        | 8.80          
+tt8090284  | 1           | Tri kota          | 2015   | N/A               | 5         | 7.10          
+tt6966692  | 4           | Green Book        | 2018   | Peter Farrelly    | 130       | 8.20          
+tt0099785  | 3           | Home Alone        | 1990   | Chris Columbus    | 103       | 7.70          
+tt0095016  | 5           | Die Hard          | 1988   | John McTiernan    | 132       | 8.20          
+tt0120201  | 5           | Starship Troopers | 1997   | Paul Verhoeven    | 129       | 7.30          
+tt0112573  | 5           | Braveheart        | 1995   | Mel Gibson        | 178       | 8.40
 ```
 
 ### NoSpaceTable
