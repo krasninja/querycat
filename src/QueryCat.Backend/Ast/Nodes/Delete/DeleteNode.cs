@@ -27,6 +27,16 @@ internal sealed class DeleteNode : AstNode
     }
 
     /// <inheritdoc />
+    public override IEnumerable<IAstNode> GetChildren()
+    {
+        yield return DeleteTargetNode;
+        if (SearchConditionNode != null)
+        {
+            yield return SearchConditionNode;
+        }
+    }
+
+    /// <inheritdoc />
     public override object Clone() => new DeleteNode(this);
 
     /// <inheritdoc />

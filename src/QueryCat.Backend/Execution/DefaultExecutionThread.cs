@@ -246,7 +246,7 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IAsync
         var programNode = AstBuilder.BuildProgramFromString(query);
 
         // Set first executing statement and run.
-        var executingStatement = programNode.Statements.FirstOrDefault();
+        var executingStatement = programNode.Body.Statements.FirstOrDefault();
 
         // Setup timer.
         if (_deepLevel == 1)

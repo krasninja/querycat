@@ -39,6 +39,12 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitProgram([NotNull] QueryCatParser.ProgramContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="QueryCatParser.programBody"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitProgramBody([NotNull] QueryCatParser.ProgramBodyContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>StatementFunctionCall</c>
 	/// labeled alternative in <see cref="QueryCatParser.statement"/>.
 	/// </summary>
@@ -108,6 +114,34 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitStatementIf([NotNull] QueryCatParser.StatementIfContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>StatementWhile</c>
+	/// labeled alternative in <see cref="QueryCatParser.statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitStatementWhile([NotNull] QueryCatParser.StatementWhileContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>StatementFor</c>
+	/// labeled alternative in <see cref="QueryCatParser.statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitStatementFor([NotNull] QueryCatParser.StatementForContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>StatementBreak</c>
+	/// labeled alternative in <see cref="QueryCatParser.statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitStatementBreak([NotNull] QueryCatParser.StatementBreakContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>StatementContinue</c>
+	/// labeled alternative in <see cref="QueryCatParser.statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitStatementContinue([NotNull] QueryCatParser.StatementContinueContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>StatementExpression</c>
 	/// labeled alternative in <see cref="QueryCatParser.statement"/>.
@@ -608,6 +642,30 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitIfCondition([NotNull] QueryCatParser.IfConditionContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="QueryCatParser.whileStatement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitWhileStatement([NotNull] QueryCatParser.WhileStatementContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="QueryCatParser.forStatement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitForStatement([NotNull] QueryCatParser.ForStatementContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="QueryCatParser.breakStatement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitBreakStatement([NotNull] QueryCatParser.BreakStatementContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="QueryCatParser.continueStatement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitContinueStatement([NotNull] QueryCatParser.ContinueStatementContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>IdentifierSimpleNoQuotes</c>
 	/// labeled alternative in <see cref="QueryCatParser.identifierSimple"/>.

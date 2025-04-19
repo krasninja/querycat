@@ -6,18 +6,17 @@ namespace QueryCat.Backend.Ast.Nodes;
 /// </summary>
 internal sealed class ProgramNode : AstNode
 {
-    public List<StatementNode> Statements { get; } = new();
+    public ProgramBodyNode Body { get; }
 
     /// <inheritdoc />
     public override string Code => "program";
 
-    public ProgramNode(params IList<StatementNode> statements)
+    public ProgramNode(ProgramBodyNode bodyNode)
     {
-        Statements.AddRange(statements);
+        Body = bodyNode;
     }
 
-    public ProgramNode(ProgramNode node) : this(
-        node.Statements.Select(s => (StatementNode)s.Clone()).ToList())
+    public ProgramNode(ProgramNode node) : this((ProgramBodyNode)node.Body.Clone())
     {
         node.CopyTo(this);
     }
@@ -27,11 +26,11 @@ internal sealed class ProgramNode : AstNode
         => visitor.VisitAsync(this, cancellationToken);
 
     /// <inheritdoc />
-    public override IEnumerable<IAstNode> GetChildren() => Statements;
+    public override IEnumerable<IAstNode> GetChildren()
+    {
+        yield return Body;
+    }
 
     /// <inheritdoc />
     public override object Clone() => new ProgramNode(this);
-
-    /// <inheritdoc />
-    public override string ToString() => $"program: {Statements.Count} statement(-s)";
 }

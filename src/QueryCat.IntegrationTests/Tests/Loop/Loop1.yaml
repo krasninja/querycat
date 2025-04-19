@@ -1,0 +1,9 @@
+expected: |
+  2
+skip: true
+query: |
+  declare i int;
+  for r in generate_series(1, 100) loop
+    set i := i + r;
+  end loop;
+  select i;

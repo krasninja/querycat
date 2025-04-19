@@ -11,7 +11,8 @@ options {
  * Program statements.
  */
 
-program: SEMICOLON* statement (SEMICOLON statement)* SEMICOLON* EOF;
+program: programBody EOF;
+programBody: SEMICOLON* statement (SEMICOLON statement)* SEMICOLON*;
 
 statement
     : functionCall # StatementFunctionCall
@@ -24,6 +25,10 @@ statement
     | echoStatement # StatementEcho
     | callStatement # StatementCall
     | ifStatement # StatementIf
+    | whileStatement # StatementWhile
+    | forStatement # StatementFor
+    | breakStatement # StatementBreak
+    | continueStatement # StatementContinue
     | expression # StatementExpression
     ;
 
@@ -247,6 +252,44 @@ ifStatement:
     (ELSEIF elseIf=ifCondition)*
     (ELSE elseBlock=blockExpression)?;
 ifCondition: condition=expression THEN block=blockExpression;
+
+/*
+ * ===============
+ * WHILE command.
+ * ===============
+ */
+
+whileStatement:
+    WHILE expression LOOP
+        programBody
+    END LOOP;
+
+/*
+ * ===============
+ * FOR command.
+ * ===============
+ */
+
+forStatement:
+    FOR target=identifierSimple IN query=expression LOOP
+        programBody
+    END LOOP;
+
+/*
+ * ===============
+ * BREAK command.
+ * ===============
+ */
+
+breakStatement: BREAK;
+
+/*
+ * ===============
+ * CONTINUE command.
+ * ===============
+ */
+
+continueStatement: CONTINUE;
 
 /*
  * ===============

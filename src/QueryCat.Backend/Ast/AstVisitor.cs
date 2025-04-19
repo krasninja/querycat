@@ -2,6 +2,7 @@ using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Call;
 using QueryCat.Backend.Ast.Nodes.Declare;
 using QueryCat.Backend.Ast.Nodes.Delete;
+using QueryCat.Backend.Ast.Nodes.For;
 using QueryCat.Backend.Ast.Nodes.Function;
 using QueryCat.Backend.Ast.Nodes.If;
 using QueryCat.Backend.Ast.Nodes.Insert;
@@ -136,6 +137,11 @@ internal abstract class AstVisitor
     }
 
     public virtual ValueTask VisitAsync(ProgramNode node, CancellationToken cancellationToken)
+    {
+        return ValueTask.CompletedTask;
+    }
+
+    public virtual ValueTask VisitAsync(ProgramBodyNode node, CancellationToken cancellationToken)
     {
         return ValueTask.CompletedTask;
     }
@@ -519,6 +525,20 @@ internal abstract class AstVisitor
     }
 
     public virtual ValueTask VisitAsync(UpdateStatementNode node, CancellationToken cancellationToken)
+    {
+        return ValueTask.CompletedTask;
+    }
+
+    #endregion
+
+    #region For
+
+    public virtual ValueTask VisitAsync(ForNode node, CancellationToken cancellationToken)
+    {
+        return ValueTask.CompletedTask;
+    }
+
+    public virtual ValueTask VisitAsync(ForStatementNode node, CancellationToken cancellationToken)
     {
         return ValueTask.CompletedTask;
     }
