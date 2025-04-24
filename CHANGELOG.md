@@ -10,7 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Initial implementation of Delete command.
-- Add function "cache_input".
+- Add functions "cache_input", "blob_from_file".
+- Extended support for BLOBs.
 
 ### Fixed
 

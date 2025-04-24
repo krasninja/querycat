@@ -45,6 +45,10 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
     public override async ValueTask VisitAsync(SelectTableFunctionNode node, CancellationToken cancellationToken)
     {
         var rowsInput = await VisitFunctionNodeInternalAsync(node.TableFunctionNode, node.Alias, cancellationToken);
+        if (rowsInput == null)
+        {
+            throw new QueryCatException(Resources.Errors.InvalidRowsInput);
+        }
         node.SetAttribute(AstAttributeKeys.RowsInputKey, rowsInput);
         node.TableFunctionNode.SetAttribute(AstAttributeKeys.RowsInputKey, rowsInput);
     }

@@ -36,6 +36,7 @@ nav:
     - 'XML': output/xml.md
   - 'Functions':
     - 'Aggregate': functions/aggregate.md
+    - 'BLOB': functions/blob.md
     - 'Crypto': functions/crypto.md
     - 'Date and Time': functions/datetime.md
     - 'Info': functions/info.md

@@ -37,6 +37,21 @@ internal static class IOFunctions
         return await ReadFileAsync(thread, cancellationToken);
     }
 
+    [SafeFunction]
+    [Description("Read data from a BLOB.")]
+    [FunctionSignature("read(\"blob\": blob): object<IRowsInput>")]
+    public static async ValueTask<VariantValue> ReadBlobAsync(IExecutionThread thread, CancellationToken cancellationToken)
+    {
+        var blob = thread.Stack[0].AsBlob;
+        if (blob == null)
+        {
+            return VariantValue.Null;
+        }
+        var formatter = await File_GetFormatterAsync(blob.ContentType, thread, null, cancellationToken);
+        var input = formatter.OpenInput(blob);
+        return VariantValue.CreateFromObject(input);
+    }
+
     [Description("Write data to a URI.")]
     [FunctionSignature("write(uri: string, fmt?: object<IRowsFormatter>): object<IRowsOutput>")]
     public static ValueTask<VariantValue> WriteAsync(IExecutionThread thread, CancellationToken cancellationToken)
@@ -198,6 +213,11 @@ internal static class IOFunctions
         CancellationToken cancellationToken = default)
     {
         var extension = File_GetExtension(path);
+        if (string.IsNullOrEmpty(extension) && path.Contains('/'))
+        {
+            // Consider this can be MIME.
+            extension = path;
+        }
         var formatter = await FormattersInfo.CreateFormatterAsync(extension, thread, funcArgs, cancellationToken);
         return formatter ?? new TextLineFormatter();
     }
@@ -512,6 +532,7 @@ internal static class IOFunctions
         functionsManager.RegisterFunction(Stdin);
 
         functionsManager.RegisterFunction(ReadAsync);
+        functionsManager.RegisterFunction(ReadBlobAsync);
         functionsManager.RegisterFunction(WriteAsync);
         functionsManager.RegisterFunction(ListDirectory);
 
