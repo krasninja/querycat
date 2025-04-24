@@ -1,5 +1,6 @@
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
+using QueryCat.Backend.Ast.Nodes.Declare;
 using QueryCat.Backend.Ast.Nodes.Function;
 using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Ast.Nodes.SpecialFunctions;
@@ -279,6 +280,17 @@ internal class ResolveTypesVisitor : AstVisitor
     {
         await new SelectPlanner(ExecutionThread, this).CreateIteratorAsync(node, cancellationToken: cancellationToken);
         node.ColumnsListNode.ColumnsNodes[0].CopyTo<DataType>(AstAttributeKeys.TypeKey, node);
+    }
+
+    #endregion
+
+    #region Declare
+
+    /// <inheritdoc />
+    public override ValueTask VisitAsync(DeclareNode node, CancellationToken cancellationToken)
+    {
+        node.SetDataType(node.Type);
+        return ValueTask.CompletedTask;
     }
 
     #endregion

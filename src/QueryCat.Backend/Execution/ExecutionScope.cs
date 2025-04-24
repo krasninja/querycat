@@ -23,7 +23,7 @@ public sealed class ExecutionScope : IExecutionScope
     /// Constructor.
     /// </summary>
     /// <param name="parent">Parent execution scope.</param>
-    public ExecutionScope(IExecutionScope? parent)
+    internal ExecutionScope(IExecutionScope? parent)
     {
         _parent = parent;
     }

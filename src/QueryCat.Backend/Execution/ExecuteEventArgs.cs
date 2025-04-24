@@ -1,4 +1,5 @@
 using QueryCat.Backend.Ast.Nodes;
+using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Execution;
 
@@ -17,6 +18,11 @@ public sealed class ExecuteEventArgs : EventArgs
     /// Current executing statement.
     /// </summary>
     internal StatementNode ExecutingStatementNode { get; set; }
+
+    /// <summary>
+    /// Last statement execution result.
+    /// </summary>
+    internal VariantValue Result { get; set; } = VariantValue.Null;
 
     internal ExecuteEventArgs(StatementNode executingStatementNode)
     {

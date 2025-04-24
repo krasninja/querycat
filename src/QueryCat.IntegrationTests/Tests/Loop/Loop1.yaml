@@ -1,9 +1,8 @@
 expected: |
-  2
-skip: true
+  15
 query: |
-  declare i int;
-  for r in generate_series(1, 100) loop
-    set i := i + r;
+  declare i int := 0;
+  for r in generate_series(1, 5) loop
+    set i := i + r[0];
   end loop;
   select i;

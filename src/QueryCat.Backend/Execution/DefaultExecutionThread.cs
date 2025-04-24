@@ -22,27 +22,82 @@ namespace QueryCat.Backend.Execution;
 /// </summary>
 public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IAsyncDisposable
 {
-    internal const string BootstrapFileName = "rc.sql";
+    private const string BootstrapFileName = "rc.sql";
 
     private readonly AstVisitor _statementsVisitor;
     private int _deepLevel;
-    private readonly List<IDisposable> _disposablesList = new();
-    private bool _isInCallback;
 
     /// <inheritdoc />
     public IInputConfigStorage ConfigStorage { get; }
 
     private IExecutionScope _topScope;
-    private readonly IExecutionScope _rootScope;
     private bool _bootstrapScriptExecuted;
     private bool _configLoaded;
     private readonly Stopwatch _stopwatch = new();
     private readonly AsyncLock _asyncLock = new();
 
-    /// <summary>
-    /// Root (base) thread scope.
-    /// </summary>
-    internal IExecutionScope RootScope => _rootScope;
+    private sealed class DefaultBodyFuncUnit : StatementsBlockFuncUnit
+    {
+        private readonly DefaultExecutionThread _executionThread;
+        private bool _isInCallback;
+
+        /// <inheritdoc />
+        public DefaultBodyFuncUnit(DefaultExecutionThread executionThread, ProgramBodyNode programBodyNode)
+            : base(new StatementsVisitor(executionThread), programBodyNode)
+        {
+            _executionThread = executionThread;
+        }
+
+        /// <inheritdoc />
+        protected override async ValueTask<VariantValue> InvokeStatementAsync(
+            IExecutionThread thread,
+            IFuncUnit funcUnit,
+            StatementNode statementNode,
+            CancellationToken cancellationToken = default)
+        {
+            var executionThread = (DefaultExecutionThread)thread;
+
+            // Before.
+            if (executionThread.StatementExecuting != null && !_isInCallback)
+            {
+                _isInCallback = true;
+                var executeEventArgs = new ExecuteEventArgs(statementNode);
+                executionThread.StatementExecuting.Invoke(this, executeEventArgs);
+                _isInCallback = false;
+                if (!executeEventArgs.ContinueExecution)
+                {
+                    Jump = ExecutionJump.Halt;
+                    return VariantValue.Null;
+                }
+            }
+
+            // Invoke.
+            var result = await base.InvokeStatementAsync(thread, funcUnit, statementNode, cancellationToken);
+
+            // After.
+            if (executionThread.StatementExecuted != null && !_isInCallback)
+            {
+                _isInCallback = true;
+                var executeEventArgs = new ExecuteEventArgs(statementNode);
+                executeEventArgs.Result = result;
+                executionThread.StatementExecuted.Invoke(this, executeEventArgs);
+                _isInCallback = false;
+                if (!executeEventArgs.ContinueExecution)
+                {
+                    Jump = ExecutionJump.Halt;
+                    return VariantValue.Null;
+                }
+            }
+
+            // Write result.
+            if (_executionThread.Options.DefaultRowsOutput != NullRowsOutput.Instance)
+            {
+                await _executionThread.Write(result, cancellationToken);
+            }
+
+            return result;
+        }
+    }
 
     /// <summary>
     /// AST builder.
@@ -88,11 +143,6 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IAsync
     public IPluginsManager PluginsManager { get; internal set; } = NullPluginsManager.Instance;
 
     /// <summary>
-    /// Last execution statement return value.
-    /// </summary>
-    public VariantValue LastResult { get; private set; } = VariantValue.Null;
-
-    /// <summary>
     /// The event to be called before any statement execution.
     /// </summary>
     public event EventHandler<ExecuteEventArgs>? StatementExecuting;
@@ -120,8 +170,7 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IAsync
         Tag = tag;
         _statementsVisitor = new StatementsVisitor(this);
 
-        _rootScope = new ExecutionScope(parent: null);
-        _topScope = _rootScope;
+        _topScope = new ExecutionScope(parent: null);
     }
 
     /// <summary>
@@ -137,7 +186,6 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IAsync
             executionThread.CompletionSource,
             executionThread.Tag)
     {
-        _rootScope = new ExecutionScope(parent: null);
 #if ENABLE_PLUGINS
         PluginsManager = executionThread.PluginsManager;
 #endif
@@ -245,92 +293,33 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IAsync
     {
         var programNode = AstBuilder.BuildProgramFromString(query);
 
-        // Set first executing statement and run.
-        var executingStatement = programNode.Body.Statements.FirstOrDefault();
-
         // Setup timer.
         if (_deepLevel == 1)
         {
             _stopwatch.Restart();
         }
 
-        if (executingStatement == null)
-        {
-            return VariantValue.Null;
-        }
         if (parameters != null && parameters.Keys.Count > 0)
         {
             var scope = PushScope();
             SetScopeVariables(scope, parameters);
         }
         return Options.QueryTimeout != TimeSpan.Zero
-            ? await RunWithTimeoutAsync(ct => ExecuteStatementAsync(executingStatement, ct), cancellationToken)
-            : await ExecuteStatementAsync(executingStatement, cancellationToken);
+            ? await RunWithTimeoutAsync(ct => ExecuteStatementAsync(programNode.Body, ct), cancellationToken)
+            : await ExecuteStatementAsync(programNode.Body, cancellationToken);
     }
 
-    private async Task<VariantValue> ExecuteStatementAsync(StatementNode executingStatement, CancellationToken cancellationToken)
+    private async Task<VariantValue> ExecuteStatementAsync(ProgramBodyNode bodyNode, CancellationToken cancellationToken)
     {
-        var executeEventArgs = new ExecuteEventArgs(executingStatement);
-        StatementNode? currentStatement = executingStatement;
-        while (currentStatement != null)
-        {
-            executeEventArgs.ExecutingStatementNode = currentStatement;
-
-            // Evaluate the command.
-            var commandContext = await _statementsVisitor.RunAndReturnAsync(currentStatement, cancellationToken);
-            if (commandContext is IDisposable disposable)
-            {
-                _disposablesList.Add(disposable);
-            }
-
-            // Fire "before" event.
-            if (StatementExecuting != null && !_isInCallback)
-            {
-                _isInCallback = true;
-                StatementExecuting.Invoke(this, executeEventArgs);
-                _isInCallback = false;
-            }
-            if (!executeEventArgs.ContinueExecution)
-            {
-                break;
-            }
-
-            // Run the command.
-            LastResult = await commandContext.InvokeAsync(this, cancellationToken);
-
-            // Fire "after" event.
-            if (StatementExecuted != null && !_isInCallback)
-            {
-                _isInCallback = true;
-                StatementExecuted.Invoke(this, executeEventArgs);
-                _isInCallback = false;
-            }
-            if (!executeEventArgs.ContinueExecution)
-            {
-                break;
-            }
-
-            // Write result.
-            if (Options.DefaultRowsOutput != NullRowsOutput.Instance)
-            {
-                await Write(LastResult, cancellationToken);
-            }
-
-            if (cancellationToken.IsCancellationRequested)
-            {
-                break;
-            }
-
-            // Get the next statement to execute.
-            currentStatement = currentStatement.NextNode;
-        }
+        await using var bodyFuncUnit = new DefaultBodyFuncUnit(this, bodyNode);
+        var result = await bodyFuncUnit.InvokeAsync(this, cancellationToken);
 
         if (Options.UseConfig)
         {
             await ConfigStorage.SaveAsync(cancellationToken);
         }
 
-        return LastResult;
+        return result;
     }
 
     /// <summary>
@@ -482,10 +471,10 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IAsync
                 if (!isOpened)
                 {
                     rowsOutput.QueryContext = new RowsOutputQueryContext(rowsIterator.Columns);
-                    await rowsOutput.OpenAsync(cancellationToken);
+                    await rowsOutput.OpenAsync(ct);
                     isOpened = true;
                 }
-                await rowsOutput.WriteValuesAsync(rowsIterator.Current.Values, cancellationToken);
+                await rowsOutput.WriteValuesAsync(rowsIterator.Current.Values, ct);
             }
         }
 
@@ -552,11 +541,6 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IAsync
         if (disposing)
         {
             _asyncLock.Dispose();
-            foreach (var disposable in _disposablesList)
-            {
-                disposable.Dispose();
-            }
-            _disposablesList.Clear();
         }
     }
 
@@ -570,18 +554,6 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IAsync
     protected virtual async ValueTask DisposeAsyncCore()
     {
         await _asyncLock.DisposeAsync();
-        foreach (var disposable in _disposablesList)
-        {
-            if (disposable is IAsyncDisposable asyncDisposable)
-            {
-                await asyncDisposable.DisposeAsync();
-            }
-            else
-            {
-                disposable.Dispose();
-            }
-        }
-        _disposablesList.Clear();
     }
 
     /// <inheritdoc />

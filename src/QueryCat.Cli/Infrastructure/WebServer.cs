@@ -232,9 +232,8 @@ internal sealed partial class WebServer
         var thread = (DefaultExecutionThread)_executionThread;
         async void ThreadOnStatementExecuted(object? sender, ExecuteEventArgs e)
         {
-            var result = thread.LastResult;
-            if (!result.IsNull && result.Type == DataType.Object
-                && result.AsObject is IRowsSchema rowsSchema)
+            if (!e.Result.IsNull && e.Result.Type == DataType.Object
+                && e.Result.AsObject is IRowsSchema rowsSchema)
             {
                 var schema = await FunctionCaller.CallWithArgumentsAsync(Backend.Functions.InfoFunctions.Schema, thread,
                     [rowsSchema], cancellationToken);

@@ -10,12 +10,12 @@ internal class ParametersUsage : BaseUsage
     {
         await using var executionThread = new ExecutionThreadBootstrapper().Create();
 
-        await executionThread.RunAsync("hello || ' ' || world", new Dictionary<string, VariantValue>
+        var result = await executionThread.RunAsync("hello || ' ' || world", new Dictionary<string, VariantValue>
         {
             ["hello"] = new("Hello"),
             ["world"] = new("World!"),
         });
 
-        Console.WriteLine(executionThread.LastResult.AsString); // Hello World!
+        Console.WriteLine(result.AsString); // Hello World!
     }
 }

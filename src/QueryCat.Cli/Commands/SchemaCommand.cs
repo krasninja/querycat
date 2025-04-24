@@ -25,14 +25,13 @@ internal class SchemaCommand : BaseQueryCommand
             applicationOptions.InitializeLogger();
             var root = await applicationOptions.CreateStdoutApplicationRootAsync();
             var thread = root.Thread;
-            thread.StatementExecuted += async (_, threadArgs) =>
+            thread.StatementExecuted += async (_, args) =>
             {
-                var result = thread.LastResult;
-                if (!result.IsNull
-                    && result.Type == DataType.Object
-                    && result.AsObject is IRowsSchema rowsSchema)
+                if (!args.Result.IsNull
+                    && args.Result.Type == DataType.Object
+                    && args.Result.AsObject is IRowsSchema rowsSchema)
                 {
-                    threadArgs.ContinueExecution = false;
+                    args.ContinueExecution = false;
                     var schema = await FunctionCaller.CallWithArgumentsAsync(InfoFunctions.Schema, thread, [rowsSchema]);
                     thread.TopScope.Variables["result"] = schema;
                     await thread.RunAsync("result", cancellationToken: context.GetCancellationToken());

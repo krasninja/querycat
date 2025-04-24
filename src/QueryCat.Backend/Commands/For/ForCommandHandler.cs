@@ -1,27 +1,27 @@
+using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Commands.For;
 
-internal sealed class ForCommandHandler : IFuncUnit
+internal sealed class ForCommandHandler : StatementsBlockFuncUnit
 {
     private readonly string _variableName;
     private readonly IRowsIterator _rowsIterator;
-    private readonly IFuncUnit _loopFuncUnit;
 
-    /// <inheritdoc />
-    public DataType OutputType => DataType.Void;
-
-    public ForCommandHandler(string variable, IRowsIterator iterator, IFuncUnit loopBodyFuncUnit)
+    public ForCommandHandler(
+        StatementsVisitor statementsVisitor,
+        ProgramBodyNode bodyNode,
+        string variable,
+        IRowsIterator iterator) : base(statementsVisitor, bodyNode)
     {
         _variableName = variable;
         _rowsIterator = iterator;
-        _loopFuncUnit = loopBodyFuncUnit;
     }
 
     /// <inheritdoc />
-    public async ValueTask<VariantValue> InvokeAsync(IExecutionThread thread, CancellationToken cancellationToken = default)
+    public override async ValueTask<VariantValue> InvokeAsync(IExecutionThread thread, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -30,7 +30,7 @@ internal sealed class ForCommandHandler : IFuncUnit
             while (await _rowsIterator.MoveNextAsync(cancellationToken))
             {
                 scope.Variables[_variableName] = VariantValue.CreateFromObject(_rowsIterator.Current);
-                await _loopFuncUnit.InvokeAsync(thread, cancellationToken);
+                await base.InvokeAsync(thread, cancellationToken);
             }
         }
         finally

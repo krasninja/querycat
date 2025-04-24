@@ -1,14 +1,19 @@
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.For;
-using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
-using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Storage;
 
 namespace QueryCat.Backend.Commands.For;
 
 internal sealed class ForCommand : ICommand
 {
+    private readonly StatementsVisitor _statementsVisitor;
+
+    public ForCommand(StatementsVisitor statementsVisitor)
+    {
+        _statementsVisitor = statementsVisitor;
+    }
+
     /// <inheritdoc />
     public async Task<IFuncUnit> CreateHandlerAsync(
         IExecutionThread<ExecutionOptions> executionThread,
@@ -22,11 +27,6 @@ internal sealed class ForCommand : ICommand
         var queryValue = await query.InvokeAsync(executionThread, cancellationToken);
         var iterator = RowsIteratorConverter.Convert(queryValue);
 
-        var scope = executionThread.PushScope();
-        scope.Variables[forNode.TargetVariableName] = VariantValue.CreateFromObject(new Row(iterator.Current));
-        var loopBody = await new CreateDelegateVisitor(executionThread)
-            .RunAndReturnAsync(forNode.ProgramBodyNode, cancellationToken);
-        executionThread.PopScope();
-        return new ForCommandHandler(forNode.TargetVariableName, iterator, loopBody);
+        return new ForCommandHandler(_statementsVisitor, forNode.ProgramBodyNode, forNode.TargetVariableName, iterator);
     }
 }

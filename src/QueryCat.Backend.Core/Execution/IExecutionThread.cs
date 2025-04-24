@@ -97,7 +97,7 @@ public interface IExecutionThread : IDisposable
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Create the new variables scope based on top of the current.
+    /// Create the new variables and execution scope based on top of the current one.
     /// </summary>
     /// <returns>Instance of <see cref="IExecutionScope" />.</returns>
     IExecutionScope PushScope();
@@ -105,7 +105,7 @@ public interface IExecutionThread : IDisposable
     /// <summary>
     /// Pop the current execution scope for stack and return it.
     /// </summary>
-    /// <returns>Instance of <see cref="IExecutionScope" />.</returns>
+    /// <returns>Instance of <see cref="IExecutionScope" /> or null if it is the top scope.</returns>
     IExecutionScope? PopScope();
 }
 

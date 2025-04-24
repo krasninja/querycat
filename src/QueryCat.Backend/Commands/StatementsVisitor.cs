@@ -158,7 +158,7 @@ internal sealed class StatementsVisitor : CreateDelegateVisitor
     /// <inheritdoc />
     public override async ValueTask VisitAsync(ForStatementNode node, CancellationToken cancellationToken)
     {
-        var handler = await new ForCommand().CreateHandlerAsync(_executionThread, node, cancellationToken);
+        var handler = await new ForCommand(this).CreateHandlerAsync(_executionThread, node, cancellationToken);
         NodeIdFuncMap.Add(node.Id, handler);
     }
 }
