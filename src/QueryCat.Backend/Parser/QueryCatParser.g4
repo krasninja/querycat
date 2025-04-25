@@ -55,7 +55,7 @@ functionCallArg: (identifierSimple ASSOCIATION)? expression;
  * ===============
  */
 
-declareVariable: DECLARE identifierSimple type (':=' statement)?;
+declareVariable: DECLARE identifierSimple (':=' statement)?;
 setVariable: SET identifier ':=' statement;
 
 /*

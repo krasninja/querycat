@@ -1,12 +1,12 @@
 expected: |
   True,False,{"value":"1"},2
 query: |
-  declare json string := '
+  declare json := '
   {
     "a": 1,
     "b": [3, 1]
   }';
-  declare nojson string := '{a"a":6}';
+  declare nojson := '{a"a":6}';
   select
     is_json(json),
     is_json(nojson),

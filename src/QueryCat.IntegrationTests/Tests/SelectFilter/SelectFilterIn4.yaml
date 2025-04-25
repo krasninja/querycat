@@ -1,5 +1,5 @@
 expected: |
   China
 query: |
-  DECLARE var object := string_to_table('China Russia USA', ' ');
+  DECLARE var := string_to_table('China Russia USA', ' ');
   SELECT name FROM 'Countries2.csv' WHERE "name" in var;

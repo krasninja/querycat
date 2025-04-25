@@ -140,7 +140,7 @@ internal class QueryAstVisitor : AstVisitor
     /// <inheritdoc />
     public override ValueTask VisitAsync(DeclareNode node, CancellationToken cancellationToken)
     {
-        var str = $"DECLARE {node.Name} {GetTypeString(node.Type)}";
+        var str = $"DECLARE {node.Name}";
         if (node.ValueNode != null)
         {
             str += " := " + Get(node.ValueNode);

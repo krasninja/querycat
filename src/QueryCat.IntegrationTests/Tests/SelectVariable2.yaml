@@ -1,5 +1,5 @@
 expected: |
   1
 query: |
-  declare x integer := (select 1);
+  declare x := (select 1);
   select x;

@@ -2,7 +2,7 @@ expected: |
   1,,,Sport
   ,,"{""town"":""Cheltenham"",""county"":""Gloucestershire"",""country"":""England""}","[""Sport"",""Water polo""]"
 query: |
-  declare json string := '
+  declare json := '
   {
     "info": {
       "type": 1,

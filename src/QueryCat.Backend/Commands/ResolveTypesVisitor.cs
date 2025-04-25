@@ -289,7 +289,10 @@ internal class ResolveTypesVisitor : AstVisitor
     /// <inheritdoc />
     public override ValueTask VisitAsync(DeclareNode node, CancellationToken cancellationToken)
     {
-        node.SetDataType(node.Type);
+        if (node.ValueNode != null)
+        {
+            node.SetDataType(node.ValueNode.GetDataType());
+        }
         return ValueTask.CompletedTask;
     }
 

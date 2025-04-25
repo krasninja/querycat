@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add functions "cache_input", "blob_from_file".
 - Extended support for BLOBs.
 
+### Changed
+
+- "Declare" command does not need type statement anymore.
+
 ### Fixed
 
 - Improve Update command support.

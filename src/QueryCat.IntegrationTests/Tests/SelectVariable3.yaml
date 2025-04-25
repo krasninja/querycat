@@ -2,6 +2,6 @@ expected: |
   Benjamin Glover
   Max Mills
 query: |
-  declare x object := (select * from 'Employees1.csv');
+  declare x := (select * from 'Employees1.csv');
   select full_name from x where x.employee_id = 9;
   select full_name from x where x.employee_id = 8;
