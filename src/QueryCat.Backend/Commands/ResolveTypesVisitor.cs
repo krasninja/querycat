@@ -120,8 +120,7 @@ internal class ResolveTypesVisitor : AstVisitor
             return true;
         }
 
-        var scope = ExecutionThread.TopScope;
-        if (ExecutionThread.TryGetVariable(name, out var value, scope))
+        if (ExecutionThread.TopScope.TryGetVariable(name, out var value))
         {
             var valueType = value.Type;
             if (valueType == DataType.Object && node.HasSelectors)

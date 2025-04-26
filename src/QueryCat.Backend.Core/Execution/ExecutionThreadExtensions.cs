@@ -47,21 +47,19 @@ public static class ExecutionThreadExtensions
     /// </summary>
     /// <param name="executionThread">Instance of <see cref="IExecutionThread" />.</param>
     /// <param name="name">Variable name.</param>
-    /// <param name="scope">Scope instance.</param>
     /// <returns>True if variable with the specified name is found, false otherwise.</returns>
-    public static bool ContainsVariable(this IExecutionThread executionThread, string name, IExecutionScope? scope = null)
-        => executionThread.TryGetVariable(name, out _, scope);
+    public static bool ContainsVariable(this IExecutionThread executionThread, string name)
+        => executionThread.TopScope.TryGetVariable(name, out _);
 
     /// <summary>
     /// Get variable value from top scope to the root recursively.
     /// </summary>
     /// <param name="executionThread">Instance of <see cref="IExecutionThread" />.</param>
-    /// <param name="scope">Scope instance.</param>
     /// <param name="name">Variable name.</param>
     /// <returns>Value or NULL if not found.</returns>
-    public static VariantValue GetVariable(this IExecutionThread executionThread, string name, IExecutionScope? scope = null)
+    public static VariantValue GetVariable(this IExecutionThread executionThread, string name)
     {
-        if (executionThread.TryGetVariable(name, out var value, scope))
+        if (executionThread.TopScope.TryGetVariable(name, out var value))
         {
             return value;
         }

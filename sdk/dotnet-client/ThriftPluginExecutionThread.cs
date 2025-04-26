@@ -1,7 +1,5 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using QueryCat.Backend.Core.Data;
@@ -9,7 +7,6 @@ using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Plugins;
 using QueryCat.Backend.Core.Utils;
-using PluginsManager = QueryCat.Plugins.Sdk.PluginsManager;
 using VariantValue = QueryCat.Backend.Core.Types.VariantValue;
 
 namespace QueryCat.Plugins.Client;
@@ -45,14 +42,6 @@ public sealed class ThriftPluginExecutionThread : IExecutionThread
 
     /// <inheritdoc />
     public IExecutionStack Stack { get; }
-
-#pragma warning disable CS0067
-    /// <inheritdoc />
-    public event EventHandler<ResolveVariableEventArgs>? VariableResolving;
-
-    /// <inheritdoc />
-    public event EventHandler<ResolveVariableEventArgs>? VariableResolved;
-#pragma warning disable CS0067
 
     /// <inheritdoc />
     public IObjectSelector ObjectSelector => NullObjectSelector.Instance;
@@ -96,13 +85,6 @@ public sealed class ThriftPluginExecutionThread : IExecutionThread
         {
             CurrentQuery = string.Empty;
         }
-    }
-
-    /// <inheritdoc />
-    public bool TryGetVariable(string name, out VariantValue value, IExecutionScope? scope = null)
-    {
-        value = TopScope.Variables[name];
-        return !value.IsNull;
     }
 
     /// <inheritdoc />

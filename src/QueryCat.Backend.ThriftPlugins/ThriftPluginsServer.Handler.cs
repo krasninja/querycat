@@ -155,7 +155,7 @@ public partial class ThriftPluginsServer
         public Task<VariantValue> GetVariableAsync(long token, string name, CancellationToken cancellationToken = default)
         {
             _thriftPluginsServer.VerifyToken(token);
-            if (_thriftPluginsServer._executionThread.TryGetVariable(name, out var value))
+            if (_thriftPluginsServer._executionThread.TopScope.TryGetVariable(name, out var value))
             {
                 return Task.FromResult(SdkConvert.Convert(value));
             }

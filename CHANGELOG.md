@@ -22,6 +22,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improve Update command support.
 - Minor bugfixes.
 
+### Removed
+
+- Remove VariableResolving and VariableResolved events.
+
 ## [0.12.1] - 2025-03-16
 
 ### Added

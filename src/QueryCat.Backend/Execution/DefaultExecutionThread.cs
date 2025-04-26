@@ -25,6 +25,7 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IAsync
     private const string BootstrapFileName = "rc.sql";
 
     private readonly AstVisitor _statementsVisitor;
+    private readonly Func<IExecutionScope?, IExecutionScope> _executionScopeFactory;
     private int _deepLevel;
 
     /// <inheritdoc />
@@ -111,12 +112,6 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IAsync
     public IExecutionStack Stack { get; } = new DefaultFixedSizeExecutionStack();
 
     /// <inheritdoc />
-    public event EventHandler<ResolveVariableEventArgs>? VariableResolving;
-
-    /// <inheritdoc />
-    public event EventHandler<ResolveVariableEventArgs>? VariableResolved;
-
-    /// <inheritdoc />
     public IObjectSelector ObjectSelector { get; protected set; }
 
     /// <summary>
@@ -159,6 +154,7 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IAsync
         IInputConfigStorage configStorage,
         IAstBuilder astBuilder,
         ICompletionSource completionSource,
+        Func<IExecutionScope?, IExecutionScope>? executionScopeFactory = null,
         object? tag = null)
     {
         Options = options;
@@ -170,7 +166,8 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IAsync
         Tag = tag;
         _statementsVisitor = new StatementsVisitor(this);
 
-        _topScope = new ExecutionScope(parent: null);
+        _executionScopeFactory = executionScopeFactory ?? (parent => new DefaultExecutionScope(parent));
+        _topScope = _executionScopeFactory.Invoke(null);
     }
 
     /// <summary>
@@ -184,6 +181,7 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IAsync
             executionThread.ConfigStorage,
             executionThread.AstBuilder,
             executionThread.CompletionSource,
+            executionThread._executionScopeFactory,
             executionThread.Tag)
     {
 #if ENABLE_PLUGINS
@@ -251,7 +249,7 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IAsync
     /// <inheritdoc />
     public IExecutionScope PushScope()
     {
-        var scope = new ExecutionScope(TopScope);
+        var scope = _executionScopeFactory.Invoke(TopScope);
         _topScope = scope;
         return scope;
     }
@@ -335,55 +333,6 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IAsync
         await visitor.RunAsync(args.ExecutingStatementNode, cancellationToken);
         return sb.ToString();
     }
-
-    #region Variables
-
-    /// <inheritdoc />
-    public virtual bool TryGetVariable(string name, out VariantValue value, IExecutionScope? scope = null)
-    {
-        var eventArgs = new ResolveVariableEventArgs(name, this);
-
-        VariableResolving?.Invoke(this, eventArgs);
-        if (eventArgs.Handled)
-        {
-            value = eventArgs.Result;
-            return true;
-        }
-        name = eventArgs.VariableName;
-
-        var currentScope = TopScope;
-        while (currentScope != null)
-        {
-            if (currentScope.Variables.TryGetValue(name, out value))
-            {
-                eventArgs.Handled = true;
-                eventArgs.Result = value;
-                VariableResolved?.Invoke(this, eventArgs);
-                if (eventArgs.Handled)
-                {
-                    value = eventArgs.Result;
-                    return true;
-                }
-
-                value = VariantValue.Null;
-                return false;
-            }
-            currentScope = currentScope.Parent;
-        }
-
-        eventArgs.Handled = false;
-        VariableResolved?.Invoke(this, eventArgs);
-        if (eventArgs.Handled)
-        {
-            value = eventArgs.Result;
-            return true;
-        }
-
-        value = VariantValue.Null;
-        return false;
-    }
-
-    #endregion
 
     /// <inheritdoc />
     public async IAsyncEnumerable<CompletionResult> GetCompletionsAsync(string text, int position = -1, object? tag = null,

@@ -198,7 +198,7 @@ internal sealed partial class SelectPlanner
         IdentifierExpressionNode idNode,
         CancellationToken cancellationToken)
     {
-        if (!ExecutionThread.TryGetVariable(idNode.FullName, out var value, context.CapturedScope))
+        if (!context.CapturedScope.TryGetVariable(idNode.FullName, out var value))
         {
             if (idNode.HasSelectors)
             {

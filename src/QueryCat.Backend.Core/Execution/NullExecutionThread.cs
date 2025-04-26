@@ -31,14 +31,6 @@ public sealed class NullExecutionThread : IExecutionThread
     /// <inheritdoc />
     public IExecutionStack Stack { get; } = NullExecutionStack.Instance;
 
-#pragma warning disable CS0067
-    /// <inheritdoc />
-    public event EventHandler<ResolveVariableEventArgs>? VariableResolving;
-
-    /// <inheritdoc />
-    public event EventHandler<ResolveVariableEventArgs>? VariableResolved;
-#pragma warning disable CS0067
-
     /// <inheritdoc />
     public IObjectSelector ObjectSelector { get; } = NullObjectSelector.Instance;
 
@@ -54,13 +46,6 @@ public sealed class NullExecutionThread : IExecutionThread
     /// <inheritdoc />
     public Task<VariantValue> RunAsync(string query, IDictionary<string, VariantValue>? parameters = null,
         CancellationToken cancellationToken = default) => Task.FromResult(VariantValue.Null);
-
-    /// <inheritdoc />
-    public bool TryGetVariable(string name, out VariantValue value, IExecutionScope? scope = null)
-    {
-        value = VariantValue.Null;
-        return false;
-    }
 
     /// <inheritdoc />
     public IAsyncEnumerable<CompletionResult> GetCompletionsAsync(string query, int position = -1, object? tag = null,

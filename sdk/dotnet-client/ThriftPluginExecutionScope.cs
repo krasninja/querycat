@@ -121,6 +121,41 @@ public sealed class ThriftPluginExecutionScope : IExecutionScope
     /// <inheritdoc />
     public IExecutionScope? Parent => null;
 
+    /// <inheritdoc />
+    public bool TryGetVariable(string name, out VariantValue value)
+    {
+        var currentScope = (IExecutionScope)this;
+        while (currentScope != null)
+        {
+            if (currentScope.Variables.TryGetValue(name, out value))
+            {
+                return true;
+            }
+            currentScope = currentScope.Parent;
+        }
+
+        value = VariantValue.Null;
+        return false;
+    }
+
+    /// <inheritdoc />
+    public bool TrySetVariable(string name, VariantValue value)
+    {
+        var currentScope = (IExecutionScope)this;
+        while (currentScope != null)
+        {
+            if (currentScope.Variables.ContainsKey(name))
+            {
+                currentScope.Variables[name] = value;
+                return true;
+            }
+            currentScope = currentScope.Parent;
+        }
+
+        Variables[name] = value;
+        return true;
+    }
+
     public ThriftPluginExecutionScope(ThriftPluginClient client)
     {
         _client = client;

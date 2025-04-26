@@ -74,25 +74,9 @@ internal sealed class SetIdentifierDelegateVisitor : CreateDelegateVisitor
         // Not an expression - variable.
         if (!set && !node.HasSelectors)
         {
-            SetVariableInThread(thread.TopScope, node.Name, newValue);
+            thread.TopScope.TrySetVariable(node.Name, newValue);
         }
 
         return newValue;
-    }
-
-    private static void SetVariableInThread(IExecutionScope topScope, string variableName, VariantValue value)
-    {
-        var currentScope = topScope;
-        while (currentScope != null)
-        {
-            if (currentScope.Variables.ContainsKey(variableName))
-            {
-                currentScope.Variables[variableName] = value;
-                return;
-            }
-            currentScope = currentScope.Parent;
-        }
-
-        topScope.Variables[variableName] = value;
     }
 }
