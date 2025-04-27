@@ -1,7 +1,12 @@
+using QueryCat.Backend.Core;
+
 namespace QueryCat.Backend.Ast.Nodes.For;
 
-internal sealed class ForStatementNode : StatementNode
+internal sealed class ForStatementNode : StatementNode, ICommandNode
 {
+    /// <inheritdoc />
+    public string CommandName => Application.CommandFor;
+
     /// <inheritdoc />
     public ForStatementNode(IAstNode rootNode) : base(rootNode)
     {

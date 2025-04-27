@@ -17,6 +17,7 @@ using QueryCat.Backend.Commands.If;
 using QueryCat.Backend.Commands.Insert;
 using QueryCat.Backend.Commands.Select;
 using QueryCat.Backend.Commands.Update;
+using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
 
@@ -87,6 +88,10 @@ internal sealed class StatementsVisitor : CreateDelegateVisitor
     /// <inheritdoc />
     public override async ValueTask VisitAsync(CallFunctionStatementNode node, CancellationToken cancellationToken)
     {
+        if (!IsAcceptable(node))
+        {
+            return;
+        }
         var handler = await new CallCommand().CreateHandlerAsync(_executionThread, node, cancellationToken);
         NodeIdFuncMap.Add(node.Id, handler);
     }
@@ -94,6 +99,10 @@ internal sealed class StatementsVisitor : CreateDelegateVisitor
     /// <inheritdoc />
     public override async ValueTask VisitAsync(DeclareStatementNode node, CancellationToken cancellationToken)
     {
+        if (!IsAcceptable(node))
+        {
+            return;
+        }
         var handler = await new DeclareCommand().CreateHandlerAsync(_executionThread, node, cancellationToken);
         NodeIdFuncMap.Add(node.Id, handler);
     }
@@ -101,6 +110,10 @@ internal sealed class StatementsVisitor : CreateDelegateVisitor
     /// <inheritdoc />
     public override async ValueTask VisitAsync(DeleteStatementNode node, CancellationToken cancellationToken)
     {
+        if (!IsAcceptable(node))
+        {
+            return;
+        }
         var handler = await new DeleteCommand().CreateHandlerAsync(_executionThread, node, cancellationToken);
         NodeIdFuncMap.Add(node.Id, handler);
     }
@@ -108,6 +121,10 @@ internal sealed class StatementsVisitor : CreateDelegateVisitor
     /// <inheritdoc />
     public override async ValueTask VisitAsync(SetStatementNode node, CancellationToken cancellationToken)
     {
+        if (!IsAcceptable(node))
+        {
+            return;
+        }
         var handler = await new SetCommand(ResolveTypesVisitor).CreateHandlerAsync(_executionThread, node, cancellationToken);
         NodeIdFuncMap.Add(node.Id, handler);
     }
@@ -130,6 +147,10 @@ internal sealed class StatementsVisitor : CreateDelegateVisitor
     /// <inheritdoc />
     public override async ValueTask VisitAsync(IfConditionStatementNode node, CancellationToken cancellationToken)
     {
+        if (!IsAcceptable(node))
+        {
+            return;
+        }
         var handler = await new IfConditionCommand().CreateHandlerAsync(_executionThread, node, cancellationToken);
         NodeIdFuncMap.Add(node.Id, handler);
     }
@@ -137,6 +158,10 @@ internal sealed class StatementsVisitor : CreateDelegateVisitor
     /// <inheritdoc />
     public override async ValueTask VisitAsync(InsertStatementNode node, CancellationToken cancellationToken)
     {
+        if (!IsAcceptable(node))
+        {
+            return;
+        }
         var handler = await new InsertCommand().CreateHandlerAsync(_executionThread, node, cancellationToken);
         NodeIdFuncMap.Add(node.Id, handler);
     }
@@ -144,6 +169,10 @@ internal sealed class StatementsVisitor : CreateDelegateVisitor
     /// <inheritdoc />
     public override async ValueTask VisitAsync(SelectStatementNode node, CancellationToken cancellationToken)
     {
+        if (!IsAcceptable(node))
+        {
+            return;
+        }
         var handler = await new SelectCommand(ResolveTypesVisitor).CreateHandlerAsync(_executionThread, node, cancellationToken);
         NodeIdFuncMap.Add(node.Id, handler);
     }
@@ -151,6 +180,10 @@ internal sealed class StatementsVisitor : CreateDelegateVisitor
     /// <inheritdoc />
     public override async ValueTask VisitAsync(UpdateStatementNode node, CancellationToken cancellationToken)
     {
+        if (!IsAcceptable(node))
+        {
+            return;
+        }
         var handler = await new UpdateCommand().CreateHandlerAsync(_executionThread, node, cancellationToken);
         NodeIdFuncMap.Add(node.Id, handler);
     }
@@ -158,7 +191,42 @@ internal sealed class StatementsVisitor : CreateDelegateVisitor
     /// <inheritdoc />
     public override async ValueTask VisitAsync(ForStatementNode node, CancellationToken cancellationToken)
     {
+        if (!IsAcceptable(node))
+        {
+            return;
+        }
         var handler = await new ForCommand(this).CreateHandlerAsync(_executionThread, node, cancellationToken);
         NodeIdFuncMap.Add(node.Id, handler);
+    }
+
+    private sealed class NotAllowedCommandFuncUnit : IFuncUnit
+    {
+        private readonly string _commandName;
+
+        /// <inheritdoc />
+        public DataType OutputType => DataType.Void;
+
+        public NotAllowedCommandFuncUnit(string commandName)
+        {
+            _commandName = commandName;
+        }
+
+        /// <inheritdoc />
+        public ValueTask<VariantValue> InvokeAsync(IExecutionThread thread, CancellationToken cancellationToken = default)
+        {
+            throw new QueryCatException(string.Format(Resources.Errors.CommandNotAllowed, _commandName));
+        }
+    }
+
+    private bool IsAcceptable(IAstNode node)
+    {
+        if (_executionThread.Options.AllowedCommands != null
+            && node is ICommandNode commandNode
+            && !_executionThread.Options.AllowedCommands.Contains(commandNode.CommandName, StringComparer.InvariantCultureIgnoreCase))
+        {
+            NodeIdFuncMap.Add(node.Id, new NotAllowedCommandFuncUnit(commandNode.CommandName));
+            return false;
+        }
+        return true;
     }
 }

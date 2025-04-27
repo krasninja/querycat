@@ -1,7 +1,12 @@
+using QueryCat.Backend.Core;
+
 namespace QueryCat.Backend.Ast.Nodes.Delete;
 
-internal sealed class DeleteStatementNode : StatementNode
+internal sealed class DeleteStatementNode : StatementNode, ICommandNode
 {
+    /// <inheritdoc />
+    public string CommandName => Application.CommandDelete;
+
     /// <inheritdoc />
     public DeleteStatementNode(IAstNode rootNode) : base(rootNode)
     {

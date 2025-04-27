@@ -31,6 +31,16 @@ public static class Application
 
     internal const string ApplicationDirectory = "qcat";
 
+    public const string CommandCall = "CALL";
+    public const string CommandDeclare = "DECLARE";
+    public const string CommandSet = "SET";
+    public const string CommandDelete = "DELETE";
+    public const string CommandFor = "FOR";
+    public const string CommandIf = "If";
+    public const string CommandInsert = "INSERT";
+    public const string CommandSelect = "SELECT";
+    public const string CommandUpdate = "UPDATE";
+
     /// <summary>
     /// The culture to use by QueryCat application. Current runtime culture by default.
     /// </summary>
