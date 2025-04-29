@@ -44,7 +44,7 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IAsync
 
         /// <inheritdoc />
         public DefaultBodyFuncUnit(DefaultExecutionThread executionThread, ProgramBodyNode programBodyNode)
-            : base(new StatementsVisitor(executionThread), programBodyNode)
+            : base(new StatementsVisitor(executionThread), programBodyNode.Statements.ToArray())
         {
             _executionThread = executionThread;
         }

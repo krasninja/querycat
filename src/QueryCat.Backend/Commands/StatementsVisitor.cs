@@ -1,20 +1,26 @@
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
+using QueryCat.Backend.Ast.Nodes.Break;
 using QueryCat.Backend.Ast.Nodes.Call;
+using QueryCat.Backend.Ast.Nodes.Continue;
 using QueryCat.Backend.Ast.Nodes.Declare;
 using QueryCat.Backend.Ast.Nodes.Delete;
 using QueryCat.Backend.Ast.Nodes.For;
 using QueryCat.Backend.Ast.Nodes.Function;
 using QueryCat.Backend.Ast.Nodes.If;
 using QueryCat.Backend.Ast.Nodes.Insert;
+using QueryCat.Backend.Ast.Nodes.Return;
 using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Ast.Nodes.Update;
+using QueryCat.Backend.Commands.Break;
 using QueryCat.Backend.Commands.Call;
+using QueryCat.Backend.Commands.Continue;
 using QueryCat.Backend.Commands.Declare;
 using QueryCat.Backend.Commands.Delete;
 using QueryCat.Backend.Commands.For;
 using QueryCat.Backend.Commands.If;
 using QueryCat.Backend.Commands.Insert;
+using QueryCat.Backend.Commands.Return;
 using QueryCat.Backend.Commands.Select;
 using QueryCat.Backend.Commands.Update;
 using QueryCat.Backend.Core;
@@ -67,13 +73,8 @@ internal sealed class StatementsVisitor : CreateDelegateVisitor
     /// <inheritdoc />
     public override async ValueTask VisitAsync(BlockExpressionNode node, CancellationToken cancellationToken)
     {
-        foreach (var statementNode in node.Statements)
-        {
-            await statementNode.AcceptAsync(this, cancellationToken);
-        }
-        var blockHandlers = node.Statements.Select(s => NodeIdFuncMap[s.Id]).ToArray();
-
-        NodeIdFuncMap[node.Id] = new BlockExpressionFuncUnit(blockHandlers);
+        await using var bodyFuncUnit = new StatementsBlockFuncUnit(this, node.Statements.ToArray());
+        NodeIdFuncMap[node.Id] = bodyFuncUnit;
     }
 
     /// <inheritdoc />
@@ -196,6 +197,39 @@ internal sealed class StatementsVisitor : CreateDelegateVisitor
             return;
         }
         var handler = await new ForCommand(this).CreateHandlerAsync(_executionThread, node, cancellationToken);
+        NodeIdFuncMap.Add(node.Id, handler);
+    }
+
+    /// <inheritdoc />
+    public override async ValueTask VisitAsync(ContinueStatementNode node, CancellationToken cancellationToken)
+    {
+        if (!IsAcceptable(node))
+        {
+            return;
+        }
+        var handler = await new ContinueCommand().CreateHandlerAsync(_executionThread, node, cancellationToken);
+        NodeIdFuncMap.Add(node.Id, handler);
+    }
+
+    /// <inheritdoc />
+    public override async ValueTask VisitAsync(BreakStatementNode node, CancellationToken cancellationToken)
+    {
+        if (!IsAcceptable(node))
+        {
+            return;
+        }
+        var handler = await new BreakCommand().CreateHandlerAsync(_executionThread, node, cancellationToken);
+        NodeIdFuncMap.Add(node.Id, handler);
+    }
+
+    /// <inheritdoc />
+    public override async ValueTask VisitAsync(ReturnStatementNode node, CancellationToken cancellationToken)
+    {
+        if (!IsAcceptable(node))
+        {
+            return;
+        }
+        var handler = await new ReturnCommand().CreateHandlerAsync(_executionThread, node, cancellationToken);
         NodeIdFuncMap.Add(node.Id, handler);
     }
 

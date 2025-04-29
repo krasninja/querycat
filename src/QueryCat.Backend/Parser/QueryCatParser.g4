@@ -29,6 +29,7 @@ statement
     | forStatement # StatementFor
     | breakStatement # StatementBreak
     | continueStatement # StatementContinue
+    | returnStatement # StatementReturn
     | expression # StatementExpression
     ;
 
@@ -290,6 +291,14 @@ breakStatement: BREAK;
  */
 
 continueStatement: CONTINUE;
+
+/*
+ * ===============
+ * RETURN command.
+ * ===============
+ */
+
+returnStatement: RETURN expression;
 
 /*
  * ===============

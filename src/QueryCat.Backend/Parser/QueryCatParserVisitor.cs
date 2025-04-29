@@ -143,6 +143,13 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitStatementContinue([NotNull] QueryCatParser.StatementContinueContext context);
 	/// <summary>
+	/// Visit a parse tree produced by the <c>StatementReturn</c>
+	/// labeled alternative in <see cref="QueryCatParser.statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitStatementReturn([NotNull] QueryCatParser.StatementReturnContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>StatementExpression</c>
 	/// labeled alternative in <see cref="QueryCatParser.statement"/>.
 	/// </summary>
@@ -666,6 +673,12 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitContinueStatement([NotNull] QueryCatParser.ContinueStatementContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="QueryCatParser.returnStatement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitReturnStatement([NotNull] QueryCatParser.ReturnStatementContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>IdentifierSimpleNoQuotes</c>
 	/// labeled alternative in <see cref="QueryCatParser.identifierSimple"/>.

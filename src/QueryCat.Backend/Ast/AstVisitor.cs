@@ -1,11 +1,14 @@
 using QueryCat.Backend.Ast.Nodes;
+using QueryCat.Backend.Ast.Nodes.Break;
 using QueryCat.Backend.Ast.Nodes.Call;
+using QueryCat.Backend.Ast.Nodes.Continue;
 using QueryCat.Backend.Ast.Nodes.Declare;
 using QueryCat.Backend.Ast.Nodes.Delete;
 using QueryCat.Backend.Ast.Nodes.For;
 using QueryCat.Backend.Ast.Nodes.Function;
 using QueryCat.Backend.Ast.Nodes.If;
 using QueryCat.Backend.Ast.Nodes.Insert;
+using QueryCat.Backend.Ast.Nodes.Return;
 using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Ast.Nodes.SpecialFunctions;
 using QueryCat.Backend.Ast.Nodes.Update;
@@ -539,6 +542,48 @@ internal abstract class AstVisitor
     }
 
     public virtual ValueTask VisitAsync(ForStatementNode node, CancellationToken cancellationToken)
+    {
+        return ValueTask.CompletedTask;
+    }
+
+    #endregion
+
+    #region Continue
+
+    public virtual ValueTask VisitAsync(ContinueNode node, CancellationToken cancellationToken)
+    {
+        return ValueTask.CompletedTask;
+    }
+
+    public virtual ValueTask VisitAsync(ContinueStatementNode node, CancellationToken cancellationToken)
+    {
+        return ValueTask.CompletedTask;
+    }
+
+    #endregion
+
+    #region Break
+
+    public virtual ValueTask VisitAsync(BreakNode node, CancellationToken cancellationToken)
+    {
+        return ValueTask.CompletedTask;
+    }
+
+    public virtual ValueTask VisitAsync(BreakStatementNode node, CancellationToken cancellationToken)
+    {
+        return ValueTask.CompletedTask;
+    }
+
+    #endregion
+
+    #region Return
+
+    public virtual ValueTask VisitAsync(ReturnNode node, CancellationToken cancellationToken)
+    {
+        return ValueTask.CompletedTask;
+    }
+
+    public virtual ValueTask VisitAsync(ReturnStatementNode node, CancellationToken cancellationToken)
     {
         return ValueTask.CompletedTask;
     }

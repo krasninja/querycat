@@ -89,6 +89,7 @@ TO:                 'TO';
 TRUE:               'TRUE';
 USING:              'USING';
 VOID:               'VOID';
+RETURN:             'RETURN';
 
 // Trim function.
 

@@ -40,6 +40,9 @@ public static class Application
     public const string CommandInsert = "INSERT";
     public const string CommandSelect = "SELECT";
     public const string CommandUpdate = "UPDATE";
+    public const string CommandContinue = "CONTINUE";
+    public const string CommandBreak = "BREAK";
+    public const string CommandReturn = "RETURN";
 
     /// <summary>
     /// The culture to use by QueryCat application. Current runtime culture by default.

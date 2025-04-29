@@ -5,10 +5,10 @@ using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Commands;
 
-internal class StatementsBlockFuncUnit : IFuncUnit, IDisposable, IAsyncDisposable
+internal class StatementsBlockFuncUnit : IFuncUnit, IExecutionFlowFuncUnit, IDisposable, IAsyncDisposable
 {
     private readonly AstVisitor _statementsVisitor;
-    private readonly ProgramBodyNode _programBodyNode;
+    private readonly StatementNode[] _statements;
     private readonly HashSet<IDisposable> _disposablesList = new();
 
     /// <inheritdoc />
@@ -18,21 +18,21 @@ internal class StatementsBlockFuncUnit : IFuncUnit, IDisposable, IAsyncDisposabl
 
     public StatementsBlockFuncUnit(
         StatementsVisitor statementsVisitor,
-        ProgramBodyNode programBodyNode)
+        StatementNode[] statements)
     {
         _statementsVisitor = statementsVisitor;
-        _programBodyNode = programBodyNode;
+        _statements = statements;
     }
 
     /// <inheritdoc />
     public virtual async ValueTask<VariantValue> InvokeAsync(IExecutionThread thread, CancellationToken cancellationToken = default)
     {
-        if (_programBodyNode.Statements.Count < 1)
+        if (_statements.Length < 1)
         {
             return VariantValue.Null;
         }
 
-        var currentStatement = _programBodyNode.Statements[0];
+        var currentStatement = _statements[0];
         var result = VariantValue.Null;
         while (currentStatement != null && !cancellationToken.IsCancellationRequested)
         {
@@ -64,9 +64,9 @@ internal class StatementsBlockFuncUnit : IFuncUnit, IDisposable, IAsyncDisposabl
         CancellationToken cancellationToken = default)
     {
         var result = await funcUnit.InvokeAsync(thread, cancellationToken);
-        if (Jump == ExecutionJump.Next &&funcUnit is StatementsBlockFuncUnit statementsBlockFuncUnit)
+        if (Jump == ExecutionJump.Next && funcUnit is IExecutionFlowFuncUnit executionFlowFuncUnit)
         {
-            Jump = statementsBlockFuncUnit.Jump;
+            Jump = executionFlowFuncUnit.Jump;
         }
         return result;
     }
