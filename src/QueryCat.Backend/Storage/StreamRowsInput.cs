@@ -49,6 +49,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     protected StreamReader StreamReader { get; }
 
     private bool _isClosed;
+    private bool _isOpened;
 
     /// <inheritdoc />
     public QueryContext QueryContext { get; set; } = NullQueryContext.Instance;
@@ -326,6 +327,11 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     /// <inheritdoc />
     public virtual async Task OpenAsync(CancellationToken cancellationToken = default)
     {
+        if (_isOpened)
+        {
+            return;
+        }
+
         _logger.LogDebug("Start stream open.");
         _virtualColumnsCount = GetVirtualColumns().Length;
         var inputIterator = new RowsInputIterator(this, autoFetch: true);
@@ -350,6 +356,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
         }
 
         _logger.LogDebug("Open stream finished.");
+        _isOpened = true;
     }
 
     /// <summary>
@@ -423,6 +430,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
         {
             StreamReader.Dispose();
             _isClosed = true;
+            _isOpened = false;
         }
     }
 
