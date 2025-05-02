@@ -5,9 +5,9 @@ using Microsoft.Extensions.Logging;
 using Thrift.Protocol;
 using Thrift.Transport;
 using QueryCat.Backend.Core;
-using QueryCat.Backend.Core.Utils;
 using QueryCat.Plugins.Client;
 using QueryCat.Plugins.Sdk;
+using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
 namespace QueryCat.Backend.ThriftPlugins;
 
@@ -15,11 +15,8 @@ namespace QueryCat.Backend.ThriftPlugins;
 internal sealed class ThriftPluginContext : IDisposable, IAsyncDisposable
 {
     private readonly ConcurrentQueue<string> _pluginCallbackUris = new();
-    private static readonly SimpleObjectPool<WaitingConsumer> _waitingConsumerPool = new(() => new WaitingConsumer());
-    private readonly ConcurrentQueue<WaitingConsumer> _awaitClientQueue = new();
-    private readonly ConcurrentQueue<ClientWrapper> _availableClientWrappers = new();
     private readonly SemaphoreSlim _createClientSemaphore = new(1);
-    private int _totalConnectionsCount;
+    private readonly WaitQueue _waitQueue;
     private readonly int _maxConnections;
     private bool _maxConnectionsReached;
     private bool _isDisposed;
@@ -27,9 +24,9 @@ internal sealed class ThriftPluginContext : IDisposable, IAsyncDisposable
 
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(ThriftPluginContext));
 
-    public int TotalConnectionsCount => _totalConnectionsCount;
+    public int TotalConnectionsCount => _waitQueue.Count;
 
-    public int InUseConnectionsCount => _totalConnectionsCount - _availableClientWrappers.Count;
+    public bool IsOutOfAvailableConnections => TotalConnectionsCount == _waitQueue.InUseCount;
 
     public string PluginName { get; set; } = "N/A";
 
@@ -52,63 +49,26 @@ internal sealed class ThriftPluginContext : IDisposable, IAsyncDisposable
         _pluginCallbackUris.Enqueue(firstCallbackUri);
         _logClientRemoteCalls = logClientRemoteCalls;
         _maxConnections = maxConnections;
+
+        _waitQueue = new WaitQueue(Application.LoggerFactory);
     }
 
-    internal async ValueTask<ClientSession> GetSessionAsync(CancellationToken cancellationToken = default)
+    internal async ValueTask<ClientWrapper> GetSessionAsync(CancellationToken cancellationToken = default)
     {
-        if (_isDisposed)
-        {
-            throw new ObjectDisposedException(nameof(ThriftPluginContext));
-        }
-
-        if (_totalConnectionsCount == 0)
+        if (TotalConnectionsCount == 0 || IsOutOfAvailableConnections)
         {
             await CreateClientAsync(null, cancellationToken);
         }
 
-        // Has available client - use it.
-        if (_availableClientWrappers.TryDequeue(out var clientWrapper))
-        {
-            _logger.LogTrace("Take connection {ConnectionId}, in use {ConnectionsInUseCount}, total {ConnectionsCount}.",
-                clientWrapper.Id,
-                InUseConnectionsCount,
-                TotalConnectionsCount
-                );
-            return new ClientSession(this, clientWrapper);
-        }
+        var session = await _waitQueue.DequeueAsync(cancellationToken);
+        var wrapper = new ClientWrapper(session);
 
-        // Create the new awaiter and wait.
-        var awaiter = _waitingConsumerPool.Get();
-        ClientSession clientSession;
-        try
+        /*if (IsOutOfAvailableConnections)
         {
-            _awaitClientQueue.Enqueue(awaiter);
-            await awaiter.Trigger.WaitAsync(cancellationToken);
-            if (awaiter.Session == null)
-            {
-                throw new InvalidOperationException("Session is not set.");
-            }
-            clientSession = awaiter.Session.Value;
-        }
-        finally
-        {
-            awaiter.Session = null;
-            _waitingConsumerPool.Return(awaiter);
-        }
-        _logger.LogTrace("Take connection {ConnectionId}, in use {ConnectionsInUseCount}, total {ConnectionsCount}.",
-            clientSession.Wrapper.Id,
-            InUseConnectionsCount,
-            TotalConnectionsCount
-        );
+            await CreateClientAsync(wrapper.ClientProxy, cancellationToken);
+        }*/
 
-        // First try to create the additional client.
-        if (!_maxConnectionsReached)
-        {
-            await CreateClientAsync(clientSession.ClientProxy, cancellationToken);
-        }
-
-        // And then give it to the consumer.
-        return clientSession;
+        return wrapper;
     }
 
     private async Task CreateClientAsync(Plugin.IAsync? client, CancellationToken cancellationToken = default)
@@ -119,10 +79,10 @@ internal sealed class ThriftPluginContext : IDisposable, IAsyncDisposable
             await _createClientSemaphore.WaitAsync(cancellationToken);
 
             // Do not reach connections limit.
-            if (_maxConnectionsReached || _totalConnectionsCount >= _maxConnections)
+            if (_maxConnectionsReached || _waitQueue.Count >= _maxConnections)
             {
                 _logger.LogTrace("Maximum number of connections {MaxConnections} reached.",
-                    _totalConnectionsCount);
+                    _waitQueue.Count);
                 _maxConnectionsReached = true;
                 return;
             }
@@ -142,7 +102,14 @@ internal sealed class ThriftPluginContext : IDisposable, IAsyncDisposable
             var newClient = await PrepareClientWrapperAsync(uri, cancellationToken);
             if (newClient != null)
             {
-                ReturnAvailableClient(newClient);
+                _waitQueue.Enqueue(newClient);
+
+                if (_logger.IsEnabled(LogLevel.Trace))
+                {
+                    _logger.LogTrace("Created new client connection {ConnectionId}, current count {ConnectionsCount}.",
+                        newClient.ToString(),
+                        _waitQueue.Count);
+                }
             }
         }
         finally
@@ -151,7 +118,7 @@ internal sealed class ThriftPluginContext : IDisposable, IAsyncDisposable
         }
     }
 
-    private async Task<ClientWrapper?> PrepareClientWrapperAsync(string callbackUri, CancellationToken cancellationToken = default)
+    private async Task<Plugin.IAsync?> PrepareClientWrapperAsync(string callbackUri, CancellationToken cancellationToken = default)
     {
         var uri = new Uri(callbackUri);
         var protocol = new TMultiplexedProtocol(
@@ -171,34 +138,13 @@ internal sealed class ThriftPluginContext : IDisposable, IAsyncDisposable
         }
         else
         {
-            var logClient = new PluginClientLogDecorator(new Plugin.Client(protocol),
-                Application.LoggerFactory.CreateLogger(nameof(PluginClientLogDecorator)));
+            var logClient = new PluginClientLogDecorator(new Plugin.Client(protocol), Application.LoggerFactory);
             await logClient.OpenTransportAsync(cancellationToken);
             newClient = logClient;
         }
 
         // The new client will be returned to the queue after session release.
-        Interlocked.Increment(ref _totalConnectionsCount);
-        var wrapper = new ClientWrapper(newClient);
-        _logger.LogTrace("Created new client connection {ConnectionId}, current count {ConnectionsCount}.",
-            wrapper.Id,
-            _totalConnectionsCount);
-
-        return wrapper;
-    }
-
-    private void ReturnAvailableClient(ClientWrapper clientWrapper)
-    {
-        _logger.LogTrace("Return connection {ConnectionId}.", clientWrapper.Id);
-        if (_awaitClientQueue.TryDequeue(out var consumer))
-        {
-            consumer.Session = new ClientSession(this, clientWrapper);
-            consumer.Trigger.Release();
-        }
-        else
-        {
-            _availableClientWrappers.Enqueue(clientWrapper);
-        }
+        return new PluginClientIdDecorator(newClient);
     }
 
     /// <inheritdoc />
@@ -210,14 +156,6 @@ internal sealed class ThriftPluginContext : IDisposable, IAsyncDisposable
         }
 
         await _createClientSemaphore.WaitAsync();
-        _createClientSemaphore.Dispose();
-        ObjectsStorage.Clean();
-        foreach (var clientWrapper in _availableClientWrappers)
-        {
-            await clientWrapper.Client.ShutdownAsync();
-            (clientWrapper.Client as IDisposable)?.Dispose();
-        }
-        _availableClientWrappers.Clear();
         Dispose();
     }
 
@@ -229,11 +167,9 @@ internal sealed class ThriftPluginContext : IDisposable, IAsyncDisposable
             return;
         }
 
+        ObjectsStorage.Clean();
         _createClientSemaphore.Dispose();
-        foreach (var clientWrapper in _availableClientWrappers)
-        {
-            (clientWrapper.Client as IDisposable)?.Dispose();
-        }
+        _waitQueue.Dispose();
         if (LibraryHandle.HasValue && LibraryHandle.Value != IntPtr.Zero)
         {
             // For some reason it causes SIGSEGV (Address boundary error) on Linux.
@@ -242,44 +178,31 @@ internal sealed class ThriftPluginContext : IDisposable, IAsyncDisposable
                 NativeLibrary.Free(LibraryHandle.Value);
             }
         }
+
+        _logger.LogTrace("Disposed.");
         _isDisposed = true;
     }
 
-    private sealed class WaitingConsumer
+    internal readonly struct ClientWrapper : IDisposable
     {
-        public SemaphoreSlim Trigger { get; } = new(0, 1);
+        private readonly WaitQueue.ItemWrapper _session;
 
-        public ClientSession? Session { get; set; }
-    }
+        public Plugin.IAsync ClientProxy => (Plugin.IAsync)_session.Item;
 
-    [DebuggerDisplay("Id = {Id}")]
-    internal sealed class ClientWrapper
-    {
-        private static int _nextId;
+        public int ProxyId => ClientProxy is PluginClientIdDecorator clientIdDecorator ? clientIdDecorator.Id : 0;
 
-        public int Id { get; } = Interlocked.Increment(ref _nextId);
-
-        public Plugin.IAsync Client { get; }
-
-        public ClientWrapper(Plugin.IAsync client)
+        public ClientWrapper(WaitQueue.ItemWrapper session)
         {
-            Client = client;
+            _session = session;
         }
-    }
-
-    [DebuggerDisplay("ClientId = {Id}")]
-    internal readonly struct ClientSession(ThriftPluginContext context, ClientWrapper value) : IDisposable
-    {
-        public ClientWrapper Wrapper { get; } = value;
-
-        public Plugin.IAsync ClientProxy => Wrapper.Client;
-
-        public int Id => Wrapper.Id;
 
         /// <inheritdoc />
         public void Dispose()
         {
-            context.ReturnAvailableClient(Wrapper);
+            _session.Dispose();
         }
+
+        /// <inheritdoc />
+        public override string ToString() => "ProxyId = " + ProxyId;
     }
 }

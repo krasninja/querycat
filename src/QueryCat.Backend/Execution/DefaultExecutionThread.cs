@@ -490,6 +490,10 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IAsync
         if (disposing)
         {
             _asyncLock.Dispose();
+#if ENABLE_PLUGINS
+            (PluginsManager as IDisposable)?.Dispose();
+            (PluginsManager.PluginsLoader as IDisposable)?.Dispose();
+#endif
         }
     }
 

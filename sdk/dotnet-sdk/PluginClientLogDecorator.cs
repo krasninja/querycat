@@ -15,10 +15,10 @@ public sealed partial class PluginClientLogDecorator : Plugin.IAsync
     private readonly Plugin.Client _client;
     private readonly ILogger _logger;
 
-    public PluginClientLogDecorator(Plugin.Client client, ILogger logger)
+    public PluginClientLogDecorator(Plugin.Client client, ILoggerFactory loggerFactory)
     {
         _client = client;
-        _logger = logger;
+        _logger = loggerFactory.CreateLogger(nameof(PluginClientLogDecorator));
     }
 
     public Task OpenTransportAsync(CancellationToken cancellationToken = default) => _client.OpenTransportAsync(cancellationToken);
