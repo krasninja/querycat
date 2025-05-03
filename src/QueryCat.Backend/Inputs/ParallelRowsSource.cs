@@ -29,14 +29,25 @@ internal class ParallelRowsSource : IRowsSource, IDisposable, IAsyncDisposable
 
     protected async ValueTask AddTask(Func<CancellationToken, Task> func, CancellationToken cancellationToken = default)
     {
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return;
+        }
         await ParallelSemaphore.WaitAsync(cancellationToken);
         Interlocked.Increment(ref _runningTasksCount);
-        _ = Task.Run(async () =>
+        _ = Task.Factory.StartNew(async () =>
         {
-            await func.Invoke(CancellationToken.None);
-            ParallelSemaphore.Release();
-            Interlocked.Decrement(ref _runningTasksCount);
-        }, cancellationToken);
+            try
+            {
+                await func.Invoke(CancellationToken.None);
+            }
+            finally
+            {
+                ParallelSemaphore.Release();
+                Interlocked.Decrement(ref _runningTasksCount);
+            }
+        }, CancellationToken.None, TaskCreationOptions.DenyChildAttach, TaskScheduler.Default)
+            .ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -45,17 +56,19 @@ internal class ParallelRowsSource : IRowsSource, IDisposable, IAsyncDisposable
     /// <inheritdoc />
     public async Task CloseAsync(CancellationToken cancellationToken = default)
     {
-        await WaitForAllPendingTasksAsync(cancellationToken);
-        await _source.CloseAsync(cancellationToken);
-        await DisposeAsyncCore();
+        await WaitForAllPendingTasksAsync(cancellationToken).ConfigureAwait(false);
+        await _source.CloseAsync(cancellationToken).ConfigureAwait(false);
+        await DisposeAsyncCore().ConfigureAwait(false);
     }
 
     /// <inheritdoc />
     public async Task ResetAsync(CancellationToken cancellationToken = default)
     {
-        await WaitForAllPendingTasksAsync(cancellationToken);
+        await WaitForAllPendingTasksAsync(cancellationToken)
+            .ConfigureAwait(false);
         _runningTasksCount = 0;
-        await _source.ResetAsync(cancellationToken);
+        await _source.ResetAsync(cancellationToken)
+            .ConfigureAwait(false);
     }
 
     private async ValueTask WaitForAllPendingTasksAsync(CancellationToken cancellationToken = default)
@@ -63,7 +76,7 @@ internal class ParallelRowsSource : IRowsSource, IDisposable, IAsyncDisposable
         _logger.LogDebug("Pending tasks {PendingTasksCount}.", Interlocked.Read(ref _runningTasksCount));
         while (Interlocked.Read(ref _runningTasksCount) > 0)
         {
-            await Task.Delay(20, cancellationToken);
+            await Task.Delay(20, cancellationToken).ConfigureAwait(false);
         }
     }
 
@@ -97,7 +110,8 @@ internal class ParallelRowsSource : IRowsSource, IDisposable, IAsyncDisposable
         {
             return;
         }
-        await ParallelSemaphore.WaitAsync(TimeSpan.FromSeconds(5));
+        await ParallelSemaphore.WaitAsync(TimeSpan.FromSeconds(5))
+            .ConfigureAwait(false);
         ParallelSemaphore.Dispose();
         _isDisposed = true;
     }
