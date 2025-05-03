@@ -1,4 +1,6 @@
 using System.Buffers;
+using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -739,6 +741,23 @@ public readonly partial struct VariantValue :
     public static implicit operator DateTime?(VariantValue value) => value.AsTimestamp;
 
     public static implicit operator TimeSpan?(VariantValue value) => value.AsInterval;
+
+    [RequiresDynamicCode("Contains serialization for object type.")]
+    [RequiresUnreferencedCode("Contains serialization for object type.")]
+    public static implicit operator JsonNode?(VariantValue value) => value.Type switch
+    {
+        DataType.Integer => JsonValue.Create(value.AsIntegerUnsafe),
+        DataType.Float => JsonValue.Create(value.AsFloatUnsafe),
+        DataType.String => JsonValue.Create(value.AsStringUnsafe),
+        DataType.Boolean => JsonValue.Create(value.AsBooleanUnsafe),
+        DataType.Numeric => JsonValue.Create(value.AsNumericUnsafe),
+        DataType.Timestamp => JsonValue.Create(value.AsTimestampUnsafe),
+        DataType.Interval => JsonValue.Create(value.AsIntervalUnsafe),
+        DataType.Blob => JsonValue.Create(value.ToString(CultureInfo.InvariantCulture)),
+        DataType.Object => value.AsObjectUnsafe != null ? JsonSerializer.SerializeToNode(value.AsObjectUnsafe) : null,
+        DataType.Dynamic => value.AsObjectUnsafe != null ? JsonSerializer.SerializeToNode(value.AsObjectUnsafe) : null,
+        _ => null,
+    };
 
     /// <inheritdoc />
     public override string ToString() => Type switch
