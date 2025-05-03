@@ -26,8 +26,6 @@ internal sealed class ThriftPluginContext : IDisposable, IAsyncDisposable
 
     public int TotalConnectionsCount => _waitQueue.Count;
 
-    public bool IsOutOfAvailableConnections => TotalConnectionsCount == _waitQueue.InUseCount;
-
     public string PluginName { get; set; } = "N/A";
 
     public List<PluginContextFunction> Functions { get; } = new();
@@ -55,7 +53,7 @@ internal sealed class ThriftPluginContext : IDisposable, IAsyncDisposable
 
     internal async ValueTask<ClientWrapper> GetSessionAsync(CancellationToken cancellationToken = default)
     {
-        if (TotalConnectionsCount == 0 || IsOutOfAvailableConnections)
+        if (TotalConnectionsCount == 0)
         {
             await CreateClientAsync(null, cancellationToken);
         }
@@ -63,10 +61,10 @@ internal sealed class ThriftPluginContext : IDisposable, IAsyncDisposable
         var session = await _waitQueue.DequeueAsync(cancellationToken);
         var wrapper = new ClientWrapper(session);
 
-        /*if (IsOutOfAvailableConnections)
+        if (!_maxConnectionsReached)
         {
             await CreateClientAsync(wrapper.ClientProxy, cancellationToken);
-        }*/
+        }
 
         return wrapper;
     }
