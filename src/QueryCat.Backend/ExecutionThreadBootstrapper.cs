@@ -37,7 +37,7 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
 
     private readonly List<Action<IFunctionsManager>> _registrations = new();
 
-    private Func<IExecutionThread, PluginsLoader> _pluginsLoaderFactory = _ => new NullPluginsLoader(Array.Empty<string>());
+    private Func<IExecutionThread, PluginsLoader> _pluginsLoaderFactory = _ => new NullPluginsLoader([]);
 
     private Func<PluginsLoader, IPluginsManager> _pluginsManagerFactory = pluginLoader => new NullPluginsManager(pluginLoader);
 
@@ -103,6 +103,17 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
         _uriResolvers.Add(new CurlUriResolver());
         _uriResolvers.Add(new DirectoryUriResolver());
         _uriResolvers.Add(new FileUriResolver());
+        return this;
+    }
+
+    /// <summary>
+    /// Add custom URI resolver.
+    /// </summary>
+    /// <param name="uriResolver">Instance of <see cref="IUriResolver" />.</param>
+    /// <returns>The instance of <see cref="ExecutionThreadBootstrapper" />.</returns>
+    public ExecutionThreadBootstrapper WithUriResolver(IUriResolver uriResolver)
+    {
+        _uriResolvers.Add(uriResolver);
         return this;
     }
 
