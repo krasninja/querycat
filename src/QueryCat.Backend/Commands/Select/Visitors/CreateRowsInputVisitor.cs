@@ -99,18 +99,21 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
         }
         if (source.AsObject is IRowsInput rowsInput)
         {
-            var targetColumns = await _context.GetSelectIdentifierColumnsAsync(alias, cancellationToken);
-            var queryContext = new SelectInputQueryContext(rowsInput, targetColumns)
+            if (rowsInput.QueryContext is not SelectInputQueryContext queryContext)
             {
-                InputConfigStorage = _executionThread.ConfigStorage,
-            };
-            if (_context.Parent != null && !_executionThread.Options.DisableCache)
-            {
-                rowsInput = new CacheRowsInput(_executionThread, rowsInput, _context.Conditions);
+                var targetColumns = await _context.GetSelectIdentifierColumnsAsync(alias, cancellationToken);
+                queryContext = new SelectInputQueryContext(rowsInput, targetColumns)
+                {
+                    InputConfigStorage = _executionThread.ConfigStorage,
+                };
+                if (_context.Parent != null && !_executionThread.Options.DisableCache)
+                {
+                    rowsInput = new CacheRowsInput(_executionThread, rowsInput, _context.Conditions);
+                }
+                rowsInput.QueryContext = queryContext;
+                await rowsInput.OpenAsync(cancellationToken);
+                _logger.LogDebug("Open rows input {RowsInput}.", rowsInput);
             }
-            rowsInput.QueryContext = queryContext;
-            await rowsInput.OpenAsync(cancellationToken);
-            _logger.LogDebug("Open rows input {RowsInput}.", rowsInput);
             return new SelectCommandInputContext(rowsInput, queryContext);
         }
         if (source.AsObject is IRowsIterator rowsIterator)

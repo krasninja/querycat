@@ -31,6 +31,9 @@ internal sealed class AstTraversal
         {
             ChildrenEnumerator.Dispose();
         }
+
+        /// <inheritdoc />
+        public override string ToString() => Node.ToString() ?? string.Empty;
     }
 
     private readonly Stack<TraversalItem> _traversalStack = new(32);
