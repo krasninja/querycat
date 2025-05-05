@@ -12,8 +12,8 @@ namespace QueryCat.Backend.Utils;
 [DebuggerDisplay("Taken = {IsTaken}")]
 internal sealed class AsyncLock : IAsyncDisposable, IDisposable
 {
-    private static readonly SimpleObjectPool<SemaphoreSlim> _semaphorePool
-        = new(() => new SemaphoreSlim(1), 40);
+    private static readonly DisposableObjectPool<SemaphoreSlim> _semaphorePool
+        = new(() => new SemaphoreSlim(1), maximumRetained: 40);
 
     private readonly AsyncLocal<SemaphoreSlim?> _currentSemaphore = new();
 #pragma warning disable CA2213
@@ -92,7 +92,7 @@ internal sealed class AsyncLock : IAsyncDisposable, IDisposable
 
         _isDisposed = true;
         // Ensure the lock isn't held. If it is, wait for it to be released
-        // before completing the dispose.
+        // before completing to dispose.
         await _topLevelSemaphore.WaitAsync();
         _topLevelSemaphore.Release();
         _semaphorePool.Return(_topLevelSemaphore);
@@ -108,7 +108,7 @@ internal sealed class AsyncLock : IAsyncDisposable, IDisposable
 
         _isDisposed = true;
         // Ensure the lock isn't held. If it is, wait for it to be released
-        // before completing the dispose.
+        // before completing to dispose.
         _topLevelSemaphore.Wait();
         _semaphorePool.Return(_topLevelSemaphore);
     }

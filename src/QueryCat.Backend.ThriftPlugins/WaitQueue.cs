@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend.ThriftPlugins;
@@ -8,10 +9,10 @@ namespace QueryCat.Backend.ThriftPlugins;
 /// <summary>
 /// Queue with the ability of the async dequeue and return back to queue.
 /// </summary>
-[DebuggerDisplay("Count = {Count}")]
+[DebuggerDisplay("Count = {Count}, InUse = {InUseCount}, Available = {AvailableCount}")]
 internal sealed class WaitQueue : IDisposable
 {
-    private static readonly SimpleObjectPool<WaitingConsumer> _waitingConsumerPool = new(() => new WaitingConsumer());
+    private static readonly DisposableObjectPool<WaitingConsumer> _waitingConsumerPool = new(() => new WaitingConsumer());
     private readonly ConcurrentQueue<WaitingConsumer> _awaitClientQueue = new();
     private readonly ConcurrentQueue<object> _availableItemsObjects = new();
     private readonly ILogger _logger;
@@ -34,12 +35,17 @@ internal sealed class WaitQueue : IDisposable
     public int AwaitersCount => _awaitClientQueue.Count;
 
     /// <summary>
+    /// Number of available for dequeue objects.
+    /// </summary>
+    public int AvailableCount => _availableItemsObjects.Count;
+
+    /// <summary>
     /// Constructor.
     /// </summary>
     /// <param name="loggerFactory">Logger factory.</param>
-    public WaitQueue(ILoggerFactory loggerFactory)
+    public WaitQueue(ILoggerFactory? loggerFactory = null)
     {
-        _logger = loggerFactory.CreateLogger(nameof(WaitQueue));
+        _logger = (loggerFactory ?? NullLoggerFactory.Instance).CreateLogger(nameof(WaitQueue));
     }
 
     /// <summary>
@@ -164,11 +170,17 @@ internal sealed class WaitQueue : IDisposable
         _isDisposed = true;
     }
 
-    private sealed class WaitingConsumer
+    private sealed class WaitingConsumer : IDisposable
     {
         public SemaphoreSlim Trigger { get; } = new(0, 1);
 
         public ItemWrapper? Wrapper { get; set; }
+
+        /// <inheritdoc />
+        public void Dispose()
+        {
+            Trigger.Dispose();
+        }
     }
 
     /// <summary>
