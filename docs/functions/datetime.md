@@ -3,6 +3,7 @@
 | Name and Description |
 | --- |
 | `date(datetime: timestamp): timestamp`<br /><br /> Takes the date part. |
+| `date_add(datepart: string, number: integer, source: timestamp): timestamp`<br /><br /> The function adds a number to a datepart of an input date, and returns a modified date/time value. |
 | `date_part(field: string, source: timestamp): integer`<br /><br /> The function retrieves subfields such as year or hour from date/time values. |
 | `date_trunc(field: string, source: timestamp): timestamp`<br />`date_trunc(field: string, source: interval): interval`<br /><br />The function rounds or truncates a timestamp or interval to the date part you need. |
 | `now(): timestamp`<br /><br /> Current date and time |
