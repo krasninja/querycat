@@ -82,4 +82,7 @@ internal sealed class ThriftRemoteRowsOutput : IRowsOutput
             cancellationToken);
         return SdkConvert.Convert(result);
     }
+
+    /// <inheritdoc />
+    public override string ToString() => $"Id = {_id}";
 }

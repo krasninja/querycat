@@ -11,6 +11,11 @@ public interface IBlobData
     long Length { get; }
 
     /// <summary>
+    /// BLOB content MINE-type.
+    /// </summary>
+    string ContentType { get; }
+
+    /// <summary>
     /// Return stream representation of BLOB data.
     /// </summary>
     /// <returns>Stream.</returns>

@@ -11,7 +11,8 @@ options {
  * Program statements.
  */
 
-program: SEMICOLON* statement (SEMICOLON statement)* SEMICOLON* EOF;
+program: programBody EOF;
+programBody: SEMICOLON* statement (SEMICOLON statement)* SEMICOLON*;
 
 statement
     : functionCall # StatementFunctionCall
@@ -20,9 +21,15 @@ statement
     | selectStatement # StatementSelectExpression
     | updateStatement # StatementUpdateExpression
     | insertStatement # StatementInsertExpression
+    | deleteStatement # StatementDeleteExpression
     | echoStatement # StatementEcho
     | callStatement # StatementCall
     | ifStatement # StatementIf
+    | whileStatement # StatementWhile
+    | forStatement # StatementFor
+    | breakStatement # StatementBreak
+    | continueStatement # StatementContinue
+    | returnStatement # StatementReturn
     | expression # StatementExpression
     ;
 
@@ -49,7 +56,7 @@ functionCallArg: (identifierSimple ASSOCIATION)? expression;
  * ===============
  */
 
-declareVariable: DECLARE identifierSimple type (':=' statement)?;
+declareVariable: DECLARE identifierSimple (':=' statement)?;
 setVariable: SET identifier ':=' statement;
 
 /*
@@ -112,7 +119,7 @@ selectSublist
     ;
 
 // Into.
-selectTarget: INTO (into=functionCall | uri=STRING_LITERAL) (FORMAT format=functionCall)?;
+selectTarget: INTO (into=functionCall | uri=STRING_LITERAL | dash='-') (FORMAT format=functionCall)?;
 
 // From.
 selectFromClause:
@@ -175,8 +182,8 @@ updateStatement:
     selectSearchCondition?;
 updateSource
     : functionCall selectAlias? # UpdateNoFormat
-    | uri=STRING_LITERAL (FORMAT functionCall)? # UpdateWithFormat
-    | name=identifier # UpdateFromVariable
+    | uri=STRING_LITERAL (FORMAT functionCall)? selectAlias? # UpdateWithFormat
+    | name=identifier selectAlias? # UpdateFromVariable
     ;
 updateSetClause: source=identifier '=' target=expression;
 
@@ -192,14 +199,31 @@ insertStatement:
     insertColumnsList?
     insertFromSource;
 insertToSource
-    : functionCall # InsertNoFormat
-    | uri=STRING_LITERAL (FORMAT functionCall)? # InsertWithFormat
-    | name=identifier # InsertFromVariable
+    : functionCall selectAlias? # InsertNoFormat
+    | uri=STRING_LITERAL (FORMAT functionCall)? selectAlias? # InsertWithFormat
+    | '-' (FORMAT format=functionCall)? selectAlias? # InsertStdout
+    | name=identifier selectAlias? # InsertFromVariable
     ;
 insertColumnsList: '(' name=identifier (',' name=identifier)* ')';
 insertFromSource
     : selectQueryExpression # InsertSourceQuery
     | selectTableValues # InsertSourceTable
+    ;
+
+/*
+ * ===============
+ * DELETE command.
+ * ===============
+ */
+
+deleteStatement:
+    DELETE FROM
+    deleteFromSource
+    selectSearchCondition?;
+deleteFromSource
+    : functionCall selectAlias? # DeleteNoFormat
+    | uri=STRING_LITERAL (FORMAT functionCall)? selectAlias? # DeleteWithFormat
+    | name=identifier selectAlias? # DeleteFromVariable
     ;
 
 /*
@@ -229,6 +253,52 @@ ifStatement:
     (ELSEIF elseIf=ifCondition)*
     (ELSE elseBlock=blockExpression)?;
 ifCondition: condition=expression THEN block=blockExpression;
+
+/*
+ * ===============
+ * WHILE command.
+ * ===============
+ */
+
+whileStatement:
+    WHILE expression LOOP
+        programBody
+    END LOOP;
+
+/*
+ * ===============
+ * FOR command.
+ * ===============
+ */
+
+forStatement:
+    FOR target=identifierSimple IN query=expression LOOP
+        programBody
+    END LOOP;
+
+/*
+ * ===============
+ * BREAK command.
+ * ===============
+ */
+
+breakStatement: BREAK;
+
+/*
+ * ===============
+ * CONTINUE command.
+ * ===============
+ */
+
+continueStatement: CONTINUE;
+
+/*
+ * ===============
+ * RETURN command.
+ * ===============
+ */
+
+returnStatement: RETURN expression;
 
 /*
  * ===============

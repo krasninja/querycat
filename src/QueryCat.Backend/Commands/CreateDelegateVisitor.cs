@@ -41,8 +41,11 @@ internal partial class CreateDelegateVisitor : AstVisitor
         AstTraversal.TypesToIgnore.Add(typeof(Ast.Nodes.Select.SelectQuerySpecificationNode));
         AstTraversal.TypesToIgnore.Add(typeof(Ast.Nodes.Select.SelectQueryCombineNode));
         AstTraversal.TypesToIgnore.Add(typeof(Ast.Nodes.Declare.DeclareNode));
+        AstTraversal.TypesToIgnore.Add(typeof(Ast.Nodes.Declare.SetNode));
         AstTraversal.TypesToIgnore.Add(typeof(Ast.Nodes.Insert.InsertNode));
         AstTraversal.TypesToIgnore.Add(typeof(Ast.Nodes.Update.UpdateNode));
+        AstTraversal.TypesToIgnore.Add(typeof(Ast.Nodes.Delete.DeleteNode));
+        AstTraversal.TypesToIgnore.Add(typeof(Ast.Nodes.For.ForNode));
         AstTraversal.AcceptBeforeIgnore = true;
     }
 
@@ -129,9 +132,9 @@ internal partial class CreateDelegateVisitor : AstVisitor
             ? NodeIdFuncMap[node.DefaultNode.Id]
             : new FuncUnitStatic(VariantValue.Null);
 
-        if (node.IsSimpleCase)
+        if (node.IsSimpleCase && node.ArgumentNode != null)
         {
-            var arg = NodeIdFuncMap[node.ArgumentNode!.Id];
+            var arg = NodeIdFuncMap[node.ArgumentNode.Id];
             var equalsDelegate = VariantValue.GetEqualsDelegate(node.ArgumentNode.GetDataType());
 
             async ValueTask<VariantValue> Func(IExecutionThread thread, CancellationToken ct)
@@ -200,6 +203,12 @@ internal partial class CreateDelegateVisitor : AstVisitor
         }
 
         throw new CannotFindIdentifierException(node.Name);
+    }
+
+    /// <inheritdoc />
+    public override async ValueTask VisitAsync(QueryCat.Backend.Ast.Nodes.Select.SelectIdentifierExpressionNode node, CancellationToken cancellationToken)
+    {
+        await VisitAsync((IdentifierExpressionNode)node, cancellationToken);
     }
 
     /// <inheritdoc />
@@ -285,10 +294,21 @@ internal partial class CreateDelegateVisitor : AstVisitor
     }
 
     /// <inheritdoc />
-    public override async ValueTask VisitAsync(ProgramNode node, CancellationToken cancellationToken)
+    public override ValueTask VisitAsync(ProgramNode node, CancellationToken cancellationToken)
+    {
+        NodeIdFuncMap[node.Id] = NodeIdFuncMap[node.Body.Id];
+        return ValueTask.CompletedTask;
+    }
+
+    /// <inheritdoc />
+    public override async ValueTask VisitAsync(ProgramBodyNode node, CancellationToken cancellationToken)
     {
         await ResolveTypesVisitor.VisitAsync(node, cancellationToken);
-        var actions = node.Statements.Select(n => NodeIdFuncMap[n.Id]).ToArray();
+        var actions = new IFuncUnit[node.Statements.Count];
+        for (var i = 0; i < node.Statements.Count; i++)
+        {
+            actions[i] = NodeIdFuncMap[node.Statements[i].Id];
+        }
         NodeIdFuncMap[node.Id] = new FuncUnitMultiDelegate(DataType.Void, actions);
     }
 
@@ -402,23 +422,33 @@ internal partial class CreateDelegateVisitor : AstVisitor
 
     #region Special functions
 
+    private sealed class CastFuncUnit(
+        IFuncUnit action,
+        DataType outputType) : IFuncUnit
+    {
+        /// <inheritdoc />
+        public DataType OutputType => outputType;
+
+        /// <inheritdoc />
+        public async ValueTask<VariantValue> InvokeAsync(IExecutionThread thread, CancellationToken cancellationToken = default)
+        {
+            var expressionValue = await action.InvokeAsync(thread, cancellationToken);
+            if (!expressionValue.TryCast(outputType, out VariantValue result))
+            {
+                ApplyStatistic(thread, ErrorCode.CannotCast);
+                return VariantValue.Null;
+            }
+            return result;
+        }
+    }
+
     /// <inheritdoc />
     public override async ValueTask VisitAsync(CastFunctionNode node, CancellationToken cancellationToken)
     {
         await ResolveTypesVisitor.VisitAsync(node, cancellationToken);
         var expressionAction = NodeIdFuncMap[node.ExpressionNode.Id];
 
-        async ValueTask<VariantValue> Func(IExecutionThread thread, CancellationToken ct)
-        {
-            var expressionValue = await expressionAction.InvokeAsync(thread, ct);
-            if (expressionValue.TryCast(node.TargetTypeNode.Type, out VariantValue result))
-            {
-                return result;
-            }
-            ApplyStatistic(thread, ErrorCode.CannotCast);
-            return VariantValue.Null;
-        }
-        NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, node.GetDataType());
+        NodeIdFuncMap[node.Id] = new CastFuncUnit(expressionAction, node.GetDataType());
     }
 
     private sealed class CoalesceFuncUnit : IFuncUnit
@@ -546,6 +576,13 @@ internal partial class CreateDelegateVisitor : AstVisitor
         return ValueTask.CompletedTask;
     }
 
+    /// <inheritdoc />
+    public override ValueTask VisitAsync(QueryCat.Backend.Ast.Nodes.Select.SelectTableFunctionNode node, CancellationToken cancellationToken)
+    {
+        NodeIdFuncMap[node.Id] = NodeIdFuncMap[node.TableFunctionNode.Id];
+        return ValueTask.CompletedTask;
+    }
+
     #endregion
 
     #region Statements
@@ -580,6 +617,13 @@ internal partial class CreateDelegateVisitor : AstVisitor
     }
 
     /// <inheritdoc />
+    public override async ValueTask VisitAsync(Ast.Nodes.Declare.SetNode node, CancellationToken cancellationToken)
+    {
+        await VisitWithStatementVisitor(node, cancellationToken);
+        await base.VisitAsync(node, cancellationToken);
+    }
+
+    /// <inheritdoc />
     public override async ValueTask VisitAsync(Ast.Nodes.Insert.InsertNode node, CancellationToken cancellationToken)
     {
         await VisitWithStatementVisitor(node, cancellationToken);
@@ -588,6 +632,20 @@ internal partial class CreateDelegateVisitor : AstVisitor
 
     /// <inheritdoc />
     public override async ValueTask VisitAsync(Ast.Nodes.Update.UpdateNode node, CancellationToken cancellationToken)
+    {
+        await VisitWithStatementVisitor(node, cancellationToken);
+        await base.VisitAsync(node, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public override async ValueTask VisitAsync(Ast.Nodes.Delete.DeleteNode node, CancellationToken cancellationToken)
+    {
+        await VisitWithStatementVisitor(node, cancellationToken);
+        await base.VisitAsync(node, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public override async ValueTask VisitAsync(Ast.Nodes.For.ForNode node, CancellationToken cancellationToken)
     {
         await VisitWithStatementVisitor(node, cancellationToken);
         await base.VisitAsync(node, cancellationToken);

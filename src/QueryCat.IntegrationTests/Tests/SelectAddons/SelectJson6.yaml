@@ -1,7 +1,7 @@
 expected: |
   b
 query: |
-  declare json string := '
+  declare json := '
   {
     "a": "b"
   }';

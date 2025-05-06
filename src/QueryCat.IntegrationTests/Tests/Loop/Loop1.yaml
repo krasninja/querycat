@@ -1,0 +1,8 @@
+expected: |
+  15
+query: |
+  declare i := 0;
+  for r in generate_series(1, 5) loop
+    set i := i + r[0];
+  end loop;
+  select i;

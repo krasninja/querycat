@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Globalization;
 using System.Text;
 using QueryCat.Backend.Core.Types;
 
@@ -18,6 +19,10 @@ public class Row : IRowsSchema, ICloneable, IEnumerable<VariantValue>
 
     private readonly VariantValue[] _values;
 
+    /// <summary>
+    /// Get value by column name.
+    /// </summary>
+    /// <param name="columnName">Column name.</param>
     public VariantValue this[string columnName]
     {
         get
@@ -25,7 +30,7 @@ public class Row : IRowsSchema, ICloneable, IEnumerable<VariantValue>
             var columnIndex = this.GetColumnIndexByName(columnName);
             if (columnIndex < 0)
             {
-                throw new ArgumentException(string.Format(Resources.Errors.CannotFindColumn, columnName), nameof(columnIndex));
+                throw new ArgumentOutOfRangeException(string.Format(Resources.Errors.CannotFindColumn, columnName), nameof(columnIndex));
             }
             return _values[columnIndex];
         }
@@ -35,10 +40,20 @@ public class Row : IRowsSchema, ICloneable, IEnumerable<VariantValue>
             var columnIndex = this.GetColumnIndexByName(columnName);
             if (columnIndex < 0)
             {
-                throw new ArgumentException(string.Format(Resources.Errors.CannotFindColumn, columnName), nameof(columnIndex));
+                throw new ArgumentOutOfRangeException(string.Format(Resources.Errors.CannotFindColumn, columnName), nameof(columnIndex));
             }
             _values[columnIndex] = value;
         }
+    }
+
+    /// <summary>
+    /// Index getter and setter.
+    /// </summary>
+    /// <param name="columnIndex">Column index.</param>
+    public virtual VariantValue this[int columnIndex]
+    {
+        get => _values[columnIndex];
+        set => _values[columnIndex] = value;
     }
 
     /// <summary>
@@ -57,7 +72,6 @@ public class Row : IRowsSchema, ICloneable, IEnumerable<VariantValue>
     {
         _columns = schema.Columns;
         _values = new VariantValue[Columns.Length];
-        MakeEmpty();
     }
 
     /// <summary>
@@ -68,7 +82,6 @@ public class Row : IRowsSchema, ICloneable, IEnumerable<VariantValue>
     {
         _columns = columns;
         _values = new VariantValue[Columns.Length];
-        MakeEmpty();
     }
 
     /// <summary>
@@ -89,11 +102,8 @@ public class Row : IRowsSchema, ICloneable, IEnumerable<VariantValue>
     /// <param name="toRow">Destination row.</param>
     public static void Copy(Row fromRow, Row toRow)
     {
-        var length = Math.Min(fromRow.Columns.Length, toRow.Columns.Length);
-        for (int i = 0; i < length; i++)
-        {
-            toRow[i] = fromRow[i];
-        }
+        ValidateArraysLength(fromRow._values, toRow._values);
+        fromRow._values.CopyTo(toRow._values, 0);
     }
 
     /// <summary>
@@ -101,13 +111,10 @@ public class Row : IRowsSchema, ICloneable, IEnumerable<VariantValue>
     /// </summary>
     /// <param name="values">Values.</param>
     /// <param name="toRow">Destination row.</param>
-    public static void Copy(VariantValue[] values, Row toRow)
+    public static void Copy(ReadOnlySpan<VariantValue> values, Row toRow)
     {
-        var length = Math.Min(values.Length, toRow.Columns.Length);
-        for (int i = 0; i < length; i++)
-        {
-            toRow[i] = values[i];
-        }
+        ValidateArraysLength(values, toRow._values);
+        values.CopyTo(toRow._values);
     }
 
     /// <summary>
@@ -119,10 +126,14 @@ public class Row : IRowsSchema, ICloneable, IEnumerable<VariantValue>
     /// <param name="toRowOffset">Destination start index.</param>
     public static void Copy(Row fromRow, int fromRowOffset, Row toRow, int toRowOffset)
     {
-        var length = Math.Min(fromRow.Columns.Length, toRow.Columns.Length);
-        for (var i = fromRowOffset; i < length; i++)
+        fromRow._values[fromRowOffset..].CopyTo(toRow._values.AsSpan(toRowOffset));
+    }
+
+    private static void ValidateArraysLength(ReadOnlySpan<VariantValue> array1, ReadOnlySpan<VariantValue> array2)
+    {
+        if (array1.Length > array2.Length)
         {
-            toRow[toRowOffset + i] = fromRow[i];
+            throw new ArgumentException(Resources.Errors.InvalidNumberOfValues);
         }
     }
 
@@ -146,21 +157,11 @@ public class Row : IRowsSchema, ICloneable, IEnumerable<VariantValue>
     }
 
     /// <summary>
-    /// Remove all the data, clear the row.
+    /// Clear row values.
     /// </summary>
-    public void MakeEmpty()
+    public void Clear()
     {
         Array.Fill(_values, VariantValue.Null);
-    }
-
-    /// <summary>
-    /// Index getter and setter.
-    /// </summary>
-    /// <param name="columnIndex">Column index.</param>
-    public virtual VariantValue this[int columnIndex]
-    {
-        get => _values[columnIndex];
-        set => _values[columnIndex] = value;
     }
 
     /// <inheritdoc />
@@ -185,14 +186,6 @@ public class Row : IRowsSchema, ICloneable, IEnumerable<VariantValue>
         return true;
     }
 
-    /// <summary>
-    /// Clear row values.
-    /// </summary>
-    public void Clear()
-    {
-        Array.Fill(_values, VariantValue.Null);
-    }
-
     /// <inheritdoc />
     public override int GetHashCode()
     {
@@ -210,7 +203,7 @@ public class Row : IRowsSchema, ICloneable, IEnumerable<VariantValue>
         var sb = new StringBuilder(Columns.Length * 20);
         for (var i = 0; i < Columns.Length; i++)
         {
-            sb.Append(_values[i].ToString());
+            sb.Append(_values[i].ToString(CultureInfo.InvariantCulture));
             if (i != Columns.Length - 1)
             {
                 sb.Append("; ");

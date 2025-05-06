@@ -16,12 +16,13 @@ public class AdjustColumnsLengthsIterator : IRowsIterator, IRowsIteratorParent
     private readonly int _maxRowsToAnalyze;
     private readonly CacheRowsIterator _cacheRowsIterator;
     private bool _isInitialized;
+    private bool _cacheMode;
 
     /// <inheritdoc />
     public Column[] Columns => _rowsIterator.Columns;
 
     /// <inheritdoc />
-    public Row Current => _cacheRowsIterator.Current;
+    public Row Current => _cacheMode ? _cacheRowsIterator.Current : _rowsIterator.Current;
 
     public AdjustColumnsLengthsIterator(IRowsIterator rowsIterator, int maxRowsToAnalyze = MaxRowsToAnalyze)
     {
@@ -38,7 +39,18 @@ public class AdjustColumnsLengthsIterator : IRowsIterator, IRowsIteratorParent
             await InitializeAsync(cancellationToken);
         }
 
-        return await _cacheRowsIterator.MoveNextAsync(cancellationToken);
+        if (!_cacheRowsIterator.EndOfCache)
+        {
+            var hasData = await _cacheRowsIterator.MoveNextAsync(cancellationToken);
+            if (hasData)
+            {
+                _cacheMode = true;
+                return hasData;
+            }
+        }
+
+        _cacheMode = false;
+        return await _rowsIterator.MoveNextAsync(cancellationToken);
     }
 
     /// <inheritdoc />
@@ -64,7 +76,7 @@ public class AdjustColumnsLengthsIterator : IRowsIterator, IRowsIteratorParent
             }
         }
 
-        while (await _cacheRowsIterator.MoveNextAsync(cancellationToken) && _cacheRowsIterator.Position < _maxRowsToAnalyze)
+        while (await _cacheRowsIterator.MoveNextAsync(cancellationToken) && _cacheRowsIterator.Position + 1 < _maxRowsToAnalyze)
         {
             for (var i = 0; i < Columns.Length; i++)
             {
@@ -81,7 +93,8 @@ public class AdjustColumnsLengthsIterator : IRowsIterator, IRowsIteratorParent
             }
         }
         _isInitialized = true;
-        _cacheRowsIterator.Seek(-1, CursorSeekOrigin.Begin);
+        _cacheRowsIterator.SeekCacheCursorToHead();
+        _cacheRowsIterator.Freeze();
     }
 
     /// <inheritdoc />

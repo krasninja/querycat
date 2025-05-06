@@ -37,9 +37,9 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
 
     private readonly List<Action<IFunctionsManager>> _registrations = new();
 
-    private Func<IExecutionThread, PluginsLoader> _pluginsLoaderFactory = _ => new NullPluginsLoader(Array.Empty<string>());
+    private Func<IExecutionThread, PluginsLoader> _pluginsLoaderFactory = _ => new NullPluginsLoader([]);
 
-    private Func<PluginsLoader, IPluginsManager> _pluginsManagerFactory = _ => new NullPluginsManager();
+    private Func<PluginsLoader, IPluginsManager> _pluginsManagerFactory = pluginLoader => new NullPluginsManager(pluginLoader);
 
     private readonly List<IUriResolver> _uriResolvers = new();
 
@@ -48,6 +48,8 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
     private object? _tag;
 
     private bool _addStandardCompletions;
+
+    private Func<IExecutionScope?, IExecutionScope>? _executionScopeFactory;
 
     /// <summary>
     /// Use the custom config storage.
@@ -101,6 +103,17 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
         _uriResolvers.Add(new CurlUriResolver());
         _uriResolvers.Add(new DirectoryUriResolver());
         _uriResolvers.Add(new FileUriResolver());
+        return this;
+    }
+
+    /// <summary>
+    /// Add custom URI resolver.
+    /// </summary>
+    /// <param name="uriResolver">Instance of <see cref="IUriResolver" />.</param>
+    /// <returns>The instance of <see cref="ExecutionThreadBootstrapper" />.</returns>
+    public ExecutionThreadBootstrapper WithUriResolver(IUriResolver uriResolver)
+    {
+        _uriResolvers.Add(uriResolver);
         return this;
     }
 
@@ -182,6 +195,12 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
         return this;
     }
 
+    public ExecutionThreadBootstrapper WithExecutionScopeFactory(Func<IExecutionScope?, IExecutionScope> factory)
+    {
+        _executionScopeFactory = factory;
+        return this;
+    }
+
     /// <summary>
     /// Create the instance of execution thread.
     /// </summary>
@@ -230,7 +249,8 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
             objectSelector: _objectSelector,
             configStorage: _inputConfigStorage,
             astBuilder: astBuilder,
-            completionSource: completionSource
+            completionSource: completionSource,
+            executionScopeFactory: _executionScopeFactory
         );
         thread.Tag = _tag;
 
@@ -247,6 +267,7 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
             CryptoFunctions.RegisterFunctions(_functionsManager);
             MiscFunctions.RegisterFunctions(_functionsManager);
             InfoFunctions.RegisterFunctions(_functionsManager);
+            BlobFunctions.RegisterFunctions(_functionsManager);
         }
         foreach (var registration in _registrations)
         {

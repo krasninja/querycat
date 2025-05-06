@@ -20,7 +20,7 @@ internal sealed class XmlOutput : RowsOutput, IDisposable, IAsyncDisposable
     {
         _xmlWriter = XmlWriter.Create(stream, new XmlWriterSettings
         {
-            Async = false,
+            Async = true,
             Indent = true,
         });
     }

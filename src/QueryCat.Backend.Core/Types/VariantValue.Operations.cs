@@ -438,7 +438,9 @@ public readonly partial struct VariantValue
         VariantValue CreateCombinedBlob(IBlobData leftBlob, IBlobData rightBlob)
         {
             return new VariantValue(new StreamBlobData(
-                () => new MultiStream(leftBlob.GetStream(), rightBlob.GetStream()))
+                () => new MultiStream(
+                    leftBlob.GetStream(), rightBlob.GetStream()), leftBlob.ContentType
+                )
             );
         }
 

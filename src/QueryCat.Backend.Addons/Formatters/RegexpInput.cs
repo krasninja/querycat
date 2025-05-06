@@ -64,7 +64,7 @@ internal sealed class RegexpInput : StreamRowsInput
     protected override async Task AnalyzeAsync(CacheRowsIterator iterator, CancellationToken cancellationToken = default)
     {
         await RowsIteratorUtils.ResolveColumnsTypesAsync(iterator, cancellationToken: cancellationToken);
-        iterator.SeekToHead();
+        iterator.SeekCacheCursorToHead();
     }
 
     /// <inheritdoc />

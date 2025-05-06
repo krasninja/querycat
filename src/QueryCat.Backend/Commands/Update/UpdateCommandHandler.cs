@@ -5,14 +5,14 @@ using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Commands.Update;
 
-internal sealed class UpdateCommandHandler : IFuncUnit
+internal sealed class UpdateCommandHandler : IFuncUnit, IAsyncDisposable
 {
     private readonly SelectCommandContext _selectCommandContext;
     private readonly UpdateSetter[] _setters;
     private readonly IRowsInputUpdate _rowsInput;
 
     /// <inheritdoc />
-    public DataType OutputType => DataType.Null;
+    public DataType OutputType => DataType.Integer;
 
     public UpdateCommandHandler(
         SelectCommandContext selectCommandContext,
@@ -44,4 +44,7 @@ internal sealed class UpdateCommandHandler : IFuncUnit
 
         return new VariantValue(updateCount);
     }
+
+    /// <inheritdoc />
+    public ValueTask DisposeAsync() => _selectCommandContext.CloseAsync();
 }

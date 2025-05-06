@@ -24,7 +24,7 @@ internal sealed class PluginAssemblyLoadContext : AssemblyLoadContext
     /// <inheritdoc />
     protected override IntPtr LoadUnmanagedDll(string unmanagedDllName)
     {
-        // Try to use standard approach first.
+        // 1. Try to use standard approach first.
         var address = base.LoadUnmanagedDll(unmanagedDllName);
         if (address != IntPtr.Zero)
         {
@@ -36,6 +36,8 @@ internal sealed class PluginAssemblyLoadContext : AssemblyLoadContext
         {
             return ptr;
         }
+
+        // 2. Try to load from "runtimes" folder.
 
         // Format native library name.
         var targetDllName = GetTargetDllName(unmanagedDllName);
@@ -59,6 +61,12 @@ internal sealed class PluginAssemblyLoadContext : AssemblyLoadContext
         {
             _loaded[unmanagedDllName] = libraryHandle;
             return libraryHandle;
+        }
+
+        // 3. Try to load with NativeLibrary.
+        if (NativeLibrary.TryLoad(unmanagedDllName, out address))
+        {
+            return address;
         }
 
         _logger.LogWarning("Failed to load library '{LibraryPath}'.", libraryPath);
@@ -103,8 +111,7 @@ internal sealed class PluginAssemblyLoadContext : AssemblyLoadContext
         }
 
         // Load native library.
-        if (!string.IsNullOrEmpty(libraryPath)
-            && NativeLibrary.TryLoad(libraryPath, out var library))
+        if (NativeLibrary.TryLoad(libraryPath, out var library))
         {
             _logger.LogDebug("Loaded native library '{LibraryPath}'.", libraryPath);
             return library;
@@ -116,13 +123,13 @@ internal sealed class PluginAssemblyLoadContext : AssemblyLoadContext
     private string CopyFileToNativeCache(string libraryPath)
     {
         var libraryName = Path.GetFileName(libraryPath);
-        var cacheTargetDirectory = Path.Combine(Application.GetApplicationDirectory(), "native-cache", _pluginName);
-        Directory.CreateDirectory(cacheTargetDirectory);
         using var file = _pluginLoadStrategy.GetFile(libraryPath);
         if (file == Stream.Null)
         {
             return string.Empty;
         }
+        var cacheTargetDirectory = Path.Combine(Application.GetApplicationDirectory(), "native-cache", _pluginName);
+        Directory.CreateDirectory(cacheTargetDirectory);
         libraryPath = Path.Combine(cacheTargetDirectory, libraryName);
         long fileSize = 0;
         if (file.CanSeek)
@@ -149,21 +156,25 @@ internal sealed class PluginAssemblyLoadContext : AssemblyLoadContext
     {
         var prefix = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? string.Empty : "lib";
 
-        var extension = string.Empty;
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        var fileExtension = Path.GetExtension(unmanagedDllName);
+        var targetExtension = string.Empty;
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            && !fileExtension.Equals(".dll", StringComparison.OrdinalIgnoreCase))
         {
-            extension = ".dll";
+            targetExtension = ".dll";
         }
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
+        if ((RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
             || RuntimeInformation.IsOSPlatform(OSPlatform.FreeBSD))
+            && !fileExtension.Equals(".so"))
         {
-            extension = ".so";
+            targetExtension = ".so";
         }
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX)
+            && !fileExtension.Equals(".dylib"))
         {
-            extension = ".dylib";
+            targetExtension = ".dylib";
         }
 
-        return $"{prefix}{unmanagedDllName}{extension}";
+        return $"{prefix}{unmanagedDllName}{targetExtension}";
     }
 }

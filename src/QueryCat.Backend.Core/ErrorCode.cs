@@ -56,6 +56,11 @@ public enum ErrorCode
     /// </summary>
     Closed = 9,
 
+    /// <summary>
+    /// No operation was performed.
+    /// </summary>
+    NoAction = 10,
+
     // More specific errors.
 
     /// <summary>

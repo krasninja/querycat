@@ -94,6 +94,13 @@ internal class QueryAstVisitor : AstVisitor
     /// <inheritdoc />
     public override ValueTask VisitAsync(ProgramNode node, CancellationToken cancellationToken)
     {
+        Copy(node, node.Body);
+        return ValueTask.CompletedTask;
+    }
+
+    /// <inheritdoc />
+    public override ValueTask VisitAsync(ProgramBodyNode node, CancellationToken cancellationToken)
+    {
         var sb = new StringBuilder();
         foreach (var statementNode in node.Statements)
         {
@@ -133,7 +140,7 @@ internal class QueryAstVisitor : AstVisitor
     /// <inheritdoc />
     public override ValueTask VisitAsync(DeclareNode node, CancellationToken cancellationToken)
     {
-        var str = $"DECLARE {node.Name} {GetTypeString(node.Type)}";
+        var str = $"DECLARE {node.Name}";
         if (node.ValueNode != null)
         {
             str += " := " + Get(node.ValueNode);

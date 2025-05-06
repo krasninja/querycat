@@ -23,7 +23,7 @@ public abstract class RowsOutput : IRowsOutput
     public abstract Task CloseAsync(CancellationToken cancellationToken = default);
 
     /// <inheritdoc />
-    public Task ResetAsync(CancellationToken cancellationToken = default)
+    public virtual Task ResetAsync(CancellationToken cancellationToken = default)
     {
         _isFirstCall = true;
         return Task.CompletedTask;

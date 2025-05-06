@@ -103,6 +103,7 @@ enum QueryCatErrorCode {
   INVALID_ARGUMENTS = 7,
   ABORTED = 8,
   CLOSED = 9,
+  NO_ACTION = 10,
 
   CANNOT_CAST = 100,
   CANNOT_APPLY_OPERATOR = 101,
@@ -227,6 +228,12 @@ service PluginsManager {
 
   // Get total binary length.
   i64 Blob_GetLength(
+    1: required i64 token, // Authorization token.
+    2: required Handle object_blob_handle
+  ) throws (1: QueryCatPluginException e),
+
+  // Get binary MIME content type.
+  string Blob_GetContentType(
     1: required i64 token, // Authorization token.
     2: required Handle object_blob_handle
   ) throws (1: QueryCatPluginException e),
@@ -420,7 +427,12 @@ service Plugin {
     1: required Handle object_blob_handle
   ) throws (1: QueryCatPluginException e),
 
-  // The method is called to ask client to start server so QueryCat host can make additional connection.
+  // Get binary MIME content type.
+  string Blob_GetContentType(
+    1: required Handle object_blob_handle
+  ) throws (1: QueryCatPluginException e),
+
+  // The method is called to ask client to start new server so QueryCat host can make additional connection.
   string Serve(
   ) throws (1: QueryCatPluginException e),
 }

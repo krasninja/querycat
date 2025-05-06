@@ -1,7 +1,11 @@
+using System.Collections.Concurrent;
 using System.ComponentModel;
+using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Relational.Iterators;
+using QueryCat.Backend.Storage;
 
 namespace QueryCat.Backend.Functions;
 
@@ -79,6 +83,41 @@ internal static class MiscFunctions
         return thread.Stack.Pop();
     }
 
+    [SafeFunction]
+    [Description("Implements rows input caching.")]
+    [FunctionSignature("cache_input(input: object<IRowsIterator>, key: string, expire?: interval := null): object<IRowsIterator>")]
+    [FunctionSignature("cache_input(input: object<IRowsInput>, key: string, expire?: interval := null): object<IRowsIterator>")]
+    public static VariantValue CacheInput(IExecutionThread thread)
+    {
+        var iterator = thread.Stack[0].AsObjectUnsafe as IRowsIterator;
+        if (iterator == null && thread.Stack[0].AsObjectUnsafe is IRowsInput rowsInput)
+        {
+            iterator = new RowsInputIterator(rowsInput);
+        }
+        iterator ??= EmptyIterator.Instance;
+        var key = thread.Stack[1].AsString;
+        var expireTime = thread.Stack[2].AsInterval ?? TimeSpan.FromHours(1);
+
+        var cacheIterator = _cacheStorage.AddOrUpdate(key,
+            addValueFactory: (k) => new CacheRowsIterator(iterator, expiresIn: expireTime),
+            updateValueFactory: (k, cache) =>
+            {
+                if (cache.IsExpired || !cache.RowsIterator.IsSchemaEqual(iterator))
+                {
+                    return new CacheRowsIterator(iterator, expiresIn: expireTime);
+                }
+                else
+                {
+                    cache.SeekCacheCursorToHead();
+                    return new CacheRowsIterator(iterator, cache);
+                }
+            });
+
+        return VariantValue.CreateFromObject(cacheIterator);
+    }
+
+    private static readonly ConcurrentDictionary<string, CacheRowsIterator> _cacheStorage = new();
+
     public static void RegisterFunctions(IFunctionsManager functionsManager)
     {
         functionsManager.RegisterFunction(NullIf);
@@ -86,5 +125,6 @@ internal static class MiscFunctions
         functionsManager.RegisterFunction(GetRandomGuid);
         functionsManager.RegisterFunction(SizePretty);
         functionsManager.RegisterFunction(Self);
+        functionsManager.RegisterFunction(CacheInput);
     }
 }

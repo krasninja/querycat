@@ -14,7 +14,7 @@ public sealed class RowsIteratorInput : IRowsInput, IRowsIteratorParent
     private QueryContext _queryContext = NullQueryContext.Instance;
 
     /// <inheritdoc />
-    public Column[] Columns { get; }
+    public Column[] Columns => _rowsIterator.Columns;
 
     /// <inheritdoc />
     public string[] UniqueKey { get; }
@@ -29,7 +29,6 @@ public sealed class RowsIteratorInput : IRowsInput, IRowsIteratorParent
     public RowsIteratorInput(IRowsIterator rowsIterator, string? id = null)
     {
         _rowsIterator = rowsIterator;
-        Columns = rowsIterator.Columns;
         _id = id ?? Guid.NewGuid().ToString("N");
         UniqueKey = [_id];
     }

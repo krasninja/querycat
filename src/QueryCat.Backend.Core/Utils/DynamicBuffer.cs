@@ -164,6 +164,37 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
         {
             Head = null;
             Tail = null;
+            Count = 0;
+        }
+
+        /// <summary>
+        /// Validate the linked list state. For internal debug only.
+        /// </summary>
+        /// <returns>Returns <c>true</c> if the state is valid, <c>false</c> otherwise.</returns>
+        private bool ValidateState()
+        {
+            if (Head == null && Tail != null)
+            {
+                return false;
+            }
+            if (Head != null && Tail == null)
+            {
+                return false;
+            }
+
+            var count = 0;
+            BufferSegment? current = Head;
+            while (current != null)
+            {
+                count++;
+                current = current.NextRef;
+            }
+            if (count != Count)
+            {
+                return false;
+            }
+
+            return true;
         }
     }
 

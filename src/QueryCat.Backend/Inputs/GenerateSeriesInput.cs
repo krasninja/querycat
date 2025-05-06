@@ -26,6 +26,7 @@ internal sealed class GenerateSeriesInput : IRowsInput
     private readonly VariantValue _end;
     private readonly VariantValue _step;
     private readonly VariantValue.BinaryFunction _addFunction;
+    private bool _isInProgress;
 
     /// <inheritdoc />
     public QueryContext QueryContext { get; set; } = NullQueryContext.Instance;
@@ -64,6 +65,7 @@ internal sealed class GenerateSeriesInput : IRowsInput
     /// <inheritdoc />
     public Task CloseAsync(CancellationToken cancellationToken = default)
     {
+        _isInProgress = false;
         return Task.CompletedTask;
     }
 
@@ -71,12 +73,19 @@ internal sealed class GenerateSeriesInput : IRowsInput
     public Task ResetAsync(CancellationToken cancellationToken = default)
     {
         _current = _start;
+        _isInProgress = false;
         return Task.CompletedTask;
     }
 
     /// <inheritdoc />
     public ErrorCode ReadValue(int columnIndex, out VariantValue value)
     {
+        if (!_isInProgress)
+        {
+            value = VariantValue.Null;
+            return ErrorCode.NotInitialized;
+        }
+
         if (columnIndex == 0)
         {
             value = _current;
@@ -90,6 +99,13 @@ internal sealed class GenerateSeriesInput : IRowsInput
     /// <inheritdoc />
     public ValueTask<bool> ReadNextAsync(CancellationToken cancellationToken = default)
     {
+        if (!_isInProgress)
+        {
+            _isInProgress = true;
+            _current = _start;
+            return ValueTask.FromResult(true);
+        }
+
         var next = _addFunction.Invoke(_current, _step);
         if (next <= _end)
         {

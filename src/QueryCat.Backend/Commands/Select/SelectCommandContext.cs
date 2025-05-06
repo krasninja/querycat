@@ -13,7 +13,7 @@ namespace QueryCat.Backend.Commands.Select;
 /// Contains all necessary information to handle the query on all stages.
 /// </summary>
 [DebuggerDisplay("Id = {Id}, Iterator = {CurrentIterator}")]
-internal sealed class SelectCommandContext(SelectQueryNode queryNode) : CommandContext, IDisposable, IAsyncDisposable
+internal sealed class SelectCommandContext(SelectQueryNode queryNode) : CommandContext
 {
     public SelectQueryConditions Conditions { get; } = new();
 
@@ -168,6 +168,16 @@ internal sealed class SelectCommandContext(SelectQueryNode queryNode) : CommandC
     }
 
     /// <summary>
+    /// Remove child context.
+    /// </summary>
+    /// <param name="context">Context.</param>
+    internal void RemoveChildContext(SelectCommandContext context)
+    {
+        context.Parent = null;
+        _childContexts.Remove(context);
+    }
+
+    /// <summary>
     /// Set parent query context. The method also updates child items.
     /// If null - the context will be topmost.
     /// </summary>
@@ -190,16 +200,6 @@ internal sealed class SelectCommandContext(SelectQueryNode queryNode) : CommandC
         {
             yield return parentContext;
             parentContext = parentContext.Parent;
-        }
-    }
-
-    internal IEnumerable<T> GetChildren<T>(Func<SelectCommandContext, T> func)
-    {
-        yield return func.Invoke(this);
-
-        foreach (var child in _childContexts)
-        {
-            yield return func.Invoke(child);
         }
     }
 
@@ -248,6 +248,10 @@ internal sealed class SelectCommandContext(SelectQueryNode queryNode) : CommandC
         return identifierAstVisitor.Columns.ToArray();
     }
 
+    /// <summary>
+    /// Dump debug info into instance of <see cref="IndentedStringBuilder" />.
+    /// </summary>
+    /// <param name="stringBuilder">String builder.</param>
     public void Dump(IndentedStringBuilder stringBuilder)
     {
         stringBuilder.AppendLine();
@@ -271,31 +275,18 @@ internal sealed class SelectCommandContext(SelectQueryNode queryNode) : CommandC
         }
     }
 
-    /// <inheritdoc />
-    public void Dispose()
+    /// <summary>
+    /// Close iterators and child resource.
+    /// </summary>
+    public async ValueTask CloseAsync(CancellationToken cancellationToken = default)
     {
         if (RowsInputIterator != null)
         {
-            RowsInputIterator.CloseAsync()
-                .ConfigureAwait(false)
-                .GetAwaiter().GetResult();
+            await RowsInputIterator.CloseAsync(cancellationToken);
         }
         foreach (var childContext in ChildContexts)
         {
-            childContext.Dispose();
-        }
-    }
-
-    /// <inheritdoc />
-    public async ValueTask DisposeAsync()
-    {
-        if (RowsInputIterator != null)
-        {
-            await RowsInputIterator.CloseAsync();
-        }
-        foreach (var childContext in ChildContexts)
-        {
-            await childContext.DisposeAsync();
+            await childContext.CloseAsync(cancellationToken);
         }
     }
 }

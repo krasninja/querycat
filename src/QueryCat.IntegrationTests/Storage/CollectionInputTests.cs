@@ -56,7 +56,7 @@ public sealed class CollectionInputTests : IDisposable
         var rowsFrame = new RowsFrame(_employeesList.Columns);
         var thread = new ExecutionThreadBootstrapper(new ExecutionOptions
         {
-            DefaultRowsOutput = new RowsFrameOutput(rowsFrame),
+            DefaultRowsOutput = new RowsFrameSource(rowsFrame),
         }).Create();
         thread.TopScope.Variables["employees"] = VariantValue.CreateFromObject(_employeesList);
         await thread.RunAsync("select * from \"employees\";");
@@ -106,6 +106,23 @@ public sealed class CollectionInputTests : IDisposable
         await thread.RunAsync("insert into self(employees) (id, name) values (4, 'Abbie Cornish');");
         Assert.Equal(4, _employeesList.TargetCollection.Count());
         Assert.Equal(5, _employeesList.TargetCollection.ElementAt(3).Score);
+    }
+
+    [Fact]
+    public async Task Delete_ListOfEmployees_ShouldRemoveByCondition()
+    {
+        await using var thread = new ExecutionThreadBootstrapper(new ExecutionOptions
+            {
+                DefaultRowsOutput = NullRowsOutput.Instance,
+            })
+            .WithRegistrations(AdditionalRegistration.Register)
+            .WithStandardFunctions()
+            .Create();
+        var rowsFrame = _employeesList.ToRowsFrame();
+        var rowsInput = new RowsFrameSource(rowsFrame);
+        thread.TopScope.Variables["employees"] = VariantValue.CreateFromObject(rowsInput);
+        await thread.RunAsync(@"delete from self(employees) where id >= 2;");
+        Assert.Equal(1, rowsFrame.TotalActiveRows);
     }
 
     /// <inheritdoc />

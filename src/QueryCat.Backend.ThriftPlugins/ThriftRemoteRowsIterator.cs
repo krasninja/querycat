@@ -9,12 +9,13 @@ using VariantValue = QueryCat.Backend.Core.Types.VariantValue;
 
 namespace QueryCat.Backend.ThriftPlugins;
 
-internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys
+internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys, IRowsInputUpdate, IRowsInputDelete
 {
-    private const int LoadCount = 10;
+    private const int DefaultLoadCount = 1;
 
     private readonly ThriftPluginContext _context;
     private readonly int _objectHandle;
+    private readonly int _loadCount;
     private readonly string _id;
     private readonly DynamicBuffer<VariantValue> _cache = new(chunkSize: 64);
 
@@ -39,10 +40,11 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys
         }
     }
 
-    public ThriftRemoteRowsIterator(ThriftPluginContext context, int objectHandle, string? id = null)
+    public ThriftRemoteRowsIterator(ThriftPluginContext context, int objectHandle, string? id = null, int loadCount = DefaultLoadCount)
     {
         _context = context;
         _objectHandle = objectHandle;
+        _loadCount = loadCount;
         _id = id ?? string.Empty;
     }
 
@@ -117,7 +119,7 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys
         }
 
         using var session = await _context.GetSessionAsync(cancellationToken);
-        var result = await session.ClientProxy.RowsSet_GetRowsAsync(_objectHandle, LoadCount * Columns.Length, cancellationToken);
+        var result = await session.ClientProxy.RowsSet_GetRowsAsync(_objectHandle, _loadCount, cancellationToken);
         if (result.Values == null || result.Values.Count == 0)
         {
             return false;
@@ -168,6 +170,23 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys
             using var session = await _context.GetSessionAsync(ct);
             await session.ClientProxy.RowsSet_UnsetKeyColumnValueAsync(_objectHandle, columnIndex, operation.ToString(), ct);
         });
+    }
+
+    /// <inheritdoc />
+    public async ValueTask<ErrorCode> UpdateValueAsync(int columnIndex, VariantValue value, CancellationToken cancellationToken = default)
+    {
+        using var session = await _context.GetSessionAsync(cancellationToken);
+        var result = await session.ClientProxy.RowsSet_UpdateValueAsync(_objectHandle, columnIndex, SdkConvert.Convert(value),
+            cancellationToken);
+        return SdkConvert.Convert(result);
+    }
+
+    /// <inheritdoc />
+    public async ValueTask<ErrorCode> DeleteAsync(CancellationToken cancellationToken = default)
+    {
+        using var session = await _context.GetSessionAsync(cancellationToken);
+        var result = await session.ClientProxy.RowsSet_DeleteRowAsync(_objectHandle, cancellationToken);
+        return SdkConvert.Convert(result);
     }
 
     /// <inheritdoc />

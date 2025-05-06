@@ -25,7 +25,7 @@ internal class DsvInput : StreamRowsInput
     {
         var hasHeader = _hasHeader ?? await RowsIteratorUtils.DetermineIfHasHeaderAsync(iterator, cancellationToken: cancellationToken);
         _hasHeader = hasHeader;
-        iterator.SeekToHead();
+        iterator.SeekCacheCursorToHead();
 
         if (hasHeader)
         {
@@ -47,7 +47,7 @@ internal class DsvInput : StreamRowsInput
         // Remove header row since it is not a data row.
         if (hasHeader)
         {
-            iterator.RemoveRowAt(0);
+            iterator.RemoveFirst();
         }
     }
 

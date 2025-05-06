@@ -72,7 +72,7 @@ internal partial class WebServer
         _executionThread.TopScope.Variables["path"] = new VariantValue(path);
         var result = await _executionThread.RunAsync(_selectFilesQuery, cancellationToken: cancellationToken);
         _logger.LogInformation("[{Address}] Dir: {Path}", request.RemoteEndPoint.Address, path);
-        await WriteIteratorAsync(RowsIteratorConverter.Convert(result), request, response, cancellationToken);
+        await WriteValueAsync(result, request, response, cancellationToken);
     }
 
     private async Task Files_ServeFile(string file, HttpListenerRequest request, HttpListenerResponse response, CancellationToken cancellationToken)
@@ -88,7 +88,7 @@ internal partial class WebServer
         response.AddHeader("Last-Modified", File.GetLastWriteTime(file).ToString("r"));
         response.AddHeader(
             "Content-Disposition", $"filename={System.Web.HttpUtility.UrlEncode(Path.GetFileName(file))}");
-        response.ContentType = _mimeTypeProvider.GetContentType(Path.GetExtension(file));
+        response.ContentType = _mimeTypesProvider.GetContentTypeByExtension(Path.GetExtension(file));
         response.ContentLength64 = range.Size;
         if (isRangeRequest)
         {

@@ -9,12 +9,17 @@ using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Formatters;
 using QueryCat.Backend.Storage;
+using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Functions;
 
 internal static class IOFunctions
 {
     private const string ContentTypeHeader = "Content-Type";
+
+    private static readonly MimeTypesProvider _mimeTypesProvider = new();
+
+    public static MimeTypesProvider MimeTypesProvider => _mimeTypesProvider;
 
     [SafeFunction]
     [Description("Read data from a URI.")]
@@ -30,6 +35,21 @@ internal static class IOFunctions
         }
 
         return await ReadFileAsync(thread, cancellationToken);
+    }
+
+    [SafeFunction]
+    [Description("Read data from a BLOB.")]
+    [FunctionSignature("read(\"blob\": blob): object<IRowsInput>")]
+    public static async ValueTask<VariantValue> ReadBlobAsync(IExecutionThread thread, CancellationToken cancellationToken)
+    {
+        var blob = thread.Stack[0].AsBlob;
+        if (blob == null)
+        {
+            return VariantValue.Null;
+        }
+        var formatter = await File_GetFormatterAsync(blob.ContentType, thread, null, cancellationToken);
+        var input = formatter.OpenInput(blob);
+        return VariantValue.CreateFromObject(input);
     }
 
     [Description("Write data to a URI.")]
@@ -101,7 +121,7 @@ internal static class IOFunctions
                 file = new GZipStream(file, CompressionMode.Compress, leaveOpen: false);
             }
             return file;
-        });
+        }, File_GetContentType(path));
         return VariantValue.CreateFromObject(formatter.OpenOutput(blobFile));
     }
 
@@ -122,7 +142,7 @@ internal static class IOFunctions
                     fileStream = new GZipStream(fileStream, CompressionMode.Decompress);
                 }
                 return fileStream;
-            });
+            }, File_GetContentType(file));
             yield return fileFormatter.OpenInput(blobFileStream, path);
         }
     }
@@ -169,16 +189,34 @@ internal static class IOFunctions
         }
     }
 
+    private static string File_GetContentType(string path)
+    {
+        var extension = File_GetExtension(path);
+        return _mimeTypesProvider.GetContentTypeByExtension(extension);
+    }
+
+    private static string File_GetExtension(string path)
+    {
+        var extension = Path.GetExtension(path).ToLower();
+        if (_compressFilesExtensions.Contains(extension))
+        {
+            // Expect to get the "real" extension from a file with a double extension like .tar.gz .
+            extension = Path.GetExtension(path.Substring(0, path.Length - extension.Length)).ToLower();
+        }
+        return extension;
+    }
+
     private static async ValueTask<IRowsFormatter> File_GetFormatterAsync(
         string path,
         IExecutionThread thread,
         FunctionCallArguments? funcArgs = null,
         CancellationToken cancellationToken = default)
     {
-        var extension = Path.GetExtension(path).ToLower();
-        if (_compressFilesExtensions.Contains(extension))
+        var extension = File_GetExtension(path);
+        if (string.IsNullOrEmpty(extension) && path.Contains('/'))
         {
-            extension = Path.GetExtension(path.Substring(0, path.Length - extension.Length)).ToLower();
+            // Consider this can be MIME.
+            extension = path;
         }
         var formatter = await FormattersInfo.CreateFormatterAsync(extension, thread, funcArgs, cancellationToken);
         return formatter ?? new TextLineFormatter();
@@ -313,16 +351,17 @@ internal static class IOFunctions
         var request = new HttpRequestMessage(HttpMethod.Get, uri);
         var response = await _httpClient.SendAsync(request, cancellationToken);
 
-        // Try get formatter by HTTP response content type.
+        // Try to get formatter by HTTP response content type.
+        var contentType = string.Empty;
         if (formatter == null)
         {
             if (response.Headers.TryGetValues(ContentTypeHeader, out var contentTypes))
             {
-                var contentType = contentTypes.Last();
+                contentType = contentTypes.Last();
                 formatter = await FormattersInfo.CreateFormatterAsync(contentType, thread, funcArgs, cancellationToken);
             }
         }
-        // Try get formatter by extension from URI.
+        // Try to get formatter by extension from URI.
         if (formatter == null)
         {
             var absolutePath = (request.RequestUri ?? uri).AbsolutePath;
@@ -334,7 +373,7 @@ internal static class IOFunctions
         }
         formatter ??= new TextLineFormatter();
 
-        var blobStream = new StreamBlobData(() => response.Content.ReadAsStream(cancellationToken));
+        var blobStream = new StreamBlobData(() => response.Content.ReadAsStream(cancellationToken), contentType);
         return VariantValue.CreateFromObject(formatter.OpenInput(blobStream));
     }
 
@@ -493,6 +532,7 @@ internal static class IOFunctions
         functionsManager.RegisterFunction(Stdin);
 
         functionsManager.RegisterFunction(ReadAsync);
+        functionsManager.RegisterFunction(ReadBlobAsync);
         functionsManager.RegisterFunction(WriteAsync);
         functionsManager.RegisterFunction(ListDirectory);
 

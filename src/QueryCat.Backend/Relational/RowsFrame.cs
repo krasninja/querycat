@@ -7,7 +7,8 @@ namespace QueryCat.Backend.Relational;
 
 /// <summary>
 /// Table is the in-memory store of rows. It is optimized for bulk rows store and
-/// can be used for internal operations.
+/// can be used for internal operations. The remove operation doesn't physically remove
+/// it from memory and just marks the row. Use IsRemoved method to check by the row index.
 /// </summary>
 public class RowsFrame : IRowsSchema, IEnumerable<Row>
 {
@@ -15,11 +16,17 @@ public class RowsFrame : IRowsSchema, IEnumerable<Row>
     private readonly int _rowsPerChunk;
     private readonly ChunkList<VariantValue[]> _storage;
     private readonly Column[] _columns;
+    private readonly HashSet<int> _removedRows = new();
 
     /// <summary>
     /// Total rows.
     /// </summary>
     public int TotalRows { get; private set; }
+
+    /// <summary>
+    /// Total active rows.
+    /// </summary>
+    public int TotalActiveRows => TotalRows - _removedRows.Count;
 
     /// <summary>
     /// Is the rows frame empty.
@@ -42,12 +49,9 @@ public class RowsFrame : IRowsSchema, IEnumerable<Row>
     public RowsFrame(RowsFrameOptions options, params Column[] columns)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(options.ChunkSize, nameof(options.ChunkSize));
+        ArgumentOutOfRangeException.ThrowIfLessThan(columns.Length, 1, nameof(columns));
         _chunkSize = options.ChunkSize;
         _columns = columns;
-        if (_columns.Length < 1)
-        {
-            throw new ArgumentException(Resources.Errors.NoColumns, nameof(columns));
-        }
         _rowsPerChunk = _chunkSize / _columns.Length;
         // Align.
         var remains = _chunkSize - _rowsPerChunk * _columns.Length;
@@ -163,6 +167,34 @@ public class RowsFrame : IRowsSchema, IEnumerable<Row>
     }
 
     /// <summary>
+    /// Mark the row as removed.
+    /// </summary>
+    /// <param name="rowIndex">Row index.</param>
+    public bool RemoveRow(int rowIndex)
+    {
+        (int chunkIndex, int offset) = GetChunkAndOffset(rowIndex);
+        if (chunkIndex > _storage.Count - 1)
+        {
+            return false;
+        }
+        if (_removedRows.Add(rowIndex))
+        {
+            for (int i = 0; i < _columns.Length; i++)
+            {
+                _storage[chunkIndex][offset] = VariantValue.Null;
+            }
+        }
+        return true;
+    }
+
+    /// <summary>
+    /// Returns <c>true</c> if row is marked as removed.
+    /// </summary>
+    /// <param name="rowIndex">Row index.</param>
+    /// <returns>Returns <c>true</c> if row is marked as removed, <c>false</c> otherwise.</returns>
+    public bool IsRemoved(int rowIndex) => _removedRows.Contains(rowIndex);
+
+    /// <summary>
     /// Get row by index.
     /// </summary>
     /// <param name="rowIndex">Row index.</param>
@@ -174,13 +206,19 @@ public class RowsFrame : IRowsSchema, IEnumerable<Row>
         return row;
     }
 
+    /// <summary>
+    /// Get all values of the specified column.
+    /// </summary>
+    /// <param name="columnIndex">Column index.</param>
+    /// <param name="numberOfRows">Max number of rows to retrieve. -1 to get all.</param>
+    /// <returns>List of values.</returns>
     public IList<VariantValue> GetColumnValues(int columnIndex, int numberOfRows = -1)
     {
-        var values = new List<VariantValue>(numberOfRows > 0 ? numberOfRows : TotalRows);
-        for (int i = 0; i < TotalRows; i++)
+        var max = numberOfRows > 0 ? numberOfRows : TotalRows;
+        var values = new List<VariantValue>(max);
+        foreach (var item in this)
         {
-            (int chunkIndex, int offset) = GetChunkAndOffset(i);
-            values.Add(_storage[chunkIndex][offset + columnIndex]);
+            values.Add(item[columnIndex]);
         }
         return values;
     }
@@ -194,10 +232,10 @@ public class RowsFrame : IRowsSchema, IEnumerable<Row>
         TotalRows = 0;
     }
 
-    private (int ChunkIndex, int Offset) GetChunkAndOffset(int index)
+    private (int ChunkIndex, int Offset) GetChunkAndOffset(int rowIndex)
     {
-        var chunkIndex = index / _rowsPerChunk;
-        return (chunkIndex, index % _rowsPerChunk * _columns.Length);
+        var chunkIndex = rowIndex / _rowsPerChunk;
+        return (chunkIndex, rowIndex % _rowsPerChunk * _columns.Length);
     }
 
     private (int ChunkIndex, int Offset) EnsureCapacityAndGetStartOffset(int index)

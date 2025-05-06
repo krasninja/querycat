@@ -17,4 +17,14 @@ public sealed class NullExecutionScope : IExecutionScope
 
     /// <inheritdoc />
     public IExecutionScope? Parent => null;
+
+    /// <inheritdoc />
+    public bool TryGetVariable(string name, out VariantValue value)
+    {
+        value = VariantValue.Null;
+        return true;
+    }
+
+    /// <inheritdoc />
+    public bool TrySetVariable(string name, VariantValue value) => true;
 }

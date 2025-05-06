@@ -1,7 +1,12 @@
+using QueryCat.Backend.Core;
+
 namespace QueryCat.Backend.Ast.Nodes.Insert;
 
-internal sealed class InsertStatementNode : StatementNode
+internal sealed class InsertStatementNode : StatementNode, ICommandNode
 {
+    /// <inheritdoc />
+    public string CommandName => Application.CommandInsert;
+
     /// <inheritdoc />
     public InsertStatementNode(InsertNode rootNode) : base(rootNode)
     {

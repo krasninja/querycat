@@ -81,4 +81,9 @@ public class ExecutionOptions
     /// Lock execution thread while it is being used by another caller.
     /// </summary>
     public bool PreventConcurrentRun { get; set; } = true;
+
+    /// <summary>
+    /// Define the array of allowed commands to execute.
+    /// </summary>
+    public string[]? AllowedCommands { get; set; }
 }

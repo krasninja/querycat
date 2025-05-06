@@ -37,7 +37,7 @@ internal sealed class InsertCommand : ICommand
         {
             CopyInputColumnsToOutput(insertNode.QueryNode.ColumnsListNode, insertNode);
         }
-        var inputIterator = await new SelectPlanner(executionThread)
+        var inputIterator = await new SelectPlanner(executionThread, operationIntentionType: SelectPlanner.OperationIntentionType.Create)
             .CreateIteratorAsync(insertNode.QueryNode, cancellationToken: cancellationToken);
 
         // If input list is not defined but for output we have columns - use them as target.

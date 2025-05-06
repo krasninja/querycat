@@ -186,4 +186,7 @@
   <data name="FileNoExists" xml:space="preserve">
     <value>File '{0}' not exists.</value>
   </data>
+  <data name="CommandNotAllowed" xml:space="preserve">
+    <value>Command '{0}' is not allowed.</value>
+  </data>
 </root>

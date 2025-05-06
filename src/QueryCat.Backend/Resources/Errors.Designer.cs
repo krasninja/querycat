@@ -380,5 +380,11 @@ namespace QueryCat.Backend.Resources {
                 return ResourceManager.GetString("FileNoExists", resourceCulture);
             }
         }
+        
+        internal static string CommandNotAllowed {
+            get {
+                return ResourceManager.GetString("CommandNotAllowed", resourceCulture);
+            }
+        }
     }
 }

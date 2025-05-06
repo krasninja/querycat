@@ -1,7 +1,12 @@
+using QueryCat.Backend.Core;
+
 namespace QueryCat.Backend.Ast.Nodes.Select;
 
-internal sealed class SelectStatementNode : StatementNode
+internal sealed class SelectStatementNode : StatementNode, ICommandNode
 {
+    /// <inheritdoc />
+    public string CommandName => Application.CommandSelect;
+
     public SelectQueryNode QueryNode => (SelectQueryNode)RootNode;
 
     /// <inheritdoc />

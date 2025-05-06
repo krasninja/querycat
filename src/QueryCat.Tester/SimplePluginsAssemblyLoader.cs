@@ -15,7 +15,7 @@ public sealed class SimplePluginsAssemblyLoader : PluginsLoader
     }
 
     /// <inheritdoc />
-    public override Task<string[]> LoadAsync(CancellationToken cancellationToken = default)
+    public override Task<int> LoadAsync(PluginsLoadingOptions options, CancellationToken cancellationToken = default)
     {
         var loaded = new List<string>();
         foreach (var pluginFile in PluginDirectories)
@@ -28,7 +28,7 @@ public sealed class SimplePluginsAssemblyLoader : PluginsLoader
             RegisterFunctions(assembly);
             loaded.Add(pluginFile);
         }
-        return Task.FromResult(loaded.ToArray());
+        return Task.FromResult(loaded.Count);
     }
 
     private void RegisterFunctions(Assembly assembly)

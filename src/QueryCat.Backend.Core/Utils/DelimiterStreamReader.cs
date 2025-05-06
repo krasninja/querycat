@@ -33,7 +33,7 @@ public class DelimiterStreamReader
     /// <summary>
     /// Use async read.
     /// </summary>
-    public bool AsyncRead { get; set; }
+    public bool AsyncRead { get; set; } = OperatingSystem.IsBrowser();
 
     /// <summary>
     /// Quotes escape mode.

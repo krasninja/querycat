@@ -9,6 +9,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Initial implementation of Delete command.
+- Add functions "cache_input", "blob_from_file", "date_add".
+- Extended support for BLOBs.
+- Allow to set the list of allowed commands to execute.
+
+### Changed
+
+- "Declare" command does not need type statement anymore.
+
+### Fixed
+
+- Improve Update command support.
+- Minor bugfixes.
+
+### Removed
+
+- Remove VariableResolving and VariableResolved events.
+
+## [0.12.1] - 2025-03-16
+
+### Added
+
 - Add functions "buffer_input", "buffer_output", "json_array_elements".
 - Support "IRowsFormatter" for Thrift plugins system.
 - Add option "overwrite" to "plugin install" command.
@@ -16,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Improve and bugfix Thrift plugins support.
+- Do not load plugin proxy if it already exists.
 
 ## [0.11.0] - 2025-02-17
 

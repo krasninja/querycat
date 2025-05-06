@@ -78,6 +78,7 @@ IN:                 'IN';
 IS:                 'IS';
 LIKE:               'LIKE';
 LIKE_REGEX:         'LIKE_REGEX';
+LOOP:               'LOOP';
 NOT:                'NOT';
 NULL:               'NULL';
 ON:                 'ON';
@@ -88,6 +89,7 @@ TO:                 'TO';
 TRUE:               'TRUE';
 USING:              'USING';
 VOID:               'VOID';
+RETURN:             'RETURN';
 
 // Trim function.
 
@@ -185,6 +187,10 @@ UPDATE:             'UPDATE';
 
 INSERT:             'INSERT';
 
+// DELETE command.
+
+DELETE:             'DELETE';
+
 // DECLARE/SET command.
 
 DECLARE:            'DECLARE';
@@ -204,12 +210,18 @@ ELSEIF:             'ELSEIF';
 // WHILE command.
 
 WHILE:              'WHILE';
-BREAK:              'BREAK';
-CONTINUE:           'CONTINUE';
 
 // FOR command.
 
 FOR:                'FOR';
+
+// BREAK command.
+
+BREAK:              'BREAK';
+
+// CONTINUE command.
+
+CONTINUE:           'CONTINUE';
 
 TYPE: ANY | BLOB | BOOL | BOOLEAN | DECIMAL | FLOAT | INT | INT8 | INTEGER | NUMERIC | OBJECT | REAL | STRING | TEXT
     | TIMESTAMP;

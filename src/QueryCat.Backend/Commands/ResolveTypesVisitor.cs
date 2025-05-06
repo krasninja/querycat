@@ -1,5 +1,6 @@
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
+using QueryCat.Backend.Ast.Nodes.Declare;
 using QueryCat.Backend.Ast.Nodes.Function;
 using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Ast.Nodes.SpecialFunctions;
@@ -119,8 +120,7 @@ internal class ResolveTypesVisitor : AstVisitor
             return true;
         }
 
-        var scope = ExecutionThread.TopScope;
-        if (ExecutionThread.TryGetVariable(name, out var value, scope))
+        if (ExecutionThread.TopScope.TryGetVariable(name, out var value))
         {
             var valueType = value.Type;
             if (valueType == DataType.Object && node.HasSelectors)
@@ -279,6 +279,20 @@ internal class ResolveTypesVisitor : AstVisitor
     {
         await new SelectPlanner(ExecutionThread, this).CreateIteratorAsync(node, cancellationToken: cancellationToken);
         node.ColumnsListNode.ColumnsNodes[0].CopyTo<DataType>(AstAttributeKeys.TypeKey, node);
+    }
+
+    #endregion
+
+    #region Declare
+
+    /// <inheritdoc />
+    public override ValueTask VisitAsync(DeclareNode node, CancellationToken cancellationToken)
+    {
+        if (node.ValueNode != null)
+        {
+            node.SetDataType(node.ValueNode.GetDataType());
+        }
+        return ValueTask.CompletedTask;
     }
 
     #endregion

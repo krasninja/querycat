@@ -33,7 +33,6 @@ internal sealed class DeclareCommand : ICommand
         IFuncUnit handler = new FuncCommandHandler(async (thread, ct) =>
         {
             var value = await valueHandler.InvokeAsync(thread, ct);
-            value = value.Cast(declareNode.Type);
             scope.Variables[declareNode.Name] = value;
             return VariantValue.Null;
         });

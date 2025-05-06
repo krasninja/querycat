@@ -23,6 +23,22 @@ public sealed class FunctionCallArguments
     public IReadOnlyList<VariantValue> Positional => _positional;
 
     /// <summary>
+    /// Constructor.
+    /// </summary>
+    public FunctionCallArguments()
+    {
+    }
+
+    /// <summary>
+    /// Constructor.
+    /// </summary>
+    /// <param name="args">Positional arguments.</param>
+    public FunctionCallArguments(params ReadOnlySpan<VariantValue> args)
+    {
+        _positional.AddRange(args);
+    }
+
+    /// <summary>
     /// Add named argument.
     /// </summary>
     /// <param name="name">Argument name.</param>

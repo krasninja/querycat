@@ -1,4 +1,6 @@
 using System.Buffers;
+using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -22,8 +24,6 @@ public readonly partial struct VariantValue :
     public const string VoidValueString = "VOID";
     private const string UnknownString = "[unknown]";
 
-    public const string FloatNumberFormat = "F";
-
     private static readonly DataTypeObject _integerObject = IntegerDataTypeObject.Instance;
     private static readonly DataTypeObject _floatObject = FloatDataTypeObject.Instance;
     private static readonly DataTypeObject _timestampObject = TimestampDataTypeObject.Instance;
@@ -33,6 +33,11 @@ public readonly partial struct VariantValue :
     public static VariantValue OneIntegerValue = new(1);
     public static VariantValue TrueValue = new(true);
     public static VariantValue FalseValue = new(false);
+
+    /// <summary>
+    /// Float number formatter that is used for variant value string representation.
+    /// </summary>
+    public static string FloatNumberFormat { get; set; } = "F";
 
     [StructLayout(LayoutKind.Explicit)]
     private readonly struct TypeUnion : IEquatable<TypeUnion>
@@ -737,6 +742,23 @@ public readonly partial struct VariantValue :
 
     public static implicit operator TimeSpan?(VariantValue value) => value.AsInterval;
 
+    [RequiresDynamicCode("Contains serialization for object type.")]
+    [RequiresUnreferencedCode("Contains serialization for object type.")]
+    public static implicit operator JsonNode?(VariantValue value) => value.Type switch
+    {
+        DataType.Integer => JsonValue.Create(value.AsIntegerUnsafe),
+        DataType.Float => JsonValue.Create(value.AsFloatUnsafe),
+        DataType.String => JsonValue.Create(value.AsStringUnsafe),
+        DataType.Boolean => JsonValue.Create(value.AsBooleanUnsafe),
+        DataType.Numeric => JsonValue.Create(value.AsNumericUnsafe),
+        DataType.Timestamp => JsonValue.Create(value.AsTimestampUnsafe),
+        DataType.Interval => JsonValue.Create(value.AsIntervalUnsafe),
+        DataType.Blob => JsonValue.Create(value.ToString(CultureInfo.InvariantCulture)),
+        DataType.Object => value.AsObjectUnsafe != null ? JsonSerializer.SerializeToNode(value.AsObjectUnsafe) : null,
+        DataType.Dynamic => value.AsObjectUnsafe != null ? JsonSerializer.SerializeToNode(value.AsObjectUnsafe) : null,
+        _ => null,
+    };
+
     /// <inheritdoc />
     public override string ToString() => Type switch
     {
@@ -754,9 +776,6 @@ public readonly partial struct VariantValue :
         DataType.Blob => BlobToShortString(AsBlobUnsafe),
         _ => UnknownString,
     };
-
-    /// <inheritdoc />
-    public object Clone() => new VariantValue(this);
 
     /// <summary>
     /// Convert to string according to the format.
@@ -837,6 +856,9 @@ public readonly partial struct VariantValue :
 
         return sb.ToString();
     }
+
+    /// <inheritdoc />
+    public object Clone() => new VariantValue(this);
 
     /// <inheritdoc />
     public bool Equals(VariantValue other) => Equals(this, in other);

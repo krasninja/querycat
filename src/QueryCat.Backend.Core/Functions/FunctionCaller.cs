@@ -56,7 +56,7 @@ public static class FunctionCaller
             return await functionDelegateAsync.Invoke(thread, cancellationToken);
         }
         throw new InvalidOperationException(
-            "The delegate type must be  Func<IExecutionThread, VariantValue> or Func<IExecutionThread, CancellationToken, ValueTask<VariantValue>>.");
+            "The delegate type must be Func<IExecutionThread, VariantValue> or Func<IExecutionThread, CancellationToken, ValueTask<VariantValue>>.");
     }
 
     /// <summary>

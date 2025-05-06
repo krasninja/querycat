@@ -1,0 +1,20 @@
+expected: |
+  11
+skip: true
+query: |
+  declare i := 0;
+  for r in generate_series(3, 10) loop
+    declare num := r[0];
+
+    if num < 5 then
+    begin
+      continue;
+    end;
+    if (num = 7) then
+    begin
+      break;
+    end;
+
+    set i := i + num;
+  end loop;
+  select i;

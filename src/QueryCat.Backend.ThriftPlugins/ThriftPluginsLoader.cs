@@ -8,7 +8,6 @@ using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Plugins;
-using QueryCat.Backend.Core.Types;
 using QueryCat.Plugins.Client;
 using QueryCat.Plugins.Sdk;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
@@ -170,7 +169,7 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
     {
         var loadedPlugins = new List<string>();
 
-        foreach (var pluginFile in GetPluginFiles())
+        foreach (var pluginFile in GetPluginFiles(options))
         {
             if (IsMatchPlatform(pluginFile))
             {
@@ -648,7 +647,7 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
         if (result.Object.Type == ObjectType.BLOB)
         {
             var blobProxy = new PluginBlobProxyService(context);
-            return new StreamBlobData(() => new RemoteStream(result.Object.Handle, blobProxy));
+            return new RemoteBlobProxy(new RemoteStream(result.Object.Handle, blobProxy));
         }
         if (result.Object.Type == ObjectType.ROWS_FORMATTER)
         {

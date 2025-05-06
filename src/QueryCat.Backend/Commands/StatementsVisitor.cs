@@ -1,18 +1,29 @@
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
+using QueryCat.Backend.Ast.Nodes.Break;
 using QueryCat.Backend.Ast.Nodes.Call;
+using QueryCat.Backend.Ast.Nodes.Continue;
 using QueryCat.Backend.Ast.Nodes.Declare;
+using QueryCat.Backend.Ast.Nodes.Delete;
+using QueryCat.Backend.Ast.Nodes.For;
 using QueryCat.Backend.Ast.Nodes.Function;
 using QueryCat.Backend.Ast.Nodes.If;
 using QueryCat.Backend.Ast.Nodes.Insert;
+using QueryCat.Backend.Ast.Nodes.Return;
 using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Ast.Nodes.Update;
+using QueryCat.Backend.Commands.Break;
 using QueryCat.Backend.Commands.Call;
+using QueryCat.Backend.Commands.Continue;
 using QueryCat.Backend.Commands.Declare;
+using QueryCat.Backend.Commands.Delete;
+using QueryCat.Backend.Commands.For;
 using QueryCat.Backend.Commands.If;
 using QueryCat.Backend.Commands.Insert;
+using QueryCat.Backend.Commands.Return;
 using QueryCat.Backend.Commands.Select;
 using QueryCat.Backend.Commands.Update;
+using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
 
@@ -62,13 +73,8 @@ internal sealed class StatementsVisitor : CreateDelegateVisitor
     /// <inheritdoc />
     public override async ValueTask VisitAsync(BlockExpressionNode node, CancellationToken cancellationToken)
     {
-        foreach (var statementNode in node.Statements)
-        {
-            await statementNode.AcceptAsync(this, cancellationToken);
-        }
-        var blockHandlers = node.Statements.Select(s => NodeIdFuncMap[s.Id]).ToArray();
-
-        NodeIdFuncMap[node.Id] = new BlockExpressionFuncUnit(blockHandlers);
+        await using var bodyFuncUnit = new StatementsBlockFuncUnit(this, node.Statements.ToArray());
+        NodeIdFuncMap[node.Id] = bodyFuncUnit;
     }
 
     /// <inheritdoc />
@@ -83,6 +89,10 @@ internal sealed class StatementsVisitor : CreateDelegateVisitor
     /// <inheritdoc />
     public override async ValueTask VisitAsync(CallFunctionStatementNode node, CancellationToken cancellationToken)
     {
+        if (!IsAcceptable(node))
+        {
+            return;
+        }
         var handler = await new CallCommand().CreateHandlerAsync(_executionThread, node, cancellationToken);
         NodeIdFuncMap.Add(node.Id, handler);
     }
@@ -90,17 +100,37 @@ internal sealed class StatementsVisitor : CreateDelegateVisitor
     /// <inheritdoc />
     public override async ValueTask VisitAsync(DeclareStatementNode node, CancellationToken cancellationToken)
     {
+        if (!IsAcceptable(node))
+        {
+            return;
+        }
         var handler = await new DeclareCommand().CreateHandlerAsync(_executionThread, node, cancellationToken);
+        NodeIdFuncMap.Add(node.Id, handler);
+    }
+
+    /// <inheritdoc />
+    public override async ValueTask VisitAsync(DeleteStatementNode node, CancellationToken cancellationToken)
+    {
+        if (!IsAcceptable(node))
+        {
+            return;
+        }
+        var handler = await new DeleteCommand().CreateHandlerAsync(_executionThread, node, cancellationToken);
         NodeIdFuncMap.Add(node.Id, handler);
     }
 
     /// <inheritdoc />
     public override async ValueTask VisitAsync(SetStatementNode node, CancellationToken cancellationToken)
     {
+        if (!IsAcceptable(node))
+        {
+            return;
+        }
         var handler = await new SetCommand(ResolveTypesVisitor).CreateHandlerAsync(_executionThread, node, cancellationToken);
         NodeIdFuncMap.Add(node.Id, handler);
     }
 
+    /// <inheritdoc />
     public override async ValueTask VisitAsync(FunctionCallStatementNode node, CancellationToken cancellationToken)
     {
         var handler = await new CreateDelegateVisitor(_executionThread, ResolveTypesVisitor)
@@ -109,8 +139,19 @@ internal sealed class StatementsVisitor : CreateDelegateVisitor
     }
 
     /// <inheritdoc />
+    public override async ValueTask VisitAsync(FunctionCallNode node, CancellationToken cancellationToken)
+    {
+        await ResolveTypesVisitor.RunAsync(node, cancellationToken);
+        await base.VisitAsync(node, cancellationToken);
+    }
+
+    /// <inheritdoc />
     public override async ValueTask VisitAsync(IfConditionStatementNode node, CancellationToken cancellationToken)
     {
+        if (!IsAcceptable(node))
+        {
+            return;
+        }
         var handler = await new IfConditionCommand().CreateHandlerAsync(_executionThread, node, cancellationToken);
         NodeIdFuncMap.Add(node.Id, handler);
     }
@@ -118,6 +159,10 @@ internal sealed class StatementsVisitor : CreateDelegateVisitor
     /// <inheritdoc />
     public override async ValueTask VisitAsync(InsertStatementNode node, CancellationToken cancellationToken)
     {
+        if (!IsAcceptable(node))
+        {
+            return;
+        }
         var handler = await new InsertCommand().CreateHandlerAsync(_executionThread, node, cancellationToken);
         NodeIdFuncMap.Add(node.Id, handler);
     }
@@ -125,6 +170,10 @@ internal sealed class StatementsVisitor : CreateDelegateVisitor
     /// <inheritdoc />
     public override async ValueTask VisitAsync(SelectStatementNode node, CancellationToken cancellationToken)
     {
+        if (!IsAcceptable(node))
+        {
+            return;
+        }
         var handler = await new SelectCommand(ResolveTypesVisitor).CreateHandlerAsync(_executionThread, node, cancellationToken);
         NodeIdFuncMap.Add(node.Id, handler);
     }
@@ -132,7 +181,86 @@ internal sealed class StatementsVisitor : CreateDelegateVisitor
     /// <inheritdoc />
     public override async ValueTask VisitAsync(UpdateStatementNode node, CancellationToken cancellationToken)
     {
+        if (!IsAcceptable(node))
+        {
+            return;
+        }
         var handler = await new UpdateCommand().CreateHandlerAsync(_executionThread, node, cancellationToken);
         NodeIdFuncMap.Add(node.Id, handler);
+    }
+
+    /// <inheritdoc />
+    public override async ValueTask VisitAsync(ForStatementNode node, CancellationToken cancellationToken)
+    {
+        if (!IsAcceptable(node))
+        {
+            return;
+        }
+        var handler = await new ForCommand(this).CreateHandlerAsync(_executionThread, node, cancellationToken);
+        NodeIdFuncMap.Add(node.Id, handler);
+    }
+
+    /// <inheritdoc />
+    public override async ValueTask VisitAsync(ContinueStatementNode node, CancellationToken cancellationToken)
+    {
+        if (!IsAcceptable(node))
+        {
+            return;
+        }
+        var handler = await new ContinueCommand().CreateHandlerAsync(_executionThread, node, cancellationToken);
+        NodeIdFuncMap.Add(node.Id, handler);
+    }
+
+    /// <inheritdoc />
+    public override async ValueTask VisitAsync(BreakStatementNode node, CancellationToken cancellationToken)
+    {
+        if (!IsAcceptable(node))
+        {
+            return;
+        }
+        var handler = await new BreakCommand().CreateHandlerAsync(_executionThread, node, cancellationToken);
+        NodeIdFuncMap.Add(node.Id, handler);
+    }
+
+    /// <inheritdoc />
+    public override async ValueTask VisitAsync(ReturnStatementNode node, CancellationToken cancellationToken)
+    {
+        if (!IsAcceptable(node))
+        {
+            return;
+        }
+        var handler = await new ReturnCommand().CreateHandlerAsync(_executionThread, node, cancellationToken);
+        NodeIdFuncMap.Add(node.Id, handler);
+    }
+
+    private sealed class NotAllowedCommandFuncUnit : IFuncUnit
+    {
+        private readonly string _commandName;
+
+        /// <inheritdoc />
+        public DataType OutputType => DataType.Void;
+
+        public NotAllowedCommandFuncUnit(string commandName)
+        {
+            _commandName = commandName;
+        }
+
+        /// <inheritdoc />
+        public ValueTask<VariantValue> InvokeAsync(IExecutionThread thread, CancellationToken cancellationToken = default)
+        {
+            throw new QueryCatException(string.Format(Resources.Errors.CommandNotAllowed, _commandName));
+        }
+    }
+
+    private bool IsAcceptable(IAstNode node)
+    {
+        if (_executionThread.Options.AllowedCommands != null
+            && node is ICommandNode commandNode
+            && !_executionThread.Options.AllowedCommands.Contains(commandNode.CommandName, StringComparer.InvariantCultureIgnoreCase))
+        {
+            NodeIdFuncMap.Add(node.Id, new NotAllowedCommandFuncUnit(commandNode.CommandName));
+            return false;
+        }
+        return true;
     }
 }

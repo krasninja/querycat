@@ -10,7 +10,7 @@
     <StripSymbols>false</StripSymbols>
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
     <OutputType>Exe</OutputType>
-    <Copyright>Copyright (c) 2022-24</Copyright>
+    <Copyright>Copyright (c) 2022-2025</Copyright>
   </PropertyGroup>
 
   <ItemGroup>

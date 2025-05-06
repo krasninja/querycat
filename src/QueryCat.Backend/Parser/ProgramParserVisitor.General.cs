@@ -13,9 +13,14 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
 {
     /// <inheritdoc />
     public override IAstNode VisitProgram(QueryCatParser.ProgramContext context)
+        => new ProgramNode(this.Visit<ProgramBodyNode>(context.programBody()));
+
+    /// <inheritdoc />
+    public override IAstNode VisitProgramBody(QueryCatParser.ProgramBodyContext context)
     {
-        var statements = new List<StatementNode>();
-        foreach (var statementContext in context.statement())
+        var statementContextItems = context.statement();
+        var statements = new List<StatementNode>(capacity: statementContextItems.Length);
+        foreach (var statementContext in statementContextItems)
         {
             if (statementContext.IsEmpty || statementContext.children == null)
             {
@@ -33,7 +38,7 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
         {
             statements[i - 1].NextNode = statements[i];
         }
-        return new ProgramNode(statements);
+        return new ProgramBodyNode(statements);
     }
 
     /// <inheritdoc />

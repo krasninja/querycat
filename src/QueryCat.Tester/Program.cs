@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using QueryCat.Backend;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Execution;
+using QueryCat.Backend.Core.Plugins;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Formatters;
@@ -80,14 +81,22 @@ public class Program
             RunBootstrapScript = true,
         };
 
-        var executionThread = await new ExecutionThreadBootstrapper(options)
+        var pluginLoaderFactory = (IExecutionThread thread) =>
+        {
+            var loader = new SimplePluginsAssemblyLoader(
+                workingDirectoryPlugins.Union(pluginDirectories),
+                thread.FunctionsManager);
+            // TODO: Remove after QueryCat update, this is a workaround due to bug in 0.12.1.
+            loader.LoadAsync(new PluginsLoadingOptions()).GetAwaiter().GetResult();
+            return loader;
+        };
+        var executionThread = new ExecutionThreadBootstrapper(options)
             .WithStandardFunctions()
             .WithStandardUriResolvers()
             .WithConfigStorage(new MemoryInputConfigStorage())
-            .WithPluginsLoader(thread => new SimplePluginsAssemblyLoader(
-                workingDirectoryPlugins.Union(pluginDirectories),
-                thread.FunctionsManager))
-            .CreateAsync();
+            .WithPluginsLoader(pluginLoaderFactory)
+            .Create();
+        await executionThread.PluginsManager.PluginsLoader.LoadAsync(new PluginsLoadingOptions(), CancellationToken.None);
 
         AddVariables(executionThread, variables);
 

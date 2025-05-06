@@ -11,7 +11,7 @@ SET var_name := value
 ## Examples
 
 ```
-DECLARE i integer := 20;
+DECLARE i := 20;
 SET i := 25;
 ECHO i; -- 25
 ```

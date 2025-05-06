@@ -6,7 +6,7 @@ namespace QueryCat.Backend.Core.Functions;
 /// The class contains extracted function arguments types separated
 /// by positional and named.
 /// </summary>
-public sealed class FunctionCallArgumentsTypes
+public sealed class FunctionCallArgumentsTypes : IEqualityComparer<FunctionCallArgumentsTypes>, IEquatable<FunctionCallArgumentsTypes>
 {
     /// <summary>
     /// Positional arguments.
@@ -50,6 +50,76 @@ public sealed class FunctionCallArgumentsTypes
                 new KeyValuePair<int, DataType>(pos, arg))
                     .ToArray());
     }
+
+    /// <inheritdoc />
+    public bool Equals(FunctionCallArgumentsTypes? x, FunctionCallArgumentsTypes? y)
+    {
+        if (ReferenceEquals(x, y))
+        {
+            return true;
+        }
+        if (x is null)
+        {
+            return false;
+        }
+        if (y is null)
+        {
+            return false;
+        }
+        if (x.GetType() != y.GetType())
+        {
+            return false;
+        }
+        if (x.Positional.Length != y.Positional.Length
+            || x.Named.Length != y.Named.Length)
+        {
+            return false;
+        }
+
+        for (var i = 0; i < x.Positional.Length; i++)
+        {
+            if (x.Positional[i].Key != y.Positional[i].Key)
+            {
+                return false;
+            }
+        }
+        for (var i = 0; i < x.Named.Length; i++)
+        {
+            if (x.Named[i].Key != y.Named[i].Key)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /// <inheritdoc />
+    public bool Equals(FunctionCallArgumentsTypes? other) => Equals(this, other);
+
+    /// <inheritdoc />
+    public override bool Equals(object? obj)
+        => ReferenceEquals(this, obj) || (obj is FunctionCallArgumentsTypes other && Equals(other));
+
+    /// <inheritdoc />
+    public int GetHashCode(FunctionCallArgumentsTypes obj)
+    {
+        var hashCode = default(HashCode);
+        foreach (var pair in Positional)
+        {
+            hashCode.Add(pair.Key);
+            hashCode.Add(pair.Value);
+        }
+        foreach (var pair in Named)
+        {
+            hashCode.Add(pair.Key);
+            hashCode.Add(pair.Value);
+        }
+        return hashCode.ToHashCode();
+    }
+
+    /// <inheritdoc />
+    public override int GetHashCode() => GetHashCode(this);
 
     /// <inheritdoc />
     public override string ToString()

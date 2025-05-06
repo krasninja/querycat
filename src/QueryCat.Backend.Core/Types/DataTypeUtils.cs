@@ -145,19 +145,30 @@ public static class DataTypeUtils
     internal static DataType DetermineTypeByValues(IEnumerable<VariantValue> values)
     {
         var variantValues = values
-            .Where(v => !string.IsNullOrEmpty(v.AsString))
+            .Where(v => !IsEmptyValue(in v))
             .ToArray();
+
+        bool IsEmptyValue(in VariantValue value)
+        {
+            if (value.IsNull)
+            {
+                return true;
+            }
+            var type = value.Type;
+            if (type == DataType.String
+                && (string.IsNullOrEmpty(value.AsStringUnsafe) || value.AsStringUnsafe.Equals(VariantValue.NullValueString, StringComparison.OrdinalIgnoreCase)))
+            {
+                return true;
+            }
+
+            return false;
+        }
 
         bool TestType(DataType dataType)
         {
             var wasTested = false;
             foreach (var variantValue in variantValues)
             {
-                if (string.IsNullOrEmpty(variantValue.AsString)
-                    || variantValue.AsString.Equals(VariantValue.NullValueString, StringComparison.OrdinalIgnoreCase))
-                {
-                    continue;
-                }
                 wasTested = true;
                 if (!variantValue.TryCast(dataType, out _))
                 {

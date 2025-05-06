@@ -36,16 +36,6 @@ public interface IExecutionThread : IDisposable
     IExecutionStack Stack { get; }
 
     /// <summary>
-    /// The event is fired before variable resolving.
-    /// </summary>
-    event EventHandler<ResolveVariableEventArgs>? VariableResolving;
-
-    /// <summary>
-    /// The event is fired after variable resolve.
-    /// </summary>
-    event EventHandler<ResolveVariableEventArgs>? VariableResolved;
-
-    /// <summary>
     /// Selector to resolve object expressions.
     /// </summary>
     IObjectSelector ObjectSelector { get; }
@@ -77,15 +67,6 @@ public interface IExecutionThread : IDisposable
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Try to get variable value from top scope to the root recursively.
-    /// </summary>
-    /// <param name="name">Variable name.</param>
-    /// <param name="value">Variable value.</param>
-    /// <param name="scope">Scope instance. Top scope is used by default.</param>
-    /// <returns>True if variable with the specified name is found, false otherwise.</returns>
-    bool TryGetVariable(string name, out VariantValue value, IExecutionScope? scope = null);
-
-    /// <summary>
     /// Get completions for the incomplete query.
     /// </summary>
     /// <param name="text">Query text.</param>
@@ -97,7 +78,7 @@ public interface IExecutionThread : IDisposable
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Create the new variables scope based on top of the current.
+    /// Create the new variables and execution scope based on top of the current one.
     /// </summary>
     /// <returns>Instance of <see cref="IExecutionScope" />.</returns>
     IExecutionScope PushScope();
@@ -105,7 +86,7 @@ public interface IExecutionThread : IDisposable
     /// <summary>
     /// Pop the current execution scope for stack and return it.
     /// </summary>
-    /// <returns>Instance of <see cref="IExecutionScope" />.</returns>
+    /// <returns>Instance of <see cref="IExecutionScope" /> or null if it is the top scope.</returns>
     IExecutionScope? PopScope();
 }
 

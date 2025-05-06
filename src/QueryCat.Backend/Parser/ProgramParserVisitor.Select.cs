@@ -9,6 +9,9 @@ namespace QueryCat.Backend.Parser;
 
 internal partial class ProgramParserVisitor
 {
+    private const string StdinFunctionName = "stdin";
+    private const string StdoutFunctionName = "stdout";
+
     #region Statement
 
     /// <inheritdoc />
@@ -82,7 +85,7 @@ internal partial class ProgramParserVisitor
             tableExpressionNode = new SelectTableNode(new SelectTableReferenceListNode(
                 new List<ExpressionNode>
                 {
-                    new SelectTableFunctionNode(new FunctionCallNode("stdin")),
+                    new SelectTableFunctionNode(new FunctionCallNode(StdinFunctionName)),
                 }));
         }
         return new SelectQuerySpecificationNode(this.Visit<SelectColumnsListNode>(context.selectList()))
@@ -239,9 +242,13 @@ internal partial class ProgramParserVisitor
             functionCallNode.Arguments.Add(new FunctionCallArgumentNode("uri",
                 new LiteralNode(new VariantValue(uri))));
         }
-        else
+        else if (context.into != null)
         {
             functionCallNode = this.Visit<FunctionCallNode>(context.into);
+        }
+        else
+        {
+            functionCallNode = new FunctionCallNode(StdoutFunctionName);
         }
         if (context.format != null)
         {
@@ -289,7 +296,7 @@ internal partial class ProgramParserVisitor
     /// <inheritdoc />
     public override IAstNode VisitSelectTablePrimaryStdin(QueryCatParser.SelectTablePrimaryStdinContext context)
     {
-        var functionCallNode = new FunctionCallNode("stdin");
+        var functionCallNode = new FunctionCallNode(StdinFunctionName);
         if (context.format != null)
         {
             var formatterFunctionCallNode = this.Visit<FunctionCallNode>(context.format);

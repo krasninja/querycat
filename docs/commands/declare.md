@@ -5,12 +5,12 @@ Declares the new variable within the current execution scope. Variable are case-
 ## Syntax
 
 ```
-DECLARE var_name type [ := value ]
+DECLARE var_name [ := value ]
 ```
 
 ## Examples
 
 ```
-DECLARE vk_password string;
-DECLARE token string := 'go4kysokm6340jGsd';
+DECLARE vk_password; -- Null variable.
+DECLARE token := 'go4kysokm6340jGsd';
 ```

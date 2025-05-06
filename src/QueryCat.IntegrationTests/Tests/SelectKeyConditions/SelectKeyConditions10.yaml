@@ -2,5 +2,5 @@ expected: |
   NVDA
   BABA
 query: |
-  declare q object := (select 'NVDA' union select 'BABA');
+  declare q := (select 'NVDA' union select 'BABA');
   select id from it_stocks() where id in q;

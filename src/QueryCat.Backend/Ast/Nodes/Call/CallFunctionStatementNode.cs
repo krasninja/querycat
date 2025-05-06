@@ -1,7 +1,12 @@
+using QueryCat.Backend.Core;
+
 namespace QueryCat.Backend.Ast.Nodes.Call;
 
-internal sealed class CallFunctionStatementNode : StatementNode
+internal sealed class CallFunctionStatementNode : StatementNode, ICommandNode
 {
+    /// <inheritdoc />
+    public string CommandName => Application.CommandCall;
+
     /// <inheritdoc />
     public CallFunctionStatementNode(CallFunctionNode rootNode) : base(rootNode)
     {

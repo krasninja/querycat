@@ -8,7 +8,7 @@ using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Commands.Select.Inputs;
 
-internal sealed class SetKeysRowsInput : RowsInput, IRowsInputKeys
+internal sealed class SetKeysRowsInput : RowsInput, IRowsInputKeys, IRowsInputUpdate, IRowsInputDelete
 {
     private sealed record ConditionJoint(
         SelectQueryCondition Condition,
@@ -152,9 +152,23 @@ internal sealed class SetKeysRowsInput : RowsInput, IRowsInputKeys
     }
 
     /// <inheritdoc />
-    public override void Explain(IndentedStringBuilder stringBuilder)
+    public async ValueTask<ErrorCode> UpdateValueAsync(int columnIndex, VariantValue value, CancellationToken cancellationToken = default)
     {
-        stringBuilder.AppendRowsInputsWithIndent($"SetKeys (id={_id})", _rowsInput);
+        if (_rowsInput is not IRowsInputUpdate rowsInputUpdate)
+        {
+            return ErrorCode.NotSupported;
+        }
+        return await rowsInputUpdate.UpdateValueAsync(columnIndex, value, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async ValueTask<ErrorCode> DeleteAsync(CancellationToken cancellationToken = default)
+    {
+        if (_rowsInput is not IRowsInputDelete rowsInputDelete)
+        {
+            return ErrorCode.NotSupported;
+        }
+        return await rowsInputDelete.DeleteAsync(cancellationToken);
     }
 
     /// <inheritdoc />
@@ -170,6 +184,12 @@ internal sealed class SetKeysRowsInput : RowsInput, IRowsInputKeys
     public void UnsetKeyColumnValue(int columnIndex, VariantValue.Operation operation)
     {
         // Do not passthru key value calls.
+    }
+
+    /// <inheritdoc />
+    public override void Explain(IndentedStringBuilder stringBuilder)
+    {
+        stringBuilder.AppendRowsInputsWithIndent($"SetKeys (id={_id})", _rowsInput);
     }
 
     /// <inheritdoc />

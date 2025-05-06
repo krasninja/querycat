@@ -73,6 +73,10 @@ internal abstract class AstNode : IAstNode
     /// <inheritdoc />
     public void SetAttribute(string key, object? value)
     {
+        if (value == null)
+        {
+            return;
+        }
         _attributes ??= new();
         _attributes[key] = value;
     }

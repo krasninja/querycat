@@ -195,4 +195,54 @@ public class AsyncLockTests
 
         Assert.False(endLoopIndicator);
     }
+
+    [Fact]
+    public async Task Lock_ShouldQueueAwaiters()
+    {
+        // Arrange.
+        var asyncLock = new AsyncLock();
+        var list = new List<int>();
+        var lockObj = new object();
+        var @event = new ManualResetEventSlim();
+
+        async Task LockAndAdd(int i)
+        {
+            var scope = await asyncLock.LockAsync();
+            lock (lockObj)
+            {
+                list.Add(i);
+            }
+            await scope.DisposeAsync();
+        }
+
+        // Act.
+        _ = Task.Run(async () =>
+        {
+            var scope = await asyncLock.LockAsync();
+            @event.Wait();
+            await scope.DisposeAsync();
+        });
+        await Task.Delay(100);
+
+        var task1 = Task.Run(async () => await LockAndAdd(1));
+        await Task.Delay(100);
+        var task2 = Task.Run(async () => await LockAndAdd(2));
+        await Task.Delay(100);
+        var task3 = Task.Run(async () => await LockAndAdd(3));
+        await Task.Delay(100);
+        var task4 = Task.Run(async () => await LockAndAdd(4));
+        await Task.Delay(100);
+        var task5 = Task.Run(async () => await LockAndAdd(5));
+        await Task.Delay(100);
+
+        @event.Set();
+        await task1;
+        await task2;
+        await task3;
+        await task4;
+        await task5;
+
+        // Assert.
+        Assert.Equal([1, 2, 3, 4, 5], list);
+    }
 }

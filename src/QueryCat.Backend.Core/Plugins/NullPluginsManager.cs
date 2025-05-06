@@ -11,7 +11,16 @@ public sealed class NullPluginsManager : IPluginsManager
     public static IPluginsManager Instance { get; } = new NullPluginsManager();
 
     /// <inheritdoc />
-    public IPluginsLoader PluginsLoader { get; } = NullPluginsLoader.Instance;
+    public IPluginsLoader PluginsLoader { get; }
+
+    /// <summary>
+    /// Constructor.
+    /// </summary>
+    /// <param name="pluginsLoader">Instance of <see cref="IPluginsLoader" />.</param>
+    public NullPluginsManager(IPluginsLoader? pluginsLoader = null)
+    {
+        PluginsLoader = pluginsLoader ?? NullPluginsLoader.Instance;
+    }
 
     /// <inheritdoc />
     public Task<IEnumerable<PluginInfo>> ListAsync(bool localOnly = false, CancellationToken cancellationToken = default)

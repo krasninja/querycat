@@ -1,7 +1,7 @@
 expected: |
   35
 query: |
-  declare x integer := 10;
-  declare y int := 15;
+  declare x := 10;
+  declare y := 15;
   set X := X + 10 + y;
   select x;

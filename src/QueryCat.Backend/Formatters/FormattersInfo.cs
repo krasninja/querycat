@@ -10,7 +10,7 @@ namespace QueryCat.Backend.Formatters;
 /// </summary>
 public static class FormattersInfo
 {
-    private static readonly Dictionary<string, Func<IFunctionsManager, IExecutionThread, FunctionCallArguments, ValueTask<VariantValue>>> Formatters
+    private static readonly Dictionary<string, Func<IFunctionsManager, IExecutionThread, FunctionCallArguments, ValueTask<VariantValue>>> _formatters
         = new(capacity: 64);
 
     /// <summary>
@@ -27,9 +27,9 @@ public static class FormattersInfo
         FunctionCallArguments? args = null,
         CancellationToken cancellationToken = default)
     {
-        if (Formatters.TryGetValue(id.ToLower(), out var factory))
+        if (_formatters.TryGetValue(id.ToLower(), out var factory))
         {
-            var value = await factory.Invoke(thread.FunctionsManager, thread, args ?? new FunctionCallArguments());
+            var value = await factory.Invoke(thread.FunctionsManager, thread, args ?? FunctionCallArguments.Empty);
             return value.AsRequired<IRowsFormatter>();
         }
         return null;
@@ -43,6 +43,6 @@ public static class FormattersInfo
     public static void RegisterFormatter(string id,
         Func<IFunctionsManager, IExecutionThread, FunctionCallArguments, ValueTask<VariantValue>> formatterFunc)
     {
-        Formatters[id] = formatterFunc;
+        _formatters[id] = formatterFunc;
     }
 }

@@ -5,6 +5,7 @@ using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Fetch;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Relational;
 
 namespace QueryCat.Backend.Storage;
 
@@ -85,10 +86,18 @@ public class CollectionInput : IRowsOutput, IDisposable, IAsyncDisposable, IRows
         await DisposeAsync();
     }
 
+    /// <summary>
+    /// Reset the collection to its initial position.
+    /// </summary>
+    public void Reset()
+    {
+        _enumerator.Reset();
+    }
+
     /// <inheritdoc />
     public Task ResetAsync(CancellationToken cancellationToken = default)
     {
-        _enumerator.Reset();
+        Reset();
         return Task.CompletedTask;
     }
 
@@ -107,9 +116,14 @@ public class CollectionInput : IRowsOutput, IDisposable, IAsyncDisposable, IRows
         return ErrorCode.OK;
     }
 
+    /// <summary>
+    /// Read the next item.
+    /// </summary>
+    /// <returns>Returns <c>true</c> if enumerator has more data, <c>false</c> otherwise.</returns>
+    public bool ReadNext() => _enumerator.MoveNext();
+
     /// <inheritdoc />
-    public ValueTask<bool> ReadNextAsync(CancellationToken cancellationToken = default)
-        => ValueTask.FromResult(_enumerator.MoveNext());
+    public ValueTask<bool> ReadNextAsync(CancellationToken cancellationToken = default) => ValueTask.FromResult(ReadNext());
 
     /// <inheritdoc />
     public ValueTask<ErrorCode> WriteValuesAsync(VariantValue[] values, CancellationToken cancellationToken = default)
@@ -170,6 +184,27 @@ public class CollectionInput : IRowsOutput, IDisposable, IAsyncDisposable, IRows
         return ValueTask.FromResult(ErrorCode.OK);
     }
 
+    /// <summary>
+    /// Convert to rows frame.
+    /// </summary>
+    /// <returns>Instance of <see cref="RowsFrame" />.</returns>
+    public RowsFrame ToRowsFrame()
+    {
+        var frame = new RowsFrame(_columns);
+        var row = new Row(_columns);
+        while (ReadNext())
+        {
+            for (var i = 0; i < _columnsProperties.Count; i++)
+            {
+                ReadValue(i, out var rowValue);
+                row[i] = rowValue;
+            }
+            frame.AddRow(row);
+        }
+        Reset();
+        return frame;
+    }
+
     /// <inheritdoc />
     public void Explain(IndentedStringBuilder stringBuilder)
     {
@@ -182,7 +217,7 @@ public class CollectionInput : IRowsOutput, IDisposable, IAsyncDisposable, IRows
     /// <param name="value">Object to type change.</param>
     /// <param name="conversionType">Conversion type.</param>
     /// <returns>New object with target type.</returns>
-    internal static object? ChangeType(object? value, Type conversionType)
+    private static object? ChangeType(object? value, Type conversionType)
     {
         if (value == null)
         {
@@ -197,11 +232,11 @@ public class CollectionInput : IRowsOutput, IDisposable, IAsyncDisposable, IRows
     }
 
     private static readonly Type[] _simpleTypes =
-    {
+    [
         typeof(DateTimeOffset),
         typeof(TimeSpan),
-        typeof(Guid),
-    };
+        typeof(Guid)
+    ];
 
     private static bool IsSimpleType(in Type type)
     {

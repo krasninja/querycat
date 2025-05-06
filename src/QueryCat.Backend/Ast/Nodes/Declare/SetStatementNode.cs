@@ -1,7 +1,12 @@
+using QueryCat.Backend.Core;
+
 namespace QueryCat.Backend.Ast.Nodes.Declare;
 
-internal sealed class SetStatementNode : StatementNode
+internal sealed class SetStatementNode : StatementNode, ICommandNode
 {
+    /// <inheritdoc />
+    public string CommandName => Application.CommandSet;
+
     /// <inheritdoc />
     public SetStatementNode(SetNode rootNode) : base(rootNode)
     {
