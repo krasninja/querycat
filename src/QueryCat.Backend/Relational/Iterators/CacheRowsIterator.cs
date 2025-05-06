@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using QueryCat.Backend.Core.Data;
 
 namespace QueryCat.Backend.Relational.Iterators;
@@ -6,6 +7,7 @@ namespace QueryCat.Backend.Relational.Iterators;
 /// Read the rows iterator and cache its data. If it goes above max cache size - read
 /// rows directly from original rows iterator.
 /// </summary>
+[DebuggerDisplay("Position = {Position}, Count = {Count}")]
 public sealed class CacheRowsIterator : IRowsIterator, IRowsIteratorParent
 {
     private readonly IRowsIterator _rowsIterator;
@@ -30,7 +32,7 @@ public sealed class CacheRowsIterator : IRowsIterator, IRowsIteratorParent
     /// <summary>
     /// Total cache rows.
     /// </summary>
-    public int TotalRows => _cache.Count;
+    public int Count => _cache.Count;
 
     /// <inheritdoc />
     public Row Current => _currentRow;
@@ -43,7 +45,7 @@ public sealed class CacheRowsIterator : IRowsIterator, IRowsIteratorParent
     /// <summary>
     /// Is the current cache cursor position at the last row.
     /// </summary>
-    public bool EndOfCache => _isFrozen && Position >= _cache.Count;
+    public bool EndOfCache => Position + 1 >= _cache.Count;
 
     /// <summary>
     /// If cache is expired.
@@ -207,7 +209,8 @@ public sealed class CacheRowsIterator : IRowsIterator, IRowsIteratorParent
     /// <inheritdoc />
     public void Explain(IndentedStringBuilder stringBuilder)
     {
-        stringBuilder.AppendRowsIteratorsWithIndent($"Cache (max={_cacheSize} fill={_cache.Count})", _rowsIterator);
+        stringBuilder
+            .AppendRowsIteratorsWithIndent($"Cache (max={_cacheSize} fill={_cache.Count} expired={_expiresAt})", _rowsIterator);
     }
 
     /// <inheritdoc />

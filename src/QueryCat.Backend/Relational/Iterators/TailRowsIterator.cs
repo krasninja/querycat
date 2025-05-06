@@ -74,7 +74,7 @@ public sealed class TailRowsIterator : IRowsIterator, IRowsIteratorParent
             while (await _rowsIterator.MoveNextAsync(cancellationToken))
             {
                 _cacheRowsIterator.AddLast(_rowsIterator.Current);
-                if (_cacheRowsIterator.TotalRows > _tailCount && _cacheRowsIterator.TotalRows > 0)
+                if (_cacheRowsIterator.Count > _tailCount && _cacheRowsIterator.Count > 0)
                 {
                     _cacheRowsIterator.RemoveFirst();
                 }
