@@ -6,6 +6,8 @@ namespace QueryCat.Backend.Core.Utils;
 /// <typeparam name="T">Pool object type.</typeparam>
 internal sealed class DisposableObjectPool<T> : SimpleObjectPool<T>, IDisposable where T : class
 {
+    // Based on .NET implementation: https://github.com/dotnet/aspnetcore/blob/main/src/ObjectPool/src/DisposableObjectPool.cs
+
     private volatile bool _isDisposed;
 
     /// <summary>
@@ -45,6 +47,7 @@ internal sealed class DisposableObjectPool<T> : SimpleObjectPool<T>, IDisposable
         }
     }
 
+    /// <inheritdoc />
     public void Dispose()
     {
         _isDisposed = true;

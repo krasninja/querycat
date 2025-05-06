@@ -47,19 +47,19 @@ internal sealed class AsyncLock : IAsyncDisposable, IDisposable
         }
 
         _currentSemaphore.Value ??= _topLevelSemaphore;
-        var currentSemaphore = _currentSemaphore.Value;
+        var localCurrentSemaphore = _currentSemaphore.Value;
         var nextSemaphore = _semaphorePool.Get();
         _currentSemaphore.Value = nextSemaphore;
-        var safeRelease = new SafeSemaphoreRelease(currentSemaphore, nextSemaphore, this);
-        return TakeLockCoreAsync(currentSemaphore, safeRelease, cancellationToken);
+        var safeRelease = new SafeSemaphoreRelease(localCurrentSemaphore, nextSemaphore, this);
+        return TakeLockCoreAsync(localCurrentSemaphore, safeRelease, cancellationToken);
     }
 
     private async Task<IAsyncDisposable> TakeLockCoreAsync(
-        SemaphoreSlim currentSemaphore,
+        SemaphoreSlim localCurrentSemaphore,
         SafeSemaphoreRelease safeSemaphoreRelease,
         CancellationToken cancellationToken)
     {
-        await currentSemaphore.WaitAsync(cancellationToken);
+        await localCurrentSemaphore.WaitAsync(cancellationToken);
         return safeSemaphoreRelease;
     }
 
@@ -75,11 +75,11 @@ internal sealed class AsyncLock : IAsyncDisposable, IDisposable
         }
 
         _currentSemaphore.Value ??= _topLevelSemaphore;
-        SemaphoreSlim currentSemaphore = _currentSemaphore.Value;
-        currentSemaphore.Wait();
+        SemaphoreSlim localCurrentSemaphore = _currentSemaphore.Value;
+        localCurrentSemaphore.Wait();
         var nextSemaphore = _semaphorePool.Get();
         _currentSemaphore.Value = nextSemaphore;
-        return new SafeSemaphoreRelease(currentSemaphore, nextSemaphore, this);
+        return new SafeSemaphoreRelease(localCurrentSemaphore, nextSemaphore, this);
     }
 
     /// <inheritdoc />
