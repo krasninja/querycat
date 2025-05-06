@@ -23,10 +23,12 @@ public sealed class BuildAssemblyDebugTask : AsyncFrostingTask<BuildContext>
                 return pag;
             }
         });
-        context.DeleteFile(Path.Combine(context.OutputDirectory, "qcat-ad"));
-        context.MoveFile(
-            Path.Combine(context.OutputDirectory, "qcat"),
-            Path.Combine(context.OutputDirectory, "qcat-ad"));
+        var qcatTargetFile = Path.Combine(context.OutputDirectory, "qcat-ad");
+        if (context.FileExists(qcatTargetFile))
+        {
+            context.DeleteFile(qcatTargetFile);
+        }
+        context.MoveFile(Path.Combine(context.OutputDirectory, "qcat"), qcatTargetFile);
 
         return base.RunAsync(context);
     }
