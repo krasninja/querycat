@@ -147,7 +147,7 @@ internal sealed class Program
             }
             else
             {
-                logger.LogCritical(exception, exception.Message);
+                logger.LogCritical(logger.IsEnabled(LogLevel.Debug) ? exception : null, exception.Message);
                 return 1;
             }
         }
