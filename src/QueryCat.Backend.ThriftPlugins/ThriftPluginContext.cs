@@ -58,10 +58,17 @@ internal sealed class ThriftPluginContext : IDisposable, IAsyncDisposable
             await CreateClientAsync(null, cancellationToken);
         }
 
-        var session = await _waitQueue.DequeueAsync(cancellationToken);
-        var wrapper = new ClientWrapper(session);
+        // Fast path.
+        var hasFastItem = _waitQueue.TryDequeue(out var session);
+        if (hasFastItem && session.HasValue)
+        {
+            return new ClientWrapper(session.Value);
+        }
 
-        if (!_maxConnectionsReached)
+        session = await _waitQueue.DequeueAsync(cancellationToken);
+        var wrapper = new ClientWrapper(session.Value);
+
+        if (!_maxConnectionsReached && !hasFastItem)
         {
             await CreateClientAsync(wrapper.ClientProxy, cancellationToken);
         }

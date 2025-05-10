@@ -55,20 +55,14 @@ internal sealed class WaitQueue : IDisposable
     /// <returns>Item session wrapper.</returns>
     public async ValueTask<ItemWrapper> DequeueAsync(CancellationToken cancellationToken = default)
     {
-        if (_isDisposed)
+        if (TryDequeue(out var itemWrapper)
+            && itemWrapper.HasValue)
         {
-            throw new ObjectDisposedException(nameof(WaitQueue));
-        }
-
-        // Has available client - use it.
-        if (_availableItemsObjects.TryDequeue(out var clientWrapper))
-        {
-            return new ItemWrapper(this, clientWrapper);
+            return itemWrapper.Value;
         }
 
         // Create the new awaiter and wait.
         var awaiter = _waitingConsumerPool.Get();
-        ItemWrapper itemWrapper;
         try
         {
             _awaitClientQueue.Enqueue(awaiter);
@@ -88,14 +82,37 @@ internal sealed class WaitQueue : IDisposable
         if (_logger.IsEnabled(LogLevel.Trace))
         {
             _logger.LogTrace("Take item {Item}, in use {InUseCount}, total {Count}.",
-                itemWrapper.Item,
+                itemWrapper.Value,
                 InUseCount,
                 Count
             );
         }
 
         // And then give it to the consumer.
-        return itemWrapper;
+        return itemWrapper.Value;
+    }
+
+    /// <summary>
+    /// Try to dequeue the item.
+    /// </summary>
+    /// <param name="item">Item or null.</param>
+    /// <returns><c>True</c> if was able to return, <c>false</c> otherwise.</returns>
+    public bool TryDequeue(out ItemWrapper? item)
+    {
+        if (_isDisposed)
+        {
+            throw new ObjectDisposedException(nameof(WaitQueue));
+        }
+
+        // Has available client - use it.
+        if (_availableItemsObjects.TryDequeue(out var clientWrapper))
+        {
+            item = new ItemWrapper(this, clientWrapper);
+            return true;
+        }
+
+        item = null;
+        return false;
     }
 
     /// <summary>
