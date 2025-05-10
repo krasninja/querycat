@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Reflection;
 using QueryCat.Backend.Core.Functions;
 
 namespace QueryCat.Plugins.Client;
@@ -24,7 +22,8 @@ public sealed class PluginFunctionsFactory : FunctionsFactory
 
     private IEnumerable<IFunction> CreateFunctionFromMethodAttributes(Delegate functionDelegate)
     {
-        var methodSignatureAttributes = Attribute.GetCustomAttributes(functionDelegate.Method, typeof(FunctionSignatureAttribute));
+        var methodSignatureAttributes = Attribute.GetCustomAttributes(functionDelegate.Method,
+            typeof(FunctionSignatureAttribute));
         var metadata = FunctionMetadata.CreateFromAttributes(functionDelegate.Method);
         foreach (var attribute in methodSignatureAttributes)
         {

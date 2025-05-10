@@ -34,10 +34,35 @@ namespace QueryCat.Plugins.Sdk
 
   public partial class RegistrationResult : TBase
   {
+    private global::QueryCat.Plugins.Sdk.LogLevel _min_log_level;
 
     public long Token { get; set; } = 0;
 
     public string Version { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 
+    /// <seealso cref="global::QueryCat.Plugins.Sdk.LogLevel"/>
+    /// </summary>
+    public global::QueryCat.Plugins.Sdk.LogLevel MinLogLevel
+    {
+      get
+      {
+        return _min_log_level;
+      }
+      set
+      {
+        __isset.min_log_level = true;
+        this._min_log_level = value;
+      }
+    }
+
+
+    public Isset __isset;
+    public struct Isset
+    {
+      public bool min_log_level;
+    }
 
     public RegistrationResult()
     {
@@ -84,6 +109,16 @@ namespace QueryCat.Plugins.Sdk
               {
                 Version = await iprot.ReadStringAsync(cancellationToken);
                 isset_version = true;
+              }
+              else
+              {
+                await TProtocolUtil.SkipAsync(iprot, field.Type, cancellationToken);
+              }
+              break;
+            case 3:
+              if (field.Type == TType.I32)
+              {
+                MinLogLevel = (global::QueryCat.Plugins.Sdk.LogLevel)await iprot.ReadI32Async(cancellationToken);
               }
               else
               {
@@ -138,6 +173,15 @@ namespace QueryCat.Plugins.Sdk
           await oprot.WriteStringAsync(Version, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
+        if(__isset.min_log_level)
+        {
+          tmp33.Name = "min_log_level";
+          tmp33.Type = TType.I32;
+          tmp33.ID = 3;
+          await oprot.WriteFieldBeginAsync(tmp33, cancellationToken);
+          await oprot.WriteI32Async((int)MinLogLevel, cancellationToken);
+          await oprot.WriteFieldEndAsync(cancellationToken);
+        }
         #pragma warning restore IDE0017  // simplified init
         await oprot.WriteFieldStopAsync(cancellationToken);
         await oprot.WriteStructEndAsync(cancellationToken);
@@ -153,7 +197,8 @@ namespace QueryCat.Plugins.Sdk
       if (that is not RegistrationResult other) return false;
       if (ReferenceEquals(this, other)) return true;
       return global::System.Object.Equals(Token, other.Token)
-        && global::System.Object.Equals(Version, other.Version);
+        && global::System.Object.Equals(Version, other.Version)
+        && ((__isset.min_log_level == other.__isset.min_log_level) && ((!__isset.min_log_level) || (global::System.Object.Equals(MinLogLevel, other.MinLogLevel))));
     }
 
     public override int GetHashCode() {
@@ -163,6 +208,10 @@ namespace QueryCat.Plugins.Sdk
         if((Version != null))
         {
           hashcode = (hashcode * 397) + Version.GetHashCode();
+        }
+        if(__isset.min_log_level)
+        {
+          hashcode = (hashcode * 397) + MinLogLevel.GetHashCode();
         }
       }
       return hashcode;
@@ -177,6 +226,11 @@ namespace QueryCat.Plugins.Sdk
       {
         tmp34.Append(", Version: ");
         Version.ToString(tmp34);
+      }
+      if(__isset.min_log_level)
+      {
+        tmp34.Append(", MinLogLevel: ");
+        MinLogLevel.ToString(tmp34);
       }
       tmp34.Append(')');
       return tmp34.ToString();

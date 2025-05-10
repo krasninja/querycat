@@ -154,7 +154,8 @@ struct PluginData {
 
 struct RegistrationResult {
   1: required i64 token, // Authorization token.
-  2: required string version // QueryCat version.
+  2: required string version, // QueryCat version.
+  3: optional LogLevel min_log_level // Minimal application log level.
 }
 
 service PluginsManager {

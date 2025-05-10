@@ -21,20 +21,6 @@ internal sealed class ThriftClientLogger : ILogger
     /// <inheritdoc />
     public bool IsEnabled(LogLevel logLevel) => logLevel != LogLevel.None;
 
-    private static global::QueryCat.Plugins.Sdk.LogLevel GetLogLevelString(LogLevel logLevel)
-    {
-        return logLevel switch
-        {
-            LogLevel.Trace => Sdk.LogLevel.TRACE,
-            LogLevel.Debug => Sdk.LogLevel.DEBUG,
-            LogLevel.Information => Sdk.LogLevel.INFORMATION,
-            LogLevel.Warning => Sdk.LogLevel.WARNING,
-            LogLevel.Error => Sdk.LogLevel.ERROR,
-            LogLevel.Critical => Sdk.LogLevel.CRITICAL,
-            _ => throw new ArgumentOutOfRangeException(nameof(logLevel))
-        };
-    }
-
     /// <inheritdoc />
     public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
     {
@@ -49,9 +35,9 @@ internal sealed class ThriftClientLogger : ILogger
 
         var message = string.Concat(_name, ": ", formatter.Invoke(state, exception));
         AsyncUtils.RunSync(ct => _client.LogAsync(
-            level: GetLogLevelString(logLevel),
-            cancellationToken: ct,
-            message: message)
+            level: SdkConvert.Convert(logLevel),
+            message: message,
+            cancellationToken: ct)
         );
     }
 }
