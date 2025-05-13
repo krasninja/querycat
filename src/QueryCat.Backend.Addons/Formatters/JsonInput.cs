@@ -55,11 +55,11 @@ internal sealed class JsonInput : StreamRowsInput
         JsonNode? jsonNode;
         try
         {
-            jsonNode = JsonNode.Parse(streamReader.ReadToEnd());
+            jsonNode = JsonNode.Parse(streamReader.BaseStream);
         }
         catch (JsonException ex)
         {
-            throw new QueryCatException($"Invalid JSON: {ex}");
+            throw new QueryCatException($"Invalid JSON: {ex.Message}");
         }
         if (jsonNode == null)
         {
@@ -71,14 +71,17 @@ internal sealed class JsonInput : StreamRowsInput
             throw new SemanticException("Incorrect JSON path input.");
         }
         var pathResult = path.Evaluate(jsonNode);
-        var matches = pathResult.Matches.Where(m => m.Value != null).ToList();
 
         var ms = new MemoryStream();
         using var jsonWriter = new Utf8JsonWriter(ms);
         jsonWriter.WriteStartArray();
-        foreach (var match in matches)
+        foreach (var match in pathResult.Matches)
         {
-            match.Value!.WriteTo(jsonWriter);
+            if (match.Value == null)
+            {
+                continue;
+            }
+            match.Value.WriteTo(jsonWriter);
         }
         jsonWriter.WriteEndArray();
         jsonWriter.Flush();
