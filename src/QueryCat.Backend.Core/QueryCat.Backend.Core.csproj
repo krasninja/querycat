@@ -8,7 +8,7 @@
 
   <ItemGroup>
     <PackageReference Condition=" '$(TargetFramework)'=='net8.0' " Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.3" />
-    <PackageReference Condition=" '$(TargetFramework)'=='net9.0' " Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.4" />
+    <PackageReference Condition=" '$(TargetFramework)'=='net9.0' " Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.5" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
   </ItemGroup>
 
