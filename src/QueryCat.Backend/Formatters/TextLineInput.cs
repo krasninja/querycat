@@ -13,10 +13,10 @@ namespace QueryCat.Backend.Formatters;
 /// </summary>
 internal sealed class TextLineInput : StreamRowsInput
 {
-    private readonly Column[] _customColumns =
-    {
+    private readonly VirtualColumn[] _customColumns =
+    [
         new("filename", DataType.String, "File path"), // Index 0.
-    };
+    ];
 
     public TextLineInput(Stream stream, string? key = null) : base(new StreamReader(stream), new StreamRowsInputOptions
     {
@@ -41,7 +41,7 @@ internal sealed class TextLineInput : StreamRowsInput
     }
 
     /// <inheritdoc />
-    protected override Column[] GetVirtualColumns() => _customColumns;
+    protected override VirtualColumn[] GetVirtualColumns() => _customColumns;
 
     /// <inheritdoc />
     protected override VariantValue GetVirtualColumnValue(int rowIndex, int columnIndex)

@@ -34,7 +34,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
 
     private readonly StreamRowsInputOptions _options;
 
-    private readonly Column[] _customColumns =
+    private static readonly VirtualColumn[] _customColumns =
     [
         new("filename", DataType.String, "File path.") // Index 0.
     ];
@@ -194,13 +194,13 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
 
         var virtualColumns = GetVirtualColumns();
         _virtualColumnsCount = virtualColumns.Length;
-        var nonVirtualColumns = columns.Where(c => !virtualColumns.Contains(c)).ToArray();
+        var nonVirtualColumns = columns.Where(c => c is not VirtualColumn).ToArray();
         Array.Resize(ref _columns, nonVirtualColumns.Length + _virtualColumnsCount);
 
         // Add virtual columns.
         for (var i = 0; i < _virtualColumnsCount; i++)
         {
-            _columns[i] = new Column(virtualColumns[i]);
+            _columns[i] = new VirtualColumn(virtualColumns[i]);
         }
 
         // Add non-virtual columns.
@@ -372,7 +372,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     /// The method should return custom (virtual) columns array.
     /// </summary>
     /// <returns>Virtual columns array.</returns>
-    protected virtual Column[] GetVirtualColumns()
+    protected virtual VirtualColumn[] GetVirtualColumns()
     {
         return _options.AddInputSourceColumn
                && (StreamReader.BaseStream is FileStream || StreamReader.BaseStream is GZipStream)

@@ -26,4 +26,9 @@ public sealed class IISW3CFormatter : IRowsFormatter
 
     /// <inheritdoc />
     public IRowsOutput OpenOutput(IBlobData blob) => throw new NotImplementedException();
+
+    public static void RegisterFunctions(IFunctionsManager functionsManager)
+    {
+        functionsManager.RegisterFunction(IISW3C);
+    }
 }

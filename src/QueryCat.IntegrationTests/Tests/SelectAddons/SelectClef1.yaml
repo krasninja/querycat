@@ -1,0 +1,5 @@
+expected: |
+  05/20/2025 14:18:53,HTTP "PUT" "/api/sales/project/68100" responded 200 in 386.6064 ms,62d0885c,3ab165560579ed8156600c6887a879d1,a04526f109a2635c,185,PUT,/api/sales/project/68100,200,386.606434,Serilog.AspNetCore.RequestLoggingMiddleware,0HNCNDGQAJP28:00000039,0HNCNDGQAJP28
+  06/07/2016 10:44:57,,,,,466,,,,,,,
+query: |
+  select * except filename from 'Logs1.clef';

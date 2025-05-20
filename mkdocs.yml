@@ -19,6 +19,7 @@ nav:
     - 'SET': commands/set.md
     - 'UPDATE': commands/update.md
   - 'Input':
+    - 'CLEF': input/clef.md
     - 'CSV': input/csv.md
     - 'Grok': input/grok.md
     - 'IISW3C': input/iisw3c.md

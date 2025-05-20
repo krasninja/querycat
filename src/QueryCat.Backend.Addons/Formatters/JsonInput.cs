@@ -15,7 +15,7 @@ namespace QueryCat.Backend.Addons.Formatters;
 /// <summary>
 /// Input that parser JSON data.
 /// </summary>
-internal sealed class JsonInput : StreamRowsInput
+internal class JsonInput : StreamRowsInput
 {
     private int _bracketsCount;
 
