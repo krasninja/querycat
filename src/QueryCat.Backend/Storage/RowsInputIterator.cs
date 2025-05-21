@@ -31,7 +31,6 @@ public class RowsInputIterator : IRowsIterator, IRowsIteratorParent
                 {
                     FetchValue(columnIndex);
                     _fetched[columnIndex] = true;
-                    return base[columnIndex];
                 }
                 return base[columnIndex];
             }
