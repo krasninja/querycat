@@ -10,7 +10,7 @@ namespace QueryCat.Backend.ThriftPlugins;
 /// Queue with the ability of the async dequeue and return back to queue.
 /// </summary>
 [DebuggerDisplay("Count = {Count}, InUse = {InUseCount}, Available = {AvailableCount}")]
-internal sealed class WaitQueue : IDisposable
+internal sealed partial class WaitQueue : IDisposable
 {
     private static readonly DisposableObjectPool<WaitingConsumer> _waitingConsumerPool = new(() => new WaitingConsumer());
     private readonly ConcurrentQueue<WaitingConsumer> _awaitClientQueue = new();
@@ -79,25 +79,17 @@ internal sealed class WaitQueue : IDisposable
             _waitingConsumerPool.Return(awaiter);
         }
 
-        if (_logger.IsEnabled(LogLevel.Trace))
-        {
-            _logger.LogTrace("Take item {Item}, in use {InUseCount}, total {Count}.",
-                itemWrapper.Value,
-                InUseCount,
-                Count
-            );
-        }
-
         // And then give it to the consumer.
+        LogTakeItem(itemWrapper.Value, InUseCount, Count);
         return itemWrapper.Value;
     }
 
     /// <summary>
     /// Try to dequeue the item.
     /// </summary>
-    /// <param name="item">Item or null.</param>
+    /// <param name="itemWrapper">Item or null.</param>
     /// <returns><c>True</c> if was able to return, <c>false</c> otherwise.</returns>
-    public bool TryDequeue(out ItemWrapper? item)
+    public bool TryDequeue(out ItemWrapper? itemWrapper)
     {
         if (_isDisposed)
         {
@@ -107,11 +99,12 @@ internal sealed class WaitQueue : IDisposable
         // Has available client - use it.
         if (_availableItemsObjects.TryDequeue(out var clientWrapper))
         {
-            item = new ItemWrapper(this, clientWrapper);
+            itemWrapper = new ItemWrapper(this, clientWrapper);
+            LogTakeItem(itemWrapper.Value.Item, InUseCount, Count);
             return true;
         }
 
-        item = null;
+        itemWrapper = null;
         return false;
     }
 
@@ -149,9 +142,8 @@ internal sealed class WaitQueue : IDisposable
 
     private void ReturnAvailableItem(object item)
     {
-        // Find the first
         ReturnAvailableItemCore(item);
-        _logger.LogTrace("Return item {Item}.", item);
+        LogReturnItem(item);
     }
 
     private void ReturnAvailableItemCore(object item)
@@ -167,6 +159,12 @@ internal sealed class WaitQueue : IDisposable
             _availableItemsObjects.Enqueue(item);
         }
     }
+
+    [LoggerMessage(LogLevel.Trace, "Take item {Item}, in use {InUseCount}, total {Count}.")]
+    private partial void LogTakeItem(object item, int inUseCount, int count);
+
+    [LoggerMessage(LogLevel.Trace, "Return item {Item}.")]
+    private partial void LogReturnItem(object item);
 
     /// <inheritdoc />
     public void Dispose()
