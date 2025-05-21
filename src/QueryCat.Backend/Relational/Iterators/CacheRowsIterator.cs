@@ -8,13 +8,15 @@ namespace QueryCat.Backend.Relational.Iterators;
 /// rows directly from original rows iterator.
 /// </summary>
 [DebuggerDisplay("Position = {Position}, Count = {Count}")]
-public sealed class CacheRowsIterator : IRowsIterator, IRowsIteratorParent
+public sealed class CacheRowsIterator : IRowsIteratorParent, ICursorRowsIterator
 {
+    private const int InitialPosition = -1;
+
     private readonly IRowsIterator _rowsIterator;
-    private int _rowsIteratorCursor = -1; // How many record we really read from rows iterator.
+    private int _rowsIteratorCursor = InitialPosition; // How many record we really read from rows iterator.
     private readonly int _cacheSize;
     private readonly List<Row> _cache;
-    private int _cursor = -1; // Absolution cursor position, might be within cache of rows iterator.
+    private int _cursor = InitialPosition; // Absolution cursor position, might be within cache of rows iterator.
     private Row _currentRow;
     private bool _isFrozen;
 
@@ -28,6 +30,9 @@ public sealed class CacheRowsIterator : IRowsIterator, IRowsIteratorParent
     /// Cursor position.
     /// </summary>
     public int Position => _cursor;
+
+    /// <inheritdoc />
+    public int TotalRows => Count;
 
     /// <summary>
     /// Total cache rows.
@@ -104,7 +109,7 @@ public sealed class CacheRowsIterator : IRowsIterator, IRowsIteratorParent
     public async ValueTask<bool> MoveNextAsync(CancellationToken cancellationToken = default)
     {
         // If this is the first call, make new expiration date.
-        if (_cursor == -1)
+        if (_cursor == InitialPosition)
         {
             ResetExpiration();
         }
@@ -112,8 +117,7 @@ public sealed class CacheRowsIterator : IRowsIterator, IRowsIteratorParent
         // If our position within the cache - return cached data.
         if (_cursor + 1 <= _cache.Count - 1)
         {
-            _cursor++;
-            _currentRow = _cache[_cursor];
+            SetCursor(_cursor + 1);
             return true;
         }
 
@@ -176,9 +180,10 @@ public sealed class CacheRowsIterator : IRowsIterator, IRowsIteratorParent
     public async Task ResetAsync(CancellationToken cancellationToken = default)
     {
         await _rowsIterator.ResetAsync(cancellationToken);
-        _rowsIteratorCursor = -1;
+        _rowsIteratorCursor = InitialPosition;
         _cache.Clear();
-        _cursor = -1;
+        _cursor = InitialPosition;
+        _currentRow = new Row(_rowsIterator);
         ResetExpiration();
     }
 
@@ -195,7 +200,7 @@ public sealed class CacheRowsIterator : IRowsIterator, IRowsIteratorParent
     /// </summary>
     public void SeekCacheCursorToHead()
     {
-        _cursor = -1;
+        SetCursor(InitialPosition);
     }
 
     /// <summary>
@@ -209,8 +214,39 @@ public sealed class CacheRowsIterator : IRowsIterator, IRowsIteratorParent
     /// <inheritdoc />
     public void Explain(IndentedStringBuilder stringBuilder)
     {
-        stringBuilder
-            .AppendRowsIteratorsWithIndent($"Cache (max={_cacheSize} fill={_cache.Count} expired={_expiresAt})", _rowsIterator);
+        var text = $"Cache (max={_cacheSize} fill={_cache.Count} expire={_expiresAt} pos={_cursor})";
+        stringBuilder.AppendRowsIteratorsWithIndent(text, _rowsIterator);
+    }
+
+    /// <inheritdoc />
+    public void Seek(int offset, CursorSeekOrigin origin)
+    {
+        if (origin == CursorSeekOrigin.Begin)
+        {
+            SetCursor(offset);
+        }
+        else if (origin == CursorSeekOrigin.Current)
+        {
+            SetCursor(_cursor + offset);
+        }
+        else if (origin == CursorSeekOrigin.End)
+        {
+            SetCursor(TotalRows - offset);
+        }
+    }
+
+    private void SetCursor(int newPosition)
+    {
+        _cursor = newPosition;
+
+        if (_cursor == InitialPosition)
+        {
+            _currentRow = new Row(_rowsIterator);
+        }
+        else if (_cursor > InitialPosition)
+        {
+            _currentRow = _cache[_cursor];
+        }
     }
 
     /// <inheritdoc />
