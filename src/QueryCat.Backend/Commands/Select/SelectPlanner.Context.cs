@@ -128,7 +128,7 @@ internal sealed partial class SelectPlanner
             var alias = tableExpression is ISelectAliasNode selectAlias ? selectAlias.Alias : string.Empty;
 
             Context_SetAlias(tableExpression, alias);
-            finalRowInput = Context_WrapKeysInput(finalRowInput, context.Conditions);
+            finalRowInput = Context_WrapKeysInput(finalRowInput, context);
             finalRowsInputs.Add(finalRowInput);
         }
 
@@ -345,8 +345,8 @@ internal sealed partial class SelectPlanner
             .Last();
         var alias = tableJoinedNode.RightTableNode is ISelectAliasNode selectAlias ? selectAlias.Alias : string.Empty;
         Context_SetAlias(right, alias);
-        right = Context_WrapKeysInput(right, context.Conditions);
-        left = Context_WrapKeysInput(left, context.Conditions);
+        right = Context_WrapKeysInput(right, context);
+        left = Context_WrapKeysInput(left, context);
 
         // For right join we swap left and right. But we keep columns in the same order.
         var join = Context_ConvertAstJoinType(tableJoinedNode.JoinTypeNode.JoinedType);
@@ -379,12 +379,14 @@ internal sealed partial class SelectPlanner
             nameof(tableJoinedNode));
     }
 
-    private IRowsInput Context_WrapKeysInput(IRowsInput rowsInput, SelectQueryConditions conditions)
+    private IRowsInput Context_WrapKeysInput(IRowsInput rowsInput, SelectCommandContext context)
     {
         if (rowsInput is IRowsInputKeys rowsInputKeys
-            && rowsInputKeys is not SetKeysRowsInput)
+            && rowsInputKeys is not SetKeysRowsInput
+            && context.Inputs.Any(i => i.RowsInput == rowsInput) // Create wrapper only for input source with data.
+        )
         {
-            return new SetKeysRowsInput(ExecutionThread, rowsInputKeys, conditions);
+            return new SetKeysRowsInput(ExecutionThread, rowsInputKeys, context.Conditions);
         }
         return rowsInput;
     }

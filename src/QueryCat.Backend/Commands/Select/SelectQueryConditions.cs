@@ -59,6 +59,10 @@ internal sealed class SelectQueryConditions : IEnumerable<SelectQueryCondition>
         {
             return null;
         }
+        if (operation == VariantValue.Operation.Equals && _conditions.Any(c => c.Column == column && c.Operation == VariantValue.Operation.In))
+        {
+            return null;
+        }
         var queryContextCondition = new SelectQueryCondition(column, operation, generator);
         _conditions.Add(queryContextCondition);
         return queryContextCondition;

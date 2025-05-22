@@ -1,0 +1,8 @@
+expected: |
+  BABA,Alibaba Group Holdings Ltd ADR
+  LNVGY,Lenovo Group Limited
+query: |
+  select i1.id, i2.name
+  from it_stocks() as i1
+  inner join it_stocks() as i2 ON i1.id = i2.id
+  where i1.id in (select 'BABA' as 'value' union select 'LNVGY' as 'value');
