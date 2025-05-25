@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
 
@@ -14,6 +15,8 @@ public abstract class EnumerableRowsInput<[DynamicallyAccessedMembers(Dynamicall
     private readonly ClassRowsFrameBuilder<TClass> _builder = new();
 
     private IEnumerator<TClass>? _enumerator;
+
+    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(EnumerableRowsInput<TClass>));
 
     private sealed class SourceEnumerableRowsInput<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] T>
         : EnumerableRowsInput<T>
@@ -74,7 +77,17 @@ public abstract class EnumerableRowsInput<[DynamicallyAccessedMembers(Dynamicall
             return ErrorCode.NoData;
         }
 
-        value = _builder.GetValue(columnIndex, _enumerator.Current);
+        try
+        {
+            value = _builder.GetValue(columnIndex, _enumerator.Current);
+        }
+        catch (Exception e)
+        {
+            _logger.LogWarning("Error getting value for column '{Column}' of input '{Input}': {ErrorMessage}",
+                Columns[columnIndex].FullName, GetType().Name, e.Message);
+            value = VariantValue.Null;
+            return ErrorCode.Error;
+        }
         return ErrorCode.OK;
     }
 
