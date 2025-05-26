@@ -8,6 +8,8 @@ internal static class Registration
     {
         functionsManager.RegisterFunction(BufferRowsInput.BufferInput);
         functionsManager.RegisterFunction(BufferRowsOutput.BufferOutput);
+        functionsManager.RegisterFunction(DelayRowsInput.DelayInput);
+        functionsManager.RegisterFunction(DelayRowsOutput.DelayOutput);
         functionsManager.RegisterFunction(GenerateSeriesInput.GenerateSeries);
         functionsManager.RegisterFunction(ParallelRowsOutput.ParallelOutput);
         functionsManager.RegisterFunction(RetryRowsInput.RetryInput);

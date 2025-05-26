@@ -7,7 +7,7 @@ using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Inputs;
 
-internal sealed class BufferRowsInput : BufferRowsSource, IRowsInput
+internal sealed class BufferRowsInput : BufferRowsSource, IRowsInputKeys
 {
     [SafeFunction]
     [Description("Implements buffer for rows input.")]
@@ -76,6 +76,7 @@ internal sealed class BufferRowsInput : BufferRowsSource, IRowsInput
     /// <inheritdoc />
     public async ValueTask<bool> ReadNextAsync(CancellationToken cancellationToken = default)
     {
+        StartThread();
         do
         {
             // Otherwise wait for complete write and try to dequeue again.
@@ -97,6 +98,34 @@ internal sealed class BufferRowsInput : BufferRowsSource, IRowsInput
     {
         await base.ResetAsync(cancellationToken);
         await _writeSemaphore.WaitAsync(cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public IReadOnlyList<KeyColumn> GetKeyColumns()
+    {
+        if (_rowsInput is IRowsInputKeys rowsInputKeys)
+        {
+            return rowsInputKeys.GetKeyColumns();
+        }
+        return [];
+    }
+
+    /// <inheritdoc />
+    public void SetKeyColumnValue(int columnIndex, VariantValue value, VariantValue.Operation operation)
+    {
+        if (_rowsInput is IRowsInputKeys rowsInputKeys)
+        {
+            rowsInputKeys.SetKeyColumnValue(columnIndex, value, operation);
+        }
+    }
+
+    /// <inheritdoc />
+    public void UnsetKeyColumnValue(int columnIndex, VariantValue.Operation operation)
+    {
+        if (_rowsInput is IRowsInputKeys rowsInputKeys)
+        {
+            rowsInputKeys.UnsetKeyColumnValue(columnIndex, operation);
+        }
     }
 
     /// <inheritdoc />

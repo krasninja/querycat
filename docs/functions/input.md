@@ -6,6 +6,7 @@ The input functions returns object of type `IRowsInput`.
 | --- |
 | `buffer_input(input: object<IRowsInput>, size: integer := 1024): object<IRowsInput>`<br /><br /> Implements buffer for rows input. |
 | `curl(uri: string, fmt?: object<IRowsFormatter>): object<IRowsInput>`<br /><br /> Reads data from a remote server using HTTP transport protocol. |
+| `delay_input(input: object<IRowsInput>, delay_secs: integer := 5): object<IRowsInput>`<br /><br /> Implements delay before reading the next record. |
 | `generate_series(start: integer, stop: integer, step: integer = 1): object<IRowsInput>`<br />`generate_series(start: float, stop: float, step: float = 1): object<IRowsInput>`<br />`generate_series(start: numeric, stop: numeric, step: numeric = 1): object<IRowsInput>`<br />`generate_series(start: timestamp, stop: timestamp, step: timestamp): object<IRowsInput>`<br /><br />Generates a series of values from start to stop, with a step size of step. |
 | `ls_dir(path: string): object<IRowsInput>`<br /><br /> List directory content (files and sub-directories). |
 | `read(uri: string, fmt?: object<IRowsFormatter>): object<IRowsInput>`<br /><br /> Read data from a URI. |

@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Add Compact Log Event Format (CLEF) formatter.
+- Add functions "delay_input", "delay_output".
+
+### Fixed
+
+- Postpone thread start in "buffer_input", "buffer_output".
 
 ## [0.13.0] - 2025-05-06
 

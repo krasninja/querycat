@@ -9,6 +9,7 @@ internal abstract class BufferRowsSource : IRowsSource, IDisposable
 
     private readonly IRowsSource _rowsSource;
     private Thread? _thread;
+    private bool _isThreadStarted;
     private bool _isThreadFinished;
     private readonly CancellationTokenSource _cancellationTokenSource = new();
 
@@ -82,7 +83,6 @@ internal abstract class BufferRowsSource : IRowsSource, IDisposable
     {
         _thread = new Thread(QueueLoop);
         await _rowsSource.OpenAsync(cancellationToken);
-        _thread.Start(new ThreadState(this));
     }
 
     /// <inheritdoc />
@@ -92,6 +92,15 @@ internal abstract class BufferRowsSource : IRowsSource, IDisposable
         await WaitForThreadFinishAsync(cancellationToken);
         await _cancellationTokenSource.CancelAsync();
         Dispose();
+    }
+
+    protected void StartThread()
+    {
+        if (_thread != null && !_isThreadStarted)
+        {
+            _isThreadStarted = true;
+            _thread.Start(new ThreadState(this));
+        }
     }
 
     protected async Task WaitForThreadFinishAsync(CancellationToken cancellationToken)
@@ -116,6 +125,7 @@ internal abstract class BufferRowsSource : IRowsSource, IDisposable
         await _rowsSource.ResetAsync(cancellationToken);
         RowsQueue.Clear();
         QueueCountSemaphore.Release(QueueCountSemaphore.CurrentCount);
+        _isThreadStarted = false;
     }
 
     protected virtual void Dispose(bool disposing)
