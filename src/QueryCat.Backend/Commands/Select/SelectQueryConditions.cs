@@ -79,9 +79,7 @@ internal sealed class SelectQueryConditions : IEnumerable<SelectQueryCondition>
         {
             var column = inputKey.Columns[keyColumn.ColumnIndex];
             var relatedConditions = Conditions
-                .Where(c =>
-                    c.Column == column
-                    && (alias == null || column.SourceName == alias))
+                .Where(c => c.Column == column)
                 .ToArray();
 
             // Straight conditions check.

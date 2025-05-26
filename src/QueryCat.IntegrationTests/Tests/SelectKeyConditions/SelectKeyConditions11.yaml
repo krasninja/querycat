@@ -1,0 +1,4 @@
+expected: |
+  NVDA,NVIDIA Corp
+query: |
+  SELECT id, name FROM buffer_input(it_stocks()) w WHERE w.id = 'NVDA';
