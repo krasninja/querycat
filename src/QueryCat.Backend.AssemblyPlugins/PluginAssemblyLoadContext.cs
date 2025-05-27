@@ -174,6 +174,11 @@ internal sealed class PluginAssemblyLoadContext : AssemblyLoadContext
         {
             targetExtension = ".dylib";
         }
+        if (OperatingSystem.IsBrowser()
+            && !fileExtension.Equals(".a"))
+        {
+            targetExtension = ".a";
+        }
 
         return $"{prefix}{unmanagedDllName}{targetExtension}";
     }
