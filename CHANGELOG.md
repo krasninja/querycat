@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Add Compact Log Event Format (CLEF) formatter.
-- Add functions "delay_input", "delay_output".
+- Add functions "delay_input", "delay_output", "to_base64", "from_base64".
 
 ### Fixed
 

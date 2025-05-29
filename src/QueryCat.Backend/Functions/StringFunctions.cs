@@ -302,6 +302,37 @@ internal static class StringFunctions
         return new VariantValue(result);
     }
 
+    [SafeFunction]
+    [Description("Converts a blob to a base64 encoded string.")]
+    [FunctionSignature("to_base64(target: blob): string")]
+    [FunctionSignature("base64(target: blob): string")]
+    public static async ValueTask<VariantValue> ToBase64(IExecutionThread thread, CancellationToken cancellationToken)
+    {
+        var target = thread.Stack.Pop().AsBlob;
+        if (target == null)
+        {
+            return VariantValue.Null;
+        }
+
+        await using var stream = target.GetStream();
+        var buffer = new byte[target.Length];
+        await stream.ReadExactlyAsync(buffer, cancellationToken);
+        var result = Convert.ToBase64String(buffer);
+        return new VariantValue(result);
+    }
+
+    [SafeFunction]
+    [Description("Converts a base64 encoded string to a character string (BLOB).")]
+    [FunctionSignature("from_base64(target: string): blob")]
+    public static VariantValue FromBase64(IExecutionThread thread)
+    {
+        var target = thread.Stack.Pop().AsString;
+
+        var bytes = Convert.FromBase64String(target);
+        var blob = new StreamBlobData(bytes);
+        return new VariantValue(blob);
+    }
+
     internal static RegexOptions FlagsToRegexOptions(string? flags)
     {
         var options = RegexOptions.None;
@@ -337,5 +368,7 @@ internal static class StringFunctions
         functionsManager.RegisterFunction(RegexpSubstring);
         functionsManager.RegisterFunction(RegexpCount);
         functionsManager.RegisterFunction(RegexpReplace);
+        functionsManager.RegisterFunction(ToBase64);
+        functionsManager.RegisterFunction(FromBase64);
     }
 }
