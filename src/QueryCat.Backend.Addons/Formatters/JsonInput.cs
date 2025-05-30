@@ -4,6 +4,7 @@ using System.Text.Json.Nodes;
 using Json.Path;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Relational;
@@ -198,15 +199,11 @@ internal class JsonInput : StreamRowsInput
     protected override void SetDefaultColumns(int columnsCount)
     {
         var jsonElement = GetParsedJsonDocument();
-        if (jsonElement == null)
-        {
-            throw new InvalidOperationException("Cannot initialize JSON columns.");
-        }
 
         var list = new List<string>();
-        foreach (var jsonProperty in jsonElement.Value.EnumerateObject())
+        foreach (var field in GetJsonObjectFields(jsonElement))
         {
-            list.Add(jsonProperty.Name);
+            list.Add(field);
         }
         _properties = list.ToArray();
 
@@ -214,14 +211,14 @@ internal class JsonInput : StreamRowsInput
     }
 
     /// <inheritdoc />
-    protected override Task AnalyzeAsync(CacheRowsIterator iterator, CancellationToken cancellationToken = default)
+    protected override async Task AnalyzeAsync(CacheRowsIterator iterator, CancellationToken cancellationToken = default)
     {
         var columns = GetInputColumns();
         for (var i = 0; i < _properties.Length; i++)
         {
             columns[i].Name = _properties[i];
         }
-        return RowsIteratorUtils.ResolveColumnsTypesAsync(iterator, cancellationToken: cancellationToken);
+        await RowsIteratorUtils.ResolveColumnsTypesAsync(iterator, cancellationToken: cancellationToken);
     }
 
     private JsonElement? GetParsedJsonDocument()
@@ -234,5 +231,18 @@ internal class JsonInput : StreamRowsInput
             return JsonSerializer.Deserialize(json, SourceGenerationContext.Default.JsonElement);
         }
         return null;
+    }
+
+    private IEnumerable<string> GetJsonObjectFields(JsonElement? jsonElement)
+    {
+        if (jsonElement == null)
+        {
+            yield break;
+        }
+
+        foreach (var jsonProperty in jsonElement.Value.EnumerateObject())
+        {
+            yield return jsonProperty.Name;
+        }
     }
 }

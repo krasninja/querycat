@@ -102,7 +102,7 @@ internal static class MiscFunctions
             addValueFactory: (k) => new CacheRowsIterator(iterator, expiresIn: expireTime),
             updateValueFactory: (k, cache) =>
             {
-                if (cache.IsExpired || !cache.RowsIterator.IsSchemaEqual(iterator))
+                if (cache.IsExpired || !cache.RowsIterator.IsSchemaEqual(iterator.Columns))
                 {
                     return new CacheRowsIterator(iterator, expiresIn: expireTime);
                 }

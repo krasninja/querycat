@@ -46,11 +46,11 @@ public static class RowsSchemaExtensions
     /// for that is columns types equality and columns count equality.
     /// </summary>
     /// <param name="schema">Source schema.</param>
-    /// <param name="target">Target schema.</param>
+    /// <param name="columns">Target schema columns.</param>
     /// <returns>Returns <c>true</c> if schemas are equal, <c>false</c> otherwise.</returns>
-    public static bool IsSchemaEqual(this IRowsSchema schema, IRowsSchema target)
+    public static bool IsSchemaEqual(this IRowsSchema schema, Column[] columns)
     {
-        if (schema.Columns.Length != target.Columns.Length)
+        if (schema.Columns.Length != columns.Length)
         {
             return false;
         }
@@ -58,7 +58,7 @@ public static class RowsSchemaExtensions
         for (var i = 0; i < schema.Columns.Length; i++)
         {
             var sourceColumn = schema.Columns[i];
-            if (sourceColumn.DataType != target.Columns[i].DataType)
+            if (sourceColumn.DataType != columns[i].DataType)
             {
                 return false;
             }

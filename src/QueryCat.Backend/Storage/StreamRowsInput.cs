@@ -184,18 +184,19 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     /// <summary>
     /// Initialize columns with the new set.
     /// </summary>
-    /// <param name="columns">New columns.</param>
-    protected void SetColumns(IReadOnlyList<Column> columns)
+    /// <param name="newColumns">New columns.</param>
+    protected void SetColumns(IReadOnlyList<Column> newColumns)
     {
-        if (columns.Count < 1)
+        if (newColumns.Count < 1)
         {
             throw new QueryCatException(Resources.Errors.NoColumns);
         }
 
         var virtualColumns = GetVirtualColumns();
         _virtualColumnsCount = virtualColumns.Length;
-        var nonVirtualColumns = columns.Where(c => c is not VirtualColumn).ToArray();
-        Array.Resize(ref _columns, nonVirtualColumns.Length + _virtualColumnsCount);
+        var nonVirtualColumns = newColumns.Where(c => c is not VirtualColumn).ToArray();
+        var newColumnsLength = nonVirtualColumns.Length + _virtualColumnsCount;
+        Array.Resize(ref _columns, newColumnsLength);
 
         // Add virtual columns.
         for (var i = 0; i < _virtualColumnsCount; i++)
@@ -204,7 +205,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
         }
 
         // Add non-virtual columns.
-        for (var i = _virtualColumnsCount; i < nonVirtualColumns.Length + _virtualColumnsCount; i++)
+        for (var i = _virtualColumnsCount; i < newColumnsLength; i++)
         {
             _columns[i] = nonVirtualColumns[i - _virtualColumnsCount];
         }
