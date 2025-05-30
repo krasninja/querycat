@@ -39,6 +39,7 @@ internal sealed class Program
             new ExplainCommand(),
             new AstCommand(),
             new SchemaCommand(),
+            new CallFunctionCommand(),
             new ServeCommand(),
 #if ENABLE_PLUGINS
             new Command("plugin", "Plugins management.")
