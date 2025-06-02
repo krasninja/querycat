@@ -18,7 +18,7 @@ internal sealed class TextLineInput : StreamRowsInput
         new("filename", DataType.String, "File path"), // Index 0.
     ];
 
-    public TextLineInput(Stream stream, string? key = null) : base(new StreamReader(stream), new StreamRowsInputOptions
+    public TextLineInput(Stream stream, string? key = null) : base(stream, new StreamRowsInputOptions
     {
         DelimiterStreamReaderOptions = new DelimiterStreamReader.ReaderOptions
         {

@@ -48,6 +48,8 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
 
     protected StreamReader StreamReader { get; }
 
+    private readonly Stream _baseStream;
+
     private bool _isClosed;
     private bool _isOpened;
 
@@ -80,18 +82,19 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     /// <summary>
     /// Constructor.
     /// </summary>
-    /// <param name="streamReader">Stream reader.</param>
+    /// <param name="stream">Stream to read.</param>
     /// <param name="options">The options.</param>
     /// <param name="keys">Unique keys.</param>
     protected StreamRowsInput(
-        StreamReader streamReader,
+        Stream stream,
         StreamRowsInputOptions? options = null,
         params IEnumerable<string> keys)
     {
         _options = options ?? new();
-        _delimiterStreamReader = new DelimiterStreamReader(streamReader, _options.DelimiterStreamReaderOptions);
+        _baseStream = stream;
+        StreamReader = new StreamReader(_baseStream);
+        _delimiterStreamReader = new DelimiterStreamReader(StreamReader, _options.DelimiterStreamReaderOptions);
         UniqueKey = keys.Concat(_options.CacheKeys).ToArray();
-        StreamReader = streamReader;
     }
 
     /// <summary>
@@ -276,7 +279,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
         else
         {
             StreamReader.DiscardBufferedData();
-            StreamReader.BaseStream.Seek(0, SeekOrigin.Begin);
+            _baseStream.Seek(0, SeekOrigin.Begin);
             _delimiterStreamReader.Reset();
         }
         _rowIndex = 0;
@@ -375,8 +378,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     /// <returns>Virtual columns array.</returns>
     protected virtual VirtualColumn[] GetVirtualColumns()
     {
-        return _options.AddInputSourceColumn
-               && (StreamReader.BaseStream is FileStream || StreamReader.BaseStream is GZipStream)
+        return _options.AddInputSourceColumn && (_baseStream is FileStream || _baseStream is GZipStream)
             ? _customColumns
             : [];
     }
@@ -389,12 +391,12 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     /// <returns>Value.</returns>
     protected virtual VariantValue GetVirtualColumnValue(int rowIndex, int columnIndex)
     {
-        if (columnIndex == 0 && StreamReader.BaseStream is FileStream fileStream)
+        if (columnIndex == 0 && _baseStream is FileStream fileStream)
         {
             return new VariantValue(fileStream.Name);
         }
-        if (columnIndex == 0 && StreamReader.BaseStream is GZipStream zipStream
-            && zipStream.BaseStream is FileStream zipFileStream)
+        if (columnIndex == 0 && _baseStream is GZipStream zipStream
+            && _baseStream is FileStream zipFileStream)
         {
             return new VariantValue(zipFileStream.Name);
         }
@@ -430,6 +432,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
         if (disposing)
         {
             StreamReader.Dispose();
+            _baseStream.Dispose();
             _isClosed = true;
             _isOpened = false;
         }
@@ -447,7 +450,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     /// <inheritdoc />
     public override string ToString()
     {
-        if (StreamReader.BaseStream is FileStream fileStream)
+        if (_baseStream is FileStream fileStream)
         {
             return $"{nameof(StreamRowsInput)}: {fileStream.Name}";
         }

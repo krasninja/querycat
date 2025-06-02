@@ -57,7 +57,7 @@ public sealed class IISW3CInput : StreamRowsInput
         .AlternateLookup<ReadOnlySpan<char>> _availableFieldsLookup =
             _availableFields.GetAlternateLookup<ReadOnlySpan<char>>();
 
-    public IISW3CInput(Stream stream, string? key = null) : base(new StreamReader(stream), new StreamRowsInputOptions
+    public IISW3CInput(Stream stream, string? key = null) : base(stream, new StreamRowsInputOptions
     {
         DelimiterStreamReaderOptions = new DelimiterStreamReader.ReaderOptions
         {

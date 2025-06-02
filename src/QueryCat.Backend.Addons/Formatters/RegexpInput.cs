@@ -21,7 +21,7 @@ internal sealed class RegexpInput : StreamRowsInput
 
     /// <inheritdoc />
     public RegexpInput(Stream stream, string pattern, string? flags = null, string? key = null)
-        : base(new StreamReader(stream), new StreamRowsInputOptions
+        : base(stream, new StreamRowsInputOptions
     {
         DelimiterStreamReaderOptions = new DelimiterStreamReader.ReaderOptions
         {

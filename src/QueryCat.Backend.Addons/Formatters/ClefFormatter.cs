@@ -27,7 +27,7 @@ internal sealed class ClefFormatter : IRowsFormatter
     public IRowsInput OpenInput(IBlobData blob, string? key = null)
     {
         var stream = blob.GetStream();
-        return new ClefInput(new StreamReader(stream), key: key);
+        return new ClefInput(stream, key: key);
     }
 
     /// <inheritdoc />

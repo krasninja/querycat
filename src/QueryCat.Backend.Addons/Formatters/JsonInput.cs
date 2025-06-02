@@ -4,7 +4,6 @@ using System.Text.Json.Nodes;
 using Json.Path;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
-using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Relational;
@@ -26,9 +25,8 @@ internal class JsonInput : StreamRowsInput
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(JsonInput));
 
     /// <inheritdoc />
-    public JsonInput(StreamReader streamReader, bool addFileNameColumn = true, string? jsonPath = null, string? key = null)
-        : base(
-            GetEvaluatedStream(streamReader, jsonPath), new StreamRowsInputOptions
+    public JsonInput(Stream stream, bool addFileNameColumn = true, string? jsonPath = null, string? key = null)
+        : base(GetEvaluatedStream(stream, jsonPath), new StreamRowsInputOptions
         {
             DelimiterStreamReaderOptions = new DelimiterStreamReader.ReaderOptions
             {
@@ -46,17 +44,17 @@ internal class JsonInput : StreamRowsInput
         SetOnDelimiterDelegate(OnDelimiter);
     }
 
-    private static StreamReader GetEvaluatedStream(StreamReader streamReader, string? jsonPath = null)
+    private static Stream GetEvaluatedStream(Stream stream, string? jsonPath = null)
     {
         if (string.IsNullOrEmpty(jsonPath))
         {
-            return streamReader;
+            return stream;
         }
 
         JsonNode? jsonNode;
         try
         {
-            jsonNode = JsonNode.Parse(streamReader.BaseStream);
+            jsonNode = JsonNode.Parse(stream);
         }
         catch (JsonException ex)
         {
@@ -87,7 +85,7 @@ internal class JsonInput : StreamRowsInput
         jsonWriter.WriteEndArray();
         jsonWriter.Flush();
         ms.Seek(0, SeekOrigin.Begin);
-        return new StreamReader(ms);
+        return ms;
     }
 
     private void OnDelimiter(char ch, long pos, out bool countField, out bool completeLine)

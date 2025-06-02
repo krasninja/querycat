@@ -7,8 +7,8 @@ namespace QueryCat.Backend.Addons.Formatters;
 internal sealed class ClefInput : JsonInput
 {
     /// <inheritdoc />
-    public ClefInput(StreamReader streamReader, bool addFileNameColumn = true, string? jsonPath = null, string? key = null)
-        : base(streamReader, addFileNameColumn, jsonPath, key)
+    public ClefInput(Stream stream, bool addFileNameColumn = true, string? jsonPath = null, string? key = null)
+        : base(stream, addFileNameColumn, jsonPath, key)
     {
     }
 
