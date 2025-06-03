@@ -37,10 +37,11 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IAsync
     private readonly Stopwatch _stopwatch = new();
     private readonly AsyncLock _asyncLock = new();
 
+    private bool IsInCallback { get; set; }
+
     private sealed class DefaultBodyFuncUnit : StatementsBlockFuncUnit
     {
         private readonly DefaultExecutionThread _executionThread;
-        private bool _isInCallback;
 
         /// <inheritdoc />
         public DefaultBodyFuncUnit(DefaultExecutionThread executionThread, ProgramBodyNode programBodyNode)
@@ -59,12 +60,12 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IAsync
             var executionThread = (DefaultExecutionThread)thread;
 
             // Before.
-            if (executionThread.StatementExecuting != null && !_isInCallback)
+            if (executionThread.StatementExecuting != null && !_executionThread.IsInCallback)
             {
-                _isInCallback = true;
+                _executionThread.IsInCallback = true;
                 var executeEventArgs = new ExecuteEventArgs(statementNode);
                 executionThread.StatementExecuting.Invoke(this, executeEventArgs);
-                _isInCallback = false;
+                _executionThread.IsInCallback = false;
                 if (!executeEventArgs.ContinueExecution)
                 {
                     Jump = ExecutionJump.Halt;
@@ -76,13 +77,13 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IAsync
             var result = await base.InvokeStatementAsync(thread, funcUnit, statementNode, cancellationToken);
 
             // After.
-            if (executionThread.StatementExecuted != null && !_isInCallback)
+            if (executionThread.StatementExecuted != null && !_executionThread.IsInCallback)
             {
-                _isInCallback = true;
+                _executionThread.IsInCallback = true;
                 var executeEventArgs = new ExecuteEventArgs(statementNode);
                 executeEventArgs.Result = result;
                 executionThread.StatementExecuted.Invoke(this, executeEventArgs);
-                _isInCallback = false;
+                _executionThread.IsInCallback = false;
                 if (!executeEventArgs.ContinueExecution)
                 {
                     Jump = ExecutionJump.Halt;
