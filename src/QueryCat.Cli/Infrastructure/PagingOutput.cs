@@ -11,7 +11,7 @@ public class PagingOutput : IRowsOutput
 {
     public const int NoLimit = -1;
 
-    private static readonly string _clearText = new('\r', Resources.Messages.MoreRows.Length);
+    private static readonly string _clearText = new string(' ', Resources.Messages.MoreRows.Length) + '\r';
 
     private readonly IRowsOutput _rowsOutput;
     private readonly CancellationTokenSource? _cancellationTokenSource;
