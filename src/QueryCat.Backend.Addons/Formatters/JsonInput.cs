@@ -4,10 +4,9 @@ using System.Text.Json.Nodes;
 using Json.Path;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Core.Utils;
-using QueryCat.Backend.Relational;
-using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Storage;
 
 namespace QueryCat.Backend.Addons.Formatters;
@@ -167,35 +166,42 @@ internal class JsonInput : StreamRowsInput
         while (true)
         {
             var hasData = await base.ReadNextInternalAsync(cancellationToken);
-            if (hasData)
+            if (!hasData)
             {
-                var text = GetRowText();
-                var reader = new SequenceReader<char>(text);
-                if (reader.TryAdvanceTo('{', advancePastDelimiter: false))
+                return false;
+            }
+            var text = GetRowText();
+            var reader = new SequenceReader<char>(text);
+            if (reader.TryAdvanceTo('{', advancePastDelimiter: false))
+            {
+                var json = reader.UnreadSequence.ToString();
+                try
                 {
-                    var json = reader.UnreadSequence.ToString();
-                    try
-                    {
-                        _jsonElement = JsonSerializer.Deserialize(json, SourceGenerationContext.Default.JsonElement);
-                    }
-                    catch (JsonException jsonException)
-                    {
-                        _logger.LogWarning("Cannot parse row {RowIndex}: {Error}", RowIndex, jsonException.Message);
-                        continue;
-                    }
+                    _jsonElement = JsonSerializer.Deserialize(json, SourceGenerationContext.Default.JsonElement);
                 }
-                else
+                catch (JsonException jsonException)
                 {
-                    hasData = false;
+                    _logger.LogWarning("Cannot parse row {RowIndex}: {Error}", RowIndex, jsonException.Message);
+                    continue;
                 }
+            }
+            else
+            {
+                hasData = false;
             }
             return hasData;
         }
     }
 
     /// <inheritdoc />
-    protected override void SetDefaultColumns(int columnsCount)
+    protected override async Task<Column[]> DetectColumnsAsync(CancellationToken cancellationToken = default)
     {
+        var hasData = await ReadNextAsync(cancellationToken);
+        if (!hasData)
+        {
+            return [];
+        }
+
         var jsonElement = GetParsedJsonDocument();
 
         var list = new List<string>();
@@ -205,18 +211,8 @@ internal class JsonInput : StreamRowsInput
         }
         _properties = list.ToArray();
 
-        base.SetDefaultColumns(_properties.Length);
-    }
-
-    /// <inheritdoc />
-    protected override async Task AnalyzeAsync(CacheRowsIterator iterator, CancellationToken cancellationToken = default)
-    {
-        var columns = GetInputColumns();
-        for (var i = 0; i < _properties.Length; i++)
-        {
-            columns[i].Name = _properties[i];
-        }
-        await RowsIteratorUtils.ResolveColumnsTypesAsync(iterator, cancellationToken: cancellationToken);
+        var columns = _properties.Select(p => new Column(p, DataType.String));
+        return columns.ToArray();
     }
 
     private JsonElement? GetParsedJsonDocument()

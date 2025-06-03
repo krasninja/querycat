@@ -196,7 +196,7 @@ public class DelimiterStreamReader
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     private bool GetNextCharacter(out char nextChar)
     {
-        if ((ulong)_dynamicBuffer.Size > (ulong)_currentDelimiterPosition)
+        if ((ulong)_dynamicBuffer.SizeLong > (ulong)_currentDelimiterPosition)
         {
             nextChar = _dynamicBuffer.GetAt((int)_currentDelimiterPosition);
             return true;
@@ -251,7 +251,7 @@ public class DelimiterStreamReader
         {
             var stopCharactersLocal = (ReadOnlySpan<char>)_stopCharacters;
             CreateSequenceReader(out var sequenceReader);
-            while ((ulong)_currentDelimiterPosition < (ulong)_dynamicBuffer.Size)
+            while ((ulong)_currentDelimiterPosition < (ulong)_dynamicBuffer.SizeLong)
             {
                 if (cancellationToken.IsCancellationRequested)
                 {

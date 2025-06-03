@@ -1,6 +1,5 @@
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Relational.Iterators;
 
 namespace QueryCat.Backend.Addons.Formatters;
 
@@ -13,11 +12,11 @@ internal sealed class ClefInput : JsonInput
     }
 
     /// <inheritdoc />
-    protected override async Task AnalyzeAsync(CacheRowsIterator iterator, CancellationToken cancellationToken = default)
+    protected override async Task<Column[]> DetectColumnsAsync(CancellationToken cancellationToken = default)
     {
-        await base.AnalyzeAsync(iterator, cancellationToken);
+        var columns = await base.DetectColumnsAsync(cancellationToken);
         var newColumns = new List<Column>(capacity: Columns.Length);
-        foreach (var column in Columns)
+        foreach (var column in columns)
         {
             switch (column.Name)
             {
@@ -55,6 +54,7 @@ internal sealed class ClefInput : JsonInput
                     break;
             }
         }
-        SetColumns(newColumns);
+
+        return newColumns.ToArray();
     }
 }

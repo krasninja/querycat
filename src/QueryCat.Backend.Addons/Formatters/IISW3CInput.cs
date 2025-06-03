@@ -154,12 +154,6 @@ public sealed class IISW3CInput : StreamRowsInput
         await SeekToFieldsHeaderAsync(cancellationToken);
     }
 
-    /// <inheritdoc />
-    protected override Task AnalyzeAsync(CacheRowsIterator iterator, CancellationToken cancellationToken = default)
-    {
-        return Task.CompletedTask;
-    }
-
     private void ParseHeaders(ReadOnlySpan<char> header)
     {
         var subheader = header[FieldsMarker.Length..];

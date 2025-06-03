@@ -4,8 +4,6 @@ using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Functions;
-using QueryCat.Backend.Relational;
-using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Storage;
 
 namespace QueryCat.Backend.Addons.Formatters;
@@ -61,13 +59,6 @@ internal sealed class RegexpInput : StreamRowsInput
     }
 
     /// <inheritdoc />
-    protected override async Task AnalyzeAsync(CacheRowsIterator iterator, CancellationToken cancellationToken = default)
-    {
-        await RowsIteratorUtils.ResolveColumnsTypesAsync(iterator, cancellationToken: cancellationToken);
-        iterator.SeekCacheCursorToHead();
-    }
-
-    /// <inheritdoc />
     protected override ErrorCode ReadValueInternal(int nonVirtualColumnIndex, DataType type, out VariantValue value)
     {
         value = _valuesArray[nonVirtualColumnIndex];
@@ -108,5 +99,12 @@ internal sealed class RegexpInput : StreamRowsInput
             match = match.NextMatch();
         }
         return true;
+    }
+
+    /// <inheritdoc />
+    protected override Task<Column[]> DetectColumnsAsync(CancellationToken cancellationToken = default)
+    {
+        // Columns are already calculated in ctor.
+        return Task.FromResult(Columns);
     }
 }

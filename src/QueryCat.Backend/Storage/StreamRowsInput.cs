@@ -5,7 +5,9 @@ using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Core.Utils;
+using QueryCat.Backend.Relational;
 using QueryCat.Backend.Relational.Iterators;
+using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Storage;
 
@@ -49,16 +51,13 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     protected StreamReader StreamReader { get; }
 
     private readonly Stream _baseStream;
+    private readonly CacheStream _cacheStream;
 
     private bool _isClosed;
     private bool _isOpened;
 
     /// <inheritdoc />
     public QueryContext QueryContext { get; set; } = NullQueryContext.Instance;
-
-    // Current position in a reading row. We need it in a case if read current row and need to
-    // fetch new data to finish. The current position will contain the start index.
-    private bool _firstFetch = true;
 
     // Cache.
     private CacheRowsIterator? _cacheIterator;
@@ -92,7 +91,8 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     {
         _options = options ?? new();
         _baseStream = stream;
-        StreamReader = new StreamReader(_baseStream);
+        _cacheStream = new CacheStream(stream);
+        StreamReader = new StreamReader(_cacheStream);
         _delimiterStreamReader = new DelimiterStreamReader(StreamReader, _options.DelimiterStreamReaderOptions);
         UniqueKey = keys.Concat(_options.CacheKeys).ToArray();
     }
@@ -246,12 +246,6 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
             {
                 _rowIndex++;
             }
-
-            if (hasData && _firstFetch)
-            {
-                SetDefaultColumns(_delimiterStreamReader.GetFieldsCount());
-                _firstFetch = false;
-            }
         }
         while (hasData && IgnoreLine());
         return hasData;
@@ -271,6 +265,17 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     public virtual Task ResetAsync(CancellationToken cancellationToken = default)
     {
         _logger.LogTrace("Reset stream.");
+
+        ResetCacheToInitialPosition();
+        if (_cacheIterator == null)
+        {
+            _baseStream.Seek(0, SeekOrigin.Begin);
+        }
+        return Task.CompletedTask;
+    }
+
+    private void ResetCacheToInitialPosition()
+    {
         // If we still read cache data - we just reset it. Otherwise, there will be double read.
         if (_cacheIterator != null)
         {
@@ -279,11 +284,10 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
         else
         {
             StreamReader.DiscardBufferedData();
-            _baseStream.Seek(0, SeekOrigin.Begin);
             _delimiterStreamReader.Reset();
+            _cacheStream.Seek(0, SeekOrigin.Begin);
         }
         _rowIndex = 0;
-        return Task.CompletedTask;
     }
 
     /// <inheritdoc />
@@ -310,7 +314,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     /// </summary>
     /// <param name="columnIndex">Column index.</param>
     /// <returns>The string value.</returns>
-    protected ReadOnlySpan<char> GetColumnValue(int columnIndex)
+    private ReadOnlySpan<char> GetColumnValue(int columnIndex)
     {
         if (_cacheIterator != null)
         {
@@ -325,8 +329,25 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
         return _delimiterStreamReader.GetField(columnIndex);
     }
 
+    /// <summary>
+    /// Get column raw string value within the current row. Takes into account virtual columns.
+    /// </summary>
+    /// <param name="columnIndex">Column index.</param>
+    /// <returns>String value.</returns>
     protected ReadOnlySpan<char> GetInputColumnValue(int columnIndex)
         => GetColumnValue(columnIndex + _virtualColumnsCount);
+
+    protected virtual async Task<Column[]> DetectColumnsAsync(CancellationToken cancellationToken = default)
+    {
+        await ReadNextAsync(cancellationToken);
+        var fieldsCount = _delimiterStreamReader.GetFieldsCount();
+        var newColumns = new Column[fieldsCount];
+        for (var i = 0; i < newColumns.Length; i++)
+        {
+            newColumns[i] = new Column(i, DataType.String);
+        }
+        return newColumns.ToArray();
+    }
 
     /// <inheritdoc />
     public virtual async Task OpenAsync(CancellationToken cancellationToken = default)
@@ -343,16 +364,14 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
         if (DetectColumnsTypes)
         {
             // Move iterator, after that we are able to fill initial columns set.
-            var cacheIterator = new CacheRowsIterator(inputIterator);
-            var hasData = await cacheIterator.MoveNextAsync(cancellationToken);
-            if (!hasData)
-            {
-                return;
-            }
+            var columns = await DetectColumnsAsync(cancellationToken);
+            SetColumns(columns);
+            ResetCacheToInitialPosition();
+            _cacheStream.Freeze();
 
             // Prepare cache iterator. Analyze might read data which we cache and
-            // then provide from memory instead from input source.
-            cacheIterator.SeekCacheCursorToHead();
+            // then provide it from memory instead from input source.
+            var cacheIterator = new CacheRowsIterator(inputIterator);
             await AnalyzeAsync(cacheIterator, cancellationToken);
             cacheIterator.SeekCacheCursorToHead();
             cacheIterator.Freeze();
@@ -370,7 +389,10 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     /// <param name="iterator">Rows iterator.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Awaitable task.</returns>
-    protected abstract Task AnalyzeAsync(CacheRowsIterator iterator, CancellationToken cancellationToken = default);
+    protected virtual Task AnalyzeAsync(CacheRowsIterator iterator, CancellationToken cancellationToken = default)
+    {
+        return RowsIteratorUtils.ResolveColumnsTypesAsync(iterator, cancellationToken: cancellationToken);
+    }
 
     /// <summary>
     /// The method should return custom (virtual) columns array.
