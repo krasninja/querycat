@@ -1,11 +1,14 @@
+using System.Collections;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Ast;
+using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Function;
 using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Commands.Select.Inputs;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
+using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Storage;
 
@@ -64,6 +67,46 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
         }
     }
 
+    /// <inheritdoc />
+    public override ValueTask VisitAsync(SelectIdentifierExpressionNode node, CancellationToken cancellationToken)
+    {
+        return VisitAsync((IdentifierExpressionNode)node, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public override async ValueTask VisitAsync(IdentifierExpressionNode node, CancellationToken cancellationToken)
+    {
+        if (!_context.CapturedScope.TryGetVariable(node.Name, out var value))
+        {
+            return;
+        }
+        if (node.HasSelectors)
+        {
+            var @delegate = await _createDelegateVisitor.RunAndReturnAsync(node, cancellationToken);
+            value = await @delegate.InvokeAsync(_executionThread, cancellationToken);
+        }
+
+        IRowsInput? rowsInput = null;
+        var internalValueType = value.Type;
+        // Case: we select from variable that already contains the iterator.
+        if (internalValueType == DataType.Object && value.AsObjectUnsafe != null)
+        {
+            rowsInput = await CreateInputSourceFromObjectVariableAsync(_context, value.AsObjectUnsafe, cancellationToken);
+        }
+        // Case: we select from string variable, that contains file name, f.e. DECLARE X := '1.csv'; SELECT * FROM x.
+        else if (internalValueType == DataType.String && !string.IsNullOrEmpty(value.AsStringUnsafe)
+                 && AstTraversal.GetFirstParent<SelectTableNode>() != null)
+        {
+            rowsInput = await CreateInputSourceFromStringVariableAsync(_context, value.AsStringUnsafe,
+                (node as SelectIdentifierExpressionNode)?.Format, cancellationToken);
+        }
+
+        if (rowsInput != null)
+        {
+            node.SetAttribute(AstAttributeKeys.RowsInputKey, rowsInput);
+        }
+    }
+
     private async ValueTask<IRowsInput?> VisitFunctionNodeInternalAsync(FunctionCallNode node, string alias,
         CancellationToken cancellationToken)
     {
@@ -71,7 +114,7 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
         var rowsInput = node.GetAttribute<IRowsInput>(AstAttributeKeys.RowsInputKey);
         if (rowsInput != null)
         {
-            return node.GetRequiredAttribute<IRowsInput>(AstAttributeKeys.RowsInputKey);
+            return rowsInput;
         }
 
         // Determine types for the node.
@@ -122,6 +165,69 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
         }
 
         return null;
+    }
+
+    private async Task<IRowsInput> CreateInputSourceFromObjectVariableAsync(
+        SelectCommandContext currentContext,
+        object objVariable,
+        CancellationToken cancellationToken)
+    {
+        IRowsInput? rowsInputResult = null;
+        if (objVariable is IRowsInput rowsInput)
+        {
+            currentContext.AddInput(new SelectCommandInputContext(rowsInput)
+            {
+                IsVariableBound = true,
+            });
+            await rowsInput.OpenAsync(cancellationToken);
+            rowsInputResult = rowsInput;
+        }
+        if (objVariable is IRowsIterator rowsIterator)
+        {
+            rowsInput = new RowsIteratorInput(rowsIterator);
+            currentContext.AddInput(new SelectCommandInputContext(rowsInput)
+            {
+                IsVariableBound = true,
+            });
+            rowsInputResult = rowsInput;
+        }
+        if (objVariable is IEnumerable enumerable && enumerable.GetType().IsGenericType)
+        {
+#pragma warning disable IL2072
+            rowsInput = new CollectionInput(TypeUtils.GetUnderlyingType(enumerable), enumerable);
+#pragma warning restore IL2072
+            currentContext.AddInput(new SelectCommandInputContext(rowsInput));
+            rowsInputResult = rowsInput;
+        }
+
+        if (rowsInputResult == null)
+        {
+            throw new QueryCatException(
+                string.Format(Resources.Errors.CannotCreateRowsInputFromType, objVariable.GetType().Name));
+        }
+
+        return rowsInputResult;
+    }
+
+    private async Task<IRowsInput> CreateInputSourceFromStringVariableAsync(
+        SelectCommandContext context,
+        string strVariable,
+        FunctionCallNode? formatterNode,
+        CancellationToken cancellationToken)
+    {
+        var args = new FunctionCallArguments()
+            .Add("uri", new VariantValue(strVariable));
+        if (formatterNode != null)
+        {
+            var @delegate = await _createDelegateVisitor.RunAndReturnAsync(formatterNode, cancellationToken);
+            var formatter = await @delegate.InvokeAsync(_executionThread, cancellationToken);
+            args.Add("fmt", formatter);
+        }
+        var rowsInput = (await _executionThread.FunctionsManager.CallFunctionAsync("read", _executionThread, args, cancellationToken))
+            .AsRequired<IRowsInput>();
+        rowsInput.QueryContext = new SelectInputQueryContext(rowsInput);
+        await rowsInput.OpenAsync(cancellationToken);
+        return rowsInput;
     }
 
     private static void SetAlias(IRowsInput input, string alias)
