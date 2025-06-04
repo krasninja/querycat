@@ -7,7 +7,6 @@ using QueryCat.Backend.Commands.Select.Inputs;
 using QueryCat.Backend.Commands.Select.Visitors;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
-using QueryCat.Backend.Relational;
 using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Storage;
 
@@ -243,14 +242,6 @@ internal sealed partial class SelectPlanner
         return inputs.ToArray();
     }
 
-    private IRowsInput[] Context_CreateInputSourceFromFunctionAsync(
-        SelectCommandContext context,
-        FunctionCallNode functionNode)
-    {
-        var rowsInput = functionNode.GetRequiredAttribute<IRowsInput>(AstAttributeKeys.RowsInputKey);
-        return [rowsInput];
-    }
-
     private async Task<IRowsInput> Context_CreateInputSourceFromTableJoinAsync(
         SelectCommandContext context,
         IRowsInput left,
@@ -307,15 +298,6 @@ internal sealed partial class SelectPlanner
         return rowsInput;
     }
 
-    private async Task<IRowsInput> Context_CreateInputSourceFromTableAsync(SelectCommandContext context,
-        SelectTableValuesNode tableValuesNode, CancellationToken cancellationToken)
-    {
-        var func = await new SelectCreateDelegateVisitor(ExecutionThread, context)
-            .RunAndReturnAsync(tableValuesNode, cancellationToken);
-        var rowsFrame = (await func.InvokeAsync(ExecutionThread, cancellationToken)).AsRequired<RowsFrame>();
-        return new RowsIteratorInput(rowsFrame.GetIterator());
-    }
-
     private async Task<IRowsInput[]> Context_GetRowsInputFromExpressionAsync(
         SelectCommandContext context,
         ExpressionNode expressionNode,
@@ -341,16 +323,13 @@ internal sealed partial class SelectPlanner
             }
             return inputs;
         }
-        if (expressionNode is SelectTableValuesNode tableNode)
+        if (expressionNode is SelectTableValuesNode
+            || expressionNode is FunctionCallNode)
         {
             return
             [
-                await Context_CreateInputSourceFromTableAsync(context, tableNode, cancellationToken)
+                expressionNode.GetRequiredAttribute<IRowsInput>(AstAttributeKeys.RowsInputKey)
             ];
-        }
-        if (expressionNode is FunctionCallNode functionCallNode)
-        {
-            return Context_CreateInputSourceFromFunctionAsync(context, functionCallNode);
         }
 
         throw new InvalidOperationException(string.Format(Resources.Errors.CannotProcessNodeAsInput, expressionNode));

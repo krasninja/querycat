@@ -10,6 +10,7 @@ using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Relational;
 using QueryCat.Backend.Storage;
 
 namespace QueryCat.Backend.Commands.Select.Visitors;
@@ -105,6 +106,16 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
         {
             node.SetAttribute(AstAttributeKeys.RowsInputKey, rowsInput);
         }
+    }
+
+    /// <inheritdoc />
+    public override async ValueTask VisitAsync(SelectTableValuesNode node, CancellationToken cancellationToken)
+    {
+        var func = await new SelectCreateDelegateVisitor(_executionThread, _context)
+            .RunAndReturnAsync(node, cancellationToken);
+        var rowsFrame = (await func.InvokeAsync(_executionThread, cancellationToken)).AsRequired<RowsFrame>();
+        var rowsInput = new RowsIteratorInput(rowsFrame.GetIterator());
+        node.SetAttribute(AstAttributeKeys.RowsInputKey, rowsInput);
     }
 
     private async ValueTask<IRowsInput?> VisitFunctionNodeInternalAsync(FunctionCallNode node, string alias,
