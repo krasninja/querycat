@@ -24,14 +24,14 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
 {
     /*
      * The main workflow is:
-     * - Open()
-     *   - ReadNextAsync() - get first row
-     *     - ReadNextInternal()
-     *     - SetDefaultColumns() - on this stage we know the real columns count, pre-initialize
-     *   - AnalyzeAsync() - init columns, add custom columns, resolve columns types
+     * - OpenAsync()
+     *   - InitializeColumnsAsync() - get initial columns.
+     *   - InitializeHeadDataAsync() - detect header, modify initial read cache frame.
+     *   - InitializeColumnsTypesAsync() - resolve types by columns.
+     *   - InitializeCompleteAsync() - complete initialization, get final types.
      * - SetContext()
-     * - ReadNextAsync() - real data reading, cache first, stream next
-     * - Close()
+     * - ReadNextAsync() - real data reading, cache first, stream next.
+     * - CloseAsync()
      */
 
     private readonly StreamRowsInputOptions _options;
@@ -171,24 +171,10 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     }
 
     /// <summary>
-    /// Set pre initialized columns.
-    /// </summary>
-    /// <param name="columnsCount">Columns count.</param>
-    protected virtual void SetDefaultColumns(int columnsCount)
-    {
-        var newColumns = new Column[columnsCount];
-        for (var i = 0; i < newColumns.Length; i++)
-        {
-            newColumns[i] = new Column(i, DataType.String);
-        }
-        SetColumns(newColumns);
-    }
-
-    /// <summary>
     /// Initialize columns with the new set.
     /// </summary>
     /// <param name="newColumns">New columns.</param>
-    protected void SetColumns(IReadOnlyList<Column> newColumns)
+    private void SetColumns(IReadOnlyList<Column> newColumns)
     {
         if (newColumns.Count < 1)
         {
@@ -337,7 +323,16 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     protected ReadOnlySpan<char> GetInputColumnValue(int columnIndex)
         => GetColumnValue(columnIndex + _virtualColumnsCount);
 
-    protected virtual async Task<Column[]> DetectColumnsAsync(CancellationToken cancellationToken = default)
+    /// <summary>
+    /// The method is called when we need to figure out the initial count of columns. On this stage
+    /// only lines from the source are supported to read.
+    /// </summary>
+    /// <param name="input">Rows input.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Column related to the source.</returns>
+    protected virtual async Task<Column[]> InitializeColumnsAsync(
+        IRowsInput input,
+        CancellationToken cancellationToken = default)
     {
         await ReadNextAsync(cancellationToken);
         var fieldsCount = _delimiterStreamReader.GetFieldsCount();
@@ -347,6 +342,43 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
             newColumns[i] = new Column(i, DataType.String);
         }
         return newColumns.ToArray();
+    }
+
+    /// <summary>
+    /// The method is called when the schema is ready. On this stage you can modify initial
+    /// data. It can be useful if you want to update schema and want to use first row as header (it should not
+    /// be a part of data).
+    /// </summary>
+    /// <param name="iterator">Cache iterator.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Awaitable task.</returns>
+    protected virtual Task InitializeHeadDataAsync(CacheRowsIterator iterator, CancellationToken cancellationToken = default)
+    {
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// The method is called to detect columns types.
+    /// </summary>
+    /// <param name="iterator">Data iterator.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    protected virtual async Task InitializeColumnsTypesAsync(IRowsIterator iterator, CancellationToken cancellationToken = default)
+    {
+        if (DetectColumnsTypes)
+        {
+            await RowsIteratorUtils.ResolveColumnsTypesAsync(iterator, cancellationToken: cancellationToken);
+        }
+    }
+
+    /// <summary>
+    /// The method is called when initial read frame is initialized and schema is prepared.
+    /// </summary>
+    /// <param name="iterator">Rows iterator.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Awaitable task.</returns>
+    protected virtual Task InitializeCompleteAsync(CacheRowsIterator iterator, CancellationToken cancellationToken = default)
+    {
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />
@@ -360,38 +392,32 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
         _logger.LogDebug("Start stream open.");
         _virtualColumnsCount = GetVirtualColumns().Length;
         var inputIterator = new RowsInputIterator(this, autoFetch: true);
+        var cacheIterator = new CacheRowsIterator(inputIterator);
 
-        if (DetectColumnsTypes)
-        {
-            // Move iterator, after that we are able to fill initial columns set.
-            var columns = await DetectColumnsAsync(cancellationToken);
-            SetColumns(columns);
-            ResetCacheToInitialPosition();
-            _cacheStream.Freeze();
+        // Initialize columns.
+        var columns = await InitializeColumnsAsync(this, cancellationToken);
+        SetColumns(columns);
+        ResetCacheToInitialPosition();
+        _cacheStream.Freeze();
 
-            // Prepare cache iterator. Analyze might read data which we cache and
-            // then provide it from memory instead from input source.
-            var cacheIterator = new CacheRowsIterator(inputIterator);
-            await AnalyzeAsync(cacheIterator, cancellationToken);
-            cacheIterator.SeekCacheCursorToHead();
-            cacheIterator.Freeze();
-            _cacheIterator = cacheIterator;
-        }
+        // Initialize head data frame.
+        await InitializeHeadDataAsync(cacheIterator, cancellationToken);
+        cacheIterator.SeekCacheCursorToHead();
+
+        // Types detection, or they would be strings by default.
+        await InitializeColumnsTypesAsync(cacheIterator, cancellationToken);
+        cacheIterator.SeekCacheCursorToHead();
+
+        // Prepare cache iterator. Analyze might read data which we cache and
+        // then provide it from memory instead from input source.
+        await InitializeCompleteAsync(cacheIterator, cancellationToken);
+        cacheIterator.SeekCacheCursorToHead();
+
+        _cacheIterator = cacheIterator;
+        _cacheIterator.Freeze();
 
         _logger.LogDebug("Open stream finished.");
         _isOpened = true;
-    }
-
-    /// <summary>
-    /// The method is called to analyze current dataset (get columns, resolve types, etc).
-    /// The data that was read by iterator will be cached.
-    /// </summary>
-    /// <param name="iterator">Rows iterator.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>Awaitable task.</returns>
-    protected virtual Task AnalyzeAsync(CacheRowsIterator iterator, CancellationToken cancellationToken = default)
-    {
-        return RowsIteratorUtils.ResolveColumnsTypesAsync(iterator, cancellationToken: cancellationToken);
     }
 
     /// <summary>

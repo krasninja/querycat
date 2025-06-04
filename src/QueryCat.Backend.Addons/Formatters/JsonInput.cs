@@ -194,9 +194,10 @@ internal class JsonInput : StreamRowsInput
     }
 
     /// <inheritdoc />
-    protected override async Task<Column[]> DetectColumnsAsync(CancellationToken cancellationToken = default)
+    protected override async Task<Column[]> InitializeColumnsAsync(IRowsInput input,
+        CancellationToken cancellationToken = default)
     {
-        var hasData = await ReadNextAsync(cancellationToken);
+        var hasData = await input.ReadNextAsync(cancellationToken);
         if (!hasData)
         {
             return [];

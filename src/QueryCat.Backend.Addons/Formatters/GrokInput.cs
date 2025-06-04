@@ -29,7 +29,7 @@ internal sealed partial class GrokInput : IRowsInput
     private Func<VariantValue, VariantValue>?[] _converters = [];
 
     /// <inheritdoc />
-    public Column[] Columns { get; }
+    public Column[] Columns => _grokImpl.Columns;
 
     /// <inheritdoc />
     public string[] UniqueKey => _grokImpl.UniqueKey;
@@ -48,8 +48,6 @@ internal sealed partial class GrokInput : IRowsInput
     {
         var regex = GrokPatternRegex().Replace(pattern, GrokEvaluation);
         _grokImpl = new RegexpInput(stream, regex, key);
-
-        Columns = _grokImpl.Columns.Select(c => new Column(c)).ToArray();
     }
 
     private Func<VariantValue, VariantValue>?[] CreateCustomConverters()
@@ -284,9 +282,9 @@ internal sealed partial class GrokInput : IRowsInput
     /// <inheritdoc />
     public async Task OpenAsync(CancellationToken cancellationToken = default)
     {
-        _converters = CreateCustomConverters();
-
         await _grokImpl.OpenAsync(cancellationToken);
+
+        _converters = CreateCustomConverters();
 
         // Here is the hack. After original rows input open it tries to determine column types.
         // However, we do not want to do that for columns with converters. So we force them

@@ -86,6 +86,13 @@ public sealed class CacheRowsIterator : IRowsIteratorParent, ICursorRowsIterator
     }
 
     /// <summary>
+    /// Get row at the specified position.
+    /// </summary>
+    /// <param name="position">Row index/position.</param>
+    /// <returns>Row instance.</returns>
+    public Row GetAt(int position) => _cache[position];
+
+    /// <summary>
     /// Add row manually to the end of the cache. It ignores the max cache limit.
     /// </summary>
     /// <param name="row">Row to add.</param>
@@ -99,10 +106,15 @@ public sealed class CacheRowsIterator : IRowsIteratorParent, ICursorRowsIterator
     /// Remove row at beginning of cache.
     /// </summary>
     /// <param name="count">How many rows to remove.</param>
-    public void RemoveFirst(int count = 1)
+    public bool RemoveFirst(int count = 1)
     {
+        if (count > _cache.Count)
+        {
+            return false;
+        }
         _cache.RemoveRange(0, count);
         _cursor -= count;
+        return true;
     }
 
     /// <inheritdoc />

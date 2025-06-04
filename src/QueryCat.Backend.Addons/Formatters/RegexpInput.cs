@@ -14,8 +14,8 @@ namespace QueryCat.Backend.Addons.Formatters;
 internal sealed class RegexpInput : StreamRowsInput
 {
     private readonly Regex _regex;
-    private readonly VariantValue[] _valuesArray;
-    private readonly int[] _targetColumnIndexes;
+    private int[] _targetColumnIndexes = [];
+    private VariantValue[] _valuesArray = [];
 
     /// <inheritdoc />
     public RegexpInput(Stream stream, string pattern, string? flags = null, string? key = null)
@@ -30,32 +30,6 @@ internal sealed class RegexpInput : StreamRowsInput
     }, key ?? string.Empty)
     {
         _regex = new Regex(pattern.Replace("\n", string.Empty), StringFunctions.FlagsToRegexOptions(flags));
-
-        // Fill columns.
-        var numbers = _regex.GetGroupNumbers().Select(gn => gn.ToString()).ToArray();
-        var names = _regex.GetGroupNames();
-        var columns = new List<Column>(names.Length);
-        _targetColumnIndexes = new int[names.Length];
-        Array.Fill(_targetColumnIndexes, -1);
-        for (var i = 0; i < names.Length; i++)
-        {
-            // Select only named groups.
-            if (names[i] == numbers[i])
-            {
-                continue;
-            }
-
-            columns.Add(new Column(names[i], DataType.String));
-            _targetColumnIndexes[i] = columns.Count - 1;
-        }
-        SetColumns(columns);
-        _valuesArray = new VariantValue[Columns.Length];
-    }
-
-    /// <inheritdoc />
-    protected override void SetDefaultColumns(int columnsCount)
-    {
-        // Skip because we have already defined this in ctor.
     }
 
     /// <inheritdoc />
@@ -102,9 +76,26 @@ internal sealed class RegexpInput : StreamRowsInput
     }
 
     /// <inheritdoc />
-    protected override Task<Column[]> DetectColumnsAsync(CancellationToken cancellationToken = default)
+    protected override Task<Column[]> InitializeColumnsAsync(IRowsInput input,
+        CancellationToken cancellationToken = default)
     {
-        // Columns are already calculated in ctor.
-        return Task.FromResult(Columns);
+        var numbers = _regex.GetGroupNumbers().Select(gn => gn.ToString()).ToArray();
+        var names = _regex.GetGroupNames();
+        _targetColumnIndexes = new int[names.Length];
+        var columns = new List<Column>(names.Length);
+        Array.Fill(_targetColumnIndexes, -1);
+        for (var i = 0; i < names.Length; i++)
+        {
+            // Select only named groups.
+            if (names[i] == numbers[i])
+            {
+                continue;
+            }
+
+            columns.Add(new Column(names[i], DataType.String));
+            _targetColumnIndexes[i] = columns.Count - 1;
+        }
+        _valuesArray = new VariantValue[columns.Count];
+        return Task.FromResult(columns.ToArray());
     }
 }

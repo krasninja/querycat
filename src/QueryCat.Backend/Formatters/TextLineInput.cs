@@ -1,8 +1,6 @@
 using QueryCat.Backend.Core;
-using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Core.Utils;
-using QueryCat.Backend.Relational;
 using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Storage;
 
@@ -34,10 +32,10 @@ internal sealed class TextLineInput : StreamRowsInput
     }
 
     /// <inheritdoc />
-    protected override async Task AnalyzeAsync(CacheRowsIterator iterator, CancellationToken cancellationToken = default)
+    protected override Task InitializeCompleteAsync(CacheRowsIterator iterator, CancellationToken cancellationToken = default)
     {
-        await RowsIteratorUtils.ResolveColumnsTypesAsync(iterator, cancellationToken: cancellationToken);
         Columns[^1].Name = "text";
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />

@@ -21,29 +21,27 @@ internal class DsvInput : StreamRowsInput
     }
 
     /// <inheritdoc />
-    protected override async Task AnalyzeAsync(CacheRowsIterator iterator, CancellationToken cancellationToken = default)
+    protected override async Task InitializeHeadDataAsync(CacheRowsIterator iterator, CancellationToken cancellationToken = default)
     {
         var hasHeader = _hasHeader ?? await RowsIteratorUtils.DetermineIfHasHeaderAsync(iterator, cancellationToken: cancellationToken);
         _hasHeader = hasHeader;
-        iterator.SeekCacheCursorToHead();
 
-        if (hasHeader)
+        if (hasHeader && iterator.TotalRows > 0)
         {
             // Parse head columns names.
-            await iterator.MoveNextAsync(cancellationToken);
-            var columnNames = GetCurrentInputValues(iterator.Current);
+            var firstRow = iterator.GetAt(0);
+            var columnNames = GetCurrentInputValues(firstRow);
             if (columnNames.Length < 1)
             {
                 throw new IOSourceException(Resources.Errors.NoColumns);
             }
             var columns = GetInputColumns();
-            for (int i = 0; i < columns.Length; i++)
+            for (var i = 0; i < columns.Length; i++)
             {
                 columns[i].Name = columnNames[i].AsString;
             }
         }
 
-        await RowsIteratorUtils.ResolveColumnsTypesAsync(iterator, cancellationToken: cancellationToken);
         // Remove header row since it is not a data row.
         if (hasHeader)
         {

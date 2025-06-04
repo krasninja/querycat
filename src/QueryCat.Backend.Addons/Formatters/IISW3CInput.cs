@@ -22,6 +22,7 @@ public sealed class IISW3CInput : StreamRowsInput
 
     private int _timeColumnIndex = -1;
     private int _dateColumnIndex = -1;
+    private int _dataStartRowIndex = -1;
     private bool _isInitialized;
 
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(IISW3CInput));
@@ -36,7 +37,7 @@ public sealed class IISW3CInput : StreamRowsInput
         ["s-sitename"] = new("s-sitename", DataType.String, "The site service name and instance number that handled the request."),
         ["s-computername"] = new("s-computername", DataType.String, "The name of the server on which request was made."),
         ["s-ip"] = new("s-ip", DataType.String, "The IP address of the server on which request was made."),
-        ["s-port"] = new("s-port", DataType.String, "The server port number that is configured for the service."),
+        ["s-port"] = new("s-port", DataType.Integer, "The server port number that is configured for the service."),
         ["cs-method"] = new("cs-method", DataType.String, "The requested action, for example, a GET method."),
         ["cs-uri-stem"] = new("cs-uri-stem", DataType.String, "The URI, or target, of the action."),
         ["cs-uri-query"] = new("cs-uri-query", DataType.String, "The query, if any, that the client was trying to perform."),
@@ -114,20 +115,57 @@ public sealed class IISW3CInput : StreamRowsInput
             return false;
         }
         var row = GetRowText();
-        return row.Slice(0, 1).FirstSpan[0] == '#';
+        return row.Length == 0 || row.Slice(0, 1).FirstSpan[0] == '#';
     }
 
     /// <inheritdoc />
-    public override async Task OpenAsync(CancellationToken cancellationToken = default)
+    protected override async Task<Column[]> InitializeColumnsAsync(IRowsInput input, CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("Open {Input}.", this);
 
         // Try to find fields header.
-        var foundHeaders = await SeekToFieldsHeaderAsync(cancellationToken);
-        if (!foundHeaders)
+        var headers = Array.Empty<Column>();
+        while (await input.ReadNextAsync(cancellationToken))
+        {
+            _dataStartRowIndex++;
+            var line = GetInputColumnValue(0);
+            if (line.StartsWith(FieldsMarker))
+            {
+                headers = ParseHeaders(GetRowText().ToString()).ToArray();
+                _logger.LogDebug("Found headers.");
+                break;
+            }
+        }
+
+        if (headers.Length < 1)
         {
             throw new QueryCatException("Cannot find IIS fields.");
         }
+
+        return headers;
+    }
+
+    /// <inheritdoc />
+    protected override async Task InitializeHeadDataAsync(CacheRowsIterator iterator, CancellationToken cancellationToken = default)
+    {
+        for (var i = 0; i < _dataStartRowIndex; i++)
+        {
+            await iterator.MoveNextAsync(cancellationToken);
+        }
+        iterator.RemoveFirst(_dataStartRowIndex);
+    }
+
+    /// <inheritdoc />
+    protected override Task InitializeColumnsTypesAsync(IRowsIterator iterator, CancellationToken cancellationToken = default)
+    {
+        return Task.CompletedTask;
+    }
+
+    /// <inheritdoc />
+    protected override Task InitializeCompleteAsync(CacheRowsIterator iterator, CancellationToken cancellationToken = default)
+    {
+        _isInitialized = true;
+        return base.InitializeCompleteAsync(iterator, cancellationToken);
     }
 
     private async ValueTask<bool> SeekToFieldsHeaderAsync(CancellationToken cancellationToken = default)
@@ -154,7 +192,7 @@ public sealed class IISW3CInput : StreamRowsInput
         await SeekToFieldsHeaderAsync(cancellationToken);
     }
 
-    private void ParseHeaders(ReadOnlySpan<char> header)
+    private List<Column> ParseHeaders(ReadOnlySpan<char> header)
     {
         var subheader = header[FieldsMarker.Length..];
         var fieldsRanges = subheader.Split(' ');
@@ -187,6 +225,6 @@ public sealed class IISW3CInput : StreamRowsInput
             i++;
         }
 
-        SetColumns(columns);
+        return columns;
     }
 }
