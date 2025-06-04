@@ -455,6 +455,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
         {
             StreamReader.Dispose();
             _baseStream.Dispose();
+            _cacheStream.Dispose();
             _isClosed = true;
             _isOpened = false;
         }
