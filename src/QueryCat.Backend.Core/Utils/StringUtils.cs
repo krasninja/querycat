@@ -21,13 +21,36 @@ public static class StringUtils
     /// <param name="quote">Quote character.</param>
     /// <param name="force">Force quote.</param>
     /// <returns>Quoted string.</returns>
+    public static string Quote(
+        string target,
+        string quote = QuoteChar,
+        bool force = false)
+    {
+        // If already quoted - return the target string.
+        if (!force
+            && target.IndexOf(quote, StringComparison.Ordinal) == 0
+            && target.LastIndexOf(quote, StringComparison.Ordinal) == target.Length - 1)
+        {
+            return target;
+        }
+        return Quote(target.AsSpan(), quote, force).ToString();
+    }
+
+    /// <summary>
+    /// Quote the specified string. If string doesn't contain the quote character
+    /// the target string will be returned instead.
+    /// </summary>
+    /// <param name="target">Target string.</param>
+    /// <param name="quote">Quote character.</param>
+    /// <param name="force">Force quote.</param>
+    /// <returns>Quoted string.</returns>
     public static ReadOnlySpan<char> Quote(
         ReadOnlySpan<char> target,
         string quote = QuoteChar,
         bool force = false)
     {
         // If already quoted - return the target string.
-        if (target.IndexOf(quote) == 0 && target.LastIndexOf(quote) == target.Length - 1 && !force)
+        if (!force && target.IndexOf(quote) == 0 && target.LastIndexOf(quote) == target.Length - 1)
         {
             return target;
         }
@@ -47,9 +70,24 @@ public static class StringUtils
     /// <param name="target">String to unquote.</param>
     /// <param name="quoteChar">Quote character.</param>
     /// <returns>Unquoted string.</returns>
+    public static string Unquote(string target, string quoteChar = QuoteChar)
+    {
+        if (target.Length == 0 || !target.StartsWith(quoteChar))
+        {
+            return target;
+        }
+        return Unquote(target.AsSpan(), quoteChar).ToString();
+    }
+
+    /// <summary>
+    /// Unquote the specified string.
+    /// </summary>
+    /// <param name="target">String to unquote.</param>
+    /// <param name="quoteChar">Quote character.</param>
+    /// <returns>Unquoted string.</returns>
     public static ReadOnlySpan<char> Unquote(ReadOnlySpan<char> target, string quoteChar = QuoteChar)
     {
-        if (target.Length == 0 || target[..1].ToString() != quoteChar)
+        if (target.Length == 0 || !target[..1].SequenceEqual(quoteChar))
         {
             return target;
         }

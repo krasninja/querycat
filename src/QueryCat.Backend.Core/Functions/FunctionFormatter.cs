@@ -171,20 +171,22 @@ internal static class FunctionFormatter
 
     internal static string ValueToString(VariantValue value) => value.Type switch
     {
-        DataType.String => Quote(value.AsStringUnsafe),
-        DataType.Timestamp => Quote(value.AsTimestampUnsafe.ToString(Application.Culture)) + "::timestamp",
-        DataType.Interval => Quote(value.AsIntervalUnsafe.ToString("c", Application.Culture)) + "::interval",
-        DataType.Object => Quote($"[object:{value.AsObjectUnsafe?.GetType().Name}]"),
-        DataType.Blob => "E" + Quote(value.ToString(CultureInfo.InvariantCulture)),
+        DataType.String => StringUtils.Quote(value.AsStringUnsafe),
+        DataType.Timestamp => StringUtils.Quote(value.AsTimestampUnsafe.ToString(Application.Culture)) + "::timestamp",
+        DataType.Interval => StringUtils.Quote(value.AsIntervalUnsafe.ToString("c", Application.Culture)) + "::interval",
+        DataType.Object => StringUtils.Quote($"[object:{value.AsObjectUnsafe?.GetType().Name}]"),
+        DataType.Blob => "E" + StringUtils.Quote(value.ToString(CultureInfo.InvariantCulture)),
         _ => value.ToString(CultureInfo.InvariantCulture),
     };
-
-    private static string Quote(string target) => StringUtils.Quote(target, quote: "\'").ToString();
 
     /// <summary>
     /// Normalize function name. Make it uppercase.
     /// </summary>
     /// <param name="target">Target function name.</param>
     /// <returns>Normalized name.</returns>
-    internal static string NormalizeName(string target) => target.ToUpperInvariant();
+    internal static string NormalizeName(string target)
+    {
+        target = StringUtils.Unquote(target);
+        return target.ToUpperInvariant();
+    }
 }
