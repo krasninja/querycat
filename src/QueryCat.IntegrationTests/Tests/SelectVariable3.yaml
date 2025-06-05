@@ -1,7 +1,11 @@
 expected: |
   Benjamin Glover
   Max Mills
+  Ryan Metcalfe
 query: |
+  declare source := 'Employees1.csv';
   declare x := (select * from 'Employees1.csv');
+  declare target_name := 'Max';
   select full_name from x where x.employee_id = 9;
-  select full_name from x where x.employee_id = 8;
+  select full_name from x where x.employee_id = 8 and x.full_name like target_name || '%';
+  select full_name from replace(source, 'Q', 'Q') x where x.employee_id = 7;

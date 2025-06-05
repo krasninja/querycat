@@ -48,7 +48,7 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
     /// <inheritdoc />
     public override async ValueTask VisitAsync(SelectTableFunctionNode node, CancellationToken cancellationToken)
     {
-        var rowsInput = await VisitFunctionNodeInternalAsync(node.TableFunctionNode, node.Alias, cancellationToken);
+        var rowsInput = await VisitFunctionNodeInternalAsync(node.TableFunctionNode, null, node.Alias, cancellationToken);
         if (rowsInput == null)
         {
             throw new QueryCatException(Resources.Errors.InvalidRowsInput);
@@ -63,49 +63,74 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
         var selectTableFunc = AstTraversal.GetFirstParent<SelectTableFunctionNode>();
         if (selectTableFunc != null)
         {
-            var rowsInput = await VisitFunctionNodeInternalAsync(node, string.Empty, cancellationToken);
+            var rowsInput = await VisitFunctionNodeInternalAsync(node, null, string.Empty, cancellationToken);
             node.SetAttribute(AstAttributeKeys.RowsInputKey, rowsInput);
         }
-    }
-
-    /// <inheritdoc />
-    public override ValueTask VisitAsync(SelectIdentifierExpressionNode node, CancellationToken cancellationToken)
-    {
-        return VisitAsync((IdentifierExpressionNode)node, cancellationToken);
     }
 
     /// <inheritdoc />
     public override async ValueTask VisitAsync(IdentifierExpressionNode node, CancellationToken cancellationToken)
     {
-        if (!_context.CapturedScope.TryGetVariable(node.Name, out var value))
+        var value = await GetIdentifierValueAsync(node, cancellationToken);
+        await VisitIdentifierNodeInternalAsync(node, value, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public override async ValueTask VisitAsync(SelectIdentifierExpressionNode node, CancellationToken cancellationToken)
+    {
+        var value = await GetIdentifierValueAsync(node, cancellationToken);
+        var rowsInput = await VisitIdentifierNodeInternalAsync(node, value, cancellationToken);
+        if (rowsInput != null)
         {
             return;
+        }
+
+        // Case: we select from string variable, that contains file name, f.e. "DECLARE X := '1.csv'; SELECT * FROM x".
+        var internalValueType = value.Type;
+        if (internalValueType == DataType.String
+            && !string.IsNullOrEmpty(value.AsStringUnsafe)
+            && AstTraversal.GetFirstParent<SelectTableReferenceListNode>() != null)
+        {
+            rowsInput = await CreateInputSourceFromStringVariableAsync(value.AsStringUnsafe,
+                node.Format, cancellationToken);
+            node.SetAttribute(AstAttributeKeys.RowsInputKey, rowsInput);
+        }
+    }
+
+    private async ValueTask<VariantValue> GetIdentifierValueAsync(IdentifierExpressionNode node, CancellationToken cancellationToken)
+    {
+        if (!_context.CapturedScope.TryGetVariable(node.Name, out var value))
+        {
+            return VariantValue.Null;
         }
         if (node.HasSelectors)
         {
             var @delegate = await _createDelegateVisitor.RunAndReturnAsync(node, cancellationToken);
-            value = await @delegate.InvokeAsync(_executionThread, cancellationToken);
+            return await @delegate.InvokeAsync(_executionThread, cancellationToken);
         }
 
-        IRowsInput? rowsInput = null;
-        var internalValueType = value.Type;
-        // Case: we select from variable that already contains the iterator.
-        if (internalValueType == DataType.Object && value.AsObjectUnsafe != null)
+        return value;
+    }
+
+    private async ValueTask<IRowsInput?> VisitIdentifierNodeInternalAsync(
+        IdentifierExpressionNode node,
+        VariantValue value,
+        CancellationToken cancellationToken)
+    {
+        if (value.IsNull)
         {
-            rowsInput = await CreateInputSourceFromObjectVariableAsync(_context, value.AsObjectUnsafe, cancellationToken);
-        }
-        // Case: we select from string variable, that contains file name, f.e. DECLARE X := '1.csv'; SELECT * FROM x.
-        else if (internalValueType == DataType.String && !string.IsNullOrEmpty(value.AsStringUnsafe)
-                 && AstTraversal.GetFirstParent<SelectTableNode>() != null)
-        {
-            rowsInput = await CreateInputSourceFromStringVariableAsync(_context, value.AsStringUnsafe,
-                (node as SelectIdentifierExpressionNode)?.Format, cancellationToken);
+            return null;
         }
 
-        if (rowsInput != null)
+        // Case: we select from a variable that already contains an iterator.
+        if (value.Type == DataType.Object && value.AsObjectUnsafe != null)
         {
+            var rowsInput = await CreateInputSourceFromObjectVariableAsync(_context, value.AsObjectUnsafe, cancellationToken);
             node.SetAttribute(AstAttributeKeys.RowsInputKey, rowsInput);
+            return rowsInput;
         }
+
+        return null;
     }
 
     /// <inheritdoc />
@@ -118,7 +143,10 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
         node.SetAttribute(AstAttributeKeys.RowsInputKey, rowsInput);
     }
 
-    private async ValueTask<IRowsInput?> VisitFunctionNodeInternalAsync(FunctionCallNode node, string alias,
+    private async ValueTask<IRowsInput?> VisitFunctionNodeInternalAsync(
+        FunctionCallNode node,
+        FunctionCallNode? formatNode,
+        string alias,
         CancellationToken cancellationToken)
     {
         // If we already have rows input assign - do not create a new one.
@@ -133,7 +161,7 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
 
         var @delegate = await _createDelegateVisitor.RunAndReturnAsync(node, cancellationToken);
         var source = await @delegate.InvokeAsync(_executionThread, cancellationToken);
-        var inputContext = await CreateRowsInputAsync(source, alias, cancellationToken);
+        var inputContext = await CreateRowsInputAsync(source, alias, formatNode, cancellationToken);
         if (inputContext == null)
         {
             return null;
@@ -145,8 +173,18 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
         return inputContext.RowsInput;
     }
 
-    private async ValueTask<SelectCommandInputContext?> CreateRowsInputAsync(VariantValue source, string alias, CancellationToken cancellationToken)
+    private async ValueTask<SelectCommandInputContext?> CreateRowsInputAsync(
+        VariantValue source,
+        string alias,
+        FunctionCallNode? formatNode,
+        CancellationToken cancellationToken)
     {
+        if (source.Type == DataType.String)
+        {
+            var stringInput = await CreateInputSourceFromStringVariableAsync(source.AsStringUnsafe,
+                formatNode, cancellationToken);
+            return new SelectCommandInputContext(stringInput);
+        }
         if (DataTypeUtils.IsSimple(source.Type))
         {
             return new SelectCommandInputContext(new SingleValueRowsInput(source));
@@ -165,8 +203,7 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
                     rowsInput = new CacheRowsInput(_executionThread, rowsInput, _context.Conditions);
                 }
                 rowsInput.QueryContext = queryContext;
-                await rowsInput.OpenAsync(cancellationToken);
-                _logger.LogDebug("Open rows input {RowsInput}.", rowsInput);
+                await OpenRowsInput(rowsInput, cancellationToken);
             }
             return new SelectCommandInputContext(rowsInput, queryContext);
         }
@@ -190,7 +227,7 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
             {
                 IsVariableBound = true,
             });
-            await rowsInput.OpenAsync(cancellationToken);
+            await OpenRowsInput(rowsInput, cancellationToken);
             rowsInputResult = rowsInput;
         }
         if (objVariable is IRowsIterator rowsIterator)
@@ -221,7 +258,6 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
     }
 
     private async Task<IRowsInput> CreateInputSourceFromStringVariableAsync(
-        SelectCommandContext context,
         string strVariable,
         FunctionCallNode? formatterNode,
         CancellationToken cancellationToken)
@@ -237,8 +273,14 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
         var rowsInput = (await _executionThread.FunctionsManager.CallFunctionAsync("read", _executionThread, args, cancellationToken))
             .AsRequired<IRowsInput>();
         rowsInput.QueryContext = new SelectInputQueryContext(rowsInput);
-        await rowsInput.OpenAsync(cancellationToken);
+        await OpenRowsInput(rowsInput, cancellationToken);
         return rowsInput;
+    }
+
+    private async ValueTask OpenRowsInput(IRowsInput rowsInput, CancellationToken cancellationToken)
+    {
+        await rowsInput.OpenAsync(cancellationToken);
+        _logger.LogDebug("Open rows input {RowsInput}.", rowsInput);
     }
 
     private static void SetAlias(IRowsInput input, string alias)
