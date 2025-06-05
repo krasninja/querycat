@@ -86,9 +86,9 @@ internal sealed class ApplicationOptions
             UseConfig = true,
         };
 #if ENABLE_PLUGINS
+        executionOptions.PluginDirectories.AddRange(PluginDirectories);
         executionOptions.PluginDirectories.AddRange(
             GetPluginDirectories(Application.GetApplicationDirectory()));
-        executionOptions.PluginDirectories.AddRange(PluginDirectories);
 #endif
 
         var bootstrapper = new ExecutionThreadBootstrapper(executionOptions)
