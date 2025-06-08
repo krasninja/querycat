@@ -7,12 +7,8 @@ namespace QueryCat.Plugins.Client;
 /// </summary>
 public sealed class PluginQueryContext : QueryContext
 {
-    /// <inheritdoc />
-    public override QueryContextQueryInfo QueryInfo { get; }
-
-    public PluginQueryContext(QueryContextQueryInfo queryInfo, IInputConfigStorage inputConfigStorage)
+    public PluginQueryContext(QueryContextQueryInfo queryInfo, IInputConfigStorage configStorage) : base(queryInfo)
     {
-        QueryInfo = queryInfo;
-        InputConfigStorage = inputConfigStorage;
+        ConfigStorage = configStorage;
     }
 }

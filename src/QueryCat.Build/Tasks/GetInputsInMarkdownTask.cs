@@ -27,7 +27,9 @@ public sealed class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
     private sealed class CollectQueryContext : QueryContext
     {
         /// <inheritdoc />
-        public override QueryContextQueryInfo QueryInfo { get; } = new(Array.Empty<Column>());
+        public CollectQueryContext() : base(new QueryContextQueryInfo([]))
+        {
+        }
     }
 
     /// <inheritdoc />

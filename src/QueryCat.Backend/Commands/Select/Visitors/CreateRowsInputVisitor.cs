@@ -194,10 +194,7 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
             if (rowsInput.QueryContext is not SelectInputQueryContext queryContext)
             {
                 var targetColumns = await _context.GetSelectIdentifierColumnsAsync(alias, cancellationToken);
-                queryContext = new SelectInputQueryContext(rowsInput, targetColumns)
-                {
-                    InputConfigStorage = _executionThread.ConfigStorage,
-                };
+                queryContext = new SelectInputQueryContext(rowsInput, targetColumns, _executionThread.ConfigStorage);
                 if (_context.Parent != null && !_executionThread.Options.DisableCache)
                 {
                     rowsInput = new CacheRowsInput(_executionThread, rowsInput, _context.Conditions);
