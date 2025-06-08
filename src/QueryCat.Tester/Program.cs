@@ -19,8 +19,6 @@ namespace QueryCat.Tester;
 /// </summary>
 public class Program
 {
-    private static readonly Lazy<ILogger> _logger = new(() => Application.LoggerFactory.CreateLogger(nameof(Program)));
-
     private static readonly Option<string[]> _pluginFilesOption = new("--plugin-files",
         description: "Plugin files.")
         {
