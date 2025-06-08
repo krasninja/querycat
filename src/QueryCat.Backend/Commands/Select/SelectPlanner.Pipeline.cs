@@ -360,7 +360,7 @@ internal sealed partial class SelectPlanner
             return;
         }
 
-        var queryContext = new RowsOutputQueryContext(context.CurrentIterator.Columns);
+        var queryContext = new RowsOutputQueryContext(context.CurrentIterator.Columns, ExecutionThread.ConfigStorage);
         var functionCallInfo = querySpecificationNode.TargetNode
             .GetRequiredAttribute<FuncUnitCallInfo>(AstAttributeKeys.ArgumentsKey);
         var hasVaryingTarget = querySpecificationNode.TargetNode.Arguments.Count > 0;

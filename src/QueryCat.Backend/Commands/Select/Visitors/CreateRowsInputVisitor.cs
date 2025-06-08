@@ -269,7 +269,7 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
         }
         var rowsInput = (await _executionThread.FunctionsManager.CallFunctionAsync("read", _executionThread, args, cancellationToken))
             .AsRequired<IRowsInput>();
-        rowsInput.QueryContext = new SelectInputQueryContext(rowsInput);
+        rowsInput.QueryContext = new SelectInputQueryContext(rowsInput, rowsInput.Columns, _executionThread.ConfigStorage);
         await OpenRowsInput(rowsInput, cancellationToken);
         return rowsInput;
     }

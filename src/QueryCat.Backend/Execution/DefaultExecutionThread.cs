@@ -420,7 +420,7 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IAsync
                 }
                 if (!isOpened)
                 {
-                    rowsOutput.QueryContext = new RowsOutputQueryContext(rowsIterator.Columns);
+                    rowsOutput.QueryContext = new RowsOutputQueryContext(rowsIterator.Columns, ConfigStorage);
                     await rowsOutput.OpenAsync(ct);
                     isOpened = true;
                 }
