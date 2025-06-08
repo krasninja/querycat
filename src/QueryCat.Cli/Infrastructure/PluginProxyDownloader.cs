@@ -28,7 +28,7 @@ internal sealed class PluginProxyDownloader
         _logger.LogDebug("Download proxy with URI {Uri}.", pluginsProxyRemoteFile);
         var tempPath = Path.GetTempPath();
         var archiveFile = await FilesUtils.DownloadFileAsync(
-            ct => new HttpClient().GetStreamAsync(pluginsProxyRemoteFile, ct),
+            ct => httpClient.GetStreamAsync(pluginsProxyRemoteFile, ct),
             Path.Combine(tempPath, Path.GetFileName(pluginsProxyRemoteFile.LocalPath)),
             cancellationToken);
         _logger.LogDebug("Temporary archive file {File}.", archiveFile);
