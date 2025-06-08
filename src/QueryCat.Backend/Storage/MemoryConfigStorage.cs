@@ -6,7 +6,7 @@ namespace QueryCat.Backend.Storage;
 /// <summary>
 /// In memory storage for rows input.
 /// </summary>
-public class MemoryInputConfigStorage : IInputConfigStorage
+public class MemoryConfigStorage : IConfigStorage
 {
     protected Dictionary<string, VariantValue> Map { get; } = new();
 

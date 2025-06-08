@@ -7,7 +7,7 @@ namespace QueryCat.Plugins.Client;
 /// </summary>
 public sealed class PluginQueryContext : QueryContext
 {
-    public PluginQueryContext(QueryContextQueryInfo queryInfo, IInputConfigStorage configStorage) : base(queryInfo)
+    public PluginQueryContext(QueryContextQueryInfo queryInfo, IConfigStorage configStorage) : base(queryInfo)
     {
         ConfigStorage = configStorage;
     }

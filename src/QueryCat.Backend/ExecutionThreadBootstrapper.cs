@@ -24,7 +24,7 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
 
     private readonly ExecutionOptions _executionOptions = options ?? new ExecutionOptions();
 
-    private IInputConfigStorage _inputConfigStorage = NullInputConfigStorage.Instance;
+    private IConfigStorage _configStorage = NullConfigStorage.Instance;
 
     private IFunctionsManager? _functionsManager;
 
@@ -54,11 +54,11 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
     /// <summary>
     /// Use the custom config storage.
     /// </summary>
-    /// <param name="configStorage">Instance of <see cref="IInputConfigStorage" />.</param>
+    /// <param name="configStorage">Instance of <see cref="IConfigStorage" />.</param>
     /// <returns>The instance of <see cref="ExecutionThreadBootstrapper" />.</returns>
-    public ExecutionThreadBootstrapper WithConfigStorage(IInputConfigStorage configStorage)
+    public ExecutionThreadBootstrapper WithConfigStorage(IConfigStorage configStorage)
     {
-        _inputConfigStorage = configStorage;
+        _configStorage = configStorage;
         return this;
     }
 
@@ -247,7 +247,7 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
             options: _executionOptions,
             functionsManager: _functionsManager,
             objectSelector: _objectSelector,
-            configStorage: _inputConfigStorage,
+            configStorage: _configStorage,
             astBuilder: astBuilder,
             completionSource: completionSource,
             executionScopeFactory: _executionScopeFactory

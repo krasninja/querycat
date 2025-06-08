@@ -13,7 +13,7 @@ internal class SelectInputQueryContext : QueryContext
     public IRowsInput RowsInput { get; }
 
     /// <inheritdoc />
-    public SelectInputQueryContext(IRowsInput rowsInput, Column[] columns, IInputConfigStorage configStorage)
+    public SelectInputQueryContext(IRowsInput rowsInput, Column[] columns, IConfigStorage configStorage)
         : base(new QueryContextQueryInfo(columns))
     {
         RowsInput = rowsInput;
@@ -21,7 +21,7 @@ internal class SelectInputQueryContext : QueryContext
     }
 
     /// <inheritdoc />
-    public SelectInputQueryContext(IRowsInput rowsInput) : this(rowsInput, rowsInput.Columns, NullInputConfigStorage.Instance)
+    public SelectInputQueryContext(IRowsInput rowsInput) : this(rowsInput, rowsInput.Columns, NullConfigStorage.Instance)
     {
     }
 }

@@ -92,7 +92,7 @@ internal sealed class ApplicationOptions
 #endif
 
         var bootstrapper = new ExecutionThreadBootstrapper(executionOptions)
-            .WithConfigStorage(new PersistentInputConfigStorage(
+            .WithConfigStorage(new PersistentConfigStorage(
                 Path.Combine(Application.GetApplicationDirectory(), ConfigFileName))
             )
             .WithStandardFunctions()

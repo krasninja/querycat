@@ -23,7 +23,7 @@ public sealed class NullExecutionThread : IExecutionThread
     public IPluginsManager PluginsManager { get; } = NullPluginsManager.Instance;
 
     /// <inheritdoc />
-    public IInputConfigStorage ConfigStorage { get; } = NullInputConfigStorage.Instance;
+    public IConfigStorage ConfigStorage { get; } = NullConfigStorage.Instance;
 
     /// <inheritdoc />
     public IExecutionScope TopScope { get; } = NullExecutionScope.Instance;

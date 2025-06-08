@@ -143,14 +143,14 @@ public partial class ThriftPluginsServer
         {
             _thriftPluginsServer.VerifyToken(token);
             var internalValue = value != null ? SdkConvert.Convert(value) : Core.Types.VariantValue.Null;
-            await _thriftPluginsServer._inputConfigStorage.SetAsync(key, internalValue, cancellationToken);
+            await _thriftPluginsServer._configStorage.SetAsync(key, internalValue, cancellationToken);
         }
 
         /// <inheritdoc />
         public async Task<VariantValue> GetConfigValueAsync(long token, string key, CancellationToken cancellationToken = default)
         {
             _thriftPluginsServer.VerifyToken(token);
-            var value = await _thriftPluginsServer._inputConfigStorage.GetAsync(key, cancellationToken);
+            var value = await _thriftPluginsServer._configStorage.GetAsync(key, cancellationToken);
             return SdkConvert.Convert(value);
         }
 

@@ -11,9 +11,9 @@ public abstract class QueryContext
     public QueryContextQueryInfo QueryInfo { get; }
 
     /// <summary>
-    /// Input config storage.
+    /// Config storage.
     /// </summary>
-    public IInputConfigStorage ConfigStorage { get; protected set; } = NullInputConfigStorage.Instance;
+    public IConfigStorage ConfigStorage { get; protected set; } = NullConfigStorage.Instance;
 
     /// <summary>
     /// Constructor.

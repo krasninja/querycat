@@ -12,13 +12,13 @@ namespace QueryCat.Plugins.Client;
 /// <summary>
 /// Config storage that calls Thrift host to store variables. Object variables are saved locally.
 /// </summary>
-public sealed class ThriftInputConfigStorage : IInputConfigStorage
+public sealed class ThriftConfigStorage : IConfigStorage
 {
     private readonly ThriftPluginClient _client;
     private readonly Dictionary<string, VariantValue> _objectsStorage = new();
-    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(ThriftInputConfigStorage));
+    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(ThriftConfigStorage));
 
-    public ThriftInputConfigStorage(ThriftPluginClient client)
+    public ThriftConfigStorage(ThriftPluginClient client)
     {
         _client = client;
     }

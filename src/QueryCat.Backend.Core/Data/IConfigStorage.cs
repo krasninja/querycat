@@ -3,9 +3,9 @@ using QueryCat.Backend.Core.Types;
 namespace QueryCat.Backend.Core.Data;
 
 /// <summary>
-/// Storage for rows input config.
+/// Storage for rows inputs and outputs configuration. Can be used to share data.
 /// </summary>
-public interface IInputConfigStorage
+public interface IConfigStorage
 {
     /// <summary>
     /// Set value.

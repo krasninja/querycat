@@ -29,7 +29,7 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IAsync
     private int _deepLevel;
 
     /// <inheritdoc />
-    public IInputConfigStorage ConfigStorage { get; }
+    public IConfigStorage ConfigStorage { get; }
 
     private IExecutionScope _topScope;
     private bool _bootstrapScriptExecuted;
@@ -152,7 +152,7 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IAsync
         ExecutionOptions options,
         IFunctionsManager functionsManager,
         IObjectSelector objectSelector,
-        IInputConfigStorage configStorage,
+        IConfigStorage configStorage,
         IAstBuilder astBuilder,
         ICompletionSource completionSource,
         Func<IExecutionScope?, IExecutionScope>? executionScopeFactory = null,

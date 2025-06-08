@@ -7,16 +7,20 @@ using QueryCat.Backend.Storage;
 namespace QueryCat.Backend.Execution;
 
 /// <summary>
-/// Persistent input config storage. The content is saved between program runs.
+/// Persistent config storage. The content is saved between program runs.
 /// </summary>
-public class PersistentInputConfigStorage : MemoryInputConfigStorage
+public class PersistentConfigStorage : MemoryConfigStorage
 {
     private readonly string _configFile;
     private int _writesCount;
 
-    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(PersistentInputConfigStorage));
+    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(PersistentConfigStorage));
 
-    public PersistentInputConfigStorage(string configFile)
+    /// <summary>
+    /// Constructor.
+    /// </summary>
+    /// <param name="configFile">Configuration file.</param>
+    public PersistentConfigStorage(string configFile)
     {
         _configFile = configFile;
     }

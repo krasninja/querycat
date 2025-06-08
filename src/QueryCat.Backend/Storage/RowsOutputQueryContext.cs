@@ -11,8 +11,8 @@ internal class RowsOutputQueryContext : QueryContext
     /// Constructor.
     /// </summary>
     /// <param name="columns">Column of output.</param>
-    /// <param name="configStorage">Input configuration storage.</param>
-    public RowsOutputQueryContext(Column[] columns, IInputConfigStorage configStorage)
+    /// <param name="configStorage">Configuration storage.</param>
+    public RowsOutputQueryContext(Column[] columns, IConfigStorage configStorage)
         : base(new QueryContextQueryInfo(columns))
     {
         ConfigStorage = configStorage;
@@ -22,7 +22,7 @@ internal class RowsOutputQueryContext : QueryContext
     /// Constructor.
     /// </summary>
     /// <param name="columns">Column of output.</param>
-    public RowsOutputQueryContext(Column[] columns) : this(columns, NullInputConfigStorage.Instance)
+    public RowsOutputQueryContext(Column[] columns) : this(columns, NullConfigStorage.Instance)
     {
     }
 }
