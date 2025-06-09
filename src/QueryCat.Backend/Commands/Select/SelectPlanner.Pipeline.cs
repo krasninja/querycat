@@ -385,7 +385,7 @@ internal sealed partial class SelectPlanner
             }
             else
             {
-                var writeIterator = new OutputWriteRowsIterator(outputIterator, outputIterator.CurrentOutput);
+                var writeIterator = new OutputWriteRowsIterator(outputIterator);
                 context.SetIterator(writeIterator);
             }
         }
