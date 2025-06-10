@@ -7,7 +7,7 @@ internal class SelectCommandInputContext
     /// <summary>
     /// Rows input that is generated from function or subquery.
     /// </summary>
-    public IRowsInput RowsInput { get; }
+    public IRowsInput RowsInput { get; set; }
 
     public SelectInputQueryContext InputQueryContext { get; }
 

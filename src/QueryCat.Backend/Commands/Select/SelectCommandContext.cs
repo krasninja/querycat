@@ -5,7 +5,6 @@ using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Relational.Iterators;
-using QueryCat.Backend.Storage;
 
 namespace QueryCat.Backend.Commands.Select;
 

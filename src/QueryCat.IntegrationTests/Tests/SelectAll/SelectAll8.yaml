@@ -3,6 +3,5 @@ expected: |
   1,TX
   1,FL
   2,CA
-skip: true
 query: |
   select b.id, s.value from 'Branches.csv' b, (select value from string_to_table(b.states, ',')) s;

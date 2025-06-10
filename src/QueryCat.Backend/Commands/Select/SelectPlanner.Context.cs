@@ -126,8 +126,12 @@ internal sealed partial class SelectPlanner
         }
 
         // Create final iterator.
-        var resultRowsIterator = Context_CreateMultipleIterator(finalRowsInputs,
-            ExecutionThread.Statistic, ExecutionThread.Options.ShowDetailedStatistic);
+        var resultRowsIterator = await Context_CreateMultipleIteratorAsync(
+            finalRowsInputs,
+            ExecutionThread.Statistic,
+            ExecutionThread.Options.ShowDetailedStatistic,
+            prefetch: false,
+            cancellationToken);
         await QueryContext_FillQueryContextConditionsAsync(context, querySpecificationNode, cancellationToken);
         context.SetIterator(resultRowsIterator);
     }
@@ -249,8 +253,7 @@ internal sealed partial class SelectPlanner
         SelectTableJoinedNode tableJoinedNode,
         CancellationToken cancellationToken)
     {
-        var right = (await Context_GetRowsInputFromExpressionAsync(context, tableJoinedNode.RightTableNode, cancellationToken))
-            .Last();
+        var right = (await Context_GetRowsInputFromExpressionAsync(context, tableJoinedNode.RightTableNode, cancellationToken))[^1];
         var alias = tableJoinedNode.RightTableNode is ISelectAliasNode selectAlias ? selectAlias.Alias : string.Empty;
         Context_SetAlias(right, alias);
         right = Context_WrapKeysInput(right, context);
@@ -347,10 +350,12 @@ internal sealed partial class SelectPlanner
         return rowsInput;
     }
 
-    private static IRowsIterator Context_CreateMultipleIterator(
+    private static async Task<IRowsIterator> Context_CreateMultipleIteratorAsync(
         List<IRowsInput> rowsInputs,
         ExecutionStatistic executionStatistic,
-        bool detailedStatistic)
+        bool detailedStatistic,
+        bool prefetch = false,
+        CancellationToken cancellationToken = default)
     {
         if (rowsInputs.Count == 0)
         {
@@ -358,31 +363,42 @@ internal sealed partial class SelectPlanner
         }
         if (rowsInputs.Count == 1)
         {
-            return new RowsInputIterator(
+            var iterator = new RowsInputIterator(
                 rowsInputs[0],
                 autoFetch: false,
                 statistic: executionStatistic,
                 detailedStatistic: detailedStatistic);
+            if (prefetch)
+            {
+                await iterator.PrefetchFirstRowAsync(cancellationToken);
+            }
+            return iterator;
         }
-        var multipleIterator = new MultiplyRowsIterator(
-            new RowsInputIterator(
-                rowsInputs[0],
-                autoFetch: true,
-                statistic: executionStatistic,
-                detailedStatistic: detailedStatistic),
-            new RowsInputIterator(
-                rowsInputs[1],
-                autoFetch: true,
-                statistic: executionStatistic,
-                detailedStatistic: detailedStatistic));
+
+        var iterator1 = new RowsInputIterator(
+            rowsInputs[0],
+            autoFetch: true,
+            statistic: executionStatistic,
+            detailedStatistic: detailedStatistic);
+        var iterator2 = new RowsInputIterator(
+            rowsInputs[1],
+            autoFetch: true,
+            statistic: executionStatistic,
+            detailedStatistic: detailedStatistic);
+        var multipleIterator = new MultiplyRowsIterator(iterator1, iterator2);
+
         for (var i = 2; i < rowsInputs.Count; i++)
         {
-            multipleIterator = new MultiplyRowsIterator(
-                multipleIterator, new RowsInputIterator(
-                    rowsInputs[i],
-                    autoFetch: true,
-                    statistic: executionStatistic,
-                    detailedStatistic: detailedStatistic));
+            var iterator = new RowsInputIterator(
+                rowsInputs[i],
+                autoFetch: true,
+                statistic: executionStatistic,
+                detailedStatistic: detailedStatistic);
+            if (prefetch)
+            {
+                await iterator.PrefetchFirstRowAsync(cancellationToken);
+            }
+            multipleIterator = new MultiplyRowsIterator(multipleIterator, iterator);
         }
         return multipleIterator;
     }

@@ -9,11 +9,9 @@ internal sealed class MultiplyRowsIterator : IRowsIterator, IRowsIteratorParent
 {
     private readonly IRowsIterator _leftRowsIterator;
     private readonly IRowsIterator _rightRowsIterator;
-    private readonly RowsFrame _leftRowsFrame;
-    private readonly RowsFrameIterator _leftRowsFrameIterator;
     private readonly Row _currentRow;
-    private Row? _currentRightRow;
-    private IRowsIterator _currentLeftIterator;
+    private Row? _currentLeftRow;
+    private readonly IRowsIterator _currentLeftIterator;
 
     /// <inheritdoc />
     public Column[] Columns { get; }
@@ -23,64 +21,39 @@ internal sealed class MultiplyRowsIterator : IRowsIterator, IRowsIteratorParent
 
     public MultiplyRowsIterator(IRowsIterator leftRowsIterator, IRowsIterator rightRowsIterator)
     {
-        _leftRowsFrame = new RowsFrame(leftRowsIterator.Columns);
-        _leftRowsFrameIterator = _leftRowsFrame.GetIterator();
+        var leftRowsFrame = new RowsFrame(leftRowsIterator.Columns);
         _leftRowsIterator = leftRowsIterator;
         _currentLeftIterator = leftRowsIterator;
         _rightRowsIterator = rightRowsIterator;
 
-        Columns = _leftRowsFrame.Columns.Concat(_rightRowsIterator.Columns).ToArray();
+        Columns = leftRowsFrame.Columns.Concat(_rightRowsIterator.Columns).ToArray();
         _currentRow = new Row(this);
-    }
-
-    private async ValueTask<bool> SetNextRightRowAsync(CancellationToken cancellationToken)
-    {
-        if (!await _rightRowsIterator.MoveNextAsync(cancellationToken))
-        {
-            return false;
-        }
-        _currentRightRow = _rightRowsIterator.Current;
-        return true;
     }
 
     /// <inheritdoc />
     public async ValueTask<bool> MoveNextAsync(CancellationToken cancellationToken = default)
     {
-        if (_currentRightRow == null)
+        if (_currentLeftRow == null)
         {
-            if (!await SetNextRightRowAsync(cancellationToken))
+            var leftHasNext = await _currentLeftIterator.MoveNextAsync(cancellationToken);
+            if (!leftHasNext)
             {
                 return false;
             }
+            _currentLeftRow = _currentLeftIterator.Current;
         }
 
-        var leftHasNext = await _currentLeftIterator.MoveNextAsync(cancellationToken);
+        var rightHasNext = await _rightRowsIterator.MoveNextAsync(cancellationToken);
+        if (rightHasNext)
+        {
+            Row.Copy(_currentLeftIterator.Current, _currentRow);
+            Row.Copy(_rightRowsIterator.Current, 0, _currentRow, _currentLeftIterator.Columns.Length);
+            return true;
+        }
 
-        // Left rows set has no rows.
-        if (!leftHasNext && _leftRowsFrame.IsEmpty)
-        {
-            return false;
-        }
-        // On first iteration we fill row frame, then we reuse.
-        if (leftHasNext && _currentLeftIterator != _leftRowsFrameIterator)
-        {
-            _leftRowsFrame.AddRow(_leftRowsIterator.Current);
-        }
-        // If there are no rows - reset and start again.
-        if (!leftHasNext)
-        {
-            _currentLeftIterator = _leftRowsFrameIterator;
-            if (!await SetNextRightRowAsync(cancellationToken))
-            {
-                return false;
-            }
-            await _leftRowsFrameIterator.ResetAsync(cancellationToken);
-            await _leftRowsFrameIterator.MoveNextAsync(cancellationToken);
-        }
-        Row.Copy(_currentLeftIterator.Current, _currentRow);
-        Row.Copy(_currentRightRow!, 0, _currentRow, _currentLeftIterator.Columns.Length);
-
-        return true;
+        await _rightRowsIterator.ResetAsync(cancellationToken);
+        _currentLeftRow = null;
+        return await MoveNextAsync(cancellationToken);
     }
 
     /// <inheritdoc />
