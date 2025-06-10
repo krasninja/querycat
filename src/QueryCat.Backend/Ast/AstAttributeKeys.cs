@@ -28,6 +28,11 @@ internal static class AstAttributeKeys
     public const string ArgumentsKey = "args_key";
 
     /// <summary>
+    /// Keeps function results.
+    /// </summary>
+    public const string StoreKey = "store_key";
+
+    /// <summary>
     /// Target aggregate column.
     /// </summary>
     public const string InputAggregateIndexKey = "aggregate_index_key";

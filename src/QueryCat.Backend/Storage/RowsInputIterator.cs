@@ -1,6 +1,7 @@
 using System.Runtime.CompilerServices;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Utils;
 
@@ -46,11 +47,7 @@ public class RowsInputIterator : IRowsIterator, IRowsIteratorParent
         private void FetchValue(int columnIndex)
         {
             var errorCode = _rowsInputIterator._rowsInput.ReadValue(columnIndex, out var value);
-            if (errorCode != ErrorCode.OK)
-            {
-                _rowsInputIterator.OnError?.Invoke(this,
-                    new RowsInputErrorEventArgs(_rowsInputIterator._rowIndex, columnIndex + 1, errorCode));
-            }
+            _rowsInputIterator.AddError(errorCode, columnIndex + 1);
             Values[columnIndex] = value;
         }
 
@@ -66,6 +63,10 @@ public class RowsInputIterator : IRowsIterator, IRowsIteratorParent
     private bool _hasInput;
     private int _rowIndex;
     private bool _isInitialized;
+    private bool _isFirstRowPrefetched;
+
+    private readonly ExecutionStatistic? _statistic;
+    private readonly bool _useDetailedStatistic;
 
     /// <inheritdoc />
     public Column[] Columns => _rowsInput.Columns;
@@ -79,18 +80,41 @@ public class RowsInputIterator : IRowsIterator, IRowsIteratorParent
     public bool AutoFetch { get; set; }
 
     /// <summary>
-    /// The event occurs on data processing (reading) errors.
+    /// Related rows input.
     /// </summary>
-    public event EventHandler<RowsInputErrorEventArgs>? OnError;
-
     public IRowsInput RowsInput => _rowsInput;
 
-    public RowsInputIterator(IRowsInput rowsInput, bool autoFetch = true, bool autoOpen = false)
+    public RowsInputIterator(
+        IRowsInput rowsInput,
+        bool autoFetch = true,
+        bool autoOpen = false,
+        ExecutionStatistic? statistic = null,
+        bool detailedStatistic = false)
     {
         _rowsInput = rowsInput;
         AutoFetch = autoFetch;
         _autoOpen = autoOpen;
         _row = new Row(this);
+        _statistic = statistic;
+        _useDetailedStatistic = detailedStatistic;
+    }
+
+    private void AddError(ErrorCode errorCode, int columnIndex)
+    {
+        if (_statistic == null || errorCode == ErrorCode.OK)
+        {
+            return;
+        }
+
+        if (_useDetailedStatistic)
+        {
+            _statistic.AddError(
+                new ExecutionStatistic.RowErrorInfo(errorCode, _rowIndex, columnIndex));
+        }
+        else
+        {
+            _statistic.AddError(new ExecutionStatistic.RowErrorInfo(errorCode));
+        }
     }
 
     private void FetchAll()
@@ -98,11 +122,7 @@ public class RowsInputIterator : IRowsIterator, IRowsIteratorParent
         for (var i = 0; i < Columns.Length; i++)
         {
             var errorCode = _rowsInput.ReadValue(i, out var value);
-            if (errorCode != ErrorCode.OK)
-            {
-                OnError?.Invoke(this,
-                    new RowsInputErrorEventArgs(_rowIndex, i + 1, errorCode));
-            }
+            AddError(errorCode, i + 1);
             _row[i] = value;
         }
     }
@@ -110,6 +130,12 @@ public class RowsInputIterator : IRowsIterator, IRowsIteratorParent
     /// <inheritdoc />
     public async ValueTask<bool> MoveNextAsync(CancellationToken cancellationToken = default)
     {
+        if (_isFirstRowPrefetched)
+        {
+            _isFirstRowPrefetched = false;
+            return true;
+        }
+
         // Open rows input.
         if (_autoOpen && !_isOpened)
         {
@@ -146,6 +172,15 @@ public class RowsInputIterator : IRowsIterator, IRowsIteratorParent
 
         _rowIndex++;
         return _hasInput;
+    }
+
+    public async ValueTask PrefetchFirstRowAsync(CancellationToken cancellationToken = default)
+    {
+        var hasData = await this.MoveNextAsync(cancellationToken);
+        if (hasData)
+        {
+            _isFirstRowPrefetched = true;
+        }
     }
 
     /// <inheritdoc />

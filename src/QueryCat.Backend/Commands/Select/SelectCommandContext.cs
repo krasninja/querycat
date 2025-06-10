@@ -106,14 +106,11 @@ internal sealed class SelectCommandContext(SelectQueryNode queryNode) : CommandC
 
     #region Inputs
 
-    /// <summary>
-    /// The instance of <see cref="RowsInputIterator" /> that is used in FROM clause.
-    /// </summary>
-    public RowsInputIterator? RowsInputIterator { get; set; }
-
     private readonly List<SelectCommandInputContext> _inputs = new();
 
-    internal IReadOnlyCollection<SelectCommandInputContext> Inputs => _inputs;
+    internal IReadOnlyList<SelectCommandInputContext> Inputs => _inputs;
+
+    internal IRowsInput? FirstRowsInput => Inputs.Count > 0 ? Inputs[0].RowsInput : null;
 
     /// <summary>
     /// Context information for rows inputs. We bypass this to input to provide additional information
@@ -280,9 +277,9 @@ internal sealed class SelectCommandContext(SelectQueryNode queryNode) : CommandC
     /// </summary>
     public async ValueTask CloseAsync(CancellationToken cancellationToken = default)
     {
-        if (RowsInputIterator != null)
+        foreach (var input in _inputs)
         {
-            await RowsInputIterator.CloseAsync(cancellationToken);
+            await input.RowsInput.CloseAsync(cancellationToken);
         }
         foreach (var childContext in ChildContexts)
         {

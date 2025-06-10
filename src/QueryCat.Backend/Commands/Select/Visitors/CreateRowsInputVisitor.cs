@@ -25,7 +25,7 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
     private readonly IExecutionThread<ExecutionOptions> _executionThread;
     private readonly SelectCommandContext _context;
     private readonly ResolveTypesVisitor _resolveTypesVisitor;
-    private readonly CreateDelegateVisitor _createDelegateVisitor;
+    private readonly CreateDelegateVisitorWithValueStore _createDelegateVisitor;
 
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(CreateRowsInputVisitor));
 
@@ -42,7 +42,7 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
         {
             _resolveTypesVisitor = new SelectResolveTypesVisitor(_executionThread, _context.Parent);
         }
-        _createDelegateVisitor = new CreateDelegateVisitorWithValueStore(executionThread, _resolveTypesVisitor);
+        _createDelegateVisitor = new CreateDelegateVisitorWithValueStore(executionThread, context);
     }
 
     /// <inheritdoc />
@@ -143,6 +143,18 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
         node.SetAttribute(AstAttributeKeys.RowsInputKey, rowsInput);
     }
 
+    private sealed class FunctionCallWithStoreDecorator(FunctionResultStore store) : IFuncUnit
+    {
+        /// <inheritdoc />
+        public DataType OutputType => store.OutputType;
+
+        /// <inheritdoc />
+        public ValueTask<VariantValue> InvokeAsync(IExecutionThread thread, CancellationToken cancellationToken = default)
+        {
+            return store.CallAsync(thread, cancellationToken);
+        }
+    }
+
     private async ValueTask<IRowsInput?> VisitFunctionNodeInternalAsync(
         FunctionCallNode node,
         FunctionCallNode? formatNode,
@@ -167,6 +179,7 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
             return null;
         }
         inputContext.Alias = alias;
+
         SetAlias(inputContext.RowsInput, alias);
         _context.AddInput(inputContext);
 
@@ -308,14 +321,14 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
     /// again so we create new rows input. To prevent duplicate objects creation, we override FunctionCallNode
     /// and return the existing object instead of creation of a new one.
     /// </summary>
-    private sealed class CreateDelegateVisitorWithValueStore : CreateDelegateVisitor
+    private sealed class CreateDelegateVisitorWithValueStore : SelectCreateDelegateVisitor
     {
         /// <summary>
         /// NodeId -> Object map.
         /// </summary>
         private readonly Dictionary<int, VariantValue> _nodeIdFuncMap = new();
 
-        private sealed class FunctionCallFuncUnitFacade(
+        private sealed class FunctionCallFuncUnitDecorator(
             IFuncUnit func,
             int nodeId,
             IDictionary<int, VariantValue> cacheMap) : IFuncUnit
@@ -340,8 +353,8 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
         }
 
         /// <inheritdoc />
-        public CreateDelegateVisitorWithValueStore(IExecutionThread<ExecutionOptions> thread, ResolveTypesVisitor resolveTypesVisitor)
-            : base(thread, resolveTypesVisitor)
+        public CreateDelegateVisitorWithValueStore(IExecutionThread<ExecutionOptions> thread, SelectCommandContext commandContext)
+            : base(thread, commandContext)
         {
         }
 
@@ -350,7 +363,7 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
         {
             await base.VisitAsync(node, cancellationToken);
             var func = NodeIdFuncMap[node.Id];
-            NodeIdFuncMap[node.Id] = new FunctionCallFuncUnitFacade(func, node.Id, _nodeIdFuncMap);
+            NodeIdFuncMap[node.Id] = new FunctionCallFuncUnitDecorator(func, node.Id, _nodeIdFuncMap);
         }
     }
 }

@@ -7,6 +7,7 @@ using QueryCat.Backend.Commands.Select.Inputs;
 using QueryCat.Backend.Commands.Select.Visitors;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Storage;
 
@@ -70,7 +71,7 @@ internal sealed partial class SelectPlanner
     private async Task Context_PrepareInitialInputAsync(SelectQueryNode queryNode, CancellationToken cancellationToken)
     {
         var context = queryNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
-        if (context.RowsInputIterator != null)
+        if (context.FirstRowsInput != null)
         {
             // Seems it has already been filled - skip.
             return;
@@ -125,8 +126,8 @@ internal sealed partial class SelectPlanner
         }
 
         // Create final iterator.
-        var resultRowsIterator = Context_CreateMultipleIterator(finalRowsInputs);
-        context.RowsInputIterator = resultRowsIterator as RowsInputIterator;
+        var resultRowsIterator = Context_CreateMultipleIterator(finalRowsInputs,
+            ExecutionThread.Statistic, ExecutionThread.Options.ShowDetailedStatistic);
         await QueryContext_FillQueryContextConditionsAsync(context, querySpecificationNode, cancellationToken);
         context.SetIterator(resultRowsIterator);
     }
@@ -346,7 +347,10 @@ internal sealed partial class SelectPlanner
         return rowsInput;
     }
 
-    private static IRowsIterator Context_CreateMultipleIterator(List<IRowsInput> rowsInputs)
+    private static IRowsIterator Context_CreateMultipleIterator(
+        List<IRowsInput> rowsInputs,
+        ExecutionStatistic executionStatistic,
+        bool detailedStatistic)
     {
         if (rowsInputs.Count == 0)
         {
@@ -354,15 +358,31 @@ internal sealed partial class SelectPlanner
         }
         if (rowsInputs.Count == 1)
         {
-            return new RowsInputIterator(rowsInputs[0], autoFetch: false);
+            return new RowsInputIterator(
+                rowsInputs[0],
+                autoFetch: false,
+                statistic: executionStatistic,
+                detailedStatistic: detailedStatistic);
         }
         var multipleIterator = new MultiplyRowsIterator(
-            new RowsInputIterator(rowsInputs[0], autoFetch: true),
-            new RowsInputIterator(rowsInputs[1], autoFetch: true));
+            new RowsInputIterator(
+                rowsInputs[0],
+                autoFetch: true,
+                statistic: executionStatistic,
+                detailedStatistic: detailedStatistic),
+            new RowsInputIterator(
+                rowsInputs[1],
+                autoFetch: true,
+                statistic: executionStatistic,
+                detailedStatistic: detailedStatistic));
         for (var i = 2; i < rowsInputs.Count; i++)
         {
             multipleIterator = new MultiplyRowsIterator(
-                multipleIterator, new RowsInputIterator(rowsInputs[i], autoFetch: true));
+                multipleIterator, new RowsInputIterator(
+                    rowsInputs[i],
+                    autoFetch: true,
+                    statistic: executionStatistic,
+                    detailedStatistic: detailedStatistic));
         }
         return multipleIterator;
     }

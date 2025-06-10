@@ -21,7 +21,7 @@ internal sealed class UpdateCommandHandler : IFuncUnit, IAsyncDisposable
         _selectCommandContext = selectCommandContext;
         _setters = setters;
 
-        if (selectCommandContext.RowsInputIterator?.RowsInput is not IRowsInputUpdate rowsInputUpdate)
+        if (selectCommandContext.FirstRowsInput is not IRowsInputUpdate rowsInputUpdate)
         {
             throw new ArgumentException(Resources.Errors.RowsInputNotUpdatable, nameof(selectCommandContext));
         }

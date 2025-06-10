@@ -427,37 +427,13 @@ internal sealed partial class SelectPlanner
     }
 
     /// <summary>
-    /// Update statistic if there is a error in rows input.
-    /// </summary>
-    private void Pipeline_SubscribeOnErrorsFromInputSources(SelectCommandContext context)
-    {
-        if (context.RowsInputIterator == null)
-        {
-            return;
-        }
-        context.RowsInputIterator.OnError += (_, args) =>
-        {
-            if (ExecutionThread.Options.ShowDetailedStatistic)
-            {
-                ExecutionThread.Statistic.AddError(
-                    new ExecutionStatistic.RowErrorInfo(args.ErrorCode, args.RowIndex, args.ColumnIndex));
-            }
-            else
-            {
-                ExecutionThread.Statistic.AddError(
-                    new ExecutionStatistic.RowErrorInfo(args.ErrorCode));
-            }
-        };
-    }
-
-    /// <summary>
     /// Assign SourceInputColumn attribute based on rows input iterator.
     /// </summary>
     private static void Pipeline_ResolveSelectSourceColumns(
         SelectCommandContext context,
         SelectQuerySpecificationNode querySpecificationNode)
     {
-        if (context.RowsInputIterator == null)
+        if (context.FirstRowsInput == null)
         {
             return;
         }
@@ -466,7 +442,7 @@ internal sealed partial class SelectPlanner
         {
             if (column.ExpressionNode is IdentifierExpressionNode identifierExpressionNode)
             {
-                var sourceColumn = context.RowsInputIterator.GetColumnByName(identifierExpressionNode.TableFieldName,
+                var sourceColumn = context.FirstRowsInput.GetColumnByName(identifierExpressionNode.TableFieldName,
                     identifierExpressionNode.TableSourceName);
                 if (sourceColumn != null)
                 {

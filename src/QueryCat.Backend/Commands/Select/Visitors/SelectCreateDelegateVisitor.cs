@@ -15,7 +15,7 @@ namespace QueryCat.Backend.Commands.Select.Visitors;
 /// <summary>
 /// Generate delegate for a node using SELECT statement specific processing.
 /// </summary>
-internal sealed class SelectCreateDelegateVisitor : CreateDelegateVisitor
+internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
 {
     private readonly SelectCommandContext _context;
 

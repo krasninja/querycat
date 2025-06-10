@@ -85,7 +85,6 @@ internal sealed partial class SelectPlanner
 
         // Misc.
         Pipeline_ApplyStatistic(context);
-        Pipeline_SubscribeOnErrorsFromInputSources(context);
 
         // WHERE.
         await Pipeline_ApplyFilterAsync(context, node.TableExpressionNode, cancellationToken);
