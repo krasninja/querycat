@@ -16,8 +16,9 @@ internal sealed class FunctionResultStore
     private readonly FuncUnitCallInfo _functionCallInfo;
     private readonly VariantValue[] _functionCallInfoResults;
 
-    public DataType OutputType => _factory.OutputType;
-
+    /// <summary>
+    /// Number of cache values.
+    /// </summary>
     public int Count => _results.Count;
 
     public FunctionResultStore(
@@ -30,6 +31,12 @@ internal sealed class FunctionResultStore
         _functionCallInfoResults = new VariantValueArray(size: functionCallInfo.Arguments.Length);
     }
 
+    /// <summary>
+    /// Get the current function argument values. Return the cached result or the new one.
+    /// </summary>
+    /// <param name="thread">Instance of <see cref="IExecutionThread" />.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Instance of <see cref="VariantValue" /> and cache mark.</returns>
     public async ValueTask<(VariantValue Value, bool Cached)> CallAsync(IExecutionThread thread, CancellationToken cancellationToken = default)
     {
         var args = await InvokeArgumentsDelegatesAsync(thread, cancellationToken);
@@ -41,6 +48,14 @@ internal sealed class FunctionResultStore
         variantValue = await _factory.InvokeAsync(thread, cancellationToken);
         _results.Add(args, variantValue);
         return (variantValue, false);
+    }
+
+    /// <summary>
+    /// Clear cache,
+    /// </summary>
+    public void Clear()
+    {
+        _results.Clear();
     }
 
     private async ValueTask<VariantValueArray> InvokeArgumentsDelegatesAsync(IExecutionThread thread, CancellationToken cancellationToken)
@@ -56,7 +71,8 @@ internal sealed class FunctionResultStore
             _functionCallInfoResults[i] = await args[i].InvokeAsync(thread, cancellationToken);
         }
         _firstCall = false;
-        var arr = new VariantValueArray(size: _functionCallInfoResults.Length);
+
+        var arr = new VariantValueArray(size: _functionCallInfo.Arguments.Length);
         Array.Copy(_functionCallInfoResults, arr, _functionCallInfoResults.Length);
         return arr;
     }

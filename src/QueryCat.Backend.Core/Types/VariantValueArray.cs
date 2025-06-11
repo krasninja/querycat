@@ -11,6 +11,11 @@ public readonly struct VariantValueArray(params VariantValue[] values) : IEquata
 
     public VariantValue this[int index] => _values[index];
 
+    /// <summary>
+    /// Array length.
+    /// </summary>
+    public int Length => _values.Length;
+
     public VariantValueArray(IEnumerable<VariantValue> values) : this(values.ToArray())
     {
     }

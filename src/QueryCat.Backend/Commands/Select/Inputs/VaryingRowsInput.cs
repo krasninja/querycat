@@ -56,7 +56,13 @@ internal sealed class VaryingRowsInput : IRowsInputKeys, IRowsInputDelete, IRows
     public Task CloseAsync(CancellationToken cancellationToken = default) => RowsInput.CloseAsync(cancellationToken);
 
     /// <inheritdoc />
-    public Task ResetAsync(CancellationToken cancellationToken = default) => RowsInput.ResetAsync(cancellationToken);
+    public Task ResetAsync(CancellationToken cancellationToken = default)
+    {
+        _isEndOfData = false;
+        _store.Clear();
+        _currentInput = null;
+        return RowsInput.ResetAsync(cancellationToken);
+    }
 
     /// <inheritdoc />
     public ErrorCode ReadValue(int columnIndex, out VariantValue value)
