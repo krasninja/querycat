@@ -15,10 +15,11 @@ internal sealed class SelectTableValuesNode : ExpressionNode, ISelectAliasNode
         RowsNodes.AddRange(rowsNodes);
     }
 
-    public SelectTableValuesNode(SelectTableValuesNode valuesNode)
-        : this(valuesNode.RowsNodes.Select(n => (SelectTableValuesRowNode)n.Clone()).ToList())
+    public SelectTableValuesNode(SelectTableValuesNode node)
+        : this(node.RowsNodes.Select(n => (SelectTableValuesRowNode)n.Clone()).ToList())
     {
-        valuesNode.CopyTo(this);
+        Alias = node.Alias;
+        node.CopyTo(this);
     }
 
     /// <inheritdoc />
