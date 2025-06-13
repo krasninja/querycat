@@ -26,7 +26,6 @@ internal class InputResolveTypesVisitor : ResolveTypesVisitor
             if (columnIndex > -1)
             {
                 node.SetAttribute(AstAttributeKeys.InputColumnKey, rowsInput.Columns[columnIndex]);
-                node.SetAttribute(AstAttributeKeys.RowsInputKey, rowsInput);
                 node.SetDataType(rowsInput.Columns[columnIndex].DataType);
                 return ValueTask.CompletedTask;
             }

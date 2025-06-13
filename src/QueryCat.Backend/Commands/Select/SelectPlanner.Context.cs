@@ -196,8 +196,8 @@ internal sealed partial class SelectPlanner
         IdentifierExpressionNode idNode,
         CancellationToken cancellationToken)
     {
-        var rowsInput = idNode.GetAttribute<IRowsInput>(AstAttributeKeys.RowsInputKey);
-        if (rowsInput == null)
+        var rowsInputContext = idNode.GetAttribute<SelectInputQueryContext>(AstAttributeKeys.RowsInputContextKey);
+        if (rowsInputContext == null)
         {
             return [];
         }
@@ -205,28 +205,28 @@ internal sealed partial class SelectPlanner
         // Alias.
         if (idNode is ISelectAliasNode selectAliasNode && !string.IsNullOrEmpty(selectAliasNode.Alias))
         {
-            Context_SetAlias(rowsInput, selectAliasNode.Alias);
+            Context_SetAlias(rowsInputContext.RowsInput, selectAliasNode.Alias);
         }
 
-        var result = new[] { rowsInput };
+        var inputs = new[] { rowsInputContext.RowsInput };
 
         // Joined nodes processing.
         if (idNode is SelectIdentifierExpressionNode selectIdentifierExpressionNode)
         {
             var joinedInputs = new List<IRowsInput>(capacity: selectIdentifierExpressionNode.JoinedNodes.Count + 1)
             {
-                rowsInput
+                rowsInputContext.RowsInput
             };
             foreach (var joinedNode in selectIdentifierExpressionNode.JoinedNodes)
             {
                 var joinRowsInput = await Context_CreateInputSourceFromTableJoinAsync(
-                    context, rowsInput, joinedNode, cancellationToken);
+                    context, rowsInputContext.RowsInput, joinedNode, cancellationToken);
                 joinedInputs.Add(joinRowsInput);
             }
-            result = joinedInputs.ToArray();
+            inputs = joinedInputs.ToArray();
         }
 
-        return result;
+        return inputs;
     }
 
     // Last input is combine input.
@@ -236,7 +236,8 @@ internal sealed partial class SelectPlanner
         CancellationToken cancellationToken)
     {
         var inputs = new List<IRowsInput>();
-        var rowsInput = tableFunctionNode.GetRequiredAttribute<IRowsInput>(AstAttributeKeys.RowsInputKey);
+        var rowsInputContext = tableFunctionNode.GetRequiredAttribute<SelectInputQueryContext>(AstAttributeKeys.RowsInputContextKey);
+        var rowsInput = rowsInputContext.RowsInput;
         inputs.Add(rowsInput);
         Context_SetAlias(rowsInput, tableFunctionNode.Alias);
         foreach (var joinedNode in tableFunctionNode.JoinedNodes)
@@ -332,7 +333,8 @@ internal sealed partial class SelectPlanner
         {
             return
             [
-                expressionNode.GetRequiredAttribute<IRowsInput>(AstAttributeKeys.RowsInputKey)
+                expressionNode
+                    .GetRequiredAttribute<SelectInputQueryContext>(AstAttributeKeys.RowsInputContextKey).RowsInput
             ];
         }
 
@@ -345,7 +347,9 @@ internal sealed partial class SelectPlanner
         var rowsIterator = await CreateIteratorAsync(queryNode, parentContext: context, cancellationToken);
 
         var rowsInput = new RowsIteratorInput(rowsIterator);
-        context.AddInput(new SelectCommandInputContext(rowsInput));
+        var rowsInputContext = new SelectInputQueryContext(rowsInput);
+        rowsInput.QueryContext = rowsInputContext;
+        context.AddInput(rowsInputContext);
         Context_SetAlias(rowsInput, queryNode.Alias);
         return rowsInput;
     }

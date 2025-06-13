@@ -31,6 +31,10 @@ public sealed class RowsFrameIterator : ICursorRowsIterator
     {
         get
         {
+            if (_absoluteCursor < 0)
+            {
+                return new Row(_rowsFrame);
+            }
             _rowsFrame.ReadRowAt(_currentRow, _absoluteCursor);
             return _currentRow;
         }

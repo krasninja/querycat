@@ -32,8 +32,13 @@ internal sealed class DeleteCommand : ICommand
         var context = selectNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
 
         // Get output source.
-        var input = deleteNode.DeleteTargetNode.GetRequiredAttribute<IRowsInputDelete>(AstAttributeKeys.RowsInputKey);
+        var inputContext = deleteNode.DeleteTargetNode.GetRequiredAttribute<SelectInputQueryContext>(
+            AstAttributeKeys.RowsInputContextKey);
+        if (inputContext.RowsInput is not IRowsInputDelete rowsInputDelete)
+        {
+            return EmptyFuncUnit.Instance;
+        }
 
-        return new DeleteCommandHandler(context, input);
+        return new DeleteCommandHandler(context, rowsInputDelete);
     }
 }

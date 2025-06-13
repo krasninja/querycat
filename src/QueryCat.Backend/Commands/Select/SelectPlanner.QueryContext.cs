@@ -17,7 +17,7 @@ internal sealed partial class SelectPlanner
         CancellationToken cancellationToken)
     {
         // Fill conditions.
-        foreach (var inputContext in context.InputQueryContextList)
+        foreach (var inputContext in context.Inputs)
         {
             await QueryContext_FillQueryContextConditionsAsync(
                 querySpecificationNode.TableExpressionNode?.SearchConditionNode?.ExpressionNode,
@@ -42,7 +42,7 @@ internal sealed partial class SelectPlanner
                 var @delegate = await Misc_CreateDelegateAsync(querySpecificationNode.FetchNode.CountNode,
                     cancellationToken: cancellationToken);
                 var fetchCount = (await @delegate.InvokeAsync(ExecutionThread, cancellationToken)).AsInteger;
-                foreach (var queryContext in context.InputQueryContextList)
+                foreach (var queryContext in context.Inputs)
                 {
                     queryContext.QueryInfo.Limit = (queryContext.QueryInfo.Limit ?? 0) + fetchCount;
                 }
@@ -52,7 +52,7 @@ internal sealed partial class SelectPlanner
                 var @delegate = await Misc_CreateDelegateAsync(querySpecificationNode.OffsetNode.CountNode,
                     cancellationToken: cancellationToken);
                 var offsetCount = (await @delegate.InvokeAsync(ExecutionThread, cancellationToken)).AsInteger;
-                foreach (var queryContext in context.InputQueryContextList)
+                foreach (var queryContext in context.Inputs)
                 {
                     queryContext.QueryInfo.Limit = (queryContext.QueryInfo.Limit ?? 0) + offsetCount;
                 }
