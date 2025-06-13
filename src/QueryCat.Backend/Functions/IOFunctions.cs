@@ -27,6 +27,10 @@ internal static class IOFunctions
     public static async ValueTask<VariantValue> ReadAsync(IExecutionThread thread, CancellationToken cancellationToken)
     {
         var uri = thread.Stack[0].AsString;
+        if (string.IsNullOrEmpty(uri))
+        {
+            return VariantValue.CreateFromObject(NullRowsInput.Instance);
+        }
 
         var function = thread.FunctionsManager.ResolveUri(uri);
         if (function != null)
