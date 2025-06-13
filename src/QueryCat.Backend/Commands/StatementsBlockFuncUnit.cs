@@ -9,7 +9,7 @@ internal class StatementsBlockFuncUnit : IFuncUnit, IExecutionFlowFuncUnit, IDis
 {
     private readonly AstVisitor _statementsVisitor;
     private readonly StatementNode[] _statements;
-    private readonly HashSet<IDisposable> _disposablesList = new();
+    private readonly HashSet<object> _disposablesList = new();
 
     /// <inheritdoc />
     public DataType OutputType => DataType.Void;
@@ -38,9 +38,9 @@ internal class StatementsBlockFuncUnit : IFuncUnit, IExecutionFlowFuncUnit, IDis
         {
             // Evaluate the command.
             var commandContext = await _statementsVisitor.RunAndReturnAsync(currentStatement, cancellationToken);
-            if (commandContext is IDisposable disposable)
+            if (commandContext is IDisposable || commandContext is IAsyncDisposable)
             {
-                _disposablesList.Add(disposable);
+                _disposablesList.Add(commandContext);
             }
 
             // Invoke statement.
@@ -77,9 +77,12 @@ internal class StatementsBlockFuncUnit : IFuncUnit, IExecutionFlowFuncUnit, IDis
     {
         if (disposing)
         {
-            foreach (var disposable in _disposablesList)
+            foreach (var obj in _disposablesList)
             {
-                disposable.Dispose();
+                if (obj is IDisposable disposable)
+                {
+                    disposable.Dispose();
+                }
             }
             _disposablesList.Clear();
         }
@@ -94,13 +97,13 @@ internal class StatementsBlockFuncUnit : IFuncUnit, IExecutionFlowFuncUnit, IDis
 
     protected virtual async ValueTask DisposeAsyncCore()
     {
-        foreach (var disposable in _disposablesList)
+        foreach (var obj in _disposablesList)
         {
-            if (disposable is IAsyncDisposable asyncDisposable)
+            if (obj is IAsyncDisposable asyncDisposable)
             {
                 await asyncDisposable.DisposeAsync();
             }
-            else
+            else if (obj is IDisposable disposable)
             {
                 disposable.Dispose();
             }
