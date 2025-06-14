@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
@@ -6,14 +5,17 @@ using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Commands.Select.Inputs;
 
+/// <summary>
+/// The input source that will be re-created on reset. It is used for such input source
+/// types that have references to another input source.
+/// </summary>
 internal sealed class VaryingRowsInput : IRowsInputKeys, IRowsInputDelete, IRowsInputUpdate
 {
     private readonly IRowsInput _initialRowsInput;
     private readonly QueryContext _queryContext;
     private readonly IExecutionThread<ExecutionOptions> _thread;
     private IRowsInput? _currentInput;
-
-    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(VaryingRowsInput));
+    private int[] _sourceColumnsMapping = [];
 
     private readonly FunctionResultStore _store;
     private readonly RowsInputFactory _rowsInputFactory;
@@ -29,10 +31,10 @@ internal sealed class VaryingRowsInput : IRowsInputKeys, IRowsInputDelete, IRows
     }
 
     /// <inheritdoc />
-    public Column[] Columns => RowsInput.Columns;
+    public Column[] Columns => _initialRowsInput.Columns;
 
     /// <inheritdoc />
-    public string[] UniqueKey => RowsInput.UniqueKey;
+    public string[] UniqueKey => _initialRowsInput.UniqueKey;
 
     public VaryingRowsInput(
         IExecutionThread<ExecutionOptions> thread,
@@ -44,13 +46,53 @@ internal sealed class VaryingRowsInput : IRowsInputKeys, IRowsInputDelete, IRows
         _thread = thread;
         _initialRowsInput = initialRowsInput;
         _queryContext = queryContext;
-
         _store = store;
         _rowsInputFactory = rowsInputFactory;
+
+        InitializeSourceColumnsMapping(initial: true);
+    }
+
+    private void InitializeSourceColumnsMapping(bool initial = false)
+    {
+        if (Columns.Length != _sourceColumnsMapping.Length)
+        {
+            _sourceColumnsMapping = new int[Columns.Length];
+        }
+
+        if (initial)
+        {
+            for (var i = 0; i < _sourceColumnsMapping.Length; i++)
+            {
+                _sourceColumnsMapping[i] = i;
+            }
+        }
+        else
+        {
+            if (_currentInput != null)
+            {
+                for (var i = 0; i < _sourceColumnsMapping.Length; i++)
+                {
+                    var columnIndex = _currentInput.GetColumnIndexByName(Columns[i].Name);
+                    _sourceColumnsMapping[i] = columnIndex;
+                }
+            }
+        }
     }
 
     /// <inheritdoc />
-    public Task OpenAsync(CancellationToken cancellationToken = default) => RowsInput.OpenAsync(cancellationToken);
+    public async Task OpenAsync(CancellationToken cancellationToken = default)
+    {
+        await RowsInput.OpenAsync(cancellationToken);
+
+        if (Columns.Length != _sourceColumnsMapping.Length)
+        {
+            _sourceColumnsMapping = new int[Columns.Length];
+        }
+        for (var i = 0; i < _sourceColumnsMapping.Length; i++)
+        {
+            _sourceColumnsMapping[i] = i;
+        }
+    }
 
     /// <inheritdoc />
     public Task CloseAsync(CancellationToken cancellationToken = default) => RowsInput.CloseAsync(cancellationToken);
@@ -61,7 +103,7 @@ internal sealed class VaryingRowsInput : IRowsInputKeys, IRowsInputDelete, IRows
         _isEndOfData = false;
         _store.Clear();
         _currentInput = null;
-        return RowsInput.ResetAsync(cancellationToken);
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />
@@ -73,7 +115,14 @@ internal sealed class VaryingRowsInput : IRowsInputKeys, IRowsInputDelete, IRows
             return ErrorCode.NoData;
         }
 
-        return _currentInput.ReadValue(columnIndex, out value);
+        var index = _sourceColumnsMapping[columnIndex];
+        if (index < 0)
+        {
+            value = VariantValue.Null;
+            return ErrorCode.NoData;
+        }
+
+        return _currentInput.ReadValue(index, out value);
     }
 
     /// <inheritdoc />
@@ -132,6 +181,8 @@ internal sealed class VaryingRowsInput : IRowsInputKeys, IRowsInputDelete, IRows
             _currentInput = newInput;
             _currentInput.QueryContext = _queryContext;
             await _currentInput.OpenAsync(cancellationToken);
+
+            InitializeSourceColumnsMapping();
         }
         // If cached - the same result was used as before. That means we out of data.
         else
