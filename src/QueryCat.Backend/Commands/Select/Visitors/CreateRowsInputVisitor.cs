@@ -132,9 +132,13 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
             return null;
         }
 
+        var funcUnit = new FuncUnitRowsInputColumn(result.InputQueryContext.RowsInput, columnIndex);
+        var store = new FunctionResultStore(funcUnit, new FuncUnitCallInfo(funcUnit));
+        var rowsInputContextValue = (await store.CallAsync(_executionThread, cancellationToken)).Value;
+
         var alias = node is ISelectAliasNode selectAliasNode ? selectAliasNode.Alias : string.Empty;
         var rowsInputContext = await _rowsInputFactory.CreateRowsInputAsync(
-            value,
+            rowsInputContextValue,
             alias,
             _executionThread,
             formatNode: null,
@@ -145,11 +149,10 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
             return null;
         }
 
-        var funcUnit = new FuncUnitRowsInputColumn(result.InputQueryContext.RowsInput, columnIndex);
         rowsInputContext.RowsInput = new VaryingRowsInput(
             _executionThread,
             rowsInputContext.RowsInput,
-            new FunctionResultStore(funcUnit, new FuncUnitCallInfo(funcUnit)),
+            store,
             _rowsInputFactory,
             rowsInputContext);
 
