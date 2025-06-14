@@ -1,0 +1,5 @@
+expected: |
+  2
+query: |
+  select b.id
+  from 'Branches.csv' b inner join string_to_table(b.states, ',') s on s.value = b.states;
