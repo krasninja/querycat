@@ -97,6 +97,19 @@ The tutorial explains how to create custom plugin based on `IRowsInput` interfac
         {
             stringBuilder.AppendLine("Sample");
         }
+
+        /// <inheritdoc />
+        public IReadOnlyList<KeyColumn> GetKeyColumns() => [];
+
+        /// <inheritdoc />
+        public void SetKeyColumnValue(int columnIndex, VariantValue value, VariantValue.Operation operation)
+        {
+        }
+
+        /// <inheritdoc />
+        public void UnsetKeyColumnValue(int columnIndex, VariantValue.Operation operation)
+        {
+        }
     }
     ```
 
