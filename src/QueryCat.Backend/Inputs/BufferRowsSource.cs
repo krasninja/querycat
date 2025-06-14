@@ -90,7 +90,10 @@ internal abstract class BufferRowsSource : IRowsSource, IDisposable
     {
         await _rowsSource.CloseAsync(cancellationToken);
         await WaitForThreadFinishAsync(cancellationToken);
-        await _cancellationTokenSource.CancelAsync();
+        if (!_cancellationTokenSource.IsCancellationRequested)
+        {
+            await _cancellationTokenSource.CancelAsync();
+        }
         Dispose();
     }
 
