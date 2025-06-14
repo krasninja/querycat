@@ -21,13 +21,14 @@ internal sealed class SelectQueryConditions : IEnumerable<SelectQueryCondition>
     /// <summary>
     /// Get key conditions.
     /// </summary>
+    /// <param name="rowsInput">Rows input.</param>
     /// <returns>Key condition.</returns>
-    internal IReadOnlyList<SelectQueryCondition> GetKeyConditions(IRowsInputKeys rowsInputKeys)
+    internal IReadOnlyList<SelectQueryCondition> GetKeyConditions(IRowsInput rowsInput)
     {
         var listConditions = new List<SelectQueryCondition>(capacity: Conditions.Count);
         foreach (var condition in Conditions)
         {
-            if (rowsInputKeys.FindKeyColumn(condition.Column, condition.Operation) != null)
+            if (rowsInput.FindKeyColumn(condition.Column, condition.Operation) != null)
             {
                 listConditions.Add(condition);
             }
@@ -70,7 +71,7 @@ internal sealed class SelectQueryConditions : IEnumerable<SelectQueryCondition>
 
     internal IEnumerable<SelectInputKeysConditions> GetConditionsColumns(IRowsSource input, string? alias = null)
     {
-        if (input is not IRowsInputKeys inputKey)
+        if (input is not IRowsInput inputKey)
         {
             yield break;
         }

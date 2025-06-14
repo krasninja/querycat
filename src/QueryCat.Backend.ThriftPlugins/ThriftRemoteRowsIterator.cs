@@ -9,7 +9,7 @@ using VariantValue = QueryCat.Backend.Core.Types.VariantValue;
 
 namespace QueryCat.Backend.ThriftPlugins;
 
-internal sealed class ThriftRemoteRowsIterator : IRowsInputKeys, IRowsInputUpdate, IRowsInputDelete
+internal sealed class ThriftRemoteRowsIterator : IRowsInputUpdate, IRowsInputDelete
 {
     private const int DefaultLoadCount = 1;
 

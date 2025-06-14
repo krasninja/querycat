@@ -73,4 +73,17 @@ public sealed class RowsIteratorInput : IRowsInput, IRowsIteratorParent
     {
         yield return _rowsIterator;
     }
+
+    /// <inheritdoc />
+    public IReadOnlyList<KeyColumn> GetKeyColumns() => [];
+
+    /// <inheritdoc />
+    public void SetKeyColumnValue(int columnIndex, VariantValue value, VariantValue.Operation operation)
+    {
+    }
+
+    /// <inheritdoc />
+    public void UnsetKeyColumnValue(int columnIndex, VariantValue.Operation operation)
+    {
+    }
 }

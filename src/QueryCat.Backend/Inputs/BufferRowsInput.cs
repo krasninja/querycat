@@ -7,7 +7,7 @@ using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Inputs;
 
-internal sealed class BufferRowsInput : BufferRowsSource, IRowsInputKeys
+internal sealed class BufferRowsInput : BufferRowsSource, IRowsInput, IRowsIteratorParent
 {
     [SafeFunction]
     [Description("Implements buffer for rows input.")]
@@ -101,31 +101,24 @@ internal sealed class BufferRowsInput : BufferRowsSource, IRowsInputKeys
     }
 
     /// <inheritdoc />
-    public IReadOnlyList<KeyColumn> GetKeyColumns()
-    {
-        if (_rowsInput is IRowsInputKeys rowsInputKeys)
-        {
-            return rowsInputKeys.GetKeyColumns();
-        }
-        return [];
-    }
+    public IReadOnlyList<KeyColumn> GetKeyColumns() => _rowsInput.GetKeyColumns();
 
     /// <inheritdoc />
     public void SetKeyColumnValue(int columnIndex, VariantValue value, VariantValue.Operation operation)
     {
-        if (_rowsInput is IRowsInputKeys rowsInputKeys)
-        {
-            rowsInputKeys.SetKeyColumnValue(columnIndex, value, operation);
-        }
+        _rowsInput.SetKeyColumnValue(columnIndex, value, operation);
     }
 
     /// <inheritdoc />
     public void UnsetKeyColumnValue(int columnIndex, VariantValue.Operation operation)
     {
-        if (_rowsInput is IRowsInputKeys rowsInputKeys)
-        {
-            rowsInputKeys.UnsetKeyColumnValue(columnIndex, operation);
-        }
+        _rowsInput.UnsetKeyColumnValue(columnIndex, operation);
+    }
+
+    /// <inheritdoc />
+    public IEnumerable<IRowsSchema> GetChildren()
+    {
+        yield return _rowsInput;
     }
 
     /// <inheritdoc />

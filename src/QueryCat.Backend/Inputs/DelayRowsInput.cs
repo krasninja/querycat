@@ -10,7 +10,7 @@ namespace QueryCat.Backend.Inputs;
 /// <summary>
 /// Adds a delay before reading a next record.
 /// </summary>
-internal sealed class DelayRowsInput : IRowsInputKeys
+internal sealed class DelayRowsInput : IRowsInput, IRowsIteratorParent
 {
     [SafeFunction]
     [Description("Implements delay before reading the next record.")]
@@ -64,31 +64,24 @@ internal sealed class DelayRowsInput : IRowsInputKeys
     public Task ResetAsync(CancellationToken cancellationToken = default) => _rowsInput.ResetAsync(cancellationToken);
 
     /// <inheritdoc />
-    public IReadOnlyList<KeyColumn> GetKeyColumns()
-    {
-        if (_rowsInput is IRowsInputKeys rowsInputKeys)
-        {
-            return rowsInputKeys.GetKeyColumns();
-        }
-        return [];
-    }
+    public IReadOnlyList<KeyColumn> GetKeyColumns() => _rowsInput.GetKeyColumns();
 
     /// <inheritdoc />
     public void SetKeyColumnValue(int columnIndex, VariantValue value, VariantValue.Operation operation)
     {
-        if (_rowsInput is IRowsInputKeys rowsInputKeys)
-        {
-            rowsInputKeys.SetKeyColumnValue(columnIndex, value, operation);
-        }
+        _rowsInput.SetKeyColumnValue(columnIndex, value, operation);
+    }
+
+    /// <inheritdoc />
+    public IEnumerable<IRowsSchema> GetChildren()
+    {
+        yield return _rowsInput;
     }
 
     /// <inheritdoc />
     public void UnsetKeyColumnValue(int columnIndex, VariantValue.Operation operation)
     {
-        if (_rowsInput is IRowsInputKeys rowsInputKeys)
-        {
-            rowsInputKeys.UnsetKeyColumnValue(columnIndex, operation);
-        }
+        _rowsInput.UnsetKeyColumnValue(columnIndex, operation);
     }
 
     /// <inheritdoc />

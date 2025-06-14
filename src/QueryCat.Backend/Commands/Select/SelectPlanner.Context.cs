@@ -293,12 +293,11 @@ internal sealed partial class SelectPlanner
 
     private IRowsInput Context_WrapKeysInput(IRowsInput rowsInput, SelectCommandContext context)
     {
-        if (rowsInput is IRowsInputKeys rowsInputKeys
-            && rowsInputKeys is not SetKeysRowsInput
+        if (rowsInput is not SetKeysRowsInput
             && context.Inputs.Any(i => i.RowsInput == rowsInput) // Create wrapper only for input source with data.
         )
         {
-            return new SetKeysRowsInput(ExecutionThread, rowsInputKeys, context.Conditions);
+            return new SetKeysRowsInput(ExecutionThread, rowsInput, context.Conditions);
         }
         return rowsInput;
     }

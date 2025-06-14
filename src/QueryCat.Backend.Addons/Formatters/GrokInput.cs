@@ -10,7 +10,7 @@ namespace QueryCat.Backend.Addons.Formatters;
 /// <summary>
 /// Grok expressions input parser.
 /// </summary>
-internal sealed partial class GrokInput : IRowsInput
+internal sealed partial class GrokInput : IRowsInput, IRowsIteratorParent
 {
     // Sources:
     // https://www.elastic.co/guide/en/logstash/current/plugins-filters-grok.html
@@ -336,5 +336,26 @@ internal sealed partial class GrokInput : IRowsInput
     public void Explain(IndentedStringBuilder stringBuilder)
     {
         stringBuilder.AppendLine("Grok");
+    }
+
+    /// <inheritdoc />
+    public IReadOnlyList<KeyColumn> GetKeyColumns() => _grokImpl.GetKeyColumns();
+
+    /// <inheritdoc />
+    public void SetKeyColumnValue(int columnIndex, VariantValue value, VariantValue.Operation operation)
+    {
+        _grokImpl.SetKeyColumnValue(columnIndex, value, operation);
+    }
+
+    /// <inheritdoc />
+    public void UnsetKeyColumnValue(int columnIndex, VariantValue.Operation operation)
+    {
+        _grokImpl.UnsetKeyColumnValue(columnIndex, operation);
+    }
+
+    /// <inheritdoc />
+    public IEnumerable<IRowsSchema> GetChildren()
+    {
+        yield return _grokImpl;
     }
 }

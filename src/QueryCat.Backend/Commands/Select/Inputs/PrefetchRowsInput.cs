@@ -7,7 +7,7 @@ namespace QueryCat.Backend.Commands.Select.Inputs;
 /// <summary>
 /// Pre-reads the first row.
 /// </summary>
-internal sealed class PrefetchRowsInput : IRowsInput
+internal sealed class PrefetchRowsInput : IRowsInput, IRowsIteratorParent
 {
     private readonly IRowsInput _rowsInput;
     private bool _firstRead;
@@ -74,5 +74,26 @@ internal sealed class PrefetchRowsInput : IRowsInput
     public void Explain(IndentedStringBuilder stringBuilder)
     {
         stringBuilder.AppendRowsInputsWithIndent("Prefetch", _rowsInput);
+    }
+
+    /// <inheritdoc />
+    public IReadOnlyList<KeyColumn> GetKeyColumns() => _rowsInput.GetKeyColumns();
+
+    /// <inheritdoc />
+    public void SetKeyColumnValue(int columnIndex, VariantValue value, VariantValue.Operation operation)
+    {
+        _rowsInput.SetKeyColumnValue(columnIndex, value, operation);
+    }
+
+    /// <inheritdoc />
+    public void UnsetKeyColumnValue(int columnIndex, VariantValue.Operation operation)
+    {
+        _rowsInput.UnsetKeyColumnValue(columnIndex, operation);
+    }
+
+    /// <inheritdoc />
+    public IEnumerable<IRowsSchema> GetChildren()
+    {
+        yield return _rowsInput;
     }
 }

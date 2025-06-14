@@ -5,7 +5,7 @@ namespace QueryCat.Backend.Core.Data;
 /// <summary>
 /// Rows input keys.
 /// </summary>
-public interface IRowsInputKeys : IRowsInput
+public interface IRowsInputKeys
 {
     /// <summary>
     /// Get key columns list.

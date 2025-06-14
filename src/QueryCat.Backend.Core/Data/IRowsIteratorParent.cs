@@ -1,7 +1,7 @@
 namespace QueryCat.Backend.Core.Data;
 
 /// <summary>
-/// The interfaces identifies that current iterator or input has children.
+/// The interfaces identifiers that current iterator or input has children.
 /// </summary>
 public interface IRowsIteratorParent
 {

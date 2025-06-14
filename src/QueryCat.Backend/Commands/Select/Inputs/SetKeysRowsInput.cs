@@ -8,7 +8,7 @@ using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Commands.Select.Inputs;
 
-internal sealed class SetKeysRowsInput : RowsInput, IRowsInputKeys, IRowsInputUpdate, IRowsInputDelete
+internal sealed class SetKeysRowsInput : RowsInput, IRowsInputUpdate, IRowsInputDelete
 {
     private sealed record ConditionJoint(
         SelectQueryCondition Condition,
@@ -18,7 +18,7 @@ internal sealed class SetKeysRowsInput : RowsInput, IRowsInputKeys, IRowsInputUp
 
     private ConditionJoint[] _conditions = [];
     private readonly IExecutionThread _thread;
-    private readonly IRowsInputKeys _rowsInput;
+    private readonly IRowsInput _rowsInput;
     private readonly SelectQueryConditions _selectQueryConditions;
     private bool _keysFilled;
     // Special mode for "WHERE id IN (x, y, z)" condition.
@@ -36,9 +36,9 @@ internal sealed class SetKeysRowsInput : RowsInput, IRowsInputKeys, IRowsInputUp
     /// <inheritdoc />
     public override Column[] Columns { get; protected set; }
 
-    public IRowsInputKeys InnerRowsInput => _rowsInput;
+    public IRowsInput InnerRowsInput => _rowsInput;
 
-    public SetKeysRowsInput(IExecutionThread thread, IRowsInputKeys rowsInput, SelectQueryConditions conditions)
+    public SetKeysRowsInput(IExecutionThread thread, IRowsInput rowsInput, SelectQueryConditions conditions)
     {
         Columns = rowsInput.Columns;
         _thread = thread;
@@ -175,13 +175,13 @@ internal sealed class SetKeysRowsInput : RowsInput, IRowsInputKeys, IRowsInputUp
     public IReadOnlyList<KeyColumn> GetKeyColumns() => _rowsInput.GetKeyColumns();
 
     /// <inheritdoc />
-    public void SetKeyColumnValue(int columnIndex, VariantValue value, VariantValue.Operation operation)
+    public override void SetKeyColumnValue(int columnIndex, VariantValue value, VariantValue.Operation operation)
     {
         // Do not passthru set key value calls.
     }
 
     /// <inheritdoc />
-    public void UnsetKeyColumnValue(int columnIndex, VariantValue.Operation operation)
+    public override void UnsetKeyColumnValue(int columnIndex, VariantValue.Operation operation)
     {
         // Do not passthru key value calls.
     }

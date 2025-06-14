@@ -9,7 +9,7 @@ namespace QueryCat.Backend.Commands.Select.Inputs;
 /// The input source that will be re-created on reset. It is used for such input source
 /// types that have references to another input source.
 /// </summary>
-internal sealed class VaryingRowsInput : IRowsInputKeys, IRowsInputDelete, IRowsInputUpdate
+internal sealed class VaryingRowsInput : IRowsInputDelete, IRowsInputUpdate, IRowsIteratorParent
 {
     private readonly IRowsInput _initialRowsInput;
     private readonly QueryContext _queryContext;
@@ -220,30 +220,23 @@ internal sealed class VaryingRowsInput : IRowsInputKeys, IRowsInputDelete, IRows
     }
 
     /// <inheritdoc />
-    public IReadOnlyList<KeyColumn> GetKeyColumns()
-    {
-        if (RowsInput is IRowsInputKeys keysInput)
-        {
-            return keysInput.GetKeyColumns();
-        }
-        return [];
-    }
+    public IReadOnlyList<KeyColumn> GetKeyColumns() => RowsInput.GetKeyColumns();
 
     /// <inheritdoc />
     public void SetKeyColumnValue(int columnIndex, VariantValue value, VariantValue.Operation operation)
     {
-        if (RowsInput is IRowsInputKeys keysInput)
-        {
-            keysInput.SetKeyColumnValue(columnIndex, value, operation);
-        }
+        RowsInput.SetKeyColumnValue(columnIndex, value, operation);
     }
 
     /// <inheritdoc />
     public void UnsetKeyColumnValue(int columnIndex, VariantValue.Operation operation)
     {
-        if (RowsInput is IRowsInputKeys keysInput)
-        {
-            keysInput.UnsetKeyColumnValue(columnIndex, operation);
-        }
+        RowsInput.UnsetKeyColumnValue(columnIndex, operation);
+    }
+
+    /// <inheritdoc />
+    public IEnumerable<IRowsSchema> GetChildren()
+    {
+        yield return RowsInput;
     }
 }

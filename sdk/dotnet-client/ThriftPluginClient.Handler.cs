@@ -339,16 +339,13 @@ public partial class ThriftPluginClient
             if (_thriftPluginClient._objectsStorage.TryGet<IRowsInput>(object_rows_set_handle, out var rowsInput)
                 && rowsInput != null)
             {
-                if (rowsInput is IRowsInputKeys rowsInputKeys)
-                {
-                    var result = rowsInputKeys.GetKeyColumns()
-                        .Select(c => new KeyColumn(
-                            c.ColumnIndex,
-                            c.IsRequired,
-                            c.GetOperations().Select(o => o.ToString()).ToList())
-                        );
-                    return Task.FromResult(result.ToList());
-                }
+                var result = rowsInput.GetKeyColumns()
+                    .Select(c => new KeyColumn(
+                        c.ColumnIndex,
+                        c.IsRequired,
+                        c.GetOperations().Select(o => o.ToString()).ToList())
+                    );
+                return Task.FromResult(result.ToList());
             }
             else
             {
@@ -365,11 +362,8 @@ public partial class ThriftPluginClient
                 && _thriftPluginClient._objectsStorage.TryGet<IRowsInput>(object_rows_set_handle, out var rowsInput)
                 && rowsInput != null)
             {
-                if (rowsInput is IRowsInputKeys rowsInputKeys)
-                {
-                    rowsInputKeys.SetKeyColumnValue(column_index, SdkConvert.Convert(value),
-                        Enum.Parse<Backend.Core.Types.VariantValue.Operation>(operation));
-                }
+                rowsInput.SetKeyColumnValue(column_index, SdkConvert.Convert(value),
+                    Enum.Parse<Backend.Core.Types.VariantValue.Operation>(operation));
             }
             else
             {
@@ -383,10 +377,9 @@ public partial class ThriftPluginClient
             CancellationToken cancellationToken = default)
         {
             if (_thriftPluginClient._objectsStorage.TryGet<IRowsInput>(object_rows_set_handle, out var rowsInput)
-                && rowsInput != null
-                && rowsInput is IRowsInputKeys rowsInputKeys)
+                && rowsInput != null)
             {
-                rowsInputKeys.UnsetKeyColumnValue(column_index, Enum.Parse<Backend.Core.Types.VariantValue.Operation>(operation));
+                rowsInput.UnsetKeyColumnValue(column_index, Enum.Parse<Backend.Core.Types.VariantValue.Operation>(operation));
             }
             else
             {

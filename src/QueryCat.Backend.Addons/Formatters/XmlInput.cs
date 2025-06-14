@@ -3,7 +3,6 @@ using System.Xml.XPath;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Relational;
 using QueryCat.Backend.Utils;
 
@@ -314,5 +313,18 @@ internal sealed class XmlInput : IRowsInput, IDisposable, IAsyncDisposable
     {
         _xmlReader.Dispose();
         return ValueTask.CompletedTask;
+    }
+
+    /// <inheritdoc />
+    public IReadOnlyList<KeyColumn> GetKeyColumns() => [];
+
+    /// <inheritdoc />
+    public void SetKeyColumnValue(int columnIndex, VariantValue value, VariantValue.Operation operation)
+    {
+    }
+
+    /// <inheritdoc />
+    public void UnsetKeyColumnValue(int columnIndex, VariantValue.Operation operation)
+    {
     }
 }

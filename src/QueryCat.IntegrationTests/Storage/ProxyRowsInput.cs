@@ -64,4 +64,19 @@ public class ProxyRowsInput : IRowsInput, IRowsIteratorParent
     {
         yield return _rowsInput;
     }
+
+    /// <inheritdoc />
+    public IReadOnlyList<KeyColumn> GetKeyColumns() => _rowsInput.GetKeyColumns();
+
+    /// <inheritdoc />
+    public void SetKeyColumnValue(int columnIndex, VariantValue value, VariantValue.Operation operation)
+    {
+        _rowsInput.SetKeyColumnValue(columnIndex, value, operation);
+    }
+
+    /// <inheritdoc />
+    public void UnsetKeyColumnValue(int columnIndex, VariantValue.Operation operation)
+    {
+        _rowsInput.UnsetKeyColumnValue(columnIndex, operation);
+    }
 }

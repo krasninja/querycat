@@ -56,4 +56,17 @@ public abstract class RowsInput : IRowsInput
     /// The method is called before first ReadNext to initialize input.
     /// </summary>
     protected virtual ValueTask LoadAsync(CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
+
+    /// <inheritdoc />
+    public virtual IReadOnlyList<KeyColumn> GetKeyColumns() => [];
+
+    /// <inheritdoc />
+    public virtual void SetKeyColumnValue(int columnIndex, VariantValue value, VariantValue.Operation operation)
+    {
+    }
+
+    /// <inheritdoc />
+    public virtual void UnsetKeyColumnValue(int columnIndex, VariantValue.Operation operation)
+    {
+    }
 }
