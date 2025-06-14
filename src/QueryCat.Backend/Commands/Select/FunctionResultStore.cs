@@ -51,7 +51,7 @@ internal sealed class FunctionResultStore
     }
 
     /// <summary>
-    /// Clear cache,
+    /// Clear results cache.
     /// </summary>
     public void Clear()
     {
