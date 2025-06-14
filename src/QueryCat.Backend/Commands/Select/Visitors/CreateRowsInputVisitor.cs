@@ -145,14 +145,13 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
             return null;
         }
 
+        var funcUnit = new FuncUnitRowsInputColumn(result.InputQueryContext.RowsInput, columnIndex);
         rowsInputContext.RowsInput = new VaryingRowsInput(
             _executionThread,
             rowsInputContext.RowsInput,
-            new FunctionResultStore(new FuncUnitRowsInputColumn(result.InputQueryContext.RowsInput, columnIndex),
-                FuncUnitCallInfo.Empty),
+            new FunctionResultStore(funcUnit, new FuncUnitCallInfo(funcUnit)),
             _rowsInputFactory,
             rowsInputContext);
-        rowsInputContext.IsVary = true;
 
         return rowsInputContext;
     }
@@ -167,23 +166,13 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
             return null;
         }
 
-        SelectInputQueryContext? rowsInputContext = null;
-
-        // Case: we select from a variable that already contains an iterator.
-        if (value.Type == DataType.Object && value.AsObjectUnsafe != null)
-        {
-            rowsInputContext = CreateInputSourceFromObjectVariable(value.AsObjectUnsafe);
-        }
-
-        if (rowsInputContext == null)
-        {
-            var isPartOfFromClause = AstTraversal.GetParents<SelectTableReferenceListNode>().Any();
-            rowsInputContext = await _rowsInputFactory.CreateRowsInputAsync(
-                value, _executionThread, resolveStringAsSource: isPartOfFromClause, cancellationToken);
-        }
+        var isPartOfFromClause = AstTraversal.GetParents<SelectTableReferenceListNode>().Any();
+        var rowsInputContext = await _rowsInputFactory.CreateRowsInputAsync(
+            value, _executionThread, resolveStringAsSource: isPartOfFromClause, cancellationToken);
 
         if (rowsInputContext != null)
         {
+            rowsInputContext.IsVariableBound = true;
             _context.AddInput(rowsInputContext);
             await rowsInputContext.RowsInput.OpenAsync(cancellationToken);
             _logger.LogDebug("Open rows input {RowsInput}.", rowsInputContext.RowsInput);
@@ -285,48 +274,6 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
             callFuncUnitDecorator.CacheEnabled = false;
         }
         return context;
-    }
-
-    private SelectInputQueryContext CreateInputSourceFromObjectVariable(object objVariable)
-    {
-        if (objVariable is IRowsInput rowsInput)
-        {
-            if (rowsInput.QueryContext is not SelectInputQueryContext selectInputQueryContext)
-            {
-                selectInputQueryContext = new SelectInputQueryContext(rowsInput)
-                {
-                    IsVariableBound = true,
-                };
-                rowsInput.QueryContext = selectInputQueryContext;
-            }
-            else
-            {
-                selectInputQueryContext.IsVariableBound = true;
-            }
-            return selectInputQueryContext;
-        }
-        if (objVariable is IRowsIterator rowsIterator)
-        {
-            rowsInput = new RowsIteratorInput(rowsIterator);
-            var context = new SelectInputQueryContext(rowsInput)
-            {
-                IsVariableBound = true,
-            };
-            rowsInput.QueryContext = context;
-            return context;
-        }
-        if (objVariable is IEnumerable enumerable && enumerable.GetType().IsGenericType)
-        {
-#pragma warning disable IL2072
-            rowsInput = new CollectionInput(TypeUtils.GetUnderlyingType(enumerable), enumerable);
-            var context = new SelectInputQueryContext(rowsInput);
-            rowsInput.QueryContext = context;
-#pragma warning restore IL2072
-            return context;
-        }
-
-        throw new QueryCatException(
-            string.Format(Resources.Errors.CannotCreateRowsInputFromType, objVariable.GetType().Name));
     }
 
     private static void SetAlias(IRowsInput input, string alias)

@@ -1,3 +1,4 @@
+using System.Collections;
 using QueryCat.Backend.Ast.Nodes.Function;
 using QueryCat.Backend.Commands.Select.Visitors;
 using QueryCat.Backend.Core.Data;
@@ -53,24 +54,43 @@ internal sealed class RowsInputFactory
             singleValueRowsInput.QueryContext = context;
             return context;
         }
-        if (source.AsObject is IRowsInput rowsInput
-            && rowsInput.QueryContext is not SelectInputQueryContext)
+        if (source.Type == DataType.Object)
         {
-            var targetColumns = await _context.GetSelectIdentifierColumnsAsync(alias, cancellationToken);
-            var queryContext = new SelectInputQueryContext(rowsInput, targetColumns, executionThread.ConfigStorage);
-            if (_context.Parent != null && !executionThread.Options.DisableCache)
+            if (source.AsObjectUnsafe is IRowsInput rowsInput)
             {
-                rowsInput = new CacheRowsInput(executionThread, rowsInput, _context.Conditions);
+                SelectInputQueryContext queryContext;
+                if (rowsInput.QueryContext is not SelectInputQueryContext selectInputQueryContext)
+                {
+                    var targetColumns = await _context.GetSelectIdentifierColumnsAsync(alias, cancellationToken);
+                    queryContext = new SelectInputQueryContext(rowsInput, targetColumns, executionThread.ConfigStorage);
+                    if (_context.Parent != null && !executionThread.Options.DisableCache)
+                    {
+                        rowsInput = new CacheRowsInput(executionThread, rowsInput, _context.Conditions);
+                    }
+                }
+                else
+                {
+                    queryContext = selectInputQueryContext;
+                }
+                rowsInput.QueryContext = queryContext;
+                return queryContext;
             }
-            rowsInput.QueryContext = queryContext;
-            return queryContext;
-        }
-        if (source.AsObject is IRowsIterator rowsIterator)
-        {
-            rowsInput = new RowsIteratorInput(rowsIterator);
-            var context = new SelectInputQueryContext(rowsInput);
-            rowsInput.QueryContext = context;
-            return context;
+            if (source.AsObjectUnsafe is IRowsIterator rowsIterator)
+            {
+                rowsInput = new RowsIteratorInput(rowsIterator);
+                var context = new SelectInputQueryContext(rowsInput);
+                rowsInput.QueryContext = context;
+                return context;
+            }
+            if (source.AsObjectUnsafe is IEnumerable enumerable && enumerable.GetType().IsGenericType)
+            {
+#pragma warning disable IL2072
+                rowsInput = new CollectionInput(TypeUtils.GetUnderlyingType(enumerable), enumerable);
+                var context = new SelectInputQueryContext(rowsInput);
+                rowsInput.QueryContext = context;
+#pragma warning restore IL2072
+                return context;
+            }
         }
 
         return null;
