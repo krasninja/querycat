@@ -26,12 +26,13 @@ public class RowsInputIterator : IRowsIterator, IRowsIteratorParent
         /// <inheritdoc />
         public override VariantValue this[int columnIndex]
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
             get
             {
                 if (!_fetched[columnIndex])
                 {
-                    FetchValue(columnIndex);
                     _fetched[columnIndex] = true;
+                    return FetchValue(columnIndex);
                 }
                 return base[columnIndex];
             }
@@ -44,11 +45,12 @@ public class RowsInputIterator : IRowsIterator, IRowsIteratorParent
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-        private void FetchValue(int columnIndex)
+        private VariantValue FetchValue(int columnIndex)
         {
             var errorCode = _rowsInputIterator._rowsInput.ReadValue(columnIndex, out var value);
             _rowsInputIterator.AddError(errorCode, columnIndex + 1);
             Values[columnIndex] = value;
+            return value;
         }
 
         public void Reset() => Array.Fill(_fetched, false);
@@ -75,7 +77,7 @@ public class RowsInputIterator : IRowsIterator, IRowsIteratorParent
     public Row Current => _row;
 
     /// <summary>
-    /// Autofetch all values.
+    /// Auto-fetch all values.
     /// </summary>
     public bool AutoFetch { get; set; }
 
