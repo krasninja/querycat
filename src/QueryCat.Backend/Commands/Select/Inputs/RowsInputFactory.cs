@@ -23,28 +23,21 @@ internal sealed class RowsInputFactory
     public ValueTask<SelectInputQueryContext?> CreateRowsInputAsync(
         VariantValue source,
         IExecutionThread<ExecutionOptions> executionThread,
-        CancellationToken cancellationToken)
-        => CreateRowsInputAsync(source, string.Empty, executionThread, null, cancellationToken);
+        bool resolveStringAsSource = false,
+        CancellationToken cancellationToken = default)
+        => CreateRowsInputAsync(source, string.Empty, executionThread, null, resolveStringAsSource, cancellationToken);
 
     public async ValueTask<SelectInputQueryContext?> CreateRowsInputAsync(
         VariantValue source,
         string alias,
         IExecutionThread<ExecutionOptions> executionThread,
         FunctionCallNode? formatNode,
-        CancellationToken cancellationToken)
+        bool resolveStringAsSource = false,
+        CancellationToken cancellationToken = default)
     {
-        if (source.Type == DataType.String)
+        if (resolveStringAsSource && source.Type == DataType.String)
         {
             var createDelegateVisitor = new SelectCreateDelegateVisitor(executionThread, _context);
-            if (!string.IsNullOrEmpty(source.AsStringUnsafe))
-            {
-                return await CreateInputSourceFromStringVariableAsync(
-                    source.AsStringUnsafe,
-                    executionThread,
-                    createDelegateVisitor,
-                    formatNode,
-                    cancellationToken);
-            }
             var stringRowsInputContext = await CreateInputSourceFromStringVariableAsync(
                 source.AsStringUnsafe,
                 executionThread,

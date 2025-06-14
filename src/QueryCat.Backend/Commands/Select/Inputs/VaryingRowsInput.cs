@@ -169,7 +169,8 @@ internal sealed class VaryingRowsInput : IRowsInputDelete, IRowsInputUpdate, IRo
             }
 
             // Create new input for variant value.
-            var newInputContext = await _rowsInputFactory.CreateRowsInputAsync(callResult.Value, _thread, cancellationToken);
+            var newInputContext = await _rowsInputFactory.CreateRowsInputAsync(
+                callResult.Value, _thread, true, cancellationToken);
             if (newInputContext == null)
             {
                 _isEndOfData = true;

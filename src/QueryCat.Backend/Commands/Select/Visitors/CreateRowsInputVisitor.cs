@@ -138,6 +138,7 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
             alias,
             _executionThread,
             formatNode: null,
+            resolveStringAsSource: true,
             cancellationToken);
         if (rowsInputContext == null)
         {
@@ -166,10 +167,23 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
             return null;
         }
 
+        SelectInputQueryContext? rowsInputContext = null;
+
         // Case: we select from a variable that already contains an iterator.
         if (value.Type == DataType.Object && value.AsObjectUnsafe != null)
         {
-            var rowsInputContext = CreateInputSourceFromObjectVariable(value.AsObjectUnsafe);
+            rowsInputContext = CreateInputSourceFromObjectVariable(value.AsObjectUnsafe);
+        }
+
+        if (rowsInputContext == null)
+        {
+            var isPartOfFromClause = AstTraversal.GetParents<SelectTableReferenceListNode>().Any();
+            rowsInputContext = await _rowsInputFactory.CreateRowsInputAsync(
+                value, _executionThread, resolveStringAsSource: isPartOfFromClause, cancellationToken);
+        }
+
+        if (rowsInputContext != null)
+        {
             _context.AddInput(rowsInputContext);
             await rowsInputContext.RowsInput.OpenAsync(cancellationToken);
             _logger.LogDebug("Open rows input {RowsInput}.", rowsInputContext.RowsInput);
@@ -242,7 +256,8 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
         {
             callFuncUnitDecorator.CacheEnabled = false;
         }
-        return await _rowsInputFactory.CreateRowsInputAsync(source, alias, _executionThread, formatNode, cancellationToken);
+        return await _rowsInputFactory.CreateRowsInputAsync(
+            source, alias, _executionThread, formatNode, true, cancellationToken);
     }
 
     private async ValueTask<SelectInputQueryContext?> CreateVaryInputContextAsync(
@@ -256,7 +271,8 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
             @delegate,
             functionCallNode.GetRequiredAttribute<FuncUnitCallInfo>(AstAttributeKeys.ArgumentsKey));
         var source = (await store.CallAsync(_executionThread, cancellationToken)).Value;
-        var context = await _rowsInputFactory.CreateRowsInputAsync(source, alias, _executionThread, formatNode, cancellationToken);
+        var context = await _rowsInputFactory.CreateRowsInputAsync(
+            source, alias, _executionThread, formatNode, true, cancellationToken);
         if (context == null)
         {
             return null;
