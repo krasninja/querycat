@@ -354,13 +354,9 @@ internal partial class ProgramParserVisitor
     public override IAstNode VisitSelectTableReference(QueryCatParser.SelectTableReferenceContext context)
     {
         var expressionNode = this.Visit<ExpressionNode>(context.selectTablePrimary());
-        if (expressionNode is SelectTableFunctionNode functionNode)
+        if (expressionNode is ISelectJoinedNode functionNode)
         {
             functionNode.JoinedNodes.AddRange(this.Visit<SelectTableJoinedNode>(context.selectTableJoined()));
-        }
-        else if (expressionNode is SelectIdentifierExpressionNode identifierExpressionNode)
-        {
-            identifierExpressionNode.JoinedNodes.AddRange(this.Visit<SelectTableJoinedNode>(context.selectTableJoined()));
         }
         return expressionNode;
     }
