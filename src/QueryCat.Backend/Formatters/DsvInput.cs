@@ -38,7 +38,7 @@ internal class DsvInput : StreamRowsInput
             var columns = GetInputColumns();
             for (var i = 0; i < columns.Length; i++)
             {
-                columns[i].Name = columnNames[i].AsString;
+                columns[i].Name = columnNames[i].AsString.Trim();
             }
         }
 

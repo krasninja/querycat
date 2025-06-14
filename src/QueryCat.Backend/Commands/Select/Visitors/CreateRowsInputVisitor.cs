@@ -5,6 +5,7 @@ using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Function;
 using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Commands.Select.Inputs;
+using QueryCat.Backend.Commands.Select.Iterators;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
@@ -110,29 +111,46 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
     private async ValueTask<SelectInputQueryContext?> GetInputSourceValueAsync(IdentifierExpressionNode node, CancellationToken cancellationToken)
     {
         if (!_context.TryGetInputSourceByName(node.TableFieldName, node.TableSourceName, out var result)
-            || result == null
-            || result.InputQueryContext == null)
+            || result == null)
         {
             return null;
         }
-        var columnIndex = result.InputQueryContext.RowsInput.GetColumnIndexByName(node.TableFieldName,
+        var columnIndex = result.Input.GetColumnIndexByName(node.TableFieldName,
             node.TableSourceName);
         if (columnIndex < 0)
         {
             return null;
         }
-        if (result.InputQueryContext.RowsInput is not PrefetchRowsInput)
+
+        IFuncUnit? funcUnit = null;
+
+        // If found with rows input.
+        if (result.InputQueryContext != null)
         {
-            result.InputQueryContext.RowsInput = await PrefetchRowsInput.CreateAsync(
-                result.InputQueryContext.RowsInput,
-                cancellationToken);
+            if (result.InputQueryContext.RowsInput is not PrefetchRowsInput)
+            {
+                result.InputQueryContext.RowsInput = await PrefetchRowsInput.CreateAsync(
+                    result.InputQueryContext.RowsInput,
+                    cancellationToken);
+            }
+            funcUnit = new FuncUnitRowsInputColumn(result.InputQueryContext.RowsInput, columnIndex);
         }
-        if (result.InputQueryContext.RowsInput.ReadValue(columnIndex, out var value) != ErrorCode.OK)
+        // Found rows iterator.
+        else if (result.Input is IRowsIterator rowsIterator)
+        {
+            if (rowsIterator is not PrefetchRowsIterator)
+            {
+                var prefetchIterator = await PrefetchRowsIterator.CreateAsync(rowsIterator, cancellationToken);
+                result.Context.SetIterator(prefetchIterator);
+            }
+            funcUnit = new FuncUnitRowsIteratorColumn(result.Context.CurrentIterator, columnIndex);
+        }
+
+        if (funcUnit == null)
         {
             return null;
         }
 
-        var funcUnit = new FuncUnitRowsInputColumn(result.InputQueryContext.RowsInput, columnIndex);
         var store = new FunctionResultStore(funcUnit, new FuncUnitCallInfo(funcUnit));
         var rowsInputContextValue = (await store.CallAsync(_executionThread, cancellationToken)).Value;
 

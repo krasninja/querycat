@@ -140,8 +140,6 @@ internal sealed partial class SelectPlanner
         SelectColumnsExceptNode? exceptNode,
         CancellationToken cancellationToken)
     {
-        var projectedIterator = new ProjectedRowsIterator(ExecutionThread, context.CurrentIterator);
-
         // Format the initial iterator with all columns (except excluded) that
         // user mentioned in SELECT block.
         var funcs = new List<IFuncUnit>();
@@ -151,6 +149,7 @@ internal sealed partial class SelectPlanner
         }
         var selectColumns = CreateSelectColumns(columnsNode).ToList();
         var exceptColumns = exceptNode?.ExceptIdentifiers.ToList() ?? new List<IdentifierExpressionNode>();
+        var projectedIterator = new ProjectedRowsIterator(ExecutionThread, context.CurrentIterator);
         for (var i = 0; i < columnsNode.ColumnsNodes.Count; i++)
         {
             // Excluded columns filter.

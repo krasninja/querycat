@@ -1,0 +1,7 @@
+expected: |
+  1
+  3
+  5
+query: |
+  select (select top 1 v.id from s.source v)
+  from 'Sources.csv' s;

@@ -13,10 +13,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add functions "delay_input", "delay_output", "to_base64", "from_base64".
 - Add "call" command.
 - Initial implementation of inputs with references to other columns.
+- Project icon.
 
 ### Fixed
 
 - Postpone thread start in "buffer_input", "buffer_output".
+- Other improvements.
 
 ## [0.13.0] - 2025-05-06
 
