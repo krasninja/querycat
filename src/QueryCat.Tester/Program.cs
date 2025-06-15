@@ -82,7 +82,7 @@ public class Program
         var executionThread = new ExecutionThreadBootstrapper(options)
             .WithStandardFunctions()
             .WithStandardUriResolvers()
-            .WithConfigStorage(new MemoryInputConfigStorage())
+            .WithConfigStorage(new MemoryConfigStorage())
             .WithPluginsLoader(thread => new SimplePluginsAssemblyLoader(
                 workingDirectoryPlugins.Union(pluginDirectories),
                 thread.FunctionsManager))
