@@ -172,7 +172,7 @@ internal sealed class SetKeysRowsInput : RowsInput, IRowsInputUpdate, IRowsInput
     }
 
     /// <inheritdoc />
-    public IReadOnlyList<KeyColumn> GetKeyColumns() => _rowsInput.GetKeyColumns();
+    public override IReadOnlyList<KeyColumn> GetKeyColumns() => _rowsInput.GetKeyColumns();
 
     /// <inheritdoc />
     public override void SetKeyColumnValue(int columnIndex, VariantValue value, VariantValue.Operation operation)
