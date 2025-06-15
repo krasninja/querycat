@@ -115,11 +115,29 @@ public class DelimiterStreamReader
 
     private sealed class FieldInfo
     {
-        public long StartIndex { get; set; }
+        private long _startIndex;
 
-        public long EndIndex { get; set; }
+        public long StartIndex
+        {
+            get => _startIndex;
+            set => _startIndex = value;
+        }
 
-        public int QuotesCount { get; set; }
+        private long _endIndex;
+
+        public long EndIndex
+        {
+            get => _endIndex;
+            set => _endIndex = value;
+        }
+
+        private int _quotesCount;
+
+        public int QuotesCount
+        {
+            get => _quotesCount;
+            set => _quotesCount = value;
+        }
 
         public char QuoteCharacter { get; set; }
 
@@ -129,12 +147,12 @@ public class DelimiterStreamReader
 
         public bool IsEmpty => EndIndex - StartIndex < 2;
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
         public void Reset()
         {
-            StartIndex = 0;
-            EndIndex = 0;
-            QuotesCount = 0;
+            _startIndex = 0;
+            _endIndex = 0;
+            _quotesCount = 0;
         }
 
         /// <inheritdoc />
@@ -380,7 +398,7 @@ public class DelimiterStreamReader
 
             var remain = sequenceReader.Remaining;
             var readBytes = await ReadNextBufferDataAsync(cancellationToken);
-            if ((ulong)readBytes < 1)
+            if (readBytes < 1)
             {
                 _currentDelimiterPosition += remain;
                 break;
@@ -433,8 +451,10 @@ public class DelimiterStreamReader
             _fieldInfos[^1] = new FieldInfo();
         }
 
-        _fieldInfos[_fieldInfoLastIndex].Reset();
-        return _fieldInfos[_fieldInfoLastIndex++];
+        var field = _fieldInfos[_fieldInfoLastIndex];
+        field.Reset();
+        _fieldInfoLastIndex++;
+        return field;
     }
 
     /// <summary>
