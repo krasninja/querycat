@@ -62,7 +62,7 @@ internal sealed class VaryingOutputRowsIterator : IRowsIterator, IRowsIteratorPa
         QueryContext queryContext) : this(
             thread: thread,
             rowsIterator: rowsIterator,
-            func: new FuncUnitDelegate((_, _) => ValueTask.FromResult(VariantValue.CreateFromObject(defaultRowsOutput)), DataType.Object),
+            func: new FuncUnitStatic(VariantValue.CreateFromObject(defaultRowsOutput)),
             functionCallInfo: FuncUnitCallInfo.Empty,
             defaultRowsOutput,
             queryContext)

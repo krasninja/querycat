@@ -70,6 +70,7 @@ internal sealed class BufferRowsOutput : BufferRowsSource, IRowsOutput
     /// <inheritdoc />
     public async ValueTask<ErrorCode> WriteValuesAsync(VariantValue[] values, CancellationToken cancellationToken = default)
     {
+        StartThread();
         await QueueCountSemaphore.WaitAsync(cancellationToken);
 
         try

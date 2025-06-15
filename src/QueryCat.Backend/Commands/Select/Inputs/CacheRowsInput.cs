@@ -13,7 +13,7 @@ namespace QueryCat.Backend.Commands.Select.Inputs;
 /// The input caches input data and after reset reads it from memory instead.
 /// </summary>
 [DebuggerDisplay("Count = {TotalCacheEntries}, CacheReads = {CacheReads}, TotalReads = {TotalReads}")]
-internal sealed class CacheRowsInput : IRowsInputKeys
+internal sealed class CacheRowsInput : IRowsInput, IRowsIteratorParent
 {
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(CacheRowsInput));
 
@@ -238,15 +238,11 @@ internal sealed class CacheRowsInput : IRowsInputKeys
         SelectQueryConditions conditions,
         CancellationToken cancellationToken)
     {
-        CacheKeyCondition[]? cacheConditions = null;
-        if (rowsInput is IRowsInputKeys rowsInputKeys)
+        var keyConditions = conditions.GetKeyConditions(rowsInput);
+        var cacheConditions = new CacheKeyCondition[keyConditions.Count];
+        for (var i = 0; i < keyConditions.Count; i++)
         {
-            var keyConditions = conditions.GetKeyConditions(rowsInputKeys);
-            cacheConditions = new CacheKeyCondition[keyConditions.Count];
-            for (var i = 0; i < keyConditions.Count; i++)
-            {
-                cacheConditions[i] = await keyConditions[i].ToCacheCondition(thread, cancellationToken);
-            }
+            cacheConditions[i] = await keyConditions[i].ToCacheCondition(thread, cancellationToken);
         }
 
         return new CacheKey(
@@ -282,30 +278,23 @@ internal sealed class CacheRowsInput : IRowsInputKeys
     }
 
     /// <inheritdoc />
-    public IReadOnlyList<KeyColumn> GetKeyColumns()
-    {
-        if (_rowsInput is IRowsInputKeys rowsInputKeys)
-        {
-            return rowsInputKeys.GetKeyColumns();
-        }
-        return new List<KeyColumn>();
-    }
+    public IReadOnlyList<KeyColumn> GetKeyColumns() => _rowsInput.GetKeyColumns();
 
     /// <inheritdoc />
     public void SetKeyColumnValue(int columnIndex, VariantValue value, VariantValue.Operation operation)
     {
-        if (_rowsInput is IRowsInputKeys rowsInputKeys)
-        {
-            rowsInputKeys.SetKeyColumnValue(columnIndex, value, operation);
-        }
+        _rowsInput.SetKeyColumnValue(columnIndex, value, operation);
     }
 
     /// <inheritdoc />
     public void UnsetKeyColumnValue(int columnIndex, VariantValue.Operation operation)
     {
-        if (_rowsInput is IRowsInputKeys rowsInputKeys)
-        {
-            rowsInputKeys.UnsetKeyColumnValue(columnIndex, operation);
-        }
+        _rowsInput.UnsetKeyColumnValue(columnIndex, operation);
+    }
+
+    /// <inheritdoc />
+    public IEnumerable<IRowsSchema> GetChildren()
+    {
+        yield return _rowsInput;
     }
 }

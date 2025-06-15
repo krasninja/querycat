@@ -1,11 +1,11 @@
 expected: |
   Ivan,Wine,Home
-  Marina,Wine,Home
-  Ivan,Chocolate,Home
-  Marina,Chocolate,Home
   Ivan,Wine,Work
-  Marina,Wine,Work
+  Ivan,Chocolate,Home
   Ivan,Chocolate,Work
+  Marina,Wine,Home
+  Marina,Wine,Work
+  Marina,Chocolate,Home
   Marina,Chocolate,Work
 query: |
   SELECT * FROM

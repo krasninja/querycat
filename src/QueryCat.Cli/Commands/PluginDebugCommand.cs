@@ -53,7 +53,7 @@ internal class PluginDebugCommand : BaseQueryCommand
             options.FollowTimeout = follow ? QueryOptionsBinder.FollowDefaultTimeout : TimeSpan.Zero;
 
             await using var thread = new ExecutionThreadBootstrapper(options)
-                .WithConfigStorage(new PersistentInputConfigStorage(
+                .WithConfigStorage(new PersistentConfigStorage(
                     Path.Combine(Application.GetApplicationDirectory(), ApplicationOptions.ConfigFileName)))
 #if PLUGIN_THRIFT
                 .WithPluginsLoader(th => new ThriftPluginsLoader(

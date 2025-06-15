@@ -1,11 +1,14 @@
 namespace QueryCat.Backend.Ast.Nodes.Select;
 
-internal sealed class SelectTableValuesNode : ExpressionNode, ISelectAliasNode
+internal sealed class SelectTableValuesNode : ExpressionNode, ISelectAliasNode, ISelectJoinedNode
 {
     public List<SelectTableValuesRowNode> RowsNodes { get; } = new();
 
     /// <inheritdoc />
     public string Alias { get; internal set; } = string.Empty;
+
+    /// <inheritdoc />
+    public List<SelectTableJoinedNode> JoinedNodes { get; } = new();
 
     /// <inheritdoc />
     public override string Code => "table_values";
@@ -15,16 +18,25 @@ internal sealed class SelectTableValuesNode : ExpressionNode, ISelectAliasNode
         RowsNodes.AddRange(rowsNodes);
     }
 
-    public SelectTableValuesNode(SelectTableValuesNode valuesNode)
-        : this(valuesNode.RowsNodes.Select(n => (SelectTableValuesRowNode)n.Clone()).ToList())
+    public SelectTableValuesNode(SelectTableValuesNode node)
+        : this(node.RowsNodes.Select(n => (SelectTableValuesRowNode)n.Clone()).ToList())
     {
-        valuesNode.CopyTo(this);
+        Alias = node.Alias;
+        JoinedNodes.AddRange(node.JoinedNodes.Select(j => (SelectTableJoinedNode)j.Clone()));
+        node.CopyTo(this);
     }
 
     /// <inheritdoc />
     public override IEnumerable<IAstNode> GetChildren()
     {
-        return RowsNodes;
+        foreach (var selectTableValuesRowNode in RowsNodes)
+        {
+            yield return selectTableValuesRowNode;
+        }
+        foreach (var selectTableJoinedNode in JoinedNodes)
+        {
+            yield return selectTableJoinedNode;
+        }
     }
 
     /// <inheritdoc />

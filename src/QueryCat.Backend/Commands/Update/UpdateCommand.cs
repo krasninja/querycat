@@ -38,7 +38,7 @@ internal sealed class UpdateCommand : ICommand
         var context = selectNode.GetRequiredAttribute<SelectCommandContext>(AstAttributeKeys.ContextKey);
 
         // Evaluate setters.
-        if (context.RowsInputIterator?.RowsInput is not IRowsInputUpdate rowsInput)
+        if (context.FirstRowsInput is not IRowsInputUpdate rowsInput)
         {
             throw new QueryCatException(Resources.Errors.RowsInputNotUpdatable);
         }

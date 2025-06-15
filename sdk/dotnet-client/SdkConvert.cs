@@ -320,4 +320,30 @@ public static class SdkConvert
             Sdk.CursorSeekOrigin.END => Backend.Core.Data.CursorSeekOrigin.End,
             _ => throw new ArgumentOutOfRangeException(nameof(origin)),
         };
+
+    public static Sdk.LogLevel Convert(Microsoft.Extensions.Logging.LogLevel origin)
+        => origin switch
+        {
+            Microsoft.Extensions.Logging.LogLevel.Trace => Sdk.LogLevel.TRACE,
+            Microsoft.Extensions.Logging.LogLevel.Debug => Sdk.LogLevel.DEBUG,
+            Microsoft.Extensions.Logging.LogLevel.Information => Sdk.LogLevel.INFORMATION,
+            Microsoft.Extensions.Logging.LogLevel.Warning => Sdk.LogLevel.WARNING,
+            Microsoft.Extensions.Logging.LogLevel.Error => Sdk.LogLevel.ERROR,
+            Microsoft.Extensions.Logging.LogLevel.Critical => Sdk.LogLevel.CRITICAL,
+            Microsoft.Extensions.Logging.LogLevel.None => Sdk.LogLevel.NONE,
+            _ => throw new ArgumentOutOfRangeException(nameof(origin))
+        };
+
+    public static Microsoft.Extensions.Logging.LogLevel Convert(Sdk.LogLevel origin)
+        => origin switch
+        {
+            LogLevel.TRACE => Microsoft.Extensions.Logging.LogLevel.Trace,
+            LogLevel.DEBUG => Microsoft.Extensions.Logging.LogLevel.Debug,
+            LogLevel.INFORMATION => Microsoft.Extensions.Logging.LogLevel.Information,
+            LogLevel.WARNING => Microsoft.Extensions.Logging.LogLevel.Warning,
+            LogLevel.ERROR => Microsoft.Extensions.Logging.LogLevel.Error,
+            LogLevel.CRITICAL => Microsoft.Extensions.Logging.LogLevel.Critical,
+            LogLevel.NONE => Microsoft.Extensions.Logging.LogLevel.None,
+            _ => throw new ArgumentOutOfRangeException(nameof(origin))
+        };
 }

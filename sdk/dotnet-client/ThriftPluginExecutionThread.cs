@@ -12,7 +12,7 @@ using VariantValue = QueryCat.Backend.Core.Types.VariantValue;
 namespace QueryCat.Plugins.Client;
 
 /// <summary>
-/// The implementation of execution thread that uses remote input config storage.
+/// The implementation of execution thread that uses remote config storage.
 /// </summary>
 /// <remarks>
 /// The implementation has the following limitations:
@@ -35,7 +35,7 @@ public sealed class ThriftPluginExecutionThread : IExecutionThread
     public IPluginsManager PluginsManager { get; }
 
     /// <inheritdoc />
-    public IInputConfigStorage ConfigStorage { get; }
+    public IConfigStorage ConfigStorage { get; }
 
     /// <inheritdoc />
     public IExecutionScope TopScope { get; }
@@ -61,7 +61,7 @@ public sealed class ThriftPluginExecutionThread : IExecutionThread
         PluginsManager = NullPluginsManager.Instance;
         FunctionsManager = new PluginFunctionsManager();
         TopScope = new ThriftPluginExecutionScope(_client);
-        ConfigStorage = new ThriftInputConfigStorage(_client);
+        ConfigStorage = new ThriftConfigStorage(_client);
         Stack = new ListExecutionStack();
     }
 

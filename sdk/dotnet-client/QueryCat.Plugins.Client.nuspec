@@ -3,8 +3,9 @@
   <metadata>
     <id>QueryCat.Plugins.Client</id>
     <title>QueryCat Plugins Client</title>
+    <icon>icon.png</icon>
     <summary>The assembly that helps you build plugins for QueryCat</summary>
-    <version>0.1.1</version>
+    <version>0.2.0</version>
     <description>The assembly that helps you build plugins for QueryCat. Contains references to Thrift proxy and QueryCat core.</description>
     <authors>Ivan Kozhin</authors>
     <owners>Ivan Kozhin</owners>
@@ -16,9 +17,9 @@
     <repository type="git" url="https://github.com/krasninja/querycat" commit="$CommitHash$" />
     <dependencies>
       <group targetFramework="net8.0">
-        <dependency id="ApacheThrift" version="[0.20.0, )" />
+        <dependency id="ApacheThrift" version="[0.22.0, )" />
         <dependency id="Microsoft.Extensions.Logging.Abstractions" version="[8.0.0, )" />
-        <dependency id="QueryCat" version="[0.8.1, )" />
+        <dependency id="QueryCat" version="[0.13.0, )" />
       </group>
     </dependencies>
   </metadata>
@@ -27,5 +28,6 @@
     <file src="bin\Release\net8.0\QueryCat.Plugins.Client.pdb" target="lib\net8.0" />
     <file src="bin\Release\net8.0\QueryCat.Plugins.Sdk.dll" target="lib\net8.0" />
     <file src="..\..\LICENSE.txt" target="LICENSE.txt" />
+    <file src="..\..\icon.png" target="icon.png" />
   </files>
 </package>

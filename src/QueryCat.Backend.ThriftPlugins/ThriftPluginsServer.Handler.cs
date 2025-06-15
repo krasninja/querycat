@@ -34,7 +34,8 @@ public partial class ThriftPluginsServer
                 return Task.FromResult(new RegistrationResult
                 {
                     Version = Application.GetVersion(),
-                    Token = -1
+                    Token = -1,
+                    MinLogLevel = SdkConvert.Convert(GetCurrentLogLevel()),
                 });
             }
 
@@ -87,10 +88,12 @@ public partial class ThriftPluginsServer
             _thriftPluginsServer.ConfirmRegistrationToken(registration_token);
             _thriftPluginsServer._logger.LogDebug("Registered plugin '{PluginName}'.", context.PluginName);
 
-            return Task.FromResult(new RegistrationResult(
-                token,
-                Application.GetVersion()
-            ));
+            return Task.FromResult(new RegistrationResult
+            {
+                Token = token,
+                Version = Application.GetVersion(),
+                MinLogLevel = SdkConvert.Convert(GetCurrentLogLevel()),
+            });
         }
 
         private ThriftPluginContext CreateClientConnection(string callbackUri)
@@ -140,14 +143,14 @@ public partial class ThriftPluginsServer
         {
             _thriftPluginsServer.VerifyToken(token);
             var internalValue = value != null ? SdkConvert.Convert(value) : Core.Types.VariantValue.Null;
-            await _thriftPluginsServer._inputConfigStorage.SetAsync(key, internalValue, cancellationToken);
+            await _thriftPluginsServer._configStorage.SetAsync(key, internalValue, cancellationToken);
         }
 
         /// <inheritdoc />
         public async Task<VariantValue> GetConfigValueAsync(long token, string key, CancellationToken cancellationToken = default)
         {
             _thriftPluginsServer.VerifyToken(token);
-            var value = await _thriftPluginsServer._inputConfigStorage.GetAsync(key, cancellationToken);
+            var value = await _thriftPluginsServer._configStorage.GetAsync(key, cancellationToken);
             return SdkConvert.Convert(value);
         }
 
@@ -245,17 +248,7 @@ public partial class ThriftPluginsServer
             CancellationToken cancellationToken = default)
         {
             var context = _thriftPluginsServer.GetPluginContextByToken(token);
-            var logLevel = level switch
-            {
-                LogLevel.TRACE => Microsoft.Extensions.Logging.LogLevel.Trace,
-                LogLevel.DEBUG => Microsoft.Extensions.Logging.LogLevel.Debug,
-                LogLevel.INFORMATION => Microsoft.Extensions.Logging.LogLevel.Information,
-                LogLevel.WARNING => Microsoft.Extensions.Logging.LogLevel.Warning,
-                LogLevel.ERROR => Microsoft.Extensions.Logging.LogLevel.Error,
-                LogLevel.CRITICAL => Microsoft.Extensions.Logging.LogLevel.Critical,
-                LogLevel.NONE => Microsoft.Extensions.Logging.LogLevel.None,
-                _ => throw new ArgumentOutOfRangeException(nameof(level), level, null),
-            };
+            var logLevel = SdkConvert.Convert(level);
 
             message = $"[{context.PluginName}] {message}";
             if (arguments != null && arguments.Count > 0)
@@ -267,6 +260,19 @@ public partial class ThriftPluginsServer
                 _thriftPluginsServer._logger.Log(logLevel, message);
             }
             return Task.CompletedTask;
+        }
+
+        private Microsoft.Extensions.Logging.LogLevel GetCurrentLogLevel()
+        {
+            foreach (var logLevel in Enum.GetValues<Microsoft.Extensions.Logging.LogLevel>())
+            {
+                if (_thriftPluginsServer._logger.IsEnabled(logLevel))
+                {
+                    return logLevel;
+                }
+            }
+
+            return Microsoft.Extensions.Logging.LogLevel.None;
         }
     }
 

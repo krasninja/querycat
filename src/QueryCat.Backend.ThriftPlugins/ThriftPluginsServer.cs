@@ -24,7 +24,7 @@ public sealed partial class ThriftPluginsServer : IDisposable
 
     public Uri ServerEndpointUri => _mainServerThread.Endpoint;
 
-    private readonly IInputConfigStorage _inputConfigStorage;
+    private readonly IConfigStorage _configStorage;
     private readonly IExecutionThread _executionThread;
     private readonly CancellationTokenSource _serverCts = new();
     private readonly ConcurrentDictionary<string, RegistrationTokenData> _registrationTokens = new();
@@ -76,7 +76,7 @@ public sealed partial class ThriftPluginsServer : IDisposable
         IgnoreThriftLogs = true;
 #endif
         _executionThread = executionThread;
-        _inputConfigStorage = executionThread.ConfigStorage;
+        _configStorage = executionThread.ConfigStorage;
         var uri = ThriftTransportUtils.FormatTransportUri(thriftTransportType, serverEndpointPath);
         var server = CreateServer(uri);
         _mainServerThread = new ServerThread(uri, server);

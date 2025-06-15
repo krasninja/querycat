@@ -5,7 +5,7 @@ namespace QueryCat.Backend.Core.Data;
 /// <summary>
 /// Class implements methods to get rows.
 /// </summary>
-public interface IRowsInput : IRowsSource, IRowsSchema
+public interface IRowsInput : IRowsSource, IRowsSchema, IRowsInputKeys
 {
     /// <summary>
     /// Unique keys identifies rows input among others. It can be used by cache layer.

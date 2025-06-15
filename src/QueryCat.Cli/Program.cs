@@ -39,6 +39,7 @@ internal sealed class Program
             new ExplainCommand(),
             new AstCommand(),
             new SchemaCommand(),
+            new CallFunctionCommand(),
             new ServeCommand(),
 #if ENABLE_PLUGINS
             new Command("plugin", "Plugins management.")
@@ -147,7 +148,7 @@ internal sealed class Program
             }
             else
             {
-                logger.LogCritical(exception, exception.Message);
+                logger.LogCritical(logger.IsEnabled(LogLevel.Debug) ? exception : null, exception.Message);
                 return 1;
             }
         }

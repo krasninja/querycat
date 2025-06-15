@@ -386,5 +386,11 @@ namespace QueryCat.Backend.Resources {
                 return ResourceManager.GetString("CommandNotAllowed", resourceCulture);
             }
         }
+        
+        internal static string CannotCreateRowsInputFromType {
+            get {
+                return ResourceManager.GetString("CannotCreateRowsInputFromType", resourceCulture);
+            }
+        }
     }
 }

@@ -27,7 +27,9 @@ public sealed class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
     private sealed class CollectQueryContext : QueryContext
     {
         /// <inheritdoc />
-        public override QueryContextQueryInfo QueryInfo { get; } = new(Array.Empty<Column>());
+        public CollectQueryContext() : base(new QueryContextQueryInfo([]))
+        {
+        }
     }
 
     /// <inheritdoc />
@@ -92,7 +94,7 @@ public sealed class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
         // Iterate and write whole schema.
         foreach (var inputFunction in pluginFunctions)
         {
-            IRowsInputKeys rowsInput;
+            IRowsInput rowsInput;
             var queryContext = new CollectQueryContext();
             try
             {
@@ -102,7 +104,7 @@ public sealed class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
                     frame.Push(VariantValue.Null);
                 }
                 rowsInput = (await FunctionCaller.CallAsync(inputFunction.Delegate, thread))
-                    .As<IRowsInputKeys?>()!;
+                    .AsRequired<IRowsInput>();
                 rowsInput.QueryContext = queryContext;
                 await rowsInput.OpenAsync();
             }

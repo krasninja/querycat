@@ -1,4 +1,4 @@
-using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Commands.Select;
 
 namespace QueryCat.Backend.Ast;
 
@@ -16,11 +16,6 @@ internal static class AstAttributeKeys
     /// Associated function (of type <see cref="QueryCat.Backend.Core.Functions.IFunction" />).
     /// </summary>
     public const string FunctionKey = "function_key";
-
-    /// <summary>
-    /// Rows input of type <see cref="IRowsInput" />.
-    /// </summary>
-    public const string RowsInputKey = "rows_input_key";
 
     /// <summary>
     /// Function call info (of type <see cref="QueryCat.Backend.Commands.FuncUnitCallInfo" />).
@@ -43,9 +38,14 @@ internal static class AstAttributeKeys
     public const string ResultKey = "result_key";
 
     /// <summary>
-    /// Select command context.
+    /// Select command context. See <see cref="SelectCommandContext" />.
     /// </summary>
     public const string ContextKey = "context_key";
+
+    /// <summary>
+    /// Select input context. See <see cref="SelectInputQueryContext" />.
+    /// </summary>
+    public const string RowsInputContextKey = "input_context_key";
 
     /// <summary>
     /// Correspond identifier rows input column.

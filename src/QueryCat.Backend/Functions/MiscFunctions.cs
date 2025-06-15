@@ -16,7 +16,14 @@ internal static class MiscFunctions
 {
     [SafeFunction]
     [Description("The function returns a null value if value1 equals value2; otherwise it returns value1.")]
-    [FunctionSignature("\"nullif\"(value1: any, value2: any): any")]
+    [FunctionSignature("\"nullif\"(value1: integer, value2: integer): integer")]
+    [FunctionSignature("\"nullif\"(value1: string, value2: string): string")]
+    [FunctionSignature("\"nullif\"(value1: float, value2: float): float")]
+    [FunctionSignature("\"nullif\"(value1: timestamp, value2: timestamp): timestamp")]
+    [FunctionSignature("\"nullif\"(value1: boolean, value2: boolean): boolean")]
+    [FunctionSignature("\"nullif\"(value1: numeric, value2: numeric): numeric")]
+    [FunctionSignature("\"nullif\"(value1: interval, value2: interval): interval")]
+    [FunctionSignature("\"nullif\"(value1: blob, value2: blob): blob")]
     public static VariantValue NullIf(IExecutionThread thread)
     {
         var value1 = thread.Stack[0];
@@ -102,7 +109,7 @@ internal static class MiscFunctions
             addValueFactory: (k) => new CacheRowsIterator(iterator, expiresIn: expireTime),
             updateValueFactory: (k, cache) =>
             {
-                if (cache.IsExpired || !cache.RowsIterator.IsSchemaEqual(iterator))
+                if (cache.IsExpired || !cache.RowsIterator.IsSchemaEqual(iterator.Columns))
                 {
                     return new CacheRowsIterator(iterator, expiresIn: expireTime);
                 }

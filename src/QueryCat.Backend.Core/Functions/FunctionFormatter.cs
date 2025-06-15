@@ -179,12 +179,16 @@ internal static class FunctionFormatter
         _ => value.ToString(CultureInfo.InvariantCulture),
     };
 
-    private static string Quote(string target) => StringUtils.Quote(target, quote: "\'").ToString();
+    private static string Quote(string target) => StringUtils.Quote(target, quote: "\'");
 
     /// <summary>
     /// Normalize function name. Make it uppercase.
     /// </summary>
     /// <param name="target">Target function name.</param>
     /// <returns>Normalized name.</returns>
-    internal static string NormalizeName(string target) => target.ToUpperInvariant();
+    internal static string NormalizeName(string target)
+    {
+        target = StringUtils.Unquote(target);
+        return target.ToUpperInvariant();
+    }
 }

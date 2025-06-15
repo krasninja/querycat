@@ -7,7 +7,7 @@ using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Inputs;
 
-internal sealed class BufferRowsInput : BufferRowsSource, IRowsInput
+internal sealed class BufferRowsInput : BufferRowsSource, IRowsInput, IRowsIteratorParent
 {
     [SafeFunction]
     [Description("Implements buffer for rows input.")]
@@ -76,6 +76,7 @@ internal sealed class BufferRowsInput : BufferRowsSource, IRowsInput
     /// <inheritdoc />
     public async ValueTask<bool> ReadNextAsync(CancellationToken cancellationToken = default)
     {
+        StartThread();
         do
         {
             // Otherwise wait for complete write and try to dequeue again.
@@ -97,6 +98,27 @@ internal sealed class BufferRowsInput : BufferRowsSource, IRowsInput
     {
         await base.ResetAsync(cancellationToken);
         await _writeSemaphore.WaitAsync(cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public IReadOnlyList<KeyColumn> GetKeyColumns() => _rowsInput.GetKeyColumns();
+
+    /// <inheritdoc />
+    public void SetKeyColumnValue(int columnIndex, VariantValue value, VariantValue.Operation operation)
+    {
+        _rowsInput.SetKeyColumnValue(columnIndex, value, operation);
+    }
+
+    /// <inheritdoc />
+    public void UnsetKeyColumnValue(int columnIndex, VariantValue.Operation operation)
+    {
+        _rowsInput.UnsetKeyColumnValue(columnIndex, operation);
+    }
+
+    /// <inheritdoc />
+    public IEnumerable<IRowsSchema> GetChildren()
+    {
+        yield return _rowsInput;
     }
 
     /// <inheritdoc />

@@ -52,8 +52,11 @@ public static class RowsIteratorUtils
     /// <param name="skipColumnsIndexes">Skip certain columns by indexes.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Awaitable task.</returns>
-    public static async Task ResolveColumnsTypesAsync(IRowsIterator rowsIterator, int numberOfRowsToAnalyze = 10,
-        int[]? skipColumnsIndexes = null, CancellationToken cancellationToken = default)
+    public static async Task ResolveColumnsTypesAsync(
+        IRowsIterator rowsIterator,
+        int numberOfRowsToAnalyze = 10,
+        int[]? skipColumnsIndexes = null,
+        CancellationToken cancellationToken = default)
     {
         skipColumnsIndexes ??= [];
 

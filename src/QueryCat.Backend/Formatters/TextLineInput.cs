@@ -1,8 +1,6 @@
 using QueryCat.Backend.Core;
-using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Core.Utils;
-using QueryCat.Backend.Relational;
 using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Storage;
 
@@ -13,12 +11,12 @@ namespace QueryCat.Backend.Formatters;
 /// </summary>
 internal sealed class TextLineInput : StreamRowsInput
 {
-    private readonly Column[] _customColumns =
-    {
+    private readonly VirtualColumn[] _customColumns =
+    [
         new("filename", DataType.String, "File path"), // Index 0.
-    };
+    ];
 
-    public TextLineInput(Stream stream, string? key = null) : base(new StreamReader(stream), new StreamRowsInputOptions
+    public TextLineInput(Stream stream, string? key = null) : base(stream, new StreamRowsInputOptions
     {
         DelimiterStreamReaderOptions = new DelimiterStreamReader.ReaderOptions
         {
@@ -34,14 +32,14 @@ internal sealed class TextLineInput : StreamRowsInput
     }
 
     /// <inheritdoc />
-    protected override async Task AnalyzeAsync(CacheRowsIterator iterator, CancellationToken cancellationToken = default)
+    protected override Task InitializeCompleteAsync(CacheRowsIterator iterator, CancellationToken cancellationToken = default)
     {
-        await RowsIteratorUtils.ResolveColumnsTypesAsync(iterator, cancellationToken: cancellationToken);
         Columns[^1].Name = "text";
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />
-    protected override Column[] GetVirtualColumns() => _customColumns;
+    protected override VirtualColumn[] GetVirtualColumns() => _customColumns;
 
     /// <inheritdoc />
     protected override VariantValue GetVirtualColumnValue(int rowIndex, int columnIndex)

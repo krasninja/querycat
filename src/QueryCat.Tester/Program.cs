@@ -19,8 +19,6 @@ namespace QueryCat.Tester;
 /// </summary>
 public class Program
 {
-    private static readonly Lazy<ILogger> _logger = new(() => Application.LoggerFactory.CreateLogger(nameof(Program)));
-
     private static readonly Option<string[]> _pluginFilesOption = new("--plugin-files",
         description: "Plugin files.")
         {
@@ -81,20 +79,13 @@ public class Program
             RunBootstrapScript = true,
         };
 
-        var pluginLoaderFactory = (IExecutionThread thread) =>
-        {
-            var loader = new SimplePluginsAssemblyLoader(
-                workingDirectoryPlugins.Union(pluginDirectories),
-                thread.FunctionsManager);
-            // TODO: Remove after QueryCat update, this is a workaround due to bug in 0.12.1.
-            loader.LoadAsync(new PluginsLoadingOptions()).GetAwaiter().GetResult();
-            return loader;
-        };
         var executionThread = new ExecutionThreadBootstrapper(options)
             .WithStandardFunctions()
             .WithStandardUriResolvers()
             .WithConfigStorage(new MemoryInputConfigStorage())
-            .WithPluginsLoader(pluginLoaderFactory)
+            .WithPluginsLoader(thread => new SimplePluginsAssemblyLoader(
+                workingDirectoryPlugins.Union(pluginDirectories),
+                thread.FunctionsManager))
             .Create();
         await executionThread.PluginsManager.PluginsLoader.LoadAsync(new PluginsLoadingOptions(), CancellationToken.None);
 

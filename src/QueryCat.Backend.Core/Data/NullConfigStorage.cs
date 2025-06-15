@@ -3,11 +3,11 @@ using QueryCat.Backend.Core.Types;
 namespace QueryCat.Backend.Core.Data;
 
 /// <summary>
-/// Empty input config storage implementation.
+/// Empty config storage implementation.
 /// </summary>
-public class NullInputConfigStorage : IInputConfigStorage
+public class NullConfigStorage : IConfigStorage
 {
-    public static NullInputConfigStorage Instance { get; } = new();
+    public static NullConfigStorage Instance { get; } = new();
 
     /// <inheritdoc />
     public ValueTask SetAsync(string key, VariantValue value, CancellationToken cancellationToken = default) => ValueTask.CompletedTask;

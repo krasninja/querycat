@@ -1,29 +1,48 @@
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Commands.Select;
 
 /// <summary>
 /// Context for input rows source.
 /// </summary>
-internal class SelectInputQueryContext : QueryContext
+internal sealed class SelectInputQueryContext : QueryContext
 {
+#if DEBUG
+    private readonly int _id = IdGenerator.GetNext(3000);
+#endif
+
     /// <summary>
     /// The target rows input.
     /// </summary>
-    public IRowsInput RowsInput { get; }
+    public IRowsInput RowsInput { get; set; }
+
+    /// <summary>
+    /// Input alternative name.
+    /// </summary>
+    public string Alias { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Was the input created from variable.
+    /// </summary>
+    public bool IsVariableBound { get; set; }
+
+    /// <summary>
+    /// Is vary input source. Vary input source contain identifiers as input arguments.
+    /// </summary>
+    public bool IsVary { get; set; }
 
     /// <inheritdoc />
-    public override QueryContextQueryInfo QueryInfo { get; }
-
-    /// <inheritdoc />
-    public SelectInputQueryContext(IRowsInput rowsInput, Column[] columns)
+    public SelectInputQueryContext(IRowsInput rowsInput, Column[] columns, IConfigStorage configStorage)
+        : base(new QueryContextQueryInfo(columns))
     {
         RowsInput = rowsInput;
-        QueryInfo = new QueryContextQueryInfo(columns);
+        ConfigStorage = configStorage;
     }
 
     /// <inheritdoc />
-    public SelectInputQueryContext(IRowsInput rowsInput) : this(rowsInput, rowsInput.Columns)
+    public SelectInputQueryContext(IRowsInput rowsInput)
+        : this(rowsInput, rowsInput.Columns, NullConfigStorage.Instance)
     {
     }
 }

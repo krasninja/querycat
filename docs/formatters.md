@@ -4,6 +4,7 @@
 
 | Name and Description |
 | --- |
+| `clef(): object<IRowsFormatter>`<br /><br /> Compact log event formatter (CLEF). |
 | `csv(has_header?: boolean): object<IRowsFormatter>`<br /><br /> Comma separated values (CSV) format. |
 | `iisw3c(): object<IRowsFormatter>`<br /><br /> IIS W3C log files formatter. |
 | `grok(pattern: string): object<IRowsFormatter>`<br /><br /> Grok expression formatter. |

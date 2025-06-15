@@ -498,7 +498,7 @@ internal partial class CreateDelegateVisitor : AstVisitor
         NodeIdFuncMap[node.Id] = NodeIdFuncMap[node.ExpressionValueNode.Id];
     }
 
-    private sealed class FunctionCallFuncUnit(
+    private class FunctionCallFuncUnit(
         IFunction function,
         IFuncUnit[] argsUnits,
         DataType outputType) : IFuncUnit

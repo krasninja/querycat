@@ -1,12 +1,16 @@
+using System.Collections;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Ast;
+using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Function;
 using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Commands.Select.Inputs;
+using QueryCat.Backend.Commands.Select.Iterators;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Relational;
 using QueryCat.Backend.Storage;
 
 namespace QueryCat.Backend.Commands.Select.Visitors;
@@ -21,7 +25,8 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
     private readonly IExecutionThread<ExecutionOptions> _executionThread;
     private readonly SelectCommandContext _context;
     private readonly ResolveTypesVisitor _resolveTypesVisitor;
-    private readonly CreateDelegateVisitor _createDelegateVisitor;
+    private readonly CreateDelegateVisitorWithValueStore _createDelegateVisitor;
+    private readonly RowsInputFactory _rowsInputFactory;
 
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(CreateRowsInputVisitor));
 
@@ -33,24 +38,25 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
         AstTraversal.TypesToIgnore.Add(typeof(SelectQueryCombineNode));
         AstTraversal.AcceptBeforeIgnore = true;
 
-        _resolveTypesVisitor = new ResolveTypesVisitor(executionThread);
+        _resolveTypesVisitor = new SelectResolveTypesVisitor(executionThread, context);
         if (_context.Parent != null)
         {
             _resolveTypesVisitor = new SelectResolveTypesVisitor(_executionThread, _context.Parent);
         }
-        _createDelegateVisitor = new CreateDelegateVisitorWithValueStore(executionThread, _resolveTypesVisitor);
+        _createDelegateVisitor = new CreateDelegateVisitorWithValueStore(executionThread, context);
+        _rowsInputFactory = new RowsInputFactory(_context);
     }
 
     /// <inheritdoc />
     public override async ValueTask VisitAsync(SelectTableFunctionNode node, CancellationToken cancellationToken)
     {
-        var rowsInput = await VisitFunctionNodeInternalAsync(node.TableFunctionNode, node.Alias, cancellationToken);
-        if (rowsInput == null)
+        var rowsInputContext = await VisitFunctionNodeInternalAsync(node.TableFunctionNode, null, node.Alias, cancellationToken);
+        if (rowsInputContext == null)
         {
             throw new QueryCatException(Resources.Errors.InvalidRowsInput);
         }
-        node.SetAttribute(AstAttributeKeys.RowsInputKey, rowsInput);
-        node.TableFunctionNode.SetAttribute(AstAttributeKeys.RowsInputKey, rowsInput);
+        node.SetAttribute(AstAttributeKeys.RowsInputContextKey, rowsInputContext);
+        node.TableFunctionNode.SetAttribute(AstAttributeKeys.RowsInputContextKey, rowsInputContext);
     }
 
     /// <inheritdoc />
@@ -59,69 +65,236 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
         var selectTableFunc = AstTraversal.GetFirstParent<SelectTableFunctionNode>();
         if (selectTableFunc != null)
         {
-            var rowsInput = await VisitFunctionNodeInternalAsync(node, string.Empty, cancellationToken);
-            node.SetAttribute(AstAttributeKeys.RowsInputKey, rowsInput);
+            var rowsInputContext = await VisitFunctionNodeInternalAsync(node, null, string.Empty, cancellationToken);
+            node.SetAttribute(AstAttributeKeys.RowsInputContextKey, rowsInputContext);
         }
     }
 
-    private async ValueTask<IRowsInput?> VisitFunctionNodeInternalAsync(FunctionCallNode node, string alias,
+    /// <inheritdoc />
+    public override async ValueTask VisitAsync(IdentifierExpressionNode node, CancellationToken cancellationToken)
+    {
+        var value = await GetIdentifierValueAsync(node, cancellationToken);
+        await VisitIdentifierNodeInternalAsync(node, value, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public override async ValueTask VisitAsync(SelectIdentifierExpressionNode node, CancellationToken cancellationToken)
+    {
+        var value = await GetIdentifierValueAsync(node, cancellationToken);
+        if (value.IsNull)
+        {
+            var inputContext = await GetInputSourceValueAsync(node, cancellationToken);
+            if (inputContext != null)
+            {
+                inputContext.IsVary = true;
+                value = VariantValue.CreateFromObject(inputContext.RowsInput);
+            }
+        }
+        await VisitIdentifierNodeInternalAsync(node, value, cancellationToken);
+    }
+
+    private async ValueTask<VariantValue> GetIdentifierValueAsync(IdentifierExpressionNode node, CancellationToken cancellationToken)
+    {
+        if (!_context.CapturedScope.TryGetVariable(node.Name, out var value))
+        {
+            return VariantValue.Null;
+        }
+        if (node.HasSelectors)
+        {
+            var @delegate = await _createDelegateVisitor.RunAndReturnAsync(node, cancellationToken);
+            return await @delegate.InvokeAsync(_executionThread, cancellationToken);
+        }
+
+        return value;
+    }
+
+    private async ValueTask<SelectInputQueryContext?> GetInputSourceValueAsync(IdentifierExpressionNode node, CancellationToken cancellationToken)
+    {
+        if (!_context.TryGetInputSourceByName(node.TableFieldName, node.TableSourceName, out var result)
+            || result == null)
+        {
+            return null;
+        }
+        var columnIndex = result.Input.GetColumnIndexByName(node.TableFieldName,
+            node.TableSourceName);
+        if (columnIndex < 0)
+        {
+            return null;
+        }
+
+        IFuncUnit? funcUnit = null;
+
+        // If found with rows input.
+        if (result.InputQueryContext != null)
+        {
+            if (result.InputQueryContext.RowsInput is not PrefetchRowsInput)
+            {
+                result.InputQueryContext.RowsInput = await PrefetchRowsInput.CreateAsync(
+                    result.InputQueryContext.RowsInput,
+                    cancellationToken);
+            }
+            funcUnit = new FuncUnitRowsInputColumn(result.InputQueryContext.RowsInput, columnIndex);
+        }
+        // Found rows iterator.
+        else if (result.Input is IRowsIterator rowsIterator)
+        {
+            if (rowsIterator is not PrefetchRowsIterator)
+            {
+                var prefetchIterator = await PrefetchRowsIterator.CreateAsync(rowsIterator, cancellationToken);
+                result.Context.SetIterator(prefetchIterator);
+            }
+            funcUnit = new FuncUnitRowsIteratorColumn(result.Context.CurrentIterator, columnIndex);
+        }
+
+        if (funcUnit == null)
+        {
+            return null;
+        }
+
+        var store = new FunctionResultStore(funcUnit, new FuncUnitCallInfo(funcUnit));
+        var rowsInputContextValue = (await store.CallAsync(_executionThread, cancellationToken)).Value;
+
+        var alias = node is ISelectAliasNode selectAliasNode ? selectAliasNode.Alias : string.Empty;
+        var rowsInputContext = await _rowsInputFactory.CreateRowsInputAsync(
+            rowsInputContextValue,
+            alias,
+            _executionThread,
+            formatNode: null,
+            resolveStringAsSource: true,
+            cancellationToken);
+        if (rowsInputContext == null)
+        {
+            return null;
+        }
+
+        rowsInputContext.RowsInput = new VaryingRowsInput(
+            _executionThread,
+            rowsInputContext.RowsInput,
+            store,
+            _rowsInputFactory,
+            rowsInputContext);
+
+        return rowsInputContext;
+    }
+
+    private async ValueTask<SelectInputQueryContext?> VisitIdentifierNodeInternalAsync(
+        IdentifierExpressionNode node,
+        VariantValue value,
+        CancellationToken cancellationToken)
+    {
+        if (value.IsNull)
+        {
+            return null;
+        }
+
+        var isPartOfFromClause = AstTraversal.GetParents<SelectTableReferenceListNode>().Any();
+        var rowsInputContext = await _rowsInputFactory.CreateRowsInputAsync(
+            value, _executionThread, resolveStringAsSource: isPartOfFromClause, cancellationToken);
+
+        if (rowsInputContext != null)
+        {
+            rowsInputContext.IsVariableBound = true;
+            _context.AddInput(rowsInputContext);
+            await rowsInputContext.RowsInput.OpenAsync(cancellationToken);
+            _logger.LogDebug("Open rows input {RowsInput}.", rowsInputContext.RowsInput);
+            node.SetAttribute(AstAttributeKeys.RowsInputContextKey, rowsInputContext);
+            return rowsInputContext;
+        }
+
+        return null;
+    }
+
+    /// <inheritdoc />
+    public override async ValueTask VisitAsync(SelectTableValuesNode node, CancellationToken cancellationToken)
+    {
+        var func = await new SelectCreateDelegateVisitor(_executionThread, _context)
+            .RunAndReturnAsync(node, cancellationToken);
+        var rowsFrame = (await func.InvokeAsync(_executionThread, cancellationToken)).AsRequired<RowsFrame>();
+        var rowsInput = new RowsIteratorInput(rowsFrame.GetIterator());
+        var context = new SelectInputQueryContext(rowsInput);
+        _context.AddInput(context);
+        node.SetAttribute(AstAttributeKeys.RowsInputContextKey, context);
+    }
+
+    private async ValueTask<SelectInputQueryContext?> VisitFunctionNodeInternalAsync(
+        FunctionCallNode node,
+        FunctionCallNode? formatNode,
+        string alias,
         CancellationToken cancellationToken)
     {
         // If we already have rows input assign - do not create a new one.
-        var rowsInput = node.GetAttribute<IRowsInput>(AstAttributeKeys.RowsInputKey);
-        if (rowsInput != null)
+        var rowsInputContext = node.GetAttribute<SelectInputQueryContext>(AstAttributeKeys.RowsInputContextKey);
+        if (rowsInputContext != null)
         {
-            return node.GetRequiredAttribute<IRowsInput>(AstAttributeKeys.RowsInputKey);
+            return rowsInputContext;
         }
 
         // Determine types for the node.
         await _resolveTypesVisitor.RunAsync(node, cancellationToken);
 
-        var @delegate = await _createDelegateVisitor.RunAndReturnAsync(node, cancellationToken);
-        var source = await @delegate.InvokeAsync(_executionThread, cancellationToken);
-        var inputContext = await CreateRowsInputAsync(source, alias, cancellationToken);
+        var isVary = node.Arguments.Count > 0 && node.GetAllChildren<IdentifierExpressionNode>().Any();
+        // isVary mean that input function refers to other columns/variables that might be changed.
+        // For them, we create the special kind of iterator.
+        var inputContext = isVary
+            ? await CreateVaryInputContextAsync(node, formatNode, alias, cancellationToken)
+            : await CreateInputContextAsync(node, formatNode, alias, cancellationToken);
         if (inputContext == null)
         {
             return null;
         }
         inputContext.Alias = alias;
+        inputContext.IsVary = isVary;
+
+        await inputContext.RowsInput.OpenAsync(cancellationToken);
+        _logger.LogDebug("Open rows input {RowsInput}.", inputContext.RowsInput);
+
         SetAlias(inputContext.RowsInput, alias);
         _context.AddInput(inputContext);
 
-        return inputContext.RowsInput;
+        return inputContext;
     }
 
-    private async ValueTask<SelectCommandInputContext?> CreateRowsInputAsync(VariantValue source, string alias, CancellationToken cancellationToken)
+    private async ValueTask<SelectInputQueryContext?> CreateInputContextAsync(
+        FunctionCallNode functionCallNode,
+        FunctionCallNode? formatNode,
+        string alias,
+        CancellationToken cancellationToken)
     {
-        if (DataTypeUtils.IsSimple(source.Type))
+        var @delegate = await _createDelegateVisitor.RunAndReturnAsync(functionCallNode, cancellationToken);
+        var source = await @delegate.InvokeAsync(_executionThread, cancellationToken);
+        if (@delegate is FunctionCallFuncUnitDecorator callFuncUnitDecorator)
         {
-            return new SelectCommandInputContext(new SingleValueRowsInput(source));
+            callFuncUnitDecorator.CacheEnabled = false;
         }
-        if (source.AsObject is IRowsInput rowsInput)
-        {
-            if (rowsInput.QueryContext is not SelectInputQueryContext queryContext)
-            {
-                var targetColumns = await _context.GetSelectIdentifierColumnsAsync(alias, cancellationToken);
-                queryContext = new SelectInputQueryContext(rowsInput, targetColumns)
-                {
-                    InputConfigStorage = _executionThread.ConfigStorage,
-                };
-                if (_context.Parent != null && !_executionThread.Options.DisableCache)
-                {
-                    rowsInput = new CacheRowsInput(_executionThread, rowsInput, _context.Conditions);
-                }
-                rowsInput.QueryContext = queryContext;
-                await rowsInput.OpenAsync(cancellationToken);
-                _logger.LogDebug("Open rows input {RowsInput}.", rowsInput);
-            }
-            return new SelectCommandInputContext(rowsInput, queryContext);
-        }
-        if (source.AsObject is IRowsIterator rowsIterator)
-        {
-            return new SelectCommandInputContext(new RowsIteratorInput(rowsIterator));
-        }
+        return await _rowsInputFactory.CreateRowsInputAsync(
+            source, alias, _executionThread, formatNode, true, cancellationToken);
+    }
 
-        return null;
+    private async ValueTask<SelectInputQueryContext?> CreateVaryInputContextAsync(
+        FunctionCallNode functionCallNode,
+        FunctionCallNode? formatNode,
+        string alias,
+        CancellationToken cancellationToken)
+    {
+        var @delegate = await _createDelegateVisitor.RunAndReturnAsync(functionCallNode, cancellationToken);
+        var store = new FunctionResultStore(
+            @delegate,
+            functionCallNode.GetRequiredAttribute<FuncUnitCallInfo>(AstAttributeKeys.ArgumentsKey));
+        var source = (await store.CallAsync(_executionThread, cancellationToken)).Value;
+        var context = await _rowsInputFactory.CreateRowsInputAsync(
+            source, alias, _executionThread, formatNode, true, cancellationToken);
+        if (context == null)
+        {
+            return null;
+        }
+        var varyingRowsInput = new VaryingRowsInput(_executionThread, context.RowsInput, store, _rowsInputFactory,
+            context);
+        context.RowsInput = varyingRowsInput;
+        if (@delegate is FunctionCallFuncUnitDecorator callFuncUnitDecorator)
+        {
+            callFuncUnitDecorator.CacheEnabled = false;
+        }
+        return context;
     }
 
     private static void SetAlias(IRowsInput input, string alias)
@@ -133,6 +306,46 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
         foreach (var column in input.Columns)
         {
             column.SourceName = alias;
+        }
+    }
+
+    private sealed class FunctionCallFuncUnitDecorator(
+        IFuncUnit func,
+        int nodeId,
+        IDictionary<int, VariantValue> cacheMap) : IFuncUnit
+    {
+        private bool _cacheEnabled = true;
+
+        /// <inheritdoc />
+        public DataType OutputType => func.OutputType;
+
+        public bool CacheEnabled
+        {
+            get => _cacheEnabled;
+            set
+            {
+                _cacheEnabled = value;
+            }
+        }
+
+        /// <inheritdoc />
+        public async ValueTask<VariantValue> InvokeAsync(IExecutionThread thread, CancellationToken cancellationToken = default)
+        {
+            if (!_cacheEnabled)
+            {
+                return await func.InvokeAsync(thread, cancellationToken);
+            }
+
+            if (cacheMap.TryGetValue(nodeId, out var value))
+            {
+                return value;
+            }
+            value = await func.InvokeAsync(thread, cancellationToken);
+            if (value.Type == DataType.Object)
+            {
+                cacheMap[nodeId] = value;
+            }
+            return value;
         }
     }
 
@@ -152,40 +365,16 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
     /// again so we create new rows input. To prevent duplicate objects creation, we override FunctionCallNode
     /// and return the existing object instead of creation of a new one.
     /// </summary>
-    private sealed class CreateDelegateVisitorWithValueStore : CreateDelegateVisitor
+    private sealed class CreateDelegateVisitorWithValueStore : SelectCreateDelegateVisitor
     {
         /// <summary>
         /// NodeId -> Object map.
         /// </summary>
         private readonly Dictionary<int, VariantValue> _nodeIdFuncMap = new();
 
-        private sealed class FunctionCallFuncUnitFacade(
-            IFuncUnit func,
-            int nodeId,
-            IDictionary<int, VariantValue> cacheMap) : IFuncUnit
-        {
-            /// <inheritdoc />
-            public DataType OutputType => func.OutputType;
-
-            /// <inheritdoc />
-            public async ValueTask<VariantValue> InvokeAsync(IExecutionThread thread, CancellationToken cancellationToken = default)
-            {
-                if (cacheMap.TryGetValue(nodeId, out var value))
-                {
-                    return value;
-                }
-                value = await func.InvokeAsync(thread, cancellationToken);
-                if (value.Type == DataType.Object)
-                {
-                    cacheMap[nodeId] = value;
-                }
-                return value;
-            }
-        }
-
         /// <inheritdoc />
-        public CreateDelegateVisitorWithValueStore(IExecutionThread<ExecutionOptions> thread, ResolveTypesVisitor resolveTypesVisitor)
-            : base(thread, resolveTypesVisitor)
+        public CreateDelegateVisitorWithValueStore(IExecutionThread<ExecutionOptions> thread, SelectCommandContext commandContext)
+            : base(thread, commandContext)
         {
         }
 
@@ -194,7 +383,7 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
         {
             await base.VisitAsync(node, cancellationToken);
             var func = NodeIdFuncMap[node.Id];
-            NodeIdFuncMap[node.Id] = new FunctionCallFuncUnitFacade(func, node.Id, _nodeIdFuncMap);
+            NodeIdFuncMap[node.Id] = new FunctionCallFuncUnitDecorator(func, node.Id, _nodeIdFuncMap);
         }
     }
 }

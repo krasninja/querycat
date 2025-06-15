@@ -21,13 +21,14 @@ internal sealed class SelectQueryConditions : IEnumerable<SelectQueryCondition>
     /// <summary>
     /// Get key conditions.
     /// </summary>
+    /// <param name="rowsInput">Rows input.</param>
     /// <returns>Key condition.</returns>
-    internal IReadOnlyList<SelectQueryCondition> GetKeyConditions(IRowsInputKeys rowsInputKeys)
+    internal IReadOnlyList<SelectQueryCondition> GetKeyConditions(IRowsInput rowsInput)
     {
         var listConditions = new List<SelectQueryCondition>(capacity: Conditions.Count);
         foreach (var condition in Conditions)
         {
-            if (rowsInputKeys.FindKeyColumn(condition.Column, condition.Operation) != null)
+            if (rowsInput.FindKeyColumn(condition.Column, condition.Operation) != null)
             {
                 listConditions.Add(condition);
             }
@@ -59,6 +60,10 @@ internal sealed class SelectQueryConditions : IEnumerable<SelectQueryCondition>
         {
             return null;
         }
+        if (operation == VariantValue.Operation.Equals && _conditions.Any(c => c.Column == column && c.Operation == VariantValue.Operation.In))
+        {
+            return null;
+        }
         var queryContextCondition = new SelectQueryCondition(column, operation, generator);
         _conditions.Add(queryContextCondition);
         return queryContextCondition;
@@ -66,7 +71,7 @@ internal sealed class SelectQueryConditions : IEnumerable<SelectQueryCondition>
 
     internal IEnumerable<SelectInputKeysConditions> GetConditionsColumns(IRowsSource input, string? alias = null)
     {
-        if (input is not IRowsInputKeys inputKey)
+        if (input is not IRowsInput inputKey)
         {
             yield break;
         }
@@ -75,9 +80,7 @@ internal sealed class SelectQueryConditions : IEnumerable<SelectQueryCondition>
         {
             var column = inputKey.Columns[keyColumn.ColumnIndex];
             var relatedConditions = Conditions
-                .Where(c =>
-                    c.Column == column
-                    && (alias == null || column.SourceName == alias))
+                .Where(c => c.Column == column)
                 .ToArray();
 
             // Straight conditions check.

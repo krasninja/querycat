@@ -10,7 +10,7 @@ namespace QueryCat.Backend.Addons.Formatters;
 /// <summary>
 /// Grok expressions input parser.
 /// </summary>
-internal sealed partial class GrokInput : IRowsInput
+internal sealed partial class GrokInput : IRowsInput, IRowsIteratorParent
 {
     // Sources:
     // https://www.elastic.co/guide/en/logstash/current/plugins-filters-grok.html
@@ -29,7 +29,7 @@ internal sealed partial class GrokInput : IRowsInput
     private Func<VariantValue, VariantValue>?[] _converters = [];
 
     /// <inheritdoc />
-    public Column[] Columns { get; }
+    public Column[] Columns => _grokImpl.Columns;
 
     /// <inheritdoc />
     public string[] UniqueKey => _grokImpl.UniqueKey;
@@ -48,8 +48,6 @@ internal sealed partial class GrokInput : IRowsInput
     {
         var regex = GrokPatternRegex().Replace(pattern, GrokEvaluation);
         _grokImpl = new RegexpInput(stream, regex, key);
-
-        Columns = _grokImpl.Columns.Select(c => new Column(c)).ToArray();
     }
 
     private Func<VariantValue, VariantValue>?[] CreateCustomConverters()
@@ -284,9 +282,9 @@ internal sealed partial class GrokInput : IRowsInput
     /// <inheritdoc />
     public async Task OpenAsync(CancellationToken cancellationToken = default)
     {
-        _converters = CreateCustomConverters();
-
         await _grokImpl.OpenAsync(cancellationToken);
+
+        _converters = CreateCustomConverters();
 
         // Here is the hack. After original rows input open it tries to determine column types.
         // However, we do not want to do that for columns with converters. So we force them
@@ -338,5 +336,26 @@ internal sealed partial class GrokInput : IRowsInput
     public void Explain(IndentedStringBuilder stringBuilder)
     {
         stringBuilder.AppendLine("Grok");
+    }
+
+    /// <inheritdoc />
+    public IReadOnlyList<KeyColumn> GetKeyColumns() => _grokImpl.GetKeyColumns();
+
+    /// <inheritdoc />
+    public void SetKeyColumnValue(int columnIndex, VariantValue value, VariantValue.Operation operation)
+    {
+        _grokImpl.SetKeyColumnValue(columnIndex, value, operation);
+    }
+
+    /// <inheritdoc />
+    public void UnsetKeyColumnValue(int columnIndex, VariantValue.Operation operation)
+    {
+        _grokImpl.UnsetKeyColumnValue(columnIndex, operation);
+    }
+
+    /// <inheritdoc />
+    public IEnumerable<IRowsSchema> GetChildren()
+    {
+        yield return _grokImpl;
     }
 }

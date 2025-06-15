@@ -44,7 +44,7 @@ internal sealed class CombineRowsIterator : IRowsIterator, IRowsIteratorParent
             _ => throw new ArgumentException(string.Format(Resources.Errors.NotImplemented, combineType), nameof(combineType)),
         };
 
-        if (!_leftIterator.IsSchemaEqual(_rightIterator))
+        if (!_leftIterator.IsSchemaEqual(_rightIterator.Columns))
         {
             throw new SemanticException(Resources.Errors.CombineMustHaveSameColumns);
         }

@@ -32,7 +32,7 @@ internal sealed class JsonFormatter : IRowsFormatter
     public IRowsInput OpenInput(IBlobData blob, string? key = null)
     {
         var stream = blob.GetStream();
-        return new JsonInput(new StreamReader(stream), jsonPath: _jsonPath, key: key);
+        return new JsonInput(stream, jsonPath: _jsonPath, key: key);
     }
 
     /// <inheritdoc />

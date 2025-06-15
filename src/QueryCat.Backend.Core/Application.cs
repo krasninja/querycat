@@ -36,7 +36,7 @@ public static class Application
     public const string CommandSet = "SET";
     public const string CommandDelete = "DELETE";
     public const string CommandFor = "FOR";
-    public const string CommandIf = "If";
+    public const string CommandIf = "IF";
     public const string CommandInsert = "INSERT";
     public const string CommandSelect = "SELECT";
     public const string CommandUpdate = "UPDATE";

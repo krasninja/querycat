@@ -6,7 +6,7 @@ namespace QueryCat.Backend.Ast.Nodes.Select;
 /// The special node is used to distinguish between identifier and
 /// another identifier that can be only used for CTE expression.
 /// </summary>
-internal sealed class SelectIdentifierExpressionNode : IdentifierExpressionNode, ISelectAliasNode
+internal sealed class SelectIdentifierExpressionNode : IdentifierExpressionNode, ISelectAliasNode, ISelectJoinedNode
 {
     /// <inheritdoc />
     public string Alias { get; set; }
@@ -19,6 +19,7 @@ internal sealed class SelectIdentifierExpressionNode : IdentifierExpressionNode,
     /// </summary>
     public FunctionCallNode? Format { get; set; }
 
+    /// <inheritdoc />
     public List<SelectTableJoinedNode> JoinedNodes { get; } = new();
 
     /// <inheritdoc />

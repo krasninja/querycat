@@ -1,0 +1,16 @@
+{
+  "@t": "2025-05-20T07:18:53.1157458Z",
+  "@m": "HTTP \"PUT\" \"/api/sales/project/68100\" responded 200 in 386.6064 ms",
+  "@i": "62d0885c",
+  "@tr": "3ab165560579ed8156600c6887a879d1",
+  "@sp": "a04526f109a2635c",
+  "CurrentUserId": 185,
+  "RequestMethod": "PUT",
+  "RequestPath": "/api/sales/project/68100",
+  "StatusCode": 200,
+  "Elapsed": 386.606434,
+  "SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware",
+  "RequestId": "0HNCNDGQAJP28:00000039",
+  "ConnectionId": "0HNCNDGQAJP28"
+}
+{"@t":"2016-06-07T03:44:57.8532799Z","@mt":"Hello, {CurrentUserId}","CurrentUserId":"466"}

@@ -100,3 +100,4 @@ The interfaces declare the additional methods to describe keys (index) columns. 
 
 - `GetKeyColumns`. Get all supported keys columns.
 - `SetKeyColumnValue`. Set key column value before query.
+- `UnsetKeyColumnValue`. Clear the value for the specified key column.

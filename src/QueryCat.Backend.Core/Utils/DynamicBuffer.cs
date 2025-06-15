@@ -12,7 +12,7 @@ namespace QueryCat.Backend.Core.Utils;
 /// it keeps freed buffers for reuse.
 /// </summary>
 /// <typeparam name="T">Buffer type.</typeparam>
-[DebuggerDisplay("Size = {Size}, Buffers = {UsedBuffersCount}/{TotalBuffersCount}")]
+[DebuggerDisplay("Size = {SizeLong}, Buffers = {UsedBuffersCount}/{TotalBuffersCount}")]
 public sealed class DynamicBuffer<T> where T : IEquatable<T>
 {
     /*
@@ -60,6 +60,11 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
     /// Current buffer size.
     /// </summary>
     public int Size => (int)_endPosition - (int)_startPosition;
+
+    /// <summary>
+    /// Current buffer size.
+    /// </summary>
+    public long SizeLong => _endPosition - _startPosition;
 
     /// <summary>
     /// Whether the dynamic buffer contains any data.
@@ -271,14 +276,14 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
             {
                 var remainSpaceInChunk = _chunkSize - chunkStartIndex;
                 var remain = (ulong)sizeToAdvance > (ulong)remainSpaceInChunk ? remainSpaceInChunk : sizeToAdvance;
-                remain = Math.Min(remain, Size);
+                remain = Math.Min(remain, SizeLong);
                 advanced += remain;
                 _startPosition += remain;
             }
             // For tail buffer we can only free remain space.
             else if (currentSegment == _buffersList.Tail)
             {
-                var remain = Min(sizeToAdvance - advanced, _chunkSize, Size);
+                var remain = Min(sizeToAdvance - advanced, _chunkSize, SizeLong);
                 advanced += remain;
                 _startPosition += remain;
             }
@@ -286,7 +291,7 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
             {
                 var remain = (ulong)(sizeToAdvance - advanced) > (ulong)_chunkSize ? _chunkSize
                     : sizeToAdvance - advanced;
-                remain = Math.Min(remain, Size);
+                remain = Math.Min(remain, SizeLong);
                 advanced += remain;
                 _startPosition += remain;
             }

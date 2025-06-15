@@ -9,7 +9,7 @@ namespace QueryCat.Backend.Storage;
 /// Allows to read/write from/to the <see cref="RowsFrame" /> using <see cref="IRowsOutput"  />,
 /// <see cref="IRowsInput" /> and <see cref="IRowsInputDelete" />.
 /// </summary>
-public class RowsFrameSource : RowsOutput, IRowsInputDelete
+public class RowsFrameSource : RowsOutput, IRowsInputDelete, IRowsIteratorParent
 {
     private readonly RowsFrame _rowsFrame;
     private readonly RowsFrameIterator _frameIterator;
@@ -90,5 +90,24 @@ public class RowsFrameSource : RowsOutput, IRowsInputDelete
     public void Explain(IndentedStringBuilder stringBuilder)
     {
         stringBuilder.AppendLine("RowsFrame");
+    }
+
+    /// <inheritdoc />
+    public IReadOnlyList<KeyColumn> GetKeyColumns() => [];
+
+    /// <inheritdoc />
+    public void SetKeyColumnValue(int columnIndex, VariantValue value, VariantValue.Operation operation)
+    {
+    }
+
+    /// <inheritdoc />
+    public void UnsetKeyColumnValue(int columnIndex, VariantValue.Operation operation)
+    {
+    }
+
+    /// <inheritdoc />
+    public IEnumerable<IRowsSchema> GetChildren()
+    {
+        yield return _frameIterator;
     }
 }

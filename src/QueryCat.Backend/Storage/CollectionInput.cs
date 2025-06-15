@@ -282,4 +282,17 @@ public class CollectionInput : IRowsOutput, IDisposable, IAsyncDisposable, IRows
         await DisposeAsyncCore();
         GC.SuppressFinalize(this);
     }
+
+    /// <inheritdoc />
+    public IReadOnlyList<KeyColumn> GetKeyColumns() => [];
+
+    /// <inheritdoc />
+    public void SetKeyColumnValue(int columnIndex, VariantValue value, VariantValue.Operation operation)
+    {
+    }
+
+    /// <inheritdoc />
+    public void UnsetKeyColumnValue(int columnIndex, VariantValue.Operation operation)
+    {
+    }
 }

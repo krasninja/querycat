@@ -14,6 +14,12 @@ internal sealed class MimeTypesProvider
     public const string ContentTypeForm = "application/x-www-form-urlencoded";
     public const string ContentTypeOctetStream = "application/octet-stream";
 
+#if NET9_0_OR_GREATER
+    private static readonly Lock _objLock = new();
+#else
+    private static readonly object _objLock = new();
+#endif
+
     /// <summary>
     /// MIME types conversion table.
     /// </summary>
@@ -159,6 +165,9 @@ internal sealed class MimeTypesProvider
     /// <param name="mime">MIME type.</param>
     public void SetMimeAndExtension(string extension, string mime)
     {
-        _additionalExtensionMimeMapping[extension.ToLowerInvariant()] = mime;
+        lock (_objLock)
+        {
+            _additionalExtensionMimeMapping[extension.ToLowerInvariant()] = mime;
+        }
     }
 }

@@ -5,7 +5,7 @@ using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Commands.Select.Inputs;
 
-internal sealed class SelectJoinRowsInput : IRowsInputKeys, IRowsIteratorParent
+internal sealed class SelectJoinRowsInput : IRowsInput, IRowsIteratorParent
 {
     private readonly IExecutionThread _thread;
     private readonly IRowsInput _leftInput;
@@ -189,7 +189,6 @@ internal sealed class SelectJoinRowsInput : IRowsInputKeys, IRowsIteratorParent
     public IReadOnlyList<KeyColumn> GetKeyColumns()
     {
         return new[] { _leftInput, _rightInput }
-            .OfType<IRowsInputKeys>()
             .SelectMany(i => i.GetKeyColumns())
             .ToArray();
     }
@@ -197,27 +196,15 @@ internal sealed class SelectJoinRowsInput : IRowsInputKeys, IRowsIteratorParent
     /// <inheritdoc />
     public void SetKeyColumnValue(int columnIndex, VariantValue value, VariantValue.Operation operation)
     {
-        if (_leftInput is IRowsInputKeys leftInputKeys)
-        {
-            leftInputKeys.SetKeyColumnValue(columnIndex, value, operation);
-        }
-        if (_rightInput is IRowsInputKeys rightInputKeys)
-        {
-            rightInputKeys.SetKeyColumnValue(columnIndex, value, operation);
-        }
+        _leftInput.SetKeyColumnValue(columnIndex, value, operation);
+        _rightInput.SetKeyColumnValue(columnIndex, value, operation);
     }
 
     /// <inheritdoc />
     public void UnsetKeyColumnValue(int columnIndex, VariantValue.Operation operation)
     {
-        if (_leftInput is IRowsInputKeys leftInputKeys)
-        {
-            leftInputKeys.UnsetKeyColumnValue(columnIndex, operation);
-        }
-        if (_rightInput is IRowsInputKeys rightInputKeys)
-        {
-            rightInputKeys.UnsetKeyColumnValue(columnIndex, operation);
-        }
+        _leftInput.UnsetKeyColumnValue(columnIndex, operation);
+        _rightInput.UnsetKeyColumnValue(columnIndex, operation);
     }
 
     /// <inheritdoc />

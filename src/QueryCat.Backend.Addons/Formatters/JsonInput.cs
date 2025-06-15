@@ -4,10 +4,9 @@ using System.Text.Json.Nodes;
 using Json.Path;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Core.Utils;
-using QueryCat.Backend.Relational;
-using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Storage;
 
 namespace QueryCat.Backend.Addons.Formatters;
@@ -15,7 +14,7 @@ namespace QueryCat.Backend.Addons.Formatters;
 /// <summary>
 /// Input that parser JSON data.
 /// </summary>
-internal sealed class JsonInput : StreamRowsInput
+internal class JsonInput : StreamRowsInput
 {
     private int _bracketsCount;
 
@@ -25,9 +24,8 @@ internal sealed class JsonInput : StreamRowsInput
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(JsonInput));
 
     /// <inheritdoc />
-    public JsonInput(StreamReader streamReader, bool addFileNameColumn = true, string? jsonPath = null, string? key = null)
-        : base(
-            GetEvaluatedStream(streamReader, jsonPath), new StreamRowsInputOptions
+    public JsonInput(Stream stream, bool addFileNameColumn = true, string? jsonPath = null, string? key = null)
+        : base(GetEvaluatedStream(stream, jsonPath), new StreamRowsInputOptions
         {
             DelimiterStreamReaderOptions = new DelimiterStreamReader.ReaderOptions
             {
@@ -45,21 +43,21 @@ internal sealed class JsonInput : StreamRowsInput
         SetOnDelimiterDelegate(OnDelimiter);
     }
 
-    private static StreamReader GetEvaluatedStream(StreamReader streamReader, string? jsonPath = null)
+    private static Stream GetEvaluatedStream(Stream stream, string? jsonPath = null)
     {
         if (string.IsNullOrEmpty(jsonPath))
         {
-            return streamReader;
+            return stream;
         }
 
         JsonNode? jsonNode;
         try
         {
-            jsonNode = JsonNode.Parse(streamReader.ReadToEnd());
+            jsonNode = JsonNode.Parse(stream);
         }
         catch (JsonException ex)
         {
-            throw new QueryCatException($"Invalid JSON: {ex}");
+            throw new QueryCatException($"Invalid JSON: {ex.Message}");
         }
         if (jsonNode == null)
         {
@@ -71,19 +69,22 @@ internal sealed class JsonInput : StreamRowsInput
             throw new SemanticException("Incorrect JSON path input.");
         }
         var pathResult = path.Evaluate(jsonNode);
-        var matches = pathResult.Matches.Where(m => m.Value != null).ToList();
 
         var ms = new MemoryStream();
         using var jsonWriter = new Utf8JsonWriter(ms);
         jsonWriter.WriteStartArray();
-        foreach (var match in matches)
+        foreach (var match in pathResult.Matches)
         {
-            match.Value!.WriteTo(jsonWriter);
+            if (match.Value == null)
+            {
+                continue;
+            }
+            match.Value.WriteTo(jsonWriter);
         }
         jsonWriter.WriteEndArray();
         jsonWriter.Flush();
         ms.Seek(0, SeekOrigin.Begin);
-        return new StreamReader(ms);
+        return ms;
     }
 
     private void OnDelimiter(char ch, long pos, out bool countField, out bool completeLine)
@@ -165,60 +166,54 @@ internal sealed class JsonInput : StreamRowsInput
         while (true)
         {
             var hasData = await base.ReadNextInternalAsync(cancellationToken);
-            if (hasData)
+            if (!hasData)
             {
-                var text = GetRowText();
-                var reader = new SequenceReader<char>(text);
-                if (reader.TryAdvanceTo('{', advancePastDelimiter: false))
+                return false;
+            }
+            var text = GetRowText();
+            var reader = new SequenceReader<char>(text);
+            if (reader.TryAdvanceTo('{', advancePastDelimiter: false))
+            {
+                var json = reader.UnreadSequence.ToString();
+                try
                 {
-                    var json = reader.UnreadSequence.ToString();
-                    try
-                    {
-                        _jsonElement = JsonSerializer.Deserialize(json, SourceGenerationContext.Default.JsonElement);
-                    }
-                    catch (JsonException jsonException)
-                    {
-                        _logger.LogWarning("Cannot parse row {RowIndex}: {Error}", RowIndex, jsonException.Message);
-                        continue;
-                    }
+                    _jsonElement = JsonSerializer.Deserialize(json, SourceGenerationContext.Default.JsonElement);
                 }
-                else
+                catch (JsonException jsonException)
                 {
-                    hasData = false;
+                    _logger.LogWarning("Cannot parse row {RowIndex}: {Error}", RowIndex, jsonException.Message);
+                    continue;
                 }
+            }
+            else
+            {
+                hasData = false;
             }
             return hasData;
         }
     }
 
     /// <inheritdoc />
-    protected override void SetDefaultColumns(int columnsCount)
+    protected override async Task<Column[]> InitializeColumnsAsync(IRowsInput input,
+        CancellationToken cancellationToken = default)
     {
-        var jsonElement = GetParsedJsonDocument();
-        if (jsonElement == null)
+        var hasData = await input.ReadNextAsync(cancellationToken);
+        if (!hasData)
         {
-            throw new InvalidOperationException("Cannot initialize JSON columns.");
+            return [];
         }
 
+        var jsonElement = GetParsedJsonDocument();
+
         var list = new List<string>();
-        foreach (var jsonProperty in jsonElement.Value.EnumerateObject())
+        foreach (var field in GetJsonObjectFields(jsonElement))
         {
-            list.Add(jsonProperty.Name);
+            list.Add(field);
         }
         _properties = list.ToArray();
 
-        base.SetDefaultColumns(_properties.Length);
-    }
-
-    /// <inheritdoc />
-    protected override Task AnalyzeAsync(CacheRowsIterator iterator, CancellationToken cancellationToken = default)
-    {
-        var columns = GetInputColumns();
-        for (var i = 0; i < _properties.Length; i++)
-        {
-            columns[i].Name = _properties[i];
-        }
-        return RowsIteratorUtils.ResolveColumnsTypesAsync(iterator, cancellationToken: cancellationToken);
+        var columns = _properties.Select(p => new Column(p, DataType.String));
+        return columns.ToArray();
     }
 
     private JsonElement? GetParsedJsonDocument()
@@ -231,5 +226,18 @@ internal sealed class JsonInput : StreamRowsInput
             return JsonSerializer.Deserialize(json, SourceGenerationContext.Default.JsonElement);
         }
         return null;
+    }
+
+    private IEnumerable<string> GetJsonObjectFields(JsonElement? jsonElement)
+    {
+        if (jsonElement == null)
+        {
+            yield break;
+        }
+
+        foreach (var jsonProperty in jsonElement.Value.EnumerateObject())
+        {
+            yield return jsonProperty.Name;
+        }
     }
 }

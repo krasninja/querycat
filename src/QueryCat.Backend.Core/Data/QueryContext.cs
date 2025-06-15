@@ -8,10 +8,19 @@ public abstract class QueryContext
     /// <summary>
     /// Information about the query where the rows input is used.
     /// </summary>
-    public abstract QueryContextQueryInfo QueryInfo { get; }
+    public QueryContextQueryInfo QueryInfo { get; }
 
     /// <summary>
-    /// Input config storage.
+    /// Config storage.
     /// </summary>
-    public IInputConfigStorage InputConfigStorage { get; set; } = NullInputConfigStorage.Instance;
+    public IConfigStorage ConfigStorage { get; protected set; } = NullConfigStorage.Instance;
+
+    /// <summary>
+    /// Constructor.
+    /// </summary>
+    /// <param name="queryInfo">Query info.</param>
+    public QueryContext(QueryContextQueryInfo queryInfo)
+    {
+        QueryInfo = queryInfo;
+    }
 }

@@ -8,7 +8,7 @@ namespace QueryCat.Backend.Core.Fetch;
 /// Rows input with keys columns support. It has the separate list of columns
 /// that contains key values. These values (with correspond conditions) can be used to optimize read operation.
 /// </summary>
-public abstract class KeysRowsInput : RowsInput, IRowsInputKeys, IDisposable
+public abstract class KeysRowsInput : RowsInput, IDisposable
 {
     private readonly List<KeyColumn> _keyColumns = new();
 
@@ -84,10 +84,10 @@ public abstract class KeysRowsInput : RowsInput, IRowsInputKeys, IDisposable
     #region IRowsInputKeys
 
     /// <inheritdoc />
-    public IReadOnlyList<KeyColumn> GetKeyColumns() => _keyColumns;
+    public override IReadOnlyList<KeyColumn> GetKeyColumns() => _keyColumns;
 
     /// <inheritdoc />
-    public virtual void SetKeyColumnValue(int columnIndex, VariantValue value, VariantValue.Operation operation)
+    public override void SetKeyColumnValue(int columnIndex, VariantValue value, VariantValue.Operation operation)
     {
         InitializeKeyColumns();
         var kcv = _setKeyColumns[columnIndex].First(kc => kc.KeyColumn.ContainsOperation(operation));
@@ -96,7 +96,7 @@ public abstract class KeysRowsInput : RowsInput, IRowsInputKeys, IDisposable
     }
 
     /// <inheritdoc />
-    public void UnsetKeyColumnValue(int columnIndex, VariantValue.Operation operation)
+    public override void UnsetKeyColumnValue(int columnIndex, VariantValue.Operation operation)
     {
         InitializeKeyColumns();
         var kcv = _setKeyColumns[columnIndex].First(kc => kc.KeyColumn.ContainsOperation(operation));

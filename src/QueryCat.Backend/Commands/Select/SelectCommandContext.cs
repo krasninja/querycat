@@ -5,7 +5,6 @@ using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Relational.Iterators;
-using QueryCat.Backend.Storage;
 
 namespace QueryCat.Backend.Commands.Select;
 
@@ -42,7 +41,8 @@ internal sealed class SelectCommandContext(SelectQueryNode queryNode) : CommandC
     public record InputNameSearchResult(
         IRowsSchema Input,
         int ColumnIndex,
-        SelectCommandContext Context);
+        SelectCommandContext Context,
+        SelectInputQueryContext? InputQueryContext);
 
     /// <summary>
     /// Try get input by name.
@@ -61,17 +61,17 @@ internal sealed class SelectCommandContext(SelectQueryNode queryNode) : CommandC
             index = context.CurrentIterator.GetColumnIndexByName(name, source);
             if (index > -1)
             {
-                result = new InputNameSearchResult(context.CurrentIterator, index, context);
+                result = new InputNameSearchResult(context.CurrentIterator, index, context, null);
                 return true;
             }
 
             // Rows inputs.
-            foreach (var inputContext in context.InputQueryContextList)
+            foreach (var inputContext in context.Inputs)
             {
                 index = inputContext.RowsInput.GetColumnIndexByName(name, source);
                 if (index > -1)
                 {
-                    result = new InputNameSearchResult(inputContext.RowsInput, index, context);
+                    result = new InputNameSearchResult(inputContext.RowsInput, index, context, inputContext);
                     return true;
                 }
             }
@@ -83,7 +83,7 @@ internal sealed class SelectCommandContext(SelectQueryNode queryNode) : CommandC
             index = commonTableExpression.RowsIterator.GetColumnIndexByName(name, source);
             if (index > -1)
             {
-                result = new InputNameSearchResult(commonTableExpression.RowsIterator, index, this);
+                result = new InputNameSearchResult(commonTableExpression.RowsIterator, index, this, null);
                 return true;
             }
         }
@@ -98,7 +98,7 @@ internal sealed class SelectCommandContext(SelectQueryNode queryNode) : CommandC
             }
         }
 
-        result = default;
+        result = null;
         return false;
     }
 
@@ -106,28 +106,19 @@ internal sealed class SelectCommandContext(SelectQueryNode queryNode) : CommandC
 
     #region Inputs
 
-    /// <summary>
-    /// The instance of <see cref="RowsInputIterator" /> that is used in FROM clause.
-    /// </summary>
-    public RowsInputIterator? RowsInputIterator { get; set; }
+    private readonly List<SelectInputQueryContext> _inputs = new();
 
-    private readonly List<SelectCommandInputContext> _inputs = new();
+    internal IReadOnlyList<SelectInputQueryContext> Inputs => _inputs;
 
-    internal IReadOnlyCollection<SelectCommandInputContext> Inputs => _inputs;
-
-    /// <summary>
-    /// Context information for rows inputs. We bypass this to input to provide additional information
-    /// about a query. This would allow to optimize execution.
-    /// </summary>
-    public IEnumerable<SelectInputQueryContext> InputQueryContextList => Inputs.Select(i => i.InputQueryContext);
+    internal IRowsInput? FirstRowsInput => Inputs.Count > 0 ? Inputs[0].RowsInput : null;
 
     /// <summary>
     /// Add input source context.
     /// </summary>
-    /// <param name="input">Input context.</param>
-    internal void AddInput(SelectCommandInputContext input)
+    /// <param name="inputContext">Input context.</param>
+    internal void AddInput(SelectInputQueryContext inputContext)
     {
-        _inputs.Add(input);
+        _inputs.Add(inputContext);
     }
 
     internal IEnumerable<SelectInputKeysConditions> GetAllConditionsColumns()
@@ -280,9 +271,9 @@ internal sealed class SelectCommandContext(SelectQueryNode queryNode) : CommandC
     /// </summary>
     public async ValueTask CloseAsync(CancellationToken cancellationToken = default)
     {
-        if (RowsInputIterator != null)
+        foreach (var input in _inputs)
         {
-            await RowsInputIterator.CloseAsync(cancellationToken);
+            await input.RowsInput.CloseAsync(cancellationToken);
         }
         foreach (var childContext in ChildContexts)
         {

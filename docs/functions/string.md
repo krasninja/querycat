@@ -2,7 +2,9 @@
 
 | Name and Description |
 | --- |
+| `base64(target: blob): string`<br /><br /> Converts a blob to a base64 encoded string. |
 | `btrim(target: string, characters: string = ' '): string`<br /><br /> Remove the longest string consisting only of characters in characters from the start and end of string. |
+| `from_base64(target: string): blob`<br /><br /> Converts a base64 encoded string to a character string (BLOB). |
 | `length(target: string): integer`<br />`char_length(target: string): integer`<br />`character_length(target: string): integer`<br /><br /> Number of characters in string. |
 | `lower(target: string): string`<br /><br /> Convert a string to lower case. |
 | `ltrim(target: string, characters: string = ' '): string`<br /><br /> Removes the longest string containing only characters in characters from the start of string. |
@@ -18,6 +20,7 @@
 | `string_to_table(target: string, delimiter?: string, null_string?: string := null): object<IRowsIterator>`<br /><br /> Splits the string at occurrences of delimiter and returns the resulting fields as a set of text rows. |
 | `substr(target: string, start: integer, count?: integer): string`<br /><br /> Extracts the substring of string starting at the start'th character, and extending for count characters if that is specified. |
 | `to_char(args: any, fmt?: string): string`<br /><br /> Convert value to string according to the given format. |
+| `to_base64(target: blob): string`<br /><br /> Converts a blob to a base64 encoded string. |
 | `upper(target: string): string`<br /><br /> Convert a string to upper case. |
 
 ## SQL Standard

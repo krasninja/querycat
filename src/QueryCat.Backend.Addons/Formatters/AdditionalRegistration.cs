@@ -6,10 +6,11 @@ public static class AdditionalRegistration
 {
     public static void Register(IFunctionsManager functionsManager)
     {
+        ClefFormatter.RegisterFunctions(functionsManager);
+        GrokFormatter.RegisterFunctions(functionsManager);
+        IISW3CFormatter.RegisterFunctions(functionsManager);
         JsonFormatter.RegisterFunctions(functionsManager);
         RegexpFormatter.RegisterFunctions(functionsManager);
-        GrokFormatter.RegisterFunctions(functionsManager);
         XmlFormatter.RegisterFunctions(functionsManager);
-        functionsManager.RegisterFunction(IISW3CFormatter.IISW3C);
     }
 }

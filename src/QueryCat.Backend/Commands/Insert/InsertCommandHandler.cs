@@ -23,7 +23,7 @@ internal sealed class InsertCommandHandler : IFuncUnit
     public async ValueTask<VariantValue> InvokeAsync(IExecutionThread thread, CancellationToken cancellationToken = default)
     {
         var insertCount = 0;
-        _rowsOutput.QueryContext = new RowsOutputQueryContext(_rowsInput.Columns);
+        _rowsOutput.QueryContext = new RowsOutputQueryContext(_rowsInput.Columns, thread.ConfigStorage);
         await _rowsOutput.OpenAsync(cancellationToken);
         try
         {

@@ -17,7 +17,7 @@ internal sealed partial class SelectPlanner
         CancellationToken cancellationToken)
     {
         // Fill conditions.
-        foreach (var inputContext in context.InputQueryContextList)
+        foreach (var inputContext in context.Inputs)
         {
             await QueryContext_FillQueryContextConditionsAsync(
                 querySpecificationNode.TableExpressionNode?.SearchConditionNode?.ExpressionNode,
@@ -42,7 +42,7 @@ internal sealed partial class SelectPlanner
                 var @delegate = await Misc_CreateDelegateAsync(querySpecificationNode.FetchNode.CountNode,
                     cancellationToken: cancellationToken);
                 var fetchCount = (await @delegate.InvokeAsync(ExecutionThread, cancellationToken)).AsInteger;
-                foreach (var queryContext in context.InputQueryContextList)
+                foreach (var queryContext in context.Inputs)
                 {
                     queryContext.QueryInfo.Limit = (queryContext.QueryInfo.Limit ?? 0) + fetchCount;
                 }
@@ -52,7 +52,7 @@ internal sealed partial class SelectPlanner
                 var @delegate = await Misc_CreateDelegateAsync(querySpecificationNode.OffsetNode.CountNode,
                     cancellationToken: cancellationToken);
                 var offsetCount = (await @delegate.InvokeAsync(ExecutionThread, cancellationToken)).AsInteger;
-                foreach (var queryContext in context.InputQueryContextList)
+                foreach (var queryContext in context.Inputs)
                 {
                     queryContext.QueryInfo.Limit = (queryContext.QueryInfo.Limit ?? 0) + offsetCount;
                 }
@@ -165,7 +165,7 @@ internal sealed partial class SelectPlanner
                 return false;
             }
             // Try to find correspond row input column.
-            await makeDelegateVisitor.RunAndReturnAsync(identifierNode, cancellationToken); // This call sets InputColumnKey attribute.
+            await makeDelegateVisitor.RunAndReturnAsync(identifierNode, ct); // This call sets InputColumnKey attribute.
             var column = identifierNode.GetAttribute<Column>(AstAttributeKeys.InputColumnKey);
             if (column == null || rowsInputContext.RowsInput.GetColumnIndex(column) < 0)
             {
@@ -173,7 +173,7 @@ internal sealed partial class SelectPlanner
             }
             if (inOperationExpressionNode.InExpressionValuesNodes is InExpressionValuesNode inExpressionValuesNode)
             {
-                var values = await Misc_CreateDelegateAsync(inExpressionValuesNode.ValuesNodes, commandContext, cancellationToken);
+                var values = await Misc_CreateDelegateAsync(inExpressionValuesNode.ValuesNodes, commandContext, ct);
                 if (values.Length == 1)
                 {
                     commandContext.Conditions.TryAddCondition(column, VariantValue.Operation.In,
@@ -190,14 +190,14 @@ internal sealed partial class SelectPlanner
             if (inOperationExpressionNode.InExpressionValuesNodes is SelectQueryNode selectQueryNode)
             {
                 var iterator = await new SelectPlanner(ExecutionThread)
-                    .CreateIteratorAsync(selectQueryNode, commandContext, cancellationToken);
+                    .CreateIteratorAsync(selectQueryNode, commandContext, ct);
                 commandContext.Conditions.TryAddCondition(column, VariantValue.Operation.In,
                     new KeyConditionValueGeneratorIterator(iterator));
                 return true;
             }
             if (inOperationExpressionNode.InExpressionValuesNodes is IdentifierExpressionNode identifierInNode)
             {
-                var identifierNodeAction = await makeDelegateVisitor.RunAndReturnAsync(identifierInNode, cancellationToken);
+                var identifierNodeAction = await makeDelegateVisitor.RunAndReturnAsync(identifierInNode, ct);
                 commandContext.Conditions.TryAddCondition(column, VariantValue.Operation.In,
                     new KeyConditionValueGeneratorVariable(identifierNodeAction));
                 return true;

@@ -4,7 +4,6 @@ using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Commands.Select.Iterators;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
-using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Indexes;
 using QueryCat.Backend.Relational;
@@ -141,8 +140,6 @@ internal sealed partial class SelectPlanner
         SelectColumnsExceptNode? exceptNode,
         CancellationToken cancellationToken)
     {
-        var projectedIterator = new ProjectedRowsIterator(ExecutionThread, context.CurrentIterator);
-
         // Format the initial iterator with all columns (except excluded) that
         // user mentioned in SELECT block.
         var funcs = new List<IFuncUnit>();
@@ -152,6 +149,7 @@ internal sealed partial class SelectPlanner
         }
         var selectColumns = CreateSelectColumns(columnsNode).ToList();
         var exceptColumns = exceptNode?.ExceptIdentifiers.ToList() ?? new List<IdentifierExpressionNode>();
+        var projectedIterator = new ProjectedRowsIterator(ExecutionThread, context.CurrentIterator);
         for (var i = 0; i < columnsNode.ColumnsNodes.Count; i++)
         {
             // Excluded columns filter.
@@ -360,7 +358,7 @@ internal sealed partial class SelectPlanner
             return;
         }
 
-        var queryContext = new RowsOutputQueryContext(context.CurrentIterator.Columns);
+        var queryContext = new RowsOutputQueryContext(context.CurrentIterator.Columns, ExecutionThread.ConfigStorage);
         var functionCallInfo = querySpecificationNode.TargetNode
             .GetRequiredAttribute<FuncUnitCallInfo>(AstAttributeKeys.ArgumentsKey);
         var hasVaryingTarget = querySpecificationNode.TargetNode.Arguments.Count > 0;
@@ -385,17 +383,8 @@ internal sealed partial class SelectPlanner
             }
             else
             {
-                var actionIterator = new ActionRowsIterator(outputIterator, "write to output")
-                {
-                    BeforeMoveNext = async (rowsIterator, ct) =>
-                    {
-                        while (await outputIterator.MoveNextAsync(ct))
-                        {
-                            await outputIterator.CurrentOutput.WriteValuesAsync(outputIterator.Current.Values, ct);
-                        }
-                    },
-                };
-                context.SetIterator(actionIterator);
+                var writeIterator = new OutputWriteRowsIterator(outputIterator);
+                context.SetIterator(writeIterator);
             }
         }
     }
@@ -436,37 +425,13 @@ internal sealed partial class SelectPlanner
     }
 
     /// <summary>
-    /// Update statistic if there is a error in rows input.
-    /// </summary>
-    private void Pipeline_SubscribeOnErrorsFromInputSources(SelectCommandContext context)
-    {
-        if (context.RowsInputIterator == null)
-        {
-            return;
-        }
-        context.RowsInputIterator.OnError += (_, args) =>
-        {
-            if (ExecutionThread.Options.ShowDetailedStatistic)
-            {
-                ExecutionThread.Statistic.AddError(
-                    new ExecutionStatistic.RowErrorInfo(args.ErrorCode, args.RowIndex, args.ColumnIndex));
-            }
-            else
-            {
-                ExecutionThread.Statistic.AddError(
-                    new ExecutionStatistic.RowErrorInfo(args.ErrorCode));
-            }
-        };
-    }
-
-    /// <summary>
     /// Assign SourceInputColumn attribute based on rows input iterator.
     /// </summary>
     private static void Pipeline_ResolveSelectSourceColumns(
         SelectCommandContext context,
         SelectQuerySpecificationNode querySpecificationNode)
     {
-        if (context.RowsInputIterator == null)
+        if (context.FirstRowsInput == null)
         {
             return;
         }
@@ -475,7 +440,7 @@ internal sealed partial class SelectPlanner
         {
             if (column.ExpressionNode is IdentifierExpressionNode identifierExpressionNode)
             {
-                var sourceColumn = context.RowsInputIterator.GetColumnByName(identifierExpressionNode.TableFieldName,
+                var sourceColumn = context.FirstRowsInput.GetColumnByName(identifierExpressionNode.TableFieldName,
                     identifierExpressionNode.TableSourceName);
                 if (sourceColumn != null)
                 {

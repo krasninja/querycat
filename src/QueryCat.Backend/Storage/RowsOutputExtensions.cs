@@ -14,11 +14,16 @@ public static class RowsOutputExtensions
     /// <param name="output">Rows output.</param>
     /// <param name="iterator">Rows iterator.</param>
     /// <param name="adjustColumnsLengths">Should update columns widths.</param>
+    /// <param name="configStorage">Configuration storage.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    public static async ValueTask WriteAsync(this IRowsOutput output, IRowsIterator iterator, bool adjustColumnsLengths = false,
+    public static async ValueTask WriteAsync(
+        this IRowsOutput output,
+        IRowsIterator iterator,
+        bool adjustColumnsLengths = false,
+        IConfigStorage? configStorage = null,
         CancellationToken cancellationToken = default)
     {
-        output.QueryContext = new RowsOutputQueryContext(iterator.Columns);
+        output.QueryContext = new RowsOutputQueryContext(iterator.Columns, configStorage ?? NullConfigStorage.Instance);
         await output.OpenAsync(cancellationToken);
         try
         {
@@ -43,10 +48,20 @@ public static class RowsOutputExtensions
     /// <param name="output">Rows output.</param>
     /// <param name="input">Rows input.</param>
     /// <param name="adjustColumnsLengths">Should update columns widths.</param>
+    /// <param name="configStorage">Configuration storage.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    public static ValueTask WriteAsync(this IRowsOutput output, IRowsInput input, bool adjustColumnsLengths = false,
+    public static ValueTask WriteAsync(
+        this IRowsOutput output,
+        IRowsInput input,
+        bool adjustColumnsLengths = false,
+        IConfigStorage? configStorage = null,
         CancellationToken cancellationToken = default)
     {
-        return WriteAsync(output, new RowsInputIterator(input), adjustColumnsLengths, cancellationToken: cancellationToken);
+        return WriteAsync(
+            output,
+            new RowsInputIterator(input),
+            adjustColumnsLengths,
+            configStorage,
+            cancellationToken: cancellationToken);
     }
 }

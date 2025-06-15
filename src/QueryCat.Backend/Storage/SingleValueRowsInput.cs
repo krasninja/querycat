@@ -87,4 +87,17 @@ internal sealed class SingleValueRowsInput : IRowsInput
 
     /// <inheritdoc />
     public override string ToString() => $"{GetType().Name} (value={_value}, id={_id})";
+
+    /// <inheritdoc />
+    public IReadOnlyList<KeyColumn> GetKeyColumns() => [];
+
+    /// <inheritdoc />
+    public void SetKeyColumnValue(int columnIndex, VariantValue value, VariantValue.Operation operation)
+    {
+    }
+
+    /// <inheritdoc />
+    public void UnsetKeyColumnValue(int columnIndex, VariantValue.Operation operation)
+    {
+    }
 }

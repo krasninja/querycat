@@ -47,7 +47,7 @@ internal sealed class CombineRowsInput : RowsInput, IDisposable
         var firstRowsInput = _rowsInputs.First();
         foreach (var rowsInput in _rowsInputs.Skip(1))
         {
-            if (!rowsInput.IsSchemaEqual(firstRowsInput))
+            if (!rowsInput.IsSchemaEqual(firstRowsInput.Columns))
             {
                 throw new QueryCatException(Resources.Errors.SchemasNotEqual);
             }

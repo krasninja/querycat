@@ -1,0 +1,7 @@
+expected: |
+  1,CA
+  1,TX
+  1,FL
+  2,CA
+query: |
+  select b.id, s.value from 'Branches.csv' b, (select value from string_to_table(b.states, ',')) s;

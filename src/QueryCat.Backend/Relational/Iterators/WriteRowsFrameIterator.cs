@@ -21,7 +21,7 @@ internal sealed class WriteRowsFrameIterator : IRowsIterator, IRowsIteratorParen
         _rowsFrame = rowsFrame;
         _rowsIterator = rowsIterator;
 
-        if (!_rowsFrame.IsSchemaEqual(rowsIterator))
+        if (!_rowsFrame.IsSchemaEqual(rowsIterator.Columns))
         {
             throw new InvalidOperationException(Resources.Errors.SchemasNotEqual);
         }

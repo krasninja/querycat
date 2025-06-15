@@ -1,0 +1,7 @@
+expected: |
+  1,Russia
+  2,USA
+  3,China
+  4,Belarus
+query: |
+  select v.id, v.name from (values('Countries1.csv'), ('Countries2.csv')) c, c.column1 as v;

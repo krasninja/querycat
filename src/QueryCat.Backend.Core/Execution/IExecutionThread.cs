@@ -23,7 +23,7 @@ public interface IExecutionThread : IDisposable
     /// <summary>
     /// Config storage.
     /// </summary>
-    IInputConfigStorage ConfigStorage { get; }
+    IConfigStorage ConfigStorage { get; }
 
     /// <summary>
     /// Top execution scope.

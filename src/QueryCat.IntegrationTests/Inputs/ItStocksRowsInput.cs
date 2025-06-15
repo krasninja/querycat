@@ -2,11 +2,14 @@ using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Fetch;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Utils;
 
 namespace QueryCat.IntegrationTests.Inputs;
 
 public sealed class ItStocksRowsInput : EnumerableRowsInput<Stock>
 {
+    private readonly int _id = IdGenerator.GetNext();
+
     [SafeFunction]
     [FunctionSignature("it_stocks(): object<IRowsInput>")]
     public static VariantValue ItStocks(IExecutionThread thread)
@@ -44,4 +47,7 @@ public sealed class ItStocksRowsInput : EnumerableRowsInput<Stock>
         var item = _data.First(s => s.Id == id.AsString);
         yield return item;
     }
+
+    /// <inheritdoc />
+    public override string ToString() => $"{nameof(ItStocks)} (Id = {_id})";
 }

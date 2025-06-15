@@ -1,5 +1,4 @@
 using System.ComponentModel;
-using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
@@ -26,4 +25,9 @@ public sealed class IISW3CFormatter : IRowsFormatter
 
     /// <inheritdoc />
     public IRowsOutput OpenOutput(IBlobData blob) => throw new NotImplementedException();
+
+    public static void RegisterFunctions(IFunctionsManager functionsManager)
+    {
+        functionsManager.RegisterFunction(IISW3C);
+    }
 }
