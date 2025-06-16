@@ -98,17 +98,6 @@ public class Row : IRowsSchema, ICloneable, IEnumerable<VariantValue>
     /// <summary>
     /// Copy row values into another row.
     /// </summary>
-    /// <param name="fromRow">Source row.</param>
-    /// <param name="toRow">Destination row.</param>
-    public static void Copy(Row fromRow, Row toRow)
-    {
-        ValidateArraysLength(fromRow._values, toRow._values);
-        fromRow._values.CopyTo(toRow._values, 0);
-    }
-
-    /// <summary>
-    /// Copy row values into another row.
-    /// </summary>
     /// <param name="values">Values.</param>
     /// <param name="toRow">Destination row.</param>
     public static void Copy(ReadOnlySpan<VariantValue> values, Row toRow)
@@ -118,15 +107,23 @@ public class Row : IRowsSchema, ICloneable, IEnumerable<VariantValue>
     }
 
     /// <summary>
+    /// Copy row values into another row starting.
+    /// </summary>
+    /// <param name="toRow">Destination row.</param>
+    public virtual void Copy(Row toRow)
+    {
+        _values.CopyTo(toRow._values.AsSpan());
+    }
+
+    /// <summary>
     /// Copy row values into another row starting from index.
     /// </summary>
-    /// <param name="fromRow">Source row.</param>
     /// <param name="fromRowOffset">Source start index.</param>
     /// <param name="toRow">Destination row.</param>
     /// <param name="toRowOffset">Destination start index.</param>
-    public static void Copy(Row fromRow, int fromRowOffset, Row toRow, int toRowOffset)
+    public virtual void Copy(int fromRowOffset, Row toRow, int toRowOffset)
     {
-        fromRow._values[fromRowOffset..].CopyTo(toRow._values.AsSpan(toRowOffset));
+        _values[fromRowOffset..].CopyTo(toRow._values.AsSpan(toRowOffset));
     }
 
     private static void ValidateArraysLength(ReadOnlySpan<VariantValue> array1, ReadOnlySpan<VariantValue> array2)

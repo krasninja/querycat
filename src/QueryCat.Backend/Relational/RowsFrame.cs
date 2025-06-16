@@ -142,11 +142,7 @@ public class RowsFrame : IRowsSchema, IEnumerable<Row>
     /// <param name="rowIndex">Row index.</param>
     public void ReadRowAt(Row row, int rowIndex)
     {
-        (int chunkIndex, int offset) = GetChunkAndOffset(rowIndex);
-        if (chunkIndex > _storage.Count - 1)
-        {
-            throw new QueryCatException(string.Format(Resources.Errors.InvalidRowIndex, rowIndex));
-        }
+        var (chunkIndex, offset) = GetChunkAndOffsetValidate(rowIndex);
         Array.Copy(_storage[chunkIndex], offset, row.AsArray(), 0, _columns.Length);
     }
 
@@ -158,12 +154,23 @@ public class RowsFrame : IRowsSchema, IEnumerable<Row>
     /// <param name="value">New value.</param>
     public void UpdateValue(int rowIndex, int columnIndex, VariantValue value)
     {
-        (int chunkIndex, int offset) = GetChunkAndOffset(rowIndex);
-        if (chunkIndex > _storage.Count - 1)
-        {
-            throw new QueryCatException(string.Format(Resources.Errors.InvalidRowIndex, rowIndex));
-        }
+        var (chunkIndex, offset) = GetChunkAndOffsetValidate(rowIndex);
         _storage[chunkIndex][offset + columnIndex] = value;
+    }
+
+    /// <summary>
+    /// Update range of values.
+    /// </summary>
+    /// <param name="rowIndex">Row index.</param>
+    /// <param name="columnIndexOffset">Zero-based columns offset.</param>
+    /// <param name="values">Values to copy.</param>
+    public void UpdateValues(int rowIndex, int columnIndexOffset, params ReadOnlySpan<VariantValue> values)
+    {
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(values.Length + columnIndexOffset,
+            Columns.Length, nameof(values));
+
+        var (chunkIndex, offset) = GetChunkAndOffsetValidate(rowIndex);
+        values.CopyTo(_storage[chunkIndex].AsSpan(offset + columnIndexOffset, values.Length));
     }
 
     /// <summary>
@@ -230,6 +237,16 @@ public class RowsFrame : IRowsSchema, IEnumerable<Row>
     {
         _storage.Clear();
         TotalRows = 0;
+    }
+
+    private (int ChunkIndex, int Offset) GetChunkAndOffsetValidate(int rowIndex)
+    {
+        var chunkIndex = rowIndex / _rowsPerChunk;
+        if (chunkIndex > _storage.Count - 1)
+        {
+            throw new QueryCatException(string.Format(Resources.Errors.InvalidRowIndex, rowIndex));
+        }
+        return (chunkIndex, rowIndex % _rowsPerChunk * _columns.Length);
     }
 
     private (int ChunkIndex, int Offset) GetChunkAndOffset(int rowIndex)
