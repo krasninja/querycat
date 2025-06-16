@@ -536,7 +536,9 @@ public partial class ThriftPluginClient
     {
         private readonly Plugin.IAsync _handler;
         private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(Handler));
+#pragma warning disable CS0649 // Field is never assigned to, and will always have its default value
         private readonly bool _traceCalls;
+#pragma warning restore CS0649 // Field is never assigned to, and will always have its default value
 
         public HandlerWithExceptionIntercept(Plugin.IAsync handler)
         {
