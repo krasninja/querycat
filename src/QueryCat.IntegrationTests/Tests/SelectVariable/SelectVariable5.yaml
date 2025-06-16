@@ -1,0 +1,5 @@
+expected: |
+  9
+query: |
+  declare file := 'Laski.json';
+  json_array_length((select Players from file));

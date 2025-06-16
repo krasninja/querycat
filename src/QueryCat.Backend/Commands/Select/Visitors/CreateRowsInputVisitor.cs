@@ -187,7 +187,8 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
             return null;
         }
 
-        var isPartOfFromClause = AstTraversal.GetParents<SelectTableReferenceListNode>().Any();
+        var parentNode = AstTraversal.GetFirstParent<IAstNode>();
+        var isPartOfFromClause = parentNode is SelectTableReferenceListNode;
         var rowsInputContext = await _rowsInputFactory.CreateRowsInputAsync(
             value, _executionThread, resolveStringAsSource: isPartOfFromClause, cancellationToken);
 
