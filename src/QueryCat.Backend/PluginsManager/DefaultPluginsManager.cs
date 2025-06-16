@@ -29,7 +29,7 @@ public sealed class DefaultPluginsManager : IPluginsManager, IDisposable
     /// </summary>
     /// <param name="pluginDirectories">Directories to search plugins for.</param>
     /// <param name="pluginsLoader">Instance of <see cref="PluginsLoader" />.</param>
-    /// <param name="pluginsStorage">Instance of <see cref="pluginsStorage" />.</param>
+    /// <param name="pluginsStorage">Instance of <see cref="IPluginsStorage" />.</param>
     /// <param name="platform">Target platform.</param>
     public DefaultPluginsManager(
         IEnumerable<string> pluginDirectories,
