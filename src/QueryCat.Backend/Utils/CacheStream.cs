@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend.Utils;
@@ -131,12 +132,23 @@ internal sealed class CacheStream : Stream
         return bytesRead;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private int WriteToCache(byte[] buffer, int offset, int bytesRead)
-        => WriteToCache(buffer.AsMemory(offset, bytesRead));
+    {
+        if (!_cacheMode)
+        {
+            return 0;
+        }
+        return WriteToCache(buffer.AsMemory(offset, bytesRead));
+    }
 
     private int WriteToCache(Memory<byte> buffer)
     {
-        if (_cacheMode && buffer.IsEmpty)
+        if (!_cacheMode)
+        {
+            return 0;
+        }
+        if (buffer.IsEmpty)
         {
             return 0;
         }
