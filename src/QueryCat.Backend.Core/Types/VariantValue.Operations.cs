@@ -50,11 +50,29 @@ public readonly partial struct VariantValue
     public delegate VariantValue OperationBinaryDelegate(in VariantValue left, in VariantValue right,
         out ErrorCode errorCode);
 
-    internal static BinaryFunction GetBinaryFunction(OperationBinaryDelegate @delegate)
+    internal static BinaryFunction GetBinaryFunction(Operation operation) => operation switch
     {
-        return (in VariantValue left, in VariantValue right)
-            => @delegate.Invoke(in left, in right, out _);
-    }
+        Operation.Add => (in VariantValue left, in VariantValue right) => Add(in left, in right, out _),
+        Operation.Subtract => (in VariantValue left, in VariantValue right) => Subtract(in left, in right, out _),
+        Operation.Multiple => (in VariantValue left, in VariantValue right) => Mul(in left, in right, out _),
+        Operation.Divide => (in VariantValue left, in VariantValue right) => Div(in left, in right, out _),
+        Operation.Modulo => (in VariantValue left, in VariantValue right) => Modulo(in left, in right, out _),
+        Operation.LeftShift => (in VariantValue left, in VariantValue right) => LeftShift(in left, in right, out _),
+        Operation.RightShift => (in VariantValue left, in VariantValue right) => RightShift(in left, in right, out _),
+        Operation.Equals => (in VariantValue left, in VariantValue right) => Equals(in left, in right, out _),
+        Operation.NotEquals => (in VariantValue left, in VariantValue right) => NotEquals(in left, in right, out _),
+        Operation.Greater => (in VariantValue left, in VariantValue right) => Greater(in left, in right, out _),
+        Operation.GreaterOrEquals => (in VariantValue left, in VariantValue right) => GreaterOrEquals(in left, in right, out _),
+        Operation.Less => (in VariantValue left, in VariantValue right) => Less(in left, in right, out _),
+        Operation.LessOrEquals => (in VariantValue left, in VariantValue right) => LessOrEquals(in left, in right, out _),
+        Operation.Concat => (in VariantValue left, in VariantValue right) => Concat(in left, in right, out _),
+        Operation.BetweenAnd => (in VariantValue left, in VariantValue right) => BetweenAnd(in left, in right, out _),
+        Operation.Like => (in VariantValue left, in VariantValue right) => Like(in left, in right, out _),
+        Operation.NotLike => (in VariantValue left, in VariantValue right) => NotLike(in left, in right, out _),
+        Operation.Similar => (in VariantValue left, in VariantValue right) => Similar(in left, in right, out _),
+        Operation.NotSimilar => (in VariantValue left, in VariantValue right) => NotSimilar(in left, in right, out _),
+        _ => throw new ArgumentOutOfRangeException(nameof(operation), Resources.Errors.InvalidOperation),
+    };
 
     internal static UnaryFunction GetOperationDelegate(Operation operation, DataType leftType)
         => operation switch
@@ -103,7 +121,7 @@ public readonly partial struct VariantValue
             Operation.LessOrEquals => GetLessOrEqualsDelegate(leftType, rightType),
             Operation.And => GetAndDelegate(leftType, rightType),
             Operation.Or => GetOrDelegate(leftType, rightType),
-            _ => GetBinaryFunction(GetOperationDelegate(operation)),
+            _ => GetBinaryFunction(operation),
         };
 
     internal delegate VariantValue OperationTernaryDelegate(in VariantValue left, in VariantValue right,
