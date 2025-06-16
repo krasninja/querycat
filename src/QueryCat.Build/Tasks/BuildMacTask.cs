@@ -22,10 +22,6 @@ public sealed class BuildMacTask : BaseBuildTask
         {
             Runtime = platform,
         });
-        context.DotNetPublish(context.TimeItAppProjectDirectory, new PublishGeneralSettings(context, publishAot, properties)
-        {
-            Runtime = platform,
-        });
 
         return base.RunAsync(context);
     }
