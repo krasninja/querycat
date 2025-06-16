@@ -498,13 +498,16 @@ internal partial class CreateDelegateVisitor : AstVisitor
         NodeIdFuncMap[node.Id] = NodeIdFuncMap[node.ExpressionValueNode.Id];
     }
 
-    private class FunctionCallFuncUnit(
+    private sealed class FunctionCallFuncUnit(
         IFunction function,
         IFuncUnit[] argsUnits,
-        DataType outputType) : IFuncUnit
+        DataType outputType) : IFuncUnitArguments
     {
         /// <inheritdoc />
         public DataType OutputType => outputType;
+
+        /// <inheritdoc />
+        public IFuncUnit[] ArgumentsUnits => argsUnits;
 
         /// <inheritdoc />
         public async ValueTask<VariantValue> InvokeAsync(IExecutionThread thread, CancellationToken cancellationToken = default)

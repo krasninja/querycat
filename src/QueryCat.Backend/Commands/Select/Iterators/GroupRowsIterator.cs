@@ -155,7 +155,7 @@ internal sealed class GroupRowsIterator : IRowsIterator, IRowsIteratorParent
             {
                 var target = _targets[i];
                 _thread.Stack.CreateFrame();
-                await target.ValueGenerator.InvokeAsync(_thread, cancellationToken); // We need this call to fill FunctionCallInfo.
+                await FillAggregateTargetStackValuesAsync(target, cancellationToken);
                 target.AggregateFunction.Invoke(groupKey.AggregateStates[i], _thread);
                 _thread.Stack.CloseFrame();
             }
@@ -185,6 +185,21 @@ internal sealed class GroupRowsIterator : IRowsIterator, IRowsIteratorParent
                     target.AggregateFunction.GetInitialState(target.ReturnType));
             }
             _rowsFrame.AddRow(defaultValuesRow);
+        }
+    }
+
+    private async ValueTask FillAggregateTargetStackValuesAsync(AggregateTarget target, CancellationToken cancellationToken)
+    {
+        if (target.ValueGenerator is IFuncUnitArguments funcUnitArguments)
+        {
+            foreach (var argUnit in funcUnitArguments.ArgumentsUnits)
+            {
+                _thread.Stack.Push(await argUnit.InvokeAsync(_thread, cancellationToken));
+            }
+        }
+        else
+        {
+            await target.ValueGenerator.InvokeAsync(_thread, cancellationToken); // We need this call to fill FunctionCallInfo.
         }
     }
 
