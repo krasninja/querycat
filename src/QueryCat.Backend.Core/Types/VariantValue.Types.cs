@@ -298,7 +298,7 @@ public partial struct VariantValue
         internal static string StringToString(in ReadOnlySpan<char> value, out bool success)
         {
             success = true;
-            return value.ToString();
+            return !value.IsEmpty ? value.ToString() : string.Empty;
         }
 
         #endregion
