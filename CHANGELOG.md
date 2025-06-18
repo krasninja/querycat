@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- New table output layout SolidTable.
+
+### Fixed
+
+- Bugfixes, performance improvements.
+
 ## [0.14.0] - 2025-06-15
 
 ### Added
