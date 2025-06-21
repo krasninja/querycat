@@ -1,6 +1,4 @@
 ﻿using System.CommandLine;
-using System.CommandLine.Builder;
-using System.CommandLine.Parsing;
 using System.Text;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend;
@@ -19,54 +17,57 @@ namespace QueryCat.Tester;
 /// </summary>
 public class Program
 {
-    private static readonly Option<string[]> _pluginFilesOption = new("--plugin-files",
-        description: "Plugin files.")
-        {
-            AllowMultipleArgumentsPerToken = true,
-        };
+    private static readonly Option<string[]> _pluginFilesOption = new("--plugin-files")
+    {
+        Description = "Plugin files.",
+        AllowMultipleArgumentsPerToken = true,
+    };
 
-    private static readonly Argument<string> _queryArgument = new("query",
-        description: "SQL-like query or command argument.");
+    private static readonly Argument<string> _queryArgument = new("query")
+    {
+        Description = "SQL-like query or command argument.",
+    };
 
-    private static readonly Option<string[]> _filesOption = new(["-f", "--files"],
-        description: "SQL files to execute.")
-        {
-            AllowMultipleArgumentsPerToken = true,
-        };
+    private static readonly Option<string[]> _filesOption = new("-f", "--files")
+    {
+        Description = "SQL files to execute.",
+        AllowMultipleArgumentsPerToken = true,
+    };
 
-    private static readonly Option<string[]> _variablesOption = new("--var",
-        description: "Pass variables.");
+    private static readonly Option<string[]> _variablesOption = new("--var")
+    {
+        Description = "Variables for query.",
+    };
 
     public static async Task<int> Main(string[] args)
     {
-        if (args.Length < 1)
-        {
-            args = ["-h"];
-        }
-
         var rootCommand = new RootCommand("QueryCat Tester");
 
-        rootCommand.AddOption(_pluginFilesOption);
-        rootCommand.AddOption(_filesOption);
-        rootCommand.AddArgument(_queryArgument);
-        rootCommand.AddOption(_variablesOption);
+        rootCommand.Add(_pluginFilesOption);
+        rootCommand.Add(_filesOption);
+        rootCommand.Add(_queryArgument);
+        rootCommand.Add(_variablesOption);
 
-        rootCommand.SetHandler(
-            Run,
-            _queryArgument,
-            _pluginFilesOption,
-            _filesOption,
-            _variablesOption);
+        rootCommand.SetAction((parseResult, cancellationToken) =>
+        {
+            return Run(
+                parseResult.GetValue(_queryArgument) ?? string.Empty,
+                parseResult.GetValue(_pluginFilesOption) ?? [],
+                parseResult.GetValue(_filesOption) ?? [],
+                parseResult.GetValue(_variablesOption) ?? [],
+                cancellationToken
+            );
+        });
 
-        var parser = new CommandLineBuilder(rootCommand)
-            .UseVersionOption("-v", "--version")
-            .UseDefaults()
-            .Build();
-        var returnCode = await parser.Parse(args).InvokeAsync();
-        return returnCode;
+        return await rootCommand.Parse(args).InvokeAsync();
     }
 
-    private static async Task Run(string query, string[] pluginDirectories, string[] files, string[] variables)
+    private static async Task Run(
+        string query,
+        string[] pluginDirectories,
+        string[] files,
+        string[] variables,
+        CancellationToken cancellationToken = default)
     {
         InitializeLogger();
 
@@ -95,15 +96,15 @@ public class Program
         {
             foreach (var file in files)
             {
-                var fileContent = await File.ReadAllTextAsync(file);
-                await executionThread.RunAsync(fileContent);
+                var fileContent = await File.ReadAllTextAsync(file, cancellationToken);
+                await executionThread.RunAsync(fileContent, cancellationToken: cancellationToken);
             }
         }
         else
         {
-            await executionThread.RunAsync(query);
+            await executionThread.RunAsync(query, cancellationToken: cancellationToken);
         }
-        await Console.Out.WriteLineAsync(outputStringBuilder);
+        await Console.Out.WriteLineAsync(outputStringBuilder, cancellationToken);
     }
 
     public static void AddVariables(IExecutionThread executionThread, string[]? variables = null)

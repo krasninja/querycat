@@ -1,7 +1,6 @@
 ﻿using System.CommandLine;
-using System.CommandLine.Builder;
 using System.CommandLine.Help;
-using System.CommandLine.Parsing;
+using System.CommandLine.Invocation;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Parser;
@@ -14,8 +13,6 @@ namespace QueryCat.Cli;
 /// </summary>
 internal sealed class Program
 {
-    private static readonly Lazy<ILogger> _logger = new(() => Application.LoggerFactory.CreateLogger(nameof(Program)));
-
     private static readonly Lock _objLock = new();
 
     /// <summary>
@@ -27,11 +24,6 @@ internal sealed class Program
     {
         AppDomain.CurrentDomain.UnhandledException += CurrentDomainOnUnhandledException;
 
-        if (args.Length < 1)
-        {
-            args = ["-h"];
-        }
-
         // Root.
         var rootCommand = new ApplicationRootCommand
         {
@@ -42,7 +34,7 @@ internal sealed class Program
             new CallFunctionCommand(),
             new ServeCommand(),
 #if ENABLE_PLUGINS
-            new Command("plugin", "Plugins management.")
+            new Command("plugin", Resources.Messages.PluginCommand_Description)
             {
                 new PluginInstallCommand(),
                 new PluginListCommand(),
@@ -60,63 +52,83 @@ internal sealed class Program
         // Allow to query without "query" command. Fast way.
         var queryArgument = new Argument<string>("query")
         {
-            IsHidden = true,
+            Hidden = true,
         };
-        rootCommand.AddArgument(queryArgument);
-        rootCommand.SetHandler(async (context) =>
+        rootCommand.Add(queryArgument);
+        rootCommand.SetAction(async (parseResult, cancellationToken) =>
         {
+            parseResult.Configuration.EnableDefaultExceptionHandler = false;
+
             // Allow to use with shebang.
             if (args.Length == 1
                 && args[0].Length < 140
                 && !args[0].Contains(Environment.NewLine)
                 && File.Exists(args[0]))
             {
-                await new QueryCommand().Parse("-f", args[0]).InvokeAsync();
+                await new QueryCommand().Parse(["-f", args[0]]).InvokeAsync(cancellationToken);
             }
             else
             {
-                await new QueryCommand().Parse(args).InvokeAsync();
+                await new QueryCommand().Parse(args).InvokeAsync(cancellationToken);
             }
         });
 
-        var parser = new CommandLineBuilder(rootCommand)
-            .UseVersionOption("-v", "--version")
-            .UseDefaults()
-            .UseHelp(context =>
-            {
-                if (context.Command is RootCommand)
-                {
-                    var layouts = HelpBuilder.Default.GetLayout().ToList();
-                    layouts.Insert(1, _ =>
-                    {
-                        context.Output.Write(Resources.Messages.HelpText);
-                    });
-                    context.HelpBuilder.CustomizeLayout(_ => layouts);
-                }
-            })
-            .UseExceptionHandler((exception, ic) =>
-            {
-                ic.ExitCode = ProcessException(exception);
-            }, errorExitCode: 1)
-            .Build();
+        SetCustomHelpMessage(rootCommand);
 
-        var returnCode = await parser.Parse(args).InvokeAsync();
+        int returnCode;
+        try
+        {
+            returnCode = await rootCommand.Parse(args).InvokeAsync();
+        }
+        catch (Exception e)
+        {
+            returnCode = ProcessException(e);
+        }
         Application.LoggerFactory.Dispose();
         return returnCode;
     }
 
+    private static void SetCustomHelpMessage(RootCommand rootCommand)
+    {
+        foreach (var rootCommandOption in rootCommand.Options)
+        {
+            // RootCommand has a default HelpOption, we need to update its Action.
+            if (rootCommandOption is HelpOption defaultHelpOption)
+            {
+                defaultHelpOption.Action = new UsageHelpSection((HelpAction)defaultHelpOption.Action!);
+                break;
+            }
+        }
+    }
+
     private static void CurrentDomainOnUnhandledException(object? sender, UnhandledExceptionEventArgs e)
     {
+        var returnCode = 1;
         if (e.ExceptionObject is Exception exception)
         {
-            ProcessException(exception);
+            returnCode = ProcessException(exception);
         }
-        Environment.Exit(1);
+        Environment.Exit(returnCode);
+    }
+
+    private sealed class UsageHelpSection(HelpAction action) : SynchronousCommandLineAction
+    {
+        /// <inheritdoc />
+        public override int Invoke(ParseResult parseResult)
+        {
+            var result = action.Invoke(parseResult);
+            if (parseResult.CommandResult.Command is ApplicationRootCommand)
+            {
+                var output = parseResult.Configuration.Output;
+                output.WriteLine(Resources.Messages.HelpText);
+            }
+            return result;
+        }
     }
 
     private static int ProcessException(Exception exception)
     {
-        var logger = _logger.Value;
+        var logger = Application.LoggerFactory.CreateLogger(nameof(Program));
         lock (_objLock)
         {
             if (exception is AggregateException aggregateException)

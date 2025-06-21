@@ -23,7 +23,6 @@
   </data>
   <data name="HelpText" xml:space="preserve">
     <value>Getting started:
-
   -- Simple select from CSV file
   qcat "select * from '/home/user/users.csv' where email like '%@gmail.com'";
   -- Query from command
@@ -46,5 +45,149 @@
   </data>
   <data name="PluginProxyWantToInstall" xml:space="preserve">
     <value>Plugin proxy is not found. Do you want to download it now? (y/N)</value>
+  </data>
+  <data name="QueryCommand_Description" xml:space="preserve">
+    <value>Execute SQL query.</value>
+  </data>
+  <data name="QueryCommand_MaxErrorsDescription" xml:space="preserve">
+    <value>Max number of errors before abort. -1 is ignore.</value>
+  </data>
+  <data name="QueryCommand_StatisticDescription" xml:space="preserve">
+    <value>Show statistic.</value>
+  </data>
+  <data name="QueryCommand_DetailedStatisticDescription" xml:space="preserve">
+    <value>Show detailed statistic (include rows errors).</value>
+  </data>
+  <data name="QueryCommand_RowNumberDescription" xml:space="preserve">
+    <value>Include row number column.</value>
+  </data>
+  <data name="QueryCommand_PageSizeDescription" xml:space="preserve">
+    <value>Output page size. Set -1 to show all.</value>
+  </data>
+  <data name="QueryCommand_OutputStyleDescription" xml:space="preserve">
+    <value>Output table style.</value>
+  </data>
+  <data name="QueryCommand_AnalyzeRowsDescription" xml:space="preserve">
+    <value>Number of rows to analyze. -1 to analyze all.</value>
+  </data>
+  <data name="QueryCommand_ColumnsSeparatorDescription" xml:space="preserve">
+    <value>Character to use to separate columns.</value>
+  </data>
+  <data name="QueryCommand_DisableCacheDescription" xml:space="preserve">
+    <value>Do not use memory cache for sub-queries.</value>
+  </data>
+  <data name="QueryCommand_NoHeaderDescription" xml:space="preserve">
+    <value>Do not render header.</value>
+  </data>
+  <data name="QueryCommand_FloatFormatDescription" xml:space="preserve">
+    <value>Float numbers format.</value>
+  </data>
+  <data name="QueryCommand_FollowDescription" xml:space="preserve">
+    <value>Output appended data as the input source grows.</value>
+  </data>
+  <data name="QueryCommand_TailDescription" xml:space="preserve">
+    <value>Return the specific number of rows from tail.</value>
+  </data>
+  <data name="QueryCommand_TimeoutDescription" xml:space="preserve">
+    <value>Query timeout in ms.</value>
+  </data>
+  <data name="QueryCommand_SafeModeDescription" xml:space="preserve">
+    <value>Allow to call only safe (no modifications) functions.</value>
+  </data>
+  <data name="QueryCommand_QueryDescription" xml:space="preserve">
+    <value>SQL-like query or command argument.</value>
+  </data>
+  <data name="QueryCommand_FilesDescription" xml:space="preserve">
+    <value>SQL files to execute.</value>
+  </data>
+  <data name="QueryCommand_VariablesDescription" xml:space="preserve">
+    <value>Pass variables.</value>
+  </data>
+  <data name="AstCommand_Description" xml:space="preserve">
+    <value>Show query AST for debugging.</value>
+  </data>
+  <data name="QueryCommand_LogLevelDescription" xml:space="preserve">
+    <value>Log level.</value>
+  </data>
+  <data name="QueryCommand_PluginDirectoriesCommand" xml:space="preserve">
+    <value>Plugin directories.</value>
+  </data>
+  <data name="CallCommand_Description" xml:space="preserve">
+    <value>Call function.</value>
+  </data>
+  <data name="CallCommand_FunctionDescription" xml:space="preserve">
+    <value>Function name.</value>
+  </data>
+  <data name="CallCommand_ArgumentsDescription" xml:space="preserve">
+    <value>Function call arguments.</value>
+  </data>
+  <data name="ExplainCommand_Description" xml:space="preserve">
+    <value>Show query plan for debugging.</value>
+  </data>
+  <data name="PluginDebugCommand_Description" xml:space="preserve">
+    <value>Setup debug server.</value>
+  </data>
+  <data name="PluginInstallCommand_Description" xml:space="preserve">
+    <value>Install the plugin.</value>
+  </data>
+  <data name="PluginInstallCommand_NameDescription" xml:space="preserve">
+    <value>Plugin name.</value>
+  </data>
+  <data name="PluginInstallCommand_OverwriteDescription" xml:space="preserve">
+    <value>Overwrite the plugin if it already exists.</value>
+  </data>
+  <data name="PluginListCommand_Description" xml:space="preserve">
+    <value>List available plugins for the current platform.</value>
+  </data>
+  <data name="PluginInstallProxyCommand_Description" xml:space="preserve">
+    <value>Install the plugins proxy.</value>
+  </data>
+  <data name="PluginRemoveCommand_Description" xml:space="preserve">
+    <value>Remove the plugin.</value>
+  </data>
+  <data name="PluginRemoveCommand_NameDescription" xml:space="preserve">
+    <value>Plugin name.</value>
+  </data>
+  <data name="PluginUpdateCommand_Description" xml:space="preserve">
+    <value>Update the plugin.</value>
+  </data>
+  <data name="PluginUpdateCommand_NameDescription" xml:space="preserve">
+    <value>Plugin name.</value>
+  </data>
+  <data name="SchemaCommand_Description" xml:space="preserve">
+    <value>Show query result columns.</value>
+  </data>
+  <data name="ServeCommand_Description" xml:space="preserve">
+    <value>Run simple HTTP server.</value>
+  </data>
+  <data name="ServeCommand_UrlsDescription" xml:space="preserve">
+    <value>Endpoint to serve on.</value>
+  </data>
+  <data name="ServeCommand_AllowOriginDescription" xml:space="preserve">
+    <value>Enables CORS for the specified origin.</value>
+  </data>
+  <data name="ServeCommand_PasswordDescription" xml:space="preserve">
+    <value>Basic authentication password.</value>
+  </data>
+  <data name="ServeCommand_RootDirectoryDescription" xml:space="preserve">
+    <value>Root directory for files serve.</value>
+  </data>
+  <data name="ServeCommand_SafeModeDescription" xml:space="preserve">
+    <value>Allow to call only safe (no modifications) functions.</value>
+  </data>
+  <data name="ServeCommand_AllowedIPsSlotsDescription" xml:space="preserve">
+    <value>Number of IPs that will be added to authorized list on first connect.</value>
+  </data>
+  <data name="ServeCommand_AllowsIPsDescription" xml:space="preserve">
+    <value>Allowed IP addresses to connect.\nExample: http://192.168.1.125:5555/</value>
+  </data>
+  <data name="RootCommand_Description" xml:space="preserve">
+    <value>The simple text parsing, data query and transformation utility.</value>
+  </data>
+  <data name="PluginListCommand_AllDescription" xml:space="preserve">
+    <value>List all plugins.</value>
+  </data>
+  <data name="PluginCommand_Description" xml:space="preserve">
+    <value>Plugins management.</value>
   </data>
 </root>

@@ -23,7 +23,7 @@ internal class CreateTestCsvFileCommand : Command
 
     public CreateTestCsvFileCommand() : base("create-test-csv")
     {
-        this.SetHandler(async () =>
+        this.SetAction(async (parseResult, cancellationToken) =>
         {
             Randomizer.Seed = new Random(Seed);
 

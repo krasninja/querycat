@@ -6,15 +6,16 @@ internal class CallBenchmarkMethodCommand : Command
 {
     public CallBenchmarkMethodCommand() : base("call-benchmark", "Call the specific benchmark method.")
     {
-        var methodNameOption = new Option<string>(new[] { "-m", "--method" },
-            description: "Benchmark method.")
-            {
-                IsRequired = true
-            };
-
-        this.AddOption(methodNameOption);
-        this.SetHandler(methodName =>
+        var methodNameOption = new Option<string>("-m", "--method")
         {
+            Description = "Benchmark method.",
+            Required = true,
+        };
+
+        this.Add(methodNameOption);
+        this.SetAction((parseResult, cancellationToken) =>
+        {
+            var methodName = parseResult.GetRequiredValue(methodNameOption);
             var split = methodName.Split('.');
             if (split.Length != 2)
             {
@@ -34,7 +35,8 @@ internal class CallBenchmarkMethodCommand : Command
                 throw new InvalidOperationException("Cannot find method.");
             }
 
-            method.Invoke(instance, Array.Empty<object>());
-        }, methodNameOption);
+            method.Invoke(instance, []);
+            return Task.CompletedTask;
+        });
     }
 }

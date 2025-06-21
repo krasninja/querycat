@@ -3,7 +3,6 @@ using System.Diagnostics;
 using System.Net;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Storage;
 
 namespace QueryCat.Cli.Infrastructure;
 

@@ -86,5 +86,293 @@ namespace QueryCat.Cli.Resources {
                 return ResourceManager.GetString("PluginProxyWantToInstall", resourceCulture);
             }
         }
+        
+        internal static string QueryCommand_Description {
+            get {
+                return ResourceManager.GetString("QueryCommand_Description", resourceCulture);
+            }
+        }
+        
+        internal static string QueryCommand_MaxErrorsDescription {
+            get {
+                return ResourceManager.GetString("QueryCommand_MaxErrorsDescription", resourceCulture);
+            }
+        }
+        
+        internal static string QueryCommand_StatisticDescription {
+            get {
+                return ResourceManager.GetString("QueryCommand_StatisticDescription", resourceCulture);
+            }
+        }
+        
+        internal static string QueryCommand_DetailedStatisticDescription {
+            get {
+                return ResourceManager.GetString("QueryCommand_DetailedStatisticDescription", resourceCulture);
+            }
+        }
+        
+        internal static string QueryCommand_RowNumberDescription {
+            get {
+                return ResourceManager.GetString("QueryCommand_RowNumberDescription", resourceCulture);
+            }
+        }
+        
+        internal static string QueryCommand_PageSizeDescription {
+            get {
+                return ResourceManager.GetString("QueryCommand_PageSizeDescription", resourceCulture);
+            }
+        }
+        
+        internal static string QueryCommand_OutputStyleDescription {
+            get {
+                return ResourceManager.GetString("QueryCommand_OutputStyleDescription", resourceCulture);
+            }
+        }
+        
+        internal static string QueryCommand_AnalyzeRowsDescription {
+            get {
+                return ResourceManager.GetString("QueryCommand_AnalyzeRowsDescription", resourceCulture);
+            }
+        }
+        
+        internal static string QueryCommand_ColumnsSeparatorDescription {
+            get {
+                return ResourceManager.GetString("QueryCommand_ColumnsSeparatorDescription", resourceCulture);
+            }
+        }
+        
+        internal static string QueryCommand_DisableCacheDescription {
+            get {
+                return ResourceManager.GetString("QueryCommand_DisableCacheDescription", resourceCulture);
+            }
+        }
+        
+        internal static string QueryCommand_NoHeaderDescription {
+            get {
+                return ResourceManager.GetString("QueryCommand_NoHeaderDescription", resourceCulture);
+            }
+        }
+        
+        internal static string QueryCommand_FloatFormatDescription {
+            get {
+                return ResourceManager.GetString("QueryCommand_FloatFormatDescription", resourceCulture);
+            }
+        }
+        
+        internal static string QueryCommand_FollowDescription {
+            get {
+                return ResourceManager.GetString("QueryCommand_FollowDescription", resourceCulture);
+            }
+        }
+        
+        internal static string QueryCommand_TailDescription {
+            get {
+                return ResourceManager.GetString("QueryCommand_TailDescription", resourceCulture);
+            }
+        }
+        
+        internal static string QueryCommand_TimeoutDescription {
+            get {
+                return ResourceManager.GetString("QueryCommand_TimeoutDescription", resourceCulture);
+            }
+        }
+        
+        internal static string QueryCommand_SafeModeDescription {
+            get {
+                return ResourceManager.GetString("QueryCommand_SafeModeDescription", resourceCulture);
+            }
+        }
+        
+        internal static string QueryCommand_QueryDescription {
+            get {
+                return ResourceManager.GetString("QueryCommand_QueryDescription", resourceCulture);
+            }
+        }
+        
+        internal static string QueryCommand_FilesDescription {
+            get {
+                return ResourceManager.GetString("QueryCommand_FilesDescription", resourceCulture);
+            }
+        }
+        
+        internal static string QueryCommand_VariablesDescription {
+            get {
+                return ResourceManager.GetString("QueryCommand_VariablesDescription", resourceCulture);
+            }
+        }
+        
+        internal static string AstCommand_Description {
+            get {
+                return ResourceManager.GetString("AstCommand_Description", resourceCulture);
+            }
+        }
+        
+        internal static string QueryCommand_LogLevelDescription {
+            get {
+                return ResourceManager.GetString("QueryCommand_LogLevelDescription", resourceCulture);
+            }
+        }
+        
+        internal static string QueryCommand_PluginDirectoriesCommand {
+            get {
+                return ResourceManager.GetString("QueryCommand_PluginDirectoriesCommand", resourceCulture);
+            }
+        }
+        
+        internal static string CallCommand_Description {
+            get {
+                return ResourceManager.GetString("CallCommand_Description", resourceCulture);
+            }
+        }
+        
+        internal static string CallCommand_FunctionDescription {
+            get {
+                return ResourceManager.GetString("CallCommand_FunctionDescription", resourceCulture);
+            }
+        }
+        
+        internal static string CallCommand_ArgumentsDescription {
+            get {
+                return ResourceManager.GetString("CallCommand_ArgumentsDescription", resourceCulture);
+            }
+        }
+        
+        internal static string ExplainCommand_Description {
+            get {
+                return ResourceManager.GetString("ExplainCommand_Description", resourceCulture);
+            }
+        }
+        
+        internal static string PluginDebugCommand_Description {
+            get {
+                return ResourceManager.GetString("PluginDebugCommand_Description", resourceCulture);
+            }
+        }
+        
+        internal static string PluginInstallCommand_Description {
+            get {
+                return ResourceManager.GetString("PluginInstallCommand_Description", resourceCulture);
+            }
+        }
+        
+        internal static string PluginInstallCommand_NameDescription {
+            get {
+                return ResourceManager.GetString("PluginInstallCommand_NameDescription", resourceCulture);
+            }
+        }
+        
+        internal static string PluginInstallCommand_OverwriteDescription {
+            get {
+                return ResourceManager.GetString("PluginInstallCommand_OverwriteDescription", resourceCulture);
+            }
+        }
+        
+        internal static string PluginListCommand_Description {
+            get {
+                return ResourceManager.GetString("PluginListCommand_Description", resourceCulture);
+            }
+        }
+        
+        internal static string PluginInstallProxyCommand_Description {
+            get {
+                return ResourceManager.GetString("PluginInstallProxyCommand_Description", resourceCulture);
+            }
+        }
+        
+        internal static string PluginRemoveCommand_Description {
+            get {
+                return ResourceManager.GetString("PluginRemoveCommand_Description", resourceCulture);
+            }
+        }
+        
+        internal static string PluginRemoveCommand_NameDescription {
+            get {
+                return ResourceManager.GetString("PluginRemoveCommand_NameDescription", resourceCulture);
+            }
+        }
+        
+        internal static string PluginUpdateCommand_Description {
+            get {
+                return ResourceManager.GetString("PluginUpdateCommand_Description", resourceCulture);
+            }
+        }
+        
+        internal static string PluginUpdateCommand_NameDescription {
+            get {
+                return ResourceManager.GetString("PluginUpdateCommand_NameDescription", resourceCulture);
+            }
+        }
+        
+        internal static string SchemaCommand_Description {
+            get {
+                return ResourceManager.GetString("SchemaCommand_Description", resourceCulture);
+            }
+        }
+        
+        internal static string ServeCommand_Description {
+            get {
+                return ResourceManager.GetString("ServeCommand_Description", resourceCulture);
+            }
+        }
+        
+        internal static string ServeCommand_UrlsDescription {
+            get {
+                return ResourceManager.GetString("ServeCommand_UrlsDescription", resourceCulture);
+            }
+        }
+        
+        internal static string ServeCommand_AllowOriginDescription {
+            get {
+                return ResourceManager.GetString("ServeCommand_AllowOriginDescription", resourceCulture);
+            }
+        }
+        
+        internal static string ServeCommand_PasswordDescription {
+            get {
+                return ResourceManager.GetString("ServeCommand_PasswordDescription", resourceCulture);
+            }
+        }
+        
+        internal static string ServeCommand_RootDirectoryDescription {
+            get {
+                return ResourceManager.GetString("ServeCommand_RootDirectoryDescription", resourceCulture);
+            }
+        }
+        
+        internal static string ServeCommand_SafeModeDescription {
+            get {
+                return ResourceManager.GetString("ServeCommand_SafeModeDescription", resourceCulture);
+            }
+        }
+        
+        internal static string ServeCommand_AllowedIPsSlotsDescription {
+            get {
+                return ResourceManager.GetString("ServeCommand_AllowedIPsSlotsDescription", resourceCulture);
+            }
+        }
+        
+        internal static string ServeCommand_AllowsIPsDescription {
+            get {
+                return ResourceManager.GetString("ServeCommand_AllowsIPsDescription", resourceCulture);
+            }
+        }
+        
+        internal static string RootCommand_Description {
+            get {
+                return ResourceManager.GetString("RootCommand_Description", resourceCulture);
+            }
+        }
+        
+        internal static string PluginListCommand_AllDescription {
+            get {
+                return ResourceManager.GetString("PluginListCommand_AllDescription", resourceCulture);
+            }
+        }
+        
+        internal static string PluginCommand_Description {
+            get {
+                return ResourceManager.GetString("PluginCommand_Description", resourceCulture);
+            }
+        }
     }
 }

@@ -1,26 +1,32 @@
 using System.CommandLine;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Cli.Commands.Options;
 
 namespace QueryCat.Cli.Commands;
 
 internal sealed class CallFunctionCommand : BaseCommand
 {
     /// <inheritdoc />
-    public CallFunctionCommand() : base("call", "Call function.")
+    public CallFunctionCommand() : base("call", Resources.Messages.CallCommand_Description)
     {
-        var functionNameArgument = new Argument<string>("name", "Function name.");
-        var functionArgumentsArgument = new Argument<string[]>("args", "Function call arguments.");
-
-        this.AddArgument(functionNameArgument);
-        this.AddArgument(functionArgumentsArgument);
-        this.SetHandler(async context =>
+        var functionNameArgument = new Argument<string>("name")
         {
-            var applicationOptions = OptionsUtils.GetValueForOption(
-                new ApplicationOptionsBinder(LogLevelOption, PluginDirectoriesOption), context);
-            var functionName = OptionsUtils.GetValueForOption(functionNameArgument, context);
-            var functionArguments = OptionsUtils.GetValueForOption(functionArgumentsArgument, context);
+            Description = Resources.Messages.CallCommand_FunctionDescription,
+        };
+        var functionArgumentsArgument = new Argument<string[]>("args")
+        {
+            Description = Resources.Messages.CallCommand_ArgumentsDescription
+        };
+
+        this.Add(functionNameArgument);
+        this.Add(functionArgumentsArgument);
+        this.SetAction(async (parseResult, cancellationToken) =>
+        {
+            parseResult.Configuration.EnableDefaultExceptionHandler = false;
+
+            var applicationOptions = GetApplicationOptions(parseResult);
+            var functionName = parseResult.GetRequiredValue(functionNameArgument);
+            var functionArguments = parseResult.GetValue(functionArgumentsArgument) ?? [];
 
             applicationOptions.InitializeLogger();
             var root = await applicationOptions.CreateStdoutApplicationRootAsync();
@@ -30,8 +36,8 @@ internal sealed class CallFunctionCommand : BaseCommand
             {
                 callArgs.Add(new VariantValue(arg));
             }
-            var result = await root.Thread.FunctionsManager.CallFunctionAsync(function,
-                root.Thread, callArgs, context.GetCancellationToken());
+            var result = await root.Thread.FunctionsManager.CallFunctionAsync(
+                function, root.Thread, callArgs, cancellationToken);
             root.Thread.TopScope.Variables["result"] = result;
             await root.Thread.RunAsync("result");
         });

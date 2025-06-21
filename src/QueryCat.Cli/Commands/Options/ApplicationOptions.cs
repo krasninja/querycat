@@ -157,8 +157,9 @@ internal sealed class ApplicationOptions
             stream: Stdio.GetConsoleOutput(),
             separator: columnsSeparator,
             style: outputStyle);
+        var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         root.Thread.Options.DefaultRowsOutput = new PagingOutput(
-            tableOutput, pagingRowsCount: PagingOutput.NoLimit, cancellationTokenSource: root.CancellationTokenSource);
+            tableOutput, pagingRowsCount: PagingOutput.NoLimit, cancellationTokenSource: cts);
         return root;
     }
 

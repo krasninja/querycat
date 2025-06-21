@@ -1,20 +1,18 @@
-using System.CommandLine;
-using QueryCat.Cli.Commands.Options;
-
 namespace QueryCat.Cli.Commands;
 
 internal class AstCommand : BaseQueryCommand
 {
     /// <inheritdoc />
-    public AstCommand() : base("ast", "Show query AST for debugging.")
+    public AstCommand() : base("ast", Resources.Messages.AstCommand_Description)
     {
-        this.SetHandler(async (context) =>
+        this.SetAction(async (parseResult, cancellationToken) =>
         {
-            var applicationOptions = OptionsUtils.GetValueForOption(
-                new ApplicationOptionsBinder(LogLevelOption, PluginDirectoriesOption), context);
-            var query = OptionsUtils.GetValueForOption(QueryArgument, context);
-            var variables = OptionsUtils.GetValueForOption(VariablesOption, context);
-            var files = OptionsUtils.GetValueForOption(FilesOption, context);
+            parseResult.Configuration.EnableDefaultExceptionHandler = false;
+
+            var applicationOptions = GetApplicationOptions(parseResult);
+            var query = parseResult.GetValue(QueryArgument);
+            var variables = parseResult.GetValue(VariablesOption);
+            var files = parseResult.GetValue(FilesOption);
 
             applicationOptions.InitializeLogger();
             var root = await applicationOptions.CreateApplicationRootAsync();
@@ -24,7 +22,7 @@ internal class AstCommand : BaseQueryCommand
                 threadArgs.ContinueExecution = false;
             };
             AddVariables(root.Thread, variables);
-            await RunQueryAsync(root.Thread, query, files);
+            await RunQueryAsync(root.Thread, query, files, cancellationToken);
         });
     }
 }
