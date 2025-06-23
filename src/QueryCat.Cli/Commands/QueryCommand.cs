@@ -35,20 +35,10 @@ internal class QueryCommand : BaseQueryCommand
             Description = Resources.Messages.QueryCommand_PageSizeDescription,
             DefaultValueFactory = _ => 20,
         };
-        var outputStyleOption = new Option<TextTableOutput.Style>("--output-style")
-        {
-            Description = Resources.Messages.QueryCommand_OutputStyleDescription,
-            DefaultValueFactory = _ => TextTableOutput.Style.Table1,
-        };
         var analyzeRowsOption = new Option<int>("--analyze-rows")
         {
             Description = Resources.Messages.QueryCommand_AnalyzeRowsDescription,
             DefaultValueFactory = _ => 10,
-        };
-        var columnsSeparatorOption = new Option<string?>("--columns-separator")
-        {
-            Description = Resources.Messages.QueryCommand_ColumnsSeparatorDescription,
-            Required = false,
         };
         var disableCacheOption = new Option<bool>("--disable-cache")
         {
@@ -86,9 +76,7 @@ internal class QueryCommand : BaseQueryCommand
         this.Add(detailedStatisticOption);
         this.Add(rowNumberOption);
         this.Add(pageSizeOption);
-        this.Add(outputStyleOption);
         this.Add(analyzeRowsOption);
-        this.Add(columnsSeparatorOption);
         this.Add(disableCacheOption);
         this.Add(noHeaderOption);
         this.Add(floatNumberOption);
@@ -109,8 +97,8 @@ internal class QueryCommand : BaseQueryCommand
             var tableOutput = new TextTableOutput(
                 stream: Stdio.GetConsoleOutput(),
                 hasHeader: parseResult.GetValue(noHeaderOption),
-                separator: parseResult.GetValue(columnsSeparatorOption),
-                style: parseResult.GetValue(outputStyleOption),
+                separator: parseResult.GetValue(ColumnsSeparatorOption),
+                style: parseResult.GetValue(OutputStyleOption),
                 floatNumberFormat: parseResult.GetValue(floatNumberOption));
             var options = new AppExecutionOptions
             {
@@ -130,7 +118,8 @@ internal class QueryCommand : BaseQueryCommand
             {
                 options.AnalyzeRowsCount = int.MaxValue;
             }
-            using var root = await applicationOptions.CreateApplicationRootAsync(options);
+
+            await using var root = await applicationOptions.CreateApplicationRootAsync(options);
             var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             options.DefaultRowsOutput = new PagingOutput(tableOutput, cancellationTokenSource: cts)
             {

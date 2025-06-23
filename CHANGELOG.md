@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - New table output layout SolidTable.
+- Allow to use table layout and separator options for other commands.
 
 ### Fixed
 

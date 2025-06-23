@@ -29,7 +29,7 @@ internal class PluginInstallCommand : BaseCommand
             var overwrite = parseResult.GetRequiredValue(overwriteOption);
 
             applicationOptions.InitializeLogger();
-            using var root = await applicationOptions.CreateApplicationRootAsync();
+            await using var root = await applicationOptions.CreateApplicationRootAsync();
             await root.PluginsManager.InstallAsync(plugin, overwrite, cancellationToken);
             await ApplicationOptions.InstallPluginsProxyAsync(
                 askUser: false,

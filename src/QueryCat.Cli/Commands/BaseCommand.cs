@@ -1,5 +1,6 @@
 using System.CommandLine;
 using Microsoft.Extensions.Logging;
+using QueryCat.Backend.Formatters;
 using QueryCat.Cli.Commands.Options;
 
 namespace QueryCat.Cli.Commands;
@@ -28,6 +29,18 @@ internal abstract class BaseCommand : Command
 #endif
     };
 
+    protected Option<TextTableOutput.Style> OutputStyleOption { get; } = new("--output-style")
+    {
+        Description = Resources.Messages.QueryCommand_OutputStyleDescription,
+        DefaultValueFactory = _ => TextTableOutput.Style.Table1,
+    };
+
+    protected Option<string?> ColumnsSeparatorOption { get; } = new("--columns-separator")
+    {
+        Description = Resources.Messages.QueryCommand_ColumnsSeparatorDescription,
+        Required = false,
+    };
+
     /// <inheritdoc />
     protected BaseCommand(string name, string? description = null) : base(name, description)
     {
@@ -35,6 +48,8 @@ internal abstract class BaseCommand : Command
 #if ENABLE_PLUGINS
         Add(PluginDirectoriesOption);
 #endif
+        Add(OutputStyleOption);
+        Add(ColumnsSeparatorOption);
     }
 
     protected static ApplicationOptions GetApplicationOptions(ParseResult parseResult)

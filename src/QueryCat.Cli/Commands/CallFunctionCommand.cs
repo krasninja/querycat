@@ -29,7 +29,10 @@ internal sealed class CallFunctionCommand : BaseCommand
             var functionArguments = parseResult.GetValue(functionArgumentsArgument) ?? [];
 
             applicationOptions.InitializeLogger();
-            var root = await applicationOptions.CreateStdoutApplicationRootAsync();
+            await using var root = await applicationOptions.CreateStdoutApplicationRootAsync(
+                columnsSeparator: parseResult.GetValue(ColumnsSeparatorOption),
+                outputStyle: parseResult.GetValue(OutputStyleOption)
+            );
             var function = root.Thread.FunctionsManager.FindByNameFirst(functionName);
             var callArgs = new FunctionCallArguments();
             foreach (var arg in functionArguments)

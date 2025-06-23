@@ -23,7 +23,10 @@ internal class PluginListCommand : BaseCommand
             var listAll = parseResult.GetValue(listAllArgument);
 
             applicationOptions.InitializeLogger();
-            using var root = await applicationOptions.CreateStdoutApplicationRootAsync();
+            await using var root = await applicationOptions.CreateStdoutApplicationRootAsync(
+                columnsSeparator: parseResult.GetValue(ColumnsSeparatorOption),
+                outputStyle: parseResult.GetValue(OutputStyleOption)
+            );
             var query = "SELECT * FROM _plugins() WHERE 1=1";
             if (!listAll)
             {

@@ -18,7 +18,10 @@ internal class ExplainCommand : BaseQueryCommand
             var files = parseResult.GetValue(FilesOption);
 
             applicationOptions.InitializeLogger();
-            var root = await applicationOptions.CreateStdoutApplicationRootAsync();
+            await using var root = await applicationOptions.CreateStdoutApplicationRootAsync(
+                columnsSeparator: parseResult.GetValue(ColumnsSeparatorOption),
+                outputStyle: parseResult.GetValue(OutputStyleOption)
+            );
             root.Thread.StatementExecuted += (_, args) =>
             {
                 if (args.Result.Type == DataType.Object

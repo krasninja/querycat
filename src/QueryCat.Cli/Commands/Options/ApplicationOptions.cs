@@ -24,6 +24,12 @@ internal sealed class ApplicationOptions
     public string[] PluginDirectories { get; init; } = [];
 #endif
 
+    /// <summary>
+    /// Creation application core object facade.
+    /// </summary>
+    /// <param name="executionOptions">Options.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Instance of <see cref="ApplicationRoot" />.</returns>
     public async Task<ApplicationRoot> CreateApplicationRootAsync(
         AppExecutionOptions? executionOptions = null,
         CancellationToken cancellationToken = default)

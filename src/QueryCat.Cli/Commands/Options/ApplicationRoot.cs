@@ -6,7 +6,7 @@ namespace QueryCat.Cli.Commands.Options;
 /// <summary>
 /// Root of application: main application objects.
 /// </summary>
-internal sealed class ApplicationRoot : IDisposable
+internal sealed class ApplicationRoot : IDisposable, IAsyncDisposable
 {
     /// <summary>
     /// Execution thread.
@@ -17,6 +17,8 @@ internal sealed class ApplicationRoot : IDisposable
     /// Plugins manager.
     /// </summary>
     public IPluginsManager PluginsManager { get; }
+
+    private bool _isDisposed;
 
     /// <summary>
     /// Constructor.
@@ -32,7 +34,26 @@ internal sealed class ApplicationRoot : IDisposable
     /// <inheritdoc />
     public void Dispose()
     {
+        if (_isDisposed)
+        {
+            return;
+        }
+
         (PluginsManager as IDisposable)?.Dispose();
         Thread.Dispose();
+        _isDisposed = true;
+    }
+
+    /// <inheritdoc />
+    public async ValueTask DisposeAsync()
+    {
+        if (_isDisposed)
+        {
+            return;
+        }
+
+        (PluginsManager as IDisposable)?.Dispose();
+        await Thread.DisposeAsync();
+        _isDisposed = true;
     }
 }

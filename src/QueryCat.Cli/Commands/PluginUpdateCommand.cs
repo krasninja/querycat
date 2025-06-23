@@ -22,7 +22,7 @@ internal class PluginUpdateCommand : BaseCommand
             var plugin = parseResult.GetRequiredValue(pluginArgument);
 
             applicationOptions.InitializeLogger();
-            using var root = await applicationOptions.CreateApplicationRootAsync();
+            await using var root = await applicationOptions.CreateApplicationRootAsync();
             await root.PluginsManager.UpdateAsync(plugin, cancellationToken);
         });
     }

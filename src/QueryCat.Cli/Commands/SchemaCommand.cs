@@ -20,7 +20,10 @@ internal class SchemaCommand : BaseQueryCommand
             var files = parseResult.GetValue(FilesOption);
 
             applicationOptions.InitializeLogger();
-            var root = await applicationOptions.CreateStdoutApplicationRootAsync();
+            await using var root = await applicationOptions.CreateStdoutApplicationRootAsync(
+                columnsSeparator: parseResult.GetValue(ColumnsSeparatorOption),
+                outputStyle: parseResult.GetValue(OutputStyleOption)
+            );
             var thread = root.Thread;
             thread.StatementExecuted += async (_, args) =>
             {
