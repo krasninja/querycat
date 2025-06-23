@@ -50,18 +50,20 @@ public static class RowsOutputExtensions
     /// <param name="adjustColumnsLengths">Should update columns widths.</param>
     /// <param name="configStorage">Configuration storage.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    public static ValueTask WriteAsync(
+    public static async ValueTask WriteAsync(
         this IRowsOutput output,
         IRowsInput input,
         bool adjustColumnsLengths = false,
         IConfigStorage? configStorage = null,
         CancellationToken cancellationToken = default)
     {
-        return WriteAsync(
+        await input.OpenAsync(cancellationToken);
+        await WriteAsync(
             output,
             new RowsInputIterator(input),
             adjustColumnsLengths,
             configStorage,
             cancellationToken: cancellationToken);
+        await input.CloseAsync(cancellationToken);
     }
 }
