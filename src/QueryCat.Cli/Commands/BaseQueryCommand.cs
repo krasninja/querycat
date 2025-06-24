@@ -8,9 +8,10 @@ namespace QueryCat.Cli.Commands;
 
 internal abstract class BaseQueryCommand : BaseCommand
 {
-    protected Argument<string?> QueryArgument { get; } = new("query")
+    protected Argument<string> QueryArgument { get; } = new("query")
     {
         Description = Resources.Messages.QueryCommand_QueryDescription,
+        DefaultValueFactory = _ => string.Empty,
     };
 
     protected Option<string[]> FilesOption { get; } = new("-f", "--files")

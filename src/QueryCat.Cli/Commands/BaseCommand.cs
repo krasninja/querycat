@@ -38,7 +38,6 @@ internal abstract class BaseCommand : Command
     protected Option<string?> ColumnsSeparatorOption { get; } = new("--columns-separator")
     {
         Description = Resources.Messages.QueryCommand_ColumnsSeparatorDescription,
-        Required = false,
     };
 
     /// <inheritdoc />
