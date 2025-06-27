@@ -96,7 +96,7 @@ internal class QueryCommand : BaseQueryCommand
             applicationOptions.InitializeLogger();
             var tableOutput = new TextTableOutput(
                 stream: Stdio.GetConsoleOutput(),
-                hasHeader: parseResult.GetValue(noHeaderOption),
+                hasHeader: !parseResult.GetValue(noHeaderOption),
                 separator: parseResult.GetValue(ColumnsSeparatorOption),
                 style: parseResult.GetValue(OutputStyleOption),
                 floatNumberFormat: parseResult.GetValue(floatNumberOption));
