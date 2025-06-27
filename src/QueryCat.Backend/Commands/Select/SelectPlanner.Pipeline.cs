@@ -359,6 +359,7 @@ internal sealed partial class SelectPlanner
         }
 
         var queryContext = new RowsOutputQueryContext(context.CurrentIterator.Columns, ExecutionThread.ConfigStorage);
+        queryContext.PrereadRowsCount = ExecutionThread.Options.AnalyzeRowsCount;
         var functionCallInfo = querySpecificationNode.TargetNode
             .GetRequiredAttribute<FuncUnitCallInfo>(AstAttributeKeys.ArgumentsKey);
         var hasVaryingTarget = querySpecificationNode.TargetNode.Arguments.Count > 0;

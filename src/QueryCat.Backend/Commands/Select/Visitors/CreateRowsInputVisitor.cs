@@ -212,7 +212,7 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
             .RunAndReturnAsync(node, cancellationToken);
         var rowsFrame = (await func.InvokeAsync(_executionThread, cancellationToken)).AsRequired<RowsFrame>();
         var rowsInput = new RowsIteratorInput(rowsFrame.GetIterator());
-        var context = new SelectInputQueryContext(rowsInput);
+        var context = new SelectInputQueryContext(rowsInput, _executionThread.Options);
         _context.AddInput(context);
         node.SetAttribute(AstAttributeKeys.RowsInputContextKey, context);
     }

@@ -63,9 +63,12 @@ public sealed class PluginClientIdDecorator : Plugin.IAsync
         => _client.RowsSet_SeekAsync(object_rows_set_handle, offset, origin, cancellationToken);
 
     /// <inheritdoc />
-    public Task RowsSet_SetContextAsync(int object_rows_set_handle, ContextQueryInfo? context_query_info,
+    public Task RowsSet_SetContextAsync(
+        int object_rows_set_handle,
+        ContextQueryInfo? context_query_info,
+        ContextInfo? context_info,
         CancellationToken cancellationToken = default)
-        => _client.RowsSet_SetContextAsync(object_rows_set_handle, context_query_info, cancellationToken);
+        => _client.RowsSet_SetContextAsync(object_rows_set_handle, context_query_info, context_info, cancellationToken);
 
     /// <inheritdoc />
     public Task<RowsList> RowsSet_GetRowsAsync(int object_rows_set_handle, int count, CancellationToken cancellationToken = default)

@@ -230,7 +230,7 @@ public partial class ThriftPluginClient
 
         /// <inheritdoc />
         public Task RowsSet_SetContextAsync(int object_rows_set_handle, ContextQueryInfo? context_query_info,
-            CancellationToken cancellationToken = default)
+            ContextInfo? context_info, CancellationToken cancellationToken = default)
         {
             if (_thriftPluginClient._objectsStorage.TryGet<IRowsSource>(object_rows_set_handle, out var rowsSource)
                 && rowsSource != null)
@@ -238,7 +238,7 @@ public partial class ThriftPluginClient
                 if (context_query_info == null)
                 {
                     rowsSource.QueryContext = new PluginQueryContext(
-                        new QueryContextQueryInfo(Array.Empty<Backend.Core.Data.Column>()),
+                        new QueryContextQueryInfo([]),
                         _thriftPluginClient._executionThread.ConfigStorage
                     );
                 }
@@ -254,6 +254,10 @@ public partial class ThriftPluginClient
                         },
                         _thriftPluginClient._executionThread.ConfigStorage
                     );
+                }
+                if (context_info != null)
+                {
+                    rowsSource.QueryContext.PrereadRowsCount = context_info.PrereadRowsCount;
                 }
             }
             else
@@ -687,12 +691,12 @@ public partial class ThriftPluginClient
 
         /// <inheritdoc />
         public async Task RowsSet_SetContextAsync(int object_rows_set_handle, ContextQueryInfo? context_query_info,
-            CancellationToken cancellationToken = default)
+            ContextInfo? context_info, CancellationToken cancellationToken = default)
         {
             LogCallMethod(nameof(RowsSet_SetContextAsync));
             try
             {
-                await _handler.RowsSet_SetContextAsync(object_rows_set_handle, context_query_info, cancellationToken);
+                await _handler.RowsSet_SetContextAsync(object_rows_set_handle, context_query_info, context_info, cancellationToken);
             }
             catch (Exception ex)
             {

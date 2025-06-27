@@ -366,7 +366,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     {
         if (DetectColumnsTypes)
         {
-            await RowsIteratorUtils.ResolveColumnsTypesAsync(iterator, cancellationToken: cancellationToken);
+            await RowsIteratorUtils.ResolveColumnsTypesAsync(iterator, QueryContext.PrereadRowsCount, cancellationToken: cancellationToken);
         }
     }
 

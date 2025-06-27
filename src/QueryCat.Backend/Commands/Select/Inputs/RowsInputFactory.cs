@@ -50,7 +50,7 @@ internal sealed class RowsInputFactory
         if (DataTypeUtils.IsSimple(source.Type))
         {
             var singleValueRowsInput = new SingleValueRowsInput(source);
-            var context = new SelectInputQueryContext(singleValueRowsInput);
+            var context = new SelectInputQueryContext(singleValueRowsInput, executionThread.Options);
             singleValueRowsInput.QueryContext = context;
             return context;
         }
@@ -78,7 +78,7 @@ internal sealed class RowsInputFactory
             if (source.AsObjectUnsafe is IRowsIterator rowsIterator)
             {
                 rowsInput = new RowsIteratorInput(rowsIterator);
-                var context = new SelectInputQueryContext(rowsInput);
+                var context = new SelectInputQueryContext(rowsInput, executionThread.Options);
                 rowsInput.QueryContext = context;
                 return context;
             }
@@ -86,7 +86,7 @@ internal sealed class RowsInputFactory
             {
 #pragma warning disable IL2072
                 rowsInput = new CollectionInput(TypeUtils.GetUnderlyingType(enumerable), enumerable);
-                var context = new SelectInputQueryContext(rowsInput);
+                var context = new SelectInputQueryContext(rowsInput, executionThread.Options);
                 rowsInput.QueryContext = context;
 #pragma warning restore IL2072
                 return context;

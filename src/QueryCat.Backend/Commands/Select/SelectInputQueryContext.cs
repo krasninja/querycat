@@ -41,8 +41,9 @@ internal sealed class SelectInputQueryContext : QueryContext
     }
 
     /// <inheritdoc />
-    public SelectInputQueryContext(IRowsInput rowsInput)
+    public SelectInputQueryContext(IRowsInput rowsInput, ExecutionOptions options)
         : this(rowsInput, rowsInput.Columns, NullConfigStorage.Instance)
     {
+        PrereadRowsCount = options.AnalyzeRowsCount;
     }
 }

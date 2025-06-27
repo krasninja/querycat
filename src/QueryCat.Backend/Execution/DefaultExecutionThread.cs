@@ -421,6 +421,7 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IAsync
                 if (!isOpened)
                 {
                     rowsOutput.QueryContext = new RowsOutputQueryContext(rowsIterator.Columns, ConfigStorage);
+                    rowsOutput.QueryContext.PrereadRowsCount = Options.AnalyzeRowsCount;
                     await rowsOutput.OpenAsync(ct);
                     isOpened = true;
                 }

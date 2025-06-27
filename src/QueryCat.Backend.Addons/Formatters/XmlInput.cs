@@ -14,7 +14,6 @@ namespace QueryCat.Backend.Addons.Formatters;
 internal sealed class XmlInput : IRowsInput, IDisposable, IAsyncDisposable
 {
     private const int NoColumnIndex = -1;
-    private const int RowsToAnalyze = 10;
 
     private readonly XmlReader _xmlReader;
 
@@ -111,7 +110,7 @@ internal sealed class XmlInput : IRowsInput, IDisposable, IAsyncDisposable
 
         // Read first rows.
         var count = 0;
-        while (await ReadNextAsync(cancellationToken) && count++ < RowsToAnalyze)
+        while (await ReadNextAsync(cancellationToken) && count++ < QueryContext.PrereadRowsCount)
         {
         }
 
@@ -126,7 +125,7 @@ internal sealed class XmlInput : IRowsInput, IDisposable, IAsyncDisposable
             }
             frame.AddRow(row);
         }
-        await RowsIteratorUtils.ResolveColumnsTypesAsync(frame.GetIterator(), RowsToAnalyze,
+        await RowsIteratorUtils.ResolveColumnsTypesAsync(frame.GetIterator(), QueryContext.PrereadRowsCount,
             cancellationToken: cancellationToken);
 
         _initMode = false;

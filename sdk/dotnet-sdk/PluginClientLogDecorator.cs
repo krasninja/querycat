@@ -90,10 +90,10 @@ public sealed partial class PluginClientLogDecorator : Plugin.IAsync
 
     /// <inheritdoc />
     public Task RowsSet_SetContextAsync(int object_rows_set_handle, ContextQueryInfo? context_query_info,
-        CancellationToken cancellationToken = default)
+        ContextInfo? context_info, CancellationToken cancellationToken = default)
     {
         LogStartMethodCall(nameof(RowsSet_SetContextAsync));
-        return _client.RowsSet_SetContextAsync(object_rows_set_handle, context_query_info, cancellationToken);
+        return _client.RowsSet_SetContextAsync(object_rows_set_handle, context_query_info, context_info, cancellationToken);
     }
 
     /// <inheritdoc />

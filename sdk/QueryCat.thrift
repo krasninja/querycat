@@ -278,6 +278,11 @@ struct ContextQueryInfo {
   3: optional i64 limit
 }
 
+// Contains the general information.
+struct ContextInfo {
+  1: required i32 preread_rows_count
+}
+
 service Plugin {
   // Call function.
   VariantValue CallFunction(
@@ -337,7 +342,8 @@ service Plugin {
   // Supported objects: ROWS_INPUT, ROWS_OUTPUT.
   void RowsSet_SetContext(
     1: required Handle object_rows_set_handle,
-    2: required ContextQueryInfo context_query_info
+    2: required ContextQueryInfo context_query_info,
+    3: required ContextInfo context_info
   ) throws (1: QueryCatPluginException e),
 
   // Get rows.
