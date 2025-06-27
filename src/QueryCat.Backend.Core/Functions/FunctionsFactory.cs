@@ -57,6 +57,15 @@ public abstract class FunctionsFactory
     /// <summary>
     /// Register type methods as functions.
     /// </summary>
+    /// <typeparam name="T">Target type.</typeparam>
+    /// <returns>Functions.</returns>
+    public IFunction[] CreateFromType<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicMethods)] T
+    >() => CreateFromType(typeof(T));
+
+    /// <summary>
+    /// Register type methods as functions.
+    /// </summary>
     /// <param name="type">Target type.</param>
     /// <returns>Functions.</returns>
     public IFunction[] CreateFromType(
