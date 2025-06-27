@@ -1,0 +1,4 @@
+expected: |
+  Line with quotes (quoted "C").
+query: |
+  select "text" from 'ts.tsv';

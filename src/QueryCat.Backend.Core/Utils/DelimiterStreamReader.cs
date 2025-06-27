@@ -62,6 +62,17 @@ public class DelimiterStreamReader
         public char[] QuoteChars { get; set; } = [];
 
         /// <summary>
+        /// Quote mode will be enabled only if quote is in the beginning of field.
+        /// </summary>
+        /// <example>
+        /// true: "one two ""three""" -> one two "three";
+        /// true: one two ""three"" -> one two ""three"";
+        /// false: "one two ""three""" -> one two "three";
+        /// true: one two ""three"" -> one two "three".
+        /// </example>
+        public bool EnableQuotesModeOnFieldStart { get; set; } = true;
+
+        /// <summary>
         /// Columns delimiters.
         /// </summary>
         public char[] Delimiters { get; set; } = [];
@@ -284,8 +295,8 @@ public class DelimiterStreamReader
                     {
                         _currentDelimiterPosition++;
                         sequenceReader.Advance(1);
+                        currentField.StartIndex = _currentDelimiterPosition;
                     }
-                    currentField.StartIndex = _currentDelimiterPosition;
                 }
 
                 // Advance to any stop character or quote (if in a quote mode).
@@ -305,13 +316,22 @@ public class DelimiterStreamReader
                 {
                     if (fieldStart)
                     {
-                        quotesMode = true;
-                        isInQuotes = true;
-                        currentField.QuoteCharacter = ch;
-                        currentField.QuotesCount++;
+                        var hasOnlyWhitespacesBeforeDelimiter =
+                            !_options.EnableQuotesModeOnFieldStart // Bypass.
+                            || (_options.EnableQuotesModeOnFieldStart && HasOnlyWhitespaceChars((int)currentField.StartIndex, ref sequenceReader));
+                        if (hasOnlyWhitespacesBeforeDelimiter)
+                        {
+                            quotesMode = true;
+                            isInQuotes = true;
+                            currentField.QuoteCharacter = ch;
+                            currentField.QuotesCount++;
+                            _currentDelimiterPosition = sequenceReader.Consumed;
+                            currentField.StartIndex = _currentDelimiterPosition - 1;
+                        }
+
                         fieldStart = false;
                     }
-                    else
+                    else if (quotesMode)
                     {
                         if (_options.QuotesEscapeStyle == QuotesMode.DoubleQuotes)
                         {
@@ -412,9 +432,32 @@ public class DelimiterStreamReader
         return !IsEmpty();
     }
 
+    private bool HasOnlyWhitespaceChars(long startIndex, ref readonly SequenceReader<char> sequenceReader)
+    {
+        var endIndex = sequenceReader.CurrentSpanIndex - 1;
+        if (startIndex == endIndex)
+        {
+            return true;
+        }
+        var span = sequenceReader.CurrentSpan[(int)startIndex..endIndex];
+        foreach (var ch in span)
+        {
+            if (_delimiters.Contains(ch))
+            {
+                continue;
+            }
+            if (!char.IsWhiteSpace(ch))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
     private static char Peek(long offset, ref readonly SequenceReader<char> sequenceReader)
         => sequenceReader.TryPeek(offset, out var ch) ? ch : '\0';
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     private static char Peek(ref readonly SequenceReader<char> sequenceReader)
         => sequenceReader.TryPeek(out var ch) ? ch : '\0';
 
