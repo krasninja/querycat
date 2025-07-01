@@ -98,7 +98,7 @@ internal sealed class RowsInputFactory
 
     private static async Task<SelectInputQueryContext> CreateInputSourceFromStringVariableAsync(
         string strVariable,
-        IExecutionThread executionThread,
+        IExecutionThread<ExecutionOptions> executionThread,
         CreateDelegateVisitor createDelegateVisitor,
         FunctionCallNode? formatNode,
         CancellationToken cancellationToken)
@@ -114,6 +114,7 @@ internal sealed class RowsInputFactory
         var rowsInput = (await executionThread.FunctionsManager.CallFunctionAsync("read", executionThread, args, cancellationToken))
             .AsRequired<IRowsInput>();
         var context = new SelectInputQueryContext(rowsInput, rowsInput.Columns, executionThread.ConfigStorage);
+        context.PrereadRowsCount = executionThread.Options.AnalyzeRowsCount;
         rowsInput.QueryContext = context;
         return context;
     }

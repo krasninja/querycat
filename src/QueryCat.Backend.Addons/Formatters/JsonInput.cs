@@ -198,21 +198,24 @@ internal class JsonInput : StreamRowsInput
     protected override async Task<Column[]> InitializeColumnsAsync(IRowsInput input,
         CancellationToken cancellationToken = default)
     {
-        var hasData = await input.ReadNextAsync(cancellationToken);
-        if (!hasData)
+        var list = new HashSet<string>();
+
+        for (var i = 0; i < QueryContext.PrereadRowsCount; i++)
         {
-            return [];
+            var hasData = await input.ReadNextAsync(cancellationToken);
+            if (!hasData)
+            {
+                break;
+            }
+
+            var jsonElement = GetParsedJsonDocument();
+            foreach (var field in GetJsonObjectFields(jsonElement))
+            {
+                list.Add(field);
+            }
         }
 
-        var jsonElement = GetParsedJsonDocument();
-
-        var list = new List<string>();
-        foreach (var field in GetJsonObjectFields(jsonElement))
-        {
-            list.Add(field);
-        }
         _properties = list.ToArray();
-
         var columns = _properties.Select(p => new Column(p, DataType.String));
         return columns.ToArray();
     }
@@ -238,6 +241,10 @@ internal class JsonInput : StreamRowsInput
 
         foreach (var jsonProperty in jsonElement.Value.EnumerateObject())
         {
+            if (string.IsNullOrEmpty(jsonProperty.Name))
+            {
+                continue;
+            }
             yield return jsonProperty.Name;
         }
     }
