@@ -26,7 +26,7 @@ internal class PluginInstallCommand : BaseCommand
 
             var applicationOptions = GetApplicationOptions(parseResult);
             var plugin = parseResult.GetRequiredValue(pluginArgument);
-            var overwrite = parseResult.GetRequiredValue(overwriteOption);
+            var overwrite = parseResult.GetValue(overwriteOption);
 
             applicationOptions.InitializeLogger();
             await using var root = await applicationOptions.CreateApplicationRootAsync();
