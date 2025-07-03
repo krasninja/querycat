@@ -308,7 +308,10 @@ public class DelimiterStreamReader
                     _currentDelimiterPosition = sequenceReader.Consumed;
                     break;
                 }
-                var ch = Peek(ref sequenceReader);
+                if (!sequenceReader.TryPeek(out var ch))
+                {
+                    ch = '\0';
+                }
                 sequenceReader.Advance(1);
 
                 // Quotes.
@@ -340,9 +343,7 @@ public class DelimiterStreamReader
                         else if (_options.QuotesEscapeStyle == QuotesMode.Backslash)
                         {
                             // Process \" case.
-                            sequenceReader.Rewind(2);
-                            sequenceReader.TryPeek(out var prevCh);
-                            sequenceReader.Advance(2);
+                            TryPeekBackward(2, ref sequenceReader, out var prevCh);
                             if (prevCh != '\\')
                             {
                                 isInQuotes = !isInQuotes;
@@ -454,12 +455,22 @@ public class DelimiterStreamReader
         return true;
     }
 
-    private static char Peek(long offset, ref readonly SequenceReader<char> sequenceReader)
-        => sequenceReader.TryPeek(offset, out var ch) ? ch : '\0';
-
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    private static char Peek(ref readonly SequenceReader<char> sequenceReader)
-        => sequenceReader.TryPeek(out var ch) ? ch : '\0';
+    private static bool TryPeekBackward(int offset, ref SequenceReader<char> sequenceReader, out char value)
+    {
+        if (sequenceReader.CurrentSpanIndex >= offset)
+        {
+            value = sequenceReader.CurrentSpan[sequenceReader.CurrentSpanIndex - offset];
+            return true;
+        }
+        else
+        {
+            sequenceReader.Rewind(2);
+            var result = sequenceReader.TryPeek(out value);
+            sequenceReader.Advance(2);
+            return result;
+        }
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     private bool IsEmpty()
