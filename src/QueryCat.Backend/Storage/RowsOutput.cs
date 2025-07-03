@@ -40,15 +40,16 @@ public abstract class RowsOutput : IRowsOutput
             await InitializeAsync(cancellationToken);
             _isFirstCall = false;
         }
-        OnWrite(values);
-        return ErrorCode.OK;
+        var result = await OnWriteAsync(values, cancellationToken);
+        return result;
     }
 
     /// <summary>
     /// Write a row.
     /// </summary>
     /// <param name="values">Values to write.</param>
-    protected abstract void OnWrite(in VariantValue[] values);
+    /// <param name="cancellationToken">Cancellation token.</param>
+    protected abstract ValueTask<ErrorCode> OnWriteAsync(VariantValue[] values, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// The method is called before first Write to initialize input.

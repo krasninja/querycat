@@ -51,9 +51,10 @@ public class RowsFrameSource : RowsOutput, IRowsInputDelete, IRowsIteratorParent
     }
 
     /// <inheritdoc />
-    protected override void OnWrite(in VariantValue[] values)
+    protected override ValueTask<ErrorCode> OnWriteAsync(VariantValue[] values, CancellationToken cancellationToken = default)
     {
         _rowsFrame.AddRow(values);
+        return ValueTask.FromResult(ErrorCode.OK);
     }
 
     /// <inheritdoc />

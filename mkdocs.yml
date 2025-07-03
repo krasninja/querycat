@@ -24,6 +24,7 @@ nav:
     - 'Grok': input/grok.md
     - 'IISW3C': input/iisw3c.md
     - 'JSON': input/json.md
+    - 'RAW': input/raw.md
     - 'RegEx': input/regex.md
     - 'STDIN': input/stdin.md
     - 'Text': input/text-line.md
@@ -32,6 +33,7 @@ nav:
   - 'Output':
     - 'CSV': output/csv.md
     - 'JSON': output/json.md
+    - 'RAW': output/raw.md
     - 'Text Table': output/text-table.md
     - 'TSV': output/tsv.md
     - 'XML': output/xml.md

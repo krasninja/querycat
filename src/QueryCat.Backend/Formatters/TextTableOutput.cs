@@ -204,10 +204,11 @@ public sealed class TextTableOutput : RowsOutput, IDisposable, IAsyncDisposable
     }
 
     /// <inheritdoc />
-    protected override void OnWrite(in VariantValue[] values)
+    protected override async ValueTask<ErrorCode> OnWriteAsync(VariantValue[] values, CancellationToken cancellationToken = default)
     {
         _onWrite.Invoke(values);
-        _streamWriter.Flush();
+        await _streamWriter.FlushAsync(cancellationToken);
+        return ErrorCode.OK;
     }
 
     /// <inheritdoc />

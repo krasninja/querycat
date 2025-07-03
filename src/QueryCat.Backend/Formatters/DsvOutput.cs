@@ -52,7 +52,7 @@ internal sealed class DsvOutput : RowsOutput, IDisposable
     }
 
     /// <inheritdoc />
-    protected override void OnWrite(in VariantValue[] values)
+    protected override async ValueTask<ErrorCode> OnWriteAsync(VariantValue[] values, CancellationToken cancellationToken = default)
     {
         var columns = QueryContext.QueryInfo.Columns;
         for (var i = 0; i < columns.Length; i++)
@@ -90,7 +90,7 @@ internal sealed class DsvOutput : RowsOutput, IDisposable
                         break;
                     case DataType.Blob:
                         {
-                            using var stream = values[i].AsBlobUnsafe.GetStream();
+                            await using var stream = values[i].AsBlobUnsafe.GetStream();
                             var arr = ArrayPool<byte>.Shared.Rent(4096);
                             int bytesRead;
                             while ((bytesRead = stream.Read(arr)) > 0)
@@ -108,7 +108,9 @@ internal sealed class DsvOutput : RowsOutput, IDisposable
             }
         }
         _streamWriter.WriteLine();
-        _streamWriter.Flush();
+        await _streamWriter.FlushAsync(cancellationToken);
+
+        return ErrorCode.OK;
     }
 
     /// <inheritdoc />
