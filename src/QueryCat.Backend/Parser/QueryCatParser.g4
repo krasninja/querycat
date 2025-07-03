@@ -119,7 +119,8 @@ selectSublist
     ;
 
 // Into.
-selectTarget: INTO (into=functionCall | uri=STRING_LITERAL | dash='-') (FORMAT format=functionCall)?;
+selectTarget: INTO (into=functionCall | uri=STRING_LITERAL | dash='-' | expr=expression)
+    (FORMAT format=functionCall)?;
 
 // From.
 selectFromClause:

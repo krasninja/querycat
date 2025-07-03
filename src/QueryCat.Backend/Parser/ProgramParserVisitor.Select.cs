@@ -246,6 +246,12 @@ internal partial class ProgramParserVisitor
         {
             functionCallNode = this.Visit<FunctionCallNode>(context.into);
         }
+        else if (context.expr != null)
+        {
+            functionCallNode = new FunctionCallNode("write");
+            functionCallNode.Arguments.Add(new FunctionCallArgumentNode(
+                this.Visit<ExpressionNode>(context.expr)));
+        }
         else
         {
             functionCallNode = new FunctionCallNode(StdoutFunctionName);
