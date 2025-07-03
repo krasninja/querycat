@@ -7,20 +7,24 @@ namespace QueryCat.Backend.PluginsManager;
 /// </summary>
 internal static class FilesUtils
 {
+    private static string[] _unixExeExtensions = [".sh", ".py", ".pl", ".rb", ".run", ".elf"];
+
     /// <summary>
     /// Add executable flag to file for Posix systems.
     /// </summary>
     /// <param name="file">File to make executable.</param>
     public static void MakeUnixExecutable(string file)
     {
-        if (Path.GetExtension(file).Equals(".exe", StringComparison.OrdinalIgnoreCase))
+        var extension = Path.GetExtension(file);
+        if (extension.Equals(".exe", StringComparison.OrdinalIgnoreCase))
         {
             return;
         }
 
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX)
+        if ((RuntimeInformation.IsOSPlatform(OSPlatform.OSX)
             || RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
             || RuntimeInformation.IsOSPlatform(OSPlatform.FreeBSD))
+                && (string.IsNullOrEmpty(extension) || _unixExeExtensions.Contains(extension)))
         {
             var mode = File.GetUnixFileMode(file);
             mode |= UnixFileMode.UserExecute | UnixFileMode.GroupExecute | UnixFileMode.OtherExecute;
