@@ -156,7 +156,7 @@ public class DelimiterStreamReader
 
         public bool HasInnerQuotes => QuotesCount > 2;
 
-        public bool IsEmpty => EndIndex - StartIndex < 2;
+        public bool IsEmpty => EndIndex == StartIndex;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
         public void Reset()
@@ -326,7 +326,7 @@ public class DelimiterStreamReader
                             currentField.QuoteCharacter = ch;
                             currentField.QuotesCount++;
                             _currentDelimiterPosition = sequenceReader.Consumed;
-                            currentField.StartIndex = _currentDelimiterPosition - 1;
+                            currentField.StartIndex = _options.IncludeDelimiter ? _currentDelimiterPosition : _currentDelimiterPosition - 1;
                         }
 
                         fieldStart = false;
@@ -364,7 +364,7 @@ public class DelimiterStreamReader
                         OnDelimiter?.Invoke(ch, _currentDelimiterPosition, out addField, out completeLine);
                         if (addField)
                         {
-                            currentField.EndIndex = _options.IncludeDelimiter ? _currentDelimiterPosition + 1 : _currentDelimiterPosition;
+                            currentField.EndIndex = _options.IncludeDelimiter ? _currentDelimiterPosition : _currentDelimiterPosition - 1;
                             currentField = MoveToNextFieldInfo();
                             fieldStart = true;
                             currentField.StartIndex = _options.IncludeDelimiter ? _currentDelimiterPosition - 1 : _currentDelimiterPosition;
@@ -384,7 +384,7 @@ public class DelimiterStreamReader
                     if (!isInQuotes)
                     {
                         _currentDelimiterPosition = sequenceReader.Consumed;
-                        currentField.EndIndex = _currentDelimiterPosition;
+                        currentField.EndIndex = _currentDelimiterPosition - 1;
                         MoveToNextFieldInfo();
                         fieldStart = true;
 
@@ -426,7 +426,7 @@ public class DelimiterStreamReader
         }
 
         // We are at the end of the stream. Update remain index and exit.
-        currentField.EndIndex = _currentDelimiterPosition + 1;
+        currentField.EndIndex = _currentDelimiterPosition;
         // Move next field index next to correct calculate total columns count.
         MoveToNextFieldInfo();
         return !IsEmpty();
@@ -463,7 +463,7 @@ public class DelimiterStreamReader
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     private bool IsEmpty()
-        => _fieldInfoLastIndex <= 2 && _fieldInfos[0].EndIndex == 1;
+        => _fieldInfoLastIndex <= 2 && _fieldInfos[0].EndIndex == 0;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     private async ValueTask<int> ReadNextBufferDataAsync(CancellationToken cancellationToken = default)
@@ -517,7 +517,7 @@ public class DelimiterStreamReader
         {
             return ReadOnlySpan<char>.Empty;
         }
-        var valueSequence = _currentSequence.Slice(fieldInfo.StartIndex, fieldInfo.EndIndex - fieldInfo.StartIndex - 1);
+        var valueSequence = _currentSequence.Slice(fieldInfo.StartIndex, fieldInfo.EndIndex - fieldInfo.StartIndex);
         if (fieldInfo.HasQuotes)
         {
             if (!fieldInfo.HasInnerQuotes)
@@ -607,8 +607,9 @@ public class DelimiterStreamReader
         {
             return ReadOnlySequence<char>.Empty;
         }
-        return _currentSequence.Slice(
-            _fieldInfos[0].StartIndex, _fieldInfos[_fieldInfoLastIndex - 2].EndIndex - 1);
+        var startIndex = _fieldInfos[0].StartIndex;
+        var endIndex = _fieldInfos[_fieldInfoLastIndex - 2].EndIndex;
+        return _currentSequence.Slice(startIndex, endIndex - startIndex);
     }
 
     private async ValueTask FindDelimiterAsync(CancellationToken cancellationToken)
