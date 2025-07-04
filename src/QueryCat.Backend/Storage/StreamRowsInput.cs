@@ -426,7 +426,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     /// <returns>Virtual columns array.</returns>
     protected virtual VirtualColumn[] GetVirtualColumns()
     {
-        return _options.AddInputSourceColumn && (_baseStream is FileStream || _baseStream is GZipStream)
+        return _options.AddInputSourceColumn && GetFileNameFromStream(_baseStream).Length > 0
             ? _customColumns
             : [];
     }
@@ -439,16 +439,33 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     /// <returns>Value.</returns>
     protected virtual VariantValue GetVirtualColumnValue(int rowIndex, int columnIndex)
     {
-        if (columnIndex == 0 && _baseStream is FileStream fileStream)
+        if (columnIndex != 0)
         {
-            return new VariantValue(fileStream.Name);
+            return VariantValue.Null;
         }
-        if (columnIndex == 0 && _baseStream is GZipStream zipStream
-            && _baseStream is FileStream zipFileStream)
+
+        var fileName = GetFileNameFromStream(_baseStream);
+        return !string.IsNullOrEmpty(fileName) ? new VariantValue(fileName) : VariantValue.Null;
+    }
+
+    private static string GetFileNameFromStream(Stream stream)
+    {
+        if (stream is FileStream fileStream)
         {
-            return new VariantValue(zipFileStream.Name);
+            return fileStream.Name;
         }
-        return VariantValue.Null;
+        if (stream is GZipStream zipStream
+            && zipStream.BaseStream is FileStream zipFileStream)
+        {
+            return zipFileStream.Name;
+        }
+        if (stream is MemoryFileStream memoryFileStream
+            && memoryFileStream.BaseStream is FileStream baseMemoryFileStream)
+        {
+            return baseMemoryFileStream.Name;
+        }
+
+        return string.Empty;
     }
 
     /// <summary>

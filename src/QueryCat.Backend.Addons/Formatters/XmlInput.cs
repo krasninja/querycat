@@ -37,12 +37,11 @@ internal sealed class XmlInput : IRowsInput, IDisposable, IAsyncDisposable
     /// <inheritdoc />
     public QueryContext QueryContext { get; set; } = NullQueryContext.Instance;
 
-    public XmlInput(StreamReader streamReader, string? xpath = null, params string[] uniqueKeys)
+    public XmlInput(Stream stream, string? xpath = null, params string[] uniqueKeys)
     {
-        if (!string.IsNullOrEmpty(xpath))
-        {
-            streamReader = RunXPath(streamReader, xpath);
-        }
+        var streamReader = !string.IsNullOrEmpty(xpath)
+            ? new StreamReader(RunXPath(stream, xpath))
+            : new StreamReader(stream);
         _uniqueKey = ArrayUtils.Append(uniqueKeys, xpath);
 
         _xmlReader = XmlReader.Create(streamReader, new XmlReaderSettings
@@ -55,14 +54,15 @@ internal sealed class XmlInput : IRowsInput, IDisposable, IAsyncDisposable
         });
     }
 
-    private static StreamReader RunXPath(StreamReader streamReader, string xpath)
+    private static Stream RunXPath(Stream stream, string xpath)
     {
+        using var streamReader = new StreamReader(stream);
         var xmlDocument = new XmlDocument();
         xmlDocument.LoadXml(streamReader.ReadToEnd());
         var xmlNamespaceManager = GetXmlNamespaceManager(xmlDocument);
         var nodes = xmlDocument.SelectNodes(xpath, xmlNamespaceManager);
 
-        var memoryStream = new MemoryStream();
+        var memoryStream = new MemoryFileStream(stream);
         using var xmlWriter = XmlWriter.Create(memoryStream, new XmlWriterSettings
         {
             Async = false,
@@ -83,7 +83,7 @@ internal sealed class XmlInput : IRowsInput, IDisposable, IAsyncDisposable
         xmlWriter.Close();
 
         memoryStream.Seek(0, SeekOrigin.Begin);
-        return new StreamReader(memoryStream);
+        return memoryStream;
     }
 
     private static XmlNamespaceManager GetXmlNamespaceManager(XmlDocument xmlDocument)

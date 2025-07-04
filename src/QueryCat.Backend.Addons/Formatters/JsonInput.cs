@@ -8,6 +8,7 @@ using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Storage;
+using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Addons.Formatters;
 
@@ -71,7 +72,7 @@ internal class JsonInput : StreamRowsInput
         }
         var pathResult = path.Evaluate(jsonNode);
 
-        var ms = new MemoryStream();
+        var ms = new MemoryFileStream(stream);
         using var jsonWriter = new Utf8JsonWriter(ms);
         jsonWriter.WriteStartArray();
         foreach (var match in pathResult.Matches)

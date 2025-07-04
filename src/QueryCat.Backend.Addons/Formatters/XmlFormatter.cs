@@ -29,7 +29,7 @@ internal class XmlFormatter : IRowsFormatter
     public IRowsInput OpenInput(IBlobData blob, string? key = null)
     {
         var stream = blob.GetStream();
-        return new XmlInput(new StreamReader(stream), _xpath, key ?? string.Empty);
+        return new XmlInput(stream, _xpath, key ?? string.Empty);
     }
 
     /// <inheritdoc />
