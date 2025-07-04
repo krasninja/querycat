@@ -433,26 +433,42 @@ public class DelimiterStreamReader
         return !IsEmpty();
     }
 
-    private bool HasOnlyWhitespaceChars(long startIndex, ref readonly SequenceReader<char> sequenceReader)
+    private bool HasOnlyWhitespaceChars(long startIndex, ref SequenceReader<char> sequenceReader)
     {
-        var endIndex = sequenceReader.CurrentSpanIndex - 1;
-        if (startIndex == endIndex)
+        var count = sequenceReader.Consumed - startIndex - 1;
+
+        if (count < 1)
         {
             return true;
         }
-        var span = sequenceReader.CurrentSpan[(int)startIndex..endIndex];
-        foreach (var ch in span)
+
+        sequenceReader.Rewind(1);
+
+        // Go backward and analyze.
+        var hasOnlyWhitespaces = true;
+        var i = 0;
+        for (i = 0; i < count; i++)
         {
+            sequenceReader.Rewind(1);
+            if (!sequenceReader.TryPeek(out var ch))
+            {
+                break;
+            }
             if (_delimiters.Contains(ch))
             {
                 continue;
             }
             if (!char.IsWhiteSpace(ch))
             {
-                return false;
+                hasOnlyWhitespaces = false;
+                break;
             }
         }
-        return true;
+
+        // Restore sequence position.
+        sequenceReader.Advance(i + 1);
+
+        return hasOnlyWhitespaces;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]

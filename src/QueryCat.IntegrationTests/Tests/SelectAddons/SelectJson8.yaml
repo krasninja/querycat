@@ -1,0 +1,5 @@
+expected: |
+  "function sum(a, b) { return a + b; ;"
+  ;;{}{}{}{}}}
+query: |
+  select code from 'Json2.json';
