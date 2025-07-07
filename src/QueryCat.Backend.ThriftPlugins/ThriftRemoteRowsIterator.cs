@@ -65,6 +65,7 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputUpdate, IRowsInputDel
                 new ContextInfo
                 {
                     PrereadRowsCount = QueryContext.PrereadRowsCount,
+                    SkipIfNoColumns = QueryContext.SkipIfNoColumns,
                 },
                 ct
             );

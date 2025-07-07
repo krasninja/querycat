@@ -63,6 +63,8 @@ internal sealed class RowsInputFactory
                 {
                     var targetColumns = await _context.GetSelectIdentifierColumnsAsync(alias, cancellationToken);
                     queryContext = new SelectInputQueryContext(rowsInput, targetColumns, executionThread.ConfigStorage);
+                    queryContext.PrereadRowsCount = executionThread.Options.AnalyzeRowsCount;
+                    queryContext.SkipIfNoColumns = executionThread.Options.SkipIfNoColumns;
                     if (_context.Parent != null && !executionThread.Options.DisableCache)
                     {
                         rowsInput = new CacheRowsInput(executionThread, rowsInput, _context.Conditions);
@@ -115,6 +117,7 @@ internal sealed class RowsInputFactory
             .AsRequired<IRowsInput>();
         var context = new SelectInputQueryContext(rowsInput, rowsInput.Columns, executionThread.ConfigStorage);
         context.PrereadRowsCount = executionThread.Options.AnalyzeRowsCount;
+        context.SkipIfNoColumns = executionThread.Options.SkipIfNoColumns;
         rowsInput.QueryContext = context;
         return context;
     }

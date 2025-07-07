@@ -23,6 +23,11 @@ public abstract class QueryContext
     public int PrereadRowsCount { get; set; } = DefaultPrereadRowsCount;
 
     /// <summary>
+    /// Skip read if columns cannot be detected.
+    /// </summary>
+    internal bool SkipIfNoColumns { get; set; }
+
+    /// <summary>
     /// Constructor.
     /// </summary>
     /// <param name="queryInfo">Query info.</param>

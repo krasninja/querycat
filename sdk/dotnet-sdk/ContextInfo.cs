@@ -37,13 +37,16 @@ namespace QueryCat.Plugins.Sdk
 
     public int PrereadRowsCount { get; set; } = 0;
 
+    public bool SkipIfNoColumns { get; set; } = false;
+
     public ContextInfo()
     {
     }
 
-    public ContextInfo(int preread_rows_count) : this()
+    public ContextInfo(int preread_rows_count, bool skip_if_no_columns) : this()
     {
       this.PrereadRowsCount = preread_rows_count;
+      this.SkipIfNoColumns = skip_if_no_columns;
     }
 
     public async global::System.Threading.Tasks.Task ReadAsync(TProtocol iprot, CancellationToken cancellationToken)
@@ -52,6 +55,7 @@ namespace QueryCat.Plugins.Sdk
       try
       {
         bool isset_preread_rows_count = false;
+        bool isset_skip_if_no_columns = false;
         TField field;
         await iprot.ReadStructBeginAsync(cancellationToken);
         while (true)
@@ -75,6 +79,17 @@ namespace QueryCat.Plugins.Sdk
                 await TProtocolUtil.SkipAsync(iprot, field.Type, cancellationToken);
               }
               break;
+            case 2:
+              if (field.Type == TType.Bool)
+              {
+                SkipIfNoColumns = await iprot.ReadBoolAsync(cancellationToken);
+                isset_skip_if_no_columns = true;
+              }
+              else
+              {
+                await TProtocolUtil.SkipAsync(iprot, field.Type, cancellationToken);
+              }
+              break;
             default: 
               await TProtocolUtil.SkipAsync(iprot, field.Type, cancellationToken);
               break;
@@ -85,6 +100,10 @@ namespace QueryCat.Plugins.Sdk
 
         await iprot.ReadStructEndAsync(cancellationToken);
         if (!isset_preread_rows_count)
+        {
+          throw new TProtocolException(TProtocolException.INVALID_DATA);
+        }
+        if (!isset_skip_if_no_columns)
         {
           throw new TProtocolException(TProtocolException.INVALID_DATA);
         }
@@ -110,6 +129,12 @@ namespace QueryCat.Plugins.Sdk
         await oprot.WriteFieldBeginAsync(tmp65, cancellationToken);
         await oprot.WriteI32Async(PrereadRowsCount, cancellationToken);
         await oprot.WriteFieldEndAsync(cancellationToken);
+        tmp65.Name = "skip_if_no_columns";
+        tmp65.Type = TType.Bool;
+        tmp65.ID = 2;
+        await oprot.WriteFieldBeginAsync(tmp65, cancellationToken);
+        await oprot.WriteBoolAsync(SkipIfNoColumns, cancellationToken);
+        await oprot.WriteFieldEndAsync(cancellationToken);
         #pragma warning restore IDE0017  // simplified init
         await oprot.WriteFieldStopAsync(cancellationToken);
         await oprot.WriteStructEndAsync(cancellationToken);
@@ -124,13 +149,15 @@ namespace QueryCat.Plugins.Sdk
     {
       if (that is not ContextInfo other) return false;
       if (ReferenceEquals(this, other)) return true;
-      return global::System.Object.Equals(PrereadRowsCount, other.PrereadRowsCount);
+      return global::System.Object.Equals(PrereadRowsCount, other.PrereadRowsCount)
+        && global::System.Object.Equals(SkipIfNoColumns, other.SkipIfNoColumns);
     }
 
     public override int GetHashCode() {
       int hashcode = 157;
       unchecked {
         hashcode = (hashcode * 397) + PrereadRowsCount.GetHashCode();
+        hashcode = (hashcode * 397) + SkipIfNoColumns.GetHashCode();
       }
       return hashcode;
     }
@@ -140,6 +167,8 @@ namespace QueryCat.Plugins.Sdk
       var tmp66 = new StringBuilder("ContextInfo(");
       tmp66.Append(", PrereadRowsCount: ");
       PrereadRowsCount.ToString(tmp66);
+      tmp66.Append(", SkipIfNoColumns: ");
+      SkipIfNoColumns.ToString(tmp66);
       tmp66.Append(')');
       return tmp66.ToString();
     }

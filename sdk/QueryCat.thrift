@@ -280,7 +280,8 @@ struct ContextQueryInfo {
 
 // Contains the general information.
 struct ContextInfo {
-  1: required i32 preread_rows_count
+  1: required i32 preread_rows_count,
+  2: required bool skip_if_no_columns
 }
 
 service Plugin {

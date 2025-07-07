@@ -40,6 +40,10 @@ internal class QueryCommand : BaseQueryCommand
             Description = Resources.Messages.QueryCommand_AnalyzeRowsDescription,
             DefaultValueFactory = _ => 10,
         };
+        var skipIfNoColumnsOption = new Option<bool>("--skip-if-no-columns")
+        {
+            Description = Resources.Messages.QueryCommand_SkipIfNoColumnsDescription,
+        };
         var disableCacheOption = new Option<bool>("--disable-cache")
         {
             Description = Resources.Messages.QueryCommand_DisableCacheDescription,
@@ -77,6 +81,7 @@ internal class QueryCommand : BaseQueryCommand
         this.Add(rowNumberOption);
         this.Add(pageSizeOption);
         this.Add(analyzeRowsOption);
+        this.Add(skipIfNoColumnsOption);
         this.Add(disableCacheOption);
         this.Add(noHeaderOption);
         this.Add(floatNumberOption);
@@ -106,6 +111,7 @@ internal class QueryCommand : BaseQueryCommand
                 ShowDetailedStatistic = parseResult.GetValue(detailedStatisticOption),
                 MaxErrors = parseResult.GetValue(maxErrorsOption),
                 AnalyzeRowsCount = parseResult.GetValue(analyzeRowsOption),
+                SkipIfNoColumns = parseResult.GetValue(skipIfNoColumnsOption),
                 DisableCache = parseResult.GetValue(disableCacheOption),
                 UseConfig = true,
                 RunBootstrapScript = true,

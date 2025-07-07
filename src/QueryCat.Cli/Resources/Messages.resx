@@ -190,4 +190,7 @@
   <data name="PluginCommand_Description" xml:space="preserve">
     <value>Plugins management.</value>
   </data>
+  <data name="QueryCommand_SkipIfNoColumnsDescription" xml:space="preserve">
+    <value>Skip read if columns cannot be detected.</value>
+  </data>
 </root>

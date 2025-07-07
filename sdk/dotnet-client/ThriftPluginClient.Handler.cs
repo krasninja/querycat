@@ -258,6 +258,7 @@ public partial class ThriftPluginClient
                 if (context_info != null)
                 {
                     rowsSource.QueryContext.PrereadRowsCount = context_info.PrereadRowsCount;
+                    rowsSource.QueryContext.SkipIfNoColumns =  context_info.SkipIfNoColumns;
                 }
             }
             else

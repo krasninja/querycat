@@ -70,7 +70,15 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     /// <inheritdoc />
     public string[] UniqueKey { get; set; }
 
+    /// <summary>
+    /// Allow columns types heuristics detection. Otherwise, all of them will be strings.
+    /// </summary>
     internal bool DetectColumnsTypes { get; set; } = true;
+
+    /// <summary>
+    /// Skip read if columns cannot be detected.
+    /// </summary>
+    internal bool SkipIfNoColumns { get; set; }
 
     private int _virtualColumnsCount;
 
@@ -176,7 +184,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     /// <param name="newColumns">New columns.</param>
     private void SetColumns(IReadOnlyList<Column> newColumns)
     {
-        if (newColumns.Count < 1)
+        if (newColumns.Count < 1 && !SkipIfNoColumns)
         {
             throw new QueryCatException(Resources.Errors.NoColumns);
         }
@@ -390,6 +398,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
         }
 
         _logger.LogDebug("Start stream open.");
+        SkipIfNoColumns = QueryContext.SkipIfNoColumns;
         _virtualColumnsCount = GetVirtualColumns().Length;
         var inputIterator = new RowsInputIterator(this, autoFetch: true);
         var cacheIterator = new CacheRowsIterator(inputIterator);

@@ -45,5 +45,6 @@ internal sealed class SelectInputQueryContext : QueryContext
         : this(rowsInput, rowsInput.Columns, NullConfigStorage.Instance)
     {
         PrereadRowsCount = options.AnalyzeRowsCount;
+        SkipIfNoColumns = options.SkipIfNoColumns;
     }
 }

@@ -99,9 +99,9 @@ internal sealed class CombineRowsInput : RowsInput, IDisposable
             await _currentRowsInput.CloseAsync(cancellationToken);
         }
 
-        if (FetchNextInput())
+        if (FetchNextInput() && _currentRowsInput != null)
         {
-            await _currentRowsInput!.OpenAsync(cancellationToken);
+            await _currentRowsInput.OpenAsync(cancellationToken);
             return await ReadNextAsync(cancellationToken);
         }
 

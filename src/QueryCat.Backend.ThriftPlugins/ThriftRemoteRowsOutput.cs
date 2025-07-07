@@ -52,6 +52,7 @@ internal sealed class ThriftRemoteRowsOutput : IRowsOutput
                 new ContextInfo
                 {
                     PrereadRowsCount = QueryContext.PrereadRowsCount,
+                    SkipIfNoColumns = QueryContext.SkipIfNoColumns,
                 },
                 ct
             );
