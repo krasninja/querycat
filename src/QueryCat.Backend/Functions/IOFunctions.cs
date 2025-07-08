@@ -147,7 +147,7 @@ internal static class IOFunctions
                 }
                 return fileStream;
             }, File_GetContentType(file));
-            yield return fileFormatter.OpenInput(blobFileStream, path);
+            yield return fileFormatter.OpenInput(blobFileStream, file);
         }
     }
 

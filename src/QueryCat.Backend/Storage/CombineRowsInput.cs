@@ -13,6 +13,7 @@ internal sealed class CombineRowsInput : RowsInput, IDisposable
     private int _currentInputIndex = -1;
     private IRowsInput? _currentRowsInput;
     private QueryContext _queryContext = NullQueryContext.Instance;
+    private int[] _sourceColumnsMapping = [];
 
     /// <inheritdoc />
     public override Column[] Columns { get; protected set; } = [];
@@ -57,10 +58,33 @@ internal sealed class CombineRowsInput : RowsInput, IDisposable
     /// <inheritdoc />
     public override async Task OpenAsync(CancellationToken cancellationToken = default)
     {
-        if (FetchNextInput())
+        if (FetchNextInput() && _currentRowsInput != null)
         {
-            await _currentRowsInput!.OpenAsync(cancellationToken);
+            await _currentRowsInput.OpenAsync(cancellationToken);
             Columns = _currentRowsInput.Columns;
+            UpdateMapping();
+        }
+    }
+
+    /// <summary>
+    /// Since the next input source might have different columns than original one - we set up mapping.
+    /// </summary>
+    private void UpdateMapping()
+    {
+        if (_currentRowsInput == null)
+        {
+            return;
+        }
+
+        if (_sourceColumnsMapping.Length == 0)
+        {
+            _sourceColumnsMapping = new int[Columns.Length];
+        }
+
+        for (var i = 0; i < Columns.Length; i++)
+        {
+            var column = Columns[i];
+            _sourceColumnsMapping[i] = _currentRowsInput.GetColumnIndexByName(column.Name);
         }
     }
 
@@ -77,9 +101,16 @@ internal sealed class CombineRowsInput : RowsInput, IDisposable
     /// <inheritdoc />
     public override ErrorCode ReadValue(int columnIndex, out VariantValue value)
     {
+        var realIndex = _sourceColumnsMapping[columnIndex];
+        if (realIndex == -1)
+        {
+            value = VariantValue.Null;
+            return ErrorCode.OK;
+        }
+
         if (_currentRowsInput != null)
         {
-            return _currentRowsInput.ReadValue(columnIndex, out value);
+            return _currentRowsInput.ReadValue(realIndex, out value);
         }
         value = VariantValue.Null;
         return ErrorCode.NoData;
@@ -99,10 +130,16 @@ internal sealed class CombineRowsInput : RowsInput, IDisposable
             await _currentRowsInput.CloseAsync(cancellationToken);
         }
 
-        if (FetchNextInput() && _currentRowsInput != null)
+        while (FetchNextInput() && _currentRowsInput != null)
         {
             await _currentRowsInput.OpenAsync(cancellationToken);
-            return await ReadNextAsync(cancellationToken);
+            UpdateMapping();
+            var hasData = await _currentRowsInput.ReadNextAsync(cancellationToken);
+            if (hasData)
+            {
+                return true;
+            }
+            await _currentRowsInput.CloseAsync(cancellationToken);
         }
 
         return false;
