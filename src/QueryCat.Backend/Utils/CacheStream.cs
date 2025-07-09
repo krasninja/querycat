@@ -38,12 +38,12 @@ internal sealed class CacheStream : Stream
     /// <summary>
     /// Returns <c>true</c> if read from cache instead of source stream.
     /// </summary>
-    public bool IsInCache => _cachePosition < _buffer.SizeLong;
+    public bool IsInCache => _cachePosition < _buffer.Size;
 
     /// <summary>
     /// Current cache size.
     /// </summary>
-    public long CacheSize => _buffer.SizeLong;
+    public long CacheSize => _buffer.Size;
 
     public Stream UnderlyingStream => _stream;
 
@@ -154,7 +154,7 @@ internal sealed class CacheStream : Stream
         }
         var span = buffer.Span;
         _buffer.Write(span);
-        _cachePosition = _buffer.SizeLong;
+        _cachePosition = _buffer.Size;
         return span.Length;
     }
 

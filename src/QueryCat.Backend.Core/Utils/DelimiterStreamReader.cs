@@ -225,7 +225,7 @@ public class DelimiterStreamReader
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     private bool GetNextCharacter(out char nextChar)
     {
-        if ((ulong)_dynamicBuffer.SizeLong > (ulong)_currentDelimiterPosition)
+        if (_dynamicBuffer.Size > _currentDelimiterPosition)
         {
             nextChar = _dynamicBuffer.GetAt((int)_currentDelimiterPosition);
             return true;
@@ -280,7 +280,7 @@ public class DelimiterStreamReader
         {
             var stopCharactersLocal = (ReadOnlySpan<char>)_stopCharacters;
             CreateSequenceReader(out var sequenceReader);
-            while ((ulong)_currentDelimiterPosition < (ulong)_dynamicBuffer.SizeLong)
+            while (_currentDelimiterPosition < _dynamicBuffer.Size)
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
@@ -359,7 +359,7 @@ public class DelimiterStreamReader
                 else if (!lineMode && _delimiters.Contains(ch))
                 {
                     _currentDelimiterPosition = sequenceReader.Consumed;
-                    if (!isInQuotes && (ulong)_currentDelimiterPosition > 0)
+                    if (!isInQuotes && _currentDelimiterPosition > 0)
                     {
                         bool addField = true, completeLine = false;
                         OnDelimiter?.Invoke(ch, _currentDelimiterPosition, out addField, out completeLine);
@@ -515,7 +515,7 @@ public class DelimiterStreamReader
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     private FieldInfo MoveToNextFieldInfo()
     {
-        if ((ulong)_fieldInfoLastIndex >= (ulong)_fieldInfos.Length)
+        if (_fieldInfoLastIndex >= _fieldInfos.Length)
         {
             Array.Resize(ref _fieldInfos, _fieldInfoLastIndex + 1);
             _fieldInfos[^1] = new FieldInfo();
@@ -534,7 +534,7 @@ public class DelimiterStreamReader
     /// <returns><c>True</c> if there are more records to read, <c>false</c> otherwise.</returns>
     public ReadOnlySpan<char> GetField(int columnIndex)
     {
-        if ((ulong)columnIndex + 1 > (ulong)_fieldInfoLastIndex)
+        if (columnIndex + 1 > _fieldInfoLastIndex)
         {
             return ReadOnlySpan<char>.Empty;
         }
