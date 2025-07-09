@@ -117,6 +117,15 @@ enum CursorSeekOrigin {
   END = 2
 }
 
+enum CompletionKind {
+  MISC = 0,
+  KEYWORD = 1,
+  FUNCTION = 2,
+  VARIABLE = 3,
+  PROPERTY = 4,
+  TEXT = 5,
+}
+
 exception QueryCatPluginException {
   1: required ErrorType type,
   2: required string error_message,
@@ -156,6 +165,30 @@ struct RegistrationResult {
   1: required i64 token, // Authorization token.
   2: required string version, // QueryCat version.
   3: optional LogLevel min_log_level // Minimal application log level.
+}
+
+struct ExecutionScope {
+  1: required i32 id,
+  2: required i32 parent_id // Get parent scope, -1 if root.
+}
+
+struct ScopeVariable {
+  1: required string name,
+  2: required VariantValue value
+}
+
+struct CompletionTextEdit {
+  1: required i32 start,
+  2: required i32 end,
+  3: required string new_text
+}
+
+struct CompletionResult {
+  1: required CompletionKind kind,
+  2: required string label,
+  3: required string documentation,
+  4: required double relevance,
+  5: required list<CompletionTextEdit> edits
 }
 
 service PluginsManager {
@@ -211,6 +244,32 @@ service PluginsManager {
     2: required string name,
     3: required VariantValue value
   ) throws (1: QueryCatPluginException e),
+
+  list<ScopeVariable> GetVariables(
+    1: required i64 token, // Authorization token.
+    2: required i32 scope_id
+  ) throws (1: QueryCatPluginException e),
+
+  // Create the new variables and execution scope based on top of the current one.
+  ExecutionScope PushScope(
+    1: required i64 token // Authorization token.
+  ) throws (1: QueryCatPluginException e),
+
+  // Pop the current execution scope for stack and return it.
+  ExecutionScope PopScope(
+    1: required i64 token // Authorization token.
+  ) throws (1: QueryCatPluginException e),
+
+  // Get current top scope.
+  ExecutionScope PeekTopScope(
+    1: required i64 token // Authorization token.
+  ) throws (1: QueryCatPluginException e),
+
+  list<CompletionResult> GetCompletions(
+    1: required i64 token, // Authorization token.
+    2: required string text,
+    3: required i32 position
+  ),
 
   // Read binary data.
   binary Blob_Read(

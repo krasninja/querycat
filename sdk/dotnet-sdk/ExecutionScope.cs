@@ -32,21 +32,21 @@ using Thrift.Processor;
 namespace QueryCat.Plugins.Sdk
 {
 
-  public partial class ContextInfo : TBase
+  public partial class ExecutionScope : TBase
   {
 
-    public int PrereadRowsCount { get; set; } = 0;
+    public int Id { get; set; } = 0;
 
-    public bool SkipIfNoColumns { get; set; } = false;
+    public int ParentId { get; set; } = 0;
 
-    public ContextInfo()
+    public ExecutionScope()
     {
     }
 
-    public ContextInfo(int preread_rows_count, bool skip_if_no_columns) : this()
+    public ExecutionScope(int @id, int parent_id) : this()
     {
-      this.PrereadRowsCount = preread_rows_count;
-      this.SkipIfNoColumns = skip_if_no_columns;
+      this.Id = @id;
+      this.ParentId = parent_id;
     }
 
     public async global::System.Threading.Tasks.Task ReadAsync(TProtocol iprot, CancellationToken cancellationToken)
@@ -54,8 +54,8 @@ namespace QueryCat.Plugins.Sdk
       iprot.IncrementRecursionDepth();
       try
       {
-        bool isset_preread_rows_count = false;
-        bool isset_skip_if_no_columns = false;
+        bool isset_id = false;
+        bool isset_parent_id = false;
         TField field;
         await iprot.ReadStructBeginAsync(cancellationToken);
         while (true)
@@ -71,8 +71,8 @@ namespace QueryCat.Plugins.Sdk
             case 1:
               if (field.Type == TType.I32)
               {
-                PrereadRowsCount = await iprot.ReadI32Async(cancellationToken);
-                isset_preread_rows_count = true;
+                Id = await iprot.ReadI32Async(cancellationToken);
+                isset_id = true;
               }
               else
               {
@@ -80,10 +80,10 @@ namespace QueryCat.Plugins.Sdk
               }
               break;
             case 2:
-              if (field.Type == TType.Bool)
+              if (field.Type == TType.I32)
               {
-                SkipIfNoColumns = await iprot.ReadBoolAsync(cancellationToken);
-                isset_skip_if_no_columns = true;
+                ParentId = await iprot.ReadI32Async(cancellationToken);
+                isset_parent_id = true;
               }
               else
               {
@@ -99,11 +99,11 @@ namespace QueryCat.Plugins.Sdk
         }
 
         await iprot.ReadStructEndAsync(cancellationToken);
-        if (!isset_preread_rows_count)
+        if (!isset_id)
         {
           throw new TProtocolException(TProtocolException.INVALID_DATA);
         }
-        if (!isset_skip_if_no_columns)
+        if (!isset_parent_id)
         {
           throw new TProtocolException(TProtocolException.INVALID_DATA);
         }
@@ -119,21 +119,21 @@ namespace QueryCat.Plugins.Sdk
       oprot.IncrementRecursionDepth();
       try
       {
-        var tmp84 = new TStruct("ContextInfo");
-        await oprot.WriteStructBeginAsync(tmp84, cancellationToken);
+        var tmp36 = new TStruct("ExecutionScope");
+        await oprot.WriteStructBeginAsync(tmp36, cancellationToken);
         #pragma warning disable IDE0017  // simplified init
-        var tmp85 = new TField();
-        tmp85.Name = "preread_rows_count";
-        tmp85.Type = TType.I32;
-        tmp85.ID = 1;
-        await oprot.WriteFieldBeginAsync(tmp85, cancellationToken);
-        await oprot.WriteI32Async(PrereadRowsCount, cancellationToken);
+        var tmp37 = new TField();
+        tmp37.Name = "id";
+        tmp37.Type = TType.I32;
+        tmp37.ID = 1;
+        await oprot.WriteFieldBeginAsync(tmp37, cancellationToken);
+        await oprot.WriteI32Async(Id, cancellationToken);
         await oprot.WriteFieldEndAsync(cancellationToken);
-        tmp85.Name = "skip_if_no_columns";
-        tmp85.Type = TType.Bool;
-        tmp85.ID = 2;
-        await oprot.WriteFieldBeginAsync(tmp85, cancellationToken);
-        await oprot.WriteBoolAsync(SkipIfNoColumns, cancellationToken);
+        tmp37.Name = "parent_id";
+        tmp37.Type = TType.I32;
+        tmp37.ID = 2;
+        await oprot.WriteFieldBeginAsync(tmp37, cancellationToken);
+        await oprot.WriteI32Async(ParentId, cancellationToken);
         await oprot.WriteFieldEndAsync(cancellationToken);
         #pragma warning restore IDE0017  // simplified init
         await oprot.WriteFieldStopAsync(cancellationToken);
@@ -147,30 +147,30 @@ namespace QueryCat.Plugins.Sdk
 
     public override bool Equals(object? that)
     {
-      if (that is not ContextInfo other) return false;
+      if (that is not ExecutionScope other) return false;
       if (ReferenceEquals(this, other)) return true;
-      return global::System.Object.Equals(PrereadRowsCount, other.PrereadRowsCount)
-        && global::System.Object.Equals(SkipIfNoColumns, other.SkipIfNoColumns);
+      return global::System.Object.Equals(Id, other.Id)
+        && global::System.Object.Equals(ParentId, other.ParentId);
     }
 
     public override int GetHashCode() {
       int hashcode = 157;
       unchecked {
-        hashcode = (hashcode * 397) + PrereadRowsCount.GetHashCode();
-        hashcode = (hashcode * 397) + SkipIfNoColumns.GetHashCode();
+        hashcode = (hashcode * 397) + Id.GetHashCode();
+        hashcode = (hashcode * 397) + ParentId.GetHashCode();
       }
       return hashcode;
     }
 
     public override string ToString()
     {
-      var tmp86 = new StringBuilder("ContextInfo(");
-      tmp86.Append(", PrereadRowsCount: ");
-      PrereadRowsCount.ToString(tmp86);
-      tmp86.Append(", SkipIfNoColumns: ");
-      SkipIfNoColumns.ToString(tmp86);
-      tmp86.Append(')');
-      return tmp86.ToString();
+      var tmp38 = new StringBuilder("ExecutionScope(");
+      tmp38.Append(", Id: ");
+      Id.ToString(tmp38);
+      tmp38.Append(", ParentId: ");
+      ParentId.ToString(tmp38);
+      tmp38.Append(')');
+      return tmp38.ToString();
     }
   }
 

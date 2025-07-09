@@ -32,21 +32,21 @@ using Thrift.Processor;
 namespace QueryCat.Plugins.Sdk
 {
 
-  public partial class ContextInfo : TBase
+  public partial class ScopeVariable : TBase
   {
 
-    public int PrereadRowsCount { get; set; } = 0;
+    public string Name { get; set; } = string.Empty;
 
-    public bool SkipIfNoColumns { get; set; } = false;
+    public global::QueryCat.Plugins.Sdk.VariantValue? Value { get; set; }
 
-    public ContextInfo()
+    public ScopeVariable()
     {
     }
 
-    public ContextInfo(int preread_rows_count, bool skip_if_no_columns) : this()
+    public ScopeVariable(string @name, global::QueryCat.Plugins.Sdk.VariantValue? @value) : this()
     {
-      this.PrereadRowsCount = preread_rows_count;
-      this.SkipIfNoColumns = skip_if_no_columns;
+      this.Name = @name;
+      this.Value = @value;
     }
 
     public async global::System.Threading.Tasks.Task ReadAsync(TProtocol iprot, CancellationToken cancellationToken)
@@ -54,8 +54,8 @@ namespace QueryCat.Plugins.Sdk
       iprot.IncrementRecursionDepth();
       try
       {
-        bool isset_preread_rows_count = false;
-        bool isset_skip_if_no_columns = false;
+        bool isset_name = false;
+        bool isset_value = false;
         TField field;
         await iprot.ReadStructBeginAsync(cancellationToken);
         while (true)
@@ -69,10 +69,10 @@ namespace QueryCat.Plugins.Sdk
           switch (field.ID)
           {
             case 1:
-              if (field.Type == TType.I32)
+              if (field.Type == TType.String)
               {
-                PrereadRowsCount = await iprot.ReadI32Async(cancellationToken);
-                isset_preread_rows_count = true;
+                Name = await iprot.ReadStringAsync(cancellationToken);
+                isset_name = true;
               }
               else
               {
@@ -80,10 +80,11 @@ namespace QueryCat.Plugins.Sdk
               }
               break;
             case 2:
-              if (field.Type == TType.Bool)
+              if (field.Type == TType.Struct)
               {
-                SkipIfNoColumns = await iprot.ReadBoolAsync(cancellationToken);
-                isset_skip_if_no_columns = true;
+                Value = new global::QueryCat.Plugins.Sdk.VariantValue();
+                await Value.ReadAsync(iprot, cancellationToken);
+                isset_value = true;
               }
               else
               {
@@ -99,11 +100,11 @@ namespace QueryCat.Plugins.Sdk
         }
 
         await iprot.ReadStructEndAsync(cancellationToken);
-        if (!isset_preread_rows_count)
+        if (!isset_name)
         {
           throw new TProtocolException(TProtocolException.INVALID_DATA);
         }
-        if (!isset_skip_if_no_columns)
+        if (!isset_value)
         {
           throw new TProtocolException(TProtocolException.INVALID_DATA);
         }
@@ -119,22 +120,28 @@ namespace QueryCat.Plugins.Sdk
       oprot.IncrementRecursionDepth();
       try
       {
-        var tmp84 = new TStruct("ContextInfo");
-        await oprot.WriteStructBeginAsync(tmp84, cancellationToken);
+        var tmp40 = new TStruct("ScopeVariable");
+        await oprot.WriteStructBeginAsync(tmp40, cancellationToken);
         #pragma warning disable IDE0017  // simplified init
-        var tmp85 = new TField();
-        tmp85.Name = "preread_rows_count";
-        tmp85.Type = TType.I32;
-        tmp85.ID = 1;
-        await oprot.WriteFieldBeginAsync(tmp85, cancellationToken);
-        await oprot.WriteI32Async(PrereadRowsCount, cancellationToken);
-        await oprot.WriteFieldEndAsync(cancellationToken);
-        tmp85.Name = "skip_if_no_columns";
-        tmp85.Type = TType.Bool;
-        tmp85.ID = 2;
-        await oprot.WriteFieldBeginAsync(tmp85, cancellationToken);
-        await oprot.WriteBoolAsync(SkipIfNoColumns, cancellationToken);
-        await oprot.WriteFieldEndAsync(cancellationToken);
+        var tmp41 = new TField();
+        if((Name != null))
+        {
+          tmp41.Name = "name";
+          tmp41.Type = TType.String;
+          tmp41.ID = 1;
+          await oprot.WriteFieldBeginAsync(tmp41, cancellationToken);
+          await oprot.WriteStringAsync(Name, cancellationToken);
+          await oprot.WriteFieldEndAsync(cancellationToken);
+        }
+        if((Value != null))
+        {
+          tmp41.Name = "value";
+          tmp41.Type = TType.Struct;
+          tmp41.ID = 2;
+          await oprot.WriteFieldBeginAsync(tmp41, cancellationToken);
+          await Value.WriteAsync(oprot, cancellationToken);
+          await oprot.WriteFieldEndAsync(cancellationToken);
+        }
         #pragma warning restore IDE0017  // simplified init
         await oprot.WriteFieldStopAsync(cancellationToken);
         await oprot.WriteStructEndAsync(cancellationToken);
@@ -147,30 +154,42 @@ namespace QueryCat.Plugins.Sdk
 
     public override bool Equals(object? that)
     {
-      if (that is not ContextInfo other) return false;
+      if (that is not ScopeVariable other) return false;
       if (ReferenceEquals(this, other)) return true;
-      return global::System.Object.Equals(PrereadRowsCount, other.PrereadRowsCount)
-        && global::System.Object.Equals(SkipIfNoColumns, other.SkipIfNoColumns);
+      return global::System.Object.Equals(Name, other.Name)
+        && global::System.Object.Equals(Value, other.Value);
     }
 
     public override int GetHashCode() {
       int hashcode = 157;
       unchecked {
-        hashcode = (hashcode * 397) + PrereadRowsCount.GetHashCode();
-        hashcode = (hashcode * 397) + SkipIfNoColumns.GetHashCode();
+        if((Name != null))
+        {
+          hashcode = (hashcode * 397) + Name.GetHashCode();
+        }
+        if((Value != null))
+        {
+          hashcode = (hashcode * 397) + Value.GetHashCode();
+        }
       }
       return hashcode;
     }
 
     public override string ToString()
     {
-      var tmp86 = new StringBuilder("ContextInfo(");
-      tmp86.Append(", PrereadRowsCount: ");
-      PrereadRowsCount.ToString(tmp86);
-      tmp86.Append(", SkipIfNoColumns: ");
-      SkipIfNoColumns.ToString(tmp86);
-      tmp86.Append(')');
-      return tmp86.ToString();
+      var tmp42 = new StringBuilder("ScopeVariable(");
+      if((Name != null))
+      {
+        tmp42.Append(", Name: ");
+        Name.ToString(tmp42);
+      }
+      if((Value != null))
+      {
+        tmp42.Append(", Value: ");
+        Value.ToString(tmp42);
+      }
+      tmp42.Append(')');
+      return tmp42.ToString();
     }
   }
 

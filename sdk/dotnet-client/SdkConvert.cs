@@ -1,9 +1,11 @@
 using System;
+using System.Linq;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Plugins.Sdk;
 using Column = QueryCat.Plugins.Sdk.Column;
@@ -346,4 +348,52 @@ public static class SdkConvert
             LogLevel.NONE => Microsoft.Extensions.Logging.LogLevel.None,
             _ => throw new ArgumentOutOfRangeException(nameof(origin))
         };
+
+    public static Backend.Core.Execution.CompletionItemKind Convert(Sdk.CompletionKind kind)
+        => kind switch
+        {
+            CompletionKind.MISC => CompletionItemKind.Misc,
+            CompletionKind.KEYWORD => CompletionItemKind.Keyword,
+            CompletionKind.FUNCTION => CompletionItemKind.Function,
+            CompletionKind.VARIABLE => CompletionItemKind.Variable,
+            CompletionKind.PROPERTY => CompletionItemKind.Property,
+            CompletionKind.TEXT => CompletionItemKind.Text,
+            _ => throw new ArgumentOutOfRangeException(nameof(kind))
+        };
+
+    public static Sdk.CompletionKind Convert(Backend.Core.Execution.CompletionItemKind kind)
+        => kind switch
+        {
+            CompletionItemKind.Misc => CompletionKind.MISC,
+            CompletionItemKind.Keyword => CompletionKind.KEYWORD,
+            CompletionItemKind.Function => CompletionKind.FUNCTION,
+            CompletionItemKind.Variable => CompletionKind.VARIABLE,
+            CompletionItemKind.Property => CompletionKind.PROPERTY,
+            CompletionItemKind.Text => CompletionKind.TEXT,
+            _ => throw new ArgumentOutOfRangeException(nameof(kind))
+        };
+
+    public static Backend.Core.Execution.CompletionTextEdit Convert(Sdk.CompletionTextEdit edit)
+        => new(edit.Start, edit.End, edit.NewText);
+
+    public static Sdk.CompletionTextEdit Convert(Backend.Core.Execution.CompletionTextEdit edit)
+        => new(edit.Start, edit.End, edit.NewText);
+
+    public static Backend.Core.Execution.CompletionResult Convert(Sdk.CompletionResult result)
+        => new(
+            result.Label,
+            Convert(result.Kind),
+            result.Documentation,
+            (float)result.Relevance,
+            (result.Edits ?? []) .Select(Convert).ToArray()
+        );
+
+    public static Sdk.CompletionResult Convert(Backend.Core.Execution.CompletionResult result)
+        => new(
+            Convert(result.Completion.Kind),
+            result.Completion.Label,
+            result.Completion.Documentation,
+            result.Completion.Relevance,
+            result.Edits.Select(Convert).ToList()
+        );
 }

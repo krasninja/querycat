@@ -32,21 +32,24 @@ using Thrift.Processor;
 namespace QueryCat.Plugins.Sdk
 {
 
-  public partial class ContextInfo : TBase
+  public partial class CompletionTextEdit : TBase
   {
 
-    public int PrereadRowsCount { get; set; } = 0;
+    public int Start { get; set; } = 0;
 
-    public bool SkipIfNoColumns { get; set; } = false;
+    public int End { get; set; } = 0;
 
-    public ContextInfo()
+    public string NewText { get; set; } = string.Empty;
+
+    public CompletionTextEdit()
     {
     }
 
-    public ContextInfo(int preread_rows_count, bool skip_if_no_columns) : this()
+    public CompletionTextEdit(int @start, int @end, string new_text) : this()
     {
-      this.PrereadRowsCount = preread_rows_count;
-      this.SkipIfNoColumns = skip_if_no_columns;
+      this.Start = @start;
+      this.End = @end;
+      this.NewText = new_text;
     }
 
     public async global::System.Threading.Tasks.Task ReadAsync(TProtocol iprot, CancellationToken cancellationToken)
@@ -54,8 +57,9 @@ namespace QueryCat.Plugins.Sdk
       iprot.IncrementRecursionDepth();
       try
       {
-        bool isset_preread_rows_count = false;
-        bool isset_skip_if_no_columns = false;
+        bool isset_start = false;
+        bool isset_end = false;
+        bool isset_new_text = false;
         TField field;
         await iprot.ReadStructBeginAsync(cancellationToken);
         while (true)
@@ -71,8 +75,8 @@ namespace QueryCat.Plugins.Sdk
             case 1:
               if (field.Type == TType.I32)
               {
-                PrereadRowsCount = await iprot.ReadI32Async(cancellationToken);
-                isset_preread_rows_count = true;
+                Start = await iprot.ReadI32Async(cancellationToken);
+                isset_start = true;
               }
               else
               {
@@ -80,10 +84,21 @@ namespace QueryCat.Plugins.Sdk
               }
               break;
             case 2:
-              if (field.Type == TType.Bool)
+              if (field.Type == TType.I32)
               {
-                SkipIfNoColumns = await iprot.ReadBoolAsync(cancellationToken);
-                isset_skip_if_no_columns = true;
+                End = await iprot.ReadI32Async(cancellationToken);
+                isset_end = true;
+              }
+              else
+              {
+                await TProtocolUtil.SkipAsync(iprot, field.Type, cancellationToken);
+              }
+              break;
+            case 3:
+              if (field.Type == TType.String)
+              {
+                NewText = await iprot.ReadStringAsync(cancellationToken);
+                isset_new_text = true;
               }
               else
               {
@@ -99,11 +114,15 @@ namespace QueryCat.Plugins.Sdk
         }
 
         await iprot.ReadStructEndAsync(cancellationToken);
-        if (!isset_preread_rows_count)
+        if (!isset_start)
         {
           throw new TProtocolException(TProtocolException.INVALID_DATA);
         }
-        if (!isset_skip_if_no_columns)
+        if (!isset_end)
+        {
+          throw new TProtocolException(TProtocolException.INVALID_DATA);
+        }
+        if (!isset_new_text)
         {
           throw new TProtocolException(TProtocolException.INVALID_DATA);
         }
@@ -119,22 +138,31 @@ namespace QueryCat.Plugins.Sdk
       oprot.IncrementRecursionDepth();
       try
       {
-        var tmp84 = new TStruct("ContextInfo");
-        await oprot.WriteStructBeginAsync(tmp84, cancellationToken);
+        var tmp44 = new TStruct("CompletionTextEdit");
+        await oprot.WriteStructBeginAsync(tmp44, cancellationToken);
         #pragma warning disable IDE0017  // simplified init
-        var tmp85 = new TField();
-        tmp85.Name = "preread_rows_count";
-        tmp85.Type = TType.I32;
-        tmp85.ID = 1;
-        await oprot.WriteFieldBeginAsync(tmp85, cancellationToken);
-        await oprot.WriteI32Async(PrereadRowsCount, cancellationToken);
+        var tmp45 = new TField();
+        tmp45.Name = "start";
+        tmp45.Type = TType.I32;
+        tmp45.ID = 1;
+        await oprot.WriteFieldBeginAsync(tmp45, cancellationToken);
+        await oprot.WriteI32Async(Start, cancellationToken);
         await oprot.WriteFieldEndAsync(cancellationToken);
-        tmp85.Name = "skip_if_no_columns";
-        tmp85.Type = TType.Bool;
-        tmp85.ID = 2;
-        await oprot.WriteFieldBeginAsync(tmp85, cancellationToken);
-        await oprot.WriteBoolAsync(SkipIfNoColumns, cancellationToken);
+        tmp45.Name = "end";
+        tmp45.Type = TType.I32;
+        tmp45.ID = 2;
+        await oprot.WriteFieldBeginAsync(tmp45, cancellationToken);
+        await oprot.WriteI32Async(End, cancellationToken);
         await oprot.WriteFieldEndAsync(cancellationToken);
+        if((NewText != null))
+        {
+          tmp45.Name = "new_text";
+          tmp45.Type = TType.String;
+          tmp45.ID = 3;
+          await oprot.WriteFieldBeginAsync(tmp45, cancellationToken);
+          await oprot.WriteStringAsync(NewText, cancellationToken);
+          await oprot.WriteFieldEndAsync(cancellationToken);
+        }
         #pragma warning restore IDE0017  // simplified init
         await oprot.WriteFieldStopAsync(cancellationToken);
         await oprot.WriteStructEndAsync(cancellationToken);
@@ -147,30 +175,40 @@ namespace QueryCat.Plugins.Sdk
 
     public override bool Equals(object? that)
     {
-      if (that is not ContextInfo other) return false;
+      if (that is not CompletionTextEdit other) return false;
       if (ReferenceEquals(this, other)) return true;
-      return global::System.Object.Equals(PrereadRowsCount, other.PrereadRowsCount)
-        && global::System.Object.Equals(SkipIfNoColumns, other.SkipIfNoColumns);
+      return global::System.Object.Equals(Start, other.Start)
+        && global::System.Object.Equals(End, other.End)
+        && global::System.Object.Equals(NewText, other.NewText);
     }
 
     public override int GetHashCode() {
       int hashcode = 157;
       unchecked {
-        hashcode = (hashcode * 397) + PrereadRowsCount.GetHashCode();
-        hashcode = (hashcode * 397) + SkipIfNoColumns.GetHashCode();
+        hashcode = (hashcode * 397) + Start.GetHashCode();
+        hashcode = (hashcode * 397) + End.GetHashCode();
+        if((NewText != null))
+        {
+          hashcode = (hashcode * 397) + NewText.GetHashCode();
+        }
       }
       return hashcode;
     }
 
     public override string ToString()
     {
-      var tmp86 = new StringBuilder("ContextInfo(");
-      tmp86.Append(", PrereadRowsCount: ");
-      PrereadRowsCount.ToString(tmp86);
-      tmp86.Append(", SkipIfNoColumns: ");
-      SkipIfNoColumns.ToString(tmp86);
-      tmp86.Append(')');
-      return tmp86.ToString();
+      var tmp46 = new StringBuilder("CompletionTextEdit(");
+      tmp46.Append(", Start: ");
+      Start.ToString(tmp46);
+      tmp46.Append(", End: ");
+      End.ToString(tmp46);
+      if((NewText != null))
+      {
+        tmp46.Append(", NewText: ");
+        NewText.ToString(tmp46);
+      }
+      tmp46.Append(')');
+      return tmp46.ToString();
     }
   }
 

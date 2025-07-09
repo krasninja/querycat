@@ -57,6 +57,36 @@ namespace QueryCat.Plugins.Sdk
     }
 
 
+    public static bool Equals(this List<global::QueryCat.Plugins.Sdk.CompletionResult> instance, object that)
+    {
+      if (that is not List<global::QueryCat.Plugins.Sdk.CompletionResult> other) return false;
+      if (ReferenceEquals(instance, other)) return true;
+
+      return TCollections.Equals(instance, other);
+    }
+
+
+    public static int GetHashCode(this List<global::QueryCat.Plugins.Sdk.CompletionResult> instance)
+    {
+      return TCollections.GetHashCode(instance);
+    }
+
+
+    public static bool Equals(this List<global::QueryCat.Plugins.Sdk.CompletionTextEdit> instance, object that)
+    {
+      if (that is not List<global::QueryCat.Plugins.Sdk.CompletionTextEdit> other) return false;
+      if (ReferenceEquals(instance, other)) return true;
+
+      return TCollections.Equals(instance, other);
+    }
+
+
+    public static int GetHashCode(this List<global::QueryCat.Plugins.Sdk.CompletionTextEdit> instance)
+    {
+      return TCollections.GetHashCode(instance);
+    }
+
+
     public static bool Equals(this List<global::QueryCat.Plugins.Sdk.Function> instance, object that)
     {
       if (that is not List<global::QueryCat.Plugins.Sdk.Function> other) return false;
@@ -82,6 +112,21 @@ namespace QueryCat.Plugins.Sdk
 
 
     public static int GetHashCode(this List<global::QueryCat.Plugins.Sdk.KeyColumn> instance)
+    {
+      return TCollections.GetHashCode(instance);
+    }
+
+
+    public static bool Equals(this List<global::QueryCat.Plugins.Sdk.ScopeVariable> instance, object that)
+    {
+      if (that is not List<global::QueryCat.Plugins.Sdk.ScopeVariable> other) return false;
+      if (ReferenceEquals(instance, other)) return true;
+
+      return TCollections.Equals(instance, other);
+    }
+
+
+    public static int GetHashCode(this List<global::QueryCat.Plugins.Sdk.ScopeVariable> instance)
     {
       return TCollections.GetHashCode(instance);
     }
