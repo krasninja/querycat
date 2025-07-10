@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
@@ -68,7 +69,7 @@ public partial class ThriftPluginClient
                 else if (result.AsObject is IRowsInput rowsInput)
                 {
                     rowsInput.QueryContext = new PluginQueryContext(
-                        new QueryContextQueryInfo(new List<Backend.Core.Data.Column>()),
+                        new QueryContextQueryInfo(ImmutableList<Backend.Core.Data.Column>.Empty),
                         _thriftPluginClient._executionThread.ConfigStorage);
                     var index =_thriftPluginClient._objectsStorage.Add(rowsInput);
                     _thriftPluginClient._logger.LogDebug("Added new input object '{Object}' with handle {Handle}.",
@@ -81,7 +82,7 @@ public partial class ThriftPluginClient
                 else if (result.AsObject is IRowsOutput rowsOutput)
                 {
                     rowsOutput.QueryContext = new PluginQueryContext(
-                        new QueryContextQueryInfo(new List<Backend.Core.Data.Column>()),
+                        new QueryContextQueryInfo(ImmutableList<Backend.Core.Data.Column>.Empty),
                         _thriftPluginClient._executionThread.ConfigStorage);
                     var index =_thriftPluginClient._objectsStorage.Add(rowsOutput);
                     _thriftPluginClient._logger.LogDebug("Added new output object '{Object}' with handle {Handle}.",
@@ -244,7 +245,8 @@ public partial class ThriftPluginClient
                 }
                 else
                 {
-                    var columns = context_query_info.Columns ?? new List<QueryCat.Plugins.Sdk.Column>();
+                    var columns = context_query_info.Columns
+                                  ?? (IList<QueryCat.Plugins.Sdk.Column>)ImmutableList<QueryCat.Plugins.Sdk.Column>.Empty;
                     rowsSource.QueryContext = new PluginQueryContext(
                         new QueryContextQueryInfo(
                             columns.Select(SdkConvert.Convert).ToList(),

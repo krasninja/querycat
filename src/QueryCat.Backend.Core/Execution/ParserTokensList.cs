@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Text;
 
@@ -13,7 +14,7 @@ public sealed class ParserTokensList : IReadOnlyList<ParserToken>
     /// <summary>
     /// Empty instance.
     /// </summary>
-    public static ParserTokensList Empty { get; } = new(new List<ParserToken>());
+    public static ParserTokensList Empty { get; } = new(ImmutableList<ParserToken>.Empty);
 
     private readonly List<ParserToken> _tokens;
 
