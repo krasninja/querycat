@@ -357,6 +357,14 @@ public partial class ThriftPluginsServer
             return Task.CompletedTask;
         }
 
+        /// <inheritdoc />
+        public Task<Statistic> GetStatisticAsync(long token, CancellationToken cancellationToken = default)
+        {
+            _thriftPluginsServer.VerifyToken(token);
+            var statistic = SdkConvert.Convert(_thriftPluginsServer._executionThread.Statistic);
+            return Task.FromResult(statistic);
+        }
+
         private Microsoft.Extensions.Logging.LogLevel GetCurrentLogLevel()
         {
             foreach (var logLevel in Enum.GetValues<Microsoft.Extensions.Logging.LogLevel>())
@@ -617,6 +625,20 @@ public partial class ThriftPluginsServer
             try
             {
                 await _handler.LogAsync(token, level, message, arguments, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, Resources.Errors.HandlerInternalError);
+                throw QueryCatPluginExceptionUtils.Create(ex);
+            }
+        }
+
+        /// <inheritdoc />
+        public Task<Statistic> GetStatisticAsync(long token, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return _handler.GetStatisticAsync(token, cancellationToken);
             }
             catch (Exception ex)
             {

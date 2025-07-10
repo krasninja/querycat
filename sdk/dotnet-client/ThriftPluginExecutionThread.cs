@@ -22,7 +22,6 @@ namespace QueryCat.Plugins.Client;
 /// - No object selector.
 /// - No variables resolve events.
 /// - Local stack only.
-/// - No current statistic.
 /// </remarks>
 public sealed class ThriftPluginExecutionThread : IExecutionThread
 {
@@ -61,7 +60,18 @@ public sealed class ThriftPluginExecutionThread : IExecutionThread
     public string CurrentQuery { get; private set; } = string.Empty;
 
     /// <inheritdoc />
-    public ExecutionStatistic Statistic => NullExecutionStatistic.Instance;
+    public ExecutionStatistic Statistic
+    {
+        get
+        {
+            var statistic = AsyncUtils.RunSync(ct => _client.ThriftClient.GetStatisticAsync(_client.Token, ct));
+            if (statistic == null)
+            {
+                throw new InvalidOperationException("Cannot get statistic.");
+            }
+            return SdkConvert.Convert(statistic);
+        }
+    }
 
     /// <inheritdoc />
     public object? Tag => null;

@@ -119,20 +119,20 @@ namespace QueryCat.Plugins.Sdk
       oprot.IncrementRecursionDepth();
       try
       {
-        var tmp84 = new TStruct("ContextInfo");
-        await oprot.WriteStructBeginAsync(tmp84, cancellationToken);
+        var tmp96 = new TStruct("ContextInfo");
+        await oprot.WriteStructBeginAsync(tmp96, cancellationToken);
         #pragma warning disable IDE0017  // simplified init
-        var tmp85 = new TField();
-        tmp85.Name = "preread_rows_count";
-        tmp85.Type = TType.I32;
-        tmp85.ID = 1;
-        await oprot.WriteFieldBeginAsync(tmp85, cancellationToken);
+        var tmp97 = new TField();
+        tmp97.Name = "preread_rows_count";
+        tmp97.Type = TType.I32;
+        tmp97.ID = 1;
+        await oprot.WriteFieldBeginAsync(tmp97, cancellationToken);
         await oprot.WriteI32Async(PrereadRowsCount, cancellationToken);
         await oprot.WriteFieldEndAsync(cancellationToken);
-        tmp85.Name = "skip_if_no_columns";
-        tmp85.Type = TType.Bool;
-        tmp85.ID = 2;
-        await oprot.WriteFieldBeginAsync(tmp85, cancellationToken);
+        tmp97.Name = "skip_if_no_columns";
+        tmp97.Type = TType.Bool;
+        tmp97.ID = 2;
+        await oprot.WriteFieldBeginAsync(tmp97, cancellationToken);
         await oprot.WriteBoolAsync(SkipIfNoColumns, cancellationToken);
         await oprot.WriteFieldEndAsync(cancellationToken);
         #pragma warning restore IDE0017  // simplified init
@@ -164,13 +164,13 @@ namespace QueryCat.Plugins.Sdk
 
     public override string ToString()
     {
-      var tmp86 = new StringBuilder("ContextInfo(");
-      tmp86.Append(", PrereadRowsCount: ");
-      PrereadRowsCount.ToString(tmp86);
-      tmp86.Append(", SkipIfNoColumns: ");
-      SkipIfNoColumns.ToString(tmp86);
-      tmp86.Append(')');
-      return tmp86.ToString();
+      var tmp98 = new StringBuilder("ContextInfo(");
+      tmp98.Append(", PrereadRowsCount: ");
+      PrereadRowsCount.ToString(tmp98);
+      tmp98.Append(", SkipIfNoColumns: ");
+      SkipIfNoColumns.ToString(tmp98);
+      tmp98.Append(')');
+      return tmp98.ToString();
     }
   }
 

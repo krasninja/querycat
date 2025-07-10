@@ -396,4 +396,26 @@ public static class SdkConvert
             result.Completion.Relevance,
             result.Edits.Select(Convert).ToList()
         );
+
+    public static Backend.Core.Execution.ExecutionStatistic.RowErrorInfo Convert(Sdk.StatisticRowError rowError)
+        => new(SdkConvert.Convert(rowError.ErrorCode), rowError.RowIndex, rowError.ColumnIndex, rowError.Value);
+
+    public static Sdk.StatisticRowError Convert(Backend.Core.Execution.ExecutionStatistic.RowErrorInfo rowError)
+        => new(SdkConvert.Convert(rowError.ErrorCode), rowError.RowIndex, rowError.ColumnIndex)
+        {
+            Value = rowError.Value,
+        };
+
+    public static Backend.Core.Execution.ExecutionStatistic Convert(Sdk.Statistic statistic)
+        => new ThriftPluginStatistic();
+
+    public static Sdk.Statistic Convert(Backend.Core.Execution.ExecutionStatistic statistic)
+    {
+        return new Statistic(
+            (long)statistic.ExecutionTime.TotalMilliseconds,
+            statistic.ProcessedCount,
+            statistic.ErrorsCount,
+            statistic.Errors.Select(SdkConvert.Convert).ToList()
+        );
+    }
 }

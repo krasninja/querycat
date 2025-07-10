@@ -259,4 +259,18 @@ internal sealed class ThreadSafePluginsManagerClient : PluginsManager.IAsync
             _semaphore.Release();
         }
     }
+
+    /// <inheritdoc />
+    public async Task<Statistic> GetStatisticAsync(long token, CancellationToken cancellationToken = default)
+    {
+        await _semaphore.WaitAsync(cancellationToken);
+        try
+        {
+            return await _client.GetStatisticAsync(token, cancellationToken);
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
+    }
 }

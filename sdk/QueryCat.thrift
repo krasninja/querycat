@@ -191,6 +191,20 @@ struct CompletionResult {
   5: required list<CompletionTextEdit> edits
 }
 
+struct StatisticRowError {
+  1: required QueryCatErrorCode error_code,
+  2: required i64 row_index,
+  3: required i32 column_index,
+  4: optional string value
+}
+
+struct Statistic {
+  1: required i64 execution_time_ms,
+  2: required i64 processed_count,
+  3: required i64 errors_count,
+  4: required list<StatisticRowError> errors
+}
+
 service PluginsManager {
   // Register plugin with all its data.
   RegistrationResult RegisterPlugin(
@@ -304,6 +318,11 @@ service PluginsManager {
     2: required LogLevel level,
     3: required string message,
     4: list<string> arguments
+  ) throws (1: QueryCatPluginException e),
+
+  // Get query execution statistic.
+  Statistic GetStatistic(
+    1: required i64 token // Authorization token.
   ) throws (1: QueryCatPluginException e)
 }
 

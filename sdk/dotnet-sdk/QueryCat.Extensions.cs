@@ -132,6 +132,21 @@ namespace QueryCat.Plugins.Sdk
     }
 
 
+    public static bool Equals(this List<global::QueryCat.Plugins.Sdk.StatisticRowError> instance, object that)
+    {
+      if (that is not List<global::QueryCat.Plugins.Sdk.StatisticRowError> other) return false;
+      if (ReferenceEquals(instance, other)) return true;
+
+      return TCollections.Equals(instance, other);
+    }
+
+
+    public static int GetHashCode(this List<global::QueryCat.Plugins.Sdk.StatisticRowError> instance)
+    {
+      return TCollections.GetHashCode(instance);
+    }
+
+
     public static bool Equals(this List<global::QueryCat.Plugins.Sdk.VariantValue> instance, object that)
     {
       if (that is not List<global::QueryCat.Plugins.Sdk.VariantValue> other) return false;

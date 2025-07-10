@@ -11,6 +11,9 @@ public class NullExecutionStatistic : ExecutionStatistic
     public static ExecutionStatistic Instance { get; } = new NullExecutionStatistic();
 
     /// <inheritdoc />
+    public override IReadOnlyList<RowErrorInfo> Errors => [];
+
+    /// <inheritdoc />
     public override void AddError(in RowErrorInfo info)
     {
     }
