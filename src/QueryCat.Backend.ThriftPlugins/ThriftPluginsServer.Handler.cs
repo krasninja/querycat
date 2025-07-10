@@ -214,7 +214,7 @@ public partial class ThriftPluginsServer
                 _scopeIdToScope.Remove(scopeId);
                 return scopeId;
             }
-            return -1;
+            return ThriftPluginExecutionScope.NoScopeId;
         }
 
         private int GetScopeParentId(IExecutionScope scope)
@@ -223,7 +223,7 @@ public partial class ThriftPluginsServer
             {
                 return parentScopeId;
             }
-            return -1;
+            return ThriftPluginExecutionScope.NoScopeId;
         }
 
         /// <inheritdoc />
@@ -245,7 +245,7 @@ public partial class ThriftPluginsServer
                 var scopeId = AddScope(scope); // Do not remove it because it can be used in closure code.
                 return Task.FromResult(new ExecutionScope(scopeId, GetScopeParentId(scope)));
             }
-            return Task.FromResult(new ExecutionScope(-1, -1));
+            return Task.FromResult(new ExecutionScope(ThriftPluginExecutionScope.NoScopeId, ThriftPluginExecutionScope.NoScopeId));
         }
 
         /// <inheritdoc />

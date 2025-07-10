@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using QueryCat.Backend.Core.Data;
@@ -18,10 +20,8 @@ namespace QueryCat.Plugins.Client;
 /// The implementation has the following limitations:
 /// - The separate execution stack. When plugin function is called - we copy input args.
 /// - No object selector.
-/// - No execution scopes.
 /// - No variables resolve events.
 /// - Local stack only.
-/// - No completions.
 /// - No current statistic.
 /// </remarks>
 public sealed class ThriftPluginExecutionThread : IExecutionThread
@@ -38,7 +38,18 @@ public sealed class ThriftPluginExecutionThread : IExecutionThread
     public IConfigStorage ConfigStorage { get; }
 
     /// <inheritdoc />
-    public IExecutionScope TopScope { get; }
+    public IExecutionScope TopScope
+    {
+        get
+        {
+            var scope = AsyncUtils.RunSync(ct => _client.ThriftClient.PeekTopScopeAsync(_client.Token, ct));
+            if (scope == null)
+            {
+                throw new InvalidOperationException("Cannot get scope.");
+            }
+            return new ThriftPluginExecutionScope(_client, scope.Id, scope.ParentId);
+        }
+    }
 
     /// <inheritdoc />
     public IExecutionStack Stack { get; }
@@ -60,7 +71,6 @@ public sealed class ThriftPluginExecutionThread : IExecutionThread
         _client = client;
         PluginsManager = NullPluginsManager.Instance;
         FunctionsManager = new PluginFunctionsManager();
-        TopScope = new ThriftPluginExecutionScope(_client);
         ConfigStorage = new ThriftConfigStorage(_client);
         Stack = new ListExecutionStack();
     }
@@ -88,17 +98,37 @@ public sealed class ThriftPluginExecutionThread : IExecutionThread
     }
 
     /// <inheritdoc />
-    public IAsyncEnumerable<CompletionResult> GetCompletionsAsync(string query, int position = -1, object? tag = null,
-        CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<CompletionResult> GetCompletionsAsync(string query, int position = -1, object? tag = null,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        return AsyncUtils.Empty<CompletionResult>();
+        var completions = await _client.ThriftClient.GetCompletionsAsync(_client.Token, query, position, cancellationToken);
+        foreach (var completionResult in completions)
+        {
+            yield return SdkConvert.Convert(completionResult);
+        }
     }
 
     /// <inheritdoc />
-    public IExecutionScope PushScope() => NullExecutionScope.Instance;
+    public IExecutionScope PushScope()
+    {
+        var scope = AsyncUtils.RunSync(ct => _client.ThriftClient.PushScopeAsync(_client.Token, ct));
+        if (scope == null)
+        {
+            throw new InvalidOperationException("Cannot create scope.");
+        }
+        return new ThriftPluginExecutionScope(_client, scope.Id, scope.ParentId);
+    }
 
     /// <inheritdoc />
-    public IExecutionScope? PopScope() => null;
+    public IExecutionScope? PopScope()
+    {
+        var scope = AsyncUtils.RunSync(ct => _client.ThriftClient.PopScopeAsync(_client.Token, ct));
+        if (scope == null)
+        {
+            return null;
+        }
+        return new ThriftPluginExecutionScope(_client, scope.Id, scope.ParentId);
+    }
 
     /// <inheritdoc />
     public void Dispose()
