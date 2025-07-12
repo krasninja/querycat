@@ -40,6 +40,7 @@ internal sealed partial class WebServer
     private readonly MimeTypesProvider _mimeTypesProvider = new();
     private int? _allowedAddressesSlots;
     private readonly Lock _lockObj = new();
+    private readonly int _acceptConnections;
 
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(WebServer));
 
@@ -63,6 +64,7 @@ internal sealed partial class WebServer
         _filesRoot = options.FilesRoot;
         _allowedAddresses = new HashSet<IPAddress>(options.AllowedAddresses);
         _allowedAddressesSlots = options.AllowedAddressesSlots;
+        _acceptConnections = Environment.ProcessorCount;
         Uri = options.Urls ?? DefaultEndpointUri;
     }
 
@@ -79,16 +81,22 @@ internal sealed partial class WebServer
         {
             listener.AuthenticationSchemes = AuthenticationSchemes.Basic;
         }
+        listener.IgnoreWriteExceptions = true;
         listener.Start();
         Console.Out.WriteLine(Resources.Messages.WebServerListen, Uri);
 
+        var semaphore = new SemaphoreSlim(_acceptConnections, _acceptConnections);
         while (true)
         {
             try
             {
-                var context = await listener.GetContextAsync().WaitAsync(cancellationToken)
-                    .ConfigureAwait(false);
-                await HandleRequestAsync(context, cancellationToken);
+                await semaphore.WaitAsync(cancellationToken);
+                await listener.GetContextAsync()
+                    .ContinueWith(async t =>
+                    {
+                        semaphore.Release();
+                        await HandleRequestAsync(t.Result, cancellationToken);
+                    }, cancellationToken).ConfigureAwait(false);
             }
             catch (TaskCanceledException)
             {
