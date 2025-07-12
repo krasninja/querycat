@@ -91,10 +91,7 @@ internal sealed partial class WaitQueue : IDisposable
     /// <returns><c>True</c> if was able to return, <c>false</c> otherwise.</returns>
     public bool TryDequeue(out ItemWrapper? itemWrapper)
     {
-        if (_isDisposed)
-        {
-            throw new ObjectDisposedException(nameof(WaitQueue));
-        }
+        ObjectDisposedException.ThrowIf(_isDisposed, this);
 
         // Has available client - use it.
         if (_availableItemsObjects.TryDequeue(out var clientWrapper))
@@ -115,10 +112,7 @@ internal sealed partial class WaitQueue : IDisposable
     /// <returns>Item object.</returns>
     public async ValueTask<object> RemoveAsync(CancellationToken cancellationToken = default)
     {
-        if (_isDisposed)
-        {
-            throw new ObjectDisposedException(nameof(WaitQueue));
-        }
+        ObjectDisposedException.ThrowIf(_isDisposed, this);
 
         var itemWrapper = await DequeueAsync(cancellationToken);
         Interlocked.Decrement(ref _totalItemsCount);
@@ -131,10 +125,7 @@ internal sealed partial class WaitQueue : IDisposable
     /// <param name="item">Optional item to enqueue.</param>
     public void Enqueue(object item)
     {
-        if (_isDisposed)
-        {
-            throw new ObjectDisposedException(nameof(WaitQueue));
-        }
+        ObjectDisposedException.ThrowIf(_isDisposed, this);
 
         ReturnAvailableItemCore(item);
         Interlocked.Increment(ref _totalItemsCount);

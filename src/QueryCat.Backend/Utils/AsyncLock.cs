@@ -41,10 +41,7 @@ internal sealed class AsyncLock : IAsyncDisposable, IDisposable
     /// <returns>Awaitable task.</returns>
     public Task<IAsyncDisposable> LockAsync(CancellationToken cancellationToken = default)
     {
-        if (_isDisposed)
-        {
-            throw new ObjectDisposedException(nameof(AsyncLock));
-        }
+        ObjectDisposedException.ThrowIf(_isDisposed, this);
 
         _currentSemaphore.Value ??= _topLevelSemaphore;
         var localCurrentSemaphore = _currentSemaphore.Value;
@@ -69,10 +66,7 @@ internal sealed class AsyncLock : IAsyncDisposable, IDisposable
     /// <returns>Disposable.</returns>
     public IDisposable Lock()
     {
-        if (_isDisposed)
-        {
-            throw new ObjectDisposedException(nameof(AsyncLock));
-        }
+        ObjectDisposedException.ThrowIf(_isDisposed, this);
 
         _currentSemaphore.Value ??= _topLevelSemaphore;
         SemaphoreSlim localCurrentSemaphore = _currentSemaphore.Value;
