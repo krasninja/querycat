@@ -15,8 +15,10 @@ internal class SimpleObjectPool<T> where T : class
     private readonly int _maxCapacity;
     private int _numItems;
 
+#pragma warning disable SA1401
     private protected readonly ConcurrentQueue<T> _items = new();
     private protected T? _fastItem;
+#pragma warning restore SA1401
 
     /// <summary>
     /// Creates an instance of <see cref="SimpleObjectPool{T}" />.

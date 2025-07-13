@@ -137,6 +137,7 @@ internal sealed class GroupRowsIterator : IRowsIterator, IRowsIteratorParent
         var keysRowIndexesMap = new Dictionary<VariantValueArray, GroupKeyEntry>(capacity: 1024);
 
         // Fill keysRowIndexesMap.
+        var row = new Row(_rowsFrame);
         while (await _rowsIterator.MoveNextAsync(cancellationToken))
         {
             // Format key and fill aggregate values.
@@ -144,11 +145,7 @@ internal sealed class GroupRowsIterator : IRowsIterator, IRowsIteratorParent
             var key = await KeysToArrayAsync(_keys, cancellationToken);
             if (!keysRowIndexesMap.TryGetValue(key, out GroupKeyEntry groupKey))
             {
-                var row = new Row(_rowsFrame);
-                for (var i = 0; i < _rowsIterator.Columns.Length; i++)
-                {
-                    row[i] = _rowsIterator.Current[i];
-                }
+                _rowsIterator.Current.Copy(row);
                 VariantValueArray[] initialStates = TargetsToInitialStates(_targets);
                 groupKey = new GroupKeyEntry(initialStates, _rowsFrame.AddRow(row));
                 keysRowIndexesMap.Add(key, groupKey);
@@ -158,7 +155,7 @@ internal sealed class GroupRowsIterator : IRowsIterator, IRowsIteratorParent
             {
                 var target = _targets[i];
                 _thread.Stack.CreateFrame();
-                await target.ValueGenerator.InvokeAsync(_thread, cancellationToken); // We need this call to fill FunctionCallInfo.
+                await FillAggregateTargetStackValuesAsync(target, cancellationToken);
                 target.AggregateFunction.Invoke(groupKey.AggregateStates[i], _thread);
                 _thread.Stack.CloseFrame();
             }
@@ -167,13 +164,14 @@ internal sealed class GroupRowsIterator : IRowsIterator, IRowsIteratorParent
         // Fill rows frame.
         if (keysRowIndexesMap.Count > 0)
         {
+            var valuesArray = new VariantValue[_targets.Length];
             foreach (var mapValue in keysRowIndexesMap.Values)
             {
                 for (var i = 0; i < _targets.Length; i++)
                 {
-                    var value = _targets[i].AggregateFunction.GetResult(mapValue.AggregateStates[i]);
-                    _rowsFrame.UpdateValue(mapValue.RowIndex, _aggregateColumnsOffset + i, value);
+                    valuesArray[i] = _targets[i].AggregateFunction.GetResult(mapValue.AggregateStates[i]);
                 }
+                _rowsFrame.UpdateValues(mapValue.RowIndex, _aggregateColumnsOffset, valuesArray);
             }
         }
         else if (_keys == NoGroupsKeyFactory)
@@ -187,6 +185,21 @@ internal sealed class GroupRowsIterator : IRowsIterator, IRowsIteratorParent
                     target.AggregateFunction.GetInitialState(target.ReturnType));
             }
             _rowsFrame.AddRow(defaultValuesRow);
+        }
+    }
+
+    private async ValueTask FillAggregateTargetStackValuesAsync(AggregateTarget target, CancellationToken cancellationToken)
+    {
+        if (target.ValueGenerator is IFuncUnitArguments funcUnitArguments)
+        {
+            foreach (var argUnit in funcUnitArguments.ArgumentsUnits)
+            {
+                _thread.Stack.Push(await argUnit.InvokeAsync(_thread, cancellationToken));
+            }
+        }
+        else
+        {
+            await target.ValueGenerator.InvokeAsync(_thread, cancellationToken); // We need this call to fill FunctionCallInfo.
         }
     }
 

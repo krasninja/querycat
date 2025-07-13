@@ -60,6 +60,11 @@ public abstract class ExecutionStatistic
     public bool HasErrors => ErrorsCount > 0;
 
     /// <summary>
+    /// Errors in rows.
+    /// </summary>
+    public abstract IReadOnlyList<RowErrorInfo> Errors { get; }
+
+    /// <summary>
     /// Add error to the query statistic.
     /// </summary>
     /// <param name="info">Error info.</param>

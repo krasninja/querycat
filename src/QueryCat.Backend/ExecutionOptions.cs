@@ -48,6 +48,11 @@ public class ExecutionOptions
     public int AnalyzeRowsCount { get; set; } = 10;
 
     /// <summary>
+    /// Skip read if columns cannot be detected.
+    /// </summary>
+    internal bool SkipIfNoColumns { get; set; }
+
+    /// <summary>
     /// Disable in-memory cache for sub-queries.
     /// </summary>
     public bool DisableCache { get; set; }

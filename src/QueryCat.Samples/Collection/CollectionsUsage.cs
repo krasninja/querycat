@@ -1,10 +1,7 @@
 using System.Text;
 using QueryCat.Backend;
-using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Fetch;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Formatters;
-using QueryCat.Backend.Storage;
 
 namespace QueryCat.Samples.Collection;
 
@@ -65,7 +62,7 @@ internal class CollectionsUsage : BaseUsage
 
         // Out.
         var sb = new StringBuilder();
-        await new TextTableOutput(sb).WriteAsync(result.AsRequired<IRowsIterator>(), adjustColumnsLengths: true);
+        Console.WriteLine(await SerializeValueToStringAsync(result));
         Console.WriteLine(sb);
         /*
          | b.name                                                                 | c.city            |

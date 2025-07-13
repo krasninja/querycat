@@ -9,6 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- New table output layout SolidTable.
+- Allow to use table layout and separator options for other commands.
+- Add raw formatter "raw_fmt".
+- Add "skip-if-no-columns" option.
+
+### Fixed
+
+- Bugfixes, performance improvements.
+
+### Changed
+
+- Pre-read 10 rows to analyze columns from JSON, CLEF files.
+
+## [0.14.0] - 2025-06-15
+
+### Added
+
 - Add Compact Log Event Format (CLEF) formatter.
 - Add functions "delay_input", "delay_output", "to_base64", "from_base64".
 - Add "call" command.

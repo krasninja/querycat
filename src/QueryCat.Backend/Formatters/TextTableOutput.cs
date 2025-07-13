@@ -24,6 +24,7 @@ public sealed class TextTableOutput : RowsOutput, IDisposable, IAsyncDisposable
         Table2,
         NoSpaceTable,
         Card,
+        SolidTable,
     }
 
     private readonly Stream _stream;
@@ -37,8 +38,9 @@ public sealed class TextTableOutput : RowsOutput, IDisposable, IAsyncDisposable
     private readonly string _separatorWithSpace;
     private readonly string _floatNumberFormat;
 
-    private readonly Action _onInit;
+    private readonly Action _onHeader;
     private readonly Action<VariantValue[]> _onWrite;
+    private readonly Action _onFooter;
 
     private int[] _columnsLengths = [];
 
@@ -48,6 +50,20 @@ public sealed class TextTableOutput : RowsOutput, IDisposable, IAsyncDisposable
     /// Columns separator.
     /// </summary>
     public string Separator => _separator;
+
+#pragma warning disable SA1203
+    private const char BoxBottomTop = '\u2502';
+    private const char BoxLeftBottomRight = '\u252c';
+    private const char BoxBottomRight = '\u250c';
+    private const char BoxLeftBottom = '\u2510';
+    private const char BoxLeftRight = '\u2500';
+    private const char BoxBottomRightTop = '\u251c';
+    private const char BoxLeftBottomTop = '\u2524';
+    private const char BoxLeftBottomRightTop = '\u253c';
+    private const char BoxRightTop = '\u2514';
+    private const char BoxLeftTop = '\u2518';
+    private const char BoxLeftTopRight = '\u2534';
+#pragma warning restore SA1203
 
     public TextTableOutput(
         Stream stream,
@@ -66,27 +82,38 @@ public sealed class TextTableOutput : RowsOutput, IDisposable, IAsyncDisposable
 
         if (style == Style.Card)
         {
-            _onInit = OnCardInit;
+            _onHeader = OnCardHeader;
             _onWrite = OnCardWrite;
+            _onFooter = OnCardFooter;
             _separator = separator ?? ":";
         }
         else if (style == Style.Table1)
         {
-            _onInit = OnTable1Init;
+            _onHeader = OnTable1Header;
             _onWrite = OnTable1Write;
+            _onFooter = OnTable1Footer;
             _separator = separator ?? "|";
         }
         else if (style == Style.Table2)
         {
-            _onInit = OnTable2Init;
+            _onHeader = OnTable2Header;
             _onWrite = OnTable2Write;
+            _onFooter = OnTable2Footer;
             _separator = separator ?? "|";
         }
         else if (style == Style.NoSpaceTable)
         {
-            _onInit = OnNoSpaceTableInit;
+            _onHeader = OnNoSpaceTableHeader;
             _onWrite = OnNoSpaceTableWrite;
+            _onFooter = OnNoSpaceTableFooter;
             _separator = separator ?? "|";
+        }
+        else if (style == Style.SolidTable)
+        {
+            _onHeader = OnSolidTableHeader;
+            _onWrite = OnSolidTableWrite;
+            _onFooter = OnSolidTableFooter;
+            _separator = BoxBottomTop.ToString();
         }
         else
         {
@@ -167,16 +194,21 @@ public sealed class TextTableOutput : RowsOutput, IDisposable, IAsyncDisposable
     /// <inheritdoc />
     public override Task CloseAsync(CancellationToken cancellationToken = default)
     {
+        if (_hasHeader && !_isSingleValue)
+        {
+            _onFooter.Invoke();
+        }
         _streamWriter.Close();
         _logger.LogTrace("Text table closed.");
         return Task.CompletedTask;
     }
 
     /// <inheritdoc />
-    protected override void OnWrite(in VariantValue[] values)
+    protected override async ValueTask<ErrorCode> OnWriteAsync(VariantValue[] values, CancellationToken cancellationToken = default)
     {
         _onWrite.Invoke(values);
-        _streamWriter.Flush();
+        await _streamWriter.FlushAsync(cancellationToken);
+        return ErrorCode.OK;
     }
 
     /// <inheritdoc />
@@ -186,13 +218,13 @@ public sealed class TextTableOutput : RowsOutput, IDisposable, IAsyncDisposable
         _isSingleValue = columns.Length == 1 && columns[0].Name == SingleValueRowsIterator.ColumnTitle;
         _columnsLengths = new int[columns.Length];
 
-        _onInit.Invoke();
+        _onHeader.Invoke();
         await _streamWriter.FlushAsync(cancellationToken);
     }
 
     #region Table1
 
-    private void OnTable1Init()
+    private void OnTable1Header()
     {
         var columns = QueryContext.QueryInfo.Columns;
         _totalMaxLineLength = new int[columns.Length];
@@ -286,11 +318,15 @@ public sealed class TextTableOutput : RowsOutput, IDisposable, IAsyncDisposable
         _streamWriter.WriteLine();
     }
 
+    private void OnTable1Footer()
+    {
+    }
+
     #endregion
 
     #region Table2
 
-    private void OnTable2Init()
+    private void OnTable2Header()
     {
         var columns = QueryContext.QueryInfo.Columns;
         _totalMaxLineLength = new int[columns.Length];
@@ -386,11 +422,15 @@ public sealed class TextTableOutput : RowsOutput, IDisposable, IAsyncDisposable
         _streamWriter.WriteLine();
     }
 
+    private void OnTable2Footer()
+    {
+    }
+
     #endregion
 
     #region No Space Table
 
-    private void OnNoSpaceTableInit()
+    private void OnNoSpaceTableHeader()
     {
         var columns = QueryContext.QueryInfo.Columns;
         if (!_hasHeader || _isSingleValue)
@@ -435,11 +475,15 @@ public sealed class TextTableOutput : RowsOutput, IDisposable, IAsyncDisposable
         _streamWriter.WriteLine();
     }
 
+    private void OnNoSpaceTableFooter()
+    {
+    }
+
     #endregion
 
     #region Card
 
-    private void OnCardInit()
+    private void OnCardHeader()
     {
         _maxColumnNameWidth = Math.Min(QueryContext.QueryInfo.Columns
             .Where(c => !c.IsHidden)
@@ -461,6 +505,162 @@ public sealed class TextTableOutput : RowsOutput, IDisposable, IAsyncDisposable
             _streamWriter.Write($" {_separator} {valueString}\n");
         }
         _streamWriter.WriteLine();
+    }
+
+    private void OnCardFooter()
+    {
+    }
+
+    #endregion
+
+    #region SolidTable
+
+    private void OnSolidTableHeader()
+    {
+        var columns = QueryContext.QueryInfo.Columns;
+        _totalMaxLineLength = new int[columns.Length];
+        int currentMaxLength = 0;
+
+        if (!_hasHeader || _isSingleValue)
+        {
+            for (var i = 0; i < columns.Length; i++)
+            {
+                var separatorLength = 0;
+                if (i > 0)
+                {
+                    _streamWriter.Write(_separatorWithSpace);
+                    separatorLength = _separatorWithSpace.Length;
+                }
+                currentMaxLength += separatorLength + columns[i].Length + 1;
+                _totalMaxLineLength[i] = currentMaxLength;
+            }
+            return;
+        }
+
+        // Append header separator.
+        _streamWriter.Write(BoxBottomRight);
+        for (var i = 0; i < columns.Length; i++)
+        {
+            if (columns[i].IsHidden)
+            {
+                continue;
+            }
+
+            _columnsLengths[i] = columns[i].Length;
+
+            if (i > 0)
+            {
+                _streamWriter.Write(BoxLeftBottomRight);
+            }
+            _streamWriter.Write(new string(BoxLeftRight, _columnsLengths[i] + 2));
+        }
+        _streamWriter.Write(BoxLeftBottom);
+        _streamWriter.WriteLine();
+        _streamWriter.Flush();
+
+        // Header.
+        _streamWriter.Write(_separatorWithSpace);
+        for (var i = 0; i < columns.Length; i++)
+        {
+            if (columns[i].IsHidden)
+            {
+                continue;
+            }
+
+            _columnsLengths[i] = columns[i].Length;
+
+            var separatorLength = 0;
+            if (i > 0)
+            {
+                _streamWriter.Write(_separatorWithSpace);
+                separatorLength = _separatorWithSpace.Length;
+            }
+            _streamWriter.Write(columns[i].FullName.PadRight(_columnsLengths[i]));
+            _streamWriter.Write(' ');
+            currentMaxLength += separatorLength + columns[i].Length + 1;
+            _totalMaxLineLength[i] = currentMaxLength;
+        }
+        _streamWriter.Write(_separator);
+        _streamWriter.WriteLine();
+        _streamWriter.Flush();
+
+        // Append header separator.
+        _streamWriter.Write(BoxBottomRightTop);
+        for (var i = 0; i < columns.Length; i++)
+        {
+            if (columns[i].IsHidden)
+            {
+                continue;
+            }
+
+            _columnsLengths[i] = columns[i].Length;
+
+            if (i > 0)
+            {
+                _streamWriter.Write(BoxLeftBottomRightTop);
+            }
+            _streamWriter.Write(new string(BoxLeftRight, _columnsLengths[i] + 2));
+        }
+        _streamWriter.Write(BoxLeftBottomTop);
+        _streamWriter.WriteLine();
+    }
+
+    private void OnSolidTableWrite(VariantValue[] values)
+    {
+        int writeCount = 0;
+        var columns = QueryContext.QueryInfo.Columns;
+        _streamWriter.Write(_separatorWithSpace);
+        for (var i = 0; i < columns.Length; i++)
+        {
+            if (columns[i].IsHidden)
+            {
+                continue;
+            }
+            if (!_isSingleValue && i > 0)
+            {
+                _streamWriter.Write(_separatorWithSpace);
+                writeCount += _separatorWithSpace.Length;
+            }
+            var value = values[i];
+            var valueString = ToStringWithFormat(value);
+            var padding = _columnsLengths[i];
+            var exceed = _totalMaxLineLength[i] - writeCount - _columnsLengths[i] - 1;
+            if (exceed < 0)
+            {
+                padding = Math.Max(0, exceed + padding);
+            }
+            var valueWithPadding = valueString.PadRight(padding);
+            _streamWriter.Write(valueWithPadding);
+            _streamWriter.Write(' ');
+            writeCount += valueWithPadding.Length + 1;
+        }
+        _streamWriter.Write(_separatorWithSpace);
+        _streamWriter.WriteLine();
+    }
+
+    private void OnSolidTableFooter()
+    {
+        var columns = QueryContext.QueryInfo.Columns;
+
+        _streamWriter.Write(BoxRightTop);
+        for (var i = 0; i < columns.Length; i++)
+        {
+            if (columns[i].IsHidden)
+            {
+                continue;
+            }
+
+            _columnsLengths[i] = columns[i].Length;
+
+            if (i > 0)
+            {
+                _streamWriter.Write(BoxLeftTopRight);
+            }
+            _streamWriter.Write(new string(BoxLeftRight, _columnsLengths[i] + 2));
+        }
+        _streamWriter.Write(BoxLeftTop);
+        _streamWriter.WriteLine();
+        _streamWriter.Flush();
     }
 
     #endregion

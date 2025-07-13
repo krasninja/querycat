@@ -1,0 +1,13 @@
+expected: |
+  4
+  !4
+  4
+  !4
+  !4
+query: |
+  SELECT
+    CASE
+      WHEN length(name) = 4 THEN '4'
+      WHEN length(name) <> 0 THEN '!4'
+    END as q
+  FROM 'Simple2.csv';

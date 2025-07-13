@@ -62,6 +62,17 @@ public class DelimiterStreamReader
         public char[] QuoteChars { get; set; } = [];
 
         /// <summary>
+        /// Quote mode will be enabled only if quote is in the beginning of field.
+        /// </summary>
+        /// <example>
+        /// true: "one two ""three""" -> one two "three";
+        /// true: one two ""three"" -> one two ""three"";
+        /// false: "one two ""three""" -> one two "three";
+        /// true: one two ""three"" -> one two "three".
+        /// </example>
+        public bool EnableQuotesModeOnFieldStart { get; set; } = true;
+
+        /// <summary>
         /// Columns delimiters.
         /// </summary>
         public char[] Delimiters { get; set; } = [];
@@ -145,7 +156,7 @@ public class DelimiterStreamReader
 
         public bool HasInnerQuotes => QuotesCount > 2;
 
-        public bool IsEmpty => EndIndex - StartIndex < 2;
+        public bool IsEmpty => EndIndex == StartIndex;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
         public void Reset()
@@ -214,7 +225,7 @@ public class DelimiterStreamReader
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     private bool GetNextCharacter(out char nextChar)
     {
-        if ((ulong)_dynamicBuffer.SizeLong > (ulong)_currentDelimiterPosition)
+        if (_dynamicBuffer.Size > _currentDelimiterPosition)
         {
             nextChar = _dynamicBuffer.GetAt((int)_currentDelimiterPosition);
             return true;
@@ -269,7 +280,7 @@ public class DelimiterStreamReader
         {
             var stopCharactersLocal = (ReadOnlySpan<char>)_stopCharacters;
             CreateSequenceReader(out var sequenceReader);
-            while ((ulong)_currentDelimiterPosition < (ulong)_dynamicBuffer.SizeLong)
+            while (_currentDelimiterPosition < _dynamicBuffer.Size)
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
@@ -284,8 +295,8 @@ public class DelimiterStreamReader
                     {
                         _currentDelimiterPosition++;
                         sequenceReader.Advance(1);
+                        currentField.StartIndex = _currentDelimiterPosition;
                     }
-                    currentField.StartIndex = _currentDelimiterPosition;
                 }
 
                 // Advance to any stop character or quote (if in a quote mode).
@@ -297,7 +308,10 @@ public class DelimiterStreamReader
                     _currentDelimiterPosition = sequenceReader.Consumed;
                     break;
                 }
-                var ch = Peek(ref sequenceReader);
+                if (!sequenceReader.TryPeek(out var ch))
+                {
+                    ch = '\0';
+                }
                 sequenceReader.Advance(1);
 
                 // Quotes.
@@ -305,13 +319,22 @@ public class DelimiterStreamReader
                 {
                     if (fieldStart)
                     {
-                        quotesMode = true;
-                        isInQuotes = true;
-                        currentField.QuoteCharacter = ch;
-                        currentField.QuotesCount++;
+                        var hasOnlyWhitespacesBeforeDelimiter =
+                            !_options.EnableQuotesModeOnFieldStart // Bypass.
+                            || (_options.EnableQuotesModeOnFieldStart && HasOnlyWhitespaceChars((int)currentField.StartIndex, ref sequenceReader));
+                        if (hasOnlyWhitespacesBeforeDelimiter)
+                        {
+                            quotesMode = true;
+                            isInQuotes = true;
+                            currentField.QuoteCharacter = ch;
+                            currentField.QuotesCount++;
+                            _currentDelimiterPosition = sequenceReader.Consumed;
+                            currentField.StartIndex = _options.IncludeDelimiter ? _currentDelimiterPosition : _currentDelimiterPosition - 1;
+                        }
+
                         fieldStart = false;
                     }
-                    else
+                    else if (quotesMode)
                     {
                         if (_options.QuotesEscapeStyle == QuotesMode.DoubleQuotes)
                         {
@@ -320,9 +343,7 @@ public class DelimiterStreamReader
                         else if (_options.QuotesEscapeStyle == QuotesMode.Backslash)
                         {
                             // Process \" case.
-                            sequenceReader.Rewind(2);
-                            sequenceReader.TryPeek(out var prevCh);
-                            sequenceReader.Advance(2);
+                            TryPeekBackward(2, ref sequenceReader, out var prevCh);
                             if (prevCh != '\\')
                             {
                                 isInQuotes = !isInQuotes;
@@ -338,13 +359,13 @@ public class DelimiterStreamReader
                 else if (!lineMode && _delimiters.Contains(ch))
                 {
                     _currentDelimiterPosition = sequenceReader.Consumed;
-                    if (!isInQuotes && (ulong)_currentDelimiterPosition > 0)
+                    if (!isInQuotes && _currentDelimiterPosition > 0)
                     {
                         bool addField = true, completeLine = false;
                         OnDelimiter?.Invoke(ch, _currentDelimiterPosition, out addField, out completeLine);
                         if (addField)
                         {
-                            currentField.EndIndex = _options.IncludeDelimiter ? _currentDelimiterPosition + 1 : _currentDelimiterPosition;
+                            currentField.EndIndex = _options.IncludeDelimiter ? _currentDelimiterPosition : _currentDelimiterPosition - 1;
                             currentField = MoveToNextFieldInfo();
                             fieldStart = true;
                             currentField.StartIndex = _options.IncludeDelimiter ? _currentDelimiterPosition - 1 : _currentDelimiterPosition;
@@ -364,7 +385,7 @@ public class DelimiterStreamReader
                     if (!isInQuotes)
                     {
                         _currentDelimiterPosition = sequenceReader.Consumed;
-                        currentField.EndIndex = _currentDelimiterPosition;
+                        currentField.EndIndex = _currentDelimiterPosition - 1;
                         MoveToNextFieldInfo();
                         fieldStart = true;
 
@@ -406,21 +427,70 @@ public class DelimiterStreamReader
         }
 
         // We are at the end of the stream. Update remain index and exit.
-        currentField.EndIndex = _currentDelimiterPosition + 1;
+        currentField.EndIndex = _currentDelimiterPosition;
         // Move next field index next to correct calculate total columns count.
         MoveToNextFieldInfo();
         return !IsEmpty();
     }
 
-    private static char Peek(long offset, ref readonly SequenceReader<char> sequenceReader)
-        => sequenceReader.TryPeek(offset, out var ch) ? ch : '\0';
+    private bool HasOnlyWhitespaceChars(long startIndex, ref SequenceReader<char> sequenceReader)
+    {
+        var count = sequenceReader.Consumed - startIndex - 1;
 
-    private static char Peek(ref readonly SequenceReader<char> sequenceReader)
-        => sequenceReader.TryPeek(out var ch) ? ch : '\0';
+        if (count < 1)
+        {
+            return true;
+        }
+
+        sequenceReader.Rewind(1);
+
+        // Go backward and analyze.
+        var hasOnlyWhitespaces = true;
+        var i = 0;
+        for (i = 0; i < count; i++)
+        {
+            sequenceReader.Rewind(1);
+            if (!sequenceReader.TryPeek(out var ch))
+            {
+                break;
+            }
+            if (_delimiters.Contains(ch))
+            {
+                continue;
+            }
+            if (!char.IsWhiteSpace(ch))
+            {
+                hasOnlyWhitespaces = false;
+                break;
+            }
+        }
+
+        // Restore sequence position.
+        sequenceReader.Advance(i + 1);
+
+        return hasOnlyWhitespaces;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    private static bool TryPeekBackward(int offset, ref SequenceReader<char> sequenceReader, out char value)
+    {
+        if (sequenceReader.CurrentSpanIndex >= offset)
+        {
+            value = sequenceReader.CurrentSpan[sequenceReader.CurrentSpanIndex - offset];
+            return true;
+        }
+        else
+        {
+            sequenceReader.Rewind(2);
+            var result = sequenceReader.TryPeek(out value);
+            sequenceReader.Advance(2);
+            return result;
+        }
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     private bool IsEmpty()
-        => _fieldInfoLastIndex <= 2 && _fieldInfos[0].EndIndex == 1;
+        => _fieldInfoLastIndex <= 2 && _fieldInfos[0].EndIndex == 0;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     private async ValueTask<int> ReadNextBufferDataAsync(CancellationToken cancellationToken = default)
@@ -445,7 +515,7 @@ public class DelimiterStreamReader
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     private FieldInfo MoveToNextFieldInfo()
     {
-        if ((ulong)_fieldInfoLastIndex >= (ulong)_fieldInfos.Length)
+        if (_fieldInfoLastIndex >= _fieldInfos.Length)
         {
             Array.Resize(ref _fieldInfos, _fieldInfoLastIndex + 1);
             _fieldInfos[^1] = new FieldInfo();
@@ -464,7 +534,7 @@ public class DelimiterStreamReader
     /// <returns><c>True</c> if there are more records to read, <c>false</c> otherwise.</returns>
     public ReadOnlySpan<char> GetField(int columnIndex)
     {
-        if ((ulong)columnIndex + 1 > (ulong)_fieldInfoLastIndex)
+        if (columnIndex + 1 > _fieldInfoLastIndex)
         {
             return ReadOnlySpan<char>.Empty;
         }
@@ -474,7 +544,7 @@ public class DelimiterStreamReader
         {
             return ReadOnlySpan<char>.Empty;
         }
-        var valueSequence = _currentSequence.Slice(fieldInfo.StartIndex, fieldInfo.EndIndex - fieldInfo.StartIndex - 1);
+        var valueSequence = _currentSequence.Slice(fieldInfo.StartIndex, fieldInfo.EndIndex - fieldInfo.StartIndex);
         if (fieldInfo.HasQuotes)
         {
             if (!fieldInfo.HasInnerQuotes)
@@ -564,8 +634,9 @@ public class DelimiterStreamReader
         {
             return ReadOnlySequence<char>.Empty;
         }
-        return _currentSequence.Slice(
-            _fieldInfos[0].StartIndex, _fieldInfos[_fieldInfoLastIndex - 2].EndIndex - 1);
+        var startIndex = _fieldInfos[0].StartIndex;
+        var endIndex = _fieldInfos[_fieldInfoLastIndex - 2].EndIndex;
+        return _currentSequence.Slice(startIndex, endIndex - startIndex);
     }
 
     private async ValueTask FindDelimiterAsync(CancellationToken cancellationToken)

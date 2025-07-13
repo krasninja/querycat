@@ -47,7 +47,7 @@ internal sealed class XmlOutput : RowsOutput, IDisposable, IAsyncDisposable
     }
 
     /// <inheritdoc />
-    protected override void OnWrite(in VariantValue[] values)
+    protected override ValueTask<ErrorCode> OnWriteAsync(VariantValue[] values, CancellationToken cancellationToken = default)
     {
         _xmlWriter.WriteStartElement(RowTagName);
         var columns = QueryContext.QueryInfo.Columns;
@@ -85,6 +85,8 @@ internal sealed class XmlOutput : RowsOutput, IDisposable, IAsyncDisposable
             _xmlWriter.WriteEndElement();
         }
         _xmlWriter.WriteEndElement(); // RowTagName.
+
+        return ValueTask.FromResult(ErrorCode.OK);
     }
 
     /// <inheritdoc />

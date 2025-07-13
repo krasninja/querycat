@@ -187,7 +187,8 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
             return null;
         }
 
-        var isPartOfFromClause = AstTraversal.GetParents<SelectTableReferenceListNode>().Any();
+        var parentNode = AstTraversal.GetFirstParent<IAstNode>();
+        var isPartOfFromClause = parentNode is SelectTableReferenceListNode;
         var rowsInputContext = await _rowsInputFactory.CreateRowsInputAsync(
             value, _executionThread, resolveStringAsSource: isPartOfFromClause, cancellationToken);
 
@@ -211,7 +212,7 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
             .RunAndReturnAsync(node, cancellationToken);
         var rowsFrame = (await func.InvokeAsync(_executionThread, cancellationToken)).AsRequired<RowsFrame>();
         var rowsInput = new RowsIteratorInput(rowsFrame.GetIterator());
-        var context = new SelectInputQueryContext(rowsInput);
+        var context = new SelectInputQueryContext(rowsInput, _executionThread.Options);
         _context.AddInput(context);
         node.SetAttribute(AstAttributeKeys.RowsInputContextKey, context);
     }

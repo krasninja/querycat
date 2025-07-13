@@ -193,13 +193,13 @@ internal class ResolveTypesVisitor : AstVisitor
     public override ValueTask VisitAsync(CoalesceFunctionNode node, CancellationToken cancellationToken)
     {
         var types = node.Expressions.Select(e => e.GetDataType());
-        var generalType = types.Where(DataTypeUtils.IsSimple).Distinct().ToList();
-        if (generalType.Count > 1)
+        var generalType = types.Where(DataTypeUtils.IsSimple).Distinct().ToArray();
+        if (generalType.Length > 1)
         {
             var foundTypes = string.Join(", ", generalType);
             throw new SemanticException(string.Format(Resources.Errors.CoalesceMustHaveSameArguments, foundTypes));
         }
-        node.SetDataType(generalType.First());
+        node.SetDataType(generalType.Length > 0 ? generalType[0] : DataType.Dynamic);
         return ValueTask.CompletedTask;
     }
 

@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
@@ -31,7 +32,8 @@ internal sealed class NullRowsOutput : RowsOutput
     }
 
     /// <inheritdoc />
-    protected override void OnWrite(in VariantValue[] values)
+    protected override ValueTask<ErrorCode> OnWriteAsync(VariantValue[] values, CancellationToken cancellationToken = default)
     {
+        return ValueTask.FromResult(ErrorCode.OK);
     }
 }

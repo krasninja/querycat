@@ -46,8 +46,8 @@ internal sealed class MultiplyRowsIterator : IRowsIterator, IRowsIteratorParent
         var rightHasNext = await _rightRowsIterator.MoveNextAsync(cancellationToken);
         if (rightHasNext)
         {
-            Row.Copy(_currentLeftIterator.Current, _currentRow);
-            Row.Copy(_rightRowsIterator.Current, 0, _currentRow, _currentLeftIterator.Columns.Length);
+            _currentLeftIterator.Current.Copy(_currentRow);
+            _rightRowsIterator.Current.Copy(0, _currentRow, _currentLeftIterator.Columns.Length);
             return true;
         }
 

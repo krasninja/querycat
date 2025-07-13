@@ -50,7 +50,7 @@ internal sealed class RowsInputFactory
         if (DataTypeUtils.IsSimple(source.Type))
         {
             var singleValueRowsInput = new SingleValueRowsInput(source);
-            var context = new SelectInputQueryContext(singleValueRowsInput);
+            var context = new SelectInputQueryContext(singleValueRowsInput, executionThread.Options);
             singleValueRowsInput.QueryContext = context;
             return context;
         }
@@ -63,6 +63,8 @@ internal sealed class RowsInputFactory
                 {
                     var targetColumns = await _context.GetSelectIdentifierColumnsAsync(alias, cancellationToken);
                     queryContext = new SelectInputQueryContext(rowsInput, targetColumns, executionThread.ConfigStorage);
+                    queryContext.PrereadRowsCount = executionThread.Options.AnalyzeRowsCount;
+                    queryContext.SkipIfNoColumns = executionThread.Options.SkipIfNoColumns;
                     if (_context.Parent != null && !executionThread.Options.DisableCache)
                     {
                         rowsInput = new CacheRowsInput(executionThread, rowsInput, _context.Conditions);
@@ -78,7 +80,7 @@ internal sealed class RowsInputFactory
             if (source.AsObjectUnsafe is IRowsIterator rowsIterator)
             {
                 rowsInput = new RowsIteratorInput(rowsIterator);
-                var context = new SelectInputQueryContext(rowsInput);
+                var context = new SelectInputQueryContext(rowsInput, executionThread.Options);
                 rowsInput.QueryContext = context;
                 return context;
             }
@@ -86,7 +88,7 @@ internal sealed class RowsInputFactory
             {
 #pragma warning disable IL2072
                 rowsInput = new CollectionInput(TypeUtils.GetUnderlyingType(enumerable), enumerable);
-                var context = new SelectInputQueryContext(rowsInput);
+                var context = new SelectInputQueryContext(rowsInput, executionThread.Options);
                 rowsInput.QueryContext = context;
 #pragma warning restore IL2072
                 return context;
@@ -98,7 +100,7 @@ internal sealed class RowsInputFactory
 
     private static async Task<SelectInputQueryContext> CreateInputSourceFromStringVariableAsync(
         string strVariable,
-        IExecutionThread executionThread,
+        IExecutionThread<ExecutionOptions> executionThread,
         CreateDelegateVisitor createDelegateVisitor,
         FunctionCallNode? formatNode,
         CancellationToken cancellationToken)
@@ -114,6 +116,8 @@ internal sealed class RowsInputFactory
         var rowsInput = (await executionThread.FunctionsManager.CallFunctionAsync("read", executionThread, args, cancellationToken))
             .AsRequired<IRowsInput>();
         var context = new SelectInputQueryContext(rowsInput, rowsInput.Columns, executionThread.ConfigStorage);
+        context.PrereadRowsCount = executionThread.Options.AnalyzeRowsCount;
+        context.SkipIfNoColumns = executionThread.Options.SkipIfNoColumns;
         rowsInput.QueryContext = context;
         return context;
     }

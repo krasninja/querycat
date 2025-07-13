@@ -34,9 +34,10 @@ Result is the `VariantValue` returned by the last statement in the script.
 
 - `DefaultRowsOutput: IRowsOutput`. Default output target if INTO clause is not specified.
 - `AddRowNumberColumn: bool`. Adds `row_number` column with the current row number.
-- `ShowDetailedStatistic: bool`. Fills more informations about query.
+- `ShowDetailedStatistic: bool`. Fills more information about query.
 - `MaxErrors: int`. Max number of errors before query abort.
 - `AnalyzeRowsCount: int`. How many rows to analyze for types detection. 10 by default.
+- `SkipIfNoColumns: bool`. Skip read if columns cannot be detected. False by default.
 - `DisableCache: bool`. Do not use cache for subqueries. False by default.
 - `FollowTimeout: TimeSpan`. Write appended data as source grows. Specifies check timeout. 0 means do not follow.
 - `QueryTimeout: TimeSpan`. Throw time out exception if query hasn't been executed within the time.

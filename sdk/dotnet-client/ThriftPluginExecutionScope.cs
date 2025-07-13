@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Utils;
 using QueryCat.Plugins.Sdk;
@@ -10,18 +11,20 @@ namespace QueryCat.Plugins.Client;
 
 public sealed class ThriftPluginExecutionScope : IExecutionScope
 {
+    public const int NoScopeId = -1;
+
     private sealed class RemoteDictionary : IDictionary<string, VariantValue>
     {
         private readonly ThriftPluginExecutionScope _thriftPluginExecutionScope;
 
         /// <inheritdoc />
-        public ICollection<string> Keys => [];
+        public ICollection<string> Keys => GetAllVariables().Select(v => v.Name).ToArray();
 
         /// <inheritdoc />
-        public ICollection<VariantValue> Values => [];
+        public ICollection<VariantValue> Values => GetAllVariables().Select(v => SdkConvert.Convert(v.Value)).ToArray();
 
         /// <inheritdoc />
-        public int Count => throw new NotImplementedException();
+        public int Count => GetAllVariables().Count;
 
         /// <inheritdoc />
         public bool IsReadOnly => false;
@@ -50,17 +53,27 @@ public sealed class ThriftPluginExecutionScope : IExecutionScope
             _thriftPluginExecutionScope = thriftPluginExecutionScope;
         }
 
-        /// <inheritdoc />
-        public IEnumerator<KeyValuePair<string, VariantValue>> GetEnumerator()
+        private IReadOnlyList<ScopeVariable> GetAllVariables()
         {
-            yield break;
+            var values = AsyncUtils.RunSync(ct
+                => _thriftPluginExecutionScope._client.ThriftClient.GetVariablesAsync(
+                    _thriftPluginExecutionScope._client.Token,
+                    scope_id: _thriftPluginExecutionScope._id, ct));
+            return values ?? [];
         }
 
         /// <inheritdoc />
-        IEnumerator IEnumerable.GetEnumerator()
+        public IEnumerator<KeyValuePair<string, VariantValue>> GetEnumerator()
         {
-            return GetEnumerator();
+            var values = GetAllVariables();
+            foreach (var value in values)
+            {
+                yield return new KeyValuePair<string, VariantValue>(value.Name, SdkConvert.Convert(value.Value));
+            }
         }
+
+        /// <inheritdoc />
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
         /// <inheritdoc />
         public void Add(KeyValuePair<string, VariantValue> item)
@@ -114,12 +127,22 @@ public sealed class ThriftPluginExecutionScope : IExecutionScope
     }
 
     private readonly ThriftPluginClient _client;
+    private readonly int _id;
+    private readonly int _parentId;
 
     /// <inheritdoc />
     public IDictionary<string, VariantValue> Variables { get; }
 
     /// <inheritdoc />
     public IExecutionScope? Parent => null;
+
+    public ThriftPluginExecutionScope(ThriftPluginClient client, int id, int parentId)
+    {
+        _client = client;
+        _id = id;
+        _parentId = parentId;
+        Variables = new RemoteDictionary(this);
+    }
 
     /// <inheritdoc />
     public bool TryGetVariable(string name, out VariantValue value)
@@ -154,11 +177,5 @@ public sealed class ThriftPluginExecutionScope : IExecutionScope
 
         Variables[name] = value;
         return true;
-    }
-
-    public ThriftPluginExecutionScope(ThriftPluginClient client)
-    {
-        _client = client;
-        Variables = new RemoteDictionary(this);
     }
 }

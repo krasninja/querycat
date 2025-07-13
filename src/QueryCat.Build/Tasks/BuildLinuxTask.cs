@@ -22,10 +22,6 @@ public sealed class BuildLinuxTask : BaseBuildTask
         {
             Runtime = platform,
         });
-        context.DotNetPublish(context.TimeItAppProjectDirectory, new PublishGeneralSettings(context, publishAot, properties)
-        {
-            Runtime = platform,
-        });
         context.DotNetPublish(context.TestPluginAppProjectDirectory, new PublishGeneralSettings(context, publishAot, properties)
         {
             Runtime = platform,

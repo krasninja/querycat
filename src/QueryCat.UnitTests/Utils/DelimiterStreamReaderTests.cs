@@ -70,7 +70,7 @@ public class DelimiterStreamReaderTests
     {
         // Arrange.
         var sb = new StringBuilder()
-            .Append("no quotes,\"has quotes\",\"inner\"\"quote\"\"s\",'mixed\"quotes'");
+            .Append("no quotes,\"has quotes\",\"inner\"\"quote\"\"s\",'mixed\"quotes',    \"space offset\"");
 
         // Act.
         var streamRowsInput = new DelimiterStreamReader(StringToStream(sb.ToString()),
@@ -87,6 +87,7 @@ public class DelimiterStreamReaderTests
         Assert.Equal("has quotes", streamRowsInput.GetField(1).ToString());
         Assert.Equal("inner\"quote\"s", streamRowsInput.GetField(2).ToString());
         Assert.Equal("mixed\"quotes", streamRowsInput.GetField(3).ToString());
+        Assert.Equal("space offset", streamRowsInput.GetField(4).ToString());
     }
 
     [Fact]
@@ -94,8 +95,8 @@ public class DelimiterStreamReaderTests
     {
         // Arrange.
         var sb = new StringBuilder()
-            .Append(" 10     explorer\n")
-            .Append(" 5323  \"quake 2\"");
+            .Append(" 10       explorer\n")
+            .Append(" 5323    \"quake 2\"");
 
         // Act.
         var streamRowsInput = new DelimiterStreamReader(StringToStream(sb.ToString()),

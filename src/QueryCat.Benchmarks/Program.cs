@@ -1,6 +1,4 @@
 ﻿using System.CommandLine;
-using System.CommandLine.Builder;
-using System.CommandLine.Parsing;
 using QueryCat.Benchmarks.Commands;
 
 namespace QueryCat.Benchmarks;
@@ -12,11 +10,6 @@ public class Program
 {
     public static async Task<int> Main(string[] args)
     {
-        if (args.Length < 1)
-        {
-            args = ["-h"];
-        }
-
         // Root.
         var rootCommand = new RootCommand
         {
@@ -25,10 +18,6 @@ public class Program
             new RunBenchmarkCommand(),
         };
 
-        var parser = new CommandLineBuilder(rootCommand)
-            .UseVersionOption("-v", "--version")
-            .UseDefaults()
-            .Build();
-        return await parser.Parse(args).InvokeAsync();
+        return await rootCommand.Parse(args).InvokeAsync();
     }
 }

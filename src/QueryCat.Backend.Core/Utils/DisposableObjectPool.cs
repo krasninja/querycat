@@ -24,17 +24,9 @@ internal sealed class DisposableObjectPool<T> : SimpleObjectPool<T>, IDisposable
     /// <inheritdoc />
     public override T Get()
     {
-        if (_isDisposed)
-        {
-            ThrowObjectDisposedException();
-        }
+        ObjectDisposedException.ThrowIf(_isDisposed, this);
 
         return base.Get();
-
-        void ThrowObjectDisposedException()
-        {
-            throw new ObjectDisposedException(GetType().Name);
-        }
     }
 
     /// <inheritdoc />

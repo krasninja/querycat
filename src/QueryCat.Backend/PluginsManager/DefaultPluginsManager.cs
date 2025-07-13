@@ -10,8 +10,6 @@ namespace QueryCat.Backend.PluginsManager;
 /// </summary>
 public sealed class DefaultPluginsManager : IPluginsManager, IDisposable
 {
-    private const string PluginsStorageUri = @"https://querycat.storage.yandexcloud.net/";
-
     private readonly IEnumerable<string> _pluginDirectories;
     private readonly PluginsLoader _pluginsLoader;
     private readonly IPluginsStorage _pluginsStorage;
@@ -26,6 +24,13 @@ public sealed class DefaultPluginsManager : IPluginsManager, IDisposable
 
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(DefaultPluginsManager));
 
+    /// <summary>
+    /// Constructor.
+    /// </summary>
+    /// <param name="pluginDirectories">Directories to search plugins for.</param>
+    /// <param name="pluginsLoader">Instance of <see cref="PluginsLoader" />.</param>
+    /// <param name="pluginsStorage">Instance of <see cref="IPluginsStorage" />.</param>
+    /// <param name="platform">Target platform.</param>
     public DefaultPluginsManager(
         IEnumerable<string> pluginDirectories,
         PluginsLoader pluginsLoader,
@@ -63,7 +68,7 @@ public sealed class DefaultPluginsManager : IPluginsManager, IDisposable
     {
         var remote = !localOnly
             ? await GetRemotePluginsAsync(cancellationToken).ConfigureAwait(false)
-            : Array.Empty<PluginInfo>();
+            : [];
         var local = GetLocalPlugins();
 
         return remote.Union(local).OrderBy(p => p.Name);
@@ -76,8 +81,10 @@ public sealed class DefaultPluginsManager : IPluginsManager, IDisposable
         foreach (var prefix in _prefixes)
         {
             var newName = prefix + name;
-            var plugin = allPlugins.FirstOrDefault(p => newName.Equals(p.Name, StringComparison.OrdinalIgnoreCase)
-                && (p.Platform == platform || p.Platform == Application.PlatformMulti || string.IsNullOrEmpty(platform)));
+            var plugin = allPlugins
+                .OrderByDescending(p => p.Version)
+                .FirstOrDefault(p => newName.Equals(p.Name, StringComparison.OrdinalIgnoreCase)
+                                     && (p.Platform == platform || p.Platform == Application.PlatformMulti || string.IsNullOrEmpty(platform)));
             if (plugin != null)
             {
                 return plugin;
@@ -90,7 +97,7 @@ public sealed class DefaultPluginsManager : IPluginsManager, IDisposable
     public async Task<int> InstallAsync(string name, bool overwrite = true, CancellationToken cancellationToken = default)
     {
         var plugins = await GetRemotePluginsAsync(cancellationToken).ConfigureAwait(false);
-        var plugin = TryFindPlugin(name, Application.GetPlatform(), plugins.ToList());
+        var plugin = TryFindPlugin(name, Application.GetPlatform(), plugins);
         if (plugin == null)
         {
             throw new PluginException(string.Format(Resources.Errors.Plugins_CannotFind, name));
@@ -109,6 +116,7 @@ public sealed class DefaultPluginsManager : IPluginsManager, IDisposable
         // Create X.downloading file, download and then remove.
         var mainPluginDirectory = GetMainPluginDirectory();
         var fullFileName = Path.Combine(mainPluginDirectory, Path.GetFileName(plugin.Uri));
+        _logger.LogInformation("Start downloading plugin file {PluginUri}.", plugin.Uri);
         await FilesUtils.DownloadFileAsync(
                 ct => _pluginsStorage.DownloadAsync(plugin.Uri, ct),
                 fullFileName,
@@ -116,7 +124,7 @@ public sealed class DefaultPluginsManager : IPluginsManager, IDisposable
             .ConfigureAwait(false);
         FilesUtils.MakeUnixExecutable(fullFileName);
         var exists = File.Exists(fullFileName);
-        _logger.LogInformation("Save plugin file {FullFileName}.", fullFileName);
+        _logger.LogInformation("Saved plugin file {FullFileName}.", fullFileName);
         return exists ? 1 : 0;
     }
 

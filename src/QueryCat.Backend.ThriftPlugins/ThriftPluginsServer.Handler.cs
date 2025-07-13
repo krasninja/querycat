@@ -3,8 +3,11 @@ using Microsoft.Extensions.Logging;
 using QueryCat.Plugins.Client;
 using QueryCat.Plugins.Sdk;
 using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
+using CompletionResult = QueryCat.Plugins.Sdk.CompletionResult;
 using LogLevel = QueryCat.Plugins.Sdk.LogLevel;
 using VariantValue = QueryCat.Plugins.Sdk.VariantValue;
 
@@ -16,6 +19,9 @@ public partial class ThriftPluginsServer
     private sealed class Handler : PluginsManager.IAsync
     {
         private readonly ThriftPluginsServer _thriftPluginsServer;
+        private readonly Dictionary<int, IExecutionScope> _scopeIdToScope = new();
+        private readonly Dictionary<IExecutionScope, int> _scopeToScopeId = new();
+        private int _executionScopeId;
 
         public Handler(ThriftPluginsServer thriftPluginsServer)
         {
@@ -178,9 +184,93 @@ public partial class ThriftPluginsServer
         }
 
         /// <inheritdoc />
+        public Task<List<ScopeVariable>> GetVariablesAsync(long token, int scope_id, CancellationToken cancellationToken = default)
+        {
+            _thriftPluginsServer.VerifyToken(token);
+            if (_scopeIdToScope.TryGetValue(scope_id, out var scope))
+            {
+                var result = scope.Variables.Select(v => new ScopeVariable(v.Key, SdkConvert.Convert(v.Value))).ToList();
+                return Task.FromResult(result);
+            }
+            return Task.FromResult(new List<ScopeVariable>());
+        }
+
+        private int AddScope(IExecutionScope scope)
+        {
+            if (_scopeToScopeId.TryGetValue(scope, out var scopeId))
+            {
+                return scopeId;
+            }
+            scopeId = Interlocked.Increment(ref _executionScopeId);
+            _scopeIdToScope[scopeId] = scope;
+            _scopeToScopeId[scope] = scopeId;
+            return scopeId;
+        }
+
+        private int RemoveScope(IExecutionScope scope)
+        {
+            if (_scopeToScopeId.Remove(scope, out var scopeId))
+            {
+                _scopeIdToScope.Remove(scopeId);
+                return scopeId;
+            }
+            return ThriftPluginExecutionScope.NoScopeId;
+        }
+
+        private int GetScopeParentId(IExecutionScope scope)
+        {
+            if (scope.Parent != null && _scopeToScopeId.TryGetValue(scope.Parent, out var parentScopeId))
+            {
+                return parentScopeId;
+            }
+            return ThriftPluginExecutionScope.NoScopeId;
+        }
+
+        /// <inheritdoc />
+        public Task<ExecutionScope> PushScopeAsync(long token, CancellationToken cancellationToken = default)
+        {
+            _thriftPluginsServer.VerifyToken(token);
+            var scope = _thriftPluginsServer._executionThread.PushScope();
+            var scopeId = AddScope(scope);
+            return Task.FromResult(new ExecutionScope(scopeId, GetScopeParentId(scope)));
+        }
+
+        /// <inheritdoc />
+        public Task<ExecutionScope> PopScopeAsync(long token, CancellationToken cancellationToken = default)
+        {
+            _thriftPluginsServer.VerifyToken(token);
+            var scope = _thriftPluginsServer._executionThread.PopScope();
+            if (scope != null)
+            {
+                var scopeId = AddScope(scope); // Do not remove it because it can be used in closure code.
+                return Task.FromResult(new ExecutionScope(scopeId, GetScopeParentId(scope)));
+            }
+            return Task.FromResult(new ExecutionScope(ThriftPluginExecutionScope.NoScopeId, ThriftPluginExecutionScope.NoScopeId));
+        }
+
+        /// <inheritdoc />
+        public Task<ExecutionScope> PeekTopScopeAsync(long token, CancellationToken cancellationToken = default)
+        {
+            _thriftPluginsServer.VerifyToken(token);
+            var topScope = _thriftPluginsServer._executionThread.TopScope;
+            var scopeId = AddScope(topScope);
+            return Task.FromResult(new ExecutionScope(scopeId, GetScopeParentId(topScope)));
+        }
+
+        /// <inheritdoc />
+        public async Task<List<CompletionResult>> GetCompletionsAsync(long token, string text, int position, CancellationToken cancellationToken = default)
+        {
+            _thriftPluginsServer.VerifyToken(token);
+            var completions = await _thriftPluginsServer._executionThread.GetCompletionsAsync(text, position, null, cancellationToken)
+                .ToListAsync(cancellationToken);
+            return completions.Select(SdkConvert.Convert).ToList();
+        }
+
+        /// <inheritdoc />
         public async Task<byte[]> Blob_ReadAsync(long token, int object_blob_handle, int offset, int count,
             CancellationToken cancellationToken = default)
         {
+            _thriftPluginsServer.VerifyToken(token);
             var pluginContext = _thriftPluginsServer.GetPluginContextByToken(token);
             if (pluginContext.ObjectsStorage.TryGet<IBlobData>(object_blob_handle, out var blobData)
                 && blobData != null)
@@ -209,6 +299,7 @@ public partial class ThriftPluginsServer
         public async Task<long> Blob_WriteAsync(long token, int object_blob_handle, byte[] bytes,
             CancellationToken cancellationToken = default)
         {
+            _thriftPluginsServer.VerifyToken(token);
             var pluginContext = _thriftPluginsServer.GetPluginContextByToken(token);
             if (pluginContext.ObjectsStorage.TryGet<IBlobData>(object_blob_handle, out var blobData)
                 && blobData != null)
@@ -222,6 +313,7 @@ public partial class ThriftPluginsServer
         /// <inheritdoc />
         public Task<long> Blob_GetLengthAsync(long token, int object_blob_handle, CancellationToken cancellationToken = default)
         {
+            _thriftPluginsServer.VerifyToken(token);
             var pluginContext = _thriftPluginsServer.GetPluginContextByToken(token);
             if (pluginContext.ObjectsStorage.TryGet<IBlobData>(object_blob_handle, out var blobData)
                 && blobData != null)
@@ -234,6 +326,7 @@ public partial class ThriftPluginsServer
         /// <inheritdoc />
         public Task<string> Blob_GetContentTypeAsync(long token, int object_blob_handle, CancellationToken cancellationToken = default)
         {
+            _thriftPluginsServer.VerifyToken(token);
             var pluginContext = _thriftPluginsServer.GetPluginContextByToken(token);
             if (pluginContext.ObjectsStorage.TryGet<IBlobData>(object_blob_handle, out var blobData)
                 && blobData != null)
@@ -247,6 +340,8 @@ public partial class ThriftPluginsServer
         public Task LogAsync(long token, LogLevel level, string message, List<string>? arguments,
             CancellationToken cancellationToken = default)
         {
+            _thriftPluginsServer.VerifyToken(token);
+
             var context = _thriftPluginsServer.GetPluginContextByToken(token);
             var logLevel = SdkConvert.Convert(level);
 
@@ -260,6 +355,14 @@ public partial class ThriftPluginsServer
                 _thriftPluginsServer._logger.Log(logLevel, message);
             }
             return Task.CompletedTask;
+        }
+
+        /// <inheritdoc />
+        public Task<Statistic> GetStatisticAsync(long token, CancellationToken cancellationToken = default)
+        {
+            _thriftPluginsServer.VerifyToken(token);
+            var statistic = SdkConvert.Convert(_thriftPluginsServer._executionThread.Statistic);
+            return Task.FromResult(statistic);
         }
 
         private Microsoft.Extensions.Logging.LogLevel GetCurrentLogLevel()
@@ -389,6 +492,76 @@ public partial class ThriftPluginsServer
         }
 
         /// <inheritdoc />
+        public async Task<List<ScopeVariable>> GetVariablesAsync(long token, int scope_id, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return await _handler.GetVariablesAsync(token, scope_id, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, Resources.Errors.HandlerInternalError);
+                throw QueryCatPluginExceptionUtils.Create(ex);
+            }
+        }
+
+        /// <inheritdoc />
+        public async Task<ExecutionScope> PushScopeAsync(long token, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return await _handler.PushScopeAsync(token, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, Resources.Errors.HandlerInternalError);
+                throw QueryCatPluginExceptionUtils.Create(ex);
+            }
+        }
+
+        /// <inheritdoc />
+        public async Task<ExecutionScope> PopScopeAsync(long token, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return await _handler.PopScopeAsync(token, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, Resources.Errors.HandlerInternalError);
+                throw QueryCatPluginExceptionUtils.Create(ex);
+            }
+        }
+
+        /// <inheritdoc />
+        public async Task<ExecutionScope> PeekTopScopeAsync(long token, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return await _handler.PeekTopScopeAsync(token, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, Resources.Errors.HandlerInternalError);
+                throw QueryCatPluginExceptionUtils.Create(ex);
+            }
+        }
+
+        /// <inheritdoc />
+        public async Task<List<CompletionResult>> GetCompletionsAsync(long token, string text, int position, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return await _handler.GetCompletionsAsync(token, text, position, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, Resources.Errors.HandlerInternalError);
+                throw QueryCatPluginExceptionUtils.Create(ex);
+            }
+        }
+
+        /// <inheritdoc />
         public async Task<byte[]> Blob_ReadAsync(long token, int object_blob_handle, int offset, int count,
             CancellationToken cancellationToken = default)
         {
@@ -452,6 +625,20 @@ public partial class ThriftPluginsServer
             try
             {
                 await _handler.LogAsync(token, level, message, arguments, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, Resources.Errors.HandlerInternalError);
+                throw QueryCatPluginExceptionUtils.Create(ex);
+            }
+        }
+
+        /// <inheritdoc />
+        public Task<Statistic> GetStatisticAsync(long token, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return _handler.GetStatisticAsync(token, cancellationToken);
             }
             catch (Exception ex)
             {

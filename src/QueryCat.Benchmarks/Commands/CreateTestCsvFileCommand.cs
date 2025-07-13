@@ -16,47 +16,54 @@ internal class CreateTestCsvFileCommand : Command
     private const int ChunkSize = 2000;
     private const int Seed = 8675309;
 
-    /// <summary>
-    /// Number of items to generate.
-    /// </summary>
-    public int NumberOfItems { get; set; } = 200_000;
-
     public CreateTestCsvFileCommand() : base("create-test-csv")
     {
-        this.SetHandler(async () =>
+        var numberOfItemsOption = new Option<int>("--num")
+        {
+            Description = "Number of items to generate.",
+            Required = true,
+            DefaultValueFactory =_ => 200_000,
+        };
+
+        this.Add(numberOfItemsOption);
+        this.SetAction(async (parseResult, cancellationToken) =>
         {
             Randomizer.Seed = new Random(Seed);
 
             var rowsFrame = User.ClassBuilder.BuildRowsFrame();
+            var numberOfItems = parseResult.GetValue(numberOfItemsOption);
 
             // Fill users.
             var stopwatch = new Stopwatch();
+            var filePath = Path.Combine("../../..", UsersFileName); // Create at the project root.
+            var blob = new StreamBlobData(() => File.Create(filePath));
+            var output = new DsvFormatter(',').OpenOutput(blob);
             try
             {
                 stopwatch.Start();
-                var filePath = Path.Combine("../../..", UsersFileName); // Create at the project root.
-                var output = new DsvFormatter(',').OpenOutput(new StreamBlobData(() => File.Create(filePath)));
-                await output.OpenAsync();
+                await output.OpenAsync(cancellationToken);
                 output.QueryContext = new RowsOutputQueryContext(rowsFrame.Columns);
-                for (var count = 0; count < NumberOfItems; count += ChunkSize)
+                for (var count = 0; count < numberOfItems; count += ChunkSize)
                 {
-                    var usersToInsert = UsersFaker.GenerateForever().Take(ChunkSize);
+                    var usersToInsert = _usersFaker.GenerateForever().Take(ChunkSize);
                     rowsFrame.AddRows(usersToInsert);
-                }
-                foreach (var row in rowsFrame)
-                {
-                    await output.WriteValuesAsync(row.Values);
+                    foreach (var row in rowsFrame)
+                    {
+                        await output.WriteValuesAsync(row.Values, cancellationToken);
+                    }
+                    rowsFrame.Clear();
                 }
             }
             finally
             {
                 stopwatch.Stop();
+                await output.CloseAsync(cancellationToken);
                 Console.WriteLine($@"Created {UsersFileName}. Overall time spent: {stopwatch.Elapsed:c}.");
             }
         });
     }
 
-    private static readonly Faker<User> UsersFaker = new Faker<User>()
+    private static readonly Faker<User> _usersFaker = new Faker<User>()
         .RuleFor(u => u.Id, f => f.UniqueIndex)
         .RuleFor(u => u.Gender, f => f.PickRandom<Gender>())
         .RuleFor(u => u.FirstName, (f, u) => f.Name.FirstName(ConvertGender(u.Gender)))

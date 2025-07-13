@@ -51,10 +51,7 @@ public static class AsyncUtils
         /// <inheritdoc />
         public override void Post(SendOrPostCallback d, object? state)
         {
-            if (_isDisposed)
-            {
-                throw new ObjectDisposedException(nameof(AsyncUtils));
-            }
+            ObjectDisposedException.ThrowIf(_isDisposed, this);
 
             _postbackItems.Enqueue(new EventTask(d, state));
             _workItemsWaiting.Set();

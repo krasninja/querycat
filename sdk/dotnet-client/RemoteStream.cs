@@ -9,8 +9,6 @@ namespace QueryCat.Plugins.Client;
 
 public sealed class RemoteStream : Stream
 {
-    private const int BufferSize = 4096 * 2;
-
     private readonly int _objectHandle;
     private readonly IBlobProxyService _proxy;
 

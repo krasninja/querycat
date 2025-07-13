@@ -147,7 +147,7 @@ internal static class IOFunctions
                 }
                 return fileStream;
             }, File_GetContentType(file));
-            yield return fileFormatter.OpenInput(blobFileStream, path);
+            yield return fileFormatter.OpenInput(blobFileStream, file);
         }
     }
 
@@ -357,25 +357,21 @@ internal static class IOFunctions
 
         // Try to get formatter by HTTP response content type.
         var contentType = string.Empty;
-        if (formatter == null)
+        if (response.Headers.TryGetValues(ContentTypeHeader, out var contentTypes))
         {
-            if (response.Headers.TryGetValues(ContentTypeHeader, out var contentTypes))
-            {
-                contentType = contentTypes.Last();
-                formatter = await FormattersInfo.CreateFormatterAsync(contentType, thread, funcArgs, cancellationToken);
-            }
+            contentType = contentTypes.Last();
         }
         // Try to get formatter by extension from URI.
         if (formatter == null)
         {
-            var absolutePath = (request.RequestUri ?? uri).AbsolutePath;
-            var extension = Path.GetExtension(absolutePath).ToLower();
-            if (!string.IsNullOrEmpty(extension))
+            var type = contentType;
+            if (string.IsNullOrEmpty(type))
             {
-                formatter = await FormattersInfo.CreateFormatterAsync(extension, thread, funcArgs, cancellationToken);
+                var absolutePath = (request.RequestUri ?? uri).AbsolutePath;
+                type = Path.GetExtension(absolutePath).ToLower();
             }
+            formatter = await File_GetFormatterAsync(type, thread, null, cancellationToken);
         }
-        formatter ??= new TextLineFormatter();
 
         var blobStream = new StreamBlobData(() => response.Content.ReadAsStream(cancellationToken), contentType);
         return VariantValue.CreateFromObject(formatter.OpenInput(blobStream));
@@ -447,7 +443,7 @@ internal static class IOFunctions
         {
             var stringValue = StringUtils.Unquote(str);
             stringValue = StringUtils.Unquote(stringValue, quoteChar: "'");
-            return new VariantValue(StringUtils.Unescape(stringValue.ToString()));
+            return new VariantValue(StringUtils.Unescape(stringValue));
         }
         if (VariantValue.TryCreateFromString(str, type, out var value))
         {

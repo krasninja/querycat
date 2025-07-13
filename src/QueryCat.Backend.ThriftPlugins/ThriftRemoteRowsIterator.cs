@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Utils;
@@ -54,12 +55,21 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputUpdate, IRowsInputDel
         AsyncUtils.RunSync(async ct =>
         {
             using var session = await _context.GetSessionAsync(ct);
-            await session.ClientProxy.RowsSet_SetContextAsync(_objectHandle, new ContextQueryInfo
-            {
-                Columns = QueryContext.QueryInfo.Columns.Select(SdkConvert.Convert).ToList(),
-                Limit = QueryContext.QueryInfo.Limit ?? -1,
-                Offset = QueryContext.QueryInfo.Offset,
-            }, ct);
+            await session.ClientProxy.RowsSet_SetContextAsync(
+                _objectHandle,
+                new ContextQueryInfo
+                {
+                    Columns = QueryContext.QueryInfo.Columns.Select(SdkConvert.Convert).ToList(),
+                    Limit = QueryContext.QueryInfo.Limit ?? -1,
+                    Offset = QueryContext.QueryInfo.Offset,
+                },
+                new ContextInfo
+                {
+                    PrereadRowsCount = QueryContext.PrereadRowsCount,
+                    SkipIfNoColumns = QueryContext.SkipIfNoColumns,
+                },
+                ct
+            );
         });
     }
 
@@ -142,11 +152,11 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputUpdate, IRowsInputDel
                         .Select(c => new KeyColumn(
                             c.ColumnIndex,
                             c.IsRequired,
-                            (c.Operations ?? new List<string>()).Select(Enum.Parse<VariantValue.Operation>).ToArray()
+                            (c.Operations ?? (IList<string>)ImmutableList<string>.Empty).Select(Enum.Parse<VariantValue.Operation>).ToArray()
                         ));
                 }
             );
-            _cachedKeyColumns = (result ?? Array.Empty<KeyColumn>()).ToList();
+            _cachedKeyColumns = (result ?? []).ToList();
         }
         return _cachedKeyColumns;
     }

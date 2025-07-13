@@ -8,21 +8,25 @@ namespace QueryCat.Cli.Commands;
 
 internal abstract class BaseQueryCommand : BaseCommand
 {
-    public Argument<string> QueryArgument { get; } = new("query",
-        description: "SQL-like query or command argument.",
-        getDefaultValue: () => string.Empty);
-
-    public Option<string[]> FilesOption { get; } = new(["-f", "--files"],
-        description: "SQL files to execute.")
+    protected Argument<string> QueryArgument { get; } = new("query")
     {
+        Description = Resources.Messages.QueryCommand_QueryDescription,
+        DefaultValueFactory = _ => string.Empty,
+    };
+
+    protected Option<string[]> FilesOption { get; } = new("-f", "--files")
+    {
+        Description = Resources.Messages.QueryCommand_FilesDescription,
         AllowMultipleArgumentsPerToken = true,
     };
 
-    public Option<string[]> VariablesOption { get; } = new("--var",
-        description: "Pass variables.");
+    protected Option<string[]> VariablesOption { get; } = new("--var")
+    {
+        Description = Resources.Messages.QueryCommand_VariablesDescription,
+    };
 
     /// <inheritdoc />
-    public BaseQueryCommand(string name, string? description = null) : base(name, description)
+    protected BaseQueryCommand(string name, string? description = null) : base(name, description)
     {
         Add(QueryArgument);
         Add(FilesOption);
@@ -31,11 +35,12 @@ internal abstract class BaseQueryCommand : BaseCommand
 
     internal static async Task RunQueryAsync(
         IExecutionThread executionThread,
-        string query,
-        string[] files,
+        string? query,
+        string[]? files,
         CancellationToken cancellationToken = default)
     {
-        if (files.Any())
+        query ??= string.Empty;
+        if (files != null && files.Length > 0)
         {
             foreach (var file in files.SelectMany(f => f.Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)))
             {
@@ -84,7 +89,7 @@ internal abstract class BaseQueryCommand : BaseCommand
                 throw new QueryCatException(string.Format(Resources.Errors.InvalidVariableFormat, variable));
             }
             var name = arr[0];
-            var stringValue = StringUtils.Unquote(arr[1], quoteChar: "\'").ToString();
+            var stringValue = StringUtils.Unquote(arr[1], quoteChar: "\'");
             var targetType = arr[1].Length == stringValue.Length
                 ? DataTypeUtils.DetermineTypeByValue(stringValue)
                 : DataType.String;

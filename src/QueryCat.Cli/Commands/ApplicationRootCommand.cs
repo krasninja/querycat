@@ -5,7 +5,7 @@ namespace QueryCat.Cli.Commands;
 internal class ApplicationRootCommand : RootCommand
 {
     /// <inheritdoc />
-    public ApplicationRootCommand() : base("The simple text parsing, data query and transformation utility.")
+    public ApplicationRootCommand() : base(Resources.Messages.RootCommand_Description)
     {
     }
 }

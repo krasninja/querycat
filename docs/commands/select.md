@@ -9,7 +9,7 @@ Executes the SQL query against input. If not output is specified (with `INTO` cl
 SELECT [ ALL | DISTINCT [ ON ( expression [, ...] ) ] ] [ TOP number ]
     [ * | expression AS [ alias ] | column AS [ alias ] [, ...] ]
 [ EXCEPT column [, ...] ]
-[ INTO [ function : IRowsOutput ] ] [ FORMAT [ function : IRowsFormatter ] ]
+[ INTO [ function : IRowsOutput ] | expression ] [ FORMAT [ function : IRowsFormatter ] ]
 [ FROM [ function : IRowsInput | uri ] [ FORMAT [ function : IRowsFormatter ] ] ]
 [ WHERE search_condition ]
 [ GROUP BY [ expression ] ]

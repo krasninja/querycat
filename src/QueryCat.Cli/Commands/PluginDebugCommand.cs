@@ -23,20 +23,23 @@ internal class PluginDebugCommand : BaseQueryCommand
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(PluginDebugCommand));
 
     /// <inheritdoc />
-    public PluginDebugCommand() : base("debug", "Setup debug server.")
+    public PluginDebugCommand() : base("debug", Resources.Messages.PluginDebugCommand_Description)
     {
-        var followOption = new Option<bool>("--follow",
-            description: "Output appended data as the input source grows.");
-        this.AddOption(followOption);
-
-        this.SetHandler(async (context) =>
+        var followOption = new Option<bool>("--follow")
         {
-            var applicationOptions = OptionsUtils.GetValueForOption(
-                new ApplicationOptionsBinder(LogLevelOption, PluginDirectoriesOption), context);
-            var query = OptionsUtils.GetValueForOption(QueryArgument, context);
-            var variables = OptionsUtils.GetValueForOption(VariablesOption, context);
-            var files = OptionsUtils.GetValueForOption(FilesOption, context);
-            var follow = OptionsUtils.GetValueForOption(followOption, context);
+            Description = "Output appended data as the input source grows.",
+        };
+        this.Add(followOption);
+
+        this.SetAction(async (parseResult, cancellationToken) =>
+        {
+            parseResult.Configuration.EnableDefaultExceptionHandler = false;
+
+            var applicationOptions = GetApplicationOptions(parseResult);
+            var query = parseResult.GetValue(QueryArgument);
+            var variables = parseResult.GetValue(VariablesOption);
+            var files = parseResult.GetValue(FilesOption);
+            var follow = parseResult.GetValue(followOption);
 
             applicationOptions.InitializeLogger();
             var tableOutput = new Backend.Formatters.TextTableOutput(
@@ -46,11 +49,11 @@ internal class PluginDebugCommand : BaseQueryCommand
                 UseConfig = true,
                 RunBootstrapScript = true,
             };
-            using var cts = new CancellationTokenSource();
+            var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
             options.PluginDirectories.AddRange(applicationOptions.PluginDirectories);
             options.DefaultRowsOutput = new PagingOutput(tableOutput, cancellationTokenSource: cts);
-            options.FollowTimeout = follow ? QueryOptionsBinder.FollowDefaultTimeout : TimeSpan.Zero;
+            options.FollowTimeout = follow ? QueryCommand.FollowDefaultTimeout : TimeSpan.Zero;
 
             await using var thread = new ExecutionThreadBootstrapper(options)
                 .WithConfigStorage(new PersistentConfigStorage(
@@ -75,7 +78,9 @@ internal class PluginDebugCommand : BaseQueryCommand
                 .WithRegistrations(AdditionalRegistration.Register)
                 .WithRegistrations(Backend.Addons.Functions.JsonFunctions.RegisterFunctions)
                 .Create();
-            await thread.PluginsManager.PluginsLoader.LoadAsync(new PluginsLoadingOptions());
+
+            _logger.LogInformation("Waiting for connections.");
+            await thread.PluginsManager.PluginsLoader.LoadAsync(new PluginsLoadingOptions(), cts.Token);
             AddVariables(thread, variables);
             await RunQueryAsync(thread, query, files, cts.Token);
         });

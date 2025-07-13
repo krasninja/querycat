@@ -10,15 +10,16 @@ internal class RunBenchmarkCommand : Command
 {
     public RunBenchmarkCommand() : base("benchmark")
     {
-        var benchmarkOption = new Option<string>("-b",
-            description: "Benchmark to run")
-            {
-                IsRequired = true,
-            };
-
-        this.AddOption(benchmarkOption);
-        this.SetHandler(benchmark =>
+        var benchmarkOption = new Option<string>("-b")
         {
+            Description = "Benchmark to run",
+            Required = true,
+        };
+
+        this.Add(benchmarkOption);
+        this.SetAction((parseResult, cancellationToken) =>
+        {
+            var benchmark = parseResult.GetValue(benchmarkOption);
             var type = typeof(RunBenchmarkCommand).Assembly.GetTypes().FirstOrDefault(t =>
                 t.Name.Equals(benchmark, StringComparison.OrdinalIgnoreCase));
             if (type == null)
@@ -26,6 +27,7 @@ internal class RunBenchmarkCommand : Command
                 throw new InvalidOperationException($"Cannot find benchmark '{benchmark}'.");
             }
             BenchmarkRunner.Run(type);
-        }, benchmarkOption);
+            return Task.CompletedTask;
+        });
     }
 }

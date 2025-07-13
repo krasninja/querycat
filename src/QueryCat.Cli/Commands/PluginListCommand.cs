@@ -1,6 +1,5 @@
 using System.CommandLine;
 using QueryCat.Backend.Core;
-using QueryCat.Cli.Commands.Options;
 
 namespace QueryCat.Cli.Commands;
 
@@ -8,25 +7,32 @@ namespace QueryCat.Cli.Commands;
 internal class PluginListCommand : BaseCommand
 {
     /// <inheritdoc />
-    public PluginListCommand() : base("list", "List available plugins for the current platform.")
+    public PluginListCommand() : base("list", Resources.Messages.PluginListCommand_Description)
     {
-        var listAllArgument = new Option<bool>("--all", "List all plugins.");
-
-        this.AddOption(listAllArgument);
-        this.SetHandler(async (context) =>
+        var listAllArgument = new Option<bool>("--all")
         {
-            var applicationOptions = OptionsUtils.GetValueForOption(
-                new ApplicationOptionsBinder(LogLevelOption, PluginDirectoriesOption), context);
-            var listAll = OptionsUtils.GetValueForOption(listAllArgument, context);
+            Description = Resources.Messages.PluginListCommand_AllDescription
+        };
+
+        this.Add(listAllArgument);
+        this.SetAction(async (parseResult, cancellationToken) =>
+        {
+            parseResult.Configuration.EnableDefaultExceptionHandler = false;
+
+            var applicationOptions = GetApplicationOptions(parseResult);
+            var listAll = parseResult.GetValue(listAllArgument);
 
             applicationOptions.InitializeLogger();
-            using var root = await applicationOptions.CreateStdoutApplicationRootAsync();
+            await using var root = await applicationOptions.CreateStdoutApplicationRootAsync(
+                columnsSeparator: parseResult.GetValue(ColumnsSeparatorOption),
+                outputStyle: parseResult.GetValue(OutputStyleOption)
+            );
             var query = "SELECT * FROM _plugins() WHERE 1=1";
             if (!listAll)
             {
                 query += $@" AND (platform = _platform() OR platform = '{Application.PlatformMulti}');";
             }
-            var result = await root.Thread.RunAsync(query, cancellationToken: context.GetCancellationToken());
+            var result = await root.Thread.RunAsync(query, cancellationToken: cancellationToken);
             root.Thread.TopScope.Variables["result"] = result;
             await root.Thread.RunAsync("result");
         });

@@ -1,5 +1,4 @@
 using System.CommandLine;
-using QueryCat.Cli.Commands.Options;
 
 namespace QueryCat.Cli.Commands;
 
@@ -7,20 +6,24 @@ namespace QueryCat.Cli.Commands;
 internal class PluginUpdateCommand : BaseCommand
 {
     /// <inheritdoc />
-    public PluginUpdateCommand() : base("update", "Update the plugin.")
+    public PluginUpdateCommand() : base("update", Resources.Messages.PluginUpdateCommand_Description)
     {
-        var pluginArgument = new Argument<string>("plugin", "Plugin name.");
-
-        this.AddArgument(pluginArgument);
-        this.SetHandler(async (context) =>
+        var pluginArgument = new Argument<string>("plugin")
         {
-            var applicationOptions = OptionsUtils.GetValueForOption(
-                new ApplicationOptionsBinder(LogLevelOption, PluginDirectoriesOption), context);
-            var plugin = OptionsUtils.GetValueForOption(pluginArgument, context);
+            Description = Resources.Messages.PluginUpdateCommand_NameDescription,
+        };
+
+        this.Add(pluginArgument);
+        this.SetAction(async (parseResult, cancellationToken) =>
+        {
+            parseResult.Configuration.EnableDefaultExceptionHandler = false;
+
+            var applicationOptions = GetApplicationOptions(parseResult);
+            var plugin = parseResult.GetRequiredValue(pluginArgument);
 
             applicationOptions.InitializeLogger();
-            using var root = await applicationOptions.CreateApplicationRootAsync();
-            await root.PluginsManager.UpdateAsync(plugin, context.GetCancellationToken());
+            await using var root = await applicationOptions.CreateApplicationRootAsync();
+            await root.PluginsManager.UpdateAsync(plugin, cancellationToken);
         });
     }
 }

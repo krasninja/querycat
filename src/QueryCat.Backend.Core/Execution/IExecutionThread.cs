@@ -8,6 +8,9 @@ namespace QueryCat.Backend.Core.Execution;
 /// <summary>
 /// The execution thread allows to run string commands.
 /// </summary>
+/// <remarks>
+/// It is not related to operation-system thread.
+/// </remarks>
 public interface IExecutionThread : IDisposable
 {
     /// <summary>

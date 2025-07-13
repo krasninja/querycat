@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
@@ -68,7 +69,7 @@ public partial class ThriftPluginClient
                 else if (result.AsObject is IRowsInput rowsInput)
                 {
                     rowsInput.QueryContext = new PluginQueryContext(
-                        new QueryContextQueryInfo(new List<Backend.Core.Data.Column>()),
+                        new QueryContextQueryInfo(ImmutableList<Backend.Core.Data.Column>.Empty),
                         _thriftPluginClient._executionThread.ConfigStorage);
                     var index =_thriftPluginClient._objectsStorage.Add(rowsInput);
                     _thriftPluginClient._logger.LogDebug("Added new input object '{Object}' with handle {Handle}.",
@@ -81,7 +82,7 @@ public partial class ThriftPluginClient
                 else if (result.AsObject is IRowsOutput rowsOutput)
                 {
                     rowsOutput.QueryContext = new PluginQueryContext(
-                        new QueryContextQueryInfo(new List<Backend.Core.Data.Column>()),
+                        new QueryContextQueryInfo(ImmutableList<Backend.Core.Data.Column>.Empty),
                         _thriftPluginClient._executionThread.ConfigStorage);
                     var index =_thriftPluginClient._objectsStorage.Add(rowsOutput);
                     _thriftPluginClient._logger.LogDebug("Added new output object '{Object}' with handle {Handle}.",
@@ -230,7 +231,7 @@ public partial class ThriftPluginClient
 
         /// <inheritdoc />
         public Task RowsSet_SetContextAsync(int object_rows_set_handle, ContextQueryInfo? context_query_info,
-            CancellationToken cancellationToken = default)
+            ContextInfo? context_info, CancellationToken cancellationToken = default)
         {
             if (_thriftPluginClient._objectsStorage.TryGet<IRowsSource>(object_rows_set_handle, out var rowsSource)
                 && rowsSource != null)
@@ -238,13 +239,14 @@ public partial class ThriftPluginClient
                 if (context_query_info == null)
                 {
                     rowsSource.QueryContext = new PluginQueryContext(
-                        new QueryContextQueryInfo(Array.Empty<Backend.Core.Data.Column>()),
+                        new QueryContextQueryInfo([]),
                         _thriftPluginClient._executionThread.ConfigStorage
                     );
                 }
                 else
                 {
-                    var columns = context_query_info.Columns ?? new List<QueryCat.Plugins.Sdk.Column>();
+                    var columns = context_query_info.Columns
+                                  ?? (IList<QueryCat.Plugins.Sdk.Column>)ImmutableList<QueryCat.Plugins.Sdk.Column>.Empty;
                     rowsSource.QueryContext = new PluginQueryContext(
                         new QueryContextQueryInfo(
                             columns.Select(SdkConvert.Convert).ToList(),
@@ -254,6 +256,11 @@ public partial class ThriftPluginClient
                         },
                         _thriftPluginClient._executionThread.ConfigStorage
                     );
+                }
+                if (context_info != null)
+                {
+                    rowsSource.QueryContext.PrereadRowsCount = context_info.PrereadRowsCount;
+                    rowsSource.QueryContext.SkipIfNoColumns =  context_info.SkipIfNoColumns;
                 }
             }
             else
@@ -536,7 +543,9 @@ public partial class ThriftPluginClient
     {
         private readonly Plugin.IAsync _handler;
         private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(Handler));
+#pragma warning disable CS0649 // Field is never assigned to, and will always have its default value
         private readonly bool _traceCalls;
+#pragma warning restore CS0649 // Field is never assigned to, and will always have its default value
 
         public HandlerWithExceptionIntercept(Plugin.IAsync handler)
         {
@@ -685,12 +694,12 @@ public partial class ThriftPluginClient
 
         /// <inheritdoc />
         public async Task RowsSet_SetContextAsync(int object_rows_set_handle, ContextQueryInfo? context_query_info,
-            CancellationToken cancellationToken = default)
+            ContextInfo? context_info, CancellationToken cancellationToken = default)
         {
             LogCallMethod(nameof(RowsSet_SetContextAsync));
             try
             {
-                await _handler.RowsSet_SetContextAsync(object_rows_set_handle, context_query_info, cancellationToken);
+                await _handler.RowsSet_SetContextAsync(object_rows_set_handle, context_query_info, context_info, cancellationToken);
             }
             catch (Exception ex)
             {

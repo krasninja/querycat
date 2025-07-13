@@ -55,9 +55,9 @@ internal sealed class AstTraversal
     }
 
     /// <summary>
-    /// Get current top parent.
+    /// Get current top node.
     /// </summary>
-    public IAstNode? CurrentParent => _traversalStack.Count > 0 ? _traversalStack.Peek().Node : null;
+    public IAstNode? CurrentNode => _traversalStack.Count > 0 ? _traversalStack.Peek().Node : null;
 
     /// <summary>
     /// Get current traversal stack values.

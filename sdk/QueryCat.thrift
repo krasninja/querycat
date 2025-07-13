@@ -117,6 +117,15 @@ enum CursorSeekOrigin {
   END = 2
 }
 
+enum CompletionKind {
+  MISC = 0,
+  KEYWORD = 1,
+  FUNCTION = 2,
+  VARIABLE = 3,
+  PROPERTY = 4,
+  TEXT = 5,
+}
+
 exception QueryCatPluginException {
   1: required ErrorType type,
   2: required string error_message,
@@ -156,6 +165,44 @@ struct RegistrationResult {
   1: required i64 token, // Authorization token.
   2: required string version, // QueryCat version.
   3: optional LogLevel min_log_level // Minimal application log level.
+}
+
+struct ExecutionScope {
+  1: required i32 id,
+  2: required i32 parent_id // Get parent scope, -1 if root.
+}
+
+struct ScopeVariable {
+  1: required string name,
+  2: required VariantValue value
+}
+
+struct CompletionTextEdit {
+  1: required i32 start,
+  2: required i32 end,
+  3: required string new_text
+}
+
+struct CompletionResult {
+  1: required CompletionKind kind,
+  2: required string label,
+  3: required string documentation,
+  4: required double relevance,
+  5: required list<CompletionTextEdit> edits
+}
+
+struct StatisticRowError {
+  1: required QueryCatErrorCode error_code,
+  2: required i64 row_index,
+  3: required i32 column_index,
+  4: optional string value
+}
+
+struct Statistic {
+  1: required i64 execution_time_ms,
+  2: required i64 processed_count,
+  3: required i64 errors_count,
+  4: required list<StatisticRowError> errors
 }
 
 service PluginsManager {
@@ -212,6 +259,32 @@ service PluginsManager {
     3: required VariantValue value
   ) throws (1: QueryCatPluginException e),
 
+  list<ScopeVariable> GetVariables(
+    1: required i64 token, // Authorization token.
+    2: required i32 scope_id
+  ) throws (1: QueryCatPluginException e),
+
+  // Create the new variables and execution scope based on top of the current one.
+  ExecutionScope PushScope(
+    1: required i64 token // Authorization token.
+  ) throws (1: QueryCatPluginException e),
+
+  // Pop the current execution scope for stack and return it.
+  ExecutionScope PopScope(
+    1: required i64 token // Authorization token.
+  ) throws (1: QueryCatPluginException e),
+
+  // Get current top scope.
+  ExecutionScope PeekTopScope(
+    1: required i64 token // Authorization token.
+  ) throws (1: QueryCatPluginException e),
+
+  list<CompletionResult> GetCompletions(
+    1: required i64 token, // Authorization token.
+    2: required string text,
+    3: required i32 position
+  ),
+
   // Read binary data.
   binary Blob_Read(
     1: required i64 token, // Authorization token.
@@ -245,6 +318,11 @@ service PluginsManager {
     2: required LogLevel level,
     3: required string message,
     4: list<string> arguments
+  ) throws (1: QueryCatPluginException e),
+
+  // Get query execution statistic.
+  Statistic GetStatistic(
+    1: required i64 token // Authorization token.
   ) throws (1: QueryCatPluginException e)
 }
 
@@ -276,6 +354,12 @@ struct ContextQueryInfo {
   1: required list<Column> columns,
   2: required i64 offset,
   3: optional i64 limit
+}
+
+// Contains the general information.
+struct ContextInfo {
+  1: required i32 preread_rows_count,
+  2: required bool skip_if_no_columns
 }
 
 service Plugin {
@@ -337,7 +421,8 @@ service Plugin {
   // Supported objects: ROWS_INPUT, ROWS_OUTPUT.
   void RowsSet_SetContext(
     1: required Handle object_rows_set_handle,
-    2: required ContextQueryInfo context_query_info
+    2: required ContextQueryInfo context_query_info,
+    3: required ContextInfo context_info
   ) throws (1: QueryCatPluginException e),
 
   // Get rows.

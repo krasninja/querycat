@@ -79,6 +79,7 @@ public class PagingOutput : IRowsOutput
             else if (consoleKey.Key == ConsoleKey.Q && _cancellationTokenSource != null)
             {
                 await _cancellationTokenSource.CancelAsync();
+                return ErrorCode.NoData;
             }
         }
 

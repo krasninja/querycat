@@ -1,6 +1,5 @@
 using System.CommandLine;
 using System.Net;
-using QueryCat.Cli.Commands.Options;
 using QueryCat.Cli.Infrastructure;
 
 namespace QueryCat.Cli.Commands;
@@ -8,43 +7,60 @@ namespace QueryCat.Cli.Commands;
 internal class ServeCommand : BaseCommand
 {
     /// <inheritdoc />
-    public ServeCommand() : base("serve", "Run simple HTTP server.")
+    public ServeCommand() : base("serve", Resources.Messages.ServeCommand_Description)
     {
-        var urlsOption = new Option<string>("--url", description: "Endpoint to serve on.");
-        var allowOriginOption = new Option<string>("--allow-origin", description: "Enables CORS for the specified origin.");
-        var passwordOption = new Option<string>("--password", description: "Basic authentication password.");
-        var rootDirectoryOption = new Option<string>(aliases: ["-r", "--root-dir"], description: "Root directory for files serve.");
-        var safeModeOption = new Option<bool>("--safe-mode",
-            description: "Allow to call only safe (no modifications) functions.");
-        var allowedIPsSlotsOption = new Option<int?>("--allowed-ips-slots",
-            description: "Number of IPs that will be added to authorized list on first connect.");
-        var allowedIPsOption = new Option<string[]>("--allowed-ips",
-            description: "Allowed IP addresses to connect.\nExample: http://192.168.1.125:5555/")
+        var urlsOption = new Option<string>("--url")
         {
+            Description = Resources.Messages.ServeCommand_UrlsDescription,
+        };
+        var allowOriginOption = new Option<string>("--allow-origin")
+        {
+            Description = Resources.Messages.ServeCommand_AllowOriginDescription,
+        };
+        var passwordOption = new Option<string>("--password")
+        {
+            Description = Resources.Messages.ServeCommand_PasswordDescription,
+        };
+        var rootDirectoryOption = new Option<string>("-r", "--root-dir")
+        {
+            Description = Resources.Messages.ServeCommand_RootDirectoryDescription,
+        };
+        var safeModeOption = new Option<bool>("--safe-mode")
+        {
+            Description = Resources.Messages.ServeCommand_SafeModeDescription,
+        };
+        var allowedIPsSlotsOption = new Option<int?>("--allowed-ips-slots")
+        {
+            Description = Resources.Messages.ServeCommand_AllowedIPsSlotsDescription,
+        };
+        var allowedIPsOption = new Option<string[]>("--allowed-ips")
+        {
+            Description = Resources.Messages.ServeCommand_AllowsIPsDescription,
             AllowMultipleArgumentsPerToken = true,
         };
 
-        AddOption(urlsOption);
-        AddOption(allowOriginOption);
-        AddOption(passwordOption);
-        AddOption(rootDirectoryOption);
-        AddOption(safeModeOption);
-        AddOption(allowedIPsOption);
-        AddOption(allowedIPsSlotsOption);
-        this.SetHandler(async (context) =>
+        Add(urlsOption);
+        Add(allowOriginOption);
+        Add(passwordOption);
+        Add(rootDirectoryOption);
+        Add(safeModeOption);
+        Add(allowedIPsOption);
+        Add(allowedIPsSlotsOption);
+        this.SetAction(async (parseResult, cancellationToken) =>
         {
-            var applicationOptions = OptionsUtils.GetValueForOption(
-                new ApplicationOptionsBinder(LogLevelOption, PluginDirectoriesOption), context);
-            var urls = OptionsUtils.GetValueForOption(urlsOption, context);
-            var allowOrigin = OptionsUtils.GetValueForOption(allowOriginOption, context);
-            var password = OptionsUtils.GetValueForOption(passwordOption, context);
-            var safeMode = OptionsUtils.GetValueForOption(safeModeOption, context);
-            var rootDirectory = OptionsUtils.GetValueForOption(rootDirectoryOption, context);
-            var allowedIPs = OptionsUtils.GetValueForOption(allowedIPsOption, context);
-            var allowedIPsSlots = OptionsUtils.GetValueForOption(allowedIPsSlotsOption, context);
+            parseResult.Configuration.EnableDefaultExceptionHandler = false;
+
+            var applicationOptions = GetApplicationOptions(parseResult);
+            var urls = parseResult.GetValue(urlsOption);
+            var allowOrigin = parseResult.GetValue(allowOriginOption);
+            var password = parseResult.GetValue(passwordOption) ?? string.Empty;
+            var safeMode = parseResult.GetValue(safeModeOption);
+            var rootDirectory = parseResult.GetValue(rootDirectoryOption) ?? string.Empty;
+            var allowedIPs = parseResult.GetValue(allowedIPsOption) ?? [];
+            var allowedIPsSlots = parseResult.GetValue(allowedIPsSlotsOption);
 
             applicationOptions.InitializeLogger();
-            using var root = await applicationOptions.CreateApplicationRootAsync();
+            await using var root = await applicationOptions.CreateApplicationRootAsync();
             root.Thread.Options.AddRowNumberColumn = true;
             root.Thread.Options.SafeMode = safeMode;
             var webServer = new WebServer(root.Thread, new WebServerOptions
@@ -59,7 +75,7 @@ internal class ServeCommand : BaseCommand
             {
                 webServer.AllowOrigin = allowOrigin;
             }
-            await webServer.RunAsync(cancellationToken: context.GetCancellationToken());
+            await webServer.RunAsync(cancellationToken: cancellationToken);
         });
     }
 }

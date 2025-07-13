@@ -5,17 +5,18 @@ namespace QueryCat.Samples;
 internal class Program
 {
     private static readonly BaseUsage[] _samples =
-    {
+    [
         new AsyncFunctionUsage(),
         new BasicUsage(),
         new CollectionsUsage(),
         new CustomFunctionUsage(),
         new CustomInlineFunctionUsage(),
+        new InputClassUsage(),
         new ObjectExpressionsUsage(),
         new ParametersUsage(),
         new SetVariableUsage(),
-        new VariablesUsage(),
-    };
+        new VariablesUsage()
+    ];
 
     internal static async Task Main(string[] args)
     {

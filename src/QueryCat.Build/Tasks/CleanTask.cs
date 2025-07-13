@@ -16,10 +16,6 @@ public sealed class CleanTask : AsyncFrostingTask<BuildContext>
         {
             Configuration = DotNetConstants.ConfigurationRelease,
         });
-        context.DotNetClean(context.TimeItAppProjectDirectory, new DotNetCleanSettings
-        {
-            Configuration = DotNetConstants.ConfigurationRelease,
-        });
         context.DotNetClean(context.TestPluginAppProjectDirectory, new DotNetCleanSettings
         {
             Configuration = DotNetConstants.ConfigurationRelease,
@@ -27,10 +23,6 @@ public sealed class CleanTask : AsyncFrostingTask<BuildContext>
 
         // Dotnet clean with Debug configuration.
         context.DotNetClean(context.ConsoleAppProjectDirectory, new DotNetCleanSettings
-        {
-            Configuration = DotNetConstants.ConfigurationDebug,
-        });
-        context.DotNetClean(context.TimeItAppProjectDirectory, new DotNetCleanSettings
         {
             Configuration = DotNetConstants.ConfigurationDebug,
         });

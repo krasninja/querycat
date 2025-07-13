@@ -98,13 +98,13 @@ namespace QueryCat.Plugins.Sdk
               if (field.Type == TType.List)
               {
                 {
-                  var _list48 = await iprot.ReadListBeginAsync(cancellationToken);
-                  Operations = new List<string>(_list48.Count);
-                  for(int _i49 = 0; _i49 < _list48.Count; ++_i49)
+                  var _list80 = await iprot.ReadListBeginAsync(cancellationToken);
+                  Operations = new List<string>(_list80.Count);
+                  for(int _i81 = 0; _i81 < _list80.Count; ++_i81)
                   {
-                    string _elem50;
-                    _elem50 = await iprot.ReadStringAsync(cancellationToken);
-                    Operations.Add(_elem50);
+                    string _elem82;
+                    _elem82 = await iprot.ReadStringAsync(cancellationToken);
+                    Operations.Add(_elem82);
                   }
                   await iprot.ReadListEndAsync(cancellationToken);
                 }
@@ -148,32 +148,32 @@ namespace QueryCat.Plugins.Sdk
       oprot.IncrementRecursionDepth();
       try
       {
-        var tmp51 = new TStruct("KeyColumn");
-        await oprot.WriteStructBeginAsync(tmp51, cancellationToken);
+        var tmp83 = new TStruct("KeyColumn");
+        await oprot.WriteStructBeginAsync(tmp83, cancellationToken);
         #pragma warning disable IDE0017  // simplified init
-        var tmp52 = new TField();
-        tmp52.Name = "column_index";
-        tmp52.Type = TType.I32;
-        tmp52.ID = 1;
-        await oprot.WriteFieldBeginAsync(tmp52, cancellationToken);
+        var tmp84 = new TField();
+        tmp84.Name = "column_index";
+        tmp84.Type = TType.I32;
+        tmp84.ID = 1;
+        await oprot.WriteFieldBeginAsync(tmp84, cancellationToken);
         await oprot.WriteI32Async(ColumnIndex, cancellationToken);
         await oprot.WriteFieldEndAsync(cancellationToken);
-        tmp52.Name = "is_required";
-        tmp52.Type = TType.Bool;
-        tmp52.ID = 2;
-        await oprot.WriteFieldBeginAsync(tmp52, cancellationToken);
+        tmp84.Name = "is_required";
+        tmp84.Type = TType.Bool;
+        tmp84.ID = 2;
+        await oprot.WriteFieldBeginAsync(tmp84, cancellationToken);
         await oprot.WriteBoolAsync(IsRequired, cancellationToken);
         await oprot.WriteFieldEndAsync(cancellationToken);
         if((Operations != null))
         {
-          tmp52.Name = "operations";
-          tmp52.Type = TType.List;
-          tmp52.ID = 3;
-          await oprot.WriteFieldBeginAsync(tmp52, cancellationToken);
+          tmp84.Name = "operations";
+          tmp84.Type = TType.List;
+          tmp84.ID = 3;
+          await oprot.WriteFieldBeginAsync(tmp84, cancellationToken);
           await oprot.WriteListBeginAsync(new TList(TType.String, Operations.Count), cancellationToken);
-          foreach (string _iter53 in Operations)
+          foreach (string _iter85 in Operations)
           {
-            await oprot.WriteStringAsync(_iter53, cancellationToken);
+            await oprot.WriteStringAsync(_iter85, cancellationToken);
           }
           await oprot.WriteListEndAsync(cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
@@ -212,18 +212,18 @@ namespace QueryCat.Plugins.Sdk
 
     public override string ToString()
     {
-      var tmp54 = new StringBuilder("KeyColumn(");
-      tmp54.Append(", ColumnIndex: ");
-      ColumnIndex.ToString(tmp54);
-      tmp54.Append(", IsRequired: ");
-      IsRequired.ToString(tmp54);
+      var tmp86 = new StringBuilder("KeyColumn(");
+      tmp86.Append(", ColumnIndex: ");
+      ColumnIndex.ToString(tmp86);
+      tmp86.Append(", IsRequired: ");
+      IsRequired.ToString(tmp86);
       if((Operations != null))
       {
-        tmp54.Append(", Operations: ");
-        Operations.ToString(tmp54);
+        tmp86.Append(", Operations: ");
+        Operations.ToString(tmp86);
       }
-      tmp54.Append(')');
-      return tmp54.ToString();
+      tmp86.Append(')');
+      return tmp86.ToString();
     }
   }
 

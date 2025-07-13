@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend.Utils;
@@ -37,12 +38,12 @@ internal sealed class CacheStream : Stream
     /// <summary>
     /// Returns <c>true</c> if read from cache instead of source stream.
     /// </summary>
-    public bool IsInCache => _cachePosition < _buffer.SizeLong;
+    public bool IsInCache => _cachePosition < _buffer.Size;
 
     /// <summary>
     /// Current cache size.
     /// </summary>
-    public long CacheSize => _buffer.SizeLong;
+    public long CacheSize => _buffer.Size;
 
     public Stream UnderlyingStream => _stream;
 
@@ -131,18 +132,29 @@ internal sealed class CacheStream : Stream
         return bytesRead;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private int WriteToCache(byte[] buffer, int offset, int bytesRead)
-        => WriteToCache(buffer.AsMemory(offset, bytesRead));
+    {
+        if (!_cacheMode)
+        {
+            return 0;
+        }
+        return WriteToCache(buffer.AsMemory(offset, bytesRead));
+    }
 
     private int WriteToCache(Memory<byte> buffer)
     {
-        if (_cacheMode && buffer.IsEmpty)
+        if (!_cacheMode)
+        {
+            return 0;
+        }
+        if (buffer.IsEmpty)
         {
             return 0;
         }
         var span = buffer.Span;
         _buffer.Write(span);
-        _cachePosition = _buffer.SizeLong;
+        _cachePosition = _buffer.Size;
         return span.Length;
     }
 

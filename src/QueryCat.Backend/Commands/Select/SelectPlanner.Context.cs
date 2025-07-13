@@ -346,7 +346,7 @@ internal sealed partial class SelectPlanner
         var rowsIterator = await CreateIteratorAsync(queryNode, parentContext: context, cancellationToken);
 
         var rowsInput = new RowsIteratorInput(rowsIterator);
-        var rowsInputContext = new SelectInputQueryContext(rowsInput);
+        var rowsInputContext = new SelectInputQueryContext(rowsInput, ExecutionThread.Options);
         rowsInput.QueryContext = rowsInputContext;
         context.AddInput(rowsInputContext);
         Context_SetAlias(rowsInput, queryNode.Alias);

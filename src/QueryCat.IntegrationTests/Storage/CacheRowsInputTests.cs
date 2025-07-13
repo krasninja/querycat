@@ -1,4 +1,5 @@
 using Xunit;
+using QueryCat.Backend;
 using QueryCat.Backend.Commands.Select;
 using QueryCat.Backend.Commands.Select.Inputs;
 using QueryCat.Backend.Core.Data;
@@ -73,7 +74,7 @@ public class CacheRowsInputTests
         var input2 = new RowsIteratorInput(rowsFrame2.GetIterator(), "input2");
         var proxyInput = new ProxyRowsInput(input1);
         var cacheRowsInput = new CacheRowsInput(NullExecutionThread.Instance, proxyInput);
-        cacheRowsInput.QueryContext = new SelectInputQueryContext(cacheRowsInput);
+        cacheRowsInput.QueryContext = new SelectInputQueryContext(cacheRowsInput, new ExecutionOptions());
         var iterator = cacheRowsInput.AsIterable(autoFetch: true);
 
         // Act.
@@ -110,7 +111,7 @@ public class CacheRowsInputTests
         var input2 = new RowsIteratorInput(rowsFrame2.GetIterator(), "input2");
         var proxyInput = new ProxyRowsInput(input1);
         var cacheRowsInput = new CacheRowsInput(NullExecutionThread.Instance, proxyInput);
-        cacheRowsInput.QueryContext = new SelectInputQueryContext(cacheRowsInput);
+        cacheRowsInput.QueryContext = new SelectInputQueryContext(cacheRowsInput, new ExecutionOptions());
         var iterator = cacheRowsInput.AsIterable(autoFetch: true);
 
         // Act.

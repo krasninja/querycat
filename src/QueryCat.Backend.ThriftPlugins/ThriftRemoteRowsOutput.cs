@@ -41,12 +41,21 @@ internal sealed class ThriftRemoteRowsOutput : IRowsOutput
         AsyncUtils.RunSync(async ct =>
         {
             using var session = await _context.GetSessionAsync(ct);
-            await session.ClientProxy.RowsSet_SetContextAsync(_objectHandle, new ContextQueryInfo
-            {
-                Columns = QueryContext.QueryInfo.Columns.Select(SdkConvert.Convert).ToList(),
-                Limit = QueryContext.QueryInfo.Limit ?? -1,
-                Offset = QueryContext.QueryInfo.Offset,
-            }, ct);
+            await session.ClientProxy.RowsSet_SetContextAsync(
+                _objectHandle,
+                new ContextQueryInfo
+                {
+                    Columns = QueryContext.QueryInfo.Columns.Select(SdkConvert.Convert).ToList(),
+                    Limit = QueryContext.QueryInfo.Limit ?? -1,
+                    Offset = QueryContext.QueryInfo.Offset,
+                },
+                new ContextInfo
+                {
+                    PrereadRowsCount = QueryContext.PrereadRowsCount,
+                    SkipIfNoColumns = QueryContext.SkipIfNoColumns,
+                },
+                ct
+            );
         });
     }
 

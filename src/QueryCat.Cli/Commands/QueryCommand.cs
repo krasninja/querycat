@@ -1,7 +1,6 @@
 using System.CommandLine;
 using QueryCat.Backend;
 using QueryCat.Backend.Formatters;
-using QueryCat.Cli.Commands.Options;
 using QueryCat.Cli.Infrastructure;
 
 namespace QueryCat.Cli.Commands;
@@ -10,124 +9,132 @@ internal class QueryCommand : BaseQueryCommand
 {
     public const string QueryCommandName = "query";
 
-    public QueryCommand() : base(QueryCommandName, "Execute SQL query.")
-    {
-        var maxErrorsOption = new Option<int>("--max-errors",
-            description: "Max number of errors before abort. -1 is ignore.",
-            getDefaultValue: () => -1);
-        var statisticOption = new Option<bool>("--stat",
-            description: "Show statistic.",
-            getDefaultValue: () => false);
-        var detailedStatisticOption = new Option<bool>("--detailed-stat",
-            description: "Show detailed statistic (include rows errors).",
-            getDefaultValue: () => false);
-        var rowNumberOption = new Option<bool>("--row-number",
-            description: "Include row number column.",
-            getDefaultValue: () => false);
-        var pageSizeOption = new Option<int>("--page-size",
-            description: "Output page size. Set -1 to show all.",
-            getDefaultValue: () => 20);
-        var outputStyleOption = new Option<TextTableOutput.Style>("--output-style",
-            description: "Output style.",
-            getDefaultValue: () => TextTableOutput.Style.Table1);
-        var analyzeRowsOption = new Option<int>("--analyze-rows",
-            description: "Number of rows to analyze. -1 to analyze all.",
-            getDefaultValue: () => 10);
-        var columnsSeparatorOption = new Option<string?>("--columns-separator",
-            description: "Character to use to separate columns.")
-            {
-                IsRequired = false,
-            };
-        var disableCacheOption = new Option<bool>("--disable-cache",
-            description: "Do not use memory cache for sub-queries.");
-        var noHeaderOption = new Option<bool>("--no-header",
-            description: "Do not render header.");
-        var floatNumberOption = new Option<string>("--float-format",
-            description: "Float numbers format.",
-            getDefaultValue: () => "F");
-        var followOption = new Option<bool>("--follow",
-            description: "Output appended data as the input source grows.");
-        var tailOption = new Option<int>("--tail",
-            description: "Return the specific number of rows from tail.",
-            getDefaultValue: () => -1);
-        var timeoutOption = new Option<int>("--timeout",
-            description: "Query timeout in ms.");
-        var safeModeOption = new Option<bool>("--safe-mode",
-            description: "Allow to call only safe (no modifications) functions.");
+    internal static readonly TimeSpan FollowDefaultTimeout = TimeSpan.FromSeconds(2);
 
-        this.AddOption(maxErrorsOption);
-        this.AddOption(statisticOption);
-        this.AddOption(detailedStatisticOption);
-        this.AddOption(rowNumberOption);
-        this.AddOption(pageSizeOption);
-        this.AddOption(outputStyleOption);
-        this.AddOption(analyzeRowsOption);
-        this.AddOption(columnsSeparatorOption);
-        this.AddOption(disableCacheOption);
-        this.AddOption(noHeaderOption);
-        this.AddOption(floatNumberOption);
-        this.AddOption(followOption);
-        this.AddOption(tailOption);
-        this.AddOption(timeoutOption);
-        this.AddOption(safeModeOption);
-        this.SetHandler(async (context) =>
+    public QueryCommand() : base(QueryCommandName, Resources.Messages.QueryCommand_Description)
+    {
+        var maxErrorsOption = new Option<int>("--max-errors")
         {
-            var applicationOptions = OptionsUtils.GetValueForOption(
-                new ApplicationOptionsBinder(LogLevelOption, PluginDirectoriesOption), context);
-            var query = OptionsUtils.GetValueForOption(QueryArgument, context);
-            var variables = OptionsUtils.GetValueForOption(VariablesOption, context);
-            var files = OptionsUtils.GetValueForOption(FilesOption, context);
-            var queryOptions = OptionsUtils.GetValueForOption(new QueryOptionsBinder(
-                maxErrorsOption,
-                statisticOption,
-                detailedStatisticOption,
-                rowNumberOption,
-                pageSizeOption,
-                outputStyleOption,
-                analyzeRowsOption,
-                columnsSeparatorOption,
-                disableCacheOption,
-                noHeaderOption,
-                floatNumberOption,
-                followOption,
-                tailOption,
-                timeoutOption,
-                safeModeOption), context);
+            Description = Resources.Messages.QueryCommand_MaxErrorsDescription,
+            DefaultValueFactory = _ => -1,
+        };
+        var statisticOption = new Option<bool>("--stat")
+        {
+            Description = Resources.Messages.QueryCommand_StatisticDescription,
+        };
+        var detailedStatisticOption = new Option<bool>("--detailed-stat")
+        {
+            Description = Resources.Messages.QueryCommand_DetailedStatisticDescription,
+        };
+        var rowNumberOption = new Option<bool>("--row-number")
+        {
+            Description = Resources.Messages.QueryCommand_RowNumberDescription,
+        };
+        var pageSizeOption = new Option<int>("--page-size")
+        {
+            Description = Resources.Messages.QueryCommand_PageSizeDescription,
+            DefaultValueFactory = _ => 20,
+        };
+        var analyzeRowsOption = new Option<int>("--analyze-rows")
+        {
+            Description = Resources.Messages.QueryCommand_AnalyzeRowsDescription,
+            DefaultValueFactory = _ => 10,
+        };
+        var skipIfNoColumnsOption = new Option<bool>("--skip-if-no-columns")
+        {
+            Description = Resources.Messages.QueryCommand_SkipIfNoColumnsDescription,
+        };
+        var disableCacheOption = new Option<bool>("--disable-cache")
+        {
+            Description = Resources.Messages.QueryCommand_DisableCacheDescription,
+        };
+        var noHeaderOption = new Option<bool>("--no-header")
+        {
+            Description = Resources.Messages.QueryCommand_NoHeaderDescription,
+        };
+        var floatNumberOption = new Option<string>("--float-format")
+        {
+            Description = Resources.Messages.QueryCommand_FloatFormatDescription,
+            DefaultValueFactory = _ => "F",
+        };
+        var followOption = new Option<bool>("--follow")
+        {
+            Description = Resources.Messages.QueryCommand_FollowDescription,
+        };
+        var tailOption = new Option<int>("--tail")
+        {
+            Description = Resources.Messages.QueryCommand_TailDescription,
+            DefaultValueFactory = _ => -1,
+        };
+        var timeoutOption = new Option<int>("--timeout")
+        {
+            Description = Resources.Messages.QueryCommand_TimeoutDescription,
+        };
+        var safeModeOption = new Option<bool>("--safe-mode")
+        {
+            Description = Resources.Messages.QueryCommand_SafeModeDescription,
+        };
+
+        this.Add(maxErrorsOption);
+        this.Add(statisticOption);
+        this.Add(detailedStatisticOption);
+        this.Add(rowNumberOption);
+        this.Add(pageSizeOption);
+        this.Add(analyzeRowsOption);
+        this.Add(skipIfNoColumnsOption);
+        this.Add(disableCacheOption);
+        this.Add(noHeaderOption);
+        this.Add(floatNumberOption);
+        this.Add(followOption);
+        this.Add(tailOption);
+        this.Add(timeoutOption);
+        this.Add(safeModeOption);
+        this.SetAction(async (parseResult, cancellationToken) =>
+        {
+            parseResult.Configuration.EnableDefaultExceptionHandler = false;
+
+            var applicationOptions = GetApplicationOptions(parseResult);
+            var query = parseResult.GetValue(QueryArgument);
+            var variables = parseResult.GetValue(VariablesOption);
+            var files = parseResult.GetValue(FilesOption);
 
             applicationOptions.InitializeLogger();
             var tableOutput = new TextTableOutput(
                 stream: Stdio.GetConsoleOutput(),
-                hasHeader: !queryOptions.NoHeader,
-                separator: queryOptions.ColumnsSeparator,
-                style: queryOptions.OutputStyle,
-                floatNumberFormat: queryOptions.FloatNumberFormat);
+                hasHeader: !parseResult.GetValue(noHeaderOption),
+                separator: parseResult.GetValue(ColumnsSeparatorOption),
+                style: parseResult.GetValue(OutputStyleOption),
+                floatNumberFormat: parseResult.GetValue(floatNumberOption));
             var options = new AppExecutionOptions
             {
-                AddRowNumberColumn = queryOptions.RowNumberOption,
-                ShowDetailedStatistic = queryOptions.DetailedStatistic,
-                MaxErrors = queryOptions.MaxErrors,
-                AnalyzeRowsCount = queryOptions.AnalyzeRows,
-                DisableCache = queryOptions.DisableCache,
+                AddRowNumberColumn = parseResult.GetValue(rowNumberOption),
+                ShowDetailedStatistic = parseResult.GetValue(detailedStatisticOption),
+                MaxErrors = parseResult.GetValue(maxErrorsOption),
+                AnalyzeRowsCount = parseResult.GetValue(analyzeRowsOption),
+                SkipIfNoColumns = parseResult.GetValue(skipIfNoColumnsOption),
+                DisableCache = parseResult.GetValue(disableCacheOption),
                 UseConfig = true,
                 RunBootstrapScript = true,
-                FollowTimeout = queryOptions.FollowTimeout,
-                TailCount = queryOptions.TailCount,
-                QueryTimeout = queryOptions.QueryTimeout,
-                SafeMode = queryOptions.SafeMode,
+                FollowTimeout = parseResult.GetValue(followOption) ? FollowDefaultTimeout : TimeSpan.Zero,
+                TailCount = parseResult.GetValue(tailOption),
+                QueryTimeout = TimeSpan.FromMilliseconds(parseResult.GetValue(timeoutOption)),
+                SafeMode = parseResult.GetValue(safeModeOption),
             };
-            if (queryOptions.AnalyzeRows < 0)
+            if (parseResult.GetValue(analyzeRowsOption) < 0)
             {
                 options.AnalyzeRowsCount = int.MaxValue;
             }
-            using var root = await applicationOptions.CreateApplicationRootAsync(options);
-            options.DefaultRowsOutput = new PagingOutput(tableOutput, cancellationTokenSource: root.CancellationTokenSource)
+
+            await using var root = await applicationOptions.CreateApplicationRootAsync(options);
+            var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            options.DefaultRowsOutput = new PagingOutput(tableOutput, cancellationTokenSource: cts)
             {
-                PagingRowsCount = queryOptions.PageSize,
+                PagingRowsCount = parseResult.GetValue(pageSizeOption),
             };
             AddVariables(root.Thread, variables);
-            await RunQueryAsync(root.Thread, query, files, root.CancellationTokenSource.Token);
+            await RunQueryAsync(root.Thread, query, files, cts.Token);
 
-            if (queryOptions.Statistic || queryOptions.DetailedStatistic)
+            if (parseResult.GetValue(statisticOption) || parseResult.GetValue(detailedStatisticOption))
             {
                 Console.WriteLine(new string('-', 5));
                 Console.WriteLine(root.Thread.Statistic.Dump());

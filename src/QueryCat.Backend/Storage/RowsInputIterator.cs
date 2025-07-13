@@ -54,6 +54,28 @@ public class RowsInputIterator : IRowsIterator, IRowsIteratorParent
         }
 
         public void Reset() => Array.Fill(_fetched, false);
+
+        /// <inheritdoc />
+        public override void Copy(Row toRow)
+        {
+            for (var i = 0; i < _fetched.Length; i++)
+            {
+                FetchValue(i);
+            }
+            Array.Fill(_fetched, true);
+            base.Copy(toRow);
+        }
+
+        /// <inheritdoc />
+        public override void Copy(int fromRowOffset, Row toRow, int toRowOffset)
+        {
+            for (var i = fromRowOffset; i < _fetched.Length; i++)
+            {
+                FetchValue(i);
+                _fetched[i] = true;
+            }
+            base.Copy(fromRowOffset, toRow, toRowOffset);
+        }
     }
 
     private readonly int _id = IdGenerator.GetNext();

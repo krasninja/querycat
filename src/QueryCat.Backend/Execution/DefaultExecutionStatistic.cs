@@ -17,6 +17,9 @@ public sealed class DefaultExecutionStatistic : ExecutionStatistic
     private readonly List<RowErrorInfo> _errorRows = new();
 
     /// <inheritdoc />
+    public override IReadOnlyList<RowErrorInfo> Errors => _errorRows;
+
+    /// <inheritdoc />
     public override void AddError(in RowErrorInfo info)
     {
         if (info.ErrorCode == ErrorCode.OK)

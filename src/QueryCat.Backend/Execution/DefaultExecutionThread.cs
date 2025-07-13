@@ -104,7 +104,7 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IAsync
     /// <summary>
     /// AST builder.
     /// </summary>
-    internal IAstBuilder AstBuilder { get; }
+    private IAstBuilder AstBuilder { get; }
 
     /// <inheritdoc />
     public IExecutionScope TopScope => _topScope;
@@ -421,6 +421,8 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IAsync
                 if (!isOpened)
                 {
                     rowsOutput.QueryContext = new RowsOutputQueryContext(rowsIterator.Columns, ConfigStorage);
+                    rowsOutput.QueryContext.PrereadRowsCount = Options.AnalyzeRowsCount;
+                    rowsOutput.QueryContext.SkipIfNoColumns = Options.SkipIfNoColumns;
                     await rowsOutput.OpenAsync(ct);
                     isOpened = true;
                 }
