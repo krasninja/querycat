@@ -20,8 +20,9 @@ public sealed class PluginsTests
         thread.FunctionsManager.RegisterFunction(SamplePluginRowsInput.SamplePlugin);
 
         // Act.
-        await thread.RunAsync(@"SELECT * FROM plugin();");
-        var result = PrepareResult(TestThread.GetQueryResult(thread));
+        var value = await thread.RunAsync(@"SELECT * FROM plugin();");
+        var result = await TestThread.GetQueryResultAsync(value);
+        result = PrepareResult(result);
 
         // Assert.
         Assert.Equal("123456789", result);
@@ -35,8 +36,9 @@ public sealed class PluginsTests
         thread.FunctionsManager.RegisterFunction(SamplePluginRowsIterator.SamplePlugin);
 
         // Act.
-        await thread.RunAsync(@"SELECT * FROM plugin();");
-        var result = PrepareResult(TestThread.GetQueryResult(thread));
+        var value = await thread.RunAsync(@"SELECT * FROM plugin();");
+        var result = await TestThread.GetQueryResultAsync(value);
+        result = PrepareResult(result);
 
         // Assert.
         Assert.Equal("123456789", result);
@@ -50,8 +52,9 @@ public sealed class PluginsTests
         thread.FunctionsManager.RegisterFunction(SamplePluginInput.SamplePlugin);
 
         // Act.
-        await thread.RunAsync(@"SELECT * FROM plugin();");
-        var result = PrepareResult(TestThread.GetQueryResult(thread));
+        var value = await thread.RunAsync(@"SELECT * FROM plugin();");
+        var result = await TestThread.GetQueryResultAsync(value);
+        result = PrepareResult(result);
 
         // Assert.
         Assert.Equal("123456789", result);

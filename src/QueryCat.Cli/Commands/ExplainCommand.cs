@@ -35,7 +35,7 @@ internal class ExplainCommand : BaseQueryCommand
                 }
             };
             AddVariables(root.Thread, variables);
-            await RunQueryAsync(root.Thread, query, files, cancellationToken);
+            await RunQueryAsync(root.Thread, root.RowsOutput, query, files, cancellationToken);
         });
     }
 }

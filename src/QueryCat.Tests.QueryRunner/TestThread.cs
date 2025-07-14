@@ -1,7 +1,8 @@
 using System.Globalization;
 using QueryCat.Backend;
 using QueryCat.Backend.Core;
-using QueryCat.Backend.Core.Execution;
+using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Formatters;
 using QueryCat.Backend.Storage;
@@ -20,7 +21,6 @@ public static class TestThread
     {
         return new ExecutionThreadBootstrapper(new ExecutionOptions
             {
-                DefaultRowsOutput = CreateDsvOutput(),
                 UseConfig = false,
                 AddRowNumberColumn = false,
             })
@@ -29,7 +29,7 @@ public static class TestThread
             .WithStandardUriResolvers();
     }
 
-    private static DsvOutput CreateDsvOutput()
+    private static IRowsOutput CreateDsvOutput()
     {
         return new DsvOutput(
             new DsvOptions(new MemoryStream())
@@ -67,25 +67,19 @@ public static class TestThread
     /// <summary>
     /// Get last query execution result as string.
     /// </summary>
-    /// <param name="executionThread">Instance of execution thread.</param>
+    /// <param name="result">Query result.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Result.</returns>
-    public static string GetQueryResult(IExecutionThread<ExecutionOptions> executionThread)
+    public static async Task<string> GetQueryResultAsync(VariantValue result, CancellationToken cancellationToken = default)
     {
-        var options = executionThread.Options;
-        var stream = (MemoryStream)((DsvOutput)options.DefaultRowsOutput).Stream;
+        var iterator = RowsIteratorConverter.Convert(result);
+        var rowsOutput = CreateDsvOutput();
+        await rowsOutput.WriteAsync(iterator, cancellationToken: cancellationToken);
+
+        var stream = (MemoryStream)((DsvOutput)rowsOutput).Stream;
         stream.Seek(0, SeekOrigin.Begin);
         using var sr = new StreamReader(stream);
-        return sr.ReadToEnd().Replace("\r\n", "\n").Trim();
-    }
-
-    /// <summary>
-    /// Clear output result.
-    /// </summary>
-    /// <param name="executionThread">Instance of execution thread.</param>
-    public static void ClearQueryResult(IExecutionThread<ExecutionOptions> executionThread)
-    {
-        var options = executionThread.Options;
-        options.DefaultRowsOutput = CreateDsvOutput();
+        return (await sr.ReadToEndAsync(cancellationToken)).Replace("\r\n", "\n").Trim();
     }
 
     /// <summary>

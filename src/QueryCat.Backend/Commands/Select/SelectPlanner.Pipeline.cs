@@ -369,7 +369,6 @@ internal sealed partial class SelectPlanner
             context.CurrentIterator,
             context.OutputArgumentsFunc,
             functionCallInfo,
-            ExecutionThread.Options.DefaultRowsOutput,
             queryContext);
 
         // If we have INTO clause defined we execute iterator and write rows into

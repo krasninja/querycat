@@ -1,5 +1,3 @@
-using QueryCat.Backend.Core.Data;
-
 namespace QueryCat.Backend;
 
 /// <summary>
@@ -7,11 +5,6 @@ namespace QueryCat.Backend;
 /// </summary>
 public class ExecutionOptions
 {
-    /// <summary>
-    /// Default output target if INTO clause is not specified.
-    /// </summary>
-    public IRowsOutput DefaultRowsOutput { get; set; } = NullRowsOutput.Instance;
-
     /// <summary>
     /// Add row number to output.
     /// </summary>

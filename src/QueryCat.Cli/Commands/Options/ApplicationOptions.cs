@@ -164,7 +164,7 @@ internal sealed class ApplicationOptions
             separator: columnsSeparator,
             style: outputStyle);
         var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        root.Thread.Options.DefaultRowsOutput = new PagingOutput(
+        root.RowsOutput = new PagingOutput(
             tableOutput, pagingRowsCount: PagingOutput.NoLimit, cancellationTokenSource: cts);
         return root;
     }

@@ -127,12 +127,12 @@ internal class QueryCommand : BaseQueryCommand
 
             await using var root = await applicationOptions.CreateApplicationRootAsync(options);
             var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            options.DefaultRowsOutput = new PagingOutput(tableOutput, cancellationTokenSource: cts)
+            root.RowsOutput = new PagingOutput(tableOutput, cancellationTokenSource: cts)
             {
                 PagingRowsCount = parseResult.GetValue(pageSizeOption),
             };
             AddVariables(root.Thread, variables);
-            await RunQueryAsync(root.Thread, query, files, cts.Token);
+            await RunQueryAsync(root.Thread, root.RowsOutput, query, files, cts.Token);
 
             if (parseResult.GetValue(statisticOption) || parseResult.GetValue(detailedStatisticOption))
             {

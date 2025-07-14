@@ -22,7 +22,7 @@ internal class AstCommand : BaseQueryCommand
                 threadArgs.ContinueExecution = false;
             };
             AddVariables(root.Thread, variables);
-            await RunQueryAsync(root.Thread, query, files, cancellationToken);
+            await RunQueryAsync(root.Thread, root.RowsOutput, query, files, cancellationToken);
         });
     }
 }

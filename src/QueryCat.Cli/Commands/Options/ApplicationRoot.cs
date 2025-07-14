@@ -1,3 +1,4 @@
+using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Plugins;
 using QueryCat.Backend.Execution;
 
@@ -17,6 +18,11 @@ internal sealed class ApplicationRoot : IDisposable, IAsyncDisposable
     /// Plugins manager.
     /// </summary>
     public IPluginsManager PluginsManager { get; }
+
+    /// <summary>
+    /// Application level rows output.
+    /// </summary>
+    public IRowsOutput RowsOutput { get; set; } = NullRowsOutput.Instance;
 
     private bool _isDisposed;
 

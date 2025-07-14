@@ -38,7 +38,7 @@ internal class SchemaCommand : BaseQueryCommand
                 }
             };
             AddVariables(thread, variables);
-            await RunQueryAsync(thread, query, files, cancellationToken);
+            await RunQueryAsync(thread, root.RowsOutput, query, files, cancellationToken);
         });
     }
 }

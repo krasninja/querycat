@@ -52,7 +52,6 @@ internal class PluginDebugCommand : BaseQueryCommand
             var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
             options.PluginDirectories.AddRange(applicationOptions.PluginDirectories);
-            options.DefaultRowsOutput = new PagingOutput(tableOutput, cancellationTokenSource: cts);
             options.FollowTimeout = follow ? QueryCommand.FollowDefaultTimeout : TimeSpan.Zero;
 
             await using var thread = new ExecutionThreadBootstrapper(options)
@@ -82,7 +81,8 @@ internal class PluginDebugCommand : BaseQueryCommand
             _logger.LogInformation("Waiting for connections.");
             await thread.PluginsManager.PluginsLoader.LoadAsync(new PluginsLoadingOptions(), cts.Token);
             AddVariables(thread, variables);
-            await RunQueryAsync(thread, query, files, cts.Token);
+            var output = new PagingOutput(tableOutput, cancellationTokenSource: cts);
+            await RunQueryAsync(thread, output, query, files, cts.Token);
         });
     }
 }
