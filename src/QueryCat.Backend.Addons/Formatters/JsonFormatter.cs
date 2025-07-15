@@ -17,8 +17,8 @@ internal sealed class JsonFormatter : IRowsFormatter
     [FunctionFormatters(".json", "application/json")]
     public static VariantValue Json(IExecutionThread thread)
     {
-        var rowsSource = new JsonFormatter(thread.Stack.GetAtOrDefault(0).AsString);
-        return VariantValue.CreateFromObject(rowsSource);
+        var formatter = new JsonFormatter(thread.Stack.GetAtOrDefault(0).AsString);
+        return VariantValue.CreateFromObject(formatter);
     }
 
     private readonly string? _jsonPath;
