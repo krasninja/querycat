@@ -38,7 +38,11 @@ internal sealed class CacheStream : Stream
     /// <summary>
     /// Returns <c>true</c> if read from cache instead of source stream.
     /// </summary>
-    public bool IsInCache => _cachePosition < _buffer.Size;
+    public bool IsInCache
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => _cachePosition < _buffer.Size;
+    }
 
     /// <summary>
     /// Current cache size.
@@ -71,7 +75,10 @@ internal sealed class CacheStream : Stream
         if (IsInCache)
         {
             bytesRead = ReadFromCache(buffer, offset, count);
-            bytesRead += _stream.Read(buffer, offset + bytesRead, count - bytesRead);
+            if (!IsInCache)
+            {
+                bytesRead += _stream.Read(buffer, offset + bytesRead, count - bytesRead);
+            }
         }
         // Read from the stream.
         else
@@ -97,7 +104,10 @@ internal sealed class CacheStream : Stream
         if (IsInCache)
         {
             bytesRead = ReadFromCache(buffer, offset, count);
-            bytesRead += await _stream.ReadAsync(buffer, offset + bytesRead, count - bytesRead, cancellationToken);
+            if (!IsInCache)
+            {
+                bytesRead += await _stream.ReadAsync(buffer, offset + bytesRead, count - bytesRead, cancellationToken);
+            }
         }
         // Read from the stream.
         else
@@ -123,7 +133,10 @@ internal sealed class CacheStream : Stream
         if (IsInCache)
         {
             bytesRead = ReadFromCache(buffer);
-            bytesRead += await _stream.ReadAsync(buffer.Slice(bytesRead, buffer.Length - bytesRead), cancellationToken);
+            if (!IsInCache)
+            {
+                bytesRead += await _stream.ReadAsync(buffer.Slice(bytesRead, buffer.Length - bytesRead), cancellationToken);
+            }
         }
         // Read from the stream.
         else
@@ -170,7 +183,7 @@ internal sealed class CacheStream : Stream
         var span = _buffer.GetSpan(cachePosition, cachePosition + buffer.Length);
         _cachePosition += span.Length;
         span.CopyTo(buffer.Span);
-        if (_cachePosition != _stream.Position)
+        if (!IsInCache && _cachePosition != _stream.Position)
         {
             _stream.Position = _cachePosition;
         }
