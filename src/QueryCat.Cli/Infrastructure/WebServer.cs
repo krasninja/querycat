@@ -10,6 +10,7 @@ using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Formatters;
 using QueryCat.Backend.Storage;
@@ -238,14 +239,17 @@ internal sealed partial class WebServer
         _logger.LogInformation("[{Address}] Schema: {Query}", request.RemoteEndPoint.Address, query);
 
         var thread = (DefaultExecutionThread)_executionThread;
-        async void ThreadOnStatementExecuted(object? sender, ExecuteEventArgs e)
+        void ThreadOnStatementExecuted(object? sender, ExecuteEventArgs e)
         {
             if (!e.Result.IsNull && e.Result.Type == DataType.Object
                 && e.Result.AsObject is IRowsSchema rowsSchema)
             {
-                var schema = await FunctionCaller.CallWithArgumentsAsync(Backend.Functions.InfoFunctions.Schema, thread,
-                    [rowsSchema], cancellationToken);
-                await WriteValueAsync(schema, request, response, cancellationToken);
+                AsyncUtils.RunSync(async () =>
+                {
+                    var schema = await FunctionCaller.CallWithArgumentsAsync(Backend.Functions.InfoFunctions.Schema, thread,
+                        [rowsSchema], cancellationToken);
+                    await WriteValueAsync(schema, request, response, cancellationToken);
+                });
                 e.ContinueExecution = false;
             }
         }

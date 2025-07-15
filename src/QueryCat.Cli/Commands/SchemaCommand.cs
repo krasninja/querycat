@@ -1,6 +1,7 @@
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Functions;
 
 namespace QueryCat.Cli.Commands;
@@ -26,15 +27,18 @@ internal class SchemaCommand : BaseQueryCommand
             );
             var thread = root.Thread;
             var rowsOutput = root.RowsOutput;
-            thread.StatementExecuted += async (_, args) =>
+            thread.StatementExecuted += (_, args) =>
             {
                 if (!args.Result.IsNull
                     && args.Result.Type == DataType.Object
                     && args.Result.AsObject is IRowsSchema rowsSchema)
                 {
+                    AsyncUtils.RunSync(async () =>
+                    {
+                        var schema = await FunctionCaller.CallWithArgumentsAsync(InfoFunctions.Schema, thread, [rowsSchema]);
+                        await WriteAsync(thread, schema, rowsOutput, cancellationToken);
+                    });
                     args.ContinueExecution = false;
-                    var schema = await FunctionCaller.CallWithArgumentsAsync(InfoFunctions.Schema, thread, [rowsSchema]);
-                    await WriteAsync(thread, schema, rowsOutput, cancellationToken);
                 }
             };
             AddVariables(thread, variables);
