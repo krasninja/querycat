@@ -6,8 +6,6 @@ using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Functions;
-using QueryCat.Backend.Relational.Iterators;
-using QueryCat.Backend.Storage;
 
 namespace QueryCat.Cli.Commands;
 
@@ -86,110 +84,6 @@ internal abstract class BaseQueryCommand : BaseCommand
 #endif
 
         await WriteAsync(executionThread, result, rowsOutput, cancellationToken);
-    }
-
-    protected static async Task WriteAsync(IExecutionThread<ExecutionOptions> executionThread, VariantValue result,
-        IRowsOutput rowsOutput, CancellationToken cancellationToken)
-    {
-        if (result.IsNull)
-        {
-            return;
-        }
-        var iterator = RowsIteratorConverter.Convert(result);
-        if (result.Type == DataType.Object
-            && result.AsObjectUnsafe is IRowsOutput alternateRowsOutput)
-        {
-            rowsOutput = alternateRowsOutput;
-        }
-        await rowsOutput.ResetAsync(cancellationToken);
-        await WriteLoopAsync(executionThread.ConfigStorage, rowsOutput, iterator, executionThread.Options, cancellationToken);
-    }
-
-    private static async Task WriteLoopAsync(
-        IConfigStorage configStorage,
-        IRowsOutput rowsOutput,
-        IRowsIterator rowsIterator,
-        ExecutionOptions options,
-        CancellationToken cancellationToken)
-    {
-        // For plain output let's adjust columns width first.
-        if (rowsOutput.Options.RequiresColumnsLengthAdjust && options.AnalyzeRowsCount > 0)
-        {
-            rowsIterator = new AdjustColumnsLengthsIterator(rowsIterator, options.AnalyzeRowsCount);
-        }
-        if (options.TailCount > -1)
-        {
-            rowsIterator = new TailRowsIterator(rowsIterator, options.TailCount);
-        }
-
-        // Write the main data.
-        var isOpened = false;
-        await StartWriterLoop(cancellationToken);
-
-        // Append grow data.
-        if (options.FollowTimeout != TimeSpan.Zero)
-        {
-            while (true)
-            {
-                var requestQuit = false;
-                Thread.Sleep(options.FollowTimeout);
-                await StartWriterLoop(cancellationToken);
-                ProcessInput(ref requestQuit);
-                if (cancellationToken.IsCancellationRequested || requestQuit)
-                {
-                    break;
-                }
-            }
-        }
-
-        if (isOpened)
-        {
-            await rowsOutput.CloseAsync(cancellationToken);
-        }
-
-        async Task StartWriterLoop(CancellationToken ct)
-        {
-            while (await rowsIterator.MoveNextAsync(ct))
-            {
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    break;
-                }
-                if (!isOpened)
-                {
-                    rowsOutput.QueryContext = new RowsOutputQueryContext(rowsIterator.Columns, configStorage);
-                    rowsOutput.QueryContext.PrereadRowsCount = options.AnalyzeRowsCount;
-                    rowsOutput.QueryContext.SkipIfNoColumns = options.SkipIfNoColumns;
-                    await rowsOutput.OpenAsync(ct);
-                    isOpened = true;
-                }
-                await rowsOutput.WriteValuesAsync(rowsIterator.Current.Values, ct);
-            }
-        }
-
-        void ProcessInput(ref bool requestQuit)
-        {
-            if (!Environment.UserInteractive)
-            {
-                return;
-            }
-            while (Console.KeyAvailable)
-            {
-                var key = Console.ReadKey(true);
-                if (key.Key == ConsoleKey.Enter)
-                {
-                    Console.WriteLine();
-                }
-                else if (key.Key == ConsoleKey.Q)
-                {
-                    requestQuit = true;
-                }
-                else if (key.Key == ConsoleKey.Subtract)
-                {
-                    Console.WriteLine(new string('-', 5));
-                }
-            }
-        }
     }
 
     internal static void AddVariables(IExecutionThread executionThread, string[]? variables = null)

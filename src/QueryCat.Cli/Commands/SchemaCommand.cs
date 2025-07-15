@@ -25,6 +25,7 @@ internal class SchemaCommand : BaseQueryCommand
                 outputStyle: parseResult.GetValue(OutputStyleOption)
             );
             var thread = root.Thread;
+            var rowsOutput = root.RowsOutput;
             thread.StatementExecuted += async (_, args) =>
             {
                 if (!args.Result.IsNull
@@ -33,12 +34,11 @@ internal class SchemaCommand : BaseQueryCommand
                 {
                     args.ContinueExecution = false;
                     var schema = await FunctionCaller.CallWithArgumentsAsync(InfoFunctions.Schema, thread, [rowsSchema]);
-                    thread.TopScope.Variables["result"] = schema;
-                    await thread.RunAsync("result", cancellationToken: cancellationToken);
+                    await WriteAsync(thread, schema, rowsOutput, cancellationToken);
                 }
             };
             AddVariables(thread, variables);
-            await RunQueryAsync(thread, root.RowsOutput, query, files, cancellationToken);
+            await RunQueryAsync(thread, rowsOutput, query, files, cancellationToken);
         });
     }
 }

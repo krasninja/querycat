@@ -33,8 +33,7 @@ internal class PluginListCommand : BaseCommand
                 query += $@" AND (platform = _platform() OR platform = '{Application.PlatformMulti}');";
             }
             var result = await root.Thread.RunAsync(query, cancellationToken: cancellationToken);
-            root.Thread.TopScope.Variables["result"] = result;
-            await root.Thread.RunAsync("result");
+            await WriteAsync(root.Thread, result, root.RowsOutput, cancellationToken);
         });
     }
 }
