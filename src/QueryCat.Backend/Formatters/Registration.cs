@@ -21,6 +21,6 @@ internal static class Registration
             (fm, et, args) => fm.CallFunctionAsync("csv", et, args.Add("delimiter", '\t')));
         FormattersInfo.RegisterFormatter(".bin", (fm, et, args) => fm.CallFunctionAsync("raw_fmt", et));
         FormattersInfo.RegisterFormatter(".raw", (fm, et, args) => fm.CallFunctionAsync("raw_fmt", et));
-        FormattersInfo.RegisterFormatter(MimeTypesProvider.ContentTypeOctetStream, (fm, et, args) => fm.CallFunctionAsync("raw", et));
+        FormattersInfo.RegisterFormatter(MimeTypesProvider.ContentTypeOctetStream, (fm, et, args) => fm.CallFunctionAsync("raw_fmt", et));
     }
 }
