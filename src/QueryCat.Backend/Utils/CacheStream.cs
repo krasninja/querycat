@@ -45,6 +45,9 @@ internal sealed class CacheStream : Stream
     /// </summary>
     public long CacheSize => _buffer.Size;
 
+    /// <summary>
+    /// The underlying (base) stream.
+    /// </summary>
     public Stream UnderlyingStream => _stream;
 
     /// <inheritdoc />
@@ -126,7 +129,7 @@ internal sealed class CacheStream : Stream
         else
         {
             bytesRead += await _stream.ReadAsync(buffer, cancellationToken);
-            WriteToCache(buffer);
+            WriteToCache(buffer.Slice(0, bytesRead));
         }
 
         return bytesRead;
