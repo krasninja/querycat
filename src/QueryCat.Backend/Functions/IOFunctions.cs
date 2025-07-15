@@ -43,7 +43,7 @@ internal static class IOFunctions
 
     [SafeFunction]
     [Description("Read data from a BLOB.")]
-    [FunctionSignature("read(\"blob\": blob): object<IRowsInput>")]
+    [FunctionSignature("read(\"blob\": blob, fmt?: object<IRowsFormatter>): object<IRowsInput>")]
     public static async ValueTask<VariantValue> ReadBlobAsync(IExecutionThread thread, CancellationToken cancellationToken)
     {
         var blob = thread.Stack[0].AsBlob;
@@ -51,7 +51,8 @@ internal static class IOFunctions
         {
             return VariantValue.Null;
         }
-        var formatter = await File_GetFormatterAsync(blob.ContentType, thread, null, cancellationToken);
+        var formatter = thread.Stack[1].As<IRowsFormatter>();
+        formatter ??= await File_GetFormatterAsync(blob.ContentType, thread, null, cancellationToken);
         var input = formatter.OpenInput(blob);
         return VariantValue.CreateFromObject(input);
     }
