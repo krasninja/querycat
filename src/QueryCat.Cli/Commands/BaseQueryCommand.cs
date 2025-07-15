@@ -5,6 +5,7 @@ using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Core.Utils;
+using QueryCat.Backend.Functions;
 using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Storage;
 
@@ -49,7 +50,8 @@ internal abstract class BaseQueryCommand : BaseCommand
         {
             foreach (var file in files.SelectMany(f => f.Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)))
             {
-                var text = await File.ReadAllTextAsync(file, cancellationToken);
+                var resolvedFile = IOFunctions.ResolveHomeDirectory(file);
+                var text = await File.ReadAllTextAsync(resolvedFile, cancellationToken);
                 await RunWithPluginsInstall(executionThread, rowsOutput, text, cancellationToken: cancellationToken);
             }
         }
@@ -86,7 +88,7 @@ internal abstract class BaseQueryCommand : BaseCommand
         await WriteAsync(executionThread, result, rowsOutput, cancellationToken);
     }
 
-    private static async Task WriteAsync(IExecutionThread<ExecutionOptions> executionThread, VariantValue result,
+    protected static async Task WriteAsync(IExecutionThread<ExecutionOptions> executionThread, VariantValue result,
         IRowsOutput rowsOutput, CancellationToken cancellationToken)
     {
         if (result.IsNull)
