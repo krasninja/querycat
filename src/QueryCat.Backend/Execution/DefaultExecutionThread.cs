@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Text;
 using QueryCat.Backend.Ast;
@@ -33,7 +32,6 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IAsync
     private IExecutionScope _topScope;
     private bool _bootstrapScriptExecuted;
     private bool _configLoaded;
-    private readonly Stopwatch _stopwatch = new();
     private readonly AsyncLock _asyncLock = new();
 
     private bool IsInCallback { get; set; }
@@ -228,8 +226,7 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IAsync
             }
             if (_deepLevel == 1)
             {
-                _stopwatch.Stop();
-                Statistic.ExecutionTime = _stopwatch.Elapsed;
+                Statistic.StopStopwatch();
             }
             _deepLevel--;
             CurrentQuery = string.Empty;
@@ -288,7 +285,7 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IAsync
         // Setup timer.
         if (_deepLevel == 1)
         {
-            _stopwatch.Restart();
+            Statistic.RestartStopwatch();
         }
 
         if (parameters != null && parameters.Keys.Count > 0)

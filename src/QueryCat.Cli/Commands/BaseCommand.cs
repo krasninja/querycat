@@ -85,6 +85,7 @@ internal abstract class BaseCommand : Command
         }
         await rowsOutput.ResetAsync(cancellationToken);
         await WriteLoopAsync(executionThread.ConfigStorage, rowsOutput, iterator, executionThread.Options, cancellationToken);
+        executionThread.Statistic.StopStopwatch();
     }
 
     private static async Task WriteLoopAsync(
