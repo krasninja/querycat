@@ -36,6 +36,8 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IAsync
 
     private bool IsInCallback { get; set; }
 
+    public Func<VariantValue, CancellationToken, ValueTask>? CommandResultOutput { get; set; }
+
     private sealed class DefaultBodyFuncUnit : StatementsBlockFuncUnit
     {
         private readonly DefaultExecutionThread _executionThread;
@@ -307,6 +309,11 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IAsync
         if (Options.UseConfig)
         {
             await ConfigStorage.SaveAsync(cancellationToken);
+        }
+
+        if (CommandResultOutput != null)
+        {
+            await CommandResultOutput.Invoke(result, cancellationToken);
         }
 
         return result;

@@ -5,6 +5,7 @@ using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Plugins;
+using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Execution;
 using QueryCat.Backend.Functions;
@@ -40,6 +41,8 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
     private Func<IExecutionThread, PluginsLoader> _pluginsLoaderFactory = _ => new NullPluginsLoader([]);
 
     private Func<PluginsLoader, IPluginsManager> _pluginsManagerFactory = pluginLoader => new NullPluginsManager(pluginLoader);
+
+    private Func<VariantValue, CancellationToken, ValueTask>? _commandsResultOutput;
 
     private readonly List<IUriResolver> _uriResolvers = new();
 
@@ -195,9 +198,26 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
         return this;
     }
 
+    /// <summary>
+    /// Use custom scope factory.
+    /// </summary>
+    /// <param name="factory">Custom factory delegate.</param>
+    /// <returns>Instance of <see cref="ExecutionThreadBootstrapper" />.</returns>
     public ExecutionThreadBootstrapper WithExecutionScopeFactory(Func<IExecutionScope?, IExecutionScope> factory)
     {
         _executionScopeFactory = factory;
+        return this;
+    }
+
+    /// <summary>
+    /// The delegate to be called after every statement execution. It is called with statement result value.
+    /// Can be used to render the execution result.
+    /// </summary>
+    /// <param name="output">Output delegate.</param>
+    /// <returns>Instance of <see cref="ExecutionThreadBootstrapper" />.</returns>
+    public ExecutionThreadBootstrapper WithCommandResultOutput(Func<VariantValue, CancellationToken, ValueTask> output)
+    {
+        _commandsResultOutput = output;
         return this;
     }
 
@@ -253,6 +273,11 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
             executionScopeFactory: _executionScopeFactory
         );
         thread.Tag = _tag;
+
+        if (_commandsResultOutput != null)
+        {
+            thread.CommandResultOutput = _commandsResultOutput;
+        }
 
         // Register functions.
         if (_registerStandardLibrary)
