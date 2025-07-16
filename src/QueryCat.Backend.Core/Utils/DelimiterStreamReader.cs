@@ -21,7 +21,7 @@ public class DelimiterStreamReader
      *     csv.GetField(1); // Read column #1 as string.
      * }
      */
-    private const int DefaultBufferSize = 0x4000;
+    private const int DefaultBufferSize = 0x5000;
 
     private static readonly char[] _autoDetectDelimiters = [',', '\t', ';', '|'];
     private static readonly char[] _endOfLineCharacters = ['\n', '\r'];

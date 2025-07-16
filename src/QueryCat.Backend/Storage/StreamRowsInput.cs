@@ -34,6 +34,8 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
      * - CloseAsync()
      */
 
+    private const int ReadBufferSize = 0x10000;
+
     private readonly StreamRowsInputOptions _options;
 
     private static readonly VirtualColumn[] _customColumns =
@@ -100,7 +102,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
         _options = options ?? new();
         _baseStream = stream;
         _cacheStream = new CacheStream(stream);
-        StreamReader = new StreamReader(_cacheStream);
+        StreamReader = new StreamReader(_cacheStream, bufferSize: ReadBufferSize);
         _delimiterStreamReader = new DelimiterStreamReader(StreamReader, _options.DelimiterStreamReaderOptions);
         UniqueKey = keys.Concat(_options.CacheKeys).ToArray();
     }
