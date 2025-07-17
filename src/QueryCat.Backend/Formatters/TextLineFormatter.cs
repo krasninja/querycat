@@ -14,6 +14,7 @@ public class TextLineFormatter : IRowsFormatter
 {
     [SafeFunction]
     [Description("Text line formatter.")]
+    [FunctionFormatters(".txt", "text/plain")]
     [FunctionSignature("text_line(): object<IRowsFormatter>")]
     public static VariantValue TextLine(IExecutionThread thread)
     {

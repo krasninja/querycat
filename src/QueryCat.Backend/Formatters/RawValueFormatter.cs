@@ -3,6 +3,7 @@ using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Formatters;
 
@@ -13,6 +14,7 @@ internal sealed class RawValueFormatter : IRowsFormatter
 {
     [SafeFunction]
     [Description("Raw formatter.")]
+    [FunctionFormatters(".bin", ".raw", MimeTypesProvider.ContentTypeOctetStream)]
     [FunctionSignature("raw_fmt(): object<IRowsFormatter>")]
     public static VariantValue Raw(IExecutionThread thread)
     {
