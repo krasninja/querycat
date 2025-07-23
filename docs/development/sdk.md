@@ -23,7 +23,7 @@ var executionThread = new ExecutionThreadBootstrapper()
     .Create();
 await executionThread.PluginsManager.PluginsLoader.LoadAsync(new PluginsLoadingOptions());
 var result1 = await executionThread.RunAsync("1+1"); // 2
-var result2 = await executionThread.RunAsync('uuid()'); // 63af7231-f182-4d29-816c-b83b9dc9cff5
+var result2 = await executionThread.RunAsync("uuid()"); // 63af7231-f182-4d29-816c-b83b9dc9cff5
 ```
 
 Result is the `VariantValue` returned by the last statement in the script.
