@@ -1,7 +1,6 @@
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Storage;
@@ -29,7 +28,7 @@ internal sealed class SingleValueRowsInput : IRowsInput
     {
         Columns =
         [
-            new(SingleValueRowsIterator.ColumnTitle, DataType.Integer)
+            new(Column.ValueColumnTitle, DataType.Integer)
         ];
     }
 
@@ -37,7 +36,7 @@ internal sealed class SingleValueRowsInput : IRowsInput
     {
         Columns =
         [
-            new(SingleValueRowsIterator.ColumnTitle, value.Type)
+            new(Column.ValueColumnTitle, value.Type)
         ];
         _value = value;
     }

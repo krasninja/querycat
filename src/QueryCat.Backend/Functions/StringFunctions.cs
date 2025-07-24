@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Text.RegularExpressions;
 using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Fetch;
 using QueryCat.Backend.Core.Functions;
@@ -224,7 +225,7 @@ internal static class StringFunctions
 
         var result = GetSplitItems(target, delimiter, nullString).ToList();
         var input = EnumerableRowsInput<string>.FromSource(result,
-            builder => builder.AddProperty("value", p => p, "String part."));
+            builder => builder.AddProperty(Column.ValueColumnTitle, p => p, "String part."));
         return VariantValue.CreateFromObject(input);
     }
 

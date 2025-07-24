@@ -36,7 +36,7 @@ internal sealed class ListRowsIterator : IRowsIterator
         // Determine type.
         Columns =
         [
-            new Column("value", dataType.Value),
+            new Column(Column.ValueColumnTitle, dataType.Value),
         ];
         _currentRow = new Row(Columns);
     }

@@ -118,7 +118,7 @@ internal sealed partial class SelectPlanner
                 : string.Empty;
             if (string.IsNullOrEmpty(columnName) && node.ColumnsNodes.Count == 1)
             {
-                columnName = SingleValueRowsIterator.ColumnTitle;
+                columnName = Column.ValueColumnTitle;
             }
             var column = !string.IsNullOrEmpty(columnName)
                 ? new Column(columnName, columnSourceName, columnNode.GetDataType())

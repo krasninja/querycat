@@ -66,7 +66,7 @@ public class CollectionInput : IRowsOutput, IDisposable, IAsyncDisposable, IRows
             _columns =
             [
                 new Column(
-                    name: "value",
+                    name: Column.ValueColumnTitle,
                     sourceName: string.Empty,
                     dataType: Converter.ConvertFromSystem(_type)
                 )
