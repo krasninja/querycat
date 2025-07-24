@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add function "regexp_split_to_table".
+
 ## [0.15.0] - 2025-07-13
 
 ### Added
