@@ -209,9 +209,16 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
         => Visit(context.simpleExpression());
 
     /// <inheritdoc />
-    public override IAstNode VisitCastOperand(QueryCatParser.CastOperandContext context)
+    public override IAstNode VisitCastOperandWithCast(QueryCatParser.CastOperandWithCastContext context)
         => new CastFunctionNode(
             this.Visit<ExpressionNode>(context.value),
+            this.VisitType(context.type())
+        );
+
+    /// <inheritdoc />
+    public override IAstNode VisitCastOperandWithString(QueryCatParser.CastOperandWithStringContext context)
+        => new CastFunctionNode(
+            new LiteralNode(GetUnwrappedText(context.value)),
             this.VisitType(context.type())
         );
 
@@ -341,7 +348,7 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
     public override IAstNode VisitStandardFunctionTrim(QueryCatParser.StandardFunctionTrimContext context)
     {
         var targetNode = this.Visit<ExpressionNode>(context.target);
-        var characters = context.characters != null ? context.characters.Text : string.Empty;
+        var characters = context.characters != null ? GetUnwrappedText(context.characters) : string.Empty;
         if (context.spec == null || context.spec.Type == QueryCatLexer.BOTH)
         {
             return new FunctionCallNode("btrim",

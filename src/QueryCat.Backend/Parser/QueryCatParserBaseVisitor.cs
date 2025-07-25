@@ -1201,7 +1201,8 @@ public partial class QueryCatParserBaseVisitor<Result> : AbstractParseTreeVisito
 	/// <return>The visitor result.</return>
 	public virtual Result VisitBlockExpression([NotNull] QueryCatParser.BlockExpressionContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="QueryCatParser.castOperand"/>.
+	/// Visit a parse tree produced by the <c>CastOperandWithCast</c>
+	/// labeled alternative in <see cref="QueryCatParser.castOperand"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -1209,7 +1210,18 @@ public partial class QueryCatParserBaseVisitor<Result> : AbstractParseTreeVisito
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitCastOperand([NotNull] QueryCatParser.CastOperandContext context) { return VisitChildren(context); }
+	public virtual Result VisitCastOperandWithCast([NotNull] QueryCatParser.CastOperandWithCastContext context) { return VisitChildren(context); }
+	/// <summary>
+	/// Visit a parse tree produced by the <c>CastOperandWithString</c>
+	/// labeled alternative in <see cref="QueryCatParser.castOperand"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitCastOperandWithString([NotNull] QueryCatParser.CastOperandWithStringContext context) { return VisitChildren(context); }
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="QueryCatParser.atTimeZone"/>.
 	/// <para>

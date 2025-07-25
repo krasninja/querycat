@@ -326,7 +326,10 @@ intervalLiteral: INTERVAL interval=STRING_LITERAL;
 
 blockExpression : BEGIN SEMICOLON* statement (SEMICOLON statement)* SEMICOLON* END;
 
-castOperand: CAST '(' value=simpleExpression AS type ')';
+castOperand
+    : CAST '(' value=simpleExpression AS type ')' # CastOperandWithCast
+    | type value=STRING_LITERAL # CastOperandWithString
+    ;
 atTimeZone: AT (LOCAL | TIME ZONE tz=simpleExpression);
 caseExpression: CASE arg=simpleExpression? caseWhen* (ELSE default=expression)? END;
 caseWhen: WHEN condition=expression THEN result=expression;

@@ -754,11 +754,19 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitBlockExpression([NotNull] QueryCatParser.BlockExpressionContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="QueryCatParser.castOperand"/>.
+	/// Visit a parse tree produced by the <c>CastOperandWithCast</c>
+	/// labeled alternative in <see cref="QueryCatParser.castOperand"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitCastOperand([NotNull] QueryCatParser.CastOperandContext context);
+	Result VisitCastOperandWithCast([NotNull] QueryCatParser.CastOperandWithCastContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>CastOperandWithString</c>
+	/// labeled alternative in <see cref="QueryCatParser.castOperand"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitCastOperandWithString([NotNull] QueryCatParser.CastOperandWithStringContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="QueryCatParser.atTimeZone"/>.
 	/// </summary>
