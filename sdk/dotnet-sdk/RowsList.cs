@@ -99,14 +99,14 @@ namespace QueryCat.Plugins.Sdk
               if (field.Type == TType.List)
               {
                 {
-                  var _list72 = await iprot.ReadListBeginAsync(cancellationToken);
-                  Values = new List<global::QueryCat.Plugins.Sdk.VariantValue>(_list72.Count);
-                  for(int _i73 = 0; _i73 < _list72.Count; ++_i73)
+                  var _list76 = await iprot.ReadListBeginAsync(cancellationToken);
+                  Values = new List<global::QueryCat.Plugins.Sdk.VariantValue>(_list76.Count);
+                  for(int _i77 = 0; _i77 < _list76.Count; ++_i77)
                   {
-                    global::QueryCat.Plugins.Sdk.VariantValue _elem74;
-                    _elem74 = new global::QueryCat.Plugins.Sdk.VariantValue();
-                    await _elem74.ReadAsync(iprot, cancellationToken);
-                    Values.Add(_elem74);
+                    global::QueryCat.Plugins.Sdk.VariantValue _elem78;
+                    _elem78 = new global::QueryCat.Plugins.Sdk.VariantValue();
+                    await _elem78.ReadAsync(iprot, cancellationToken);
+                    Values.Add(_elem78);
                   }
                   await iprot.ReadListEndAsync(cancellationToken);
                 }
@@ -142,29 +142,29 @@ namespace QueryCat.Plugins.Sdk
       oprot.IncrementRecursionDepth();
       try
       {
-        var tmp75 = new TStruct("RowsList");
-        await oprot.WriteStructBeginAsync(tmp75, cancellationToken);
+        var tmp79 = new TStruct("RowsList");
+        await oprot.WriteStructBeginAsync(tmp79, cancellationToken);
         #pragma warning disable IDE0017  // simplified init
-        var tmp76 = new TField();
+        var tmp80 = new TField();
         if(__isset.has_more)
         {
-          tmp76.Name = "has_more";
-          tmp76.Type = TType.Bool;
-          tmp76.ID = 1;
-          await oprot.WriteFieldBeginAsync(tmp76, cancellationToken);
+          tmp80.Name = "has_more";
+          tmp80.Type = TType.Bool;
+          tmp80.ID = 1;
+          await oprot.WriteFieldBeginAsync(tmp80, cancellationToken);
           await oprot.WriteBoolAsync(HasMore, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         if((Values != null))
         {
-          tmp76.Name = "values";
-          tmp76.Type = TType.List;
-          tmp76.ID = 2;
-          await oprot.WriteFieldBeginAsync(tmp76, cancellationToken);
+          tmp80.Name = "values";
+          tmp80.Type = TType.List;
+          tmp80.ID = 2;
+          await oprot.WriteFieldBeginAsync(tmp80, cancellationToken);
           await oprot.WriteListBeginAsync(new TList(TType.Struct, Values.Count), cancellationToken);
-          foreach (global::QueryCat.Plugins.Sdk.VariantValue _iter77 in Values)
+          foreach (global::QueryCat.Plugins.Sdk.VariantValue _iter81 in Values)
           {
-            await _iter77.WriteAsync(oprot, cancellationToken);
+            await _iter81.WriteAsync(oprot, cancellationToken);
           }
           await oprot.WriteListEndAsync(cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
@@ -204,22 +204,22 @@ namespace QueryCat.Plugins.Sdk
 
     public override string ToString()
     {
-      var tmp78 = new StringBuilder("RowsList(");
-      int tmp79 = 0;
+      var tmp82 = new StringBuilder("RowsList(");
+      int tmp83 = 0;
       if(__isset.has_more)
       {
-        if(0 < tmp79++) { tmp78.Append(", "); }
-        tmp78.Append("HasMore: ");
-        HasMore.ToString(tmp78);
+        if(0 < tmp83++) { tmp82.Append(", "); }
+        tmp82.Append("HasMore: ");
+        HasMore.ToString(tmp82);
       }
       if((Values != null))
       {
-        if(0 < tmp79) { tmp78.Append(", "); }
-        tmp78.Append("Values: ");
-        Values.ToString(tmp78);
+        if(0 < tmp83) { tmp82.Append(", "); }
+        tmp82.Append("Values: ");
+        Values.ToString(tmp82);
       }
-      tmp78.Append(')');
-      return tmp78.ToString();
+      tmp82.Append(')');
+      return tmp82.ToString();
     }
   }
 

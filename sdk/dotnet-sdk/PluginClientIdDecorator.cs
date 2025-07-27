@@ -106,6 +106,10 @@ public sealed class PluginClientIdDecorator : Plugin.IAsync
         => _client.RowsSet_DeleteRowAsync(object_rows_set_handle, cancellationToken);
 
     /// <inheritdoc />
+    public Task<ModelDescription> RowsSet_GetDescriptionAsync(int object_handle, CancellationToken cancellationToken = default)
+        => _client.RowsSet_GetDescriptionAsync(object_handle, cancellationToken);
+
+    /// <inheritdoc />
     public Task<int> RowsFormatter_OpenInputAsync(int object_rows_formatter_handle, int object_blob_handle, string? key,
         CancellationToken cancellationToken = default)
         => _client.RowsFormatter_OpenInputAsync(object_rows_formatter_handle, object_blob_handle, key, cancellationToken);

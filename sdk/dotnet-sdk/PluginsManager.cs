@@ -94,13 +94,13 @@ namespace QueryCat.Plugins.Sdk
       {
         await OutputProtocol.WriteMessageBeginAsync(new TMessage("RegisterPlugin", TMessageType.Call, SeqId), cancellationToken);
         
-        var tmp100 = new InternalStructs.RegisterPlugin_args() {
+        var tmp104 = new InternalStructs.RegisterPlugin_args() {
           RegistrationToken = registration_token,
           CallbackUri = callback_uri,
           PluginData = plugin_data,
         };
         
-        await tmp100.WriteAsync(OutputProtocol, cancellationToken);
+        await tmp104.WriteAsync(OutputProtocol, cancellationToken);
         await OutputProtocol.WriteMessageEndAsync(cancellationToken);
         await OutputProtocol.Transport.FlushAsync(cancellationToken);
       }
@@ -108,24 +108,24 @@ namespace QueryCat.Plugins.Sdk
       public async global::System.Threading.Tasks.Task<global::QueryCat.Plugins.Sdk.RegistrationResult> recv_RegisterPluginAsync(CancellationToken cancellationToken = default)
       {
         
-        var tmp101 = await InputProtocol.ReadMessageBeginAsync(cancellationToken);
-        if (tmp101.Type == TMessageType.Exception)
+        var tmp105 = await InputProtocol.ReadMessageBeginAsync(cancellationToken);
+        if (tmp105.Type == TMessageType.Exception)
         {
-          var tmp102 = await TApplicationException.ReadAsync(InputProtocol, cancellationToken);
+          var tmp106 = await TApplicationException.ReadAsync(InputProtocol, cancellationToken);
           await InputProtocol.ReadMessageEndAsync(cancellationToken);
-          throw tmp102;
+          throw tmp106;
         }
 
-        var tmp103 = new InternalStructs.RegisterPlugin_result();
-        await tmp103.ReadAsync(InputProtocol, cancellationToken);
+        var tmp107 = new InternalStructs.RegisterPlugin_result();
+        await tmp107.ReadAsync(InputProtocol, cancellationToken);
         await InputProtocol.ReadMessageEndAsync(cancellationToken);
-        if (tmp103.__isset.success)
+        if (tmp107.__isset.success)
         {
-          return tmp103.Success!;
+          return tmp107.Success!;
         }
-        if (tmp103.__isset.@e)
+        if (tmp107.__isset.@e)
         {
-          throw tmp103.E!;
+          throw tmp107.E!;
         }
         throw new TApplicationException(TApplicationException.ExceptionType.MissingResult, "RegisterPluginAsync failed: unknown result");
       }
@@ -140,14 +140,14 @@ namespace QueryCat.Plugins.Sdk
       {
         await OutputProtocol.WriteMessageBeginAsync(new TMessage("CallFunction", TMessageType.Call, SeqId), cancellationToken);
         
-        var tmp104 = new InternalStructs.CallFunction_args() {
+        var tmp108 = new InternalStructs.CallFunction_args() {
           Token = @token,
           FunctionName = function_name,
           Args = @args,
           ObjectHandle = object_handle,
         };
         
-        await tmp104.WriteAsync(OutputProtocol, cancellationToken);
+        await tmp108.WriteAsync(OutputProtocol, cancellationToken);
         await OutputProtocol.WriteMessageEndAsync(cancellationToken);
         await OutputProtocol.Transport.FlushAsync(cancellationToken);
       }
@@ -155,24 +155,24 @@ namespace QueryCat.Plugins.Sdk
       public async global::System.Threading.Tasks.Task<global::QueryCat.Plugins.Sdk.VariantValue> recv_CallFunctionAsync(CancellationToken cancellationToken = default)
       {
         
-        var tmp105 = await InputProtocol.ReadMessageBeginAsync(cancellationToken);
-        if (tmp105.Type == TMessageType.Exception)
+        var tmp109 = await InputProtocol.ReadMessageBeginAsync(cancellationToken);
+        if (tmp109.Type == TMessageType.Exception)
         {
-          var tmp106 = await TApplicationException.ReadAsync(InputProtocol, cancellationToken);
+          var tmp110 = await TApplicationException.ReadAsync(InputProtocol, cancellationToken);
           await InputProtocol.ReadMessageEndAsync(cancellationToken);
-          throw tmp106;
+          throw tmp110;
         }
 
-        var tmp107 = new InternalStructs.CallFunction_result();
-        await tmp107.ReadAsync(InputProtocol, cancellationToken);
+        var tmp111 = new InternalStructs.CallFunction_result();
+        await tmp111.ReadAsync(InputProtocol, cancellationToken);
         await InputProtocol.ReadMessageEndAsync(cancellationToken);
-        if (tmp107.__isset.success)
+        if (tmp111.__isset.success)
         {
-          return tmp107.Success!;
+          return tmp111.Success!;
         }
-        if (tmp107.__isset.@e)
+        if (tmp111.__isset.@e)
         {
-          throw tmp107.E!;
+          throw tmp111.E!;
         }
         throw new TApplicationException(TApplicationException.ExceptionType.MissingResult, "CallFunctionAsync failed: unknown result");
       }
@@ -187,13 +187,13 @@ namespace QueryCat.Plugins.Sdk
       {
         await OutputProtocol.WriteMessageBeginAsync(new TMessage("RunQuery", TMessageType.Call, SeqId), cancellationToken);
         
-        var tmp108 = new InternalStructs.RunQuery_args() {
+        var tmp112 = new InternalStructs.RunQuery_args() {
           Token = @token,
           Query = @query,
           Parameters = @parameters,
         };
         
-        await tmp108.WriteAsync(OutputProtocol, cancellationToken);
+        await tmp112.WriteAsync(OutputProtocol, cancellationToken);
         await OutputProtocol.WriteMessageEndAsync(cancellationToken);
         await OutputProtocol.Transport.FlushAsync(cancellationToken);
       }
@@ -201,24 +201,24 @@ namespace QueryCat.Plugins.Sdk
       public async global::System.Threading.Tasks.Task<global::QueryCat.Plugins.Sdk.VariantValue> recv_RunQueryAsync(CancellationToken cancellationToken = default)
       {
         
-        var tmp109 = await InputProtocol.ReadMessageBeginAsync(cancellationToken);
-        if (tmp109.Type == TMessageType.Exception)
+        var tmp113 = await InputProtocol.ReadMessageBeginAsync(cancellationToken);
+        if (tmp113.Type == TMessageType.Exception)
         {
-          var tmp110 = await TApplicationException.ReadAsync(InputProtocol, cancellationToken);
+          var tmp114 = await TApplicationException.ReadAsync(InputProtocol, cancellationToken);
           await InputProtocol.ReadMessageEndAsync(cancellationToken);
-          throw tmp110;
+          throw tmp114;
         }
 
-        var tmp111 = new InternalStructs.RunQuery_result();
-        await tmp111.ReadAsync(InputProtocol, cancellationToken);
+        var tmp115 = new InternalStructs.RunQuery_result();
+        await tmp115.ReadAsync(InputProtocol, cancellationToken);
         await InputProtocol.ReadMessageEndAsync(cancellationToken);
-        if (tmp111.__isset.success)
+        if (tmp115.__isset.success)
         {
-          return tmp111.Success!;
+          return tmp115.Success!;
         }
-        if (tmp111.__isset.@e)
+        if (tmp115.__isset.@e)
         {
-          throw tmp111.E!;
+          throw tmp115.E!;
         }
         throw new TApplicationException(TApplicationException.ExceptionType.MissingResult, "RunQueryAsync failed: unknown result");
       }
@@ -233,13 +233,13 @@ namespace QueryCat.Plugins.Sdk
       {
         await OutputProtocol.WriteMessageBeginAsync(new TMessage("SetConfigValue", TMessageType.Call, SeqId), cancellationToken);
         
-        var tmp112 = new InternalStructs.SetConfigValue_args() {
+        var tmp116 = new InternalStructs.SetConfigValue_args() {
           Token = @token,
           Key = @key,
           Value = @value,
         };
         
-        await tmp112.WriteAsync(OutputProtocol, cancellationToken);
+        await tmp116.WriteAsync(OutputProtocol, cancellationToken);
         await OutputProtocol.WriteMessageEndAsync(cancellationToken);
         await OutputProtocol.Transport.FlushAsync(cancellationToken);
       }
@@ -247,20 +247,20 @@ namespace QueryCat.Plugins.Sdk
       public async global::System.Threading.Tasks.Task recv_SetConfigValueAsync(CancellationToken cancellationToken = default)
       {
         
-        var tmp113 = await InputProtocol.ReadMessageBeginAsync(cancellationToken);
-        if (tmp113.Type == TMessageType.Exception)
+        var tmp117 = await InputProtocol.ReadMessageBeginAsync(cancellationToken);
+        if (tmp117.Type == TMessageType.Exception)
         {
-          var tmp114 = await TApplicationException.ReadAsync(InputProtocol, cancellationToken);
+          var tmp118 = await TApplicationException.ReadAsync(InputProtocol, cancellationToken);
           await InputProtocol.ReadMessageEndAsync(cancellationToken);
-          throw tmp114;
+          throw tmp118;
         }
 
-        var tmp115 = new InternalStructs.SetConfigValue_result();
-        await tmp115.ReadAsync(InputProtocol, cancellationToken);
+        var tmp119 = new InternalStructs.SetConfigValue_result();
+        await tmp119.ReadAsync(InputProtocol, cancellationToken);
         await InputProtocol.ReadMessageEndAsync(cancellationToken);
-        if (tmp115.__isset.@e)
+        if (tmp119.__isset.@e)
         {
-          throw tmp115.E!;
+          throw tmp119.E!;
         }
       }
 
@@ -274,12 +274,12 @@ namespace QueryCat.Plugins.Sdk
       {
         await OutputProtocol.WriteMessageBeginAsync(new TMessage("GetConfigValue", TMessageType.Call, SeqId), cancellationToken);
         
-        var tmp116 = new InternalStructs.GetConfigValue_args() {
+        var tmp120 = new InternalStructs.GetConfigValue_args() {
           Token = @token,
           Key = @key,
         };
         
-        await tmp116.WriteAsync(OutputProtocol, cancellationToken);
+        await tmp120.WriteAsync(OutputProtocol, cancellationToken);
         await OutputProtocol.WriteMessageEndAsync(cancellationToken);
         await OutputProtocol.Transport.FlushAsync(cancellationToken);
       }
@@ -287,24 +287,24 @@ namespace QueryCat.Plugins.Sdk
       public async global::System.Threading.Tasks.Task<global::QueryCat.Plugins.Sdk.VariantValue> recv_GetConfigValueAsync(CancellationToken cancellationToken = default)
       {
         
-        var tmp117 = await InputProtocol.ReadMessageBeginAsync(cancellationToken);
-        if (tmp117.Type == TMessageType.Exception)
+        var tmp121 = await InputProtocol.ReadMessageBeginAsync(cancellationToken);
+        if (tmp121.Type == TMessageType.Exception)
         {
-          var tmp118 = await TApplicationException.ReadAsync(InputProtocol, cancellationToken);
+          var tmp122 = await TApplicationException.ReadAsync(InputProtocol, cancellationToken);
           await InputProtocol.ReadMessageEndAsync(cancellationToken);
-          throw tmp118;
+          throw tmp122;
         }
 
-        var tmp119 = new InternalStructs.GetConfigValue_result();
-        await tmp119.ReadAsync(InputProtocol, cancellationToken);
+        var tmp123 = new InternalStructs.GetConfigValue_result();
+        await tmp123.ReadAsync(InputProtocol, cancellationToken);
         await InputProtocol.ReadMessageEndAsync(cancellationToken);
-        if (tmp119.__isset.success)
+        if (tmp123.__isset.success)
         {
-          return tmp119.Success!;
+          return tmp123.Success!;
         }
-        if (tmp119.__isset.@e)
+        if (tmp123.__isset.@e)
         {
-          throw tmp119.E!;
+          throw tmp123.E!;
         }
         throw new TApplicationException(TApplicationException.ExceptionType.MissingResult, "GetConfigValueAsync failed: unknown result");
       }
@@ -319,12 +319,12 @@ namespace QueryCat.Plugins.Sdk
       {
         await OutputProtocol.WriteMessageBeginAsync(new TMessage("GetVariable", TMessageType.Call, SeqId), cancellationToken);
         
-        var tmp120 = new InternalStructs.GetVariable_args() {
+        var tmp124 = new InternalStructs.GetVariable_args() {
           Token = @token,
           Name = @name,
         };
         
-        await tmp120.WriteAsync(OutputProtocol, cancellationToken);
+        await tmp124.WriteAsync(OutputProtocol, cancellationToken);
         await OutputProtocol.WriteMessageEndAsync(cancellationToken);
         await OutputProtocol.Transport.FlushAsync(cancellationToken);
       }
@@ -332,24 +332,24 @@ namespace QueryCat.Plugins.Sdk
       public async global::System.Threading.Tasks.Task<global::QueryCat.Plugins.Sdk.VariantValue> recv_GetVariableAsync(CancellationToken cancellationToken = default)
       {
         
-        var tmp121 = await InputProtocol.ReadMessageBeginAsync(cancellationToken);
-        if (tmp121.Type == TMessageType.Exception)
+        var tmp125 = await InputProtocol.ReadMessageBeginAsync(cancellationToken);
+        if (tmp125.Type == TMessageType.Exception)
         {
-          var tmp122 = await TApplicationException.ReadAsync(InputProtocol, cancellationToken);
+          var tmp126 = await TApplicationException.ReadAsync(InputProtocol, cancellationToken);
           await InputProtocol.ReadMessageEndAsync(cancellationToken);
-          throw tmp122;
+          throw tmp126;
         }
 
-        var tmp123 = new InternalStructs.GetVariable_result();
-        await tmp123.ReadAsync(InputProtocol, cancellationToken);
+        var tmp127 = new InternalStructs.GetVariable_result();
+        await tmp127.ReadAsync(InputProtocol, cancellationToken);
         await InputProtocol.ReadMessageEndAsync(cancellationToken);
-        if (tmp123.__isset.success)
+        if (tmp127.__isset.success)
         {
-          return tmp123.Success!;
+          return tmp127.Success!;
         }
-        if (tmp123.__isset.@e)
+        if (tmp127.__isset.@e)
         {
-          throw tmp123.E!;
+          throw tmp127.E!;
         }
         throw new TApplicationException(TApplicationException.ExceptionType.MissingResult, "GetVariableAsync failed: unknown result");
       }
@@ -364,13 +364,13 @@ namespace QueryCat.Plugins.Sdk
       {
         await OutputProtocol.WriteMessageBeginAsync(new TMessage("SetVariable", TMessageType.Call, SeqId), cancellationToken);
         
-        var tmp124 = new InternalStructs.SetVariable_args() {
+        var tmp128 = new InternalStructs.SetVariable_args() {
           Token = @token,
           Name = @name,
           Value = @value,
         };
         
-        await tmp124.WriteAsync(OutputProtocol, cancellationToken);
+        await tmp128.WriteAsync(OutputProtocol, cancellationToken);
         await OutputProtocol.WriteMessageEndAsync(cancellationToken);
         await OutputProtocol.Transport.FlushAsync(cancellationToken);
       }
@@ -378,24 +378,24 @@ namespace QueryCat.Plugins.Sdk
       public async global::System.Threading.Tasks.Task<global::QueryCat.Plugins.Sdk.VariantValue> recv_SetVariableAsync(CancellationToken cancellationToken = default)
       {
         
-        var tmp125 = await InputProtocol.ReadMessageBeginAsync(cancellationToken);
-        if (tmp125.Type == TMessageType.Exception)
+        var tmp129 = await InputProtocol.ReadMessageBeginAsync(cancellationToken);
+        if (tmp129.Type == TMessageType.Exception)
         {
-          var tmp126 = await TApplicationException.ReadAsync(InputProtocol, cancellationToken);
+          var tmp130 = await TApplicationException.ReadAsync(InputProtocol, cancellationToken);
           await InputProtocol.ReadMessageEndAsync(cancellationToken);
-          throw tmp126;
+          throw tmp130;
         }
 
-        var tmp127 = new InternalStructs.SetVariable_result();
-        await tmp127.ReadAsync(InputProtocol, cancellationToken);
+        var tmp131 = new InternalStructs.SetVariable_result();
+        await tmp131.ReadAsync(InputProtocol, cancellationToken);
         await InputProtocol.ReadMessageEndAsync(cancellationToken);
-        if (tmp127.__isset.success)
+        if (tmp131.__isset.success)
         {
-          return tmp127.Success!;
+          return tmp131.Success!;
         }
-        if (tmp127.__isset.@e)
+        if (tmp131.__isset.@e)
         {
-          throw tmp127.E!;
+          throw tmp131.E!;
         }
         throw new TApplicationException(TApplicationException.ExceptionType.MissingResult, "SetVariableAsync failed: unknown result");
       }
@@ -410,12 +410,12 @@ namespace QueryCat.Plugins.Sdk
       {
         await OutputProtocol.WriteMessageBeginAsync(new TMessage("GetVariables", TMessageType.Call, SeqId), cancellationToken);
         
-        var tmp128 = new InternalStructs.GetVariables_args() {
+        var tmp132 = new InternalStructs.GetVariables_args() {
           Token = @token,
           ScopeId = scope_id,
         };
         
-        await tmp128.WriteAsync(OutputProtocol, cancellationToken);
+        await tmp132.WriteAsync(OutputProtocol, cancellationToken);
         await OutputProtocol.WriteMessageEndAsync(cancellationToken);
         await OutputProtocol.Transport.FlushAsync(cancellationToken);
       }
@@ -423,24 +423,24 @@ namespace QueryCat.Plugins.Sdk
       public async global::System.Threading.Tasks.Task<List<global::QueryCat.Plugins.Sdk.ScopeVariable>> recv_GetVariablesAsync(CancellationToken cancellationToken = default)
       {
         
-        var tmp129 = await InputProtocol.ReadMessageBeginAsync(cancellationToken);
-        if (tmp129.Type == TMessageType.Exception)
+        var tmp133 = await InputProtocol.ReadMessageBeginAsync(cancellationToken);
+        if (tmp133.Type == TMessageType.Exception)
         {
-          var tmp130 = await TApplicationException.ReadAsync(InputProtocol, cancellationToken);
+          var tmp134 = await TApplicationException.ReadAsync(InputProtocol, cancellationToken);
           await InputProtocol.ReadMessageEndAsync(cancellationToken);
-          throw tmp130;
+          throw tmp134;
         }
 
-        var tmp131 = new InternalStructs.GetVariables_result();
-        await tmp131.ReadAsync(InputProtocol, cancellationToken);
+        var tmp135 = new InternalStructs.GetVariables_result();
+        await tmp135.ReadAsync(InputProtocol, cancellationToken);
         await InputProtocol.ReadMessageEndAsync(cancellationToken);
-        if (tmp131.__isset.success)
+        if (tmp135.__isset.success)
         {
-          return tmp131.Success!;
+          return tmp135.Success!;
         }
-        if (tmp131.__isset.@e)
+        if (tmp135.__isset.@e)
         {
-          throw tmp131.E!;
+          throw tmp135.E!;
         }
         throw new TApplicationException(TApplicationException.ExceptionType.MissingResult, "GetVariablesAsync failed: unknown result");
       }
@@ -455,11 +455,11 @@ namespace QueryCat.Plugins.Sdk
       {
         await OutputProtocol.WriteMessageBeginAsync(new TMessage("PushScope", TMessageType.Call, SeqId), cancellationToken);
         
-        var tmp132 = new InternalStructs.PushScope_args() {
+        var tmp136 = new InternalStructs.PushScope_args() {
           Token = @token,
         };
         
-        await tmp132.WriteAsync(OutputProtocol, cancellationToken);
+        await tmp136.WriteAsync(OutputProtocol, cancellationToken);
         await OutputProtocol.WriteMessageEndAsync(cancellationToken);
         await OutputProtocol.Transport.FlushAsync(cancellationToken);
       }
@@ -467,24 +467,24 @@ namespace QueryCat.Plugins.Sdk
       public async global::System.Threading.Tasks.Task<global::QueryCat.Plugins.Sdk.ExecutionScope> recv_PushScopeAsync(CancellationToken cancellationToken = default)
       {
         
-        var tmp133 = await InputProtocol.ReadMessageBeginAsync(cancellationToken);
-        if (tmp133.Type == TMessageType.Exception)
+        var tmp137 = await InputProtocol.ReadMessageBeginAsync(cancellationToken);
+        if (tmp137.Type == TMessageType.Exception)
         {
-          var tmp134 = await TApplicationException.ReadAsync(InputProtocol, cancellationToken);
+          var tmp138 = await TApplicationException.ReadAsync(InputProtocol, cancellationToken);
           await InputProtocol.ReadMessageEndAsync(cancellationToken);
-          throw tmp134;
+          throw tmp138;
         }
 
-        var tmp135 = new InternalStructs.PushScope_result();
-        await tmp135.ReadAsync(InputProtocol, cancellationToken);
+        var tmp139 = new InternalStructs.PushScope_result();
+        await tmp139.ReadAsync(InputProtocol, cancellationToken);
         await InputProtocol.ReadMessageEndAsync(cancellationToken);
-        if (tmp135.__isset.success)
+        if (tmp139.__isset.success)
         {
-          return tmp135.Success!;
+          return tmp139.Success!;
         }
-        if (tmp135.__isset.@e)
+        if (tmp139.__isset.@e)
         {
-          throw tmp135.E!;
+          throw tmp139.E!;
         }
         throw new TApplicationException(TApplicationException.ExceptionType.MissingResult, "PushScopeAsync failed: unknown result");
       }
@@ -499,11 +499,11 @@ namespace QueryCat.Plugins.Sdk
       {
         await OutputProtocol.WriteMessageBeginAsync(new TMessage("PopScope", TMessageType.Call, SeqId), cancellationToken);
         
-        var tmp136 = new InternalStructs.PopScope_args() {
+        var tmp140 = new InternalStructs.PopScope_args() {
           Token = @token,
         };
         
-        await tmp136.WriteAsync(OutputProtocol, cancellationToken);
+        await tmp140.WriteAsync(OutputProtocol, cancellationToken);
         await OutputProtocol.WriteMessageEndAsync(cancellationToken);
         await OutputProtocol.Transport.FlushAsync(cancellationToken);
       }
@@ -511,24 +511,24 @@ namespace QueryCat.Plugins.Sdk
       public async global::System.Threading.Tasks.Task<global::QueryCat.Plugins.Sdk.ExecutionScope> recv_PopScopeAsync(CancellationToken cancellationToken = default)
       {
         
-        var tmp137 = await InputProtocol.ReadMessageBeginAsync(cancellationToken);
-        if (tmp137.Type == TMessageType.Exception)
+        var tmp141 = await InputProtocol.ReadMessageBeginAsync(cancellationToken);
+        if (tmp141.Type == TMessageType.Exception)
         {
-          var tmp138 = await TApplicationException.ReadAsync(InputProtocol, cancellationToken);
+          var tmp142 = await TApplicationException.ReadAsync(InputProtocol, cancellationToken);
           await InputProtocol.ReadMessageEndAsync(cancellationToken);
-          throw tmp138;
+          throw tmp142;
         }
 
-        var tmp139 = new InternalStructs.PopScope_result();
-        await tmp139.ReadAsync(InputProtocol, cancellationToken);
+        var tmp143 = new InternalStructs.PopScope_result();
+        await tmp143.ReadAsync(InputProtocol, cancellationToken);
         await InputProtocol.ReadMessageEndAsync(cancellationToken);
-        if (tmp139.__isset.success)
+        if (tmp143.__isset.success)
         {
-          return tmp139.Success!;
+          return tmp143.Success!;
         }
-        if (tmp139.__isset.@e)
+        if (tmp143.__isset.@e)
         {
-          throw tmp139.E!;
+          throw tmp143.E!;
         }
         throw new TApplicationException(TApplicationException.ExceptionType.MissingResult, "PopScopeAsync failed: unknown result");
       }
@@ -543,11 +543,11 @@ namespace QueryCat.Plugins.Sdk
       {
         await OutputProtocol.WriteMessageBeginAsync(new TMessage("PeekTopScope", TMessageType.Call, SeqId), cancellationToken);
         
-        var tmp140 = new InternalStructs.PeekTopScope_args() {
+        var tmp144 = new InternalStructs.PeekTopScope_args() {
           Token = @token,
         };
         
-        await tmp140.WriteAsync(OutputProtocol, cancellationToken);
+        await tmp144.WriteAsync(OutputProtocol, cancellationToken);
         await OutputProtocol.WriteMessageEndAsync(cancellationToken);
         await OutputProtocol.Transport.FlushAsync(cancellationToken);
       }
@@ -555,24 +555,24 @@ namespace QueryCat.Plugins.Sdk
       public async global::System.Threading.Tasks.Task<global::QueryCat.Plugins.Sdk.ExecutionScope> recv_PeekTopScopeAsync(CancellationToken cancellationToken = default)
       {
         
-        var tmp141 = await InputProtocol.ReadMessageBeginAsync(cancellationToken);
-        if (tmp141.Type == TMessageType.Exception)
+        var tmp145 = await InputProtocol.ReadMessageBeginAsync(cancellationToken);
+        if (tmp145.Type == TMessageType.Exception)
         {
-          var tmp142 = await TApplicationException.ReadAsync(InputProtocol, cancellationToken);
+          var tmp146 = await TApplicationException.ReadAsync(InputProtocol, cancellationToken);
           await InputProtocol.ReadMessageEndAsync(cancellationToken);
-          throw tmp142;
+          throw tmp146;
         }
 
-        var tmp143 = new InternalStructs.PeekTopScope_result();
-        await tmp143.ReadAsync(InputProtocol, cancellationToken);
+        var tmp147 = new InternalStructs.PeekTopScope_result();
+        await tmp147.ReadAsync(InputProtocol, cancellationToken);
         await InputProtocol.ReadMessageEndAsync(cancellationToken);
-        if (tmp143.__isset.success)
+        if (tmp147.__isset.success)
         {
-          return tmp143.Success!;
+          return tmp147.Success!;
         }
-        if (tmp143.__isset.@e)
+        if (tmp147.__isset.@e)
         {
-          throw tmp143.E!;
+          throw tmp147.E!;
         }
         throw new TApplicationException(TApplicationException.ExceptionType.MissingResult, "PeekTopScopeAsync failed: unknown result");
       }
@@ -587,13 +587,13 @@ namespace QueryCat.Plugins.Sdk
       {
         await OutputProtocol.WriteMessageBeginAsync(new TMessage("GetCompletions", TMessageType.Call, SeqId), cancellationToken);
         
-        var tmp144 = new InternalStructs.GetCompletions_args() {
+        var tmp148 = new InternalStructs.GetCompletions_args() {
           Token = @token,
           Text = @text,
           Position = @position,
         };
         
-        await tmp144.WriteAsync(OutputProtocol, cancellationToken);
+        await tmp148.WriteAsync(OutputProtocol, cancellationToken);
         await OutputProtocol.WriteMessageEndAsync(cancellationToken);
         await OutputProtocol.Transport.FlushAsync(cancellationToken);
       }
@@ -601,20 +601,20 @@ namespace QueryCat.Plugins.Sdk
       public async global::System.Threading.Tasks.Task<List<global::QueryCat.Plugins.Sdk.CompletionResult>> recv_GetCompletionsAsync(CancellationToken cancellationToken = default)
       {
         
-        var tmp145 = await InputProtocol.ReadMessageBeginAsync(cancellationToken);
-        if (tmp145.Type == TMessageType.Exception)
+        var tmp149 = await InputProtocol.ReadMessageBeginAsync(cancellationToken);
+        if (tmp149.Type == TMessageType.Exception)
         {
-          var tmp146 = await TApplicationException.ReadAsync(InputProtocol, cancellationToken);
+          var tmp150 = await TApplicationException.ReadAsync(InputProtocol, cancellationToken);
           await InputProtocol.ReadMessageEndAsync(cancellationToken);
-          throw tmp146;
+          throw tmp150;
         }
 
-        var tmp147 = new InternalStructs.GetCompletions_result();
-        await tmp147.ReadAsync(InputProtocol, cancellationToken);
+        var tmp151 = new InternalStructs.GetCompletions_result();
+        await tmp151.ReadAsync(InputProtocol, cancellationToken);
         await InputProtocol.ReadMessageEndAsync(cancellationToken);
-        if (tmp147.__isset.success)
+        if (tmp151.__isset.success)
         {
-          return tmp147.Success!;
+          return tmp151.Success!;
         }
         throw new TApplicationException(TApplicationException.ExceptionType.MissingResult, "GetCompletionsAsync failed: unknown result");
       }
@@ -629,14 +629,14 @@ namespace QueryCat.Plugins.Sdk
       {
         await OutputProtocol.WriteMessageBeginAsync(new TMessage("Blob_Read", TMessageType.Call, SeqId), cancellationToken);
         
-        var tmp148 = new InternalStructs.Blob_Read_args() {
+        var tmp152 = new InternalStructs.Blob_Read_args() {
           Token = @token,
           ObjectBlobHandle = object_blob_handle,
           Offset = @offset,
           Count = @count,
         };
         
-        await tmp148.WriteAsync(OutputProtocol, cancellationToken);
+        await tmp152.WriteAsync(OutputProtocol, cancellationToken);
         await OutputProtocol.WriteMessageEndAsync(cancellationToken);
         await OutputProtocol.Transport.FlushAsync(cancellationToken);
       }
@@ -644,24 +644,24 @@ namespace QueryCat.Plugins.Sdk
       public async global::System.Threading.Tasks.Task<byte[]> recv_Blob_ReadAsync(CancellationToken cancellationToken = default)
       {
         
-        var tmp149 = await InputProtocol.ReadMessageBeginAsync(cancellationToken);
-        if (tmp149.Type == TMessageType.Exception)
+        var tmp153 = await InputProtocol.ReadMessageBeginAsync(cancellationToken);
+        if (tmp153.Type == TMessageType.Exception)
         {
-          var tmp150 = await TApplicationException.ReadAsync(InputProtocol, cancellationToken);
+          var tmp154 = await TApplicationException.ReadAsync(InputProtocol, cancellationToken);
           await InputProtocol.ReadMessageEndAsync(cancellationToken);
-          throw tmp150;
+          throw tmp154;
         }
 
-        var tmp151 = new InternalStructs.Blob_Read_result();
-        await tmp151.ReadAsync(InputProtocol, cancellationToken);
+        var tmp155 = new InternalStructs.Blob_Read_result();
+        await tmp155.ReadAsync(InputProtocol, cancellationToken);
         await InputProtocol.ReadMessageEndAsync(cancellationToken);
-        if (tmp151.__isset.success)
+        if (tmp155.__isset.success)
         {
-          return tmp151.Success!;
+          return tmp155.Success!;
         }
-        if (tmp151.__isset.@e)
+        if (tmp155.__isset.@e)
         {
-          throw tmp151.E!;
+          throw tmp155.E!;
         }
         throw new TApplicationException(TApplicationException.ExceptionType.MissingResult, "Blob_ReadAsync failed: unknown result");
       }
@@ -676,13 +676,13 @@ namespace QueryCat.Plugins.Sdk
       {
         await OutputProtocol.WriteMessageBeginAsync(new TMessage("Blob_Write", TMessageType.Call, SeqId), cancellationToken);
         
-        var tmp152 = new InternalStructs.Blob_Write_args() {
+        var tmp156 = new InternalStructs.Blob_Write_args() {
           Token = @token,
           ObjectBlobHandle = object_blob_handle,
           Bytes = @bytes,
         };
         
-        await tmp152.WriteAsync(OutputProtocol, cancellationToken);
+        await tmp156.WriteAsync(OutputProtocol, cancellationToken);
         await OutputProtocol.WriteMessageEndAsync(cancellationToken);
         await OutputProtocol.Transport.FlushAsync(cancellationToken);
       }
@@ -690,24 +690,24 @@ namespace QueryCat.Plugins.Sdk
       public async global::System.Threading.Tasks.Task<long> recv_Blob_WriteAsync(CancellationToken cancellationToken = default)
       {
         
-        var tmp153 = await InputProtocol.ReadMessageBeginAsync(cancellationToken);
-        if (tmp153.Type == TMessageType.Exception)
+        var tmp157 = await InputProtocol.ReadMessageBeginAsync(cancellationToken);
+        if (tmp157.Type == TMessageType.Exception)
         {
-          var tmp154 = await TApplicationException.ReadAsync(InputProtocol, cancellationToken);
+          var tmp158 = await TApplicationException.ReadAsync(InputProtocol, cancellationToken);
           await InputProtocol.ReadMessageEndAsync(cancellationToken);
-          throw tmp154;
+          throw tmp158;
         }
 
-        var tmp155 = new InternalStructs.Blob_Write_result();
-        await tmp155.ReadAsync(InputProtocol, cancellationToken);
+        var tmp159 = new InternalStructs.Blob_Write_result();
+        await tmp159.ReadAsync(InputProtocol, cancellationToken);
         await InputProtocol.ReadMessageEndAsync(cancellationToken);
-        if (tmp155.__isset.success)
+        if (tmp159.__isset.success)
         {
-          return tmp155.Success;
+          return tmp159.Success;
         }
-        if (tmp155.__isset.@e)
+        if (tmp159.__isset.@e)
         {
-          throw tmp155.E!;
+          throw tmp159.E!;
         }
         throw new TApplicationException(TApplicationException.ExceptionType.MissingResult, "Blob_WriteAsync failed: unknown result");
       }
@@ -722,12 +722,12 @@ namespace QueryCat.Plugins.Sdk
       {
         await OutputProtocol.WriteMessageBeginAsync(new TMessage("Blob_GetLength", TMessageType.Call, SeqId), cancellationToken);
         
-        var tmp156 = new InternalStructs.Blob_GetLength_args() {
+        var tmp160 = new InternalStructs.Blob_GetLength_args() {
           Token = @token,
           ObjectBlobHandle = object_blob_handle,
         };
         
-        await tmp156.WriteAsync(OutputProtocol, cancellationToken);
+        await tmp160.WriteAsync(OutputProtocol, cancellationToken);
         await OutputProtocol.WriteMessageEndAsync(cancellationToken);
         await OutputProtocol.Transport.FlushAsync(cancellationToken);
       }
@@ -735,24 +735,24 @@ namespace QueryCat.Plugins.Sdk
       public async global::System.Threading.Tasks.Task<long> recv_Blob_GetLengthAsync(CancellationToken cancellationToken = default)
       {
         
-        var tmp157 = await InputProtocol.ReadMessageBeginAsync(cancellationToken);
-        if (tmp157.Type == TMessageType.Exception)
+        var tmp161 = await InputProtocol.ReadMessageBeginAsync(cancellationToken);
+        if (tmp161.Type == TMessageType.Exception)
         {
-          var tmp158 = await TApplicationException.ReadAsync(InputProtocol, cancellationToken);
+          var tmp162 = await TApplicationException.ReadAsync(InputProtocol, cancellationToken);
           await InputProtocol.ReadMessageEndAsync(cancellationToken);
-          throw tmp158;
+          throw tmp162;
         }
 
-        var tmp159 = new InternalStructs.Blob_GetLength_result();
-        await tmp159.ReadAsync(InputProtocol, cancellationToken);
+        var tmp163 = new InternalStructs.Blob_GetLength_result();
+        await tmp163.ReadAsync(InputProtocol, cancellationToken);
         await InputProtocol.ReadMessageEndAsync(cancellationToken);
-        if (tmp159.__isset.success)
+        if (tmp163.__isset.success)
         {
-          return tmp159.Success;
+          return tmp163.Success;
         }
-        if (tmp159.__isset.@e)
+        if (tmp163.__isset.@e)
         {
-          throw tmp159.E!;
+          throw tmp163.E!;
         }
         throw new TApplicationException(TApplicationException.ExceptionType.MissingResult, "Blob_GetLengthAsync failed: unknown result");
       }
@@ -767,12 +767,12 @@ namespace QueryCat.Plugins.Sdk
       {
         await OutputProtocol.WriteMessageBeginAsync(new TMessage("Blob_GetContentType", TMessageType.Call, SeqId), cancellationToken);
         
-        var tmp160 = new InternalStructs.Blob_GetContentType_args() {
+        var tmp164 = new InternalStructs.Blob_GetContentType_args() {
           Token = @token,
           ObjectBlobHandle = object_blob_handle,
         };
         
-        await tmp160.WriteAsync(OutputProtocol, cancellationToken);
+        await tmp164.WriteAsync(OutputProtocol, cancellationToken);
         await OutputProtocol.WriteMessageEndAsync(cancellationToken);
         await OutputProtocol.Transport.FlushAsync(cancellationToken);
       }
@@ -780,24 +780,24 @@ namespace QueryCat.Plugins.Sdk
       public async global::System.Threading.Tasks.Task<string> recv_Blob_GetContentTypeAsync(CancellationToken cancellationToken = default)
       {
         
-        var tmp161 = await InputProtocol.ReadMessageBeginAsync(cancellationToken);
-        if (tmp161.Type == TMessageType.Exception)
+        var tmp165 = await InputProtocol.ReadMessageBeginAsync(cancellationToken);
+        if (tmp165.Type == TMessageType.Exception)
         {
-          var tmp162 = await TApplicationException.ReadAsync(InputProtocol, cancellationToken);
+          var tmp166 = await TApplicationException.ReadAsync(InputProtocol, cancellationToken);
           await InputProtocol.ReadMessageEndAsync(cancellationToken);
-          throw tmp162;
+          throw tmp166;
         }
 
-        var tmp163 = new InternalStructs.Blob_GetContentType_result();
-        await tmp163.ReadAsync(InputProtocol, cancellationToken);
+        var tmp167 = new InternalStructs.Blob_GetContentType_result();
+        await tmp167.ReadAsync(InputProtocol, cancellationToken);
         await InputProtocol.ReadMessageEndAsync(cancellationToken);
-        if (tmp163.__isset.success)
+        if (tmp167.__isset.success)
         {
-          return tmp163.Success!;
+          return tmp167.Success!;
         }
-        if (tmp163.__isset.@e)
+        if (tmp167.__isset.@e)
         {
-          throw tmp163.E!;
+          throw tmp167.E!;
         }
         throw new TApplicationException(TApplicationException.ExceptionType.MissingResult, "Blob_GetContentTypeAsync failed: unknown result");
       }
@@ -812,14 +812,14 @@ namespace QueryCat.Plugins.Sdk
       {
         await OutputProtocol.WriteMessageBeginAsync(new TMessage("Log", TMessageType.Call, SeqId), cancellationToken);
         
-        var tmp164 = new InternalStructs.Log_args() {
+        var tmp168 = new InternalStructs.Log_args() {
           Token = @token,
           Level = @level,
           Message = @message,
           Arguments = @arguments,
         };
         
-        await tmp164.WriteAsync(OutputProtocol, cancellationToken);
+        await tmp168.WriteAsync(OutputProtocol, cancellationToken);
         await OutputProtocol.WriteMessageEndAsync(cancellationToken);
         await OutputProtocol.Transport.FlushAsync(cancellationToken);
       }
@@ -827,20 +827,20 @@ namespace QueryCat.Plugins.Sdk
       public async global::System.Threading.Tasks.Task recv_LogAsync(CancellationToken cancellationToken = default)
       {
         
-        var tmp165 = await InputProtocol.ReadMessageBeginAsync(cancellationToken);
-        if (tmp165.Type == TMessageType.Exception)
+        var tmp169 = await InputProtocol.ReadMessageBeginAsync(cancellationToken);
+        if (tmp169.Type == TMessageType.Exception)
         {
-          var tmp166 = await TApplicationException.ReadAsync(InputProtocol, cancellationToken);
+          var tmp170 = await TApplicationException.ReadAsync(InputProtocol, cancellationToken);
           await InputProtocol.ReadMessageEndAsync(cancellationToken);
-          throw tmp166;
+          throw tmp170;
         }
 
-        var tmp167 = new InternalStructs.Log_result();
-        await tmp167.ReadAsync(InputProtocol, cancellationToken);
+        var tmp171 = new InternalStructs.Log_result();
+        await tmp171.ReadAsync(InputProtocol, cancellationToken);
         await InputProtocol.ReadMessageEndAsync(cancellationToken);
-        if (tmp167.__isset.@e)
+        if (tmp171.__isset.@e)
         {
-          throw tmp167.E!;
+          throw tmp171.E!;
         }
       }
 
@@ -854,11 +854,11 @@ namespace QueryCat.Plugins.Sdk
       {
         await OutputProtocol.WriteMessageBeginAsync(new TMessage("GetStatistic", TMessageType.Call, SeqId), cancellationToken);
         
-        var tmp168 = new InternalStructs.GetStatistic_args() {
+        var tmp172 = new InternalStructs.GetStatistic_args() {
           Token = @token,
         };
         
-        await tmp168.WriteAsync(OutputProtocol, cancellationToken);
+        await tmp172.WriteAsync(OutputProtocol, cancellationToken);
         await OutputProtocol.WriteMessageEndAsync(cancellationToken);
         await OutputProtocol.Transport.FlushAsync(cancellationToken);
       }
@@ -866,24 +866,24 @@ namespace QueryCat.Plugins.Sdk
       public async global::System.Threading.Tasks.Task<global::QueryCat.Plugins.Sdk.Statistic> recv_GetStatisticAsync(CancellationToken cancellationToken = default)
       {
         
-        var tmp169 = await InputProtocol.ReadMessageBeginAsync(cancellationToken);
-        if (tmp169.Type == TMessageType.Exception)
+        var tmp173 = await InputProtocol.ReadMessageBeginAsync(cancellationToken);
+        if (tmp173.Type == TMessageType.Exception)
         {
-          var tmp170 = await TApplicationException.ReadAsync(InputProtocol, cancellationToken);
+          var tmp174 = await TApplicationException.ReadAsync(InputProtocol, cancellationToken);
           await InputProtocol.ReadMessageEndAsync(cancellationToken);
-          throw tmp170;
+          throw tmp174;
         }
 
-        var tmp171 = new InternalStructs.GetStatistic_result();
-        await tmp171.ReadAsync(InputProtocol, cancellationToken);
+        var tmp175 = new InternalStructs.GetStatistic_result();
+        await tmp175.ReadAsync(InputProtocol, cancellationToken);
         await InputProtocol.ReadMessageEndAsync(cancellationToken);
-        if (tmp171.__isset.success)
+        if (tmp175.__isset.success)
         {
-          return tmp171.Success!;
+          return tmp175.Success!;
         }
-        if (tmp171.__isset.@e)
+        if (tmp175.__isset.@e)
         {
-          throw tmp171.E!;
+          throw tmp175.E!;
         }
         throw new TApplicationException(TApplicationException.ExceptionType.MissingResult, "GetStatisticAsync failed: unknown result");
       }
@@ -960,37 +960,37 @@ namespace QueryCat.Plugins.Sdk
 
       public async global::System.Threading.Tasks.Task RegisterPlugin_ProcessAsync(int seqid, TProtocol iprot, TProtocol oprot, CancellationToken cancellationToken)
       {
-        var tmp172 = new InternalStructs.RegisterPlugin_args();
-        await tmp172.ReadAsync(iprot, cancellationToken);
+        var tmp176 = new InternalStructs.RegisterPlugin_args();
+        await tmp176.ReadAsync(iprot, cancellationToken);
         await iprot.ReadMessageEndAsync(cancellationToken);
-        var tmp173 = new InternalStructs.RegisterPlugin_result();
+        var tmp177 = new InternalStructs.RegisterPlugin_result();
         try
         {
           try
           {
-            tmp173.Success = await _iAsync.RegisterPluginAsync(tmp172.RegistrationToken, tmp172.CallbackUri, tmp172.PluginData, cancellationToken);
+            tmp177.Success = await _iAsync.RegisterPluginAsync(tmp176.RegistrationToken, tmp176.CallbackUri, tmp176.PluginData, cancellationToken);
           }
-          catch (global::QueryCat.Plugins.Sdk.QueryCatPluginException tmp174)
+          catch (global::QueryCat.Plugins.Sdk.QueryCatPluginException tmp178)
           {
-            tmp173.E = tmp174;
+            tmp177.E = tmp178;
           }
           await oprot.WriteMessageBeginAsync(new TMessage("RegisterPlugin", TMessageType.Reply, seqid), cancellationToken); 
-          await tmp173.WriteAsync(oprot, cancellationToken);
+          await tmp177.WriteAsync(oprot, cancellationToken);
         }
         catch (TTransportException)
         {
           throw;
         }
-        catch (Exception tmp175)
+        catch (Exception tmp179)
         {
-          var tmp176 = $"Error occurred in {GetType().FullName}: {tmp175.Message}";
+          var tmp180 = $"Error occurred in {GetType().FullName}: {tmp179.Message}";
           if(_logger != null)
-            _logger.LogError("{Exception}, {Message}", tmp175, tmp176);
+            _logger.LogError("{Exception}, {Message}", tmp179, tmp180);
           else
-            Console.Error.WriteLine(tmp176);
-          var tmp177 = new TApplicationException(TApplicationException.ExceptionType.InternalError," Internal error.");
+            Console.Error.WriteLine(tmp180);
+          var tmp181 = new TApplicationException(TApplicationException.ExceptionType.InternalError," Internal error.");
           await oprot.WriteMessageBeginAsync(new TMessage("RegisterPlugin", TMessageType.Exception, seqid), cancellationToken);
-          await tmp177.WriteAsync(oprot, cancellationToken);
+          await tmp181.WriteAsync(oprot, cancellationToken);
         }
         await oprot.WriteMessageEndAsync(cancellationToken);
         await oprot.Transport.FlushAsync(cancellationToken);
@@ -998,37 +998,37 @@ namespace QueryCat.Plugins.Sdk
 
       public async global::System.Threading.Tasks.Task CallFunction_ProcessAsync(int seqid, TProtocol iprot, TProtocol oprot, CancellationToken cancellationToken)
       {
-        var tmp178 = new InternalStructs.CallFunction_args();
-        await tmp178.ReadAsync(iprot, cancellationToken);
+        var tmp182 = new InternalStructs.CallFunction_args();
+        await tmp182.ReadAsync(iprot, cancellationToken);
         await iprot.ReadMessageEndAsync(cancellationToken);
-        var tmp179 = new InternalStructs.CallFunction_result();
+        var tmp183 = new InternalStructs.CallFunction_result();
         try
         {
           try
           {
-            tmp179.Success = await _iAsync.CallFunctionAsync(tmp178.Token, tmp178.FunctionName, tmp178.Args, tmp178.ObjectHandle, cancellationToken);
+            tmp183.Success = await _iAsync.CallFunctionAsync(tmp182.Token, tmp182.FunctionName, tmp182.Args, tmp182.ObjectHandle, cancellationToken);
           }
-          catch (global::QueryCat.Plugins.Sdk.QueryCatPluginException tmp180)
+          catch (global::QueryCat.Plugins.Sdk.QueryCatPluginException tmp184)
           {
-            tmp179.E = tmp180;
+            tmp183.E = tmp184;
           }
           await oprot.WriteMessageBeginAsync(new TMessage("CallFunction", TMessageType.Reply, seqid), cancellationToken); 
-          await tmp179.WriteAsync(oprot, cancellationToken);
+          await tmp183.WriteAsync(oprot, cancellationToken);
         }
         catch (TTransportException)
         {
           throw;
         }
-        catch (Exception tmp181)
+        catch (Exception tmp185)
         {
-          var tmp182 = $"Error occurred in {GetType().FullName}: {tmp181.Message}";
+          var tmp186 = $"Error occurred in {GetType().FullName}: {tmp185.Message}";
           if(_logger != null)
-            _logger.LogError("{Exception}, {Message}", tmp181, tmp182);
+            _logger.LogError("{Exception}, {Message}", tmp185, tmp186);
           else
-            Console.Error.WriteLine(tmp182);
-          var tmp183 = new TApplicationException(TApplicationException.ExceptionType.InternalError," Internal error.");
+            Console.Error.WriteLine(tmp186);
+          var tmp187 = new TApplicationException(TApplicationException.ExceptionType.InternalError," Internal error.");
           await oprot.WriteMessageBeginAsync(new TMessage("CallFunction", TMessageType.Exception, seqid), cancellationToken);
-          await tmp183.WriteAsync(oprot, cancellationToken);
+          await tmp187.WriteAsync(oprot, cancellationToken);
         }
         await oprot.WriteMessageEndAsync(cancellationToken);
         await oprot.Transport.FlushAsync(cancellationToken);
@@ -1036,37 +1036,37 @@ namespace QueryCat.Plugins.Sdk
 
       public async global::System.Threading.Tasks.Task RunQuery_ProcessAsync(int seqid, TProtocol iprot, TProtocol oprot, CancellationToken cancellationToken)
       {
-        var tmp184 = new InternalStructs.RunQuery_args();
-        await tmp184.ReadAsync(iprot, cancellationToken);
+        var tmp188 = new InternalStructs.RunQuery_args();
+        await tmp188.ReadAsync(iprot, cancellationToken);
         await iprot.ReadMessageEndAsync(cancellationToken);
-        var tmp185 = new InternalStructs.RunQuery_result();
+        var tmp189 = new InternalStructs.RunQuery_result();
         try
         {
           try
           {
-            tmp185.Success = await _iAsync.RunQueryAsync(tmp184.Token, tmp184.Query, tmp184.Parameters, cancellationToken);
+            tmp189.Success = await _iAsync.RunQueryAsync(tmp188.Token, tmp188.Query, tmp188.Parameters, cancellationToken);
           }
-          catch (global::QueryCat.Plugins.Sdk.QueryCatPluginException tmp186)
+          catch (global::QueryCat.Plugins.Sdk.QueryCatPluginException tmp190)
           {
-            tmp185.E = tmp186;
+            tmp189.E = tmp190;
           }
           await oprot.WriteMessageBeginAsync(new TMessage("RunQuery", TMessageType.Reply, seqid), cancellationToken); 
-          await tmp185.WriteAsync(oprot, cancellationToken);
+          await tmp189.WriteAsync(oprot, cancellationToken);
         }
         catch (TTransportException)
         {
           throw;
         }
-        catch (Exception tmp187)
+        catch (Exception tmp191)
         {
-          var tmp188 = $"Error occurred in {GetType().FullName}: {tmp187.Message}";
+          var tmp192 = $"Error occurred in {GetType().FullName}: {tmp191.Message}";
           if(_logger != null)
-            _logger.LogError("{Exception}, {Message}", tmp187, tmp188);
+            _logger.LogError("{Exception}, {Message}", tmp191, tmp192);
           else
-            Console.Error.WriteLine(tmp188);
-          var tmp189 = new TApplicationException(TApplicationException.ExceptionType.InternalError," Internal error.");
+            Console.Error.WriteLine(tmp192);
+          var tmp193 = new TApplicationException(TApplicationException.ExceptionType.InternalError," Internal error.");
           await oprot.WriteMessageBeginAsync(new TMessage("RunQuery", TMessageType.Exception, seqid), cancellationToken);
-          await tmp189.WriteAsync(oprot, cancellationToken);
+          await tmp193.WriteAsync(oprot, cancellationToken);
         }
         await oprot.WriteMessageEndAsync(cancellationToken);
         await oprot.Transport.FlushAsync(cancellationToken);
@@ -1074,37 +1074,37 @@ namespace QueryCat.Plugins.Sdk
 
       public async global::System.Threading.Tasks.Task SetConfigValue_ProcessAsync(int seqid, TProtocol iprot, TProtocol oprot, CancellationToken cancellationToken)
       {
-        var tmp190 = new InternalStructs.SetConfigValue_args();
-        await tmp190.ReadAsync(iprot, cancellationToken);
+        var tmp194 = new InternalStructs.SetConfigValue_args();
+        await tmp194.ReadAsync(iprot, cancellationToken);
         await iprot.ReadMessageEndAsync(cancellationToken);
-        var tmp191 = new InternalStructs.SetConfigValue_result();
+        var tmp195 = new InternalStructs.SetConfigValue_result();
         try
         {
           try
           {
-            await _iAsync.SetConfigValueAsync(tmp190.Token, tmp190.Key, tmp190.Value, cancellationToken);
+            await _iAsync.SetConfigValueAsync(tmp194.Token, tmp194.Key, tmp194.Value, cancellationToken);
           }
-          catch (global::QueryCat.Plugins.Sdk.QueryCatPluginException tmp192)
+          catch (global::QueryCat.Plugins.Sdk.QueryCatPluginException tmp196)
           {
-            tmp191.E = tmp192;
+            tmp195.E = tmp196;
           }
           await oprot.WriteMessageBeginAsync(new TMessage("SetConfigValue", TMessageType.Reply, seqid), cancellationToken); 
-          await tmp191.WriteAsync(oprot, cancellationToken);
+          await tmp195.WriteAsync(oprot, cancellationToken);
         }
         catch (TTransportException)
         {
           throw;
         }
-        catch (Exception tmp193)
+        catch (Exception tmp197)
         {
-          var tmp194 = $"Error occurred in {GetType().FullName}: {tmp193.Message}";
+          var tmp198 = $"Error occurred in {GetType().FullName}: {tmp197.Message}";
           if(_logger != null)
-            _logger.LogError("{Exception}, {Message}", tmp193, tmp194);
+            _logger.LogError("{Exception}, {Message}", tmp197, tmp198);
           else
-            Console.Error.WriteLine(tmp194);
-          var tmp195 = new TApplicationException(TApplicationException.ExceptionType.InternalError," Internal error.");
+            Console.Error.WriteLine(tmp198);
+          var tmp199 = new TApplicationException(TApplicationException.ExceptionType.InternalError," Internal error.");
           await oprot.WriteMessageBeginAsync(new TMessage("SetConfigValue", TMessageType.Exception, seqid), cancellationToken);
-          await tmp195.WriteAsync(oprot, cancellationToken);
+          await tmp199.WriteAsync(oprot, cancellationToken);
         }
         await oprot.WriteMessageEndAsync(cancellationToken);
         await oprot.Transport.FlushAsync(cancellationToken);
@@ -1112,37 +1112,37 @@ namespace QueryCat.Plugins.Sdk
 
       public async global::System.Threading.Tasks.Task GetConfigValue_ProcessAsync(int seqid, TProtocol iprot, TProtocol oprot, CancellationToken cancellationToken)
       {
-        var tmp196 = new InternalStructs.GetConfigValue_args();
-        await tmp196.ReadAsync(iprot, cancellationToken);
+        var tmp200 = new InternalStructs.GetConfigValue_args();
+        await tmp200.ReadAsync(iprot, cancellationToken);
         await iprot.ReadMessageEndAsync(cancellationToken);
-        var tmp197 = new InternalStructs.GetConfigValue_result();
+        var tmp201 = new InternalStructs.GetConfigValue_result();
         try
         {
           try
           {
-            tmp197.Success = await _iAsync.GetConfigValueAsync(tmp196.Token, tmp196.Key, cancellationToken);
+            tmp201.Success = await _iAsync.GetConfigValueAsync(tmp200.Token, tmp200.Key, cancellationToken);
           }
-          catch (global::QueryCat.Plugins.Sdk.QueryCatPluginException tmp198)
+          catch (global::QueryCat.Plugins.Sdk.QueryCatPluginException tmp202)
           {
-            tmp197.E = tmp198;
+            tmp201.E = tmp202;
           }
           await oprot.WriteMessageBeginAsync(new TMessage("GetConfigValue", TMessageType.Reply, seqid), cancellationToken); 
-          await tmp197.WriteAsync(oprot, cancellationToken);
+          await tmp201.WriteAsync(oprot, cancellationToken);
         }
         catch (TTransportException)
         {
           throw;
         }
-        catch (Exception tmp199)
+        catch (Exception tmp203)
         {
-          var tmp200 = $"Error occurred in {GetType().FullName}: {tmp199.Message}";
+          var tmp204 = $"Error occurred in {GetType().FullName}: {tmp203.Message}";
           if(_logger != null)
-            _logger.LogError("{Exception}, {Message}", tmp199, tmp200);
+            _logger.LogError("{Exception}, {Message}", tmp203, tmp204);
           else
-            Console.Error.WriteLine(tmp200);
-          var tmp201 = new TApplicationException(TApplicationException.ExceptionType.InternalError," Internal error.");
+            Console.Error.WriteLine(tmp204);
+          var tmp205 = new TApplicationException(TApplicationException.ExceptionType.InternalError," Internal error.");
           await oprot.WriteMessageBeginAsync(new TMessage("GetConfigValue", TMessageType.Exception, seqid), cancellationToken);
-          await tmp201.WriteAsync(oprot, cancellationToken);
+          await tmp205.WriteAsync(oprot, cancellationToken);
         }
         await oprot.WriteMessageEndAsync(cancellationToken);
         await oprot.Transport.FlushAsync(cancellationToken);
@@ -1150,37 +1150,37 @@ namespace QueryCat.Plugins.Sdk
 
       public async global::System.Threading.Tasks.Task GetVariable_ProcessAsync(int seqid, TProtocol iprot, TProtocol oprot, CancellationToken cancellationToken)
       {
-        var tmp202 = new InternalStructs.GetVariable_args();
-        await tmp202.ReadAsync(iprot, cancellationToken);
+        var tmp206 = new InternalStructs.GetVariable_args();
+        await tmp206.ReadAsync(iprot, cancellationToken);
         await iprot.ReadMessageEndAsync(cancellationToken);
-        var tmp203 = new InternalStructs.GetVariable_result();
+        var tmp207 = new InternalStructs.GetVariable_result();
         try
         {
           try
           {
-            tmp203.Success = await _iAsync.GetVariableAsync(tmp202.Token, tmp202.Name, cancellationToken);
+            tmp207.Success = await _iAsync.GetVariableAsync(tmp206.Token, tmp206.Name, cancellationToken);
           }
-          catch (global::QueryCat.Plugins.Sdk.QueryCatPluginException tmp204)
+          catch (global::QueryCat.Plugins.Sdk.QueryCatPluginException tmp208)
           {
-            tmp203.E = tmp204;
+            tmp207.E = tmp208;
           }
           await oprot.WriteMessageBeginAsync(new TMessage("GetVariable", TMessageType.Reply, seqid), cancellationToken); 
-          await tmp203.WriteAsync(oprot, cancellationToken);
+          await tmp207.WriteAsync(oprot, cancellationToken);
         }
         catch (TTransportException)
         {
           throw;
         }
-        catch (Exception tmp205)
+        catch (Exception tmp209)
         {
-          var tmp206 = $"Error occurred in {GetType().FullName}: {tmp205.Message}";
+          var tmp210 = $"Error occurred in {GetType().FullName}: {tmp209.Message}";
           if(_logger != null)
-            _logger.LogError("{Exception}, {Message}", tmp205, tmp206);
+            _logger.LogError("{Exception}, {Message}", tmp209, tmp210);
           else
-            Console.Error.WriteLine(tmp206);
-          var tmp207 = new TApplicationException(TApplicationException.ExceptionType.InternalError," Internal error.");
+            Console.Error.WriteLine(tmp210);
+          var tmp211 = new TApplicationException(TApplicationException.ExceptionType.InternalError," Internal error.");
           await oprot.WriteMessageBeginAsync(new TMessage("GetVariable", TMessageType.Exception, seqid), cancellationToken);
-          await tmp207.WriteAsync(oprot, cancellationToken);
+          await tmp211.WriteAsync(oprot, cancellationToken);
         }
         await oprot.WriteMessageEndAsync(cancellationToken);
         await oprot.Transport.FlushAsync(cancellationToken);
@@ -1188,37 +1188,37 @@ namespace QueryCat.Plugins.Sdk
 
       public async global::System.Threading.Tasks.Task SetVariable_ProcessAsync(int seqid, TProtocol iprot, TProtocol oprot, CancellationToken cancellationToken)
       {
-        var tmp208 = new InternalStructs.SetVariable_args();
-        await tmp208.ReadAsync(iprot, cancellationToken);
+        var tmp212 = new InternalStructs.SetVariable_args();
+        await tmp212.ReadAsync(iprot, cancellationToken);
         await iprot.ReadMessageEndAsync(cancellationToken);
-        var tmp209 = new InternalStructs.SetVariable_result();
+        var tmp213 = new InternalStructs.SetVariable_result();
         try
         {
           try
           {
-            tmp209.Success = await _iAsync.SetVariableAsync(tmp208.Token, tmp208.Name, tmp208.Value, cancellationToken);
+            tmp213.Success = await _iAsync.SetVariableAsync(tmp212.Token, tmp212.Name, tmp212.Value, cancellationToken);
           }
-          catch (global::QueryCat.Plugins.Sdk.QueryCatPluginException tmp210)
+          catch (global::QueryCat.Plugins.Sdk.QueryCatPluginException tmp214)
           {
-            tmp209.E = tmp210;
+            tmp213.E = tmp214;
           }
           await oprot.WriteMessageBeginAsync(new TMessage("SetVariable", TMessageType.Reply, seqid), cancellationToken); 
-          await tmp209.WriteAsync(oprot, cancellationToken);
+          await tmp213.WriteAsync(oprot, cancellationToken);
         }
         catch (TTransportException)
         {
           throw;
         }
-        catch (Exception tmp211)
+        catch (Exception tmp215)
         {
-          var tmp212 = $"Error occurred in {GetType().FullName}: {tmp211.Message}";
+          var tmp216 = $"Error occurred in {GetType().FullName}: {tmp215.Message}";
           if(_logger != null)
-            _logger.LogError("{Exception}, {Message}", tmp211, tmp212);
+            _logger.LogError("{Exception}, {Message}", tmp215, tmp216);
           else
-            Console.Error.WriteLine(tmp212);
-          var tmp213 = new TApplicationException(TApplicationException.ExceptionType.InternalError," Internal error.");
+            Console.Error.WriteLine(tmp216);
+          var tmp217 = new TApplicationException(TApplicationException.ExceptionType.InternalError," Internal error.");
           await oprot.WriteMessageBeginAsync(new TMessage("SetVariable", TMessageType.Exception, seqid), cancellationToken);
-          await tmp213.WriteAsync(oprot, cancellationToken);
+          await tmp217.WriteAsync(oprot, cancellationToken);
         }
         await oprot.WriteMessageEndAsync(cancellationToken);
         await oprot.Transport.FlushAsync(cancellationToken);
@@ -1226,37 +1226,37 @@ namespace QueryCat.Plugins.Sdk
 
       public async global::System.Threading.Tasks.Task GetVariables_ProcessAsync(int seqid, TProtocol iprot, TProtocol oprot, CancellationToken cancellationToken)
       {
-        var tmp214 = new InternalStructs.GetVariables_args();
-        await tmp214.ReadAsync(iprot, cancellationToken);
+        var tmp218 = new InternalStructs.GetVariables_args();
+        await tmp218.ReadAsync(iprot, cancellationToken);
         await iprot.ReadMessageEndAsync(cancellationToken);
-        var tmp215 = new InternalStructs.GetVariables_result();
+        var tmp219 = new InternalStructs.GetVariables_result();
         try
         {
           try
           {
-            tmp215.Success = await _iAsync.GetVariablesAsync(tmp214.Token, tmp214.ScopeId, cancellationToken);
+            tmp219.Success = await _iAsync.GetVariablesAsync(tmp218.Token, tmp218.ScopeId, cancellationToken);
           }
-          catch (global::QueryCat.Plugins.Sdk.QueryCatPluginException tmp216)
+          catch (global::QueryCat.Plugins.Sdk.QueryCatPluginException tmp220)
           {
-            tmp215.E = tmp216;
+            tmp219.E = tmp220;
           }
           await oprot.WriteMessageBeginAsync(new TMessage("GetVariables", TMessageType.Reply, seqid), cancellationToken); 
-          await tmp215.WriteAsync(oprot, cancellationToken);
+          await tmp219.WriteAsync(oprot, cancellationToken);
         }
         catch (TTransportException)
         {
           throw;
         }
-        catch (Exception tmp217)
+        catch (Exception tmp221)
         {
-          var tmp218 = $"Error occurred in {GetType().FullName}: {tmp217.Message}";
+          var tmp222 = $"Error occurred in {GetType().FullName}: {tmp221.Message}";
           if(_logger != null)
-            _logger.LogError("{Exception}, {Message}", tmp217, tmp218);
+            _logger.LogError("{Exception}, {Message}", tmp221, tmp222);
           else
-            Console.Error.WriteLine(tmp218);
-          var tmp219 = new TApplicationException(TApplicationException.ExceptionType.InternalError," Internal error.");
+            Console.Error.WriteLine(tmp222);
+          var tmp223 = new TApplicationException(TApplicationException.ExceptionType.InternalError," Internal error.");
           await oprot.WriteMessageBeginAsync(new TMessage("GetVariables", TMessageType.Exception, seqid), cancellationToken);
-          await tmp219.WriteAsync(oprot, cancellationToken);
+          await tmp223.WriteAsync(oprot, cancellationToken);
         }
         await oprot.WriteMessageEndAsync(cancellationToken);
         await oprot.Transport.FlushAsync(cancellationToken);
@@ -1264,37 +1264,37 @@ namespace QueryCat.Plugins.Sdk
 
       public async global::System.Threading.Tasks.Task PushScope_ProcessAsync(int seqid, TProtocol iprot, TProtocol oprot, CancellationToken cancellationToken)
       {
-        var tmp220 = new InternalStructs.PushScope_args();
-        await tmp220.ReadAsync(iprot, cancellationToken);
+        var tmp224 = new InternalStructs.PushScope_args();
+        await tmp224.ReadAsync(iprot, cancellationToken);
         await iprot.ReadMessageEndAsync(cancellationToken);
-        var tmp221 = new InternalStructs.PushScope_result();
+        var tmp225 = new InternalStructs.PushScope_result();
         try
         {
           try
           {
-            tmp221.Success = await _iAsync.PushScopeAsync(tmp220.Token, cancellationToken);
+            tmp225.Success = await _iAsync.PushScopeAsync(tmp224.Token, cancellationToken);
           }
-          catch (global::QueryCat.Plugins.Sdk.QueryCatPluginException tmp222)
+          catch (global::QueryCat.Plugins.Sdk.QueryCatPluginException tmp226)
           {
-            tmp221.E = tmp222;
+            tmp225.E = tmp226;
           }
           await oprot.WriteMessageBeginAsync(new TMessage("PushScope", TMessageType.Reply, seqid), cancellationToken); 
-          await tmp221.WriteAsync(oprot, cancellationToken);
+          await tmp225.WriteAsync(oprot, cancellationToken);
         }
         catch (TTransportException)
         {
           throw;
         }
-        catch (Exception tmp223)
+        catch (Exception tmp227)
         {
-          var tmp224 = $"Error occurred in {GetType().FullName}: {tmp223.Message}";
+          var tmp228 = $"Error occurred in {GetType().FullName}: {tmp227.Message}";
           if(_logger != null)
-            _logger.LogError("{Exception}, {Message}", tmp223, tmp224);
+            _logger.LogError("{Exception}, {Message}", tmp227, tmp228);
           else
-            Console.Error.WriteLine(tmp224);
-          var tmp225 = new TApplicationException(TApplicationException.ExceptionType.InternalError," Internal error.");
+            Console.Error.WriteLine(tmp228);
+          var tmp229 = new TApplicationException(TApplicationException.ExceptionType.InternalError," Internal error.");
           await oprot.WriteMessageBeginAsync(new TMessage("PushScope", TMessageType.Exception, seqid), cancellationToken);
-          await tmp225.WriteAsync(oprot, cancellationToken);
+          await tmp229.WriteAsync(oprot, cancellationToken);
         }
         await oprot.WriteMessageEndAsync(cancellationToken);
         await oprot.Transport.FlushAsync(cancellationToken);
@@ -1302,37 +1302,37 @@ namespace QueryCat.Plugins.Sdk
 
       public async global::System.Threading.Tasks.Task PopScope_ProcessAsync(int seqid, TProtocol iprot, TProtocol oprot, CancellationToken cancellationToken)
       {
-        var tmp226 = new InternalStructs.PopScope_args();
-        await tmp226.ReadAsync(iprot, cancellationToken);
+        var tmp230 = new InternalStructs.PopScope_args();
+        await tmp230.ReadAsync(iprot, cancellationToken);
         await iprot.ReadMessageEndAsync(cancellationToken);
-        var tmp227 = new InternalStructs.PopScope_result();
+        var tmp231 = new InternalStructs.PopScope_result();
         try
         {
           try
           {
-            tmp227.Success = await _iAsync.PopScopeAsync(tmp226.Token, cancellationToken);
+            tmp231.Success = await _iAsync.PopScopeAsync(tmp230.Token, cancellationToken);
           }
-          catch (global::QueryCat.Plugins.Sdk.QueryCatPluginException tmp228)
+          catch (global::QueryCat.Plugins.Sdk.QueryCatPluginException tmp232)
           {
-            tmp227.E = tmp228;
+            tmp231.E = tmp232;
           }
           await oprot.WriteMessageBeginAsync(new TMessage("PopScope", TMessageType.Reply, seqid), cancellationToken); 
-          await tmp227.WriteAsync(oprot, cancellationToken);
+          await tmp231.WriteAsync(oprot, cancellationToken);
         }
         catch (TTransportException)
         {
           throw;
         }
-        catch (Exception tmp229)
+        catch (Exception tmp233)
         {
-          var tmp230 = $"Error occurred in {GetType().FullName}: {tmp229.Message}";
+          var tmp234 = $"Error occurred in {GetType().FullName}: {tmp233.Message}";
           if(_logger != null)
-            _logger.LogError("{Exception}, {Message}", tmp229, tmp230);
+            _logger.LogError("{Exception}, {Message}", tmp233, tmp234);
           else
-            Console.Error.WriteLine(tmp230);
-          var tmp231 = new TApplicationException(TApplicationException.ExceptionType.InternalError," Internal error.");
+            Console.Error.WriteLine(tmp234);
+          var tmp235 = new TApplicationException(TApplicationException.ExceptionType.InternalError," Internal error.");
           await oprot.WriteMessageBeginAsync(new TMessage("PopScope", TMessageType.Exception, seqid), cancellationToken);
-          await tmp231.WriteAsync(oprot, cancellationToken);
+          await tmp235.WriteAsync(oprot, cancellationToken);
         }
         await oprot.WriteMessageEndAsync(cancellationToken);
         await oprot.Transport.FlushAsync(cancellationToken);
@@ -1340,37 +1340,37 @@ namespace QueryCat.Plugins.Sdk
 
       public async global::System.Threading.Tasks.Task PeekTopScope_ProcessAsync(int seqid, TProtocol iprot, TProtocol oprot, CancellationToken cancellationToken)
       {
-        var tmp232 = new InternalStructs.PeekTopScope_args();
-        await tmp232.ReadAsync(iprot, cancellationToken);
+        var tmp236 = new InternalStructs.PeekTopScope_args();
+        await tmp236.ReadAsync(iprot, cancellationToken);
         await iprot.ReadMessageEndAsync(cancellationToken);
-        var tmp233 = new InternalStructs.PeekTopScope_result();
+        var tmp237 = new InternalStructs.PeekTopScope_result();
         try
         {
           try
           {
-            tmp233.Success = await _iAsync.PeekTopScopeAsync(tmp232.Token, cancellationToken);
+            tmp237.Success = await _iAsync.PeekTopScopeAsync(tmp236.Token, cancellationToken);
           }
-          catch (global::QueryCat.Plugins.Sdk.QueryCatPluginException tmp234)
+          catch (global::QueryCat.Plugins.Sdk.QueryCatPluginException tmp238)
           {
-            tmp233.E = tmp234;
+            tmp237.E = tmp238;
           }
           await oprot.WriteMessageBeginAsync(new TMessage("PeekTopScope", TMessageType.Reply, seqid), cancellationToken); 
-          await tmp233.WriteAsync(oprot, cancellationToken);
+          await tmp237.WriteAsync(oprot, cancellationToken);
         }
         catch (TTransportException)
         {
           throw;
         }
-        catch (Exception tmp235)
+        catch (Exception tmp239)
         {
-          var tmp236 = $"Error occurred in {GetType().FullName}: {tmp235.Message}";
+          var tmp240 = $"Error occurred in {GetType().FullName}: {tmp239.Message}";
           if(_logger != null)
-            _logger.LogError("{Exception}, {Message}", tmp235, tmp236);
+            _logger.LogError("{Exception}, {Message}", tmp239, tmp240);
           else
-            Console.Error.WriteLine(tmp236);
-          var tmp237 = new TApplicationException(TApplicationException.ExceptionType.InternalError," Internal error.");
+            Console.Error.WriteLine(tmp240);
+          var tmp241 = new TApplicationException(TApplicationException.ExceptionType.InternalError," Internal error.");
           await oprot.WriteMessageBeginAsync(new TMessage("PeekTopScope", TMessageType.Exception, seqid), cancellationToken);
-          await tmp237.WriteAsync(oprot, cancellationToken);
+          await tmp241.WriteAsync(oprot, cancellationToken);
         }
         await oprot.WriteMessageEndAsync(cancellationToken);
         await oprot.Transport.FlushAsync(cancellationToken);
@@ -1378,30 +1378,30 @@ namespace QueryCat.Plugins.Sdk
 
       public async global::System.Threading.Tasks.Task GetCompletions_ProcessAsync(int seqid, TProtocol iprot, TProtocol oprot, CancellationToken cancellationToken)
       {
-        var tmp238 = new InternalStructs.GetCompletions_args();
-        await tmp238.ReadAsync(iprot, cancellationToken);
+        var tmp242 = new InternalStructs.GetCompletions_args();
+        await tmp242.ReadAsync(iprot, cancellationToken);
         await iprot.ReadMessageEndAsync(cancellationToken);
-        var tmp239 = new InternalStructs.GetCompletions_result();
+        var tmp243 = new InternalStructs.GetCompletions_result();
         try
         {
-          tmp239.Success = await _iAsync.GetCompletionsAsync(tmp238.Token, tmp238.Text, tmp238.Position, cancellationToken);
+          tmp243.Success = await _iAsync.GetCompletionsAsync(tmp242.Token, tmp242.Text, tmp242.Position, cancellationToken);
           await oprot.WriteMessageBeginAsync(new TMessage("GetCompletions", TMessageType.Reply, seqid), cancellationToken); 
-          await tmp239.WriteAsync(oprot, cancellationToken);
+          await tmp243.WriteAsync(oprot, cancellationToken);
         }
         catch (TTransportException)
         {
           throw;
         }
-        catch (Exception tmp240)
+        catch (Exception tmp244)
         {
-          var tmp241 = $"Error occurred in {GetType().FullName}: {tmp240.Message}";
+          var tmp245 = $"Error occurred in {GetType().FullName}: {tmp244.Message}";
           if(_logger != null)
-            _logger.LogError("{Exception}, {Message}", tmp240, tmp241);
+            _logger.LogError("{Exception}, {Message}", tmp244, tmp245);
           else
-            Console.Error.WriteLine(tmp241);
-          var tmp242 = new TApplicationException(TApplicationException.ExceptionType.InternalError," Internal error.");
+            Console.Error.WriteLine(tmp245);
+          var tmp246 = new TApplicationException(TApplicationException.ExceptionType.InternalError," Internal error.");
           await oprot.WriteMessageBeginAsync(new TMessage("GetCompletions", TMessageType.Exception, seqid), cancellationToken);
-          await tmp242.WriteAsync(oprot, cancellationToken);
+          await tmp246.WriteAsync(oprot, cancellationToken);
         }
         await oprot.WriteMessageEndAsync(cancellationToken);
         await oprot.Transport.FlushAsync(cancellationToken);
@@ -1409,37 +1409,37 @@ namespace QueryCat.Plugins.Sdk
 
       public async global::System.Threading.Tasks.Task Blob_Read_ProcessAsync(int seqid, TProtocol iprot, TProtocol oprot, CancellationToken cancellationToken)
       {
-        var tmp243 = new InternalStructs.Blob_Read_args();
-        await tmp243.ReadAsync(iprot, cancellationToken);
+        var tmp247 = new InternalStructs.Blob_Read_args();
+        await tmp247.ReadAsync(iprot, cancellationToken);
         await iprot.ReadMessageEndAsync(cancellationToken);
-        var tmp244 = new InternalStructs.Blob_Read_result();
+        var tmp248 = new InternalStructs.Blob_Read_result();
         try
         {
           try
           {
-            tmp244.Success = await _iAsync.Blob_ReadAsync(tmp243.Token, tmp243.ObjectBlobHandle, tmp243.Offset, tmp243.Count, cancellationToken);
+            tmp248.Success = await _iAsync.Blob_ReadAsync(tmp247.Token, tmp247.ObjectBlobHandle, tmp247.Offset, tmp247.Count, cancellationToken);
           }
-          catch (global::QueryCat.Plugins.Sdk.QueryCatPluginException tmp245)
+          catch (global::QueryCat.Plugins.Sdk.QueryCatPluginException tmp249)
           {
-            tmp244.E = tmp245;
+            tmp248.E = tmp249;
           }
           await oprot.WriteMessageBeginAsync(new TMessage("Blob_Read", TMessageType.Reply, seqid), cancellationToken); 
-          await tmp244.WriteAsync(oprot, cancellationToken);
+          await tmp248.WriteAsync(oprot, cancellationToken);
         }
         catch (TTransportException)
         {
           throw;
         }
-        catch (Exception tmp246)
+        catch (Exception tmp250)
         {
-          var tmp247 = $"Error occurred in {GetType().FullName}: {tmp246.Message}";
+          var tmp251 = $"Error occurred in {GetType().FullName}: {tmp250.Message}";
           if(_logger != null)
-            _logger.LogError("{Exception}, {Message}", tmp246, tmp247);
+            _logger.LogError("{Exception}, {Message}", tmp250, tmp251);
           else
-            Console.Error.WriteLine(tmp247);
-          var tmp248 = new TApplicationException(TApplicationException.ExceptionType.InternalError," Internal error.");
+            Console.Error.WriteLine(tmp251);
+          var tmp252 = new TApplicationException(TApplicationException.ExceptionType.InternalError," Internal error.");
           await oprot.WriteMessageBeginAsync(new TMessage("Blob_Read", TMessageType.Exception, seqid), cancellationToken);
-          await tmp248.WriteAsync(oprot, cancellationToken);
+          await tmp252.WriteAsync(oprot, cancellationToken);
         }
         await oprot.WriteMessageEndAsync(cancellationToken);
         await oprot.Transport.FlushAsync(cancellationToken);
@@ -1447,37 +1447,37 @@ namespace QueryCat.Plugins.Sdk
 
       public async global::System.Threading.Tasks.Task Blob_Write_ProcessAsync(int seqid, TProtocol iprot, TProtocol oprot, CancellationToken cancellationToken)
       {
-        var tmp249 = new InternalStructs.Blob_Write_args();
-        await tmp249.ReadAsync(iprot, cancellationToken);
+        var tmp253 = new InternalStructs.Blob_Write_args();
+        await tmp253.ReadAsync(iprot, cancellationToken);
         await iprot.ReadMessageEndAsync(cancellationToken);
-        var tmp250 = new InternalStructs.Blob_Write_result();
+        var tmp254 = new InternalStructs.Blob_Write_result();
         try
         {
           try
           {
-            tmp250.Success = await _iAsync.Blob_WriteAsync(tmp249.Token, tmp249.ObjectBlobHandle, tmp249.Bytes, cancellationToken);
+            tmp254.Success = await _iAsync.Blob_WriteAsync(tmp253.Token, tmp253.ObjectBlobHandle, tmp253.Bytes, cancellationToken);
           }
-          catch (global::QueryCat.Plugins.Sdk.QueryCatPluginException tmp251)
+          catch (global::QueryCat.Plugins.Sdk.QueryCatPluginException tmp255)
           {
-            tmp250.E = tmp251;
+            tmp254.E = tmp255;
           }
           await oprot.WriteMessageBeginAsync(new TMessage("Blob_Write", TMessageType.Reply, seqid), cancellationToken); 
-          await tmp250.WriteAsync(oprot, cancellationToken);
+          await tmp254.WriteAsync(oprot, cancellationToken);
         }
         catch (TTransportException)
         {
           throw;
         }
-        catch (Exception tmp252)
+        catch (Exception tmp256)
         {
-          var tmp253 = $"Error occurred in {GetType().FullName}: {tmp252.Message}";
+          var tmp257 = $"Error occurred in {GetType().FullName}: {tmp256.Message}";
           if(_logger != null)
-            _logger.LogError("{Exception}, {Message}", tmp252, tmp253);
+            _logger.LogError("{Exception}, {Message}", tmp256, tmp257);
           else
-            Console.Error.WriteLine(tmp253);
-          var tmp254 = new TApplicationException(TApplicationException.ExceptionType.InternalError," Internal error.");
+            Console.Error.WriteLine(tmp257);
+          var tmp258 = new TApplicationException(TApplicationException.ExceptionType.InternalError," Internal error.");
           await oprot.WriteMessageBeginAsync(new TMessage("Blob_Write", TMessageType.Exception, seqid), cancellationToken);
-          await tmp254.WriteAsync(oprot, cancellationToken);
+          await tmp258.WriteAsync(oprot, cancellationToken);
         }
         await oprot.WriteMessageEndAsync(cancellationToken);
         await oprot.Transport.FlushAsync(cancellationToken);
@@ -1485,37 +1485,37 @@ namespace QueryCat.Plugins.Sdk
 
       public async global::System.Threading.Tasks.Task Blob_GetLength_ProcessAsync(int seqid, TProtocol iprot, TProtocol oprot, CancellationToken cancellationToken)
       {
-        var tmp255 = new InternalStructs.Blob_GetLength_args();
-        await tmp255.ReadAsync(iprot, cancellationToken);
+        var tmp259 = new InternalStructs.Blob_GetLength_args();
+        await tmp259.ReadAsync(iprot, cancellationToken);
         await iprot.ReadMessageEndAsync(cancellationToken);
-        var tmp256 = new InternalStructs.Blob_GetLength_result();
+        var tmp260 = new InternalStructs.Blob_GetLength_result();
         try
         {
           try
           {
-            tmp256.Success = await _iAsync.Blob_GetLengthAsync(tmp255.Token, tmp255.ObjectBlobHandle, cancellationToken);
+            tmp260.Success = await _iAsync.Blob_GetLengthAsync(tmp259.Token, tmp259.ObjectBlobHandle, cancellationToken);
           }
-          catch (global::QueryCat.Plugins.Sdk.QueryCatPluginException tmp257)
+          catch (global::QueryCat.Plugins.Sdk.QueryCatPluginException tmp261)
           {
-            tmp256.E = tmp257;
+            tmp260.E = tmp261;
           }
           await oprot.WriteMessageBeginAsync(new TMessage("Blob_GetLength", TMessageType.Reply, seqid), cancellationToken); 
-          await tmp256.WriteAsync(oprot, cancellationToken);
+          await tmp260.WriteAsync(oprot, cancellationToken);
         }
         catch (TTransportException)
         {
           throw;
         }
-        catch (Exception tmp258)
+        catch (Exception tmp262)
         {
-          var tmp259 = $"Error occurred in {GetType().FullName}: {tmp258.Message}";
+          var tmp263 = $"Error occurred in {GetType().FullName}: {tmp262.Message}";
           if(_logger != null)
-            _logger.LogError("{Exception}, {Message}", tmp258, tmp259);
+            _logger.LogError("{Exception}, {Message}", tmp262, tmp263);
           else
-            Console.Error.WriteLine(tmp259);
-          var tmp260 = new TApplicationException(TApplicationException.ExceptionType.InternalError," Internal error.");
+            Console.Error.WriteLine(tmp263);
+          var tmp264 = new TApplicationException(TApplicationException.ExceptionType.InternalError," Internal error.");
           await oprot.WriteMessageBeginAsync(new TMessage("Blob_GetLength", TMessageType.Exception, seqid), cancellationToken);
-          await tmp260.WriteAsync(oprot, cancellationToken);
+          await tmp264.WriteAsync(oprot, cancellationToken);
         }
         await oprot.WriteMessageEndAsync(cancellationToken);
         await oprot.Transport.FlushAsync(cancellationToken);
@@ -1523,37 +1523,37 @@ namespace QueryCat.Plugins.Sdk
 
       public async global::System.Threading.Tasks.Task Blob_GetContentType_ProcessAsync(int seqid, TProtocol iprot, TProtocol oprot, CancellationToken cancellationToken)
       {
-        var tmp261 = new InternalStructs.Blob_GetContentType_args();
-        await tmp261.ReadAsync(iprot, cancellationToken);
+        var tmp265 = new InternalStructs.Blob_GetContentType_args();
+        await tmp265.ReadAsync(iprot, cancellationToken);
         await iprot.ReadMessageEndAsync(cancellationToken);
-        var tmp262 = new InternalStructs.Blob_GetContentType_result();
+        var tmp266 = new InternalStructs.Blob_GetContentType_result();
         try
         {
           try
           {
-            tmp262.Success = await _iAsync.Blob_GetContentTypeAsync(tmp261.Token, tmp261.ObjectBlobHandle, cancellationToken);
+            tmp266.Success = await _iAsync.Blob_GetContentTypeAsync(tmp265.Token, tmp265.ObjectBlobHandle, cancellationToken);
           }
-          catch (global::QueryCat.Plugins.Sdk.QueryCatPluginException tmp263)
+          catch (global::QueryCat.Plugins.Sdk.QueryCatPluginException tmp267)
           {
-            tmp262.E = tmp263;
+            tmp266.E = tmp267;
           }
           await oprot.WriteMessageBeginAsync(new TMessage("Blob_GetContentType", TMessageType.Reply, seqid), cancellationToken); 
-          await tmp262.WriteAsync(oprot, cancellationToken);
+          await tmp266.WriteAsync(oprot, cancellationToken);
         }
         catch (TTransportException)
         {
           throw;
         }
-        catch (Exception tmp264)
+        catch (Exception tmp268)
         {
-          var tmp265 = $"Error occurred in {GetType().FullName}: {tmp264.Message}";
+          var tmp269 = $"Error occurred in {GetType().FullName}: {tmp268.Message}";
           if(_logger != null)
-            _logger.LogError("{Exception}, {Message}", tmp264, tmp265);
+            _logger.LogError("{Exception}, {Message}", tmp268, tmp269);
           else
-            Console.Error.WriteLine(tmp265);
-          var tmp266 = new TApplicationException(TApplicationException.ExceptionType.InternalError," Internal error.");
+            Console.Error.WriteLine(tmp269);
+          var tmp270 = new TApplicationException(TApplicationException.ExceptionType.InternalError," Internal error.");
           await oprot.WriteMessageBeginAsync(new TMessage("Blob_GetContentType", TMessageType.Exception, seqid), cancellationToken);
-          await tmp266.WriteAsync(oprot, cancellationToken);
+          await tmp270.WriteAsync(oprot, cancellationToken);
         }
         await oprot.WriteMessageEndAsync(cancellationToken);
         await oprot.Transport.FlushAsync(cancellationToken);
@@ -1561,37 +1561,37 @@ namespace QueryCat.Plugins.Sdk
 
       public async global::System.Threading.Tasks.Task Log_ProcessAsync(int seqid, TProtocol iprot, TProtocol oprot, CancellationToken cancellationToken)
       {
-        var tmp267 = new InternalStructs.Log_args();
-        await tmp267.ReadAsync(iprot, cancellationToken);
+        var tmp271 = new InternalStructs.Log_args();
+        await tmp271.ReadAsync(iprot, cancellationToken);
         await iprot.ReadMessageEndAsync(cancellationToken);
-        var tmp268 = new InternalStructs.Log_result();
+        var tmp272 = new InternalStructs.Log_result();
         try
         {
           try
           {
-            await _iAsync.LogAsync(tmp267.Token, tmp267.Level, tmp267.Message, tmp267.Arguments, cancellationToken);
+            await _iAsync.LogAsync(tmp271.Token, tmp271.Level, tmp271.Message, tmp271.Arguments, cancellationToken);
           }
-          catch (global::QueryCat.Plugins.Sdk.QueryCatPluginException tmp269)
+          catch (global::QueryCat.Plugins.Sdk.QueryCatPluginException tmp273)
           {
-            tmp268.E = tmp269;
+            tmp272.E = tmp273;
           }
           await oprot.WriteMessageBeginAsync(new TMessage("Log", TMessageType.Reply, seqid), cancellationToken); 
-          await tmp268.WriteAsync(oprot, cancellationToken);
+          await tmp272.WriteAsync(oprot, cancellationToken);
         }
         catch (TTransportException)
         {
           throw;
         }
-        catch (Exception tmp270)
+        catch (Exception tmp274)
         {
-          var tmp271 = $"Error occurred in {GetType().FullName}: {tmp270.Message}";
+          var tmp275 = $"Error occurred in {GetType().FullName}: {tmp274.Message}";
           if(_logger != null)
-            _logger.LogError("{Exception}, {Message}", tmp270, tmp271);
+            _logger.LogError("{Exception}, {Message}", tmp274, tmp275);
           else
-            Console.Error.WriteLine(tmp271);
-          var tmp272 = new TApplicationException(TApplicationException.ExceptionType.InternalError," Internal error.");
+            Console.Error.WriteLine(tmp275);
+          var tmp276 = new TApplicationException(TApplicationException.ExceptionType.InternalError," Internal error.");
           await oprot.WriteMessageBeginAsync(new TMessage("Log", TMessageType.Exception, seqid), cancellationToken);
-          await tmp272.WriteAsync(oprot, cancellationToken);
+          await tmp276.WriteAsync(oprot, cancellationToken);
         }
         await oprot.WriteMessageEndAsync(cancellationToken);
         await oprot.Transport.FlushAsync(cancellationToken);
@@ -1599,37 +1599,37 @@ namespace QueryCat.Plugins.Sdk
 
       public async global::System.Threading.Tasks.Task GetStatistic_ProcessAsync(int seqid, TProtocol iprot, TProtocol oprot, CancellationToken cancellationToken)
       {
-        var tmp273 = new InternalStructs.GetStatistic_args();
-        await tmp273.ReadAsync(iprot, cancellationToken);
+        var tmp277 = new InternalStructs.GetStatistic_args();
+        await tmp277.ReadAsync(iprot, cancellationToken);
         await iprot.ReadMessageEndAsync(cancellationToken);
-        var tmp274 = new InternalStructs.GetStatistic_result();
+        var tmp278 = new InternalStructs.GetStatistic_result();
         try
         {
           try
           {
-            tmp274.Success = await _iAsync.GetStatisticAsync(tmp273.Token, cancellationToken);
+            tmp278.Success = await _iAsync.GetStatisticAsync(tmp277.Token, cancellationToken);
           }
-          catch (global::QueryCat.Plugins.Sdk.QueryCatPluginException tmp275)
+          catch (global::QueryCat.Plugins.Sdk.QueryCatPluginException tmp279)
           {
-            tmp274.E = tmp275;
+            tmp278.E = tmp279;
           }
           await oprot.WriteMessageBeginAsync(new TMessage("GetStatistic", TMessageType.Reply, seqid), cancellationToken); 
-          await tmp274.WriteAsync(oprot, cancellationToken);
+          await tmp278.WriteAsync(oprot, cancellationToken);
         }
         catch (TTransportException)
         {
           throw;
         }
-        catch (Exception tmp276)
+        catch (Exception tmp280)
         {
-          var tmp277 = $"Error occurred in {GetType().FullName}: {tmp276.Message}";
+          var tmp281 = $"Error occurred in {GetType().FullName}: {tmp280.Message}";
           if(_logger != null)
-            _logger.LogError("{Exception}, {Message}", tmp276, tmp277);
+            _logger.LogError("{Exception}, {Message}", tmp280, tmp281);
           else
-            Console.Error.WriteLine(tmp277);
-          var tmp278 = new TApplicationException(TApplicationException.ExceptionType.InternalError," Internal error.");
+            Console.Error.WriteLine(tmp281);
+          var tmp282 = new TApplicationException(TApplicationException.ExceptionType.InternalError," Internal error.");
           await oprot.WriteMessageBeginAsync(new TMessage("GetStatistic", TMessageType.Exception, seqid), cancellationToken);
-          await tmp278.WriteAsync(oprot, cancellationToken);
+          await tmp282.WriteAsync(oprot, cancellationToken);
         }
         await oprot.WriteMessageEndAsync(cancellationToken);
         await oprot.Transport.FlushAsync(cancellationToken);
@@ -1747,34 +1747,34 @@ namespace QueryCat.Plugins.Sdk
           oprot.IncrementRecursionDepth();
           try
           {
-            var tmp279 = new TStruct("RegisterPlugin_args");
-            await oprot.WriteStructBeginAsync(tmp279, cancellationToken);
+            var tmp283 = new TStruct("RegisterPlugin_args");
+            await oprot.WriteStructBeginAsync(tmp283, cancellationToken);
             #pragma warning disable IDE0017  // simplified init
-            var tmp280 = new TField();
+            var tmp284 = new TField();
             if((RegistrationToken != null))
             {
-              tmp280.Name = "registration_token";
-              tmp280.Type = TType.String;
-              tmp280.ID = 1;
-              await oprot.WriteFieldBeginAsync(tmp280, cancellationToken);
+              tmp284.Name = "registration_token";
+              tmp284.Type = TType.String;
+              tmp284.ID = 1;
+              await oprot.WriteFieldBeginAsync(tmp284, cancellationToken);
               await oprot.WriteStringAsync(RegistrationToken, cancellationToken);
               await oprot.WriteFieldEndAsync(cancellationToken);
             }
             if((CallbackUri != null))
             {
-              tmp280.Name = "callback_uri";
-              tmp280.Type = TType.String;
-              tmp280.ID = 2;
-              await oprot.WriteFieldBeginAsync(tmp280, cancellationToken);
+              tmp284.Name = "callback_uri";
+              tmp284.Type = TType.String;
+              tmp284.ID = 2;
+              await oprot.WriteFieldBeginAsync(tmp284, cancellationToken);
               await oprot.WriteStringAsync(CallbackUri, cancellationToken);
               await oprot.WriteFieldEndAsync(cancellationToken);
             }
             if((PluginData != null))
             {
-              tmp280.Name = "plugin_data";
-              tmp280.Type = TType.Struct;
-              tmp280.ID = 3;
-              await oprot.WriteFieldBeginAsync(tmp280, cancellationToken);
+              tmp284.Name = "plugin_data";
+              tmp284.Type = TType.Struct;
+              tmp284.ID = 3;
+              await oprot.WriteFieldBeginAsync(tmp284, cancellationToken);
               await PluginData.WriteAsync(oprot, cancellationToken);
               await oprot.WriteFieldEndAsync(cancellationToken);
             }
@@ -1818,24 +1818,24 @@ namespace QueryCat.Plugins.Sdk
 
         public override string ToString()
         {
-          var tmp281 = new StringBuilder("RegisterPlugin_args(");
+          var tmp285 = new StringBuilder("RegisterPlugin_args(");
           if((RegistrationToken != null))
           {
-            tmp281.Append(", RegistrationToken: ");
-            RegistrationToken.ToString(tmp281);
+            tmp285.Append(", RegistrationToken: ");
+            RegistrationToken.ToString(tmp285);
           }
           if((CallbackUri != null))
           {
-            tmp281.Append(", CallbackUri: ");
-            CallbackUri.ToString(tmp281);
+            tmp285.Append(", CallbackUri: ");
+            CallbackUri.ToString(tmp285);
           }
           if((PluginData != null))
           {
-            tmp281.Append(", PluginData: ");
-            PluginData.ToString(tmp281);
+            tmp285.Append(", PluginData: ");
+            PluginData.ToString(tmp285);
           }
-          tmp281.Append(')');
-          return tmp281.ToString();
+          tmp285.Append(')');
+          return tmp285.ToString();
         }
       }
 
@@ -1943,19 +1943,19 @@ namespace QueryCat.Plugins.Sdk
           oprot.IncrementRecursionDepth();
           try
           {
-            var tmp283 = new TStruct("RegisterPlugin_result");
-            await oprot.WriteStructBeginAsync(tmp283, cancellationToken);
+            var tmp287 = new TStruct("RegisterPlugin_result");
+            await oprot.WriteStructBeginAsync(tmp287, cancellationToken);
             #pragma warning disable IDE0017  // simplified init
-            var tmp284 = new TField();
+            var tmp288 = new TField();
 
             if(this.__isset.@success)
             {
               if (Success != null)
               {
-                tmp284.Name = "Success";
-                tmp284.Type = TType.Struct;
-                tmp284.ID = 0;
-                await oprot.WriteFieldBeginAsync(tmp284, cancellationToken);
+                tmp288.Name = "Success";
+                tmp288.Type = TType.Struct;
+                tmp288.ID = 0;
+                await oprot.WriteFieldBeginAsync(tmp288, cancellationToken);
                 await Success.WriteAsync(oprot, cancellationToken);
                 await oprot.WriteFieldEndAsync(cancellationToken);
               }
@@ -1964,10 +1964,10 @@ namespace QueryCat.Plugins.Sdk
             {
               if (E != null)
               {
-                tmp284.Name = "E";
-                tmp284.Type = TType.Struct;
-                tmp284.ID = 1;
-                await oprot.WriteFieldBeginAsync(tmp284, cancellationToken);
+                tmp288.Name = "E";
+                tmp288.Type = TType.Struct;
+                tmp288.ID = 1;
+                await oprot.WriteFieldBeginAsync(tmp288, cancellationToken);
                 await E.WriteAsync(oprot, cancellationToken);
                 await oprot.WriteFieldEndAsync(cancellationToken);
               }
@@ -2007,22 +2007,22 @@ namespace QueryCat.Plugins.Sdk
 
         public override string ToString()
         {
-          var tmp285 = new StringBuilder("RegisterPlugin_result(");
-          int tmp286 = 0;
+          var tmp289 = new StringBuilder("RegisterPlugin_result(");
+          int tmp290 = 0;
           if((Success != null) && __isset.@success)
           {
-            if(0 < tmp286++) { tmp285.Append(", "); }
-            tmp285.Append("Success: ");
-            Success.ToString(tmp285);
+            if(0 < tmp290++) { tmp289.Append(", "); }
+            tmp289.Append("Success: ");
+            Success.ToString(tmp289);
           }
           if((E != null) && __isset.@e)
           {
-            if(0 < tmp286++) { tmp285.Append(", "); }
-            tmp285.Append("E: ");
-            E.ToString(tmp285);
+            if(0 < tmp290++) { tmp289.Append(", "); }
+            tmp289.Append("E: ");
+            E.ToString(tmp289);
           }
-          tmp285.Append(')');
-          return tmp285.ToString();
+          tmp289.Append(')');
+          return tmp289.ToString();
         }
       }
 
@@ -2114,14 +2114,14 @@ namespace QueryCat.Plugins.Sdk
                   if (field.Type == TType.List)
                   {
                     {
-                      var _list287 = await iprot.ReadListBeginAsync(cancellationToken);
-                      Args = new List<global::QueryCat.Plugins.Sdk.VariantValue>(_list287.Count);
-                      for(int _i288 = 0; _i288 < _list287.Count; ++_i288)
+                      var _list291 = await iprot.ReadListBeginAsync(cancellationToken);
+                      Args = new List<global::QueryCat.Plugins.Sdk.VariantValue>(_list291.Count);
+                      for(int _i292 = 0; _i292 < _list291.Count; ++_i292)
                       {
-                        global::QueryCat.Plugins.Sdk.VariantValue _elem289;
-                        _elem289 = new global::QueryCat.Plugins.Sdk.VariantValue();
-                        await _elem289.ReadAsync(iprot, cancellationToken);
-                        Args.Add(_elem289);
+                        global::QueryCat.Plugins.Sdk.VariantValue _elem293;
+                        _elem293 = new global::QueryCat.Plugins.Sdk.VariantValue();
+                        await _elem293.ReadAsync(iprot, cancellationToken);
+                        Args.Add(_elem293);
                       }
                       await iprot.ReadListEndAsync(cancellationToken);
                     }
@@ -2175,45 +2175,45 @@ namespace QueryCat.Plugins.Sdk
           oprot.IncrementRecursionDepth();
           try
           {
-            var tmp290 = new TStruct("CallFunction_args");
-            await oprot.WriteStructBeginAsync(tmp290, cancellationToken);
+            var tmp294 = new TStruct("CallFunction_args");
+            await oprot.WriteStructBeginAsync(tmp294, cancellationToken);
             #pragma warning disable IDE0017  // simplified init
-            var tmp291 = new TField();
-            tmp291.Name = "token";
-            tmp291.Type = TType.I64;
-            tmp291.ID = 1;
-            await oprot.WriteFieldBeginAsync(tmp291, cancellationToken);
+            var tmp295 = new TField();
+            tmp295.Name = "token";
+            tmp295.Type = TType.I64;
+            tmp295.ID = 1;
+            await oprot.WriteFieldBeginAsync(tmp295, cancellationToken);
             await oprot.WriteI64Async(Token, cancellationToken);
             await oprot.WriteFieldEndAsync(cancellationToken);
             if((FunctionName != null))
             {
-              tmp291.Name = "function_name";
-              tmp291.Type = TType.String;
-              tmp291.ID = 2;
-              await oprot.WriteFieldBeginAsync(tmp291, cancellationToken);
+              tmp295.Name = "function_name";
+              tmp295.Type = TType.String;
+              tmp295.ID = 2;
+              await oprot.WriteFieldBeginAsync(tmp295, cancellationToken);
               await oprot.WriteStringAsync(FunctionName, cancellationToken);
               await oprot.WriteFieldEndAsync(cancellationToken);
             }
             if((Args != null))
             {
-              tmp291.Name = "args";
-              tmp291.Type = TType.List;
-              tmp291.ID = 3;
-              await oprot.WriteFieldBeginAsync(tmp291, cancellationToken);
+              tmp295.Name = "args";
+              tmp295.Type = TType.List;
+              tmp295.ID = 3;
+              await oprot.WriteFieldBeginAsync(tmp295, cancellationToken);
               await oprot.WriteListBeginAsync(new TList(TType.Struct, Args.Count), cancellationToken);
-              foreach (global::QueryCat.Plugins.Sdk.VariantValue _iter292 in Args)
+              foreach (global::QueryCat.Plugins.Sdk.VariantValue _iter296 in Args)
               {
-                await _iter292.WriteAsync(oprot, cancellationToken);
+                await _iter296.WriteAsync(oprot, cancellationToken);
               }
               await oprot.WriteListEndAsync(cancellationToken);
               await oprot.WriteFieldEndAsync(cancellationToken);
             }
             if(__isset.object_handle)
             {
-              tmp291.Name = "object_handle";
-              tmp291.Type = TType.I32;
-              tmp291.ID = 4;
-              await oprot.WriteFieldBeginAsync(tmp291, cancellationToken);
+              tmp295.Name = "object_handle";
+              tmp295.Type = TType.I32;
+              tmp295.ID = 4;
+              await oprot.WriteFieldBeginAsync(tmp295, cancellationToken);
               await oprot.WriteI32Async(ObjectHandle, cancellationToken);
               await oprot.WriteFieldEndAsync(cancellationToken);
             }
@@ -2259,26 +2259,26 @@ namespace QueryCat.Plugins.Sdk
 
         public override string ToString()
         {
-          var tmp293 = new StringBuilder("CallFunction_args(");
-          tmp293.Append(", Token: ");
-          Token.ToString(tmp293);
+          var tmp297 = new StringBuilder("CallFunction_args(");
+          tmp297.Append(", Token: ");
+          Token.ToString(tmp297);
           if((FunctionName != null))
           {
-            tmp293.Append(", FunctionName: ");
-            FunctionName.ToString(tmp293);
+            tmp297.Append(", FunctionName: ");
+            FunctionName.ToString(tmp297);
           }
           if((Args != null))
           {
-            tmp293.Append(", Args: ");
-            Args.ToString(tmp293);
+            tmp297.Append(", Args: ");
+            Args.ToString(tmp297);
           }
           if(__isset.object_handle)
           {
-            tmp293.Append(", ObjectHandle: ");
-            ObjectHandle.ToString(tmp293);
+            tmp297.Append(", ObjectHandle: ");
+            ObjectHandle.ToString(tmp297);
           }
-          tmp293.Append(')');
-          return tmp293.ToString();
+          tmp297.Append(')');
+          return tmp297.ToString();
         }
       }
 
@@ -2386,19 +2386,19 @@ namespace QueryCat.Plugins.Sdk
           oprot.IncrementRecursionDepth();
           try
           {
-            var tmp295 = new TStruct("CallFunction_result");
-            await oprot.WriteStructBeginAsync(tmp295, cancellationToken);
+            var tmp299 = new TStruct("CallFunction_result");
+            await oprot.WriteStructBeginAsync(tmp299, cancellationToken);
             #pragma warning disable IDE0017  // simplified init
-            var tmp296 = new TField();
+            var tmp300 = new TField();
 
             if(this.__isset.@success)
             {
               if (Success != null)
               {
-                tmp296.Name = "Success";
-                tmp296.Type = TType.Struct;
-                tmp296.ID = 0;
-                await oprot.WriteFieldBeginAsync(tmp296, cancellationToken);
+                tmp300.Name = "Success";
+                tmp300.Type = TType.Struct;
+                tmp300.ID = 0;
+                await oprot.WriteFieldBeginAsync(tmp300, cancellationToken);
                 await Success.WriteAsync(oprot, cancellationToken);
                 await oprot.WriteFieldEndAsync(cancellationToken);
               }
@@ -2407,10 +2407,10 @@ namespace QueryCat.Plugins.Sdk
             {
               if (E != null)
               {
-                tmp296.Name = "E";
-                tmp296.Type = TType.Struct;
-                tmp296.ID = 1;
-                await oprot.WriteFieldBeginAsync(tmp296, cancellationToken);
+                tmp300.Name = "E";
+                tmp300.Type = TType.Struct;
+                tmp300.ID = 1;
+                await oprot.WriteFieldBeginAsync(tmp300, cancellationToken);
                 await E.WriteAsync(oprot, cancellationToken);
                 await oprot.WriteFieldEndAsync(cancellationToken);
               }
@@ -2450,22 +2450,22 @@ namespace QueryCat.Plugins.Sdk
 
         public override string ToString()
         {
-          var tmp297 = new StringBuilder("CallFunction_result(");
-          int tmp298 = 0;
+          var tmp301 = new StringBuilder("CallFunction_result(");
+          int tmp302 = 0;
           if((Success != null) && __isset.@success)
           {
-            if(0 < tmp298++) { tmp297.Append(", "); }
-            tmp297.Append("Success: ");
-            Success.ToString(tmp297);
+            if(0 < tmp302++) { tmp301.Append(", "); }
+            tmp301.Append("Success: ");
+            Success.ToString(tmp301);
           }
           if((E != null) && __isset.@e)
           {
-            if(0 < tmp298++) { tmp297.Append(", "); }
-            tmp297.Append("E: ");
-            E.ToString(tmp297);
+            if(0 < tmp302++) { tmp301.Append(", "); }
+            tmp301.Append("E: ");
+            E.ToString(tmp301);
           }
-          tmp297.Append(')');
-          return tmp297.ToString();
+          tmp301.Append(')');
+          return tmp301.ToString();
         }
       }
 
@@ -2553,16 +2553,16 @@ namespace QueryCat.Plugins.Sdk
                   if (field.Type == TType.Map)
                   {
                     {
-                      var _map299 = await iprot.ReadMapBeginAsync(cancellationToken);
-                      Parameters = new Dictionary<string, global::QueryCat.Plugins.Sdk.VariantValue>(_map299.Count);
-                      for(int _i300 = 0; _i300 < _map299.Count; ++_i300)
+                      var _map303 = await iprot.ReadMapBeginAsync(cancellationToken);
+                      Parameters = new Dictionary<string, global::QueryCat.Plugins.Sdk.VariantValue>(_map303.Count);
+                      for(int _i304 = 0; _i304 < _map303.Count; ++_i304)
                       {
-                        string _key301;
-                        global::QueryCat.Plugins.Sdk.VariantValue _val302;
-                        _key301 = await iprot.ReadStringAsync(cancellationToken);
-                        _val302 = new global::QueryCat.Plugins.Sdk.VariantValue();
-                        await _val302.ReadAsync(iprot, cancellationToken);
-                        Parameters[_key301] = _val302;
+                        string _key305;
+                        global::QueryCat.Plugins.Sdk.VariantValue _val306;
+                        _key305 = await iprot.ReadStringAsync(cancellationToken);
+                        _val306 = new global::QueryCat.Plugins.Sdk.VariantValue();
+                        await _val306.ReadAsync(iprot, cancellationToken);
+                        Parameters[_key305] = _val306;
                       }
                       await iprot.ReadMapEndAsync(cancellationToken);
                     }
@@ -2601,36 +2601,36 @@ namespace QueryCat.Plugins.Sdk
           oprot.IncrementRecursionDepth();
           try
           {
-            var tmp303 = new TStruct("RunQuery_args");
-            await oprot.WriteStructBeginAsync(tmp303, cancellationToken);
+            var tmp307 = new TStruct("RunQuery_args");
+            await oprot.WriteStructBeginAsync(tmp307, cancellationToken);
             #pragma warning disable IDE0017  // simplified init
-            var tmp304 = new TField();
-            tmp304.Name = "token";
-            tmp304.Type = TType.I64;
-            tmp304.ID = 1;
-            await oprot.WriteFieldBeginAsync(tmp304, cancellationToken);
+            var tmp308 = new TField();
+            tmp308.Name = "token";
+            tmp308.Type = TType.I64;
+            tmp308.ID = 1;
+            await oprot.WriteFieldBeginAsync(tmp308, cancellationToken);
             await oprot.WriteI64Async(Token, cancellationToken);
             await oprot.WriteFieldEndAsync(cancellationToken);
             if((Query != null))
             {
-              tmp304.Name = "query";
-              tmp304.Type = TType.String;
-              tmp304.ID = 2;
-              await oprot.WriteFieldBeginAsync(tmp304, cancellationToken);
+              tmp308.Name = "query";
+              tmp308.Type = TType.String;
+              tmp308.ID = 2;
+              await oprot.WriteFieldBeginAsync(tmp308, cancellationToken);
               await oprot.WriteStringAsync(Query, cancellationToken);
               await oprot.WriteFieldEndAsync(cancellationToken);
             }
             if((Parameters != null) && __isset.@parameters)
             {
-              tmp304.Name = "parameters";
-              tmp304.Type = TType.Map;
-              tmp304.ID = 3;
-              await oprot.WriteFieldBeginAsync(tmp304, cancellationToken);
+              tmp308.Name = "parameters";
+              tmp308.Type = TType.Map;
+              tmp308.ID = 3;
+              await oprot.WriteFieldBeginAsync(tmp308, cancellationToken);
               await oprot.WriteMapBeginAsync(new TMap(TType.String, TType.Struct, Parameters.Count), cancellationToken);
-              foreach (string _iter305 in Parameters.Keys)
+              foreach (string _iter309 in Parameters.Keys)
               {
-                await oprot.WriteStringAsync(_iter305, cancellationToken);
-                await Parameters[_iter305].WriteAsync(oprot, cancellationToken);
+                await oprot.WriteStringAsync(_iter309, cancellationToken);
+                await Parameters[_iter309].WriteAsync(oprot, cancellationToken);
               }
               await oprot.WriteMapEndAsync(cancellationToken);
               await oprot.WriteFieldEndAsync(cancellationToken);
@@ -2672,21 +2672,21 @@ namespace QueryCat.Plugins.Sdk
 
         public override string ToString()
         {
-          var tmp306 = new StringBuilder("RunQuery_args(");
-          tmp306.Append(", Token: ");
-          Token.ToString(tmp306);
+          var tmp310 = new StringBuilder("RunQuery_args(");
+          tmp310.Append(", Token: ");
+          Token.ToString(tmp310);
           if((Query != null))
           {
-            tmp306.Append(", Query: ");
-            Query.ToString(tmp306);
+            tmp310.Append(", Query: ");
+            Query.ToString(tmp310);
           }
           if((Parameters != null) && __isset.@parameters)
           {
-            tmp306.Append(", Parameters: ");
-            Parameters.ToString(tmp306);
+            tmp310.Append(", Parameters: ");
+            Parameters.ToString(tmp310);
           }
-          tmp306.Append(')');
-          return tmp306.ToString();
+          tmp310.Append(')');
+          return tmp310.ToString();
         }
       }
 
@@ -2794,19 +2794,19 @@ namespace QueryCat.Plugins.Sdk
           oprot.IncrementRecursionDepth();
           try
           {
-            var tmp308 = new TStruct("RunQuery_result");
-            await oprot.WriteStructBeginAsync(tmp308, cancellationToken);
+            var tmp312 = new TStruct("RunQuery_result");
+            await oprot.WriteStructBeginAsync(tmp312, cancellationToken);
             #pragma warning disable IDE0017  // simplified init
-            var tmp309 = new TField();
+            var tmp313 = new TField();
 
             if(this.__isset.@success)
             {
               if (Success != null)
               {
-                tmp309.Name = "Success";
-                tmp309.Type = TType.Struct;
-                tmp309.ID = 0;
-                await oprot.WriteFieldBeginAsync(tmp309, cancellationToken);
+                tmp313.Name = "Success";
+                tmp313.Type = TType.Struct;
+                tmp313.ID = 0;
+                await oprot.WriteFieldBeginAsync(tmp313, cancellationToken);
                 await Success.WriteAsync(oprot, cancellationToken);
                 await oprot.WriteFieldEndAsync(cancellationToken);
               }
@@ -2815,10 +2815,10 @@ namespace QueryCat.Plugins.Sdk
             {
               if (E != null)
               {
-                tmp309.Name = "E";
-                tmp309.Type = TType.Struct;
-                tmp309.ID = 1;
-                await oprot.WriteFieldBeginAsync(tmp309, cancellationToken);
+                tmp313.Name = "E";
+                tmp313.Type = TType.Struct;
+                tmp313.ID = 1;
+                await oprot.WriteFieldBeginAsync(tmp313, cancellationToken);
                 await E.WriteAsync(oprot, cancellationToken);
                 await oprot.WriteFieldEndAsync(cancellationToken);
               }
@@ -2858,22 +2858,22 @@ namespace QueryCat.Plugins.Sdk
 
         public override string ToString()
         {
-          var tmp310 = new StringBuilder("RunQuery_result(");
-          int tmp311 = 0;
+          var tmp314 = new StringBuilder("RunQuery_result(");
+          int tmp315 = 0;
           if((Success != null) && __isset.@success)
           {
-            if(0 < tmp311++) { tmp310.Append(", "); }
-            tmp310.Append("Success: ");
-            Success.ToString(tmp310);
+            if(0 < tmp315++) { tmp314.Append(", "); }
+            tmp314.Append("Success: ");
+            Success.ToString(tmp314);
           }
           if((E != null) && __isset.@e)
           {
-            if(0 < tmp311++) { tmp310.Append(", "); }
-            tmp310.Append("E: ");
-            E.ToString(tmp310);
+            if(0 < tmp315++) { tmp314.Append(", "); }
+            tmp314.Append("E: ");
+            E.ToString(tmp314);
           }
-          tmp310.Append(')');
-          return tmp310.ToString();
+          tmp314.Append(')');
+          return tmp314.ToString();
         }
       }
 
@@ -2985,31 +2985,31 @@ namespace QueryCat.Plugins.Sdk
           oprot.IncrementRecursionDepth();
           try
           {
-            var tmp312 = new TStruct("SetConfigValue_args");
-            await oprot.WriteStructBeginAsync(tmp312, cancellationToken);
+            var tmp316 = new TStruct("SetConfigValue_args");
+            await oprot.WriteStructBeginAsync(tmp316, cancellationToken);
             #pragma warning disable IDE0017  // simplified init
-            var tmp313 = new TField();
-            tmp313.Name = "token";
-            tmp313.Type = TType.I64;
-            tmp313.ID = 1;
-            await oprot.WriteFieldBeginAsync(tmp313, cancellationToken);
+            var tmp317 = new TField();
+            tmp317.Name = "token";
+            tmp317.Type = TType.I64;
+            tmp317.ID = 1;
+            await oprot.WriteFieldBeginAsync(tmp317, cancellationToken);
             await oprot.WriteI64Async(Token, cancellationToken);
             await oprot.WriteFieldEndAsync(cancellationToken);
             if((Key != null))
             {
-              tmp313.Name = "key";
-              tmp313.Type = TType.String;
-              tmp313.ID = 2;
-              await oprot.WriteFieldBeginAsync(tmp313, cancellationToken);
+              tmp317.Name = "key";
+              tmp317.Type = TType.String;
+              tmp317.ID = 2;
+              await oprot.WriteFieldBeginAsync(tmp317, cancellationToken);
               await oprot.WriteStringAsync(Key, cancellationToken);
               await oprot.WriteFieldEndAsync(cancellationToken);
             }
             if((Value != null))
             {
-              tmp313.Name = "value";
-              tmp313.Type = TType.Struct;
-              tmp313.ID = 3;
-              await oprot.WriteFieldBeginAsync(tmp313, cancellationToken);
+              tmp317.Name = "value";
+              tmp317.Type = TType.Struct;
+              tmp317.ID = 3;
+              await oprot.WriteFieldBeginAsync(tmp317, cancellationToken);
               await Value.WriteAsync(oprot, cancellationToken);
               await oprot.WriteFieldEndAsync(cancellationToken);
             }
@@ -3050,21 +3050,21 @@ namespace QueryCat.Plugins.Sdk
 
         public override string ToString()
         {
-          var tmp314 = new StringBuilder("SetConfigValue_args(");
-          tmp314.Append(", Token: ");
-          Token.ToString(tmp314);
+          var tmp318 = new StringBuilder("SetConfigValue_args(");
+          tmp318.Append(", Token: ");
+          Token.ToString(tmp318);
           if((Key != null))
           {
-            tmp314.Append(", Key: ");
-            Key.ToString(tmp314);
+            tmp318.Append(", Key: ");
+            Key.ToString(tmp318);
           }
           if((Value != null))
           {
-            tmp314.Append(", Value: ");
-            Value.ToString(tmp314);
+            tmp318.Append(", Value: ");
+            Value.ToString(tmp318);
           }
-          tmp314.Append(')');
-          return tmp314.ToString();
+          tmp318.Append(')');
+          return tmp318.ToString();
         }
       }
 
@@ -3146,19 +3146,19 @@ namespace QueryCat.Plugins.Sdk
           oprot.IncrementRecursionDepth();
           try
           {
-            var tmp316 = new TStruct("SetConfigValue_result");
-            await oprot.WriteStructBeginAsync(tmp316, cancellationToken);
+            var tmp320 = new TStruct("SetConfigValue_result");
+            await oprot.WriteStructBeginAsync(tmp320, cancellationToken);
             #pragma warning disable IDE0017  // simplified init
-            var tmp317 = new TField();
+            var tmp321 = new TField();
 
             if(this.__isset.@e)
             {
               if (E != null)
               {
-                tmp317.Name = "E";
-                tmp317.Type = TType.Struct;
-                tmp317.ID = 1;
-                await oprot.WriteFieldBeginAsync(tmp317, cancellationToken);
+                tmp321.Name = "E";
+                tmp321.Type = TType.Struct;
+                tmp321.ID = 1;
+                await oprot.WriteFieldBeginAsync(tmp321, cancellationToken);
                 await E.WriteAsync(oprot, cancellationToken);
                 await oprot.WriteFieldEndAsync(cancellationToken);
               }
@@ -3193,16 +3193,16 @@ namespace QueryCat.Plugins.Sdk
 
         public override string ToString()
         {
-          var tmp318 = new StringBuilder("SetConfigValue_result(");
-          int tmp319 = 0;
+          var tmp322 = new StringBuilder("SetConfigValue_result(");
+          int tmp323 = 0;
           if((E != null) && __isset.@e)
           {
-            if(0 < tmp319++) { tmp318.Append(", "); }
-            tmp318.Append("E: ");
-            E.ToString(tmp318);
+            if(0 < tmp323++) { tmp322.Append(", "); }
+            tmp322.Append("E: ");
+            E.ToString(tmp322);
           }
-          tmp318.Append(')');
-          return tmp318.ToString();
+          tmp322.Append(')');
+          return tmp322.ToString();
         }
       }
 
@@ -3294,22 +3294,22 @@ namespace QueryCat.Plugins.Sdk
           oprot.IncrementRecursionDepth();
           try
           {
-            var tmp320 = new TStruct("GetConfigValue_args");
-            await oprot.WriteStructBeginAsync(tmp320, cancellationToken);
+            var tmp324 = new TStruct("GetConfigValue_args");
+            await oprot.WriteStructBeginAsync(tmp324, cancellationToken);
             #pragma warning disable IDE0017  // simplified init
-            var tmp321 = new TField();
-            tmp321.Name = "token";
-            tmp321.Type = TType.I64;
-            tmp321.ID = 1;
-            await oprot.WriteFieldBeginAsync(tmp321, cancellationToken);
+            var tmp325 = new TField();
+            tmp325.Name = "token";
+            tmp325.Type = TType.I64;
+            tmp325.ID = 1;
+            await oprot.WriteFieldBeginAsync(tmp325, cancellationToken);
             await oprot.WriteI64Async(Token, cancellationToken);
             await oprot.WriteFieldEndAsync(cancellationToken);
             if((Key != null))
             {
-              tmp321.Name = "key";
-              tmp321.Type = TType.String;
-              tmp321.ID = 2;
-              await oprot.WriteFieldBeginAsync(tmp321, cancellationToken);
+              tmp325.Name = "key";
+              tmp325.Type = TType.String;
+              tmp325.ID = 2;
+              await oprot.WriteFieldBeginAsync(tmp325, cancellationToken);
               await oprot.WriteStringAsync(Key, cancellationToken);
               await oprot.WriteFieldEndAsync(cancellationToken);
             }
@@ -3345,16 +3345,16 @@ namespace QueryCat.Plugins.Sdk
 
         public override string ToString()
         {
-          var tmp322 = new StringBuilder("GetConfigValue_args(");
-          tmp322.Append(", Token: ");
-          Token.ToString(tmp322);
+          var tmp326 = new StringBuilder("GetConfigValue_args(");
+          tmp326.Append(", Token: ");
+          Token.ToString(tmp326);
           if((Key != null))
           {
-            tmp322.Append(", Key: ");
-            Key.ToString(tmp322);
+            tmp326.Append(", Key: ");
+            Key.ToString(tmp326);
           }
-          tmp322.Append(')');
-          return tmp322.ToString();
+          tmp326.Append(')');
+          return tmp326.ToString();
         }
       }
 
@@ -3462,19 +3462,19 @@ namespace QueryCat.Plugins.Sdk
           oprot.IncrementRecursionDepth();
           try
           {
-            var tmp324 = new TStruct("GetConfigValue_result");
-            await oprot.WriteStructBeginAsync(tmp324, cancellationToken);
+            var tmp328 = new TStruct("GetConfigValue_result");
+            await oprot.WriteStructBeginAsync(tmp328, cancellationToken);
             #pragma warning disable IDE0017  // simplified init
-            var tmp325 = new TField();
+            var tmp329 = new TField();
 
             if(this.__isset.@success)
             {
               if (Success != null)
               {
-                tmp325.Name = "Success";
-                tmp325.Type = TType.Struct;
-                tmp325.ID = 0;
-                await oprot.WriteFieldBeginAsync(tmp325, cancellationToken);
+                tmp329.Name = "Success";
+                tmp329.Type = TType.Struct;
+                tmp329.ID = 0;
+                await oprot.WriteFieldBeginAsync(tmp329, cancellationToken);
                 await Success.WriteAsync(oprot, cancellationToken);
                 await oprot.WriteFieldEndAsync(cancellationToken);
               }
@@ -3483,10 +3483,10 @@ namespace QueryCat.Plugins.Sdk
             {
               if (E != null)
               {
-                tmp325.Name = "E";
-                tmp325.Type = TType.Struct;
-                tmp325.ID = 1;
-                await oprot.WriteFieldBeginAsync(tmp325, cancellationToken);
+                tmp329.Name = "E";
+                tmp329.Type = TType.Struct;
+                tmp329.ID = 1;
+                await oprot.WriteFieldBeginAsync(tmp329, cancellationToken);
                 await E.WriteAsync(oprot, cancellationToken);
                 await oprot.WriteFieldEndAsync(cancellationToken);
               }
@@ -3526,22 +3526,22 @@ namespace QueryCat.Plugins.Sdk
 
         public override string ToString()
         {
-          var tmp326 = new StringBuilder("GetConfigValue_result(");
-          int tmp327 = 0;
+          var tmp330 = new StringBuilder("GetConfigValue_result(");
+          int tmp331 = 0;
           if((Success != null) && __isset.@success)
           {
-            if(0 < tmp327++) { tmp326.Append(", "); }
-            tmp326.Append("Success: ");
-            Success.ToString(tmp326);
+            if(0 < tmp331++) { tmp330.Append(", "); }
+            tmp330.Append("Success: ");
+            Success.ToString(tmp330);
           }
           if((E != null) && __isset.@e)
           {
-            if(0 < tmp327++) { tmp326.Append(", "); }
-            tmp326.Append("E: ");
-            E.ToString(tmp326);
+            if(0 < tmp331++) { tmp330.Append(", "); }
+            tmp330.Append("E: ");
+            E.ToString(tmp330);
           }
-          tmp326.Append(')');
-          return tmp326.ToString();
+          tmp330.Append(')');
+          return tmp330.ToString();
         }
       }
 
@@ -3633,22 +3633,22 @@ namespace QueryCat.Plugins.Sdk
           oprot.IncrementRecursionDepth();
           try
           {
-            var tmp328 = new TStruct("GetVariable_args");
-            await oprot.WriteStructBeginAsync(tmp328, cancellationToken);
+            var tmp332 = new TStruct("GetVariable_args");
+            await oprot.WriteStructBeginAsync(tmp332, cancellationToken);
             #pragma warning disable IDE0017  // simplified init
-            var tmp329 = new TField();
-            tmp329.Name = "token";
-            tmp329.Type = TType.I64;
-            tmp329.ID = 1;
-            await oprot.WriteFieldBeginAsync(tmp329, cancellationToken);
+            var tmp333 = new TField();
+            tmp333.Name = "token";
+            tmp333.Type = TType.I64;
+            tmp333.ID = 1;
+            await oprot.WriteFieldBeginAsync(tmp333, cancellationToken);
             await oprot.WriteI64Async(Token, cancellationToken);
             await oprot.WriteFieldEndAsync(cancellationToken);
             if((Name != null))
             {
-              tmp329.Name = "name";
-              tmp329.Type = TType.String;
-              tmp329.ID = 2;
-              await oprot.WriteFieldBeginAsync(tmp329, cancellationToken);
+              tmp333.Name = "name";
+              tmp333.Type = TType.String;
+              tmp333.ID = 2;
+              await oprot.WriteFieldBeginAsync(tmp333, cancellationToken);
               await oprot.WriteStringAsync(Name, cancellationToken);
               await oprot.WriteFieldEndAsync(cancellationToken);
             }
@@ -3684,16 +3684,16 @@ namespace QueryCat.Plugins.Sdk
 
         public override string ToString()
         {
-          var tmp330 = new StringBuilder("GetVariable_args(");
-          tmp330.Append(", Token: ");
-          Token.ToString(tmp330);
+          var tmp334 = new StringBuilder("GetVariable_args(");
+          tmp334.Append(", Token: ");
+          Token.ToString(tmp334);
           if((Name != null))
           {
-            tmp330.Append(", Name: ");
-            Name.ToString(tmp330);
+            tmp334.Append(", Name: ");
+            Name.ToString(tmp334);
           }
-          tmp330.Append(')');
-          return tmp330.ToString();
+          tmp334.Append(')');
+          return tmp334.ToString();
         }
       }
 
@@ -3801,19 +3801,19 @@ namespace QueryCat.Plugins.Sdk
           oprot.IncrementRecursionDepth();
           try
           {
-            var tmp332 = new TStruct("GetVariable_result");
-            await oprot.WriteStructBeginAsync(tmp332, cancellationToken);
+            var tmp336 = new TStruct("GetVariable_result");
+            await oprot.WriteStructBeginAsync(tmp336, cancellationToken);
             #pragma warning disable IDE0017  // simplified init
-            var tmp333 = new TField();
+            var tmp337 = new TField();
 
             if(this.__isset.@success)
             {
               if (Success != null)
               {
-                tmp333.Name = "Success";
-                tmp333.Type = TType.Struct;
-                tmp333.ID = 0;
-                await oprot.WriteFieldBeginAsync(tmp333, cancellationToken);
+                tmp337.Name = "Success";
+                tmp337.Type = TType.Struct;
+                tmp337.ID = 0;
+                await oprot.WriteFieldBeginAsync(tmp337, cancellationToken);
                 await Success.WriteAsync(oprot, cancellationToken);
                 await oprot.WriteFieldEndAsync(cancellationToken);
               }
@@ -3822,10 +3822,10 @@ namespace QueryCat.Plugins.Sdk
             {
               if (E != null)
               {
-                tmp333.Name = "E";
-                tmp333.Type = TType.Struct;
-                tmp333.ID = 1;
-                await oprot.WriteFieldBeginAsync(tmp333, cancellationToken);
+                tmp337.Name = "E";
+                tmp337.Type = TType.Struct;
+                tmp337.ID = 1;
+                await oprot.WriteFieldBeginAsync(tmp337, cancellationToken);
                 await E.WriteAsync(oprot, cancellationToken);
                 await oprot.WriteFieldEndAsync(cancellationToken);
               }
@@ -3865,22 +3865,22 @@ namespace QueryCat.Plugins.Sdk
 
         public override string ToString()
         {
-          var tmp334 = new StringBuilder("GetVariable_result(");
-          int tmp335 = 0;
+          var tmp338 = new StringBuilder("GetVariable_result(");
+          int tmp339 = 0;
           if((Success != null) && __isset.@success)
           {
-            if(0 < tmp335++) { tmp334.Append(", "); }
-            tmp334.Append("Success: ");
-            Success.ToString(tmp334);
+            if(0 < tmp339++) { tmp338.Append(", "); }
+            tmp338.Append("Success: ");
+            Success.ToString(tmp338);
           }
           if((E != null) && __isset.@e)
           {
-            if(0 < tmp335++) { tmp334.Append(", "); }
-            tmp334.Append("E: ");
-            E.ToString(tmp334);
+            if(0 < tmp339++) { tmp338.Append(", "); }
+            tmp338.Append("E: ");
+            E.ToString(tmp338);
           }
-          tmp334.Append(')');
-          return tmp334.ToString();
+          tmp338.Append(')');
+          return tmp338.ToString();
         }
       }
 
@@ -3992,31 +3992,31 @@ namespace QueryCat.Plugins.Sdk
           oprot.IncrementRecursionDepth();
           try
           {
-            var tmp336 = new TStruct("SetVariable_args");
-            await oprot.WriteStructBeginAsync(tmp336, cancellationToken);
+            var tmp340 = new TStruct("SetVariable_args");
+            await oprot.WriteStructBeginAsync(tmp340, cancellationToken);
             #pragma warning disable IDE0017  // simplified init
-            var tmp337 = new TField();
-            tmp337.Name = "token";
-            tmp337.Type = TType.I64;
-            tmp337.ID = 1;
-            await oprot.WriteFieldBeginAsync(tmp337, cancellationToken);
+            var tmp341 = new TField();
+            tmp341.Name = "token";
+            tmp341.Type = TType.I64;
+            tmp341.ID = 1;
+            await oprot.WriteFieldBeginAsync(tmp341, cancellationToken);
             await oprot.WriteI64Async(Token, cancellationToken);
             await oprot.WriteFieldEndAsync(cancellationToken);
             if((Name != null))
             {
-              tmp337.Name = "name";
-              tmp337.Type = TType.String;
-              tmp337.ID = 2;
-              await oprot.WriteFieldBeginAsync(tmp337, cancellationToken);
+              tmp341.Name = "name";
+              tmp341.Type = TType.String;
+              tmp341.ID = 2;
+              await oprot.WriteFieldBeginAsync(tmp341, cancellationToken);
               await oprot.WriteStringAsync(Name, cancellationToken);
               await oprot.WriteFieldEndAsync(cancellationToken);
             }
             if((Value != null))
             {
-              tmp337.Name = "value";
-              tmp337.Type = TType.Struct;
-              tmp337.ID = 3;
-              await oprot.WriteFieldBeginAsync(tmp337, cancellationToken);
+              tmp341.Name = "value";
+              tmp341.Type = TType.Struct;
+              tmp341.ID = 3;
+              await oprot.WriteFieldBeginAsync(tmp341, cancellationToken);
               await Value.WriteAsync(oprot, cancellationToken);
               await oprot.WriteFieldEndAsync(cancellationToken);
             }
@@ -4057,21 +4057,21 @@ namespace QueryCat.Plugins.Sdk
 
         public override string ToString()
         {
-          var tmp338 = new StringBuilder("SetVariable_args(");
-          tmp338.Append(", Token: ");
-          Token.ToString(tmp338);
+          var tmp342 = new StringBuilder("SetVariable_args(");
+          tmp342.Append(", Token: ");
+          Token.ToString(tmp342);
           if((Name != null))
           {
-            tmp338.Append(", Name: ");
-            Name.ToString(tmp338);
+            tmp342.Append(", Name: ");
+            Name.ToString(tmp342);
           }
           if((Value != null))
           {
-            tmp338.Append(", Value: ");
-            Value.ToString(tmp338);
+            tmp342.Append(", Value: ");
+            Value.ToString(tmp342);
           }
-          tmp338.Append(')');
-          return tmp338.ToString();
+          tmp342.Append(')');
+          return tmp342.ToString();
         }
       }
 
@@ -4179,19 +4179,19 @@ namespace QueryCat.Plugins.Sdk
           oprot.IncrementRecursionDepth();
           try
           {
-            var tmp340 = new TStruct("SetVariable_result");
-            await oprot.WriteStructBeginAsync(tmp340, cancellationToken);
+            var tmp344 = new TStruct("SetVariable_result");
+            await oprot.WriteStructBeginAsync(tmp344, cancellationToken);
             #pragma warning disable IDE0017  // simplified init
-            var tmp341 = new TField();
+            var tmp345 = new TField();
 
             if(this.__isset.@success)
             {
               if (Success != null)
               {
-                tmp341.Name = "Success";
-                tmp341.Type = TType.Struct;
-                tmp341.ID = 0;
-                await oprot.WriteFieldBeginAsync(tmp341, cancellationToken);
+                tmp345.Name = "Success";
+                tmp345.Type = TType.Struct;
+                tmp345.ID = 0;
+                await oprot.WriteFieldBeginAsync(tmp345, cancellationToken);
                 await Success.WriteAsync(oprot, cancellationToken);
                 await oprot.WriteFieldEndAsync(cancellationToken);
               }
@@ -4200,10 +4200,10 @@ namespace QueryCat.Plugins.Sdk
             {
               if (E != null)
               {
-                tmp341.Name = "E";
-                tmp341.Type = TType.Struct;
-                tmp341.ID = 1;
-                await oprot.WriteFieldBeginAsync(tmp341, cancellationToken);
+                tmp345.Name = "E";
+                tmp345.Type = TType.Struct;
+                tmp345.ID = 1;
+                await oprot.WriteFieldBeginAsync(tmp345, cancellationToken);
                 await E.WriteAsync(oprot, cancellationToken);
                 await oprot.WriteFieldEndAsync(cancellationToken);
               }
@@ -4243,22 +4243,22 @@ namespace QueryCat.Plugins.Sdk
 
         public override string ToString()
         {
-          var tmp342 = new StringBuilder("SetVariable_result(");
-          int tmp343 = 0;
+          var tmp346 = new StringBuilder("SetVariable_result(");
+          int tmp347 = 0;
           if((Success != null) && __isset.@success)
           {
-            if(0 < tmp343++) { tmp342.Append(", "); }
-            tmp342.Append("Success: ");
-            Success.ToString(tmp342);
+            if(0 < tmp347++) { tmp346.Append(", "); }
+            tmp346.Append("Success: ");
+            Success.ToString(tmp346);
           }
           if((E != null) && __isset.@e)
           {
-            if(0 < tmp343++) { tmp342.Append(", "); }
-            tmp342.Append("E: ");
-            E.ToString(tmp342);
+            if(0 < tmp347++) { tmp346.Append(", "); }
+            tmp346.Append("E: ");
+            E.ToString(tmp346);
           }
-          tmp342.Append(')');
-          return tmp342.ToString();
+          tmp346.Append(')');
+          return tmp346.ToString();
         }
       }
 
@@ -4350,20 +4350,20 @@ namespace QueryCat.Plugins.Sdk
           oprot.IncrementRecursionDepth();
           try
           {
-            var tmp344 = new TStruct("GetVariables_args");
-            await oprot.WriteStructBeginAsync(tmp344, cancellationToken);
+            var tmp348 = new TStruct("GetVariables_args");
+            await oprot.WriteStructBeginAsync(tmp348, cancellationToken);
             #pragma warning disable IDE0017  // simplified init
-            var tmp345 = new TField();
-            tmp345.Name = "token";
-            tmp345.Type = TType.I64;
-            tmp345.ID = 1;
-            await oprot.WriteFieldBeginAsync(tmp345, cancellationToken);
+            var tmp349 = new TField();
+            tmp349.Name = "token";
+            tmp349.Type = TType.I64;
+            tmp349.ID = 1;
+            await oprot.WriteFieldBeginAsync(tmp349, cancellationToken);
             await oprot.WriteI64Async(Token, cancellationToken);
             await oprot.WriteFieldEndAsync(cancellationToken);
-            tmp345.Name = "scope_id";
-            tmp345.Type = TType.I32;
-            tmp345.ID = 2;
-            await oprot.WriteFieldBeginAsync(tmp345, cancellationToken);
+            tmp349.Name = "scope_id";
+            tmp349.Type = TType.I32;
+            tmp349.ID = 2;
+            await oprot.WriteFieldBeginAsync(tmp349, cancellationToken);
             await oprot.WriteI32Async(ScopeId, cancellationToken);
             await oprot.WriteFieldEndAsync(cancellationToken);
             #pragma warning restore IDE0017  // simplified init
@@ -4395,13 +4395,13 @@ namespace QueryCat.Plugins.Sdk
 
         public override string ToString()
         {
-          var tmp346 = new StringBuilder("GetVariables_args(");
-          tmp346.Append(", Token: ");
-          Token.ToString(tmp346);
-          tmp346.Append(", ScopeId: ");
-          ScopeId.ToString(tmp346);
-          tmp346.Append(')');
-          return tmp346.ToString();
+          var tmp350 = new StringBuilder("GetVariables_args(");
+          tmp350.Append(", Token: ");
+          Token.ToString(tmp350);
+          tmp350.Append(", ScopeId: ");
+          ScopeId.ToString(tmp350);
+          tmp350.Append(')');
+          return tmp350.ToString();
         }
       }
 
@@ -4470,14 +4470,14 @@ namespace QueryCat.Plugins.Sdk
                   if (field.Type == TType.List)
                   {
                     {
-                      var _list348 = await iprot.ReadListBeginAsync(cancellationToken);
-                      Success = new List<global::QueryCat.Plugins.Sdk.ScopeVariable>(_list348.Count);
-                      for(int _i349 = 0; _i349 < _list348.Count; ++_i349)
+                      var _list352 = await iprot.ReadListBeginAsync(cancellationToken);
+                      Success = new List<global::QueryCat.Plugins.Sdk.ScopeVariable>(_list352.Count);
+                      for(int _i353 = 0; _i353 < _list352.Count; ++_i353)
                       {
-                        global::QueryCat.Plugins.Sdk.ScopeVariable _elem350;
-                        _elem350 = new global::QueryCat.Plugins.Sdk.ScopeVariable();
-                        await _elem350.ReadAsync(iprot, cancellationToken);
-                        Success.Add(_elem350);
+                        global::QueryCat.Plugins.Sdk.ScopeVariable _elem354;
+                        _elem354 = new global::QueryCat.Plugins.Sdk.ScopeVariable();
+                        await _elem354.ReadAsync(iprot, cancellationToken);
+                        Success.Add(_elem354);
                       }
                       await iprot.ReadListEndAsync(cancellationToken);
                     }
@@ -4519,23 +4519,23 @@ namespace QueryCat.Plugins.Sdk
           oprot.IncrementRecursionDepth();
           try
           {
-            var tmp351 = new TStruct("GetVariables_result");
-            await oprot.WriteStructBeginAsync(tmp351, cancellationToken);
+            var tmp355 = new TStruct("GetVariables_result");
+            await oprot.WriteStructBeginAsync(tmp355, cancellationToken);
             #pragma warning disable IDE0017  // simplified init
-            var tmp352 = new TField();
+            var tmp356 = new TField();
 
             if(this.__isset.@success)
             {
               if (Success != null)
               {
-                tmp352.Name = "Success";
-                tmp352.Type = TType.List;
-                tmp352.ID = 0;
-                await oprot.WriteFieldBeginAsync(tmp352, cancellationToken);
+                tmp356.Name = "Success";
+                tmp356.Type = TType.List;
+                tmp356.ID = 0;
+                await oprot.WriteFieldBeginAsync(tmp356, cancellationToken);
                 await oprot.WriteListBeginAsync(new TList(TType.Struct, Success.Count), cancellationToken);
-                foreach (global::QueryCat.Plugins.Sdk.ScopeVariable _iter353 in Success)
+                foreach (global::QueryCat.Plugins.Sdk.ScopeVariable _iter357 in Success)
                 {
-                  await _iter353.WriteAsync(oprot, cancellationToken);
+                  await _iter357.WriteAsync(oprot, cancellationToken);
                 }
                 await oprot.WriteListEndAsync(cancellationToken);
                 await oprot.WriteFieldEndAsync(cancellationToken);
@@ -4545,10 +4545,10 @@ namespace QueryCat.Plugins.Sdk
             {
               if (E != null)
               {
-                tmp352.Name = "E";
-                tmp352.Type = TType.Struct;
-                tmp352.ID = 1;
-                await oprot.WriteFieldBeginAsync(tmp352, cancellationToken);
+                tmp356.Name = "E";
+                tmp356.Type = TType.Struct;
+                tmp356.ID = 1;
+                await oprot.WriteFieldBeginAsync(tmp356, cancellationToken);
                 await E.WriteAsync(oprot, cancellationToken);
                 await oprot.WriteFieldEndAsync(cancellationToken);
               }
@@ -4588,22 +4588,22 @@ namespace QueryCat.Plugins.Sdk
 
         public override string ToString()
         {
-          var tmp354 = new StringBuilder("GetVariables_result(");
-          int tmp355 = 0;
+          var tmp358 = new StringBuilder("GetVariables_result(");
+          int tmp359 = 0;
           if((Success != null) && __isset.@success)
           {
-            if(0 < tmp355++) { tmp354.Append(", "); }
-            tmp354.Append("Success: ");
-            Success.ToString(tmp354);
+            if(0 < tmp359++) { tmp358.Append(", "); }
+            tmp358.Append("Success: ");
+            Success.ToString(tmp358);
           }
           if((E != null) && __isset.@e)
           {
-            if(0 < tmp355++) { tmp354.Append(", "); }
-            tmp354.Append("E: ");
-            E.ToString(tmp354);
+            if(0 < tmp359++) { tmp358.Append(", "); }
+            tmp358.Append("E: ");
+            E.ToString(tmp358);
           }
-          tmp354.Append(')');
-          return tmp354.ToString();
+          tmp358.Append(')');
+          return tmp358.ToString();
         }
       }
 
@@ -4676,14 +4676,14 @@ namespace QueryCat.Plugins.Sdk
           oprot.IncrementRecursionDepth();
           try
           {
-            var tmp356 = new TStruct("PushScope_args");
-            await oprot.WriteStructBeginAsync(tmp356, cancellationToken);
+            var tmp360 = new TStruct("PushScope_args");
+            await oprot.WriteStructBeginAsync(tmp360, cancellationToken);
             #pragma warning disable IDE0017  // simplified init
-            var tmp357 = new TField();
-            tmp357.Name = "token";
-            tmp357.Type = TType.I64;
-            tmp357.ID = 1;
-            await oprot.WriteFieldBeginAsync(tmp357, cancellationToken);
+            var tmp361 = new TField();
+            tmp361.Name = "token";
+            tmp361.Type = TType.I64;
+            tmp361.ID = 1;
+            await oprot.WriteFieldBeginAsync(tmp361, cancellationToken);
             await oprot.WriteI64Async(Token, cancellationToken);
             await oprot.WriteFieldEndAsync(cancellationToken);
             #pragma warning restore IDE0017  // simplified init
@@ -4713,11 +4713,11 @@ namespace QueryCat.Plugins.Sdk
 
         public override string ToString()
         {
-          var tmp358 = new StringBuilder("PushScope_args(");
-          tmp358.Append(", Token: ");
-          Token.ToString(tmp358);
-          tmp358.Append(')');
-          return tmp358.ToString();
+          var tmp362 = new StringBuilder("PushScope_args(");
+          tmp362.Append(", Token: ");
+          Token.ToString(tmp362);
+          tmp362.Append(')');
+          return tmp362.ToString();
         }
       }
 
@@ -4825,19 +4825,19 @@ namespace QueryCat.Plugins.Sdk
           oprot.IncrementRecursionDepth();
           try
           {
-            var tmp360 = new TStruct("PushScope_result");
-            await oprot.WriteStructBeginAsync(tmp360, cancellationToken);
+            var tmp364 = new TStruct("PushScope_result");
+            await oprot.WriteStructBeginAsync(tmp364, cancellationToken);
             #pragma warning disable IDE0017  // simplified init
-            var tmp361 = new TField();
+            var tmp365 = new TField();
 
             if(this.__isset.@success)
             {
               if (Success != null)
               {
-                tmp361.Name = "Success";
-                tmp361.Type = TType.Struct;
-                tmp361.ID = 0;
-                await oprot.WriteFieldBeginAsync(tmp361, cancellationToken);
+                tmp365.Name = "Success";
+                tmp365.Type = TType.Struct;
+                tmp365.ID = 0;
+                await oprot.WriteFieldBeginAsync(tmp365, cancellationToken);
                 await Success.WriteAsync(oprot, cancellationToken);
                 await oprot.WriteFieldEndAsync(cancellationToken);
               }
@@ -4846,10 +4846,10 @@ namespace QueryCat.Plugins.Sdk
             {
               if (E != null)
               {
-                tmp361.Name = "E";
-                tmp361.Type = TType.Struct;
-                tmp361.ID = 1;
-                await oprot.WriteFieldBeginAsync(tmp361, cancellationToken);
+                tmp365.Name = "E";
+                tmp365.Type = TType.Struct;
+                tmp365.ID = 1;
+                await oprot.WriteFieldBeginAsync(tmp365, cancellationToken);
                 await E.WriteAsync(oprot, cancellationToken);
                 await oprot.WriteFieldEndAsync(cancellationToken);
               }
@@ -4889,22 +4889,22 @@ namespace QueryCat.Plugins.Sdk
 
         public override string ToString()
         {
-          var tmp362 = new StringBuilder("PushScope_result(");
-          int tmp363 = 0;
+          var tmp366 = new StringBuilder("PushScope_result(");
+          int tmp367 = 0;
           if((Success != null) && __isset.@success)
           {
-            if(0 < tmp363++) { tmp362.Append(", "); }
-            tmp362.Append("Success: ");
-            Success.ToString(tmp362);
+            if(0 < tmp367++) { tmp366.Append(", "); }
+            tmp366.Append("Success: ");
+            Success.ToString(tmp366);
           }
           if((E != null) && __isset.@e)
           {
-            if(0 < tmp363++) { tmp362.Append(", "); }
-            tmp362.Append("E: ");
-            E.ToString(tmp362);
+            if(0 < tmp367++) { tmp366.Append(", "); }
+            tmp366.Append("E: ");
+            E.ToString(tmp366);
           }
-          tmp362.Append(')');
-          return tmp362.ToString();
+          tmp366.Append(')');
+          return tmp366.ToString();
         }
       }
 
@@ -4977,14 +4977,14 @@ namespace QueryCat.Plugins.Sdk
           oprot.IncrementRecursionDepth();
           try
           {
-            var tmp364 = new TStruct("PopScope_args");
-            await oprot.WriteStructBeginAsync(tmp364, cancellationToken);
+            var tmp368 = new TStruct("PopScope_args");
+            await oprot.WriteStructBeginAsync(tmp368, cancellationToken);
             #pragma warning disable IDE0017  // simplified init
-            var tmp365 = new TField();
-            tmp365.Name = "token";
-            tmp365.Type = TType.I64;
-            tmp365.ID = 1;
-            await oprot.WriteFieldBeginAsync(tmp365, cancellationToken);
+            var tmp369 = new TField();
+            tmp369.Name = "token";
+            tmp369.Type = TType.I64;
+            tmp369.ID = 1;
+            await oprot.WriteFieldBeginAsync(tmp369, cancellationToken);
             await oprot.WriteI64Async(Token, cancellationToken);
             await oprot.WriteFieldEndAsync(cancellationToken);
             #pragma warning restore IDE0017  // simplified init
@@ -5014,11 +5014,11 @@ namespace QueryCat.Plugins.Sdk
 
         public override string ToString()
         {
-          var tmp366 = new StringBuilder("PopScope_args(");
-          tmp366.Append(", Token: ");
-          Token.ToString(tmp366);
-          tmp366.Append(')');
-          return tmp366.ToString();
+          var tmp370 = new StringBuilder("PopScope_args(");
+          tmp370.Append(", Token: ");
+          Token.ToString(tmp370);
+          tmp370.Append(')');
+          return tmp370.ToString();
         }
       }
 
@@ -5126,19 +5126,19 @@ namespace QueryCat.Plugins.Sdk
           oprot.IncrementRecursionDepth();
           try
           {
-            var tmp368 = new TStruct("PopScope_result");
-            await oprot.WriteStructBeginAsync(tmp368, cancellationToken);
+            var tmp372 = new TStruct("PopScope_result");
+            await oprot.WriteStructBeginAsync(tmp372, cancellationToken);
             #pragma warning disable IDE0017  // simplified init
-            var tmp369 = new TField();
+            var tmp373 = new TField();
 
             if(this.__isset.@success)
             {
               if (Success != null)
               {
-                tmp369.Name = "Success";
-                tmp369.Type = TType.Struct;
-                tmp369.ID = 0;
-                await oprot.WriteFieldBeginAsync(tmp369, cancellationToken);
+                tmp373.Name = "Success";
+                tmp373.Type = TType.Struct;
+                tmp373.ID = 0;
+                await oprot.WriteFieldBeginAsync(tmp373, cancellationToken);
                 await Success.WriteAsync(oprot, cancellationToken);
                 await oprot.WriteFieldEndAsync(cancellationToken);
               }
@@ -5147,10 +5147,10 @@ namespace QueryCat.Plugins.Sdk
             {
               if (E != null)
               {
-                tmp369.Name = "E";
-                tmp369.Type = TType.Struct;
-                tmp369.ID = 1;
-                await oprot.WriteFieldBeginAsync(tmp369, cancellationToken);
+                tmp373.Name = "E";
+                tmp373.Type = TType.Struct;
+                tmp373.ID = 1;
+                await oprot.WriteFieldBeginAsync(tmp373, cancellationToken);
                 await E.WriteAsync(oprot, cancellationToken);
                 await oprot.WriteFieldEndAsync(cancellationToken);
               }
@@ -5190,22 +5190,22 @@ namespace QueryCat.Plugins.Sdk
 
         public override string ToString()
         {
-          var tmp370 = new StringBuilder("PopScope_result(");
-          int tmp371 = 0;
+          var tmp374 = new StringBuilder("PopScope_result(");
+          int tmp375 = 0;
           if((Success != null) && __isset.@success)
           {
-            if(0 < tmp371++) { tmp370.Append(", "); }
-            tmp370.Append("Success: ");
-            Success.ToString(tmp370);
+            if(0 < tmp375++) { tmp374.Append(", "); }
+            tmp374.Append("Success: ");
+            Success.ToString(tmp374);
           }
           if((E != null) && __isset.@e)
           {
-            if(0 < tmp371++) { tmp370.Append(", "); }
-            tmp370.Append("E: ");
-            E.ToString(tmp370);
+            if(0 < tmp375++) { tmp374.Append(", "); }
+            tmp374.Append("E: ");
+            E.ToString(tmp374);
           }
-          tmp370.Append(')');
-          return tmp370.ToString();
+          tmp374.Append(')');
+          return tmp374.ToString();
         }
       }
 
@@ -5278,14 +5278,14 @@ namespace QueryCat.Plugins.Sdk
           oprot.IncrementRecursionDepth();
           try
           {
-            var tmp372 = new TStruct("PeekTopScope_args");
-            await oprot.WriteStructBeginAsync(tmp372, cancellationToken);
+            var tmp376 = new TStruct("PeekTopScope_args");
+            await oprot.WriteStructBeginAsync(tmp376, cancellationToken);
             #pragma warning disable IDE0017  // simplified init
-            var tmp373 = new TField();
-            tmp373.Name = "token";
-            tmp373.Type = TType.I64;
-            tmp373.ID = 1;
-            await oprot.WriteFieldBeginAsync(tmp373, cancellationToken);
+            var tmp377 = new TField();
+            tmp377.Name = "token";
+            tmp377.Type = TType.I64;
+            tmp377.ID = 1;
+            await oprot.WriteFieldBeginAsync(tmp377, cancellationToken);
             await oprot.WriteI64Async(Token, cancellationToken);
             await oprot.WriteFieldEndAsync(cancellationToken);
             #pragma warning restore IDE0017  // simplified init
@@ -5315,11 +5315,11 @@ namespace QueryCat.Plugins.Sdk
 
         public override string ToString()
         {
-          var tmp374 = new StringBuilder("PeekTopScope_args(");
-          tmp374.Append(", Token: ");
-          Token.ToString(tmp374);
-          tmp374.Append(')');
-          return tmp374.ToString();
+          var tmp378 = new StringBuilder("PeekTopScope_args(");
+          tmp378.Append(", Token: ");
+          Token.ToString(tmp378);
+          tmp378.Append(')');
+          return tmp378.ToString();
         }
       }
 
@@ -5427,19 +5427,19 @@ namespace QueryCat.Plugins.Sdk
           oprot.IncrementRecursionDepth();
           try
           {
-            var tmp376 = new TStruct("PeekTopScope_result");
-            await oprot.WriteStructBeginAsync(tmp376, cancellationToken);
+            var tmp380 = new TStruct("PeekTopScope_result");
+            await oprot.WriteStructBeginAsync(tmp380, cancellationToken);
             #pragma warning disable IDE0017  // simplified init
-            var tmp377 = new TField();
+            var tmp381 = new TField();
 
             if(this.__isset.@success)
             {
               if (Success != null)
               {
-                tmp377.Name = "Success";
-                tmp377.Type = TType.Struct;
-                tmp377.ID = 0;
-                await oprot.WriteFieldBeginAsync(tmp377, cancellationToken);
+                tmp381.Name = "Success";
+                tmp381.Type = TType.Struct;
+                tmp381.ID = 0;
+                await oprot.WriteFieldBeginAsync(tmp381, cancellationToken);
                 await Success.WriteAsync(oprot, cancellationToken);
                 await oprot.WriteFieldEndAsync(cancellationToken);
               }
@@ -5448,10 +5448,10 @@ namespace QueryCat.Plugins.Sdk
             {
               if (E != null)
               {
-                tmp377.Name = "E";
-                tmp377.Type = TType.Struct;
-                tmp377.ID = 1;
-                await oprot.WriteFieldBeginAsync(tmp377, cancellationToken);
+                tmp381.Name = "E";
+                tmp381.Type = TType.Struct;
+                tmp381.ID = 1;
+                await oprot.WriteFieldBeginAsync(tmp381, cancellationToken);
                 await E.WriteAsync(oprot, cancellationToken);
                 await oprot.WriteFieldEndAsync(cancellationToken);
               }
@@ -5491,22 +5491,22 @@ namespace QueryCat.Plugins.Sdk
 
         public override string ToString()
         {
-          var tmp378 = new StringBuilder("PeekTopScope_result(");
-          int tmp379 = 0;
+          var tmp382 = new StringBuilder("PeekTopScope_result(");
+          int tmp383 = 0;
           if((Success != null) && __isset.@success)
           {
-            if(0 < tmp379++) { tmp378.Append(", "); }
-            tmp378.Append("Success: ");
-            Success.ToString(tmp378);
+            if(0 < tmp383++) { tmp382.Append(", "); }
+            tmp382.Append("Success: ");
+            Success.ToString(tmp382);
           }
           if((E != null) && __isset.@e)
           {
-            if(0 < tmp379++) { tmp378.Append(", "); }
-            tmp378.Append("E: ");
-            E.ToString(tmp378);
+            if(0 < tmp383++) { tmp382.Append(", "); }
+            tmp382.Append("E: ");
+            E.ToString(tmp382);
           }
-          tmp378.Append(')');
-          return tmp378.ToString();
+          tmp382.Append(')');
+          return tmp382.ToString();
         }
       }
 
@@ -5617,29 +5617,29 @@ namespace QueryCat.Plugins.Sdk
           oprot.IncrementRecursionDepth();
           try
           {
-            var tmp380 = new TStruct("GetCompletions_args");
-            await oprot.WriteStructBeginAsync(tmp380, cancellationToken);
+            var tmp384 = new TStruct("GetCompletions_args");
+            await oprot.WriteStructBeginAsync(tmp384, cancellationToken);
             #pragma warning disable IDE0017  // simplified init
-            var tmp381 = new TField();
-            tmp381.Name = "token";
-            tmp381.Type = TType.I64;
-            tmp381.ID = 1;
-            await oprot.WriteFieldBeginAsync(tmp381, cancellationToken);
+            var tmp385 = new TField();
+            tmp385.Name = "token";
+            tmp385.Type = TType.I64;
+            tmp385.ID = 1;
+            await oprot.WriteFieldBeginAsync(tmp385, cancellationToken);
             await oprot.WriteI64Async(Token, cancellationToken);
             await oprot.WriteFieldEndAsync(cancellationToken);
             if((Text != null))
             {
-              tmp381.Name = "text";
-              tmp381.Type = TType.String;
-              tmp381.ID = 2;
-              await oprot.WriteFieldBeginAsync(tmp381, cancellationToken);
+              tmp385.Name = "text";
+              tmp385.Type = TType.String;
+              tmp385.ID = 2;
+              await oprot.WriteFieldBeginAsync(tmp385, cancellationToken);
               await oprot.WriteStringAsync(Text, cancellationToken);
               await oprot.WriteFieldEndAsync(cancellationToken);
             }
-            tmp381.Name = "position";
-            tmp381.Type = TType.I32;
-            tmp381.ID = 3;
-            await oprot.WriteFieldBeginAsync(tmp381, cancellationToken);
+            tmp385.Name = "position";
+            tmp385.Type = TType.I32;
+            tmp385.ID = 3;
+            await oprot.WriteFieldBeginAsync(tmp385, cancellationToken);
             await oprot.WriteI32Async(Position, cancellationToken);
             await oprot.WriteFieldEndAsync(cancellationToken);
             #pragma warning restore IDE0017  // simplified init
@@ -5676,18 +5676,18 @@ namespace QueryCat.Plugins.Sdk
 
         public override string ToString()
         {
-          var tmp382 = new StringBuilder("GetCompletions_args(");
-          tmp382.Append(", Token: ");
-          Token.ToString(tmp382);
+          var tmp386 = new StringBuilder("GetCompletions_args(");
+          tmp386.Append(", Token: ");
+          Token.ToString(tmp386);
           if((Text != null))
           {
-            tmp382.Append(", Text: ");
-            Text.ToString(tmp382);
+            tmp386.Append(", Text: ");
+            Text.ToString(tmp386);
           }
-          tmp382.Append(", Position: ");
-          Position.ToString(tmp382);
-          tmp382.Append(')');
-          return tmp382.ToString();
+          tmp386.Append(", Position: ");
+          Position.ToString(tmp386);
+          tmp386.Append(')');
+          return tmp386.ToString();
         }
       }
 
@@ -5741,14 +5741,14 @@ namespace QueryCat.Plugins.Sdk
                   if (field.Type == TType.List)
                   {
                     {
-                      var _list384 = await iprot.ReadListBeginAsync(cancellationToken);
-                      Success = new List<global::QueryCat.Plugins.Sdk.CompletionResult>(_list384.Count);
-                      for(int _i385 = 0; _i385 < _list384.Count; ++_i385)
+                      var _list388 = await iprot.ReadListBeginAsync(cancellationToken);
+                      Success = new List<global::QueryCat.Plugins.Sdk.CompletionResult>(_list388.Count);
+                      for(int _i389 = 0; _i389 < _list388.Count; ++_i389)
                       {
-                        global::QueryCat.Plugins.Sdk.CompletionResult _elem386;
-                        _elem386 = new global::QueryCat.Plugins.Sdk.CompletionResult();
-                        await _elem386.ReadAsync(iprot, cancellationToken);
-                        Success.Add(_elem386);
+                        global::QueryCat.Plugins.Sdk.CompletionResult _elem390;
+                        _elem390 = new global::QueryCat.Plugins.Sdk.CompletionResult();
+                        await _elem390.ReadAsync(iprot, cancellationToken);
+                        Success.Add(_elem390);
                       }
                       await iprot.ReadListEndAsync(cancellationToken);
                     }
@@ -5779,23 +5779,23 @@ namespace QueryCat.Plugins.Sdk
           oprot.IncrementRecursionDepth();
           try
           {
-            var tmp387 = new TStruct("GetCompletions_result");
-            await oprot.WriteStructBeginAsync(tmp387, cancellationToken);
+            var tmp391 = new TStruct("GetCompletions_result");
+            await oprot.WriteStructBeginAsync(tmp391, cancellationToken);
             #pragma warning disable IDE0017  // simplified init
-            var tmp388 = new TField();
+            var tmp392 = new TField();
 
             if(this.__isset.@success)
             {
               if (Success != null)
               {
-                tmp388.Name = "Success";
-                tmp388.Type = TType.List;
-                tmp388.ID = 0;
-                await oprot.WriteFieldBeginAsync(tmp388, cancellationToken);
+                tmp392.Name = "Success";
+                tmp392.Type = TType.List;
+                tmp392.ID = 0;
+                await oprot.WriteFieldBeginAsync(tmp392, cancellationToken);
                 await oprot.WriteListBeginAsync(new TList(TType.Struct, Success.Count), cancellationToken);
-                foreach (global::QueryCat.Plugins.Sdk.CompletionResult _iter389 in Success)
+                foreach (global::QueryCat.Plugins.Sdk.CompletionResult _iter393 in Success)
                 {
-                  await _iter389.WriteAsync(oprot, cancellationToken);
+                  await _iter393.WriteAsync(oprot, cancellationToken);
                 }
                 await oprot.WriteListEndAsync(cancellationToken);
                 await oprot.WriteFieldEndAsync(cancellationToken);
@@ -5831,16 +5831,16 @@ namespace QueryCat.Plugins.Sdk
 
         public override string ToString()
         {
-          var tmp390 = new StringBuilder("GetCompletions_result(");
-          int tmp391 = 0;
+          var tmp394 = new StringBuilder("GetCompletions_result(");
+          int tmp395 = 0;
           if((Success != null) && __isset.@success)
           {
-            if(0 < tmp391++) { tmp390.Append(", "); }
-            tmp390.Append("Success: ");
-            Success.ToString(tmp390);
+            if(0 < tmp395++) { tmp394.Append(", "); }
+            tmp394.Append("Success: ");
+            Success.ToString(tmp394);
           }
-          tmp390.Append(')');
-          return tmp390.ToString();
+          tmp394.Append(')');
+          return tmp394.ToString();
         }
       }
 
@@ -5970,32 +5970,32 @@ namespace QueryCat.Plugins.Sdk
           oprot.IncrementRecursionDepth();
           try
           {
-            var tmp392 = new TStruct("Blob_Read_args");
-            await oprot.WriteStructBeginAsync(tmp392, cancellationToken);
+            var tmp396 = new TStruct("Blob_Read_args");
+            await oprot.WriteStructBeginAsync(tmp396, cancellationToken);
             #pragma warning disable IDE0017  // simplified init
-            var tmp393 = new TField();
-            tmp393.Name = "token";
-            tmp393.Type = TType.I64;
-            tmp393.ID = 1;
-            await oprot.WriteFieldBeginAsync(tmp393, cancellationToken);
+            var tmp397 = new TField();
+            tmp397.Name = "token";
+            tmp397.Type = TType.I64;
+            tmp397.ID = 1;
+            await oprot.WriteFieldBeginAsync(tmp397, cancellationToken);
             await oprot.WriteI64Async(Token, cancellationToken);
             await oprot.WriteFieldEndAsync(cancellationToken);
-            tmp393.Name = "object_blob_handle";
-            tmp393.Type = TType.I32;
-            tmp393.ID = 2;
-            await oprot.WriteFieldBeginAsync(tmp393, cancellationToken);
+            tmp397.Name = "object_blob_handle";
+            tmp397.Type = TType.I32;
+            tmp397.ID = 2;
+            await oprot.WriteFieldBeginAsync(tmp397, cancellationToken);
             await oprot.WriteI32Async(ObjectBlobHandle, cancellationToken);
             await oprot.WriteFieldEndAsync(cancellationToken);
-            tmp393.Name = "offset";
-            tmp393.Type = TType.I32;
-            tmp393.ID = 3;
-            await oprot.WriteFieldBeginAsync(tmp393, cancellationToken);
+            tmp397.Name = "offset";
+            tmp397.Type = TType.I32;
+            tmp397.ID = 3;
+            await oprot.WriteFieldBeginAsync(tmp397, cancellationToken);
             await oprot.WriteI32Async(Offset, cancellationToken);
             await oprot.WriteFieldEndAsync(cancellationToken);
-            tmp393.Name = "count";
-            tmp393.Type = TType.I32;
-            tmp393.ID = 4;
-            await oprot.WriteFieldBeginAsync(tmp393, cancellationToken);
+            tmp397.Name = "count";
+            tmp397.Type = TType.I32;
+            tmp397.ID = 4;
+            await oprot.WriteFieldBeginAsync(tmp397, cancellationToken);
             await oprot.WriteI32Async(Count, cancellationToken);
             await oprot.WriteFieldEndAsync(cancellationToken);
             #pragma warning restore IDE0017  // simplified init
@@ -6031,17 +6031,17 @@ namespace QueryCat.Plugins.Sdk
 
         public override string ToString()
         {
-          var tmp394 = new StringBuilder("Blob_Read_args(");
-          tmp394.Append(", Token: ");
-          Token.ToString(tmp394);
-          tmp394.Append(", ObjectBlobHandle: ");
-          ObjectBlobHandle.ToString(tmp394);
-          tmp394.Append(", Offset: ");
-          Offset.ToString(tmp394);
-          tmp394.Append(", Count: ");
-          Count.ToString(tmp394);
-          tmp394.Append(')');
-          return tmp394.ToString();
+          var tmp398 = new StringBuilder("Blob_Read_args(");
+          tmp398.Append(", Token: ");
+          Token.ToString(tmp398);
+          tmp398.Append(", ObjectBlobHandle: ");
+          ObjectBlobHandle.ToString(tmp398);
+          tmp398.Append(", Offset: ");
+          Offset.ToString(tmp398);
+          tmp398.Append(", Count: ");
+          Count.ToString(tmp398);
+          tmp398.Append(')');
+          return tmp398.ToString();
         }
       }
 
@@ -6148,19 +6148,19 @@ namespace QueryCat.Plugins.Sdk
           oprot.IncrementRecursionDepth();
           try
           {
-            var tmp396 = new TStruct("Blob_Read_result");
-            await oprot.WriteStructBeginAsync(tmp396, cancellationToken);
+            var tmp400 = new TStruct("Blob_Read_result");
+            await oprot.WriteStructBeginAsync(tmp400, cancellationToken);
             #pragma warning disable IDE0017  // simplified init
-            var tmp397 = new TField();
+            var tmp401 = new TField();
 
             if(this.__isset.@success)
             {
               if (Success != null)
               {
-                tmp397.Name = "Success";
-                tmp397.Type = TType.String;
-                tmp397.ID = 0;
-                await oprot.WriteFieldBeginAsync(tmp397, cancellationToken);
+                tmp401.Name = "Success";
+                tmp401.Type = TType.String;
+                tmp401.ID = 0;
+                await oprot.WriteFieldBeginAsync(tmp401, cancellationToken);
                 await oprot.WriteBinaryAsync(Success, cancellationToken);
                 await oprot.WriteFieldEndAsync(cancellationToken);
               }
@@ -6169,10 +6169,10 @@ namespace QueryCat.Plugins.Sdk
             {
               if (E != null)
               {
-                tmp397.Name = "E";
-                tmp397.Type = TType.Struct;
-                tmp397.ID = 1;
-                await oprot.WriteFieldBeginAsync(tmp397, cancellationToken);
+                tmp401.Name = "E";
+                tmp401.Type = TType.Struct;
+                tmp401.ID = 1;
+                await oprot.WriteFieldBeginAsync(tmp401, cancellationToken);
                 await E.WriteAsync(oprot, cancellationToken);
                 await oprot.WriteFieldEndAsync(cancellationToken);
               }
@@ -6212,22 +6212,22 @@ namespace QueryCat.Plugins.Sdk
 
         public override string ToString()
         {
-          var tmp398 = new StringBuilder("Blob_Read_result(");
-          int tmp399 = 0;
+          var tmp402 = new StringBuilder("Blob_Read_result(");
+          int tmp403 = 0;
           if((Success != null) && __isset.@success)
           {
-            if(0 < tmp399++) { tmp398.Append(", "); }
-            tmp398.Append("Success: ");
-            Success.ToString(tmp398);
+            if(0 < tmp403++) { tmp402.Append(", "); }
+            tmp402.Append("Success: ");
+            Success.ToString(tmp402);
           }
           if((E != null) && __isset.@e)
           {
-            if(0 < tmp399++) { tmp398.Append(", "); }
-            tmp398.Append("E: ");
-            E.ToString(tmp398);
+            if(0 < tmp403++) { tmp402.Append(", "); }
+            tmp402.Append("E: ");
+            E.ToString(tmp402);
           }
-          tmp398.Append(')');
-          return tmp398.ToString();
+          tmp402.Append(')');
+          return tmp402.ToString();
         }
       }
 
@@ -6338,28 +6338,28 @@ namespace QueryCat.Plugins.Sdk
           oprot.IncrementRecursionDepth();
           try
           {
-            var tmp400 = new TStruct("Blob_Write_args");
-            await oprot.WriteStructBeginAsync(tmp400, cancellationToken);
+            var tmp404 = new TStruct("Blob_Write_args");
+            await oprot.WriteStructBeginAsync(tmp404, cancellationToken);
             #pragma warning disable IDE0017  // simplified init
-            var tmp401 = new TField();
-            tmp401.Name = "token";
-            tmp401.Type = TType.I64;
-            tmp401.ID = 1;
-            await oprot.WriteFieldBeginAsync(tmp401, cancellationToken);
+            var tmp405 = new TField();
+            tmp405.Name = "token";
+            tmp405.Type = TType.I64;
+            tmp405.ID = 1;
+            await oprot.WriteFieldBeginAsync(tmp405, cancellationToken);
             await oprot.WriteI64Async(Token, cancellationToken);
             await oprot.WriteFieldEndAsync(cancellationToken);
-            tmp401.Name = "object_blob_handle";
-            tmp401.Type = TType.I32;
-            tmp401.ID = 2;
-            await oprot.WriteFieldBeginAsync(tmp401, cancellationToken);
+            tmp405.Name = "object_blob_handle";
+            tmp405.Type = TType.I32;
+            tmp405.ID = 2;
+            await oprot.WriteFieldBeginAsync(tmp405, cancellationToken);
             await oprot.WriteI32Async(ObjectBlobHandle, cancellationToken);
             await oprot.WriteFieldEndAsync(cancellationToken);
             if((Bytes != null))
             {
-              tmp401.Name = "bytes";
-              tmp401.Type = TType.String;
-              tmp401.ID = 3;
-              await oprot.WriteFieldBeginAsync(tmp401, cancellationToken);
+              tmp405.Name = "bytes";
+              tmp405.Type = TType.String;
+              tmp405.ID = 3;
+              await oprot.WriteFieldBeginAsync(tmp405, cancellationToken);
               await oprot.WriteBinaryAsync(Bytes, cancellationToken);
               await oprot.WriteFieldEndAsync(cancellationToken);
             }
@@ -6397,18 +6397,18 @@ namespace QueryCat.Plugins.Sdk
 
         public override string ToString()
         {
-          var tmp402 = new StringBuilder("Blob_Write_args(");
-          tmp402.Append(", Token: ");
-          Token.ToString(tmp402);
-          tmp402.Append(", ObjectBlobHandle: ");
-          ObjectBlobHandle.ToString(tmp402);
+          var tmp406 = new StringBuilder("Blob_Write_args(");
+          tmp406.Append(", Token: ");
+          Token.ToString(tmp406);
+          tmp406.Append(", ObjectBlobHandle: ");
+          ObjectBlobHandle.ToString(tmp406);
           if((Bytes != null))
           {
-            tmp402.Append(", Bytes: ");
-            Bytes.ToString(tmp402);
+            tmp406.Append(", Bytes: ");
+            Bytes.ToString(tmp406);
           }
-          tmp402.Append(')');
-          return tmp402.ToString();
+          tmp406.Append(')');
+          return tmp406.ToString();
         }
       }
 
@@ -6515,17 +6515,17 @@ namespace QueryCat.Plugins.Sdk
           oprot.IncrementRecursionDepth();
           try
           {
-            var tmp404 = new TStruct("Blob_Write_result");
-            await oprot.WriteStructBeginAsync(tmp404, cancellationToken);
+            var tmp408 = new TStruct("Blob_Write_result");
+            await oprot.WriteStructBeginAsync(tmp408, cancellationToken);
             #pragma warning disable IDE0017  // simplified init
-            var tmp405 = new TField();
+            var tmp409 = new TField();
 
             if(this.__isset.@success)
             {
-              tmp405.Name = "Success";
-              tmp405.Type = TType.I64;
-              tmp405.ID = 0;
-              await oprot.WriteFieldBeginAsync(tmp405, cancellationToken);
+              tmp409.Name = "Success";
+              tmp409.Type = TType.I64;
+              tmp409.ID = 0;
+              await oprot.WriteFieldBeginAsync(tmp409, cancellationToken);
               await oprot.WriteI64Async(Success, cancellationToken);
               await oprot.WriteFieldEndAsync(cancellationToken);
             }
@@ -6533,10 +6533,10 @@ namespace QueryCat.Plugins.Sdk
             {
               if (E != null)
               {
-                tmp405.Name = "E";
-                tmp405.Type = TType.Struct;
-                tmp405.ID = 1;
-                await oprot.WriteFieldBeginAsync(tmp405, cancellationToken);
+                tmp409.Name = "E";
+                tmp409.Type = TType.Struct;
+                tmp409.ID = 1;
+                await oprot.WriteFieldBeginAsync(tmp409, cancellationToken);
                 await E.WriteAsync(oprot, cancellationToken);
                 await oprot.WriteFieldEndAsync(cancellationToken);
               }
@@ -6576,22 +6576,22 @@ namespace QueryCat.Plugins.Sdk
 
         public override string ToString()
         {
-          var tmp406 = new StringBuilder("Blob_Write_result(");
-          int tmp407 = 0;
+          var tmp410 = new StringBuilder("Blob_Write_result(");
+          int tmp411 = 0;
           if(__isset.@success)
           {
-            if(0 < tmp407++) { tmp406.Append(", "); }
-            tmp406.Append("Success: ");
-            Success.ToString(tmp406);
+            if(0 < tmp411++) { tmp410.Append(", "); }
+            tmp410.Append("Success: ");
+            Success.ToString(tmp410);
           }
           if((E != null) && __isset.@e)
           {
-            if(0 < tmp407++) { tmp406.Append(", "); }
-            tmp406.Append("E: ");
-            E.ToString(tmp406);
+            if(0 < tmp411++) { tmp410.Append(", "); }
+            tmp410.Append("E: ");
+            E.ToString(tmp410);
           }
-          tmp406.Append(')');
-          return tmp406.ToString();
+          tmp410.Append(')');
+          return tmp410.ToString();
         }
       }
 
@@ -6683,20 +6683,20 @@ namespace QueryCat.Plugins.Sdk
           oprot.IncrementRecursionDepth();
           try
           {
-            var tmp408 = new TStruct("Blob_GetLength_args");
-            await oprot.WriteStructBeginAsync(tmp408, cancellationToken);
+            var tmp412 = new TStruct("Blob_GetLength_args");
+            await oprot.WriteStructBeginAsync(tmp412, cancellationToken);
             #pragma warning disable IDE0017  // simplified init
-            var tmp409 = new TField();
-            tmp409.Name = "token";
-            tmp409.Type = TType.I64;
-            tmp409.ID = 1;
-            await oprot.WriteFieldBeginAsync(tmp409, cancellationToken);
+            var tmp413 = new TField();
+            tmp413.Name = "token";
+            tmp413.Type = TType.I64;
+            tmp413.ID = 1;
+            await oprot.WriteFieldBeginAsync(tmp413, cancellationToken);
             await oprot.WriteI64Async(Token, cancellationToken);
             await oprot.WriteFieldEndAsync(cancellationToken);
-            tmp409.Name = "object_blob_handle";
-            tmp409.Type = TType.I32;
-            tmp409.ID = 2;
-            await oprot.WriteFieldBeginAsync(tmp409, cancellationToken);
+            tmp413.Name = "object_blob_handle";
+            tmp413.Type = TType.I32;
+            tmp413.ID = 2;
+            await oprot.WriteFieldBeginAsync(tmp413, cancellationToken);
             await oprot.WriteI32Async(ObjectBlobHandle, cancellationToken);
             await oprot.WriteFieldEndAsync(cancellationToken);
             #pragma warning restore IDE0017  // simplified init
@@ -6728,13 +6728,13 @@ namespace QueryCat.Plugins.Sdk
 
         public override string ToString()
         {
-          var tmp410 = new StringBuilder("Blob_GetLength_args(");
-          tmp410.Append(", Token: ");
-          Token.ToString(tmp410);
-          tmp410.Append(", ObjectBlobHandle: ");
-          ObjectBlobHandle.ToString(tmp410);
-          tmp410.Append(')');
-          return tmp410.ToString();
+          var tmp414 = new StringBuilder("Blob_GetLength_args(");
+          tmp414.Append(", Token: ");
+          Token.ToString(tmp414);
+          tmp414.Append(", ObjectBlobHandle: ");
+          ObjectBlobHandle.ToString(tmp414);
+          tmp414.Append(')');
+          return tmp414.ToString();
         }
       }
 
@@ -6841,17 +6841,17 @@ namespace QueryCat.Plugins.Sdk
           oprot.IncrementRecursionDepth();
           try
           {
-            var tmp412 = new TStruct("Blob_GetLength_result");
-            await oprot.WriteStructBeginAsync(tmp412, cancellationToken);
+            var tmp416 = new TStruct("Blob_GetLength_result");
+            await oprot.WriteStructBeginAsync(tmp416, cancellationToken);
             #pragma warning disable IDE0017  // simplified init
-            var tmp413 = new TField();
+            var tmp417 = new TField();
 
             if(this.__isset.@success)
             {
-              tmp413.Name = "Success";
-              tmp413.Type = TType.I64;
-              tmp413.ID = 0;
-              await oprot.WriteFieldBeginAsync(tmp413, cancellationToken);
+              tmp417.Name = "Success";
+              tmp417.Type = TType.I64;
+              tmp417.ID = 0;
+              await oprot.WriteFieldBeginAsync(tmp417, cancellationToken);
               await oprot.WriteI64Async(Success, cancellationToken);
               await oprot.WriteFieldEndAsync(cancellationToken);
             }
@@ -6859,10 +6859,10 @@ namespace QueryCat.Plugins.Sdk
             {
               if (E != null)
               {
-                tmp413.Name = "E";
-                tmp413.Type = TType.Struct;
-                tmp413.ID = 1;
-                await oprot.WriteFieldBeginAsync(tmp413, cancellationToken);
+                tmp417.Name = "E";
+                tmp417.Type = TType.Struct;
+                tmp417.ID = 1;
+                await oprot.WriteFieldBeginAsync(tmp417, cancellationToken);
                 await E.WriteAsync(oprot, cancellationToken);
                 await oprot.WriteFieldEndAsync(cancellationToken);
               }
@@ -6902,22 +6902,22 @@ namespace QueryCat.Plugins.Sdk
 
         public override string ToString()
         {
-          var tmp414 = new StringBuilder("Blob_GetLength_result(");
-          int tmp415 = 0;
+          var tmp418 = new StringBuilder("Blob_GetLength_result(");
+          int tmp419 = 0;
           if(__isset.@success)
           {
-            if(0 < tmp415++) { tmp414.Append(", "); }
-            tmp414.Append("Success: ");
-            Success.ToString(tmp414);
+            if(0 < tmp419++) { tmp418.Append(", "); }
+            tmp418.Append("Success: ");
+            Success.ToString(tmp418);
           }
           if((E != null) && __isset.@e)
           {
-            if(0 < tmp415++) { tmp414.Append(", "); }
-            tmp414.Append("E: ");
-            E.ToString(tmp414);
+            if(0 < tmp419++) { tmp418.Append(", "); }
+            tmp418.Append("E: ");
+            E.ToString(tmp418);
           }
-          tmp414.Append(')');
-          return tmp414.ToString();
+          tmp418.Append(')');
+          return tmp418.ToString();
         }
       }
 
@@ -7009,20 +7009,20 @@ namespace QueryCat.Plugins.Sdk
           oprot.IncrementRecursionDepth();
           try
           {
-            var tmp416 = new TStruct("Blob_GetContentType_args");
-            await oprot.WriteStructBeginAsync(tmp416, cancellationToken);
+            var tmp420 = new TStruct("Blob_GetContentType_args");
+            await oprot.WriteStructBeginAsync(tmp420, cancellationToken);
             #pragma warning disable IDE0017  // simplified init
-            var tmp417 = new TField();
-            tmp417.Name = "token";
-            tmp417.Type = TType.I64;
-            tmp417.ID = 1;
-            await oprot.WriteFieldBeginAsync(tmp417, cancellationToken);
+            var tmp421 = new TField();
+            tmp421.Name = "token";
+            tmp421.Type = TType.I64;
+            tmp421.ID = 1;
+            await oprot.WriteFieldBeginAsync(tmp421, cancellationToken);
             await oprot.WriteI64Async(Token, cancellationToken);
             await oprot.WriteFieldEndAsync(cancellationToken);
-            tmp417.Name = "object_blob_handle";
-            tmp417.Type = TType.I32;
-            tmp417.ID = 2;
-            await oprot.WriteFieldBeginAsync(tmp417, cancellationToken);
+            tmp421.Name = "object_blob_handle";
+            tmp421.Type = TType.I32;
+            tmp421.ID = 2;
+            await oprot.WriteFieldBeginAsync(tmp421, cancellationToken);
             await oprot.WriteI32Async(ObjectBlobHandle, cancellationToken);
             await oprot.WriteFieldEndAsync(cancellationToken);
             #pragma warning restore IDE0017  // simplified init
@@ -7054,13 +7054,13 @@ namespace QueryCat.Plugins.Sdk
 
         public override string ToString()
         {
-          var tmp418 = new StringBuilder("Blob_GetContentType_args(");
-          tmp418.Append(", Token: ");
-          Token.ToString(tmp418);
-          tmp418.Append(", ObjectBlobHandle: ");
-          ObjectBlobHandle.ToString(tmp418);
-          tmp418.Append(')');
-          return tmp418.ToString();
+          var tmp422 = new StringBuilder("Blob_GetContentType_args(");
+          tmp422.Append(", Token: ");
+          Token.ToString(tmp422);
+          tmp422.Append(", ObjectBlobHandle: ");
+          ObjectBlobHandle.ToString(tmp422);
+          tmp422.Append(')');
+          return tmp422.ToString();
         }
       }
 
@@ -7167,19 +7167,19 @@ namespace QueryCat.Plugins.Sdk
           oprot.IncrementRecursionDepth();
           try
           {
-            var tmp420 = new TStruct("Blob_GetContentType_result");
-            await oprot.WriteStructBeginAsync(tmp420, cancellationToken);
+            var tmp424 = new TStruct("Blob_GetContentType_result");
+            await oprot.WriteStructBeginAsync(tmp424, cancellationToken);
             #pragma warning disable IDE0017  // simplified init
-            var tmp421 = new TField();
+            var tmp425 = new TField();
 
             if(this.__isset.@success)
             {
               if (Success != null)
               {
-                tmp421.Name = "Success";
-                tmp421.Type = TType.String;
-                tmp421.ID = 0;
-                await oprot.WriteFieldBeginAsync(tmp421, cancellationToken);
+                tmp425.Name = "Success";
+                tmp425.Type = TType.String;
+                tmp425.ID = 0;
+                await oprot.WriteFieldBeginAsync(tmp425, cancellationToken);
                 await oprot.WriteStringAsync(Success, cancellationToken);
                 await oprot.WriteFieldEndAsync(cancellationToken);
               }
@@ -7188,10 +7188,10 @@ namespace QueryCat.Plugins.Sdk
             {
               if (E != null)
               {
-                tmp421.Name = "E";
-                tmp421.Type = TType.Struct;
-                tmp421.ID = 1;
-                await oprot.WriteFieldBeginAsync(tmp421, cancellationToken);
+                tmp425.Name = "E";
+                tmp425.Type = TType.Struct;
+                tmp425.ID = 1;
+                await oprot.WriteFieldBeginAsync(tmp425, cancellationToken);
                 await E.WriteAsync(oprot, cancellationToken);
                 await oprot.WriteFieldEndAsync(cancellationToken);
               }
@@ -7231,22 +7231,22 @@ namespace QueryCat.Plugins.Sdk
 
         public override string ToString()
         {
-          var tmp422 = new StringBuilder("Blob_GetContentType_result(");
-          int tmp423 = 0;
+          var tmp426 = new StringBuilder("Blob_GetContentType_result(");
+          int tmp427 = 0;
           if((Success != null) && __isset.@success)
           {
-            if(0 < tmp423++) { tmp422.Append(", "); }
-            tmp422.Append("Success: ");
-            Success.ToString(tmp422);
+            if(0 < tmp427++) { tmp426.Append(", "); }
+            tmp426.Append("Success: ");
+            Success.ToString(tmp426);
           }
           if((E != null) && __isset.@e)
           {
-            if(0 < tmp423++) { tmp422.Append(", "); }
-            tmp422.Append("E: ");
-            E.ToString(tmp422);
+            if(0 < tmp427++) { tmp426.Append(", "); }
+            tmp426.Append("E: ");
+            E.ToString(tmp426);
           }
-          tmp422.Append(')');
-          return tmp422.ToString();
+          tmp426.Append(')');
+          return tmp426.ToString();
         }
       }
 
@@ -7353,13 +7353,13 @@ namespace QueryCat.Plugins.Sdk
                   if (field.Type == TType.List)
                   {
                     {
-                      var _list424 = await iprot.ReadListBeginAsync(cancellationToken);
-                      Arguments = new List<string>(_list424.Count);
-                      for(int _i425 = 0; _i425 < _list424.Count; ++_i425)
+                      var _list428 = await iprot.ReadListBeginAsync(cancellationToken);
+                      Arguments = new List<string>(_list428.Count);
+                      for(int _i429 = 0; _i429 < _list428.Count; ++_i429)
                       {
-                        string _elem426;
-                        _elem426 = await iprot.ReadStringAsync(cancellationToken);
-                        Arguments.Add(_elem426);
+                        string _elem430;
+                        _elem430 = await iprot.ReadStringAsync(cancellationToken);
+                        Arguments.Add(_elem430);
                       }
                       await iprot.ReadListEndAsync(cancellationToken);
                     }
@@ -7402,41 +7402,41 @@ namespace QueryCat.Plugins.Sdk
           oprot.IncrementRecursionDepth();
           try
           {
-            var tmp427 = new TStruct("Log_args");
-            await oprot.WriteStructBeginAsync(tmp427, cancellationToken);
+            var tmp431 = new TStruct("Log_args");
+            await oprot.WriteStructBeginAsync(tmp431, cancellationToken);
             #pragma warning disable IDE0017  // simplified init
-            var tmp428 = new TField();
-            tmp428.Name = "token";
-            tmp428.Type = TType.I64;
-            tmp428.ID = 1;
-            await oprot.WriteFieldBeginAsync(tmp428, cancellationToken);
+            var tmp432 = new TField();
+            tmp432.Name = "token";
+            tmp432.Type = TType.I64;
+            tmp432.ID = 1;
+            await oprot.WriteFieldBeginAsync(tmp432, cancellationToken);
             await oprot.WriteI64Async(Token, cancellationToken);
             await oprot.WriteFieldEndAsync(cancellationToken);
-            tmp428.Name = "level";
-            tmp428.Type = TType.I32;
-            tmp428.ID = 2;
-            await oprot.WriteFieldBeginAsync(tmp428, cancellationToken);
+            tmp432.Name = "level";
+            tmp432.Type = TType.I32;
+            tmp432.ID = 2;
+            await oprot.WriteFieldBeginAsync(tmp432, cancellationToken);
             await oprot.WriteI32Async((int)Level, cancellationToken);
             await oprot.WriteFieldEndAsync(cancellationToken);
             if((Message != null))
             {
-              tmp428.Name = "message";
-              tmp428.Type = TType.String;
-              tmp428.ID = 3;
-              await oprot.WriteFieldBeginAsync(tmp428, cancellationToken);
+              tmp432.Name = "message";
+              tmp432.Type = TType.String;
+              tmp432.ID = 3;
+              await oprot.WriteFieldBeginAsync(tmp432, cancellationToken);
               await oprot.WriteStringAsync(Message, cancellationToken);
               await oprot.WriteFieldEndAsync(cancellationToken);
             }
             if((Arguments != null) && __isset.@arguments)
             {
-              tmp428.Name = "arguments";
-              tmp428.Type = TType.List;
-              tmp428.ID = 4;
-              await oprot.WriteFieldBeginAsync(tmp428, cancellationToken);
+              tmp432.Name = "arguments";
+              tmp432.Type = TType.List;
+              tmp432.ID = 4;
+              await oprot.WriteFieldBeginAsync(tmp432, cancellationToken);
               await oprot.WriteListBeginAsync(new TList(TType.String, Arguments.Count), cancellationToken);
-              foreach (string _iter429 in Arguments)
+              foreach (string _iter433 in Arguments)
               {
-                await oprot.WriteStringAsync(_iter429, cancellationToken);
+                await oprot.WriteStringAsync(_iter433, cancellationToken);
               }
               await oprot.WriteListEndAsync(cancellationToken);
               await oprot.WriteFieldEndAsync(cancellationToken);
@@ -7480,23 +7480,23 @@ namespace QueryCat.Plugins.Sdk
 
         public override string ToString()
         {
-          var tmp430 = new StringBuilder("Log_args(");
-          tmp430.Append(", Token: ");
-          Token.ToString(tmp430);
-          tmp430.Append(", Level: ");
-          Level.ToString(tmp430);
+          var tmp434 = new StringBuilder("Log_args(");
+          tmp434.Append(", Token: ");
+          Token.ToString(tmp434);
+          tmp434.Append(", Level: ");
+          Level.ToString(tmp434);
           if((Message != null))
           {
-            tmp430.Append(", Message: ");
-            Message.ToString(tmp430);
+            tmp434.Append(", Message: ");
+            Message.ToString(tmp434);
           }
           if((Arguments != null) && __isset.@arguments)
           {
-            tmp430.Append(", Arguments: ");
-            Arguments.ToString(tmp430);
+            tmp434.Append(", Arguments: ");
+            Arguments.ToString(tmp434);
           }
-          tmp430.Append(')');
-          return tmp430.ToString();
+          tmp434.Append(')');
+          return tmp434.ToString();
         }
       }
 
@@ -7578,19 +7578,19 @@ namespace QueryCat.Plugins.Sdk
           oprot.IncrementRecursionDepth();
           try
           {
-            var tmp432 = new TStruct("Log_result");
-            await oprot.WriteStructBeginAsync(tmp432, cancellationToken);
+            var tmp436 = new TStruct("Log_result");
+            await oprot.WriteStructBeginAsync(tmp436, cancellationToken);
             #pragma warning disable IDE0017  // simplified init
-            var tmp433 = new TField();
+            var tmp437 = new TField();
 
             if(this.__isset.@e)
             {
               if (E != null)
               {
-                tmp433.Name = "E";
-                tmp433.Type = TType.Struct;
-                tmp433.ID = 1;
-                await oprot.WriteFieldBeginAsync(tmp433, cancellationToken);
+                tmp437.Name = "E";
+                tmp437.Type = TType.Struct;
+                tmp437.ID = 1;
+                await oprot.WriteFieldBeginAsync(tmp437, cancellationToken);
                 await E.WriteAsync(oprot, cancellationToken);
                 await oprot.WriteFieldEndAsync(cancellationToken);
               }
@@ -7625,16 +7625,16 @@ namespace QueryCat.Plugins.Sdk
 
         public override string ToString()
         {
-          var tmp434 = new StringBuilder("Log_result(");
-          int tmp435 = 0;
+          var tmp438 = new StringBuilder("Log_result(");
+          int tmp439 = 0;
           if((E != null) && __isset.@e)
           {
-            if(0 < tmp435++) { tmp434.Append(", "); }
-            tmp434.Append("E: ");
-            E.ToString(tmp434);
+            if(0 < tmp439++) { tmp438.Append(", "); }
+            tmp438.Append("E: ");
+            E.ToString(tmp438);
           }
-          tmp434.Append(')');
-          return tmp434.ToString();
+          tmp438.Append(')');
+          return tmp438.ToString();
         }
       }
 
@@ -7707,14 +7707,14 @@ namespace QueryCat.Plugins.Sdk
           oprot.IncrementRecursionDepth();
           try
           {
-            var tmp436 = new TStruct("GetStatistic_args");
-            await oprot.WriteStructBeginAsync(tmp436, cancellationToken);
+            var tmp440 = new TStruct("GetStatistic_args");
+            await oprot.WriteStructBeginAsync(tmp440, cancellationToken);
             #pragma warning disable IDE0017  // simplified init
-            var tmp437 = new TField();
-            tmp437.Name = "token";
-            tmp437.Type = TType.I64;
-            tmp437.ID = 1;
-            await oprot.WriteFieldBeginAsync(tmp437, cancellationToken);
+            var tmp441 = new TField();
+            tmp441.Name = "token";
+            tmp441.Type = TType.I64;
+            tmp441.ID = 1;
+            await oprot.WriteFieldBeginAsync(tmp441, cancellationToken);
             await oprot.WriteI64Async(Token, cancellationToken);
             await oprot.WriteFieldEndAsync(cancellationToken);
             #pragma warning restore IDE0017  // simplified init
@@ -7744,11 +7744,11 @@ namespace QueryCat.Plugins.Sdk
 
         public override string ToString()
         {
-          var tmp438 = new StringBuilder("GetStatistic_args(");
-          tmp438.Append(", Token: ");
-          Token.ToString(tmp438);
-          tmp438.Append(')');
-          return tmp438.ToString();
+          var tmp442 = new StringBuilder("GetStatistic_args(");
+          tmp442.Append(", Token: ");
+          Token.ToString(tmp442);
+          tmp442.Append(')');
+          return tmp442.ToString();
         }
       }
 
@@ -7856,19 +7856,19 @@ namespace QueryCat.Plugins.Sdk
           oprot.IncrementRecursionDepth();
           try
           {
-            var tmp440 = new TStruct("GetStatistic_result");
-            await oprot.WriteStructBeginAsync(tmp440, cancellationToken);
+            var tmp444 = new TStruct("GetStatistic_result");
+            await oprot.WriteStructBeginAsync(tmp444, cancellationToken);
             #pragma warning disable IDE0017  // simplified init
-            var tmp441 = new TField();
+            var tmp445 = new TField();
 
             if(this.__isset.@success)
             {
               if (Success != null)
               {
-                tmp441.Name = "Success";
-                tmp441.Type = TType.Struct;
-                tmp441.ID = 0;
-                await oprot.WriteFieldBeginAsync(tmp441, cancellationToken);
+                tmp445.Name = "Success";
+                tmp445.Type = TType.Struct;
+                tmp445.ID = 0;
+                await oprot.WriteFieldBeginAsync(tmp445, cancellationToken);
                 await Success.WriteAsync(oprot, cancellationToken);
                 await oprot.WriteFieldEndAsync(cancellationToken);
               }
@@ -7877,10 +7877,10 @@ namespace QueryCat.Plugins.Sdk
             {
               if (E != null)
               {
-                tmp441.Name = "E";
-                tmp441.Type = TType.Struct;
-                tmp441.ID = 1;
-                await oprot.WriteFieldBeginAsync(tmp441, cancellationToken);
+                tmp445.Name = "E";
+                tmp445.Type = TType.Struct;
+                tmp445.ID = 1;
+                await oprot.WriteFieldBeginAsync(tmp445, cancellationToken);
                 await E.WriteAsync(oprot, cancellationToken);
                 await oprot.WriteFieldEndAsync(cancellationToken);
               }
@@ -7920,22 +7920,22 @@ namespace QueryCat.Plugins.Sdk
 
         public override string ToString()
         {
-          var tmp442 = new StringBuilder("GetStatistic_result(");
-          int tmp443 = 0;
+          var tmp446 = new StringBuilder("GetStatistic_result(");
+          int tmp447 = 0;
           if((Success != null) && __isset.@success)
           {
-            if(0 < tmp443++) { tmp442.Append(", "); }
-            tmp442.Append("Success: ");
-            Success.ToString(tmp442);
+            if(0 < tmp447++) { tmp446.Append(", "); }
+            tmp446.Append("Success: ");
+            Success.ToString(tmp446);
           }
           if((E != null) && __isset.@e)
           {
-            if(0 < tmp443++) { tmp442.Append(", "); }
-            tmp442.Append("E: ");
-            E.ToString(tmp442);
+            if(0 < tmp447++) { tmp446.Append(", "); }
+            tmp446.Append("E: ");
+            E.ToString(tmp446);
           }
-          tmp442.Append(')');
-          return tmp442.ToString();
+          tmp446.Append(')');
+          return tmp446.ToString();
         }
       }
 

@@ -205,6 +205,11 @@ struct Statistic {
   4: required list<StatisticRowError> errors
 }
 
+struct ModelDescription {
+  1: required string name,
+  2: required string description
+}
+
 service PluginsManager {
   // Register plugin with all its data.
   RegistrationResult RegisterPlugin(
@@ -480,6 +485,11 @@ service Plugin {
   // Delete the current row.
   QueryCatErrorCode RowsSet_DeleteRow(
     1: required Handle object_rows_set_handle
+  ) throws (1: QueryCatPluginException e),
+
+  // Get rows set model description.
+  ModelDescription RowsSet_GetDescription(
+    1: required Handle object_handle
   ) throws (1: QueryCatPluginException e),
 
   // Create input from BLOB.

@@ -418,4 +418,7 @@ public static class SdkConvert
             statistic.Errors.Select(SdkConvert.Convert).ToList()
         );
     }
+
+    public static Sdk.ModelDescription Convert(Backend.Core.Data.IModelDescription model)
+        => new ModelDescription(model.Name, model.Description);
 }

@@ -442,6 +442,17 @@ public partial class ThriftPluginClient
         }
 
         /// <inheritdoc />
+        public Task<ModelDescription> RowsSet_GetDescriptionAsync(int object_handle, CancellationToken cancellationToken = default)
+        {
+            if (_thriftPluginClient._objectsStorage.TryGet<IModelDescription>(object_handle, out var model)
+                && model != null)
+            {
+                return Task.FromResult(SdkConvert.Convert(model));
+            }
+            return Task.FromResult(new ModelDescription(string.Empty, string.Empty));
+        }
+
+        /// <inheritdoc />
         public Task<int> RowsFormatter_OpenInputAsync(int object_rows_formatter_handle, int object_blob_handle, string? key, CancellationToken cancellationToken = default)
         {
             if (_thriftPluginClient._objectsStorage.TryGet<IRowsFormatter>(object_rows_formatter_handle, out var rowsFormatter)
@@ -828,6 +839,21 @@ public partial class ThriftPluginClient
             {
                 _logger.LogError(ex, Resources.Errors.HandlerInternalError);
                 throw QueryCatPluginExceptionUtils.Create(ex, objectHandle: object_rows_set_handle);
+            }
+        }
+
+        /// <inheritdoc />
+        public async Task<ModelDescription> RowsSet_GetDescriptionAsync(int object_handle, CancellationToken cancellationToken = default)
+        {
+            LogCallMethod(nameof(RowsFormatter_OpenInputAsync));
+            try
+            {
+                return await _handler.RowsSet_GetDescriptionAsync(object_handle, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, Resources.Errors.HandlerInternalError);
+                throw QueryCatPluginExceptionUtils.Create(ex, objectHandle: object_handle);
             }
         }
 

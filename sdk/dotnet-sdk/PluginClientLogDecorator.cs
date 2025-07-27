@@ -156,6 +156,13 @@ public sealed partial class PluginClientLogDecorator : Plugin.IAsync
     }
 
     /// <inheritdoc />
+    public Task<ModelDescription> RowsSet_GetDescriptionAsync(int object_handle, CancellationToken cancellationToken = default)
+    {
+        LogStartMethodCall(nameof(RowsSet_GetDescriptionAsync));
+        return _client.RowsSet_GetDescriptionAsync(object_handle, cancellationToken);
+    }
+
+    /// <inheritdoc />
     public Task<int> RowsFormatter_OpenInputAsync(int object_rows_formatter_handle, int object_blob_handle, string? key, CancellationToken cancellationToken = default)
     {
         LogStartMethodCall(nameof(RowsFormatter_OpenInputAsync));
