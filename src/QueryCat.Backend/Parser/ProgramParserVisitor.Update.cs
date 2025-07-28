@@ -31,7 +31,7 @@ internal partial class ProgramParserVisitor
     public override IAstNode VisitUpdateNoFormat(QueryCatParser.UpdateNoFormatContext context)
         => new SelectTableFunctionNode(this.Visit<FunctionCallNode>(context.functionCall()))
         {
-            Alias = this.Visit(context.selectAlias(), SelectAliasNode.Empty).AliasName,
+            Alias = GetContextAlias(context.selectAlias),
         };
 
     /// <inheritdoc />
@@ -48,14 +48,14 @@ internal partial class ProgramParserVisitor
         }
         return new SelectTableFunctionNode(readFunction)
         {
-            Alias = this.Visit(context.selectAlias(), SelectAliasNode.Empty).AliasName,
+            Alias = GetContextAlias(context.selectAlias),
         };
     }
 
     /// <inheritdoc />
     public override IAstNode VisitUpdateFromVariable(QueryCatParser.UpdateFromVariableContext context)
     {
-        var alias = this.Visit(context.selectAlias(), SelectAliasNode.Empty).AliasName;
+        var alias = GetContextAlias(context.selectAlias);
         return new SelectIdentifierExpressionNode(this.Visit<IdentifierExpressionNode>(context.identifier()), alias);
     }
 

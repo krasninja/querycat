@@ -3,6 +3,7 @@ using Antlr4.Runtime.Tree;
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Function;
+using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Ast.Nodes.SpecialFunctions;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Core.Utils;
@@ -471,6 +472,21 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
         }
         return StringUtils.GetUnwrappedText(token.Text);
     }
+
+    private void SetNodeAlias(ExpressionNode expressionNode, Func<QueryCatParser.SelectAliasContext> aliasContextFunc)
+    {
+        if (expressionNode is ISelectAliasNode aliasNode)
+        {
+            var aliasName = GetContextAlias(aliasContextFunc);
+            if (!string.IsNullOrEmpty(aliasName))
+            {
+                aliasNode.Alias = aliasName;
+            }
+        }
+    }
+
+    private string GetContextAlias(Func<QueryCatParser.SelectAliasContext> aliasContextFunc)
+        => this.Visit(aliasContextFunc.Invoke(), SelectAliasNode.Empty).AliasName;
 
     #endregion
 }

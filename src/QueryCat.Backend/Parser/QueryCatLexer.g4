@@ -223,6 +223,10 @@ BREAK:              'BREAK';
 
 CONTINUE:           'CONTINUE';
 
+// OPEN command.
+
+OPEN:               'OPEN';
+
 TYPE: ANY | BLOB | BOOL | BOOLEAN | DECIMAL | FLOAT | INT | INT8 | INTEGER | NUMERIC | OBJECT | REAL | STRING | TEXT
     | TIMESTAMP;
 
