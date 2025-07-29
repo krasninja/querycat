@@ -1,11 +1,15 @@
 using QueryCat.Backend.Ast.Nodes;
+using QueryCat.Backend.Ast.Nodes.Break;
 using QueryCat.Backend.Ast.Nodes.Call;
+using QueryCat.Backend.Ast.Nodes.Continue;
 using QueryCat.Backend.Ast.Nodes.Declare;
 using QueryCat.Backend.Ast.Nodes.Delete;
 using QueryCat.Backend.Ast.Nodes.For;
 using QueryCat.Backend.Ast.Nodes.Function;
 using QueryCat.Backend.Ast.Nodes.If;
 using QueryCat.Backend.Ast.Nodes.Insert;
+using QueryCat.Backend.Ast.Nodes.Open;
+using QueryCat.Backend.Ast.Nodes.Return;
 using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Ast.Nodes.SpecialFunctions;
 using QueryCat.Backend.Ast.Nodes.Update;
@@ -570,6 +574,67 @@ internal abstract class DelegateVisitor : AstVisitor
 
     /// <inheritdoc />
     public override ValueTask VisitAsync(ForStatementNode node, CancellationToken cancellationToken)
+    {
+        return OnVisitAsync(node, cancellationToken);
+    }
+
+    #endregion
+
+    #region Continue
+
+    public override ValueTask VisitAsync(ContinueNode node, CancellationToken cancellationToken)
+    {
+        return OnVisitAsync(node, cancellationToken);
+    }
+
+    public override ValueTask VisitAsync(ContinueStatementNode node, CancellationToken cancellationToken)
+    {
+        return OnVisitAsync(node, cancellationToken);
+    }
+
+    #endregion
+
+    #region Break
+
+    public override ValueTask VisitAsync(BreakNode node, CancellationToken cancellationToken)
+    {
+        return OnVisitAsync(node, cancellationToken);
+    }
+
+    public override ValueTask VisitAsync(BreakStatementNode node, CancellationToken cancellationToken)
+    {
+        return OnVisitAsync(node, cancellationToken);
+    }
+
+    #endregion
+
+    #region Return
+
+    public override ValueTask VisitAsync(ReturnNode node, CancellationToken cancellationToken)
+    {
+        return OnVisitAsync(node, cancellationToken);
+    }
+
+    public override ValueTask VisitAsync(ReturnStatementNode node, CancellationToken cancellationToken)
+    {
+        return OnVisitAsync(node, cancellationToken);
+    }
+
+    #endregion
+
+    #region Open
+
+    public override ValueTask VisitAsync(OpenNode node, CancellationToken cancellationToken)
+    {
+        return OnVisitAsync(node, cancellationToken);
+    }
+
+    public override ValueTask VisitAsync(OpenStatementNode node, CancellationToken cancellationToken)
+    {
+        return OnVisitAsync(node, cancellationToken);
+    }
+
+    public override ValueTask VisitAsync(SelectOpenNode node, CancellationToken cancellationToken)
     {
         return OnVisitAsync(node, cancellationToken);
     }

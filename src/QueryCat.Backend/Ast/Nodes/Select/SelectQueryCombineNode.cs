@@ -46,6 +46,7 @@ internal sealed class SelectQueryCombineNode : SelectQueryNode
         {
             FetchNode = (SelectFetchNode)node.FetchNode.Clone();
         }
+        node.CopyTo(this);
     }
 
     /// <inheritdoc />
