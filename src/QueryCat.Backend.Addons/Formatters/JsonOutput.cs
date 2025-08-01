@@ -13,9 +13,15 @@ internal sealed class JsonOutput : RowsOutput, IDisposable
 
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(JsonOutput));
 
-    public JsonOutput(Stream stream)
+    public JsonOutput(Stream stream, int? indent = null)
     {
-        _streamWriter = new Utf8JsonWriter(stream);
+        var options = default(JsonWriterOptions);
+        if (indent.HasValue)
+        {
+            options.IndentSize = indent.Value;
+            options.Indented = true;
+        }
+        _streamWriter = new Utf8JsonWriter(stream, options);
     }
 
     /// <inheritdoc />
