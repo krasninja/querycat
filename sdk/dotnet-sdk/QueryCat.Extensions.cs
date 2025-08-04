@@ -117,6 +117,21 @@ namespace QueryCat.Plugins.Sdk
     }
 
 
+    public static bool Equals(this List<global::QueryCat.Plugins.Sdk.QuestionMessage> instance, object that)
+    {
+      if (that is not List<global::QueryCat.Plugins.Sdk.QuestionMessage> other) return false;
+      if (ReferenceEquals(instance, other)) return true;
+
+      return TCollections.Equals(instance, other);
+    }
+
+
+    public static int GetHashCode(this List<global::QueryCat.Plugins.Sdk.QuestionMessage> instance)
+    {
+      return TCollections.GetHashCode(instance);
+    }
+
+
     public static bool Equals(this List<global::QueryCat.Plugins.Sdk.ScopeVariable> instance, object that)
     {
       if (that is not List<global::QueryCat.Plugins.Sdk.ScopeVariable> other) return false;

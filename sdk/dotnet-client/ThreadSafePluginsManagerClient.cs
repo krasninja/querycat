@@ -273,4 +273,18 @@ internal sealed class ThreadSafePluginsManagerClient : PluginsManager.IAsync
             _semaphore.Release();
         }
     }
+
+    /// <inheritdoc />
+    public async Task<QuestionResponse> AnswerAgent_AskAsync(long token, int object_answer_agent, QuestionRequest? request, CancellationToken cancellationToken = default)
+    {
+        await _semaphore.WaitAsync(cancellationToken);
+        try
+        {
+            return await _client.AnswerAgent_AskAsync(token, object_answer_agent, request, cancellationToken);
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
+    }
 }

@@ -421,4 +421,19 @@ public static class SdkConvert
 
     public static Sdk.ModelDescription Convert(Backend.Core.Data.IModelDescription model)
         => new ModelDescription(model.Name, model.Description);
+
+    public static Sdk.QuestionResponse Convert(Backend.Core.Execution.QuestionResponse target)
+        => new(target.MessageId, target.Answer);
+
+    public static Backend.Core.Execution.QuestionMessage Convert(Sdk.QuestionMessage target)
+        => new(target.Content, target.Role);
+
+    public static Sdk.QuestionMessage Convert(Backend.Core.Execution.QuestionMessage target)
+        => new(target.Content, target.Role);
+
+    public static Backend.Core.Execution.QuestionRequest Convert(Sdk.QuestionRequest target)
+        => new((target.Messages ?? []).Select(SdkConvert.Convert).ToArray(), target.Type);
+
+    public static Sdk.QuestionRequest Convert(Backend.Core.Execution.QuestionRequest target)
+        => new(target.Messages.Select(SdkConvert.Convert).ToList(), target.Type);
 }

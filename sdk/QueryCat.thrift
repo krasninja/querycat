@@ -28,7 +28,8 @@ enum ObjectType {
   ROWS_OUTPUT = 12, // Interfaces: IRowsOutput, IRowsSource.
   BLOB = 13, // Binary data.
   JSON = 14, // JSON.
-  ROWS_FORMATTER = 15 // Interfaces: IRowsFormatter.
+  ROWS_FORMATTER = 15, // Interfaces: IRowsFormatter.
+  ANSWER_AGENT = 16 // Interfaces: IAnswerAgent.
 }
 
 // To refer to objects we use special identifiers: handles.
@@ -210,6 +211,21 @@ struct ModelDescription {
   2: required string description
 }
 
+struct QuestionRequest {
+  1: required list<QuestionMessage> messages,
+  2: required string type
+}
+
+struct QuestionMessage {
+  1: required string content,
+  2: required string role
+}
+
+struct QuestionResponse {
+  1: required string message_id,
+  2: required string answer
+}
+
 service PluginsManager {
   // Register plugin with all its data.
   RegistrationResult RegisterPlugin(
@@ -328,7 +344,14 @@ service PluginsManager {
   // Get query execution statistic.
   Statistic GetStatistic(
     1: required i64 token // Authorization token.
-  ) throws (1: QueryCatPluginException e)
+  ) throws (1: QueryCatPluginException e),
+
+  // Get an answer from agent based on question.
+  QuestionResponse AnswerAgent_Ask(
+    1: required i64 token, // Authorization token.
+    2: required Handle object_answer_agent,
+    3: required QuestionRequest request
+  ) throws (1: QueryCatPluginException e),
 }
 
 /*

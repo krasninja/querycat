@@ -1,0 +1,270 @@
+using System.Text;
+using System.Text.Json;
+using Microsoft.Extensions.Logging;
+using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Execution;
+using QueryCat.Backend.Core.Types;
+using QueryCat.Backend.Core.Utils;
+
+namespace QueryCat.Backend.Execution;
+
+/// <summary>
+/// The class helps to execute natural language question query.
+/// </summary>
+// ReSharper disable once InconsistentNaming
+public class AIAssistant
+{
+    private const int MaxQueryFixAttempts = 3;
+
+    private readonly IExecutionThread _executionThread;
+    private readonly IAnswerAgent _answerAgent;
+
+    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(AIAssistant));
+
+    public const string PromptPreamble =
+        """
+        You are the DuckDB expert.
+
+        Please help to generate an SQL query to answer the question.
+        Your response should ONLY be based on the given context and follow the response guidelines and format instructions.
+
+        """;
+
+    public const string PromptGuidelines =
+        """
+        == Response Guidelines
+        1. If the provided context is sufficient, please generate a valid query without any explanations for the question.
+        2. If the provided context is insufficient, please explain why it cannot be generated.
+        3. Please use the most relevant table(s). Use table identifiers for the FROM clause.
+        4. Please format the query before responding.
+        5. The following types only are available: integer, string, float, timestamp, boolean, numeric, interval, BLOB.
+        6. Please output in JSON format with the following structure: `{ "Query": "", "Refusal": "" }`.
+           Put generated SQL into the `Query` field. If you cannot generate SQL, fill the `Refusal` field.
+        7. If possible, use the following documentation to format the SQL query correctly: 'https://querycat.readthedocs.io/en/latest/'.
+
+        """;
+
+    /// <summary>
+    /// Model for AI agent serialization/deserialization.
+    /// </summary>
+    public sealed class PromptResponseModel
+    {
+        public string Query { get; set; } = string.Empty;
+
+        public string Refusal { get; set; } = string.Empty;
+
+        public bool IsSuccess => !string.IsNullOrEmpty(Query);
+
+        /// <inheritdoc />
+        public override string ToString() => $"Q: {Query}, R: {Refusal}";
+    }
+
+    /// <summary>
+    /// Constructor.
+    /// </summary>
+    /// <param name="executionThread">Instance of <see cref="IExecutionThread{TOptions}" />.</param>
+    /// <param name="answerAgent">Instance of <see cref="IAnswerAgent" />.</param>
+    public AIAssistant(IExecutionThread executionThread, IAnswerAgent answerAgent)
+    {
+        _executionThread = executionThread;
+        _answerAgent = answerAgent;
+    }
+
+    /// <summary>
+    /// Run question query for AI agent, generate SQL and execute it.
+    /// </summary>
+    /// <param name="request">AI request.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Instance of <see cref="IRowsIterator" />.</returns>
+    public async Task<IRowsIterator> RunQueryAsync(AskAIRequest request, CancellationToken cancellationToken = default)
+    {
+        var inputs = await ResolveInputsAsync(request.Inputs, cancellationToken);
+
+        // Ask AI.
+        try
+        {
+            var iterator = await AiPromptingLoopAsync(request.Question, inputs, cancellationToken);
+            if (iterator == null)
+            {
+                throw new QueryCatException("Cannot process query.");
+            }
+            return iterator;
+        }
+        finally
+        {
+            await CloseInputsAsync(inputs, cancellationToken);
+        }
+    }
+
+    private async Task<IReadOnlyDictionary<string, IRowsInput>> ResolveInputsAsync(
+        IReadOnlyDictionary<string, string> rawInputs,
+        CancellationToken cancellationToken)
+    {
+        var inputs = new Dictionary<string, IRowsInput>();
+        foreach (var requestInput in rawInputs)
+        {
+            var inputResolveQuery = string.Concat(Application.CommandOpen, " ", requestInput.Value);
+            var inputValue = await _executionThread.RunAsync(inputResolveQuery, cancellationToken: cancellationToken);
+            var input = inputValue.AsRequired<IRowsInput>();
+            inputs[requestInput.Key] = input;
+        }
+        return inputs;
+    }
+
+    private async Task CloseInputsAsync(
+        IReadOnlyDictionary<string, IRowsInput> inputs,
+        CancellationToken cancellationToken)
+    {
+        foreach (var input in inputs)
+        {
+            await input.Value.CloseAsync(cancellationToken);
+        }
+    }
+
+    private async Task<IRowsIterator?> AiPromptingLoopAsync(
+        string question,
+        IReadOnlyDictionary<string, IRowsInput> inputs,
+        CancellationToken cancellationToken)
+    {
+        var canProceedQuery = false;
+        var currentAiRequest = GetInitialQuestion(question, inputs);
+        var queryAttempts = 0;
+        while (!canProceedQuery)
+        {
+            _logger.LogTrace("Prompt: {Prompt}.", currentAiRequest.Message);
+            var response = await _answerAgent.AskAsync(currentAiRequest, cancellationToken);
+            if (_logger.IsEnabled(LogLevel.Trace))
+            {
+                _logger.LogTrace("Resolver response. {ResolverResponse}", response.ToString());
+            }
+            var model = ConvertAnswerToSql(response.Answer);
+            canProceedQuery = model.IsSuccess;
+            if (!canProceedQuery)
+            {
+                var userResponse = await ClarifyAsync(model.Refusal, cancellationToken);
+                if (string.IsNullOrEmpty(userResponse))
+                {
+                    throw new QueryCatException("No response provided.");
+                }
+                currentAiRequest = new QuestionRequest(userResponse);
+                continue;
+            }
+
+            VariantValue result;
+            try
+            {
+                result = await _executionThread.RunAsync(
+                    model.Query,
+                    inputs.ToDictionary(k => k.Key, v => VariantValue.CreateFromObject(v.Value)),
+                    cancellationToken);
+            }
+            catch (QueryCatException e)
+            {
+                queryAttempts++;
+                canProceedQuery = false;
+                _logger.LogDebug("Query Attempt {AttemptCount}, Exception: {Error}", queryAttempts, e.Message);
+                if (queryAttempts >= MaxQueryFixAttempts)
+                {
+                    throw new QueryCatException("Cannot process query.", e);
+                }
+                currentAiRequest = new QuestionRequest(e.Message);
+                continue;
+            }
+
+            return result.AsRequired<IRowsIterator>();
+        }
+
+        return null;
+    }
+
+    private static QuestionRequest GetInitialQuestion(
+        string question,
+        IReadOnlyDictionary<string, IRowsInput> inputs)
+    {
+        var messages = new QuestionMessage[]
+        {
+            new(PromptPreamble, QuestionMessage.RoleSystem),
+            new(PromptGuidelines, QuestionMessage.RoleSystem),
+            new(GetPromptTablesInformation(inputs)),
+            new(GetPromptQuestion(question))
+        };
+        return new QuestionRequest(messages, QuestionRequest.TypeSql);
+    }
+
+    private PromptResponseModel ConvertAnswerToSql(string answer)
+    {
+        var startOfJson = answer.IndexOf('{');
+        var endOfJson = answer.LastIndexOf('}');
+        if (startOfJson == endOfJson
+            || startOfJson < 0
+            || endOfJson < 0)
+        {
+            throw new InvalidOperationException("Cannot process query.");
+        }
+        var json = answer.Substring(startOfJson, endOfJson - startOfJson + 1);
+        var model = JsonSerializer.Deserialize(
+            json,
+            SourceGenerationContext.Default.PromptResponseModel);
+        if (model == null)
+        {
+            throw new InvalidOperationException("Invalid response: " + json);
+        }
+        return model;
+    }
+
+    protected virtual Task<string> ClarifyAsync(string issue, CancellationToken cancellationToken)
+    {
+        // By default, provide no feedback that means query is failed.
+        return Task.FromResult(string.Empty);
+    }
+
+    private static string Quote(string target)
+        => StringUtils.Quote(target, quote: "'", force: true);
+
+    public static string GetPromptTablesInformation(IReadOnlyDictionary<string, IRowsInput> inputs)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine("== Tables and Columns");
+        foreach (var input in inputs)
+        {
+            sb.AppendFormat("=== Table identifier: {0}.", Quote(input.Key));
+            sb.AppendLine();
+            if (input.Value is IModelDescription modelDescription)
+            {
+                if (!string.IsNullOrEmpty(modelDescription.Name))
+                {
+                    sb.AppendFormat(" Table logical name: {0}.", Quote(modelDescription.Name));
+                }
+                if (!string.IsNullOrEmpty(modelDescription.Description))
+                {
+                    sb.AppendFormat(" Table description: {0}.", Quote(modelDescription.Name));
+                }
+            }
+            sb.Append(" Columns:");
+            sb.AppendLine();
+            foreach (var column in input.Value.Columns)
+            {
+                if (column.IsHidden)
+                {
+                    continue;
+                }
+                sb.AppendFormat("- Column {0} of type '{1}';", Quote(column.Name), column.DataType);
+                if (!string.IsNullOrEmpty(column.Description))
+                {
+                    sb.AppendFormat(" Description: {0};", Quote(column.Description));
+                }
+                sb.AppendLine();
+            }
+        }
+        return sb.ToString();
+    }
+
+    public static string GetPromptQuestion(string question)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine("== User Question");
+        sb.AppendLine(question);
+        return sb.ToString();
+    }
+}

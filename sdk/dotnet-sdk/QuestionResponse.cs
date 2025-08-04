@@ -32,39 +32,21 @@ using Thrift.Processor;
 namespace QueryCat.Plugins.Sdk
 {
 
-  public partial class RowsList : TBase
+  public partial class QuestionResponse : TBase
   {
-    private bool _has_more;
 
-    public bool HasMore
-    {
-      get
-      {
-        return _has_more;
-      }
-      set
-      {
-        __isset.has_more = true;
-        this._has_more = value;
-      }
-    }
+    public string MessageId { get; set; } = string.Empty;
 
-    public List<global::QueryCat.Plugins.Sdk.VariantValue>? Values { get; set; }
+    public string Answer { get; set; } = string.Empty;
 
-
-    public Isset __isset;
-    public struct Isset
-    {
-      public bool has_more;
-    }
-
-    public RowsList()
+    public QuestionResponse()
     {
     }
 
-    public RowsList(List<global::QueryCat.Plugins.Sdk.VariantValue>? @values) : this()
+    public QuestionResponse(string message_id, string @answer) : this()
     {
-      this.Values = @values;
+      this.MessageId = message_id;
+      this.Answer = @answer;
     }
 
     public async global::System.Threading.Tasks.Task ReadAsync(TProtocol iprot, CancellationToken cancellationToken)
@@ -72,7 +54,8 @@ namespace QueryCat.Plugins.Sdk
       iprot.IncrementRecursionDepth();
       try
       {
-        bool isset_values = false;
+        bool isset_message_id = false;
+        bool isset_answer = false;
         TField field;
         await iprot.ReadStructBeginAsync(cancellationToken);
         while (true)
@@ -86,9 +69,10 @@ namespace QueryCat.Plugins.Sdk
           switch (field.ID)
           {
             case 1:
-              if (field.Type == TType.Bool)
+              if (field.Type == TType.String)
               {
-                HasMore = await iprot.ReadBoolAsync(cancellationToken);
+                MessageId = await iprot.ReadStringAsync(cancellationToken);
+                isset_message_id = true;
               }
               else
               {
@@ -96,21 +80,10 @@ namespace QueryCat.Plugins.Sdk
               }
               break;
             case 2:
-              if (field.Type == TType.List)
+              if (field.Type == TType.String)
               {
-                {
-                  var _list92 = await iprot.ReadListBeginAsync(cancellationToken);
-                  Values = new List<global::QueryCat.Plugins.Sdk.VariantValue>(_list92.Count);
-                  for(int _i93 = 0; _i93 < _list92.Count; ++_i93)
-                  {
-                    global::QueryCat.Plugins.Sdk.VariantValue _elem94;
-                    _elem94 = new global::QueryCat.Plugins.Sdk.VariantValue();
-                    await _elem94.ReadAsync(iprot, cancellationToken);
-                    Values.Add(_elem94);
-                  }
-                  await iprot.ReadListEndAsync(cancellationToken);
-                }
-                isset_values = true;
+                Answer = await iprot.ReadStringAsync(cancellationToken);
+                isset_answer = true;
               }
               else
               {
@@ -126,7 +99,11 @@ namespace QueryCat.Plugins.Sdk
         }
 
         await iprot.ReadStructEndAsync(cancellationToken);
-        if (!isset_values)
+        if (!isset_message_id)
+        {
+          throw new TProtocolException(TProtocolException.INVALID_DATA);
+        }
+        if (!isset_answer)
         {
           throw new TProtocolException(TProtocolException.INVALID_DATA);
         }
@@ -142,31 +119,26 @@ namespace QueryCat.Plugins.Sdk
       oprot.IncrementRecursionDepth();
       try
       {
-        var tmp95 = new TStruct("RowsList");
-        await oprot.WriteStructBeginAsync(tmp95, cancellationToken);
+        var tmp84 = new TStruct("QuestionResponse");
+        await oprot.WriteStructBeginAsync(tmp84, cancellationToken);
         #pragma warning disable IDE0017  // simplified init
-        var tmp96 = new TField();
-        if(__isset.has_more)
+        var tmp85 = new TField();
+        if((MessageId != null))
         {
-          tmp96.Name = "has_more";
-          tmp96.Type = TType.Bool;
-          tmp96.ID = 1;
-          await oprot.WriteFieldBeginAsync(tmp96, cancellationToken);
-          await oprot.WriteBoolAsync(HasMore, cancellationToken);
+          tmp85.Name = "message_id";
+          tmp85.Type = TType.String;
+          tmp85.ID = 1;
+          await oprot.WriteFieldBeginAsync(tmp85, cancellationToken);
+          await oprot.WriteStringAsync(MessageId, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
-        if((Values != null))
+        if((Answer != null))
         {
-          tmp96.Name = "values";
-          tmp96.Type = TType.List;
-          tmp96.ID = 2;
-          await oprot.WriteFieldBeginAsync(tmp96, cancellationToken);
-          await oprot.WriteListBeginAsync(new TList(TType.Struct, Values.Count), cancellationToken);
-          foreach (global::QueryCat.Plugins.Sdk.VariantValue _iter97 in Values)
-          {
-            await _iter97.WriteAsync(oprot, cancellationToken);
-          }
-          await oprot.WriteListEndAsync(cancellationToken);
+          tmp85.Name = "answer";
+          tmp85.Type = TType.String;
+          tmp85.ID = 2;
+          await oprot.WriteFieldBeginAsync(tmp85, cancellationToken);
+          await oprot.WriteStringAsync(Answer, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         #pragma warning restore IDE0017  // simplified init
@@ -181,22 +153,22 @@ namespace QueryCat.Plugins.Sdk
 
     public override bool Equals(object? that)
     {
-      if (that is not RowsList other) return false;
+      if (that is not QuestionResponse other) return false;
       if (ReferenceEquals(this, other)) return true;
-      return ((__isset.has_more == other.__isset.has_more) && ((!__isset.has_more) || (global::System.Object.Equals(HasMore, other.HasMore))))
-        && TCollections.Equals(Values, other.Values);
+      return global::System.Object.Equals(MessageId, other.MessageId)
+        && global::System.Object.Equals(Answer, other.Answer);
     }
 
     public override int GetHashCode() {
       int hashcode = 157;
       unchecked {
-        if(__isset.has_more)
+        if((MessageId != null))
         {
-          hashcode = (hashcode * 397) + HasMore.GetHashCode();
+          hashcode = (hashcode * 397) + MessageId.GetHashCode();
         }
-        if((Values != null))
+        if((Answer != null))
         {
-          hashcode = (hashcode * 397) + TCollections.GetHashCode(Values);
+          hashcode = (hashcode * 397) + Answer.GetHashCode();
         }
       }
       return hashcode;
@@ -204,22 +176,19 @@ namespace QueryCat.Plugins.Sdk
 
     public override string ToString()
     {
-      var tmp98 = new StringBuilder("RowsList(");
-      int tmp99 = 0;
-      if(__isset.has_more)
+      var tmp86 = new StringBuilder("QuestionResponse(");
+      if((MessageId != null))
       {
-        if(0 < tmp99++) { tmp98.Append(", "); }
-        tmp98.Append("HasMore: ");
-        HasMore.ToString(tmp98);
+        tmp86.Append(", MessageId: ");
+        MessageId.ToString(tmp86);
       }
-      if((Values != null))
+      if((Answer != null))
       {
-        if(0 < tmp99) { tmp98.Append(", "); }
-        tmp98.Append("Values: ");
-        Values.ToString(tmp98);
+        tmp86.Append(", Answer: ");
+        Answer.ToString(tmp86);
       }
-      tmp98.Append(')');
-      return tmp98.ToString();
+      tmp86.Append(')');
+      return tmp86.ToString();
     }
   }
 
