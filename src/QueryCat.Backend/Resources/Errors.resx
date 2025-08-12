@@ -205,6 +205,6 @@
     <value>Invalid agent response: {0}</value>
   </data>
   <data name="AnswerAgentNotFound" xml:space="preserve">
-    <value>Answer agent not found.</value>
+    <value>Answer agent not found. Define or set '{0}' variable to object of type '{1}'.</value>
   </data>
 </root>

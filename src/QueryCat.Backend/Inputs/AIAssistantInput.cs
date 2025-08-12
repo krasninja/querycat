@@ -10,7 +10,7 @@ using QueryCat.Backend.Storage;
 namespace QueryCat.Backend.Inputs;
 
 // ReSharper disable once InconsistentNaming
-internal sealed class AIAssistantInput : IRowsInput
+internal sealed class AIAssistantInput : IRowsInput, IRowsIteratorParent
 {
     // ReSharper disable once InconsistentNaming
     public const string DefaultAIAgentVariableName = "_ANSWER_AGENT";
@@ -83,7 +83,8 @@ internal sealed class AIAssistantInput : IRowsInput
 
         if (answerAgent == null)
         {
-            throw new QueryCatException(Resources.Errors.AnswerAgentNotFound);
+            throw new QueryCatException(
+                string.Format(Resources.Errors.AnswerAgentNotFound, DefaultAIAgentVariableName, nameof(IAnswerAgent)));
         }
 
         var aiInput = new AIAssistantInput(AIAssistant.Default, answerAgent, question, thread, inputs.ToArray());
@@ -164,6 +165,15 @@ internal sealed class AIAssistantInput : IRowsInput
     /// <inheritdoc />
     public ValueTask<bool> ReadNextAsync(CancellationToken cancellationToken = default)
         => _rowsIterator.MoveNextAsync(cancellationToken);
+
+    /// <inheritdoc />
+    public IEnumerable<IRowsSchema> GetChildren()
+    {
+        foreach (var input in _inputs)
+        {
+            yield return input.Value;
+        }
+    }
 
     /// <inheritdoc />
     public void Explain(IndentedStringBuilder stringBuilder)
