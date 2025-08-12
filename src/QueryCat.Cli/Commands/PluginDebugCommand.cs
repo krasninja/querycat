@@ -38,6 +38,7 @@ internal class PluginDebugCommand : BaseQueryCommand
             var applicationOptions = GetApplicationOptions(parseResult);
             var query = parseResult.GetValue(QueryArgument);
             var variables = parseResult.GetValue(VariablesOption);
+            var inputs = parseResult.GetValue(InputsOption);
             var files = parseResult.GetValue(FilesOption);
             var follow = parseResult.GetValue(followOption);
 
@@ -80,7 +81,8 @@ internal class PluginDebugCommand : BaseQueryCommand
 
             _logger.LogInformation("Waiting for connections.");
             await thread.PluginsManager.PluginsLoader.LoadAsync(new PluginsLoadingOptions(), cts.Token);
-            AddVariables(thread, variables);
+            await AddVariablesAsync(thread, variables, cancellationToken);
+            await AddInputsAsync(thread, inputs, cancellationToken);
             var output = new PagingOutput(tableOutput, cancellationTokenSource: cts);
             await RunQueryAsync(thread, output, query, files, cts.Token);
         });

@@ -1,3 +1,5 @@
+using System.Text;
+
 namespace QueryCat.Backend.Core.Execution;
 
 /// <summary>
@@ -29,5 +31,21 @@ public class QuestionMessage
     {
         Content = content;
         Role = role ?? RoleUser;
+    }
+
+    /// <summary>
+    /// Merge content of several messages.
+    /// </summary>
+    /// <param name="messages">Messages to merge.</param>
+    /// <returns>Instance of <see cref="QuestionMessage" />.</returns>
+    public QuestionMessage Merge(params IReadOnlyList<QuestionMessage> messages)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine(Content);
+        foreach (var message in messages)
+        {
+            sb.AppendLine(message.Content);
+        }
+        return new QuestionMessage(sb.ToString(), Role);
     }
 }

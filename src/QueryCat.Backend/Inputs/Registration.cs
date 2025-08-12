@@ -6,6 +6,7 @@ internal static class Registration
 {
     public static void RegisterFunctions(IFunctionsManager functionsManager)
     {
+        functionsManager.RegisterFunction(AIAssistantInput.AIInput);
         functionsManager.RegisterFunction(BufferRowsInput.BufferInput);
         functionsManager.RegisterFunction(BufferRowsOutput.BufferOutput);
         functionsManager.RegisterFunction(DelayRowsInput.DelayInput);

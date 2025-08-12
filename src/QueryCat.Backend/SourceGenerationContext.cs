@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using QueryCat.Backend.Execution;
+using QueryCat.Backend.Inputs;
 
 namespace QueryCat.Backend;
 

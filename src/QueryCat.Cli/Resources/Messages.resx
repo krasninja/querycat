@@ -193,4 +193,7 @@
   <data name="QueryCommand_SkipIfNoColumnsDescription" xml:space="preserve">
     <value>Skip read if columns cannot be detected.</value>
   </data>
+  <data name="QueryCommand_InputsDescription" xml:space="preserve">
+    <value>Pass inputs.</value>
+  </data>
 </root>

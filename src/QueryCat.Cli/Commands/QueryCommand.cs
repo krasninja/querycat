@@ -96,6 +96,7 @@ internal class QueryCommand : BaseQueryCommand
             var applicationOptions = GetApplicationOptions(parseResult);
             var query = parseResult.GetValue(QueryArgument);
             var variables = parseResult.GetValue(VariablesOption);
+            var inputs = parseResult.GetValue(InputsOption);
             var files = parseResult.GetValue(FilesOption);
 
             applicationOptions.InitializeLogger();
@@ -131,7 +132,8 @@ internal class QueryCommand : BaseQueryCommand
             {
                 PagingRowsCount = parseResult.GetValue(pageSizeOption),
             };
-            AddVariables(root.Thread, variables);
+            await AddVariablesAsync(root.Thread, variables, cts.Token);
+            await AddInputsAsync(root.Thread, inputs, cts.Token);
             await RunQueryAsync(root.Thread, root.RowsOutput, query, files, cts.Token);
 
             if (parseResult.GetValue(statisticOption) || parseResult.GetValue(detailedStatisticOption))

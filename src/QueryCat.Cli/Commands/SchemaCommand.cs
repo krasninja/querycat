@@ -18,6 +18,7 @@ internal class SchemaCommand : BaseQueryCommand
             var applicationOptions = GetApplicationOptions(parseResult);
             var query = parseResult.GetValue(QueryArgument);
             var variables = parseResult.GetValue(VariablesOption);
+            var inputs = parseResult.GetValue(InputsOption);
             var files = parseResult.GetValue(FilesOption);
 
             applicationOptions.InitializeLogger();
@@ -41,7 +42,8 @@ internal class SchemaCommand : BaseQueryCommand
                     args.ContinueExecution = false;
                 }
             };
-            AddVariables(thread, variables);
+            await AddVariablesAsync(thread, variables, cancellationToken);
+            await AddInputsAsync(thread, inputs, cancellationToken);
             await RunQueryAsync(thread, rowsOutput, query, files, cancellationToken);
         });
     }

@@ -15,6 +15,7 @@ internal class ExplainCommand : BaseQueryCommand
             var applicationOptions = GetApplicationOptions(parseResult);
             var query = parseResult.GetValue(QueryArgument);
             var variables = parseResult.GetValue(VariablesOption);
+            var inputs = parseResult.GetValue(InputsOption);
             var files = parseResult.GetValue(FilesOption);
 
             applicationOptions.InitializeLogger();
@@ -34,7 +35,8 @@ internal class ExplainCommand : BaseQueryCommand
                     args.ContinueExecution = false;
                 }
             };
-            AddVariables(root.Thread, variables);
+            await AddVariablesAsync(root.Thread, variables, cancellationToken);
+            await AddInputsAsync(root.Thread, inputs, cancellationToken);
             await RunQueryAsync(root.Thread, root.RowsOutput, query, files, cancellationToken);
         });
     }

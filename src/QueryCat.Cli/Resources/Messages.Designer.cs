@@ -380,5 +380,11 @@ namespace QueryCat.Cli.Resources {
                 return ResourceManager.GetString("QueryCommand_SkipIfNoColumnsDescription", resourceCulture);
             }
         }
+        
+        internal static string QueryCommand_InputsDescription {
+            get {
+                return ResourceManager.GetString("QueryCommand_InputsDescription", resourceCulture);
+            }
+        }
     }
 }

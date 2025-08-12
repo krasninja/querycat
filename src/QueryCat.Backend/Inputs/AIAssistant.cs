@@ -7,7 +7,7 @@ using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Core.Utils;
 
-namespace QueryCat.Backend.Execution;
+namespace QueryCat.Backend.Inputs;
 
 /// <summary>
 /// The class helps to execute natural language question query.
@@ -15,12 +15,10 @@ namespace QueryCat.Backend.Execution;
 // ReSharper disable once InconsistentNaming
 public class AIAssistant
 {
-    private const int MaxQueryFixAttempts = 3;
-
-    private readonly IExecutionThread _executionThread;
-    private readonly IAnswerAgent _answerAgent;
-
-    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(AIAssistant));
+    /// <summary>
+    /// Default instance of AI assistant.
+    /// </summary>
+    public static AIAssistant Default { get; set; } = new();
 
     public const string PromptPreamble =
         """
@@ -45,6 +43,49 @@ public class AIAssistant
 
         """;
 
+    private const int MaxQueryFixAttempts = 3;
+
+    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(AIAssistant));
+
+    /// <summary>
+    /// Ask question model.
+    /// </summary>
+    // ReSharper disable once InconsistentNaming
+    public class AskAIRequest
+    {
+        /// <summary>
+        /// Question text.
+        /// </summary>
+        public string Question { get; }
+
+        /// <summary>
+        /// Input to select data from.
+        /// </summary>
+        public IReadOnlyDictionary<string, IRowsInput> Inputs { get; }
+
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="question">Question text.</param>
+        /// <param name="inputs">Inputs.</param>
+        public AskAIRequest(string question, IReadOnlyDictionary<string, IRowsInput> inputs)
+        {
+            Question = question;
+            Inputs = inputs;
+        }
+
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="question">Question text.</param>
+        /// <param name="inputs">Inputs.</param>
+        public AskAIRequest(string question, params KeyValuePair<string, IRowsInput>[] inputs)
+        {
+            Question = question;
+            Inputs = inputs.ToDictionary(k => k.Key, v => v.Value);
+        }
+    }
+
     /// <summary>
     /// Model for AI agent serialization/deserialization.
     /// </summary>
@@ -61,33 +102,28 @@ public class AIAssistant
     }
 
     /// <summary>
-    /// Constructor.
-    /// </summary>
-    /// <param name="executionThread">Instance of <see cref="IExecutionThread{TOptions}" />.</param>
-    /// <param name="answerAgent">Instance of <see cref="IAnswerAgent" />.</param>
-    public AIAssistant(IExecutionThread executionThread, IAnswerAgent answerAgent)
-    {
-        _executionThread = executionThread;
-        _answerAgent = answerAgent;
-    }
-
-    /// <summary>
     /// Run question query for AI agent, generate SQL and execute it.
     /// </summary>
     /// <param name="request">AI request.</param>
+    /// <param name="answerAgent">Answer agent.</param>
+    /// <param name="thread">Execution token.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Instance of <see cref="IRowsIterator" />.</returns>
-    public async Task<IRowsIterator> RunQueryAsync(AskAIRequest request, CancellationToken cancellationToken = default)
+    public async Task<IRowsIterator> RunQueryAsync(
+        AskAIRequest request,
+        IAnswerAgent answerAgent,
+        IExecutionThread thread,
+        CancellationToken cancellationToken = default)
     {
-        var inputs = await ResolveInputsAsync(request.Inputs, cancellationToken);
+        var inputs = request.Inputs;
 
         // Ask AI.
         try
         {
-            var iterator = await AiPromptingLoopAsync(request.Question, inputs, cancellationToken);
+            var iterator = await AiPromptingLoopAsync(request.Question, inputs, answerAgent, thread, cancellationToken);
             if (iterator == null)
             {
-                throw new QueryCatException("Cannot process query.");
+                throw new QueryCatException(Resources.Errors.CannotCreateIterator);
             }
             return iterator;
         }
@@ -95,21 +131,6 @@ public class AIAssistant
         {
             await CloseInputsAsync(inputs, cancellationToken);
         }
-    }
-
-    private async Task<IReadOnlyDictionary<string, IRowsInput>> ResolveInputsAsync(
-        IReadOnlyDictionary<string, string> rawInputs,
-        CancellationToken cancellationToken)
-    {
-        var inputs = new Dictionary<string, IRowsInput>();
-        foreach (var requestInput in rawInputs)
-        {
-            var inputResolveQuery = string.Concat(Application.CommandOpen, " ", requestInput.Value);
-            var inputValue = await _executionThread.RunAsync(inputResolveQuery, cancellationToken: cancellationToken);
-            var input = inputValue.AsRequired<IRowsInput>();
-            inputs[requestInput.Key] = input;
-        }
-        return inputs;
     }
 
     private async Task CloseInputsAsync(
@@ -125,6 +146,8 @@ public class AIAssistant
     private async Task<IRowsIterator?> AiPromptingLoopAsync(
         string question,
         IReadOnlyDictionary<string, IRowsInput> inputs,
+        IAnswerAgent answerAgent,
+        IExecutionThread thread,
         CancellationToken cancellationToken)
     {
         var canProceedQuery = false;
@@ -133,10 +156,10 @@ public class AIAssistant
         while (!canProceedQuery)
         {
             _logger.LogTrace("Prompt: {Prompt}.", currentAiRequest.Message);
-            var response = await _answerAgent.AskAsync(currentAiRequest, cancellationToken);
+            var response = await answerAgent.AskAsync(currentAiRequest, cancellationToken);
             if (_logger.IsEnabled(LogLevel.Trace))
             {
-                _logger.LogTrace("Resolver response. {ResolverResponse}", response.ToString());
+                _logger.LogTrace("Resolver response: {Response}", response.ToString());
             }
             var model = ConvertAnswerToSql(response.Answer);
             canProceedQuery = model.IsSuccess;
@@ -145,7 +168,7 @@ public class AIAssistant
                 var userResponse = await ClarifyAsync(model.Refusal, cancellationToken);
                 if (string.IsNullOrEmpty(userResponse))
                 {
-                    throw new QueryCatException("No response provided.");
+                    throw new QueryCatException(string.Format(Resources.Errors.AnswerAgentIssue, model.Refusal));
                 }
                 currentAiRequest = new QuestionRequest(userResponse);
                 continue;
@@ -154,7 +177,8 @@ public class AIAssistant
             VariantValue result;
             try
             {
-                result = await _executionThread.RunAsync(
+                _logger.LogDebug("SQL to execute {SQL}.", model.Query);
+                result = await thread.RunAsync(
                     model.Query,
                     inputs.ToDictionary(k => k.Key, v => VariantValue.CreateFromObject(v.Value)),
                     cancellationToken);
@@ -163,10 +187,11 @@ public class AIAssistant
             {
                 queryAttempts++;
                 canProceedQuery = false;
-                _logger.LogDebug("Query Attempt {AttemptCount}, Exception: {Error}", queryAttempts, e.Message);
+                _logger.LogDebug("Query attempt {AttemptCount}, Exception: {Error}", queryAttempts, e.Message);
                 if (queryAttempts >= MaxQueryFixAttempts)
                 {
-                    throw new QueryCatException("Cannot process query.", e);
+                    throw new QueryCatException(
+                        string.Format(Resources.Errors.CannotProcessMaxAttempts, queryAttempts));
                 }
                 currentAiRequest = new QuestionRequest(e.Message);
                 continue;
@@ -200,7 +225,7 @@ public class AIAssistant
             || startOfJson < 0
             || endOfJson < 0)
         {
-            throw new InvalidOperationException("Cannot process query.");
+            throw new InvalidOperationException(string.Format(Resources.Errors.InvalidAgentResponse, answer));
         }
         var json = answer.Substring(startOfJson, endOfJson - startOfJson + 1);
         var model = JsonSerializer.Deserialize(
@@ -208,11 +233,17 @@ public class AIAssistant
             SourceGenerationContext.Default.PromptResponseModel);
         if (model == null)
         {
-            throw new InvalidOperationException("Invalid response: " + json);
+            throw new InvalidOperationException(string.Format(Resources.Errors.InvalidAgentResponse, answer));
         }
         return model;
     }
 
+    /// <summary>
+    /// Asks user to clarify input to help AI assistant to generate SQL.
+    /// </summary>
+    /// <param name="issue">Issue text.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Answer for assistant.</returns>
     protected virtual Task<string> ClarifyAsync(string issue, CancellationToken cancellationToken)
     {
         // By default, provide no feedback that means query is failed.
@@ -260,6 +291,11 @@ public class AIAssistant
         return sb.ToString();
     }
 
+    /// <summary>
+    /// Get string for prompt with user question.
+    /// </summary>
+    /// <param name="question">User question.</param>
+    /// <returns>Prompt lines.</returns>
     public static string GetPromptQuestion(string question)
     {
         var sb = new StringBuilder();

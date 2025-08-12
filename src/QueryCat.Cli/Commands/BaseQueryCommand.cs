@@ -6,6 +6,8 @@ using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Core.Utils;
 using QueryCat.Backend.Functions;
+using QueryCat.Backend.Inputs;
+using QueryCat.Backend.Storage;
 
 namespace QueryCat.Cli.Commands;
 
@@ -17,7 +19,7 @@ internal abstract class BaseQueryCommand : BaseCommand
         DefaultValueFactory = _ => string.Empty,
     };
 
-    protected Option<string[]> FilesOption { get; } = new("-f", "--files")
+    protected Option<string[]> FilesOption { get; } = new("--file", "-f")
     {
         Description = Resources.Messages.QueryCommand_FilesDescription,
         AllowMultipleArgumentsPerToken = true,
@@ -28,12 +30,19 @@ internal abstract class BaseQueryCommand : BaseCommand
         Description = Resources.Messages.QueryCommand_VariablesDescription,
     };
 
+    protected Option<string[]> InputsOption { get; } = new("--input", "-i")
+    {
+        Description = Resources.Messages.QueryCommand_InputsDescription,
+        AllowMultipleArgumentsPerToken = true,
+    };
+
     /// <inheritdoc />
     protected BaseQueryCommand(string name, string? description = null) : base(name, description)
     {
         Add(QueryArgument);
         Add(FilesOption);
         Add(VariablesOption);
+        Add(InputsOption);
     }
 
     internal static async Task RunQueryAsync(
@@ -65,6 +74,7 @@ internal abstract class BaseQueryCommand : BaseCommand
         string query,
         CancellationToken cancellationToken)
     {
+        // ReSharper disable once RedundantAssignment
         var result = VariantValue.Null;
 #if ENABLE_PLUGINS && PLUGIN_THRIFT
         try
@@ -86,11 +96,12 @@ internal abstract class BaseQueryCommand : BaseCommand
         await WriteAsync(executionThread, result, rowsOutput, cancellationToken);
     }
 
-    internal static void AddVariables(IExecutionThread executionThread, string[]? variables = null)
+    internal static Task AddVariablesAsync(IExecutionThread executionThread, string[]? variables = null,
+        CancellationToken cancellationToken = default)
     {
         if (variables == null || !variables.Any())
         {
-            return;
+            return Task.CompletedTask;
         }
 
         foreach (var variable in variables)
@@ -110,6 +121,26 @@ internal abstract class BaseQueryCommand : BaseCommand
                 throw new QueryCatException(string.Format(Resources.Errors.CannotDefineVariable, name));
             }
             executionThread.TopScope.Variables[name] = value.Cast(targetType);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    internal static async Task AddInputsAsync(IExecutionThread executionThread, string[]? inputs = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (inputs == null || !inputs.Any())
+        {
+            return;
+        }
+
+        foreach (var input in inputs)
+        {
+            var rowsInputPair = await RowsInputConverter.ResolveInputAsync(executionThread, input, cancellationToken);
+            if (rowsInputPair.Value != null)
+            {
+                executionThread.TopScope.Variables[rowsInputPair.Key] = VariantValue.CreateFromObject(rowsInputPair.Value);
+            }
         }
     }
 }

@@ -21,7 +21,7 @@ internal class ServeCommand : BaseCommand
         {
             Description = Resources.Messages.ServeCommand_PasswordDescription,
         };
-        var rootDirectoryOption = new Option<string>("-r", "--root-dir")
+        var rootDirectoryOption = new Option<string>("--root-dir", "-r")
         {
             Description = Resources.Messages.ServeCommand_RootDirectoryDescription,
         };
