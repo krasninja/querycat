@@ -367,21 +367,6 @@ public partial class ThriftPluginsServer
             return Task.FromResult(statistic);
         }
 
-        /// <inheritdoc />
-        public async Task<QuestionResponse> AnswerAgent_AskAsync(long token, int object_answer_agent, QuestionRequest? request, CancellationToken cancellationToken = default)
-        {
-            _thriftPluginsServer.VerifyToken(token);
-            var pluginContext = _thriftPluginsServer.GetPluginContextByToken(token);
-            if (pluginContext.ObjectsStorage.TryGet<IAnswerAgent>(object_answer_agent, out var answerAgent)
-                && answerAgent != null
-                && request != null)
-            {
-                var result = await answerAgent.AskAsync(SdkConvert.Convert(request), cancellationToken);
-                return SdkConvert.Convert(result);
-            }
-            throw new QueryCatException(Resources.Errors.InvalidBlobHandle);
-        }
-
         private Microsoft.Extensions.Logging.LogLevel GetCurrentLogLevel()
         {
             foreach (var logLevel in Enum.GetValues<Microsoft.Extensions.Logging.LogLevel>())
@@ -656,20 +641,6 @@ public partial class ThriftPluginsServer
             try
             {
                 return await _handler.GetStatisticAsync(token, cancellationToken);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, Resources.Errors.HandlerInternalError);
-                throw QueryCatPluginExceptionUtils.Create(ex);
-            }
-        }
-
-        /// <inheritdoc />
-        public async Task<QuestionResponse> AnswerAgent_AskAsync(long token, int object_answer_agent, QuestionRequest? request, CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                return await _handler.AnswerAgent_AskAsync(token, object_answer_agent, request, cancellationToken);
             }
             catch (Exception ex)
             {

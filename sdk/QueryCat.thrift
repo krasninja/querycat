@@ -222,8 +222,8 @@ struct QuestionMessage {
 }
 
 struct QuestionResponse {
-  1: required string message_id,
-  2: required string answer
+  1: required string answer,
+  2: required string message_id
 }
 
 service PluginsManager {
@@ -344,14 +344,7 @@ service PluginsManager {
   // Get query execution statistic.
   Statistic GetStatistic(
     1: required i64 token // Authorization token.
-  ) throws (1: QueryCatPluginException e),
-
-  // Get an answer from agent based on question.
-  QuestionResponse AnswerAgent_Ask(
-    1: required i64 token, // Authorization token.
-    2: required Handle object_answer_agent,
-    3: required QuestionRequest request
-  ) throws (1: QueryCatPluginException e),
+  ) throws (1: QueryCatPluginException e)
 }
 
 /*
@@ -554,4 +547,10 @@ service Plugin {
   // The method is called to ask client to start new server so QueryCat host can make additional connection.
   string Serve(
   ) throws (1: QueryCatPluginException e),
+
+  // Get an answer from agent based on question.
+  QuestionResponse AnswerAgent_Ask(
+    1: required Handle object_answer_agent_handle,
+    2: required QuestionRequest request
+  ) throws (1: QueryCatPluginException e)
 }

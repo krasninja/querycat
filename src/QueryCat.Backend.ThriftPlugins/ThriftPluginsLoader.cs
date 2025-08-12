@@ -653,6 +653,10 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
         {
             return new ThriftRemoteRowsFormatter(context, result.Object.Handle);
         }
+        if (result.Object.Type == ObjectType.ANSWER_AGENT)
+        {
+            return new ThriftRemoteAnswerAgent(context, result.Object.Handle);
+        }
         throw new PluginException(string.Format(Resources.Errors.CannotCreateObject, result.Object.Type));
     }
 

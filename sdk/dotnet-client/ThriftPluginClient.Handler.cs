@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Plugins.Sdk;
@@ -16,6 +17,8 @@ using CursorSeekOrigin = QueryCat.Plugins.Sdk.CursorSeekOrigin;
 using DataType = QueryCat.Backend.Core.Types.DataType;
 using KeyColumn = QueryCat.Plugins.Sdk.KeyColumn;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
+using QuestionRequest = QueryCat.Plugins.Sdk.QuestionRequest;
+using QuestionResponse = QueryCat.Plugins.Sdk.QuestionResponse;
 using VariantValue = QueryCat.Plugins.Sdk.VariantValue;
 
 namespace QueryCat.Plugins.Client;
@@ -54,7 +57,7 @@ public partial class ThriftPluginClient
                 cancellationToken);
             frame.Dispose();
             var resultType = result.Type;
-            if (resultType == DataType.Object)
+            if (resultType == DataType.Object || resultType == DataType.Dynamic)
             {
                 if (result.AsObject is IRowsIterator rowsIterator)
                 {
@@ -100,6 +103,16 @@ public partial class ThriftPluginClient
                     return new VariantValue
                     {
                         Object = new ObjectValue(ObjectType.ROWS_FORMATTER, index, rowsFormatter.ToString() ?? string.Empty),
+                    };
+                }
+                else if (result.AsObject is IAnswerAgent answerAgent)
+                {
+                    var index =_thriftPluginClient._objectsStorage.Add(answerAgent);
+                    _thriftPluginClient._logger.LogDebug("Added new answer agent object '{Object}' with handle {Handle}.",
+                        answerAgent.ToString(), index);
+                    return new VariantValue
+                    {
+                        Object = new ObjectValue(ObjectType.ANSWER_AGENT, index, answerAgent.ToString() ?? string.Empty),
                     };
                 }
                 throw new QueryCatPluginException(
@@ -545,6 +558,22 @@ public partial class ThriftPluginClient
             return Task.FromResult(uri.ToString());
         }
 
+        /// <inheritdoc />
+        public async Task<QuestionResponse> AnswerAgent_AskAsync(int object_answer_agent_handle, QuestionRequest? request,
+            CancellationToken cancellationToken = default)
+        {
+            if (request != null
+                && _thriftPluginClient._objectsStorage.TryGet<IAnswerAgent>(object_answer_agent_handle, out var answerAgent)
+                && answerAgent != null)
+            {
+                var response = await answerAgent.AskAsync(SdkConvert.Convert(request), cancellationToken);
+                return SdkConvert.Convert(response);
+            }
+            throw new QueryCatPluginException(
+                ErrorType.INVALID_OBJECT,
+                string.Format(Resources.Errors.Object_InvalidType, typeof(IAnswerAgent)));
+        }
+
         [LoggerMessage(LogLevel.Warning, "Cannot find object with handle {ObjectHandle}.")]
         private partial void LogCannotFindObject(int objectHandle);
     }
@@ -956,6 +985,22 @@ public partial class ThriftPluginClient
             try
             {
                 return await _handler.ServeAsync(cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, Resources.Errors.HandlerInternalError);
+                throw QueryCatPluginExceptionUtils.Create(ex);
+            }
+        }
+
+        /// <inheritdoc />
+        public async Task<QuestionResponse> AnswerAgent_AskAsync(int object_answer_agent_handle, QuestionRequest? request,
+            CancellationToken cancellationToken = default)
+        {
+            LogCallMethod(nameof(AnswerAgent_AskAsync));
+            try
+            {
+                return await _handler.AnswerAgent_AskAsync(object_answer_agent_handle, request, cancellationToken);
             }
             catch (Exception ex)
             {

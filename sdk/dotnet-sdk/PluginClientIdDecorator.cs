@@ -140,5 +140,10 @@ public sealed class PluginClientIdDecorator : Plugin.IAsync
         => _client.ServeAsync(cancellationToken);
 
     /// <inheritdoc />
+    public Task<QuestionResponse> AnswerAgent_AskAsync(int object_answer_agent_handle, QuestionRequest? request,
+        CancellationToken cancellationToken = default)
+        => _client.AnswerAgent_AskAsync(object_answer_agent_handle, request, cancellationToken);
+
+    /// <inheritdoc />
     public override string ToString() => $"ClientId = {_id}";
 }

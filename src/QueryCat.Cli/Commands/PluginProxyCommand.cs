@@ -19,6 +19,7 @@ internal class PluginProxyCommand : BaseCommand
             var applicationOptions = GetApplicationOptions(parseResult);
 
             applicationOptions.InitializeLogger();
+            applicationOptions.InitializeAIAssistant();
             Console.WriteLine(Resources.Messages.PluginProxyDownload, PluginProxyDownloader.GetLinkToPluginsProxyFile());
 
             var downloader = new PluginProxyDownloader(ProxyFile.GetProxyFileName());

@@ -211,6 +211,14 @@ public sealed partial class PluginClientLogDecorator : Plugin.IAsync
         return _client.ServeAsync(cancellationToken);
     }
 
+    /// <inheritdoc />
+    public Task<QuestionResponse> AnswerAgent_AskAsync(int object_answer_agent_handle, QuestionRequest? request,
+        CancellationToken cancellationToken = default)
+    {
+        LogStartMethodCall(nameof(AnswerAgent_AskAsync));
+        return _client.AnswerAgent_AskAsync(object_answer_agent_handle, request, cancellationToken);
+    }
+
     [LoggerMessage(Microsoft.Extensions.Logging.LogLevel.Trace, "Start call remote method '{MethodName}'.")]
     private partial void LogStartMethodCall(string methodName);
 

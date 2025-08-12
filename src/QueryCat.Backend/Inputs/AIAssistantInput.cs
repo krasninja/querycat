@@ -17,7 +17,7 @@ internal sealed class AIAssistantInput : IRowsInput
 
     [SafeFunction]
     [Description("Uses AI to convert question into SQL and run the query.")]
-    [FunctionSignature("ai_input(question: string, ...source: any[]): object<IRowsInput>")]
+    [FunctionSignature("ai_input(question: string, ...source?: any[]): object<IRowsInput>")]
     // ReSharper disable once InconsistentNaming
     public static async ValueTask<VariantValue> AIInput(IExecutionThread thread, CancellationToken cancellationToken)
     {
@@ -65,7 +65,7 @@ internal sealed class AIAssistantInput : IRowsInput
                 {
                     continue;
                 }
-                inputs.Add(new KeyValuePair<string, IRowsInput>(rowsInputNamePair.Key, rowsInputNamePair.Value));
+                inputs.Add(new KeyValuePair<string, IRowsInput>(variable.Key, rowsInputNamePair.Value));
             }
         }
 

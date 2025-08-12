@@ -43,6 +43,7 @@ internal class PluginDebugCommand : BaseQueryCommand
             var follow = parseResult.GetValue(followOption);
 
             applicationOptions.InitializeLogger();
+            applicationOptions.InitializeAIAssistant();
             var tableOutput = new Backend.Formatters.TextTableOutput(
                 stream: Stdio.GetConsoleOutput());
             var options = new AppExecutionOptions

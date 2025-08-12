@@ -23,6 +23,7 @@ internal class PluginListCommand : BaseCommand
             var listAll = parseResult.GetValue(listAllArgument);
 
             applicationOptions.InitializeLogger();
+            applicationOptions.InitializeAIAssistant();
             await using var root = await applicationOptions.CreateStdoutApplicationRootAsync(
                 columnsSeparator: parseResult.GetValue(ColumnsSeparatorOption),
                 outputStyle: parseResult.GetValue(OutputStyleOption)

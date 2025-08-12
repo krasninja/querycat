@@ -4,6 +4,7 @@ using QueryCat.Backend.Addons.Formatters;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Plugins;
 using QueryCat.Backend.Execution;
+using QueryCat.Backend.Inputs;
 using QueryCat.Backend.PluginsManager;
 using QueryCat.Cli.Infrastructure;
 
@@ -180,5 +181,14 @@ internal sealed class ApplicationOptions
             {
                 MinLevel = LogLevel,
             });
+    }
+
+    /// <summary>
+    /// Initialize default AI assistant instance.
+    /// </summary>
+    // ReSharper disable once InconsistentNaming
+    public void InitializeAIAssistant()
+    {
+        AIAssistant.Default = new ConsoleAIAssistant();
     }
 }

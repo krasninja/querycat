@@ -100,6 +100,7 @@ internal class QueryCommand : BaseQueryCommand
             var files = parseResult.GetValue(FilesOption);
 
             applicationOptions.InitializeLogger();
+            applicationOptions.InitializeAIAssistant();
             var tableOutput = new TextTableOutput(
                 stream: Stdio.GetConsoleOutput(),
                 hasHeader: !parseResult.GetValue(noHeaderOption),

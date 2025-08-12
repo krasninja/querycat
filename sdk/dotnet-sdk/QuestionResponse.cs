@@ -35,18 +35,18 @@ namespace QueryCat.Plugins.Sdk
   public partial class QuestionResponse : TBase
   {
 
-    public string MessageId { get; set; } = string.Empty;
-
     public string Answer { get; set; } = string.Empty;
+
+    public string MessageId { get; set; } = string.Empty;
 
     public QuestionResponse()
     {
     }
 
-    public QuestionResponse(string message_id, string @answer) : this()
+    public QuestionResponse(string @answer, string message_id) : this()
     {
-      this.MessageId = message_id;
       this.Answer = @answer;
+      this.MessageId = message_id;
     }
 
     public async global::System.Threading.Tasks.Task ReadAsync(TProtocol iprot, CancellationToken cancellationToken)
@@ -54,8 +54,8 @@ namespace QueryCat.Plugins.Sdk
       iprot.IncrementRecursionDepth();
       try
       {
-        bool isset_message_id = false;
         bool isset_answer = false;
+        bool isset_message_id = false;
         TField field;
         await iprot.ReadStructBeginAsync(cancellationToken);
         while (true)
@@ -71,8 +71,8 @@ namespace QueryCat.Plugins.Sdk
             case 1:
               if (field.Type == TType.String)
               {
-                MessageId = await iprot.ReadStringAsync(cancellationToken);
-                isset_message_id = true;
+                Answer = await iprot.ReadStringAsync(cancellationToken);
+                isset_answer = true;
               }
               else
               {
@@ -82,8 +82,8 @@ namespace QueryCat.Plugins.Sdk
             case 2:
               if (field.Type == TType.String)
               {
-                Answer = await iprot.ReadStringAsync(cancellationToken);
-                isset_answer = true;
+                MessageId = await iprot.ReadStringAsync(cancellationToken);
+                isset_message_id = true;
               }
               else
               {
@@ -99,11 +99,11 @@ namespace QueryCat.Plugins.Sdk
         }
 
         await iprot.ReadStructEndAsync(cancellationToken);
-        if (!isset_message_id)
+        if (!isset_answer)
         {
           throw new TProtocolException(TProtocolException.INVALID_DATA);
         }
-        if (!isset_answer)
+        if (!isset_message_id)
         {
           throw new TProtocolException(TProtocolException.INVALID_DATA);
         }
@@ -123,22 +123,22 @@ namespace QueryCat.Plugins.Sdk
         await oprot.WriteStructBeginAsync(tmp84, cancellationToken);
         #pragma warning disable IDE0017  // simplified init
         var tmp85 = new TField();
-        if((MessageId != null))
-        {
-          tmp85.Name = "message_id";
-          tmp85.Type = TType.String;
-          tmp85.ID = 1;
-          await oprot.WriteFieldBeginAsync(tmp85, cancellationToken);
-          await oprot.WriteStringAsync(MessageId, cancellationToken);
-          await oprot.WriteFieldEndAsync(cancellationToken);
-        }
         if((Answer != null))
         {
           tmp85.Name = "answer";
           tmp85.Type = TType.String;
-          tmp85.ID = 2;
+          tmp85.ID = 1;
           await oprot.WriteFieldBeginAsync(tmp85, cancellationToken);
           await oprot.WriteStringAsync(Answer, cancellationToken);
+          await oprot.WriteFieldEndAsync(cancellationToken);
+        }
+        if((MessageId != null))
+        {
+          tmp85.Name = "message_id";
+          tmp85.Type = TType.String;
+          tmp85.ID = 2;
+          await oprot.WriteFieldBeginAsync(tmp85, cancellationToken);
+          await oprot.WriteStringAsync(MessageId, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         #pragma warning restore IDE0017  // simplified init
@@ -155,20 +155,20 @@ namespace QueryCat.Plugins.Sdk
     {
       if (that is not QuestionResponse other) return false;
       if (ReferenceEquals(this, other)) return true;
-      return global::System.Object.Equals(MessageId, other.MessageId)
-        && global::System.Object.Equals(Answer, other.Answer);
+      return global::System.Object.Equals(Answer, other.Answer)
+        && global::System.Object.Equals(MessageId, other.MessageId);
     }
 
     public override int GetHashCode() {
       int hashcode = 157;
       unchecked {
-        if((MessageId != null))
-        {
-          hashcode = (hashcode * 397) + MessageId.GetHashCode();
-        }
         if((Answer != null))
         {
           hashcode = (hashcode * 397) + Answer.GetHashCode();
+        }
+        if((MessageId != null))
+        {
+          hashcode = (hashcode * 397) + MessageId.GetHashCode();
         }
       }
       return hashcode;
@@ -177,15 +177,15 @@ namespace QueryCat.Plugins.Sdk
     public override string ToString()
     {
       var tmp86 = new StringBuilder("QuestionResponse(");
-      if((MessageId != null))
-      {
-        tmp86.Append(", MessageId: ");
-        MessageId.ToString(tmp86);
-      }
       if((Answer != null))
       {
         tmp86.Append(", Answer: ");
         Answer.ToString(tmp86);
+      }
+      if((MessageId != null))
+      {
+        tmp86.Append(", MessageId: ");
+        MessageId.ToString(tmp86);
       }
       tmp86.Append(')');
       return tmp86.ToString();

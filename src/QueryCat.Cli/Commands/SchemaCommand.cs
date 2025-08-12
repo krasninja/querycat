@@ -22,6 +22,7 @@ internal class SchemaCommand : BaseQueryCommand
             var files = parseResult.GetValue(FilesOption);
 
             applicationOptions.InitializeLogger();
+            applicationOptions.InitializeAIAssistant();
             await using var root = await applicationOptions.CreateStdoutApplicationRootAsync(
                 columnsSeparator: parseResult.GetValue(ColumnsSeparatorOption),
                 outputStyle: parseResult.GetValue(OutputStyleOption)

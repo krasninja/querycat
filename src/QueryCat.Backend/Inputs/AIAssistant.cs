@@ -101,6 +101,10 @@ public class AIAssistant
         public override string ToString() => $"Q: {Query}, R: {Refusal}";
     }
 
+    public AIAssistant()
+    {
+    }
+
     /// <summary>
     /// Run question query for AI agent, generate SQL and execute it.
     /// </summary>
@@ -177,7 +181,7 @@ public class AIAssistant
             VariantValue result;
             try
             {
-                _logger.LogDebug("SQL to execute {SQL}.", model.Query);
+                _logger.LogDebug("SQL to execute: {SQL}.", model.Query);
                 result = await thread.RunAsync(
                     model.Query,
                     inputs.ToDictionary(k => k.Key, v => VariantValue.CreateFromObject(v.Value)),
@@ -187,13 +191,13 @@ public class AIAssistant
             {
                 queryAttempts++;
                 canProceedQuery = false;
-                _logger.LogDebug("Query attempt {AttemptCount}, Exception: {Error}", queryAttempts, e.Message);
+                _logger.LogTrace("Query attempt {AttemptCount}, Exception: {Error}", queryAttempts, e.Message);
                 if (queryAttempts >= MaxQueryFixAttempts)
                 {
                     throw new QueryCatException(
                         string.Format(Resources.Errors.CannotProcessMaxAttempts, queryAttempts));
                 }
-                currentAiRequest = new QuestionRequest(e.Message);
+                currentAiRequest = new QuestionRequest(GetPromptIssue(e.Message));
                 continue;
             }
 
@@ -233,7 +237,7 @@ public class AIAssistant
             SourceGenerationContext.Default.PromptResponseModel);
         if (model == null)
         {
-            throw new InvalidOperationException(string.Format(Resources.Errors.InvalidAgentResponse, answer));
+            throw new InvalidOperationException(string.Format(Resources.Errors.InvalidAgentResponse, json));
         }
         return model;
     }
@@ -301,6 +305,21 @@ public class AIAssistant
         var sb = new StringBuilder();
         sb.AppendLine("== User Question");
         sb.AppendLine(question);
+        return sb.ToString();
+    }
+
+    /// <summary>
+    /// Get string for prompt with error.
+    /// </summary>
+    /// <param name="issue">Issue text.</param>
+    /// <returns>Prompt lines.</returns>
+    public static string GetPromptIssue(string issue)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine(PromptGuidelines);
+        sb.AppendLine("== Error");
+        sb.AppendLine("I was not able to run the generated SQL. Try to re-format the SQL. The error is below:");
+        sb.AppendLine(issue);
         return sb.ToString();
     }
 }

@@ -420,10 +420,13 @@ public static class SdkConvert
     }
 
     public static Sdk.ModelDescription Convert(Backend.Core.Data.IModelDescription model)
-        => new ModelDescription(model.Name, model.Description);
+        => new(model.Name, model.Description);
 
     public static Sdk.QuestionResponse Convert(Backend.Core.Execution.QuestionResponse target)
-        => new(target.MessageId, target.Answer);
+        => new(target.Answer, target.MessageId);
+
+    public static Backend.Core.Execution.QuestionResponse Convert(Sdk.QuestionResponse target)
+        => new(target.Answer, target.MessageId);
 
     public static Backend.Core.Execution.QuestionMessage Convert(Sdk.QuestionMessage target)
         => new(target.Content, target.Role);

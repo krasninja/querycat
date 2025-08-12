@@ -3,10 +3,8 @@ using System.CommandLine.Help;
 using System.CommandLine.Invocation;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
-using QueryCat.Backend.Inputs;
 using QueryCat.Backend.Parser;
 using QueryCat.Cli.Commands;
-using QueryCat.Cli.Infrastructure;
 
 namespace QueryCat.Cli;
 
@@ -76,7 +74,6 @@ internal sealed class Program
         });
 
         SetCustomHelpMessage(rootCommand);
-        AIAssistant.Default = new ConsoleAIAssistant();
 
         int returnCode;
         try

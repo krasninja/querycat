@@ -16,6 +16,7 @@ internal class AstCommand : BaseQueryCommand
             var files = parseResult.GetValue(FilesOption);
 
             applicationOptions.InitializeLogger();
+            applicationOptions.InitializeAIAssistant();
             var root = await applicationOptions.CreateApplicationRootAsync();
             root.Thread.StatementExecuting += async (_, threadArgs) =>
             {

@@ -60,6 +60,7 @@ internal class ServeCommand : BaseCommand
             var allowedIPsSlots = parseResult.GetValue(allowedIPsSlotsOption);
 
             applicationOptions.InitializeLogger();
+            applicationOptions.InitializeAIAssistant();
             await using var root = await applicationOptions.CreateApplicationRootAsync();
             root.Thread.Options.AddRowNumberColumn = true;
             root.Thread.Options.SafeMode = safeMode;
