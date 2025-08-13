@@ -84,4 +84,10 @@ public class ExecutionOptions
     /// Define the array of allowed commands to execute.
     /// </summary>
     public string[]? AllowedCommands { get; set; }
+
+    /// <summary>
+    /// Defines that query is written in natural language. Uses AI to convert the query into SQL.
+    /// </summary>
+    // ReSharper disable once InconsistentNaming
+    public bool AIMode { get; set; }
 }

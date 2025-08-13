@@ -12,9 +12,6 @@ namespace QueryCat.Backend.Inputs;
 // ReSharper disable once InconsistentNaming
 internal sealed class AIAssistantInput : IRowsInput, IRowsIteratorParent
 {
-    // ReSharper disable once InconsistentNaming
-    public const string DefaultAIAgentVariableName = "_ANSWER_AGENT";
-
     [SafeFunction]
     [Description("Uses AI to convert question into SQL and run the query.")]
     [FunctionSignature("ai_input(question: string, ...source?: any[]): object<IRowsInput>")]
@@ -55,36 +52,14 @@ internal sealed class AIAssistantInput : IRowsInput, IRowsIteratorParent
             }
         }
 
+        if (answerAgent == null)
+        {
+            answerAgent = AIAssistant.GetDefaultAnswerAgent(thread);
+        }
         // No inputs provided? Let's search within current variables.
         if (inputs.Count == 0)
         {
-            foreach (var variable in thread.TopScope.Variables)
-            {
-                var rowsInputNamePair = RowsInputConverter.Convert(variable.Value);
-                if (rowsInputNamePair.Value == null)
-                {
-                    continue;
-                }
-                inputs.Add(new KeyValuePair<string, IRowsInput>(variable.Key, rowsInputNamePair.Value));
-            }
-        }
-
-        // Resolve answer agent.
-        if (answerAgent == null)
-        {
-            var answerAgentValue = thread.GetVariable(DefaultAIAgentVariableName);
-            if (!answerAgentValue.IsNull
-                && answerAgentValue.Type == DataType.Object
-                && answerAgentValue.AsObjectUnsafe is IAnswerAgent agent)
-            {
-                answerAgent = agent;
-            }
-        }
-
-        if (answerAgent == null)
-        {
-            throw new QueryCatException(
-                string.Format(Resources.Errors.AnswerAgentNotFound, DefaultAIAgentVariableName, nameof(IAnswerAgent)));
+            inputs.AddRange(AIAssistant.GetInputs(thread));
         }
 
         var aiInput = new AIAssistantInput(AIAssistant.Default, answerAgent, question, thread, inputs.ToArray());

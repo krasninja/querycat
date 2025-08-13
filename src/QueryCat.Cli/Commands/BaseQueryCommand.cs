@@ -79,7 +79,7 @@ internal abstract class BaseQueryCommand : BaseCommand
 #if ENABLE_PLUGINS && PLUGIN_THRIFT
         try
         {
-            result = await executionThread.RunAsync(query, cancellationToken: cancellationToken);
+            result = await RunQueryAsync(executionThread, query, cancellationToken);
         }
         catch (Backend.ThriftPlugins.ProxyNotFoundException)
         {
@@ -90,10 +90,30 @@ internal abstract class BaseQueryCommand : BaseCommand
             }
         }
 #else
-        result = await executionThread.RunAsync(query, cancellationToken: cancellationToken);
+        result = await RunQueryAsync(executionThread, query, cancellationToken);
 #endif
 
         await WriteAsync(executionThread, result, rowsOutput, cancellationToken);
+    }
+
+    private static async Task<VariantValue> RunQueryAsync(
+        IExecutionThread<ExecutionOptions> executionThread,
+        string query,
+        CancellationToken cancellationToken = default)
+    {
+        if (executionThread.Options.AIMode)
+        {
+            var input = await AIAssistant.Default.RunQueryAsync(
+                new AIAssistant.AskAIRequest(query, AIAssistant.GetInputs(executionThread).ToArray()),
+                AIAssistant.GetDefaultAnswerAgent(executionThread),
+                executionThread,
+                cancellationToken: cancellationToken);
+            return VariantValue.CreateFromObject(input);
+        }
+        else
+        {
+            return await executionThread.RunAsync(query, cancellationToken: cancellationToken);
+        }
     }
 
     internal static Task AddVariablesAsync(IExecutionThread executionThread, string[]? variables = null,

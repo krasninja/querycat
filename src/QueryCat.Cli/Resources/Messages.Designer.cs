@@ -386,5 +386,11 @@ namespace QueryCat.Cli.Resources {
                 return ResourceManager.GetString("QueryCommand_InputsDescription", resourceCulture);
             }
         }
+        
+        internal static string QueryCommand_AIDescription {
+            get {
+                return ResourceManager.GetString("QueryCommand_AIDescription", resourceCulture);
+            }
+        }
     }
 }

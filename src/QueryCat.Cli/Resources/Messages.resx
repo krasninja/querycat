@@ -196,4 +196,7 @@
   <data name="QueryCommand_InputsDescription" xml:space="preserve">
     <value>Pass inputs.</value>
   </data>
+  <data name="QueryCommand_AIDescription" xml:space="preserve">
+    <value>Uses AI answer agent to convert natural language query to SQL.</value>
+  </data>
 </root>

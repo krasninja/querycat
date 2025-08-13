@@ -74,6 +74,10 @@ internal class QueryCommand : BaseQueryCommand
         {
             Description = Resources.Messages.QueryCommand_SafeModeDescription,
         };
+        var aiModeOption = new Option<bool>("--ai")
+        {
+            Description = Resources.Messages.QueryCommand_AIDescription,
+        };
 
         this.Add(maxErrorsOption);
         this.Add(statisticOption);
@@ -89,6 +93,7 @@ internal class QueryCommand : BaseQueryCommand
         this.Add(tailOption);
         this.Add(timeoutOption);
         this.Add(safeModeOption);
+        this.Add(aiModeOption);
         this.SetAction(async (parseResult, cancellationToken) =>
         {
             parseResult.Configuration.EnableDefaultExceptionHandler = false;
@@ -121,6 +126,7 @@ internal class QueryCommand : BaseQueryCommand
                 TailCount = parseResult.GetValue(tailOption),
                 QueryTimeout = TimeSpan.FromMilliseconds(parseResult.GetValue(timeoutOption)),
                 SafeMode = parseResult.GetValue(safeModeOption),
+                AIMode = parseResult.GetValue(aiModeOption),
             };
             if (parseResult.GetValue(analyzeRowsOption) < 0)
             {

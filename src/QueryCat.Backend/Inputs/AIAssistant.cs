@@ -6,6 +6,7 @@ using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Core.Utils;
+using QueryCat.Backend.Storage;
 
 namespace QueryCat.Backend.Inputs;
 
@@ -15,6 +16,9 @@ namespace QueryCat.Backend.Inputs;
 // ReSharper disable once InconsistentNaming
 public class AIAssistant
 {
+    // ReSharper disable once InconsistentNaming
+    public const string DefaultAIAgentVariableName = "_ANSWER_AGENT";
+
     /// <summary>
     /// Default instance of AI assistant.
     /// </summary>
@@ -101,10 +105,6 @@ public class AIAssistant
         public override string ToString() => $"Q: {Query}, R: {Refusal}";
     }
 
-    public AIAssistant()
-    {
-    }
-
     /// <summary>
     /// Run question query for AI agent, generate SQL and execute it.
     /// </summary>
@@ -135,6 +135,45 @@ public class AIAssistant
         {
             await CloseInputsAsync(inputs, cancellationToken);
         }
+    }
+
+    /// <summary>
+    /// Get the default answer agent from variables.
+    /// </summary>
+    /// <param name="thread">Execution thread.</param>
+    /// <returns>Instance of <see cref="IAnswerAgent" />.</returns>
+    public static IAnswerAgent GetDefaultAnswerAgent(IExecutionThread thread)
+    {
+        var answerAgentValue = thread.GetVariable(DefaultAIAgentVariableName);
+        if (!answerAgentValue.IsNull
+            && (answerAgentValue.Type == DataType.Object || answerAgentValue.Type == DataType.Dynamic)
+            && answerAgentValue.AsObjectUnsafe is IAnswerAgent agent)
+        {
+            return agent;
+        }
+
+        throw new QueryCatException(
+            string.Format(Resources.Errors.AnswerAgentNotFound, DefaultAIAgentVariableName, nameof(IAnswerAgent)));
+    }
+
+    /// <summary>
+    /// Get all input variables.
+    /// </summary>
+    /// <param name="thread">Execution thread.</param>
+    /// <returns>List of inputs.</returns>
+    public static IList<KeyValuePair<string, IRowsInput>> GetInputs(IExecutionThread thread)
+    {
+        var inputs = new List<KeyValuePair<string, IRowsInput>>();
+        foreach (var variable in thread.TopScope.Variables)
+        {
+            var rowsInputNamePair = RowsInputConverter.Convert(variable.Value);
+            if (rowsInputNamePair.Value == null)
+            {
+                continue;
+            }
+            inputs.Add(new KeyValuePair<string, IRowsInput>(variable.Key, rowsInputNamePair.Value));
+        }
+        return inputs;
     }
 
     private async Task CloseInputsAsync(
