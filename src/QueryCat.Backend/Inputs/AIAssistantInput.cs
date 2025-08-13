@@ -41,7 +41,7 @@ internal sealed class AIAssistantInput : IRowsInput, IRowsIteratorParent
             {
                 rowsInputNamePair = await RowsInputConverter.ResolveInputAsync(thread, source.AsString, cancellationToken);
             }
-            if (rowsInputNamePair.Value != null)
+            if (rowsInputNamePair.Value == null)
             {
                 rowsInputNamePair = RowsInputConverter.Convert(source);
             }

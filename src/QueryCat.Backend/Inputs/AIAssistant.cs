@@ -101,6 +101,13 @@ public class AIAssistant
 
         public bool IsSuccess => !string.IsNullOrEmpty(Query);
 
+        internal static QuestionResponse CreateSuccessMessage(string sql)
+            => new(
+                JsonSerializer.Serialize(new PromptResponseModel
+                {
+                    Query = sql,
+                }, SourceGenerationContext.Default.PromptResponseModel));
+
         /// <inheritdoc />
         public override string ToString() => $"Q: {Query}, R: {Refusal}";
     }
@@ -131,9 +138,10 @@ public class AIAssistant
             }
             return iterator;
         }
-        finally
+        catch (Exception)
         {
             await CloseInputsAsync(inputs, cancellationToken);
+            throw;
         }
     }
 
@@ -198,7 +206,7 @@ public class AIAssistant
         var queryAttempts = 0;
         while (!canProceedQuery)
         {
-            _logger.LogTrace("Prompt: {Prompt}.", currentAiRequest.Message);
+            _logger.LogDebug("Prompt: {Prompt}.", currentAiRequest);
             var response = await answerAgent.AskAsync(currentAiRequest, cancellationToken);
             if (_logger.IsEnabled(LogLevel.Trace))
             {
@@ -308,7 +316,7 @@ public class AIAssistant
             {
                 if (!string.IsNullOrEmpty(modelDescription.Name))
                 {
-                    sb.AppendFormat(" Table logical name: {0}.", Quote(modelDescription.Name));
+                    sb.AppendFormat(" Table logical label: {0}.", Quote(modelDescription.Name));
                 }
                 if (!string.IsNullOrEmpty(modelDescription.Description))
                 {

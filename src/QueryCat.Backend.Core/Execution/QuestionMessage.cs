@@ -38,14 +38,22 @@ public class QuestionMessage
     /// </summary>
     /// <param name="messages">Messages to merge.</param>
     /// <returns>Instance of <see cref="QuestionMessage" />.</returns>
-    public QuestionMessage Merge(params IReadOnlyList<QuestionMessage> messages)
+    public static QuestionMessage Merge(params IReadOnlyList<QuestionMessage> messages)
     {
+        if (messages.Count == 0)
+        {
+            return new QuestionMessage(string.Empty);
+        }
+
         var sb = new StringBuilder();
-        sb.AppendLine(Content);
+        var role = messages[0].Role;
         foreach (var message in messages)
         {
             sb.AppendLine(message.Content);
         }
-        return new QuestionMessage(sb.ToString(), Role);
+        return new QuestionMessage(sb.ToString(), role);
     }
+
+    /// <inheritdoc />
+    public override string ToString() => $"({Role}): {Content}";
 }

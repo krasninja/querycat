@@ -1,3 +1,5 @@
+using System.Text;
+
 namespace QueryCat.Backend.Core.Execution;
 
 /// <summary>
@@ -43,5 +45,17 @@ public class QuestionRequest
     {
         Messages = messages;
         Type = type ?? TypeGeneral;
+    }
+
+    /// <inheritdoc />
+    public override string ToString()
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine("Type: " + Type);
+        foreach (var message in Messages)
+        {
+            sb.AppendLine(message.ToString());
+        }
+        return sb.ToString();
     }
 }
