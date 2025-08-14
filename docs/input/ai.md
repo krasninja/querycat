@@ -21,7 +21,7 @@ Right now, there are no embedded AI agents in the QueryCat. You can use the one 
 - `QueryCat.Plugins.GigaChat`. The LLM developed by Sber Bank Russian company. https://giga.chat.
 - `QueryCat.Plugins.Ollama`. The framework for building and running language models on the local machine. https://ollama.com.
 
-There are two ways to setup the AI answer agent.
+There are two ways to set up the AI answer agent.
 
 1. Define the special `_ANSWER_AGENT`. Examples:
 
@@ -31,7 +31,9 @@ There are two ways to setup the AI answer agent.
     declare _ANSWER_AGENT := gigachat_agent('API_KEY');
     ```
 
-2. Provide thru the sources:
+    You can set this up in autoexec `rc.sql` file (see Autoexec section for more details).
+
+2. Provide through the sources:
 
     ```
     ai_input('select all actors', 'actors=/home/ivan/temp/MoviesActors.csv', ollama_agent('qwen3:8b'));
@@ -53,7 +55,7 @@ ai_input('Select all movies', '/home/ivan/temp/MoviesActors.csv')
 -- SQL: SELECT * FROM input0;
 ```
 
-***Select from two sources**
+**Select from two sources**
 
 ```
 ai_input('select names that we have both in actors ans hackers', 'actors=/home/ivan/temp/MoviesActors.csv', 'hackers=/home/ivan/temp/hackers.csv')

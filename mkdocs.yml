@@ -53,6 +53,7 @@ nav:
     - 'String': functions/string.md
   - 'FAQ': faq.md
   - 'Features':
+    - 'Autoexec': features/autoexec.md
     - 'Web Server': features/web-server.md
   - 'Development':
     - 'Overview': development/index.md

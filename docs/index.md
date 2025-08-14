@@ -56,7 +56,8 @@ Just imagine that everything in the world is a table, and you can process it usi
     - 8.11) [String](functions/string.md)
 - 9) [FAQ](faq.md)
 - 10) Features
-    - 10.1) [Web Server](features/web-server.md)
+    - 10.1) [Autoexec](features/autoexec.md)
+    - 10.2) [Web Server](features/web-server.md)
 - 11) Development
     - 11.1) [Overview](development/index.md)
 - 12) Misc
