@@ -13,6 +13,7 @@ internal sealed class MimeTypesProvider
     public const string ContentTypeHtml = "text/html";
     public const string ContentTypeForm = "application/x-www-form-urlencoded";
     public const string ContentTypeOctetStream = "application/octet-stream";
+    public const string ContentTypeMultipartFormData = "multipart/form-data";
 
 #if NET9_0_OR_GREATER
     private static readonly Lock _objLock = new();

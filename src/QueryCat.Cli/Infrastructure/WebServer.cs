@@ -2,6 +2,7 @@ using System.Collections.Frozen;
 using System.Globalization;
 using System.Net;
 using System.Reflection;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
@@ -24,6 +25,7 @@ namespace QueryCat.Cli.Infrastructure;
 internal sealed partial class WebServer
 {
     private const string DefaultEndpointUri = "http://localhost:6789/";
+    private const string QueryField = "query";
 
     /// <summary>
     /// Endpoint URI.
@@ -176,6 +178,7 @@ internal sealed partial class WebServer
             }
             catch (QueryCatException e)
             {
+                _logger.LogWarning(e, "Invalid input: {Error}", e.Message);
                 response.ContentType = MimeTypesProvider.ContentTypeJson;
                 response.StatusCode = (int)HttpStatusCode.BadRequest;
                 await using var jsonWriter = new Utf8JsonWriter(response.OutputStream);
@@ -351,8 +354,27 @@ internal sealed partial class WebServer
             }
             else if (request.ContentType == MimeTypesProvider.ContentTypeJson)
             {
-                return JsonSerializer.Deserialize(text, SourceGenerationContext.Default.WebServerQueryData)
-                    ?? new WebServerQueryData();
+                try
+                {
+                    return JsonSerializer.Deserialize(text, SourceGenerationContext.Default.WebServerQueryData)
+                           ?? new WebServerQueryData();
+                }
+                catch (JsonException e)
+                {
+                    throw new QueryCatException(
+                        string.Format(Resources.Errors.InvalidInputData, e.Message), e);
+                }
+            }
+            else if (!string.IsNullOrEmpty(request.ContentType)
+                && request.ContentType.StartsWith(MimeTypesProvider.ContentTypeMultipartFormData))
+            {
+                foreach (var pair in ParseMultipartData(text))
+                {
+                    if (pair.Key == QueryField)
+                    {
+                        return new WebServerQueryData(pair.Value.Trim());
+                    }
+                }
             }
         }
         else if (request.HttpMethod == HttpMethod.Get.Method)
@@ -362,9 +384,57 @@ internal sealed partial class WebServer
             {
                 return new WebServerQueryData(query);
             }
-            return new WebServerQueryData(request.QueryString.Get("query") ?? string.Empty);
+            return new WebServerQueryData(request.QueryString.Get(QueryField) ?? string.Empty);
         }
         throw new QueryCatException(Resources.Errors.InvalidContentType);
+    }
+
+    private static IEnumerable<KeyValuePair<string, string>> ParseMultipartData(string data)
+    {
+        var currentField = string.Empty;
+        var currentBoundary = string.Empty;
+        var currentValue = new StringBuilder();
+        foreach (var line in data.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            if (line.StartsWith("---"))
+            {
+                if (string.IsNullOrEmpty(currentBoundary))
+                {
+                    currentBoundary = line;
+                }
+                else
+                {
+                    if (currentValue.Length > 0)
+                    {
+                        yield return new KeyValuePair<string, string>(currentField, currentValue.ToString());
+                    }
+                    currentBoundary = string.Empty;
+                    currentField = string.Empty;
+                    currentValue.Clear();
+                }
+                continue;
+            }
+
+            if (string.IsNullOrEmpty(currentBoundary))
+            {
+                continue;
+            }
+
+            if (line.StartsWith("Content-Disposition:", StringComparison.InvariantCultureIgnoreCase))
+            {
+                foreach (var dispositionEntry in line.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+                {
+                    var dispositionEntryFields = StringUtils.GetFieldsFromLine(dispositionEntry, delimiter: '=', quoteChar: '"');
+                    if (dispositionEntryFields.Length == 2 && dispositionEntryFields[0] == "name")
+                    {
+                        currentField = dispositionEntryFields[1];
+                    }
+                }
+                continue;
+            }
+
+            currentValue.AppendLine(line);
+        }
     }
 
     private static async Task WriteHtmlAsync(IRowsIterator iterator, StreamWriter streamWriter, CancellationToken cancellationToken)
@@ -434,6 +504,8 @@ internal sealed partial class WebServer
                 continue;
             }
             jsonWriter.WriteStartObject();
+            jsonWriter.WritePropertyName("id");
+            jsonWriter.WriteNumberValue(column.Id);
             jsonWriter.WritePropertyName("name");
             jsonWriter.WriteStringValue(column.Name);
             jsonWriter.WritePropertyName("type");

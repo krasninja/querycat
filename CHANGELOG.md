@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add function "regexp_split_to_table".
 - Add "indent" field into "json" function.
+- Web server can parse multipart/form-data.
 
 ## [0.15.0] - 2025-07-13
 
