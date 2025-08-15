@@ -13,14 +13,19 @@ public class QuestionMessage
     public const string RoleTool = "tool";
 
     /// <summary>
+    /// Empty message.
+    /// </summary>
+    public static QuestionMessage Empty { get; } = new(string.Empty);
+
+    /// <summary>
     /// Message content.
     /// </summary>
-    public string Content { get; }
+    public string Content { get; private set; }
 
     /// <summary>
     /// Advises how to treat the message content.
     /// </summary>
-    public string Role { get; }
+    public string Role { get; private set; }
 
     /// <summary>
     /// Constructor.
