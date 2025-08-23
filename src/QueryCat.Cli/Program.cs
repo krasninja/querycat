@@ -57,7 +57,7 @@ internal sealed class Program
         rootCommand.Add(queryArgument);
         rootCommand.SetAction(async (parseResult, cancellationToken) =>
         {
-            parseResult.Configuration.EnableDefaultExceptionHandler = false;
+            parseResult.InvocationConfiguration.EnableDefaultExceptionHandler = false;
 
             // Allow to use with shebang.
             if (args.Length == 1
@@ -65,11 +65,13 @@ internal sealed class Program
                 && !args[0].Contains(Environment.NewLine)
                 && File.Exists(args[0]))
             {
-                await new QueryCommand().Parse(["-f", args[0]]).InvokeAsync(cancellationToken);
+                await new QueryCommand().Parse(["-f", args[0]])
+                    .InvokeAsync(parseResult.InvocationConfiguration, cancellationToken);
             }
             else
             {
-                await new QueryCommand().Parse(args).InvokeAsync(cancellationToken);
+                await new QueryCommand().Parse(args)
+                    .InvokeAsync(parseResult.InvocationConfiguration, cancellationToken);
             }
         });
 
@@ -119,7 +121,7 @@ internal sealed class Program
             var result = action.Invoke(parseResult);
             if (parseResult.CommandResult.Command is ApplicationRootCommand)
             {
-                var output = parseResult.Configuration.Output;
+                var output = parseResult.InvocationConfiguration.Output;
                 output.WriteLine(Resources.Messages.HelpText);
             }
             return result;

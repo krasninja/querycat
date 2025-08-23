@@ -10,7 +10,7 @@ internal class ExplainCommand : BaseQueryCommand
     {
         this.SetAction(async (parseResult, cancellationToken) =>
         {
-            parseResult.Configuration.EnableDefaultExceptionHandler = false;
+            parseResult.InvocationConfiguration.EnableDefaultExceptionHandler = false;
 
             var applicationOptions = GetApplicationOptions(parseResult);
             var query = parseResult.GetValue(QueryArgument);

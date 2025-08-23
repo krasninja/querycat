@@ -22,7 +22,7 @@ internal sealed class CallFunctionCommand : BaseCommand
         this.Add(functionArgumentsArgument);
         this.SetAction(async (parseResult, cancellationToken) =>
         {
-            parseResult.Configuration.EnableDefaultExceptionHandler = false;
+            parseResult.InvocationConfiguration.EnableDefaultExceptionHandler = false;
 
             var applicationOptions = GetApplicationOptions(parseResult);
             var functionName = parseResult.GetRequiredValue(functionNameArgument);
