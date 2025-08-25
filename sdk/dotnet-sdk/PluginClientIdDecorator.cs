@@ -136,6 +136,10 @@ public sealed class PluginClientIdDecorator : Plugin.IAsync
         => _client.Blob_GetContentTypeAsync(object_blob_handle, cancellationToken);
 
     /// <inheritdoc />
+    public Task<string> Blob_GetNameAsync(int object_blob_handle, CancellationToken cancellationToken = default)
+        => _client.Blob_GetNameAsync(object_blob_handle, cancellationToken);
+
+    /// <inheritdoc />
     public Task<string> ServeAsync(CancellationToken cancellationToken = default)
         => _client.ServeAsync(cancellationToken);
 

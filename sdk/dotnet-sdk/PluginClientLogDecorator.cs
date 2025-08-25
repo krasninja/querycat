@@ -205,6 +205,13 @@ public sealed partial class PluginClientLogDecorator : Plugin.IAsync
     }
 
     /// <inheritdoc />
+    public Task<string> Blob_GetNameAsync(int object_blob_handle, CancellationToken cancellationToken = default)
+    {
+        LogStartMethodCall(nameof(Blob_GetNameAsync));
+        return _client.Blob_GetNameAsync(object_blob_handle, cancellationToken);
+    }
+
+    /// <inheritdoc />
     public Task<string> ServeAsync(CancellationToken cancellationToken = default)
     {
         LogStartMethodCall(nameof(ServeAsync));

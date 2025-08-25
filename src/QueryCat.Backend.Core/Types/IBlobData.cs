@@ -6,12 +6,17 @@ namespace QueryCat.Backend.Core.Types;
 public interface IBlobData
 {
     /// <summary>
+    /// Logical BLOB name, optional.
+    /// </summary>
+    string Name { get; }
+
+    /// <summary>
     /// Length in bytes of the data.
     /// </summary>
     long Length { get; }
 
     /// <summary>
-    /// BLOB content MINE-type.
+    /// BLOB content MIME-type.
     /// </summary>
     string ContentType { get; }
 

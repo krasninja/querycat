@@ -64,7 +64,9 @@ enum DataType {
   INTERVAL = 7,
   BLOB = 8,
   OBJECT = 40, // See ObjectType.
-  DYNAMIC = 41
+  DYNAMIC = 41,
+  ARRAY = 42,
+  MAP = 43
 }
 
 enum LogLevel {
@@ -541,6 +543,11 @@ service Plugin {
 
   // Get binary MIME content type.
   string Blob_GetContentType(
+    1: required Handle object_blob_handle
+  ) throws (1: QueryCatPluginException e),
+
+  // Get binary logical name.
+  string Blob_GetName(
     1: required Handle object_blob_handle
   ) throws (1: QueryCatPluginException e),
 
