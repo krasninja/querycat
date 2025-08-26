@@ -335,6 +335,12 @@ service PluginsManager {
     2: required Handle object_blob_handle
   ) throws (1: QueryCatPluginException e),
 
+  // Get binary logical name.
+  string Blob_GetName(
+    1: required i64 token, // Authorization token.
+    2: required Handle object_blob_handle
+  ) throws (1: QueryCatPluginException e),
+
   // Logging.
   void Log(
     1: required i64 token, // Authorization token.

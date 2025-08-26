@@ -38,4 +38,11 @@ internal sealed class PluginBlobProxyService : IBlobProxyService
         using var session = await _context.GetSessionAsync(cancellationToken);
         return await session.ClientProxy.Blob_GetContentTypeAsync(objectBlobHandle, cancellationToken);
     }
+
+    /// <inheritdoc />
+    public async Task<string> Blob_GetNameAsync(int objectBlobHandle, CancellationToken cancellationToken = default)
+    {
+        using var session = await _context.GetSessionAsync(cancellationToken);
+        return await session.ClientProxy.Blob_GetNameAsync(objectBlobHandle, cancellationToken);
+    }
 }

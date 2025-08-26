@@ -38,4 +38,10 @@ public sealed class PluginManagerBlobProxyService : IBlobProxyService
     {
         return _client.Blob_GetContentTypeAsync(_token, objectBlobHandle, cancellationToken);
     }
+
+    /// <inheritdoc />
+    public Task<string> Blob_GetNameAsync(int objectBlobHandle, CancellationToken cancellationToken = default)
+    {
+        return _client.Blob_GetNameAsync(_token, objectBlobHandle, cancellationToken);
+    }
 }

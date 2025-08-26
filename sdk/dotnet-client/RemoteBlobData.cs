@@ -10,7 +10,7 @@ public sealed class RemoteBlobProxy : IBlobData
     private readonly RemoteStream _remoteStream;
 
     /// <inheritdoc />
-    public string Name => string.Empty;
+    public string Name => _remoteStream.Name;
 
     /// <inheritdoc />
     public long Length => _remoteStream.Length;

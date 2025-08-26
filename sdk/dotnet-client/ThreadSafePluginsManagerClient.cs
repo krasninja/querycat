@@ -246,6 +246,20 @@ internal sealed class ThreadSafePluginsManagerClient : PluginsManager.IAsync
     }
 
     /// <inheritdoc />
+    public async Task<string> Blob_GetNameAsync(long token, int object_blob_handle, CancellationToken cancellationToken = default)
+    {
+        await _semaphore.WaitAsync(cancellationToken);
+        try
+        {
+            return await _client.Blob_GetNameAsync(token, object_blob_handle, cancellationToken);
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
+    }
+
+    /// <inheritdoc />
     public async Task LogAsync(long token, LogLevel level, string message, List<string>? arguments,
         CancellationToken cancellationToken = default)
     {

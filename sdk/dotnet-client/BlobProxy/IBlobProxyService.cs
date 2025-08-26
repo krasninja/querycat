@@ -12,4 +12,6 @@ public interface IBlobProxyService
     Task<long> Blob_WriteAsync(int objectBlobHandle, byte[] bytes, CancellationToken cancellationToken = default);
 
     Task<string> Blob_GetContentTypeAsync(int objectBlobHandle, CancellationToken cancellationToken = default);
+
+    Task<string> Blob_GetNameAsync(int objectBlobHandle, CancellationToken cancellationToken = default);
 }

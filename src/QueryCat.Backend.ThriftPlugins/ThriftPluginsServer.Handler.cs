@@ -339,6 +339,19 @@ public partial class ThriftPluginsServer
         }
 
         /// <inheritdoc />
+        public Task<string> Blob_GetNameAsync(long token, int object_blob_handle, CancellationToken cancellationToken = default)
+        {
+            _thriftPluginsServer.VerifyToken(token);
+            var pluginContext = _thriftPluginsServer.GetPluginContextByToken(token);
+            if (pluginContext.ObjectsStorage.TryGet<IBlobData>(object_blob_handle, out var blobData)
+                && blobData != null)
+            {
+                return Task.FromResult(blobData.Name);
+            }
+            throw new QueryCatException(Resources.Errors.InvalidBlobHandle);
+        }
+
+        /// <inheritdoc />
         public Task LogAsync(long token, LogLevel level, string message, List<string>? arguments,
             CancellationToken cancellationToken = default)
         {
@@ -609,6 +622,20 @@ public partial class ThriftPluginsServer
 
         /// <inheritdoc />
         public async Task<string> Blob_GetContentTypeAsync(long token, int object_blob_handle, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return await _handler.Blob_GetContentTypeAsync(token, object_blob_handle, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, Resources.Errors.HandlerInternalError);
+                throw QueryCatPluginExceptionUtils.Create(ex);
+            }
+        }
+
+        /// <inheritdoc />
+        public async Task<string> Blob_GetNameAsync(long token, int object_blob_handle, CancellationToken cancellationToken = default)
         {
             try
             {

@@ -50,6 +50,20 @@ public sealed class RemoteStream : Stream
         }
     }
 
+    /// <summary>
+    /// Logical stream name. Optional.
+    /// </summary>
+    public string Name
+    {
+        get
+        {
+            return AsyncUtils.RunSync(async ct =>
+            {
+                return await _proxy.Blob_GetNameAsync(_objectHandle, ct);
+            }) ?? string.Empty;
+        }
+    }
+
     public RemoteStream(int objectHandle, IBlobProxyService proxy)
     {
         _objectHandle = objectHandle;
