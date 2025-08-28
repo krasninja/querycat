@@ -129,7 +129,7 @@ internal sealed class ThriftPluginContext : IDisposable, IAsyncDisposable
         var protocol = new TMultiplexedProtocol(
             new TBinaryProtocol(
                 new TFramedTransport(
-                    ThriftTransportUtils.CreateClientTransport(uri))
+                    ThriftTransportFactory.CreateClientTransport(uri))
             ),
             ThriftPluginClient.PluginServerName);
         Plugin.IAsync newClient;

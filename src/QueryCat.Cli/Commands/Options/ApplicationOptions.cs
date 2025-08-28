@@ -110,6 +110,8 @@ internal sealed class ApplicationOptions
         bootstrapper.WithPluginsLoader(thread => new Backend.ThriftPlugins.ThriftPluginsLoader(
             thread,
             executionOptions.PluginDirectories,
+            endpoint: QueryCat.Plugins.Client.ThriftEndpoint.CreateNamedPipe(
+                QueryCat.Plugins.Client.ThriftEndpoint.GenerateIdentifier("qcath")),
             Application.GetApplicationDirectory(),
             functionsCacheDirectory: Path.Combine(Application.GetApplicationDirectory(),
                 ApplicationPluginsFunctionsCacheDirectory),

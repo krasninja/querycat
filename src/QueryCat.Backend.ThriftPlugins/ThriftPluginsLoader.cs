@@ -49,7 +49,7 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
     /// <summary>
     /// The using server pipe name.
     /// </summary>
-    public string ServerPipeName { get; } = "qcath-" + ThriftTransportUtils.GenerateIdentifier();
+    public string ServerPipeName { get; } = ThriftEndpoint.GenerateIdentifier("qcath");
 
     internal sealed record FunctionsCache(
         [property:JsonPropertyName("createdAt")] long CreatedAt,
@@ -117,9 +117,8 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
     public ThriftPluginsLoader(
         IExecutionThread thread,
         IEnumerable<string> pluginDirectories,
+        ThriftEndpoint endpoint,
         string? applicationDirectory = null,
-        ThriftTransportType transportType = ThriftTransportType.NamedPipes,
-        string? serverPipeName = null,
         string? functionsCacheDirectory = null,
         bool debugMode = false,
         LogLevel minLogLevel = LogLevel.Information,
@@ -129,13 +128,14 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
         _applicationDirectory = applicationDirectory;
         _debugMode = debugMode;
         _minLogLevel = minLogLevel;
-        if (!string.IsNullOrEmpty(serverPipeName))
+        if (!string.IsNullOrEmpty(endpoint.NamedPipe))
         {
-            ServerPipeName = serverPipeName;
+            ServerPipeName = endpoint.NamedPipe;
         }
-        _server = new ThriftPluginsServer(thread, ServerPipeName, transportType, maxConnectionsToClient: maxConnectionsToPlugin);
+        _server = new ThriftPluginsServer(thread, endpoint, maxConnectionsToClient: maxConnectionsToPlugin);
         if (_debugMode)
         {
+            _server.PluginRegistrationTimeoutSeconds = 100;
             _server.SkipTokenVerification = true;
             _server.Start();
         }

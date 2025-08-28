@@ -27,6 +27,7 @@ public partial class ThriftPluginClient : IDisposable
     public const string PluginServerName = "plugin";
     public const string TestRegistrationToken = "test";
     public const string TestPipeName = "qcat-test";
+    public const int DefaultTcpPort = 25_7_3_8;
 
     public const string PluginServerPipeParameter = "server-endpoint";
     public const string PluginTokenParameter = "token";
@@ -103,9 +104,9 @@ public partial class ThriftPluginClient : IDisposable
 
         // Server pipe.
         var serverEndpoint = !string.IsNullOrEmpty(args.DebugServerPath)
-            ? ThriftTransportUtils.FormatTransportUri(ThriftTransportType.NamedPipes, TestPipeName)
-            : new Uri(args.ServerEndpoint);
-        _pluginServerUri = serverEndpoint;
+            ? ThriftEndpoint.CreateNamedPipe(TestPipeName)
+            : new ThriftEndpoint(args.ServerEndpoint);
+        _pluginServerUri = serverEndpoint.Uri;
 
         // Auth token.
         if (string.IsNullOrEmpty(args.DebugServerPath))
@@ -133,7 +134,7 @@ public partial class ThriftPluginClient : IDisposable
         _protocol = new TMultiplexedProtocol(
             new TBinaryProtocol(
                 new TFramedTransport(
-                    ThriftTransportUtils.CreateClientTransport(serverEndpoint))
+                    ThriftTransportFactory.CreateClientTransport(serverEndpoint.Uri))
                 ),
             PluginsManagerServiceName);
         _thriftClient = new PluginsManager.Client(_protocol);
@@ -282,10 +283,15 @@ public partial class ThriftPluginClient : IDisposable
 
     internal Uri StartNewServer(ThriftTransportType transportType = ThriftTransportType.NamedPipes)
     {
-        var id = ThriftTransportUtils.GenerateIdentifier();
-        var uri = ThriftTransportUtils.FormatTransportUri(transportType, $"qcatp-{id}");
+        var id = ThriftEndpoint.GenerateIdentifier("qcatp");
+        var uri = transportType switch
+        {
+            ThriftTransportType.NamedPipes => ThriftEndpoint.CreateNamedPipe(id).Uri,
+            ThriftTransportType.Tcp => ThriftEndpoint.CreateTcp(DefaultTcpPort).Uri,
+            _ => throw new ArgumentOutOfRangeException(nameof(transportType), transportType, null),
+        };
 
-        var transport = ThriftTransportUtils.CreateServerTransport(uri);
+        var transport = ThriftTransportFactory.CreateServerTransport(uri);
         var transportFactory = new TFramedTransport.Factory();
         var binaryProtocolFactory = new TBinaryProtocol.Factory();
         var processor = new TMultiplexedProcessor();

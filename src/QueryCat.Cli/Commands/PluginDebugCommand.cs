@@ -29,7 +29,13 @@ internal class PluginDebugCommand : BaseQueryCommand
         {
             Description = "Output appended data as the input source grows.",
         };
+        var transportOption = new Option<ThriftTransportType>("--transport")
+        {
+            Description = "Server transport type.",
+            DefaultValueFactory = _ => ThriftTransportType.NamedPipes,
+        };
         this.Add(followOption);
+        this.Add(transportOption);
 
         this.SetAction(async (parseResult, cancellationToken) =>
         {
@@ -41,6 +47,7 @@ internal class PluginDebugCommand : BaseQueryCommand
             var inputs = parseResult.GetValue(InputsOption);
             var files = parseResult.GetValue(FilesOption);
             var follow = parseResult.GetValue(followOption);
+            var transport = parseResult.GetValue(transportOption);
 
             applicationOptions.InitializeLogger();
             applicationOptions.InitializeAIAssistant();
@@ -63,8 +70,8 @@ internal class PluginDebugCommand : BaseQueryCommand
                 .WithPluginsLoader(th => new ThriftPluginsLoader(
                     th,
                     applicationOptions.PluginDirectories,
-                    Application.GetApplicationDirectory(),
-                    serverPipeName: ThriftPluginClient.TestPipeName,
+                    endpoint: CreateEndpoint(transport),
+                    applicationDirectory: Application.GetApplicationDirectory(),
                     debugMode: true,
                     minLogLevel: LogLevel.Debug)
                 {
@@ -88,5 +95,17 @@ internal class PluginDebugCommand : BaseQueryCommand
             await RunQueryAsync(thread, output, query, files, cts.Token);
         });
     }
+
+#if PLUGIN_THRIFT
+    private ThriftEndpoint CreateEndpoint(ThriftTransportType transportType)
+    {
+        return transportType switch
+        {
+            ThriftTransportType.NamedPipes => ThriftEndpoint.CreateNamedPipe(ThriftPluginClient.TestPipeName),
+            ThriftTransportType.Tcp => ThriftEndpoint.CreateTcp(ThriftPluginClient.DefaultTcpPort),
+            _ => throw new ArgumentOutOfRangeException(nameof(transportType), transportType, null),
+        };
+    }
+#endif
 }
 #endif

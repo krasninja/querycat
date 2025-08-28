@@ -20,8 +20,6 @@ public sealed partial class ThriftPluginsServer : IDisposable
         SemaphoreSlim Semaphore,
         string PluginName);
 
-    private const int PluginRegistrationTimeoutSeconds = 10;
-
     public Uri ServerEndpointUri => _mainServerThread.Endpoint;
 
     private readonly IConfigStorage _configStorage;
@@ -39,6 +37,11 @@ public sealed partial class ThriftPluginsServer : IDisposable
     /// Do not verify token for debug purpose.
     /// </summary>
     public bool SkipTokenVerification { get; set; }
+
+    /// <summary>
+    /// Seconds to wait before plugin/client registration. -1 for infinite.
+    /// </summary>
+    public int PluginRegistrationTimeoutSeconds { get; set; } = 10;
 
     internal IReadOnlyCollection<ThriftPluginContext> Plugins => _plugins;
 
@@ -68,8 +71,7 @@ public sealed partial class ThriftPluginsServer : IDisposable
 
     public ThriftPluginsServer(
         IExecutionThread executionThread,
-        string serverEndpointPath,
-        ThriftTransportType thriftTransportType = ThriftTransportType.NamedPipes,
+        ThriftEndpoint serverEndpoint,
         int maxConnectionsToClient = 1)
     {
 #if !DEBUG
@@ -77,7 +79,7 @@ public sealed partial class ThriftPluginsServer : IDisposable
 #endif
         _executionThread = executionThread;
         _configStorage = executionThread.ConfigStorage;
-        var uri = ThriftTransportUtils.FormatTransportUri(thriftTransportType, serverEndpointPath);
+        var uri = serverEndpoint.Uri;
         var server = CreateServer(uri);
         _mainServerThread = new ServerThread(uri, server);
         _maxConnectionsToClient = maxConnectionsToClient;
@@ -85,7 +87,7 @@ public sealed partial class ThriftPluginsServer : IDisposable
 
     private TThreadPoolAsyncServer CreateServer(Uri uri)
     {
-        var transport = ThriftTransportUtils.CreateServerTransport(uri);
+        var transport = ThriftTransportFactory.CreateServerTransport(uri);
         var transportFactory = new TFramedTransport.Factory();
         var binaryProtocolFactory = new TBinaryProtocol.Factory();
         var processor = new TMultiplexedProcessor();
@@ -106,7 +108,7 @@ public sealed partial class ThriftPluginsServer : IDisposable
     }
 
     /// <summary>
-    /// Start local host server.
+    /// Start local host server. The call does not block the current thread.
     /// </summary>
     public void Start() => _mainServerThread.Start(_serverCts);
 
@@ -194,7 +196,10 @@ public sealed partial class ThriftPluginsServer : IDisposable
             throw new InvalidOperationException(string.Format(Resources.Errors.TokenNotRegistered, registrationToken));
         }
         _logger.LogTrace("Waiting for token activation '{Token}'.", registrationToken);
-        if (!registrationTokenData.Semaphore.Wait(TimeSpan.FromSeconds(PluginRegistrationTimeoutSeconds), cancellationToken))
+        var timeout = PluginRegistrationTimeoutSeconds > 0
+            ? TimeSpan.FromSeconds(PluginRegistrationTimeoutSeconds)
+            : TimeSpan.MaxValue;
+        if (!registrationTokenData.Semaphore.Wait(timeout, cancellationToken))
         {
             throw new PluginException(string.Format(Resources.Errors.TokenRegistrationTimeout, registrationToken));
         }

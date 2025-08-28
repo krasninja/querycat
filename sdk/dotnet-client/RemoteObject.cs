@@ -3,7 +3,7 @@ using System.Diagnostics;
 namespace QueryCat.Plugins.Client;
 
 /// <summary>
-/// Remote object (can be iterator, blob, etc).
+/// Remote object (can be iterator, BLOB, etc).
 /// </summary>
 [DebuggerDisplay("Handle = {Handle}, Type = {Type}")]
 public sealed class RemoteObject
