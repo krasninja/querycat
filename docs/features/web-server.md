@@ -2,6 +2,11 @@
 
 The QueryCat has internal simple web server. You can also specify what network interface and port to use. Use the command below to run it.
 
+You can find OpenAPI specification here:
+
+- [OpenAPI](https://raw.githubusercontent.com/krasninja/querycat/refs/heads/develop/sdk/openapi.yaml)
+- [Swagger UI](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/krasninja/querycat/refs/heads/develop/sdk/openapi.yaml)
+
 Features:
 
 - Simple web UI.
