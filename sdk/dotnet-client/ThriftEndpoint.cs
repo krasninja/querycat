@@ -149,4 +149,7 @@ public sealed class ThriftEndpoint
             ThriftTransportType.Tcp => TransportTcp,
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, null),
         };
+
+    /// <inheritdoc />
+    public override string ToString() => Uri.ToString();
 }

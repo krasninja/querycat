@@ -20,8 +20,6 @@ namespace QueryCat.Cli.Commands;
 #if ENABLE_PLUGINS
 internal class PluginDebugCommand : BaseQueryCommand
 {
-    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(PluginDebugCommand));
-
     /// <inheritdoc />
     public PluginDebugCommand() : base("debug", Resources.Messages.PluginDebugCommand_Description)
     {
@@ -50,9 +48,8 @@ internal class PluginDebugCommand : BaseQueryCommand
             var transport = parseResult.GetValue(transportOption);
 
             applicationOptions.InitializeLogger();
+            var logger = Application.LoggerFactory.CreateLogger(nameof(PluginDebugCommand));
             applicationOptions.InitializeAIAssistant();
-            var tableOutput = new Backend.Formatters.TextTableOutput(
-                stream: Stdio.GetConsoleOutput());
             var options = new AppExecutionOptions
             {
                 UseConfig = true,
@@ -83,16 +80,22 @@ internal class PluginDebugCommand : BaseQueryCommand
                     th.FunctionsManager,
                     applicationOptions.PluginDirectories))
 #endif
+                .WithStandardFunctions()
                 .WithRegistrations(AdditionalRegistration.Register)
                 .WithRegistrations(Backend.Addons.Functions.JsonFunctions.RegisterFunctions)
                 .Create();
-
-            _logger.LogInformation("Waiting for connections.");
-            await thread.PluginsManager.PluginsLoader.LoadAsync(new PluginsLoadingOptions(), cts.Token);
             await AddVariablesAsync(thread, variables, cancellationToken);
             await AddInputsAsync(thread, inputs, cancellationToken);
-            var output = new PagingOutput(tableOutput, cancellationTokenSource: cts);
-            await RunQueryAsync(thread, output, query, files, cts.Token);
+            logger.LogInformation("Waiting for connections.");
+            await thread.PluginsManager.PluginsLoader.LoadAsync(new PluginsLoadingOptions(), cts.Token);
+            logger.LogInformation("Press 'q' to exit.");
+            while (true)
+            {
+                if (Console.ReadKey().Key == ConsoleKey.Q)
+                {
+                    break;
+                }
+            }
         });
     }
 

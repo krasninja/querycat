@@ -89,7 +89,7 @@ public partial class ThriftPluginClient : IDisposable
     /// </summary>
     public long Token => RegistrationResult != null ? RegistrationResult.Token : -1;
 
-    internal PluginsManager.IAsync ThriftClient => _thriftClientSafe;
+    internal global::QueryCat.Plugins.Sdk.PluginsManager.IAsync ThriftClient => _thriftClientSafe;
 
     /// <summary>
     /// The event occurs on plugin registration.
@@ -138,10 +138,9 @@ public partial class ThriftPluginClient : IDisposable
                 ),
             PluginsManagerServiceName);
         _thriftClient = new PluginsManager.Client(_protocol);
-        _thriftClientSafe = new ThreadSafePluginsManagerClient(_thriftClient);
-
         _executionThread = new ThriftPluginExecutionThread(this);
-        _functionsManager = new PluginFunctionsManager();
+        _functionsManager = (PluginFunctionsManager)_executionThread.FunctionsManager;
+        _thriftClientSafe = new ThreadSafePluginsManagerClient(_thriftClient);
     }
 
     public static ThriftPluginClientArguments ConvertCommandLineArguments(string[] args)

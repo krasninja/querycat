@@ -1,10 +1,11 @@
+using System;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Core.Utils;
 
-namespace QueryCat.Backend.ThriftPlugins;
+namespace QueryCat.Plugins.Client.Remote;
 
-internal sealed class ThriftRemoteRowsFormatter : IRowsFormatter
+public sealed class ThriftRemoteRowsFormatter : IRowsFormatter
 {
     /*
      * Remote iteration scheme:
@@ -19,13 +20,21 @@ internal sealed class ThriftRemoteRowsFormatter : IRowsFormatter
      * |            <- RowsInputHandle                  |
      */
 
-    private readonly ThriftPluginContext _context;
+    private readonly IThriftSessionProvider _sessionProvider;
+    private readonly ObjectsStorage _objectsStorage;
     private readonly int _objectHandle;
+    private readonly int _token;
 
-    public ThriftRemoteRowsFormatter(ThriftPluginContext context, int objectHandle)
+    public ThriftRemoteRowsFormatter(
+        IThriftSessionProvider sessionProvider,
+        ObjectsStorage objectsStorage,
+        int objectHandle,
+        int token = 0)
     {
-        _context = context;
+        _sessionProvider = sessionProvider;
+        _objectsStorage = objectsStorage;
         _objectHandle = objectHandle;
+        _token = token;
     }
 
     /// <inheritdoc />
@@ -33,10 +42,10 @@ internal sealed class ThriftRemoteRowsFormatter : IRowsFormatter
     {
         var result = AsyncUtils.RunSync(async ct =>
         {
-            using var session = await _context.GetSessionAsync(ct);
-            var blobHandle = _context.ObjectsStorage.GetOrAdd(blob);
-            var rowsInput = await session.ClientProxy.RowsFormatter_OpenInputAsync(_objectHandle, blobHandle, key, ct);
-            return new ThriftRemoteRowsIterator(_context, rowsInput);
+            var blobHandle = _objectsStorage.GetOrAdd(blob);
+            using var session = await _sessionProvider.GetAsync(ct);
+            var rowsInput = await session.Client.RowsFormatter_OpenInputAsync(_token, _objectHandle, blobHandle, key, ct);
+            return new ThriftRemoteRowsIterator(_sessionProvider, rowsInput);
         });
         if (result == null)
         {
@@ -50,10 +59,10 @@ internal sealed class ThriftRemoteRowsFormatter : IRowsFormatter
     {
         var result = AsyncUtils.RunSync(async ct =>
         {
-            using var session = await _context.GetSessionAsync(ct);
-            var blobHandle = _context.ObjectsStorage.GetOrAdd(blob);
-            var rowsInput = await session.ClientProxy.RowsFormatter_OpenOutputAsync(_objectHandle, blobHandle, ct);
-            return new ThriftRemoteRowsOutput(_context, rowsInput);
+            var blobHandle = _objectsStorage.GetOrAdd(blob);
+            using var session = await _sessionProvider.GetAsync(ct);
+            var rowsInput = await session.Client.RowsFormatter_OpenOutputAsync(_token, _objectHandle, blobHandle, ct);
+            return new ThriftRemoteRowsOutput(_sessionProvider, rowsInput);
         });
         if (result == null)
         {

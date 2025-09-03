@@ -206,5 +206,8 @@ internal sealed partial class WaitQueue : IDisposable
         {
             waitQueue.ReturnAvailableItem(item);
         }
+
+        /// <inheritdoc />
+        public override string ToString() => "Item = " + item;
     }
 }

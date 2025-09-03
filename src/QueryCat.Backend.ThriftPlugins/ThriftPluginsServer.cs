@@ -30,6 +30,7 @@ public sealed partial class ThriftPluginsServer : IDisposable
     private readonly Dictionary<long, ThriftPluginContext> _tokenPluginContextMap = new();
     private readonly ServerThread _mainServerThread;
     private readonly int _maxConnectionsToClient;
+    private readonly ObjectsStorage _objectsStorage = new();
 
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(ThriftPluginsServer));
 
@@ -91,7 +92,7 @@ public sealed partial class ThriftPluginsServer : IDisposable
         var transportFactory = new TFramedTransport.Factory();
         var binaryProtocolFactory = new TBinaryProtocol.Factory();
         var processor = new TMultiplexedProcessor();
-        var handler = new HandlerWithExceptionIntercept(new Handler(this));
+        var handler = new HandlerWithExceptionIntercept(new Handler(this, _objectsStorage));
         var asyncProcessor = new Plugins.Sdk.PluginsManager.AsyncProcessor(handler);
         processor.RegisterProcessor(QueryCat.Plugins.Client.ThriftPluginClient.PluginsManagerServiceName, asyncProcessor);
         return new TThreadPoolAsyncServer(
@@ -135,7 +136,15 @@ public sealed partial class ThriftPluginsServer : IDisposable
         return context;
     }
 
-    internal bool VerifyToken(long token) => token != -1 && _tokenPluginContextMap.ContainsKey(token);
+    internal bool IsValidToken(long token) => token != -1 && _tokenPluginContextMap.ContainsKey(token);
+
+    internal void ValidateToken(long token)
+    {
+        if (!IsValidToken(token))
+        {
+            throw new AuthorizationException();
+        }
+    }
 
     /// <summary>
     /// Generate new authorization token.
@@ -189,6 +198,11 @@ public sealed partial class ThriftPluginsServer : IDisposable
         }
     }
 
+    /// <summary>
+    /// Wait for the specific registration with token. The call blocks the current thread.
+    /// </summary>
+    /// <param name="registrationToken">Registration token to await.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     public void WaitForPluginRegistration(string registrationToken, CancellationToken cancellationToken = default)
     {
         if (!_registrationTokens.TryGetValue(registrationToken, out var registrationTokenData))
@@ -213,6 +227,7 @@ public sealed partial class ThriftPluginsServer : IDisposable
     public void Dispose()
     {
         Stop();
+        _objectsStorage.Clean();
         _serverCts.Dispose();
         foreach (var pluginContext in _plugins)
         {

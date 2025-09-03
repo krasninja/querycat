@@ -1,22 +1,27 @@
+using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Utils;
-using QueryCat.Plugins.Client;
 using QueryCat.Plugins.Sdk;
 using Column = QueryCat.Backend.Core.Data.Column;
 using KeyColumn = QueryCat.Backend.Core.Data.KeyColumn;
 using VariantValue = QueryCat.Backend.Core.Types.VariantValue;
 
-namespace QueryCat.Backend.ThriftPlugins;
+namespace QueryCat.Plugins.Client.Remote;
 
-internal sealed class ThriftRemoteRowsIterator : IRowsInputUpdate, IRowsInputDelete
+public sealed class ThriftRemoteRowsIterator : IRowsInputUpdate, IRowsInputDelete
 {
     private const int DefaultLoadCount = 1;
 
-    private readonly ThriftPluginContext _context;
+    private readonly IThriftSessionProvider _sessionProvider;
     private readonly int _objectHandle;
     private readonly int _loadCount;
+    private readonly long _token;
     private readonly string _id;
     private readonly DynamicBuffer<VariantValue> _cache = new(chunkSize: 64);
 
@@ -41,11 +46,17 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputUpdate, IRowsInputDel
         }
     }
 
-    public ThriftRemoteRowsIterator(ThriftPluginContext context, int objectHandle, string? id = null, int loadCount = DefaultLoadCount)
+    public ThriftRemoteRowsIterator(
+        IThriftSessionProvider sessionProvider,
+        int objectHandle,
+        string? id = null,
+        int loadCount = DefaultLoadCount,
+        long token = 0)
     {
-        _context = context;
+        _sessionProvider = sessionProvider;
         _objectHandle = objectHandle;
         _loadCount = loadCount;
+        _token = token;
         _id = id ?? string.Empty;
     }
 
@@ -54,8 +65,9 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputUpdate, IRowsInputDel
         _cachedKeyColumns = null;
         AsyncUtils.RunSync(async ct =>
         {
-            using var session = await _context.GetSessionAsync(ct);
-            await session.ClientProxy.RowsSet_SetContextAsync(
+            using var session = await _sessionProvider.GetAsync(ct);
+            await session.Client.RowsSet_SetContextAsync(
+                _token,
                 _objectHandle,
                 new ContextQueryInfo
                 {
@@ -76,27 +88,27 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputUpdate, IRowsInputDel
     /// <inheritdoc />
     public async Task OpenAsync(CancellationToken cancellationToken = default)
     {
-        using var session = await _context.GetSessionAsync(cancellationToken);
-        await session.ClientProxy.RowsSet_OpenAsync(_objectHandle, cancellationToken);
-        Columns = (await session.ClientProxy.RowsSet_GetColumnsAsync(_objectHandle, cancellationToken))
+        using var session = await _sessionProvider.GetAsync(cancellationToken);
+        await session.Client.RowsSet_OpenAsync(_token, _objectHandle, cancellationToken);
+        Columns = (await session.Client.RowsSet_GetColumnsAsync(_token, _objectHandle, cancellationToken))
             .Select(SdkConvert.Convert).ToArray();
-        UniqueKey = (await session.ClientProxy.RowsSet_GetUniqueKeyAsync(_objectHandle, cancellationToken)).ToArray();
+        UniqueKey = (await session.Client.RowsSet_GetUniqueKeyAsync(_token, _objectHandle, cancellationToken)).ToArray();
     }
 
     /// <inheritdoc />
     public async Task CloseAsync(CancellationToken cancellationToken = default)
     {
         _cachedKeyColumns = null;
-        using var session = await _context.GetSessionAsync(cancellationToken);
-        await session.ClientProxy.RowsSet_CloseAsync(_objectHandle, cancellationToken);
+        var session = await _sessionProvider.GetAsync(cancellationToken);
+        await session.Client.RowsSet_CloseAsync(_token, _objectHandle, cancellationToken);
     }
 
     /// <inheritdoc />
     public async Task ResetAsync(CancellationToken cancellationToken = default)
     {
         _cachedKeyColumns = null;
-        using var session = await _context.GetSessionAsync(cancellationToken);
-        await session.ClientProxy.RowsSet_ResetAsync(_objectHandle, cancellationToken);
+        using var session = await _sessionProvider.GetAsync(cancellationToken);
+        await session.Client.RowsSet_ResetAsync(_token, _objectHandle, cancellationToken);
         _cache.Clear();
     }
 
@@ -128,8 +140,8 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputUpdate, IRowsInputDel
             }
         }
 
-        using var session = await _context.GetSessionAsync(cancellationToken);
-        var result = await session.ClientProxy.RowsSet_GetRowsAsync(_objectHandle, _loadCount, cancellationToken);
+        using var session = await _sessionProvider.GetAsync(cancellationToken);
+        var result = await session.Client.RowsSet_GetRowsAsync(_token, _objectHandle, _loadCount, cancellationToken);
         if (result.Values == null || result.Values.Count == 0)
         {
             return false;
@@ -147,8 +159,8 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputUpdate, IRowsInputDel
         {
             var result = AsyncUtils.RunSync(async ct =>
                 {
-                    using var session = await _context.GetSessionAsync(ct);
-                    return (await session.ClientProxy.RowsSet_GetKeyColumnsAsync(_objectHandle, ct))
+                    using var session = await _sessionProvider.GetAsync(ct);
+                    return (await session.Client.RowsSet_GetKeyColumnsAsync(_token, _objectHandle, ct))
                         .Select(c => new KeyColumn(
                             c.ColumnIndex,
                             c.IsRequired,
@@ -166,8 +178,8 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputUpdate, IRowsInputDel
     {
         AsyncUtils.RunSync(async ct =>
         {
-            using var session = await _context.GetSessionAsync(ct);
-            await session.ClientProxy.RowsSet_SetKeyColumnValueAsync(_objectHandle, columnIndex, operation.ToString(),
+            using var session = await _sessionProvider.GetAsync(ct);
+            await session.Client.RowsSet_SetKeyColumnValueAsync(_token, _objectHandle, columnIndex, operation.ToString(),
                 SdkConvert.Convert(value), ct);
         });
     }
@@ -177,16 +189,16 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputUpdate, IRowsInputDel
     {
         AsyncUtils.RunSync(async ct =>
         {
-            using var session = await _context.GetSessionAsync(ct);
-            await session.ClientProxy.RowsSet_UnsetKeyColumnValueAsync(_objectHandle, columnIndex, operation.ToString(), ct);
+            using var session = await _sessionProvider.GetAsync(ct);
+            await session.Client.RowsSet_UnsetKeyColumnValueAsync(_token, _objectHandle, columnIndex, operation.ToString(), ct);
         });
     }
 
     /// <inheritdoc />
     public async ValueTask<ErrorCode> UpdateValueAsync(int columnIndex, VariantValue value, CancellationToken cancellationToken = default)
     {
-        using var session = await _context.GetSessionAsync(cancellationToken);
-        var result = await session.ClientProxy.RowsSet_UpdateValueAsync(_objectHandle, columnIndex, SdkConvert.Convert(value),
+        using var session = await _sessionProvider.GetAsync(cancellationToken);
+        var result = await session.Client.RowsSet_UpdateValueAsync(_token, _objectHandle, columnIndex, SdkConvert.Convert(value),
             cancellationToken);
         return SdkConvert.Convert(result);
     }
@@ -194,8 +206,8 @@ internal sealed class ThriftRemoteRowsIterator : IRowsInputUpdate, IRowsInputDel
     /// <inheritdoc />
     public async ValueTask<ErrorCode> DeleteAsync(CancellationToken cancellationToken = default)
     {
-        using var session = await _context.GetSessionAsync(cancellationToken);
-        var result = await session.ClientProxy.RowsSet_DeleteRowAsync(_objectHandle, cancellationToken);
+        using var session = await _sessionProvider.GetAsync(cancellationToken);
+        var result = await session.Client.RowsSet_DeleteRowAsync(_token, _objectHandle, cancellationToken);
         return SdkConvert.Convert(result);
     }
 

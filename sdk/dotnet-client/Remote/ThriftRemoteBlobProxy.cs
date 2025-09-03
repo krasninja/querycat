@@ -1,11 +1,9 @@
 using System.IO;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Plugins.Client.BlobProxy;
-using QueryCat.Plugins.Sdk;
 
-namespace QueryCat.Plugins.Client;
+namespace QueryCat.Plugins.Client.Remote;
 
-public sealed class RemoteBlobProxy : IBlobData
+public sealed class ThriftRemoteBlobProxy : IBlobData
 {
     private readonly RemoteStream _remoteStream;
 
@@ -18,12 +16,12 @@ public sealed class RemoteBlobProxy : IBlobData
     /// <inheritdoc />
     public string ContentType => _remoteStream.ContentType;
 
-    public RemoteBlobProxy(PluginsManager.IAsync client, int handle, long token)
+    public ThriftRemoteBlobProxy(IThriftSessionProvider sessionProvider, int handle, long token)
     {
-        _remoteStream = new RemoteStream(handle, new PluginManagerBlobProxyService(client, token));
+        _remoteStream = new RemoteStream(handle, sessionProvider, token);
     }
 
-    public RemoteBlobProxy(RemoteStream remoteStream)
+    public ThriftRemoteBlobProxy(RemoteStream remoteStream)
     {
         _remoteStream = remoteStream;
     }
