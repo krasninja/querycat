@@ -13,7 +13,7 @@ public sealed class ThriftRemoteRowsOutput : IRowsOutput
 {
     private readonly IThriftSessionProvider _sessionProvider;
     private readonly int _objectHandle;
-    private readonly int _token;
+    private readonly long _token;
     private readonly string _id;
 
     private QueryContext _queryContext = NullQueryContext.Instance;
@@ -32,12 +32,17 @@ public sealed class ThriftRemoteRowsOutput : IRowsOutput
     /// <inheritdoc />
     public RowsOutputOptions Options { get; } = new();
 
-    public ThriftRemoteRowsOutput(IThriftSessionProvider sessionProvider, int objectHandle, string? id = null, int token = 0)
+    public ThriftRemoteRowsOutput(IThriftSessionProvider sessionProvider, int objectHandle, string? id = null, long token = 0)
     {
         _sessionProvider = sessionProvider;
         _objectHandle = objectHandle;
         _token = token;
         _id = id ?? string.Empty;
+    }
+
+    public ThriftRemoteRowsOutput(ThriftPluginClient pluginClient, int objectHandle, string? id = null)
+        : this(new SimpleThriftSessionProvider(pluginClient.ThriftClient), objectHandle, id, pluginClient.Token)
+    {
     }
 
     private void SendContextToPlugin()

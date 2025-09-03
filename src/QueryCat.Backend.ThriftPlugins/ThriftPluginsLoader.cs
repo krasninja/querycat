@@ -636,7 +636,7 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
         var sessionProvider = new ServerThriftSessionProvider(context);
         if (result.Object.Type == ObjectType.ROWS_INPUT || result.Object.Type == ObjectType.ROWS_ITERATOR)
         {
-            return new ThriftRemoteRowsIterator(sessionProvider, result.Object.Handle, result.Object.Name);
+            return new ThriftRemoteRowsInput(sessionProvider, result.Object.Handle, result.Object.Name);
         }
         if (result.Object.Type == ObjectType.ROWS_OUTPUT)
         {

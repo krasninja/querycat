@@ -23,18 +23,26 @@ public sealed class ThriftRemoteRowsFormatter : IRowsFormatter
     private readonly IThriftSessionProvider _sessionProvider;
     private readonly ObjectsStorage _objectsStorage;
     private readonly int _objectHandle;
-    private readonly int _token;
+    private readonly long _token;
 
     public ThriftRemoteRowsFormatter(
         IThriftSessionProvider sessionProvider,
         ObjectsStorage objectsStorage,
         int objectHandle,
-        int token = 0)
+        long token = 0)
     {
         _sessionProvider = sessionProvider;
         _objectsStorage = objectsStorage;
         _objectHandle = objectHandle;
         _token = token;
+    }
+
+    public ThriftRemoteRowsFormatter(
+        ThriftPluginClient pluginClient,
+        ObjectsStorage objectsStorage,
+        int objectHandle)
+        : this(new SimpleThriftSessionProvider(pluginClient.ThriftClient), objectsStorage, objectHandle, pluginClient.Token)
+    {
     }
 
     /// <inheritdoc />
@@ -45,7 +53,7 @@ public sealed class ThriftRemoteRowsFormatter : IRowsFormatter
             var blobHandle = _objectsStorage.GetOrAdd(blob);
             using var session = await _sessionProvider.GetAsync(ct);
             var rowsInput = await session.Client.RowsFormatter_OpenInputAsync(_token, _objectHandle, blobHandle, key, ct);
-            return new ThriftRemoteRowsIterator(_sessionProvider, rowsInput);
+            return new ThriftRemoteRowsInput(_sessionProvider, rowsInput);
         });
         if (result == null)
         {

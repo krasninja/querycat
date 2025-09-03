@@ -242,10 +242,6 @@ public partial class QueryCatIOHandler : global::QueryCat.Plugins.Sdk.QueryCatIO
         {
             await rowsSource.OpenAsync(cancellationToken);
         }
-        else
-        {
-            LogCannotFindObject(object_rows_set_handle);
-        }
     }
 
     /// <inheritdoc />
@@ -256,10 +252,6 @@ public partial class QueryCatIOHandler : global::QueryCat.Plugins.Sdk.QueryCatIO
             && rowsSource != null)
         {
             await rowsSource.CloseAsync(cancellationToken);
-        }
-        else
-        {
-            LogCannotFindObject(object_rows_set_handle);
         }
     }
 
@@ -276,10 +268,6 @@ public partial class QueryCatIOHandler : global::QueryCat.Plugins.Sdk.QueryCatIO
                  && rowsIterator != null)
         {
             await rowsIterator.ResetAsync(cancellationToken);
-        }
-        else
-        {
-            LogCannotFindObject(object_rows_set_handle);
         }
     }
 
@@ -317,10 +305,6 @@ public partial class QueryCatIOHandler : global::QueryCat.Plugins.Sdk.QueryCatIO
                 rowsSource.QueryContext.PrereadRowsCount = context_info.PrereadRowsCount;
                 rowsSource.QueryContext.SkipIfNoColumns =  context_info.SkipIfNoColumns;
             }
-        }
-        else
-        {
-            LogCannotFindObject(object_rows_set_handle);
         }
     }
 

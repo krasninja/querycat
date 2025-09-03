@@ -14,7 +14,7 @@ using VariantValue = QueryCat.Backend.Core.Types.VariantValue;
 
 namespace QueryCat.Plugins.Client.Remote;
 
-public sealed class ThriftRemoteRowsIterator : IRowsInputUpdate, IRowsInputDelete
+public sealed class ThriftRemoteRowsInput : IRowsInputUpdate, IRowsInputDelete
 {
     private const int DefaultLoadCount = 1;
 
@@ -46,7 +46,7 @@ public sealed class ThriftRemoteRowsIterator : IRowsInputUpdate, IRowsInputDelet
         }
     }
 
-    public ThriftRemoteRowsIterator(
+    public ThriftRemoteRowsInput(
         IThriftSessionProvider sessionProvider,
         int objectHandle,
         string? id = null,
@@ -58,6 +58,15 @@ public sealed class ThriftRemoteRowsIterator : IRowsInputUpdate, IRowsInputDelet
         _loadCount = loadCount;
         _token = token;
         _id = id ?? string.Empty;
+    }
+
+    public ThriftRemoteRowsInput(
+        ThriftPluginClient pluginClient,
+        int objectHandle,
+        string? id = null,
+        int loadCount = DefaultLoadCount)
+        : this(new SimpleThriftSessionProvider(pluginClient.ThriftClient), objectHandle, id, loadCount, pluginClient.Token)
+    {
     }
 
     private void SendContextToPlugin()
