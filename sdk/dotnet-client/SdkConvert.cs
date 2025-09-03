@@ -166,14 +166,33 @@ public static class SdkConvert
         }
         if (value.__isset.@object && value.Object != null)
         {
-            return Backend.Core.Types.VariantValue.CreateFromObject(
-                new RemoteObject(value.Object.Handle, value.Object.Type.ToString()));
+            var remoteObject = new RemoteObject(value.Object.Handle, Convert(value.Object.Type), value.Object.Name);
+            if (!string.IsNullOrEmpty(value.Json))
+            {
+                remoteObject.Data = value.Json;
+            };
+            return Backend.Core.Types.VariantValue.CreateFromObject(remoteObject);
         }
         if (value.__isset.json && value.Json != null)
         {
             return Backend.Core.Types.VariantValue.CreateFromObject(JsonNode.Parse(value.Json));
         }
         throw new ArgumentOutOfRangeException(nameof(value));
+    }
+
+    public static RemoteObjectType Convert(global::QueryCat.Plugins.Sdk.ObjectType type)
+    {
+        return type switch
+        {
+            ObjectType.ANSWER_AGENT => RemoteObjectType.AnswerAgent,
+            ObjectType.BLOB => RemoteObjectType.Blob,
+            ObjectType.JSON => RemoteObjectType.Json,
+            ObjectType.ROWS_FORMATTER => RemoteObjectType.RowsFormatter,
+            ObjectType.ROWS_INPUT => RemoteObjectType.RowsInput,
+            ObjectType.ROWS_ITERATOR => RemoteObjectType.RowsIterator,
+            ObjectType.ROWS_OUTPUT => RemoteObjectType.RowsOutput,
+            _ => RemoteObjectType.Generic,
+        };
     }
 
     public static Backend.Core.Types.DataType Convert(DataType type)

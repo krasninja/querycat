@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text.Json;
-using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
@@ -10,9 +9,8 @@ using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Plugins;
 using QueryCat.Plugins.Client;
 using QueryCat.Plugins.Client.Remote;
-using QueryCat.Plugins.Sdk;
+using DataType = QueryCat.Backend.Core.Types.DataType;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
-using VariantValue = QueryCat.Plugins.Sdk.VariantValue;
 
 namespace QueryCat.Backend.ThriftPlugins;
 
@@ -70,14 +68,19 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
 
             var arguments = thread.Stack.Select(SdkConvert.Convert).ToList();
             using var session = await context.GetSessionAsync(cancellationToken);
-            var result = await session.ClientProxy.CallFunctionAsync(0, functionName, arguments, -1, cancellationToken);
-            if (result.__isset.@object && result.Object != null)
+            var rawValue = await session.ClientProxy.CallFunctionAsync(0, functionName, arguments, -1, cancellationToken);
+            var result = SdkConvert.Convert(rawValue);
+            if (result.Type == DataType.Object && result.AsObjectUnsafe is RemoteObject remoteObject)
             {
-                var obj = CreateObjectFromResult(result, context);
-                context.ObjectsStorage.Add(obj);
-                return Core.Types.VariantValue.CreateFromObject(obj);
+                var sessionProvider = new ServerThriftSessionProvider(context);
+                var obj = remoteObject.ToLocalObject(sessionProvider, context.ObjectsStorage);
+                if (obj != null)
+                {
+                    context.ObjectsStorage.Add(obj);
+                    return Core.Types.VariantValue.CreateFromObject(obj);
+                }
             }
-            return SdkConvert.Convert(result);
+            return result;
         }
     }
 
@@ -625,44 +628,6 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
             functionsManager.RegisterFunction(internalFunction);
             wrapper.FunctionName = internalFunction.Name;
         }
-    }
-
-    private static object CreateObjectFromResult(VariantValue result, ThriftPluginContext context)
-    {
-        if (result.Object == null)
-        {
-            throw new InvalidOperationException(Resources.Errors.NoObject);
-        }
-        var sessionProvider = new ServerThriftSessionProvider(context);
-        if (result.Object.Type == ObjectType.ROWS_INPUT || result.Object.Type == ObjectType.ROWS_ITERATOR)
-        {
-            return new ThriftRemoteRowsInput(sessionProvider, result.Object.Handle, result.Object.Name);
-        }
-        if (result.Object.Type == ObjectType.ROWS_OUTPUT)
-        {
-            return new ThriftRemoteRowsOutput(sessionProvider, result.Object.Handle, result.Object.Name);
-        }
-        if (result.Object.Type == ObjectType.JSON && !string.IsNullOrEmpty(result.Json))
-        {
-            var node = JsonNode.Parse(result.Json);
-            if (node != null)
-            {
-                return node;
-            }
-        }
-        if (result.Object.Type == ObjectType.BLOB)
-        {
-            return new ThriftRemoteBlobProxy(new RemoteStream(result.Object.Handle, sessionProvider));
-        }
-        if (result.Object.Type == ObjectType.ROWS_FORMATTER)
-        {
-            return new ThriftRemoteRowsFormatter(sessionProvider, context.ObjectsStorage, result.Object.Handle);
-        }
-        if (result.Object.Type == ObjectType.ANSWER_AGENT)
-        {
-            return new ThriftRemoteAnswerAgent(sessionProvider, result.Object.Handle);
-        }
-        throw new PluginException(string.Format(Resources.Errors.CannotCreateObject, result.Object.Type));
     }
 
     #region Cache

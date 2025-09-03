@@ -8,9 +8,9 @@ public sealed class ThriftRemoteAnswerAgent : IAnswerAgent
 {
     private readonly IThriftSessionProvider _sessionProvider;
     private readonly int _objectHandle;
-    private readonly int _token;
+    private readonly long _token;
 
-    public ThriftRemoteAnswerAgent(IThriftSessionProvider sessionProvider, int objectHandle, int token = 0)
+    public ThriftRemoteAnswerAgent(IThriftSessionProvider sessionProvider, int objectHandle, long token = 0)
     {
         _sessionProvider = sessionProvider;
         _objectHandle = objectHandle;

@@ -91,6 +91,8 @@ public partial class ThriftPluginClient : IDisposable
 
     internal global::QueryCat.Plugins.Sdk.PluginsManager.IAsync ThriftClient => _thriftClientSafe;
 
+    internal ObjectsStorage ObjectsStorage => _objectsStorage;
+
     /// <summary>
     /// The event occurs on plugin registration.
     /// </summary>
