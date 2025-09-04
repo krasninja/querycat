@@ -72,4 +72,7 @@
     <data name="AuthorizationError" xml:space="preserve">
         <value>Not authorized.</value>
     </data>
+    <data name="InvalidToken" xml:space="preserve">
+        <value>Invalid token '{0}'.</value>
+    </data>
 </root>

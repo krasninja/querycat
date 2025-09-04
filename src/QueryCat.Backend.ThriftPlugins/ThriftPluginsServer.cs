@@ -131,7 +131,7 @@ public sealed partial class ThriftPluginsServer : IDisposable
     {
         if (!_tokenPluginContextMap.TryGetValue(token, out var context))
         {
-            throw new AuthorizationException();
+            throw new AuthorizationException(string.Format(Resources.Errors.InvalidToken, token));
         }
         return context;
     }
@@ -142,7 +142,7 @@ public sealed partial class ThriftPluginsServer : IDisposable
     {
         if (!IsValidToken(token))
         {
-            throw new AuthorizationException();
+            throw new AuthorizationException(string.Format(Resources.Errors.InvalidToken, token));
         }
     }
 
