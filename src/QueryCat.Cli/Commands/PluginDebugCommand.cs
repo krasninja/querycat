@@ -87,6 +87,8 @@ internal sealed class PluginDebugCommand : BaseQueryCommand
             var thread = root.Thread;
             await AddVariablesAsync(thread, variables, cancellationToken);
             await AddInputsAsync(thread, inputs, cancellationToken);
+            // The hack to initialize thread and load rc files.
+            await thread.RunAsync(string.Empty, cancellationToken: cancellationToken);
             await thread.PluginsManager.PluginsLoader.LoadAsync(new PluginsLoadingOptions(), cts.Token);
 
             logger.LogInformation("Waiting for connections.");

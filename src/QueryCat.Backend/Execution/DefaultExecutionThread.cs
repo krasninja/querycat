@@ -190,11 +190,6 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IAsync
         IDictionary<string, VariantValue>? parameters = null,
         CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrEmpty(query))
-        {
-            return VariantValue.Null;
-        }
-
         // Run with lock and timer.
         IAsyncDisposable? @lock = null;
         try
@@ -282,6 +277,11 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IAsync
         IDictionary<string, VariantValue>? parameters = null,
         CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrEmpty(query))
+        {
+            return VariantValue.Null;
+        }
+
         var programNode = AstBuilder.BuildProgramFromString(query);
 
         // Setup timer.
