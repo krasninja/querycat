@@ -8,7 +8,9 @@ using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Plugins;
+using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Core.Utils;
+using QueryCat.Plugins.Client.Remote;
 using VariantValue = QueryCat.Backend.Core.Types.VariantValue;
 
 namespace QueryCat.Plugins.Client;
@@ -99,12 +101,33 @@ public sealed class ThriftPluginExecutionThread : IExecutionThread
                 query,
                 parameters?.ToDictionary(k => k.Key, v => SdkConvert.Convert(v.Value)),
                 cancellationToken);
-            return SdkConvert.Convert(result);
+
+            var resultValue = SdkConvert.Convert(result);
+            resultValue = await TryToConvertToLocalObjectAsync(resultValue, cancellationToken);
+
+            return resultValue;
         }
         finally
         {
             CurrentQuery = string.Empty;
         }
+    }
+
+    private async Task<VariantValue> TryToConvertToLocalObjectAsync(
+        VariantValue value,
+        CancellationToken cancellationToken)
+    {
+        if (value.Type == DataType.Object &&
+            value.AsObjectUnsafe is RemoteObject remoteObject)
+        {
+            var rawObject = await RemoteObjectUtils.ToLocalObjectAsync(remoteObject, _client, cancellationToken);
+            if (rawObject != null)
+            {
+                return VariantValue.CreateFromObject(rawObject);
+            }
+        }
+
+        return value;
     }
 
     /// <inheritdoc />

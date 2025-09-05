@@ -73,7 +73,8 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
             if (result.Type == DataType.Object && result.AsObjectUnsafe is RemoteObject remoteObject)
             {
                 var sessionProvider = new ServerThriftSessionProvider(context);
-                var obj = remoteObject.ToLocalObject(sessionProvider, context.ObjectsStorage);
+                var obj = await RemoteObjectUtils.ToLocalObjectAsync(remoteObject,
+                    sessionProvider, context.ObjectsStorage, cancellationToken: cancellationToken);
                 if (obj != null)
                 {
                     context.ObjectsStorage.Add(obj);

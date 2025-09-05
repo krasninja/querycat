@@ -223,7 +223,7 @@ public sealed class ThriftRemoteRowsInput : IRowsInputUpdate, IRowsInputDelete
     /// <inheritdoc />
     public void Explain(IndentedStringBuilder stringBuilder)
     {
-        stringBuilder.AppendLine($"Remote (handle={_objectHandle}, id={_id})");
+        stringBuilder.AppendLine($"Remote input (handle={_objectHandle}, id={_id})");
     }
 
     /// <inheritdoc />
