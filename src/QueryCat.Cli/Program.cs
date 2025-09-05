@@ -1,7 +1,4 @@
-﻿using System.CommandLine;
-using System.CommandLine.Help;
-using System.CommandLine.Invocation;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Parser;
 using QueryCat.Cli.Commands;
@@ -24,37 +21,7 @@ internal sealed class Program
     {
         AppDomain.CurrentDomain.UnhandledException += CurrentDomainOnUnhandledException;
 
-        // Root.
-        var rootCommand = new ApplicationRootCommand
-        {
-            new QueryCommand(),
-            new ExplainCommand(),
-            new AstCommand(),
-            new SchemaCommand(),
-            new CallFunctionCommand(),
-            new ServeCommand(),
-#if ENABLE_PLUGINS
-            new Command("plugin", Resources.Messages.PluginCommand_Description)
-            {
-                new PluginInstallCommand(),
-                new PluginListCommand(),
-                new PluginRemoveCommand(),
-                new PluginUpdateCommand(),
-                new PluginDebugCommand(),
-#if PLUGIN_THRIFT
-                new PluginProxyCommand(),
-#endif
-            },
-#endif
-        };
-        rootCommand.TreatUnmatchedTokensAsErrors = false;
-
-        // Allow to query without "query" command. Fast way.
-        var queryArgument = new Argument<string>("query")
-        {
-            Hidden = true,
-        };
-        rootCommand.Add(queryArgument);
+        var rootCommand = new ApplicationRootCommand();
         rootCommand.SetAction(async (parseResult, cancellationToken) =>
         {
             parseResult.InvocationConfiguration.EnableDefaultExceptionHandler = false;
@@ -75,8 +42,6 @@ internal sealed class Program
             }
         });
 
-        SetCustomHelpMessage(rootCommand);
-
         int returnCode;
         try
         {
@@ -90,19 +55,6 @@ internal sealed class Program
         return returnCode;
     }
 
-    private static void SetCustomHelpMessage(RootCommand rootCommand)
-    {
-        foreach (var rootCommandOption in rootCommand.Options)
-        {
-            // RootCommand has a default HelpOption, we need to update its Action.
-            if (rootCommandOption is HelpOption defaultHelpOption)
-            {
-                defaultHelpOption.Action = new UsageHelpSection((HelpAction)defaultHelpOption.Action!);
-                break;
-            }
-        }
-    }
-
     private static void CurrentDomainOnUnhandledException(object? sender, UnhandledExceptionEventArgs e)
     {
         var returnCode = 1;
@@ -111,21 +63,6 @@ internal sealed class Program
             returnCode = ProcessException(exception);
         }
         Environment.Exit(returnCode);
-    }
-
-    private sealed class UsageHelpSection(HelpAction action) : SynchronousCommandLineAction
-    {
-        /// <inheritdoc />
-        public override int Invoke(ParseResult parseResult)
-        {
-            var result = action.Invoke(parseResult);
-            if (parseResult.CommandResult.Command is ApplicationRootCommand)
-            {
-                var output = parseResult.InvocationConfiguration.Output;
-                output.WriteLine(Resources.Messages.HelpText);
-            }
-            return result;
-        }
     }
 
     private static int ProcessException(Exception exception)

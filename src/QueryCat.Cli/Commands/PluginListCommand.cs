@@ -9,18 +9,18 @@ internal class PluginListCommand : BaseCommand
     /// <inheritdoc />
     public PluginListCommand() : base("list", Resources.Messages.PluginListCommand_Description)
     {
-        var listAllArgument = new Option<bool>("--all")
+        var listAllOption = new Option<bool>("--all")
         {
             Description = Resources.Messages.PluginListCommand_AllDescription
         };
 
-        this.Add(listAllArgument);
+        this.Add(listAllOption);
         this.SetAction(async (parseResult, cancellationToken) =>
         {
             parseResult.InvocationConfiguration.EnableDefaultExceptionHandler = false;
 
             var applicationOptions = GetApplicationOptions(parseResult);
-            var listAll = parseResult.GetValue(listAllArgument);
+            var listAll = parseResult.GetValue(listAllOption);
 
             applicationOptions.InitializeLogger();
             applicationOptions.InitializeAIAssistant();
