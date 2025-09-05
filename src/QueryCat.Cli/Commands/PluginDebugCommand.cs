@@ -91,7 +91,7 @@ internal sealed class PluginDebugCommand : BaseQueryCommand
 
             logger.LogInformation("Waiting for connections.");
             var debugPluginsManager = new DefaultPluginsManager(
-                options.PluginDirectories,
+                [],
                 CreateDebugPluginLoader(
                     thread,
                     applicationOptions,
@@ -101,6 +101,7 @@ internal sealed class PluginDebugCommand : BaseQueryCommand
                     token),
                 NullPluginsStorage.Instance
             );
+
             await debugPluginsManager.PluginsLoader.LoadAsync(new PluginsLoadingOptions(), cts.Token);
             logger.LogInformation("Press 'q' to exit.");
             while (true)
@@ -124,7 +125,7 @@ internal sealed class PluginDebugCommand : BaseQueryCommand
 #if PLUGIN_THRIFT
         return new ThriftPluginsLoader(
             thread,
-            applicationOptions.PluginDirectories,
+            [],
             endpoint: CreateEndpoint(transport),
             applicationDirectory: Application.GetApplicationDirectory(),
             debugMode: true,

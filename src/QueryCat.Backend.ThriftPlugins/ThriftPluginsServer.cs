@@ -212,7 +212,7 @@ public sealed partial class ThriftPluginsServer : IDisposable
         _logger.LogTrace("Waiting for token activation '{Token}'.", registrationToken);
         var timeout = PluginRegistrationTimeoutSeconds > 0
             ? TimeSpan.FromSeconds(PluginRegistrationTimeoutSeconds)
-            : TimeSpan.MaxValue;
+            : Timeout.InfiniteTimeSpan;
         if (!registrationTokenData.Semaphore.Wait(timeout, cancellationToken))
         {
             throw new PluginException(string.Format(Resources.Errors.TokenRegistrationTimeout, registrationToken));

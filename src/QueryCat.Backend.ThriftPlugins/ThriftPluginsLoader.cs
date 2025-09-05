@@ -140,7 +140,7 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
         _server = new ThriftPluginsServer(thread, endpoint, maxConnectionsToClient: maxConnectionsToPlugin);
         if (_debugMode)
         {
-            _server.PluginRegistrationTimeoutSeconds = 100;
+            _server.PluginRegistrationTimeoutSeconds = -1;
             _server.SkipTokenVerification = true;
             _server.Start();
         }
