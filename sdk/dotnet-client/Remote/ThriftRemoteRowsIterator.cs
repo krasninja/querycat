@@ -32,6 +32,7 @@ public sealed class ThriftRemoteRowsIterator : IRowsIterator
         using var session = await _sessionProvider.GetAsync(cancellationToken);
         Columns = (await session.Client.RowsSet_GetColumnsAsync(_token, _objectHandle, cancellationToken))
             .Select(SdkConvert.Convert).ToArray();
+        Current = new Row(Columns);
     }
 
     /// <inheritdoc />
