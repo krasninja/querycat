@@ -98,6 +98,7 @@ internal static class DateTimeFunctions
             var timestamp = field switch
             {
                 "YEAR" or "Y" => new DateTime(target.Year, 1, 1, 0, 0, 0, target.Kind),
+                "MONTH" => new DateTime(target.Year, target.Month, 1, 0, 0, 0, target.Kind),
                 "DAY" or "D" => new DateTime(target.Year, target.Month, target.Day, 0, 0, 0, target.Kind),
                 "HOUR" or "H" => new DateTime(target.Year, target.Month, target.Day, target.Hour, 0, 0, target.Kind),
                 "MINUTE" or "MIN" or "M" =>
