@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text.Json;
@@ -9,6 +10,7 @@ using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Plugins.Sdk;
 using Column = QueryCat.Plugins.Sdk.Column;
+using CursorSeekOrigin = QueryCat.Plugins.Sdk.CursorSeekOrigin;
 using DataType = QueryCat.Plugins.Sdk.DataType;
 using VariantValue = QueryCat.Plugins.Sdk.VariantValue;
 
@@ -458,4 +460,13 @@ public static class SdkConvert
 
     public static Sdk.QuestionRequest Convert(Backend.Core.Execution.QuestionRequest target)
         => new(target.Messages.Select(SdkConvert.Convert).ToList(), target.Type);
+
+    public static Sdk.CursorSeekOrigin Convert(System.IO.SeekOrigin target)
+        => target switch
+        {
+            SeekOrigin.Begin => CursorSeekOrigin.BEGIN,
+            SeekOrigin.Current => CursorSeekOrigin.CURRENT,
+            SeekOrigin.End => CursorSeekOrigin.END,
+            _ => throw new ArgumentOutOfRangeException(nameof(target))
+        };
 }

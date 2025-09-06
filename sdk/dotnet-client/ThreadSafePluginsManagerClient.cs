@@ -557,6 +557,48 @@ internal sealed class ThreadSafePluginsManagerClient : PluginsManager.IAsync
     }
 
     /// <inheritdoc />
+    public async Task Thread_CloseHandleAsync(long token, int handle, CancellationToken cancellationToken = default)
+    {
+        await _semaphore.WaitAsync(cancellationToken);
+        try
+        {
+            await _client.Thread_CloseHandleAsync(token, handle, cancellationToken);
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<ObjectValue> Thread_GetHandleInfoAsync(long token, int handle, CancellationToken cancellationToken = default)
+    {
+        await _semaphore.WaitAsync(cancellationToken);
+        try
+        {
+            return await _client.Thread_GetHandleInfoAsync(token, handle, cancellationToken);
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<ObjectValue> Thread_GetHandleFromVariableAsync(long token, string name, CancellationToken cancellationToken = default)
+    {
+        await _semaphore.WaitAsync(cancellationToken);
+        try
+        {
+            return await _client.Thread_GetHandleFromVariableAsync(token, name, cancellationToken);
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
+    }
+
+    /// <inheritdoc />
     public async Task LogAsync(long token, LogLevel level, string message, List<string>? arguments,
         CancellationToken cancellationToken = default)
     {

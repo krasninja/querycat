@@ -121,4 +121,22 @@ public sealed class RemoteStream : Stream
         var session = await _sessionProvider.GetAsync(cancellationToken);
         await session.Client.Blob_WriteAsync(_token, _objectHandle, buffer, cancellationToken);
     }
+
+    /// <inheritdoc />
+    protected override void Dispose(bool disposing)
+    {
+        AsyncUtils.RunSync(async ct =>
+        {
+            await DisposeAsync();
+        });
+        base.Dispose(disposing);
+    }
+
+    /// <inheritdoc />
+    public override async ValueTask DisposeAsync()
+    {
+        var session = await _sessionProvider.GetAsync();
+        await session.Client.Thread_CloseHandleAsync(_token, _objectHandle);
+        await base.DisposeAsync();
+    }
 }

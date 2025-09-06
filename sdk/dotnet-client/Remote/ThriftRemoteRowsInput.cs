@@ -14,7 +14,7 @@ using VariantValue = QueryCat.Backend.Core.Types.VariantValue;
 
 namespace QueryCat.Plugins.Client.Remote;
 
-public sealed class ThriftRemoteRowsInput : IRowsInputUpdate, IRowsInputDelete
+public sealed class ThriftRemoteRowsInput : IRowsInputUpdate, IRowsInputDelete, IAsyncDisposable
 {
     private const int DefaultLoadCount = 1;
 
@@ -224,6 +224,14 @@ public sealed class ThriftRemoteRowsInput : IRowsInputUpdate, IRowsInputDelete
     public void Explain(IndentedStringBuilder stringBuilder)
     {
         stringBuilder.AppendLine($"Remote input (handle={_objectHandle}, id={_id})");
+    }
+
+    /// <inheritdoc />
+    public async ValueTask DisposeAsync()
+    {
+        using var session = await _sessionProvider.GetAsync();
+        await session.Client.RowsSet_CloseAsync(_token, _objectHandle);
+        await session.Client.Thread_CloseHandleAsync(_token, _objectHandle);
     }
 
     /// <inheritdoc />

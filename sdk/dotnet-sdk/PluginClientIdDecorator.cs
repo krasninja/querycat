@@ -150,5 +150,17 @@ public sealed class PluginClientIdDecorator : Plugin.IAsync
         => _client.AnswerAgent_AskAsync(token, object_answer_agent_handle, request, cancellationToken);
 
     /// <inheritdoc />
+    public Task Thread_CloseHandleAsync(long token, int handle, CancellationToken cancellationToken = default)
+        => _client.Thread_CloseHandleAsync(token, handle, cancellationToken);
+
+    /// <inheritdoc />
+    public Task<ObjectValue> Thread_GetHandleInfoAsync(long token, int handle, CancellationToken cancellationToken = default)
+        => _client.Thread_GetHandleInfoAsync(token, handle, cancellationToken);
+
+    /// <inheritdoc />
+    public Task<ObjectValue> Thread_GetHandleFromVariableAsync(long token, string name, CancellationToken cancellationToken = default)
+        => _client.Thread_GetHandleFromVariableAsync(token, name, cancellationToken);
+
+    /// <inheritdoc />
     public override string ToString() => $"ClientId = {_id}";
 }

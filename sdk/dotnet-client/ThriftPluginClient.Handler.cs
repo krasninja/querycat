@@ -1,13 +1,10 @@
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
-using QueryCat.Backend.Core.Data;
 using QueryCat.Plugins.Sdk;
 using Column = QueryCat.Plugins.Sdk.Column;
 using CursorSeekOrigin = QueryCat.Plugins.Sdk.CursorSeekOrigin;
@@ -25,7 +22,6 @@ public partial class ThriftPluginClient
     private sealed partial class Handler : QueryCatIOHandler, Plugin.IAsync
     {
         private readonly ThriftPluginClient _thriftPluginClient;
-        private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(Handler));
 
         public Handler(ThriftPluginClient thriftPluginClient)
             : base(thriftPluginClient._executionThread, thriftPluginClient._objectsStorage)
@@ -488,6 +484,51 @@ public partial class ThriftPluginClient
             try
             {
                 return await _handler.AnswerAgent_AskAsync(token, object_answer_agent_handle, request, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, Resources.Errors.HandlerInternalError);
+                throw QueryCatPluginExceptionUtils.Create(ex);
+            }
+        }
+
+        /// <inheritdoc />
+        public async Task Thread_CloseHandleAsync(long token, int handle, CancellationToken cancellationToken = default)
+        {
+            LogCallMethod(nameof(Thread_CloseHandleAsync));
+            try
+            {
+                await _handler.Thread_CloseHandleAsync(token, handle, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, Resources.Errors.HandlerInternalError);
+                throw QueryCatPluginExceptionUtils.Create(ex);
+            }
+        }
+
+        /// <inheritdoc />
+        public async Task<ObjectValue> Thread_GetHandleInfoAsync(long token, int handle, CancellationToken cancellationToken = default)
+        {
+            LogCallMethod(nameof(Thread_GetHandleInfoAsync));
+            try
+            {
+                return await _handler.Thread_GetHandleInfoAsync(token, handle, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, Resources.Errors.HandlerInternalError);
+                throw QueryCatPluginExceptionUtils.Create(ex);
+            }
+        }
+
+        /// <inheritdoc />
+        public async Task<ObjectValue> Thread_GetHandleFromVariableAsync(long token, string name, CancellationToken cancellationToken = default)
+        {
+            LogCallMethod(nameof(Thread_GetHandleFromVariableAsync));
+            try
+            {
+                return await _handler.Thread_GetHandleFromVariableAsync(token, name, cancellationToken);
             }
             catch (Exception ex)
             {

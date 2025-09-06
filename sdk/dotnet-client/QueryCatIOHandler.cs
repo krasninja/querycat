@@ -32,6 +32,13 @@ public partial class QueryCatIOHandler : global::QueryCat.Plugins.Sdk.QueryCatIO
     private readonly ObjectsStorage _objectsStorage;
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(QueryCatIOHandler));
 
+    private static ObjectValue NullObjectValue { get; } = new()
+    {
+        Type = ObjectType.NONE,
+        Handle = -1,
+        Name = "NULL",
+    };
+
     public QueryCatIOHandler(
         IExecutionThread executionThread,
         ObjectsStorage objectsStorage)
@@ -607,6 +614,64 @@ public partial class QueryCatIOHandler : global::QueryCat.Plugins.Sdk.QueryCatIO
         throw new QueryCatPluginException(
             ErrorType.INVALID_OBJECT,
             string.Format(Resources.Errors.Object_InvalidType, typeof(IAnswerAgent)));
+    }
+
+    /// <inheritdoc />
+    public async Task Thread_CloseHandleAsync(long token, int handle, CancellationToken cancellationToken = default)
+    {
+        await BeforeCallAsync(token, nameof(Thread_CloseHandleAsync), cancellationToken);
+        _objectsStorage.Remove(handle);
+    }
+
+    /// <inheritdoc />
+    public async Task<ObjectValue> Thread_GetHandleInfoAsync(long token, int handle, CancellationToken cancellationToken = default)
+    {
+        await BeforeCallAsync(token, nameof(Thread_GetHandleInfoAsync), cancellationToken);
+        if (_objectsStorage.TryGet<object>(handle, out var obj))
+        {
+            if (obj is IRowsIterator)
+            {
+                return new ObjectValue(ObjectType.ROWS_ITERATOR, handle, obj.ToString() ?? string.Empty);
+            }
+            if (obj is IRowsInput)
+            {
+                return new ObjectValue(ObjectType.ROWS_INPUT, handle, obj.ToString() ?? string.Empty);
+            }
+            if (obj is IRowsOutput)
+            {
+                return new ObjectValue(ObjectType.ROWS_OUTPUT, handle, obj.ToString() ?? string.Empty);
+            }
+            if (obj is IRowsFormatter)
+            {
+                return new ObjectValue(ObjectType.ROWS_FORMATTER, handle, obj.ToString() ?? string.Empty);
+            }
+            if (obj is IAnswerAgent)
+            {
+                return new ObjectValue(ObjectType.ANSWER_AGENT, handle, obj.ToString() ?? string.Empty);
+            }
+            if (obj is IBlobData blobData)
+            {
+                return new ObjectValue(ObjectType.BLOB, handle, blobData.Name);
+            }
+        }
+
+        return NullObjectValue;
+    }
+
+    /// <inheritdoc />
+    public async Task<ObjectValue> Thread_GetHandleFromVariableAsync(long token, string name, CancellationToken cancellationToken = default)
+    {
+        await BeforeCallAsync(token, nameof(Thread_GetHandleFromVariableAsync), cancellationToken);
+        if (_executionThread.TopScope.TryGetVariable(name, out var variable))
+        {
+            var objValue = AddObjectToStorage(variable);
+            if (objValue != null && objValue.Object != null)
+            {
+                return objValue.Object;
+            }
+        }
+
+        return NullObjectValue;
     }
 
     protected virtual Task BeforeCallAsync(long token, string methodName, CancellationToken cancellationToken = default)

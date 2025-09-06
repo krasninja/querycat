@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,7 +10,7 @@ using VariantValue = QueryCat.Backend.Core.Types.VariantValue;
 
 namespace QueryCat.Plugins.Client.Remote;
 
-public sealed class ThriftRemoteRowsOutput : IRowsOutput
+public sealed class ThriftRemoteRowsOutput : IRowsOutput, IAsyncDisposable
 {
     private readonly IThriftSessionProvider _sessionProvider;
     private readonly int _objectHandle;
@@ -101,6 +102,13 @@ public sealed class ThriftRemoteRowsOutput : IRowsOutput
             valuesArray.Select(SdkConvert.Convert).ToList(),
             cancellationToken);
         return SdkConvert.Convert(result);
+    }
+
+    /// <inheritdoc />
+    public async ValueTask DisposeAsync()
+    {
+        using var session = await _sessionProvider.GetAsync();
+        await session.Client.Thread_CloseHandleAsync(_token, _objectHandle);
     }
 
     /// <inheritdoc />

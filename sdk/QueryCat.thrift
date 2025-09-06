@@ -22,6 +22,7 @@ struct DecimalValue {
 
 // Supported plugins objects types.
 enum ObjectType {
+  NONE = -1,
   GENERIC = 0,
   ROWS_INPUT = 10, // Interfaces: IRowsInput, IRowsSource, IRowsInputKeys, IRowsSchema.
   ROWS_ITERATOR = 11, // Interfaces: IRowsIterator.
@@ -454,6 +455,24 @@ service QueryCatIO {
     2: required Handle object_answer_agent_handle,
     3: required QuestionRequest request
   ) throws (1: QueryCatPluginException e),
+
+  // Free handle resources.
+  void Thread_CloseHandle(
+    1: required i64 token, // Authorization token.
+    2: required Handle handle
+  ) throws (1: QueryCatPluginException e),
+
+  // Get handle information.
+  ObjectValue Thread_GetHandleInfo(
+    1: required i64 token, // Authorization token.
+    2: required Handle handle
+  ) throws (1: QueryCatPluginException e),
+
+  // Assign handle for an existing variable object.
+  ObjectValue Thread_GetHandleFromVariable(
+    1: required i64 token, // Authorization token.
+    2: required string name
+  ) throws (1: QueryCatPluginException e)
 }
 
 service PluginsManager extends QueryCatIO {

@@ -61,11 +61,11 @@ public sealed class RowsFrameIterator : ICursorRowsIterator
         {
             if (origin == CursorSeekOrigin.Begin)
             {
-                _absoluteCursor = offset;
+                _absoluteCursor = (int)offset;
             }
             else if (origin == CursorSeekOrigin.Current)
             {
-                _absoluteCursor += offset;
+                _absoluteCursor += (int)offset;
             }
             _relativeCursor = _absoluteCursor;
         }

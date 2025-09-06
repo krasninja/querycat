@@ -1,10 +1,11 @@
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using QueryCat.Backend.Core.Execution;
 
 namespace QueryCat.Plugins.Client.Remote;
 
-public sealed class ThriftRemoteAnswerAgent : IAnswerAgent
+public sealed class ThriftRemoteAnswerAgent : IAnswerAgent, IAsyncDisposable
 {
     private readonly IThriftSessionProvider _sessionProvider;
     private readonly int _objectHandle;
@@ -24,5 +25,12 @@ public sealed class ThriftRemoteAnswerAgent : IAnswerAgent
         var response = await session.Client.AnswerAgent_AskAsync(_token, _objectHandle,
             SdkConvert.Convert(request), cancellationToken);
         return SdkConvert.Convert(response);
+    }
+
+    /// <inheritdoc />
+    public async ValueTask DisposeAsync()
+    {
+        using var session = await _sessionProvider.GetAsync();
+        await session.Client.Thread_CloseHandleAsync(_token, _objectHandle);
     }
 }

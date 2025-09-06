@@ -1,9 +1,11 @@
+using System;
 using System.IO;
+using System.Threading.Tasks;
 using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Plugins.Client.Remote;
 
-public sealed class ThriftRemoteBlobProxy : IBlobData
+public sealed class ThriftRemoteBlobProxy : IBlobData, IDisposable, IAsyncDisposable
 {
     private readonly RemoteStream _remoteStream;
 
@@ -28,4 +30,16 @@ public sealed class ThriftRemoteBlobProxy : IBlobData
 
     /// <inheritdoc />
     public Stream GetStream() => _remoteStream;
+
+    /// <inheritdoc />
+    public ValueTask DisposeAsync()
+    {
+        return _remoteStream.DisposeAsync();
+    }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        _remoteStream.Dispose();
+    }
 }

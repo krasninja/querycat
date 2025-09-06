@@ -1,11 +1,12 @@
 using System;
+using System.Threading.Tasks;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Plugins.Client.Remote;
 
-public sealed class ThriftRemoteRowsFormatter : IRowsFormatter
+public sealed class ThriftRemoteRowsFormatter : IRowsFormatter, IAsyncDisposable
 {
     /*
      * Remote iteration scheme:
@@ -77,5 +78,12 @@ public sealed class ThriftRemoteRowsFormatter : IRowsFormatter
             throw new InvalidOperationException(Resources.Errors.HandlerInternalError);
         }
         return result;
+    }
+
+    /// <inheritdoc />
+    public async ValueTask DisposeAsync()
+    {
+        using var session = await _sessionProvider.GetAsync();
+        await session.Client.Thread_CloseHandleAsync(_token, _objectHandle);
     }
 }

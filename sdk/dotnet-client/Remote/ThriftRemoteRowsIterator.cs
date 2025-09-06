@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -5,7 +6,7 @@ using QueryCat.Backend.Core.Data;
 
 namespace QueryCat.Plugins.Client.Remote;
 
-public sealed class ThriftRemoteRowsIterator : IRowsIterator
+public sealed class ThriftRemoteRowsIterator : IRowsIterator, IAsyncDisposable
 {
     private readonly IThriftSessionProvider _sessionProvider;
     private readonly int _objectHandle;
@@ -63,5 +64,12 @@ public sealed class ThriftRemoteRowsIterator : IRowsIterator
     public void Explain(IndentedStringBuilder stringBuilder)
     {
         stringBuilder.AppendLine($"Remote iterator (handle={_objectHandle})");
+    }
+
+    /// <inheritdoc />
+    public async ValueTask DisposeAsync()
+    {
+        using var session = await _sessionProvider.GetAsync();
+        await session.Client.Thread_CloseHandleAsync(_token, _objectHandle);
     }
 }
