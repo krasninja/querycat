@@ -359,7 +359,7 @@ internal static class IOFunctions
             throw new QueryCatException(Resources.Errors.InvalidUri);
         }
         var request = new HttpRequestMessage(HttpMethod.Get, uri);
-        var response = await _httpClient.SendAsync(request, cancellationToken);
+        var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
 
         // Try to get formatter by HTTP response content type.
         var contentType = string.Empty;
@@ -379,8 +379,10 @@ internal static class IOFunctions
             formatter = await File_GetFormatterAsync(type, thread, null, cancellationToken);
         }
 
-        var blobStream = new StreamBlobData(() => response.Content.ReadAsStream(cancellationToken),
-            contentType, Path.GetFileName(uri.LocalPath));
+        var blobStream = new StreamBlobData(
+            () => response.Content.ReadAsStream(cancellationToken),
+            contentType,
+            Path.GetFileName(uri.LocalPath));
         return VariantValue.CreateFromObject(formatter.OpenInput(blobStream));
     }
 

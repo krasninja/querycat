@@ -183,7 +183,7 @@ internal sealed class CacheStream : Stream
         var span = _buffer.GetSpan(cachePosition, cachePosition + buffer.Length);
         _cachePosition += span.Length;
         span.CopyTo(buffer.Span);
-        if (!IsInCache && _cachePosition != _stream.Position)
+        if (!IsInCache && _stream.CanSeek && _cachePosition != _stream.Position)
         {
             _stream.Position = _cachePosition;
         }
@@ -197,12 +197,12 @@ internal sealed class CacheStream : Stream
         {
             ArgumentOutOfRangeException.ThrowIfNotEqual((int)origin, (int)SeekOrigin.Begin, nameof(origin));
         }
-        if (offset > _stream.Position)
+        if (_stream.CanSeek && offset > _stream.Position)
         {
             ArgumentOutOfRangeException.ThrowIfGreaterThan(offset, _stream.Position, nameof(offset));
         }
         _cachePosition = offset;
-        return _stream.Position;
+        return _cachePosition;
     }
 
     /// <inheritdoc />
