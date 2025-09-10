@@ -269,11 +269,13 @@ public class DelimiterStreamReader
 
         if (_dynamicBuffer.IsEmpty)
         {
-            await ReadNextBufferDataAsync(cancellationToken);
+            await ReadNextBufferDataAsync(cancellationToken)
+                .ConfigureAwait(false);
         }
         if (_options.Delimiters.Length == 0)
         {
-            await FindDelimiterAsync(cancellationToken);
+            await FindDelimiterAsync(cancellationToken)
+                .ConfigureAwait(false);
         }
 
         bool isInQuotes = false, // Are we within quotes?
@@ -338,7 +340,6 @@ public class DelimiterStreamReader
                         }
                         if (completeLine)
                         {
-                            _currentDelimiterPosition = sequenceReader.Consumed;
                             return true;
                         }
                     }
@@ -350,7 +351,7 @@ public class DelimiterStreamReader
                     {
                         var hasOnlyWhitespacesBeforeDelimiter =
                             !_options.EnableQuotesModeOnFieldStart // Bypass.
-                            || (_options.EnableQuotesModeOnFieldStart && HasOnlyWhitespaceChars((int)currentField.StartIndex, ref sequenceReader));
+                            || (_options.EnableQuotesModeOnFieldStart && HasOnlyWhitespaceChars(currentField.StartIndex, ref sequenceReader));
                         if (hasOnlyWhitespacesBeforeDelimiter)
                         {
                             quotesMode = true;
@@ -378,10 +379,7 @@ public class DelimiterStreamReader
                                 isInQuotes = !isInQuotes;
                             }
                         }
-                        if (quotesMode)
-                        {
-                            currentField.QuotesCount++;
-                        }
+                        currentField.QuotesCount++;
                     }
                 }
                 // End of line.
@@ -423,7 +421,8 @@ public class DelimiterStreamReader
             }
 
             var remain = sequenceReader.Remaining;
-            var readBytes = await ReadNextBufferDataAsync(cancellationToken);
+            var readBytes = await ReadNextBufferDataAsync(cancellationToken)
+                .ConfigureAwait(false);
             if (readBytes < 1)
             {
                 _currentDelimiterPosition += remain;
@@ -451,7 +450,7 @@ public class DelimiterStreamReader
 
         // Go backward and analyze.
         var hasOnlyWhitespaces = true;
-        var i = 0;
+        int i;
         for (i = 0; i < count; i++)
         {
             sequenceReader.Rewind(1);
@@ -493,7 +492,7 @@ public class DelimiterStreamReader
         }
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private bool IsEmpty()
         => _fieldInfoLastIndex <= 2 && _fieldInfos[0].EndIndex == 0;
 
@@ -503,21 +502,21 @@ public class DelimiterStreamReader
         var buffer = _dynamicBuffer.Allocate();
         // The Read method has about 20% better performance than ReadAsync.
         var readBytes = AsyncRead
-            ? await _streamReader.ReadAsync(buffer, cancellationToken)
+            ? await _streamReader.ReadAsync(buffer, cancellationToken).ConfigureAwait(false)
             : _streamReader.Read(buffer.Span);
         _dynamicBuffer.Commit(readBytes);
         return readBytes;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void CreateSequenceReader(out SequenceReader<char> sequenceReader)
     {
+        _dynamicBuffer.Advance(_currentDelimiterPosition);
         _currentSequence = _dynamicBuffer.GetSequence();
         sequenceReader = new SequenceReader<char>(_currentSequence);
-        sequenceReader.Advance(_currentDelimiterPosition);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private FieldInfo MoveToNextFieldInfo()
     {
         if (_fieldInfoLastIndex >= _fieldInfos.LongLength)
@@ -650,7 +649,8 @@ public class DelimiterStreamReader
         ReadOnlySpan<char> line;
         do
         {
-            readBytes = await ReadNextBufferDataAsync(cancellationToken);
+            readBytes = await ReadNextBufferDataAsync(cancellationToken)
+                .ConfigureAwait(false);
             _currentSequence = _dynamicBuffer.GetSequence();
             sequenceReader = new SequenceReader<char>(_currentSequence);
         }
