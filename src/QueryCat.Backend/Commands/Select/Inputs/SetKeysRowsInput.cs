@@ -79,7 +79,7 @@ internal sealed class SetKeysRowsInput : RowsInput, IRowsInputUpdate, IRowsInput
         }
         await base.ReadNextAsync(cancellationToken);
 
-        if (!_keysFilled)
+        if (_conditions.Length > 0 && !_keysFilled)
         {
             await FillKeysAsync(cancellationToken);
             _keysFilled = true;
@@ -88,7 +88,7 @@ internal sealed class SetKeysRowsInput : RowsInput, IRowsInputUpdate, IRowsInput
         var hasData = await _rowsInput.ReadNextAsync(cancellationToken);
 
         // We need to repeat "ReadNext" call in case of multiple func values.
-        if (_hasMultipleConditions && !hasData)
+        if (_conditions.Length > 0 && _hasMultipleConditions && !hasData)
         {
             await _rowsInput.ResetAsync(cancellationToken);
             hasData = await FillKeysAsync(cancellationToken);

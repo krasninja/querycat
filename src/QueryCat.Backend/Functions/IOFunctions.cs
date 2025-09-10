@@ -144,7 +144,13 @@ internal static class IOFunctions
             var fileFormatter = formatter ?? await File_GetFormatterAsync(file, thread, funcArgs);
             var blobFileStream = new StreamBlobData(() =>
                 {
-                    Stream fileStream = File.Open(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                    Stream fileStream = new FileStream(
+                        file,
+                        FileMode.Open,
+                        FileAccess.Read,
+                        FileShare.Inheritable,
+                        0x1000 * 2 /* 8KB */,
+                        FileOptions.SequentialScan);
                     if (_compressFilesExtensions.Contains(Path.GetExtension(file).ToLower()))
                     {
                         fileStream = new GZipStream(fileStream, CompressionMode.Decompress);

@@ -138,7 +138,9 @@ public class DelimiterStreamReader
 
         public long EndIndex
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _endIndex;
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             set => _endIndex = value;
         }
 
@@ -146,17 +148,19 @@ public class DelimiterStreamReader
 
         public int QuotesCount
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _quotesCount;
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             set => _quotesCount = value;
         }
 
         public char QuoteCharacter { get; set; }
 
-        public bool HasQuotes => QuotesCount > 0;
+        public bool HasQuotes => _quotesCount > 0;
 
-        public bool HasInnerQuotes => QuotesCount > 2;
+        public bool HasInnerQuotes => _quotesCount > 2;
 
-        public bool IsEmpty => EndIndex == StartIndex;
+        public bool IsEmpty => _endIndex == _startIndex;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
         public void Reset()
@@ -261,6 +265,7 @@ public class DelimiterStreamReader
     {
         _dynamicBuffer.Advance(_currentDelimiterPosition);
         _currentDelimiterPosition = 0;
+        var includeDelimiter = _options.IncludeDelimiter;
 
         if (_dynamicBuffer.IsEmpty)
         {
@@ -278,15 +283,15 @@ public class DelimiterStreamReader
         var currentField = MoveToNextFieldInfo();
         while (true)
         {
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return false;
+            }
+
             var stopCharactersLocal = (ReadOnlySpan<char>)_stopCharacters;
             CreateSequenceReader(out var sequenceReader);
             while (_currentDelimiterPosition < _dynamicBuffer.Size)
             {
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    return false;
-                }
-
                 // Skip extra spaces (or any delimiters).
                 if (_options.DelimitersCanRepeat)
                 {
@@ -314,8 +319,32 @@ public class DelimiterStreamReader
                 }
                 sequenceReader.Advance(1);
 
+                // Delimiters.
+                if (!lineMode && _delimiters.Contains(ch))
+                {
+                    _currentDelimiterPosition = sequenceReader.Consumed;
+                    if (!isInQuotes && _currentDelimiterPosition > 0)
+                    {
+                        bool addField = true, completeLine = false;
+                        OnDelimiter?.Invoke(ch, _currentDelimiterPosition, out addField, out completeLine);
+                        if (addField)
+                        {
+                            currentField.EndIndex = includeDelimiter ? _currentDelimiterPosition : _currentDelimiterPosition - 1;
+                            currentField = MoveToNextFieldInfo();
+                            fieldStart = true;
+                            currentField.StartIndex = includeDelimiter ? _currentDelimiterPosition - 1 : _currentDelimiterPosition;
+                            currentField.QuotesCount = 0;
+                            quotesMode = false;
+                        }
+                        if (completeLine)
+                        {
+                            _currentDelimiterPosition = sequenceReader.Consumed;
+                            return true;
+                        }
+                    }
+                }
                 // Quotes.
-                if (isInQuotes || _quoteCharacters.Contains(ch))
+                else if (isInQuotes || _quoteCharacters.Contains(ch))
                 {
                     if (fieldStart)
                     {
@@ -329,7 +358,7 @@ public class DelimiterStreamReader
                             currentField.QuoteCharacter = ch;
                             currentField.QuotesCount++;
                             _currentDelimiterPosition = sequenceReader.Consumed;
-                            currentField.StartIndex = _options.IncludeDelimiter ? _currentDelimiterPosition : _currentDelimiterPosition - 1;
+                            currentField.StartIndex = includeDelimiter ? _currentDelimiterPosition : _currentDelimiterPosition - 1;
                         }
 
                         fieldStart = false;
@@ -352,30 +381,6 @@ public class DelimiterStreamReader
                         if (quotesMode)
                         {
                             currentField.QuotesCount++;
-                        }
-                    }
-                }
-                // Delimiters.
-                else if (!lineMode && _delimiters.Contains(ch))
-                {
-                    _currentDelimiterPosition = sequenceReader.Consumed;
-                    if (!isInQuotes && _currentDelimiterPosition > 0)
-                    {
-                        bool addField = true, completeLine = false;
-                        OnDelimiter?.Invoke(ch, _currentDelimiterPosition, out addField, out completeLine);
-                        if (addField)
-                        {
-                            currentField.EndIndex = _options.IncludeDelimiter ? _currentDelimiterPosition : _currentDelimiterPosition - 1;
-                            currentField = MoveToNextFieldInfo();
-                            fieldStart = true;
-                            currentField.StartIndex = _options.IncludeDelimiter ? _currentDelimiterPosition - 1 : _currentDelimiterPosition;
-                            currentField.QuotesCount = 0;
-                            quotesMode = false;
-                        }
-                        if (completeLine)
-                        {
-                            _currentDelimiterPosition = sequenceReader.Consumed;
-                            return true;
                         }
                     }
                 }
@@ -515,15 +520,14 @@ public class DelimiterStreamReader
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     private FieldInfo MoveToNextFieldInfo()
     {
-        if (_fieldInfoLastIndex >= _fieldInfos.Length)
+        if (_fieldInfoLastIndex >= _fieldInfos.LongLength)
         {
             Array.Resize(ref _fieldInfos, _fieldInfoLastIndex + 1);
             _fieldInfos[^1] = new FieldInfo();
         }
 
-        var field = _fieldInfos[_fieldInfoLastIndex];
+        var field = _fieldInfos[_fieldInfoLastIndex++];
         field.Reset();
-        _fieldInfoLastIndex++;
         return field;
     }
 

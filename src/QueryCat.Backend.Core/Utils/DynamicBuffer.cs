@@ -56,15 +56,17 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
     private static int _segmentId;
 #endif
 
+    private long _size;
+
     /// <summary>
     /// Current buffer size.
     /// </summary>
-    public long Size => _endPosition - _startPosition;
+    public long Size => _size;
 
     /// <summary>
     /// Whether the dynamic buffer contains any data.
     /// </summary>
-    public bool IsEmpty => _endPosition == _startPosition;
+    public bool IsEmpty => _size == 0;
 
     /// <summary>
     /// Total buffers (used and free) count.
@@ -290,6 +292,7 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
                 advanced += remain;
                 _startPosition += remain;
             }
+            SetSize();
 
             // Store freed segment, shrink main buffer.
             if (GetSegmentStartIndex() == 0)
@@ -348,6 +351,7 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
         _startPosition = 0;
         _endPosition = 0;
         _allocatedFlag = false;
+        _size = 0;
     }
 
     #region Read
@@ -421,6 +425,7 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
         }
 
         _endPosition += size;
+        SetSize();
         Debug.Assert(_endPosition <= _allocatedPosition,
             "Allocated position cannot be before committed!");
     }
@@ -809,6 +814,7 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
             var append = upperIndex - writeIndex;
             _endPosition += append;
             writeIndex += append;
+            SetSize();
         }
     }
 
@@ -856,8 +862,12 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
         _allocatedPosition = 0;
         _startPosition = 0;
         _endPosition = 0;
+        _size = 0;
         _allocatedFlag = false;
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void SetSize() => _size = _endPosition - _startPosition;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     private static ulong Min(ulong val1, ulong val2, ulong val3)
