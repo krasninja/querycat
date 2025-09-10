@@ -24,6 +24,12 @@ There are alternative and similar tools:
 
 - [MathEvaluator](https://github.com/AntonovAnton/math.evaluation). MathEvaluator is a .NET library that allows you to evaluate any mathematical expressions from a string dynamically.
 
+- [DuckDB](https://duckdb.org). The DuckDB has extensible engine and can select structured data from CSV or log files. [The Data Engineer's Guide to Efficient Log Parsing with DuckDB/MotherDuck](https://motherduck.com/blog/json-log-analysis-duckdb-motherduck/). Has great performance.
+
+- [zsv](https://github.com/liquidaty/zsv). Fast CSV parser.
+
+- [Sep](https://github.com/nietras/Sep). CSV parser NuGet package. Really fast.
+
 No active support:
 
 - [Log Parser](https://www.microsoft.com/en-us/download/details.aspx?id=24659). The is the command line tool to query various logs files (CSV, IIS logs, event logs, XML, etc). It can run aggregate and filter queries. Only for Windows. Not supported anymore. [Documentation](https://documentation.help/Log-Parser/index.htm).
@@ -33,3 +39,10 @@ No active support:
 - [xsv](https://github.com/BurntSushi/xsv/). Command line programs for indexing, slicing, analyzing, splitting and joining CSV files. Written in Rust. Seems it is not supported anymore.
 
 - [q](https://harelba.github.io/q/). Run SQL directly on CSV or TSV files. Written in Python. Seems no active support.
+
+- [TextQL](https://github.com/dinedal/textql). Executes SQL against CSV or TSV. Golang.
+
+- [dsq](https://github.com/multiprocessio/dsq). Command line tool for running SQL queries against JSON, CSV, Excel, Parquet, and more. Not under active development: "While development may continue in the future with a different architecture, for the moment you should probably instead use DuckDB, ClickHouse-local, or GlareDB (based on DataFusion)."
+https://github.com/cube2222/octosql
+
+- [OctoSQL](https://github.com/cube2222/octosql). OctoSQL is a query tool that allows you to join, analyse and transform data from multiple databases and file formats using SQL.
