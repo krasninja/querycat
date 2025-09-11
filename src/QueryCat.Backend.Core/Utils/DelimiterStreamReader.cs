@@ -511,9 +511,9 @@ public class DelimiterStreamReader
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void CreateSequenceReader(out SequenceReader<char> sequenceReader)
     {
-        _dynamicBuffer.Advance(_currentDelimiterPosition);
         _currentSequence = _dynamicBuffer.GetSequence();
         sequenceReader = new SequenceReader<char>(_currentSequence);
+        sequenceReader.Advance(_currentDelimiterPosition);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
