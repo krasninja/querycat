@@ -9,7 +9,7 @@ namespace QueryCat.Backend.Core.Utils;
 /// <summary>
 /// The class encapsulates the linked list of buffers. It keeps the ordered
 /// list of buffers and can auto-grow if no enough space available. Also,
-/// it keeps freed buffers for reuse.
+/// it keeps freed buffers for reuse. The class is not thread safe.
 /// </summary>
 /// <typeparam name="T">Buffer type.</typeparam>
 [DebuggerDisplay("Size = {Size}, Buffers = {UsedBuffersCount}/{TotalBuffersCount}")]
@@ -206,6 +206,8 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
 #if DEBUG
         private int SegmentId { get; } = _segmentId++;
 #endif
+
+        public static BufferSegment Empty { get; } = new([], 0);
 
         internal T[] Buffer { get; }
 
@@ -581,7 +583,7 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
 
         public bool IsNotEmpty => StartIndex != -1;
 
-        public static SegmentChunk Empty { get; } = new(new BufferSegment([], 0), -1, 0, 0);
+        public static SegmentChunk Empty { get; } = new(BufferSegment.Empty, -1, 0, 0);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ReadOnlySpan<T> GetSpan() => Segment.GetSpan(StartIndex, EndIndex);
@@ -661,11 +663,7 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
         }
 
         var bufferEndIndex = GetSegmentEndIndex(bufferSegment);
-        if (bufferStartIndex > bufferEndIndex)
-        {
-            throw new ArgumentOutOfRangeException(nameof(startIndex),
-                "Buffer start index cannot be greater than buffer end index.");
-        }
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(bufferStartIndex, bufferEndIndex, nameof(startIndex));
         return new SegmentChunk(bufferSegment, bufferStartIndex, bufferEndIndex, consumed);
     }
 
