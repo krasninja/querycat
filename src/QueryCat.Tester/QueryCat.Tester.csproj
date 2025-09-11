@@ -14,7 +14,7 @@
   <ItemGroup>
     <PackageReference Include="QueryCat" Version="0.15.0" />
     <PackageReference Include="System.CommandLine" Version="2.0.0-beta7.25380.108" />
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.8" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.9" />
   </ItemGroup>
 
 </Project>
