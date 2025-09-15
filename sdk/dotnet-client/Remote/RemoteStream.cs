@@ -28,7 +28,7 @@ public sealed class RemoteStream : Stream
         {
             return AsyncUtils.RunSync(async ct =>
             {
-                var session = await _sessionProvider.GetAsync(ct);
+                using var session = await _sessionProvider.GetAsync(ct);
                 return await session.Client.Blob_GetLengthAsync(_token, _objectHandle, ct);
             });
         }
@@ -46,7 +46,7 @@ public sealed class RemoteStream : Stream
         {
             return AsyncUtils.RunSync(async ct =>
             {
-                var session = await _sessionProvider.GetAsync(ct);
+                using var session = await _sessionProvider.GetAsync(ct);
                 return await session.Client.Blob_GetContentTypeAsync(_token,_objectHandle, ct);
             }) ?? string.Empty;
         }
@@ -61,7 +61,7 @@ public sealed class RemoteStream : Stream
         {
             return AsyncUtils.RunSync(async ct =>
             {
-                var session = await _sessionProvider.GetAsync(ct);
+                using var session = await _sessionProvider.GetAsync(ct);
                 return await session.Client.Blob_GetNameAsync(_token,_objectHandle, ct);
             }) ?? string.Empty;
         }
@@ -88,7 +88,7 @@ public sealed class RemoteStream : Stream
     /// <inheritdoc />
     public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
     {
-        var session = await _sessionProvider.GetAsync(cancellationToken);
+        using var session = await _sessionProvider.GetAsync(cancellationToken);
         var bytes = await session.Client.Blob_ReadAsync(_token,_objectHandle, (int)Position, count, cancellationToken);
         Position += bytes.Length;
 
@@ -118,7 +118,7 @@ public sealed class RemoteStream : Stream
             buffer = buffer.AsSpan(offset, count).ToArray();
         }
 
-        var session = await _sessionProvider.GetAsync(cancellationToken);
+        using var session = await _sessionProvider.GetAsync(cancellationToken);
         await session.Client.Blob_WriteAsync(_token, _objectHandle, buffer, cancellationToken);
     }
 
@@ -135,7 +135,7 @@ public sealed class RemoteStream : Stream
     /// <inheritdoc />
     public override async ValueTask DisposeAsync()
     {
-        var session = await _sessionProvider.GetAsync();
+        using var session = await _sessionProvider.GetAsync();
         await session.Client.Thread_CloseHandleAsync(_token, _objectHandle);
         await base.DisposeAsync();
     }

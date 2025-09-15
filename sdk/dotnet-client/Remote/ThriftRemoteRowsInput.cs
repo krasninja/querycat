@@ -108,7 +108,7 @@ public sealed class ThriftRemoteRowsInput : IRowsInputUpdate, IRowsInputDelete, 
     public async Task CloseAsync(CancellationToken cancellationToken = default)
     {
         _cachedKeyColumns = null;
-        var session = await _sessionProvider.GetAsync(cancellationToken);
+        using var session = await _sessionProvider.GetAsync(cancellationToken);
         await session.Client.RowsSet_CloseAsync(_token, _objectHandle, cancellationToken);
     }
 
