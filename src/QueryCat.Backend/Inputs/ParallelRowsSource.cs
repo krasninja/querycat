@@ -29,10 +29,7 @@ internal class ParallelRowsSource : IRowsSource, IDisposable, IAsyncDisposable
 
     protected async ValueTask AddTask(Func<CancellationToken, Task> func, CancellationToken cancellationToken = default)
     {
-        if (cancellationToken.IsCancellationRequested)
-        {
-            return;
-        }
+        cancellationToken.ThrowIfCancellationRequested();
         await ParallelSemaphore.WaitAsync(cancellationToken);
         Interlocked.Increment(ref _runningTasksCount);
         _ = Task.Factory.StartNew(async () =>

@@ -114,11 +114,13 @@ internal abstract class BaseCommand : Command
         {
             while (true)
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 var requestQuit = false;
                 Thread.Sleep(options.FollowTimeout);
                 await StartWriterLoop(cancellationToken);
                 ProcessInput(ref requestQuit);
-                if (cancellationToken.IsCancellationRequested || requestQuit)
+                if (requestQuit)
                 {
                     break;
                 }
@@ -134,10 +136,7 @@ internal abstract class BaseCommand : Command
         {
             while (await rowsIterator.MoveNextAsync(ct))
             {
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    break;
-                }
+                cancellationToken.ThrowIfCancellationRequested();
                 if (!isOpened)
                 {
                     rowsOutput.QueryContext = new RowsOutputQueryContext(rowsIterator.Columns, configStorage);

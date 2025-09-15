@@ -57,14 +57,16 @@ internal abstract class BufferRowsSource : IRowsSource, IDisposable
         var parent = threadState.BufferRowsSource;
 
         // Loop while we have data or cancellation requested.
-        while (!cancellationToken.IsCancellationRequested)
+        var hasDataToProcess = true;
+        while (hasDataToProcess)
         {
-            var hasDataToProcess = await parent.CallbackAsync(cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+
+            hasDataToProcess = await parent.CallbackAsync(cancellationToken);
             if (!hasDataToProcess)
             {
                 // If we have no data - exit.
                 await parent._cancellationTokenSource.CancelAsync();
-                break;
             }
         }
 

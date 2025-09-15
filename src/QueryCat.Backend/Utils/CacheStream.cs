@@ -93,10 +93,7 @@ internal sealed class CacheStream : Stream
     /// <inheritdoc />
     public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
     {
-        if (cancellationToken.IsCancellationRequested)
-        {
-            return 0;
-        }
+        cancellationToken.ThrowIfCancellationRequested();
 
         var bytesRead = 0;
 
@@ -122,10 +119,7 @@ internal sealed class CacheStream : Stream
     /// <inheritdoc />
     public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
     {
-        if (cancellationToken.IsCancellationRequested)
-        {
-            return 0;
-        }
+        cancellationToken.ThrowIfCancellationRequested();
 
         var bytesRead = 0;
 

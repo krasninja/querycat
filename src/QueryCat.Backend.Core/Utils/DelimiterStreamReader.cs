@@ -285,10 +285,7 @@ public class DelimiterStreamReader
         var currentField = MoveToNextFieldInfo();
         while (true)
         {
-            if (cancellationToken.IsCancellationRequested)
-            {
-                return false;
-            }
+            cancellationToken.ThrowIfCancellationRequested();
 
             var stopCharactersLocal = (ReadOnlySpan<char>)_stopCharacters;
             CreateSequenceReader(out var sequenceReader);
