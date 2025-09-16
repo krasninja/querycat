@@ -68,13 +68,7 @@ public class AdjustColumnsLengthsIterator : IRowsIterator, IRowsIteratorParent
 
     private async ValueTask InitializeAsync(CancellationToken cancellationToken)
     {
-        foreach (var column in Columns)
-        {
-            if (column.Length < column.FullName.Length)
-            {
-                column.Length = column.FullName.Length;
-            }
-        }
+        SetColumnsWidthMatchNames();
 
         while (await _cacheRowsIterator.MoveNextAsync(cancellationToken) && _cacheRowsIterator.Position + 1 < _maxRowsToAnalyze)
         {
@@ -95,6 +89,19 @@ public class AdjustColumnsLengthsIterator : IRowsIterator, IRowsIteratorParent
         _isInitialized = true;
         _cacheRowsIterator.SeekCacheCursorToHead();
         _cacheRowsIterator.Freeze();
+
+        SetColumnsWidthMatchNames();
+    }
+
+    private void SetColumnsWidthMatchNames()
+    {
+        foreach (var column in Columns)
+        {
+            if (column.Length < column.FullName.Length)
+            {
+                column.Length = column.FullName.Length;
+            }
+        }
     }
 
     /// <inheritdoc />

@@ -1,7 +1,6 @@
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Relational.Iterators;
 
 namespace QueryCat.Backend.Formatters;
 
@@ -16,7 +15,7 @@ internal sealed class RawValueInput : RowsInput
     /// <inheritdoc />
     public override Column[] Columns { get; protected set; } =
     [
-        new(SingleValueRowsIterator.ColumnTitle, DataType.Blob)
+        new(Column.ValueColumnTitle, DataType.Blob)
     ];
 
     /// <inheritdoc />

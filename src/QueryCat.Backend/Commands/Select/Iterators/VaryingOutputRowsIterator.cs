@@ -40,7 +40,6 @@ internal sealed class VaryingOutputRowsIterator : IRowsIterator, IRowsIteratorPa
         IRowsIterator rowsIterator,
         IFuncUnit func,
         FuncUnitCallInfo functionCallInfo,
-        IRowsOutput defaultRowsOutput,
         QueryContext queryContext)
     {
         _thread = thread;
@@ -52,19 +51,17 @@ internal sealed class VaryingOutputRowsIterator : IRowsIterator, IRowsIteratorPa
         _functionCallInfoResults = new VariantValueArray(size: functionCallInfo.Arguments.Length);
         _functionCallInfoResultsForCompare = new VariantValueArray(size: functionCallInfo.Arguments.Length);
 
-        CurrentOutput = defaultRowsOutput;
+        CurrentOutput = NullRowsOutput.Instance;
     }
 
     public VaryingOutputRowsIterator(
         IExecutionThread thread,
         IRowsIterator rowsIterator,
-        IRowsOutput defaultRowsOutput,
         QueryContext queryContext) : this(
             thread: thread,
             rowsIterator: rowsIterator,
-            func: new FuncUnitStatic(VariantValue.CreateFromObject(defaultRowsOutput)),
+            func: new FuncUnitStatic(VariantValue.CreateFromObject(NullRowsOutput.Instance)),
             functionCallInfo: FuncUnitCallInfo.Empty,
-            defaultRowsOutput,
             queryContext)
     {
     }

@@ -13,19 +13,23 @@ internal sealed class JsonFormatter : IRowsFormatter
 {
     [SafeFunction]
     [Description("JSON formatter.")]
-    [FunctionSignature("json(jsonpath?: string): object<IRowsFormatter>")]
+    [FunctionSignature("json(jsonpath?: string, indent?: int): object<IRowsFormatter>")]
     [FunctionFormatters(".json", "application/json")]
     public static VariantValue Json(IExecutionThread thread)
     {
-        var rowsSource = new JsonFormatter(thread.Stack.GetAtOrDefault(0).AsString);
-        return VariantValue.CreateFromObject(rowsSource);
+        var path = thread.Stack.GetAtOrDefault(0).AsString;
+        var indent = thread.Stack.GetAtOrDefault(1).AsInteger;
+        var formatter = new JsonFormatter(path, (int?)indent);
+        return VariantValue.CreateFromObject(formatter);
     }
 
     private readonly string? _jsonPath;
+    private readonly int? _indent;
 
-    public JsonFormatter(string? jsonPath)
+    public JsonFormatter(string? jsonPath, int? indent)
     {
         _jsonPath = jsonPath;
+        _indent = indent;
     }
 
     /// <inheritdoc />
@@ -39,7 +43,7 @@ internal sealed class JsonFormatter : IRowsFormatter
     public IRowsOutput OpenOutput(IBlobData blob)
     {
         var stream = blob.GetStream();
-        return new JsonOutput(stream);
+        return new JsonOutput(stream, _indent);
     }
 
     public static void RegisterFunctions(IFunctionsManager functionsManager)

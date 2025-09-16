@@ -52,7 +52,7 @@ internal sealed class GenerateSeriesInput : IRowsInput
         _addFunction = VariantValue.GetAddDelegate(_current.Type, _step.Type);
         Columns =
         [
-            new Column("value", _current.Type, "The series value.")
+            new Column(Column.ValueColumnTitle, _current.Type, "The series value.")
         ];
     }
 

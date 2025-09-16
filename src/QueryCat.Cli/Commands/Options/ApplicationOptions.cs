@@ -4,6 +4,7 @@ using QueryCat.Backend.Addons.Formatters;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Plugins;
 using QueryCat.Backend.Execution;
+using QueryCat.Backend.Inputs;
 using QueryCat.Backend.PluginsManager;
 using QueryCat.Cli.Infrastructure;
 
@@ -109,6 +110,8 @@ internal sealed class ApplicationOptions
         bootstrapper.WithPluginsLoader(thread => new Backend.ThriftPlugins.ThriftPluginsLoader(
             thread,
             executionOptions.PluginDirectories,
+            endpoint: QueryCat.Plugins.Client.ThriftEndpoint.CreateNamedPipe(
+                QueryCat.Plugins.Client.ThriftEndpoint.GenerateIdentifier("qcath")),
             Application.GetApplicationDirectory(),
             functionsCacheDirectory: Path.Combine(Application.GetApplicationDirectory(),
                 ApplicationPluginsFunctionsCacheDirectory),
@@ -164,7 +167,7 @@ internal sealed class ApplicationOptions
             separator: columnsSeparator,
             style: outputStyle);
         var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        root.Thread.Options.DefaultRowsOutput = new PagingOutput(
+        root.RowsOutput = new PagingOutput(
             tableOutput, pagingRowsCount: PagingOutput.NoLimit, cancellationTokenSource: cts);
         return root;
     }
@@ -180,5 +183,14 @@ internal sealed class ApplicationOptions
             {
                 MinLevel = LogLevel,
             });
+    }
+
+    /// <summary>
+    /// Initialize default AI assistant instance.
+    /// </summary>
+    // ReSharper disable once InconsistentNaming
+    public void InitializeAIAssistant()
+    {
+        AIAssistant.Default = new ConsoleAIAssistant();
     }
 }

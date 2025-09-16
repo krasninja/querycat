@@ -8,6 +8,7 @@ using QueryCat.Backend.Ast.Nodes.For;
 using QueryCat.Backend.Ast.Nodes.Function;
 using QueryCat.Backend.Ast.Nodes.If;
 using QueryCat.Backend.Ast.Nodes.Insert;
+using QueryCat.Backend.Ast.Nodes.Open;
 using QueryCat.Backend.Ast.Nodes.Return;
 using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Ast.Nodes.SpecialFunctions;
@@ -584,6 +585,25 @@ internal abstract class AstVisitor
     }
 
     public virtual ValueTask VisitAsync(ReturnStatementNode node, CancellationToken cancellationToken)
+    {
+        return ValueTask.CompletedTask;
+    }
+
+    #endregion
+
+    #region Open
+
+    public virtual ValueTask VisitAsync(OpenNode node, CancellationToken cancellationToken)
+    {
+        return ValueTask.CompletedTask;
+    }
+
+    public virtual ValueTask VisitAsync(OpenStatementNode node, CancellationToken cancellationToken)
+    {
+        return ValueTask.CompletedTask;
+    }
+
+    public virtual ValueTask VisitAsync(SelectOpenNode node, CancellationToken cancellationToken)
     {
         return ValueTask.CompletedTask;
     }

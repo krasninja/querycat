@@ -30,6 +30,7 @@ statement
     | breakStatement # StatementBreak
     | continueStatement # StatementContinue
     | returnStatement # StatementReturn
+    | openStatement # StatementOpen
     | expression # StatementExpression
     ;
 
@@ -130,21 +131,21 @@ selectFromClause:
     selectHaving?;
 selectTableReferenceList:
     FROM selectTableReference (COMMA selectTableReference)*;
-selectTableReference: selectTablePrimary selectTableJoined*;
+selectTableReference: selectTablePrimary selectAlias? selectTableJoined*;
 selectTableValuesRow: '(' simpleExpression (COMMA simpleExpression)* ')';
 selectTableValues: VALUES selectTableValuesRow (COMMA selectTableValuesRow)*;
 selectTablePrimary
-    : func=functionCall (FORMAT format=functionCall)? selectAlias? # SelectTablePrimaryNoFormat
-    | '-' (FORMAT format=functionCall)? selectAlias? # SelectTablePrimaryStdin
-    | uri=STRING_LITERAL (FORMAT format=functionCall)? selectAlias? # SelectTablePrimaryWithFormat
-    | '(' selectQueryExpression ')' selectAlias? # SelectTablePrimarySubquery
-    | name=identifier (FORMAT format=functionCall)? selectAlias? # SelectTablePrimaryIdentifier
-    | '(' selectTableValues ')' selectAlias? # SelectTablePrimaryTableValues
-    | simpleExpression (FORMAT format=functionCall)? selectAlias? # SelectTablePrimaryExpression
+    : func=functionCall (FORMAT format=functionCall)? # SelectTablePrimaryNoFormat
+    | '-' (FORMAT format=functionCall)? # SelectTablePrimaryStdin
+    | uri=STRING_LITERAL (FORMAT format=functionCall)? # SelectTablePrimaryWithFormat
+    | '(' selectQueryExpression ')' # SelectTablePrimarySubquery
+    | name=identifier (FORMAT format=functionCall)? # SelectTablePrimaryIdentifier
+    | '(' selectTableValues ')' # SelectTablePrimaryTableValues
+    | simpleExpression (FORMAT format=functionCall)? # SelectTablePrimaryExpression
     ;
 selectTableJoined
-    : selectJoinType? JOIN right=selectTablePrimary ON condition=expression # SelectTableJoinedOn
-    | selectJoinType? JOIN right=selectTablePrimary USING '(' identifier (COMMA identifier)* ')' # SelectTableJoinedUsing
+    : selectJoinType? JOIN right=selectTablePrimary selectAlias? ON condition=expression # SelectTableJoinedOn
+    | selectJoinType? JOIN right=selectTablePrimary selectAlias? USING '(' identifier (COMMA identifier)* ')' # SelectTableJoinedUsing
     ;
 selectJoinType: INNER | (LEFT | RIGHT | FULL) OUTER?;
 
@@ -303,6 +304,14 @@ returnStatement: RETURN expression;
 
 /*
  * ===============
+ * OPEN command.
+ * ===============
+ */
+
+openStatement: OPEN source=selectTablePrimary;
+
+/*
+ * ===============
  * General.
  * ===============
  */
@@ -326,7 +335,10 @@ intervalLiteral: INTERVAL interval=STRING_LITERAL;
 
 blockExpression : BEGIN SEMICOLON* statement (SEMICOLON statement)* SEMICOLON* END;
 
-castOperand: CAST '(' value=simpleExpression AS type ')';
+castOperand
+    : CAST '(' value=simpleExpression AS type ')' # CastOperandWithCast
+    | type value=STRING_LITERAL # CastOperandWithString
+    ;
 atTimeZone: AT (LOCAL | TIME ZONE tz=simpleExpression);
 caseExpression: CASE arg=simpleExpression? caseWhen* (ELSE default=expression)? END;
 caseWhen: WHEN condition=expression THEN result=expression;
@@ -369,6 +381,8 @@ type
     | BOOLEAN | BOOL
     | NUMERIC | DECIMAL
     | OBJECT
+    | ARRAY | LIST
+    | MAP
     | ANY
     | VOID
     ;
@@ -405,7 +419,7 @@ expression
     | blockExpression # ExpressionBlock
     ;
 
-// Simple expression is subset of "expressons" to be used in clauses like BETWEEN.
+// Simple expression is subset of "expressions" to be used in clauses like BETWEEN.
 // Because (BETWEEN x AND y) conflicts with plain (a AND b).
 simpleExpression
     : literal # SimpleExpressionLiteral

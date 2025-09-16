@@ -192,4 +192,19 @@
   <data name="CannotCreateRowsInputFromType" xml:space="preserve">
     <value>Cannot create rows input from type '{0}'.</value>
   </data>
+  <data name="CannotProcessMaxAttempts" xml:space="preserve">
+    <value>Cannot process query because max {0} attempts reached.</value>
+  </data>
+  <data name="AnswerAgentIssue" xml:space="preserve">
+    <value>The answer agent cannot provide the SQL and the question cannot be clarified. Issue: {0}</value>
+  </data>
+  <data name="CannotCreateIterator" xml:space="preserve">
+    <value>Cannot create iterator.</value>
+  </data>
+  <data name="InvalidAgentResponse" xml:space="preserve">
+    <value>Invalid agent response: {0}</value>
+  </data>
+  <data name="AnswerAgentNotFound" xml:space="preserve">
+    <value>Answer agent not found. Define or set '{0}' variable to object of type '{1}'.</value>
+  </data>
 </root>

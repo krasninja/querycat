@@ -30,7 +30,7 @@ internal sealed class ThriftPluginContext : IDisposable, IAsyncDisposable
 
     public List<PluginContextFunction> Functions { get; } = new();
 
-    public ObjectsStorage ObjectsStorage { get; } = new();
+    public ObjectsStorage ObjectsStorage { get; }
 
     public IntPtr? LibraryHandle { get; set; }
 
@@ -39,14 +39,19 @@ internal sealed class ThriftPluginContext : IDisposable, IAsyncDisposable
     /// </summary>
     /// <param name="firstCallbackUri">First callback to connect to the plugin. It is needed
     /// because we don't have other ways to ask plugin to connect.</param>
+    /// <param name="objectsStorage">Object storage.</param>
     /// <param name="logClientRemoteCalls">Log client remote calls.</param>
     /// <param name="maxConnections">Max connections that can be established to the client plugin.</param>
-    public ThriftPluginContext(string firstCallbackUri, bool logClientRemoteCalls = false,
+    public ThriftPluginContext(
+        string firstCallbackUri,
+        ObjectsStorage objectsStorage,
+        bool logClientRemoteCalls = false,
         int maxConnections = 1)
     {
         _pluginCallbackUris.Enqueue(firstCallbackUri);
         _logClientRemoteCalls = logClientRemoteCalls;
         _maxConnections = maxConnections;
+        ObjectsStorage = objectsStorage;
 
         _waitQueue = new WaitQueue(Application.LoggerFactory);
     }
@@ -129,7 +134,7 @@ internal sealed class ThriftPluginContext : IDisposable, IAsyncDisposable
         var protocol = new TMultiplexedProtocol(
             new TBinaryProtocol(
                 new TFramedTransport(
-                    ThriftTransportUtils.CreateClientTransport(uri))
+                    ThriftTransportFactory.CreateClientTransport(uri))
             ),
             ThriftPluginClient.PluginServerName);
         Plugin.IAsync newClient;

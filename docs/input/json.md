@@ -5,12 +5,13 @@ JSON (JavaScript Object Notation) is a lightweight data-interchange format. It i
 ## Syntax
 
 ```
-json(jsonpath?: string): object<IRowsFormatter>
+json(jsonpath?: string, indent?: int): object<IRowsFormatter>
 ```
 
 Parameters:
 
 - `jsonpath`. Evaluate JSON path expression on data before processing.
+- `indent`. Defines the indentation size for JSON output.
 
 ## Examples
 
@@ -51,4 +52,27 @@ from (
     and jsonPayload not like '%The remote host closed the connection.%'
     and jsonPayload not like '%The client disconnected.%'
     and jsonPayload not like '%System.Threading.ThreadAbortException%';
+```
+
+**Write with indent**
+
+```bash
+qcat query --var f=~/temp/hackers.csv "select top 1 * into - format json(indent => 2) from f"
+```
+
+Result:
+
+```json
+[
+  {
+    "filename": "/home/ivan/temp/hackers.csv",
+    "Id": 0,
+    "Name": "Nigel Zboncak",
+    "Balance": 582,
+    "EthereumAddress": "0xf48fb3caba5c8a78ea3a620f6173391058fe58e4",
+    "Phrase": "Use the haptic XSS microchip, then you can calculate the haptic microchip!",
+    "CreatedAt": "02/08/2022 11:36:22",
+    "RemovedAt": ""
+  }
+]
 ```

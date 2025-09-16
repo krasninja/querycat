@@ -15,4 +15,12 @@ public sealed class AuthorizationException : QueryCatException
     public AuthorizationException() : base(Resources.Errors.AuthorizationError)
     {
     }
+
+    /// <summary>
+    /// Constructor.
+    /// </summary>
+    /// <param name="message">Exception message.</param>
+    public AuthorizationException(string message) : base(message)
+    {
+    }
 }

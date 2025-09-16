@@ -15,10 +15,12 @@ nav:
     - 'ECHO': commands/echo.md
     - 'IF': commands/if.md
     - 'INSERT': commands/insert.md
+    - 'OPEN': commands/open.md
     - 'SELECT': commands/select.md
     - 'SET': commands/set.md
     - 'UPDATE': commands/update.md
   - 'Input':
+    - 'AI': input/ai.md
     - 'CLEF': input/clef.md
     - 'CSV': input/csv.md
     - 'Grok': input/grok.md
@@ -51,6 +53,7 @@ nav:
     - 'String': functions/string.md
   - 'FAQ': faq.md
   - 'Features':
+    - 'Autoexec': features/autoexec.md
     - 'Web Server': features/web-server.md
   - 'Development':
     - 'Overview': development/index.md

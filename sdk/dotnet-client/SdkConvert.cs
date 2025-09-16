@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text.Json;
@@ -9,6 +11,7 @@ using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Plugins.Sdk;
 using Column = QueryCat.Plugins.Sdk.Column;
+using CursorSeekOrigin = QueryCat.Plugins.Sdk.CursorSeekOrigin;
 using DataType = QueryCat.Plugins.Sdk.DataType;
 using VariantValue = QueryCat.Plugins.Sdk.VariantValue;
 
@@ -19,11 +22,6 @@ namespace QueryCat.Plugins.Client;
 /// </summary>
 public static class SdkConvert
 {
-    /// <summary>
-    /// Unix epoch.
-    /// </summary>
-    private static readonly DateTime _unixEpoch = new(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-
     public static VariantValue Convert(Backend.Core.Types.VariantValue value)
     {
         return value.Type switch
@@ -50,7 +48,7 @@ public static class SdkConvert
             },
             Backend.Core.Types.DataType.Timestamp => new VariantValue
             {
-                Timestamp = (long)(value.AsTimestampUnsafe - _unixEpoch).TotalSeconds,
+                Timestamp = (long)(value.AsTimestampUnsafe - DateTime.UnixEpoch).TotalSeconds,
             },
             Backend.Core.Types.DataType.Boolean => new VariantValue
             {
@@ -64,12 +62,21 @@ public static class SdkConvert
             {
                 Interval = (long)value.AsIntervalUnsafe.TotalMilliseconds,
             },
+            Backend.Core.Types.DataType.Array => new VariantValue
+            {
+                Array = ((IList<Backend.Core.Types.VariantValue>)value.AsObjectUnsafe!).Select(Convert).ToList(),
+            },
+            Backend.Core.Types.DataType.Map => new VariantValue
+            {
+                Map = ((IDictionary<Backend.Core.Types.VariantValue, Backend.Core.Types.VariantValue>)value.AsObjectUnsafe!)
+                    .ToDictionary(k => Convert(k.Key), v => Convert(v.Value)),
+            },
             Backend.Core.Types.DataType.Object or Backend.Core.Types.DataType.Blob => ConvertObject(value),
             _ => throw new ArgumentOutOfRangeException(),
         };
     }
 
-    private static readonly JsonSerializerOptions _jsonSerializerOptions = new()
+    private static readonly JsonSerializerOptions JsonSerializerOptions = new()
     {
         WriteIndented = false,
     };
@@ -94,7 +101,7 @@ public static class SdkConvert
         {
             return new VariantValue
             {
-                Json = jsonNode.ToJsonString(_jsonSerializerOptions),
+                Json = jsonNode.ToJsonString(JsonSerializerOptions),
             };
         }
 
@@ -150,7 +157,7 @@ public static class SdkConvert
         }
         if (value.__isset.timestamp)
         {
-            return new Backend.Core.Types.VariantValue(_unixEpoch.AddSeconds(value.Timestamp));
+            return new Backend.Core.Types.VariantValue(DateTime.UnixEpoch.AddSeconds(value.Timestamp));
         }
         if (value.__isset.boolean)
         {
@@ -166,14 +173,43 @@ public static class SdkConvert
         }
         if (value.__isset.@object && value.Object != null)
         {
-            return Backend.Core.Types.VariantValue.CreateFromObject(
-                new RemoteObject(value.Object.Handle, value.Object.Type.ToString()));
+            var remoteObject = new RemoteObject(value.Object.Handle, Convert(value.Object.Type), value.Object.Name);
+            if (!string.IsNullOrEmpty(value.Json))
+            {
+                remoteObject.Data = value.Json;
+            };
+            return Backend.Core.Types.VariantValue.CreateFromObject(remoteObject);
         }
         if (value.__isset.json && value.Json != null)
         {
             return Backend.Core.Types.VariantValue.CreateFromObject(JsonNode.Parse(value.Json));
         }
+        if (value.__isset.array && value.Array != null)
+        {
+            var list = value.Array.Select(Convert).ToList();
+            return Backend.Core.Types.VariantValue.CreateFromObject(list);
+        }
+        if (value.__isset.map && value.Map != null)
+        {
+            var dict = value.Map.ToDictionary(k => Convert(k.Key), v => Convert(v.Value));
+            return Backend.Core.Types.VariantValue.CreateFromObject(dict);
+        }
         throw new ArgumentOutOfRangeException(nameof(value));
+    }
+
+    public static RemoteObjectType Convert(global::QueryCat.Plugins.Sdk.ObjectType type)
+    {
+        return type switch
+        {
+            ObjectType.ANSWER_AGENT => RemoteObjectType.AnswerAgent,
+            ObjectType.BLOB => RemoteObjectType.Blob,
+            ObjectType.JSON => RemoteObjectType.Json,
+            ObjectType.ROWS_FORMATTER => RemoteObjectType.RowsFormatter,
+            ObjectType.ROWS_INPUT => RemoteObjectType.RowsInput,
+            ObjectType.ROWS_ITERATOR => RemoteObjectType.RowsIterator,
+            ObjectType.ROWS_OUTPUT => RemoteObjectType.RowsOutput,
+            _ => RemoteObjectType.Generic,
+        };
     }
 
     public static Backend.Core.Types.DataType Convert(DataType type)
@@ -192,6 +228,8 @@ public static class SdkConvert
             DataType.BLOB => Backend.Core.Types.DataType.Blob,
             DataType.OBJECT => Backend.Core.Types.DataType.Object,
             DataType.DYNAMIC => Backend.Core.Types.DataType.Dynamic,
+            DataType.ARRAY => Backend.Core.Types.DataType.Array,
+            DataType.MAP => Backend.Core.Types.DataType.Map,
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, null),
         };
     }
@@ -210,6 +248,8 @@ public static class SdkConvert
             Backend.Core.Types.DataType.Interval => DataType.INTERVAL,
             Backend.Core.Types.DataType.Object => DataType.OBJECT,
             Backend.Core.Types.DataType.Blob => DataType.BLOB,
+            Backend.Core.Types.DataType.Array => DataType.ARRAY,
+            Backend.Core.Types.DataType.Map => DataType.MAP,
             Backend.Core.Types.DataType.Void => DataType.VOID,
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
         };
@@ -418,4 +458,34 @@ public static class SdkConvert
             statistic.Errors.Select(SdkConvert.Convert).ToList()
         );
     }
+
+    public static Sdk.ModelDescription Convert(Backend.Core.Data.IModelDescription model)
+        => new(model.Name, model.Description);
+
+    public static Sdk.QuestionResponse Convert(Backend.Core.Execution.QuestionResponse target)
+        => new(target.Answer, target.MessageId);
+
+    public static Backend.Core.Execution.QuestionResponse Convert(Sdk.QuestionResponse target)
+        => new(target.Answer, target.MessageId);
+
+    public static Backend.Core.Execution.QuestionMessage Convert(Sdk.QuestionMessage target)
+        => new(target.Content, target.Role);
+
+    public static Sdk.QuestionMessage Convert(Backend.Core.Execution.QuestionMessage target)
+        => new(target.Content, target.Role);
+
+    public static Backend.Core.Execution.QuestionRequest Convert(Sdk.QuestionRequest target)
+        => new((target.Messages ?? []).Select(SdkConvert.Convert).ToArray(), target.Type);
+
+    public static Sdk.QuestionRequest Convert(Backend.Core.Execution.QuestionRequest target)
+        => new(target.Messages.Select(SdkConvert.Convert).ToList(), target.Type);
+
+    public static Sdk.CursorSeekOrigin Convert(System.IO.SeekOrigin target)
+        => target switch
+        {
+            SeekOrigin.Begin => CursorSeekOrigin.BEGIN,
+            SeekOrigin.Current => CursorSeekOrigin.CURRENT,
+            SeekOrigin.End => CursorSeekOrigin.END,
+            _ => throw new ArgumentOutOfRangeException(nameof(target))
+        };
 }

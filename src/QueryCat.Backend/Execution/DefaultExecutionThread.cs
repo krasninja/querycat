@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Text;
 using QueryCat.Backend.Ast;
@@ -11,8 +10,6 @@ using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Plugins;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Core.Utils;
-using QueryCat.Backend.Relational.Iterators;
-using QueryCat.Backend.Storage;
 using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Execution;
@@ -27,6 +24,7 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IAsync
     private readonly AstVisitor _statementsVisitor;
     private readonly Func<IExecutionScope?, IExecutionScope> _executionScopeFactory;
     private int _deepLevel;
+    private readonly List<IDisposable> _disposables = new();
 
     /// <inheritdoc />
     public IConfigStorage ConfigStorage { get; }
@@ -34,10 +32,11 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IAsync
     private IExecutionScope _topScope;
     private bool _bootstrapScriptExecuted;
     private bool _configLoaded;
-    private readonly Stopwatch _stopwatch = new();
     private readonly AsyncLock _asyncLock = new();
 
     private bool IsInCallback { get; set; }
+
+    public Func<VariantValue, CancellationToken, ValueTask>? CommandResultOutput { get; set; }
 
     private sealed class DefaultBodyFuncUnit : StatementsBlockFuncUnit
     {
@@ -89,12 +88,6 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IAsync
                     Jump = ExecutionJump.Halt;
                     return VariantValue.Null;
                 }
-            }
-
-            // Write result.
-            if (_executionThread.Options.DefaultRowsOutput != NullRowsOutput.Instance)
-            {
-                await _executionThread.Write(result, cancellationToken);
             }
 
             return result;
@@ -197,11 +190,6 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IAsync
         IDictionary<string, VariantValue>? parameters = null,
         CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrEmpty(query))
-        {
-            return VariantValue.Null;
-        }
-
         // Run with lock and timer.
         IAsyncDisposable? @lock = null;
         try
@@ -235,8 +223,7 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IAsync
             }
             if (_deepLevel == 1)
             {
-                _stopwatch.Stop();
-                Statistic.ExecutionTime = _stopwatch.Elapsed;
+                Statistic.StopStopwatch();
             }
             _deepLevel--;
             CurrentQuery = string.Empty;
@@ -290,12 +277,17 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IAsync
         IDictionary<string, VariantValue>? parameters = null,
         CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrEmpty(query))
+        {
+            return VariantValue.Null;
+        }
+
         var programNode = AstBuilder.BuildProgramFromString(query);
 
         // Setup timer.
         if (_deepLevel == 1)
         {
-            _stopwatch.Restart();
+            Statistic.RestartStopwatch();
         }
 
         if (parameters != null && parameters.Keys.Count > 0)
@@ -310,12 +302,18 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IAsync
 
     private async Task<VariantValue> ExecuteStatementAsync(ProgramBodyNode bodyNode, CancellationToken cancellationToken)
     {
-        await using var bodyFuncUnit = new DefaultBodyFuncUnit(this, bodyNode);
+        var bodyFuncUnit = new DefaultBodyFuncUnit(this, bodyNode);
+        _disposables.Add(bodyFuncUnit);
         var result = await bodyFuncUnit.InvokeAsync(this, cancellationToken);
 
         if (Options.UseConfig)
         {
             await ConfigStorage.SaveAsync(cancellationToken);
+        }
+
+        if (CommandResultOutput != null)
+        {
+            await CommandResultOutput.Invoke(result, cancellationToken);
         }
 
         return result;
@@ -350,108 +348,6 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IAsync
         foreach (var item in items.OrderByDescending(c => c.Completion.Relevance))
         {
             yield return item;
-        }
-    }
-
-    private async Task Write(VariantValue result, CancellationToken cancellationToken)
-    {
-        if (result.IsNull)
-        {
-            return;
-        }
-        var iterator = RowsIteratorConverter.Convert(result);
-        var rowsOutput = Options.DefaultRowsOutput;
-        if (result.Type == DataType.Object
-            && result.AsObjectUnsafe is IRowsOutput alternateRowsOutput)
-        {
-            rowsOutput = alternateRowsOutput;
-        }
-        await rowsOutput.ResetAsync(cancellationToken);
-        await WriteAsync(rowsOutput, iterator, cancellationToken);
-    }
-
-    private async Task WriteAsync(
-        IRowsOutput rowsOutput,
-        IRowsIterator rowsIterator,
-        CancellationToken cancellationToken)
-    {
-        // For plain output let's adjust columns width first.
-        if (rowsOutput.Options.RequiresColumnsLengthAdjust && Options.AnalyzeRowsCount > 0)
-        {
-            rowsIterator = new AdjustColumnsLengthsIterator(rowsIterator, Options.AnalyzeRowsCount);
-        }
-        if (Options.TailCount > -1)
-        {
-            rowsIterator = new TailRowsIterator(rowsIterator, Options.TailCount);
-        }
-
-        // Write the main data.
-        var isOpened = false;
-        await StartWriterLoop(cancellationToken);
-
-        // Append grow data.
-        if (Options.FollowTimeout != TimeSpan.Zero)
-        {
-            while (true)
-            {
-                var requestQuit = false;
-                Thread.Sleep(Options.FollowTimeout);
-                await StartWriterLoop(cancellationToken);
-                ProcessInput(ref requestQuit);
-                if (cancellationToken.IsCancellationRequested || requestQuit)
-                {
-                    break;
-                }
-            }
-        }
-
-        if (isOpened)
-        {
-            await rowsOutput.CloseAsync(cancellationToken);
-        }
-
-        async Task StartWriterLoop(CancellationToken ct)
-        {
-            while (await rowsIterator.MoveNextAsync(ct))
-            {
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    break;
-                }
-                if (!isOpened)
-                {
-                    rowsOutput.QueryContext = new RowsOutputQueryContext(rowsIterator.Columns, ConfigStorage);
-                    rowsOutput.QueryContext.PrereadRowsCount = Options.AnalyzeRowsCount;
-                    rowsOutput.QueryContext.SkipIfNoColumns = Options.SkipIfNoColumns;
-                    await rowsOutput.OpenAsync(ct);
-                    isOpened = true;
-                }
-                await rowsOutput.WriteValuesAsync(rowsIterator.Current.Values, ct);
-            }
-        }
-
-        void ProcessInput(ref bool requestQuit)
-        {
-            if (!Environment.UserInteractive)
-            {
-                return;
-            }
-            while (Console.KeyAvailable)
-            {
-                var key = Console.ReadKey(true);
-                if (key.Key == ConsoleKey.Enter)
-                {
-                    Console.WriteLine();
-                }
-                else if (key.Key == ConsoleKey.Q)
-                {
-                    requestQuit = true;
-                }
-                else if (key.Key == ConsoleKey.Subtract)
-                {
-                    Console.WriteLine(new string('-', 5));
-                }
-            }
         }
     }
 
@@ -497,6 +393,10 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IAsync
             (PluginsManager as IDisposable)?.Dispose();
             (PluginsManager.PluginsLoader as IDisposable)?.Dispose();
 #endif
+            foreach (var disposable in _disposables)
+            {
+                disposable.Dispose();
+            }
         }
     }
 
@@ -510,6 +410,13 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IAsync
     protected virtual async ValueTask DisposeAsyncCore()
     {
         await _asyncLock.DisposeAsync();
+        foreach (var disposable in _disposables)
+        {
+            if (disposable is IAsyncDisposable asyncDisposable)
+            {
+                await asyncDisposable.DisposeAsync();
+            }
+        }
     }
 
     /// <inheritdoc />

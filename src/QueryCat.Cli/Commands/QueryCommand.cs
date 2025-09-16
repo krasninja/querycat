@@ -74,6 +74,10 @@ internal class QueryCommand : BaseQueryCommand
         {
             Description = Resources.Messages.QueryCommand_SafeModeDescription,
         };
+        var aiModeOption = new Option<bool>("--ai")
+        {
+            Description = Resources.Messages.QueryCommand_AIDescription,
+        };
 
         this.Add(maxErrorsOption);
         this.Add(statisticOption);
@@ -89,16 +93,19 @@ internal class QueryCommand : BaseQueryCommand
         this.Add(tailOption);
         this.Add(timeoutOption);
         this.Add(safeModeOption);
+        this.Add(aiModeOption);
         this.SetAction(async (parseResult, cancellationToken) =>
         {
-            parseResult.Configuration.EnableDefaultExceptionHandler = false;
+            parseResult.InvocationConfiguration.EnableDefaultExceptionHandler = false;
 
             var applicationOptions = GetApplicationOptions(parseResult);
             var query = parseResult.GetValue(QueryArgument);
             var variables = parseResult.GetValue(VariablesOption);
+            var inputs = parseResult.GetValue(InputsOption);
             var files = parseResult.GetValue(FilesOption);
 
             applicationOptions.InitializeLogger();
+            applicationOptions.InitializeAIAssistant();
             var tableOutput = new TextTableOutput(
                 stream: Stdio.GetConsoleOutput(),
                 hasHeader: !parseResult.GetValue(noHeaderOption),
@@ -119,6 +126,7 @@ internal class QueryCommand : BaseQueryCommand
                 TailCount = parseResult.GetValue(tailOption),
                 QueryTimeout = TimeSpan.FromMilliseconds(parseResult.GetValue(timeoutOption)),
                 SafeMode = parseResult.GetValue(safeModeOption),
+                AIMode = parseResult.GetValue(aiModeOption),
             };
             if (parseResult.GetValue(analyzeRowsOption) < 0)
             {
@@ -127,12 +135,13 @@ internal class QueryCommand : BaseQueryCommand
 
             await using var root = await applicationOptions.CreateApplicationRootAsync(options);
             var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            options.DefaultRowsOutput = new PagingOutput(tableOutput, cancellationTokenSource: cts)
+            root.RowsOutput = new PagingOutput(tableOutput, cancellationTokenSource: cts)
             {
                 PagingRowsCount = parseResult.GetValue(pageSizeOption),
             };
-            AddVariables(root.Thread, variables);
-            await RunQueryAsync(root.Thread, query, files, cts.Token);
+            await AddVariablesAsync(root.Thread, variables, cts.Token);
+            await AddInputsAsync(root.Thread, inputs, cts.Token);
+            await RunQueryAsync(root.Thread, root.RowsOutput, query, files, cts.Token);
 
             if (parseResult.GetValue(statisticOption) || parseResult.GetValue(detailedStatisticOption))
             {

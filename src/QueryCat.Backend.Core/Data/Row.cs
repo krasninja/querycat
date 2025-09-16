@@ -20,6 +20,11 @@ public class Row : IRowsSchema, ICloneable, IEnumerable<VariantValue>
     private readonly VariantValue[] _values;
 
     /// <summary>
+    /// Length.
+    /// </summary>
+    public int Length => _values.Length;
+
+    /// <summary>
     /// Get value by column name.
     /// </summary>
     /// <param name="columnName">Column name.</param>

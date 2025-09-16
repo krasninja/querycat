@@ -26,7 +26,9 @@ public static class DataTypeUtils
         DataType.Blob,
         DataType.Void,
         DataType.Object,
-        DataType.Dynamic
+        DataType.Dynamic,
+        DataType.Array,
+        DataType.Map,
     ];
 
     /// <summary>

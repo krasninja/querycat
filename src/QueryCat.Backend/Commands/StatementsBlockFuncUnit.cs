@@ -34,8 +34,10 @@ internal class StatementsBlockFuncUnit : IFuncUnit, IExecutionFlowFuncUnit, IDis
 
         var currentStatement = _statements[0];
         var result = VariantValue.Null;
-        while (currentStatement != null && !cancellationToken.IsCancellationRequested)
+        while (currentStatement != null)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             // Evaluate the command.
             var commandContext = await _statementsVisitor.RunAndReturnAsync(currentStatement, cancellationToken);
             if (commandContext is IDisposable || commandContext is IAsyncDisposable)

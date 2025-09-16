@@ -9,9 +9,10 @@
 | `lower(target: string): string`<br /><br /> Convert a string to lower case. |
 | `ltrim(target: string, characters: string = ' '): string`<br /><br /> Removes the longest string containing only characters in characters from the start of string. |
 | `position(substring: string, target: string): integer`<br /><br /> Returns first starting index of the specified substring within string, or zero if it's not present. |
-| `regexp_count(target: string, pattern: string, start?: integer = 1): string`<br /><br /> Returns the number of times the regular expression pattern matches in the string. |
-| `regexp_replace(target: string, pattern: string, replacement: string, start?: integer = 1): string`<br /><br /> Provides substitution of new text for substrings that match regular expression patterns. |
-| `regexp_substr(target: string, pattern: string, start?: integer = 1, n?: integer = 1, subexpr?: integer = 1): string`<br /><br /> Returns the substring within string that matches the N'th occurrence of the regular expression pattern, or NULL. |
+| `regexp_count(target: string, pattern: string, start?: integer = 1), flags?: string := null: string`<br /><br /> Returns the number of times the regular expression pattern matches in the string. |
+| `regexp_replace(target: string, pattern: string, replacement: string, start?: integer = 1, flags?: string := null): string`<br /><br /> Provides substitution of new text for substrings that match regular expression patterns. |
+| `regexp_split_to_table(target: string, pattern: string, flags?: string := null): object<IRowsIterator>`<br /><br /> Splits string using a regular expression as the delimiter, producing a set of results. |
+| `regexp_substr(target: string, pattern: string, start?: integer = 1, n?: integer = 1, subexpr?: integer = 1, flags?: string := null): string`<br /><br /> Returns the substring within string that matches the N'th occurrence of the regular expression pattern, or NULL. |
 | `replace(target: string, old: string, new: string): string`<br /><br /> Replaces all occurrences in string of substring from with substring to. |
 | `reverse(target: string): string`<br /><br /> Reverses the order of the characters in the string. |
 | `rtrim(target: string, characters: string = ' '): string`<br /><br /> Removes the longest string containing only characters in characters from the end of string. |
@@ -32,3 +33,11 @@ There are SQL standard regular expression functions that are partially supported
 | `OCCURRENCES_REGEX(pattern IN string)` | `regexp_count(string, pattern)` |
 | `SUBSTRING_REGEX(pattern IN string)` | `regexp_substr(string, pattern)` |
 | `TRANSLATE_REGEX(pattern IN string WITH replacement)` | `regexp_replace(string, pattern, replacement)` |
+
+## Regular Expression Flags
+
+| Option | Description |
+| --- | ---- |
+| `i` | case-insensitive matching |
+| `m`, `n` | multiline |
+| `s` | single line |

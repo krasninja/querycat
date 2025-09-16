@@ -67,7 +67,7 @@ public sealed class Tests
         }
 
         // Act.
-        var result = TestThread.GetQueryResult(thread);
+        var result = await TestThread.GetQueryResultAsync(value);
 
         // Assert.
         Assert.Equal(data.Expected, result);

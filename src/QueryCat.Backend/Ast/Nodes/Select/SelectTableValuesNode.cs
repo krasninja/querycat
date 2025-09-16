@@ -5,7 +5,7 @@ internal sealed class SelectTableValuesNode : ExpressionNode, ISelectAliasNode, 
     public List<SelectTableValuesRowNode> RowsNodes { get; } = new();
 
     /// <inheritdoc />
-    public string Alias { get; internal set; } = string.Empty;
+    public string Alias { get; set; } = string.Empty;
 
     /// <inheritdoc />
     public List<SelectTableJoinedNode> JoinedNodes { get; } = new();

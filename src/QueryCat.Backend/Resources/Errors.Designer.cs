@@ -392,5 +392,35 @@ namespace QueryCat.Backend.Resources {
                 return ResourceManager.GetString("CannotCreateRowsInputFromType", resourceCulture);
             }
         }
+        
+        internal static string CannotProcessMaxAttempts {
+            get {
+                return ResourceManager.GetString("CannotProcessMaxAttempts", resourceCulture);
+            }
+        }
+        
+        internal static string AnswerAgentIssue {
+            get {
+                return ResourceManager.GetString("AnswerAgentIssue", resourceCulture);
+            }
+        }
+        
+        internal static string CannotCreateIterator {
+            get {
+                return ResourceManager.GetString("CannotCreateIterator", resourceCulture);
+            }
+        }
+        
+        internal static string InvalidAgentResponse {
+            get {
+                return ResourceManager.GetString("InvalidAgentResponse", resourceCulture);
+            }
+        }
+        
+        internal static string AnswerAgentNotFound {
+            get {
+                return ResourceManager.GetString("AnswerAgentNotFound", resourceCulture);
+            }
+        }
     }
 }

@@ -8,8 +8,13 @@ namespace QueryCat.Backend.Core.Data;
 /// Represents a relational column.
 /// </summary>
 [Serializable]
-public class Column : ICloneable
+public class Column : ICloneable, IModelDescription
 {
+    /// <summary>
+    /// The title can be used for a single result, or when there is only one column in result.
+    /// </summary>
+    public const string ValueColumnTitle = "value";
+
     private static int _nextId = 1;
 
     /// <summary>
@@ -125,6 +130,8 @@ public class Column : ICloneable
             DataType.Boolean => 5,
             DataType.Numeric => 8,
             DataType.Blob => 25,
+            DataType.Array => 45,
+            DataType.Map => 55,
             _ => 4
         };
         if (Name.Length > size)

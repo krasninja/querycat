@@ -43,7 +43,7 @@ internal static class IOFunctions
 
     [SafeFunction]
     [Description("Read data from a BLOB.")]
-    [FunctionSignature("read(\"blob\": blob): object<IRowsInput>")]
+    [FunctionSignature("read(\"blob\": blob, fmt?: object<IRowsFormatter>): object<IRowsInput>")]
     public static async ValueTask<VariantValue> ReadBlobAsync(IExecutionThread thread, CancellationToken cancellationToken)
     {
         var blob = thread.Stack[0].AsBlob;
@@ -51,7 +51,8 @@ internal static class IOFunctions
         {
             return VariantValue.Null;
         }
-        var formatter = await File_GetFormatterAsync(blob.ContentType, thread, null, cancellationToken);
+        var formatter = thread.Stack[1].As<IRowsFormatter>();
+        formatter ??= await File_GetFormatterAsync(blob.ContentType, thread, null, cancellationToken);
         var input = formatter.OpenInput(blob);
         return VariantValue.CreateFromObject(input);
     }
@@ -118,14 +119,17 @@ internal static class IOFunctions
             Directory.CreateDirectory(fullDirectory);
         }
         var blobFile = new StreamBlobData(() =>
-        {
-            Stream file = File.Open(path, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
-            if (_compressFilesExtensions.Contains(Path.GetExtension(path).ToLowerInvariant()))
             {
-                file = new GZipStream(file, CompressionMode.Compress, leaveOpen: false);
-            }
-            return file;
-        }, File_GetContentType(path));
+                Stream file = File.Open(path, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
+                if (_compressFilesExtensions.Contains(Path.GetExtension(path).ToLowerInvariant()))
+                {
+                    file = new GZipStream(file, CompressionMode.Compress, leaveOpen: false);
+                }
+                return file;
+            },
+            File_GetContentType(path),
+            Path.GetFileName(path)
+        );
         return VariantValue.CreateFromObject(formatter.OpenOutput(blobFile));
     }
 
@@ -139,14 +143,22 @@ internal static class IOFunctions
         {
             var fileFormatter = formatter ?? await File_GetFormatterAsync(file, thread, funcArgs);
             var blobFileStream = new StreamBlobData(() =>
-            {
-                Stream fileStream = File.Open(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-                if (_compressFilesExtensions.Contains(Path.GetExtension(file).ToLower()))
                 {
-                    fileStream = new GZipStream(fileStream, CompressionMode.Decompress);
-                }
-                return fileStream;
-            }, File_GetContentType(file));
+                    Stream fileStream = new FileStream(
+                        file,
+                        FileMode.Open,
+                        FileAccess.Read,
+                        FileShare.Inheritable,
+                        0x1000 * 2 /* 8KB */,
+                        FileOptions.SequentialScan);
+                    if (_compressFilesExtensions.Contains(Path.GetExtension(file).ToLower()))
+                    {
+                        fileStream = new GZipStream(fileStream, CompressionMode.Decompress);
+                    }
+                    return fileStream;
+                },
+                File_GetContentType(file),
+                file);
             yield return fileFormatter.OpenInput(blobFileStream, file);
         }
     }
@@ -353,7 +365,7 @@ internal static class IOFunctions
             throw new QueryCatException(Resources.Errors.InvalidUri);
         }
         var request = new HttpRequestMessage(HttpMethod.Get, uri);
-        var response = await _httpClient.SendAsync(request, cancellationToken);
+        var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
 
         // Try to get formatter by HTTP response content type.
         var contentType = string.Empty;
@@ -373,7 +385,10 @@ internal static class IOFunctions
             formatter = await File_GetFormatterAsync(type, thread, null, cancellationToken);
         }
 
-        var blobStream = new StreamBlobData(() => response.Content.ReadAsStream(cancellationToken), contentType);
+        var blobStream = new StreamBlobData(
+            () => response.Content.ReadAsStream(cancellationToken),
+            contentType,
+            Path.GetFileName(uri.LocalPath));
         return VariantValue.CreateFromObject(formatter.OpenInput(blobStream));
     }
 

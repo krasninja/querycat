@@ -21,7 +21,7 @@ internal class ServeCommand : BaseCommand
         {
             Description = Resources.Messages.ServeCommand_PasswordDescription,
         };
-        var rootDirectoryOption = new Option<string>("-r", "--root-dir")
+        var rootDirectoryOption = new Option<string>("--root-dir", "-r")
         {
             Description = Resources.Messages.ServeCommand_RootDirectoryDescription,
         };
@@ -48,7 +48,7 @@ internal class ServeCommand : BaseCommand
         Add(allowedIPsSlotsOption);
         this.SetAction(async (parseResult, cancellationToken) =>
         {
-            parseResult.Configuration.EnableDefaultExceptionHandler = false;
+            parseResult.InvocationConfiguration.EnableDefaultExceptionHandler = false;
 
             var applicationOptions = GetApplicationOptions(parseResult);
             var urls = parseResult.GetValue(urlsOption);
@@ -60,6 +60,7 @@ internal class ServeCommand : BaseCommand
             var allowedIPsSlots = parseResult.GetValue(allowedIPsSlotsOption);
 
             applicationOptions.InitializeLogger();
+            applicationOptions.InitializeAIAssistant();
             await using var root = await applicationOptions.CreateApplicationRootAsync();
             root.Thread.Options.AddRowNumberColumn = true;
             root.Thread.Options.SafeMode = safeMode;

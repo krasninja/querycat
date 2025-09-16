@@ -5,8 +5,6 @@ namespace QueryCat.Backend.Relational.Iterators;
 
 public sealed class SingleValueRowsIterator : IRowsIterator
 {
-    public const string ColumnTitle = "value";
-
     /// <inheritdoc />
     public Column[] Columns { get; }
 
@@ -17,10 +15,10 @@ public sealed class SingleValueRowsIterator : IRowsIterator
 
     public SingleValueRowsIterator()
     {
-        Columns = new[]
-        {
-            new Column(ColumnTitle, DataType.Void)
-        };
+        Columns =
+        [
+            new Column(Column.ValueColumnTitle, DataType.Void)
+        ];
         Current = new Row(this)
         {
             [0] = VariantValue.Null
@@ -31,7 +29,7 @@ public sealed class SingleValueRowsIterator : IRowsIterator
     {
         Columns =
         [
-            new Column(ColumnTitle, value.Type)
+            new Column(Column.ValueColumnTitle, value.Type)
         ];
         Current = new Row(this)
         {

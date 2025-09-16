@@ -43,6 +43,7 @@ public static class Application
     public const string CommandContinue = "CONTINUE";
     public const string CommandBreak = "BREAK";
     public const string CommandReturn = "RETURN";
+    public const string CommandOpen = "OPEN";
 
     /// <summary>
     /// The culture to use by QueryCat application. Current runtime culture by default.

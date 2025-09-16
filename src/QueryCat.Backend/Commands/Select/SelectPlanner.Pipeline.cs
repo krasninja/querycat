@@ -118,7 +118,7 @@ internal sealed partial class SelectPlanner
                 : string.Empty;
             if (string.IsNullOrEmpty(columnName) && node.ColumnsNodes.Count == 1)
             {
-                columnName = SingleValueRowsIterator.ColumnTitle;
+                columnName = Column.ValueColumnTitle;
             }
             var column = !string.IsNullOrEmpty(columnName)
                 ? new Column(columnName, columnSourceName, columnNode.GetDataType())
@@ -369,7 +369,6 @@ internal sealed partial class SelectPlanner
             context.CurrentIterator,
             context.OutputArgumentsFunc,
             functionCallInfo,
-            ExecutionThread.Options.DefaultRowsOutput,
             queryContext);
 
         // If we have INTO clause defined we execute iterator and write rows into

@@ -9,4 +9,9 @@ public enum ThriftTransportType
     /// Named pipes on Windows or local sockets in UNIX.
     /// </summary>
     NamedPipes,
+
+    /// <summary>
+    /// TCP sockets.
+    /// </summary>
+    Tcp,
 }

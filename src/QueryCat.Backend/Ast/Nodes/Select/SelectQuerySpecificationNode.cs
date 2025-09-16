@@ -52,6 +52,7 @@ internal sealed class SelectQuerySpecificationNode : SelectQueryNode
         {
             WindowNode = (SelectWindowNode)node.WindowNode.Clone();
         }
+        node.CopyTo(this);
     }
 
     /// <inheritdoc />

@@ -17,7 +17,7 @@ public struct QueryCatPluginArguments
     public readonly string GetToken() => Marshal.PtrToStringAuto(Token) ?? string.Empty;
 
     public readonly Microsoft.Extensions.Logging.LogLevel GetLogLevel() => Enum.Parse<Microsoft.Extensions.Logging.LogLevel>(
-        Marshal.PtrToStringAuto(LogLevel) ?? Sdk.LogLevel.INFORMATION.ToString());
+        Marshal.PtrToStringAuto(LogLevel) ?? nameof(Sdk.LogLevel.INFORMATION));
 
     public readonly ThriftPluginClientArguments ConvertToPluginClientArguments()
         => new()

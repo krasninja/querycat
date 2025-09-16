@@ -30,4 +30,7 @@
   <data name="CannotExtractFromArchvie" xml:space="preserve">
     <value>Cannot extract from archive '{0}'.</value>
   </data>
+  <data name="InvalidInputData" xml:space="preserve">
+    <value>Invalid input data: {0}.</value>
+  </data>
 </root>

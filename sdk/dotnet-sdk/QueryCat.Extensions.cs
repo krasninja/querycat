@@ -27,6 +27,21 @@ namespace QueryCat.Plugins.Sdk
 {
   public static class QueryCatExtensions
   {
+    public static bool Equals(this Dictionary<global::QueryCat.Plugins.Sdk.VariantValue, global::QueryCat.Plugins.Sdk.VariantValue> instance, object that)
+    {
+      if (that is not Dictionary<global::QueryCat.Plugins.Sdk.VariantValue, global::QueryCat.Plugins.Sdk.VariantValue> other) return false;
+      if (ReferenceEquals(instance, other)) return true;
+
+      return TCollections.Equals(instance, other);
+    }
+
+
+    public static int GetHashCode(this Dictionary<global::QueryCat.Plugins.Sdk.VariantValue, global::QueryCat.Plugins.Sdk.VariantValue> instance)
+    {
+      return TCollections.GetHashCode(instance);
+    }
+
+
     public static bool Equals(this Dictionary<string, global::QueryCat.Plugins.Sdk.VariantValue> instance, object that)
     {
       if (that is not Dictionary<string, global::QueryCat.Plugins.Sdk.VariantValue> other) return false;
@@ -112,6 +127,21 @@ namespace QueryCat.Plugins.Sdk
 
 
     public static int GetHashCode(this List<global::QueryCat.Plugins.Sdk.KeyColumn> instance)
+    {
+      return TCollections.GetHashCode(instance);
+    }
+
+
+    public static bool Equals(this List<global::QueryCat.Plugins.Sdk.QuestionMessage> instance, object that)
+    {
+      if (that is not List<global::QueryCat.Plugins.Sdk.QuestionMessage> other) return false;
+      if (ReferenceEquals(instance, other)) return true;
+
+      return TCollections.Equals(instance, other);
+    }
+
+
+    public static int GetHashCode(this List<global::QueryCat.Plugins.Sdk.QuestionMessage> instance)
     {
       return TCollections.GetHashCode(instance);
     }

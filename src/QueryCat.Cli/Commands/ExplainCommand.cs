@@ -10,14 +10,16 @@ internal class ExplainCommand : BaseQueryCommand
     {
         this.SetAction(async (parseResult, cancellationToken) =>
         {
-            parseResult.Configuration.EnableDefaultExceptionHandler = false;
+            parseResult.InvocationConfiguration.EnableDefaultExceptionHandler = false;
 
             var applicationOptions = GetApplicationOptions(parseResult);
             var query = parseResult.GetValue(QueryArgument);
             var variables = parseResult.GetValue(VariablesOption);
+            var inputs = parseResult.GetValue(InputsOption);
             var files = parseResult.GetValue(FilesOption);
 
             applicationOptions.InitializeLogger();
+            applicationOptions.InitializeAIAssistant();
             await using var root = await applicationOptions.CreateStdoutApplicationRootAsync(
                 columnsSeparator: parseResult.GetValue(ColumnsSeparatorOption),
                 outputStyle: parseResult.GetValue(OutputStyleOption)
@@ -34,8 +36,9 @@ internal class ExplainCommand : BaseQueryCommand
                     args.ContinueExecution = false;
                 }
             };
-            AddVariables(root.Thread, variables);
-            await RunQueryAsync(root.Thread, query, files, cancellationToken);
+            await AddVariablesAsync(root.Thread, variables, cancellationToken);
+            await AddInputsAsync(root.Thread, inputs, cancellationToken);
+            await RunQueryAsync(root.Thread, root.RowsOutput, query, files, cancellationToken);
         });
     }
 }

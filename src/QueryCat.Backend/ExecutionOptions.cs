@@ -1,5 +1,3 @@
-using QueryCat.Backend.Core.Data;
-
 namespace QueryCat.Backend;
 
 /// <summary>
@@ -7,11 +5,6 @@ namespace QueryCat.Backend;
 /// </summary>
 public class ExecutionOptions
 {
-    /// <summary>
-    /// Default output target if INTO clause is not specified.
-    /// </summary>
-    public IRowsOutput DefaultRowsOutput { get; set; } = NullRowsOutput.Instance;
-
     /// <summary>
     /// Add row number to output.
     /// </summary>
@@ -91,4 +84,10 @@ public class ExecutionOptions
     /// Define the array of allowed commands to execute.
     /// </summary>
     public string[]? AllowedCommands { get; set; }
+
+    /// <summary>
+    /// Defines that query is written in natural language. Uses AI to convert the query into SQL.
+    /// </summary>
+    // ReSharper disable once InconsistentNaming
+    public bool AIMode { get; set; }
 }

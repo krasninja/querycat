@@ -152,5 +152,11 @@ namespace QueryCat.Plugins.Client.Resources {
                 return ResourceManager.GetString("AuthorizationError", resourceCulture);
             }
         }
+
+        internal static string InvalidToken {
+            get {
+                return ResourceManager.GetString("InvalidToken", resourceCulture);
+            }
+        }
     }
 }

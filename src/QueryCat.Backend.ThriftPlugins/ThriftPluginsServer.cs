@@ -20,8 +20,6 @@ public sealed partial class ThriftPluginsServer : IDisposable
         SemaphoreSlim Semaphore,
         string PluginName);
 
-    private const int PluginRegistrationTimeoutSeconds = 10;
-
     public Uri ServerEndpointUri => _mainServerThread.Endpoint;
 
     private readonly IConfigStorage _configStorage;
@@ -32,6 +30,7 @@ public sealed partial class ThriftPluginsServer : IDisposable
     private readonly Dictionary<long, ThriftPluginContext> _tokenPluginContextMap = new();
     private readonly ServerThread _mainServerThread;
     private readonly int _maxConnectionsToClient;
+    private readonly ObjectsStorage _objectsStorage = new();
 
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(ThriftPluginsServer));
 
@@ -39,6 +38,11 @@ public sealed partial class ThriftPluginsServer : IDisposable
     /// Do not verify token for debug purpose.
     /// </summary>
     public bool SkipTokenVerification { get; set; }
+
+    /// <summary>
+    /// Seconds to wait before plugin/client registration. -1 for infinite.
+    /// </summary>
+    public int PluginRegistrationTimeoutSeconds { get; set; } = 10;
 
     internal IReadOnlyCollection<ThriftPluginContext> Plugins => _plugins;
 
@@ -68,8 +72,7 @@ public sealed partial class ThriftPluginsServer : IDisposable
 
     public ThriftPluginsServer(
         IExecutionThread executionThread,
-        string serverEndpointPath,
-        ThriftTransportType thriftTransportType = ThriftTransportType.NamedPipes,
+        ThriftEndpoint serverEndpoint,
         int maxConnectionsToClient = 1)
     {
 #if !DEBUG
@@ -77,7 +80,7 @@ public sealed partial class ThriftPluginsServer : IDisposable
 #endif
         _executionThread = executionThread;
         _configStorage = executionThread.ConfigStorage;
-        var uri = ThriftTransportUtils.FormatTransportUri(thriftTransportType, serverEndpointPath);
+        var uri = serverEndpoint.Uri;
         var server = CreateServer(uri);
         _mainServerThread = new ServerThread(uri, server);
         _maxConnectionsToClient = maxConnectionsToClient;
@@ -85,11 +88,11 @@ public sealed partial class ThriftPluginsServer : IDisposable
 
     private TThreadPoolAsyncServer CreateServer(Uri uri)
     {
-        var transport = ThriftTransportUtils.CreateServerTransport(uri);
+        var transport = ThriftTransportFactory.CreateServerTransport(uri);
         var transportFactory = new TFramedTransport.Factory();
         var binaryProtocolFactory = new TBinaryProtocol.Factory();
         var processor = new TMultiplexedProcessor();
-        var handler = new HandlerWithExceptionIntercept(new Handler(this));
+        var handler = new HandlerWithExceptionIntercept(new Handler(this, _objectsStorage));
         var asyncProcessor = new Plugins.Sdk.PluginsManager.AsyncProcessor(handler);
         processor.RegisterProcessor(QueryCat.Plugins.Client.ThriftPluginClient.PluginsManagerServiceName, asyncProcessor);
         return new TThreadPoolAsyncServer(
@@ -106,7 +109,7 @@ public sealed partial class ThriftPluginsServer : IDisposable
     }
 
     /// <summary>
-    /// Start local host server.
+    /// Start local host server. The call does not block the current thread.
     /// </summary>
     public void Start() => _mainServerThread.Start(_serverCts);
 
@@ -128,12 +131,20 @@ public sealed partial class ThriftPluginsServer : IDisposable
     {
         if (!_tokenPluginContextMap.TryGetValue(token, out var context))
         {
-            throw new AuthorizationException();
+            throw new AuthorizationException(string.Format(Resources.Errors.InvalidToken, token));
         }
         return context;
     }
 
-    internal bool VerifyToken(long token) => token != -1 && _tokenPluginContextMap.ContainsKey(token);
+    internal bool IsValidToken(long token) => token != -1 && _tokenPluginContextMap.ContainsKey(token);
+
+    internal void ValidateToken(long token)
+    {
+        if (!IsValidToken(token))
+        {
+            throw new AuthorizationException(string.Format(Resources.Errors.InvalidToken, token));
+        }
+    }
 
     /// <summary>
     /// Generate new authorization token.
@@ -187,6 +198,11 @@ public sealed partial class ThriftPluginsServer : IDisposable
         }
     }
 
+    /// <summary>
+    /// Wait for the specific registration with token. The call blocks the current thread.
+    /// </summary>
+    /// <param name="registrationToken">Registration token to await.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     public void WaitForPluginRegistration(string registrationToken, CancellationToken cancellationToken = default)
     {
         if (!_registrationTokens.TryGetValue(registrationToken, out var registrationTokenData))
@@ -194,7 +210,10 @@ public sealed partial class ThriftPluginsServer : IDisposable
             throw new InvalidOperationException(string.Format(Resources.Errors.TokenNotRegistered, registrationToken));
         }
         _logger.LogTrace("Waiting for token activation '{Token}'.", registrationToken);
-        if (!registrationTokenData.Semaphore.Wait(TimeSpan.FromSeconds(PluginRegistrationTimeoutSeconds), cancellationToken))
+        var timeout = PluginRegistrationTimeoutSeconds > 0
+            ? TimeSpan.FromSeconds(PluginRegistrationTimeoutSeconds)
+            : Timeout.InfiniteTimeSpan;
+        if (!registrationTokenData.Semaphore.Wait(timeout, cancellationToken))
         {
             throw new PluginException(string.Format(Resources.Errors.TokenRegistrationTimeout, registrationToken));
         }
@@ -208,6 +227,7 @@ public sealed partial class ThriftPluginsServer : IDisposable
     public void Dispose()
     {
         Stop();
+        _objectsStorage.Clean();
         _serverCts.Dispose();
         foreach (var pluginContext in _plugins)
         {

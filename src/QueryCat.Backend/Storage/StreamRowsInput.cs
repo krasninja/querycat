@@ -20,7 +20,7 @@ namespace QueryCat.Backend.Storage;
 /// - StreamReader reset (if Stream supports Seek);
 /// - virtual (custom) columns.
 /// </summary>
-public abstract class StreamRowsInput : IRowsInput, IDisposable
+public abstract class StreamRowsInput : IRowsInput, IDisposable, IModelDescription
 {
     /*
      * The main workflow is:
@@ -33,6 +33,8 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
      * - ReadNextAsync() - real data reading, cache first, stream next.
      * - CloseAsync()
      */
+
+    private const int ReadBufferSize = 0x10000;
 
     private readonly StreamRowsInputOptions _options;
 
@@ -70,6 +72,12 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
     /// <inheritdoc />
     public string[] UniqueKey { get; set; }
 
+    /// <inheritdoc />
+    public string Name => Path.GetFileName(GetFileNameFromStream(_baseStream));
+
+    /// <inheritdoc />
+    public string Description => string.Empty;
+
     /// <summary>
     /// Allow columns types heuristics detection. Otherwise, all of them will be strings.
     /// </summary>
@@ -100,7 +108,7 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable
         _options = options ?? new();
         _baseStream = stream;
         _cacheStream = new CacheStream(stream);
-        StreamReader = new StreamReader(_cacheStream);
+        StreamReader = new StreamReader(_cacheStream, bufferSize: ReadBufferSize);
         _delimiterStreamReader = new DelimiterStreamReader(StreamReader, _options.DelimiterStreamReaderOptions);
         UniqueKey = keys.Concat(_options.CacheKeys).ToArray();
     }

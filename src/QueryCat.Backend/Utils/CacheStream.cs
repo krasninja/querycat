@@ -38,13 +38,20 @@ internal sealed class CacheStream : Stream
     /// <summary>
     /// Returns <c>true</c> if read from cache instead of source stream.
     /// </summary>
-    public bool IsInCache => _cachePosition < _buffer.Size;
+    public bool IsInCache
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => _cachePosition < _buffer.Size;
+    }
 
     /// <summary>
     /// Current cache size.
     /// </summary>
     public long CacheSize => _buffer.Size;
 
+    /// <summary>
+    /// The underlying (base) stream.
+    /// </summary>
     public Stream UnderlyingStream => _stream;
 
     /// <inheritdoc />
@@ -68,7 +75,10 @@ internal sealed class CacheStream : Stream
         if (IsInCache)
         {
             bytesRead = ReadFromCache(buffer, offset, count);
-            bytesRead += _stream.Read(buffer, offset + bytesRead, count - bytesRead);
+            if (!IsInCache)
+            {
+                bytesRead += _stream.Read(buffer, offset + bytesRead, count - bytesRead);
+            }
         }
         // Read from the stream.
         else
@@ -83,10 +93,7 @@ internal sealed class CacheStream : Stream
     /// <inheritdoc />
     public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
     {
-        if (cancellationToken.IsCancellationRequested)
-        {
-            return 0;
-        }
+        cancellationToken.ThrowIfCancellationRequested();
 
         var bytesRead = 0;
 
@@ -94,7 +101,10 @@ internal sealed class CacheStream : Stream
         if (IsInCache)
         {
             bytesRead = ReadFromCache(buffer, offset, count);
-            bytesRead += await _stream.ReadAsync(buffer, offset + bytesRead, count - bytesRead, cancellationToken);
+            if (!IsInCache)
+            {
+                bytesRead += await _stream.ReadAsync(buffer, offset + bytesRead, count - bytesRead, cancellationToken);
+            }
         }
         // Read from the stream.
         else
@@ -109,10 +119,7 @@ internal sealed class CacheStream : Stream
     /// <inheritdoc />
     public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
     {
-        if (cancellationToken.IsCancellationRequested)
-        {
-            return 0;
-        }
+        cancellationToken.ThrowIfCancellationRequested();
 
         var bytesRead = 0;
 
@@ -120,13 +127,16 @@ internal sealed class CacheStream : Stream
         if (IsInCache)
         {
             bytesRead = ReadFromCache(buffer);
-            bytesRead += await _stream.ReadAsync(buffer.Slice(bytesRead, buffer.Length - bytesRead), cancellationToken);
+            if (!IsInCache)
+            {
+                bytesRead += await _stream.ReadAsync(buffer.Slice(bytesRead, buffer.Length - bytesRead), cancellationToken);
+            }
         }
         // Read from the stream.
         else
         {
             bytesRead += await _stream.ReadAsync(buffer, cancellationToken);
-            WriteToCache(buffer);
+            WriteToCache(buffer.Slice(0, bytesRead));
         }
 
         return bytesRead;
@@ -167,7 +177,7 @@ internal sealed class CacheStream : Stream
         var span = _buffer.GetSpan(cachePosition, cachePosition + buffer.Length);
         _cachePosition += span.Length;
         span.CopyTo(buffer.Span);
-        if (_cachePosition != _stream.Position)
+        if (!IsInCache && _stream.CanSeek && _cachePosition != _stream.Position)
         {
             _stream.Position = _cachePosition;
         }
@@ -181,12 +191,12 @@ internal sealed class CacheStream : Stream
         {
             ArgumentOutOfRangeException.ThrowIfNotEqual((int)origin, (int)SeekOrigin.Begin, nameof(origin));
         }
-        if (offset > _stream.Position)
+        if (_stream.CanSeek && offset > _stream.Position)
         {
             ArgumentOutOfRangeException.ThrowIfGreaterThan(offset, _stream.Position, nameof(offset));
         }
         _cachePosition = offset;
-        return _stream.Position;
+        return _cachePosition;
     }
 
     /// <inheritdoc />

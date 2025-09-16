@@ -22,13 +22,14 @@ internal sealed class CallFunctionCommand : BaseCommand
         this.Add(functionArgumentsArgument);
         this.SetAction(async (parseResult, cancellationToken) =>
         {
-            parseResult.Configuration.EnableDefaultExceptionHandler = false;
+            parseResult.InvocationConfiguration.EnableDefaultExceptionHandler = false;
 
             var applicationOptions = GetApplicationOptions(parseResult);
             var functionName = parseResult.GetRequiredValue(functionNameArgument);
             var functionArguments = parseResult.GetValue(functionArgumentsArgument) ?? [];
 
             applicationOptions.InitializeLogger();
+            applicationOptions.InitializeAIAssistant();
             await using var root = await applicationOptions.CreateStdoutApplicationRootAsync(
                 columnsSeparator: parseResult.GetValue(ColumnsSeparatorOption),
                 outputStyle: parseResult.GetValue(OutputStyleOption)
@@ -41,8 +42,7 @@ internal sealed class CallFunctionCommand : BaseCommand
             }
             var result = await root.Thread.FunctionsManager.CallFunctionAsync(
                 function, root.Thread, callArgs, cancellationToken);
-            root.Thread.TopScope.Variables["result"] = result;
-            await root.Thread.RunAsync("result");
+            await WriteAsync(root.Thread, result, root.RowsOutput, cancellationToken);
         });
     }
 }

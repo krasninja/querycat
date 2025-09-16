@@ -1,10 +1,13 @@
 using System.Buffers;
+using System.Globalization;
 using System.Text;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Storage;
+
+// ReSharper disable MethodHasAsyncOverload
 
 namespace QueryCat.Backend.Formatters;
 
@@ -99,6 +102,12 @@ internal sealed class DsvOutput : RowsOutput, IDisposable
                             }
                             ArrayPool<byte>.Shared.Return(arr);
                         }
+                        break;
+                    case DataType.Array:
+                        _streamWriter.Write(values[i].ToString(CultureInfo.InvariantCulture));
+                        break;
+                    case DataType.Map:
+                        _streamWriter.Write(values[i].ToString(CultureInfo.InvariantCulture));
                         break;
                 }
             }

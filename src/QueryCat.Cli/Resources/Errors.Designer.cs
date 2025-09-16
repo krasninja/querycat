@@ -68,5 +68,11 @@ namespace QueryCat.Cli.Resources {
                 return ResourceManager.GetString("CannotExtractFromArchvie", resourceCulture);
             }
         }
+        
+        internal static string InvalidInputData {
+            get {
+                return ResourceManager.GetString("InvalidInputData", resourceCulture);
+            }
+        }
     }
 }

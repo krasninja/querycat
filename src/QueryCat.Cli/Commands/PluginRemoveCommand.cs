@@ -16,12 +16,13 @@ internal class PluginRemoveCommand : BaseCommand
         this.Add(pluginArgument);
         this.SetAction(async (parseResult, cancellationToken) =>
         {
-            parseResult.Configuration.EnableDefaultExceptionHandler = false;
+            parseResult.InvocationConfiguration.EnableDefaultExceptionHandler = false;
 
             var applicationOptions = GetApplicationOptions(parseResult);
             var plugin = parseResult.GetRequiredValue(pluginArgument);
 
             applicationOptions.InitializeLogger();
+            applicationOptions.InitializeAIAssistant();
             await using var root = await applicationOptions.CreateApplicationRootAsync();
             await root.PluginsManager.RemoveAsync(plugin, cancellationToken);
         });

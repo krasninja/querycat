@@ -27,7 +27,8 @@ internal static class BlobFunctions
         var extension = Path.GetExtension(file);
         var blob = new StreamBlobData(
             () => File.OpenRead(file),
-            IOFunctions.MimeTypesProvider.GetContentTypeByExtension(extension));
+            IOFunctions.MimeTypesProvider.GetContentTypeByExtension(extension),
+            Path.GetFileName(file));
         return VariantValue.CreateFromObject(blob);
     }
 

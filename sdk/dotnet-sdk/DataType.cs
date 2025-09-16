@@ -26,5 +26,7 @@ namespace QueryCat.Plugins.Sdk
     BLOB = 8,
     @OBJECT = 40,
     @DYNAMIC = 41,
+    ARRAY = 42,
+    MAP = 43,
   }
 }

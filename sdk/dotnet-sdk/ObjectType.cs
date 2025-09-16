@@ -14,6 +14,7 @@ namespace QueryCat.Plugins.Sdk
 {
   public enum ObjectType
   {
+    NONE = -1,
     GENERIC = 0,
     ROWS_INPUT = 10,
     ROWS_ITERATOR = 11,
@@ -21,5 +22,6 @@ namespace QueryCat.Plugins.Sdk
     BLOB = 13,
     JSON = 14,
     ROWS_FORMATTER = 15,
+    ANSWER_AGENT = 16,
   }
 }

@@ -74,7 +74,7 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
     public override async ValueTask VisitAsync(IdentifierExpressionNode node, CancellationToken cancellationToken)
     {
         var value = await GetIdentifierValueAsync(node, cancellationToken);
-        await VisitIdentifierNodeInternalAsync(node, value, cancellationToken);
+        await VisitIdentifierNodeInternalAsync(node, value, null, cancellationToken);
     }
 
     /// <inheritdoc />
@@ -90,7 +90,7 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
                 value = VariantValue.CreateFromObject(inputContext.RowsInput);
             }
         }
-        await VisitIdentifierNodeInternalAsync(node, value, cancellationToken);
+        await VisitIdentifierNodeInternalAsync(node, value, node.Format, cancellationToken);
     }
 
     private async ValueTask<VariantValue> GetIdentifierValueAsync(IdentifierExpressionNode node, CancellationToken cancellationToken)
@@ -180,6 +180,7 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
     private async ValueTask<SelectInputQueryContext?> VisitIdentifierNodeInternalAsync(
         IdentifierExpressionNode node,
         VariantValue value,
+        FunctionCallNode? formatNode,
         CancellationToken cancellationToken)
     {
         if (value.IsNull)
@@ -189,8 +190,14 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
 
         var parentNode = AstTraversal.GetFirstParent<IAstNode>();
         var isPartOfFromClause = parentNode is SelectTableReferenceListNode;
+        var alias = node is ISelectAliasNode aliasNode ? aliasNode.Alias : string.Empty;
         var rowsInputContext = await _rowsInputFactory.CreateRowsInputAsync(
-            value, _executionThread, resolveStringAsSource: isPartOfFromClause, cancellationToken);
+            source: value,
+            alias: alias,
+            executionThread: _executionThread,
+            formatNode: formatNode,
+            resolveStringAsSource: isPartOfFromClause,
+            cancellationToken);
 
         if (rowsInputContext != null)
         {

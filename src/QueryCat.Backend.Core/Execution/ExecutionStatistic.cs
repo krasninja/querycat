@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace QueryCat.Backend.Core.Execution;
 
 /// <summary>
@@ -39,10 +41,15 @@ public abstract class ExecutionStatistic
         }
     }
 
+    private long _startingTimestamp = Stopwatch.GetTimestamp();
+    private long _endingTimestamp = 0;
+
     /// <summary>
     /// Query processing execution time.
     /// </summary>
-    public TimeSpan ExecutionTime { get; set; }
+    public TimeSpan ExecutionTime => _endingTimestamp != 0
+        ? Stopwatch.GetElapsedTime(_startingTimestamp, _endingTimestamp)
+        : TimeSpan.Zero;
 
     /// <summary>
     /// Total number of processed rows.
@@ -75,13 +82,30 @@ public abstract class ExecutionStatistic
     /// </summary>
     public virtual void Clear()
     {
-        ExecutionTime = TimeSpan.Zero;
         ProcessedCount = 0;
         ErrorsCount = 0;
+        RestartStopwatch();
     }
 
     /// <summary>
     /// Dump statistic as string.
     /// </summary>
     public abstract string Dump();
+
+    /// <summary>
+    /// Start or restart timer.
+    /// </summary>
+    public void RestartStopwatch()
+    {
+        _startingTimestamp = Stopwatch.GetTimestamp();
+        _endingTimestamp = 0;
+    }
+
+    /// <summary>
+    /// Stop timer.
+    /// </summary>
+    public void StopStopwatch()
+    {
+        _endingTimestamp = Stopwatch.GetTimestamp();
+    }
 }

@@ -9,20 +9,21 @@ internal class PluginListCommand : BaseCommand
     /// <inheritdoc />
     public PluginListCommand() : base("list", Resources.Messages.PluginListCommand_Description)
     {
-        var listAllArgument = new Option<bool>("--all")
+        var listAllOption = new Option<bool>("--all")
         {
             Description = Resources.Messages.PluginListCommand_AllDescription
         };
 
-        this.Add(listAllArgument);
+        this.Add(listAllOption);
         this.SetAction(async (parseResult, cancellationToken) =>
         {
-            parseResult.Configuration.EnableDefaultExceptionHandler = false;
+            parseResult.InvocationConfiguration.EnableDefaultExceptionHandler = false;
 
             var applicationOptions = GetApplicationOptions(parseResult);
-            var listAll = parseResult.GetValue(listAllArgument);
+            var listAll = parseResult.GetValue(listAllOption);
 
             applicationOptions.InitializeLogger();
+            applicationOptions.InitializeAIAssistant();
             await using var root = await applicationOptions.CreateStdoutApplicationRootAsync(
                 columnsSeparator: parseResult.GetValue(ColumnsSeparatorOption),
                 outputStyle: parseResult.GetValue(OutputStyleOption)
@@ -33,8 +34,7 @@ internal class PluginListCommand : BaseCommand
                 query += $@" AND (platform = _platform() OR platform = '{Application.PlatformMulti}');";
             }
             var result = await root.Thread.RunAsync(query, cancellationToken: cancellationToken);
-            root.Thread.TopScope.Variables["result"] = result;
-            await root.Thread.RunAsync("result");
+            await WriteAsync(root.Thread, result, root.RowsOutput, cancellationToken);
         });
     }
 }

@@ -4,7 +4,6 @@ using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Relational.Iterators;
 using QueryCat.Backend.Storage;
 
 namespace QueryCat.Backend.Formatters;
@@ -215,7 +214,7 @@ public sealed class TextTableOutput : RowsOutput, IDisposable, IAsyncDisposable
     protected override async Task InitializeAsync(CancellationToken cancellationToken = default)
     {
         var columns = QueryContext.QueryInfo.Columns;
-        _isSingleValue = columns.Length == 1 && columns[0].Name == SingleValueRowsIterator.ColumnTitle;
+        _isSingleValue = columns.Length == 1 && columns[0].Name == Column.ValueColumnTitle;
         _columnsLengths = new int[columns.Length];
 
         _onHeader.Invoke();

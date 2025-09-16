@@ -54,8 +54,11 @@ FLOAT:              'FLOAT';
 INT:                'INT';
 INT8:               'INT8';
 INTEGER:            'INTEGER';
+LIST:               'LIST';
+MAP:                'MAP';
 NUMERIC:            'NUMERIC';
 OBJECT:             'OBJECT';
+ARRAY:              'ARRAY';
 REAL:               'REAL';
 STRING:             'STRING';
 TEXT:               'TEXT';
@@ -222,6 +225,10 @@ BREAK:              'BREAK';
 // CONTINUE command.
 
 CONTINUE:           'CONTINUE';
+
+// OPEN command.
+
+OPEN:               'OPEN';
 
 TYPE: ANY | BLOB | BOOL | BOOLEAN | DECIMAL | FLOAT | INT | INT8 | INTEGER | NUMERIC | OBJECT | REAL | STRING | TEXT
     | TIMESTAMP;

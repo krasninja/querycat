@@ -34,12 +34,33 @@ namespace QueryCat.Plugins.Sdk
 
   public partial class PluginData : TBase
   {
+    private Dictionary<string, global::QueryCat.Plugins.Sdk.VariantValue>? _metadata;
 
     public List<global::QueryCat.Plugins.Sdk.Function>? Functions { get; set; }
 
     public string Name { get; set; } = string.Empty;
 
     public string Version { get; set; } = string.Empty;
+
+    public Dictionary<string, global::QueryCat.Plugins.Sdk.VariantValue>? Metadata
+    {
+      get
+      {
+        return _metadata;
+      }
+      set
+      {
+        __isset.@metadata = true;
+        this._metadata = value;
+      }
+    }
+
+
+    public Isset __isset;
+    public struct Isset
+    {
+      public bool @metadata;
+    }
 
     public PluginData()
     {
@@ -76,14 +97,14 @@ namespace QueryCat.Plugins.Sdk
               if (field.Type == TType.List)
               {
                 {
-                  var _list24 = await iprot.ReadListBeginAsync(cancellationToken);
-                  Functions = new List<global::QueryCat.Plugins.Sdk.Function>(_list24.Count);
-                  for(int _i25 = 0; _i25 < _list24.Count; ++_i25)
+                  var _list33 = await iprot.ReadListBeginAsync(cancellationToken);
+                  Functions = new List<global::QueryCat.Plugins.Sdk.Function>(_list33.Count);
+                  for(int _i34 = 0; _i34 < _list33.Count; ++_i34)
                   {
-                    global::QueryCat.Plugins.Sdk.Function _elem26;
-                    _elem26 = new global::QueryCat.Plugins.Sdk.Function();
-                    await _elem26.ReadAsync(iprot, cancellationToken);
-                    Functions.Add(_elem26);
+                    global::QueryCat.Plugins.Sdk.Function _elem35;
+                    _elem35 = new global::QueryCat.Plugins.Sdk.Function();
+                    await _elem35.ReadAsync(iprot, cancellationToken);
+                    Functions.Add(_elem35);
                   }
                   await iprot.ReadListEndAsync(cancellationToken);
                 }
@@ -110,6 +131,29 @@ namespace QueryCat.Plugins.Sdk
               {
                 Version = await iprot.ReadStringAsync(cancellationToken);
                 isset_version = true;
+              }
+              else
+              {
+                await TProtocolUtil.SkipAsync(iprot, field.Type, cancellationToken);
+              }
+              break;
+            case 4:
+              if (field.Type == TType.Map)
+              {
+                {
+                  var _map36 = await iprot.ReadMapBeginAsync(cancellationToken);
+                  Metadata = new Dictionary<string, global::QueryCat.Plugins.Sdk.VariantValue>(_map36.Count);
+                  for(int _i37 = 0; _i37 < _map36.Count; ++_i37)
+                  {
+                    string _key38;
+                    global::QueryCat.Plugins.Sdk.VariantValue _val39;
+                    _key38 = await iprot.ReadStringAsync(cancellationToken);
+                    _val39 = new global::QueryCat.Plugins.Sdk.VariantValue();
+                    await _val39.ReadAsync(iprot, cancellationToken);
+                    Metadata[_key38] = _val39;
+                  }
+                  await iprot.ReadMapEndAsync(cancellationToken);
+                }
               }
               else
               {
@@ -149,40 +193,55 @@ namespace QueryCat.Plugins.Sdk
       oprot.IncrementRecursionDepth();
       try
       {
-        var tmp27 = new TStruct("PluginData");
-        await oprot.WriteStructBeginAsync(tmp27, cancellationToken);
+        var tmp40 = new TStruct("PluginData");
+        await oprot.WriteStructBeginAsync(tmp40, cancellationToken);
         #pragma warning disable IDE0017  // simplified init
-        var tmp28 = new TField();
+        var tmp41 = new TField();
         if((Functions != null))
         {
-          tmp28.Name = "functions";
-          tmp28.Type = TType.List;
-          tmp28.ID = 1;
-          await oprot.WriteFieldBeginAsync(tmp28, cancellationToken);
+          tmp41.Name = "functions";
+          tmp41.Type = TType.List;
+          tmp41.ID = 1;
+          await oprot.WriteFieldBeginAsync(tmp41, cancellationToken);
           await oprot.WriteListBeginAsync(new TList(TType.Struct, Functions.Count), cancellationToken);
-          foreach (global::QueryCat.Plugins.Sdk.Function _iter29 in Functions)
+          foreach (global::QueryCat.Plugins.Sdk.Function _iter42 in Functions)
           {
-            await _iter29.WriteAsync(oprot, cancellationToken);
+            await _iter42.WriteAsync(oprot, cancellationToken);
           }
           await oprot.WriteListEndAsync(cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         if((Name != null))
         {
-          tmp28.Name = "name";
-          tmp28.Type = TType.String;
-          tmp28.ID = 2;
-          await oprot.WriteFieldBeginAsync(tmp28, cancellationToken);
+          tmp41.Name = "name";
+          tmp41.Type = TType.String;
+          tmp41.ID = 2;
+          await oprot.WriteFieldBeginAsync(tmp41, cancellationToken);
           await oprot.WriteStringAsync(Name, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         if((Version != null))
         {
-          tmp28.Name = "version";
-          tmp28.Type = TType.String;
-          tmp28.ID = 3;
-          await oprot.WriteFieldBeginAsync(tmp28, cancellationToken);
+          tmp41.Name = "version";
+          tmp41.Type = TType.String;
+          tmp41.ID = 3;
+          await oprot.WriteFieldBeginAsync(tmp41, cancellationToken);
           await oprot.WriteStringAsync(Version, cancellationToken);
+          await oprot.WriteFieldEndAsync(cancellationToken);
+        }
+        if((Metadata != null) && __isset.@metadata)
+        {
+          tmp41.Name = "metadata";
+          tmp41.Type = TType.Map;
+          tmp41.ID = 4;
+          await oprot.WriteFieldBeginAsync(tmp41, cancellationToken);
+          await oprot.WriteMapBeginAsync(new TMap(TType.String, TType.Struct, Metadata.Count), cancellationToken);
+          foreach (string _iter43 in Metadata.Keys)
+          {
+            await oprot.WriteStringAsync(_iter43, cancellationToken);
+            await Metadata[_iter43].WriteAsync(oprot, cancellationToken);
+          }
+          await oprot.WriteMapEndAsync(cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         #pragma warning restore IDE0017  // simplified init
@@ -201,7 +260,8 @@ namespace QueryCat.Plugins.Sdk
       if (ReferenceEquals(this, other)) return true;
       return TCollections.Equals(Functions, other.Functions)
         && global::System.Object.Equals(Name, other.Name)
-        && global::System.Object.Equals(Version, other.Version);
+        && global::System.Object.Equals(Version, other.Version)
+        && ((__isset.@metadata == other.__isset.@metadata) && ((!__isset.@metadata) || (TCollections.Equals(Metadata, other.Metadata))));
     }
 
     public override int GetHashCode() {
@@ -219,30 +279,39 @@ namespace QueryCat.Plugins.Sdk
         {
           hashcode = (hashcode * 397) + Version.GetHashCode();
         }
+        if((Metadata != null) && __isset.@metadata)
+        {
+          hashcode = (hashcode * 397) + TCollections.GetHashCode(Metadata);
+        }
       }
       return hashcode;
     }
 
     public override string ToString()
     {
-      var tmp30 = new StringBuilder("PluginData(");
+      var tmp44 = new StringBuilder("PluginData(");
       if((Functions != null))
       {
-        tmp30.Append(", Functions: ");
-        Functions.ToString(tmp30);
+        tmp44.Append(", Functions: ");
+        Functions.ToString(tmp44);
       }
       if((Name != null))
       {
-        tmp30.Append(", Name: ");
-        Name.ToString(tmp30);
+        tmp44.Append(", Name: ");
+        Name.ToString(tmp44);
       }
       if((Version != null))
       {
-        tmp30.Append(", Version: ");
-        Version.ToString(tmp30);
+        tmp44.Append(", Version: ");
+        Version.ToString(tmp44);
       }
-      tmp30.Append(')');
-      return tmp30.ToString();
+      if((Metadata != null) && __isset.@metadata)
+      {
+        tmp44.Append(", Metadata: ");
+        Metadata.ToString(tmp44);
+      }
+      tmp44.Append(')');
+      return tmp44.ToString();
     }
   }
 

@@ -58,7 +58,8 @@ public sealed class ThriftPluginExecutionScope : IExecutionScope
             var values = AsyncUtils.RunSync(ct
                 => _thriftPluginExecutionScope._client.ThriftClient.GetVariablesAsync(
                     _thriftPluginExecutionScope._client.Token,
-                    scope_id: _thriftPluginExecutionScope._id, ct));
+                    scope_id: _thriftPluginExecutionScope._id,
+                    ct));
             return values ?? [];
         }
 
@@ -96,7 +97,7 @@ public sealed class ThriftPluginExecutionScope : IExecutionScope
         /// <inheritdoc />
         public void CopyTo(KeyValuePair<string, VariantValue>[] array, int arrayIndex)
         {
-            throw new NotImplementedException();
+            this.ToArray().CopyTo(array, arrayIndex);
         }
 
         /// <inheritdoc />

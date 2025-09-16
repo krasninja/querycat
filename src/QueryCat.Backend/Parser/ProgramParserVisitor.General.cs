@@ -3,6 +3,7 @@ using Antlr4.Runtime.Tree;
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
 using QueryCat.Backend.Ast.Nodes.Function;
+using QueryCat.Backend.Ast.Nodes.Select;
 using QueryCat.Backend.Ast.Nodes.SpecialFunctions;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Core.Utils;
@@ -209,9 +210,16 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
         => Visit(context.simpleExpression());
 
     /// <inheritdoc />
-    public override IAstNode VisitCastOperand(QueryCatParser.CastOperandContext context)
+    public override IAstNode VisitCastOperandWithCast(QueryCatParser.CastOperandWithCastContext context)
         => new CastFunctionNode(
             this.Visit<ExpressionNode>(context.value),
+            this.VisitType(context.type())
+        );
+
+    /// <inheritdoc />
+    public override IAstNode VisitCastOperandWithString(QueryCatParser.CastOperandWithStringContext context)
+        => new CastFunctionNode(
+            new LiteralNode(GetUnwrappedText(context.value)),
             this.VisitType(context.type())
         );
 
@@ -341,7 +349,7 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
     public override IAstNode VisitStandardFunctionTrim(QueryCatParser.StandardFunctionTrimContext context)
     {
         var targetNode = this.Visit<ExpressionNode>(context.target);
-        var characters = context.characters != null ? context.characters.Text : string.Empty;
+        var characters = context.characters != null ? GetUnwrappedText(context.characters) : string.Empty;
         if (context.spec == null || context.spec.Type == QueryCatLexer.BOTH)
         {
             return new FunctionCallNode("btrim",
@@ -432,6 +440,9 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
             QueryCatParser.INTERVAL => DataType.Interval,
             QueryCatParser.ANY => DataType.Dynamic,
             QueryCatParser.VOID => DataType.Void,
+            QueryCatParser.ARRAY => DataType.Array,
+            QueryCatParser.LIST => DataType.Array,
+            QueryCatParser.MAP => DataType.Map,
             _ => DataType.Object,
         };
         return new TypeNode(value);
@@ -464,6 +475,21 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
         }
         return StringUtils.GetUnwrappedText(token.Text);
     }
+
+    private void SetNodeAlias(ExpressionNode expressionNode, Func<QueryCatParser.SelectAliasContext> aliasContextFunc)
+    {
+        if (expressionNode is ISelectAliasNode aliasNode)
+        {
+            var aliasName = GetContextAlias(aliasContextFunc);
+            if (!string.IsNullOrEmpty(aliasName))
+            {
+                aliasNode.Alias = aliasName;
+            }
+        }
+    }
+
+    private string GetContextAlias(Func<QueryCatParser.SelectAliasContext> aliasContextFunc)
+        => this.Visit(aliasContextFunc.Invoke(), SelectAliasNode.Empty).AliasName;
 
     #endregion
 }

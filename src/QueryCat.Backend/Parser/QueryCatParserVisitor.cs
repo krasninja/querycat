@@ -150,6 +150,13 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitStatementReturn([NotNull] QueryCatParser.StatementReturnContext context);
 	/// <summary>
+	/// Visit a parse tree produced by the <c>StatementOpen</c>
+	/// labeled alternative in <see cref="QueryCatParser.statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitStatementOpen([NotNull] QueryCatParser.StatementOpenContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>StatementExpression</c>
 	/// labeled alternative in <see cref="QueryCatParser.statement"/>.
 	/// </summary>
@@ -680,6 +687,12 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitReturnStatement([NotNull] QueryCatParser.ReturnStatementContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="QueryCatParser.openStatement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitOpenStatement([NotNull] QueryCatParser.OpenStatementContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>IdentifierSimpleNoQuotes</c>
 	/// labeled alternative in <see cref="QueryCatParser.identifierSimple"/>.
 	/// </summary>
@@ -754,11 +767,19 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitBlockExpression([NotNull] QueryCatParser.BlockExpressionContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="QueryCatParser.castOperand"/>.
+	/// Visit a parse tree produced by the <c>CastOperandWithCast</c>
+	/// labeled alternative in <see cref="QueryCatParser.castOperand"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitCastOperand([NotNull] QueryCatParser.CastOperandContext context);
+	Result VisitCastOperandWithCast([NotNull] QueryCatParser.CastOperandWithCastContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>CastOperandWithString</c>
+	/// labeled alternative in <see cref="QueryCatParser.castOperand"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitCastOperandWithString([NotNull] QueryCatParser.CastOperandWithStringContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="QueryCatParser.atTimeZone"/>.
 	/// </summary>

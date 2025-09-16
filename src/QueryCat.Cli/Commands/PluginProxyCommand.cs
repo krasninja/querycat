@@ -14,11 +14,12 @@ internal class PluginProxyCommand : BaseCommand
     {
         this.SetAction(async (parseResult, cancellationToken) =>
         {
-            parseResult.Configuration.EnableDefaultExceptionHandler = false;
+            parseResult.InvocationConfiguration.EnableDefaultExceptionHandler = false;
 
             var applicationOptions = GetApplicationOptions(parseResult);
 
             applicationOptions.InitializeLogger();
+            applicationOptions.InitializeAIAssistant();
             Console.WriteLine(Resources.Messages.PluginProxyDownload, PluginProxyDownloader.GetLinkToPluginsProxyFile());
 
             var downloader = new PluginProxyDownloader(ProxyFile.GetProxyFileName());

@@ -5,6 +5,8 @@ namespace QueryCat.Backend.Core.Types;
 /// </summary>
 internal static class IntervalParser
 {
+    private const int DaysInYear = 365;
+
     /// <summary>
     /// Parse interval from string.
     /// </summary>
@@ -126,6 +128,11 @@ internal static class IntervalParser
             case "DAY":
             case "DAYS":
                 return TimeSpan.FromDays(value);
+            // Approximate year's interval.
+            case "Y":
+            case "YEAR":
+            case "YEARS":
+                return TimeSpan.FromDays(value) * DaysInYear;
         }
         if (throwExceptions)
         {

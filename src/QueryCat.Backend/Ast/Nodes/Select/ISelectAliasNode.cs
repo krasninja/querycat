@@ -8,5 +8,5 @@ internal interface ISelectAliasNode
     /// <summary>
     /// Query alias name.
     /// </summary>
-    string Alias { get; }
+    string Alias { get; set; }
 }

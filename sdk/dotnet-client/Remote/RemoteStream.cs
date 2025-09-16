@@ -3,14 +3,14 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using QueryCat.Backend.Core.Utils;
-using QueryCat.Plugins.Client.BlobProxy;
 
-namespace QueryCat.Plugins.Client;
+namespace QueryCat.Plugins.Client.Remote;
 
 public sealed class RemoteStream : Stream
 {
     private readonly int _objectHandle;
-    private readonly IBlobProxyService _proxy;
+    private readonly IThriftSessionProvider _sessionProvider;
+    private readonly long _token;
 
     /// <inheritdoc />
     public override bool CanRead => true;
@@ -28,7 +28,8 @@ public sealed class RemoteStream : Stream
         {
             return AsyncUtils.RunSync(async ct =>
             {
-                return await _proxy.Blob_GetLengthAsync(_objectHandle, ct);
+                using var session = await _sessionProvider.GetAsync(ct);
+                return await session.Client.Blob_GetLengthAsync(_token, _objectHandle, ct);
             });
         }
     }
@@ -45,15 +46,32 @@ public sealed class RemoteStream : Stream
         {
             return AsyncUtils.RunSync(async ct =>
             {
-                return await _proxy.Blob_GetContentTypeAsync(_objectHandle, ct);
+                using var session = await _sessionProvider.GetAsync(ct);
+                return await session.Client.Blob_GetContentTypeAsync(_token,_objectHandle, ct);
             }) ?? string.Empty;
         }
     }
 
-    public RemoteStream(int objectHandle, IBlobProxyService proxy)
+    /// <summary>
+    /// Logical stream name. Optional.
+    /// </summary>
+    public string Name
+    {
+        get
+        {
+            return AsyncUtils.RunSync(async ct =>
+            {
+                using var session = await _sessionProvider.GetAsync(ct);
+                return await session.Client.Blob_GetNameAsync(_token,_objectHandle, ct);
+            }) ?? string.Empty;
+        }
+    }
+
+    public RemoteStream(int objectHandle, IThriftSessionProvider sessionProvider, long token = 0)
     {
         _objectHandle = objectHandle;
-        _proxy = proxy;
+        _sessionProvider = sessionProvider;
+        _token = token;
     }
 
     /// <inheritdoc />
@@ -70,7 +88,8 @@ public sealed class RemoteStream : Stream
     /// <inheritdoc />
     public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
     {
-        var bytes = await _proxy.Blob_ReadAsync(_objectHandle, (int)Position, count, cancellationToken);
+        using var session = await _sessionProvider.GetAsync(cancellationToken);
+        var bytes = await session.Client.Blob_ReadAsync(_token,_objectHandle, (int)Position, count, cancellationToken);
         Position += bytes.Length;
 
         var realCount = count;
@@ -99,6 +118,25 @@ public sealed class RemoteStream : Stream
             buffer = buffer.AsSpan(offset, count).ToArray();
         }
 
-        await _proxy.Blob_WriteAsync(_objectHandle, buffer, cancellationToken);
+        using var session = await _sessionProvider.GetAsync(cancellationToken);
+        await session.Client.Blob_WriteAsync(_token, _objectHandle, buffer, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    protected override void Dispose(bool disposing)
+    {
+        AsyncUtils.RunSync(async ct =>
+        {
+            await DisposeAsync();
+        });
+        base.Dispose(disposing);
+    }
+
+    /// <inheritdoc />
+    public override async ValueTask DisposeAsync()
+    {
+        using var session = await _sessionProvider.GetAsync();
+        await session.Client.Thread_CloseHandleAsync(_token, _objectHandle);
+        await base.DisposeAsync();
     }
 }

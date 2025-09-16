@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Text.RegularExpressions;
 using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Fetch;
 using QueryCat.Backend.Core.Functions;
@@ -224,13 +225,13 @@ internal static class StringFunctions
 
         var result = GetSplitItems(target, delimiter, nullString).ToList();
         var input = EnumerableRowsInput<string>.FromSource(result,
-            builder => builder.AddProperty("value", p => p, "String part."));
+            builder => builder.AddProperty(Column.ValueColumnTitle, p => p, "String part."));
         return VariantValue.CreateFromObject(input);
     }
 
     [SafeFunction]
     [Description("Returns the substring within string that matches the N'th occurrence of the regular expression pattern, or NULL.")]
-    [FunctionSignature("regexp_substr(target: string, pattern: string, start?: integer = 1, n?: integer = 1, subexpr?: integer = 1): string")]
+    [FunctionSignature("regexp_substr(target: string, pattern: string, start?: integer = 1, n?: integer = 1, subexpr?: integer = 1, flags?: string := null): string")]
     public static VariantValue RegexpSubstring(IExecutionThread thread)
     {
         var startValue = thread.Stack[2].AsInteger;
@@ -240,6 +241,7 @@ internal static class StringFunctions
         {
             return VariantValue.Null;
         }
+        var options = FlagsToRegexOptions(thread.Stack[5].AsString);
 
         var target = thread.Stack[0].AsString;
         var pattern = thread.Stack[1].AsString;
@@ -248,7 +250,7 @@ internal static class StringFunctions
         var subexpr = (int)subexprValue.Value - 1;
 
         target = StringUtils.SafeSubstring(target, start);
-        var matches = Regex.Matches(target, pattern, RegexOptions.Compiled);
+        var matches = Regex.Matches(target, pattern, options);
         if (n < 0 || n > matches.Count - 1)
         {
             return VariantValue.Null;
@@ -263,7 +265,7 @@ internal static class StringFunctions
 
     [SafeFunction]
     [Description("Returns the number of times the regular expression pattern matches in the string.")]
-    [FunctionSignature("regexp_count(target: string, pattern: string, start?: integer = 1): string")]
+    [FunctionSignature("regexp_count(target: string, pattern: string, start?: integer = 1, flags?: string := null): string")]
     public static VariantValue RegexpCount(IExecutionThread thread)
     {
         var startValue = thread.Stack[2].AsInteger;
@@ -275,15 +277,16 @@ internal static class StringFunctions
         var target = thread.Stack[0].AsString;
         var pattern = thread.Stack[1].AsString;
         var start = (int)startValue.Value - 1;
+        var options = FlagsToRegexOptions(thread.Stack[3].AsString);
 
         target = StringUtils.SafeSubstring(target, start);
-        var matches = Regex.Matches(target, pattern, RegexOptions.Compiled);
+        var matches = Regex.Matches(target, pattern, options);
         return new VariantValue(matches.Count);
     }
 
     [SafeFunction]
     [Description("Provides substitution of new text for substrings that match regular expression patterns.")]
-    [FunctionSignature("regexp_replace(target: string, pattern: string, replacement: string, start?: integer = 1): string")]
+    [FunctionSignature("regexp_replace(target: string, pattern: string, replacement: string, start?: integer = 1, flags?: string := null): string")]
     public static VariantValue RegexpReplace(IExecutionThread thread)
     {
         var startValue = thread.Stack[3].AsInteger;
@@ -296,10 +299,27 @@ internal static class StringFunctions
         var pattern = thread.Stack[1].AsString;
         var replacement = thread.Stack[2].AsString;
         var start = (int)startValue.Value - 1;
+        var options = FlagsToRegexOptions(thread.Stack[4].AsString);
 
         target = StringUtils.SafeSubstring(target, start);
-        var result = Regex.Replace(target, pattern, replacement);
+        var result = Regex.Replace(target, pattern, replacement, options);
         return new VariantValue(result);
+    }
+
+    [SafeFunction]
+    [Description("Splits string using a regular expression as the delimiter, producing a set of results.")]
+    [FunctionSignature("regexp_split_to_table(target: string, pattern: string, flags?: string := null): object<IRowsIterator>")]
+    public static VariantValue RegexpStringToTable(IExecutionThread thread)
+    {
+        var target = thread.Stack[0].AsString;
+        var pattern = thread.Stack[1].AsString;
+        var flags = thread.Stack[2].AsString;
+
+        var result = Regex.Split(target, pattern, FlagsToRegexOptions(flags));
+        var input = EnumerableRowsInput<string>.FromSource(
+            result,
+            builder => builder.AddProperty(Column.ValueColumnTitle, p => p, "String part."));
+        return VariantValue.CreateFromObject(input);
     }
 
     [SafeFunction]
@@ -343,6 +363,13 @@ internal static class StringFunctions
                 case 'i':
                     options |= RegexOptions.IgnoreCase;
                     break;
+                case 'm':
+                case 'n':
+                    options |= RegexOptions.Multiline;
+                    break;
+                case 's':
+                    options |= RegexOptions.Singleline;
+                    break;
             }
         }
         return options;
@@ -368,6 +395,7 @@ internal static class StringFunctions
         functionsManager.RegisterFunction(RegexpSubstring);
         functionsManager.RegisterFunction(RegexpCount);
         functionsManager.RegisterFunction(RegexpReplace);
+        functionsManager.RegisterFunction(RegexpStringToTable);
         functionsManager.RegisterFunction(ToBase64);
         functionsManager.RegisterFunction(FromBase64);
     }

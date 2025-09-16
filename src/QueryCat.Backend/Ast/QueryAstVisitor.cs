@@ -376,6 +376,8 @@ internal class QueryAstVisitor : AstVisitor
         DataType.Interval => "INTERVAL",
         DataType.Blob => "BLOB",
         DataType.Object => "OBJECT",
+        DataType.Array => "ARRAY",
+        DataType.Map => "MAP",
         _ => throw new ArgumentOutOfRangeException(nameof(type), type, Resources.Errors.InvalidArgumentType),
     };
 
