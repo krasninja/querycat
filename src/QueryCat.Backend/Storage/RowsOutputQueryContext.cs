@@ -5,7 +5,7 @@ namespace QueryCat.Backend.Storage;
 /// <summary>
 /// Context for rows output.
 /// </summary>
-internal class RowsOutputQueryContext : QueryContext
+public class RowsOutputQueryContext : QueryContext
 {
     /// <summary>
     /// Constructor.

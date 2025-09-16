@@ -3,6 +3,7 @@ using System.Text;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend;
 using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Plugins;
 using QueryCat.Backend.Core.Types;
@@ -72,10 +73,8 @@ public class Program
         InitializeLogger();
 
         var workingDirectoryPlugins = Directory.GetFiles(Environment.CurrentDirectory, "*.dll");
-        var outputStringBuilder = new StringBuilder();
         var options = new ExecutionOptions
         {
-            DefaultRowsOutput = new TextTableOutput(outputStringBuilder),
             UseConfig = true,
             RunBootstrapScript = true,
         };
@@ -97,13 +96,31 @@ public class Program
             foreach (var file in files)
             {
                 var fileContent = await File.ReadAllTextAsync(file, cancellationToken);
-                await executionThread.RunAsync(fileContent, cancellationToken: cancellationToken);
+                var result = await executionThread.RunAsync(fileContent, cancellationToken: cancellationToken);
+                await PrintResultAsync(result, cancellationToken);
             }
         }
         else
         {
-            await executionThread.RunAsync(query, cancellationToken: cancellationToken);
+            var result = await executionThread.RunAsync(query, cancellationToken: cancellationToken);
+            await PrintResultAsync(result, cancellationToken);
         }
+    }
+
+    private static async Task PrintResultAsync(
+        VariantValue result,
+        CancellationToken cancellationToken = default)
+    {
+        var outputStringBuilder = new StringBuilder();
+        await using var output = new TextTableOutput(outputStringBuilder);
+        var iterator = RowsIteratorConverter.Convert(result);
+        output.QueryContext = new SimpleQueryContext(new QueryContextQueryInfo(iterator.Columns));
+        await output.OpenAsync(cancellationToken);
+        while (await iterator.MoveNextAsync(cancellationToken))
+        {
+            await output.WriteValuesAsync(iterator.Current.AsArray(), cancellationToken);
+        }
+        await output.CloseAsync(cancellationToken);
         await Console.Out.WriteLineAsync(outputStringBuilder, cancellationToken);
     }
 
