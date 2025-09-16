@@ -26,6 +26,11 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
     private readonly List<KeyColumn> _keyColumns = new();
 
     /// <summary>
+    /// Columns count.
+    /// </summary>
+    public int Count => _columns.Count;
+
+    /// <summary>
     /// Property naming convention when used from expressions.
     /// </summary>
     public NamingConventionStyle NamingConvention { get; set; } = NamingConventionStyle.Keep;
@@ -482,6 +487,16 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
         return null;
     }
 
+    private string GetNameFromProperty<T1, T2>(Expression<Func<T1, T2>> valueGetterExpression)
+    {
+        var propertyInfo = GetProperty(valueGetterExpression);
+        if (propertyInfo == null)
+        {
+            throw new InvalidOperationException(Resources.Errors.CannotGetColumnFromExpression);
+        }
+        return ConvertName(propertyInfo.Name);
+    }
+
     /// <summary>
     /// Get value.
     /// </summary>
@@ -568,6 +583,23 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
     /// <summary>
     /// Add key column information.
     /// </summary>
+    /// <param name="valueGetterExpression">Column expression.</param>
+    /// <param name="isRequired">Is this the required condition.</param>
+    /// <returns>Instance of <see cref="ClassRowsFrameBuilder{TClass}" />.</returns>
+    public ClassRowsFrameBuilder<TClass> AddKeyColumn<T>(
+        Expression<Func<TClass, T>> valueGetterExpression,
+        bool isRequired = false)
+    {
+        var columnName = GetNameFromProperty(valueGetterExpression);
+        var columnIndex = GetColumnIndexByName(columnName);
+        var keyColumn = new KeyColumn(columnIndex, isRequired);
+        _keyColumns.Add(keyColumn);
+        return this;
+    }
+
+    /// <summary>
+    /// Add key column information.
+    /// </summary>
     /// <param name="columnName">Column name.</param>
     /// <param name="operation">Key operation.</param>
     /// <param name="isRequired">Is this the required condition.</param>
@@ -577,6 +609,25 @@ public class ClassRowsFrameBuilder<TClass> where TClass : class
         VariantValue.Operation operation,
         bool isRequired = false)
     {
+        var columnIndex = GetColumnIndexByName(columnName);
+        var keyColumn = new KeyColumn(columnIndex, isRequired, operation);
+        _keyColumns.Add(keyColumn);
+        return this;
+    }
+
+    /// <summary>
+    /// Add key column information.
+    /// </summary>
+    /// <param name="valueGetterExpression">Column expression.</param>
+    /// <param name="operation">Key operation.</param>
+    /// <param name="isRequired">Is this the required condition.</param>
+    /// <returns>Instance of <see cref="ClassRowsFrameBuilder{TClass}" />.</returns>
+    public ClassRowsFrameBuilder<TClass> AddKeyColumn<T>(
+        Expression<Func<TClass, T>> valueGetterExpression,
+        VariantValue.Operation operation,
+        bool isRequired = false)
+    {
+        var columnName = GetNameFromProperty(valueGetterExpression);
         var columnIndex = GetColumnIndexByName(columnName);
         var keyColumn = new KeyColumn(columnIndex, isRequired, operation);
         _keyColumns.Add(keyColumn);
