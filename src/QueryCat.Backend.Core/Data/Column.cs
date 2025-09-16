@@ -130,6 +130,8 @@ public class Column : ICloneable, IModelDescription
             DataType.Boolean => 5,
             DataType.Numeric => 8,
             DataType.Blob => 25,
+            DataType.Array => 45,
+            DataType.Map => 55,
             _ => 4
         };
         if (Name.Length > size)

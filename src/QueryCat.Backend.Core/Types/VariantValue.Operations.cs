@@ -489,6 +489,11 @@ public readonly partial struct VariantValue
                 DataType.Blob => CreateCombinedBlob(left.AsBlobUnsafe, right.AsBlobUnsafe),
                 _ => Null,
             },
+            DataType.Array => right.Type switch
+            {
+                DataType.Array => CreateFromObject(left.AsArrayUnsafe.Concat(right.AsArrayUnsafe)),
+                _ => Null,
+            },
             _ => Null,
         };
 

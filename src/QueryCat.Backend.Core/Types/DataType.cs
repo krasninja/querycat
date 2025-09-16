@@ -65,4 +65,14 @@ public enum DataType
     /// and check. The variant value cannot have this type.
     /// </summary>
     Dynamic = 41,
+
+    /// <summary>
+    /// Array of values.
+    /// </summary>
+    Array = 42,
+
+    /// <summary>
+    /// Key-values pairs.
+    /// </summary>
+    Map = 43,
 }

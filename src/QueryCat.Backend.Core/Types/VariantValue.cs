@@ -293,6 +293,18 @@ public readonly partial struct VariantValue :
         _valueUnion = new TypeUnion(DataType.Object);
     }
 
+    private VariantValue(IList<VariantValue> list)
+    {
+        _object = list;
+        _valueUnion = new TypeUnion(DataType.Array);
+    }
+
+    private VariantValue(IDictionary<VariantValue, VariantValue> map)
+    {
+        _object = map;
+        _valueUnion = new TypeUnion(DataType.Map);
+    }
+
     public VariantValue(IBlobData? blob)
     {
         _object = blob;
@@ -388,6 +400,14 @@ public readonly partial struct VariantValue :
         {
             return Null;
         }
+        if (obj is IList<VariantValue> list)
+        {
+            return new VariantValue(list);
+        }
+        if (obj is IDictionary<VariantValue, VariantValue> map)
+        {
+            return new VariantValue(map);
+        }
         return new VariantValue(obj);
     }
 
@@ -457,6 +477,8 @@ public readonly partial struct VariantValue :
             DataType.Blob => BlobDataTypeObject.Instance,
             DataType.Object => ObjectDataTypeObject.Instance,
             DataType.Dynamic => ObjectDataTypeObject.Instance,
+            DataType.Array => ArrayDataTypeObject.Instance,
+            DataType.Map => MapDataTypeObject.Instance,
             _ => NullDataTypeObject.Instance,
         };
     }
@@ -502,6 +524,10 @@ public readonly partial struct VariantValue :
     public IBlobData? AsBlob => GetDataTypeObject().ToBlob(in this);
 
     internal IBlobData AsBlobUnsafe => (IBlobData)_object!;
+
+    internal IList<VariantValue> AsArrayUnsafe => (IList<VariantValue>)_object!;
+
+    internal IDictionary<VariantValue, VariantValue> AsMapUnsafe => (IDictionary<VariantValue, VariantValue>)_object!;
 
     #endregion
 
@@ -774,6 +800,8 @@ public readonly partial struct VariantValue :
         DataType.Interval => AsIntervalUnsafe.ToString("c", Application.Culture),
         DataType.Object => $"[object:{AsObjectUnsafe}]",
         DataType.Blob => BlobToShortString(AsBlobUnsafe),
+        DataType.Array => ArrayToString(AsArrayUnsafe, Application.Culture),
+        DataType.Map => MapToString(AsMapUnsafe, Application.Culture),
         _ => UnknownString,
     };
 
@@ -796,6 +824,8 @@ public readonly partial struct VariantValue :
         DataType.Interval => AsIntervalUnsafe.ToString(format, Application.Culture),
         DataType.Object => $"[object:{AsObjectUnsafe}]",
         DataType.Blob => BlobToShortString(AsBlobUnsafe),
+        DataType.Array => ArrayToString(AsArrayUnsafe, Application.Culture),
+        DataType.Map => MapToString(AsMapUnsafe, Application.Culture),
         _ => UnknownString,
     };
 
@@ -817,6 +847,8 @@ public readonly partial struct VariantValue :
         DataType.Interval => AsIntervalUnsafe.ToString(null, formatProvider),
         DataType.Object => $"[object:{AsObjectUnsafe}]",
         DataType.Blob => BlobToShortString(AsBlobUnsafe),
+        DataType.Array => ArrayToString(AsArrayUnsafe, formatProvider),
+        DataType.Map => MapToString(AsMapUnsafe, formatProvider),
         _ => UnknownString,
     };
 
@@ -854,6 +886,31 @@ public readonly partial struct VariantValue :
             ArrayPool<byte>.Shared.Return(buffer);
         }
 
+        return sb.ToString();
+    }
+
+    private static string ArrayToString(IList<VariantValue> list, IFormatProvider? formatProvider)
+    {
+        var sb = new StringBuilder(list.Count * 7)
+            .Append('[')
+            .Append(
+                string.Join(',', list.Select(item => item.ToString(formatProvider)))
+            )
+            .Append(']');
+        return sb.ToString();
+    }
+
+    private static string MapToString(IDictionary<VariantValue, VariantValue> map, IFormatProvider? formatProvider)
+    {
+        string KeyValueToString(KeyValuePair<VariantValue, VariantValue> kvp) =>
+            $"{kvp.Key.ToString(formatProvider)}:{kvp.Value.ToString(formatProvider)}";
+
+        var sb = new StringBuilder(map.Count * 7)
+            .Append('{')
+            .Append(
+                string.Join(',', map.Select(KeyValueToString))
+            )
+            .Append('}');
         return sb.ToString();
     }
 

@@ -50,7 +50,9 @@ union VariantValue {
   7: DecimalValue decimal,
   8: Duration interval,
   9: ObjectValue object,
-  10: string json
+  10: string json,
+  11: list<VariantValue> array,
+  12: map<VariantValue, VariantValue> map
 }
 
 enum DataType {
@@ -161,8 +163,10 @@ struct PluginData {
   1: required list<Function> functions,
   // Plugin name.
   2: required string name,
-  // Version. Format is MAJOR.MINOR.PATCH .
-  3: required string version
+  // Plugin version. Format is MAJOR.MINOR.PATCH .
+  3: required string version,
+  // Metadata.
+  4: optional map<string, VariantValue> metadata
 }
 
 struct RegistrationResult {

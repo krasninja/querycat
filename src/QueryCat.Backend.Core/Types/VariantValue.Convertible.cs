@@ -16,6 +16,8 @@ public readonly partial struct VariantValue
         DataType.Timestamp => TypeCode.DateTime,
         DataType.Numeric => TypeCode.Decimal,
         DataType.Blob => TypeCode.Object,
+        DataType.Array => TypeCode.Object,
+        DataType.Map => TypeCode.Object,
         _ => TypeCode.Empty,
     };
 

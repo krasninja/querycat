@@ -119,25 +119,25 @@ namespace QueryCat.Plugins.Sdk
       oprot.IncrementRecursionDepth();
       try
       {
-        var tmp80 = new TStruct("QuestionMessage");
-        await oprot.WriteStructBeginAsync(tmp80, cancellationToken);
+        var tmp94 = new TStruct("QuestionMessage");
+        await oprot.WriteStructBeginAsync(tmp94, cancellationToken);
         #pragma warning disable IDE0017  // simplified init
-        var tmp81 = new TField();
+        var tmp95 = new TField();
         if((Content != null))
         {
-          tmp81.Name = "content";
-          tmp81.Type = TType.String;
-          tmp81.ID = 1;
-          await oprot.WriteFieldBeginAsync(tmp81, cancellationToken);
+          tmp95.Name = "content";
+          tmp95.Type = TType.String;
+          tmp95.ID = 1;
+          await oprot.WriteFieldBeginAsync(tmp95, cancellationToken);
           await oprot.WriteStringAsync(Content, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         if((Role != null))
         {
-          tmp81.Name = "role";
-          tmp81.Type = TType.String;
-          tmp81.ID = 2;
-          await oprot.WriteFieldBeginAsync(tmp81, cancellationToken);
+          tmp95.Name = "role";
+          tmp95.Type = TType.String;
+          tmp95.ID = 2;
+          await oprot.WriteFieldBeginAsync(tmp95, cancellationToken);
           await oprot.WriteStringAsync(Role, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
@@ -176,19 +176,19 @@ namespace QueryCat.Plugins.Sdk
 
     public override string ToString()
     {
-      var tmp82 = new StringBuilder("QuestionMessage(");
+      var tmp96 = new StringBuilder("QuestionMessage(");
       if((Content != null))
       {
-        tmp82.Append(", Content: ");
-        Content.ToString(tmp82);
+        tmp96.Append(", Content: ");
+        Content.ToString(tmp96);
       }
       if((Role != null))
       {
-        tmp82.Append(", Role: ");
-        Role.ToString(tmp82);
+        tmp96.Append(", Role: ");
+        Role.ToString(tmp96);
       }
-      tmp82.Append(')');
-      return tmp82.ToString();
+      tmp96.Append(')');
+      return tmp96.ToString();
     }
   }
 

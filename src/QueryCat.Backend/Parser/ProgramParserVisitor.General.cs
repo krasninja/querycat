@@ -440,6 +440,9 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
             QueryCatParser.INTERVAL => DataType.Interval,
             QueryCatParser.ANY => DataType.Dynamic,
             QueryCatParser.VOID => DataType.Void,
+            QueryCatParser.ARRAY => DataType.Array,
+            QueryCatParser.LIST => DataType.Array,
+            QueryCatParser.MAP => DataType.Map,
             _ => DataType.Object,
         };
         return new TypeNode(value);

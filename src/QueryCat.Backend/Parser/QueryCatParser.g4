@@ -381,6 +381,8 @@ type
     | BOOLEAN | BOOL
     | NUMERIC | DECIMAL
     | OBJECT
+    | ARRAY | LIST
+    | MAP
     | ANY
     | VOID
     ;
@@ -417,7 +419,7 @@ expression
     | blockExpression # ExpressionBlock
     ;
 
-// Simple expression is subset of "expressons" to be used in clauses like BETWEEN.
+// Simple expression is subset of "expressions" to be used in clauses like BETWEEN.
 // Because (BETWEEN x AND y) conflicts with plain (a AND b).
 simpleExpression
     : literal # SimpleExpressionLiteral

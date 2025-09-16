@@ -458,6 +458,46 @@ public partial struct VariantValue
 
     #endregion
 
+    #region Array
+
+    internal sealed class ArrayDataTypeObject : DataTypeObject
+    {
+        public static ArrayDataTypeObject Instance { get; } = new();
+
+        /// <inheritdoc />
+        private ArrayDataTypeObject() : base(DataType.Array)
+        {
+        }
+
+        /// <inheritdoc />
+        public override bool CanToString => true;
+
+        /// <inheritdoc />
+        public override string ToString(in VariantValue value) => value.AsObjectUnsafe?.ToString() ?? string.Empty;
+    }
+
+    #endregion
+
+    #region Map
+
+    internal sealed class MapDataTypeObject : DataTypeObject
+    {
+        public static MapDataTypeObject Instance { get; } = new();
+
+        /// <inheritdoc />
+        private MapDataTypeObject() : base(DataType.Map)
+        {
+        }
+
+        /// <inheritdoc />
+        public override bool CanToString => true;
+
+        /// <inheritdoc />
+        public override string ToString(in VariantValue value) => value.AsObjectUnsafe?.ToString() ?? string.Empty;
+    }
+
+    #endregion
+
     #region Null
 
     internal sealed class NullDataTypeObject : DataTypeObject

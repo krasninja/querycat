@@ -119,20 +119,20 @@ namespace QueryCat.Plugins.Sdk
       oprot.IncrementRecursionDepth();
       try
       {
-        var tmp36 = new TStruct("ExecutionScope");
-        await oprot.WriteStructBeginAsync(tmp36, cancellationToken);
+        var tmp50 = new TStruct("ExecutionScope");
+        await oprot.WriteStructBeginAsync(tmp50, cancellationToken);
         #pragma warning disable IDE0017  // simplified init
-        var tmp37 = new TField();
-        tmp37.Name = "id";
-        tmp37.Type = TType.I32;
-        tmp37.ID = 1;
-        await oprot.WriteFieldBeginAsync(tmp37, cancellationToken);
+        var tmp51 = new TField();
+        tmp51.Name = "id";
+        tmp51.Type = TType.I32;
+        tmp51.ID = 1;
+        await oprot.WriteFieldBeginAsync(tmp51, cancellationToken);
         await oprot.WriteI32Async(Id, cancellationToken);
         await oprot.WriteFieldEndAsync(cancellationToken);
-        tmp37.Name = "parent_id";
-        tmp37.Type = TType.I32;
-        tmp37.ID = 2;
-        await oprot.WriteFieldBeginAsync(tmp37, cancellationToken);
+        tmp51.Name = "parent_id";
+        tmp51.Type = TType.I32;
+        tmp51.ID = 2;
+        await oprot.WriteFieldBeginAsync(tmp51, cancellationToken);
         await oprot.WriteI32Async(ParentId, cancellationToken);
         await oprot.WriteFieldEndAsync(cancellationToken);
         #pragma warning restore IDE0017  // simplified init
@@ -164,13 +164,13 @@ namespace QueryCat.Plugins.Sdk
 
     public override string ToString()
     {
-      var tmp38 = new StringBuilder("ExecutionScope(");
-      tmp38.Append(", Id: ");
-      Id.ToString(tmp38);
-      tmp38.Append(", ParentId: ");
-      ParentId.ToString(tmp38);
-      tmp38.Append(')');
-      return tmp38.ToString();
+      var tmp52 = new StringBuilder("ExecutionScope(");
+      tmp52.Append(", Id: ");
+      Id.ToString(tmp52);
+      tmp52.Append(", ParentId: ");
+      ParentId.ToString(tmp52);
+      tmp52.Append(')');
+      return tmp52.ToString();
     }
   }
 

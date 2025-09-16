@@ -173,34 +173,34 @@ namespace QueryCat.Plugins.Sdk
       oprot.IncrementRecursionDepth();
       try
       {
-        var tmp56 = new TStruct("StatisticRowError");
-        await oprot.WriteStructBeginAsync(tmp56, cancellationToken);
+        var tmp70 = new TStruct("StatisticRowError");
+        await oprot.WriteStructBeginAsync(tmp70, cancellationToken);
         #pragma warning disable IDE0017  // simplified init
-        var tmp57 = new TField();
-        tmp57.Name = "error_code";
-        tmp57.Type = TType.I32;
-        tmp57.ID = 1;
-        await oprot.WriteFieldBeginAsync(tmp57, cancellationToken);
+        var tmp71 = new TField();
+        tmp71.Name = "error_code";
+        tmp71.Type = TType.I32;
+        tmp71.ID = 1;
+        await oprot.WriteFieldBeginAsync(tmp71, cancellationToken);
         await oprot.WriteI32Async((int)ErrorCode, cancellationToken);
         await oprot.WriteFieldEndAsync(cancellationToken);
-        tmp57.Name = "row_index";
-        tmp57.Type = TType.I64;
-        tmp57.ID = 2;
-        await oprot.WriteFieldBeginAsync(tmp57, cancellationToken);
+        tmp71.Name = "row_index";
+        tmp71.Type = TType.I64;
+        tmp71.ID = 2;
+        await oprot.WriteFieldBeginAsync(tmp71, cancellationToken);
         await oprot.WriteI64Async(RowIndex, cancellationToken);
         await oprot.WriteFieldEndAsync(cancellationToken);
-        tmp57.Name = "column_index";
-        tmp57.Type = TType.I32;
-        tmp57.ID = 3;
-        await oprot.WriteFieldBeginAsync(tmp57, cancellationToken);
+        tmp71.Name = "column_index";
+        tmp71.Type = TType.I32;
+        tmp71.ID = 3;
+        await oprot.WriteFieldBeginAsync(tmp71, cancellationToken);
         await oprot.WriteI32Async(ColumnIndex, cancellationToken);
         await oprot.WriteFieldEndAsync(cancellationToken);
         if((Value != null) && __isset.@value)
         {
-          tmp57.Name = "value";
-          tmp57.Type = TType.String;
-          tmp57.ID = 4;
-          await oprot.WriteFieldBeginAsync(tmp57, cancellationToken);
+          tmp71.Name = "value";
+          tmp71.Type = TType.String;
+          tmp71.ID = 4;
+          await oprot.WriteFieldBeginAsync(tmp71, cancellationToken);
           await oprot.WriteStringAsync(Value, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
@@ -240,20 +240,20 @@ namespace QueryCat.Plugins.Sdk
 
     public override string ToString()
     {
-      var tmp58 = new StringBuilder("StatisticRowError(");
-      tmp58.Append(", ErrorCode: ");
-      ErrorCode.ToString(tmp58);
-      tmp58.Append(", RowIndex: ");
-      RowIndex.ToString(tmp58);
-      tmp58.Append(", ColumnIndex: ");
-      ColumnIndex.ToString(tmp58);
+      var tmp72 = new StringBuilder("StatisticRowError(");
+      tmp72.Append(", ErrorCode: ");
+      ErrorCode.ToString(tmp72);
+      tmp72.Append(", RowIndex: ");
+      RowIndex.ToString(tmp72);
+      tmp72.Append(", ColumnIndex: ");
+      ColumnIndex.ToString(tmp72);
       if((Value != null) && __isset.@value)
       {
-        tmp58.Append(", Value: ");
-        Value.ToString(tmp58);
+        tmp72.Append(", Value: ");
+        Value.ToString(tmp72);
       }
-      tmp58.Append(')');
-      return tmp58.ToString();
+      tmp72.Append(')');
+      return tmp72.ToString();
     }
   }
 

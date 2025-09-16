@@ -155,13 +155,13 @@ namespace QueryCat.Plugins.Sdk
               if (field.Type == TType.List)
               {
                 {
-                  var _list16 = await iprot.ReadListBeginAsync(cancellationToken);
-                  FormatterIds = new List<string>(_list16.Count);
-                  for(int _i17 = 0; _i17 < _list16.Count; ++_i17)
+                  var _list25 = await iprot.ReadListBeginAsync(cancellationToken);
+                  FormatterIds = new List<string>(_list25.Count);
+                  for(int _i26 = 0; _i26 < _list25.Count; ++_i26)
                   {
-                    string _elem18;
-                    _elem18 = await iprot.ReadStringAsync(cancellationToken);
-                    FormatterIds.Add(_elem18);
+                    string _elem27;
+                    _elem27 = await iprot.ReadStringAsync(cancellationToken);
+                    FormatterIds.Add(_elem27);
                   }
                   await iprot.ReadListEndAsync(cancellationToken);
                 }
@@ -204,53 +204,53 @@ namespace QueryCat.Plugins.Sdk
       oprot.IncrementRecursionDepth();
       try
       {
-        var tmp19 = new TStruct("Function");
-        await oprot.WriteStructBeginAsync(tmp19, cancellationToken);
+        var tmp28 = new TStruct("Function");
+        await oprot.WriteStructBeginAsync(tmp28, cancellationToken);
         #pragma warning disable IDE0017  // simplified init
-        var tmp20 = new TField();
+        var tmp29 = new TField();
         if((Signature != null))
         {
-          tmp20.Name = "signature";
-          tmp20.Type = TType.String;
-          tmp20.ID = 1;
-          await oprot.WriteFieldBeginAsync(tmp20, cancellationToken);
+          tmp29.Name = "signature";
+          tmp29.Type = TType.String;
+          tmp29.ID = 1;
+          await oprot.WriteFieldBeginAsync(tmp29, cancellationToken);
           await oprot.WriteStringAsync(Signature, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         if((Description != null))
         {
-          tmp20.Name = "description";
-          tmp20.Type = TType.String;
-          tmp20.ID = 2;
-          await oprot.WriteFieldBeginAsync(tmp20, cancellationToken);
+          tmp29.Name = "description";
+          tmp29.Type = TType.String;
+          tmp29.ID = 2;
+          await oprot.WriteFieldBeginAsync(tmp29, cancellationToken);
           await oprot.WriteStringAsync(Description, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
-        tmp20.Name = "is_aggregate";
-        tmp20.Type = TType.Bool;
-        tmp20.ID = 3;
-        await oprot.WriteFieldBeginAsync(tmp20, cancellationToken);
+        tmp29.Name = "is_aggregate";
+        tmp29.Type = TType.Bool;
+        tmp29.ID = 3;
+        await oprot.WriteFieldBeginAsync(tmp29, cancellationToken);
         await oprot.WriteBoolAsync(IsAggregate, cancellationToken);
         await oprot.WriteFieldEndAsync(cancellationToken);
         if(__isset.is_safe)
         {
-          tmp20.Name = "is_safe";
-          tmp20.Type = TType.Bool;
-          tmp20.ID = 4;
-          await oprot.WriteFieldBeginAsync(tmp20, cancellationToken);
+          tmp29.Name = "is_safe";
+          tmp29.Type = TType.Bool;
+          tmp29.ID = 4;
+          await oprot.WriteFieldBeginAsync(tmp29, cancellationToken);
           await oprot.WriteBoolAsync(IsSafe, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         if((FormatterIds != null) && __isset.formatter_ids)
         {
-          tmp20.Name = "formatter_ids";
-          tmp20.Type = TType.List;
-          tmp20.ID = 5;
-          await oprot.WriteFieldBeginAsync(tmp20, cancellationToken);
+          tmp29.Name = "formatter_ids";
+          tmp29.Type = TType.List;
+          tmp29.ID = 5;
+          await oprot.WriteFieldBeginAsync(tmp29, cancellationToken);
           await oprot.WriteListBeginAsync(new TList(TType.String, FormatterIds.Count), cancellationToken);
-          foreach (string _iter21 in FormatterIds)
+          foreach (string _iter30 in FormatterIds)
           {
-            await oprot.WriteStringAsync(_iter21, cancellationToken);
+            await oprot.WriteStringAsync(_iter30, cancellationToken);
           }
           await oprot.WriteListEndAsync(cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
@@ -302,31 +302,31 @@ namespace QueryCat.Plugins.Sdk
 
     public override string ToString()
     {
-      var tmp22 = new StringBuilder("Function(");
+      var tmp31 = new StringBuilder("Function(");
       if((Signature != null))
       {
-        tmp22.Append(", Signature: ");
-        Signature.ToString(tmp22);
+        tmp31.Append(", Signature: ");
+        Signature.ToString(tmp31);
       }
       if((Description != null))
       {
-        tmp22.Append(", Description: ");
-        Description.ToString(tmp22);
+        tmp31.Append(", Description: ");
+        Description.ToString(tmp31);
       }
-      tmp22.Append(", IsAggregate: ");
-      IsAggregate.ToString(tmp22);
+      tmp31.Append(", IsAggregate: ");
+      IsAggregate.ToString(tmp31);
       if(__isset.is_safe)
       {
-        tmp22.Append(", IsSafe: ");
-        IsSafe.ToString(tmp22);
+        tmp31.Append(", IsSafe: ");
+        IsSafe.ToString(tmp31);
       }
       if((FormatterIds != null) && __isset.formatter_ids)
       {
-        tmp22.Append(", FormatterIds: ");
-        FormatterIds.ToString(tmp22);
+        tmp31.Append(", FormatterIds: ");
+        FormatterIds.ToString(tmp31);
       }
-      tmp22.Append(')');
-      return tmp22.ToString();
+      tmp31.Append(')');
+      return tmp31.ToString();
     }
   }
 

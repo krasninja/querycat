@@ -154,31 +154,31 @@ namespace QueryCat.Plugins.Sdk
       oprot.IncrementRecursionDepth();
       try
       {
-        var tmp32 = new TStruct("RegistrationResult");
-        await oprot.WriteStructBeginAsync(tmp32, cancellationToken);
+        var tmp46 = new TStruct("RegistrationResult");
+        await oprot.WriteStructBeginAsync(tmp46, cancellationToken);
         #pragma warning disable IDE0017  // simplified init
-        var tmp33 = new TField();
-        tmp33.Name = "token";
-        tmp33.Type = TType.I64;
-        tmp33.ID = 1;
-        await oprot.WriteFieldBeginAsync(tmp33, cancellationToken);
+        var tmp47 = new TField();
+        tmp47.Name = "token";
+        tmp47.Type = TType.I64;
+        tmp47.ID = 1;
+        await oprot.WriteFieldBeginAsync(tmp47, cancellationToken);
         await oprot.WriteI64Async(Token, cancellationToken);
         await oprot.WriteFieldEndAsync(cancellationToken);
         if((Version != null))
         {
-          tmp33.Name = "version";
-          tmp33.Type = TType.String;
-          tmp33.ID = 2;
-          await oprot.WriteFieldBeginAsync(tmp33, cancellationToken);
+          tmp47.Name = "version";
+          tmp47.Type = TType.String;
+          tmp47.ID = 2;
+          await oprot.WriteFieldBeginAsync(tmp47, cancellationToken);
           await oprot.WriteStringAsync(Version, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
         if(__isset.min_log_level)
         {
-          tmp33.Name = "min_log_level";
-          tmp33.Type = TType.I32;
-          tmp33.ID = 3;
-          await oprot.WriteFieldBeginAsync(tmp33, cancellationToken);
+          tmp47.Name = "min_log_level";
+          tmp47.Type = TType.I32;
+          tmp47.ID = 3;
+          await oprot.WriteFieldBeginAsync(tmp47, cancellationToken);
           await oprot.WriteI32Async((int)MinLogLevel, cancellationToken);
           await oprot.WriteFieldEndAsync(cancellationToken);
         }
@@ -219,21 +219,21 @@ namespace QueryCat.Plugins.Sdk
 
     public override string ToString()
     {
-      var tmp34 = new StringBuilder("RegistrationResult(");
-      tmp34.Append(", Token: ");
-      Token.ToString(tmp34);
+      var tmp48 = new StringBuilder("RegistrationResult(");
+      tmp48.Append(", Token: ");
+      Token.ToString(tmp48);
       if((Version != null))
       {
-        tmp34.Append(", Version: ");
-        Version.ToString(tmp34);
+        tmp48.Append(", Version: ");
+        Version.ToString(tmp48);
       }
       if(__isset.min_log_level)
       {
-        tmp34.Append(", MinLogLevel: ");
-        MinLogLevel.ToString(tmp34);
+        tmp48.Append(", MinLogLevel: ");
+        MinLogLevel.ToString(tmp48);
       }
-      tmp34.Append(')');
-      return tmp34.ToString();
+      tmp48.Append(')');
+      return tmp48.ToString();
     }
   }
 
