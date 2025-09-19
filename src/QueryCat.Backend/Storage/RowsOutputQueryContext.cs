@@ -1,4 +1,5 @@
 using QueryCat.Backend.Core.Data;
+using QueryCat.Backend.Core.Execution;
 
 namespace QueryCat.Backend.Storage;
 
@@ -24,5 +25,18 @@ public class RowsOutputQueryContext : QueryContext
     /// <param name="columns">Column of output.</param>
     public RowsOutputQueryContext(Column[] columns) : this(columns, NullConfigStorage.Instance)
     {
+    }
+
+    /// <summary>
+    /// Constructor.
+    /// </summary>
+    /// <param name="columns">Column of output.</param>
+    /// <param name="executionThread">Execution thread.</param>
+    public RowsOutputQueryContext(Column[] columns, IExecutionThread<ExecutionOptions> executionThread)
+        : base(new QueryContextQueryInfo(columns))
+    {
+        ConfigStorage = executionThread.ConfigStorage;
+        PrereadRowsCount = executionThread.Options.AnalyzeRowsCount;
+        SkipIfNoColumns = executionThread.Options.SkipIfNoColumns;
     }
 }
