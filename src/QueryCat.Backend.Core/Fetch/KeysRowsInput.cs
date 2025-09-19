@@ -12,42 +12,35 @@ public abstract class KeysRowsInput : RowsInput, IDisposable
 {
     private readonly List<KeyColumn> _keyColumns = new();
 
-    [DebuggerDisplay("{KeyColumn} => {Value}")]
-    private sealed class KeyColumnValue(KeyColumn keyColumn, VariantValue value = default)
+    [DebuggerDisplay("{KeyColumnIndex} => {Operation} {Value}")]
+    private sealed class KeyColumnValue(int keyColumnIndex)
     {
-        public KeyColumn KeyColumn { get; } = keyColumn;
+        public int KeyColumnIndex { get; } = keyColumnIndex;
 
-        public VariantValue Value { get; set; } = value;
+        public VariantValue Value { get; private set; }
 
-        public bool IsSet { get; set; } = true;
+        public bool IsSet { get; private set; }
+
+        public VariantValue.Operation Operation { get; private set; } = VariantValue.Operation.Equals;
+
+        public void Set(VariantValue value, VariantValue.Operation operation)
+        {
+            IsSet = true;
+            Value = value;
+            Operation = operation;
+        }
+
+        public void Unset()
+        {
+            IsSet = false;
+            Value = VariantValue.Null;
+        }
     }
 
-    private KeyColumnValue[][] _setKeyColumns = [];
-
-    /// <summary>
-    /// Is <c>true</c> if user set all key columns in his query.
-    /// </summary>
-    public bool AreAllKeyColumnsSet => _keyColumns.Count == _setKeyColumns.Length;
+    private readonly List<KeyColumnValue> _setKeyColumns = [];
 
     /// <inheritdoc />
     public override Column[] Columns { get; protected set; } = [];
-
-    protected virtual void InitializeKeyColumns(bool force = false)
-    {
-        if (_setKeyColumns.Length == Columns.Length && !force)
-        {
-            return;
-        }
-
-        _setKeyColumns = new KeyColumnValue[Columns.Length][];
-        for (var i = 0; i < Columns.Length; i++)
-        {
-            _setKeyColumns[i] = _keyColumns
-                .Where(kc => kc.ColumnIndex == i)
-                .Select(kc => new KeyColumnValue(kc))
-                .ToArray();
-        }
-    }
 
     protected Fetcher<TClass> CreateFetcher<TClass>() where TClass : class
     {
@@ -75,8 +68,7 @@ public abstract class KeysRowsInput : RowsInput, IDisposable
     /// <inheritdoc />
     public override async Task ResetAsync(CancellationToken cancellationToken = default)
     {
-        _setKeyColumns = [];
-        InitializeKeyColumns();
+        _setKeyColumns.Clear();
         await CloseAsync(cancellationToken);
         await base.ResetAsync(cancellationToken);
     }
@@ -89,19 +81,31 @@ public abstract class KeysRowsInput : RowsInput, IDisposable
     /// <inheritdoc />
     public override void SetKeyColumnValue(int columnIndex, VariantValue value, VariantValue.Operation operation)
     {
-        InitializeKeyColumns();
-        var kcv = _setKeyColumns[columnIndex].First(kc => kc.KeyColumn.ContainsOperation(operation));
-        kcv.Value = value;
-        kcv.IsSet = true;
+        var kcv = GetOrCreateKeyColumnValue(columnIndex, operation);
+        kcv.Set(value, operation);
     }
 
     /// <inheritdoc />
     public override void UnsetKeyColumnValue(int columnIndex, VariantValue.Operation operation)
     {
-        InitializeKeyColumns();
-        var kcv = _setKeyColumns[columnIndex].First(kc => kc.KeyColumn.ContainsOperation(operation));
-        kcv.Value = VariantValue.Null;
-        kcv.IsSet = false;
+        var kcv = GetOrCreateKeyColumnValue(columnIndex, operation);
+        kcv.Unset();
+    }
+
+    private KeyColumnValue GetOrCreateKeyColumnValue(int columnIndex, VariantValue.Operation operation)
+    {
+        var keyColumn = _keyColumns[columnIndex];
+        if (!keyColumn.ContainsOperation(operation))
+        {
+            throw new InvalidOperationException($"The operation '{operation}' is not supported by the key column index '{keyColumn.ColumnIndex}'.");
+        }
+        var kcv = _setKeyColumns.Find(kc => !kc.IsSet && kc.KeyColumnIndex == columnIndex && kc.Operation == operation);
+        if (kcv == null)
+        {
+            kcv = new KeyColumnValue(columnIndex);
+            _setKeyColumns.Add(kcv);
+        }
+        return kcv;
     }
 
     #endregion
@@ -122,7 +126,7 @@ public abstract class KeysRowsInput : RowsInput, IDisposable
             throw new QueryCatException(
                 string.Format(Resources.Errors.CannotFindColumn, columnName));
         }
-        var keyValue = GetKeyColumn(_setKeyColumns[columnIndex], operation);
+        var keyValue = GetKeyColumn(columnIndex, operation.HasValue ? [operation.Value] : []);
         if (keyValue == null || !keyValue.IsSet)
         {
             return VariantValue.Null;
@@ -145,37 +149,37 @@ public abstract class KeysRowsInput : RowsInput, IDisposable
             value = VariantValue.Null;
             return false;
         }
-        var keyValue = GetKeyColumn(_setKeyColumns[columnIndex], operation);
+        var keyValue = GetKeyColumn(columnIndex, operation.HasValue ? [operation.Value] : []);
         if (keyValue == null || !keyValue.IsSet)
         {
             value = VariantValue.Null;
             return false;
         }
-        if (keyValue.KeyColumn.IsRequired)
+        var keyColumn = _keyColumns[keyValue.KeyColumnIndex];
+        if (keyColumn.IsRequired)
         {
-            throw new QueryMissedCondition(Columns[columnIndex].FullName, keyValue.KeyColumn.GetOperations());
+            throw new QueryMissedCondition(Columns[columnIndex].FullName, keyColumn.GetOperations());
         }
         value = keyValue.Value;
         return !value.IsNull;
     }
 
     private KeyColumnValue? GetKeyColumn(
-        KeyColumnValue[] keyColumnValues,
-        VariantValue.Operation? operation = null,
-        VariantValue.Operation? orOperation = null)
+        int keyColumnIndex,
+        params IList<VariantValue.Operation> operations)
     {
-        var keyColumnValueResult = keyColumnValues.FirstOrDefault(c =>
-            (operation == null || c.KeyColumn.ContainsOperation(operation.Value))
-            && (orOperation == null || c.KeyColumn.ContainsOperation(orOperation.Value)));
-        if (keyColumnValueResult == null || !keyColumnValueResult.IsSet)
+        var keyColumnValueResult = _setKeyColumns
+            .Find(skc => skc.IsSet && skc.KeyColumnIndex == keyColumnIndex
+                                   && (operations.Count < 1 || operations.Contains(skc.Operation)));
+        if (keyColumnValueResult == null)
         {
             return null;
         }
-        if (keyColumnValueResult.Value.IsNull && keyColumnValueResult.KeyColumn.IsRequired)
+        if (keyColumnValueResult.Value.IsNull && _keyColumns[keyColumnValueResult.KeyColumnIndex].IsRequired)
         {
             throw new QueryMissedCondition(
-                Columns[keyColumnValueResult.KeyColumn.ColumnIndex].FullName,
-                keyColumnValueResult.KeyColumn.GetOperations());
+                Columns[keyColumnValueResult.KeyColumnIndex].FullName,
+                _keyColumns[keyColumnValueResult.KeyColumnIndex].GetOperations());
         }
         return keyColumnValueResult;
     }
