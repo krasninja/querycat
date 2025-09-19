@@ -92,14 +92,24 @@ public abstract class KeysRowsInput : RowsInput, IDisposable
         kcv.Unset();
     }
 
+    private KeyColumn GetKeyColumn(int columnIndex)
+    {
+        var keyColumn = _keyColumns.Find(kc => kc.ColumnIndex == columnIndex);
+        if (keyColumn == null)
+        {
+            throw new InvalidOperationException($"The column with index '{columnIndex}' is not a key column.");
+        }
+        return keyColumn;
+    }
+
     private KeyColumnValue GetOrCreateKeyColumnValue(int columnIndex, VariantValue.Operation operation)
     {
-        var keyColumn = _keyColumns[columnIndex];
+        var keyColumn = GetKeyColumn(columnIndex);
         if (!keyColumn.ContainsOperation(operation))
         {
             throw new InvalidOperationException($"The operation '{operation}' is not supported by the key column index '{keyColumn.ColumnIndex}'.");
         }
-        var kcv = _setKeyColumns.Find(kc => !kc.IsSet && kc.KeyColumnIndex == columnIndex && kc.Operation == operation);
+        var kcv = _setKeyColumns.Find(kc => kc.KeyColumnIndex == columnIndex && kc.Operation == operation);
         if (kcv == null)
         {
             kcv = new KeyColumnValue(columnIndex);
@@ -155,7 +165,7 @@ public abstract class KeysRowsInput : RowsInput, IDisposable
             value = VariantValue.Null;
             return false;
         }
-        var keyColumn = _keyColumns[keyValue.KeyColumnIndex];
+        var keyColumn = GetKeyColumn(columnIndex);
         if (keyColumn.IsRequired)
         {
             throw new QueryMissedCondition(Columns[columnIndex].FullName, keyColumn.GetOperations());
@@ -175,11 +185,12 @@ public abstract class KeysRowsInput : RowsInput, IDisposable
         {
             return null;
         }
-        if (keyColumnValueResult.Value.IsNull && _keyColumns[keyColumnValueResult.KeyColumnIndex].IsRequired)
+        var keyColumn = GetKeyColumn(keyColumnValueResult.KeyColumnIndex);
+        if (keyColumnValueResult.Value.IsNull && keyColumn.IsRequired)
         {
             throw new QueryMissedCondition(
                 Columns[keyColumnValueResult.KeyColumnIndex].FullName,
-                _keyColumns[keyColumnValueResult.KeyColumnIndex].GetOperations());
+                keyColumn.GetOperations());
         }
         return keyColumnValueResult;
     }
