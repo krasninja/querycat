@@ -10,8 +10,6 @@ namespace QueryCat.Backend.Core.Fetch;
 /// </summary>
 public abstract class KeysRowsInput : RowsInput, IDisposable
 {
-    private readonly List<KeyColumn> _keyColumns = new();
-
     [DebuggerDisplay("{KeyColumnIndex} => {Operation} {Value}")]
     private sealed class KeyColumnValue(int keyColumnIndex)
     {
@@ -37,7 +35,8 @@ public abstract class KeysRowsInput : RowsInput, IDisposable
         }
     }
 
-    private readonly List<KeyColumnValue> _setKeyColumns = [];
+    private readonly List<KeyColumn> _keyColumns = new();
+    private readonly IDictionary<int, KeyColumnValue[]> _setKeyColumns = new SortedDictionary<int, KeyColumnValue[]>();
 
     /// <inheritdoc />
     public override Column[] Columns { get; protected set; } = [];
@@ -109,12 +108,25 @@ public abstract class KeysRowsInput : RowsInput, IDisposable
         {
             throw new InvalidOperationException($"The operation '{operation}' is not supported by the key column index '{keyColumn.ColumnIndex}'.");
         }
-        var kcv = _setKeyColumns.Find(kc => kc.KeyColumnIndex == columnIndex && kc.Operation == operation);
+
+        KeyColumnValue? kcv;
+        if (!_setKeyColumns.TryGetValue(columnIndex, out var keyColumnValues))
+        {
+            kcv = new KeyColumnValue(columnIndex);
+            _setKeyColumns[columnIndex] = [kcv];
+            return kcv;
+        }
+
+        kcv = Array.Find(keyColumnValues, kc => kc.Operation == operation);
         if (kcv == null)
         {
             kcv = new KeyColumnValue(columnIndex);
-            _setKeyColumns.Add(kcv);
+            Array.Resize(ref keyColumnValues, keyColumnValues.Length + 1);
+            _setKeyColumns[columnIndex] = keyColumnValues;
+            keyColumnValues[^1] = kcv;
+            return kcv;
         }
+
         return kcv;
     }
 
@@ -136,7 +148,7 @@ public abstract class KeysRowsInput : RowsInput, IDisposable
             throw new QueryCatException(
                 string.Format(Resources.Errors.CannotFindColumn, columnName));
         }
-        var keyValue = GetKeyColumn(columnIndex, operation.HasValue ? [operation.Value] : []);
+        var keyValue = FindKeyColumnValue(columnIndex, operation.HasValue ? [operation.Value] : []);
         if (keyValue == null || !keyValue.IsSet)
         {
             return VariantValue.Null;
@@ -159,7 +171,7 @@ public abstract class KeysRowsInput : RowsInput, IDisposable
             value = VariantValue.Null;
             return false;
         }
-        var keyValue = GetKeyColumn(columnIndex, operation.HasValue ? [operation.Value] : []);
+        var keyValue = FindKeyColumnValue(columnIndex, operation.HasValue ? [operation.Value] : []);
         if (keyValue == null || !keyValue.IsSet)
         {
             value = VariantValue.Null;
@@ -174,13 +186,17 @@ public abstract class KeysRowsInput : RowsInput, IDisposable
         return !value.IsNull;
     }
 
-    private KeyColumnValue? GetKeyColumn(
+    private KeyColumnValue? FindKeyColumnValue(
         int keyColumnIndex,
         params IList<VariantValue.Operation> operations)
     {
-        var keyColumnValueResult = _setKeyColumns
-            .Find(skc => skc.IsSet && skc.KeyColumnIndex == keyColumnIndex
-                                   && (operations.Count < 1 || operations.Contains(skc.Operation)));
+        if (!_setKeyColumns.TryGetValue(keyColumnIndex, out var keyColumnValues))
+        {
+            return null;
+        }
+        var keyColumnValueResult = Array.Find(keyColumnValues,
+            skc => skc.IsSet && skc.KeyColumnIndex == keyColumnIndex
+                             && (operations.Count < 1 || operations.Contains(skc.Operation)));
         if (keyColumnValueResult == null)
         {
             return null;
