@@ -37,6 +37,7 @@ public static class InfoFunctions
     {
         var obj = thread.Stack[0].AsObject;
         Column[] columns;
+        KeyColumn[] keyColumns = [];
 
         if (obj is IRowsIterator iterator)
         {
@@ -51,6 +52,29 @@ public static class InfoFunctions
         {
             throw new QueryCatException(Resources.Errors.InvalidRowsInput);
         }
+        if (obj is IRowsInputKeys inputKeys)
+        {
+            keyColumns = inputKeys.GetKeyColumns().ToArray();
+        }
+
+        string GetKeyConditions(Column column)
+        {
+            if (keyColumns.Length < 1)
+            {
+                return string.Empty;
+            }
+            var index = Array.IndexOf(columns, column);
+            if (index < 0)
+            {
+                return string.Empty;
+            }
+            var relatedKeyColumns = Array.FindAll(keyColumns, kc => kc.ColumnIndex == index);
+            if (relatedKeyColumns.Length < 1)
+            {
+                return string.Empty;
+            }
+            return string.Join(' ', relatedKeyColumns.SelectMany(kc => kc.GetOperations()));
+        }
 
         var inputResult = EnumerableRowsInput<Column>.FromSource(columns,
             builder => builder
@@ -63,6 +87,7 @@ public static class InfoFunctions
                 .AddProperty("length", f => f.Length)
 #endif
                 .AddProperty("description", f => f.Description)
+                .AddProperty("key_operators", GetKeyConditions)
             );
         return VariantValue.CreateFromObject(inputResult);
     }
