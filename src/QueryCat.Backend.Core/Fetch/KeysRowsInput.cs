@@ -35,7 +35,30 @@ public abstract class KeysRowsInput : RowsInput, IDisposable
         }
     }
 
-    private readonly List<KeyColumn> _keyColumns = new();
+    private sealed class KeyColumnColumnIndexComparer : IComparer<KeyColumn>
+    {
+        public static KeyColumnColumnIndexComparer Instance { get; } = new();
+
+        public int Compare(KeyColumn? x, KeyColumn? y)
+        {
+            if (ReferenceEquals(x, y))
+            {
+                return 0;
+            }
+            if (y is null)
+            {
+                return 1;
+            }
+            if (x is null)
+            {
+                return -1;
+            }
+
+            return x.ColumnIndex.CompareTo(y.ColumnIndex);
+        }
+    }
+
+    private KeyColumn[] _keyColumns = [];
     private readonly IDictionary<int, KeyColumnValue[]> _setKeyColumns = new SortedDictionary<int, KeyColumnValue[]>();
 
     /// <inheritdoc />
@@ -91,42 +114,47 @@ public abstract class KeysRowsInput : RowsInput, IDisposable
         kcv.Unset();
     }
 
-    private KeyColumn GetKeyColumn(int columnIndex)
+    private KeyColumn GetKeyColumn(int columnIndex, VariantValue.Operation? operation)
     {
-        var keyColumn = _keyColumns.Find(kc => kc.ColumnIndex == columnIndex);
-        if (keyColumn == null)
+        foreach (var keyColumn in _keyColumns)
         {
-            throw new InvalidOperationException($"The column with index '{columnIndex}' is not a key column.");
+            if (keyColumn.ColumnIndex == columnIndex && (!operation.HasValue || keyColumn.ContainsOperation(operation.Value)))
+            {
+                return keyColumn;
+            }
+            if (keyColumn.ColumnIndex > columnIndex)
+            {
+                break;
+            }
         }
-        return keyColumn;
+        throw new InvalidOperationException($"Cannot find column with index '{columnIndex}' and operation '{operation}' column.");
     }
 
     private KeyColumnValue GetOrCreateKeyColumnValue(int columnIndex, VariantValue.Operation operation)
     {
-        var keyColumn = GetKeyColumn(columnIndex);
-        if (!keyColumn.ContainsOperation(operation))
-        {
-            throw new InvalidOperationException($"The operation '{operation}' is not supported by the key column index '{keyColumn.ColumnIndex}'.");
-        }
-
         KeyColumnValue? kcv;
+        KeyColumn? keyColumn;
         if (!_setKeyColumns.TryGetValue(columnIndex, out var keyColumnValues))
         {
-            kcv = new KeyColumnValue(columnIndex);
+            keyColumn = GetKeyColumn(columnIndex, operation);
+            kcv = new KeyColumnValue(keyColumn.ColumnIndex);
             _setKeyColumns[columnIndex] = [kcv];
             return kcv;
         }
 
-        kcv = Array.Find(keyColumnValues, kc => kc.Operation == operation);
-        if (kcv == null)
+        foreach (var keyColumnValue in keyColumnValues)
         {
-            kcv = new KeyColumnValue(columnIndex);
-            Array.Resize(ref keyColumnValues, keyColumnValues.Length + 1);
-            _setKeyColumns[columnIndex] = keyColumnValues;
-            keyColumnValues[^1] = kcv;
-            return kcv;
+            if (keyColumnValue.Operation == operation)
+            {
+                return keyColumnValue;
+            }
         }
 
+        keyColumn = GetKeyColumn(columnIndex, operation);
+        kcv = new KeyColumnValue(keyColumn.ColumnIndex);
+        Array.Resize(ref keyColumnValues, keyColumnValues.Length + 1);
+        _setKeyColumns[columnIndex] = keyColumnValues;
+        keyColumnValues[^1] = kcv;
         return kcv;
     }
 
@@ -151,6 +179,11 @@ public abstract class KeysRowsInput : RowsInput, IDisposable
         var keyValue = FindKeyColumnValue(columnIndex, operation.HasValue ? [operation.Value] : []);
         if (keyValue == null || !keyValue.IsSet)
         {
+            var keyColumn = GetKeyColumn(columnIndex, operation);
+            if (keyColumn.IsRequired)
+            {
+                throw new QueryMissedCondition(Columns[keyColumn.ColumnIndex].FullName, keyColumn.GetOperations());
+            }
             return VariantValue.Null;
         }
         return keyValue.Value;
@@ -177,7 +210,7 @@ public abstract class KeysRowsInput : RowsInput, IDisposable
             value = VariantValue.Null;
             return false;
         }
-        var keyColumn = GetKeyColumn(columnIndex);
+        var keyColumn = GetKeyColumn(columnIndex, operation);
         if (keyColumn.IsRequired)
         {
             throw new QueryMissedCondition(Columns[columnIndex].FullName, keyColumn.GetOperations());
@@ -201,17 +234,19 @@ public abstract class KeysRowsInput : RowsInput, IDisposable
         {
             return null;
         }
-        var keyColumn = GetKeyColumn(keyColumnValueResult.KeyColumnIndex);
-        if (keyColumnValueResult.Value.IsNull && keyColumn.IsRequired)
-        {
-            throw new QueryMissedCondition(
-                Columns[keyColumnValueResult.KeyColumnIndex].FullName,
-                keyColumn.GetOperations());
-        }
         return keyColumnValueResult;
     }
 
-    protected void AddKeyColumns(IReadOnlyCollection<KeyColumn> keyColumns) => _keyColumns.AddRange(keyColumns);
+    protected void AddKeyColumns(IReadOnlyList<KeyColumn> keyColumns)
+    {
+        var originalLength = _keyColumns.Length;
+        Array.Resize(ref _keyColumns, _keyColumns.Length + keyColumns.Count);
+        for (var i = 0; i < keyColumns.Count; i++)
+        {
+            _keyColumns[originalLength + i] = keyColumns[i];
+        }
+        Array.Sort(_keyColumns, KeyColumnColumnIndexComparer.Instance);
+    }
 
     #endregion
 
