@@ -114,7 +114,7 @@ public abstract class KeysRowsInput : RowsInput, IDisposable
         kcv.Unset();
     }
 
-    private KeyColumn GetKeyColumn(int columnIndex, VariantValue.Operation? operation)
+    private KeyColumn? TryGetKeyColumn(int columnIndex, VariantValue.Operation? operation)
     {
         foreach (var keyColumn in _keyColumns)
         {
@@ -124,10 +124,20 @@ public abstract class KeysRowsInput : RowsInput, IDisposable
             }
             if (keyColumn.ColumnIndex > columnIndex)
             {
-                break;
+                return null;
             }
         }
-        throw new InvalidOperationException($"Cannot find column with index '{columnIndex}' and operation '{operation}' column.");
+        return null;
+    }
+
+    private KeyColumn GetKeyColumn(int columnIndex, VariantValue.Operation? operation)
+    {
+        var keyColumn = TryGetKeyColumn(columnIndex, operation);
+        if (keyColumn == null)
+        {
+            throw new InvalidOperationException($"Cannot find column with index '{columnIndex}' and operation '{operation}' column.");
+        }
+        return keyColumn;
     }
 
     private KeyColumnValue GetOrCreateKeyColumnValue(int columnIndex, VariantValue.Operation operation)
@@ -170,23 +180,11 @@ public abstract class KeysRowsInput : RowsInput, IDisposable
     /// <returns>Value or null.</returns>
     public VariantValue GetKeyColumnValue(string columnName, VariantValue.Operation? operation = null)
     {
-        var columnIndex = this.GetColumnIndexByName(columnName);
-        if (columnIndex < 0)
-        {
-            throw new QueryCatException(
-                string.Format(Resources.Errors.CannotFindColumn, columnName));
-        }
-        var keyValue = FindKeyColumnValue(columnIndex, operation.HasValue ? [operation.Value] : []);
-        if (keyValue == null || !keyValue.IsSet)
-        {
-            var keyColumn = GetKeyColumn(columnIndex, operation);
-            if (keyColumn.IsRequired)
-            {
-                throw new QueryMissedCondition(Columns[keyColumn.ColumnIndex].FullName, keyColumn.GetOperations());
-            }
-            return VariantValue.Null;
-        }
-        return keyValue.Value;
+        TryGetKeyColumnValueAnyOperation(
+            columnName,
+            operation.HasValue ? [operation.Value] : [],
+            out var value);
+        return value;
     }
 
     /// <summary>
@@ -198,43 +196,83 @@ public abstract class KeysRowsInput : RowsInput, IDisposable
     /// <returns><c>True</c> if found, <c>false</c> otherwise.</returns>
     public bool TryGetKeyColumnValue(string columnName, VariantValue.Operation? operation, out VariantValue value)
     {
+        return TryGetKeyColumnValueAnyOperation(
+            columnName,
+            operation.HasValue ? [operation.Value] : [],
+            out value);
+    }
+
+    /// <summary>
+    /// Try to get key column value by column name.
+    /// </summary>
+    /// <param name="columnName">Column name.</param>
+    /// <param name="operations">Operations.</param>
+    /// <param name="value">Out value or null.</param>
+    /// <returns><c>True</c> if found, <c>false</c> otherwise.</returns>
+    public bool TryGetKeyColumnValueAnyOperation(
+        string columnName,
+        ReadOnlySpan<VariantValue.Operation> operations,
+        out VariantValue value)
+    {
         var columnIndex = this.GetColumnIndexByName(columnName);
         if (columnIndex < 0)
         {
             value = VariantValue.Null;
             return false;
         }
-        var keyValue = FindKeyColumnValue(columnIndex, operation.HasValue ? [operation.Value] : []);
+
+        var keyValue = FindKeyColumnValue(columnIndex, ref operations);
         if (keyValue == null || !keyValue.IsSet)
         {
+            // Check if it was a required condition.
+            foreach (var operation in operations)
+            {
+                var keyColumn = TryGetKeyColumn(columnIndex, operation);
+                if (keyColumn != null && keyColumn.IsRequired)
+                {
+                    throw new QueryMissedCondition(Columns[columnIndex].FullName, keyColumn.GetOperations());
+                }
+            }
+
             value = VariantValue.Null;
             return false;
         }
-        var keyColumn = GetKeyColumn(columnIndex, operation);
-        if (keyColumn.IsRequired)
-        {
-            throw new QueryMissedCondition(Columns[columnIndex].FullName, keyColumn.GetOperations());
-        }
+
         value = keyValue.Value;
-        return !value.IsNull;
+        return true;
     }
 
     private KeyColumnValue? FindKeyColumnValue(
         int keyColumnIndex,
-        params IList<VariantValue.Operation> operations)
+        ref ReadOnlySpan<VariantValue.Operation> operations)
     {
+        bool OperationsContains(ReadOnlySpan<VariantValue.Operation> localOperations, KeyColumnValue kcv)
+        {
+            foreach (var op in localOperations)
+            {
+                if (op == kcv.Operation)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         if (!_setKeyColumns.TryGetValue(keyColumnIndex, out var keyColumnValues))
         {
             return null;
         }
-        var keyColumnValueResult = Array.Find(keyColumnValues,
-            skc => skc.IsSet && skc.KeyColumnIndex == keyColumnIndex
-                             && (operations.Count < 1 || operations.Contains(skc.Operation)));
-        if (keyColumnValueResult == null)
+
+        foreach (var keyColumnValue in keyColumnValues)
         {
-            return null;
+            if (keyColumnValue.IsSet && keyColumnValue.KeyColumnIndex == keyColumnIndex
+                && (operations.IsEmpty || OperationsContains(operations, keyColumnValue)))
+            {
+                return keyColumnValue;
+            }
         }
-        return keyColumnValueResult;
+
+        return null;
     }
 
     protected void AddKeyColumns(IReadOnlyList<KeyColumn> keyColumns)
