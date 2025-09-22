@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Logging;
+using System.Runtime.CompilerServices;
 using QueryCat.Backend.Commands.Select.KeyConditionValue;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
@@ -8,7 +8,7 @@ using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Commands.Select.Inputs;
 
-internal sealed class SetKeysRowsInput : RowsInput, IRowsInputUpdate, IRowsInputDelete
+internal sealed class SetKeysRowsInput : IRowsInputUpdate, IRowsInputDelete
 {
     private sealed record ConditionJoint(
         SelectQueryCondition Condition,
@@ -24,17 +24,17 @@ internal sealed class SetKeysRowsInput : RowsInput, IRowsInputUpdate, IRowsInput
     // Special mode for "WHERE id IN (x, y, z)" condition.
     private bool _hasMultipleConditions;
     private bool _hasNoMoreData;
-    private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(SetKeysRowsInput));
+    private bool _needFillConditions = true;
 
     /// <inheritdoc />
-    public override QueryContext QueryContext
+    public QueryContext QueryContext
     {
         get => _rowsInput.QueryContext;
         set => _rowsInput.QueryContext = value;
     }
 
     /// <inheritdoc />
-    public override Column[] Columns { get; protected set; }
+    public Column[] Columns { get; }
 
     public IRowsInput InnerRowsInput => _rowsInput;
 
@@ -47,13 +47,13 @@ internal sealed class SetKeysRowsInput : RowsInput, IRowsInputUpdate, IRowsInput
     }
 
     /// <inheritdoc />
-    public override Task OpenAsync(CancellationToken cancellationToken = default) => _rowsInput.OpenAsync(cancellationToken);
+    public Task OpenAsync(CancellationToken cancellationToken = default) => _rowsInput.OpenAsync(cancellationToken);
 
     /// <inheritdoc />
-    public override Task CloseAsync(CancellationToken cancellationToken = default) => _rowsInput.CloseAsync(cancellationToken);
+    public Task CloseAsync(CancellationToken cancellationToken = default) => _rowsInput.CloseAsync(cancellationToken);
 
     /// <inheritdoc />
-    public override async Task ResetAsync(CancellationToken cancellationToken = default)
+    public async Task ResetAsync(CancellationToken cancellationToken = default)
     {
         foreach (var condition in _conditions)
         {
@@ -68,16 +68,24 @@ internal sealed class SetKeysRowsInput : RowsInput, IRowsInputUpdate, IRowsInput
     }
 
     /// <inheritdoc />
-    public override ErrorCode ReadValue(int columnIndex, out VariantValue value) => _rowsInput.ReadValue(columnIndex, out value);
+    public string[] UniqueKey => _rowsInput.UniqueKey;
 
     /// <inheritdoc />
-    public override async ValueTask<bool> ReadNextAsync(CancellationToken cancellationToken = default)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public ErrorCode ReadValue(int columnIndex, out VariantValue value) => _rowsInput.ReadValue(columnIndex, out value);
+
+    /// <inheritdoc />
+    public async ValueTask<bool> ReadNextAsync(CancellationToken cancellationToken = default)
     {
         if (_hasNoMoreData)
         {
             return false;
         }
-        await base.ReadNextAsync(cancellationToken);
+        if (_needFillConditions)
+        {
+            FillConditions();
+            _needFillConditions = false;
+        }
 
         if (_conditions.Length > 0 && !_keysFilled)
         {
@@ -127,8 +135,7 @@ internal sealed class SetKeysRowsInput : RowsInput, IRowsInputUpdate, IRowsInput
         return hasMoreMultipleValues;
     }
 
-    /// <inheritdoc />
-    protected override ValueTask LoadAsync(CancellationToken cancellationToken = default)
+    private void FillConditions()
     {
         // Find all related conditions.
         var list = new List<ConditionJoint>();
@@ -147,8 +154,6 @@ internal sealed class SetKeysRowsInput : RowsInput, IRowsInputUpdate, IRowsInput
         _hasMultipleConditions = _conditions
             .Any(c => c.Condition.Operation == VariantValue.Operation.Equals
                         && c.Condition.Generator is IKeyConditionMultipleValuesGenerator);
-
-        return base.LoadAsync(cancellationToken);
     }
 
     /// <inheritdoc />
@@ -172,22 +177,22 @@ internal sealed class SetKeysRowsInput : RowsInput, IRowsInputUpdate, IRowsInput
     }
 
     /// <inheritdoc />
-    public override IReadOnlyList<KeyColumn> GetKeyColumns() => _rowsInput.GetKeyColumns();
+    public IReadOnlyList<KeyColumn> GetKeyColumns() => _rowsInput.GetKeyColumns();
 
     /// <inheritdoc />
-    public override void SetKeyColumnValue(int columnIndex, VariantValue value, VariantValue.Operation operation)
+    public void SetKeyColumnValue(int columnIndex, VariantValue value, VariantValue.Operation operation)
     {
         // Do not passthru set key value calls.
     }
 
     /// <inheritdoc />
-    public override void UnsetKeyColumnValue(int columnIndex, VariantValue.Operation operation)
+    public void UnsetKeyColumnValue(int columnIndex, VariantValue.Operation operation)
     {
         // Do not passthru key value calls.
     }
 
     /// <inheritdoc />
-    public override void Explain(IndentedStringBuilder stringBuilder)
+    public void Explain(IndentedStringBuilder stringBuilder)
     {
         stringBuilder.AppendRowsInputsWithIndent($"SetKeys (id={_id})", _rowsInput);
     }
