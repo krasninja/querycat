@@ -209,7 +209,7 @@ internal class JsonInput : StreamRowsInput
                 break;
             }
 
-            var jsonElement = GetParsedJsonDocument();
+            var jsonElement = GetParsedJsonElement();
             foreach (var field in GetJsonObjectFields(jsonElement))
             {
                 list.Add(field);
@@ -221,7 +221,7 @@ internal class JsonInput : StreamRowsInput
         return columns.ToArray();
     }
 
-    private JsonElement? GetParsedJsonDocument()
+    private JsonElement? GetParsedJsonElement()
     {
         var text = GetRowText();
         var reader = new SequenceReader<char>(text);
