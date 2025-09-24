@@ -83,6 +83,22 @@ internal sealed class SetKeysRowsInput : IRowsInputUpdate, IRowsInputDelete
     /// <inheritdoc />
     public async ValueTask<bool> ReadNextAsync(CancellationToken cancellationToken = default)
     {
+        // Fast path.
+        if (_hasNoMoreData)
+        {
+            return false;
+        }
+        if (_needFillConditions)
+        {
+            FillConditions();
+            _needFillConditions = false;
+        }
+        if (_conditions.Length == 0)
+        {
+            return await _rowsInput.ReadNextAsync(cancellationToken);
+        }
+
+        // Fill conditions and check them.
         var keysValid = false;
         while (!keysValid)
         {
@@ -103,16 +119,6 @@ internal sealed class SetKeysRowsInput : IRowsInputUpdate, IRowsInputDelete
 
     private async ValueTask<bool> ReadNextInternalAsync(CancellationToken cancellationToken)
     {
-        if (_hasNoMoreData)
-        {
-            return false;
-        }
-        if (_needFillConditions)
-        {
-            FillConditions();
-            _needFillConditions = false;
-        }
-
         if (_conditions.Length > 0 && !_keysFilled)
         {
             await FillKeysAsync(cancellationToken);
