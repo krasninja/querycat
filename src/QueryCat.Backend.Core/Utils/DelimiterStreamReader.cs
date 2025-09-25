@@ -126,48 +126,55 @@ public class DelimiterStreamReader
 
     private sealed class FieldInfo
     {
-        private long _startIndex;
+        // 0: startIndex
+        // 1: endIndex
+        // 2: quotesCount
+        private readonly long[] _indexes = new long[3];
 
         public long StartIndex
         {
-            get => _startIndex;
-            set => _startIndex = value;
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => _indexes[0];
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            set => _indexes[0] = value;
         }
-
-        private long _endIndex;
 
         public long EndIndex
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _endIndex;
+            get => _indexes[1];
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            set => _endIndex = value;
+            set => _indexes[1] = value;
         }
 
-        private int _quotesCount;
-
-        public int QuotesCount
+        public long QuotesCount
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _quotesCount;
+            get => _indexes[2];
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            set => _quotesCount = value;
+            set => _indexes[2] = value;
         }
 
         public char QuoteCharacter { get; set; }
 
-        public bool HasQuotes => _quotesCount > 0;
+        public bool HasQuotes
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _indexes[2] > 0; }
+        }
 
-        public bool HasInnerQuotes => _quotesCount > 2;
+        public bool HasInnerQuotes => _indexes[2] > 2;
 
-        public bool IsEmpty => _endIndex == _startIndex;
+        public bool IsEmpty
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _indexes[1] == _indexes[2]; }
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
         public void Reset()
         {
-            _startIndex = 0;
-            _endIndex = 0;
-            _quotesCount = 0;
+            new Span<long>(_indexes).Fill(0);
         }
 
         /// <inheritdoc />
