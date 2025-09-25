@@ -35,25 +35,25 @@ internal sealed class SelectResolveTypesVisitor : ResolveTypesVisitor
     /// <inheritdoc />
     public override ValueTask VisitAsync(SelectExistsExpressionNode node, CancellationToken cancellationToken)
     {
-        node.SetDataType(DataType.Boolean);
+        node.Type = DataType.Boolean;
         return ValueTask.CompletedTask;
     }
 
     /// <inheritdoc />
     public override ValueTask VisitAsync(SelectColumnsSublistExpressionNode node, CancellationToken cancellationToken)
     {
-        node.ExpressionNode.CopyTo<DataType>(AstAttributeKeys.TypeKey, node);
+        node.Type = node.ExpressionNode.Type;
         return ValueTask.CompletedTask;
     }
 
     /// <inheritdoc />
     public override ValueTask VisitAsync(SelectColumnsSublistWindowNode node, CancellationToken cancellationToken)
     {
-        node.AggregateFunctionNode.CopyTo<DataType>(AstAttributeKeys.TypeKey, node);
+        node.Type = node.AggregateFunctionNode.Type;
         return ValueTask.CompletedTask;
     }
 
-    private bool VisitIdentifierNode(IAstNode node, string name, string source)
+    private bool VisitIdentifierNode(AstNode node, string name, string source)
     {
         if (!_context.TryGetInputSourceByName(name, source, out var result)
             || result == null)
@@ -62,14 +62,14 @@ internal sealed class SelectResolveTypesVisitor : ResolveTypesVisitor
         }
 
         node.SetAttribute(AstAttributeKeys.InputColumnKey, result.Input.Columns[result.ColumnIndex]);
-        node.SetDataType(result.Input.Columns[result.ColumnIndex].DataType);
+        node.Type = result.Input.Columns[result.ColumnIndex].DataType;
         return true;
     }
 
     /// <inheritdoc />
     public override ValueTask VisitAsync(SelectOrderBySpecificationNode node, CancellationToken cancellationToken)
     {
-        node.SetDataType(node.ExpressionNode.GetDataType());
+        node.Type = node.ExpressionNode.Type;
         return ValueTask.CompletedTask;
     }
 
@@ -89,13 +89,13 @@ internal sealed class SelectResolveTypesVisitor : ResolveTypesVisitor
 
     private void VisitSelectQueryNode(SelectQueryNode node)
     {
-        node.SetDataType(node.ColumnsListNode.ColumnsNodes[0].GetDataType());
+        node.Type = node.ColumnsListNode.ColumnsNodes[0].Type;
     }
 
     /// <inheritdoc />
     public override ValueTask VisitAsync(SelectSubqueryConditionExpressionNode node, CancellationToken cancellationToken)
     {
-        node.SetDataType(DataType.Boolean);
+        node.Type = DataType.Boolean;
         return ValueTask.CompletedTask;
     }
 }

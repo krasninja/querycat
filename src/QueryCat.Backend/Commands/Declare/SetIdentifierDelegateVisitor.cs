@@ -42,7 +42,7 @@ internal sealed class SetIdentifierDelegateVisitor : CreateDelegateVisitor
                 context.Clear();
                 return newValue;
             }
-            NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, node.GetDataType());
+            NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, node.Type);
             return;
         }
 

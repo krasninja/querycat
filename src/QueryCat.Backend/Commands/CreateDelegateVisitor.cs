@@ -89,7 +89,7 @@ internal partial class CreateDelegateVisitor : AstVisitor
             var boolResult = result.AsBoolean;
             return node.IsNot ? new VariantValue(!boolResult) : new VariantValue(boolResult);
         }
-        NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, node.GetDataType());
+        NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, node.Type);
     }
 
     private sealed class BinaryFuncUnit(
@@ -118,7 +118,7 @@ internal partial class CreateDelegateVisitor : AstVisitor
 
         var leftAction = NodeIdFuncMap[node.LeftNode.Id];
         var rightAction = NodeIdFuncMap[node.RightNode.Id];
-        NodeIdFuncMap[node.Id] = new BinaryFuncUnit(node.Operation, leftAction, rightAction, node.GetDataType());
+        NodeIdFuncMap[node.Id] = new BinaryFuncUnit(node.Operation, leftAction, rightAction, node.Type);
     }
 
     /// <inheritdoc />
@@ -135,7 +135,7 @@ internal partial class CreateDelegateVisitor : AstVisitor
         if (node.IsSimpleCase && node.ArgumentNode != null)
         {
             var arg = NodeIdFuncMap[node.ArgumentNode.Id];
-            var equalsDelegate = VariantValue.GetEqualsDelegate(node.ArgumentNode.GetDataType());
+            var equalsDelegate = VariantValue.GetEqualsDelegate(node.ArgumentNode.Type);
 
             async ValueTask<VariantValue> Func(IExecutionThread thread, CancellationToken ct)
             {
@@ -151,7 +151,7 @@ internal partial class CreateDelegateVisitor : AstVisitor
                 }
                 return await whenDefault.InvokeAsync(thread, ct);
             }
-            NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, node.GetDataType());
+            NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, node.Type);
         }
         else if (node.IsSearchCase)
         {
@@ -168,7 +168,7 @@ internal partial class CreateDelegateVisitor : AstVisitor
                 }
                 return await whenDefault.InvokeAsync(thread, ct);
             }
-            NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, node.GetDataType());
+            NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, node.Type);
         }
         else
         {
@@ -186,7 +186,7 @@ internal partial class CreateDelegateVisitor : AstVisitor
             var context = new ObjectSelectorContext();
             node.SetAttribute(ObjectSelectorKey, context);
             var strategies = GetObjectSelectStrategies(node, NodeIdFuncMap);
-            NodeIdFuncMap[node.Id] = new ObjectSelectFuncUnit(node.Name, node.GetDataType(), strategies, context);
+            NodeIdFuncMap[node.Id] = new ObjectSelectFuncUnit(node.Name, node.Type, strategies, context);
             return;
         }
 
@@ -220,13 +220,13 @@ internal partial class CreateDelegateVisitor : AstVisitor
         if (node.InExpressionValuesNodes is InExpressionValuesNode inExpressionValuesNode)
         {
             var actions = inExpressionValuesNode.ValuesNodes.Select(v => NodeIdFuncMap[v.Id]).ToArray();
-            NodeIdFuncMap[node.Id] = new InArrayFuncUnit(valueAction, actions, node.IsNot, node.GetDataType());
+            NodeIdFuncMap[node.Id] = new InArrayFuncUnit(valueAction, actions, node.IsNot, node.Type);
             return;
         }
         if (node.InExpressionValuesNodes is IdentifierExpressionNode identifierExpressionNode)
         {
             var action = NodeIdFuncMap[identifierExpressionNode.Id];
-            NodeIdFuncMap[node.Id] = new InArrayFuncUnit(valueAction, [action], node.IsNot, node.GetDataType());
+            NodeIdFuncMap[node.Id] = new InArrayFuncUnit(valueAction, [action], node.IsNot, node.Type);
             return;
         }
 
@@ -379,7 +379,7 @@ internal partial class CreateDelegateVisitor : AstVisitor
     {
         await ResolveTypesVisitor.VisitAsync(node, cancellationToken);
         var action = NodeIdFuncMap[node.RightNode.Id];
-        var nodeType = node.GetDataType();
+        var nodeType = node.Type;
 
         NodeIdFuncMap[node.Id] = node.Operation switch
         {
@@ -415,7 +415,7 @@ internal partial class CreateDelegateVisitor : AstVisitor
                 throw new QueryCatException(string.Format(Resources.Errors.CannotFindTimeZone, tz));
             }
         }
-        NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, node.GetDataType());
+        NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, node.Type);
     }
 
     #endregion
@@ -448,7 +448,7 @@ internal partial class CreateDelegateVisitor : AstVisitor
         await ResolveTypesVisitor.VisitAsync(node, cancellationToken);
         var expressionAction = NodeIdFuncMap[node.ExpressionNode.Id];
 
-        NodeIdFuncMap[node.Id] = new CastFuncUnit(expressionAction, node.GetDataType());
+        NodeIdFuncMap[node.Id] = new CastFuncUnit(expressionAction, node.Type);
     }
 
     private sealed class CoalesceFuncUnit : IFuncUnit
@@ -484,7 +484,7 @@ internal partial class CreateDelegateVisitor : AstVisitor
     {
         await ResolveTypesVisitor.VisitAsync(node, cancellationToken);
         var expressionActions = node.Expressions.Select(e => NodeIdFuncMap[e.Id]).ToArray();
-        NodeIdFuncMap[node.Id] = new CoalesceFuncUnit(expressionActions, node.GetDataType());
+        NodeIdFuncMap[node.Id] = new CoalesceFuncUnit(expressionActions, node.Type);
     }
 
     #endregion
@@ -574,7 +574,7 @@ internal partial class CreateDelegateVisitor : AstVisitor
         var argsDelegates = argsDelegatesList.ToArray();
         var callInfo = new FuncUnitCallInfo(argsDelegates);
         node.SetAttribute(AstAttributeKeys.ArgumentsKey, callInfo);
-        NodeIdFuncMap[node.Id] = new FunctionCallFuncUnit(function, argsDelegates, node.GetDataType());
+        NodeIdFuncMap[node.Id] = new FunctionCallFuncUnit(function, argsDelegates, node.Type);
 
         return ValueTask.CompletedTask;
     }
@@ -594,7 +594,7 @@ internal partial class CreateDelegateVisitor : AstVisitor
     {
         var handler = await VisitWithStatementVisitor(new Ast.Nodes.Select.SelectStatementNode(node), cancellationToken);
         var iterator = (await handler.InvokeAsync(ExecutionThread, cancellationToken)).AsRequired<IRowsIterator>();
-        node.SetDataType(handler.OutputType);
+        node.Type = handler.OutputType;
         NodeIdFuncMap[node.Id] = new FuncUnitRowsIteratorScalar(iterator);
     }
 

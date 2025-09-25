@@ -43,19 +43,19 @@ public class EvaluateExpressionBenchmark
     [Benchmark]
     public async Task RunExpressionSeveralTimes()
     {
-        for (var i = 0; i < 1000; i++)
+        for (var i = 0; i < 100; i++)
         {
             var result = await _executionThread.RunAsync(
-                """
+                $"""
                 abs((data['KRAS'].Temperature +
                     data['NSK'].Temperature +
                     data['MSK'].Temperature +
-                    data['SPB'].Temperature)::float / total) - 1 + 1
+                    data['SPB'].Temperature)::float / total) - 1 + {i}
                 """,
                 new Dictionary<string, VariantValue>
                 {
                     ["data"] = VariantValue.CreateFromObject(_data),
-                    ["total"] = new VariantValue(4),
+                    ["total"] = new(4),
                 });
         }
     }

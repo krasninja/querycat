@@ -1,5 +1,3 @@
-using QueryCat.Backend.Core.Types;
-
 namespace QueryCat.Backend.Ast;
 
 /// <summary>
@@ -36,16 +34,12 @@ internal static class AstNodeExtensions
         var stack = new Stack<IAstNode>();
         var currentNode = node;
         stack.Push(currentNode);
-        typesToIgnore ??= Array.Empty<Type>();
+        typesToIgnore ??= [];
 
         bool IsIgnoreType(Type type)
         {
             var foundIndex = Array.FindIndex(typesToIgnore, t => t.IsAssignableFrom(type));
-            if (foundIndex > -1)
-            {
-                return true;
-            }
-            return false;
+            return foundIndex > -1;
         }
 
         while (stack.Count > 0)
@@ -70,7 +64,7 @@ internal static class AstNodeExtensions
     /// </summary>
     /// <param name="node">Node.</param>
     /// <param name="key">Attribute key.</param>
-    /// <returns><c>True</c> if attribute exists, <c>false</c> otherwise or it is null.</returns>
+    /// <returns><c>True</c> if attribute exists, <c>false</c> otherwise, or it is null.</returns>
     public static bool HasAttribute(this IAstNode node, string key)
         => node.GetAttribute<object>(key) != null;
 
@@ -105,14 +99,4 @@ internal static class AstNodeExtensions
             toNode.SetAttribute(key, fromNode.GetAttribute<object>(key));
         }
     }
-
-    #region Attribute helpers
-
-    public static DataType GetDataType(this IAstNode node)
-        => node.GetAttribute<DataType>(AstAttributeKeys.TypeKey);
-
-    public static void SetDataType(this IAstNode node, DataType type)
-        => node.SetAttribute(AstAttributeKeys.TypeKey, type);
-
-    #endregion
 }

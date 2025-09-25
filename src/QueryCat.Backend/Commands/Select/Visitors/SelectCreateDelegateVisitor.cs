@@ -101,7 +101,7 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
             return VariantValue.FalseValue;
         }
         _subQueryIterators.Add(rowsIterator);
-        NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, node.GetDataType());
+        NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, node.Type);
     }
 
     /// <inheritdoc />
@@ -164,7 +164,7 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
         );
     }
 
-    private bool VisitIdentifierNode(IAstNode node, string name, string source)
+    private bool VisitIdentifierNode(AstNode node, string name, string source)
     {
         if (!_context.TryGetInputSourceByName(name, source, out var result)
             || result == null)
@@ -173,7 +173,7 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
         }
 
         node.SetAttribute(AstAttributeKeys.InputColumnKey, result.Input.Columns[result.ColumnIndex]);
-        node.SetDataType(result.Input.Columns[result.ColumnIndex].DataType);
+        node.Type = result.Input.Columns[result.ColumnIndex].DataType;
 
         if (result.Input is IRowsIterator rowsIterator)
         {
@@ -192,14 +192,14 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
     /// <inheritdoc />
     public override ValueTask VisitAsync(SelectTableValuesNode node, CancellationToken cancellationToken)
     {
-        var firstRowTypes = node.RowsNodes.First().ExpressionNodes.Select(n => n.GetDataType());
+        var firstRowTypes = node.RowsNodes.First().ExpressionNodes.Select(n => n.Type);
         var rowsFrame = new RowsFrame(
             firstRowTypes
                 .Select((rt, i) => new Column($"column{i + 1}", node.Alias, rt))
                 .ToArray()
         );
 
-        node.SetDataType(DataType.Object);
+        node.Type = DataType.Object;
 
         // Persist rows nodes handlers.
         var handlers = new Dictionary<ExpressionNode, IFuncUnit>(capacity: node.RowsNodes.Count * 4);
@@ -239,7 +239,7 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
         {
             var valueAction = NodeIdFuncMap[node.ExpressionNode.Id];
             var rowsIterator = await new SelectPlanner(ExecutionThread).CreateIteratorAsync(queryNode, _context, cancellationToken);
-            var equalDelegate = VariantValue.GetEqualsDelegate(node.ExpressionNode.GetDataType());
+            var equalDelegate = VariantValue.GetEqualsDelegate(node.ExpressionNode.Type);
 
             async ValueTask<VariantValue> Func(IExecutionThread thread, CancellationToken ct)
             {
@@ -261,7 +261,7 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
                 return new VariantValue(node.IsNot);
             }
 
-            NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, node.GetDataType());
+            NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, node.Type);
 
             return;
         }
@@ -304,7 +304,7 @@ internal class SelectCreateDelegateVisitor : CreateDelegateVisitor
         }
 
         _subQueryIterators.Add(rowsIterator);
-        NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, node.GetDataType());
+        NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, node.Type);
     }
 
     /// <inheritdoc />

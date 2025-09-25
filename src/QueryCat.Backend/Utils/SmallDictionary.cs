@@ -38,7 +38,7 @@ internal sealed class SmallDictionary<TKey, TValue> : IDictionary<TKey, TValue> 
             {
                 return _values[i];
             }
-            throw new KeyNotFoundException("The given key was not present in the dictionary.");
+            throw new KeyNotFoundException($"The given key '{key}' was not present in the dictionary.");
         }
 
         set
