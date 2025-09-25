@@ -483,8 +483,12 @@ internal partial class CreateDelegateVisitor : AstVisitor
     public override async ValueTask VisitAsync(CoalesceFunctionNode node, CancellationToken cancellationToken)
     {
         await ResolveTypesVisitor.VisitAsync(node, cancellationToken);
-        var expressionActions = node.Expressions.Select(e => NodeIdFuncMap[e.Id]).ToArray();
-        NodeIdFuncMap[node.Id] = new CoalesceFuncUnit(expressionActions, node.Type);
+        var arr = new IFuncUnit[node.Expressions.Count];
+        for (var i = 0; i < node.Expressions.Count; i++)
+        {
+            arr[i] = NodeIdFuncMap[node.Expressions[i].Id];
+        }
+        NodeIdFuncMap[node.Id] = new CoalesceFuncUnit(arr, node.Type);
     }
 
     #endregion
