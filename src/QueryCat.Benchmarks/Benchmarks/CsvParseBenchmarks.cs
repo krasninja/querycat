@@ -1,9 +1,6 @@
 using System.Globalization;
 using BenchmarkDotNet.Attributes;
-using CsvHelper;
-using CsvHelper.Configuration;
-using Sylvan.Data.Csv;
-using CsvDataReader = Sylvan.Data.Csv.CsvDataReader;
+using nietras.SeparatedValues;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Core.Utils;
@@ -16,6 +13,42 @@ namespace QueryCat.Benchmarks.Benchmarks;
 [MemoryDiagnoser]
 public class CsvParseBenchmarks
 {
+    [Benchmark]
+    public async Task<int> ReadAllUsersWithSep()
+    {
+        await using var file = UsersCsvFile.OpenTestUsersFile();
+        using var csv = await Sep.Reader(_ => new SepReaderOptions
+        {
+            DisableQuotesParsing = false,
+            Unescape = true,
+        }).FromAsync(file);
+
+        var rowsFrame = User.ClassBuilder.BuildRowsFrame();
+        var row = new Row(rowsFrame);
+
+        while (await csv.MoveNextAsync())
+        {
+            row[0] = new VariantValue(csv.Current[0].Parse<int>()); // Id.
+            row[1] = new VariantValue(csv.Current[1].Parse<string>()); // Email.
+            row[2] = new VariantValue(csv.Current[2].Parse<string>()); // FirstName.
+            row[3] = new VariantValue(csv.Current[3].Parse<string>()); // LastName.
+            row[4] = !csv.Current[4].Span.IsEmpty ? new VariantValue(csv.Current[4].Parse<DateTime>()) : VariantValue.Null; // EmailVerifiedAt.
+            row[5] = new VariantValue(csv.Current[5].Parse<string>()); // Address.
+            row[6] = new VariantValue(csv.Current[6].Parse<string>()); // State.
+            row[7] = new VariantValue(csv.Current[7].Parse<string>()); // Zip.
+            row[8] = new VariantValue(csv.Current[8].Parse<string>()); // Phone.
+            row[9] = new VariantValue(csv.Current[9].Parse<string>()); // Gender.
+            row[10] = new VariantValue(csv.Current[10].Parse<DateTime>()); // DateOfBirth.
+            row[11] = new VariantValue(csv.Current[11].Parse<decimal>()); // Balance.
+            row[12] = new VariantValue(csv.Current[12].Parse<DateTime>()); // CreatedAt.
+            row[13] = !csv.Current[13].Span.IsEmpty ? new VariantValue(csv.Current[13].Parse<string>()) : VariantValue.Null; // RemovedAt.
+            row[14] = new VariantValue(csv.Current[14].Parse<string>()); // Phrase.
+            rowsFrame.AddRow(row);
+        }
+
+        return rowsFrame.TotalRows;
+    }
+
     [Benchmark]
     public async Task<int> ReadAllUsersWithDsvFormatter()
     {
@@ -70,19 +103,19 @@ public class CsvParseBenchmarks
     }
 
     [Benchmark]
-    public int ReadAllUsersWithSylvanCsv()
+    public async Task<int> ReadAllUsersWithSylvanCsv()
     {
         var rowsFrame = User.ClassBuilder.BuildRowsFrame();
         var row = new Row(rowsFrame);
 
-        using var file = UsersCsvFile.OpenTestUsersFile();
-        using var csv = CsvDataReader.Create(new StreamReader(file), new CsvDataReaderOptions
+        await using var file = UsersCsvFile.OpenTestUsersFile();
+        await using var csv = await Sylvan.Data.Csv.CsvDataReader.CreateAsync(new StreamReader(file), new Sylvan.Data.Csv.CsvDataReaderOptions
         {
             Culture = CultureInfo.InvariantCulture,
-            Schema = CsvSchema.Nullable
+            Schema = Sylvan.Data.Csv.CsvSchema.Nullable
         });
 
-        while (csv.Read())
+        while (await csv.ReadAsync())
         {
             row[0] = new VariantValue(csv.GetInt32(0)); // Id.
             row[1] = new VariantValue(csv.GetString(1)); // Email.
@@ -106,17 +139,17 @@ public class CsvParseBenchmarks
     }
 
     [Benchmark]
-    public int ReadAllUsersWithCsvHelper()
+    public async Task<int> ReadAllUsersWithCsvHelper()
     {
         var rowsFrame = User.ClassBuilder.BuildRowsFrame();
         var row = new Row(rowsFrame);
 
-        using var file = UsersCsvFile.OpenTestUsersFile();
-        using var csv = new CsvReader(new StreamReader(file), new CsvConfiguration(CultureInfo.CurrentCulture));
-        csv.Read();
+        await using var file = UsersCsvFile.OpenTestUsersFile();
+        using var csv = new CsvHelper.CsvReader(new StreamReader(file), new CsvHelper.Configuration.CsvConfiguration(CultureInfo.CurrentCulture));
+        await csv.ReadAsync();
         csv.ReadHeader();
 
-        while (csv.Read())
+        while (await csv.ReadAsync())
         {
             row[0] = new VariantValue(csv.GetField<int>(0)); // Id.
             row[1] = new VariantValue(csv.GetField(1)); // Email.
@@ -181,7 +214,7 @@ public class CsvParseBenchmarks
     }
 
     [Benchmark]
-    public int ReadAllUsersWithNaiveStringSplit()
+    public async Task<int> ReadAllUsersWithNaiveStringSplit()
     {
         /*
          * The test is not the correct way of CSV parsing, it is just to test dumb implementation!
@@ -190,10 +223,10 @@ public class CsvParseBenchmarks
         var rowsFrame = User.ClassBuilder.BuildRowsFrame();
         var row = new Row(rowsFrame);
 
-        using var file = UsersCsvFile.OpenTestUsersFile();
+        await using var file = UsersCsvFile.OpenTestUsersFile();
         using var streamReader = new StreamReader(file);
-        streamReader.ReadLine(); // Read header.
-        while (streamReader.ReadLine() is { } line)
+        await streamReader.ReadLineAsync(); // Read header.
+        while (await streamReader.ReadLineAsync() is { } line)
         {
             var arr = line.Split(',');
             row[0] = new VariantValue(int.Parse(arr[0])); // Id.
