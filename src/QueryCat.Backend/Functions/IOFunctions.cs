@@ -16,6 +16,7 @@ namespace QueryCat.Backend.Functions;
 internal static class IOFunctions
 {
     private const string ContentTypeHeader = "Content-Type";
+    private const int DefaultFileReadBufferSize = 0x1000 * 2; /* 8KB */
 
     private static readonly MimeTypesProvider _mimeTypesProvider = new();
 
@@ -120,8 +121,12 @@ internal static class IOFunctions
         }
         var blobFile = new StreamBlobData(() =>
             {
-                Stream file = File.Open(path, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
-                if (_compressFilesExtensions.Contains(Path.GetExtension(path).ToLowerInvariant()))
+                Stream file = new FileStream(
+                    path,
+                    FileMode.Create,
+                    FileAccess.Write,
+                    FileShare.Inheritable);
+                if (_compressFilesExtensions.Contains(Path.GetExtension(path), StringComparer.InvariantCultureIgnoreCase))
                 {
                     file = new GZipStream(file, CompressionMode.Compress, leaveOpen: false);
                 }
@@ -149,9 +154,9 @@ internal static class IOFunctions
                         FileMode.Open,
                         FileAccess.Read,
                         FileShare.Inheritable,
-                        0x1000 * 2 /* 8KB */,
+                        DefaultFileReadBufferSize,
                         FileOptions.SequentialScan);
-                    if (_compressFilesExtensions.Contains(Path.GetExtension(file).ToLower()))
+                    if (_compressFilesExtensions.Contains(Path.GetExtension(file), StringComparer.InvariantCultureIgnoreCase))
                     {
                         fileStream = new GZipStream(fileStream, CompressionMode.Decompress);
                     }
