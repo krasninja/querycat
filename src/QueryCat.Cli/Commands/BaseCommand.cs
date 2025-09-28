@@ -65,6 +65,7 @@ internal abstract class BaseCommand : Command
 #if ENABLE_PLUGINS
             PluginDirectories = (parseResult.GetValue(PluginDirectoriesOption) ?? [])
                 .SelectMany(d => d.Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries))
+                .Select(QueryCat.Backend.Functions.IOFunctions.ResolveHomeDirectory)
                 .ToArray(),
 #endif
         };
