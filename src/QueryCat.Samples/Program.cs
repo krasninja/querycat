@@ -7,6 +7,7 @@ internal class Program
     private static readonly BaseUsage[] _samples =
     [
         new AsyncFunctionUsage(),
+        new BasicIteratorUsage(),
         new BasicUsage(),
         new CollectionsUsage(),
         new CustomFunctionUsage(),
