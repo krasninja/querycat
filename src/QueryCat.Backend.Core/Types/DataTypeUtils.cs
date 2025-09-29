@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core.Utils;
 
@@ -58,14 +59,44 @@ public static class DataTypeUtils
             DataType.Void => VariantValue.VoidValueString,
             DataType.Dynamic => "dynamic",
             DataType.Integer => "i:" + value.AsIntegerUnsafe.ToString(CultureInfo.InvariantCulture),
-            DataType.String => "s:" + StringUtils.Quote(value.AsStringUnsafe).ToString(),
+            DataType.String => "s:" + StringUtils.Quote(value.AsStringUnsafe),
             DataType.Boolean => "bl:" + value.AsBooleanUnsafe.ToString(CultureInfo.InvariantCulture),
             DataType.Float => "fl:" + value.AsFloatUnsafe.ToString("G17", CultureInfo.InvariantCulture),
             DataType.Numeric => "n:" + value.AsNumericUnsafe.ToString(CultureInfo.InvariantCulture),
             DataType.Timestamp => $"ts:{value.AsTimestampUnsafe.Ticks}:{(int)value.AsTimestampUnsafe.Kind}",
             DataType.Interval => "in:" + value.AsIntervalUnsafe.Ticks.ToString(CultureInfo.InvariantCulture),
+            DataType.Array => "a:" + SerializeArray(value.AsArrayUnsafe),
+            DataType.Map => "m:" + SerializeMap(value.AsMapUnsafe),
             _ => string.Empty
         };
+
+    private static string SerializeArray(IEnumerable<VariantValue> values)
+    {
+        var sb = new StringBuilder();
+        foreach (var item in values)
+        {
+            var str = SerializeVariantValue(item);
+            sb.Append(str.Length)
+                .Append(':')
+                .Append(str)
+                .Append('|');
+        }
+        return sb.ToString();
+    }
+
+    private static string SerializeMap(IDictionary<VariantValue, VariantValue> values)
+    {
+        IEnumerable<VariantValue> GetKeyValuePairs(IDictionary<VariantValue, VariantValue> dict)
+        {
+            foreach (var item in dict)
+            {
+                yield return item.Key;
+                yield return item.Value;
+            }
+        }
+
+        return SerializeArray(GetKeyValuePairs(values));
+    }
 
     internal static VariantValue DeserializeVariantValue(ReadOnlySpan<char> source, bool strongDeserialization = true)
     {
@@ -119,8 +150,65 @@ public static class DataTypeUtils
             var ticks = long.Parse(value, CultureInfo.InvariantCulture);
             return new VariantValue(new TimeSpan(ticks));
         }
+        if (type == "a")
+        {
+            return VariantValue.CreateFromObject(DeserializeArray(value));
+        }
+        if (type == "m")
+        {
+            return VariantValue.CreateFromObject(DeserializeMap(value));
+        }
 
         throw new InvalidOperationException(string.Format(Resources.Errors.InvalidDeserializationType, type));
+    }
+
+    private static IReadOnlyList<VariantValue> DeserializeArray(ReadOnlySpan<char> source, bool strongDeserialization = true)
+    {
+        var list = new List<VariantValue>();
+        var startIndex = 0;
+#pragma warning disable SA1002
+        for (;;)
+#pragma warning restore SA1002
+        {
+            var sizeIndex = source[startIndex..].IndexOf(':');
+            if (sizeIndex == -1)
+            {
+                break;
+            }
+            sizeIndex += startIndex;
+            var sizeSpan = source[startIndex..sizeIndex];
+            if (sizeSpan.IsEmpty)
+            {
+                break;
+            }
+            var size = int.Parse(sizeSpan, CultureInfo.InvariantCulture);
+            if (size < 1)
+            {
+                break;
+            }
+            var valueSpan = source[(sizeIndex + 1)..(sizeIndex + size + 1)];
+            var value = DeserializeVariantValue(valueSpan, strongDeserialization);
+            list.Add(value);
+            startIndex += sizeSpan.Length + size + 2;
+        }
+        return list;
+    }
+
+    private static IDictionary<VariantValue, VariantValue> DeserializeMap(ReadOnlySpan<char> source, bool strongDeserialization = true)
+    {
+        var map = new Dictionary<VariantValue, VariantValue>();
+        var arr = DeserializeArray(source, strongDeserialization);
+
+        for (var i = 0; i < arr.Count; i++)
+        {
+            if (i == 0 || !int.IsOddInteger(i))
+            {
+                continue;
+            }
+            map[arr[i - 1]] = arr[i];
+        }
+
+        return map;
     }
 
     #endregion
