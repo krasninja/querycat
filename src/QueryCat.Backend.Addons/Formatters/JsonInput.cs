@@ -156,6 +156,11 @@ internal class JsonInput : StreamRowsInput
             value = new VariantValue(property.GetRawText());
             return ErrorCode.OK;
         }
+        if (property.ValueKind == JsonValueKind.Array && type == DataType.Array)
+        {
+            value = VariantValue.CreateFromObject(property.EnumerateArray().ToList());
+            return ErrorCode.OK;
+        }
 
         value = VariantValue.Null;
         return ErrorCode.CannotCast;
