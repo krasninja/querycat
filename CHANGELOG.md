@@ -7,10 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.16.1] - 2025-10-02
+
 ### Added
 
 - Add 'key_operators' column to schema output.
 - Allow to compare Numeric and Float types.
+
+### Fixed
+
+- Fix IS NOT NULL operation priority.
 
 ## [0.16.0] - 2025-09-16
 
