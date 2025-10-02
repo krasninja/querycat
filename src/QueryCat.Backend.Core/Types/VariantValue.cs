@@ -104,6 +104,7 @@ public readonly partial struct VariantValue :
 
     private readonly TypeUnion _valueUnion;
 
+    // Type object or object instance (string/object/array/map).
     private readonly object? _object = null;
 
     /// <summary>

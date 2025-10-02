@@ -8,11 +8,6 @@ namespace QueryCat.Backend.Ast;
 internal static class AstAttributeKeys
 {
     /// <summary>
-    /// Node result type.
-    /// </summary>
-    public const string TypeKey = "type_key";
-
-    /// <summary>
     /// Associated function (of type <see cref="QueryCat.Backend.Core.Functions.IFunction" />).
     /// </summary>
     public const string FunctionKey = "function_key";

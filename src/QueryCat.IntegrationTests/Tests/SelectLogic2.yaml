@@ -1,0 +1,4 @@
+expected: |
+  True
+query: |
+  SELECT 1 = 1 AND 1 IS NOT NULL;

@@ -7,14 +7,15 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="BenchmarkDotNet" Version="0.15.2" />
-    <PackageReference Include="Bogus" Version="35.6.3" />
+    <PackageReference Include="BenchmarkDotNet" Version="0.15.4" />
+    <PackageReference Include="Bogus" Version="35.6.4" />
     <PackageReference Include="CsvHelper" Version="33.1.0" />
-    <PackageReference Include="DotNext" Version="5.24.0" />
-    <PackageReference Include="NCalcSync" Version="5.6.0" />
-    <PackageReference Include="System.CommandLine" Version="2.0.0-beta7.25380.108" />
+    <PackageReference Include="DotNext" Version="5.25.1" />
+    <PackageReference Include="NCalcSync" Version="5.7.0" />
+    <PackageReference Include="System.CommandLine" Version="2.0.0-rc.1.25451.107" />
     <PackageReference Include="NReco.Csv" Version="1.0.3" />
     <PackageReference Include="Sylvan.Data.Csv" Version="1.4.2" />
+    <PackageReference Include="Sep" Version="0.11.1" />
   </ItemGroup>
 
   <ItemGroup>

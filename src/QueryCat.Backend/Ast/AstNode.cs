@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Ast;
@@ -17,6 +18,11 @@ internal abstract class AstNode : IAstNode
     /// Node identifier. It is kept when node is cloned.
     /// </summary>
     public int Id { get; } = _nextId++;
+
+    /// <summary>
+    /// Final node type.
+    /// </summary>
+    public DataType Type { get; set; } = DataType.Null;
 
     private SmallDictionary<string, object?>? _attributes;
 

@@ -94,7 +94,6 @@ public abstract class EnumerableRowsInput<[DynamicallyAccessedMembers(Dynamicall
     /// <inheritdoc />
     public override async ValueTask<bool> ReadNextAsync(CancellationToken cancellationToken = default)
     {
-        InitializeKeyColumns();
         await base.ReadNextAsync(cancellationToken);
         if (_enumerator == null)
         {

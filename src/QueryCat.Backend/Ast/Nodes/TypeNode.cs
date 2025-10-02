@@ -7,8 +7,6 @@ namespace QueryCat.Backend.Ast.Nodes;
 /// </summary>
 internal class TypeNode : AstNode
 {
-    public DataType Type { get; }
-
     /// <inheritdoc />
     public override string Code => "type";
 

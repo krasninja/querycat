@@ -5,7 +5,7 @@
     <title>QueryCat Plugins Client</title>
     <icon>icon.png</icon>
     <summary>The assembly that helps you build plugins for QueryCat</summary>
-    <version>0.2.0</version>
+    <version>0.3.0</version>
     <description>The assembly that helps you build plugins for QueryCat. Contains references to Thrift proxy and QueryCat core.</description>
     <authors>Ivan Kozhin</authors>
     <owners>Ivan Kozhin</owners>
@@ -19,7 +19,7 @@
       <group targetFramework="net8.0">
         <dependency id="ApacheThrift" version="[0.22.0, )" />
         <dependency id="Microsoft.Extensions.Logging.Abstractions" version="[8.0.0, )" />
-        <dependency id="QueryCat" version="[0.13.0, )" />
+        <dependency id="QueryCat" version="[0.16.0, )" />
       </group>
     </dependencies>
   </metadata>

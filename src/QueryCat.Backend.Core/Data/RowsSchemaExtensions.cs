@@ -13,7 +13,16 @@ public static class RowsSchemaExtensions
     /// <param name="sourceName">Optional source or prefix.</param>
     /// <returns>Found column index or -1.</returns>
     public static int GetColumnIndexByName(this IRowsSchema schema, string name, string? sourceName = null)
-        => Array.FindIndex(schema.Columns, c => Column.NameEquals(c, name, sourceName));
+    {
+        for (var i = 0; i < schema.Columns.Length; i++)
+        {
+            if (Column.NameEquals(schema.Columns[i], name, sourceName))
+            {
+                return i;
+            }
+        }
+        return -1;
+    }
 
     /// <summary>
     /// Get column index by instance of <see cref="Column" />.

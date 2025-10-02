@@ -39,11 +39,15 @@ public partial struct VariantValue
             {
                 DataType.Integer => (in VariantValue left, in VariantValue right) =>
                 {
-                    return new VariantValue(left.AsFloatUnsafe > right.AsFloatUnsafe);
+                    return new VariantValue(left.AsFloatUnsafe > right.AsIntegerUnsafe);
                 },
                 DataType.Float => (in VariantValue left, in VariantValue right) =>
                 {
                     return new VariantValue(left.AsFloatUnsafe > right.AsFloatUnsafe);
+                },
+                DataType.Numeric => (in VariantValue left, in VariantValue right) =>
+                {
+                    return new VariantValue((decimal)left.AsFloatUnsafe > right.AsNumericUnsafe);
                 },
                 _ => BinaryNullDelegate,
             },
@@ -56,6 +60,10 @@ public partial struct VariantValue
                 DataType.Numeric => (in VariantValue left, in VariantValue right) =>
                 {
                     return new VariantValue(left.AsNumericUnsafe > right.AsNumericUnsafe);
+                },
+                DataType.Float => (in VariantValue left, in VariantValue right) =>
+                {
+                    return new VariantValue(left.AsNumericUnsafe > (decimal)right.AsFloatUnsafe);
                 },
                 _ => BinaryNullDelegate,
             },

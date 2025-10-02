@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add 'key_operators' column to schema output.
+- Allow to compare Numeric and Float types.
+
+## [0.16.0] - 2025-09-16
+
+### Added
+
 - Add function "regexp_split_to_table".
 - Add "indent" field into "json" function.
 - Web server can parse multipart/form-data.

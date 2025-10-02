@@ -103,20 +103,20 @@ internal sealed partial class SelectPlanner
             return false;
 
             async ValueTask<bool> TryFindAndAddIdConditionAsync(IdentifierExpressionNode? localIdentifierNode,
-                ExpressionNode? localExpressionNode, CancellationToken localCancellationToekn)
+                ExpressionNode? localExpressionNode, CancellationToken localCancellationToken)
             {
                 if (localIdentifierNode == null)
                 {
                     return false;
                 }
                 // Try to find correspond row input column.
-                await makeDelegateVisitor.RunAndReturnAsync(localIdentifierNode, localCancellationToekn); // This call sets InputColumnKey attribute.
+                await makeDelegateVisitor.RunAndReturnAsync(localIdentifierNode, localCancellationToken); // This call sets InputColumnKey attribute.
                 var column = localIdentifierNode.GetAttribute<Column>(AstAttributeKeys.InputColumnKey);
                 if (column == null || rowsInputContext.RowsInput.GetColumnIndex(column) < 0)
                 {
                     return false;
                 }
-                var valueFunc = await makeDelegateVisitor.RunAndReturnAsync(localExpressionNode!, localCancellationToekn);
+                var valueFunc = await makeDelegateVisitor.RunAndReturnAsync(localExpressionNode!, localCancellationToken);
                 commandContext.Conditions.TryAddCondition(column, binaryOperationExpressionNode.Operation,
                     new KeyConditionSingleValueGeneratorFunc(valueFunc));
                 return true;

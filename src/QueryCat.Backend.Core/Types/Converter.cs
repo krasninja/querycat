@@ -139,6 +139,8 @@ public static class Converter
             DataType.String => value.AsString,
             DataType.Timestamp => value.AsTimestamp,
             DataType.Blob => value.AsBlobUnsafe.GetStream(),
+            DataType.Array => value.AsArrayUnsafe,
+            DataType.Map => value.AsMapUnsafe,
             DataType.Null => null,
             DataType.Void => null,
             _ => throw new InvalidOperationException(
@@ -166,6 +168,8 @@ public static class Converter
             DataType.String => value.AsStringUnsafe,
             DataType.Timestamp => value.AsTimestampUnsafe,
             DataType.Blob => value.AsBlobUnsafe.GetStream(),
+            DataType.Array => value.AsArrayUnsafe,
+            DataType.Map => value.AsMapUnsafe,
             DataType.Void => null,
             DataType.Null => null,
             _ => null,

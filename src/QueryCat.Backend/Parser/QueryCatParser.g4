@@ -409,11 +409,11 @@ expression
     | expr=expression NOT? op=BETWEEN left=simpleExpression AND right=expression # ExpressionBetween
     | left=expression op=(EQUALS | NOT_EQUALS | GREATER | GREATER_OR_EQUALS | LESS | LESS_OR_EQUALS)
         condition=(ANY | SOME | ALL) '(' selectQueryExpression ')' # ExpressionSubquery
+    | right=expression op=IS NOT? NULL # ExpressionUnary
     | EXISTS '(' selectQueryExpression ')' # ExpressionExists
     | '(' selectQueryExpression ')' # ExpressionSelect
     | left=expression op=AND right=expression # ExpressionBinary
     | left=expression op=OR right=expression # ExpressionBinary
-    | right=expression op=IS NOT? NULL # ExpressionUnary
     | left=expression atTimeZone # ExpressionAtTimeZone
     | caseExpression # ExpressionCase
     | blockExpression # ExpressionBlock

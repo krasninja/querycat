@@ -51,10 +51,12 @@ internal sealed class SelectQueryConditions : IEnumerable<SelectQueryCondition>
     /// <param name="column">Condition column.</param>
     /// <param name="operation">Condition operation.</param>
     /// <param name="generator">Values generator strategy.</param>
+    /// <param name="addSimilarWeakCondition">Tries to add less strong condition to better match any input key.</param>
     internal SelectQueryCondition? TryAddCondition(
         Column column,
         VariantValue.Operation operation,
-        IKeyConditionSingleValueGenerator generator)
+        IKeyConditionSingleValueGenerator generator,
+        bool addSimilarWeakCondition = true)
     {
         if (_conditions.Any(c => c.Column == column && c.Operation == operation))
         {
@@ -66,7 +68,25 @@ internal sealed class SelectQueryConditions : IEnumerable<SelectQueryCondition>
         }
         var queryContextCondition = new SelectQueryCondition(column, operation, generator);
         _conditions.Add(queryContextCondition);
+
+        if (addSimilarWeakCondition)
+        {
+            AddSimilarWeakConditions(queryContextCondition);
+        }
+
         return queryContextCondition;
+    }
+
+    private void AddSimilarWeakConditions(SelectQueryCondition condition)
+    {
+        if (condition.Operation == VariantValue.Operation.Greater)
+        {
+            _conditions.Add(new SelectQueryCondition(condition.Column, VariantValue.Operation.GreaterOrEquals, condition.Generator));
+        }
+        else if (condition.Operation == VariantValue.Operation.Less)
+        {
+            _conditions.Add(new SelectQueryCondition(condition.Column, VariantValue.Operation.LessOrEquals, condition.Generator));
+        }
     }
 
     internal IEnumerable<SelectInputKeysConditions> GetConditionsColumns(IRowsSource input, string? alias = null)

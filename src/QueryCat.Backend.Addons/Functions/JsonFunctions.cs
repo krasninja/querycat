@@ -118,7 +118,7 @@ public static class JsonFunctions
         var json = thread.Stack.Pop();
         try
         {
-            JsonDocument.Parse(json);
+            using var doc = JsonDocument.Parse(json);
             return VariantValue.TrueValue;
         }
         catch (JsonException)

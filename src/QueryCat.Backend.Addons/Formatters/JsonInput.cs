@@ -156,6 +156,11 @@ internal class JsonInput : StreamRowsInput
             value = new VariantValue(property.GetRawText());
             return ErrorCode.OK;
         }
+        if (property.ValueKind == JsonValueKind.Array && type == DataType.Array)
+        {
+            value = VariantValue.CreateFromObject(property.EnumerateArray().ToList());
+            return ErrorCode.OK;
+        }
 
         value = VariantValue.Null;
         return ErrorCode.CannotCast;
@@ -209,7 +214,7 @@ internal class JsonInput : StreamRowsInput
                 break;
             }
 
-            var jsonElement = GetParsedJsonDocument();
+            var jsonElement = GetParsedJsonElement();
             foreach (var field in GetJsonObjectFields(jsonElement))
             {
                 list.Add(field);
@@ -221,7 +226,7 @@ internal class JsonInput : StreamRowsInput
         return columns.ToArray();
     }
 
-    private JsonElement? GetParsedJsonDocument()
+    private JsonElement? GetParsedJsonElement()
     {
         var text = GetRowText();
         var reader = new SequenceReader<char>(text);

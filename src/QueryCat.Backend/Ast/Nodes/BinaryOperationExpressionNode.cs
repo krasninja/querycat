@@ -69,11 +69,17 @@ internal sealed class BinaryOperationExpressionNode : ExpressionNode
     private static VariantValue.Operation? GetReverseOperation(VariantValue.Operation operation)
         => operation switch
         {
-            VariantValue.Operation.Equals => VariantValue.Operation.Equals,
             VariantValue.Operation.Greater => VariantValue.Operation.Less,
             VariantValue.Operation.GreaterOrEquals => VariantValue.Operation.LessOrEquals,
             VariantValue.Operation.Less => VariantValue.Operation.Greater,
             VariantValue.Operation.LessOrEquals => VariantValue.Operation.GreaterOrEquals,
+
+            VariantValue.Operation.Equals => VariantValue.Operation.Equals,
+            VariantValue.Operation.NotEquals => VariantValue.Operation.NotEquals,
+            VariantValue.Operation.Multiple => VariantValue.Operation.Multiple,
+            VariantValue.Operation.And => VariantValue.Operation.And,
+            VariantValue.Operation.Or => VariantValue.Operation.Or,
+
             _ => null,
         };
 

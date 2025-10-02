@@ -42,11 +42,25 @@ internal class TransformQueryAstVisitor : AstVisitor
     /// <inheritdoc />
     public override ValueTask VisitAsync(SelectExistsExpressionNode node, CancellationToken cancellationToken)
     {
+        // Remove columns for EXISTS query, replaces "EXISTS(SELECT id, name FROM x())" by "EXISTS(SELECT 1 FROM x())".
         node.SubQueryNode.ColumnsListNode.ColumnsNodes.Clear();
         node.SubQueryNode.ColumnsListNode.ColumnsNodes.Add(
             new SelectColumnsSublistExpressionNode(new LiteralNode(VariantValue.OneIntegerValue))
         );
         node.SubQueryNode.FetchNode = new SelectFetchNode(new LiteralNode(VariantValue.OneIntegerValue));
+        return base.VisitAsync(node, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public override ValueTask VisitAsync(BinaryOperationExpressionNode node, CancellationToken cancellationToken)
+    {
+        // Replace 1 = id by id = 1 to avoid "Yoda" conditions. It must be useful for key columns. For example,
+        // if we have required condition col > X, then we wouldn't recognize X < col.
+        // For reference: https://en.wikipedia.org/wiki/Yoda_conditions.
+        if (node.RightNode is IdentifierExpressionNode)
+        {
+            node.TryReverse();
+        }
         return base.VisitAsync(node, cancellationToken);
     }
 }

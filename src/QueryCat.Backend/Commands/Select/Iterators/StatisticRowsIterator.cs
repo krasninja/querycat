@@ -22,7 +22,7 @@ public sealed class StatisticRowsIterator : IRowsIterator, IRowsIteratorParent
     /// <summary>
     /// Max count of errors before abort.
     /// </summary>
-    public int MaxErrorsCount { get; set; } = -1;
+    public long MaxErrorsCount { get; set; } = -1;
 
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(StatisticRowsIterator));
 

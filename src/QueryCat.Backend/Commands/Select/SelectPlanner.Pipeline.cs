@@ -121,8 +121,8 @@ internal sealed partial class SelectPlanner
                 columnName = Column.ValueColumnTitle;
             }
             var column = !string.IsNullOrEmpty(columnName)
-                ? new Column(columnName, columnSourceName, columnNode.GetDataType())
-                : new Column(i + 1, columnNode.GetDataType());
+                ? new Column(columnName, columnSourceName, columnNode.Type)
+                : new Column(i + 1, columnNode.Type);
 
             var sourceInputColumn = columnNode.GetAttribute<Column>(SourceInputColumn);
             if (sourceInputColumn != null)

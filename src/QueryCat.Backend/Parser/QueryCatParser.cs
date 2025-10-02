@@ -7917,11 +7917,11 @@ public partial class QueryCatParser : Parser {
 						((ExpressionBinaryContext)_localctx).left = _prevctx;
 						PushNewRecursionContext(_localctx, _startState, RULE_expression);
 						State = 1095;
-						if (!(Precpred(Context, 6))) throw new FailedPredicateException(this, "Precpred(Context, 6)");
+						if (!(Precpred(Context, 5))) throw new FailedPredicateException(this, "Precpred(Context, 5)");
 						State = 1096;
 						((ExpressionBinaryContext)_localctx).op = Match(AND);
 						State = 1097;
-						((ExpressionBinaryContext)_localctx).right = expression(7);
+						((ExpressionBinaryContext)_localctx).right = expression(6);
 						}
 						break;
 					case 9:
@@ -7930,11 +7930,11 @@ public partial class QueryCatParser : Parser {
 						((ExpressionBinaryContext)_localctx).left = _prevctx;
 						PushNewRecursionContext(_localctx, _startState, RULE_expression);
 						State = 1098;
-						if (!(Precpred(Context, 5))) throw new FailedPredicateException(this, "Precpred(Context, 5)");
+						if (!(Precpred(Context, 4))) throw new FailedPredicateException(this, "Precpred(Context, 4)");
 						State = 1099;
 						((ExpressionBinaryContext)_localctx).op = Match(OR);
 						State = 1100;
-						((ExpressionBinaryContext)_localctx).right = expression(6);
+						((ExpressionBinaryContext)_localctx).right = expression(5);
 						}
 						break;
 					case 10:
@@ -8060,7 +8060,7 @@ public partial class QueryCatParser : Parser {
 						((ExpressionUnaryContext)_localctx).right = _prevctx;
 						PushNewRecursionContext(_localctx, _startState, RULE_expression);
 						State = 1129;
-						if (!(Precpred(Context, 4))) throw new FailedPredicateException(this, "Precpred(Context, 4)");
+						if (!(Precpred(Context, 8))) throw new FailedPredicateException(this, "Precpred(Context, 8)");
 						State = 1130;
 						((ExpressionUnaryContext)_localctx).op = Match(IS);
 						State = 1132;
@@ -8661,14 +8661,14 @@ public partial class QueryCatParser : Parser {
 		case 6: return Precpred(Context, 15);
 		case 7: return Precpred(Context, 14);
 		case 8: return Precpred(Context, 10);
-		case 9: return Precpred(Context, 6);
-		case 10: return Precpred(Context, 5);
+		case 9: return Precpred(Context, 5);
+		case 10: return Precpred(Context, 4);
 		case 11: return Precpred(Context, 25);
 		case 12: return Precpred(Context, 13);
 		case 13: return Precpred(Context, 12);
 		case 14: return Precpred(Context, 11);
 		case 15: return Precpred(Context, 9);
-		case 16: return Precpred(Context, 4);
+		case 16: return Precpred(Context, 8);
 		case 17: return Precpred(Context, 3);
 		}
 		return true;
@@ -9068,9 +9068,9 @@ public partial class QueryCatParser : Parser {
 		0,0,0,1083,1084,5,143,0,0,1084,1085,5,73,0,0,1085,1138,3,158,79,15,1086,
 		1088,10,10,0,0,1087,1089,5,67,0,0,1088,1087,1,0,0,0,1088,1089,1,0,0,0,
 		1089,1090,1,0,0,0,1090,1091,5,111,0,0,1091,1092,3,160,80,0,1092,1093,5,
-		51,0,0,1093,1094,3,158,79,11,1094,1138,1,0,0,0,1095,1096,10,6,0,0,1096,
-		1097,5,51,0,0,1097,1138,3,158,79,7,1098,1099,10,5,0,0,1099,1100,5,71,0,
-		0,1100,1138,3,158,79,6,1101,1102,10,25,0,0,1102,1103,5,32,0,0,1103,1138,
+		51,0,0,1093,1094,3,158,79,11,1094,1138,1,0,0,0,1095,1096,10,5,0,0,1096,
+		1097,5,51,0,0,1097,1138,3,158,79,6,1098,1099,10,4,0,0,1099,1100,5,71,0,
+		0,1100,1138,3,158,79,5,1101,1102,10,25,0,0,1102,1103,5,32,0,0,1103,1138,
 		3,156,78,0,1104,1106,10,13,0,0,1105,1107,5,67,0,0,1106,1105,1,0,0,0,1106,
 		1107,1,0,0,0,1107,1108,1,0,0,0,1108,1109,5,62,0,0,1109,1138,3,138,69,0,
 		1110,1112,10,12,0,0,1111,1113,5,67,0,0,1112,1111,1,0,0,0,1112,1113,1,0,
@@ -9078,7 +9078,7 @@ public partial class QueryCatParser : Parser {
 		10,11,0,0,1117,1119,5,67,0,0,1118,1117,1,0,0,0,1118,1119,1,0,0,0,1119,
 		1120,1,0,0,0,1120,1121,5,62,0,0,1121,1138,3,28,14,0,1122,1123,10,9,0,0,
 		1123,1124,7,16,0,0,1124,1125,7,17,0,0,1125,1126,5,1,0,0,1126,1127,3,28,
-		14,0,1127,1128,5,2,0,0,1128,1138,1,0,0,0,1129,1130,10,4,0,0,1130,1132,
+		14,0,1127,1128,5,2,0,0,1128,1138,1,0,0,0,1129,1130,10,8,0,0,1130,1132,
 		5,63,0,0,1131,1133,5,67,0,0,1132,1131,1,0,0,0,1132,1133,1,0,0,0,1133,1134,
 		1,0,0,0,1134,1138,5,68,0,0,1135,1136,10,3,0,0,1136,1138,3,146,73,0,1137,
 		1061,1,0,0,0,1137,1064,1,0,0,0,1137,1067,1,0,0,0,1137,1070,1,0,0,0,1137,
