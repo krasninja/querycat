@@ -15,7 +15,7 @@
     <PackageReference Include="System.CommandLine" Version="2.0.0-rc.1.25451.107" />
     <PackageReference Include="NReco.Csv" Version="1.0.3" />
     <PackageReference Include="Sylvan.Data.Csv" Version="1.4.2" />
-    <PackageReference Include="Sep" Version="0.11.1" />
+    <PackageReference Include="Sep" Version="0.11.2" />
   </ItemGroup>
 
   <ItemGroup>
