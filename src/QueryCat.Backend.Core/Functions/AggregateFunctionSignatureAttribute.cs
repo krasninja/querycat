@@ -4,7 +4,7 @@ namespace QueryCat.Backend.Core.Functions;
 /// The special attribute to specify aggregate functions.
 /// </summary>
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
-public class AggregateFunctionSignatureAttribute : FunctionSignatureAttribute
+public sealed class AggregateFunctionSignatureAttribute : FunctionSignatureAttribute
 {
     /// <inheritdoc />
     public AggregateFunctionSignatureAttribute(string signature) : base(signature)

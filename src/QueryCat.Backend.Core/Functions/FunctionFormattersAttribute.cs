@@ -5,7 +5,7 @@ namespace QueryCat.Backend.Core.Functions;
 /// what file extensions and MIME types it can process.
 /// </summary>
 [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class)]
-public class FunctionFormattersAttribute : Attribute
+public sealed class FunctionFormattersAttribute : Attribute
 {
     /// <summary>
     /// List of MIME types or file extensions.
