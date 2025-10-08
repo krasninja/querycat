@@ -7,39 +7,6 @@ namespace QueryCat.Backend.Core.Execution;
 /// </summary>
 public static class ExecutionThreadExtensions
 {
-    /// <summary>
-    /// Run query with object properties as parameters.
-    /// </summary>
-    /// <param name="executionThread">Execution thread.</param>
-    /// <param name="query">Query.</param>
-    /// <param name="parameters">Object.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>Return value.</returns>
-    public static Task<VariantValue> RunWithScopeAsync(
-        this IExecutionThread executionThread,
-        string query,
-        object?[] parameters,
-        CancellationToken cancellationToken = default)
-    {
-        var parametersDict = new Dictionary<string, VariantValue>();
-        foreach (var parameter in parameters)
-        {
-            if (parameter == null)
-            {
-                continue;
-            }
-            var executionParameters = parameter.GetType()
-                .GetProperties()
-                .ToDictionary(p => p.Name, p => VariantValue.CreateFromObject(p.GetValue(parameter)));
-            foreach (var executionParameter in executionParameters)
-            {
-                parametersDict[executionParameter.Key] = executionParameter.Value;
-            }
-        }
-
-        return executionThread.RunAsync(query, parametersDict, cancellationToken);
-    }
-
     #region Variables
 
     /// <summary>
