@@ -14,8 +14,8 @@ internal sealed partial class GrokInput : IRowsInput, IRowsIteratorParent
 {
     // Sources:
     // https://www.elastic.co/guide/en/logstash/current/plugins-filters-grok.html
-    // https://www.elastic.co/guide/en/logstash/8.11/plugins-filters-dissect.html
-    // https://github.com/hpcugent/logstash-patterns/blob/master/files/grok-patterns
+    // https://www.elastic.co/guide/en/logstash/current/plugins-filters-dissect.html
+    // https://github.com/logstash-plugins/logstash-patterns-core/blob/main/patterns/ecs-v1/grok-patterns
 
     [GeneratedRegex(@"%{(\w+):?(\w+)?:?(\w+)?}", RegexOptions.IgnoreCase)]
     private static partial Regex GrokPatternRegex();
@@ -66,7 +66,7 @@ internal sealed partial class GrokInput : IRowsInput, IRowsIteratorParent
             }
 
             // Determine type and converter for some standard
-            // grok patterns.
+            // Grok patterns.
             else if (_semanticPatternNameMap.TryGetValue(column.Name, out var patternName))
             {
                 switch (patternName)

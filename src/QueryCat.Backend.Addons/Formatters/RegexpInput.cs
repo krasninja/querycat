@@ -16,6 +16,7 @@ internal sealed class RegexpInput : StreamRowsInput
     private readonly Regex _regex;
     private int[] _targetColumnIndexes = [];
     private VariantValue[] _valuesArray = [];
+    private int _virtualColumnsOffset = 0;
 
     /// <inheritdoc />
     public RegexpInput(Stream stream, string pattern, string? flags = null, string? key = null)
@@ -60,8 +61,9 @@ internal sealed class RegexpInput : StreamRowsInput
                     continue;
                 }
 
+                var columnType = Columns[colIndex + _virtualColumnsOffset].DataType;
                 if (match.Groups[i].Success && VariantValue.TryCreateFromString(
-                        match.Groups[i].ValueSpan, Columns[colIndex].DataType, out var value))
+                        match.Groups[i].ValueSpan, columnType, out var value))
                 {
                     _valuesArray[colIndex] = value;
                 }
@@ -96,6 +98,7 @@ internal sealed class RegexpInput : StreamRowsInput
             _targetColumnIndexes[i] = columns.Count - 1;
         }
         _valuesArray = new VariantValue[columns.Count];
+        _virtualColumnsOffset = this.GetVirtualColumns().Length;
         return Task.FromResult(columns.ToArray());
     }
 }
