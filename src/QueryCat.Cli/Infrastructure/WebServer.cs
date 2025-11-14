@@ -56,7 +56,7 @@ internal sealed partial class WebServer
             ["/"] = HandleIndexActionAsync,
             ["/index.html"] = HandleIndexActionAsync,
             ["/index.js"] = HandleIndexJsActionAsync,
-            ["/api/info"] = HandleInfoApiActionAsync,
+            ["/api/info"] = Info_HandleInfoApiActionAsync,
             ["/api/query"] = HandleQueryApiAction,
             ["/api/schema"] = HandleSchemaApiActionAsync,
             ["/api/files"] = Files_HandleFilesApiActionAsync,
@@ -119,7 +119,7 @@ internal sealed partial class WebServer
         // CORS.
         if (!string.IsNullOrEmpty(AllowOrigin))
         {
-            response.Headers.Add("Access-Control-Allow-Origin", "*");
+            response.Headers.Add("Access-Control-Allow-Origin", AllowOrigin);
             if (context.Request.HttpMethod.Equals(HttpMethod.Options.Method))
             {
                 response.Headers.Add("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
