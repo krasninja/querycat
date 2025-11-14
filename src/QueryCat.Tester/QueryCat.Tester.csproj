@@ -13,7 +13,7 @@
 
   <ItemGroup>
     <PackageReference Include="QueryCat" Version="0.16.1" />
-    <PackageReference Include="System.CommandLine" Version="2.0.0-rc.2.25502.107" />
+    <PackageReference Include="System.CommandLine" Version="2.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.10" />
   </ItemGroup>
 
