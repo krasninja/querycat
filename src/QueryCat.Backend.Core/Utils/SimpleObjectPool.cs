@@ -3,12 +3,12 @@ using System.Collections.Concurrent;
 namespace QueryCat.Backend.Core.Utils;
 
 /// <summary>
-/// Simple object pool implementation based on Microsoft.Extensions.ObjectPool .
+/// Simple object pool implementation based on Microsoft.Extensions.ObjectPool.
 /// </summary>
 /// <typeparam name="T">Pool object type.</typeparam>
 internal class SimpleObjectPool<T> where T : class
 {
-    // Based on .NET implementation: https://github.com/dotnet/aspnetcore/blob/main/src/ObjectPool/src/DefaultObjectPool.cs
+    // Based on .NET implementation: https://github.com/dotnet/dotnet/blob/main/src/aspnetcore/src/ObjectPool/src/DefaultObjectPool.cs.
 
     private readonly Func<T> _createFunc;
     private readonly Action<T>? _beforeReturn;
@@ -16,8 +16,10 @@ internal class SimpleObjectPool<T> where T : class
     private int _numItems;
 
 #pragma warning disable SA1401
+    // ReSharper disable InconsistentNaming
     private protected readonly ConcurrentQueue<T> _items = new();
     private protected T? _fastItem;
+    // ReSharper restore InconsistentNaming
 #pragma warning restore SA1401
 
     /// <summary>
