@@ -12,7 +12,11 @@ namespace QueryCat.Backend.ThriftPlugins;
 [DebuggerDisplay("Count = {Count}, InUse = {InUseCount}, Available = {AvailableCount}")]
 internal sealed partial class WaitQueue : IDisposable
 {
-    private static readonly DisposableObjectPool<WaitingConsumer> _waitingConsumerPool = new(() => new WaitingConsumer());
+    private static readonly DisposableObjectPool<WaitingConsumer> _waitingConsumerPool = new(
+        createFunc: () => new WaitingConsumer(),
+        beforeReturn: wc => wc.Check()
+    );
+
     private readonly ConcurrentQueue<WaitingConsumer> _awaitClientQueue = new();
     private readonly ConcurrentQueue<object> _availableItemsObjects = new();
     private readonly ILogger _logger;
@@ -181,6 +185,14 @@ internal sealed partial class WaitQueue : IDisposable
         public SemaphoreSlim Trigger { get; } = new(0, 1);
 
         public ItemWrapper? Wrapper { get; set; }
+
+        internal void Check()
+        {
+            if (Trigger.CurrentCount != 0)
+            {
+                throw new InvalidOperationException("Trigger has not been initialized properly.");
+            }
+        }
 
         /// <inheritdoc />
         public void Dispose()
