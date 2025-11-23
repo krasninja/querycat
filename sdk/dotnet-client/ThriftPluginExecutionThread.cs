@@ -8,9 +8,10 @@ using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Plugins;
-using QueryCat.Backend.Core.Types;
 using QueryCat.Backend.Core.Utils;
 using QueryCat.Plugins.Client.Remote;
+using CompletionResult = QueryCat.Backend.Core.Execution.CompletionResult;
+using DataType = QueryCat.Backend.Core.Types.DataType;
 using VariantValue = QueryCat.Backend.Core.Types.VariantValue;
 
 namespace QueryCat.Plugins.Client;
@@ -78,7 +79,7 @@ public sealed class ThriftPluginExecutionThread : IExecutionThread
     /// <inheritdoc />
     public object? Tag => null;
 
-    public ThriftPluginExecutionThread(ThriftPluginClient client)
+    public ThriftPluginExecutionThread(ThriftPluginClient client )
     {
         _client = client;
         PluginsManager = NullPluginsManager.Instance;

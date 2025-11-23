@@ -3,7 +3,7 @@ using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
 
-namespace QueryCat.Plugins.Samples.Functions;
+namespace QueryCat.Plugins.Sample.Functions;
 
 internal static class TestSimple
 {
@@ -12,6 +12,6 @@ internal static class TestSimple
     [FunctionSignature("sample_simple(): timestamp")]
     public static VariantValue TestSimpleFunction(IExecutionThread thread)
     {
-        return new VariantValue(DateTime.Now);
+        return new VariantValue("Current time: " + DateTime.Now);
     }
 }

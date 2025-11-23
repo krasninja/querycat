@@ -185,6 +185,11 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
                 LoadPluginLazy(pluginFile, cancellationToken);
                 loadedPlugins.Add(pluginFile);
             }
+            else
+            {
+                _logger.LogDebug("Skip plugin file '{PluginFile}' due to platform mismatch.",
+                    pluginFile);
+            }
         }
 
         if (_debugMode && !string.IsNullOrEmpty(ForceRegistrationToken) && !_loadedPlugins.Any())
@@ -207,7 +212,7 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
         }
 
         // Executable or library.
-        if (IsLibrary(file) || IsExecutable(file) || IsNugetPackage(file))
+        if (IsLibrary(file) || IsExecutable(file) || IsNugetPackage(file) || IsDotnetAssembly(file))
         {
             return true;
         }
@@ -273,6 +278,12 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
         return extension.Equals(".nupkg", StringComparison.InvariantCultureIgnoreCase);
     }
 
+    private static bool IsDotnetAssembly(string pluginFile)
+    {
+        var extension = Path.GetExtension(pluginFile);
+        return extension.Equals(".dll", StringComparison.InvariantCultureIgnoreCase);
+    }
+
     private static bool IsMatchPlatform(string pluginFile)
     {
         var plugin = PluginInfo.CreateFromUniversalName(pluginFile);
@@ -300,7 +311,6 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
     {
         try
         {
-            _logger.LogDebug("Load plugin file '{PluginFile}'.", file);
             LoadPluginLazy(file, cancellationToken);
             return true;
         }
@@ -313,6 +323,7 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
 
     private void LoadPluginLazy(string file, CancellationToken cancellationToken = default)
     {
+        _logger.LogDebug("Load plugin file '{PluginFile}'.", file);
         var pluginName = GetPluginName(file);
         if (_loadedPlugins.Contains(pluginName))
         {
@@ -351,6 +362,7 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
         var pluginName = GetPluginName(file);
         if (_loadedPlugins.Contains(pluginName))
         {
+            _logger.LogDebug("Plugin '{PluginFile}' has been already loaded.", file);
             return GetContext(file);
         }
 
@@ -363,7 +375,11 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
         ThriftPluginContext pluginContext;
         try
         {
-            if (IsLibrary(file))
+            if (IsDotnetAssembly(file))
+            {
+                pluginContext = LoadPluginDllAssembly(file, registrationToken, cancellationToken);
+            }
+            else if (IsLibrary(file))
             {
                 pluginContext = LoadPluginLibrary(file, registrationToken, cancellationToken);
             }
@@ -383,6 +399,14 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
         }
 
         return pluginContext;
+    }
+
+    private ThriftPluginContext LoadPluginDllAssembly(
+        string file,
+        string registrationToken,
+        CancellationToken cancellationToken = default)
+    {
+        return LoadPluginNugetPackage(file, registrationToken, cancellationToken);
     }
 
     private ThriftPluginContext LoadPluginNugetPackage(

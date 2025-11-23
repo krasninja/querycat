@@ -2,7 +2,7 @@
 using QueryCat.Backend.Core.Utils;
 using QueryCat.Plugins.Client;
 
-namespace QueryCat.Plugins.Samples;
+namespace QueryCat.Plugins.Sample;
 
 /// <summary>
 /// Program entry point.
@@ -16,7 +16,9 @@ public class Program
         {
             using var client = new ThriftPluginClient(args);
             Registration.RegisterFunctions(client.FunctionsManager);
+            await Registration.OnLoadAsync(client.ExecutionThread, ct);
             await client.StartAsync(cancellationToken: ct);
+            await client.ReadyAsync(cancellationToken: ct);
             await client.WaitForServerExitAsync(ct);
         });
     }

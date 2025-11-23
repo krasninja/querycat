@@ -54,4 +54,7 @@
   <data name="InvalidBlobHandle" xml:space="preserve">
     <value>Blob handle is invalid.</value>
   </data>
+  <data name="PluginReadyTimeout" xml:space="preserve">
+    <value>Plugin with token '{0}' ready timeout.</value>
+  </data>
 </root>

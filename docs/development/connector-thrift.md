@@ -144,7 +144,14 @@ QueryCat Host <---> QueryCat Proxy <---> Plugin Executable
     {
         public static void RegisterFunctions(IFunctionsManager functionsManager)
         {
+            // Register your functions here.
             functionsManager.RegisterFunction(SampleFunction.RandomNumberFunction);
+        }
+
+        public static Task OnLoadAsync(IExecutionThread executionThread, CancellationToken cancellationToken)
+        {
+            // You can put plugin initialization code here.
+            return Task.CompletedTask;
         }
     }
     ```

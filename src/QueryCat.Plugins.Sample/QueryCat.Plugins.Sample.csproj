@@ -2,7 +2,6 @@
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
-    <RootNamespace>QueryCat.Plugins.Samples</RootNamespace>
     <PackageVersion>0.1.0</PackageVersion>
     <Title>Sample Plugin</Title>
     <Authors>Ivan Kozhin</Authors>

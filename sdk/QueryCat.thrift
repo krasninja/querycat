@@ -491,6 +491,11 @@ service PluginsManager extends QueryCatIO {
     3: required PluginData plugin_data
   ) throws (1: QueryCatPluginException e),
 
+  // Finish plugin initialization.
+  void PluginReady(
+    1: required i64 token // Authorization token.
+  ) throws (1: QueryCatPluginException e),
+
   // Run the query and return the last result.
   VariantValue RunQuery(
     1: required i64 token, // Authorization token.

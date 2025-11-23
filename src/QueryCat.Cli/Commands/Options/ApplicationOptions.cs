@@ -123,6 +123,7 @@ internal sealed class ApplicationOptions
         bootstrapper.WithPluginsLoader(thread =>
             new QueryCat.Backend.AssemblyPlugins.DotNetAssemblyPluginsLoader(
                 thread.FunctionsManager,
+                thread,
                 executionOptions.PluginDirectories));
 #endif
 #if ENABLE_PLUGINS

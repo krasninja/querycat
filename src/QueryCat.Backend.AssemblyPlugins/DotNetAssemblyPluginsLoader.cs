@@ -2,6 +2,7 @@ using System.Reflection;
 using System.Text;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Plugins;
 
@@ -17,6 +18,8 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader, IDisposable
 
     private const string RegistrationClassName = "Registration";
     private const string RegistrationMethodName = "RegisterFunctions";
+    private const string OnLoadMethodName = "OnLoadAsync";
+    private const string OnUnloadMethodName = "OnUnloadAsync";
 
     private sealed record AssemblyContext(
         Stream Stream,
@@ -33,8 +36,10 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader, IDisposable
     private readonly Dictionary<string, AssemblyContext> _rawAssembliesCache = new(); // Not loaded yet assemblies.
     private readonly Dictionary<string, Assembly> _loadedFromCacheAssemblies = new(); // Assemblies loaded from cache.
     private readonly IFunctionsManager _functionsManager;
+    private readonly IExecutionThread _executionThread;
     private readonly HashSet<Assembly> _loadedAssemblies = new(); // All loaded plugin DLLs.
     private readonly HashSet<string> _domainLoadedAssemblies;
+    private readonly Queue<MethodBase> _loadMethodsQueue = new();
 
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(DotNetAssemblyPluginsLoader));
 
@@ -65,9 +70,11 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader, IDisposable
 
     public DotNetAssemblyPluginsLoader(
         IFunctionsManager functionsManager,
+        IExecutionThread executionThread,
         IEnumerable<string> pluginDirectories) : base(pluginDirectories)
     {
         _functionsManager = functionsManager;
+        _executionThread = executionThread;
         AppDomain.CurrentDomain.AssemblyResolve += CurrentDomainOnAssemblyResolve;
 
         _domainLoadedAssemblies =
@@ -75,6 +82,12 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader, IDisposable
                 .Select(a => Path.GetFileName(a.GetName().Name ?? string.Empty))
                 .Where(n => !string.IsNullOrEmpty(n))
                 .ToHashSet();
+    }
+
+    public DotNetAssemblyPluginsLoader(
+        IFunctionsManager functionsManager,
+        IEnumerable<string> pluginDirectories) : this(functionsManager, NullExecutionThread.Instance, pluginDirectories)
+    {
     }
 
     private Assembly? CurrentDomainOnAssemblyResolve(object? sender, ResolveEventArgs args)
@@ -138,15 +151,31 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader, IDisposable
                 if (assembly != null)
                 {
                     _loadedAssemblies.Add(assembly);
-                    _logger.LogDebug("Loaded plugin target '{PluginFile}' with strategy {Strategy}.", pluginFile, strategy);
+                    _logger.LogDebug("Loaded plugin target '{PluginFile}' with strategy {Strategy}.", pluginFile, strategy.GetType().Name);
                     loadedCount++;
                     break;
                 }
             }
         }
 
-        RegisterFunctions();
+        await RegisterFunctionsAsync(cancellationToken);
+        if (!options.SkipLoadingCallbackCall)
+        {
+            await CallOnLoadAsync(cancellationToken);
+        }
         return loadedCount;
+    }
+
+    public async Task CallOnLoadAsync(CancellationToken cancellationToken = default)
+    {
+        while (_loadMethodsQueue.TryDequeue(out var loadMethod))
+        {
+            var taskObject = loadMethod.Invoke(null, [_executionThread, cancellationToken]) as Task;
+            if (taskObject != null)
+            {
+                await taskObject;
+            }
+        }
     }
 
     private async Task<Assembly?> LoadWithStrategyAsync(IPluginLoadStrategy strategy, CancellationToken cancellationToken)
@@ -272,28 +301,37 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader, IDisposable
         return true;
     }
 
-    private void RegisterFunctions()
+    private async Task RegisterFunctionsAsync(CancellationToken cancellationToken)
     {
         foreach (var pluginAssembly in _loadedAssemblies)
         {
-            RegisterFromAssembly(pluginAssembly);
+            await RegisterFromAssemblyAsync(pluginAssembly, cancellationToken);
         }
     }
 
-    private void RegisterFromAssembly(Assembly assembly)
+    private async Task RegisterFromAssemblyAsync(Assembly assembly, CancellationToken cancellationToken)
     {
         // If there is class Registration with RegisterFunctions method - call it instead. Use reflection otherwise.
         // Fast path.
         var registerType = assembly.GetType(assembly.GetName().Name + $".{RegistrationClassName}");
         if (registerType != null)
         {
+            // static void RegisterFunctions(IFunctionsManager functionsManager).
             var registerMethod = registerType.GetMethod(RegistrationMethodName);
             if (registerMethod != null)
             {
                 _logger.LogDebug("Register using '{ClassName}' class.", RegistrationClassName);
                 registerMethod.Invoke(null, [_functionsManager]);
-                return;
             }
+
+            // static Task OnLoadAsync(IExecutionThread executionThread, CancellationToken cancellationToken).
+            var loadMethod = registerType.GetMethod(OnLoadMethodName);
+            if (loadMethod != null)
+            {
+                _loadMethodsQueue.Enqueue(loadMethod);
+            }
+
+            return;
         }
 
         // Get all types via reflection and try to register. Slow path.

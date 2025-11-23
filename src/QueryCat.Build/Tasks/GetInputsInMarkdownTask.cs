@@ -60,7 +60,8 @@ public sealed class GetInputsInMarkdownTask : AsyncFrostingTask<BuildContext>
         }
         else
         {
-            bootstrapper.WithPluginsLoader(thr => new DotNetAssemblyPluginsLoader(thr.FunctionsManager, [targetFile]));
+            bootstrapper.WithPluginsLoader(thr => new DotNetAssemblyPluginsLoader(
+                thr.FunctionsManager, [targetFile]));
         }
 
         await using var thread = bootstrapper.Create();

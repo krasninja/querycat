@@ -36,6 +36,20 @@ internal sealed class ThreadSafePluginsManagerClient : PluginsManager.IAsync
     }
 
     /// <inheritdoc />
+    public async Task PluginReadyAsync(long token, CancellationToken cancellationToken = default)
+    {
+        await _semaphore.WaitAsync(cancellationToken);
+        try
+        {
+            await _client.PluginReadyAsync(token, cancellationToken);
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
+    }
+
+    /// <inheritdoc />
     public async Task<VariantValue> CallFunctionAsync(long token, string function_name, List<VariantValue>? args, int object_handle,
         CancellationToken cancellationToken = default)
     {
