@@ -218,7 +218,6 @@ internal sealed class SetKeysRowsInput : IRowsInputUpdate, IRowsInputDelete
             var matchCondition = operationDelegate.Invoke(columnValue, condition.KeyValue.Value);
             if (!matchCondition.AsBoolean)
             {
-                _logger.LogWarning($"!!!!!!! {columnValue} - {condition.Condition.Operation} - {condition.KeyValue.Value}");
                 return false;
             }
         }
