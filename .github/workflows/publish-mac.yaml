@@ -17,14 +17,14 @@ jobs:
     runs-on: macos-14
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
       - name: Set up dotnet
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9'
+          dotnet-version: '10'
 
       - name: Install GitVersion
         run: dotnet tool install --global GitVersion.Tool --version 6.*

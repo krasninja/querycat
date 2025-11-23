@@ -203,6 +203,7 @@ public static class AsyncUtils
     public static T? RunSync<T>(Func<CancellationToken, Task<T>> task)
         => RunSync(() => task.Invoke(CancellationToken.None));
 
+#if NET8_0
     /// <summary>
     /// Converts async enumerable into list.
     /// </summary>
@@ -256,6 +257,7 @@ public static class AsyncUtils
         }
         return defaultValue;
     }
+#endif
 
     /// <summary>
     /// Convert <see cref="IEnumerable{T}" /> to <see cref="IAsyncEnumerable{T}" />.
