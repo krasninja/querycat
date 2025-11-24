@@ -136,7 +136,7 @@ public sealed class AsyncLock : IAsyncDisposable, IDisposable
         public ValueTask DisposeAsync()
         {
             Debug.Assert(_nextSemaphore == _asyncLock._currentSemaphore.Value,
-                "nextSemaphore was expected to by the current semaphore.");
+                "nextSemaphore was expected to be the current semaphore.");
             // Update _asyncLock._currentSemaphore in the calling ExecutionContext
             // and defer any awaits to DisposeCoreAsync(). If this isn't done, the
             // update will happen in a copy of the ExecutionContext and the caller
@@ -165,7 +165,7 @@ public sealed class AsyncLock : IAsyncDisposable, IDisposable
         public void Dispose()
         {
             Debug.Assert(_nextSemaphore == _asyncLock._currentSemaphore.Value,
-                "nextSemaphore was expected to by the current semaphore.");
+                "nextSemaphore was expected to be the current semaphore.");
             if (_currentSemaphore == _asyncLock._topLevelSemaphore)
             {
                 _asyncLock._currentSemaphore.Value = null;
