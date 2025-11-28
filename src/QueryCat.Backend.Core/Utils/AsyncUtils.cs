@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Runtime.CompilerServices;
 
 namespace QueryCat.Backend.Core.Utils;
 
@@ -155,9 +156,10 @@ public static class AsyncUtils
     /// Executes an async Task method which has a T return value synchronously.
     /// </summary>
     /// <param name="taskFunc">Task.</param>
+    /// <param name="state"></param>
     /// <typeparam name="T">Task generic type.</typeparam>
     /// <returns>Task value.</returns>
-    public static T? RunSync<T>(Func<Task<T>> taskFunc)
+    public static T? RunSync<T>(Func<object?, Task<T>> taskFunc, object? state)
     {
         var current = SynchronizationContext.Current;
         var exclusiveSynchronizationContext = new ExclusiveSynchronizationContext(current);
@@ -168,7 +170,7 @@ public static class AsyncUtils
         {
             try
             {
-                result = await taskFunc();
+                result = await taskFunc(state);
             }
             catch (AggregateException ex)
             {
@@ -197,13 +199,22 @@ public static class AsyncUtils
     /// <summary>
     /// Executes an async Task method which has a T return value synchronously.
     /// </summary>
+    /// <param name="taskFunc">Task.</param>
+    /// <typeparam name="T">Task generic type.</typeparam>
+    /// <returns>Task value.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static T? RunSync<T>(Func<Task<T>> taskFunc) => RunSync(_ => taskFunc(), null);
+
+    /// <summary>
+    /// Executes an async Task method which has a T return value synchronously.
+    /// </summary>
     /// <param name="task">Task.</param>
     /// <typeparam name="T">Task generic type.</typeparam>
     /// <returns>Task value.</returns>
     public static T? RunSync<T>(Func<CancellationToken, Task<T>> task)
         => RunSync(() => task.Invoke(CancellationToken.None));
 
-#if NET8_0
+#if NET8_0 || NET9_0
     /// <summary>
     /// Converts async enumerable into list.
     /// </summary>

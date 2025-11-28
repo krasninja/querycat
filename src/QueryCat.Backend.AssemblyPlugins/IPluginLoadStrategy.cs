@@ -9,20 +9,23 @@ internal interface IPluginLoadStrategy
     /// <summary>
     /// Enumerate all files within the plugin.
     /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Files full path.</returns>
-    IEnumerable<string> GetAllFiles();
+    Task<IReadOnlyCollection<string>> GetAllFilesAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Get file stream.
     /// </summary>
     /// <param name="file">File path.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Stream.</returns>
-    Stream GetFile(string file);
+    Task<Stream> GetFileAsync(string file, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Get file size.
     /// </summary>
     /// <param name="file">File path.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>File size in bytes.</returns>
-    long GetFileSize(string file);
+    Task<long> GetFileSizeAsync(string file, CancellationToken cancellationToken = default);
 }

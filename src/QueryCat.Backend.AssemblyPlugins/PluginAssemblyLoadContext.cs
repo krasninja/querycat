@@ -2,6 +2,7 @@ using System.Runtime.InteropServices;
 using System.Runtime.Loader;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend.AssemblyPlugins;
 
@@ -41,8 +42,7 @@ internal sealed class PluginAssemblyLoadContext : AssemblyLoadContext
 
         // Format native library name.
         var targetDllName = GetTargetDllName(unmanagedDllName);
-        var files = _pluginLoadStrategy.GetAllFiles()
-            .ToArray();
+        var files = AsyncUtils.RunSync(async () => (await _pluginLoadStrategy.GetAllFilesAsync()).ToArray())!;
 
         // Try to load from runtime path. Example: runtimes/linux-arm64/native/libduckdb.so .
         var runtimePath = Path.Combine("runtimes", Application.GetRuntimeIdentifier(), "native", targetDllName);
@@ -107,7 +107,8 @@ internal sealed class PluginAssemblyLoadContext : AssemblyLoadContext
         // We should get it from the strategy and save into QueryCat local folder.
         if (!File.Exists(libraryPath))
         {
-            libraryPath = CopyFileToNativeCache(libraryPath);
+            libraryPath = AsyncUtils.RunSync(
+                lp => CopyFileToNativeCacheAsync((string)lp!, CancellationToken.None), libraryPath)!;
         }
 
         // Load native library.
@@ -120,10 +121,10 @@ internal sealed class PluginAssemblyLoadContext : AssemblyLoadContext
         return IntPtr.Zero;
     }
 
-    private string CopyFileToNativeCache(string libraryPath)
+    private async Task<string> CopyFileToNativeCacheAsync(string libraryPath, CancellationToken cancellationToken)
     {
         var libraryName = Path.GetFileName(libraryPath);
-        using var file = _pluginLoadStrategy.GetFile(libraryPath);
+        await using var file = await _pluginLoadStrategy.GetFileAsync(libraryPath, cancellationToken);
         if (file == Stream.Null)
         {
             return string.Empty;
@@ -139,13 +140,13 @@ internal sealed class PluginAssemblyLoadContext : AssemblyLoadContext
         }
         else
         {
-            fileSize = _pluginLoadStrategy.GetFileSize(libraryPath);
+            fileSize = await _pluginLoadStrategy.GetFileSizeAsync(libraryPath, cancellationToken);
         }
         if (!File.Exists(libraryPath) ||
             new FileInfo(libraryPath).Length != fileSize)
         {
-            using var newFile = File.Create(libraryPath);
-            file.CopyTo(newFile);
+            await using var newFile = File.Create(libraryPath);
+            await file.CopyToAsync(newFile, cancellationToken);
             newFile.Close();
             _logger.LogDebug("Cached native library '{FilePath}'.", libraryPath);
         }

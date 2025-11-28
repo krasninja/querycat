@@ -181,10 +181,10 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader, IDisposable
     private async Task<Assembly?> LoadWithStrategyAsync(IPluginLoadStrategy strategy, CancellationToken cancellationToken)
     {
         // Find target framework directory.
-        var monikerRoot = FindTargetFrameworkDirectory(strategy);
+        var monikerRoot = await FindTargetFrameworkDirectoryAsync(strategy, cancellationToken);
 
         // Get DLL files.
-        var dllFiles = strategy.GetAllFiles()
+        var dllFiles = (await strategy.GetAllFilesAsync(cancellationToken))
             .Where(f => f.StartsWith(monikerRoot)
                         && Path.GetExtension(f).Equals(DllExtension, StringComparison.InvariantCultureIgnoreCase))
             .ToArray();
@@ -212,13 +212,14 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader, IDisposable
                 continue;
             }
 
-            var runtimeSpecificLibraryFile = GetTfmRuntimeSpecificPackageFile(libraryFile, strategy);
+            var runtimeSpecificLibraryFile = await GetTfmRuntimeSpecificPackageFileAsync(libraryFile, strategy, cancellationToken);
             if (!string.IsNullOrEmpty(runtimeSpecificLibraryFile))
             {
                 libraryFile = runtimeSpecificLibraryFile;
             }
 
-            var stream = await CloneStreamAsync(strategy.GetFile(libraryFile), cancellationToken);
+            await using var libraryFileStream = await strategy.GetFileAsync(libraryFile, cancellationToken);
+            var stream = await CloneStreamAsync(libraryFileStream, cancellationToken);
             if (stream == Stream.Null)
             {
                 continue;
@@ -228,7 +229,8 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader, IDisposable
         }
 
         // Load plugin library.
-        var pluginStream = await CloneStreamAsync(strategy.GetFile(pluginDll), cancellationToken);
+        await using var pluginFileStream = await strategy.GetFileAsync(pluginDll, cancellationToken);
+        var pluginStream = await CloneStreamAsync(pluginFileStream, cancellationToken);
         if (pluginStream == Stream.Null)
         {
             return null;
@@ -243,8 +245,12 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader, IDisposable
     /// </summary>
     /// <param name="libraryFile">Library file name.</param>
     /// <param name="pluginLoadStrategy">Plugin load strategy.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Target framework runtime specific file.</returns>
-    private static string GetTfmRuntimeSpecificPackageFile(string libraryFile, IPluginLoadStrategy pluginLoadStrategy)
+    private static async Task<string> GetTfmRuntimeSpecificPackageFileAsync(
+        string libraryFile,
+        IPluginLoadStrategy pluginLoadStrategy,
+        CancellationToken cancellationToken)
     {
         var libraryDirectory = Path.GetDirectoryName(libraryFile);
         var libraryFileName = Path.GetFileName(libraryFile);
@@ -265,7 +271,7 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader, IDisposable
                 "lib",
                 monikerDirectory,
                 libraryFileName);
-            if (pluginLoadStrategy.GetFileSize(runtimePath) > 0)
+            if (await pluginLoadStrategy.GetFileSizeAsync(runtimePath, cancellationToken) > 0)
             {
                 return runtimePath;
             }
@@ -309,7 +315,7 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader, IDisposable
         }
     }
 
-    private async Task RegisterFromAssemblyAsync(Assembly assembly, CancellationToken cancellationToken)
+    private Task RegisterFromAssemblyAsync(Assembly assembly, CancellationToken cancellationToken)
     {
         // If there is class Registration with RegisterFunctions method - call it instead. Use reflection otherwise.
         // Fast path.
@@ -331,7 +337,7 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader, IDisposable
                 _loadMethodsQueue.Enqueue(loadMethod);
             }
 
-            return;
+            return Task.CompletedTask;
         }
 
         // Get all types via reflection and try to register. Slow path.
@@ -341,11 +347,14 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader, IDisposable
             var functions = _functionsManager.Factory.CreateFromType(type);
             _functionsManager.RegisterFunctions(functions);
         }
+
+        return Task.CompletedTask;
     }
 
-    private static string FindTargetFrameworkDirectory(IPluginLoadStrategy pluginLoadStrategy)
+    private static async Task<string> FindTargetFrameworkDirectoryAsync(IPluginLoadStrategy pluginLoadStrategy,
+        CancellationToken cancellationToken)
     {
-        var files = pluginLoadStrategy.GetAllFiles().ToArray();
+        var files = (await pluginLoadStrategy.GetAllFilesAsync(cancellationToken)).ToArray();
         foreach (var moniker in _monikerDirectories)
         {
             var monikerDirectory = "lib/" + moniker + "/";
