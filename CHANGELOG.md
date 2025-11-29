@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix Grok column type calculation.
 - Set file open share mode to read/write.
 
+### Added
+
+- Add prepare statements support.
+
 ## [0.16.1] - 2025-10-02
 
 ### Added

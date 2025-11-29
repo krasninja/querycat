@@ -59,4 +59,29 @@ public class EvaluateExpressionBenchmark
                 });
         }
     }
+
+    [Benchmark]
+    public async Task RunPreparedExpressionSeveralTimes()
+    {
+        if (_executionThread is not IExecutionThreadPrepare executionThreadPrepare)
+        {
+            throw new InvalidOperationException("Execution thread does not support prepare.");
+        }
+        var func = executionThreadPrepare.PrepareWithScope($"""
+                                                            abs((data['KRAS'].Temperature +
+                                                                data['NSK'].Temperature +
+                                                                data['MSK'].Temperature +
+                                                                data['SPB'].Temperature)::float / total) - 1 + i
+                                                            """);
+
+        for (var i = 0; i < 100; i++)
+        {
+            var result = await func.Invoke(new Dictionary<string, VariantValue>
+            {
+                ["i"] = new(i),
+                ["data"] = VariantValue.CreateFromObject(_data),
+                ["total"] = new(4),
+            }, CancellationToken.None);
+        }
+    }
 }
