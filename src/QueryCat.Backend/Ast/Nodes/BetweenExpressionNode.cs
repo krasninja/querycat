@@ -45,7 +45,7 @@ internal sealed class BetweenExpressionNode : ExpressionNode
     }
 
     public BetweenExpressionNode(BetweenExpressionNode node)
-        : this((ExpressionNode)node.Expression.Clone(), (ExpressionNode)node.AndExpression.Clone())
+        : this((ExpressionNode)node.Expression.Clone(), (ExpressionNode)node.AndExpression.Clone(), node.IsNot)
     {
         node.CopyTo(this);
     }
