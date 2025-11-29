@@ -12,11 +12,6 @@ namespace QueryCat.Backend.Parser;
 /// </summary>
 internal sealed class AstBuilder : IAstBuilder
 {
-    private const int DefaultMaxQueryLengthForCache = 150;
-
-    private readonly IDictionary<string, IAstNode>? _astCache;
-    private readonly int _maxQueryLength;
-
     private readonly QueryCatLexer _lexer = new(new AntlrInputStream(string.Empty), TextWriter.Null, TextWriter.Null);
     private readonly QueryCatParser _parser;
     private readonly ProgramAntlrErrorListener _errorListener = new();
@@ -30,13 +25,8 @@ internal sealed class AstBuilder : IAstBuilder
     /// <summary>
     /// Constructor.
     /// </summary>
-    /// <param name="cache">Cache for AST.</param>
-    /// <param name="maxQueryLength">Max query length for cache.</param>
-    public AstBuilder(IDictionary<string, IAstNode>? cache = null, int maxQueryLength = DefaultMaxQueryLengthForCache)
+    public AstBuilder()
     {
-        _astCache = cache;
-        _maxQueryLength = maxQueryLength;
-
         _parser = new QueryCatParser(new CommonTokenStream(_lexer));
         _parser.RemoveErrorListeners();
         _parser.AddErrorListener(_errorListener);
@@ -44,11 +34,11 @@ internal sealed class AstBuilder : IAstBuilder
     }
 
     /// <inheritdoc />
-    public ProgramNode BuildProgramFromString(string program) => Build<ProgramNode>(program, p => p.program(), _astCache);
+    public ProgramNode BuildProgramFromString(string program) => Build<ProgramNode>(program, p => p.program());
 
     /// <inheritdoc />
     public FunctionSignatureNode BuildFunctionSignatureFromString(string function)
-        => Build<FunctionSignatureNode>(function, p => p.functionSignature(), astCache: null);
+        => Build<FunctionSignatureNode>(function, p => p.functionSignature());
 
     /// <inheritdoc />
     public IAstBuilder.Token[] GetTokens(string text)
@@ -63,27 +53,14 @@ internal sealed class AstBuilder : IAstBuilder
 
     private TNode Build<TNode>(
         string input,
-        Func<QueryCatParser, ParserRuleContext> signatureFunc,
-        IDictionary<string, IAstNode>? astCache) where TNode : IAstNode
+        Func<QueryCatParser, ParserRuleContext> signatureFunc) where TNode : IAstNode
     {
-        // Cache only small queries.
-        if (astCache == null || input.Length > _maxQueryLength)
-        {
-            return BuildInternal<TNode>(input, signatureFunc);
-        }
-
-        if (astCache.TryGetValue(input, out var resultNode))
-        {
-            return (TNode)resultNode.Clone();
-        }
-
-        resultNode = BuildInternal<TNode>(input, signatureFunc);
-        astCache[input] = resultNode;
+        var resultNode = BuildInternal<TNode>(input, signatureFunc);
 #if DEBUG
         // Return cloned node instead for debug only purposes.
         return (TNode)resultNode.Clone();
 #else
-        return (TNode)resultNode;
+        return resultNode;
 #endif
     }
 
@@ -138,7 +115,7 @@ internal sealed class AstBuilder : IAstBuilder
             if (token.Type == QueryCatParser.QUOTES_IDENTIFIER)
             {
                 yield return new IAstBuilder.Token(
-                    StringUtils.Unquote(token.Text).ToString(),
+                    StringUtils.Unquote(token.Text),
                     ParserToken.TokenKindIdentifier,
                     token.StartIndex);
             }

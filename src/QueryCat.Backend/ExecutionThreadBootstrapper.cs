@@ -254,11 +254,15 @@ public sealed class ExecutionThreadBootstrapper(ExecutionOptions? options = null
         }
 
         // Create thread.
-        var astBuilder = _cacheSize > 0
-            ? new AstBuilder(
+        IAstBuilder astBuilder = new AstBuilder();
+        if (_cacheSize > 0)
+        {
+            astBuilder = new AstBuilderCacheDecorator(
+                astBuilder,
                 new SimpleLruDictionary<string, IAstNode>(_cacheSize),
-                _maxQueryLength > 0 ? _maxQueryLength : 150)
-            : new AstBuilder();
+                _maxQueryLength > 0 ? _maxQueryLength : AstBuilderCacheDecorator.DefaultMaxQueryLengthForCache
+            );
+        }
         // Keep only one combined completion source.
         var completionSource = _completionSources.Count == 1 && _completionSources[0] is CombineCompletionSource
             ? _completionSources[0]
