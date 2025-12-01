@@ -1,4 +1,4 @@
-namespace QueryCat.Backend.Utils;
+namespace QueryCat.Backend.Core.Utils;
 
 /// <summary>
 /// Global next identifier generator class.

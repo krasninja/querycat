@@ -21,8 +21,7 @@ public static class AsyncUtils
     private sealed class ExclusiveSynchronizationContext : SynchronizationContext, IDisposable
     {
 #if DEBUG
-        private static int _idGenerator;
-        private readonly int _id = Interlocked.Increment(ref _idGenerator);
+        private readonly int _id = IdGenerator.GetNext();
 #endif
         private bool _done;
         private readonly AutoResetEvent _workItemsWaiting = new(initialState: false);
