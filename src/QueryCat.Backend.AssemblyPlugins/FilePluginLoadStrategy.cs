@@ -10,31 +10,33 @@ internal sealed class FilePluginLoadStrategy : IPluginLoadStrategy
     }
 
     /// <inheritdoc />
-    public IEnumerable<string> GetAllFiles()
+    public Task<IReadOnlyCollection<string>> GetAllFilesAsync(CancellationToken cancellationToken = default)
     {
         var directory = Path.GetDirectoryName(_file);
         if (string.IsNullOrEmpty(directory))
         {
-            return [];
+            return Task.FromResult<IReadOnlyCollection<string>>([]);
         }
 
-        return Directory.GetFiles(directory, string.Empty, SearchOption.AllDirectories);
+        var files = Directory.GetFiles(directory, string.Empty, SearchOption.AllDirectories);
+        return Task.FromResult<IReadOnlyCollection<string>>(files);
     }
 
     /// <inheritdoc />
-    public Stream GetFile(string file)
+    public Task<Stream> GetFileAsync(string file, CancellationToken cancellationToken = default)
     {
         if (!File.Exists(file))
         {
-            return Stream.Null;
+            return Task.FromResult(Stream.Null);
         }
-        return File.OpenRead(file);
+        return Task.FromResult<Stream>(File.OpenRead(file));
     }
 
     /// <inheritdoc />
-    public long GetFileSize(string file)
+    public Task<long> GetFileSizeAsync(string file, CancellationToken cancellationToken = default)
     {
         var fileInfo = new FileInfo(file);
-        return fileInfo.Exists ? file.Length : 0;
+        var filesSize = fileInfo.Exists ? file.Length : 0;
+        return Task.FromResult<long>(filesSize);
     }
 }

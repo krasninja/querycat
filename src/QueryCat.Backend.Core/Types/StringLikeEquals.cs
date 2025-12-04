@@ -4,7 +4,10 @@ namespace QueryCat.Backend.Core.Types;
 
 internal static class StringLikeEquals
 {
-    private static readonly SimpleObjectPool<List<char>> _listCharPool = new(() => new List<char>());
+    private static readonly SimpleObjectPool<List<char>> _listCharPool = new(
+        createFunc: () => new List<char>(),
+        beforeReturn: l => l.Clear()
+    );
 
     /// <summary>
     /// Implements SQL LIKE pattern comparision.
@@ -24,7 +27,7 @@ internal static class StringLikeEquals
         var lastWildCard = -1;
         var patternIndex = 0;
         var set = _listCharPool.Get();
-        char p = '\0';
+        var p = '\0';
 
         foreach (var c in str)
         {
@@ -101,7 +104,7 @@ internal static class StringLikeEquals
             }
             else if (isCharSetOn || isNotCharSetOn)
             {
-                bool charMatch = set.Contains(char.ToUpper(c));
+                var charMatch = set.Contains(char.ToUpper(c));
                 if ((isNotCharSetOn && charMatch) || (isCharSetOn && !charMatch))
                 {
                     if (lastWildCard >= 0)
@@ -140,8 +143,8 @@ internal static class StringLikeEquals
 
         if (isMatch && !endOfPattern)
         {
-            bool isOnlyWildCards = true;
-            for (int i = patternIndex; i < pattern.Length; i++)
+            var isOnlyWildCards = true;
+            for (var i = patternIndex; i < pattern.Length; i++)
             {
                 if (pattern[i] != '%')
                 {

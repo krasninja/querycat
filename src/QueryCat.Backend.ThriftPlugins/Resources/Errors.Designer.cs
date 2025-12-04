@@ -116,5 +116,11 @@ namespace QueryCat.Backend.ThriftPlugins.Resources {
                 return ResourceManager.GetString("InvalidBlobHandle", resourceCulture);
             }
         }
+        
+        internal static string PluginReadyTimeout {
+            get {
+                return ResourceManager.GetString("PluginReadyTimeout", resourceCulture);
+            }
+        }
     }
 }

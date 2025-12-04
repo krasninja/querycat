@@ -6,7 +6,7 @@ namespace QueryCat.Cli.Infrastructure;
 
 internal partial class WebServer
 {
-    private async Task HandleInfoApiActionAsync(HttpListenerRequest request, HttpListenerResponse response, CancellationToken cancellationToken)
+    private async Task Info_HandleInfoApiActionAsync(HttpListenerRequest request, HttpListenerResponse response, CancellationToken cancellationToken)
     {
         var localPlugins = (await _executionThread.PluginsManager.ListAsync(localOnly: true, cancellationToken)).ToList();
         var dict = new WebServerReply

@@ -103,6 +103,13 @@ public partial class ThriftPluginsServer
             });
         }
 
+        /// <inheritdoc />
+        public async Task PluginReadyAsync(long token, CancellationToken cancellationToken = default)
+        {
+            await BeforeCallAsync(token, nameof(PluginReadyAsync), cancellationToken);
+            _thriftPluginsServer.SetPluginReady(token);
+        }
+
         private ThriftPluginContext CreateClientConnection(string callbackUri)
         {
             var context = new ThriftPluginContext(callbackUri, _thriftPluginsServer._objectsStorage,
@@ -318,6 +325,20 @@ public partial class ThriftPluginsServer
             try
             {
                 return await _handler.RegisterPluginAsync(registration_token, callback_uri, plugin_data, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, Resources.Errors.HandlerInternalError);
+                throw QueryCatPluginExceptionUtils.Create(ex);
+            }
+        }
+
+        /// <inheritdoc />
+        public async Task PluginReadyAsync(long token, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                await _handler.PluginReadyAsync(token, cancellationToken);
             }
             catch (Exception ex)
             {

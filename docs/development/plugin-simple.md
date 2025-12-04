@@ -135,7 +135,7 @@ The tutorial explains how to create custom plugin based on `IRowsInput` interfac
 4. Run QueryCat with the new plugin.
 
     ```bash
-    qcat "select * from plugin()" --plugin-dirs /mnt/data/work/SimplePlugin/SimplePlugin/bin/Debug/net9.0/publish/
+    qcat "select * from plugin()" --plugin-dirs /mnt/data/work/SimplePlugin/SimplePlugin/bin/Debug/net10.0/publish/
     ```
 
     ```

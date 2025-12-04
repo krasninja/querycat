@@ -1,6 +1,6 @@
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
-using QueryCat.Backend.Utils;
+using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend.Commands.Select.Iterators;
 

@@ -14,4 +14,9 @@ public sealed class PluginsLoadingOptions
     /// Do not load plugins with the same name to avoid double loading.
     /// </summary>
     public bool SkipDuplicates { get; set; } = true;
+
+    /// <summary>
+    /// Do not call "OnLoad" plugin callback.
+    /// </summary>
+    public bool SkipLoadingCallbackCall { get; set; } = false;
 }

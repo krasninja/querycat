@@ -1,11 +1,14 @@
+using QueryCat.Backend.Core.Utils;
+
 namespace QueryCat.Backend.Commands;
 
-internal class CommandContext
+/// <summary>
+/// Base command context that is used to store current command state.
+/// </summary>
+internal abstract class CommandContext
 {
-    private static int _nextId;
-
     /// <summary>
     /// The identifier used to distinguish command contexts between each other.
     /// </summary>
-    internal int Id { get; } = Interlocked.Increment(ref _nextId);
+    internal int Id { get; } = IdGenerator.GetNext();
 }

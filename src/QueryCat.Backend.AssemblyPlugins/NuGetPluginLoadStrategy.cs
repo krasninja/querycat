@@ -15,41 +15,38 @@ internal sealed class NuGetPluginLoadStrategy : IPluginLoadStrategy
     }
 
     /// <inheritdoc />
-    public IEnumerable<string> GetAllFiles()
+    public async Task<IReadOnlyCollection<string>> GetAllFilesAsync(CancellationToken cancellationToken = default)
     {
         if (!Path.GetExtension(_file).Equals(NuGetExtensions, StringComparison.InvariantCultureIgnoreCase)
             || !File.Exists(_file))
         {
-            yield break;
+            return [];
         }
 
-        _zip = ZipFile.OpenRead(_file);
+        _zip = await ZipFile.OpenReadAsync(_file, cancellationToken);
         try
         {
-            foreach (var entry in _zip.Entries)
-            {
-                yield return entry.FullName;
-            }
+            return _zip.Entries.Select(e => e.FullName).ToArray();
         }
         finally
         {
-            _zip.Dispose();
+            await _zip.DisposeAsync();
             _zip = null;
         }
     }
 
     /// <inheritdoc />
-    public Stream GetFile(string file)
+    public async Task<Stream> GetFileAsync(string file, CancellationToken cancellationToken = default)
     {
-        var zip = _zip ?? ZipFile.OpenRead(_file);
+        var zip = _zip ?? await ZipFile.OpenReadAsync(_file, cancellationToken);
         var entry = zip.GetEntry(file);
-        return entry == null ? Stream.Null : entry.Open();
+        return entry == null ? Stream.Null : await entry.OpenAsync(cancellationToken);
     }
 
     /// <inheritdoc />
-    public long GetFileSize(string file)
+    public async Task<long> GetFileSizeAsync(string file, CancellationToken cancellationToken = default)
     {
-        var zip = _zip ?? ZipFile.OpenRead(_file);
+        var zip = _zip ?? await ZipFile.OpenReadAsync(_file, cancellationToken);
         var entry = zip.GetEntry(file);
         if (entry == null)
         {

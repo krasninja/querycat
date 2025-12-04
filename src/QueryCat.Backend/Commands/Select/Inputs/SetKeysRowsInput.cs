@@ -5,7 +5,7 @@ using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Data;
 using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Backend.Utils;
+using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend.Commands.Select.Inputs;
 
@@ -218,7 +218,6 @@ internal sealed class SetKeysRowsInput : IRowsInputUpdate, IRowsInputDelete
             var matchCondition = operationDelegate.Invoke(columnValue, condition.KeyValue.Value);
             if (!matchCondition.AsBoolean)
             {
-                _logger.LogWarning($"!!!!!!! {columnValue} - {condition.Condition.Operation} - {condition.KeyValue.Value}");
                 return false;
             }
         }

@@ -17,7 +17,7 @@ namespace QueryCat.Backend.Execution;
 /// <summary>
 /// Execution thread that includes statements to be executed, local variables, options and statistic.
 /// </summary>
-public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IAsyncDisposable
+public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IExecutionThreadPrepare, IAsyncDisposable
 {
     private const string BootstrapFileName = "rc.sql";
 
@@ -380,6 +380,34 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IAsync
                 await RunInternalAsync(query, cancellationToken: cancellationToken);
             }
         }
+    }
+
+    /// <inheritdoc />
+    public Func<CancellationToken, ValueTask<VariantValue>> Prepare(string query)
+    {
+        var programNode = AstBuilder.BuildProgramFromString(query);
+        var bodyFuncUnit = new DefaultBodyFuncUnit(this, programNode.Body);
+        _disposables.Add(bodyFuncUnit);
+
+        return async ct =>
+        {
+            IAsyncDisposable? @lock = null;
+            try
+            {
+                if (Options.PreventConcurrentRun)
+                {
+                    @lock = await _asyncLock.LockAsync(ct);
+                }
+                return await bodyFuncUnit.InvokeAsync(this, ct);
+            }
+            finally
+            {
+                if (@lock != null)
+                {
+                    await @lock.DisposeAsync();
+                }
+            }
+        };
     }
 
     #region Dispose

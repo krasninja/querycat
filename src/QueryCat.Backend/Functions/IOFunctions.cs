@@ -125,7 +125,7 @@ internal static class IOFunctions
                     path,
                     FileMode.Create,
                     FileAccess.Write,
-                    FileShare.Inheritable);
+                    FileShare.ReadWrite);
                 if (_compressFilesExtensions.Contains(Path.GetExtension(path), StringComparer.InvariantCultureIgnoreCase))
                 {
                     file = new GZipStream(file, CompressionMode.Compress, leaveOpen: false);
@@ -153,7 +153,7 @@ internal static class IOFunctions
                         file,
                         FileMode.Open,
                         FileAccess.Read,
-                        FileShare.Inheritable,
+                        FileShare.ReadWrite,
                         DefaultFileReadBufferSize,
                         FileOptions.SequentialScan);
                     if (_compressFilesExtensions.Contains(Path.GetExtension(file), StringComparer.InvariantCultureIgnoreCase))

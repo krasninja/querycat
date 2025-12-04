@@ -11,6 +11,11 @@ public abstract class PluginsLoader : IPluginsLoader
     protected IEnumerable<string> PluginDirectories { get; }
 
     /// <summary>
+    /// The keyword that must present in the plugin file name.
+    /// </summary>
+    protected string PluginKeyword { get; set; } = "plugin";
+
+    /// <summary>
     /// Constructor.
     /// </summary>
     /// <param name="pluginDirectories">Directories.</param>
@@ -29,15 +34,16 @@ public abstract class PluginsLoader : IPluginsLoader
     /// <returns><c>True</c> if correct plugin file, <c>false</c> otherwise.</returns>
     public virtual bool IsCorrectPluginFile(string file)
     {
-        // File name must contain "plugin" word.
+        // File name must contain keyword.
         if (!File.Exists(file)
-            || !Path.GetFileName(file).Contains("plugin", StringComparison.OrdinalIgnoreCase))
+            || !Path.GetFileName(file).Contains(PluginKeyword, StringComparison.OrdinalIgnoreCase))
         {
             return false;
         }
 
         // Skip debug files.
-        if (file.EndsWith(".dbg"))
+        if (file.EndsWith(".dbg", StringComparison.InvariantCultureIgnoreCase)
+            || file.EndsWith(".pdb", StringComparison.InvariantCultureIgnoreCase))
         {
             return false;
         }

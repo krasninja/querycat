@@ -4,9 +4,9 @@ using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Fetch;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Types;
-using QueryCat.Plugins.Samples.Models;
+using QueryCat.Plugins.Sample.Models;
 
-namespace QueryCat.Plugins.Samples.Inputs;
+namespace QueryCat.Plugins.Sample.Inputs;
 
 internal sealed class AddressRowsInput : EnumerableRowsInput<Address>
 {

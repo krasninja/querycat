@@ -21,14 +21,19 @@ public class Program
         ThriftPluginClient.SetupApplicationLogging(logLevel: args.LogLevel);
 
         using var client = new ThriftPluginClient(args);
-        var assemblyLoader = new DotNetAssemblyPluginsLoader(client.FunctionsManager, assemblyFiles);
-        await assemblyLoader.LoadAsync(new PluginsLoadingOptions());
+        var assemblyLoader = new DotNetAssemblyPluginsLoader(client.FunctionsManager, client.ExecutionThread, assemblyFiles);
+        await assemblyLoader.LoadAsync(new PluginsLoadingOptions
+        {
+            SkipLoadingCallbackCall = true,
+        });
         if (!assemblyLoader.LoadedAssemblies.Any())
         {
             throw new QueryCatException("No plugins loaded.");
         }
         await client.StartAsync(
             SdkConvert.Convert(assemblyLoader.LoadedAssemblies.FirstOrDefault()));
+        await assemblyLoader.CallOnLoadAsync(CancellationToken.None);
+        await client.ReadyAsync(CancellationToken.None);
         await client.WaitForServerExitAsync();
     }
 

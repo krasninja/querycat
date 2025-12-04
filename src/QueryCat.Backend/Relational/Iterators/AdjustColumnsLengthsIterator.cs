@@ -70,7 +70,7 @@ public class AdjustColumnsLengthsIterator : IRowsIterator, IRowsIteratorParent
     {
         SetColumnsWidthMatchNames();
 
-        while (await _cacheRowsIterator.MoveNextAsync(cancellationToken) && _cacheRowsIterator.Position + 1 < _maxRowsToAnalyze)
+        while (await _cacheRowsIterator.MoveNextAsync(cancellationToken) && _cacheRowsIterator.Position < _maxRowsToAnalyze)
         {
             for (var i = 0; i < Columns.Length; i++)
             {

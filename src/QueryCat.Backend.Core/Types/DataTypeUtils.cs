@@ -52,7 +52,12 @@ public static class DataTypeUtils
 
     #region Serialization
 
-    internal static string SerializeVariantValue(VariantValue value)
+    /// <summary>
+    /// Serialize <see cref="VariantValue" /> into string.
+    /// </summary>
+    /// <param name="value">Instance of <see cref="VariantValue" />.</param>
+    /// <returns>Serialized value.</returns>
+    public static string SerializeVariantValue(VariantValue value)
         => value.Type switch
         {
             DataType.Null => VariantValue.NullValueString,
@@ -98,7 +103,13 @@ public static class DataTypeUtils
         return SerializeArray(GetKeyValuePairs(values));
     }
 
-    internal static VariantValue DeserializeVariantValue(ReadOnlySpan<char> source, bool strongDeserialization = true)
+    /// <summary>
+    /// Deserialize <see cref="VariantValue" /> from string.
+    /// </summary>
+    /// <param name="source">String to deserialize from.</param>
+    /// <param name="strongDeserialization">Types auto-detection, skip saved types marks.</param>
+    /// <returns>Instance of <see cref="VariantValue" />.</returns>
+    public static VariantValue DeserializeVariantValue(ReadOnlySpan<char> source, bool strongDeserialization = true)
     {
         if (source == VariantValue.NullValueString || source == VariantValue.VoidValueString)
         {

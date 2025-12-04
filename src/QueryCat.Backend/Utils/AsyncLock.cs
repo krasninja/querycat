@@ -4,16 +4,26 @@ using QueryCat.Backend.Core.Utils;
 namespace QueryCat.Backend.Utils;
 
 /// <summary>
-/// A mutual exclusion lock that is compatible with async. This lock is supports recursive calls.
+/// A mutual exclusion lock that is compatible with async. This lock supports recursive calls.
 /// </summary>
 /// <remarks>
 /// For reference: https://github.com/dotnet/wcf/blob/main/src/System.ServiceModel.Primitives/src/Internals/System/Runtime/AsyncLock.cs.
 /// </remarks>
 [DebuggerDisplay("Taken = {IsTaken}")]
-internal sealed class AsyncLock : IAsyncDisposable, IDisposable
+public sealed class AsyncLock : IAsyncDisposable, IDisposable
 {
-    private static readonly DisposableObjectPool<SemaphoreSlim> _semaphorePool
-        = new(() => new SemaphoreSlim(1), maximumRetained: 40);
+    private static readonly DisposableObjectPool<SemaphoreSlim> _semaphorePool = new(
+        createFunc: () => new SemaphoreSlim(1),
+        beforeReturn: s =>
+        {
+            if (s.CurrentCount == 0)
+            {
+                s.Release();
+                Debug.Assert(s.CurrentCount == 1, "Initial semaphore count must be 1.");
+            }
+        },
+        maximumRetained: 40
+    );
 
     private readonly AsyncLocal<SemaphoreSlim?> _currentSemaphore = new();
 #pragma warning disable CA2213
@@ -69,7 +79,7 @@ internal sealed class AsyncLock : IAsyncDisposable, IDisposable
         ObjectDisposedException.ThrowIf(_isDisposed, this);
 
         _currentSemaphore.Value ??= _topLevelSemaphore;
-        SemaphoreSlim localCurrentSemaphore = _currentSemaphore.Value;
+        var localCurrentSemaphore = _currentSemaphore.Value;
         localCurrentSemaphore.Wait();
         var nextSemaphore = _semaphorePool.Get();
         _currentSemaphore.Value = nextSemaphore;
@@ -125,6 +135,8 @@ internal sealed class AsyncLock : IAsyncDisposable, IDisposable
 
         public ValueTask DisposeAsync()
         {
+            Debug.Assert(_nextSemaphore == _asyncLock._currentSemaphore.Value,
+                "nextSemaphore was expected to be the current semaphore.");
             // Update _asyncLock._currentSemaphore in the calling ExecutionContext
             // and defer any awaits to DisposeCoreAsync(). If this isn't done, the
             // update will happen in a copy of the ExecutionContext and the caller
@@ -152,6 +164,8 @@ internal sealed class AsyncLock : IAsyncDisposable, IDisposable
         /// <inheritdoc />
         public void Dispose()
         {
+            Debug.Assert(_nextSemaphore == _asyncLock._currentSemaphore.Value,
+                "nextSemaphore was expected to be the current semaphore.");
             if (_currentSemaphore == _asyncLock._topLevelSemaphore)
             {
                 _asyncLock._currentSemaphore.Value = null;

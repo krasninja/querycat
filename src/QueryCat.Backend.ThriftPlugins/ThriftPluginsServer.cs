@@ -16,9 +16,15 @@ namespace QueryCat.Backend.ThriftPlugins;
 
 public sealed partial class ThriftPluginsServer : IDisposable
 {
-    private readonly record struct RegistrationTokenData(
+    private sealed record RegistrationTokenData(
         SemaphoreSlim Semaphore,
-        string PluginName);
+        string PluginName)
+    {
+        /// <summary>
+        /// Plugin token.
+        /// </summary>
+        public long Token { get; set; } = -1;
+    }
 
     public Uri ServerEndpointUri => _mainServerThread.Endpoint;
 
@@ -26,6 +32,7 @@ public sealed partial class ThriftPluginsServer : IDisposable
     private readonly IExecutionThread _executionThread;
     private readonly CancellationTokenSource _serverCts = new();
     private readonly ConcurrentDictionary<string, RegistrationTokenData> _registrationTokens = new();
+    private readonly ConcurrentDictionary<long, SemaphoreSlim> _pluginsReady = new();
     private readonly List<ThriftPluginContext> _plugins = new();
     private readonly Dictionary<long, ThriftPluginContext> _tokenPluginContextMap = new();
     private readonly ServerThread _mainServerThread;
@@ -122,6 +129,10 @@ public sealed partial class ThriftPluginsServer : IDisposable
     {
         _plugins.Add(context);
         _tokenPluginContextMap[token] = context;
+        if (_registrationTokens.TryGetValue(registrationToken, out var registrationTokenData))
+        {
+            registrationTokenData.Token = token;
+        }
         OnPluginRegistration?.Invoke(this, new PluginRegistrationEventArgs(context, registrationToken, token));
     }
 
@@ -213,27 +224,34 @@ public sealed partial class ThriftPluginsServer : IDisposable
         var timeout = PluginRegistrationTimeoutSeconds > 0
             ? TimeSpan.FromSeconds(PluginRegistrationTimeoutSeconds)
             : Timeout.InfiniteTimeSpan;
+
+        // Wait first for registration signal.
         if (!registrationTokenData.Semaphore.Wait(timeout, cancellationToken))
         {
             throw new PluginException(string.Format(Resources.Errors.TokenRegistrationTimeout, registrationToken));
         }
         _registrationTokens.Remove(registrationToken, out _);
         registrationTokenData.Semaphore.Dispose();
+
+        // Then wait for plugin ready signal.
+        var pluginReadySemaphore = new SemaphoreSlim(0, 1);
+        _pluginsReady[registrationTokenData.Token] = pluginReadySemaphore;
+        if (!pluginReadySemaphore.Wait(timeout, cancellationToken))
+        {
+            throw new PluginException(string.Format(Resources.Errors.PluginReadyTimeout, registrationTokenData.Token));
+        }
+    }
+
+    internal void SetPluginReady(long token)
+    {
+        if (!_pluginsReady.TryGetValue(token, out var semaphoreSlim))
+        {
+            throw new AuthorizationException(string.Format(Resources.Errors.InvalidToken, token));
+        }
+        semaphoreSlim.Release();
     }
 
     #endregion
-
-    /// <inheritdoc />
-    public void Dispose()
-    {
-        Stop();
-        _objectsStorage.Clean();
-        _serverCts.Dispose();
-        foreach (var pluginContext in _plugins)
-        {
-            pluginContext.Dispose();
-        }
-    }
 
     #region ThriftClientConnection
 
@@ -297,4 +315,16 @@ public sealed partial class ThriftPluginsServer : IDisposable
     }
 
     #endregion
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        Stop();
+        _objectsStorage.Clean();
+        _serverCts.Dispose();
+        foreach (var pluginContext in _plugins)
+        {
+            pluginContext.Dispose();
+        }
+    }
 }

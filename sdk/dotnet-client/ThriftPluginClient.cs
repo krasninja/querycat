@@ -13,6 +13,7 @@ using Thrift.Server;
 using Thrift.Transport;
 using PluginsManager = QueryCat.Plugins.Sdk.PluginsManager;
 using QueryCat.Backend.Core;
+using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Plugins;
 using QueryCat.Plugins.Client.Logging;
@@ -68,6 +69,11 @@ public partial class ThriftPluginClient : IDisposable
     /// Functions manager.
     /// </summary>
     public IFunctionsManager FunctionsManager => _functionsManager;
+
+    /// <summary>
+    /// Execution thread.
+    /// </summary>
+    public IExecutionThread ExecutionThread => _executionThread;
 
     /// <summary>
     /// Registration result. It is filled after connection to QueryCat host.
@@ -216,7 +222,7 @@ public partial class ThriftPluginClient : IDisposable
 
         Application.LoggerFactory = new LoggerFactory(
             providers: [
-                new SimpleConsoleLoggerProvider(LogLevel.Error),
+                new SimpleConsoleLoggerProvider(minLogLevel),
             ],
             new LoggerFilterOptions
             {
@@ -228,7 +234,14 @@ public partial class ThriftPluginClient : IDisposable
 
     private static void CurrentDomainOnUnhandledException(object sender, UnhandledExceptionEventArgs e)
     {
-        if (e.ExceptionObject is Exception exception)
+        if (e.ExceptionObject is AggregateException aggregateException)
+        {
+            foreach (var aggregateExceptionInnerException in aggregateException.InnerExceptions)
+            {
+                Console.Error.WriteLine(aggregateExceptionInnerException.Message);
+            }
+        }
+        else if (e.ExceptionObject is Exception exception)
         {
             Console.Error.WriteLine(exception.Message);
         }
@@ -280,6 +293,15 @@ public partial class ThriftPluginClient : IDisposable
 
         // Add the current logger.
         QueryCat.Backend.Core.Application.LoggerFactory.AddProvider(new ThriftClientLoggerProvider(this));
+    }
+
+    /// <summary>
+    /// Notify QueryCat host that plugin is ready to use.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    public async Task ReadyAsync(CancellationToken cancellationToken = default)
+    {
+        await _thriftClient.PluginReadyAsync(Token, cancellationToken);
     }
 
     internal Uri StartNewServer(ThriftTransportType transportType = ThriftTransportType.NamedPipes)
