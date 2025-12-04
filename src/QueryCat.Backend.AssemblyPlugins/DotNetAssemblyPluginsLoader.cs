@@ -9,9 +9,9 @@ using QueryCat.Backend.Core.Plugins;
 namespace QueryCat.Backend.AssemblyPlugins;
 
 /// <summary>
-/// Plugins loader.
+/// Plugins loader that loads .NET assemblies.
 /// </summary>
-public sealed class DotNetAssemblyPluginsLoader : PluginsLoader, IDisposable
+public class DotNetAssemblyPluginsLoader : PluginsLoader, IDisposable
 {
     private const string DllExtension = ".dll";
     private const string NuGetExtensions = ".nupkg";
@@ -190,7 +190,8 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader, IDisposable
             .ToArray();
 
         // Find plugin library.
-        var pluginDll = Array.Find(dllFiles, f => Path.GetFileNameWithoutExtension(f).Contains("Plugin"));
+        var pluginDll = Array.Find(dllFiles, f => Path.GetFileNameWithoutExtension(f)
+            .Contains(PluginKeyword, StringComparison.InvariantCultureIgnoreCase));
         if (pluginDll == null)
         {
             return null;
@@ -315,7 +316,7 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader, IDisposable
         }
     }
 
-    private Task RegisterFromAssemblyAsync(Assembly assembly, CancellationToken cancellationToken)
+    private async Task RegisterFromAssemblyAsync(Assembly assembly, CancellationToken cancellationToken)
     {
         // If there is class Registration with RegisterFunctions method - call it instead. Use reflection otherwise.
         // Fast path.
@@ -336,18 +337,30 @@ public sealed class DotNetAssemblyPluginsLoader : PluginsLoader, IDisposable
             {
                 _loadMethodsQueue.Enqueue(loadMethod);
             }
-
-            return Task.CompletedTask;
         }
-
-        // Get all types via reflection and try to register. Slow path.
-        _logger.LogDebug("Register using types search method.");
-        foreach (var type in assembly.GetTypes())
+        else
         {
-            var functions = _functionsManager.Factory.CreateFromType(type);
-            _functionsManager.RegisterFunctions(functions);
+            // Get all types via reflection and try to register. Slow path.
+            _logger.LogDebug("Register using types search method.");
+            foreach (var type in assembly.GetTypes())
+            {
+                var functions = _functionsManager.Factory.CreateFromType(type);
+                _functionsManager.RegisterFunctions(functions);
+            }
         }
 
+        await OnPluginLoadedAsync(assembly, registerType, cancellationToken);
+    }
+
+    /// <summary>
+    /// The method is called after plugin load and registration.
+    /// </summary>
+    /// <param name="assembly">Plugin assembly.</param>
+    /// <param name="registrationClassType">Registration class if available.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Awaitable task.</returns>
+    protected virtual Task OnPluginLoadedAsync(Assembly assembly, Type? registrationClassType, CancellationToken cancellationToken)
+    {
         return Task.CompletedTask;
     }
 
