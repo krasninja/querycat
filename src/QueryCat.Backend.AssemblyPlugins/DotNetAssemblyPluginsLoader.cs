@@ -387,12 +387,21 @@ public class DotNetAssemblyPluginsLoader : PluginsLoader, IDisposable
         return ms;
     }
 
+    protected virtual void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            foreach (var value in _rawAssembliesCache.Values)
+            {
+                value.Dispose();
+            }
+        }
+    }
+
     /// <inheritdoc />
     public void Dispose()
     {
-        foreach (var value in _rawAssembliesCache.Values)
-        {
-            value.Dispose();
-        }
+        Dispose(true);
+        GC.SuppressFinalize(this);
     }
 }
