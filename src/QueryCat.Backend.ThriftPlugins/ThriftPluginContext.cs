@@ -130,11 +130,10 @@ internal sealed class ThriftPluginContext : IDisposable, IAsyncDisposable
 
     private async Task<Plugin.IAsync?> PrepareClientWrapperAsync(string callbackUri, CancellationToken cancellationToken = default)
     {
-        var uri = new Uri(callbackUri);
         var protocol = new TMultiplexedProtocol(
             new TBinaryProtocol(
                 new TFramedTransport(
-                    ThriftTransportFactory.CreateClientTransport(uri))
+                    ThriftTransportFactory.CreateClientTransport(new SimpleUri(callbackUri)))
             ),
             ThriftPluginClient.PluginServerName);
         Plugin.IAsync newClient;

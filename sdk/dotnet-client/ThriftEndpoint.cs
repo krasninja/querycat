@@ -1,4 +1,5 @@
 using System;
+using Thrift.Protocol;
 
 namespace QueryCat.Plugins.Client;
 
@@ -10,10 +11,14 @@ public sealed class ThriftEndpoint
     public const string TransportNamedPipes = "net.pipe";
     public const string TransportTcp = "tcp";
 
+    private const int NamedPipesPort = 445;
+
+    private static string LoopbackHost { get; } = System.Net.IPAddress.Loopback.ToString();
+
     /// <summary>
     /// Host name.
     /// </summary>
-    public string Host { get; } = "localhost";
+    public string Host { get; } = LoopbackHost;
 
     /// <summary>
     /// Transport type.
@@ -33,9 +38,12 @@ public sealed class ThriftEndpoint
     /// <summary>
     /// Empty instance of <see cref="ThriftEndpoint" />.
     /// </summary>
-    public static ThriftEndpoint Empty { get; } = new(TransportNamedPipes + "://localhost/empty");
+    public static ThriftEndpoint Empty { get; } = new(TransportNamedPipes + $"://{LoopbackHost}/empty");
 
-    public Uri Uri
+    /// <summary>
+    /// Endpoint URI.
+    /// </summary>
+    public SimpleUri Uri
     {
         get
         {
@@ -55,11 +63,11 @@ public sealed class ThriftEndpoint
             {
                 uriBuilder.Port = Port;
             }
-            return uriBuilder.Uri;
+            return new SimpleUri(uriBuilder.ToString());
         }
     }
 
-    public ThriftEndpoint(Uri uri)
+    public ThriftEndpoint(SimpleUri uri)
     {
         TransportType = uri.Scheme switch
         {
@@ -77,7 +85,7 @@ public sealed class ThriftEndpoint
         if (TransportType == ThriftTransportType.NamedPipes)
         {
             NamedPipe = uri.Segments[1];
-            Port = 445;
+            Port = NamedPipesPort;
         }
         else
         {
@@ -85,7 +93,7 @@ public sealed class ThriftEndpoint
         }
     }
 
-    public ThriftEndpoint(string uri) : this(new Uri(uri))
+    public ThriftEndpoint(string uri) : this(new SimpleUri(uri))
     {
     }
 
@@ -99,9 +107,9 @@ public sealed class ThriftEndpoint
         => new(new UriBuilder
         {
             Scheme = TransportNamedPipes,
-            Host = host ?? "localhost",
+            Host = host ?? LoopbackHost,
             Path = pipeName
-        }.Uri);
+        }.ToString());
 
     /// <summary>
     /// Create TCP endpoint.
@@ -113,9 +121,9 @@ public sealed class ThriftEndpoint
         => new(new UriBuilder
         {
             Scheme = TransportTcp,
-            Host = host ?? "localhost",
+            Host = host ?? LoopbackHost,
             Port = port
-        }.Uri);
+        }.ToString());
 
     private static readonly char[] IdentifierCharacters =
     [

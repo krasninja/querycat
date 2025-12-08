@@ -54,7 +54,7 @@ public partial class ThriftPluginClient : IDisposable
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(ThriftPluginClient));
 
     // Connection to plugin manager.
-    private readonly Uri _pluginServerUri;
+    private readonly SimpleUri _pluginServerUri;
     private readonly string _registrationToken;
     private readonly TProtocol _protocol;
     private readonly PluginsManager.Client _thriftClient;
@@ -304,7 +304,7 @@ public partial class ThriftPluginClient : IDisposable
         await _thriftClient.PluginReadyAsync(Token, cancellationToken);
     }
 
-    internal Uri StartNewServer(ThriftTransportType transportType = ThriftTransportType.NamedPipes)
+    internal SimpleUri StartNewServer(ThriftTransportType transportType = ThriftTransportType.NamedPipes)
     {
         var id = ThriftEndpoint.GenerateIdentifier("qcatp");
         var uri = transportType switch
