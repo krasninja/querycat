@@ -30,6 +30,8 @@ There are alternative and similar tools:
 
 - [Sep](https://github.com/nietras/Sep). CSV parser NuGet package. Really fast.
 
+- [sqly](https://github.com/nao1215/sqly). Eaisly execute SQL against CSV/TSV/LTSV and Microsoft Excel with shell. Golang. It imports files into SQLite table on run.
+
 No active support:
 
 - [Log Parser](https://www.microsoft.com/en-us/download/details.aspx?id=24659). The is the command line tool to query various logs files (CSV, IIS logs, event logs, XML, etc). It can run aggregate and filter queries. Only for Windows. Not supported anymore. [Documentation](https://documentation.help/Log-Parser/index.htm).
