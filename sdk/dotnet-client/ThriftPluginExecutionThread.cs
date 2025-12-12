@@ -83,7 +83,7 @@ public sealed class ThriftPluginExecutionThread : IExecutionThread
     {
         _client = client;
         PluginsManager = NullPluginsManager.Instance;
-        FunctionsManager = new PluginFunctionsManager();
+        FunctionsManager = new ThriftPluginFunctionsManager(_client);
         ConfigStorage = new ThriftConfigStorage(_client);
         Stack = new ListExecutionStack();
     }

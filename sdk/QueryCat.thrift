@@ -264,13 +264,25 @@ struct ContextInfo {
   2: required bool skip_if_no_columns
 }
 
+// Input arguments for function call.
+struct FunctionCallArguments {
+  1: required map<string, VariantValue> named,
+  2: required list<VariantValue> positional
+}
+
+// Input arguments types for function call.
+struct FunctionCallArgumentsTypes {
+  1: required map<string, DataType> named,
+  2: required map<i32, DataType> positional
+}
+
 // Base data management service. Work with iterators, inputs, BLOBs, etc.
 service QueryCatIO {
   // Call function.
   VariantValue CallFunction(
     1: required i64 token, // Authorization token.
     2: required string function_name,
-    3: required list<VariantValue> args,
+    3: required FunctionCallArguments call_args,
     4: Handle object_handle // Optional. It is used to call function of a specific object.
   ) throws (1: QueryCatPluginException e),
 
@@ -567,7 +579,31 @@ service PluginsManager extends QueryCatIO {
   // Get query execution statistic.
   Statistic GetStatistic(
     1: required i64 token // Authorization token.
-  ) throws (1: QueryCatPluginException e)
+  ) throws (1: QueryCatPluginException e),
+
+  // Resolve URI to function.
+  Function ResolveUri(
+    1: required i64 token, // Authorization token.
+    2: required string uri
+  ) throws (1: QueryCatPluginException e),
+
+  // Find function by name.
+  list<Function> FindFunctionByName(
+    1: required i64 token, // Authorization token.
+    2: required string name,
+    3: FunctionCallArgumentsTypes args_types
+  ) throws (1: QueryCatPluginException e),
+
+  // Get all registered functions.
+  list<Function> GetFunctions(
+    1: required i64 token // Authorization token.
+  ) throws (1: QueryCatPluginException e),
+
+  // Register plugin functions.
+  void RegisterFunction(
+    1: required i64 token, // Authorization token.
+    2: required list<Function> functions
+  ) throws (1: QueryCatPluginException e),
 }
 
 /*

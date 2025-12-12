@@ -27,13 +27,13 @@ public sealed class FunctionCallArgumentsTypes : IEqualityComparer<FunctionCallA
     /// Constructor.
     /// </summary>
     /// <param name="positional">Positional arguments types.</param>
-    /// <param name="namedArguments">Named arguments types.</param>
+    /// <param name="named">Named arguments types.</param>
     public FunctionCallArgumentsTypes(
         KeyValuePair<int, DataType>[]? positional = null,
-        KeyValuePair<string, DataType>[]? namedArguments = null)
+        KeyValuePair<string, DataType>[]? named = null)
     {
         Positional = positional ?? [];
-        Named = namedArguments ?? [];
+        Named = named ?? [];
     }
 
     /// <summary>

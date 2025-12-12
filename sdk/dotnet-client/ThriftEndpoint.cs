@@ -114,10 +114,10 @@ public sealed class ThriftEndpoint
     /// <summary>
     /// Create TCP endpoint.
     /// </summary>
-    /// <param name="port">Port number.</param>
+    /// <param name="port">Port number (or random).</param>
     /// <param name="host">Host.</param>
     /// <returns>Instance of <see cref="ThriftEndpoint" />.</returns>
-    public static ThriftEndpoint CreateTcp(int port, string? host = null)
+    public static ThriftEndpoint CreateTcp(int port = 0, string? host = null)
         => new(new UriBuilder
         {
             Scheme = TransportTcp,

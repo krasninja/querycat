@@ -4,8 +4,10 @@ using QueryCat.Plugins.Client;
 using QueryCat.Plugins.Sdk;
 using QueryCat.Backend.Core;
 using QueryCat.Backend.Core.Execution;
-using QueryCat.Backend.Core.Utils;
+using QueryCat.Backend.Core.Functions;
 using CompletionResult = QueryCat.Plugins.Sdk.CompletionResult;
+using FunctionCallArguments = QueryCat.Plugins.Sdk.FunctionCallArguments;
+using FunctionCallArgumentsTypes = QueryCat.Plugins.Sdk.FunctionCallArgumentsTypes;
 using LogLevel = QueryCat.Plugins.Sdk.LogLevel;
 using QuestionRequest = QueryCat.Plugins.Sdk.QuestionRequest;
 using QuestionResponse = QueryCat.Plugins.Sdk.QuestionResponse;
@@ -287,6 +289,69 @@ public partial class ThriftPluginsServer
         }
 
         /// <inheritdoc />
+        public async Task<Function> ResolveUriAsync(long token, string uri, CancellationToken cancellationToken = default)
+        {
+            await BeforeCallAsync(token, nameof(ResolveUriAsync), cancellationToken);
+            var function = _thriftPluginsServer._executionThread.FunctionsManager.ResolveUri(uri);
+            if (function == null)
+            {
+                return null!;
+            }
+            return CreateFunction(function);
+        }
+
+        /// <inheritdoc />
+        public async Task<List<Function>> FindFunctionByNameAsync(long token, string name, FunctionCallArgumentsTypes? args_types,
+            CancellationToken cancellationToken = default)
+        {
+            await BeforeCallAsync(token, nameof(ResolveUriAsync), cancellationToken);
+            var functions = _thriftPluginsServer._executionThread.FunctionsManager.FindByName(name,
+                SdkConvert.Convert(args_types ?? new FunctionCallArgumentsTypes())
+            );
+            return functions.Select(CreateFunction).ToList();
+        }
+
+        /// <inheritdoc />
+        public async Task<List<Function>> GetFunctionsAsync(long token, CancellationToken cancellationToken = default)
+        {
+            await BeforeCallAsync(token, nameof(ResolveUriAsync), cancellationToken);
+            var functions = _thriftPluginsServer._executionThread.FunctionsManager.GetFunctions();
+            return functions.Select(CreateFunction).ToList();
+        }
+
+        private static Function CreateFunction(IFunction function)
+            => new(
+                FunctionFormatter.GetSignature(function, forceLowerCase: true),
+                function.Description,
+                function.IsAggregate)
+            {
+                IsSafe = function.IsSafe,
+            };
+
+        /// <inheritdoc />
+        public async Task RegisterFunctionAsync(long token, List<Function>? functions, CancellationToken cancellationToken = default)
+        {
+            await BeforeCallAsync(token, nameof(ResolveUriAsync), cancellationToken);
+            var context = _thriftPluginsServer.GetPluginContextByToken(token);
+            if (functions == null)
+            {
+                return;
+            }
+            foreach (var function in functions)
+            {
+                context.Functions.Add(
+                    new PluginContextFunction(
+                        function.Signature,
+                        function.Description,
+                        function.IsSafe,
+                        function.IsAggregate,
+                        (function.FormatterIds ?? []).ToArray()
+                    )
+                );
+            }
+        }
+
+        /// <inheritdoc />
         protected override Task BeforeCallAsync(long token, string methodName, CancellationToken cancellationToken = default)
         {
             _thriftPluginsServer.ValidateToken(token);
@@ -348,12 +413,12 @@ public partial class ThriftPluginsServer
         }
 
         /// <inheritdoc />
-        public async Task<VariantValue> CallFunctionAsync(long token, string function_name, List<VariantValue>? args, int object_handle,
+        public async Task<VariantValue> CallFunctionAsync(long token, string function_name, FunctionCallArguments? call_args, int object_handle,
             CancellationToken cancellationToken = default)
         {
             try
             {
-                return await _handler.CallFunctionAsync(token, function_name, args, object_handle, cancellationToken);
+                return await _handler.CallFunctionAsync(token, function_name, call_args, object_handle, cancellationToken);
             }
             catch (Exception ex)
             {
@@ -928,6 +993,63 @@ public partial class ThriftPluginsServer
             try
             {
                 return await _handler.GetStatisticAsync(token, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, Resources.Errors.HandlerInternalError);
+                throw QueryCatPluginExceptionUtils.Create(ex);
+            }
+        }
+
+        /// <inheritdoc />
+        public async Task<Function> ResolveUriAsync(long token, string uri, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return await _handler.ResolveUriAsync(token, uri, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, Resources.Errors.HandlerInternalError);
+                throw QueryCatPluginExceptionUtils.Create(ex);
+            }
+        }
+
+        /// <inheritdoc />
+        public async Task<List<Function>> FindFunctionByNameAsync(long token, string name, FunctionCallArgumentsTypes? args_types,
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return await _handler.FindFunctionByNameAsync(token, name, args_types, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, Resources.Errors.HandlerInternalError);
+                throw QueryCatPluginExceptionUtils.Create(ex);
+            }
+        }
+
+        /// <inheritdoc />
+        public async Task<List<Function>> GetFunctionsAsync(long token, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return await _handler.GetFunctionsAsync(token, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, Resources.Errors.HandlerInternalError);
+                throw QueryCatPluginExceptionUtils.Create(ex);
+            }
+        }
+
+        /// <inheritdoc />
+        public async Task RegisterFunctionAsync(long token, List<Function>? functions, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                await _handler.RegisterFunctionAsync(token, functions, cancellationToken);
             }
             catch (Exception ex)
             {

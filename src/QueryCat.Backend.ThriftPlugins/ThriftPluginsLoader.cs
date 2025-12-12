@@ -9,7 +9,9 @@ using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Plugins;
 using QueryCat.Plugins.Client;
 using QueryCat.Plugins.Client.Remote;
+using QueryCat.Plugins.Sdk;
 using DataType = QueryCat.Backend.Core.Types.DataType;
+using FunctionCallArguments = QueryCat.Plugins.Sdk.FunctionCallArguments;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
 namespace QueryCat.Backend.ThriftPlugins;
@@ -64,11 +66,14 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
             ThriftPluginContext context,
             CancellationToken cancellationToken)
         {
-            ArgumentException.ThrowIfNullOrEmpty(functionName, nameof(functionName));
+            ArgumentException.ThrowIfNullOrEmpty(functionName);
 
-            var arguments = thread.Stack.Select(SdkConvert.Convert).ToList();
+            var arguments = thread.Stack.Select(SdkConvert.Convert);
+            var callArguments = new FunctionCallArguments(
+                named: new Dictionary<string, VariantValue>(),
+                positional: arguments.ToList());
             using var session = await context.GetSessionAsync(cancellationToken);
-            var rawValue = await session.ClientProxy.CallFunctionAsync(0, functionName, arguments, -1, cancellationToken);
+            var rawValue = await session.ClientProxy.CallFunctionAsync(0, functionName, callArguments, -1, cancellationToken);
             var result = SdkConvert.Convert(rawValue);
             if (result.Type == DataType.Object && result.AsObjectUnsafe is RemoteObject remoteObject)
             {
@@ -457,7 +462,7 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
                     FileName = file,
                 }
             };
-            process.StartInfo.ArgumentList.Add(FormatParameter(ThriftPluginClient.PluginServerPipeParameter,
+            process.StartInfo.ArgumentList.Add(FormatParameter(ThriftPluginClient.PluginServerEndpointParameter,
                 _server.ServerEndpointUri.ToString()));
             process.StartInfo.ArgumentList.Add(FormatParameter(ThriftPluginClient.PluginTokenParameter, registrationToken));
             process.StartInfo.ArgumentList.Add(FormatParameter(ThriftPluginClient.PluginParentPidParameter,

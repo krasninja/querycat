@@ -17,7 +17,7 @@ public interface IFunctionsManager
     /// Resolve URI into the specific function call.
     /// </summary>
     /// <param name="uri">URI.</param>
-    /// <returns>Function or null if cannot be resolved.</returns>
+    /// <returns>Function or null, if uri cannot be resolved.</returns>
     IFunction? ResolveUri(string uri);
 
     /// <summary>

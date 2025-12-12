@@ -25,11 +25,6 @@ public sealed class PluginClientIdDecorator : Plugin.IAsync
     }
 
     /// <inheritdoc />
-    public Task<VariantValue> CallFunctionAsync(long token, string function_name, List<VariantValue>? args, int object_handle,
-        CancellationToken cancellationToken = default)
-        => _client.CallFunctionAsync(token, function_name, args, object_handle, cancellationToken);
-
-    /// <inheritdoc />
     public Task ShutdownAsync(CancellationToken cancellationToken = default)
         => _client.ShutdownAsync(cancellationToken);
 
@@ -119,6 +114,11 @@ public sealed class PluginClientIdDecorator : Plugin.IAsync
     public Task<int> RowsFormatter_OpenOutputAsync(long token, int object_rows_formatter_handle, int object_blob_handle,
         CancellationToken cancellationToken = default)
         => _client.RowsFormatter_OpenOutputAsync(token, object_rows_formatter_handle, object_blob_handle, cancellationToken);
+
+    /// <inheritdoc />
+    public Task<VariantValue> CallFunctionAsync(long token, string function_name, FunctionCallArguments? call_args, int object_handle,
+        CancellationToken cancellationToken = default)
+        => _client.CallFunctionAsync(token, function_name, call_args, object_handle, cancellationToken);
 
     /// <inheritdoc />
     public Task<byte[]> Blob_ReadAsync(long token, int object_blob_handle, int offset, int count, CancellationToken cancellationToken = default)
