@@ -18,8 +18,8 @@ public class TextLineFormatter : IRowsFormatter
     [FunctionSignature("text_line(): object<IRowsFormatter>")]
     public static VariantValue TextLine(IExecutionThread thread)
     {
-        var rowsSource = new TextLineFormatter();
-        return VariantValue.CreateFromObject(rowsSource);
+        var rowsFormatter = new TextLineFormatter();
+        return VariantValue.CreateFromObject(rowsFormatter);
     }
 
     /// <inheritdoc />

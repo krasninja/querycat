@@ -42,7 +42,11 @@ internal sealed class XmlInput : IRowsInput, IDisposable, IAsyncDisposable
         var streamReader = !string.IsNullOrEmpty(xpath)
             ? new StreamReader(RunXPath(stream, xpath))
             : new StreamReader(stream);
-        _uniqueKey = ArrayUtils.Append(uniqueKeys, xpath);
+        _uniqueKey = uniqueKeys;
+        if (!string.IsNullOrEmpty(xpath))
+        {
+            _uniqueKey = uniqueKeys.Concat([xpath]).ToArray();
+        }
 
         _xmlReader = XmlReader.Create(streamReader, new XmlReaderSettings
         {

@@ -77,7 +77,23 @@ internal readonly struct CacheKeyCondition : IEquatable<CacheKeyCondition>
         => obj is CacheKeyCondition other && Equals(other);
 
     /// <inheritdoc />
-    public override int GetHashCode() => HashCode.Combine(Column, (int)Operation, ArrayUtils.GetHashCode(ValuesArray));
+    public override int GetHashCode() => HashCode.Combine(Column, (int)Operation, GetHashCode(ValuesArray));
+
+    /// <summary>
+    /// Calculates hash code of every array element and combines it.
+    /// </summary>
+    /// <param name="values">Array values.</param>
+    /// <typeparam name="T">Array type.</typeparam>
+    /// <returns>Calculated hash code.</returns>
+    private static int GetHashCode<T>(T[] values)
+    {
+        var hashCode = default(HashCode);
+        foreach (var value in values)
+        {
+            hashCode.Add(value);
+        }
+        return hashCode.ToHashCode();
+    }
 
     public static bool operator ==(CacheKeyCondition left, CacheKeyCondition right) => left.Equals(right);
 

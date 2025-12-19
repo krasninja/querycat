@@ -18,8 +18,8 @@ public class SamplePluginInput : EnumerableRowsInput<TestClass>
     [FunctionSignature("plugin(): object<IRowsInput>")]
     public static VariantValue SamplePlugin(IExecutionThread thread)
     {
-        var rowsSource = new SamplePluginInput();
-        return VariantValue.CreateFromObject(rowsSource);
+        var rowsFormatter = new SamplePluginInput();
+        return VariantValue.CreateFromObject(rowsFormatter);
     }
 
     private long _currentState;

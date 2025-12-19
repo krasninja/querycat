@@ -103,14 +103,18 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable, IModelDescripti
     protected StreamRowsInput(
         Stream stream,
         StreamRowsInputOptions? options = null,
-        params IEnumerable<string> keys)
+        params ReadOnlySpan<string> keys)
     {
         _options = options ?? new();
         _baseStream = stream;
         _cacheStream = new CacheStream(stream);
         StreamReader = new StreamReader(_cacheStream, bufferSize: ReadBufferSize);
         _delimiterStreamReader = new DelimiterStreamReader(StreamReader, _options.DelimiterStreamReaderOptions);
-        UniqueKey = keys.Concat(_options.CacheKeys).ToArray();
+        UniqueKey = _options.CacheKeys;
+        if (keys.Length > 0)
+        {
+            UniqueKey = UniqueKey.Concat(keys.ToArray().Where(k => !string.IsNullOrEmpty(k))).ToArray();
+        }
     }
 
     /// <summary>

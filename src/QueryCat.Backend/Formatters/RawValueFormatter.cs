@@ -18,12 +18,12 @@ internal sealed class RawValueFormatter : IRowsFormatter
     [FunctionSignature("raw_fmt(): object<IRowsFormatter>")]
     public static VariantValue Raw(IExecutionThread thread)
     {
-        var rowsSource = new RawValueFormatter();
-        return VariantValue.CreateFromObject(rowsSource);
+        var rowsFormatter = new RawValueFormatter();
+        return VariantValue.CreateFromObject(rowsFormatter);
     }
 
     /// <inheritdoc />
-    public IRowsInput OpenInput(IBlobData blob, string? key = null) => new RawValueInput(blob);
+    public IRowsInput OpenInput(IBlobData blob, string? key = null) => new RawValueInput(blob, key);
 
     /// <inheritdoc />
     public IRowsOutput OpenOutput(IBlobData blob) => new RawValueOutput(blob);
