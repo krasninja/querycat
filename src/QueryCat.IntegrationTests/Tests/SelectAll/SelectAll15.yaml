@@ -1,0 +1,5 @@
+expected: |
+  12/12/2024 10:00:00,200,GET /index.html
+  12/12/2024 10:01:15,404,GET /missing.txt
+query: |
+  select "time" at time zone 'utc',status,req from 'LTSV.ltsv';

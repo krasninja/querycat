@@ -332,12 +332,18 @@ public abstract class StreamRowsInput : IRowsInput, IDisposable, IModelDescripti
     }
 
     /// <summary>
-    /// Get column raw string value within the current row. Takes into account virtual columns.
+    /// Get column raw string value within the current row. Excludes virtual columns.
     /// </summary>
     /// <param name="columnIndex">Column index.</param>
     /// <returns>String value.</returns>
     protected ReadOnlySpan<char> GetInputColumnValue(int columnIndex)
         => GetColumnValue(columnIndex + _virtualColumnsCount);
+
+    /// <summary>
+    /// Get number of columns in the input. Excludes virtual columns.
+    /// </summary>
+    /// <returns></returns>
+    protected int GetInputColumnsCount() => _delimiterStreamReader.GetFieldsCount();
 
     /// <summary>
     /// The method is called when we need to figure out the initial count of columns. On this stage

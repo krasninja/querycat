@@ -1,0 +1,2 @@
+time:2024-12-12T10:00:00Z	host:web01.example.com	status:200	req:GET /index.html	size:1024	user:anon
+time:2024-12-12T10:01:15Z	host:web02.example.com	status:404	req:GET /missing.txt	size:0	user:anon
