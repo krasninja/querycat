@@ -22,7 +22,6 @@ internal sealed class LtsvInput : StreamRowsInput
                 QuoteChars = ['"'],
                 SkipEmptyLines = true,
                 EnableQuotesModeOnFieldStart = false,
-                IncludeDelimiter = true,
                 Culture = Application.Culture,
             },
             AddInputSourceColumn = addFileNameColumn,
