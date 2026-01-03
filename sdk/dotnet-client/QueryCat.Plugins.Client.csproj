@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <Title>QueryCat Plugins Client</Title>
     <Authors>Ivan Kozhin</Authors>
-    <Copyright>Copyright (c) 2022-2025</Copyright>
+    <Copyright>Copyright (c) 2022-2026</Copyright>
     <IsAotCompatible>true</IsAotCompatible>
   </PropertyGroup>
 
