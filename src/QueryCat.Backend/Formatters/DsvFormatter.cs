@@ -119,7 +119,7 @@ internal class DsvFormatter : IRowsFormatter
             if (_delimiter.HasValue)
             {
                 options.InputOptions.DelimiterStreamReaderOptions.Delimiters = [_delimiter.Value];
-                options.InputOptions.DelimiterStreamReaderOptions.DelimitersCanRepeat = _delimiterCanRepeat;
+                options.InputOptions.DelimiterStreamReaderOptions.SkipRepeatedDelimiters = _delimiterCanRepeat;
                 options.InputOptions.DelimiterStreamReaderOptions.SkipEmptyLines = _skipEmptyLines;
             }
             options.InputOptions.DelimiterStreamReaderOptions.PreferredDelimiter = ',';

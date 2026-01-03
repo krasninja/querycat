@@ -18,7 +18,7 @@ internal sealed class TextTableInput : DsvInput
                 DelimiterStreamReaderOptions = new DelimiterStreamReader.ReaderOptions
                 {
                     Delimiters = [' '],
-                    DelimitersCanRepeat = true,
+                    SkipRepeatedDelimiters = true,
                     QuoteChars = [],
                     SkipEmptyLines = true,
                     Culture = Application.Culture,

@@ -104,7 +104,7 @@ public class DelimiterStreamReaderTests
             {
                 Delimiters = [' '],
                 QuoteChars = ['"'],
-                DelimitersCanRepeat = true,
+                SkipRepeatedDelimiters = true,
                 Culture = CultureInfo.InvariantCulture,
             });
         streamRowsInput.ReadAsync();
@@ -135,7 +135,7 @@ public class DelimiterStreamReaderTests
             {
                 Delimiters = [' '],
                 QuoteChars = [],
-                DelimitersCanRepeat = true,
+                SkipRepeatedDelimiters = true,
                 Culture = CultureInfo.InvariantCulture,
             });
         streamRowsInput.ReadAsync();

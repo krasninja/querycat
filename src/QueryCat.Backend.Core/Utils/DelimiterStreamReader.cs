@@ -89,9 +89,9 @@ public class DelimiterStreamReader
         public char? PreferredDelimiter { get; set; }
 
         /// <summary>
-        /// Can a delimiter be repeated. Can be useful for example for whitespace delimiter.
+        /// Skip extra delimiters. Can be useful for example for whitespace delimiter.
         /// </summary>
-        public bool DelimitersCanRepeat { get; set; }
+        public bool SkipRepeatedDelimiters { get; set; }
 
         /// <summary>
         /// Buffer size.
@@ -186,6 +186,7 @@ public class DelimiterStreamReader
     private readonly ReaderOptions _options;
     private char[] _stopCharacters = [];
     private SearchValues<char> _delimiters = SearchValues.Create(ReadOnlySpan<char>.Empty);
+    private char[] _delimitersArray = [];
     private SearchValues<char> _quoteCharacters = SearchValues.Create(ReadOnlySpan<char>.Empty);
 
     // Stores positions of delimiters for columns.
@@ -229,7 +230,8 @@ public class DelimiterStreamReader
             .Union(_options.QuoteChars)
             .Distinct()
             .ToArray();
-        _delimiters = SearchValues.Create(_options.Delimiters);
+        _delimitersArray = _options.Delimiters;
+        _delimiters = SearchValues.Create(_delimitersArray);
         _quoteCharacters = SearchValues.Create(_options.QuoteChars);
     }
 
@@ -299,15 +301,11 @@ public class DelimiterStreamReader
             while (_currentDelimiterPosition < _dynamicBuffer.Size)
             {
                 // Skip extra spaces (or any delimiters).
-                if (_options.DelimitersCanRepeat)
+                if (_options.SkipRepeatedDelimiters && sequenceReader.IsNext(_delimitersArray, true))
                 {
-                    while (GetNextCharacter(out var nextChar)
-                           && _delimiters.Contains(nextChar))
-                    {
-                        _currentDelimiterPosition++;
-                        sequenceReader.Advance(1);
-                        currentField.StartIndex = _currentDelimiterPosition;
-                    }
+                    sequenceReader.AdvancePastAny(_delimitersArray);
+                    _currentDelimiterPosition = sequenceReader.Consumed;
+                    currentField.StartIndex = _currentDelimiterPosition;
                 }
 
                 // Advance to any stop character or quote (if in a quote mode).
@@ -319,10 +317,7 @@ public class DelimiterStreamReader
                     _currentDelimiterPosition = sequenceReader.Consumed;
                     break;
                 }
-                if (!sequenceReader.TryPeek(out var ch))
-                {
-                    ch = '\0';
-                }
+                sequenceReader.TryPeek(out var ch);
                 sequenceReader.Advance(1);
 
                 // Delimiters.
