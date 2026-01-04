@@ -18,7 +18,36 @@ public sealed partial class DynamicBuffer<T> where T : IEquatable<T>
         /// <summary>
         /// Current element.
         /// </summary>
-        public T? Current => _segment != null ? _segment.Buffer[_position % _buffer._chunkSize] : default;
+        public T? Current
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _segment != null ? _segment.Buffer[_position % _buffer._chunkSize] : default; }
+        }
+
+        /// <summary>
+        /// Next element.
+        /// </summary>
+        public T? Next
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get
+            {
+                if (_segment == null)
+                {
+                    return default;
+                }
+                var offset = _position % _buffer._chunkSize;
+                if (offset < _buffer._chunkSize)
+                {
+                    return _segment.Buffer[offset];
+                }
+                if (_segment.NextRef == null)
+                {
+                    return default;
+                }
+                return _segment.NextRef.Buffer[0];
+            }
+        }
 
         /// <summary>
         /// Is at the end of the buffer.

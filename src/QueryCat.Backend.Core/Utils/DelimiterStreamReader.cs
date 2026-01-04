@@ -237,18 +237,6 @@ public class DelimiterStreamReader
         _quoteCharacters = SearchValues.Create(_options.QuoteChars);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    private bool GetNextCharacter(out char nextChar)
-    {
-        if (_dynamicBuffer.Size > _currentDelimiterPosition)
-        {
-            nextChar = _dynamicBuffer.GetAt((int)_currentDelimiterPosition);
-            return true;
-        }
-        nextChar = '\0';
-        return false;
-    }
-
     /// <summary>
     /// Get current line fields count.
     /// </summary>
@@ -308,8 +296,7 @@ public class DelimiterStreamReader
                 // Skip extra spaces (or any delimiters).
                 if (_options.SkipRepeatedDelimiters)
                 {
-                    while (GetNextCharacter(out var nextChar)
-                           && _delimiters.Contains(nextChar))
+                    while (_delimiters.Contains(_dynamicBufferReader.Next))
                     {
                         _currentDelimiterPosition++;
                         _dynamicBufferReader.Advance(1);
