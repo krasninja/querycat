@@ -13,7 +13,7 @@ namespace QueryCat.Backend.Core.Utils;
 /// </summary>
 /// <typeparam name="T">Buffer type.</typeparam>
 [DebuggerDisplay("Size = {Size}, Buffers = {UsedBuffersCount}/{TotalBuffersCount}")]
-public sealed class DynamicBuffer<T> where T : IEquatable<T>
+public sealed partial class DynamicBuffer<T> where T : IEquatable<T>
 {
     /*
      * Here is the typical internal representation of dynamic buffer.
@@ -248,7 +248,7 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
     /// by default.</param>
     public DynamicBuffer(int chunkSize = 4096, int maxFreeBuffers = -1)
     {
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(chunkSize, nameof(chunkSize));
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(chunkSize);
         _chunkSize = chunkSize;
         _maxFreeBuffers = maxFreeBuffers;
     }
@@ -505,7 +505,7 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
                 // If start and end indexes are within buffer segment - return just as span.
                 if (endIndex < endIndexOffset)
                 {
-                    return new Span<T>(iterator.Segment.Buffer, iterator.StartIndex, spanSize);
+                    return new ReadOnlySpan<T>(iterator.Segment.Buffer, iterator.StartIndex, spanSize);
                 }
                 localBuffer = GC.AllocateUninitializedArray<T>(spanSize);
                 Array.Copy(iterator.Segment.Buffer, iterator.StartIndex,
@@ -529,7 +529,7 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
                 return localBuffer;
             }
 
-            iterator = IteratorNext(in iterator);
+            iterator = IteratorNext(iterator);
         }
         return localBuffer;
     }
@@ -541,7 +541,7 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
     /// <param name="foundDelimiter">Found delimiter.</param>
     /// <param name="skip">Start index to search from. Default is 0.</param>
     /// <returns>The delimiter index or -1 if not found.</returns>
-    public int IndexOfAny(ReadOnlySpan<T> delimiters, out T? foundDelimiter, int skip = 0)
+    public int IndexOfAny(scoped ReadOnlySpan<T> delimiters, out T? foundDelimiter, int skip = 0)
     {
         var iterator = IteratorStart(skip);
         while (iterator.IsNotEmpty)
@@ -556,18 +556,24 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
                 }
             }
 
-            iterator = IteratorNext(in iterator);
+            iterator = IteratorNext(iterator);
         }
 
         foundDelimiter = default;
         return -1;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private ReadOnlySpan<T> GetSegmentActiveSpan(BufferSegment segment)
+    {
+        return new ReadOnlySpan<T>(segment.Buffer, GetSegmentStartIndex(segment), GetSegmentEndIndex(segment));
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     private long GetNextRunningIndex()
         => _buffersList.Tail != null ? _buffersList.Tail.RunningIndex + _buffersList.Tail.Memory.Length : 0;
 
-    private readonly struct SegmentChunk
+    private readonly ref struct SegmentChunk
     {
         public BufferSegment Segment { get; }
 
@@ -575,7 +581,7 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
 
         public int EndIndex { get; }
 
-        public int Size { get; }
+        public int Size => EndIndex - StartIndex;
 
         public int Consumed { get; }
 
@@ -583,7 +589,8 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
 
         public bool IsNotEmpty => StartIndex != -1;
 
-        public static SegmentChunk Empty { get; } = new(BufferSegment.Empty, -1, 0, 0);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static SegmentChunk Empty() => new(BufferSegment.Empty, -1, 0, 0);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ReadOnlySpan<T> GetSpan() => Segment.GetSpan(StartIndex, EndIndex);
@@ -593,7 +600,6 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
             Segment = segment;
             StartIndex = startIndex;
             EndIndex = endIndex;
-            Size = endIndex - startIndex;
             Consumed = consumed;
         }
     }
@@ -603,11 +609,15 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
         => bufferSegment == _buffersList.Head ? (int)(_startPosition % _chunkSize) : 0;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private long GetSegmentStartIndexLong(BufferSegment? bufferSegment)
-        => bufferSegment == _buffersList.Head ? _startPosition % _chunkSize : 0;
+    private int GetSegmentStartIndex(BufferSegment? bufferSegment, long position)
+        => bufferSegment == _buffersList.Head ? (int)(position % _chunkSize) : 0;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private int GetSegmentStartIndex() => (int)(_startPosition % _chunkSize);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private long GetSegmentStartIndexLong(BufferSegment? bufferSegment)
+        => bufferSegment == _buffersList.Head ? _startPosition % _chunkSize : 0;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private long GetSegmentStartIndexLong() => _startPosition % _chunkSize;
@@ -625,6 +635,14 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
             : _chunkSize;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private int GetSegmentLength(BufferSegment? bufferSegment)
+    {
+        var startIndex = GetSegmentStartIndex(bufferSegment);
+        var endIndex = GetSegmentEndIndex(bufferSegment);
+        return endIndex - startIndex;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private int GetSegmentEndIndex() => (int)(_endPosition % _chunkSize);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -635,7 +653,7 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
         var bufferSegment = _buffersList.Head;
         if (bufferSegment == null)
         {
-            return SegmentChunk.Empty;
+            return SegmentChunk.Empty();
         }
 
         var consumed = startIndex;
@@ -659,7 +677,7 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
         }
         if (bufferSegment == null)
         {
-            return SegmentChunk.Empty;
+            return SegmentChunk.Empty();
         }
 
         var bufferEndIndex = GetSegmentEndIndex(bufferSegment);
@@ -667,11 +685,12 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
         return new SegmentChunk(bufferSegment, bufferStartIndex, bufferEndIndex, consumed);
     }
 
-    private SegmentChunk IteratorNext(in SegmentChunk segmentChunk)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private SegmentChunk IteratorNext(scoped SegmentChunk segmentChunk)
     {
         if (segmentChunk.Segment.NextRef == null)
         {
-            return SegmentChunk.Empty;
+            return SegmentChunk.Empty();
         }
 
         var nextSegment = segmentChunk.Segment.NextRef;
@@ -736,7 +755,7 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
                 span.CopyTo(buffer);
                 buffer = buffer.Slice(span.Length);
                 totalRead += span.Length;
-                iterator = IteratorNext(in iterator);
+                iterator = IteratorNext(iterator);
             }
         }
 
@@ -808,7 +827,7 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
     /// Write data into the buffer.
     /// </summary>
     /// <param name="data">Data to write.</param>
-    public void Write(ReadOnlySpan<T> data)
+    public void Write(scoped ReadOnlySpan<T> data)
     {
         var writeIndex = 0;
         var length = data.Length;
@@ -840,7 +859,7 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
     /// <param name="data">Data to write.</param>
     /// <param name="totalWidth">Total dynamic buffer size.</param>
     /// <param name="paddingValue">The value to fill the remain space.</param>
-    public void WritePadRight(ReadOnlySpan<T> data, int totalWidth, T paddingValue)
+    public void WritePadRight(scoped ReadOnlySpan<T> data, int totalWidth, T paddingValue)
     {
         Write(data);
         var paddingCount = totalWidth - data.Length;
@@ -856,7 +875,7 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
     /// <param name="data">Data to write.</param>
     /// <param name="totalWidth">Total dynamic buffer size.</param>
     /// <param name="paddingValue">The value to fill the remain space.</param>
-    public void WritePadLeft(ReadOnlySpan<T> data, int totalWidth, T paddingValue)
+    public void WritePadLeft(scoped ReadOnlySpan<T> data, int totalWidth, T paddingValue)
     {
         var paddingCount = totalWidth - data.Length;
         if (paddingCount > 0)
@@ -888,14 +907,12 @@ public sealed class DynamicBuffer<T> where T : IEquatable<T>
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     private static ulong Min(ulong val1, ulong val2, ulong val3)
     {
-        var temp = val1 <= val2 ? val1 : val2;
-        return temp <= val3 ? temp : val3;
+        return Math.Min(val3, Math.Min(val1, val2));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     private static long Min(long val1, long val2, long val3)
     {
-        var temp = val1 <= val2 ? val1 : val2;
-        return temp <= val3 ? temp : val3;
+        return Math.Min(val3, Math.Min(val1, val2));
     }
 }
