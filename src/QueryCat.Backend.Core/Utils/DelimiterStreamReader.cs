@@ -369,7 +369,7 @@ public class DelimiterStreamReader
                         else if (_options.QuotesEscapeStyle == QuotesMode.Backslash)
                         {
                             // Process \" case.
-                            TryPeekBackward(2, out var prevCh);
+                            var prevCh = _dynamicBufferReader.GetPosition(-2).Value;
                             if (prevCh != '\\')
                             {
                                 isInQuotes = !isInQuotes;
@@ -470,13 +470,6 @@ public class DelimiterStreamReader
         _dynamicBufferReader.Advance(i + 1);
 
         return hasOnlyWhitespaces;
-    }
-
-    private void TryPeekBackward(int offset, out char value)
-    {
-        _dynamicBufferReader.Rewind(offset);
-        value = _dynamicBufferReader.Current;
-        _dynamicBufferReader.Advance(offset);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

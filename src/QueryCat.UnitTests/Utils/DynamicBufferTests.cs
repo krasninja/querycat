@@ -261,7 +261,7 @@ public class DynamicBufferTests
     }
 
     [Fact]
-    public void IndexOfAny_EmptyBuffer_ShouldFindNoting()
+    public void IndexOfAny_EmptyBuffer_ShouldFindNothing()
     {
         /*
          * ;_cd;,ef,h 0123456789
@@ -297,11 +297,11 @@ public class DynamicBufferTests
         dynamicBuffer.Advance(5); // Take -5!
 
         // Act.
-        var span1 = dynamicBuffer.GetSpan(1, 4);
-        var span2 = dynamicBuffer.GetSpan(13, 17);
-        var span3 = dynamicBuffer.GetSpan(3, 14);
+        var span1 = dynamicBuffer.Slice(1, 4);
+        var span2 = dynamicBuffer.Slice(13, 17);
+        var span3 = dynamicBuffer.Slice(3, 14);
         dynamicBuffer.Advance(3);
-        var span4 = dynamicBuffer.GetSpan(3, 4);
+        var span4 = dynamicBuffer.Slice(3, 4);
 
         // Assert.
         Assert.Equal("bcd", span1.ToString());
@@ -411,6 +411,10 @@ public class DynamicBufferTests
         dynamicBuffer.Write("90");
 
         // Assert.
+        /*
+         * ___45 67890
+         * 0   4 5   9
+         */
         Assert.Equal("4567890", dynamicBuffer.GetSequence().ToString());
     }
 
@@ -465,6 +469,6 @@ public class DynamicBufferTests
 
         // Assert.
         Assert.Equal("1234", dynamicBuffer.GetSequence().ToString());
-        Assert.Equal("1234", dynamicBuffer.GetSpan(0).ToString());
+        Assert.Equal("1234", dynamicBuffer.Slice(0).ToString());
     }
 }

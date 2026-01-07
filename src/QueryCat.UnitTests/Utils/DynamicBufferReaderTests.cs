@@ -13,7 +13,7 @@ public class DynamicBufferReaderTests
     {
         // Arrange.
         var dynamicBuffer = new DynamicBuffer<char>(chunkSize: 5);
-        dynamicBuffer.Write("1234567890");
+        dynamicBuffer.Write("1234567890"); // 2345 | 67890
         dynamicBuffer.Advance(1);
         var reader = new DynamicBuffer<char>.DynamicBufferReader(dynamicBuffer);
 
@@ -29,7 +29,7 @@ public class DynamicBufferReaderTests
     {
         // Arrange.
         var dynamicBuffer = new DynamicBuffer<char>(chunkSize: 3);
-        dynamicBuffer.Write("1234567890");
+        dynamicBuffer.Write("1234567890"); // 123 | 456 | 789 | 0
         var reader = new DynamicBuffer<char>.DynamicBufferReader(dynamicBuffer);
 
         // Act.
@@ -131,5 +131,29 @@ public class DynamicBufferReaderTests
 
         // Assert.
         Assert.True(reader.IsNext('2'));
+    }
+
+    [Fact]
+    public void GetPosition_NextPrevPositions_ShouldGetCorrect()
+    {
+        // Arrange.
+        var dynamicBuffer = new DynamicBuffer<char>(chunkSize: 3);
+        dynamicBuffer.Write("00_123456789");
+        /*
+         * 0 0 _ | 1 2 3 | 4 5 6 | 7  8  9
+         * 0 1 2 | 3 4 5 | 6 7 8 | 9  10 11
+         */
+        dynamicBuffer.Advance(3);
+        var reader = new DynamicBuffer<char>.DynamicBufferReader(dynamicBuffer);
+
+        // Act.
+        reader.Advance(5);
+
+        // Assert.
+        Assert.Equal('6', reader.Position.Value);
+        Assert.Equal('1', reader.GetPosition(-5).Value);
+        Assert.Equal('8', reader.GetPosition(2).Value);
+        Assert.Equal('9', reader.GetPosition(666).Value);
+        Assert.Equal('1', reader.GetPosition(-666).Value);
     }
 }

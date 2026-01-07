@@ -34,8 +34,8 @@ public class DelimiterStreamReaderTests
     {
         // Arrange.
         var sb = new StringBuilder()
-            .Append("id\tname\n")
-            .Append("10\tjohn\n");
+            .Append("id\tname\n") // len = 8
+            .Append("10\tjohn\n"); // len = 8
 
         // Act.
         var streamRowsInput = new DelimiterStreamReader(StringToStream(sb.ToString()));

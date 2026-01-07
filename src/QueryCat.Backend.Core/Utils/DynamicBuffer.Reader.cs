@@ -70,6 +70,11 @@ public sealed partial class DynamicBuffer<T> where T : IEquatable<T>
         public long Length => _buffer._size - Consumed;
 
         /// <summary>
+        /// Current position.
+        /// </summary>
+        public DynamicBufferPosition Position => new(_segment, (int)(_position % _buffer._chunkSize));
+
+        /// <summary>
         /// Current unread span (buffer).
         /// </summary>
         public ReadOnlySpan<T> UnreadSpan
@@ -133,6 +138,7 @@ public sealed partial class DynamicBuffer<T> where T : IEquatable<T>
 
                 if (!AdvanceToNextSegment())
                 {
+                    _position--;
                     break;
                 }
                 advanced++;
@@ -164,6 +170,7 @@ public sealed partial class DynamicBuffer<T> where T : IEquatable<T>
 
                 if (!AdvanceToPreviousSegment())
                 {
+                    _position++;
                     break;
                 }
                 rewind++;
@@ -192,15 +199,7 @@ public sealed partial class DynamicBuffer<T> where T : IEquatable<T>
                 return false;
             }
 
-            var previousSegment = _buffer._buffersList.Head;
-            while (previousSegment != null)
-            {
-                if (previousSegment.NextRef == _segment)
-                {
-                    break;
-                }
-                previousSegment = previousSegment.NextRef;
-            }
+            var previousSegment = _segment.PrevRef;
             _position -= _position % _buffer._chunkSize + 1;
             _segment = previousSegment;
             return true;
@@ -366,6 +365,68 @@ public sealed partial class DynamicBuffer<T> where T : IEquatable<T>
                 _segment = nextSegment;
             }
             return equal;
+        }
+
+        /// <summary>
+        /// Get the position according to the given offset.
+        /// </summary>
+        /// <param name="offset">Position offset.</param>
+        /// <returns>Instance of <see cref="DynamicBufferPosition" />.</returns>
+        public DynamicBufferPosition GetPosition(long offset)
+        {
+            if (_segment == null)
+            {
+                return DynamicBufferPosition.Null;
+            }
+
+            if (offset == 0)
+            {
+                return Position;
+            }
+
+            var current = _segment;
+            var targetPosition = _position + offset;
+
+            if (targetPosition <= _buffer._startPosition)
+            {
+                return _buffer.Start;
+            }
+            if (targetPosition >= _buffer._endPosition)
+            {
+                return _buffer.End;
+            }
+
+            var abs = _position - _position % _buffer._chunkSize;
+            var currentStartIndex = _buffer.GetSegmentStartIndex(current) + abs;
+            var currentEndIndex = _buffer.GetSegmentEndIndex(current) + abs - 1;
+            if (offset > 0)
+            {
+                while (current != null)
+                {
+                    if (targetPosition >= currentStartIndex && targetPosition <= currentEndIndex)
+                    {
+                        return new DynamicBufferPosition(current, (int)targetPosition % _buffer._chunkSize);
+                    }
+                    currentStartIndex += _buffer._chunkSize;
+                    currentEndIndex += _buffer._chunkSize;
+                    current = current.NextRef;
+                }
+            }
+            else
+            {
+                while (current != null)
+                {
+                    if (targetPosition >= currentStartIndex && targetPosition <= currentEndIndex)
+                    {
+                        return new DynamicBufferPosition(current, (int)targetPosition % _buffer._chunkSize);
+                    }
+                    currentStartIndex -= _buffer._chunkSize;
+                    currentEndIndex -= _buffer._chunkSize;
+                    current = current.PrevRef;
+                }
+            }
+
+            return DynamicBufferPosition.Null;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
