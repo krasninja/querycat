@@ -40,6 +40,38 @@ public class DynamicBufferReaderTests
     }
 
     [Fact]
+    public void Advance_AtTheEnd_ShouldNotAdvance()
+    {
+        // Arrange.
+        var dynamicBuffer = new DynamicBuffer<char>(chunkSize: 4);
+        dynamicBuffer.Write("1234");
+        var reader = new DynamicBuffer<char>.DynamicBufferReader(dynamicBuffer);
+        reader.Advance(3);
+
+        // Act.
+        reader.Advance(1);
+
+        // Assert.
+        Assert.Equal('4', reader.Current);
+    }
+
+    [Fact]
+    public void Advance_PositionWithAdvance_ShouldCalculateRemainBufferCorrectly()
+    {
+        // Arrange.
+        var dynamicBuffer = new DynamicBuffer<char>(chunkSize: 4);
+        dynamicBuffer.Write("1234567890"); // 1234 | 5678 | 90
+        var reader = new DynamicBuffer<char>.DynamicBufferReader(dynamicBuffer);
+        reader.Advance(3);
+
+        // Act.
+        reader.Advance(2);
+
+        // Assert.
+        Assert.Equal('6', reader.Current);
+    }
+
+    [Fact]
     public void AdvancePastAny_CharToSkip_ShouldAdvancePast()
     {
         // Arrange.
@@ -53,6 +85,22 @@ public class DynamicBufferReaderTests
 
         // Assert.
         Assert.Equal('9', reader.Current);
+    }
+
+    [Fact]
+    public void AdvanceToEnd_MoveToEndOfStream_ShouldBeAtEnd()
+    {
+        // Arrange.
+        var dynamicBuffer = new DynamicBuffer<char>(chunkSize: 4);
+        dynamicBuffer.Write("1234567890"); // 1234 | 5678 | 90
+        var reader = new DynamicBuffer<char>.DynamicBufferReader(dynamicBuffer);
+
+        // Act.
+        reader.AdvanceToEnd();
+
+        // Assert.
+        Assert.Equal('0', reader.Current);
+        Assert.Equal(dynamicBuffer.End, reader.Position);
     }
 
     [Fact]
@@ -107,7 +155,7 @@ public class DynamicBufferReaderTests
     {
         // Arrange.
         var dynamicBuffer = new DynamicBuffer<char>(chunkSize: 3);
-        dynamicBuffer.Write("1234567890");
+        dynamicBuffer.Write("1234567890"); // 123 | 456 | 789 | 0
         var reader = new DynamicBuffer<char>.DynamicBufferReader(dynamicBuffer);
 
         // Act.
@@ -116,6 +164,23 @@ public class DynamicBufferReaderTests
 
         // Assert.
         Assert.Equal('1', reader.Current);
+    }
+
+    [Fact]
+    public void Rewind_WithinSegment_ShouldRewind()
+    {
+        // Arrange.
+        var dynamicBuffer = new DynamicBuffer<char>();
+        dynamicBuffer.Write("001234567890");
+        dynamicBuffer.Advance(2);
+        var reader = new DynamicBuffer<char>.DynamicBufferReader(dynamicBuffer);
+
+        // Act.
+        reader.Advance(8);
+        reader.Rewind(7);
+
+        // Assert.
+        Assert.Equal('2', reader.Current);
     }
 
     [Fact]

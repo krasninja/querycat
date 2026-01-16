@@ -1,5 +1,5 @@
-using QueryCat.Backend.Core.Utils;
 using Xunit;
+using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.UnitTests.Utils;
 
@@ -127,6 +127,35 @@ public class DynamicBufferTests
         Assert.Equal(2, sequence.GetElementAt(5));
         Assert.Equal(2, dynamicBuffer.TotalBuffersCount);
         Assert.Equal(2, dynamicBuffer.UsedBuffersCount);
+    }
+
+    [Fact]
+    public void GetSequence_Partial_ShouldReturnPartialSequence()
+    {
+        // Arrange.
+        var dynamicBuffer = new DynamicBuffer<char>(chunkSize: 3);
+        dynamicBuffer.Write("00123_45678_90123_4567_890");
+        dynamicBuffer.Advance(2);
+
+        // Act.
+        var sequence = dynamicBuffer.GetSequence(dynamicBuffer.Start, 11);
+
+        // Assert.
+        Assert.Equal("123_45678_9", sequence.ToString());
+    }
+
+    [Fact]
+    public void GetSequence_FromStartToEnd_ShouldReturnWholeLine()
+    {
+        // Arrange.
+        var dynamicBuffer = new DynamicBuffer<char>(chunkSize: 5);
+        dynamicBuffer.Write("1234567890"); // 12345 | 67890
+
+        // Act.
+        var sequence = dynamicBuffer.GetSequence(dynamicBuffer.Start, dynamicBuffer.End);
+
+        // Assert.
+        Assert.Equal("1234567890", sequence.ToString());
     }
 
     [Fact]
@@ -283,7 +312,7 @@ public class DynamicBufferTests
     }
 
     [Fact]
-    public void GetSpan_VariousCases_ShouldReturnCorrectSpan()
+    public void Slice_VariousCases_ShouldReturnCorrectSpan()
     {
         /*
          * xxxxx abcde fghij klmno pqrst
@@ -470,5 +499,50 @@ public class DynamicBufferTests
         // Assert.
         Assert.Equal("1234", dynamicBuffer.GetSequence().ToString());
         Assert.Equal("1234", dynamicBuffer.Slice(0).ToString());
+    }
+
+    [Fact]
+    public void Slice_AcrossSegments_ShouldCopyAll()
+    {
+        // Arrange.
+        var dynamicBuffer = new DynamicBuffer<char>(chunkSize: 5);
+        dynamicBuffer.Write("__000001111122222");
+
+        // Act.
+        dynamicBuffer.Advance(2);
+        var span = dynamicBuffer.Slice(dynamicBuffer.Start, dynamicBuffer.End);
+
+        // Assert.
+        Assert.Equal("000001111122222", span);
+    }
+
+    [Fact]
+    public void Slice_WithinSegment_ShouldCopyAll()
+    {
+        // Arrange.
+        var dynamicBuffer = new DynamicBuffer<char>();
+        dynamicBuffer.Write("__000001111122222");
+
+        // Act.
+        dynamicBuffer.Advance(2);
+        var span = dynamicBuffer.Slice(dynamicBuffer.Start, dynamicBuffer.End);
+
+        // Assert.
+        Assert.Equal("000001111122222", span);
+    }
+
+    [Fact]
+    public void Slice_ByLength_ShouldReturnRange()
+    {
+        // Arrange.
+        var dynamicBuffer = new DynamicBuffer<char>(chunkSize: 5);
+        dynamicBuffer.Write("000001111122222");
+
+        // Act.
+        dynamicBuffer.Advance(2);
+        var span = dynamicBuffer.Slice(dynamicBuffer.Start, 10);
+
+        // Assert.
+        Assert.Equal("0001111122", span);
     }
 }

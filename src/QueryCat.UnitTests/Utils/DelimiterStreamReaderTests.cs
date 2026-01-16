@@ -12,7 +12,7 @@ namespace QueryCat.UnitTests.Utils;
 public class DelimiterStreamReaderTests
 {
     [Fact]
-    public void Read_CsvWithWindowsNewLines_ShouldParseCorrect()
+    public async Task Read_CsvWithWindowsNewLines_ShouldParseCorrect()
     {
         // Arrange.
         var sb = new StringBuilder()
@@ -21,8 +21,8 @@ public class DelimiterStreamReaderTests
 
         // Act.
         var streamRowsInput = new DelimiterStreamReader(StringToStream(sb.ToString()));
-        streamRowsInput.ReadAsync();
-        streamRowsInput.ReadAsync();
+        await streamRowsInput.ReadAsync();
+        await streamRowsInput.ReadAsync();
 
         // Assert.
         Assert.Equal("10", streamRowsInput.GetField(0).ToString());
@@ -30,7 +30,7 @@ public class DelimiterStreamReaderTests
     }
 
     [Fact]
-    public void Read_CsvWithUnixNewLines_ShouldParseCorrect()
+    public async Task Read_CsvWithUnixNewLines_ShouldParseCorrect()
     {
         // Arrange.
         var sb = new StringBuilder()
@@ -39,8 +39,8 @@ public class DelimiterStreamReaderTests
 
         // Act.
         var streamRowsInput = new DelimiterStreamReader(StringToStream(sb.ToString()));
-        streamRowsInput.ReadAsync();
-        streamRowsInput.ReadAsync();
+        await streamRowsInput.ReadAsync();
+        await streamRowsInput.ReadAsync();
 
         // Assert.
         Assert.Equal("10", streamRowsInput.GetField(0).ToString());
@@ -48,7 +48,7 @@ public class DelimiterStreamReaderTests
     }
 
     [Fact]
-    public void ReadLine_CsvText_ShouldReadWholeLine()
+    public async Task ReadLine_CsvText_ShouldReadWholeLine()
     {
         // Arrange.
         var sb = new StringBuilder()
@@ -58,15 +58,15 @@ public class DelimiterStreamReaderTests
 
         // Act.
         var streamRowsInput = new DelimiterStreamReader(StringToStream(sb.ToString()));
-        streamRowsInput.ReadAsync();
-        streamRowsInput.ReadLineAsync();
+        await streamRowsInput.ReadAsync();
+        await streamRowsInput.ReadLineAsync();
 
         // Assert.
         Assert.Equal("//comment", streamRowsInput.GetField(0).ToString());
     }
 
     [Fact]
-    public void Read_CsvTextWithQuotes_ShouldUnquote()
+    public async Task Read_CsvTextWithQuotes_ShouldUnquote()
     {
         // Arrange.
         var sb = new StringBuilder()
@@ -80,7 +80,7 @@ public class DelimiterStreamReaderTests
                 QuoteChars = ['"', '\''],
                 Culture = CultureInfo.InvariantCulture,
             });
-        streamRowsInput.ReadAsync();
+        await streamRowsInput.ReadAsync();
 
         // Assert.
         Assert.Equal("no quotes", streamRowsInput.GetField(0).ToString());
@@ -91,7 +91,132 @@ public class DelimiterStreamReaderTests
     }
 
     [Fact]
-    public void Read_TextFromStdin_ShouldParse()
+    public async Task Read_QuotesAtTheEnd_ShouldUnquote()
+    {
+        // Arrange.
+        var sb = new StringBuilder()
+            .Append("no quotes,\"has quotes\"\n")
+            .Append("1,2");
+
+        // Act.
+        var streamRowsInput = new DelimiterStreamReader(StringToStream(sb.ToString()),
+            new DelimiterStreamReader.ReaderOptions
+            {
+                Delimiters = [','],
+                QuoteChars = ['"'],
+                Culture = CultureInfo.InvariantCulture,
+            });
+        await streamRowsInput.ReadAsync();
+
+        // Assert.
+        Assert.Equal(2, streamRowsInput.GetFieldsCount());
+        Assert.Equal("no quotes", streamRowsInput.GetField(0).ToString());
+        Assert.Equal("has quotes", streamRowsInput.GetField(1).ToString());
+    }
+
+    [Fact]
+    public async Task Read_LastFieldWithQuotes_ShouldParse()
+    {
+        // Arrange.
+        var sb = new StringBuilder()
+            .Append("mark \"A\",mark \"B\" here");
+
+        // Act.
+        var streamRowsInput = new DelimiterStreamReader(StringToStream(sb.ToString()),
+            new DelimiterStreamReader.ReaderOptions
+            {
+                Delimiters = [','],
+                QuoteChars = ['"'],
+                Culture = CultureInfo.InvariantCulture,
+            });
+        await streamRowsInput.ReadAsync();
+
+        // Assert.
+        Assert.Equal(2, streamRowsInput.GetFieldsCount());
+        Assert.Equal("mark \"A\"", streamRowsInput.GetField(0).ToString());
+        Assert.Equal("mark \"B\" here", streamRowsInput.GetField(1).ToString());
+    }
+
+    [Fact]
+    public async Task Read_LastFieldEmpty_ShouldGetField()
+    {
+        // Arrange.
+        var sb = new StringBuilder()
+            .AppendLine("1,2,")
+            .AppendLine("3,4,");
+
+        // Act.
+        var streamRowsInput = new DelimiterStreamReader(StringToStream(sb.ToString()),
+            new DelimiterStreamReader.ReaderOptions
+            {
+                Delimiters = [','],
+            });
+        await streamRowsInput.ReadAsync();
+        var field1 = streamRowsInput.GetField(0).ToString();
+        var field2 = streamRowsInput.GetField(1).ToString();
+        var fieldCount1 = streamRowsInput.GetFieldsCount();
+        await streamRowsInput.ReadAsync();
+        var field3 = streamRowsInput.GetField(0).ToString();
+        var field4 = streamRowsInput.GetField(1).ToString();
+        var fieldCount2 = streamRowsInput.GetFieldsCount();
+
+        // Assert.
+        Assert.Equal(3, fieldCount1);
+        Assert.Equal("1", field1);
+        Assert.Equal("2", field2);
+        Assert.Equal(3, fieldCount2);
+        Assert.Equal("3", field3);
+        Assert.Equal("4", field4);
+    }
+
+    [Fact]
+    public async Task Read_OneColumnData_ShouldReturn()
+    {
+        // Arrange.
+        var sb = new StringBuilder()
+            .AppendLine("id1")
+            .AppendLine("id2");
+
+        // Act.
+        var streamRowsInput = new DelimiterStreamReader(StringToStream(sb.ToString()),
+            new DelimiterStreamReader.ReaderOptions
+            {
+                Delimiters = [','],
+                Culture = CultureInfo.InvariantCulture,
+            });
+        await streamRowsInput.ReadAsync();
+        await streamRowsInput.ReadAsync();
+
+        // Assert.
+        Assert.Equal(1, streamRowsInput.GetFieldsCount());
+    }
+
+    [Fact]
+    public async Task Read_MultipleQuoteStrings_ShouldUnquote()
+    {
+        // Arrange.
+        var sb = new StringBuilder()
+            .AppendLine("fox,\"bobr\"  \"dobr\",cat");
+
+        // Act.
+        var streamRowsInput = new DelimiterStreamReader(StringToStream(sb.ToString()),
+            new DelimiterStreamReader.ReaderOptions
+            {
+                Delimiters = [','],
+                QuoteChars = ['"'],
+                Culture = CultureInfo.InvariantCulture,
+            });
+        await streamRowsInput.ReadAsync();
+
+        // Assert.
+        Assert.Equal(3, streamRowsInput.GetFieldsCount());
+        Assert.Equal("fox", streamRowsInput.GetField(0).ToString());
+        Assert.Equal("bobr\"  \"dobr", streamRowsInput.GetField(1).ToString());
+        Assert.Equal("cat", streamRowsInput.GetField(2).ToString());
+    }
+
+    [Fact]
+    public async Task Read_TextFromStdin_ShouldParse()
     {
         // Arrange.
         var sb = new StringBuilder()
@@ -107,10 +232,10 @@ public class DelimiterStreamReaderTests
                 SkipRepeatedDelimiters = true,
                 Culture = CultureInfo.InvariantCulture,
             });
-        streamRowsInput.ReadAsync();
+        await streamRowsInput.ReadAsync();
         var id1 = streamRowsInput.GetField(0).ToString();
         var name1 = streamRowsInput.GetField(1).ToString();
-        streamRowsInput.ReadAsync();
+        await streamRowsInput.ReadAsync();
         var id2 = streamRowsInput.GetField(0).ToString();
         var name2 = streamRowsInput.GetField(1).ToString();
 
@@ -122,7 +247,7 @@ public class DelimiterStreamReaderTests
     }
 
     [Fact]
-    public void Read_LogTextFromStdin_ShouldParse()
+    public async Task Read_LogTextFromStdin_ShouldParse()
     {
         // Arrange.
         var sb = new StringBuilder()
@@ -138,9 +263,9 @@ public class DelimiterStreamReaderTests
                 SkipRepeatedDelimiters = true,
                 Culture = CultureInfo.InvariantCulture,
             });
-        streamRowsInput.ReadAsync();
+        await streamRowsInput.ReadAsync();
         var name1 = streamRowsInput.GetField(0).ToString();
-        streamRowsInput.ReadAsync();
+        await streamRowsInput.ReadAsync();
         var name2 = streamRowsInput.GetField(0).ToString();
 
         // Assert.
@@ -149,7 +274,7 @@ public class DelimiterStreamReaderTests
     }
 
     [Fact]
-    public void Read_DataWithEmptyLines_ShouldSkipEmpty()
+    public async Task Read_DataWithEmptyLines_ShouldSkipEmpty()
     {
         // Arrange.
         var sb = new StringBuilder()
@@ -164,12 +289,74 @@ public class DelimiterStreamReaderTests
             Delimiters = [','],
             Culture = CultureInfo.InvariantCulture,
         });
-        streamRowsInput.ReadAsync();
-        streamRowsInput.ReadAsync();
+        await streamRowsInput.ReadAsync();
+        await streamRowsInput.ReadAsync();
 
         // Assert.
         Assert.Equal("10", streamRowsInput.GetField(0).ToString());
         Assert.Equal("john", streamRowsInput.GetField(1).ToString());
+    }
+
+    [Fact]
+    public async Task Read_DataWithEmptyFields_ShouldParse()
+    {
+        // Arrange.
+        var sb = new StringBuilder()
+            .AppendLine("id,name,age,category")
+            .AppendLine("466,ivan,40,web")
+            .AppendLine("999,,,");
+
+        // Act.
+        var streamRowsInput = new DelimiterStreamReader(StringToStream(sb.ToString()), new DelimiterStreamReader.ReaderOptions
+        {
+            SkipEmptyLines = true,
+            Delimiters = [','],
+            Culture = CultureInfo.InvariantCulture,
+        });
+        await streamRowsInput.ReadAsync();
+        await streamRowsInput.ReadAsync();
+        await streamRowsInput.ReadAsync();
+
+        // Assert.
+        Assert.Equal("999", streamRowsInput.GetField(0).ToString());
+        Assert.Empty(streamRowsInput.GetField(1).ToString());
+        Assert.Empty(streamRowsInput.GetField(2).ToString());
+        Assert.Empty(streamRowsInput.GetField(3).ToString());
+    }
+
+    [Fact]
+    public async Task Read_VariableDynamicBufferLength_ShouldParse()
+    {
+        // Arrange.
+        var sb = new StringBuilder()
+            .AppendLine("col1,col2,col3,col4,col5")
+            .AppendLine("0000,0001,0002,0003,0004")
+            .AppendLine("0100,0101,0102,0103,0104")
+            .AppendLine("0200,0201,0202,0203,0204");
+
+        // Act.
+        for (var bufferSize = 2; bufferSize < 200; bufferSize++)
+        {
+            var streamRowsInput = new DelimiterStreamReader(StringToStream(sb.ToString()), new DelimiterStreamReader.ReaderOptions
+            {
+                SkipEmptyLines = true,
+                Delimiters = [','],
+                Culture = CultureInfo.InvariantCulture,
+                BufferSize = bufferSize,
+            });
+
+            for (var i = 0; i < 4; i++)
+            {
+                await streamRowsInput.ReadAsync();
+
+                // Assert.
+                Assert.Equal(4, streamRowsInput.GetField(0).ToString().Length);
+                Assert.Equal(4, streamRowsInput.GetField(1).ToString().Length);
+                Assert.Equal(4, streamRowsInput.GetField(2).ToString().Length);
+                Assert.Equal(4, streamRowsInput.GetField(3).ToString().Length);
+                Assert.Equal(4, streamRowsInput.GetField(4).ToString().Length);
+            }
+        }
     }
 
     [Theory]

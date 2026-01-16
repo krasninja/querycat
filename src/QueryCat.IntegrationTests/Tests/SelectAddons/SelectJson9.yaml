@@ -1,0 +1,4 @@
+expected: |
+  1
+query: |
+  select a from 'Json3.json';
