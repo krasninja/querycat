@@ -209,20 +209,20 @@ public static class AsyncUtils
             }
             catch (AggregateException ex)
             {
-                exclusiveSynchronizationContext.InnerException = ex.InnerException;
+                localContext.InnerException = ex.InnerException;
             }
             catch (TargetInvocationException ex)
             {
-                exclusiveSynchronizationContext.InnerException = ex.InnerException;
+                localContext.InnerException = ex.InnerException;
             }
             catch (Exception ex)
             {
-                exclusiveSynchronizationContext.InnerException = ex;
+                localContext.InnerException = ex;
                 throw;
             }
             finally
             {
-                exclusiveSynchronizationContext.EndMessageLoop();
+                localContext.EndMessageLoop();
             }
         }, exclusiveSynchronizationContext);
         exclusiveSynchronizationContext.BeginMessageLoop();
