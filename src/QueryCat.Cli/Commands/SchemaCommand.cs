@@ -35,10 +35,10 @@ internal class SchemaCommand : BaseQueryCommand
                     && args.Result.Type == DataType.Object
                     && args.Result.AsObject is IRowsSchema rowsSchema)
                 {
-                    AsyncUtils.RunSync(async () =>
+                    AsyncUtils.RunSync(async ct =>
                     {
-                        var schema = await FunctionCaller.CallWithArgumentsAsync(InfoFunctions.Schema, thread, [rowsSchema]);
-                        await WriteAsync(thread, schema, rowsOutput, cancellationToken);
+                        var schema = await FunctionCaller.CallWithArgumentsAsync(InfoFunctions.Schema, thread, [rowsSchema], ct);
+                        await WriteAsync(thread, schema, rowsOutput, ct);
                     });
                     args.ContinueExecution = false;
                 }
