@@ -1,5 +1,4 @@
 using System;
-using Thrift.Protocol;
 
 namespace QueryCat.Plugins.Client;
 
@@ -143,7 +142,7 @@ public sealed class ThriftEndpoint
         var randomChars = string.Join(
             string.Empty,
             Random.Shared.GetItems(IdentifierCharacters, length));
-        if (string.IsNullOrEmpty(prefix))
+        if (!string.IsNullOrEmpty(prefix))
         {
             return prefix + '-' +  randomChars;
         }
