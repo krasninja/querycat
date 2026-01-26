@@ -63,10 +63,10 @@ public static class AsyncUtils
 
         internal void EndMessageLoop()
         {
-            Post(_ =>
+            Post(self =>
             {
-                _done = true;
-            }, null);
+                ((ExclusiveSynchronizationContext)self!)._done = true;
+            }, this);
         }
 
         internal void BeginMessageLoop()
@@ -127,6 +127,11 @@ public static class AsyncUtils
             _workItemsWaiting.Dispose();
             _isDisposed = true;
         }
+
+#if DEBUG
+        /// <inheritdoc />
+        public override string ToString() => $"Id = {_id}";
+#endif
     }
 
     /// <summary>
