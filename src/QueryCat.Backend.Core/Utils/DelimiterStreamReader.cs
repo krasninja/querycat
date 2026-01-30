@@ -308,7 +308,7 @@ public class DelimiterStreamReader
                 }
                 else
                 {
-                    currentField.Start = _bufferReader.GetPosition(-1, fieldStartPosition);
+                    currentField.Start = _dynamicBuffer.GetPosition(-1, fieldStartPosition);
                     currentField.Length = (int)(_bufferReader.Consumed - fieldStartOffset) + 1;
                 }
                 currentField.QuoteCharacter = quoteChar;
@@ -498,7 +498,7 @@ public class DelimiterStreamReader
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private bool HasOnlyWhitespaces(DynamicBuffer<char>.DynamicBufferPosition startPosition)
     {
-        for (var pos = startPosition; pos != _bufferReader.Position; pos = _bufferReader.GetPosition(1, pos))
+        for (var pos = startPosition; pos != _bufferReader.Position; pos = _dynamicBuffer.GetPosition(1, pos))
         {
             if (!char.IsWhiteSpace(pos.Value))
             {
@@ -598,7 +598,7 @@ public class DelimiterStreamReader
             else
             {
                 return _dynamicBuffer.Slice(
-                    _bufferReader.GetPosition(1, fieldInfo.Start),
+                    _dynamicBuffer.GetPosition(1, fieldInfo.Start),
                     fieldInfo.Length - 2
                 );
             }
@@ -681,7 +681,7 @@ public class DelimiterStreamReader
             return ReadOnlySequence<char>.Empty;
         }
         var lastField = _fieldInfos[_fieldInfoLastIndex - 1];
-        var end = _bufferReader.GetPosition(lastField.Length, lastField.Start);
+        var end = _dynamicBuffer.GetPosition(lastField.Length, lastField.Start);
         return _dynamicBuffer.GetSequence(_fieldInfos[0].Start, end);
     }
 

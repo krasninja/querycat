@@ -22,7 +22,7 @@ public sealed partial class DynamicBuffer<T> where T : IEquatable<T>
         public T? Current
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return _segment != null ? _segment.Buffer[_position % _buffer._chunkSize] : default; }
+            get => _segment != null ? _segment.Buffer[_position % _buffer._chunkSize] : default;
         }
 
         /// <summary>
@@ -415,16 +415,13 @@ public sealed partial class DynamicBuffer<T> where T : IEquatable<T>
                 return false;
             }
 
-            var segment = _segment;
-            var newPosition = _position;
-            while (segment != null)
+            foreach (var chunk in new ChunkIterator(_buffer, Position))
             {
-                var remaining = GetUnreadSpan(segment, newPosition);
-                var index = remaining.IndexOfAny(delimiters);
+                var index = chunk.Span.IndexOfAny(delimiters);
                 if (index > -1)
                 {
-                    _position = newPosition;
-                    _segment = segment;
+                    _position = chunk.StartIndex + chunk.Segment.StartPosition;
+                    _segment = chunk.Segment;
                     if (!advancePastDelimiter)
                     {
                         _position += index;
@@ -435,9 +432,6 @@ public sealed partial class DynamicBuffer<T> where T : IEquatable<T>
                     }
                     return true;
                 }
-
-                newPosition += remaining.Length;
-                segment = segment.NextRef;
             }
 
             return false;
@@ -456,16 +450,13 @@ public sealed partial class DynamicBuffer<T> where T : IEquatable<T>
                 return false;
             }
 
-            var segment = _segment;
-            var newPosition = _position;
-            while (segment != null)
+            foreach (var chunk in new ChunkIterator(_buffer, Position))
             {
-                var remaining = GetUnreadSpan(segment, newPosition);
-                var index = remaining.IndexOfAny(delimiters);
+                var index = chunk.Span.IndexOfAny(delimiters);
                 if (index > -1)
                 {
-                    _position = newPosition;
-                    _segment = segment;
+                    _position = chunk.StartIndex + chunk.Segment.StartPosition;
+                    _segment = chunk.Segment;
                     if (!advancePastDelimiter)
                     {
                         _position += index;
@@ -476,9 +467,6 @@ public sealed partial class DynamicBuffer<T> where T : IEquatable<T>
                     }
                     return true;
                 }
-
-                newPosition += remaining.Length;
-                segment = segment.NextRef;
             }
 
             return false;
@@ -497,19 +485,16 @@ public sealed partial class DynamicBuffer<T> where T : IEquatable<T>
                 return false;
             }
 
-            var segment = _segment;
-            var newPosition = _position;
-            while (segment != null)
+            foreach (var chunk in new ChunkIterator(_buffer, Position))
             {
-                var remaining = GetUnreadSpan(segment, newPosition);
+                var remaining = chunk.Span;
                 var index = remaining.IndexOf(delimiter);
                 if (index > -1)
                 {
-                    _position = newPosition;
-                    _segment = segment;
+                    _position = chunk.StartIndex + chunk.Segment.StartPosition;
+                    _segment = chunk.Segment;
                     if (!advancePastDelimiter)
                     {
-                        _segment = segment;
                         _position += index;
                     }
                     else
@@ -518,9 +503,6 @@ public sealed partial class DynamicBuffer<T> where T : IEquatable<T>
                     }
                     return true;
                 }
-
-                newPosition += remaining.Length;
-                segment = segment.NextRef;
             }
 
             return false;
@@ -582,50 +564,7 @@ public sealed partial class DynamicBuffer<T> where T : IEquatable<T>
         /// <param name="offset">Position offset.</param>
         /// <returns>Instance of <see cref="DynamicBufferPosition" />.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public DynamicBufferPosition GetPosition(long offset) => GetPosition(offset, Position);
-
-        /// <summary>
-        /// Get the position according to the given offset.
-        /// </summary>
-        /// <param name="offset">Position offset.</param>
-        /// <param name="bufferPosition">Position to get offset of.</param>
-        /// <returns>Instance of <see cref="DynamicBufferPosition" />.</returns>
-        public DynamicBufferPosition GetPosition(long offset, DynamicBufferPosition bufferPosition)
-        {
-            if (offset == 0)
-            {
-                return bufferPosition;
-            }
-            var currentSegment = (BufferSegment?)bufferPosition.Segment;
-            if (currentSegment == null)
-            {
-                return bufferPosition;
-            }
-
-            var position = currentSegment.StartPosition + bufferPosition.Offset;
-            var targetPosition = position + offset;
-
-            if (targetPosition <= _buffer._startPosition)
-            {
-                return _buffer.Start;
-            }
-            if (targetPosition >= _buffer._endPosition)
-            {
-                return _buffer.End;
-            }
-
-            while (currentSegment != null)
-            {
-                if (targetPosition >= currentSegment.StartPosition && targetPosition <= currentSegment.StartPosition + _buffer._maxEndIndex)
-                {
-                    return new DynamicBufferPosition(currentSegment, (int)(targetPosition % _buffer._chunkSize));
-                }
-                currentSegment = offset > 0 ? currentSegment.NextRef : currentSegment.PrevRef;
-            }
-
-            // Shouldn't be here. Exceptional safe case.
-            return DynamicBufferPosition.Null;
-        }
+        public DynamicBufferPosition GetPosition(long offset) => _buffer.GetPosition(offset, Position);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private ReadOnlySpan<T> GetUnreadSpan(BufferSegment segment, long position)

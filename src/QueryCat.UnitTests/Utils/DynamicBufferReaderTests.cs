@@ -108,6 +108,8 @@ public class DynamicBufferReaderTests
     {
         // Arrange.
         var dynamicBuffer = new DynamicBuffer<char>(chunkSize: 4);
+        // 1234 | 5678 | 90_1 | 234 | 5678 | 90
+        // 0      4      8      12    16     20
         dynamicBuffer.Write("1234567890_1234567890");
         dynamicBuffer.Advance(3);
         var reader = new DynamicBuffer<char>.DynamicBufferReader(dynamicBuffer);
@@ -148,6 +150,23 @@ public class DynamicBufferReaderTests
 
         // Assert.
         Assert.Equal('2', reader.Current);
+    }
+
+    [Fact]
+    public void TryAdvanceToAny_NoCharsToSeek_ShouldNotAdvancePast()
+    {
+        // Arrange.
+        var dynamicBuffer = new DynamicBuffer<char>(chunkSize: 4);
+        dynamicBuffer.Write("111122203333");
+        var reader = new DynamicBuffer<char>.DynamicBufferReader(dynamicBuffer);
+
+        // Act.
+        var advanced = reader.TryAdvanceToAny("Q", advancePastDelimiter: true);
+
+        // Assert.
+        Assert.False(advanced);
+        Assert.Equal('1', reader.Current);
+        Assert.Equal(0, reader.Position.Offset);
     }
 
     [Fact]

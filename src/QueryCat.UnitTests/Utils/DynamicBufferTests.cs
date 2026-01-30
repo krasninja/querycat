@@ -326,11 +326,11 @@ public class DynamicBufferTests
         dynamicBuffer.Advance(5); // Take -5!
 
         // Act.
-        var span1 = dynamicBuffer.Slice(1, 4);
-        var span2 = dynamicBuffer.Slice(13, 17);
-        var span3 = dynamicBuffer.Slice(3, 14);
+        var span1 = dynamicBuffer.Slice(1, 3);
+        var span2 = dynamicBuffer.Slice(13, 16);
+        var span3 = dynamicBuffer.Slice(3, 13);
         dynamicBuffer.Advance(3);
-        var span4 = dynamicBuffer.Slice(3, 4);
+        var span4 = dynamicBuffer.Slice(3, 3);
 
         // Assert.
         Assert.Equal("bcd", span1.ToString());
