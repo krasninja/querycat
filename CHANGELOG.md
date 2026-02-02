@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add LTSV formatter.
+
+## [0.17.1] - 2025-12-05
+
 ### Changed
 
 - Update Grok patterns.

@@ -17,7 +17,7 @@ public static class ThriftTransportFactory
     /// <param name="uri">URI.</param>
     /// <param name="configuration">Transport configuration (or default).</param>
     /// <returns>Instance of <see cref="TTransport" />.</returns>
-    public static TTransport CreateClientTransport(Uri uri, TConfiguration? configuration = null)
+    public static TTransport CreateClientTransport(SimpleUri uri, TConfiguration? configuration = null)
     {
         configuration ??= new TConfiguration();
         switch (uri.Scheme.ToLower())
@@ -39,16 +39,17 @@ public static class ThriftTransportFactory
     /// <param name="configuration">Transport configuration (or default).</param>
     /// <param name="localOnly">Accept only local connections.</param>
     /// <returns>Instance of <see cref="TServerTransport" />.</returns>
-    public static TServerTransport CreateServerTransport(Uri uri, TConfiguration? configuration = null,
+    public static TServerTransport CreateServerTransport(SimpleUri uri, TConfiguration? configuration = null,
         bool localOnly = true)
     {
-        // Endpoint format example: net.pipe://localhost/qcat-123.
         configuration ??= new TConfiguration();
         var flags = localOnly ? NamedPipeServerFlags.OnlyLocalClients : NamedPipeServerFlags.None;
         switch (uri.Scheme.ToLower())
         {
+            // Endpoint format example: net.pipe://localhost/qcat-123.
             case ThriftEndpoint.TransportNamedPipes:
                 return new TNamedPipeServerTransport(uri.Segments[1], configuration, flags, 1);
+            // Endpoint format example: tcp://localhost:6780.
             case ThriftEndpoint.TransportTcp:
                 return new TServerSocketTransport(uri.Port, new TConfiguration());
         }

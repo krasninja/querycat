@@ -52,7 +52,12 @@ internal sealed class PluginFunction : IFunction
             IsAggregate = metadata.IsAggregate;
             Formatters = metadata.Formatters;
         }
+        Name = GetFunctionName(signature);
+    }
+    
+    public static string GetFunctionName(string signature)
+    {
         var firstBracketIndex = signature.IndexOf('(');
-        Name = firstBracketIndex > -1 ? signature.Substring(0, firstBracketIndex).ToUpperInvariant() : "Unknown";
+        return firstBracketIndex > -1 ? signature.Substring(0, firstBracketIndex).ToUpperInvariant() : "Unknown";
     }
 }

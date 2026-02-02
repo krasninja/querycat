@@ -50,21 +50,6 @@ internal sealed class ThreadSafePluginsManagerClient : PluginsManager.IAsync
     }
 
     /// <inheritdoc />
-    public async Task<VariantValue> CallFunctionAsync(long token, string function_name, List<VariantValue>? args, int object_handle,
-        CancellationToken cancellationToken = default)
-    {
-        await _semaphore.WaitAsync(cancellationToken);
-        try
-        {
-            return await _client.CallFunctionAsync(token, function_name, args, object_handle, cancellationToken);
-        }
-        finally
-        {
-            _semaphore.Release();
-        }
-    }
-
-    /// <inheritdoc />
     public async Task<VariantValue> RunQueryAsync(long token, string query, Dictionary<string, VariantValue>? parameters, CancellationToken cancellationToken = default)
     {
         await _semaphore.WaitAsync(cancellationToken);
@@ -197,6 +182,21 @@ internal sealed class ThreadSafePluginsManagerClient : PluginsManager.IAsync
         try
         {
             return await _client.GetCompletionsAsync(token, text, position, cancellationToken);
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<VariantValue> CallFunctionAsync(long token, string function_name, FunctionCallArguments? call_args, int object_handle,
+        CancellationToken cancellationToken = default)
+    {
+        await _semaphore.WaitAsync(cancellationToken);
+        try
+        {
+            return await _client.CallFunctionAsync(token, function_name, call_args, object_handle, cancellationToken);
         }
         finally
         {
@@ -634,6 +634,63 @@ internal sealed class ThreadSafePluginsManagerClient : PluginsManager.IAsync
         try
         {
             return await _client.GetStatisticAsync(token, cancellationToken);
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<Function> ResolveUriAsync(long token, string uri, CancellationToken cancellationToken = default)
+    {
+        await _semaphore.WaitAsync(cancellationToken);
+        try
+        {
+            return await _client.ResolveUriAsync(token, uri, cancellationToken);
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<List<Function>> FindFunctionByNameAsync(long token, string name, FunctionCallArgumentsTypes? args_types,
+        CancellationToken cancellationToken = default)
+    {
+        await _semaphore.WaitAsync(cancellationToken);
+        try
+        {
+            return await _client.FindFunctionByNameAsync(token, name, args_types, cancellationToken);
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<List<Function>> GetFunctionsAsync(long token, CancellationToken cancellationToken = default)
+    {
+        await _semaphore.WaitAsync(cancellationToken);
+        try
+        {
+            return await _client.GetFunctionsAsync(token, cancellationToken);
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task RegisterFunctionAsync(long token, List<Function>? functions, CancellationToken cancellationToken = default)
+    {
+        await _semaphore.WaitAsync(cancellationToken);
+        try
+        {
+            await _client.RegisterFunctionAsync(token, functions, cancellationToken);
         }
         finally
         {

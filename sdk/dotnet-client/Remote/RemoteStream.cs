@@ -125,7 +125,7 @@ public sealed class RemoteStream : Stream
     /// <inheritdoc />
     protected override void Dispose(bool disposing)
     {
-        AsyncUtils.RunSync(async ct =>
+        AsyncUtils.RunSync(async () =>
         {
             await DisposeAsync();
         });

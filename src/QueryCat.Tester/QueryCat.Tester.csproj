@@ -8,13 +8,13 @@
     <Nullable>enable</Nullable>
     <AssemblyName>qcattester</AssemblyName>
     <Product>QueryCat Tester</Product>
-    <Copyright>Copyright (c) 2022-2025</Copyright>
+    <Copyright>Copyright (c) 2022-2026</Copyright>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="QueryCat" Version="0.16.1" />
-    <PackageReference Include="System.CommandLine" Version="2.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.0" />
+    <PackageReference Include="QueryCat" Version="0.17.0" />
+    <PackageReference Include="System.CommandLine" Version="2.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.2" />
   </ItemGroup>
 
 </Project>

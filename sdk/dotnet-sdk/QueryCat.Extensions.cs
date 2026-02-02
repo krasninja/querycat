@@ -42,6 +42,36 @@ namespace QueryCat.Plugins.Sdk
     }
 
 
+    public static bool Equals(this Dictionary<int, global::QueryCat.Plugins.Sdk.DataType> instance, object that)
+    {
+      if (that is not Dictionary<int, global::QueryCat.Plugins.Sdk.DataType> other) return false;
+      if (ReferenceEquals(instance, other)) return true;
+
+      return TCollections.Equals(instance, other);
+    }
+
+
+    public static int GetHashCode(this Dictionary<int, global::QueryCat.Plugins.Sdk.DataType> instance)
+    {
+      return TCollections.GetHashCode(instance);
+    }
+
+
+    public static bool Equals(this Dictionary<string, global::QueryCat.Plugins.Sdk.DataType> instance, object that)
+    {
+      if (that is not Dictionary<string, global::QueryCat.Plugins.Sdk.DataType> other) return false;
+      if (ReferenceEquals(instance, other)) return true;
+
+      return TCollections.Equals(instance, other);
+    }
+
+
+    public static int GetHashCode(this Dictionary<string, global::QueryCat.Plugins.Sdk.DataType> instance)
+    {
+      return TCollections.GetHashCode(instance);
+    }
+
+
     public static bool Equals(this Dictionary<string, global::QueryCat.Plugins.Sdk.VariantValue> instance, object that)
     {
       if (that is not Dictionary<string, global::QueryCat.Plugins.Sdk.VariantValue> other) return false;

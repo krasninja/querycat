@@ -147,7 +147,7 @@ public class DotNetAssemblyPluginsLoader : PluginsLoader, IDisposable
             var strategies = GetLoadStrategies(pluginFile);
             foreach (var strategy in strategies)
             {
-                var assembly = await LoadWithStrategyAsync(strategy, cancellationToken);
+                var assembly = await LoadWithStrategyAsync(strategy, Path.GetFileName(pluginFile), cancellationToken);
                 if (assembly != null)
                 {
                     _loadedAssemblies.Add(assembly);
@@ -178,7 +178,10 @@ public class DotNetAssemblyPluginsLoader : PluginsLoader, IDisposable
         }
     }
 
-    private async Task<Assembly?> LoadWithStrategyAsync(IPluginLoadStrategy strategy, CancellationToken cancellationToken)
+    private async Task<Assembly?> LoadWithStrategyAsync(
+        IPluginLoadStrategy strategy,
+        string pluginFileName,
+        CancellationToken cancellationToken)
     {
         // Find target framework directory.
         var monikerRoot = await FindTargetFrameworkDirectoryAsync(strategy, cancellationToken);
@@ -190,9 +193,24 @@ public class DotNetAssemblyPluginsLoader : PluginsLoader, IDisposable
             .ToArray();
 
         // Find plugin library.
-        var pluginDll = Array.Find(dllFiles, f => Path.GetFileNameWithoutExtension(f)
-            .Contains(PluginKeyword, StringComparison.InvariantCultureIgnoreCase));
-        if (pluginDll == null)
+        var pluginDlls = Array.FindAll(
+            dllFiles,
+            f => Path.GetFileNameWithoutExtension(f).Contains(PluginKeyword, StringComparison.InvariantCultureIgnoreCase)
+        );
+        var pluginDll = string.Empty;
+        if (pluginDlls.Length == 1)
+        {
+            pluginDll = pluginDlls[0];
+        }
+        else if (pluginDlls.Length > 1)
+        {
+            // In case if we have several matching libraries - try to find exact match by file name.
+            pluginDll = pluginDlls
+                .FirstOrDefault(f => Path.GetFileNameWithoutExtension(f)
+                    .Equals(Path.GetFileNameWithoutExtension(pluginFileName), StringComparison.InvariantCultureIgnoreCase))
+                ?? pluginDlls[0];
+        }
+        if (string.IsNullOrEmpty(pluginDll))
         {
             return null;
         }
@@ -381,18 +399,27 @@ public class DotNetAssemblyPluginsLoader : PluginsLoader, IDisposable
 
     private static async Task<MemoryStream> CloneStreamAsync(Stream stream, CancellationToken cancellationToken)
     {
-        var ms = new MemoryStream();
+        var ms = stream.CanSeek ? new MemoryStream(capacity: (int)stream.Length) : new MemoryStream();
         await stream.CopyToAsync(ms, cancellationToken);
         ms.Seek(0, SeekOrigin.Begin);
         return ms;
     }
 
+    protected virtual void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            foreach (var value in _rawAssembliesCache.Values)
+            {
+                value.Dispose();
+            }
+        }
+    }
+
     /// <inheritdoc />
     public void Dispose()
     {
-        foreach (var value in _rawAssembliesCache.Values)
-        {
-            value.Dispose();
-        }
+        Dispose(true);
+        GC.SuppressFinalize(this);
     }
 }

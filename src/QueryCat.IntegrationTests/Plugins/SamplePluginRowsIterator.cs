@@ -20,8 +20,8 @@ public class SamplePluginRowsIterator : IRowsIterator
     public static VariantValue SamplePlugin(IExecutionThread thread)
     {
         var startValue = thread.Stack.Pop().AsInteger;
-        var rowsSource = new SamplePluginRowsIterator(startValue ?? 0);
-        return VariantValue.CreateFromObject(rowsSource);
+        var rowsFormatter = new SamplePluginRowsIterator(startValue ?? 0);
+        return VariantValue.CreateFromObject(rowsFormatter);
     }
 
     private long _currentState;

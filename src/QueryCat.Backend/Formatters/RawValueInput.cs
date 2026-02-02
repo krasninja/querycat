@@ -22,6 +22,10 @@ internal sealed class RawValueInput : RowsInput
     public RawValueInput(IBlobData blobInput, string? key = null)
     {
         _blobInput = blobInput;
+        if (!string.IsNullOrEmpty(key))
+        {
+            UniqueKey = [key];
+        }
     }
 
     /// <inheritdoc />

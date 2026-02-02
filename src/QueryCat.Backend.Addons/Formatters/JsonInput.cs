@@ -32,7 +32,7 @@ internal class JsonInput : StreamRowsInput
             {
                 Delimiters = ['{', '}'],
                 QuoteChars = ['"'],
-                SkipEmptyLines = true,
+                SkipEmptyLines = false,
                 EnableQuotesModeOnFieldStart = false,
                 CompleteOnEndOfLine = false,
                 QuotesEscapeStyle = DelimiterStreamReader.QuotesMode.Backslash,

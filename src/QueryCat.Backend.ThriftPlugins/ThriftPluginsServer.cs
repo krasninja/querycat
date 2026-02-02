@@ -26,7 +26,7 @@ public sealed partial class ThriftPluginsServer : IDisposable
         public long Token { get; set; } = -1;
     }
 
-    public Uri ServerEndpointUri => _mainServerThread.Endpoint;
+    public SimpleUri ServerEndpointUri => _mainServerThread.Endpoint;
 
     private readonly IConfigStorage _configStorage;
     private readonly IExecutionThread _executionThread;
@@ -93,7 +93,7 @@ public sealed partial class ThriftPluginsServer : IDisposable
         _maxConnectionsToClient = maxConnectionsToClient;
     }
 
-    private TThreadPoolAsyncServer CreateServer(Uri uri)
+    private TThreadPoolAsyncServer CreateServer(SimpleUri uri)
     {
         var transport = ThriftTransportFactory.CreateServerTransport(uri);
         var transportFactory = new TFramedTransport.Factory();
@@ -259,7 +259,7 @@ public sealed partial class ThriftPluginsServer : IDisposable
     {
         private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(ServerThread));
 
-        public Uri Endpoint { get; }
+        public SimpleUri Endpoint { get; }
 
         public TServer Server { get; }
 
@@ -267,7 +267,7 @@ public sealed partial class ThriftPluginsServer : IDisposable
 
         public ThriftPluginContext? PluginContext { get; set; }
 
-        public ServerThread(Uri endpoint, TServer server)
+        public ServerThread(SimpleUri endpoint, TServer server)
         {
             Endpoint = endpoint;
             Server = server;

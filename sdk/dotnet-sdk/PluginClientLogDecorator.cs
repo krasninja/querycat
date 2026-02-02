@@ -24,14 +24,6 @@ public sealed partial class PluginClientLogDecorator : Plugin.IAsync
     public Task OpenTransportAsync(CancellationToken cancellationToken = default) => _client.OpenTransportAsync(cancellationToken);
 
     /// <inheritdoc />
-    public Task<VariantValue> CallFunctionAsync(long token, string function_name, List<VariantValue>? args, int object_handle,
-        CancellationToken cancellationToken = default)
-    {
-        LogStartMethodCall(nameof(CallFunctionAsync));
-        return _client.CallFunctionAsync(token, function_name, args, object_handle, cancellationToken);
-    }
-
-    /// <inheritdoc />
     public Task ShutdownAsync(CancellationToken cancellationToken = default)
     {
         LogStartMethodCall(nameof(ShutdownAsync));
@@ -174,6 +166,14 @@ public sealed partial class PluginClientLogDecorator : Plugin.IAsync
     {
         LogStartMethodCall(nameof(RowsFormatter_OpenOutputAsync));
         return _client.RowsFormatter_OpenOutputAsync(token, object_rows_formatter_handle, object_blob_handle, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public Task<VariantValue> CallFunctionAsync(long token, string function_name, FunctionCallArguments? call_args, int object_handle,
+        CancellationToken cancellationToken = default)
+    {
+        LogStartMethodCall(nameof(CallFunctionAsync));
+        return _client.CallFunctionAsync(token, function_name, call_args, object_handle, cancellationToken);
     }
 
     /// <inheritdoc />

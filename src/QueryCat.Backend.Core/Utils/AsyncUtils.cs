@@ -1,10 +1,8 @@
+using System.Collections.Concurrent;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
 namespace QueryCat.Backend.Core.Utils;
-
-using EventTask = System.Tuple<System.Threading.SendOrPostCallback, object?>;
-using EventQueue = System.Collections.Concurrent.ConcurrentQueue<System.Tuple<System.Threading.SendOrPostCallback, object?>>;
 
 /// <summary>
 /// Helpers for asynchronous operations.
@@ -14,6 +12,12 @@ public static class AsyncUtils
     // For reference:
     // - https://github.com/StephenCleary/AsyncEx/blob/master/src/Nito.AsyncEx.Context/AsyncContext.cs.
     // - https://github.com/tejacques/AsyncBridge/blob/master/src/AsyncBridge/AsyncHelper.cs.
+    // - https://github.com/ravendb/ravendb/blob/v7.1/src/Raven.Client/Util/AsyncHelpers.cs.
+
+    private static readonly DisposableObjectPool<ExclusiveSynchronizationContext> _synchronizationContextPool = new(
+        createFunc: () => new ExclusiveSynchronizationContext(),
+        maximumRetained: 16
+    );
 
     /// <summary>
     /// Provides a context for asynchronous operations.
@@ -23,24 +27,24 @@ public static class AsyncUtils
 #if DEBUG
         private readonly int _id = IdGenerator.GetNext();
 #endif
+
+        private sealed class CallbackWithState(SendOrPostCallback callback, object? state)
+        {
+            public SendOrPostCallback Callback { get; } = callback;
+
+            public object? State { get; } = state;
+        }
+
         private bool _done;
         private readonly AutoResetEvent _workItemsWaiting = new(initialState: false);
-        private readonly EventQueue _postbackItems;
+        private readonly ConcurrentQueue<CallbackWithState> _postbackItems = new();
         private bool _isDisposed;
 
         public Exception? InnerException { get; internal set; }
 
-        public ExclusiveSynchronizationContext(SynchronizationContext? oldContext)
-        {
-            if (oldContext is ExclusiveSynchronizationContext exclusiveSynchronizationContext)
-            {
-                this._postbackItems = exclusiveSynchronizationContext._postbackItems;
-            }
-            else
-            {
-                this._postbackItems = new EventQueue();
-            }
-        }
+        public Delegate? Delegate { get; internal set; }
+
+        public object? State { get; internal set; }
 
         /// <inheritdoc />
         public override void Send(SendOrPostCallback d, object? state)
@@ -53,32 +57,28 @@ public static class AsyncUtils
         {
             ObjectDisposedException.ThrowIf(_isDisposed, this);
 
-            _postbackItems.Enqueue(new EventTask(d, state));
+            _postbackItems.Enqueue(new CallbackWithState(d, state));
             _workItemsWaiting.Set();
         }
 
         internal void EndMessageLoop()
         {
-            Post(_ =>
+            Post(self =>
             {
-                Dispose();
-            }, null);
+                ((ExclusiveSynchronizationContext)self!)._done = true;
+            }, this);
         }
 
         internal void BeginMessageLoop()
         {
             while (!_done)
             {
-                if (!_postbackItems.TryDequeue(out EventTask? task))
+                if (_postbackItems.TryDequeue(out CallbackWithState? task))
                 {
-                    task = null;
-                }
-                if (task != null)
-                {
-                    task.Item1(task.Item2);
+                    task.Callback.Invoke(task.State);
                     if (InnerException != null)
                     {
-                        throw new AggregateException("AsyncUtils.Run method threw an exception.", InnerException);
+                        ThrowAggregateExceptionIfNeeded();
                     }
                 }
                 else
@@ -88,8 +88,31 @@ public static class AsyncUtils
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void ThrowAggregateExceptionIfNeeded()
+        {
+            if (InnerException != null)
+            {
+                throw new AggregateException("AsyncUtils.Run method threw an exception.", InnerException);
+            }
+        }
+
         /// <inheritdoc />
         public override SynchronizationContext CreateCopy() => this;
+
+        /// <summary>
+        /// Reset context state.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Reset()
+        {
+            _postbackItems.Clear();
+            _done = false;
+            _workItemsWaiting.Reset();
+            InnerException = null;
+            Delegate = null;
+            State = null;
+        }
 
         /// <inheritdoc />
         public void Dispose()
@@ -104,6 +127,11 @@ public static class AsyncUtils
             _workItemsWaiting.Dispose();
             _isDisposed = true;
         }
+
+#if DEBUG
+        /// <inheritdoc />
+        public override string ToString() => $"Id = {_id}";
+#endif
     }
 
     /// <summary>
@@ -113,41 +141,49 @@ public static class AsyncUtils
     public static void RunSync(Func<Task> taskFunc)
     {
         var current = SynchronizationContext.Current;
-        var exclusiveSynchronizationContext = new ExclusiveSynchronizationContext(current);
+        var exclusiveSynchronizationContext = _synchronizationContextPool.Get();
+        exclusiveSynchronizationContext.Delegate = taskFunc;
         SynchronizationContext.SetSynchronizationContext(exclusiveSynchronizationContext);
+
         // ReSharper disable once AsyncVoidLambda
-        exclusiveSynchronizationContext.Post(async _ =>
+        exclusiveSynchronizationContext.Post(async context =>
         {
+            var localContext = (ExclusiveSynchronizationContext)context!;
+
             try
             {
-                await taskFunc();
+                await ((Func<Task>)localContext.Delegate!).Invoke();
             }
             catch (AggregateException ex)
             {
-                exclusiveSynchronizationContext.InnerException = ex.InnerException;
+                localContext.InnerException = ex.InnerException;
             }
             catch (TargetInvocationException ex)
             {
-                exclusiveSynchronizationContext.InnerException = ex.InnerException;
+                localContext.InnerException = ex.InnerException;
             }
             catch (Exception ex)
             {
-                exclusiveSynchronizationContext.InnerException = ex;
+                localContext.InnerException = ex;
                 throw;
             }
             finally
             {
-                exclusiveSynchronizationContext.EndMessageLoop();
+                localContext.EndMessageLoop();
             }
-        }, null);
+        }, exclusiveSynchronizationContext);
         exclusiveSynchronizationContext.BeginMessageLoop();
         SynchronizationContext.SetSynchronizationContext(current);
+
+        exclusiveSynchronizationContext.Reset();
+        _synchronizationContextPool.Return(exclusiveSynchronizationContext);
     }
 
     /// <summary>
     /// Executes an async Task method which has a void return value synchronously.
     /// </summary>
     /// <param name="taskFunc">Task.</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void RunSync(Func<CancellationToken, Task> taskFunc)
         => RunSync(() => taskFunc.Invoke(CancellationToken.None));
 
@@ -155,43 +191,51 @@ public static class AsyncUtils
     /// Executes an async Task method which has a T return value synchronously.
     /// </summary>
     /// <param name="taskFunc">Task.</param>
-    /// <param name="state"></param>
+    /// <param name="state">State to pass to func.</param>
     /// <typeparam name="T">Task generic type.</typeparam>
     /// <returns>Task value.</returns>
     public static T? RunSync<T>(Func<object?, Task<T>> taskFunc, object? state)
     {
         var current = SynchronizationContext.Current;
-        var exclusiveSynchronizationContext = new ExclusiveSynchronizationContext(current);
+        var exclusiveSynchronizationContext = _synchronizationContextPool.Get();
+        exclusiveSynchronizationContext.Delegate = taskFunc;
+        exclusiveSynchronizationContext.State = state;
         SynchronizationContext.SetSynchronizationContext(exclusiveSynchronizationContext);
-        T? result = default(T);
+
         // ReSharper disable once AsyncVoidLambda
-        exclusiveSynchronizationContext.Post(async _ =>
+        exclusiveSynchronizationContext.Post(async context =>
         {
+            var localContext = (ExclusiveSynchronizationContext)context!;
+
             try
             {
-                result = await taskFunc(state);
+                localContext.State = await ((Func<object?, Task<T>>)localContext.Delegate!)
+                    .Invoke(localContext.State);
             }
             catch (AggregateException ex)
             {
-                exclusiveSynchronizationContext.InnerException = ex.InnerException;
+                localContext.InnerException = ex.InnerException;
             }
             catch (TargetInvocationException ex)
             {
-                exclusiveSynchronizationContext.InnerException = ex.InnerException;
+                localContext.InnerException = ex.InnerException;
             }
             catch (Exception ex)
             {
-                var exception = ex;
-                exclusiveSynchronizationContext.InnerException = exception;
+                localContext.InnerException = ex;
                 throw;
             }
             finally
             {
-                exclusiveSynchronizationContext.EndMessageLoop();
+                localContext.EndMessageLoop();
             }
-        }, null);
+        }, exclusiveSynchronizationContext);
         exclusiveSynchronizationContext.BeginMessageLoop();
         SynchronizationContext.SetSynchronizationContext(current);
+
+        var result = (T?)exclusiveSynchronizationContext.State;
+        exclusiveSynchronizationContext.Reset();
+        _synchronizationContextPool.Return(exclusiveSynchronizationContext);
         return result;
     }
 
@@ -210,6 +254,7 @@ public static class AsyncUtils
     /// <param name="task">Task.</param>
     /// <typeparam name="T">Task generic type.</typeparam>
     /// <returns>Task value.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static T? RunSync<T>(Func<CancellationToken, Task<T>> task)
         => RunSync(() => task.Invoke(CancellationToken.None));
 

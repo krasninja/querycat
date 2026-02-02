@@ -30,7 +30,7 @@ public partial class ThriftPluginClient : IDisposable
     public const string TestPipeName = "qcat-test";
     public const int DefaultTcpPort = 25_7_3_8;
 
-    public const string PluginServerPipeParameter = "server-endpoint";
+    public const string PluginServerEndpointParameter = "server-endpoint";
     public const string PluginTokenParameter = "token";
     public const string PluginParentPidParameter = "parent-pid";
     public const string PluginLogLevelParameter = "log-level";
@@ -42,7 +42,7 @@ public partial class ThriftPluginClient : IDisposable
     public const string PluginMainFunctionName = "QueryCatPlugin_Main";
 
     private readonly ThriftPluginExecutionThread _executionThread;
-    private readonly PluginFunctionsManager _functionsManager;
+    private readonly ThriftPluginFunctionsManager _functionsManager;
     private readonly ObjectsStorage _objectsStorage = new();
     private readonly string _debugServerPath = string.Empty;
     private readonly string _debugServerQueryText = string.Empty;
@@ -54,7 +54,7 @@ public partial class ThriftPluginClient : IDisposable
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(ThriftPluginClient));
 
     // Connection to plugin manager.
-    private readonly Uri _pluginServerUri;
+    private readonly SimpleUri _pluginServerUri;
     private readonly string _registrationToken;
     private readonly TProtocol _protocol;
     private readonly PluginsManager.Client _thriftClient;
@@ -147,7 +147,7 @@ public partial class ThriftPluginClient : IDisposable
             PluginsManagerServiceName);
         _thriftClient = new PluginsManager.Client(_protocol);
         _executionThread = new ThriftPluginExecutionThread(this);
-        _functionsManager = (PluginFunctionsManager)_executionThread.FunctionsManager;
+        _functionsManager = (ThriftPluginFunctionsManager)_executionThread.FunctionsManager;
         _thriftClientSafe = new ThreadSafePluginsManagerClient(_thriftClient);
     }
 
@@ -175,7 +175,7 @@ public partial class ThriftPluginClient : IDisposable
             var value = arg.Substring(separatorIndex + 1);
             switch (name)
             {
-                case PluginServerPipeParameter:
+                case PluginServerEndpointParameter:
                 // Legacy.
                 case "server-pipe-name":
                     appArgs.ServerEndpoint = value;
@@ -253,12 +253,15 @@ public partial class ThriftPluginClient : IDisposable
     /// </summary>
     /// <param name="pluginData">Plugin information. If null - the info will be retrieved from current assembly.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    public async Task StartAsync(PluginData? pluginData = null, CancellationToken cancellationToken = default)
+    /// <returns>Awaitable task.</returns>
+    public async Task StartAsync(
+        PluginData? pluginData = null,
+        CancellationToken cancellationToken = default)
     {
         if (!string.IsNullOrEmpty(_debugServerPath))
         {
             StartQueryCatDebugServer();
-            Thread.Sleep(100);
+            await Task.Delay(100, cancellationToken);
         }
 
         var task = _thriftClient.OpenTransportAsync(cancellationToken);
@@ -304,13 +307,15 @@ public partial class ThriftPluginClient : IDisposable
         await _thriftClient.PluginReadyAsync(Token, cancellationToken);
     }
 
-    internal Uri StartNewServer(ThriftTransportType transportType = ThriftTransportType.NamedPipes)
+    internal SimpleUri StartNewServer()
     {
-        var id = ThriftEndpoint.GenerateIdentifier("qcatp");
+        var transportType = new ThriftEndpoint(_pluginServerUri).TransportType;
+
         var uri = transportType switch
         {
-            ThriftTransportType.NamedPipes => ThriftEndpoint.CreateNamedPipe(id).Uri,
-            ThriftTransportType.Tcp => ThriftEndpoint.CreateTcp(DefaultTcpPort).Uri,
+            ThriftTransportType.NamedPipes => ThriftEndpoint.CreateNamedPipe(
+                ThriftEndpoint.GenerateIdentifier("qcatp")).Uri,
+            ThriftTransportType.Tcp => ThriftEndpoint.CreateTcp().Uri,
             _ => throw new ArgumentOutOfRangeException(nameof(transportType), transportType, null),
         };
 
@@ -339,6 +344,7 @@ public partial class ThriftPluginClient : IDisposable
             _serverConnections.Add(serverConnection);
             serverConnection.Start();
         }
+        _logger.LogDebug("Started client server on '{Uri}'.", uri);
 
         return uri;
     }

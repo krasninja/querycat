@@ -26,6 +26,7 @@ nav:
     - 'Grok': input/grok.md
     - 'IISW3C': input/iisw3c.md
     - 'JSON': input/json.md
+    - 'LTSV': input/ltsv.md
     - 'RAW': input/raw.md
     - 'RegEx': input/regex.md
     - 'STDIN': input/stdin.md

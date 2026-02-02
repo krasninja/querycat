@@ -15,8 +15,8 @@ internal sealed class NullRowsOutput : RowsOutput
     [FunctionSignature("write_null(): object<IRowsOutput>")]
     public static VariantValue Null(IExecutionThread thread)
     {
-        var rowsSource = new NullRowsFormatter();
-        return VariantValue.CreateFromObject(rowsSource);
+        var rowsFormatter = new NullRowsFormatter();
+        return VariantValue.CreateFromObject(rowsFormatter);
     }
 
     /// <inheritdoc />

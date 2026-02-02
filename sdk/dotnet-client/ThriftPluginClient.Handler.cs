@@ -64,13 +64,13 @@ public partial class ThriftPluginClient
         }
 
         /// <inheritdoc />
-        public async Task<VariantValue> CallFunctionAsync(long token, string function_name, List<VariantValue>? args, int object_handle,
+        public async Task<VariantValue> CallFunctionAsync(long token, string function_name, FunctionCallArguments? call_args, int object_handle,
             CancellationToken cancellationToken = default)
         {
             LogCallMethod(nameof(CallFunctionAsync));
             try
             {
-                return await _handler.CallFunctionAsync(token, function_name, args, object_handle, cancellationToken);
+                return await _handler.CallFunctionAsync(token, function_name, call_args, object_handle, cancellationToken);
             }
             catch (Exception ex)
             {

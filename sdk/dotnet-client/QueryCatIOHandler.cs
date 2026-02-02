@@ -17,6 +17,7 @@ using QueryCat.Plugins.Sdk;
 using Column = QueryCat.Plugins.Sdk.Column;
 using CursorSeekOrigin = QueryCat.Plugins.Sdk.CursorSeekOrigin;
 using DataType = QueryCat.Backend.Core.Types.DataType;
+using FunctionCallArguments = QueryCat.Plugins.Sdk.FunctionCallArguments;
 using KeyColumn = QueryCat.Plugins.Sdk.KeyColumn;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 using QuestionRequest = QueryCat.Plugins.Sdk.QuestionRequest;
@@ -45,33 +46,6 @@ public partial class QueryCatIOHandler : global::QueryCat.Plugins.Sdk.QueryCatIO
     {
         _executionThread = executionThread;
         _objectsStorage = objectsStorage;
-    }
-
-    /// <inheritdoc />
-    public virtual async Task<VariantValue> CallFunctionAsync(long token, string function_name, List<VariantValue>? args, int object_handle,
-        CancellationToken cancellationToken = default)
-    {
-        await BeforeCallAsync(token, nameof(CallFunctionAsync), cancellationToken);
-        args ??= new List<VariantValue>();
-
-        var func = _executionThread.FunctionsManager.FindByNameFirst(function_name);
-        var frame =_executionThread.Stack.CreateFrame();
-        foreach (var arg in args)
-        {
-            frame.Push(SdkConvert.Convert(arg));
-        }
-        var result = await FunctionCaller.CallAsync(
-            func.Delegate,
-            _executionThread,
-            cancellationToken);
-        frame.Dispose();
-        var resultObject = AddObjectToStorage(result);
-        if (resultObject != null)
-        {
-            return resultObject;
-        }
-
-        return SdkConvert.Convert(result);
     }
 
     protected QueryCat.Plugins.Sdk.VariantValue? AddObjectToStorage(QueryCat.Backend.Core.Types.VariantValue result)
@@ -150,6 +124,72 @@ public partial class QueryCatIOHandler : global::QueryCat.Plugins.Sdk.QueryCatIO
         }
 
         return null;
+    }
+
+    /// <inheritdoc />
+    public async Task<VariantValue> CallFunctionAsync(long token, string function_name, FunctionCallArguments? call_args, int object_handle,
+        CancellationToken cancellationToken = default)
+    {
+        await BeforeCallAsync(token, nameof(CallFunctionAsync), cancellationToken);
+        call_args ??= new FunctionCallArguments();
+
+        var func = _executionThread.FunctionsManager.FindByNameFirst(function_name);
+        var frame =_executionThread.Stack.CreateFrame();
+        try
+        {
+            // Format frame.
+            var positionalIndex = 0;
+            var positional = call_args.Positional ?? new List<VariantValue>();
+            var named = call_args.Named ?? new Dictionary<string, VariantValue>();
+
+            foreach (var funcArgument in func.Arguments)
+            {
+                if (positional.Count >= positionalIndex + 1)
+                {
+                    frame.Push(SdkConvert.Convert(positional[positionalIndex++]));
+                    continue;
+                }
+
+                if (named.TryGetValue(funcArgument.Name, out var value))
+                {
+                    frame.Push(SdkConvert.Convert(value));
+                }
+                else
+                {
+                    frame.Push(funcArgument.DefaultValue);
+                }
+            }
+
+            // In PluginFunction we cannot determine arguments, so push positional and named as is.
+            if (func.Arguments.Length == 0)
+            {
+                foreach (var value in positional)
+                {
+                    frame.Push(SdkConvert.Convert(value));
+                }
+                foreach (var value in named)
+                {
+                    frame.Push(SdkConvert.Convert(value.Value));
+                }
+            }
+
+            var result = await FunctionCaller.CallAsync(
+                func.Delegate,
+                _executionThread,
+                cancellationToken);
+
+            var resultObject = AddObjectToStorage(result);
+            if (resultObject != null)
+            {
+                return resultObject;
+            }
+
+            return SdkConvert.Convert(result);
+        }
+        finally
+        {
+            frame.Dispose();
+        }
     }
 
     /// <inheritdoc />

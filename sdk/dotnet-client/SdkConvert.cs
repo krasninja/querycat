@@ -488,4 +488,22 @@ public static class SdkConvert
             SeekOrigin.End => CursorSeekOrigin.END,
             _ => throw new ArgumentOutOfRangeException(nameof(target))
         };
+
+    public static Sdk.FunctionCallArguments Convert(Backend.Core.Functions.FunctionCallArguments target)
+        => new(
+            named: target.Named.ToDictionary(a => a.Key, a => Convert(a.Value)),
+            positional: target.Positional.Select(Convert).ToList()
+        );
+
+    public static Sdk.FunctionCallArgumentsTypes Convert(Backend.Core.Functions.FunctionCallArgumentsTypes target)
+        => new(
+            named: target.Named.ToDictionary(a => a.Key, a => Convert(a.Value)),
+            positional: target.Positional.ToDictionary(a => a.Key, a => Convert(a.Value))
+        );
+    
+    public static Backend.Core.Functions.FunctionCallArgumentsTypes Convert(Sdk.FunctionCallArgumentsTypes target)
+        => new(
+            named: (target.Named ?? new Dictionary<string, Sdk.DataType>()).ToDictionary(a => a.Key, a => Convert(a.Value)).ToArray(),
+            positional: (target.Positional ?? new Dictionary<int, Sdk.DataType>()).ToDictionary(a => a.Key, a => Convert(a.Value)).ToArray()
+        );
 }

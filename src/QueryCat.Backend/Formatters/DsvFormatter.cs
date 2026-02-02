@@ -49,23 +49,23 @@ internal class DsvFormatter : IRowsFormatter
             throw new QueryCatException(Resources.Errors.DelimiterOneCharacter);
         }
 
-        var rowsSource = new DsvFormatter(
+        var rowsFormatter = new DsvFormatter(
             delimiter: delimiter.Length == 1 ? delimiter[0] : null,
             hasHeader: hasHeader,
             quoteStrings: quoteStrings,
             skipEmptyLines: skipEmptyLines,
             delimiterCanRepeat: delimiterCanRepeat);
-        return VariantValue.CreateFromObject(rowsSource);
+        return VariantValue.CreateFromObject(rowsFormatter);
     }
 
     [Description("TSV formatter.")]
-    [FunctionSignature("tsv(has_header?: boolean, quote_strings?: boolean = false): object")]
+    [FunctionSignature("tsv(has_header?: boolean, quote_strings?: boolean = false): object<IRowsFormatter>")]
     public static VariantValue Tsv(IExecutionThread thread)
     {
         var hasHeader = thread.Stack[0].AsBooleanNullable;
         var quoteStrings = thread.Stack[1].AsBoolean;
-        var rowsSource = new DsvFormatter('\t', hasHeader, quoteStrings: quoteStrings);
-        return VariantValue.CreateFromObject(rowsSource);
+        var rowsFormatter = new DsvFormatter('\t', hasHeader, quoteStrings: quoteStrings);
+        return VariantValue.CreateFromObject(rowsFormatter);
     }
 
     public DsvFormatter(
@@ -118,8 +118,8 @@ internal class DsvFormatter : IRowsFormatter
         {
             if (_delimiter.HasValue)
             {
-                options.InputOptions.DelimiterStreamReaderOptions.Delimiters = new[] { _delimiter.Value };
-                options.InputOptions.DelimiterStreamReaderOptions.DelimitersCanRepeat = _delimiterCanRepeat;
+                options.InputOptions.DelimiterStreamReaderOptions.Delimiters = [_delimiter.Value];
+                options.InputOptions.DelimiterStreamReaderOptions.SkipRepeatedDelimiters = _delimiterCanRepeat;
                 options.InputOptions.DelimiterStreamReaderOptions.SkipEmptyLines = _skipEmptyLines;
             }
             options.InputOptions.DelimiterStreamReaderOptions.PreferredDelimiter = ',';
