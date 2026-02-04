@@ -26,27 +26,42 @@ public sealed class PluginInfo
     /// <summary>
     /// Full URI to plugin file. It should be used to download a plugin.
     /// </summary>
-    public string Uri { get; set; } = string.Empty;
+    public string Uri { get; internal set; } = string.Empty;
 
     /// <summary>
     /// Plugin version. It will be "0.0" if not defined.
     /// </summary>
-    public Version Version { get; set; } = new();
+    public Version Version { get; internal set; } = new();
 
     /// <summary>
     /// Plugin platform.
     /// </summary>
-    public string Platform { get; set; } = Application.PlatformUnknown;
+    public string Platform { get; internal set; } = Application.PlatformUnknown;
 
     /// <summary>
     /// Plugin architecture.
     /// </summary>
-    public string Architecture { get; set; } = Application.ArchitectureUnknown;
+    public string Architecture { get; internal set; } = Application.ArchitectureUnknown;
 
     /// <summary>
     /// Is plugin installed and ready to use.
     /// </summary>
-    public bool IsInstalled { get; set; }
+    public bool IsInstalled { get; internal set; }
+
+    /// <summary>
+    /// Plugin file size.
+    /// </summary>
+    public long Size { get; internal set; }
+
+    /// <summary>
+    /// Plugin description.
+    /// </summary>
+    public string Description { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Plugin icon URI.
+    /// </summary>
+    public string IconUri { get; set; } = string.Empty;
 
     private PluginInfo(string name)
     {
@@ -110,6 +125,13 @@ public sealed class PluginInfo
     {
         return pluginInfo.Name == this.Name && pluginInfo.Version == this.Version
             && pluginInfo.Platform.Equals(this.Platform) && pluginInfo.Architecture.Equals(this.Architecture);
+    }
+
+    public static IEnumerable<PluginInfo> FilterOnlyLatest(IEnumerable<PluginInfo> list)
+    {
+        return list
+            .GroupBy(k => Tuple.Create(k.Name, k.Platform, k.Architecture), v => v)
+            .Select(v => v.MaxBy(q => q.Version))!;
     }
 
     /// <inheritdoc />
