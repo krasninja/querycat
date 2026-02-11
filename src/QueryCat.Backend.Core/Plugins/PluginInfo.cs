@@ -34,6 +34,11 @@ public sealed class PluginInfo
     public Version Version { get; internal set; } = new();
 
     /// <summary>
+    /// Development plugin version. We prefer it over release versions.
+    /// </summary>
+    public bool DevelopmentVersion => Version.Major == 0 && Version.Minor == 0 && Version.Build < 0;
+
+    /// <summary>
     /// Plugin platform.
     /// </summary>
     public string Platform { get; internal set; } = Application.PlatformUnknown;

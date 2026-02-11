@@ -79,7 +79,11 @@ public abstract class PluginsLoader : IPluginsLoader
             // If there is duplicate we try to load the latest version only.
             if (dict.TryGetValue(plugin.PluginName, out var existing))
             {
-                if (plugin.PluginVersion > existing.PluginInfo.Version)
+                if (existing.PluginInfo.DevelopmentVersion)
+                {
+                    return;
+                }
+                if (plugin.PluginVersion > existing.PluginInfo.Version || plugin.PluginInfo.DevelopmentVersion)
                 {
                     dict[plugin.PluginName] = plugin;
                 }
