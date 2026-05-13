@@ -72,6 +72,7 @@ internal partial class WebServer
         var result = await _executionThread.RunAsync(_selectFilesQuery, cancellationToken: cancellationToken);
         _logger.LogInformation("[{Address}] Dir: {Path}", request.RemoteEndPoint.Address, path);
         await WriteValueAsync(result, request, response, cancellationToken);
+        result.Close();
     }
 
     private async Task Files_ServeFile(string file, HttpListenerRequest request, HttpListenerResponse response, CancellationToken cancellationToken)

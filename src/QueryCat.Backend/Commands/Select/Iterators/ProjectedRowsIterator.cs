@@ -72,5 +72,16 @@ internal sealed class ProjectedRowsIterator : IRowsIterator, IRowsIteratorParent
     public IEnumerable<IRowsSchema> GetChildren()
     {
         yield return _rowsIterator;
+
+        foreach (IFuncUnit funcUnit in _funcUnits)
+        {
+            if (funcUnit is IRowsIteratorParent funcUnitDelegate)
+            {
+                foreach (var child in funcUnitDelegate.GetChildren())
+                {
+                    yield return child;
+                }
+            }
+        }
     }
 }

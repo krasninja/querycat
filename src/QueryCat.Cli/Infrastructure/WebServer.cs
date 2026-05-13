@@ -226,8 +226,8 @@ internal sealed partial class WebServer
         var queryData = GetQueryDataFromRequest(request);
         _logger.LogInformation("[{Address}] Query: {QueryData}", request.RemoteEndPoint.Address, queryData);
         var lastResult = await _executionThread.RunAsync(queryData.Query, queryData.ParametersAsDict, cancellationToken);
-
         await WriteValueAsync(lastResult, request, response, cancellationToken);
+        lastResult.Close();
     }
 
     private async Task HandleSchemaApiActionAsync(HttpListenerRequest request, HttpListenerResponse response, CancellationToken cancellationToken)
@@ -260,7 +260,8 @@ internal sealed partial class WebServer
         try
         {
             thread.StatementExecuted += ThreadOnStatementExecuted;
-            await _executionThread.RunAsync(query.Query, query.ParametersAsDict, cancellationToken);
+            var result = await _executionThread.RunAsync(query.Query, query.ParametersAsDict, cancellationToken);
+            result.Close();
         }
         finally
         {

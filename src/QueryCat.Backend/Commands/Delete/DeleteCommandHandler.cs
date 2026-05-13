@@ -6,7 +6,7 @@ using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Commands.Delete;
 
-internal sealed class DeleteCommandHandler : IFuncUnit, IAsyncDisposable
+internal sealed class DeleteCommandHandler : IFuncUnit
 {
     private readonly SelectCommandContext _selectCommandContext;
     private readonly IRowsInputDelete _rowsInputDelete;
@@ -34,7 +34,4 @@ internal sealed class DeleteCommandHandler : IFuncUnit, IAsyncDisposable
 
         return new VariantValue(deleteCount);
     }
-
-    /// <inheritdoc />
-    public ValueTask DisposeAsync() => _selectCommandContext.CloseAsync();
 }

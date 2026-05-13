@@ -9,7 +9,9 @@ using QueryCat.Backend.Core.Execution;
 using QueryCat.Backend.Core.Functions;
 using QueryCat.Backend.Core.Plugins;
 using QueryCat.Backend.Core.Types;
+#if NET8_0 || NET9_0
 using QueryCat.Backend.Core.Utils;
+#endif
 using QueryCat.Backend.Utils;
 
 namespace QueryCat.Backend.Execution;
@@ -24,7 +26,6 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IExecu
     private readonly AstVisitor _statementsVisitor;
     private readonly Func<IExecutionScope?, IExecutionScope> _executionScopeFactory;
     private int _deepLevel;
-    private readonly List<IDisposable> _disposables = new();
 
     /// <inheritdoc />
     public IConfigStorage ConfigStorage { get; }
@@ -303,7 +304,6 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IExecu
     private async Task<VariantValue> ExecuteStatementAsync(ProgramBodyNode bodyNode, CancellationToken cancellationToken)
     {
         var bodyFuncUnit = new DefaultBodyFuncUnit(this, bodyNode);
-        _disposables.Add(bodyFuncUnit);
         var result = await bodyFuncUnit.InvokeAsync(this, cancellationToken);
 
         if (Options.UseConfig)
@@ -386,14 +386,13 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IExecu
     public Func<CancellationToken, ValueTask<VariantValue>> Prepare(string query)
     {
         var programNode = AstBuilder.BuildProgramFromString(query);
-        var bodyFuncUnit = new DefaultBodyFuncUnit(this, programNode.Body);
-        _disposables.Add(bodyFuncUnit);
 
         return async ct =>
         {
             IAsyncDisposable? @lock = null;
             try
             {
+                var bodyFuncUnit = new DefaultBodyFuncUnit(this, programNode.Body);
                 if (Options.PreventConcurrentRun)
                 {
                     @lock = await _asyncLock.LockAsync(ct);
@@ -421,10 +420,6 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IExecu
             (PluginsManager as IDisposable)?.Dispose();
             (PluginsManager.PluginsLoader as IDisposable)?.Dispose();
 #endif
-            foreach (var disposable in _disposables)
-            {
-                disposable.Dispose();
-            }
         }
     }
 
@@ -438,13 +433,6 @@ public class DefaultExecutionThread : IExecutionThread<ExecutionOptions>, IExecu
     protected virtual async ValueTask DisposeAsyncCore()
     {
         await _asyncLock.DisposeAsync();
-        foreach (var disposable in _disposables)
-        {
-            if (disposable is IAsyncDisposable asyncDisposable)
-            {
-                await asyncDisposable.DisposeAsync();
-            }
-        }
     }
 
     /// <inheritdoc />

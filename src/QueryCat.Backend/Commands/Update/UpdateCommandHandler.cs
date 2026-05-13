@@ -5,7 +5,7 @@ using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Commands.Update;
 
-internal sealed class UpdateCommandHandler : IFuncUnit, IAsyncDisposable
+internal sealed class UpdateCommandHandler : IFuncUnit
 {
     private readonly SelectCommandContext _selectCommandContext;
     private readonly UpdateSetter[] _setters;
@@ -44,7 +44,4 @@ internal sealed class UpdateCommandHandler : IFuncUnit, IAsyncDisposable
 
         return new VariantValue(updateCount);
     }
-
-    /// <inheritdoc />
-    public ValueTask DisposeAsync() => _selectCommandContext.CloseAsync();
 }

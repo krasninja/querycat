@@ -8,10 +8,10 @@ namespace QueryCat.Backend.Core.Utils;
 /// </summary>
 /// <typeparam name="TKey">Key type.</typeparam>
 /// <typeparam name="TValue">Value type.</typeparam>
-internal sealed class SimpleLruDictionary<TKey, TValue> : IDictionary<TKey, TValue> where TKey : notnull
+internal sealed class SimpleLruDictionary<TKey, TValue> : IDictionary<TKey, TValue> where TKey : notnull where TValue : class
 {
     private readonly int _capacity;
-    private readonly IDictionary<TKey, TValue> _map;
+    private readonly IDictionary<TKey, WeakReference<TValue>> _map;
     private readonly LinkedList<TKey> _lruList = [];
 
     /// <inheritdoc />
@@ -23,12 +23,20 @@ internal sealed class SimpleLruDictionary<TKey, TValue> : IDictionary<TKey, TVal
     /// <inheritdoc />
     public TValue this[TKey key]
     {
-        get => _map[key]!;
+        get
+        {
+            if (_map.TryGetValue(key, out var weakRef) && weakRef.TryGetTarget(out var target))
+            {
+                return target;
+            }
+            throw new KeyNotFoundException($"The key '{key}' was not found or the value has been garbage collected.");
+        }
+
         set
         {
-            if (!_map.TryAdd(key, value))
+            if (!_map.TryAdd(key, new WeakReference<TValue>(value)))
             {
-                _map[key] = value;
+                _map[key] = new WeakReference<TValue>(value);
             }
             else
             {
@@ -46,25 +54,27 @@ internal sealed class SimpleLruDictionary<TKey, TValue> : IDictionary<TKey, TVal
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(capacity, nameof(capacity));
         _capacity = capacity;
-        _map = new ConcurrentDictionary<TKey, TValue>();
+        _map = new ConcurrentDictionary<TKey, WeakReference<TValue>>();
     }
 
     /// <inheritdoc />
     public ICollection<TKey> Keys => _map.Keys;
 
     /// <inheritdoc />
-    public ICollection<TValue> Values => _map.Values;
+    public ICollection<TValue> Values =>
+        _map.Values
+            .Select(wr => wr.TryGetTarget(out var t) ? t : null)
+            .Where(v => v != null)
+            .Select(v => v!)
+            .ToList();
 
     /// <inheritdoc />
-    public void Add(KeyValuePair<TKey, TValue> item)
-    {
-        Add(item.Key, item.Value);
-    }
+    public void Add(KeyValuePair<TKey, TValue> item) => Add(item.Key, item.Value);
 
     /// <inheritdoc />
     public void Add(TKey key, TValue value)
     {
-        _map.Add(key, value);
+        _map.Add(key, new WeakReference<TValue>(value));
         _lruList.AddLast(key);
         Evict();
     }
@@ -87,7 +97,10 @@ internal sealed class SimpleLruDictionary<TKey, TValue> : IDictionary<TKey, TVal
     {
         foreach (var keyValue in _map)
         {
-            array[arrayIndex++] = new KeyValuePair<TKey, TValue>(keyValue.Key, keyValue.Value!);
+            if (keyValue.Value.TryGetTarget(out var target))
+            {
+                array[arrayIndex++] = new KeyValuePair<TKey, TValue>(keyValue.Key, target);
+            }
         }
     }
 
@@ -102,12 +115,20 @@ internal sealed class SimpleLruDictionary<TKey, TValue> : IDictionary<TKey, TVal
             _lruList.Remove(key);
             return true;
         }
-
         return false;
     }
 
     /// <inheritdoc />
-    public bool TryGetValue(TKey key, out TValue value) =>_map.TryGetValue(key, out value!);
+    public bool TryGetValue(TKey key, out TValue value)
+    {
+        if (_map.TryGetValue(key, out var weakRef) && weakRef.TryGetTarget(out var target))
+        {
+            value = target;
+            return true;
+        }
+        value = null!;
+        return false;
+    }
 
     private void Evict()
     {
@@ -129,7 +150,16 @@ internal sealed class SimpleLruDictionary<TKey, TValue> : IDictionary<TKey, TVal
     }
 
     /// <inheritdoc />
-    public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator() => _map.GetEnumerator();
+    public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
+    {
+        foreach (var keyValue in _map)
+        {
+            if (keyValue.Value.TryGetTarget(out var target))
+            {
+                yield return new KeyValuePair<TKey, TValue>(keyValue.Key, target);
+            }
+        }
+    }
 
     /// <inheritdoc />
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();

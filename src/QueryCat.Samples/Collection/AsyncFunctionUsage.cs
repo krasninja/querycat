@@ -32,5 +32,6 @@ internal class AsyncFunctionUsage : BaseUsage
 
         var result = await executionThread.RunAsync("async_demo()");
         Console.WriteLine(result.ToString(CultureInfo.InvariantCulture)); // Hello World!
+        result.Close();
     }
 }

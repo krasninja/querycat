@@ -9,7 +9,7 @@ using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Backend.Commands.Select.Inputs;
 
-internal sealed class SetKeysRowsInput : IRowsInputUpdate, IRowsInputDelete
+internal sealed class SetKeysRowsInput : IRowsInputUpdate, IRowsInputDelete, IRowsIteratorParent
 {
     private sealed record ConditionJoint(
         SelectQueryCondition Condition,
@@ -281,6 +281,12 @@ internal sealed class SetKeysRowsInput : IRowsInputUpdate, IRowsInputDelete
            || operation == VariantValue.Operation.IsNull
            || operation == VariantValue.Operation.NotLike
            || operation == VariantValue.Operation.NotSimilar;
+
+    /// <inheritdoc />
+    public IEnumerable<IRowsSchema> GetChildren()
+    {
+        yield return _rowsInput;
+    }
 
     /// <inheritdoc />
     public override string ToString() => $"Id = {_id}, RowsInput = {_rowsInput.GetType().Name}";

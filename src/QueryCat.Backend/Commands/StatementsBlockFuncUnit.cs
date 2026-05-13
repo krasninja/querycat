@@ -5,11 +5,10 @@ using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Commands;
 
-internal class StatementsBlockFuncUnit : IFuncUnit, IExecutionFlowFuncUnit, IDisposable, IAsyncDisposable
+internal class StatementsBlockFuncUnit : IFuncUnit, IExecutionFlowFuncUnit
 {
     private readonly AstVisitor _statementsVisitor;
     private readonly StatementNode[] _statements;
-    private readonly HashSet<object> _disposablesList = new();
 
     /// <inheritdoc />
     public DataType OutputType => DataType.Void;
@@ -40,10 +39,6 @@ internal class StatementsBlockFuncUnit : IFuncUnit, IExecutionFlowFuncUnit, IDis
 
             // Evaluate the command.
             var commandContext = await _statementsVisitor.RunAndReturnAsync(currentStatement, cancellationToken);
-            if (commandContext is IDisposable || commandContext is IAsyncDisposable)
-            {
-                _disposablesList.Add(commandContext);
-            }
 
             // Invoke statement.
             result = await InvokeStatementAsync(thread, commandContext, currentStatement, cancellationToken);
@@ -72,53 +67,4 @@ internal class StatementsBlockFuncUnit : IFuncUnit, IExecutionFlowFuncUnit, IDis
         }
         return result;
     }
-
-    #region Dispose
-
-    protected virtual void Dispose(bool disposing)
-    {
-        if (disposing)
-        {
-            foreach (var obj in _disposablesList)
-            {
-                if (obj is IDisposable disposable)
-                {
-                    disposable.Dispose();
-                }
-            }
-            _disposablesList.Clear();
-        }
-    }
-
-    /// <inheritdoc />
-    public void Dispose()
-    {
-        Dispose(true);
-        GC.SuppressFinalize(this);
-    }
-
-    protected virtual async ValueTask DisposeAsyncCore()
-    {
-        foreach (var obj in _disposablesList)
-        {
-            if (obj is IAsyncDisposable asyncDisposable)
-            {
-                await asyncDisposable.DisposeAsync();
-            }
-            else if (obj is IDisposable disposable)
-            {
-                disposable.Dispose();
-            }
-        }
-        _disposablesList.Clear();
-    }
-
-    /// <inheritdoc />
-    public async ValueTask DisposeAsync()
-    {
-        await DisposeAsyncCore();
-        GC.SuppressFinalize(this);
-    }
-
-    #endregion
 }

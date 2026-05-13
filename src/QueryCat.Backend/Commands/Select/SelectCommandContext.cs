@@ -269,7 +269,7 @@ internal sealed class SelectCommandContext(SelectQueryNode queryNode) : CommandC
     /// <summary>
     /// Close iterators and child resource.
     /// </summary>
-    public async ValueTask CloseAsync(CancellationToken cancellationToken = default)
+    public async ValueTask CloseInputsAsync(CancellationToken cancellationToken = default)
     {
         foreach (var input in _inputs)
         {
@@ -277,7 +277,7 @@ internal sealed class SelectCommandContext(SelectQueryNode queryNode) : CommandC
         }
         foreach (var childContext in ChildContexts)
         {
-            await childContext.CloseAsync(cancellationToken);
+            await childContext.CloseInputsAsync(cancellationToken);
         }
     }
 }

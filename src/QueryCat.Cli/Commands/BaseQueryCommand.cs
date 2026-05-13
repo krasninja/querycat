@@ -86,7 +86,7 @@ internal abstract class BaseQueryCommand : BaseCommand
             var installed = await QueryCat.Cli.Commands.Options.ApplicationOptions.InstallPluginsProxyAsync(cancellationToken: cancellationToken);
             if (installed)
             {
-                await executionThread.RunAsync(query, cancellationToken: cancellationToken);
+                result = await executionThread.RunAsync(query, cancellationToken: cancellationToken);
             }
         }
 #else
@@ -94,6 +94,7 @@ internal abstract class BaseQueryCommand : BaseCommand
 #endif
 
         await WriteAsync(executionThread, result, rowsOutput, cancellationToken);
+        result.Close();
     }
 
     private static async Task<VariantValue> RunQueryAsync(

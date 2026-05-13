@@ -21,5 +21,6 @@ internal class CustomInlineFunctionUsage : BaseUsage
 
         var result = await executionThread.RunAsync("secret('num:', 10.25::numeric)");
         Console.WriteLine(result.ToString(CultureInfo.InvariantCulture)); // num:10.25
+        result.Close();
     }
 }

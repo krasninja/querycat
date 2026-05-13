@@ -5,7 +5,7 @@ using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Commands;
 
-internal sealed class FuncUnitDelegate(Func<IExecutionThread, CancellationToken, ValueTask<VariantValue>> func, DataType outputType) : IFuncUnit
+internal sealed class FuncUnitDelegate(Func<IExecutionThread, CancellationToken, ValueTask<VariantValue>> func, DataType outputType) : IFuncUnit, IRowsIteratorParent
 {
     public IReadOnlyList<IRowsIterator>? SubQueryIterators { get; set; }
 
@@ -16,6 +16,9 @@ internal sealed class FuncUnitDelegate(Func<IExecutionThread, CancellationToken,
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public ValueTask<VariantValue> InvokeAsync(IExecutionThread thread, CancellationToken cancellationToken = default)
         => func.Invoke(thread, cancellationToken);
+
+    /// <inheritdoc />
+    public IEnumerable<IRowsSchema> GetChildren() => SubQueryIterators ?? Enumerable.Empty<IRowsSchema>();
 
     /// <inheritdoc />
     public override string ToString() => nameof(FuncUnitDelegate);

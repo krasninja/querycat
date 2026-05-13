@@ -11,12 +11,15 @@ internal static class IndentedStringBuilderUtils
         IndentedStringBuilder stringBuilder,
         IFuncUnit funcUnit)
     {
-        if (funcUnit is FuncUnitDelegate funcUnitDelegate && funcUnitDelegate.SubQueryIterators != null)
+        if (funcUnit is IRowsIteratorParent funcUnitDelegate)
         {
             stringBuilder.IncreaseIndent();
-            foreach (var rowsIterator in funcUnitDelegate.SubQueryIterators)
+            foreach (var rowsIterator in funcUnitDelegate.GetChildren())
             {
-                rowsIterator.Explain(stringBuilder);
+                if (rowsIterator is IRowsIterator rowsIteratorDelegate)
+                {
+                    rowsIteratorDelegate.Explain(stringBuilder);
+                }
             }
             stringBuilder.DecreaseIndent();
         }
