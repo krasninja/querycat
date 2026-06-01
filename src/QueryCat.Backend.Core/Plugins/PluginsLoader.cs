@@ -113,7 +113,7 @@ public abstract class PluginsLoader : IPluginsLoader
                 if (IsCorrectPluginFile(pluginFile))
                 {
                     var plugin = PluginInfo.CreateFromUniversalName(pluginFile);
-                    if (options.Filter.Length > 0 && Array.IndexOf(options.Filter, plugin.Name) == -1)
+                    if (options.Filter.Length > 0 && IsMatchToFilter(plugin.Name, options.Filter))
                     {
                         continue;
                     }
@@ -124,6 +124,18 @@ public abstract class PluginsLoader : IPluginsLoader
         }
 
         return options.SkipDuplicates ? plugins.Values.Select(v => v.Path) : files;
+    }
+
+    private static bool IsMatchToFilter(string target, string[] filters)
+    {
+        foreach (var filter in filters)
+        {
+            if (target.Contains(filter, StringComparison.InvariantCultureIgnoreCase))
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
     /// <summary>
