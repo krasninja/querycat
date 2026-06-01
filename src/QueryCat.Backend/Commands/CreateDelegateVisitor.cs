@@ -217,7 +217,7 @@ internal partial class CreateDelegateVisitor : AstVisitor
         await ResolveTypesVisitor.VisitAsync(node, cancellationToken);
 
         var valueAction = NodeIdFuncMap[node.ExpressionNode.Id];
-        if (node.InExpressionValuesNodes is InExpressionValuesNode inExpressionValuesNode)
+        if (node.InExpressionValuesNodes is ListValuesNode inExpressionValuesNode)
         {
             var actions = inExpressionValuesNode.ValuesNodes.Select(v => NodeIdFuncMap[v.Id]).ToArray();
             NodeIdFuncMap[node.Id] = new InArrayFuncUnit(valueAction, actions, node.IsNot, node.Type);

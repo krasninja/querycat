@@ -70,7 +70,7 @@ internal class QueryAstVisitor : AstVisitor
     }
 
     /// <inheritdoc />
-    public override ValueTask VisitAsync(InExpressionValuesNode node, CancellationToken cancellationToken)
+    public override ValueTask VisitAsync(ListValuesNode node, CancellationToken cancellationToken)
     {
         return ValueTask.CompletedTask;
     }

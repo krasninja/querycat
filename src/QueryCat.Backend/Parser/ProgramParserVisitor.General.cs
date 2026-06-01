@@ -144,7 +144,7 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
     }
 
     /// <inheritdoc />
-    public override IAstNode VisitExpressionBinaryInArray(QueryCatParser.ExpressionBinaryInArrayContext context)
+    public override IAstNode VisitExpressionBinaryInList(QueryCatParser.ExpressionBinaryInListContext context)
     {
         var left = (ExpressionNode)Visit(context.left);
         var right = (ExpressionNode)Visit(context.right);
@@ -270,8 +270,22 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
     };
 
     /// <inheritdoc />
+    public override IAstNode VisitList(QueryCatParser.ListContext context)
+        => new ListValuesNode(this.Visit<ExpressionNode>(context.expression()));
+
+    /// <inheritdoc />
     public override IAstNode VisitArray(QueryCatParser.ArrayContext context)
-        => new InExpressionValuesNode(this.Visit<ExpressionNode>(context.expression()));
+        => new ArrayValuesNode(this.Visit<ExpressionNode>(context.expression()));
+
+    /// <inheritdoc />
+    public override IAstNode VisitKeyValue(QueryCatParser.KeyValueContext context)
+        => new KeyValueNode(
+            this.Visit<LiteralNode>(context.key),
+            this.Visit<ExpressionNode>(context.value));
+
+    /// <inheritdoc />
+    public override IAstNode VisitMap(QueryCatParser.MapContext context)
+        => new MapNode(context.keyValue().Select(this.Visit<KeyValueNode>).ToArray());
 
     /// <inheritdoc />
     public override IAstNode VisitIdentifierSimpleNoQuotes(QueryCatParser.IdentifierSimpleNoQuotesContext context)
