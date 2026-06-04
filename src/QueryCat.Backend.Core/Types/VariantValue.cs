@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using QueryCat.Backend.Core.Data;
 
 namespace QueryCat.Backend.Core.Types;
 
@@ -607,6 +608,33 @@ public readonly partial struct VariantValue :
         }
         throw new InvalidOperationException(
             string.Format(Resources.Errors.ObjectInvalidType, sourceObj.GetType().Name, typeof(T).Name));
+    }
+
+    /// <summary>
+    /// Close and free the internal resources.
+    /// </summary>
+    public void Close()
+    {
+        if (Type == DataType.Object && AsObjectUnsafe is IRowsSchema iterator)
+        {
+            void CloseIteratorInternal(IRowsSchema localIterator)
+            {
+                if (localIterator is IRowsIteratorParent localIteratorParent)
+                {
+                    foreach (var child in localIteratorParent.GetChildren())
+                    {
+                        CloseIteratorInternal(child);
+                    }
+                }
+                (localIterator as IDisposable)?.Dispose();
+            }
+
+            CloseIteratorInternal(iterator);
+        }
+        else if (Type == DataType.Object && AsObjectUnsafe is IDisposable disposable)
+        {
+            disposable.Dispose();
+        }
     }
 
     /// <summary>

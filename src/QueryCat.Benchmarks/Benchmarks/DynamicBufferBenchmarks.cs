@@ -1,6 +1,4 @@
 using BenchmarkDotNet.Attributes;
-using DotNext.Buffers;
-using DotNext.IO;
 using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.Benchmarks.Benchmarks;
@@ -29,18 +27,6 @@ public class DynamicBufferBenchmarks
         {
             taken = Math.Min(remaining, _chunk.Length);
             dynamicBuffer.Write(_chunk);
-        }
-    }
-
-    [Benchmark]
-    public void WriteToSparseBuffer()
-    {
-        var buffer = new SparseBufferWriter<byte>(4096, SparseBufferGrowth.Linear);
-        var ms = buffer.AsStream(false);
-        for (int remaining = TotalCount, taken; remaining > 0; remaining -= taken)
-        {
-            taken = Math.Min(remaining, _chunk.Length);
-            ms.Write(_chunk, 0, taken);
         }
     }
 }

@@ -1,0 +1,5 @@
+expected: |
+  {a:1,b:string}
+query: |
+  declare dict := MAP [ 'a':1, 'b':'string' ];
+  SELECT dict;

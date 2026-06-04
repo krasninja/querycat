@@ -75,7 +75,7 @@ internal sealed class StatementsVisitor : CreateDelegateVisitor
     /// <inheritdoc />
     public override async ValueTask VisitAsync(BlockExpressionNode node, CancellationToken cancellationToken)
     {
-        await using var bodyFuncUnit = new StatementsBlockFuncUnit(this, node.Statements.ToArray());
+        var bodyFuncUnit = new StatementsBlockFuncUnit(this, node.Statements.ToArray());
         NodeIdFuncMap[node.Id] = bodyFuncUnit;
     }
 

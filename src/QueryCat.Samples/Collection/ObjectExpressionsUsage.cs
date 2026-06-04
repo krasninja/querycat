@@ -34,6 +34,7 @@ internal class ObjectExpressionsUsage : BaseUsage
                 ["email"] = VariantValue.CreateFromObject(email),
             });
         Console.WriteLine(result1.ToString(CultureInfo.InvariantCulture)); // test2@example.com
+        result1.Close();
 
         var result2 = await executionThread.RunAsync(
             "select count(*) from email.Recipients;",
@@ -44,5 +45,6 @@ internal class ObjectExpressionsUsage : BaseUsage
         var result2Frame = (await result2.AsRequired<IRowsIterator>().ToFrameAsync())
             .GetFirstValue();
         Console.WriteLine(result2Frame.ToString(CultureInfo.InvariantCulture)); // 3
+        result2.Close();
     }
 }

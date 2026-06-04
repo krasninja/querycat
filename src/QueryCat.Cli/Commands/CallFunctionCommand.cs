@@ -43,6 +43,7 @@ internal sealed class CallFunctionCommand : BaseCommand
             var result = await root.Thread.FunctionsManager.CallFunctionAsync(
                 function, root.Thread, callArgs, cancellationToken);
             await WriteAsync(root.Thread, result, root.RowsOutput, cancellationToken);
+            result.Close();
         });
     }
 }

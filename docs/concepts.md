@@ -26,6 +26,8 @@ There are following column data types are supported:
 | TIMESTAMP | | Date and time values. |
 | STRING | TEXT | Text data. |
 | INTERVAL | | | Time interval. |
+| ARRAY | | | List of variant values. |
+| MAP | | | Key-value dictionary. |
 | BLOB | | | Binary large object. |
 | OBJECT | | |
 | NULL | | | Special type that represents "nothing" value. |

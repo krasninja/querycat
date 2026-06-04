@@ -35,6 +35,7 @@ internal class PluginListCommand : BaseCommand
             }
             var result = await root.Thread.RunAsync(query, cancellationToken: cancellationToken);
             await WriteAsync(root.Thread, result, root.RowsOutput, cancellationToken);
+            result.Close();
         });
     }
 }

@@ -130,7 +130,22 @@ internal abstract class AstVisitor
         return ValueTask.CompletedTask;
     }
 
-    public virtual ValueTask VisitAsync(InExpressionValuesNode node, CancellationToken cancellationToken)
+    public virtual ValueTask VisitAsync(ListValuesNode node, CancellationToken cancellationToken)
+    {
+        return ValueTask.CompletedTask;
+    }
+
+    public virtual ValueTask VisitAsync(ArrayValuesNode node, CancellationToken cancellationToken)
+    {
+        return ValueTask.CompletedTask;
+    }
+
+    public virtual ValueTask VisitAsync(KeyValueNode node, CancellationToken cancellationToken)
+    {
+        return ValueTask.CompletedTask;
+    }
+
+    public virtual ValueTask VisitAsync(MapValuesNode valuesNode, CancellationToken cancellationToken)
     {
         return ValueTask.CompletedTask;
     }

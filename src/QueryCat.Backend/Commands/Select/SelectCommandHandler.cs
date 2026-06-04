@@ -3,7 +3,7 @@ using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Commands.Select;
 
-internal sealed class SelectCommandHandler : IFuncUnit, IAsyncDisposable
+internal sealed class SelectCommandHandler : IFuncUnit
 {
     public SelectCommandContext SelectCommandContext { get; }
 
@@ -36,7 +36,4 @@ internal sealed class SelectCommandHandler : IFuncUnit, IAsyncDisposable
             }
         }
     }
-
-    /// <inheritdoc />
-    public ValueTask DisposeAsync() => SelectCommandContext.CloseAsync();
 }

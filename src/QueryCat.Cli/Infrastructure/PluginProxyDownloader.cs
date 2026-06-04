@@ -11,6 +11,9 @@ namespace QueryCat.Cli.Infrastructure;
 internal sealed class PluginProxyDownloader
 {
     private const string RepositoryUrl = @"https://github.com/krasninja/querycat/releases/download/";
+
+    private static readonly HttpClient _httpClient = new();
+
     private readonly string _proxyFileName;
     private readonly ILogger _logger = Application.LoggerFactory.CreateLogger(nameof(PluginProxyDownloader));
 
@@ -21,14 +24,12 @@ internal sealed class PluginProxyDownloader
 
     public async Task DownloadAsync(string pluginsProxyLocalFile, CancellationToken cancellationToken = default)
     {
-        using var httpClient = new HttpClient();
-
         // Download.
         var pluginsProxyRemoteFile = GetLinkToPluginsProxyFile();
-        _logger.LogDebug("Download proxy with URI {Uri}.", pluginsProxyRemoteFile);
+        _logger.LogInformation("Downloading proxy with URI {Uri}.", pluginsProxyRemoteFile);
         var tempPath = Path.GetTempPath();
         var archiveFile = await FilesUtils.DownloadFileAsync(
-            ct => httpClient.GetStreamAsync(pluginsProxyRemoteFile, ct),
+            ct => _httpClient.GetStreamAsync(pluginsProxyRemoteFile, ct),
             Path.Combine(tempPath, Path.GetFileName(pluginsProxyRemoteFile.LocalPath)),
             cancellationToken);
         _logger.LogDebug("Temporary archive file {File}.", archiveFile);
@@ -81,12 +82,12 @@ internal sealed class PluginProxyDownloader
         }
         else if (archiveFile.EndsWith(".zip"))
         {
-            using var zip = ZipFile.OpenRead(archiveFile);
+            await using var zip = await ZipFile.OpenReadAsync(archiveFile, cancellationToken);
             foreach (var entry in zip.Entries)
             {
                 if (entry.Name == targetFile)
                 {
-                    await using var stream = entry.Open();
+                    await using var stream = await entry.OpenAsync(cancellationToken);
                     return await CopyToMemoryStreamAsync(stream, cancellationToken);
                 }
             }

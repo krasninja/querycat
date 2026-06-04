@@ -8,13 +8,12 @@ namespace QueryCat.Backend.PluginsManager;
 /// <summary>
 /// The class allows to search, install, remove and update plugins.
 /// </summary>
-public sealed class DefaultPluginsManager : IPluginsManager, IDisposable
+public sealed class DefaultPluginsManager : IPluginsManager
 {
     private readonly IEnumerable<string> _pluginDirectories;
     private readonly PluginsLoader _pluginsLoader;
     private readonly IPluginsStorage _pluginsStorage;
     private readonly string? _platform;
-    private readonly HttpClient _httpClient = new();
     private IReadOnlyList<PluginInfo>? _remotePluginsCache;
 
     public IEnumerable<string> PluginDirectories => _pluginDirectories;
@@ -212,11 +211,5 @@ public sealed class DefaultPluginsManager : IPluginsManager, IDisposable
             Directory.CreateDirectory(mainPluginDirectory);
         }
         return mainPluginDirectory;
-    }
-
-    /// <inheritdoc />
-    public void Dispose()
-    {
-        _httpClient.Dispose();
     }
 }

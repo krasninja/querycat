@@ -178,6 +178,20 @@ internal class ResolveTypesVisitor : AstVisitor
         return ValueTask.CompletedTask;
     }
 
+    /// <inheritdoc />
+    public override ValueTask VisitAsync(ArrayValuesNode node, CancellationToken cancellationToken)
+    {
+        node.Type = DataType.Array;
+        return ValueTask.CompletedTask;
+    }
+
+    /// <inheritdoc />
+    public override ValueTask VisitAsync(MapValuesNode node, CancellationToken cancellationToken)
+    {
+        node.Type = DataType.Map;
+        return ValueTask.CompletedTask;
+    }
+
     #endregion
 
     #region Special functions

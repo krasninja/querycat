@@ -1,22 +1,22 @@
 namespace QueryCat.Backend.Ast.Nodes;
 
 /// <summary>
-/// In expression array: (1, 2, 3 + 4).
+/// In expression list: (1, 2, 3 + 4).
 /// </summary>
-internal sealed class InExpressionValuesNode : ExpressionNode
+internal class ListValuesNode : ExpressionNode
 {
     public List<ExpressionNode> ValuesNodes { get; } = new();
 
     /// <inheritdoc />
-    public override string Code => "in_values";
+    public override string Code => "list";
 
     /// <inheritdoc />
-    public InExpressionValuesNode(IEnumerable<ExpressionNode> valuesNodes)
+    public ListValuesNode(IEnumerable<ExpressionNode> valuesNodes)
     {
         ValuesNodes.AddRange(valuesNodes);
     }
 
-    public InExpressionValuesNode(InExpressionValuesNode node) :
+    public ListValuesNode(ListValuesNode node) :
         this(node.ValuesNodes.Select(v => (ExpressionNode)v.Clone()).ToList())
     {
         node.CopyTo(this);
@@ -32,7 +32,7 @@ internal sealed class InExpressionValuesNode : ExpressionNode
     }
 
     /// <inheritdoc />
-    public override object Clone() => new InExpressionValuesNode(this);
+    public override object Clone() => new ListValuesNode(this);
 
     /// <inheritdoc />
     public override ValueTask AcceptAsync(AstVisitor visitor, CancellationToken cancellationToken)

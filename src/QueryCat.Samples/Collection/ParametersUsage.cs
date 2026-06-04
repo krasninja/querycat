@@ -17,5 +17,6 @@ internal class ParametersUsage : BaseUsage
         });
 
         Console.WriteLine(result.AsString); // Hello World!
+        result.Close();
     }
 }

@@ -54,5 +54,6 @@ internal class InputClassUsage : BaseUsage
 
         var result = await executionThread.RunAsync("country_size_rows_input()");
         Console.WriteLine(await SerializeValueToStringAsync(result));
+        result.Close();
     }
 }

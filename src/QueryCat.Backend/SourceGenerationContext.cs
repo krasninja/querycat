@@ -8,4 +8,6 @@ namespace QueryCat.Backend;
 [JsonSerializable(typeof(ConfigDictionary))]
 [JsonSerializable(typeof(DateTimeOffset))]
 [JsonSerializable(typeof(AIAssistant.PromptResponseModel))]
+[JsonSerializable(typeof(PluginsManager.NginxPluginsStorage.NginxObjectDto))]
+[JsonSerializable(typeof(IList<PluginsManager.NginxPluginsStorage.NginxObjectDto>))]
 internal partial class SourceGenerationContext : JsonSerializerContext;

@@ -217,7 +217,7 @@ internal partial class CreateDelegateVisitor : AstVisitor
         await ResolveTypesVisitor.VisitAsync(node, cancellationToken);
 
         var valueAction = NodeIdFuncMap[node.ExpressionNode.Id];
-        if (node.InExpressionValuesNodes is InExpressionValuesNode inExpressionValuesNode)
+        if (node.InExpressionValuesNodes is ListValuesNode inExpressionValuesNode)
         {
             var actions = inExpressionValuesNode.ValuesNodes.Select(v => NodeIdFuncMap[v.Id]).ToArray();
             NodeIdFuncMap[node.Id] = new InArrayFuncUnit(valueAction, actions, node.IsNot, node.Type);
@@ -414,6 +414,40 @@ internal partial class CreateDelegateVisitor : AstVisitor
             {
                 throw new QueryCatException(string.Format(Resources.Errors.CannotFindTimeZone, tz));
             }
+        }
+        NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, node.Type);
+    }
+
+    /// <inheritdoc />
+    public override async ValueTask VisitAsync(ArrayValuesNode node, CancellationToken cancellationToken)
+    {
+        var nodeFuncs = node.ValuesNodes.Select(v => NodeIdFuncMap[v.Id]).ToArray();
+        async ValueTask<VariantValue> Func(IExecutionThread thread, CancellationToken ct)
+        {
+            var array = new List<VariantValue>(capacity: node.ValuesNodes.Count);
+            foreach (var valueFunc in nodeFuncs)
+            {
+                var value = await valueFunc.InvokeAsync(thread, ct);
+                array.Add(value);
+            }
+            return VariantValue.CreateFromObject(array);
+        }
+        NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, node.Type);
+    }
+
+    /// <inheritdoc />
+    public override async ValueTask VisitAsync(MapValuesNode node, CancellationToken cancellationToken)
+    {
+        var nodeFuncs = node.Map.ToDictionary(k => k.Key, v => NodeIdFuncMap[v.Value.Id]).ToDictionary();
+        async ValueTask<VariantValue> Func(IExecutionThread thread, CancellationToken ct)
+        {
+            var map = new Dictionary<VariantValue, VariantValue>(capacity: node.Map.Count);
+            foreach (var keyValue in nodeFuncs)
+            {
+                var value = await keyValue.Value.InvokeAsync(thread, ct);
+                map[keyValue.Key] = value;
+            }
+            return VariantValue.CreateFromObject(map);
         }
         NodeIdFuncMap[node.Id] = new FuncUnitDelegate(Func, node.Type);
     }

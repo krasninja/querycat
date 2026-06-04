@@ -27,11 +27,9 @@ internal sealed class S3PluginsStorage : IPluginsStorage, IDisposable
             xmlKeys.Add(xmlReader.ReadString());
         }
         // Select only latest version.
-        return xmlKeys
-            .Select(k => CreatePluginInfoFromKey(k, _bucketUri))
-            .GroupBy(k => Tuple.Create(k.Name, k.Platform, k.Architecture), v => v)
-            .Select(v => v.MaxBy(q => q.Version))
-            .ToList()!;
+        var plugins = xmlKeys
+            .Select(k => CreatePluginInfoFromKey(k, _bucketUri));
+        return PluginInfo.FilterOnlyLatest(plugins).ToList();
     }
 
     private PluginInfo CreatePluginInfoFromKey(string key, string baseUri, bool isInstalled = false)

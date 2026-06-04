@@ -171,7 +171,7 @@ internal sealed partial class SelectPlanner
             {
                 return false;
             }
-            if (inOperationExpressionNode.InExpressionValuesNodes is InExpressionValuesNode inExpressionValuesNode)
+            if (inOperationExpressionNode.InExpressionValuesNodes is ListValuesNode inExpressionValuesNode)
             {
                 var values = await Misc_CreateDelegateAsync(inExpressionValuesNode.ValuesNodes, commandContext, ct);
                 if (values.Length == 1)

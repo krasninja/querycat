@@ -38,11 +38,13 @@ The `QueryCat.Backend.Core.Data.IRowsInput` is the input rows source. It can be 
 
 The QueryCat uses this interface to read various rows sources. It calls the methods to get data. For example, you implement the rows input that reads the following table:
 
+```
 | Id  | Name  |
 | --- | ---   |
 | 1   | Alice |
 | 2   | Bob   |
 | 3   | Jack  |
+```
 
 For query `SELECT * FROM input() WHERE Id > 2` the calling sequence will be like this:
 

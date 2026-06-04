@@ -58,5 +58,12 @@ internal sealed class FilterRowsIterator : IRowsIterator, IRowsIteratorParent
     public IEnumerable<IRowsSchema> GetChildren()
     {
         yield return _rowsIterator;
+        if (_predicate is IRowsIteratorParent childIterators)
+        {
+            foreach (var iterator in childIterators.GetChildren())
+            {
+                yield return iterator;
+            }
+        }
     }
 }

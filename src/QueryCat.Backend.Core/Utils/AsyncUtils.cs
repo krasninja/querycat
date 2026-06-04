@@ -14,9 +14,13 @@ public static class AsyncUtils
     // - https://github.com/tejacques/AsyncBridge/blob/master/src/AsyncBridge/AsyncHelper.cs.
     // - https://github.com/ravendb/ravendb/blob/v7.1/src/Raven.Client/Util/AsyncHelpers.cs.
 
-    private static readonly DisposableObjectPool<ExclusiveSynchronizationContext> _synchronizationContextPool = new(
-        createFunc: () => new ExclusiveSynchronizationContext(),
-        maximumRetained: 16
+    private static readonly DisposableObjectPool<AutoResetEvent> _autoResetEventPool = new(
+        createFunc: () => new AutoResetEvent(initialState: false),
+        maximumRetained: 16,
+        beforeReturn: c =>
+        {
+            c.Reset();
+        }
     );
 
     /// <summary>
@@ -36,15 +40,25 @@ public static class AsyncUtils
         }
 
         private bool _done;
-        private readonly AutoResetEvent _workItemsWaiting = new(initialState: false);
+#pragma warning disable CA2213
+        private readonly AutoResetEvent _workItemsWaiting;
+#pragma warning restore CA2213
         private readonly ConcurrentQueue<CallbackWithState> _postbackItems = new();
-        private bool _isDisposed;
+        private volatile bool _isDisposed;
 
         public Exception? InnerException { get; internal set; }
 
-        public Delegate? Delegate { get; internal set; }
+        public Delegate Delegate { get; }
 
         public object? State { get; internal set; }
+
+        public ExclusiveSynchronizationContext(Delegate @delegate, object? state = null)
+        {
+            Delegate = @delegate;
+            State = state;
+
+            _workItemsWaiting = _autoResetEventPool.Get();
+        }
 
         /// <inheritdoc />
         public override void Send(SendOrPostCallback d, object? state)
@@ -98,20 +112,43 @@ public static class AsyncUtils
         }
 
         /// <inheritdoc />
-        public override SynchronizationContext CreateCopy() => this;
+        public override SynchronizationContext CreateCopy() => new ForwardingSynchronizationContext(this);
 
         /// <summary>
-        /// Reset context state.
+        /// A lightweight copy that forwards <see cref="Post" /> to the original context while it is
+        /// still alive, and falls back to the thread pool after the original has been disposed.
+        /// This prevents <see cref="ObjectDisposedException" /> from captured copies and avoids
+        /// posting work into a dead message loop.
         /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Reset()
+        private sealed class ForwardingSynchronizationContext(ExclusiveSynchronizationContext owner) : SynchronizationContext
         {
-            _postbackItems.Clear();
-            _done = false;
-            _workItemsWaiting.Reset();
-            InnerException = null;
-            Delegate = null;
-            State = null;
+            /// <inheritdoc />
+            public override void Send(SendOrPostCallback d, object? state)
+            {
+                throw new NotSupportedException("We cannot send to our same thread.");
+            }
+
+            /// <inheritdoc />
+            public override void Post(SendOrPostCallback d, object? state)
+            {
+                if (!owner._isDisposed)
+                {
+                    try
+                    {
+                        owner.Post(d, state);
+                        return;
+                    }
+                    catch (ObjectDisposedException)
+                    {
+                        // Owner was disposed between our check and the call — fall through.
+                    }
+                }
+
+                ThreadPool.QueueUserWorkItem(s => d(s), state);
+            }
+
+            /// <inheritdoc />
+            public override SynchronizationContext CreateCopy() => this;
         }
 
         /// <inheritdoc />
@@ -121,11 +158,11 @@ public static class AsyncUtils
             {
                 return;
             }
+            _isDisposed = true;
 
             _done = true;
             _postbackItems.Clear();
-            _workItemsWaiting.Dispose();
-            _isDisposed = true;
+            _autoResetEventPool.Return(_workItemsWaiting);
         }
 
 #if DEBUG
@@ -141,8 +178,7 @@ public static class AsyncUtils
     public static void RunSync(Func<Task> taskFunc)
     {
         var current = SynchronizationContext.Current;
-        var exclusiveSynchronizationContext = _synchronizationContextPool.Get();
-        exclusiveSynchronizationContext.Delegate = taskFunc;
+        var exclusiveSynchronizationContext = new ExclusiveSynchronizationContext(taskFunc);
         SynchronizationContext.SetSynchronizationContext(exclusiveSynchronizationContext);
 
         // ReSharper disable once AsyncVoidLambda
@@ -154,29 +190,31 @@ public static class AsyncUtils
             {
                 await ((Func<Task>)localContext.Delegate!).Invoke();
             }
-            catch (AggregateException ex)
-            {
-                localContext.InnerException = ex.InnerException;
-            }
             catch (TargetInvocationException ex)
             {
                 localContext.InnerException = ex.InnerException;
             }
             catch (Exception ex)
             {
-                localContext.InnerException = ex;
-                throw;
+                localContext.InnerException = ex is AggregateException ae && ae.InnerExceptions.Count > 0
+                    ? ae.InnerExceptions[0]
+                    : ex;
             }
             finally
             {
                 localContext.EndMessageLoop();
             }
         }, exclusiveSynchronizationContext);
-        exclusiveSynchronizationContext.BeginMessageLoop();
-        SynchronizationContext.SetSynchronizationContext(current);
 
-        exclusiveSynchronizationContext.Reset();
-        _synchronizationContextPool.Return(exclusiveSynchronizationContext);
+        try
+        {
+            exclusiveSynchronizationContext.BeginMessageLoop();
+        }
+        finally
+        {
+            SynchronizationContext.SetSynchronizationContext(current);
+            exclusiveSynchronizationContext.Dispose();
+        }
     }
 
     /// <summary>
@@ -188,7 +226,7 @@ public static class AsyncUtils
         => RunSync(() => taskFunc.Invoke(CancellationToken.None));
 
     /// <summary>
-    /// Executes an async Task method which has a T return value synchronously.
+    /// Executes an async Task method which has a <see cref="T" /> return value synchronously.
     /// </summary>
     /// <param name="taskFunc">Task.</param>
     /// <param name="state">State to pass to func.</param>
@@ -197,9 +235,7 @@ public static class AsyncUtils
     public static T? RunSync<T>(Func<object?, Task<T>> taskFunc, object? state)
     {
         var current = SynchronizationContext.Current;
-        var exclusiveSynchronizationContext = _synchronizationContextPool.Get();
-        exclusiveSynchronizationContext.Delegate = taskFunc;
-        exclusiveSynchronizationContext.State = state;
+        var exclusiveSynchronizationContext = new ExclusiveSynchronizationContext(taskFunc, state);
         SynchronizationContext.SetSynchronizationContext(exclusiveSynchronizationContext);
 
         // ReSharper disable once AsyncVoidLambda
@@ -212,31 +248,32 @@ public static class AsyncUtils
                 localContext.State = await ((Func<object?, Task<T>>)localContext.Delegate!)
                     .Invoke(localContext.State);
             }
-            catch (AggregateException ex)
-            {
-                localContext.InnerException = ex.InnerException;
-            }
             catch (TargetInvocationException ex)
             {
                 localContext.InnerException = ex.InnerException;
             }
             catch (Exception ex)
             {
-                localContext.InnerException = ex;
-                throw;
+                localContext.InnerException = ex is AggregateException ae && ae.InnerExceptions.Count > 0
+                    ? ae.InnerExceptions[0]
+                    : ex;
             }
             finally
             {
                 localContext.EndMessageLoop();
             }
         }, exclusiveSynchronizationContext);
-        exclusiveSynchronizationContext.BeginMessageLoop();
-        SynchronizationContext.SetSynchronizationContext(current);
 
-        var result = (T?)exclusiveSynchronizationContext.State;
-        exclusiveSynchronizationContext.Reset();
-        _synchronizationContextPool.Return(exclusiveSynchronizationContext);
-        return result;
+        try
+        {
+            exclusiveSynchronizationContext.BeginMessageLoop();
+            return (T?)exclusiveSynchronizationContext.State;
+        }
+        finally
+        {
+            SynchronizationContext.SetSynchronizationContext(current);
+            exclusiveSynchronizationContext.Dispose();
+        }
     }
 
     /// <summary>
