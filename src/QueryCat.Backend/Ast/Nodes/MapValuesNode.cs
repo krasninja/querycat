@@ -2,28 +2,30 @@ using QueryCat.Backend.Core.Types;
 
 namespace QueryCat.Backend.Ast.Nodes;
 
-internal sealed class MapNode : ExpressionNode
+internal sealed class MapValuesNode : ExpressionNode
 {
     public Dictionary<VariantValue, ExpressionNode> Map { get; } = new();
 
     /// <inheritdoc />
     public override string Code => "map";
 
-    public MapNode(params ReadOnlySpan<KeyValueNode> keyValueNodes)
+    public MapValuesNode(params ReadOnlySpan<KeyValueNode> keyValueNodes)
     {
+        Type = DataType.Map;
         foreach (var keyValueNode in keyValueNodes)
         {
             Map[keyValueNode.Key.Value] = keyValueNode.Value;
         }
     }
 
-    public MapNode(MapNode node)
+    public MapValuesNode(MapValuesNode valuesNode)
     {
-        foreach (var keyValue in node.Map)
+        Type = DataType.Map;
+        foreach (var keyValue in valuesNode.Map)
         {
             Map.Add(keyValue.Key, keyValue.Value);
         }
-        node.CopyTo(this);
+        valuesNode.CopyTo(this);
     }
 
     /// <inheritdoc />
@@ -40,5 +42,5 @@ internal sealed class MapNode : ExpressionNode
         => visitor.VisitAsync(this, cancellationToken);
 
     /// <inheritdoc />
-    public override object Clone() => new MapNode(this);
+    public override object Clone() => new MapValuesNode(this);
 }

@@ -121,9 +121,9 @@ internal abstract class DelegateVisitor : AstVisitor
     }
 
     /// <inheritdoc />
-    public override ValueTask VisitAsync(MapNode node, CancellationToken cancellationToken)
+    public override ValueTask VisitAsync(MapValuesNode valuesNode, CancellationToken cancellationToken)
     {
-        return OnVisitAsync(node, cancellationToken);
+        return OnVisitAsync(valuesNode, cancellationToken);
     }
 
     /// <inheritdoc />

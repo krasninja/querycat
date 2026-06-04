@@ -116,6 +116,14 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
     }
 
     /// <inheritdoc />
+    public override IAstNode VisitExpressionArray(QueryCatParser.ExpressionArrayContext context)
+        => this.Visit<ArrayValuesNode>(context.array());
+
+    /// <inheritdoc />
+    public override IAstNode VisitExpressionMap(QueryCatParser.ExpressionMapContext context)
+        => this.Visit<MapValuesNode>(context.map());
+
+    /// <inheritdoc />
     public override IAstNode VisitExpressionUnary(QueryCatParser.ExpressionUnaryContext context)
     {
         var operation = ConvertOperationTokenToAst(context.op.Type);
@@ -285,7 +293,7 @@ internal partial class ProgramParserVisitor : QueryCatParserBaseVisitor<IAstNode
 
     /// <inheritdoc />
     public override IAstNode VisitMap(QueryCatParser.MapContext context)
-        => new MapNode(context.keyValue().Select(this.Visit<KeyValueNode>).ToArray());
+        => new MapValuesNode(context.keyValue().Select(this.Visit<KeyValueNode>).ToArray());
 
     /// <inheritdoc />
     public override IAstNode VisitIdentifierSimpleNoQuotes(QueryCatParser.IdentifierSimpleNoQuotesContext context)

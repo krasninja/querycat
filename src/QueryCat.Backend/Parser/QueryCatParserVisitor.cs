@@ -948,6 +948,20 @@ public interface IQueryCatParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitExpressionAtTimeZone([NotNull] QueryCatParser.ExpressionAtTimeZoneContext context);
 	/// <summary>
+	/// Visit a parse tree produced by the <c>ExpressionMap</c>
+	/// labeled alternative in <see cref="QueryCatParser.expression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitExpressionMap([NotNull] QueryCatParser.ExpressionMapContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>ExpressionArray</c>
+	/// labeled alternative in <see cref="QueryCatParser.expression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitExpressionArray([NotNull] QueryCatParser.ExpressionArrayContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>ExpressionCase</c>
 	/// labeled alternative in <see cref="QueryCatParser.expression"/>.
 	/// </summary>

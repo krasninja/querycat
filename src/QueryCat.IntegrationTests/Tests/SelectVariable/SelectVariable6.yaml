@@ -1,0 +1,5 @@
+expected: |
+  [1,string]
+query: |
+  declare arr := ARRAY [ 1, 'string' ];
+  SELECT arr;

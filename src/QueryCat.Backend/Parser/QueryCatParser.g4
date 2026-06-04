@@ -418,6 +418,8 @@ expression
     | left=expression op=AND right=expression # ExpressionBinary
     | left=expression op=OR right=expression # ExpressionBinary
     | left=expression atTimeZone # ExpressionAtTimeZone
+    | array # ExpressionArray
+    | map # ExpressionMap
     | caseExpression # ExpressionCase
     | blockExpression # ExpressionBlock
     ;
