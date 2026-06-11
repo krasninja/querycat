@@ -36,6 +36,7 @@ public static class Converter
     /// <returns>Application type.</returns>
     public static DataType ConvertFromSystem(Type type)
     {
+        ArgumentNullException.ThrowIfNull(type);
         if (type.IsGenericType
             && type.GetGenericTypeDefinition() == typeof(Nullable<>))
         {
