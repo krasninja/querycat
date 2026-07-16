@@ -242,6 +242,8 @@ public abstract class FunctionsFactory
         return FunctionDelegate;
     }
 
+    [UnconditionalSuppressMessage("Trimming", "IL2075",
+        Justification = "The 'Result' property always exists on Task<T> and is preserved by the runtime.")]
     private static object? GetResultFromTask(MethodBase method, object task)
     {
         if (method is MethodInfo methodInfo
