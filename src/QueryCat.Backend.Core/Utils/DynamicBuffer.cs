@@ -765,8 +765,8 @@ public sealed partial class DynamicBuffer<T> where T : IEquatable<T>
     /// Get data between start and end indexes.
     /// </summary>
     /// <param name="startIndex">Start index.</param>
-    /// <param name="endIndex">End index.</param>
-    /// <returns>Span.</returns>
+    /// <param name="endIndex">End index. -1 is to read the entire buffer to the end.</param>
+    /// <returns>Span. Notice that target length is endIndex-startIndex+1.</returns>
     public ReadOnlySpan<T> Slice(int startIndex, int endIndex = -1)
     {
         var startPosition = GetPosition(startIndex);
