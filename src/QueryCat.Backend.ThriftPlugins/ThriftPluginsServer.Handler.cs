@@ -304,7 +304,7 @@ public partial class ThriftPluginsServer
         public async Task<List<Function>> FindFunctionByNameAsync(long token, string name, FunctionCallArgumentsTypes? args_types,
             CancellationToken cancellationToken = default)
         {
-            await BeforeCallAsync(token, nameof(ResolveUriAsync), cancellationToken);
+            await BeforeCallAsync(token, nameof(FindFunctionByNameAsync), cancellationToken);
             var functions = _thriftPluginsServer._executionThread.FunctionsManager.FindByName(name,
                 SdkConvert.Convert(args_types ?? new FunctionCallArgumentsTypes())
             );
@@ -314,7 +314,7 @@ public partial class ThriftPluginsServer
         /// <inheritdoc />
         public async Task<List<Function>> GetFunctionsAsync(long token, CancellationToken cancellationToken = default)
         {
-            await BeforeCallAsync(token, nameof(ResolveUriAsync), cancellationToken);
+            await BeforeCallAsync(token, nameof(GetFunctionsAsync), cancellationToken);
             var functions = _thriftPluginsServer._executionThread.FunctionsManager.GetFunctions();
             return functions.Select(CreateFunction).ToList();
         }
@@ -331,7 +331,7 @@ public partial class ThriftPluginsServer
         /// <inheritdoc />
         public async Task RegisterFunctionAsync(long token, List<Function>? functions, CancellationToken cancellationToken = default)
         {
-            await BeforeCallAsync(token, nameof(ResolveUriAsync), cancellationToken);
+            await BeforeCallAsync(token, nameof(RegisterFunctionAsync), cancellationToken);
             var context = _thriftPluginsServer.GetPluginContextByToken(token);
             if (functions == null)
             {
