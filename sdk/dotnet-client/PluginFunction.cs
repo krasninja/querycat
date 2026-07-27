@@ -52,9 +52,44 @@ internal sealed class PluginFunction : IFunction
             IsAggregate = metadata.IsAggregate;
             Formatters = metadata.Formatters;
         }
+        Arguments = ParseArgumentsSimple(signature);
         Name = GetFunctionName(signature);
     }
-    
+
+    private static FunctionSignatureArgument[] ParseArgumentsSimple(string signature)
+    {
+        // "Naive" implementation of arguments parsing.
+        var firstBracketIndex = signature.IndexOf('(');
+        var lastBracketIndex = signature.LastIndexOf(')');
+        if (firstBracketIndex == -1 || lastBracketIndex == -1 || lastBracketIndex <= firstBracketIndex)
+        {
+            return [];
+        }
+
+        var argsString = signature.Substring(firstBracketIndex + 1, lastBracketIndex - firstBracketIndex - 1);
+        if (string.IsNullOrWhiteSpace(argsString))
+        {
+            return [];
+        }
+
+        var args = argsString.Split([',', ';'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var result = new FunctionSignatureArgument[args.Length];
+        for (int i = 0; i < args.Length; i++)
+        {
+            var parts = args[i].Split(':', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            if (parts.Length == 2)
+            {
+                var type = DataType.String;
+                if (Enum.TryParse(parts[1], ignoreCase: true, out DataType parsedType))
+                {
+                    type = parsedType;
+                }
+                result[i] = new FunctionSignatureArgument(parts[0], type);
+            }
+        }
+        return result;
+    }
+
     public static string GetFunctionName(string signature)
     {
         var firstBracketIndex = signature.IndexOf('(');

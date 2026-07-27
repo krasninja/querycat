@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- CacheStream buffer allocate problem.
+
+### Added
+
+- Simple function polymorphism for plugin functions.
+
 ## [0.17.4] - 2026-06-04
 
 ### Added

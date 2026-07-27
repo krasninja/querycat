@@ -34,12 +34,18 @@ internal sealed class CallFunctionCommand : BaseCommand
                 columnsSeparator: parseResult.GetValue(ColumnsSeparatorOption),
                 outputStyle: parseResult.GetValue(OutputStyleOption)
             );
-            var function = root.Thread.FunctionsManager.FindByNameFirst(functionName);
+
             var callArgs = new FunctionCallArguments();
             foreach (var arg in functionArguments)
             {
                 callArgs.Add(new VariantValue(arg));
             }
+
+            var argTypes = new FunctionCallArgumentsTypes(
+                positional: callArgs.Positional.Select((x, i) => new KeyValuePair<int, DataType>(i, x.Type)).ToArray()
+            );
+            var function = root.Thread.FunctionsManager.FindByNameFirst(functionName, argTypes);
+
             var result = await root.Thread.FunctionsManager.CallFunctionAsync(
                 function, root.Thread, callArgs, cancellationToken);
             await WriteAsync(root.Thread, result, root.RowsOutput, cancellationToken);

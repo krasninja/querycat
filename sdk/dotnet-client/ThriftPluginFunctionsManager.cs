@@ -72,10 +72,16 @@ public sealed class ThriftPluginFunctionsManager : IFunctionsManager
         );
     }
 
+    private static string GetFunctionKey(IFunction function) => $"{function.Name}__{function.Arguments.Length}";
+    
+    private static string GetFunctionKey(string name, FunctionCallArgumentsTypes? functionArgumentsTypes)
+        => $"{name}__{functionArgumentsTypes?.TotalCount ?? 0}";
+
     /// <inheritdoc />
     public void RegisterFunction(IFunction function)
     {
-        _functions[function.Name] = function;
+        var key = GetFunctionKey(function);
+        _functions[key] = function;
         if (_client.IsActive)
         {
             AsyncUtils.RunSync(async ct =>
@@ -97,7 +103,8 @@ public sealed class ThriftPluginFunctionsManager : IFunctionsManager
         FunctionCallArgumentsTypes? functionArgumentsTypes = null)
     {
         name = FunctionFormatter.NormalizeName(name);
-        if (_functions.TryGetValue(name, out var functionInfo))
+        var key = GetFunctionKey(name, functionArgumentsTypes);
+        if (_functions.TryGetValue(key, out var functionInfo))
         {
             return [functionInfo];
         }

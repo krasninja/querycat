@@ -133,7 +133,9 @@ public partial class QueryCatIOHandler : global::QueryCat.Plugins.Sdk.QueryCatIO
         await BeforeCallAsync(token, nameof(CallFunctionAsync), cancellationToken);
         call_args ??= new FunctionCallArguments();
 
-        var func = _executionThread.FunctionsManager.FindByNameFirst(function_name);
+        var argTypes = QueryCat.Backend.Core.Functions.FunctionCallArgumentsTypes.FromCallArguments(
+            SdkConvert.Convert(call_args));
+        var func = _executionThread.FunctionsManager.FindByNameFirst(function_name, argTypes);
         var frame =_executionThread.Stack.CreateFrame();
         try
         {
