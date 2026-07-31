@@ -226,7 +226,7 @@ public static class AsyncUtils
         => RunSync(() => taskFunc.Invoke(CancellationToken.None));
 
     /// <summary>
-    /// Executes an async Task method which has a <see cref="T" /> return value synchronously.
+    /// Executes an async Task method which has a <typeparamref name="T" /> type return value synchronously.
     /// </summary>
     /// <param name="taskFunc">Task.</param>
     /// <param name="state">State to pass to func.</param>

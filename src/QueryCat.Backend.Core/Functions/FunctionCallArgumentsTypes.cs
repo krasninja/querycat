@@ -51,6 +51,23 @@ public sealed class FunctionCallArgumentsTypes : IEqualityComparer<FunctionCallA
                     .ToArray());
     }
 
+    /// <summary>
+    /// Create instance of <see cref="FunctionCallArgumentsTypes"/> from
+    /// only call arguments.
+    /// </summary>
+    /// <param name="callArguments">Call arguments.</param>
+    /// <returns>Instance of <see cref="FunctionCallArgumentsTypes" />.</returns>
+    public static FunctionCallArgumentsTypes FromCallArguments(FunctionCallArguments callArguments)
+    {
+        return new FunctionCallArgumentsTypes(
+            positional: callArguments.Positional.Select(
+                    (arg, pos) => new KeyValuePair<int, DataType>(pos, arg.Type))
+                .ToArray(),
+            named: callArguments.Named.Select(
+                    arg => new KeyValuePair<string, DataType>(arg.Key, arg.Value.Type))
+                .ToArray());
+    }
+
     /// <inheritdoc />
     public bool Equals(FunctionCallArgumentsTypes? x, FunctionCallArgumentsTypes? y)
     {

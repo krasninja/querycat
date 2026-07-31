@@ -7,7 +7,6 @@ internal sealed class NuGetPluginLoadStrategy : IPluginLoadStrategy
     private const string NuGetExtensions = ".nupkg";
 
     private readonly string _file;
-    private ZipArchive? _zip;
 
     public NuGetPluginLoadStrategy(string file)
     {
@@ -23,35 +22,43 @@ internal sealed class NuGetPluginLoadStrategy : IPluginLoadStrategy
             return [];
         }
 
-        _zip = await ZipFile.OpenReadAsync(_file, cancellationToken);
+        var zip = await ZipFile.OpenReadAsync(_file, cancellationToken);
         try
         {
-            return _zip.Entries.Select(e => e.FullName).ToArray();
+            return zip.Entries.Select(e => e.FullName).ToArray();
         }
         finally
         {
-            await _zip.DisposeAsync();
-            _zip = null;
+            await zip.DisposeAsync();
         }
     }
 
     /// <inheritdoc />
     public async Task<Stream> GetFileAsync(string file, CancellationToken cancellationToken = default)
     {
-        var zip = _zip ?? await ZipFile.OpenReadAsync(_file, cancellationToken);
+        var zip = await ZipFile.OpenReadAsync(_file, cancellationToken);
+        file = FixFilePath(file);
         var entry = zip.GetEntry(file);
-        return entry == null ? Stream.Null : await entry.OpenAsync(cancellationToken);
+        return entry == null
+            ? Stream.Null
+            : new ZipStreamWrapper(await entry.OpenAsync(cancellationToken), zip);
     }
 
     /// <inheritdoc />
     public async Task<long> GetFileSizeAsync(string file, CancellationToken cancellationToken = default)
     {
-        var zip = _zip ?? await ZipFile.OpenReadAsync(_file, cancellationToken);
+        await using var zip = await ZipFile.OpenReadAsync(_file, cancellationToken);
+        file = FixFilePath(file);
         var entry = zip.GetEntry(file);
         if (entry == null)
         {
             return 0;
         }
         return entry.Length;
+    }
+
+    private static string FixFilePath(string file)
+    {
+        return file.Replace('\\', '/');
     }
 }

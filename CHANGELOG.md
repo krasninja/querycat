@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- CacheStream buffer allocate problem.
+
+### Added
+
+- Simple function polymorphism for plugin functions.
+
+## [0.17.4] - 2026-06-04
+
+### Added
+
+- Add syntax for arrays and maps.
+
+### Changed
+
+- Minor internal improvements.
+- Improve AsyncUtils.
+
 ## [0.17.3] - 2026-02-02
 
 ### Added

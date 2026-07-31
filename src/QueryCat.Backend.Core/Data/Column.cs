@@ -20,7 +20,7 @@ public class Column : ICloneable, IModelDescription
     /// <summary>
     /// Column unique identifier.
     /// </summary>
-    public int Id { get; private set; } = _nextId++;
+    public int Id { get; private set; } = Interlocked.Increment(ref _nextId);
 
     /// <summary>
     /// Column name.

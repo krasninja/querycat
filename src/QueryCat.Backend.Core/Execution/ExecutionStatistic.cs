@@ -54,7 +54,7 @@ public abstract class ExecutionStatistic
     /// <summary>
     /// Total number of processed rows.
     /// </summary>
-    public long ProcessedCount { get; set; }
+    public long ProcessedCount { get; internal set; }
 
     /// <summary>
     /// Errors count.

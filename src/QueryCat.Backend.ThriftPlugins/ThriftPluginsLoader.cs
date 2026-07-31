@@ -422,6 +422,7 @@ public sealed partial class ThriftPluginsLoader : PluginsLoader, IDisposable
         var proxyExecutable = ProxyFile.ResolveProxyFileName(_applicationDirectory);
         if (string.IsNullOrEmpty(proxyExecutable))
         {
+            _logger.LogDebug("No plugin proxy found: '{Location}'.", proxyExecutable);
             throw new ProxyNotFoundException(file);
         }
 

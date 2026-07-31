@@ -495,12 +495,32 @@ public static class SdkConvert
             positional: target.Positional.Select(Convert).ToList()
         );
 
+    public static Backend.Core.Functions.FunctionCallArguments Convert(Sdk.FunctionCallArguments target)
+    {
+        var callArgs = new Backend.Core.Functions.FunctionCallArguments();
+        if (target.Named != null)
+        {
+            foreach (var nameArg in target.Named)
+            {
+                callArgs.Add(nameArg.Key, Convert(nameArg.Value));
+            }
+        }
+        if (target.Positional != null)
+        {
+            foreach (var posArg in target.Positional)
+            {
+                callArgs.Add(Convert(posArg));
+            }
+        }
+        return callArgs;
+    }
+
     public static Sdk.FunctionCallArgumentsTypes Convert(Backend.Core.Functions.FunctionCallArgumentsTypes target)
         => new(
             named: target.Named.ToDictionary(a => a.Key, a => Convert(a.Value)),
             positional: target.Positional.ToDictionary(a => a.Key, a => Convert(a.Value))
         );
-    
+
     public static Backend.Core.Functions.FunctionCallArgumentsTypes Convert(Sdk.FunctionCallArgumentsTypes target)
         => new(
             named: (target.Named ?? new Dictionary<string, Sdk.DataType>()).ToDictionary(a => a.Key, a => Convert(a.Value)).ToArray(),

@@ -9,6 +9,10 @@ namespace QueryCat.Backend.Execution;
 public abstract class BaseObjectPropertiesCompletionSource : ICompletionSource
 {
     /// <inheritdoc />
+    [UnconditionalSuppressMessage("Trimming", "IL2075",
+        Justification = "Completion source works with arbitrary runtime objects whose properties cannot be statically annotated.")]
+    [UnconditionalSuppressMessage("Trimming", "IL2072",
+        Justification = "Completion source works with arbitrary runtime objects whose properties cannot be statically annotated.")]
     public virtual async IAsyncEnumerable<CompletionResult> GetAsync(CompletionContext context,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {

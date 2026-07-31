@@ -174,7 +174,7 @@ internal sealed class CacheStream : Stream
     private int ReadFromCache(Memory<byte> buffer)
     {
         var cachePosition = (int)_cachePosition;
-        var span = _buffer.Slice(cachePosition, cachePosition + buffer.Length);
+        var span = _buffer.Slice(cachePosition, cachePosition + buffer.Length - 1);
         _cachePosition += span.Length;
         span.CopyTo(buffer.Span);
         if (!IsInCache && _stream.CanSeek && _cachePosition != _stream.Position)

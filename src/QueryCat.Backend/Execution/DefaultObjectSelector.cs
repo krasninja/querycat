@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using QueryCat.Backend.Core.Execution;
 
@@ -18,6 +19,8 @@ public class DefaultObjectSelector : IObjectSelector
     public bool CaseInsensitivePropertyName { get; set; }
 
     /// <inheritdoc />
+    [UnconditionalSuppressMessage("Trimming", "IL2075",
+        Justification = "Object selector works with arbitrary runtime objects whose properties cannot be statically annotated.")]
     public virtual ValueTask<ObjectSelectorContext.Token?> SelectByPropertyAsync(
         ObjectSelectorContext context,
         string propertyName,
@@ -46,6 +49,8 @@ public class DefaultObjectSelector : IObjectSelector
     }
 
     /// <inheritdoc />
+    [UnconditionalSuppressMessage("Trimming", "IL2075",
+        Justification = "Object selector works with arbitrary runtime objects whose properties cannot be statically annotated.")]
     public virtual ValueTask<ObjectSelectorContext.Token?> SelectByIndexAsync(
         ObjectSelectorContext context,
         object?[] indexes,

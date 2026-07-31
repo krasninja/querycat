@@ -81,7 +81,7 @@ public abstract class EnumerableRowsInput<[DynamicallyAccessedMembers(Dynamicall
         {
             value = _builder.GetValue(columnIndex, _enumerator.Current);
         }
-        catch (Exception e)
+        catch (Exception e) when (e is not OutOfMemoryException and not StackOverflowException)
         {
             _logger.LogWarning("Error getting value for column '{Column}' of input '{Input}': {ErrorMessage}",
                 Columns[columnIndex].FullName, GetType().Name, e.Message);

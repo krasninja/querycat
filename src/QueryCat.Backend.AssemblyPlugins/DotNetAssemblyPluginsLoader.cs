@@ -326,9 +326,8 @@ public class DotNetAssemblyPluginsLoader : PluginsLoader, IDisposable
 
         foreach (var monikerDirectory in _monikerDirectories)
         {
-            // Example: ./runtimes/win/lib/net9.0 .
+            // Example: /runtimes/win/lib/net9.0 .
             var runtimePath = Path.Combine(
-                libraryDirectory,
                 "runtimes",
                 platform,
                 "lib",
