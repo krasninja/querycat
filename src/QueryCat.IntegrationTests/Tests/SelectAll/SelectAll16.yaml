@@ -1,0 +1,10 @@
+expected: |
+  3,p1,q1
+  3,p1,q2
+  3,p2,q1
+  3,p2,q2
+query: |
+  select s1.c, s2.column0, s3.column0 from
+    (select * from 'Simple3.csv') s1,
+    (select * from read_text(replace(s1.a, ',', e'\n'), fmt=>csv(has_header=>false))) s2,
+    (select * from read_text(replace(s1.b, ',', e'\n'), fmt=>csv(has_header=>false))) s3
