@@ -133,7 +133,7 @@ public sealed partial class DynamicBuffer<T> where T : IEquatable<T>
         {
             _buffer = buffer;
             _position = _buffer._startPosition;
-            _segment = _buffer._buffersList.Head;
+            _segment = !_buffer.IsEmpty ? _buffer._buffersList.Head : null;
         }
 
         /// <summary>
@@ -142,7 +142,7 @@ public sealed partial class DynamicBuffer<T> where T : IEquatable<T>
         public void Reset()
         {
             _position = _buffer._startPosition;
-            _segment = _buffer._buffersList.Head;
+            _segment = !_buffer.IsEmpty ? _buffer._buffersList.Head : null;
         }
 
         /// <summary>

@@ -240,4 +240,21 @@ public class DynamicBufferReaderTests
         Assert.Equal('9', reader.GetPosition(666).Value);
         Assert.Equal('1', reader.GetPosition(-666).Value);
     }
+
+    [Fact]
+    public void AdvancePastAny_EmptyBufferAfterAllocate_ShouldNotException()
+    {
+        // Arrange.
+        var dynamicBuffer = new DynamicBuffer<char>(chunkSize: 5);
+        var reader = new DynamicBuffer<char>.DynamicBufferReader(dynamicBuffer);
+
+        // Act.
+        var buf = dynamicBuffer.Allocate();
+        dynamicBuffer.Commit(0);
+        reader.Reset();
+        reader.AdvancePastAny("1");
+
+        // Assert.
+        Assert.Equal(0, reader.UnreadSpan.Length);
+    }
 }
