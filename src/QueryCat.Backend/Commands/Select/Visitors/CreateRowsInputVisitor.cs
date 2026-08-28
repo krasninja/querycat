@@ -1,4 +1,3 @@
-using System.Collections;
 using Microsoft.Extensions.Logging;
 using QueryCat.Backend.Ast;
 using QueryCat.Backend.Ast.Nodes;
@@ -274,8 +273,9 @@ internal sealed class CreateRowsInputVisitor : AstVisitor
         {
             callFuncUnitDecorator.CacheEnabled = false;
         }
+        var resolveStringAsSource = functionCallNode.FunctionName.StartsWith("read", StringComparison.OrdinalIgnoreCase);
         return await _rowsInputFactory.CreateRowsInputAsync(
-            source, alias, _executionThread, formatNode, true, cancellationToken);
+            source, alias, _executionThread, formatNode, resolveStringAsSource, cancellationToken);
     }
 
     private async ValueTask<SelectInputQueryContext?> CreateVaryInputContextAsync(

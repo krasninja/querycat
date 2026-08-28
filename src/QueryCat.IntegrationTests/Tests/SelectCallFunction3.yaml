@@ -1,0 +1,5 @@
+expected: |
+  1
+  2
+query: |
+  select * from read_text(replace('1,  2', ',', e'\n'), fmt=>csv())
