@@ -359,6 +359,29 @@ public class DelimiterStreamReaderTests
         }
     }
 
+    [Fact]
+    public async Task Read_BufferSize5_ShouldAvoidForeverLoop()
+    {
+        // Arrange.
+        var streamRowsInput = new DelimiterStreamReader(StringToStream("a0,bb0,ccc0\na1,bb1,ccc1\n"), new DelimiterStreamReader.ReaderOptions()
+        {
+            BufferSize = 5,
+            Delimiters = [','],
+        });
+
+        // Act.
+        var b1 = await streamRowsInput.ReadAsync();
+        var b2 = await streamRowsInput.ReadAsync();
+        var b3 = await streamRowsInput.ReadAsync();
+        var b4 = await streamRowsInput.ReadAsync();
+
+        // Assert.
+        Assert.True(b1);
+        Assert.True(b2);
+        Assert.False(b3);
+        Assert.False(b4);
+    }
+
     [Theory]
     [InlineData("test", "test")]
     [InlineData("\"test\"", "test")]

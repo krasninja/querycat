@@ -208,7 +208,7 @@ public sealed partial class DynamicBuffer<T> where T : IEquatable<T>
             if (_position > _buffer._endPosition - 1)
             {
                 _position = _buffer._endPosition - 1;
-                advanced = _buffer._endPosition - _position;
+                advanced = _buffer._endPosition - _position - 1;
             }
 
             return advanced;
@@ -530,7 +530,7 @@ public sealed partial class DynamicBuffer<T> where T : IEquatable<T>
                 return false;
             }
 
-            var segmentStartIndex = _buffer.GetSegmentStartIndex(_segment, _position);
+            var segmentStartIndex = (int)(_position % _buffer._chunkSize);
             if (segmentStartIndex < _buffer._maxEndIndex)
             {
                 if (_segment.Buffer[segmentStartIndex + 1].Equals(next))

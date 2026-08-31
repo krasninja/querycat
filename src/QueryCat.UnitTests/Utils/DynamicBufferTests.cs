@@ -159,6 +159,24 @@ public class DynamicBufferTests
     }
 
     [Fact]
+    public void GetSequence_PositionOffset_ShouldReturnCorrectResult()
+    {
+        // Arrange.
+        var dynamicBuffer = new DynamicBuffer<char>(chunkSize: 4);
+        dynamicBuffer.Write("abcdefgh"); // abcd | efgh
+
+        // Act.
+        var sequence1 = dynamicBuffer.GetSequence(dynamicBuffer.GetPosition(2), 6);
+        var sequence2 = dynamicBuffer.GetSequence(dynamicBuffer.GetPosition(4), 4);
+        var sequence3 = dynamicBuffer.GetSequence(dynamicBuffer.GetPosition(5), 2);
+
+        // Assert.
+        Assert.Equal("cdefgh", sequence1.ToString());
+        Assert.Equal("efgh", sequence2.ToString());
+        Assert.Equal("fg", sequence3.ToString());
+    }
+
+    [Fact]
     public void Allocate_NewBuffer_ShouldReuseExisting()
     {
         // Arrange.
@@ -312,34 +330,6 @@ public class DynamicBufferTests
     }
 
     [Fact]
-    public void Slice_VariousCases_ShouldReturnCorrectSpan()
-    {
-        /*
-         * xxxxx abcde fghij klmno pqrst
-         * 01234 01234 01234 01234 01234
-         *       0     5     10    15
-         */
-
-        // Arrange.
-        var dynamicBuffer = new DynamicBuffer<char>(chunkSize: 5);
-        dynamicBuffer.Write("xxxxxabcdefghijklmnopqrst");
-        dynamicBuffer.Advance(5); // Take -5!
-
-        // Act.
-        var span1 = dynamicBuffer.Slice(1, 3);
-        var span2 = dynamicBuffer.Slice(13, 16);
-        var span3 = dynamicBuffer.Slice(3, 13);
-        dynamicBuffer.Advance(3);
-        var span4 = dynamicBuffer.Slice(3, 3);
-
-        // Assert.
-        Assert.Equal("bcd", span1.ToString());
-        Assert.Equal("nopq", span2.ToString());
-        Assert.Equal("defghijklmn", span3.ToString());
-        Assert.Equal("g", span4.ToString());
-    }
-
-    [Fact]
     public void TryCopyExact_BufferWithData_ShouldCopy()
     {
         // Arrange.
@@ -386,6 +376,20 @@ public class DynamicBufferTests
         // Assert.
         Assert.True(success);
         Assert.Equal("123", new string(outputBuffer));
+    }
+
+    [Fact]
+    public void TryReadExact_ReadMoreDataThanInBuffer_ShouldReturnFalse()
+    {
+        // Arrange.
+        var dynamicBuffer = new DynamicBuffer<char>(chunkSize: 3);
+        dynamicBuffer.Write("123");
+
+        // Act.
+        var success = dynamicBuffer.TryReadExact(100, out var outputBuffer);
+
+        // Assert.
+        Assert.False(success);
     }
 
     [Fact]
@@ -502,6 +506,61 @@ public class DynamicBufferTests
     }
 
     [Fact]
+    public void Allocate_DoubleAllocateCommitThenWrite_ShouldWriteCorrect()
+    {
+        // Arrange.
+        var dynamicBuffer = new DynamicBuffer<char>(chunkSize: 8);
+
+        // Act.
+        var m1 = dynamicBuffer.Allocate();
+        "123".CopyTo(m1.Span);
+        dynamicBuffer.Commit(3);
+        var m2 = dynamicBuffer.Allocate();
+        "45".CopyTo(m2.Span);
+        dynamicBuffer.Commit(2);
+        dynamicBuffer.Write("ABCDE");
+
+        // Assert.
+        Assert.Equal("12345ABCDE", dynamicBuffer.GetSequence().ToString());
+    }
+
+    [Fact]
+    public void Allocate_DoubleAllocateCommit_ShouldNotProduceOrphanChunk()
+    {
+        // Arrange.
+        var dynamicBuffer = new DynamicBuffer<char>(chunkSize: 8);
+
+        // Act.
+        dynamicBuffer.Allocate();
+        dynamicBuffer.Commit(0); // No data.
+        var m = dynamicBuffer.Allocate();
+        "xy".CopyTo(m.Span);
+        dynamicBuffer.Commit(2);
+
+        // Assert.
+        Assert.Equal("xy", dynamicBuffer.GetSequence().ToString());
+        Assert.Equal(1, dynamicBuffer.TotalBuffersCount);
+        Assert.Equal(1, dynamicBuffer.UsedBuffersCount);
+    }
+
+    [Fact]
+    public void Allocate_Commit0AfterWrite_ShouldNotProduceOrphanChunk()
+    {
+        // Arrange.
+        var dynamicBuffer = new DynamicBuffer<char>(chunkSize: 4);
+
+        // Act.
+        dynamicBuffer.Write("abcd");
+        dynamicBuffer.Allocate();
+        dynamicBuffer.Commit(0);
+
+        // Assert.
+        Assert.Equal(4, dynamicBuffer.Size);
+        Assert.Equal("abcd", dynamicBuffer.GetSequence().ToString());
+        Assert.Equal(1, dynamicBuffer.UsedBuffersCount);
+    }
+
+    [Fact]
     public void Slice_AcrossSegments_ShouldCopyAll()
     {
         // Arrange.
@@ -544,5 +603,120 @@ public class DynamicBufferTests
 
         // Assert.
         Assert.Equal("0001111122", span);
+    }
+
+    [Fact]
+    public void Slice_ExceedLength_ShouldThrowOutOfRange()
+    {
+        // Arrange.
+        var dynamicBuffer = new DynamicBuffer<char>(chunkSize: 16);
+        dynamicBuffer.Write("abc");
+
+        // Act.
+        Assert.Throws<ArgumentOutOfRangeException>(() => dynamicBuffer.Slice(dynamicBuffer.Start, 10));
+    }
+
+    [Fact]
+    public void Slice_WholeBuffer_ShouldReturnCorrectStringLength()
+    {
+        // Arrange.
+        var dynamicBuffer1 = new DynamicBuffer<char>(chunkSize: 4);
+        var dynamicBuffer2 = new DynamicBuffer<char>(chunkSize: 8);
+        var dynamicBuffer3 = new DynamicBuffer<char>(chunkSize: 32);
+
+        // Act.
+        dynamicBuffer1.Write("a");
+        var m1 = dynamicBuffer1.Slice(0);
+        dynamicBuffer2.Write("abcde");
+        var m2 = dynamicBuffer2.Slice(0);
+        dynamicBuffer3.Write("abcdefghijkl");
+        var m3 = dynamicBuffer3.Slice(dynamicBuffer3.GetPosition(8), 10);
+
+        // Act.
+        Assert.Equal(1, m1.Length);
+        Assert.Equal(5, m2.Length);
+        Assert.Equal(4, m3.Length);
+        Assert.Equal("ijkl", m3.ToString());
+    }
+
+    [Fact]
+    public void Slice_VariousCases_ShouldReturnCorrectSpan()
+    {
+        /*
+         * xxxxx abcde fghij klmno pqrst
+         * 01234 01234 01234 01234 01234
+         *       0     5     10    15
+         */
+
+        // Arrange.
+        var dynamicBuffer = new DynamicBuffer<char>(chunkSize: 5);
+        dynamicBuffer.Write("xxxxxabcdefghijklmnopqrst");
+        dynamicBuffer.Advance(5); // Take -5!
+
+        // Act.
+        var span1 = dynamicBuffer.Slice(1, 3);
+        var span2 = dynamicBuffer.Slice(13, 16);
+        var span3 = dynamicBuffer.Slice(3, 13);
+        dynamicBuffer.Advance(3);
+        var span4 = dynamicBuffer.Slice(3, 3);
+
+        // Assert.
+        Assert.Equal("bcd", span1.ToString());
+        Assert.Equal("nopq", span2.ToString());
+        Assert.Equal("defghijklmn", span3.ToString());
+        Assert.Equal("g", span4.ToString());
+    }
+
+    [Fact]
+    public void Slice_StalePositionAfterAdvanceToEnd_ShouldNotThrowRawSpanError()
+    {
+        // Arrange.
+        var dynamicBuffer = new DynamicBuffer<char>(chunkSize: 4);
+        dynamicBuffer.Write("abcdefgh");
+        var position = dynamicBuffer.GetPosition(6);
+        dynamicBuffer.AdvanceToEnd();
+
+        // Act & Assert.
+        Assert.Empty(dynamicBuffer.Slice(position, 0).ToArray());
+    }
+
+    [Fact]
+    public void TryGetAt_OutOfRangeIndex_ShouldReturnFalse()
+    {
+        // Arrange.
+        var dynamicBuffer = new DynamicBuffer<char>(chunkSize: 5);
+        dynamicBuffer.Write("000001111122222");
+
+        // Act.
+        var success = dynamicBuffer.TryGetAt(100, out _);
+
+        // Assert.
+        Assert.False(success);
+    }
+
+    [Fact]
+    public void End_EmptyDynamicBuffer_OffsetShouldBeZero()
+    {
+        // Arrange.
+        var dynamicBuffer = new DynamicBuffer<char>(chunkSize: 5);
+
+        // Assert.
+        Assert.Equal(0, dynamicBuffer.End.Offset);
+    }
+
+    [Fact]
+    public void End_EmptyDynamicBuffer_ShouldProduceZeroSliceWithStart()
+    {
+        // Arrange.
+        var dynamicBuffer = new DynamicBuffer<char>(chunkSize: 5);
+
+        // Assert.
+        Assert.Equal(0, dynamicBuffer.Slice(dynamicBuffer.Start, dynamicBuffer.End).Length);
+    }
+
+    [Fact]
+    public void Null_OfDynamicBufferPosition_ShouldBeEmpty()
+    {
+        Assert.True(DynamicBuffer<char>.DynamicBufferPosition.Null.Empty);
     }
 }

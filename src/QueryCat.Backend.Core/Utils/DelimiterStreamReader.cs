@@ -316,8 +316,11 @@ public class DelimiterStreamReader
                 quotesCount = 0;
                 quoteChar = '\0';
 #if DEBUG
-                var value = _dynamicBuffer.Slice(currentField.Start, currentField.Length);
-                Trace("found field: " + value.ToString());
+                if (currentField.Length > -1)
+                {
+                    var value = _dynamicBuffer.Slice(currentField.Start, currentField.Length);
+                    Trace("found field: " + value.ToString());
+                }
 #endif
             }
         }
