@@ -18,10 +18,11 @@ public class DynamicBufferReaderTests
         var reader = new DynamicBuffer<char>.DynamicBufferReader(dynamicBuffer);
 
         // Act.
-        reader.Advance(8);
+        var advanced = reader.Advance(8);
 
         // Assert.
         Assert.Equal('0', reader.Current);
+        Assert.Equal(8, advanced);
     }
 
     [Fact]
@@ -33,10 +34,11 @@ public class DynamicBufferReaderTests
         var reader = new DynamicBuffer<char>.DynamicBufferReader(dynamicBuffer);
 
         // Act.
-        reader.Advance(999);
+        var advanced = reader.Advance(999);
 
         // Assert.
         Assert.Equal('0', reader.Current);
+        Assert.Equal(9, advanced);
     }
 
     [Fact]
