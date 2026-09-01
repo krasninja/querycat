@@ -715,6 +715,23 @@ public class DynamicBufferTests
     }
 
     [Fact]
+    public void GetPosition_ByOffset_ShouldReturnCorrectPosition()
+    {
+        // Arrange.
+        var dynamicBuffer = new DynamicBuffer<char>(chunkSize: 5);
+        dynamicBuffer.Write("01234567890");
+
+        var ch1 = dynamicBuffer.GetPosition(0);
+        var ch2 = dynamicBuffer.GetPosition(5);
+        var ch3 = dynamicBuffer.GetPosition(10);
+
+        // Act.
+        Assert.Equal('0', ch1.Value);
+        Assert.Equal('5', ch2.Value);
+        Assert.Equal('0', ch3.Value);
+    }
+
+    [Fact]
     public void Null_OfDynamicBufferPosition_ShouldBeEmpty()
     {
         Assert.True(DynamicBuffer<char>.DynamicBufferPosition.Null.Empty);
