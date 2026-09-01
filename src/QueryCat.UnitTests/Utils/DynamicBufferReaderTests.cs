@@ -37,8 +37,8 @@ public class DynamicBufferReaderTests
         var advanced = reader.Advance(999);
 
         // Assert.
-        Assert.Equal('0', reader.Current);
-        Assert.Equal(9, advanced);
+        Assert.Equal('\0', reader.Current);
+        Assert.Equal(10, advanced);
     }
 
     [Fact]
@@ -48,13 +48,15 @@ public class DynamicBufferReaderTests
         var dynamicBuffer = new DynamicBuffer<char>(chunkSize: 4);
         dynamicBuffer.Write("1234");
         var reader = new DynamicBuffer<char>.DynamicBufferReader(dynamicBuffer);
-        reader.Advance(3);
+        reader.Advance(3); // 4.
 
         // Act.
         reader.Advance(1);
+        var count = reader.Advance(1);
 
         // Assert.
-        Assert.Equal('4', reader.Current);
+        Assert.Equal('\0', reader.Current);
+        Assert.Equal(0, count);
     }
 
     [Fact]
