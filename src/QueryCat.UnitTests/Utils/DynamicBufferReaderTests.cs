@@ -101,7 +101,7 @@ public class DynamicBufferReaderTests
         reader.AdvanceToEnd();
 
         // Assert.
-        Assert.Equal('0', reader.Current);
+        Assert.Equal('\0', reader.Current);
         Assert.Equal(dynamicBuffer.End, reader.Position);
     }
 
@@ -239,7 +239,7 @@ public class DynamicBufferReaderTests
         Assert.Equal('6', reader.Position.Value);
         Assert.Equal('1', reader.GetPosition(-5).Value);
         Assert.Equal('8', reader.GetPosition(2).Value);
-        Assert.Equal('9', reader.GetPosition(666).Value);
+        Assert.Equal('\0', reader.GetPosition(666).Value);
         Assert.Equal('1', reader.GetPosition(-666).Value);
     }
 

@@ -658,12 +658,12 @@ public class DynamicBufferTests
         var span2 = dynamicBuffer.Slice(13, 16);
         var span3 = dynamicBuffer.Slice(3, 13);
         dynamicBuffer.Advance(3);
-        var span4 = dynamicBuffer.Slice(3, 3);
+        var span4 = dynamicBuffer.Slice(3, 4);
 
         // Assert.
-        Assert.Equal("bcd", span1.ToString());
-        Assert.Equal("nopq", span2.ToString());
-        Assert.Equal("defghijklmn", span3.ToString());
+        Assert.Equal("bc", span1.ToString());
+        Assert.Equal("nop", span2.ToString());
+        Assert.Equal("defghijklm", span3.ToString());
         Assert.Equal("g", span4.ToString());
     }
 

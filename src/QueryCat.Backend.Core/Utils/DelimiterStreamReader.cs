@@ -308,7 +308,7 @@ public class DelimiterStreamReader
                 }
                 else
                 {
-                    currentField.Start = _dynamicBuffer.GetPosition(-1, fieldStartPosition);
+                    currentField.Start = _dynamicBuffer.GetPosition(0, fieldStartPosition);
                     currentField.Length = (int)(_bufferReader.Consumed - fieldStartOffset) + 1;
                 }
                 currentField.QuoteCharacter = quoteChar;
@@ -481,7 +481,6 @@ public class DelimiterStreamReader
                     {
                         AddField();
                     }
-                    ++currentField.Length; // Include last character.
                     _parseState = StateAdvanceNewLine1;
                     Trace("state change");
 
