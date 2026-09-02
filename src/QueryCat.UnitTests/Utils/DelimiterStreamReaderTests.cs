@@ -1,7 +1,7 @@
 using System.Buffers;
 using System.Globalization;
-using Xunit;
 using System.Text;
+using Xunit;
 using QueryCat.Backend.Core.Utils;
 
 namespace QueryCat.UnitTests.Utils;
@@ -12,7 +12,7 @@ namespace QueryCat.UnitTests.Utils;
 public class DelimiterStreamReaderTests
 {
     [Fact]
-    public async Task Read_CsvWithWindowsNewLines_ShouldParseCorrect()
+    public async Task ReadAsync_CsvWithWindowsNewLines_ShouldParseCorrect()
     {
         // Arrange.
         var sb = new StringBuilder()
@@ -30,7 +30,7 @@ public class DelimiterStreamReaderTests
     }
 
     [Fact]
-    public async Task Read_CsvWithUnixNewLines_ShouldParseCorrect()
+    public async Task ReadAsync_CsvWithUnixNewLines_ShouldParseCorrect()
     {
         // Arrange.
         var sb = new StringBuilder()
@@ -66,7 +66,7 @@ public class DelimiterStreamReaderTests
     }
 
     [Fact]
-    public async Task Read_CsvTextWithQuotes_ShouldUnquote()
+    public async Task ReadAsync_CsvTextWithQuotes_ShouldUnquote()
     {
         // Arrange.
         var sb = new StringBuilder()
@@ -91,7 +91,7 @@ public class DelimiterStreamReaderTests
     }
 
     [Fact]
-    public async Task Read_QuotesAtTheEnd_ShouldUnquote()
+    public async Task ReadAsync_QuotesAtTheEnd_ShouldUnquote()
     {
         // Arrange.
         var sb = new StringBuilder()
@@ -115,7 +115,7 @@ public class DelimiterStreamReaderTests
     }
 
     [Fact]
-    public async Task Read_LastFieldWithQuotes_ShouldParse()
+    public async Task ReadAsync_LastFieldWithQuotes_ShouldParse()
     {
         // Arrange.
         var sb = new StringBuilder()
@@ -138,7 +138,7 @@ public class DelimiterStreamReaderTests
     }
 
     [Fact]
-    public async Task Read_LastFieldEmpty_ShouldGetField()
+    public async Task ReadAsync_LastFieldEmpty_ShouldGetField()
     {
         // Arrange.
         var sb = new StringBuilder()
@@ -192,7 +192,7 @@ public class DelimiterStreamReaderTests
     }
 
     [Fact]
-    public async Task Read_MultipleQuoteStrings_ShouldUnquote()
+    public async Task ReadAsync_MultipleQuoteStrings_ShouldUnquote()
     {
         // Arrange.
         var sb = new StringBuilder()
@@ -216,7 +216,7 @@ public class DelimiterStreamReaderTests
     }
 
     [Fact]
-    public async Task Read_TextFromStdin_ShouldParse()
+    public async Task ReadAsync_TextFromStdin_ShouldParse()
     {
         // Arrange.
         var sb = new StringBuilder()
@@ -247,7 +247,7 @@ public class DelimiterStreamReaderTests
     }
 
     [Fact]
-    public async Task Read_LogTextFromStdin_ShouldParse()
+    public async Task ReadAsync_LogTextFromStdin_ShouldParse()
     {
         // Arrange.
         var sb = new StringBuilder()
@@ -274,7 +274,7 @@ public class DelimiterStreamReaderTests
     }
 
     [Fact]
-    public async Task Read_DataWithEmptyLines_ShouldSkipEmpty()
+    public async Task ReadAsync_DataWithEmptyLines_ShouldSkipEmpty()
     {
         // Arrange.
         var sb = new StringBuilder()
@@ -298,7 +298,7 @@ public class DelimiterStreamReaderTests
     }
 
     [Fact]
-    public async Task Read_DataWithEmptyFields_ShouldParse()
+    public async Task ReadAsync_DataWithEmptyFields_ShouldParse()
     {
         // Arrange.
         var sb = new StringBuilder()
@@ -325,7 +325,7 @@ public class DelimiterStreamReaderTests
     }
 
     [Fact]
-    public async Task Read_VariableDynamicBufferLength_ShouldParse()
+    public async Task ReadAsync_VariableDynamicBufferLength_ShouldParse()
     {
         // Arrange.
         var sb = new StringBuilder()
@@ -360,7 +360,7 @@ public class DelimiterStreamReaderTests
     }
 
     [Fact]
-    public async Task Read_BufferSize5_ShouldAvoidForeverLoop()
+    public async Task ReadAsync_BufferSize5_ShouldAvoidForeverLoop()
     {
         // Arrange.
         var streamRowsInput = new DelimiterStreamReader(StringToStream("a0,bb0,ccc0\na1,bb1,ccc1\n"), new DelimiterStreamReader.ReaderOptions()
@@ -380,6 +380,100 @@ public class DelimiterStreamReaderTests
         Assert.True(b2);
         Assert.False(b3);
         Assert.False(b4);
+    }
+
+    [Fact]
+    public async Task ReadLineAsync_CommentWithComma_ShouldAvoidForeverLoop()
+    {
+        // Arrange.
+        var streamRowsInput = new DelimiterStreamReader(StringToStream("id,name\n//com,ment\n10,john\n"), new DelimiterStreamReader.ReaderOptions()
+        {
+            Delimiters = [','],
+        });
+
+        // Act.
+        var b1 = await streamRowsInput.ReadAsync();
+        var b2 = await streamRowsInput.ReadLineAsync();
+
+        // Assert.
+        Assert.True(b1);
+        Assert.True(b2);
+        Assert.Equal("//com,ment", streamRowsInput.GetString(0));
+    }
+
+    [Fact]
+    public async Task ReadAsync_TryDetectDelimiterNoEol_ShouldDetectComma()
+    {
+        // Arrange.
+        var streamRowsInput = new DelimiterStreamReader(
+            StringToStream("a,b,c"), new DelimiterStreamReader.ReaderOptions
+            {
+                DetectDelimiter = true,
+            });
+
+        // Act.
+        var b1 = await streamRowsInput.ReadAsync();
+
+        // Assert.
+        Assert.True(b1);
+        Assert.Equal("c", streamRowsInput.GetField(2));
+    }
+
+    [Fact]
+    public async Task ReadAsync_1CharQuote_ShouldNotCrash()
+    {
+        // Arrange.
+        var streamRowsInput = new DelimiterStreamReader(
+            StringToStream("a,\""), new DelimiterStreamReader.ReaderOptions
+            {
+                QuoteChars = ['"'],
+                DetectDelimiter = true,
+            });
+
+        // Act.
+        var b1 = await streamRowsInput.ReadAsync();
+
+        // Assert.
+        Assert.True(b1);
+        Assert.Equal(string.Empty, streamRowsInput.GetField(1));
+    }
+
+    [Fact]
+    public async Task ReadAsync_UnterminatedQuoteAtEof_ShouldNotDropLastChar()
+    {
+        // Arrange.
+        var streamRowsInput = new DelimiterStreamReader(
+            StringToStream("a,\"bc"), new DelimiterStreamReader.ReaderOptions
+            {
+                QuoteChars = ['"'],
+            });
+
+        // Act.
+        await streamRowsInput.ReadAsync();
+
+        // Assert.
+        Assert.Equal("bc", streamRowsInput.GetField(1));
+    }
+
+    [Fact]
+    public async Task ReadAsync_BufferSize4_ShouldUnquote()
+    {
+        // Arrange.
+        var streamRowsInput = new DelimiterStreamReader(
+            StringToStream("abc,\"d\"\n"), new DelimiterStreamReader.ReaderOptions
+        {
+            BufferSize = 4,
+            QuoteChars = ['"'],
+            Delimiters = [','],
+        });
+
+        // Act.
+        var b1 = await streamRowsInput.ReadAsync();
+
+        // Assert.
+        Assert.True(b1);
+        Assert.Equal("abc", streamRowsInput.GetField(0).ToString());
+        Assert.Equal("d", streamRowsInput.GetField(1).ToString());
     }
 
     [Theory]

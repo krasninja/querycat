@@ -176,6 +176,7 @@ public sealed partial class DynamicBuffer<T> where T : IEquatable<T>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private BufferSegment? EnsureSegment()
         {
+            SyncSegment();
             if (_segment == null && _buffer._buffersList.Head != null)
             {
                 _position = _buffer._startPosition;
@@ -255,7 +256,7 @@ public sealed partial class DynamicBuffer<T> where T : IEquatable<T>
             }
 
             // If we stay within the current segment - use fast path.
-            if (target - _segment!.AbsoluteStartPosition < _buffer._chunkSize)
+            if (_segment != null && _segment.Contains(target))
             {
                 var advanced = target - _position;
                 _position = target;
