@@ -20,6 +20,7 @@ public sealed partial class DynamicBuffer<T> where T : IEquatable<T>
     {
         private readonly DynamicBuffer<T> _buffer;
         private long _position;
+        private readonly int _maxEndIndex;
         private BufferSegment? _segment;
 
         /// <summary>
@@ -40,12 +41,11 @@ public sealed partial class DynamicBuffer<T> where T : IEquatable<T>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-                var segment = EnsureSegment();
-                if (segment == null || _position >= _buffer._endPosition || _position < _buffer._startPosition)
+                if (_segment == null || _position >= _buffer._endPosition || _position < _buffer._startPosition)
                 {
                     return default;
                 }
-                return segment.Buffer[SegmentOffset];
+                return _segment.Buffer[SegmentOffset];
             }
         }
 
@@ -57,17 +57,16 @@ public sealed partial class DynamicBuffer<T> where T : IEquatable<T>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-                var segment = EnsureSegment();
-                if (segment == null || _position + 1 >= _buffer._endPosition)
+                if (_segment == null || _position + 1 >= _buffer._endPosition)
                 {
                     return default;
                 }
                 var offset = SegmentOffset;
-                if (offset < _buffer._chunkSize - 1)
+                if (offset < _maxEndIndex)
                 {
-                    return segment.Buffer[offset + 1];
+                    return _segment.Buffer[offset + 1];
                 }
-                return segment.NextRef != null ? segment.NextRef.Buffer[0] : default;
+                return _segment.NextRef != null ? _segment.NextRef.Buffer[0] : default;
             }
         }
 
@@ -79,17 +78,16 @@ public sealed partial class DynamicBuffer<T> where T : IEquatable<T>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-                var segment = EnsureSegment();
-                if (segment == null || _position <= _buffer._startPosition || _position > _buffer._endPosition)
+                if (_segment == null || _position <= _buffer._startPosition)
                 {
                     return default;
                 }
                 var offset = SegmentOffset;
                 if (offset > 0)
                 {
-                    return segment.Buffer[offset - 1];
+                    return _segment.Buffer[offset - 1];
                 }
-                return segment.PrevRef != null ? segment.PrevRef.Buffer[_buffer._chunkSize - 1] : default;
+                return _segment.PrevRef != null ? _segment.PrevRef.Buffer[_maxEndIndex] : default;
             }
         }
 
@@ -120,9 +118,8 @@ public sealed partial class DynamicBuffer<T> where T : IEquatable<T>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-                var segment = EnsureSegment();
-                return segment != null
-                    ? new DynamicBufferPosition(segment, (int)(_position - segment.AbsoluteStartPosition))
+                return _segment != null
+                    ? new DynamicBufferPosition(_segment, (int)(_position - _segment.AbsoluteStartPosition))
                     : DynamicBufferPosition.Null;
             }
         }
@@ -135,14 +132,13 @@ public sealed partial class DynamicBuffer<T> where T : IEquatable<T>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-                var segment = EnsureSegment();
-                if (segment == null)
+                if (_segment == null)
                 {
                     return ReadOnlySpan<T>.Empty;
                 }
                 var startIndex = SegmentOffset;
                 var length = (int)Math.Min(_buffer._endPosition - _position, _buffer._chunkSize - startIndex);
-                return length > 0 ? new ReadOnlySpan<T>(segment.Buffer, startIndex, length) : ReadOnlySpan<T>.Empty;
+                return length > 0 ? new ReadOnlySpan<T>(_segment.Buffer, startIndex, length) : ReadOnlySpan<T>.Empty;
             }
         }
 
@@ -154,56 +150,18 @@ public sealed partial class DynamicBuffer<T> where T : IEquatable<T>
         public DynamicBufferReader(DynamicBuffer<T> buffer)
         {
             _buffer = buffer;
-            _position = buffer._startPosition;
-            _segment = buffer._buffersList.Head;
+            _position = _buffer._startPosition;
+            _segment = !_buffer.IsEmpty ? _buffer._buffersList.Head : null;
+            _maxEndIndex = _buffer._chunkSize - 1;
         }
 
         /// <summary>
         /// Reset reader state to the beginning of the buffer.
         /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Reset()
         {
             _position = _buffer._startPosition;
-            _segment = _buffer._buffersList.Head;
-        }
-
-        /// <summary>
-        /// Attach to the buffer head if the reader was created (or reset) while the buffer
-        /// had no segments. Otherwise, the reader would stay empty forever even after
-        /// the data has been written.
-        /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private BufferSegment? EnsureSegment()
-        {
-            SyncSegment();
-            if (_segment == null && _buffer._buffersList.Head != null)
-            {
-                _position = _buffer._startPosition;
-                _segment = _buffer._buffersList.Head;
-            }
-            return _segment;
-        }
-
-        /// <summary>
-        /// Make sure the current segment is the one that contains the current position. The position
-        /// right after the last element of the last segment stays within that segment.
-        /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void SyncSegment()
-        {
-            if (_segment == null)
-            {
-                return;
-            }
-            while (_position - _segment.AbsoluteStartPosition >= _buffer._chunkSize && _segment.NextRef != null)
-            {
-                _segment = _segment.NextRef;
-            }
-            while (_position < _segment.AbsoluteStartPosition && _segment.PrevRef != null)
-            {
-                _segment = _segment.PrevRef;
-            }
+            _segment = !_buffer.IsEmpty ? _buffer._buffersList.Head : null;
         }
 
         /// <summary>
@@ -222,19 +180,17 @@ public sealed partial class DynamicBuffer<T> where T : IEquatable<T>
             var absolutePosition = position.AbsolutePosition;
             if (absolutePosition < _buffer._startPosition || absolutePosition > _buffer._endPosition)
             {
-                ThrowSeekOutOfRange();
+                ThrowSeekOutOfRange(nameof(position));
             }
-            Debug.Assert(
-                absolutePosition >= segment.AbsoluteStartPosition && absolutePosition <= segment.AbsoluteEndPosition,
-                "The position segment either belongs to another buffer or has already been recycled.");
-            _position = absolutePosition;
-            _segment = segment;
-            SyncSegment();
+            _position = position.AbsolutePosition;
+            _segment = (BufferSegment?)position.Segment;
+            FixBoundPositionsCase();
         }
 
         [DoesNotReturn]
-        private static void ThrowSeekOutOfRange()
-            => throw new ArgumentOutOfRangeException("position", "Seek position is outside of the committed buffer range.");
+        private static void ThrowSeekOutOfRange(string paramName)
+            // ReSharper disable once LocalizableElement
+            => throw new ArgumentOutOfRangeException(paramName, "Seek position is outside of the committed buffer range.");
 
         /// <summary>
         /// Move the reader ahead the specified number of items.
@@ -244,19 +200,19 @@ public sealed partial class DynamicBuffer<T> where T : IEquatable<T>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public long Advance(long count)
         {
-            if (count < 1 || EnsureSegment() == null)
+            if (count < 1 || _segment == null)
             {
                 return 0;
             }
 
-            var target = Math.Min(_position + count, _buffer._endPosition);
+            var target = count >= _buffer._endPosition - _position ? _buffer._endPosition : _position + count;
             if (target <= _position)
             {
                 return 0;
             }
 
             // If we stay within the current segment - use fast path.
-            if (_segment != null && _segment.Contains(target))
+            if (target - _segment.AbsoluteStartPosition < _buffer._chunkSize)
             {
                 var advanced = target - _position;
                 _position = target;
@@ -280,8 +236,17 @@ public sealed partial class DynamicBuffer<T> where T : IEquatable<T>
                 _segment = _segment.NextRef;
             }
 
-            SyncSegment();
+            FixBoundPositionsCase();
             return _position - initialPosition;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void FixBoundPositionsCase()
+        {
+            if (_segment != null && _position >= _segment.AbsoluteEndPosition && _segment.NextRef != null)
+            {
+                _segment = _segment.NextRef;
+            }
         }
 
         /// <summary>
@@ -292,7 +257,7 @@ public sealed partial class DynamicBuffer<T> where T : IEquatable<T>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public long Rewind(long count)
         {
-            if (count < 1 || EnsureSegment() == null)
+            if (count < 1 || _segment == null)
             {
                 return 0;
             }
@@ -303,8 +268,8 @@ public sealed partial class DynamicBuffer<T> where T : IEquatable<T>
                 return 0;
             }
 
-            // If we stay within the current segment - use fast path.
-            if (target >= _segment!.AbsoluteStartPosition)
+            // If we are in the current segment - use fast path.
+            if (target >= _segment.AbsoluteStartPosition)
             {
                 var rewound = _position - target;
                 _position = target;
@@ -328,7 +293,7 @@ public sealed partial class DynamicBuffer<T> where T : IEquatable<T>
                 _segment = _segment.PrevRef;
             }
 
-            SyncSegment();
+            FixBoundPositionsCase();
             return initialPosition - _position;
         }
 
@@ -338,7 +303,7 @@ public sealed partial class DynamicBuffer<T> where T : IEquatable<T>
         /// <returns>How many positions the reader has been advanced.</returns>
         public long AdvancePastAny(scoped ReadOnlySpan<T> values)
         {
-            if (EnsureSegment() == null)
+            if (_segment == null)
             {
                 return 0;
             }
@@ -359,9 +324,8 @@ public sealed partial class DynamicBuffer<T> where T : IEquatable<T>
                     break;
                 }
 
-                // The whole span matches - move on to the next segment.
                 _position += remaining.Length;
-                SyncSegment();
+                FixBoundPositionsCase();
             }
 
             return _position - initialPosition;
@@ -373,7 +337,7 @@ public sealed partial class DynamicBuffer<T> where T : IEquatable<T>
         /// <returns>How many positions the reader has been advanced.</returns>
         public long AdvancePastAny(SearchValues<T> values)
         {
-            if (EnsureSegment() == null)
+            if (_segment == null)
             {
                 return 0;
             }
@@ -394,9 +358,8 @@ public sealed partial class DynamicBuffer<T> where T : IEquatable<T>
                     break;
                 }
 
-                // The whole span matches - move on to the next segment.
                 _position += remaining.Length;
-                SyncSegment();
+                FixBoundPositionsCase();
             }
 
             return _position - initialPosition;
@@ -410,7 +373,7 @@ public sealed partial class DynamicBuffer<T> where T : IEquatable<T>
         /// <returns>True if any of the given <paramref name="delimiters" /> were found.</returns>
         public bool TryAdvanceToAny(scoped ReadOnlySpan<T> delimiters, bool advancePastDelimiter = true)
         {
-            if (EnsureSegment() == null)
+            if (_segment == null)
             {
                 return false;
             }
@@ -420,7 +383,16 @@ public sealed partial class DynamicBuffer<T> where T : IEquatable<T>
                 var index = chunk.Span.IndexOfAny(delimiters);
                 if (index > -1)
                 {
-                    SeekToDelimiter(chunk, index, advancePastDelimiter);
+                    _position = chunk.StartIndex + chunk.Segment.AbsoluteStartPosition;
+                    _segment = chunk.Segment;
+                    if (!advancePastDelimiter)
+                    {
+                        _position += index;
+                    }
+                    else
+                    {
+                        Advance(index + 1);
+                    }
                     return true;
                 }
             }
@@ -436,7 +408,7 @@ public sealed partial class DynamicBuffer<T> where T : IEquatable<T>
         /// <returns>True if any of the given <paramref name="delimiters" /> were found.</returns>
         public bool TryAdvanceToAny(SearchValues<T> delimiters, bool advancePastDelimiter = true)
         {
-            if (EnsureSegment() == null)
+            if (_segment == null)
             {
                 return false;
             }
@@ -446,7 +418,16 @@ public sealed partial class DynamicBuffer<T> where T : IEquatable<T>
                 var index = chunk.Span.IndexOfAny(delimiters);
                 if (index > -1)
                 {
-                    SeekToDelimiter(chunk, index, advancePastDelimiter);
+                    _position = chunk.StartIndex + chunk.Segment.AbsoluteStartPosition;
+                    _segment = chunk.Segment;
+                    if (!advancePastDelimiter)
+                    {
+                        _position += index;
+                    }
+                    else
+                    {
+                        Advance(index + 1);
+                    }
                     return true;
                 }
             }
@@ -462,17 +443,27 @@ public sealed partial class DynamicBuffer<T> where T : IEquatable<T>
         /// <returns>True if the given <paramref name="delimiter" /> was found.</returns>
         public bool TryAdvanceTo(T delimiter, bool advancePastDelimiter = true)
         {
-            if (EnsureSegment() == null)
+            if (_segment == null)
             {
                 return false;
             }
 
             foreach (var chunk in new ChunkIterator(_buffer, Position))
             {
-                var index = chunk.Span.IndexOf(delimiter);
+                var remaining = chunk.Span;
+                var index = remaining.IndexOf(delimiter);
                 if (index > -1)
                 {
-                    SeekToDelimiter(chunk, index, advancePastDelimiter);
+                    _position = chunk.StartIndex + chunk.Segment.AbsoluteStartPosition;
+                    _segment = chunk.Segment;
+                    if (!advancePastDelimiter)
+                    {
+                        _position += index;
+                    }
+                    else
+                    {
+                        Advance(index + 1);
+                    }
                     return true;
                 }
             }
@@ -481,36 +472,11 @@ public sealed partial class DynamicBuffer<T> where T : IEquatable<T>
         }
 
         /// <summary>
-        /// Move the reader onto the delimiter found within the chunk and optionally step over it.
-        /// </summary>
-        /// <param name="chunk">The chunk the delimiter was found in.</param>
-        /// <param name="index">The delimiter index within the chunk span.</param>
-        /// <param name="advancePastDelimiter">True to move past the delimiter.</param>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void SeekToDelimiter(SegmentChunk chunk, int index, bool advancePastDelimiter)
-        {
-            _segment = chunk.Segment;
-            _position = chunk.Segment.AbsoluteStartPosition + chunk.StartIndex + index;
-            SyncSegment();
-            if (advancePastDelimiter)
-            {
-                Advance(1);
-            }
-        }
-
-        /// <summary>
         /// Moves the reader to the end of the dynamic buffer.
         /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void AdvanceToEnd()
         {
-            var endSegment = (BufferSegment?)_buffer.End.Segment;
-            if (endSegment == null)
-            {
-                Reset();
-                return;
-            }
-            _segment = endSegment;
+            _segment = _buffer._buffersList.Tail;
             _position = _buffer._endPosition;
         }
 
@@ -521,16 +487,15 @@ public sealed partial class DynamicBuffer<T> where T : IEquatable<T>
         /// <param name="advancePast">Move past the <paramref name="next" /> value if found.</param>
         public bool IsNext(T? next, bool advancePast = false)
         {
-            var segment = EnsureSegment();
-            if (segment == null || _position + 1 >= _buffer._endPosition)
+            if (_segment == null || _position + 1 >= _buffer._endPosition)
             {
                 return false;
             }
 
             var segmentStartIndex = SegmentOffset;
-            if (segmentStartIndex < _buffer._chunkSize - 1)
+            if (segmentStartIndex < _maxEndIndex)
             {
-                if (!EqualityComparer<T>.Default.Equals(segment.Buffer[segmentStartIndex + 1], next))
+                if (!EqualityComparer<T>.Default.Equals(_segment.Buffer[segmentStartIndex + 1], next))
                 {
                     return false;
                 }
@@ -541,7 +506,7 @@ public sealed partial class DynamicBuffer<T> where T : IEquatable<T>
                 return true;
             }
 
-            var nextSegment = segment.NextRef;
+            var nextSegment = _segment.NextRef;
             if (nextSegment == null)
             {
                 return false;
@@ -551,7 +516,7 @@ public sealed partial class DynamicBuffer<T> where T : IEquatable<T>
             if (equal && advancePast)
             {
                 _position++;
-                SyncSegment();
+                _segment = nextSegment;
             }
             return equal;
         }

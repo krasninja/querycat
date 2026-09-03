@@ -194,6 +194,7 @@ public sealed partial class DynamicBuffer<T> where T : IEquatable<T>
                 Tail = null;
             }
             head.PrevRef = null;
+            head.NextRef = null;
             return head;
         }
 
@@ -215,6 +216,7 @@ public sealed partial class DynamicBuffer<T> where T : IEquatable<T>
                 Head = null;
             }
             tail.NextRef = null;
+            tail.PrevRef = null;
             return tail;
         }
 
